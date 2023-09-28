@@ -1,0 +1,90 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #4b3535;
+    margin: 0;
+    padding: 0;
+}
+
+h1 {
+    text-align: center;
+}
+  
+  /* Style the container for the images */
+  #hand_html {
+    background-color: #fafafa;
+    position: fixed;
+    bottom: 5%;
+    left: 0;
+    width: 100%;
+    height: 20%;
+    overflow-y: auto;
+  }
+  
+  /* Style the images within the container */
+  #hand_html img {
+    width: auto;
+    height: 80%;
+  }
+
+  #deck_html {
+    background-color: #fafafa;
+    position: fixed;
+    bottom: 65%;
+    left: 75%;
+    width: 20%;
+    height: 30%;
+  }
+
+  #discard_html {
+    background-color: #fafafa;
+    position: fixed;
+    bottom: 30%;
+    left: 75%;
+    width: 20%;
+    height: 30%;
+  }
+
+  #bench_html {
+    background-color: #fafafa;
+    position: fixed;
+    bottom: 30%;
+    left: 5%;
+    width: 60%;
+    height: 30%;
+  }
+
+  #active_html {
+    background-color: #fafafa;
+    position: fixed;
+    bottom: 65%;
+    left: 40%;
+    width: 20%;
+    height: 30%;
+  }
+
+  #stadium_html {
+    background-color: #278b47;
+    position: fixed;
+    bottom: 80%;
+    left: 60%;
+    width: 10%;
+    height: 20%;
+  }
+
+  #prizes_html {
+    background-color: #278b47;
+    position: fixed;
+    bottom: 65%;
+    left: 5%;
+    width: 20%;
+    height: 30%;
+  }
+
+  #lostzone_html {
+    background-color: #278b47;
+    position: fixed;
+    bottom: 80%;
+    left: 30%;
+    width: 10%;
+    height: 20%;
+  }
