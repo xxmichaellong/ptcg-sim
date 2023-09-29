@@ -4,6 +4,7 @@ import { deck } from "./initialization.js";
 import { deck_html } from "./initialization.js";
 import { hand } from "./initialization.js";
 import { hand_html } from "./initialization.js";
+import { imageClick } from "./imageClick.js";
 
 // Draw starting hand of 7
 export function drawHand(){
@@ -52,14 +53,14 @@ export function drawHand(){
         // Set the alt attribute (alternative text for the image)
         imgElement.alt = card.name;
 
-        //Add a data attribute to store the index
-        imgElement.dataset.arrayIndex = index;
-
         //Add a click event listener to the image
-        // imgElement.addEventListener('click', handleImageClick);
+        imgElement.addEventListener('click', imageClick);
 
         // Append the <img> element to the container
         hand_html.appendChild(imgElement);
+        hand.images.push(imgElement);
+
+        console.log(imgElement);
         });
     };
 }

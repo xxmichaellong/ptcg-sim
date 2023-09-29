@@ -2,6 +2,7 @@ import { deck } from "./initialization.js";
 import { deck_html } from "./initialization.js";
 import { hand } from "./initialization.js";
 import { hand_html } from "./initialization.js";
+import { imageClick } from "./imageClick.js";
 
 //Function to draw a card from deck
 export function drawCard(){
@@ -22,11 +23,10 @@ export function drawCard(){
          imgElement.dataset.arrayIndex = hand.count-1;
 
          //Add a click event listener to the image
+         imgElement.addEventListener('click', imageClick);
+
          // imgElement.addEventListener('click', handleImageClick);
 
         hand_html.appendChild(imgElement);
-        
-        console.log(deck.cards);
-        console.log(deck.count);
         };
 }

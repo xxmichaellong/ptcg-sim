@@ -10,8 +10,13 @@ export const deck_html = document.getElementById('deck_html');
 export let lostzone = [];
 export const lostzone_html = document.getElementById('lostzone_html');
 
-export let discard = [];
-export const discard_html = document.getElementById('discard_html');
+export const discard = {
+    cards: [],
+    images: [],
+    get count() {
+        return this.cards.length;
+    }
+};export const discard_html = document.getElementById('discard_html');
 
 export let stadium = [];
 export const stadium_html = document.getElementById('stadium_html');
@@ -27,8 +32,14 @@ export const bench_html = document.getElementById('bench_html');
 
 export const hand = {
     cards: [],
+    images: [],
     get count() {
         return this.cards.length;
     }
 };
 export const hand_html = document.getElementById('hand_html');
+
+//create global variable that holds the html index of a card
+export const index = {
+    poo: 0
+};

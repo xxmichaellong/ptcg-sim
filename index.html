@@ -8,6 +8,8 @@
 </head>
 <body>
     <h1>LZB Simulator</h1>
+
+    <!--Different parts of the game-->
     <div id="hand_html">
 
     </div>
@@ -26,12 +28,27 @@
     <div id="active_html">
 
     </div>
-    <div id="prizes_html">
+    <!--<div id="prizes_html">
 
-    </div>
+    </div> -->
     <div id="stadium_html">
 
     </div>
+
+    <!-- Modal HTML structure -->
+    <div id="popup" class="popup">
+        <div class="popup-content">
+            <p>Choose an option:</p>
+            <button id="discardCardButton">Discard</button>
+            <button onclick="lostZoneOption()">Lost Zone</button>
+            <button onclick="prizeOption()">Prize</button>
+            <button onclick="lostZoneOption()">Active</button>
+            <button onclick="lostZoneOption()">Bench</button>
+            <button onclick="lostZoneOption()">Deck</button>
+        </div>
+    </div>
+
+    <!--Buttons-->
     <button id="drawHandButton">Draw Starting Hand</button>
     <button id="drawCardButton">Draw Card From Deck</button>
 
