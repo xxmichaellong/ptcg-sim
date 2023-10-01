@@ -7,23 +7,17 @@ export function benchCard(){
     
     if (selectedCard.location==='hand'){
 
-        //function to remove card from hand array and add it to bench array
+        // remove card from hand.cards array and add it to bench.cards array
         bench.cards.push(...hand.cards.splice(selectedCard.index, 1));
     
-        //function to remove image of card from hand container
-        hand_html.removeChild(...hand.images.splice(selectedCard.index, 1));
+        // remove image from hand.images array and add it to bench.images array
+        bench.images.push(...hand.images.splice(selectedCard.index, 1));
 
-        //Add to bench pile
-        const imgElement = document.createElement('img');
-        imgElement.src = bench.cards[bench.count-1].image;
-        imgElement.alt = bench.cards[bench.count-1].name;
-        imgElement.addEventListener('click', imageClick);
+        // remove image from hand_html container
+        hand_html.removeChild(bench.images[bench.count-1]);
 
-        // append new image
-        bench_html.appendChild(imgElement);
-
-        //Add the image to an array so we can access it later
-        bench.images.push(imgElement);    
+        // append image to bench_html container
+        bench_html.appendChild(bench.images[bench.count-1]);
 
         //remove popup
         popup.style.display = "none";

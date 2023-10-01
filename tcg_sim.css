@@ -35,6 +35,11 @@ h1 {
     height: 30%;
   }
 
+  #deck_html img {
+    width: auto;
+    height: 80%;
+  } 
+
   #discard_html {
     background-color: #fafafa;
     position: fixed;
@@ -43,6 +48,11 @@ h1 {
     width: 20%;
     height: 30%;
   }
+
+  #discard_html img {
+    width: auto;
+    height: 80%;
+  } 
 
   #bench_html {
     background-color: #fafafa;
@@ -53,6 +63,11 @@ h1 {
     height: 30%;
   }
 
+  #bench_html img {
+    width: auto;
+    height: 80%;
+  } 
+
   #active_html {
     background-color: #fafafa;
     position: fixed;
@@ -61,6 +76,11 @@ h1 {
     width: 20%;
     height: 30%;
   }
+
+  #active_html img {
+    width: auto;
+    height: 80%;
+  } 
 
   #stadium_html {
     background-color: #278b47;
@@ -71,6 +91,11 @@ h1 {
     height: 20%;
   }
 
+  #stadium_html img {
+    width: auto;
+    height: 80%;
+  } 
+
   #prizes_html {
     background-color: #278b47;
     position: fixed;
@@ -80,6 +105,11 @@ h1 {
     height: 30%;
   }
 
+  #prizes_html img {
+    width: auto;
+    height: 80%;
+  } 
+  
   #lostzone_html {
     background-color: #278b47;
     position: fixed;
@@ -89,6 +119,11 @@ h1 {
     height: 20%;
   }
 
+  #lostzone_html img {
+    width: auto;
+    height: 80%;
+  } 
+
   .popup {
     display: none;
     position: fixed;
@@ -96,7 +131,7 @@ h1 {
     left: 50%;
     transform: translate(-50%, -50%);
     background-color: #fff;
-    width: 200px;
+    width: 500px;
     padding: 20px;
     text-align: center;
     border: 1px solid #ccc;
