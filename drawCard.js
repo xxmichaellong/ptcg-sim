@@ -18,15 +18,8 @@ export function drawCard(){
         const imgElement = document.createElement('img');
         imgElement.src = hand.cards[hand.count-1].image;
         imgElement.alt = hand.cards[hand.count-1].name;
-
-         //Add a data attribute to store the index
-         imgElement.dataset.arrayIndex = hand.count-1;
-
-         //Add a click event listener to the image
-         imgElement.addEventListener('click', imageClick);
-
-         // imgElement.addEventListener('click', handleImageClick);
-
+        imgElement.addEventListener('click', imageClick);
         hand_html.appendChild(imgElement);
+        hand.images.push(imgElement);
         };
 }

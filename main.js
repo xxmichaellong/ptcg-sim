@@ -1,6 +1,7 @@
 import { drawHand } from "./drawHand.js";
 import { drawCard } from "./drawCard.js";
 import { discardCard } from "./discardCard.js";
+import { benchCard } from "./benchCard.js";
 
 // Buttons
 
@@ -15,3 +16,7 @@ drawCardButton.addEventListener('click', drawCard);
 // Discard a Card from Hand
 const discardCardButton = document.getElementById('discardCardButton');
 discardCardButton.addEventListener('click', discardCard);
+
+// Bench a card
+const benchCardButton = document.getElementById('benchCardButton');
+benchCardButton.addEventListener('click', benchCard);

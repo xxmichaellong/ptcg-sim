@@ -4,6 +4,18 @@ import { deck } from "./initialization.js";
 import { deck_html } from "./initialization.js";
 import { hand } from "./initialization.js";
 import { hand_html } from "./initialization.js";
+import { lostzone } from "./initialization.js";
+import { lostzone_html } from "./initialization.js";
+import { discard } from "./initialization.js";
+import { discard_html } from "./initialization.js";
+import { stadium } from "./initialization.js";
+import { stadium_html } from "./initialization.js";
+import { prizes } from "./initialization.js";
+import { prizes_html } from "./initialization.js";
+import { active } from "./initialization.js";
+import { active_html } from "./initialization.js";
+import { bench } from "./initialization.js";
+import { bench_html } from "./initialization.js";
 import { imageClick } from "./imageClick.js";
 
 // Draw starting hand of 7
@@ -17,16 +29,37 @@ export function drawHand(){
         };
     };
 
-    // Reset deck to an empty array
+    // Reset all initialized parameters
     deck.cards = [];
+    lostzone.cards = [];
+    discard.cards = [];
+    stadium.cards = [];
+    prizes.cards = [];
+    active.cards = [];
+    bench.cards = [];
+    hand.cards = [];
+    deck_html.innerHTML = "";
+    lostzone_html.innerHTML = ""; 
+    discard_html.innerHTML = ""; 
+    stadium_html.innerHTML = ""; 
+    prizes_html.innerHTML = ""; 
+    active_html.innerHTML = ""; 
+    bench_html.innerHTML = ""; 
+    hand_html.innerHTML = ""; 
 
     // Add the cards to the deck array
-    addCard(30, 'Comfey', 'cardScans/comfey.webp');
-    addCard(30, 'Sableye', 'cardScans/sableye.webp');
+    addCard(1, 'comfey', 'cardScans/comfey.webp');
+    addCard(1, 'sableye', 'cardScans/sableye.webp');
+    addCard(1, 'cramorant', 'cardScans/cramorant.webp');
+    addCard(1, 'kyogre', 'cardScans/kyogre.webp');
+    addCard(1, 'pidgeotV', 'cardScans/pidgeotV.webp');
+    addCard(1, 'manaphy', 'cardScans/manaphy.webp');
+    addCard(1, 'radiantGreninja', 'cardScans/radiantGreninja.webp');
+    addCard(1, 'zamazenta', 'cardScans/zamazenta.webp');
+
   
     // Check if the total quantity is 60
-    const totalQuantity = deck.count;
-    if (totalQuantity !== 60) {
+    if (deck.count !== 8) {
         const errormsg = `Total quantity should be 60. The current quantity is ${totalQuantity}.`;
         console.error(errormsg);
         deck_html.textContent = errormsg;
@@ -41,26 +74,42 @@ export function drawHand(){
             console.log(`${index + 1}. ${card.name}`);
         });
 
-        // Populate Hand array with first 7 values of Deck
+        // Populate Hand array with first 7 values of Deck (and removing cards from deck)
         hand.cards = deck.cards.splice(0, 7);
-        
-        hand.cards.forEach((card, index) => {
+
+        // Populate hand_html container with the images of each card
+        hand.cards.forEach((card) => {
         // Create an <img> element
-        const imgElement = document.createElement('img');
-        
-        // Set the src attribute to the image URL
-        imgElement.src = card.image;
-        // Set the alt attribute (alternative text for the image)
-        imgElement.alt = card.name;
+            const imgElement = document.createElement('img');
+            // Set the src attribute to the image URL
+            imgElement.src = card.image;
+            // Set the alt attribute (alternative text for the image)
+            imgElement.alt = card.name;
+            //Add a click event listener to the image
+            imgElement.addEventListener('click', imageClick);
+            // Append the <img> element to the container
+            hand_html.appendChild(imgElement);
+            // Add the image to an array so we can access it later
+            hand.images.push(imgElement);
+        });
 
-        //Add a click event listener to the image
-        imgElement.addEventListener('click', imageClick);
+        // Populate prize card array with first 6 values of deck
+        prizes.cards = deck.cards.splice(0, 6);
 
-        // Append the <img> element to the container
-        hand_html.appendChild(imgElement);
-        hand.images.push(imgElement);
-
-        console.log(imgElement);
+        // Populate hand_html container with the images of each card
+        prizes.cards.forEach((card) => {
+            // Create an <img> element
+            const imgElement = document.createElement('img');
+            // Set the src attribute to the image URL
+            imgElement.src = card.image;
+            // Set the alt attribute (alternative text for the image)
+            imgElement.alt = card.name;
+            //Add a click event listener to the image
+            imgElement.addEventListener('click', imageClick);
+            // Append the <img> element to the container
+            prizes_html.appendChild(imgElement);
+            // Add the image to an array so we can access it later
+            prizes.images.push(imgElement);
         });
     };
 }

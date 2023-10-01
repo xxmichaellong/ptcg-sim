@@ -1,35 +1,75 @@
 // Initialize empty deck array, lostzone array, discard pile, stadium, prize cards, active, bench, and link to HTML element
+//deck
 export const deck = {
     cards: [],
+    images: [],
     get count() {
         return this.cards.length;
     }
 };
 export const deck_html = document.getElementById('deck_html');
 
-export let lostzone = [];
+//lostzone
+export const lostzone = {
+    cards: [],
+    images: [],
+    get count() {
+        return this.cards.length;
+    }
+};
 export const lostzone_html = document.getElementById('lostzone_html');
 
+//discard
 export const discard = {
     cards: [],
     images: [],
     get count() {
         return this.cards.length;
     }
-};export const discard_html = document.getElementById('discard_html');
+};
+export const discard_html = document.getElementById('discard_html');
 
-export let stadium = [];
+//stadium
+export const stadium = {
+    cards: [],
+    images: [],
+    get count() {
+        return this.cards.length;
+    }
+};
 export const stadium_html = document.getElementById('stadium_html');
 
-export let prizes = [];
+//prizes
+export const prizes = {
+    cards: [],
+    images: [],
+    get count() {
+        return this.cards.length;
+    }
+};
 export const prizes_html = document.getElementById('prizes_html');
 
-export let active = [];
+//active
+export const active = {
+    cards: [],
+    images: [],
+    get count() {
+        return this.cards.length;
+    }
+};
 export const active_html = document.getElementById('active_html');
 
-export let bench = [];
+//bench
+export const bench = {
+    cards: [],
+    images: [],
+    get count() {
+        return this.cards.length;
+    }
+};
 export const bench_html = document.getElementById('bench_html');
 
+//hand
 export const hand = {
     cards: [],
     images: [],
@@ -39,7 +79,8 @@ export const hand = {
 };
 export const hand_html = document.getElementById('hand_html');
 
-//create global variable that holds the html index of a card
-export const index = {
-    poo: 0
+//create global variable that holds the html index of a the clicked card
+export const selectedCard = {
+    index: 0,
+    location: ''
 };
