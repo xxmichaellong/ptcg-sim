@@ -48,18 +48,35 @@ export function drawHand(){
     hand_html.innerHTML = ""; 
 
     // Add the cards to the deck array
-    addCard(1, 'comfey', 'cardScans/comfey.webp');
-    addCard(1, 'sableye', 'cardScans/sableye.webp');
+    addCard(4, 'comfey', 'cardScans/comfey.webp');
+    addCard(2, 'sableye', 'cardScans/sableye.webp');
     addCard(1, 'cramorant', 'cardScans/cramorant.webp');
     addCard(1, 'kyogre', 'cardScans/kyogre.webp');
     addCard(1, 'pidgeotV', 'cardScans/pidgeotV.webp');
     addCard(1, 'manaphy', 'cardScans/manaphy.webp');
     addCard(1, 'radiantGreninja', 'cardScans/radiantGreninja.webp');
     addCard(1, 'zamazenta', 'cardScans/zamazenta.webp');
+    addCard(4, 'metal', 'cardScans/metal.webp');
+    addCard(4, 'water', 'cardScans/water.webp');
+    addCard(3, 'psychic', 'cardScans/psychic.webp');
+    addCard(4, 'colress\'sExperiment', 'cardScans/colress\'sExperiment.webp');
+    addCard(4, 'battleVipPass', 'cardScans/battleVipPass.webp');
+    addCard(4, 'mirageGate', 'cardScans/mirageGate.webp');
+    addCard(4, 'switchCart', 'cardScans/switchCart.webp');
+    addCard(4, 'escapeRope', 'cardScans/escapeRope.webp');
+    addCard(3, 'nestBall', 'cardScans/nestBall.jpg');
+    addCard(3, 'superRod', 'cardScans/superRod.webp');
+    addCard(2, 'energyRecycler', 'cardScans/energyRecycler.webp');
+    addCard(2, 'lostVacuum', 'cardScans/lostVacuum.webp');
+    addCard(1, 'echoingHorn', 'cardScans/echoingHorn.jpg');
+    addCard(1, 'hisuianHeavyBall', 'cardScans/hisuianHeavyBall.webp');
+    addCard(1, 'palPad', 'cardScans/palPad.webp');
+    addCard(1, 'artazon', 'cardScans/artazon.webp');
+    addCard(1, 'pokestop', 'cardScans/pokestop.webp');
+    addCard(2, 'forestSealStone', 'cardScans/forestSealStone.webp');
 
-  
     // Check if the total quantity is 60
-    if (deck.count !== 8) {
+    if (deck.count !== 60) {
         const errormsg = `Total quantity should be 60. The current quantity is ${totalQuantity}.`;
         console.error(errormsg);
         deck_html.textContent = errormsg;
