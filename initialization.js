@@ -84,3 +84,32 @@ export const selectedCard = {
     index: 0,
     location: ''
 };
+
+export const cardData = [
+    [4, 'comfey', 'cardScans/comfey.webp'],
+    [2, 'sableye', 'cardScans/sableye.webp'],
+    [1, 'cramorant', 'cardScans/cramorant.webp'],
+    [1, 'kyogre', 'cardScans/kyogre.webp'],
+    [1, 'pidgeotV', 'cardScans/pidgeotV.webp'],
+    [1, 'manaphy', 'cardScans/manaphy.webp'],
+    [1, 'radiantGreninja', 'cardScans/radiantGreninja.webp'],
+    [1, 'zamazenta', 'cardScans/zamazenta.webp'],
+    [4, 'metal', 'cardScans/metal.webp'],
+    [4, 'water', 'cardScans/water.webp'],
+    [3, 'psychic', 'cardScans/psychic.webp'],
+    [4, 'colress\'sExperiment', 'cardScans/colress\'sExperiment.webp'],
+    [4, 'battleVipPass', 'cardScans/battleVipPass.webp'],
+    [4, 'mirageGate', 'cardScans/mirageGate.webp'],
+    [4, 'switchCart', 'cardScans/switchCart.webp'],
+    [4, 'escapeRope', 'cardScans/escapeRope.webp'],
+    [3, 'nestBall', 'cardScans/nestBall.jpg'],
+    [3, 'superRod', 'cardScans/superRod.webp'],
+    [2, 'energyRecycler', 'cardScans/energyRecycler.webp'],
+    [2, 'lostVacuum', 'cardScans/lostVacuum.webp'],
+    [1, 'echoingHorn', 'cardScans/echoingHorn.jpg'],
+    [1, 'hisuianHeavyBall', 'cardScans/hisuianHeavyBall.webp'],
+    [1, 'palPad', 'cardScans/palPad.webp'],
+    [1, 'artazon', 'cardScans/artazon.webp'],
+    [1, 'pokestop', 'cardScans/pokestop.webp'],
+    [2, 'forestSealStone', 'cardScans/forestSealStone.webp']
+];

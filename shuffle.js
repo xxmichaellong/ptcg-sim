@@ -1,7 +1,8 @@
 // Function to shuffle deck (Fisher-Yates)
-export function shuffle(array) {
-    for (let i = array.length - 1; i > 0; i--) {
+export function shuffle(card, image) {
+    for (let i = card.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
+      [card[i], card[j]] = [card[j], card[i]];
+      [image[i], image[j]] = [image[j], image[i]];
     }
   }

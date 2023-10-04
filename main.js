@@ -1,7 +1,5 @@
 import { drawHand } from "./drawHand.js";
 import { drawCard } from "./drawCard.js";
-import { discardCard } from "./discardCard.js";
-import { benchCard } from "./benchCard.js";
 import { selectedCard } from "./initialization.js";
 import { moveEventTarget } from "./moveEventTarget.js";
 
@@ -47,3 +45,18 @@ deckCardButton.addEventListener('click', function() {moveEventTarget(selectedCar
 const activeCardButton = document.getElementById('activeCardButton');
 activeCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, 'active')});
 
+
+// Get the modal and image elements
+const modal = document.getElementById('displayDeck');
+const modalButton = document.getElementById('displayDeckButton');
+const closeModalButton = document.getElementById('closeDisplayButton');
+
+// Function to open the modal
+modalButton.addEventListener('click', () => {
+    modal.style.display = 'block';
+});
+
+// Function to close the modal
+closeModalButton.addEventListener('click', () => {
+    modal.style.display = 'none';
+});
