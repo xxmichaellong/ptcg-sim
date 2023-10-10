@@ -1,5 +1,5 @@
 import { hand_html, hand, discard, discard_html, prizes, prizes_html, lostzone, lostzone_html, 
-        bench, bench_html, active, active_html, stadium, stadium_html, deck_html, deck, selectedCard } from "./initialization.js";
+        bench, bench_html, active, active_html, stadium, stadium_html, deck, selectedCard } from "./initialization.js";
 
 // Function to display the popup when the image is clicked
 export function imageClick(event){

@@ -1,5 +1,5 @@
 import { makeCardObject } from "./makeCardObject.js";
-import { deck } from "./initialization.js";
+import { deck, deckDisplay_html } from "./initialization.js";
 import { imageClick } from "./imageClick.js";
 
 // Function to make card objects and add it to the deck array, specifying the quantity of each card
@@ -14,10 +14,6 @@ export const addCard = (quantity, name, image) => {
       imgElement.alt = card.name;
       //Add a click event listener to the image
       imgElement.addEventListener('click', imageClick);
-
-      /* Append the <img> element to the container
-      hand_html.appendChild(imgElement); */
-
       // Add the image to an array so we can access it later
       deck.images.push(imgElement);
     };

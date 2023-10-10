@@ -7,6 +7,7 @@ export const deck = {
         return this.cards.length;
     }
 };
+export const deckDisplay_html = document.getElementById('deckDisplay_html');
 export const deck_html = document.getElementById('deck_html');
 
 //lostzone
@@ -79,6 +80,8 @@ export const hand = {
 };
 export const hand_html = document.getElementById('hand_html');
 
+
+
 //create global variable that holds the html index of a the clicked card
 export const selectedCard = {
     index: 0,
@@ -101,15 +104,16 @@ export const cardData = [
     [4, 'battleVipPass', 'cardScans/battleVipPass.webp'],
     [4, 'mirageGate', 'cardScans/mirageGate.webp'],
     [4, 'switchCart', 'cardScans/switchCart.webp'],
-    [4, 'escapeRope', 'cardScans/escapeRope.webp'],
-    [3, 'nestBall', 'cardScans/nestBall.jpg'],
+    [3, 'escapeRope', 'cardScans/escapeRope.webp'],
+    [4, 'nestBall', 'cardScans/nestBall.jpg'],
     [3, 'superRod', 'cardScans/superRod.webp'],
     [2, 'energyRecycler', 'cardScans/energyRecycler.webp'],
-    [2, 'lostVacuum', 'cardScans/lostVacuum.webp'],
+    [1, 'lostVacuum', 'cardScans/lostVacuum.webp'],
     [1, 'echoingHorn', 'cardScans/echoingHorn.jpg'],
     [1, 'hisuianHeavyBall', 'cardScans/hisuianHeavyBall.webp'],
     [1, 'palPad', 'cardScans/palPad.webp'],
     [1, 'artazon', 'cardScans/artazon.webp'],
     [1, 'pokestop', 'cardScans/pokestop.webp'],
+    [1, 'beachCourt', 'cardScans/beachCourt.webp'],
     [2, 'forestSealStone', 'cardScans/forestSealStone.webp']
 ];

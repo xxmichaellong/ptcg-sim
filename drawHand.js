@@ -2,6 +2,7 @@ import { shuffle } from "./shuffle.js";
 import { addCard } from "./addCard.js";
 import { deck } from "./initialization.js";
 import { deck_html } from "./initialization.js";
+import { deckDisplay_html } from "./initialization.js";
 import { hand } from "./initialization.js";
 import { hand_html } from "./initialization.js";
 import { lostzone } from "./initialization.js";
@@ -18,6 +19,7 @@ import { bench } from "./initialization.js";
 import { bench_html } from "./initialization.js";
 import { moveCard } from "./moveCard.js";
 import { cardData } from "./initialization.js";
+import { removeImages } from "./removeImages.js";
 
 // Draw starting hand of 7
 export function drawHand(){
@@ -47,14 +49,10 @@ export function drawHand(){
     active.images = [];
     bench.images = [];
     hand.images = [];
-    deck_html.innerHTML = "";
-    lostzone_html.innerHTML = ""; 
-    discard_html.innerHTML = ""; 
-    stadium_html.innerHTML = ""; 
-    prizes_html.innerHTML = ""; 
-    active_html.innerHTML = ""; 
-    bench_html.innerHTML = ""; 
-    hand_html.innerHTML = ""; 
+    
+    [deckDisplay_html, lostzone_html, discard_html, stadium_html, prizes_html, active_html, bench_html, hand_html].forEach((container) => {
+        removeImages(container);
+    });
 
     // Add the cards to the deck array
 
@@ -74,6 +72,11 @@ export function drawHand(){
     // If deck is legal, proceed
     else {
         shuffle(deck.cards, deck.images);
+        // Append the <img> element to the deck display modal
+
+        for (let i=0; i<deck.count; i++){
+            deckDisplay_html.appendChild(deck.images[i]);
+        }
 
         // Display the shuffled deck
         console.log('Shuffled Decklist:');
@@ -84,13 +87,13 @@ export function drawHand(){
         // Populate Hand array with first 7 values of Deck (and removing cards from deck)
 
         for (let i=0; i<7; i++){
-            moveCard(deck, deck_html, hand, hand_html, i);
+            moveCard(deck, deckDisplay_html, hand, hand_html, i);
         };
 
         // Populate prize array with first 6 values of Deck
         
         for (let i=0; i<6; i++){
-            moveCard(deck, deck_html, prizes, prizes_html, i);
+            moveCard(deck, deckDisplay_html, prizes, prizes_html, i);
         };
     };
 }
