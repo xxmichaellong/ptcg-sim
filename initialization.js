@@ -19,6 +19,7 @@ export const lostzone = {
     }
 };
 export const lostzone_html = document.getElementById('lostzone_html');
+export const lostzoneDisplay_html = document.getElementById('lostzoneDisplay_html');
 
 //discard
 export const discard = {
@@ -29,6 +30,7 @@ export const discard = {
     }
 };
 export const discard_html = document.getElementById('discard_html');
+export const discardDisplay_html = document.getElementById('discardDisplay_html');
 
 //stadium
 export const stadium = {
@@ -49,6 +51,7 @@ export const prizes = {
     }
 };
 export const prizes_html = document.getElementById('prizes_html');
+export const prizesHidden_html = document.getElementById('prizesHidden_html');
 
 //active
 export const active = {
@@ -82,7 +85,7 @@ export const hand_html = document.getElementById('hand_html');
 
 
 
-//create global variable that holds the html index of a the clicked card
+//create global variable that holds the html index of a clicked card
 export const selectedCard = {
     index: 0,
     location: ''

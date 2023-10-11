@@ -1,5 +1,5 @@
 import { makeCardObject } from "./makeCardObject.js";
-import { deck, deckDisplay_html } from "./initialization.js";
+import { deck } from "./initialization.js";
 import { imageClick } from "./imageClick.js";
 
 // Function to make card objects and add it to the deck array, specifying the quantity of each card

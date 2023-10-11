@@ -3,6 +3,11 @@ import { drawCard } from "./drawCard.js";
 import { selectedCard } from "./initialization.js";
 import { moveEventTarget } from "./moveEventTarget.js";
 import { deck } from "./initialization.js";
+import { deckDisplay_html } from "./initialization.js";
+import { prizes } from "./initialization.js";
+import { prizes_html } from "./initialization.js";
+import { lostzone_html } from "./initialization.js";
+import { discard_html } from "./initialization.js";
 
 // Buttons
 
@@ -61,4 +66,37 @@ deckDisplayButton.addEventListener('click', () => {
 // Function to close the modal
 closeDeckDisplayButton.addEventListener('click', () => {
     deckDisplay_html.style.display = 'none';
+});
+
+// Get the modal and image elements
+const prizesDisplayButton = document.getElementById('prizesDisplayButton');
+const closePrizesDisplayButton = document.getElementById('closePrizesDisplayButton');
+
+// Function to open the modal
+prizesDisplayButton.addEventListener('click', () => {
+    prizes_html.style.display = 'block';
+    prizes.images.forEach(image => {
+        image.style.display = 'inline-block';
+    });
+});
+
+// Function to close the modal
+closePrizesDisplayButton.addEventListener('click', () => {
+    prizes_html.style.display = 'none';
+});
+
+// Get the modal and image elements
+const closeLostzoneDisplayButton = document.getElementById('closeLostzoneDisplayButton');
+
+// Function to close the modal
+closeLostzoneDisplayButton.addEventListener('click', () => {
+    lostzone_html.style.display = 'none';
+});
+
+// Get the modal and image elements
+const closeDiscardDisplayButton = document.getElementById('closeDiscardDisplayButton');
+
+// Function to close the modal
+closeDiscardDisplayButton.addEventListener('click', () => {
+    discard_html.style.display = 'none';
 });

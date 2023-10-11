@@ -1,5 +1,5 @@
 import { hand_html, hand, discard, discard_html, prizes, prizes_html, lostzone, lostzone_html, 
-        bench, bench_html, active, active_html, stadium, stadium_html, deck, selectedCard } from "./initialization.js";
+        bench, bench_html, active, active_html, stadium, stadium_html, deck, selectedCard, prizesHidden_html } from "./initialization.js";
 
 // Function to display the popup when the image is clicked
 export function imageClick(event){
@@ -17,8 +17,12 @@ export function imageClick(event){
         selectedCard.index = discard.images.indexOf(event.target);
         selectedCard.location = 'discard';
     }
-    else if (event.target.parentElement === prizes_html){
+    else if (event.target.parentElement === prizes_html) {
         selectedCard.index = prizes.images.indexOf(event.target);
+        selectedCard.location = 'prizes';
+    }
+    else if (event.target.parentElement === prizesHidden_html) {
+        selectedCard.index = 0;
         selectedCard.location = 'prizes';
     }
     else if (event.target.parentElement === lostzone_html){
@@ -41,7 +45,4 @@ export function imageClick(event){
         selectedCard.index = deck.images.indexOf(event.target);
         selectedCard.location = 'deck';
     };
-    console.log(selectedCard.index);
-    console.log(event.target);
-
 }

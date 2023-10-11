@@ -1,6 +1,7 @@
 import { hand_html, hand, discard, discard_html, prizes, prizes_html, lostzone, lostzone_html, 
     bench, bench_html, active, active_html, stadium, stadium_html, deck, deckDisplay_html } from "./initialization.js";
 import { moveCard } from "./moveCard.js";
+import { updateCount } from "./counts.js";
 
 export function moveEventTarget(selectedCard, mLocation){
     switch (selectedCard.location){
@@ -257,4 +258,5 @@ export function moveEventTarget(selectedCard, mLocation){
             };
             break;
     };
+    updateCount();
 }

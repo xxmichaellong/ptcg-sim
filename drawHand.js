@@ -1,56 +1,24 @@
 import { shuffle } from "./shuffle.js";
 import { addCard } from "./addCard.js";
-import { deck } from "./initialization.js";
-import { deck_html } from "./initialization.js";
-import { deckDisplay_html } from "./initialization.js";
-import { hand } from "./initialization.js";
-import { hand_html } from "./initialization.js";
-import { lostzone } from "./initialization.js";
-import { lostzone_html } from "./initialization.js";
-import { discard } from "./initialization.js";
-import { discard_html } from "./initialization.js";
-import { stadium } from "./initialization.js";
-import { stadium_html } from "./initialization.js";
-import { prizes } from "./initialization.js";
-import { prizes_html } from "./initialization.js";
-import { active } from "./initialization.js";
-import { active_html } from "./initialization.js";
-import { bench } from "./initialization.js";
-import { bench_html } from "./initialization.js";
 import { moveCard } from "./moveCard.js";
-import { cardData } from "./initialization.js";
 import { removeImages } from "./removeImages.js";
+import { updateCount } from "./counts.js";
+import { deck, deck_html, deckDisplay_html, hand, hand_html, lostzone, lostzone_html, discard, discard_html, stadium, stadium_html, prizes, 
+prizes_html, active, active_html, bench, bench_html, cardData, prizesHidden_html } from "./initialization.js";
+
 
 // Draw starting hand of 7
 export function drawHand(){
 
-    // Check if the container exists; if it does remove all images
-   const container = document.getElementById('hand_html');
-    if (container) {
-        while (container.firstChild) {
-            container.removeChild(container.firstChild);
-        };
-    };
-
     // Reset all initialized parameters
-    deck.cards = [];
-    lostzone.cards = [];
-    discard.cards = [];
-    stadium.cards = [];
-    prizes.cards = [];
-    active.cards = [];
-    bench.cards = [];
-    hand.cards = [];
-    deck.images = [];
-    lostzone.images = [];
-    discard.images = [];
-    stadium.images = [];
-    prizes.images = [];
-    active.images = [];
-    bench.images = [];
-    hand.images = [];
+    const cardContainers = [deck, lostzone, discard, stadium, prizes, active, bench, hand];
+
+    for (const container of cardContainers) {
+        container.cards = [];
+        container.images = [];
+    }
     
-    [deckDisplay_html, lostzone_html, discard_html, stadium_html, prizes_html, active_html, bench_html, hand_html].forEach((container) => {
+    [deckDisplay_html, lostzone_html, discard_html, stadium_html, prizes_html, active_html, bench_html, hand_html, prizesHidden_html].forEach((container) => {
         removeImages(container);
     });
 
@@ -77,12 +45,6 @@ export function drawHand(){
         for (let i=0; i<deck.count; i++){
             deckDisplay_html.appendChild(deck.images[i]);
         }
-
-        // Display the shuffled deck
-        console.log('Shuffled Decklist:');
-        deck.cards.forEach((card, index) => {
-            console.log(`${index + 1}. ${card.name}`);
-        });
         
         // Populate Hand array with first 7 values of Deck (and removing cards from deck)
 
@@ -95,5 +57,7 @@ export function drawHand(){
         for (let i=0; i<6; i++){
             moveCard(deck, deckDisplay_html, prizes, prizes_html, i);
         };
+
+        updateCount();
     };
 }
