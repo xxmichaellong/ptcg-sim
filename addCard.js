@@ -1,6 +1,7 @@
 import { makeCardObject } from "./makeCardObject.js";
 import { deck } from "./initialization.js";
 import { imageClick } from "./imageClick.js";
+import { dragStart } from "./drag.js";
 
 // Function to make card objects and add it to the deck array, specifying the quantity of each card
 export const addCard = (quantity, name, image) => {
@@ -8,13 +9,11 @@ export const addCard = (quantity, name, image) => {
       const card = makeCardObject(name, image);
       deck.cards.push(card);
       const imgElement = document.createElement('img');
-      // Set the src attribute to the image URL
-      imgElement.src = card.image;
-      // Set the alt attribute (alternative text for the image)
-      imgElement.alt = card.name;
-      //Add a click event listener to the image
-      imgElement.addEventListener('click', imageClick);
-      // Add the image to an array so we can access it later
-      deck.images.push(imgElement);
+      imgElement.src = card.image; // Set the src attribute to the image URL
+      imgElement.alt = card.name; // Set the alt attribute (alternative text for the image)
+      imgElement.addEventListener('click', imageClick); //Add a click event listener to the image
+      imgElement.draggable = true; // Make image draggable
+      imgElement.addEventListener('dragstart', dragStart); //Add a dragstart even listener
+      deck.images.push(imgElement); // Add the image to a deck array so we can access it later=
     };
   }

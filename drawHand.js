@@ -4,7 +4,7 @@ import { moveCard } from "./moveCard.js";
 import { removeImages } from "./removeImages.js";
 import { updateCount } from "./counts.js";
 import { deck, deck_html, deckDisplay_html, hand, hand_html, lostzone, lostzone_html, discard, discard_html, stadium, stadium_html, prizes, 
-prizes_html, active, active_html, bench, bench_html, cardData, prizesHidden_html } from "./initialization.js";
+prizes_html, active, active_html, bench, bench_html, cardData, prizesHidden_html, lostzoneDisplay_html, discardDisplay_html } from "./initialization.js";
 
 
 // Draw starting hand of 7
@@ -18,7 +18,7 @@ export function drawHand(){
         container.images = [];
     }
     
-    [deckDisplay_html, lostzone_html, discard_html, stadium_html, prizes_html, active_html, bench_html, hand_html, prizesHidden_html].forEach((container) => {
+    [deckDisplay_html, lostzone_html, discard_html, stadium_html, prizes_html, active_html, bench_html, hand_html, prizesHidden_html, lostzoneDisplay_html, discardDisplay_html].forEach((container) => {
         removeImages(container);
     });
 

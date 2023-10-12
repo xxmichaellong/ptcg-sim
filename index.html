@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LZB Simulator</title>
     <link rel="stylesheet" href="tcg_sim.css">
+    <script type="module" src="main.js"></script>
 </head>
 <body>
-    <!--Different parts of the game-->
+
     <div id="handText">Hand (<span id="handCount">0</span>)</div>
     <div id="hand_html"></div>
 
@@ -15,7 +16,6 @@
     <div id="deck_html">
         <img src="/cardScans/cardback.png" alt="Card Back" id="deckDisplayButton">
     </div>
-    
     <div id="deckDisplay_html">
         <div>
             <span id="closeDeckDisplayButton">&times;</span>
@@ -24,7 +24,6 @@
 
     <div id="discardText">Discard (<span id="discardCount">0</span>)</div>    
     <div id="discardDisplay_html"></div>
-
     <div id="discard_html">
         <div>
             <span id="closeDiscardDisplayButton">&times;</span>
@@ -33,7 +32,6 @@
 
     <div id="lostzoneText">Lost Zone (<span id="lostzoneCount">0</span>)</div>
     <div id="lostzoneDisplay_html"></div>
-
     <div id="lostzone_html">
         <div>
             <span id="closeLostzoneDisplayButton">&times;</span>
@@ -47,9 +45,7 @@
     <div id="active_html"></div>
 
     <div id="prizesText">Prizes (<span id="prizesCount">0</span>)</div>
-    
     <div id="prizesHidden_html"></div>
-
     <div id="prizes_html">
         <div>
             <span id="closePrizesDisplayButton">&times;</span>
@@ -71,7 +67,6 @@
             <button id="prizesCardButton">Prize</button>
             <button id="deckCardButton">Deck</button>
             <button id="handCardButton">Hand</button>
-
         </div>
     </div>
 
@@ -79,7 +74,6 @@
     <button id="drawHandButton">Draw Starting Hand</button>
     <button id="drawCardButton">Draw Card From Deck</button>
     <button id="prizesDisplayButton">Show Prizes</button>
-    <script type="module" src="main.js"></script>
 
 </body>
 </html>

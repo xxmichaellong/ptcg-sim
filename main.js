@@ -8,6 +8,8 @@ import { prizes } from "./initialization.js";
 import { prizes_html } from "./initialization.js";
 import { lostzone_html } from "./initialization.js";
 import { discard_html } from "./initialization.js";
+import { allowDrop } from "./drag.js";
+import { drop } from "./drag.js";
 
 // Buttons
 
@@ -100,3 +102,26 @@ const closeDiscardDisplayButton = document.getElementById('closeDiscardDisplayBu
 closeDiscardDisplayButton.addEventListener('click', () => {
     discard_html.style.display = 'none';
 });
+
+// Drag and drop functions
+const containerIds = [
+    "hand_html",
+    "prizesHidden_html",
+    "prizes_html",
+    "lostzoneDisplay_html",
+    "lostzone_html",
+    "active_html",
+    "stadium_html",
+    "bench_html",
+    "deckDisplay_html",
+    "deck_html",
+    "discard_html",
+    "discardDisplay_html"
+  ];
+  
+  containerIds.forEach(id => {
+    const container = document.getElementById(id);
+    container.addEventListener("dragover", allowDrop);
+    container.addEventListener("drop", drop);
+  });
+  
