@@ -1,8 +1,9 @@
-import { selectedCard, deckDisplay_html, prizes_html, lostzone_html, discard_html, deck, prizes, discard, lostzone, active, stadium, bench, hand } from "./initialization.js";
+import { selectedCard, prizes_html, lostzone_html, discard_html, deck, prizes, discard, lostzone, active, stadium, bench, hand, deck_html } from "./initialization.js";
 import { allowDrop, drop } from "./drag.js";
 import { drawHand } from "./drawHand.js";
-import { drawCard } from "./drawCard.js";
 import { moveEventTarget } from "./moveEventTarget.js";
+import { shufflePopupButton } from "./shuffleButton.js";
+import { shuffleContainer } from "./shuffleButton.js";
 
 // Buttons
 
@@ -10,9 +11,15 @@ import { moveEventTarget } from "./moveEventTarget.js";
 const drawHandButton = document.getElementById('drawHandButton');
 drawHandButton.addEventListener('click', drawHand);
 
-// Draw a Card from Deck
-const drawCardButton = document.getElementById('drawCardButton');
-drawCardButton.addEventListener('click', drawCard);
+// Shuffle deck or prize cards
+const shuffleButton = document.getElementById('shuffleButton');
+shuffleButton.addEventListener('click', shufflePopupButton);
+
+const shuffleDeckButton = document.getElementById('shuffleDeckButton');
+shuffleDeckButton.addEventListener('click', function() {shuffleContainer('deck_html')});
+
+const shufflePrizesButton = document.getElementById('shufflePrizesButton');
+shufflePrizesButton.addEventListener('click', function() {shuffleContainer('prizes_html')});
 
 // Discard selected card
 const discardCardButton = document.getElementById('discardCardButton');

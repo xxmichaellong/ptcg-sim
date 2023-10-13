@@ -139,5 +139,5 @@ export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i
         mLocation_html.appendChild(mLocation.images[mLocation.count-1]);
 
     //remove popup
-    popup.style.display = "none";
+    cardPopup.style.display = "none";
 }

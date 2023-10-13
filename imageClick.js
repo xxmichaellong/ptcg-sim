@@ -5,7 +5,7 @@ import { containerToLocation } from "./containerReference.js";
 export function imageClick(event){
 
      //style the popup when image is clicked
-     var popup = document.getElementById('popup');
+     var popup = document.getElementById('cardPopup');
      popup.style.display = 'block';
 
     //identify index of the card/image
