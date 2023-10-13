@@ -88,7 +88,8 @@ export const hand_html = document.getElementById('hand_html');
 //create global variable that holds the html index of a clicked card
 export const selectedCard = {
     index: 0,
-    location: ''
+    location: '',
+    container: ''
 };
 
 export const cardData = [

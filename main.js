@@ -1,15 +1,8 @@
+import { selectedCard, deckDisplay_html, prizes_html, lostzone_html, discard_html, deck, prizes, discard, lostzone, active, stadium, bench, hand } from "./initialization.js";
+import { allowDrop, drop } from "./drag.js";
 import { drawHand } from "./drawHand.js";
 import { drawCard } from "./drawCard.js";
-import { selectedCard } from "./initialization.js";
 import { moveEventTarget } from "./moveEventTarget.js";
-import { deck } from "./initialization.js";
-import { deckDisplay_html } from "./initialization.js";
-import { prizes } from "./initialization.js";
-import { prizes_html } from "./initialization.js";
-import { lostzone_html } from "./initialization.js";
-import { discard_html } from "./initialization.js";
-import { allowDrop } from "./drag.js";
-import { drop } from "./drag.js";
 
 // Buttons
 
@@ -23,35 +16,35 @@ drawCardButton.addEventListener('click', drawCard);
 
 // Discard selected card
 const discardCardButton = document.getElementById('discardCardButton');
-discardCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, 'discard')});
+discardCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, discard)});
 
 // Bench selected card
 const benchCardButton = document.getElementById('benchCardButton');
-benchCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, 'bench')});
+benchCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, bench)});
 
 // Discard selected card
 const lostzoneCardButton = document.getElementById('lostzoneCardButton');
-lostzoneCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, 'lostzone')});
+lostzoneCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, lostzone)});
 
 // Bench selected card
 const stadiumCardButton = document.getElementById('stadiumCardButton');
-stadiumCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, 'stadium')});
+stadiumCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, stadium)});
 
 // Discard selected card
 const prizesCardButton = document.getElementById('prizesCardButton');
-prizesCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, 'prizes')});
+prizesCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, prizes)});
 
 // Bench selected card
 const handCardButton = document.getElementById('handCardButton');
-handCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, 'hand')});
+handCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, hand)});
 
 // Discard selected card
 const deckCardButton = document.getElementById('deckCardButton');
-deckCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, 'deck')});
+deckCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, deck)});
 
 // Bench selected card
 const activeCardButton = document.getElementById('activeCardButton');
-activeCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, 'active')});
+activeCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, active)});
 
 // Get the modal and image elements
 const deckDisplayButton = document.getElementById('deckDisplayButton');

@@ -1,5 +1,5 @@
-import { hand_html, hand, discard, discard_html, prizes, prizes_html, lostzone, lostzone_html, 
-        bench, bench_html, active, active_html, stadium, stadium_html, deck, selectedCard, prizesHidden_html } from "./initialization.js";
+import { prizes, selectedCard, } from "./initialization.js";
+import { containerToLocation } from "./containerReference.js";
 
 // Function to display the popup when the image is clicked
 export function imageClick(event){
@@ -9,40 +9,12 @@ export function imageClick(event){
      popup.style.display = 'block';
 
     //identify index of the card/image
-    if (event.target.parentElement === hand_html){
-        selectedCard.index = hand.images.indexOf(event.target);
-        selectedCard.location = 'hand';
+    const containerId = event.target.parentElement.id;
+    selectedCard.location = containerToLocation[containerId];
+  
+    if (selectedCard.location === prizes && containerId === 'prizesHidden_html') {
+      selectedCard.index = 0;
+    } else {
+      selectedCard.index = selectedCard.location.images.indexOf(event.target);
     }
-    else if (event.target.parentElement === discard_html){
-        selectedCard.index = discard.images.indexOf(event.target);
-        selectedCard.location = 'discard';
-    }
-    else if (event.target.parentElement === prizes_html) {
-        selectedCard.index = prizes.images.indexOf(event.target);
-        selectedCard.location = 'prizes';
-    }
-    else if (event.target.parentElement === prizesHidden_html) {
-        selectedCard.index = 0;
-        selectedCard.location = 'prizes';
-    }
-    else if (event.target.parentElement === lostzone_html){
-        selectedCard.index = lostzone.images.indexOf(event.target);
-        selectedCard.location = 'lostzone';
-    }
-    else if (event.target.parentElement === stadium_html){
-        selectedCard.index = stadium.images.indexOf(event.target);
-        selectedCard.location = 'stadium';
-    }
-    else if (event.target.parentElement === bench_html){
-        selectedCard.index = bench.images.indexOf(event.target);
-        selectedCard.location = 'bench';
-    }
-    else if (event.target.parentElement === active_html){
-        selectedCard.index = active.images.indexOf(event.target);
-        selectedCard.location = 'active';
-    }
-    else {
-        selectedCard.index = deck.images.indexOf(event.target);
-        selectedCard.location = 'deck';
-    };
 }

@@ -5,258 +5,262 @@ import { updateCount } from "./counts.js";
 
 export function moveEventTarget(selectedCard, mLocation){
     switch (selectedCard.location){
-        case 'hand':
+        case hand:
             switch (mLocation){
-                case 'bench':
+                case bench:
                     moveCard(hand, hand_html, bench, bench_html, selectedCard.index);
                     break;
-                case 'discard':
+                case discard:
                     moveCard(hand, hand_html, discard, discard_html, selectedCard.index);
                     break;
-                case 'prizes':
+                case prizes:
                     moveCard(hand, hand_html, prizes, prizes_html, selectedCard.index);
                     break;
-                case 'lostzone':
+                case lostzone:
                     moveCard(hand, hand_html, lostzone, lostzone_html, selectedCard.index);
                     break;
-                case 'active':
+                case active:
                     moveCard(hand, hand_html, active, active_html, selectedCard.index);
                     break;
-                case 'stadium':
+                case stadium:
                     moveCard(hand, hand_html, stadium, stadium_html, selectedCard.index);
                     break;
-                case 'deck':
+                case deck:
                     moveCard(hand, hand_html, deck, deckDisplay_html, selectedCard.index);
                     break;
-                case 'hand':
+                case hand:
                     moveCard(hand, hand_html, hand, hand_html, selectedCard.index);
                     break;
             };
             break;
-        case 'bench':
+        case bench:
             switch (mLocation){
-                case 'bench':
+                case bench:
                     moveCard(bench, bench_html, bench, bench_html, selectedCard.index);
                     break;
-                case 'discard':
+                case discard:
                     moveCard(bench, bench_html, discard, discard_html, selectedCard.index);
                     break;
-                case 'prizes':
+                case prizes:
                     moveCard(bench, bench_html, prizes, prizes_html, selectedCard.index);
                     break;
-                case 'lostzone':
+                case lostzone:
                     moveCard(bench, bench_html, lostzone, lostzone_html, selectedCard.index);
                     break;
-                case 'active':
+                case active:
                     moveCard(bench, bench_html, active, active_html, selectedCard.index);
                     break;
-                case 'stadium':
+                case stadium:
                     moveCard(bench, bench_html, stadium, stadium_html, selectedCard.index);
                     break;
-                case 'deck':
+                case deck:
                     moveCard(bench, bench_html, deck, deckDisplay_html, selectedCard.index);
                     break;
-                case 'hand':
+                case hand:
                     moveCard(bench, bench_html, hand, hand_html, selectedCard.index);
                     break;
             };
             break;
-        case 'discard':
+        case discard:
             switch (mLocation){
-                case 'bench':
+                case bench:
                     moveCard(discard, discard_html, bench, bench_html, selectedCard.index);
                     break;
-                case 'discard':
+                case discard:
                     moveCard(discard, discard_html, discard, discard_html, selectedCard.index);
                     break;
-                case 'prizes':
+                case prizes:
                     moveCard(discard, discard_html, prizes, prizes_html, selectedCard.index);
                     break;
-                case 'lostzone':
+                case lostzone:
                     moveCard(discard, discard_html, lostzone, lostzone_html, selectedCard.index);
                     break;
-                case 'active':
+                case active:
                     moveCard(discard, discard_html, active, active_html, selectedCard.index);
                     break;
-                case 'stadium':
+                case stadium:
                     moveCard(discard, discard_html, stadium, stadium_html, selectedCard.index);
                     break;
-                case 'deck':
+                case deck:
                     moveCard(discard, discard_html, deck, deckDisplay_html, selectedCard.index);
                     break;
-                case 'hand':
+                case hand:
                     moveCard(discard, discard_html, hand, hand_html, selectedCard.index);
                     break;
             };
             break;
-        case 'prizes':
+        case prizes:
             switch (mLocation){
-                case 'bench':
+                case bench:
                     moveCard(prizes, prizes_html, bench, bench_html, selectedCard.index);
                     break;
-                case 'discard':
+                case discard:
                     moveCard(prizes, prizes_html, discard, discard_html, selectedCard.index);
                     break;
-                case 'prizes':
+                case prizes:
                     moveCard(prizes, prizes_html, prizes, prizes_html, selectedCard.index);
                     break;
-                case 'lostzone':
+                case lostzone:
                     moveCard(prizes, prizes_html, lostzone, lostzone_html, selectedCard.index);
                     break;
-                case 'active':
+                case active:
                     moveCard(prizes, prizes_html, active, active_html, selectedCard.index);
                     break;
-                case 'stadium':
+                case stadium:
                     moveCard(prizes, prizes_html, stadium, stadium_html, selectedCard.index);
                     break;
-                case 'deck':
+                case deck:
                     moveCard(prizes, prizes_html, deck, deckDisplay_html, selectedCard.index);
                     break;
-                case 'hand':
+                case hand:
                     moveCard(prizes, prizes_html, hand, hand_html, selectedCard.index);
                     break;
             };
             break;
-        case 'lostzone':
+        case lostzone:
             switch (mLocation){
-                case 'bench':
+                case bench:
                     moveCard(lostzone, lostzone_html, bench, bench_html, selectedCard.index);
                     break;
-                case 'discard':
+                case discard:
                     moveCard(lostzone, lostzone_html, discard, discard_html, selectedCard.index);
                     break;
-                case 'prizes':
+                case prizes:
                     moveCard(lostzone, lostzone_html, prizes, prizes_html, selectedCard.index);
                     break;
-                case 'lostzone':
+                case lostzone:
                     moveCard(lostzone, lostzone_html, lostzone, lostzone_html, selectedCard.index);
                     break;
-                case 'active':
+                case active:
                     moveCard(lostzone, lostzone_html, active, active_html, selectedCard.index);
                     break;
-                case 'stadium':
+                case stadium:
                     moveCard(lostzone, lostzone_html, stadium, stadium_html, selectedCard.index);
                     break;
-                case 'deck':
+                case deck:
                     moveCard(lostzone, lostzone_html, deck, deckDisplay_html, selectedCard.index);
                     break;
-                case 'hand':
+                case hand:
                     moveCard(lostzone, lostzone_html, hand, hand_html, selectedCard.index);
                     break;
             };
             break;
-        case 'active':
+        case active:
             switch (mLocation){
-                case 'bench':
+                case bench:
                     moveCard(active, active_html, bench, bench_html, selectedCard.index);
                     break;
-                case 'discard':
+                case discard:
                     moveCard(active, active_html, discard, discard_html, selectedCard.index);
                     break;
-                case 'prizes':
+                case prizes:
                     moveCard(active, active_html, prizes, prizes_html, selectedCard.index);
                     break;
-                case 'lostzone':
+                case lostzone:
                     moveCard(active, active_html, lostzone, lostzone_html, selectedCard.index);
                     break;
-                case 'active':
+                case active:
                     moveCard(active, active_html, active, active_html, selectedCard.index);
                     break;
-                case 'stadium':
+                case stadium:
                     moveCard(active, active_html, stadium, stadium_html, selectedCard.index);
                     break;
-                case 'deck':
+                case deck:
                     moveCard(active, active_html, deck, deckDisplay_html, selectedCard.index);
                     break;
-                case 'hand':
+                case hand:
                     moveCard(active, active_html, hand, hand_html, selectedCard.index);
                     break;
             };
             break;
-        case 'stadium':
+        case stadium:
             switch (mLocation){
-                case 'bench':
+                case bench:
                     moveCard(stadium, stadium_html, bench, bench_html, selectedCard.index);
                     break;
-                case 'discard':
+                case discard:
                     moveCard(stadium, stadium_html, discard, discard_html, selectedCard.index);
                     break;
-                case 'prizes':
+                case prizes:
                     moveCard(stadium, stadium_html, prizes, prizes_html, selectedCard.index);
                     break;
-                case 'lostzone':
+                case lostzone:
                     moveCard(stadium, stadium_html, lostzone, lostzone_html, selectedCard.index);
                     break;
-                case 'active':
+                case active:
                     moveCard(stadium, stadium_html, active, active_html, selectedCard.index);
                     break;
-                case 'stadium':
+                case stadium:
                     moveCard(stadium, stadium_html, stadium, stadium_html, selectedCard.index);
                     break;
-                case 'deck':
+                case deck:
                     moveCard(stadium, stadium_html, deck, deckDisplay_html, selectedCard.index);
                     break;
-                case 'hand':
+                case hand:
                     moveCard(stadium, stadium_html, hand, hand_html, selectedCard.index);
                     break;
             };
             break;
-        case 'deck':
+        case deck:
             switch (mLocation){
-                case 'bench':
+                case bench:
                     moveCard(deck, deckDisplay_html, bench, bench_html, selectedCard.index);
                     break;
-                case 'discard':
+                case discard:
                     moveCard(deck, deckDisplay_html, discard, discard_html, selectedCard.index);
                     break;
-                case 'prizes':
+                case prizes:
                     moveCard(deck, deckDisplay_html, prizes, prizes_html, selectedCard.index);
                     break;
-                case 'lostzone':
+                case lostzone:
                     moveCard(deck, deckDisplay_html, lostzone, lostzone_html, selectedCard.index);
                     break;
-                case 'active':
+                case active:
                     moveCard(deck, deckDisplay_html, active, active_html, selectedCard.index);
                     break;
-                case 'stadium':
+                case stadium:
                     moveCard(deck, deckDisplay_html, stadium, stadium_html, selectedCard.index);
                     break;
-                case 'deck':
+                case deck:
                     moveCard(deck, deckDisplay_html, deck, deckDisplay_html, selectedCard.index);
                     break;
-                case 'hand':
+                case hand:
                     moveCard(deck, deckDisplay_html, hand, hand_html, selectedCard.index);
                     break;
             };
             break;
-        case 'hand':
+        case hand:
             switch (mLocation){
-                case 'bench':
+                case bench:
                     moveCard(hand, hand_html, bench, bench_html, selectedCard.index);
                     break;
-                case 'discard':
+                case discard:
                     moveCard(hand, hand_html, discard, discard_html, selectedCard.index);
                     break;
-                case 'prizes':
+                case prizes:
                     moveCard(hand, hand_html, prizes, prizes_html, selectedCard.index);
                     break;
-                case 'lostzone':
+                case lostzone:
                     moveCard(hand, hand_html, lostzone, lostzone_html, selectedCard.index);
                     break;
-                case 'active':
+                case active:
                     moveCard(hand, hand_html, active, active_html, selectedCard.index);
                     break;
-                case 'stadium':
+                case stadium:
                     moveCard(hand, hand_html, stadium, stadium_html, selectedCard.index);
                     break;
-                case 'deck':
+                case deck:
                     moveCard(hand, hand_html, deck, deckDisplay_html, selectedCard.index);
                     break;
-                case 'hand':
+                case hand:
                     moveCard(hand, hand_html, hand, hand_html, selectedCard.index);
                     break;
             };
             break;
     };
     updateCount();
+    lostzone_html.style.display = 'none';
+    deckDisplay_html.style.display = 'none';
+    prizes_html.style.display = 'none';
+    discard_html.style.display = 'none';
 }
