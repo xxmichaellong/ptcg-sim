@@ -47,23 +47,6 @@ const activeCardButton = document.getElementById('activeCardButton');
 activeCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, active)});
 
 // Get the modal and image elements
-const deckDisplayButton = document.getElementById('deckDisplayButton');
-const closeDeckDisplayButton = document.getElementById('closeDeckDisplayButton');
-
-// Function to open the modal
-deckDisplayButton.addEventListener('click', () => {
-    deckDisplay_html.style.display = 'block';
-    deck.images.forEach(image => {
-        image.style.display = 'inline-block';
-    });
-});
-
-// Function to close the modal
-closeDeckDisplayButton.addEventListener('click', () => {
-    deckDisplay_html.style.display = 'none';
-});
-
-// Get the modal and image elements
 const prizesDisplayButton = document.getElementById('prizesDisplayButton');
 const closePrizesDisplayButton = document.getElementById('closePrizesDisplayButton');
 
@@ -78,6 +61,14 @@ prizesDisplayButton.addEventListener('click', () => {
 // Function to close the modal
 closePrizesDisplayButton.addEventListener('click', () => {
     prizes_html.style.display = 'none';
+});
+
+// Get the modal and image elements
+const closeDeckDisplayButton = document.getElementById('closeDeckDisplayButton');
+
+// Function to close the modal
+closeDeckDisplayButton.addEventListener('click', () => {
+    deck_html.style.display = 'none';
 });
 
 // Get the modal and image elements
@@ -117,4 +108,3 @@ const containerIds = [
     container.addEventListener("dragover", allowDrop);
     container.addEventListener("drop", drop);
   });
-  

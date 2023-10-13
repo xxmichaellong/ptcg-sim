@@ -1,4 +1,4 @@
-import { selectedCard, prizes } from "./initialization.js";
+import { selectedCard, prizes, discard_html, lostzone_html, deck_html } from "./initialization.js";
 import { containerToLocation } from "./containerReference.js"
 import { moveEventTarget } from "./moveEventTarget.js";
 
@@ -14,16 +14,22 @@ export function dragStart(event) {
     }
     // Find the parent element by ID
     selectedCard.container = document.getElementById(containerId);
-    selectedCard.container.style.opacity = "0.2";
+    if (selectedCard.container === lostzone_html || selectedCard.container === discard_html || selectedCard.container === deck_html){
+        selectedCard.container.style.opacity = "0";
+    };
 }
 
 export function dragOver(){
-    selectedCard.container.style.zIndex = "-1";
+    if (selectedCard.container === lostzone_html || selectedCard.container === discard_html || selectedCard.container === deck_html){
+        selectedCard.container.style.zIndex = "-1";
+    };
 }
 
 export function dragEnd(){
-    selectedCard.container.style.opacity = "1";
-    selectedCard.container.style.zIndex = "9999";
+    if (selectedCard.container === lostzone_html || selectedCard.container === discard_html || selectedCard.container === deck_html){
+        selectedCard.container.style.opacity = "1";
+        selectedCard.container.style.zIndex = "9999";
+    };
 }
 
 // Add this function to allow dropping in the hand container

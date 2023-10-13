@@ -5,7 +5,7 @@ import { removeImages } from "./removeImages.js";
 import { updateCount } from "./counts.js";
 import { deck, deck_html, deckDisplay_html, hand, hand_html, lostzone, lostzone_html, discard, discard_html, stadium, stadium_html, prizes, 
 prizes_html, active, active_html, bench, bench_html, cardData, prizesHidden_html, lostzoneDisplay_html, discardDisplay_html } from "./initialization.js";
-
+import { allowDrop, drop } from "./drag.js";
 
 // Draw starting hand of 7
 export function drawHand(){
@@ -18,7 +18,7 @@ export function drawHand(){
         container.images = [];
     }
     
-    [deckDisplay_html, lostzone_html, discard_html, stadium_html, prizes_html, active_html, bench_html, hand_html, prizesHidden_html, lostzoneDisplay_html, discardDisplay_html].forEach((container) => {
+    [deckDisplay_html, deck_html, lostzone_html, discard_html, stadium_html, prizes_html, active_html, bench_html, hand_html, prizesHidden_html, lostzoneDisplay_html, discardDisplay_html].forEach((container) => {
         removeImages(container);
     });
 
@@ -35,7 +35,7 @@ export function drawHand(){
     if (deck.count !== 60) {
         const errormsg = `Total quantity should be 60. The current quantity is ${totalQuantity}.`;
         console.error(errormsg);
-        deck_html.textContent = errormsg;
+        deckDisplay_html.textContent = errormsg;
     } 
     // If deck is legal, proceed
     else {
@@ -43,19 +43,35 @@ export function drawHand(){
         // Append the <img> element to the deck display modal
 
         for (let i=0; i<deck.count; i++){
-            deckDisplay_html.appendChild(deck.images[i]);
+            deck_html.appendChild(deck.images[i]);
         }
+
+        //Append deck display
+        const coverImage = document.createElement('img');
+        coverImage.src = 'cardScans/cardback.png';
+        coverImage.draggable = false;
+        coverImage.id = "deckCover"; //id to reference for dropping
+        coverImage.addEventListener("dragover", allowDrop);
+        coverImage.addEventListener("drop", drop);
+        // Function to open the modal
+        coverImage.addEventListener('click', () => {
+            deck_html.style.display = 'block';
+            deck.images.forEach(image => {
+                image.style.display = 'inline-block';
+            });
+        });
+        deckDisplay_html.appendChild(coverImage);
         
         // Populate Hand array with first 7 values of Deck (and removing cards from deck)
 
         for (let i=0; i<7; i++){
-            moveCard(deck, deckDisplay_html, hand, hand_html, i);
+            moveCard(deck, deck_html, hand, hand_html, i);
         };
 
         // Populate prize array with first 6 values of Deck
         
         for (let i=0; i<6; i++){
-            moveCard(deck, deckDisplay_html, prizes, prizes_html, i);
+            moveCard(deck, deck_html, prizes, prizes_html, i);
         };
 
         updateCount();

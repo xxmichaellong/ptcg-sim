@@ -1,6 +1,6 @@
-import { lostzone_html, lostzone, prizes_html, prizesHidden_html, lostzoneDisplay_html, discard_html, discard, discardDisplay_html } from "./initialization.js";
+import { lostzone_html, lostzone, prizes_html, prizesHidden_html, lostzoneDisplay_html, discard_html, discard, discardDisplay_html, deck_html, deckDisplay_html } from "./initialization.js";
 import { imageClick } from "./imageClick.js";
-import { allowDrop, dragEnd, dragOver, dragStart, drop } from "./drag.js";
+import { allowDrop, dragEnd, dragStart, drop } from "./drag.js";
 
 export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, index){
     // remove card from origin card array to new location array
@@ -52,6 +52,10 @@ export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i
             });
         discardDisplay_html.appendChild(coverImage);
         }
+    }
+    else if (oLocation_html === deck_html && oLocation.images.length === 1){
+        deckDisplay_html.removeChild(deckDisplay_html.firstElementChild)
+        oLocation_html.removeChild(oLocation.images[index]);
     }
     else
         oLocation_html.removeChild(oLocation.images[index]);
@@ -110,6 +114,25 @@ export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i
             });
         });
         discardDisplay_html.appendChild(coverImage);
+        mLocation_html.appendChild(mLocation.images[mLocation.count-1]);
+    }
+    else if (mLocation_html === deck_html){
+        if (!deckDisplay_html.firstElementChild){
+            const coverImage = document.createElement('img');
+            coverImage.src = 'cardScans/cardback.png';
+            coverImage.draggable = false;
+            coverImage.id = "deckCover"; //id to reference for dropping
+            coverImage.addEventListener("dragover", allowDrop);
+            coverImage.addEventListener("drop", drop);
+            // Function to open the modal
+            coverImage.addEventListener('click', () => {
+                deck_html.style.display = 'block';
+                deck.images.forEach(image => {
+                    image.style.display = 'inline-block';
+                });
+            });
+            deckDisplay_html.appendChild(coverImage);
+        }
         mLocation_html.appendChild(mLocation.images[mLocation.count-1]);
     }
     else

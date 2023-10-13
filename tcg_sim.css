@@ -5,8 +5,6 @@ body {
     padding: 0;
 }
  
-  /* Style the container for the images */
-
   #handText {
     position: fixed;
     left: 2%;
@@ -22,7 +20,6 @@ body {
     overflow-y: auto;
   }
   
-  /* Style the images within the container */
   #hand_html img {
     width: auto;
     height: 80%;
@@ -33,7 +30,7 @@ body {
     left: 88%;
     bottom: 90%;
   }
-  #deck_html {
+  #deckDisplay_html {
     background-color: #ffffff;
     position: fixed;
     bottom: 65%;
@@ -42,7 +39,7 @@ body {
     height: 25%;
   }
 
-  #deck_html img {
+  #deckDisplay_html img {
     width: auto;
     height: 100%;
   } 
@@ -174,7 +171,7 @@ body {
     border: 1px solid #ccc;
     border-radius: 5px;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
-    z-index: 9999; /* Set a high z-index value */
+    z-index: 10000;
 }
 
 .popup-content {
@@ -198,7 +195,7 @@ body {
   left: 20%;
 }
 
-#deckDisplay_html {
+#deck_html {
   display: none;
   background-color: #ffffff;
   position: fixed;
@@ -207,10 +204,10 @@ body {
   width: 100%;
   height: 80%;
   overflow-y: auto;
-  z-index: 9998; /* Set a high z-index value */
+  z-index: 500;
 }
 
-#deckDisplay_html img {
+#deck_html img {
   display: inline-block;
   width: 10%;
   height: auto;
@@ -224,7 +221,6 @@ body {
   left: 2%;
   width: 10%;
   height: 50%;
-  z-index: 9999; /* Set a high z-index value */
 }
 
 #prizes_html img {
@@ -242,7 +238,7 @@ body {
   width: 70%;
   height: 70%;
   overflow-y: auto;
-  z-index: 9998; /* Set a high z-index value */
+  z-index: 500;
 }
 
 #lostzone_html img {
@@ -260,7 +256,7 @@ body {
   width: 70%;
   height: 70%;
   overflow-y: auto;
-  z-index: 9998; /* Set a high z-index value */
+  z-index: 500;
 }
 
 #discard_html img {

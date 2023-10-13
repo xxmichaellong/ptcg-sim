@@ -14,5 +14,6 @@ export const containerToLocation = {
     deck_html: deck,
     deckDisplay_html: deck,
     lostzoneCover: lostzone,
-    discardCover: discard
+    discardCover: discard,
+    deckCover: deck
   };

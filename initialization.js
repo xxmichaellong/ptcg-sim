@@ -1,5 +1,3 @@
-// Initialize empty deck array, lostzone array, discard pile, stadium, prize cards, active, bench, and link to HTML element
-//deck
 export const deck = {
     cards: [],
     images: [],

@@ -1,5 +1,5 @@
 import { hand_html, hand, discard, discard_html, prizes, prizes_html, lostzone, lostzone_html, 
-    bench, bench_html, active, active_html, stadium, stadium_html, deck, deckDisplay_html } from "./initialization.js";
+    bench, bench_html, active, active_html, stadium, stadium_html, deck, deck_html } from "./initialization.js";
 import { moveCard } from "./moveCard.js";
 import { updateCount } from "./counts.js";
 
@@ -26,7 +26,7 @@ export function moveEventTarget(selectedCard, mLocation){
                     moveCard(hand, hand_html, stadium, stadium_html, selectedCard.index);
                     break;
                 case deck:
-                    moveCard(hand, hand_html, deck, deckDisplay_html, selectedCard.index);
+                    moveCard(hand, hand_html, deck, deck_html, selectedCard.index);
                     break;
                 case hand:
                     moveCard(hand, hand_html, hand, hand_html, selectedCard.index);
@@ -54,7 +54,7 @@ export function moveEventTarget(selectedCard, mLocation){
                     moveCard(bench, bench_html, stadium, stadium_html, selectedCard.index);
                     break;
                 case deck:
-                    moveCard(bench, bench_html, deck, deckDisplay_html, selectedCard.index);
+                    moveCard(bench, bench_html, deck, deck_html, selectedCard.index);
                     break;
                 case hand:
                     moveCard(bench, bench_html, hand, hand_html, selectedCard.index);
@@ -82,7 +82,7 @@ export function moveEventTarget(selectedCard, mLocation){
                     moveCard(discard, discard_html, stadium, stadium_html, selectedCard.index);
                     break;
                 case deck:
-                    moveCard(discard, discard_html, deck, deckDisplay_html, selectedCard.index);
+                    moveCard(discard, discard_html, deck, deck_html, selectedCard.index);
                     break;
                 case hand:
                     moveCard(discard, discard_html, hand, hand_html, selectedCard.index);
@@ -110,7 +110,7 @@ export function moveEventTarget(selectedCard, mLocation){
                     moveCard(prizes, prizes_html, stadium, stadium_html, selectedCard.index);
                     break;
                 case deck:
-                    moveCard(prizes, prizes_html, deck, deckDisplay_html, selectedCard.index);
+                    moveCard(prizes, prizes_html, deck, deck_html, selectedCard.index);
                     break;
                 case hand:
                     moveCard(prizes, prizes_html, hand, hand_html, selectedCard.index);
@@ -138,7 +138,7 @@ export function moveEventTarget(selectedCard, mLocation){
                     moveCard(lostzone, lostzone_html, stadium, stadium_html, selectedCard.index);
                     break;
                 case deck:
-                    moveCard(lostzone, lostzone_html, deck, deckDisplay_html, selectedCard.index);
+                    moveCard(lostzone, lostzone_html, deck, deck_html, selectedCard.index);
                     break;
                 case hand:
                     moveCard(lostzone, lostzone_html, hand, hand_html, selectedCard.index);
@@ -166,7 +166,7 @@ export function moveEventTarget(selectedCard, mLocation){
                     moveCard(active, active_html, stadium, stadium_html, selectedCard.index);
                     break;
                 case deck:
-                    moveCard(active, active_html, deck, deckDisplay_html, selectedCard.index);
+                    moveCard(active, active_html, deck, deck_html, selectedCard.index);
                     break;
                 case hand:
                     moveCard(active, active_html, hand, hand_html, selectedCard.index);
@@ -194,7 +194,7 @@ export function moveEventTarget(selectedCard, mLocation){
                     moveCard(stadium, stadium_html, stadium, stadium_html, selectedCard.index);
                     break;
                 case deck:
-                    moveCard(stadium, stadium_html, deck, deckDisplay_html, selectedCard.index);
+                    moveCard(stadium, stadium_html, deck, deck_html, selectedCard.index);
                     break;
                 case hand:
                     moveCard(stadium, stadium_html, hand, hand_html, selectedCard.index);
@@ -204,28 +204,28 @@ export function moveEventTarget(selectedCard, mLocation){
         case deck:
             switch (mLocation){
                 case bench:
-                    moveCard(deck, deckDisplay_html, bench, bench_html, selectedCard.index);
+                    moveCard(deck, deck_html, bench, bench_html, selectedCard.index);
                     break;
                 case discard:
-                    moveCard(deck, deckDisplay_html, discard, discard_html, selectedCard.index);
+                    moveCard(deck, deck_html, discard, discard_html, selectedCard.index);
                     break;
                 case prizes:
-                    moveCard(deck, deckDisplay_html, prizes, prizes_html, selectedCard.index);
+                    moveCard(deck, deck_html, prizes, prizes_html, selectedCard.index);
                     break;
                 case lostzone:
-                    moveCard(deck, deckDisplay_html, lostzone, lostzone_html, selectedCard.index);
+                    moveCard(deck, deck_html, lostzone, lostzone_html, selectedCard.index);
                     break;
                 case active:
-                    moveCard(deck, deckDisplay_html, active, active_html, selectedCard.index);
+                    moveCard(deck, deck_html, active, active_html, selectedCard.index);
                     break;
                 case stadium:
-                    moveCard(deck, deckDisplay_html, stadium, stadium_html, selectedCard.index);
+                    moveCard(deck, deck_html, stadium, stadium_html, selectedCard.index);
                     break;
                 case deck:
-                    moveCard(deck, deckDisplay_html, deck, deckDisplay_html, selectedCard.index);
+                    moveCard(deck, deck_html, deck, deck_html, selectedCard.index);
                     break;
                 case hand:
-                    moveCard(deck, deckDisplay_html, hand, hand_html, selectedCard.index);
+                    moveCard(deck, deck_html, hand, hand_html, selectedCard.index);
                     break;
             };
             break;
@@ -250,7 +250,7 @@ export function moveEventTarget(selectedCard, mLocation){
                     moveCard(hand, hand_html, stadium, stadium_html, selectedCard.index);
                     break;
                 case deck:
-                    moveCard(hand, hand_html, deck, deckDisplay_html, selectedCard.index);
+                    moveCard(hand, hand_html, deck, deck_html, selectedCard.index);
                     break;
                 case hand:
                     moveCard(hand, hand_html, hand, hand_html, selectedCard.index);
@@ -259,8 +259,7 @@ export function moveEventTarget(selectedCard, mLocation){
             break;
     };
     updateCount();
-    lostzone_html.style.display = 'none';
-    deckDisplay_html.style.display = 'none';
-    prizes_html.style.display = 'none';
-    discard_html.style.display = 'none';
+    if (selectedCard.container === lostzone_html || selectedCard.container === discard_html || selectedCard.container === deck_html){
+        selectedCard.container.style.display = 'none';
+    }
 }
