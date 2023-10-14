@@ -11,6 +11,7 @@ export function imageClick(event){
     //identify index of the card/image
     const containerId = event.target.parentElement.id;
     selectedCard.location = containerToLocation[containerId];
+    selectedCard.container = document.getElementById(containerId);
   
     if (selectedCard.location === prizes && containerId === 'prizesHidden_html') {
       selectedCard.index = 0;

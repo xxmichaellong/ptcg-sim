@@ -2,7 +2,8 @@ import { lostzone_html, lostzone, prizes_html, prizesHidden_html, lostzoneDispla
 import { imageClick } from "./imageClick.js";
 import { allowDrop, dragEnd, dragStart, drop } from "./drag.js";
 
-export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, index){
+export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, index, targetImage){
+
     // remove card from origin card array to new location array
     mLocation.cards.push(...oLocation.cards.splice(index, 1));
 
@@ -60,8 +61,27 @@ export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i
     else
         oLocation_html.removeChild(oLocation.images[index]);
 
+    oLocation.images.forEach(image => {
+        if(oLocation.images[index].relative instanceof HTMLImageElement && oLocation.images[index].relative === image.relative 
+        && parseInt(image.style.bottom) > parseInt(oLocation.images[index].style.bottom)){
+            image.style.bottom = (parseInt(image.style.bottom) - 10) + '%';
+            image.style.zIndex = (parseInt(image.style.zIndex) + 1).toString();
+        };
+    });
+
+     // reset styles
+     oLocation.images[index].style.position = 'static';
+     oLocation.images[index].style.bottom = '0%';
+     oLocation.images[index].style.zIndex = '0';
+
     // remove img from origin images array and add it to new location images array
     mLocation.images.push(...oLocation.images.splice(index, 1));
+
+    if (mLocation.images[mLocation.count-1].target === 'on'){
+        mLocation.images[mLocation.count-1].relative.layer -= 1;
+    };
+
+    mLocation.images[mLocation.count-1].relative = 0;
 
     // append image to new container
     if (mLocation_html === prizes_html){
@@ -73,6 +93,7 @@ export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i
         prizesHidden_html.appendChild(cardbackElement);
 
         mLocation_html.appendChild(mLocation.images[mLocation.count-1]);
+        mLocation.images[mLocation.count-1].target = 'off';
     }
     else if (mLocation_html === lostzone_html){
         if (lostzoneDisplay_html.firstElementChild){
@@ -94,6 +115,7 @@ export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i
         });
         lostzoneDisplay_html.appendChild(coverImage);
         mLocation_html.appendChild(mLocation.images[mLocation.count-1]);
+        mLocation.images[mLocation.count-1].target = 'off';
     }
     else if (mLocation_html === discard_html){
         if (discardDisplay_html.firstElementChild){
@@ -115,6 +137,7 @@ export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i
         });
         discardDisplay_html.appendChild(coverImage);
         mLocation_html.appendChild(mLocation.images[mLocation.count-1]);
+        mLocation.images[mLocation.count-1].target = 'off';
     }
     else if (mLocation_html === deck_html){
         if (!deckDisplay_html.firstElementChild){
@@ -134,9 +157,40 @@ export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i
             deckDisplay_html.appendChild(coverImage);
         }
         mLocation_html.appendChild(mLocation.images[mLocation.count-1]);
+        mLocation.images[mLocation.count-1].target = 'off';
     }
-    else
+    else if (targetImage && (mLocation_html === bench_html || mLocation_html === active_html) && targetImage.target === 'off'){
+        const targetRect = targetImage.getBoundingClientRect();
+        const draggedImage = mLocation.images[mLocation.count-1];
+
+        draggedImage.style.position = 'absolute';
+        draggedImage.style.left = targetRect.left;
+       
+        draggedImage.relative = targetImage;
+        
+        draggedImage.target = 'on';
+
+        if (!targetImage.layer) {
+            targetImage.layer = 0;
+        };
+
+        targetImage.layer += 1;
+
+        const layerIncreaseFactor = 10; // 10% increase for each layer
+        const zindexDecreaseFactor = -1; // -1 decrease for each layer
+        
+        const bottomValue = `${targetImage.layer * layerIncreaseFactor}%`;
+        const zIndexValue = targetImage.layer * zindexDecreaseFactor;
+      
+        draggedImage.style.bottom = bottomValue;
+        draggedImage.style.zIndex = zIndexValue;
+
+        mLocation_html.insertBefore(draggedImage, targetImage);
+    }
+    else {
         mLocation_html.appendChild(mLocation.images[mLocation.count-1]);
+        mLocation.images[mLocation.count-1].target = 'off';
+    };
 
     //remove popup
     cardPopup.style.display = "none";
