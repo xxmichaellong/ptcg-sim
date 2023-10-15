@@ -85,7 +85,8 @@ export const hand_html = document.getElementById('hand_html');
 export const selectedCard = {
     index: 0,
     location: '',
-    container: ''
+    container: '',
+    image: '',
 };
 
 // Drag and drop functions
