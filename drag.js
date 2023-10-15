@@ -28,10 +28,11 @@ export function dragOver(){
 
 export function dragEnd(event){
     event.target.classList.remove('dragging');
-    if (selectedCard.container === lostzone_html || selectedCard.container === discard_html || selectedCard.container === deck_html){
-        selectedCard.container.style.opacity = "1";
-        selectedCard.container.style.zIndex = "9999";
-    };
+    const containers = [lostzone_html, discard_html, deck_html];
+    for (const container of containers) {
+      container.style.opacity = "1";
+      container.style.zIndex = "9999";
+    };    
 }
 
 // Add this function to allow dropping in the hand container
@@ -42,16 +43,21 @@ export function allowDrop(event) {
 // Add this function to handle the drop operation
 export function drop(event) {
     event.preventDefault();
+    const draggedImage = document.querySelectorAll('.dragging');
 
-    const targetImage = event.target.closest('img');
-    let containerId = event.target.id;
+//make sure only card images can trigger drop
+    if (draggedImage[0].layer !== 'undefined'){
 
-    if (targetImage && targetImage !== document.querySelector('.dragging') && (event.target.parentElement.id === 'bench_html' || event.target.parentElement.id === 'active_html')) {
-        containerId = event.target.parentElement.id;
+        const targetImage = event.target.closest('img');
+        let containerId = event.target.id;
+
+        if (targetImage && targetImage !== document.querySelector('.dragging') && (event.target.parentElement.id === 'bench_html' || event.target.parentElement.id === 'active_html')) {
+            containerId = event.target.parentElement.id;
+        }
+
+        const mLocation = containerToLocation[containerId];
+        moveEventTarget(selectedCard, mLocation, targetImage);
     }
-
-    const mLocation = containerToLocation[containerId];
-    moveEventTarget(selectedCard, mLocation, targetImage);
 
     event.stopPropagation();
 }

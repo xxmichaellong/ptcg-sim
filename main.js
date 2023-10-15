@@ -1,9 +1,10 @@
-import { selectedCard, prizes_html, lostzone_html, discard_html, deck, prizes, discard, lostzone, active, stadium, bench, hand, deck_html } from "./initialization.js";
+import { containerIds, selectedCard, prizes_html, lostzone_html, discard_html, deck, prizes, discard, lostzone, active, stadium, bench, hand, deck_html } from "./initialization.js";
 import { allowDrop, drop } from "./drag.js";
 import { drawHand } from "./drawHand.js";
 import { moveEventTarget } from "./moveEventTarget.js";
 import { shufflePopupButton } from "./shuffleButton.js";
 import { shuffleContainer } from "./shuffleButton.js";
+import { pokestop } from "./pokestop.js";
 
 // Buttons
 
@@ -29,27 +30,27 @@ discardCardButton.addEventListener('click', function() {moveEventTarget(selected
 const benchCardButton = document.getElementById('benchCardButton');
 benchCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, bench)});
 
-// Discard selected card
+// lostzone selected card
 const lostzoneCardButton = document.getElementById('lostzoneCardButton');
 lostzoneCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, lostzone)});
 
-// Bench selected card
+// stadium selected card
 const stadiumCardButton = document.getElementById('stadiumCardButton');
 stadiumCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, stadium)});
 
-// Discard selected card
+// prize selected card
 const prizesCardButton = document.getElementById('prizesCardButton');
 prizesCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, prizes)});
 
-// Bench selected card
+// hand selected card
 const handCardButton = document.getElementById('handCardButton');
 handCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, hand)});
 
-// Discard selected card
+// deck selected card
 const deckCardButton = document.getElementById('deckCardButton');
 deckCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, deck)});
 
-// Bench selected card
+// active selected card
 const activeCardButton = document.getElementById('activeCardButton');
 activeCardButton.addEventListener('click', function() {moveEventTarget(selectedCard, active)});
 
@@ -94,24 +95,12 @@ closeDiscardDisplayButton.addEventListener('click', () => {
     discard_html.style.display = 'none';
 });
 
-// Drag and drop functions
-const containerIds = [
-    "hand_html",
-    "prizesHidden_html",
-    "prizes_html",
-    "lostzoneDisplay_html",
-    "lostzone_html",
-    "active_html",
-    "stadium_html",
-    "bench_html",
-    "deckDisplay_html",
-    "deck_html",
-    "discard_html",
-    "discardDisplay_html"
-  ];
-  
-  containerIds.forEach(id => {
+containerIds.forEach(id => {
     const container = document.getElementById(id);
     container.addEventListener("dragover", allowDrop);
     container.addEventListener("drop", drop);
-  });
+});
+
+// pokestop function
+const pokestopButton = document.getElementById('pokestopButton');
+pokestopButton.addEventListener('click', pokestop);

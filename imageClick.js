@@ -5,8 +5,8 @@ import { containerToLocation } from "./containerReference.js";
 export function imageClick(event){
 
      //style the popup when image is clicked
-     var popup = document.getElementById('cardPopup');
-     popup.style.display = 'block';
+     const cardPopup = document.getElementById('cardPopup');
+     cardPopup.style.display = 'block';
 
     //identify index of the card/image
     const containerId = event.target.parentElement.id;
@@ -17,5 +17,14 @@ export function imageClick(event){
       selectedCard.index = 0;
     } else {
       selectedCard.index = selectedCard.location.images.indexOf(event.target);
-    }
+    };
+
+    //handle popups for specific cards
+
+    //pokestop popup
+    if (selectedCard.location.cards[selectedCard.index].name === 'pokestop'){
+      const pokestopPopup = document.getElementById('pokestopPopup');
+      pokestopPopup.style.display = 'block';
+      pokestopPopup.style.top = "40%";
+    };
 }

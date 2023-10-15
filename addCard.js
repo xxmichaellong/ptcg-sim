@@ -4,9 +4,9 @@ import { imageClick } from "./imageClick.js";
 import { dragEnd, dragOver, dragStart } from "./drag.js";
 
 // Function to make card objects and add it to the deck array, specifying the quantity of each card
-export const addCard = (quantity, name, image) => {
+export const addCard = (quantity, name, image, type) => {
     for (let i = 0; i < quantity; i++) {
-      const card = makeCardObject(name, image);
+      const card = makeCardObject(name, image, type);
       deck.cards.push(card);
       const imgElement = document.createElement('img');
       imgElement.src = card.image; // Set the src attribute to the image URL
@@ -17,6 +17,6 @@ export const addCard = (quantity, name, image) => {
       imgElement.addEventListener('dragover', dragOver);
       imgElement.addEventListener('dragend', dragEnd);
       imgElement.style.zIndex = '0'; // You may adjust this value as needed
-      deck.images.push(imgElement); // Add the image to a deck array so we can access it later=
+      deck.images.push(imgElement); // Add the image to a deck array so we can access it later
     };
   }

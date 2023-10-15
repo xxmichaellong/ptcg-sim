@@ -67,17 +67,22 @@ export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i
             image.style.bottom = (parseInt(image.style.bottom) - 10) + '%';
             image.style.zIndex = (parseInt(image.style.zIndex) + 1).toString();
         };
+        if(oLocation.images[index] === image.relative){
+            image.target = 'off';
+        };
     });
 
      // reset styles
      oLocation.images[index].style.position = 'static';
      oLocation.images[index].style.bottom = '0%';
      oLocation.images[index].style.zIndex = '0';
+     oLocation.images[index].layer = 0;
+
 
     // remove img from origin images array and add it to new location images array
     mLocation.images.push(...oLocation.images.splice(index, 1));
 
-    if (mLocation.images[mLocation.count-1].target === 'on'){
+    if (mLocation.images[mLocation.count-1].target === 'on' && mLocation.images[mLocation.count-1].relative.layer !== 0){
         mLocation.images[mLocation.count-1].relative.layer -= 1;
     };
 
@@ -150,6 +155,7 @@ export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i
             // Function to open the modal
             coverImage.addEventListener('click', () => {
                 deck_html.style.display = 'block';
+                deck_html.style.zIndex = "1000"
                 deck.images.forEach(image => {
                     image.style.display = 'inline-block';
                 });
@@ -159,7 +165,7 @@ export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i
         mLocation_html.appendChild(mLocation.images[mLocation.count-1]);
         mLocation.images[mLocation.count-1].target = 'off';
     }
-    else if (targetImage && (mLocation_html === bench_html || mLocation_html === active_html) && targetImage.target === 'off'){
+    else if (targetImage && (mLocation_html === bench_html || mLocation_html === active_html) && targetImage.style.position === 'static' && targetImage !==mLocation.images[mLocation.count-1] ){
         const targetRect = targetImage.getBoundingClientRect();
         const draggedImage = mLocation.images[mLocation.count-1];
 

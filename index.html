@@ -9,10 +9,10 @@
 </head>
 <body>
 
-    <div id="handText">Hand (<span id="handCount">0</span>)</div>
+    <div id="handText" class="text">Hand (<span id="handCount">0</span>)</div>
     <div id="hand_html"></div>
 
-    <div id="deckText">Deck (<span id="deckCount">0</span>)</div>
+    <div id="deckText" class="text">Deck (<span id="deckCount">0</span>)</div>
     <div id="deckDisplay_html"></div>
     <div id="deck_html">
         <div>
@@ -20,7 +20,7 @@
         </div>
     </div>
 
-    <div id="discardText">Discard (<span id="discardCount">0</span>)</div>    
+    <div id="discardText" class="text">Discard (<span id="discardCount">0</span>)</div>    
     <div id="discardDisplay_html"></div>
     <div id="discard_html">
         <div>
@@ -28,7 +28,7 @@
         </div>
     </div>
 
-    <div id="lostzoneText">Lost Zone (<span id="lostzoneCount">0</span>)</div>
+    <div id="lostzoneText" class="text">Lost Zone (<span id="lostzoneCount">0</span>)</div>
     <div id="lostzoneDisplay_html"></div>
     <div id="lostzone_html">
         <div>
@@ -36,13 +36,13 @@
         </div>
     </div>
 
-    <div id="benchText">Bench (<span id="benchCount">0</span>)</div>
+    <div id="benchText" class="text">Bench (<span id="benchCount">0</span>)</div>
     <div id="bench_html"></div>
 
-    <div id="activeText">Active (<span id="activeCount">0</span>)</div>
+    <div id="activeText" class="text">Active (<span id="activeCount">0</span>)</div>
     <div id="active_html"></div>
 
-    <div id="prizesText">Prizes (<span id="prizesCount">0</span>)</div>
+    <div id="prizesText" class="text">Prizes (<span id="prizesCount">0</span>)</div>
     <div id="prizesHidden_html"></div>
     <div id="prizes_html">
         <div>
@@ -50,13 +50,13 @@
         </div>
     </div>
 
-    <div id="stadiumText">Stadium (<span id="stadiumCount">0</span>)</div>
+    <div id="stadiumText" class="text">Stadium (<span id="stadiumCount">0</span>)</div>
     <div id="stadium_html"></div>
 
     <!-- Modal HTML structure -->
     <div id="cardPopup" class="popup">
         <div class="popup-content">
-            <p>Choose an option:</p>
+            <p>Move to:</p>
             <button id="discardCardButton">Discard</button>
             <button id="benchCardButton">Bench</button>
             <button id="activeCardButton">Active</button>
@@ -70,14 +70,20 @@
 
     <div id="shufflePopup" class="popup">
         <div class="popup-content">
-            <p>Choose an option:</p>
             <button id="shuffleDeckButton">Shuffle Deck</button>
             <button id="shufflePrizesButton">Shuffle Prizes</button>
         </div>
     </div>
 
+    <!--Card Function Popups-->
+    <div id="pokestopPopup" class="popup">
+        <div class="popup-content">
+            <button id="pokestopButton">Use PokeStop</button>
+        </div>
+    </div>
+
     <!--Buttons-->
-    <button id="drawHandButton">Draw Starting Hand</button>
+    <button id="drawHandButton">Draw Hand</button>
     <button id="shuffleButton">Shuffle</button>
     <button id="prizesDisplayButton">Show Prizes</button>
 

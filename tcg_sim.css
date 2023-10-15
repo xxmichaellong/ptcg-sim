@@ -9,6 +9,7 @@ body {
     position: fixed;
     left: 2%;
     bottom: 25%;
+    
   }
   #hand_html {
     background-color: #ffffff;
@@ -37,11 +38,13 @@ body {
     left: 88%;
     width: 8%;
     height: 25%;
+    user-select: none;
   }
 
   #deckDisplay_html img {
     width: auto;
     height: 100%;
+    user-select: none;
   } 
 
   #discardText {
@@ -166,17 +169,13 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     background-color: #ffffff;
-    width: 500px;
+    width: auto;
     padding: 20px;
     text-align: center;
     border: 1px solid #ccc;
     border-radius: 5px;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
     z-index: 10000;
-}
-
-.popup-content {
-    margin-bottom: 10px;
 }
 
 #drawHandButton {
@@ -264,4 +263,12 @@ body {
   display: inline-block;
   width: 10%;
   height: auto;
+}
+
+.text {
+  user-select: none;
+}
+
+#closeDeckDisplayButton {
+  user-select: none;
 }

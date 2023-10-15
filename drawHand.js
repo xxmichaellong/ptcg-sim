@@ -25,9 +25,9 @@ export function drawHand(){
     // Add the cards to the deck array
 
     // Loop through the card data and call addCard for each entry.
-    for (const [quantity, name, imageUrl] of cardData) {
+    for (const [quantity, name, imageUrl, type] of cardData) {
         for (let i = 0; i < quantity; i++) {
-            addCard(1, name, imageUrl);
+            addCard(1, name, imageUrl, type);
         };
     }
 
