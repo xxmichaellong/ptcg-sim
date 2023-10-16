@@ -81,12 +81,27 @@ export const hand = {
 };
 export const hand_html = document.getElementById('hand_html');
 
-//create global variable that holds the html index of a clicked card
+export const flowerSelectingZone = {
+    cards: [],
+    images: [],
+    get count() {
+        return this.cards.length;
+    }
+}
+
+export const colresssExperimentZone = {
+    cards: [],
+    images: [],
+    get count() {
+        return this.cards.length;
+    }
+}
+
+// create global variable that holds the html index of a clicked card
 export const selectedCard = {
     index: 0,
     location: '',
     container: '',
-    image: '',
 };
 
 // Drag and drop functions

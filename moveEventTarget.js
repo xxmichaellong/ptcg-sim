@@ -1,7 +1,6 @@
 import { hand_html, hand, discard, discard_html, prizes, prizes_html, lostzone, lostzone_html, 
-    bench, bench_html, active, active_html, stadium, stadium_html, deck, deck_html } from "./initialization.js";
+    bench, bench_html, active, active_html, stadium, stadium_html, deck, deck_html, flowerSelectingZone, colresssExperimentZone } from "./initialization.js";
 import { moveCard } from "./moveCard.js";
-import { updateCount } from "./counts.js";
 
 export function moveEventTarget(selectedCard, mLocation, targetImage){
     switch (selectedCard.location){
@@ -257,8 +256,62 @@ export function moveEventTarget(selectedCard, mLocation, targetImage){
                     break;
             };
             break;
+        case flowerSelectingZone:
+            switch (mLocation){
+                case bench:
+                    moveCard(flowerSelectingZone, flowerSelectingZone_html, bench, bench_html, selectedCard.index, targetImage);
+                    break;
+                case discard:
+                    moveCard(flowerSelectingZone, flowerSelectingZone_html, discard, discard_html, selectedCard.index, targetImage);
+                    break;
+                case prizes:
+                    moveCard(flowerSelectingZone, flowerSelectingZone_html, prizes, prizes_html, selectedCard.index, targetImage);
+                    break;
+                case lostzone:
+                    moveCard(flowerSelectingZone, flowerSelectingZone_html, lostzone, lostzone_html, selectedCard.index, targetImage);
+                    break;
+                case active:
+                    moveCard(flowerSelectingZone, flowerSelectingZone_html, active, active_html, selectedCard.index, targetImage);
+                    break;
+                case stadium:
+                    moveCard(flowerSelectingZone, flowerSelectingZone_html, stadium, stadium_html, selectedCard.index, targetImage);
+                    break;
+                case deck:
+                    moveCard(flowerSelectingZone, flowerSelectingZone_html, deck, deck_html, selectedCard.index, targetImage);
+                    break;
+                case hand:
+                    moveCard(flowerSelectingZone, flowerSelectingZone_html, hand, hand_html, selectedCard.index, targetImage);
+                    break;
+            };
+        case colresssExperimentZone:
+            switch (mLocation){
+                case bench:
+                    moveCard(colresssExperimentZone, colresssExperimentZone_html, bench, bench_html, selectedCard.index, targetImage);
+                    break;
+                case discard:
+                    moveCard(colresssExperimentZone, colresssExperimentZone_html, discard, discard_html, selectedCard.index, targetImage);
+                    break;
+                case prizes:
+                    moveCard(colresssExperimentZone, colresssExperimentZone_html, prizes, prizes_html, selectedCard.index, targetImage);
+                    break;
+                case lostzone:
+                    moveCard(colresssExperimentZone, colresssExperimentZone_html, lostzone, lostzone_html, selectedCard.index, targetImage);
+                    break;
+                case active:
+                    moveCard(colresssExperimentZone, colresssExperimentZone_html, active, active_html, selectedCard.index, targetImage);
+                    break;
+                case stadium:
+                    moveCard(colresssExperimentZone, colresssExperimentZone_html, stadium, stadium_html, selectedCard.index, targetImage);
+                    break;
+                case deck:
+                    moveCard(colresssExperimentZone, colresssExperimentZone_html, deck, deck_html, selectedCard.index, targetImage);
+                    break;
+                case hand:
+                    moveCard(colresssExperimentZone, colresssExperimentZone_html, hand, hand_html, selectedCard.index, targetImage);
+                    break;
+            };
+            break;
     };
-    updateCount();
     if (selectedCard.container === lostzone_html || selectedCard.container === discard_html || selectedCard.container === deck_html){
         selectedCard.container.style.display = 'none';
     }

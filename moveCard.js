@@ -2,6 +2,7 @@ import { lostzone_html, lostzone, prizes_html, prizesHidden_html, lostzoneDispla
 import { imageClick } from "./imageClick.js";
 import { allowDrop, dragEnd, dragStart, drop } from "./drag.js";
 import { resetImage } from "./resetImage.js";
+import { updateCount } from "./counts.js";
 
 export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, index, targetImage){
 
@@ -174,17 +175,18 @@ export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i
         if (!deckDisplay_html.firstElementChild){
             const coverImage = document.createElement('img');
             coverImage.src = 'cardScans/cardback.png';
-            coverImage.draggable = false;
             coverImage.id = "deckCover"; // id to reference for dropping
             coverImage.addEventListener("dragover", allowDrop);
             coverImage.addEventListener("drop", drop);
             // Function to open the modal
             coverImage.addEventListener('click', () => {
                 deck_html.style.display = 'block';
-                deck.images.forEach(image => {
-                    image.style.display = 'inline-block';
-                });
             });
+            // allow card to be dragged to draw the top card of the deck
+            coverImage.draggable = true; // Make image draggable
+            coverImage.addEventListener('dragstart', dragStart); //Add a dragstart event listener
+            coverImage.addEventListener('dragend', dragEnd);   
+
             deckDisplay_html.appendChild(coverImage);
         };
         mLocation_html.appendChild(mLocation.images[mLocation.count-1]);
@@ -209,12 +211,14 @@ export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i
                 image.style.position = 'absolute';
                 moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i, referenceImage);
                 i--;
-            
             };
         };
     };
 
+    updateCount();
     //remove popup
     cardPopup.style.display = "none";
     pokestopPopup.style.display = "none";
+    flowerSelectingPopup.style.display = "none";
+    colresssExperimentPopup.style.display = "none";
 }

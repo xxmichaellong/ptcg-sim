@@ -1,4 +1,4 @@
-import { hand, bench, active, stadium, discard, prizes, lostzone, deck } from "./initialization.js";
+import { hand, bench, active, stadium, discard, prizes, lostzone, deck, flowerSelectingZone, colresssExperimentZone } from "./initialization.js";
 
 export const containerToLocation = {
     hand_html: hand,
@@ -15,5 +15,7 @@ export const containerToLocation = {
     deckDisplay_html: deck,
     lostzoneCover: lostzone,
     discardCover: discard,
-    deckCover: deck
+    deckCover: deck,
+    flowerSelectingZone_html: flowerSelectingZone,
+    colresssExperimentZone_html: colresssExperimentZone
   };

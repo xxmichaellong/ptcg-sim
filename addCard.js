@@ -16,7 +16,6 @@ export const addCard = (quantity, name, image, type) => {
       imgElement.addEventListener('dragstart', dragStart); //Add a dragstart even listener
       imgElement.addEventListener('dragover', dragOver);
       imgElement.addEventListener('dragend', dragEnd);
-      imgElement.style.zIndex = '0'; // You may adjust this value as needed
       deck.images.push(imgElement); // Add the image to a deck array so we can access it later
     };
   }

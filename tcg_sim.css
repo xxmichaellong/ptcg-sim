@@ -272,3 +272,46 @@ body {
 #closeDeckDisplayButton {
   user-select: none;
 }
+
+#flowerSelectingZone_html {
+  position: fixed;
+  display: block;
+  width: 40%; /* Set the width as per your requirement */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* Center the container */
+}
+
+#flowerSelectingZone_html img {
+  width: 50%;
+}
+
+#colresssExperimentZone_html {
+  position: fixed;
+  display: block;
+  width: 40%; /* Set the width as per your requirement */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* Center the container */
+}
+
+#colresssExperimentZone_html img {
+  width: 20%;
+}
+
+.bouncing-text {
+  font-size: 24px;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-30px);
+  }
+  60% {
+    transform: translateY(-15px);
+  }
+}

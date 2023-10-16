@@ -27,4 +27,17 @@ export function imageClick(event){
       pokestopPopup.style.display = 'block';
       pokestopPopup.style.top = "40%";
     };
+    //flowerselectingpopup
+    if (selectedCard.location.cards[selectedCard.index].name === 'comfey'){
+      const flowerSelectingPopup = document.getElementById('flowerSelectingPopup');
+      flowerSelectingPopup.style.display = 'block';
+      flowerSelectingPopup.style.top = "40%";
+    };
+
+    //colresssexperiment popup
+    if (selectedCard.location.cards[selectedCard.index].name === 'colress\'sExperiment'){
+      const colresssExperimentPopup = document.getElementById('colresssExperimentPopup');
+      colresssExperimentPopup.style.display = 'block';
+      colresssExperimentPopup.style.top = "40%";
+    };
 }

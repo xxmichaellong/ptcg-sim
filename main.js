@@ -5,6 +5,8 @@ import { moveEventTarget } from "./moveEventTarget.js";
 import { shufflePopupButton } from "./shuffleButton.js";
 import { shuffleContainer } from "./shuffleButton.js";
 import { pokestop } from "./pokestop.js";
+import { flowerSelecting } from "./flowerSelecting.js";
+import { colresssExperiment } from "./colress'sExperiment.js";
 
 // Buttons
 
@@ -104,3 +106,11 @@ containerIds.forEach(id => {
 // pokestop function
 const pokestopButton = document.getElementById('pokestopButton');
 pokestopButton.addEventListener('click', pokestop);
+
+// flowerSelecting function
+const flowerSelectingButton = document.getElementById('flowerSelectingButton');
+flowerSelectingButton.addEventListener('click', flowerSelecting);
+
+// colress Experiment function
+const colresssExperimentButton = document.getElementById('colresssExperimentButton');
+colresssExperimentButton.addEventListener('click', colresssExperiment);
