@@ -1,5 +1,5 @@
-import { prizes, selectedCard, } from "../setup/initialization.js";
-import { containerToLocation } from "../setup/container-reference.js";
+import { prizes, selectedCard, } from "./initialization.js";
+import { containerToLocation } from "./containerReference.js";
 
 // Function to display the popup when the image is clicked
 export function imageClick(event){

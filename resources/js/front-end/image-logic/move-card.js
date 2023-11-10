@@ -1,10 +1,8 @@
-import { lostzone_html, lostzone, prizes_html, prizesHidden_html, lostzoneDisplay_html, discard_html, discard, 
-    discardDisplay_html, deck_html, deckDisplay_html, bench_html, active_html, hand_html } from "../setup/initialization.js";
-import { imageClick } from "./image-click.js";
+import { lostzone_html, lostzone, prizes_html, prizesHidden_html, lostzoneDisplay_html, discard_html, discard, discardDisplay_html, deck_html, deckDisplay_html } from "./initialization.js";
+import { imageClick } from "./imageClick.js";
 import { allowDrop, dragEnd, dragStart, drop } from "./drag.js";
-import { resetImage } from "./reset-image.js";
-import { updateCount } from "../setup/counts.js";
-import { socket } from "../front-end.js";
+import { resetImage } from "./resetImage.js";
+import { updateCount } from "./counts.js";
 
 export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, index, targetImage){
 
@@ -15,13 +13,6 @@ export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i
     if (oLocation_html === prizes_html){
         oLocation_html.removeChild(oLocation.images[index]);
         prizesHidden_html.removeChild(prizesHidden_html.lastElementChild);
-        
-        //opp socket
-        const oppImageAttributes = {
-            src: 'resources/card-scans/cardback.png',
-            alt: 'Prize Card',
-        };
-        socket.emit('removeImage', oppImageAttributes, 'prizeCardsHidden_html');
     }
     else if (oLocation_html === lostzone_html && oLocation.images[index] === oLocation.images[oLocation.images.length-1]){
         lostzoneDisplay_html.removeChild(lostzoneDisplay_html.firstElementChild)
@@ -124,20 +115,13 @@ export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i
         resetImage(mLocation.images[mLocation.count-1]);
 
         const cardbackElement = document.createElement('img');
-        cardbackElement.src = 'resources/card-scans/cardback.png';
+        cardbackElement.src = 'cardScans/cardback.png';
         cardbackElement.addEventListener('click', imageClick);
         cardbackElement.addEventListener('dragstart', dragStart);
         cardbackElement.addEventListener('dragend', dragEnd);
         prizesHidden_html.appendChild(cardbackElement);
 
         mLocation_html.appendChild(mLocation.images[mLocation.count-1]);
-
-        //opp socket
-        const oppImageAttributes = {
-            src: 'resources/card-scans/cardback.png',
-            alt: 'Prize Card',
-        };
-        socket.emit('appendImage', oppImageAttributes, 'prizesHidden_html');
     }
     else if (mLocation_html === lostzone_html){
         resetImage(mLocation.images[mLocation.count-1]);
@@ -190,7 +174,7 @@ export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i
 
         if (!deckDisplay_html.firstElementChild){
             const coverImage = document.createElement('img');
-            coverImage.src = 'resources/card-scans/cardback.png';
+            coverImage.src = 'cardScans/cardback.png';
             coverImage.id = "deckCover"; // id to reference for dropping
             coverImage.addEventListener("dragover", allowDrop);
             coverImage.addEventListener("drop", drop);
@@ -207,22 +191,11 @@ export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i
         };
         mLocation_html.appendChild(mLocation.images[mLocation.count-1]);
     }
-    else if (mLocation_html === hand_html){
-        resetImage(mLocation.images[mLocation.count-1]);
-        mLocation_html.appendChild(mLocation.images[mLocation.count-1]);
-
-        //opp socket
-        const oppImageAttributes = {
-            src: 'resources/card-scans/cardback.png',
-            alt: 'Hand Card',
-        };
-        socket.emit('appendImage', oppImageAttributes, 'hand_html');
-    }
     else {
         resetImage(mLocation.images[mLocation.count-1]);
+
         mLocation_html.appendChild(mLocation.images[mLocation.count-1]);
     };
-
 
     // deal with any attached cards!!
     if (mLocation.images[mLocation.count-1].style.position === 'static'){

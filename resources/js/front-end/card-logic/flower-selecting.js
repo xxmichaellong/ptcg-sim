@@ -1,12 +1,12 @@
-import { deck, deck_html, flowerSelectingZone } from "../setup/initialization.js";
-import { moveCard } from "../image-logic/move-card.js";
+import { deck, deck_html, flowerSelectingZone } from "./initialization.js";
+import { moveCard } from "./moveCard.js";
 
-export const flowerSelectingZone_html = document.getElementById('flowerSelectingZone_html');
 export function flowerSelecting(){
     // close flowerSelectingpopup
     flowerSelectingPopup.style.display = "none";
  
     // create HTML container to temporarily hold flowerselecting cards
+    const flowerSelectingZone_html = document.getElementById('flowerSelectingZone_html');
     flowerSelectingZone_html.style.display = 'block';
   
     let i = 0;

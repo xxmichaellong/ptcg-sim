@@ -1,12 +1,11 @@
-import { shuffle } from "../setup/shuffle.js";
-import { addCard } from "./add-card.js";
+import { shuffle } from "./shuffle.js";
+import { addCard } from "./addCard.js";
+import { moveCard } from "./moveCard.js";
+import { removeImages } from "./removeImages.js";
 import { deck, deck_html, deckDisplay_html, hand, hand_html, lostzone, lostzone_html, discard, discard_html, stadium, stadium_html, prizes, 
-prizes_html, active, active_html, bench, bench_html, cardData, prizesHidden_html, lostzoneDisplay_html, discardDisplay_html } from "../setup/initialization.js"
-import { allowDrop, drop, dragStart, dragEnd } from "../image-logic/drag.js";
-import { removeImages } from "../image-logic/remove-images.js";
-import { moveCard } from "../image-logic/move-card.js";
-import { socket } from "../front-end.js";
-import { buildImage } from "../setup/build-image.js";
+prizes_html, active, active_html, bench, bench_html, cardData, prizesHidden_html, lostzoneDisplay_html, discardDisplay_html } from "./initialization.js";
+import { allowDrop, drop, dragStart, dragEnd } from "./drag.js";
+import { socket } from "./frontend.js";
 
 // Draw starting hand of 7
 export function drawHand(){
@@ -43,11 +42,21 @@ export function drawHand(){
         shuffle(deck.cards, deck.images);
         // Append the <img> element to the deck display modal
         const coverImage = document.createElement('img');
+        /* coverImage.src = 'cardScans/cardback.png';
+        coverImage.id = "deckCover"; // id to reference for dropping
+        coverImage.addEventListener("dragover", allowDrop);
+        coverImage.addEventListener("drop", drop);
+        // Function to open the modal
+        coverImage.addEventListener('click', () => {
+            deck_html.style.display = 'block';
+        });
+        // allow card to be dragged to draw the top card of the deck
+        coverImage.draggable = true; // Make image draggable
+        coverImage.addEventListener('dragstart', dragStart); //Add a dragstart event listener
+        coverImage.addEventListener('dragend', dragEnd); */
 
-        // define attributes of deck image
-        const mainImageAttributes = {
-            src: 'resources/card-scans/cardback.png',
-            alt: 'Deck Cover',
+        const imageAttributes = {
+            src: 'cardScans/cardback.png',
             id: 'deckCover',
             // Event listener for drag-and-drop
             dragover: allowDrop,
@@ -63,17 +72,20 @@ export function drawHand(){
             dragend: dragEnd
         };
           
-        // Set image attributes and event listeners and append to deckDisplay container
-        buildImage(mainImageAttributes, coverImage);
+        // Set image attributes and event listeners
+        for (const attr in imageAttributes) {
+            if (typeof imageAttributes[attr] === 'function') {
+                // If it's a function (an event listener), add it as an event listener
+                coverImage.addEventListener(attr, imageAttributes[attr]);
+            } else {
+                // Otherwise, set it as an attribute
+                coverImage.setAttribute(attr, imageAttributes[attr]);
+            };
+        }
+
         deckDisplay_html.appendChild(coverImage);
 
-        //send to back-end
-        const oppImageAttributes = {
-            src: 'resources/card-scans/cardback.png',
-            alt: 'Deck Cover',
-            id: 'deckCover'
-        };
-        socket.emit('appendImage', oppImageAttributes, 'deckDisplay_html');
+        socket.emit('appendImage', imageAttributes);
 
 
         for (let i = 0; i < deck.count; i++){

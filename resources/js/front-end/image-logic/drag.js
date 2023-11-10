@@ -1,9 +1,6 @@
-import { selectedCard, discard_html, lostzone_html, deck_html, mainContainersDocument, stadium_html } from "../setup/initialization.js";
-import { containerToLocation } from "../setup/container-reference.js"
-import { moveEventTarget } from "./move-event-target.js";
-import { colresssExperimentZone_html } from "../card-logic/colress's-experiment.js";
-import { flowerSelectingZone_html } from "../card-logic/flower-selecting.js";
-
+import { selectedCard, prizes, discard_html, lostzone_html, deck_html } from "./initialization.js";
+import { containerToLocation } from "./containerReference.js"
+import { moveEventTarget } from "./moveEventTarget.js";
 
 // Add this function to initiate the drag operation
 export function dragStart(event){
@@ -18,12 +15,7 @@ export function dragStart(event){
         selectedCard.index = selectedCard.location.images.indexOf(event.target);
 
     // Find the parent element by ID
-    if (containerId === 'stadium_html' || containerId === 'colresssExperimentZone_html' || containerId === 'flowerSelectingZone_html'){
-        selectedCard.container = document.getElementById(containerId);
-    }
-    else
-        selectedCard.container = mainContainersDocument.getElementById(containerId);
-    
+    selectedCard.container = document.getElementById(containerId);
     if (selectedCard.container === lostzone_html || selectedCard.container === discard_html || selectedCard.container === deck_html){
         selectedCard.container.style.opacity = '0';
     };
@@ -51,28 +43,21 @@ export function allowDrop(event){
 // Add this function to handle the drop operation
 export function drop(event){
     event.preventDefault();
+    const draggedImage = document.querySelectorAll('.dragging');
 
-    let draggedImage;
-    if (selectedCard.container === stadium_html || selectedCard.container === colresssExperimentZone_html || selectedCard.container === flowerSelectingZone_html){
-        draggedImage = document.querySelectorAll('.dragging');
-    }
-    else
-        draggedImage = mainContainersDocument.querySelectorAll('.dragging');
 //make sure only card images can trigger drop
     if (draggedImage[0].layer !== 'undefined'){
 
         const targetImage = event.target.closest('img');
-        let containerId;
+        let containerId = event.target.id;
 
-        if (targetImage && targetImage !== draggedImage && (event.target.parentElement.id === 'bench_html' || event.target.parentElement.id === 'active_html')){
+        if (targetImage && targetImage !== document.querySelector('.dragging') && (event.target.parentElement.id === 'bench_html' || event.target.parentElement.id === 'active_html')){
             containerId = event.target.parentElement.id;
         }
-        else
-            containerId = event.target.id;
 
         const mLocation = containerToLocation[containerId];
         moveEventTarget(selectedCard, mLocation, targetImage);
-    };
+    }
 
     event.stopPropagation();
 }

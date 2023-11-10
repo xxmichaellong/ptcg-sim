@@ -1,0 +1,305 @@
+/* Main Containers */
+
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(hsl(269, 64%, 80%) 40%, rgb(218, 174, 222) 40%);
+  background-size: 100% 100%;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+}
+
+ 
+  #handText {
+    position: fixed;
+    left: 2%;
+    bottom: 25%;
+    
+  }
+  #hand_html {
+    background-color: #ffffff;
+    position: fixed;
+    bottom: 5%;
+    left: 0;
+    width: 100%;
+    height: 20%;
+    overflow-y: auto;
+  }
+  
+  #hand_html img {
+    width: auto;
+    height: 80%;
+  }
+
+  #deckText {
+    position: fixed;
+    left: 88%;
+    bottom: 90%;
+  }
+  #deckDisplay_html {
+    background-color: #ffffff;
+    position: fixed;
+    bottom: 65%;
+    left: 88%;
+    width: 8%;
+    height: 25%;
+    user-select: none;
+  }
+
+  #deckDisplay_html img {
+    width: auto;
+    height: 100%;
+    user-select: none;
+  } 
+
+  #discardText {
+    position: fixed;
+    left: 88%;
+    bottom: 55%;
+  }
+  #discardDisplay_html {
+    background-color: #ffffff;
+    position: fixed;
+    bottom: 30%;
+    left: 88%;
+    width: 8%;
+    height: 25%;
+  }
+
+  #discardDisplay_html img {
+    width: auto;
+    height: 100%;
+  } 
+
+  #benchText {
+    position: fixed;
+    left: 20%;
+    bottom: 55%;
+  }
+  #bench_html {
+    background-color: #ffffff;
+    position: fixed;
+    bottom: 30%;
+    left: 20%;
+    width: 60%;
+    height: 25%;
+    white-space: nowrap;
+  }
+
+  #bench_html img {
+    width: auto;
+    height: 100%;
+  } 
+
+  #activeText {
+    position: fixed;
+    left: 43%;
+    bottom: 95%;
+  }
+  #active_html {
+    background-color: #ffffff;
+    position: fixed;
+    bottom: 63%;
+    left: 43%;
+    width: 12%;
+    height: 32%;
+  }
+
+  #active_html img {
+    width: auto;
+    height: 100%;
+  } 
+
+  #stadiumText {
+    position: fixed;
+    left: 72%;
+    bottom: 95%;
+  }
+  #stadium_html {
+    background-color: #ffffff;
+    position: fixed;
+    bottom: 70%;
+    left: 72%;
+    width: 8%;
+    height: 25%;
+  }
+
+  #stadium_html img {
+    width: auto;
+    height: 100%;
+  } 
+
+  #prizesText {
+    position: fixed;
+    left: 2%;
+    bottom: 90%;
+  }
+  #prizesHidden_html {
+    background-color: #ffffff;
+    position: fixed;
+    bottom: 40%;
+    left: 2%;
+    width: 10%;
+    height: 50%;
+  }
+
+  #prizesHidden_html img {
+    width: 50%;
+    height: auto;
+  } 
+
+  #lostzoneText {
+    position: fixed;
+    left: 20%;
+    bottom: 95%;
+  }
+  #lostzoneDisplay_html {
+    background-color: #ffffff;
+    position: fixed;
+    bottom: 70%;
+    left: 20%;
+    width: 8%;
+    height: 25%;
+  }
+
+  #lostzoneDisplay_html img {
+    width: auto;
+    height: 100%;
+  } 
+
+  .popup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #ffffff;
+    width: auto;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+    z-index: 10000;
+}
+
+#drawHandButton {
+  position: fixed;
+  bottom: 0%;
+}
+
+#shuffleButton {
+  position: fixed;
+  bottom: 0%;
+  left: 10%;
+}
+
+#prizesDisplayButton {
+  position: fixed;
+  bottom: 0%;
+  left: 20%;
+}
+
+#deck_html {
+  display: none;
+  background-color: #ffffff;
+  position: fixed;
+  bottom: 10%;
+  left: 0;
+  width: 100%;
+  height: 80%;
+  overflow-y: auto;
+  z-index: 500;
+}
+
+#deck_html img {
+  display: inline-block;
+  width: 10%;
+  height: auto;
+}
+
+#prizes_html {
+  display: none;
+  background-color: #ffffff;
+  position: fixed;
+  bottom: 40%;
+  left: 2%;
+  width: 10%;
+  height: 50%;
+}
+
+#prizes_html img {
+  display: inline-block;
+  width: 50%;
+  height: auto;
+}
+
+#lostzone_html {
+  display: none;
+  background-color: #ffffff;
+  position: fixed;
+  bottom: 30%;
+  left: 15%;
+  width: 70%;
+  height: 70%;
+  overflow-y: auto;
+  z-index: 500;
+}
+
+#lostzone_html img {
+  display: inline-block;
+  width: 10%;
+  height: auto;
+}
+
+#discard_html {
+  display: none;
+  background-color: #ffffff;
+  position: fixed;
+  bottom: 30%;
+  left: 15%;
+  width: 70%;
+  height: 70%;
+  overflow-y: auto;
+  z-index: 500;
+}
+
+#discard_html img {
+  display: inline-block;
+  width: 10%;
+  height: auto;
+}
+
+.text {
+  user-select: none;
+}
+
+#closeDeckDisplayButton {
+  user-select: none;
+}
+
+#flowerSelectingZone_html {
+  position: fixed;
+  display: block;
+  width: 40%; /* Set the width as per your requirement */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* Center the container */
+}
+
+#flowerSelectingZone_html img {
+  width: 50%;
+}
+
+#colresssExperimentZone_html {
+  position: fixed;
+  display: block;
+  width: 40%; 
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+#colresssExperimentZone_html img {
+  width: 20%;
+}
