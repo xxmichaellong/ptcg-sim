@@ -1,4 +1,4 @@
-import { containerIds, selectedCard, prizes_html, lostzone_html, discard_html, deck, prizes, discard, lostzone, active, stadium, bench, hand, deck_html, hand_html, deckDisplay_html } from "./initialization.js";
+import { containerIds, selectedCard, prizes_html, lostzone_html, discard_html, deck, prizes, discard, lostzone, active, stadium, bench, hand, deck_html } from "./initialization.js";
 import { allowDrop, drop } from "./drag.js";
 import { drawHand } from "./drawHand.js";
 import { moveEventTarget } from "./moveEventTarget.js";
@@ -7,48 +7,6 @@ import { shuffleContainer } from "./shuffleButton.js";
 import { pokestop } from "./pokestop.js";
 import { flowerSelecting } from "./flowerSelecting.js";
 import { colresssExperiment } from "./colress'sExperiment.js";
-
-export const socket = io();
-
-/* 
-const frontEndPlayers = {};
-
-socket.on('updatePlayers', (backEndPlayers) => {
-    for (const id in backEndPlayers){
-        if (!frontEndPlayers[id]){
-            frontEndPlayers[id] = new Player({
-                radius:10
-            })
-        }
-    }
-})
-
-for (const id in frontEndPlayers){
-    if (!backEndPlayers[id]){
-        delete frontEndPlayers[id]
-    }
-} */
-
-//more socket stuff
-// Listen for the 'imageAppended' event from the server
-socket.on('imageAppended', (imageAttributes) => {
-
-    const coverImage = document.createElement('img');              
-    // Set image attributes and event listeners
-    for (const attr in imageAttributes) {
-        if (typeof imageAttributes[attr] === 'function') {
-            // If it's a function (an event listener), add it as an event listener
-            coverImage.addEventListener(attr, imageAttributes[attr]);
-        } else {
-            // Otherwise, set it as an attribute
-            coverImage.setAttribute(attr, imageAttributes[attr]);
-        };
-    }
-
-    deckDisplay_html.appendChild(coverImage);
-});
-
-
 
 // Buttons
 
