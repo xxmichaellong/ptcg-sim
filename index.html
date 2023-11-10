@@ -4,54 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LZB Simulator</title>
-    <link rel="stylesheet" href="tcg_sim.css">
+    <link rel="stylesheet" href="/resources/css/index.css">
     <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
-    <script type="module" src="frontend.js"></script>
+    <script type="module" src="/resources/js/front-end/front-end.js"></script>
 </head>
 <body>
-    <div id="handText" class="text">Hand (<span id="handCount">0</span>)</div>
-    <div id="hand_html"></div>
-
-    <div id="deckText" class="text">Deck (<span id="deckCount">0</span>)</div>
-    <div id="deckDisplay_html"></div>
-    <div id="deck_html">
-        <div>
-            <span id="closeDeckDisplayButton">&times;</span>
-        </div>
-    </div>
-
-    <div id="discardText" class="text">Discard (<span id="discardCount">0</span>)</div>    
-    <div id="discardDisplay_html"></div>
-    <div id="discard_html">
-        <div>
-            <span id="closeDiscardDisplayButton">&times;</span>
-        </div>
-    </div>
-
-    <div id="lostzoneText" class="text">Lost Zone (<span id="lostzoneCount">0</span>)</div>
-    <div id="lostzoneDisplay_html"></div>
-    <div id="lostzone_html">
-        <div>
-            <span id="closeLostzoneDisplayButton">&times;</span>
-        </div>
-    </div>
-
-    <div id="benchText" class="text">Bench (<span id="benchCount">0</span>)</div>
-    <div id="bench_html"></div>
-
-    <div id="activeText" class="text">Active (<span id="activeCount">0</span>)</div>
-    <div id="active_html"></div>
-
-    <div id="prizesText" class="text">Prizes (<span id="prizesCount">0</span>)</div>
-    <div id="prizesHidden_html"></div>
-    <div id="prizes_html">
-        <div>
-            <span id="closePrizesDisplayButton">&times;</span>
-        </div>
-    </div>
-
-    <div id="stadiumText" class="text">Stadium (<span id="stadiumCount">0</span>)</div>
+    <iframe id="mainContainers" src="main-containers.html"></iframe>
+    <iframe id="oppContainers" src="opp-containers.html"></iframe>
     <div id="stadium_html"></div>
+    <div id="lostzoneText">Lost Zone</div>
 
     <!-- Modal HTML structure -->
     <div id="cardPopup" class="popup">

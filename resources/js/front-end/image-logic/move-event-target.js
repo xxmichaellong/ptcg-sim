@@ -1,6 +1,6 @@
 import { hand_html, hand, discard, discard_html, prizes, prizes_html, lostzone, lostzone_html, 
-    bench, bench_html, active, active_html, stadium, stadium_html, deck, deck_html, flowerSelectingZone, colresssExperimentZone } from "./initialization.js";
-import { moveCard } from "./moveCard.js";
+    bench, bench_html, active, active_html, stadium, stadium_html, deck, deck_html, flowerSelectingZone, colresssExperimentZone } from "../setup/initialization.js";
+import { moveCard } from "./move-card.js";
 
 export function moveEventTarget(selectedCard, mLocation, targetImage){
     switch (selectedCard.location){
@@ -283,6 +283,7 @@ export function moveEventTarget(selectedCard, mLocation, targetImage){
                     moveCard(flowerSelectingZone, flowerSelectingZone_html, hand, hand_html, selectedCard.index, targetImage);
                     break;
             };
+            break;
         case colresssExperimentZone:
             switch (mLocation){
                 case bench:

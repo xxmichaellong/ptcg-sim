@@ -12,35 +12,23 @@ const port = 8080;
 app.use(express.static(__dirname));
 
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
+  res.sendFile( + '/index.html');
 });
-
-const backEndPlayers = {};
 
 io.on('connection', (socket) => {
   console.log('a user connected');
 
   // Listen for the 'appendImage' event from the client
-  socket.on('appendImage', (imageAttributes) => {
+  socket.on('appendImage', (imageAttributes, targetContainerId) => {
     // Broadcast the image information to all connected clients
-    socket.broadcast.emit('imageAppended', imageAttributes);
+    socket.broadcast.emit('imageAppended', imageAttributes, targetContainerId);
   });
 
-  /*
-  backEndPlayers[socket.id] = {
-    x: 100,
-    y: 100
-  };
-
-  io.emit('updatePlayers', backEndPlayers);
-
-  socket.on('disconnect', (reason) => {
-    console.log(reason);
-    delete backEndPlayers[socket.id]
-    io.emit('updatePlayers', backEndPlayers)
-  }); 
-  console.log(backEndPlayers);
-  */
+  // Listen for the 'removeImage' event from the client
+   socket.on('removeImage', (imageId, targetContainerId) => {
+    // Broadcast the image information to all connected clients
+    socket.broadcast.emit('imageRemoved', imageId, targetContainerId);
+  });
 });
 
 // Start the server
