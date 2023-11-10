@@ -1,8 +1,5 @@
-import { deck } from "./initialization.js";
-import { deck_html } from "./initialization.js";
-import { hand } from "./initialization.js";
-import { hand_html } from "./initialization.js";
-import { imageClick } from "./imageClick.js";
+import { deck, deck_html, hand, hand_html } from "../setup/initialization.js";
+import { imageClick } from "../image-logic/image-click.js";
 
 //Function to draw a card from deck
 export function drawCard(){

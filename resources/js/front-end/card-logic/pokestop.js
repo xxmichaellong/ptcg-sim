@@ -1,5 +1,5 @@
-import { deck, deck_html, hand, hand_html, discard, discard_html } from "./initialization.js";
-import { moveCard } from "./moveCard.js";
+import { deck, deck_html, hand, hand_html, discard, discard_html } from "../setup/initialization.js";
+import { moveCard } from "../image-logic/move-card.js";
 
 export function pokestop(){
     let i = 0;
