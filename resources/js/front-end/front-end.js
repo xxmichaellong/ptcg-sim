@@ -10,7 +10,7 @@ import { colresssExperiment } from "./card-logic/colress's-experiment.js";
 import { oppContainersDocument, oppDeckDisplay_html } from "./setup/opp-initialization.js";
 import { buildImage } from "./setup/build-image.js";
 
-export const socket = io();
+export const socket = io('http://localhost:4000');
 
 // Draw a Hand
 const drawHandButton = document.getElementById('drawHandButton');

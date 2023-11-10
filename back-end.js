@@ -1,19 +1,20 @@
 const express = require('express');
+const cors = require('cors');
 const app = express();
+app.use(cors());
 
 //socket.io setup
 const http = require('http');
 const server = http.createServer(app);
 const { Server } = require('socket.io');
-const io = new Server(server);
-
-const port = 8080;
-
-app.use(express.static(__dirname));
-
-app.get('/', (req, res) => {
-  res.sendFile( + '/index.html');
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:8000",  // specify the client origin
+    methods: ["GET", "POST"]  // specify the allowed HTTP methods
+  }
 });
+
+const port = 4000;
 
 io.on('connection', (socket) => {
   console.log('a user connected');
