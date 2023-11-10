@@ -2,7 +2,7 @@ import { shuffle } from "../setup/shuffle.js";
 import { addCard } from "./add-card.js";
 import { deck, deck_html, deckDisplay_html, hand, hand_html, lostzone, lostzone_html, discard, discard_html, stadium, stadium_html, prizes, 
 prizes_html, active, active_html, bench, bench_html, cardData, prizesHidden_html, lostzoneDisplay_html, discardDisplay_html } from "../setup/initialization.js"
-import { allowDrop, drop, dragStart, dragEnd } from "../image-logic/drag.js";
+import { dragOver, drop, dragStart, dragEnd } from "../image-logic/drag.js";
 import { removeImages } from "../image-logic/remove-images.js";
 import { moveCard } from "../image-logic/move-card.js";
 import { socket } from "../front-end.js";
@@ -50,7 +50,7 @@ export function drawHand(){
             alt: 'Deck Cover',
             id: 'deckCover',
             // Event listener for drag-and-drop
-            dragover: allowDrop,
+            dragover: dragOver,
             drop: drop,
             // Function to open the modal when clicked
             click: () => {

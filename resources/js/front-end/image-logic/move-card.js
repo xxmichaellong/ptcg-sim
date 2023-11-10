@@ -1,7 +1,7 @@
 import { lostzone_html, lostzone, prizes_html, prizesHidden_html, lostzoneDisplay_html, discard_html, discard, 
     discardDisplay_html, deck_html, deckDisplay_html, bench_html, active_html, hand_html } from "../setup/initialization.js";
 import { imageClick } from "./image-click.js";
-import { allowDrop, dragEnd, dragStart, drop } from "./drag.js";
+import { dragOver, dragEnd, dragStart, drop } from "./drag.js";
 import { resetImage } from "./reset-image.js";
 import { updateCount } from "../setup/counts.js";
 import { socket } from "../front-end.js";
@@ -33,7 +33,7 @@ export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i
             coverImage.draggable = false;
             // Function to open the modal
             coverImage.id = "lostzoneCover"; //id to reference for dropping
-            coverImage.addEventListener("dragover", allowDrop);
+            coverImage.addEventListener("dragover", dragOver);
             coverImage.addEventListener("drop", drop);
             coverImage.addEventListener('click', () => {
                 lostzone_html.style.display = 'block';
@@ -54,7 +54,7 @@ export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i
             coverImage.draggable = false;
             // Function to open the modal
             coverImage.id = "discardCover"; //id to reference for dropping
-            coverImage.addEventListener("dragover", allowDrop);
+            coverImage.addEventListener("dragover", dragOver);
             coverImage.addEventListener("drop", drop);
             coverImage.addEventListener('click', () => {
                 discard_html.style.display = 'block';
@@ -150,7 +150,7 @@ export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i
         coverImage.removeEventListener('click', imageClick);
         coverImage.draggable = false;
         coverImage.id = "lostzoneCover"; // id to reference for dropping
-        coverImage.addEventListener("dragover", allowDrop);
+        coverImage.addEventListener("dragover", dragOver);
         coverImage.addEventListener("drop", drop);
         // Function to open the modal
         coverImage.addEventListener('click', () => {
@@ -174,7 +174,7 @@ export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i
         coverImage.draggable = false;
         // Function to open the modal
         coverImage.id = "discardCover"; // id to reference for dropping
-        coverImage.addEventListener("dragover", allowDrop);
+        coverImage.addEventListener("dragover", dragOver);
         coverImage.addEventListener("drop", drop);
         coverImage.addEventListener('click', () => {
             discard_html.style.display = 'block';
@@ -192,7 +192,7 @@ export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i
             const coverImage = document.createElement('img');
             coverImage.src = 'resources/card-scans/cardback.png';
             coverImage.id = "deckCover"; // id to reference for dropping
-            coverImage.addEventListener("dragover", allowDrop);
+            coverImage.addEventListener("dragover", dragOver);
             coverImage.addEventListener("drop", drop);
             // Function to open the modal
             coverImage.addEventListener('click', () => {

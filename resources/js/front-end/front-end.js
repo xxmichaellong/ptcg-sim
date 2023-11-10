@@ -1,6 +1,6 @@
 import { containerIds, selectedCard, prizes_html, lostzone_html, discard_html, deck, prizes, discard, 
     lostzone, active, stadium, bench, hand, deck_html, deckDisplay_html } from "./setup/initialization.js";
-import { allowDrop, drop } from "./image-logic/drag.js";
+import { dragOver, drop } from "./image-logic/drag.js";
 import { drawHand } from "./general-actions/draw-hand.js";
 import { moveEventTarget } from "./image-logic/move-event-target.js";
 import { shufflePopupButton, shuffleContainer } from "./general-actions/shuffle-button.js";
@@ -119,7 +119,7 @@ containerIds.forEach(id => {
     }
     else
         container = mainContainersDocument.getElementById(id);
-    container.addEventListener("dragover", allowDrop);
+    container.addEventListener("dragover", dragOver);
     container.addEventListener("drop", drop);
 });
 
