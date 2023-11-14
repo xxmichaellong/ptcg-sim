@@ -104,7 +104,7 @@
   left: 2%;
   bottom: 90%;
 }
-#prizesHidden_html {
+#prizes_html {
   position: fixed;
   bottom: 40%;
   left: 2%;
@@ -114,7 +114,7 @@
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
   background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
 }
-#prizesHidden_html img {
+#prizes_html img {
   width: 50%;
   height: auto;
 } 
@@ -153,23 +153,6 @@
 #deck_html img {
   display: inline-block;
   width: 10%;
-  height: auto;
-}
-#prizes_html {
-  display: none;
-  position: fixed;
-  bottom: 43%;
-  left: 2%;
-  width: 7%;
-  height: 50%;
-  border: 2px solid rgba(224, 224, 75, 0.864); /* Add a thin yellow outline */
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
-  background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
-  z-index: 9999;
-}
-#prizes_html img {
-  display: inline-block;
-  width: 50%;
   height: auto;
 }
 #lostzone_html {

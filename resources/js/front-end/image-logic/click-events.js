@@ -1,5 +1,6 @@
 import { prizes, selectedCard, } from "../setup/initialization.js";
-import { containerToLocation } from "../setup/container-reference.js";
+import { containerIdToLocation } from "../setup/container-reference.js";
+import { deck_html, lostzone_html, discard_html } from "../setup/initialization.js";
 
 // Function to display the popup when the image is clicked
 export function imageClick(event){
@@ -10,14 +11,10 @@ export function imageClick(event){
 
     //identify index of the card/image
     const containerId = event.target.parentElement.id;
-    selectedCard.location = containerToLocation[containerId];
+    selectedCard.location = containerIdToLocation[containerId];
     selectedCard.container = document.getElementById(containerId);
   
-    if (selectedCard.location === prizes && containerId === 'prizesHidden_html') {
-      selectedCard.index = 0;
-    } else {
-      selectedCard.index = selectedCard.location.images.indexOf(event.target);
-    };
+    selectedCard.index = selectedCard.location.cards.findIndex(card => card.image === event.target);
 
     //handle popups for specific cards
 
@@ -41,3 +38,15 @@ export function imageClick(event){
       colresssExperimentPopup.style.top = "40%";
     };
 }
+
+export function deckCoverClick(){
+  deck_html.style.display = 'block';
+};
+
+export function discardCoverClick(){
+  discard_html.style.display = 'block';
+};
+
+export function lostzoneCoverClick(){
+  lostzone_html.style.display = 'block';
+};

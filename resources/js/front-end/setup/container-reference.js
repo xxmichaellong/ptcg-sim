@@ -1,6 +1,6 @@
 import { hand, bench, active, stadium, discard, prizes, lostzone, deck, flowerSelectingZone, colresssExperimentZone } from "./initialization.js";
 
-export const containerToLocation = {
+export const containerIdToLocation = {
     hand_html: hand,
     bench_html: bench,
     active_html: active,
@@ -8,7 +8,6 @@ export const containerToLocation = {
     discard_html: discard,
     discardDisplay_html: discard,
     prizes_html: prizes,
-    prizesHidden_html: prizes,
     lostzone_html: lostzone,
     lostzoneDisplay_html: lostzone,
     deck_html: deck,

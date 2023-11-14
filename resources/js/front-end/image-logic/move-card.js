@@ -1,251 +1,192 @@
-import { lostzone_html, lostzone, prizes_html, prizesHidden_html, lostzoneDisplay_html, discard_html, discard, 
+import { lostzone_html, prizes_html, lostzoneDisplay_html, discard_html, discard, 
     discardDisplay_html, deck_html, deckDisplay_html, bench_html, active_html, hand_html } from "../setup/initialization.js";
-import { imageClick } from "./image-click.js";
-import { dragOver, dragEnd, dragStart, drop } from "./drag.js";
 import { resetImage } from "./reset-image.js";
 import { updateCount } from "../setup/counts.js";
-import { socket } from "../front-end.js";
+import { makeLostzoneCover } from "../card-types/lostzone-cover.js";
+import { makeDiscardCover } from "../card-types/discard-cover.js";
+import { closePopups } from "../setup/close-popups.js";
+import { hideCard, revealCard } from "../general-actions/reveal-and-hide-button.js";
+import { stringToVariable } from "../setup/string-to-variable.js";
+import { oppActive_html, oppBench_html, oppDeckDisplay_html, oppDeck_html, oppDiscardDisplay_html, oppDiscard_html, oppHand_html, oppLostzoneDisplay_html, oppLostzone_html, oppPrizes_html } from "../setup/opp-initialization.js";
+import { makeDeckCover } from "../card-types/deck-cover.js";
 
-export function moveCard(oLocation, oLocation_html, mLocation, mLocation_html, index, targetImage){
+export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex){
+    // create references to the string in case it needs to be used later for recalling moveCard (e.g., appending attached cards);
+    const _oLocation = oLocation;
+    const _oLocation_html = oLocation_html;
+    const _mLocation = mLocation;
+    const _mLocation_html = mLocation_html;
 
-    // remove card from origin card array to new location array
+    oLocation = stringToVariable(user, oLocation);
+    oLocation_html = stringToVariable(user, oLocation_html);
+    mLocation = stringToVariable(user, mLocation);
+    mLocation_html = stringToVariable(user, mLocation_html);
+
+    let targetCard;
+    if (typeof targetIndex === 'number'){
+        targetCard = mLocation.cards[targetIndex];
+    };
+
+    // move card from origin array to new location array
+    const movingCard = oLocation.cards[index];
     mLocation.cards.push(...oLocation.cards.splice(index, 1));
 
-    // remove image from origin location
-    if (oLocation_html === prizes_html){
-        oLocation_html.removeChild(oLocation.images[index]);
-        prizesHidden_html.removeChild(prizesHidden_html.lastElementChild);
-        
-        //opp socket
-        const oppImageAttributes = {
-            src: 'resources/card-scans/cardback.png',
-            alt: 'Prize Card',
+    // dealing with lostzone/discard cover, check if index is equal to the length of array (after removal)
+    if ([lostzone_html, discard_html, oppDiscard_html, oppLostzone_html].includes(oLocation_html) && index === oLocation.cards.length){
+        // remove existing cover image
+        let display_html;
+        if (oLocation_html === lostzone_html){
+            display_html = lostzoneDisplay_html;
+        } else if (oLocation_html === discard_html){
+            display_html = discardDisplay_html;
+        } else if (oLocation_html === oppLostzone_html){
+            display_html = oppLostzoneDisplay_html;
+        } else if (oLocation_html === oppDiscard_html){
+            display_html = oppDiscardDisplay_html;
         };
-        socket.emit('removeImage', oppImageAttributes, 'prizeCardsHidden_html');
-    }
-    else if (oLocation_html === lostzone_html && oLocation.images[index] === oLocation.images[oLocation.images.length-1]){
-        lostzoneDisplay_html.removeChild(lostzoneDisplay_html.firstElementChild)
-        oLocation_html.removeChild(oLocation.images[index]);
-        if (lostzone_html.querySelector('img')){
-            const coverImage = oLocation.images[oLocation.count-1].cloneNode(true);
-            // remove image click function
-            coverImage.removeEventListener('click', imageClick);
-            coverImage.draggable = false;
-            // Function to open the modal
-            coverImage.id = "lostzoneCover"; //id to reference for dropping
-            coverImage.addEventListener("dragover", dragOver);
-            coverImage.addEventListener("drop", drop);
-            coverImage.addEventListener('click', () => {
-                lostzone_html.style.display = 'block';
-                lostzone.images.forEach(image => {
-                    image.style.display = 'inline-block';
-                });   
-            });
-            lostzoneDisplay_html.appendChild(coverImage);
-        }
-    }
-    else if (oLocation_html === discard_html && oLocation.images[index] === oLocation.images[oLocation.images.length-1]){
-        discardDisplay_html.removeChild(discardDisplay_html.firstElementChild)
-        oLocation_html.removeChild(oLocation.images[index]);
-        if (discard_html.querySelector('img')){
-            const coverImage = oLocation.images[oLocation.count-1].cloneNode(true);
-            // remove image click function
-            coverImage.removeEventListener('click', imageClick);
-            coverImage.draggable = false;
-            // Function to open the modal
-            coverImage.id = "discardCover"; //id to reference for dropping
-            coverImage.addEventListener("dragover", dragOver);
-            coverImage.addEventListener("drop", drop);
-            coverImage.addEventListener('click', () => {
-                discard_html.style.display = 'block';
-                discard.images.forEach(image => {
-                    image.style.display = 'inline-block';
-                });
-            });
-        discardDisplay_html.appendChild(coverImage);
-        }
-    }
-    else if (oLocation_html === deck_html && oLocation.images.length === 1){
-        deckDisplay_html.removeChild(deckDisplay_html.firstElementChild)
-        oLocation_html.removeChild(oLocation.images[index]);
-    }
-    else
-        oLocation_html.removeChild(oLocation.images[index]);
 
+        display_html.removeChild(display_html.firstElementChild);
+        // append new cover image if there are still cards
+        if (oLocation.cards.length > 0){
+            const src = oLocation.cards[oLocation.cards.length - 1].image.src;
+            let cover;
+            if (oLocation_html === lostzone_html){
+                cover = makeLostzoneCover(src);
+            } else if (oLocation_html === discard_html){
+                cover = makeDiscardCover(src);
+            } else if (oLocation_html === oppLostzone_html){
+                cover = makeLostzoneCover(src);
+            } else if (oLocation_html === oppDiscard_html){
+                cover = makeDiscardCover(src);
+            };
+            display_html.appendChild(cover.image);
+        };
+    } else if ([deck_html, oppDeck_html].includes(oLocation_html) && oLocation.cards.length === 0){
+        let display_html;
+        if (oLocation_html === deck_html){
+            display_html = deckDisplay_html;
+        } else if (oLocation_html === oppDeck_html){
+            display_html = oppDeckDisplay_html;
+        }
+        display_html.removeChild(display_html.firstElementChild);
+    } else if (oLocation_html === prizes_html){
+        revealCard(movingCard);
+    };
+    
     // update the zIndex and height of each card if the card was attached to the same card and located higher
-    oLocation.images.forEach(image => {
-        if (oLocation.images[index].relative instanceof HTMLImageElement && oLocation.images[index].relative === image.relative 
-        && parseInt(image.style.bottom) > parseInt(oLocation.images[index].style.bottom)){
-            image.style.bottom = (parseInt(image.style.bottom) - 10) + '%';
-            image.style.zIndex = (parseInt(image.style.zIndex) + 1).toString();
+    oLocation.cards.forEach(card => {
+        if (movingCard.image.relative instanceof HTMLImageElement && movingCard.image.relative === card.image.relative 
+        && parseInt(card.image.style.bottom) > parseInt(movingCard.image.style.bottom)){
+            card.image.style.bottom = (parseInt(card.image.style.bottom) - 10) + '%';
+            card.image.style.zIndex = (parseInt(card.image.style.zIndex) + 1).toString();
         };
     });
 
-    // remove img from origin images array and add it to new location images array
-    mLocation.images.push(...oLocation.images.splice(index, 1));
-
     // if the image was attached to another image, decrease the level of layering on the base image
-    if (mLocation.images[mLocation.count-1].target === 'on'){
-        mLocation.images[mLocation.count-1].relative.layer -= 1;
+    if (movingCard.image.target === 'on'){
+        movingCard.image.relative.layer -= 1;
     };
 
     // first, check if image is being attached to another card
-    if (targetImage && (mLocation_html === bench_html || mLocation_html === active_html) && targetImage.style.position === 'static' 
-    && targetImage !== mLocation.images[mLocation.count-1] 
-    && ((oLocation_html !== bench_html && oLocation_html !== active_html) || mLocation.images[mLocation.count-1].style.position === 'absolute')){
-        const targetRect = targetImage.getBoundingClientRect();
-        const draggedImage = mLocation.images[mLocation.count-1];
+    if (targetCard 
+    && [active_html, bench_html, oppActive_html, oppBench_html].includes(mLocation_html) 
+    && targetCard.image.style.position === 'static' 
+    && targetCard.image !== movingCard.image
+    && (![active_html, bench_html, oppActive_html, oppBench_html].includes(oLocation_html) || movingCard.image.style.position === 'absolute')){
+        
+        const targetRect = targetCard.image.getBoundingClientRect();
 
         // format the card so it's attached to targetImage
-        draggedImage.style.position = 'absolute';
-        draggedImage.style.left = targetRect.left;
-        draggedImage.relative = targetImage;    
-        draggedImage.target = 'on';
+        movingCard.image.style.position = 'absolute';
+        movingCard.image.style.left = targetRect.left;
+        movingCard.image.relative = targetCard.image;    
+        movingCard.image.target = 'on';
 
         // increase layer of targetImage by 1
-        if (!targetImage.layer) {
+        /* if (!targetCard.image.layer){
             targetImage.layer = 0;
-        };
-        targetImage.layer += 1;
+        }; */
+        targetCard.image.layer += 1;
 
         const layerIncreaseFactor = 10; // 10% increase for each layer
         const zindexDecreaseFactor = -1; // -1 decrease for each layer
         
-        const bottomValue = `${targetImage.layer * layerIncreaseFactor}%`;
-        const zIndexValue = targetImage.layer * zindexDecreaseFactor;
+        const bottomValue = `${targetCard.image.layer * layerIncreaseFactor}%`;
+        const zIndexValue = targetCard.image.layer * zindexDecreaseFactor;
     
         // make the attached card the appropriate height and attach it to image
-        draggedImage.style.bottom = bottomValue;
-        draggedImage.style.zIndex = zIndexValue;
-        mLocation_html.insertBefore(draggedImage, targetImage);
-    }
-    // now, since we know the card isn't being attached to something else, we can reset the image styles
-    else if (mLocation_html === prizes_html){
-        resetImage(mLocation.images[mLocation.count-1]);
+        movingCard.image.style.bottom = bottomValue;
+        movingCard.image.style.zIndex = zIndexValue;
+        mLocation_html.insertBefore(movingCard.image, targetCard.image);
+    } else {
+        resetImage(movingCard.image);
+        mLocation_html.appendChild(movingCard.image);
 
-        const cardbackElement = document.createElement('img');
-        cardbackElement.src = 'resources/card-scans/cardback.png';
-        cardbackElement.addEventListener('click', imageClick);
-        cardbackElement.addEventListener('dragstart', dragStart);
-        cardbackElement.addEventListener('dragend', dragEnd);
-        prizesHidden_html.appendChild(cardbackElement);
-
-        mLocation_html.appendChild(mLocation.images[mLocation.count-1]);
-
-        //opp socket
-        const oppImageAttributes = {
-            src: 'resources/card-scans/cardback.png',
-            alt: 'Prize Card',
-        };
-        socket.emit('appendImage', oppImageAttributes, 'prizesHidden_html');
-    }
-    else if (mLocation_html === lostzone_html){
-        resetImage(mLocation.images[mLocation.count-1]);
-
-        if (lostzoneDisplay_html.firstElementChild){
-            lostzoneDisplay_html.removeChild(lostzoneDisplay_html.firstElementChild);
-        };
-        const coverImage = mLocation.images[mLocation.count-1].cloneNode(true);
-        // remove image click function
-        coverImage.removeEventListener('click', imageClick);
-        coverImage.draggable = false;
-        coverImage.id = "lostzoneCover"; // id to reference for dropping
-        coverImage.addEventListener("dragover", dragOver);
-        coverImage.addEventListener("drop", drop);
-        // Function to open the modal
-        coverImage.addEventListener('click', () => {
-            lostzone_html.style.display = 'block';
-            lostzone.images.forEach(image => {
-                image.style.display = 'inline-block';
-            });
-        });
-        lostzoneDisplay_html.appendChild(coverImage);
-        mLocation_html.appendChild(mLocation.images[mLocation.count-1]);
-    }
-    else if (mLocation_html === discard_html){
-        resetImage(mLocation.images[mLocation.count-1]);
-
-        if (discardDisplay_html.firstElementChild){
-            discardDisplay_html.removeChild(discardDisplay_html.firstElementChild);
-        }
-        const coverImage = mLocation.images[mLocation.count-1].cloneNode(true);
-        // remove image click function
-        coverImage.removeEventListener('click', imageClick);
-        coverImage.draggable = false;
-        // Function to open the modal
-        coverImage.id = "discardCover"; // id to reference for dropping
-        coverImage.addEventListener("dragover", dragOver);
-        coverImage.addEventListener("drop", drop);
-        coverImage.addEventListener('click', () => {
-            discard_html.style.display = 'block';
-            discard.images.forEach(image => {
-                image.style.display = 'inline-block';
-            });
-        });
-        discardDisplay_html.appendChild(coverImage);
-        mLocation_html.appendChild(mLocation.images[mLocation.count-1]);
-    }
-    else if (mLocation_html === deck_html){
-        resetImage(mLocation.images[mLocation.count-1]);
-
-        if (!deckDisplay_html.firstElementChild){
-            const coverImage = document.createElement('img');
-            coverImage.src = 'resources/card-scans/cardback.png';
-            coverImage.id = "deckCover"; // id to reference for dropping
-            coverImage.addEventListener("dragover", dragOver);
-            coverImage.addEventListener("drop", drop);
-            // Function to open the modal
-            coverImage.addEventListener('click', () => {
-                deck_html.style.display = 'block';
-            });
-            // allow card to be dragged to draw the top card of the deck
-            coverImage.draggable = true; // Make image draggable
-            coverImage.addEventListener('dragstart', dragStart); //Add a dragstart event listener
-            coverImage.addEventListener('dragend', dragEnd);   
-
-            deckDisplay_html.appendChild(coverImage);
-        };
-        mLocation_html.appendChild(mLocation.images[mLocation.count-1]);
-    }
-    else if (mLocation_html === hand_html){
-        resetImage(mLocation.images[mLocation.count-1]);
-        mLocation_html.appendChild(mLocation.images[mLocation.count-1]);
-
-        //opp socket
-        const oppImageAttributes = {
-            src: 'resources/card-scans/cardback.png',
-            alt: 'Hand Card',
-        };
-        socket.emit('appendImage', oppImageAttributes, 'hand_html');
-    }
-    else {
-        resetImage(mLocation.images[mLocation.count-1]);
-        mLocation_html.appendChild(mLocation.images[mLocation.count-1]);
-    };
-
-
-    // deal with any attached cards!!
-    if (mLocation.images[mLocation.count-1].style.position === 'static'){
-        const referenceImage = mLocation.images[mLocation.count-1];
-        for (let i = 0; i < oLocation.images.length; i++) {
-            const image = oLocation.images[i];
-            
-            if (image === referenceImage){
-                break;
+        if ([prizes_html, oppPrizes_html].includes(mLocation_html)){
+           hideCard(movingCard);
+        } else if ([lostzone_html, discard_html, oppLostzone_html, oppDiscard_html].includes(mLocation_html)){
+            let display_html;
+            let cover;
+            if (mLocation_html === lostzone_html){
+                display_html = lostzoneDisplay_html;
+                cover = makeLostzoneCover(movingCard.image.src);
+            } else if (mLocation_html === discard_html){
+                display_html = discardDisplay_html;
+                cover = makeDiscardCover(movingCard.image.src);
+            } else if (mLocation_html === oppLostzone_html){
+                display_html = oppLostzoneDisplay_html;
+                cover = makeLostzoneCover(movingCard.image.src);
+            } else if (mLocation_html === oppDiscard_html){
+                display_html = oppDiscardDisplay_html;
+                cover = makeDiscardCover(movingCard.image.src);
+            };
+            //remove any existing image
+            if (display_html.firstElementChild){
+                display_html.removeChild(display_html.firstElementChild);
+            };
+            display_html.appendChild(cover.image);
+        } else if ([deck_html, oppDeck_html].includes(mLocation_html) && mLocation.cards.length === 1){
+            let display_html;
+            if (mLocation_html === deck_html){
+                display_html = deckDisplay_html;
+            } else if (mLocation_html === oppDeck_html){
+                display_html = oppDeckDisplay_html;
             }
-            else if (image.relative === referenceImage && (mLocation_html === bench_html || mLocation_html === active_html)) {
+            display_html.appendChild(makeDeckCover().image);
+        };
+    };
+   
+    // deal with any attached cards!!
+    if (movingCard.image.style.position === 'static'){
+    
+        //create a reference to the original movingCard index so it's constant within this block
+        let movingCardIndex = mLocation.cards.length - 1;
+        for (let i = 0; i < oLocation.cards.length; i++){
+            const image = oLocation.cards[i].image;
+            if (image === movingCard.image){
+                break;
+            } else if (image.relative === movingCard.image && [active_html, bench_html, oppActive_html, oppBench_html].includes(mLocation_html)){
                 resetImage(image);
                 image.style.position = 'absolute';
-                moveCard(oLocation, oLocation_html, mLocation, mLocation_html, i, referenceImage);
+                moveCard(user, _oLocation, _oLocation_html, _mLocation, _mLocation_html, i, movingCardIndex);
                 i--;
+                //moving from empty/filled to empty
+                //no change to index
+                //moving from empty to empty/filled
+                //no change
+                //moving from filled to different filled
+                //no change
+                //moving from filled to same filled (last card)
+                //no change
+                //moving from filled to same filled (not last card)
+                if(_oLocation === _mLocation && index !== movingCardIndex){
+                    movingCardIndex--;
+                }
             };
         };
     };
 
     updateCount();
     //remove popup
-    cardPopup.style.display = "none";
-    pokestopPopup.style.display = "none";
-    flowerSelectingPopup.style.display = "none";
-    colresssExperimentPopup.style.display = "none";
+    closePopups();
 }

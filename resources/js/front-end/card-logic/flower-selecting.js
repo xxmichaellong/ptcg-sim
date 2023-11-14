@@ -15,8 +15,8 @@ export function flowerSelecting(){
         i++;
     };
 
-    flowerSelectingZone.images.forEach(image => {
-        image.style.display = 'inline-block';
+    flowerSelectingZone.cards.forEach(card => {
+        card.image.style.display = 'inline-block';
     });
 
     if (flowerSelectingZone.childElementCount === 0)

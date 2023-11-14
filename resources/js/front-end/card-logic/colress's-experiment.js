@@ -15,8 +15,8 @@ export function colresssExperiment(){
         i++;
     };
 
-    colresssExperimentZone.images.forEach(image => {
-        image.style.display = 'inline-block';
+    colresssExperimentZone.cards.forEach(card => {
+        card.image.style.display = 'inline-block';
     });
 
     if (colresssExperimentZone.childElementCount === 0)
