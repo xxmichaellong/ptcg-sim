@@ -2,6 +2,7 @@ import { containerIds } from "./setup/initialization.js";
 import { dragOver, drop } from "./image-logic/drag.js";
 import { drawHand } from "./general-actions/draw-hand.js";
 import { moveCard } from "./image-logic/move-card.js";
+import { shuffleButtonFunction } from "./general-actions/shuffle-container.js";
 
 export * from './setup/buttons.js';
 
@@ -28,4 +29,8 @@ socket.on('drawHand', (user, indices) => {
 
 socket.on('moveCard', (user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex) => {
     moveCard(user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex);
+});
+
+socket.on('shuffleButtonFunction', (user, locationAsString, indices) => {
+    shuffleButtonFunction(user, locationAsString, indices);
 });

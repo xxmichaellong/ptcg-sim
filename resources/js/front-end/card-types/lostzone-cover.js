@@ -1,12 +1,13 @@
 import { Card } from "../setup/card.js";
 
-export function makeLostzoneCover(src){
-    const cardAttributes = {
+export function makeLostzoneCover(user, src){
+
+    let cardAttributes = {
         name: 'Lost Zone Cover',
         type: 'cover'
     };
 
-    const imageAttributes = {
+    let imageAttributes = {
         src: src,
         alt: 'Lost Zone Cover',
         id: 'lostzoneDisplay_html',
@@ -16,11 +17,12 @@ export function makeLostzoneCover(src){
         click: 'lostzoneCoverClick'
     };
 
-    const oppImageAttributes = (({ src, alt, id }) => ({ src, alt, id }))(imageAttributes);
-
+    if (user === 'opp'){
+        imageAttributes = (({ src, alt, id, draggable, click }) => ({ src, alt, id, draggable, click }))(imageAttributes);
+    };
+    
     const rawCardAttributes = JSON.stringify(cardAttributes);
     const rawImageAttributes = JSON.stringify(imageAttributes);
-    const oppRawImageAttributes = JSON.stringify(oppImageAttributes);
 
-    return new Card(rawCardAttributes, rawImageAttributes, oppRawImageAttributes);
+    return new Card(rawCardAttributes, rawImageAttributes);
 }

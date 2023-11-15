@@ -15,9 +15,9 @@ export function drawHand(user, indices){
 
     cleanUp(user);
     // Add the cards to the deck array + append to deck_html container
-    for (const [quantity, rawCardAttributes, rawImageAttributes, oppRawImageAttributes] of deckData){
+    for (const [quantity, rawCardAttributes, rawImageAttributes] of deckData){
         for (let i = 0; i < quantity; i++){
-            addCard(user, rawCardAttributes, rawImageAttributes, oppRawImageAttributes);
+            addCard(user, rawCardAttributes, rawImageAttributes);
         };
     };
     //shuffle the indices only if it's the own user
@@ -28,9 +28,9 @@ export function drawHand(user, indices){
 
     // Append the <img> element to the deck display
     if (user === 'self'){
-        deckDisplay_html.appendChild(makeDeckCover().image);
+        deckDisplay_html.appendChild(makeDeckCover(user).image);
     } else 
-        oppDeckDisplay_html.appendChild(makeDeckCover().image);
+        oppDeckDisplay_html.appendChild(makeDeckCover(user).image);
 
     // Populate hand array/container with first 7 values of Deck (and removing cards from deck)
     for (let i = 0; i < 7; i++){

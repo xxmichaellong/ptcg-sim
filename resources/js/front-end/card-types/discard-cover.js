@@ -1,12 +1,13 @@
 import { Card } from "../setup/card.js";
 
-export function makeDiscardCover(src){
-    const cardAttributes = {
+export function makeDiscardCover(user, src){
+    
+    let cardAttributes = {
         name: 'Discard Cover',
         type: 'cover'
     };
 
-    const imageAttributes = {
+    let imageAttributes = {
         src: src,
         alt: 'Discard Cover',
         id: 'discardDisplay_html',
@@ -16,11 +17,12 @@ export function makeDiscardCover(src){
         click: 'discardCoverClick'
     };
 
-    const oppImageAttributes = (({ src, alt, id }) => ({ src, alt, id }))(imageAttributes);
+    if (user === 'opp'){
+        imageAttributes = (({ src, alt, id, draggable, click }) => ({ src, alt, id, draggable, click }))(imageAttributes);
+    };
 
     const rawCardAttributes = JSON.stringify(cardAttributes);
     const rawImageAttributes = JSON.stringify(imageAttributes);
-    const oppRawImageAttributes = JSON.stringify(oppImageAttributes);
 
-    return new Card(rawCardAttributes, rawImageAttributes, oppRawImageAttributes);
+    return new Card(rawCardAttributes, rawImageAttributes);
 }

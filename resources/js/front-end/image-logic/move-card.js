@@ -51,13 +51,13 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
             const src = oLocation.cards[oLocation.cards.length - 1].image.src;
             let cover;
             if (oLocation_html === lostzone_html){
-                cover = makeLostzoneCover(src);
+                cover = makeLostzoneCover(user, src);
             } else if (oLocation_html === discard_html){
-                cover = makeDiscardCover(src);
+                cover = makeDiscardCover(user, src);
             } else if (oLocation_html === oppLostzone_html){
-                cover = makeLostzoneCover(src);
+                cover = makeLostzoneCover(user, src);
             } else if (oLocation_html === oppDiscard_html){
-                cover = makeDiscardCover(src);
+                cover = makeDiscardCover(user, src);
             };
             display_html.appendChild(cover.image);
         };
@@ -69,9 +69,7 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
             display_html = oppDeckDisplay_html;
         }
         display_html.removeChild(display_html.firstElementChild);
-    } else if (oLocation_html === prizes_html){
-        revealCard(movingCard);
-    };
+    }
     
     // update the zIndex and height of each card if the card was attached to the same card and located higher
     oLocation.cards.forEach(card => {
@@ -87,6 +85,17 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
         movingCard.image.relative.layer -= 1;
     };
 
+    // determine whether to hide/reveal card
+
+    //EXTREMELY STRANGE. had an issue where cards weren't properly loading in the discard/lostzone containers
+    //for some reason, refreshing the source makes the image load properly every time.
+    hideCard(movingCard);
+    revealCard(movingCard);
+    //
+
+    if ([prizes_html, oppPrizes_html, oppHand_html].includes(mLocation_html)){
+        hideCard(movingCard);
+     } else revealCard(movingCard);
     // first, check if image is being attached to another card
     if (targetCard 
     && [active_html, bench_html, oppActive_html, oppBench_html].includes(mLocation_html) 
@@ -102,10 +111,6 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
         movingCard.image.relative = targetCard.image;    
         movingCard.image.target = 'on';
 
-        // increase layer of targetImage by 1
-        /* if (!targetCard.image.layer){
-            targetImage.layer = 0;
-        }; */
         targetCard.image.layer += 1;
 
         const layerIncreaseFactor = 10; // 10% increase for each layer
@@ -121,44 +126,48 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
     } else {
         resetImage(movingCard.image);
         mLocation_html.appendChild(movingCard.image);
-
-        if ([prizes_html, oppPrizes_html].includes(mLocation_html)){
-           hideCard(movingCard);
-        } else if ([lostzone_html, discard_html, oppLostzone_html, oppDiscard_html].includes(mLocation_html)){
+        //update discard/lostzone cover
+        if ([lostzone_html, discard_html, oppLostzone_html, oppDiscard_html].includes(mLocation_html)){
             let display_html;
             let cover;
             if (mLocation_html === lostzone_html){
                 display_html = lostzoneDisplay_html;
-                cover = makeLostzoneCover(movingCard.image.src);
+                cover = makeLostzoneCover(user, movingCard.image.src);
             } else if (mLocation_html === discard_html){
                 display_html = discardDisplay_html;
-                cover = makeDiscardCover(movingCard.image.src);
+                cover = makeDiscardCover(user, movingCard.image.src);
             } else if (mLocation_html === oppLostzone_html){
                 display_html = oppLostzoneDisplay_html;
-                cover = makeLostzoneCover(movingCard.image.src);
+                cover = makeLostzoneCover(user, movingCard.image.src);
             } else if (mLocation_html === oppDiscard_html){
                 display_html = oppDiscardDisplay_html;
-                cover = makeDiscardCover(movingCard.image.src);
+                cover = makeDiscardCover(user, movingCard.image.src);
             };
             //remove any existing image
             if (display_html.firstElementChild){
                 display_html.removeChild(display_html.firstElementChild);
             };
             display_html.appendChild(cover.image);
+        //add deck cover if it's the first card
         } else if ([deck_html, oppDeck_html].includes(mLocation_html) && mLocation.cards.length === 1){
             let display_html;
             if (mLocation_html === deck_html){
                 display_html = deckDisplay_html;
             } else if (mLocation_html === oppDeck_html){
                 display_html = oppDeckDisplay_html;
-            }
-            display_html.appendChild(makeDeckCover().image);
+            };
+            display_html.appendChild(makeDeckCover(user).image);
+        //move active card to the bench if it exists
+        } else if ([active_html, oppActive_html].includes(mLocation_html) 
+        && ![active_html, oppActive_html].includes(oLocation_html)
+        && mLocation.cards[1] 
+        && movingCard.image.style.position === 'static'){
+            moveCard(user, 'active', 'active_html', 'bench', 'bench_html', 0);
         };
     };
    
     // deal with any attached cards!!
     if (movingCard.image.style.position === 'static'){
-    
         //create a reference to the original movingCard index so it's constant within this block
         let movingCardIndex = mLocation.cards.length - 1;
         for (let i = 0; i < oLocation.cards.length; i++){
@@ -185,7 +194,6 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
             };
         };
     };
-
     updateCount();
     //remove popup
     closePopups();

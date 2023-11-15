@@ -25,6 +25,9 @@ io.on('connection', (socket) => {
     socket.on('moveCard', (user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex) => {
         socket.broadcast.emit('moveCard', user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex);
     });
+    socket.on('shuffleButtonFunction', (user, locationAsString, indices) => {
+        socket.broadcast.emit('shuffleButtonFunction', user, locationAsString, indices);
+    });
 });
 
 // Start the server

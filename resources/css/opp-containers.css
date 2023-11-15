@@ -168,6 +168,7 @@
     border: 2px solid rgba(188, 90, 90, 0.864); /* Add a thin yellow outline */
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
     background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
+    transform: scaleX(-1) scaleY(-1);
 }
 #lostzone_html img {
     display: inline-block;
@@ -186,6 +187,7 @@
     border: 2px solid rgba(188, 90, 90, 0.864); /* Add a thin yellow outline */
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
     background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
+    transform: scaleX(-1) scaleY(-1);
 }
 #discard_html img {
     display: inline-block;

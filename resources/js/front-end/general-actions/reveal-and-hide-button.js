@@ -5,13 +5,22 @@ export function triggerRevealAndHidePopup(){
     popup.style.display = 'block';
 }
 
+let rootDirectory = window.location.origin;
+
 export function hideCard(card){
-    card.image.src2 = card.image.src;
-    card.image.src = 'resources/card-scans/cardback.png';
+    //only trigger if card isn't already hidden
+    if (card.image.src !== rootDirectory + '/resources/card-scans/cardback.png'){
+    //store actual source in src2
+        card.image.src2 = card.image.src;
+        card.image.src = rootDirectory + '/resources/card-scans/cardback.png';
+    };
 }
 
 export function revealCard(card){
-    card.image.src = card.image.src2;
+    //only trigger if card is hidden
+    if (card.image.src === rootDirectory + '/resources/card-scans/cardback.png'){
+        card.image.src = card.image.src2;
+    };
 }
 
 export function hideCards(container, container_html){

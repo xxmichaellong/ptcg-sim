@@ -61,9 +61,6 @@ export function drop(event){
         draggedImage = mainContainersDocument.querySelectorAll('.dragging');
 //make sure only card images can trigger drop
     if (draggedImage[0].layer !== undefined){
-
-        // const targetImage = event.target.closest('img');
-
         // if target image exists and it isn't itself 
         if (event.target.tagName === 'IMG' && event.target !== draggedImage[0] && ['bench_html', 'active_html'].includes(event.target.parentElement.id)){
             target.containerId = event.target.parentElement.id;

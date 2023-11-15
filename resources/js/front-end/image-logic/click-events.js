@@ -1,6 +1,7 @@
-import { prizes, selectedCard, } from "../setup/initialization.js";
+import { discardDisplay_html, lostzoneDisplay_html, prizes, selectedCard, } from "../setup/initialization.js";
 import { containerIdToLocation } from "../setup/container-reference.js";
 import { deck_html, lostzone_html, discard_html } from "../setup/initialization.js";
+import { oppDiscard_html, oppLostzone_html } from "../setup/opp-initialization.js";
 
 // Function to display the popup when the image is clicked
 export function imageClick(event){
@@ -43,10 +44,16 @@ export function deckCoverClick(){
   deck_html.style.display = 'block';
 };
 
-export function discardCoverClick(){
-  discard_html.style.display = 'block';
+export function discardCoverClick(event){
+  if (event.target.parentElement === discardDisplay_html){
+    discard_html.style.display = 'block';
+  } else
+    oppDiscard_html.style.display = 'block';
 };
 
-export function lostzoneCoverClick(){
-  lostzone_html.style.display = 'block';
+export function lostzoneCoverClick(event){
+  if (event.target.parentElement === lostzoneDisplay_html){
+    lostzone_html.style.display = 'block';
+  } else
+    oppLostzone_html.style.display = 'block';
 };

@@ -6,7 +6,6 @@ export function shuffleIndices(length){
         const j = Math.floor(Math.random() * (i + 1));
         [indices[i], indices[j]] = [indices[j], indices[i]];
     }
-
     return indices;
 }
 

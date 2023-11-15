@@ -6,10 +6,9 @@ export class Card {
     type;
     image;
 
-    constructor(rawCardAttributes, rawImageAttributes, oppRawImageAttributes){
+    constructor(rawCardAttributes, rawImageAttributes){
         this.rawCardAttributes = rawCardAttributes;
         this.rawImageAttributes = rawImageAttributes;
-        this.oppRawImageAttributes = oppRawImageAttributes;
         this.buildCard(JSON.parse(rawCardAttributes)),
         this.buildImage(JSON.parse(rawImageAttributes));
     }
