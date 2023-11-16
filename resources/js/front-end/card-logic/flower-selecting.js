@@ -19,6 +19,7 @@ export function flowerSelecting(){
         card.image.style.display = 'inline-block';
     });
 
-    if (flowerSelectingZone.childElementCount === 0)
+    if (flowerSelectingZone.childElementCount === 0){
         flowerSelectingZone_html.style.display = 'none';
+    };
 }

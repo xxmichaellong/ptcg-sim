@@ -1,5 +1,5 @@
 import { lostzone_html, prizes_html, lostzoneDisplay_html, discard_html, discard, 
-    discardDisplay_html, deck_html, deckDisplay_html, bench_html, active_html, hand_html } from "../setup/initialization.js";
+    discardDisplay_html, deck_html, deckDisplay_html, bench_html, active_html, hand_html, stadium_html, stadium, attachedCardPopup, attachedCardPopup_html } from "../setup/initialization.js";
 import { resetImage } from "./reset-image.js";
 import { updateCount } from "../setup/counts.js";
 import { makeLostzoneCover } from "../card-types/lostzone-cover.js";
@@ -7,8 +7,9 @@ import { makeDiscardCover } from "../card-types/discard-cover.js";
 import { closePopups } from "../setup/close-popups.js";
 import { hideCard, revealCard } from "../general-actions/reveal-and-hide-button.js";
 import { stringToVariable } from "../setup/string-to-variable.js";
-import { oppActive_html, oppBench_html, oppDeckDisplay_html, oppDeck_html, oppDiscardDisplay_html, oppDiscard_html, oppHand_html, oppLostzoneDisplay_html, oppLostzone_html, oppPrizes_html } from "../setup/opp-initialization.js";
+import { oppActive_html, oppAttachedCardPopup_html, oppBench_html, oppDeckDisplay_html, oppDeck_html, oppDiscardDisplay_html, oppDiscard_html, oppHand_html, oppLostzoneDisplay_html, oppLostzone_html, oppPrizes_html } from "../setup/opp-initialization.js";
 import { makeDeckCover } from "../card-types/deck-cover.js";
+import { socket } from "../front-end.js";
 
 export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex){
     // create references to the string in case it needs to be used later for recalling moveCard (e.g., appending attached cards);
@@ -69,7 +70,7 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
             display_html = oppDeckDisplay_html;
         }
         display_html.removeChild(display_html.firstElementChild);
-    }
+    };
     
     // update the zIndex and height of each card if the card was attached to the same card and located higher
     oLocation.cards.forEach(card => {
@@ -89,18 +90,19 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
 
     //EXTREMELY STRANGE. had an issue where cards weren't properly loading in the discard/lostzone containers
     //for some reason, refreshing the source makes the image load properly every time.
-    hideCard(movingCard);
-    revealCard(movingCard);
+    /*hideCard(movingCard);
+    revealCard(movingCard);*/
     //
 
     if ([prizes_html, oppPrizes_html, oppHand_html].includes(mLocation_html)){
         hideCard(movingCard);
-     } else revealCard(movingCard);
+     } else {
+        revealCard(movingCard);
+     };
     // first, check if image is being attached to another card
     if (targetCard 
     && [active_html, bench_html, oppActive_html, oppBench_html].includes(mLocation_html) 
     && targetCard.image.style.position === 'static' 
-    && targetCard.image !== movingCard.image
     && (![active_html, bench_html, oppActive_html, oppBench_html].includes(oLocation_html) || movingCard.image.style.position === 'absolute')){
         
         const targetRect = targetCard.image.getBoundingClientRect();
@@ -163,6 +165,22 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
         && mLocation.cards[1] 
         && movingCard.image.style.position === 'static'){
             moveCard(user, 'active', 'active_html', 'bench', 'bench_html', 0);
+        //remove any existing stadium and send to correct discard pile
+        } else if (stadium_html === mLocation_html && mLocation.cards[1] && user === 'self'){
+            if (mLocation.cards[0].image.user === 'self'){
+                moveCard('self', 'stadium', 'stadium_html', 'discard', 'discard_html', 0);
+                socket.emit('moveCard', 'opp', 'stadium', 'stadium_html', 'discard', 'discard_html', 0)
+            } else {
+                moveCard('opp', 'stadium', 'stadium_html', 'discard', 'discard_html', 0);
+                socket.emit('moveCard', 'self', 'stadium', 'stadium_html', 'discard', 'discard_html', 0)
+            };
+        };
+        if (stadium_html === mLocation_html){
+            if (user === 'self'){
+                stadium_html.style.transform = 'scaleX(1) scaleY(1)';
+            } else {
+                stadium_html.style.transform = 'scaleX(-1) scaleY(-1)';  
+            };
         };
     };
    
@@ -174,27 +192,37 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
             const image = oLocation.cards[i].image;
             if (image === movingCard.image){
                 break;
-            } else if (image.relative === movingCard.image && [active_html, bench_html, oppActive_html, oppBench_html].includes(mLocation_html)){
+            } else if (image.relative === movingCard.image){
                 resetImage(image);
-                image.style.position = 'absolute';
-                moveCard(user, _oLocation, _oLocation_html, _mLocation, _mLocation_html, i, movingCardIndex);
-                i--;
-                //moving from empty/filled to empty
-                //no change to index
-                //moving from empty to empty/filled
-                //no change
-                //moving from filled to different filled
-                //no change
-                //moving from filled to same filled (last card)
-                //no change
-                //moving from filled to same filled (not last card)
-                if(_oLocation === _mLocation && index !== movingCardIndex){
-                    movingCardIndex--;
-                }
+                //moving to active or bench
+                if ([active_html, bench_html, oppActive_html, oppBench_html].includes(mLocation_html)){
+                    image.style.position = 'absolute';
+                    moveCard(user, _oLocation, _oLocation_html, _mLocation, _mLocation_html, i, movingCardIndex);
+                    //moving from empty/filled to empty
+                    //no change to index
+                    //moving from empty to empty/filled
+                    //no change
+                    //moving from filled to different filled
+                    //no change
+                    //moving from filled to same filled (last card)
+                    //no change
+                    //moving from filled to same filled (not last card)
+                    if(_oLocation === _mLocation && index !== movingCardIndex){
+                        movingCardIndex--;
+                    };
+                //moving to other part of deck, open a popup to move the cards
+                } else {
+                    if (user === 'self'){
+                        attachedCardPopup_html.style.display = 'block';
+                    } else {
+                        oppAttachedCardPopup_html.style.display = 'block';
+                    };
+                    moveCard(user, _oLocation, _oLocation_html, 'attachedCardPopup', 'attachedCardPopup_html', i);
+                };
+                i--;    
             };
         };
     };
     updateCount();
-    //remove popup
     closePopups();
 }

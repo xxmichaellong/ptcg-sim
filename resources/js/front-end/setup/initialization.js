@@ -1,15 +1,16 @@
-const mainContainers = document.getElementById('mainContainers');
-export const mainContainersDocument = mainContainers.contentWindow.document;
-export const deckDisplay_html = mainContainersDocument.getElementById('deckDisplay_html');
-export const deck_html = mainContainersDocument.getElementById('deck_html');
-export const lostzone_html = mainContainersDocument.getElementById('lostzone_html');
-export const lostzoneDisplay_html = mainContainersDocument.getElementById('lostzoneDisplay_html');
-export const discard_html = mainContainersDocument.getElementById('discard_html');
-export const discardDisplay_html = mainContainersDocument.getElementById('discardDisplay_html');
-export const prizes_html = mainContainersDocument.getElementById('prizes_html');
-export const active_html = mainContainersDocument.getElementById('active_html');
-export const bench_html = mainContainersDocument.getElementById('bench_html');
-export const hand_html = mainContainersDocument.getElementById('hand_html');
+const selfContainers = document.getElementById('selfContainers');
+export const selfContainersDocument = selfContainers.contentWindow.document;
+export const deckDisplay_html = selfContainersDocument.getElementById('deckDisplay_html');
+export const deck_html = selfContainersDocument.getElementById('deck_html');
+export const lostzone_html = selfContainersDocument.getElementById('lostzone_html');
+export const lostzoneDisplay_html = selfContainersDocument.getElementById('lostzoneDisplay_html');
+export const discard_html = selfContainersDocument.getElementById('discard_html');
+export const discardDisplay_html = selfContainersDocument.getElementById('discardDisplay_html');
+export const prizes_html = selfContainersDocument.getElementById('prizes_html');
+export const active_html = selfContainersDocument.getElementById('active_html');
+export const bench_html = selfContainersDocument.getElementById('bench_html');
+export const hand_html = selfContainersDocument.getElementById('hand_html');
+export const attachedCardPopup_html = selfContainersDocument.getElementById('attachedCardPopup_html');
 
 //deck
 export const deck = {
@@ -85,6 +86,13 @@ export const flowerSelectingZone = {
 };
 
 export const colresssExperimentZone = {
+    cards: [],
+    get count(){
+        return this.cards.length;
+    }
+};
+
+export const attachedCardPopup = {
     cards: [],
     get count(){
         return this.cards.length;

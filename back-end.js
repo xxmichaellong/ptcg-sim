@@ -7,12 +7,7 @@ app.use(cors());
 const http = require('http');
 const server = http.createServer(app);
 const { Server } = require('socket.io');
-const io = new Server(server, {
-    cors: {
-      origin: "http://localhost:8000",  // specify the client origin
-      methods: ["GET", "POST"]  // specify the allowed HTTP methods
-    }
-});
+const io = new Server(server, {cors: {}});
 
 const port = 4000;
 
@@ -27,6 +22,9 @@ io.on('connection', (socket) => {
     });
     socket.on('shuffleButtonFunction', (user, locationAsString, indices) => {
         socket.broadcast.emit('shuffleButtonFunction', user, locationAsString, indices);
+    });
+    socket.on('removeStadium', () => {
+        socket.broadcast.emit('removeStadium');
     });
 });
 

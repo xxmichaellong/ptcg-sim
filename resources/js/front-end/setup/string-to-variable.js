@@ -1,5 +1,5 @@
-import { active, active_html, bench, bench_html, deck, deckDisplay_html, deck_html, discard, discardDisplay_html, discard_html, hand, hand_html, lostzone, lostzoneDisplay_html, lostzone_html, prizes, prizes_html, stadium, stadium_html } from "./initialization.js";
-import { oppActive, oppActive_html, oppBench, oppBench_html, oppDeck, oppDeckDisplay_html, oppDeck_html, oppDiscard, oppDiscardDisplay_html, oppDiscard_html, oppHand, oppHand_html, oppLostzone, oppLostzoneDisplay_html, oppLostzone_html, oppPrizes, oppPrizes_html } from "./opp-initialization.js";
+import { active, active_html, attachedCardPopup, attachedCardPopup_html, bench, bench_html, deck, deckDisplay_html, deck_html, discard, discardDisplay_html, discard_html, hand, hand_html, lostzone, lostzoneDisplay_html, lostzone_html, prizes, prizes_html, stadium, stadium_html } from "./initialization.js";
+import { oppActive, oppActive_html, oppAttachedCardPopup, oppAttachedCardPopup_html, oppBench, oppBench_html, oppDeck, oppDeckDisplay_html, oppDeck_html, oppDiscard, oppDiscardDisplay_html, oppDiscard_html, oppHand, oppHand_html, oppLostzone, oppLostzoneDisplay_html, oppLostzone_html, oppPrizes, oppPrizes_html } from "./opp-initialization.js";
 
 let locations = {
     deck : deck,
@@ -20,10 +20,13 @@ let locations = {
     stadium_html : stadium_html,
     deckDisplay_html : deckDisplay_html,
     lostzoneDisplay_html : lostzoneDisplay_html,
-    discardDisplay_html : discardDisplay_html
+    discardDisplay_html : discardDisplay_html,
+    attachedCardPopup: attachedCardPopup,
+    attachedCardPopup_html: attachedCardPopup_html
 };
 
 export function stringToVariable(user, string){
+    let locations;
     if (user !== 'self'){
         locations = {
             deck : oppDeck,
@@ -44,9 +47,11 @@ export function stringToVariable(user, string){
             stadium_html : stadium_html,
             oppDeckDisplay_html : oppDeckDisplay_html,
             oppLostzoneDisplay_html : oppLostzoneDisplay_html,
-            oppDiscardDisplay_html : oppDiscardDisplay_html
+            oppDiscardDisplay_html : oppDiscardDisplay_html,
+            attachedCardPopup: oppAttachedCardPopup,
+            attachedCardPopup_html: oppAttachedCardPopup_html
         };
-    } else
+    } else {
         locations = {
             deck : deck,
             deck_html : deck_html,
@@ -66,8 +71,11 @@ export function stringToVariable(user, string){
             stadium_html : stadium_html,
             deckDisplay_html : deckDisplay_html,
             lostzoneDisplay_html : lostzoneDisplay_html,
-            discardDisplay_html : discardDisplay_html
+            discardDisplay_html : discardDisplay_html,
+            attachedCardPopup: attachedCardPopup,
+            attachedCardPopup_html: attachedCardPopup_html
         };
+    };
     return locations[string];
 }
 

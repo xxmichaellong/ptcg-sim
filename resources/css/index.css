@@ -5,7 +5,7 @@ body {
   height: 100vh;
   overflow: none;
 }
-#mainContainers {
+#selfContainers {
   position: fixed;
   border: none;
   bottom: 0;
@@ -40,19 +40,19 @@ body {
   left: 20%
 }
 .popup {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: #ffffff;
-    width: auto;
-    padding: 20px;
-    text-align: center;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
-    z-index: 10000;
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #ffffff;
+  width: auto;
+  padding: 20px;
+  text-align: center;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
 }
 #drawHandButton {
   position: fixed;
@@ -71,7 +71,7 @@ body {
 #flowerSelectingZone_html {
   position: fixed;
   display: block;
-  width: 40%; /* Set the width as per your requirement */
+  width: 40%;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%); /* Center the container */

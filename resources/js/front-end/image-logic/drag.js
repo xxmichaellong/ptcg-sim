@@ -1,11 +1,9 @@
-import { selectedCard, discard_html, lostzone_html, deck_html, mainContainersDocument, stadium_html, target } from "../setup/initialization.js";
+import { selectedCard, discard_html, lostzone_html, deck_html, selfContainersDocument, stadium_html, target, attachedCardPopup_html } from "../setup/initialization.js";
 import { containerIdToLocation } from "../setup/container-reference.js"
-import { moveEventTarget } from "./move-event-target.js";
-import { colresssExperimentZone_html } from "../card-logic/colress's-experiment.js";
-import { flowerSelectingZone_html } from "../card-logic/flower-selecting.js";
 import { stringToVariable, variableToString } from "../setup/string-to-variable.js";
 import { moveCard } from "./move-card.js";
 import { socket } from "../front-end.js";
+import { oppAttachedCardPopup_html } from "../setup/opp-initialization.js";
 
 
 // Add this function to initiate the drag operation
@@ -22,16 +20,17 @@ export function dragStart(event){
     } else
         selectedCard.index = selectedCard.location.cards.findIndex(card => card.image === event.target);
     
-    if ([lostzone_html, discard_html, deck_html].includes(selectedCard.container)){
-        selectedCard.container.style.opacity = '0';
+    if ([lostzone_html, discard_html, deck_html, attachedCardPopup_html].includes(selectedCard.container)){
+        selectedCard.container.style.opacity = '0%';
     };
 
     //reroute displays to actual container
-    if (['deckDisplay_html', 'lostzoneDisplay_html', 'discardDisplay_html'].includes(selectedCard.containerId)){
+    if (['deckDisplay_html', 'lostzoneDisplay_html', 'discardDisplay_html', 'attachedCardPopup_html'].includes(selectedCard.containerId)){
     const mapping = {
         'deckDisplay_html': 'deck_html',
         'lostzoneDisplay_html': 'lostzone_html',
-        'discardDisplay_html': 'discard_html'
+        'discardDisplay_html': 'discard_html',
+        'attachedCardPopup_html': 'attachedCardPopup'
     };
         selectedCard.containerId = mapping[selectedCard.containerId];
     };
@@ -39,14 +38,14 @@ export function dragStart(event){
 
 export function dragOver(event){
     event.preventDefault();
-    if ([lostzone_html, discard_html, deck_html].includes(selectedCard.container)){
+    if ([lostzone_html, discard_html, deck_html, attachedCardPopup_html].includes(selectedCard.container)){
         selectedCard.container.style.zIndex = '-1';
     };
 }
 
 export function dragEnd(event){
     event.target.classList.remove('dragging');
-    if ([lostzone_html, discard_html, deck_html].includes(selectedCard.container)){
+    if ([lostzone_html, discard_html, deck_html, attachedCardPopup_html].includes(selectedCard.container)){
         selectedCard.container.style.opacity = '1';
         selectedCard.container.style.zIndex = '9999';    
     };
@@ -58,9 +57,9 @@ export function drop(event){
 
     let draggedImage = document.querySelectorAll('.dragging');
     if (draggedImage.length === 0)
-        draggedImage = mainContainersDocument.querySelectorAll('.dragging');
+        draggedImage = selfContainersDocument.querySelectorAll('.dragging');
 //make sure only card images can trigger drop
-    if (draggedImage[0].layer !== undefined){
+    if (draggedImage[0].layer !== undefined && draggedImage[0].user === 'self'){
         // if target image exists and it isn't itself 
         if (event.target.tagName === 'IMG' && event.target !== draggedImage[0] && ['bench_html', 'active_html'].includes(event.target.parentElement.id)){
             target.containerId = event.target.parentElement.id;

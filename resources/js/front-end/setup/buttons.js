@@ -1,13 +1,12 @@
 import {selectedCard, prizes_html, lostzone_html, discard_html, deck, prizes, discard, 
     lostzone, active, stadium, bench, hand, deck_html, deckDisplay_html } from "./initialization.js";
 import { drawHand } from "../general-actions/draw-hand.js";
-import { moveEventTarget } from "../image-logic/move-event-target.js";
 import { triggerShufflePopup, shuffleContainer, shuffleButtonFunction } from "../general-actions/shuffle-container.js";
 import { pokestop } from "../card-logic/pokestop.js";
 import { flowerSelecting } from "../card-logic/flower-selecting.js";
 import { colresssExperiment } from "../card-logic/colress's-experiment.js";
 import { triggerRevealAndHidePopup, revealCards, hideCards } from "../general-actions/reveal-and-hide-button.js"; 
-import { mainContainersDocument } from "./initialization.js";
+import { selfContainersDocument } from "./initialization.js";
 import { oppContainersDocument, oppDiscard_html, oppLostzone_html } from "./opp-initialization.js";
 
 // Draw a Hand
@@ -69,7 +68,7 @@ export const colresssExperimentButton = document.getElementById('colresssExperim
 colresssExperimentButton.addEventListener('click', colresssExperiment);
 
 // Get the modal and image elements
-export const closeDeckDisplayButton = mainContainersDocument.getElementById('closeDeckDisplayButton');
+export const closeDeckDisplayButton = selfContainersDocument.getElementById('closeDeckDisplayButton');
 
 // Function to close the modal
 closeDeckDisplayButton.addEventListener('click', () => {
@@ -77,7 +76,7 @@ closeDeckDisplayButton.addEventListener('click', () => {
 });
 
 // Get the modal and image elements
-export const closeLostzoneDisplayButton = mainContainersDocument.getElementById('closeLostzoneDisplayButton');
+export const closeLostzoneDisplayButton = selfContainersDocument.getElementById('closeLostzoneDisplayButton');
 
 // Function to close the modal
 closeLostzoneDisplayButton.addEventListener('click', () => {
@@ -85,7 +84,7 @@ closeLostzoneDisplayButton.addEventListener('click', () => {
 });
 
 // Get the modal and image elements
-export const closeDiscardDisplayButton = mainContainersDocument.getElementById('closeDiscardDisplayButton');
+export const closeDiscardDisplayButton = selfContainersDocument.getElementById('closeDiscardDisplayButton');
 
 // Function to close the modal
 closeDiscardDisplayButton.addEventListener('click', () => {

@@ -191,3 +191,32 @@
   width: 10%;
   height: auto;
 }
+#attachedCardPopup_html {
+  display: none;
+  position: fixed;
+  width: 40%;
+  bottom: 50%;
+  left: 50%;
+  height: 20%;
+  transform: translate(-50%, -50%);
+  z-index: 500;
+  border: 2px solid rgba(224, 224, 75, 0.864); /* Add a thin yellow outline */
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
+  background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
+  text-align: center;
+}
+#attachedCardPopup_html img {
+  height: 100%;
+}
+#attachedCardPopup_html::before {
+  content: "Move attached cards";
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  background-color: #ddd;
+  border: 2px solid rgba(224, 224, 75, 0.864);
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
+  text-align: center;
+}

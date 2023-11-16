@@ -12,7 +12,7 @@ export function hideCard(card){
     if (card.image.src !== rootDirectory + '/resources/card-scans/cardback.png'){
     //store actual source in src2
         card.image.src2 = card.image.src;
-        card.image.src = rootDirectory + '/resources/card-scans/cardback.png';
+        card.image.src = '/resources/card-scans/cardback.png';
     };
 }
 

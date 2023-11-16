@@ -33,7 +33,11 @@ export class Card {
                 for (const styleAttr in imageAttributes[attr]){
                     this.image.style[styleAttr] = imageAttributes[attr][styleAttr];
                 };
-            } else this.image.setAttribute(attr, imageAttributes[attr]);
+            } else if (attr === 'user'){
+                this.image.user = imageAttributes[attr];
+            }else {
+                this.image.setAttribute(attr, imageAttributes[attr]);
+            };
         };
         resetImage(this.image);
     }

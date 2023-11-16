@@ -1,12 +1,12 @@
 import { deck, deck_html, colresssExperimentZone } from "../setup/initialization.js";
 import { moveCard } from "../image-logic/move-card.js";
 
+// create HTML container to temporarily hold popup cards
 export const colresssExperimentZone_html = document.getElementById('colresssExperimentZone_html');
 export function colresssExperiment(){
-    // close flowerSelectingpopup
+    // close popup
     colresssExperimentPopup.style.display = "none";
  
-    // create HTML container to temporarily hold flowerselecting cards
     colresssExperimentZone_html.style.display = 'block';
   
     let i = 0;
@@ -19,6 +19,7 @@ export function colresssExperiment(){
         card.image.style.display = 'inline-block';
     });
 
-    if (colresssExperimentZone.childElementCount === 0)
+    if (colresssExperimentZone.childElementCount === 0){
         colresssExperimentZone_html.style.display = 'none';
+    };
 }

@@ -15,11 +15,12 @@ export function makeDeckCover(user){
         click: 'deckCoverClick',
         draggable: true,
         dragstart: 'dragStart',
-        dragend: 'dragEnd'
+        dragend: 'dragEnd',
+        user: user
     };
 
     if (user === 'opp'){
-        imageAttributes = (({ src, alt, id }) => ({ src, alt, id }))(imageAttributes);
+        imageAttributes = (({ src, alt, id, user }) => ({ src, alt, id, user }))(imageAttributes);
     };
 
     const rawCardAttributes = JSON.stringify(cardAttributes);

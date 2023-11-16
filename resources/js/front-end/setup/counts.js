@@ -1,15 +1,16 @@
-import { hand, discard, prizes, lostzone, bench, active, stadium, deck, mainContainersDocument } from "./initialization.js";
+import { hand, discard, prizes, lostzone, bench, active, stadium, deck, selfContainersDocument } from "./initialization.js";
+import { oppContainersDocument, oppDeck, oppDiscard, oppLostzone } from "./opp-initialization.js";
 
 export function updateCount(){
-    const deckCountElement = mainContainersDocument.getElementById('deckCount');
-    const discardCountElement = mainContainersDocument.getElementById('discardCount');
-    const lostzoneCountElement = mainContainersDocument.getElementById('lostzoneCount');
+    const deckCountElement = selfContainersDocument.getElementById('deckCount');
+    const discardCountElement = selfContainersDocument.getElementById('discardCount');
+    const lostzoneCountElement = selfContainersDocument.getElementById('lostzoneCount');
     
     /* 
-    const prizesCountElement = mainContainersDocument.getElementById('prizesCount');
-    const activeCountElement = mainContainersDocument.getElementById('activeCount');
-    const benchCountElement = mainContainersDocument.getElementById('benchCount');
-    const handCountElement = mainContainersDocument.getElementById('handCount');
+    const prizesCountElement = selfContainersDocument.getElementById('prizesCount');
+    const activeCountElement = selfContainersDocument.getElementById('activeCount');
+    const benchCountElement = selfContainersDocument.getElementById('benchCount');
+    const handCountElement = selfContainersDocument.getElementById('handCount');
     */
 
     deckCountElement.textContent = deck.count;
@@ -21,4 +22,13 @@ export function updateCount(){
     benchCountElement.textContent = bench.count;
     handCountElement.textContent = hand.count;
     */
+
+    //opp containers
+    const oppDeckCountElement =  oppContainersDocument.getElementById('deckCount');
+    const oppDiscardCountElement = oppContainersDocument.getElementById('discardCount');
+    const oppLostzoneCountElement = oppContainersDocument.getElementById('lostzoneCount');
+
+    oppDeckCountElement.textContent = oppDeck.count;
+    oppDiscardCountElement.textContent = oppDiscard.count;
+    oppLostzoneCountElement.textContent = oppLostzone.count;
 }

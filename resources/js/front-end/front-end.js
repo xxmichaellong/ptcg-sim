@@ -3,21 +3,22 @@ import { dragOver, drop } from "./image-logic/drag.js";
 import { drawHand } from "./general-actions/draw-hand.js";
 import { moveCard } from "./image-logic/move-card.js";
 import { shuffleButtonFunction } from "./general-actions/shuffle-container.js";
+import { removeStadium } from "./setup/clean-up.js";
 
 export * from './setup/buttons.js';
 
 export const socket = io('http://localhost:4000');
 
-const mainContainers = document.getElementById('mainContainers');
+const selfContainers = document.getElementById('selfContainers');
 
-const mainContainersDocument = mainContainers.contentWindow.document;
+const selfContainersDocument = selfContainers.contentWindow.document;
 
 containerIds.forEach(id => {
     let container;
     if (id === 'stadium_html'){
         container = document.getElementById(id);
     } else
-        container = mainContainersDocument.getElementById(id);
+        container = selfContainersDocument.getElementById(id);
     container.addEventListener("dragover", dragOver);
     container.addEventListener("drop", drop);
 });
@@ -33,4 +34,8 @@ socket.on('moveCard', (user, oLocation, oLocation_html, mLocation, mLocation_htm
 
 socket.on('shuffleButtonFunction', (user, locationAsString, indices) => {
     shuffleButtonFunction(user, locationAsString, indices);
+});
+
+socket.on('removeStadium', () => {
+    removeStadium();
 });
