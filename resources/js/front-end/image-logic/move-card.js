@@ -10,6 +10,7 @@ import { stringToVariable } from "../setup/string-to-variable.js";
 import { oppActive_html, oppAttachedCardPopup_html, oppBench_html, oppDeckDisplay_html, oppDeck_html, oppDiscardDisplay_html, oppDiscard_html, oppHand_html, oppLostzoneDisplay_html, oppLostzone_html, oppPrizes_html } from "../setup/opp-initialization.js";
 import { makeDeckCover } from "../card-types/deck-cover.js";
 import { socket } from "../front-end.js";
+import { addDamageCounter } from "../general-actions/damage-counter.js";
 
 export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex){
     // create references to the string in case it needs to be used later for recalling moveCard (e.g., appending attached cards);
@@ -86,13 +87,13 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
         movingCard.image.relative.layer -= 1;
     };
 
-    // determine whether to hide/reveal card
-
     //EXTREMELY STRANGE. had an issue where cards weren't properly loading in the discard/lostzone containers
     //for some reason, refreshing the source makes the image load properly every time.
     /*hideCard(movingCard);
     revealCard(movingCard);*/
     //
+
+    // determine whether to hide/reveal card
 
     if ([prizes_html, oppPrizes_html, oppHand_html].includes(mLocation_html)){
         hideCard(movingCard);
@@ -100,31 +101,62 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
         revealCard(movingCard);
      };
     // first, check if image is being attached to another card
-    if (targetCard 
+    if (targetCard
     && [active_html, bench_html, oppActive_html, oppBench_html].includes(mLocation_html) 
     && targetCard.image.style.position === 'static' 
     && (![active_html, bench_html, oppActive_html, oppBench_html].includes(oLocation_html) || movingCard.image.style.position === 'absolute')){
+        if (movingCard.type === 'pokemon' && ![active_html, bench_html, oppActive_html, oppBench_html].includes(oLocation_html)){
+            mLocation_html.insertBefore(movingCard.image, targetCard.image);
+            // change targetCard type to absolute, set relative to movingCard
+            targetCard.image.style.position === 'absolute';
+            targetCard.image.relative = movingCard.image;
+            //if damage counter exists, link the textcontent with the new pokemon card
+            if (targetCard.image.damageCounter){
+                addDamageCounter(user, _mLocation, _mLocation_html, mLocation.cards.length - 1);
+                movingCard.image.damageCounter.textContent = targetCard.image.damageCounter.textContent;
+                //remove once opponent is finished with it
+                targetCard.image.damageCounter.textContent = '0';
+                targetCard.image.damageCounter.handleRemove();
+            };
+            // set relative of all of targetCard's attached cards to movingCard
+            mLocation.cards.forEach(card => { 
+                if(card.image.relative === targetCard.image){
+                    card.image.relative = movingCard.image;
+                };
+            });
+            //move the cards to the new host
+            let movingCardIndex = mLocation.cards.length - 1;
+            for (let i = 0; i < mLocation.cards.length; i++){
+                const image = mLocation.cards[i].image;
+                if (image === movingCard.image){
+                    break;
+                } else if (image.relative === movingCard.image){
+                    resetImage(image);
+                    image.style.position = 'absolute';
+                    moveCard(user, _mLocation, _mLocation_html, _mLocation, _mLocation_html, i, movingCardIndex);
+                    movingCardIndex--;
+                    i--;
+                };
+            };
+        } else {
+            // format the card so it's attached to targetImage
+            movingCard.image.style.position = 'absolute';
+            movingCard.image.relative = targetCard.image;    
+            movingCard.image.target = 'on';
+
+            targetCard.image.layer += 1;
+
+            const layerIncreaseFactor = 10; // 10% increase for each layer
+            const zindexDecreaseFactor = -1; // -1 decrease for each layer
+            
+            const bottomValue = `${targetCard.image.layer * layerIncreaseFactor}%`;
+            const zIndexValue = targetCard.image.layer * zindexDecreaseFactor;
         
-        const targetRect = targetCard.image.getBoundingClientRect();
-
-        // format the card so it's attached to targetImage
-        movingCard.image.style.position = 'absolute';
-        movingCard.image.style.left = targetRect.left;
-        movingCard.image.relative = targetCard.image;    
-        movingCard.image.target = 'on';
-
-        targetCard.image.layer += 1;
-
-        const layerIncreaseFactor = 10; // 10% increase for each layer
-        const zindexDecreaseFactor = -1; // -1 decrease for each layer
-        
-        const bottomValue = `${targetCard.image.layer * layerIncreaseFactor}%`;
-        const zIndexValue = targetCard.image.layer * zindexDecreaseFactor;
-    
-        // make the attached card the appropriate height and attach it to image
-        movingCard.image.style.bottom = bottomValue;
-        movingCard.image.style.zIndex = zIndexValue;
-        mLocation_html.insertBefore(movingCard.image, targetCard.image);
+            // make the attached card the appropriate height and attach it to image
+            movingCard.image.style.bottom = bottomValue;
+            movingCard.image.style.zIndex = zIndexValue;
+            mLocation_html.insertBefore(movingCard.image, targetCard.image);
+        };
     } else {
         resetImage(movingCard.image);
         mLocation_html.appendChild(movingCard.image);
@@ -184,15 +216,19 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
         };
     };
    
-    // deal with any attached cards!!
-    if (movingCard.image.style.position === 'static'){
+    // deal with any attached cards
+    if (movingCard.image.style.position === 'static' && [active_html, bench_html, oppActive_html, oppBench_html, attachedCardPopup_html, oppAttachedCardPopup_html].includes(oLocation_html)){
         //create a reference to the original movingCard index so it's constant within this block
         let movingCardIndex = mLocation.cards.length - 1;
         for (let i = 0; i < oLocation.cards.length; i++){
             const image = oLocation.cards[i].image;
             if (image === movingCard.image){
                 break;
-            } else if (image.relative === movingCard.image){
+            };
+            if (image.damageCounter){
+                addDamageCounter(user, _oLocation, _oLocation_html, i);
+            };
+            if (image.relative === movingCard.image){
                 resetImage(image);
                 //moving to active or bench
                 if ([active_html, bench_html, oppActive_html, oppBench_html].includes(mLocation_html)){
@@ -207,11 +243,15 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
                     //moving from filled to same filled (last card)
                     //no change
                     //moving from filled to same filled (not last card)
-                    if(_oLocation === _mLocation && index !== movingCardIndex){
+                    if (_oLocation === _mLocation && index !== movingCardIndex){
                         movingCardIndex--;
                     };
                 //moving to other part of deck, open a popup to move the cards
                 } else {
+                    if (oLocation.cards[i].type === 'pokemon' && movingCard.image.damageCounter){
+                        addDamageCounter(user, _oLocation, _oLocation_html, i);
+                        image.damageCounter.textContent = movingCard.image.damageCounter.textContent;
+                    };
                     if (user === 'self'){
                         attachedCardPopup_html.style.display = 'block';
                     } else {
@@ -219,8 +259,19 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
                     };
                     moveCard(user, _oLocation, _oLocation_html, 'attachedCardPopup', 'attachedCardPopup_html', i);
                 };
-                i--;    
+                i--;
             };
+        };
+    };
+    if (movingCard.image.damageCounter){
+        //redefine index of movingCard because its location could have moved due to attached cards.
+        const index = mLocation.cards.findIndex(card => card === movingCard);
+
+        if ([active_html, bench_html, oppActive_html, oppBench_html, attachedCardPopup_html, oppAttachedCardPopup_html].includes(mLocation_html)){
+            addDamageCounter(user, _mLocation, _mLocation_html, index);
+        } else {
+            movingCard.image.damageCounter.textContent = '0';
+            movingCard.image.damageCounter.handleRemove();
         };
     };
     updateCount();

@@ -79,9 +79,9 @@ export function stringToVariable(user, string){
     return locations[string];
 }
 
-export function variableToString(input) {
-    for (let property in locations) {
-        if (locations[property] === input) {
+export function variableToString(input){
+    for (let property in locations){
+        if (locations[property] === input){
             return property;
         };
     };

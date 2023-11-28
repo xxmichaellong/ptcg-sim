@@ -12,6 +12,7 @@ export function makeLostzoneCover(user, src){
         alt: 'Lost Zone Cover',
         id: 'lostzoneDisplay_html',
         dragover: 'dragOver',
+        dragleave: 'dragLeave',
         drop: 'drop',
         draggable: false,
         click: 'lostzoneCoverClick'

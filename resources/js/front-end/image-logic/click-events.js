@@ -2,9 +2,10 @@ import { discardDisplay_html, lostzoneDisplay_html, prizes, selectedCard, } from
 import { containerIdToLocation } from "../setup/container-reference.js";
 import { deck_html, lostzone_html, discard_html } from "../setup/initialization.js";
 import { oppDiscard_html, oppLostzone_html } from "../setup/opp-initialization.js";
+import { stringToVariable, variableToString } from "../setup/string-to-variable.js";
 
 // Function to display the popup when the image is clicked
-export function imageClick(event){
+/* export function imageClick(event){
 
      //style the popup when image is clicked
      const cardPopup = document.getElementById('cardPopup');
@@ -39,21 +40,33 @@ export function imageClick(event){
       colresssExperimentPopup.style.top = "40%";
     };
 }
+*/
+export const cardPopup = document.getElementById('cardPopup');
+
+export function imageClick(event){
+    cardPopup.style.display = 'block';
+
+    selectedCard.containerId = event.target.parentElement.id;
+    selectedCard.container = stringToVariable('self', selectedCard.containerId);
+    selectedCard.location = containerIdToLocation[selectedCard.containerId];
+    selectedCard.locationAsString = variableToString(selectedCard.location);
+    selectedCard.index = selectedCard.location.cards.findIndex(card => card.image === event.target);
+}
 
 export function deckCoverClick(){
   deck_html.style.display = 'block';
-};
+}
 
 export function discardCoverClick(event){
   if (event.target.parentElement === discardDisplay_html){
     discard_html.style.display = 'block';
   } else
     oppDiscard_html.style.display = 'block';
-};
+}
 
 export function lostzoneCoverClick(event){
   if (event.target.parentElement === lostzoneDisplay_html){
     lostzone_html.style.display = 'block';
   } else
     oppLostzone_html.style.display = 'block';
-};
+}

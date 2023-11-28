@@ -26,6 +26,15 @@ io.on('connection', (socket) => {
     socket.on('removeStadium', () => {
         socket.broadcast.emit('removeStadium');
     });
+    socket.on('addDamageCounter', (user, location, container, index) => {
+        socket.broadcast.emit('addDamageCounter', user, location, container, index);
+    });
+    socket.on('updateDamageCounter', (user, location, index, textContent) => {
+        socket.broadcast.emit('updateDamageCounter', user, location, index, textContent);
+    });
+    socket.on('removeDamageCounter', (user, location, index) => {
+        socket.broadcast.emit('removeDamageCounter', user, location, index);
+    });
 });
 
 // Start the server

@@ -12,6 +12,7 @@ export function makeDiscardCover(user, src){
         alt: 'Discard Cover',
         id: 'discardDisplay_html',
         dragover: 'dragOver',
+        dragleave: 'dragLeave',
         drop: 'drop',
         draggable: false,
         click: 'discardCoverClick'

@@ -11,6 +11,7 @@ export function makeDeckCover(user){
         alt: 'Deck Cover',
         id: 'deckDisplay_html',
         dragover: 'dragOver',
+        dragleave: 'dragLeave',
         drop: 'drop',
         click: 'deckCoverClick',
         draggable: true,

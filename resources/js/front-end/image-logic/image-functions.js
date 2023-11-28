@@ -1,4 +1,4 @@
-import { dragEnd, dragOver, dragStart, drop } from "./drag.js";
+import { dragEnd, dragLeave, dragOver, dragStart, drop } from "./drag.js";
 import { imageClick, discardCoverClick, deckCoverClick, lostzoneCoverClick } from "./click-events.js";
 
 export const imageFunctions = {
@@ -8,6 +8,7 @@ export const imageFunctions = {
     discardCoverClick: discardCoverClick,
     dragStart: dragStart,
     dragOver: dragOver,
+    dragLeave: dragLeave,
     drop: drop,
     dragEnd: dragEnd
 };

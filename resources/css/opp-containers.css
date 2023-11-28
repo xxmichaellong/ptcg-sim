@@ -206,7 +206,6 @@
     border: 2px solid rgba(224, 224, 75, 0.864); /* Add a thin yellow outline */
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
     background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
-    text-align: center;
 }
 #attachedCardPopup_html img {
     height: 100%;
@@ -223,3 +222,14 @@
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
     text-align: center;
 }
+.circle {
+    display: none;
+    position: absolute;
+    width: 3vw;
+    border-radius: 50%;
+    background-color: red;
+    color: white;
+    text-align: center;
+    line-height: 3vw;
+    z-index: 20;
+  }

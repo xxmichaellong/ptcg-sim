@@ -8,6 +8,9 @@ import { colresssExperiment } from "../card-logic/colress's-experiment.js";
 import { triggerRevealAndHidePopup, revealCards, hideCards } from "../general-actions/reveal-and-hide-button.js"; 
 import { selfContainersDocument } from "./initialization.js";
 import { oppContainersDocument, oppDiscard_html, oppLostzone_html } from "./opp-initialization.js";
+import { addDamageCounter } from "../general-actions/damage-counter.js";
+import { variableToString } from "./string-to-variable.js";
+import { socket } from "../front-end.js";
 
 // Draw a Hand
 export const drawHandButton = document.getElementById('drawHandButton');
@@ -117,4 +120,10 @@ export const closeOppDiscardDisplayButton = oppContainersDocument.getElementById
 // Function to close the modal
 closeOppDiscardDisplayButton.addEventListener('click', () => {
     oppDiscard_html.style.display = 'none';
+});
+
+export const damageCounterButton = document.getElementById('damageCounterButton');
+damageCounterButton.addEventListener('click', function(){
+    addDamageCounter('self', variableToString(selectedCard.location), variableToString(selectedCard.container), selectedCard.index)
+    socket.emit('addDamageCounter', 'opp', variableToString(selectedCard.location), variableToString(selectedCard.container), selectedCard.index)
 });

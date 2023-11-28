@@ -39,6 +39,7 @@ function assembleCard(quantity, name, imageURL, type){
         click: 'imageClick',
         dragstart: 'dragStart',
         dragover: 'dragOver',
+        dragleave: 'dragLeave',
         dragend: 'dragEnd',
         id: 'card',
     };

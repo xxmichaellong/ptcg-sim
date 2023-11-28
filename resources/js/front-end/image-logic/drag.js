@@ -1,15 +1,14 @@
-import { selectedCard, discard_html, lostzone_html, deck_html, selfContainersDocument, stadium_html, target, attachedCardPopup_html } from "../setup/initialization.js";
+import { selectedCard, discard_html, lostzone_html, deck_html, selfContainersDocument, stadium_html, target, attachedCardPopup_html, active_html, bench_html } from "../setup/initialization.js";
 import { containerIdToLocation } from "../setup/container-reference.js"
 import { stringToVariable, variableToString } from "../setup/string-to-variable.js";
 import { moveCard } from "./move-card.js";
 import { socket } from "../front-end.js";
-import { oppAttachedCardPopup_html } from "../setup/opp-initialization.js";
-
+import { cardPopup } from "./click-events.js";
 
 // Add this function to initiate the drag operation
 export function dragStart(event){
+    cardPopup.style.display = 'none';
     event.target.classList.add('dragging');
-
     selectedCard.containerId = event.target.parentElement.id;
     selectedCard.container = stringToVariable('self', selectedCard.containerId);
     selectedCard.location = containerIdToLocation[selectedCard.containerId];
@@ -25,12 +24,9 @@ export function dragStart(event){
     };
 
     //reroute displays to actual container
-    if (['deckDisplay_html', 'lostzoneDisplay_html', 'discardDisplay_html', 'attachedCardPopup_html'].includes(selectedCard.containerId)){
+    if (['deckDisplay_html'].includes(selectedCard.containerId)){
     const mapping = {
         'deckDisplay_html': 'deck_html',
-        'lostzoneDisplay_html': 'lostzone_html',
-        'discardDisplay_html': 'discard_html',
-        'attachedCardPopup_html': 'attachedCardPopup'
     };
         selectedCard.containerId = mapping[selectedCard.containerId];
     };
@@ -38,13 +34,37 @@ export function dragStart(event){
 
 export function dragOver(event){
     event.preventDefault();
+    if (event.target.classList.contains('circle')) {
+        event.target.style.pointerEvents = 'none';
+    };
     if ([lostzone_html, discard_html, deck_html, attachedCardPopup_html].includes(selectedCard.container)){
         selectedCard.container.style.zIndex = '-1';
     };
+    if (event.target.tagName === 'DIV' || ([active_html, bench_html].includes(event.target.parentElement)
+    && !event.target.classList.contains('dragging')
+    && event.target.style.position === 'static')
+    && ![active_html, bench_html].includes(selfContainersDocument.querySelector('.dragging').parentElement)){
+        event.target.classList.add('highlight');
+    };
+    if (event.target.parentElement.tagName === 'DIV' 
+    && (![active_html, bench_html].includes(event.target.parentElement) || [active_html, bench_html].includes(selfContainersDocument.querySelector('.dragging').parentElement))){
+        event.target.parentElement.classList.add('highlight');
+    }
 }
+export function dragLeave(event){
+    event.target.classList.remove('highlight'); 
+    event.target.parentElement.classList.remove('highlight');
+};
 
 export function dragEnd(event){
+    let damageCounters = selfContainersDocument.getElementsByClassName('circle');
+    for (let i = 0; i < damageCounters.length; i++) {
+        damageCounters[i].style.pointerEvents = 'auto';
+    };
+
     event.target.classList.remove('dragging');
+    event.target.parentElement.classList.remove('highlight');
+
     if ([lostzone_html, discard_html, deck_html, attachedCardPopup_html].includes(selectedCard.container)){
         selectedCard.container.style.opacity = '1';
         selectedCard.container.style.zIndex = '9999';    
@@ -54,6 +74,11 @@ export function dragEnd(event){
 // Add this function to handle the drop operation
 export function drop(event){
     event.preventDefault();
+    if (event.target.classList.contains('circle')) {
+        event.target.style.pointerEvents = 'none';
+    };
+    event.target.classList.remove('highlight');
+    event.target.parentElement.classList.remove('highlight');
 
     let draggedImage = document.querySelectorAll('.dragging');
     if (draggedImage.length === 0)
