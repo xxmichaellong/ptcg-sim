@@ -13,27 +13,48 @@ const port = 4000;
 
 io.on('connection', (socket) => {
     console.log('a user connected');
-    // Listen for the 'appendImage' event from the client
-    socket.on('drawHand', (user, indices) => {
-        socket.broadcast.emit('drawHand', user, indices);
+
+    socket.on('generateId', () => {
+        socket.emit('generateId', socket.id.toString() + '0');
     });
-    socket.on('moveCard', (user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex) => {
-        socket.broadcast.emit('moveCard', user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex);
+
+    socket.on('joinGame', (id) => {
+        socket.join(id);
+        socket.emit('joinGame', id);
     });
-    socket.on('shuffleButtonFunction', (user, locationAsString, indices) => {
-        socket.broadcast.emit('shuffleButtonFunction', user, locationAsString, indices);
+
+    socket.on('drawHand', (id, user, indices) => {
+        socket.broadcast.to(id).emit('drawHand', user, indices);
     });
-    socket.on('removeStadium', () => {
-        socket.broadcast.emit('removeStadium');
+    socket.on('moveCard', (id, user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex) => {
+        socket.broadcast.to(id).emit('moveCard', user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex);
     });
-    socket.on('addDamageCounter', (user, location, container, index) => {
-        socket.broadcast.emit('addDamageCounter', user, location, container, index);
+    socket.on('shuffleButtonFunction', (id, user, locationAsString, indices) => {
+        socket.broadcast.to(id).emit('shuffleButtonFunction', user, locationAsString, indices);
     });
-    socket.on('updateDamageCounter', (user, location, index, textContent) => {
-        socket.broadcast.emit('updateDamageCounter', user, location, index, textContent);
+    socket.on('removeStadium', (id, ) => {
+        socket.broadcast.to(id).emit('removeStadium');
     });
-    socket.on('removeDamageCounter', (user, location, index) => {
-        socket.broadcast.emit('removeDamageCounter', user, location, index);
+    socket.on('addDamageCounter', (id, user, location, container, index) => {
+        socket.broadcast.to(id).emit('addDamageCounter', user, location, container, index);
+    });
+    socket.on('updateDamageCounter', (id, user, location, index, textContent) => {
+        socket.broadcast.to(id).emit('updateDamageCounter', user, location, index, textContent);
+    });
+    socket.on('removeDamageCounter', (id, user, location, index) => {
+        socket.broadcast.to(id).emit('removeDamageCounter', user, location, index);
+    });
+    socket.on('addSpecialCondition', (id, user, location, container, index) => {
+        socket.broadcast.to(id).emit('addSpecialCondition', user, location, container, index);
+    });
+    socket.on('updateSpecialCondition', (id, user, location, index, textContent) => {
+        socket.broadcast.to(id).emit('updateSpecialCondition', user, location, index, textContent);
+    });
+    socket.on('removeSpecialCondition', (id, user, location, index) => {
+        socket.broadcast.to(id).emit('removeSpecialCondition', user, location, index);
+    });
+    socket.on('textMessage', (id, textContent) => {
+        socket.broadcast.to(id).emit('textMessage', textContent);
     });
 });
 

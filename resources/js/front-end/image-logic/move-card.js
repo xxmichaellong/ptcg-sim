@@ -9,8 +9,9 @@ import { hideCard, revealCard } from "../general-actions/reveal-and-hide-button.
 import { stringToVariable } from "../setup/string-to-variable.js";
 import { oppActive_html, oppAttachedCardPopup_html, oppBench_html, oppDeckDisplay_html, oppDeck_html, oppDiscardDisplay_html, oppDiscard_html, oppHand_html, oppLostzoneDisplay_html, oppLostzone_html, oppPrizes_html } from "../setup/opp-initialization.js";
 import { makeDeckCover } from "../card-types/deck-cover.js";
-import { socket } from "../front-end.js";
+import { socket } from "../setup/socket.js";
 import { addDamageCounter } from "../general-actions/damage-counter.js";
+import { roomId } from "../start-page/generate-id.js";
 
 export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex){
     // create references to the string in case it needs to be used later for recalling moveCard (e.g., appending attached cards);
@@ -77,7 +78,7 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
     oLocation.cards.forEach(card => {
         if (movingCard.image.relative instanceof HTMLImageElement && movingCard.image.relative === card.image.relative 
         && parseInt(card.image.style.bottom) > parseInt(movingCard.image.style.bottom)){
-            card.image.style.bottom = (parseInt(card.image.style.bottom) - 10) + '%';
+            card.image.style.bottom = (parseInt(card.image.style.bottom) - 12) + '%';
             card.image.style.zIndex = (parseInt(card.image.style.zIndex) + 1).toString();
         };
     });
@@ -87,19 +88,19 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
         movingCard.image.relative.layer -= 1;
     };
 
-    //EXTREMELY STRANGE. had an issue where cards weren't properly loading in the discard/lostzone containers
-    //for some reason, refreshing the source makes the image load properly every time.
-    /*hideCard(movingCard);
-    revealCard(movingCard);*/
-    //
+    //redraw trick
+    if (![active_html, bench_html, oppActive_html, oppBench_html, attachedCardPopup_html, oppAttachedCardPopup_html].includes(mLocation_html)){
+        hideCard(movingCard);
+        revealCard(movingCard);
+    };
 
     // determine whether to hide/reveal card
-
     if ([prizes_html, oppPrizes_html, oppHand_html].includes(mLocation_html)){
         hideCard(movingCard);
      } else {
         revealCard(movingCard);
-     };
+    };
+
     // first, check if image is being attached to another card
     if (targetCard
     && [active_html, bench_html, oppActive_html, oppBench_html].includes(mLocation_html) 
@@ -146,8 +147,8 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
 
             targetCard.image.layer += 1;
 
-            const layerIncreaseFactor = 10; // 10% increase for each layer
-            const zindexDecreaseFactor = -1; // -1 decrease for each layer
+            const layerIncreaseFactor = 12;
+            const zindexDecreaseFactor = -1;
             
             const bottomValue = `${targetCard.image.layer * layerIncreaseFactor}%`;
             const zIndexValue = targetCard.image.layer * zindexDecreaseFactor;
@@ -201,10 +202,10 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
         } else if (stadium_html === mLocation_html && mLocation.cards[1] && user === 'self'){
             if (mLocation.cards[0].image.user === 'self'){
                 moveCard('self', 'stadium', 'stadium_html', 'discard', 'discard_html', 0);
-                socket.emit('moveCard', 'opp', 'stadium', 'stadium_html', 'discard', 'discard_html', 0)
+                socket.emit('moveCard', roomId, 'opp', 'stadium', 'stadium_html', 'discard', 'discard_html', 0)
             } else {
                 moveCard('opp', 'stadium', 'stadium_html', 'discard', 'discard_html', 0);
-                socket.emit('moveCard', 'self', 'stadium', 'stadium_html', 'discard', 'discard_html', 0)
+                socket.emit('moveCard', roomId, 'self', 'stadium', 'stadium_html', 'discard', 'discard_html', 0)
             };
         };
         if (stadium_html === mLocation_html){
@@ -263,6 +264,7 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
             };
         };
     };
+
     if (movingCard.image.damageCounter){
         //redefine index of movingCard because its location could have moved due to attached cards.
         const index = mLocation.cards.findIndex(card => card === movingCard);
@@ -274,6 +276,12 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
             movingCard.image.damageCounter.handleRemove();
         };
     };
+
+    if (movingCard.image.specialCondition && ![active_html, oppActive_html].includes(mLocation_html)){
+        movingCard.image.specialCondition.textContent = '0';
+        movingCard.image.specialCondition.handleRemove();
+    };
+
     updateCount();
     closePopups();
 }

@@ -18,9 +18,9 @@ export function makeDiscardCover(user, src){
         click: 'discardCoverClick'
     };
 
-    if (user === 'opp'){
+    /* if (user === 'opp'){
         imageAttributes = (({ src, alt, id, draggable, click }) => ({ src, alt, id, draggable, click }))(imageAttributes);
-    };
+    }; */
 
     const rawCardAttributes = JSON.stringify(cardAttributes);
     const rawImageAttributes = JSON.stringify(imageAttributes);

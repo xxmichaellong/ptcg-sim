@@ -2,9 +2,10 @@ import { rearrangeArray } from "../setup/shuffle.js"
 import { removeImages } from "../image-logic/remove-images.js";
 import { deck, deck_html, prizes, prizes_html } from "../setup/initialization.js";
 import { oppDeck, oppDeck_html, oppPrizes, oppPrizes_html } from "../setup/opp-initialization.js";
-import { socket } from "../front-end.js";
+import { socket } from "../setup/socket.js";
 import { stringToVariable } from "../setup/string-to-variable.js";
 import { shuffleIndices } from "../setup/shuffle.js";
+import { roomId } from "../start-page/generate-id.js";
 
 export function triggerShufflePopup(){
     const popup = document.getElementById('shufflePopup');
@@ -51,5 +52,5 @@ export function shuffleButtonFunction (user, locationAsString, indices){
     shuffleContainer(user, locationAsString, indices);
     
     if (user === 'self')
-        socket.emit('shuffleButtonFunction', 'opp', locationAsString, indices);
+        socket.emit('shuffleButtonFunction', roomId, 'opp', locationAsString, indices);
 }

@@ -20,9 +20,10 @@ export function makeDeckCover(user){
         user: user
     };
 
+    /*
     if (user === 'opp'){
         imageAttributes = (({ src, alt, id, user }) => ({ src, alt, id, user }))(imageAttributes);
-    };
+    }; */
 
     const rawCardAttributes = JSON.stringify(cardAttributes);
     const rawImageAttributes = JSON.stringify(imageAttributes);

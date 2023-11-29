@@ -18,9 +18,9 @@ export function makeLostzoneCover(user, src){
         click: 'lostzoneCoverClick'
     };
 
-    if (user === 'opp'){
+    /* if (user === 'opp'){
         imageAttributes = (({ src, alt, id, draggable, click }) => ({ src, alt, id, draggable, click }))(imageAttributes);
-    };
+    }; */
     
     const rawCardAttributes = JSON.stringify(cardAttributes);
     const rawImageAttributes = JSON.stringify(imageAttributes);

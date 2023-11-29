@@ -1,7 +1,7 @@
-import { discardDisplay_html, lostzoneDisplay_html, prizes, selectedCard, } from "../setup/initialization.js";
+import { deckDisplay_html, discardDisplay_html, lostzoneDisplay_html, prizes, selectedCard, selfContainersDocument, } from "../setup/initialization.js";
 import { containerIdToLocation } from "../setup/container-reference.js";
 import { deck_html, lostzone_html, discard_html } from "../setup/initialization.js";
-import { oppDiscard_html, oppLostzone_html } from "../setup/opp-initialization.js";
+import { oppDeck_html, oppDiscard_html, oppLostzone_html } from "../setup/opp-initialization.js";
 import { stringToVariable, variableToString } from "../setup/string-to-variable.js";
 
 // Function to display the popup when the image is clicked
@@ -44,29 +44,56 @@ import { stringToVariable, variableToString } from "../setup/string-to-variable.
 export const cardPopup = document.getElementById('cardPopup');
 
 export function imageClick(event){
-    cardPopup.style.display = 'block';
+    if (selfContainersDocument.body.contains(event.target)){
+        selectedCard.oUser = 'opp';
+        selectedCard.user = 'self';
+    } else {
+        selectedCard.oUser = 'self';
+        selectedCard.user = 'opp';
+    };
 
     selectedCard.containerId = event.target.parentElement.id;
-    selectedCard.container = stringToVariable('self', selectedCard.containerId);
-    selectedCard.location = containerIdToLocation[selectedCard.containerId];
-    selectedCard.locationAsString = variableToString(selectedCard.location);
+    selectedCard.container = stringToVariable(selectedCard.user, selectedCard.containerId);
+    selectedCard.location = containerIdToLocation(selectedCard.user, selectedCard.containerId);
+    selectedCard.locationAsString = variableToString(selectedCard.user, selectedCard.location);
     selectedCard.index = selectedCard.location.cards.findIndex(card => card.image === event.target);
+
+    let damageCounterButton = document.getElementById('damageCounterButton');
+    let specialConditionButton = document.getElementById('specialConditionButton')
+
+    if (['active_html', 'bench_html'].includes(selectedCard.containerId)){
+        damageCounterButton.style.display = 'block';
+    } else {
+        damageCounterButton.style.display = 'none';
+    };
+
+    if (['active_html'].includes(selectedCard.containerId)){
+        specialConditionButton.style.display = 'block';
+    } else {
+        specialConditionButton.style.display = 'none';
+    };
+
+
+    cardPopup.style.display = 'block';
 }
 
-export function deckCoverClick(){
-  deck_html.style.display = 'block';
+export function deckCoverClick(event){
+    if (event.target.parentElement === deckDisplay_html){
+        deck_html.style.display = 'block';
+    } else
+		oppDeck_html.style.display = 'block';
 }
 
 export function discardCoverClick(event){
-  if (event.target.parentElement === discardDisplay_html){
-    discard_html.style.display = 'block';
-  } else
-    oppDiscard_html.style.display = 'block';
+    if (event.target.parentElement === discardDisplay_html){
+        discard_html.style.display = 'block';
+    } else
+        oppDiscard_html.style.display = 'block';
 }
 
 export function lostzoneCoverClick(event){
   if (event.target.parentElement === lostzoneDisplay_html){
-    lostzone_html.style.display = 'block';
+      lostzone_html.style.display = 'block';
   } else
-    oppLostzone_html.style.display = 'block';
+      oppLostzone_html.style.display = 'block';
 }

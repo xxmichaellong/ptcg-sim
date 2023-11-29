@@ -79,7 +79,6 @@
 #bench_html img {
   width: auto;
   height: 100%;
-  margin: 2px;
 } 
 #activeText {
   position: fixed;
@@ -225,7 +224,7 @@
   position: absolute;
   width: 3vw;
   border-radius: 50%;
-  background-color: red;
+  background-color: rgb(255, 98, 0);
   color: white;
   text-align: center;
   line-height: 3vw;

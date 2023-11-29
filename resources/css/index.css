@@ -5,25 +5,132 @@ body {
   height: 100vh;
   overflow: none;
 }
+
+#chatbox {
+  background: #99c1be;
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 20%;
+  height: 85%;
+  overflow-y: auto;
+  padding: 10px;
+  box-sizing: border-box;
+  border: 2px solid #706969;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+#messageInput {
+  position: fixed;
+  right: 0;
+  bottom: 10%;
+  width: 19.5%;
+  height: 50px;
+}
+
+.selfBubble, .announcement, .oppBubble {
+  max-width: 80%;
+  padding: 10px;
+  word-wrap: break-word;
+  margin-bottom: 0px;
+}
+
+.selfBubble {
+  background-color: #f0f0f0;
+  border-radius: 10px;
+  text-align: left;
+  align-self: flex-end;
+}
+
+.announcement {
+  background-color: rgb(206, 139, 139);
+  border-radius: 10px;
+  text-align: left;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.oppBubble {
+  background-color: rgb(139, 148, 206);
+  border-radius: 10px;
+  text-align: left;
+  margin-right: auto;
+}
+
+.cover {
+  position: fixed;
+  height: 100%;
+  width: 100%;
+  background: rgba(30, 30, 60, 0.7);
+  z-index: 1000;
+}
+.container {
+  bottom: 35%;
+  left: 35%;
+  position: fixed;
+  z-index: 1000;
+  overflow: hidden;
+}
+#header {
+  background: #50a8a0;
+  color: white;
+  padding: 10px;
+  text-align: center;
+}
+#roomId {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 0;
+}
+#roomId input {
+  padding: 10px;
+  width: 70%;
+}
+#copyButton {
+  margin: 10px;
+  padding: 9px;
+}
+#generateIdButton {
+  padding: 10px;
+  width: 20%;
+  background: #a89850;
+  color: white;
+  border: none;
+}
+#generateIdButton:hover {
+  background: #8c7e46; /* Change this color to the hover color you want */
+}
+#playButton {
+  line-height: 60px;
+  background: #333;
+  color: white;
+  text-align: center;
+}
+#playButton:hover {
+  background: #78766e; /* Change this color to the hover color you want */
+}
 #selfContainers {
   position: fixed;
   border: none;
   bottom: 0;
-  width: 100%;
+  width: 80%;
   height: 60%;
 }
 #oppContainers {
   position: fixed;
   border: none;
   bottom: 60%;
-  width: 100%;
+  width: 80%;
   height: 40%;
   transform: scaleX(-1) scaleY(-1);
 }
 #stadium_html {
   position: fixed;
   bottom: 54%;
-  left: 72%;
+  left: 60%;
   width: 8%;
   height: 12%;
   border: 2px solid rgba(123, 123, 118, 0.864); /* Add a thin yellow outline */

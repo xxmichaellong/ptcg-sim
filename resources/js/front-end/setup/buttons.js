@@ -1,16 +1,17 @@
-import {selectedCard, prizes_html, lostzone_html, discard_html, deck, prizes, discard, 
-    lostzone, active, stadium, bench, hand, deck_html, deckDisplay_html } from "./initialization.js";
+import {selectedCard, prizes_html, lostzone_html, discard_html, prizes, deck_html } from "./initialization.js";
 import { drawHand } from "../general-actions/draw-hand.js";
-import { triggerShufflePopup, shuffleContainer, shuffleButtonFunction } from "../general-actions/shuffle-container.js";
+import { triggerShufflePopup, shuffleButtonFunction } from "../general-actions/shuffle-container.js";
 import { pokestop } from "../card-logic/pokestop.js";
 import { flowerSelecting } from "../card-logic/flower-selecting.js";
 import { colresssExperiment } from "../card-logic/colress's-experiment.js";
 import { triggerRevealAndHidePopup, revealCards, hideCards } from "../general-actions/reveal-and-hide-button.js"; 
 import { selfContainersDocument } from "./initialization.js";
-import { oppContainersDocument, oppDiscard_html, oppLostzone_html } from "./opp-initialization.js";
+import { oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html } from "./opp-initialization.js";
 import { addDamageCounter } from "../general-actions/damage-counter.js";
 import { variableToString } from "./string-to-variable.js";
-import { socket } from "../front-end.js";
+import { socket } from "./socket.js";
+import { addSpecialCondition } from "../general-actions/special-condition.js";
+import { roomId } from "../start-page/generate-id.js";
 
 // Draw a Hand
 export const drawHandButton = document.getElementById('drawHandButton');
@@ -25,38 +26,6 @@ shuffleDeckButton.addEventListener('click', function(){shuffleButtonFunction ('s
 
 export const shufflePrizesButton = document.getElementById('shufflePrizesButton');
 shufflePrizesButton.addEventListener('click', function(){shuffleButtonFunction ('self', 'prizes')});
-
-// Discard selected card
-export const discardCardButton = document.getElementById('discardCardButton');
-discardCardButton.addEventListener('click', function(){moveEventTarget(selectedCard, discard)});
-
-// Bench selected card
-export const benchCardButton = document.getElementById('benchCardButton');
-benchCardButton.addEventListener('click', function(){moveEventTarget(selectedCard, bench)});
-
-// lostzone selected card
-export const lostzoneCardButton = document.getElementById('lostzoneCardButton');
-lostzoneCardButton.addEventListener('click', function(){moveEventTarget(selectedCard, lostzone)});
-
-// stadium selected card
-export const stadiumCardButton = document.getElementById('stadiumCardButton');
-stadiumCardButton.addEventListener('click', function(){moveEventTarget(selectedCard, stadium)});
-
-// prize selected card
-export const prizesCardButton = document.getElementById('prizesCardButton');
-prizesCardButton.addEventListener('click', function(){moveEventTarget(selectedCard, prizes)});
-
-// hand selected card
-export const handCardButton = document.getElementById('handCardButton');
-handCardButton.addEventListener('click', function(){moveEventTarget(selectedCard, hand)});
-
-// deck selected card
-export const deckCardButton = document.getElementById('deckCardButton');
-deckCardButton.addEventListener('click', function(){moveEventTarget(selectedCard, deck)});
-
-// active selected card
-export const activeCardButton = document.getElementById('activeCardButton');
-activeCardButton.addEventListener('click', function(){moveEventTarget(selectedCard, active)});
 
 // pokestop function
 export const pokestopButton = document.getElementById('pokestopButton');
@@ -122,8 +91,21 @@ closeOppDiscardDisplayButton.addEventListener('click', () => {
     oppDiscard_html.style.display = 'none';
 });
 
+export const closeOppDeckDisplayButton = oppContainersDocument.getElementById('closeDeckDisplayButton');
+
+// Function to close the modal
+closeOppDeckDisplayButton.addEventListener('click', () => {
+    oppDeck_html.style.display = 'none';
+});
+
 export const damageCounterButton = document.getElementById('damageCounterButton');
 damageCounterButton.addEventListener('click', function(){
-    addDamageCounter('self', variableToString(selectedCard.location), variableToString(selectedCard.container), selectedCard.index)
-    socket.emit('addDamageCounter', 'opp', variableToString(selectedCard.location), variableToString(selectedCard.container), selectedCard.index)
+    addDamageCounter(selectedCard.user, variableToString(selectedCard.user, selectedCard.location), variableToString(selectedCard.user, selectedCard.container), selectedCard.index)
+    socket.emit('addDamageCounter', roomId, selectedCard.oUser, variableToString(selectedCard.user, selectedCard.location), variableToString(selectedCard.user, selectedCard.container), selectedCard.index)
+});
+ 
+export const specialConditionButton = document.getElementById('specialConditionButton');
+specialConditionButton.addEventListener('click', function(){
+    addSpecialCondition(selectedCard.user, variableToString(selectedCard.user, selectedCard.location), variableToString(selectedCard.user, selectedCard.container), selectedCard.index)
+    socket.emit('addSpecialCondition', roomId, selectedCard.oUser, variableToString(selectedCard.user, selectedCard.location), variableToString(selectedCard.user, selectedCard.container), selectedCard.index)
 });

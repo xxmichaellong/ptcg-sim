@@ -2,7 +2,8 @@ import { cardPopup } from "../image-logic/click-events.js";
 import { selfContainersDocument } from "../setup/initialization.js";
 import { oppContainersDocument } from "../setup/opp-initialization.js";
 import { stringToVariable } from "../setup/string-to-variable.js";
-import { socket } from "../front-end.js";
+import { socket } from "../setup/socket.js";
+import { roomId } from "../start-page/generate-id.js";
 
 export function addDamageCounter (user, location, container, index){
 
@@ -50,9 +51,9 @@ export function addDamageCounter (user, location, container, index){
     const handleInput = () => {
         // Send an update over the socket with the new text content
         if (user === 'self'){
-            socket.emit('updateDamageCounter', 'opp', _location, index, damageCounter.textContent);
+            socket.emit('updateDamageCounter', roomId, 'opp', _location, index, damageCounter.textContent);
         } else {
-            socket.emit('updateDamageCounter', 'self', _location, index, damageCounter.textContent);
+            socket.emit('updateDamageCounter', roomId, 'self', _location, index, damageCounter.textContent);
         };
     }
 
@@ -78,7 +79,7 @@ export function addDamageCounter (user, location, container, index){
             targetCard.image.damageCounter = null;
         
             if (fromBlurEvent){
-                socket.emit('removeDamageCounter', user, _location, index);
+                socket.emit('removeDamageCounter', roomId, user, _location, index);
             };
         };
     }

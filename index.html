@@ -17,15 +17,8 @@
     <!-- Modal HTML structure -->
     <div id="cardPopup" class="popup">
         <div class="popup-content">
-            <button id="discardCardButton">Discard</button>
-            <button id="benchCardButton">Bench</button>
-            <button id="activeCardButton">Active</button>
-            <button id="lostzoneCardButton">Lost Zone</button>
-            <button id="stadiumCardButton">Stadium</button>
-            <button id="prizesCardButton">Prize</button>
-            <button id="deckCardButton">Deck</button>
-            <button id="handCardButton">Hand</button>
-            <button id="damageCounterButton">Add/Remove Damage</button>
+            <button id="damageCounterButton">Damage Counter</button>
+            <button id="specialConditionButton">Special Condition</button>
         </div>
     </div>
 
@@ -72,6 +65,23 @@
             <button id="hideOppHandButton">Hide Opponent's Hand</button>
         </div>
     </div>
-    
+    <div id = 'coverPage' class ="cover">
+        <div class="container">
+            <div id="header">
+                <h1>PTCG-SIM</h1>
+            </div>
+            <div id="roomId">
+                <input id="roomIdInput" type="text" placeholder="Paste Room ID here to join a game">
+                <button id="copyButton">📋</button>
+                <button id="generateIdButton">Generate Room ID</button>
+            </div>
+            <div id="playButton">
+                <h1>Play</h1>
+            </div>
+        </div>
+    </div>
+
+    <div id="chatbox"></div>
+    <input id="messageInput" type="text" placeholder="Type your message here...">
 </body>
 </html>

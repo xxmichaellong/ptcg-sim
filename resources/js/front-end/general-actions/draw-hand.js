@@ -3,11 +3,12 @@ import { moveCard } from "../image-logic/move-card.js";
 import { makeDeckCover } from "../card-types/deck-cover.js";
 import { cleanUp } from "../setup/clean-up.js";
 import { shuffleContainer } from "./shuffle-container.js";
-import { socket } from "../front-end.js";
+import { socket } from "../setup/socket.js";
 import { shuffleIndices } from "../setup/shuffle.js";
 import { _deckDisplay_html, _deck, _deck_html, _hand, _hand_html, _prizes, _prizes_html } from "../setup/update-user.js";
 import { oppDeckDisplay_html } from "../setup/opp-initialization.js";
 import { buildDeck } from "./build-deck.js";
+import { roomId } from "../start-page/generate-id.js";
 
 // Draw starting hand of 7
 export function drawHand(user, indices){
@@ -39,5 +40,5 @@ export function drawHand(user, indices){
     };
 
     if (user === 'self')
-        socket.emit('drawHand', 'opp', indices);
+        socket.emit('drawHand', roomId, 'opp', indices);
 }

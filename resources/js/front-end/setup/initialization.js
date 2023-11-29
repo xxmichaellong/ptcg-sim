@@ -105,7 +105,9 @@ export const selectedCard = {
     location: '',
     container: '',
     containerId: '',
-    locationAsString: ''
+    locationAsString: '',
+    oUser: '',
+    user: ''
 };
 
 export const target = {
