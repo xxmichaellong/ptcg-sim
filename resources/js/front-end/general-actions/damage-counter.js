@@ -96,7 +96,5 @@ export function addDamageCounter (user, location, container, index){
 
     //save the damageCounter on the card
     targetCard.image.damageCounter = damageCounter;
-
-    cardPopup.style.display = 'none';
 }
 

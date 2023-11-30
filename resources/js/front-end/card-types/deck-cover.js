@@ -17,7 +17,8 @@ export function makeDeckCover(user){
         draggable: true,
         dragstart: 'dragStart',
         dragend: 'dragEnd',
-        user: user
+        user: user,
+        contextmenu: 'openCardContextMenu'
     };
 
     /*

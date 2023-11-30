@@ -37,18 +37,18 @@ export function addSpecialCondition (user, location, container, index){
         };
         specialCondition.className = 'circle';
         specialCondition.contentEditable = 'true';
-        specialCondition.textContent = 'x';
-        specialCondition.style.backgroundColor = 'white';
-        specialCondition.style.color = 'black';
+        specialCondition.textContent = 'P';
+        specialCondition.style.backgroundColor = 'green';
+        specialCondition.style.color = 'white';
     };
    
     specialCondition.style.display = 'inline-block';
     specialCondition.style.left = `${targetRect.left - containerRect.left}px`;
-    specialCondition.style.top = `${targetRect.height/3}px`;
+    specialCondition.style.top = `${targetRect.height/4}px`;
     container.appendChild(specialCondition, targetCard.image);
     //adjust size of the circle based on card size
-    specialCondition.style.width = `${targetRect.width/4}px`;
-    specialCondition.style.lineHeight = `${targetRect.width/4}px`;
+    specialCondition.style.width = `${targetRect.width/3}px`;
+    specialCondition.style.lineHeight = `${targetRect.width/3}px`;
 
 
     const handleColour = () => {
@@ -129,7 +129,5 @@ export function addSpecialCondition (user, location, container, index){
 
     //save the specialCondition on the card
     targetCard.image.specialCondition = specialCondition;
-
-    cardPopup.style.display = 'none';
 }
 

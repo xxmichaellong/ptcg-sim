@@ -4,7 +4,7 @@ import { resetImage } from "./reset-image.js";
 import { updateCount } from "../setup/counts.js";
 import { makeLostzoneCover } from "../card-types/lostzone-cover.js";
 import { makeDiscardCover } from "../card-types/discard-cover.js";
-import { closePopups } from "../setup/close-popups.js";
+import { closeContainerPopups } from "../setup/close-popups.js";
 import { hideCard, revealCard } from "../general-actions/reveal-and-hide-button.js";
 import { stringToVariable } from "../setup/string-to-variable.js";
 import { oppActive_html, oppAttachedCardPopup_html, oppBench_html, oppDeckDisplay_html, oppDeck_html, oppDiscardDisplay_html, oppDiscard_html, oppHand_html, oppLostzoneDisplay_html, oppLostzone_html, oppPrizes_html } from "../setup/opp-initialization.js";
@@ -283,5 +283,5 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
     };
 
     updateCount();
-    closePopups();
+    closeContainerPopups();
 }

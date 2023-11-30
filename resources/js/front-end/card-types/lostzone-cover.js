@@ -15,7 +15,8 @@ export function makeLostzoneCover(user, src){
         dragleave: 'dragLeave',
         drop: 'drop',
         draggable: false,
-        click: 'lostzoneCoverClick'
+        click: 'lostzoneCoverClick',
+        user: user
     };
 
     /* if (user === 'opp'){

@@ -15,7 +15,8 @@ export function makeDiscardCover(user, src){
         dragleave: 'dragLeave',
         drop: 'drop',
         draggable: false,
-        click: 'discardCoverClick'
+        click: 'discardCoverClick',
+        user: user
     };
 
     /* if (user === 'opp'){

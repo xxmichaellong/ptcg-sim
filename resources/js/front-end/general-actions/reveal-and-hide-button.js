@@ -29,7 +29,6 @@ export function hideCards(container, container_html){
         hideCard(card);
         container_html.appendChild(card.image);
     });
-    revealAndHidePopup.style.display = "none";
 }
 export function revealCards(container, container_html){
     removeImages(container_html);
@@ -37,5 +36,4 @@ export function revealCards(container, container_html){
         revealCard(card);
         container_html.appendChild(card.image);
     });
-    revealAndHidePopup.style.display = "none";
 }

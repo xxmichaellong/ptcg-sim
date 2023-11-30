@@ -1,5 +1,5 @@
 import { dragEnd, dragLeave, dragOver, dragStart, drop } from "./drag.js";
-import { imageClick, discardCoverClick, deckCoverClick, lostzoneCoverClick } from "./click-events.js";
+import { imageClick, discardCoverClick, deckCoverClick, lostzoneCoverClick, openCardContextMenu } from "./click-events.js";
 
 export const imageFunctions = {
     imageClick: imageClick,
@@ -10,5 +10,6 @@ export const imageFunctions = {
     dragOver: dragOver,
     dragLeave: dragLeave,
     drop: drop,
-    dragEnd: dragEnd
+    dragEnd: dragEnd,
+    openCardContextMenu: openCardContextMenu
 };

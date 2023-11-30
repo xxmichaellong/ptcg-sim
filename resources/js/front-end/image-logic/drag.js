@@ -3,16 +3,17 @@ import { containerIdToLocation } from "../setup/container-reference.js"
 import { stringToVariable, variableToString } from "../setup/string-to-variable.js";
 import { moveCard } from "./move-card.js";
 import { socket } from "../setup/socket.js";
-import { cardPopup } from "./click-events.js";
 import { oppActive_html, oppAttachedCardPopup_html, oppBench_html, oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html } from "../setup/opp-initialization.js";
 import { roomId } from "../start-page/generate-id.js";
+import { closePopups } from "../setup/close-popups.js";
 
 // Add this function to initiate the drag operation
 export function dragStart(event){
-    cardPopup.style.display = 'none';
+    closePopups();
+
     event.target.classList.add('dragging');
 
-    if (selfContainersDocument.body.contains(event.target)){
+    if (event.target.user === 'self'){
         selectedCard.oUser = 'opp';
         selectedCard.user = 'self';
     } else {

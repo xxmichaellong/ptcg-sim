@@ -5,7 +5,7 @@
 }
 #hand_html {
   position: fixed;
-  bottom: 5%;
+  bottom: 0;
   left: 0;
   width: 100%;
   height: 20%;
@@ -106,10 +106,10 @@
 }
 #prizes_html {
   position: fixed;
-  bottom: 40%;
+  bottom: 60%;
   left: 2%;
-  width: 7%;
-  height: 50%;
+  width: 9%;
+  height: 35%;
   border: 2px solid rgba(224, 224, 75, 0.864); /* Add a thin yellow outline */
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
   background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */

@@ -24,3 +24,12 @@ socket.on('textMessage', (textContent) => {
     chatbox.appendChild(p);
     chatbox.scrollTop = chatbox.scrollHeight;
 });
+
+socket.on('generalMessage', (textContent) => {
+    const p = document.createElement('p');
+    p.className = 'announcement';
+    p.textContent = textContent;
+    p.style.background = 'grey';
+    chatbox.appendChild(p);
+    chatbox.scrollTop = chatbox.scrollHeight;
+});

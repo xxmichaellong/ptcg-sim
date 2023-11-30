@@ -42,6 +42,7 @@ function assembleCard(quantity, name, imageURL, type){
         dragleave: 'dragLeave',
         dragend: 'dragEnd',
         id: 'card',
+        contextmenu: 'openCardContextMenu'
     };
 
     const cardAttributes = {

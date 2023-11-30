@@ -4,46 +4,9 @@ import { deck_html, lostzone_html, discard_html } from "../setup/initialization.
 import { oppDeck_html, oppDiscard_html, oppLostzone_html } from "../setup/opp-initialization.js";
 import { stringToVariable, variableToString } from "../setup/string-to-variable.js";
 
-// Function to display the popup when the image is clicked
-/* export function imageClick(event){
-
-     //style the popup when image is clicked
-     const cardPopup = document.getElementById('cardPopup');
-     cardPopup.style.display = 'block';
-
-    //identify index of the card/image
-    const containerId = event.target.parentElement.id;
-    selectedCard.location = containerIdToLocation[containerId];
-    selectedCard.container = document.getElementById(containerId);
-  
-    selectedCard.index = selectedCard.location.cards.findIndex(card => card.image === event.target);
-
-    //handle popups for specific cards
-
-    //pokestop popup
-    if (selectedCard.location.cards[selectedCard.index].name === 'pokestop'){
-      const pokestopPopup = document.getElementById('pokestopPopup');
-      pokestopPopup.style.display = 'block';
-      pokestopPopup.style.top = "40%";
-    };
-    //flowerselectingpopup
-    if (selectedCard.location.cards[selectedCard.index].name === 'comfey'){
-      const flowerSelectingPopup = document.getElementById('flowerSelectingPopup');
-      flowerSelectingPopup.style.display = 'block';
-      flowerSelectingPopup.style.top = "40%";
-    };
-
-    //colresssexperiment popup
-    if (selectedCard.location.cards[selectedCard.index].name === 'colress\'sExperiment'){
-      const colresssExperimentPopup = document.getElementById('colresssExperimentPopup');
-      colresssExperimentPopup.style.display = 'block';
-      colresssExperimentPopup.style.top = "40%";
-    };
-}
-*/
 export const cardPopup = document.getElementById('cardPopup');
 
-export function imageClick(event){
+function identifyCard(event){
     if (selfContainersDocument.body.contains(event.target)){
         selectedCard.oUser = 'opp';
         selectedCard.user = 'self';
@@ -57,23 +20,12 @@ export function imageClick(event){
     selectedCard.location = containerIdToLocation(selectedCard.user, selectedCard.containerId);
     selectedCard.locationAsString = variableToString(selectedCard.user, selectedCard.location);
     selectedCard.index = selectedCard.location.cards.findIndex(card => card.image === event.target);
+}
 
-    let damageCounterButton = document.getElementById('damageCounterButton');
-    let specialConditionButton = document.getElementById('specialConditionButton')
+export function imageClick(event){
+    event.stopPropagation();
 
-    if (['active_html', 'bench_html'].includes(selectedCard.containerId)){
-        damageCounterButton.style.display = 'block';
-    } else {
-        damageCounterButton.style.display = 'none';
-    };
-
-    if (['active_html'].includes(selectedCard.containerId)){
-        specialConditionButton.style.display = 'block';
-    } else {
-        specialConditionButton.style.display = 'none';
-    };
-
-
+    identifyCard(event);
     cardPopup.style.display = 'block';
 }
 
@@ -96,4 +48,67 @@ export function lostzoneCoverClick(event){
       lostzone_html.style.display = 'block';
   } else
       oppLostzone_html.style.display = 'block';
+}
+
+export const cardContextMenu = document.getElementById('cardContextMenu');
+
+export function openCardContextMenu(event){
+    event.preventDefault();
+    event.stopPropagation();
+
+    identifyCard(event);
+
+    cardContextMenu.style.left = '';
+    cardContextMenu.style.top = '';
+    cardContextMenu.style.right = '';
+    cardContextMenu.style.bottom = '';
+
+    const targetRect = event.target.getBoundingClientRect();
+    if (event.target.user === 'self'){
+        const oppContainersDocument = document.getElementById('oppContainers');
+        cardContextMenu.style.left = `${targetRect.left}px`;
+        cardContextMenu.style.top = `${targetRect.top + oppContainersDocument.offsetHeight}px`;
+    } else {
+        const selfContainersDocument = document.getElementById('selfContainers');
+        const chatbox = document.getElementById('chatbox');
+        cardContextMenu.style.right = `${targetRect.left + chatbox.offsetWidth}px`;
+        cardContextMenu.style.bottom = `${targetRect.top + selfContainersDocument.offsetHeight}px`;
+    };
+    
+    // Set the location of cardContextMenu based on the mouse coordinates
+    const buttonConditions = {
+        'damageCounterButton': [['self', 'active_html'], ['opp', 'active_html'], ['self', 'bench_html'], ['opp', 'bench_html']],
+        'specialConditionButton': [['self', 'active_html'], ['opp', 'active_html']],
+        'shufflePrizesButton': [['self', 'prizes_html']],
+        'revealPrizesButton': [['self', 'prizes_html']],
+        'hidePrizesButton': [['self', 'prizes_html']],
+        'revealOppHandButton': [['opp', 'hand_html']],
+        'hideOppHandButton': [['opp', 'hand_html']],
+        'shuffleDeckButton': [['self', 'deckDisplay_html']],
+        'drawButton': [['self', 'deckDisplay_html']],
+        'viewTopButton': [['self', 'deckDisplay_html'], ['opp', 'deckDisplay_html']],
+        'viewBottomButton': [['self', 'deckDisplay_html'], ['opp', 'deckDisplay_html']],
+        'discardHandButton': [['self', 'hand_html']],
+        'shuffleHandButton': [['self', 'hand_html']],
+        'shuffleHandBottomButton': [['self', 'hand_html']],
+    };
+    
+    for (const [buttonId, conditionsArray] of Object.entries(buttonConditions)){
+        const button = document.getElementById(buttonId);
+      
+        // Check each condition array
+        const shouldDisplay = conditionsArray.some(conditions => {
+            const [userCondition, containerCondition] = conditions;
+            return userCondition === selectedCard.user && containerCondition === selectedCard.containerId;
+        });
+      
+        // Set display property based on conditions
+        button.style.display = shouldDisplay ? 'block' : 'none';
+    };
+
+    const atLeastOneButtonVisible = Array.from(cardContextMenu.children)
+    .some(button => button.style.display !== 'none');
+    
+    // Set the display property based on the visibility of buttons
+    cardContextMenu.style.display = atLeastOneButtonVisible ? 'block' : 'none';
 }

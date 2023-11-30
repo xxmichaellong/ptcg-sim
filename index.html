@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LZB Simulator</title>
+    <title>AquaLeap</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="resources/css/index.css">
     <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
     <script type="module" src="resources/js/front-end/front-end.js"></script>
@@ -14,62 +15,22 @@
     <div id="stadium_html"></div>
     <div id="lostzoneText">Lost Zone</div>
 
-    <!-- Modal HTML structure -->
-    <div id="cardPopup" class="popup">
-        <div class="popup-content">
-            <button id="damageCounterButton">Damage Counter</button>
-            <button id="specialConditionButton">Special Condition</button>
-        </div>
+    <div id="cardPopup" class="popup">will populate
     </div>
 
-    <div id="shufflePopup" class="popup">
-        <div class="popup-content">
-            <button id="shuffleDeckButton">Shuffle Deck</button>
-            <button id="shufflePrizesButton">Shuffle Prizes</button>
-        </div>
+    <div id="buttonContainer">
+        <button id="drawHandButton">Start Game</button>
+        <button id="flipCoinButton">Flip Coin</button>
+        <button id="vSTARButton">VSTAR</button>
     </div>
-
-    <!--Card Function Popups-->
-    <div id="pokestopPopup" class="popup">
-        <div class="popup-content">
-            <button id="pokestopButton">Use PokeStop</button>
-        </div>
-    </div>
-
-    <div id="flowerSelectingPopup" class="popup">
-        <div class="popup-content">
-            <button id="flowerSelectingButton">Use Flower Selecting</button>
-        </div>
-    </div>
-
-    <div id="flowerSelectingZone_html"></div>
-
-    <div id="colresssExperimentPopup" class="popup">
-        <div class="popup-content">
-            <button id="colresssExperimentButton">Use Colress's Experiment</button>
-        </div>
-    </div>
-
-    <div id="colresssExperimentZone_html"></div>
-
-    <!--Buttons-->
-    <button id="drawHandButton">Draw Hand</button>
-    <button id="shuffleButton">Shuffle</button>
-    <button id="revealAndHideButton">Reveal/Hide</button>
     
-    <div id="revealAndHidePopup" class="popup">
-        <div class="popup-content">
-            <button id="revealPrizesButton">Reveal Prizes</button>
-            <button id="hidePrizesButton">Hide Prizes</button>
-            <button id="revealOppHandButton">Reveal Opponent's Hand</button>
-            <button id="hideOppHandButton">Hide Opponent's Hand</button>
-        </div>
-    </div>
-    <div id = 'coverPage' class ="cover">
+    <div id ="coverPage" class ="cover">
         <div class="container">
             <div id="header">
-                <h1>PTCG-SIM</h1>
+                <h1>AquaLeap</h1>
+                <h3>ptcg simulator</h3>
             </div>
+            <input id="nameInput" type="text" placeholder="Name">
             <div id="roomId">
                 <input id="roomIdInput" type="text" placeholder="Paste Room ID here to join a game">
                 <button id="copyButton">📋</button>
@@ -83,5 +44,23 @@
 
     <div id="chatbox"></div>
     <input id="messageInput" type="text" placeholder="Type your message here...">
+
+    <div id="cardContextMenu" class="contextMenu">
+        <button id="damageCounterButton">Damage counter</button>
+        <button id="specialConditionButton">Special condition</button>
+        <button id="shufflePrizesButton">Shuffle prizes</button>
+        <button id="revealPrizesButton">Reveal prizes</button>
+        <button id="hidePrizesButton">Hide prizes</button>
+        <button id="revealOppHandButton">Reveal hand</button>
+        <button id="hideOppHandButton">Hide hand</button>
+        <button id="shuffleDeckButton">Shuffle</button>
+        <button id="drawButton">Draw ''</button>
+        <button id="viewTopButton">Look at top ''</button>
+        <button id="viewBottomButton">Look at bottom ''</button>
+        <button id="discardHandButton">Discard hand and draw ''</button>
+        <button id="shuffleHandButton">Shuffle hand into deck and draw ''</button>
+        <button id="shuffleHandBottomButton">Shuffle hand to bottom and draw ''</button>
+    </div>
+
 </body>
 </html>
