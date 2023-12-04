@@ -1,6 +1,6 @@
 import { roomId } from "../../front-end.js";
 import { moveCard } from "../../image-logic/move-card.js";
-import { deck, hand } from "../../setup/initialization.js";
+import { deck, hand } from "../../setup/self-initialization.js";
 import { shuffleIndices } from "../../setup/shuffle.js";
 import { socket } from "../../setup/socket.js";
 import { shuffleContainer } from "../shuffle-container.js";
@@ -10,12 +10,6 @@ export const discardAndDraw = (user, discardAmount, drawAmount) => {
         moveCard(user, 'hand', 'hand_html', 'discard', 'discard_html', 0);
     };
 
-    for (let i = 0; i < drawAmount; i++){
-        moveCard(user, 'deck', 'deck_html', 'hand', 'hand_html', 0);
-    };
-}
-
-export const draw = (user, drawAmount) => {
     for (let i = 0; i < drawAmount; i++){
         moveCard(user, 'deck', 'deck_html', 'hand', 'hand_html', 0);
     };

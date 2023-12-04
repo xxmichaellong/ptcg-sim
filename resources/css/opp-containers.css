@@ -39,6 +39,8 @@
 #deckDisplay_html img {
     width: auto;
     height: 100%;
+    position: relative;
+    left: 0;
 } 
 #discardText {
     position: fixed;
@@ -59,6 +61,8 @@
 #discardDisplay_html img {
     width: auto;
     height: 100%;
+    position: relative;
+    left: 0;
 } 
 #benchText {
     position: fixed;
@@ -76,10 +80,11 @@
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
     background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
 }
-#bench_html img {
+#bench_html div {
     width: auto;
     height: 100%;
-} 
+    margin-right: 3px;
+  } 
 #activeText {
     position: fixed;
     left: 43%;
@@ -101,10 +106,10 @@
 }
 #lostzoneDisplay_html {
     position: fixed;
-    bottom: 68%;
-    left: 72%;
-    width: 8%;
-    height: 25%;
+    bottom: 85%;
+    left: 75%;
+    width: 4%;
+    height: 12%;
     border: 2px solid rgba(188, 90, 90, 0.864); /* Add a thin yellow outline */
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
     background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
@@ -112,10 +117,12 @@
 #lostzoneDisplay_html img {
     width: auto;
     height: 100%;
+    position: relative;
+    left: 0;
 } 
 #lostzoneText {
     position: fixed;
-    left: 72%;
+    left: 70%;
     bottom: 94%;
     transform: scaleX(-1) scaleY(-1);
 }
@@ -195,6 +202,31 @@
     width: 10%;
     height: auto;
 }
+.circle {
+    display: none;
+    position: absolute;
+    width: 3vw;
+    border-radius: 50%;
+    background-color: rgb(255, 98, 0);
+    color: white;
+    text-align: center;
+    line-height: 3vw;
+    z-index: 20;
+  }
+#board_html {
+    position: fixed;
+    bottom: 63%;
+    left: 60%;
+    width: 10%;
+    height: 20%;
+    white-space: nowrap;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
+    background: linear-gradient(to bottom, rgb(87, 93, 128), #ffffff); /* Slightly darker grey background */
+}
+#board_html img {
+    width: auto;
+    height: 100%;
+}
 #attachedCardPopup_html {
     display: none;
     position: fixed;
@@ -223,14 +255,41 @@
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
     text-align: center;
 }
-.circle {
+#viewCards_html {
     display: none;
+    position: fixed;
+    width: 40%;
+    bottom: 50%;
+    left: 50%;
+    height: 20%;
+    transform: translate(-50%, -50%);
+    z-index: 500;
+    border: 2px solid rgba(224, 224, 75, 0.864); /* Add a thin yellow outline */
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
+    background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
+}
+#viewCards_html img {
+    height: 100%;
+}
+#viewCards_html::before {
+    content: "Looking at cards...";
     position: absolute;
-    width: 3vw;
-    border-radius: 50%;
-    background-color: rgb(255, 98, 0);
-    color: white;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%) scaleX(-1) scaleY(-1);
+    width: 100%;
+    background-color: #ddd;
+    border: 2px solid rgba(224, 224, 75, 0.864);
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
     text-align: center;
-    line-height: 3vw;
-    z-index: 20;
+}
+.playContainer {
+    display: inline-block;
+    flex-wrap: nowrap;
+    height: 100%;
+    position: relative;
+  }
+  .playContainer img {
+    width: auto;
+    height: 100%;
   }

@@ -1,5 +1,5 @@
-import { hand, bench, active, stadium, discard, prizes, lostzone, deck, flowerSelectingZone, colresssExperimentZone, attachedCardPopup } from "./initialization.js";
-import { oppActive, oppBench, oppDeck, oppDiscard, oppHand, oppLostzone, oppPrizes } from "./opp-initialization.js";
+import { hand, bench, active, stadium, discard, prizes, lostzone, deck, attachedCardPopup, board, board_html, viewCards, viewCards_html } from "./self-initialization.js";
+import { oppActive, oppAttachedCardPopup, oppBench, oppDeck, oppDiscard, oppHand, oppLostzone, oppBoard, oppBoard_html, oppPrizes, oppViewCards, oppViewCards_html } from "./opp-initialization.js";
 
 export function containerIdToLocation(user, string){
     let locations;
@@ -19,9 +19,9 @@ export function containerIdToLocation(user, string){
             lostzoneCover: lostzone,
             discardCover: discard,
             deckCover: deck,
-            flowerSelectingZone_html: flowerSelectingZone,
-            colresssExperimentZone_html: colresssExperimentZone,
             attachedCardPopup_html: attachedCardPopup,
+            board_html: board,
+            viewCards_html: viewCards
         };
     } else {
         locations = {
@@ -39,9 +39,9 @@ export function containerIdToLocation(user, string){
           lostzoneCover: oppLostzone,
           discardCover: oppDiscard,
           deckCover: oppDeck,
-          flowerSelectingZone_html: flowerSelectingZone,
-          colresssExperimentZone_html: colresssExperimentZone,
-          attachedCardPopup_html: attachedCardPopup,
+          attachedCardPopup_html: oppAttachedCardPopup,
+          board_html: oppBoard,
+          viewCards_html: oppViewCards
       };
   };
   return locations[string];

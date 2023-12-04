@@ -1,15 +1,18 @@
-import {selectedCard, prizes_html, lostzone_html, discard_html, prizes, deck_html, hand, deck } from "./initialization.js";
+import {sCard, prizes_html, lostzone_html, discard_html, prizes, deck_html, hand, deck, viewCards } from "./self-initialization.js";
 import { drawHand } from "../general-actions/hand/draw-hand.js";
-import { shuffleButtonFunction } from "../general-actions/shuffle-container.js";
-import { revealCards, hideCards } from "../general-actions/reveal-and-hide-button.js"; 
-import { selfContainersDocument } from "./initialization.js";
-import { oppContainersDocument, oppDeck_html, oppDiscard_html, oppHand, oppHand_html, oppLostzone_html } from "./opp-initialization.js";
+import { shuffleContainer } from "../general-actions/shuffle-container.js";
+import { revealCards, hideCards } from "../general-actions/reveal-and-hide.js"; 
+import { selfContainersDocument } from "./self-initialization.js";
+import { oppContainersDocument, oppDeck, oppDeck_html, oppDiscard_html, oppHand, oppHand_html, oppLostzone_html, oppPrizes, oppViewCards } from "./opp-initialization.js";
 import { addDamageCounter } from "../general-actions/damage-counter.js";
 import { variableToString } from "./string-to-variable.js";
 import { socket } from "./socket.js";
 import { addSpecialCondition } from "../general-actions/special-condition.js";
 import { roomId, username } from "../start-page/generate-id.js";
-import { discardAndDraw, draw, shuffleAndDraw, shuffleBottomAndDraw } from "../general-actions/hand/discard-and-draw.js";
+import { discardAndDraw, shuffleAndDraw, shuffleBottomAndDraw } from "../general-actions/hand/discard-and-draw.js";
+import { draw, viewDeck } from "../general-actions/deck-actions.js";
+import { moveCard } from "../image-logic/move-card.js";
+import { shuffleIndices } from "./shuffle.js";
 
 // Draw a Hand
 const drawHandButton = document.getElementById('drawHandButton');
@@ -18,8 +21,18 @@ drawHandButton.addEventListener('click', function(){drawHand('self')});
 const shuffleDeckButton = document.getElementById('shuffleDeckButton');
 const shufflePrizesButton = document.getElementById('shufflePrizesButton');
 
-shuffleDeckButton.addEventListener('click', function(){shuffleButtonFunction ('self', 'deck', 'deck_html')});
-shufflePrizesButton.addEventListener('click', function(){shuffleButtonFunction ('self', 'prizes', 'prizes_html')});
+shuffleDeckButton.addEventListener('click', function(){
+    let deckCount = sCard.user === 'self' ? deck.count : oppDeck.count;
+    const indices = shuffleIndices(deckCount);
+    shuffleContainer(sCard.user, 'deck', 'deck_html', indices);
+    socket.emit('shuffleContainer', roomId, sCard.oUser, 'deck', 'deck_html', indices);
+});
+shufflePrizesButton.addEventListener('click', function(){
+    let prizesCount = sCard.user === 'self' ? prizes.count : oppPrizes.count;
+    const indices = shuffleIndices(prizesCount);
+    shuffleContainer(sCard.user, 'prizes', 'prizes_html', indices);
+    socket.emit('shuffleContainer', roomId, sCard.oUser, 'prizes', 'prizes_html', indices);
+});
 
 // Get the modal and image elements
 const closeDeckDisplayButton = selfContainersDocument.getElementById('closeDeckDisplayButton');
@@ -68,14 +81,14 @@ hideOppHandButton.addEventListener('click', () => hideCards(oppHand, oppHand_htm
 
 const damageCounterButton = document.getElementById('damageCounterButton');
 damageCounterButton.addEventListener('click', function(){
-    addDamageCounter(selectedCard.user, variableToString(selectedCard.user, selectedCard.location), variableToString(selectedCard.user, selectedCard.container), selectedCard.index)
-    socket.emit('addDamageCounter', roomId, selectedCard.oUser, variableToString(selectedCard.user, selectedCard.location), variableToString(selectedCard.user, selectedCard.container), selectedCard.index)
+    addDamageCounter(sCard.user, variableToString(sCard.user, sCard.location), variableToString(sCard.user, sCard.container), sCard.index)
+    socket.emit('addDamageCounter', roomId, sCard.oUser, variableToString(sCard.user, sCard.location), variableToString(sCard.user, sCard.container), sCard.index)
 });
 
 const specialConditionButton = document.getElementById('specialConditionButton');
 specialConditionButton.addEventListener('click', function(){
-    addSpecialCondition(selectedCard.user, variableToString(selectedCard.user, selectedCard.location), variableToString(selectedCard.user, selectedCard.container), selectedCard.index)
-    socket.emit('addSpecialCondition', roomId, selectedCard.oUser, variableToString(selectedCard.user, selectedCard.location), variableToString(selectedCard.user, selectedCard.container), selectedCard.index)
+    addSpecialCondition(sCard.user, variableToString(sCard.user, sCard.location), variableToString(sCard.user, sCard.container), sCard.index)
+    socket.emit('addSpecialCondition', roomId, sCard.oUser, variableToString(sCard.user, sCard.location), variableToString(sCard.user, sCard.container), sCard.index)
 });
 
 const flipCoinButton = document.getElementById('flipCoinButton');
@@ -110,7 +123,7 @@ const discardHandButton = document.getElementById('discardHandButton');
 discardHandButton.addEventListener('click', () => {
     let drawAmount;
 
-    const userInput = window.prompt('Enter the draw amount:', '0');
+    const userInput = window.prompt('Draw how many cards?', '0');
 
     drawAmount = parseInt(userInput);
 
@@ -127,7 +140,7 @@ const shuffleHandButton = document.getElementById('shuffleHandButton');
 shuffleHandButton.addEventListener('click', () => {
     let drawAmount;
 
-    const userInput = window.prompt('Enter the draw amount:', '0');
+    const userInput = window.prompt('Draw how many cards?', '0');
 
     drawAmount = parseInt(userInput);
 
@@ -143,7 +156,7 @@ const shuffleHandBottomButton = document.getElementById('shuffleHandBottomButton
 shuffleHandBottomButton.addEventListener('click', () => {
     let drawAmount;
 
-    const userInput = window.prompt('Enter the draw amount:', '0');
+    const userInput = window.prompt('Draw how many cards?', '0');
 
     drawAmount = parseInt(userInput);
 
@@ -159,7 +172,7 @@ const drawButton = document.getElementById('drawButton');
 drawButton.addEventListener('click', () => {
     let drawAmount;
 
-    const userInput = window.prompt('Enter the draw amount:', '0');
+    const userInput = window.prompt('Draw how many cards?', '0');
 
     drawAmount = parseInt(userInput);
 
@@ -171,4 +184,79 @@ drawButton.addEventListener('click', () => {
         window.alert('Please enter a valid number for the draw amount.');
     };
 });
+
+function handleViewButtonClick(top) {
+    let viewAmount;
+    const userInput = window.prompt('How many cards do you want to look at?', '1');
+    viewAmount = parseInt(userInput);
+
+    const deckCount = sCard.user === 'self' ? deck.count : oppDeck.count;
+    const targetOpp = sCard.user === 'opp';
+
+    if (!isNaN(viewAmount) && viewAmount >= 1) {
+        viewAmount = Math.min(viewAmount, deckCount);
+        viewDeck(sCard.user, viewAmount, targetOpp, top, deckCount);
+        socket.emit('viewDeck', roomId, sCard.oUser, viewAmount, targetOpp, top, deckCount);
+    } else {
+        window.alert('Please enter a valid number for the view amount.');
+    }
+}
+
+const viewTopButton = document.getElementById('viewTopButton');
+viewTopButton.addEventListener('click', () => handleViewButtonClick(true));
+
+const viewBottomButton = document.getElementById('viewBottomButton');
+viewBottomButton.addEventListener('click', () => handleViewButtonClick(false));
+
+const moveToTopButton = document.getElementById('moveToTopButton');
+moveToTopButton.addEventListener('click', () => {
+    moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'deck', 'deck_html', sCard.index);
+    socket.emit('moveCard', roomId, sCard.oUser, sCard.locationAsString, sCard.containerId, 'deck', 'deck_html', sCard.index);
+
+    //since card is appended to bottom, move all existing cards in deck to the bottom afterwards
+    const deckCount = sCard.user === 'self' ? deck.count : oppDeck.count;
+
+    for (let i = 0; i < deckCount - 1; i++){
+        moveCard(sCard.user, 'deck', 'deck_html', 'deck', 'deck_html', 0);
+        socket.emit('moveCard', roomId, sCard.oUser, 'deck', 'deck_html', 'deck', 'deck_html', 0);
+    };
+});
+
+const moveToBottomButton = document.getElementById('moveToBottomButton');
+moveToBottomButton.addEventListener('click', () => {
+    moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'deck', 'deck_html', sCard.index);
+    socket.emit('moveCard', roomId, sCard.oUser, sCard.locationAsString, sCard.containerId, 'deck', 'deck_html', sCard.index);
+});
+
+const shuffleToDeckButton = document.getElementById('shuffleToDeckButton');
+shuffleToDeckButton.addEventListener('click', () => {
+    moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'deck', 'deck_html', sCard.index);
+    
+    const deckCount = sCard.user === 'self' ? deck.count : oppDeck.count;
+    const indices = shuffleIndices(deckCount);
+    shuffleContainer(sCard.user, 'deck', 'deck_html', indices);
+
+    socket.emit('moveCard', roomId, sCard.oUser, sCard.locationAsString, sCard.containerId, 'deck', 'deck_html', sCard.index);
+    socket.emit('shuffleContainer', roomId, sCard.oUser, 'deck', 'deck_html', indices);
+});
+
+const moveToBoard = document.getElementById('moveToBoard');
+moveToBoard.addEventListener('click', () => {
+    moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'board', 'board_html', sCard.index);
+    socket.emit('moveCard', roomId, sCard.oUser, sCard.locationAsString, sCard.containerId, 'board', 'board_html', sCard.index);
+});
+
+const shuffleAllButton = document.getElementById('shuffleAllButton');
+shuffleAllButton.addEventListener('click', () => {
+    const viewCount = sCard.user === 'self' ? viewCards.count : oppViewCards.count;
+    for (let i = 0; i < viewCount; i++){
+        moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'deck', 'deck_html', 0);
+        socket.emit('moveCard', roomId, sCard.oUser, sCard.locationAsString, sCard.containerId, 'deck', 'deck_html', 0);
+    };
+    const deckCount = sCard.user === 'self' ? deck.count : oppDeck.count;
+    const indices = shuffleIndices(deckCount);
+    shuffleContainer(sCard.user, 'deck', 'deck_html', indices);
+    socket.emit('shuffleContainer', roomId, sCard.oUser, 'deck', 'deck_html', indices);
+});
+
 

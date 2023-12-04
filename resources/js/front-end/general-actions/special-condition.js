@@ -1,5 +1,4 @@
-import { cardPopup } from "../image-logic/click-events.js";
-import { selfContainersDocument } from "../setup/initialization.js";
+import { selfContainersDocument } from "../setup/self-initialization.js";
 import { oppContainersDocument } from "../setup/opp-initialization.js";
 import { stringToVariable } from "../setup/string-to-variable.js";
 import { socket } from "../setup/socket.js";
@@ -17,7 +16,7 @@ export function addSpecialCondition (user, location, container, index){
     const targetCard = location.cards[index];
     const targetRect = targetCard.image.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
-    //use insert before and absolute (similar to adding tools)
+
     let specialCondition = targetCard.image.specialCondition;
     //clean up existing event listeners
     if (specialCondition){

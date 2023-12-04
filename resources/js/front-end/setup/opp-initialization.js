@@ -11,6 +11,8 @@ export const oppHand_html = oppContainersDocument.getElementById('hand_html');
 export const oppPrizes_html = oppContainersDocument.getElementById('prizes_html');
 export const oppDeck_html = oppContainersDocument.getElementById('deck_html');
 export const oppAttachedCardPopup_html = oppContainersDocument.getElementById('attachedCardPopup_html');
+export const oppViewCards_html = oppContainersDocument.getElementById('viewCards_html');
+export const oppBoard_html = oppContainersDocument.getElementById('board_html');
 
 //opp arrays
 export const oppLostzone = {
@@ -57,6 +59,20 @@ export const oppHand = {
 };
 
 export const oppAttachedCardPopup = {
+    cards: [],
+    get count(){
+        return this.cards.length;
+    }
+};
+
+export const oppViewCards = {
+    cards: [],
+    get count(){
+        return this.cards.length;
+    }
+};
+
+export const oppBoard = {
     cards: [],
     get count(){
         return this.cards.length;

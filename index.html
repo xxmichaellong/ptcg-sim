@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AquaLeap</title>
+    <title>ptcg sim</title>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="resources/css/index.css">
     <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
@@ -27,7 +27,7 @@
     <div id ="coverPage" class ="cover">
         <div class="container">
             <div id="header">
-                <h1>AquaLeap</h1>
+                <h1>ptcg sim</h1>
                 <h3>ptcg simulator</h3>
             </div>
             <input id="nameInput" type="text" placeholder="Name">
@@ -46,21 +46,32 @@
     <input id="messageInput" type="text" placeholder="Type your message here...">
 
     <div id="cardContextMenu" class="contextMenu">
-        <button id="damageCounterButton">Damage counter</button>
-        <button id="specialConditionButton">Special condition</button>
-        <button id="shufflePrizesButton">Shuffle prizes</button>
-        <button id="revealPrizesButton">Reveal prizes</button>
-        <button id="hidePrizesButton">Hide prizes</button>
-        <button id="revealOppHandButton">Reveal hand</button>
-        <button id="hideOppHandButton">Hide hand</button>
-        <button id="shuffleDeckButton">Shuffle</button>
-        <button id="drawButton">Draw ''</button>
-        <button id="viewTopButton">Look at top ''</button>
-        <button id="viewBottomButton">Look at bottom ''</button>
-        <button id="discardHandButton">Discard hand and draw ''</button>
-        <button id="shuffleHandButton">Shuffle hand into deck and draw ''</button>
-        <button id="shuffleHandBottomButton">Shuffle hand to bottom and draw ''</button>
-    </div>
+        <ul>
+            <li id="damageCounterButton">Damage counter</li>
+            <li id="specialConditionButton">Special condition</li>
+            <li id="shufflePrizesButton">Shuffle prizes</li>
+            <li id="revealPrizesButton">Reveal prizes</li>
+            <li id="hidePrizesButton">Hide prizes</li>
+            <li id="revealOppHandButton">Reveal hand</li>
+            <li id="hideOppHandButton">Hide hand</li>
+            <li id="shuffleDeckButton">Shuffle</li>
+            <li id="drawButton">Draw</li>
+            <li id="viewTopButton">View top</li>
+            <li id="viewBottomButton">View bottom</li>
+            <li id="discardHandButton">Discard all</li>
+            <li id="shuffleHandButton">Shuffle all into deck</li>
+            <li id="shuffleHandBottomButton">Shuffle all to bottom of deck</li>
+            <li id="shuffleAllButton">Shuffle all into deck</li>
+            <li id="moveButton">Move to...
+                <ul class="subMenu">
+                    <li id="moveToTopButton">Top of deck</li>
+                    <li id="moveToBottomButton">Bottom of deck</li>
+                    <li id="shuffleToDeckButton">Shuffle into deck</li>
+                    <li id="moveToBoard">Board</li>
+                </ul>
+            </li>
+        </ul>
+    </div>    
 
 </body>
 </html>

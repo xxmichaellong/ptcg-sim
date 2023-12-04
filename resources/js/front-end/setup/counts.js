@@ -1,4 +1,4 @@
-import { hand, discard, prizes, lostzone, bench, active, stadium, deck, selfContainersDocument } from "./initialization.js";
+import { hand, discard, prizes, lostzone, bench, active, stadium, deck, selfContainersDocument } from "./self-initialization.js";
 import { oppContainersDocument, oppDeck, oppDiscard, oppLostzone } from "./opp-initialization.js";
 
 export function updateCount(){

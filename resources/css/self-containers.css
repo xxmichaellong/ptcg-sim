@@ -1,8 +1,3 @@
-#handText {
-  position: fixed;
-  left: 2%;
-  bottom: 25%;
-}
 #hand_html {
   position: fixed;
   bottom: 0;
@@ -31,7 +26,6 @@
   left: 88%;
   width: 8%;
   height: 25%;
-  user-select: none;
   border: 2px solid rgba(224, 224, 75, 0.864); /* Add a thin yellow outline */
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
   background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
@@ -39,7 +33,8 @@
 #deckDisplay_html img {
   width: auto;
   height: 100%;
-  user-select: none;
+  position: relative;
+  left: 0;
 } 
 #discardText {
   position: fixed;
@@ -59,12 +54,9 @@
 #discardDisplay_html img {
   width: auto;
   height: 100%;
+  position: relative;
+  left: 0;
 } 
-#benchText {
-  position: fixed;
-  left: 20%;
-  bottom: 55%;
-}
 #bench_html {
   position: fixed;
   bottom: 30%;
@@ -76,15 +68,11 @@
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
   background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
 }
-#bench_html img {
+#bench_html div {
   width: auto;
   height: 100%;
+  margin-right: 5px;
 } 
-#activeText {
-  position: fixed;
-  left: 43%;
-  bottom: 95%;
-}
 #active_html {
   position: fixed;
   bottom: 63%;
@@ -98,11 +86,6 @@
 #active_html img {
   width: auto;
   height: 100%;
-}
-#prizesText {
-  position: fixed;
-  left: 2%;
-  bottom: 90%;
 }
 #prizes_html {
   position: fixed;
@@ -125,10 +108,10 @@
 }
 #lostzoneDisplay_html {
   position: fixed;
-  bottom: 67%;
+  bottom: 85%;
   left: 20%;
-  width: 8%;
-  height: 25%;
+  width: 4%;
+  height: 12%;
   border: 2px solid rgba(224, 224, 75, 0.864); /* Add a thin yellow outline */
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
   background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
@@ -136,6 +119,8 @@
 #lostzoneDisplay_html img {
   width: auto;
   height: 100%;
+  position: relative;
+  left: 0;
 } 
 #deck_html {
   display: none;
@@ -191,6 +176,34 @@
   width: 10%;
   height: auto;
 }
+.circle {
+  display: none;
+  position: absolute;
+  width: 3vw;
+  border-radius: 50%;
+  background-color: rgb(255, 98, 0);
+  color: white;
+  text-align: center;
+  line-height: 3vw;
+  z-index: 20;
+}
+.highlight {
+  box-shadow: 0 0 0 2px lightblue !important;
+}
+#board_html {
+  position: fixed;
+  bottom: 63%;
+  left: 60%;
+  width: 24%;
+  height: 20%;
+  white-space: nowrap;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
+  background: linear-gradient(to bottom, rgb(87, 93, 128), #ffffff); /* Slightly darker grey background */
+}
+#board_html img {
+  width: auto;
+  height: 100%;
+}
 #attachedCardPopup_html {
   display: none;
   position: fixed;
@@ -219,17 +232,41 @@
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
   text-align: center;
 }
-.circle {
+#viewCards_html {
   display: none;
-  position: absolute;
-  width: 3vw;
-  border-radius: 50%;
-  background-color: rgb(255, 98, 0);
-  color: white;
-  text-align: center;
-  line-height: 3vw;
-  z-index: 20;
+  position: fixed;
+  width: 40%;
+  bottom: 50%;
+  left: 50%;
+  height: 20%;
+  transform: translate(-50%, -50%);
+  z-index: 500;
+  border: 2px solid rgba(224, 224, 75, 0.864); /* Add a thin yellow outline */
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
+  background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
 }
-.highlight {
-  box-shadow: 0 0 0 2px lightblue !important;
+#viewCards_html img {
+  height: 100%;
+}
+#viewCards_html::before {
+  content: "Looking at cards...";
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  background-color: #ddd;
+  border: 2px solid rgba(224, 224, 75, 0.864);
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
+  text-align: center;
+}
+.playContainer {
+  display: inline-block;
+  flex-wrap: nowrap;
+  height: 100%;
+  position: relative;
+}
+.playContainer img {
+  width: auto;
+  height: 100%;
 }

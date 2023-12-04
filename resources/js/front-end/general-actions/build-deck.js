@@ -1,5 +1,5 @@
 import { Card } from "../setup/card.js";
-import { deck, deck_html } from "../setup/initialization.js";
+import { deck, deck_html } from "../setup/self-initialization.js";
 import { oppDeck, oppDeck_html } from "../setup/opp-initialization.js";
 import { deckData } from "../setup/deck-data.js"
 

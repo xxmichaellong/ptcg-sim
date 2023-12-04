@@ -1,5 +1,4 @@
-import { cardPopup } from "../image-logic/click-events.js";
-import { selfContainersDocument } from "../setup/initialization.js";
+import { selfContainersDocument } from "../setup/self-initialization.js";
 import { oppContainersDocument } from "../setup/opp-initialization.js";
 import { stringToVariable } from "../setup/string-to-variable.js";
 import { socket } from "../setup/socket.js";
@@ -17,7 +16,7 @@ export function addDamageCounter (user, location, container, index){
     const targetCard = location.cards[index];
     const targetRect = targetCard.image.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
-    //use insert before and absolute (similar to adding tools)
+
     let damageCounter = targetCard.image.damageCounter;
     //clean up existing event listeners
     if (damageCounter){
@@ -45,6 +44,7 @@ export function addDamageCounter (user, location, container, index){
     container.appendChild(damageCounter, targetCard.image);
     //adjust size of the circle based on card size
     damageCounter.style.width = `${targetRect.width/4}px`;
+    damageCounter.style.height = `${targetRect.width/4}px`;
     damageCounter.style.lineHeight = `${targetRect.width/4}px`;
     
     //functions for event listeners (updating text and removing damageCounter)

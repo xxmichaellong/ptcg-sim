@@ -43,11 +43,8 @@ io.on('connection', (socket) => {
     socket.on('moveCard', (id, user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex) => {
         socket.broadcast.to(id).emit('moveCard', user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex);
     });
-    socket.on('shuffleButtonFunction', (id, user, location, location_html, indices) => {
-        socket.broadcast.to(id).emit('shuffleButtonFunction', user, location, location_html, indices);
-    });
-    socket.on('removeStadium', (id, ) => {
-        socket.broadcast.to(id).emit('removeStadium');
+    socket.on('shuffleContainer', (id, user, location, location_html, indices) => {
+        socket.broadcast.to(id).emit('shuffleContainer', user, location, location_html, indices);
     });
     socket.on('addDamageCounter', (id, user, location, container, index) => {
         socket.broadcast.to(id).emit('addDamageCounter', user, location, container, index);
@@ -85,6 +82,9 @@ io.on('connection', (socket) => {
     socket.on('draw', (id, drawAmount) => {
         socket.broadcast.to(id).emit('draw', drawAmount);
     });
+    socket.on('viewDeck', (id, user, viewAmount, targetOpp, top, deckCount) => {
+        socket.broadcast.to(id).emit('viewDeck', user, viewAmount, targetOpp, top, deckCount);
+    })
 });
 
 // Start the server

@@ -1,16 +1,16 @@
-import { containerIds, selfContainersDocument } from "./setup/initialization.js";
+import { containerIds, selfContainersDocument } from "./setup/self-initialization.js";
 import { dragLeave, dragOver, drop } from "./image-logic/drag.js";
 import { drawHand } from "./general-actions/hand/draw-hand.js";
 import { moveCard } from "./image-logic/move-card.js";
-import { shuffleButtonFunction } from "./general-actions/shuffle-container.js";
-import { removeStadium } from "./setup/clean-up.js";
+import { shuffleContainer } from "./general-actions/shuffle-container.js";
 import { addDamageCounter } from "./general-actions/damage-counter.js";
 import { stringToVariable } from "./setup/string-to-variable.js";
 import { addSpecialCondition } from "./general-actions/special-condition.js";
 import { oppContainersDocument } from "./setup/opp-initialization.js";
 import { socket } from "./setup/socket.js";
 import { closePopups } from "./setup/close-popups.js";
-import { discardAndDraw, draw, shuffleAndDraw, shuffleBottomAndDraw } from "./general-actions/hand/discard-and-draw.js";
+import { discardAndDraw, shuffleAndDraw, shuffleBottomAndDraw } from "./general-actions/hand/discard-and-draw.js";
+import { draw, viewDeck } from "./general-actions/deck-actions.js";
 
 export * from './setup/buttons.js';
 export * from './start-page/generate-id.js';
@@ -52,12 +52,8 @@ socket.on('moveCard', (user, oLocation, oLocation_html, mLocation, mLocation_htm
     moveCard(user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex);
 });
 
-socket.on('shuffleButtonFunction', (user, location, location_html, indices) => {
-    shuffleButtonFunction(user, location, location_html, indices);
-});
-
-socket.on('removeStadium', () => {
-    removeStadium();
+socket.on('shuffleContainer', (user, location, location_html, indices) => {
+    shuffleContainer(user, location, location_html, indices);
 });
 
 socket.on('addDamageCounter', (user, location, container, index) => {
@@ -105,3 +101,6 @@ socket.on('shuffleBottomAndDraw', (shuffleAmount, drawAmount, indices) => {
 socket.on('draw', (drawAmount) => {
     draw('opp', drawAmount);
 });
+socket.on('viewDeck', (user, viewAmount, targetOpp, top, deckCount) => {
+    viewDeck(user, viewAmount, targetOpp, top, deckCount);
+})

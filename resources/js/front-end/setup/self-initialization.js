@@ -11,8 +11,9 @@ export const active_html = selfContainersDocument.getElementById('active_html');
 export const bench_html = selfContainersDocument.getElementById('bench_html');
 export const hand_html = selfContainersDocument.getElementById('hand_html');
 export const attachedCardPopup_html = selfContainersDocument.getElementById('attachedCardPopup_html');
+export const viewCards_html = selfContainersDocument.getElementById('viewCards_html');
+export const board_html = selfContainersDocument.getElementById('board_html');
 
-//deck
 export const deck = {
     cards: [],
     get count(){
@@ -20,7 +21,6 @@ export const deck = {
     }
 };
 
-//lostzone
 export const lostzone = {
     cards: [],
     get count(){
@@ -28,7 +28,6 @@ export const lostzone = {
     }
 };
 
-//discard
 export const discard = {
     cards: [],
     get count(){
@@ -36,7 +35,6 @@ export const discard = {
     }
 };
 
-//stadium
 export const stadium = {
     cards: [],
     get count(){
@@ -45,8 +43,6 @@ export const stadium = {
 };
 
 export const stadium_html = document.getElementById('stadium_html');
-
-//prizes
 export const prizes = {
     cards: [],
     get count(){
@@ -54,7 +50,6 @@ export const prizes = {
     }
 };
 
-//active
 export const active = {
     cards: [],
     get count(){
@@ -62,7 +57,6 @@ export const active = {
     }
 };
 
-//bench
 export const bench = {
     cards: [],
     get count(){
@@ -70,22 +64,7 @@ export const bench = {
     }
 };
 
-//hand
 export const hand = {
-    cards: [],
-    get count(){
-        return this.cards.length;
-    }
-};
-
-export const flowerSelectingZone = {
-    cards: [],
-    get count(){
-        return this.cards.length;
-    }
-};
-
-export const colresssExperimentZone = {
     cards: [],
     get count(){
         return this.cards.length;
@@ -99,8 +78,22 @@ export const attachedCardPopup = {
     }
 };
 
+export const viewCards = {
+    cards: [],
+    get count(){
+        return this.cards.length;
+    }
+};
+
+export const board = {
+    cards: [],
+    get count(){
+        return this.cards.length;
+    }
+};
+
 // create global variable that holds the html index of a clicked card
-export const selectedCard = {
+export const sCard = {
     index: 0,
     location: '',
     container: '',
@@ -130,5 +123,7 @@ export const containerIds = [
     "deck_html",
     "discard_html",
     "discardDisplay_html",
-    "stadium_html"
+    "stadium_html",
+    "board_html",
+    "viewCards_html"
 ];
