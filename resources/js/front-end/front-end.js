@@ -1,4 +1,4 @@
-import { containerIds, deck, discard, selfContainersDocument } from "./setup/self-initialization.js";
+import { containerIds, selfContainersDocument } from "./setup/self-initialization.js";
 import { dragLeave, dragOver, drop } from "./image-logic/drag.js";
 import { drawHand } from "./general-actions/hand/draw-hand.js";
 import { moveCard } from "./image-logic/move-card.js";
