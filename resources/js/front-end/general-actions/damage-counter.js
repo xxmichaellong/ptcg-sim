@@ -40,12 +40,17 @@ export function addDamageCounter (user, location, container, index){
    
     damageCounter.style.display = 'inline-block';
     damageCounter.style.left = `${targetRect.left - containerRect.left + targetRect.width/1.5}px`;
-    damageCounter.style.top = `${targetRect.height/3}px`;
-    container.appendChild(damageCounter, targetCard.image);
+    if (targetCard.image.parentElement.classList.contains('fullView')){
+        damageCounter.style.top = `${targetRect.top - containerRect.top + targetRect.height/3}px`;
+    } else {
+        damageCounter.style.top = `${targetRect.height/3}px`;
+    };
+    container.appendChild(damageCounter);
     //adjust size of the circle based on card size
     damageCounter.style.width = `${targetRect.width/4}px`;
     damageCounter.style.height = `${targetRect.width/4}px`;
     damageCounter.style.lineHeight = `${targetRect.width/4}px`;
+    damageCounter.style.zIndex = '1';
     
     //functions for event listeners (updating text and removing damageCounter)
     const handleInput = () => {

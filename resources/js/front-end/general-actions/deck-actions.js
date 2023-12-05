@@ -1,6 +1,8 @@
+import { roomId } from "../front-end.js";
 import { moveCard } from "../image-logic/move-card.js";
-import { oppDeck, oppViewCards, oppViewCards_html } from "../setup/opp-initialization.js";
+import { oppViewCards, oppViewCards_html } from "../setup/opp-initialization.js";
 import { deck, viewCards, viewCards_html } from "../setup/self-initialization.js";
+import { socket } from "../setup/socket.js";
 import { hideCards, revealCards } from "./reveal-and-hide.js";
 
 export const draw = (user, drawAmount) => {
@@ -29,5 +31,16 @@ export const viewDeck = (user, viewAmount, targetOpp, top, deckCount) => {
     };
     if (targetOpp && user === 'self'){
         hideCards(viewCards, viewCards_html);
+    };
+}
+
+export const keyDraw = (event) => {
+    if (event.key >= 1 && event.key <= 9) {
+        if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.classList.contains('circle')) {
+            return;
+        };
+    const drawAmount = Math.min(event.key, deck.count);
+    draw('self', drawAmount);
+    socket.emit('draw', roomId, drawAmount);
     };
 }

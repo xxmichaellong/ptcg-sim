@@ -1,9 +1,9 @@
-import {sCard, prizes_html, lostzone_html, discard_html, prizes, deck_html, hand, deck, viewCards } from "./self-initialization.js";
+import {sCard, prizes_html, lostzone_html, discard_html, prizes, deck_html, hand, deck, viewCards, attachedCardPopup } from "./self-initialization.js";
 import { drawHand } from "../general-actions/hand/draw-hand.js";
 import { shuffleContainer } from "../general-actions/shuffle-container.js";
 import { revealCards, hideCards } from "../general-actions/reveal-and-hide.js"; 
 import { selfContainersDocument } from "./self-initialization.js";
-import { oppContainersDocument, oppDeck, oppDeck_html, oppDiscard_html, oppHand, oppHand_html, oppLostzone_html, oppPrizes, oppViewCards } from "./opp-initialization.js";
+import { oppAttachedCardPopup, oppContainersDocument, oppDeck, oppDeck_html, oppDiscard_html, oppHand, oppHand_html, oppLostzone_html, oppPrizes, oppViewCards } from "./opp-initialization.js";
 import { addDamageCounter } from "../general-actions/damage-counter.js";
 import { variableToString } from "./string-to-variable.js";
 import { socket } from "./socket.js";
@@ -13,6 +13,7 @@ import { discardAndDraw, shuffleAndDraw, shuffleBottomAndDraw } from "../general
 import { draw, viewDeck } from "../general-actions/deck-actions.js";
 import { moveCard } from "../image-logic/move-card.js";
 import { shuffleIndices } from "./shuffle.js";
+import { discardAll } from "../general-actions/discard-all.js";
 
 // Draw a Hand
 const drawHandButton = document.getElementById('drawHandButton');
@@ -127,7 +128,7 @@ discardHandButton.addEventListener('click', () => {
 
     drawAmount = parseInt(userInput);
 
-    if (!isNaN(drawAmount) && drawAmount >= 0) {
+    if (!isNaN(drawAmount) && drawAmount >= 0){
         drawAmount = Math.min(drawAmount, deck.count);
         socket.emit('discardAndDraw', roomId, hand.count, drawAmount);
         discardAndDraw('self', hand.count, drawAmount);
@@ -144,7 +145,7 @@ shuffleHandButton.addEventListener('click', () => {
 
     drawAmount = parseInt(userInput);
 
-    if (!isNaN(drawAmount) && drawAmount >= 0) {
+    if (!isNaN(drawAmount) && drawAmount >= 0){
         drawAmount = Math.min(drawAmount, (deck.count + hand.count));
         shuffleAndDraw('self', hand.count, drawAmount);
     } else {
@@ -160,7 +161,7 @@ shuffleHandBottomButton.addEventListener('click', () => {
 
     drawAmount = parseInt(userInput);
 
-    if (!isNaN(drawAmount) && drawAmount >= 0) {
+    if (!isNaN(drawAmount) && drawAmount >= 0){
         drawAmount = Math.min(drawAmount, (deck.count + hand.count));
         shuffleBottomAndDraw('self', hand.count, drawAmount);
     } else {
@@ -176,7 +177,7 @@ drawButton.addEventListener('click', () => {
 
     drawAmount = parseInt(userInput);
 
-    if (!isNaN(drawAmount) && drawAmount >= 0) {
+    if (!isNaN(drawAmount) && drawAmount >= 0){
         drawAmount = Math.min(drawAmount, deck.count);
         draw('self', drawAmount);
         socket.emit('draw', roomId, drawAmount);
@@ -185,7 +186,7 @@ drawButton.addEventListener('click', () => {
     };
 });
 
-function handleViewButtonClick(top) {
+function handleViewButtonClick(top){
     let viewAmount;
     const userInput = window.prompt('How many cards do you want to look at?', '1');
     viewAmount = parseInt(userInput);
@@ -193,7 +194,7 @@ function handleViewButtonClick(top) {
     const deckCount = sCard.user === 'self' ? deck.count : oppDeck.count;
     const targetOpp = sCard.user === 'opp';
 
-    if (!isNaN(viewAmount) && viewAmount >= 1) {
+    if (!isNaN(viewAmount) && viewAmount >= 1){
         viewAmount = Math.min(viewAmount, deckCount);
         viewDeck(sCard.user, viewAmount, targetOpp, top, deckCount);
         socket.emit('viewDeck', roomId, sCard.oUser, viewAmount, targetOpp, top, deckCount);
@@ -257,6 +258,13 @@ shuffleAllButton.addEventListener('click', () => {
     const indices = shuffleIndices(deckCount);
     shuffleContainer(sCard.user, 'deck', 'deck_html', indices);
     socket.emit('shuffleContainer', roomId, sCard.oUser, 'deck', 'deck_html', indices);
+});
+
+const discardAllButton = document.getElementById('discardAllButton');
+discardAllButton.addEventListener('click', () => {
+    const discardAmount = sCard.user === 'self' ? attachedCardPopup.count : oppAttachedCardPopup.count;
+    socket.emit('discardAll', roomId, sCard.oUser, discardAmount);
+    discardAll(sCard.user, discardAmount);
 });
 
 

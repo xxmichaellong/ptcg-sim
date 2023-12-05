@@ -10,6 +10,7 @@
   background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
   display: flex; /* Use flexbox to center-align child elements */
   justify-content: center; /* Horizontally center-align child elements */
+  z-index: 0;
 }
 #hand_html img {
   width: auto;
@@ -50,6 +51,7 @@
   border: 2px solid rgba(224, 224, 75, 0.864); /* Add a thin yellow outline */
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
   background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
+  z-index: 0;
 }
 #discardDisplay_html img {
   width: auto;
@@ -63,10 +65,10 @@
   left: 20%;
   width: 60%;
   height: 25%;
-  white-space: nowrap;
   border: 2px solid rgba(224, 224, 75, 0.864); /* Add a thin yellow outline */
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
   background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
+  z-index: 0;
 }
 #bench_html div {
   width: auto;
@@ -82,8 +84,9 @@
   border: 2px solid rgba(224, 224, 75, 0.864); /* Add a thin yellow outline */
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
   background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
+  z-index: 0;
 }
-#active_html img {
+#active_html div {
   width: auto;
   height: 100%;
 }
@@ -96,6 +99,7 @@
   border: 2px solid rgba(224, 224, 75, 0.864); /* Add a thin yellow outline */
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
   background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
+  z-index: 0;
 }
 #prizes_html img {
   width: 50%;
@@ -115,6 +119,7 @@
   border: 2px solid rgba(224, 224, 75, 0.864); /* Add a thin yellow outline */
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
   background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
+  z-index: 0;
 }
 #lostzoneDisplay_html img {
   width: auto;
@@ -177,15 +182,12 @@
   height: auto;
 }
 .circle {
-  display: none;
   position: absolute;
-  width: 3vw;
   border-radius: 50%;
   background-color: rgb(255, 98, 0);
   color: white;
   text-align: center;
-  line-height: 3vw;
-  z-index: 20;
+  z-index: 1;
 }
 .highlight {
   box-shadow: 0 0 0 2px lightblue !important;
@@ -198,7 +200,8 @@
   height: 20%;
   white-space: nowrap;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
-  background: linear-gradient(to bottom, rgb(87, 93, 128), #ffffff); /* Slightly darker grey background */
+  background: linear-gradient(to bottom, rgb(87, 93, 128), #ffffff); 
+  z-index: 0;
 }
 #board_html img {
   width: auto;
@@ -269,4 +272,18 @@
 .playContainer img {
   width: auto;
   height: 100%;
+}
+.fullView {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+  padding: 20px;
+}
+.fullView img {
+  height: 25%;
 }

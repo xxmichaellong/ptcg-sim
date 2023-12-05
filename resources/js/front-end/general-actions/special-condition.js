@@ -43,16 +43,17 @@ export function addSpecialCondition (user, location, container, index){
    
     specialCondition.style.display = 'inline-block';
     specialCondition.style.left = `${targetRect.left - containerRect.left}px`;
-    specialCondition.style.top = `${targetRect.height/4}px`;
+    specialCondition.style.top = `${targetRect.top - containerRect.top + targetRect.height/4}px`;
     container.appendChild(specialCondition, targetCard.image);
     //adjust size of the circle based on card size
     specialCondition.style.width = `${targetRect.width/3}px`;
+    specialCondition.style.height = `${targetRect.width/3}px`;
     specialCondition.style.lineHeight = `${targetRect.width/3}px`;
-
+    specialCondition.style.zIndex = '1';
 
     const handleColour = () => {
         let text = specialCondition.textContent.toUpperCase();
-        switch (text) {
+        switch (text){
             case 'P':
                 specialCondition.style.backgroundColor = 'green';
                 specialCondition.style.color = 'white';

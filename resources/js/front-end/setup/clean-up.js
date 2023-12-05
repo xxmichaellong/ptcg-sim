@@ -2,6 +2,7 @@ import { deck, deck_html, deckDisplay_html, hand, hand_html, lostzone, lostzone_
     prizes_html, active, active_html, bench, bench_html, lostzoneDisplay_html, discardDisplay_html, attachedCardPopup, attachedCardPopup_html, selfContainersDocument, viewCards, board, board_html, viewCards_html } from "../setup/self-initialization.js"
 import { removeImages } from "../image-logic/remove-images.js";
 import { oppActive, oppActive_html, oppBench, oppBench_html, oppDeck, oppDeck_html, oppDeckDisplay_html, oppDiscard, oppDiscard_html, oppHand,oppHand_html, oppLostzone, oppLostzone_html, oppPrizes, oppPrizes_html, oppLostzoneDisplay_html, oppDiscardDisplay_html, oppAttachedCardPopup, oppAttachedCardPopup_html, oppContainersDocument, oppViewCards, oppBoard, oppViewCards_html, oppBoard_html } from "./opp-initialization.js";
+import { hideIfEmpty } from "./close-popups.js";
 
 export function cleanUp(user){
     let cardArrays;
@@ -29,4 +30,10 @@ export function cleanUp(user){
     };
     cardArrays.forEach(container => container.cards = []);
     cardContainers.forEach(container => removeImages(container));
+
+    const containers = ['discard_html', 'lostzone_html', 'deck_html', 'attachedCardPopup_html', 'viewCards_html'];
+    for (let container of containers){
+        // Run hideIfEmpty for the current user and container
+        hideIfEmpty(user, container);
+    };
 }

@@ -100,7 +100,9 @@ export const sCard = {
     containerId: '',
     locationAsString: '',
     oUser: '',
-    user: ''
+    user: '',
+    box: '',
+    boxParent: ''
 };
 
 export const target = {

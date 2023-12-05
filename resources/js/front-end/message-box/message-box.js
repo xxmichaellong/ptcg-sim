@@ -5,7 +5,7 @@ const chatbox = document.getElementById('chatbox');
 const messageInput = document.getElementById('messageInput');
 
 messageInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter'){
         const p = document.createElement('p');
         p.className = 'selfBubble';
         p.textContent = messageInput.value;

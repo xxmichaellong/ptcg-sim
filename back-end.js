@@ -84,7 +84,10 @@ io.on('connection', (socket) => {
     });
     socket.on('viewDeck', (id, user, viewAmount, targetOpp, top, deckCount) => {
         socket.broadcast.to(id).emit('viewDeck', user, viewAmount, targetOpp, top, deckCount);
-    })
+    });
+    socket.on('discardAll', (id, user, discardAmount) => {
+        socket.broadcast.to(id).emit('discardAll', user, discardAmount);
+    });
 });
 
 // Start the server

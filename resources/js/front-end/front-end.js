@@ -1,4 +1,4 @@
-import { containerIds, selfContainersDocument } from "./setup/self-initialization.js";
+import { containerIds, deck, discard, selfContainersDocument } from "./setup/self-initialization.js";
 import { dragLeave, dragOver, drop } from "./image-logic/drag.js";
 import { drawHand } from "./general-actions/hand/draw-hand.js";
 import { moveCard } from "./image-logic/move-card.js";
@@ -10,21 +10,27 @@ import { oppContainersDocument } from "./setup/opp-initialization.js";
 import { socket } from "./setup/socket.js";
 import { closePopups } from "./setup/close-popups.js";
 import { discardAndDraw, shuffleAndDraw, shuffleBottomAndDraw } from "./general-actions/hand/discard-and-draw.js";
-import { draw, viewDeck } from "./general-actions/deck-actions.js";
+import { draw, keyDraw, viewDeck } from "./general-actions/deck-actions.js";
+import { discardAll } from "./general-actions/discard-all.js";
 
 export * from './setup/buttons.js';
 export * from './start-page/generate-id.js';
 export * from './message-box/message-box.js'
 
-//auto close popups if focus is on something else
-document.addEventListener('click', closePopups);
-selfContainersDocument.addEventListener('click', closePopups);
-oppContainersDocument.addEventListener('click', closePopups);
-document.addEventListener('contextmenu', closePopups);
-selfContainersDocument.addEventListener('contextmenu', closePopups);
-oppContainersDocument.addEventListener('contextmenu', closePopups);
+//draw cards with keypress
+document.addEventListener('keydown', (event) => {keyDraw(event)});
+selfContainersDocument.addEventListener('keydown', (event) => {keyDraw(event)});
+oppContainersDocument.addEventListener('keydown', (event) => {keyDraw(event)});
 
-function addEventListeners(container) {
+//auto close popups if focus is on something else
+document.addEventListener('click', (event) => {closePopups(event)});
+selfContainersDocument.addEventListener('click', (event) => {closePopups(event)});
+oppContainersDocument.addEventListener('click', (event) => {closePopups(event)});
+document.addEventListener('contextmenu', (event) => {closePopups(event)});
+selfContainersDocument.addEventListener('contextmenu', (event) => {closePopups(event)});
+oppContainersDocument.addEventListener('contextmenu', (event) => {closePopups(event)});
+
+function addEventListeners(container){
     container.addEventListener('dragover', dragOver);
     container.addEventListener('dragleave', dragLeave);
     container.addEventListener('drop', drop);
@@ -103,4 +109,7 @@ socket.on('draw', (drawAmount) => {
 });
 socket.on('viewDeck', (user, viewAmount, targetOpp, top, deckCount) => {
     viewDeck(user, viewAmount, targetOpp, top, deckCount);
-})
+});
+socket.on('discardAll', (user, discardAmount) => {
+    discardAll(user, discardAmount);
+});

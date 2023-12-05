@@ -57,12 +57,12 @@ const oppLocations = {
     viewCards_html: oppViewCards_html
 };
 
-export function stringToVariable(user, string) {
+export function stringToVariable(user, string){
     const locations = user === 'self' ? selfLocations : oppLocations;
     return locations[string];
 }
 
-export function variableToString(user, variable) {
+export function variableToString(user, variable){
     const locations = user === 'self' ? selfLocations : oppLocations;
     return Object.keys(locations).find(key => locations[key] === variable);
 }

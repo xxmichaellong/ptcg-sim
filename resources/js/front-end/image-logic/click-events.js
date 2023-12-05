@@ -3,8 +3,8 @@ import { containerIdToLocation } from "../setup/container-reference.js";
 import { deck_html, lostzone_html, discard_html } from "../setup/self-initialization.js";
 import { oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html } from "../setup/opp-initialization.js";
 import { stringToVariable, variableToString } from "../setup/string-to-variable.js";
-
-export const cardPopup = document.getElementById('cardPopup');
+import { addDamageCounter } from "../general-actions/damage-counter.js";
+import { addSpecialCondition } from "../general-actions/special-condition.js";
 
 export function identifyCard(event){
     if (event.target.user === 'self'){
@@ -77,7 +77,8 @@ export function openCardContextMenu(event){
         'discardHandButton': [['self', 'hand_html']],
         'shuffleHandButton': [['self', 'hand_html']],
         'shuffleHandBottomButton': [['self', 'hand_html']],
-        'shuffleAllButton': [['self', 'viewCards_html'], ['opp', 'viewCards_html']]
+        'shuffleAllButton': [['self', 'viewCards_html'], ['opp', 'viewCards_html']],
+        'discardAllButton': [['self', 'attachedCardPopup_html'], ['opp', 'attachedCardPopup_html']]
     };
     
     for (const [buttonId, conditionsArray] of Object.entries(buttonConditions)){
@@ -134,9 +135,31 @@ export function openCardContextMenu(event){
     };
 }
 
+export const cardPopup = document.getElementById('cardPopup');
+
 export function imageClick(event){
     event.stopPropagation();
 
     identifyCard(event);
-    cardPopup.style.display = 'block';
+
+    if (['bench_html', 'active_html'].includes(sCard.containerId)){
+        const images = event.target.parentElement.querySelectorAll('img');
+        images.forEach(function(img){
+            if (img.attached){
+                img.style.position = "static";
+            };
+        });
+        event.target.parentElement.className = 'fullView';
+        event.target.parentElement.style.zIndex = '2';
+        event.target.parentElement.style.height = '50%';
+        event.target.parentElement.style.width = '69%';
+
+        if (event.target.damageCounter){
+            event.target.damageCounter.style.display = 'none';
+        };
+        if (event.target.specialCondition){
+            event.target.specialCondition.style.display = 'none';
+        };
+        sCard.container.style.zIndex = '2';
+    };
 }

@@ -157,21 +157,6 @@ body {
   bottom: 58%;
   left: 20%
 }
-.popup {
-  display: none;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: #ffffff;
-  width: auto;
-  padding: 20px;
-  text-align: center;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
-  z-index: 10000;
-}
 #buttonContainer {
   display: flex;
   position: fixed;
@@ -229,6 +214,21 @@ body {
 
 .contextMenu .subMenu li:hover {
   background-color: #f0f0f0;
+}
+.popup {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #ffffff;
+  width: auto;
+  padding: 20px;
+  text-align: center;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
 }
 
 

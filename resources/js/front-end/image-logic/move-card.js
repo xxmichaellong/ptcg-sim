@@ -35,7 +35,7 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
     mLocation.cards.push(...oLocation.cards.splice(index, 1));
 
     // dealing with lostzone/discard cover, check if index is equal to the length of array (after removal)
-    if ([lostzone_html, discard_html, oppDiscard_html, oppLostzone_html].includes(oLocation_html) && index === oLocation.cards.length){
+    if (['lostzone_html', 'discard_html'].includes(_oLocation_html) && index === oLocation.cards.length){
         // remove existing cover image
         let display_html;
         if (oLocation_html === lostzone_html){
@@ -64,7 +64,7 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
             };
             display_html.appendChild(cover.image);
         };
-    } else if ([deck_html, oppDeck_html].includes(oLocation_html) && oLocation.cards.length === 0){
+    } else if (['deck_html'].includes(_oLocation_html) && oLocation.cards.length === 0){
         let display_html;
         if (oLocation_html === deck_html){
             display_html = deckDisplay_html;
@@ -114,7 +114,7 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
     };
 
     //redraw trick
-    if (![active_html, bench_html, oppActive_html, oppBench_html, attachedCardPopup_html, oppAttachedCardPopup_html].includes(mLocation_html)){
+    if (!['active_html', 'bench_html', 'attachedCardPopup_html'].includes(_mLocation_html)){
         hideCard(movingCard);
         revealCard(movingCard);
     };
@@ -128,10 +128,10 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
 
     // first, check if image is being attached to another card
     if (targetCard
-    && [active_html, bench_html, oppActive_html, oppBench_html].includes(mLocation_html) 
+    && ['active_html', 'bench_html'].includes(_mLocation_html) 
     && !targetCard.image.attached
-    && (![active_html, bench_html, oppActive_html, oppBench_html].includes(oLocation_html) || movingCard.image.attached)){
-        if (movingCard.type === 'pokemon' && ![active_html, bench_html, oppActive_html, oppBench_html].includes(oLocation_html)){
+    && (!['active_html', 'bench_html'].includes(_oLocation_html) || movingCard.image.attached)){
+        if (movingCard.type === 'pokemon' && !['active_html', 'bench_html'].includes(_oLocation_html)){
             targetCard.image.after(movingCard.image);
             targetCard.image.attached = true;
             targetCard.image.relative = movingCard.image;
@@ -169,6 +169,8 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
             };
         } else {
             // format the card so it's attached to targetImage
+            resetImage(movingCard.image);
+
             movingCard.image.attached = true;
             movingCard.image.target = 'on';
             movingCard.image.relative = targetCard.image;
@@ -205,15 +207,16 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
                 container = oppContainersDocument.createElement('div');
             };
             container.className = 'playContainer';
+            container.style.zIndex = '0';
             mLocation_html.appendChild(container);
             container.appendChild(movingCard.image);
 
             // some jank code  that deletes the container if it's empty
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.removedNodes.length > 0) {
+            const observer = new MutationObserver(function(mutations){
+                mutations.forEach(function(mutation){
+                    if (mutation.removedNodes.length > 0){
                         const removedNode = mutation.removedNodes[0];
-                        if (removedNode.nodeName === 'IMG' && container.getElementsByTagName('img').length === 0) {
+                        if (removedNode.nodeName === 'IMG' && container.getElementsByTagName('img').length === 0){
                             container.remove();
                         };
                         // update damage counters
@@ -241,7 +244,7 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
             mLocation_html.appendChild(movingCard.image);
         }
         //update discard/lostzone cover
-        if ([lostzone_html, discard_html, oppLostzone_html, oppDiscard_html].includes(mLocation_html)){
+        if (['lostzone_html', 'discard_html'].includes(_mLocation_html)){
             let display_html;
             let cover;
             if (mLocation_html === lostzone_html){
@@ -263,7 +266,7 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
             };
             display_html.appendChild(cover.image);
         //add deck cover if it's the first card
-        } else if ([deck_html, oppDeck_html].includes(mLocation_html) && mLocation.cards.length === 1){
+        } else if (['deck_html'].includes(_mLocation_html) && mLocation.cards.length === 1){
             let display_html;
             if (mLocation_html === deck_html){
                 display_html = deckDisplay_html;
@@ -272,7 +275,7 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
             };
             display_html.appendChild(makeDeckCover(user).image);
         //move active card to the bench if it exists
-        } else if ([active_html, oppActive_html].includes(mLocation_html) 
+        } else if (['active_html'].includes(_mLocation_html) 
         && mLocation.cards[1] 
         && !movingCard.image.attached){
             moveCard(user, 'active', 'active_html', 'bench', 'bench_html', 0);
@@ -296,7 +299,7 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
     };
    
     // deal with any attached cards
-    if ([active_html, bench_html, oppActive_html, oppBench_html, attachedCardPopup_html, oppAttachedCardPopup_html].includes(oLocation_html)){
+    if (['active_html', 'bench_html', 'attachedCardPopup_html'].includes(_oLocation_html)){
         //create a reference to the original movingCard index so it's constant within this block
         let movingCardIndex = mLocation.cards.length - 1;
         for (let i = 0; i < oLocation.cards.length; i++){
@@ -307,7 +310,7 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
             if (image.relative === movingCard.image){
                 resetImage(image);
                 //moving to active or bench
-                if ([active_html, bench_html, oppActive_html, oppBench_html].includes(mLocation_html)){
+                if (['active_html', 'bench_html'].includes(_mLocation_html)){
                     image.attached = true;
                     moveCard(user, _oLocation, _oLocation_html, _mLocation, _mLocation_html, i, movingCardIndex);
                     //moving from empty/filled to empty
@@ -344,7 +347,7 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
         //redefine index of movingCard because its location could have moved due to attached cards.
         const index = mLocation.cards.findIndex(card => card === movingCard);
 
-        if ([active_html, bench_html, oppActive_html, oppBench_html, attachedCardPopup_html, oppAttachedCardPopup_html].includes(mLocation_html)){
+        if (['active_html', 'bench_html', 'attachedCardPopup_html'].includes(_mLocation_html)){
             addDamageCounter(user, _mLocation, _mLocation_html, index);
         } else {
             movingCard.image.damageCounter.textContent = '0';
@@ -352,12 +355,12 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
         };
     };
 
-    if (movingCard.image.specialCondition && ![active_html, oppActive_html].includes(mLocation_html)){
+    if (movingCard.image.specialCondition && !['active_html'].includes(_mLocation_html)){
         movingCard.image.specialCondition.textContent = '0';
         movingCard.image.specialCondition.handleRemove();
     };
     //update damage counter locations
-    if ([active_html, bench_html, oppActive_html, oppBench_html, attachedCardPopup_html, oppAttachedCardPopup_html].includes(oLocation_html)){
+    if (['active_html', 'bench_html', 'attachedCardPopup_html'].includes(_oLocation_html)){
         for (let i = 0; i < oLocation.cards.length; i++){
             const image = oLocation.cards[i].image;
             if (image.damageCounter){
