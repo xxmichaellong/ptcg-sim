@@ -1,17 +1,17 @@
 import { roomId } from "../front-end.js";
 import { socket } from "../setup/socket.js";
 
-const chatbox = document.getElementById('chatbox');
-const messageInput = document.getElementById('messageInput');
+export const pvpChatbox = document.getElementById('pvpChatbox');
+const pvpMessageInput = document.getElementById('pvpMessageInput');
 
-messageInput.addEventListener('keypress', (e) => {
+pvpMessageInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter'){
         const p = document.createElement('p');
         p.className = 'selfBubble';
-        p.textContent = messageInput.value;
-        chatbox.appendChild(p);
-        messageInput.value = '';
-        chatbox.scrollTop = chatbox.scrollHeight;
+        p.textContent = pvpMessageInput.value;
+        pvpChatbox.appendChild(p);
+        pvpMessageInput.value = '';
+        pvpChatbox.scrollTop = pvpChatbox.scrollHeight;
 
         socket.emit('textMessage', roomId, p.textContent);
     };
@@ -21,8 +21,8 @@ socket.on('textMessage', (textContent) => {
     const p = document.createElement('p');
     p.className = 'oppBubble';
     p.textContent = textContent;
-    chatbox.appendChild(p);
-    chatbox.scrollTop = chatbox.scrollHeight;
+    pvpChatbox.appendChild(p);
+    pvpChatbox.scrollTop = pvpChatbox.scrollHeight;
 });
 
 socket.on('generalMessage', (textContent) => {
@@ -30,6 +30,6 @@ socket.on('generalMessage', (textContent) => {
     p.className = 'announcement';
     p.textContent = textContent;
     p.style.background = 'grey';
-    chatbox.appendChild(p);
-    chatbox.scrollTop = chatbox.scrollHeight;
+    pvpChatbox.appendChild(p);
+    pvpChatbox.scrollTop = pvpChatbox.scrollHeight;
 });

@@ -5,7 +5,6 @@ export function resetImage(image){
     image.energyLayer = 0;
     image.layer = 0;
     image.relative = 0;
-    image.adjustment = '0';
     image.style.left = 0;
     image.attached = false;
     image.target = 'off';

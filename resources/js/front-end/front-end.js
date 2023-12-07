@@ -15,7 +15,10 @@ import { discardAll } from "./general-actions/discard-all.js";
 
 export * from './setup/buttons.js';
 export * from './start-page/generate-id.js';
-export * from './message-box/message-box.js'
+export * from './message-box/message-box.js';
+export * from './setup/resizer.js'
+export * from './setup/check-overflow.js'
+export * from './message-box/boxButtons.js'
 
 //draw cards with keypress
 document.addEventListener('keydown', (event) => {keyDraw(event)});

@@ -1,5 +1,5 @@
-import { lostzone_html, prizes_html, lostzoneDisplay_html, discard_html, discard, 
-    discardDisplay_html, deck_html, deckDisplay_html, bench_html, active_html, hand_html, stadium_html, stadium, attachedCardPopup, attachedCardPopup_html, selfContainersDocument, bench } from "../setup/self-initialization.js";
+import { lostzone_html, prizes_html, lostzoneDisplay_html, discard_html,
+    discardDisplay_html, deck_html, deckDisplay_html, stadium_html, attachedCardPopup_html, selfContainersDocument, bench } from "../setup/self-initialization.js";
 import { resetImage } from "./reset-image.js";
 import { updateCount } from "../setup/counts.js";
 import { makeLostzoneCover } from "../card-types/lostzone-cover.js";
@@ -7,11 +7,12 @@ import { makeDiscardCover } from "../card-types/discard-cover.js";
 import { hideIfEmpty } from "../setup/close-popups.js";
 import { hideCard, revealCard } from "../general-actions/reveal-and-hide.js";
 import { stringToVariable } from "../setup/string-to-variable.js";
-import { oppActive_html, oppAttachedCardPopup_html, oppBench, oppBench_html, oppContainersDocument, oppDeckDisplay_html, oppDeck_html, oppDiscardDisplay_html, oppDiscard_html, oppHand_html, oppLostzoneDisplay_html, oppLostzone_html, oppPrizes_html, oppViewCards_html } from "../setup/opp-initialization.js";
+import { oppAttachedCardPopup_html, oppBench, oppContainersDocument, oppDeckDisplay_html, oppDeck_html, oppDiscardDisplay_html, oppDiscard_html, oppHand_html, oppLostzoneDisplay_html, oppLostzone_html, oppPrizes_html, oppViewCards_html } from "../setup/opp-initialization.js";
 import { makeDeckCover } from "../card-types/deck-cover.js";
 import { socket } from "../setup/socket.js";
 import { addDamageCounter } from "../general-actions/damage-counter.js";
 import { roomId } from "../start-page/generate-id.js";
+import { addSpecialCondition } from "../general-actions/special-condition.js";
 
 export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex){
     // create references to the string in case it needs to be used later for recalling moveCard (e.g., appending attached cards);
@@ -78,13 +79,14 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
     oLocation.cards.forEach(card => {
         let cardPosition;
         let movingCardPosition;
-        if (card.type === 'energy' && movingCard.type == 'energy'){
+        if (card.type !== 'pokemon' && movingCard.type !== 'pokemon'){
             cardPosition = card.image.style.left;
             movingCardPosition = movingCard.image.style.left;
 
             if (movingCard.image.relative instanceof HTMLImageElement && movingCard.image.relative === card.image.relative 
             && parseInt(cardPosition) > parseInt(movingCardPosition)){
-                card.image.style.left = (parseInt(cardPosition) - card.image.relative.adjustment) + 'px';
+                const adjustment = movingCard.image.relative.clientWidth/6;
+                card.image.style.left = (parseInt(cardPosition) - adjustment) + 'px';
                 card.image.style.zIndex = (parseInt(card.image.style.zIndex) + 1).toString();
             };
 
@@ -93,8 +95,9 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
             movingCardPosition = movingCard.image.style.bottom;
 
             if (movingCard.image.relative instanceof HTMLImageElement && movingCard.image.relative === card.image.relative 
-            && parseInt(cardPosition) > parseInt(movingCardPosition) && movingCard.type !== 'energy'){
-                card.image.style.bottom = (parseInt(cardPosition) - card.image.relative.adjustment) + 'px';
+            && parseInt(cardPosition) > parseInt(movingCardPosition) && movingCard.type === 'pokemon'){
+                const adjustment = movingCard.image.relative.clientWidth/14;
+                card.image.style.bottom = (parseInt(cardPosition) - adjustment) + 'px';
                 card.image.style.zIndex = (parseInt(card.image.style.zIndex) + 1).toString();
             };
         };
@@ -102,11 +105,12 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
 
     // if the image was attached to another image, decrease the level of layering on the base image
     if (movingCard.image.target === 'on'){
-        if (movingCard.type === 'energy'){
+        if (movingCard.type !== 'pokemon'){
             movingCard.image.relative.energyLayer -= 1;
              //adjust width of container
+             const adjustment = movingCard.image.relative.clientWidth/6;
              const currentWidth = parseFloat(movingCard.image.relative.parentElement.clientWidth);
-             const newWidth = currentWidth - movingCard.image.relative.adjustment;
+             const newWidth = currentWidth - adjustment;
              movingCard.image.relative.parentElement.style.width = newWidth + 'px';
         } else {
             movingCard.image.relative.layer -= 1;
@@ -149,7 +153,7 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
 
             // set relative of all of targetCard's attached cards to movingCard
             mLocation.cards.forEach(card => { 
-                if(card.image.relative === targetCard.image){
+                if (card.image.relative === targetCard.image){
                     card.image.relative = movingCard.image;
                 };
             });
@@ -177,24 +181,37 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
             movingCard.image.style.position = 'absolute';
 
             let layer;
-            if (movingCard.type === 'energy'){
-                targetCard.image.adjustment = targetCard.image.clientWidth/6;
+            if (movingCard.type !== 'pokemon'){
+                const adjustment = targetCard.image.clientWidth/6;
                 targetCard.image.energyLayer += 1;
                 layer = targetCard.image.energyLayer;
-                movingCard.image.style.left = `${layer * targetCard.image.adjustment}px`;
+                movingCard.image.style.left = `${layer * adjustment}px`;
                 
                 //adjust width of container
                 const currentWidth = parseFloat(targetCard.image.parentElement.clientWidth);
-                const newWidth = currentWidth + targetCard.image.adjustment;
+                const newWidth = currentWidth + adjustment;
                 targetCard.image.parentElement.style.width = newWidth + 'px';
             } else {
-                targetCard.image.adjustment = targetCard.image.clientWidth/6;
+                const adjustment = targetCard.image.clientWidth/14;
                 targetCard.image.layer += 1;
                 layer = targetCard.image.layer;
-                movingCard.image.style.bottom = `${layer * targetCard.image.adjustment}px`;
+                movingCard.image.style.bottom = `${layer * adjustment}px`;
             };
             movingCard.image.style.zIndex -= layer;
             targetCard.image.after(movingCard.image);
+
+            // move tools to the back of the image, index cannot be zero to prevent being called when evolving pokemon
+            if (movingCard.type === 'energy' && index !== 0){
+                for (let i = 0; i < mLocation.count - 1; i++){
+                    if (mLocation.cards[i].image.relative === movingCard.image.relative && !['pokemon', 'energy'].includes(mLocation.cards[i].type)){
+                        moveCard(user, _mLocation, _mLocation_html, _mLocation, _mLocation_html, i, targetIndex);
+                        i--;
+                    };
+                    if (mLocation.cards[i] === movingCard){
+                        break;
+                    };
+                };
+            };
         };
     } else {
         resetImage(movingCard.image);
@@ -366,6 +383,9 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
             if (image.damageCounter){
                 addDamageCounter(user, _oLocation, _oLocation_html, i);
             };
+            if (image.specialCondition){
+                addSpecialCondition(user, _oLocation, _oLocation_html, i);
+            };
         };
     };
     if (['active_html', 'bench_html'].includes(_mLocation_html)){
@@ -373,6 +393,9 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
             const image = mLocation.cards[i].image;
             if (image.damageCounter){
                 addDamageCounter(user, _mLocation, _mLocation_html, i);
+            };
+            if (image.specialCondition){
+                addSpecialCondition(user, _mLocation, _mLocation_html, i);
             };
         };
     };

@@ -12,39 +12,67 @@
 <body>
     <iframe id="selfContainers" src="self-containers.html"></iframe>
     <iframe id="oppContainers" src="opp-containers.html"></iframe>
-    <div id="stadium_html"></div>
-    <div id="lostzoneText">Lost Zone</div>
 
+    <div id="resizer">↕</div>
+    <div id="boardDivider"></div>
+    <div id="stadium_html"></div>
     <div id="cardPopup" class="popup">will populate
     </div>
-
-    <div id="buttonContainer">
-        <button id="drawHandButton">Start Game</button>
-        <button id="flipCoinButton">Flip Coin</button>
-        <button id="vSTARButton">VSTAR</button>
+  
+    <div id="sideButtonContainer">
+        <button id="turnButton" class="squareButton">+Turn</button>
+        <button id="flipCoinButton" class="squareButton">Coin Flip</button>
+        <button id="vSTARButton" class="squareButton">VSTAR</button>
+        <button id="vSTARButton" class="squareButton">GX</button>
+        <button id="flipBoardButton" class="squareButton">Flip Board</button>
     </div>
-    
-    <div id ="coverPage" class ="cover">
-        <div class="container">
-            <div id="header">
-                <h1>ptcg sim</h1>
-                <h3>ptcg simulator</h3>
-            </div>
-            <input id="nameInput" type="text" placeholder="Name">
-            <div id="roomId">
-                <input id="roomIdInput" type="text" placeholder="Paste Room ID here to join a game">
-                <button id="copyButton">📋</button>
-                <button id="generateIdButton">Generate Room ID</button>
-            </div>
-            <div id="playButton">
-                <h1>Play</h1>
-            </div>
+
+    <div id="topButtonContainer">
+        <button id="homeButton">Home</button>
+        <button id="pvpButton">PvP</button>
+        <button id="deckImportButton">Deck Import</button>
+        <button id="settingsButton">Settings</button>
+    </div>
+    <div id="home">
+        <div id="chatbox">Hi! Welcome to ptcg-sim. description incoming.</div>
+        <div id="chatboxButtonContainer">
+            <button id="attackButton">Attack</button>
+            <button id="passButton">Pass</button>
+            <button id="undoButton">Undo</button>
+        </div>
+        <input id="messageInput" type="text" placeholder="Type your message here...">
+        <div id="bottomHomeButtonContainer">
+            <button id="drawHandButton">Setup</button>
+            <button id="resetHandButton">Reset</button>
         </div>
     </div>
-
-    <div id="chatbox"></div>
-    <input id="messageInput" type="text" placeholder="Type your message here...">
-
+    <div id="pvp">
+        <div id="lobby">
+            <input id="nameInput" type="text" placeholder="Name">
+            <div id="roomId">
+                <input id="roomIdInput" type="text" placeholder="Room ID">
+                <button id="copyButton">📋</button>
+                <button id="generateIdButton">Generate ID</button>
+            </div>
+            <div id="joinRoomButton"> Join Room </div>
+        </div>
+        <div id="pvpChatbox"></div>
+        <div id="pvpChatboxButtonContainer">
+            <button id="pvpAttackButton">Attack</button>
+            <button id="pvpPassButton">Pass</button>
+            <button id="pvpUndoButton">Undo</button>
+        </div>
+        <input id="pvpMessageInput" type="text" placeholder="Type your message here...">
+        <div id="pvpBottomHomeButtonContainer">
+            <button id="pvpDrawHandButton">Setup</button>
+            <button id="pvpResetHandButton">Reset</button>
+            <button id="pvpLeaveRoomButton">Leave Room</button>
+        </div>
+    </div>
+    <div id="deckImport"> 
+        <input type="text" placeholder="Import your decklist here..."
+    ></div>
+    <div id="settings">Settings content...</div>
     <div id="cardContextMenu" class="contextMenu">
         <ul>
             <li id="damageCounterButton">Damage counter</li>

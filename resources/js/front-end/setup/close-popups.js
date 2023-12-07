@@ -58,7 +58,7 @@ export function closePopups(event){
         });
 
         const currentWidth = parseFloat(targetImage[0].clientWidth);
-        const newWidth = currentWidth + targetImage[0].adjustment * targetImage[0].energyLayer;
+        const newWidth = currentWidth + targetImage[0].clientWidth/6 * targetImage[0].energyLayer;
         fullViewElement.style.width = newWidth + 'px';
         fullViewElement.style.zIndex = '0';
 

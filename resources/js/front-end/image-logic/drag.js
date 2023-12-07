@@ -56,7 +56,11 @@ export function dragOver(event){
     const attachingValidCard = (targetParentIsActiveOrBench && targetNotItself && !targetIsAttached && (!cardIsFromActiveOrBench || cardIsAttached))
 
     if (movingValidCardToContainer || attachingValidCard){
-        event.target.classList.add('highlight');
+        if (event.target.id === 'board_html'){
+            event.target.classList.add('highlightBox');
+        } else {
+            event.target.classList.add('highlight');
+        };
     };
 
     const targetParentIsNotOwnContainer = event.target.parentElement !== draggedImage.parentElement
@@ -68,15 +72,19 @@ export function dragOver(event){
         if (targetParentIsActiveOrBench && cardIsFromActiveOrBench && targetParentParentIsNotOwnContainer){
             event.target.parentElement.parentElement.classList.add('highlight');
         } else if (!targetParentIsActiveOrBench && targetParentIsNotOwnContainer){
-            event.target.parentElement.classList.add('highlight');
-        }
+            if (event.target.parentElement.id === 'board_html'){
+                event.target.parentElement.classList.add('highlightBox');
+            } else {
+                event.target.parentElement.classList.add('highlight');
+            };
+        ;}
     };
 }
 
 export function dragLeave(event){
-    event.target.classList.remove('highlight'); 
-    event.target.parentElement.classList.remove('highlight');
-    event.target.parentElement.parentElement.classList.remove('highlight');
+    event.target.classList.remove('highlight', 'highlightBox'); 
+    event.target.parentElement.classList.remove('highlight', 'highlightBox');
+    event.target.parentElement.parentElement.classList.remove('highlight', 'highlightBox');
 }
 
 export function dragEnd(event){
@@ -90,8 +98,8 @@ export function dragEnd(event){
     };
 
     event.target.classList.remove('dragging');
-    event.target.parentElement.classList.remove('highlight');
-    event.target.parentElement.parentElement.classList.remove('highlight');
+    event.target.parentElement.classList.remove('highlight', 'highlightBox');
+    event.target.parentElement.parentElement.classList.remove('highlight', 'highlightBox');
 
     if (popupContainers.includes(sCard.container)){
         sCard.container.style.opacity = '1';
@@ -112,9 +120,9 @@ export function drop(event){
     if (event.target.classList.contains('circle')){
         event.target.style.pointerEvents = 'none';
     };
-    event.target.classList.remove('highlight');
-    event.target.parentElement.classList.remove('highlight');
-    event.target.parentElement.parentElement.classList.remove('highlight');
+    event.target.classList.remove('highlight', 'highlightBox');
+    event.target.parentElement.classList.remove('highlight', 'highlightBox');
+    event.target.parentElement.parentElement.classList.remove('highlight', 'highlightBox');
 
     //reroute displays to actual container
     if (['deckDisplay_html'].includes(sCard.containerId)){

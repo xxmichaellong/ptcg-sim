@@ -14,10 +14,14 @@ import { draw, viewDeck } from "../general-actions/deck-actions.js";
 import { moveCard } from "../image-logic/move-card.js";
 import { shuffleIndices } from "./shuffle.js";
 import { discardAll } from "../general-actions/discard-all.js";
+import { pvpChatbox } from "../front-end.js";
 
 // Draw a Hand
 const drawHandButton = document.getElementById('drawHandButton');
 drawHandButton.addEventListener('click', function(){drawHand('self')});
+
+const pvpDrawHandButton = document.getElementById('pvpDrawHandButton');
+pvpDrawHandButton.addEventListener('click', function(){drawHand('self')});
 
 const shuffleDeckButton = document.getElementById('shuffleDeckButton');
 const shufflePrizesButton = document.getElementById('shufflePrizesButton');
@@ -102,8 +106,8 @@ flipCoinButton.addEventListener('click', () => {
     p.className = 'announcement';
     p.style.backgroundColor = 'grey';
     p.textContent = message;
-    chatbox.appendChild(p);
-    chatbox.scrollTop = chatbox.scrollHeight;
+    pvpChatbox.appendChild(p);
+    pvpChatbox.scrollTop = pvpChatbox.scrollHeight;
 
     socket.emit('generalMessage', roomId, message);
 });
@@ -114,8 +118,8 @@ vSTARButton.addEventListener('click', () => {
     p.className = 'announcement';
     p.style.backgroundColor = 'grey';
     p.textContent = username + ' used their VSTAR!';
-    chatbox.appendChild(p);
-    chatbox.scrollTop = chatbox.scrollHeight;
+    pvpChatbox.appendChild(p);
+    pvpChatbox.scrollTop = pvpChatbox.scrollHeight;
 
     socket.emit('generalMessage', roomId, p.textContent);
 });

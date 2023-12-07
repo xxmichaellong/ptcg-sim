@@ -1,140 +1,172 @@
 #hand_html {
-    position: fixed;
-    bottom: 0%;
-    left: 0;
-    width: 100%;
-    height: 20%;
-    overflow-y: auto;
-    border: 2px solid rgba(188, 90, 90, 0.864); /* Add a thin yellow outline */
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
-    background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
-    display: flex; /* Use flexbox to center-align child elements */
-    justify-content: center; /* Horizontally center-align child elements */
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	height: 30%;
+	overflow-y: auto;
+	border-top: 5px solid rgba(188, 90, 113, 0.864);  
+	display: flex; /* Use flexbox to center-align child elements */
+	z-index: 0;
+	align-items: flex-end; 
 }
 #hand_html img {
-    width: auto;
-    height: 100%;
-}
-#deckText {
-    position: fixed;
-    left: 90.5%;
-    bottom: 91%;
-    transform: scaleX(-1) scaleY(-1);
-}
-#deckDisplay_html {
-    position: fixed;
-    bottom: 65%;
-    left: 88%;
-    width: 8%;
-    height: 25%;
-    border: 2px solid rgba(188, 90, 90, 0.864); /* Add a thin yellow outline */
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
-    background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
-}
-#deckDisplay_html img {
-    width: auto;
-    height: 100%;
-    position: relative;
-    left: 0;
-} 
-#discardText {
-    position: fixed;
-    left: 88.75%;
-    bottom: 56%;
-    transform: scaleX(-1) scaleY(-1);
-}
-#discardDisplay_html {
-    position: fixed;
-    bottom: 30%;
-    left: 88%;
-    width: 8%;
-    height: 25%;
-    border: 2px solid rgba(188, 90, 90, 0.864); /* Add a thin yellow outline */
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
-    background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
-    z-index: 0;
-}
-#discardDisplay_html img {
-    width: auto;
-    height: 100%;
-    position: relative;
-    left: 0;
-} 
-#benchText {
-    position: fixed;
-    left: 20%;
-    bottom: 55%;
+	width: auto;
+	height: 95%;
 }
 #bench_html {
-    position: fixed;
-    bottom: 30%;
-    left: 20%;
-    width: 60%;
-    height: 25%;
-    white-space: nowrap;
-    border: 2px solid rgba(188, 90, 90, 0.864); /* Add a thin yellow outline */
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
-    background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
-    z-index: 0;
+	position: fixed;
+	bottom: 35%;
+	left: 12%;
+	width: 76%;
+	height: 25%;
+	box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
+	display: flex;
+	justify-content: center; /* Horizontally center-align child elements */
+	align-items: flex-end;
+	z-index: 0;
 }
 #bench_html div {
-    width: auto;
-    height: 100%;
-    margin-right: 3px;
-  } 
+	height: 100%;
+	margin-right: 5px;
+}
 #active_html {
-    position: fixed;
-    bottom: 63%;
-    left: 44%;
-    width: 12%;
-    height: 32%;
-    border: 2px solid rgba(188, 90, 90, 0.864); /* Add a thin yellow outline */
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
-    background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
-    z-index: 0;
+	position: fixed;
+	bottom: 63%;
+	left: 38%;
+	width: 24%;
+	height: 32%;
+	box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
+	display: flex;
+	justify-content: center; /* Horizontally center-align child elements */
+	align-items: flex-end;
+	z-index: 0;
 }
 #active_html div {
-    width: auto;
-    height: 100%;
+	width: auto;
+	height: 100%;
 }
 #prizes_html {
-    position: fixed;
-    bottom: 40%;
-    left: 2%;
-    width: 10%;
-    height: 50%;
-    border: 2px solid rgba(188, 90, 90, 0.864); /* Add a thin yellow outline */
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
-    background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
-    z-index: 0;
+  position: fixed;
+  bottom: 36%;
+  left: 1%;
+  width: 8%;
+  height: 43%;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
+  z-index: 0;
+  padding: 5px; /* Add padding */
 }
 #prizes_html img {
-    width: 50%;
-    height: auto;
-}
-#lostzoneText {
-    position: fixed;
-    left: 70%;
-    bottom: 94%;
-    transform: scaleX(-1) scaleY(-1);
+	width: auto;
+	max-width: 50%;
+	max-height: 33%;
 }
 #lostzoneDisplay_html {
-    position: fixed;
-    bottom: 85%;
-    left: 75%;
-    width: 4%;
-    height: 12%;
-    border: 2px solid rgba(188, 90, 90, 0.864); /* Add a thin yellow outline */
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
-    background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
-    z-index: 0;
+	position: fixed;
+	bottom: 85%;
+	left: 1%;
+	width: 9%;
+	height: 15%;
+	box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
+	z-index: 0;
+	background-color: rgba(128, 0, 128, 0.187); /* Add this for a very light transparent purple background */
+	display: flex; /* Add this */
+	justify-content: center; /* Horizontally center-align child elements */
+	align-items: center; /* Vertically center-align child elements */
 }
 #lostzoneDisplay_html img {
-    width: auto;
-    height: 100%;
-    position: relative;
-    left: 0;
+	width: auto;
+	height: 100%;
+	position: relative;
+}
+#lostzoneText {
+	position: fixed;
+  left: 11%;
+  bottom: 90%;
+	transform: scaleX(-1) scaleY(-1);
+}
+#deckDisplay_html {
+  position: fixed;
+  bottom: 66%;
+  right: 1%;
+  width: 8%;
+  height: 25%;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
+  display: flex; /* Add this */
+  justify-content: center; /* Horizontally center-align child elements */
+  align-items: center; /* Vertically center-align child elements */
+  z-index: 0;
+}
+#deckDisplay_html img {
+  width: auto;
+  height: 100%;
+  position: relative;
+  left: 0;
 } 
+#deckText {
+  position: fixed;
+  right: 2%;
+  bottom: 91%;
+	transform: scaleX(-1) scaleY(-1);
+}
+.text {
+  font-size: 4vh; /* Adjust as needed */
+}
+#discardText {
+  position: fixed;
+  right: 2%;
+  bottom: 60%;
+	transform: scaleX(-1) scaleY(-1);
+}
+#discardDisplay_html {
+  position: fixed;
+  bottom: 36%;
+  right: 1%;
+  width: 8%;
+  height: 23%;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
+  display: flex; /* Add this */
+  justify-content: center; /* Horizontally center-align child elements */
+  align-items: center; /* Vertically center-align child elements */
+  z-index: 0;
+}
+#discardDisplay_html img {
+  width: auto;
+  height: 100%;
+  position: relative;
+  left: 0;
+} 
+#board_html {
+  position: fixed;
+  bottom: 61%;
+  left: 10%;
+  width: 23%;
+  height: 30%;
+  display: flex;
+  flex-wrap: wrap; /* Allow items to wrap onto multiple lines */
+  justify-content: center;
+  overflow-y: auto; /* Enable vertical scrolling */
+  align-items: flex-end;
+  padding: 20px;
+  z-index: 0;
+}
+#board_html img {
+  width: auto; /* Ensure images don't exceed the width of the container */
+  height: 70%; /* Maintain aspect ratio */
+}
+.highlight {
+  box-shadow: 0 0 0 2px rgb(182, 110, 110) !important;
+}
+.highlightBox {
+  background-color: rgba(188, 90, 113, 0.3);
+}
+
+
+
+
+
+
+
 #deck_html {
     display: none;
     position: fixed;
@@ -173,6 +205,10 @@
     width: 10%;
     height: auto;
 }
+
+
+
+
 #discard_html {
     display: none;
     position: fixed;
@@ -199,24 +235,6 @@
     color: white;
     text-align: center;
     z-index: 1;
-}
-.highlight {
-    box-shadow: 0 0 0 2px lightblue !important;
-}
-#board_html {
-    position: fixed;
-    bottom: 63%;
-    left: 60%;
-    width: 10%;
-    height: 20%;
-    white-space: nowrap;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
-    background: linear-gradient(to bottom, rgb(87, 93, 128), #ffffff); /* Slightly darker grey background */
-    z-index: 0;
-}
-#board_html img {
-    width: auto;
-    height: 100%;
 }
 #attachedCardPopup_html {
     display: none;

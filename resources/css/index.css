@@ -1,5 +1,5 @@
 body {
-  background: linear-gradient(hsl(269, 64%, 80%) 40%, rgb(218, 174, 222) 40%);
+  background: white;
   background-size: 100% 100%;
   margin: 0;
   height: 100vh;
@@ -17,27 +17,136 @@ body {
 .contextMenu button {
   display: block;
 }
-#chatbox {
-  background: #99c1be;
+#topButtonContainer {
   position: fixed;
   right: 0;
   top: 0;
-  width: 20%;
+  width: 25%;
+  height: 5%;
+}
+#chatbox {
+  background: #abbfbe;
+  position: fixed;
+  right: 1%;
+  top: 10%;
+  width: 23%;
   height: 80%;
   overflow-y: auto;
   padding: 10px;
   box-sizing: border-box;
-  border: 2px solid #706969;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
 }
+#home {
+  background: #99c1be;
+  position: fixed;
+  right: 0;
+  top: 5%;
+  width: 25%;
+  height: 95%;
+  overflow-y: auto;
+  padding: 10px;
+  box-sizing: border-box;
+  border: 2px solid #7ab7ad;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+#pvp {
+  display: none;
+  background: #99c1be;
+  position: fixed;
+  right: 0;
+  top: 5%;
+  width: 25%;
+  height: 95%;
+  overflow-y: auto;
+  padding: 10px;
+  box-sizing: border-box;
+  border: 2px solid #7ab7ad;
+}
+#pvpChatbox {
+  background: #abbfbe;
+  position: fixed;
+  right: 1%;
+  top: 10%;
+  width: 23%;
+  height: 80%;
+  overflow-y: auto;
+  padding: 10px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+#deckImport {
+  display: none;
+  background: #99c1be;
+  position: fixed;
+  right: 0;
+  top: 5%;
+  width: 25%;
+  height: 95%;
+  overflow-y: auto;
+  padding: 10px;
+  box-sizing: border-box;
+  border: 2px solid #7ab7ad;
+}
+#settings {
+  display: none;
+  background: #99c1be;
+  position: fixed;
+  right: 0;
+  top: 5%;
+  width: 25%;
+  height: 95%;
+  overflow-y: auto;
+  padding: 10px;
+  box-sizing: border-box;
+  border: 2px solid #7ab7ad;
+}
+#bottomHomeButtonContainer {
+  display: flex;
+  position: fixed;
+  right: 0.5%;
+  bottom: 5%;
+  width: 23%;
+}
+#chatboxButtonContainer {
+  display: flex;
+  position: fixed;
+  right: 0.5%;
+  bottom: 20%;
+  width: 23%;
+}
 #messageInput {
   position: fixed;
-  left: 80%;
-  top: 80%;
-  width: 20%;
-  height: 50px;
+  right: 0.5%;
+  bottom: 10%;
+  width: 23%;
+  height: 5%;
+}
+#pvpBottomHomeButtonContainer {
+  display: flex;
+  position: fixed;
+  right: 0.5%;
+  bottom: 5%;
+  width: 23%;
+}
+#pvpChatboxButtonContainer {
+  display: flex;
+  position: fixed;
+  right: 0.5%;
+  bottom: 20%;
+  width: 23%;
+}
+#pvpMessageInput {
+  position: fixed;
+  right: 0.5%;
+  bottom: 10%;
+  width: 23%;
+  height: 5%;
 }
 .selfBubble, .announcement, .oppBubble {
   max-width: 80%;
@@ -64,49 +173,30 @@ body {
   text-align: left;
   margin-right: auto;
 }
-.cover {
-  position: fixed;
-  height: 100%;
+#lobby {
   width: 100%;
-  background: rgba(30, 30, 60, 0.7);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.container {
-  position: fixed;
-  z-index: 1000;
-  overflow: hidden;
-}
-#header {
-  background: #50a8a0;
-  color: white;
-  padding: 10px;
-  text-align: center;
+  z-index: 1;
 }
 #nameInput {
-  width: 100%;
-  margin-top: 20px; 
+  width: 90%;
   padding: 10px;
 }
 #roomId {
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 20px 0;
 }
 #roomIdInput {
   padding: 10px;
-  width: 70%;
+  width: 80%;
 }
 #copyButton {
   margin: 10px;
   padding: 9px;
 }
 #generateIdButton {
-  padding: 10px;
-  width: 20%;
+  padding: 9px;
   background: #a89850;
   color: white;
   border: none;
@@ -114,60 +204,88 @@ body {
 #generateIdButton:hover {
   background: #8c7e46; /* Change this color to the hover color you want */
 }
-#playButton {
-  line-height: 60px;
+#joinRoomButton {
+  width: 100%;
   background: #333;
   color: white;
   text-align: center;
 }
-#playButton:hover {
+#joinRoomButton:hover {
   background: #78766e; /* Change this color to the hover color you want */
 }
 #selfContainers {
   position: fixed;
   border: none;
   bottom: 0;
-  width: 80%;
-  height: 60%;
+  width: 66%;
+  height: 50%;
+}
+#boardDivider {
+  position: fixed;
+  height: 100%;
+  width: 1%;
+  left: 67%;
+  bottom: 0;
+  background: rgb(231, 228, 228);
+}
+#resizer {
+  position: fixed;
+  height: 6%;
+  width: 1%;
+  left: 68%;
+  bottom: 47%;
+  background: white;
+  cursor: row-resize;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+#sideButtonContainer {
+  position: fixed;
+  height: 15%;
+  width: 5%;
+  left: 69%;
+  bottom: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.squareButton {
+  width: 50px; /* Adjust as needed */
+  height: 50px; /* Adjust as needed */
+  margin-bottom: 10px; /* Space between buttons */
+  display: flex; /* Add this */
+  align-items: center; /* Add this */
+  justify-content: center; /* Add this */
 }
 #oppContainers {
   position: fixed;
   border: none;
-  bottom: 60%;
-  width: 80%;
-  height: 40%;
+  bottom: 50%;
+  width: 66%;
+  height: 50%;
   transform: scaleX(-1) scaleY(-1);
 }
 #stadium_html {
   position: fixed;
-  bottom: 54%;
-  left: 60%;
+  bottom: 42%;
+  left: 12%;
   width: 8%;
-  height: 12%;
-  border: 2px solid rgba(123, 123, 118, 0.864); /* Add a thin yellow outline */
+  height: 16%;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
-  background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
+  display: flex; /* Add this */
+	justify-content: center; /* Horizontally center-align child elements */
+	align-items: center;
 }
 #stadium_html img {
   width: auto;
   height: 100%;
 }
-#lostzoneText {
-  position: fixed;
-  bottom: 58%;
-  left: 20%
-}
-#buttonContainer {
-  display: flex;
-  position: fixed;
-  left: 80%;
-  bottom: 5%;
-}
-#buttonContainer button {
-  margin-right: 10px; /* Add margin between buttons */
-}
+
 .highlight {
-  box-shadow: 0 0 0 2px lightblue !important;
+  box-shadow: 0 0 0 2px lightseagreen !important;
 }
 .contextMenu {
   display: none;
