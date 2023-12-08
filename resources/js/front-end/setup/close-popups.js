@@ -1,6 +1,6 @@
 import { cardContextMenu, cardPopup } from "../image-logic/click-events.js";
-import { lostzone_html, deck_html, discard_html, attachedCardPopup, attachedCardPopup_html, viewCards, viewCards_html, sCard, selfContainersDocument } from "./self-initialization.js";
-import { oppAttachedCardPopup, oppAttachedCardPopup_html, oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html, oppViewCards, oppViewCards_html } from "./opp-initialization.js";
+import { lostzone_html, deck_html, discard_html, attachedCardPopup, attachedCardPopup_html, viewCards, viewCards_html, sCard, selfContainersDocument, active, bench } from "./self-initialization.js";
+import { oppActive, oppAttachedCardPopup, oppAttachedCardPopup_html, oppBench, oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html, oppViewCards, oppViewCards_html } from "./opp-initialization.js";
 import { containerIdToLocation } from "./container-reference.js";
 import { stringToVariable, variableToString } from "./string-to-variable.js";
 import { addDamageCounter } from "../general-actions/damage-counter.js";
@@ -30,8 +30,26 @@ export const hideIfEmpty = (user, containerId) => {
         };
     };
 }
+export function deselectCard(){
+    if (sCard.card){
+        sCard.card.image.classList.remove('highlight');
+        sCard.selecting = false;
+
+        function removeHighlightFromCards(cards) {
+            cards.forEach(card => {
+                card.image.classList.remove('selectHighlight');
+            });
+        }
+        removeHighlightFromCards(active.cards);
+        removeHighlightFromCards(bench.cards);
+        removeHighlightFromCards(oppActive.cards);
+        removeHighlightFromCards(oppBench.cards);
+    };
+}
 
 export function closePopups(event){
+    deselectCard();
+
     cardPopup.style.display = 'none';
     cardContextMenu.style.display = 'none';
 

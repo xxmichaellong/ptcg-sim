@@ -7,7 +7,7 @@ import { socket } from "../../setup/socket.js";
 import { shuffleIndices } from "../../setup/shuffle.js";
 import { oppDeckDisplay_html } from "../../setup/opp-initialization.js";
 import { buildDeck } from "../build-deck.js";
-import { roomId } from "../../start-page/generate-id.js";
+import { roomId } from "../../lobby/generate-id.js";
 
 // Draw starting hand of 7
 export function drawHand(user, indices){

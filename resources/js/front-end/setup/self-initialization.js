@@ -102,7 +102,13 @@ export const sCard = {
     oUser: '',
     user: '',
     box: '',
-    boxParent: ''
+    boxParent: '',
+    selecting: false,
+    get card(){
+        if (this.location){
+            return this.location.cards[this.index];
+        };
+    }
 };
 
 export const target = {

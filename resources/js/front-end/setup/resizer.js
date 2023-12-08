@@ -1,26 +1,44 @@
 import { addDamageCounter } from "../general-actions/damage-counter.js";
 import { addSpecialCondition } from "../general-actions/special-condition.js";
 import { stringToVariable } from "./string-to-variable.js";
-import { stadium_html } from "./self-initialization.js";
+import { hand_html, stadium_html } from "./self-initialization.js";
+import { oppHand_html } from "./opp-initialization.js";
+import { adjustAlignment } from "./check-overflow.js";
 
 const resizer = document.getElementById('resizer');
 const selfContainers = document.getElementById('selfContainers');
 const oppContainers = document.getElementById('oppContainers');
 
-// Start resizing when the mouse button is pressed down on the resizer
-resizer.addEventListener('mousedown', function(e){
-    e.preventDefault();
-    window.addEventListener('mousemove', resize, false);
-    document.addEventListener('mouseup', stopResize, false);
-}, false);
+// Create the overlay div
+const overlay = document.createElement('div');
+overlay.style.position = 'fixed';
+overlay.style.top = 0;
+overlay.style.right = 0;
+overlay.style.bottom = 0;
+overlay.style.left = 0;
+overlay.style.zIndex = 1000; // Adjust as needed
 
-// Stop resizing when the mouse button is released
+resizer.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    window.addEventListener('mousemove', resize);
+    document.addEventListener('mouseup', stopResize);
+
+    // Add the overlay to the body
+    document.body.appendChild(overlay);
+});
+
 function stopResize(e) {
-    window.removeEventListener('mousemove', resize, false);
-    document.removeEventListener('mouseup', stopResize, false);
+    window.removeEventListener('mousemove', resize);
+    document.removeEventListener('mouseup', stopResize);
+
+    // Remove the overlay from the body
+    document.body.removeChild(overlay);
 }
 
 function resize(e) {
+    //adjust hand container
+    [hand_html, oppHand_html].forEach(adjustAlignment);
+
     const oldSelfHeight = parseInt(selfContainers.offsetHeight);
     const oldOppHeight = parseInt(oppContainers.offsetHeight);
 

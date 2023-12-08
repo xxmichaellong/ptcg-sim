@@ -10,6 +10,7 @@ const lobby = document.getElementById('lobby');
 const joinRoomButton = document.getElementById('joinRoomButton');
 const pvpChatbox = document.getElementById('pvpChatbox');
 const nameInput = document.getElementById('nameInput');
+const connectedRoom = document.getElementById('connectedRoom');
 
 copyButton.addEventListener('click', () => {
     navigator.clipboard.writeText(roomIdInput.value)
@@ -30,6 +31,7 @@ socket.on('generateId', (id) => {
 });
 
 socket.on('joinGame', (otherPlayerUsername) => {
+    connectedRoom.style.display = 'flex';
     const p = document.createElement('p');
     p.className = 'announcement';
     p.textContent = 'Game joined with id: ' + roomId;

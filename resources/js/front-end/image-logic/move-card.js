@@ -1,5 +1,5 @@
 import { lostzone_html, prizes_html, lostzoneDisplay_html, discard_html,
-    discardDisplay_html, deck_html, deckDisplay_html, stadium_html, attachedCardPopup_html, selfContainersDocument, bench } from "../setup/self-initialization.js";
+    discardDisplay_html, deck_html, deckDisplay_html, stadium_html, attachedCardPopup_html, selfContainersDocument, bench, active } from "../setup/self-initialization.js";
 import { resetImage } from "./reset-image.js";
 import { updateCount } from "../setup/counts.js";
 import { makeLostzoneCover } from "../card-types/lostzone-cover.js";
@@ -7,11 +7,11 @@ import { makeDiscardCover } from "../card-types/discard-cover.js";
 import { hideIfEmpty } from "../setup/close-popups.js";
 import { hideCard, revealCard } from "../general-actions/reveal-and-hide.js";
 import { stringToVariable } from "../setup/string-to-variable.js";
-import { oppAttachedCardPopup_html, oppBench, oppContainersDocument, oppDeckDisplay_html, oppDeck_html, oppDiscardDisplay_html, oppDiscard_html, oppHand_html, oppLostzoneDisplay_html, oppLostzone_html, oppPrizes_html, oppViewCards_html } from "../setup/opp-initialization.js";
+import { oppActive, oppAttachedCardPopup_html, oppBench, oppContainersDocument, oppDeckDisplay_html, oppDeck_html, oppDiscardDisplay_html, oppDiscard_html, oppHand_html, oppLostzoneDisplay_html, oppLostzone_html, oppPrizes_html, oppViewCards_html } from "../setup/opp-initialization.js";
 import { makeDeckCover } from "../card-types/deck-cover.js";
 import { socket } from "../setup/socket.js";
 import { addDamageCounter } from "../general-actions/damage-counter.js";
-import { roomId } from "../start-page/generate-id.js";
+import { roomId } from "../lobby/generate-id.js";
 import { addSpecialCondition } from "../general-actions/special-condition.js";
 
 export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex){
@@ -158,7 +158,6 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
                 };
             });
             //move the cards to the new host
-            let movingCardIndex = mLocation.cards.length - 1;
             for (let i = 0; i < mLocation.cards.length; i++){
                 const card = mLocation.cards[i];
                 if (card.image === movingCard.image){
@@ -166,13 +165,15 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
                 } else if (card.image.relative === movingCard.image){
                     resetImage(card.image);
                     card.image.attached = true;
-                    moveCard(user, _mLocation, _mLocation_html, _mLocation, _mLocation_html, i, movingCardIndex);
-                    movingCardIndex--;
+                    const targetIndex = mLocation.cards.findIndex(card => card.image === movingCard.image);
+                    moveCard(user, _mLocation, _mLocation_html, _mLocation, _mLocation_html, i, targetIndex);
                     i--;
                 };
             };
         } else {
-            // format the card so it's attached to targetImage
+             //figure out where card is coming from-same parent or different? being reattached or evolve?
+            const nonEvolveAttachment = movingCard.image.target === 'on' || !movingCard.image.parentElement.classList.contains('playContainer');
+             // format the card so it's attached to targetImage
             resetImage(movingCard.image);
 
             movingCard.image.attached = true;
@@ -201,9 +202,10 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
             targetCard.image.after(movingCard.image);
 
             // move tools to the back of the image, index cannot be zero to prevent being called when evolving pokemon
-            if (movingCard.type === 'energy' && index !== 0){
+            if (movingCard.type === 'energy' && nonEvolveAttachment){
                 for (let i = 0; i < mLocation.count - 1; i++){
                     if (mLocation.cards[i].image.relative === movingCard.image.relative && !['pokemon', 'energy'].includes(mLocation.cards[i].type)){
+                        const targetIndex = mLocation.cards.findIndex(card => card.image === movingCard.image.relative);
                         moveCard(user, _mLocation, _mLocation_html, _mLocation, _mLocation_html, i, targetIndex);
                         i--;
                     };
@@ -251,6 +253,20 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
                                 };
                             };
                         };
+                        if (['active_html'].includes(_mLocation_html)){
+                            let sActive;
+                            if (user === 'self'){
+                                sActive = active;
+                            } else {
+                                sActive = oppActive;
+                            }
+                            for (let i = 0; i < sActive.count; i++){
+                                const image = sActive.cards[i].image;
+                                if (image.damageCounter){
+                                    addDamageCounter(user, 'active', 'active_html', i);
+                                };
+                            };
+                        };
                     };
                 });
             });
@@ -294,7 +310,8 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
         //move active card to the bench if it exists
         } else if (['active_html'].includes(_mLocation_html) 
         && mLocation.cards[1] 
-        && !movingCard.image.attached){
+        && !movingCard.image.attached
+        && !mLocation.cards[0].image.attached){
             moveCard(user, 'active', 'active_html', 'bench', 'bench_html', 0);
         //remove any existing stadium and send to correct discard pile
         } else if (stadium_html === mLocation_html && mLocation.cards[1] && user === 'self'){
@@ -316,9 +333,8 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
     };
    
     // deal with any attached cards
-    if (['active_html', 'bench_html', 'attachedCardPopup_html'].includes(_oLocation_html)){
+    if (['active_html', 'bench_html', 'attachedCardPopup_html'].includes(_oLocation_html) && !movingCard.image.attached){
         //create a reference to the original movingCard index so it's constant within this block
-        let movingCardIndex = mLocation.cards.length - 1;
         for (let i = 0; i < oLocation.cards.length; i++){
             const image = oLocation.cards[i].image;
             if (image === movingCard.image){
@@ -329,20 +345,8 @@ export function moveCard(user, oLocation, oLocation_html, mLocation, mLocation_h
                 //moving to active or bench
                 if (['active_html', 'bench_html'].includes(_mLocation_html)){
                     image.attached = true;
-                    moveCard(user, _oLocation, _oLocation_html, _mLocation, _mLocation_html, i, movingCardIndex);
-                    //moving from empty/filled to empty
-                    //no change to index
-                    //moving from empty to empty/filled
-                    //no change
-                    //moving from filled to different filled
-                    //no change
-                    //moving from filled to same filled (last card)
-                    //no change
-                    //moving from filled to same filled (not last card)
-                    if (_oLocation === _mLocation && index !== movingCardIndex){
-                        movingCardIndex--;
-                    };
-                //moving to other part of deck, open a popup to move the cards
+                    const targetIndex = mLocation.cards.findIndex(card => card.image === movingCard.image);
+                    moveCard(user, _oLocation, _oLocation_html, _mLocation, _mLocation_html, i, targetIndex);
                 } else {
                     if (oLocation.cards[i].type === 'pokemon' && movingCard.image.damageCounter){
                         addDamageCounter(user, _oLocation, _oLocation_html, i);

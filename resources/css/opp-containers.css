@@ -4,7 +4,7 @@
 	left: 0;
 	width: 100%;
 	height: 30%;
-	overflow-y: auto;
+  overflow-x: auto;
 	border-top: 5px solid rgba(188, 90, 113, 0.864);  
 	display: flex; /* Use flexbox to center-align child elements */
 	z-index: 0;
@@ -13,6 +13,8 @@
 #hand_html img {
 	width: auto;
 	height: 95%;
+  margin-left: 1px;
+  margin-right: 1px;
 }
 #bench_html {
 	position: fixed;
@@ -63,27 +65,31 @@
 }
 #lostzoneDisplay_html {
 	position: fixed;
-	bottom: 85%;
+	bottom: 84%;
 	left: 1%;
 	width: 9%;
 	height: 15%;
 	box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
 	z-index: 0;
 	background-color: rgba(128, 0, 128, 0.187); /* Add this for a very light transparent purple background */
-	display: flex; /* Add this */
-	justify-content: center; /* Horizontally center-align child elements */
-	align-items: center; /* Vertically center-align child elements */
+  display: flex;
+  justify-content: center; 
+  align-items:flex-start;
 }
 #lostzoneDisplay_html img {
-	width: auto;
-	height: 100%;
-	position: relative;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  left: 0;
 }
 #lostzoneText {
 	position: fixed;
   left: 11%;
   bottom: 90%;
 	transform: scaleX(-1) scaleY(-1);
+  user-select: none;
 }
 #deckDisplay_html {
   position: fixed;
@@ -92,15 +98,17 @@
   width: 8%;
   height: 25%;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
-  display: flex; /* Add this */
-  justify-content: center; /* Horizontally center-align child elements */
-  align-items: center; /* Vertically center-align child elements */
+  display: flex;
+  justify-content: center; 
+  align-items:flex-start;
   z-index: 0;
 }
 #deckDisplay_html img {
   width: auto;
-  height: 100%;
-  position: relative;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
   left: 0;
 } 
 #deckText {
@@ -108,6 +116,7 @@
   right: 2%;
   bottom: 91%;
 	transform: scaleX(-1) scaleY(-1);
+  user-select: none;
 }
 .text {
   font-size: 4vh; /* Adjust as needed */
@@ -117,6 +126,7 @@
   right: 2%;
   bottom: 60%;
 	transform: scaleX(-1) scaleY(-1);
+  user-select: none;
 }
 #discardDisplay_html {
   position: fixed;
@@ -125,15 +135,17 @@
   width: 8%;
   height: 23%;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
-  display: flex; /* Add this */
-  justify-content: center; /* Horizontally center-align child elements */
-  align-items: center; /* Vertically center-align child elements */
+  display: flex;
+  justify-content: center; 
+  align-items:flex-start;
   z-index: 0;
 }
 #discardDisplay_html img {
   width: auto;
-  height: 100%;
-  position: relative;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
   left: 0;
 } 
 #board_html {
@@ -148,7 +160,7 @@
   overflow-y: auto; /* Enable vertical scrolling */
   align-items: flex-end;
   padding: 20px;
-  z-index: 0;
+  z-index: -1;
 }
 #board_html img {
   width: auto; /* Ensure images don't exceed the width of the container */
@@ -157,9 +169,13 @@
 .highlight {
   box-shadow: 0 0 0 2px rgb(182, 110, 110) !important;
 }
+.selectHighlight {
+  box-shadow: 0 0 0 4px rgba(143, 215, 153, 0.864) !important;
+}
 .highlightBox {
   background-color: rgba(188, 90, 113, 0.3);
 }
+
 
 
 

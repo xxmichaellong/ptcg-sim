@@ -2,7 +2,7 @@ import { selfContainersDocument } from "../setup/self-initialization.js";
 import { oppContainersDocument } from "../setup/opp-initialization.js";
 import { stringToVariable } from "../setup/string-to-variable.js";
 import { socket } from "../setup/socket.js";
-import { roomId } from "../start-page/generate-id.js";
+import { roomId } from "../lobby/generate-id.js";
 
 export function addDamageCounter (user, location, container, index){
 
@@ -28,10 +28,8 @@ export function addDamageCounter (user, location, container, index){
     } else {
         if (user === 'self'){
             damageCounter = selfContainersDocument.createElement('div');
-            damageCounter.style.fontSize = '15px';
         } else {
             damageCounter = oppContainersDocument.createElement('div');
-            damageCounter.style.fontSize = '10px';
         };
         damageCounter.className = 'circle';
         damageCounter.contentEditable = 'true';
@@ -47,9 +45,10 @@ export function addDamageCounter (user, location, container, index){
     };
     container.appendChild(damageCounter);
     //adjust size of the circle based on card size
-    damageCounter.style.width = `${targetRect.width/4}px`;
-    damageCounter.style.height = `${targetRect.width/4}px`;
-    damageCounter.style.lineHeight = `${targetRect.width/4}px`;
+    damageCounter.style.width = `${targetRect.width/3}px`;
+    damageCounter.style.height = `${targetRect.width/3}px`;
+    damageCounter.style.lineHeight = `${targetRect.width/3}px`;
+    damageCounter.style.fontSize = `${targetRect.width/6}px`;
     damageCounter.style.zIndex = '1';
     
     //functions for event listeners (updating text and removing damageCounter)
@@ -67,7 +66,7 @@ export function addDamageCounter (user, location, container, index){
     };
 
     const handleRemove = (fromBlurEvent = false) => {
-        if (damageCounter.textContent.trim() === '' || damageCounter.textContent === '0'){
+        if (damageCounter.textContent.trim() === '' || damageCounter.textContent <= 0){
             let user;
             if (selfContainersDocument.body.contains(damageCounter)){
                 user = 'opp';

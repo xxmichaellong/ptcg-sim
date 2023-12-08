@@ -1,10 +1,12 @@
-import { deckDisplay_html, discardDisplay_html, lostzoneDisplay_html, sCard, selfContainersDocument, } from "../setup/self-initialization.js";
+import { deckDisplay_html, discardDisplay_html, lostzoneDisplay_html, sCard, selfContainersDocument, target, } from "../setup/self-initialization.js";
 import { containerIdToLocation } from "../setup/container-reference.js";
 import { deck_html, lostzone_html, discard_html } from "../setup/self-initialization.js";
 import { oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html } from "../setup/opp-initialization.js";
 import { stringToVariable, variableToString } from "../setup/string-to-variable.js";
-import { addDamageCounter } from "../general-actions/damage-counter.js";
-import { addSpecialCondition } from "../general-actions/special-condition.js";
+import { closePopups, deselectCard } from "../setup/close-popups.js";
+import { roomId } from "../front-end.js";
+import { moveCard } from "./move-card.js";
+import { socket } from "../setup/socket.js";
 
 export function identifyCard(event){
     if (event.target.user === 'self'){
@@ -55,6 +57,7 @@ export function lostzoneCoverClick(event){
 export const cardContextMenu = document.getElementById('cardContextMenu');
 
 export function openCardContextMenu(event){
+    deselectCard();
     cardContextMenu.style.cssText = '';
 
     event.preventDefault();
@@ -137,11 +140,28 @@ export function openCardContextMenu(event){
 
 export const cardPopup = document.getElementById('cardPopup');
 
+
 export function imageClick(event){
     event.stopPropagation();
 
-    identifyCard(event);
+    if (event.target.classList.contains('selectHighlight')){
+        closePopups();
+        target.containerId = event.target.parentElement.parentElement.id;
+        target.location = containerIdToLocation(sCard.user, target.containerId);
+        target.index = target.location.cards.findIndex(card => card.image === event.target);
+        target.locationAsString = variableToString(sCard.user, target.location);
 
+        moveCard(sCard.user, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
+        socket.emit('moveCard', roomId, sCard.oUser, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
+    } else {
+        closePopups(); //need both because of highlights
+        identifyCard(event);
+        sCard.card.image.classList.add('highlight');
+        sCard.selecting = true;
+    };
+}
+
+export function fullViewClick(event){
     if (['bench_html', 'active_html'].includes(sCard.containerId)){
         const images = event.target.parentElement.querySelectorAll('img');
         images.forEach(function(img){

@@ -127,6 +127,9 @@ body {
   width: 23%;
   height: 5%;
 }
+#connectedRoom {
+  display: none;
+}
 #pvpBottomHomeButtonContainer {
   display: flex;
   position: fixed;

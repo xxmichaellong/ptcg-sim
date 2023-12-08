@@ -10,11 +10,12 @@ import { oppContainersDocument } from "./setup/opp-initialization.js";
 import { socket } from "./setup/socket.js";
 import { closePopups } from "./setup/close-popups.js";
 import { discardAndDraw, shuffleAndDraw, shuffleBottomAndDraw } from "./general-actions/hand/discard-and-draw.js";
-import { draw, keyDraw, viewDeck } from "./general-actions/deck-actions.js";
+import { draw, viewDeck } from "./general-actions/deck-actions.js";
 import { discardAll } from "./general-actions/discard-all.js";
+import { keyDraw } from "./general-actions/key-toggles.js";
 
 export * from './setup/buttons.js';
-export * from './start-page/generate-id.js';
+export * from './lobby/generate-id.js';
 export * from './message-box/message-box.js';
 export * from './setup/resizer.js'
 export * from './setup/check-overflow.js'

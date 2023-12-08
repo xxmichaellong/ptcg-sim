@@ -8,9 +8,9 @@ import { addDamageCounter } from "../general-actions/damage-counter.js";
 import { variableToString } from "./string-to-variable.js";
 import { socket } from "./socket.js";
 import { addSpecialCondition } from "../general-actions/special-condition.js";
-import { roomId, username } from "../start-page/generate-id.js";
+import { roomId, username } from "../lobby/generate-id.js";
 import { discardAndDraw, shuffleAndDraw, shuffleBottomAndDraw } from "../general-actions/hand/discard-and-draw.js";
-import { draw, viewDeck } from "../general-actions/deck-actions.js";
+import { draw, moveToDeckTop, shuffleIntoDeck, viewDeck } from "../general-actions/deck-actions.js";
 import { moveCard } from "../image-logic/move-card.js";
 import { shuffleIndices } from "./shuffle.js";
 import { discardAll } from "../general-actions/discard-all.js";
@@ -214,18 +214,7 @@ const viewBottomButton = document.getElementById('viewBottomButton');
 viewBottomButton.addEventListener('click', () => handleViewButtonClick(false));
 
 const moveToTopButton = document.getElementById('moveToTopButton');
-moveToTopButton.addEventListener('click', () => {
-    moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'deck', 'deck_html', sCard.index);
-    socket.emit('moveCard', roomId, sCard.oUser, sCard.locationAsString, sCard.containerId, 'deck', 'deck_html', sCard.index);
-
-    //since card is appended to bottom, move all existing cards in deck to the bottom afterwards
-    const deckCount = sCard.user === 'self' ? deck.count : oppDeck.count;
-
-    for (let i = 0; i < deckCount - 1; i++){
-        moveCard(sCard.user, 'deck', 'deck_html', 'deck', 'deck_html', 0);
-        socket.emit('moveCard', roomId, sCard.oUser, 'deck', 'deck_html', 'deck', 'deck_html', 0);
-    };
-});
+moveToTopButton.addEventListener('click', moveToDeckTop);
 
 const moveToBottomButton = document.getElementById('moveToBottomButton');
 moveToBottomButton.addEventListener('click', () => {
@@ -234,16 +223,7 @@ moveToBottomButton.addEventListener('click', () => {
 });
 
 const shuffleToDeckButton = document.getElementById('shuffleToDeckButton');
-shuffleToDeckButton.addEventListener('click', () => {
-    moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'deck', 'deck_html', sCard.index);
-    
-    const deckCount = sCard.user === 'self' ? deck.count : oppDeck.count;
-    const indices = shuffleIndices(deckCount);
-    shuffleContainer(sCard.user, 'deck', 'deck_html', indices);
-
-    socket.emit('moveCard', roomId, sCard.oUser, sCard.locationAsString, sCard.containerId, 'deck', 'deck_html', sCard.index);
-    socket.emit('shuffleContainer', roomId, sCard.oUser, 'deck', 'deck_html', indices);
-});
+shuffleToDeckButton.addEventListener('click', shuffleIntoDeck);
 
 const moveToBoard = document.getElementById('moveToBoard');
 moveToBoard.addEventListener('click', () => {

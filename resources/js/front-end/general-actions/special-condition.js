@@ -2,7 +2,7 @@ import { selfContainersDocument } from "../setup/self-initialization.js";
 import { oppContainersDocument } from "../setup/opp-initialization.js";
 import { stringToVariable } from "../setup/string-to-variable.js";
 import { socket } from "../setup/socket.js";
-import { roomId } from "../start-page/generate-id.js";
+import { roomId } from "../lobby/generate-id.js";
 
 export function addSpecialCondition (user, location, container, index){
 
@@ -29,10 +29,8 @@ export function addSpecialCondition (user, location, container, index){
     } else {
         if (user === 'self'){
             specialCondition = selfContainersDocument.createElement('div');
-            specialCondition.style.fontSize = '15px';
         } else {
             specialCondition = oppContainersDocument.createElement('div');
-            specialCondition.style.fontSize = '10px';
         };
         specialCondition.className = 'circle';
         specialCondition.contentEditable = 'true';
@@ -49,6 +47,7 @@ export function addSpecialCondition (user, location, container, index){
     specialCondition.style.width = `${targetRect.width/3}px`;
     specialCondition.style.height = `${targetRect.width/3}px`;
     specialCondition.style.lineHeight = `${targetRect.width/3}px`;
+    specialCondition.style.fontSize = `${targetRect.width/4}px`;
     specialCondition.style.zIndex = '1';
 
     const handleColour = () => {

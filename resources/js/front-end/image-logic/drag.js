@@ -4,7 +4,7 @@ import { stringToVariable, variableToString } from "../setup/string-to-variable.
 import { moveCard } from "./move-card.js";
 import { socket } from "../setup/socket.js";
 import { oppActive_html, oppAttachedCardPopup_html, oppBench_html, oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html, oppViewCards_html } from "../setup/opp-initialization.js";
-import { roomId } from "../start-page/generate-id.js";
+import { roomId } from "../lobby/generate-id.js";
 import { closeContainerPopups, closePopups } from "../setup/close-popups.js";
 import { identifyCard } from "./click-events.js";
 

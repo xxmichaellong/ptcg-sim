@@ -56,21 +56,24 @@
             </div>
             <div id="joinRoomButton"> Join Room </div>
         </div>
-        <div id="pvpChatbox"></div>
-        <div id="pvpChatboxButtonContainer">
-            <button id="pvpAttackButton">Attack</button>
-            <button id="pvpPassButton">Pass</button>
-            <button id="pvpUndoButton">Undo</button>
+        <div id="connectedRoom">
+            <div id="pvpChatbox"></div>
+            <div id="pvpChatboxButtonContainer">
+                <button id="pvpAttackButton">Attack</button>
+                <button id="pvpPassButton">Pass</button>
+                <button id="pvpUndoButton">Undo</button>
+            </div>
+            <input id="pvpMessageInput" type="text" placeholder="Type your message here...">
+            <div id="pvpBottomHomeButtonContainer">
+                <button id="pvpDrawHandButton">Setup</button>
+                <button id="pvpResetHandButton">Reset</button>
+                <button id="pvpLeaveRoomButton">Leave Room</button>
+            </div>
         </div>
-        <input id="pvpMessageInput" type="text" placeholder="Type your message here...">
-        <div id="pvpBottomHomeButtonContainer">
-            <button id="pvpDrawHandButton">Setup</button>
-            <button id="pvpResetHandButton">Reset</button>
-            <button id="pvpLeaveRoomButton">Leave Room</button>
-        </div>
+       
     </div>
     <div id="deckImport"> 
-        <input type="text" placeholder="Import your decklist here..."
+        <input id="deckImportInput" type="text" placeholder="Import your decklist here..."
     ></div>
     <div id="settings">Settings content...</div>
     <div id="cardContextMenu" class="contextMenu">
