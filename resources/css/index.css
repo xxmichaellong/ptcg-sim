@@ -5,184 +5,207 @@ body {
   height: 100vh;
   overflow: none;
 }
-.contextMenu {
-  display: none;
+.self {
   position: fixed;
-  background: #fff;
-  border: 1px solid #ccc;
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-  padding: 5px;
-  z-index: 1000;
+  border: none;
+  bottom: 0;
+  width: 66%;
+  height: 50%;
 }
-.contextMenu button {
-  display: block;
+.opp {
+  position: fixed;
+  border: none;
+  bottom: 50%;
+  width: 66%;
+  height: 50%;
+  transform: scaleX(-1) scaleY(-1);
+}
+#stadium_html {
+  position: fixed;
+  bottom: 42%;
+  left: 12%;
+  width: 8%;
+  height: 16%;
+  display: flex; /* Add this */
+	justify-content: center; /* Horizontally center-align child elements */
+	align-items: center;
+}
+#stadium_html img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  left: 0;
+}
+.base {
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1); /* Lighter shadow */
+  border-radius: 15px; /* Rounded corners */
+  background-color: rgba(255, 255, 255, 0.1); /* Very faint/transparent background */
+}
+.highlight {
+  box-shadow: 0 0 0 2px rgb(236, 236, 110) !important;
+  background-color: rgba(228, 255, 119, 0.3);
+}
+#selfResizer {
+  position: fixed;
+  left: 68%;
+  bottom: 49%;
+  cursor: row-resize;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 1vw;
+  height: 2%;
+  border-radius: 50%;
+  transform: translateY(50%);
+}
+#oppResizer {
+  position: fixed;
+  left: 68%;
+  bottom: 51%;
+  cursor: row-resize;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 1vw;
+  height: 2%;
+  border-radius: 50%;
+  transform: translateY(50%);
+}
+.selfColour {
+  background-color: rgba(90, 110, 188, 0.864);
+}
+.oppColour {
+  background-color: rgba(188, 90, 113, 0.864);  
+}
+#boardDivider {
+  position: fixed;
+  height: 100%;
+  width: 1%;
+  left: 67%;
+  bottom: 0;
+  background: rgb(231, 228, 228);
+}
+#sideButtonContainer {
+  position: fixed;
+  height: 20%;
+  width: 5%;
+  left: 70%;
+  bottom: 40%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+#sideButtonContainer button {
+  width: 50px; /* Adjust as needed */
+  height: 50px; /* Adjust as needed */
+  margin-bottom: 10px; /* Space between buttons */
+  align-items: center; /* Add this */
+  justify-content: center; /* Add this */
+  padding: 7px 0; /* Adjust padding for button size */
+  width: 100%; /* Adjust width to distribute evenly */
+  border-radius: 10px; /* Rounded edges */
+  font-size: 12px; /* Adjust font size as needed */
+  cursor: pointer;
+  background-color: #4c4f4c; /* Natural green background color */
+  color: white; /* Text color */
+  border: none;
 }
 #topButtonContainer {
   position: fixed;
   right: 0;
   top: 0;
-  width: 25%;
+  width: 24%;
   height: 5%;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  overflow: hidden; /* Ensure buttons don't exceed container width */
+}
+#topButtonContainer button {
+  padding: 7px 0; /* Adjust padding for button size */
+  width: 30%; /* Adjust width to distribute evenly */
+  max-width: 100px; /* Maximum width for each button */
+  border-radius: 10px; /* Rounded edges */
+  font-size: 12px; /* Adjust font size as needed */
+  cursor: pointer;
+  background-color: #8c9e8c; /* Natural green background color */
+  color: white; /* Text color */
+  border: none;
+  margin: 0 5px; /* Add spacing between buttons */
+}
+#topButtonContainer button:hover {
+  background-color: #babcba; /* Darker green on hover */
+}
+.side-box {
+  background: #99c1be;
+  position: fixed;
+  right: 0;
+  top: 5%;
+  width: 24%;
+  height: 95%;
+  padding: 10px;
+  box-sizing: border-box;
+  border: 2px solid #7ab7ad;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 #chatbox {
+  width: 100%;
+  height: 85%;
   background: #abbfbe;
-  position: fixed;
-  right: 1%;
-  top: 10%;
-  width: 23%;
-  height: 80%;
   overflow-y: auto;
   padding: 10px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
 }
-#home {
-  background: #99c1be;
-  position: fixed;
-  right: 0;
-  top: 5%;
-  width: 25%;
-  height: 95%;
-  overflow-y: auto;
-  padding: 10px;
-  box-sizing: border-box;
-  border: 2px solid #7ab7ad;
+.sidebox-button-container {
+  width: 100%;
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  justify-content: space-around;
+  align-items: center;
+  margin-top: 10px;
+  overflow: hidden; /* Ensure buttons don't exceed container width */
 }
-#pvp {
-  display: none;
-  background: #99c1be;
-  position: fixed;
-  right: 0;
-  top: 5%;
-  width: 25%;
-  height: 95%;
-  overflow-y: auto;
-  padding: 10px;
-  box-sizing: border-box;
-  border: 2px solid #7ab7ad;
+.sidebox-button-container button {
+  padding: 7px 0; /* Adjust padding for button size */
+  width: 50%; /* Adjust width to distribute evenly */
+  max-width: 100px; /* Maximum width for each button */
+  border-radius: 10px; /* Rounded edges */
+  font-size: 12px; /* Adjust font size as needed */
+  cursor: pointer;
+  background-color: #4CAF50; /* Natural green background color */
+  color: white; /* Text color */
+  border: none;
+  margin: 0 5px; /* Add spacing between buttons */
 }
-#pvpChatbox {
-  background: #abbfbe;
-  position: fixed;
-  right: 1%;
-  top: 10%;
-  width: 23%;
-  height: 80%;
-  overflow-y: auto;
-  padding: 10px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-#deckImport {
-  display: none;
-  background: #99c1be;
-  position: fixed;
-  right: 0;
-  top: 5%;
-  width: 25%;
-  height: 95%;
-  overflow-y: auto;
-  padding: 10px;
-  box-sizing: border-box;
-  border: 2px solid #7ab7ad;
-}
-#settings {
-  display: none;
-  background: #99c1be;
-  position: fixed;
-  right: 0;
-  top: 5%;
-  width: 25%;
-  height: 95%;
-  overflow-y: auto;
-  padding: 10px;
-  box-sizing: border-box;
-  border: 2px solid #7ab7ad;
-}
-#bottomHomeButtonContainer {
-  display: flex;
-  position: fixed;
-  right: 0.5%;
-  bottom: 5%;
-  width: 23%;
-}
-#chatboxButtonContainer {
-  display: flex;
-  position: fixed;
-  right: 0.5%;
-  bottom: 20%;
-  width: 23%;
+.sidebox-button-container button:hover {
+  background-color: #45a049; /* Darker green on hover */
 }
 #messageInput {
-  position: fixed;
-  right: 0.5%;
-  bottom: 10%;
-  width: 23%;
-  height: 5%;
-}
-#connectedRoom {
-  display: none;
-}
-#pvpBottomHomeButtonContainer {
-  display: flex;
-  position: fixed;
-  right: 0.5%;
-  bottom: 5%;
-  width: 23%;
-}
-#pvpChatboxButtonContainer {
-  display: flex;
-  position: fixed;
-  right: 0.5%;
-  bottom: 20%;
-  width: 23%;
-}
-#pvpMessageInput {
-  position: fixed;
-  right: 0.5%;
-  bottom: 10%;
-  width: 23%;
-  height: 5%;
-}
-.selfBubble, .announcement, .oppBubble {
-  max-width: 80%;
+  width: 100%;
   padding: 10px;
-  word-wrap: break-word;
-  margin-bottom: 0px;
+  box-sizing: border-box; /* Include padding and border in the total width */
 }
-.selfBubble {
-  background-color: #f0f0f0;
-  border-radius: 10px;
-  text-align: left;
-  align-self: flex-end;
+#bottomP1ButtonContainer {
+  width: 100%;
 }
-.announcement {
-  background-color: rgb(206, 139, 139);
-  border-radius: 10px;
-  text-align: left;
-  margin-right: auto;
-  margin-left: auto;
-}
-.oppBubble {
-  background-color: rgb(139, 148, 206);
-  border-radius: 10px;
-  text-align: left;
-  margin-right: auto;
+#p2Box {
+  display: none;
 }
 #lobby {
   width: 100%;
-  z-index: 1;
 }
 #nameInput {
-  width: 90%;
+  width: 100%;
   padding: 10px;
+  box-sizing: border-box; /* Include padding and border in the total width */
 }
 #roomId {
   width: 100%;
@@ -212,83 +235,72 @@ body {
   background: #333;
   color: white;
   text-align: center;
+  padding: 10px;
+  box-sizing: border-box; /* Include padding and border in the total width */
 }
 #joinRoomButton:hover {
   background: #78766e; /* Change this color to the hover color you want */
 }
-#selfContainers {
-  position: fixed;
-  border: none;
-  bottom: 0;
-  width: 66%;
-  height: 50%;
-}
-#boardDivider {
-  position: fixed;
+#connectedRoom {
+  display: none;
+  width: 100%;
   height: 100%;
-  width: 1%;
-  left: 67%;
-  bottom: 0;
-  background: rgb(231, 228, 228);
 }
-#resizer {
-  position: fixed;
-  height: 6%;
-  width: 1%;
-  left: 68%;
-  bottom: 47%;
-  background: white;
-  cursor: row-resize;
-  z-index: 1;
+#roomHeader {
+  width: 100%;
+  height: 3%;
+  display: flex;
+  align-items: center; /* Center vertically */
+  justify-content: space-between;
+  background-color: #97d1bb;
+  padding: 15px;
+  box-sizing: border-box;
+  border-radius: 10px;
+  color: black;
+  margin-bottom: 10px; /* Adjust margin as needed for spacing */
+}
+#roomHeaderText {
+  margin-right: 5px;
+}
+#roomHeaderCopyButton {
+  cursor: pointer;
+  background-color: transparent;
+  border: none;
+  font-size: 20px;
+  color: white;
+}
+#p2Chatbox {
+  background: #abbfbe;
+  width: 100%; /* Set to 100% */
+  height: 80%;
+  overflow-y: auto;
+  padding: 10px;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
 }
-#sideButtonContainer {
-  position: fixed;
-  height: 15%;
-  width: 5%;
-  left: 69%;
-  bottom: 50%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+#p2ChatboxButtonContainer {
+  width: 100%;
 }
-.squareButton {
-  width: 50px; /* Adjust as needed */
-  height: 50px; /* Adjust as needed */
-  margin-bottom: 10px; /* Space between buttons */
-  display: flex; /* Add this */
-  align-items: center; /* Add this */
-  justify-content: center; /* Add this */
+#p2MessageInput {
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box; /* Include padding and border in the total width */
 }
-#oppContainers {
-  position: fixed;
-  border: none;
-  bottom: 50%;
-  width: 66%;
-  height: 50%;
-  transform: scaleX(-1) scaleY(-1);
+#p2BottomButtonContainer {
+  width: 100%;
 }
-#stadium_html {
-  position: fixed;
-  bottom: 42%;
-  left: 12%;
-  width: 8%;
-  height: 16%;
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
-  display: flex; /* Add this */
-	justify-content: center; /* Horizontally center-align child elements */
-	align-items: center;
+#deckImport {
+  display: none;
 }
-#stadium_html img {
-  width: auto;
-  height: 100%;
+#settings {
+  display: none;
 }
 
-.highlight {
-  box-shadow: 0 0 0 2px lightseagreen !important;
+/*contextMenu styling*/
+.contextMenu button {
+  display: block;
 }
 .contextMenu {
   display: none;
@@ -298,24 +310,27 @@ body {
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
   z-index: 1000;
   width: 155px; /* Set a fixed width */
+  font-family: Arial, Helvetica, sans-serif;
 }
-
 .contextMenu ul {
   list-style-type: none;
   margin: 0;
   padding: 0;
 }
-
+.contextMenu ul li[id$="Header"] {
+  padding: 4px;
+  cursor: default;
+  font-weight: bold;
+  background-color: #f0f0f0;
+}
 .contextMenu > ul > li {
   padding: 8px 16px;
   cursor: pointer;
   position: relative;
 }
-
 .contextMenu > ul > li:hover {
   background-color: #f0f0f0;
 }
-
 .contextMenu .subMenu {
   display: none;
   position: absolute;
@@ -328,30 +343,48 @@ body {
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2); /* Added box-shadow */
   width: 120px; /* Set a fixed width */
 }
-
 .contextMenu > ul > li:hover > .subMenu {
   display: block;
 }
-
 .contextMenu .subMenu li:hover {
   background-color: #f0f0f0;
 }
-.popup {
-  display: none;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: #ffffff;
-  width: auto;
-  padding: 20px;
-  text-align: center;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
-  z-index: 10000;
+.contextMenu ul li#moveButton:before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px; /* Adjust the thickness of the top border */
+  background-color: #333; /* Set the color of the top border */
 }
 
+/*chatbox text styling*/
+.selfBubble, .announcement, .oppBubble {
+  max-width: 80%;
+  padding: 10px;
+  word-wrap: break-word;
+  margin-bottom: 0px;
+}
+.selfBubble {
+  background-color: #f0f0f0;
+  border-radius: 10px;
+  text-align: left;
+  align-self: flex-end;
+}
+.oppBubble {
+  background-color: rgb(139, 148, 206);
+  border-radius: 10px;
+  text-align: left;
+  margin-right: auto;
+}
+.announcement {
+  background-color: rgb(206, 139, 139);
+  border-radius: 10px;
+  text-align: left;
+  margin-right: auto;
+  margin-left: auto;
+}
 
 
 

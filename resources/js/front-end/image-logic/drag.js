@@ -1,18 +1,14 @@
-import { sCard, discard_html, lostzone_html, deck_html, selfContainersDocument, stadium_html, target, attachedCardPopup_html, active_html, bench_html, viewCards_html } from "../setup/self-initialization.js";
-import { containerIdToLocation } from "../setup/container-reference.js"
-import { stringToVariable, variableToString } from "../setup/string-to-variable.js";
-import { moveCard } from "./move-card.js";
-import { socket } from "../setup/socket.js";
-import { oppActive_html, oppAttachedCardPopup_html, oppBench_html, oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html, oppViewCards_html } from "../setup/opp-initialization.js";
-import { roomId } from "../lobby/generate-id.js";
-import { closeContainerPopups, closePopups } from "../setup/close-popups.js";
-import { identifyCard } from "./click-events.js";
+import { closeContainerPopups, closePopups } from '../actions/general/close-popups.js';
+import { moveCard } from '../actions/general/move-card.js';
+import { active_html, attachedCardPopup_html, bench_html, deck_html, discard_html, lostzone_html, oppActive_html, oppAttachedCardPopup_html, oppBench_html, oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html, oppViewCards_html, p1, roomId, sCard, selfContainersDocument, socket, target, viewCards_html } from '../front-end.js';
+import { containerIdToLocation } from '../setup/containers/container-reference.js';
+import { stringToVariable, variableToString } from '../setup/containers/string-to-variable.js';
+import { identifyCard } from './click-events.js';
 
 const popupContainers = [lostzone_html, discard_html, deck_html, attachedCardPopup_html, oppLostzone_html, oppDiscard_html, oppAttachedCardPopup_html, oppDeck_html, viewCards_html, oppViewCards_html];
-// Add this function to initiate the drag operation
-export function dragStart(event){
-    closePopups(event);
 
+export const dragStart = (event) => {
+    closePopups(event);
     identifyCard(event);
 
     event.target.classList.add('dragging');
@@ -25,15 +21,14 @@ export function dragStart(event){
         sCard.boxParent = event.target.parentElement.parentElement;
         sCard.box.style.opacity = '0';
     };
-    
 }
 
-export function dragOver(event){
+export const dragOver = (event) => {
+
     event.preventDefault();
     if (event.target.classList.contains('circle')){
         event.target.style.pointerEvents = 'none';
     };
-
     if (popupContainers.includes(sCard.container)){
         sCard.container.style.zIndex = '-1';
     };
@@ -81,13 +76,14 @@ export function dragOver(event){
     };
 }
 
-export function dragLeave(event){
+export const dragLeave = (event) => {
+
     event.target.classList.remove('highlight', 'highlightBox'); 
     event.target.parentElement.classList.remove('highlight', 'highlightBox');
     event.target.parentElement.parentElement.classList.remove('highlight', 'highlightBox');
 }
 
-export function dragEnd(event){
+export const dragEnd = (event) => {
     let damageCounters = selfContainersDocument.getElementsByClassName('circle');
     for (let i = 0; i < damageCounters.length; i++){
         damageCounters[i].style.pointerEvents = 'auto';
@@ -109,13 +105,13 @@ export function dragEnd(event){
         sCard.box.style.opacity = '1';
         sCard.box.style.zIndex = '2';
         sCard.boxParent.style.zIndex = sCard.box.parentElement ? '2' : '0';
+        stadium_html.style.zIndex = sCard.box.parentElement ? '-1' : '0';
         sCard.box = false;
         sCard.boxParent = false;
     };
 }
 
-// Add this function to handle the drop operation
-export function drop(event){
+export const drop = (event) => {
     event.preventDefault();
     if (event.target.classList.contains('circle')){
         event.target.style.pointerEvents = 'none';
@@ -166,8 +162,10 @@ export function drop(event){
         };
 
         if ((sCard.containerId !== target.containerId || draggedImage.attached) && !(draggedImage.attached && ['bench_html', 'active_html'].includes(target.containerId) && target.index === undefined)){
-            moveCard(sCard.user, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
-            socket.emit('moveCard', roomId, sCard.oUser, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
+                moveCard(sCard.user, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
+            if (!p1[0]) {
+                socket.emit('moveCard', roomId, sCard.oUser, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
+            };
             closeContainerPopups();
         };
     };

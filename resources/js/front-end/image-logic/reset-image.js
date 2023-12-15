@@ -1,4 +1,4 @@
-export function resetImage(image){
+export const resetImage = (image) => {
     image.style.position = 'relative';
     image.style.bottom = '0%';
     image.style.zIndex = '0';

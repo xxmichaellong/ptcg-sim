@@ -10,43 +10,44 @@
     <script type="module" src="resources/js/front-end/front-end.js"></script>
 </head>
 <body>
-    <iframe id="selfContainers" src="self-containers.html"></iframe>
-    <iframe id="oppContainers" src="opp-containers.html"></iframe>
-
-    <div id="resizer">↕</div>
+    <iframe id="selfContainers" class="self" src="./iframe-containers/self-containers.html"></iframe>
+    <iframe id="oppContainers" class="opp" src="./iframe-containers/opp-containers.html"></iframe>
+    <div id="stadium_html" class="base"></div>
+    <div id="selfResizer" class="selfColour"></div>
+    <div id="oppResizer" class="oppColour"></div>
     <div id="boardDivider"></div>
-    <div id="stadium_html"></div>
-    <div id="cardPopup" class="popup">will populate
-    </div>
   
     <div id="sideButtonContainer">
         <button id="turnButton" class="squareButton">+Turn</button>
         <button id="flipCoinButton" class="squareButton">Coin Flip</button>
         <button id="vSTARButton" class="squareButton">VSTAR</button>
-        <button id="vSTARButton" class="squareButton">GX</button>
+        <button id="GXButton" class="squareButton">GX</button>
         <button id="flipBoardButton" class="squareButton">Flip Board</button>
     </div>
 
     <div id="topButtonContainer">
-        <button id="homeButton">Home</button>
-        <button id="pvpButton">PvP</button>
-        <button id="deckImportButton">Deck Import</button>
+        <button id="p1Button">1P</button>
+        <button id="p2Button">2P</button>
+        <button id="deckImportButton">Import Deck</button>
         <button id="settingsButton">Settings</button>
     </div>
-    <div id="home">
+    
+    <div id="p1Box" class="side-box">
         <div id="chatbox">Hi! Welcome to ptcg-sim. description incoming.</div>
-        <div id="chatboxButtonContainer">
+        <div id="chatboxButtonContainer" class="sidebox-button-container">
             <button id="attackButton">Attack</button>
             <button id="passButton">Pass</button>
-            <button id="undoButton">Undo</button>
+            <button id="FREEBUTTON">🥳</button>
         </div>
         <input id="messageInput" type="text" placeholder="Type your message here...">
-        <div id="bottomHomeButtonContainer">
-            <button id="drawHandButton">Setup</button>
-            <button id="resetHandButton">Reset</button>
+        <div id="bottomP1ButtonContainer" class="sidebox-button-container">
+            <button id="setupButton">Setup</button>
+            <button id="resetButton">Reset</button>
+            <button id="setupBothButton">Setup Both</button>
+            <button id="resetBothButton">Reset Both</button>
         </div>
     </div>
-    <div id="pvp">
+    <div id="p2Box" class="side-box">
         <div id="lobby">
             <input id="nameInput" type="text" placeholder="Name">
             <div id="roomId">
@@ -57,43 +58,54 @@
             <div id="joinRoomButton"> Join Room </div>
         </div>
         <div id="connectedRoom">
-            <div id="pvpChatbox"></div>
-            <div id="pvpChatboxButtonContainer">
-                <button id="pvpAttackButton">Attack</button>
-                <button id="pvpPassButton">Pass</button>
-                <button id="pvpUndoButton">Undo</button>
+            <div id="roomHeader">
+                <div id ="roomHeaderText"></div>
+                <button id="roomHeaderCopyButton">📋</button>
             </div>
-            <input id="pvpMessageInput" type="text" placeholder="Type your message here...">
-            <div id="pvpBottomHomeButtonContainer">
-                <button id="pvpDrawHandButton">Setup</button>
-                <button id="pvpResetHandButton">Reset</button>
-                <button id="pvpLeaveRoomButton">Leave Room</button>
+            <div id="p2Chatbox"></div>
+            <div id="p2ChatboxButtonContainer" class="sidebox-button-container">
+                <button id="p2AttackButton">Attack</button>
+                <button id="p2PassButton">Pass</button>
+                <button id="FREEBUTTON">🥳</button>
+            </div>
+            <input id="p2MessageInput" type="text" placeholder="Type your message here...">
+            <div id="p2BottomButtonContainer" class="sidebox-button-container">
+                <button id="p2SetupButton">Setup</button>
+                <button id="p2ResetButton">Reset</button>
+                <button id="leaveRoomButton">Leave Room</button>
             </div>
         </div>
        
     </div>
-    <div id="deckImport"> 
+    <div id="deckImport" class="side-box"> 
         <input id="deckImportInput" type="text" placeholder="Import your decklist here..."
     ></div>
-    <div id="settings">Settings content...</div>
+    <div id="settings" class="side-box">Settings content...</div>
+
+
     <div id="cardContextMenu" class="contextMenu">
         <ul>
             <li id="damageCounterButton">Damage counter</li>
             <li id="specialConditionButton">Special condition</li>
-            <li id="shufflePrizesButton">Shuffle prizes</li>
-            <li id="revealPrizesButton">Reveal prizes</li>
-            <li id="hidePrizesButton">Hide prizes</li>
-            <li id="revealOppHandButton">Reveal hand</li>
-            <li id="hideOppHandButton">Hide hand</li>
+
+            <li id="prizesHeader">Prizes</li>
+            <li id="shufflePrizesButton">Shuffle</li>
+            <li id="revealPrizesButton">Reveal</li>
+            <li id="hidePrizesButton">Hide</li>
+
+            <li id="handHeader">Hand</li>
+            <li id="revealOppHandButton">Reveal</li>
+            <li id="hideOppHandButton">Hide</li>
+            <li id="discardHandButton">Discard</li>
+            <li id="shuffleHandButton">Shuffle into deck</li>
+            <li id="shuffleHandBottomButton">Shuffle to bottom</li>
+
+            <li id="deckHeader">Deck</li>
             <li id="shuffleDeckButton">Shuffle</li>
             <li id="drawButton">Draw</li>
             <li id="viewTopButton">View top</li>
             <li id="viewBottomButton">View bottom</li>
-            <li id="discardHandButton">Discard hand</li>
-            <li id="shuffleHandButton">Shuffle hand into deck</li>
-            <li id="shuffleHandBottomButton">Shuffle hand to bottom of deck</li>
-            <li id="shuffleAllButton">Shuffle all into deck</li>
-            <li id="discardAllButton">Discard all</li>
+
             <li id="moveButton">Move to...
                 <ul class="subMenu">
                     <li id="moveToTopButton">Top of deck</li>

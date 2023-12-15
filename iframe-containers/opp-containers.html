@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<link rel="stylesheet" href="../resources/css/opp-containers.css">
+
+<div id="deckText" class="opp-text">(<span id="deckCount">0</span>)</div>
+<div id="deck_html" class="stack-container opp-view">
+    <div class="stack-button-container">
+        <button class="action-button">Shuffle</button>
+        <button id="closeDeckDisplayButton" class="action-button">Close</button>
+    </div>
+</div>
+<div id="discardText" class="opp-text">(<span id="discardCount">0</span>)</div>
+<div id="discard_html" class="stack-container opp-view">
+    <div class="stack-button-container">
+        <button id="discardShuffleButton" class="action-button">Shuffle all to Deck</button>
+        <button id="closeDiscardDisplayButton" class="action-button">Close</button>
+    </div>
+</div>
+<div id="lostzoneText" class="opp-text">(<span id="lostzoneCount">0</span>)</div>
+<div id="lostzone_html" class="stack-container opp-view">
+    <div class="stack-button-container">
+        <button id="closeLostzoneDisplayButton" class="action-button">Close</button>
+    </div>
+</div>
+
+<div id="hand_html"></div>
+<div id="discardDisplay_html" class="base"></div>
+<div id="deckDisplay_html" class="base"></div>
+<div id="lostzoneDisplay_html" class="base"></div>
+<div id="bench_html" class="base"></div>
+<div id="active_html" class="base"></div>
+<div id="prizes_html" class="base"></div>
+<div id="board_html" class="oppBoard"></div>
+
+<div id="attachedCardPopup_html" class="opp-view">
+    <div id="attachedCardPopupHeader" class="header opp-header">Opponent moving cards...</div>
+    <div id="attachedCardPopupButtonContainer" class="opp-button-container">
+        <button id="attachedCardDiscardButton" class="action-button">Discard all</button>
+        <button id="attachedCardShuffleButton" class="action-button">Shuffle all</button>
+        <button id="attachedCardLostzoneButton" class="action-button">Lost Zone all</button>
+        <button id="attachedCardHandButton" class="action-button">To Hand</button>
+    </div>
+</div>
+
+<div id="viewCards_html" class="opp-view">
+    <div id="viewCardsHeader" class="header opp-header">Looking at cards...</div>
+    <div id="viewCardsButtonContainer" class="opp-button-container">
+        <button id="viewCardsDiscardButton" class="action-button">Discard all</button>
+        <button id="viewCardsShuffleButton" class="action-button">Shuffle all</button>
+        <button id="viewCardsLostzoneButton" class="action-button">Lost Zone all</button>
+        <button id="viewCardsHandButton" class="action-button">To Hand</button>
+    </div>
+</div>

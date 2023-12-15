@@ -1,11 +1,37 @@
+.base {
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1); /* Lighter shadow */
+  border-radius: 15px; /* Rounded corners */
+  background-color: rgba(255, 255, 255, 0.1); /* Very faint/transparent background */
+}
+.self-view {
+  transform: translate(-50%, -50%);
+  top: 50%;
+  left: 50%;
+}
+.opp-view {
+  transform: translateX(-50%) scaleX(-1) scaleY(-1);
+  top: 0%;
+  left: 50%;
+}
+.highlight {
+  box-shadow: 0 0 0 2px rgb(182, 110, 110) !important;
+  background-color: rgba(188, 90, 113, 0.3);
+}
+.selectHighlight {
+  box-shadow: 0 0 0 4px rgba(143, 215, 153, 0.864) !important;
+}
+.highlightBox {
+  background-color: rgba(188, 90, 113, 0.3);
+}
 #hand_html {
-	position: fixed;
+  border-top: 5px solid rgba(188, 90, 113, 0.864);  
+  user-select: none;
+  position: fixed;
 	bottom: 0;
 	left: 0;
 	width: 100%;
 	height: 30%;
   overflow-x: auto;
-	border-top: 5px solid rgba(188, 90, 113, 0.864);  
 	display: flex; /* Use flexbox to center-align child elements */
 	z-index: 0;
 	align-items: flex-end; 
@@ -17,44 +43,46 @@
   margin-right: 1px;
 }
 #bench_html {
-	position: fixed;
+  user-select: none;
+  position: fixed;
 	bottom: 35%;
 	left: 12%;
 	width: 76%;
 	height: 25%;
-	box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
 	display: flex;
 	justify-content: center; /* Horizontally center-align child elements */
 	align-items: flex-end;
 	z-index: 0;
 }
 #bench_html div {
-	height: 100%;
-	margin-right: 5px;
+  user-select: none;
+  height: 100%;
+	margin-right: 1%;
 }
 #active_html {
-	position: fixed;
-	bottom: 63%;
-	left: 38%;
-	width: 24%;
-	height: 32%;
-	box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
+  user-select: none;
+  position: fixed;
+	bottom: 65%;
+	left: 34%;
+	width: 32%;
+	height: 28%;
 	display: flex;
 	justify-content: center; /* Horizontally center-align child elements */
 	align-items: flex-end;
 	z-index: 0;
 }
 #active_html div {
-	width: auto;
+  user-select: none;
+  width: auto;
 	height: 100%;
 }
 #prizes_html {
+  user-select: none;
   position: fixed;
   bottom: 36%;
   left: 1%;
   width: 8%;
   height: 43%;
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
   z-index: 0;
   padding: 5px; /* Add padding */
 }
@@ -64,14 +92,14 @@
 	max-height: 33%;
 }
 #lostzoneDisplay_html {
-	position: fixed;
+  user-select: none;
+  position: fixed;
 	bottom: 84%;
 	left: 1%;
 	width: 9%;
 	height: 15%;
-	box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
 	z-index: 0;
-	background-color: rgba(128, 0, 128, 0.187); /* Add this for a very light transparent purple background */
+  background-color: rgba(128, 0, 128, 0.068); /* Add this for a very light transparent purple background */
   display: flex;
   justify-content: center; 
   align-items:flex-start;
@@ -88,16 +116,15 @@
 	position: fixed;
   left: 11%;
   bottom: 90%;
-	transform: scaleX(-1) scaleY(-1);
   user-select: none;
 }
 #deckDisplay_html {
+  user-select: none;
   position: fixed;
   bottom: 66%;
   right: 1%;
   width: 8%;
   height: 25%;
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
   display: flex;
   justify-content: center; 
   align-items:flex-start;
@@ -115,26 +142,32 @@
   position: fixed;
   right: 2%;
   bottom: 91%;
-	transform: scaleX(-1) scaleY(-1);
   user-select: none;
 }
-.text {
-  font-size: 4vh; /* Adjust as needed */
+.self-text {
+  font-size: clamp(10px, 4vh, 20px);
+  font-family: Arial, sans-serif; /* Same font as the buttons */
+  user-select: none;
+}
+.opp-text {
+  font-size: clamp(10px, 4vh, 20px);
+  font-family: Arial, sans-serif; /* Same font as the buttons */
+  user-select: none;
+  transform: scaleX(-1) scaleY(-1);
 }
 #discardText {
   position: fixed;
   right: 2%;
   bottom: 60%;
-	transform: scaleX(-1) scaleY(-1);
   user-select: none;
 }
 #discardDisplay_html {
+  user-select: none;
   position: fixed;
   bottom: 36%;
   right: 1%;
   width: 8%;
   height: 23%;
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
   display: flex;
   justify-content: center; 
   align-items:flex-start;
@@ -149,11 +182,8 @@
   left: 0;
 } 
 #board_html {
+  user-select: none;
   position: fixed;
-  bottom: 61%;
-  left: 10%;
-  width: 23%;
-  height: 30%;
   display: flex;
   flex-wrap: wrap; /* Allow items to wrap onto multiple lines */
   justify-content: center;
@@ -164,171 +194,177 @@
 }
 #board_html img {
   width: auto; /* Ensure images don't exceed the width of the container */
-  height: 70%; /* Maintain aspect ratio */
+  height: 50%; /* Maintain aspect ratio */
 }
-.highlight {
-  box-shadow: 0 0 0 2px rgb(182, 110, 110) !important;
+.selfBoard {
+  bottom: 61%;
+  left: 66%;
+  width: 20%;
+  height: 30%;
 }
-.selectHighlight {
-  box-shadow: 0 0 0 4px rgba(143, 215, 153, 0.864) !important;
-}
-.highlightBox {
-  background-color: rgba(188, 90, 113, 0.3);
-}
-
-
-
-
-
-
-
-
-#deck_html {
-    display: none;
-    position: fixed;
-    bottom: 10%;
-    left: 0;
-    width: 100%;
-    height: 80%;
-    overflow-y: auto;
-    z-index: 500;
-    border: 2px solid rgba(188, 90, 90, 0.864); /* Add a thin yellow outline */
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
-    background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
-    transform: scaleX(-1) scaleY(-1);
-}
-#deck_html img {
-    display: inline-block;
-    width: 10%;
-    height: auto;
-}
-#lostzone_html {
-    display: none;
-    position: fixed;
-    bottom: 30%;
-    left: 15%;
-    width: 70%;
-    height: 70%;
-    overflow-y: auto;
-    z-index: 500;
-    border: 2px solid rgba(188, 90, 90, 0.864); /* Add a thin yellow outline */
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
-    background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
-    transform: scaleX(-1) scaleY(-1);
-}
-#lostzone_html img {
-    display: inline-block;
-    width: 10%;
-    height: auto;
-}
-
-
-
-
-#discard_html {
-    display: none;
-    position: fixed;
-    bottom: 30%;
-    left: 15%;
-    width: 70%;
-    height: 70%;
-    overflow-y: auto;
-    z-index: 500;
-    border: 2px solid rgba(188, 90, 90, 0.864); /* Add a thin yellow outline */
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
-    background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
-    transform: scaleX(-1) scaleY(-1);
-}
-#discard_html img {
-    display: inline-block;
-    width: 10%;
-    height: auto;
-}
-.circle {
-    position: absolute;
-    border-radius: 50%;
-    background-color: rgb(255, 98, 0);
-    color: white;
-    text-align: center;
-    z-index: 1;
-}
-#attachedCardPopup_html {
-    display: none;
-    position: fixed;
-    width: 40%;
-    bottom: 50%;
-    left: 50%;
-    height: 20%;
-    transform: translate(-50%, -50%);
-    z-index: 500;
-    border: 2px solid rgba(224, 224, 75, 0.864); /* Add a thin yellow outline */
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
-    background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
-}
-#attachedCardPopup_html img {
-    height: 100%;
-}
-#attachedCardPopup_html::before {
-    content: "Opponent moving attached cards...";
-    position: absolute;
-    top: -30px;
-    left: 50%;
-    transform: translateX(-50%) scaleX(-1) scaleY(-1);
-    width: 100%;
-    background-color: #ddd;
-    border: 2px solid rgba(224, 224, 75, 0.864);
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
-    text-align: center;
-}
-#viewCards_html {
-    display: none;
-    position: fixed;
-    width: 40%;
-    bottom: 50%;
-    left: 50%;
-    height: 20%;
-    transform: translate(-50%, -50%);
-    z-index: 500;
-    border: 2px solid rgba(224, 224, 75, 0.864); /* Add a thin yellow outline */
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
-    background: linear-gradient(to bottom, #ddd, #ffffff); /* Slightly darker grey background */
-}
-#viewCards_html img {
-    height: 100%;
-}
-#viewCards_html::before {
-    content: "Looking at cards...";
-    position: absolute;
-    top: -30px;
-    left: 50%;
-    transform: translateX(-50%) scaleX(-1) scaleY(-1);
-    width: 100%;
-    background-color: #ddd;
-    border: 2px solid rgba(224, 224, 75, 0.864);
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
-    text-align: center;
+.oppBoard {
+  bottom: 61%;
+  left: 10%;
+  width: 19%;
+  height: 30%;
 }
 .playContainer {
-    display: inline-block;
-    flex-wrap: nowrap;
-    height: 100%;
-    position: relative;
-  }
-  .playContainer img {
-    width: auto;
-    height: 100%;
-  }
-  .fullView {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(-1, -1);
-    background-color: #ffffff;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
-    padding: 20px;
-  }
-  .fullView img {
-    height: 25%;
-  }
+  display: inline-block;
+  flex-wrap: nowrap;
+  height: 100%;
+  position: relative;
+}
+.playContainer img {
+  width: auto;
+  height: 100%;
+}
+.fullView {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(169, 169, 169, 0.5); /* Transparent dark grey */
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+  padding: 20px;
+}
+.fullView img {
+  height: 24%;
+  margin: 0.5%;
+}
+.circle {
+  position: absolute;
+  border-radius: 50%;
+  background-color: rgb(255, 98, 0);
+  color: white;
+  text-align: center;
+  transform: scaleX(-1) scaleY(-1);
+}
+#attachedCardPopup_html {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(169, 169, 169, 0.5); /* Transparent dark grey */
+  border: 1px solid #ccc;
+  border-radius: 0 0 15px 15px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  width: 69%;
+  height: 75%;
+}
+#attachedCardPopup_html img {
+  height: 33%;
+  margin: 0.5%;
+}
+.header {
+  position: absolute;
+  top: -3%;
+  left: 50%;
+  width: 100%;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
+  text-align: center;
+  border-radius: 15px 15px 0 0;
+  color: white; /* White text */
+  font-size: clamp(12px, 3vh, 20px);
+  font-family: Arial, sans-serif; /* Same font as the buttons */
+  background-color:rgba(224, 97, 75, 0.864); 
+  border: 2px solid #ff0000;
+}
+.self-header {
+  transform: translate(-50%, -50%);
+}
+.opp-header {
+  transform: translateX(-50%) scaleX(-1) scaleY(-1);
+}
+#viewCards_html {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(169, 169, 169, 0.5); /* Transparent dark grey */
+  border: 1px solid #ccc;
+  border-radius: 0 0 15px 15px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  width: 69%;
+  height: 75%;
+}
+#viewCards_html img {
+  height: 33%;
+  margin: 0.5%;
+}
+.self-button-container {
+  position: absolute;
+  bottom: 0%;
+  width: 96%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #dddddd;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
+  text-align: center;
+  padding: 10px;
+  border-radius: 15px; /* More rounded corners */
+}
+.opp-button-container {
+  display: none;
+}
+.action-button {
+  margin: 0 5px;
+  width: 20%; /* Same width */
+  padding: 5px; /* Add some padding */
+  border-radius: 5px; /* Rounded corners */
+  border: none; /* Remove border */
+  background-color: #4c4d4f; /* Blue background */
+  color: white; /* White text */
+  cursor: pointer; /* Change cursor on hover */
+}
+.action-button:hover {
+  background-color: #adadad; /* Darker blue on hover */
+}
+.stack-button-container {
+  position: relative;
+  width: 96%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #dddddd;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
+  text-align: center;
+  padding: 5px;
+  border-radius: 15px; /* More rounded corners */
+  margin-bottom: 1%;
+}
+.stack-container {
+  display: none;
+  position: fixed;
+  background-color: rgba(169, 169, 169, 0.867); /* Transparent dark grey */
+  border: 1px solid #ccc;
+  border-radius: 15px 15px 15px 15px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+  padding: 10px 20px 20px 20px;
+  width: 85%;
+  height: 75%;
+  overflow-y: auto;
+  z-index: 3;
+}
+#deck_html img {
+  display: inline-block;
+  width: 8%;
+  height: auto;
+  margin: 1px;
+}
+#lostzone_html img {
+  display: inline-block;
+  width: 12%;
+  height: auto;
+  margin: 1px;
+}
+#discard_html img {
+  display: inline-block;
+  width: 10%;
+  height: auto;
+  margin: 1px;
+}

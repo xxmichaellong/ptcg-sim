@@ -1,14 +1,14 @@
-import { deckDisplay_html, discardDisplay_html, lostzoneDisplay_html, sCard, selfContainersDocument, target, } from "../setup/self-initialization.js";
-import { containerIdToLocation } from "../setup/container-reference.js";
-import { deck_html, lostzone_html, discard_html } from "../setup/self-initialization.js";
-import { oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html } from "../setup/opp-initialization.js";
-import { stringToVariable, variableToString } from "../setup/string-to-variable.js";
-import { closePopups, deselectCard } from "../setup/close-popups.js";
-import { roomId } from "../front-end.js";
-import { moveCard } from "./move-card.js";
-import { socket } from "../setup/socket.js";
+import { deckDisplay_html, discardDisplay_html, lostzoneDisplay_html, sCard, selfContainers, selfContainersDocument, stadium_html, target, } from '../initialization/containers/self-containers.js';
+import { containerIdToLocation } from '../setup/containers/container-reference.js';
+import { deck_html, lostzone_html, discard_html } from '../initialization/containers/self-containers.js';
+import { oppContainers, oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html } from '../initialization/containers/opp-containers.js';
+import { stringToVariable, variableToString } from '../setup/containers/string-to-variable.js';
+import { closeFullView, closePopups, deselectCard } from '../actions/general/close-popups.js';
+import { moveCard } from '../actions/general/move-card.js';
+import { socket } from '../initialization/socket-port/socket.js';
+import { cardContextMenu } from '../initialization/html-elements/context-menu.js';
 
-export function identifyCard(event){
+export const identifyCard = (event) => {
     if (event.target.user === 'self'){
         sCard.oUser = 'opp';
         sCard.user = 'self';
@@ -32,21 +32,21 @@ export function identifyCard(event){
     };
 }
 
-export function deckCoverClick(event){
+export const deckCoverClick = (event) => {
     if (event.target.parentElement === deckDisplay_html){
         deck_html.style.display = 'block';
     } else
 		oppDeck_html.style.display = 'block';
 }
 
-export function discardCoverClick(event){
+export const discardCoverClick = (event) => {
     if (event.target.parentElement === discardDisplay_html){
         discard_html.style.display = 'block';
     } else
         oppDiscard_html.style.display = 'block';
 }
 
-export function lostzoneCoverClick(event){
+export const lostzoneCoverClick = (event) => {
   if (event.target.parentElement === lostzoneDisplay_html){
       lostzone_html.style.display = 'block';
   } else {
@@ -54,9 +54,8 @@ export function lostzoneCoverClick(event){
   }
 }
 
-export const cardContextMenu = document.getElementById('cardContextMenu');
-
-export function openCardContextMenu(event){
+export const openCardContextMenu = (event) => {
+    closeFullView(event);
     deselectCard();
     cardContextMenu.style.cssText = '';
 
@@ -64,24 +63,28 @@ export function openCardContextMenu(event){
     event.stopPropagation();
 
     identifyCard(event);
+
+    const selfView = (selfContainersDocument.body.contains(event.target) && selfContainers.classList.contains('self')) || (!selfContainersDocument.body.contains(event.target) && !selfContainers.classList.contains('self'));
+    const oppView = (!selfContainersDocument.body.contains(event.target) && selfContainers.classList.contains('self')) || (selfContainersDocument.body.contains(event.target) && !selfContainers.classList.contains('self'));
     
     const buttonConditions = {
-        'damageCounterButton': [['self', 'active_html'], ['opp', 'active_html'], ['self', 'bench_html'], ['opp', 'bench_html']],
-        'specialConditionButton': [['self', 'active_html'], ['opp', 'active_html']],
-        'shufflePrizesButton': [['self', 'prizes_html']],
-        'revealPrizesButton': [['self', 'prizes_html']],
-        'hidePrizesButton': [['self', 'prizes_html']],
-        'revealOppHandButton': [['opp', 'hand_html']],
-        'hideOppHandButton': [['opp', 'hand_html']],
-        'shuffleDeckButton': [['self', 'deckDisplay_html'], ['opp', 'deckDisplay_html']],
-        'drawButton': [['self', 'deckDisplay_html']],
-        'viewTopButton': [['self', 'deckDisplay_html'], ['opp', 'deckDisplay_html']],
-        'viewBottomButton': [['self', 'deckDisplay_html'], ['opp', 'deckDisplay_html']],
-        'discardHandButton': [['self', 'hand_html']],
-        'shuffleHandButton': [['self', 'hand_html']],
-        'shuffleHandBottomButton': [['self', 'hand_html']],
-        'shuffleAllButton': [['self', 'viewCards_html'], ['opp', 'viewCards_html']],
-        'discardAllButton': [['self', 'attachedCardPopup_html'], ['opp', 'attachedCardPopup_html']]
+        'damageCounterButton': [[selfView, 'active_html'], [oppView, 'active_html'], [selfView, 'bench_html'], [oppView, 'bench_html']],
+        'specialConditionButton': [[selfView, 'active_html'], [oppView, 'active_html']],
+        'shufflePrizesButton': [[selfView, 'prizes_html']],
+        'revealPrizesButton': [[selfView, 'prizes_html']],
+        'hidePrizesButton': [[selfView, 'prizes_html']],
+        'revealOppHandButton': [[oppView, 'hand_html']],
+        'hideOppHandButton': [[oppView, 'hand_html']],
+        'shuffleDeckButton': [[selfView, 'deckDisplay_html'], [oppView, 'deckDisplay_html']],
+        'drawButton': [[selfView, 'deckDisplay_html']],
+        'viewTopButton': [[selfView, 'deckDisplay_html'], [oppView, 'deckDisplay_html']],
+        'viewBottomButton': [[selfView, 'deckDisplay_html'], [oppView, 'deckDisplay_html']],
+        'discardHandButton': [[selfView, 'hand_html']],
+        'shuffleHandButton': [[selfView, 'hand_html']],
+        'shuffleHandBottomButton': [[selfView, 'hand_html']],
+        'prizesHeader': [[selfView, 'prizes_html'], [oppView, 'prizes_html']],
+        'handHeader': [[selfView, 'hand_html'], [oppView, 'hand_html']],
+        'deckHeader': [[selfView, 'deckDisplay_html'], [oppView, 'deckDisplay_html']],
     };
     
     for (const [buttonId, conditionsArray] of Object.entries(buttonConditions)){
@@ -90,7 +93,7 @@ export function openCardContextMenu(event){
         // Check each condition array
         const shouldDisplay = conditionsArray.some(conditions => {
             const [userCondition, containerCondition] = conditions;
-            return userCondition === sCard.user && containerCondition === sCard.containerId;
+            return userCondition && containerCondition === sCard.containerId;
         });
       
         // Set display property based on conditions
@@ -105,9 +108,11 @@ export function openCardContextMenu(event){
 
     // get the fucking position of this mf
     const targetRect = event.target.getBoundingClientRect();
-    const offsetHeight = (event.target.user === 'self') ? document.getElementById('oppContainers').offsetHeight : document.getElementById('selfContainers').offsetHeight;
-    
-    if (selfContainersDocument.body.contains(event.target)){
+    const offsetHeight = (event.target.user === 'self') ? oppContainers.offsetHeight : selfContainers.offsetHeight;
+    if (document.body.contains(event.target)){
+        cardContextMenu.style.left = `${targetRect.left + event.target.clientWidth}px`;
+        cardContextMenu.style.top = `${targetRect.top}px`;
+    } else if (selfView){
         if (event.target.parentElement.id === 'deckDisplay_html'){
             cardContextMenu.style.left = `${targetRect.left - cardContextMenu.clientWidth}px`;
             cardContextMenu.style.top = `${targetRect.top + offsetHeight}px`; 
@@ -120,28 +125,22 @@ export function openCardContextMenu(event){
             cardContextMenu.style.left = `${targetRect.left + event.target.clientWidth}px`;
             cardContextMenu.style.top = `${targetRect.top + offsetHeight}px`; 
         };
-    } else if (oppContainersDocument.body.contains(event.target)){
-        const chatbox = document.getElementById('chatbox');
+    } else if (oppView){
+        const adjustment = (document.body.offsetWidth - oppContainers.offsetWidth);
         if (event.target.parentElement.id === 'deckDisplay_html'){
-            cardContextMenu.style.right = `${targetRect.left + chatbox.offsetWidth - cardContextMenu.clientWidth}px`;
+            cardContextMenu.style.right = `${targetRect.left + adjustment - cardContextMenu.clientWidth}px`;
             cardContextMenu.style.bottom = `${targetRect.top + offsetHeight - cardContextMenu.offsetHeight + event.target.offsetHeight}px`;
         } else if (event.target.parentElement.id === 'prizes_html'){
-            cardContextMenu.style.right = `${targetRect.left + chatbox.offsetWidth + event.target.clientWidth}px`;
+            cardContextMenu.style.right = `${targetRect.left + adjustment + event.target.clientWidth}px`;
             cardContextMenu.style.bottom = `${targetRect.top + offsetHeight - cardContextMenu.offsetHeight + event.target.offsetHeight}px`;
         } else {
-            cardContextMenu.style.right = `${targetRect.left + chatbox.offsetWidth - cardContextMenu.clientWidth + event.target.clientWidth}px`;
+            cardContextMenu.style.right = `${targetRect.left + adjustment - cardContextMenu.clientWidth + event.target.clientWidth}px`;
             cardContextMenu.style.bottom = `${targetRect.top + offsetHeight - cardContextMenu.offsetHeight}px`;
         };
-    } else {
-        cardContextMenu.style.left = `${targetRect.left}px`;
-        cardContextMenu.style.top = `${targetRect.top - cardContextMenu.offsetHeight}px`;
     };
 }
 
-export const cardPopup = document.getElementById('cardPopup');
-
-
-export function imageClick(event){
+export const imageClick = (event) => {
     event.stopPropagation();
 
     if (event.target.classList.contains('selectHighlight')){
@@ -154,24 +153,26 @@ export function imageClick(event){
         moveCard(sCard.user, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
         socket.emit('moveCard', roomId, sCard.oUser, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
     } else {
-        closePopups(); //need both because of highlights
+        closePopups(event); //need both because of highlights
         identifyCard(event);
         sCard.card.image.classList.add('highlight');
         sCard.selecting = true;
     };
 }
 
-export function fullViewClick(event){
-    if (['bench_html', 'active_html'].includes(sCard.containerId)){
+export const doubleClick = (event) => {
+    identifyCard(event);
+    sCard.card.image.classList.remove('highlight');
+    if (['bench_html', 'active_html'].includes(sCard.containerId) && !event.target.parentElement.classList.contains('fullView')){
         const images = event.target.parentElement.querySelectorAll('img');
-        images.forEach(function(img){
+        images.forEach((img) => {
             if (img.attached){
-                img.style.position = "static";
+                img.style.position = 'static';
             };
         });
         event.target.parentElement.className = 'fullView';
         event.target.parentElement.style.zIndex = '2';
-        event.target.parentElement.style.height = '50%';
+        event.target.parentElement.style.height = '70%';
         event.target.parentElement.style.width = '69%';
 
         if (event.target.damageCounter){
@@ -181,5 +182,38 @@ export function fullViewClick(event){
             event.target.specialCondition.style.display = 'none';
         };
         sCard.container.style.zIndex = '2';
+        stadium_html.style.zIndex = '-1';
+    } else {
+        let overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'; // Semi-transparent
+
+        // Create a new image element
+        let display = document.createElement('img');
+        display.src = event.target.src;
+        display.alt = event.target.alt;
+        display.style.position = 'absolute';
+        display.style.top = '50%';
+        display.style.left = '50%';
+        display.style.transform = 'translate(-50%, -50%)'; // Center the image
+        display.style.maxWidth = '90%'; // Keep the image within the viewport
+        display.style.maxHeight = '90%';
+
+        // Append the image to the overlay
+        overlay.appendChild(display);
+
+        // Append the overlay to the body
+        document.body.appendChild(overlay);
+
+        // Listen for click events on the overlay
+        overlay.addEventListener('click', () => {
+            // Remove the overlay from the body
+            document.body.removeChild(overlay);
+        });
+
     };
 }

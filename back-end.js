@@ -7,7 +7,6 @@ app.get('/', (req, res) => {
   res.sendFile( + '/index.html');
 });
 
-//socket.io setup
 const http = require('http');
 const server = http.createServer(app);
 const { Server } = require('socket.io');
@@ -22,28 +21,50 @@ io.on('connection', (socket) => {
     socket.on('generateId', () => {
         socket.emit('generateId', socket.id.toString() + '0');
     });
-
     socket.on('joinGame', (id, username) => {
+
         socket.join(id);
         players.set(socket.id, { id, username });
-
         const otherPlayerInfo = Array.from(players.entries())
             .filter(([key, player]) => key !== socket.id && player.id === id);
 
-        const otherPlayerUsername = otherPlayerInfo.map(([_, player]) => player.username);
+        const otherPlayerUsernames = otherPlayerInfo.map(([_, player]) => player.username);
 
-        socket.emit('joinGame', otherPlayerUsername);
-        socket.broadcast.to(id).emit('joinMessage', username);
-
-        socket.on('disconnect', () => {
-            players.delete(socket.id);
-            socket.broadcast.to(id).emit('leaveGame', username);
-        });
+        if (otherPlayerUsernames.length < 2){
+            socket.emit('joinGame', otherPlayerUsernames);
+            socket.broadcast.to(id).emit('joinMessage', username);
+    
+            socket.on('disconnect', () => {
+                players.delete(socket.id);
+                socket.broadcast.to(id).emit('leaveGameMessage', username);
+            });
+        } else {
+            socket.emit('roomReject');
+        };
     });
 
-    socket.on('drawHand', (id, user, indices) => {
-        socket.broadcast.to(id).emit('drawHand', user, indices);
+    socket.on('setup', (data) => {
+        socket.broadcast.to(data.roomId).emit('setup', data);
     });
+    socket.on('reset', (data) => {
+        socket.broadcast.to(data.roomId).emit('reset', data);
+    });
+    socket.on('takeTurn', (data) => {
+        socket.broadcast.to(data.roomId).emit('takeTurn', data);
+    });
+    socket.on('flipCoin', (data) => {
+        socket.broadcast.to(data.roomId).emit('flipCoin', data);
+    })
+    socket.on('VSTARGXFunction', (data) => {
+        socket.broadcast.to(data.roomId).emit('VSTARGXFunction', data);
+    })
+    socket.on('appendMessage', (data) => {
+        socket.broadcast.to(data.roomId).emit('appendMessage', data);
+    });
+
+
+
+
     socket.on('moveCard', (id, user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex) => {
         socket.broadcast.to(id).emit('moveCard', user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex);
     });
@@ -68,12 +89,10 @@ io.on('connection', (socket) => {
     socket.on('removeSpecialCondition', (id, user, location, index) => {
         socket.broadcast.to(id).emit('removeSpecialCondition', user, location, index);
     });
-    socket.on('textMessage', (id, textContent) => {
-        socket.broadcast.to(id).emit('textMessage', textContent);
-    });
-    socket.on('generalMessage', (id, textContent) => {
-        socket.broadcast.to(id).emit('generalMessage', textContent);
-    });
+
+
+
+
     socket.on('discardAndDraw', (id, discardAmount, drawAmount) => {
         socket.broadcast.to(id).emit('discardAndDraw', discardAmount, drawAmount);
     });
