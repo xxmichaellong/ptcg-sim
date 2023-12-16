@@ -1,3 +1,3 @@
 export * from './initialization/index.js'
 export * from './socket/event-listeners.js'
-export * from './p/index.js'
+export * from './event-listeners/index.js'

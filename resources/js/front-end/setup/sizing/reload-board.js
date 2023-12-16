@@ -17,7 +17,7 @@ const reloadContainer = (user, location, location_html) => {
             if (!image.attached){
                 //re-append the card to the end of the same container
                 const index = location.cards.findIndex(card => card.image === image);
-                moveCard(user, _location, _location_html, _location, _location_html, index)
+                moveCard(user, _location, _location_html, _location, _location_html, index, false, true)
             };
         });
     });

@@ -42,9 +42,8 @@ io.on('connection', (socket) => {
             socket.emit('roomReject');
         };
     });
-
-    socket.on('setup', (data) => {
-        socket.broadcast.to(data.roomId).emit('setup', data);
+    socket.on('appendMessage', (data) => {
+        socket.broadcast.to(data.roomId).emit('appendMessage', data);
     });
     socket.on('reset', (data) => {
         socket.broadcast.to(data.roomId).emit('reset', data);
@@ -52,45 +51,36 @@ io.on('connection', (socket) => {
     socket.on('takeTurn', (data) => {
         socket.broadcast.to(data.roomId).emit('takeTurn', data);
     });
-    socket.on('flipCoin', (data) => {
-        socket.broadcast.to(data.roomId).emit('flipCoin', data);
-    })
     socket.on('VSTARGXFunction', (data) => {
         socket.broadcast.to(data.roomId).emit('VSTARGXFunction', data);
     })
-    socket.on('appendMessage', (data) => {
-        socket.broadcast.to(data.roomId).emit('appendMessage', data);
+    socket.on('moveCard', (data) => {
+        socket.broadcast.to(data.roomId).emit('moveCard', data);
     });
-
-
-
-
-    socket.on('moveCard', (id, user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex) => {
-        socket.broadcast.to(id).emit('moveCard', user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex);
+    socket.on('addDamageCounter', (data) => {
+        socket.broadcast.to(data.roomId).emit('addDamageCounter', data);
     });
-    socket.on('shuffleContainer', (id, user, location, location_html, indices) => {
-        socket.broadcast.to(id).emit('shuffleContainer', user, location, location_html, indices);
+    socket.on('updateDamageCounter', (data) => {
+        socket.broadcast.to(data.roomId).emit('updateDamageCounter', data);
     });
-    socket.on('addDamageCounter', (id, user, location, container, index) => {
-        socket.broadcast.to(id).emit('addDamageCounter', user, location, container, index);
+    socket.on('removeDamageCounter', (data) => {
+        socket.broadcast.to(data.roomId).emit('removeDamageCounter', data);
     });
-    socket.on('updateDamageCounter', (id, user, location, index, textContent) => {
-        socket.broadcast.to(id).emit('updateDamageCounter', user, location, index, textContent);
+    socket.on('addSpecialCondition', (data) => {
+        socket.broadcast.to(data.roomId).emit('addSpecialCondition', data);
     });
-    socket.on('removeDamageCounter', (id, user, location, index) => {
-        socket.broadcast.to(id).emit('removeDamageCounter', user, location, index);
+    socket.on('updateSpecialCondition', (data) => {
+        socket.broadcast.to(data.roomId).emit('updateSpecialCondition', data);
     });
-    socket.on('addSpecialCondition', (id, user, location, container, index) => {
-        socket.broadcast.to(id).emit('addSpecialCondition', user, location, container, index);
+    socket.on('removeSpecialCondition', (data) => {
+        socket.broadcast.to(data.roomId).emit('removeSpecialCondition', data);
     });
-    socket.on('updateSpecialCondition', (id, user, location, index, textContent) => {
-        socket.broadcast.to(id).emit('updateSpecialCondition', user, location, index, textContent);
+    socket.on('shuffleContainer', (data) => {
+        socket.broadcast.to(data.roomId).emit('shuffleContainer', data);
     });
-    socket.on('removeSpecialCondition', (id, user, location, index) => {
-        socket.broadcast.to(id).emit('removeSpecialCondition', user, location, index);
+    socket.on('viewDeck', (data) => {
+        socket.broadcast.to(data.roomId).emit('viewDeck', data);
     });
-
-
 
 
     socket.on('discardAndDraw', (id, discardAmount, drawAmount) => {
@@ -102,12 +92,8 @@ io.on('connection', (socket) => {
     socket.on('shuffleBottomAndDraw', (id, shuffleAmount, drawAmount, indices) => {
         socket.broadcast.to(id).emit('shuffleBottomAndDraw', shuffleAmount, drawAmount, indices);
     });
-    socket.on('draw', (id, drawAmount) => {
-        socket.broadcast.to(id).emit('draw', drawAmount);
-    });
-    socket.on('viewDeck', (id, user, viewAmount, targetOpp, top, deckCount) => {
-        socket.broadcast.to(id).emit('viewDeck', user, viewAmount, targetOpp, top, deckCount);
-    });
+
+
     socket.on('discardAll', (id, user, discardAmount) => {
         socket.broadcast.to(id).emit('discardAll', user, discardAmount);
     });

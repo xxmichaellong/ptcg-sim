@@ -3,7 +3,7 @@ import { deck_html, discard_html, lostzone_html, oppCloseDeckDisplayButton, oppC
 selfAttachedCardDiscardButton.addEventListener('click', () => {
     const viewCount = sCard.user === 'self' ? viewCards.count : oppViewCards.count;
     for (let i = 0; i < viewCount; i++){
-        moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'deck', 'deck_html', 0);
+        moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'deck', 'deck_html', 0, false, true);
         socket.emit('moveCard', roomId, sCard.oUser, sCard.locationAsString, sCard.containerId, 'deck', 'deck_html', 0);
     };
     const deckCount = sCard.user === 'self' ? deck.count : oppDeck.count;

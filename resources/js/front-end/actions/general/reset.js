@@ -45,10 +45,10 @@ export const reset = (user, clean = false, received = false) => {
     display_html.appendChild(makeDeckCover(user).image);
 
     if (!clean){
-        appendMessage(user, determineUsername(user) + ' reset', 'announcement');
+        appendMessage(user, determineUsername(user) + ' reset', 'announcement', true);
     };
 
-    if (!p1[0] && !clean && !received){
+    if (!p1[0] && !received){
         const data = {
             roomId : roomId,
             user : POV.oUser,

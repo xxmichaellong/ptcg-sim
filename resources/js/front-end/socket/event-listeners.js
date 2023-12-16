@@ -2,10 +2,13 @@ import { connectedRoom, lobby, p1, roomIdInput, socket, p2SelfUsername, p2OppUse
 import { appendMessage } from '../setup/chatbox/messages.js'
 import { moveCard } from '../actions/general/move-card.js'
 import { takeTurn } from '../actions/general/take-turn.js'
-import { setup } from '../actions/general/setup.js'
 import { reset } from '../actions/general/reset.js'
-import { flipCoin } from '../actions/general/flip-coin.js'
 import { VSTARGXFunction } from '../actions/general/VSTAR-GX.js'
+import { addDamageCounter } from '../actions/counters/damage-counter.js'
+import { stringToVariable } from '../setup/containers/string-to-variable.js'
+import { addSpecialCondition } from '../actions/counters/special-condition.js'
+import { shuffleContainer } from '../actions/container/shuffle-container.js'
+import { viewDeck } from '../actions/container/deck-actions.js'
 
 socket.on('generateId', (id) => {
     roomIdInput.value = id;
@@ -18,16 +21,16 @@ socket.on('joinGame', (otherPlayerUsername) => {
     reset('opp', true);
     if (otherPlayerUsername.length > 0){
         p2OppUsername[0] = otherPlayerUsername[0];
-        appendMessage('', otherPlayerUsername[0] + ' is here!', 'announcement');
+        appendMessage('', otherPlayerUsername[0] + ' is here!', 'announcement', true);
     };
-    appendMessage('', p2SelfUsername[0] + ' joined', 'announcement');
+    appendMessage('', p2SelfUsername[0] + ' joined', 'announcement', true);
 });
 socket.on('joinMessage', (otherPlayerUsername) => {
     p2OppUsername[0] = otherPlayerUsername;
-    appendMessage('', otherPlayerUsername + ' joined', 'announcement');
+    appendMessage('', otherPlayerUsername + ' joined', 'announcement', true);
 });
 socket.on('leaveGameMessage', (otherPlayerUsername) => {
-    appendMessage('', otherPlayerUsername + ' left', 'announcement');
+    appendMessage('', otherPlayerUsername + ' left', 'announcement', true);
 });
 socket.on('roomReject', () => {
     // Create overlay
@@ -61,8 +64,8 @@ socket.on('roomReject', () => {
         document.body.removeChild(overlay);
     });
 });
-socket.on('setup', (data) => {
-    setup(data.user, data.indices, data.received);
+socket.on('appendMessage', (data) => {
+    appendMessage(data.user, data.message, data.type, data.received);
 });
 socket.on('reset', (data) => {
     reset(data.user, data.clean, data.received);
@@ -70,22 +73,45 @@ socket.on('reset', (data) => {
 socket.on('takeTurn', (data) => {
     takeTurn(data.user, data.received);
 });
-socket.on('flipCoin', (data) => {
-    flipCoin(data.user, data.result, data.received);
-});
 socket.on('VSTARGXFunction', (data) => {
     VSTARGXFunction(data.user, data.type, data.received)
 });
-socket.on('appendMessage', (data) => {
-    appendMessage(data.user, data.message, data.type);
+socket.on('moveCard', (data) => {
+    moveCard(data.user, data.oLocation, data.oLocation_html, data.mLocation, data.mLocation_html, data.index, data.targetIndex, data.received);
+});
+socket.on('addDamageCounter', (data) => {
+    addDamageCounter(data.user, data.location, data.container, data.index, data.received);
+});
+socket.on('updateDamageCounter', (data) => {
+    const damageCounter = stringToVariable(data.user, data.location).cards[data.index].image.damageCounter;
+    damageCounter.textContent = data.textContent;
+});
+socket.on('removeDamageCounter', (data) => {
+    const targetCard = stringToVariable(data.user, data.location).cards[data.index];
+    targetCard.image.damageCounter.textContent = '0';
+    targetCard.image.damageCounter.handleRemove();
+});
+socket.on('addSpecialCondition', (data) => {
+    addSpecialCondition(data.user, data.location, data.container, data.index, data.received);
+});
+socket.on('updateSpecialCondition', (data) => {
+    const specialCondition = stringToVariable(data.user, data.location).cards[data.index].image.specialCondition;
+    specialCondition.textContent = data.textContent;
+    specialCondition.handleColour();
+});
+socket.on('removeSpecialCondition', (data) => {
+    const targetCard = stringToVariable(data.user, data.location).cards[data.index];
+    targetCard.image.specialCondition.textContent = '0';
+    targetCard.image.specialCondition.handleRemove();
+});
+socket.on('shuffleContainer', (data) => {
+    shuffleContainer(data.user, data.location, data.location_html, data.indices, data.received);
+});
+socket.on('viewDeck', (data) => {
+    viewDeck(data.user, data.viewAmount, data.top, data.deckCount, data.targetOpp, data.received);
 });
 
 
-
-
-socket.on('shuffleContainer', (user, location, location_html, indices) => {
-    shuffleContainer(user, location, location_html, indices);
-});
 socket.on('discardAll', (user, discardAmount) => {
     discardAll(user, discardAmount);
 });
@@ -98,46 +124,13 @@ socket.on('shuffleAndDraw', (shuffleAmount, drawAmount, indices) => {
 socket.on('shuffleBottomAndDraw', (shuffleAmount, drawAmount, indices) => {
     shuffleBottomAndDraw('opp', shuffleAmount, drawAmount, indices);
 });
-socket.on('draw', (drawAmount) => {
-    draw('opp', drawAmount);
-});
-socket.on('viewDeck', (user, viewAmount, targetOpp, top, deckCount) => {
-    viewDeck(user, viewAmount, targetOpp, top, deckCount);
-});
-socket.on('addDamageCounter', (user, location, container, index) => {
-    addDamageCounter(user, location, container, index);
-});
-
-socket.on('updateDamageCounter', (user, location, index, textContent) => {
-    let damageCounter = stringToVariable(user, location).cards[index].image.damageCounter;
-    damageCounter.textContent = textContent;
-});
-
-socket.on('removeDamageCounter', (user, location, index) => {
-    const targetCard = stringToVariable(user, location).cards[index];
-
-    targetCard.image.damageCounter.textContent = '0';
-    targetCard.image.damageCounter.handleRemove();
-});
-
-socket.on('addSpecialCondition', (user, location, container, index) => {
-    addSpecialCondition(user, location, container, index);
-});
-
-socket.on('updateSpecialCondition', (user, location, index, textContent) => {
-    let specialCondition = stringToVariable(user, location).cards[index].image.specialCondition;
-    specialCondition.textContent = textContent;
-    specialCondition.handleColour();
-});
-
-socket.on('removeSpecialCondition', (user, location, index) => {
-    const targetCard = stringToVariable(user, location).cards[index];
-
-    targetCard.image.specialCondition.textContent = '0';
-    targetCard.image.specialCondition.handleRemove();
-});
 
 
-socket.on('moveCard', (user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex) => {
-    moveCard(user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex);
-});
+
+
+
+
+
+
+
+

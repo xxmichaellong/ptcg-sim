@@ -1,10 +1,7 @@
-import { selfContainersDocument } from '../../initialization/containers/self-containers.js';
-import { oppContainersDocument } from '../../initialization/containers/opp-containers.js';
 import { stringToVariable } from '../../setup/containers/string-to-variable.js';
-import { socket } from '../../initialization/socket-port/socket.js';
-import { roomId } from '../../front-end.js';
+import { sCard, socket, selfContainersDocument, oppContainersDocument, p1, roomId } from '../../front-end.js';
 
-export const addDamageCounter = (user, location, container, index) => {
+export const addDamageCounter = (user, location, container, index, received = false) => {
 
     const _location = location;
     const _container = container;
@@ -52,37 +49,42 @@ export const addDamageCounter = (user, location, container, index) => {
     damageCounter.style.zIndex = '1';
     
     const handleInput = () => {
-        // Send an update over the socket with the new text content
-        if (user === 'self'){
-            socket.emit('updateDamageCounter', roomId, 'opp', _location, index, damageCounter.textContent);
-        } else {
-            socket.emit('updateDamageCounter', roomId, 'self', _location, index, damageCounter.textContent);
+        if (!p1[0]){
+            const oUser = user === 'self' ? 'opp' : 'self';
+            const data = {
+                roomId : roomId,
+                user : oUser,
+                location: _location,
+                index: index,
+                textContent: damageCounter.textContent
+            };
+            socket.emit('updateDamageCounter', data);
         };
     }
 
     const handleResize = () => {
-        addDamageCounter(user, _location, _container, index)
+        addDamageCounter(user, _location, _container, index, true)
     };
 
     const handleRemove = (fromBlurEvent = false) => {
         if (damageCounter.textContent.trim() === '' || damageCounter.textContent <= 0){
-            let user;
-            if (selfContainersDocument.body.contains(damageCounter)){
-                user = 'opp';
-            } else {
-                user = 'self';
-            };
             targetCard.image.damageCounter.removeEventListener('input', targetCard.image.damageCounter.handleInput);
             targetCard.image.damageCounter.handleInput = null;
             targetCard.image.damageCounter.removeEventListener('blur', targetCard.image.damageCounter.handleRemoveWrapper);
             targetCard.image.damageCounter.handleRemove = null;
             window.removeEventListener('resize', targetCard.image.damageCounter.handleResize);
-
             targetCard.image.damageCounter.remove();
             targetCard.image.damageCounter = null;
         
-            if (fromBlurEvent){
-                socket.emit('removeDamageCounter', roomId, user, _location, index);
+            if (fromBlurEvent && !p1[0]){
+                const oUser = user === 'self' ? 'opp' : 'self';
+                const data = {
+                    roomId : roomId,
+                    user : oUser,
+                    location: _location,
+                    index: index,
+                };
+                socket.emit('removeDamageCounter', data);
             };
         };
     }
@@ -99,5 +101,17 @@ export const addDamageCounter = (user, location, container, index) => {
 
     //save the damageCounter on the card
     targetCard.image.damageCounter = damageCounter;
+
+    if (!p1[0] && !received){
+        const data = {
+            roomId : roomId,
+            user : sCard.oUser,
+            location : _location,
+            container: _container,
+            index: index,
+            received: true
+        };
+        socket.emit('addDamageCounter', data);
+    };
 }
 

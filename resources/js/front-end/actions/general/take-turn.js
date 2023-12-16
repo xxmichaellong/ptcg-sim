@@ -7,11 +7,11 @@ export const takeTurn = (user, received = false) => {
     const deckCount = user === 'self' ? deck.count : oppDeck.count;
     if (deckCount > 0){
         turn[0] ++;
-        moveCard(user, 'deck', 'deck_html', 'hand', 'hand_html', 0);
-        appendMessage(user, 'Turn ' + turn, 'announcement');
-        appendMessage(user, determineUsername(user) + ' drew for turn', 'announcement');
+        moveCard(user, 'deck', 'deck_html', 'hand', 'hand_html', 0, false, true);
+        appendMessage(user, 'Turn ' + turn, 'announcement', true);
+        appendMessage(user, determineUsername(user) + ' drew for turn', 'announcement', true);
     } else {
-        appendMessage(user, determineUsername(user) + ' has no more cards in deck!', 'announcement');
+        appendMessage(user, determineUsername(user) + ' has no more cards in deck!', 'announcement', true);
     };
     if (!p1[0] && !received){
         const data = {

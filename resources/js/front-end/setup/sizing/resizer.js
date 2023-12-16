@@ -156,11 +156,11 @@ export const adjustCards = (user, location, container, ratio) => {
         };
         if (card.image.damageCounter){
             const index = location.cards.findIndex(_card => _card === card);
-            addDamageCounter(user, _location, _container, index);
+            addDamageCounter(user, _location, _container, index, true);
         };
         if (card.image.specialCondition){
             const index = location.cards.findIndex(_card => _card === card);
-            addSpecialCondition(user, _location, _container, index);
+            addSpecialCondition(user, _location, _container, index, true);
         };
     });
 }

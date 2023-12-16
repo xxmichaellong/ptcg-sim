@@ -1,6 +1,6 @@
 import { draw } from '../actions/container/deck-actions.js';
 import { closeContainerPopups, closeFullView, deselectCard } from '../actions/general/close-popups.js';
-import { sCard } from '../front-end.js';
+import { sCard, target } from '../front-end.js';
 
 export const keyToggle = (event) => {
     if (!sCard.selecting){
@@ -70,8 +70,7 @@ export const keyToggle = (event) => {
             } else if (event.key === 'ArrowRight'){
                 switchWithDeckTop();
             } else {
-                moveCard(sCard.user, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
-                socket.emit('moveCard', roomId, sCard.oUser, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
+                moveCard(sCard.user, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index, true);
             }
         };
         if (event.key === 'y' && sCard.containerId === 'active_html'){
@@ -149,8 +148,3 @@ export const keyToggle = (event) => {
         };
     };
 }
-
-/*
-'q': { locationAsString: 'attach', containerId: 'attach_html' },
-'e': { locationAsString: 'evolve', containerId: 'evolve_html' }
-*/

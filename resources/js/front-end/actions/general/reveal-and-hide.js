@@ -1,4 +1,5 @@
 import { removeImages } from '../../image-logic/remove-images.js';
+import { stringToVariable } from '../../setup/containers/string-to-variable.js';
 
 let rootDirectory = window.location.origin;
 
@@ -18,14 +19,18 @@ export const revealCard = (card) => {
     };
 }
 
-export const hideCards = (container, container_html) => {
+export const hideCards = (user, container, container_html) => {
+    container = stringToVariable(user, container);
+    container_html = stringToVariable(user, container_html);
     removeImages(container_html);
     container.cards.forEach(card => {
         hideCard(card);
         container_html.appendChild(card.image);
     });
 }
-export const revealCards = (container, container_html) => {
+export const revealCards = (user, container, container_html) => {
+    container = stringToVariable(user, container);
+    container_html = stringToVariable(user, container);
     removeImages(container_html);
     container.cards.forEach(card => {
         revealCard(card);

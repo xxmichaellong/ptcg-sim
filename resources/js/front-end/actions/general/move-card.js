@@ -1,5 +1,5 @@
 import { p1, lostzone_html, lostzoneDisplay_html, discard_html,
-    discardDisplay_html, deck_html, deckDisplay_html, stadium_html, attachedCardPopup_html, selfContainersDocument, bench, active, oppActive, oppAttachedCardPopup_html, oppBench, oppContainersDocument, oppDeckDisplay_html, oppDeck_html, oppDiscardDisplay_html, oppDiscard_html, oppLostzoneDisplay_html, oppLostzone_html, POV, oppPrizes_html, oppHand_html, oppViewCards_html} from '../../front-end.js'
+    discardDisplay_html, deck_html, deckDisplay_html, stadium_html, attachedCardPopup_html, selfContainersDocument, bench, active, oppActive, oppAttachedCardPopup_html, oppBench, oppContainersDocument, oppDeckDisplay_html, oppDeck_html, oppDiscardDisplay_html, oppDiscard_html, oppLostzoneDisplay_html, oppLostzone_html, POV, oppPrizes_html, oppHand_html, oppViewCards_html, roomId, socket} from '../../front-end.js'
 import { resetImage } from '../../image-logic/reset-image.js';
 import { updateCount } from './update-count.js';
 import { makeLostzoneCover } from '../make-cover/lostzone-cover.js';
@@ -11,8 +11,7 @@ import { stringToVariable } from '../../setup/containers/string-to-variable.js';
 import { addDamageCounter } from '../counters/damage-counter.js';
 import { addSpecialCondition } from '../counters/special-condition.js';
 
-export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex) => {
-    // create references to the string in case it needs to be used later for recalling moveCard (e.g., appending attached cards);
+export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex, received = false) => {
     const _oLocation = oLocation;
     const _oLocation_html = oLocation_html;
     const _mLocation = mLocation;
@@ -123,8 +122,8 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
 
     // determine whether to hide/reveal card
     const p1HideLocations = ['prizes_html'];
-    const p2HideLocations = [oppPrizes_html, oppHand_html, oppViewCards_html];
-    if (p1HideLocations.includes(_mLocation_html) || (p2HideLocations.includes(mLocation_html) && !p1[0])) {
+    const p2HideLocations = ['hand_html'];
+    if (p1HideLocations.includes(_mLocation_html) || (p2HideLocations.includes(_mLocation_html) && !p1[0] && POV.user !== user)){
         hideCard(movingCard);
     } else {
         revealCard(movingCard);
@@ -142,7 +141,7 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
             targetCard.image.relative = movingCard.image;
             //if damage counter exists, link the textcontent with the new pokemon card
             if (targetCard.image.damageCounter){
-                addDamageCounter(user, _mLocation, _mLocation_html, mLocation.cards.length - 1);
+                addDamageCounter(user, _mLocation, _mLocation_html, mLocation.cards.length - 1, true);
                 movingCard.image.damageCounter.textContent = targetCard.image.damageCounter.textContent;
                 //remove once opponent is finished with it
                 targetCard.image.damageCounter.textContent = '0';
@@ -167,7 +166,7 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
                     resetImage(card.image);
                     card.image.attached = true;
                     const targetIndex = mLocation.cards.findIndex(card => card.image === movingCard.image);
-                    moveCard(user, _mLocation, _mLocation_html, _mLocation, _mLocation_html, i, targetIndex);
+                    moveCard(user, _mLocation, _mLocation_html, _mLocation, _mLocation_html, i, targetIndex, true);
                     i--;
                 };
             };
@@ -207,7 +206,7 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
                 for (let i = 0; i < mLocation.count - 1; i++){
                     if (mLocation.cards[i].image.relative === movingCard.image.relative && !['pokemon', 'energy'].includes(mLocation.cards[i].type)){
                         const targetIndex = mLocation.cards.findIndex(card => card.image === movingCard.image.relative);
-                        moveCard(user, _mLocation, _mLocation_html, _mLocation, _mLocation_html, i, targetIndex);
+                        moveCard(user, _mLocation, _mLocation_html, _mLocation, _mLocation_html, i, targetIndex, true);
                         i--;
                     };
                     if (mLocation.cards[i] === movingCard){
@@ -253,7 +252,7 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
                             for (let i = 0; i < sBench.count; i++){
                                 const image = sBench.cards[i].image;
                                 if (image.damageCounter){
-                                    addDamageCounter(user, 'bench', 'bench_html', i);
+                                    addDamageCounter(user, 'bench', 'bench_html', i, true);
                                 };
                             };
                         };
@@ -267,7 +266,7 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
                             for (let i = 0; i < sActive.count; i++){
                                 const image = sActive.cards[i].image;
                                 if (image.damageCounter){
-                                    addDamageCounter(user, 'active', 'active_html', i);
+                                    addDamageCounter(user, 'active', 'active_html', i, true);
                                 };
                             };
                         };
@@ -284,7 +283,7 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
                         for (let i = 0; i < mLocation.count; i++) {
                             const image = mLocation.cards[i].image;
                             if (image.damageCounter) {
-                                addDamageCounter(user, 'bench', 'bench_html', i);
+                                addDamageCounter(user, 'bench', 'bench_html', i, true);
                             }
                         }
                     }
@@ -331,14 +330,14 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
         && mLocation.cards[1] 
         && !movingCard.image.attached
         && !mLocation.cards[0].image.attached){
-            moveCard(user, 'active', 'active_html', 'bench', 'bench_html', 0);
+            moveCard(user, 'active', 'active_html', 'bench', 'bench_html', 0, false, true);
         };
         
         if (['stadium_html'].includes(_mLocation_html) && mLocation.cards[1]) {
             if (mLocation.cards[0].image.user === 'self') {
-                moveCard('self', 'stadium', 'stadium_html', 'discard', 'discard_html', 0);
+                moveCard('self', 'stadium', 'stadium_html', 'discard', 'discard_html', 0, false, true);
             } else {
-                moveCard('opp', 'stadium', 'stadium_html', 'discard', 'discard_html', 0);
+                moveCard('opp', 'stadium', 'stadium_html', 'discard', 'discard_html', 0, false, true);
             };
         };
         
@@ -366,10 +365,10 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
                 if (boardLocations.includes(_mLocation_html)){
                     image.attached = true;
                     const targetIndex = mLocation.cards.findIndex(card => card.image === movingCard.image);
-                    moveCard(user, _oLocation, _oLocation_html, _mLocation, _mLocation_html, i, targetIndex);
+                    moveCard(user, _oLocation, _oLocation_html, _mLocation, _mLocation_html, i, targetIndex, true);
                 } else {
                     if (oLocation.cards[i].type === 'pokemon' && movingCard.image.damageCounter){
-                        addDamageCounter(user, _oLocation, _oLocation_html, i);
+                        addDamageCounter(user, _oLocation, _oLocation_html, i, true);
                         image.damageCounter.textContent = movingCard.image.damageCounter.textContent;
                     };
                     if (user === 'self'){
@@ -377,7 +376,7 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
                     } else {
                         oppAttachedCardPopup_html.style.display = 'block';
                     };
-                    moveCard(user, _oLocation, _oLocation_html, 'attachedCardPopup', 'attachedCardPopup_html', i);
+                    moveCard(user, _oLocation, _oLocation_html, 'attachedCardPopup', 'attachedCardPopup_html', i, false, true);
                 };
                 i--;
             };
@@ -389,7 +388,7 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
         const index = mLocation.cards.findIndex(card => card === movingCard);
 
         if (attachedLocations.includes(_mLocation_html)){
-            addDamageCounter(user, _mLocation, _mLocation_html, index);
+            addDamageCounter(user, _mLocation, _mLocation_html, index, true);
         } else {
             movingCard.image.damageCounter.textContent = '0';
             movingCard.image.damageCounter.handleRemove();
@@ -405,10 +404,10 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
         for (let i = 0; i < oLocation.cards.length; i++){
             const image = oLocation.cards[i].image;
             if (image.damageCounter){
-                addDamageCounter(user, _oLocation, _oLocation_html, i);
+                addDamageCounter(user, _oLocation, _oLocation_html, i, true);
             };
             if (image.specialCondition){
-                addSpecialCondition(user, _oLocation, _oLocation_html, i);
+                addSpecialCondition(user, _oLocation, _oLocation_html, i, true);
             };
         };
     };
@@ -416,14 +415,37 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
         for (let i = 0; i < mLocation.cards.length; i++){
             const image = mLocation.cards[i].image;
             if (image.damageCounter){
-                addDamageCounter(user, _mLocation, _mLocation_html, i);
+                addDamageCounter(user, _mLocation, _mLocation_html, i, true);
             };
             if (image.specialCondition){
-                addSpecialCondition(user, _mLocation, _mLocation_html, i);
+                addSpecialCondition(user, _mLocation, _mLocation_html, i, true);
             };
         };
     };
 
     updateCount();
     hideIfEmpty(user, _oLocation_html);
+
+    if (!p1[0] && !received){
+        const oUser = user === 'self' ? 'opp' : 'self';
+        const moveCardData = {
+            roomId : roomId,
+            user : oUser,
+            oLocation : _oLocation,
+            oLocation_html : _oLocation_html,
+            mLocation : _mLocation,
+            mLocation_html : _mLocation_html,
+            index: index,
+            targetIndex: targetIndex,
+            received: true
+        };
+        // const appendMessageData = {
+        //     roomId,
+        //     user : POV.user,
+        //     message: message,
+        //     type: 'announcement'
+        // };
+        socket.emit('moveCard', moveCardData);
+        // socket.emit('appendMessage', appendMessageData);
+    };
 }

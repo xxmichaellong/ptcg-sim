@@ -12,7 +12,7 @@ let resizeObserver = new ResizeObserver(entries => {
       for (let i = 0; i < sBench.count; i++){
           const image = sBench.cards[i].image;
           if (image.damageCounter){
-              addDamageCounter(user, 'bench', 'bench_html', i);
+              addDamageCounter(user, 'bench', 'bench_html', i, true);
           };
       };
     }

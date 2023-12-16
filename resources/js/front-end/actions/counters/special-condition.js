@@ -1,10 +1,7 @@
-import { selfContainersDocument } from '../../initialization/containers/self-containers.js';
-import { oppContainersDocument } from '../../initialization/containers/opp-containers.js';
 import { stringToVariable } from '../../setup/containers/string-to-variable.js';
-import { socket } from '../../initialization/socket-port/socket.js';
-import { roomId } from '../../front-end.js';
+import { roomId, selfContainersDocument, oppContainersDocument, socket, p1, sCard } from '../../front-end.js';
 
-export const addSpecialCondition = (user, location, container, index) => {
+export const addSpecialCondition = (user, location, container, index, received = false) => {
 
     const _location = location;
     const _container = container;
@@ -81,38 +78,43 @@ export const addSpecialCondition = (user, location, container, index) => {
     }
 
     const handleInput = () => {
-        // Send an update over the socket with the new text content
-        if (user === 'self'){
-            socket.emit('updateSpecialCondition', roomId, 'opp', _location, index, specialCondition.textContent);
-        } else {
-            socket.emit('updateSpecialCondition', roomId, 'self', _location, index, specialCondition.textContent);
+        if (!p1[0]){
+            const oUser = user === 'self' ? 'opp' : 'self';
+            const data = {
+                roomId : roomId,
+                user : oUser,
+                location: _location,
+                index: index,
+                textContent: specialCondition.textContent
+            };
+            socket.emit('updateSpecialCondition', data);
         };
     }
 
     const handleResize = () => {
-        addSpecialCondition(user, _location, _container, index)
+        addSpecialCondition(user, _location, _container, index, true)
     };
 
     const handleRemove = (fromBlurEvent = false) => {
         if (specialCondition.textContent.trim() === '' || specialCondition.textContent === '0'){
-            let user;
-            if (selfContainersDocument.body.contains(specialCondition)){
-                user = 'opp';
-            } else {
-                user = 'self';
-            };
             targetCard.image.specialCondition.removeEventListener('input', targetCard.image.specialCondition.handleColour);
             targetCard.image.specialCondition.removeEventListener('input', targetCard.image.specialCondition.handleInput);
             targetCard.image.specialCondition.handleInput = null;
             targetCard.image.specialCondition.removeEventListener('blur', targetCard.image.specialCondition.handleRemoveWrapper);
             targetCard.image.specialCondition.handleRemove = null;
             window.removeEventListener('resize', targetCard.image.specialCondition.handleResize);
-
             targetCard.image.specialCondition.remove();
             targetCard.image.specialCondition = null;
         
             if (fromBlurEvent){
-                socket.emit('removeSpecialCondition', roomId, user, _location, index);
+                const oUser = user === 'self' ? 'opp' : 'self';
+                const data = {
+                    roomId : roomId,
+                    user : oUser,
+                    location: _location,
+                    index: index,
+                };
+                socket.emit('removeSpecialCondition', data);            
             };
         };
     }
@@ -131,5 +133,17 @@ export const addSpecialCondition = (user, location, container, index) => {
 
     //save the specialCondition on the card
     targetCard.image.specialCondition = specialCondition;
+
+    if (!p1[0] && !received){
+        const data = {
+            roomId : roomId,
+            user : sCard.oUser,
+            location : _location,
+            container: _container,
+            index: index,
+            received: true
+        };
+        socket.emit('addSpecialCondition', data);
+    };
 }
 

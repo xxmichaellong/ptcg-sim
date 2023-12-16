@@ -86,10 +86,10 @@ export const closeFullView = (event) => {
         for (let i = 0; i < location.cards.length; i++){
             const image = location.cards[i].image;
             if (image.damageCounter){
-                addDamageCounter(user, _location, _location_html, i);
+                addDamageCounter(user, _location, _location_html, i, true);
             };
             if (image.specialCondition){
-                addSpecialCondition(user, _location, _location_html, i);
+                addSpecialCondition(user, _location, _location_html, i, true);
             };
         };
 

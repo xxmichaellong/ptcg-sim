@@ -4,7 +4,7 @@ import { determineUsername } from "../../setup/general/determine-username.js";
 
 export const VSTARGXFunction = (user, type, received = false) => {
     const message = determineUsername(user) + ' used their ' + type + '!';
-    appendMessage(POV.user, message, 'announcement');
+    appendMessage(POV.user, message, 'announcement', true);
     if (!p1[0] && !received){
         const data = {
             roomId : roomId,

@@ -150,8 +150,7 @@ export const imageClick = (event) => {
         target.index = target.location.cards.findIndex(card => card.image === event.target);
         target.locationAsString = variableToString(sCard.user, target.location);
 
-        moveCard(sCard.user, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
-        socket.emit('moveCard', roomId, sCard.oUser, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
+        moveCard(sCard.user, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index, true);
     } else {
         closePopups(event); //need both because of highlights
         identifyCard(event);
