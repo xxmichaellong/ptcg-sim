@@ -1,5 +1,5 @@
-import { closePopups } from '../../actions/general/close-popups.js';
 import { oppContainersDocument, selfContainersDocument } from '../../front-end.js';
+import { closePopups } from '../../actions/general/close-popups.js';
 import { dragLeave, dragOver, drop } from '../../image-logic/drag.js';
 import { keyToggle } from '../../key-toggles/key-toggles.js';
 

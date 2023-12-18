@@ -4,9 +4,8 @@ import { adjustAlignment } from '../../setup/sizing/adjust-alignment.js';
 const handObserver = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
         if (mutation.type === 'childList') {
-            // Call adjustAlignment for each target
             [hand_html, oppHand_html].forEach(adjustAlignment);
-        }
+        };
     });
 });
 

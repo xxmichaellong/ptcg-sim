@@ -112,20 +112,6 @@ socket.on('viewDeck', (data) => {
 });
 
 
-socket.on('discardAll', (user, discardAmount) => {
-    discardAll(user, discardAmount);
-});
-socket.on('discardAndDraw', (discardAmount, drawAmount) => {
-    discardAndDraw('opp', discardAmount, drawAmount);
-});
-socket.on('shuffleAndDraw', (shuffleAmount, drawAmount, indices) => {
-    shuffleAndDraw('opp', shuffleAmount, drawAmount, indices);
-});
-socket.on('shuffleBottomAndDraw', (shuffleAmount, drawAmount, indices) => {
-    shuffleBottomAndDraw('opp', shuffleAmount, drawAmount, indices);
-});
-
-
 
 
 

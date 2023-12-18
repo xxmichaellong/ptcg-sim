@@ -1,4 +1,4 @@
-import { deck, socket } from '../../front-end.js';
+import { deck, hand, oppDeck, oppHand, socket } from '../../front-end.js';
 import { shuffleIndices } from '../../setup/general/shuffle.js';
 import { moveCard } from '../general/move-card.js';
 import { shuffleContainer } from './shuffle-container.js';
@@ -13,49 +13,75 @@ export const drawHand = (user) => {
     };
 }
 
-export const discardAndDraw = (user, discardAmount, drawAmount) => {
-    for (let i = 0; i < discardAmount; i++){
-        moveCard(user, 'hand', 'hand_html', 'discard', 'discard_html', 0, false, true);
-    };
+export const discardAndDraw = (user) => {
+    let drawAmount;
+    const userInput = window.prompt('Draw how many cards?', '0');
+    drawAmount = parseInt(userInput);
+    const deckCount = user === 'self' ? deck.count : oppDeck.count;
+    const discardAmount = user === 'self' ? hand.count : oppHand.count;
 
-    for (let i = 0; i < drawAmount; i++){
-        moveCard(user, 'deck', 'deck_html', 'hand', 'hand_html', 0, false, true);
+    if (!isNaN(drawAmount) && drawAmount >= 0){
+        drawAmount = Math.min(drawAmount, deckCount);
+
+        for (let i = 0; i < discardAmount; i++){
+            moveCard(user, 'hand', 'hand_html', 'discard', 'discard_html', 0);
+        };
+        for (let i = 0; i < drawAmount; i++){
+            moveCard(user, 'deck', 'deck_html', 'hand', 'hand_html', 0);
+        };
+    } else {
+        window.alert('Please enter a valid number for the draw amount.');
     };
 }
 
-export const shuffleAndDraw = (user, shuffleAmount, drawAmount, indices) => {
-    for (let i = 0; i < shuffleAmount; i++){
-        moveCard(user, 'hand', 'hand_html', 'deck', 'deck_html', 0, false, true);
-    };
-    if (user === 'self'){
-        indices = shuffleIndices(deck.cards.length);
-    };
-    shuffleContainer(user, 'deck', 'deck_html', indices);
+export const shuffleAndDraw = (user) => {
 
-    for (let i = 0; i < drawAmount; i++){
-        moveCard(user, 'deck', 'deck_html', 'hand', 'hand_html', 0, false, true);
-    };
+    let drawAmount;
+    const userInput = window.prompt('Draw how many cards?', '0');
+    drawAmount = parseInt(userInput);
+    const deckCount = user === 'self' ? deck.count : oppDeck.count;
+    const shuffleAmount = user === 'self' ? hand.count : oppHand.count;
 
-    if (user === 'self'){
-        socket.emit('shuffleAndDraw', roomId, shuffleAmount, drawAmount, indices);
+    if (!isNaN(drawAmount) && drawAmount >= 0){
+        drawAmount = Math.min(drawAmount, (deckCount + shuffleAmount));
+
+        for (let i = 0; i < shuffleAmount; i++){
+            moveCard(user, 'hand', 'hand_html', 'deck', 'deck_html', 0);
+        };
+
+        shuffleContainer(user, 'deck', 'deck_html');
+
+        for (let i = 0; i < drawAmount; i++){
+            moveCard(user, 'deck', 'deck_html', 'hand', 'hand_html', 0);
+        };
+    
+    } else {
+        window.alert('Please enter a valid number for the draw amount.');
     };
 }
 
-export const shuffleBottomAndDraw = (user, shuffleAmount, drawAmount, indices) => {
-    if (user === 'self'){
-        indices = shuffleIndices(hand.cards.length);
-    };
-    shuffleContainer(user, 'hand', 'hand_html', indices);
+export const shuffleBottomAndDraw = (user) => {
+    
+    let drawAmount;
+    const userInput = window.prompt('Draw how many cards?', '0');
+    drawAmount = parseInt(userInput);
+    const deckCount = user === 'self' ? deck.count : oppDeck.count;
+    const shuffleAmount = user === 'self' ? hand.count : oppHand.count;
+    
+    if (!isNaN(drawAmount) && drawAmount >= 0){
+        drawAmount = Math.min(drawAmount, (deckCount + shuffleAmount));
 
-    for (let i = 0; i < shuffleAmount; i++){
-        moveCard(user, 'hand', 'hand_html', 'deck', 'deck_html', 0, false, true);
-    };
+        shuffleContainer(user, 'hand', 'hand_html');
 
-    for (let i = 0; i < drawAmount; i++){
-        moveCard(user, 'deck', 'deck_html', 'hand', 'hand_html', 0, false, true);
-    };
+        for (let i = 0; i < shuffleAmount; i++){
+            moveCard(user, 'hand', 'hand_html', 'deck', 'deck_html', 0);
+        };
 
-    if (user === 'self'){
-        socket.emit('shuffleBottomAndDraw', roomId, shuffleAmount, drawAmount, indices);
+        for (let i = 0; i < drawAmount; i++){
+            moveCard(user, 'deck', 'deck_html', 'hand', 'hand_html', 0);
+        };
+
+    } else {
+        window.alert('Please enter a valid number for the draw amount.');
     };
 }

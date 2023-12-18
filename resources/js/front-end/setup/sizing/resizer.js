@@ -101,7 +101,6 @@ export const oppResize = (e) => {
     oppResizer.style.bottom = (100 - (clientY / window.innerHeight) * 100) + '%';
     oppContainers.style.height = Math.max(1, newOppHeight) + '%';
     oppContainers.style.bottom = (100 - 1 - (clientY / window.innerHeight) * 100) + '%';
-    console.log(oppContainers.style.bottom);
     const _newOppHeight = parseInt(oppContainers.offsetHeight);
     const oppRatio = _newOppHeight/oldOppHeight;
     adjustCards('opp', 'bench', 'bench_html', oppRatio);

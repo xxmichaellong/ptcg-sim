@@ -7,8 +7,8 @@ export const shufflePrizesButton = document.getElementById('shufflePrizesButton'
 export const revealPrizesButton = document.getElementById('revealPrizesButton');
 export const hidePrizesButton = document.getElementById('hidePrizesButton');
 
-export const revealOppHandButton = document.getElementById('revealOppHandButton');
-export const hideOppHandButton = document.getElementById('hideOppHandButton');
+export const revealHandButton = document.getElementById('revealHandButton');
+export const hideHandButton = document.getElementById('hideHandButton');
 export const discardHandButton = document.getElementById('discardHandButton');
 export const shuffleHandButton = document.getElementById('shuffleHandButton');
 export const shuffleHandBottomButton = document.getElementById('shuffleHandBottomButton');

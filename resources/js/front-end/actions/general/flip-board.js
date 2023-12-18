@@ -13,12 +13,12 @@ export const flipBoard = () => {
         oppResizer.addEventListener('mousedown', oppHandleMouseDown);
         selfResizer.removeEventListener('mousedown', flippedSelfHandleMouseDown);
         oppResizer.removeEventListener('mousedown', flippedOppHandleMouseDown);
-    }
+    };
 
     const toggleClasses = (element, class1, class2) => {
         element.classList.toggle(class1);
         element.classList.toggle(class2);
-    }
+    };
 
     toggleClasses(selfResizer, 'selfColour', 'oppColour');
     toggleClasses(oppResizer, 'oppColour', 'selfColour');
@@ -32,7 +32,7 @@ export const flipBoard = () => {
     const textIds = ['deckText', 'discardText', 'lostzoneText'];
     const containerIds = ['deck_html', 'discard_html', 'lostzone_html', 'attachedCardPopup_html', 'viewCards_html'];
     const buttonIds = ['viewCardsButtonContainer', 'attachedCardPopupButtonContainer'];
-    const headerIds = ['attachedCardPopupHeader', 'viewCardsHeader']
+    const headerIds = ['attachedCardPopupHeader', 'viewCardsHeader'];
 
     for (const user of users) {
         const document = user === 'self' ? selfContainersDocument : oppContainersDocument;
@@ -41,17 +41,17 @@ export const flipBoard = () => {
             const text = document.getElementById(textId);
             text.classList.toggle('self-text');
             text.classList.toggle('opp-text');
-        }
+        };
         for (const containerId of containerIds) {
             const container = document.getElementById(containerId);
             container.classList.toggle('self-view');
             container.classList.toggle('opp-view');
-        }
+        };
         for (const buttonId of buttonIds) {
             const button = document.getElementById(buttonId);
             button.classList.toggle('self-button-container');
             button.classList.toggle('opp-button-container');
-        }
+        };
         for (const headerId of headerIds) {
             const header = document.getElementById(headerId);
             header.classList.toggle('self-header');
@@ -62,8 +62,19 @@ export const flipBoard = () => {
                 header.textContent = 'Move attached cards';
             };
         };
-    }
-    
+    };
+
+    const selfCircleElements = selfContainersDocument.querySelectorAll('.self-circle, .opp-circle');
+    const oppCircleElements = oppContainersDocument.querySelectorAll('.self-circle, .opp-circle');
+
+    selfCircleElements.forEach(element => {
+        element.classList.toggle('self-circle');
+        element.classList.toggle('opp-circle');
+    });
+    oppCircleElements.forEach(element => {
+        element.classList.toggle('self-circle');
+        element.classList.toggle('opp-circle');
+    });
     
     // Swap heights
     let tempHeight = selfContainers.style.height;

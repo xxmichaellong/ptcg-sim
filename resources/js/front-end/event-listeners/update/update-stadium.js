@@ -19,8 +19,8 @@ const checkDisplayAndUpdateZIndex = () => {
         if (containers[i].style.display === 'block') {
             stadium_html.style.zIndex = '-1';
             return;  // Exit the function if a container is displayed
-        }
-    }
+        };
+    };
     // If none of the containers are displayed, set the z-index to 0
     stadium_html.style.zIndex = '0';
 }

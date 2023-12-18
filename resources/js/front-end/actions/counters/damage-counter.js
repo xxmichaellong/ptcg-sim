@@ -1,5 +1,5 @@
 import { stringToVariable } from '../../setup/containers/string-to-variable.js';
-import { sCard, socket, selfContainersDocument, oppContainersDocument, p1, roomId } from '../../front-end.js';
+import { sCard, socket, selfContainersDocument, oppContainersDocument, p1, roomId, POV } from '../../front-end.js';
 
 export const addDamageCounter = (user, location, container, index, received = false) => {
 
@@ -25,10 +25,11 @@ export const addDamageCounter = (user, location, container, index, received = fa
     } else {
         if (user === 'self'){
             damageCounter = selfContainersDocument.createElement('div');
+            damageCounter.className = POV.user === 'self' ? 'self-circle' : 'opp-circle';
         } else {
             damageCounter = oppContainersDocument.createElement('div');
+            damageCounter.className = POV.user === 'self' ? 'opp-circle' : 'self-circle';
         };
-        damageCounter.className = 'circle';
         damageCounter.contentEditable = 'true';
         damageCounter.textContent = '10';
     };

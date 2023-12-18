@@ -1,5 +1,5 @@
 import { stringToVariable } from '../../setup/containers/string-to-variable.js';
-import { roomId, selfContainersDocument, oppContainersDocument, socket, p1, sCard } from '../../front-end.js';
+import { roomId, selfContainersDocument, oppContainersDocument, socket, p1, sCard, POV } from '../../front-end.js';
 
 export const addSpecialCondition = (user, location, container, index, received = false) => {
 
@@ -26,10 +26,11 @@ export const addSpecialCondition = (user, location, container, index, received =
     } else {
         if (user === 'self'){
             specialCondition = selfContainersDocument.createElement('div');
+            specialCondition.className = POV.user === 'self' ? 'self-circle' : 'opp-circle';
         } else {
             specialCondition = oppContainersDocument.createElement('div');
+            specialCondition.className = POV.user === 'self' ? 'opp-circle' : 'self-circle';
         };
-        specialCondition.className = 'circle';
         specialCondition.contentEditable = 'true';
         specialCondition.textContent = 'P';
         specialCondition.style.backgroundColor = 'green';

@@ -234,12 +234,20 @@
   height: 24%;
   margin: 0.5%;
 }
-.circle {
+.self-circle {
   position: absolute;
   border-radius: 50%;
   background-color: rgb(255, 98, 0);
   color: white;
   text-align: center;
+}
+.opp-circle {
+  position: absolute;
+  border-radius: 50%;
+  background-color: rgb(255, 98, 0);
+  color: white;
+  text-align: center;
+  transform: scaleX(-1) scaleY(-1);
 }
 #attachedCardPopup_html {
   display: none;

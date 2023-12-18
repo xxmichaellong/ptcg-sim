@@ -30,7 +30,7 @@ export const hideCards = (user, container, container_html) => {
 }
 export const revealCards = (user, container, container_html) => {
     container = stringToVariable(user, container);
-    container_html = stringToVariable(user, container);
+    container_html = stringToVariable(user, container_html);
     removeImages(container_html);
     container.cards.forEach(card => {
         revealCard(card);

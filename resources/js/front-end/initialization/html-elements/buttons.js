@@ -37,6 +37,7 @@ export const p2ResetButton = document.getElementById('p2ResetButton');
 export const leaveRoomButton = document.getElementById('leaveRoomButton');
 
 //selfContainers
+export const selfShuffleDeckButton = selfContainersDocument.getElementById('selfShuffleDeckButton');
 export const selfDiscardShuffleButton = selfContainersDocument.getElementById('discardShuffleButton');
 export const selfAttachedCardDiscardButton = selfContainersDocument.getElementById('attachedCardDiscardButton');
 export const selfAttachedCardShuffleButton = selfContainersDocument.getElementById('attachedCardShuffleButton');
@@ -52,6 +53,7 @@ export const selfCloseDiscardDisplayButton = selfContainersDocument.getElementBy
 export const selfCloseLostzoneDisplayButton = selfContainersDocument.getElementById('closeLostzoneDisplayButton');
 
 //oppContainers
+export const oppShuffleDeckButton = oppContainersDocument.getElementById('oppShuffleDeckButton')
 export const oppDiscardShuffleButton = oppContainersDocument.getElementById('discardShuffleButton');
 export const oppAttachedCardDiscardButton = oppContainersDocument.getElementById('attachedCardDiscardButton');
 export const oppAttachedCardShuffleButton = oppContainersDocument.getElementById('attachedCardShuffleButton');

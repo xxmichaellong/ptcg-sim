@@ -8,5 +8,5 @@ export const adjustAlignment = (element) => {
         element.style.justifyContent = 'flex-start';
     } else {
         element.style.justifyContent = 'center';
-    }
+    };
 }

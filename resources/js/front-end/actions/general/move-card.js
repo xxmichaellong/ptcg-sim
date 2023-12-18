@@ -5,13 +5,14 @@ import { updateCount } from './update-count.js';
 import { makeLostzoneCover } from '../make-cover/lostzone-cover.js';
 import { makeDiscardCover } from '../make-cover/discard-cover.js';
 import { makeDeckCover } from '../make-cover/deck-cover.js';
-import { hideIfEmpty } from './close-popups.js';
+import { deselectCard, hideIfEmpty } from './close-popups.js';
 import { hideCard, revealCard } from './reveal-and-hide.js';
 import { stringToVariable } from '../../setup/containers/string-to-variable.js';
 import { addDamageCounter } from '../counters/damage-counter.js';
 import { addSpecialCondition } from '../counters/special-condition.js';
 
 export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex, received = false) => {
+    deselectCard(); //remove highlight from all images before it's moved
     const _oLocation = oLocation;
     const _oLocation_html = oLocation_html;
     const _mLocation = mLocation;

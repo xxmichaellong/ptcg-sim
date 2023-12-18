@@ -81,22 +81,6 @@ io.on('connection', (socket) => {
     socket.on('viewDeck', (data) => {
         socket.broadcast.to(data.roomId).emit('viewDeck', data);
     });
-
-
-    socket.on('discardAndDraw', (id, discardAmount, drawAmount) => {
-        socket.broadcast.to(id).emit('discardAndDraw', discardAmount, drawAmount);
-    });
-    socket.on('shuffleAndDraw', (id, shuffleAmount, drawAmount, indices) => {
-        socket.broadcast.to(id).emit('shuffleAndDraw', shuffleAmount, drawAmount, indices);
-    });
-    socket.on('shuffleBottomAndDraw', (id, shuffleAmount, drawAmount, indices) => {
-        socket.broadcast.to(id).emit('shuffleBottomAndDraw', shuffleAmount, drawAmount, indices);
-    });
-
-
-    socket.on('discardAll', (id, user, discardAmount) => {
-        socket.broadcast.to(id).emit('discardAll', user, discardAmount);
-    });
 });
 
 // Start the server

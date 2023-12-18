@@ -1,47 +1,13 @@
-revealOppHandButton.addEventListener('click', () => revealCards(oppHand, oppHand_html));
-hideOppHandButton.addEventListener('click', () => hideCards(oppHand, oppHand_html));
-discardHandButton.addEventListener('click', () => {
-    let drawAmount;
+import { discardAndDraw, shuffleAndDraw, shuffleBottomAndDraw } from '../../actions/container/hand-actions.js';
+import { hideCards, revealCards } from '../../actions/general/reveal-and-hide.js';
+import { discardHandButton, hideHandButton, revealHandButton, sCard, shuffleHandBottomButton, shuffleHandButton } from '../../front-end.js'
 
-    const userInput = window.prompt('Draw how many cards?', '0');
+revealHandButton.addEventListener('click', () => revealCards(sCard.user, 'hand', 'hand_html'));
 
-    drawAmount = parseInt(userInput);
+hideHandButton.addEventListener('click', () => hideCards(sCard.user, 'hand', 'hand_html'));
 
-    if (!isNaN(drawAmount) && drawAmount >= 0){
-        drawAmount = Math.min(drawAmount, deck.count);
-        socket.emit('discardAndDraw', roomId, hand.count, drawAmount);
-        discardAndDraw('self', hand.count, drawAmount);
-    } else {
-        window.alert('Please enter a valid number for the draw amount.');
-    };
-});
+discardHandButton.addEventListener('click', () => discardAndDraw(sCard.user));
 
-shuffleHandButton.addEventListener('click', () => {
-    let drawAmount;
-
-    const userInput = window.prompt('Draw how many cards?', '0');
-
-    drawAmount = parseInt(userInput);
-
-    if (!isNaN(drawAmount) && drawAmount >= 0){
-        drawAmount = Math.min(drawAmount, (deck.count + hand.count));
-        shuffleAndDraw('self', hand.count, drawAmount);
-    } else {
-        window.alert('Please enter a valid number for the draw amount.');
-    };
-});
-
-shuffleHandBottomButton.addEventListener('click', () => {
-    let drawAmount;
-
-    const userInput = window.prompt('Draw how many cards?', '0');
-
-    drawAmount = parseInt(userInput);
-
-    if (!isNaN(drawAmount) && drawAmount >= 0){
-        drawAmount = Math.min(drawAmount, (deck.count + hand.count));
-        shuffleBottomAndDraw('self', hand.count, drawAmount);
-    } else {
-        window.alert('Please enter a valid number for the draw amount.');
-    };
-});
+shuffleHandButton.addEventListener('click', () => shuffleAndDraw(sCard.user));
+    
+shuffleHandBottomButton.addEventListener('click', () => shuffleBottomAndDraw(sCard.user));

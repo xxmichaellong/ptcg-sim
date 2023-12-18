@@ -1,11 +1,10 @@
+import { shuffleContainer } from "../../actions/container/shuffle-container.js";
+import { hideCards, revealCards } from "../../actions/general/reveal-and-hide.js";
+import { hidePrizesButton, revealPrizesButton, sCard, shufflePrizesButton } from "../../front-end.js";
 
-shufflePrizesButton.addEventListener('click', function(){
-    let prizesCount = sCard.user === 'self' ? prizes.count : oppPrizes.count;
-    const indices = shuffleIndices(prizesCount);
-    shuffleContainer(sCard.user, 'prizes', 'prizes_html', indices);
-    socket.emit('shuffleContainer', roomId, sCard.oUser, 'prizes', 'prizes_html', indices);
-});
+shufflePrizesButton.addEventListener('click', () => shuffleContainer(sCard.user, 'prizes', 'prizes_html'));
 
-revealPrizesButton.addEventListener('click', function(){revealCards(prizes, prizes_html)});
-hidePrizesButton.addEventListener('click', function(){hideCards(prizes, prizes_html)});
+revealPrizesButton.addEventListener('click', () => revealCards(sCard.user, 'prizes', 'prizes_html'));
+
+hidePrizesButton.addEventListener('click', () => hideCards(sCard.user, 'prizes', 'prizes_html'));
 

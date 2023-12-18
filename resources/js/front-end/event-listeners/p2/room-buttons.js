@@ -1,5 +1,5 @@
 import { reset } from '../../actions/general/reset.js';
-import { connectedRoom, copyButton, generateIdButton, joinRoomButton, leaveRoomButton, lobby, nameInput, p1, p2Chatbox, p2SelfUsername, roomHeaderCopyButton, roomHeaderText, roomId, roomIdInput, socket } from '../../front-end.js';
+import { chatbox, connectedRoom, copyButton, generateIdButton, joinRoomButton, leaveRoomButton, lobby, nameInput, p1, p2Chatbox, p2SelfUsername, roomHeaderCopyButton, roomHeaderText, roomId, roomIdInput, socket } from '../../front-end.js';
 
 copyButton.addEventListener('click', () => {
     navigator.clipboard.writeText(roomIdInput.value)
@@ -17,6 +17,7 @@ joinRoomButton.addEventListener('click', () => {
     p2SelfUsername[0] = nameInput.value.trim() !== '' ? nameInput.value : 'Anonymous';
     roomId[0] = roomIdInput.value;
     roomHeaderText.textContent = 'id: ' + roomId;
+    chatbox.innerHTML = '';
     socket.emit('joinGame', roomId[0], p2SelfUsername[0]);
 });
 
