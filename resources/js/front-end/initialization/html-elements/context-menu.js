@@ -2,6 +2,7 @@ export const cardContextMenu = document.getElementById('cardContextMenu');
 
 export const damageCounterButton = document.getElementById('damageCounterButton');
 export const specialConditionButton = document.getElementById('specialConditionButton');
+export const abilityCounterButton = document.getElementById('abilityCounterButton');
 
 export const shufflePrizesButton = document.getElementById('shufflePrizesButton');
 export const revealPrizesButton = document.getElementById('revealPrizesButton');

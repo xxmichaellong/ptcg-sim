@@ -68,6 +68,7 @@ export const openCardContextMenu = (event) => {
     const oppView = (!selfContainersDocument.body.contains(event.target) && selfContainers.classList.contains('self')) || (selfContainersDocument.body.contains(event.target) && !selfContainers.classList.contains('self'));
     
     const buttonConditions = {
+        'abilityCounterButton': [[selfView, 'active_html'], [oppView, 'active_html'], [selfView, 'bench_html'], [oppView, 'bench_html']],
         'damageCounterButton': [[selfView, 'active_html'], [oppView, 'active_html'], [selfView, 'bench_html'], [oppView, 'bench_html']],
         'specialConditionButton': [[selfView, 'active_html'], [oppView, 'active_html']],
         'shufflePrizesButton': [[selfView, 'prizes_html']],
@@ -179,6 +180,9 @@ export const doubleClick = (event) => {
         };
         if (event.target.specialCondition){
             event.target.specialCondition.style.display = 'none';
+        };
+        if (event.target.abilityCounter){
+            event.target.abilityCounter.style.display = 'none';
         };
         sCard.container.style.zIndex = '2';
         stadium_html.style.zIndex = '-1';

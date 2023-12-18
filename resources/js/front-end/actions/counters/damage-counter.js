@@ -36,7 +36,7 @@ export const addDamageCounter = (user, location, container, index, received = fa
    
     damageCounter.style.display = 'inline-block';
     damageCounter.style.left = `${targetRect.left - containerRect.left + targetRect.width/1.5}px`;
-    damageCounter.style.top = `${targetRect.height/3}px`;
+    damageCounter.style.top = `${targetRect.top - containerRect.top + targetRect.height/4}px`;
     container.appendChild(damageCounter);
 
     if (targetCard.image.parentElement.classList.contains('fullView')){
@@ -64,7 +64,7 @@ export const addDamageCounter = (user, location, container, index, received = fa
     }
 
     const handleResize = () => {
-        addDamageCounter(user, _location, _container, index, true)
+        addDamageCounter(user, _location, _container, index, true);
     };
 
     const handleRemove = (fromBlurEvent = false) => {

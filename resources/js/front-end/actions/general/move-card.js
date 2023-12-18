@@ -10,6 +10,7 @@ import { hideCard, revealCard } from './reveal-and-hide.js';
 import { stringToVariable } from '../../setup/containers/string-to-variable.js';
 import { addDamageCounter } from '../counters/damage-counter.js';
 import { addSpecialCondition } from '../counters/special-condition.js';
+import { addAbilityCounter } from '../counters/ability-counter.js';
 
 export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex, received = false) => {
     deselectCard(); //remove highlight from all images before it's moved
@@ -140,13 +141,25 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
             targetCard.image.after(movingCard.image);
             targetCard.image.attached = true;
             targetCard.image.relative = movingCard.image;
-            //if damage counter exists, link the textcontent with the new pokemon card
+            //if counters exists, link the textcontent with the new pokemon card
             if (targetCard.image.damageCounter){
                 addDamageCounter(user, _mLocation, _mLocation_html, mLocation.cards.length - 1, true);
                 movingCard.image.damageCounter.textContent = targetCard.image.damageCounter.textContent;
                 //remove once opponent is finished with it
                 targetCard.image.damageCounter.textContent = '0';
                 targetCard.image.damageCounter.handleRemove();
+            };
+            if (targetCard.image.specialCondition){
+                addSpecialCondition(user, _mLocation, _mLocation_html, mLocation.cards.length - 1, true);
+                movingCard.image.specialCondition.textContent = targetCard.image.specialCondition.textContent;
+                //remove once opponent is finished with it
+                targetCard.image.specialCondition.textContent = '0';
+                targetCard.image.specialCondition.handleRemove();
+            };
+            if (targetCard.image.abilityCounter){
+                addAbilityCounter(user, _mLocation, _mLocation_html, mLocation.cards.length - 1, true);
+                //remove once opponent is finished with it
+                targetCard.image.abilityCounter.handleRemove();
             };
             //reset container width (since cards are being re-attached)
             const newWidth = parseFloat(movingCard.image.clientWidth);
@@ -255,6 +268,9 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
                                 if (image.damageCounter){
                                     addDamageCounter(user, 'bench', 'bench_html', i, true);
                                 };
+                                if (image.abilityCounter){
+                                    addAbilityCounter(user, 'bench', 'bench_html', i, true);
+                                };
                             };
                         };
                         if (['active_html'].includes(_mLocation_html)){
@@ -268,6 +284,9 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
                                 const image = sActive.cards[i].image;
                                 if (image.damageCounter){
                                     addDamageCounter(user, 'active', 'active_html', i, true);
+                                };
+                                if (image.abilityCounter){
+                                    addAbilityCounter(user, 'active', 'active_html', i, true);
                                 };
                             };
                         };
@@ -285,9 +304,12 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
                             const image = mLocation.cards[i].image;
                             if (image.damageCounter) {
                                 addDamageCounter(user, 'bench', 'bench_html', i, true);
-                            }
-                        }
-                    }
+                            };
+                            if (image.abilityCounter) {
+                                addAbilityCounter(user, 'bench', 'bench_html', i, true);
+                            };
+                        };
+                    };
                 });
             });
             resizeObserver.observe(container);
@@ -395,6 +417,16 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
             movingCard.image.damageCounter.handleRemove();
         };
     };
+    if (movingCard.image.abilityCounter){
+        //redefine index of movingCard because its location could have moved due to attached cards.
+        const index = mLocation.cards.findIndex(card => card === movingCard);
+
+        if (attachedLocations.includes(_mLocation_html)){
+            addAbilityCounter(user, _mLocation, _mLocation_html, index, true);
+        } else {
+            movingCard.image.abilityCounter.handleRemove();
+        };
+    };
 
     if (movingCard.image.specialCondition && !['active_html'].includes(_mLocation_html)){
         movingCard.image.specialCondition.textContent = '0';
@@ -410,6 +442,9 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
             if (image.specialCondition){
                 addSpecialCondition(user, _oLocation, _oLocation_html, i, true);
             };
+            if (image.abilityCounter){
+                addAbilityCounter(user, _oLocation, _oLocation_html, i, true);
+            };
         };
     };
     if (boardLocations.includes(_mLocation_html)){
@@ -420,6 +455,9 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
             };
             if (image.specialCondition){
                 addSpecialCondition(user, _mLocation, _mLocation_html, i, true);
+            };
+            if (image.abilityCounter){
+                addAbilityCounter(user, _mLocation, _mLocation_html, i, true);
             };
         };
     };

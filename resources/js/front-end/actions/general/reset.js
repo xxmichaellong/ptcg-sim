@@ -19,7 +19,7 @@ export const reset = (user, clean = false, received = false) => {
         cardArrays = [deck, lostzone, discard, prizes, active, bench, hand, attachedCardPopup, viewCards, board];
         cardContainers = [deckDisplay_html, deck_html, lostzone_html, discard_html, prizes_html, active_html, bench_html, hand_html, lostzoneDisplay_html, discardDisplay_html, attachedCardPopup_html, board_html, viewCards_html]
 
-        selfContainersDocument.querySelectorAll('.circle').forEach(element => {
+        selfContainersDocument.querySelectorAll('.self-circle, .opp-circle, .self-tab, .opp-tab').forEach(element => {
             element.textContent = '0'
             element.handleRemove();
         });
@@ -27,7 +27,7 @@ export const reset = (user, clean = false, received = false) => {
         cardArrays = [oppDeck, oppLostzone, oppDiscard, oppPrizes, oppActive, oppBench, oppHand, oppAttachedCardPopup, oppViewCards, oppBoard];
         cardContainers = [oppDeck_html, oppPrizes_html, oppDeckDisplay_html, oppLostzone_html, oppDiscard_html, oppActive_html, oppBench_html, oppHand_html, oppLostzoneDisplay_html, oppDiscardDisplay_html, oppAttachedCardPopup_html, oppViewCards_html, oppBoard_html]
 
-        oppContainersDocument.querySelectorAll('.circle').forEach(element => {
+        oppContainersDocument.querySelectorAll('.self-circle, .opp-circle, .self-tab, .opp-tab').forEach(element => {
             element.textContent = '0'
             element.handleRemove();
         });

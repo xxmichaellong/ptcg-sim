@@ -1,3 +1,4 @@
+import { addAbilityCounter } from '../../actions/counters/ability-counter.js';
 import { addDamageCounter } from '../../actions/counters/damage-counter.js';
 import { addSpecialCondition } from '../../actions/counters/special-condition.js';
 import { closeFullView } from '../../actions/general/close-popups.js';
@@ -160,6 +161,10 @@ export const adjustCards = (user, location, container, ratio) => {
         if (card.image.specialCondition){
             const index = location.cards.findIndex(_card => _card === card);
             addSpecialCondition(user, _location, _container, index, true);
+        };
+        if (card.image.abilityCounter){
+            const index = location.cards.findIndex(_card => _card === card);
+            addAbilityCounter(user, _location, _container, index, true);
         };
     });
 }

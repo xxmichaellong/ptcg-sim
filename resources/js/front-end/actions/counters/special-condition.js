@@ -93,7 +93,7 @@ export const addSpecialCondition = (user, location, container, index, received =
     }
 
     const handleResize = () => {
-        addSpecialCondition(user, _location, _container, index, true)
+        addSpecialCondition(user, _location, _container, index, true);
     };
 
     const handleRemove = (fromBlurEvent = false) => {

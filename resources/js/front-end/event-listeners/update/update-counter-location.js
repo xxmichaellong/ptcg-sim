@@ -1,3 +1,4 @@
+import { addAbilityCounter } from '../../actions/counters/ability-counter.js';
 import { bench_html, oppBench_html } from '../../front-end.js';
 
 let resizeObserver = new ResizeObserver(entries => {
@@ -8,12 +9,15 @@ let resizeObserver = new ResizeObserver(entries => {
           sBench = bench;
       } else {
           sBench = oppBench;
-      }
+      };
       for (let i = 0; i < sBench.count; i++){
           const image = sBench.cards[i].image;
           if (image.damageCounter){
               addDamageCounter(user, 'bench', 'bench_html', i, true);
           };
+          if (image.abilityCounter){
+            addAbilityCounter(user, 'bench', 'bench_html', i, true);
+        };
       };
     }
   });

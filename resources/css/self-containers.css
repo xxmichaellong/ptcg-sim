@@ -249,6 +249,11 @@
   text-align: center;
   transform: scaleX(-1) scaleY(-1);
 }
+.self-tab {
+  position: absolute;
+  border-radius: 10%;
+  background-color: rgba(0, 183, 255, 0.392);
+}
 #attachedCardPopup_html {
   display: none;
   position: fixed;

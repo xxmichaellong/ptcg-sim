@@ -1,6 +1,7 @@
 import { lostzone_html, deck_html, discard_html, sCard, selfContainersDocument, active, bench, stadium_html, oppActive, oppBench, oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html, cardContextMenu} from '../../front-end.js';
 import { containerIdToLocation } from '../../setup/containers/container-reference.js';
 import { stringToVariable, variableToString } from '../../setup/containers/string-to-variable.js';
+import { addAbilityCounter } from '../counters/ability-counter.js';
 import { addDamageCounter } from '../counters/damage-counter.js';
 import { addSpecialCondition } from '../counters/special-condition.js';
 
@@ -90,6 +91,9 @@ export const closeFullView = (event) => {
             };
             if (image.specialCondition){
                 addSpecialCondition(user, _location, _location_html, i, true);
+            };
+            if (image.abilityCounter){
+                addAbilityCounter(user, _location, _location_html, i, true);
             };
         };
 

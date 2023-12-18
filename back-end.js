@@ -75,6 +75,12 @@ io.on('connection', (socket) => {
     socket.on('removeSpecialCondition', (data) => {
         socket.broadcast.to(data.roomId).emit('removeSpecialCondition', data);
     });
+    socket.on('addAbilityCounter', (data) => {
+        socket.broadcast.to(data.roomId).emit('addAbilityCounter', data);
+    });
+    socket.on('removeAbilityCounter', (data) => {
+        socket.broadcast.to(data.roomId).emit('removeAbilityCounter', data);
+    });
     socket.on('shuffleContainer', (data) => {
         socket.broadcast.to(data.roomId).emit('shuffleContainer', data);
     });

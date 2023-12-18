@@ -27,7 +27,8 @@ export const dragStart = (event) => {
 
 export const dragOver = (event) => {
     event.preventDefault();
-    if (event.target.classList.contains('circle')){
+    const blockedClasses = ['self-circle', 'opp-circle', 'self-tab', 'opp-tab'];
+    if (blockedClasses.some(className => event.target.classList.contains(className))) {
         event.target.style.pointerEvents = 'none';
     };
     if (popupContainers.includes(sCard.container)){
@@ -84,15 +85,17 @@ export const dragLeave = (event) => {
 }
 
 export const dragEnd = (event) => {
-    let damageCounters = selfContainersDocument.getElementsByClassName('circle');
-    for (let i = 0; i < damageCounters.length; i++){
-        damageCounters[i].style.pointerEvents = 'auto';
+    const enablePointerEvents = (containerDocument, classNames) => {
+        const counters = containerDocument.getElementsByClassName(...classNames);
+        for (let i = 0; i < counters.length; i++) {
+            counters[i].style.pointerEvents = 'auto';
+        };
     };
-    damageCounters = oppContainersDocument.getElementsByClassName('circle');
-    for (let i = 0; i < damageCounters.length; i++){
-        damageCounters[i].style.pointerEvents = 'auto';
-    };
-
+    
+    const classList = ['self-circle', 'opp-circle', 'self-tab', 'opp-tab'];
+    enablePointerEvents(selfContainersDocument, classList);
+    enablePointerEvents(oppContainersDocument, classList);
+    
     event.target.classList.remove('dragging');
     event.target.parentElement.classList.remove('highlight', 'highlightBox');
     event.target.parentElement.parentElement.classList.remove('highlight', 'highlightBox');
@@ -113,9 +116,12 @@ export const dragEnd = (event) => {
 
 export const drop = (event) => {
     event.preventDefault();
-    if (event.target.classList.contains('circle')){
+
+    const blockedClasses = ['self-circle', 'opp-circle', 'self-tab', 'opp-tab'];
+    if (blockedClasses.some(className => event.target.classList.contains(className))) {
         event.target.style.pointerEvents = 'none';
     };
+
     event.target.classList.remove('highlight', 'highlightBox');
     event.target.parentElement.classList.remove('highlight', 'highlightBox');
     event.target.parentElement.parentElement.classList.remove('highlight', 'highlightBox');
