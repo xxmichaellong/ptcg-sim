@@ -21,6 +21,7 @@ export const viewBottomButton = document.getElementById('viewBottomButton');
 
 export const moveToTopButton = document.getElementById('moveToTopButton');
 export const moveToBottomButton = document.getElementById('moveToBottomButton');
+export const switchWithTopButton = document.getElementById('switchWithTopButton');
 export const shuffleIntoDeckButton = document.getElementById('shuffleIntoDeckButton');
 export const moveToBoardButton = document.getElementById('moveToBoardButton');
 

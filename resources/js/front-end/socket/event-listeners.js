@@ -10,6 +10,7 @@ import { addSpecialCondition } from '../actions/counters/special-condition.js'
 import { shuffleContainer } from '../actions/container/shuffle-container.js'
 import { viewDeck } from '../actions/container/deck-actions.js'
 import { addAbilityCounter } from '../actions/counters/ability-counter.js'
+import { resetCounters } from '../actions/counters/reset-ability-counters.js'
 
 socket.on('generateId', (id) => {
     roomIdInput.value = id;
@@ -111,6 +112,9 @@ socket.on('addAbilityCounter', (data) => {
 socket.on('removeAbilityCounter', (data) => {
     const targetCard = stringToVariable(data.user, data.location).cards[data.index];
     targetCard.image.abilityCounter.handleRemove();
+});
+socket.on('resetCounters', (data) => {
+    resetCounters(data.received);
 });
 socket.on('shuffleContainer', (data) => {
     shuffleContainer(data.user, data.location, data.location_html, data.indices, data.received);

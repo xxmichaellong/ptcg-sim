@@ -1,4 +1,4 @@
-import { lostzone_html, deck_html, discard_html, sCard, selfContainersDocument, active, bench, stadium_html, oppActive, oppBench, oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html, cardContextMenu} from '../../front-end.js';
+import { lostzone_html, deck_html, discard_html, sCard, selfContainersDocument, active, bench, stadium_html, oppActive, oppBench, oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html, cardContextMenu, attachedCardPopup_html, viewCards_html, oppAttachedCardPopup_html, oppViewCards_html} from '../../front-end.js';
 import { containerIdToLocation } from '../../setup/containers/container-reference.js';
 import { stringToVariable, variableToString } from '../../setup/containers/string-to-variable.js';
 import { addAbilityCounter } from '../counters/ability-counter.js';
@@ -10,25 +10,37 @@ export const closeContainerPopups = () => {
         lostzone_html,
         deck_html,
         discard_html,
+        attachedCardPopup_html,
+        viewCards_html,
         oppLostzone_html,
         oppDeck_html,
         oppDiscard_html,
+        oppAttachedCardPopup_html,
+        oppViewCards_html
     ];
     
     elementsToHide.forEach(element => {
         element.style.display = 'none';
     });
 }
+export const hideIfEmpty = () => {
+    const containerArray = ['discard_html', 'lostzone_html', 'deck_html', 'attachedCardPopup_html', 'viewCards_html'];
+    const userArray = ['self', 'opp'];
 
-export const hideIfEmpty = (user, containerId) => {
-    if (['discard_html', 'lostzone_html', 'deck_html', 'attachedCardPopup_html', 'viewCards_html'].includes(containerId)){
-        const location = containerIdToLocation(user, containerId);
-        const location_html = stringToVariable(user, containerId);
-        if (location.count === 0){
-            location_html.style.display = 'none';
-        };
-    };
+    userArray.forEach(user => {
+        containerArray.forEach(containerId =>{
+            const location = containerIdToLocation(user, containerId);
+            const location_html = stringToVariable(user, containerId);
+            if (location.count === 0){
+                location_html.style.display = 'none';
+            } else if (location.count !== 0 && ['attachedCardPopup_html', 'viewCards_html'].includes(containerId)){
+                location_html.style.display = 'block';
+            };
+        });
+    });
 }
+        
+
 export const deselectCard = () => {
     if (sCard.card){
         sCard.card.image.classList.remove('highlight');
@@ -50,6 +62,7 @@ export const closePopups = (event) => {
     deselectCard();
     closeFullView(event);
     cardContextMenu.style.display = 'none';
+    hideIfEmpty();
 }
 
 export const closeFullView = (event) => {

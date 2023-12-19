@@ -190,7 +190,6 @@ export const drop = (event) => {
             // const message = determineUsername(POV.user) + ' moved ' + sCard.card.name + ' from ' + oLocation + ' to ' + mLocation;
             // appendMessage(POV.user, message, 'announcement');
             moveCard(sCard.user, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
-            closeContainerPopups();
         };
     };
     event.stopPropagation();

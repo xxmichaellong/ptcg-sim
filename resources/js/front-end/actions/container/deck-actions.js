@@ -95,14 +95,10 @@ export const viewDeck = (user, viewAmount, top, deckCount, targetOpp, received =
     };
 }
 
-
-
-
 export const switchWithDeckTop = () => {
     moveToDeckTop();
     const deckCount = sCard.user === 'self' ? deck.count : oppDeck.count;
     if (deckCount > 1){
-        moveCard(sCard.user, 'deck', 'deck_html', sCard.locationAsString, sCard.containerId, 1, false, true);
-        socket.emit('moveCard', roomId, sCard.oUser, 'deck', 'deck_html', sCard.locationAsString, sCard.containerId, 0, false, true);
+        moveCard(sCard.user, 'deck', 'deck_html', sCard.locationAsString, sCard.containerId, 1);
     };
 }

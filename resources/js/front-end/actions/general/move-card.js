@@ -463,7 +463,7 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
     };
 
     updateCount();
-    hideIfEmpty(user, _oLocation_html);
+    hideIfEmpty();
 
     if (!p1[0] && !received){
         const oUser = user === 'self' ? 'opp' : 'self';

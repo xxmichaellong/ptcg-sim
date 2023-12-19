@@ -41,9 +41,9 @@
         </div>
         <input id="messageInput" type="text" placeholder="Type your message here...">
         <div id="bottomP1ButtonContainer" class="sidebox-button-container">
-            <button id="setupButton">Setup</button>
+            <button id="setupButton">Set Up</button>
             <button id="resetButton">Reset</button>
-            <button id="setupBothButton">Setup Both</button>
+            <button id="setupBothButton">Set Up Both</button>
             <button id="resetBothButton">Reset Both</button>
         </div>
     </div>
@@ -70,7 +70,7 @@
             </div>
             <input id="p2MessageInput" type="text" placeholder="Type your message here...">
             <div id="p2BottomButtonContainer" class="sidebox-button-container">
-                <button id="p2SetupButton">Setup</button>
+                <button id="p2SetupButton">Set Up</button>
                 <button id="p2ResetButton">Reset</button>
                 <button id="leaveRoomButton">Leave Room</button>
             </div>
@@ -109,14 +109,82 @@
 
             <li id="moveButton">Move to...
                 <ul class="subMenu">
-                    <li id="moveToTopButton">Top of deck</li>
-                    <li id="moveToBottomButton">Bottom of deck</li>
-                    <li id="shuffleIntoDeckButton">Shuffle into deck</li>
                     <li id="moveToBoardButton">Board</li>
+                    <li id="moveToTopButton">Deck (top)</li>
+                    <li id="moveToBottomButton">Deck (bottom)</li>
+                    <li id="switchWithTopButton">Deck (switch)</li>
+                    <li id="shuffleIntoDeckButton">Deck (shuffle)</li>
                 </ul>
             </li>
         </ul>
-    </div>    
+    </div>
+
+    <div id="keybindModal">
+        <h1>Keybinds</h1>
+        <div class="sections-container">
+            <div class="section">
+                <div class="column">
+                    <h2>Move card...</h2>
+                    <ul>
+                        <li>to Hand <code>[h]</code></li>
+                        <li>to Discard <code>[d]</code></li>
+                        <li>to Bench <code>[b]</code></li>
+                        <li>to Active <code>[a]</code></li>
+                        <li>to Stadium <code>[g]</code></li>
+                        <li>to Lost Zone <code>[l]</code></li>
+                        <li>to Prizes <code>[p]</code></li>
+                        <li>to Board <code>[space]</code></li>
+                        <li>to Deck (top) <code>[↑]</code></li>
+                        <li>to Deck (bottom) <code>[↓]</code></li>
+                        <li>to Deck (switch) <code>[→]</code></li>
+                        <li>to Deck (shuffle)<code>[s]</code></li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h2>Card actions</h2>
+                    <ul>
+                        <li>Attach <code>[q]</code></li>
+                        <li>Evolve <code>[e]</code></li>
+                        <li>View <code>[v]</code></li>
+                        <li>Ability toggle <code>[w]</code></li>
+                        <li>Damage counter</li>
+                        <ul>
+                            <li>Increase <code>[1-9]</code></li>
+                            <li>Decrease <code>[alt + 1-9]</code></li>
+                            <li>Remove <code>[0]</code></li>
+                        </ul>
+                        <li>Special condition</li>
+                        <ul>
+                            <li>Add/remove <code>[y]</code></li>
+                            <li>Toggle <code>[alt + y]</code></li>
+                        </ul>
+                    </ul>
+                </div>
+            </div>
+            <div class="section">
+                <div class="column">
+                    <h2>Deck</h2>
+                    <ul>
+                        <li>Draw <code>[1-9]</code></li>
+                        <li>Shuffle <code>[s]</code></li>
+                        <li>View top <code>[alt + 1-9]</code></li>
+                        <li>View bottom <code>[ctrl + 1-9]</code></li>
+                        <li>View <code>[v]</code></li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h2>General</h2>
+                    <ul>
+                        <li>Set up <code>[alt + n]</code></li>
+                        <li>Reset <code>[alt + r]</code></li>
+                        <li>Start turn <code>[alt + t]</code></li>
+                        <li>Flip coin <code>[f]</code></li>
+                        <li>Flip board <code>[alt + f]</code></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>

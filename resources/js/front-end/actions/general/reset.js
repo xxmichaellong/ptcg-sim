@@ -35,10 +35,7 @@ export const reset = (user, clean = false, received = false) => {
     cardArrays.forEach(container => container.cards = []);
     cardContainers.forEach(container => removeImages(container));
 
-    const containers = ['discard_html', 'lostzone_html', 'deck_html', 'attachedCardPopup_html', 'viewCards_html'];
-    for (let container of containers){
-        hideIfEmpty(user, container);
-    };
+    hideIfEmpty();
 
     buildDeck(user);
     const display_html = user === 'self' ? deckDisplay_html : oppDeckDisplay_html;

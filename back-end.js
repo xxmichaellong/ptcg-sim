@@ -81,6 +81,9 @@ io.on('connection', (socket) => {
     socket.on('removeAbilityCounter', (data) => {
         socket.broadcast.to(data.roomId).emit('removeAbilityCounter', data);
     });
+    socket.on('resetCounters', (data) => {
+        socket.broadcast.to(data.roomId).emit('resetCounters', data);
+    });
     socket.on('shuffleContainer', (data) => {
         socket.broadcast.to(data.roomId).emit('shuffleContainer', data);
     });

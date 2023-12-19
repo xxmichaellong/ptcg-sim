@@ -150,8 +150,7 @@ export const imageClick = (event) => {
         target.location = containerIdToLocation(sCard.user, target.containerId);
         target.index = target.location.cards.findIndex(card => card.image === event.target);
         target.locationAsString = variableToString(sCard.user, target.location);
-
-        moveCard(sCard.user, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index, true);
+        moveCard(sCard.user, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
     } else {
         closePopups(event); //need both because of highlights
         identifyCard(event);
@@ -161,29 +160,32 @@ export const imageClick = (event) => {
 }
 
 export const doubleClick = (event) => {
-    identifyCard(event);
-    sCard.card.image.classList.remove('highlight');
-    if (['bench_html', 'active_html'].includes(sCard.containerId) && !event.target.parentElement.classList.contains('fullView')){
-        const images = event.target.parentElement.querySelectorAll('img');
+    if (event){
+        identifyCard(event);
+    };
+    const targetImage = sCard.card.image;
+    targetImage.classList.remove('highlight');
+    if (['bench_html', 'active_html'].includes(sCard.containerId) && !targetImage.parentElement.classList.contains('fullView')){
+        const images = targetImage.parentElement.querySelectorAll('img');
         images.forEach((img) => {
+            if (img.damageCounter){
+                img.damageCounter.style.display = 'none';
+            };
+            if (img.specialCondition){
+                img.specialCondition.style.display = 'none';
+            };
+            if (img.abilityCounter){
+                img.abilityCounter.style.display = 'none';
+            };
             if (img.attached){
                 img.style.position = 'static';
             };
         });
-        event.target.parentElement.className = 'fullView';
-        event.target.parentElement.style.zIndex = '2';
-        event.target.parentElement.style.height = '70%';
-        event.target.parentElement.style.width = '69%';
+        targetImage.parentElement.className = 'fullView';
+        targetImage.parentElement.style.zIndex = '2';
+        targetImage.parentElement.style.height = '70%';
+        targetImage.parentElement.style.width = '69%';
 
-        if (event.target.damageCounter){
-            event.target.damageCounter.style.display = 'none';
-        };
-        if (event.target.specialCondition){
-            event.target.specialCondition.style.display = 'none';
-        };
-        if (event.target.abilityCounter){
-            event.target.abilityCounter.style.display = 'none';
-        };
         sCard.container.style.zIndex = '2';
         stadium_html.style.zIndex = '-1';
     } else {
@@ -197,8 +199,8 @@ export const doubleClick = (event) => {
 
         // Create a new image element
         let display = document.createElement('img');
-        display.src = event.target.src;
-        display.alt = event.target.alt;
+        display.src = targetImage.src;
+        display.alt = targetImage.alt;
         display.style.position = 'absolute';
         display.style.top = '50%';
         display.style.left = '50%';
@@ -217,6 +219,5 @@ export const doubleClick = (event) => {
             // Remove the overlay from the body
             document.body.removeChild(overlay);
         });
-
     };
 }

@@ -5,6 +5,54 @@ body {
   height: 100vh;
   overflow: none;
 }
+#keybindModal {
+  display: none;
+  position: fixed;
+  width: 50%;
+  top: 50%;
+  left: 33%;
+  transform: translate(-50%, -50%);
+  padding: 20px;
+  background-color: rgba(200, 200, 200, 0.873); /* Semi-transparent grey background */
+  border: 1px solid #ccc;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  font-family: 'Helvetica', sans-serif;
+}
+.sections-container {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+.section {
+  flex: 1;
+}
+.column {
+  padding: 10px;
+  margin: 10px;
+}
+h1, h2 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  padding: 0;
+}
+ul, li {
+  margin: 0;
+  padding: 0;
+}
+.column ul ul {
+  margin-left: 10px;
+}
+.column ul ul li {
+  margin-bottom: 1px;
+  margin-top: 0;
+  font-size: 13px;
+}
+.column ul li {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+}
 .self {
   position: fixed;
   border: none;

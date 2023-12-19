@@ -14,5 +14,9 @@ specialConditionButton.addEventListener('click', () => {
 });
 
 abilityCounterButton.addEventListener('click', () => {
-    addAbilityCounter(sCard.user, variableToString(sCard.user, sCard.location), variableToString(sCard.user, sCard.container), sCard.index)
+    if (sCard.card.image.abilityCounter){
+        sCard.card.image.abilityCounter.handleRemove();
+    } else {
+        addAbilityCounter(sCard.user, variableToString(sCard.user, sCard.location), variableToString(sCard.user, sCard.container), sCard.index);
+    };
 });

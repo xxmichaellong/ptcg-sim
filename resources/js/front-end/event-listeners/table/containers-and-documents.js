@@ -1,12 +1,13 @@
 import { oppContainersDocument, selfContainersDocument } from '../../front-end.js';
 import { closePopups } from '../../actions/general/close-popups.js';
 import { dragLeave, dragOver, drop } from '../../image-logic/drag.js';
-import { keyToggle } from '../../key-toggles/key-toggles.js';
+import { keyDown, keyUp } from '../../key-toggles/key-shortcuts.js';
 
 const addDocumentEventListeners = (document) => {
-    document.addEventListener('click', (event) => {closePopups(event)});
-    document.addEventListener('contextmenu', (event) => {closePopups(event)});
-    document.addEventListener('keydown', (event) => {keyToggle(event)});
+    document.addEventListener('click', (event) => closePopups(event));
+    document.addEventListener('contextmenu', (event) => closePopups(event));
+    document.addEventListener('keydown', (event) => keyDown(event));
+    document.addEventListener('keyup', (event) => keyUp(event));
 }
 
 addDocumentEventListeners(document);

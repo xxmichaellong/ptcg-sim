@@ -1,9 +1,11 @@
 import { POV, deck, oppDeck, p1, roomId, socket, turn } from '../../front-end.js';
 import { appendMessage } from '../../setup/chatbox/messages.js';
 import { determineUsername } from '../../setup/general/determine-username.js';
+import { resetCounters } from '../counters/reset-ability-counters.js';
 import { moveCard } from './move-card.js';
 
 export const takeTurn = (user, received = false) => {
+    resetCounters(true);
     const deckCount = user === 'self' ? deck.count : oppDeck.count;
     if (deckCount > 0){
         turn[0] ++;
