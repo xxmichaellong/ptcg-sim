@@ -1,3 +1,6 @@
+body, input, textarea, button {
+  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif
+}
 body {
   background: white;
   background-size: 100% 100%;
@@ -8,16 +11,16 @@ body {
 #keybindModal {
   display: none;
   position: fixed;
-  width: 50%;
+  width: 70%;
+  height: 85%;
   top: 50%;
-  left: 33%;
+  left: 37.5%;
   transform: translate(-50%, -50%);
-  padding: 20px;
+  padding: 0 15px 15px 15px;
   background-color: rgba(200, 200, 200, 0.873); /* Semi-transparent grey background */
   border: 1px solid #ccc;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   z-index: 1000;
-  font-family: 'Helvetica', sans-serif;
 }
 .sections-container {
   display: flex;
@@ -28,17 +31,19 @@ body {
   flex: 1;
 }
 .column {
+  margin-right: 10px;
   padding: 10px;
-  margin: 10px;
 }
-h1, h2 {
-  margin-top: 0;
+h1 {
+  font-size: 2vh; /* Adjust the font size using vw unit */
   margin-bottom: 10px;
+  margin: 0;
   padding: 0;
 }
 ul, li {
   margin: 0;
   padding: 0;
+  font-size: 1.8vh; /* Adjust the font size using vw unit */
 }
 .column ul ul {
   margin-left: 10px;
@@ -46,10 +51,10 @@ ul, li {
 .column ul ul li {
   margin-bottom: 1px;
   margin-top: 0;
-  font-size: 13px;
+  font-size: 1.75vh; /* Adjust the font size using vw unit */
 }
 .column ul li {
-  margin-top: 10px;
+  margin-top: 1vh;
   display: flex;
   justify-content: space-between;
 }
@@ -57,22 +62,22 @@ ul, li {
   position: fixed;
   border: none;
   bottom: 0;
-  width: 66%;
+  width: 75.5%;
   height: 50%;
 }
 .opp {
   position: fixed;
   border: none;
   bottom: 50%;
-  width: 66%;
+  width: 75.5%;
   height: 50%;
   transform: scaleX(-1) scaleY(-1);
 }
 #stadium_html {
   position: fixed;
   bottom: 42%;
-  left: 12%;
-  width: 8%;
+  left: 11%;
+  width: 6%;
   height: 16%;
   display: flex; /* Add this */
 	justify-content: center; /* Horizontally center-align child elements */
@@ -97,7 +102,7 @@ ul, li {
 }
 #selfResizer {
   position: fixed;
-  left: 68%;
+  left: 75.5%;
   bottom: 49%;
   cursor: row-resize;
   display: flex;
@@ -111,7 +116,7 @@ ul, li {
 }
 #oppResizer {
   position: fixed;
-  left: 68%;
+  left: 75.5%;
   bottom: 51%;
   cursor: row-resize;
   display: flex;
@@ -129,38 +134,30 @@ ul, li {
 .oppColour {
   background-color: rgba(188, 90, 113, 0.864);  
 }
-#boardDivider {
-  position: fixed;
-  height: 100%;
-  width: 1%;
-  left: 67%;
-  bottom: 0;
-  background: rgb(231, 228, 228);
+.neutralColour {
+  background-color: rgba(112, 112, 112, 0.864);  
 }
-#sideButtonContainer {
+#boardButtonContainer {
   position: fixed;
-  height: 20%;
-  width: 5%;
-  left: 70%;
-  bottom: 40%;
+  height: 6%;
+  left: 52%;
+  bottom: 47%;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  gap: 5px;
 }
-#sideButtonContainer button {
-  width: 50px; /* Adjust as needed */
-  height: 50px; /* Adjust as needed */
-  margin-bottom: 10px; /* Space between buttons */
-  align-items: center; /* Add this */
-  justify-content: center; /* Add this */
-  padding: 7px 0; /* Adjust padding for button size */
-  width: 100%; /* Adjust width to distribute evenly */
+#boardButtonContainer button {
   border-radius: 10px; /* Rounded edges */
-  font-size: 12px; /* Adjust font size as needed */
+  font-size: 2vh; /* Adjust font size as needed */
   cursor: pointer;
-  background-color: #4c4f4c; /* Natural green background color */
-  color: white; /* Text color */
+  background: rgb(231, 228, 228);
+  color: rgb(149, 149, 149); /* Text color */
   border: none;
+}
+#boardButtonContainer button:hover {
+  background-color: rgb(117, 117, 117); /* Natural green background color */
+  color: rgb(255, 255, 255); /* Text color */
 }
 #topButtonContainer {
   position: fixed;
@@ -169,35 +166,37 @@ ul, li {
   width: 24%;
   height: 5%;
   display: flex;
-  justify-content: space-around;
-  align-items: center;
   overflow: hidden; /* Ensure buttons don't exceed container width */
+  background: rgb(145, 145, 145);
 }
 #topButtonContainer button {
   padding: 7px 0; /* Adjust padding for button size */
   width: 30%; /* Adjust width to distribute evenly */
-  max-width: 100px; /* Maximum width for each button */
-  border-radius: 10px; /* Rounded edges */
-  font-size: 12px; /* Adjust font size as needed */
+  font-size: 1vw; /* Adjust font size as needed */
   cursor: pointer;
-  background-color: #8c9e8c; /* Natural green background color */
-  color: white; /* Text color */
   border: none;
-  margin: 0 5px; /* Add spacing between buttons */
+}
+.selectedPage {
+  background: rgb(231, 228, 228);
+  color:  rgb(50, 50, 50);
+  border-radius: 10px 10px 0 0; /* Rounded edges */
+}
+.notSelectedPage {
+  background: rgb(145, 145, 145);
+  color: white;
 }
 #topButtonContainer button:hover {
-  background-color: #babcba; /* Darker green on hover */
+  color:  rgb(50, 50, 50);
 }
-.side-box {
-  background: #99c1be;
+.sidebox {
+  background: rgb(231, 228, 228);
   position: fixed;
   right: 0;
   top: 5%;
   width: 24%;
   height: 95%;
-  padding: 10px;
+  padding: 0.5%;
   box-sizing: border-box;
-  border: 2px solid #7ab7ad;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -205,13 +204,15 @@ ul, li {
 #chatbox {
   width: 100%;
   height: 85%;
-  background: #abbfbe;
+  background: white;
   overflow-y: auto;
   padding: 10px;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  display: block;
+  border-radius: 10px;
+}
+.shift-font {
+  font-family: monospace; /* or your preferred coding font */
 }
 .sidebox-button-container {
   width: 100%;
@@ -219,27 +220,27 @@ ul, li {
   justify-content: space-around;
   align-items: center;
   margin-top: 10px;
+  margin-bottom: 10px;
   overflow: hidden; /* Ensure buttons don't exceed container width */
 }
 .sidebox-button-container button {
   padding: 7px 0; /* Adjust padding for button size */
-  width: 50%; /* Adjust width to distribute evenly */
-  max-width: 100px; /* Maximum width for each button */
+  width: 23%; /* Adjust width to distribute evenly */
   border-radius: 10px; /* Rounded edges */
-  font-size: 12px; /* Adjust font size as needed */
+  font-size: 2vh; /* Adjust font size as needed */
   cursor: pointer;
-  background-color: #4CAF50; /* Natural green background color */
   color: white; /* Text color */
   border: none;
-  margin: 0 5px; /* Add spacing between buttons */
 }
 .sidebox-button-container button:hover {
-  background-color: #45a049; /* Darker green on hover */
+  background-color: #a4a3a3; /* Darker green on hover */
 }
 #messageInput {
   width: 100%;
   padding: 10px;
   box-sizing: border-box; /* Include padding and border in the total width */
+  border-radius: 10px;
+  border: none;
 }
 #bottomP1ButtonContainer {
   width: 100%;
@@ -249,11 +250,15 @@ ul, li {
 }
 #lobby {
   width: 100%;
+  margin-top: 5%;
 }
 #nameInput {
   width: 100%;
   padding: 10px;
   box-sizing: border-box; /* Include padding and border in the total width */
+  border-radius: 10px;
+  border: none;
+  font-size: 2vh;
 }
 #roomId {
   width: 100%;
@@ -262,18 +267,32 @@ ul, li {
   align-items: center;
 }
 #roomIdInput {
-  padding: 10px;
+  padding: 1vh;
   width: 80%;
+  border-radius: 10px;
+  border: none;
+  font-size: 2vh;
 }
 #copyButton {
   margin: 10px;
-  padding: 9px;
+  padding: .5vh;
+  border-radius: 10px;
+  cursor: pointer;
+  background-color: transparent;
+  border: none;
+  font-size: 3vh;
+}
+.copied {
+  background-color: #b7d9b8 !important;
 }
 #generateIdButton {
-  padding: 9px;
+  padding: 1vh;
   background: #a89850;
   color: white;
+  border-radius: 10px;
   border: none;
+  cursor: pointer;
+  font-size: 2vh;
 }
 #generateIdButton:hover {
   background: #8c7e46; /* Change this color to the hover color you want */
@@ -285,6 +304,10 @@ ul, li {
   text-align: center;
   padding: 10px;
   box-sizing: border-box; /* Include padding and border in the total width */
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 2.5vh;
 }
 #joinRoomButton:hover {
   background: #78766e; /* Change this color to the hover color you want */
@@ -293,6 +316,8 @@ ul, li {
   display: none;
   width: 100%;
   height: 100%;
+  flex-direction: column;
+  align-items: flex-start;
 }
 #roomHeader {
   width: 100%;
@@ -300,33 +325,36 @@ ul, li {
   display: flex;
   align-items: center; /* Center vertically */
   justify-content: space-between;
-  background-color: #97d1bb;
-  padding: 15px;
   box-sizing: border-box;
-  border-radius: 10px;
   color: black;
   margin-bottom: 10px; /* Adjust margin as needed for spacing */
 }
 #roomHeaderText {
   margin-right: 5px;
+  background-color: #9dd1bd;
+  border-radius: 10px;
+  width: 98%;
+  padding: .5vh;
+  font-size: 2vh;
+  text-align: center;
 }
 #roomHeaderCopyButton {
   cursor: pointer;
   background-color: transparent;
+  border-radius: 10px;
   border: none;
-  font-size: 20px;
-  color: white;
+  padding: .25vh;
+  font-size: 2.5vh;
 }
 #p2Chatbox {
-  background: #abbfbe;
+  background: white;
   width: 100%; /* Set to 100% */
   height: 80%;
   overflow-y: auto;
   padding: 10px;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  display: block;
+  border-radius: 10px;
 }
 #p2ChatboxButtonContainer {
   width: 100%;
@@ -335,6 +363,8 @@ ul, li {
   width: 100%;
   padding: 10px;
   box-sizing: border-box; /* Include padding and border in the total width */
+  border-radius: 10px;
+  border: none;
 }
 #p2BottomButtonContainer {
   width: 100%;
@@ -358,7 +388,6 @@ ul, li {
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
   z-index: 1000;
   width: 155px; /* Set a fixed width */
-  font-family: Arial, Helvetica, sans-serif;
 }
 .contextMenu ul {
   list-style-type: none;
@@ -408,33 +437,62 @@ ul, li {
 }
 
 /*chatbox text styling*/
-.selfBubble, .announcement, .oppBubble {
-  max-width: 80%;
-  padding: 10px;
+.self-text, .announcement, .opp-text, .self-message, .opp-message {
   word-wrap: break-word;
-  margin-bottom: 0px;
-}
-.selfBubble {
-  background-color: #f0f0f0;
+  display: block;
+  font-size: 1.75vh;
+  margin: 0.5vh 0 0 0;
   border-radius: 10px;
-  text-align: left;
-  align-self: flex-end;
-}
-.oppBubble {
-  background-color: rgb(139, 148, 206);
-  border-radius: 10px;
-  text-align: left;
-  margin-right: auto;
+  padding: 0.25vh 1vh;
 }
 .announcement {
-  background-color: rgb(206, 139, 139);
-  border-radius: 10px;
+  background-color: rgb(205, 203, 203);
+  text-align: center;
+}
+.self-message {
+  background-color: rgba(142, 155, 209, 0.864);
   text-align: left;
-  margin-right: auto;
-  margin-left: auto;
+  width: fit-content;
+}
+.opp-message {
+  background-color: rgba(187, 120, 136, 0.864);  
+  text-align: left;
+  width: fit-content;
+}
+.self-text {
+  background-color: rgba(211, 219, 250, 0.864);
+  text-align: left;
+  width: fit-content;
+}
+.opp-text {
+  background-color: rgba(247, 217, 223, 0.864);  
+  text-align: left;
+  width: fit-content;
 }
 
 
 
+/* .tooltip-btn {
+  position: relative;
+  cursor: pointer;
+}
+.tooltip-btn::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px;
+  background-color: #333;
+  color: #fff;
+  border-radius: 4px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+.tooltip-btn:hover::after {
+  opacity: 1;
+  visibility: visible;
+} */
 
 

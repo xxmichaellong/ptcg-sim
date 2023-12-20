@@ -2,6 +2,7 @@ import { oppContainersDocument } from '../containers/opp-containers.js';
 import { selfContainersDocument } from '../containers/self-containers.js';
 
 //side button container
+export const boardButtonContainer = document.getElementById('boardButtonContainer');
 export const turnButton = document.getElementById('turnButton');
 export const flipCoinButton = document.getElementById('flipCoinButton');
 export const vSTARButton = document.getElementById('vSTARButton');
@@ -17,6 +18,7 @@ export const settingsButton = document.getElementById('settingsButton');
 //p1 buttons
 export const attackButton = document.getElementById('attackButton');
 export const passButton = document.getElementById('passButton');
+export const FREEBUTTON = document.getElementById('FREEBUTTON');
 export const setupButton = document.getElementById('setupButton');
 export const resetButton = document.getElementById('resetButton');
 export const setupBothButton = document.getElementById('setupBothButton');
@@ -32,6 +34,7 @@ export const joinRoomButton = document.getElementById('joinRoomButton');
 export const roomHeaderCopyButton = document.getElementById('roomHeaderCopyButton');
 export const p2AttackButton = document.getElementById('p2AttackButton');
 export const p2PassButton = document.getElementById('p2PassButton');
+export const p2FREEBUTTON = document.getElementById('p2FREEBUTTON');
 export const p2SetupButton = document.getElementById('p2SetupButton');
 export const p2ResetButton = document.getElementById('p2ResetButton');
 export const leaveRoomButton = document.getElementById('leaveRoomButton');
@@ -52,6 +55,9 @@ export const selfCloseDeckDisplayButton = selfContainersDocument.getElementById(
 export const selfCloseDiscardDisplayButton = selfContainersDocument.getElementById('closeDiscardDisplayButton');
 export const selfCloseLostzoneDisplayButton = selfContainersDocument.getElementById('closeLostzoneDisplayButton');
 
+export const selfVSTARButton = selfContainersDocument.getElementById('vSTARButton');
+export const selfGXButton = selfContainersDocument.getElementById('GXButton');
+
 //oppContainers
 export const oppShuffleDeckButton = oppContainersDocument.getElementById('oppShuffleDeckButton')
 export const oppDiscardShuffleButton = oppContainersDocument.getElementById('discardShuffleButton');
@@ -67,3 +73,6 @@ export const oppViewCardsHandButton = oppContainersDocument.getElementById('view
 export const oppCloseDeckDisplayButton = oppContainersDocument.getElementById('closeDeckDisplayButton');
 export const oppCloseDiscardDisplayButton = oppContainersDocument.getElementById('closeDiscardDisplayButton');
 export const oppCloseLostzoneDisplayButton = oppContainersDocument.getElementById('closeLostzoneDisplayButton');
+
+export const oppVSTARButton = oppContainersDocument.getElementById('vSTARButton');
+export const oppGXButton = oppContainersDocument.getElementById('GXButton');

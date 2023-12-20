@@ -1,3 +1,6 @@
+body, input, textarea, button {
+  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif
+}
 .base {
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1); /* Lighter shadow */
   border-radius: 15px; /* Rounded corners */
@@ -147,12 +150,10 @@
 }
 .self-text {
   font-size: clamp(10px, 4vh, 20px);
-  font-family: Arial, sans-serif; /* Same font as the buttons */
   user-select: none;
 }
 .opp-text {
   font-size: clamp(10px, 4vh, 20px);
-  font-family: Arial, sans-serif; /* Same font as the buttons */
   user-select: none;
   transform: scaleX(-1) scaleY(-1);
 }
@@ -208,6 +209,44 @@
   left: 10%;
   width: 19%;
   height: 30%;
+}
+.selfButtonContainer {
+  position: fixed;
+  height: 6%;
+  width: 10%;
+  right: 67%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* Align items to the right */
+  gap: 5px; /* Set the desired space between items */
+}
+.oppButtonContainer {
+  position: fixed;
+  height: 6%;
+  width: 10%;
+  left: 67%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px; /* Set the desired space between items */
+}
+#buttonContainer button {
+  min-height: 10px;
+  max-height: 20px;
+  height: 6vh; /* Adjust as needed */
+  border-radius: 10px; /* Rounded edges */
+  font-size: clamp(6px, 3vh, 15px); /* Adjust font size as needed */
+  cursor: pointer;
+  background: rgb(231, 228, 228);
+  color: rgb(149, 149, 149); /* Text color */
+  border: none;
+}
+#buttonContainer button:hover {
+  background-color: rgb(117, 117, 117); /* Natural green background color */
+  color: rgb(255, 255, 255); /* Text color */
+}
+.used {
+  background-color: rgba(90, 110, 188, 0.3) !important;
 }
 .playContainer {
   display: inline-block;
@@ -282,7 +321,6 @@
   border-radius: 15px 15px 0 0;
   color: white; /* White text */
   font-size: clamp(12px, 3vh, 20px);
-  font-family: Arial, sans-serif; /* Same font as the buttons */
   background-color: #007bffb3; /* Blue background */
   border: 2px solid rgba(75, 137, 224, 0.952);
 }

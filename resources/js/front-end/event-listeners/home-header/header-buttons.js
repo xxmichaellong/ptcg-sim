@@ -4,7 +4,7 @@ import { show } from '../../setup/home-header/header-toggle.js';
 
 p1Button.addEventListener('click', () => {
     if (p1[0]) {
-        show('p1Box')
+        show('p1Box', p1Button);
     } else if (window.confirm('Are you sure you want to leave the room?')) {
         socket.disconnect();
         lobby.style.display = 'block';
@@ -14,9 +14,9 @@ p1Button.addEventListener('click', () => {
         socket.connect();
         p1[0] = true;
         p2Chatbox.innerHTML = '';
-        show('p1Box');
+        show('p1Box', p1Button);
     };
 });
-p2Button.addEventListener('click', () => {show('p2Box')});
-deckImportButton.addEventListener('click', () => {show('deckImport')});
-settingsButton.addEventListener('click', () => {show('settings')});
+p2Button.addEventListener('click', () => {show('p2Box', p2Button)});
+deckImportButton.addEventListener('click', () => {show('deckImport', deckImportButton)});
+settingsButton.addEventListener('click', () => {show('settings', settingsButton)});

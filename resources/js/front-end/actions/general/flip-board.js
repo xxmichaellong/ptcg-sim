@@ -1,4 +1,4 @@
-import { POV, board_html, oppBoard_html, oppContainers, oppContainersDocument, oppResizer, selfContainers, selfContainersDocument, selfResizer, stadium, stadium_html } from '../../front-end.js';
+import { FREEBUTTON, POV, attackButton, board_html, oppBoard_html, oppContainers, oppContainersDocument, oppResizer, p2AttackButton, p2FREEBUTTON, p2PassButton, p2ResetButton, p2SetupButton, passButton, resetButton, selfContainers, selfContainersDocument, selfResizer, setupButton, stadium, stadium_html } from '../../front-end.js';
 import { flippedOppHandleMouseDown, flippedSelfHandleMouseDown, oppHandleMouseDown, selfHandleMouseDown } from '../../setup/sizing/resizer.js';
 import { reloadBoard } from '../../setup/sizing/reload-board.js';
 
@@ -26,13 +26,23 @@ export const flipBoard = () => {
     toggleClasses(oppContainers, 'opp', 'self');
     toggleClasses(board_html, 'selfBoard', 'oppBoard');
     toggleClasses(oppBoard_html, 'oppBoard', 'selfBoard');
-      
+    toggleClasses(attackButton, 'selfColour', 'oppColour');
+    toggleClasses(passButton, 'selfColour', 'oppColour');
+    toggleClasses(FREEBUTTON, 'selfColour', 'oppColour');
+    toggleClasses(setupButton, 'selfColour', 'oppColour');
+    toggleClasses(resetButton, 'selfColour', 'oppColour');
+    toggleClasses(p2AttackButton, 'selfColour', 'oppColour');
+    toggleClasses(p2PassButton, 'selfColour', 'oppColour');
+    toggleClasses(p2FREEBUTTON, 'selfColour', 'oppColour');
+    toggleClasses(p2SetupButton, 'selfColour', 'oppColour');
+    toggleClasses(p2ResetButton, 'selfColour', 'oppColour');
 
     const users = ['self', 'opp'];
     const textIds = ['deckText', 'discardText', 'lostzoneText'];
     const containerIds = ['deck_html', 'discard_html', 'lostzone_html', 'attachedCardPopup_html', 'viewCards_html'];
     const buttonIds = ['viewCardsButtonContainer', 'attachedCardPopupButtonContainer'];
     const headerIds = ['attachedCardPopupHeader', 'viewCardsHeader'];
+    const buttonContainerIds = ['buttonContainer'];
 
     for (const user of users) {
         const document = user === 'self' ? selfContainersDocument : oppContainersDocument;
@@ -61,6 +71,11 @@ export const flipBoard = () => {
             } else if (header.textContent === 'Opponent moving cards...'){
                 header.textContent = 'Move attached cards';
             };
+        };
+        for (const buttonContainerId of buttonContainerIds) {
+            const button = document.getElementById(buttonContainerId);
+            button.classList.toggle('selfButtonContainer');
+            button.classList.toggle('oppButtonContainer');
         };
     };
 

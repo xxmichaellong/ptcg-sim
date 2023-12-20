@@ -1,6 +1,7 @@
 import { closeContainerPopups, closePopups } from '../actions/general/close-popups.js';
 import { moveCard } from '../actions/general/move-card.js';
 import { POV, active_html, attachedCardPopup_html, bench_html, deck_html, discard_html, lostzone_html, oppActive_html, oppAttachedCardPopup_html, oppBench_html, oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html, oppViewCards_html, p1, roomId, sCard, selfContainersDocument, socket, target, viewCards_html } from '../front-end.js';
+import { moveCardMessage } from '../setup/chatbox/location-name.js';
 import { appendMessage } from '../setup/chatbox/messages.js';
 import { containerIdToLocation } from '../setup/containers/container-reference.js';
 import { stringToVariable, variableToString } from '../setup/containers/string-to-variable.js';
@@ -168,27 +169,7 @@ export const drop = (event) => {
         };
 
         if ((sCard.containerId !== target.containerId || draggedImage.attached) && !(draggedImage.attached && ['bench_html', 'active_html'].includes(target.containerId) && target.index === undefined)){
-            // //find if card is attached
-            // let hostCard;
-            // if (sCard.card.image.relative){
-            //     const location = stringToVariable(sCard.user, sCard.locationAsString);
-            //     hostCard = location.cards.find(card => card.image === sCard.card.image.relative);
-            // };
-            // const oLocation = hostCard ? hostCard.name : sCard.locationAsString;
-            // //find if card is being attached
-            // let targetCard;
-            // if (typeof target.index === 'number'){
-            //     const location = stringToVariable(sCard.user, target.locationAsString);
-            //     if (target.locationAsString === 'active' && !sCard.card.image.attached && sCard.locationAsString === 'bench'){
-            //         targetCard = undefined;
-            //     } else {
-            //         targetCard = location.cards[target.index];
-            //     };
-            // };
-            // const mLocation = targetCard ? targetCard.name : target.locationAsString;
-
-            // const message = determineUsername(POV.user) + ' moved ' + sCard.card.name + ' from ' + oLocation + ' to ' + mLocation;
-            // appendMessage(POV.user, message, 'announcement');
+            moveCardMessage(sCard.locationAsString, target.locationAsString, 'move', sCard.card.image.attached);
             moveCard(sCard.user, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
         };
     };

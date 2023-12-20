@@ -23,6 +23,9 @@ export const reset = (user, clean = false, received = false) => {
             element.textContent = '0'
             element.handleRemove();
         });
+        selfContainersDocument.querySelectorAll('.used').forEach(element => {
+            element.classList.remove('used');
+        });
     } else {
         cardArrays = [oppDeck, oppLostzone, oppDiscard, oppPrizes, oppActive, oppBench, oppHand, oppAttachedCardPopup, oppViewCards, oppBoard];
         cardContainers = [oppDeck_html, oppPrizes_html, oppDeckDisplay_html, oppLostzone_html, oppDiscard_html, oppActive_html, oppBench_html, oppHand_html, oppLostzoneDisplay_html, oppDiscardDisplay_html, oppAttachedCardPopup_html, oppViewCards_html, oppBoard_html]
@@ -30,6 +33,9 @@ export const reset = (user, clean = false, received = false) => {
         oppContainersDocument.querySelectorAll('.self-circle, .opp-circle, .self-tab, .opp-tab').forEach(element => {
             element.textContent = '0'
             element.handleRemove();
+        });
+        oppContainersDocument.querySelectorAll('.used').forEach(element => {
+            element.classList.remove('used');
         });
     };
     cardArrays.forEach(container => container.cards = []);
@@ -42,7 +48,7 @@ export const reset = (user, clean = false, received = false) => {
     display_html.appendChild(makeDeckCover(user).image);
 
     if (!clean){
-        appendMessage(user, determineUsername(user) + ' reset', 'announcement', true);
+        appendMessage(user, determineUsername(user) + ' reset', 'player', true);
     };
 
     if (!p1[0] && !received){

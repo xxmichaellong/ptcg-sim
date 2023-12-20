@@ -30,14 +30,14 @@ io.on('connection', (socket) => {
 
         const otherPlayerUsernames = otherPlayerInfo.map(([_, player]) => player.username);
 
+        socket.on('disconnect', () => {
+            players.delete(socket.id);
+            socket.broadcast.to(id).emit('leaveGameMessage', username);
+        });
+
         if (otherPlayerUsernames.length < 2){
             socket.emit('joinGame', otherPlayerUsernames);
             socket.broadcast.to(id).emit('joinMessage', username);
-    
-            socket.on('disconnect', () => {
-                players.delete(socket.id);
-                socket.broadcast.to(id).emit('leaveGameMessage', username);
-            });
         } else {
             socket.emit('roomReject');
         };

@@ -11,7 +11,7 @@ export const takeTurn = (user, received = false) => {
         turn[0] ++;
         moveCard(user, 'deck', 'deck_html', 'hand', 'hand_html', 0, false, true);
         appendMessage(user, 'Turn ' + turn, 'announcement', true);
-        appendMessage(user, determineUsername(user) + ' drew for turn', 'announcement', true);
+        appendMessage(user, determineUsername(user) + ' drew for turn', 'player', true);
     } else {
         appendMessage(user, determineUsername(user) + ' has no more cards in deck!', 'announcement', true);
     };

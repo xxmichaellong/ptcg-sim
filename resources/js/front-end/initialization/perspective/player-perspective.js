@@ -11,7 +11,7 @@ export const POV = {
 };
 export const roomId = [];
 export const p1Username = (user) => {
-    return user === 'self' ? 'Blue player' : 'Red player';
+    return user === 'self' ? 'Blue' : 'Red';
 }
 export const p2SelfUsername = [];
 export const p2OppUsername = [];

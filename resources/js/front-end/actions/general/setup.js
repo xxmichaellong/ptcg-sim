@@ -8,5 +8,5 @@ export const setup = (user) => {
     reset(user, true);
     shuffleContainer(user, 'deck', 'deck_html');
     drawHand(user);
-    appendMessage(user, determineUsername(user) + ' setup', 'announcement');
+    appendMessage(user, determineUsername(user) + ' setup', 'player');
 };

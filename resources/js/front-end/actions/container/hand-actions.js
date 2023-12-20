@@ -1,4 +1,6 @@
 import { deck, hand, oppDeck, oppHand, socket } from '../../front-end.js';
+import { appendMessage } from '../../setup/chatbox/messages.js';
+import { determineUsername } from '../../setup/general/determine-username.js';
 import { shuffleIndices } from '../../setup/general/shuffle.js';
 import { moveCard } from '../general/move-card.js';
 import { shuffleContainer } from './shuffle-container.js';
@@ -29,6 +31,14 @@ export const discardAndDraw = (user) => {
         for (let i = 0; i < drawAmount; i++){
             moveCard(user, 'deck', 'deck_html', 'hand', 'hand_html', 0);
         };
+
+        let message;
+        if (drawAmount > 0){
+            message = determineUsername(user) + ' discarded hand and drew ' + drawAmount + ' card(s)';
+        } else {
+            message = determineUsername(user) + ' discarded hand';
+        };
+        appendMessage(user, message, 'player');
     } else {
         window.alert('Please enter a valid number for the draw amount.');
     };
@@ -54,7 +64,14 @@ export const shuffleAndDraw = (user) => {
         for (let i = 0; i < drawAmount; i++){
             moveCard(user, 'deck', 'deck_html', 'hand', 'hand_html', 0);
         };
-    
+        
+        let message;
+        if (drawAmount > 0){
+            message = determineUsername(user) + ' shuffled hand into deck and drew ' + drawAmount + ' card(s)';
+        } else {
+            message = determineUsername(user) + ' shuffled hand into deck';
+        };
+        appendMessage(user, message, 'player');
     } else {
         window.alert('Please enter a valid number for the draw amount.');
     };
@@ -80,7 +97,13 @@ export const shuffleBottomAndDraw = (user) => {
         for (let i = 0; i < drawAmount; i++){
             moveCard(user, 'deck', 'deck_html', 'hand', 'hand_html', 0);
         };
-
+        let message;
+        if (drawAmount > 0){
+            message = determineUsername(user) + ' shuffled hand to bottom of deck and drew ' + drawAmount + ' card(s)';
+        } else {
+            message = determineUsername(user) + ' shuffled hand to bottom of deck';
+        };
+        appendMessage(user, message, 'player');
     } else {
         window.alert('Please enter a valid number for the draw amount.');
     };

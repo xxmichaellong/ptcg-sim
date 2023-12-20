@@ -2,7 +2,7 @@ import { addAbilityCounter } from '../../actions/counters/ability-counter.js';
 import { addDamageCounter } from '../../actions/counters/damage-counter.js';
 import { addSpecialCondition } from '../../actions/counters/special-condition.js';
 import { closeFullView } from '../../actions/general/close-popups.js';
-import { hand_html, oppContainers, oppHand_html, oppResizer, selfContainers, selfResizer, stadium_html } from '../../front-end.js';
+import { hand_html, oppContainers, oppHand_html, oppResizer, selfContainers, selfResizer, boardButtonContainer, stadium_html } from '../../front-end.js';
 import { stringToVariable } from '../containers/string-to-variable.js';
 import { adjustAlignment } from './adjust-alignment.js';
 // Create the overlay div
@@ -79,6 +79,7 @@ export const selfResize = (e) => {
         adjustCards('opp', 'active', 'active_html', oppRatio);
     };
     stadium_html.style.bottom = (Math.min(84, ((parseFloat(oppResizer.style.bottom) + parseFloat(selfResizer.style.bottom))/2 - 8))) + '%';
+    boardButtonContainer.style.bottom = (Math.min(90, ((parseFloat(oppResizer.style.bottom) + parseFloat(selfResizer.style.bottom))/2 - 3))) + '%';
     oppResizer.style.height = '2%';
     if (parseFloat(oppResizer.style.bottom) > 100){
         oppResizer.style.height = '6%';
@@ -120,6 +121,7 @@ export const oppResize = (e) => {
         adjustCards('self', 'active', 'active_html', selfRatio);
     };
     stadium_html.style.bottom = (Math.min(84, ((parseFloat(oppResizer.style.bottom) + parseFloat(selfResizer.style.bottom))/2 - 8))) + '%';
+    boardButtonContainer.style.bottom = (Math.min(90, ((parseFloat(oppResizer.style.bottom) + parseFloat(selfResizer.style.bottom))/2 - 3))) + '%';
     oppResizer.style.height = '2%';
     if (parseFloat(oppResizer.style.bottom) > 100){
         oppResizer.style.height = '6%';

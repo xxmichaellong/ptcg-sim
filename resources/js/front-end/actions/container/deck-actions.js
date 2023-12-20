@@ -1,14 +1,19 @@
-import { POV, deck, oppDeck, oppViewCards, oppViewCards_html, p1, roomId, sCard, socket, viewCards, viewCards_html } from '../../front-end.js';
+import { POV, deck, oppDeck, oppViewCards_html, p1, roomId, sCard, socket, viewCards_html } from '../../front-end.js';
+import { moveCardMessage } from '../../setup/chatbox/location-name.js';
+import { appendMessage } from '../../setup/chatbox/messages.js';
+import { determineUsername } from '../../setup/general/determine-username.js';
 import { moveCard } from '../general/move-card.js';
-import { hideCards, revealCards } from '../general/reveal-and-hide.js';
+import { hideCards } from '../general/reveal-and-hide.js';
 import { shuffleContainer } from './shuffle-container.js';
 
 export const shuffleIntoDeck = () => {
+    moveCardMessage(sCard.locationAsString, 'deck', 'shuffle', sCard.card.image.attached);
     moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'deck', 'deck_html', sCard.index);    
     shuffleContainer(sCard.user, 'deck', 'deck_html');
 }
 
 export const moveToDeckTop = () => {
+    moveCardMessage(sCard.locationAsString, 'deck', 'top', sCard.card.image.attached);
     moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'deck', 'deck_html', sCard.index);
     //since card is appended to bottom, move all existing cards in deck to the bottom afterwards
     const deckCount = sCard.user === 'self' ? deck.count : oppDeck.count;
@@ -18,10 +23,12 @@ export const moveToDeckTop = () => {
 }
 
 export const moveToDeckBottom = () => {
+    moveCardMessage(sCard.locationAsString, 'deck', 'bottom', sCard.card.image.attached);
     moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'deck', 'deck_html', sCard.index);
 }
 
 export const moveToBoard = () => {
+    moveCardMessage(sCard.locationAsString, 'board', 'move', sCard.card.image.attached);
     moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'board', 'board_html', sCard.index);
 }
 
@@ -31,18 +38,22 @@ export const shuffleDeck = (user) => {
 
 export const draw = (user) => {
     let drawAmount;
-
     const userInput = window.prompt('Draw how many cards?', '0');
-    
     drawAmount = parseInt(userInput);
-
     const deckCount = user === 'self' ? deck.count : oppDeck.count;
 
-    if (!isNaN(drawAmount) && drawAmount >= 0){
+    if (!isNaN(drawAmount) && drawAmount > 0){
         drawAmount = Math.min(drawAmount, deckCount);
         for (let i = 0; i < drawAmount; i++){
             moveCard(user, 'deck', 'deck_html', 'hand', 'hand_html', 0);
         };
+        let message;
+        if (drawAmount > 1){
+            message = determineUsername(user) + ' drew ' + drawAmount + ' cards';
+        } else {
+            message = determineUsername(user) + ' drew a card';
+        };
+        appendMessage(user, message, 'player');
     } else {
         window.alert('Please enter a valid number for the draw amount.');
     };
@@ -93,10 +104,21 @@ export const viewDeck = (user, viewAmount, top, deckCount, targetOpp, received =
         };
         socket.emit('viewDeck', data);
     };
+    const location = top ? 'top ' : 'bottom ';
+    const owner = user === 'self' ? '' : "opponent's"
+    const message = determineUsername(POV.user) + ' looked at ' + location + viewAmount + ' card(s) of ' + owner + ' deck';
+    appendMessage(POV.user, message, 'player'); 
 }
 
 export const switchWithDeckTop = () => {
-    moveToDeckTop();
+    moveCardMessage(sCard.locationAsString, 'deck', 'switch', sCard.card.image.attached);
+    //first part is moving a card to the top of the deck
+    moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'deck', 'deck_html', sCard.index);
+    const initialDeckCount = sCard.user === 'self' ? deck.count : oppDeck.count;
+    for (let i = 0; i < initialDeckCount - 1; i++){
+        moveCard(sCard.user, 'deck', 'deck_html', 'deck', 'deck_html', 0);
+    };
+
     const deckCount = sCard.user === 'self' ? deck.count : oppDeck.count;
     if (deckCount > 1){
         moveCard(sCard.user, 'deck', 'deck_html', sCard.locationAsString, sCard.containerId, 1);

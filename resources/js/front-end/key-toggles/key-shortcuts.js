@@ -1,4 +1,5 @@
 import { moveToDeckBottom, moveToDeckTop, shuffleIntoDeck, switchWithDeckTop, viewDeck } from '../actions/container/deck-actions.js';
+import { discardAndDraw, shuffleAndDraw, shuffleBottomAndDraw } from '../actions/container/hand-actions.js';
 import { shuffleContainer } from '../actions/container/shuffle-container.js';
 import { addAbilityCounter } from '../actions/counters/ability-counter.js';
 import { addDamageCounter } from '../actions/counters/damage-counter.js';
@@ -10,9 +11,12 @@ import { moveCard } from '../actions/general/move-card.js';
 import { reset } from '../actions/general/reset.js';
 import { setup } from '../actions/general/setup.js';
 import { takeTurn } from '../actions/general/take-turn.js';
-import { sCard, keybindModal, target, deck, oppDeck, POV, viewTopButton, deck_html, oppDeck_html, active, bench, oppActive, oppBench, p1, socket, roomId } from '../front-end.js';
+import { sCard, keybindModal, target, deck, oppDeck, POV, deck_html, oppDeck_html, active, bench, oppActive, oppBench, p1, socket, roomId } from '../front-end.js';
 import { doubleClick } from '../image-logic/click-events.js';
+import { moveCardMessage } from '../setup/chatbox/location-name.js';
+import { appendMessage } from '../setup/chatbox/messages.js';
 import { variableToString } from '../setup/containers/string-to-variable.js';
+import { determineUsername } from '../setup/general/determine-username.js';
 
 export const keyUp = (event) => {
     if (event.key === 'Shift') {
@@ -27,7 +31,6 @@ export const keyDown = (event) => {
     if (event.key === 'Shift') {
         keybindModal.style.display = 'block';
     };
-
     if (!sCard.selecting){
         if (event.key >= 1 && event.key <= 9 && !event.altKey && !event.ctrlKey) {
             const deckCount = POV.user === 'self' ? deck.count : oppDeck.count;
@@ -35,9 +38,18 @@ export const keyDown = (event) => {
             for (let i = 0; i < drawAmount; i++){
                 moveCard(POV.user, 'deck', 'deck_html', 'hand', 'hand_html', 0);
             };
+            let message;
+            if (drawAmount > 1){
+                message = determineUsername(POV.user) + ' drew ' + drawAmount + ' cards';
+                appendMessage(POV.user, message, 'player');
+            } else if (drawAmount === 1){
+                message = determineUsername(POV.user) + ' drew a card';
+                appendMessage(POV.user, message, 'player');
+            };
         };
         if (event.key === 's') {
             shuffleContainer(POV.user, 'deck', 'deck_html');
+            appendMessage(POV.user, determineUsername(POV.user) + ' shuffled deck', 'player');
         };
         if (event.key >= 1 && event.key <= 9 && event.altKey) {
             const deckCount = POV.user === 'self' ? deck.count : oppDeck.count;        
@@ -69,6 +81,18 @@ export const keyDown = (event) => {
             event.preventDefault();
             flipBoard();
         };
+        if (event.key === 'm') {
+            appendMessage(POV.user, determineUsername(POV.user) + ' mulligans', 'announcement');
+        };
+        if (event.key === 'd' && event.altKey) {
+            discardAndDraw(POV.user);
+        };
+        if (event.key === 's' && event.altKey) {
+            shuffleAndDraw(POV.user);
+        };
+        if (event.key === 'ArrowDown' && event.altKey) {
+            shuffleBottomAndDraw(POV.user);
+        };
     };
     if (sCard.selecting){
         const keyBinds = {
@@ -86,7 +110,7 @@ export const keyDown = (event) => {
             's': { locationAsString: 'deck', containerId: 'deck_html' },
         };
         const bind = keyBinds[event.key];
-        if (bind) {
+        if (bind && !event.altKey) {
             target.locationAsString = bind.locationAsString;
             target.containerId = bind.containerId;
             target.index = '';
@@ -100,6 +124,7 @@ export const keyDown = (event) => {
             } else if (event.key === 's'){
                 shuffleIntoDeck();
             } else {
+                moveCardMessage(sCard.locationAsString, target.locationAsString, 'move', sCard.card.image.attached);
                 moveCard(sCard.user, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
             };
         };
@@ -133,6 +158,7 @@ export const keyDown = (event) => {
                 sCard.card.image.abilityCounter.handleRemove();
             } else {
                 addAbilityCounter(sCard.user, variableToString(sCard.user, sCard.location), variableToString(sCard.user, sCard.container), sCard.index);
+                appendMessage(POV.user, determineUsername(POV.user) + ' used ability', 'player');
             };
         };
         if (event.key >= 1 && event.key <= 9 && ['active_html', 'bench_html'].includes(sCard.containerId)){

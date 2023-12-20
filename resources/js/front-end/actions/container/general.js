@@ -1,6 +1,8 @@
 import { selfContainersDocument } from "../../front-end.js";
+import { appendMessage } from "../../setup/chatbox/messages.js";
 import { containerIdToLocation } from "../../setup/containers/container-reference.js";
 import { stringToVariable, variableToString } from "../../setup/containers/string-to-variable.js";
+import { determineUsername } from "../../setup/general/determine-username.js";
 import { moveCard } from "../general/move-card.js";
 import { shuffleContainer } from "./shuffle-container.js";
 
@@ -19,6 +21,20 @@ export const shuffleAll = (event) => {
 
     const container_html = stringToVariable(user, containerId);
     container_html.style.display = 'none';
+
+    if (count > 0){
+        let message;
+        if (locationAsString === 'deck'){
+            message = determineUsername(user) + ' shuffled deck';
+        } else if (locationAsString === 'attachedCardPopup'){
+            message = determineUsername(user) + ' shuffled ' + count + ' attached card(s) into deck';
+        } else if (locationAsString === 'viewCards'){
+            message = determineUsername(user) + ' shuffled ' + count + ' card(s) into deck';
+        } else if (locationAsString === 'discard'){
+            message = determineUsername(user) + ' shuffled discard into deck';
+        };
+        appendMessage(user, message, 'player');
+    };
 }
 
 export const discardAll = (event) => {
@@ -34,6 +50,16 @@ export const discardAll = (event) => {
 
     const container_html = stringToVariable(user, containerId);
     container_html.style.display = 'none';
+
+    if (count > 0){
+        let message;
+        if (locationAsString === 'attachedCardPopup'){
+            message = determineUsername(user) + ' discarded '+ count + ' attached card(s)';
+        } else {
+            message = determineUsername(user) + ' discarded ' + count + ' card(s)';
+        };
+        appendMessage(user, message, 'player');
+    };
 }
 
 export const lostzoneAll = (event) => {
@@ -49,6 +75,16 @@ export const lostzoneAll = (event) => {
 
     const container_html = stringToVariable(user, containerId);
     container_html.style.display = 'none';
+
+    if (count > 0){
+        let message;
+        if (locationAsString === 'attachedCardPopup'){
+            message = determineUsername(user) + ' lost-zoned '+ count + ' attached card(s)';
+        } else {
+            message = determineUsername(user) + ' lost-zoned ' + count + ' card(s)';
+        };
+        appendMessage(user, message, 'player');
+    };
 }
 
 export const handAll = (event) => {
@@ -64,6 +100,16 @@ export const handAll = (event) => {
 
     const container_html = stringToVariable(user, containerId);
     container_html.style.display = 'none';
+
+    if (count > 0){
+        let message;
+        if (locationAsString === 'attachedCardPopup'){
+            message = determineUsername(user) + ' put '+ count + ' attached card(s) into hand';
+        } else {
+            message = determineUsername(user) + ' put ' + count + ' card(s) into hand';
+        };
+        appendMessage(user, message, 'player');
+    };
 }
 
 export const closeDisplay = (event) => {

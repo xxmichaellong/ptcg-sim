@@ -17,22 +17,22 @@ socket.on('generateId', (id) => {
 });
 socket.on('joinGame', (otherPlayerUsername) => {
     p1[0] = false;
-    connectedRoom.style.display = 'block';
+    connectedRoom.style.display = 'flex';
     lobby.style.display = 'none';
     reset('self', true);
     reset('opp', true);
     if (otherPlayerUsername.length > 0){
         p2OppUsername[0] = otherPlayerUsername[0];
-        appendMessage('', otherPlayerUsername[0] + ' is here!', 'announcement', true);
+        appendMessage('opp', otherPlayerUsername[0] + ' is here!', 'announcement', true);
     };
-    appendMessage('', p2SelfUsername[0] + ' joined', 'announcement', true);
+    appendMessage('self', p2SelfUsername[0] + ' joined', 'announcement', true);
 });
 socket.on('joinMessage', (otherPlayerUsername) => {
     p2OppUsername[0] = otherPlayerUsername;
-    appendMessage('', otherPlayerUsername + ' joined', 'announcement', true);
+    appendMessage('opp', otherPlayerUsername + ' joined', 'announcement', true);
 });
 socket.on('leaveGameMessage', (otherPlayerUsername) => {
-    appendMessage('', otherPlayerUsername + ' left', 'announcement', true);
+    appendMessage('opp', otherPlayerUsername + ' left', 'announcement', true);
 });
 socket.on('roomReject', () => {
     // Create overlay

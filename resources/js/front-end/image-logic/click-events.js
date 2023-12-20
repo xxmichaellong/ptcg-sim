@@ -7,6 +7,7 @@ import { closeFullView, closePopups, deselectCard } from '../actions/general/clo
 import { moveCard } from '../actions/general/move-card.js';
 import { socket } from '../initialization/socket-port/socket.js';
 import { cardContextMenu } from '../initialization/html-elements/context-menu.js';
+import { moveCardMessage } from '../setup/chatbox/location-name.js';
 
 export const identifyCard = (event) => {
     if (event.target.user === 'self'){
@@ -150,6 +151,7 @@ export const imageClick = (event) => {
         target.location = containerIdToLocation(sCard.user, target.containerId);
         target.index = target.location.cards.findIndex(card => card.image === event.target);
         target.locationAsString = variableToString(sCard.user, target.location);
+        moveCardMessage(sCard.locationAsString, target.locationAsString, 'move', sCard.card.image.attached);
         moveCard(sCard.user, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
     } else {
         closePopups(event); //need both because of highlights
