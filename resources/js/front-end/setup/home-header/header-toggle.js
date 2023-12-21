@@ -11,10 +11,14 @@ export const show = (id, button) => {
     const buttons = [p1Button, p2Button, settingsButton, deckImportButton];
 
     buttons.forEach(btn => {
-        btn.classList.remove('selectedPage');
-        btn.classList.add('notSelectedPage');
+        btn.classList.remove('selected-page');
+        btn.classList.remove('dark-mode-2');
+        btn.classList.add('not-selected-page');
     });
     
-    button.classList.remove('notSelectedPage');
-    button.classList.add('selectedPage');    
+    button.classList.remove('not-selected-page');
+    button.classList.add('selected-page');
+    if (document.querySelector('.dark-mode')) {
+        button.classList.add('dark-mode-2');
+    };
 }

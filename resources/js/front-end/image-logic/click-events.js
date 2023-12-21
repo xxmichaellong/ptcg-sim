@@ -1,11 +1,10 @@
 import { deckDisplay_html, discardDisplay_html, lostzoneDisplay_html, sCard, selfContainers, selfContainersDocument, stadium_html, target, } from '../initialization/containers/self-containers.js';
 import { containerIdToLocation } from '../setup/containers/container-reference.js';
 import { deck_html, lostzone_html, discard_html } from '../initialization/containers/self-containers.js';
-import { oppContainers, oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html } from '../initialization/containers/opp-containers.js';
+import { oppContainers, oppDeck_html, oppDiscard_html, oppLostzone_html } from '../initialization/containers/opp-containers.js';
 import { stringToVariable, variableToString } from '../setup/containers/string-to-variable.js';
 import { closeFullView, closePopups, deselectCard } from '../actions/general/close-popups.js';
 import { moveCard } from '../actions/general/move-card.js';
-import { socket } from '../initialization/socket-port/socket.js';
 import { cardContextMenu } from '../initialization/html-elements/context-menu.js';
 import { moveCardMessage } from '../setup/chatbox/location-name.js';
 
@@ -184,6 +183,9 @@ export const doubleClick = (event) => {
             };
         });
         targetImage.parentElement.className = 'fullView';
+        if (document.querySelector('.dark-mode')){
+            targetImage.parentElement.classList.add('dark-mode-5');
+        };
         targetImage.parentElement.style.zIndex = '2';
         targetImage.parentElement.style.height = '70%';
         targetImage.parentElement.style.width = '69%';
@@ -209,6 +211,7 @@ export const doubleClick = (event) => {
         display.style.transform = 'translate(-50%, -50%)'; // Center the image
         display.style.maxWidth = '90%'; // Keep the image within the viewport
         display.style.maxHeight = '90%';
+        display.style.borderRadius = '1rem';
 
         // Append the image to the overlay
         overlay.appendChild(display);

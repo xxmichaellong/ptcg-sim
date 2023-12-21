@@ -1,5 +1,43 @@
+
+* {
+  user-select: none;
+}
+.dark-mode {
+  background-color: rgb(8, 18, 18) !important;
+  color: white;
+}
+.dark-mode-2 {
+  background-color: rgb(0, 0, 0) !important;
+  color: white;
+}
+.dark-mode-3 {
+  color: rgb(149, 149, 149); /* Text color */
+}
+.dark-mode-4 {
+  background-color: #141414 !important;
+}
 body, input, textarea, button {
   font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif
+}
+#boardCircle {
+  position: absolute;
+  width: 16vw;
+  height: 16vw;
+  bottom: calc(100% - 8vw);
+  left: calc(50% - 8vw);
+  border-radius: 50%;
+  background: rgba(213, 158, 158, 0.14);
+  z-index: -2;
+}
+#innerCircle {
+  position: absolute;
+  width: 4vw;
+  height: 4vw;
+  bottom: calc(100% - 2vw);
+  left: calc(50% - 2vw);
+  border-radius: 50%;
+  background: white;
+  z-index: -2;
 }
 .base {
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1); /* Lighter shadow */
@@ -27,26 +65,26 @@ body, input, textarea, button {
   background-color: rgba(188, 90, 113, 0.3);
 }
 #hand_html {
-  border-top: 5px solid rgba(188, 90, 113, 0.864);  
-  user-select: none;
+  border-top: 3px solid rgba(188, 90, 113, 0.864);  
   position: fixed;
-	bottom: 0;
-	left: 0;
-	width: 100%;
-	height: 30%;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 30%;
   overflow-x: auto;
-	display: flex; /* Use flexbox to center-align child elements */
-	z-index: 0;
-	align-items: flex-end; 
+  display: flex;
+  z-index: 0;
+  align-items: flex-end;
 }
 #hand_html img {
-	width: auto;
-	height: 95%;
-  margin-left: 1px;
-  margin-right: 1px;
+  box-sizing: border-box;
+  width: auto;
+  max-height: calc(100% - 3vh);
+  margin-bottom: 2vh;
+  margin-left: .25vw;
+  margin-right: .25vw;
 }
 #bench_html {
-  user-select: none;
   position: fixed;
 	bottom: 35%;
 	left: 12%;
@@ -58,12 +96,10 @@ body, input, textarea, button {
 	z-index: 0;
 }
 #bench_html div {
-  user-select: none;
   height: 100%;
 	margin-right: 1%;
 }
 #active_html {
-  user-select: none;
   position: fixed;
 	bottom: 65%;
 	left: 34%;
@@ -75,12 +111,10 @@ body, input, textarea, button {
 	z-index: 0;
 }
 #active_html div {
-  user-select: none;
   width: auto;
 	height: 100%;
 }
 #prizes_html {
-  user-select: none;
   position: fixed;
   bottom: 36%;
   left: 1%;
@@ -90,22 +124,23 @@ body, input, textarea, button {
   padding: 5px; /* Add padding */
 }
 #prizes_html img {
-	width: auto;
-	max-width: 50%;
-	max-height: 33%;
+  margin-left: .1vw;
+  width: auto;
+  max-width: calc(50% - .1vw);
+  max-height: 33%;
 }
 #lostzoneDisplay_html {
-  user-select: none;
   position: fixed;
-	bottom: 84%;
-	left: 1%;
-	width: 9%;
-	height: 15%;
-	z-index: 0;
-  background-color: rgba(128, 0, 128, 0.068); /* Add this for a very light transparent purple background */
+  bottom: 84%;
+  left: 1%;
+  width: 8%;
+  height: 15%;
+  z-index: 0;
+  background-color: rgba(233, 198, 233, 0.111); /* Add this for a very light transparent purple background */
   display: flex;
   justify-content: center; 
   align-items:flex-start;
+  border-radius: 2rem; /* Rounded corners */
 }
 #lostzoneDisplay_html img {
   width: auto;
@@ -117,12 +152,10 @@ body, input, textarea, button {
 }
 #lostzoneText {
 	position: fixed;
-  left: 11%;
+  left: 9.5%;
   bottom: 90%;
-  user-select: none;
 }
 #deckDisplay_html {
-  user-select: none;
   position: fixed;
   bottom: 66%;
   right: 1%;
@@ -145,25 +178,20 @@ body, input, textarea, button {
   position: fixed;
   right: 2%;
   bottom: 91%;
-  user-select: none;
 }
 .self-text {
   font-size: clamp(10px, 4vh, 20px);
-  user-select: none;
 }
 .opp-text {
   font-size: clamp(10px, 4vh, 20px);
-  user-select: none;
   transform: scaleX(-1) scaleY(-1);
 }
 #discardText {
   position: fixed;
   right: 2%;
   bottom: 60%;
-  user-select: none;
 }
 #discardDisplay_html {
-  user-select: none;
   position: fixed;
   bottom: 36%;
   right: 1%;
@@ -183,7 +211,6 @@ body, input, textarea, button {
   left: 0;
 } 
 #board_html {
-  user-select: none;
   position: fixed;
   display: flex;
   flex-wrap: wrap; /* Allow items to wrap onto multiple lines */
@@ -196,18 +223,21 @@ body, input, textarea, button {
 #board_html img {
   width: auto; /* Ensure images don't exceed the width of the container */
   height: 50%; /* Maintain aspect ratio */
+  margin: .25vw;
 }
 .selfBoard {
   bottom: 61%;
   left: 66%;
-  width: 20%;
-  height: 30%;
+  width: 18%;
+  height: 27%;
+  border-radius: 20px; /* Rounded corners */
 }
 .oppBoard {
   bottom: 61%;
-  left: 10%;
-  width: 19%;
-  height: 30%;
+  right: 66%;
+  width: 18%;
+  height: 27%;
+  border-radius: 20px; /* Rounded corners */
 }
 .selfButtonContainer {
   position: fixed;
@@ -417,4 +447,31 @@ body, input, textarea, button {
   width: 10%;
   height: auto;
   margin: 1px;
+}
+
+#hand_html img,
+#bench_html div img,
+#lostzoneDisplay_html img,
+#deckDisplay_html img,
+#discardDisplay_html img,
+#board_html img,
+.playContainer img,
+.fullView img,
+#attachedCardPopup_html img,
+#viewCards_html img,
+#deck_html img,
+#lostzone_html img,
+#discard_html img,
+#prizes_html img {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .3); /* Adjust the values for your desired shadow effect */
+  border-radius: 0.3rem;
+}
+#hand_html,
+#bench_html,
+#deckDisplay_html,
+#discardDisplay_html,
+#active_html,
+#prizes_html
+{
+  border-radius: .5rem; /* Rounded corners */
 }

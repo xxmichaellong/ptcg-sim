@@ -12,7 +12,7 @@
 <body>
     <iframe id="selfContainers" class="self" src="./iframe-containers/self-containers.html"></iframe>
     <iframe id="oppContainers" class="opp" src="./iframe-containers/opp-containers.html"></iframe>
-    <div id="stadium_html" class="base"></div>
+    <div id="stadium_html"></div>
     <div id="selfResizer" class="selfColour"></div>
     <div id="oppResizer" class="oppColour"></div>  
 
@@ -23,14 +23,16 @@
     </div>
 
     <div id="topButtonContainer">
-        <button id="p1Button" class="selectedPage">1P</button>
-        <button id="p2Button" class="notSelectedPage">2P</button>
-        <button id="deckImportButton" class="notSelectedPage">Import Deck</button>
-        <button id="settingsButton" class="notSelectedPage">Settings</button>
+        <button id="p1Button" class="selected-page">1P</button>
+        <button id="p2Button" class="not-selected-page">2P</button>
+        <button id="deckImportButton" class="not-selected-page">Import Deck</button>
+        <button id="settingsButton" class="not-selected-page">Settings</button>
     </div>
     
     <div id="p1Box" class="sidebox">
-        <div id="chatbox"><strong>Welcome to PTCG-sim!</strong><br><br>This is a free tool to practice by yourself or with others. Drag or use keybinds (<span class="shift-font">shift</span>) to play.<br><br>Import your decklist to start testing! 🥳</div>
+        <div id="chatbox"><strong>Welcome to PTCG-sim!</strong><br><br>This is a free tool to practice by yourself or with others. Drag or use keybinds (<span class="shift-font">shift</span>) to play.<br><br>Import your decklist to start testing! 🥳
+            <div id="line"></div>
+        </div>
         <div id="chatboxButtonContainer" class="sidebox-button-container">
             <button id="attackButton" class="selfColour">Attack</button>
             <button id="passButton" class="selfColour">Pass</button>
@@ -77,7 +79,22 @@
     <div id="deckImport" class="sidebox"> 
         <input id="deckImportInput" type="text" placeholder="Import your decklist here..."
     ></div>
-    <div id="settings" class="sidebox">Settings content...</div>
+    <div id="settings" class="sidebox">
+        <div id="settingsToggles">
+            <div>
+                <input type="checkbox" id="darkModeCheckbox">
+                <label for="darkModeCheckbox">Dark mode</label>
+              </div>
+              <div>
+                <input type="checkbox" id="showContainersCheckbox">
+                <label for="showContainersCheckbox">Show containers</label>
+              </div>
+        </div>
+        <div id="keybindReminder">
+          Press (<span class="shift-font">shift</span>) to see keybinds
+        </div>
+      </div>
+      
 
 
     <div id="cardContextMenu" class="contextMenu">

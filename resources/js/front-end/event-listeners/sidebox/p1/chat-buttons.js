@@ -1,7 +1,7 @@
-import { resetCounters } from "../../actions/counters/reset-ability-counters.js";
-import { attackButton, POV, passButton, messageInput} from "../../front-end.js";
-import { appendMessage } from "../../setup/chatbox/messages.js";
-import { determineUsername } from "../../setup/general/determine-username.js";
+import { resetCounters } from "../../../actions/counters/reset-ability-counters.js";
+import { attackButton, POV, passButton, messageInput} from "../../../front-end.js";
+import { appendMessage } from "../../../setup/chatbox/messages.js";
+import { determineUsername } from "../../../setup/general/determine-username.js";
 
 attackButton.addEventListener('click', () => {
     resetCounters();

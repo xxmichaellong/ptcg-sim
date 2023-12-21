@@ -1,6 +1,6 @@
-import { flipBoard } from '../../actions/general/flip-board.js';
-import { reset } from '../../actions/general/reset.js';
-import { POV, chatbox, connectedRoom, copyButton, generateIdButton, joinRoomButton, leaveRoomButton, lobby, nameInput, p1, p2Chatbox, p2SelfUsername, roomHeaderCopyButton, roomHeaderText, roomId, roomIdInput, socket } from '../../front-end.js';
+import { flipBoard } from '../../../actions/general/flip-board.js';
+import { reset } from '../../../actions/general/reset.js';
+import { POV, chatbox, connectedRoom, copyButton, generateIdButton, joinRoomButton, leaveRoomButton, lobby, nameInput, p1, p2Chatbox, p2SelfUsername, roomHeaderCopyButton, roomHeaderText, roomId, roomIdInput, socket } from '../../../front-end.js';
 
 copyButton.addEventListener('click', () => {
     navigator.clipboard.writeText(roomIdInput.value);
