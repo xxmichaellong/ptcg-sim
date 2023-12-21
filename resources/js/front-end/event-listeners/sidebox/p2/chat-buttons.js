@@ -1,5 +1,5 @@
 import { resetCounters } from "../../../actions/counters/reset-ability-counters.js";
-import { p2AttackButton, POV, p2PassButton, p2MessageInput} from "../../../front-end.js";
+import { p2AttackButton, POV, p2PassButton, p2MessageInput, p2FREEBUTTON} from "../../../front-end.js";
 import { appendMessage } from "../../../setup/chatbox/messages.js";
 import { determineUsername } from "../../../setup/general/determine-username.js";
 
@@ -25,4 +25,8 @@ p2MessageInput.addEventListener('keydown', (event) => {
             p2MessageInput.value = '';
         };
     }
+});
+
+p2FREEBUTTON.addEventListener('click', () => {
+    appendMessage(POV.user, '🥳', 'player');
 });
