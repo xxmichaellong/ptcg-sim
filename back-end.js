@@ -14,33 +14,41 @@ const io = new Server(server, {cors: {}});
 
 const port = 4000;
 
-const players = new Map();
-
 io.on('connection', (socket) => {
 
     socket.on('generateId', () => {
         socket.emit('generateId', socket.id.toString() + '0');
     });
-    socket.on('joinGame', (id, username) => {
-
-        socket.join(id);
-        players.set(socket.id, { id, username });
-        const otherPlayerInfo = Array.from(players.entries())
-            .filter(([key, player]) => key !== socket.id && player.id === id);
-
-        const otherPlayerUsernames = otherPlayerInfo.map(([_, player]) => player.username);
-
-        socket.on('disconnect', () => {
-            players.delete(socket.id);
-            socket.broadcast.to(id).emit('leaveGameMessage', username);
-        });
-
-        if (otherPlayerUsernames.length < 2){
-            socket.emit('joinGame', otherPlayerUsernames);
-            socket.broadcast.to(id).emit('joinMessage', username);
+    socket.on('joinGame', (roomId, username) => {
+        socket.join(roomId);
+        const clientsInRoom = io.sockets.adapter.rooms.get(roomId);
+        if (clientsInRoom.size < 3){
+            socket.on('disconnect', () => {
+                socket.broadcast.to(roomId).emit('leaveGameMessage', username);
+                socket.leave(roomId);
+            });
+            socket.emit('joinGame');
         } else {
+            socket.leave(roomId);
             socket.emit('roomReject');
         };
+    });
+    socket.on('exchangeData', (data) => {
+        const clientsInRoom = io.sockets.adapter.rooms.get(data.roomId);
+        if (clientsInRoom.size > 1){
+            socket.broadcast.to(data.roomId).emit('exchangeData', data);
+        } else {
+            const errorData = {
+                error : 'No other players in room'
+            };
+            socket.emit('sentData', errorData);
+        };
+    });
+    socket.on('deckData', (data) => {
+        socket.broadcast.to(data.roomId).emit('deckData', data);
+    });
+    socket.on('sentData', (data) => {
+        socket.broadcast.to(data.roomId).emit('sentData', data);
     });
     socket.on('appendMessage', (data) => {
         socket.broadcast.to(data.roomId).emit('appendMessage', data);

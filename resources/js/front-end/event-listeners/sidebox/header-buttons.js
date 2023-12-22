@@ -1,6 +1,7 @@
 import { reset } from '../../actions/general/reset.js';
-import { connectedRoom, deckImportButton, lobby, p1, p1Button, p2Button, p2Chatbox, settingsButton, socket } from '../../front-end.js';
+import { connectedRoom, deckImportButton, lobby, p1, p1Button, p2Button, p2Chatbox, roomId, settingsButton, socket } from '../../front-end.js';
 import { show } from '../../setup/home-header/header-toggle.js';
+import { p2DeckData } from '../../socket/fetch-opp-data.js';
 
 p1Button.addEventListener('click', () => {
     if (p1[0]) {
@@ -9,11 +10,13 @@ p1Button.addEventListener('click', () => {
         socket.disconnect();
         lobby.style.display = 'block';
         connectedRoom.style.display = 'none';
-        reset('self', true);
-        reset('opp', true);
-        socket.connect();
         p1[0] = true;
+        roomId[0] = '';
+        socket.connect();
+        reset('opp', true, true, true, false);
+        reset('self', true, true, true, false);
         p2Chatbox.innerHTML = '';
+        p2DeckData[0] = '';
         show('p1Box', p1Button);
     };
 });

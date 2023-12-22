@@ -46,7 +46,6 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
         } else if (oLocation_html === oppDiscard_html){
             display_html = oppDiscardDisplay_html;
         };
-
         display_html.removeChild(display_html.firstElementChild);
         // append new cover image if there are still cards
         if (oLocation.cards.length > 0){
@@ -64,12 +63,7 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
             display_html.appendChild(cover.image);
         };
     } else if (['deck_html'].includes(_oLocation_html) && oLocation.cards.length === 0){
-        let display_html;
-        if (oLocation_html === deck_html){
-            display_html = deckDisplay_html;
-        } else if (oLocation_html === oppDeck_html){
-            display_html = oppDeckDisplay_html;
-        }
+        const display_html = oLocation_html === deck_html ? deckDisplay_html : oppDeckDisplay_html;
         display_html.removeChild(display_html.firstElementChild);
     };
     
@@ -346,6 +340,9 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
                 display_html = deckDisplay_html;
             } else if (mLocation_html === oppDeck_html){
                 display_html = oppDeckDisplay_html;
+            };
+            if (display_html.firstElementChild){
+                display_html.removeChild(display_html.firstElementChild);
             };
             display_html.appendChild(makeDeckCover(user).image);
         //move active card to the bench if it exists

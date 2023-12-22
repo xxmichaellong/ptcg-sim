@@ -39,6 +39,11 @@ export const p2SetupButton = document.getElementById('p2SetupButton');
 export const p2ResetButton = document.getElementById('p2ResetButton');
 export const leaveRoomButton = document.getElementById('leaveRoomButton');
 
+//deckimport
+export const mainImportHeaderButton = document.getElementById('mainImportHeaderButton');
+export const altImportHeaderButton = document.getElementById('altImportHeaderButton');
+export const importButton = document.getElementById('importButton');
+
 //selfContainers
 export const selfShuffleDeckButton = selfContainersDocument.getElementById('selfShuffleDeckButton');
 export const selfDiscardShuffleButton = selfContainersDocument.getElementById('discardShuffleButton');

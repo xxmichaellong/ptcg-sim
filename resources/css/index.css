@@ -246,7 +246,7 @@ ul, li {
   overflow: hidden; /* Ensure buttons don't exceed container width */
 }
 .sidebox-button-container button {
-  padding: 7px 0; /* Adjust padding for button size */
+  padding: 7px; /* Adjust padding for button size */
   width: 23%; /* Adjust width to distribute evenly */
   border-radius: 10px; /* Rounded edges */
   font-size: 2vh; /* Adjust font size as needed */
@@ -265,7 +265,6 @@ ul, li {
 .sidebox-button-container button.neutralColour:hover {
   background-color: rgba(150, 144, 144, 0.864);  
 }
-
 #messageInput {
   width: 100%;
   padding: 10px;
@@ -403,6 +402,75 @@ ul, li {
 #deckImport {
   display: none;
 }
+#importButtonContainer {
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 5%;
+  height: 8%;
+  padding-top: 1vh;
+  padding-bottom: 1vh;
+}
+#importButtonContainer button {
+  width: 50%;
+  height: 100%;
+  border-radius: .5rem;
+  padding: 1vh;
+  border: none;
+  background-color: rgba(171, 171, 171, 0.864);
+}
+.main-select {
+  font-weight: bold; /* Added to make the font bold */
+  background-color: rgba(90, 110, 188, 0.864) !important;
+  color: white;
+  border: .25vw solid rgba(40, 57, 124, 0.864) !important; /* Added "solid" for the border style */
+}
+.alt-select {
+  font-weight: bold; /* Added to make the font bold */
+  color: white;
+  background-color: rgba(188, 90, 113, 0.864) !important;
+  border: .25vw solid rgba(153, 58, 81, 0.864) !important; /* Added "solid" for the border style */
+}
+#mainDeckImportInput, #altDeckImportInput {
+  height: 85%;
+  width: 100%;
+  padding: 2vh;
+  border-radius: 10px;
+  font-size: 1.75vh;
+  box-sizing: border-box;
+  resize: none;
+}
+#mainDeckImportInput {
+  border: .25vw solid rgba(40, 57, 124, 0.864); /* Added "solid" for the border style */
+  display: inline-block;
+}
+#altDeckImportInput {
+  display: none;
+  border: .25vw solid rgba(153, 58, 81, 0.864) !important; /* Added "solid" for the border style */
+}
+#importBottom {
+  margin-top: 1vh;
+  width: 100%;
+  display: flex;
+  align-items: center; /* Align items vertically in the center */
+  gap: 1vw;
+}
+#importButton {
+  width: 30%;
+  border-radius: .5rem;
+  padding: 1vh;
+  border: none;
+  background-color: #7bb9a2;
+  color: white;
+  font-weight: bold; /* Added to make the font bold */
+}
+#importButton:hover {
+  background-color: #95c6b4;
+}
+#success, #failed, #loading {
+  display: none;
+}
 #settings {
   display: none;
 }
@@ -429,7 +497,6 @@ ul, li {
   width: 100%;
   color: grey;
 }
-
 /*contextMenu styling*/
 .contextMenu button {
   display: block;

@@ -109,7 +109,7 @@ export const openCardContextMenu = (event) => {
 
     // get the fucking position of this mf
     const targetRect = event.target.getBoundingClientRect();
-    const offsetHeight = (event.target.user === 'self') ? oppContainers.offsetHeight : selfContainers.offsetHeight;
+    const offsetHeight = window.innerHeight - ((event.target.user === 'self') ? selfContainers.offsetHeight : oppContainers.offsetHeight);
     if (document.body.contains(event.target)){
         cardContextMenu.style.left = `${targetRect.left + event.target.clientWidth}px`;
         cardContextMenu.style.top = `${targetRect.top}px`;
@@ -117,12 +117,10 @@ export const openCardContextMenu = (event) => {
         if (event.target.parentElement.id === 'deckDisplay_html'){
             cardContextMenu.style.left = `${targetRect.left - cardContextMenu.clientWidth}px`;
             cardContextMenu.style.top = `${targetRect.top + offsetHeight}px`; 
-        }
-        else if (event.target.parentElement.id === 'hand_html'){
+        } else if (event.target.parentElement.id === 'hand_html'){
             cardContextMenu.style.left = `${targetRect.left}px`;
             cardContextMenu.style.top = `${targetRect.top + offsetHeight - cardContextMenu.offsetHeight}px`; 
-        }
-        else {
+        } else {
             cardContextMenu.style.left = `${targetRect.left + event.target.clientWidth}px`;
             cardContextMenu.style.top = `${targetRect.top + offsetHeight}px`; 
         };

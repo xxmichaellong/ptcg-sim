@@ -1,4 +1,4 @@
-import { darkModeCheckbox, p1Box, p2Box, settings, settingsToggles, showContainersCheckbox, chatbox, messageInput, nameInput, p2Chatbox, p2MessageInput, roomIdInput, stadium_html, deckImport, selfContainersDocument, oppContainersDocument, cardContextMenu, keybindModal } from "../../front-end.js";
+import { darkModeCheckbox, p1Box, p2Box, settings, settingsToggles, showContainersCheckbox, chatbox, messageInput, nameInput, p2Chatbox, p2MessageInput, roomIdInput, stadium_html, deckImport, selfContainersDocument, oppContainersDocument, cardContextMenu, keybindModal, mainDeckImportInput, altDeckImportInput } from "../../front-end.js";
 import { stringToVariable } from "../../setup/containers/string-to-variable.js";
 
 const darkMode = () => {
@@ -14,6 +14,8 @@ const darkMode = () => {
     p2Box.classList.toggle('dark-mode-2');
     settings.classList.toggle('dark-mode-2');
     deckImport.classList.toggle('dark-mode-2');
+    mainDeckImportInput.classList.toggle('dark-mode-2');
+    altDeckImportInput.classList.toggle('dark-mode-2');
     document.querySelector('.selected-page').classList.toggle('dark-mode-2');
     const buttons = document.querySelectorAll('#boardButtonContainer button');
     buttons.forEach(button => {

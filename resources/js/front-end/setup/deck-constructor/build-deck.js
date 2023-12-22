@@ -1,8 +1,10 @@
-import { deck, deckData, deck_html, oppDeck, oppDeck_html } from '../../front-end.js';
+import { makeDeckCover } from '../../actions/make-cover/deck-cover.js';
+import { deck, deckDisplay_html, deck_html, oppDeck, oppDeckDisplay_html, oppDeck_html } from '../../front-end.js';
+import { determineDeckData } from '../general/determine-deckdata.js';
 import { Card } from './card.js';
 
-// Function to make card objects and add it to the deck array, specifying the quantity of each card
 export const buildDeck = (user) => {
+    const deckData = determineDeckData(user);
     for (const [quantity, rawCardAttributes, rawImageAttributes] of deckData){
         for (let i = 0; i < quantity; i++){
             const _card = new Card(rawCardAttributes, rawImageAttributes);
@@ -13,4 +15,6 @@ export const buildDeck = (user) => {
             _deck_html.appendChild(_card.image);
         };
     };
+    const display_html = user === 'self' ? deckDisplay_html : oppDeckDisplay_html;
+    display_html.appendChild(makeDeckCover(user).image);
 }

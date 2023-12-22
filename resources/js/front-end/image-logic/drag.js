@@ -1,11 +1,9 @@
-import { closeContainerPopups, closePopups } from '../actions/general/close-popups.js';
+import { closePopups } from '../actions/general/close-popups.js';
 import { moveCard } from '../actions/general/move-card.js';
-import { POV, active_html, attachedCardPopup_html, bench_html, deck_html, discard_html, lostzone_html, oppActive_html, oppAttachedCardPopup_html, oppBench_html, oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html, oppViewCards_html, p1, roomId, sCard, selfContainersDocument, socket, target, viewCards_html } from '../front-end.js';
+import { active_html, attachedCardPopup_html, bench_html, deck_html, discard_html, lostzone_html, oppActive_html, oppAttachedCardPopup_html, oppBench_html, oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html, oppViewCards_html, sCard, selfContainersDocument, target, viewCards_html } from '../front-end.js';
 import { moveCardMessage } from '../setup/chatbox/location-name.js';
-import { appendMessage } from '../setup/chatbox/messages.js';
 import { containerIdToLocation } from '../setup/containers/container-reference.js';
 import { stringToVariable, variableToString } from '../setup/containers/string-to-variable.js';
-import { determineUsername } from '../setup/general/determine-username.js';
 import { identifyCard } from './click-events.js';
 
 const popupContainers = [lostzone_html, discard_html, deck_html, attachedCardPopup_html, oppLostzone_html, oppDiscard_html, oppAttachedCardPopup_html, oppDeck_html, viewCards_html, oppViewCards_html];

@@ -21,6 +21,14 @@
 body, input, textarea, button {
   font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif
 }
+#boardCenterDesign {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
 #boardCircle {
   position: absolute;
   width: 16vw;
@@ -322,7 +330,7 @@ body, input, textarea, button {
 .self-tab {
   position: absolute;
   border-radius: 10%;
-  background-color: rgba(0, 183, 255, 0.392);
+  background-color: rgba(59, 141, 173, 0.708);
 }
 #attachedCardPopup_html {
   display: none;

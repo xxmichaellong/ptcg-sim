@@ -1,4 +1,4 @@
-import { connectedRoom, lobby, p1, roomIdInput, socket, p2SelfUsername, p2OppUsername } from '../front-end.js'
+import { connectedRoom, lobby, p1, roomIdInput, socket, p2SelfUsername, p2OppUsername, roomHeaderText, roomId, chatbox, POV } from '../front-end.js'
 import { appendMessage } from '../setup/chatbox/messages.js'
 import { moveCard } from '../actions/general/move-card.js'
 import { takeTurn } from '../actions/general/take-turn.js'
@@ -11,38 +11,46 @@ import { shuffleContainer } from '../actions/container/shuffle-container.js'
 import { viewDeck } from '../actions/container/deck-actions.js'
 import { addAbilityCounter } from '../actions/counters/ability-counter.js'
 import { resetCounters } from '../actions/counters/reset-ability-counters.js'
+import { flipBoard } from '../actions/general/flip-board.js'
+import { exchangeData, p2DeckData } from './fetch-opp-data.js'
+import { mainDeckData } from '../setup/deck-constructor/import.js'
+import { determineUsername } from '../setup/general/determine-username.js'
 
 socket.on('generateId', (id) => {
     roomIdInput.value = id;
 });
-socket.on('joinGame', (otherPlayerUsername) => {
+socket.on('joinGame', () => {
     p1[0] = false;
+    reset('opp', true, true, false);
+    reset('self', true, false, true, false);
+    roomHeaderText.textContent = 'id: ' + roomId[0];
+    chatbox.innerHTML = '';
+    if (POV.user === 'opp'){
+        flipBoard();
+    };
     connectedRoom.style.display = 'flex';
     lobby.style.display = 'none';
-    reset('self', true);
-    reset('opp', true);
-    if (otherPlayerUsername.length > 0){
-        p2OppUsername[0] = otherPlayerUsername[0];
-        appendMessage('opp', otherPlayerUsername[0] + ' is here!', 'announcement', true);
-    };
+    exchangeData()
+        .then(() => {
+            reset('opp', true, false, true, false);
+            appendMessage('opp', p2OppUsername[0] + ' is here!', 'announcement', true);
+        })
+        .catch((error) => {
+            console.error(error);
+        });
     appendMessage('self', p2SelfUsername[0] + ' joined', 'announcement', true);
-});
-socket.on('joinMessage', (otherPlayerUsername) => {
-    p2OppUsername[0] = otherPlayerUsername;
-    appendMessage('opp', otherPlayerUsername + ' joined', 'announcement', true);
 });
 socket.on('leaveGameMessage', (otherPlayerUsername) => {
     appendMessage('opp', otherPlayerUsername + ' left', 'announcement', true);
 });
 socket.on('roomReject', () => {
-    // Create overlay
     let overlay = document.createElement('div');
     overlay.style.position = 'fixed';
     overlay.style.top = '0';
     overlay.style.left = '0';
     overlay.style.width = '100%';
     overlay.style.height = '100%';
-    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'; // Semi-transparent
+    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
 
     let container = document.createElement('div');
     container.style.position = 'absolute';
@@ -50,7 +58,7 @@ socket.on('roomReject', () => {
     container.style.left = '50%';
     container.style.transform = 'translate(-50%, -50%)';
     container.style.textAlign = 'center';
-    container.style.color = '#fff'; // White text
+    container.style.color = '#fff';
 
     let message = document.createElement('p');
     message.textContent = 'Room is full!';
@@ -66,11 +74,29 @@ socket.on('roomReject', () => {
         document.body.removeChild(overlay);
     });
 });
+
+socket.on('exchangeData', (data) => {
+    p2OppUsername[0] = data.username;
+    p2DeckData[0] = data.deckData;
+    appendMessage('opp', p2OppUsername[0] + ' joined', 'announcement', true);
+    reset('opp', true, false, true, false);
+    const exchangeData = {
+        roomId : roomId,
+        username : p2SelfUsername,
+        deckData : mainDeckData[0]
+    };
+    socket.emit('sentData', exchangeData);
+});
+socket.on('deckData', (data) => {
+    p2DeckData[0] = data.deckData;
+    appendMessage(data.user, determineUsername(data.user) + ' imported deck', 'announcement');
+    reset(data.user, true, false, true);
+})
 socket.on('appendMessage', (data) => {
     appendMessage(data.user, data.message, data.type, data.received);
 });
 socket.on('reset', (data) => {
-    reset(data.user, data.clean, data.received);
+    reset(data.user, data.clean, data.received, data.build, data.invalidMessage);
 });
 socket.on('takeTurn', (data) => {
     takeTurn(data.user, data.received);

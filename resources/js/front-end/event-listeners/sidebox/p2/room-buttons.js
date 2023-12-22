@@ -1,6 +1,6 @@
-import { flipBoard } from '../../../actions/general/flip-board.js';
 import { reset } from '../../../actions/general/reset.js';
-import { POV, chatbox, connectedRoom, copyButton, generateIdButton, joinRoomButton, leaveRoomButton, lobby, nameInput, p1, p2Chatbox, p2SelfUsername, roomHeaderCopyButton, roomHeaderText, roomId, roomIdInput, socket } from '../../../front-end.js';
+import { connectedRoom, copyButton, generateIdButton, joinRoomButton, leaveRoomButton, lobby, nameInput, p1, p2Chatbox, p2SelfUsername, roomHeaderCopyButton, roomHeaderText, roomId, roomIdInput, socket } from '../../../front-end.js';
+import { p2DeckData } from '../../../socket/fetch-opp-data.js';
 
 copyButton.addEventListener('click', () => {
     navigator.clipboard.writeText(roomIdInput.value);
@@ -29,11 +29,6 @@ joinRoomButton.addEventListener('click', () => {
     const randomIndex = Math.floor(Math.random() * names.length);
     p2SelfUsername[0] = nameInput.value.trim() !== '' ? nameInput.value : names[randomIndex];
     roomId[0] = roomIdInput.value;
-    roomHeaderText.textContent = 'id: ' + roomId;
-    chatbox.innerHTML = '';
-    if (POV.user === 'opp'){
-        flipBoard();
-    };
     socket.emit('joinGame', roomId[0], p2SelfUsername[0]);
 });
 
@@ -42,10 +37,12 @@ leaveRoomButton.addEventListener('click', () => {
         socket.disconnect();
         lobby.style.display = 'block';
         connectedRoom.style.display = 'none';
-        reset('self', true);
-        reset('opp', true);
-        socket.connect();
         p1[0] = true;
+        roomId[0] = '';
+        socket.connect();
+        reset('opp', true, true, true, false);
+        reset('self', true, true, true, false);
         p2Chatbox.innerHTML = '';
+        p2DeckData[0] = '';
     };
 });

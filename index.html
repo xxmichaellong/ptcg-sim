@@ -76,9 +76,18 @@
         </div>
        
     </div>
-    <div id="deckImport" class="sidebox"> 
-        <input id="deckImportInput" type="text" placeholder="Import your decklist here..."
-    ></div>
+    <div id="deckImport" class="sidebox">
+        <div id="importButtonContainer">
+            <button id="mainImportHeaderButton" class="main-select">Main</button>
+            <button id="altImportHeaderButton">Alt (1P only)</button>
+        </div>
+        <textarea id="mainDeckImportInput" placeholder="Import your decklist here" spellcheck="false"></textarea>
+        <textarea id="altDeckImportInput" placeholder="Import your decklist here" spellcheck="false"></textarea>        
+        <div id="importBottom">
+            <button id="importButton">Import</button>
+            <div id="success">Success!</div><div id="failed">Error!</div><div id="loading"></div>
+        </div>
+    </div>
     <div id="settings" class="sidebox">
         <div id="settingsToggles">
             <div>

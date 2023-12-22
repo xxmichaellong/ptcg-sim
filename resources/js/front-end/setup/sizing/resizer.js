@@ -237,6 +237,7 @@ export const flippedSelfResize = (e) => {
         adjustCards('self', 'active', 'active_html', selfRatio);
     };
     stadium_html.style.bottom = (Math.min(84, ((parseFloat(selfResizer.style.bottom) + parseFloat(oppResizer.style.bottom))/2 - 8))) + '%';
+    boardButtonContainer.style.bottom = (Math.min(90, ((parseFloat(selfResizer.style.bottom) + parseFloat(oppResizer.style.bottom))/2 - 3))) + '%';
     oppResizer.style.height = '2%';
     if (parseFloat(oppResizer.style.bottom) > 100){
         oppResizer.style.height = '5%';
@@ -279,6 +280,7 @@ export const flippedOppResize = (e) => {
         adjustCards('opp', 'active', 'active_html', oppRatio);
     };
     stadium_html.style.bottom = (Math.min(84, ((parseFloat(selfResizer.style.bottom) + parseFloat(oppResizer.style.bottom))/2 - 8))) + '%';
+    boardButtonContainer.style.bottom = (Math.min(90, ((parseFloat(selfResizer.style.bottom) + parseFloat(oppResizer.style.bottom))/2 - 3))) + '%';
     oppResizer.style.height = '2%';
     if (parseFloat(oppResizer.style.bottom) > 100){
         oppResizer.style.height = '5%';
