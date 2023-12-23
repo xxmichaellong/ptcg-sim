@@ -43,6 +43,7 @@ export const leaveRoomButton = document.getElementById('leaveRoomButton');
 export const mainImportHeaderButton = document.getElementById('mainImportHeaderButton');
 export const altImportHeaderButton = document.getElementById('altImportHeaderButton');
 export const importButton = document.getElementById('importButton');
+export const randomButton = document.getElementById('randomButton');
 
 //selfContainers
 export const selfShuffleDeckButton = selfContainersDocument.getElementById('selfShuffleDeckButton');
@@ -63,6 +64,8 @@ export const selfCloseLostzoneDisplayButton = selfContainersDocument.getElementB
 export const selfVSTARButton = selfContainersDocument.getElementById('vSTARButton');
 export const selfGXButton = selfContainersDocument.getElementById('GXButton');
 
+export const selfSortCheckBox = selfContainersDocument.getElementById('sortCheckBox');
+
 //oppContainers
 export const oppShuffleDeckButton = oppContainersDocument.getElementById('oppShuffleDeckButton')
 export const oppDiscardShuffleButton = oppContainersDocument.getElementById('discardShuffleButton');
@@ -81,3 +84,5 @@ export const oppCloseLostzoneDisplayButton = oppContainersDocument.getElementByI
 
 export const oppVSTARButton = oppContainersDocument.getElementById('vSTARButton');
 export const oppGXButton = oppContainersDocument.getElementById('GXButton');
+
+export const oppSortCheckBox = oppContainersDocument.getElementById('sortCheckBox');

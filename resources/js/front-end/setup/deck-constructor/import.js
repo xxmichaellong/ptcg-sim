@@ -164,10 +164,10 @@ export const importDecklist = (user) => {
     };
     importButton.disabled = false;
 
-    console.log(decklistArray);
+    // console.log(decklistArray);
 
+    reset(user, true, true);
     if (p1[0]){
-        reset(user, true);
         appendMessage(user, determineUsername(user) + ' imported deck', 'announcement');
     } else if (user === 'self'){
         const oUser = user === 'self' ? 'opp' : 'self';

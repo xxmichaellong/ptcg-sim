@@ -1,4 +1,5 @@
 import { resetCounters } from "../../../actions/counters/reset-ability-counters.js";
+import { sort } from "../../../actions/general/sort.js";
 import { attackButton, POV, passButton, messageInput, FREEBUTTON} from "../../../front-end.js";
 import { appendMessage } from "../../../setup/chatbox/messages.js";
 import { determineUsername } from "../../../setup/general/determine-username.js";
@@ -27,5 +28,6 @@ messageInput.addEventListener('keydown', (event) => {
 });
 
 FREEBUTTON.addEventListener('click', () => {
-    appendMessage(POV.user, '🥳', 'player');
+    appendMessage(POV.user, FREEBUTTON.textContent, 'player');
+    sort('self');
 });

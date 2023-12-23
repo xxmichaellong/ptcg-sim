@@ -28,5 +28,5 @@ p2MessageInput.addEventListener('keydown', (event) => {
 });
 
 p2FREEBUTTON.addEventListener('click', () => {
-    appendMessage(POV.user, '🥳', 'player');
+    appendMessage(POV.user, p2FREEBUTTON.textContent, 'player');
 });

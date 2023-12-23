@@ -179,17 +179,18 @@ ul, li {
 #topButtonContainer {
   position: fixed;
   right: 0;
-  top: 0;
+  bottom: 95vh;
+  height: 5vh;
   width: 24%;
-  height: 5%;
   display: flex;
   overflow: hidden; /* Ensure buttons don't exceed container width */
   background: rgb(145, 145, 145);
+  align-items: flex-end; /* Align items at the bottom of the container */
 }
 #topButtonContainer button {
-  padding: 7px 0; /* Adjust padding for button size */
+  padding: 1vh; /* Adjust padding for button size */
   width: 30%; /* Adjust width to distribute evenly */
-  font-size: 1vw; /* Adjust font size as needed */
+  font-size: 1.75vh; /* Adjust font size as needed */
   cursor: pointer;
   border: none;
 }
@@ -208,9 +209,9 @@ ul, li {
   background: rgb(231, 228, 228);
   position: fixed;
   right: 0;
-  top: 5%;
+  top: 5vh;
   width: 24%;
-  height: 95%;
+  height: 95vh;
   padding: 0.5%;
   box-sizing: border-box;
   display: flex;
@@ -436,21 +437,21 @@ ul, li {
   display: none;
 }
 #importButtonContainer {
-  box-sizing: border-box;
   width: 100%;
   display: flex;
   justify-content: center;
   gap: 5%;
-  height: 8%;
+  height: 5%;
   padding-top: 1vh;
   padding-bottom: 1vh;
+  align-items: center;
 }
 #importButtonContainer button {
   width: 50%;
-  height: 100%;
   border-radius: .5rem;
   padding: 1vh;
   border: none;
+  font-size: 1.5vh;
   background-color: rgba(171, 171, 171, 0.864);
 }
 .main-select {
@@ -500,6 +501,14 @@ ul, li {
 }
 #importButton:hover {
   background-color: #95c6b4;
+}
+#randomButton {
+  position: absolute;
+  right: 5%;
+  background-color: transparent;
+  border: none;
+  font-size: x-large;
+  cursor: pointer;
 }
 #success, #failed, #loading {
   display: none;

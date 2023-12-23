@@ -11,6 +11,7 @@ import { stringToVariable } from '../../setup/containers/string-to-variable.js';
 import { addDamageCounter } from '../counters/damage-counter.js';
 import { addSpecialCondition } from '../counters/special-condition.js';
 import { addAbilityCounter } from '../counters/ability-counter.js';
+import { sort } from './sort.js';
 
 export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex, received = false) => {
     deselectCard(); //remove highlight from all images before it's moved
@@ -484,4 +485,5 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
         socket.emit('moveCard', moveCardData);
         // socket.emit('appendMessage', appendMessageData);
     };
+    sort(user);
 }

@@ -117,5 +117,10 @@ export const target = {
     location: '',
     container: '',
     containerId: '',
-    locationAsString: ''
+    locationAsString: '',
+    get card(){
+        if (this.location){
+            return this.location.cards[this.index];
+        };
+    }
 };

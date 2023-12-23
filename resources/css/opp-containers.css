@@ -15,6 +15,7 @@
 }
 .dark-mode-4 {
   background-color: #141414 !important;
+  color: white;
 }
 body, input, textarea, button {
   font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif
@@ -437,6 +438,10 @@ body, input, textarea, button {
   height: 75%;
   overflow-y: auto;
   z-index: 3;
+}
+#deck_html label {
+  position: relative;
+  cursor: pointer;
 }
 #deck_html img {
   display: inline-block;

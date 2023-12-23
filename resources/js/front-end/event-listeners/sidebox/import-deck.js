@@ -1,10 +1,6 @@
-import { altDeckImportInput, altImportHeaderButton, failedText, importButton, mainDeckImportInput, mainImportHeaderButton, successText } from "../../front-end.js";
+import { altDeckImportInput, altImportHeaderButton, failedText, importButton, mainDeckImportInput, mainImportHeaderButton, randomButton, successText } from "../../front-end.js";
 import { importDecklist } from "../../setup/deck-constructor/import.js";
-
-importButton.addEventListener('click', () => {
-    const user = mainDeckImportInput.style.display !== 'none' ? 'self' : 'opp';
-    importDecklist(user);
-});
+import { sampleLists } from "../../setup/deck-constructor/sample.decklists.js";
 
 mainImportHeaderButton.addEventListener('click', () => {
     if (mainImportHeaderButton.classList.contains('main-select')){
@@ -30,4 +26,19 @@ altImportHeaderButton.addEventListener('click', () => {
         successText.style.display = 'none';
         failedText.style.display = 'none';
     };
+});
+
+importButton.addEventListener('click', () => {
+    const user = mainDeckImportInput.style.display !== 'none' ? 'self' : 'opp';
+    importDecklist(user);
+});
+
+randomButton.addEventListener('click', () => {
+    const input = mainDeckImportInput.style.display !== 'none' ? mainDeckImportInput : altDeckImportInput;
+
+    input.value = '';
+
+    const randomList = sampleLists[Math.floor(Math.random() * sampleLists.length)];
+
+    input.value = randomList;
 });

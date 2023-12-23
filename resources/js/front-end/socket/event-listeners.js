@@ -36,7 +36,7 @@ socket.on('joinGame', () => {
             appendMessage('opp', p2OppUsername[0] + ' is here!', 'announcement', true);
         })
         .catch((error) => {
-            console.error(error);
+            console.log(error);
         });
     appendMessage('self', p2SelfUsername[0] + ' joined', 'announcement', true);
 });
