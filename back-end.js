@@ -12,7 +12,7 @@ const server = http.createServer(app);
 const { Server } = require('socket.io');
 const io = new Server(server, {cors: {}});
 
-const port = 80;
+const port = 4000;
 
 io.on('connection', (socket) => {
 
