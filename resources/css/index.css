@@ -5,7 +5,7 @@ body, input, textarea, button {
   font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif
 }
 body {
-  background: white;
+  background: rgb(250, 250, 250);
   background-size: 100% 100%;
   margin: 0;
   height: 100vh;
@@ -225,7 +225,7 @@ ul, li {
   padding: 10px;
   box-sizing: border-box;
   display: block;
-  border-radius: 10px;
+  border-radius: 10px 10px 0 0; /* Apply border-radius to bottom corners only */
 }
 #line {
   background: rgb(230, 230, 230);
@@ -257,19 +257,52 @@ ul, li {
 .sidebox-button-container button.selfColour:hover {
   background-color: rgba(116, 129, 183, 0.864);
 }
-
 .sidebox-button-container button.oppColour:hover {
   background-color: rgba(189, 112, 130, 0.864);  
 }
-
 .sidebox-button-container button.neutralColour:hover {
   background-color: rgba(150, 144, 144, 0.864);  
+}
+.chat-button-container {
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  overflow: hidden; /* Ensure buttons don't exceed container width */
+  gap: .5vw;
+  box-sizing: border-box;
+  margin-top: .5vh;
+  margin-bottom: .5vh;
+}
+.chat-button-container button {
+  flex: 1; /* Make the buttons take up equal width */
+  padding: 7px; /* Adjust padding for button size */
+  font-size: 2vh; /* Adjust font size as needed */
+  cursor: pointer;
+  color: white; /* Text color */
+  border: none;
+  border-radius: .5vw;
+}
+.chat-button-container button.selfColour:hover {
+  background-color: rgba(116, 129, 183, 0.864);
+}
+.chat-button-container button.oppColour:hover {
+  background-color: rgba(189, 112, 130, 0.864);  
+}
+.chat-button-container button.neutralColour:hover {
+  background-color: rgba(150, 144, 144, 0.864);  
+}
+#attackButton, #p2AttackButton {
+  border-radius: 0 .5vw .5vw 0;
+}
+#FREEBUTTON, #p2FREEBUTTON {
+  border-radius: .5vw 0 0 .5vw;
 }
 #messageInput {
   width: 100%;
   padding: 10px;
   box-sizing: border-box; /* Include padding and border in the total width */
-  border-radius: 10px;
+  border-radius: 0 0 10px 10px; /* Apply border-radius to bottom corners only */
   border: none;
 }
 #bottomP1ButtonContainer {
@@ -384,7 +417,7 @@ ul, li {
   padding: 10px;
   box-sizing: border-box;
   display: block;
-  border-radius: 10px;
+  border-radius: 10px 10px 0 0; /* Apply border-radius to bottom corners only */
 }
 #p2ChatboxButtonContainer {
   width: 100%;
@@ -393,7 +426,7 @@ ul, li {
   width: 100%;
   padding: 10px;
   box-sizing: border-box; /* Include padding and border in the total width */
-  border-radius: 10px;
+  border-radius: 0 0 10px 10px; /* Apply border-radius to bottom corners only */
   border: none;
 }
 #p2BottomButtonContainer {

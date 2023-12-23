@@ -12,7 +12,7 @@
 <body>
     <iframe id="selfContainers" class="self" src="./iframe-containers/self-containers.html"></iframe>
     <iframe id="oppContainers" class="opp" src="./iframe-containers/opp-containers.html"></iframe>
-    <div id="stadium_html"></div>
+    <div id="stadium_html" class="base"></div>
     <div id="selfResizer" class="selfColour"></div>
     <div id="oppResizer" class="oppColour"></div>  
 
@@ -33,7 +33,7 @@
         <div id="chatbox"><strong>Welcome to PTCG-sim!</strong><br><br>This is a free tool to practice by yourself or with others. Drag or use keybinds (<span class="shift-font">shift</span>) to play.<br><br>Import your decklist to start testing! 🥳
             <div id="line"></div>
         </div>
-        <div id="chatboxButtonContainer" class="sidebox-button-container">
+        <div id="chatboxButtonContainer" class="chat-button-container">
             <button id="attackButton" class="selfColour">Attack</button>
             <button id="passButton" class="selfColour">Pass</button>
             <button id="FREEBUTTON" class="selfColour">🥳</button>
@@ -62,7 +62,7 @@
                 <button id="roomHeaderCopyButton">📋</button>
             </div>
             <div id="p2Chatbox"></div>
-            <div id="p2ChatboxButtonContainer" class="sidebox-button-container">
+            <div id="p2ChatboxButtonContainer" class="chat-button-container">
                 <button id="p2AttackButton" class="selfColour">Attack</button>
                 <button id="p2PassButton" class="selfColour">Pass</button>
                 <button id="p2FREEBUTTON" class="selfColour">🥳</button>
@@ -96,7 +96,7 @@
               </div>
               <div>
                 <input type="checkbox" id="showContainersCheckbox">
-                <label for="showContainersCheckbox">Show containers</label>
+                <label for="showContainersCheckbox">Hide containers</label>
               </div>
         </div>
         <div id="keybindReminder">

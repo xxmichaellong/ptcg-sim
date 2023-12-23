@@ -1,8 +1,8 @@
 import { reset } from "../../actions/general/reset.js";
 import { altDeckImportInput, failedText, importButton, loadingText, mainDeckImportInput, p1, roomId, socket, successText } from "../../front-end.js";
-import { exchangeData } from "../../socket/fetch-opp-data.js";
 import { appendMessage } from "../chatbox/messages.js";
 import { determineUsername } from "../general/determine-username.js";
+import { getCardType } from "./find-type.js";
 
 export const mainDeckData = [];
 export const altDeckData = [];
@@ -41,7 +41,7 @@ export const importDecklist = (user) => {
 
     const decklist = user === 'self' ? mainDeckImportInput.value : altDeckImportInput.value;
 
-    const regexWithSet = /(\d+) (.+?) (\w{2,3}) (\d+)/;
+    const regexWithSet = /(\d+) (.+?) (\w{2,3}) (\d+[a-zA-Z]?)/;
     const regexWithPRSet = /(\d+) (.+?) (PR-\w{2,3}) (\d+)/;
     const regexWithSpecialSet = /(\d+) (.+?) ((?:\w{2,3}(?:\s+[a-zA-Z\d]+)*)(?:\s+(\w{2,3}\s*[a-zA-Z\d]+)\s*)*)$/;
     const regexWithoutSet = /(\d+) (.+?)(?=\s\d|$|(\s\d+))/;
@@ -54,6 +54,11 @@ export const importDecklist = (user) => {
     
     // Process each line
     lines.forEach(line => {
+        //ptcglive conversion for GG/TG cards (the alt art bs) (don't apply to promo sets)
+        line = line.replace(/(?!PR-)(\w{2,3})-(\w{2,3}) (\d+)/g, '$1 $2$3');
+        //special case for double crisis set
+        line = line.replace(/xy5-5/g, 'DCR');
+
         let matchWithSet = line.match(regexWithSet);
         let matchWithPRSet = line.match(regexWithPRSet);
         let matchWithSpecialSet = line.match(regexWithSpecialSet);
@@ -90,6 +95,24 @@ export const importDecklist = (user) => {
         'Psychic Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_P_R_EN.png',
         'Metal Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_M_R_EN.png',
         'Water Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_W_R_EN.png',
+        'Basic Fire Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_R_R_EN.png',
+        'Basic Grass Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_G_R_EN.png',
+        'Basic Fairy Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TEU/TEU_Y_R_EN.png',
+        'Basic Darkness Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_D_R_EN.png',
+        'Basic Lightning Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_L_R_EN.png',
+        'Basic Fighting Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_F_R_EN.png',
+        'Basic Psychic Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_P_R_EN.png',
+        'Basic Metal Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_M_R_EN.png',
+        'Basic Water Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_W_R_EN.png',
+        'Basic {W} Energy Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_W_R_EN.png',
+        'Basic {R} Energy Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_R_R_EN.png',
+        'Basic {G} Energy Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_G_R_EN.png',
+        'Basic {Y} Energy Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TEU/TEU_Y_R_EN.png',
+        'Basic {D} Energy Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_D_R_EN.png',
+        'Basic {L} Energy Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_L_R_EN.png',
+        'Basic {F} Energy Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_F_R_EN.png',
+        'Basic {P} Energy Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_P_R_EN.png',
+        'Basic {M} Energy Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_M_R_EN.png'
     };
 
     const specialCases = {
@@ -108,18 +131,23 @@ export const importDecklist = (user) => {
 
         if (energyUrl) {
             entry.push(energyUrl);
+            entry.push('energy');
         } else {
             let [firstPart, secondPart] = set.split(/(?<=\S)\s/);
             if (firstPart && secondPart){
                 if (specialCases[firstPart]){
                     firstPart = specialCases[firstPart];
                 };
-                const paddedSecondPart = /[a-zA-Z]/.test(secondPart) ? secondPart : secondPart.padStart(3, '0');
+                const paddedSecondPart = secondPart.replace(/^(\d+)([a-zA-Z])?$/, (_, digits, letter) => {
+                    const paddedDigits = digits.length < 3 ? digits.padStart(3, '0') : digits;
+                    return letter ? paddedDigits + letter : paddedDigits;
+                });
                 const url = `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/${firstPart.replace(/ /g, '/')}/${firstPart.replace(/ /g, '_')}_${paddedSecondPart}_R_EN.png`;
                 entry.push(url);
+                entry.push(getCardType(firstPart, secondPart));
             } else {
                 loadingText.style.display = 'none';
-                failedText.style.display = 'block';  
+                failedText.style.display = 'block';
             };
         };
     });      
