@@ -27,6 +27,9 @@ export const moveCardMessage = (oLocation, mLocation, action, attached = false) 
         ['hand', 'prizes'],
         ['deck', 'prizes'],
         ['prizes', 'deck'],
+        ['prizes', 'prizes'],
+        ['deck', 'deck'],
+        ['hand', 'hand'],
       ];
       
     if (target.card && (!['bench'].includes(oLocation) || attached)){
