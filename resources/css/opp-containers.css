@@ -226,26 +226,26 @@ body, input, textarea, button {
   justify-content: center;
   overflow-y: auto; /* Enable vertical scrolling */
   align-items: flex-end;
-  padding: 20px;
+  padding: 5px;
   z-index: -1;
 }
 #board_html img {
   width: auto; /* Ensure images don't exceed the width of the container */
-  height: 50%; /* Maintain aspect ratio */
+  height: 70%; /* Maintain aspect ratio */
   margin: .25vw;
 }
 .selfBoard {
   bottom: 61%;
   left: 66%;
-  width: 18%;
-  height: 27%;
+  width: 24%;
+  height: 30%;
   border-radius: 20px; /* Rounded corners */
 }
 .oppBoard {
   bottom: 61%;
   right: 66%;
-  width: 18%;
-  height: 27%;
+  width: 22%;
+  height: 30%;
   border-radius: 20px; /* Rounded corners */
 }
 .selfButtonContainer {

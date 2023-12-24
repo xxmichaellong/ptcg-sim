@@ -95,6 +95,8 @@ export const keyDown = (event) => {
         };
     };
     if (sCard.selecting){
+        event.preventDefault();
+        
         const keyBinds = {
             'h': { locationAsString: 'hand', containerId: 'hand_html' },
             'd': { locationAsString: 'discard', containerId: 'discard_html' },
