@@ -1,4 +1,4 @@
-import { deckImport, deckImportButton, failedText, p1Box, p1Button, p2Box, p2Button, settings, settingsButton, successText } from '../../front-end.js';
+import { deckImport, deckImportButton, failedText, invalid, p1Box, p1Button, p2Box, p2Button, settings, settingsButton, successText } from '../../front-end.js';
 
 export const show = (id, button) => {
     deckImport.style.display = 'none';
@@ -10,6 +10,7 @@ export const show = (id, button) => {
 
     successText.style.display = 'none';
     failedText.style.display = 'none';
+    invalid.style.display = 'none';
 
     const buttons = [p1Button, p2Button, settingsButton, deckImportButton];
 

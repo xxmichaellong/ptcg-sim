@@ -1,4 +1,4 @@
-import { altDeckImportInput, altImportHeaderButton, failedText, importButton, mainDeckImportInput, mainImportHeaderButton, randomButton, successText } from "../../front-end.js";
+import { altDeckImportInput, altImportHeaderButton, failedText, importButton, invalid, mainDeckImportInput, mainImportHeaderButton, randomButton, successText } from "../../front-end.js";
 import { importDecklist } from "../../setup/deck-constructor/import.js";
 import { sampleLists } from "../../setup/deck-constructor/sample.decklists.js";
 
@@ -12,6 +12,7 @@ mainImportHeaderButton.addEventListener('click', () => {
         altDeckImportInput.style.display = 'none';
         successText.style.display = 'none';
         failedText.style.display = 'none';
+        invalid.style.display = 'none';
     };
 });
 
@@ -25,6 +26,7 @@ altImportHeaderButton.addEventListener('click', () => {
         mainDeckImportInput.style.display = 'none';
         successText.style.display = 'none';
         failedText.style.display = 'none';
+        invalid.style.display = 'none';
     };
 });
 

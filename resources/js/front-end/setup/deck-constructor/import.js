@@ -1,7 +1,8 @@
 import { reset } from "../../actions/general/reset.js";
-import { altDeckImportInput, failedText, importButton, loadingText, mainDeckImportInput, p1, roomId, socket, successText } from "../../front-end.js";
+import { altDeckImportInput, failedText, importButton, invalid, mainDeckImportInput, p1, p1Button, p2Button, roomId, socket } from "../../front-end.js";
 import { appendMessage } from "../chatbox/messages.js";
 import { determineUsername } from "../general/determine-username.js";
+import { show } from "../home-header/header-toggle.js";
 import { getCardType } from "./find-type.js";
 
 export const mainDeckData = [];
@@ -34,9 +35,8 @@ const assembleCard = (quantity, name, set, imageURL, type) => {
 }
 
 export const importDecklist = (user) => {
-    successText.style.display = 'none';
     failedText.style.display = 'none';
-    loadingText.style.display = 'block';
+    invalid.style.display = 'none';
     importButton.disabled = true;
 
     const decklist = user === 'self' ? mainDeckImportInput.value : altDeckImportInput.value;
@@ -80,7 +80,6 @@ export const importDecklist = (user) => {
     });
         
     if (decklistArray.length < 1){
-        loadingText.style.display = 'none';
         failedText.style.display = 'block';      
         importButton.disabled = false;
         return;
@@ -146,7 +145,6 @@ export const importDecklist = (user) => {
                 entry.push(url);
                 entry.push(getCardType(firstPart, secondPart));
             } else {
-                loadingText.style.display = 'none';
                 failedText.style.display = 'block';
             };
         };
@@ -158,18 +156,25 @@ export const importDecklist = (user) => {
     } else {
         altDeckData[0] = deckData;
     };
-    loadingText.style.display = 'none';
     if (failedText.style.display === 'none'){
-        successText.style.display = 'block';
+        if (p1[0]){
+            show('p1Box', p1Button);
+        } else if (user === 'self'){
+            show('p2Box', p2Button);
+        };
     };
     importButton.disabled = false;
 
     // console.log(decklistArray);
 
-    reset(user, true, true);
-    if (p1[0]){
-        appendMessage(user, determineUsername(user) + ' imported deck', 'announcement');
-    } else if (user === 'self'){
+    reset(user, true, true, true, false);
+    if (!(user === 'opp' && !p1[0])){
+        appendMessage(user, determineUsername(user) + ' imported deck', 'announcement', true);
+    } else {
+        invalid.style.display = 'block';
+    };
+
+    if (user === 'self'){
         const oUser = user === 'self' ? 'opp' : 'self';
         const data = {
             roomId : roomId[0],

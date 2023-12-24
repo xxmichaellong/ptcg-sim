@@ -90,7 +90,7 @@ socket.on('exchangeData', (data) => {
 });
 socket.on('deckData', (data) => {
     p2DeckData[0] = data.deckData;
-    appendMessage(data.user, determineUsername(data.user) + ' imported deck', 'announcement');
+    appendMessage(data.user, determineUsername(data.user) + ' imported deck', 'announcement', true);
     reset(data.user, true, false, true);
 })
 socket.on('appendMessage', (data) => {

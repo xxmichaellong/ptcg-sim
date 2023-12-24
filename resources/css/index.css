@@ -534,7 +534,7 @@ ul, li {
 #randomButton:hover {
   background: rgb(202, 177, 117);
 }
-#success, #failed, #loading {
+#success, #failed, #loading, #invalid {
   display: none;
 }
 #settings {

@@ -12,6 +12,8 @@ export const settingsToggles = document.getElementById('settingsToggles');
 export const successText = document.getElementById('success');
 export const failedText = document.getElementById('failed');
 export const loadingText = document.getElementById('loading');
+export const invalid = document.getElementById('invalid');
+export const deckImportExplanationBox = document.getElementById('deckImportExplanationBox');
 
 const updateLoadingText = () => {
     const dots = loadingText.innerHTML.match(/\./g) || [];
