@@ -1,5 +1,5 @@
 import { reset } from '../../../actions/general/reset.js';
-import { connectedRoom, copyButton, generateIdButton, joinRoomButton, leaveRoomButton, lobby, nameInput, p1, p2Chatbox, p2SelfUsername, roomHeaderCopyButton, roomHeaderText, roomId, roomIdInput, socket } from '../../../front-end.js';
+import { connectedRoom, copyButton, generateIdButton, joinRoomButton, leaveRoomButton, lobby, nameInput, p1, p2Chatbox, p2ExplanationBox, p2SelfUsername, roomHeaderCopyButton, roomHeaderText, roomId, roomIdInput, socket } from '../../../front-end.js';
 import { p2DeckData } from '../../../socket/fetch-opp-data.js';
 
 copyButton.addEventListener('click', () => {
@@ -36,6 +36,7 @@ leaveRoomButton.addEventListener('click', () => {
     if (window.confirm('Are you sure you want to leave the room?')) {
         socket.disconnect();
         lobby.style.display = 'block';
+        p2ExplanationBox.style.display = 'block';
         connectedRoom.style.display = 'none';
         p1[0] = true;
         roomId[0] = '';

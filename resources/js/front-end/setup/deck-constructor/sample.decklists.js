@@ -1,5 +1,4 @@
-const list1 = `
-Pokémon (13)
+const list1 = `Pokémon (13)
 4 Mew V CRZ 60
 3 Mew VMAX FST 114
 4 Genesect V FST 185
@@ -31,8 +30,7 @@ Energy (7)
 4 Fusion Strike Energy FST 244
 3 Double Turbo Energy BRS 151
 `;
-const list2 = `
-Pokémon (18)
+const list2 = `Pokémon (18)
 3 Ralts ASR 60
 1 Ralts SIT 67
 3 Kirlia SIT 68
@@ -66,8 +64,7 @@ Energy (12)
 10 Psychic Energy 5
 2 Reversal Energy PAL 192
 `;
-const list3 = `
-Pokémon (23)
+const list3 = `Pokémon (23)
 4 Arceus V BRS 122
 3 Arceus VSTAR BRS 123
 3 Flying Pikachu V CEL 6
@@ -97,8 +94,7 @@ Energy (12)
 3 Fighting Energy 6
 1 Capture Energy RCL 171
 `;
-const list4 = `
-Pokémon (19)
+const list4 = `Pokémon (19)
 3 Origin Forme Palkia V ASR 39
 3 Origin Forme Palkia VSTAR ASR 40
 4 Sobble CRE 41
@@ -131,8 +127,7 @@ Trainer (34)
 Energy (7)
 7 Water Energy 3
 `;
-const list5 = `
-Pokémon (16)
+const list5 = `Pokémon (16)
 4 Mewtwo & Mew-GX UNM 71
 3 Dedenne-GX UNB 57
 1 Solgaleo-GX PR-SM 104
@@ -163,8 +158,7 @@ Energy (11)
 8 Fire Energy 2
 3 Psychic Energy 5
 `;
-const list6 = `
-Pokémon (7)
+const list6 = `Pokémon (7)
 4 Volcanion UNB 25
 3 Reshiram & Charizard-GX UNB 20
 
@@ -191,8 +185,7 @@ Trainer (42)
 Energy (11)
 11 Fire Energy 2
 `;
-const list7 = `
-Pokémon (18)
+const list7 = `Pokémon (18)
 4 Zorua SLG 52
 4 Zoroark-GX SLG 53
 3 Trubbish BKP 56
@@ -222,8 +215,7 @@ Energy (7)
 4 Double Colorless Energy SLG 69
 3 Unit Energy LPM UPR 138
 `;
-const list8 = `
-Pokémon (18)
+const list8 = `Pokémon (18)
 4 Inkay FLI 50
 4 Malamar FLI 51
 2 Marshadow-GX BUS 80
@@ -252,8 +244,7 @@ Trainer (32)
 Energy (10)
 10 Psychic Energy 5
 `;
-const list9 = `
-Pokémon (19)
+const list9 = `Pokémon (19)
 4 Ralts BUS 91
 3 Kirlia BUS 92
 3 Gardevoir-GX BUS 93
@@ -284,8 +275,7 @@ Energy (12)
 4 Double Colorless Energy SUM 136
 1 Wonder Energy PRC 144
 `;
-const list10 = `
-Pokémon (18)
+const list10 = `Pokémon (18)
 4 Wimpod BUS 16
 3 Golisopod-GX BUS 17
 4 Trubbish BKP 56
@@ -315,8 +305,7 @@ Energy (10)
 3 Grass Energy 1
 3 Double Colorless Energy SUM 136
 `;
-const list11 = `
-Pokémon (14)
+const list11 = `Pokémon (14)
 2 Blastoise PLB 16
 3 Keldeo-EX LTR 45
 2 Jirachi-EX PLB 60
@@ -345,8 +334,7 @@ Trainer (35)
 Energy (11)
 11 Water Energy 3
 `;
-const list12 = `
-Pokémon (18)
+const list12 = `Pokémon (18)
 4 Zubat PLS 53
 4 Golbat PHF 32
 3 Crobat PHF 33
@@ -373,8 +361,7 @@ Energy (7)
 4 Double Colorless Energy PHF 111
 3 Water Energy 3
 `;
-const list13 = `
-Pokémon (10)
+const list13 = `Pokémon (10)
 4 Virizion-EX PLB 9
 4 Genesect-EX PLB 11
 1 Jirachi-EX PLB 60
@@ -402,8 +389,7 @@ Energy (13)
 9 Grass Energy 1
 4 Plasma Energy PLB 91
 `;
-const list14 = `
-Pokémon (15)
+const list14 = `Pokémon (15)
 3 Spritzee XY 92
 2 Aromatisse XY 93
 2 Kangaskhan-EX FLF 78
@@ -438,8 +424,7 @@ Energy (11)
 1 Rainbow Energy XY 131
 1 Water Energy 3
 `;
-const list15 = `
-Pokémon (12)
+const list15 = `Pokémon (12)
 3 Darkrai-EX DEX 63
 3 Mewtwo-EX NXD 54
 2 Terrakion NVI 73
@@ -467,8 +452,7 @@ Energy (14)
 2 Prism Energy NXD 93
 2 Fighting Energy 6
 `;
-const list16 = `
-Pokémon (26)
+const list16 = `Pokémon (26)
 4 Mew TM 97
 3 Accelgor DEX 11
 3 Litwick PR-BLW 27
@@ -497,8 +481,7 @@ Energy (10)
 4 Double Colorless Energy NXD 92
 2 Prism Energy NXD 93
 `;
-const list17 = `
-Pokémon (13)
+const list17 = `Pokémon (13)
 4 Audino-EX FCO 84
 3 M Audino-EX FCO 85
 2 Shaymin-EX ROS 77
@@ -530,8 +513,7 @@ Energy (10)
 6 Metal Energy 8
 4 Double Colorless Energy FCO 114
 `;
-const list18 = `
-Pokémon (18)
+const list18 = `Pokémon (18)
 4 Talonflame STS 96
 3 Froakie BKP 38
 4 Frogadier BKP 39
@@ -558,8 +540,7 @@ Energy (10)
 8 Water Energy 3
 2 Splash Energy BKP 113
 `;
-const list19 = `
-Pokémon (10)
+const list19 = `Pokémon (10)
 4 Darkrai-EX DEX 63
 3 Sableye DEX 62
 2 Keldeo-EX BCR 49
@@ -585,8 +566,7 @@ Trainer (40)
 Energy (10)
 10 Darkness Energy 7
 `;
-const list20 = `
-Pokémon (11)
+const list20 = `Pokémon (11)
 3 Deoxys-EX PLF 53
 2 Thundurus-EX PLF 38
 2 Kyurem PLF 31

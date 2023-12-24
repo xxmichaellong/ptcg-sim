@@ -312,6 +312,15 @@ ul, li {
 #p2Box {
   display: none;
 }
+#p2ExplanationBox {
+  width: 100%;
+  background: white;
+  overflow-y: auto;
+  padding: 10px;
+  box-sizing: border-box;
+  display: block;
+  border-radius: 10px 10px;
+}
 #lobby {
   width: 100%;
   margin-top: 5%;
@@ -385,21 +394,23 @@ ul, li {
 }
 #roomHeader {
   width: 100%;
-  height: 3%;
+  height: 2.5vh;
   display: flex;
   align-items: center; /* Center vertically */
   justify-content: space-between;
   box-sizing: border-box;
   color: black;
-  margin-bottom: 10px; /* Adjust margin as needed for spacing */
+  margin-bottom: 8px; /* Adjust margin as needed for spacing */
 }
 #roomHeaderText {
   margin-right: 5px;
   background-color: #9dd1bd;
+  border: 2px solid #61cea4;
   border-radius: 10px;
   width: 98%;
-  padding: .5vh;
   font-size: 2vh;
+  padding-top: .1vh;
+  padding-bottom: .1vh;
   text-align: center;
 }
 #roomHeaderCopyButton {
@@ -407,7 +418,6 @@ ul, li {
   background-color: transparent;
   border-radius: 10px;
   border: none;
-  padding: .25vh;
   font-size: 2.5vh;
 }
 #p2Chatbox {
@@ -436,22 +446,30 @@ ul, li {
 #deckImport {
   display: none;
 }
+#deckImportExplanationBox {
+  width: 100%;
+  background: white;
+  padding: 10px;
+  box-sizing: border-box;
+  display: block;
+  border-radius: 10px 10px;
+  margin-bottom: 10px;
+  height: fit-content;
+}
 #importButtonContainer {
   width: 100%;
   display: flex;
   justify-content: center;
-  gap: 5%;
-  height: 5%;
+  height: 3%;
   padding-top: 1vh;
-  padding-bottom: 1vh;
   align-items: center;
 }
 #importButtonContainer button {
   width: 50%;
-  border-radius: .5rem;
-  padding: 1vh;
+  border-radius: .5rem .5rem 0 0;
+  padding: .5vh;
   border: none;
-  font-size: 1.75vh;
+  font-size: 2vh;
   background-color: rgba(171, 171, 171, 0.864);
 }
 .main-select {
@@ -467,21 +485,22 @@ ul, li {
   border: .25vw solid rgba(153, 58, 81, 0.864) !important; /* Added "solid" for the border style */
 }
 #mainDeckImportInput, #altDeckImportInput {
-  height: 85%;
+  height: 100%;
   width: 100%;
   padding: 2vh;
-  border-radius: 10px;
+  border-radius: 0 0 10px 10px;
   font-size: 1.75vh;
   box-sizing: border-box;
   resize: none;
+  outline: none;
 }
 #mainDeckImportInput {
-  border: .25vw solid rgba(40, 57, 124, 0.864); /* Added "solid" for the border style */
+  border: .2vw solid rgba(40, 57, 124, 0.864); /* Added "solid" for the border style */
   display: inline-block;
 }
 #altDeckImportInput {
   display: none;
-  border: .25vw solid rgba(153, 58, 81, 0.864) !important; /* Added "solid" for the border style */
+  border: .2vw solid rgba(153, 58, 81, 0.864) !important; /* Added "solid" for the border style */
 }
 #importBottom {
   margin-top: 1vh;
@@ -509,6 +528,11 @@ ul, li {
   border: none;
   font-size: x-large;
   cursor: pointer;
+  background: rgb(185, 160, 103);
+  border-radius: .5rem;
+}
+#randomButton:hover {
+  background: rgb(202, 177, 117);
 }
 #success, #failed, #loading {
   display: none;

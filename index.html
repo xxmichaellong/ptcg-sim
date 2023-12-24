@@ -10,11 +10,12 @@
     <script type="module" src="resources/js/front-end/front-end.js"></script>
 </head>
 <body>
+    <div id="tutorialLayer"></div>
     <iframe id="selfContainers" class="self" src="./iframe-containers/self-containers.html"></iframe>
     <iframe id="oppContainers" class="opp" src="./iframe-containers/opp-containers.html"></iframe>
     <div id="stadium_html" class="base"></div>
     <div id="selfResizer" class="selfColour"></div>
-    <div id="oppResizer" class="oppColour"></div>  
+    <div id="oppResizer" class="oppColour"></div>
 
     <div id="boardButtonContainer">
         <button id="turnButton">+Turn</button>
@@ -30,7 +31,13 @@
     </div>
     
     <div id="p1Box" class="sidebox">
-        <div id="chatbox"><strong>Welcome to PTCG-sim!</strong><br><br>This is a free tool to practice by yourself or with friends. Drag or use keybinds (<span class="shift-font">shift</span>) to play.<br><br>Import your decklist to start testing! 🥳
+        <div id="chatbox"><strong>Welcome to PTCG-sim!</strong>
+            <br><br>
+            PTCG-sim is a free tool to simulate the Pokemon TCG. It supports single player (1P) and online multiplayer (2P). 
+            <br><br>
+            Import your decklist by clicking the “Import” tab above, and press “Set Up” to start a game.
+            <br><br>
+            Drag or use keybinds (hold <span class="shift-font">shift</span>) to move cards. Happy testing! 🥳
             <div id="line"></div>
         </div>
         <div id="chatboxButtonContainer" class="chat-button-container">
@@ -47,6 +54,13 @@
         </div>
     </div>
     <div id="p2Box" class="sidebox">
+        <div id="p2ExplanationBox">
+            <strong>Online Multiplayer Mode</strong>
+            <br><br>
+            PTCG-sim multiplayer supports up to 2 players per room. 
+            <br><br>
+            Enter or generate a unique room ID to share with your friend. Both players must enter the same ID (case-sensitive) to join.
+        </div>
         <div id="lobby">
             <input id="nameInput" type="text" placeholder="Name">
             <div id="roomId">
@@ -77,6 +91,13 @@
        
     </div>
     <div id="deckImport" class="sidebox">
+        <div id="deckImportExplanationBox">
+            <strong>Decklist Import</strong>
+            <br><br>
+            Paste your decklist in the "Main" tab. Use the "Alt" tab for playing against yourself.
+            <br><br>
+            Click the wand for a random deck!
+        </div>
         <div id="importButtonContainer">
             <button id="mainImportHeaderButton" class="main-select">Main</button>
             <button id="altImportHeaderButton">Alt (1P only)</button>
@@ -100,12 +121,10 @@
               </div>
         </div>
         <div id="keybindReminder">
-          Press (<span class="shift-font">shift</span>) to see keybinds
+          Hold (<span class="shift-font">shift</span>) to view keybinds
         </div>
       </div>
       
-
-
     <div id="cardContextMenu" class="contextMenu">
         <ul>
             <li id="abilityCounterButton">Toggle ability</li>

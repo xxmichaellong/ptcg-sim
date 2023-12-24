@@ -1,4 +1,4 @@
-import { connectedRoom, lobby, p1, roomIdInput, socket, p2SelfUsername, p2OppUsername, roomHeaderText, roomId, chatbox, POV } from '../front-end.js'
+import { connectedRoom, lobby, p1, roomIdInput, socket, p2SelfUsername, p2OppUsername, roomHeaderText, roomId, chatbox, POV, p2ExplanationBox } from '../front-end.js'
 import { appendMessage } from '../setup/chatbox/messages.js'
 import { moveCard } from '../actions/general/move-card.js'
 import { takeTurn } from '../actions/general/take-turn.js'
@@ -30,6 +30,7 @@ socket.on('joinGame', () => {
     };
     connectedRoom.style.display = 'flex';
     lobby.style.display = 'none';
+    p2ExplanationBox.style.display = 'none';
     exchangeData()
         .then(() => {
             reset('opp', true, false, true, false);
