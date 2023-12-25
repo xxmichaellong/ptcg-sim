@@ -6,7 +6,7 @@ document.getElementById('tutorialButton').addEventListener('click', () => {
     <iframe
       width="560"
       height="315"
-      src="https://youtu.be/t3qAhO_p3mk?si=r2_PNRskd6QeKRso"
+      src="https://www.youtube.com/embed/t3qAhO_p3mk?si=jxysgkLxaAoaSw1I"
       frameborder="0"
       allowfullscreen
     ></iframe>
