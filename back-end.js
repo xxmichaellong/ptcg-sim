@@ -19,8 +19,12 @@ const io = new Server(server, {
 });
 
 instrument(io, {
-    auth: false,
-    mode: "development",
+    auth: {
+        type: "basic",
+        username: "milon8561",
+        password: "shadowstitching856193711041!"
+    },
+    mode: "production",
 });
 
 const port = 4000;
