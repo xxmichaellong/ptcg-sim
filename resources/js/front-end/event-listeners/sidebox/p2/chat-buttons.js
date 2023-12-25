@@ -1,4 +1,5 @@
 import { resetCounters } from "../../../actions/counters/reset-ability-counters.js";
+import { clearBoard } from "../../../actions/general/clear-board.js";
 import { p2AttackButton, POV, p2PassButton, p2MessageInput, p2FREEBUTTON} from "../../../front-end.js";
 import { appendMessage } from "../../../setup/chatbox/messages.js";
 import { determineUsername } from "../../../setup/general/determine-username.js";
