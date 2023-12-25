@@ -29,7 +29,7 @@ instrument(io, {
         username: "admin",
         password: hashedPassword,
     },
-    mode: "production",
+    mode: "development",
 });
 
 const port = 4000;
