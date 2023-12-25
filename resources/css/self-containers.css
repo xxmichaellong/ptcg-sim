@@ -482,6 +482,7 @@ body, input, textarea, button {
 {
   box-shadow: 0 2px 4px rgba(0, 0, 0, .3); /* Adjust the values for your desired shadow effect */
   border-radius: 0.275rem;
+  cursor: pointer;
 }
 #hand_html,
 #bench_html,

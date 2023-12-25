@@ -3,6 +3,10 @@ export const p2Box = document.getElementById('p2Box');
 export const deckImport = document.getElementById('deckImport');
 export const settings = document.getElementById('settings');
 
+//home page
+export const videoContainer = document.getElementById('videoContainer');
+export const tutorialButton = document.getElementById('tutorialButton');
+
 //settings
 export const darkModeCheckbox = document.getElementById('darkModeCheckbox');
 export const showContainersCheckbox = document.getElementById('showContainersCheckbox');

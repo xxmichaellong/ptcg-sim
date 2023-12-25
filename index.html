@@ -10,7 +10,7 @@
     <script type="module" src="resources/js/front-end/front-end.js"></script>
 </head>
 <body>
-    <div id="tutorialLayer"></div>
+    <div id="videoContainer"></div>
     <iframe id="selfContainers" class="self" src="./iframe-containers/self-containers.html"></iframe>
     <iframe id="oppContainers" class="opp" src="./iframe-containers/opp-containers.html"></iframe>
     <div id="stadium_html" class="base"></div>
@@ -39,7 +39,7 @@
             <br><br>
             Drag or use keybinds (hold <span class="shift-font">shift</span>) to move cards. Happy testing! 🥳
             <br><br>
-            <button id="tutorial">Tutorial</button>
+            <button id="tutorialButton">Watch Tutorial</button>
             <div id="line"></div>
         </div>
         <div id="chatboxButtonContainer" class="chat-button-container">
@@ -131,7 +131,15 @@
         <div id="keybindReminder">
           Hold (<span class="shift-font">shift</span>) to view keybinds
         </div>
-      </div>
+        <div>
+            <a href="https://twitter.com/xxmichaellong" target="blank" rel="noopener noreferrer">
+                <div id="twitterHandle">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Logo_of_Twitter.svg/512px-Logo_of_Twitter.svg.png">
+                    <span id="username">@xxmichaellong</span>
+                </div>
+            </a>
+        </div>
+    </div>
       
     <div id="cardContextMenu" class="contextMenu">
         <ul>
@@ -232,7 +240,7 @@
                 <div class="column">
                     <h1>Board</h1>
                     <ul>
-                        <li>Clear board <code>[enter]</code></li>
+                        <li>Clear playboard <code>[enter]</code></li>
                     </ul>
                 </div>
                 <div class="column">
