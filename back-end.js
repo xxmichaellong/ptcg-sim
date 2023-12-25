@@ -21,8 +21,8 @@ const io = new Server(server, {
 instrument(io, {
     auth: {
         type: "basic",
-        username: "milon8561",
-        password: "shadowstitching856193711041!"
+        username: "admin",
+        password: "milon8561"
     },
     mode: "production",
 });
