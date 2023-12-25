@@ -8,6 +8,15 @@
     <link rel="stylesheet" href="resources/css/index.css">
     <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
     <script type="module" src="resources/js/front-end/front-end.js"></script>
+    <script>
+        window.onload = () => {
+            var isMobile = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            if (isMobile) {
+                alert("PTCG-sim is still in mobile development! Please view on a desktop for full functionality");
+            };
+        };
+    </script>
 </head>
 <body>
     <div id="videoContainer"></div>
@@ -33,7 +42,7 @@
     <div id="p1Box" class="sidebox">
         <div id="chatbox"><strong>Welcome to PTCG-sim!</strong>
             <br><br>
-            PTCG-sim is a free tool to simulate the Pokemon TCG. It supports single player (1P) and online multiplayer (2P). 
+            PTCG-sim is a free desktop tool to simulate the Pokemon TCG. It supports single player (1P) and online multiplayer (2P). 
             <br><br>
             Import your decklist by clicking the “Import” tab above, then press “Set Up” to start a game.
             <br><br>
