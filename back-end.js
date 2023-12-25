@@ -10,7 +10,18 @@ app.get('/', (req, res) => {
 const http = require('http');
 const server = http.createServer(app);
 const { Server } = require('socket.io');
-const io = new Server(server, {cors: {}});
+const { instrument } = require("@socket.io/admin-ui");
+const io = new Server(server, {
+    cors: {
+        origin: ["https://admin.socket.io"],
+        credentials: true
+    }
+});
+
+instrument(io, {
+    auth: false,
+    mode: "development",
+});
 
 const port = 4000;
 
