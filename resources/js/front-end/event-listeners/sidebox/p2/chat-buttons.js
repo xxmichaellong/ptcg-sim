@@ -8,6 +8,7 @@ p2AttackButton.addEventListener('click', () => {
     const user = POV.user;
     const message = determineUsername(user) + ' attacked';
     appendMessage(user, message, 'player');
+    clearBoard(user, false);
 });
 
 p2PassButton.addEventListener('click', () => {
@@ -15,6 +16,7 @@ p2PassButton.addEventListener('click', () => {
     const user = POV.user;
     const message = determineUsername(user) + ' passed';
     appendMessage(user, message, 'player');
+    clearBoard(user, false);
 });
 p2MessageInput.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {

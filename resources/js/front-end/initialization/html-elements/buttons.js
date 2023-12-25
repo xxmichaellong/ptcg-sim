@@ -43,6 +43,7 @@ export const leaveRoomButton = document.getElementById('leaveRoomButton');
 export const mainImportHeaderButton = document.getElementById('mainImportHeaderButton');
 export const altImportHeaderButton = document.getElementById('altImportHeaderButton');
 export const importButton = document.getElementById('importButton');
+export const decklistsButton = document.getElementById('decklistsButton');
 export const randomButton = document.getElementById('randomButton');
 
 //selfContainers

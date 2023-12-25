@@ -14,6 +14,7 @@ export const failedText = document.getElementById('failed');
 export const loadingText = document.getElementById('loading');
 export const invalid = document.getElementById('invalid');
 export const deckImportExplanationBox = document.getElementById('deckImportExplanationBox');
+export const decklistsContextMenu = document.getElementById('decklistsContextMenu');
 
 const updateLoadingText = () => {
     const dots = loadingText.innerHTML.match(/\./g) || [];

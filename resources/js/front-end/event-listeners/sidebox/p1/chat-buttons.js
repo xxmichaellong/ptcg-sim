@@ -1,4 +1,5 @@
 import { resetCounters } from "../../../actions/counters/reset-ability-counters.js";
+import { clearBoard } from "../../../actions/general/clear-board.js";
 import { sort } from "../../../actions/general/sort.js";
 import { attackButton, POV, passButton, messageInput, FREEBUTTON} from "../../../front-end.js";
 import { appendMessage } from "../../../setup/chatbox/messages.js";
@@ -9,12 +10,14 @@ attackButton.addEventListener('click', () => {
     const user = POV.user;
     const message = determineUsername(user) + ' attacked';
     appendMessage(user, message, 'player');
+    clearBoard(user, false);
 });
 passButton.addEventListener('click', () => {
     resetCounters();
     const user = POV.user;
     const message = determineUsername(user) + ' passed';
     appendMessage(user, message, 'player');
+    clearBoard(user, false);
 });
 messageInput.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {

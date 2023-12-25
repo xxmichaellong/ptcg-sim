@@ -65,8 +65,9 @@ body, input, textarea, button {
   left: 50%;
 }
 .highlight {
-  box-shadow: 0 0 0 2px rgba(90, 110, 188, 0.864) !important;
+  box-shadow: 0 0 0 4px rgba(90, 110, 188, 0.864) !important;
   background-color: rgba(90, 110, 188, 0.3);
+  z-index: 1 !important;
 }
 .selectHighlight {
   box-shadow: 0 0 0 4px rgba(143, 215, 153, 0.864) !important;

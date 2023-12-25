@@ -69,7 +69,7 @@ export const closeFullView = (event) => {
     const fullViewElement = selfContainersDocument.querySelector('.fullView') || oppContainersDocument.querySelector('.fullView');
     const user = selfContainersDocument.querySelector('.fullView') ? 'self' : 'opp';
     
-    if (fullViewElement && !fullViewElement.contains(event.target)){
+    if (fullViewElement && (!event || !fullViewElement.contains(event.target))){
         // Revert the styles
         fullViewElement.className = 'playContainer'; // Remove the 'fullView' class
         fullViewElement.style.zIndex = ''; // Revert the z-index

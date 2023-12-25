@@ -216,11 +216,22 @@ export const doubleClick = (event) => {
 
         // Append the overlay to the body
         document.body.appendChild(overlay);
+    
+        const removeOverlay = () => {
+            if (overlay) {
+                document.body.removeChild(overlay);
+                overlay = null; // Set overlay to null to indicate it's no longer present
+            };
+        }
 
-        // Listen for click events on the overlay
-        overlay.addEventListener('click', () => {
-            // Remove the overlay from the body
-            document.body.removeChild(overlay);
-        });
-    };
+        overlay.addEventListener('click', () => removeOverlay());
+
+        // Listen for the escape key press
+        const documentArray = [selfContainersDocument, oppContainers, document];
+        documentArray.forEach(document => document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                removeOverlay();
+            };
+        }));
+    }
 }

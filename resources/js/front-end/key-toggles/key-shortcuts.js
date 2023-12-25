@@ -4,7 +4,8 @@ import { shuffleContainer } from '../actions/container/shuffle-container.js';
 import { addAbilityCounter } from '../actions/counters/ability-counter.js';
 import { addDamageCounter } from '../actions/counters/damage-counter.js';
 import { addSpecialCondition } from '../actions/counters/special-condition.js';
-import { closeContainerPopups, closeFullView, deselectCard } from '../actions/general/close-popups.js';
+import { clearBoard } from '../actions/general/clear-board.js';
+import { closeContainerPopups, closeFullView, closePopups, deselectCard } from '../actions/general/close-popups.js';
 import { flipBoard } from '../actions/general/flip-board.js';
 import { flipCoin } from '../actions/general/flip-coin.js';
 import { moveCard } from '../actions/general/move-card.js';
@@ -24,6 +25,13 @@ export const keyUp = (event) => {
     };
 }
 export const keyDown = (event) => {
+    if (event.key === 'Escape'){
+        closeContainerPopups();
+        closePopups();
+    };
+    if (event.key === 'Enter'){
+        clearBoard(POV.user);
+    };
     const blockedClasses = ['self-circle', 'opp-circle', 'self-tab', 'opp-tab'];
     if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || blockedClasses.some(className => event.target.classList.contains(className))){
         return;

@@ -35,9 +35,11 @@
             <br><br>
             PTCG-sim is a free tool to simulate the Pokemon TCG. It supports single player (1P) and online multiplayer (2P). 
             <br><br>
-            Import your decklist by clicking the “Import” tab above, and press “Set Up” to start a game.
+            Import your decklist by clicking the “Import” tab above, then press “Set Up” to start a game.
             <br><br>
             Drag or use keybinds (hold <span class="shift-font">shift</span>) to move cards. Happy testing! 🥳
+            <br><br>
+            <button id="tutorial">Tutorial</button>
             <div id="line"></div>
         </div>
         <div id="chatboxButtonContainer" class="chat-button-container">
@@ -65,7 +67,9 @@
             <input id="nameInput" type="text" placeholder="Name">
             <div id="roomId">
                 <input id="roomIdInput" type="text" placeholder="Room ID">
-                <button id="copyButton">📋</button>
+                <button id="copyButton">
+                    <img src="https://www.svgrepo.com/show/309480/copy.svg" alt="Copy">
+                </button>                
                 <button id="generateIdButton">Generate</button>
             </div>
             <div id="joinRoomButton"> Join Room </div>
@@ -73,8 +77,10 @@
         <div id="connectedRoom">
             <div id="roomHeader">
                 <div id ="roomHeaderText"></div>
-                <button id="roomHeaderCopyButton">📋</button>
-            </div>
+                <button id="roomHeaderCopyButton">
+                    <img src="https://www.svgrepo.com/show/309480/copy.svg" alt="Copy">
+                </button>
+        </div>
             <div id="p2Chatbox"></div>
             <div id="p2ChatboxButtonContainer" class="chat-button-container">
                 <button id="p2AttackButton" class="selfColour">Attack</button>
@@ -91,21 +97,23 @@
        
     </div>
     <div id="deckImport" class="sidebox">
-        <div id="deckImportExplanationBox">
-            <strong>Decklist Import</strong>
-            <br><br>
-            Paste your decklist in the "Main" tab. Use the "Alt" tab for playing against yourself.
-            <br><br>
-            Click the wand for a random deck!
-        </div>
         <div id="importButtonContainer">
             <button id="mainImportHeaderButton" class="main-select">Main</button>
             <button id="altImportHeaderButton">Alt (1P only)</button>
         </div>
-        <textarea id="mainDeckImportInput" placeholder="Import your decklist here" spellcheck="false"></textarea>
-        <textarea id="altDeckImportInput" placeholder="Import your decklist here" spellcheck="false"></textarea>        
+        <textarea id="mainDeckImportInput" spellcheck="false"></textarea>
+        <script>
+            document.getElementById("mainDeckImportInput").placeholder = "Paste your main decklist here. \n\nClick the book 📖 to look through popular decks or click the wand 🪄 for a random deck!";
+        </script>          
+        <textarea id="altDeckImportInput" spellcheck="false"></textarea>
+        <script>
+          document.getElementById("altDeckImportInput").placeholder = "Paste your alternative decklist here if you are playing against yourself. \n\nClick the book 📖 to look through popular decks or click the wand 🪄 for a random deck!";
+        </script>
         <div id="importBottom">
-            <button id="importButton">Import</button><button id="randomButton">🪄</button>
+            <button id="decklistsButton">📖</button>
+            <button id="importButton">Import</button>
+            <div id="decklistsContextMenu" class="decklists-context-menu"></div>
+            <button id="randomButton">🪄</button>
             <div id="success">Success!</div><div id="failed">Error!</div><div id="loading"></div><div id="invalid">1P only!</div>
         </div>
     </div>
@@ -145,9 +153,9 @@
 
             <li id="deckHeader">Deck</li>
             <li id="shuffleDeckButton">Shuffle deck</li>
-            <li id="drawButton">Draw cards...</li>
-            <li id="viewTopButton">View top cards...</li>
-            <li id="viewBottomButton">View bottom cards...</li>
+            <li id="drawButton">Draw card(s)</li>
+            <li id="viewTopButton">View top card(s)</li>
+            <li id="viewBottomButton">View bottom card(s)</li>
 
             <li id="moveButton">Move card...
                 <ul class="subMenu">
@@ -206,19 +214,25 @@
                 <div class="column">
                     <h1>Deck</h1>
                     <ul>
-                        <li>Shuffle <code>[s]</code></li>
-                        <li>Draw <code>[1-9]</code></li>
-                        <li>View top <code>[alt + 1-9]</code></li>
-                        <li>View bottom <code>[ctrl + 1-9]</code></li>
+                        <li>Shuffle deck<code>[s]</code></li>
+                        <li>Draw card(s)<code>[1-9]</code></li>
+                        <li>View top card(s)<code>[alt + 1-9]</code></li>
+                        <li>View bottom card(s)<code>[ctrl + 1-9]</code></li>
                         <li>View <code>[v]</code></li>
                     </ul>
                 </div>
                 <div class="column">
                     <h1>Hand</h1>
                     <ul>
-                        <li>Discard <code>[alt + d]</code></li>
-                        <li>Shuffle into deck <code>[alt + s]</code></li>
-                        <li>Shuffle to bottom <code>[alt + ↓]</code></li>
+                        <li>Discard hand<code>[alt + d]</code></li>
+                        <li>Shuffle hand into deck <code>[alt + s]</code></li>
+                        <li>Shuffle hand to bottom <code>[alt + ↓]</code></li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h1>Board</h1>
+                    <ul>
+                        <li>Clear board <code>[enter]</code></li>
                     </ul>
                 </div>
                 <div class="column">
@@ -230,6 +244,7 @@
                         <li>Flip coin <code>[f]</code></li>
                         <li>Flip board <code>[alt + f]</code></li>
                         <li>Mulligan <code>[m]</code></li>
+                        <li>Close popups <code>[esc]</code></li>
                     </ul>
                 </div>
             </div>
