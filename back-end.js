@@ -18,13 +18,17 @@ const io = new Server(server, {
     }
 });
 
+const bcrypt = require('bcryptjs');
+const saltRounds = 10;
+const plainPassword = "milon8561";
+const hashedPassword = bcrypt.hashSync(plainPassword, saltRounds);
+
 instrument(io, {
-    auth: false,
-    // auth: {
-    //     type: "basic",
-    //     username: "admin",
-    //     password: "milon8561"
-    // },
+    auth: {
+        type: "basic",
+        username: "admin",
+        password: hashedPassword,
+    },
     mode: "production",
 });
 
