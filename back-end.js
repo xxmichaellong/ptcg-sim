@@ -19,11 +19,12 @@ const io = new Server(server, {
 });
 
 instrument(io, {
-    auth: {
-        type: "basic",
-        username: "admin",
-        password: "milon8561"
-    },
+    auth: false,
+    // auth: {
+    //     type: "basic",
+    //     username: "admin",
+    //     password: "milon8561"
+    // },
     mode: "production",
 });
 
