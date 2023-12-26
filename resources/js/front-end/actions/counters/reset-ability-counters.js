@@ -7,6 +7,9 @@ export const resetCounters = (received = false) => {
     oppContainersDocument.querySelectorAll('.self-tab, .opp-tab').forEach(element => {
         element.handleRemove();
     });
+    document.querySelectorAll('.tab').forEach(element => {
+        element.handleRemove();
+    });
     if (!p1[0] && !received){
         const data = {
             roomId : roomId,

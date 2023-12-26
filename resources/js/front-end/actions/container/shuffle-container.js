@@ -27,5 +27,7 @@ export const shuffleContainer = (user, location, location_html, indices, receive
         };
         socket.emit('shuffleContainer', data);
     };
-    sort(user);
+    if (_location === 'deck'){
+        sort(user, _location, _location_html);
+    };
 }

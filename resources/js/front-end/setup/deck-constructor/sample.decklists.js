@@ -2,7 +2,8 @@ import { altDeckImportInput, deckImport, decklistsButton, decklistsContextMenu, 
 
 const decklistsByYear = {
     "2023-2024": {
-        "Charizard": `Pokémon (17)
+        "Charizard": `
+        Pokémon (17)
         3 Charmander MEW 4
         1 Charmander PR-SV 47
         1 Charmeleon OBF 27
@@ -36,7 +37,8 @@ const decklistsByYear = {
         
         Energy (7)
         7 Fire Energy 2`,
-        "Gardevoir": `Pokémon (19)
+        "Gardevoir": `
+        Pokémon (19)
         4 Ralts ASR 60
         3 Kirlia SIT 68
         1 Kirlia CRE 60
@@ -69,7 +71,8 @@ const decklistsByYear = {
         Energy (12)
         10 Psychic Energy 5
         2 Reversal Energy PAL 192`,
-        "Lost Zone Box": `Pokémon (11)
+        "Lost Zone Box": `
+        Pokémon (11)
         4 Comfey LOR 79
         1 Radiant Greninja ASR 46
         1 Cramorant LOR 50
@@ -102,7 +105,8 @@ const decklistsByYear = {
         3 Darkness Energy 7
         2 Lightning Energy 4
         2 Psychic Energy 5`,
-        "Lost Zone Giratina": `Pokémon (14)
+        "Lost Zone Giratina": `
+        Pokémon (14)
         4 Comfey LOR 79
         3 Giratina V LOR 130
         3 Giratina VSTAR LOR 131
@@ -131,7 +135,8 @@ const decklistsByYear = {
         4 Psychic Energy 5
         3 Grass Energy 1
         2 Water Energy 3`,
-        "Fusion Mew": `Pokémon (13)
+        "Fusion Mew": `
+        Pokémon (13)
         4 Mew V CRZ 60
         2 Mew VMAX FST 114
         4 Genesect V FST 185
@@ -165,7 +170,8 @@ const decklistsByYear = {
         Energy (7)
         4 Fusion Strike Energy FST 244
         3 Double Turbo Energy BRS 151`,
-        "Miraidon": `Pokémon (14)
+        "Miraidon": `
+        Pokémon (14)
         2 Miraidon ex SVI 81
         2 Iron Hands ex PAR 70
         2 Mew ex MEW 151
@@ -198,7 +204,8 @@ const decklistsByYear = {
         Energy (17)
         16 Lightning Energy 4
         1 Double Turbo Energy BRS 151`,
-        "Urshifu Inteleon": `Pokémon (18)
+        "Urshifu Inteleon": `
+        Pokémon (18)
         3 Inteleon V FST 78
         3 Inteleon VMAX FST 79
         2 Rapid Strike Urshifu V BST 87
@@ -230,7 +237,8 @@ const decklistsByYear = {
         Energy (9)
         5 Water Energy 3
         4 Rapid Strike Energy BST 140`,
-        "Chien-Pao": `Pokémon (16)
+        "Chien-Pao": `
+        Pokémon (16)
         3 Chien-Pao ex PAL 61
         2 Frigibax PAL 57
         1 Frigibax PAL 58
@@ -259,7 +267,8 @@ const decklistsByYear = {
         Energy (9)
         8 Water Energy 3
         1 Lightning Energy 4`,
-        "Snorlax Stall": `Pokémon (8)
+        "Snorlax Stall": `
+        Pokémon (8)
         4 Snorlax PGO 55
         1 Rotom V CRZ 45
         1 Pidgeot V LOR 137
@@ -297,7 +306,8 @@ const decklistsByYear = {
         Energy (0)`,
     },
     "2022-2023": {
-        "Lugia": `Pokémon (21)
+        "Lugia": `
+        Pokémon (21)
         4 Lugia V SIT 138
         3 Lugia VSTAR SIT 139
         4 Archeops SIT 147
@@ -329,7 +339,8 @@ const decklistsByYear = {
         2 Gift Energy LOR 171
         2 V Guard Energy SIT 169
         2 Jet Energy PAL 190`,
-        "Turbo Lost Zone Box": `Pokémon (13)
+        "Turbo Lost Zone Box": `
+        Pokémon (13)
         4 Comfey LOR 79
         2 Sableye LOR 70
         1 Cramorant LOR 50
@@ -362,7 +373,8 @@ const decklistsByYear = {
         4 Water Energy 3
         2 Psychic Energy 5
         2 Lightning Energy 4`,
-        "Lost Zone Box Kyogre": `Pokémon (12)
+        "Lost Zone Box Kyogre": `
+        Pokémon (12)
         4 Comfey LOR 79
         2 Sableye LOR 70
         1 Cramorant LOR 50
@@ -393,7 +405,8 @@ const decklistsByYear = {
         5 Water Energy 3
         4 Psychic Energy 5
         2 Lightning Energy 4`,
-        "Fusion Mew": `Pokémon (13)
+        "Fusion Mew": `
+        Pokémon (13)
         4 Mew V CRZ 60
         3 Mew VMAX FST 114
         4 Genesect V FST 185
@@ -424,7 +437,8 @@ const decklistsByYear = {
         Energy (7)
         4 Fusion Strike Energy FST 244
         3 Double Turbo Energy BRS 151`,
-        "Arceus Umbreon": `Pokémon (18)
+        "Arceus Umbreon": `
+        Pokémon (18)
         4 Arceus V BRS 122
         3 Arceus VSTAR BRS 123
         2 Umbreon V EVS 94
@@ -457,7 +471,8 @@ const decklistsByYear = {
         4 Double Turbo Energy BRS 151
         3 Lightning Energy 4
         3 V Guard Energy SIT 169`,
-        "Gardevoir": `Pokémon (18)
+        "Gardevoir": `
+        Pokémon (18)
         3 Ralts ASR 60
         1 Ralts SIT 67
         3 Kirlia SIT 68
@@ -490,7 +505,8 @@ const decklistsByYear = {
         Energy (12)
         10 Psychic Energy 5
         2 Reversal Energy PAL 192`,
-        "Palkia": `Pokémon (15)
+        "Palkia": `
+        Pokémon (15)
         4 Origin Forme Palkia V ASR 39
         3 Origin Forme Palkia VSTAR ASR 40
         2 Chien-Pao ex PAL 61
@@ -520,7 +536,8 @@ const decklistsByYear = {
         10 Water Energy 3`,
     },
     "2021-2022": {
-        "Arceus Flying Pikachu": `Pokémon (23)
+        "Arceus Flying Pikachu": `
+        Pokémon (23)
         4 Arceus V BRS 122
         3 Arceus VSTAR BRS 123
         3 Flying Pikachu V CEL 6
@@ -549,7 +566,8 @@ const decklistsByYear = {
         4 Lightning Energy 4
         3 Fighting Energy 6
         1 Capture Energy RCL 171`,
-        "Palkia Inteleon": `Pokémon (19)
+        "Palkia Inteleon": `
+        Pokémon (19)
         3 Origin Forme Palkia V ASR 39
         3 Origin Forme Palkia VSTAR ASR 40
         4 Sobble CRE 41
@@ -581,7 +599,8 @@ const decklistsByYear = {
         
         Energy (7)
         7 Water Energy 3`,
-        "Fusion Mew": `Pokémon (14)
+        "Fusion Mew": `
+        Pokémon (14)
         4 Mew V FST 113
         3 Mew VMAX FST 114
         4 Genesect V FST 185
@@ -606,7 +625,8 @@ const decklistsByYear = {
         Energy (7)
         4 Fusion Strike Energy FST 244
         3 Double Turbo Energy BRS 151`,
-        "Ice Rider Calyrex Palkia": `Pokémon (19)
+        "Ice Rider Calyrex Palkia": `
+        Pokémon (19)
         3 Ice Rider Calyrex V CRE 45
         2 Ice Rider Calyrex VMAX CRE 46
         2 Origin Forme Palkia V ASR 39
@@ -638,7 +658,8 @@ const decklistsByYear = {
         
         Energy (8)
         8 Water Energy 3`,
-        "Charizard Inteleon": `Pokémon (14)
+        "Charizard Inteleon": `
+        Pokémon (14)
         4 Sobble CRE 41
         3 Drizzile SSH 56
         2 Inteleon SSH 58
@@ -672,7 +693,8 @@ const decklistsByYear = {
         2 Fire Energy 2
         2 Water Energy 3
         1 Twin Energy RCL 174`,
-        "Regis": `Pokémon (12)
+        "Regis": `
+        Pokémon (12)
         2 Regieleki EVS 60
         2 Regidrago ASR 118
         2 Regigigas ASR 130
@@ -699,7 +721,8 @@ const decklistsByYear = {
         3 Speed Lightning Energy RCL 173
         2 Capture Energy RCL 171
         2 Twin Energy RCL 174`,
-        "Arceus Inteleon": `Pokémon (17)
+        "Arceus Inteleon": `
+        Pokémon (17)
         4 Arceus V BRS 122
         3 Arceus VSTAR BRS 123
         4 Sobble CRE 41
@@ -729,7 +752,8 @@ const decklistsByYear = {
         1 Capture Energy RCL 171`,
     },
     "2020-2021": {
-        "Urshifu Inteleon": `Pokémon (23)
+        "Urshifu Inteleon": `
+        Pokémon (23)
         4 Rapid Strike Urshifu V BST 87
         3 Rapid Strike Urshifu VMAX BST 88
         4 Sobble CRE 41
@@ -760,7 +784,8 @@ const decklistsByYear = {
         Energy (8)
         4 Rapid Strike Energy BST 140
         4 Fighting Energy 6`,
-        "Spiritomb": `Pokémon (14)
+        "Spiritomb": `
+        Pokémon (14)
         4 Spiritomb UNB 112
         3 Jirachi TEU 99
         1 Jynx UNM 76
@@ -787,7 +812,8 @@ const decklistsByYear = {
         Energy (7)
         4 Hiding Darkness Energy DAA 175
         3 Darkness Energy 7`,
-        "ADP Moltres": `Pokémon (14)
+        "ADP Moltres": `
+        Pokémon (14)
         4 Galarian Moltres V CRE 97
         3 Dedenne-GX UNB 57
         2 Arceus & Dialga & Palkia-GX CEC 156
@@ -815,7 +841,8 @@ const decklistsByYear = {
         4 Aurora Energy SSH 186
         1 Metal Energy 8
         1 Water Energy 3`,
-        "Shadow Rider Calyrex": `Pokémon (16)
+        "Shadow Rider Calyrex": `
+        Pokémon (16)
         4 Shadow Rider Calyrex V CRE 74
         4 Shadow Rider Calyrex VMAX CRE 75
         2 Dedenne-GX UNB 57
@@ -840,7 +867,8 @@ const decklistsByYear = {
         
         Energy (13)
         13 Psychic Energy 5`,
-        "Weavile Dark Box": `Pokémon (20)
+        "Weavile Dark Box": `
+        Pokémon (20)
         3 Sneasel CEC 43
         2 Weavile-GX UNM 132
         2 Malamar V RCL 121
@@ -877,7 +905,8 @@ const decklistsByYear = {
         1 Capture Energy RCL 171`,
     },
     "2019-2020": {
-        "Zacian Lucario & Melmetal": `Pokémon (12)
+        "Zacian Lucario & Melmetal": `
+        Pokémon (12)
         4 Zacian V SSH 138
         2 Lucario & Melmetal-GX UNB 120
         2 Zamazenta V SSH 139
@@ -899,7 +928,8 @@ const decklistsByYear = {
         
         Energy (13)
         13 Metal Energy 8`,
-        "Zacian ADP": `Pokémon (13)
+        "Zacian ADP": `
+        Pokémon (13)
         4 Zacian V SSH 138
         2 Arceus & Dialga & Palkia-GX CEC 156
         2 Zamazenta V SSH 139
@@ -930,7 +960,8 @@ const decklistsByYear = {
         8 Metal Energy 8
         2 Aurora Energy SSH 186
         1 Capture Energy RCL 171`,
-        "Inteleon Frosmoth": `Pokémon (20)
+        "Inteleon Frosmoth": `
+        Pokémon (20)
         4 Inteleon V RCL 49
         3 Inteleon VMAX RCL 50
         3 Snom SSH 63
@@ -955,7 +986,8 @@ const decklistsByYear = {
         
         Energy (9)
         9 Water Energy 3`,
-        "Centiskorch": `Pokémon (14)
+        "Centiskorch": `
+        Pokémon (14)
         4 Centiskorch V DAA 33
         3 Centiskorch VMAX DAA 34
         2 Volcanion UNB 25
@@ -982,7 +1014,8 @@ const decklistsByYear = {
         Energy (13)
         9 Fire Energy 2
         4 Heat Fire Energy DAA 174`,
-        "Eternatus": `Pokémon (18)
+        "Eternatus": `
+        Pokémon (18)
         4 Eternatus V DAA 116
         4 Eternatus VMAX DAA 117
         4 Crobat V DAA 104
@@ -1008,7 +1041,8 @@ const decklistsByYear = {
         2 Capture Energy RCL 171`,
     },
     "2018-2019": {
-        "Mewtwo & Mew": `Pokémon (16)
+        "Mewtwo & Mew": `
+        Pokémon (16)
         4 Mewtwo & Mew-GX UNM 71
         3 Dedenne-GX UNB 57
         1 Solgaleo-GX PR-SM 104
@@ -1038,7 +1072,8 @@ const decklistsByYear = {
         Energy (11)
         8 Fire Energy 2
         3 Psychic Energy 5`,
-        "Blacephalon Naganadel": `Pokémon (16)
+        "Blacephalon Naganadel": `
+        Pokémon (16)
         3 Blacephalon-GX LOT 52
         3 Poipole FLI 55
         1 Poipole LOT 107
@@ -1065,7 +1100,8 @@ const decklistsByYear = {
         14 Fire Energy 2
         1 Psychic Energy 5
         1 Beast Energy ♢ FLI 117`,
-        "Green's Reshiram & Charizard": `Pokémon (7)
+        "Green's Reshiram & Charizard": `
+        Pokémon (7)
         4 Volcanion UNB 25
         3 Reshiram & Charizard-GX UNB 20
         
@@ -1091,7 +1127,8 @@ const decklistsByYear = {
         
         Energy (11)
         11 Fire Energy 2`,
-        "Reshiram & Charizard Fire Box": `Pokémon (16)
+        "Reshiram & Charizard Fire Box": `
+        Pokémon (16)
         4 Jirachi TEU 99
         3 Dedenne-GX UNB 57
         2 Reshiram & Charizard-GX UNB 20
@@ -1115,7 +1152,8 @@ const decklistsByYear = {
         
         Energy (18)
         18 Fire Energy 2`,
-        "Pikachu & Zekrom": `Pokémon (13)
+        "Pikachu & Zekrom": `
+        Pokémon (13)
         3 Jirachi TEU 99
         2 Pikachu & Zekrom-GX TEU 33
         2 Raichu & Alolan Raichu-GX UNM 54
@@ -1145,7 +1183,8 @@ const decklistsByYear = {
         
         Energy (11)
         11 Lightning Energy 4`,
-        "Pidgeotto Control": `Pokémon (18)
+        "Pidgeotto Control": `
+        Pokémon (18)
         4 Oranguru UPR 114
         4 Pidgey TEU 121
         4 Pidgeotto TEU 123
@@ -1174,7 +1213,8 @@ const decklistsByYear = {
         Energy (4)
         3 Water Energy 3
         1 Recycle Energy UNM 212`,
-        "Gardevoir & Sylveon": `Pokémon (6)
+        "Gardevoir & Sylveon": `
+        Pokémon (6)
         4 Gardevoir & Sylveon-GX UNB 130
         1 Xerneas-GX FLI 90
         1 Mimikyu-GX LOT 149
@@ -1204,7 +1244,8 @@ const decklistsByYear = {
         9 Fairy Energy 9`,
     },
     "2017-2018": {
-        "Zoroark Garbodor": `Pokémon (18)
+        "Zoroark Garbodor": `
+        Pokémon (18)
         4 Zorua SLG 52
         4 Zoroark-GX SLG 53
         3 Trubbish BKP 56
@@ -1233,7 +1274,8 @@ const decklistsByYear = {
         Energy (7)
         4 Double Colorless Energy SLG 69
         3 Unit Energy LPM UPR 138`,
-        "Psychic Malamar": `Pokémon (18)
+        "Psychic Malamar": `
+        Pokémon (18)
         4 Inkay FLI 50
         4 Malamar FLI 51
         2 Marshadow-GX BUS 80
@@ -1261,7 +1303,8 @@ const decklistsByYear = {
         
         Energy (10)
         10 Psychic Energy 5`,
-        "Zygarde Lycanroc": `Pokémon (13)
+        "Zygarde Lycanroc": `
+        Pokémon (13)
         3 Zygarde-GX FLI 73
         2 Rockruff FLI 75
         2 Lycanroc-GX GRI 74
@@ -1290,7 +1333,8 @@ const decklistsByYear = {
         10 Fighting Energy 6
         4 Double Colorless Energy SLG 69
         2 Strong Energy FCO 115`,
-        "Rayquaza": `Pokémon (9)
+        "Rayquaza": `
+        Pokémon (9)
         4 Rayquaza-GX CES 109
         2 Marshadow SLG 45
         1 Tapu Lele-GX GRI 60
@@ -1316,7 +1360,8 @@ const decklistsByYear = {
         Energy (14)
         7 Grass Energy 1
         7 Lightning Energy 4`,
-        "Buzzwole Lycanroc": `Pokémon (14)
+        "Buzzwole Lycanroc": `
+        Pokémon (14)
         3 Buzzwole FLI 77
         2 Buzzwole-GX CIN 57
         2 Rockruff FLI 75
@@ -1343,7 +1388,8 @@ const decklistsByYear = {
         9 Fighting Energy 6
         4 Strong Energy FCO 115
         1 Beast Energy ♢ FLI 117`,
-        "Greninja": `Pokémon (17)
+        "Greninja": `
+        Pokémon (17)
         4 Froakie FLI 22
         3 Frogadier BKP 39
         1 Frogadier FLI 23
@@ -1367,7 +1413,8 @@ const decklistsByYear = {
         Energy (10)
         6 Water Energy 3
         4 Splash Energy BKP 113`,
-        "Zoroark Gallade": `Pokémon (19)
+        "Zoroark Gallade": `
+        Pokémon (19)
         4 Zorua SLG 52
         4 Zoroark-GX SLG 53
         4 Tapu Lele-GX GRI 60
@@ -1404,7 +1451,8 @@ const decklistsByYear = {
         
         Energy (4)
         4 Double Colorless Energy SLG 69`,
-        "Banette Garbodor": `Pokémon (16)
+        "Banette Garbodor": `
+        Pokémon (16)
         4 Trubbish BKP 56
         2 Garbodor BKP 57
         2 Garbodor GRI 51
@@ -1434,7 +1482,8 @@ const decklistsByYear = {
         3 Double Colorless Energy SLG 69`,
     },
     "2016-2017": {
-        "Gardevoir": `Pokémon (19)
+        "Gardevoir": `
+        Pokémon (19)
         4 Ralts BUS 91
         3 Kirlia BUS 92
         3 Gardevoir-GX BUS 93
@@ -1464,7 +1513,8 @@ const decklistsByYear = {
         7 Fairy Energy 9
         4 Double Colorless Energy SUM 136
         1 Wonder Energy PRC 144`,
-        "Golisopod Garbodor": `Pokémon (18)
+        "Golisopod Garbodor": `
+        Pokémon (18)
         4 Wimpod BUS 16
         3 Golisopod-GX BUS 17
         4 Trubbish BKP 56
@@ -1493,7 +1543,8 @@ const decklistsByYear = {
         4 Rainbow Energy SUM 137
         3 Grass Energy 1
         3 Double Colorless Energy SUM 136`,
-        "Espeon Garbodor": `Pokémon (18)
+        "Espeon Garbodor": `
+        Pokémon (18)
         4 Eevee SUM 101
         3 Espeon-GX SUM 61
         1 Flareon AOR 13
@@ -1520,7 +1571,8 @@ const decklistsByYear = {
         Energy (12)
         8 Psychic Energy 5
         4 Double Colorless Energy SUM 136`,
-        "Garbodor Necrozma": `Pokémon (15)
+        "Garbodor Necrozma": `
+        Pokémon (15)
         4 Trubbish BKP 56
         3 Garbodor GRI 51
         1 Garbodor BKP 57
@@ -1549,7 +1601,8 @@ const decklistsByYear = {
         Energy (11)
         7 Psychic Energy 5
         4 Double Colorless Energy SUM 136`,
-        "Ho-Oh Salazzle": `Pokémon (16)
+        "Ho-Oh Salazzle": `
+        Pokémon (16)
         3 Ho-Oh-GX BUS 21
         2 Salandit GRI 15
         2 Salazzle-GX BUS 25
@@ -1575,7 +1628,8 @@ const decklistsByYear = {
         
         Energy (14)
         14 Fire Energy 2`,
-        "Volcanion": `Pokémon (12)
+        "Volcanion": `
+        Pokémon (12)
         3 Volcanion STS 25
         3 Volcanion-EX STS 26
         2 Turtonator-GX GRI 18
@@ -1600,7 +1654,8 @@ const decklistsByYear = {
         
         Energy (14)
         14 Fire Energy 2`,
-        "Mega Rayquaza": `Pokémon (18)
+        "Mega Rayquaza": `
+        Pokémon (18)
         4 Rayquaza-EX ROS 75
         3 M Rayquaza-EX ROS 76
         4 Shaymin-EX ROS 77
@@ -1630,7 +1685,8 @@ const decklistsByYear = {
         Energy (9)
         5 Lightning Energy 4
         4 Double Colorless Energy SUM 136`,
-        "Greninja": `Pokémon (18)
+        "Greninja": `
+        Pokémon (18)
         4 Froakie BKP 38
         4 Frogadier BKP 39
         4 Greninja BKP 40
@@ -1657,7 +1713,8 @@ const decklistsByYear = {
         Energy (9)
         6 Water Energy 3
         3 Splash Energy BKP 113`,
-        "Drampa Garbodor": `Pokémon (15)
+        "Drampa Garbodor": `
+        Pokémon (15)
         3 Drampa-GX GRI 115
         4 Trubbish BKP 56
         3 Garbodor GRI 51
@@ -1686,7 +1743,8 @@ const decklistsByYear = {
         4 Double Colorless Energy SUM 136`,
     },
     "2015-2016": {
-        "Mega Audino": `Pokémon (13)
+        "Mega Audino": `
+        Pokémon (13)
         4 Audino-EX FCO 84
         3 M Audino-EX FCO 85
         2 Shaymin-EX ROS 77
@@ -1717,7 +1775,8 @@ const decklistsByYear = {
         Energy (10)
         6 Metal Energy 8
         4 Double Colorless Energy FCO 114`,
-        "Greninja": `Pokémon (18)
+        "Greninja": `
+        Pokémon (18)
         4 Talonflame STS 96
         3 Froakie BKP 38
         4 Frogadier BKP 39
@@ -1743,7 +1802,8 @@ const decklistsByYear = {
         Energy (10)
         8 Water Energy 3
         2 Splash Energy BKP 113`,
-        "Vileplume Toolbox": `Pokémon (21)
+        "Vileplume Toolbox": `
+        Pokémon (21)
         3 Oddish AOR 1
         3 Gloom AOR 2
         3 Vileplume AOR 3
@@ -1771,7 +1831,8 @@ const decklistsByYear = {
         4 Rainbow Energy BKT 152
         4 Double Colorless Energy FCO 114
         1 Lightning Energy 4`,
-        "Vespiquen": `Pokémon (22)
+        "Vespiquen": `
+        Pokémon (22)
         4 Combee AOR 9
         4 Vespiquen AOR 10
         4 Unown AOR 30
@@ -1801,7 +1862,8 @@ const decklistsByYear = {
         Energy (9)
         5 Darkness Energy 7
         4 Double Colorless Energy FCO 114`,
-        "Night March": `Pokémon (17)
+        "Night March": `
+        Pokémon (17)
         4 Joltik PHF 26
         4 Pumpkaboo PHF 44
         4 Lampent PHF 42
@@ -1830,7 +1892,8 @@ const decklistsByYear = {
         
         Energy (4)
         4 Double Colorless Energy FCO 114`,
-        "Bronzong Box": `Pokémon (18)
+        "Bronzong Box": `
+        Pokémon (18)
         4 Bronzor PHF 60
         4 Bronzong PHF 61
         1 Bronzong BREAK FCO 62
@@ -1856,7 +1919,8 @@ const decklistsByYear = {
         
         Energy (10)
         10 Metal Energy 8`,
-        "Waterbox": `Pokémon (12)
+        "Waterbox": `
+        Pokémon (12)
         3 Seismitoad-EX FFI 20
         3 Shaymin-EX ROS 77
         2 Manaphy-EX BKP 32
@@ -1886,7 +1950,8 @@ const decklistsByYear = {
         12 Water Energy 3`,
     },
     "2014-2015": {
-        "Archie's Blastoise": `Pokémon (14)
+        "Archie's Blastoise": `
+        Pokémon (14)
         2 Blastoise PLB 16
         3 Keldeo-EX LTR 45
         2 Jirachi-EX PLB 60
@@ -1914,7 +1979,8 @@ const decklistsByYear = {
         
         Energy (11)
         11 Water Energy 3`,
-        "Seismitoad Crobat": `Pokémon (18)
+        "Seismitoad Crobat": `
+        Pokémon (18)
         4 Zubat PLS 53
         4 Golbat PHF 32
         3 Crobat PHF 33
@@ -1940,7 +2006,8 @@ const decklistsByYear = {
         Energy (7)
         4 Double Colorless Energy PHF 111
         3 Water Energy 3`,
-        "Night March": `Pokémon (19)
+        "Night March": `
+        Pokémon (19)
         4 Joltik PHF 26
         4 Pumpkaboo PHF 44
         4 Lampent PHF 42
@@ -1966,7 +2033,8 @@ const decklistsByYear = {
         Energy (7)
         4 Double Colorless Energy PHF 111
         3 Lightning Energy 4`,
-        "Trevenant Gengar": `Pokémon (14)
+        "Trevenant Gengar": `
+        Pokémon (14)
         4 Phantump XY 54
         4 Trevenant XY 55
         3 Gengar-EX PHF 34
@@ -1992,7 +2060,8 @@ const decklistsByYear = {
         4 Mystery Energy PHF 112
         4 Double Colorless Energy PHF 111
         2 Psychic Energy 5`,
-        "Donphan": `Pokémon (14)
+        "Donphan": `
+        Pokémon (14)
         4 Phanpy PLS 71
         4 Donphan PLS 72
         4 Hawlucha FFI 63
@@ -2021,7 +2090,8 @@ const decklistsByYear = {
         4 Strong Energy FFI 104
         4 Fighting Energy 6
         2 Double Colorless Energy PHF 111`,
-        "Aromatisse Box": `Pokémon (17)
+        "Aromatisse Box": `
+        Pokémon (17)
         2 Spritzee FLF 67
         1 Spritzee XY 92
         2 Aromatisse XY 93
@@ -2056,7 +2126,8 @@ const decklistsByYear = {
         5 Fairy Energy 9
         4 Rainbow Energy XY 131
         3 Double Colorless Energy PHF 111`,
-        "Primal Groudon": `Pokémon (11)
+        "Primal Groudon": `
+        Pokémon (11)
         3 Groudon-EX PRC 85
         3 Primal Groudon-EX PRC 86
         3 Wobbuffet PHF 36
@@ -2088,7 +2159,8 @@ const decklistsByYear = {
         Energy (11)
         7 Fighting Energy 6
         4 Strong Energy FFI 104`,
-        "Mega Manectric": `Pokémon (11)
+        "Mega Manectric": `
+        Pokémon (11)
         4 Manectric-EX PHF 23
         3 M Manectric-EX PHF 24
         2 Genesect-EX PLB 11
@@ -2118,7 +2190,8 @@ const decklistsByYear = {
         5 Lightning Energy 4
         4 Grass Energy 1
         2 Plasma Energy PLB 91`,
-        "Raichu Crobat": `Pokémon (25)
+        "Raichu Crobat": `
+        Pokémon (25)
         4 Pikachu XY 42
         4 Raichu XY 43
         4 Zubat PLS 53
@@ -2149,7 +2222,8 @@ const decklistsByYear = {
 
     },
     "2013-2014": {
-        "Virizion Genesect": `Pokémon (10)
+        "Virizion Genesect": `
+        Pokémon (10)
         4 Virizion-EX PLB 9
         4 Genesect-EX PLB 11
         1 Jirachi-EX PLB 60
@@ -2176,7 +2250,8 @@ const decklistsByYear = {
         Energy (13)
         9 Grass Energy 1
         4 Plasma Energy PLB 91`,
-        "Aromatisse Kangaskhan": `Pokémon (15)
+        "Aromatisse Kangaskhan": `
+        Pokémon (15)
         3 Spritzee XY 92
         2 Aromatisse XY 93
         2 Kangaskhan-EX FLF 78
@@ -2210,7 +2285,8 @@ const decklistsByYear = {
         2 Double Colorless Energy XY 130
         1 Rainbow Energy XY 131
         1 Water Energy 3`,
-        "Yveltal Garbodor": `Pokémon (10)
+        "Yveltal Garbodor": `
+        Pokémon (10)
         3 Yveltal-EX XY 79
         1 Darkrai-EX LTR 88
         1 Sableye DEX 62
@@ -2238,7 +2314,8 @@ const decklistsByYear = {
         Energy (11)
         7 Darkness Energy 7
         4 Double Colorless Energy XY 130`,
-        "Plasma Lugia": `Pokémon (9)
+        "Plasma Lugia": `
+        Pokémon (9)
         4 Deoxys-EX PLF 53
         2 Thundurus-EX PLF 38
         2 Lugia-EX LTR 102
@@ -2266,7 +2343,8 @@ const decklistsByYear = {
         4 Plasma Energy PLB 91
         4 Double Colorless Energy XY 130
         4 Prism Energy NXD 93`,
-        "Blastoise Keldeo": `Pokémon (14)
+        "Blastoise Keldeo": `
+        Pokémon (14)
         3 Squirtle BCR 29
         1 Wartortle BCR 30
         3 Blastoise PLB 16
@@ -2298,7 +2376,8 @@ const decklistsByYear = {
         Energy (11)
         9 Water Energy 3
         2 Lightning Energy 4`,
-        "Landorus Raichu": `Pokémon (18)
+        "Landorus Raichu": `
+        Pokémon (18)
         3 Landorus-EX BCR 89
         1 Mewtwo-EX LTR 54
         3 Pikachu XY 42
@@ -2328,7 +2407,8 @@ const decklistsByYear = {
         4 Double Colorless Energy XY 130`,
     },
     "2012-2013": {
-        "Darkrai Sableye": `Pokémon (10)
+        "Darkrai Sableye": `
+        Pokémon (10)
         4 Darkrai-EX DEX 63
         3 Sableye DEX 62
         2 Keldeo-EX BCR 49
@@ -2353,7 +2433,8 @@ const decklistsByYear = {
         
         Energy (10)
         10 Darkness Energy 7`,
-        "Plasma Kyurem": `Pokémon (11)
+        "Plasma Kyurem": `
+        Pokémon (11)
         3 Deoxys-EX PLF 53
         2 Thundurus-EX PLF 38
         2 Kyurem PLF 31
@@ -2382,7 +2463,8 @@ const decklistsByYear = {
         4 Prism Energy NXD 93
         4 Blend Energy WLFM DRX 118
         1 Double Colorless Energy NXD 92`,
-        "Blastoise Keldeo": `Pokémon (14)
+        "Blastoise Keldeo": `
+        Pokémon (14)
         4 Squirtle BCR 29
         1 Wartortle BCR 30
         4 Blastoise BCR 31
@@ -2409,7 +2491,8 @@ const decklistsByYear = {
         Energy (11)
         9 Water Energy 3
         2 Lightning Energy 4`,
-        "Sableye Garbodor": `Pokémon (11)
+        "Sableye Garbodor": `
+        Pokémon (11)
         4 Sableye DEX 62
         2 Trubbish DRX 53
         2 Garbodor DRX 54
@@ -2438,7 +2521,8 @@ const decklistsByYear = {
         
         Energy (8)
         8 Darkness Energy 7`,
-        "Rayquaza Eelektrik": `Pokémon (15)
+        "Rayquaza Eelektrik": `
+        Pokémon (15)
         4 Tynamo DEX 45
         4 Eelektrik NVI 40
         3 Rayquaza-EX DRX 85
@@ -2463,7 +2547,8 @@ const decklistsByYear = {
         Energy (12)
         8 Lightning Energy 4
         4 Fire Energy 2`,
-        "Flareon": `Pokémon (25)
+        "Flareon": `
+        Pokémon (25)
         4 Eevee PLF 90
         4 Flareon PLF 12
         1 Leafeon PLF 11
@@ -2493,7 +2578,8 @@ const decklistsByYear = {
         Energy (8)
         4 Double Colorless Energy NXD 92
         4 Fighting Energy 6`,
-        "Klinklang": `Pokémon (18)
+        "Klinklang": `
+        Pokémon (18)
         4 Klink DEX 75
         2 Klang DEX 76
         2 Klinklang BLW 76
@@ -2525,7 +2611,8 @@ const decklistsByYear = {
         1 Blend Energy WLFM DRX 118`,
     },
     "2011-2012": {
-        "Darkrai Mewtwo Terrakion": `Pokémon (12)
+        "Darkrai Mewtwo Terrakion": `
+        Pokémon (12)
         3 Darkrai-EX DEX 63
         3 Mewtwo-EX NXD 54
         2 Terrakion NVI 73
@@ -2552,7 +2639,8 @@ const decklistsByYear = {
         3 Double Colorless Energy NXD 92
         2 Prism Energy NXD 93
         2 Fighting Energy 6`,
-        "Darkrai Mewtwo": `Pokémon (10)
+        "Darkrai Mewtwo": `
+        Pokémon (10)
         3 Darkrai-EX DEX 63
         3 Mewtwo-EX NXD 54
         2 Shaymin UL 8
@@ -2577,7 +2665,8 @@ const decklistsByYear = {
         Energy (13)
         9 Darkness Energy 7
         4 Double Colorless Energy NXD 92`,
-        "Celebi Mewtwo Terrakion": `Pokémon (17)
+        "Celebi Mewtwo Terrakion": `
+        Pokémon (17)
         3 Celebi TM 92
         3 Mewtwo-EX NXD 54
         2 Terrakion NVI 73
@@ -2610,7 +2699,8 @@ const decklistsByYear = {
         6 Grass Energy 1
         4 Double Colorless Energy NXD 92
         3 Fighting Energy 6`,
-        "Chandelure Accelgor Lock": `Pokémon (26)
+        "Chandelure Accelgor Lock": `
+        Pokémon (26)
         4 Mew TM 97
         3 Accelgor DEX 11
         3 Litwick PR-BLW 27

@@ -96,7 +96,6 @@ ul, li {
   height: 16%;
   display: flex; /* Add this */
 	justify-content: center; /* Horizontally center-align child elements */
-	align-items: center;
   border-radius: 15px; /* Rounded corners */
 }
 #stadium_html img {
@@ -109,6 +108,11 @@ ul, li {
   box-shadow: 0 2px 4px rgba(0, 0, 0, .5); /* Adjust the values for your desired shadow effect */
   border-radius: 0.375rem;
   cursor: pointer;
+}
+.tab {
+  position: absolute;
+  border-radius: 10%;
+  background-color: rgba(59, 173, 84, 0.708);
 }
 .base {
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1); /* Lighter shadow */
@@ -619,11 +623,17 @@ ul, li {
   width: 100%;
   color: grey;
 }
-#twitterHandle {
+#twitterDescription {
   position: absolute;
   bottom: 2%;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 5%;
+  display: block;
+  max-width: 90%;
+  font-weight: bold;
+}
+#twitterHandle {
+  font-weight: normal;
+  margin-top: 1vh;
   display: flex;
   align-items: center;
 }
@@ -745,6 +755,7 @@ a:hover {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border: 1px solid #ccc; /* Add this line for a grey border */
   z-index: 2;
+  color: black;
 }
 .decklists-context-menu-item {
   padding: .2vh 1vw;

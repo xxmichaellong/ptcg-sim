@@ -65,7 +65,9 @@ export const selfCloseLostzoneDisplayButton = selfContainersDocument.getElementB
 export const selfVSTARButton = selfContainersDocument.getElementById('vSTARButton');
 export const selfGXButton = selfContainersDocument.getElementById('GXButton');
 
-export const selfSortCheckBox = selfContainersDocument.getElementById('sortCheckBox');
+export const selfDeckSortCheckBox = selfContainersDocument.getElementById('deckSortCheckBox');
+export const selfDiscardSortCheckBox = selfContainersDocument.getElementById('discardSortCheckBox');
+export const selfLostzoneSortCheckBox = selfContainersDocument.getElementById('lostzoneSortCheckBox');
 
 //oppContainers
 export const oppShuffleDeckButton = oppContainersDocument.getElementById('oppShuffleDeckButton')
@@ -86,4 +88,6 @@ export const oppCloseLostzoneDisplayButton = oppContainersDocument.getElementByI
 export const oppVSTARButton = oppContainersDocument.getElementById('vSTARButton');
 export const oppGXButton = oppContainersDocument.getElementById('GXButton');
 
-export const oppSortCheckBox = oppContainersDocument.getElementById('sortCheckBox');
+export const oppDeckSortCheckBox = oppContainersDocument.getElementById('deckSortCheckBox');
+export const oppDiscardSortCheckBox = oppContainersDocument.getElementById('discardSortCheckBox');
+export const oppLostzoneSortCheckBox = oppContainersDocument.getElementById('lostzoneSortCheckBox');

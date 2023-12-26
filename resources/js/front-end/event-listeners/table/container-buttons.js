@@ -1,6 +1,6 @@
 import { closeDisplay, discardAll, handAll, lostzoneAll, shuffleAll } from '../../actions/container/general.js';
 import { sort } from '../../actions/general/sort.js';
-import { oppAttachedCardDiscardButton, oppAttachedCardHandButton, oppAttachedCardLostzoneButton, oppAttachedCardShuffleButton, oppCloseDeckDisplayButton, oppCloseDiscardDisplayButton, oppCloseLostzoneDisplayButton, oppDiscardShuffleButton, oppShuffleDeckButton, oppSortCheckBox, oppViewCardsDiscardButton, oppViewCardsHandButton, oppViewCardsLostzoneButton, oppViewCardsShuffleButton, selfAttachedCardDiscardButton, selfAttachedCardHandButton, selfAttachedCardLostzoneButton, selfAttachedCardShuffleButton, selfCloseDeckDisplayButton, selfCloseDiscardDisplayButton, selfCloseLostzoneDisplayButton, selfDiscardShuffleButton, selfShuffleDeckButton, selfSortCheckBox, selfViewCardsDiscardButton, selfViewCardsHandButton, selfViewCardsLostzoneButton, selfViewCardsShuffleButton } from '../../front-end.js';
+import { oppAttachedCardDiscardButton, oppAttachedCardHandButton, oppAttachedCardLostzoneButton, oppAttachedCardShuffleButton, oppCloseDeckDisplayButton, oppCloseDiscardDisplayButton, oppCloseLostzoneDisplayButton, oppDeckSortCheckBox, oppDiscardShuffleButton, oppDiscardSortCheckBox, oppLostzoneSortCheckBox, oppShuffleDeckButton, oppViewCardsDiscardButton, oppViewCardsHandButton, oppViewCardsLostzoneButton, oppViewCardsShuffleButton, selfAttachedCardDiscardButton, selfAttachedCardHandButton, selfAttachedCardLostzoneButton, selfAttachedCardShuffleButton, selfCloseDeckDisplayButton, selfCloseDiscardDisplayButton, selfCloseLostzoneDisplayButton, selfDeckSortCheckBox, selfDiscardShuffleButton, selfDiscardSortCheckBox, selfLostzoneSortCheckBox, selfShuffleDeckButton, selfViewCardsDiscardButton, selfViewCardsHandButton, selfViewCardsLostzoneButton, selfViewCardsShuffleButton } from '../../front-end.js';
 
 //self buttons
 selfShuffleDeckButton.addEventListener('click', (event) => shuffleAll(event));
@@ -29,7 +29,9 @@ selfCloseDiscardDisplayButton.addEventListener('click', (event) => closeDisplay(
 
 selfCloseLostzoneDisplayButton.addEventListener('click', (event) => closeDisplay(event));
 
-selfSortCheckBox.addEventListener('change', () => sort('self'));
+selfDeckSortCheckBox.addEventListener('change', () => sort('self', 'deck', 'deck_html'));
+selfDiscardSortCheckBox.addEventListener('change', () => sort('self', 'discard', 'discard_html'));
+selfLostzoneSortCheckBox.addEventListener('change', () => sort('self', 'lostzone', 'lostzone_html'));
 
 //opp buttons
 oppShuffleDeckButton.addEventListener('click', (event) => shuffleAll(event));
@@ -58,5 +60,6 @@ oppCloseDiscardDisplayButton.addEventListener('click', (event) => closeDisplay(e
 
 oppCloseLostzoneDisplayButton.addEventListener('click', (event) => closeDisplay(event));
 
-oppSortCheckBox.addEventListener('change', () => sort('opp'));
-
+oppDeckSortCheckBox.addEventListener('change', () => sort('opp', 'deck', 'deck_html'));
+oppDiscardSortCheckBox.addEventListener('change', () => sort('opp', 'discard', 'discard_html'));
+oppLostzoneSortCheckBox.addEventListener('change', () => sort('opp', 'lostzone', 'lostzone_html'));

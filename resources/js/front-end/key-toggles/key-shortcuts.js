@@ -12,7 +12,7 @@ import { moveCard } from '../actions/general/move-card.js';
 import { reset } from '../actions/general/reset.js';
 import { setup } from '../actions/general/setup.js';
 import { takeTurn } from '../actions/general/take-turn.js';
-import { sCard, keybindModal, target, deck, oppDeck, POV, deck_html, oppDeck_html, active, bench, oppActive, oppBench, p1, socket, roomId } from '../front-end.js';
+import { sCard, keybindModal, target, deck, oppDeck, POV, deck_html, oppDeck_html, active, bench, oppActive, oppBench, p1, socket, roomId, stadium } from '../front-end.js';
 import { doubleClick } from '../image-logic/click-events.js';
 import { moveCardMessage } from '../setup/chatbox/location-name.js';
 import { appendMessage } from '../setup/chatbox/messages.js';
@@ -161,14 +161,18 @@ export const keyDown = (event) => {
         if (event.key === 'v') {
             doubleClick(null);
         };
-        if (event.key === 'w' && ['active_html', 'bench_html'].includes(sCard.containerId)) {
+        if (event.key === 'w' && ['active_html', 'bench_html', 'stadium_html'].includes(sCard.containerId)) {
             deselectCard();
             event.preventDefault();
             if (sCard.card.image.abilityCounter){
                 sCard.card.image.abilityCounter.handleRemove();
             } else {
                 addAbilityCounter(sCard.user, variableToString(sCard.user, sCard.location), variableToString(sCard.user, sCard.container), sCard.index);
-                appendMessage(POV.user, determineUsername(POV.user) + ' used ability', 'player');
+                if (sCard.location !== stadium){
+                    appendMessage(POV.user, determineUsername(POV.user) + ' used ability', 'player');
+                } else {
+                    appendMessage(POV.user, determineUsername(POV.user) + ' used ' + sCard.card.name, 'player');
+                };
             };
         };
         if (event.key >= 1 && event.key <= 9 && ['active_html', 'bench_html'].includes(sCard.containerId)){

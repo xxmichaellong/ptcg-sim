@@ -485,5 +485,7 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
         socket.emit('moveCard', moveCardData);
         // socket.emit('appendMessage', appendMessageData);
     };
-    sort(user);
+    if (['deck', 'lostzone', 'discard'].includes(_mLocation)){
+        sort(user, _mLocation, _mLocation_html);
+    };
 }

@@ -20,12 +20,17 @@ export const addAbilityCounter = (user, location, container, index, received = f
         abilityCounter.handleRemove = null;
         window.removeEventListener('resize', abilityCounter.handleResize);
     } else {
-        if (user === 'self'){
-            abilityCounter = selfContainersDocument.createElement('div');
-            abilityCounter.className = 'self-tab';
+        if (_location !== 'stadium'){
+            if (user === 'self'){
+                abilityCounter = selfContainersDocument.createElement('div');
+                abilityCounter.className = 'self-tab';
+            } else {
+                abilityCounter = oppContainersDocument.createElement('div');
+                abilityCounter.className = 'opp-tab';
+            };
         } else {
-            abilityCounter = oppContainersDocument.createElement('div');
-            abilityCounter.className = 'opp-tab';
+            abilityCounter = document.createElement('div');
+            abilityCounter.className = 'tab';
         };
     };
    
