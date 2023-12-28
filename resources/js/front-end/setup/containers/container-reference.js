@@ -1,7 +1,7 @@
 import { hand, bench, active, stadium, discard, prizes, lostzone, deck, attachedCardPopup, board, board_html, viewCards, viewCards_html } from '../../initialization/containers/self-containers.js';
 import { oppActive, oppAttachedCardPopup, oppBench, oppDeck, oppDiscard, oppHand, oppLostzone, oppBoard, oppBoard_html, oppPrizes, oppViewCards, oppViewCards_html } from '../../initialization/containers/opp-containers.js';
 
-export const containerIdToLocation = (user, string) => {
+export const containerIdToLocation = (user, containerId) => {
     let locations;
     if (user === 'self'){
         locations = {
@@ -44,5 +44,5 @@ export const containerIdToLocation = (user, string) => {
           viewCards_html: oppViewCards
       };
   };
-  return locations[string];
+  return locations[containerId];
 }

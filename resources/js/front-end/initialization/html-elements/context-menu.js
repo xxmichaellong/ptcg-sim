@@ -5,11 +5,10 @@ export const specialConditionButton = document.getElementById('specialConditionB
 export const abilityCounterButton = document.getElementById('abilityCounterButton');
 
 export const shufflePrizesButton = document.getElementById('shufflePrizesButton');
-export const revealPrizesButton = document.getElementById('revealPrizesButton');
-export const hidePrizesButton = document.getElementById('hidePrizesButton');
+export const lookPrizesButton = document.getElementById('lookPrizesButton');
+export const revealHidePrizesButton = document.getElementById('revealHidePrizesButton');
 
-export const revealHandButton = document.getElementById('revealHandButton');
-export const hideHandButton = document.getElementById('hideHandButton');
+export const lookHandButton = document.getElementById('lookHandButton');
 export const discardHandButton = document.getElementById('discardHandButton');
 export const shuffleHandButton = document.getElementById('shuffleHandButton');
 export const shuffleHandBottomButton = document.getElementById('shuffleHandBottomButton');
@@ -25,4 +24,18 @@ export const switchWithTopButton = document.getElementById('switchWithTopButton'
 export const shuffleIntoDeckButton = document.getElementById('shuffleIntoDeckButton');
 export const moveToBoardButton = document.getElementById('moveToBoardButton');
 
+export const discardBoardButton = document.getElementById('discardBoardButton');
+export const handBoardButton = document.getElementById('handBoardButton');
+export const shuffleBoardButton = document.getElementById('shuffleBoardButton');
+export const lostzoneBoardButton = document.getElementById('lostzoneBoardButton');
 
+export const changeButton = document.getElementById('changeButton');
+export const changeToEnergyButton = document.getElementById('changeToEnergyButton');
+export const changeToToolButton = document.getElementById('changeToToolButton');
+export const changeToPokemonButton = document.getElementById('changeToPokemonButton');
+
+//options context menu
+
+export const optionsContextMenu = document.getElementById('optionsContextMenu');
+export const clearLog = document.getElementById('clearLog');
+export const exportLog = document.getElementById('exportLog');

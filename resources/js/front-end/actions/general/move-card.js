@@ -1,5 +1,4 @@
-import { p1, lostzone_html, lostzoneDisplay_html, discard_html,
-    discardDisplay_html, deck_html, deckDisplay_html, stadium_html, attachedCardPopup_html, selfContainersDocument, bench, active, oppActive, oppAttachedCardPopup_html, oppBench, oppContainersDocument, oppDeckDisplay_html, oppDeck_html, oppDiscardDisplay_html, oppDiscard_html, oppLostzoneDisplay_html, oppLostzone_html, POV, oppPrizes_html, oppHand_html, oppViewCards_html, roomId, socket} from '../../front-end.js'
+import { p1, lostzoneDisplay_html, discardDisplay_html, deck_html, deckDisplay_html, stadium_html, attachedCardPopup_html, selfContainersDocument, bench, active, oppActive, oppAttachedCardPopup_html, oppBench, oppContainersDocument, oppDeckDisplay_html, oppDeck_html, oppDiscardDisplay_html, oppLostzoneDisplay_html, POV, roomId, socket, lostzone, discard, oppLostzone, oppDiscard} from '../../front-end.js'
 import { resetImage } from '../../image-logic/reset-image.js';
 import { updateCount } from './update-count.js';
 import { makeLostzoneCover } from '../make-cover/lostzone-cover.js';
@@ -12,6 +11,8 @@ import { addDamageCounter } from '../counters/damage-counter.js';
 import { addSpecialCondition } from '../counters/special-condition.js';
 import { addAbilityCounter } from '../counters/ability-counter.js';
 import { sort } from './sort.js';
+import { matchRotation, resetRotation } from './rotate-card.js';
+import { moveCardMessage } from '../../setup/chatbox/location-name.js';
 
 export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex, received = false) => {
     deselectCard(); //remove highlight from all images before it's moved
@@ -35,16 +36,16 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
     mLocation.cards.push(...oLocation.cards.splice(index, 1));
 
     // dealing with lostzone/discard cover, check if index is equal to the length of array (after removal)
-    if (['lostzone_html', 'discard_html'].includes(_oLocation_html) && index === oLocation.cards.length){
+    if (['lostzone', 'discard'].includes(_oLocation) && index === oLocation.cards.length){
         // remove existing cover image
         let display_html;
-        if (oLocation_html === lostzone_html){
+        if (oLocation === lostzone){
             display_html = lostzoneDisplay_html;
-        } else if (oLocation_html === discard_html){
+        } else if (oLocation === discard){
             display_html = discardDisplay_html;
-        } else if (oLocation_html === oppLostzone_html){
+        } else if (oLocation === oppLostzone){
             display_html = oppLostzoneDisplay_html;
-        } else if (oLocation_html === oppDiscard_html){
+        } else if (oLocation === oppDiscard){
             display_html = oppDiscardDisplay_html;
         };
         display_html.removeChild(display_html.firstElementChild);
@@ -52,13 +53,13 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
         if (oLocation.cards.length > 0){
             const src = oLocation.cards[oLocation.cards.length - 1].image.src;
             let cover;
-            if (oLocation_html === lostzone_html){
+            if (oLocation === lostzone){
                 cover = makeLostzoneCover(user, src);
-            } else if (oLocation_html === discard_html){
+            } else if (oLocation === discard){
                 cover = makeDiscardCover(user, src);
-            } else if (oLocation_html === oppLostzone_html){
+            } else if (oLocation === oppLostzone){
                 cover = makeLostzoneCover(user, src);
-            } else if (oLocation_html === oppDiscard_html){
+            } else if (oLocation === oppDiscard){
                 cover = makeDiscardCover(user, src);
             };
             display_html.appendChild(cover.image);
@@ -120,10 +121,15 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
     // determine whether to hide/reveal card
     const p1HideLocations = ['prizes_html'];
     const p2HideLocations = ['hand_html'];
-    if (p1HideLocations.includes(_mLocation_html) || (p2HideLocations.includes(_mLocation_html) && !p1[0] && POV.user !== user)){
+    if (p1HideLocations.includes(_mLocation_html) || (p2HideLocations.includes(_mLocation_html) && !p1[0] && POV.user !== user) 
+    || (movingCard.image.faceDown && ['active_html', 'bench_html', 'board_html'].includes(_mLocation_html))){
         hideCard(movingCard);
+        if (p1HideLocations.includes(_mLocation_html) || (p2HideLocations.includes(_mLocation_html))){
+            movingCard.image.faceDown = false;
+        };
     } else {
         revealCard(movingCard);
+        movingCard.image.faceDown = false;
     };
 
     // first, check if image is being attached to another card
@@ -133,6 +139,7 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
     && !targetCard.image.attached
     && (!boardLocations.includes(_oLocation_html) || movingCard.image.attached)){
         if (movingCard.type === 'pokemon' && !boardLocations.includes(_oLocation_html)){
+            resetImage(movingCard.image);
             targetCard.image.after(movingCard.image);
             targetCard.image.attached = true;
             targetCard.image.relative = movingCard.image;
@@ -145,17 +152,15 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
                 targetCard.image.damageCounter.handleRemove();
             };
             if (targetCard.image.specialCondition){
-                addSpecialCondition(user, _mLocation, _mLocation_html, mLocation.cards.length - 1, true);
-                movingCard.image.specialCondition.textContent = targetCard.image.specialCondition.textContent;
-                //remove once opponent is finished with it
                 targetCard.image.specialCondition.textContent = '0';
                 targetCard.image.specialCondition.handleRemove();
             };
             if (targetCard.image.abilityCounter){
-                addAbilityCounter(user, _mLocation, _mLocation_html, mLocation.cards.length - 1, true);
-                //remove once opponent is finished with it
                 targetCard.image.abilityCounter.handleRemove();
             };
+            //rotate card back to normal if it's not
+            resetRotation(targetCard.image);
+
             //reset container width (since cards are being re-attached)
             const newWidth = parseFloat(movingCard.image.clientWidth);
             targetCard.image.parentElement.style.width = newWidth + 'px';
@@ -208,6 +213,10 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
                 movingCard.image.style.bottom = `${layer * adjustment}px`;
             };
             movingCard.image.style.zIndex -= layer;
+
+            //rotate tool/energy to the same orientation of card
+            matchRotation(movingCard.image, targetCard.image);
+
             targetCard.image.after(movingCard.image);
 
             // move tools to the back of the image, index cannot be zero to prevent being called when evolving pokemon
@@ -225,14 +234,17 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
             };
         };
     } else {
-        resetImage(movingCard.image);
-        // adjust create a div container for active/bench
+        resetImage(movingCard.image, _mLocation);
         if (boardLocations.includes(_mLocation_html)){
             let container;
             if (user === 'self'){
                 container = selfContainersDocument.createElement('div');
             } else {
                 container = oppContainersDocument.createElement('div');
+            };
+            if (movingCard.image.pokemonBreak && ['active', 'bench'].includes(_mLocation)){
+                container.style.marginRight = '3%';
+                container.style.marginLeft = '2%';
             };
             container.className = 'playContainer';
             container.style.zIndex = '0';
@@ -311,21 +323,21 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
 
         } else {
             mLocation_html.appendChild(movingCard.image);
-        }
+        };
         //update discard/lostzone cover
-        if (['lostzone_html', 'discard_html'].includes(_mLocation_html)){
+        if (['lostzone', 'discard'].includes(_mLocation)){
             let display_html;
             let cover;
-            if (mLocation_html === lostzone_html){
+            if (mLocation === lostzone){
                 display_html = lostzoneDisplay_html;
                 cover = makeLostzoneCover(user, movingCard.image.src);
-            } else if (mLocation_html === discard_html){
+            } else if (mLocation === discard){
                 display_html = discardDisplay_html;
                 cover = makeDiscardCover(user, movingCard.image.src);
-            } else if (mLocation_html === oppLostzone_html){
+            } else if (mLocation === oppLostzone){
                 display_html = oppLostzoneDisplay_html;
                 cover = makeLostzoneCover(user, movingCard.image.src);
-            } else if (mLocation_html === oppDiscard_html){
+            } else if (mLocation === oppDiscard){
                 display_html = oppDiscardDisplay_html;
                 cover = makeDiscardCover(user, movingCard.image.src);
             };
@@ -346,14 +358,33 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
                 display_html.removeChild(display_html.firstElementChild);
             };
             display_html.appendChild(makeDeckCover(user).image);
-        //move active card to the bench if it exists
+        //case 1: no target, moving bench card to active
         } else if (['active_html'].includes(_mLocation_html) 
-        && mLocation.cards[1] 
-        && !movingCard.image.attached
+        && mLocation.cards[1] //there is a card in active
+        && !movingCard.image.attached //we are not attaching a card
         && !mLocation.cards[0].image.attached){
+            if (!received){
+                moveCardMessage(POV.user, mLocation.cards[0].name, 'active', 'bench', 'move', false, mLocation.cards[0].image.faceDown);
+            };
             moveCard(user, 'active', 'active_html', 'bench', 'bench_html', 0, false, true);
+        } else if (['bench_html'].includes(_mLocation_html) // case 2: no target, only one pokemon on bench
+        && ['active_html'].includes(_oLocation_html)
+        && mLocation.cards.filter(card => !card.image.attached).length === 2
+        && oLocation.cards.filter(card => !card.image.attached).length === 0
+        && !mLocation.cards[0].image.attached){
+            if (!received){
+                moveCardMessage(POV.user, mLocation.cards[0].name, 'bench', 'active', 'move', false, mLocation.cards[0].image.faceDown);
+            };
+            moveCard(user, 'bench', 'bench_html', 'active', 'active_html', 0, false, true);
+        } else if (boardLocations.includes(_mLocation_html) //case 3: yes target, switch spots
+        && targetCard
+        && !movingCard.image.attached //we are not attaching a card
+        && !mLocation.cards[targetIndex].image.attached){
+            if (!received){
+                moveCardMessage(POV.user, mLocation.cards[targetIndex].name, _mLocation, _oLocation, 'move', false, mLocation.cards[targetIndex].image.faceDown);
+            };
+            moveCard(user, _mLocation, _mLocation_html, _oLocation, _oLocation_html, targetIndex, false, true);
         };
-        
         if (['stadium_html'].includes(_mLocation_html) && mLocation.cards[1]) {
             if (mLocation.cards[0].image.user === 'self') {
                 moveCard('self', 'stadium', 'stadium_html', 'discard', 'discard_html', 0, false, true);
@@ -459,7 +490,10 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
             };
         };
     };
-
+    if (!['active', 'board', 'bench', 'attachedCardPopup'].includes(_mLocation) && movingCard.type2){
+        movingCard.type = movingCard.type2;
+    };
+      
     updateCount();
     hideIfEmpty();
 
@@ -476,14 +510,7 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
             targetIndex: targetIndex,
             received: true
         };
-        // const appendMessageData = {
-        //     roomId,
-        //     user : POV.user,
-        //     message: message,
-        //     type: 'announcement'
-        // };
         socket.emit('moveCard', moveCardData);
-        // socket.emit('appendMessage', appendMessageData);
     };
     if (['deck', 'lostzone', 'discard'].includes(_mLocation)){
         sort(user, _mLocation, _mLocation_html);

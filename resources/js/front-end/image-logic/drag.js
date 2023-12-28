@@ -1,6 +1,7 @@
+import { moveToDeckTop } from '../actions/container/deck-actions.js';
 import { closePopups } from '../actions/general/close-popups.js';
 import { moveCard } from '../actions/general/move-card.js';
-import { active_html, attachedCardPopup_html, bench_html, deck_html, discard_html, lostzone_html, oppActive_html, oppAttachedCardPopup_html, oppBench_html, oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html, oppViewCards_html, sCard, selfContainersDocument, target, viewCards_html } from '../front-end.js';
+import { POV, active_html, attachedCardPopup_html, bench_html, deck_html, discard_html, lostzone_html, oppActive_html, oppAttachedCardPopup_html, oppBench_html, oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html, oppViewCards_html, sCard, selfContainersDocument, target, viewCards_html } from '../front-end.js';
 import { moveCardMessage } from '../setup/chatbox/location-name.js';
 import { containerIdToLocation } from '../setup/containers/container-reference.js';
 import { stringToVariable, variableToString } from '../setup/containers/string-to-variable.js';
@@ -47,11 +48,13 @@ export const dragOver = (event) => {
     const targetNotItself = event.target !== draggedImage;
     const targetIsAttached = event.target.attached;
     const cardIsFromActiveOrBench = [active_html, bench_html, oppActive_html, oppBench_html].includes(draggedImage.parentElement.parentElement);
-
+    const targetParentParentIsNotOwnContainer = event.target.parentElement.parentElement !== draggedImage.parentElement.parentElement;
+    
     const movingValidCardToContainer = targetIsContainer && targetIsNotOwnContainer && (!cardIsAttached || !targetIsActiveOrBench);
-    const attachingValidCard = (targetParentIsActiveOrBench && targetNotItself && !targetIsAttached && (!cardIsFromActiveOrBench || cardIsAttached))
+    const attachingValidCard = (targetParentIsActiveOrBench && targetNotItself && !targetIsAttached && (targetParentParentIsNotOwnContainer || cardIsAttached))
+    const targetIsNotBox = !event.target.classList.contains('fullView') && !event.target.classList.contains('playContainer');
 
-    if (movingValidCardToContainer || attachingValidCard){
+    if (targetIsNotBox && (movingValidCardToContainer || attachingValidCard)){
         if (event.target.id === 'board_html'){
             event.target.classList.add('highlightBox');
         } else {
@@ -59,10 +62,8 @@ export const dragOver = (event) => {
         };
     };
 
-    const targetParentIsNotOwnContainer = event.target.parentElement !== draggedImage.parentElement
-    const targetParentParentIsNotOwnContainer = event.target.parentElement.parentElement !== draggedImage.parentElement.parentElement;
-    const targetParentIsContainer = event.target.parentElement.tagName === 'DIV'
-    const targetIsNotBox = !event.target.classList.contains('fullView') && !event.target.classList.contains('playContainer') 
+    const targetParentIsNotOwnContainer = event.target.parentElement !== draggedImage.parentElement;
+    const targetParentIsContainer = event.target.parentElement.tagName === 'DIV';
 
     if (targetIsNotBox && targetParentIsContainer && (!targetParentIsActiveOrBench || (cardIsFromActiveOrBench && !cardIsAttached))){
         if (targetParentIsActiveOrBench && cardIsFromActiveOrBench && targetParentParentIsNotOwnContainer){
@@ -96,12 +97,14 @@ export const dragEnd = (event) => {
     enablePointerEvents(oppContainersDocument, classList);
     
     event.target.classList.remove('dragging');
-    event.target.parentElement.classList.remove('highlight', 'highlightBox');
-    event.target.parentElement.parentElement.classList.remove('highlight', 'highlightBox');
+    if (event.target.parentElement){
+        event.target.parentElement.classList.remove('highlight', 'highlightBox');
+        event.target.parentElement.parentElement.classList.remove('highlight', 'highlightBox');
+    };
 
     if (popupContainers.includes(sCard.container)){
         sCard.container.style.opacity = '1';
-        sCard.container.style.zIndex = '9999';    
+        sCard.container.style.zIndex = '9999';
     };
     if (sCard.box){
         sCard.box.style.opacity = '1';
@@ -167,8 +170,12 @@ export const drop = (event) => {
         };
 
         if ((sCard.containerId !== target.containerId || draggedImage.attached) && !(draggedImage.attached && ['bench_html', 'active_html'].includes(target.containerId) && target.index === undefined)){
-            moveCardMessage(sCard.locationAsString, target.locationAsString, 'move', sCard.card.image.attached);
-            moveCard(sCard.user, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
+            if (target.locationAsString === 'deck'){
+                moveToDeckTop();
+            } else {
+                moveCardMessage(POV.user, sCard.card.name, sCard.locationAsString, target.locationAsString, 'move', sCard.card.image.attached, sCard.card.image.hidden);
+                moveCard(sCard.user, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
+            };
         };
     };
     event.stopPropagation();

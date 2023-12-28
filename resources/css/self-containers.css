@@ -81,7 +81,7 @@ body, input, textarea, button {
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 30%;
+  height: calc(30% - 3px);
   overflow-x: auto;
   display: flex;
   z-index: 0;
@@ -95,11 +95,17 @@ body, input, textarea, button {
   margin-left: .25vw;
   margin-right: .25vw;
 }
+#handText {
+  position: fixed;
+  right: 2%;
+  bottom: 30%;
+  color:rgba(90, 110, 188, 0.864);
+}
 #bench_html {
   position: fixed;
   bottom: 35%;
-  left: 12%;
-  width: 76%;
+  left: 10%;
+  width: 79%;
   height: 25%;
   display: flex;
   justify-content: center; /* Horizontally center-align child elements */
@@ -129,7 +135,7 @@ body, input, textarea, button {
   position: fixed;
   bottom: 36%;
   left: 1%;
-  width: 8%;
+  width: 6%;
   height: 43%;
   z-index: 0;
   padding: 5px; /* Add padding */
@@ -138,7 +144,12 @@ body, input, textarea, button {
   margin-left: .1vw;
   width: auto;
   max-width: calc(50% - .1vw);
+}
+.prizes-normal-size {
   max-height: 33%;
+}
+.prizes-small-size {
+  max-height: 23%;
 }
 #lostzoneDisplay_html {
   position: fixed;
@@ -309,6 +320,7 @@ body, input, textarea, button {
   border-radius: 5px;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
   padding: 20px;
+  margin-right: 1%;
 }
 .fullView img {
   height: 24%;
@@ -351,6 +363,9 @@ body, input, textarea, button {
 #attachedCardPopup_html img {
   height: 33%;
   margin: 0.5%;
+}
+#attachedCardPopup_html button {
+  width: 17%;
 }
 .header {
   position: absolute;
@@ -493,4 +508,6 @@ body, input, textarea, button {
 {
   border-radius: .5rem; /* Rounded corners */
 }
-
+.reset-rotation {
+  transform: rotate(0deg) !important;
+}

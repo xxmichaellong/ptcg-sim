@@ -52,19 +52,20 @@ export const addAbilityCounter = (user, location, container, index, received = f
         addAbilityCounter(user, _location, _container, index, true);
     };
 
-    const handleRemove = () => {
+    const handleRemove = (received = false) => {
         targetCard.image.abilityCounter.handleRemove = null;
         window.removeEventListener('resize', targetCard.image.abilityCounter.handleResize);
         targetCard.image.abilityCounter.remove();
         targetCard.image.abilityCounter = null;
     
-        if (!p1[0]){
+        if (!p1[0] && !received){
             const oUser = user === 'self' ? 'opp' : 'self';
             const data = {
                 roomId : roomId,
                 user : oUser,
                 location: _location,
                 index: index,
+                received: true
             };
             socket.emit('removeAbilityCounter', data);
         };

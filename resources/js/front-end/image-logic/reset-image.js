@@ -1,4 +1,4 @@
-export const resetImage = (image) => {
+export const resetImage = (image, mLocation = '') => {
     image.style.position = 'relative';
     image.style.bottom = '0%';
     image.style.zIndex = '0';
@@ -8,4 +8,11 @@ export const resetImage = (image) => {
     image.style.left = 0;
     image.attached = false;
     image.target = 'off';
+    if (image.pokemonBreak && ['active', 'bench'].includes(mLocation)){
+        image.style.transform = 'rotate(90deg)';
+    } else {
+        image.style.transform = 'rotate(0deg)';
+        image.pokemonBreak = false;
+    };
+    image.classList.remove('prizes-normal-size', 'prizes-small-size');
 }

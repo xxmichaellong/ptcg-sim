@@ -3,7 +3,7 @@ import { oppContainersDocument } from '../../initialization/containers/opp-conta
 import { stringToVariable } from '../../setup/containers/string-to-variable.js';
 
 export const updateCount = () => {
-    const containerNames = ['deck', 'discard', 'lostzone'];
+    const containerNames = ['deck', 'discard', 'lostzone', 'hand'];
   
     containerNames.forEach((containerId) => {
         const selfElement = selfContainersDocument.getElementById(`${containerId}Count`);

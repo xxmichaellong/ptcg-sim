@@ -2793,14 +2793,10 @@ export const showDecklistsContextMenu = (event) => {
     const adjustment = deckImport.offsetHeight - decklistsButton.offsetTop
     decklistsContextMenu.style.bottom = `${adjustment}px`;
     
-    
-
     decklistsContextMenu.style.display = 'block';
     // Use mousedown event to hide the menu when clicking outside
     document.addEventListener('mousedown', hidedecklistsContextMenu);
 };
-
-
 
 // Function to hide the context menu
 export const hidedecklistsContextMenu = (event) => {

@@ -1,17 +1,19 @@
 import { discardAndDraw, shuffleAndDraw, shuffleBottomAndDraw } from '../../actions/container/hand-actions.js';
 import { hideCards, revealCards } from '../../actions/general/reveal-and-hide.js';
-import { POV, discardHandButton, hideHandButton, revealHandButton, sCard, shuffleHandBottomButton, shuffleHandButton } from '../../front-end.js'
+import { POV, discardHandButton, lookHandButton, sCard, shuffleHandBottomButton, shuffleHandButton } from '../../front-end.js'
 import { appendMessage } from '../../setup/chatbox/messages.js';
 import { determineUsername } from '../../setup/general/determine-username.js';
 
-revealHandButton.addEventListener('click', () => {
-    revealCards(sCard.user, 'hand', 'hand_html');
-    appendMessage(POV.user, determineUsername(POV.user) + " looked at opponent's hand", 'player');
-});
+lookHandButton.addEventListener('click', () => {
+    let rootDirectory = window.location.origin;
 
-hideHandButton.addEventListener('click', () => {
-    hideCards(sCard.user, 'hand', 'hand_html');
-    appendMessage(POV.user, determineUsername(POV.user) + " hid opponent's hand", 'player');
+    if (sCard.card.image.src === rootDirectory + '/resources/card-scans/cardback.png'){
+        revealCards(sCard.user, 'hand', 'hand_html');
+        appendMessage(POV.user, determineUsername(POV.user) + " looked at " + determineUsername(sCard.user) + "'s hand", 'player');
+    } else {
+        hideCards(sCard.user, 'hand', 'hand_html');
+        appendMessage(POV.user, determineUsername(POV.user) + " stopped looking at " + determineUsername(sCard.user) + "'s hand", 'player');
+    };
 });
 
 discardHandButton.addEventListener('click', () => discardAndDraw(sCard.user));

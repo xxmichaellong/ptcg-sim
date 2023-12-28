@@ -118,6 +118,18 @@ io.on('connection', (socket) => {
     socket.on('viewDeck', (data) => {
         socket.broadcast.to(data.roomId).emit('viewDeck', data);
     });
+    socket.on('rotateCard', (data) => {
+        socket.broadcast.to(data.roomId).emit('rotateCard', data);
+    });
+    socket.on('revealShortcut', (data) => {
+        socket.broadcast.to(data.roomId).emit('revealShortcut', data);
+    });
+    socket.on('hideShortcut', (data) => {
+        socket.broadcast.to(data.roomId).emit('hideShortcut', data);
+    });
+    socket.on('faceDown', (data) => {
+        socket.broadcast.to(data.roomId).emit('faceDown', data);
+    });
 });
 
 // Start the server

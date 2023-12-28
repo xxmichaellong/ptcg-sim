@@ -26,7 +26,7 @@ body {
   display: none;
   position: fixed;
   width: 70%;
-  height: 85%;
+  height: 95%;
   top: 50%;
   left: 37.5%;
   transform: translate(-50%, -50%);
@@ -47,7 +47,7 @@ body {
 }
 .column {
   margin-right: 10px;
-  padding: 10px;
+  padding: 5px;
 }
 h1 {
   font-size: 2vh; /* Adjust the font size using vw unit */
@@ -99,11 +99,9 @@ ul, li {
   border-radius: 15px; /* Rounded corners */
 }
 #stadium_html img {
-  width: auto;
-  height: auto;
   max-width: 100%;
   max-height: 100%;
-  object-fit: contain;
+  height: fit-content;
   left: 0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, .5); /* Adjust the values for your desired shadow effect */
   border-radius: 0.375rem;
@@ -119,7 +117,7 @@ ul, li {
   background-color: rgba(255, 255, 255, 0.1); /* Very faint/transparent background */
 }
 .highlight {
-  box-shadow: 0 0 0 2px rgb(122, 185, 133) !important;
+  box-shadow: 0 0 0 4px rgb(122, 185, 133) !important;
   background-color: rgba(133, 197, 155, 0.3);
 }
 #selfResizer {
@@ -263,6 +261,19 @@ ul, li {
   bottom: 50%;
   transform: translateY(50%);
 }
+#changelog {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 76%;
+  height: 100%;
+  background: rgba(171, 171, 171, 0.852); /* Semi-transparent grey background */
+  z-index: 1000;
+  overflow: auto;
+  padding: 60px;
+  box-sizing: border-box;
+}
 #line {
   background: rgb(230, 230, 230);
   width: 100%;
@@ -283,9 +294,9 @@ ul, li {
 }
 .sidebox-button-container button {
   padding: 7px; /* Adjust padding for button size */
-  width: 23%; /* Adjust width to distribute evenly */
+  width: 19%; /* Adjust width to distribute evenly */
   border-radius: 10px; /* Rounded edges */
-  font-size: 2vh; /* Adjust font size as needed */
+  font-size: 1.75vh; /* Adjust font size as needed */
   cursor: pointer;
   color: white; /* Text color */
   border: none;
@@ -327,6 +338,25 @@ ul, li {
 }
 .chat-button-container button.neutralColour:hover {
   background-color: rgba(150, 144, 144, 0.864);  
+}
+#optionsContextMenu {
+  position: absolute;
+  display: none;
+  background-color: #fff;
+  border: 1px solid #676767;
+  padding: 2px;
+  border-radius: 5px;
+  right: 0.5%;
+  color: white;
+  background-color: #595959;
+  font-size: 1.25vh;
+}
+#optionsContextMenu div {
+  cursor: pointer;
+  padding: 3px;
+}
+#optionsContextMenu div:hover {
+  background-color: #757575;
 }
 #attackButton, #p2AttackButton {
   border-radius: 0 .5vw .5vw 0;
@@ -659,7 +689,7 @@ a:hover {
   border: 1px solid #ccc;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
   z-index: 1000;
-  width: 140px; /* Set a fixed width */
+  width: 150px; /* Set a fixed width */
 }
 .contextMenu ul {
   list-style-type: none;

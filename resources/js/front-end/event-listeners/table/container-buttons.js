@@ -1,6 +1,6 @@
-import { closeDisplay, discardAll, handAll, lostzoneAll, shuffleAll } from '../../actions/container/general.js';
+import { closeDisplay, discardAll, handAll, leaveAll, lostzoneAll, shuffleAll } from '../../actions/container/general.js';
 import { sort } from '../../actions/general/sort.js';
-import { oppAttachedCardDiscardButton, oppAttachedCardHandButton, oppAttachedCardLostzoneButton, oppAttachedCardShuffleButton, oppCloseDeckDisplayButton, oppCloseDiscardDisplayButton, oppCloseLostzoneDisplayButton, oppDeckSortCheckBox, oppDiscardShuffleButton, oppDiscardSortCheckBox, oppLostzoneSortCheckBox, oppShuffleDeckButton, oppViewCardsDiscardButton, oppViewCardsHandButton, oppViewCardsLostzoneButton, oppViewCardsShuffleButton, selfAttachedCardDiscardButton, selfAttachedCardHandButton, selfAttachedCardLostzoneButton, selfAttachedCardShuffleButton, selfCloseDeckDisplayButton, selfCloseDiscardDisplayButton, selfCloseLostzoneDisplayButton, selfDeckSortCheckBox, selfDiscardShuffleButton, selfDiscardSortCheckBox, selfLostzoneSortCheckBox, selfShuffleDeckButton, selfViewCardsDiscardButton, selfViewCardsHandButton, selfViewCardsLostzoneButton, selfViewCardsShuffleButton } from '../../front-end.js';
+import { oppAttachedCardDiscardButton, oppAttachedCardHandButton, oppAttachedCardLeaveButton, oppAttachedCardLostzoneButton, oppAttachedCardShuffleButton, oppCloseDeckDisplayButton, oppCloseDiscardDisplayButton, oppCloseLostzoneDisplayButton, oppDeckSortCheckBox, oppDiscardShuffleButton, oppDiscardSortCheckBox, oppLostzoneSortCheckBox, oppShuffleDeckButton, oppViewCardsDiscardButton, oppViewCardsHandButton, oppViewCardsLostzoneButton, oppViewCardsShuffleButton, selfAttachedCardDiscardButton, selfAttachedCardHandButton, selfAttachedCardLeaveButton, selfAttachedCardLostzoneButton, selfAttachedCardShuffleButton, selfCloseDeckDisplayButton, selfCloseDiscardDisplayButton, selfCloseLostzoneDisplayButton, selfDeckSortCheckBox, selfDiscardShuffleButton, selfDiscardSortCheckBox, selfLostzoneSortCheckBox, selfShuffleDeckButton, selfViewCardsDiscardButton, selfViewCardsHandButton, selfViewCardsLostzoneButton, selfViewCardsShuffleButton } from '../../front-end.js';
 
 //self buttons
 selfShuffleDeckButton.addEventListener('click', (event) => shuffleAll(event));
@@ -14,6 +14,8 @@ selfAttachedCardShuffleButton.addEventListener('click', (event) => shuffleAll(ev
 selfAttachedCardLostzoneButton.addEventListener('click', (event) => lostzoneAll(event));
 
 selfAttachedCardHandButton.addEventListener('click', (event) => handAll(event));
+
+selfAttachedCardLeaveButton.addEventListener('click', (event) => leaveAll(event));
 
 selfViewCardsDiscardButton.addEventListener('click', (event) => discardAll(event));
 
@@ -45,6 +47,8 @@ oppAttachedCardShuffleButton.addEventListener('click', (event) => shuffleAll(eve
 oppAttachedCardLostzoneButton.addEventListener('click', (event) => lostzoneAll(event));
 
 oppAttachedCardHandButton.addEventListener('click', (event) => handAll(event));
+
+oppAttachedCardLeaveButton.addEventListener('click', (event) => leaveAll(event));
 
 oppViewCardsDiscardButton.addEventListener('click', (event) => discardAll(event));
 

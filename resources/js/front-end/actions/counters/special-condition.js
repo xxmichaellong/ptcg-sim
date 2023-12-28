@@ -71,6 +71,10 @@ export const addSpecialCondition = (user, location, container, index, received =
                 specialCondition.style.backgroundColor = 'yellow';
                 specialCondition.style.color = 'black';
                 break;
+            case 'C':
+                specialCondition.style.backgroundColor = 'purple';
+                specialCondition.style.color = 'white';
+                break;
             default:
                 specialCondition.style.backgroundColor = 'white';
                 specialCondition.style.color = 'black';

@@ -1,4 +1,4 @@
-import { POV, sCard, target } from "../../front-end.js"
+import { sCard, target } from "../../front-end.js"
 import { stringToVariable } from "../containers/string-to-variable.js";
 import { determineUsername } from "../general/determine-username.js";
 import { appendMessage } from "./messages.js";
@@ -15,11 +15,10 @@ export const findLocation = (locationAsString) => {
     };
 }
 
-export const moveCardMessage = (oLocation, mLocation, action, attached = false) => {
+export const moveCardMessage = (user, cardName, oLocation, mLocation, action, attached = false, faceDown = false) => {
     oLocation = findLocation(oLocation);
     mLocation = findLocation(mLocation);
 
-    let card;
     const hiddenName = [
         ['hand', 'deck'],
         ['deck', 'hand'],
@@ -32,7 +31,7 @@ export const moveCardMessage = (oLocation, mLocation, action, attached = false) 
         ['hand', 'hand'],
       ];
       
-    if (target.card && (!['bench'].includes(oLocation) || attached)){
+    if (target.card && (!['active', 'bench'].includes(oLocation) || attached)){
         mLocation = target.card.name;
         if (!['bench', 'active'].includes(oLocation) && sCard.card.type !== 'pokemon'){
             action = 'attach';
@@ -40,10 +39,8 @@ export const moveCardMessage = (oLocation, mLocation, action, attached = false) 
             action = 'evolve';
         };
     };
-    if (hiddenName.some(pair => pair[0] === oLocation && pair[1] === mLocation)) {
-        card = 'card';
-    } else {
-        card = sCard.card.name;
+    if (hiddenName.some(pair => pair[0] === oLocation && pair[1] === mLocation) || faceDown) {
+        cardName = 'card';
     };
     if (attached){
         const relativeCard = stringToVariable(sCard.user, sCard.locationAsString).cards.find(card => card.image === sCard.card.image.relative);
@@ -51,19 +48,19 @@ export const moveCardMessage = (oLocation, mLocation, action, attached = false) 
     };
     let message;
     if (action === 'move'){
-        message = determineUsername(POV.user) + ' moved ' + card + ' from ' + oLocation + ' to ' + mLocation;
+        message = determineUsername(user) + ' moved ' + cardName + ' from ' + oLocation + ' to ' + mLocation;
     } else if (action === 'shuffle'){
-        message = determineUsername(POV.user) + ' shuffled ' + card + ' from ' + oLocation + ' into deck';
+        message = determineUsername(user) + ' shuffled ' + cardName + ' from ' + oLocation + ' into deck';
     } else if (action === 'top'){
-        message = determineUsername(POV.user) + ' moved ' + card + ' from ' + oLocation + ' to top of deck';
+        message = determineUsername(user) + ' moved ' + cardName + ' from ' + oLocation + ' to top of deck';
     } else if (action === 'bottom'){
-        message = determineUsername(POV.user) + ' moved ' + card + ' from ' + oLocation + ' to bottom of deck';
+        message = determineUsername(user) + ' moved ' + cardName + ' from ' + oLocation + ' to bottom of deck';
     } else if (action === 'switch'){
-        message = determineUsername(POV.user) + ' switched ' + card + ' from ' + oLocation + ' with top of deck';
+        message = determineUsername(user) + ' switched ' + cardName + ' from ' + oLocation + ' with top of deck';
     } else if (action === 'attach'){
-        message = determineUsername(POV.user) + ' attached ' + card + ' from ' + oLocation + ' to ' + mLocation;
+        message = determineUsername(user) + ' attached ' + cardName + ' from ' + oLocation + ' to ' + mLocation;
     } else if (action === 'evolve'){
-        message = determineUsername(POV.user) + ' evolved ' + mLocation + ' into ' + card;
+        message = determineUsername(user) + ' evolved ' + mLocation + ' into ' + cardName;
     };
-    appendMessage(POV.user, message, 'player');
+    appendMessage(user, message, 'player');
 };

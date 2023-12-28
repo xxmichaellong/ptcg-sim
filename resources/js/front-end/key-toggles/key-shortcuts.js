@@ -4,12 +4,14 @@ import { shuffleContainer } from '../actions/container/shuffle-container.js';
 import { addAbilityCounter } from '../actions/counters/ability-counter.js';
 import { addDamageCounter } from '../actions/counters/damage-counter.js';
 import { addSpecialCondition } from '../actions/counters/special-condition.js';
-import { clearBoard } from '../actions/general/clear-board.js';
+import { discardBoard, handBoard, lostzoneBoard, shuffleBoard } from '../actions/general/clear-board.js';
 import { closeContainerPopups, closeFullView, closePopups, deselectCard } from '../actions/general/close-popups.js';
 import { flipBoard } from '../actions/general/flip-board.js';
 import { flipCoin } from '../actions/general/flip-coin.js';
 import { moveCard } from '../actions/general/move-card.js';
 import { reset } from '../actions/general/reset.js';
+import { hideShortcut, lookShortcut, revealShortcut, stopLookingShortcut } from '../actions/general/reveal-and-hide.js';
+import { rotateCard } from '../actions/general/rotate-card.js';
 import { setup } from '../actions/general/setup.js';
 import { takeTurn } from '../actions/general/take-turn.js';
 import { sCard, keybindModal, target, deck, oppDeck, POV, deck_html, oppDeck_html, active, bench, oppActive, oppBench, p1, socket, roomId, stadium } from '../front-end.js';
@@ -29,8 +31,14 @@ export const keyDown = (event) => {
         closeContainerPopups();
         closePopups();
     };
-    if (event.key === 'Enter'){
-        clearBoard(POV.user);
+    if (event.key === 'Enter' && !event.altKey){
+        discardBoard(POV.user);
+    };
+    if (event.key === 'Enter' && event.altKey){
+        handBoard(POV.user);
+    };
+    if (event.key === '/'){
+        shuffleBoard(POV.user);
     };
     const blockedClasses = ['self-circle', 'opp-circle', 'self-tab', 'opp-tab'];
     if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || blockedClasses.some(className => event.target.classList.contains(className))){
@@ -134,7 +142,7 @@ export const keyDown = (event) => {
             } else if (event.key === 's'){
                 shuffleIntoDeck();
             } else {
-                moveCardMessage(sCard.locationAsString, target.locationAsString, 'move', sCard.card.image.attached);
+                moveCardMessage(POV.user, sCard.card.name, sCard.locationAsString, target.locationAsString, 'move', sCard.card.image.attached, sCard.card.image.faceDown);
                 moveCard(sCard.user, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
             };
         };
@@ -169,14 +177,13 @@ export const keyDown = (event) => {
             } else {
                 addAbilityCounter(sCard.user, variableToString(sCard.user, sCard.location), variableToString(sCard.user, sCard.container), sCard.index);
                 if (sCard.location !== stadium){
-                    appendMessage(POV.user, determineUsername(POV.user) + ' used ability', 'player');
+                    appendMessage(POV.user, determineUsername(POV.user) + ' used ' + sCard.card.name + "'s ability", 'player');
                 } else {
                     appendMessage(POV.user, determineUsername(POV.user) + ' used ' + sCard.card.name, 'player');
                 };
             };
         };
         if (event.key >= 1 && event.key <= 9 && ['active_html', 'bench_html'].includes(sCard.containerId)){
-            deselectCard();
             if (!sCard.card.image.damageCounter){
                 addDamageCounter(sCard.user, sCard.locationAsString, sCard.containerId, sCard.index);
                 const damage = parseInt(event.key * 10);
@@ -191,6 +198,7 @@ export const keyDown = (event) => {
                 };
                 sCard.card.image.damageCounter.textContent = damage.toString();
                 if (sCard.card.image.damageCounter.textContent <= 0){
+                    deselectCard();
                     sCard.card.image.damageCounter.handleRemove(true);
                 };
             };
@@ -211,22 +219,24 @@ export const keyDown = (event) => {
             sCard.card.image.damageCounter.handleRemove(true);
         };
         if (event.key === 'y' && sCard.containerId === 'active_html'){
-            deselectCard();
             if (!sCard.card.image.specialCondition){
                 addSpecialCondition(sCard.user, sCard.locationAsString, sCard.containerId, sCard.index);
             } else {
-                if (event.altKey){
+                if (!event.altKey){
                     switch (sCard.card.image.specialCondition.textContent.toUpperCase()) {
                         case 'P':
-                            sCard.card.image.specialCondition.textContent = 'A';
-                            break;
-                        case 'A':
-                            sCard.card.image.specialCondition.textContent = 'Pa';
-                            break;
-                        case 'PA':
                             sCard.card.image.specialCondition.textContent = 'B';
                             break;
                         case 'B':
+                            sCard.card.image.specialCondition.textContent = 'Pa';
+                            break;
+                        case 'PA':
+                            sCard.card.image.specialCondition.textContent = 'C';
+                            break;
+                        case 'C':
+                            sCard.card.image.specialCondition.textContent = 'A';
+                            break;
+                        case 'A':
                             sCard.card.image.specialCondition.textContent = 'P';
                             break;
                     };
@@ -234,6 +244,7 @@ export const keyDown = (event) => {
                 } else {
                     sCard.card.image.specialCondition.textContent = '';
                     sCard.card.image.specialCondition.handleRemove(true);
+                    deselectCard();
                 };
                 if (!p1[0] && sCard.card.image.specialCondition){
                     const data = {
@@ -247,6 +258,28 @@ export const keyDown = (event) => {
                 };
             };
 
+        };
+        if (event.key === 'r' && !event.altKey && ['stadium', 'active', 'bench'].includes(sCard.locationAsString) && !sCard.card.image.parentElement.classList.contains('fullView')) {
+            rotateCard(sCard.user, sCard.locationAsString, sCard.containerId, sCard.index);
+        };
+        if (event.key === 'r' && event.altKey && ['active', 'bench'].includes(sCard.locationAsString) && !sCard.card.image.parentElement.classList.contains('fullView')){
+            rotateCard(sCard.user, sCard.locationAsString, sCard.containerId, sCard.index, true);
+        };
+        if (event.key ==='c'){
+            let rootDirectory = window.location.origin;
+            if (sCard.card.image.src === rootDirectory + '/resources/card-scans/cardback.png'){
+                lookShortcut(sCard.user, sCard.locationAsString, sCard.index);
+            } else {
+                stopLookingShortcut(sCard.user, sCard.locationAsString, sCard.index);
+            };
+        };
+        if (event.key === 'z'){
+            let rootDirectory = window.location.origin;
+            if (sCard.card.image.src === rootDirectory + '/resources/card-scans/cardback.png'){
+                revealShortcut(sCard.user, sCard.locationAsString, sCard.index);
+            } else {
+                hideShortcut(sCard.user, sCard.locationAsString, sCard.index);
+            };
         };
     };
 }

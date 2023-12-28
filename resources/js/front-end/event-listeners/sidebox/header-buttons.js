@@ -6,7 +6,7 @@ import { p2DeckData } from '../../socket/fetch-opp-data.js';
 p1Button.addEventListener('click', () => {
     if (p1[0]) {
         show('p1Box', p1Button);
-    } else if (window.confirm('Are you sure you want to leave the room?')) {
+    } else if (window.confirm('Are you sure you want to leave the room? Battle log will be erased.')) {
         socket.disconnect();
         p2ExplanationBox.style.display = 'block';
         lobby.style.display = 'block';

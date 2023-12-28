@@ -33,7 +33,8 @@ const containerIds = [
     'discardDisplay_html',
     'stadium_html',
     'board_html',
-    'viewCards_html'
+    'viewCards_html',
+    'attachedCardPopup_html'
 ];
 
 containerIds.forEach(id => {

@@ -33,7 +33,7 @@ joinRoomButton.addEventListener('click', () => {
 });
 
 leaveRoomButton.addEventListener('click', () => {
-    if (window.confirm('Are you sure you want to leave the room?')) {
+    if (window.confirm('Are you sure you want to leave the room? Battle log will be erased.')) {
         socket.disconnect();
         lobby.style.display = 'block';
         p2ExplanationBox.style.display = 'block';

@@ -635,7 +635,7 @@ const BWEra = {
     "PLS": {
         117: "pokemon",
         127: "trainer",
-        127: "energy",
+        128: "energy",
         131: "trainer",
         135: "pokemon",
         136: "trainer",

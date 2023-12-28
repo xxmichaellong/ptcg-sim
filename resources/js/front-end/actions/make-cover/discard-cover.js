@@ -14,8 +14,10 @@ export const makeDiscardCover = (user, src) => {
         dragover: 'dragOver',
         dragleave: 'dragLeave',
         drop: 'drop',
-        draggable: false,
         click: 'discardCoverClick',
+        draggable: true,
+        dragstart: 'dragStart',
+        dragend: 'dragEnd',
         user: user
     };
 

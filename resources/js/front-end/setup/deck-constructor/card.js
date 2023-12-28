@@ -35,7 +35,7 @@ export class Card {
                 };
             } else if (attr === 'user'){
                 this.image.user = imageAttributes[attr];
-            }else {
+            } else {
                 this.image.setAttribute(attr, imageAttributes[attr]);
             };
         };

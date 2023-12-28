@@ -15,6 +15,8 @@ import { flipBoard } from '../actions/general/flip-board.js'
 import { exchangeData, p2DeckData } from './fetch-opp-data.js'
 import { mainDeckData } from '../setup/deck-constructor/import.js'
 import { determineUsername } from '../setup/general/determine-username.js'
+import { rotateCard } from '../actions/general/rotate-card.js'
+import { hideShortcut, revealShortcut } from '../actions/general/reveal-and-hide.js'
 
 socket.on('generateId', (id) => {
     roomIdInput.value = id;
@@ -138,7 +140,7 @@ socket.on('addAbilityCounter', (data) => {
 });
 socket.on('removeAbilityCounter', (data) => {
     const targetCard = stringToVariable(data.user, data.location).cards[data.index];
-    targetCard.image.abilityCounter.handleRemove();
+    targetCard.image.abilityCounter.handleRemove(data.received);
 });
 socket.on('resetCounters', (data) => {
     resetCounters(data.received);
@@ -149,6 +151,21 @@ socket.on('shuffleContainer', (data) => {
 socket.on('viewDeck', (data) => {
     viewDeck(data.user, data.viewAmount, data.top, data.deckCount, data.targetOpp, data.received);
 });
+socket.on('rotateCard', (data) => {
+    rotateCard(data.user, data.locationAsString, data.containerId, data.index, data.single, data.received);
+});
+socket.on('revealShortcut', (data) => {
+    revealShortcut(data.user, data.location, data.index, data.message, data.received);
+});
+socket.on('hideShortcut', (data) => {
+    hideShortcut(data.user, data.location, data.index, data.message, data.received);
+});
+socket.on('faceDown', (data) => {
+    const location = stringToVariable(data.user, data.location);
+    const card = location.cards[data.index];
+    card.image.faceDown = true;
+});
+
 
 
 

@@ -4,7 +4,7 @@ const checkOverflow = (element) => {
 }
 // Change the justify-content property based on the overflow
 export const adjustAlignment = (element) => {
-    if (checkOverflow(element)) {
+    if (checkOverflow(element)){
         element.style.justifyContent = 'flex-start';
     } else {
         element.style.justifyContent = 'center';

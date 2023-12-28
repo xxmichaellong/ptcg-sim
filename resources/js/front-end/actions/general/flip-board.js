@@ -38,7 +38,7 @@ export const flipBoard = () => {
     toggleClasses(p2ResetButton, 'selfColour', 'oppColour');
 
     const users = ['self', 'opp'];
-    const textIds = ['deckText', 'discardText', 'lostzoneText'];
+    const textIds = ['deckText', 'discardText', 'lostzoneText', 'handText'];
     const containerIds = ['deck_html', 'discard_html', 'lostzone_html', 'attachedCardPopup_html', 'viewCards_html'];
     const buttonIds = ['viewCardsButtonContainer', 'attachedCardPopupButtonContainer'];
     const headerIds = ['attachedCardPopupHeader', 'viewCardsHeader'];

@@ -1,6 +1,7 @@
 import { lostzone_html, deck_html, discard_html, sCard, selfContainersDocument, active, bench, stadium_html, oppActive, oppBench, oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html, cardContextMenu, attachedCardPopup_html, viewCards_html, oppAttachedCardPopup_html, oppViewCards_html} from '../../front-end.js';
 import { containerIdToLocation } from '../../setup/containers/container-reference.js';
 import { stringToVariable, variableToString } from '../../setup/containers/string-to-variable.js';
+import { reloadBoard } from '../../setup/sizing/reload-board.js';
 import { addAbilityCounter } from '../counters/ability-counter.js';
 import { addDamageCounter } from '../counters/damage-counter.js';
 import { addSpecialCondition } from '../counters/special-condition.js';
@@ -83,9 +84,10 @@ export const closeFullView = (event) => {
         // Revert the position of the images
         const images = fullViewElement.querySelectorAll('img');
         images.forEach((img) => {
+            img.classList.remove('reset-rotation');
             if (img.attached){
-            img.style.position = 'absolute';
-            }
+                img.style.position = 'absolute';
+            };
         });
 
         const currentWidth = parseFloat(targetImage[0].clientWidth);
@@ -113,5 +115,6 @@ export const closeFullView = (event) => {
         // Revert the z-index of the sCard.container
         fullViewElement.parentElement.style.zIndex = '0';
         stadium_html.style.zIndex = '0';
+        reloadBoard();
     };
 }

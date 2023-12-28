@@ -23,6 +23,7 @@ export const setupButton = document.getElementById('setupButton');
 export const resetButton = document.getElementById('resetButton');
 export const setupBothButton = document.getElementById('setupBothButton');
 export const resetBothButton = document.getElementById('resetBothButton');
+export const optionsButton = document.getElementById('optionsButton');
 
 //p2 buttons
 //lobby
@@ -37,6 +38,7 @@ export const p2PassButton = document.getElementById('p2PassButton');
 export const p2FREEBUTTON = document.getElementById('p2FREEBUTTON');
 export const p2SetupButton = document.getElementById('p2SetupButton');
 export const p2ResetButton = document.getElementById('p2ResetButton');
+export const p2OptionsButton = document.getElementById('p2OptionsButton');
 export const leaveRoomButton = document.getElementById('leaveRoomButton');
 
 //deckimport
@@ -53,6 +55,8 @@ export const selfAttachedCardDiscardButton = selfContainersDocument.getElementBy
 export const selfAttachedCardShuffleButton = selfContainersDocument.getElementById('attachedCardShuffleButton');
 export const selfAttachedCardLostzoneButton = selfContainersDocument.getElementById('attachedCardLostzoneButton');
 export const selfAttachedCardHandButton = selfContainersDocument.getElementById('attachedCardHandButton');
+export const selfAttachedCardLeaveButton = selfContainersDocument.getElementById('attachedCardLeaveButton');
+
 export const selfViewCardsDiscardButton = selfContainersDocument.getElementById('viewCardsDiscardButton');
 export const selfViewCardsShuffleButton = selfContainersDocument.getElementById('viewCardsShuffleButton');
 export const selfViewCardsLostzoneButton = selfContainersDocument.getElementById('viewCardsLostzoneButton');
@@ -76,6 +80,8 @@ export const oppAttachedCardDiscardButton = oppContainersDocument.getElementById
 export const oppAttachedCardShuffleButton = oppContainersDocument.getElementById('attachedCardShuffleButton');
 export const oppAttachedCardLostzoneButton = oppContainersDocument.getElementById('attachedCardLostzoneButton');
 export const oppAttachedCardHandButton = oppContainersDocument.getElementById('attachedCardHandButton');
+export const oppAttachedCardLeaveButton = oppContainersDocument.getElementById('attachedCardLeaveButton');
+
 export const oppViewCardsDiscardButton = oppContainersDocument.getElementById('viewCardsDiscardButton');
 export const oppViewCardsShuffleButton = oppContainersDocument.getElementById('viewCardsShuffleButton');
 export const oppViewCardsLostzoneButton = oppContainersDocument.getElementById('viewCardsLostzoneButton');

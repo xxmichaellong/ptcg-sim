@@ -1,5 +1,5 @@
 import { resetCounters } from "../../../actions/counters/reset-ability-counters.js";
-import { clearBoard } from "../../../actions/general/clear-board.js";
+import { discardBoard } from "../../../actions/general/clear-board.js";
 import { p2AttackButton, POV, p2PassButton, p2MessageInput, p2FREEBUTTON} from "../../../front-end.js";
 import { appendMessage } from "../../../setup/chatbox/messages.js";
 import { determineUsername } from "../../../setup/general/determine-username.js";
@@ -9,7 +9,7 @@ p2AttackButton.addEventListener('click', () => {
     const user = POV.user;
     const message = determineUsername(user) + ' attacked';
     appendMessage(user, message, 'player');
-    clearBoard(user, false);
+    discardBoard(user, false);
 });
 
 p2PassButton.addEventListener('click', () => {
@@ -17,7 +17,7 @@ p2PassButton.addEventListener('click', () => {
     const user = POV.user;
     const message = determineUsername(user) + ' passed';
     appendMessage(user, message, 'player');
-    clearBoard(user, false);
+    discardBoard(user, false);
 });
 p2MessageInput.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {

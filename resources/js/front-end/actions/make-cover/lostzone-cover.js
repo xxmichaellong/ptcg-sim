@@ -14,8 +14,10 @@ export const makeLostzoneCover = (user, src) => {
         dragover: 'dragOver',
         dragleave: 'dragLeave',
         drop: 'drop',
-        draggable: false,
         click: 'lostzoneCoverClick',
+        draggable: true,
+        dragstart: 'dragStart',
+        dragend: 'dragEnd',
         user: user
     };
     

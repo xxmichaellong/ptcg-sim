@@ -7,6 +7,7 @@ import { closeFullView, closePopups, deselectCard } from '../actions/general/clo
 import { moveCard } from '../actions/general/move-card.js';
 import { cardContextMenu } from '../initialization/html-elements/context-menu.js';
 import { moveCardMessage } from '../setup/chatbox/location-name.js';
+import { POV } from '../front-end.js';
 
 export const identifyCard = (event) => {
     if (event.target.user === 'self'){
@@ -27,6 +28,8 @@ export const identifyCard = (event) => {
   
     if (sCard.containerId === 'deckDisplay_html'){
         sCard.index = 0;
+    } else if (['lostzoneDisplay_html', 'discardDisplay_html'].includes(sCard.containerId)){
+        sCard.index = sCard.location.count - 1;
     } else {
         sCard.index = sCard.location.cards.findIndex(card => card.image === event.target);
     };
@@ -72,10 +75,9 @@ export const openCardContextMenu = (event) => {
         'damageCounterButton': [[selfView, 'active_html'], [oppView, 'active_html'], [selfView, 'bench_html'], [oppView, 'bench_html']],
         'specialConditionButton': [[selfView, 'active_html'], [oppView, 'active_html']],
         'shufflePrizesButton': [[selfView, 'prizes_html']],
-        'revealPrizesButton': [[selfView, 'prizes_html']],
-        'hidePrizesButton': [[selfView, 'prizes_html']],
-        'revealHandButton': [[oppView, 'hand_html']],
-        'hideHandButton': [[oppView, 'hand_html']],
+        'lookPrizesButton': [[selfView, 'prizes_html'], [oppView, 'prizes_html']],
+        'revealHidePrizesButton': [[selfView, 'prizes_html'], [oppView, 'prizes_html']],
+        'lookHandButton': [[selfView, 'hand_html'], [oppView, 'hand_html']],
         'shuffleDeckButton': [[selfView, 'deckDisplay_html'], [oppView, 'deckDisplay_html']],
         'drawButton': [[selfView, 'deckDisplay_html']],
         'viewTopButton': [[selfView, 'deckDisplay_html'], [oppView, 'deckDisplay_html']],
@@ -86,6 +88,13 @@ export const openCardContextMenu = (event) => {
         'prizesHeader': [[selfView, 'prizes_html'], [oppView, 'prizes_html']],
         'handHeader': [[selfView, 'hand_html'], [oppView, 'hand_html']],
         'deckHeader': [[selfView, 'deckDisplay_html'], [oppView, 'deckDisplay_html']],
+        'boardHeader': [[selfView, 'board_html'], [oppView, 'board_html']],
+        'discardBoardButton': [[selfView, 'board_html'], [oppView, 'board_html']],
+        'handBoardButton': [[selfView, 'board_html'], [oppView, 'board_html']],
+        'shuffleBoardButton': [[selfView, 'board_html'], [oppView, 'board_html']],
+        'lostzoneBoardButton': [[selfView, 'board_html'], [oppView, 'board_html']],
+        'changeButton': [[selfView, 'active_html'], [oppView, 'active_html'], [selfView, 'bench_html'], [oppView, 'bench_html']]
+
     };
     
     for (const [buttonId, conditionsArray] of Object.entries(buttonConditions)){
@@ -148,7 +157,7 @@ export const imageClick = (event) => {
         target.location = containerIdToLocation(sCard.user, target.containerId);
         target.index = target.location.cards.findIndex(card => card.image === event.target);
         target.locationAsString = variableToString(sCard.user, target.location);
-        moveCardMessage(sCard.locationAsString, target.locationAsString, 'move', sCard.card.image.attached);
+        moveCardMessage(POV.user, sCard.card.name, sCard.locationAsString, target.locationAsString, 'move', sCard.card.image.attached, sCard.card.image.faceDown);
         moveCard(sCard.user, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
     } else {
         closePopups(event); //need both because of highlights
@@ -179,6 +188,7 @@ export const doubleClick = (event) => {
             if (img.attached){
                 img.style.position = 'static';
             };
+            img.classList.add('reset-rotation');
         });
         targetImage.parentElement.className = 'fullView';
         if (document.querySelector('.dark-mode')){
@@ -229,7 +239,7 @@ export const doubleClick = (event) => {
         // Listen for the escape key press
         const documentArray = [selfContainersDocument, oppContainers, document];
         documentArray.forEach(document => document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape') {
+            if (event.key === 'Escape' || event.key === 'v') {
                 removeOverlay();
             };
         }));

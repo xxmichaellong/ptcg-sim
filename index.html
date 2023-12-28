@@ -43,8 +43,53 @@
         <button id="settingsButton" class="not-selected-page">Settings</button>
     </div>
     
+    <div id="changelog">
+        <strong>v0.9.1 Changelog 12/28/2023</strong><br><br>
+      
+        <strong>Rotating Stadium/Pokemon BREAK Cards:</strong> You can now rotate cards using the keybind [r]. This can be used for dual stadiums (e.g., Parallel City) as well as special conditions.<br><br>
+      
+        <strong>Resetting Conditions:</strong> Evolving Pokemon now removes ability counters, special conditions, and rotates Pokemon upright.<br><br>
+      
+        <strong>Active/Benched Pokemon Switching:</strong> Moving the active Pokemon to a target bench Pokemon now automatically switches the target Pokemon to the active zone. Battle log messages are also fixed.<br><br>
+      
+        <strong>Revealing/Hiding versus Looking/Covering Cards:</strong> The process of flipping over cards is now divided into two types: revealing/hiding will show for both players (e.g., Town Map, Blacephalon UNB) while looking/covering only shows for the user who triggered the action (e.g., Hisuian Heavy Ball). Cards like Sidney/Grabber can work either by looking at/revealing the opponent's hand, or the opponent revealing their cards. <strong>NOTE:</strong> To put a face-down card from your hand in play, hide it in your hand using [z], and then move the card into play. Starting a turn will automatically reveal cards in play.<br><br>
+      
+        <strong>Attaching Pokemon:</strong> There is now a "Change type" function that can be accessed by right-clicking on cards in the active/bench. Changing a Pokemon to a tool/energy type (e.g., Electrode EVO, Klefki STS) enables the correct attachment to other cards.<br><br>
+      
+        <strong>Leaving cards in play:</strong> There is now a "Leave cards in play" button when dealing with attached cards to make handling cards like Devolution Spray easier.<br><br>
+      
+        <strong>Prizes Sizing:</strong> Prizes now adjust size if a 7th prize is added (e.g., Xurkitree GX).<br><br>
+      
+        - Added option button in the bottom right to clear battle log and export battle log.<br>
+        - Added confused special condition marker ("c").<br>
+        - Added hand count display.<br>
+        - Added keybinds/right-click for moving cards from the board into the hand, lost zone, and shuffling into the deck.<br>
+        - Drag & drop to deck now appends the card to the top of the deck instead of the bottom.<br>
+        - You can now drag & drop the top card of your discard and lost zone into other zones.<br>
+        - The name of the Pokemon whose ability was used is now recorded in the battle log.<br>
+        - Selected card is no longer de-selected when adding damage counters/special conditions/rotating/revealing/hiding, making it easier to handle card actions.<br>
+        - Fixed resizing issue of active/bench cards when resizing window.<br>
+        - Fixed GX/VSTAR bug in 2P mode; resetting/using GX/VSTAR now properly updates both player's boards.<br>
+        - Fixed issue where spamming "v" while viewing a card would append multiple full-screen cards.<br><br>
+      
+        <strong>Coming later this week:</strong><br>
+        - Adding all expansions prior to 2011.<br>
+        - Custom image imports.<br>
+        - Selecting multiple cards at once.<br>
+        - Attaching cards on opponent's side (e.g., Head Ringer).<br><br>
+      
+        <strong>Thank you to everyone for the support these past three days. I'm going to continue working hard to add new features and fix bugs! Come say hi in the Discord channel :)</strong><br><br>
+      
+        - XX/Michael
+      </div>
+      
+
     <div id="p1Box" class="sidebox">
         <div id="chatbox"><strong>Welcome to PTCG-sim!</strong>
+            <br><br>
+            <strong id="changelogLink" style="cursor: pointer; text-decoration: underline;">v0.9.1 launched! Read the changelog here.</strong>
+            <br><br>
+            <strong><a href="https://discord.gg/Kj8fhVns4g" target="_blank">Join our Discord server!</a></strong>
             <br><br>
             PTCG-sim is a free desktop tool to simulate the Pokemon TCG. It supports single player (1P) and online multiplayer (2P). 
             <br><br>
@@ -58,7 +103,7 @@
         <div id="chatboxButtonContainer" class="chat-button-container">
             <button id="attackButton" class="selfColour">Attack</button>
             <button id="passButton" class="selfColour">Pass</button>
-            <button id="FREEBUTTON" class="selfColour">🎅</button>
+            <button id="FREEBUTTON" class="selfColour">🤔</button>
         </div>
         <input id="messageInput" type="text" placeholder="Type your message here...">
         <div id="bottomP1ButtonContainer" class="sidebox-button-container">
@@ -66,6 +111,7 @@
             <button id="resetButton" class="selfColour">Reset</button>
             <button id="setupBothButton" class="neutralColour">Set Up Both</button>
             <button id="resetBothButton" class="neutralColour">Reset Both</button>
+            <button id="optionsButton" class="neutralColour">Options</button>
         </div>
     </div>
     <div id="p2Box" class="sidebox">
@@ -98,13 +144,14 @@
             <div id="p2ChatboxButtonContainer" class="chat-button-container">
                 <button id="p2AttackButton" class="selfColour">Attack</button>
                 <button id="p2PassButton" class="selfColour">Pass</button>
-                <button id="p2FREEBUTTON" class="selfColour">🎅</button>
+                <button id="p2FREEBUTTON" class="selfColour">🤔</button>
             </div>
             <input id="p2MessageInput" type="text" placeholder="Type your message here...">
             <div id="p2BottomButtonContainer" class="sidebox-button-container">
                 <button id="p2SetupButton" class="selfColour">Set Up</button>
                 <button id="p2ResetButton" class="selfColour">Reset</button>
                 <button id="leaveRoomButton" class="neutralColour">Leave Room</button>
+                <button id="p2OptionsButton" class="neutralColour">Options</button>
             </div>
         </div>
        
@@ -163,21 +210,27 @@
 
             <li id="prizesHeader">Prizes</li>
             <li id="shufflePrizesButton">Shuffle prizes</li>
-            <li id="revealPrizesButton">Reveal prizes</li>
-            <li id="hidePrizesButton">Hide prizes</li>
+            <li id="revealHidePrizesButton">Reveal/hide prizes</li>
+            <li id="lookPrizesButton">Look/cover prizes</li>
 
             <li id="handHeader">Hand</li>
-            <li id="revealHandButton">Reveal hand</li>
-            <li id="hideHandButton">Hide hand</li>
             <li id="discardHandButton">Discard hand</li>
             <li id="shuffleHandButton">Shuffle hand into deck</li>
             <li id="shuffleHandBottomButton">Shuffle hand to bottom</li>
+            <li id="lookHandButton">Look/cover hand</li>
 
             <li id="deckHeader">Deck</li>
             <li id="shuffleDeckButton">Shuffle deck</li>
             <li id="drawButton">Draw card(s)</li>
             <li id="viewTopButton">View top card(s)</li>
             <li id="viewBottomButton">View bottom card(s)</li>
+
+            <li id="boardHeader">Playboard</li>
+            <li id="discardBoardButton">Discard all</li>
+            <li id="handBoardButton">Move all to hand</li>
+            <li id="shuffleBoardButton">Shuffle all into deck</li>
+            <li id="lostzoneBoardButton">Lost Zone all</li>
+
 
             <li id="moveButton">Move card...
                 <ul class="subMenu">
@@ -188,7 +241,19 @@
                     <li id="shuffleIntoDeckButton">to Deck (shuffle)</li>
                 </ul>
             </li>
+            <li id="changeButton">Change type...
+                <ul class="subMenu">
+                    <li id="changeToEnergyButton">to Energy</li>
+                    <li id="changeToToolButton">to Tool</li>
+                    <li id="changeToPokemonButton">to Pokemon</li>
+                </ul>
+            </li>
         </ul>
+    </div>
+
+    <div id="optionsContextMenu">
+        <div id="clearLog">Clear battle log</div>
+        <div id="exportLog">Export battle log</div>
     </div>
 
     <div id="keybindModal">
@@ -212,28 +277,6 @@
                     </ul>
                 </div>
                 <div class="column">
-                    <h1>Card actions</h1>
-                    <ul>
-                        <li>Attach <code>[q]</code></li>
-                        <li>Evolve <code>[e]</code></li>
-                        <li>View <code>[v]</code></li>
-                        <li>Toggle ability/Use stadium<code>[w]</code></li>
-                        <li>Damage counter</li>
-                        <ul>
-                            <li>Increase <code>[1-9]</code></li>
-                            <li>Decrease <code>[alt + 1-9]</code></li>
-                            <li>Remove <code>[0]</code></li>
-                        </ul>
-                        <li>Special condition</li>
-                        <ul>
-                            <li>Add/remove <code>[y]</code></li>
-                            <li>Toggle <code>[alt + y]</code></li>
-                        </ul>
-                    </ul>
-                </div>
-            </div>
-            <div class="section">
-                <div class="column">
                     <h1>Deck</h1>
                     <ul>
                         <li>Shuffle deck<code>[s]</code></li>
@@ -252,9 +295,38 @@
                     </ul>
                 </div>
                 <div class="column">
-                    <h1>Board</h1>
+                    <h1>Playboard</h1>
                     <ul>
-                        <li>Clear playboard <code>[enter]</code></li>
+                        <li>Discard all<code>[enter]</code></li>
+                        <li>Move all to hand<code>[alt + enter]</code></li>
+                        <li>Shuffle all into deck<code>[/]</code></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="section">
+                <div class="column">
+                    <h1>Card actions</h1>
+                    <ul>
+                        <li>Attach <code>[q]</code></li>
+                        <li>Evolve <code>[e]</code></li>
+                        <li>View <code>[v]</code></li>
+                        <li>Toggle ability/Use stadium<code>[w]</code></li>
+                        <li>Damage counter</li>
+                        <ul>
+                            <li>Increase <code>[1-9]</code></li>
+                            <li>Decrease <code>[alt + 1-9]</code></li>
+                            <li>Remove <code>[0]</code></li>
+                        </ul>
+                        <li>Special condition</li>
+                        <ul>
+                            <li>Add/Toggle <code>[y]</code></li>
+                            <li>Remove <code>[alt + y]</code></li>
+                        </ul>
+                        <li>Rotate card(s)<code>[r]</code></li>
+                        <li>Rotate Pokemon BREAK <code>[alt + r]</code></li>
+                        <li>Look/cover card (only yourself)<code>[c]</code></li>
+                        <li>Reveal/hide card (both players)<code>[z]</code></li>
+                        <li>Put face-down card in active<code>[z] -> [a]</code></li>
                     </ul>
                 </div>
                 <div class="column">
@@ -265,7 +337,7 @@
                         <li>Start turn <code>[alt + t]</code></li>
                         <li>Flip coin <code>[f]</code></li>
                         <li>Flip board <code>[alt + f]</code></li>
-                        <li>Mulligan <code>[m]</code></li>
+                        <li>Announce mulligan <code>[m]</code></li>
                         <li>Close popups <code>[esc]</code></li>
                     </ul>
                 </div>
