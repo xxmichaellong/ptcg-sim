@@ -16,6 +16,7 @@ export const reset = (user, clean = false, received = false, build = true, inval
         document.querySelectorAll('.tab').forEach(element => {
             element.classList.remove('tab');
         });
+        removeImages(stadium_html);
     };
     if (user === 'self'){
         cardArrays = [deck, lostzone, discard, prizes, active, bench, hand, attachedCardPopup, viewCards, board];
