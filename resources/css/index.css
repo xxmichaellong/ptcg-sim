@@ -846,7 +846,7 @@ a:hover {
   border: 1px solid #ccc; /* Add this line for a grey border */
   z-index: 2;
   color: black;
-  height: 85%;
+  height: 90%;
 }
 .decklists-context-menu-item {
   padding: .3vh 1vw;
