@@ -33,7 +33,7 @@ export const moveCardMessage = (user, cardName, oLocation, mLocation, action, at
       
     if (target.card && (!['active', 'bench'].includes(oLocation) || attached)){
         mLocation = target.card.name;
-        if (!['bench', 'active'].includes(oLocation) && sCard.card.type !== 'pokemon'){
+        if (!['bench', 'active'].includes(oLocation) && sCard.card.type !== 'Pokémon'){
             action = 'attach';
         } else if (!['bench', 'active'].includes(oLocation)) {
             action = 'evolve';

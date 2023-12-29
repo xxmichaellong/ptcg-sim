@@ -141,7 +141,7 @@ export const adjustCards = (user, location, container, ratio) => {
 
     location.cards.forEach(card => {
         if (card.image.attached){
-            if (card.type === 'pokemon'){
+            if (card.type === 'Pokémon'){
                 const oldBottom = parseFloat(card.image.style.bottom);
                 const newBottom = oldBottom * ratio;
                 card.image.style.bottom = `${newBottom}px`;

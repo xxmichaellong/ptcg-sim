@@ -1,5 +1,5 @@
 import { reset } from "../../actions/general/reset.js";
-import { altDeckImportInput, failedText, importButton, invalid, mainDeckImportInput, p1, p1Button, p2Button, roomId, socket } from "../../front-end.js";
+import { altDeckImportInput, cancelButton, confirmButton, decklistsButton, failedText, importButton, invalid, loadingText, mainDeckImportInput, oppContainers, p1, p1Button, p2Button, roomId, saveButton, selfContainers, socket } from "../../front-end.js";
 import { appendMessage } from "../chatbox/messages.js";
 import { determineUsername } from "../general/determine-username.js";
 import { show } from "../home-header/header-toggle.js";
@@ -8,7 +8,7 @@ import { getCardType } from "./find-type.js";
 export const mainDeckData = [];
 export const altDeckData = [];
 
-const assembleCard = (quantity, name, set, imageURL, type) => {
+const assembleCard = (quantity, name, type, imageURL, ) => {
     const imageAttributes = {
         src: imageURL,
         alt: name,
@@ -25,7 +25,6 @@ const assembleCard = (quantity, name, set, imageURL, type) => {
     const cardAttributes = {
         name: name,
         type: type,
-        set: set
     };
 
     const rawCardAttributes = JSON.stringify(cardAttributes);
@@ -37,10 +36,12 @@ const assembleCard = (quantity, name, set, imageURL, type) => {
 export const importDecklist = (user) => {
     failedText.style.display = 'none';
     invalid.style.display = 'none';
+    loadingText.style.display = 'block';
     importButton.disabled = true;
 
     const decklist = user === 'self' ? mainDeckImportInput.value : altDeckImportInput.value;
 
+    const regexWithOldSet = /(\d+) (.+?)(?= \w*-\w*\d*$) (\w*-\w*\d*)/;
     const regexWithSet = /(\d+) (.+?) (\w{2,3}) (\d+[a-zA-Z]?)/;
     const regexWithPRSet = /(\d+) (.+?) (PR-\w{2,3}) (\d+)/;
     const regexWithSpecialSet = /(\d+) (.+?) ((?:\w{2,3}(?:\s+[a-zA-Z\d]+)*)(?:\s+(\w{2,3}\s*[a-zA-Z\d]+)\s*)*)$/;
@@ -59,12 +60,31 @@ export const importDecklist = (user) => {
         //special case for double crisis set
         line = line.replace(/xy5-5/g, 'DCR');
 
+        let matchWithOldSet = line.match(regexWithOldSet);
         let matchWithSet = line.match(regexWithSet);
         let matchWithPRSet = line.match(regexWithPRSet);
         let matchWithSpecialSet = line.match(regexWithSpecialSet);
         let matchWithoutSet = line.match(regexWithoutSet);
     
-        if (matchWithSet) {
+        if (matchWithOldSet) {
+            const [, quantity, name, id,] = matchWithOldSet;
+            decklistArray.push([parseInt(quantity), name, id, null, null]);
+            
+            fetch('https://api.pokemontcg.io/v2/cards/' + id, {
+                method: 'GET',
+                headers: {
+                    'X-Api-Key': 'cde33a60-5d8a-414e-ae04-b447090dd6ba'
+                }
+            })
+            .then(response => response.json())
+            .then(({data}) => {
+                const index = decklistArray.findIndex(item => item[2] === id && item[3] === null);
+                decklistArray[index] = [parseInt(quantity), name, id, data.images.large, data.supertype]
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        } else if (matchWithSet) {
             const [, quantity, name, set, setNumber] = matchWithSet;
             decklistArray.push([parseInt(quantity), name, `${set} ${setNumber}`]);
         } else if (matchWithPRSet) {
@@ -76,11 +96,12 @@ export const importDecklist = (user) => {
         } else if (matchWithoutSet) {
             const [, quantity, name] = matchWithoutSet;
             decklistArray.push([parseInt(quantity), name, '']);
-        }
+        };
     });
         
     if (decklistArray.length < 1){
-        failedText.style.display = 'block';      
+        failedText.style.display = 'block';
+        loadingText.style.display = 'none';      
         importButton.disabled = false;
         return;
     };
@@ -121,52 +142,161 @@ export const importDecklist = (user) => {
         'PR-XY' : 'XYP',
         'PR-BLW' : 'BWP',
         'PR-HS' : 'HSP'
-    }
+    };
       
     decklistArray.forEach((entry) => {
-        const [q, name, set] = entry;
+        if (!entry[2].match(/\w*-\w*\d*$/)){
+            const [q, name, set] = entry;
 
-        const energyUrl = energies[name];
-
-        if (energyUrl) {
-            entry.push(energyUrl);
-            entry.push('energy');
-        } else {
-            let [firstPart, secondPart] = set.split(/(?<=\S)\s/);
-            if (firstPart && secondPart){
-                if (specialCases[firstPart]){
-                    firstPart = specialCases[firstPart];
-                };
-                const paddedSecondPart = secondPart.replace(/^(\d+)([a-zA-Z])?$/, (_, digits, letter) => {
-                    const paddedDigits = digits.length < 3 ? digits.padStart(3, '0') : digits;
-                    return letter ? paddedDigits + letter : paddedDigits;
-                });
-                const url = `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/${firstPart.replace(/ /g, '/')}/${firstPart.replace(/ /g, '_')}_${paddedSecondPart}_R_EN.png`;
-                entry.push(url);
-                entry.push(getCardType(firstPart, secondPart));
+            const energyUrl = energies[name];
+    
+            if (energyUrl) {
+                entry.push(energyUrl);
+                entry.push('Energy');
             } else {
-                failedText.style.display = 'block';
+                let [firstPart, secondPart] = set.split(/(?<=\S)\s/);
+                if (firstPart && secondPart){
+                    if (specialCases[firstPart]){
+                        firstPart = specialCases[firstPart];
+                    };
+                    const paddedSecondPart = secondPart.replace(/^(\d+)([a-zA-Z])?$/, (_, digits, letter) => {
+                        const paddedDigits = digits.length < 3 ? digits.padStart(3, '0') : digits;
+                        return letter ? paddedDigits + letter : paddedDigits;
+                    });
+                    const url = `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/${firstPart.replace(/ /g, '/')}/${firstPart.replace(/ /g, '_')}_${paddedSecondPart}_R_EN.png`;
+                    entry.push(url);
+                    entry.push(getCardType(firstPart, secondPart));
+                } else {
+                    failedText.style.display = 'block';
+                    loadingText.style.display = 'none';
+                };
             };
         };
-    });      
-    let deckData;
-    deckData = decklistArray.map(card => assembleCard(...card));
+    });
+
+    let fetchPromises = decklistArray.map(([quantity, name, id]) => {
+        if (id.match(/\w*-\w*\d*$/)) {
+            return fetch('https://api.pokemontcg.io/v2/cards/' + id, {
+                method: 'GET',
+                headers: {
+                    'X-Api-Key': 'cde33a60-5d8a-414e-ae04-b447090dd6ba'
+                }
+            })
+            .then(response => response.json())
+            .then(({data}) => {
+                const index = decklistArray.findIndex(item => item[2] === id);
+                if (index !== -1) {
+                    decklistArray[index] = [parseInt(quantity), name, id, data.images.large, data.supertype];
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                failedText.style.display = 'block';
+                loadingText.style.display = 'none';
+                importButton.disabled = false;
+            });
+        } else {
+            return Promise.resolve();
+        };
+    });    
+
+    Promise.all(fetchPromises)
+    .then(() => {
+        const decklistTable = document.getElementById('decklistTable')
+        let tableBody = decklistTable.getElementsByTagName('tbody')[0];
+        decklistTable.style.display = 'block';
+
+        decklistArray.forEach(([quantity, name, , url, type]) => {
+            let newRow = tableBody.insertRow();
+            
+            let qtyCell = newRow.insertCell(0);
+            let nameCell = newRow.insertCell(1);
+            let typeCell = newRow.insertCell(2);
+            let urlCell = newRow.insertCell(3);
+            
+            qtyCell.contentEditable = "true";
+            nameCell.contentEditable = "true";
+            urlCell.contentEditable = "true";
+            typeCell.contentEditable = "true";
+            
+            qtyCell.innerHTML = quantity;
+            nameCell.innerHTML = name;
+            urlCell.innerHTML = url;
+            typeCell.innerHTML = type;
+        });
+        importButton.disabled = false;
+        loadingText.style.display = 'none';
+        selfContainers.style.zIndex = -1;
+        oppContainers.style.zIndex = -1;
+        decklistsButton.style.display = 'none';
+        importButton.style.display = 'none';
+        confirmButton.style.display = 'block';
+        cancelButton.style.display = 'block';
+        saveButton.style.display = 'block';
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+}
+
+cancelButton.addEventListener('click', () => {
+    selfContainers.style.zIndex = 0;
+    oppContainers.style.zIndex = 0;
+    decklistsButton.style.display = 'block';
+    importButton.style.display = 'block';
+    confirmButton.style.display = 'none';
+    cancelButton.style.display = 'none';
+    saveButton.style.display = 'none';
+    const decklistTable = document.getElementById('decklistTable')
+    let tableBody = decklistTable.getElementsByTagName('tbody')[0];
+    while (tableBody.firstChild) {
+        tableBody.removeChild(tableBody.firstChild);
+    };
+    decklistTable.style.display = 'none';
+})
+
+confirmButton.addEventListener('click', () => {
+    selfContainers.style.zIndex = 0;
+    oppContainers.style.zIndex = 0;
+    decklistsButton.style.display = 'block';
+    importButton.style.display = 'block';
+    confirmButton.style.display = 'none';
+    cancelButton.style.display = 'none';
+    saveButton.style.display = 'none';
+
+    const user = mainDeckImportInput.style.display !== 'none' ? 'self' : 'opp';
+    let deckData = [];
+    const decklistTable = document.getElementById('decklistTable')
+    let tableBody = decklistTable.getElementsByTagName('tbody')[0];
+    let rows = tableBody.rows;
+    for (let i = 0; i < rows.length; i++) {
+        let cells = rows[i].cells;
+        
+        let quantity = cells[0].innerText;
+        let name = cells[1].innerText;
+        let type = cells[2].innerText;
+        let url = cells[3].innerText;
+
+        // Call assembleCard and store the result in deckData
+        let cardData = assembleCard(quantity, name, type, url);
+        deckData.push(cardData);
+    };
+    while (tableBody.firstChild) {
+        tableBody.removeChild(tableBody.firstChild);
+    };
+    decklistTable.style.display = 'none';
+    // let deckData;
+    // deckData = decklistArray.map(card => assembleCard(...card));
     if (user === 'self'){
         mainDeckData[0] = deckData;
     } else {
         altDeckData[0] = deckData;
     };
-    if (failedText.style.display === 'none'){
-        if (p1[0]){
-            show('p1Box', p1Button);
-        } else if (user === 'self'){
-            show('p2Box', p2Button);
-        };
+    if (p1[0]){
+        show('p1Box', p1Button);
+    } else if (user === 'self'){
+        show('p2Box', p2Button);
     };
-    importButton.disabled = false;
-
-    // console.log(decklistArray);
-
     reset(user, true, true, true, false);
     if (!(user === 'opp' && !p1[0])){
         appendMessage(user, determineUsername(user) + ' imported deck', 'announcement', true);
@@ -183,70 +313,89 @@ export const importDecklist = (user) => {
         };
         socket.emit('deckData', data);
     };
-}
-            
-    // const url = "http://127.0.0.1:8000/deck";
-    // fetch(url, {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json'
-    //     },
-    //     body: JSON.stringify(decklist)
-    //   })
-    //     .then(response => response.json())
-    //     .then(data => {
-    //         loadingText.style.display = 'none';
-    //         if (decklistArray.length === data.image_urls.length) {
-    //             for (let i = 0; i < decklistArray.length; i++) {
-    //                 decklistArray[i].push(data.image_urls[i]);
-    //             };
-    //             let deckData;
-    //             deckData = decklistArray.map(card => assembleCard(...card));
-    //             if (user === 'self'){
-    //                 mainDeckData[0] = deckData;
-    //             } else {
-    //                 altDeckData[0] = deckData;
-    //             };
-    //             successText.style.display = 'block';
-    //             appendMessage(user, determineUsername(user) + ' imported deck', 'announcement');
-    //         } else {
-    //             failedText.style.display = 'block';    
-    //         };
-    //         importButton.disabled = false;
-    //     })
-    //     .catch(error => {
-    //         console.error('Error during fetch:', error);
-    //         loadingText.style.display = 'none';
-    //         failedText.style.display = 'block';
-    //         importButton.disabled = false;
-    //     });
+})
+       
+function downloadCSV(csv, filename) {
+    let csvFile;
+    let downloadLink;
 
-// const decklist = [
-//     [4, 'comfey', '/resources/card-scans/comfey.webp', 'pokemon'],
-//     [2, 'sableye', '/resources/card-scans/sableye.webp', 'pokemon'],
-//     [1, 'cramorant', '/resources/card-scans/cramorant.webp', 'pokemon'],
-//     [1, 'kyogre', '/resources/card-scans/kyogre.webp', 'pokemon'],
-//     [1, 'pidgeotV', '/resources/card-scans/pidgeotV.webp', 'pokemon'],
-//     [1, 'manaphy', '/resources/card-scans/manaphy.webp', 'pokemon'],
-//     [1, 'radiantGreninja', '/resources/card-scans/radiantGreninja.webp', 'pokemon'],
-//     [1, 'zamazenta', '/resources/card-scans/zamazenta.webp', 'pokemon'],
-//     [4, 'metal', '/resources/card-scans/metal.webp', 'energy'],
-//     [4, 'water', '/resources/card-scans/water.webp', 'energy'],
-//     [3, 'psychic', '/resources/card-scans/psychic.webp', 'energy'],
-//     [4, 'colress\'sExperiment', '/resources/card-scans/colress\'sExperiment.webp', 'supporter'],
-//     [4, 'battleVipPass', '/resources/card-scans/battleVipPass.webp', 'item'],
-//     [4, 'mirageGate', '/resources/card-scans/mirageGate.webp', 'item'],
-//     [4, 'switchCart', '/resources/card-scans/switchCart.webp', 'item'],
-//     [3, 'escapeRope', '/resources/card-scans/escapeRope.webp', 'item'],
-//     [4, 'nestBall', '/resources/card-scans/nestBall.jpg', 'item'],
-//     [3, 'superRod', '/resources/card-scans/superRod.webp', 'item'],
-//     [2, 'energyRecycler', '/resources/card-scans/energyRecycler.webp', 'item'],
-//     [1, 'lostVacuum', '/resources/card-scans/lostVacuum.webp', 'item'],
-//     [1, 'echoingHorn', '/resources/card-scans/echoingHorn.jpg', 'item'],
-//     [1, 'hisuianHeavyBall', '/resources/card-scans/hisuianHeavyBall.webp', 'item'],
-//     [1, 'roxanne', '/resources/card-scans/roxanne.webp', 'supporter'],
-//     [1, 'artazon', '/resources/card-scans/artazon.webp', 'stadium'],
-//     [1, 'pokestop', '/resources/card-scans/pokestop.webp', 'stadium'],
-//     [1, 'beachCourt', '/resources/card-scans/beachCourt.webp', 'stadium'],
-//     [2, 'forestSealStone', '/resources/card-scans/forestSealStone.webp', 'tool']
-// ];
+    // CSV file
+    csvFile = new Blob([csv], {type: "text/csv"});
+
+    // Download link
+    downloadLink = document.createElement("a");
+
+    // File name
+    downloadLink.download = filename;
+
+    // Create a link to the file
+    downloadLink.href = window.URL.createObjectURL(csvFile);
+
+    // Hide download link
+    downloadLink.style.display = "none";
+
+    // Add the link to DOM
+    document.body.appendChild(downloadLink);
+
+    // Click download link
+    downloadLink.click();
+}
+
+function exportTableToCSV(filename) {
+    let csv = [];
+    let rows = document.querySelectorAll("#decklistTable tr");
+    
+    for (let i = 0; i < rows.length; i++) {
+        let row = [], cols = rows[i].querySelectorAll("td, th");
+        
+        for (let j = 0; j < cols.length; j++) 
+            row.push(cols[j].innerText);
+        
+        csv.push(row.join(","));        
+    }
+
+    // Download CSV file
+    downloadCSV(csv.join("\n"), filename);
+}
+
+saveButton.addEventListener('click', () => {
+    exportTableToCSV('decklist.csv');
+});
+
+document.getElementById('csvFile').addEventListener('change', function(evt) {
+    const decklistTable = document.getElementById('decklistTable')
+    decklistTable.style.display = 'block';
+    importButton.disabled = false;
+    loadingText.style.display = 'none';
+    selfContainers.style.zIndex = -1;
+    oppContainers.style.zIndex = -1;
+    decklistsButton.style.display = 'none';
+    importButton.style.display = 'none';
+    failedText.style.display = 'none';
+    confirmButton.style.display = 'block';
+    cancelButton.style.display = 'block';
+    saveButton.style.display = 'block';
+    let file = evt.target.files[0];
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        let contents = e.target.result;
+        let lines = contents.split('\n');
+        let tableBody = document.getElementById('decklistTable').getElementsByTagName('tbody')[0];
+        // Clear the table body
+        while (tableBody.firstChild) {
+            tableBody.removeChild(tableBody.firstChild);
+        }
+        // Populate the table with the CSV data, skipping the first line
+        for (let i = 1; i < lines.length; i++) {
+            let cells = lines[i].split(',');
+            let newRow = tableBody.insertRow();
+            for (let j = 0; j < cells.length; j++) {
+                let newCell = newRow.insertCell();
+                newCell.innerText = cells[j];
+            }
+        }
+    };
+    reader.readAsText(file);
+    evt.target.value = '';
+});
+

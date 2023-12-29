@@ -144,7 +144,7 @@ export const leaveAll = (event) => {
     let targetImage;
 
     for (let i = count - 1; i >= 0; i--){
-        if (location.cards[i].type === 'pokemon'){
+        if (location.cards[i].type === 'Pokémon'){
             targetImage = location.cards[i].image;
             moveCard(user, locationAsString, containerId, mLocationAsString, mLocation_html, i);
             break;
@@ -152,7 +152,7 @@ export const leaveAll = (event) => {
     };
     const count1 = location.count;
     for (let i = count1 - 1; i >= 0; i--){
-        if (location.cards[i].type === 'pokemon'){
+        if (location.cards[i].type === 'Pokémon'){
             const targetIndex = mLocation.cards.findIndex(card => card.image === targetImage);
             targetImage = location.cards[i].image;
             moveCard(user, locationAsString, containerId, mLocationAsString, mLocation_html, i, targetIndex);

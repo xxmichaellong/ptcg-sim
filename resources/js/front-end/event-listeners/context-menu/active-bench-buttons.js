@@ -29,7 +29,7 @@ changeToEnergyButton.addEventListener('click', () => {
     if (!sCard.card.type2){
         sCard.card.type2 = sCard.card.type;
     };
-    sCard.card.type = 'energy';
+    sCard.card.type = 'Energy';
     appendMessage(sCard.user, determineUsername(sCard.user) + ' changed ' + sCard.card.name + ' into an energy', 'player');
     moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'board', 'board_html', sCard.index);
 });
@@ -37,14 +37,14 @@ changeToPokemonButton.addEventListener('click', () => {
     if (!sCard.card.type2){
         sCard.card.type2 = sCard.card.type;
     };
-    sCard.card.type = 'pokemon';
+    sCard.card.type = 'Pokémon';
     appendMessage(sCard.user, determineUsername(sCard.user) + ' changed ' + sCard.card.name + ' into a Pokemon', 'player');
 });
 changeToToolButton.addEventListener('click', () => {
     if (!sCard.card.type2){
         sCard.card.type2 = sCard.card.type;
     };
-    sCard.card.type = 'trainer';
+    sCard.card.type = 'Trainer';
     appendMessage(sCard.user, determineUsername(sCard.user) + ' changed ' + sCard.card.name + ' into a tool', 'player');
     moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'board', 'board_html', sCard.index);
 });

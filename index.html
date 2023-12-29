@@ -44,6 +44,42 @@
     </div>
     
     <div id="changelog">
+        <strong>v1.0.0 Update 12/29/2023</strong><br><br>
+        
+        Hi everyone! Thank you all for your support during PTCG-sim’s launch. The feedback and general reception has been overwhelming (in a great way), and I’m happy that so many people in the community are finding great usage out of the sim. If you haven’t already, <strong><a href="https://discord.gg/jMfhQa38mh" target="_blank">join our Discord server here</a></strong> to receive the latest updates, report bugs, find matches, share decklists, and more! You can also read the previous Changelog (v0.9.1) following the below.<br><br>
+        
+        <strong>Without further ado, let’s dive right into v1.0.0:</strong><br><br>
+        
+        <strong>DECK SUPPORT</strong><br>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+            <li style="font-size: 1.2em; margin-bottom: 10px;"><strong>Legacy Formats:</strong> All expansions prior to 2011 have been added. A spreadsheet containing all information related to cards, including decklist syntax for PTCG-sim imports, will be available in the Discord server.</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;"><strong>Decklist Library:</strong> Popular legacy decklists have now been added to the library. We’d like to extend our thanks to <a href="https://jklaczpokemon.com/" target="_blank">Jason K</a> for being an awesome Pokemon archivist.</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;"><strong>Import/Export Decks:</strong> Importing a deck now breaks down cards by quantity, name, type, and image URL. Decklists can also now be saved using the “Save” button to export CSV files.</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;"><strong>Custom Image Imports:</strong> With the above feature, you can now upload your own image URLs. This means every card is now supported on PTCG-sim!</li>
+        </ul>
+        
+          
+        
+        <strong>BUG FIXES</strong><br>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+        <li style="font-size: 1.2em; margin-bottom: 10px;">Fixed issue where stadium toggle doesn’t disappear on reset.</li>
+        </ul>
+
+        <strong>COMING SOON</strong><br>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+            <li style="font-size: 1.2em; margin-bottom: 10px;">Selecting multiple cards at once.</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;">Attaching cards on opponent’s side (e.g., Head Ringer).</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;">Fixing appending/overlap issues.</li>
+        </ul>
+        There have been reports of desyncing issues. We’re looking into this - if you’ve experienced anything similar, please share on our Discord server in the #bugs-and-suggestions channel!<br><br>
+        
+        I’ll continue adding new features to the sim + fixing bugs as they come up. Wishing you all a happy new year and see you at the next update!<br><br>
+        
+        <strong>-XXL &lt;3</strong>
+
+        <br><br>
+        <br><br>
+        
         <strong>v0.9.1 Changelog 12/28/2023</strong><br><br>
       
         <strong>Rotating Stadium/Pokemon BREAK Cards:</strong> You can now rotate cards using the keybind [r]. This can be used for dual stadiums (e.g., Parallel City) as well as special conditions.<br><br>
@@ -52,58 +88,63 @@
       
         <strong>Active/Benched Pokemon Switching:</strong> Moving the active Pokemon to a target bench Pokemon now automatically switches the target Pokemon to the active zone. Battle log messages are also fixed.<br><br>
       
-        <strong>Revealing/Hiding versus Looking/Covering Cards:</strong> The process of flipping over cards is now divided into two types: revealing/hiding will show for both players (e.g., Town Map, Blacephalon UNB) while looking/covering only shows for the user who triggered the action (e.g., Hisuian Heavy Ball). Cards like Sidney/Grabber can work either by looking at/revealing the opponent's hand, or the opponent revealing their cards. <strong>NOTE:</strong> To put a face-down card from your hand in play, hide it in your hand using [z], and then move the card into play. Starting a turn will automatically reveal cards in play.<br><br>
+        <strong>Revealing/Hiding versus Looking/Covering Cards:</strong> The process of flipping over cards is now divided into two types: revealing/hiding will show for both players (e.g., Town Map, Blacephalon UNB) while looking/covering only shows for the user who triggered the action (e.g., Hisuian Heavy Ball). Cards like Sidney/Grabber can work either by looking at/revealing the opponent's hand, or the opponent revealing their cards. <br><strong>NOTE:</strong> To put a face-down card from your hand in play, hide it in your hand using [z], and then move the card into play. Starting a turn will automatically reveal cards in play.<br><br>
       
         <strong>Attaching Pokemon:</strong> There is now a "Change type" function that can be accessed by right-clicking on cards in the active/bench. Changing a Pokemon to a tool/energy type (e.g., Electrode EVO, Klefki STS) enables the correct attachment to other cards.<br><br>
       
         <strong>Leaving cards in play:</strong> There is now a "Leave cards in play" button when dealing with attached cards to make handling cards like Devolution Spray easier.<br><br>
       
-        <strong>Prizes Sizing:</strong> Prizes now adjust size if a 7th prize is added (e.g., Xurkitree GX).<br><br>
+        <strong>Prizes Sizing:</strong> Prizes now adjust size if a 7th prize is added (e.g., Xurkitree GX).<br>
       
-        - Added option button in the bottom right to clear battle log and export battle log.<br>
-        - Added confused special condition marker ("c").<br>
-        - Added hand count display.<br>
-        - Added keybinds/right-click for moving cards from the board into the hand, lost zone, and shuffling into the deck.<br>
-        - Drag & drop to deck now appends the card to the top of the deck instead of the bottom.<br>
-        - You can now drag & drop the top card of your discard and lost zone into other zones.<br>
-        - The name of the Pokemon whose ability was used is now recorded in the battle log.<br>
-        - Selected card is no longer de-selected when adding damage counters/special conditions/rotating/revealing/hiding, making it easier to handle card actions.<br>
-        - Fixed resizing issue of active/bench cards when resizing window.<br>
-        - Fixed GX/VSTAR bug in 2P mode; resetting/using GX/VSTAR now properly updates both player's boards.<br>
-        - Fixed issue where spamming "v" while viewing a card would append multiple full-screen cards.<br><br>
+        <ul style="list-style-type: disc; padding-left: 15px; margin-top: 10px; margin-bottom: 20px; font-size: 2em;">
+            <li style="margin-bottom: 10px;">Added option button in the bottom right to clear battle log and export battle log.</li>
+            <li style="margin-bottom: 10px;">Added confused special condition marker ("c").</li>
+            <li style="margin-bottom: 10px;">Added hand count display.</li>
+            <li style="margin-bottom: 10px;">Added keybinds/right-click for moving cards from the board into the hand, lost zone, and shuffling into the deck.</li>
+            <li style="margin-bottom: 10px;">Drag & drop to deck now appends the card to the top of the deck instead of the bottom.</li>
+            <li style="margin-bottom: 10px;">You can now drag & drop the top card of your discard and lost zone into other zones.</li>
+            <li style="margin-bottom: 10px;">The name of the Pokemon whose ability was used is now recorded in the battle log.</li>
+            <li style="margin-bottom: 10px;">Selected card is no longer de-selected when adding damage counters/special conditions/rotating/revealing/hiding, making it easier to handle card actions.</li>
+            <li style="margin-bottom: 10px;">Fixed resizing issue of active/bench cards when resizing window.</li>
+            <li style="margin-bottom: 10px;">Fixed GX/VSTAR bug in 2P mode; resetting/using GX/VSTAR now properly updates both player's boards.</li>
+            <li style="margin-bottom: 10px;">Fixed issue where spamming "v" while viewing a card would append multiple full-screen cards.</li>
+        </ul>
+              
       
         <strong>Coming later this week:</strong><br>
-        - Adding all expansions prior to 2011.<br>
-        - Custom image imports.<br>
-        - Selecting multiple cards at once.<br>
-        - Attaching cards on opponent's side (e.g., Head Ringer).<br><br>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px; font-size: 1.5em;">
+            <li style="margin-bottom: 10px;">Adding all expansions prior to 2011.</li>
+            <li style="margin-bottom: 10px;">Custom image imports.</li>
+            <li style="margin-bottom: 10px;">Selecting multiple cards at once.</li>
+            <li style="margin-bottom: 10px;">Attaching cards on opponent's side (e.g., Head Ringer).</li>
+        </ul>        
       
         <strong>Thank you to everyone for the support these past three days. I'm going to continue working hard to add new features and fix bugs! Come say hi in the Discord channel :)</strong><br><br>
       
-        - XX/Michael
+        <strong>-XXL</strong>
       </div>
       
 
     <div id="p1Box" class="sidebox">
         <div id="chatbox"><strong>Welcome to PTCG-sim!</strong>
             <br><br>
-            <strong id="changelogLink" style="cursor: pointer; text-decoration: underline;">v0.9.1 launched! Read the changelog here.</strong>
-            <br><br>
-            <strong><a href="https://discord.gg/Kj8fhVns4g" target="_blank">Join our Discord server!</a></strong>
+            <strong id="changelogLink" style="cursor: pointer; text-decoration: underline;">v1.0.0 has arrived!</strong>
             <br><br>
             PTCG-sim is a free desktop tool to simulate the Pokemon TCG. It supports single player (1P) and online multiplayer (2P). 
             <br><br>
             Import your decklist by clicking the “Import” tab above, then press “Set Up” to start a game.
             <br><br>
-            Drag or use keybinds (hold <span class="shift-font">shift</span>) to move cards. Happy testing! 🥳
+            Drag or use keybinds (hold <span class="shift-font">shift</span>) to move cards. Happy testing! 🎉
             <br><br>
             <button id="tutorialButton">Watch Tutorial</button>
+            <br><br>
+            <div id="discord"><strong><a href="https://discord.gg/Kj8fhVns4g" target="_blank">Join our Discord</a></strong></div>
             <div id="line"></div>
         </div>
         <div id="chatboxButtonContainer" class="chat-button-container">
             <button id="attackButton" class="selfColour">Attack</button>
             <button id="passButton" class="selfColour">Pass</button>
-            <button id="FREEBUTTON" class="selfColour">🤔</button>
+            <button id="FREEBUTTON" class="selfColour">🥳</button>
         </div>
         <input id="messageInput" type="text" placeholder="Type your message here...">
         <div id="bottomP1ButtonContainer" class="sidebox-button-container">
@@ -144,7 +185,7 @@
             <div id="p2ChatboxButtonContainer" class="chat-button-container">
                 <button id="p2AttackButton" class="selfColour">Attack</button>
                 <button id="p2PassButton" class="selfColour">Pass</button>
-                <button id="p2FREEBUTTON" class="selfColour">🤔</button>
+                <button id="p2FREEBUTTON" class="selfColour">🥳</button>
             </div>
             <input id="p2MessageInput" type="text" placeholder="Type your message here...">
             <div id="p2BottomButtonContainer" class="sidebox-button-container">
@@ -172,11 +213,19 @@
         <div id="importBottom">
             <button id="decklistsButton">📖</button>
             <button id="importButton">Import</button>
+            <button id="confirmButton">Confirm</button>
+            <button id="cancelButton">Cancel</button>
+            <button id="saveButton">Save</button>
             <div id="decklistsContextMenu" class="decklists-context-menu"></div>
             <button id="randomButton">🪄</button>
             <div id="success">Success!</div><div id="failed">Error!</div><div id="loading"></div><div id="invalid">1P only!</div>
         </div>
+        <label for="csvFile" class="custom-file-upload">
+            Upload File
+        </label>
+        <input type="file" id="csvFile" accept=".csv" style="display:none;">        
     </div>
+    
     <div id="settings" class="sidebox">
         <div id="settingsToggles">
             <div>
@@ -230,7 +279,6 @@
             <li id="handBoardButton">Move all to hand</li>
             <li id="shuffleBoardButton">Shuffle all into deck</li>
             <li id="lostzoneBoardButton">Lost Zone all</li>
-
 
             <li id="moveButton">Move card...
                 <ul class="subMenu">
@@ -344,6 +392,19 @@
             </div>
         </div>
     </div>
+
+    <table id="decklistTable">
+        <thead>
+            <tr>
+                <th>QTY</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>URL</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
 
 <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "2abae72112d74a619e3de341e1d4aa18"}'></script><!-- End Cloudflare Web Analytics -->
 

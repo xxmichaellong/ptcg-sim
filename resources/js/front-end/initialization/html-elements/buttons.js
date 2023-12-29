@@ -47,6 +47,10 @@ export const altImportHeaderButton = document.getElementById('altImportHeaderBut
 export const importButton = document.getElementById('importButton');
 export const decklistsButton = document.getElementById('decklistsButton');
 export const randomButton = document.getElementById('randomButton');
+export const confirmButton = document.getElementById('confirmButton');
+export const cancelButton = document.getElementById('cancelButton');
+export const saveButton = document.getElementById('saveButton');
+
 
 //selfContainers
 export const selfShuffleDeckButton = selfContainersDocument.getElementById('selfShuffleDeckButton');

@@ -1,7 +1,7 @@
 import { altDeckImportInput, deckImport, decklistsButton, decklistsContextMenu, mainDeckImportInput } from "../../front-end.js";
 
 const decklistsByYear = {
-    "2023-2024": {
+    "2023-2024 S&V": {
         "Charizard": `
         Pokémon (17)
         3 Charmander MEW 4
@@ -305,7 +305,7 @@ const decklistsByYear = {
         
         Energy (0)`,
     },
-    "2022-2023": {
+    "2022-2023 S&S": {
         "Lugia": `
         Pokémon (21)
         4 Lugia V SIT 138
@@ -535,7 +535,7 @@ const decklistsByYear = {
         Energy (10)
         10 Water Energy 3`,
     },
-    "2021-2022": {
+    "2021-2022 S&S": {
         "Arceus Flying Pikachu": `
         Pokémon (23)
         4 Arceus V BRS 122
@@ -751,7 +751,7 @@ const decklistsByYear = {
         4 Double Turbo Energy BRS 151
         1 Capture Energy RCL 171`,
     },
-    "2020-2021": {
+    "2020-2021 S&S": {
         "Urshifu Inteleon": `
         Pokémon (23)
         4 Rapid Strike Urshifu V BST 87
@@ -904,7 +904,7 @@ const decklistsByYear = {
         8 Darkness Energy 7
         1 Capture Energy RCL 171`,
     },
-    "2019-2020": {
+    "2019-2020 S&S": {
         "Zacian Lucario & Melmetal": `
         Pokémon (12)
         4 Zacian V SSH 138
@@ -1040,7 +1040,7 @@ const decklistsByYear = {
         8 Darkness Energy 7
         2 Capture Energy RCL 171`,
     },
-    "2018-2019": {
+    "2018-2019 S&M": {
         "Mewtwo & Mew": `
         Pokémon (16)
         4 Mewtwo & Mew-GX UNM 71
@@ -1243,7 +1243,7 @@ const decklistsByYear = {
         Energy (9)
         9 Fairy Energy 9`,
     },
-    "2017-2018": {
+    "2017-2018 S&M": {
         "Zoroark Garbodor": `
         Pokémon (18)
         4 Zorua SLG 52
@@ -1481,7 +1481,7 @@ const decklistsByYear = {
         4 Psychic Energy 5
         3 Double Colorless Energy SLG 69`,
     },
-    "2016-2017": {
+    "2016-2017 S&M": {
         "Gardevoir": `
         Pokémon (19)
         4 Ralts BUS 91
@@ -1742,7 +1742,7 @@ const decklistsByYear = {
         4 Rainbow Energy SUM 137
         4 Double Colorless Energy SUM 136`,
     },
-    "2015-2016": {
+    "2015-2016 X&Y": {
         "Mega Audino": `
         Pokémon (13)
         4 Audino-EX FCO 84
@@ -1949,7 +1949,7 @@ const decklistsByYear = {
         Energy (12)
         12 Water Energy 3`,
     },
-    "2014-2015": {
+    "2014-2015 X&Y": {
         "Archie's Blastoise": `
         Pokémon (14)
         2 Blastoise PLB 16
@@ -2221,7 +2221,7 @@ const decklistsByYear = {
         4 Fighting Energy 6`,
 
     },
-    "2013-2014": {
+    "2013-2014 X&Y": {
         "Virizion Genesect": `
         Pokémon (10)
         4 Virizion-EX PLB 9
@@ -2406,7 +2406,7 @@ const decklistsByYear = {
         7 Fighting Energy 6
         4 Double Colorless Energy XY 130`,
     },
-    "2012-2013": {
+    "2012-2013 B&W": {
         "Darkrai Sableye": `
         Pokémon (10)
         4 Darkrai-EX DEX 63
@@ -2610,7 +2610,7 @@ const decklistsByYear = {
         4 Prism Energy NXD 93
         1 Blend Energy WLFM DRX 118`,
     },
-    "2011-2012": {
+    "2011-2012 B&W": {
         "Darkrai Mewtwo Terrakion": `
         Pokémon (12)
         3 Darkrai-EX DEX 63
@@ -2729,8 +2729,1983 @@ const decklistsByYear = {
         4 Double Colorless Energy NXD 92
         2 Prism Energy NXD 93`,
     },
+
+"2010-2011 HS": {
+    "Yanmega Weavile": `
+        Pokémon (20)
+        4 Yanma hgss4-84
+        4 Yanmega hgss4-98
+        4 Sneasel hgss3-68
+        4 Weavile hgss3-25
+        2 Slowpoke hgss3-66
+        2 Slowking col1-32
+
+        Trainer (30)
+        4 Pokemon Collector hgss1-97
+        4 Judge hgss2-78
+        4 Professor Oak's New Theory col1-83
+        3 Copycat col1-77
+        3 Professor Elm's Training Method hgss1-100
+        4 Pokemon Communication hgss1-98
+        4 Super Scoop Up hgss2-83
+        2 Junk Arm hgss4-87
+        2 Lost Remover col1-80
+
+        Energy (10)
+        5 Grass Energy hgss1-115
+        3 Rescue Energy hgss4-90
+        1 Rainbow Energy hgss1-104
+        1 Psychic Energy hgss1-119
+    `,
+    "Yanmega Magnezone": `
+        Pokémon (17)
+        4 Yanma hgss4-84
+        4 Yanmega hgss4-98
+        3 Magnemite hgss4-68
+        1 Magneton hgss4-43
+        3 Magnezone hgss4-96
+        1 Horsea hgss2-49
+        1 Kingdra hgss2-85
+
+        Trainer (27)
+        4 Pokemon Collector hgss1-97
+        4 Professor Oak's New Theory col1-83
+        3 Judge hgss2-78
+        3 Sage's Training hgss3-77
+        4 Rare Candy hgss2-82
+        4 Pokemon Communication hgss1-98
+        3 Junk Arm hgss4-87
+        2 Pokemon Reversal hgss1-99
+
+        Energy (16)
+        11 Lightning Energy hgss1-118
+        2 Rainbow Energy hgss1-104
+        3 Psychic Energy hgss1-119
+    `,
+    "Vileplume Yanmega": `
+        Pokémon (17)
+        4 Yanma hgss4-84
+        4 Yanmega hgss4-98
+        3 Oddish hgss3-60
+        1 Gloom hgss3-27
+        2 Vileplume hgss3-24
+        1 Bellossom hgss3-1
+        2 Sunkern hgss1-85
+        2 Sunflora hgss1-31
+
+        Trainer (27)
+        4 Pokemon Collector hgss1-97
+        3 Copycat col1-77
+        3 Judge hgss2-78
+        3 Professor Oak's New Theory col1-83
+        3 Sage's Training hgss3-77
+        3 Twins hgss4-89
+        4 Pokemon Communication hgss1-98
+        4 Rare Candy hgss2-82
+
+        Energy (16)
+        5 Psychic Energy hgss1-119
+        3 Rescue Energy hgss4-90
+        1 Rainbow Energy hgss1-104
+        7 Grass Energy hgss1-115
+    `,
+    "Typhlosion, Rayquaza & Deoxys-LEGEND": `
+        Pokémon (14)
+        4 Cyndaquil hgss1-61
+        2 Quilava hgss1-49
+        4 Typhlosion hgss1-110
+        2 Vulpix hgss2-68
+        2 Ninetales hgss1-7
+
+        Trainer (24)
+        4 Pokemon Collector hgss1-97
+        4 Professor Elm's Training Method hgss1-100
+        3 Sage's Training hgss3-77
+        2 Flower Shop Lady hgss3-74
+        4 Pokemon Communication hgss1-98
+        4 Rare Candy hgss2-82
+        3 Lightning Energy hgss1-118
+
+        Energy (22)
+        15 Fire Energy hgss1-116
+        3 Lightning Energy hgss1-118
+        4 Double Colorless Energy hgss1-103
+    `,
+    "Leafeon, Roserade, & Houndoom": `
+        Pokémon (19)
+        4 Eevee hgss3-48
+        3 Leafeon hgss3-17
+        1 Espeon hgss3-81
+        2 Roselia hgss2-61
+        2 Roserade hgss2-23
+        2 Houndour hgss3-54
+        2 Houndoom hgss3-82
+        1 Venonat hgss4-81
+        1 Venomoth hgss4-11
+
+        Trainer (27)
+        4 Pokemon Collector hgss1-97
+        4 Professor Oak’s New Theory col1-83
+        3 Professor Elm’s Training Method hgss1-100
+        1 Twins hgss4-89
+        1 Seeker hgss4-88
+        4 Pokemon Communication hgss1-98
+        3 Pokemon Reversal hgss1-99
+        2 Pokegear hgss1-96
+        2 Energy Exchanger hgss3-73
+
+        Energy (14)
+        6 Grass Energy hgss1-115
+        1 Psychic Energy hgss1-119
+        4 Rainbow Energy hgss1-104
+        3 Rescue Energy hgss4-90
+    `,
+    "Magnezone Pachirisu": `
+        Pokémon (12)
+        4 Magnemite hgss4-68
+        1 Magneton hgss4-43
+        4 Magnezone hgss4-96
+        4 Pachirisu col1-18
+
+        Trainer (25)
+        4 Pokemon Collector hgss1-97
+        4 Judge hgss2-78
+        3 Twins hgss4-89
+        4 Rare Candy hgss2-82
+        4 Pokemon Communication hgss1-98
+        3 Lightning Energy hgss1-118
+
+        Energy (23)
+        23 Lightning Energy hgss1-118
+    `,
+    "Lanturn Feraligatr": `
+        Pokémon (16)
+        4 Chinchou hgss2-48
+        4 Lanturn hgss2-86
+        3 Totodile hgss1-86
+        1 Croconaw hgss1-38
+        3 Feraligatr hgss1-108
+        1 Smeargle hgss3-8
+
+        Trainer (24)
+        4 Pokemon Collector hgss1-97
+        4 Professor Oak’s New Theory col1-83
+        3 Professor Elm’s Training Method hgss1-100
+        2 Fisherman hgss1-92
+        2 Interviewer’s Questions hgss2-77
+        4 Pokemon Communication hgss1-98
+        3 Rare Candy hgss2-82
+        2 Pokemon Reversal hgss1-99
+
+        Energy (20)
+        11 Water Energy hgss1-117
+        4 Lightning Energy hgss1-118
+        2 Double Colorless Energy hgss1-103
+    `,
+    "Gengar": `
+        Pokémon (20)
+        4 Gastly hgss4-63
+        2 Haunter hgss4-35
+        4 Gengar hgss4-94
+        2 Spiritomb hgss4-10
+        1 Oddish hgss3-60
+        1 Vileplume hgss3-24
+        1 Mime Jr. col1-47
+        1 Mr. Mime col1-29
+        1 Smeargle hgss3-8
+        1 Cleffa hgss1-17
+        1 Jirachi hgss2-1
+        1 Shaymin hgss2-8
+
+        Trainer (26)
+        4 Pokemon Collector hgss1-97
+        4 Twins hgss4-89
+        4 Professor Oak’s New Theory col1-83
+        4 Seeker hgss4-88
+        4 Pokemon Communication hgss1-98
+        4 Rare Candy hgss2-82
+        2 Lost World col1-81
+
+        Energy (14)
+        12 Psychic Energy hgss1-119
+        2 Rescue Energy hgss4-90
+    `
+    },
+    "2007-2009 D&P/P": {
+        "Regigigas": `
+        Pokémon (17)
+        1 Regigigas dpp-DP40
+        1 Regigigas dp6-37
+        2 Regigigas Lv.X dp7-100
+        4 Mesprit dp6-34
+        3 Uxie dp6-43
+        1 Uxie Lv.X dp6-146
+        1 Azelf dp6-19
+        1 Azelf dp2-4
+        1 Crobat G pl1-47
+        1 Regice dp6-36
+        1 Giratina pl1-9
+    
+        Trainer (28)
+        4 Roseanne's Research dp3-125
+        4 Felicity's Drawing dp4-98
+        4 Cyrus's Initiative pl3-137
+        4 Super Scoop Up dp1-115
+        4 Time-Space Distortion dp2-124
+        3 Premier Ball dp4-101
+        2 Luxury Ball dp7-86
+        2 Expert Belt pl4-87
+        1 Snowpoint Temple dp6-134
+    
+        Energy (15)
+        4 Water Energy dp1-125
+        4 Metal Energy dp1-130
+        3 Fighting Energy dp1-128
+        4 Multi Energy dp2-118`,
+        "Palkia Lock":`
+        2 Palkia G pl1-12
+        2 Palkia G Lv.X pl1-125
+        4 Mesprit dp6-34
+        3 Uxie dp6-43
+        1 Uxie Lv.X dp6-146
+        2 Crobat G pl1-47
+        1 Azelf dp6-19
+        1 Azelf dp2-4
+        1 Bronzong G pl1-41
+        1 Toxicroak G dpp-DP41
+        1 Unown G dp4-57
+        1 Unown Q dp5-49
+        4 Cyrus's Conspiracy pl1-105
+        4 Roseanne's Research dp3-125
+        1 Bebe's Search dp3-119
+        1 Cynthia's Feelings dp6-131
+        1 Aaron's Collection pl2-88
+        4 Energy Gain pl1-116
+        4 Poke Turn pl1-118
+        3 Power Spray pl1-117
+        3 SP Radar pl2-96
+        1 Luxury Ball dp7-86
+        1 Expert Belt pl4-87
+        1 VS Seeker pl3-140
+        3 Water Energy dp1-125
+        2 Psychic Energy dp1-127
+        4 Call Energy dp5-92
+        3 SP Energy pl2-101
+        `,
+        "Machamp ":`
+        4 Machop dp7-64
+        4 Machoke dp7-41
+        3 Machamp dp7-20
+        1 Machamp Lv.X dp7-98
+        3 Spiritomb pl4-32
+        2 Baltoy dp4-60
+        2 Claydol dp4-15
+        1 Finneon dp7-61
+        1 Lumineon dp7-4
+        1 Relicanth dp7-79
+        1 Uxie dp6-43
+        1 Azelf dp6-19
+        1 Unown Q dp5-49
+        3 Broken Time-Space pl1-104
+        4 Roseanne's Research dp3-125
+        4 Bebe's Search dp3-119
+        2 Cynthia's Feelings dp6-131
+        1 Looker's Investigation pl1-109
+        4 Poke Blower + dp7-88
+        1 Luxury Ball dp7-86
+        1 Premier Ball dp4-101
+        1 Night Maintenance dp3-120
+        1 Warp Point dp1-116
+        9 Fighting Energy dp1-126
+        4 Call Energy dp5-92
+        `,
+        "Luxchomp":`
+        2 Luxray GL pl2-9
+        2 Luxray GL Lv.X pl2-109
+        2 Garchomp C pl3-60
+        2 Garchomp C Lv.X pl3-145
+        2 Uxie dp6-43
+        1 Uxie Lv.X dp6-146
+        1 Bronzong G pl1-41
+        1 Toxicroak G dpp-DP41
+        1 Lucario GL pl2-8
+        1 Ambipom G pl2-56
+        1 Azelf dp6-19
+        1 Unown G dp4-57
+        1 Unown Q dp5-49
+        4 Cyrus's Conspiracy pl1-105
+        4 Roseanne's Research dp3-125
+        2 Cynthia's Feelings dp6-131
+        2 Bebe's Search dp3-119
+        4 Energy Gain pl1-116
+        4 Poke Turn pl1-118
+        4 Power Spray pl1-117
+        3 SP Radar pl2-96
+        1 VS Seeker pl3-140
+        1 Luxury Ball dp7-86
+        4 Lightning Energy dp1-126
+        2 Psychic Energy dp1-127
+        4 Call Energy dp5-92
+        3 SP Energy pl2-101
+        `,
+        "Kingdra":`
+        4 Horsea dp6-102
+        4 Seadra dp6-70
+        4 Kingdra dp6-7
+        3 Baltoy dp4-60
+        3 Claydol dp4-15
+        2 Uxie dp6-43
+        1 Uxie Lv.X dp6-146
+        1 Regice dp6-36
+        1 Unown Q dp5-49
+        4 Broken Time-Space pl1-104
+        4 Roseanne's Research dp3-125
+        4 Bebe's Search dp3-119
+        3 Cynthia's Feelings dp6-131
+        3 Luxury Ball dp7-86
+        3 Super Scoop Up dp1-115
+        3 PlusPower dp1-109
+        2 Expert Belt pl4-87
+        2 Night Maintenance dp3-120
+        9 Water Energy dp1-125
+        `,
+        "Gyarados":`
+        4 Sableye dp7-48
+        4 Magikarp dp7-65
+        3 Gyarados dp7-19
+        2 Uxie dp6-43
+        1 Uxie Lv.X dp6-146
+        2 Crobat G pl1-47
+        1 Regice dp6-36
+        1 Azelf dp6-19
+        1 Unown Q dp5-49
+        1 Combee dp7-57
+        3 Broken Time-Space pl1-104
+        4 Roseanne's Research dp3-125
+        3 Felicity's Drawing dp4-98
+        2 Cynthia's Feelings dp6-131
+        2 Bebe's Search dp3-119
+        1 Buck's Training dp6-130
+        4 Pokemon Rescue pl1-115
+        4 Super Scoop Up dp1-115
+        3 Poke Turn pl1-118
+        3 VS Seeker pl3-140
+        3 PlusPower dp1-109
+        2 Expert Belt pl4-87
+        2 Luxury Ball dp7-86
+        2 Darkness Energy dp1-129
+        2 Cyclone Energy dp7-94
+        `,
+        "Gliscor":`
+        4 Spiritomb pl4-32
+        4 Unown Q dp5-49
+        4 Gligar dp6-94
+        3 Gliscor dp6-5
+        1 Gliscor Lv.X dp6-141
+        2 Baltoy dp4-60
+        2 Claydol dp4-15
+        2 Crobat G pl1-47
+        1 Uxie dp6-43
+        1 Uxie Lv.X dp6-146
+        1 Azelf dp6-19
+        3 Broken Time-Space pl1-104
+        4 Roseanne's Research dp3-125
+        4 Bebe's Search dp3-119
+        4 Cyrus's Initiative pl3-137
+        3 Looker's Investigation pl1-109
+        4 Poke Blower + dp7-88
+        3 Bench Shield pl4-83
+        1 Night Maintenance dp3-120
+        1 Luxury Ball dp7-86
+        1 Premier Ball dp4-101
+        1 Poke Turn pl1-118
+        2 Fighting Energy dp1-128
+        4 Call Energy dp5-92
+        `,
+        "Gengar":`
+        4 Spiritomb pl4-32
+        4 Gastly dp7-62
+        4 Haunter dp7-40
+        2 Gengar dp7-18
+        1 Gengar pl4-16
+        1 Gengar Lv.X pl4-97
+        2 Baltoy dp4-60
+        2 Claydol dp4-15
+        1 Chansey pl1-69
+        1 Blissey pl1-22
+        1 Relicanth pl3-79
+        1 Unown G dp4-57
+        1 Unown Q dp5-49
+        1 Azelf dp6-19
+        1 Uxie dp6-43
+        3 Broken Time-Space pl1-104
+        4 Roseanne's Research dp3-125
+        4 Bebe's Search dp3-119
+        3 Cynthia's Feelings dp6-131
+        2 Looker's Investigation pl1-109
+        1 Luxury Ball dp7-86
+        1 Night Maintenance dp3-120
+        1 Expert Belt pl4-87
+        1 Switch dp1-119
+        7 Psychic Energy dp1-127
+        1 Fighting Energy dp1-128
+        4 Call Energy dp5-92
+        1 Rainbow Energy pl1-121
+        `,
+        "Gardevoir Gallade":`
+        4 Spiritomb pl4-32
+        4 Ralts dp3-102
+        4 Kirlia dp3-53
+        3 Gardevoir dp3-7
+        2 Gallade dp3-6
+        2 Baltoy dp4-60
+        2 Claydol dp4-15
+        1 Duskull dp3-86
+        1 Dusclops dp7-34
+        1 Dusknoir dp1-2
+        1 Relicanth pl3-79
+        1 Crobat G pl1-47
+        1 Unown Q dp5-49
+        2 Broken Time-Space pl1-104
+        4 Roseanne's Research dp3-125
+        4 Bebe's Search dp3-119
+        3 Team Galactic's Wager dp2-115
+        1 Lucian's Assignment pl2-92
+        1 Switch dp1-119
+        1 Night Maintenance dp3-120
+        1 Luxury Ball dp7-86
+        1 Poke Turn pl1-118
+        5 Psychic Energy dp1-127
+        1 Fighting Energy dp1-128
+        4 Call Energy dp5-92
+        4 Upper Energy pl2-102
+        1 Rainbow Energy pl1-121
+        `,
+        "Flygon":`
+        4 Spiritomb pl4-32
+        3 Trapinch dp3-115
+        3 Vibrava pl2-53
+        3 Flygon pl2-5
+        1 Flygon Lv.X pl2-105
+        2 Machop dp7-64
+        2 Machoke dp7-41
+        2 Machamp dp7-20
+        2 Baltoy dp4-60
+        2 Claydol dp4-15
+        2 Palkia dp5-11
+        2 Palkia Lv.X dp4-106
+        1 Unown Q dp5-49
+        1 Azelf dp6-19
+        4 Roseanne's Research dp3-125
+        4 Bebe's Search dp3-119
+        3 Cyrus's Initiative pl3-137
+        2 Cynthia's Feelings dp6-131
+        1 Memory Berry pl1-110
+        1 Luxury Ball dp7-86
+        1 Premier Ball dp4-101
+        1 Night Maintenance dp3-120
+        5 Fighting Energy dp1-128
+        3 Water Energy dp1-125
+        1 Darkness Energy dp1-129
+        4 Call Energy dp5-92
+        `,
+        "Dusknoir":`
+        4 Spiritomb pl4-32
+        4 Duskull dp7-SH2
+        4 Dusclops dp7-34
+        2 Dusknoir dp7-1
+        1 Dusknoir dp1-2
+        1 Dusknoir Lv.X dp7-96
+        2 Baltoy dp4-60
+        2 Claydol dp4-15
+        1 Finneon dp7-61
+        1 Lumineon dp7-4
+        1 Mewtwo dp5-9
+        1 Mewtwo Lv.X dp6-144
+        1 Unown G dp4-57
+        1 Unown Q dp5-49
+        1 Azelf dp6-19
+        4 Roseanne's Research dp3-125
+        4 Bebe's Search dp3-119
+        4 Cyrus's Initiative pl3-137
+        2 Cynthia's Feelings dp6-131
+        1 Looker's Investigation pl1-109
+        2 Warp Point dp1-116
+        1 Night Maintenance dp3-120
+        1 Luxury Ball dp7-86
+        10 Psychic Energy dp1-127
+        4 Call Energy dp5-92
+        `,
+        "Dialgachomp":`
+        2 Dialga G pl1-7
+        1 Dialga G Lv.X pl1-122
+        2 Garchomp C pl3-60
+        2 Garchomp C Lv.X pl3-145
+        2 Crobat G pl1-47
+        1 Toxicroak G dpp-DP41
+        1 Bronzong G pl1-41
+        1 Ambipom G pl2-56
+        2 Uxie dp6-143
+        1 Uxie Lv.X dp6-146
+        1 Azelf dp6-19
+        1 Unown G dp4-57
+        1 Unown Q dp5-49
+        4 Cyrus's Conspiracy pl1-105
+        4 Roseanne's Research dp3-125
+        1 Looker's Investigation pl1-109
+        1 Bebe's Search dp3-119
+        1 Aaron's Collection pl2-88
+        4 Energy Gain pl1-116
+        4 Poke Turn pl1-118
+        4 Power Spray pl1-117
+        3 SP Radar pl2-96
+        1 Luxury Ball dp7-86
+        1 Expert Belt pl4-87
+        1 VS Seeker pl3-140
+        3 Psychic Energy dp1-127
+        1 Metal Energy dp1-130
+        4 Metal Energy dp3-130
+        4 Call Energy dp5-92
+        1 Warp Energy dp7-95
+        `,
+        "Blazeray":`
+        2 Blaziken FB pl3-2
+        2 Blaziken FB Lv.X pl3-142
+        2 Luxray GL pl2-9
+        2 Luxray GL Lv.X pl2-109
+        1 Bronzong G pl1-41
+        1 Lucario GL pl2-8
+        1 Toxicroak G dpp-DP41
+        2 Uxie dp6-43
+        1 Uxie Lv.X dp6-146
+        1 Azelf dp6-19
+        1 Unown G dp4-57
+        1 Unown Q dp5-49
+        4 Cyrus's Conspiracy pl1-105
+        4 Roseanne's Research dp3-125
+        2 Cynthia's Feelings dp6-131
+        1 Bebe's Search dp3-119
+        1 Aaron's Collection pl2-88
+        4 Energy Gain pl1-116
+        4 Poke Turn pl1-118
+        4 Power Spray pl1-117
+        3 SP Radar pl2-96
+        1 Luxury Ball dp7-86
+        1 Expert Belt pl4-87
+        1 VS Seeker pl3-140
+        3 Fire Energy dp1-124
+        2 Lightning Energy dp1-126
+        1 Psychic Energy dp1-127
+        4 Call Energy dp5-92
+        3 SP Energy pl2-101
+        `,
+        "Beedrill":`
+        4 Weedle dp4-93
+        4 Kakuna pl2-66
+        2 Beedrill dp4-13
+        2 Beedrill pl2-15
+        3 Baltoy dp4-60
+        3 Claydol dp4-15
+        1 Uxie dp6-43
+        4 Broken Time-Space pl1-104
+        4 Roseanne's Research dp3-125
+        4 Bebe's Search dp3-119
+        3 Cynthia's Feelings dp6-131
+        4 Quick Ball dp2-114
+        4 Poke Drawer + dp7-89
+        4 Night Maintenance dp3-120
+        3 PlusPower dp1-109
+        2 Warp Point dp1-116
+        2 Expert Belt pl4-87
+        1 Luxury Ball dp7-86
+        4 Grass Energy dp1-123
+        2 Multi Energy dp2-118
+        `,
+        "AMU":`
+        3 Uxie dp6-43
+        1 Uxie Lv.X dp6-146
+        2 Mesprit dp6-34
+        1 Mesprit dp2-14
+        1 Mesprit Lv.X dp6-143
+        2 Azelf dp6-19
+        1 Azelf dp2-4
+        1 Azelv Lv.X dp6-140
+        2 Snowpoint Temple dp6-134
+        4 Roseanne's Research dp3-125
+        4 Cynthia's Feelings dp6-131
+        1 Looker's Investigation pl1-109
+        4 Poke Drawer + dp7-89
+        4 Energy Pickup dp6-132
+        4 Premier Ball dp4-101
+        3 Time-Space Distortion dp2-124
+        3 Energy Switch dp1-107
+        2 Switch dp1-119
+        1 Warp Point dp1-116
+        1 Luxury Ball dp7-86
+        1 Night Maintenance dp3-120
+        14 Psychic Energy dp1-127
+        `,
+        "Abomasnow Ampharos":`
+        4 Spiritomb pl4-32
+        3 Mareep pl1-82
+        3 Flaaffy dp3-50
+        4 Snover dp7-74
+        4 Abomasnow dp7-12
+        2 Nidoran F pl2-71
+        2 Nidorina pl2-73
+        2 Nidoqueen pl2-30
+        2 Bronzor dp5-52
+        2 Bronzong dp5-16
+        2 Baltoy dp4-60
+        2 Claydol dp4-15
+        1 Unown Q dp5-49
+        4 Roseanne's Research dp3-125
+        4 Bebe's Search dp3-119
+        3 Cytnhia's Feelings dp6-131
+        1 Switch dp1-119
+        1 Night Maintenance dp3-120
+        1 Luxury Ball dp7-86
+        2 Psychic Energy dp1-127
+        2 Lightning Energy dp1-126
+        4 Call Energy dp5-92
+        4 Upper Energy pl2-102
+        1 Warp Energy dp7-95
+        `,
+    },
+    "2003-2007 ex":{
+        "Shiftry ex":`
+        4 Seedot ex8-71
+        2 Nuzleaf ex12-41
+        4 Shiftry ex ex14-97
+        3 Lickitung ex15-19
+        2 Pidgey ex6-73
+        1 Pidgeotto ex6-45
+        2 Pidgeot ex6-10
+        1 Absol ex ex16-92
+        1 Holon's Magnemite ex11-70
+        1 Holon's Magneton ex11-22
+        3 Crystal Beach ex14-75
+        4 Rocket's Admin. ex7-86
+        4 Professor Elm's Training Method ex10-89
+        2 Holon Mentor ex11-93
+        1 Holon Adventurer ex13-85
+        1 Holon Scientist ex11-97
+        4 Rare Candy ex9-83
+        4 Holon Transceiver ex11-98
+        2 Pow! Hand Extension ex7-85
+        1 Windstorm ex14-85
+        5 Psychic Energy ex1-107
+        4 Darkness Energy ex16-87
+        4 Multi Energy ex16-89
+        `,
+        "Scrambled Eggs":`
+        3 Exeggcute ex13-65
+        1 Exeggcute ex6-33
+        4 Exeggutor ex6-5
+        3 Voltorb ex5-80
+        3 Electrode ex ex6-107
+        1 Magnetic Storm ex5-91
+        4 Rocket's Admin. ex7-86
+        4 TV Reporter ex3-88
+        3 Professor Elm's Training Method ex10-89
+        3 Castaway ex14-72
+        4 Cessation Crystal ex14-74
+        4 Pow! Hand Extension ex7-85
+        3 Great Ball ex6-92
+        2 Poke Ball ex6-95
+        2 Windstorm ex14-85
+        1 Energy Root ex10-83
+        3 Psychic Energy ex1-107
+        2 Lightning Energy ex1-109
+        4 Scramble Energy ex8-95
+        3 Double Rainbow Energy ex14-88
+        3 Heal Energy ex8-94
+       `,
+        "Rayler":`
+        4 Stantler ex10-32
+        3 Rayquaza ex ex15-97
+        2 Minun ex8-41
+        1 Unown ex10-E
+        3 Cursed Stone ex12-72
+        2 Crystal Beach ex14-75
+        4 Castaway ex14-72
+        4 Rocket's Admin. ex7-86
+        2 Pokemon Fan Club pop4-9
+        1 Lanette's Net Search ex2-87
+        1 Steven's Advice ex5-92
+        1 Mary's Request ex10-86
+        1 TV Reporter ex3-88
+        1 Scott ex9-84
+        1 Mr. Stone's Project ex15-77
+        4 Pow! Hand Extension ex7-85
+        4 Energy Removal 2 ex16-74
+        4 Cessation Crystal ex14-74
+        2 Balloon Berry ex8-84
+        1 Super Scoop Up ex11-100
+        14 Lightning Energy ex1-109
+       `,
+        "Rai-Eggs":`
+        3 Pikachu ex13-79
+        1 Pikachu ex12-93
+        3 Raichu ex13-15
+        3 Exeggcute ex13-65
+        3 Exeggutor ex13-41
+        4 Holon's Castform ex13-44
+        3 Holon's Magnemite ex11-70
+        4 Cursed Stone ex12-72
+        4 Rocket's Admin. ex7-86
+        3 Holon Mentor ex11-93
+        2 Holon Researcher ex11-95
+        1 Holon Adventurer ex13-85
+        1 Holon Scientist ex11-97
+        2 Steven's Advice ex5-92
+        4 Cessation Crystal ex14-74
+        4 Holon Transceiver ex11-98
+        2 Swoop! Teleporter ex7-92
+        2 Pokemon Retriever ex7-84
+        4 Metal Energy ex16-88
+        4 Scramble Energy ex8-95
+        3 Double Rainbow Energy ex14-88
+       `,
+        "Queendom":`
+        4 Nidoran♀ ex6-70
+        2 Nidorina ex6-40
+        4 Nidoqueen ex6-9
+        3 Pidgey ex6-73
+        1 Pidgeotto ex6-45
+        3 Pidgeot ex6-10
+        1 Feebas ex9-49
+        1 Milotic ex5-12
+        1 Holon's Magneton ex11-22
+        4 Desert Ruins ex5-88
+        4 Celio's Network ex6-88
+        3 Rocket's Admin. ex7-86
+        3 Steven's Advice ex16-83
+        2 Copycat ex7-83
+        1 Mr. Briney's Compassion ex3-87
+        4 Rare Candy ex9-83
+        3 Great Ball ex6-92
+        1 Windstorm ex14-85
+        1 VS Seeker ex6-100
+        6 Grass Energy ex1-104
+        1 Fighting Energy ex1-105
+        4 Double Rainbow Energy ex14-88
+        2 Heal Energy ex8-94
+        1 Scramble Energy ex8-95
+       `,
+        "Mew Lock":`
+        4 Mew ex ex12-88
+        4 Holon's Castform ex13-44
+        4 Holon's Magnemite ex11-70
+        3 Holon's Voltorb ex11-71
+        2 Wynaut ex12-71
+        2 Wobbuffet ex12-28
+        2 Jynx ex10-28
+        2 Minun ex8-41
+        1 Roselia ex12-42
+        1 Unown ex10-E
+        1 Stantler ex10-32
+        1 Girafarig ex12-16
+        1 Lapras ex12-8
+        4 Battle Frontier ex9-75
+        4 Rocket's Admin. ex7-86
+        4 Holon Mentor ex11-93
+        1 Holon Adventurer ex13-85
+        1 Holon Scientist ex11-97
+        4 Holon Transceiver ex11-98
+        4 Pow! Hand Extension ex7-85
+        3 Swoop! Teleporter ex7-92
+        3 Pokemon Retriever ex7-84
+        1 Warp Point ex14-84
+        1 Windstorm ex14-85
+        1 Super Scoop Up ex11-100
+        1 Warp Energy ex16-91
+       `,
+        "Mewtric":`
+        4 Electrike ex8-59
+        4 Manectric ex ex8-101
+        2 Lunatone ex12-20
+        1 Solrock ex12-25
+        1 Mew ex ex12-88
+        1 Girafarig ex12-16
+        1 Lapras ex12-8
+        1 Tropius ex15-23
+        1 Holon's Magneton ex11-22
+        2 Cursed Stone ex12-72
+        2 Crystal Beach ex14-75
+        4 Rocket's Admin. ex7-86
+        4 Professor Elm's Training Method ex10-89
+        2 Copycat ex7-83
+        2 Scott ex9-84
+        1 Steven's Advice ex16-83
+        1 TV Reporter ex3-88
+        4 Dual Ball ex4-72
+        3 Swoop! Teleporter ex7-92
+        2 Switch ex1-92
+        1 Pow! Hand Extension ex7-85
+        1 Pokemon Retriever ex7-84
+        11 Lightning Energy ex1-109
+        4 Multi Energy ex16-89
+       `,
+        "Metanite":`
+        1 Rayquaza  ex8-107
+        3 Dratini ex11-66
+        1 Dragonair ex11-42
+        3 Dragonite ex11-3
+        4 Beldum ex11-59
+        2 Metang ex11-49
+        3 Metagross ex11-11
+        1 Metagross ex8-11
+        2 Holon's Castform ex13-44
+        1 Mew pop5-3
+        1 Jirachi ex8-9
+        1 Holon's Voltorb ex11-71
+        3 Holon Mentor ex11-93
+        1 Holon Adventurer ex13-85
+        1 Holon Scientist ex11-97
+        1 Holon Researcher ex11-95
+        3 Rocket's Admin. ex7-86
+        1 Celio's Network ex6-88
+        4 Holon Transceiver ex11-98
+        4 Rare Candy ex9-83
+        3 Windstorm ex14-85
+        2 Warp Point ex14-84
+        10 Lightning Energy ex1-109
+        4 Metal Energy ex16-88
+       `,
+        "Medicham ex":`
+        4 Jirachi ex8-9
+        3 Meditite ex16-55
+        1 Meditite ex9-55
+        4 Medicham ex ex9-95
+        1 Wobbuffet ex16-24
+        1 Holon's Magneton ex11-22
+        3 Island Cave ex5-89
+        1 Team Aqua Hideout ex4-78
+        4 Rocket's Admin. ex7-86
+        4 Professor Elm's Training Method ex10-89
+        3 Mary's Request ex10-86
+        2 Steven's Advice ex16-83
+        2 Scott ex9-84
+        4 Pow! Hand Extension ex7-92
+        4 Swoop! Teleporter ex7-85
+        4 Energy Removal 2 ex16-74
+        6 Fighting Energy ex1-105
+        5 Psychic Energy ex1-107
+        4 Metal Energy ex16-88
+       `,
+        "Ludicargo":`
+        1 Umbreon pop5-17
+        4 Lotad ex14-55
+        2 Lombre ex14-37
+        3 Ludicolo ex8-10
+        1 Ludicolo ex8-19
+        2 Slugma ex10-73
+        2 Magcargo ex8-20
+        1 Magcargo ex10-41
+        2 Jirachi ex8-9
+        1 Celebi ex pop2-17
+        1 Holon's Voltorb ex11-71
+        1 Holon's Castform ex13-44
+        3 Battle Frontier ex9-75
+        4 Lanette's Net Search ex2-87
+        4 Celio's Network ex6-88
+        3 Rocket's Admin. ex7-86
+        1 Mr. Briney's Compassion ex3-87
+        1 Solid Rage ex10-92
+        4 Rare Candy ex9-83
+        2 VS Seeker ex6-100
+        2 Windstorm ex14-85
+        1 Pow! Hand Extension ex7-85
+        1 Pokemon Retriever ex7-84
+        1 Warp Point ex14-84
+        6 Water Energy ex1-106
+        4 Double Rainbow Energy ex14-88
+        2 Scramble Energy ex8-95
+       `,
+        "Imprison":`
+        1 Mew ex15-101
+        4 Ralts ex15-61
+        2 Kirlia ex15-33
+        2 Gardevoir ex ex15-93
+        2 Gardevoir ex11-6
+        4 Holon's Castform ex13-44
+        2 Pidgey ex13-77
+        1 Pidgeotto ex13-49
+        2 Pidgeot ex6-10
+        1 Jirachi ex8-9
+        1 Jirachi ex ex14-94
+        1 Holon's Magnemite ex11-70
+        4 Rocket's Admin. ex7-86
+        3 Professor Elm's Training Method ex10-89
+        3 Holon Mentor ex11-93
+        1 Holon Adventurer ex13-85
+        1 Holon Scientist ex11-97
+        1 Holon Researcher ex11-95
+        4 Holon Transceiver ex11-98
+        4 Rare Candy ex9-83
+        3 Windstorm ex14-85
+        1 Warp Point ex14-84
+        1 Swoop! Teleporter ex7-92
+        6 Psychic Energy ex1-107
+        2 Metal Energy ex16-88
+        3 Warp Energy ex16-91
+       `,
+        "Flariados":`
+        4 Eevee ex11-69
+        4 Flareon ex ex11-108
+        1 Espeon ex ex10-102
+        4 Spinarak ex10-75
+        4 Ariados ex10-2
+        1 Ditto ex6-4
+        1 Girafarig ex12-16
+        1 Holon's Magneton ex11-22
+        4 Battle Frontier ex9-75
+        4 Professor Elm's Training Method ex10-89
+        4 Rocket's Admin. ex7-86
+        4 Mary's Request ex10-86
+        3 Steven's Advice ex16-83
+        4 Super Scoop Up ex11-100
+        3 Great Ball ex6-92
+        2 Windstorm ex14-85
+        6 Grass Energy ex1-104
+        2 Fire Energy ex1-108
+        4 Multi Energy ex16-89
+       `,
+        "Eeveelutions Absol ex":`
+        1 Jolteon Star ex16-101
+        4 Eevee ex11-69
+        3 Jolteon ex ex11-109
+        1 Umbreon ex ex10-112
+        1 Espeon ex ex10-102
+        2 Rayquaza ex ex15-97
+        2 Absol ex ex16-92
+        1 Girafarig ex12-16
+        1 Lapras ex12-8
+        1 Tauros ex14-12
+        1 Holon's Magneton ex11-22
+        1 Giant Stump ex12-75
+        4 Rocket's Admin. ex7-86
+        4 Professor Elm's Training Method ex10-89
+        3 Holon Mentor ex11-93
+        1 Holon Adventurer ex13-85
+        1 Holon Scientist ex11-97
+        1 Holon Researcher ex11-95
+        4 Holon Transceiver ex11-98
+        4 Super Scoop Up ex11-100
+        2 Windstorm ex14-85
+        2 Warp Point ex14-84
+        1 Pokemon Retriever ex7-84
+        10 Lightning Energy ex1-109
+        4 Multi Energy ex16-89
+       `,
+        "Dragtrode":`
+        4 Rocket's Sneasel ex ex7-103
+        3 Dratini ex7-53
+        3 Dark Dragonair ex7-31
+        2 Dark Dragonite ex7-15
+        1 Voltorb ex12-68
+        1 Voltorb ex6-85
+        2 Dark Electrode ex7-4
+        1 Rocket's Scyther ex ex7-102
+        4 Desert Ruins ex5-88
+        4 Rocket's Admin. ex7-86
+        3 Holon Mentor ex11-93
+        1 Holon Adventurer ex13-85
+        1 Holon Scientist ex11-97
+        2 Steven's Advice ex16-83
+        1 Mr. Briney's Compassion ex3-87
+        4 Holon Transceiver ex11-98
+        4 Rocket's Poke Ball ex7-89
+        2 Warp Point ex14-84
+        1 Windstorm ex14-85
+        1 VS Seeker ex6-100
+        4 Darkness Energy ex16-87
+        4 Dark Metal Energy ex7-94
+        4 Rainbow Energy ex12-81
+        3 R Energy ex7-95
+       `,
+        "Dragonite ex δ":`
+        4 Dratini ex11-65
+        1 Dragonair ex11-42
+        4 Dragonite ex ex15-91
+        4 Holon's Castform ex13-44
+        2 Holon's Voltorb ex11-71
+        2 Lunatone ex12-20
+        1 Solrock ex12-25
+        1 Girafarig ex12-16
+        1 Latios ex ex15-96
+        1 Latias ex13-11
+        2 Crystal Beach ex14-75
+        2 Cursed Stone ex12-72
+        4 Rocket's Admin. ex7-86
+        2 Scott ex9-84
+        2 Holon Researcher ex11-95
+        2 Holon Mentor ex11-93
+        1 Holon Adventurer ex13-85
+        1 Holon Scientist ex11-97
+        1 Holon Farmer ex11-91
+        4 Holon Transceiver ex11-98
+        4 Rare Candy ex13-90
+        4 Swoop! Teleporter ex7-92
+        2 Grass Energy ex1-104
+        4 δ Rainbow Energy ex15-88
+        4 Warp Energy ex16-91
+       `,
+        "Camler":`
+        4 Numel ex3-70
+        3 Camerupt ex8-4
+        4 Stantler ex10-32
+        1 Unown ex10-E
+        3 Team Aqua Hideout ex4-78
+        2 Cursed Stone ex12-72
+        4 Castaway ex14-72
+        4 Rocket's Admin. ex7-86
+        2 Scott ex9-84
+        2 Celio's Network ex6-88
+        1 Pokemon Fan Club pop4-9
+        1 Lanette's Net Search ex2-87
+        1 Steven's Advice ex16-83
+        1 Mary's Request ex10-86
+        4 Energy Removal 2 ex16-74
+        4 Pow! Hand Extension ex7-85
+        4 Cessation Crystal ex14-74
+        2 Fluffy Berry ex10-85
+        10 Fire Energy ex1-108
+        3 Heal Energy ex8-94
+        `,
+        "Bombtar":`
+        2 Larvitar ex11-73
+        1 Larvitar ex7-63
+        3 Dark Pupitar ex7-41
+        3 Dark Tyranitar ex7-19
+        2 Voltorb ex7-80
+        2 Electrode ex ex6-107
+        2 Jirachi ex8-9
+        1 Lapras ex12-8
+        1 Holon's Magnemite ex11-70
+        4 Rocket's Admin. ex7-86
+        2 Professor Elm's Training Method ex10-89
+        2 Holon Mentor ex11-93
+        1 Holon Adventurer ex13-85
+        1 Holon Scientist ex11-97
+        4 Pow! Hand Extension ex7-85
+        4 Holon Transceiver ex11-98
+        2 Windstorm ex14-85
+        2 Swoop! Teleporter ex7-92
+        2 Rocket's Poke Ball ex7-89
+        2 Cessation Crystal ex14-74
+        1 VS Seeker ex6-100
+        1 Pokemon Retriever ex7-84
+        3 Fire Energy ex1-108
+        4 Darkness Energy ex16-87
+        4 Scramble Energy ex8-95
+        2 Holon Energy FF ex15-84
+        2 Heal Energy ex8-94
+        `,
+        "Blastoise ex Lugia ex":`
+        1 Latias ex8-105
+        3 Holon's Castform ex13-44
+        2 Squirtle ex6-83
+        2 Blastoise ex ex6-104
+        2 Pidgey ex6-73
+        1 Pidgeotto ex6-45
+        2 Pidgeot ex6-10
+        2 Lugia ex ex10-105
+        2 Jirachi ex8-9
+        1 Kyogre ex ex14-95
+        1 Chimecho ex13-37
+        1 Tauros ex14-12
+        1 Aipom ex10-34
+        1 Lapras ex12-8
+        1 Holon's Magnemite ex11-70
+        1 Power Tree ex12-76
+        1 Giant Stump ex12-75
+        4 Holon Mentor ex11-93
+        1 Holon Adventurer ex13-85
+        1 Holon Scientist ex11-97
+        2 Rocket's Admin. ex7-86
+        2 Professor Elm's Training Method ex10-89
+        2 Steven's Advice ex5-92
+        4 Holon Transceiver ex11-98
+        4 Rare Candy ex9-83
+        3 Warp Point ex14-84
+        3 Windstorm ex14-85
+        3 Pokemon Retriever ex7-84
+        1 Swoop! Teleporter ex7-92
+        5 Water Energy ex1-106
+        `,
+        "Arcanine ex Houndoom":`
+        4 Growlithe ex12-55
+        4 Arcanine ex ex12-83
+        2 Houndour ex10-60
+        2 Houndoom ex10-7
+        1 Aipom ex10-34
+        1 Holon's Electrode ex11-21
+        2 Cursed Stone ex12-72
+        2 Crystal Beach ex14-75
+        1 Battle Frontier ex9-75
+        4 Professor Elm's Training Method ex10-89
+        4 Rocket's Admin. ex7-86
+        3 Mary's Request ex10-86
+        3 Scott ex9-84
+        2 Copycat ex7-83
+        4 Energy Removal 2 ex16-74
+        3 Great Ball ex6-92
+        1 Warp Point ex14-84
+        1 Potion ex14-87
+        12 Fire Energy ex1-108
+        4 React Energy ex12-82
+        `,
+        "Magma Spirit Deck":`
+        Pokemon - 15
+
+        2 Team Magma's Baltoy ex4-32
+        2 Team Magma's Camerupt ex4-19
+        2 Team Magma's Claydol ex4-8
+        4 Team Magma's Groudon ex4-9
+        1 Team Magma's Numel ex4-64
+        4 Team Magma's Zangoose ex4-23
+        
+        Trainer - 28
+        2 Copycat ecard1-138
+        3 Desert Ruins ex5-88
+        2 Maxie ex4-73
+        2 Mr. Briney's Compassion ex3-87
+        3 Pokémon Reversal ex1-87
+        3 Steven's Advice ex16-83
+        1 Switch base1-95
+        3 TV Reporter ex15-82
+        2 Team Magma Ball ex4-80
+        4 Team Magma Conspirator ex4-82
+        3 Underground Expedition ecard3-140
+        
+        Energy - 17
+        4 Darkness Energy col1-86
+        6 Fighting Energy base1-97
+        4 Magma Energy ex4-87
+        1 Psychic Energy base1-101
+        2 Rainbow Energy ex7-80
+        `
+    },
+
+    "2003 e-Card":{
+        "Typhlosion Ninetales":`
+        2 Cyndaquil ecard1-104
+        2 Cyndaquil ecard1-105
+        4 Quilava ecard1-91
+        3 Typhlosion ecard1-65
+        4 Vulpix ecard1-136
+        3 Ninetales ecard1-57
+        2 Ponyta ecard2-102
+        2 Rapidash ecard2-31
+        1 Lapras ecard3-71
+        4 Pokemon Fan Club ecard2-130
+        4 Professor Elm's Training Method ecard1-148
+        4 Professor Oak's Research ecard1-149
+        4 Town Volunteers ecard2-136
+        2 Underground Expedition ecard3-140
+        2 Copycat ecard1-138
+        1 Pokemon Nurse ecard1-145
+        12 Fire Energy ecard1-161
+        4 Warp Energy ecard2-147
+        `,
+        "Scizor Furret":`
+        4 Scyther ecard2-106
+        3 Scizor ecard2-32
+        2 Eevee ecard2-75
+        2 Vaporeon ecard3-33
+        1 Flareon ecard3-8
+        2 Sentret ecard2-107
+        2 Furret ecard2-48
+        2 Porygon ecard2-103
+        2 Porygon2 ecard2-28
+        4 Pokemon Fan Club ecard2-130
+        4 Professor Elm's Training Method ecard1-148
+        4 Professor Oak's Research ecard1-149
+        3 Underground Expedition ecard3-140
+        2 Oracle ecard3-138
+        1 Desert Shaman ecard3-123
+        3 Power Charge ecard1-147
+        2 Pokemon Reversal ecard1-146
+        2 Friend Ball ecard3-126
+        1 Potion ecard1-156
+        1 Strength Charm ecard1-150
+        4 Metal Energy ecard2-143
+        4 Rainbow Energy ecard2-144
+        2 Cyclone Energy ecard3-143
+        2 Warp Energy ecard2-147
+        1 Water Energy ecard1-165
+        `,
+        "Kingdra Espeon":`
+        4 Horsea ecard2-84
+        4 Seadra ecard2-58
+        4 Kingdra ecard2-19
+        3 Eevee ecard2-75
+        2 Espeon ecard2-11
+        1 Flareon ecard3-8
+        2 Lapras ecard3-71
+        1 Moltres ecard3-21
+        1 Zapdos ecard2-44
+        4 Pokemon Fan Club ecard2-130
+        4 Professor Elm's Training Method ecard1-148
+        4 Professor Oak's Research ecard1-149
+        3 Pokemon Nurse ecard1-145
+        3 Underground Expedition ecard3-140
+        2 Copycat ecard1-145
+        1 Super Energy Removal 2 ecard2-134
+        8 Water Energy ecard1-165
+        4 Rainbow Energy ecard2-144
+        4 Warp Energy ecard2-147
+        2 Metal Energy ecard2-143
+        `,
+        "Charizard Venusaur":`
+        3 Charmander ecard1-98
+        3 Charmeleon ecard1-73
+        3 Charizard ecard1-40
+        3 Bulbasaur ecard1-95
+        3 Ivysaur ecard1-82
+        2 Venusaur ecard1-68
+        2 Clefairy ecard1-101
+        2 Clefable ecard1-41
+        2 Porygon ecard2-103
+        2 Porygon2 ecard2-28
+        1 Lapras ecard3-71
+        4 Pokemon Fan Club ecard2-130
+        4 Professor Elm's Training Method ecard1-148
+        3 Professor Oak's Research ecard1-149
+        3 Underground Expedition ecard3-140
+        2 Town Volunteers ecard2-136
+        1 Copycat ecard1-138
+        1 Desert Shaman ecard3-123
+        1 Switch ecard1-157
+        10 Fire Energy ecard1-161
+        5 Grass Energy ecard1-162
+        `,
+        "Beedrill":`
+        2 Weedle ecard3-115
+        2 Weedle ecard3-114
+        4 Kakuna ecard3-70
+        4 Beedrill ecard3-5
+        2 Lapras ecard3-71
+        2 Undersea Ruins ecard2-138
+        4 Professor Oak's Research ecard1-149
+        3 Professor Elm's Training Method ecard1-148
+        3 Apricorn Maker ecard3-121
+        3 Underground Expedition ecard3-140
+        2 Copycat ecard1-138
+        1 Desert Shaman ecard3-123
+        1 Relic Hunter ecard3-120
+        1 Town Volunteers ecard2-136
+        4 Dual Ball ecard1-139
+        4 Fast Ball ecard3-124
+        3 Lure Ball ecard3-128
+        11 Grass Energy ecard1-162
+        4 Retro Energy ecard3-144
+        `,
+        "Alakazam":`
+        4 Abra ecard1-93
+        4 Kadabra ecard1-84
+        2 Alakazam ecard1-33
+        2 Alakazam ecard3-2
+        1 Moltres ecard3-21
+        1 Articuno ecard3-4
+        1 Zapdos ecard2-44
+        1 Lapras ecard3-71
+        1 Power Plant ecard2-139
+        4 Pokemon Fan Club ecard2-130
+        4 Professor Elm's Training Method ecard1-148
+        4 Juggler ecard2-126
+        3 Underground Expedition ecard3-140
+        2 Fisherman ecard3-125
+        1 Town Volunteers ecard2-136
+        4 Energy Removal 2 ecard1-140
+        2 Energy Search ecard1-153
+        1 Hyper Potion ecard3-127
+        5 Psychic Energy ecard1-164
+        2 Fire Energy ecard1-161
+        2 Water Energy ecard1-165
+        2 Lightning Energy ecard1-163
+        4 Rainbow Energy ecard2-144
+        2 Bounce Energy ecard3-142
+        1 Warp Energy ecard2-147
+        `,
+    },
+
+    "2000-2002 Neo-On":{
+        "SMF":`
+        3 Cleffa neo1-20
+        3 Scyther ecard2-106
+        2 Scizor ecard2-32
+        2 Sentret ecard2-107
+        2 Furret ecard2-48
+        3 Grimer base6-78
+        3 Muk base6-16
+        2 Mantine neo4-74
+        4 Gold Berry neo1-93
+        2 Balloon Berry neo3-60
+        4 Copycat ecard1-138
+        4 Pokemon Fan Club ecard2-130
+        1 Town Volunteers ecard2-136
+        4 Professor Elm neo1-96
+        4 Pokemon Trader base6-103
+        3 Power Charge ecard1-147
+        3 Double Gust neo1-100
+        4 Metal Energy ecard2-143
+        4 Rainbow Energy ecard2-144
+        3 Water Energy ecard1-165
+        3 Warp Energy ecard2-147
+        `,
+        "Meganium Exeggutor":`
+        4 Cleffa neo1-20
+        3 Pichu neo1-12
+        3 Chikorita ecard1-99
+        3 Bayleef ecard1-71
+        3 Meganium neo1-11
+        3 Exeggcute ecard2-76
+        3 Exeggutor ecard2-12
+        2 Energy Stadium neo4-99
+        3 Focus Band neo1-86
+        4 Copycat ecard1-138
+        3 Pokemon Fan Club ecard2-130
+        1 Town Volunteers ecard2-136
+        4 Professor Elm neo1-96
+        4 Pokemon Trader base6-103
+        3 Double Gust neo1-100
+        14 Grass Energy ecard1-162
+        `,
+        "Entei Cargo":`
+        2 Cleffa neo1-20
+        4 Entei neo3-6
+        4 Slugma neo4-82
+        4 Magcargo neo3-33
+        3 Focus Band neo1-86
+        4 Copycat ecard1-138
+        3 Oracle ecard3-138
+        2 Town Volunteers ecard2-136
+        3 Professor Elm neo1-96
+        3 Scoop Up base6-104
+        3 Dual Ball ecard1-139
+        3 Double Gust neo1-100
+        2 Bill base6-108
+        18 Fire Energy ecard1-161
+        2 Metal Energy ecard2-143
+        `
+    },
+
+    "2000 Prop 15/3":{
+        "Life Drain":`
+        3 Sabrina's Abra gym2-93
+        3 Sabrina's Kadabra gym2-58
+        2 Sabrina's Alakazam gym2-16
+        3 Sabrina's Venonat gym1-96
+        3 Sabrina's Venomoth gym1-34
+        3 Zubat base5-70
+        3 Dark Golbat base5-24
+        2 Sabrina's Jynx base1-71
+        1 Sabrina's Mr. Mime gym2-59
+        1 Mewtwo basep-14
+        3 Professor Oak base1-88
+        3 Computer Search base1-71
+        3 Pokemon Trader base1-77
+        2 Sabrina's ESP gym1-117
+        2 Super Energy Removal base1-79
+        1 Gust of Wind base1-93
+        8 Psychic Energy base1-101
+        7 Grass Energy gym2-129
+        3 Rainbow Energy base5-80
+        3 Double Colorless Energy base1-96
+        `,
+        "Rain Dance":`
+        3 Squirtle base1-63
+        3 Wartortle base1-42
+        3 Blastoise base1-2
+        3 Magikarp base5-47
+        3 Dark Gyarados base5-25
+        3 Articuno base1-17
+        2 Lapras base1-25
+        3 Computer Search base1-71
+        3 Pokemon Trader base1-77
+        3 Computer Error basep-16
+        3 Super Energy Removal base1-79
+        2 Super Potion base1-90
+        1 Professor Oak base1-88
+        25 Water Energy base1-102
+        `,
+        "Gengar Brock’s Golbat":`
+        3 Gastly base1-33
+        3 Haunter base1-21
+        3 Gengar base1-20
+        3 Brock's Zubat base1-71
+        3 Brock's Golbat base1-71
+        3 Brock's Mankey gym1-67
+        2 Mr. Mime base2-22
+        2 Lickitung base2-38
+        1 Kangaskhan base4-26
+        1 The Rocket's Training Gym gym1-104
+        3 Professor Oak base1-88
+        3 Pokemon Trader base1-77
+        3 Super Energy Removal base1-79
+        2 Computer Search base1-71
+        2 Gust of Wind base1-93
+        1 Erika's Perfume gym1-110
+        1 Item Finder base1-74
+        14 Psychic Energy base1-101
+        3 Double Colorless Energy base1-96
+        3 Potion Energy base5-82
+        2 Full Heal Energy base5-81
+        `,
+        "Dark Alakazam Dark Vileplume":`
+        3 Abra base1-43
+        3 Dark Kadabra base5-39
+        3 Dark Alakazam base5-18
+        3 Oddish base5-63
+        3 Dark Gloom base5-36
+        2 Dark Vileplume base5-13
+        3 Chansey base1-3
+        3 Mr. Mime base2-22
+        2 Doduo base1-48
+        2 Dodrio base2-34
+        2 Resistance Gym gym2-109
+        3 Computer Search base1-71
+        3 Pokemon Trader base1-77
+        3 Professor Oak base1-88
+        3 The Boss's Way base5-73
+        1 Pokemon Breeder base1-76
+        15 Psychic Energy base1-101
+        3 Double Colorless Energy base1-96
+        `,
+        "Blaine’s Rapidash Wigglytuff":`
+        3 Blaine's Ponyta gym1-63
+        3 Blaine's Rapidash gym2-33
+        3 Jigglypuff base2-54
+        3 Wigglytuff base2-32
+        3 Magmar base1-39
+        3 Kangaskhan base2-21
+        2 Grimer base1-48
+        2 Muk base1-28
+        1 Scyther base2-26
+        2 Chaos Gym gym2-102
+        3 Computer Search base1-71
+        3 Professor Oak base1-88
+        3 Pokemon Trader base1-77
+        2 Gust of Wind base1-93
+        1 Super Energy Removal base1-79
+        1 Scoop Up base1-78
+        14 Fire Energy gym2-128
+        3 Double Colorless Energy base1-96
+        3 Full Heal Energy base5-81
+        2 Potion Energy base5-82
+        `,
+    },
+
+    "2000 Base-Gym":{
+        "Wigglytuff Trapper":`
+        3 Mankey base2-55
+        3 Jigglypuff base2-54
+        3 Wigglytuff base2-32
+        2 Scyther base2-26
+        1 Rattata base5-66
+        1 Erika's Jigglypuff gym2-69
+        1 No Removal Gym gym1-103
+        1 Chaos Gym gym2-102
+        4 Erika gym1-100
+        4 Bill base1-91
+        4 Rocket's Sneak Attack base5-72
+        4 The Rocket's Trap gym1-19
+        4 PlusPower base1-84
+        4 Item Finder base1-74
+        4 Computer Search base1-71
+        3 Misty's Wrath gym1-114
+        3 Imposter Oak's Revenge base5-76
+        2 Professor Oak base1-88
+        2 Energy Removal base1-92
+        1 Nightly Garbage Run base5-77
+        1 Grass Energy gym2-129
+        4 Double Colorless Energy base1-96
+        1 Full Heal Energy base5-81
+        `,
+        "Brock’s Ninetales Misty’s Gyarados":`
+        4 Brock's Vulpix gym2-37
+        3 Brock's Ninetales gym2-3
+        3 Misty's Gyarados gym2-13
+        1 Dark Blastoise base5-20
+        1 Poliwrath base1-13
+        4 Chansey base1-3
+        2 Erika's Dratini gym1-42
+        1 Narrow Gym gym1-124
+        4 Professor Oak base1-88
+        3 Computer Search base1-71
+        3 Item Finder base1-74
+        3 Brock's Protection gym2-101
+        3 Energy Removal base1-92
+        2 Super Energy Removal base1-79
+        2 Potion base1-94
+        2 Gust of Wind base1-93
+        2 Nightly Garbage Run base5-77
+        1 Lass base1-75
+        1 Brock's Training Method gym1-106
+        1 PlusPower base1-84
+        12 Water Energy gym2-132
+        2 Double Colorless Energy base1-96
+        `,
+        "Aerodactyl Erika’s Dratini":`
+        4 Erika's Dratini gym1-42
+        3 Mewtwo basep-14
+        2 Chansey base1-3
+        1 Mr. Mime base2-22
+        1 Mew basep-8
+        1 Ditto base1-18
+        2 Aerodactyl base1-16
+        1 Resistance Gym gym2-109
+        1 Celadon City Gym gym1-107
+        4 Mysterious Fossil base1-62
+        4 Professor Oak base1-88
+        3 Potion base1-94
+        3 Computer Search base1-71
+        3 Super Energy Removal base1-79
+        3 Item Finder base1-74
+        2 Gust of Wind base1-93
+        2 Scoop Up base1-78
+        2 Nightly Garbage Run base5-77
+        1 Lass base1-75
+        1 PlusPower base1-84
+        10 Psychic Energy gym1-131
+        4 Double Colorless Energy base1-96
+        2 Potion Energy base5-82
+        `,
+
+    },
+    "2000 Base–Team R":{
+        "Magmarbuzz":`
+        4 Magmar base1-39
+        3 Electabuzz base1-20
+        3 Scyther base2-26
+        2 Ditto base1-18
+        4 Professor Oak base1-88
+        4 Bill base1-91
+        4 Energy Retrieval base1-81
+        4 Energy Removal base1-92
+        3 Super Energy Removal base1-79
+        2 Gust of Wind base1-93
+        2 PlusPower base1-84
+        2 Scoop Up base1-78
+        2 Item Finder base1-74
+        2 Energy Search base1-59
+        1 Nightly Garbage Run base5-77
+        8 Fire Energy base1-98
+        6 Lightning Energy base1-100
+        4 Double Colorless Energy base1-96
+        `,
+        "Lickitung Moltres":`
+        4 Lickitung base2-38
+        3 Scyther base2-26
+        2 Grimer base1-48
+        2 Muk base1-28
+        2 Magmar base1-39
+        2 Moltres base1-27
+        2 Chansey base1-3
+        1 Mew basep-8
+        4 Scoop Up base1-78
+        4 Energy Retrieval base1-81
+        4 Energy Removal base1-92
+        3 Super Energy Removal base1-79
+        3 Professor Oak base1-88
+        3 Item Finder base1-74
+        1 Pokemon Center base1-85
+        1 Computer Search base1-71
+        1 PlusPower base1-84
+        1 Nightly Garbage Run base5-77
+        11 Fire Energy base1-98
+        2 Psychic Energy base1-101
+        4 Double Colorless Energy base1-96
+        `,
+        "Dark Vileplume Snorlax":`
+        4 Psyduck base1-53
+        2 Dark Golduck base5-37
+        4 Oddish base5-63
+        3 Dark Gloom base5-36
+        3 Dark Vileplume base5-13
+        3 Snorlax base2-27
+        2 Kangaskhan base2-21
+        2 Mr. Mime base2-22
+        4 Computer Search base1-71
+        4 Bill base1-91
+        4 Professor Oak base1-88
+        2 Switch base1-95
+        2 Pokemon Breeder base1-76
+        2 The Boss's Way base5-73
+        1 Gust of Wind base1-93
+        9 Psychic Energy base1-101
+        4 Double Colorless Energy base1-96
+        3 Potion Energy base5-82
+        2 Full Heal Energy base5-81
+        `,
+        "Buzzap Potpourri":`
+        4 Voltorb base5-69
+        4 Electrode base1-21
+        2 Machop base5-59
+        2 Machoke base1-34
+        2 Chansey base1-3
+        1 Ponyta base1-60
+        1 Mewtwo WBSP 14
+        1 Staryu base1-65
+        4 Professor Oak base1-88
+        4 Computer Search base1-71
+        4 Bill base1-91
+        4 Rocket's Sneak Attack base5-72
+        4 PlusPower base1-84
+        4 Item Finder base1-74
+        2 Gust of Wind base1-93
+        2 Pokemon Trader base1-77
+        2 Maintenance base1-83
+        2 Switch base1-95
+        1 Energy Removal base1-92
+        1 Imposter Oak's Revenge base5-76
+        1 Goop Gas Attack base5-78
+        1 Nightly Garbage Run base5-77
+        4 Double Colorless Energy base1-96
+        3 Rainbow Energy base5-80
+        `,
+        "Alakazam, Dark Vileplume, & Kangaskhan":`
+        4 Abra base1-43
+        3 Kadabra base1-32
+        3 Alakazam base1-1
+        4 Oddish base5-63
+        3 Dark Gloom base5-36
+        3 Dark Vileplume base5-13
+        4 Kangaskhan base2-21
+        3 Chansey base1-3
+        1 Snorlax base2-27
+        4 Computer Search base1-71
+        4 Bill base1-91
+        4 Professor Oak base1-88
+        4 Pokemon Trader base1-77
+        4 Pokemon Breeder base1-76
+        1 Maintenance base1-83
+        4 Double Colorless Energy base1-96
+        4 Full Heal Energy base5-81
+        3 Rainbow Energy base5-80
+        `,
+        "Mewtwo Electabuzz":`
+        4 Scyther base2-26
+        3 Mewtwo basep-14
+        3 Electabuzz base1-20
+        2 Chansey base1-3
+        2 Ditto base1-18
+        4 Professor Oak base1-88
+        4 Computer Search base1-71
+        3 Energy Removal base1-92
+        3 Super Energy Removal base1-79
+        3 Rocket's Sneak Attack base5-72
+        3 Scoop Up base1-78
+        3 Item Finder base1-74
+        3 Nightly Garbage Run base5-77
+        2 Gust of Wind base1-93
+        2 PlusPower base1-84
+        6 Psychic Energy base1-101
+        6 Lightning Energy base1-100
+        4 Double Colorless Energy base1-96
+        `,
+        "Hitmonchan Mewtwo":`
+        3 Mewtwo basep-14
+        3 Hitmonchan base1-7
+        2 Lickitung base2-38
+        2 Scyther base2-26
+        2 Ditto base1-18
+        1 Mew basep-8
+        4 Professor Oak base1-88
+        4 Bill base1-91
+        3 Computer Search base1-71
+        3 PlusPower base1-84
+        3 Item Finder base1-74
+        2 Energy Removal base1-92
+        2 Super Energy Removal base1-79
+        2 Gust of Wind base1-93
+        2 Scoop Up base1-78
+        2 Switch base1-95
+        2 Nightly Garbage Run base5-77
+        1 Lass base1-75
+        7 Psychic Energy base1-101
+        6 Fighting Energy base1-97
+        4 Double Colorless Energy base1-96
+        `
+    },
+
+    "1999 Base-Fossil": {
+        "Haymaker Deck": `
+        Pokémon (10)
+        4 Electabuzz base4-24
+        4 Hitmonchan base4-8
+        3 Farfetch'd base4-40
+        
+        Trainer (29)
+        3 Bill base1-91
+        3 Gust Of Wind base1-93
+        4 PlusPower base1-84
+        2 Computer Search base4-101
+        3 Scoop Up base4-107
+        3 Item Finder base1-74
+        4 Energy Removal base4-119
+        3 Energy Retrieval base1-81
+        4 Professor Oak base1-88
+        3 Super Energy Removal base1-79
+        
+        Energy (11)
+        4 Double Colorless Energy base1-96
+        7 Fighting Energy base1-97
+        6 Lightning Energy base1-100`,
+    "Alakazam, Mr. Mime, & Chansey": `
+        Pokémon (21)
+        4 Abra base1-43
+        3 Kadabra base1-32
+        3 Alakazam base1-1
+        3 Kangaskhan base2-21
+        2 Chansey base1-3
+        2 Mr. Mime base2-22
+        2 Scyther base2-26
+        2 Psyduck base1-53
+
+        Trainer (22)
+        4 Energy Retrieval base1-81
+        3 Item Finder base1-74
+        3 Professor Oak base1-88
+        3 Switch base1-95
+        2 Pokemon Center base1-85
+        2 Computer Search base1-71
+        2 Pokemon Trader base1-77
+        1 Gust of Wind base1-93
+        1 Gambler base1-60
+        1 Pokemon Breeder base1-76
+
+        Energy (17)
+        9 Psychic Energy base1-101
+        4 Grass Energy base1-99
+        4 Double Colorless Energy base1-96`,
+    "Arcanine Electrode": `
+        Pokémon (19)
+        4 Psyduck base1-53
+        4 Voltorb base1-67
+        4 Electrode base1-21
+        3 Growlithe base1-28
+        3 Arcanine base1-23
+        1 Gastly base3-33
+
+        Trainer (31)
+        4 Professor Oak base1-88
+        4 Bill base1-91
+        4 Computer Search base1-71
+        4 Item Finder base1-74
+        3 Lass base1-75
+        2 Switch base1-95
+        2 Pokemon Trader base1-77
+        2 Maintenance base1-83
+        2 Defender base1-80
+        2 Energy Removal base1-92
+        1 PlusPower base1-84
+        1 Gust of Wind base1-93
+
+        Energy (10)
+        6 Psychic Energy base1-101
+        4 Double Colorless Energy base1-96`,
+    "Clefable, Hitmonchan, & Dodrio": `
+        Pokémon (18)
+        4 Doduo base1-48
+        3 Dodrio base2-34
+        3 Clefairy base1-5
+        3 Clefable base2-17
+        3 Hitmonchan base1-7
+        2 Electabuzz basep-2
+
+        Trainer (27)
+        4 Professor Oak base1-88
+        4 Bill base1-91
+        4 Energy Removal base1-92
+        3 Super Energy Removal base1-79
+        2 Gust of Wind base1-93
+        2 PlusPower base1-84
+        2 Pokemon Center base1-85
+        2 Pokemon Trader base1-77
+        2 Item Finder base1-74
+        1 Energy Retrieval base1-81
+        1 Lass base1-75
+
+        Energy (15)
+        11 Fighting Energy base1-97
+        4 Double Colorless Energy base1-96`,
+    "Hitmonchan, Mewtwo, & Dodrio": `
+        Pokémon (16)
+        4 Doduo base1-48
+        3 Dodrio base2-34
+        4 Hitmonchan base1-7
+        2 Mewtwo basep-3
+        2 Mr. Mime base2-22
+        1 Mew basep-8
+
+        Trainer (28)
+        4 Professor Oak base1-88
+        4 Bill base1-91
+        3 Energy Retrieval base1-81
+        3 PlusPower base1-84
+        3 Gust of Wind base1-93
+        3 Energy Removal base1-92
+        2 Super Energy Removal base1-79
+        2 Item Finder base1-74
+        1 Lass base1-75
+        1 Pokemon Center base1-85
+        1 Computer Search base1-71
+        1 Mr. Fuji base1-58
+
+        Energy (16)
+        8 Psychic Energy base1-101
+        7 Fighting Energy base1-97
+        1 Double Colorless Energy base1-96`,
+    "Dragonite, Dodrio, & Hitmonchan": `
+        Pokémon (23)
+        4 Dratini base1-26
+        3 Dragonair base1-18
+        3 Dragonite base1-19
+        4 Kangaskhan base2-21
+        3 Hitmonchan base1-7
+        2 Doduo base1-48
+        2 Dodrio base2-34
+        1 Lickitung base2-38
+        1 Mr. Mime base2-22
+
+        Trainer (20)
+        4 Bill base1-91
+        4 Energy Retrieval base1-81
+        3 Lass base1-75
+        2 Professor Oak base1-88
+        2 Pokemon Trader base1-77
+        2 Item Finder base1-74
+        1 PlusPower base1-84
+        1 Gust of Wind base1-93
+        1 Super Energy Removal base1-79
+
+        Energy (17)
+        9 Fighting Energy base1-97
+        4 Psychic Energy base1-101
+        4 Double Colorless Energy base1-96`,
+    "Lickitung, Scyther, & Mr. Mime": `
+        Pokémon (15)
+        4 Lickitung base2-38
+        3 Scyther base2-26
+        2 Chansey base1-3
+        2 Mr. Mime base2-22
+        1 Mewtwo basep-3
+        1 Gastly base1-33
+        1 Ditto base1-18
+        1 Psyduck base1-53
+
+        Trainer (27)
+        4 Scoop Up base1-78
+        4 Professor Oak base1-88
+        4 Energy Retrieval base1-81
+        4 Item Finder base1-74
+        4 Super Energy Removal base1-79
+        3 Energy Removal base1-92
+        1 PlusPower base1-84
+        1 Gust of Wind base1-93
+        1 Pokemon Center base1-85
+        1 Mr. Fuji base1-58
+
+        Energy (18)
+        13 Psychic Energy base1-101
+        1 Grass Energy base1-99
+        4 Double Colorless Energy base1-96`,
+    "Rain Dance": `
+        Pokémon (12)
+        4 Squirtle base1-63
+        1 Wartortle base1-42
+        3 Blastoise base1-2
+        4 Articuno base1-17
+
+        Trainer (34)
+        4 Professor Oak base1-88
+        4 Bill base1-91
+        4 Computer Search base1-71
+        4 Pokemon Breeder base1-76
+        4 Energy Retrieval base1-81
+        3 Item Finder base1-74
+        2 Switch base1-95
+        2 Super Energy Removal base1-79
+        2 Maintenance base1-83
+        2 Super Potion base1-90
+        1 PlusPower base1-84
+        1 Gust of Wind base1-93
+        1 Lass base1-75
+
+        Energy (14)
+        14 Water Energy base1-102`,
+    "Venusaur Dodrio": `
+        Pokémon (17)
+        4 Bulbasaur base1-44
+        3 Ivysaur base1-30
+        3 Venusaur base1-15
+        4 Kangaskhan base2-21
+        3 Doduo base1-48
+        3 Dodrio base2-34
+        1 Chansey base1-3
+
+        Trainer (25)
+        4 Energy Retrieval base1-81
+        4 Bill base1-91
+        2 Professor Oak base1-88
+        2 Pokemon Center base1-85
+        2 Pokemon Trader base1-77
+        2 Item Finder base1-74
+        1 Super Energy Removal base1-79
+        1 Gust of Wind base1-93
+        1 PlusPower base1-84
+        1 Mr. Fuji base1-58
+        1 Lass base1-75
+
+        Energy (18)
+        17 Grass Energy base1-99
+        1 Double Colorless Energy base1-96`,
+    "Wigglytuff, Magmar, & Dodrio": `
+        Pokémon (18)
+        4 Jigglypuff base2-54
+        3 Wigglytuff base2-32
+        4 Doduo base1-48
+        3 Dodrio base2-34
+        4 Magmar base1-39
+
+        Trainer (25)
+        4 Professor Oak base1-88
+        4 Bill base1-91
+        4 Energy Retrieval base1-81
+        3 Energy Removal base1-92
+        2 Super Energy Removal base1-79
+        2 PlusPower base1-84
+        2 Gust of Wind base1-93
+        2 Item Finder base1-74
+        1 Pokemon Trader base1-77
+        1 Lass base1-75
+
+        Energy (17)
+        13 Fire Energy base1-98
+        4 Double Colorless Energy base1-96`
+    }
 };
-  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 export const getRandomDeckList = () => {
     const years = Object.keys(decklistsByYear);
     const randomYear = years[Math.floor(Math.random() * years.length)];

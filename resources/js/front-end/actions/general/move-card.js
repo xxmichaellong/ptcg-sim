@@ -73,7 +73,7 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
     oLocation.cards.forEach(card => {
         let cardPosition;
         let movingCardPosition;
-        if (card.type !== 'pokemon' && movingCard.type !== 'pokemon'){
+        if (card.type !== 'Pokémon' && movingCard.type !== 'Pokémon'){
             cardPosition = card.image.style.left;
             movingCardPosition = movingCard.image.style.left;
 
@@ -89,7 +89,7 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
             movingCardPosition = movingCard.image.style.bottom;
 
             if (movingCard.image.relative instanceof HTMLImageElement && movingCard.image.relative === card.image.relative 
-            && parseInt(cardPosition) > parseInt(movingCardPosition) && movingCard.type === 'pokemon'){
+            && parseInt(cardPosition) > parseInt(movingCardPosition) && movingCard.type === 'Pokémon'){
                 const adjustment = movingCard.image.relative.clientWidth/14;
                 card.image.style.bottom = (parseInt(cardPosition) - adjustment) + 'px';
                 card.image.style.zIndex = (parseInt(card.image.style.zIndex) + 1).toString();
@@ -99,7 +99,7 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
 
     // if the image was attached to another image, decrease the level of layering on the base image
     if (movingCard.image.target === 'on'){
-        if (movingCard.type !== 'pokemon'){
+        if (movingCard.type !== 'Pokémon'){
             movingCard.image.relative.energyLayer -= 1;
              //adjust width of container
              const adjustment = movingCard.image.relative.clientWidth/6;
@@ -138,7 +138,7 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
     && boardLocations.includes(_mLocation_html) 
     && !targetCard.image.attached
     && (!boardLocations.includes(_oLocation_html) || movingCard.image.attached)){
-        if (movingCard.type === 'pokemon' && !boardLocations.includes(_oLocation_html)){
+        if (movingCard.type === 'Pokémon' && !boardLocations.includes(_oLocation_html)){
             resetImage(movingCard.image);
             targetCard.image.after(movingCard.image);
             targetCard.image.attached = true;
@@ -196,7 +196,7 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
             movingCard.image.style.position = 'absolute';
 
             let layer;
-            if (movingCard.type !== 'pokemon'){
+            if (movingCard.type !== 'Pokémon'){
                 const adjustment = targetCard.image.clientWidth/6;
                 targetCard.image.energyLayer += 1;
                 layer = targetCard.image.energyLayer;
@@ -220,9 +220,9 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
             targetCard.image.after(movingCard.image);
 
             // move tools to the back of the image, index cannot be zero to prevent being called when evolving pokemon
-            if (movingCard.type === 'energy' && nonEvolveAttachment){
+            if (movingCard.type === 'Energy' && nonEvolveAttachment){
                 for (let i = 0; i < mLocation.count - 1; i++){
-                    if (mLocation.cards[i].image.relative === movingCard.image.relative && !['pokemon', 'energy'].includes(mLocation.cards[i].type)){
+                    if (mLocation.cards[i].image.relative === movingCard.image.relative && !['Pokémon', 'Energy'].includes(mLocation.cards[i].type)){
                         const targetIndex = mLocation.cards.findIndex(card => card.image === movingCard.image.relative);
                         moveCard(user, _mLocation, _mLocation_html, _mLocation, _mLocation_html, i, targetIndex, true);
                         i--;
@@ -419,7 +419,7 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
                     const targetIndex = mLocation.cards.findIndex(card => card.image === movingCard.image);
                     moveCard(user, _oLocation, _oLocation_html, _mLocation, _mLocation_html, i, targetIndex, true);
                 } else {
-                    if (oLocation.cards[i].type === 'pokemon' && movingCard.image.damageCounter){
+                    if (oLocation.cards[i].type === 'Pokémon' && movingCard.image.damageCounter){
                         addDamageCounter(user, _oLocation, _oLocation_html, i, true);
                         image.damageCounter.textContent = movingCard.image.damageCounter.textContent;
                     };

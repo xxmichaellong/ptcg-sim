@@ -1,5 +1,5 @@
 const changelogLink = document.getElementById('changelogLink');
-const changelog = document.getElementById('changelog');
+export const changelog = document.getElementById('changelog');
 
 // Handle click event on the changelog link
 changelogLink.addEventListener('click', () => {

@@ -13,7 +13,7 @@ export const exportChatboxContent = () => {
     const blob = new Blob([content], { type: 'text/plain' });
     const a = document.createElement('a');
     a.href = window.URL.createObjectURL(blob);
-    a.download = 'chatbox_export.txt';
+    a.download = 'battle-log.txt';
     a.click();
 };
 

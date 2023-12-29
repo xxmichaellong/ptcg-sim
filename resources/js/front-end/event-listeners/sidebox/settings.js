@@ -1,7 +1,8 @@
-import { darkModeCheckbox, p1Box, p2Box, settings, settingsToggles, showContainersCheckbox, chatbox, messageInput, nameInput, p2Chatbox, p2MessageInput, roomIdInput, stadium_html, deckImport, selfContainersDocument, oppContainersDocument, keybindModal, mainDeckImportInput, altDeckImportInput, p2ExplanationBox } from "../../front-end.js";
+import { darkModeCheckbox, p1Box, p2Box, settings, settingsToggles, showContainersCheckbox, chatbox, messageInput, nameInput, p2Chatbox, p2MessageInput, roomIdInput, stadium_html, deckImport, selfContainersDocument, oppContainersDocument, keybindModal, mainDeckImportInput, altDeckImportInput, p2ExplanationBox, changelog } from "../../front-end.js";
 import { stringToVariable } from "../../setup/containers/string-to-variable.js";
 
 const darkMode = () => {
+    changelog.classList.toggle('dark-mode-6');
     document.body.classList.toggle('dark-mode');
     chatbox.classList.toggle('dark-mode');
     p2Chatbox.classList.toggle('dark-mode');

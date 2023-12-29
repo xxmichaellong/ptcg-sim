@@ -243,6 +243,11 @@ ul, li {
 #tutorialButton:hover {
   background: #8c7e46; /* Change this color to the hover color you want */
 }
+#discord {
+  font-size: small;
+  width: 100%;
+  text-align: center;
+}
 #videoContainer {
   display: none;
   position: fixed;
@@ -268,7 +273,7 @@ ul, li {
   left: 0;
   width: 76%;
   height: 100%;
-  background: rgba(171, 171, 171, 0.852); /* Semi-transparent grey background */
+  background: rgba(222, 221, 221, 0.852); /* Semi-transparent grey background */
   z-index: 1000;
   overflow: auto;
   padding: 60px;
@@ -548,6 +553,24 @@ ul, li {
   font-size: 2vh;
   background-color: rgba(171, 171, 171, 0.864);
 }
+#decklistTable {
+  z-index: 1000;
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 76%;
+  height: 100%;
+  background: rgba(222, 221, 221, 0.852); /* Semi-transparent grey background */
+  z-index: 1000;
+  overflow: auto;
+  padding: 30px;
+  box-sizing: border-box;
+  font-size: 1.75vh;
+}
+#decklistTable td {
+  padding: 0.3vh 2vw; /* Adjust as needed */
+}
 .main-select {
   font-weight: bold; /* Added to make the font bold */
   background-color: rgba(90, 110, 188, 0.864) !important;
@@ -583,19 +606,55 @@ ul, li {
   width: 100%;
   display: flex;
   align-items: center; /* Align items vertically in the center */
-  gap: 1vw;
+  gap: 0.5vw;
+}
+#importButton, #confirmButton {
+  background-color: #7bb9a2;
+  color: white;
 }
 #importButton {
-  width: 30%;
+  cursor: pointer;
+  width: 25%;
   border-radius: .5rem;
   padding: 1vh;
   border: none;
-  background-color: #7bb9a2;
+  font-weight: bold; /* Added to make the font bold */
+}
+#importButton:hover, #confirmButton:hover {
+  background-color: #95c6b4;
+}
+#cancelButton, #confirmButton, #saveButton {
+  cursor: pointer;
+  display: none;
+  width: 20%;
+  border-radius: .5rem;
+  padding: .7vh;
+  border: none;
   color: white;
   font-weight: bold; /* Added to make the font bold */
 }
-#importButton:hover {
-  background-color: #95c6b4;
+#cancelButton {
+  background-color: #b9857b;
+}
+#cancelButton:hover {
+  background-color: #b97d7b;
+}
+#saveButton {
+  background-color: #8c8c8c;
+}
+#saveButton:hover {
+  background-color: #aeaeae;
+}
+.custom-file-upload {
+  padding: 3px 6px;
+  cursor: pointer;
+  background-color: #757474; /* You can change this */
+  color: white; /* You can change this */
+  border: none;
+  border-radius: .5rem;
+  display: block;
+  margin: 1vh;
+  font-size: 1.75vh;
 }
 #randomButton {
   position: absolute;
@@ -640,6 +699,7 @@ ul, li {
   box-sizing: border-box;
   display: block;
   border-radius: 10px;
+  
 }
 #settings label {
   position: relative;
@@ -786,21 +846,27 @@ a:hover {
   border: 1px solid #ccc; /* Add this line for a grey border */
   z-index: 2;
   color: black;
+  height: 85%;
 }
 .decklists-context-menu-item {
-  padding: .2vh 1vw;
+  padding: .3vh 1vw;
   cursor: pointer;
   font-size: small;
 }
 .decklists-context-menu-submenu {
-  padding-left: 10px;
   font-weight: normal; /* Bold font */
   display: none;
+  position: absolute;
+  background-color: #e5e3e3;
+  left: 99%; /* Adjust this value to position the submenu accordingly */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #ccc; /* Add this line for a grey border */
+  border-radius: 5px;
+  top: 0;
+  height: 100%;
+  width: 112%;
 }
 .decklist-highlight {
   background-color: #f0f0f0; /* Light grey background */
   font-weight: bold; /* Bold font */
 }
-
-
-
