@@ -16,7 +16,8 @@ import { exchangeData, p2DeckData } from './fetch-opp-data.js'
 import { mainDeckData } from '../setup/deck-constructor/import.js'
 import { determineUsername } from '../setup/general/determine-username.js'
 import { rotateCard } from '../actions/general/rotate-card.js'
-import { hideShortcut, revealShortcut } from '../actions/general/reveal-and-hide.js'
+import { hideShortcut, revealShortcut, stopLookingShortcut } from '../actions/general/reveal-and-hide.js'
+import { changeType } from '../actions/general/change-type.js'
 
 socket.on('generateId', (id) => {
     roomIdInput.value = id;
@@ -160,10 +161,16 @@ socket.on('revealShortcut', (data) => {
 socket.on('hideShortcut', (data) => {
     hideShortcut(data.user, data.location, data.index, data.message, data.received);
 });
+socket.on('stopLookingShortcut', (data) => {
+    stopLookingShortcut(data.user, data.location, data.index);
+});
 socket.on('faceDown', (data) => {
     const location = stringToVariable(data.user, data.location);
     const card = location.cards[data.index];
     card.image.faceDown = true;
+});
+socket.on('changeType', (data) => {
+    changeType(data.user, data.location, data.index, data.type, data.received);
 });
 
 

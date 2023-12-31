@@ -63,6 +63,7 @@ const darkMode = () => {
     });
     document.getElementById('deckHeader').classList.toggle('dark-mode-2');
     document.getElementById('handHeader').classList.toggle('dark-mode-2');
+    document.getElementById('boardHeader').classList.toggle('dark-mode-2');
     document.getElementById('prizesHeader').classList.toggle('dark-mode-2');
     keybindModal.classList.toggle('dark-mode-6');
 }

@@ -6,7 +6,7 @@ import { stringToVariable, variableToString } from '../setup/containers/string-t
 import { closeFullView, closePopups, deselectCard } from '../actions/general/close-popups.js';
 import { moveCard } from '../actions/general/move-card.js';
 import { cardContextMenu } from '../initialization/html-elements/context-menu.js';
-import { moveCardMessage } from '../setup/chatbox/location-name.js';
+import { moveCardMessage } from '../setup/chatbox/determine-location-name.js';
 import { POV } from '../front-end.js';
 
 export const identifyCard = (event) => {
@@ -77,7 +77,8 @@ export const openCardContextMenu = (event) => {
         'shufflePrizesButton': [[selfView, 'prizes_html']],
         'lookPrizesButton': [[selfView, 'prizes_html'], [oppView, 'prizes_html']],
         'revealHidePrizesButton': [[selfView, 'prizes_html'], [oppView, 'prizes_html']],
-        'lookHandButton': [[selfView, 'hand_html'], [oppView, 'hand_html']],
+        'revealHideHandButton': [[oppView, 'hand_html']],
+        'revealRandomHandButton': [[oppView, 'hand_html']],
         'shuffleDeckButton': [[selfView, 'deckDisplay_html'], [oppView, 'deckDisplay_html']],
         'drawButton': [[selfView, 'deckDisplay_html']],
         'viewTopButton': [[selfView, 'deckDisplay_html'], [oppView, 'deckDisplay_html']],
@@ -157,7 +158,7 @@ export const imageClick = (event) => {
         target.location = containerIdToLocation(sCard.user, target.containerId);
         target.index = target.location.cards.findIndex(card => card.image === event.target);
         target.locationAsString = variableToString(sCard.user, target.location);
-        moveCardMessage(POV.user, sCard.card.name, sCard.locationAsString, target.locationAsString, 'move', sCard.card.image.attached, sCard.card.image.faceDown);
+        moveCardMessage(POV.user, sCard.card.name, sCard.locationAsString, target.locationAsString, 'move', sCard.card.image.attached, sCard.card.image.faceDown, sCard.card.image.faceUp);
         moveCard(sCard.user, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
     } else {
         closePopups(event); //need both because of highlights

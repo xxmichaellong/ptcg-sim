@@ -3,6 +3,8 @@ import { removeImages } from '../../image-logic/remove-images.js';
 import { appendMessage } from '../../setup/chatbox/messages.js';
 import { stringToVariable } from '../../setup/containers/string-to-variable.js';
 import { determineUsername } from '../../setup/general/determine-username.js';
+import { showPopup } from '../../setup/general/pop-up-message.js';
+import { deselectCard } from './close-popups.js';
 
 let rootDirectory = window.location.origin;
 
@@ -51,6 +53,9 @@ export const revealShortcut = (user, location, index, message = true, received =
     if (card.image.src === rootDirectory + '/resources/card-scans/cardback.png'){
         card.image.src = card.image.src2;
     };
+    if (_location === 'prizes'){
+        card.image.faceUp = true;
+    };
     //if card is from prizes,  don't reveal to opponent. otherwise, reveal
     if (!received && message){
         appendMessage(POV.user, determineUsername(POV.user) + ' revealed ' + card.name + ' in ' + determineUsername(locationOwner) + "'s " + _location, 'player');
@@ -66,6 +71,21 @@ export const revealShortcut = (user, location, index, message = true, received =
             received: true
         };
         socket.emit('revealShortcut', data);
+    };
+
+    //deal with case when revealing a card in your own hand
+    if (!received && !p1[0] && _location === 'hand' && POV.user === locationOwner) {
+        deselectCard();
+        showPopup('Press OK to stop revealing card to opponent', () => {
+            const oUser = user === 'self' ? 'opp' : 'self';
+            const data = {
+                roomId: roomId,
+                user: oUser,
+                location: _location,
+                index: index,
+            };
+            socket.emit('stopLookingShortcut', data);
+        });
     };
 }
 
@@ -83,7 +103,7 @@ export const hideShortcut = (user, location, index, message = true, received = f
         appendMessage(POV.user, determineUsername(POV.user) + ' hid card in ' + determineUsername(locationOwner) + "'s " + _location, 'player');
     };
     //deal with handling faceDown card locations
-    if (!['prizes'].includes(_location)){
+    if (!['prizes'].includes(_location) && !(_location === 'hand' && POV.oUser === locationOwner)){
         card.image.faceDown = true;
         if (!p1[0] && !received){
             const oUser = user === 'self' ? 'opp' : 'self';
@@ -96,7 +116,7 @@ export const hideShortcut = (user, location, index, message = true, received = f
             socket.emit('faceDown', data);
         };
     };
-    if (!p1[0] && !received){
+    if (!p1[0] && !received && !(_location === 'hand' && POV.oUser === locationOwner)){
         const oUser = user === 'self' ? 'opp' : 'self';
         const data = {
             roomId: roomId,
@@ -117,7 +137,6 @@ export const lookShortcut = (user, location, index) => {
 
     if (card.image.src === rootDirectory + '/resources/card-scans/cardback.png'){
         card.image.src = card.image.src2;
-        //if card is from prizes,  don't reveal to opponent. otherwise, reveal
         appendMessage(POV.user, determineUsername(POV.user) + ' looked at card in ' + determineUsername(locationOwner) + "'s " + _location, 'player');
     };
 }

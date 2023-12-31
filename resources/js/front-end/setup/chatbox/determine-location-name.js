@@ -15,7 +15,7 @@ export const findLocation = (locationAsString) => {
     };
 }
 
-export const moveCardMessage = (user, cardName, oLocation, mLocation, action, attached = false, faceDown = false) => {
+export const moveCardMessage = (user, cardName, oLocation, mLocation, action, attached = false, faceDown = false, faceUp = false) => {
     oLocation = findLocation(oLocation);
     mLocation = findLocation(mLocation);
 
@@ -39,8 +39,11 @@ export const moveCardMessage = (user, cardName, oLocation, mLocation, action, at
             action = 'evolve';
         };
     };
-    if (hiddenName.some(pair => pair[0] === oLocation && pair[1] === mLocation) || faceDown) {
+    if (!faceUp && hiddenName.some(pair => pair[0] === oLocation && pair[1] === mLocation) || faceDown) {
         cardName = 'card';
+    };
+    if (faceUp && mLocation !== 'prizes'){
+        sCard.card.image.faceUp = false;
     };
     if (attached){
         const relativeCard = stringToVariable(sCard.user, sCard.locationAsString).cards.find(card => card.image === sCard.card.image.relative);

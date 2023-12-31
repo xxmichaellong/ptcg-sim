@@ -781,8 +781,8 @@ a:hover {
 .contextMenu .subMenu {
   display: none;
   position: absolute;
-  top: 100%;
-  left: 0;
+  top: 0;
+  left: 100%;
   z-index: 1001;
   background-color: #fff;
   padding: 8px; /* Added padding */
@@ -800,10 +800,8 @@ a:hover {
   left: 0;
   width: 100%;
   height: 2px; /* Adjust the thickness of the top border */
-  background-color: #333; /* Set the color of the top border */
+  background-color: #525252; /* Set the color of the top border */
 }
-
-/*chatbox text styling*/
 .self-text, .announcement, .opp-text, .self-message, .opp-message {
   word-wrap: break-word;
   display: block;
@@ -846,7 +844,7 @@ a:hover {
   border: 1px solid #ccc; /* Add this line for a grey border */
   z-index: 2;
   color: black;
-  height: 90%;
+  height: fit-content;
 }
 .decklists-context-menu-item {
   padding: .3vh 1vw;
@@ -869,4 +867,37 @@ a:hover {
 .decklist-highlight {
   background-color: #f0f0f0; /* Light grey background */
   font-weight: bold; /* Bold font */
+}
+/* CSS for Popup */
+.custom-popup {
+  position: fixed;
+  top: 50%;
+  left: 37.75%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  border: 2px solid #424242;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  text-align: center;
+  z-index: 9999; /* Ensure it's above other content */
+  border-radius: 5px;
+}
+.popup-content {
+  text-align: center;
+}
+.popup-button {
+  display: block; /* Make the button a block-level element */
+  margin-top: 15px; /* Add space above the button */
+  margin-left: auto; /* Center the button horizontally */
+  margin-right: auto;
+  background-color: #333; /* Dark grey */
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+.popup-button:hover {
+  background-color: #555; /* Darker grey on hover */
 }

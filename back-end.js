@@ -127,8 +127,14 @@ io.on('connection', (socket) => {
     socket.on('hideShortcut', (data) => {
         socket.broadcast.to(data.roomId).emit('hideShortcut', data);
     });
+    socket.on('stopLookingShortcut', (data) => {
+        socket.broadcast.to(data.roomId).emit('stopLookingShortcut', data);
+    });
     socket.on('faceDown', (data) => {
         socket.broadcast.to(data.roomId).emit('faceDown', data);
+    });
+    socket.on('changeType', (data) => {
+        socket.broadcast.to(data.roomId).emit('changeType', data);
     });
 });
 

@@ -1,4 +1,5 @@
 import { moveCard } from "../../actions/general/move-card.js";
+import { rotateCard } from "../../actions/general/rotate-card.js";
 import { stringToVariable } from "../containers/string-to-variable.js";
 
 const reloadContainer = (user, location, location_html) => {
@@ -16,8 +17,19 @@ const reloadContainer = (user, location, location_html) => {
         images.forEach((image) => {
             if (!image.attached){
                 //re-append the card to the end of the same container
+                let currentRotation;
+                if (image.PokémonBreak){
+                    currentRotation = (parseInt(image.style.transform.replace(/[^0-9-]/g, '')) || 0) - 90;
+                } else {
+                    currentRotation = parseInt(image.style.transform.replace(/[^0-9-]/g, '')) || 0;
+                };
+                const numberRotations = currentRotation / 90;
                 const index = location.cards.findIndex(card => card.image === image);
-                moveCard(user, _location, _location_html, _location, _location_html, index, false, true)
+                moveCard(user, _location, _location_html, _location, _location_html, index, false, true);
+                const newIndex = location.cards.findIndex(card => card.image === image);
+                for (let i = 0; i < numberRotations; i ++){
+                    rotateCard(user, _location, _location_html, newIndex, false, true);
+                };
             };
         });
     });

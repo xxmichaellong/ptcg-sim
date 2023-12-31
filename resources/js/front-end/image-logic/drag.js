@@ -2,7 +2,7 @@ import { moveToDeckTop } from '../actions/container/deck-actions.js';
 import { closePopups } from '../actions/general/close-popups.js';
 import { moveCard } from '../actions/general/move-card.js';
 import { POV, active_html, attachedCardPopup_html, bench_html, deck_html, discard_html, lostzone_html, oppActive_html, oppAttachedCardPopup_html, oppBench_html, oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html, oppViewCards_html, sCard, selfContainersDocument, target, viewCards_html } from '../front-end.js';
-import { moveCardMessage } from '../setup/chatbox/location-name.js';
+import { moveCardMessage } from '../setup/chatbox/determine-location-name.js';
 import { containerIdToLocation } from '../setup/containers/container-reference.js';
 import { stringToVariable, variableToString } from '../setup/containers/string-to-variable.js';
 import { identifyCard } from './click-events.js';
@@ -10,6 +10,20 @@ import { identifyCard } from './click-events.js';
 const popupContainers = [lostzone_html, discard_html, deck_html, attachedCardPopup_html, oppLostzone_html, oppDiscard_html, oppAttachedCardPopup_html, oppDeck_html, viewCards_html, oppViewCards_html];
 
 export const dragStart = (event) => {
+    event.target.classList.add('high-zIndex');
+    if (event.target.attached){
+        event.target.style.opacity = '0';
+    } else {
+        event.target.style.opacity = '0.6';
+    }
+    if (!event.target.attached){
+        event.target.parentElement.querySelectorAll('img').forEach(image => {
+            if (image.attached){
+                image.style.opacity = '0.2';
+            };
+        });
+    };    
+
     closePopups(event);
     identifyCard(event);
 
@@ -102,6 +116,16 @@ export const dragEnd = (event) => {
         event.target.parentElement.parentElement.classList.remove('highlight', 'highlightBox');
     };
 
+    event.target.classList.remove('high-zIndex');
+    event.target.style.opacity = '1';
+    if (event.target.parentElement){
+        event.target.parentElement.querySelectorAll('img').forEach(image => {
+            if (image.attached){
+                image.style.opacity = '1';
+            };
+        });
+    };
+
     if (popupContainers.includes(sCard.container)){
         sCard.container.style.opacity = '1';
         sCard.container.style.zIndex = '9999';
@@ -110,7 +134,7 @@ export const dragEnd = (event) => {
         sCard.box.style.opacity = '1';
         sCard.box.style.zIndex = '2';
         sCard.boxParent.style.zIndex = sCard.box.parentElement ? '2' : '0';
-        stadium_html.style.zIndex = sCard.box.parentElement ? '-1' : '0';
+        // stadium_html.style.zIndex = sCard.box.parentElement ? '-1' : '0';
         sCard.box = false;
         sCard.boxParent = false;
     };
@@ -137,6 +161,12 @@ export const drop = (event) => {
     };
 
     let draggedImage = document.querySelector('.dragging') || selfContainersDocument.querySelector('.dragging') || oppContainersDocument.querySelector('.dragging');
+    //reset opacity of attached cards
+    draggedImage.parentElement.querySelectorAll('img').forEach(image => {
+        if (image.attached){
+            image.style.opacity = '1';
+        };
+    });
 
     const targetIsNotBox = !event.target.classList.contains('fullView') && !event.target.classList.contains('playContainer') 
     //make sure only card images can trigger drop
@@ -173,7 +203,7 @@ export const drop = (event) => {
             if (target.locationAsString === 'deck'){
                 moveToDeckTop();
             } else {
-                moveCardMessage(POV.user, sCard.card.name, sCard.locationAsString, target.locationAsString, 'move', sCard.card.image.attached, sCard.card.image.hidden);
+                moveCardMessage(POV.user, sCard.card.name, sCard.locationAsString, target.locationAsString, 'move', sCard.card.image.attached, sCard.card.image.faceDown, sCard.card.image.faceUp);
                 moveCard(sCard.user, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
             };
         };

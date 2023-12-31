@@ -29,10 +29,10 @@ export const rotateCard = (user, locationAsString, containerId, index, single = 
         });
     } else {
         if ([90].includes(newRotation)){
-            rotatingImage.pokemonBreak = true;
+            rotatingImage.PokémonBreak = true;
         } else {
             rotatingImage.style.transform = 'rotate(0deg)';
-            rotatingImage.pokemonBreak = false;
+            rotatingImage.PokémonBreak = false;
         };
     };
     //update any damagecounters/specialconditions/abilitycounters
@@ -76,7 +76,7 @@ export const resetRotation = (targetImage) => {
 
 export const matchRotation = (image, targetImage) => {
     const currentRotation = parseInt(targetImage.style.transform.replace(/[^0-9-]/g, '')) || 0;
-    if (targetImage.pokemonBreak){
+    if (targetImage.PokémonBreak){
         image.style.transform = `rotate(${currentRotation - 90}deg)`
     } else {
         image.style.transform = `rotate(${currentRotation}deg)`

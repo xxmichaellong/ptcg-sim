@@ -320,7 +320,7 @@ const SMEra = {
         69: "Trainer",
         70: "Pokémon",
     },
-    "SV": {
+    "HIFSV": {
         81: "Pokémon",
         91: "Trainer",
         95: "Pokémon",

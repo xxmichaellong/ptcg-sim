@@ -2741,12 +2741,12 @@ const decklistsByYear = {
         2 Slowking col1-32
 
         Trainer (30)
-        4 Pokemon Collector hgss1-97
+        4 Pokémon Collector hgss1-97
         4 Judge hgss2-78
         4 Professor Oak's New Theory col1-83
         3 Copycat col1-77
         3 Professor Elm's Training Method hgss1-100
-        4 Pokemon Communication hgss1-98
+        4 Pokémon Communication hgss1-98
         4 Super Scoop Up hgss2-83
         2 Junk Arm hgss4-87
         2 Lost Remover col1-80
@@ -2768,14 +2768,14 @@ const decklistsByYear = {
         1 Kingdra hgss2-85
 
         Trainer (27)
-        4 Pokemon Collector hgss1-97
+        4 Pokémon Collector hgss1-97
         4 Professor Oak's New Theory col1-83
         3 Judge hgss2-78
         3 Sage's Training hgss3-77
         4 Rare Candy hgss2-82
-        4 Pokemon Communication hgss1-98
+        4 Pokémon Communication hgss1-98
         3 Junk Arm hgss4-87
-        2 Pokemon Reversal hgss1-99
+        2 Pokémon Reversal hgss1-99
 
         Energy (16)
         11 Lightning Energy hgss1-118
@@ -2783,7 +2783,7 @@ const decklistsByYear = {
         3 Psychic Energy hgss1-119
     `,
     "Vileplume Yanmega": `
-        Pokémon (17)
+        Pokémon (24)
         4 Yanma hgss4-84
         4 Yanmega hgss4-98
         3 Oddish hgss3-60
@@ -2792,22 +2792,25 @@ const decklistsByYear = {
         1 Bellossom hgss3-1
         2 Sunkern hgss1-85
         2 Sunflora hgss1-31
+        2 Mew hgss4-97
+        1 Cleffa hgss1-17
+        1 Aipom hgss2-43
+        1 Muk hgss3-31
 
         Trainer (27)
-        4 Pokemon Collector hgss1-97
+        4 Pokémon Collector hgss1-97
         3 Copycat col1-77
         3 Judge hgss2-78
         3 Professor Oak's New Theory col1-83
         3 Sage's Training hgss3-77
         3 Twins hgss4-89
-        4 Pokemon Communication hgss1-98
+        4 Pokémon Communication hgss1-98
         4 Rare Candy hgss2-82
 
-        Energy (16)
+        Energy (9)
         5 Psychic Energy hgss1-119
         3 Rescue Energy hgss4-90
         1 Rainbow Energy hgss1-104
-        7 Grass Energy hgss1-115
     `,
     "Typhlosion, Rayquaza & Deoxys-LEGEND": `
         Pokémon (14)
@@ -2818,11 +2821,11 @@ const decklistsByYear = {
         2 Ninetales hgss1-7
 
         Trainer (24)
-        4 Pokemon Collector hgss1-97
+        4 Pokémon Collector hgss1-97
         4 Professor Elm's Training Method hgss1-100
         3 Sage's Training hgss3-77
         2 Flower Shop Lady hgss3-74
-        4 Pokemon Communication hgss1-98
+        4 Pokémon Communication hgss1-98
         4 Rare Candy hgss2-82
         3 Lightning Energy hgss1-118
 
@@ -2832,7 +2835,7 @@ const decklistsByYear = {
         4 Double Colorless Energy hgss1-103
     `,
     "Leafeon, Roserade, & Houndoom": `
-        Pokémon (19)
+        Pokémon (20)
         4 Eevee hgss3-48
         3 Leafeon hgss3-17
         1 Espeon hgss3-81
@@ -2842,62 +2845,69 @@ const decklistsByYear = {
         2 Houndoom hgss3-82
         1 Venonat hgss4-81
         1 Venomoth hgss4-11
+        1 Cleffa hgss1-17
+        1 Celebi hgss4-92
 
-        Trainer (27)
-        4 Pokemon Collector hgss1-97
+        Trainer (25)
+        4 Pokémon Collector hgss1-97
         4 Professor Oak’s New Theory col1-83
-        3 Professor Elm’s Training Method hgss1-100
+        4 Professor Elm’s Training Method hgss1-100
         1 Twins hgss4-89
         1 Seeker hgss4-88
-        4 Pokemon Communication hgss1-98
-        3 Pokemon Reversal hgss1-99
+        4 Pokémon Communication hgss1-98
+        3 Pokémon Reversal hgss1-99
         2 Pokegear hgss1-96
         2 Energy Exchanger hgss3-73
 
-        Energy (14)
+        Energy (15)
         6 Grass Energy hgss1-115
         1 Psychic Energy hgss1-119
         4 Rainbow Energy hgss1-104
         3 Rescue Energy hgss4-90
-    `,
+        1 Double Colorless Energy hgss1-103
+        `,
     "Magnezone Pachirisu": `
-        Pokémon (12)
+        Pokémon (18)
         4 Magnemite hgss4-68
         1 Magneton hgss4-43
         4 Magnezone hgss4-96
         4 Pachirisu col1-18
+        2 Voltorb hgss4-83
+        2 Electrode hgss4-93
+        1 Cleffa hgss1-17
 
-        Trainer (25)
-        4 Pokemon Collector hgss1-97
+        Trainer (19)
+        4 Pokémon Collector hgss1-97
         4 Judge hgss2-78
         3 Twins hgss4-89
         4 Rare Candy hgss2-82
-        4 Pokemon Communication hgss1-98
-        3 Lightning Energy hgss1-118
+        4 Pokémon Communication hgss1-98
 
         Energy (23)
         23 Lightning Energy hgss1-118
     `,
     "Lanturn Feraligatr": `
-        Pokémon (16)
+        Pokémon (18)
         4 Chinchou hgss2-48
         4 Lanturn hgss2-86
         3 Totodile hgss1-86
         1 Croconaw hgss1-38
         3 Feraligatr hgss1-108
+        2 Cleffa hgss1-17
         1 Smeargle hgss3-8
 
-        Trainer (24)
-        4 Pokemon Collector hgss1-97
+        Trainer (25)
+        4 Pokémon Collector hgss1-97
         4 Professor Oak’s New Theory col1-83
         3 Professor Elm’s Training Method hgss1-100
         2 Fisherman hgss1-92
         2 Interviewer’s Questions hgss2-77
-        4 Pokemon Communication hgss1-98
+        4 Pokémon Communication hgss1-98
         3 Rare Candy hgss2-82
-        2 Pokemon Reversal hgss1-99
+        2 Pokémon Reversal hgss1-99
+        1 Burned Tower hgss3-71
 
-        Energy (20)
+        Energy (17)
         11 Water Energy hgss1-117
         4 Lightning Energy hgss1-118
         2 Double Colorless Energy hgss1-103
@@ -2918,11 +2928,11 @@ const decklistsByYear = {
         1 Shaymin hgss2-8
 
         Trainer (26)
-        4 Pokemon Collector hgss1-97
+        4 Pokémon Collector hgss1-97
         4 Twins hgss4-89
         4 Professor Oak’s New Theory col1-83
         4 Seeker hgss4-88
-        4 Pokemon Communication hgss1-98
+        4 Pokémon Communication hgss1-98
         4 Rare Candy hgss2-82
         2 Lost World col1-81
 
@@ -3086,7 +3096,7 @@ const decklistsByYear = {
         2 Cynthia's Feelings dp6-131
         2 Bebe's Search dp3-119
         1 Buck's Training dp6-130
-        4 Pokemon Rescue pl1-115
+        4 Pokémon Rescue pl1-115
         4 Super Scoop Up dp1-115
         3 Poke Turn pl1-118
         3 VS Seeker pl3-140
@@ -3430,7 +3440,7 @@ const decklistsByYear = {
         2 Crystal Beach ex14-75
         4 Castaway ex14-72
         4 Rocket's Admin. ex7-86
-        2 Pokemon Fan Club pop4-9
+        2 Pokémon Fan Club pop4-9
         1 Lanette's Net Search ex2-87
         1 Steven's Advice ex5-92
         1 Mary's Request ex10-86
@@ -3462,7 +3472,7 @@ const decklistsByYear = {
         4 Cessation Crystal ex14-74
         4 Holon Transceiver ex11-98
         2 Swoop! Teleporter ex7-92
-        2 Pokemon Retriever ex7-84
+        2 Pokémon Retriever ex7-84
         4 Metal Energy ex16-88
         4 Scramble Energy ex8-95
         3 Double Rainbow Energy ex14-88
@@ -3515,7 +3525,7 @@ const decklistsByYear = {
         4 Holon Transceiver ex11-98
         4 Pow! Hand Extension ex7-85
         3 Swoop! Teleporter ex7-92
-        3 Pokemon Retriever ex7-84
+        3 Pokémon Retriever ex7-84
         1 Warp Point ex14-84
         1 Windstorm ex14-85
         1 Super Scoop Up ex11-100
@@ -3543,7 +3553,7 @@ const decklistsByYear = {
         3 Swoop! Teleporter ex7-92
         2 Switch ex1-92
         1 Pow! Hand Extension ex7-85
-        1 Pokemon Retriever ex7-84
+        1 Pokémon Retriever ex7-84
         11 Lightning Energy ex1-109
         4 Multi Energy ex16-89
        `,
@@ -3617,7 +3627,7 @@ const decklistsByYear = {
         2 VS Seeker ex6-100
         2 Windstorm ex14-85
         1 Pow! Hand Extension ex7-85
-        1 Pokemon Retriever ex7-84
+        1 Pokémon Retriever ex7-84
         1 Warp Point ex14-84
         6 Water Energy ex1-106
         4 Double Rainbow Energy ex14-88
@@ -3695,7 +3705,7 @@ const decklistsByYear = {
         4 Super Scoop Up ex11-100
         2 Windstorm ex14-85
         2 Warp Point ex14-84
-        1 Pokemon Retriever ex7-84
+        1 Pokémon Retriever ex7-84
         10 Lightning Energy ex1-109
         4 Multi Energy ex16-89
        `,
@@ -3763,7 +3773,7 @@ const decklistsByYear = {
         4 Rocket's Admin. ex7-86
         2 Scott ex9-84
         2 Celio's Network ex6-88
-        1 Pokemon Fan Club pop4-9
+        1 Pokémon Fan Club pop4-9
         1 Lanette's Net Search ex2-87
         1 Steven's Advice ex16-83
         1 Mary's Request ex10-86
@@ -3796,7 +3806,7 @@ const decklistsByYear = {
         2 Rocket's Poke Ball ex7-89
         2 Cessation Crystal ex14-74
         1 VS Seeker ex6-100
-        1 Pokemon Retriever ex7-84
+        1 Pokémon Retriever ex7-84
         3 Fire Energy ex1-108
         4 Darkness Energy ex16-87
         4 Scramble Energy ex8-95
@@ -3831,7 +3841,7 @@ const decklistsByYear = {
         4 Rare Candy ex9-83
         3 Warp Point ex14-84
         3 Windstorm ex14-85
-        3 Pokemon Retriever ex7-84
+        3 Pokémon Retriever ex7-84
         1 Swoop! Teleporter ex7-92
         5 Water Energy ex1-106
         `,
@@ -3858,7 +3868,7 @@ const decklistsByYear = {
         4 React Energy ex12-82
         `,
         "Magma Spirit Deck":`
-        Pokemon - 15
+        Pokémon - 15
 
         2 Team Magma's Baltoy ex4-32
         2 Team Magma's Camerupt ex4-19
@@ -3900,13 +3910,13 @@ const decklistsByYear = {
         2 Ponyta ecard2-102
         2 Rapidash ecard2-31
         1 Lapras ecard3-71
-        4 Pokemon Fan Club ecard2-130
+        4 Pokémon Fan Club ecard2-130
         4 Professor Elm's Training Method ecard1-148
         4 Professor Oak's Research ecard1-149
         4 Town Volunteers ecard2-136
         2 Underground Expedition ecard3-140
         2 Copycat ecard1-138
-        1 Pokemon Nurse ecard1-145
+        1 Pokémon Nurse ecard1-145
         12 Fire Energy ecard1-161
         4 Warp Energy ecard2-147
         `,
@@ -3920,14 +3930,14 @@ const decklistsByYear = {
         2 Furret ecard2-48
         2 Porygon ecard2-103
         2 Porygon2 ecard2-28
-        4 Pokemon Fan Club ecard2-130
+        4 Pokémon Fan Club ecard2-130
         4 Professor Elm's Training Method ecard1-148
         4 Professor Oak's Research ecard1-149
         3 Underground Expedition ecard3-140
         2 Oracle ecard3-138
         1 Desert Shaman ecard3-123
         3 Power Charge ecard1-147
-        2 Pokemon Reversal ecard1-146
+        2 Pokémon Reversal ecard1-146
         2 Friend Ball ecard3-126
         1 Potion ecard1-156
         1 Strength Charm ecard1-150
@@ -3947,10 +3957,10 @@ const decklistsByYear = {
         2 Lapras ecard3-71
         1 Moltres ecard3-21
         1 Zapdos ecard2-44
-        4 Pokemon Fan Club ecard2-130
+        4 Pokémon Fan Club ecard2-130
         4 Professor Elm's Training Method ecard1-148
         4 Professor Oak's Research ecard1-149
-        3 Pokemon Nurse ecard1-145
+        3 Pokémon Nurse ecard1-145
         3 Underground Expedition ecard3-140
         2 Copycat ecard1-145
         1 Super Energy Removal 2 ecard2-134
@@ -3971,7 +3981,7 @@ const decklistsByYear = {
         2 Porygon ecard2-103
         2 Porygon2 ecard2-28
         1 Lapras ecard3-71
-        4 Pokemon Fan Club ecard2-130
+        4 Pokémon Fan Club ecard2-130
         4 Professor Elm's Training Method ecard1-148
         3 Professor Oak's Research ecard1-149
         3 Underground Expedition ecard3-140
@@ -4013,7 +4023,7 @@ const decklistsByYear = {
         1 Zapdos ecard2-44
         1 Lapras ecard3-71
         1 Power Plant ecard2-139
-        4 Pokemon Fan Club ecard2-130
+        4 Pokémon Fan Club ecard2-130
         4 Professor Elm's Training Method ecard1-148
         4 Juggler ecard2-126
         3 Underground Expedition ecard3-140
@@ -4039,22 +4049,22 @@ const decklistsByYear = {
         2 Scizor ecard2-32
         2 Sentret ecard2-107
         2 Furret ecard2-48
-        3 Grimer base6-78
-        3 Muk base6-16
+        2 Grimer base6-78
+        2 Muk base6-16
         2 Mantine neo4-74
         4 Gold Berry neo1-93
         2 Balloon Berry neo3-60
         4 Copycat ecard1-138
-        4 Pokemon Fan Club ecard2-130
+        4 Pokémon Fan Club ecard2-130
         1 Town Volunteers ecard2-136
         4 Professor Elm neo1-96
-        4 Pokemon Trader base6-103
+        4 Pokémon Trader base6-103
         3 Power Charge ecard1-147
         3 Double Gust neo1-100
         4 Metal Energy ecard2-143
         4 Rainbow Energy ecard2-144
         3 Water Energy ecard1-165
-        3 Warp Energy ecard2-147
+        2 Warp Energy ecard2-147
         `,
         "Meganium Exeggutor":`
         4 Cleffa neo1-20
@@ -4067,10 +4077,10 @@ const decklistsByYear = {
         2 Energy Stadium neo4-99
         3 Focus Band neo1-86
         4 Copycat ecard1-138
-        3 Pokemon Fan Club ecard2-130
+        3 Pokémon Fan Club ecard2-130
         1 Town Volunteers ecard2-136
         4 Professor Elm neo1-96
-        4 Pokemon Trader base6-103
+        4 Pokémon Trader base6-103
         3 Double Gust neo1-100
         14 Grass Energy ecard1-162
         `,
@@ -4107,7 +4117,7 @@ const decklistsByYear = {
         1 Mewtwo basep-14
         3 Professor Oak base1-88
         3 Computer Search base1-71
-        3 Pokemon Trader base1-77
+        3 Pokémon Trader base1-77
         2 Sabrina's ESP gym1-117
         2 Super Energy Removal base1-79
         1 Gust of Wind base1-93
@@ -4125,7 +4135,7 @@ const decklistsByYear = {
         3 Articuno base1-17
         2 Lapras base1-25
         3 Computer Search base1-71
-        3 Pokemon Trader base1-77
+        3 Pokémon Trader base1-77
         3 Computer Error basep-16
         3 Super Energy Removal base1-79
         2 Super Potion base1-90
@@ -4144,7 +4154,7 @@ const decklistsByYear = {
         1 Kangaskhan base4-26
         1 The Rocket's Training Gym gym1-104
         3 Professor Oak base1-88
-        3 Pokemon Trader base1-77
+        3 Pokémon Trader base1-77
         3 Super Energy Removal base1-79
         2 Computer Search base1-71
         2 Gust of Wind base1-93
@@ -4168,10 +4178,10 @@ const decklistsByYear = {
         2 Dodrio base2-34
         2 Resistance Gym gym2-109
         3 Computer Search base1-71
-        3 Pokemon Trader base1-77
+        3 Pokémon Trader base1-77
         3 Professor Oak base1-88
         3 The Boss's Way base5-73
-        1 Pokemon Breeder base1-76
+        1 Pokémon Breeder base1-76
         15 Psychic Energy base1-101
         3 Double Colorless Energy base1-96
         `,
@@ -4188,7 +4198,7 @@ const decklistsByYear = {
         2 Chaos Gym gym2-102
         3 Computer Search base1-71
         3 Professor Oak base1-88
-        3 Pokemon Trader base1-77
+        3 Pokémon Trader base1-77
         2 Gust of Wind base1-93
         1 Super Energy Removal base1-79
         1 Scoop Up base1-78
@@ -4312,7 +4322,7 @@ const decklistsByYear = {
         3 Super Energy Removal base1-79
         3 Professor Oak base1-88
         3 Item Finder base1-74
-        1 Pokemon Center base1-85
+        1 Pokémon Center base1-85
         1 Computer Search base1-71
         1 PlusPower base1-84
         1 Nightly Garbage Run base5-77
@@ -4333,7 +4343,7 @@ const decklistsByYear = {
         4 Bill base1-91
         4 Professor Oak base1-88
         2 Switch base1-95
-        2 Pokemon Breeder base1-76
+        2 Pokémon Breeder base1-76
         2 The Boss's Way base5-73
         1 Gust of Wind base1-93
         9 Psychic Energy base1-101
@@ -4357,7 +4367,7 @@ const decklistsByYear = {
         4 PlusPower base1-84
         4 Item Finder base1-74
         2 Gust of Wind base1-93
-        2 Pokemon Trader base1-77
+        2 Pokémon Trader base1-77
         2 Maintenance base1-83
         2 Switch base1-95
         1 Energy Removal base1-92
@@ -4380,8 +4390,8 @@ const decklistsByYear = {
         4 Computer Search base1-71
         4 Bill base1-91
         4 Professor Oak base1-88
-        4 Pokemon Trader base1-77
-        4 Pokemon Breeder base1-76
+        4 Pokémon Trader base1-77
+        4 Pokémon Breeder base1-76
         1 Maintenance base1-83
         4 Double Colorless Energy base1-96
         4 Full Heal Energy base5-81
@@ -4471,12 +4481,12 @@ const decklistsByYear = {
         3 Item Finder base1-74
         3 Professor Oak base1-88
         3 Switch base1-95
-        2 Pokemon Center base1-85
+        2 Pokémon Center base1-85
         2 Computer Search base1-71
-        2 Pokemon Trader base1-77
+        2 Pokémon Trader base1-77
         1 Gust of Wind base1-93
         1 Gambler base1-60
-        1 Pokemon Breeder base1-76
+        1 Pokémon Breeder base1-76
 
         Energy (17)
         9 Psychic Energy base1-101
@@ -4498,7 +4508,7 @@ const decklistsByYear = {
         4 Item Finder base1-74
         3 Lass base1-75
         2 Switch base1-95
-        2 Pokemon Trader base1-77
+        2 Pokémon Trader base1-77
         2 Maintenance base1-83
         2 Defender base1-80
         2 Energy Removal base1-92
@@ -4524,8 +4534,8 @@ const decklistsByYear = {
         3 Super Energy Removal base1-79
         2 Gust of Wind base1-93
         2 PlusPower base1-84
-        2 Pokemon Center base1-85
-        2 Pokemon Trader base1-77
+        2 Pokémon Center base1-85
+        2 Pokémon Trader base1-77
         2 Item Finder base1-74
         1 Energy Retrieval base1-81
         1 Lass base1-75
@@ -4552,7 +4562,7 @@ const decklistsByYear = {
         2 Super Energy Removal base1-79
         2 Item Finder base1-74
         1 Lass base1-75
-        1 Pokemon Center base1-85
+        1 Pokémon Center base1-85
         1 Computer Search base1-71
         1 Mr. Fuji base1-58
 
@@ -4577,7 +4587,7 @@ const decklistsByYear = {
         4 Energy Retrieval base1-81
         3 Lass base1-75
         2 Professor Oak base1-88
-        2 Pokemon Trader base1-77
+        2 Pokémon Trader base1-77
         2 Item Finder base1-74
         1 PlusPower base1-84
         1 Gust of Wind base1-93
@@ -4607,7 +4617,7 @@ const decklistsByYear = {
         3 Energy Removal base1-92
         1 PlusPower base1-84
         1 Gust of Wind base1-93
-        1 Pokemon Center base1-85
+        1 Pokémon Center base1-85
         1 Mr. Fuji base1-58
 
         Energy (18)
@@ -4625,7 +4635,7 @@ const decklistsByYear = {
         4 Professor Oak base1-88
         4 Bill base1-91
         4 Computer Search base1-71
-        4 Pokemon Breeder base1-76
+        4 Pokémon Breeder base1-76
         4 Energy Retrieval base1-81
         3 Item Finder base1-74
         2 Switch base1-95
@@ -4652,8 +4662,8 @@ const decklistsByYear = {
         4 Energy Retrieval base1-81
         4 Bill base1-91
         2 Professor Oak base1-88
-        2 Pokemon Center base1-85
-        2 Pokemon Trader base1-77
+        2 Pokémon Center base1-85
+        2 Pokémon Trader base1-77
         2 Item Finder base1-74
         1 Super Energy Removal base1-79
         1 Gust of Wind base1-93
@@ -4681,7 +4691,7 @@ const decklistsByYear = {
         2 PlusPower base1-84
         2 Gust of Wind base1-93
         2 Item Finder base1-74
-        1 Pokemon Trader base1-77
+        1 Pokémon Trader base1-77
         1 Lass base1-75
 
         Energy (17)

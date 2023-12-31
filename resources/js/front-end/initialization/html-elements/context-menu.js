@@ -8,7 +8,8 @@ export const shufflePrizesButton = document.getElementById('shufflePrizesButton'
 export const lookPrizesButton = document.getElementById('lookPrizesButton');
 export const revealHidePrizesButton = document.getElementById('revealHidePrizesButton');
 
-export const lookHandButton = document.getElementById('lookHandButton');
+export const revealHideHandButton = document.getElementById('revealHideHandButton');
+export const revealRandomHandButton = document.getElementById('revealRandomHandButton');
 export const discardHandButton = document.getElementById('discardHandButton');
 export const shuffleHandButton = document.getElementById('shuffleHandButton');
 export const shuffleHandBottomButton = document.getElementById('shuffleHandBottomButton');
@@ -32,7 +33,7 @@ export const lostzoneBoardButton = document.getElementById('lostzoneBoardButton'
 export const changeButton = document.getElementById('changeButton');
 export const changeToEnergyButton = document.getElementById('changeToEnergyButton');
 export const changeToToolButton = document.getElementById('changeToToolButton');
-export const changeToPokemonButton = document.getElementById('changeToPokemonButton');
+export const changeToPokémonButton = document.getElementById('changeToPokémonButton');
 
 //options context menu
 

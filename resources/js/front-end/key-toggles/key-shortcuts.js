@@ -4,6 +4,7 @@ import { shuffleContainer } from '../actions/container/shuffle-container.js';
 import { addAbilityCounter } from '../actions/counters/ability-counter.js';
 import { addDamageCounter } from '../actions/counters/damage-counter.js';
 import { addSpecialCondition } from '../actions/counters/special-condition.js';
+import { changeType } from '../actions/general/change-type.js';
 import { discardBoard, handBoard, lostzoneBoard, shuffleBoard } from '../actions/general/clear-board.js';
 import { closeContainerPopups, closeFullView, closePopups, deselectCard } from '../actions/general/close-popups.js';
 import { flipBoard } from '../actions/general/flip-board.js';
@@ -16,7 +17,7 @@ import { setup } from '../actions/general/setup.js';
 import { takeTurn } from '../actions/general/take-turn.js';
 import { sCard, keybindModal, target, deck, oppDeck, POV, deck_html, oppDeck_html, active, bench, oppActive, oppBench, p1, socket, roomId, stadium } from '../front-end.js';
 import { doubleClick } from '../image-logic/click-events.js';
-import { moveCardMessage } from '../setup/chatbox/location-name.js';
+import { moveCardMessage } from '../setup/chatbox/determine-location-name.js';
 import { appendMessage } from '../setup/chatbox/messages.js';
 import { variableToString } from '../setup/containers/string-to-variable.js';
 import { determineUsername } from '../setup/general/determine-username.js';
@@ -142,11 +143,11 @@ export const keyDown = (event) => {
             } else if (event.key === 's'){
                 shuffleIntoDeck();
             } else {
-                moveCardMessage(POV.user, sCard.card.name, sCard.locationAsString, target.locationAsString, 'move', sCard.card.image.attached, sCard.card.image.faceDown);
+                moveCardMessage(POV.user, sCard.card.name, sCard.locationAsString, target.locationAsString, 'move', sCard.card.image.attached, sCard.card.image.faceDown, sCard.card.image.faceUp);
                 moveCard(sCard.user, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
             };
         };
-        if ((event.key === 'e' || event.key === 'q') && (!['active', 'bench'].includes(sCard.locationAsString) || sCard.card.image.attached)){
+        if ((event.key === 'e' || event.key === 'q') && !event.altKey && (!['active', 'bench'].includes(sCard.locationAsString) || sCard.card.image.attached)){
             closeFullView(event);
             closeContainerPopups();
             deselectCard();
@@ -273,13 +274,30 @@ export const keyDown = (event) => {
                 stopLookingShortcut(sCard.user, sCard.locationAsString, sCard.index);
             };
         };
-        if (event.key === 'z'){
+        if (event.key === 'z' && !event.altKey){
             let rootDirectory = window.location.origin;
-            if (sCard.card.image.src === rootDirectory + '/resources/card-scans/cardback.png'){
-                revealShortcut(sCard.user, sCard.locationAsString, sCard.index);
-            } else {
+            if (sCard.card.image.src !== rootDirectory + '/resources/card-scans/cardback.png'){
                 hideShortcut(sCard.user, sCard.locationAsString, sCard.index);
             };
+        };
+        if (event.key === 'z' && event.altKey){
+            revealShortcut(sCard.user, sCard.locationAsString, sCard.index);
+        };
+
+        if (event.key === 'e' && event.altKey){
+            changeType(sCard.user, sCard.locationAsString, sCard.index, 'Energy');
+            appendMessage(sCard.user, determineUsername(sCard.user) + ' changed ' + sCard.card.name + ' into an energy', 'player');
+            moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'board', 'board_html', sCard.index);        
+        };
+        if (event.key === 'p' && event.altKey){
+            changeType(sCard.user, sCard.locationAsString, sCard.index, 'Pokémon');
+            appendMessage(sCard.user, determineUsername(sCard.user) + ' changed ' + sCard.card.name + ' into a Pokémon', 'player');
+            moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'board', 'board_html', sCard.index);       
+        };
+        if (event.key === 't' && event.altKey){
+            changeType(sCard.user, sCard.locationAsString, sCard.index, 'Trainer');
+            appendMessage(sCard.user, determineUsername(sCard.user) + ' changed ' + sCard.card.name + ' into a tool', 'player');
+            moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'board', 'board_html', sCard.index);        
         };
     };
 }

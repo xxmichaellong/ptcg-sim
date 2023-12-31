@@ -433,16 +433,18 @@ body, input, textarea, button {
   background-color: #adadad; /* Darker blue on hover */
 }
 .stack-button-container {
-  position: relative;
-  width: 96%;
-  left: 50%;
-  transform: translateX(-50%);
+  position: sticky;
+  top: 0;
+  width: 100%;
+  left: 0;
   background-color: #dddddd;
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
   text-align: center;
   padding: 5px;
-  border-radius: 15px; /* More rounded corners */
+  border-radius: 0 0 15px 15px;
   margin-bottom: 1%;
+  z-index: 1;
+  box-sizing: border-box;
 }
 .stack-container {
   display: none;
@@ -451,7 +453,7 @@ body, input, textarea, button {
   border: 1px solid #ccc;
   border-radius: 15px 15px 15px 15px;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
-  padding: 10px 20px 20px 20px;
+  padding: 0px 20px 20px 20px;
   width: 85%;
   height: 75%;
   overflow-y: auto;
@@ -510,4 +512,7 @@ body, input, textarea, button {
 }
 .reset-rotation {
   transform: rotate(0deg) !important;
+}
+.high-zIndex {
+  z-index: 1 !important;
 }

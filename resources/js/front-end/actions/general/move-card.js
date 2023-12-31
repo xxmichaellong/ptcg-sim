@@ -12,7 +12,7 @@ import { addSpecialCondition } from '../counters/special-condition.js';
 import { addAbilityCounter } from '../counters/ability-counter.js';
 import { sort } from './sort.js';
 import { matchRotation, resetRotation } from './rotate-card.js';
-import { moveCardMessage } from '../../setup/chatbox/location-name.js';
+import { moveCardMessage } from '../../setup/chatbox/determine-location-name.js';
 
 export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_html, index, targetIndex, received = false) => {
     deselectCard(); //remove highlight from all images before it's moved
@@ -143,7 +143,7 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
             targetCard.image.after(movingCard.image);
             targetCard.image.attached = true;
             targetCard.image.relative = movingCard.image;
-            //if counters exists, link the textcontent with the new pokemon card
+            //if counters exists, link the textcontent with the new Pokémon card
             if (targetCard.image.damageCounter){
                 addDamageCounter(user, _mLocation, _mLocation_html, mLocation.cards.length - 1, true);
                 movingCard.image.damageCounter.textContent = targetCard.image.damageCounter.textContent;
@@ -219,7 +219,7 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
 
             targetCard.image.after(movingCard.image);
 
-            // move tools to the back of the image, index cannot be zero to prevent being called when evolving pokemon
+            // move tools to the back of the image, index cannot be zero to prevent being called when evolving Pokémon
             if (movingCard.type === 'Energy' && nonEvolveAttachment){
                 for (let i = 0; i < mLocation.count - 1; i++){
                     if (mLocation.cards[i].image.relative === movingCard.image.relative && !['Pokémon', 'Energy'].includes(mLocation.cards[i].type)){
@@ -242,7 +242,7 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
             } else {
                 container = oppContainersDocument.createElement('div');
             };
-            if (movingCard.image.pokemonBreak && ['active', 'bench'].includes(_mLocation)){
+            if (movingCard.image.PokémonBreak && ['active', 'bench'].includes(_mLocation)){
                 container.style.marginRight = '3%';
                 container.style.marginLeft = '2%';
             };
@@ -367,7 +367,7 @@ export const moveCard = (user, oLocation, oLocation_html, mLocation, mLocation_h
                 moveCardMessage(POV.user, mLocation.cards[0].name, 'active', 'bench', 'move', false, mLocation.cards[0].image.faceDown);
             };
             moveCard(user, 'active', 'active_html', 'bench', 'bench_html', 0, false, true);
-        } else if (['bench_html'].includes(_mLocation_html) // case 2: no target, only one pokemon on bench
+        } else if (['bench_html'].includes(_mLocation_html) // case 2: no target, only one Pokémon on bench
         && ['active_html'].includes(_oLocation_html)
         && mLocation.cards.filter(card => !card.image.attached).length === 2
         && oLocation.cards.filter(card => !card.image.attached).length === 0

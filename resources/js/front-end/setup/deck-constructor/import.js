@@ -315,7 +315,7 @@ confirmButton.addEventListener('click', () => {
     };
 })
        
-function downloadCSV(csv, filename) {
+const downloadCSV = (csv, filename) => {
     let csvFile;
     let downloadLink;
 
@@ -341,7 +341,7 @@ function downloadCSV(csv, filename) {
     downloadLink.click();
 }
 
-function exportTableToCSV(filename) {
+const exportTableToCSV = (filename) => {
     let csv = [];
     let rows = document.querySelectorAll("#decklistTable tr");
     

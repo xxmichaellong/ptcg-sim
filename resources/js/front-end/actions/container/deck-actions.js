@@ -1,5 +1,5 @@
 import { POV, deck, oppDeck, oppViewCards_html, p1, roomId, sCard, socket, viewCards_html } from '../../front-end.js';
-import { moveCardMessage } from '../../setup/chatbox/location-name.js';
+import { moveCardMessage } from '../../setup/chatbox/determine-location-name.js';
 import { appendMessage } from '../../setup/chatbox/messages.js';
 import { determineUsername } from '../../setup/general/determine-username.js';
 import { moveCard } from '../general/move-card.js';
@@ -7,13 +7,13 @@ import { hideCards } from '../general/reveal-and-hide.js';
 import { shuffleContainer } from './shuffle-container.js';
 
 export const shuffleIntoDeck = () => {
-    moveCardMessage(POV.user, sCard.card.name, sCard.locationAsString, 'deck', 'shuffle', sCard.card.image.attached, sCard.card.image.faceDown);
+    moveCardMessage(POV.user, sCard.card.name, sCard.locationAsString, 'deck', 'shuffle', sCard.card.image.attached, sCard.card.image.faceDown, sCard.card.image.faceUp);
     moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'deck', 'deck_html', sCard.index);    
     shuffleContainer(sCard.user, 'deck', 'deck_html');
 }
 
 export const moveToDeckTop = () => {
-    moveCardMessage(POV.user, sCard.card.name, sCard.locationAsString, 'deck', 'top', sCard.card.image.attached, sCard.card.image.faceDown);
+    moveCardMessage(POV.user, sCard.card.name, sCard.locationAsString, 'deck', 'top', sCard.card.image.attached, sCard.card.image.faceDown, sCard.card.image.faceUp);
     moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'deck', 'deck_html', sCard.index);
     //since card is appended to bottom, move all existing cards in deck to the bottom afterwards
     const deckCount = sCard.user === 'self' ? deck.count : oppDeck.count;
@@ -23,12 +23,12 @@ export const moveToDeckTop = () => {
 }
 
 export const moveToDeckBottom = () => {
-    moveCardMessage(POV.user, sCard.card.name, sCard.locationAsString, 'deck', 'bottom', sCard.card.image.attached, sCard.card.image.faceDown);
+    moveCardMessage(POV.user, sCard.card.name, sCard.locationAsString, 'deck', 'bottom', sCard.card.image.attached, sCard.card.image.faceDown, sCard.card.image.faceUp);
     moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'deck', 'deck_html', sCard.index);
 }
 
 export const moveToBoard = () => {
-    moveCardMessage(POV.user, sCard.card.name, sCard.locationAsString, 'board', 'move', sCard.card.image.attached, sCard.card.image.faceDown);
+    moveCardMessage(POV.user, sCard.card.name, sCard.locationAsString, 'board', 'move', sCard.card.image.attached, sCard.card.image.faceDown, sCard.card.image.faceUp);
     moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'board', 'board_html', sCard.index);
 }
 
@@ -111,7 +111,7 @@ export const viewDeck = (user, viewAmount, top, deckCount, targetOpp, received =
 }
 
 export const switchWithDeckTop = () => {
-    moveCardMessage(POV.user, sCard.card.name, sCard.locationAsString, 'deck', 'switch', sCard.card.image.attached, sCard.card.image.faceDown);
+    moveCardMessage(POV.user, sCard.card.name, sCard.locationAsString, 'deck', 'switch', sCard.card.image.attached, sCard.card.image.faceDown, sCard.card.image.faceUp);
     //first part is moving a card to the top of the deck
     moveCard(sCard.user, sCard.locationAsString, sCard.containerId, 'deck', 'deck_html', sCard.index);
     const initialDeckCount = sCard.user === 'self' ? deck.count : oppDeck.count;
