@@ -1,4 +1,4 @@
-import { FREEBUTTON, POV, attackButton, board_html, oppBoard_html, oppContainers, oppContainersDocument, oppResizer, p2AttackButton, p2FREEBUTTON, p2PassButton, p2ResetButton, p2SetupButton, passButton, resetButton, selfContainers, selfContainersDocument, selfResizer, setupButton, stadium, stadium_html } from '../../front-end.js';
+import { FREEBUTTON, POV, attackButton, board_html, oppBoard_html, oppContainers, oppContainersDocument, oppResizer, oppViewCards_html, p2AttackButton, p2FREEBUTTON, p2PassButton, p2ResetButton, p2SetupButton, passButton, resetButton, selfContainers, selfContainersDocument, selfResizer, setupButton, stadium, stadium_html, viewCards_html } from '../../front-end.js';
 import { flippedOppHandleMouseDown, flippedSelfHandleMouseDown, oppHandleMouseDown, selfHandleMouseDown } from '../../setup/sizing/resizer.js';
 import { reloadBoard } from '../../setup/sizing/reload-board.js';
 
@@ -15,6 +15,9 @@ export const flipBoard = () => {
         oppResizer.removeEventListener('mousedown', flippedOppHandleMouseDown);
     };
 
+    viewCards_html.classList.toggle('flip-image');
+    oppViewCards_html.classList.toggle('flip-image');
+    
     const toggleClasses = (element, class1, class2) => {
         element.classList.toggle(class1);
         element.classList.toggle(class2);

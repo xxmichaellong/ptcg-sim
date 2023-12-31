@@ -63,6 +63,9 @@ body, input, textarea, button {
   top: 0%;
   left: 50%;
 }
+.flip-image img {
+  transform: scaleX(-1) scaleY(-1) !important;
+}
 .highlight {
   box-shadow: 0 0 0 4px rgb(182, 110, 110) !important;
   background-color: rgba(188, 90, 113, 0.3) !important;
@@ -369,8 +372,9 @@ body, input, textarea, button {
   border-radius: 15px 15px 0 0;
   color: white; /* White text */
   font-size: clamp(12px, 3vh, 20px);
-  background-color:rgba(224, 97, 75, 0.864); 
-  border: 2px solid #ff0000;
+  background-color: rgb(196 112 131);
+  border: 2px solid #c47083;
+  box-sizing: border-box;
 }
 .self-header {
   transform: translate(-50%, -50%);
@@ -410,6 +414,16 @@ body, input, textarea, button {
 }
 .opp-button-container {
   display: none;
+  /* position: absolute;
+  bottom: 0%;
+  width: 96%;
+  left: 50%;
+  transform: translateX(-50%) scaleX(-1) scaleY(-1);
+  background-color: #dddddd;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  padding: 10px;
+  border-radius: 15px; */
 }
 .action-button {
   margin: 0 5px;

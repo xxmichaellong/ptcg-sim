@@ -4358,7 +4358,7 @@ const decklistsByYear = {
         2 Machoke base1-34
         2 Chansey base1-3
         1 Ponyta base1-60
-        1 Mewtwo WBSP 14
+        1 Mewtwo basep-14
         1 Staryu base1-65
         4 Professor Oak base1-88
         4 Computer Search base1-71
