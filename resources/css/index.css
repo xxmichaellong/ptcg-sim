@@ -58,7 +58,7 @@ h1 {
 ul, li {
   margin: 0;
   padding: 0;
-  font-size: 1.8vh; /* Adjust the font size using vw unit */
+  font-size: 1.7vh; /* Adjust the font size using vw unit */
 }
 .column ul ul {
   margin-left: 10px;
@@ -66,7 +66,7 @@ ul, li {
 .column ul ul li {
   margin-bottom: 1px;
   margin-top: 0;
-  font-size: 1.75vh; /* Adjust the font size using vw unit */
+  font-size: 1.7vh; /* Adjust the font size using vw unit */
 }
 .column ul li {
   margin-top: 1vh;
