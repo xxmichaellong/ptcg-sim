@@ -1,2 +1,2 @@
 # ptcg sim
-how to run it locally
+-instructions for local testing to be added
