@@ -9,7 +9,7 @@ export const tutorialButton = document.getElementById('tutorialButton');
 
 //settings
 export const darkModeCheckbox = document.getElementById('darkModeCheckbox');
-export const showContainersCheckbox = document.getElementById('showContainersCheckbox');
+export const showZonesCheckbox = document.getElementById('showZonesCheckbox');
 export const settingsToggles = document.getElementById('settingsToggles');
 
 //deck import

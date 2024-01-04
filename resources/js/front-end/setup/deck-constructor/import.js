@@ -1,37 +1,9 @@
 import { reset } from "../../actions/general/reset.js";
-import { altDeckImportInput, cancelButton, confirmButton, decklistsButton, failedText, importButton, invalid, loadingText, mainDeckImportInput, oppContainers, p1, p1Button, p2Button, roomId, saveButton, selfContainers, socket } from "../../front-end.js";
+import { altDeckImportInput, cancelButton, confirmButton, decklistsButton, failedText, importButton, invalid, loadingText, mainDeckImportInput, oppContainers, systemState, p1Button, p2Button, saveButton, selfContainers, socket } from "../../front-end.js";
 import { appendMessage } from "../chatbox/messages.js";
 import { determineUsername } from "../general/determine-username.js";
 import { show } from "../home-header/header-toggle.js";
 import { getCardType } from "./find-type.js";
-
-export const mainDeckData = [];
-export const altDeckData = [];
-
-const assembleCard = (quantity, name, type, imageURL, ) => {
-    const imageAttributes = {
-        src: imageURL,
-        alt: name,
-        draggable: true,
-        click: 'imageClick',
-        dblclick: 'doubleClick',
-        dragstart: 'dragStart',
-        dragover: 'dragOver',
-        dragleave: 'dragLeave',
-        dragend: 'dragEnd',
-        id: 'card',
-        contextmenu: 'openCardContextMenu'
-    };
-    const cardAttributes = {
-        name: name,
-        type: type,
-    };
-
-    const rawCardAttributes = JSON.stringify(cardAttributes);
-    const rawImageAttributes = JSON.stringify(imageAttributes);
-
-    return [quantity, rawCardAttributes, rawImageAttributes];
-}
 
 export const importDecklist = (user) => {
     failedText.style.display = 'none';
@@ -80,6 +52,7 @@ export const importDecklist = (user) => {
             .then(({data}) => {
                 const index = decklistArray.findIndex(item => item[2] === id && item[3] === null);
                 decklistArray[index] = [parseInt(quantity), name, id, data.images.large, data.supertype]
+
             })
             .catch((error) => {
                 console.error('Error:', error);
@@ -184,7 +157,7 @@ export const importDecklist = (user) => {
             })
             .then(response => response.json())
             .then(({data}) => {
-                const index = decklistArray.findIndex(item => item[2] === id);
+                const index = decklistArray.findIndex(item => item[2] === id && item[3] === null);
                 if (index !== -1) {
                     decklistArray[index] = [parseInt(quantity), name, id, data.images.large, data.supertype];
                 }
@@ -205,7 +178,6 @@ export const importDecklist = (user) => {
         const decklistTable = document.getElementById('decklistTable')
         let tableBody = decklistTable.getElementsByTagName('tbody')[0];
         decklistTable.style.display = 'block';
-
         decklistArray.forEach(([quantity, name, , url, type]) => {
             let newRow = tableBody.insertRow();
             
@@ -225,9 +197,9 @@ export const importDecklist = (user) => {
             typeCell.innerHTML = type;
         });
         importButton.disabled = false;
-        loadingText.style.display = 'none';
         selfContainers.style.zIndex = -1;
         oppContainers.style.zIndex = -1;
+        loadingText.style.display = 'none';
         decklistsButton.style.display = 'none';
         importButton.style.display = 'none';
         confirmButton.style.display = 'block';
@@ -265,10 +237,10 @@ confirmButton.addEventListener('click', () => {
     saveButton.style.display = 'none';
 
     const user = mainDeckImportInput.style.display !== 'none' ? 'self' : 'opp';
-    let deckData = [];
     const decklistTable = document.getElementById('decklistTable')
     let tableBody = decklistTable.getElementsByTagName('tbody')[0];
     let rows = tableBody.rows;
+    let deckData = [];
     for (let i = 0; i < rows.length; i++) {
         let cells = rows[i].cells;
         
@@ -277,38 +249,34 @@ confirmButton.addEventListener('click', () => {
         let type = cells[2].innerText;
         let url = cells[3].innerText;
 
-        // Call assembleCard and store the result in deckData
-        let cardData = assembleCard(quantity, name, type, url);
+        let cardData = [quantity, name, type, url];
         deckData.push(cardData);
     };
     while (tableBody.firstChild) {
         tableBody.removeChild(tableBody.firstChild);
     };
     decklistTable.style.display = 'none';
-    // let deckData;
-    // deckData = decklistArray.map(card => assembleCard(...card));
     if (user === 'self'){
-        mainDeckData[0] = deckData;
+        systemState.selfDeckData = deckData;
     } else {
-        altDeckData[0] = deckData;
+        systemState.p1OppDeckData = deckData;
     };
-    if (p1[0]){
+    if (!systemState.isTwoPlayer){
         show('p1Box', p1Button);
     } else if (user === 'self'){
         show('p2Box', p2Button);
     };
-    reset(user, true, true, true, false);
-    if (!(user === 'opp' && !p1[0])){
-        appendMessage(user, determineUsername(user) + ' imported deck', 'announcement', true);
+    reset(user, true, false, true, false);
+    if (!(user === 'opp' && systemState.isTwoPlayer)){
+        appendMessage(user, determineUsername(user) + ' imported deck', 'announcement', false);
     } else {
         invalid.style.display = 'block';
     };
-
     if (user === 'self'){
         const oUser = user === 'self' ? 'opp' : 'self';
         const data = {
-            roomId : roomId[0],
-            deckData : mainDeckData[0],
+            roomId : systemState.roomId,
+            deckData : systemState.selfDeckData,
             user: oUser
         };
         socket.emit('deckData', data);
@@ -354,7 +322,6 @@ const exportTableToCSV = (filename) => {
         csv.push(row.join(","));        
     }
 
-    // Download CSV file
     downloadCSV(csv.join("\n"), filename);
 }
 
@@ -363,39 +330,40 @@ saveButton.addEventListener('click', () => {
 });
 
 document.getElementById('csvFile').addEventListener('change', function(evt) {
-    const decklistTable = document.getElementById('decklistTable')
-    decklistTable.style.display = 'block';
+    const decklistTable = document.getElementById('decklistTable');
     importButton.disabled = false;
-    loadingText.style.display = 'none';
     selfContainers.style.zIndex = -1;
     oppContainers.style.zIndex = -1;
+    loadingText.style.display = 'none';
     decklistsButton.style.display = 'none';
     importButton.style.display = 'none';
     failedText.style.display = 'none';
+    decklistTable.style.display = 'block';
     confirmButton.style.display = 'block';
     cancelButton.style.display = 'block';
     saveButton.style.display = 'block';
+
     let file = evt.target.files[0];
     let reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = (e) => {
         let contents = e.target.result;
         let lines = contents.split('\n');
         let tableBody = document.getElementById('decklistTable').getElementsByTagName('tbody')[0];
         // Clear the table body
         while (tableBody.firstChild) {
             tableBody.removeChild(tableBody.firstChild);
-        }
-        // Populate the table with the CSV data, skipping the first line
+        };
+        // Populate the table with the CSV data, skipping the first line (i.e., the headers)
         for (let i = 1; i < lines.length; i++) {
             let cells = lines[i].split(',');
             let newRow = tableBody.insertRow();
             for (let j = 0; j < cells.length; j++) {
                 let newCell = newRow.insertCell();
                 newCell.innerText = cells[j];
-            }
-        }
+                newCell.contentEditable = "true";
+            };
+        };
     };
     reader.readAsText(file);
     evt.target.value = '';
 });
-

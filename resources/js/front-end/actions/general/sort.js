@@ -1,44 +1,43 @@
-import { oppDeckSortCheckBox, oppDiscardSortCheckBox, oppLostzoneSortCheckBox, selfDeckSortCheckBox, selfDiscardSortCheckBox, selfLostzoneSortCheckBox } from "../../front-end.js";
+import { oppDeckSortCheckBox, oppDiscardSortCheckBox, opplostZoneSortCheckBox, selfDeckSortCheckBox, selfDiscardSortCheckBox, selflostZoneSortCheckBox } from "../../front-end.js";
 import { removeImages } from "../../image-logic/remove-images.js";
-import { stringToVariable } from "../../setup/containers/string-to-variable.js";
+import { stringToVariable } from "../../setup/zones/zone-string-to-variable.js";
 import { determineDeckData } from "../../setup/general/determine-deckdata.js";
 
-export const sort = (user, location, location_html) => {
+export const sort = (user, zoneArrayString, zoneElementString) => {
     let checkbox;
     const selfCheckboxMap = {
-        'deck': selfDeckSortCheckBox,
-        'discard': selfDiscardSortCheckBox,
-        'lostzone': selfLostzoneSortCheckBox
+        'deckArray': selfDeckSortCheckBox,
+        'discardArray': selfDiscardSortCheckBox,
+        'lostZoneArray': selflostZoneSortCheckBox
     };
     const oppCheckboxMap = {
-        'deck': oppDeckSortCheckBox,
-        'discard': oppDiscardSortCheckBox,
-        'lostzone': oppLostzoneSortCheckBox
+        'deckArray': oppDeckSortCheckBox,
+        'discardArray': oppDiscardSortCheckBox,
+        'lostZoneArray': opplostZoneSortCheckBox
     };
       
     if (user === 'self') {
-        checkbox = selfCheckboxMap[location];
+        checkbox = selfCheckboxMap[zoneArrayString];
     } else {
-        checkbox = oppCheckboxMap[location];
+        checkbox = oppCheckboxMap[zoneArrayString];
     };
     
     const deckData = determineDeckData(user);
-    location = stringToVariable(user, location);
-    location_html = stringToVariable(user, location_html);
+    const zoneArray = stringToVariable(user, zoneArrayString);
+    const zoneElement = stringToVariable(user, zoneElementString);
 
-    removeImages(location_html);
+    removeImages(zoneElement);
 
     if (checkbox.checked){
         deckData.forEach(entry => {
-            const cardAttributes = JSON.parse(entry[1]);
-            const name = cardAttributes.name;
-            location.cards.forEach(card => {
+            const name = entry[1];
+            zoneArray.forEach(card => {
                 if (card.name === name){
-                    location_html.appendChild(card.image);
+                    zoneElement.appendChild(card.image);
                 };
             });
         });
     } else {
-        location.cards.forEach(card => location_html.appendChild(card.image));
+        zoneArray.forEach(card => zoneElement.appendChild(card.image));
     };
 }

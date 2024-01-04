@@ -1,34 +1,30 @@
-import { connectedRoom, lobby, p1, roomIdInput, socket, p2SelfUsername, p2OppUsername, roomHeaderText, roomId, chatbox, POV, p2ExplanationBox } from '../front-end.js'
+import { connectedRoom, lobby, systemState, socket, roomHeaderText, chatbox, p2ExplanationBox } from '../front-end.js'
 import { appendMessage } from '../setup/chatbox/messages.js'
-import { moveCard } from '../actions/general/move-card.js'
+import { moveCard } from '../actions/move-card-logic/move-card.js'
 import { takeTurn } from '../actions/general/take-turn.js'
 import { reset } from '../actions/general/reset.js'
 import { VSTARGXFunction } from '../actions/general/VSTAR-GX.js'
 import { addDamageCounter } from '../actions/counters/damage-counter.js'
-import { stringToVariable } from '../setup/containers/string-to-variable.js'
+import { stringToVariable } from '../setup/zones/zone-string-to-variable.js'
 import { addSpecialCondition } from '../actions/counters/special-condition.js'
-import { shuffleContainer } from '../actions/container/shuffle-container.js'
-import { viewDeck } from '../actions/container/deck-actions.js'
+import { shuffleZone } from '../actions/zones/shuffle-zone.js'
+import { viewDeck } from '../actions/zones/deck-actions.js'
 import { addAbilityCounter } from '../actions/counters/ability-counter.js'
 import { resetCounters } from '../actions/counters/reset-ability-counters.js'
 import { flipBoard } from '../actions/general/flip-board.js'
-import { exchangeData, p2DeckData } from './fetch-opp-data.js'
-import { mainDeckData } from '../setup/deck-constructor/import.js'
+import { exchangeData } from './fetch-opp-data.js'
 import { determineUsername } from '../setup/general/determine-username.js'
 import { rotateCard } from '../actions/general/rotate-card.js'
 import { hideShortcut, revealShortcut, stopLookingShortcut } from '../actions/general/reveal-and-hide.js'
 import { changeType } from '../actions/general/change-type.js'
 
-socket.on('generateId', (id) => {
-    roomIdInput.value = id;
-});
 socket.on('joinGame', () => {
-    p1[0] = false;
-    reset('opp', true, true, false);
-    reset('self', true, false, true, false);
-    roomHeaderText.textContent = 'id: ' + roomId[0];
+    systemState.isTwoPlayer = true;
+    reset('opp', true, false, false);
+    reset('self', true, true, true, false);
+    roomHeaderText.textContent = 'id: ' + systemState.roomId;
     chatbox.innerHTML = '';
-    if (POV.user === 'opp'){
+    if (systemState.pov.user === 'opp'){
         flipBoard();
     };
     connectedRoom.style.display = 'flex';
@@ -36,16 +32,16 @@ socket.on('joinGame', () => {
     p2ExplanationBox.style.display = 'none';
     exchangeData()
         .then(() => {
-            reset('opp', true, false, true, false);
-            appendMessage('opp', p2OppUsername[0] + ' is here!', 'announcement', true);
+            reset('opp', true, true, true, false);
+            appendMessage('opp', systemState.p2OppUsername + ' is here!', 'announcement', false);
         })
         .catch((error) => {
             console.log(error);
         });
-    appendMessage('self', p2SelfUsername[0] + ' joined', 'announcement', true);
+    appendMessage('self', systemState.p2SelfUsername + ' joined', 'announcement', false);
 });
 socket.on('leaveGameMessage', (otherPlayerUsername) => {
-    appendMessage('opp', otherPlayerUsername + ' left', 'announcement', true);
+    appendMessage('opp', otherPlayerUsername + ' left', 'announcement', false);
 });
 socket.on('roomReject', () => {
     let overlay = document.createElement('div');
@@ -80,97 +76,97 @@ socket.on('roomReject', () => {
 });
 
 socket.on('exchangeData', (data) => {
-    p2OppUsername[0] = data.username;
-    p2DeckData[0] = data.deckData;
-    appendMessage('opp', p2OppUsername[0] + ' joined', 'announcement', true);
-    reset('opp', true, false, true, false);
+    systemState.p2OppUsername = data.username;
+    systemState.p2OppDeckData = data.deckData;
+    appendMessage('opp', systemState.p2OppUsername + ' joined', 'announcement', false);
+    reset('opp', true, true, true, false);
     const exchangeData = {
-        roomId : roomId,
-        username : p2SelfUsername,
-        deckData : mainDeckData[0]
+        roomId : systemState.roomId,
+        username : systemState.p2SelfUsername,
+        deckData : systemState.selfDeckData,
     };
     socket.emit('sentData', exchangeData);
 });
 socket.on('deckData', (data) => {
-    p2DeckData[0] = data.deckData;
-    appendMessage(data.user, determineUsername(data.user) + ' imported deck', 'announcement', true);
-    reset(data.user, true, false, true);
+    systemState.p2OppDeckData = data.deckData;
+    appendMessage(data.user, determineUsername(data.user) + ' imported deck', 'announcement', false);
+    reset(data.user, true, true, true);
 })
 socket.on('appendMessage', (data) => {
-    appendMessage(data.user, data.message, data.type, data.received);
+    appendMessage(data.user, data.message, data.type, data.emit);
 });
 socket.on('reset', (data) => {
-    reset(data.user, data.clean, data.received, data.build, data.invalidMessage);
+    reset(data.user, data.clean, data.emit, data.build, data.invalidMessage);
 });
 socket.on('takeTurn', (data) => {
-    takeTurn(data.user, data.received);
+    takeTurn(data.user, data.emit);
 });
 socket.on('VSTARGXFunction', (data) => {
-    VSTARGXFunction(data.user, data.type, data.received)
+    VSTARGXFunction(data.user, data.type, data.emit)
 });
 socket.on('moveCard', (data) => {
-    moveCard(data.user, data.oLocation, data.oLocation_html, data.mLocation, data.mLocation_html, data.index, data.targetIndex, data.received);
+    moveCard(data.user, data.oZoneArrayString, data.oZoneElementString, data.dZoneArrayString, data.dZoneElementString, data.index, data.targetIndex, data.emit);
 });
 socket.on('addDamageCounter', (data) => {
-    addDamageCounter(data.user, data.location, data.container, data.index, data.received);
+    addDamageCounter(data.user, data.zoneArrayString, data.zoneElementString, data.index, data.emit);
 });
 socket.on('updateDamageCounter', (data) => {
-    const damageCounter = stringToVariable(data.user, data.location).cards[data.index].image.damageCounter;
+    const damageCounter = stringToVariable(data.user, data.zoneArrayString)[data.index].image.damageCounter;
     damageCounter.textContent = data.textContent;
 });
 socket.on('removeDamageCounter', (data) => {
-    const targetCard = stringToVariable(data.user, data.location).cards[data.index];
+    const targetCard = stringToVariable(data.user, data.zoneArrayString)[data.index];
     targetCard.image.damageCounter.textContent = '0';
     targetCard.image.damageCounter.handleRemove();
 });
 socket.on('addSpecialCondition', (data) => {
-    addSpecialCondition(data.user, data.location, data.container, data.index, data.received);
+    addSpecialCondition(data.user, data.zoneArrayString, data.zoneElementString, data.index, data.emit);
 });
 socket.on('updateSpecialCondition', (data) => {
-    const specialCondition = stringToVariable(data.user, data.location).cards[data.index].image.specialCondition;
+    const specialCondition = stringToVariable(data.user, data.zoneArrayString)[data.index].image.specialCondition;
     specialCondition.textContent = data.textContent;
     specialCondition.handleColour();
 });
 socket.on('removeSpecialCondition', (data) => {
-    const targetCard = stringToVariable(data.user, data.location).cards[data.index];
+    const targetCard = stringToVariable(data.user, data.zoneArrayString)[data.index];
     targetCard.image.specialCondition.textContent = '0';
     targetCard.image.specialCondition.handleRemove();
 });
 socket.on('addAbilityCounter', (data) => {
-    addAbilityCounter(data.user, data.location, data.container, data.index, data.received);
+    addAbilityCounter(data.user, data.zoneArrayString, data.zoneElementString, data.index, data.emit);
 });
 socket.on('removeAbilityCounter', (data) => {
-    const targetCard = stringToVariable(data.user, data.location).cards[data.index];
-    targetCard.image.abilityCounter.handleRemove(data.received);
+    const targetCard = stringToVariable(data.user, data.zoneArrayString)[data.index];
+    targetCard.image.abilityCounter.handleRemove(data.emit);
 });
 socket.on('resetCounters', (data) => {
-    resetCounters(data.received);
+    resetCounters(data.emit);
 });
-socket.on('shuffleContainer', (data) => {
-    shuffleContainer(data.user, data.location, data.location_html, data.indices, data.received);
+socket.on('shuffleZone', (data) => {
+    shuffleZone(data.user, data.zoneArrayString, data.zoneElementString, data.indices, data.emit);
 });
 socket.on('viewDeck', (data) => {
-    viewDeck(data.user, data.viewAmount, data.top, data.deckCount, data.targetOpp, data.received);
+    viewDeck(data.user, data.viewAmount, data.top, data.selectedDeckCount, data.targetOpp, data.emit);
 });
 socket.on('rotateCard', (data) => {
-    rotateCard(data.user, data.locationAsString, data.containerId, data.index, data.single, data.received);
+    rotateCard(data.user, data.zoneArrayString, data.zoneElementString, data.index, data.single, data.emit);
 });
 socket.on('revealShortcut', (data) => {
-    revealShortcut(data.user, data.location, data.index, data.message, data.received);
+    revealShortcut(data.user, data.zoneArrayString, data.index, data.message, data.emit);
 });
 socket.on('hideShortcut', (data) => {
-    hideShortcut(data.user, data.location, data.index, data.message, data.received);
+    hideShortcut(data.user, data.zoneArrayString, data.index, data.message, data.emit);
 });
 socket.on('stopLookingShortcut', (data) => {
-    stopLookingShortcut(data.user, data.location, data.index);
+    stopLookingShortcut(data.user, data.zoneArrayString, data.index);
 });
 socket.on('faceDown', (data) => {
-    const location = stringToVariable(data.user, data.location);
-    const card = location.cards[data.index];
+    const zoneArray = stringToVariable(data.user, data.zoneArrayString);
+    const card = zoneArray[data.index];
     card.image.faceDown = true;
 });
 socket.on('changeType', (data) => {
-    changeType(data.user, data.location, data.index, data.type, data.received);
+    changeType(data.user, data.zoneArrayString, data.index, data.type, data.emit);
 });
 
 

@@ -1,10 +1,10 @@
-import { hand_html, oppHand_html } from '../../front-end.js';
+import { handElement, oppHandElement } from '../../front-end.js';
 import { adjustAlignment } from '../../setup/sizing/adjust-alignment.js';
 
 const handObserver = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
         if (mutation.type === 'childList') {
-            [hand_html, oppHand_html].forEach(adjustAlignment);
+            [handElement, oppHandElement].forEach(adjustAlignment);
         };
     });
 });
@@ -13,6 +13,6 @@ const handObserver = new MutationObserver((mutations) => {
 const handConfig = { childList: true };
 
 // Start observing the target nodes for configured mutations
-[hand_html, oppHand_html].forEach(target => {
+[handElement, oppHandElement].forEach(target => {
     handObserver.observe(target, handConfig);
 });

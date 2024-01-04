@@ -1,18 +1,14 @@
-import { stringToVariable } from '../../setup/containers/string-to-variable.js';
-import { roomId, selfContainersDocument, oppContainersDocument, socket, p1, sCard, POV } from '../../front-end.js';
+import { stringToVariable } from '../../setup/zones/zone-string-to-variable.js';
+import { selfContainersDocument, oppContainersDocument, socket, systemState, sCard } from '../../front-end.js';
 
-export const addSpecialCondition = (user, location, container, index, received = false) => {
+export const addSpecialCondition = (user, zoneArrayString, zoneElementString, index, emit = true) => {
 
-    const _location = location;
-    const _container = container;
+    const zoneArray = stringToVariable(user, zoneArrayString);
+    const zoneElement = stringToVariable(user, zoneElementString);
 
-    location = stringToVariable(user, location);
-    container = stringToVariable(user, container);
-
-    //identify target image and container locations
-    const targetCard = location.cards[index];
+    const targetCard = zoneArray[index];
     const targetRect = targetCard.image.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
+    const zoneElementRect = zoneElement.getBoundingClientRect();
 
     let specialCondition = targetCard.image.specialCondition;
     //clean up existing event listeners
@@ -26,10 +22,10 @@ export const addSpecialCondition = (user, location, container, index, received =
     } else {
         if (user === 'self'){
             specialCondition = selfContainersDocument.createElement('div');
-            specialCondition.className = POV.user === 'self' ? 'self-circle' : 'opp-circle';
+            specialCondition.className = systemState.pov.user === 'self' ? 'self-circle' : 'opp-circle';
         } else {
             specialCondition = oppContainersDocument.createElement('div');
-            specialCondition.className = POV.user === 'self' ? 'opp-circle' : 'self-circle';
+            specialCondition.className = systemState.pov.user === 'self' ? 'opp-circle' : 'self-circle';
         };
         specialCondition.contentEditable = 'true';
         specialCondition.textContent = 'P';
@@ -38,11 +34,11 @@ export const addSpecialCondition = (user, location, container, index, received =
     };
    
     specialCondition.style.display = 'inline-block';
-    specialCondition.style.left = `${targetRect.left - containerRect.left}px`;
-    specialCondition.style.top = `${targetRect.top - containerRect.top + targetRect.height/4}px`;
-    container.appendChild(specialCondition);
+    specialCondition.style.left = `${targetRect.left - zoneElementRect.left}px`;
+    specialCondition.style.top = `${targetRect.top - zoneElementRect.top + targetRect.height/4}px`;
+    zoneElement.appendChild(specialCondition);
 
-    if (targetCard.image.parentElement.classList.contains('fullView')){
+    if (targetCard.image.parentElement.classList.contains('full-view')){
         specialCondition.style.display = 'none';
     };
 
@@ -83,12 +79,12 @@ export const addSpecialCondition = (user, location, container, index, received =
     }
 
     const handleInput = () => {
-        if (!p1[0]){
+        if (systemState.isTwoPlayer){
             const oUser = user === 'self' ? 'opp' : 'self';
             const data = {
-                roomId : roomId,
+                roomId : systemState.roomId,
                 user : oUser,
-                location: _location,
+                zoneArrayString: zoneArrayString,
                 index: index,
                 textContent: specialCondition.textContent
             };
@@ -97,7 +93,7 @@ export const addSpecialCondition = (user, location, container, index, received =
     }
 
     const handleResize = () => {
-        addSpecialCondition(user, _location, _container, index, true);
+        addSpecialCondition(user, zoneArrayString, zoneElementString, index, false);
     };
 
     const handleRemove = (fromBlurEvent = false) => {
@@ -114,9 +110,9 @@ export const addSpecialCondition = (user, location, container, index, received =
             if (fromBlurEvent){
                 const oUser = user === 'self' ? 'opp' : 'self';
                 const data = {
-                    roomId : roomId,
+                    roomId : systemState.roomId,
                     user : oUser,
-                    location: _location,
+                    zoneArrayString: zoneArrayString,
                     index: index,
                 };
                 socket.emit('removeSpecialCondition', data);            
@@ -139,14 +135,14 @@ export const addSpecialCondition = (user, location, container, index, received =
     //save the specialCondition on the card
     targetCard.image.specialCondition = specialCondition;
 
-    if (!p1[0] && !received){
+    if (systemState.isTwoPlayer && emit){
         const data = {
-            roomId : roomId,
+            roomId : systemState.roomId,
             user : sCard.oUser,
-            location : _location,
-            container: _container,
+            zoneArrayString : zoneArrayString,
+            zoneElementString: zoneElementString,
             index: index,
-            received: true
+            emit: false
         };
         socket.emit('addSpecialCondition', data);
     };

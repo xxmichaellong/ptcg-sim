@@ -1,4 +1,4 @@
-export const resetImage = (image, mLocation = '') => {
+export const resetImage = (image, zoneArrayString = '') => {
     image.style.position = 'relative';
     image.style.bottom = '0%';
     image.style.zIndex = '0';
@@ -8,7 +8,7 @@ export const resetImage = (image, mLocation = '') => {
     image.style.left = 0;
     image.attached = false;
     image.target = 'off';
-    if (image.PokémonBreak && ['active', 'bench'].includes(mLocation)){
+    if (image.PokémonBreak && ['activeArray', 'benchArray'].includes(zoneArrayString)){
         image.style.transform = 'rotate(90deg)';
     } else {
         image.style.transform = 'rotate(0deg)';

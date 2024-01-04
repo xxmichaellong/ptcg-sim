@@ -1,0 +1,26 @@
+export const oppContainers = document.getElementById('oppContainers');
+export const oppContainersDocument = oppContainers.contentWindow.document;
+export const oppDeckCoverElement = oppContainersDocument.getElementById('deckCoverElement');
+export const oppLostZoneElement = oppContainersDocument.getElementById('lostZoneElement');
+export const oppLostZoneCoverElement = oppContainersDocument.getElementById('lostZoneCoverElement');
+export const oppDiscardElement = oppContainersDocument.getElementById('discardElement');
+export const oppDiscardCoverElement = oppContainersDocument.getElementById('discardCoverElement');
+export const oppActiveElement = oppContainersDocument.getElementById('activeElement');
+export const oppBenchElement = oppContainersDocument.getElementById('benchElement');
+export const oppHandElement = oppContainersDocument.getElementById('handElement');
+export const oppPrizesElement = oppContainersDocument.getElementById('prizesElement');
+export const oppDeckElement = oppContainersDocument.getElementById('deckElement');
+export const oppAttachedCardsElement = oppContainersDocument.getElementById('attachedCardsElement');
+export const oppViewCardsElement = oppContainersDocument.getElementById('viewCardsElement');
+export const oppBoardElement = oppContainersDocument.getElementById('boardElement');
+
+export const oppDeckArray = [];
+export const oppLostZoneArray = [];
+export const oppDiscardArray = [];
+export const oppPrizesArray = [];
+export const oppActiveArray = [];
+export const oppBenchArray = [];
+export const oppHandArray = [];
+export const oppAttachedCardsArray = [];
+export const oppViewCardsArray = [];
+export const oppBoardArray = [];

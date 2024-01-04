@@ -1,14 +1,11 @@
-import { p2OppUsername, p2SelfUsername, roomId, socket } from "../front-end.js";
-import { mainDeckData } from "../setup/deck-constructor/import.js";
-
-export const p2DeckData = [];
+import { systemState, socket } from "../front-end.js";
 
 export const exchangeData = () => {
     return new Promise((resolve, reject) => {
         const data = {
-          roomId : roomId[0],
-          username : p2SelfUsername[0],
-          deckData : mainDeckData[0]
+          roomId : systemState.roomId,
+          username : systemState.p2SelfUsername,
+          deckData : systemState.selfDeckData,
         }
         socket.emit('exchangeData', data);
 
@@ -16,8 +13,8 @@ export const exchangeData = () => {
             if (data.error){
               reject(data.error);
             } else {
-              p2OppUsername[0] = data.username;
-              p2DeckData[0] = data.deckData;
+              systemState.p2OppUsername = data.username;
+              systemState.p2OppDeckData = data.deckData;
               resolve();
             };
         });

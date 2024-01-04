@@ -3962,12 +3962,12 @@ const decklistsByYear = {
         4 Professor Oak's Research ecard1-149
         3 Pokémon Nurse ecard1-145
         3 Underground Expedition ecard3-140
-        2 Copycat ecard1-145
+        2 Copycat ecard1-138
         1 Super Energy Removal 2 ecard2-134
         8 Water Energy ecard1-165
         4 Rainbow Energy ecard2-144
         4 Warp Energy ecard2-147
-        2 Metal Energy ecard2-143
+        1 Metal Energy ecard2-143
         `,
         "Charizard Venusaur":`
         3 Charmander ecard1-98
@@ -4143,11 +4143,11 @@ const decklistsByYear = {
         25 Water Energy base1-102
         `,
         "Gengar Brock’s Golbat":`
-        3 Gastly base1-33
-        3 Haunter base1-21
-        3 Gengar base1-20
-        3 Brock's Zubat base1-71
-        3 Brock's Golbat base1-71
+        3 Gastly base3-33
+        3 Haunter base3-21
+        3 Gengar base3-20
+        3 Brock's Zubat gym1-24
+        3 Brock's Golbat gym1-39
         3 Brock's Mankey gym1-67
         2 Mr. Mime base2-22
         2 Lickitung base2-38
@@ -4157,7 +4157,7 @@ const decklistsByYear = {
         3 Pokémon Trader base1-77
         3 Super Energy Removal base1-79
         2 Computer Search base1-71
-        2 Gust of Wind base1-93
+        1 Gust of Wind base1-93
         1 Erika's Perfume gym1-110
         1 Item Finder base1-74
         14 Psychic Energy base1-101
@@ -4269,7 +4269,7 @@ const decklistsByYear = {
         2 Aerodactyl base1-16
         1 Resistance Gym gym2-109
         1 Celadon City Gym gym1-107
-        4 Mysterious Fossil base1-62
+        4 Mysterious Fossil base3-62
         4 Professor Oak base1-88
         3 Potion base1-94
         3 Computer Search base1-71

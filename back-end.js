@@ -18,9 +18,10 @@ const io = new Server(server, {
     }
 });
 
+require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const saltRounds = 10;
-const plainPassword = "milon8561";
+const plainPassword = process.env.ADMIN_PASSWORD || "defaultPassword";
 const hashedPassword = bcrypt.hashSync(plainPassword, saltRounds);
 
 instrument(io, {
@@ -35,10 +36,6 @@ instrument(io, {
 const port = 4000;
 
 io.on('connection', (socket) => {
-
-    socket.on('generateId', () => {
-        socket.emit('generateId', socket.id.toString() + '0');
-    });
     socket.on('joinGame', (roomId, username) => {
         socket.join(roomId);
         const clientsInRoom = io.sockets.adapter.rooms.get(roomId);
@@ -64,78 +61,45 @@ io.on('connection', (socket) => {
             socket.emit('sentData', errorData);
         };
     });
-    socket.on('deckData', (data) => {
-        socket.broadcast.to(data.roomId).emit('deckData', data);
-    });
-    socket.on('sentData', (data) => {
-        socket.broadcast.to(data.roomId).emit('sentData', data);
-    });
-    socket.on('appendMessage', (data) => {
-        socket.broadcast.to(data.roomId).emit('appendMessage', data);
-    });
-    socket.on('reset', (data) => {
-        socket.broadcast.to(data.roomId).emit('reset', data);
-    });
-    socket.on('takeTurn', (data) => {
-        socket.broadcast.to(data.roomId).emit('takeTurn', data);
-    });
-    socket.on('VSTARGXFunction', (data) => {
-        socket.broadcast.to(data.roomId).emit('VSTARGXFunction', data);
-    })
-    socket.on('moveCard', (data) => {
-        socket.broadcast.to(data.roomId).emit('moveCard', data);
-    });
-    socket.on('addDamageCounter', (data) => {
-        socket.broadcast.to(data.roomId).emit('addDamageCounter', data);
-    });
-    socket.on('updateDamageCounter', (data) => {
-        socket.broadcast.to(data.roomId).emit('updateDamageCounter', data);
-    });
-    socket.on('removeDamageCounter', (data) => {
-        socket.broadcast.to(data.roomId).emit('removeDamageCounter', data);
-    });
-    socket.on('addSpecialCondition', (data) => {
-        socket.broadcast.to(data.roomId).emit('addSpecialCondition', data);
-    });
-    socket.on('updateSpecialCondition', (data) => {
-        socket.broadcast.to(data.roomId).emit('updateSpecialCondition', data);
-    });
-    socket.on('removeSpecialCondition', (data) => {
-        socket.broadcast.to(data.roomId).emit('removeSpecialCondition', data);
-    });
-    socket.on('addAbilityCounter', (data) => {
-        socket.broadcast.to(data.roomId).emit('addAbilityCounter', data);
-    });
-    socket.on('removeAbilityCounter', (data) => {
-        socket.broadcast.to(data.roomId).emit('removeAbilityCounter', data);
-    });
-    socket.on('resetCounters', (data) => {
-        socket.broadcast.to(data.roomId).emit('resetCounters', data);
-    });
-    socket.on('shuffleContainer', (data) => {
-        socket.broadcast.to(data.roomId).emit('shuffleContainer', data);
-    });
-    socket.on('viewDeck', (data) => {
-        socket.broadcast.to(data.roomId).emit('viewDeck', data);
-    });
-    socket.on('rotateCard', (data) => {
-        socket.broadcast.to(data.roomId).emit('rotateCard', data);
-    });
-    socket.on('revealShortcut', (data) => {
-        socket.broadcast.to(data.roomId).emit('revealShortcut', data);
-    });
-    socket.on('hideShortcut', (data) => {
-        socket.broadcast.to(data.roomId).emit('hideShortcut', data);
-    });
-    socket.on('stopLookingShortcut', (data) => {
-        socket.broadcast.to(data.roomId).emit('stopLookingShortcut', data);
-    });
-    socket.on('faceDown', (data) => {
-        socket.broadcast.to(data.roomId).emit('faceDown', data);
-    });
-    socket.on('changeType', (data) => {
-        socket.broadcast.to(data.roomId).emit('changeType', data);
-    });
+
+    // Define a function to handle event emission
+    const emitToRoom = (eventName, data) => {
+        socket.broadcast.to(data.roomId).emit(eventName, data);
+    };
+    // List of events
+    const events = [
+        'deckData',
+        'sentData',
+        'appendMessage',
+        'reset',
+        'takeTurn',
+        'VSTARGXFunction',
+        'moveCard',
+        'addDamageCounter',
+        'updateDamageCounter',
+        'removeDamageCounter',
+        'addSpecialCondition',
+        'updateSpecialCondition',
+        'removeSpecialCondition',
+        'addAbilityCounter',
+        'removeAbilityCounter',
+        'resetCounters',
+        'shuffleZone',
+        'viewDeck',
+        'rotateCard',
+        'revealShortcut',
+        'hideShortcut',
+        'stopLookingShortcut',
+        'faceDown',
+        'changeType'
+    ];
+    // Register event listeners using the common function
+    for (const event of events) {
+        socket.on(event, (data) => {
+            emitToRoom(event, data);
+        });
+    };
+
 });
 
 // Start the server

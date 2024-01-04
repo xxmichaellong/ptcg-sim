@@ -1,20 +1,20 @@
-import { makeDeckCover } from '../../actions/make-cover/deck-cover.js';
-import { deck, deckDisplay_html, deck_html, oppDeck, oppDeckDisplay_html, oppDeck_html } from '../../front-end.js';
+import { deckArray, deckCoverElement, deckElement, oppDeckArray, oppDeckCoverElement, oppDeckElement, systemState } from '../../front-end.js';
 import { determineDeckData } from '../general/determine-deckdata.js';
 import { Card } from './card.js';
+import { Cover } from './cover.js';
 
 export const buildDeck = (user) => {
     const deckData = determineDeckData(user);
-    for (const [quantity, rawCardAttributes, rawImageAttributes] of deckData){
+    for (const [quantity, name, imageURL, type] of deckData){
         for (let i = 0; i < quantity; i++){
-            const _card = new Card(rawCardAttributes, rawImageAttributes);
-            _card.image.user = user;
-            const _deck = user === 'self' ? deck : oppDeck;
-            const _deck_html = user === 'self' ? deck_html : oppDeck_html;
-            _deck.cards.push(_card);
-            _deck_html.appendChild(_card.image);
+            const card = new Card(user, name, imageURL, type);
+            const selectedDeckArray = user === 'self' ? deckArray : oppDeckArray;
+            const selectedDeckElement = user === 'self' ? deckElement : oppDeckElement;
+            selectedDeckArray.push(card);
+            selectedDeckElement.appendChild(card.image);
         };
     };
-    const display_html = user === 'self' ? deckDisplay_html : oppDeckDisplay_html;
-    display_html.appendChild(makeDeckCover(user).image);
+    const selectedDisplayElement = user === 'self' ? deckCoverElement : oppDeckCoverElement;
+    const cover = new Cover(user, 'deckCoverElement', systemState.cardBackSrc);
+    selectedDisplayElement.appendChild(cover.image);
 }

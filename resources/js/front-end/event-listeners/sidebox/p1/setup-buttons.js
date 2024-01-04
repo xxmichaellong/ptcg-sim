@@ -1,16 +1,16 @@
 import { reset } from '../../../actions/general/reset.js';
 import { setup } from '../../../actions/general/setup.js';
-import { POV, clearLog, exportLog, optionsButton, optionsContextMenu, p1Box, resetBothButton, resetButton, setupBothButton, setupButton } from '../../../front-end.js';
+import { systemState, clearLog, exportLog, optionsButton, optionsContextMenu, p1Box, resetBothButton, resetButton, setupBothButton, setupButton } from '../../../front-end.js';
 import { clearChatboxContent, exportChatboxContent } from '../../../setup/chatbox/export-chat.js';
 
-setupButton.addEventListener('click', () => setup(POV.user));
+setupButton.addEventListener('click', () => setup(systemState.pov.user));
 
 setupBothButton.addEventListener('click', () => {
     setup('self');
     setup('opp');
 });
 
-resetButton.addEventListener('click', () => reset(POV.user));
+resetButton.addEventListener('click', () => reset(systemState.pov.user));
 
 resetBothButton.addEventListener('click', () => {
     reset('self');

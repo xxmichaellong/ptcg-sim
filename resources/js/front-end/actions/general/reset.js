@@ -1,26 +1,26 @@
-import { active, active_html, attachedCardPopup, attachedCardPopup_html, bench, bench_html, board, board_html, deck, deckDisplay_html, deck_html, discard, discardDisplay_html, discard_html, hand, hand_html, lostzone, lostzoneDisplay_html, lostzone_html, oppActive, oppActive_html, oppAttachedCardPopup, oppAttachedCardPopup_html, oppBench, oppBench_html, oppBoard, oppBoard_html, oppContainersDocument, oppDeck, oppDeckDisplay_html, oppDeck_html, oppDiscard, oppDiscardDisplay_html, oppDiscard_html, oppHand, oppHand_html, oppLostzone, oppLostzoneDisplay_html, oppLostzone_html, oppPrizes, oppPrizes_html, oppViewCards, oppViewCards_html, p1, prizes, prizes_html, roomId, selfContainersDocument, socket, stadium, stadium_html, turn, viewCards, viewCards_html } from '../../front-end.js';
+import { activeArray, activeElement, attachedCardsArray, attachedCardsElement, benchArray, benchElement, boardArray, boardElement, deckArray, deckCoverElement, deckElement, discardArray, discardCoverElement, discardElement, handArray, handElement, lostZoneArray, lostZoneCoverElement, lostZoneElement, oppActiveArray, oppActiveElement, oppAttachedCardsArray, oppAttachedCardsElement, oppBenchArray, oppBenchElement, oppBoardArray, oppBoardElement, oppContainersDocument, oppDeckArray, oppDeckCoverElement, oppDeckElement, oppDiscardArray, oppDiscardCoverElement, oppDiscardElement, oppHandArray, oppHandElement, oppLostZoneArray, oppLostZoneCoverElement, oppLostZoneElement, oppPrizesArray, oppPrizesElement, oppViewCardsArray, oppViewCardsElement, systemState, prizesArray, prizesElement, selfContainersDocument, socket, stadiumArray, stadiumElement, viewCardsArray, viewCardsElement } from '../../front-end.js';
 import { removeImages } from '../../image-logic/remove-images.js';
 import { appendMessage } from '../../setup/chatbox/messages.js';
 import { buildDeck } from '../../setup/deck-constructor/build-deck.js';
 import { determineDeckData } from '../../setup/general/determine-deckdata.js';
 import { determineUsername } from '../../setup/general/determine-username.js';
-import { hideIfEmpty } from './close-popups.js';
-import { updateCount } from './update-count.js';
+import { hideElementsIfEmpty } from './close-popups.js';
+import { updateCount } from './count.js';
 
-export const reset = (user, clean = false, received = false, build = true, invalidMessage = true) => {
-    turn[0] = [0];
-    let cardArrays;
-    let cardContainers;
-    if (stadium.cards[0] && ((stadium.cards[0].image.user === 'self' && user === 'self') || (stadium.cards[0].image.user !== 'self' && user !== 'self'))){
-        stadium.cards = [];
+export const reset = (user, clean = false, emit = true, build = true, invalidMessage = true) => {
+    systemState.turn = 0;
+    let zoneArrays;
+    let zoneElements;
+    if (stadiumArray[0] && ((stadiumArray[0].image.user === 'self' && user === 'self') || (stadiumArray[0].image.user !== 'self' && user !== 'self'))){
+        stadiumArray.length = 0;
         document.querySelectorAll('.tab').forEach(element => {
             element.classList.remove('tab');
         });
-        removeImages(stadium_html);
+        removeImages(stadiumElement);
     };
     if (user === 'self'){
-        cardArrays = [deck, lostzone, discard, prizes, active, bench, hand, attachedCardPopup, viewCards, board];
-        cardContainers = [deckDisplay_html, deck_html, lostzone_html, discard_html, prizes_html, active_html, bench_html, hand_html, lostzoneDisplay_html, discardDisplay_html, attachedCardPopup_html, board_html, viewCards_html]
+        zoneArrays = [deckArray, lostZoneArray, discardArray, prizesArray, activeArray, benchArray, handArray, attachedCardsArray, viewCardsArray, boardArray];
+        zoneElements = [deckCoverElement, deckElement, lostZoneElement, discardElement, prizesElement, activeElement, benchElement, handElement, lostZoneCoverElement, discardCoverElement, attachedCardsElement, boardElement, viewCardsElement]
 
         selfContainersDocument.querySelectorAll('.self-circle, .opp-circle, .self-tab, .opp-tab').forEach(element => {
             element.textContent = '0'
@@ -30,8 +30,8 @@ export const reset = (user, clean = false, received = false, build = true, inval
             element.classList.remove('used');
         });
     } else {
-        cardArrays = [oppDeck, oppLostzone, oppDiscard, oppPrizes, oppActive, oppBench, oppHand, oppAttachedCardPopup, oppViewCards, oppBoard];
-        cardContainers = [oppDeck_html, oppPrizes_html, oppDeckDisplay_html, oppLostzone_html, oppDiscard_html, oppActive_html, oppBench_html, oppHand_html, oppLostzoneDisplay_html, oppDiscardDisplay_html, oppAttachedCardPopup_html, oppViewCards_html, oppBoard_html]
+        zoneArrays = [oppDeckArray, oppLostZoneArray, oppDiscardArray, oppPrizesArray, oppActiveArray, oppBenchArray, oppHandArray, oppAttachedCardsArray, oppViewCardsArray, oppBoardArray];
+        zoneElements = [oppDeckElement, oppPrizesElement, oppDeckCoverElement, oppLostZoneElement, oppDiscardElement, oppActiveElement, oppBenchElement, oppHandElement, oppLostZoneCoverElement, oppDiscardCoverElement, oppAttachedCardsElement, oppViewCardsElement, oppBoardElement]
 
         oppContainersDocument.querySelectorAll('.self-circle, .opp-circle, .self-tab, .opp-tab').forEach(element => {
             element.textContent = '0'
@@ -41,30 +41,30 @@ export const reset = (user, clean = false, received = false, build = true, inval
             element.classList.remove('used');
         });
     };
-    cardArrays.forEach(container => container.cards = []);
-    cardContainers.forEach(container => removeImages(container));
+    zoneArrays.forEach(array => array.length = 0);
+    zoneElements.forEach(element => removeImages(element));
 
-    hideIfEmpty();
+    hideElementsIfEmpty();
 
     if (build){
         if (determineDeckData(user)){
             buildDeck(user);
         } else if (invalidMessage){
-            appendMessage(user, determineUsername(user) + ' has an invalid deck!', 'announcement', true);
+            appendMessage(user, determineUsername(user) + ' has an invalid deck!', 'announcement', false);
         };
     };
 
     if (!clean && determineDeckData(user)){
-        appendMessage(user, determineUsername(user) + ' reset', 'player', true);
-    };
-
-    if (!p1[0] && !received){
+        appendMessage(user, determineUsername(user) + ' reset', 'player', false);
+    };    
+    
+    if (systemState.isTwoPlayer && emit){
         const oUser = user === 'self' ? 'opp' : 'self';
         const data = {
-            roomId : roomId,
+            roomId : systemState.roomId,
             user : oUser,
             clean: clean,
-            received: true,
+            emit: false,
             build: build,
             invalidMessage: invalidMessage
         };

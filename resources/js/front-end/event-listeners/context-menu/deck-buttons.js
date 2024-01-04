@@ -1,5 +1,5 @@
 import { drawButton, sCard, shuffleDeckButton, viewBottomButton, viewTopButton } from '../../front-end.js'
-import { draw, handleViewButtonClick, shuffleDeck} from '../../actions/container/deck-actions.js';
+import { draw, handleViewButtonClick, shuffleDeck} from '../../actions/zones/deck-actions.js';
 import { appendMessage } from '../../setup/chatbox/messages.js';
 import { determineUsername } from '../../setup/general/determine-username.js';
 

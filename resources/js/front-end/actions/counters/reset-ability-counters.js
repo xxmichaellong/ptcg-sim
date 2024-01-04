@@ -1,6 +1,6 @@
-import { oppContainersDocument, p1, selfContainersDocument, socket } from "../../front-end.js";
+import { oppContainersDocument, systemState, selfContainersDocument, socket } from "../../front-end.js";
 
-export const resetCounters = (received = false) => {
+export const resetCounters = (emit = true) => {
     selfContainersDocument.querySelectorAll('.self-tab, .opp-tab').forEach(element => {
         element.handleRemove();
     });
@@ -10,10 +10,10 @@ export const resetCounters = (received = false) => {
     document.querySelectorAll('.tab').forEach(element => {
         element.handleRemove();
     });
-    if (!p1[0] && !received){
+    if (systemState.isTwoPlayer && emit){
         const data = {
-            roomId : roomId,
-            received: true
+            roomId : systemState.roomId,
+            emit: false
         };
         socket.emit('resetCounters', data);
     };

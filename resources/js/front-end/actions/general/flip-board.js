@@ -1,4 +1,4 @@
-import { FREEBUTTON, POV, attackButton, board_html, oppBoard_html, oppContainers, oppContainersDocument, oppResizer, oppViewCards_html, p2AttackButton, p2FREEBUTTON, p2PassButton, p2ResetButton, p2SetupButton, passButton, resetButton, selfContainers, selfContainersDocument, selfResizer, setupButton, stadium, stadium_html, viewCards_html } from '../../front-end.js';
+import { FREEBUTTON, systemState, attackButton, boardElement, oppBoardElement, oppContainers, oppContainersDocument, oppResizer, oppViewCardsElement, p2AttackButton, p2FREEBUTTON, p2PassButton, p2ResetButton, p2SetupButton, passButton, resetButton, selfContainers, selfContainersDocument, selfResizer, setupButton, stadiumArray, stadiumElement, viewCardsElement } from '../../front-end.js';
 import { flippedOppHandleMouseDown, flippedSelfHandleMouseDown, oppHandleMouseDown, selfHandleMouseDown } from '../../setup/sizing/resizer.js';
 import { reloadBoard } from '../../setup/sizing/reload-board.js';
 
@@ -15,37 +15,37 @@ export const flipBoard = () => {
         oppResizer.removeEventListener('mousedown', flippedOppHandleMouseDown);
     };
 
-    viewCards_html.classList.toggle('flip-image');
-    oppViewCards_html.classList.toggle('flip-image');
+    viewCardsElement.classList.toggle('flip-image');
+    oppViewCardsElement.classList.toggle('flip-image');
     
     const toggleClasses = (element, class1, class2) => {
         element.classList.toggle(class1);
         element.classList.toggle(class2);
     };
 
-    toggleClasses(selfResizer, 'selfColour', 'oppColour');
-    toggleClasses(oppResizer, 'oppColour', 'selfColour');
+    toggleClasses(selfResizer, 'self-color', 'opp-color');
+    toggleClasses(oppResizer, 'opp-color', 'self-color');
     toggleClasses(selfContainers, 'self', 'opp');
     toggleClasses(oppContainers, 'opp', 'self');
-    toggleClasses(board_html, 'selfBoard', 'oppBoard');
-    toggleClasses(oppBoard_html, 'oppBoard', 'selfBoard');
-    toggleClasses(attackButton, 'selfColour', 'oppColour');
-    toggleClasses(passButton, 'selfColour', 'oppColour');
-    toggleClasses(FREEBUTTON, 'selfColour', 'oppColour');
-    toggleClasses(setupButton, 'selfColour', 'oppColour');
-    toggleClasses(resetButton, 'selfColour', 'oppColour');
-    toggleClasses(p2AttackButton, 'selfColour', 'oppColour');
-    toggleClasses(p2PassButton, 'selfColour', 'oppColour');
-    toggleClasses(p2FREEBUTTON, 'selfColour', 'oppColour');
-    toggleClasses(p2SetupButton, 'selfColour', 'oppColour');
-    toggleClasses(p2ResetButton, 'selfColour', 'oppColour');
+    toggleClasses(boardElement, 'selfBoard', 'oppBoard');
+    toggleClasses(oppBoardElement, 'oppBoard', 'selfBoard');
+    toggleClasses(attackButton, 'self-color', 'opp-color');
+    toggleClasses(passButton, 'self-color', 'opp-color');
+    toggleClasses(FREEBUTTON, 'self-color', 'opp-color');
+    toggleClasses(setupButton, 'self-color', 'opp-color');
+    toggleClasses(resetButton, 'self-color', 'opp-color');
+    toggleClasses(p2AttackButton, 'self-color', 'opp-color');
+    toggleClasses(p2PassButton, 'self-color', 'opp-color');
+    toggleClasses(p2FREEBUTTON, 'self-color', 'opp-color');
+    toggleClasses(p2SetupButton, 'self-color', 'opp-color');
+    toggleClasses(p2ResetButton, 'self-color', 'opp-color');
 
     const users = ['self', 'opp'];
-    const textIds = ['deckText', 'discardText', 'lostzoneText', 'handText'];
-    const containerIds = ['deck_html', 'discard_html', 'lostzone_html', 'attachedCardPopup_html', 'viewCards_html'];
-    const buttonIds = ['viewCardsButtonContainer', 'attachedCardPopupButtonContainer'];
-    const headerIds = ['attachedCardPopupHeader', 'viewCardsHeader'];
-    const buttonContainerIds = ['buttonContainer'];
+    const textIds = ['deckText', 'discardText', 'lostZoneText', 'handText'];
+    const zoneElementStrings = ['deckElement', 'discardElement', 'lostZoneElement', 'attachedCardsElement', 'viewCardsElement'];
+    const buttonIds = ['viewCardsButtonContainer', 'attachedCardsPopupButtonContainer'];
+    const headerIds = ['attachedCardsPopupHeader', 'viewCardsHeader'];
+    const buttonzoneElementStrings = ['buttonContainer'];
 
     for (const user of users) {
         const document = user === 'self' ? selfContainersDocument : oppContainersDocument;
@@ -55,10 +55,10 @@ export const flipBoard = () => {
             text.classList.toggle('self-text');
             text.classList.toggle('opp-text');
         };
-        for (const containerId of containerIds) {
-            const container = document.getElementById(containerId);
-            container.classList.toggle('self-view');
-            container.classList.toggle('opp-view');
+        for (const zoneElementString of zoneElementStrings) {
+            const element = document.getElementById(zoneElementString);
+            element.classList.toggle('self-view');
+            element.classList.toggle('opp-view');
         };
         for (const buttonId of buttonIds) {
             const button = document.getElementById(buttonId);
@@ -75,8 +75,8 @@ export const flipBoard = () => {
                 header.textContent = 'Move attached cards';
             };
         };
-        for (const buttonContainerId of buttonContainerIds) {
-            const button = document.getElementById(buttonContainerId);
+        for (const buttonzoneElementString of buttonzoneElementStrings) {
+            const button = document.getElementById(buttonzoneElementString);
             button.classList.toggle('selfButtonContainer');
             button.classList.toggle('oppButtonContainer');
         };
@@ -105,11 +105,11 @@ export const flipBoard = () => {
     oppContainers.style.bottom = tempBottom;
     
     // Flip the stadium
-    if (stadium.cards[0]){
-        if (stadium.cards[0].image.user === POV.user){
-            stadium_html.style.transform = 'scaleX(1) scaleY(1)';
+    if (stadiumArray[0]){
+        if (stadiumArray[0].image.user === systemState.pov.user){
+            stadiumElement.style.transform = 'scaleX(1) scaleY(1)';
         } else {
-            stadium_html.style.transform = 'scaleX(-1) scaleY(-1)';  
+            stadiumElement.style.transform = 'scaleX(-1) scaleY(-1)';  
         };
     };
 

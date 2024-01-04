@@ -1,17 +1,17 @@
-import { p1, roomId, socket } from "../../front-end.js";
-import { stringToVariable } from "../../setup/containers/string-to-variable.js";
+import { systemState, socket } from "../../front-end.js";
+import { stringToVariable } from "../../setup/zones/zone-string-to-variable.js";
 import { addAbilityCounter } from "../counters/ability-counter.js";
 import { addDamageCounter } from "../counters/damage-counter.js";
 import { addSpecialCondition } from "../counters/special-condition.js";
 
-export const rotateCard = (user, locationAsString, containerId, index, single = false, received = false) => {
-    const location = stringToVariable(user, locationAsString);
-    const rotatingImage = location.cards[index].image;
+export const rotateCard = (user, zoneArrayString, zoneElementString, index, single = false, emit = true) => {
+    const zoneArray = stringToVariable(user, zoneArrayString);
+    const rotatingImage = zoneArray[index].image;
     const currentRotation = parseInt(rotatingImage.style.transform.replace(/[^0-9-]/g, '')) || 0;
     const newRotation = (currentRotation + 90) % 360;
     rotatingImage.style.transform = `rotate(${newRotation}deg)`;
 
-    if (['bench'].includes(locationAsString)){
+    if (['benchArray'].includes(zoneArrayString)){
         rotatingImage.parentElement.style.marginRight = '3%';
         rotatingImage.parentElement.style.marginLeft = '2%';
     };
@@ -36,28 +36,28 @@ export const rotateCard = (user, locationAsString, containerId, index, single = 
         };
     };
     //update any damagecounters/specialconditions/abilitycounters
-    for (let i = 0; i < location.cards.length; i++){
-        const image = location.cards[i].image;
+    for (let i = 0; i < zoneArray.length; i++){
+        const image = zoneArray[i].image;
         if (image.damageCounter){
-            addDamageCounter(user, locationAsString, containerId, i, true);
+            addDamageCounter(user, zoneArrayString, zoneElementString, i, false);
         };
         if (image.specialCondition){
-            addSpecialCondition(user, locationAsString, containerId, i, true);
+            addSpecialCondition(user, zoneArrayString, zoneElementString, i, false);
         };
         if (image.abilityCounter){
-            addAbilityCounter(user, locationAsString, containerId, i, true);
+            addAbilityCounter(user, zoneArrayString, zoneElementString, i, false);
         };
     };
-    if (!p1[0] && !received){
+    if (systemState.isTwoPlayer && emit){
         const oUser = user === 'self' ? 'opp' : 'self';
         const data = {
-            roomId : roomId,
+            roomId : systemState.roomId,
             user : oUser,
-            locationAsString : locationAsString,
-            containerId : containerId,
+            zoneArrayString : zoneArrayString,
+            zoneElementString : zoneElementString,
             index: index,
             single: single,
-            received: true
+            emit: false
         };
         socket.emit('rotateCard', data);
     };

@@ -28,7 +28,7 @@ export const moveToBoardButton = document.getElementById('moveToBoardButton');
 export const discardBoardButton = document.getElementById('discardBoardButton');
 export const handBoardButton = document.getElementById('handBoardButton');
 export const shuffleBoardButton = document.getElementById('shuffleBoardButton');
-export const lostzoneBoardButton = document.getElementById('lostzoneBoardButton');
+export const lostZoneBoardButton = document.getElementById('lostZoneBoardButton');
 
 export const changeButton = document.getElementById('changeButton');
 export const changeToEnergyButton = document.getElementById('changeToEnergyButton');

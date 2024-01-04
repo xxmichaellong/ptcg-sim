@@ -26,11 +26,11 @@
     <div id="videoContainer"></div>
     <iframe id="selfContainers" class="self" src="./iframe-containers/self-containers.html"></iframe>
     <iframe id="oppContainers" class="opp" src="./iframe-containers/opp-containers.html"></iframe>
-    <div id="stadium_html" class="base"></div>
-    <div id="selfResizer" class="selfColour"></div>
-    <div id="oppResizer" class="oppColour"></div>
+    <div id="stadiumElement" class="base"></div>
+    <div id="selfResizer" class="self-color"></div>
+    <div id="oppResizer" class="opp-color"></div>
 
-    <div id="boardButtonContainer">
+    <div id="boardButtonsContainer">
         <button id="turnButton">+Turn</button>
         <button id="flipCoinButton">Coin</button>
         <button id="flipBoardButton">⇅</button>
@@ -183,17 +183,17 @@
             <div id="line"></div>
         </div>
         <div id="chatboxButtonContainer" class="chat-button-container">
-            <button id="attackButton" class="selfColour">Attack</button>
-            <button id="passButton" class="selfColour">Pass</button>
-            <button id="FREEBUTTON" class="selfColour">🥳</button>
+            <button id="attackButton" class="self-color">Attack</button>
+            <button id="passButton" class="self-color">Pass</button>
+            <button id="FREEBUTTON" class="self-color">🥳</button>
         </div>
         <input id="messageInput" type="text" placeholder="Type your message here...">
         <div id="bottomP1ButtonContainer" class="sidebox-button-container">
-            <button id="setupButton" class="selfColour">Set Up</button>
-            <button id="resetButton" class="selfColour">Reset</button>
-            <button id="setupBothButton" class="neutralColour">Set Up Both</button>
-            <button id="resetBothButton" class="neutralColour">Reset Both</button>
-            <button id="optionsButton" class="neutralColour">Options</button>
+            <button id="setupButton" class="self-color">Set Up</button>
+            <button id="resetButton" class="self-color">Reset</button>
+            <button id="setupBothButton" class="neutral-color">Set Up Both</button>
+            <button id="resetBothButton" class="neutral-color">Reset Both</button>
+            <button id="optionsButton" class="neutral-color">Options</button>
         </div>
     </div>
     <div id="p2Box" class="sidebox">
@@ -224,16 +224,16 @@
         </div>
             <div id="p2Chatbox"></div>
             <div id="p2ChatboxButtonContainer" class="chat-button-container">
-                <button id="p2AttackButton" class="selfColour">Attack</button>
-                <button id="p2PassButton" class="selfColour">Pass</button>
-                <button id="p2FREEBUTTON" class="selfColour">🥳</button>
+                <button id="p2AttackButton" class="self-color">Attack</button>
+                <button id="p2PassButton" class="self-color">Pass</button>
+                <button id="p2FREEBUTTON" class="self-color">🥳</button>
             </div>
             <input id="p2MessageInput" type="text" placeholder="Type your message here...">
             <div id="p2BottomButtonContainer" class="sidebox-button-container">
-                <button id="p2SetupButton" class="selfColour">Set Up</button>
-                <button id="p2ResetButton" class="selfColour">Reset</button>
-                <button id="leaveRoomButton" class="neutralColour">Leave Room</button>
-                <button id="p2OptionsButton" class="neutralColour">Options</button>
+                <button id="p2SetupButton" class="self-color">Set Up</button>
+                <button id="p2ResetButton" class="self-color">Reset</button>
+                <button id="leaveRoomButton" class="neutral-color">Leave Room</button>
+                <button id="p2OptionsButton" class="neutral-color">Options</button>
             </div>
         </div>
        
@@ -274,8 +274,8 @@
                 <label for="darkModeCheckbox">Dark mode</label>
               </div>
               <div>
-                <input type="checkbox" id="showContainersCheckbox">
-                <label for="showContainersCheckbox">Hide containers</label>
+                <input type="checkbox" id="showZonesCheckbox">
+                <label for="showZonesCheckbox">Hide containers</label>
               </div>
         </div>
         <div id="keybindReminder">
@@ -292,7 +292,7 @@
         </div>
     </div>
       
-    <div id="cardContextMenu" class="contextMenu">
+    <div id="cardContextMenu" class="context-menu">
         <ul>
             <li id="abilityCounterButton">Toggle ability</li>
             <li id="damageCounterButton">Damage counter</li>
@@ -320,10 +320,10 @@
             <li id="discardBoardButton">Discard all</li>
             <li id="handBoardButton">Move all to hand</li>
             <li id="shuffleBoardButton">Shuffle all into deck</li>
-            <li id="lostzoneBoardButton">Lost Zone all</li>
+            <li id="lostZoneBoardButton">Lost Zone all</li>
 
             <li id="moveButton">Move card...
-                <ul class="subMenu">
+                <ul class="sub-menu">
                     <li id="moveToBoardButton">to Board</li>
                     <li id="moveToTopButton">to Deck (top)</li>
                     <li id="moveToBottomButton">to Deck (bottom)</li>
@@ -332,7 +332,7 @@
                 </ul>
             </li>
             <li id="changeButton">Change type...
-                <ul class="subMenu">
+                <ul class="sub-menu">
                     <li id="changeToEnergyButton">to Energy</li>
                     <li id="changeToToolButton">to Tool</li>
                     <li id="changeToPokémonButton">to Pokémon</li>

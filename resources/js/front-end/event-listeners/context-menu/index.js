@@ -1,6 +1,6 @@
 export * from './active-bench-buttons.js'
 export * from './deck-buttons.js'
-export * from './general-buttons.js'
+export * from './move-to-buttons.js'
 export * from './hand-buttons.js'
 export * from './prizes-buttons.js'
 export * from './board-buttons.js'

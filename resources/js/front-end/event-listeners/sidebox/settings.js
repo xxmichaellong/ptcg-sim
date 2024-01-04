@@ -1,5 +1,5 @@
-import { darkModeCheckbox, p1Box, p2Box, settings, settingsToggles, showContainersCheckbox, chatbox, messageInput, nameInput, p2Chatbox, p2MessageInput, roomIdInput, stadium_html, deckImport, selfContainersDocument, oppContainersDocument, keybindModal, mainDeckImportInput, altDeckImportInput, p2ExplanationBox, changelog } from "../../front-end.js";
-import { stringToVariable } from "../../setup/containers/string-to-variable.js";
+import { darkModeCheckbox, p1Box, p2Box, settings, settingsToggles, showZonesCheckbox, chatbox, messageInput, nameInput, p2Chatbox, p2MessageInput, roomIdInput, stadiumElement, deckImport, selfContainersDocument, oppContainersDocument, keybindModal, mainDeckImportInput, altDeckImportInput, p2ExplanationBox, changelog } from "../../front-end.js";
+import { stringToVariable } from "../../setup/zones/zone-string-to-variable.js";
 
 const darkMode = () => {
     changelog.classList.toggle('dark-mode-6');
@@ -19,7 +19,7 @@ const darkMode = () => {
     mainDeckImportInput.classList.toggle('dark-mode-2');
     altDeckImportInput.classList.toggle('dark-mode-2');
     document.querySelector('.selected-page').classList.toggle('dark-mode-2');
-    const buttons = document.querySelectorAll('#boardButtonContainer button');
+    const buttons = document.querySelectorAll('#boardButtonsContainer button');
     buttons.forEach(button => {
         button.classList.toggle('dark-mode-2');
     });
@@ -41,11 +41,11 @@ const darkMode = () => {
     oppText.forEach(text => {
         text.classList.toggle('dark-mode-3');
     });
-    const oppHeader = oppContainersDocument.querySelectorAll('.stack-button-container, .self-button-container, .opp-button-container');
+    const oppHeader = oppContainersDocument.querySelectorAll('.zone-button-container, .self-button-container, .opp-button-container');
     oppHeader.forEach(header => {
         header.classList.toggle('dark-mode-4');
     });
-    const selfHeader = selfContainersDocument.querySelectorAll('.stack-button-container, .self-button-container, .opp-button-container');
+    const selfHeader = selfContainersDocument.querySelectorAll('.zone-button-container, .self-button-container, .opp-button-container');
     selfHeader.forEach(header => {
         header.classList.toggle('dark-mode-4');
     });
@@ -57,7 +57,7 @@ const darkMode = () => {
     oppBackGround.forEach(background => {
       background.classList.toggle('dark-mode-5');
     });
-    const contextMenu = document.querySelectorAll('.contextMenu, .subMenu');
+    const contextMenu = document.querySelectorAll('.context-menu, .sub-menu');
     contextMenu.forEach(item => {
         item.classList.toggle('dark-mode-2');
     });
@@ -68,19 +68,19 @@ const darkMode = () => {
     keybindModal.classList.toggle('dark-mode-6');
 }
 
-const showContainers = () => {
-    const containers = ['bench_html', 'active_html', 'deckDisplay_html', 'lostzoneDisplay_html', 'discardDisplay_html', 'prizes_html'];
+const showElements = () => {
+    const elements = ['benchElement', 'activeElement', 'deckCoverElement', 'lostZoneCoverElement', 'discardCoverElement', 'prizesElement'];
     const users = ['self', 'opp'];
 
     users.forEach(user => {
-        containers.forEach(containerId => {
-            const container_html = stringToVariable(user, containerId);
-            container_html.classList.toggle('base');
+        elements.forEach(zoneElementString => {
+            const element = stringToVariable(user, zoneElementString);
+            element.classList.toggle('base');
         });
     });
-    stadium_html.classList.toggle('base');
+    stadiumElement.classList.toggle('base');
 }
 
 darkModeCheckbox.addEventListener('change', darkMode);
-showContainersCheckbox.addEventListener('change', showContainers)
+showZonesCheckbox.addEventListener('change', showElements)
 

@@ -88,7 +88,7 @@ ul, li {
   height: 50%;
   transform: scaleX(-1) scaleY(-1);
 }
-#stadium_html {
+#stadiumElement {
   position: fixed;
   bottom: 42%;
   left: 11%;
@@ -98,7 +98,7 @@ ul, li {
 	justify-content: center; /* Horizontally center-align child elements */
   border-radius: 15px; /* Rounded corners */
 }
-#stadium_html img {
+#stadiumElement img {
   max-width: 100%;
   max-height: 100%;
   height: fit-content;
@@ -148,16 +148,16 @@ ul, li {
   border-radius: 50%;
   transform: translateY(50%);
 }
-.selfColour {
+.self-color {
   background-color: rgba(90, 110, 188, 0.864);
 }
-.oppColour {
+.opp-color {
   background-color: rgba(188, 90, 113, 0.864);  
 }
-.neutralColour {
+.neutral-color {
   background-color: rgba(112, 112, 112, 0.864);  
 }
-#boardButtonContainer {
+#boardButtonsContainer {
   position: fixed;
   height: 6%;
   left: 52%;
@@ -167,7 +167,7 @@ ul, li {
   align-items: center;
   gap: 5px;
 }
-#boardButtonContainer button {
+#boardButtonsContainer button {
   border-radius: 10px; /* Rounded edges */
   font-size: 2vh; /* Adjust font size as needed */
   cursor: pointer;
@@ -175,7 +175,7 @@ ul, li {
   color: rgb(149, 149, 149); /* Text color */
   border: none;
 }
-#boardButtonContainer button:hover {
+#boardButtonsContainer button:hover {
   background-color: rgb(117, 117, 117); /* Natural green background color */
   color: rgb(255, 255, 255); /* Text color */
 }
@@ -306,13 +306,13 @@ ul, li {
   color: white; /* Text color */
   border: none;
 }
-.sidebox-button-container button.selfColour:hover {
+.sidebox-button-container button.self-color:hover {
   background-color: rgba(116, 129, 183, 0.864);
 }
-.sidebox-button-container button.oppColour:hover {
+.sidebox-button-container button.opp-color:hover {
   background-color: rgba(189, 112, 130, 0.864);  
 }
-.sidebox-button-container button.neutralColour:hover {
+.sidebox-button-container button.neutral-color:hover {
   background-color: rgba(150, 144, 144, 0.864);  
 }
 .chat-button-container {
@@ -335,13 +335,13 @@ ul, li {
   border: none;
   border-radius: .5vw;
 }
-.chat-button-container button.selfColour:hover {
+.chat-button-container button.self-color:hover {
   background-color: rgba(116, 129, 183, 0.864);
 }
-.chat-button-container button.oppColour:hover {
+.chat-button-container button.opp-color:hover {
   background-color: rgba(189, 112, 130, 0.864);  
 }
-.chat-button-container button.neutralColour:hover {
+.chat-button-container button.neutral-color:hover {
   background-color: rgba(150, 144, 144, 0.864);  
 }
 #optionsContextMenu {
@@ -699,13 +699,12 @@ ul, li {
   box-sizing: border-box;
   display: block;
   border-radius: 10px;
-  
 }
 #settings label {
   position: relative;
   cursor: pointer;
 }
-#darkModeCheckbox, #showContainersCheckbox, #keybindReminder {
+#darkModeCheckbox, #showZonesCheckbox, #keybindReminder {
   margin-top: 1vh;
 }
 #keybindReminder {
@@ -739,10 +738,10 @@ a:hover {
   text-decoration: underline;
 }
 /*contextMenu styling*/
-.contextMenu button {
+.context-menu button {
   display: block;
 }
-.contextMenu {
+.context-menu {
   display: none;
   position: absolute;
   background-color: #fff;
@@ -751,34 +750,34 @@ a:hover {
   z-index: 1000;
   width: 150px; /* Set a fixed width */
 }
-.contextMenu ul {
+.context-menu ul {
   list-style-type: none;
   margin: 0;
   padding: 0;
 }
-.contextMenu ul li[id$="Header"] {
+.context-menu ul li[id$="Header"] {
   padding: 4px;
   cursor: default;
   font-weight: bold;
   background-color: #f0f0f0;
 }
-.contextMenu > ul > li {
+.context-menu > ul > li {
   padding: 8px 16px;
   cursor: pointer;
   position: relative;
 }
-.contextMenu > ul > li > ul > li{
+.context-menu > ul > li > ul > li{
   padding: 0px 16px;
 }
-.contextMenu:not(.dark-mode-2) > ul > li:hover,
-.contextMenu:not(.dark-mode-2) .subMenu li:hover {
+.context-menu:not(.dark-mode-2) > ul > li:hover,
+.context-menu:not(.dark-mode-2) .sub-menu li:hover {
   background-color: #f0f0f0;
 }
-.contextMenu.dark-mode-2 > ul > li:hover,
-.contextMenu.dark-mode-2 .subMenu li:hover {
+.context-menu.dark-mode-2 > ul > li:hover,
+.context-menu.dark-mode-2 .sub-menu li:hover {
   background-color: #4f4f4f;
 }
-.contextMenu .subMenu {
+.context-menu .sub-menu {
   display: none;
   position: absolute;
   top: 0;
@@ -790,10 +789,10 @@ a:hover {
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2); /* Added box-shadow */
   width: 120px; /* Set a fixed width */
 }
-.contextMenu > ul > li:hover > .subMenu {
+.context-menu > ul > li:hover > .sub-menu {
   display: block;
 }
-.contextMenu ul li#moveButton:before {
+.context-menu ul li#moveButton:before {
   content: "";
   position: absolute;
   top: 0;

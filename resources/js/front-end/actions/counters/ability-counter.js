@@ -1,18 +1,15 @@
-import { stringToVariable } from '../../setup/containers/string-to-variable.js';
-import { sCard, socket, selfContainersDocument, oppContainersDocument, p1, roomId, POV } from '../../front-end.js';
+import { stringToVariable } from '../../setup/zones/zone-string-to-variable.js';
+import { sCard, socket, selfContainersDocument, oppContainersDocument, systemState } from '../../front-end.js';
 
-export const addAbilityCounter = (user, location, container, index, received = false) => {
+export const addAbilityCounter = (user, zoneArrayString, zoneElementString, index, emit = true) => {
 
-    const _location = location;
-    const _container = container;
+    const zoneArray = stringToVariable(user, zoneArrayString);
+    const zoneElement = stringToVariable(user, zoneElementString);
 
-    location = stringToVariable(user, location);
-    container = stringToVariable(user, container);
-
-    //identify target image and container locations
-    const targetCard = location.cards[index];
+    //identify target image and zone
+    const targetCard = zoneArray[index];
     const targetRect = targetCard.image.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
+    const zoneElementRect = zoneElement.getBoundingClientRect();
 
     let abilityCounter = targetCard.image.abilityCounter;
     //clean up existing event listeners
@@ -20,7 +17,7 @@ export const addAbilityCounter = (user, location, container, index, received = f
         abilityCounter.handleRemove = null;
         window.removeEventListener('resize', abilityCounter.handleResize);
     } else {
-        if (_location !== 'stadium'){
+        if (zoneArrayString !== 'stadiumArray'){
             if (user === 'self'){
                 abilityCounter = selfContainersDocument.createElement('div');
                 abilityCounter.className = 'self-tab';
@@ -35,11 +32,11 @@ export const addAbilityCounter = (user, location, container, index, received = f
     };
    
     abilityCounter.style.display = 'inline-block';
-    abilityCounter.style.left = `${targetRect.left - containerRect.left}px`;
+    abilityCounter.style.left = `${targetRect.left - zoneElementRect.left}px`;
     abilityCounter.style.top = `${targetRect.height/2}px`;
-    container.appendChild(abilityCounter);
+    zoneElement.appendChild(abilityCounter);
 
-    if (targetCard.image.parentElement.classList.contains('fullView')){
+    if (targetCard.image.parentElement.classList.contains('full-view')){
         abilityCounter.style.display = 'none';
     };
     //adjust size of the circle based on card size
@@ -49,23 +46,23 @@ export const addAbilityCounter = (user, location, container, index, received = f
     abilityCounter.style.zIndex = '1';
 
     const handleResize = () => {
-        addAbilityCounter(user, _location, _container, index, true);
+        addAbilityCounter(user, zoneArrayString, zoneElementString, index, false);
     };
 
-    const handleRemove = (received = false) => {
+    const handleRemove = (emit = true) => {
         targetCard.image.abilityCounter.handleRemove = null;
         window.removeEventListener('resize', targetCard.image.abilityCounter.handleResize);
         targetCard.image.abilityCounter.remove();
         targetCard.image.abilityCounter = null;
     
-        if (!p1[0] && !received){
+        if (systemState.isTwoPlayer && emit){
             const oUser = user === 'self' ? 'opp' : 'self';
             const data = {
-                roomId : roomId,
+                roomId : systemState.roomId,
                 user : oUser,
-                location: _location,
+                zoneArrayString: zoneArrayString,
                 index: index,
-                received: true
+                emit: false
             };
             socket.emit('removeAbilityCounter', data);
         };
@@ -79,14 +76,14 @@ export const addAbilityCounter = (user, location, container, index, received = f
     //save the abilityCounter on the card
     targetCard.image.abilityCounter = abilityCounter;
 
-    if (!p1[0] && !received){
+    if (systemState.isTwoPlayer && emit){
         const data = {
-            roomId : roomId,
+            roomId : systemState.roomId,
             user : sCard.oUser,
-            location : _location,
-            container: _container,
+            zoneArrayString : zoneArrayString,
+            zoneElementString: zoneElementString,
             index: index,
-            received: true
+            emit: false
         };
         socket.emit('addAbilityCounter', data);
     };

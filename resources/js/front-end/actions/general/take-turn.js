@@ -1,49 +1,51 @@
-import { deck, oppDeck, p1, roomId, socket, turn } from '../../front-end.js';
+import { deckArray, oppDeckArray, systemState, socket } from '../../front-end.js';
 import { appendMessage } from '../../setup/chatbox/messages.js';
-import { containerIdToLocation } from '../../setup/containers/container-reference.js';
-import { stringToVariable, variableToString } from '../../setup/containers/string-to-variable.js';
+import { zoneElementToArray } from '../../setup/zones/zone-element-to-array.js';
+import { stringToVariable, variableToString } from '../../setup/zones/zone-string-to-variable.js';
 import { determineUsername } from '../../setup/general/determine-username.js';
 import { resetCounters } from '../counters/reset-ability-counters.js';
-import { discardBoard } from './clear-board.js';
-import { moveCard } from './move-card.js';
+import { discardBoard } from './board-actions.js';
+import { moveCard } from '../move-card-logic/move-card.js';
+import { getZoneCount } from './count.js';
+import { convertZoneName } from '../../setup/chatbox/move-card-message.js';
 
-export const takeTurn = (user, received = false) => {
+export const takeTurn = (user, emit = true) => {
     const oUser = user === 'self' ? 'opp' : 'self';
     discardBoard(user, false);
     discardBoard(oUser, false);
-    resetCounters(true);
+    resetCounters(false);
 
-    const deckCount = user === 'self' ? deck.count : oppDeck.count;
-    if (deckCount > 0){
-        turn[0] ++;
-        moveCard(user, 'deck', 'deck_html', 'hand', 'hand_html', 0, false, true);
-        appendMessage(user, 'Turn ' + turn, 'announcement', true);
+    const selectedDeckCount = user === 'self' ? getZoneCount(deckArray) : getZoneCount(oppDeckArray);
+    if (selectedDeckCount > 0){
+        systemState.turn ++;
+        moveCard(user, 'deckArray', 'deckElement', 'handArray', 'handElement', 0, false, false);
+        appendMessage(user, 'Turn ' + systemState.turn, 'announcement', false);
 
-        ['bench_html', 'active_html'].forEach(containerId => {
+        ['benchElement', 'activeElement'].forEach(zoneElementString => {
             ['self', 'opp'].forEach(user => {
-                const location = containerIdToLocation(user, containerId);
-                const locationAsString = variableToString(user, location);
-                const container = stringToVariable(user, containerId);
-                Array.from(container.querySelectorAll('img')).forEach(image => {
+                const zoneArray = zoneElementToArray(user, zoneElementString);
+                const zoneArrayString = variableToString(user, zoneArray);
+                const zoneElement = stringToVariable(user, zoneElementString);
+                Array.from(zoneElement.querySelectorAll('img')).forEach(image => {
                     if (image.faceDown){
                         image.src = image.src2;
                         image.faceDown = false;
-                        const card = location.cards.find(card => card.image === image);
-                        appendMessage(user, determineUsername(user) + ' revealed ' + card.name + ' in ' + determineUsername(user) + "'s " + locationAsString, 'player', true);
+                        const card = zoneArray.find(card => card.image === image);
+                        appendMessage(user, determineUsername(user) + ' revealed ' + card.name + ' in ' + determineUsername(user) + "'s " + convertZoneName(zoneArrayString), 'player', false);
                     };
                 });
             });
         });
 
-        appendMessage(user, determineUsername(user) + ' drew for turn', 'player', true);
+        appendMessage(user, determineUsername(user) + ' drew for turn', 'player', false);
     } else {
-        appendMessage(user, determineUsername(user) + ' has no more cards in deck!', 'announcement', true);
+        appendMessage(user, determineUsername(user) + ' has no more cards in deck!', 'announcement', false);
     };
-    if (!p1[0] && !received){
+    if (systemState.isTwoPlayer && emit){
         const data = {
-            roomId : roomId,
+            roomId : systemState.roomId,
             user : oUser,
-            received: true
+            emit: false
         };
         socket.emit('takeTurn', data);
     };

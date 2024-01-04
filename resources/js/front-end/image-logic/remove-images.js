@@ -1,5 +1,5 @@
-export const removeImages = (container_html) => {
-    const images = container_html.querySelectorAll('img');
+export const removeImages = (element) => {
+    const images = element.querySelectorAll('img');
     images.forEach((image) => {
         image.remove();
     });

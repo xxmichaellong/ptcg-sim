@@ -1,39 +1,39 @@
-import { imageFunctions } from './image-function-references.js';
 import { resetImage } from '../../image-logic/reset-image.js';
+import { doubleClick, imageClick, openCardContextMenu } from '../../image-logic/click-events.js';
+import { dragEnd, dragLeave, dragOver, dragStart } from '../../image-logic/drag.js';
 
 export class Card {
     name;
     type;
+    user;
     image;
 
-    constructor(rawCardAttributes, rawImageAttributes){
-        this.rawCardAttributes = rawCardAttributes;
-        this.rawImageAttributes = rawImageAttributes;
-        this.buildCard(JSON.parse(rawCardAttributes)),
-        this.buildImage(JSON.parse(rawImageAttributes));
-    }
-
-    buildCard(cardAttributes){
-        for (const attr in cardAttributes){
-            if (attr === 'name'){
-                this.name = cardAttributes[attr];
-            }
-            if (attr === 'type'){
-                this.type = cardAttributes[attr];
-            }
+    constructor(user, name, type, imageURL){
+        this.user = user;
+        this.name = name;
+        this.type = type;
+        this.imageAttributes = {
+            user: user,
+            src: imageURL,
+            alt: name,
+            draggable: true,
+            click: imageClick,
+            dblclick: doubleClick,
+            dragstart: dragStart,
+            dragover: dragOver,
+            dragleave: dragLeave,
+            dragend: dragEnd,
+            contextmenu: openCardContextMenu
         };
+        this.buildImage(this.imageAttributes);
     }
 
-    buildImage(imageAttributes){
+    buildImage(imageAttributes) {
         this.image = document.createElement('img');
-        for (const attr in imageAttributes){
-            if (imageFunctions.hasOwnProperty(imageAttributes[attr])){
-                this.image.addEventListener(attr, imageFunctions[imageAttributes[attr]]);
-            } else if (attr === 'style'){
-                for (const styleAttr in imageAttributes[attr]){
-                    this.image.style[styleAttr] = imageAttributes[attr][styleAttr];
-                };
-            } else if (attr === 'user'){
+        for (const attr in imageAttributes) {
+            if (typeof imageAttributes[attr] === 'function') {
+                this.image.addEventListener(attr, imageAttributes[attr]);
+            } else if (attr === 'user') {
                 this.image.user = imageAttributes[attr];
             } else {
                 this.image.setAttribute(attr, imageAttributes[attr]);

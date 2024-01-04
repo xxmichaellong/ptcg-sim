@@ -1,18 +1,14 @@
-import { stringToVariable } from '../../setup/containers/string-to-variable.js';
-import { sCard, socket, selfContainersDocument, oppContainersDocument, p1, roomId, POV } from '../../front-end.js';
+import { stringToVariable } from '../../setup/zones/zone-string-to-variable.js';
+import { sCard, socket, selfContainersDocument, oppContainersDocument, systemState } from '../../front-end.js';
 
-export const addDamageCounter = (user, location, container, index, received = false) => {
+export const addDamageCounter = (user, zoneArrayString, zoneElementString, index, emit = true) => {
 
-    const _location = location;
-    const _container = container;
+    const zoneArray = stringToVariable(user, zoneArrayString);
+    const zoneElement = stringToVariable(user, zoneElementString);
 
-    location = stringToVariable(user, location);
-    container = stringToVariable(user, container);
-
-    //identify target image and container locations
-    const targetCard = location.cards[index];
+    const targetCard = zoneArray[index];
     const targetRect = targetCard.image.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
+    const zoneElementRect = zoneElement.getBoundingClientRect();
 
     let damageCounter = targetCard.image.damageCounter;
     //clean up existing event listeners
@@ -25,21 +21,21 @@ export const addDamageCounter = (user, location, container, index, received = fa
     } else {
         if (user === 'self'){
             damageCounter = selfContainersDocument.createElement('div');
-            damageCounter.className = POV.user === 'self' ? 'self-circle' : 'opp-circle';
+            damageCounter.className = systemState.pov.user === 'self' ? 'self-circle' : 'opp-circle';
         } else {
             damageCounter = oppContainersDocument.createElement('div');
-            damageCounter.className = POV.user === 'self' ? 'opp-circle' : 'self-circle';
+            damageCounter.className = systemState.pov.user === 'self' ? 'opp-circle' : 'self-circle';
         };
         damageCounter.contentEditable = 'true';
         damageCounter.textContent = '10';
     };
    
     damageCounter.style.display = 'inline-block';
-    damageCounter.style.left = `${targetRect.left - containerRect.left + targetRect.width/1.5}px`;
-    damageCounter.style.top = `${targetRect.top - containerRect.top + targetRect.height/4}px`;
-    container.appendChild(damageCounter);
+    damageCounter.style.left = `${targetRect.left - zoneElementRect.left + targetRect.width/1.5}px`;
+    damageCounter.style.top = `${targetRect.top - zoneElementRect.top + targetRect.height/4}px`;
+    zoneElement.appendChild(damageCounter);
 
-    if (targetCard.image.parentElement.classList.contains('fullView')){
+    if (targetCard.image.parentElement.classList.contains('full-view')){
         damageCounter.style.display = 'none';
     };
     //adjust size of the circle based on card size
@@ -50,12 +46,12 @@ export const addDamageCounter = (user, location, container, index, received = fa
     damageCounter.style.zIndex = '1';
     
     const handleInput = () => {
-        if (!p1[0]){
+        if (systemState.isTwoPlayer){
             const oUser = user === 'self' ? 'opp' : 'self';
             const data = {
-                roomId : roomId,
+                roomId : systemState.roomId,
                 user : oUser,
-                location: _location,
+                zoneArrayString: zoneArrayString,
                 index: index,
                 textContent: damageCounter.textContent
             };
@@ -64,7 +60,7 @@ export const addDamageCounter = (user, location, container, index, received = fa
     }
 
     const handleResize = () => {
-        addDamageCounter(user, _location, _container, index, true);
+        addDamageCounter(user, zoneArrayString, zoneElementString, index, true);
     };
 
     const handleRemove = (fromBlurEvent = false) => {
@@ -77,12 +73,12 @@ export const addDamageCounter = (user, location, container, index, received = fa
             targetCard.image.damageCounter.remove();
             targetCard.image.damageCounter = null;
         
-            if (fromBlurEvent && !p1[0]){
+            if (fromBlurEvent && systemState.isTwoPlayer){
                 const oUser = user === 'self' ? 'opp' : 'self';
                 const data = {
-                    roomId : roomId,
+                    roomId : systemState.roomId,
                     user : oUser,
-                    location: _location,
+                    zoneArrayString: zoneArrayString,
                     index: index,
                 };
                 socket.emit('removeDamageCounter', data);
@@ -103,14 +99,14 @@ export const addDamageCounter = (user, location, container, index, received = fa
     //save the damageCounter on the card
     targetCard.image.damageCounter = damageCounter;
 
-    if (!p1[0] && !received){
+    if (systemState.isTwoPlayer && emit){
         const data = {
-            roomId : roomId,
+            roomId : systemState.roomId,
             user : sCard.oUser,
-            location : _location,
-            container: _container,
+            zoneArrayString : zoneArrayString,
+            zoneElementString: zoneElementString,
             index: index,
-            received: true
+            emit: false
         };
         socket.emit('addDamageCounter', data);
     };

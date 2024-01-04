@@ -1,15 +1,15 @@
-// Import prizes_html and oppPrizes_html
-import { prizes_html, oppPrizes_html } from "../../front-end.js";
+// Import prizesElement and oppPrizesElement
+import { prizesElement, oppPrizesElement } from "../../front-end.js";
 
 // Function to adjust image size based on the number of images
-const adjustImageSize = (container) => {
-  const images = container.getElementsByTagName('img');
+const adjustImageSize = (element) => {
+  const images = element.getElementsByTagName('img');
   const numImages = images.length;
   const classList = numImages <= 6 ? 'prizes-normal-size' : 'prizes-small-size';
 
-  for (const img of images) {
-    img.classList.remove('prizes-normal-size', 'prizes-small-size');
-    img.classList.add(classList); // Use add() to add a class
+  for (const image of images) {
+    image.classList.remove('prizes-normal-size', 'prizes-small-size');
+    image.classList.add(classList); // Use add() to add a class
   }
 };
 
@@ -30,5 +30,5 @@ const mutationCallback = (mutationsList, observer) => {
 const observer = new MutationObserver(mutationCallback);
 
 // Start observing the target nodes for configured mutations
-observer.observe(prizes_html, observerConfig);
-observer.observe(oppPrizes_html, observerConfig);
+observer.observe(prizesElement, observerConfig);
+observer.observe(oppPrizesElement, observerConfig);

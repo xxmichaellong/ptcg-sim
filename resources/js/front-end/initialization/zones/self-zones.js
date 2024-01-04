@@ -1,0 +1,26 @@
+export const selfContainers = document.getElementById('selfContainers');
+export const selfContainersDocument = selfContainers.contentWindow.document;
+export const deckCoverElement = selfContainersDocument.getElementById('deckCoverElement');
+export const deckElement = selfContainersDocument.getElementById('deckElement');
+export const lostZoneElement = selfContainersDocument.getElementById('lostZoneElement');
+export const lostZoneCoverElement = selfContainersDocument.getElementById('lostZoneCoverElement');
+export const discardElement = selfContainersDocument.getElementById('discardElement');
+export const discardCoverElement = selfContainersDocument.getElementById('discardCoverElement');
+export const prizesElement = selfContainersDocument.getElementById('prizesElement');
+export const activeElement = selfContainersDocument.getElementById('activeElement');
+export const benchElement = selfContainersDocument.getElementById('benchElement');
+export const handElement = selfContainersDocument.getElementById('handElement');
+export const attachedCardsElement = selfContainersDocument.getElementById('attachedCardsElement');
+export const viewCardsElement = selfContainersDocument.getElementById('viewCardsElement');
+export const boardElement = selfContainersDocument.getElementById('boardElement');
+
+export const deckArray = [];
+export const lostZoneArray = [];
+export const discardArray = [];
+export const prizesArray = [];
+export const activeArray = [];
+export const benchArray = [];
+export const handArray = [];
+export const attachedCardsArray = [];
+export const viewCardsArray = [];
+export const boardArray = [];

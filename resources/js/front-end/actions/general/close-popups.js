@@ -1,78 +1,68 @@
-import { lostzone_html, deck_html, discard_html, sCard, selfContainersDocument, active, bench, stadium_html, oppActive, oppBench, oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html, cardContextMenu, attachedCardPopup_html, viewCards_html, oppAttachedCardPopup_html, oppViewCards_html} from '../../front-end.js';
-import { containerIdToLocation } from '../../setup/containers/container-reference.js';
-import { stringToVariable, variableToString } from '../../setup/containers/string-to-variable.js';
+import { lostZoneElement, deckElement, discardElement, sCard, selfContainersDocument, activeArray, benchArray, stadiumElement, oppActiveArray, oppBenchArray, oppContainersDocument, oppDeckElement, oppDiscardElement, oppLostZoneElement, attachedCardsElement, viewCardsElement, oppAttachedCardsElement, oppViewCardsElement} from '../../front-end.js';
+import { zoneElementToArray } from '../../setup/zones/zone-element-to-array.js';
+import { stringToVariable } from '../../setup/zones/zone-string-to-variable.js';
 import { reloadBoard } from '../../setup/sizing/reload-board.js';
-import { addAbilityCounter } from '../counters/ability-counter.js';
-import { addDamageCounter } from '../counters/damage-counter.js';
-import { addSpecialCondition } from '../counters/special-condition.js';
+import { cardContextMenu } from '../../initialization/html-elements/context-menu.js';
+import { getZoneCount } from './count.js';
 
-export const closeContainerPopups = () => {
+export const hideZoneElements = () => {
     const elementsToHide = [
-        lostzone_html,
-        deck_html,
-        discard_html,
-        attachedCardPopup_html,
-        viewCards_html,
-        oppLostzone_html,
-        oppDeck_html,
-        oppDiscard_html,
-        oppAttachedCardPopup_html,
-        oppViewCards_html
+        lostZoneElement,
+        deckElement,
+        discardElement,
+        attachedCardsElement,
+        viewCardsElement,
+        oppLostZoneElement,
+        oppDeckElement,
+        oppDiscardElement,
+        oppAttachedCardsElement,
+        oppViewCardsElement
     ];
     
     elementsToHide.forEach(element => {
         element.style.display = 'none';
     });
 }
-export const hideIfEmpty = () => {
-    const containerArray = ['discard_html', 'lostzone_html', 'deck_html', 'attachedCardPopup_html', 'viewCards_html'];
+export const hideElementsIfEmpty = () => {
+    const elementStringArray = ['discardElement', 'lostZoneElement', 'deckElement', 'attachedCardsElement', 'viewCardsElement'];
     const userArray = ['self', 'opp'];
 
     userArray.forEach(user => {
-        containerArray.forEach(containerId =>{
-            const location = containerIdToLocation(user, containerId);
-            const location_html = stringToVariable(user, containerId);
-            if (location.count === 0){
-                location_html.style.display = 'none';
-            } else if (location.count !== 0 && ['attachedCardPopup_html', 'viewCards_html'].includes(containerId)){
-                location_html.style.display = 'block';
+        elementStringArray.forEach(elementString =>{
+            const zoneArray = zoneElementToArray(user, elementString);
+            const zoneElement = stringToVariable(user, elementString);
+            if (getZoneCount(zoneArray) === 0){
+                zoneElement.style.display = 'none';
+            } else if (getZoneCount(zoneArray) !== 0 && ['attachedCardsElement', 'viewCardsElement'].includes(elementString)){
+                zoneElement.style.display = 'block';
             };
         });
     });
 }
         
+const removeHighlightFromCards = (cards) => {
+    cards.forEach(card => {
+        card.image.classList.remove('selectHighlight');
+    });
+};
 
 export const deselectCard = () => {
     if (sCard.card){
         sCard.card.image.classList.remove('highlight');
-        sCard.selecting = false;
-
-        const removeHighlightFromCards = (cards) => {
-            cards.forEach(card => {
-                card.image.classList.remove('selectHighlight');
-            });
-        };
-        removeHighlightFromCards(active.cards);
-        removeHighlightFromCards(bench.cards);
-        removeHighlightFromCards(oppActive.cards);
-        removeHighlightFromCards(oppBench.cards);
+        sCard.keybinds = false;
+        removeHighlightFromCards(activeArray);
+        removeHighlightFromCards(benchArray);
+        removeHighlightFromCards(oppActiveArray);
+        removeHighlightFromCards(oppBenchArray);
     };
 }
 
-export const closePopups = (event) => {
-    deselectCard();
-    closeFullView(event);
-    cardContextMenu.style.display = 'none';
-    hideIfEmpty();
-}
-
 export const closeFullView = (event) => {
-    const fullViewElement = selfContainersDocument.querySelector('.fullView') || oppContainersDocument.querySelector('.fullView');
-    const user = selfContainersDocument.querySelector('.fullView') ? 'self' : 'opp';
+    const fullViewElement = selfContainersDocument.querySelector('.full-view') || oppContainersDocument.querySelector('.full-view');
     
     if (fullViewElement && (!event || !fullViewElement.contains(event.target))){
         // Revert the styles
-        fullViewElement.className = 'playContainer'; // Remove the 'fullView' class
+        fullViewElement.className = 'play-container';
         fullViewElement.style.zIndex = ''; // Revert the z-index
         fullViewElement.style.height = ''; // Revert the height
             
@@ -83,10 +73,10 @@ export const closeFullView = (event) => {
     
         // Revert the position of the images
         const images = fullViewElement.querySelectorAll('img');
-        images.forEach((img) => {
-            img.classList.remove('reset-rotation');
-            if (img.attached){
-                img.style.position = 'absolute';
+        images.forEach((image) => {
+            image.classList.remove('default-rotation');
+            if (image.attached){
+                image.style.position = 'absolute';
             };
         });
 
@@ -95,26 +85,16 @@ export const closeFullView = (event) => {
         fullViewElement.style.width = newWidth + 'px';
         fullViewElement.style.zIndex = '0';
 
-        const _location_html = fullViewElement.parentElement.id;
-        const location = containerIdToLocation(user, _location_html);
-        const _location = variableToString(user, location);
-
-        for (let i = 0; i < location.cards.length; i++){
-            const image = location.cards[i].image;
-            if (image.damageCounter){
-                addDamageCounter(user, _location, _location_html, i, true);
-            };
-            if (image.specialCondition){
-                addSpecialCondition(user, _location, _location_html, i, true);
-            };
-            if (image.abilityCounter){
-                addAbilityCounter(user, _location, _location_html, i, true);
-            };
-        };
-
-        // Revert the z-index of the sCard.container
+        // Revert the z-indexes
         fullViewElement.parentElement.style.zIndex = '0';
-        stadium_html.style.zIndex = '0';
+        stadiumElement.style.zIndex = '0';
         reloadBoard();
     };
+}
+
+export const closePopups = (event) => {
+    deselectCard();
+    closeFullView(event);
+    hideElementsIfEmpty();
+    cardContextMenu.style.display = 'none';
 }

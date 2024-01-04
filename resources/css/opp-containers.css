@@ -2,6 +2,9 @@
 * {
   user-select: none;
 }
+body, input, textarea, button {
+  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif
+}
 .dark-mode {
   background-color: rgb(8, 18, 18) !important;
   color: white;
@@ -16,9 +19,6 @@
 .dark-mode-4 {
   background-color: #141414 !important;
   color: white;
-}
-body, input, textarea, button {
-  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif
 }
 #boardCenterDesign {
   position: fixed;
@@ -77,7 +77,7 @@ body, input, textarea, button {
 .highlightBox {
   background-color: rgba(188, 90, 113, 0.3);
 }
-#hand_html {
+#handElement {
   border-top: 3px solid rgba(188, 90, 113, 0.864);  
   position: fixed;
   bottom: 0;
@@ -89,7 +89,7 @@ body, input, textarea, button {
   z-index: 0;
   align-items: flex-end;
 }
-#hand_html img {
+#handElement img {
   box-sizing: border-box;
   width: auto;
   max-height: calc(100% - 3vh);
@@ -103,7 +103,7 @@ body, input, textarea, button {
   bottom: 30%;
   color: rgba(188, 90, 113, 0.864);  
 }
-#bench_html {
+#benchElement {
   position: fixed;
 	bottom: 35%;
 	left: 10%;
@@ -114,11 +114,11 @@ body, input, textarea, button {
 	align-items: flex-end;
 	z-index: 0;
 }
-#bench_html div {
+#benchElement div {
   height: 100%;
 	margin-right: 1%;
 }
-#active_html {
+#activeElement {
   position: fixed;
 	bottom: 65%;
 	left: 34%;
@@ -129,11 +129,11 @@ body, input, textarea, button {
 	align-items: flex-end;
 	z-index: 0;
 }
-#active_html div {
+#activeElement div {
   width: auto;
 	height: 100%;
 }
-#prizes_html {
+#prizesElement {
   position: fixed;
   bottom: 36%;
   left: 1%;
@@ -142,12 +142,12 @@ body, input, textarea, button {
   z-index: 0;
   padding: 5px; /* Add padding */
 }
-#prizes_html img {
+#prizesElement img {
   margin-left: .1vw;
   width: auto;
   max-width: calc(50% - .1vw);
 }
-#lostzoneDisplay_html {
+#lostZoneCoverElement {
   position: fixed;
   bottom: 84%;
   left: 1%;
@@ -160,7 +160,7 @@ body, input, textarea, button {
   align-items:flex-start;
   border-radius: 2rem; /* Rounded corners */
 }
-#lostzoneDisplay_html img {
+#lostZoneCoverElement img {
   width: auto;
   height: auto;
   max-width: 100%;
@@ -168,12 +168,12 @@ body, input, textarea, button {
   object-fit: contain;
   left: 0;
 }
-#lostzoneText {
+#lostZoneText {
 	position: fixed;
   left: 9.5%;
   bottom: 90%;
 }
-#deckDisplay_html {
+#deckCoverElement {
   position: fixed;
   bottom: 66%;
   right: 1%;
@@ -184,7 +184,7 @@ body, input, textarea, button {
   align-items:flex-start;
   z-index: 0;
 }
-#deckDisplay_html img {
+#deckCoverElement img {
   width: auto;
   height: auto;
   max-width: 100%;
@@ -209,7 +209,7 @@ body, input, textarea, button {
   right: 2%;
   bottom: 60%;
 }
-#discardDisplay_html {
+#discardCoverElement {
   position: fixed;
   bottom: 36%;
   right: 1%;
@@ -220,7 +220,7 @@ body, input, textarea, button {
   align-items:flex-start;
   z-index: 0;
 }
-#discardDisplay_html img {
+#discardCoverElement img {
   width: auto;
   height: auto;
   max-width: 100%;
@@ -228,7 +228,7 @@ body, input, textarea, button {
   object-fit: contain;
   left: 0;
 } 
-#board_html {
+#boardElement {
   position: fixed;
   display: flex;
   flex-wrap: wrap; /* Allow items to wrap onto multiple lines */
@@ -238,7 +238,7 @@ body, input, textarea, button {
   padding: 5px;
   z-index: -1;
 }
-#board_html img {
+#boardElement img {
   width: auto; /* Ensure images don't exceed the width of the container */
   height: 70%; /* Maintain aspect ratio */
   margin: .25vw;
@@ -295,17 +295,17 @@ body, input, textarea, button {
 .used {
   background-color: rgba(188, 90, 113, 0.3) !important;
 }
-.playContainer {
+.play-container {
   display: inline-block;
   flex-wrap: nowrap;
   height: 100%;
   position: relative;
 }
-.playContainer img {
+.play-container img {
   width: auto;
   height: 100%;
 }
-.fullView {
+.full-view {
   position: fixed;
   top: 50%;
   left: 50%;
@@ -317,7 +317,7 @@ body, input, textarea, button {
   padding: 20px;
   margin-right: 1%;
 }
-.fullView img {
+.full-view img {
   height: 24%;
   margin: 0.5%;
 }
@@ -341,7 +341,7 @@ body, input, textarea, button {
   border-radius: 10%;
   background-color: rgba(255, 60, 0, 0.392);
 }
-#attachedCardPopup_html {
+#attachedCardsElement {
   display: none;
   position: fixed;
   top: 50%;
@@ -355,11 +355,11 @@ body, input, textarea, button {
   width: 69%;
   height: 75%;
 }
-#attachedCardPopup_html img {
+#attachedCardsElement img {
   height: 33%;
   margin: 0.5%;
 }
-#attachedCardPopup_html button {
+#attachedCardsElement button {
   width: 17%;
 }
 .header {
@@ -382,7 +382,7 @@ body, input, textarea, button {
 .opp-header {
   transform: translateX(-50%) scaleX(-1) scaleY(-1);
 }
-#viewCards_html {
+#viewCardsElement {
   display: none;
   position: fixed;
   top: 50%;
@@ -396,7 +396,7 @@ body, input, textarea, button {
   width: 69%;
   height: 75%;
 }
-#viewCards_html img {
+#viewCardsElement img {
   height: 33%;
   margin: 0.5%;
 }
@@ -438,7 +438,7 @@ body, input, textarea, button {
 .action-button:hover {
   background-color: #adadad; /* Darker blue on hover */
 }
-.stack-button-container {
+.zone-button-container {
   position: sticky;
   top: 0;
   width: 100%;
@@ -452,7 +452,7 @@ body, input, textarea, button {
   z-index: 1;
   box-sizing: border-box;
 }
-.stack-container {
+.zone {
   display: none;
   position: fixed;
   background-color: rgba(169, 169, 169, 0.867); /* Transparent dark grey */
@@ -465,57 +465,57 @@ body, input, textarea, button {
   overflow-y: auto;
   z-index: 3;
 }
-#deck_html label {
+#deckElement label {
   position: relative;
   cursor: pointer;
 }
-#deck_html img {
+#deckElement img {
   display: inline-block;
   width: 8%;
   height: auto;
   margin: 1px;
 }
-#lostzone_html img {
+#lostZoneElement img {
   display: inline-block;
   width: 12%;
   height: auto;
   margin: 1px;
 }
-#discard_html img {
+#discardElement img {
   display: inline-block;
   width: 10%;
   height: auto;
   margin: 1px;
 }
 
-#hand_html img,
-#bench_html div img,
-#lostzoneDisplay_html img,
-#deckDisplay_html img,
-#discardDisplay_html img,
-#board_html img,
-.playContainer img,
-.fullView img,
-#attachedCardPopup_html img,
-#viewCards_html img,
-#deck_html img,
-#lostzone_html img,
-#discard_html img,
-#prizes_html img {
+#handElement img,
+#benchElement div img,
+#lostZoneCoverElement img,
+#deckCoverElement img,
+#discardCoverElement img,
+#boardElement img,
+.play-container img,
+.full-view img,
+#attachedCardsElement img,
+#viewCardsElement img,
+#deckElement img,
+#lostZoneElement img,
+#discardElement img,
+#prizesElement img {
   box-shadow: 0 2px 4px rgba(0, 0, 0, .3); /* Adjust the values for your desired shadow effect */
   border-radius: 0.3rem;
   cursor: pointer;
 }
-#hand_html,
-#bench_html,
-#deckDisplay_html,
-#discardDisplay_html,
-#active_html,
-#prizes_html
+#handElement,
+#benchElement,
+#deckCoverElement,
+#discardCoverElement,
+#activeElement,
+#prizesElement
 {
   border-radius: .5rem; /* Rounded corners */
 }
-.reset-rotation {
+.default-rotation {
   transform: rotate(0deg) !important;
 }
 .high-zIndex {

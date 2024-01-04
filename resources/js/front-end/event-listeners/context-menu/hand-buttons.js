@@ -1,27 +1,28 @@
-import { discardAndDraw, shuffleAndDraw, shuffleBottomAndDraw } from '../../actions/container/hand-actions.js';
+import { discardAndDraw, shuffleAndDraw, shuffleBottomAndDraw } from '../../actions/zones/hand-actions.js';
 import { hideCards, revealCards, revealShortcut } from '../../actions/general/reveal-and-hide.js';
-import { POV, discardHandButton, hand, oppHand, revealHideHandButton, revealRandomHandButton, sCard, shuffleHandBottomButton, shuffleHandButton } from '../../front-end.js'
+import { systemState, discardHandButton, handArray, oppHandArray, revealHideHandButton, revealRandomHandButton, sCard, shuffleHandBottomButton, shuffleHandButton } from '../../front-end.js'
 import { appendMessage } from '../../setup/chatbox/messages.js';
 import { determineUsername } from '../../setup/general/determine-username.js';
+import { getZoneCount } from '../../actions/general/count.js';
 
 revealHideHandButton.addEventListener('click', () => {
     let rootDirectory = window.location.origin;
 
-    if (sCard.card.image.src === rootDirectory + '/resources/card-scans/cardback.png'){
-        revealCards(sCard.user, 'hand', 'hand_html');
-        appendMessage(POV.user, determineUsername(POV.user) + " revealed " + determineUsername(sCard.user) + "'s hand", 'player');
+    if (sCard.card.image.src === rootDirectory + '/resources/cardback.png'){
+        revealCards(sCard.user, 'handArray', 'handElement');
+        appendMessage(systemState.pov.user, determineUsername(systemState.pov.user) + " revealed " + determineUsername(sCard.user) + "'s hand", 'player');
     } else {
-        hideCards(sCard.user, 'hand', 'hand_html');
-        appendMessage(POV.user, determineUsername(POV.user) + " stopped looking at " + determineUsername(sCard.user) + "'s hand", 'player');
+        hideCards(sCard.user, 'handArray', 'handElement');
+        appendMessage(systemState.pov.user, determineUsername(systemState.pov.user) + " stopped looking at " + determineUsername(sCard.user) + "'s hand", 'player');
     };
 });
 
 revealRandomHandButton.addEventListener('click', () => {
 
-    const handCount = sCard.user === 'self' ? hand.count : oppHand.count;
-    const randomIndex = Math.floor(Math.random() * handCount);
+    const selectedHandCount = sCard.user === 'self' ? getZoneCount(handArray) : getZoneCount(oppHandArray);
+    const randomIndex = Math.floor(Math.random() * selectedHandCount);
     sCard.index = randomIndex;
-    revealShortcut(sCard.user, sCard.locationAsString, sCard.index);
+    revealShortcut(sCard.user, sCard.zoneArrayString, sCard.index);
 });
 
 discardHandButton.addEventListener('click', () => discardAndDraw(sCard.user));

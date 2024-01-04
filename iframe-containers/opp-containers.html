@@ -6,65 +6,65 @@
     <div id="innerCircle"></div>
 </div>
 
-<div id="deckText" class="opp-text">(<span id="deckCount">0</span>)</div>
-<div id="deck_html" class="stack-container opp-view">
-    <div class="stack-button-container">
+<div id="deckText" class="opp-text">(<span id="deckArrayCount">0</span>)</div>
+<div id="deckElement" class="zone opp-view">
+    <div class="zone-button-container">
         <button id="oppShuffleDeckButton" class="action-button">Shuffle</button>
         <button id="closeDeckDisplayButton" class="action-button">Close</button>
         <input type="checkbox" id="deckSortCheckBox">
         <label for="deckSortCheckBox">Sort</label>
     </div>
 </div>
-<div id="discardText" class="opp-text">(<span id="discardCount">0</span>)</div>
-<div id="discard_html" class="stack-container opp-view">
-    <div class="stack-button-container">
+<div id="discardText" class="opp-text">(<span id="discardArrayCount">0</span>)</div>
+<div id="discardElement" class="zone opp-view">
+    <div class="zone-button-container">
         <button id="discardShuffleButton" class="action-button">Shuffle all to Deck</button>
         <button id="closeDiscardDisplayButton" class="action-button">Close</button>
         <input type="checkbox" id="discardSortCheckBox">
         <label for="discardSortCheckBox">Sort</label>
     </div>
 </div>
-<div id="lostzoneText" class="opp-text">(<span id="lostzoneCount">0</span>)</div>
-<div id="lostzone_html" class="stack-container opp-view">
-    <div class="stack-button-container">
-        <button id="closeLostzoneDisplayButton" class="action-button">Close</button>
-        <input type="checkbox" id="lostzoneSortCheckBox">
-        <label for="lostzoneSortCheckBox">Sort</label>
+<div id="lostZoneText" class="opp-text">(<span id="lostZoneArrayCount">0</span>)</div>
+<div id="lostZoneElement" class="zone opp-view">
+    <div class="zone-button-container">
+        <button id="closelostZoneDisplayButton" class="action-button">Close</button>
+        <input type="checkbox" id="lostZoneSortCheckBox">
+        <label for="lostZoneSortCheckBox">Sort</label>
     </div>
 </div>
 
-<div id="handText" class="opp-text">(<span id="handCount">0</span>)</div>
-<div id="hand_html"></div>
-<div id="discardDisplay_html" class="base"></div>
-<div id="deckDisplay_html" class="base"></div>
-<div id="lostzoneDisplay_html" class="base"></div>
-<div id="bench_html" class="base"></div>
-<div id="active_html" class="base"></div>
-<div id="prizes_html" class="base"></div>
-<div id="board_html" class="oppBoard"></div>
+<div id="handText" class="opp-text">(<span id="handArrayCount">0</span>)</div>
+<div id="handElement"></div>
+<div id="discardCoverElement" class="base"></div>
+<div id="deckCoverElement" class="base"></div>
+<div id="lostZoneCoverElement" class="base"></div>
+<div id="benchElement" class="base"></div>
+<div id="activeElement" class="base"></div>
+<div id="prizesElement" class="base"></div>
+<div id="boardElement" class="oppBoard"></div>
 
 <div id="buttonContainer" class="oppButtonContainer">
     <button id="vSTARButton">VSTAR</button>
     <button id="GXButton" >GX</button>
 </div>
 
-<div id="attachedCardPopup_html" class="opp-view">
-    <div id="attachedCardPopupHeader" class="header opp-header">Opponent moving cards...</div>
-    <div id="attachedCardPopupButtonContainer" class="opp-button-container">
-        <button id="attachedCardDiscardButton" class="action-button">Discard all</button>
-        <button id="attachedCardShuffleButton" class="action-button">Shuffle all</button>
-        <button id="attachedCardLostzoneButton" class="action-button">Lost Zone all</button>
-        <button id="attachedCardHandButton" class="action-button">To Hand</button>
-        <button id="attachedCardLeaveButton" class="action-button">Leave in play</button>
+<div id="attachedCardsElement" class="opp-view">
+    <div id="attachedCardsPopupHeader" class="header opp-header">Opponent moving cards...</div>
+    <div id="attachedCardsPopupButtonContainer" class="opp-button-container">
+        <button id="attachedCardsDiscardButton" class="action-button">Discard all</button>
+        <button id="attachedCardsShuffleButton" class="action-button">Shuffle all</button>
+        <button id="attachedCardslostZoneButton" class="action-button">Lost Zone all</button>
+        <button id="attachedCardsHandButton" class="action-button">To Hand</button>
+        <button id="attachedCardsLeaveButton" class="action-button">Leave in play</button>
     </div>
 </div>
 
-<div id="viewCards_html" class="opp-view flip-image">
+<div id="viewCardsElement" class="opp-view flip-image">
     <div id="viewCardsHeader" class="header opp-header">Looking at cards...</div>
     <div id="viewCardsButtonContainer" class="opp-button-container">
         <button id="viewCardsDiscardButton" class="action-button">Discard all</button>
         <button id="viewCardsShuffleButton" class="action-button">Shuffle all</button>
-        <button id="viewCardsLostzoneButton" class="action-button">Lost Zone all</button>
+        <button id="viewCardslostZoneButton" class="action-button">Lost Zone all</button>
         <button id="viewCardsHandButton" class="action-button">To Hand</button>
     </div>
 </div>

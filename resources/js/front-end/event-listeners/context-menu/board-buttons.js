@@ -1,10 +1,10 @@
-import { discardBoard, handBoard, lostzoneBoard, shuffleBoard } from "../../actions/general/clear-board.js";
-import { discardBoardButton, handBoardButton, lostzoneBoardButton, sCard, shuffleBoardButton } from "../../front-end.js";
+import { discardBoard, handBoard, lostZoneBoard, shuffleBoard } from "../../actions/general/board-actions.js";
+import { discardBoardButton, handBoardButton, lostZoneBoardButton, sCard, shuffleBoardButton } from "../../front-end.js";
 
 discardBoardButton.addEventListener('click', () => discardBoard(sCard.user));
 
 shuffleBoardButton.addEventListener('click', () => shuffleBoard(sCard.user));
 
-lostzoneBoardButton.addEventListener('click', () => lostzoneBoard(sCard.user));
+lostZoneBoardButton.addEventListener('click', () => lostZoneBoard(sCard.user));
 
 handBoardButton.addEventListener('click', () => handBoard(sCard.user));

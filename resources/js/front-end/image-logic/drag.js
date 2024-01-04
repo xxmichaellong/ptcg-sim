@@ -1,13 +1,13 @@
-import { moveToDeckTop } from '../actions/container/deck-actions.js';
+import { moveToDeckTop } from '../actions/zones/deck-actions.js';
 import { closePopups } from '../actions/general/close-popups.js';
-import { moveCard } from '../actions/general/move-card.js';
-import { POV, active_html, attachedCardPopup_html, bench_html, deck_html, discard_html, lostzone_html, oppActive_html, oppAttachedCardPopup_html, oppBench_html, oppContainersDocument, oppDeck_html, oppDiscard_html, oppLostzone_html, oppViewCards_html, sCard, selfContainersDocument, target, viewCards_html } from '../front-end.js';
-import { moveCardMessage } from '../setup/chatbox/determine-location-name.js';
-import { containerIdToLocation } from '../setup/containers/container-reference.js';
-import { stringToVariable, variableToString } from '../setup/containers/string-to-variable.js';
+import { moveCard } from '../actions/move-card-logic/move-card.js';
+import { activeElement, attachedCardsElement, benchElement, deckElement, discardElement, lostZoneElement, oppActiveElement, oppAttachedCardsElement, oppBenchElement, oppContainersDocument, oppDeckElement, oppDiscardElement, oppLostZoneElement, oppViewCardsElement, sCard, selfContainersDocument, systemState, target, viewCardsElement } from '../front-end.js';
+import { moveCardMessage } from '../setup/chatbox/move-card-message.js';
+import { zoneElementToArray } from '../setup/zones/zone-element-to-array.js';
+import { stringToVariable, variableToString } from '../setup/zones/zone-string-to-variable.js';
 import { identifyCard } from './click-events.js';
 
-const popupContainers = [lostzone_html, discard_html, deck_html, attachedCardPopup_html, oppLostzone_html, oppDiscard_html, oppAttachedCardPopup_html, oppDeck_html, viewCards_html, oppViewCards_html];
+const popupContainers = [lostZoneElement, discardElement, deckElement, attachedCardsElement, oppLostZoneElement, oppDiscardElement, oppAttachedCardsElement, oppDeckElement, viewCardsElement, oppViewCardsElement];
 
 export const dragStart = (event) => {
     event.target.classList.add('high-zIndex');
@@ -29,10 +29,10 @@ export const dragStart = (event) => {
 
     event.target.classList.add('dragging');
 
-    if (popupContainers.includes(sCard.container)){
-        sCard.container.style.opacity = '0%';
+    if (popupContainers.includes(sCard.zoneElement)){
+        sCard.zoneElement.style.opacity = '0%';
     };
-    if (event.target.parentElement.classList.contains('fullView')){
+    if (event.target.parentElement.classList.contains('full-view')){
         sCard.box = event.target.parentElement;
         sCard.boxParent = event.target.parentElement.parentElement;
         sCard.box.style.opacity = '0';
@@ -45,10 +45,10 @@ export const dragOver = (event) => {
     if (blockedClasses.some(className => event.target.classList.contains(className))) {
         event.target.style.pointerEvents = 'none';
     };
-    if (popupContainers.includes(sCard.container)){
-        sCard.container.style.zIndex = '-1';
+    if (popupContainers.includes(sCard.zoneElement)){
+        sCard.zoneElement.style.zIndex = '-1';
     };
-    if (event.target.classList.contains('fullView')){
+    if (event.target.classList.contains('full-view')){
         sCard.box.style.zIndex = '-1';
         sCard.boxParent.style.zIndex = '-1';
     };
@@ -57,19 +57,19 @@ export const dragOver = (event) => {
     const targetIsNotOwnContainer = event.target !== draggedImage.parentElement && event.target !== draggedImage.parentElement.parentElement;
     const targetIsContainer = event.target.tagName === 'DIV';
     const cardIsAttached = draggedImage.attached;
-    const targetIsActiveOrBench = [active_html, bench_html, oppActive_html, oppBench_html].includes(event.target);
-    const targetParentIsActiveOrBench = [active_html, bench_html, oppActive_html, oppBench_html].includes(event.target.parentElement.parentElement);
+    const targetIsActiveOrBench = [activeElement, benchElement, oppActiveElement, oppBenchElement].includes(event.target);
+    const targetParentIsActiveOrBench = [activeElement, benchElement, oppActiveElement, oppBenchElement].includes(event.target.parentElement.parentElement);
     const targetNotItself = event.target !== draggedImage;
     const targetIsAttached = event.target.attached;
-    const cardIsFromActiveOrBench = [active_html, bench_html, oppActive_html, oppBench_html].includes(draggedImage.parentElement.parentElement);
+    const cardIsFromActiveOrBench = [activeElement, benchElement, oppActiveElement, oppBenchElement].includes(draggedImage.parentElement.parentElement);
     const targetParentParentIsNotOwnContainer = event.target.parentElement.parentElement !== draggedImage.parentElement.parentElement;
     
     const movingValidCardToContainer = targetIsContainer && targetIsNotOwnContainer && (!cardIsAttached || !targetIsActiveOrBench);
     const attachingValidCard = (targetParentIsActiveOrBench && targetNotItself && !targetIsAttached && (targetParentParentIsNotOwnContainer || cardIsAttached))
-    const targetIsNotBox = !event.target.classList.contains('fullView') && !event.target.classList.contains('playContainer');
+    const targetIsNotBox = !event.target.classList.contains('full-view') && !event.target.classList.contains('play-container');
 
     if (targetIsNotBox && (movingValidCardToContainer || attachingValidCard)){
-        if (event.target.id === 'board_html'){
+        if (event.target.id === 'boardElement'){
             event.target.classList.add('highlightBox');
         } else {
             event.target.classList.add('highlight');
@@ -83,7 +83,7 @@ export const dragOver = (event) => {
         if (targetParentIsActiveOrBench && cardIsFromActiveOrBench && targetParentParentIsNotOwnContainer){
             event.target.parentElement.parentElement.classList.add('highlight');
         } else if (!targetParentIsActiveOrBench && targetParentIsNotOwnContainer){
-            if (event.target.parentElement.id === 'board_html'){
+            if (event.target.parentElement.id === 'boardElement'){
                 event.target.parentElement.classList.add('highlightBox');
             } else {
                 event.target.parentElement.classList.add('highlight');
@@ -126,15 +126,15 @@ export const dragEnd = (event) => {
         });
     };
 
-    if (popupContainers.includes(sCard.container)){
-        sCard.container.style.opacity = '1';
-        sCard.container.style.zIndex = '9999';
+    if (popupContainers.includes(sCard.zoneElement)){
+        sCard.zoneElement.style.opacity = '1';
+        sCard.zoneElement.style.zIndex = '9999';
     };
     if (sCard.box){
         sCard.box.style.opacity = '1';
         sCard.box.style.zIndex = '2';
         sCard.boxParent.style.zIndex = sCard.box.parentElement ? '2' : '0';
-        // stadium_html.style.zIndex = sCard.box.parentElement ? '-1' : '0';
+        // stadiumElement.style.zIndex = sCard.box.parentElement ? '-1' : '0';
         sCard.box = false;
         sCard.boxParent = false;
     };
@@ -152,12 +152,14 @@ export const drop = (event) => {
     event.target.parentElement.classList.remove('highlight', 'highlightBox');
     event.target.parentElement.parentElement.classList.remove('highlight', 'highlightBox');
 
-    //reroute displays to actual container
-    if (['deckDisplay_html'].includes(sCard.containerId)){
+    //reroute displays to actual element
+    if (['deckCoverElement'].includes(sCard.zoneElementString)){
         const mapping = {
-            'deckDisplay_html': 'deck_html',
+            'deckCoverElement': 'deckElement',
+            'lostZoneCoverElement': 'lostZoneElement',
+            'discardCoverElement': 'discardElement'
         };
-        sCard.containerId = mapping[sCard.containerId];
+        sCard.zoneElementString = mapping[sCard.zoneElementString];
     };
 
     let draggedImage = document.querySelector('.dragging') || selfContainersDocument.querySelector('.dragging') || oppContainersDocument.querySelector('.dragging');
@@ -168,43 +170,43 @@ export const drop = (event) => {
         };
     });
 
-    const targetIsNotBox = !event.target.classList.contains('fullView') && !event.target.classList.contains('playContainer') 
+    const targetIsNotBox = !event.target.classList.contains('full-view') && !event.target.classList.contains('play-container');
     //make sure only card images can trigger drop
     if (targetIsNotBox && draggedImage.layer !== undefined && (!event.target.attached || event.target.tagName === 'DIV')){
         // if target image exists and it isn't itself 
-        if (event.target.tagName === 'IMG' && event.target !== draggedImage[0] && ['bench_html', 'active_html'].includes(event.target.parentElement.parentElement.id)){
-            target.containerId = event.target.parentElement.parentElement.id;
-            target.location = containerIdToLocation(sCard.user, target.containerId);
+        if (event.target.tagName === 'IMG' && event.target !== draggedImage[0] && ['benchElement', 'activeElement'].includes(event.target.parentElement.parentElement.id)){
+            target.zoneElementString = event.target.parentElement.parentElement.id;
+            target.zoneArray = zoneElementToArray(sCard.user, target.zoneElementString);
 
-            target.index = target.location.cards.findIndex(card => card.image === event.target);
-        } else if (event.target.id === 'card'){
-            target.containerId = event.target.parentElement.id;
+            target.index = target.zoneArray.findIndex(card => card.image === event.target);
+        } else if (event.target.tagName === 'IMG'){
+            target.zoneElementString = event.target.parentElement.id;
             target.index = undefined;
         } else {
-            target.containerId = event.target.id;
+            target.zoneElementString = event.target.id;
             target.index = undefined;
         };
         
-        target.container = stringToVariable(sCard.user, target.containerId);
-        target.location = containerIdToLocation(sCard.user, target.containerId);
-        target.locationAsString = variableToString(sCard.user, target.location);
+        target.zoneElement = stringToVariable(sCard.user, target.zoneElementString);
+        target.zoneArray = zoneElementToArray(sCard.user, target.zoneElementString);
+        target.zoneArrayString = variableToString(sCard.user, target.zoneArray);
 
-        //reroute displays to actual container
-        if (['deckDisplay_html', 'lostzoneDisplay_html', 'discardDisplay_html'].includes(target.containerId)){
+        //reroute displays to actual zone element
+        if (['deckCoverElement', 'lostZoneCoverElement', 'discardCoverElement'].includes(target.zoneElementString)){
             const mapping = {
-                'deckDisplay_html': 'deck_html',
-                'lostzoneDisplay_html': 'lostzone_html',
-                'discardDisplay_html': 'discard_html'
+                'deckCoverElement': 'deckElement',
+                'lostZoneCoverElement': 'lostZoneElement',
+                'discardCoverElement': 'discardElement'
             };
-            target.containerId = mapping[target.containerId];
+            target.zoneElementString = mapping[target.zoneElementString];
         };
 
-        if ((sCard.containerId !== target.containerId || draggedImage.attached) && !(draggedImage.attached && ['bench_html', 'active_html'].includes(target.containerId) && target.index === undefined)){
-            if (target.locationAsString === 'deck'){
+        if ((sCard.zoneElementString !== target.zoneElementString || draggedImage.attached) && !(draggedImage.attached && ['benchElement', 'activeElement'].includes(target.zoneElementString) && target.index === undefined)){
+            if (target.zoneArrayString === 'deckArray'){
                 moveToDeckTop();
             } else {
-                moveCardMessage(POV.user, sCard.card.name, sCard.locationAsString, target.locationAsString, 'move', sCard.card.image.attached, sCard.card.image.faceDown, sCard.card.image.faceUp);
-                moveCard(sCard.user, sCard.locationAsString, sCard.containerId, target.locationAsString, target.containerId, sCard.index, target.index);
+                moveCardMessage(systemState.pov.user, sCard.card.name, sCard.zoneArrayString, target.zoneArrayString, 'move', sCard.card.image.attached, sCard.card.image.faceDown, sCard.card.image.faceUp);
+                moveCard(sCard.user, sCard.zoneArrayString, sCard.zoneElementString, target.zoneArrayString, target.zoneElementString, sCard.index, target.index);
             };
         };
     };

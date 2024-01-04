@@ -1,6 +1,6 @@
-import { chatbox, p1, p2Chatbox, roomId, socket } from '../../front-end.js';
+import { chatbox, systemState, p2Chatbox, socket } from '../../front-end.js';
 
-export const appendMessage = (user, message, type, received = false) => {
+export const appendMessage = (user, message, type, emit = true) => {
     const p = document.createElement('p');
     if (type === 'player'){
         p.className = user === 'self' ? 'self-text' : 'opp-text';
@@ -10,17 +10,17 @@ export const appendMessage = (user, message, type, received = false) => {
         p.className = type;
     };
     p.textContent = message;
-    const chat = p1[0] ? chatbox : p2Chatbox;
+    const chat = !systemState.isTwoPlayer ? chatbox : p2Chatbox;
     chat.appendChild(p);
     chat.scrollTop = chat.scrollHeight;
-    if (!p1[0] && !received){
+    if (systemState.isTwoPlayer && emit){
         const oUser = user === 'self' ? 'opp' : 'self';
         const data = {
-            roomId : roomId,
+            roomId : systemState.roomId,
             user: oUser,
             message: message,
             type : type,
-            received : true
+            emit : false
         };
         socket.emit('appendMessage', data);
     };

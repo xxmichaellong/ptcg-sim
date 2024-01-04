@@ -14,37 +14,37 @@ addDocumentEventListeners(document);
 addDocumentEventListeners(selfContainersDocument);
 addDocumentEventListeners(oppContainersDocument);
 
-const addContainerEventListeners = (container) => {
+const addElementEventListeners = (container) => {
     container.addEventListener('dragover', dragOver);
     container.addEventListener('dragleave', dragLeave);
     container.addEventListener('drop', drop);
 }
 
-const containerIds = [
-    'hand_html',
-    'prizes_html',
-    'lostzoneDisplay_html',
-    'lostzone_html',
-    'active_html',
-    'bench_html',
-    'deckDisplay_html',
-    'deck_html',
-    'discard_html',
-    'discardDisplay_html',
-    'stadium_html',
-    'board_html',
-    'viewCards_html',
-    'attachedCardPopup_html'
+const zoneElementStrings = [
+    'handElement',
+    'prizesElement',
+    'lostZoneCoverElement',
+    'lostZoneElement',
+    'activeElement',
+    'benchElement',
+    'deckCoverElement',
+    'deckElement',
+    'discardElement',
+    'discardCoverElement',
+    'stadiumElement',
+    'boardElement',
+    'viewCardsElement',
+    'attachedCardsElement'
 ];
 
-containerIds.forEach(id => {
-    if (id === 'stadium_html'){
-        const container = document.getElementById(id);
-        addContainerEventListeners(container);
+zoneElementStrings.forEach(id => {
+    if (id === 'stadiumElement'){
+        const element = document.getElementById(id);
+        addElementEventListeners(element);
     } else {
         const selfContainer = selfContainersDocument.getElementById(id);
-        addContainerEventListeners(selfContainer);
+        addElementEventListeners(selfContainer);
         const oppContainer = oppContainersDocument.getElementById(id);
-        addContainerEventListeners(oppContainer);
+        addElementEventListeners(oppContainer);
     };
 });
