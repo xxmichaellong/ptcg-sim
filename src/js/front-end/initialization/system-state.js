@@ -22,7 +22,7 @@ export const systemState = {
     selfDeckData : '',
     p1OppDeckData: '', // refers to the opponent's data in 1 player mode, i.e., the "alt" deck data
     p2OppDeckData: '', // refers to the opponent's data in 2 player mode, i.e., the other player's deck data
-    cardBackSrc: '../resources/cardback.png',
+    cardBackSrc: '../src/cardback.png',
     oppCardBackSrc: ''
 };
 

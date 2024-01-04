@@ -13,7 +13,7 @@ shufflePrizesButton.addEventListener('click', () => {
 });
 
 lookPrizesButton.addEventListener('click', () => {
-    if (sCard.card.image.src === rootDirectory + '/resources/cardback.png'){
+    if (sCard.card.image.src === rootDirectory + '/src/cardback.png'){
         revealCards(sCard.user, 'prizesArray', 'prizesElement');
         appendMessage(sCard.user, determineUsername(sCard.user) + ' looked at prizes', 'player');
     } else {
@@ -25,7 +25,7 @@ lookPrizesButton.addEventListener('click', () => {
 revealHidePrizesButton.addEventListener('click', () => {
     const prizesCount = sCard.user === 'self' ? getZoneCount(prizesArray) : getZoneCount(oppPrizesArray);
 
-    if (sCard.card.image.src === rootDirectory + '/resources/cardback.png'){
+    if (sCard.card.image.src === rootDirectory + '/src/cardback.png'){
         for (let i = 0; i < prizesCount; i++){
             revealShortcut(sCard.user, sCard.zoneArrayString, i, false);
         };

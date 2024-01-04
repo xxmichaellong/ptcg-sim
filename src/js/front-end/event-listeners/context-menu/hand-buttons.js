@@ -8,7 +8,7 @@ import { getZoneCount } from '../../actions/general/count.js';
 revealHideHandButton.addEventListener('click', () => {
     let rootDirectory = window.location.origin;
 
-    if (sCard.card.image.src === rootDirectory + '/resources/cardback.png'){
+    if (sCard.card.image.src === rootDirectory + '/src/cardback.png'){
         revealCards(sCard.user, 'handArray', 'handElement');
         appendMessage(systemState.pov.user, determineUsername(systemState.pov.user) + " revealed " + determineUsername(sCard.user) + "'s hand", 'player');
     } else {

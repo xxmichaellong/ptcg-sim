@@ -269,7 +269,7 @@ export const keyDown = (event) => {
         };
         if (event.key ==='c'){
             let rootDirectory = window.location.origin;
-            if (sCard.card.image.src === rootDirectory + '/resources/cardback.png'){
+            if (sCard.card.image.src === rootDirectory + '/src/cardback.png'){
                 lookShortcut(sCard.user, sCard.zoneArrayString, sCard.index);
             } else {
                 stopLookingShortcut(sCard.user, sCard.zoneArrayString, sCard.index);
@@ -277,7 +277,7 @@ export const keyDown = (event) => {
         };
         if (event.key === 'z' && !event.altKey){
             let rootDirectory = window.location.origin;
-            if (sCard.card.image.src !== rootDirectory + '/resources/cardback.png'){
+            if (sCard.card.image.src !== rootDirectory + '/src/cardback.png'){
                 hideShortcut(sCard.user, sCard.zoneArrayString, sCard.index);
             };
         };

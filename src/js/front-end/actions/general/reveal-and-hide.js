@@ -11,16 +11,16 @@ let rootDirectory = window.location.origin;
 
 export const hideCard = (card) => {
     //only trigger if card isn't already hidden
-    if (card.image.src !== rootDirectory + '/resources/cardback.png'){
+    if (card.image.src !== rootDirectory + '/src/cardback.png'){
     //store actual source in src2
         card.image.src2 = card.image.src;
-        card.image.src = '/resources/cardback.png';
+        card.image.src = '/src/cardback.png';
     };
 }
 
 export const revealCard = (card) => {
     //only trigger if card is hidden
-    if (card.image.src === rootDirectory + '/resources/cardback.png'){
+    if (card.image.src === rootDirectory + '/src/cardback.png'){
         card.image.src = card.image.src2;
     };
 }
@@ -49,7 +49,7 @@ export const revealShortcut = (user, zoneArrayString, index, message = true, emi
     const card = zoneArray[index];
     card.image.faceDown = false;
 
-    if (card.image.src === rootDirectory + '/resources/cardback.png'){
+    if (card.image.src === rootDirectory + '/src/cardback.png'){
         card.image.src = card.image.src2;
     };
     if (zoneArrayString === 'prizesArray'){
@@ -92,9 +92,9 @@ export const hideShortcut = (user, zoneArrayString, index, message = true, emit 
     const zoneArray = stringToVariable(user, zoneArrayString);
     const card = zoneArray[index];
 
-    if (card.image.src !== rootDirectory + '/resources/cardback.png'){
+    if (card.image.src !== rootDirectory + '/src/cardback.png'){
         card.image.src2 = card.image.src;
-        card.image.src = '/resources/cardback.png';
+        card.image.src = '/src/cardback.png';
     };
     if (emit & message){
         appendMessage(systemState.pov.user, determineUsername(systemState.pov.user) + ' hid card in ' + determineUsername(card.image.user) + "'s " + convertZoneName(zoneArrayString), 'player');
@@ -130,7 +130,7 @@ export const lookShortcut = (user, zoneArrayString, index) => {
     const zoneArray = stringToVariable(user, zoneArrayString);
     const card = zoneArray[index];
 
-    if (card.image.src === rootDirectory + '/resources/cardback.png'){
+    if (card.image.src === rootDirectory + '/src/cardback.png'){
         card.image.src = card.image.src2;
         appendMessage(systemState.pov.user, determineUsername(systemState.pov.user) + ' looked at card in ' + determineUsername(card.image.user) + "'s " + zoneArrayString, 'player');
     };
@@ -140,9 +140,9 @@ export const stopLookingShortcut = (user, zoneArrayString, index) => {
     const zoneArray = stringToVariable(user, zoneArrayString);
     const card = zoneArray[index];
 
-    if (card.image.src !== rootDirectory + '/resources/cardback.png'){
+    if (card.image.src !== rootDirectory + '/src/cardback.png'){
         card.image.src2 = card.image.src;
-        card.image.src = '/resources/cardback.png';
+        card.image.src = '/src/cardback.png';
         appendMessage(systemState.pov.user, determineUsername(systemState.pov.user) + ' stopped looking at card in ' + determineUsername(card.image.user) + "'s " + zoneArrayString, 'player');
     };
 }
