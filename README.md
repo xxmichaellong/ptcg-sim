@@ -1,2 +1,2 @@
 # ptcg sim
- just having fun
+how to run it locally
