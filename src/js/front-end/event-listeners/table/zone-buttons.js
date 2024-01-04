@@ -1,69 +1,69 @@
 import { closeDisplay, discardAll, handAll, leaveAll, lostZoneAll, shuffleAll } from '../../actions/zones/general.js';
 import { sort } from '../../actions/general/sort.js';
-import { oppAttachedCardsDiscardButton, oppAttachedCardsHandButton, oppAttachedCardsLeaveButton, oppAttachedCardslostZoneButton, oppAttachedCardsShuffleButton, oppCloseDeckDisplayButton, oppCloseDiscardDisplayButton, oppCloselostZoneDisplayButton, oppDeckSortCheckBox, oppDiscardShuffleButton, oppDiscardSortCheckBox, opplostZoneSortCheckBox, oppShuffleDeckButton, oppViewCardsDiscardButton, oppViewCardsHandButton, oppViewCardslostZoneButton, oppViewCardsShuffleButton, selfattachedCardsDiscardButton, selfattachedCardsHandButton, selfattachedCardsLeaveButton, selfattachedCardslostZoneButton, selfattachedCardsShuffleButton, selfCloseDeckDisplayButton, selfCloseDiscardDisplayButton, selfCloselostZoneDisplayButton, selfDeckSortCheckBox, selfDiscardShuffleButton, selfDiscardSortCheckBox, selflostZoneSortCheckBox, selfShuffleDeckButton, selfViewCardsDiscardButton, selfViewCardsHandButton, selfViewCardslostZoneButton, selfViewCardsShuffleButton } from '../../front-end.js';
+import { oppDiscardAttachedCardsButton, oppHandAttachedCardsButton, oppLeaveAttachedCardsButton, oppLostZoneAttachedCardsButton, oppShuffleAttachedCardsButton, oppCloseDeckButton, oppCloseDiscardButton, oppCloseLostZoneButton, oppSortDeckCheckbox, oppShuffleDiscardButton, oppSortDiscardCheckbox, oppSortLostZoneCheckbox, oppShuffleDeckButton, oppDiscardViewCardsButton, oppHandViewCardsButton, oppLostZoneViewCardsButton, oppShuffleViewCardsButton, selfDiscardAttachedCardsButton, selfHandAttachedCardsButton, selfLeaveAttachedCardsButton, selfLostZoneAttachedCardsButton, selfShuffleAttachedCardsButton, selfCloseDeckButton, selfCloseDiscardButton, selfCloseLostZoneButton, selfSortDeckCheckbox, selfShuffleDiscardButton, selfSortDiscardCheckbox, selfSortLostZoneCheckbox, selfShuffleDeckButton, selfDiscardViewCardsButton, selfHandViewCardsButton, selfLostZoneViewCardsButton, selfShuffleViewCardsButton } from '../../front-end.js';
 
 //self buttons
 selfShuffleDeckButton.addEventListener('click', (event) => shuffleAll(event));
 
-selfDiscardShuffleButton.addEventListener('click', (event) => shuffleAll(event));
+selfShuffleDiscardButton.addEventListener('click', (event) => shuffleAll(event));
 
-selfattachedCardsDiscardButton.addEventListener('click', (event) => discardAll(event));
+selfDiscardAttachedCardsButton.addEventListener('click', (event) => discardAll(event));
 
-selfattachedCardsShuffleButton.addEventListener('click', (event) => shuffleAll(event));
+selfShuffleAttachedCardsButton.addEventListener('click', (event) => shuffleAll(event));
 
-selfattachedCardslostZoneButton.addEventListener('click', (event) => lostZoneAll(event));
+selfLostZoneAttachedCardsButton.addEventListener('click', (event) => lostZoneAll(event));
 
-selfattachedCardsHandButton.addEventListener('click', (event) => handAll(event));
+selfHandAttachedCardsButton.addEventListener('click', (event) => handAll(event));
 
-selfattachedCardsLeaveButton.addEventListener('click', (event) => leaveAll(event));
+selfLeaveAttachedCardsButton.addEventListener('click', (event) => leaveAll(event));
 
-selfViewCardsDiscardButton.addEventListener('click', (event) => discardAll(event));
+selfDiscardViewCardsButton.addEventListener('click', (event) => discardAll(event));
 
-selfViewCardsShuffleButton.addEventListener('click', (event) => shuffleAll(event));
+selfShuffleViewCardsButton.addEventListener('click', (event) => shuffleAll(event));
 
-selfViewCardslostZoneButton.addEventListener('click', (event) => lostZoneAll(event));
+selfLostZoneViewCardsButton.addEventListener('click', (event) => lostZoneAll(event));
 
-selfViewCardsHandButton.addEventListener('click', (event) => handAll(event));
+selfHandViewCardsButton.addEventListener('click', (event) => handAll(event));
 
-selfCloseDeckDisplayButton.addEventListener('click', (event) => closeDisplay(event));
+selfCloseDeckButton.addEventListener('click', (event) => closeDisplay(event));
 
-selfCloseDiscardDisplayButton.addEventListener('click', (event) => closeDisplay(event));
+selfCloseDiscardButton.addEventListener('click', (event) => closeDisplay(event));
 
-selfCloselostZoneDisplayButton.addEventListener('click', (event) => closeDisplay(event));
+selfCloseLostZoneButton.addEventListener('click', (event) => closeDisplay(event));
 
-selfDeckSortCheckBox.addEventListener('change', () => sort('self', 'deckArray', 'deckElement'));
-selfDiscardSortCheckBox.addEventListener('change', () => sort('self', 'discardArray', 'discardElement'));
-selflostZoneSortCheckBox.addEventListener('change', () => sort('self', 'lostZoneArray', 'lostZoneElement'));
+selfSortDeckCheckbox.addEventListener('change', () => sort('self', 'deckArray', 'deckElement'));
+selfSortDiscardCheckbox.addEventListener('change', () => sort('self', 'discardArray', 'discardElement'));
+selfSortLostZoneCheckbox.addEventListener('change', () => sort('self', 'lostZoneArray', 'lostZoneElement'));
 
 //opp buttons
 oppShuffleDeckButton.addEventListener('click', (event) => shuffleAll(event));
 
-oppDiscardShuffleButton.addEventListener('click', (event) => shuffleAll(event));
+oppShuffleDiscardButton.addEventListener('click', (event) => shuffleAll(event));
 
-oppAttachedCardsDiscardButton.addEventListener('click', (event) => discardAll(event));
+oppDiscardAttachedCardsButton.addEventListener('click', (event) => discardAll(event));
 
-oppAttachedCardsShuffleButton.addEventListener('click', (event) => shuffleAll(event));
+oppShuffleAttachedCardsButton.addEventListener('click', (event) => shuffleAll(event));
 
-oppAttachedCardslostZoneButton.addEventListener('click', (event) => lostZoneAll(event));
+oppLostZoneAttachedCardsButton.addEventListener('click', (event) => lostZoneAll(event));
 
-oppAttachedCardsHandButton.addEventListener('click', (event) => handAll(event));
+oppHandAttachedCardsButton.addEventListener('click', (event) => handAll(event));
 
-oppAttachedCardsLeaveButton.addEventListener('click', (event) => leaveAll(event));
+oppLeaveAttachedCardsButton.addEventListener('click', (event) => leaveAll(event));
 
-oppViewCardsDiscardButton.addEventListener('click', (event) => discardAll(event));
+oppDiscardViewCardsButton.addEventListener('click', (event) => discardAll(event));
 
-oppViewCardsShuffleButton.addEventListener('click', (event) => shuffleAll(event));
+oppShuffleViewCardsButton.addEventListener('click', (event) => shuffleAll(event));
 
-oppViewCardslostZoneButton.addEventListener('click', (event) => lostZoneAll(event));
+oppLostZoneViewCardsButton.addEventListener('click', (event) => lostZoneAll(event));
 
-oppViewCardsHandButton.addEventListener('click', (event) => handAll(event));
+oppHandViewCardsButton.addEventListener('click', (event) => handAll(event));
 
-oppCloseDeckDisplayButton.addEventListener('click', (event) => closeDisplay(event));
+oppCloseDeckButton.addEventListener('click', (event) => closeDisplay(event));
 
-oppCloseDiscardDisplayButton.addEventListener('click', (event) => closeDisplay(event));
+oppCloseDiscardButton.addEventListener('click', (event) => closeDisplay(event));
 
-oppCloselostZoneDisplayButton.addEventListener('click', (event) => closeDisplay(event));
+oppCloseLostZoneButton.addEventListener('click', (event) => closeDisplay(event));
 
-oppDeckSortCheckBox.addEventListener('change', () => sort('opp', 'deckArray', 'deckElement'));
-oppDiscardSortCheckBox.addEventListener('change', () => sort('opp', 'discardArray', 'discardElement'));
-opplostZoneSortCheckBox.addEventListener('change', () => sort('opp', 'lostZoneArray', 'lostZoneElement'));
+oppSortDeckCheckbox.addEventListener('change', () => sort('opp', 'deckArray', 'deckElement'));
+oppSortDiscardCheckbox.addEventListener('change', () => sort('opp', 'discardArray', 'discardElement'));
+oppSortLostZoneCheckbox.addEventListener('change', () => sort('opp', 'lostZoneArray', 'lostZoneElement'));

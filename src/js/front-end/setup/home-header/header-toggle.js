@@ -22,7 +22,7 @@ export const show = (id, button) => {
     
     button.classList.remove('not-selected-page');
     button.classList.add('selected-page');
-    if (document.querySelector('.dark-mode')) {
+    if (document.querySelector('.dark-mode-1')) {
         button.classList.add('dark-mode-2');
     };
 }

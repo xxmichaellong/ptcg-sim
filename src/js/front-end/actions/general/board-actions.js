@@ -12,7 +12,7 @@ export const discardBoard = (user, message = true) => {
             moveCard(user, 'boardArray', 'boardElement', 'discardArray', 'discardElement', 0);
         };
         if (message){
-            appendMessage(user, determineUsername(user) + ' moved ' + selectedBoardCount + ' card(s) from boardArray to discard', 'player')
+            appendMessage(user, determineUsername(user) + ' moved ' + selectedBoardCount + ' card(s) from board to discard', 'player')
         };
     };
 }
@@ -24,7 +24,7 @@ export const handBoard = (user, message = true) => {
             moveCard(user, 'boardArray', 'boardElement', 'handArray', 'handElement', 0);
         };
         if (message){
-            appendMessage(user, determineUsername(user) + ' moved ' + selectedBoardCount + ' card(s) from boardArray to hand', 'player')
+            appendMessage(user, determineUsername(user) + ' moved ' + selectedBoardCount + ' card(s) from board to hand', 'player')
         };
     };
 }
@@ -37,7 +37,7 @@ export const shuffleBoard = (user, message = true) => {
         };
         shuffleZone(user, 'deckArray', 'deckElement');
         if (message){
-            appendMessage(user, determineUsername(user) + ' shuffled ' + selectedBoardCount + ' card(s) from boardArray to deckArray', 'player')
+            appendMessage(user, determineUsername(user) + ' shuffled ' + selectedBoardCount + ' card(s) from board to deck', 'player')
         };
     };
 }
@@ -49,7 +49,7 @@ export const lostZoneBoard = (user, message = true) => {
             moveCard(user, 'boardArray', 'boardElement', 'lostZoneArray', 'lostZoneElement', 0);
         };
         if (message){
-            appendMessage(user, determineUsername(user) + ' moved ' + selectedBoardCount + ' card(s) from boardArray to lost zone', 'player')
+            appendMessage(user, determineUsername(user) + ' moved ' + selectedBoardCount + ' card(s) from board to lost zone', 'player')
         };
     };
 }

@@ -11,7 +11,7 @@ body {
   height: 100vh;
   overflow: none;
 }
-.dark-mode {
+.dark-mode-1 {
   background-color: rgb(8, 18, 18) !important;
   color: white;
 }
@@ -37,15 +37,15 @@ body {
   z-index: 1000;
   border-radius: 4%;
 }
-.sections-container {
+.keybind-section-container {
   display: flex;
   justify-content: space-between;
   margin-top: 10px;
 }
-.section {
+.keybind-section {
   flex: 1;
 }
-.column {
+.keybind-column {
   margin-right: 10px;
   padding: 5px;
 }
@@ -60,15 +60,15 @@ ul, li {
   padding: 0;
   font-size: 1.7vh; /* Adjust the font size using vw unit */
 }
-.column ul ul {
+.keybind-column ul ul {
   margin-left: 10px;
 }
-.column ul ul li {
+.keybind-column ul ul li {
   margin-bottom: 1px;
   margin-top: 0;
   font-size: 1.7vh; /* Adjust the font size using vw unit */
 }
-.column ul li {
+.keybind-column ul li {
   margin-top: 1vh;
   display: flex;
   justify-content: space-between;
@@ -112,7 +112,7 @@ ul, li {
   border-radius: 10%;
   background-color: rgba(59, 173, 84, 0.708);
 }
-.base {
+.outline {
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1); /* Lighter shadow */
   background-color: rgba(255, 255, 255, 0.1); /* Very faint/transparent background */
 }
@@ -347,14 +347,13 @@ ul, li {
 #optionsContextMenu {
   position: absolute;
   display: none;
-  background-color: #fff;
   border: 1px solid #676767;
   padding: 2px;
   border-radius: 5px;
   right: 0.5%;
   color: white;
   background-color: #595959;
-  font-size: 1.25vh;
+  font-size: 1.75vh;
 }
 #optionsContextMenu div {
   cursor: pointer;
@@ -737,11 +736,10 @@ a {
 a:hover {
   text-decoration: underline;
 }
-/*contextMenu styling*/
-.context-menu button {
+.card-context-menu button {
   display: block;
 }
-.context-menu {
+.card-context-menu {
   display: none;
   position: absolute;
   background-color: #fff;
@@ -750,34 +748,34 @@ a:hover {
   z-index: 1000;
   width: 150px; /* Set a fixed width */
 }
-.context-menu ul {
+.card-context-menu ul {
   list-style-type: none;
   margin: 0;
   padding: 0;
 }
-.context-menu ul li[id$="Header"] {
+.card-context-menu ul li[id$="Header"] {
   padding: 4px;
   cursor: default;
   font-weight: bold;
   background-color: #f0f0f0;
 }
-.context-menu > ul > li {
+.card-context-menu > ul > li {
   padding: 8px 16px;
   cursor: pointer;
   position: relative;
 }
-.context-menu > ul > li > ul > li{
+.card-context-menu > ul > li > ul > li{
   padding: 0px 16px;
 }
-.context-menu:not(.dark-mode-2) > ul > li:hover,
-.context-menu:not(.dark-mode-2) .sub-menu li:hover {
+.card-context-menu:not(.dark-mode-2) > ul > li:hover,
+.card-context-menu:not(.dark-mode-2) .card-sub-menu li:hover {
   background-color: #f0f0f0;
 }
-.context-menu.dark-mode-2 > ul > li:hover,
-.context-menu.dark-mode-2 .sub-menu li:hover {
+.card-context-menu.dark-mode-2 > ul > li:hover,
+.card-context-menu.dark-mode-2 .card-sub-menu li:hover {
   background-color: #4f4f4f;
 }
-.context-menu .sub-menu {
+.card-context-menu .card-sub-menu {
   display: none;
   position: absolute;
   top: 0;
@@ -789,10 +787,10 @@ a:hover {
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2); /* Added box-shadow */
   width: 120px; /* Set a fixed width */
 }
-.context-menu > ul > li:hover > .sub-menu {
+.card-context-menu > ul > li:hover > .card-sub-menu {
   display: block;
 }
-.context-menu ul li#moveButton:before {
+.card-context-menu ul li#moveButton:before {
   content: "";
   position: absolute;
   top: 0;
@@ -867,7 +865,6 @@ a:hover {
   background-color: #f0f0f0; /* Light grey background */
   font-weight: bold; /* Bold font */
 }
-/* CSS for Popup */
 .custom-popup {
   position: fixed;
   top: 50%;

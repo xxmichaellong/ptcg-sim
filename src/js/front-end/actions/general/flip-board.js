@@ -27,8 +27,8 @@ export const flipBoard = () => {
     toggleClasses(oppResizer, 'opp-color', 'self-color');
     toggleClasses(selfContainers, 'self', 'opp');
     toggleClasses(oppContainers, 'opp', 'self');
-    toggleClasses(boardElement, 'selfBoard', 'oppBoard');
-    toggleClasses(oppBoardElement, 'oppBoard', 'selfBoard');
+    toggleClasses(boardElement, 'self-board', 'opp-board');
+    toggleClasses(oppBoardElement, 'opp-board', 'self-board');
     toggleClasses(attackButton, 'self-color', 'opp-color');
     toggleClasses(passButton, 'self-color', 'opp-color');
     toggleClasses(FREEBUTTON, 'self-color', 'opp-color');
@@ -43,9 +43,9 @@ export const flipBoard = () => {
     const users = ['self', 'opp'];
     const textIds = ['deckText', 'discardText', 'lostZoneText', 'handText'];
     const zoneElementStrings = ['deckElement', 'discardElement', 'lostZoneElement', 'attachedCardsElement', 'viewCardsElement'];
-    const buttonIds = ['viewCardsButtonContainer', 'attachedCardsPopupButtonContainer'];
-    const headerIds = ['attachedCardsPopupHeader', 'viewCardsHeader'];
-    const buttonzoneElementStrings = ['buttonContainer'];
+    const buttonIds = ['viewCardsButtonContainer', 'attachedCardsButtonContainer'];
+    const headerIds = ['attachedCardsHeader', 'viewCardsHeader'];
+    const buttonzoneElementStrings = ['specialMoveButtonContainer'];
 
     for (const user of users) {
         const document = user === 'self' ? selfContainersDocument : oppContainersDocument;
@@ -62,8 +62,8 @@ export const flipBoard = () => {
         };
         for (const buttonId of buttonIds) {
             const button = document.getElementById(buttonId);
-            button.classList.toggle('self-button-container');
-            button.classList.toggle('opp-button-container');
+            button.classList.toggle('self-zone-button-container');
+            button.classList.toggle('opp-zone-button-container');
         };
         for (const headerId of headerIds) {
             const header = document.getElementById(headerId);
@@ -77,8 +77,8 @@ export const flipBoard = () => {
         };
         for (const buttonzoneElementString of buttonzoneElementStrings) {
             const button = document.getElementById(buttonzoneElementString);
-            button.classList.toggle('selfButtonContainer');
-            button.classList.toggle('oppButtonContainer');
+            button.classList.toggle('self-special-move-button-container');
+            button.classList.toggle('opp-special-move-button-container');
         };
     };
 

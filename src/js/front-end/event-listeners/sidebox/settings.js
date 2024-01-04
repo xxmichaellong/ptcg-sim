@@ -3,15 +3,15 @@ import { stringToVariable } from "../../setup/zones/zone-string-to-variable.js";
 
 const darkMode = () => {
     changelog.classList.toggle('dark-mode-6');
-    document.body.classList.toggle('dark-mode');
-    chatbox.classList.toggle('dark-mode');
-    p2Chatbox.classList.toggle('dark-mode');
-    messageInput.classList.toggle('dark-mode');
-    p2MessageInput.classList.toggle('dark-mode');
-    p2ExplanationBox.classList.toggle('dark-mode');
-    settingsToggles.classList.toggle('dark-mode');
-    nameInput.classList.toggle('dark-mode');
-    roomIdInput.classList.toggle('dark-mode');
+    document.body.classList.toggle('dark-mode-1');
+    chatbox.classList.toggle('dark-mode-1');
+    p2Chatbox.classList.toggle('dark-mode-1');
+    messageInput.classList.toggle('dark-mode-1');
+    p2MessageInput.classList.toggle('dark-mode-1');
+    p2ExplanationBox.classList.toggle('dark-mode-1');
+    settingsToggles.classList.toggle('dark-mode-1');
+    nameInput.classList.toggle('dark-mode-1');
+    roomIdInput.classList.toggle('dark-mode-1');
     p1Box.classList.toggle('dark-mode-2');
     p2Box.classList.toggle('dark-mode-2');
     settings.classList.toggle('dark-mode-2');
@@ -23,16 +23,16 @@ const darkMode = () => {
     buttons.forEach(button => {
         button.classList.toggle('dark-mode-2');
     });
-    const selfButtons = selfContainersDocument.querySelectorAll('#buttonContainer button');
+    const selfButtons = selfContainersDocument.querySelectorAll('#specialMoveButtonContainer button');
     selfButtons.forEach(button => {
         button.classList.toggle('dark-mode-2');
     });
-    const oppButtons = oppContainersDocument.querySelectorAll('#buttonContainer button');
+    const oppButtons = oppContainersDocument.querySelectorAll('#specialMoveButtonContainer button');
     oppButtons.forEach(button => {
         button.classList.toggle('dark-mode-2');
     });
-    selfContainersDocument.querySelector('#innerCircle').classList.toggle('dark-mode');
-    oppContainersDocument.querySelector('#innerCircle').classList.toggle('dark-mode');
+    selfContainersDocument.querySelector('#innerCircle').classList.toggle('dark-mode-1');
+    oppContainersDocument.querySelector('#innerCircle').classList.toggle('dark-mode-1');
     const selfText = selfContainersDocument.querySelectorAll('.self-text, .opp-text');
     selfText.forEach(text => {
         text.classList.toggle('dark-mode-3');
@@ -41,11 +41,11 @@ const darkMode = () => {
     oppText.forEach(text => {
         text.classList.toggle('dark-mode-3');
     });
-    const oppHeader = oppContainersDocument.querySelectorAll('.zone-button-container, .self-button-container, .opp-button-container');
+    const oppHeader = oppContainersDocument.querySelectorAll('.zone-button-container, .self-zone-button-container, .opp-zone-button-container');
     oppHeader.forEach(header => {
         header.classList.toggle('dark-mode-4');
     });
-    const selfHeader = selfContainersDocument.querySelectorAll('.zone-button-container, .self-button-container, .opp-button-container');
+    const selfHeader = selfContainersDocument.querySelectorAll('.zone-button-container, .self-zone-button-container, .opp-zone-button-container');
     selfHeader.forEach(header => {
         header.classList.toggle('dark-mode-4');
     });
@@ -57,7 +57,7 @@ const darkMode = () => {
     oppBackGround.forEach(background => {
       background.classList.toggle('dark-mode-5');
     });
-    const contextMenu = document.querySelectorAll('.context-menu, .sub-menu');
+    const contextMenu = document.querySelectorAll('.card-context-menu, .card-sub-menu');
     contextMenu.forEach(item => {
         item.classList.toggle('dark-mode-2');
     });
@@ -75,10 +75,10 @@ const showElements = () => {
     users.forEach(user => {
         elements.forEach(zoneElementString => {
             const element = stringToVariable(user, zoneElementString);
-            element.classList.toggle('base');
+            element.classList.toggle('outline');
         });
     });
-    stadiumElement.classList.toggle('base');
+    stadiumElement.classList.toggle('outline');
 }
 
 darkModeCheckbox.addEventListener('change', darkMode);

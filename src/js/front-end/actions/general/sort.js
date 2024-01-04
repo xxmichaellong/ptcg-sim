@@ -1,4 +1,4 @@
-import { oppDeckSortCheckBox, oppDiscardSortCheckBox, opplostZoneSortCheckBox, selfDeckSortCheckBox, selfDiscardSortCheckBox, selflostZoneSortCheckBox } from "../../front-end.js";
+import { oppSortDeckCheckbox, oppSortDiscardCheckbox, oppSortLostZoneCheckbox, selfSortDeckCheckbox, selfSortDiscardCheckbox, selfSortLostZoneCheckbox } from "../../front-end.js";
 import { removeImages } from "../../image-logic/remove-images.js";
 import { stringToVariable } from "../../setup/zones/zone-string-to-variable.js";
 import { determineDeckData } from "../../setup/general/determine-deckdata.js";
@@ -6,14 +6,14 @@ import { determineDeckData } from "../../setup/general/determine-deckdata.js";
 export const sort = (user, zoneArrayString, zoneElementString) => {
     let checkbox;
     const selfCheckboxMap = {
-        'deckArray': selfDeckSortCheckBox,
-        'discardArray': selfDiscardSortCheckBox,
-        'lostZoneArray': selflostZoneSortCheckBox
+        'deckArray': selfSortDeckCheckbox,
+        'discardArray': selfSortDiscardCheckbox,
+        'lostZoneArray': selfSortLostZoneCheckbox
     };
     const oppCheckboxMap = {
-        'deckArray': oppDeckSortCheckBox,
-        'discardArray': oppDiscardSortCheckBox,
-        'lostZoneArray': opplostZoneSortCheckBox
+        'deckArray': oppSortDeckCheckbox,
+        'discardArray': oppSortDiscardCheckbox,
+        'lostZoneArray': oppSortLostZoneCheckbox
     };
       
     if (user === 'self') {

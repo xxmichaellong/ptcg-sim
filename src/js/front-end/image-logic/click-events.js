@@ -190,7 +190,7 @@ export const doubleClick = (event) => {
             image.classList.add('default-rotation');
         });
         targetImage.parentElement.className = 'full-view';
-        if (document.querySelector('.dark-mode')){
+        if (document.querySelector('.dark-mode-1')){
             targetImage.parentElement.classList.add('dark-mode-5');
         };
         targetImage.parentElement.style.zIndex = '2';

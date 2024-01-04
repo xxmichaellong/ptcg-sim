@@ -23,10 +23,10 @@
     </script>
 </head>
 <body>
-    <div id="videoContainer"></div>
     <iframe id="selfContainers" class="self" src="./iframe-containers/self-containers.html"></iframe>
     <iframe id="oppContainers" class="opp" src="./iframe-containers/opp-containers.html"></iframe>
-    <div id="stadiumElement" class="base"></div>
+    <div id="stadiumElement" class="outline"></div>
+    
     <div id="selfResizer" class="self-color"></div>
     <div id="oppResizer" class="opp-color"></div>
 
@@ -42,129 +42,6 @@
         <button id="deckImportButton" class="not-selected-page">Import</button>
         <button id="settingsButton" class="not-selected-page">Settings</button>
     </div>
-    
-    <div id="changelog">
-        <strong>v1.0.1 Update 12/31/2023</strong><br><br>
-
-        Happy New Year's Eve! This is a small update reworking some features and patching bugs. Thanks to everyone on Discord/Twitter for the feedback — keep 'em coming!
-        <br><br>
-
-        <strong>NEW FEATURES</strong><br>
-        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Right-click menu for your opponent's hand now has an option to reveal a random card from their hand (e.g., for attacks like Astonish).</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Revealing and hiding cards are now two separate keybinds, alt + z and z. When revealing a card from your hand, the game will prompt you to hide the card from your opponent when finished revealing.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Deck/Discard/Lost Zone button headers are now frozen at the top when scrolling.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">The UI and UX of dragging and clicking on cards should now be easier and more intuitive.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Changing card type now has keybinds (alt + e, alt + t, and alt + p).</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">When viewing cards from top/bottom of your opponent's deck, images are now right-side-up.</li>
-        </ul>
-        
-        <strong>BUG FIXES</strong><br>
-        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Changing card types now properly updates on the opponent's side in 2P.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">In the right-click menu, the submenus for “Move card” and “Change type” now display to the right to prevent overlap.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Battle log now properly conceals the name of a hidden card when dragging to a new zone.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Any cards in the stadium zone are now properly removed upon reset.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Decklist menu now resizes based on window size.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Decklist errors from the HS era are now fixed.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Classification errors of cards from the Hidden Fates expansion are now fixed.</li>
-        </ul>
-        
-        <strong>COMING SOON</strong><br>
-        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Fixing desync issues and adding a refresh/resync feature.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Attaching cards on the opponent's side (e.g., Head Ringer).</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Custom card backs.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Selecting multiple cards at once.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Feature to draw arrows to/from cards.</li>
-        </ul>
-        
-        And that’s all for 2023, folks. See you next year!!!
-        <br><br>
-
-        <strong>-XXL &lt;3</strong>
-        
-        <br><br><br><br>
-        <strong>v1.0.0 Update 12/29/2023</strong><br><br>
-        
-        Hi everyone! Thank you all for your support during PTCG-sim’s launch. The feedback and general reception has been overwhelming (in a great way), and I’m happy that so many people in the community are finding great usage out of the sim. If you haven’t already, <strong><a href="https://discord.gg/jMfhQa38mh" target="_blank">join our Discord server here</a></strong> to receive the latest updates, report bugs, find matches, share decklists, and more! You can also read the previous Changelog (v0.9.1) following the below.
-        <br><br>
-        
-        <strong>Without further ado, let’s dive right into v1.0.0:</strong><br><br>
-        
-        <strong>DECK SUPPORT</strong><br>
-        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-            <li style="font-size: 1.2em; margin-bottom: 10px;"><strong>Legacy Formats:</strong> All expansions prior to 2011 have been added. A spreadsheet containing all information related to cards, including decklist syntax for PTCG-sim imports, will be available in the Discord server.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;"><strong>Decklist Library:</strong> Popular legacy decklists have now been added to the library. We’d like to extend our thanks to <a href="https://jklaczPokémon.com/" target="_blank">Jason K</a> for being an awesome Pokémon archivist.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;"><strong>Import/Export Decks:</strong> Importing a deck now breaks down cards by quantity, name, type, and image URL. Decklists can also now be saved using the “Save” button to export CSV files.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;"><strong>Custom Image Imports:</strong> With the above feature, you can now upload your own image URLs. This means every card is now supported on PTCG-sim!</li>
-        </ul>
-        
-        <strong>BUG FIXES</strong><br>
-        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-        <li style="font-size: 1.2em; margin-bottom: 10px;">Fixed issue where stadium toggle doesn’t disappear on reset.</li>
-        </ul>
-
-        <strong>COMING SOON</strong><br>
-        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Selecting multiple cards at once.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Attaching cards on opponent’s side (e.g., Head Ringer).</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Fixing appending/overlap issues.</li>
-        </ul>
-        There have been reports of desyncing issues. We’re looking into this - if you’ve experienced anything similar, please share on our Discord server in the #bugs-and-suggestions channel!<br><br>
-        
-        I’ll continue adding new features to the sim + fixing bugs as they come up. Wishing you all a happy new year and see you at the next update!
-        <br><br>
-        
-        <strong>-XXL &lt;3</strong>
-
-        <br><br>
-        <br><br>
-        
-        <strong>v0.9.1 Changelog 12/28/2023</strong><br><br>
-      
-        <strong>Rotating Stadium/Pokémon BREAK Cards:</strong> You can now rotate cards using the keybind [r]. This can be used for dual stadiums (e.g., Parallel City) as well as special conditions.<br><br>
-      
-        <strong>Resetting Conditions:</strong> Evolving Pokémon now removes ability counters, special conditions, and rotates Pokémon upright.<br><br>
-      
-        <strong>Active/Benched Pokémon Switching:</strong> Moving the active Pokémon to a target bench Pokémon now automatically switches the target Pokémon to the active zone. Battle log messages are also fixed.<br><br>
-      
-        <strong>Revealing/Hiding versus Looking/Covering Cards:</strong> The process of flipping over cards is now divided into two types: revealing/hiding will show for both players (e.g., Town Map, Blacephalon UNB) while looking/covering only shows for the user who triggered the action (e.g., Hisuian Heavy Ball). Cards like Sidney/Grabber can work either by looking at/revealing the opponent's hand, or the opponent revealing their cards. <br><strong>NOTE:</strong> To put a face-down card from your hand in play, hide it in your hand using [z], and then move the card into play. Starting a turn will automatically reveal cards in play.<br><br>
-      
-        <strong>Attaching Pokémon:</strong> There is now a "Change type" function that can be accessed by right-clicking on cards in the active/bench. Changing a Pokémon to a tool/energy type (e.g., Electrode EVO, Klefki STS) enables the correct attachment to other cards.<br><br>
-      
-        <strong>Leaving cards in play:</strong> There is now a "Leave cards in play" button when dealing with attached cards to make handling cards like Devolution Spray easier.<br><br>
-      
-        <strong>Prizes Sizing:</strong> Prizes now adjust size if a 7th prize is added (e.g., Xurkitree GX).<br>
-      
-        <ul style="list-style-type: disc; padding-left: 15px; margin-top: 10px; margin-bottom: 20px; font-size: 2em;">
-            <li style="margin-bottom: 10px;">Added option button in the bottom right to clear battle log and export battle log.</li>
-            <li style="margin-bottom: 10px;">Added confused special condition marker ("c").</li>
-            <li style="margin-bottom: 10px;">Added hand count display.</li>
-            <li style="margin-bottom: 10px;">Added keybinds/right-click for moving cards from the board into the hand, lost zone, and shuffling into the deck.</li>
-            <li style="margin-bottom: 10px;">Drag & drop to deck now appends the card to the top of the deck instead of the bottom.</li>
-            <li style="margin-bottom: 10px;">You can now drag & drop the top card of your discard and lost zone into other zones.</li>
-            <li style="margin-bottom: 10px;">The name of the Pokémon whose ability was used is now recorded in the battle log.</li>
-            <li style="margin-bottom: 10px;">Selected card is no longer de-selected when adding damage counters/special conditions/rotating/revealing/hiding, making it easier to handle card actions.</li>
-            <li style="margin-bottom: 10px;">Fixed resizing issue of active/bench cards when resizing window.</li>
-            <li style="margin-bottom: 10px;">Fixed GX/VSTAR bug in 2P mode; resetting/using GX/VSTAR now properly updates both player's boards.</li>
-            <li style="margin-bottom: 10px;">Fixed issue where spamming "v" while viewing a card would append multiple full-screen cards.</li>
-        </ul>
-              
-      
-        <strong>Coming later this week:</strong><br>
-        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px; font-size: 1.5em;">
-            <li style="margin-bottom: 10px;">Adding all expansions prior to 2011.</li>
-            <li style="margin-bottom: 10px;">Custom image imports.</li>
-            <li style="margin-bottom: 10px;">Selecting multiple cards at once.</li>
-            <li style="margin-bottom: 10px;">Attaching cards on opponent's side (e.g., Head Ringer).</li>
-        </ul>        
-      
-        <strong>Thank you to everyone for the support these past three days. I'm going to continue working hard to add new features and fix bugs! Come say hi in the Discord channel :)</strong><br><br>
-      
-        <strong>-XXL</strong>
-      </div>
-      
 
     <div id="p1Box" class="sidebox">
         <div id="chatbox"><strong>Welcome to PTCG-sim!</strong>
@@ -292,7 +169,7 @@
         </div>
     </div>
       
-    <div id="cardContextMenu" class="context-menu">
+    <div id="cardContextMenu" class="card-context-menu">
         <ul>
             <li id="abilityCounterButton">Toggle ability</li>
             <li id="damageCounterButton">Damage counter</li>
@@ -323,7 +200,7 @@
             <li id="lostZoneBoardButton">Lost Zone all</li>
 
             <li id="moveButton">Move card...
-                <ul class="sub-menu">
+                <ul class="card-sub-menu">
                     <li id="moveToBoardButton">to Board</li>
                     <li id="moveToTopButton">to Deck (top)</li>
                     <li id="moveToBottomButton">to Deck (bottom)</li>
@@ -332,7 +209,7 @@
                 </ul>
             </li>
             <li id="changeButton">Change type...
-                <ul class="sub-menu">
+                <ul class="card-sub-menu">
                     <li id="changeToEnergyButton">to Energy</li>
                     <li id="changeToToolButton">to Tool</li>
                     <li id="changeToPokémonButton">to Pokémon</li>
@@ -347,9 +224,9 @@
     </div>
 
     <div id="keybindModal">
-        <div class="sections-container">
-            <div class="section">
-                <div class="column">
+        <div class="keybind-section-container">
+            <div class="keybind-section">
+                <div class="keybind-column">
                     <h1>Move card...</h1>
                     <ul>
                         <li>to Hand <code>[h]</code></li>
@@ -366,7 +243,7 @@
                         <li>to Deck (shuffle)<code>[s]</code></li>
                     </ul>
                 </div>
-                <div class="column">
+                <div class="keybind-column">
                     <h1>Deck</h1>
                     <ul>
                         <li>Shuffle deck<code>[s]</code></li>
@@ -376,7 +253,7 @@
                         <li>View <code>[v]</code></li>
                     </ul>
                 </div>
-                <div class="column">
+                <div class="keybind-column">
                     <h1>Hand</h1>
                     <ul>
                         <li>Discard hand<code>[alt + d]</code></li>
@@ -384,7 +261,7 @@
                         <li>Shuffle hand to bottom <code>[alt + ↓]</code></li>
                     </ul>
                 </div>
-                <div class="column">
+                <div class="keybind-column">
                     <h1>Playboard</h1>
                     <ul>
                         <li>Discard all<code>[enter]</code></li>
@@ -393,8 +270,8 @@
                     </ul>
                 </div>
             </div>
-            <div class="section">
-                <div class="column">
+            <div class="keybind-section">
+                <div class="keybind-column">
                     <h1>Card actions</h1>
                     <ul>
                         <li>Attach <code>[q]</code></li>
@@ -426,7 +303,7 @@
                         </ul>
                     </ul>
                 </div>
-                <div class="column">
+                <div class="keybind-column">
                     <h1>General</h1>
                     <ul>
                         <li>Set up <code>[alt + n]</code></li>
@@ -454,6 +331,130 @@
         <tbody>
         </tbody>
     </table>
+
+    <!-- home page -->
+    <div id="videoContainer"></div>
+    <div id="changelog">
+        <strong>v1.0.1 Update 12/31/2023</strong><br><br>
+
+        Happy New Year's Eve! This is a small update reworking some features and patching bugs. Thanks to everyone on Discord/Twitter for the feedback — keep 'em coming!
+        <br><br>
+
+        <strong>NEW FEATURES</strong><br>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+            <li style="font-size: 1.2em; margin-bottom: 10px;">Right-click menu for your opponent's hand now has an option to reveal a random card from their hand (e.g., for attacks like Astonish).</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;">Revealing and hiding cards are now two separate keybinds, alt + z and z. When revealing a card from your hand, the game will prompt you to hide the card from your opponent when finished revealing.</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;">Deck/Discard/Lost Zone button headers are now frozen at the top when scrolling.</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;">The UI and UX of dragging and clicking on cards should now be easier and more intuitive.</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;">Changing card type now has keybinds (alt + e, alt + t, and alt + p).</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;">When viewing cards from top/bottom of your opponent's deck, images are now right-side-up.</li>
+        </ul>
+        
+        <strong>BUG FIXES</strong><br>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+            <li style="font-size: 1.2em; margin-bottom: 10px;">Changing card types now properly updates on the opponent's side in 2P.</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;">In the right-click menu, the submenus for “Move card” and “Change type” now display to the right to prevent overlap.</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;">Battle log now properly conceals the name of a hidden card when dragging to a new zone.</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;">Any cards in the stadium zone are now properly removed upon reset.</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;">Decklist menu now resizes based on window size.</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;">Decklist errors from the HS era are now fixed.</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;">Classification errors of cards from the Hidden Fates expansion are now fixed.</li>
+        </ul>
+        
+        <strong>COMING SOON</strong><br>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+            <li style="font-size: 1.2em; margin-bottom: 10px;">Fixing desync issues and adding a refresh/resync feature.</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;">Attaching cards on the opponent's side (e.g., Head Ringer).</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;">Custom card backs.</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;">Selecting multiple cards at once.</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;">Feature to draw arrows to/from cards.</li>
+        </ul>
+        
+        And that’s all for 2023, folks. See you next year!!!
+        <br><br>
+
+        <strong>-XXL &lt;3</strong>
+        
+        <br><br><br><br>
+        <strong>v1.0.0 Update 12/29/2023</strong><br><br>
+        
+        Hi everyone! Thank you all for your support during PTCG-sim’s launch. The feedback and general reception has been overwhelming (in a great way), and I’m happy that so many people in the community are finding great usage out of the sim. If you haven’t already, <strong><a href="https://discord.gg/jMfhQa38mh" target="_blank">join our Discord server here</a></strong> to receive the latest updates, report bugs, find matches, share decklists, and more! You can also read the previous Changelog (v0.9.1) following the below.
+        <br><br>
+        
+        <strong>Without further ado, let’s dive right into v1.0.0:</strong><br><br>
+        
+        <strong>DECK SUPPORT</strong><br>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+            <li style="font-size: 1.2em; margin-bottom: 10px;"><strong>Legacy Formats:</strong> All expansions prior to 2011 have been added. A spreadsheet containing all information related to cards, including decklist syntax for PTCG-sim imports, will be available in the Discord server.</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;"><strong>Decklist Library:</strong> Popular legacy decklists have now been added to the library. We’d like to extend our thanks to <a href="https://jklaczPokémon.com/" target="_blank">Jason K</a> for being an awesome Pokémon archivist.</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;"><strong>Import/Export Decks:</strong> Importing a deck now breaks down cards by quantity, name, type, and image URL. Decklists can also now be saved using the “Save” button to export CSV files.</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;"><strong>Custom Image Imports:</strong> With the above feature, you can now upload your own image URLs. This means every card is now supported on PTCG-sim!</li>
+        </ul>
+        
+        <strong>BUG FIXES</strong><br>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+        <li style="font-size: 1.2em; margin-bottom: 10px;">Fixed issue where stadium toggle doesn’t disappear on reset.</li>
+        </ul>
+
+        <strong>COMING SOON</strong><br>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+            <li style="font-size: 1.2em; margin-bottom: 10px;">Selecting multiple cards at once.</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;">Attaching cards on opponent’s side (e.g., Head Ringer).</li>
+            <li style="font-size: 1.2em; margin-bottom: 10px;">Fixing appending/overlap issues.</li>
+        </ul>
+        There have been reports of desyncing issues. We’re looking into this - if you’ve experienced anything similar, please share on our Discord server in the #bugs-and-suggestions channel!<br><br>
+        
+        I’ll continue adding new features to the sim + fixing bugs as they come up. Wishing you all a happy new year and see you at the next update!
+        <br><br>
+        
+        <strong>-XXL &lt;3</strong>
+
+        <br><br>
+        <br><br>
+        
+        <strong>v0.9.1 Changelog 12/28/2023</strong><br><br>
+      
+        <strong>Rotating Stadium/Pokémon BREAK Cards:</strong> You can now rotate cards using the keybind [r]. This can be used for dual stadiums (e.g., Parallel City) as well as special conditions.<br><br>
+      
+        <strong>Resetting Conditions:</strong> Evolving Pokémon now removes ability counters, special conditions, and rotates Pokémon upright.<br><br>
+      
+        <strong>Active/Benched Pokémon Switching:</strong> Moving the active Pokémon to a target bench Pokémon now automatically switches the target Pokémon to the active zone. Battle log messages are also fixed.<br><br>
+      
+        <strong>Revealing/Hiding versus Looking/Covering Cards:</strong> The process of flipping over cards is now divided into two types: revealing/hiding will show for both players (e.g., Town Map, Blacephalon UNB) while looking/covering only shows for the user who triggered the action (e.g., Hisuian Heavy Ball). Cards like Sidney/Grabber can work either by looking at/revealing the opponent's hand, or the opponent revealing their cards. <br><strong>NOTE:</strong> To put a face-down card from your hand in play, hide it in your hand using [z], and then move the card into play. Starting a turn will automatically reveal cards in play.<br><br>
+      
+        <strong>Attaching Pokémon:</strong> There is now a "Change type" function that can be accessed by right-clicking on cards in the active/bench. Changing a Pokémon to a tool/energy type (e.g., Electrode EVO, Klefki STS) enables the correct attachment to other cards.<br><br>
+      
+        <strong>Leaving cards in play:</strong> There is now a "Leave cards in play" button when dealing with attached cards to make handling cards like Devolution Spray easier.<br><br>
+      
+        <strong>Prizes Sizing:</strong> Prizes now adjust size if a 7th prize is added (e.g., Xurkitree GX).<br>
+      
+        <ul style="list-style-type: disc; padding-left: 15px; margin-top: 10px; margin-bottom: 20px; font-size: 2em;">
+            <li style="margin-bottom: 10px;">Added option button in the bottom right to clear battle log and export battle log.</li>
+            <li style="margin-bottom: 10px;">Added confused special condition marker ("c").</li>
+            <li style="margin-bottom: 10px;">Added hand count display.</li>
+            <li style="margin-bottom: 10px;">Added keybinds/right-click for moving cards from the board into the hand, lost zone, and shuffling into the deck.</li>
+            <li style="margin-bottom: 10px;">Drag & drop to deck now appends the card to the top of the deck instead of the bottom.</li>
+            <li style="margin-bottom: 10px;">You can now drag & drop the top card of your discard and lost zone into other zones.</li>
+            <li style="margin-bottom: 10px;">The name of the Pokémon whose ability was used is now recorded in the battle log.</li>
+            <li style="margin-bottom: 10px;">Selected card is no longer de-selected when adding damage counters/special conditions/rotating/revealing/hiding, making it easier to handle card actions.</li>
+            <li style="margin-bottom: 10px;">Fixed resizing issue of active/bench cards when resizing window.</li>
+            <li style="margin-bottom: 10px;">Fixed GX/VSTAR bug in 2P mode; resetting/using GX/VSTAR now properly updates both player's boards.</li>
+            <li style="margin-bottom: 10px;">Fixed issue where spamming "v" while viewing a card would append multiple full-screen cards.</li>
+        </ul>
+              
+      
+        <strong>Coming later this week:</strong><br>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px; font-size: 1.5em;">
+            <li style="margin-bottom: 10px;">Adding all expansions prior to 2011.</li>
+            <li style="margin-bottom: 10px;">Custom image imports.</li>
+            <li style="margin-bottom: 10px;">Selecting multiple cards at once.</li>
+            <li style="margin-bottom: 10px;">Attaching cards on opponent's side (e.g., Head Ringer).</li>
+        </ul>        
+      
+        <strong>Thank you to everyone for the support these past three days. I'm going to continue working hard to add new features and fix bugs! Come say hi in the Discord channel :)</strong><br><br>
+      
+        <strong>-XXL</strong>
+      </div>
 
 <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "2abae72112d74a619e3de341e1d4aa18"}'></script><!-- End Cloudflare Web Analytics -->
 

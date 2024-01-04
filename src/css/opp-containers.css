@@ -5,7 +5,7 @@
 body, input, textarea, button {
   font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif
 }
-.dark-mode {
+.dark-mode-1 {
   background-color: rgb(8, 18, 18) !important;
   color: white;
 }
@@ -19,6 +19,9 @@ body, input, textarea, button {
 .dark-mode-4 {
   background-color: #141414 !important;
   color: white;
+}
+.dark-mode-5 {
+  background-color: rgb(59 59 59 / 87%) !important;
 }
 #boardCenterDesign {
   position: fixed;
@@ -48,7 +51,7 @@ body, input, textarea, button {
   background: white;
   z-index: -2;
 }
-.base {
+.outline {
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1); /* Lighter shadow */
   border-radius: 15px; /* Rounded corners */
   background-color: rgba(255, 255, 255, 0.1); /* Very faint/transparent background */
@@ -243,21 +246,21 @@ body, input, textarea, button {
   height: 70%; /* Maintain aspect ratio */
   margin: .25vw;
 }
-.selfBoard {
+.self-board {
   bottom: 61%;
   left: 66%;
   width: 24%;
   height: 30%;
   border-radius: 20px; /* Rounded corners */
 }
-.oppBoard {
+.opp-board {
   bottom: 61%;
   right: 66%;
   width: 22%;
   height: 30%;
   border-radius: 20px; /* Rounded corners */
 }
-.selfButtonContainer {
+.self-special-move-button-container {
   position: fixed;
   height: 6%;
   width: 10%;
@@ -267,7 +270,7 @@ body, input, textarea, button {
   justify-content: flex-end; /* Align items to the right */
   gap: 5px; /* Set the desired space between items */
 }
-.oppButtonContainer {
+.opp-special-move-button-container {
   position: fixed;
   height: 6%;
   width: 10%;
@@ -277,7 +280,7 @@ body, input, textarea, button {
   justify-content: flex-start;
   gap: 5px; /* Set the desired space between items */
 }
-#buttonContainer button {
+#specialMoveButtonContainer button {
   min-height: 10px;
   max-height: 20px;
   height: 6vh; /* Adjust as needed */
@@ -288,7 +291,7 @@ body, input, textarea, button {
   color: rgb(149, 149, 149); /* Text color */
   border: none;
 }
-#buttonContainer button:hover {
+#specialMoveButtonContainer button:hover {
   background-color: rgb(117, 117, 117); /* Natural green background color */
   color: rgb(255, 255, 255); /* Text color */
 }
@@ -400,7 +403,7 @@ body, input, textarea, button {
   height: 33%;
   margin: 0.5%;
 }
-.self-button-container {
+.self-zone-button-container {
   position: absolute;
   bottom: 0%;
   width: 96%;
@@ -412,7 +415,7 @@ body, input, textarea, button {
   padding: 10px;
   border-radius: 15px; /* More rounded corners */
 }
-.opp-button-container {
+.opp-zone-button-container {
   display: none;
   /* position: absolute;
   bottom: 0%;
@@ -425,7 +428,7 @@ body, input, textarea, button {
   padding: 10px;
   border-radius: 15px; */
 }
-.action-button {
+.zone-button {
   margin: 0 5px;
   width: 20%; /* Same width */
   padding: 5px; /* Add some padding */
@@ -435,7 +438,7 @@ body, input, textarea, button {
   color: white; /* White text */
   cursor: pointer; /* Change cursor on hover */
 }
-.action-button:hover {
+.zone-button:hover {
   background-color: #adadad; /* Darker blue on hover */
 }
 .zone-button-container {
