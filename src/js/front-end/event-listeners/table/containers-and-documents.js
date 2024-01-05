@@ -1,4 +1,4 @@
-import { oppContainersDocument, selfContainersDocument } from '../../front-end.js';
+import { oppContainerDocument, selfContainerDocument } from '../../front-end.js';
 import { closePopups } from '../../actions/general/close-popups.js';
 import { dragLeave, dragOver, drop } from '../../image-logic/drag.js';
 import { keyDown, keyUp } from '../../key-toggles/key-shortcuts.js';
@@ -11,8 +11,8 @@ const addDocumentEventListeners = (document) => {
 }
 
 addDocumentEventListeners(document);
-addDocumentEventListeners(selfContainersDocument);
-addDocumentEventListeners(oppContainersDocument);
+addDocumentEventListeners(selfContainerDocument);
+addDocumentEventListeners(oppContainerDocument);
 
 const addElementEventListeners = (container) => {
     container.addEventListener('dragover', dragOver);
@@ -42,9 +42,9 @@ zoneElementStrings.forEach(id => {
         const element = document.getElementById(id);
         addElementEventListeners(element);
     } else {
-        const selfContainer = selfContainersDocument.getElementById(id);
+        const selfContainer = selfContainerDocument.getElementById(id);
         addElementEventListeners(selfContainer);
-        const oppContainer = oppContainersDocument.getElementById(id);
+        const oppContainer = oppContainerDocument.getElementById(id);
         addElementEventListeners(oppContainer);
     };
 });

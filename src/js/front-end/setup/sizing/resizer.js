@@ -2,7 +2,7 @@ import { addAbilityCounter } from '../../actions/counters/ability-counter.js';
 import { addDamageCounter } from '../../actions/counters/damage-counter.js';
 import { addSpecialCondition } from '../../actions/counters/special-condition.js';
 import { closeFullView } from '../../actions/general/close-popups.js';
-import { handElement, oppContainers, oppHandElement, oppResizer, selfContainers, selfResizer, boardButtonsContainer, stadiumElement } from '../../front-end.js';
+import { handElement, oppContainer, oppHandElement, oppResizer, selfContainer, selfResizer, boardButtonsContainer, stadiumElement } from '../../front-end.js';
 import { stringToVariable } from '../zones/zone-string-to-variable.js';
 import { adjustAlignment } from './adjust-alignment.js';
 // Create the overlay div
@@ -48,18 +48,18 @@ export const selfResize = (e) => {
     //adjust hand element
     [handElement, oppHandElement].forEach(adjustAlignment);
 
-    const oldSelfHeight = parseInt(selfContainers.offsetHeight);
-    const oldOppHeight = parseInt(oppContainers.offsetHeight);
+    const oldSelfHeight = parseInt(selfContainer.offsetHeight);
+    const oldOppHeight = parseInt(oppContainer.offsetHeight);
     const clientY = Math.max(0, Math.min(e.clientY, window.innerHeight + window.innerHeight*.01));
     let newSelfHeight = ((window.innerHeight - clientY) / window.innerHeight) * 100 + 1;
     let newOppHeight = 100 - newSelfHeight;
 
     // Apply the new heights
-    selfContainers.style.height = Math.max(1, newSelfHeight) + '%';
+    selfContainer.style.height = Math.max(1, newSelfHeight) + '%';
 
     // Apply the new bottom position
     selfResizer.style.bottom = (100 - (clientY / window.innerHeight) * 100) + '%';
-    newSelfHeight = parseInt(selfContainers.offsetHeight);
+    newSelfHeight = parseInt(selfContainer.offsetHeight);
     const selfRatio = newSelfHeight/oldSelfHeight;
      // Readjust the width of containers on the active/bench
     adjustCards('self', 'benchArray', 'benchElement', selfRatio);
@@ -71,9 +71,9 @@ export const selfResize = (e) => {
     oppResizer.style.bottom = oppResizer.style.bottom ? oppResizer.style.bottom : '51%';
     if (selfResizerBottom + selfResizer.offsetHeight > oppResizerBottom){
         oppResizer.style.bottom = (100 + 2 - (clientY / window.innerHeight) * 100) + '%';
-        oppContainers.style.height = Math.max(1, newOppHeight) + '%';
-        oppContainers.style.bottom = (100 + 1 - (clientY / window.innerHeight) * 100) + '%';
-        newOppHeight = parseInt(oppContainers.offsetHeight);
+        oppContainer.style.height = Math.max(1, newOppHeight) + '%';
+        oppContainer.style.bottom = (100 + 1 - (clientY / window.innerHeight) * 100) + '%';
+        newOppHeight = parseInt(oppContainer.offsetHeight);
         const oppRatio = newOppHeight/oldOppHeight;
         adjustCards('opp', 'benchArray', 'benchElement', oppRatio);
         adjustCards('opp', 'activeArray', 'activeElement', oppRatio);
@@ -93,17 +93,17 @@ export const oppResize = (e) => {
     //adjust hand element
     [handElement, oppHandElement].forEach(adjustAlignment);
 
-    const oldSelfHeight = parseInt(selfContainers.offsetHeight);
-    const oldOppHeight = parseInt(oppContainers.offsetHeight);
+    const oldSelfHeight = parseInt(selfContainer.offsetHeight);
+    const oldOppHeight = parseInt(oppContainer.offsetHeight);
 
     const clientY = Math.max(-window.innerHeight*.01, Math.min(e.clientY, window.innerHeight));    // Calculate the new heights
     let newSelfHeight = ((window.innerHeight - clientY) / window.innerHeight) * 100 - 1;
     let newOppHeight = 100 - newSelfHeight;
    
     oppResizer.style.bottom = (100 - (clientY / window.innerHeight) * 100) + '%';
-    oppContainers.style.height = Math.max(1, newOppHeight) + '%';
-    oppContainers.style.bottom = (100 - 1 - (clientY / window.innerHeight) * 100) + '%';
-    newOppHeight = parseInt(oppContainers.offsetHeight);
+    oppContainer.style.height = Math.max(1, newOppHeight) + '%';
+    oppContainer.style.bottom = (100 - 1 - (clientY / window.innerHeight) * 100) + '%';
+    newOppHeight = parseInt(oppContainer.offsetHeight);
     const oppRatio = newOppHeight/oldOppHeight;
     adjustCards('opp', 'benchArray', 'benchElement', oppRatio);
     adjustCards('opp', 'activeArray', 'activeElement', oppRatio);
@@ -113,9 +113,9 @@ export const oppResize = (e) => {
     
     selfResizer.style.bottom = selfResizer.style.bottom ? selfResizer.style.bottom : '49%';
     if (selfResizerBottom + selfResizer.offsetHeight > oppResizerBottom){
-        selfContainers.style.height = Math.max(1, newSelfHeight) + '%';
+        selfContainer.style.height = Math.max(1, newSelfHeight) + '%';
         selfResizer.style.bottom = (100 - 2 - (clientY / window.innerHeight) * 100) + '%';
-        newSelfHeight = parseInt(selfContainers.offsetHeight);
+        newSelfHeight = parseInt(selfContainer.offsetHeight);
         const selfRatio = newSelfHeight/oldSelfHeight;
         adjustCards('self', 'benchArray', 'benchElement', selfRatio);
         adjustCards('self', 'activeArray', 'activeElement', selfRatio);
@@ -202,19 +202,19 @@ export const flippedSelfResize = (e) => {
     //adjust hand element
     [handElement, oppHandElement].forEach(adjustAlignment);
 
-    const oldSelfHeight = parseInt(selfContainers.offsetHeight);
-    const oldOppHeight = parseInt(oppContainers.offsetHeight);
+    const oldSelfHeight = parseInt(selfContainer.offsetHeight);
+    const oldOppHeight = parseInt(oppContainer.offsetHeight);
 
     const clientY = Math.max(1, Math.min(e.clientY, window.innerHeight - 1));
     let newOppHeight = ((window.innerHeight - clientY) / window.innerHeight) * 100;
     let newSelfHeight = 100 - newOppHeight;
 
     // Apply the new heights
-    oppContainers.style.height = newOppHeight + '%';
+    oppContainer.style.height = newOppHeight + '%';
 
     // Apply the new bottom position
     selfResizer.style.bottom = (100 - 1 - (clientY / window.innerHeight) * 100) + '%';
-    newOppHeight = parseInt(oppContainers.offsetHeight);
+    newOppHeight = parseInt(oppContainer.offsetHeight);
     const oppRatio = newOppHeight/oldOppHeight;
      // Readjust the width of containers on the active/bench
     adjustCards('opp', 'benchArray', 'benchElement', oppRatio);
@@ -226,9 +226,9 @@ export const flippedSelfResize = (e) => {
     oppResizer.style.bottom = oppResizer.style.bottom ? oppResizer.style.bottom : '51%';
     if (selfResizerBottom + selfResizer.offsetHeight > oppResizerBottom){
         oppResizer.style.bottom = (100 + 1 - (clientY / window.innerHeight) * 100) + '%';
-        selfContainers.style.height = newSelfHeight + '%';
-        selfContainers.style.bottom = (100 - (clientY / window.innerHeight) * 100) + '%';
-        newSelfHeight = parseInt(selfContainers.offsetHeight);
+        selfContainer.style.height = newSelfHeight + '%';
+        selfContainer.style.bottom = (100 - (clientY / window.innerHeight) * 100) + '%';
+        newSelfHeight = parseInt(selfContainer.offsetHeight);
         const selfRatio = newSelfHeight/oldSelfHeight;
         adjustCards('self', 'benchArray', 'benchElement', selfRatio);
         adjustCards('self', 'activeArray', 'activeElement', selfRatio);
@@ -249,17 +249,17 @@ export const flippedOppResize = (e) => {
     //adjust hand element
     [handElement, oppHandElement].forEach(adjustAlignment);
 
-    const oldSelfHeight = parseInt(selfContainers.offsetHeight);
-    const oldOppHeight = parseInt(oppContainers.offsetHeight);
+    const oldSelfHeight = parseInt(selfContainer.offsetHeight);
+    const oldOppHeight = parseInt(oppContainer.offsetHeight);
 
     const clientY = Math.max(1, Math.min(e.clientY, window.innerHeight - 1));    // Calculate the new heights
     let newOppHeight = ((window.innerHeight - clientY) / window.innerHeight) * 100;
     let newSelfHeight = 100 - newOppHeight;
    
     oppResizer.style.bottom = (100 + 1 - (clientY / window.innerHeight) * 100) + '%';
-    selfContainers.style.height = newSelfHeight + '%';
-    selfContainers.style.bottom = (100 - (clientY / window.innerHeight) * 100) + '%';
-    newSelfHeight = parseInt(selfContainers.offsetHeight);
+    selfContainer.style.height = newSelfHeight + '%';
+    selfContainer.style.bottom = (100 - (clientY / window.innerHeight) * 100) + '%';
+    newSelfHeight = parseInt(selfContainer.offsetHeight);
     const selfRatio = newSelfHeight/oldSelfHeight;
     adjustCards('self', 'benchArray', 'benchElement', selfRatio);
     adjustCards('self', 'activeArray', 'activeElement', selfRatio);
@@ -269,9 +269,9 @@ export const flippedOppResize = (e) => {
     
     selfResizer.style.bottom = selfResizer.style.bottom ? selfResizer.style.bottom : '49%';
     if (selfResizerBottom + selfResizer.offsetHeight > oppResizerBottom){
-        oppContainers.style.height = newOppHeight + '%';
+        oppContainer.style.height = newOppHeight + '%';
         selfResizer.style.bottom = (100 - 1 - (clientY / window.innerHeight) * 100) + '%';
-        newOppHeight = parseInt(oppContainers.offsetHeight);
+        newOppHeight = parseInt(oppContainer.offsetHeight);
         const oppRatio = newOppHeight/oldOppHeight;
         adjustCards('opp', 'benchArray', 'benchElement', oppRatio);
         adjustCards('opp', 'activeArray', 'activeElement', oppRatio);

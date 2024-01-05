@@ -1,4 +1,4 @@
-import { lostZoneElement, deckElement, discardElement, sCard, selfContainersDocument, activeArray, benchArray, stadiumElement, oppActiveArray, oppBenchArray, oppContainersDocument, oppDeckElement, oppDiscardElement, oppLostZoneElement, attachedCardsElement, viewCardsElement, oppAttachedCardsElement, oppViewCardsElement} from '../../front-end.js';
+import { lostZoneElement, deckElement, discardElement, sCard, selfContainerDocument, activeArray, benchArray, stadiumElement, oppActiveArray, oppBenchArray, oppContainerDocument, oppDeckElement, oppDiscardElement, oppLostZoneElement, attachedCardsElement, viewCardsElement, oppAttachedCardsElement, oppViewCardsElement} from '../../front-end.js';
 import { zoneElementToArray } from '../../setup/zones/zone-element-to-array.js';
 import { stringToVariable } from '../../setup/zones/zone-string-to-variable.js';
 import { reloadBoard } from '../../setup/sizing/reload-board.js';
@@ -58,7 +58,7 @@ export const deselectCard = () => {
 }
 
 export const closeFullView = (event) => {
-    const fullViewElement = selfContainersDocument.querySelector('.full-view') || oppContainersDocument.querySelector('.full-view');
+    const fullViewElement = selfContainerDocument.querySelector('.full-view') || oppContainerDocument.querySelector('.full-view');
     
     if (fullViewElement && (!event || !fullViewElement.contains(event.target))){
         // Revert the styles

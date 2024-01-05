@@ -1,5 +1,5 @@
 import { stringToVariable } from '../../setup/zones/zone-string-to-variable.js';
-import { sCard, socket, selfContainersDocument, oppContainersDocument, systemState } from '../../front-end.js';
+import { sCard, socket, selfContainerDocument, oppContainerDocument, systemState } from '../../front-end.js';
 
 export const addDamageCounter = (user, zoneArrayString, zoneElementString, index, emit = true) => {
 
@@ -20,10 +20,10 @@ export const addDamageCounter = (user, zoneArrayString, zoneElementString, index
         window.removeEventListener('resize', damageCounter.handleResize);
     } else {
         if (user === 'self'){
-            damageCounter = selfContainersDocument.createElement('div');
+            damageCounter = selfContainerDocument.createElement('div');
             damageCounter.className = systemState.pov.user === 'self' ? 'self-circle' : 'opp-circle';
         } else {
-            damageCounter = oppContainersDocument.createElement('div');
+            damageCounter = oppContainerDocument.createElement('div');
             damageCounter.className = systemState.pov.user === 'self' ? 'opp-circle' : 'self-circle';
         };
         damageCounter.contentEditable = 'true';

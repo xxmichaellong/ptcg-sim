@@ -1,4 +1,4 @@
-import { stadiumElement, attachedCardsElement, selfContainersDocument, benchArray, activeArray, oppActiveArray, oppAttachedCardsElement, oppBenchArray, oppContainersDocument, oppDeckCoverElement, oppDeckElement, oppDiscardCoverElement, oppLostZoneCoverElement, systemState, socket, lostZoneArray, discardArray, oppLostZoneArray, oppDiscardArray, handElement, deckArray, handArray, prizesArray} from '../../front-end.js'
+import { stadiumElement, attachedCardsElement, selfContainerDocument, benchArray, activeArray, oppActiveArray, oppAttachedCardsElement, oppBenchArray, oppContainerDocument, oppDeckCoverElement, oppDeckElement, oppDiscardCoverElement, oppLostZoneCoverElement, systemState, socket, lostZoneArray, discardArray, oppLostZoneArray, oppDiscardArray, handElement, deckArray, handArray, prizesArray} from '../../front-end.js'
 import { resetImage } from '../../image-logic/reset-image.js';
 import { getZoneCount, updateCount } from '../general/count.js';
 import { deselectCard, hideElementsIfEmpty } from '../general/close-popups.js';
@@ -21,7 +21,6 @@ export const moveCard = (user, oZoneArrayString, oZoneElementString, dZoneArrayS
     const oZoneElement = stringToVariable(user, oZoneElementString);
     const dZoneArray = stringToVariable(user, dZoneArrayString);
     const dZoneElement = stringToVariable(user, dZoneElementString);
-
 
     // define the card that's being targeted, i.e., the pokemon that is being attached to, if a target index is defined
     let targetCard;
@@ -178,9 +177,9 @@ export const moveCard = (user, oZoneArrayString, oZoneElementString, dZoneArrayS
         if (activeOrBenchElement.includes(dZoneElementString)){
             let container;
             if (user === 'self'){
-                container = selfContainersDocument.createElement('div');
+                container = selfContainerDocument.createElement('div');
             } else {
-                container = oppContainersDocument.createElement('div');
+                container = oppContainerDocument.createElement('div');
             };
             if (movingCard.image.PokémonBreak && ['activeArray', 'benchArray'].includes(dZoneArrayString)){
                 container.style.marginRight = '3%';

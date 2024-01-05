@@ -1,4 +1,4 @@
-import { activeArray, oppActiveArray, selfContainersDocument } from "../../front-end.js";
+import { activeArray, oppActiveArray, selfContainerDocument } from "../../front-end.js";
 import { appendMessage } from "../../setup/chatbox/messages.js";
 import { zoneElementToArray } from "../../setup/zones/zone-element-to-array.js";
 import { stringToVariable, variableToString } from "../../setup/zones/zone-string-to-variable.js";
@@ -9,7 +9,7 @@ import { getZoneCount } from "../general/count.js";
 
 export const shuffleAll = (event) => {
     const zoneElementString = event.target.parentElement.parentElement.id;
-    const user = selfContainersDocument.contains(event.target) ? 'self' : 'opp';
+    const user = selfContainerDocument.contains(event.target) ? 'self' : 'opp';
     const zoneArray = zoneElementToArray(user, zoneElementString);
     const zoneArrayString = variableToString(user, zoneArray);
     const count = getZoneCount(zoneArray);
@@ -28,11 +28,11 @@ export const shuffleAll = (event) => {
         if (zoneArrayString === 'deckArray'){
             message = determineUsername(user) + ' shuffled deck';
         } else if (zoneArrayString === 'attachedCardsArray'){
-            message = determineUsername(user) + ' shuffled ' + count + ' attached card(s) into deckArray';
+            message = determineUsername(user) + ' shuffled ' + count + ' attached card(s) into deck';
         } else if (zoneArrayString === 'viewCardsArray'){
-            message = determineUsername(user) + ' shuffled ' + count + ' card(s) into deckArray';
+            message = determineUsername(user) + ' shuffled ' + count + ' card(s) into deck';
         } else if (zoneArrayString === 'discardArray'){
-            message = determineUsername(user) + ' shuffled discard into deckArray';
+            message = determineUsername(user) + ' shuffled discard into deck';
         };
         appendMessage(user, message, 'player');
     };
@@ -40,7 +40,7 @@ export const shuffleAll = (event) => {
 
 export const discardAll = (event) => {
     const zoneElementString = event.target.parentElement.parentElement.id;
-    const user = selfContainersDocument.contains(event.target) ? 'self' : 'opp';
+    const user = selfContainerDocument.contains(event.target) ? 'self' : 'opp';
     const zoneArray = zoneElementToArray(user, zoneElementString);
     const zoneArrayString = variableToString(user, zoneArray);
     const count = getZoneCount(zoneArray);
@@ -65,7 +65,7 @@ export const discardAll = (event) => {
 
 export const lostZoneAll = (event) => {
     const zoneElementString = event.target.parentElement.parentElement.id;
-    const user = selfContainersDocument.contains(event.target) ? 'self' : 'opp';
+    const user = selfContainerDocument.contains(event.target) ? 'self' : 'opp';
     const zoneArray = zoneElementToArray(user, zoneElementString);
     const zoneArrayString = variableToString(user, zoneArray);
     const count = getZoneCount(zoneArray);
@@ -90,7 +90,7 @@ export const lostZoneAll = (event) => {
 
 export const handAll = (event) => {
     const zoneElementString = event.target.parentElement.parentElement.id;
-    const user = selfContainersDocument.contains(event.target) ? 'self' : 'opp';
+    const user = selfContainerDocument.contains(event.target) ? 'self' : 'opp';
     const zoneArray = zoneElementToArray(user, zoneElementString);
     const zoneArrayString = variableToString(user, zoneArray);
     const count = getZoneCount(zoneArray);
@@ -115,14 +115,14 @@ export const handAll = (event) => {
 
 export const closeDisplay = (event) => {
     const zoneElementString = event.target.parentElement.parentElement.id;
-    const user = selfContainersDocument.contains(event.target) ? 'self' : 'opp';
+    const user = selfContainerDocument.contains(event.target) ? 'self' : 'opp';
     const zoneElement = stringToVariable(user, zoneElementString);
     zoneElement.style.display = 'none';
 }
 
 export const leaveAll = (event) => {
     const zoneElementString = event.target.parentElement.parentElement.id;
-    const user = selfContainersDocument.contains(event.target) ? 'self' : 'opp';
+    const user = selfContainerDocument.contains(event.target) ? 'self' : 'opp';
     const zoneArray = zoneElementToArray(user, zoneElementString);
     const zoneArrayString = variableToString(user, zoneArray);
     const count = getZoneCount(zoneArray);

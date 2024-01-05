@@ -1,4 +1,4 @@
-import { activeArray, activeElement, attachedCardsArray, attachedCardsElement, benchArray, benchElement, boardArray, boardElement, deckArray, deckCoverElement, deckElement, discardArray, discardCoverElement, discardElement, handArray, handElement, lostZoneArray, lostZoneCoverElement, lostZoneElement, oppActiveArray, oppActiveElement, oppAttachedCardsArray, oppAttachedCardsElement, oppBenchArray, oppBenchElement, oppBoardArray, oppBoardElement, oppContainersDocument, oppDeckArray, oppDeckCoverElement, oppDeckElement, oppDiscardArray, oppDiscardCoverElement, oppDiscardElement, oppHandArray, oppHandElement, oppLostZoneArray, oppLostZoneCoverElement, oppLostZoneElement, oppPrizesArray, oppPrizesElement, oppViewCardsArray, oppViewCardsElement, systemState, prizesArray, prizesElement, selfContainersDocument, socket, stadiumArray, stadiumElement, viewCardsArray, viewCardsElement } from '../../front-end.js';
+import { activeArray, activeElement, attachedCardsArray, attachedCardsElement, benchArray, benchElement, boardArray, boardElement, deckArray, deckCoverElement, deckElement, discardArray, discardCoverElement, discardElement, handArray, handElement, lostZoneArray, lostZoneCoverElement, lostZoneElement, oppActiveArray, oppActiveElement, oppAttachedCardsArray, oppAttachedCardsElement, oppBenchArray, oppBenchElement, oppBoardArray, oppBoardElement, oppContainerDocument, oppDeckArray, oppDeckCoverElement, oppDeckElement, oppDiscardArray, oppDiscardCoverElement, oppDiscardElement, oppHandArray, oppHandElement, oppLostZoneArray, oppLostZoneCoverElement, oppLostZoneElement, oppPrizesArray, oppPrizesElement, oppViewCardsArray, oppViewCardsElement, systemState, prizesArray, prizesElement, selfContainerDocument, socket, stadiumArray, stadiumElement, viewCardsArray, viewCardsElement } from '../../front-end.js';
 import { removeImages } from '../../image-logic/remove-images.js';
 import { appendMessage } from '../../setup/chatbox/messages.js';
 import { buildDeck } from '../../setup/deck-constructor/build-deck.js';
@@ -22,22 +22,22 @@ export const reset = (user, clean = false, emit = true, build = true, invalidMes
         zoneArrays = [deckArray, lostZoneArray, discardArray, prizesArray, activeArray, benchArray, handArray, attachedCardsArray, viewCardsArray, boardArray];
         zoneElements = [deckCoverElement, deckElement, lostZoneElement, discardElement, prizesElement, activeElement, benchElement, handElement, lostZoneCoverElement, discardCoverElement, attachedCardsElement, boardElement, viewCardsElement]
 
-        selfContainersDocument.querySelectorAll('.self-circle, .opp-circle, .self-tab, .opp-tab').forEach(element => {
+        selfContainerDocument.querySelectorAll('.self-circle, .opp-circle, .self-tab, .opp-tab').forEach(element => {
             element.textContent = '0'
             element.handleRemove();
         });
-        selfContainersDocument.querySelectorAll('.used').forEach(element => {
+        selfContainerDocument.querySelectorAll('.used').forEach(element => {
             element.classList.remove('used');
         });
     } else {
         zoneArrays = [oppDeckArray, oppLostZoneArray, oppDiscardArray, oppPrizesArray, oppActiveArray, oppBenchArray, oppHandArray, oppAttachedCardsArray, oppViewCardsArray, oppBoardArray];
         zoneElements = [oppDeckElement, oppPrizesElement, oppDeckCoverElement, oppLostZoneElement, oppDiscardElement, oppActiveElement, oppBenchElement, oppHandElement, oppLostZoneCoverElement, oppDiscardCoverElement, oppAttachedCardsElement, oppViewCardsElement, oppBoardElement]
 
-        oppContainersDocument.querySelectorAll('.self-circle, .opp-circle, .self-tab, .opp-tab').forEach(element => {
+        oppContainerDocument.querySelectorAll('.self-circle, .opp-circle, .self-tab, .opp-tab').forEach(element => {
             element.textContent = '0'
             element.handleRemove();
         });
-        oppContainersDocument.querySelectorAll('.used').forEach(element => {
+        oppContainerDocument.querySelectorAll('.used').forEach(element => {
             element.classList.remove('used');
         });
     };

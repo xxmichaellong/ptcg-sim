@@ -1,4 +1,4 @@
-import { darkModeCheckbox, p1Box, p2Box, settings, settingsToggles, showZonesCheckbox, chatbox, messageInput, nameInput, p2Chatbox, p2MessageInput, roomIdInput, stadiumElement, deckImport, selfContainersDocument, oppContainersDocument, keybindModal, mainDeckImportInput, altDeckImportInput, p2ExplanationBox, changelog } from "../../front-end.js";
+import { darkModeCheckbox, p1Box, p2Box, settings, settingsToggles, showZonesCheckbox, chatbox, messageInput, nameInput, p2Chatbox, p2MessageInput, roomIdInput, stadiumElement, deckImport, selfContainerDocument, oppContainerDocument, keybindModal, mainDeckImportInput, altDeckImportInput, p2ExplanationBox, changelog } from "../../front-end.js";
 import { stringToVariable } from "../../setup/zones/zone-string-to-variable.js";
 
 const darkMode = () => {
@@ -23,37 +23,37 @@ const darkMode = () => {
     buttons.forEach(button => {
         button.classList.toggle('dark-mode-2');
     });
-    const selfButtons = selfContainersDocument.querySelectorAll('#specialMoveButtonContainer button');
+    const selfButtons = selfContainerDocument.querySelectorAll('#specialMoveButtonContainer button');
     selfButtons.forEach(button => {
         button.classList.toggle('dark-mode-2');
     });
-    const oppButtons = oppContainersDocument.querySelectorAll('#specialMoveButtonContainer button');
+    const oppButtons = oppContainerDocument.querySelectorAll('#specialMoveButtonContainer button');
     oppButtons.forEach(button => {
         button.classList.toggle('dark-mode-2');
     });
-    selfContainersDocument.querySelector('#innerCircle').classList.toggle('dark-mode-1');
-    oppContainersDocument.querySelector('#innerCircle').classList.toggle('dark-mode-1');
-    const selfText = selfContainersDocument.querySelectorAll('.self-text, .opp-text');
+    selfContainerDocument.querySelector('#innerCircle').classList.toggle('dark-mode-1');
+    oppContainerDocument.querySelector('#innerCircle').classList.toggle('dark-mode-1');
+    const selfText = selfContainerDocument.querySelectorAll('.self-text, .opp-text');
     selfText.forEach(text => {
         text.classList.toggle('dark-mode-3');
     });
-    const oppText = oppContainersDocument.querySelectorAll('.self-text, .opp-text');
+    const oppText = oppContainerDocument.querySelectorAll('.self-text, .opp-text');
     oppText.forEach(text => {
         text.classList.toggle('dark-mode-3');
     });
-    const oppHeader = oppContainersDocument.querySelectorAll('.zone-button-container, .self-zone-button-container, .opp-zone-button-container');
+    const oppHeader = oppContainerDocument.querySelectorAll('.zone-button-container, .self-zone-button-container, .opp-zone-button-container');
     oppHeader.forEach(header => {
         header.classList.toggle('dark-mode-4');
     });
-    const selfHeader = selfContainersDocument.querySelectorAll('.zone-button-container, .self-zone-button-container, .opp-zone-button-container');
+    const selfHeader = selfContainerDocument.querySelectorAll('.zone-button-container, .self-zone-button-container, .opp-zone-button-container');
     selfHeader.forEach(header => {
         header.classList.toggle('dark-mode-4');
     });
-    const selfBackground = selfContainersDocument.querySelectorAll('.self-view, .opp-view');
+    const selfBackground = selfContainerDocument.querySelectorAll('.self-view, .opp-view');
     selfBackground.forEach(background => {
       background.classList.toggle('dark-mode-5');
     });
-    const oppBackGround = oppContainersDocument.querySelectorAll('.self-view, .opp-view');
+    const oppBackGround = oppContainerDocument.querySelectorAll('.self-view, .opp-view');
     oppBackGround.forEach(background => {
       background.classList.toggle('dark-mode-5');
     });

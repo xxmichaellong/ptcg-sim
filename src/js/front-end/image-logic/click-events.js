@@ -1,4 +1,4 @@
-import { cardContextMenu, oppContainers, oppDeckElement, oppDiscardElement, deckElement, lostZoneElement, discardElement, deckCoverElement, oppDeckCoverElement, oppLostZoneElement, discardCoverElement, oppDiscardCoverElement, lostZoneCoverElement, oppLostZoneCoverElement, sCard, selfContainers, selfContainersDocument, stadiumElement, systemState, target, } from '../front-end.js'
+import { cardContextMenu, oppContainer, oppDeckElement, oppDiscardElement, deckElement, lostZoneElement, discardElement, deckCoverElement, oppDeckCoverElement, oppLostZoneElement, discardCoverElement, oppDiscardCoverElement, lostZoneCoverElement, oppLostZoneCoverElement, sCard, selfContainer, selfContainerDocument, stadiumElement, systemState, target, } from '../front-end.js'
 import { zoneElementToArray } from '../setup/zones/zone-element-to-array.js';
 import { stringToVariable, variableToString } from '../setup/zones/zone-string-to-variable.js';
 import { closeFullView, closePopups, deselectCard } from '../actions/general/close-popups.js';
@@ -65,8 +65,8 @@ export const openCardContextMenu = (event) => {
 
     identifyCard(event);
 
-    const selfView = (selfContainersDocument.body.contains(event.target) && selfContainers.classList.contains('self')) || (!selfContainersDocument.body.contains(event.target) && !selfContainers.classList.contains('self'));
-    const oppView = (!selfContainersDocument.body.contains(event.target) && selfContainers.classList.contains('self')) || (selfContainersDocument.body.contains(event.target) && !selfContainers.classList.contains('self'));
+    const selfView = (selfContainerDocument.body.contains(event.target) && selfContainer.classList.contains('self')) || (!selfContainerDocument.body.contains(event.target) && !selfContainer.classList.contains('self'));
+    const oppView = (!selfContainerDocument.body.contains(event.target) && selfContainer.classList.contains('self')) || (selfContainerDocument.body.contains(event.target) && !selfContainer.classList.contains('self'));
     
     const buttonConditions = {
         'abilityCounterButton': [[selfView, 'activeElement'], [oppView, 'activeElement'], [selfView, 'benchElement'], [oppView, 'benchElement']],
@@ -117,7 +117,7 @@ export const openCardContextMenu = (event) => {
 
     // get the fucking position of this mf
     const targetRect = event.target.getBoundingClientRect();
-    const offsetHeight = window.innerHeight - ((event.target.user === 'self') ? selfContainers.offsetHeight : oppContainers.offsetHeight);
+    const offsetHeight = window.innerHeight - ((event.target.user === 'self') ? selfContainer.offsetHeight : oppContainer.offsetHeight);
     if (document.body.contains(event.target)){
         cardContextMenu.style.left = `${targetRect.left + event.target.clientWidth}px`;
         cardContextMenu.style.top = `${targetRect.top}px`;
@@ -133,7 +133,7 @@ export const openCardContextMenu = (event) => {
             cardContextMenu.style.top = `${targetRect.top + offsetHeight}px`; 
         };
     } else if (oppView){
-        const adjustment = (document.body.offsetWidth - oppContainers.offsetWidth);
+        const adjustment = (document.body.offsetWidth - oppContainer.offsetWidth);
         if (event.target.parentElement.id === 'deckCoverElement'){
             cardContextMenu.style.right = `${targetRect.left + adjustment - cardContextMenu.clientWidth}px`;
             cardContextMenu.style.bottom = `${targetRect.top + offsetHeight - cardContextMenu.offsetHeight + event.target.offsetHeight}px`;
@@ -236,7 +236,7 @@ export const doubleClick = (event) => {
         overlay.addEventListener('click', () => removeOverlay());
 
         // Listen for the escape key press
-        const documentArray = [selfContainersDocument, oppContainers, document];
+        const documentArray = [selfContainerDocument, oppContainer, document];
         documentArray.forEach(document => document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape' || event.key === 'v') {
                 removeOverlay();

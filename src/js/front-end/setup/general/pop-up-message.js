@@ -1,4 +1,4 @@
-import { oppContainers, selfContainers } from "../../front-end.js";
+import { oppContainer, selfContainer } from "../../front-end.js";
 
 export const showPopup = (message, callback) => {
     const popup = document.createElement('div');
@@ -13,8 +13,8 @@ export const showPopup = (message, callback) => {
     okButton.textContent = 'OK';
     okButton.addEventListener('click', () => {
         document.body.removeChild(popup);
-        selfContainers.style.zIndex = 0;
-        oppContainers.style.zIndex = 0;    
+        selfContainer.style.zIndex = 0;
+        oppContainer.style.zIndex = 0;    
         if (callback) {
             callback();
         };
@@ -24,6 +24,6 @@ export const showPopup = (message, callback) => {
     popup.appendChild(popupContent);
 
     document.body.appendChild(popup);
-    selfContainers.style.zIndex = -1;
-    oppContainers.style.zIndex = -1;
+    selfContainer.style.zIndex = -1;
+    oppContainer.style.zIndex = -1;
 }

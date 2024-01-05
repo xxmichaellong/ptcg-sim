@@ -1,10 +1,10 @@
-import { oppContainersDocument, systemState, selfContainersDocument, socket } from "../../front-end.js";
+import { oppContainerDocument, systemState, selfContainerDocument, socket } from "../../front-end.js";
 
 export const resetCounters = (emit = true) => {
-    selfContainersDocument.querySelectorAll('.self-tab, .opp-tab').forEach(element => {
+    selfContainerDocument.querySelectorAll('.self-tab, .opp-tab').forEach(element => {
         element.handleRemove();
     });
-    oppContainersDocument.querySelectorAll('.self-tab, .opp-tab').forEach(element => {
+    oppContainerDocument.querySelectorAll('.self-tab, .opp-tab').forEach(element => {
         element.handleRemove();
     });
     document.querySelectorAll('.tab').forEach(element => {

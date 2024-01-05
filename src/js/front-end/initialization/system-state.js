@@ -1,14 +1,14 @@
-import { selfContainers } from "../front-end.js";
+import { selfContainer } from "../front-end.js";
 
 export const systemState = {
     isTwoPlayer: false,
     pov: {
         get user() {
-            return selfContainers.classList.contains('self') ? 'self' : 'opp'; 
+            return selfContainer.classList.contains('self') ? 'self' : 'opp'; 
             //pov.user refers to the user on the bottom half of the screen, e.g., pov.user === 'self' means that the bottom half is the 'self' user
         },
         get oUser() {
-            return selfContainers.classList.contains('self') ? 'opp' : 'self';
+            return selfContainer.classList.contains('self') ? 'opp' : 'self';
             //pov.oUser refers to the user on the top half of the screen
         }
     },

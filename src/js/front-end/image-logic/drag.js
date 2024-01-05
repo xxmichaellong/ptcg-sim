@@ -1,7 +1,7 @@
 import { moveToDeckTop } from '../actions/zones/deck-actions.js';
 import { closePopups } from '../actions/general/close-popups.js';
 import { moveCard } from '../actions/move-card-logic/move-card.js';
-import { activeElement, attachedCardsElement, benchElement, deckElement, discardElement, lostZoneElement, oppActiveElement, oppAttachedCardsElement, oppBenchElement, oppContainersDocument, oppDeckElement, oppDiscardElement, oppLostZoneElement, oppViewCardsElement, sCard, selfContainersDocument, systemState, target, viewCardsElement } from '../front-end.js';
+import { activeElement, attachedCardsElement, benchElement, deckElement, discardElement, lostZoneElement, oppActiveElement, oppAttachedCardsElement, oppBenchElement, oppContainerDocument, oppDeckElement, oppDiscardElement, oppLostZoneElement, oppViewCardsElement, sCard, selfContainerDocument, systemState, target, viewCardsElement } from '../front-end.js';
 import { moveCardMessage } from '../setup/chatbox/move-card-message.js';
 import { zoneElementToArray } from '../setup/zones/zone-element-to-array.js';
 import { stringToVariable, variableToString } from '../setup/zones/zone-string-to-variable.js';
@@ -52,7 +52,7 @@ export const dragOver = (event) => {
         sCard.box.style.zIndex = '-1';
         sCard.boxParent.style.zIndex = '-1';
     };
-    let draggedImage = document.querySelector('.dragging') || selfContainersDocument.querySelector('.dragging') || oppContainersDocument.querySelector('.dragging');
+    let draggedImage = document.querySelector('.dragging') || selfContainerDocument.querySelector('.dragging') || oppContainerDocument.querySelector('.dragging');
 
     const targetIsNotOwnContainer = event.target !== draggedImage.parentElement && event.target !== draggedImage.parentElement.parentElement;
     const targetIsContainer = event.target.tagName === 'DIV';
@@ -107,8 +107,8 @@ export const dragEnd = (event) => {
     };
     
     const classList = ['self-circle', 'opp-circle', 'self-tab', 'opp-tab'];
-    enablePointerEvents(selfContainersDocument, classList);
-    enablePointerEvents(oppContainersDocument, classList);
+    enablePointerEvents(selfContainerDocument, classList);
+    enablePointerEvents(oppContainerDocument, classList);
     
     event.target.classList.remove('dragging');
     if (event.target.parentElement){
@@ -162,7 +162,7 @@ export const drop = (event) => {
         sCard.zoneElementString = mapping[sCard.zoneElementString];
     };
 
-    let draggedImage = document.querySelector('.dragging') || selfContainersDocument.querySelector('.dragging') || oppContainersDocument.querySelector('.dragging');
+    let draggedImage = document.querySelector('.dragging') || selfContainerDocument.querySelector('.dragging') || oppContainerDocument.querySelector('.dragging');
     //reset opacity of attached cards
     draggedImage.parentElement.querySelectorAll('img').forEach(image => {
         if (image.attached){

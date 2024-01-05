@@ -1,9 +1,9 @@
-import { FREEBUTTON, systemState, attackButton, boardElement, oppBoardElement, oppContainers, oppContainersDocument, oppResizer, oppViewCardsElement, p2AttackButton, p2FREEBUTTON, p2PassButton, p2ResetButton, p2SetupButton, passButton, resetButton, selfContainers, selfContainersDocument, selfResizer, setupButton, stadiumArray, stadiumElement, viewCardsElement } from '../../front-end.js';
+import { FREEBUTTON, systemState, attackButton, boardElement, oppBoardElement, oppContainer, oppContainerDocument, oppResizer, oppViewCardsElement, p2AttackButton, p2FREEBUTTON, p2PassButton, p2ResetButton, p2SetupButton, passButton, resetButton, selfContainer, selfContainerDocument, selfResizer, setupButton, stadiumArray, stadiumElement, viewCardsElement } from '../../front-end.js';
 import { flippedOppHandleMouseDown, flippedSelfHandleMouseDown, oppHandleMouseDown, selfHandleMouseDown } from '../../setup/sizing/resizer.js';
 import { reloadBoard } from '../../setup/sizing/reload-board.js';
 
 export const flipBoard = () => {    
-    if (selfContainers.classList.contains('self')){
+    if (selfContainer.classList.contains('self')){
         selfResizer.removeEventListener('mousedown', selfHandleMouseDown);
         oppResizer.removeEventListener('mousedown', oppHandleMouseDown);
         selfResizer.addEventListener('mousedown', flippedSelfHandleMouseDown);
@@ -25,8 +25,8 @@ export const flipBoard = () => {
 
     toggleClasses(selfResizer, 'self-color', 'opp-color');
     toggleClasses(oppResizer, 'opp-color', 'self-color');
-    toggleClasses(selfContainers, 'self', 'opp');
-    toggleClasses(oppContainers, 'opp', 'self');
+    toggleClasses(selfContainer, 'self', 'opp');
+    toggleClasses(oppContainer, 'opp', 'self');
     toggleClasses(boardElement, 'self-board', 'opp-board');
     toggleClasses(oppBoardElement, 'opp-board', 'self-board');
     toggleClasses(attackButton, 'self-color', 'opp-color');
@@ -48,7 +48,7 @@ export const flipBoard = () => {
     const buttonzoneElementStrings = ['specialMoveButtonContainer'];
 
     for (const user of users) {
-        const document = user === 'self' ? selfContainersDocument : oppContainersDocument;
+        const document = user === 'self' ? selfContainerDocument : oppContainerDocument;
     
         for (const textId of textIds) {
             const text = document.getElementById(textId);
@@ -82,8 +82,8 @@ export const flipBoard = () => {
         };
     };
 
-    const selfCircleElements = selfContainersDocument.querySelectorAll('.self-circle, .opp-circle');
-    const oppCircleElements = oppContainersDocument.querySelectorAll('.self-circle, .opp-circle');
+    const selfCircleElements = selfContainerDocument.querySelectorAll('.self-circle, .opp-circle');
+    const oppCircleElements = oppContainerDocument.querySelectorAll('.self-circle, .opp-circle');
 
     selfCircleElements.forEach(element => {
         element.classList.toggle('self-circle');
@@ -95,14 +95,14 @@ export const flipBoard = () => {
     });
     
     // Swap heights
-    let tempHeight = selfContainers.style.height;
-    selfContainers.style.height = oppContainers.style.height;
-    oppContainers.style.height = tempHeight;
+    let tempHeight = selfContainer.style.height;
+    selfContainer.style.height = oppContainer.style.height;
+    oppContainer.style.height = tempHeight;
 
     // Swap bottom lengths
-    let tempBottom = selfContainers.style.bottom;
-    selfContainers.style.bottom = oppContainers.style.bottom;
-    oppContainers.style.bottom = tempBottom;
+    let tempBottom = selfContainer.style.bottom;
+    selfContainer.style.bottom = oppContainer.style.bottom;
+    oppContainer.style.bottom = tempBottom;
     
     // Flip the stadium
     if (stadiumArray[0]){

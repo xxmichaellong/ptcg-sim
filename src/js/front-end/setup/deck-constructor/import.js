@@ -1,5 +1,5 @@
 import { reset } from "../../actions/general/reset.js";
-import { altDeckImportInput, cancelButton, confirmButton, decklistsButton, failedText, importButton, invalid, loadingText, mainDeckImportInput, oppContainers, systemState, p1Button, p2Button, saveButton, selfContainers, socket } from "../../front-end.js";
+import { altDeckImportInput, cancelButton, confirmButton, decklistsButton, failedText, importButton, invalid, loadingText, mainDeckImportInput, oppContainer, systemState, p1Button, p2Button, saveButton, selfContainer, socket } from "../../front-end.js";
 import { appendMessage } from "../chatbox/messages.js";
 import { determineUsername } from "../general/determine-username.js";
 import { show } from "../home-header/header-toggle.js";
@@ -197,8 +197,8 @@ export const importDecklist = (user) => {
             typeCell.innerHTML = type;
         });
         importButton.disabled = false;
-        selfContainers.style.zIndex = -1;
-        oppContainers.style.zIndex = -1;
+        selfContainer.style.zIndex = -1;
+        oppContainer.style.zIndex = -1;
         loadingText.style.display = 'none';
         decklistsButton.style.display = 'none';
         importButton.style.display = 'none';
@@ -212,8 +212,8 @@ export const importDecklist = (user) => {
 }
 
 cancelButton.addEventListener('click', () => {
-    selfContainers.style.zIndex = 0;
-    oppContainers.style.zIndex = 0;
+    selfContainer.style.zIndex = 0;
+    oppContainer.style.zIndex = 0;
     decklistsButton.style.display = 'block';
     importButton.style.display = 'block';
     confirmButton.style.display = 'none';
@@ -228,8 +228,8 @@ cancelButton.addEventListener('click', () => {
 })
 
 confirmButton.addEventListener('click', () => {
-    selfContainers.style.zIndex = 0;
-    oppContainers.style.zIndex = 0;
+    selfContainer.style.zIndex = 0;
+    oppContainer.style.zIndex = 0;
     decklistsButton.style.display = 'block';
     importButton.style.display = 'block';
     confirmButton.style.display = 'none';
@@ -332,8 +332,8 @@ saveButton.addEventListener('click', () => {
 document.getElementById('csvFile').addEventListener('change', function(evt) {
     const decklistTable = document.getElementById('decklistTable');
     importButton.disabled = false;
-    selfContainers.style.zIndex = -1;
-    oppContainers.style.zIndex = -1;
+    selfContainer.style.zIndex = -1;
+    oppContainer.style.zIndex = -1;
     loadingText.style.display = 'none';
     decklistsButton.style.display = 'none';
     importButton.style.display = 'none';

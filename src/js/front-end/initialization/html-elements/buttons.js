@@ -1,5 +1,5 @@
-import { oppContainersDocument } from '../zones/opp-zones.js';
-import { selfContainersDocument } from '../zones/self-zones.js';
+import { oppContainerDocument } from '../zones/opp-zones.js';
+import { selfContainerDocument } from '../zones/self-zones.js';
 
 //side button container
 export const boardButtonsContainer = document.getElementById('boardButtonsContainer');
@@ -52,52 +52,52 @@ export const cancelButton = document.getElementById('cancelButton');
 export const saveButton = document.getElementById('saveButton');
 
 
-//selfContainers
-export const selfShuffleDeckButton = selfContainersDocument.getElementById('shuffleDeckButton');
-export const selfShuffleDiscardButton = selfContainersDocument.getElementById('shuffleDiscardButton');
-export const selfDiscardAttachedCardsButton = selfContainersDocument.getElementById('discardAttachedCardsButton');
-export const selfShuffleAttachedCardsButton = selfContainersDocument.getElementById('shuffleAttachedCardsButton');
-export const selfLostZoneAttachedCardsButton = selfContainersDocument.getElementById('lostZoneAttachedCardsButton');
-export const selfHandAttachedCardsButton = selfContainersDocument.getElementById('handAttachedCardsButton');
-export const selfLeaveAttachedCardsButton = selfContainersDocument.getElementById('leaveAttachedCardsButton');
+//selfContainer
+export const selfShuffleDeckButton = selfContainerDocument.getElementById('shuffleDeckButton');
+export const selfShuffleDiscardButton = selfContainerDocument.getElementById('shuffleDiscardButton');
+export const selfDiscardAttachedCardsButton = selfContainerDocument.getElementById('discardAttachedCardsButton');
+export const selfShuffleAttachedCardsButton = selfContainerDocument.getElementById('shuffleAttachedCardsButton');
+export const selfLostZoneAttachedCardsButton = selfContainerDocument.getElementById('lostZoneAttachedCardsButton');
+export const selfHandAttachedCardsButton = selfContainerDocument.getElementById('handAttachedCardsButton');
+export const selfLeaveAttachedCardsButton = selfContainerDocument.getElementById('leaveAttachedCardsButton');
 
-export const selfDiscardViewCardsButton = selfContainersDocument.getElementById('discardViewCardsButton');
-export const selfShuffleViewCardsButton = selfContainersDocument.getElementById('shuffleViewCardsButton');
-export const selfLostZoneViewCardsButton = selfContainersDocument.getElementById('lostZoneViewCardsButton');
-export const selfHandViewCardsButton = selfContainersDocument.getElementById('handViewCardsButton');
+export const selfDiscardViewCardsButton = selfContainerDocument.getElementById('discardViewCardsButton');
+export const selfShuffleViewCardsButton = selfContainerDocument.getElementById('shuffleViewCardsButton');
+export const selfLostZoneViewCardsButton = selfContainerDocument.getElementById('lostZoneViewCardsButton');
+export const selfHandViewCardsButton = selfContainerDocument.getElementById('handViewCardsButton');
 
-export const selfCloseDeckButton = selfContainersDocument.getElementById('closeDeckButton');
-export const selfCloseDiscardButton = selfContainersDocument.getElementById('closeDiscardButton');
-export const selfCloseLostZoneButton = selfContainersDocument.getElementById('closeLostZoneButton');
+export const selfCloseDeckButton = selfContainerDocument.getElementById('closeDeckButton');
+export const selfCloseDiscardButton = selfContainerDocument.getElementById('closeDiscardButton');
+export const selfCloseLostZoneButton = selfContainerDocument.getElementById('closeLostZoneButton');
 
-export const selfVSTARButton = selfContainersDocument.getElementById('vSTARButton');
-export const selfGXButton = selfContainersDocument.getElementById('GXButton');
+export const selfVSTARButton = selfContainerDocument.getElementById('vSTARButton');
+export const selfGXButton = selfContainerDocument.getElementById('GXButton');
 
-export const selfSortDeckCheckbox = selfContainersDocument.getElementById('sortDeckCheckbox');
-export const selfSortDiscardCheckbox = selfContainersDocument.getElementById('sortDiscardCheckbox');
-export const selfSortLostZoneCheckbox = selfContainersDocument.getElementById('sortLostZoneCheckbox');
+export const selfSortDeckCheckbox = selfContainerDocument.getElementById('sortDeckCheckbox');
+export const selfSortDiscardCheckbox = selfContainerDocument.getElementById('sortDiscardCheckbox');
+export const selfSortLostZoneCheckbox = selfContainerDocument.getElementById('sortLostZoneCheckbox');
 
-//oppContainers
-export const oppShuffleDeckButton = oppContainersDocument.getElementById('shuffleDeckButton')
-export const oppShuffleDiscardButton = oppContainersDocument.getElementById('shuffleDiscardButton');
-export const oppDiscardAttachedCardsButton = oppContainersDocument.getElementById('discardAttachedCardsButton');
-export const oppShuffleAttachedCardsButton = oppContainersDocument.getElementById('shuffleAttachedCardsButton');
-export const oppLostZoneAttachedCardsButton = oppContainersDocument.getElementById('lostZoneAttachedCardsButton');
-export const oppHandAttachedCardsButton = oppContainersDocument.getElementById('handAttachedCardsButton');
-export const oppLeaveAttachedCardsButton = oppContainersDocument.getElementById('leaveAttachedCardsButton');
+//oppContainer
+export const oppShuffleDeckButton = oppContainerDocument.getElementById('shuffleDeckButton')
+export const oppShuffleDiscardButton = oppContainerDocument.getElementById('shuffleDiscardButton');
+export const oppDiscardAttachedCardsButton = oppContainerDocument.getElementById('discardAttachedCardsButton');
+export const oppShuffleAttachedCardsButton = oppContainerDocument.getElementById('shuffleAttachedCardsButton');
+export const oppLostZoneAttachedCardsButton = oppContainerDocument.getElementById('lostZoneAttachedCardsButton');
+export const oppHandAttachedCardsButton = oppContainerDocument.getElementById('handAttachedCardsButton');
+export const oppLeaveAttachedCardsButton = oppContainerDocument.getElementById('leaveAttachedCardsButton');
 
-export const oppDiscardViewCardsButton = oppContainersDocument.getElementById('discardViewCardsButton');
-export const oppShuffleViewCardsButton = oppContainersDocument.getElementById('shuffleViewCardsButton');
-export const oppLostZoneViewCardsButton = oppContainersDocument.getElementById('lostZoneViewCardsButton');
-export const oppHandViewCardsButton = oppContainersDocument.getElementById('handViewCardsButton');
+export const oppDiscardViewCardsButton = oppContainerDocument.getElementById('discardViewCardsButton');
+export const oppShuffleViewCardsButton = oppContainerDocument.getElementById('shuffleViewCardsButton');
+export const oppLostZoneViewCardsButton = oppContainerDocument.getElementById('lostZoneViewCardsButton');
+export const oppHandViewCardsButton = oppContainerDocument.getElementById('handViewCardsButton');
 
-export const oppCloseDeckButton = oppContainersDocument.getElementById('closeDeckButton');
-export const oppCloseDiscardButton = oppContainersDocument.getElementById('closeDiscardButton');
-export const oppCloseLostZoneButton = oppContainersDocument.getElementById('closeLostZoneButton');
+export const oppCloseDeckButton = oppContainerDocument.getElementById('closeDeckButton');
+export const oppCloseDiscardButton = oppContainerDocument.getElementById('closeDiscardButton');
+export const oppCloseLostZoneButton = oppContainerDocument.getElementById('closeLostZoneButton');
 
-export const oppVSTARButton = oppContainersDocument.getElementById('vSTARButton');
-export const oppGXButton = oppContainersDocument.getElementById('GXButton');
+export const oppVSTARButton = oppContainerDocument.getElementById('vSTARButton');
+export const oppGXButton = oppContainerDocument.getElementById('GXButton');
 
-export const oppSortDeckCheckbox = oppContainersDocument.getElementById('sortDeckCheckbox');
-export const oppSortDiscardCheckbox = oppContainersDocument.getElementById('sortDiscardCheckbox');
-export const oppSortLostZoneCheckbox = oppContainersDocument.getElementById('sortLostZoneCheckbox');
+export const oppSortDeckCheckbox = oppContainerDocument.getElementById('sortDeckCheckbox');
+export const oppSortDiscardCheckbox = oppContainerDocument.getElementById('sortDiscardCheckbox');
+export const oppSortLostZoneCheckbox = oppContainerDocument.getElementById('sortLostZoneCheckbox');

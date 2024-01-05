@@ -1,5 +1,5 @@
 import { stringToVariable } from '../../setup/zones/zone-string-to-variable.js';
-import { selfContainersDocument, oppContainersDocument, socket, systemState, sCard } from '../../front-end.js';
+import { selfContainerDocument, oppContainerDocument, socket, systemState, sCard } from '../../front-end.js';
 
 export const addSpecialCondition = (user, zoneArrayString, zoneElementString, index, emit = true) => {
 
@@ -21,10 +21,10 @@ export const addSpecialCondition = (user, zoneArrayString, zoneElementString, in
         window.removeEventListener('resize', specialCondition.handleResize);
     } else {
         if (user === 'self'){
-            specialCondition = selfContainersDocument.createElement('div');
+            specialCondition = selfContainerDocument.createElement('div');
             specialCondition.className = systemState.pov.user === 'self' ? 'self-circle' : 'opp-circle';
         } else {
-            specialCondition = oppContainersDocument.createElement('div');
+            specialCondition = oppContainerDocument.createElement('div');
             specialCondition.className = systemState.pov.user === 'self' ? 'opp-circle' : 'self-circle';
         };
         specialCondition.contentEditable = 'true';

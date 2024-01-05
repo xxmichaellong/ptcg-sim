@@ -1,5 +1,5 @@
 import { stringToVariable } from '../../setup/zones/zone-string-to-variable.js';
-import { sCard, socket, selfContainersDocument, oppContainersDocument, systemState } from '../../front-end.js';
+import { sCard, socket, selfContainerDocument, oppContainerDocument, systemState } from '../../front-end.js';
 
 export const addAbilityCounter = (user, zoneArrayString, zoneElementString, index, emit = true) => {
 
@@ -19,10 +19,10 @@ export const addAbilityCounter = (user, zoneArrayString, zoneElementString, inde
     } else {
         if (zoneArrayString !== 'stadiumArray'){
             if (user === 'self'){
-                abilityCounter = selfContainersDocument.createElement('div');
+                abilityCounter = selfContainerDocument.createElement('div');
                 abilityCounter.className = 'self-tab';
             } else {
-                abilityCounter = oppContainersDocument.createElement('div');
+                abilityCounter = oppContainerDocument.createElement('div');
                 abilityCounter.className = 'opp-tab';
             };
         } else {
