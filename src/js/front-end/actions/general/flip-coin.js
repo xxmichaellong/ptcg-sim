@@ -7,5 +7,3 @@ export const flipCoin = (user, result) => {
     const message = determineUsername(user) + ' flipped ' + coinFlipResult;
     appendMessage(user, message, 'player');
 }
-
-

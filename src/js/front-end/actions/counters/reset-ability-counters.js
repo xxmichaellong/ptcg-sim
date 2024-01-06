@@ -1,4 +1,4 @@
-import { oppContainerDocument, systemState, selfContainerDocument, socket } from "../../front-end.js";
+import { oppContainerDocument, selfContainerDocument, socket, systemState } from "../../front-end.js";
 
 export const resetCounters = (emit = true) => {
     selfContainerDocument.querySelectorAll('.self-tab, .opp-tab').forEach(element => {

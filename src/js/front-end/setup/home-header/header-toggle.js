@@ -1,16 +1,26 @@
-import { deckImport, deckImportButton, failedText, invalid, p1Box, p1Button, p2Box, p2Button, settings, settingsButton, successText } from '../../front-end.js';
-
 export const show = (id, button) => {
+    const deckImport = document.getElementById('deckImport');
+    const settings = document.getElementById('settings');
+    const p1Box = document.getElementById('p1Box');
+    const p2Box = document.getElementById('p2Box');
+    const successText = document.getElementById('successText');
+    const failedText = document.getElementById('failedText');
+    const invalidText = document.getElementById('invalidText');
+    const p1Button = document.getElementById('p1Button');
+    const p2Button = document.getElementById('p2Button');
+    const settingsButton = document.getElementById('settingsButton');
+    const deckImportButton = document.getElementById('deckImportButton');
+    const page = document.getElementById(id);
+
     deckImport.style.display = 'none';
     settings.style.display = 'none';
     p1Box.style.display = 'none';
     p2Box.style.display = 'none';
-    const page = document.getElementById(id);
     page.style.display = 'flex';
 
     successText.style.display = 'none';
     failedText.style.display = 'none';
-    invalid.style.display = 'none';
+    invalidText.style.display = 'none';
 
     const buttons = [p1Button, p2Button, settingsButton, deckImportButton];
 
@@ -22,6 +32,7 @@ export const show = (id, button) => {
     
     button.classList.remove('not-selected-page');
     button.classList.add('selected-page');
+    
     if (document.querySelector('.dark-mode-1')) {
         button.classList.add('dark-mode-2');
     };

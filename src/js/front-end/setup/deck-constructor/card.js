@@ -1,6 +1,6 @@
-import { resetImage } from '../../image-logic/reset-image.js';
-import { doubleClick, imageClick, openCardContextMenu } from '../../image-logic/click-events.js';
-import { dragEnd, dragLeave, dragOver, dragStart } from '../../image-logic/drag.js';
+import { doubleClick, imageClick, openCardContextMenu } from '../image-logic/click-events.js';
+import { dragEnd, dragLeave, dragOver, dragStart } from '../image-logic/drag.js';
+import { resetImage } from '../image-logic/reset-image.js';
 
 export class Card {
     name;

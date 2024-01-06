@@ -19,6 +19,16 @@ body {
   background-color: rgb(0, 0, 0) !important;
   color: white;
 }
+.dark-mode-3 {
+  color: rgb(149, 149, 149);
+}
+.dark-mode-4 {
+  background-color: #141414 !important;
+  color: white;
+}
+.dark-mode-5 {
+  background-color: rgb(59 59 59 / 87%) !important;
+}
 .dark-mode-6 {
   background-color: rgba(21, 21, 21, 0.87) !important;
 }
@@ -31,7 +41,7 @@ body {
   left: 37.5%;
   transform: translate(-50%, -50%);
   padding: 0 15px 15px 15px;
-  background-color: rgba(200, 200, 200, 0.873); /* Semi-transparent grey background */
+  background-color: rgba(200, 200, 200, 0.873);
   border: 1px solid #ccc;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   z-index: 1000;
@@ -50,7 +60,7 @@ body {
   padding: 5px;
 }
 h1 {
-  font-size: 2vh; /* Adjust the font size using vw unit */
+  font-size: 2vh;
   margin-bottom: 10px;
   margin: 0;
   padding: 0;
@@ -58,7 +68,7 @@ h1 {
 ul, li {
   margin: 0;
   padding: 0;
-  font-size: 1.7vh; /* Adjust the font size using vw unit */
+  font-size: 1.7vh;
 }
 .keybind-column ul ul {
   margin-left: 10px;
@@ -66,7 +76,7 @@ ul, li {
 .keybind-column ul ul li {
   margin-bottom: 1px;
   margin-top: 0;
-  font-size: 1.7vh; /* Adjust the font size using vw unit */
+  font-size: 1.7vh;
 }
 .keybind-column ul li {
   margin-top: 1vh;
@@ -88,22 +98,22 @@ ul, li {
   height: 50%;
   transform: scaleX(-1) scaleY(-1);
 }
-#stadiumElement {
+#stadium {
   position: fixed;
   bottom: 42%;
   left: 11%;
   width: 6%;
   height: 16%;
-  display: flex; /* Add this */
-	justify-content: center; /* Horizontally center-align child elements */
-  border-radius: 15px; /* Rounded corners */
+  display: flex;
+	justify-content: center;
+  border-radius: 15px;
 }
-#stadiumElement img {
+#stadium img {
   max-width: 100%;
   max-height: 100%;
   height: fit-content;
   left: 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, .5); /* Adjust the values for your desired shadow effect */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .5);
   border-radius: 0.375rem;
   cursor: pointer;
 }
@@ -113,8 +123,8 @@ ul, li {
   background-color: rgba(59, 173, 84, 0.708);
 }
 .outline {
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1); /* Lighter shadow */
-  background-color: rgba(255, 255, 255, 0.1); /* Very faint/transparent background */
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+  background-color: rgba(255, 255, 255, 0.1);
 }
 .highlight {
   box-shadow: 0 0 0 4px rgb(122, 185, 133) !important;
@@ -157,7 +167,7 @@ ul, li {
 .neutral-color {
   background-color: rgba(112, 112, 112, 0.864);  
 }
-#boardButtonsContainer {
+#boardButtonContainer {
   position: fixed;
   height: 6%;
   left: 52%;
@@ -167,17 +177,17 @@ ul, li {
   align-items: center;
   gap: 5px;
 }
-#boardButtonsContainer button {
-  border-radius: 10px; /* Rounded edges */
-  font-size: 2vh; /* Adjust font size as needed */
+#boardButtonContainer button {
+  border-radius: 10px; 
+  font-size: 2vh; 
   cursor: pointer;
   background: rgb(231, 228, 228);
-  color: rgb(149, 149, 149); /* Text color */
+  color: rgb(149, 149, 149); 
   border: none;
 }
-#boardButtonsContainer button:hover {
-  background-color: rgb(117, 117, 117); /* Natural green background color */
-  color: rgb(255, 255, 255); /* Text color */
+#boardButtonContainer button:hover {
+  background-color: rgb(117, 117, 117);
+  color: rgb(255, 255, 255);
 }
 #topButtonContainer {
   position: fixed;
@@ -186,20 +196,20 @@ ul, li {
   height: 5vh;
   width: 24%;
   display: flex;
-  overflow: hidden; /* Ensure buttons don't exceed container width */
+  overflow: hidden; 
   background: rgb(145, 145, 145);
-  align-items: flex-end; /* Align items at the bottom of the container */
+  align-items: flex-end; 
 }
 #topButtonContainer button {
-  padding: 1vh; /* Adjust padding for button size */
-  width: 30%; /* Adjust width to distribute evenly */
-  font-size: 1.75vh; /* Adjust font size as needed */
+  padding: 1vh;
+  width: 30%; 
+  font-size: 1.75vh;
   cursor: pointer;
   border: none;
 }
 .selected-page {
   background: rgb(231, 228, 228);
-  border-radius: 10px 10px 0 0; /* Rounded edges */
+  border-radius: 10px 10px 0 0;
 }
 .not-selected-page {
   background: rgb(145, 145, 145);
@@ -229,7 +239,7 @@ ul, li {
   padding: 10px;
   box-sizing: border-box;
   display: block;
-  border-radius: 10px 10px 0 0; /* Apply border-radius to bottom corners only */
+  border-radius: 10px 10px 0 0; 
 }
 #tutorialButton {
   margin-left: 50%;
@@ -241,7 +251,7 @@ ul, li {
   background: #a89850;
 }
 #tutorialButton:hover {
-  background: #8c7e46; /* Change this color to the hover color you want */
+  background: #8c7e46;
 }
 #discord {
   font-size: small;
@@ -255,14 +265,14 @@ ul, li {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5); /* Semi-transparent grey background */
+  background: rgba(0, 0, 0, 0.5);
   z-index: 1000;
 }
 #videoContainer iframe {
   position: absolute;
   left: 10%;
-  width: 55.5%; /* Adjust the width as needed */
-  height: 60%; /* Adjust the height as needed */
+  width: 55.5%;
+  height: 60%;
   bottom: 50%;
   transform: translateY(50%);
 }
@@ -273,7 +283,7 @@ ul, li {
   left: 0;
   width: 76%;
   height: 100%;
-  background: rgba(222, 221, 221, 0.852); /* Semi-transparent grey background */
+  background: rgba(222, 221, 221, 0.852);
   z-index: 1000;
   overflow: auto;
   padding: 60px;
@@ -286,7 +296,7 @@ ul, li {
   margin-top: .5vh;
 }
 .shift-font {
-  font-family: monospace; /* or your preferred coding font */
+  font-family: monospace;
 }
 .sidebox-button-container {
   width: 100%;
@@ -295,15 +305,15 @@ ul, li {
   align-items: center;
   margin-top: 10px;
   margin-bottom: 10px;
-  overflow: hidden; /* Ensure buttons don't exceed container width */
+  overflow: hidden;
 }
 .sidebox-button-container button {
-  padding: 7px; /* Adjust padding for button size */
-  width: 19%; /* Adjust width to distribute evenly */
-  border-radius: 10px; /* Rounded edges */
-  font-size: 1.75vh; /* Adjust font size as needed */
+  padding: 7px;
+  width: 19%;
+  border-radius: 10px;
+  font-size: 1.75vh;
   cursor: pointer;
-  color: white; /* Text color */
+  color: white;
   border: none;
 }
 .sidebox-button-container button.self-color:hover {
@@ -320,18 +330,18 @@ ul, li {
   display: flex;
   justify-content: space-around;
   align-items: center;
-  overflow: hidden; /* Ensure buttons don't exceed container width */
+  overflow: hidden;
   gap: .5vw;
   box-sizing: border-box;
   margin-top: .5vh;
   margin-bottom: .5vh;
 }
 .chat-button-container button {
-  flex: 1; /* Make the buttons take up equal width */
-  padding: 7px; /* Adjust padding for button size */
-  font-size: 2vh; /* Adjust font size as needed */
+  flex: 1;
+  padding: 7px;
+  font-size: 2vh;
   cursor: pointer;
-  color: white; /* Text color */
+  color: white;
   border: none;
   border-radius: .5vw;
 }
@@ -371,8 +381,8 @@ ul, li {
 #messageInput {
   width: 100%;
   padding: 10px;
-  box-sizing: border-box; /* Include padding and border in the total width */
-  border-radius: 0 0 10px 10px; /* Apply border-radius to bottom corners only */
+  box-sizing: border-box;
+  border-radius: 0 0 10px 10px;
   border: none;
 }
 #bottomP1ButtonContainer {
@@ -397,7 +407,7 @@ ul, li {
 #nameInput {
   width: 100%;
   padding: 10px;
-  box-sizing: border-box; /* Include padding and border in the total width */
+  box-sizing: border-box;
   border-radius: 10px;
   border: none;
   font-size: 2vh;
@@ -443,7 +453,7 @@ ul, li {
   font-size: 2vh;
 }
 #generateIdButton:hover {
-  background: #8c7e46; /* Change this color to the hover color you want */
+  background: #8c7e46;
 }
 #joinRoomButton {
   width: 100%;
@@ -451,14 +461,14 @@ ul, li {
   color: white;
   text-align: center;
   padding: 10px;
-  box-sizing: border-box; /* Include padding and border in the total width */
+  box-sizing: border-box;
   border-radius: 10px;
   border: none;
   cursor: pointer;
   font-size: 2.5vh;
 }
 #joinRoomButton:hover {
-  background: #78766e; /* Change this color to the hover color you want */
+  background: #78766e;
 }
 #connectedRoom {
   display: none;
@@ -471,11 +481,11 @@ ul, li {
   width: 100%;
   height: 2.5vh;
   display: flex;
-  align-items: center; /* Center vertically */
+  align-items: center; 
   justify-content: space-between;
   box-sizing: border-box;
   color: black;
-  margin-bottom: 8px; /* Adjust margin as needed for spacing */
+  margin-bottom: 8px;
 }
 #roomHeaderText {
   margin-right: 5px;
@@ -502,13 +512,13 @@ ul, li {
 }
 #p2Chatbox {
   background: white;
-  width: 100%; /* Set to 100% */
+  width: 100%;
   height: 80%;
   overflow-y: auto;
   padding: 10px;
   box-sizing: border-box;
   display: block;
-  border-radius: 10px 10px 0 0; /* Apply border-radius to bottom corners only */
+  border-radius: 10px 10px 0 0;
 }
 #p2ChatboxButtonContainer {
   width: 100%;
@@ -516,8 +526,8 @@ ul, li {
 #p2MessageInput {
   width: 100%;
   padding: 10px;
-  box-sizing: border-box; /* Include padding and border in the total width */
-  border-radius: 0 0 10px 10px; /* Apply border-radius to bottom corners only */
+  box-sizing: border-box;
+  border-radius: 0 0 10px 10px;
   border: none;
 }
 #p2BottomButtonContainer {
@@ -560,7 +570,7 @@ ul, li {
   left: 0;
   width: 76%;
   height: 100%;
-  background: rgba(222, 221, 221, 0.852); /* Semi-transparent grey background */
+  background: rgba(222, 221, 221, 0.852);
   z-index: 1000;
   overflow: auto;
   padding: 30px;
@@ -568,19 +578,19 @@ ul, li {
   font-size: 1.75vh;
 }
 #decklistTable td {
-  padding: 0.3vh 2vw; /* Adjust as needed */
+  padding: 0.3vh 2vw;
 }
 .main-select {
-  font-weight: bold; /* Added to make the font bold */
+  font-weight: bold;
   background-color: rgba(90, 110, 188, 0.864) !important;
   color: white;
-  border: .25vw solid rgba(40, 57, 124, 0.864) !important; /* Added "solid" for the border style */
+  border: .25vw solid rgba(40, 57, 124, 0.864) !important;
 }
 .alt-select {
-  font-weight: bold; /* Added to make the font bold */
+  font-weight: bold;
   color: white;
   background-color: rgba(188, 90, 113, 0.864) !important;
-  border: .25vw solid rgba(153, 58, 81, 0.864) !important; /* Added "solid" for the border style */
+  border: .25vw solid rgba(153, 58, 81, 0.864) !important;
 }
 #mainDeckImportInput, #altDeckImportInput {
   height: 100%;
@@ -593,18 +603,18 @@ ul, li {
   outline: none;
 }
 #mainDeckImportInput {
-  border: .2vw solid rgba(40, 57, 124, 0.864); /* Added "solid" for the border style */
+  border: .2vw solid rgba(40, 57, 124, 0.864);
   display: inline-block;
 }
 #altDeckImportInput {
   display: none;
-  border: .2vw solid rgba(153, 58, 81, 0.864) !important; /* Added "solid" for the border style */
+  border: .2vw solid rgba(153, 58, 81, 0.864) !important;
 }
 #importBottom {
   margin-top: 1vh;
   width: 100%;
   display: flex;
-  align-items: center; /* Align items vertically in the center */
+  align-items: center;
   gap: 0.5vw;
 }
 #importButton, #confirmButton {
@@ -617,7 +627,7 @@ ul, li {
   border-radius: .5rem;
   padding: 1vh;
   border: none;
-  font-weight: bold; /* Added to make the font bold */
+  font-weight: bold;
 }
 #importButton:hover, #confirmButton:hover {
   background-color: #95c6b4;
@@ -630,7 +640,7 @@ ul, li {
   padding: .7vh;
   border: none;
   color: white;
-  font-weight: bold; /* Added to make the font bold */
+  font-weight: bold;
 }
 #cancelButton {
   background-color: #b9857b;
@@ -647,8 +657,8 @@ ul, li {
 .custom-file-upload {
   padding: 3px 6px;
   cursor: pointer;
-  background-color: #757474; /* You can change this */
-  color: white; /* You can change this */
+  background-color: #757474;
+  color: white;
   border: none;
   border-radius: .5rem;
   display: block;
@@ -683,7 +693,7 @@ ul, li {
 #decklistsButton:hover {
   background: rgb(197, 197, 197);
 }
-#success, #failed, #loading, #invalid {
+#successText, #failedText, #loadingText, #invalidText {
   display: none;
 }
 #settings {
@@ -691,8 +701,8 @@ ul, li {
 }
 #settingsToggles {
   background: white;
-  width: 100%; /* Set to 100% */
-  height: min-content; /* Adjust to min-content */
+  width: 100%;
+  height: min-content;
   overflow-y: auto;
   padding: 10px;
   box-sizing: border-box;
@@ -746,7 +756,7 @@ a:hover {
   border: 1px solid #ccc;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
   z-index: 1000;
-  width: 150px; /* Set a fixed width */
+  width: 150px;
 }
 .card-context-menu ul {
   list-style-type: none;
@@ -782,10 +792,10 @@ a:hover {
   left: 100%;
   z-index: 1001;
   background-color: #fff;
-  padding: 8px; /* Added padding */
-  border: 1px solid #ccc; /* Added border */
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2); /* Added box-shadow */
-  width: 120px; /* Set a fixed width */
+  padding: 8px;
+  border: 1px solid #ccc;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+  width: 120px;
 }
 .card-context-menu > ul > li:hover > .card-sub-menu {
   display: block;
@@ -796,8 +806,8 @@ a:hover {
   top: 0;
   left: 0;
   width: 100%;
-  height: 2px; /* Adjust the thickness of the top border */
-  background-color: #525252; /* Set the color of the top border */
+  height: 2px;
+  background-color: #525252;
 }
 .self-text, .announcement, .opp-text, .self-message, .opp-message {
   word-wrap: break-word;
@@ -838,9 +848,8 @@ a:hover {
   border-radius: 5px;
   background-color: #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border: 1px solid #ccc; /* Add this line for a grey border */
+  border: 1px solid #ccc;
   z-index: 2;
-  color: black;
   height: fit-content;
 }
 .decklists-context-menu-item {
@@ -848,22 +857,23 @@ a:hover {
   cursor: pointer;
   font-size: small;
 }
-.decklists-context-menu-submenu {
-  font-weight: normal; /* Bold font */
+.decklists-context-menu-sub-menu {
+  font-weight: normal;
   display: none;
   position: absolute;
-  background-color: #e5e3e3;
-  left: 99%; /* Adjust this value to position the submenu accordingly */
+  background-color: #c1c1c1;
+  left: 99%; 
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border: 1px solid #ccc; /* Add this line for a grey border */
+  border: 1px solid #ccc;
   border-radius: 5px;
   top: 0;
   height: 100%;
   width: 112%;
+  color: #141414;
 }
 .decklist-highlight {
-  background-color: #f0f0f0; /* Light grey background */
-  font-weight: bold; /* Bold font */
+  background-color: #f0f0f0;
+  font-weight: bold;
 }
 .custom-popup {
   position: fixed;
@@ -875,18 +885,18 @@ a:hover {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
   padding: 20px;
   text-align: center;
-  z-index: 9999; /* Ensure it's above other content */
+  z-index: 9999;
   border-radius: 5px;
 }
 .popup-content {
   text-align: center;
 }
 .popup-button {
-  display: block; /* Make the button a block-level element */
-  margin-top: 15px; /* Add space above the button */
-  margin-left: auto; /* Center the button horizontally */
+  display: block;
+  margin-top: 15px;
+  margin-left: auto;
   margin-right: auto;
-  background-color: #333; /* Dark grey */
+  background-color: #333;
   color: white;
   padding: 10px 20px;
   border: none;
@@ -895,5 +905,5 @@ a:hover {
   font-size: 16px;
 }
 .popup-button:hover {
-  background-color: #555; /* Darker grey on hover */
+  background-color: #555;
 }

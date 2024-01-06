@@ -1,37 +1,35 @@
-import { activeArray, oppActiveArray, selfContainerDocument } from "../../front-end.js";
+import { oppContainerDocument, selfContainerDocument } from "../../front-end.js";
 import { appendMessage } from "../../setup/chatbox/messages.js";
-import { zoneElementToArray } from "../../setup/zones/zone-element-to-array.js";
-import { stringToVariable, variableToString } from "../../setup/zones/zone-string-to-variable.js";
+import { determineDeckData } from "../../setup/general/determine-deckdata.js";
 import { determineUsername } from "../../setup/general/determine-username.js";
+import { removeImages } from "../../setup/image-logic/remove-images.js";
+import { getZone } from "../../setup/zones/get-zone.js";
 import { moveCard } from "../move-card-logic/move-card.js";
 import { shuffleZone } from "./shuffle-zone.js";
-import { getZoneCount } from "../general/count.js";
 
 export const shuffleAll = (event) => {
-    const zoneElementString = event.target.parentElement.parentElement.id;
+    const zoneId = event.target.parentElement.parentElement.id;
     const user = selfContainerDocument.contains(event.target) ? 'self' : 'opp';
-    const zoneArray = zoneElementToArray(user, zoneElementString);
-    const zoneArrayString = variableToString(user, zoneArray);
-    const count = getZoneCount(zoneArray);
+    const zone = getZone(user, zoneId);
+    const count = zone.getCount();
 
     for (let i = 0; i < count; i++) {
-        moveCard(user, zoneArrayString, zoneElementString, 'deckArray', 'deckElement', 0)
+        moveCard(user, zoneId, 'deck', 0)
     };
 
-    shuffleZone(user, 'deckArray', 'deckElement');
+    shuffleZone(user, 'deck');
 
-    const zoneElement = stringToVariable(user, zoneElementString);
-    zoneElement.style.display = 'none';
+    zone.element.style.display = 'none';
 
     if (count > 0){
         let message;
-        if (zoneArrayString === 'deckArray'){
+        if (zoneId === 'deck'){
             message = determineUsername(user) + ' shuffled deck';
-        } else if (zoneArrayString === 'attachedCardsArray'){
+        } else if (zoneId === 'attachedCards'){
             message = determineUsername(user) + ' shuffled ' + count + ' attached card(s) into deck';
-        } else if (zoneArrayString === 'viewCardsArray'){
+        } else if (zoneId === 'viewCards'){
             message = determineUsername(user) + ' shuffled ' + count + ' card(s) into deck';
-        } else if (zoneArrayString === 'discardArray'){
+        } else if (zoneId === 'discard'){
             message = determineUsername(user) + ' shuffled discard into deck';
         };
         appendMessage(user, message, 'player');
@@ -39,22 +37,20 @@ export const shuffleAll = (event) => {
 }
 
 export const discardAll = (event) => {
-    const zoneElementString = event.target.parentElement.parentElement.id;
+    const zoneId = event.target.parentElement.parentElement.id;
     const user = selfContainerDocument.contains(event.target) ? 'self' : 'opp';
-    const zoneArray = zoneElementToArray(user, zoneElementString);
-    const zoneArrayString = variableToString(user, zoneArray);
-    const count = getZoneCount(zoneArray);
+    const zone = getZone(user, zoneId);
+    const count = zone.getCount();
 
     for (let i = 0; i < count; i++) {
-        moveCard(user, zoneArrayString, zoneElementString, 'discardArray', 'discardElement', 0)
+        moveCard(user, zoneId, 'discard', 0)
     };
 
-    const zoneElement = stringToVariable(user, zoneElementString);
-    zoneElement.style.display = 'none';
+    zone.element.style.display = 'none';
 
     if (count > 0){
         let message;
-        if (zoneArrayString === 'attachedCardsArray'){
+        if (zoneId === 'attachedCards'){
             message = determineUsername(user) + ' discarded '+ count + ' attached card(s)';
         } else {
             message = determineUsername(user) + ' discarded ' + count + ' card(s)';
@@ -64,22 +60,20 @@ export const discardAll = (event) => {
 }
 
 export const lostZoneAll = (event) => {
-    const zoneElementString = event.target.parentElement.parentElement.id;
+    const zoneId = event.target.parentElement.parentElement.id;
     const user = selfContainerDocument.contains(event.target) ? 'self' : 'opp';
-    const zoneArray = zoneElementToArray(user, zoneElementString);
-    const zoneArrayString = variableToString(user, zoneArray);
-    const count = getZoneCount(zoneArray);
+    const zone = getZone(user, zoneId);
+    const count = zone.getCount();
 
     for (let i = 0; i < count; i++) {
-        moveCard(user, zoneArrayString, zoneElementString, 'lostZoneArray', 'lostZoneElement', 0)
+        moveCard(user, zoneId, 'lostZone', 0)
     };
 
-    const zoneElement = stringToVariable(user, zoneElementString);
-    zoneElement.style.display = 'none';
+    zone.element.style.display = 'none';
 
     if (count > 0){
         let message;
-        if (zoneArrayString === 'attachedCardsArray'){
+        if (zoneId === 'attachedCards'){
             message = determineUsername(user) + ' lost-zoned '+ count + ' attached card(s)';
         } else {
             message = determineUsername(user) + ' lost-zoned ' + count + ' card(s)';
@@ -89,22 +83,19 @@ export const lostZoneAll = (event) => {
 }
 
 export const handAll = (event) => {
-    const zoneElementString = event.target.parentElement.parentElement.id;
+    const zoneId = event.target.parentElement.parentElement.id;
     const user = selfContainerDocument.contains(event.target) ? 'self' : 'opp';
-    const zoneArray = zoneElementToArray(user, zoneElementString);
-    const zoneArrayString = variableToString(user, zoneArray);
-    const count = getZoneCount(zoneArray);
+    const zone = getZone(user, zoneId);
+    const count = zone.getCount();
 
     for (let i = 0; i < count; i++) {
-        moveCard(user, zoneArrayString, zoneElementString, 'handArray', 'handElement', 0)
+        moveCard(user, zoneId, 'hand', 0)
     };
-
-    const zoneElement = stringToVariable(user, zoneElementString);
-    zoneElement.style.display = 'none';
+    zone.element.style.display = 'none';
 
     if (count > 0){
         let message;
-        if (zoneArrayString === 'attachedCardsArray'){
+        if (zoneId === 'attachedCards'){
             message = determineUsername(user) + ' put '+ count + ' attached card(s) into hand';
         } else {
             message = determineUsername(user) + ' put ' + count + ' card(s) into hand';
@@ -114,62 +105,80 @@ export const handAll = (event) => {
 }
 
 export const closeDisplay = (event) => {
-    const zoneElementString = event.target.parentElement.parentElement.id;
+    const zoneId = event.target.parentElement.parentElement.id;
     const user = selfContainerDocument.contains(event.target) ? 'self' : 'opp';
-    const zoneElement = stringToVariable(user, zoneElementString);
-    zoneElement.style.display = 'none';
+    const zone = getZone(user, zoneId);
+    zone.element.style.display = 'none';
 }
 
 export const leaveAll = (event) => {
-    const zoneElementString = event.target.parentElement.parentElement.id;
+    const oZoneId = event.target.parentElement.parentElement.id;
     const user = selfContainerDocument.contains(event.target) ? 'self' : 'opp';
-    const zoneArray = zoneElementToArray(user, zoneElementString);
-    const zoneArrayString = variableToString(user, zoneArray);
-    const count = getZoneCount(zoneArray);
+    const oZone = getZone(user, oZoneId);
     
-    let dZoneArray;
-    let dZoneArrayString;
-    let dZoneElement;
+    const selectedActiveZone = getZone(user, 'active');
+    const dZoneId = selectedActiveZone.getCount() === 0 ? 'active' : 'bench';
+    const dZone = getZone(user, dZoneId);
 
-    const activeCount = user === 'self' ? getZoneCount(activeArray) : getZoneCount(oppActiveArray);
-    if (activeCount === 0){
-        dZoneArray = stringToVariable(user, 'activeArray');
-        dZoneArrayString = 'activeArray';
-        dZoneElement = 'activeElement';
-    } else {
-        dZoneArray = stringToVariable(user, 'benchArray');
-        dZoneArrayString = 'benchArray';
-        dZoneElement = 'benchElement';
+    if (oZone.getCount() > 0){
+        const message = determineUsername(user) + ' left ' + oZone.getCount() + ' attached card(s) in play';      
+        appendMessage(user, message, 'player');
     };
 
     let targetImage;
-
-    for (let i = count - 1; i >= 0; i--){
-        if (zoneArray[i].type === 'Pokémon'){
-            targetImage = zoneArray[i].image;
-            moveCard(user, zoneArrayString, zoneElementString, dZoneArrayString, dZoneElement, i);
+    const oZoneCount1 = oZone.getCount() - 1;
+    for (let i = oZoneCount1; i >= 0; i--){
+        if (oZone.array[i].type === 'Pokémon'){
+            targetImage = oZone.array[i].image;
+            moveCard(user, oZoneId, dZoneId, i);
             break;
         };
     };
-    const count1 = getZoneCount(zoneArray);
-    for (let i = count1 - 1; i >= 0; i--){
-        if (zoneArray[i].type === 'Pokémon'){
-            const targetIndex = dZoneArray.findIndex(card => card.image === targetImage);
-            targetImage = zoneArray[i].image;
-            moveCard(user, zoneArrayString, zoneElementString, dZoneArrayString, dZoneElement, i, targetIndex);
+    const oZoneCount2 = oZone.getCount() - 1;
+    for (let i = oZoneCount2; i >= 0; i--){
+        if (oZone.array[i].type === 'Pokémon'){
+            const targetIndex = dZone.array.findIndex(card => card.image === targetImage);
+            targetImage = oZone.array[i].image;
+            moveCard(user, oZoneId, dZoneId, i, targetIndex);
         };
     };
-    const count2 = getZoneCount(zoneArray);
-    for (let i = 0; i < count2; i++){
-        const targetIndex = dZoneArray.findIndex(card => card.image === targetImage);
-        moveCard(user, zoneArrayString, zoneElementString, dZoneArrayString, dZoneElement, 0, targetIndex);
+    const oZoneCount3 = oZone.getCount();
+    for (let i = 0; i < oZoneCount3; i++){
+        const targetIndex = dZone.array.findIndex(card => card.image === targetImage);
+        moveCard(user, oZoneId, dZoneId, 0, targetIndex);
     };
 
-    const zoneElement = stringToVariable(user, zoneElementString);
-    zoneElement.style.display = 'none';
+    oZone.element.style.display = 'none';
+};
 
-    if (count > 0){
-        const message = determineUsername(user) + ' left ' + count + ' attached card(s) in play';      
-        appendMessage(user, message, 'player');
+export const sort = (user, zoneId) => {
+    const selfCheckboxMap = {
+        'deck': selfContainerDocument.getElementById('sortDeckCheckbox'),
+        'discard': selfContainerDocument.getElementById('sortDiscardCheckbox'),
+        'lostZone': selfContainerDocument.getElementById('sortLostZoneCheckbox')
     };
-}
+    const oppCheckboxMap = {
+        'deck': oppContainerDocument.getElementById('sortDeckCheckbox'),
+        'discard': oppContainerDocument.getElementById('sortDiscardCheckbox'),
+        'lostZone': oppContainerDocument.getElementById('sortLostZoneCheckbox'),
+    };
+
+    const checkbox = user === 'self' ? selfCheckboxMap[zoneId] : oppCheckboxMap[zoneId];
+    const deckData = determineDeckData(user);
+    const zone = getZone(user, zoneId);
+
+    removeImages(zone.element);
+
+    if (checkbox.checked) {
+        deckData.forEach(entry => {
+            const name = entry[1];
+            zone.array.forEach(card => {
+                if (card.name === name) {
+                    zone.element.appendChild(card.image);
+                };
+            });
+        });
+    } else {
+        zone.array.forEach(card => zone.element.appendChild(card.image));
+    };
+};

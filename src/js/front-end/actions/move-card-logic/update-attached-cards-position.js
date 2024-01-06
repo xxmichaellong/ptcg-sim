@@ -1,5 +1,5 @@
-export const updateAttachedCardsPosition = (oZoneArray, movingCard) => {
-    oZoneArray.forEach(card => {
+export const updateAttachedCardsPosition = (oZone, movingCard) => {
+    oZone.array.forEach(card => {
         let cardPosition;
         let movingCardPosition;
         if (card.type !== 'Pokémon' && movingCard.type !== 'Pokémon'){

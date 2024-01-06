@@ -1,13 +1,28 @@
 import { reset } from "../../actions/general/reset.js";
-import { altDeckImportInput, cancelButton, confirmButton, decklistsButton, failedText, importButton, invalid, loadingText, mainDeckImportInput, oppContainer, systemState, p1Button, p2Button, saveButton, selfContainer, socket } from "../../front-end.js";
+import { oppContainer, selfContainer, socket, systemState } from "../../front-end.js";
 import { appendMessage } from "../chatbox/messages.js";
 import { determineUsername } from "../general/determine-username.js";
 import { show } from "../home-header/header-toggle.js";
 import { getCardType } from "./find-type.js";
 
+const decklistTable = document.getElementById('decklistTable');
+const altDeckImportInput = document.getElementById('altDeckImportInput');
+const cancelButton = document.getElementById('cancelButton');
+const confirmButton = document.getElementById('confirmButton');
+const decklistsButton = document.getElementById('decklistsButton');
+const failedText = document.getElementById('failedText');
+const importButton = document.getElementById('importButton');
+const invalidText = document.getElementById('invalidText');
+const loadingText = document.getElementById('loadingText');
+const mainDeckImportInput = document.getElementById('mainDeckImportInput');
+const p1Button = document.getElementById('p1Button');
+const p2Button = document.getElementById('p2Button');
+const saveButton = document.getElementById('saveButton');
+const csvFile = document.getElementById('csvFile');
+
 export const importDecklist = (user) => {
     failedText.style.display = 'none';
-    invalid.style.display = 'none';
+    invalidText.style.display = 'none';
     loadingText.style.display = 'block';
     importButton.disabled = true;
 
@@ -175,7 +190,6 @@ export const importDecklist = (user) => {
 
     Promise.all(fetchPromises)
     .then(() => {
-        const decklistTable = document.getElementById('decklistTable')
         let tableBody = decklistTable.getElementsByTagName('tbody')[0];
         decklistTable.style.display = 'block';
         decklistArray.forEach(([quantity, name, , url, type]) => {
@@ -219,13 +233,12 @@ cancelButton.addEventListener('click', () => {
     confirmButton.style.display = 'none';
     cancelButton.style.display = 'none';
     saveButton.style.display = 'none';
-    const decklistTable = document.getElementById('decklistTable')
     let tableBody = decklistTable.getElementsByTagName('tbody')[0];
     while (tableBody.firstChild) {
         tableBody.removeChild(tableBody.firstChild);
     };
     decklistTable.style.display = 'none';
-})
+});
 
 confirmButton.addEventListener('click', () => {
     selfContainer.style.zIndex = 0;
@@ -237,7 +250,6 @@ confirmButton.addEventListener('click', () => {
     saveButton.style.display = 'none';
 
     const user = mainDeckImportInput.style.display !== 'none' ? 'self' : 'opp';
-    const decklistTable = document.getElementById('decklistTable')
     let tableBody = decklistTable.getElementsByTagName('tbody')[0];
     let rows = tableBody.rows;
     let deckData = [];
@@ -266,11 +278,11 @@ confirmButton.addEventListener('click', () => {
     } else if (user === 'self'){
         show('p2Box', p2Button);
     };
-    reset(user, true, false, true, false);
     if (!(user === 'opp' && systemState.isTwoPlayer)){
+        reset(user, true, false, true, false);
         appendMessage(user, determineUsername(user) + ' imported deck', 'announcement', false);
     } else {
-        invalid.style.display = 'block';
+        invalidText.style.display = 'block';
     };
     if (user === 'self'){
         const oUser = user === 'self' ? 'opp' : 'self';
@@ -289,23 +301,12 @@ const downloadCSV = (csv, filename) => {
 
     // CSV file
     csvFile = new Blob([csv], {type: "text/csv"});
-
-    // Download link
     downloadLink = document.createElement("a");
-
-    // File name
     downloadLink.download = filename;
-
     // Create a link to the file
     downloadLink.href = window.URL.createObjectURL(csvFile);
-
-    // Hide download link
     downloadLink.style.display = "none";
-
-    // Add the link to DOM
     document.body.appendChild(downloadLink);
-
-    // Click download link
     downloadLink.click();
 }
 
@@ -320,7 +321,7 @@ const exportTableToCSV = (filename) => {
             row.push(cols[j].innerText);
         
         csv.push(row.join(","));        
-    }
+    };
 
     downloadCSV(csv.join("\n"), filename);
 }
@@ -329,8 +330,7 @@ saveButton.addEventListener('click', () => {
     exportTableToCSV('decklist.csv');
 });
 
-document.getElementById('csvFile').addEventListener('change', function(evt) {
-    const decklistTable = document.getElementById('decklistTable');
+csvFile.addEventListener('change', (evt) => {
     importButton.disabled = false;
     selfContainer.style.zIndex = -1;
     oppContainer.style.zIndex = -1;
@@ -348,7 +348,7 @@ document.getElementById('csvFile').addEventListener('change', function(evt) {
     reader.onload = (e) => {
         let contents = e.target.result;
         let lines = contents.split('\n');
-        let tableBody = document.getElementById('decklistTable').getElementsByTagName('tbody')[0];
+        let tableBody = decklistTable.getElementsByTagName('tbody')[0];
         // Clear the table body
         while (tableBody.firstChild) {
             tableBody.removeChild(tableBody.firstChild);

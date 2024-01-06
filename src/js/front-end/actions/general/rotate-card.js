@@ -1,17 +1,18 @@
-import { systemState, socket } from "../../front-end.js";
-import { stringToVariable } from "../../setup/zones/zone-string-to-variable.js";
+import { socket, systemState } from "../../front-end.js";
+import { getZone } from "../../setup/zones/get-zone.js";
 import { addAbilityCounter } from "../counters/ability-counter.js";
 import { addDamageCounter } from "../counters/damage-counter.js";
 import { addSpecialCondition } from "../counters/special-condition.js";
 
-export const rotateCard = (user, zoneArrayString, zoneElementString, index, single = false, emit = true) => {
-    const zoneArray = stringToVariable(user, zoneArrayString);
-    const rotatingImage = zoneArray[index].image;
+export const rotateCard = (user, zoneId, index, single = false, emit = true) => {
+    const zone = getZone(user, zoneId);
+
+    const rotatingImage = zone.array[index].image;
     const currentRotation = parseInt(rotatingImage.style.transform.replace(/[^0-9-]/g, '')) || 0;
     const newRotation = (currentRotation + 90) % 360;
     rotatingImage.style.transform = `rotate(${newRotation}deg)`;
 
-    if (['benchArray'].includes(zoneArrayString)){
+    if (['bench'].includes(zoneId)){
         rotatingImage.parentElement.style.marginRight = '3%';
         rotatingImage.parentElement.style.marginLeft = '2%';
     };
@@ -36,16 +37,16 @@ export const rotateCard = (user, zoneArrayString, zoneElementString, index, sing
         };
     };
     //update any damagecounters/specialconditions/abilitycounters
-    for (let i = 0; i < zoneArray.length; i++){
-        const image = zoneArray[i].image;
+    for (let i = 0; i < zone.getCount(); i++){
+        const image = zone.array[i].image;
         if (image.damageCounter){
-            addDamageCounter(user, zoneArrayString, zoneElementString, i, false);
+            addDamageCounter(user, zoneId, i, false);
         };
         if (image.specialCondition){
-            addSpecialCondition(user, zoneArrayString, zoneElementString, i, false);
+            addSpecialCondition(user, zoneId, i, false);
         };
         if (image.abilityCounter){
-            addAbilityCounter(user, zoneArrayString, zoneElementString, i, false);
+            addAbilityCounter(user, zoneId, i, false);
         };
     };
     if (systemState.isTwoPlayer && emit){
@@ -53,8 +54,7 @@ export const rotateCard = (user, zoneArrayString, zoneElementString, index, sing
         const data = {
             roomId : systemState.roomId,
             user : oUser,
-            zoneArrayString : zoneArrayString,
-            zoneElementString : zoneElementString,
+            zoneId : zoneId,
             index: index,
             single: single,
             emit: false

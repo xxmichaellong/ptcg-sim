@@ -1,53 +1,56 @@
-import { sCard, target } from "../../front-end.js"
-import { stringToVariable } from "../zones/zone-string-to-variable.js";
+import { mouseClick } from "../../front-end.js";
 import { determineUsername } from "../general/determine-username.js";
+import { getZone } from "../zones/get-zone.js";
 import { appendMessage } from "./messages.js";
 
-export const convertZoneName = (zoneArrayString) => {
+export const convertZoneName = (zoneId) => {
+    zoneId = zoneId.replace('Cover', '');
     const specialCases = {
-        'viewCardsArray': 'deck',
-        'lostZoneArray': 'lost zone',
-        'attachedCardsArray': 'attached cards',
+        'viewCards': 'deck',
+        'lostZone': 'lost zone',
+        'attachedCards': 'attached cards',
     };
-
-    const withoutArray = zoneArrayString.replace('Array', '');
-
-    return specialCases[zoneArrayString] || withoutArray;
+    return specialCases[zoneId] || zoneId;
 };
 
+export const moveCardMessage = (user, cardName, oZoneId, dZoneId, action, attached = false, faceDown = false, faceUp = false, targetIndex = false) => {
+    let oLocationName = convertZoneName(oZoneId);
+    let mLocationName = convertZoneName(dZoneId);
 
-export const moveCardMessage = (user, cardName, oZoneArrayString, dZoneArrayString, action, attached = false, faceDown = false, faceUp = false) => {
-    let oLocationName = convertZoneName(oZoneArrayString);
-    let mLocationName = convertZoneName(dZoneArrayString);
-
-    const hiddenName = [
-        ['handArray', 'deckArray'],
-        ['deckArray', 'handArray'],
-        ['prizesArray', 'handArray'],
-        ['handArray', 'prizesArray'],
-        ['deckArray', 'prizesArray'],
-        ['prizesArray', 'deckArray'],
-        ['prizesArray', 'prizesArray'],
-        ['deckArray', 'deckArray'],
-        ['handArray', 'handArray'],
-      ];
+    let targetCard;
+    if (typeof targetIndex === 'number'){
+        targetCard = getZone(user, dZoneId).array[targetIndex];
+    };
       
-    if (target.card && (!['active', 'bench'].includes(oLocationName) || attached)){
-        mLocationName = target.card.name;
-        if (!['bench', 'active'].includes(oLocationName) && sCard.card.type !== 'Pokémon'){
+    if (targetCard && (!['active', 'bench'].includes(oLocationName) || attached)){
+        mLocationName = targetCard.name;
+        if (!['active', 'bench'].includes(oLocationName) && mouseClick.card.type !== 'Pokémon'){
             action = 'attach';
-        } else if (!['bench', 'active'].includes(oLocationName)) {
+        } else if (!['active', 'bench'].includes(oLocationName)) {
             action = 'evolve';
         };
     };
-    if (!faceUp && hiddenName.some(pair => pair[0] === oLocationName && pair[1] === mLocationName) || faceDown) {
+
+    const hiddenCardZones = [
+        ['hand', 'deck'],
+        ['deck', 'hand'],
+        ['prizes', 'hand'],
+        ['hand', 'prizes'],
+        ['deck', 'prizes'],
+        ['prizes', 'deck'],
+        ['prizes', 'prizes'],
+        ['deck', 'deck'],
+        ['hand', 'hand'],
+      ];
+
+    if (!faceUp && hiddenCardZones.some(pair => pair[0] === oLocationName && pair[1] === mLocationName) || faceDown) {
         cardName = 'card';
     };
     if (faceUp && mLocationName !== 'prizes'){
-        sCard.card.image.faceUp = false;
+        mouseClick.card.image.faceUp = false;
     };
     if (attached){
-        const relativeCard = stringToVariable(sCard.user, sCard.zoneArrayString).find(card => card.image === sCard.card.image.relative);
+        const relativeCard = getZone(mouseClick.user, mouseClick.zoneId).array.find(card => card.image === mouseClick.card.image.relative);
         oLocationName = relativeCard.name;
     };
     let message;

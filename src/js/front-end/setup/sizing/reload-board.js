@@ -1,16 +1,15 @@
-import { moveCard } from "../../actions/move-card-logic/move-card.js";
 import { rotateCard } from "../../actions/general/rotate-card.js";
-import { stringToVariable } from "../zones/zone-string-to-variable.js";
+import { moveCard } from "../../actions/move-card-logic/move-card.js";
+import { getZone } from "../zones/get-zone.js";
 
-const reloadContainer = (user, zoneArrayString, zoneElementString) => {
-    const zoneArray = stringToVariable(user, zoneArrayString);
-    const zoneElement = stringToVariable(user, zoneElementString);  
-    //find all boxes
-    const boxes = zoneElement.querySelectorAll('DIV')
+const reloadContainer = (user, zoneId) => {
+    const zone = getZone(user, zoneId);
+    //find all playContainers
+    const playContainers = zone.element.querySelectorAll('DIV')
     //loop through each box
-    boxes.forEach((box) => {
+    playContainers.forEach((playContainer) => {
         //find all images within box
-        const images = (box).querySelectorAll('img');
+        const images = (playContainer).querySelectorAll('img');
         //loop through each image and update the attached cards
         images.forEach((image) => {
             if (!image.attached){
@@ -22,11 +21,11 @@ const reloadContainer = (user, zoneArrayString, zoneElementString) => {
                     currentRotation = parseInt(image.style.transform.replace(/[^0-9-]/g, '')) || 0;
                 };
                 const numberRotations = currentRotation / 90;
-                const index = zoneArray.findIndex(card => card.image === image);
-                moveCard(user, zoneArrayString, zoneElementString, zoneArrayString, zoneElementString, index, false, false);
-                const newIndex = zoneArray.findIndex(card => card.image === image);
+                const index = zone.array.findIndex(card => card.image === image);
+                moveCard(user, zoneId, zoneId, index, false, false);
+                const newIndex = zone.array.findIndex(card => card.image === image);
                 for (let i = 0; i < numberRotations; i ++){
-                    rotateCard(user, zoneArrayString, zoneElementString, newIndex, false, false);
+                    rotateCard(user, zoneId, newIndex, false, false);
                 };
             };
         });
@@ -34,22 +33,14 @@ const reloadContainer = (user, zoneArrayString, zoneElementString) => {
 }
 
 export const reloadBoard = () => {
-    const containerArray = [
-        ['self', 'activeArray', 'activeElement'],
-        ['self', 'benchArray', 'benchElement'],
-        ['opp', 'activeArray', 'activeElement'],
-        ['opp', 'benchArray', 'benchElement'],
+    const zones = [
+        ['self', 'active'],
+        ['self', 'bench'],
+        ['opp', 'active'],
+        ['opp', 'bench'],
     ];
 
-    containerArray.forEach(([user, zoneArrayString, zoneElementString]) => {
-        reloadContainer(user, zoneArrayString, zoneElementString);
+    zones.forEach(([user, zoneId]) => {
+        reloadContainer(user, zoneId);
     });
 }
-
-
-
-
-
-
-
-

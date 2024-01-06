@@ -2,9 +2,10 @@ import { addAbilityCounter } from '../../actions/counters/ability-counter.js';
 import { addDamageCounter } from '../../actions/counters/damage-counter.js';
 import { addSpecialCondition } from '../../actions/counters/special-condition.js';
 import { closeFullView } from '../../actions/general/close-popups.js';
-import { handElement, oppContainer, oppHandElement, oppResizer, selfContainer, selfResizer, boardButtonsContainer, stadiumElement } from '../../front-end.js';
-import { stringToVariable } from '../zones/zone-string-to-variable.js';
+import { oppContainerDocument, selfContainerDocument } from '../../front-end.js';
+import { getZone } from '../zones/get-zone.js';
 import { adjustAlignment } from './adjust-alignment.js';
+
 // Create the overlay div
 const overlay = document.createElement('div');
 overlay.style.position = 'fixed';
@@ -13,6 +14,13 @@ overlay.style.right = 0;
 overlay.style.bottom = 0;
 overlay.style.left = 0;
 overlay.style.zIndex = 1000; // Adjust as needed
+
+const handElement = selfContainerDocument.getElementById('hand');
+const oppHandElement = oppContainerDocument.getElementById('hand');
+const boardButtonContainer = document.getElementById('boardButtonContainer');
+const stadiumElement = document.getElementById('stadium');
+const selfResizer = document.getElementById('selfResizer');
+const oppResizer = document.getElementById('oppResizer');
 
 export const selfHandleMouseDown = (e) => {
     e.preventDefault();
@@ -45,7 +53,6 @@ export const stopOppResize = (e) => {
 }
 
 export const selfResize = (e) => {
-    //adjust hand element
     [handElement, oppHandElement].forEach(adjustAlignment);
 
     const oldSelfHeight = parseInt(selfContainer.offsetHeight);
@@ -62,8 +69,8 @@ export const selfResize = (e) => {
     newSelfHeight = parseInt(selfContainer.offsetHeight);
     const selfRatio = newSelfHeight/oldSelfHeight;
      // Readjust the width of containers on the active/bench
-    adjustCards('self', 'benchArray', 'benchElement', selfRatio);
-    adjustCards('self', 'activeArray', 'activeElement', selfRatio);
+    adjustCards('self', 'bench', selfRatio);
+    adjustCards('self', 'active', selfRatio);
     
     let selfResizerBottom = parseInt(window.getComputedStyle(selfResizer).getPropertyValue('bottom'));
     let oppResizerBottom = parseInt(window.getComputedStyle(oppResizer).getPropertyValue('bottom'));
@@ -75,11 +82,11 @@ export const selfResize = (e) => {
         oppContainer.style.bottom = (100 + 1 - (clientY / window.innerHeight) * 100) + '%';
         newOppHeight = parseInt(oppContainer.offsetHeight);
         const oppRatio = newOppHeight/oldOppHeight;
-        adjustCards('opp', 'benchArray', 'benchElement', oppRatio);
-        adjustCards('opp', 'activeArray', 'activeElement', oppRatio);
+        adjustCards('opp', 'bench', oppRatio);
+        adjustCards('opp', 'active', oppRatio);
     };
     stadiumElement.style.bottom = (Math.min(84, ((parseFloat(oppResizer.style.bottom) + parseFloat(selfResizer.style.bottom))/2 - 8))) + '%';
-    boardButtonsContainer.style.bottom = (Math.min(90, ((parseFloat(oppResizer.style.bottom) + parseFloat(selfResizer.style.bottom))/2 - 3))) + '%';
+    boardButtonContainer.style.bottom = (Math.min(90, ((parseFloat(oppResizer.style.bottom) + parseFloat(selfResizer.style.bottom))/2 - 3))) + '%';
     oppResizer.style.height = '2%';
     if (parseFloat(oppResizer.style.bottom) > 100){
         oppResizer.style.height = '6%';
@@ -89,10 +96,10 @@ export const selfResize = (e) => {
         selfResizer.style.height = '6%';
     };
 }
-export const oppResize = (e) => {
-    //adjust hand element
-    [handElement, oppHandElement].forEach(adjustAlignment);
 
+export const oppResize = (e) => {
+    [handElement, oppHandElement].forEach(adjustAlignment);
+    
     const oldSelfHeight = parseInt(selfContainer.offsetHeight);
     const oldOppHeight = parseInt(oppContainer.offsetHeight);
 
@@ -105,8 +112,8 @@ export const oppResize = (e) => {
     oppContainer.style.bottom = (100 - 1 - (clientY / window.innerHeight) * 100) + '%';
     newOppHeight = parseInt(oppContainer.offsetHeight);
     const oppRatio = newOppHeight/oldOppHeight;
-    adjustCards('opp', 'benchArray', 'benchElement', oppRatio);
-    adjustCards('opp', 'activeArray', 'activeElement', oppRatio);
+    adjustCards('opp', 'bench', oppRatio);
+    adjustCards('opp', 'active', oppRatio);
     
     let selfResizerBottom = parseInt(window.getComputedStyle(selfResizer).getPropertyValue('bottom'));
     let oppResizerBottom = parseInt(window.getComputedStyle(oppResizer).getPropertyValue('bottom'));
@@ -117,11 +124,11 @@ export const oppResize = (e) => {
         selfResizer.style.bottom = (100 - 2 - (clientY / window.innerHeight) * 100) + '%';
         newSelfHeight = parseInt(selfContainer.offsetHeight);
         const selfRatio = newSelfHeight/oldSelfHeight;
-        adjustCards('self', 'benchArray', 'benchElement', selfRatio);
-        adjustCards('self', 'activeArray', 'activeElement', selfRatio);
+        adjustCards('self', 'bench', selfRatio);
+        adjustCards('self', 'active', selfRatio);
     };
     stadiumElement.style.bottom = (Math.min(84, ((parseFloat(oppResizer.style.bottom) + parseFloat(selfResizer.style.bottom))/2 - 8))) + '%';
-    boardButtonsContainer.style.bottom = (Math.min(90, ((parseFloat(oppResizer.style.bottom) + parseFloat(selfResizer.style.bottom))/2 - 3))) + '%';
+    boardButtonContainer.style.bottom = (Math.min(90, ((parseFloat(oppResizer.style.bottom) + parseFloat(selfResizer.style.bottom))/2 - 3))) + '%';
     oppResizer.style.height = '2%';
     if (parseFloat(oppResizer.style.bottom) > 100){
         oppResizer.style.height = '6%';
@@ -132,11 +139,9 @@ export const oppResize = (e) => {
     };
 }
 
-export const adjustCards = (user, zoneArrayString, zoneElementString, ratio) => {
-
-    const zoneArray = stringToVariable(user, zoneArrayString);
-
-    zoneArray.forEach(card => {
+export const adjustCards = (user, zoneId, ratio) => {
+    const zone = getZone(user, zoneId);
+    zone.array.forEach(card => {
         if (card.image.attached){
             if (card.type === 'Pokémon'){
                 const oldBottom = parseFloat(card.image.style.bottom);
@@ -154,16 +159,16 @@ export const adjustCards = (user, zoneArrayString, zoneElementString, ratio) => 
             card.image.parentElement.style.width = `${newWidth}px`;
         };
         if (card.image.damageCounter){
-            const index = zoneArray.findIndex(loopCard => loopCard === card);
-            addDamageCounter(user, zoneArrayString, zoneElementString, index, false);
+            const index = zone.array.findIndex(loopCard => loopCard === card);
+            addDamageCounter(user, zoneId, index, false);
         };
         if (card.image.specialCondition){
-            const index = zoneArray.findIndex(loopCard => loopCard === card);
-            addSpecialCondition(user, zoneArrayString, zoneElementString, index, false);
+            const index = zone.array.findIndex(loopCard => loopCard === card);
+            addSpecialCondition(user, zoneId, index, false);
         };
         if (card.image.abilityCounter){
-            const index = zoneArray.findIndex(loopCard => loopCard === card);
-            addAbilityCounter(user, zoneArrayString, zoneElementString, index, false);
+            const index = zone.array.findIndex(loopCard => loopCard === card);
+            addAbilityCounter(user, zoneId, index, false);
         };
     });
 }
@@ -172,7 +177,6 @@ export const flippedSelfHandleMouseDown = (e) => {
     e.preventDefault();
     window.addEventListener('mousemove', flippedSelfResize);
     document.addEventListener('mouseup', flippedStopSelfResize);
-
     // Add the overlay to the body
     document.body.appendChild(overlay);
     closeFullView(e);
@@ -199,7 +203,6 @@ export const flippedStopOppResize = (e) => {
 }
 
 export const flippedSelfResize = (e) => {
-    //adjust hand element
     [handElement, oppHandElement].forEach(adjustAlignment);
 
     const oldSelfHeight = parseInt(selfContainer.offsetHeight);
@@ -217,8 +220,8 @@ export const flippedSelfResize = (e) => {
     newOppHeight = parseInt(oppContainer.offsetHeight);
     const oppRatio = newOppHeight/oldOppHeight;
      // Readjust the width of containers on the active/bench
-    adjustCards('opp', 'benchArray', 'benchElement', oppRatio);
-    adjustCards('opp', 'activeArray', 'activeElement', oppRatio);
+    adjustCards('opp', 'bench', oppRatio);
+    adjustCards('opp', 'active', oppRatio);
     
     let selfResizerBottom = parseInt(window.getComputedStyle(selfResizer).getPropertyValue('bottom'));
     let oppResizerBottom = parseInt(window.getComputedStyle(oppResizer).getPropertyValue('bottom'));
@@ -230,11 +233,11 @@ export const flippedSelfResize = (e) => {
         selfContainer.style.bottom = (100 - (clientY / window.innerHeight) * 100) + '%';
         newSelfHeight = parseInt(selfContainer.offsetHeight);
         const selfRatio = newSelfHeight/oldSelfHeight;
-        adjustCards('self', 'benchArray', 'benchElement', selfRatio);
-        adjustCards('self', 'activeArray', 'activeElement', selfRatio);
+        adjustCards('self', 'bench', selfRatio);
+        adjustCards('self', 'active', selfRatio);
     };
     stadiumElement.style.bottom = (Math.min(84, ((parseFloat(selfResizer.style.bottom) + parseFloat(oppResizer.style.bottom))/2 - 8))) + '%';
-    boardButtonsContainer.style.bottom = (Math.min(90, ((parseFloat(selfResizer.style.bottom) + parseFloat(oppResizer.style.bottom))/2 - 3))) + '%';
+    boardButtonContainer.style.bottom = (Math.min(90, ((parseFloat(selfResizer.style.bottom) + parseFloat(oppResizer.style.bottom))/2 - 3))) + '%';
     oppResizer.style.height = '2%';
     if (parseFloat(oppResizer.style.bottom) > 100){
         oppResizer.style.height = '5%';
@@ -245,8 +248,7 @@ export const flippedSelfResize = (e) => {
     };
 }
 
-export const flippedOppResize = (e) => {
-    //adjust hand element
+export const flippedOppResize = (e) => {    
     [handElement, oppHandElement].forEach(adjustAlignment);
 
     const oldSelfHeight = parseInt(selfContainer.offsetHeight);
@@ -261,8 +263,8 @@ export const flippedOppResize = (e) => {
     selfContainer.style.bottom = (100 - (clientY / window.innerHeight) * 100) + '%';
     newSelfHeight = parseInt(selfContainer.offsetHeight);
     const selfRatio = newSelfHeight/oldSelfHeight;
-    adjustCards('self', 'benchArray', 'benchElement', selfRatio);
-    adjustCards('self', 'activeArray', 'activeElement', selfRatio);
+    adjustCards('self', 'bench', selfRatio);
+    adjustCards('self', 'active', selfRatio);
     
     let selfResizerBottom = parseInt(window.getComputedStyle(selfResizer).getPropertyValue('bottom'));
     let oppResizerBottom = parseInt(window.getComputedStyle(oppResizer).getPropertyValue('bottom'));
@@ -273,11 +275,11 @@ export const flippedOppResize = (e) => {
         selfResizer.style.bottom = (100 - 1 - (clientY / window.innerHeight) * 100) + '%';
         newOppHeight = parseInt(oppContainer.offsetHeight);
         const oppRatio = newOppHeight/oldOppHeight;
-        adjustCards('opp', 'benchArray', 'benchElement', oppRatio);
-        adjustCards('opp', 'activeArray', 'activeElement', oppRatio);
+        adjustCards('opp', 'bench', oppRatio);
+        adjustCards('opp', 'active', oppRatio);
     };
     stadiumElement.style.bottom = (Math.min(84, ((parseFloat(selfResizer.style.bottom) + parseFloat(oppResizer.style.bottom))/2 - 8))) + '%';
-    boardButtonsContainer.style.bottom = (Math.min(90, ((parseFloat(selfResizer.style.bottom) + parseFloat(oppResizer.style.bottom))/2 - 3))) + '%';
+    boardButtonContainer.style.bottom = (Math.min(90, ((parseFloat(selfResizer.style.bottom) + parseFloat(oppResizer.style.bottom))/2 - 3))) + '%';
     oppResizer.style.height = '2%';
     if (parseFloat(oppResizer.style.bottom) > 100){
         oppResizer.style.height = '5%';

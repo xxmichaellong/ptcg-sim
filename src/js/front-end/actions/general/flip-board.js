@@ -1,8 +1,26 @@
-import { FREEBUTTON, systemState, attackButton, boardElement, oppBoardElement, oppContainer, oppContainerDocument, oppResizer, oppViewCardsElement, p2AttackButton, p2FREEBUTTON, p2PassButton, p2ResetButton, p2SetupButton, passButton, resetButton, selfContainer, selfContainerDocument, selfResizer, setupButton, stadiumArray, stadiumElement, viewCardsElement } from '../../front-end.js';
-import { flippedOppHandleMouseDown, flippedSelfHandleMouseDown, oppHandleMouseDown, selfHandleMouseDown } from '../../setup/sizing/resizer.js';
+import { oppContainer, oppContainerDocument, selfContainer, selfContainerDocument, systemState } from '../../front-end.js';
 import { reloadBoard } from '../../setup/sizing/reload-board.js';
+import { flippedOppHandleMouseDown, flippedSelfHandleMouseDown, oppHandleMouseDown, selfHandleMouseDown } from '../../setup/sizing/resizer.js';
+import { getZone } from '../../setup/zones/get-zone.js';
 
-export const flipBoard = () => {    
+export const flipBoard = () => {   
+    const selfResizer = document.getElementById('selfResizer');
+    const oppResizer = document.getElementById('oppResizer');
+    const attackButton = document.getElementById('attackButton');
+    const passButton = document.getElementById('passButton');
+    const FREEBUTTON = document.getElementById('FREEBUTTON');
+    const setupButton = document.getElementById('setupButton');
+    const resetButton = document.getElementById('resetButton');
+    const p2AttackButton = document.getElementById('p2AttackButton');
+    const p2PassButton = document.getElementById('p2PassButton');
+    const p2FREEBUTTON = document.getElementById('p2FREEBUTTON');
+    const p2SetupButton = document.getElementById('p2SetupButton');
+    const p2ResetButton = document.getElementById('p2ResetButton');
+    const boardElement = selfContainerDocument.getElementById('board');
+    const oppBoardElement = oppContainerDocument.getElementById('board');
+    const viewCardsElement = selfContainerDocument.getElementById('viewCards');
+    const oppViewCardsElement = oppContainerDocument.getElementById('viewCards');
+
     if (selfContainer.classList.contains('self')){
         selfResizer.removeEventListener('mousedown', selfHandleMouseDown);
         oppResizer.removeEventListener('mousedown', oppHandleMouseDown);
@@ -42,10 +60,10 @@ export const flipBoard = () => {
 
     const users = ['self', 'opp'];
     const textIds = ['deckText', 'discardText', 'lostZoneText', 'handText'];
-    const zoneElementStrings = ['deckElement', 'discardElement', 'lostZoneElement', 'attachedCardsElement', 'viewCardsElement'];
-    const buttonIds = ['viewCardsButtonContainer', 'attachedCardsButtonContainer'];
+    const zoneIds = ['deck', 'discard', 'lostZone', 'attachedCards', 'viewCards'];
+    const buttonContainers = ['viewCardsButtonContainer', 'attachedCardsButtonContainer'];
     const headerIds = ['attachedCardsHeader', 'viewCardsHeader'];
-    const buttonzoneElementStrings = ['specialMoveButtonContainer'];
+    const specialMoveButtonContainers = ['specialMoveButtonContainer'];
 
     for (const user of users) {
         const document = user === 'self' ? selfContainerDocument : oppContainerDocument;
@@ -55,15 +73,15 @@ export const flipBoard = () => {
             text.classList.toggle('self-text');
             text.classList.toggle('opp-text');
         };
-        for (const zoneElementString of zoneElementStrings) {
-            const element = document.getElementById(zoneElementString);
+        for (const zoneId of zoneIds) {
+            const element = document.getElementById(zoneId);
             element.classList.toggle('self-view');
             element.classList.toggle('opp-view');
         };
-        for (const buttonId of buttonIds) {
-            const button = document.getElementById(buttonId);
-            button.classList.toggle('self-zone-button-container');
-            button.classList.toggle('opp-zone-button-container');
+        for (const buttonContainerId of buttonContainers) {
+            const container = document.getElementById(buttonContainerId);
+            container.classList.toggle('self-zone-button-container');
+            container.classList.toggle('opp-zone-button-container');
         };
         for (const headerId of headerIds) {
             const header = document.getElementById(headerId);
@@ -75,10 +93,10 @@ export const flipBoard = () => {
                 header.textContent = 'Move attached cards';
             };
         };
-        for (const buttonzoneElementString of buttonzoneElementStrings) {
-            const button = document.getElementById(buttonzoneElementString);
-            button.classList.toggle('self-special-move-button-container');
-            button.classList.toggle('opp-special-move-button-container');
+        for (const containerId of specialMoveButtonContainers) {
+            const container = document.getElementById(containerId);
+            container.classList.toggle('self-special-move-button-container');
+            container.classList.toggle('opp-special-move-button-container');
         };
     };
 
@@ -105,14 +123,13 @@ export const flipBoard = () => {
     oppContainer.style.bottom = tempBottom;
     
     // Flip the stadium
-    if (stadiumArray[0]){
-        if (stadiumArray[0].image.user === systemState.pov.user){
-            stadiumElement.style.transform = 'scaleX(1) scaleY(1)';
+    const stadiumZone = getZone('', 'stadium');
+    if (stadiumZone.array[0]){
+        if (stadiumZone.array[0].image.user === systemState.pov.user){
+            stadiumZone.element.style.transform = 'scaleX(1) scaleY(1)';
         } else {
-            stadiumElement.style.transform = 'scaleX(-1) scaleY(-1)';  
+            stadiumZone.element.style.transform = 'scaleX(-1) scaleY(-1)';  
         };
     };
-
-    //reload cards
     reloadBoard();
 }

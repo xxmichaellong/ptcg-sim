@@ -1,9 +1,9 @@
-import { systemState, socket } from "../../front-end.js";
-import { stringToVariable } from "../../setup/zones/zone-string-to-variable.js";
+import { socket, systemState } from "../../front-end.js";
+import { getZone } from "../../setup/zones/get-zone.js";
 
-export const changeType = (user, zoneArrayString, index, type, emit = true) => {
-    const zoneArray = stringToVariable(user, zoneArrayString);
-    const card = zoneArray[index];
+export const changeType = (user, zoneId, index, type, emit = true) => {
+    const zone = getZone(user, zoneId);
+    const card = zone.array[index];
 
     if (!card.type2){
         card.type2 = card.type;
@@ -15,7 +15,7 @@ export const changeType = (user, zoneArrayString, index, type, emit = true) => {
         const data = {
             roomId: systemState.roomId,
             user: oUser,
-            zoneArrayString: zoneArrayString,
+            zoneId: zoneId,
             index: index,
             type: type,
             emit: false

@@ -1,6 +1,9 @@
-import { chatbox, systemState, p2Chatbox, socket } from '../../front-end.js';
+import { socket, systemState } from '../../front-end.js';
 
 export const appendMessage = (user, message, type, emit = true) => {
+    const chatbox = document.getElementById('chatbox');
+    const p2Chatbox = document.getElementById('p2Chatbox');
+
     const p = document.createElement('p');
     if (type === 'player'){
         p.className = user === 'self' ? 'self-text' : 'opp-text';

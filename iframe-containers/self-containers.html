@@ -5,8 +5,8 @@
     <div id="innerCircle"></div>
 </div>
 
-<div id="deckText" class="self-text">(<span id="deckArrayCount">0</span>)</div>
-<div id="deckElement" class="zone self-view">
+<div id="deckText" class="self-text">(<span id="deckCount">0</span>)</div>
+<div id="deck" class="zone self-view">
     <div class="zone-button-container">
         <button id="shuffleDeckButton" class="zone-button">Shuffle</button>
         <button id="closeDeckButton" class="zone-button">Close</button>
@@ -14,8 +14,8 @@
         <label for="sortDeckCheckbox">Sort</label>
     </div>
 </div>
-<div id="discardText" class="self-text">(<span id="discardArrayCount">0</span>)</div>
-<div id="discardElement" class="zone self-view">
+<div id="discardText" class="self-text">(<span id="discardCount">0</span>)</div>
+<div id="discard" class="zone self-view">
     <div class="zone-button-container">
         <button id="shuffleDiscardButton" class="zone-button">Shuffle all to Deck</button>
         <button id="closeDiscardButton" class="zone-button">Close</button>
@@ -23,8 +23,8 @@
         <label for="sortDiscardCheckbox">Sort</label>
     </div>
 </div>
-<div id="lostZoneText" class="self-text">(<span id="lostZoneArrayCount">0</span>)</div>
-<div id="lostZoneElement" class="zone self-view">
+<div id="lostZoneText" class="self-text">(<span id="lostZoneCount">0</span>)</div>
+<div id="lostZone" class="zone self-view">
     <div class="zone-button-container">
         <button id="closeLostZoneButton" class="zone-button">Close</button>
         <input type="checkbox" id="sortLostZoneCheckbox">
@@ -32,22 +32,22 @@
     </div>
 </div>
 
-<div id="handText" class="self-text">(<span id="handArrayCount">0</span>)</div>
-<div id="handElement"></div>
-<div id="discardCoverElement" class="outline"></div>
-<div id="deckCoverElement" class="outline"></div>
-<div id="lostZoneCoverElement" class="outline"></div>
-<div id="benchElement" class="outline"></div>
-<div id="activeElement" class="outline"></div>
-<div id="prizesElement" class="outline"></div>
-<div id="boardElement" class="self-board"></div>
+<div id="handText" class="self-text">(<span id="handCount">0</span>)</div>
+<div id="hand"></div>
+<div id="discardCover" class="outline"></div>
+<div id="deckCover" class="outline"></div>
+<div id="lostZoneCover" class="outline"></div>
+<div id="bench" class="outline"></div>
+<div id="active" class="outline"></div>
+<div id="prizes" class="outline"></div>
+<div id="board" class="self-board"></div>
 
 <div id="specialMoveButtonContainer" class="self-special-move-button-container">
-    <button id="vSTARButton">VSTAR</button>
+    <button id="VSTARButton">VSTAR</button>
     <button id="GXButton" >GX</button>
 </div>
 
-<div id="attachedCardsElement" class="self-view">
+<div id="attachedCards" class="self-view">
     <div id="attachedCardsHeader" class="header self-header">Move attached cards</div>
     <div id="attachedCardsButtonContainer" class="self-zone-button-container">
         <button id="discardAttachedCardsButton" class="zone-button">Discard all</button>
@@ -58,7 +58,7 @@
     </div>
 </div>
 
-<div id="viewCardsElement" class="self-view">
+<div id="viewCards" class="self-view">
     <div id="viewCardsHeader" class="header self-header">Looking at cards...</div>
     <div id="viewCardsButtonContainer" class="self-zone-button-container">
         <button id="discardViewCardsButton" class="zone-button">Discard all</button>

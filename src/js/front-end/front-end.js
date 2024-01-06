@@ -1,3 +1,9 @@
-export * from './initialization/index.js' // Initializes all relevant variables, making them globally accessible
-export * from './socket/event-listeners.js' // For 2-player mode only - initializes all of the socket event listeners for receiving socket messages
-export * from './event-listeners/index.js' // Initializes all event listeners for user's actions on Element elements and the window
+export * from './initialization/global-variables/global-variables.js' // Initialize all globally accessible variables
+
+import { initializeSocketEventListeners } from './initialization/socket-event-listeners/socket-event-listeners.js'
+import { initializeDOMEventListeners } from './initialization/document-event-listeners/initialize-document-event-listeners.js'
+import { initializeMutationObservers } from './initialization/mutation-observers/initialize-mutation-observers.js'
+
+initializeSocketEventListeners(); // Initializes all event listeners for socket events
+initializeDOMEventListeners(); // Initializes all event listeners for user's actions on html elements and the window
+initializeMutationObservers(); // Initializes all mutation observers for user's actions on html elements

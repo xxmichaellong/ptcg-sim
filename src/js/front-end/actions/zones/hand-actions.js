@@ -1,24 +1,22 @@
-import { deckArray, handArray, oppDeckArray, oppHandArray } from '../../front-end.js';
 import { appendMessage } from '../../setup/chatbox/messages.js';
-import { stringToVariable } from '../../setup/zones/zone-string-to-variable.js';
 import { determineUsername } from '../../setup/general/determine-username.js';
+import { getZone } from '../../setup/zones/get-zone.js';
 import { moveCard } from '../move-card-logic/move-card.js';
 import { shuffleZone } from './shuffle-zone.js';
-import { getZoneCount } from '../general/count.js';
 
-// Draw starting hand of 7
+// Draw starting hand of 7 and prize 6
 export const drawHand = (user) => {
 
-    const selectedHandCount = Math.min(7, getZoneCount(stringToVariable(user, 'deckArray')));
+    const drawAmount = Math.min(7, getZone(user, 'deck').getCount());
 
-    for (let i = 0; i < selectedHandCount; i++){
-        moveCard(user, 'deckArray', 'deckElement', 'handArray', 'handElement', 0);
+    for (let i = 0; i < drawAmount; i++){
+        moveCard(user, 'deck', 'hand', 0);
     };
 
-    const prizeCount = Math.min(6, getZoneCount(stringToVariable(user, 'deckArray')));
+    const prizeAmount = Math.min(6, getZone(user, 'deck').getCount());
 
-    for (let i = 0; i < prizeCount; i++){
-        moveCard(user, 'deckArray', 'deckElement', 'prizesArray', 'prizesElement', 0);
+    for (let i = 0; i < prizeAmount; i++){
+        moveCard(user, 'deck', 'prizes', 0);
     };
 }
 
@@ -26,17 +24,17 @@ export const discardAndDraw = (user) => {
     let drawAmount;
     const userInput = window.prompt('Draw how many cards?', '0');
     drawAmount = parseInt(userInput);
-    const selectedDeckCount = user === 'self' ? getZoneCount(deckArray) : getZoneCount(oppDeckArray);
-    const discardAmount = user === 'self' ? getZoneCount(handArray) : getZoneCount(oppHandArray);
+    const selectedDeckCount = getZone(user, 'deck').getCount();
+    const discardAmount = getZone(user, 'hand').getCount();
 
     if (!isNaN(drawAmount) && drawAmount >= 0){
         drawAmount = Math.min(drawAmount, selectedDeckCount);
 
         for (let i = 0; i < discardAmount; i++){
-            moveCard(user, 'handArray', 'handElement', 'discardArray', 'discardElement', 0);
+            moveCard(user, 'hand', 'discard', 0);
         };
         for (let i = 0; i < drawAmount; i++){
-            moveCard(user, 'deckArray', 'deckElement', 'handArray', 'handElement', 0);
+            moveCard(user, 'deck', 'hand', 0);
         };
 
         let message;
@@ -52,24 +50,23 @@ export const discardAndDraw = (user) => {
 }
 
 export const shuffleAndDraw = (user) => {
-
     let drawAmount;
     const userInput = window.prompt('Draw how many cards?', '0');
     drawAmount = parseInt(userInput);
-    const selectedDeckCount = user === 'self' ? getZoneCount(deckArray) : getZoneCount(oppDeckArray);
-    const shuffleAmount = user === 'self' ? getZoneCount(handArray) : getZoneCount(oppHandArray);
+    const selectedDeckCount = getZone(user, 'deck').getCount();
+    const shuffleAmount = getZone(user, 'hand').getCount();
 
     if (!isNaN(drawAmount) && drawAmount >= 0){
         drawAmount = Math.min(drawAmount, (selectedDeckCount + shuffleAmount));
 
         for (let i = 0; i < shuffleAmount; i++){
-            moveCard(user, 'handArray', 'handElement', 'deckArray', 'deckElement', 0);
+            moveCard(user, 'hand', 'deck', 0);
         };
 
-        shuffleZone(user, 'deckArray', 'deckElement');
+        shuffleZone(user, 'deck');
 
         for (let i = 0; i < drawAmount; i++){
-            moveCard(user, 'deckArray', 'deckElement', 'handArray', 'handElement', 0);
+            moveCard(user, 'deck', 'hand', 0);
         };
         
         let message;
@@ -85,24 +82,23 @@ export const shuffleAndDraw = (user) => {
 }
 
 export const shuffleBottomAndDraw = (user) => {
-    
     let drawAmount;
     const userInput = window.prompt('Draw how many cards?', '0');
     drawAmount = parseInt(userInput);
-    const selectedDeckCount = user === 'self' ? getZoneCount(deckArray) : getZoneCount(oppDeckArray);
-    const shuffleAmount = user === 'self' ? getZoneCount(handArray) : getZoneCount(oppHandArray);
+    const selectedDeckCount = getZone(user, 'deck').getCount();
+    const shuffleAmount = getZone(user, 'hand').getCount();
     
     if (!isNaN(drawAmount) && drawAmount >= 0){
         drawAmount = Math.min(drawAmount, (selectedDeckCount + shuffleAmount));
 
-        shuffleZone(user, 'handArray', 'handElement');
+        shuffleZone(user, 'hand');
 
         for (let i = 0; i < shuffleAmount; i++){
-            moveCard(user, 'handArray', 'handElement', 'deckArray', 'deckElement', 0);
+            moveCard(user, 'hand', 'deck', 0);
         };
 
         for (let i = 0; i < drawAmount; i++){
-            moveCard(user, 'deckArray', 'deckElement', 'handArray', 'handElement', 0);
+            moveCard(user, 'deck', 'hand', 0);
         };
         let message;
         if (drawAmount > 0){

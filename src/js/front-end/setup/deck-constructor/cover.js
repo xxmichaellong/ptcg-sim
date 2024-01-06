@@ -1,6 +1,6 @@
-import { resetImage } from '../../image-logic/reset-image.js';
-import { coverClick, openCardContextMenu } from '../../image-logic/click-events.js';
-import { dragEnd, dragLeave, dragOver, dragStart, drop } from '../../image-logic/drag.js';
+import { dragEnd, dragLeave, dragOver, dragStart, drop } from '../../setup/image-logic/drag.js';
+import { coverClick, openCardContextMenu } from '../image-logic/click-events.js';
+import { resetImage } from '../image-logic/reset-image.js';
 
 export class Cover {
     user;

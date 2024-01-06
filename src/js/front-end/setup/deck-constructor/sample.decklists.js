@@ -1,5 +1,3 @@
-import { altDeckImportInput, deckImport, decklistsButton, decklistsContextMenu, mainDeckImportInput } from "../../front-end.js";
-
 const decklistsByYear = {
     "2023-2024 S&V": {
         "Charizard": `
@@ -4112,13 +4110,13 @@ const decklistsByYear = {
         3 Sabrina's Venomoth gym1-34
         3 Zubat base5-70
         3 Dark Golbat base5-24
-        2 Sabrina's Jynx base1-71
+        2 Sabrina's Jynx gym2-57
         1 Sabrina's Mr. Mime gym2-59
         1 Mewtwo basep-14
         3 Professor Oak base1-88
         3 Computer Search base1-71
         3 Pokémon Trader base1-77
-        2 Sabrina's ESP gym1-117
+        3 Sabrina's ESP gym1-117
         2 Super Energy Removal base1-79
         1 Gust of Wind base1-93
         8 Psychic Energy base1-101
@@ -4132,8 +4130,8 @@ const decklistsByYear = {
         3 Blastoise base1-2
         3 Magikarp base5-47
         3 Dark Gyarados base5-25
-        3 Articuno base1-17
-        2 Lapras base1-25
+        3 Articuno base3-17
+        2 Lapras base3-25
         3 Computer Search base1-71
         3 Pokémon Trader base1-77
         3 Computer Error basep-16
@@ -4190,10 +4188,10 @@ const decklistsByYear = {
         3 Blaine's Rapidash gym2-33
         3 Jigglypuff base2-54
         3 Wigglytuff base2-32
-        3 Magmar base1-39
+        3 Magmar base3-39
         3 Kangaskhan base2-21
-        2 Grimer base1-48
-        2 Muk base1-28
+        2 Grimer base3-48
+        2 Muk base3-28
         1 Scyther base2-26
         2 Chaos Gym gym2-102
         3 Computer Search base1-71
@@ -4265,8 +4263,8 @@ const decklistsByYear = {
         2 Chansey base1-3
         1 Mr. Mime base2-22
         1 Mew basep-8
-        1 Ditto base1-18
-        2 Aerodactyl base1-16
+        1 Ditto base3-18
+        2 Aerodactyl base3-16
         1 Resistance Gym gym2-109
         1 Celadon City Gym gym1-107
         4 Mysterious Fossil base3-62
@@ -4288,10 +4286,10 @@ const decklistsByYear = {
     },
     "2000 Base–Team R":{
         "Magmarbuzz":`
-        4 Magmar base1-39
+        4 Magmar base3-39
         3 Electabuzz base1-20
         3 Scyther base2-26
-        2 Ditto base1-18
+        2 Ditto base3-18
         4 Professor Oak base1-88
         4 Bill base1-91
         4 Energy Retrieval base1-81
@@ -4310,10 +4308,10 @@ const decklistsByYear = {
         "Lickitung Moltres":`
         4 Lickitung base2-38
         3 Scyther base2-26
-        2 Grimer base1-48
-        2 Muk base1-28
-        2 Magmar base1-39
-        2 Moltres base1-27
+        2 Grimer base3-48
+        2 Muk base3-28
+        2 Magmar base3-39
+        2 Moltres base3-27
         2 Chansey base1-3
         1 Mew basep-8
         4 Scoop Up base1-78
@@ -4331,7 +4329,7 @@ const decklistsByYear = {
         4 Double Colorless Energy base1-96
         `,
         "Dark Vileplume Snorlax":`
-        4 Psyduck base1-53
+        4 Psyduck base3-53
         2 Dark Golduck base5-37
         4 Oddish base5-63
         3 Dark Gloom base5-36
@@ -4402,7 +4400,7 @@ const decklistsByYear = {
         3 Mewtwo basep-14
         3 Electabuzz base1-20
         2 Chansey base1-3
-        2 Ditto base1-18
+        2 Ditto base3-18
         4 Professor Oak base1-88
         4 Computer Search base1-71
         3 Energy Removal base1-92
@@ -4422,7 +4420,7 @@ const decklistsByYear = {
         3 Hitmonchan base1-7
         2 Lickitung base2-38
         2 Scyther base2-26
-        2 Ditto base1-18
+        2 Ditto base3-18
         1 Mew basep-8
         4 Professor Oak base1-88
         4 Bill base1-91
@@ -4474,7 +4472,7 @@ const decklistsByYear = {
         2 Chansey base1-3
         2 Mr. Mime base2-22
         2 Scyther base2-26
-        2 Psyduck base1-53
+        2 Psyduck base3-53
 
         Trainer (22)
         4 Energy Retrieval base1-81
@@ -4485,7 +4483,7 @@ const decklistsByYear = {
         2 Computer Search base1-71
         2 Pokémon Trader base1-77
         1 Gust of Wind base1-93
-        1 Gambler base1-60
+        1 Gambler base3-60
         1 Pokémon Breeder base1-76
 
         Energy (17)
@@ -4494,7 +4492,7 @@ const decklistsByYear = {
         4 Double Colorless Energy base1-96`,
     "Arcanine Electrode": `
         Pokémon (19)
-        4 Psyduck base1-53
+        4 Psyduck base3-53
         4 Voltorb base1-67
         4 Electrode base1-21
         3 Growlithe base1-28
@@ -4564,7 +4562,7 @@ const decklistsByYear = {
         1 Lass base1-75
         1 Pokémon Center base1-85
         1 Computer Search base1-71
-        1 Mr. Fuji base1-58
+        1 Mr. Fuji base3-58
 
         Energy (16)
         8 Psychic Energy base1-101
@@ -4574,7 +4572,7 @@ const decklistsByYear = {
         Pokémon (23)
         4 Dratini base1-26
         3 Dragonair base1-18
-        3 Dragonite base1-19
+        3 Dragonite base3-19
         4 Kangaskhan base2-21
         3 Hitmonchan base1-7
         2 Doduo base1-48
@@ -4604,9 +4602,9 @@ const decklistsByYear = {
         2 Chansey base1-3
         2 Mr. Mime base2-22
         1 Mewtwo basep-3
-        1 Gastly base1-33
-        1 Ditto base1-18
-        1 Psyduck base1-53
+        1 Gastly base3-33
+        1 Ditto base3-18
+        1 Psyduck base3-53
 
         Trainer (27)
         4 Scoop Up base1-78
@@ -4618,7 +4616,7 @@ const decklistsByYear = {
         1 PlusPower base1-84
         1 Gust of Wind base1-93
         1 Pokémon Center base1-85
-        1 Mr. Fuji base1-58
+        1 Mr. Fuji base3-58
 
         Energy (18)
         13 Psychic Energy base1-101
@@ -4629,7 +4627,7 @@ const decklistsByYear = {
         4 Squirtle base1-63
         1 Wartortle base1-42
         3 Blastoise base1-2
-        4 Articuno base1-17
+        4 Articuno base3-17
 
         Trainer (34)
         4 Professor Oak base1-88
@@ -4668,7 +4666,7 @@ const decklistsByYear = {
         1 Super Energy Removal base1-79
         1 Gust of Wind base1-93
         1 PlusPower base1-84
-        1 Mr. Fuji base1-58
+        1 Mr. Fuji base3-58
         1 Lass base1-75
 
         Energy (18)
@@ -4680,7 +4678,7 @@ const decklistsByYear = {
         3 Wigglytuff base2-32
         4 Doduo base1-48
         3 Dodrio base2-34
-        4 Magmar base1-39
+        4 Magmar base3-39
 
         Trainer (25)
         4 Professor Oak base1-88
@@ -4702,19 +4700,11 @@ const decklistsByYear = {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+const altDeckImportInput = document.getElementById('altDeckImportInput');
+const deckImport = document.getElementById('deckImport');
+const decklistsButton = document.getElementById('decklistsButton');
+const decklistsContextMenu = document.getElementById('decklistsContextMenu');
+const mainDeckImportInput = document.getElementById('mainDeckImportInput');
 
 export const getRandomDeckList = () => {
     const years = Object.keys(decklistsByYear);
@@ -4724,7 +4714,7 @@ export const getRandomDeckList = () => {
     return decklistsByYear[randomYear][randomDeck];
 }
 
-export const showDecklistsContextMenu = (event) => {
+export const showDecklistsContextMenu = () => {
     decklistsContextMenu.innerHTML = '';
 
     for (const year of Object.keys(decklistsByYear)) {
@@ -4733,7 +4723,7 @@ export const showDecklistsContextMenu = (event) => {
         yearItem.textContent = year;
 
         const deckSubMenu = document.createElement('div');
-        deckSubMenu.classList.add('decklists-context-menu-submenu');
+        deckSubMenu.classList.add('decklists-context-menu-sub-menu');
 
         for (const deck of Object.keys(decklistsByYear[year])) {
             const deckItem = document.createElement('div');
@@ -4757,7 +4747,7 @@ export const showDecklistsContextMenu = (event) => {
             deckItem.addEventListener('mouseout', () => {
                 deckItem.classList.remove('decklist-highlight');
             });
-        }
+        };
 
         yearItem.appendChild(deckSubMenu);
         decklistsContextMenu.appendChild(yearItem);
@@ -4773,9 +4763,9 @@ export const showDecklistsContextMenu = (event) => {
             deckSubMenu.style.display = 'none';
             yearItem.style.fontWeight = 'normal';
         });
-    }
+    };
 
-    const adjustment = deckImport.offsetHeight - decklistsButton.offsetTop
+    const adjustment = deckImport.offsetHeight - decklistsButton.offsetTop;
     decklistsContextMenu.style.bottom = `${adjustment}px`;
     
     decklistsContextMenu.style.display = 'block';
@@ -4788,6 +4778,5 @@ export const hidedecklistsContextMenu = (event) => {
     if (!decklistsContextMenu.contains(event.target)) {
         decklistsContextMenu.style.display = 'none';
         document.removeEventListener('mousedown', hidedecklistsContextMenu);
-    }
+    };
 };
-

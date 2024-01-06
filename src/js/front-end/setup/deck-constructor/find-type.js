@@ -768,11 +768,10 @@ export const getCardType = (setName, cardNumber) => {
 
     if (separated) {
         const { letters, numbers } = separated;
-
         // Update setName and cardNumber accordingly
         setName += letters;
         cardNumber = numbers;
-    }
+    };
 
     // Check if the setName is in the dictionary
     if (setList.hasOwnProperty(setName)) {
@@ -783,9 +782,9 @@ export const getCardType = (setName, cardNumber) => {
         for (let i = 0; i < types.length; i++) {
             if (parseInt(cardNumber) < Object.keys(set)[i]) {
                 return types[i];
-            }
-        }
-    }
+            };
+        };
+    };
 
     // Default case if the setName is not found or the cardNumber is too high
     return "Unknown";

@@ -25,12 +25,12 @@
 <body>
     <iframe id="selfContainer" class="self" src="./iframe-containers/self-containers.html"></iframe>
     <iframe id="oppContainer" class="opp" src="./iframe-containers/opp-containers.html"></iframe>
-    <div id="stadiumElement" class="outline"></div>
+    <div id="stadium" class="outline"></div>
     
     <div id="selfResizer" class="self-color"></div>
     <div id="oppResizer" class="opp-color"></div>
 
-    <div id="boardButtonsContainer">
+    <div id="boardButtonContainer">
         <button id="turnButton">+Turn</button>
         <button id="flipCoinButton">Coin</button>
         <button id="flipBoardButton">⇅</button>
@@ -136,7 +136,7 @@
             <button id="saveButton">Save</button>
             <div id="decklistsContextMenu" class="decklists-context-menu"></div>
             <button id="randomButton">🪄</button>
-            <div id="success">Success!</div><div id="failed">Error!</div><div id="loading"></div><div id="invalid">1P only!</div>
+            <div id="successText">Success!</div><div id="failedText">Error!</div><div id="loadingText"></div><div id="invalidText">1P only!</div>
         </div>
         <label for="csvFile" class="custom-file-upload">
             Upload File
@@ -208,11 +208,12 @@
                     <li id="shuffleIntoDeckButton">to Deck (shuffle)</li>
                 </ul>
             </li>
+            <li id="revealHideButton">Reveal/hide card</li>
             <li id="changeButton">Change type...
                 <ul class="card-sub-menu">
                     <li id="changeToEnergyButton">to Energy</li>
                     <li id="changeToToolButton">to Tool</li>
-                    <li id="changeToPokémonButton">to Pokémon</li>
+                    <!-- <li id="changeToPokémonButton">to Pokémon</li> -->
                 </ul>
             </li>
         </ul>
@@ -290,7 +291,7 @@
                             <li>Remove <code>[alt + y]</code></li>
                         </ul>
                         <li>Rotate card(s)<code>[r]</code></li>
-                        <li>Rotate Pokémon BREAK <code>[alt + r]</code></li>
+                        <li>Rotate BREAK <code>[alt + r]</code></li>
                         <li>Look/cover card (only yourself)<code>[c]</code></li>
                         <li>Hide card (both players)<code>[z]</code></li>
                         <li>Reveal card (both players)<code>[alt + z]</code></li>
@@ -299,7 +300,7 @@
                         <ul>
                             <li>to Tool <code>[alt + t]</code></li>
                             <li>to Energy <code>[alt + e]</code></li>
-                            <li>to Pokémon <code>[alt + p]</code></li>
+                            <!-- <li>to Pokémon <code>[alt + p]</code></li> -->
                         </ul>
                     </ul>
                 </div>

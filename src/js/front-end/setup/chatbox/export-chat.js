@@ -1,4 +1,7 @@
-import { chatbox, systemState, p2Chatbox } from "../../front-end.js";
+import { systemState } from "../../front-end.js";
+
+const chatbox = document.getElementById('chatbox');
+const p2Chatbox = document.getElementById('p2Chatbox');
 
 export const exportChatboxContent = () => {
     const chatboxContainer = !systemState.isTwoPlayer ? chatbox : p2Chatbox;
@@ -21,4 +24,3 @@ export const clearChatboxContent = () => {
   const chatboxContainer = !systemState.isTwoPlayer ? chatbox : p2Chatbox;
   chatboxContainer.innerHTML = '';
 }
-  

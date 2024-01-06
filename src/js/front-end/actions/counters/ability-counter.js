@@ -1,15 +1,12 @@
-import { stringToVariable } from '../../setup/zones/zone-string-to-variable.js';
-import { sCard, socket, selfContainerDocument, oppContainerDocument, systemState } from '../../front-end.js';
+import { oppContainerDocument, selfContainerDocument, socket, systemState } from '../../front-end.js';
+import { getZone } from '../../setup/zones/get-zone.js';
 
-export const addAbilityCounter = (user, zoneArrayString, zoneElementString, index, emit = true) => {
-
-    const zoneArray = stringToVariable(user, zoneArrayString);
-    const zoneElement = stringToVariable(user, zoneElementString);
-
+export const addAbilityCounter = (user, zoneId, index, emit = true) => {
     //identify target image and zone
-    const targetCard = zoneArray[index];
+    const zone = getZone(user, zoneId);
+    const targetCard = zone.array[index];
     const targetRect = targetCard.image.getBoundingClientRect();
-    const zoneElementRect = zoneElement.getBoundingClientRect();
+    const zoneElementRect = zone.element.getBoundingClientRect();
 
     let abilityCounter = targetCard.image.abilityCounter;
     //clean up existing event listeners
@@ -17,7 +14,7 @@ export const addAbilityCounter = (user, zoneArrayString, zoneElementString, inde
         abilityCounter.handleRemove = null;
         window.removeEventListener('resize', abilityCounter.handleResize);
     } else {
-        if (zoneArrayString !== 'stadiumArray'){
+        if (zoneId !== 'stadium'){
             if (user === 'self'){
                 abilityCounter = selfContainerDocument.createElement('div');
                 abilityCounter.className = 'self-tab';
@@ -34,7 +31,7 @@ export const addAbilityCounter = (user, zoneArrayString, zoneElementString, inde
     abilityCounter.style.display = 'inline-block';
     abilityCounter.style.left = `${targetRect.left - zoneElementRect.left}px`;
     abilityCounter.style.top = `${targetRect.height/2}px`;
-    zoneElement.appendChild(abilityCounter);
+    zone.element.appendChild(abilityCounter);
 
     if (targetCard.image.parentElement.classList.contains('full-view')){
         abilityCounter.style.display = 'none';
@@ -46,7 +43,7 @@ export const addAbilityCounter = (user, zoneArrayString, zoneElementString, inde
     abilityCounter.style.zIndex = '1';
 
     const handleResize = () => {
-        addAbilityCounter(user, zoneArrayString, zoneElementString, index, false);
+        addAbilityCounter(user, zoneId, index, false);
     };
 
     const handleRemove = (emit = true) => {
@@ -60,7 +57,7 @@ export const addAbilityCounter = (user, zoneArrayString, zoneElementString, inde
             const data = {
                 roomId : systemState.roomId,
                 user : oUser,
-                zoneArrayString: zoneArrayString,
+                zoneId: zoneId,
                 index: index,
                 emit: false
             };
@@ -68,6 +65,7 @@ export const addAbilityCounter = (user, zoneArrayString, zoneElementString, inde
         };
     }
 
+    //attach functions to abilityCounter so they can accessed later to handle changes to it
     abilityCounter.handleRemove = handleRemove;
 
     abilityCounter.handleResize = handleResize;
@@ -77,11 +75,11 @@ export const addAbilityCounter = (user, zoneArrayString, zoneElementString, inde
     targetCard.image.abilityCounter = abilityCounter;
 
     if (systemState.isTwoPlayer && emit){
+        const oUser = user === 'self' ? 'opp' : 'self';
         const data = {
             roomId : systemState.roomId,
-            user : sCard.oUser,
-            zoneArrayString : zoneArrayString,
-            zoneElementString: zoneElementString,
+            user : oUser,
+            zoneId : zoneId,
             index: index,
             emit: false
         };

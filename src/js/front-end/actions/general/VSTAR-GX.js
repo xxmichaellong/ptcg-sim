@@ -1,8 +1,13 @@
-import { oppGXButton, oppVSTARButton, systemState, selfGXButton, selfVSTARButton, socket } from "../../front-end.js";
+import { oppContainerDocument, selfContainerDocument, socket, systemState } from "../../front-end.js";
 import { appendMessage } from "../../setup/chatbox/messages.js";
 import { determineUsername } from "../../setup/general/determine-username.js";
 
 export const VSTARGXFunction = (user, type, emit = true) => {
+    const selfGXButton = selfContainerDocument.getElementById('GXButton');
+    const selfVSTARButton = selfContainerDocument.getElementById('VSTARButton');
+    const oppGXButton = oppContainerDocument.getElementById('GXButton');
+    const oppVSTARButton = oppContainerDocument.getElementById('VSTARButton');
+
     let button;
     if (user === 'self'){
         if (type === 'GX'){
@@ -17,8 +22,8 @@ export const VSTARGXFunction = (user, type, emit = true) => {
             button = oppVSTARButton;
         };
     };
-    if (button.classList.contains('used')){
-        button.classList.remove('used');
+    if (button.classList.contains('used-special-move')){
+        button.classList.remove('used-special-move');
         const message = determineUsername(user) + ' reset their ' + type;
         appendMessage(user, message, 'player', false);
         if (systemState.isTwoPlayer && emit){
@@ -32,7 +37,7 @@ export const VSTARGXFunction = (user, type, emit = true) => {
             socket.emit('VSTARGXFunction', data);
         };
     } else {
-        button.classList.add('used');
+        button.classList.add('used-special-move');
         const message = determineUsername(user) + ' used their ' + type + '!';
         appendMessage(user, message, 'player', false);
         if (systemState.isTwoPlayer && emit){

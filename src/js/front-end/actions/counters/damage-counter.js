@@ -1,14 +1,11 @@
-import { stringToVariable } from '../../setup/zones/zone-string-to-variable.js';
-import { sCard, socket, selfContainerDocument, oppContainerDocument, systemState } from '../../front-end.js';
+import { oppContainerDocument, selfContainerDocument, socket, systemState } from '../../front-end.js';
+import { getZone } from '../../setup/zones/get-zone.js';
 
-export const addDamageCounter = (user, zoneArrayString, zoneElementString, index, emit = true) => {
-
-    const zoneArray = stringToVariable(user, zoneArrayString);
-    const zoneElement = stringToVariable(user, zoneElementString);
-
-    const targetCard = zoneArray[index];
+export const addDamageCounter = (user, zoneId, index, emit = true) => {
+    const zone = getZone(user, zoneId);
+    const targetCard = zone.array[index];
     const targetRect = targetCard.image.getBoundingClientRect();
-    const zoneElementRect = zoneElement.getBoundingClientRect();
+    const zoneElementRect = zone.element.getBoundingClientRect();
 
     let damageCounter = targetCard.image.damageCounter;
     //clean up existing event listeners
@@ -29,11 +26,11 @@ export const addDamageCounter = (user, zoneArrayString, zoneElementString, index
         damageCounter.contentEditable = 'true';
         damageCounter.textContent = '10';
     };
-   
+    
     damageCounter.style.display = 'inline-block';
     damageCounter.style.left = `${targetRect.left - zoneElementRect.left + targetRect.width/1.5}px`;
     damageCounter.style.top = `${targetRect.top - zoneElementRect.top + targetRect.height/4}px`;
-    zoneElement.appendChild(damageCounter);
+    zone.element.appendChild(damageCounter);
 
     if (targetCard.image.parentElement.classList.contains('full-view')){
         damageCounter.style.display = 'none';
@@ -51,7 +48,7 @@ export const addDamageCounter = (user, zoneArrayString, zoneElementString, index
             const data = {
                 roomId : systemState.roomId,
                 user : oUser,
-                zoneArrayString: zoneArrayString,
+                zoneId: zoneId,
                 index: index,
                 textContent: damageCounter.textContent
             };
@@ -60,7 +57,7 @@ export const addDamageCounter = (user, zoneArrayString, zoneElementString, index
     }
 
     const handleResize = () => {
-        addDamageCounter(user, zoneArrayString, zoneElementString, index, true);
+        addDamageCounter(user, zoneId, index, true);
     };
 
     const handleRemove = (fromBlurEvent = false) => {
@@ -78,7 +75,7 @@ export const addDamageCounter = (user, zoneArrayString, zoneElementString, index
                 const data = {
                     roomId : systemState.roomId,
                     user : oUser,
-                    zoneArrayString: zoneArrayString,
+                    zoneId: zoneId,
                     index: index,
                 };
                 socket.emit('removeDamageCounter', data);
@@ -100,11 +97,11 @@ export const addDamageCounter = (user, zoneArrayString, zoneElementString, index
     targetCard.image.damageCounter = damageCounter;
 
     if (systemState.isTwoPlayer && emit){
+        const oUser = user === 'self' ? 'opp' : 'self';
         const data = {
             roomId : systemState.roomId,
-            user : sCard.oUser,
-            zoneArrayString : zoneArrayString,
-            zoneElementString: zoneElementString,
+            user : oUser,
+            zoneId : zoneId,
             index: index,
             emit: false
         };

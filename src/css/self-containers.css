@@ -13,7 +13,7 @@ body, input, textarea, button {
   color: white;
 }
 .dark-mode-3 {
-  color: rgb(149, 149, 149); /* Text color */
+  color: rgb(149, 149, 149);
 }
 .dark-mode-4 {
   background-color: #141414 !important;
@@ -51,8 +51,8 @@ body, input, textarea, button {
   z-index: -2;
 }
 .outline {
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1); /* Lighter shadow */
-  background-color: rgba(255, 255, 255, 0.1); /* Very faint/transparent background */
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+  background-color: rgba(255, 255, 255, 0.1);
 }
 .self-view {
   transform: translate(-50%, -50%);
@@ -78,7 +78,7 @@ body, input, textarea, button {
 .highlightBox {
   background-color: rgba(90, 110, 188, 0.3);
 }
-#handElement {
+#hand {
   border-top: 3px solid rgba(90, 110, 188, 0.864);
   position: fixed;
   bottom: 0;
@@ -90,7 +90,7 @@ body, input, textarea, button {
   z-index: 0;
   align-items: flex-end;
 }
-#handElement img {
+#hand img {
   box-sizing: border-box;
   width: auto;
   max-height: calc(100% - 3vh);
@@ -104,46 +104,46 @@ body, input, textarea, button {
   bottom: 30%;
   color:rgba(90, 110, 188, 0.864);
 }
-#benchElement {
+#bench {
   position: fixed;
   bottom: 35%;
   left: 10%;
   width: 79%;
   height: 25%;
   display: flex;
-  justify-content: center; /* Horizontally center-align child elements */
+  justify-content: center;
   align-items: flex-end;
   z-index: 0;
 }
-#benchElement div {
+#bench div {
   height: 100%;
   margin-right: 1%;
 }
-#activeElement {
+#active {
   position: fixed;
   bottom: 65%;
   left: 34%;
   width: 32%;
   height: 28%;
   display: flex;
-  justify-content: center; /* Horizontally center-align child elements */
+  justify-content: center;
   align-items: flex-end;
   z-index: 0;
 }
-#activeElement div {
+#active div {
   width: auto;
   height: 100%;
 }
-#prizesElement {
+#prizes {
   position: fixed;
   bottom: 36%;
   left: 1%;
   width: 6%;
   height: 43%;
   z-index: 0;
-  padding: 5px; /* Add padding */
+  padding: 5px;
 }
-#prizesElement img {
+#prizes img {
   margin-left: .1vw;
   width: auto;
   max-width: calc(50% - .1vw);
@@ -154,20 +154,20 @@ body, input, textarea, button {
 .prizes-small-size {
   max-height: 23%;
 }
-#lostZoneCoverElement {
+#lostZoneCover {
   position: fixed;
   bottom: 84%;
   left: 1%;
   width: 8%;
   height: 15%;
   z-index: 0;
-  background-color: rgba(233, 198, 233, 0.111); /* Add this for a very light transparent purple background */
+  background-color: rgba(233, 198, 233, 0.111);
   display: flex;
   justify-content: center; 
   align-items:flex-start;
-  border-radius: 2rem; /* Rounded corners */
+  border-radius: 2rem;
 }
-#lostZoneCoverElement img {
+#lostZoneCover img {
   width: auto;
   height: auto;
   max-width: 100%;
@@ -180,7 +180,7 @@ body, input, textarea, button {
   left: 9.5%;
   bottom: 90%;
 }
-#deckCoverElement {
+#deckCover {
   position: fixed;
   bottom: 66%;
   right: 1%;
@@ -192,7 +192,7 @@ body, input, textarea, button {
   align-items:flex-start; 
   z-index: 0;
 }
-#deckCoverElement img {
+#deckCover img {
   width: auto;
   height: auto;
   max-width: 100%;
@@ -217,7 +217,7 @@ body, input, textarea, button {
   right: 2%;
   bottom: 60%;
 }
-#discardCoverElement {
+#discardCover {
   position: fixed;
   bottom: 36%;
   right: 1%;
@@ -228,7 +228,7 @@ body, input, textarea, button {
   align-items:flex-start;
   z-index: 0;
 }
-#discardCoverElement img {
+#discardCover img {
   width: auto;
   height: auto;
   max-width: 100%;
@@ -236,19 +236,19 @@ body, input, textarea, button {
   object-fit: contain;
   left: 0;
 } 
-#boardElement {
+#board {
   position: fixed;
   display: flex;
-  flex-wrap: wrap; /* Allow items to wrap onto multiple lines */
+  flex-wrap: wrap;
   justify-content: center;
-  overflow-y: auto; /* Enable vertical scrolling */
+  overflow-y: auto;
   align-items: flex-end;
   padding: 5px;
   z-index: -1;
 }
-#boardElement img {
-  width: auto; /* Ensure images don't exceed the width of the container */
-  height: 70%; /* Maintain aspect ratio */
+#board img {
+  width: auto;
+  height: 70%;
   margin: .25vw;
 }
 .self-board {
@@ -256,14 +256,14 @@ body, input, textarea, button {
   left: 66%;
   width: 24%;
   height: 30%;
-  border-radius: 20px; /* Rounded corners */
+  border-radius: 20px;
 }
 .opp-board {
   bottom: 61%;
   right: 66%;
   width: 22%;
   height: 30%;
-  border-radius: 20px; /* Rounded corners */
+  border-radius: 20px;
 }
 .self-special-move-button-container {
   position: fixed;
@@ -272,8 +272,8 @@ body, input, textarea, button {
   right: 67%;
   display: flex;
   align-items: center;
-  justify-content: flex-end; /* Align items to the right */
-  gap: 5px; /* Set the desired space between items */
+  justify-content: flex-end;
+  gap: 5px;
 }
 .opp-special-move-button-container {
   position: fixed;
@@ -283,24 +283,24 @@ body, input, textarea, button {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 5px; /* Set the desired space between items */
+  gap: 5px;
 }
 #specialMoveButtonContainer button {
   min-height: 10px;
   max-height: 20px;
-  height: 6vh; /* Adjust as needed */
-  border-radius: 10px; /* Rounded edges */
-  font-size: clamp(6px, 3vh, 15px); /* Adjust font size as needed */
+  height: 6vh;
+  border-radius: 10px;
+  font-size: clamp(6px, 3vh, 15px);
   cursor: pointer;
   background: rgb(231, 228, 228);
-  color: rgb(149, 149, 149); /* Text color */
+  color: rgb(149, 149, 149);
   border: none;
 }
 #specialMoveButtonContainer button:hover {
-  background-color: rgb(117, 117, 117); /* Natural green background color */
-  color: rgb(255, 255, 255); /* Text color */
+  background-color: rgb(117, 117, 117);
+  color: rgb(255, 255, 255);
 }
-.used {
+.used-special-move {
   background-color: rgba(90, 110, 188, 0.3) !important;
 }
 .play-container {
@@ -318,7 +318,7 @@ body, input, textarea, button {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: rgba(169, 169, 169, 0.5); /* Transparent dark grey */
+  background-color: rgba(169, 169, 169, 0.5);
   border: 1px solid #ccc;
   border-radius: 5px;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
@@ -349,13 +349,13 @@ body, input, textarea, button {
   border-radius: 10%;
   background-color: rgba(59, 141, 173, 0.708);
 }
-#attachedCardsElement {
+#attachedCards {
   display: none;
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: rgba(169, 169, 169, 0.5); /* Transparent dark grey */
+  background-color: rgba(169, 169, 169, 0.5);
   border: 1px solid #ccc;
   border-radius: 0 0 15px 15px;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
@@ -363,11 +363,11 @@ body, input, textarea, button {
   width: 69%;
   height: 75%;
 }
-#attachedCardsElement img {
+#attachedCards img {
   height: 33%;
   margin: 0.5%;
 }
-#attachedCardsElement button {
+#attachedCards button {
   width: 17%;
 }
 .header {
@@ -375,10 +375,10 @@ body, input, textarea, button {
   top: -3%;
   left: 50%;
   width: 100%;
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
   text-align: center;
   border-radius: 15px 15px 0 0;
-  color: white; /* White text */
+  color: white;
   font-size: clamp(12px, 3vh, 20px);
   background-color: #7081c4;
   border: 2px solid rgb(112 129 196);
@@ -390,13 +390,13 @@ body, input, textarea, button {
 .opp-header {
   transform: translateX(-50%) scaleX(-1) scaleY(-1);
 }
-#viewCardsElement {
+#viewCards {
   display: none;
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: rgba(169, 169, 169, 0.5); /* Transparent dark grey */
+  background-color: rgba(169, 169, 169, 0.5);
   border: 1px solid #ccc;
   border-radius: 0 0 15px 15px;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
@@ -404,7 +404,7 @@ body, input, textarea, button {
   width: 69%;
   height: 75%;
 }
-#viewCardsElement img {
+#viewCards img {
   height: 33%;
   margin: 0.5%;
 }
@@ -415,10 +415,10 @@ body, input, textarea, button {
   left: 50%;
   transform: translateX(-50%);
   background-color: #dddddd;
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadowing */
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
   text-align: center;
   padding: 10px;
-  border-radius: 15px; /* More rounded corners */
+  border-radius: 15px;
 }
 .opp-zone-button-container {
   display: none;
@@ -435,16 +435,16 @@ body, input, textarea, button {
 }
 .zone-button {
   margin: 0 5px;
-  width: 20%; /* Same width */
-  padding: 5px; /* Add some padding */
-  border-radius: 5px; /* Rounded corners */
-  border: none; /* Remove border */
-  background-color: #4c4d4f; /* Blue background */
-  color: white; /* White text */
-  cursor: pointer; /* Change cursor on hover */
+  width: 20%;
+  padding: 5px;
+  border-radius: 5px;
+  border: none;
+  background-color: #4c4d4f;
+  color: white;
+  cursor: pointer;
 }
 .zone-button:hover {
-  background-color: #adadad; /* Darker blue on hover */
+  background-color: #adadad;
 }
 .zone-button-container {
   position: sticky;
@@ -463,7 +463,7 @@ body, input, textarea, button {
 .zone {
   display: none;
   position: fixed;
-  background-color: rgba(169, 169, 169, 0.867); /* Transparent dark grey */
+  background-color: rgba(169, 169, 169, 0.867);
   border: 1px solid #ccc;
   border-radius: 15px 15px 15px 15px;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
@@ -473,56 +473,56 @@ body, input, textarea, button {
   overflow-y: auto;
   z-index: 3;
 }
-#deckElement label {
+#deck label {
   position: relative;
   cursor: pointer;
 }
-#deckElement img {
+#deck img {
   display: inline-block;
   width: 8%;
   height: auto;
   margin: 1px;
 }
-#lostZoneElement img {
+#lostZone img {
   display: inline-block;
   width: 12%;
   height: auto;
   margin: 1px;
 }
-#discardElement img {
+#discard img {
   display: inline-block;
   width: 10%;
   height: auto;
   margin: 1px;
 }
 
-#handElement img,
-#benchElement div img,
-#lostZoneCoverElement img,
-#deckCoverElement img,
-#discardCoverElement img,
-#boardElement img,
+#hand img,
+#bench div img,
+#lostZoneCover img,
+#deckCover img,
+#discardCover img,
+#board img,
 .play-container img,
 .full-view img,
-#attachedCardsElement img,
-#viewCardsElement img,
-#deckElement img,
-#lostZoneElement img,
-#discardElement img,
-#prizesElement img
+#attachedCards img,
+#viewCards img,
+#deck img,
+#lostZone img,
+#discard img,
+#prizes img
 {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, .3); /* Adjust the values for your desired shadow effect */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .3);
   border-radius: 0.275rem;
   cursor: pointer;
 }
-#handElement,
-#benchElement,
-#deckCoverElement,
-#discardCoverElement,
-#activeElement,
-#prizesElement
+#hand,
+#bench,
+#deckCover,
+#discardCover,
+#active,
+#prizes
 {
-  border-radius: .5rem; /* Rounded corners */
+  border-radius: .5rem;
 }
 .default-rotation {
   transform: rotate(0deg) !important;

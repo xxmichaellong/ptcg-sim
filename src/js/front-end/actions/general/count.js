@@ -1,20 +1,14 @@
-import { selfContainerDocument, oppContainerDocument } from '../../front-end.js'
-import { stringToVariable } from '../../setup/zones/zone-string-to-variable.js';
-
-export const getZoneCount = (zoneArray) => zoneArray.length;
+import { oppContainerDocument, selfContainerDocument } from '../../front-end.js';
+import { getZone } from '../../setup/zones/get-zone.js';
 
 export const updateCount = () => {
-    const zoneArrayString = ['deckArray', 'discardArray', 'lostZoneArray', 'handArray'];
+    const zoneIds = ['deck', 'discard', 'lostZone', 'hand'];
   
-    zoneArrayString.forEach((zoneArrayString) => {
-        const selfElement = selfContainerDocument.getElementById(`${zoneArrayString}Count`);
-        const oppElement = oppContainerDocument.getElementById(`${zoneArrayString}Count`);
+    zoneIds.forEach((zoneId) => {
+        const selfZoneCount = selfContainerDocument.getElementById(`${zoneId}Count`);
+        const oppZoneCount = oppContainerDocument.getElementById(`${zoneId}Count`);
     
-        const selfZoneArray = stringToVariable('self', zoneArrayString);
-        const oppZoneArray = stringToVariable('opp', zoneArrayString);
-
-        selfElement.textContent = getZoneCount(selfZoneArray);
-        oppElement.textContent = getZoneCount(oppZoneArray);
+        selfZoneCount.textContent = getZone('self', zoneId).getCount();
+        oppZoneCount.textContent = getZone('opp', zoneId).getCount();
     });
 };
-  

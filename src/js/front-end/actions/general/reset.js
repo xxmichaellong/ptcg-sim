@@ -1,50 +1,53 @@
-import { activeArray, activeElement, attachedCardsArray, attachedCardsElement, benchArray, benchElement, boardArray, boardElement, deckArray, deckCoverElement, deckElement, discardArray, discardCoverElement, discardElement, handArray, handElement, lostZoneArray, lostZoneCoverElement, lostZoneElement, oppActiveArray, oppActiveElement, oppAttachedCardsArray, oppAttachedCardsElement, oppBenchArray, oppBenchElement, oppBoardArray, oppBoardElement, oppContainerDocument, oppDeckArray, oppDeckCoverElement, oppDeckElement, oppDiscardArray, oppDiscardCoverElement, oppDiscardElement, oppHandArray, oppHandElement, oppLostZoneArray, oppLostZoneCoverElement, oppLostZoneElement, oppPrizesArray, oppPrizesElement, oppViewCardsArray, oppViewCardsElement, systemState, prizesArray, prizesElement, selfContainerDocument, socket, stadiumArray, stadiumElement, viewCardsArray, viewCardsElement } from '../../front-end.js';
-import { removeImages } from '../../image-logic/remove-images.js';
+import { oppContainerDocument, selfContainerDocument, socket, systemState } from '../../front-end.js';
 import { appendMessage } from '../../setup/chatbox/messages.js';
 import { buildDeck } from '../../setup/deck-constructor/build-deck.js';
 import { determineDeckData } from '../../setup/general/determine-deckdata.js';
 import { determineUsername } from '../../setup/general/determine-username.js';
-import { hideElementsIfEmpty } from './close-popups.js';
+import { removeImages } from '../../setup/image-logic/remove-images.js';
+import { getZone } from '../../setup/zones/get-zone.js';
+import { hideZoneElementsIfEmpty } from './close-popups.js';
 import { updateCount } from './count.js';
 
 export const reset = (user, clean = false, emit = true, build = true, invalidMessage = true) => {
+    const stadium = getZone('neutral', 'stadium');
     systemState.turn = 0;
-    let zoneArrays;
-    let zoneElements;
-    if (stadiumArray[0] && ((stadiumArray[0].image.user === 'self' && user === 'self') || (stadiumArray[0].image.user !== 'self' && user !== 'self'))){
-        stadiumArray.length = 0;
+    if (stadium.array[0] && ((stadium.array[0].image.user === 'self' && user === 'self') || (stadium.array[0].image.user !== 'self' && user !== 'self'))){
+        stadium.array.length = 0;
         document.querySelectorAll('.tab').forEach(element => {
             element.classList.remove('tab');
         });
-        removeImages(stadiumElement);
+        removeImages(stadium.element);
     };
     if (user === 'self'){
-        zoneArrays = [deckArray, lostZoneArray, discardArray, prizesArray, activeArray, benchArray, handArray, attachedCardsArray, viewCardsArray, boardArray];
-        zoneElements = [deckCoverElement, deckElement, lostZoneElement, discardElement, prizesElement, activeElement, benchElement, handElement, lostZoneCoverElement, discardCoverElement, attachedCardsElement, boardElement, viewCardsElement]
-
         selfContainerDocument.querySelectorAll('.self-circle, .opp-circle, .self-tab, .opp-tab').forEach(element => {
             element.textContent = '0'
             element.handleRemove();
         });
-        selfContainerDocument.querySelectorAll('.used').forEach(element => {
-            element.classList.remove('used');
+        selfContainerDocument.querySelectorAll('.used-special-move').forEach(element => {
+            element.classList.remove('used-special-move');
         });
     } else {
-        zoneArrays = [oppDeckArray, oppLostZoneArray, oppDiscardArray, oppPrizesArray, oppActiveArray, oppBenchArray, oppHandArray, oppAttachedCardsArray, oppViewCardsArray, oppBoardArray];
-        zoneElements = [oppDeckElement, oppPrizesElement, oppDeckCoverElement, oppLostZoneElement, oppDiscardElement, oppActiveElement, oppBenchElement, oppHandElement, oppLostZoneCoverElement, oppDiscardCoverElement, oppAttachedCardsElement, oppViewCardsElement, oppBoardElement]
-
         oppContainerDocument.querySelectorAll('.self-circle, .opp-circle, .self-tab, .opp-tab').forEach(element => {
             element.textContent = '0'
             element.handleRemove();
         });
-        oppContainerDocument.querySelectorAll('.used').forEach(element => {
-            element.classList.remove('used');
+        oppContainerDocument.querySelectorAll('.used-special-move').forEach(element => {
+            element.classList.remove('used-special-move');
         });
     };
-    zoneArrays.forEach(array => array.length = 0);
-    zoneElements.forEach(element => removeImages(element));
 
-    hideElementsIfEmpty();
+    const zoneIds = ['deck', 'lostZone', 'discard', 'prizes', 'active', 'bench', 'hand', 'attachedCards', 'viewCards', 'board'];
+
+    zoneIds.forEach(zoneId => {
+        const zone = getZone(user, zoneId);
+        zone.array.length = 0;
+        removeImages(zone.element);
+        if (zone.elementCover){
+            removeImages(zone.elementCover);
+        };
+    });
+
+    hideZoneElementsIfEmpty();
 
     if (build){
         if (determineDeckData(user)){
