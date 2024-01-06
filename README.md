@@ -1,8 +1,8 @@
 # PTCG-sim
 
-Welcome to the PTCG-sim codebase! We're currently in the process of documenting extensively. Stay tuned for detailed information about our open-source journey and how you can contribute. 
+Welcome to the PTCG-sim codebase! We're currently in the process of documenting — stay tuned for detailed information about our open-source journey and how you can contribute. 
 
-PTCG-sim is primarily built with vanilla JavaScript, with Node.js, Express, and Socket.io as the key frameworks. Socket.io is utilized for two-player functionality.
+PTCG-sim is primarily built with JavaScript, using Node.js, Express, and Socket.io as the key frameworks. Socket.io is utilized for two-player functionality.
 
 ## Running PTCG-sim Locally
 
@@ -14,11 +14,11 @@ Follow these steps to run PTCG-sim on your local machine:
    ```javascript
    const socket = io('http://localhost:4000/');
    ```
-   Ensure that the URL is consistent with the one in the server.
+   Ensure that the URL is consistent with the one in the server.js file.
 
 3. **Start Local Server:** Use Node.js to start running `server.js` locally. This will load the repository, starting with `front-end.js`. This file initializes various global variables, sets up the DOM, and registers socket event listeners.
 
-Feel free to explore the codebase and play around with the sim! I'm always happy to answer any questions and open to suggestions.
+Feel free to explore the codebase and play around with the sim! I'm happy to answer any questions and I'm always open to suggestions :)
 
 ## Contributing
 
@@ -34,7 +34,6 @@ Feel free to reach out on:
 
 - [Twitter](https://twitter.com/xxmichaellong)
 - [Discord](https://discord.com/invite/Kj8fhVns4g)
-- GitHub
 
 Happy testing!
 
