@@ -33,10 +33,6 @@ export const moveToBoard = () => {
     moveCard(mouseClick.user, mouseClick.zoneId, 'board', mouseClick.cardIndex);
 }
 
-export const shuffleDeck = (user) => {
-    shuffleZone(user, 'deck');
-}
-
 export const draw = (user) => {
     let drawAmount;
     const userInput = window.prompt('Draw how many cards?', '0');

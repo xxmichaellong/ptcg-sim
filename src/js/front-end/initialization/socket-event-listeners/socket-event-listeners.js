@@ -14,42 +14,40 @@ import { viewDeck } from '../../actions/zones/deck-actions.js'
 import { shuffleZone } from '../../actions/zones/shuffle-zone.js'
 import { socket, systemState } from '../../front-end.js'
 import { appendMessage } from '../../setup/chatbox/messages.js'
-import { exchangeData } from '../../setup/deck-constructor/fetch-opp-data.js'
+import { exchangeData } from '../../setup/deck-constructor/exchange-data.js'
 import { determineUsername } from '../../setup/general/determine-username.js'
 import { getZone } from '../../setup/zones/get-zone.js'
 
 export const initializeSocketEventListeners = () => {
+    socket.on('connect', () => {
+        if (systemState.isTwoPlayer){
+            const data = {
+                roomId: systemState.roomId,
+                username: systemState.p2SelfUsername
+            };
+            socket.emit('userReconnected', data);
+        };
+    });
+
     socket.on('joinGame', () => {
         const connectedRoom = document.getElementById('connectedRoom');
         const lobby = document.getElementById('lobby');
         const roomHeaderText = document.getElementById('roomHeaderText');
         const chatbox = document.getElementById('chatbox');
         const p2ExplanationBox = document.getElementById('p2ExplanationBox');
-
-        systemState.isTwoPlayer = true;
-        reset('opp', true, false, false);
-        reset('self', true, true, true, false);
         roomHeaderText.textContent = 'id: ' + systemState.roomId;
         chatbox.innerHTML = '';
-        if (systemState.pov.user === 'opp'){
-            flipBoard();
-        };
         connectedRoom.style.display = 'flex';
         lobby.style.display = 'none';
         p2ExplanationBox.style.display = 'none';
-        exchangeData()
-            .then(() => {
-                reset('opp', true, true, true, false);
-                appendMessage('opp', systemState.p2OppUsername + ' is here!', 'announcement', false);
-            })
-            .catch((error) => {
-                console.log(error);
-            });
+        if (systemState.pov.user === 'opp'){
+            flipBoard();
+        };
+        systemState.isTwoPlayer = true;
+        reset('opp', true, false, false, false);
+        reset('self', true, false, true, false);
+        exchangeData();
         appendMessage('self', systemState.p2SelfUsername + ' joined', 'announcement', false);
-    });
-
-    socket.on('leaveGameMessage', (otherPlayerUsername) => {
-        appendMessage('opp', otherPlayerUsername + ' left', 'announcement', false);
     });
 
     socket.on('roomReject', () => {
@@ -81,18 +79,39 @@ export const initializeSocketEventListeners = () => {
             document.body.removeChild(overlay);
         });
     });
+
+    socket.on('leaveRoom', (data) => {
+        appendMessage('opp', data.username + ' left the room', 'announcement', false);
+    });
+
+    socket.on('userDisconnected', (username) => {
+        appendMessage('opp', username + ' disconnected', 'announcement', false);
+    });
+
+    socket.on('disconnect', () => {
+        if(systemState.isTwoPlayer){
+            appendMessage('self', systemState.p2SelfUsername + ' disconnected', 'announcement', false);
+        };
+    });
+
+    socket.on('userReconnected', (data) => {
+        appendMessage('opp', data.username + ' reconnected!', 'announcement', false);
+    });
     
     socket.on('exchangeData', (data) => {
         systemState.p2OppUsername = data.username;
         systemState.p2OppDeckData = data.deckData;
         appendMessage('opp', systemState.p2OppUsername + ' joined', 'announcement', false);
         reset('opp', true, true, true, false);
-        const exchangeData = {
-            roomId : systemState.roomId,
-            username : systemState.p2SelfUsername,
-            deckData : systemState.selfDeckData,
+        if (data.emit){
+            const data = {
+                roomId : systemState.roomId,
+                username : systemState.p2SelfUsername,
+                deckData : systemState.selfDeckData,
+                emit: false
+            };
+            socket.emit('exchangeData', data);
         };
-        socket.emit('sentData', exchangeData);
     });
 
     socket.on('deckData', (data) => {

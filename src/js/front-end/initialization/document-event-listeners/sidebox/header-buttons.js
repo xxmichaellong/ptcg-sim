@@ -13,13 +13,16 @@ export const initializeHeaderButtons = () => {
         if (!systemState.isTwoPlayer) {
             show('p1Box', p1Button);
         } else if (window.confirm('Are you sure you want to leave the room? Battle log will be erased.')) {
-            socket.disconnect();
+            const data = {
+                roomId: systemState.roomId,
+                username: systemState.p2SelfUsername
+            };
+            socket.emit('leaveRoom', data);
             p2ExplanationBox.style.display = 'block';
             lobby.style.display = 'block';
             connectedRoom.style.display = 'none';
             systemState.isTwoPlayer = false;
             systemState.roomId = '';
-            socket.connect();
             reset('opp', true, false, true, false);
             reset('self', true, false, true, false);
             p2Chatbox.innerHTML = '';

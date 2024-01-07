@@ -43,18 +43,20 @@ export const initializeRoomButtons = () => {
     const leaveRoomButton = document.getElementById('leaveRoomButton');
     leaveRoomButton.addEventListener('click', () => {
         if (window.confirm('Are you sure you want to leave the room? Battle log will be erased.')) {
+            const data = {
+                roomId: systemState.roomId,
+                username: systemState.p2SelfUsername
+            };
+            socket.emit('leaveRoom', data);
             const connectedRoom = document.getElementById('connectedRoom');
             const lobby = document.getElementById('lobby');
             const p2ExplanationBox = document.getElementById('p2ExplanationBox');
             const p2Chatbox = document.getElementById('p2Chatbox');
-
-            socket.disconnect();
             lobby.style.display = 'block';
             p2ExplanationBox.style.display = 'block';
             connectedRoom.style.display = 'none';
             systemState.isTwoPlayer = false;
             systemState.roomId = '';
-            socket.connect();
             reset('opp', true, false, true, false);
             reset('self', true, false, true, false);
             p2Chatbox.innerHTML = '';
