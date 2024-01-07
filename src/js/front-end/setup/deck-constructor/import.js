@@ -278,13 +278,13 @@ confirmButton.addEventListener('click', () => {
     } else if (user === 'self'){
         show('p2Box', p2Button);
     };
-    if (!(user === 'opp' && systemState.isTwoPlayer)){
+    if (!(systemState.isTwoPlayer && user === 'opp')){
         reset(user, true, false, true, false);
         appendMessage(user, determineUsername(user) + ' imported deck', 'announcement', false);
     } else {
         invalidText.style.display = 'block';
     };
-    if (user === 'self'){
+    if (systemState.isTwoPlayer && user === 'self'){
         const oUser = user === 'self' ? 'opp' : 'self';
         const data = {
             roomId : systemState.roomId,
