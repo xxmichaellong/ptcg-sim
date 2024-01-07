@@ -1,8 +1,17 @@
 import { getZone } from "../../setup/zones/get-zone.js";
 
-// exports a WebSocket connection using the Socket.IO library
-// export const socket = io('https://ptcgsim.online');
-export const socket = io('http://localhost:4000/');
+// exports a WebSocket connection using the Socket.IO library. initialize serverOffset to keep track of the socket events received
+// export const socket = io('https://ptcgsim.online', {
+//     auth: {
+//       serverOffset: 0
+//     }
+// });
+
+export const socket = io('http://localhost:4000/', {
+    auth: {
+      serverOffset: 0
+    }
+});
 // export references to HTML elements 'selfContainer' and 'oppContainer', and their respective content window documents for ease of access to the iframes
 export const selfContainer = document.getElementById('selfContainer');
 export const selfContainerDocument = selfContainer.contentWindow.document;
@@ -48,4 +57,11 @@ export const mouseClick = {
             return getZone(this.user, this.zoneId).array[this.cardIndex];
         };
     }
+};
+
+//Create a counter to keep track of moves
+
+export const counter = {
+    turn: 0,
+    data: [],
 };

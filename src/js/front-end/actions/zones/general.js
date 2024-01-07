@@ -14,7 +14,7 @@ export const shuffleAll = (event) => {
     const count = zone.getCount();
 
     for (let i = 0; i < count; i++) {
-        moveCard(user, zoneId, 'deck', 0)
+        moveCard(user, zoneId, 'deck', 0);
     };
 
     shuffleZone(user, 'deck');
