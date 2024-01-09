@@ -17,13 +17,13 @@ export const appendMessage = (user, message, type, emit = true) => {
     chat.appendChild(p);
     chat.scrollTop = chat.scrollHeight;
     if (systemState.isTwoPlayer && emit){
-        const oUser = user === 'self' ? 'opp' : 'self';
+        user = user === 'self' ? 'opp' : 'self';
         const data = {
-            roomId : systemState.roomId,
-            user: oUser,
+            roomId: systemState.roomId,
+            user: user,
             message: message,
             type : type,
-            emit : false
+            emit: false
         };
         socket.emit('appendMessage', data);
     };

@@ -6,7 +6,7 @@ import { hideOptionsContextMenu } from '../../../../setup/chatbox/hide-options-c
 
 export const initializeP1BottomButtons = () => {
     const setupButton = document.getElementById('setupButton');
-    setupButton.addEventListener('click', () => setup(systemState.pov.user));
+    setupButton.addEventListener('click', () => setup(systemState.initiator));
 
     const setupBothButton = document.getElementById('setupBothButton');
     setupBothButton.addEventListener('click', () => {
@@ -15,7 +15,7 @@ export const initializeP1BottomButtons = () => {
     });
 
     const resetButton = document.getElementById('resetButton');
-    resetButton.addEventListener('click', () => reset(systemState.pov.user));
+    resetButton.addEventListener('click', () => reset(systemState.initiator));
 
     const resetBothButton = document.getElementById('resetBothButton');
     resetBothButton.addEventListener('click', () => {

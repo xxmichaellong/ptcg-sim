@@ -1,7 +1,7 @@
 import { oppContainerDocument, selfContainerDocument, socket, systemState } from '../../front-end.js';
 import { getZone } from '../../setup/zones/get-zone.js';
 
-export const addAbilityCounter = (user, zoneId, index, emit = true) => {
+export const addAbilityCounter = (user, zoneId, index) => {
     //identify target image and zone
     const zone = getZone(user, zoneId);
     const targetCard = zone.array[index];
@@ -43,7 +43,7 @@ export const addAbilityCounter = (user, zoneId, index, emit = true) => {
     abilityCounter.style.zIndex = '1';
 
     const handleResize = () => {
-        addAbilityCounter(user, zoneId, index, false);
+        addAbilityCounter(user, zoneId, index);
     };
 
     const handleRemove = (emit = true) => {
@@ -53,10 +53,10 @@ export const addAbilityCounter = (user, zoneId, index, emit = true) => {
         targetCard.image.abilityCounter = null;
     
         if (systemState.isTwoPlayer && emit){
-            const oUser = user === 'self' ? 'opp' : 'self';
+            user = user === 'self' ? 'opp' : 'self';
             const data = {
-                roomId : systemState.roomId,
-                user : oUser,
+                roomId: systemState.roomId,
+                user: user,
                 zoneId: zoneId,
                 index: index,
                 emit: false
@@ -67,23 +67,10 @@ export const addAbilityCounter = (user, zoneId, index, emit = true) => {
 
     //attach functions to abilityCounter so they can accessed later to handle changes to it
     abilityCounter.handleRemove = handleRemove;
-
     abilityCounter.handleResize = handleResize;
     window.addEventListener('resize', handleResize);
 
     //save the abilityCounter on the card
     targetCard.image.abilityCounter = abilityCounter;
-
-    if (systemState.isTwoPlayer && emit){
-        const oUser = user === 'self' ? 'opp' : 'self';
-        const data = {
-            roomId : systemState.roomId,
-            user : oUser,
-            zoneId : zoneId,
-            index: index,
-            emit: false
-        };
-        socket.emit('addAbilityCounter', data);
-    };
 }
 

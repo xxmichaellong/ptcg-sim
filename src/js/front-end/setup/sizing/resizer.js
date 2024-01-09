@@ -160,7 +160,7 @@ export const adjustCards = (user, zoneId, ratio) => {
         };
         if (card.image.damageCounter){
             const index = zone.array.findIndex(loopCard => loopCard === card);
-            addDamageCounter(user, zoneId, index, false);
+            addDamageCounter(user, zoneId, index, false, false);
         };
         if (card.image.specialCondition){
             const index = zone.array.findIndex(loopCard => loopCard === card);
@@ -168,7 +168,7 @@ export const adjustCards = (user, zoneId, ratio) => {
         };
         if (card.image.abilityCounter){
             const index = zone.array.findIndex(loopCard => loopCard === card);
-            addAbilityCounter(user, zoneId, index, false);
+            addAbilityCounter(user, zoneId, index);
         };
     });
 }

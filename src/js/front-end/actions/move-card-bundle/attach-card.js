@@ -2,7 +2,7 @@ import { resetImage } from "../../setup/image-logic/reset-image.js";
 import { matchRotation } from "../general/rotate-card.js";
 import { moveCard } from "./move-card.js";
 
-export const attachCard = (user, movingCard, targetCard, dZoneId, dZone) => {
+export const attachCard = (initiator, user, movingCard, targetCard, dZoneId, dZone) => {
     //figure out where card is coming from-same parent or different? being reattached or evolve?
     const nonEvolveAttachment = movingCard.image.target === 'on' || !movingCard.image.parentElement.classList.contains('play-container');
     // format the card so it's attached to targetImage
@@ -42,7 +42,7 @@ export const attachCard = (user, movingCard, targetCard, dZoneId, dZone) => {
         for (let i = 0; i < dZone.getCount() - 1; i++){
             if (dZone.array[i].image.relative === movingCard.image.relative && !['Pokémon', 'Energy'].includes(dZone.array[i].type)){
                 const targetIndex = dZone.array.findIndex(card => card.image === movingCard.image.relative);
-                moveCard(user, dZoneId, dZoneId, i, targetIndex, false);
+                moveCard(initiator, user, dZoneId, dZoneId, i, targetIndex);
                 i--;
             };
             if (dZone.array[i] === movingCard){

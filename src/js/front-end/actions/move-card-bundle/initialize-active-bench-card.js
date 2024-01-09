@@ -35,10 +35,10 @@ export const initializeActiveBenchCard = (user, movingCard, dZoneId, dZone) => {
                     for (let i = 0; i < selectedBenchZone.getCount(); i++){
                         const image = selectedBenchZone.array[i].image;
                         if (image.damageCounter){
-                            addDamageCounter(user, 'bench', i, false);
+                            addDamageCounter(user, 'bench', i, false, false);
                         };
                         if (image.abilityCounter){
-                            addAbilityCounter(user, 'bench', i, false);
+                            addAbilityCounter(user, 'bench', i);
                         };
                     };
                 };
@@ -47,13 +47,13 @@ export const initializeActiveBenchCard = (user, movingCard, dZoneId, dZone) => {
                     for (let i = 0; i < selectedActiveZone.getCount(); i++){
                         const image = selectedActiveZone.array[i].image;
                         if (image.damageCounter){
-                            addDamageCounter(user, 'active', i, false);
+                            addDamageCounter(user, 'active', i, false, false);
                         };
                         if (image.specialCondition){
                             addSpecialCondition(user, 'active', i, false);
                         };
                         if (image.abilityCounter){
-                            addAbilityCounter(user, 'active', i, false);
+                            addAbilityCounter(user, 'active', i);
                         };
                     };
                 };
@@ -70,10 +70,10 @@ export const initializeActiveBenchCard = (user, movingCard, dZoneId, dZone) => {
                 for (let i = 0; i < dZone.getCount(); i++) {
                     const image = dZone.array[i].image;
                     if (image.damageCounter) {
-                        addDamageCounter(user, 'bench', i, false);
+                        addDamageCounter(user, 'bench', i, false, false);
                     };
                     if (image.abilityCounter) {
-                        addAbilityCounter(user, 'bench', i, false);
+                        addAbilityCounter(user, 'bench', i);
                     };
                 };
             };

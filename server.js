@@ -2,8 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
-const sqlite3 = require('sqlite3');
-const { open } = require('sqlite');
 const { instrument } = require("@socket.io/admin-ui");
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
@@ -29,23 +27,6 @@ async function main() {
         }
     });
 
-    // // SQLite Database Setup
-    // const db = await open({
-    //     filename: 'chat.db',
-    //     driver: sqlite3.Database
-    // });
-
-    // // Database Table Creation
-    // await db.exec('DROP TABLE IF EXISTS events;');
-    // await db.exec(`
-    //     CREATE TABLE IF NOT EXISTS events (
-    //         id INTEGER PRIMARY KEY AUTOINCREMENT,
-    //         data TEXT,
-    //         event TEXT,
-    //         roomId TEXT
-    //     );
-    // `);
-
     // Bcrypt Configuration
     const saltRounds = 10;
     const plainPassword = process.env.ADMIN_PASSWORD || "defaultPassword";
@@ -60,9 +41,6 @@ async function main() {
         },
         mode: "development",
     });
-
-    //keep a record of all of the room counters
-    const turnCounter = {};
 
     //Socket.IO Connection Handling
     io.on('connection', async (socket) => {
@@ -81,10 +59,6 @@ async function main() {
 
         socket.on('joinGame', (roomId, username) => {
             socket.join(roomId);
-            //initialize turn counter
-            if (!turnCounter[roomId]){
-                turnCounter[roomId] = { turn: 0 }
-            };
             const clientsInRoom = io.sockets.adapter.rooms.get(roomId);
             if (clientsInRoom.size < 3){
                 socket.data.disconnectListener = () => disconnectHandler(roomId, username);
@@ -104,31 +78,54 @@ async function main() {
 
         // List of socket events
         const events = [
-            'exchangeData',
-            'deckData',
-            'appendMessage',
             'reset',
+            'setup',
             'takeTurn',
-            'VSTARGXFunction',
-            'moveCard',
+            'draw',
+            'moveCardBundle',
+            'shuffleIntoDeck',
+            'moveToDeckTop',
+            'switchWithDeckTop',
+            'viewDeck',
+            'shuffleAll',
+            'discardAll',
+            'lostZoneAll',
+            'handAll',
+            'leaveAll',
+            'discardAndDraw',
+            'shuffleAndDraw',
+            'shuffleBottomAndDraw',
+            'shuffleZone',
+            'useAbility',
+            'removeAbilityCounter',
             'addDamageCounter',
             'updateDamageCounter',
             'removeDamageCounter',
             'addSpecialCondition',
             'updateSpecialCondition',
             'removeSpecialCondition',
-            'addAbilityCounter',
-            'removeAbilityCounter',
-            'resetCounters',
-            'shuffleZone',
-            'viewDeck',
-            'rotateCard',
+            'discardBoard',
+            'handBoard',
+            'shuffleBoard',
+            'lostZoneBoard',
+            'lookAtCards',
+            'stopLookingAtCards',
+            'revealCards',
+            'hideCards',
             'revealShortcut',
             'hideShortcut',
+            'lookShortcut',
             'stopLookingShortcut',
-            'faceDown',
+            'playRandomCardFaceDown',
+            'rotateCard',
             'changeType',
-            'leaveRoom'
+            'attack',
+            'pass',
+            'VSTARGXFunction',
+            'appendMessage',
+            'exchangeData',
+            'deckData',
+            'leaveRoom',
         ];
 
         // Register event listeners using the common function
@@ -136,41 +133,7 @@ async function main() {
             socket.on(event, (data) => {
                 emitToRoom(event, data);   
             });
-            // socket.on(event, async (data) => {
-            //     let result;
-            //     try {
-            //         // Store the event in the database
-            //         result = await db.run('INSERT INTO events (data, event, roomId) VALUES (?, ?, ?)',
-            //             [JSON.stringify(data), event, data.roomId]
-            //         );
-            //     } catch (e) {
-            //         console.error('Database error:', e);
-            //         return;
-            //     }          
-            //     // Include the offset with the message
-            //     emitToRoom(event, data, result.lastID);   
-            // });
-        };        
-
-        // if (!socket.recovered) {
-        //     // if the connection state recovery was not successful
-        //     try {
-        //         await db.each(
-        //             'SELECT id, data, event FROM events WHERE id > :serverOffset AND roomId = :roomId',
-        //             {
-        //                 ':serverOffset': socket.handshake.auth.serverOffset || 0,
-        //                 ':roomId': socket.data.roomId
-        //             },
-        //             (_err, row) => {
-        //                 console.log('hi')
-        //                 // emit recovered messages with event information
-        //                 socket.emit(row.event, JSON.parse(row.data)); // Parse JSON string to an object
-        //             }
-        //         );
-        //     } catch (e) {
-        //         // something went wrong
-        //     }
-        // };        
+        }; 
     });
 
     // Server Port Configuration

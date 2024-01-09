@@ -1,23 +1,19 @@
 import { draw, handleViewButtonClick } from '../../../actions/zones/deck-actions.js';
 import { shuffleZone } from '../../../actions/zones/shuffle-zone.js';
-import { mouseClick } from '../../../front-end.js';
-import { appendMessage } from '../../../setup/chatbox/messages.js';
-import { determineUsername } from '../../../setup/general/determine-username.js';
+import { mouseClick, systemState } from '../../../front-end.js';
 
 export const initializeDeckButtons = () => {
     const shuffleDeckButton = document.getElementById('shuffleDeckButton');
     shuffleDeckButton.addEventListener('click', () => {
-        const user = mouseClick.user;
-        shuffleZone(mouseClick.user, 'deck');
-        appendMessage(user, determineUsername(user) + ' shuffled deck', 'player');
+        shuffleZone(systemState.initiator, mouseClick.cardUser, 'deck');
     });
 
     const drawButton = document.getElementById('drawButton');
-    drawButton.addEventListener('click', () => draw(mouseClick.user));
+    drawButton.addEventListener('click', () => draw(systemState.initiator, mouseClick.cardUser));
 
     const viewTopButton = document.getElementById('viewTopButton');
-    viewTopButton.addEventListener('click', () => handleViewButtonClick(mouseClick.user, true));
+    viewTopButton.addEventListener('click', () => handleViewButtonClick(mouseClick.cardUser, true));
 
     const viewBottomButton = document.getElementById('viewBottomButton');
-    viewBottomButton.addEventListener('click', () => handleViewButtonClick(mouseClick.user, false));
+    viewBottomButton.addEventListener('click', () => handleViewButtonClick(mouseClick.cardUser, false));
 };

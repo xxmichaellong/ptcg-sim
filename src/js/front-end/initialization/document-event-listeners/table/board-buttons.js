@@ -6,10 +6,10 @@ import { oppContainerDocument, selfContainerDocument, systemState } from '../../
 
 export const initializeBoardButtons = () => {
     const turnButton = document.getElementById('turnButton');
-    turnButton.addEventListener('click', () => takeTurn(systemState.pov.user));
+    turnButton.addEventListener('click', () => takeTurn(systemState.initiator, systemState.initiator));
 
     const flipCoinButton = document.getElementById('flipCoinButton');
-    flipCoinButton.addEventListener('click', () => flipCoin(systemState.pov.user));
+    flipCoinButton.addEventListener('click', () => flipCoin(systemState.initiator));
     
     const flipBoardButton = document.getElementById('flipBoardButton');
     flipBoardButton.addEventListener('click', flipBoard);

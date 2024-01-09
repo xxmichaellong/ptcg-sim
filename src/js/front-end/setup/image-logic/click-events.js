@@ -1,20 +1,12 @@
 import { closeFullView, closePopups, deselectCard } from '../../actions/general/close-popups.js';
-import { moveCard } from '../../actions/move-card-logic/move-card.js';
+import { moveCardBundle } from '../../actions/move-card-bundle/move-card-bundle.js';
 import { mouseClick, oppContainer, oppContainerDocument, selfContainer, selfContainerDocument, systemState } from '../../front-end.js';
-import { moveCardMessage } from '../../setup/chatbox/move-card-message.js';
-import { appendMessage } from '../chatbox/messages.js';
+import { appendMessage } from '../chatbox/append-message.js';
 import { determineUsername } from '../general/determine-username.js';
 import { getZone } from '../zones/get-zone.js';
 
 export const identifyCard = (event) => {
-    if (event.target.user === 'self'){
-        mouseClick.oUser = 'opp';
-        mouseClick.user = 'self';
-    } else {
-        mouseClick.oUser = 'self';
-        mouseClick.user = 'opp';
-    };
-
+    mouseClick.cardUser = event.target.user === 'self' ? 'self' : 'opp';
     mouseClick.zoneId = event.target.parentElement.id;
     if (!mouseClick.zoneId){ //this will be the case for cards on the active/bench, since they are wrapped in a container
         mouseClick.zoneId = event.target.parentElement.parentElement.id;
@@ -22,21 +14,19 @@ export const identifyCard = (event) => {
     if (mouseClick.zoneId === 'deckCover'){
         mouseClick.cardIndex = 0;
     } else if (['lostZoneCover', 'discardCover'].includes(mouseClick.zoneId)){
-        mouseClick.cardIndex = getZone(mouseClick.user, mouseClick.zoneId).getCount() - 1;
+        mouseClick.cardIndex = getZone(mouseClick.cardUser, mouseClick.zoneId).getCount() - 1;
     } else {
-        mouseClick.cardIndex = getZone(mouseClick.user, mouseClick.zoneId).array.findIndex(card => card.image === event.target);
+        mouseClick.cardIndex = getZone(mouseClick.cardUser, mouseClick.zoneId).array.findIndex(card => card.image === event.target);
     };
 }
 
 export const coverClick = (event) => {
     const selectedZone = getZone(event.target.user, event.target.id);
-
     if (selectedZone.elementCover) {
         selectedZone.element.style.display = 'block';
     };
-
     if (event.target.id === 'deckCover'){
-        appendMessage(systemState.pov.user, determineUsername(systemState.pov.user) + ' is looking through ' + determineUsername(event.target.user) + "'s deck", 'player');
+        appendMessage(systemState.initiator, determineUsername(systemState.initiator) + ' is looking through ' + determineUsername(event.target.user) + "'s deck", 'player');
     };
 }
 
@@ -62,8 +52,8 @@ export const openCardContextMenu = (event) => {
         'shufflePrizesButton': [[selfView, 'prizes']],
         'lookPrizesButton': [[selfView, 'prizes'], [oppView, 'prizes']],
         'revealHidePrizesButton': [[selfView, 'prizes'], [oppView, 'prizes']],
-        'revealHideHandButton': [[oppView, 'hand']],
-        'revealRandomHandButton': [[oppView, 'hand']],
+        'lookHandButton': [[oppView, 'hand']],
+        'randomHandButton': [[oppView, 'hand']],
         'shuffleDeckButton': [[selfView, 'deckCover'], [oppView, 'deckCover']],
         'drawButton': [[selfView, 'deckCover']],
         'viewTopButton': [[selfView, 'deckCover'], [oppView, 'deckCover']],
@@ -90,8 +80,6 @@ export const openCardContextMenu = (event) => {
             const [userCondition, containerCondition] = conditions;
             return userCondition && containerCondition === mouseClick.zoneId;
         });
-      
-        // Set display property based on conditions
         button.style.display = shouldDisplay ? 'block' : 'none';
     };
 
@@ -107,7 +95,7 @@ export const openCardContextMenu = (event) => {
         cardContextMenu.style.left = `${targetRect.left + event.target.clientWidth}px`;
         cardContextMenu.style.top = `${targetRect.top}px`;
     } else if (selfView){
-        if (event.target.parentElement.id === 'deckCover'){
+        if (event.target.parentElement.id === 'deckCover' || event.target.parentElement.id === 'discardCover'){
             cardContextMenu.style.left = `${targetRect.left - cardContextMenu.clientWidth}px`;
             cardContextMenu.style.top = `${targetRect.top + offsetHeight}px`; 
         } else if (event.target.parentElement.id === 'hand'){
@@ -119,10 +107,10 @@ export const openCardContextMenu = (event) => {
         };
     } else if (oppView){
         const adjustment = (document.body.offsetWidth - oppContainer.offsetWidth);
-        if (event.target.parentElement.id === 'deckCover'){
+        if (event.target.parentElement.id === 'deckCover' || event.target.parentElement.id === 'discardCover'){
             cardContextMenu.style.right = `${targetRect.left + adjustment - cardContextMenu.clientWidth}px`;
             cardContextMenu.style.bottom = `${targetRect.top + offsetHeight - cardContextMenu.offsetHeight + event.target.offsetHeight}px`;
-        } else if (event.target.parentElement.id === 'prizes'){
+        } else if (event.target.parentElement.id === 'prizes' || event.target.parentElement.id === 'lostZoneCover'){
             cardContextMenu.style.right = `${targetRect.left + adjustment + event.target.clientWidth}px`;
             cardContextMenu.style.bottom = `${targetRect.top + offsetHeight - cardContextMenu.offsetHeight + event.target.offsetHeight}px`;
         } else {
@@ -139,8 +127,7 @@ export const imageClick = (event) => {
         closePopups(event);
         const dZoneId = event.target.parentElement.parentElement.id;
         const targetIndex = getZone(event.target.user, dZoneId).array.findIndex(card => card.image === event.target);
-        moveCardMessage(systemState.pov.user, mouseClick.card.name, mouseClick.zoneId, dZoneId, 'move', mouseClick.card.image.attached, mouseClick.card.image.faceDown, mouseClick.card.image.faceUp, targetIndex);
-        moveCard(mouseClick.user, mouseClick.zoneId, dZoneId, mouseClick.cardIndex, targetIndex);
+        moveCardBundle(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, dZoneId, mouseClick.cardIndex, targetIndex, 'move');
     } else {
         closePopups(event); //need both because of highlights condition in the if block above
         identifyCard(event);
@@ -215,9 +202,7 @@ export const doubleClick = (event) => {
                 overlay = null; // Set overlay to null to indicate it's no longer present
             };
         }
-
         overlay.addEventListener('click', () => removeOverlay());
-
         // Listen for the escape key press
         const documentArray = [selfContainerDocument, oppContainerDocument, document];
         documentArray.forEach(document => document.addEventListener('keydown', (event) => {

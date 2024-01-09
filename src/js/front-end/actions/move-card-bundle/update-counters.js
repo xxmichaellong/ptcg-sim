@@ -11,7 +11,7 @@ export const updateCounters = (user, movingCard, oZoneId, oZone, dZoneId, dZone)
         const index = dZone.array.findIndex(card => card === movingCard);
 
         if (zonesWithAttachedCards.includes(dZoneId)){
-            addDamageCounter(user, dZoneId, index, false);
+            addDamageCounter(user, dZoneId, index, false, false);
         } else {
             movingCard.image.damageCounter.textContent = '0';
             movingCard.image.damageCounter.handleRemove();
@@ -22,9 +22,9 @@ export const updateCounters = (user, movingCard, oZoneId, oZone, dZoneId, dZone)
         const index = dZone.array.findIndex(card => card === movingCard);
 
         if (zonesWithAttachedCards.includes(dZoneId)){
-            addAbilityCounter(user, dZoneId, index, false);
+            addAbilityCounter(user, dZoneId, index);
         } else {
-            movingCard.image.abilityCounter.handleRemove();
+            movingCard.image.abilityCounter.handleRemove(false);
         };
     };
     //remove special conditions if the pokemon is no longer in the active
@@ -37,13 +37,13 @@ export const updateCounters = (user, movingCard, oZoneId, oZone, dZoneId, dZone)
         for (let i = 0; i < oZone.getCount(); i++){
             const image = oZone.array[i].image;
             if (image.damageCounter){
-                addDamageCounter(user, oZoneId, i, false);
+                addDamageCounter(user, oZoneId, i, false, false);
             };
             if (image.specialCondition){
                 addSpecialCondition(user, oZoneId, i, false);
             };
             if (image.abilityCounter){
-                addAbilityCounter(user, oZoneId, i, false);
+                addAbilityCounter(user, oZoneId, i);
             };
         };
     };
@@ -51,13 +51,13 @@ export const updateCounters = (user, movingCard, oZoneId, oZone, dZoneId, dZone)
         for (let i = 0; i < dZone.getCount(); i++){
             const image = dZone.array[i].image;
             if (image.damageCounter){
-                addDamageCounter(user, dZoneId, i, false);
+                addDamageCounter(user, dZoneId, i, false, false);
             };
             if (image.specialCondition){
                 addSpecialCondition(user, dZoneId, i, false);
             };
             if (image.abilityCounter){
-                addAbilityCounter(user, dZoneId, i, false);
+                addAbilityCounter(user, dZoneId, i);
             };
         };
     };

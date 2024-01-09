@@ -1,10 +1,11 @@
 import { closePopups } from '../../actions/general/close-popups.js';
-import { moveCard } from '../../actions/move-card-logic/move-card.js';
+import { moveCard } from '../../actions/move-card-bundle/move-card.js';
 import { moveToDeckTop } from '../../actions/zones/deck-actions.js';
 import { mouseClick, oppContainerDocument, selfContainerDocument, systemState } from '../../front-end.js';
-import { moveCardMessage } from '../../setup/chatbox/move-card-message.js';
+import { moveCardMessage } from '../../actions/move-card-bundle/move-card-message.js';
 import { getZone } from '../zones/get-zone.js';
 import { identifyCard } from './click-events.js';
+import { moveCardBundle } from '../../actions/move-card-bundle/move-card-bundle.js';
 
 const popupContainers = ['lostZone', 'discard', 'deck', 'attachedCards', 'viewCards'];
 
@@ -29,7 +30,7 @@ export const dragStart = (event) => {
     event.target.classList.add('dragging');
 
     if (popupContainers.includes(mouseClick.zoneId)){
-        getZone(mouseClick.user, mouseClick.zoneId).element.style.opacity = '0';
+        getZone(mouseClick.cardUser, mouseClick.zoneId).element.style.opacity = '0';
     };
     if (event.target.parentElement.classList.contains('full-view')){
         mouseClick.playContainer = event.target.parentElement;
@@ -45,7 +46,7 @@ export const dragOver = (event) => {
         event.target.style.pointerEvents = 'none';
     };
     if (popupContainers.includes(mouseClick.zoneId)){
-        getZone(mouseClick.user, mouseClick.zoneId).element.style.zIndex = '-2';
+        getZone(mouseClick.cardUser, mouseClick.zoneId).element.style.zIndex = '-2';
     };
     if (event.target.classList.contains('full-view')){
         mouseClick.playContainer.style.zIndex = '-1';
@@ -126,8 +127,8 @@ export const dragEnd = (event) => {
     };
 
     if (popupContainers.includes(mouseClick.zoneId)){
-        getZone(mouseClick.user, mouseClick.zoneId).element.style.opacity = '1';
-        getZone(mouseClick.user, mouseClick.zoneId).element.style.zIndex = '9999';
+        getZone(mouseClick.cardUser, mouseClick.zoneId).element.style.opacity = '1';
+        getZone(mouseClick.cardUser, mouseClick.zoneId).element.style.zIndex = '9999';
     };
     if (mouseClick.playContainer){
         mouseClick.playContainer.style.opacity = '1';
@@ -176,10 +177,9 @@ export const drop = (event) => {
         
         if ((mouseClick.zoneId !== dZoneId || draggedImage.attached) && (!draggedImage.attached || !['active', 'bench'].includes(dZoneId) || targetIndex !== undefined)){
             if (dZoneId === 'deckCover'){
-                moveToDeckTop();
+                moveToDeckTop(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex);
             } else {
-                moveCardMessage(systemState.pov.user, mouseClick.card.name, mouseClick.zoneId, dZoneId, 'move', mouseClick.card.image.attached, mouseClick.card.image.faceDown, mouseClick.card.image.faceUp, targetIndex);
-                moveCard(mouseClick.user, mouseClick.zoneId, dZoneId, mouseClick.cardIndex, targetIndex);
+                moveCardBundle(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, dZoneId, mouseClick.cardIndex, targetIndex, 'move');
             };
         };
     };

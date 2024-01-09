@@ -32,7 +32,6 @@ export const initializeRoomButtons = () => {
     const joinRoomButton = document.getElementById('joinRoomButton');
     joinRoomButton.addEventListener('click', () => {
         const nameInput = document.getElementById('nameInput');
-
         const names = ['Froakie', 'Shauna', 'Avery', 'Peonia', 'Korrina', 'Guzma', 'Bridgette', 'AZ', 'Xerosic', 'Colress', 'Melony', 'Serena', 'Thorton', 'Cyllene', 'Acerola', 'Marnie', 'Arven', 'Giovanni', 'Judge', 'Boss', 'Penny', 'Leon', 'Cheren', 'Elesa', 'Volo', 'Raihan', 'Ash', 'Brock', 'Misty', 'Cynthia', 'Oak', 'N', 'Roxanne', 'Iono', 'Irida', 'Lysandre', 'Cyrus', 'Hex', 'Skyla', 'Juniper', 'Sycamore'];
         const randomIndex = Math.floor(Math.random() * names.length);
         systemState.p2SelfUsername = nameInput.value.trim() !== '' ? nameInput.value : names[randomIndex];

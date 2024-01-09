@@ -3,13 +3,13 @@ import { addDamageCounter } from "../counters/damage-counter.js";
 import { resetRotation } from "../general/rotate-card.js";
 import { moveCard } from "./move-card.js";
 
-export const evolveCard = (user, movingCard, targetCard, dZoneId, dZone) => {
+export const evolveCard = (initiator, user, movingCard, targetCard, dZoneId, dZone) => {
     resetImage(movingCard.image);
     targetCard.image.after(movingCard.image);
     targetCard.image.relative = movingCard.image;
     //if counters exists, link the textcontent with the new Pokémon card
     if (targetCard.image.damageCounter){
-        addDamageCounter(user, dZoneId, dZone.getCount() - 1, false);
+        addDamageCounter(user, dZoneId, dZone.getCount() - 1, false, false);
         movingCard.image.damageCounter.textContent = targetCard.image.damageCounter.textContent;
         //remove once opponent is finished with it
         targetCard.image.damageCounter.textContent = '0';
@@ -20,7 +20,7 @@ export const evolveCard = (user, movingCard, targetCard, dZoneId, dZone) => {
         targetCard.image.specialCondition.handleRemove();
     };
     if (targetCard.image.abilityCounter){
-        targetCard.image.abilityCounter.handleRemove();
+        targetCard.image.abilityCounter.handleRemove(false);
     };
     //rotate card back to normal if it's not
     resetRotation(targetCard.image);
@@ -44,7 +44,7 @@ export const evolveCard = (user, movingCard, targetCard, dZoneId, dZone) => {
             resetImage(card.image);
             card.image.attached = true;
             const targetIndex = dZone.array.findIndex(card => card.image === movingCard.image);
-            moveCard(user, dZoneId, dZoneId, i, targetIndex, false);
+            moveCard(initiator, user, dZoneId, dZoneId, i, targetIndex);
             i--;
         };
     };

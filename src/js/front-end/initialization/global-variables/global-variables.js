@@ -1,17 +1,9 @@
 import { getZone } from "../../setup/zones/get-zone.js";
 
-// exports a WebSocket connection using the Socket.IO library. initialize serverOffset to keep track of the socket events received
-// export const socket = io('https://ptcgsim.online', {
-//     auth: {
-//       serverOffset: 0
-//     }
-// });
+// exports a WebSocket connection using the Socket.IO library.
+// export const socket = io('https://ptcgsim.online');
 
-export const socket = io('http://localhost:4000/', {
-    auth: {
-      serverOffset: 0
-    }
-});
+export const socket = io('http://localhost:4000/');
 // export references to HTML elements 'selfContainer' and 'oppContainer', and their respective content window documents for ease of access to the iframes
 export const selfContainer = document.getElementById('selfContainer');
 export const selfContainerDocument = selfContainer.contentWindow.document;
@@ -19,17 +11,15 @@ export const oppContainer = document.getElementById('oppContainer');
 export const oppContainerDocument = oppContainer.contentWindow.document;
 // create globally accessible variable systemState, which holds information relevant to the state of the user's game
 export const systemState = {
+    selfCounter: 0,
+    selfActionData: [],
+    oppCounter: 0,
+    oppActionData: [],
     isTwoPlayer: false,
     turn: 0,
-    pov: {
-        get user() {
-            return selfContainer.classList.contains('self') ? 'self' : 'opp'; 
-            //pov.user refers to the user on the bottom half of the screen, e.g., pov.user === 'self' means that the bottom half is the 'self' user
-        },
-        get oUser() {
-            return selfContainer.classList.contains('self') ? 'opp' : 'self';
-            //pov.oUser refers to the user on the top half of the screen
-        }
+    get initiator() {
+        return selfContainer.classList.contains('self') ? 'self' : 'opp'; 
+        //refers to the user on the bottom half of the screen, e.g., initiator === 'self' means that the bottom half is the 'self' user
     },
     roomId: '',
     p1Username: (user) => {
@@ -47,21 +37,13 @@ export const systemState = {
 export const mouseClick = {
     cardIndex: '',
     zoneId: '',
-    user: '',
-    oUser: '',
+    cardUser: '',
     playContainer: '',
     playContainerParent: '',
     selectingCard: false,
     get card(){
         if (this.zoneId){
-            return getZone(this.user, this.zoneId).array[this.cardIndex];
+            return getZone(this.cardUser, this.zoneId).array[this.cardIndex];
         };
     }
-};
-
-//Create a counter to keep track of moves
-
-export const counter = {
-    turn: 0,
-    data: [],
 };

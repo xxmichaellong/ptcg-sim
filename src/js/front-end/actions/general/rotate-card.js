@@ -40,20 +40,20 @@ export const rotateCard = (user, zoneId, index, single = false, emit = true) => 
     for (let i = 0; i < zone.getCount(); i++){
         const image = zone.array[i].image;
         if (image.damageCounter){
-            addDamageCounter(user, zoneId, i, false);
+            addDamageCounter(user, zoneId, i, false, false);
         };
         if (image.specialCondition){
             addSpecialCondition(user, zoneId, i, false);
         };
         if (image.abilityCounter){
-            addAbilityCounter(user, zoneId, i, false);
+            addAbilityCounter(user, zoneId, i);
         };
     };
     if (systemState.isTwoPlayer && emit){
-        const oUser = user === 'self' ? 'opp' : 'self';
+        user = user === 'self' ? 'opp' : 'self';
         const data = {
-            roomId : systemState.roomId,
-            user : oUser,
+            roomId: systemState.roomId,
+            user: user,
             zoneId : zoneId,
             index: index,
             single: single,

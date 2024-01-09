@@ -1,27 +1,14 @@
-import { resetCounters } from "../../../../actions/counters/reset-ability-counters.js";
-import { discardBoard } from "../../../../actions/general/board-actions.js";
+import { attack, pass } from "../../../../actions/chat-buttons/chat-buttons.js";
 import { systemState } from "../../../../front-end.js";
-import { appendMessage } from "../../../../setup/chatbox/messages.js";
+import { appendMessage } from "../../../../setup/chatbox/append-message.js";
 import { determineUsername } from "../../../../setup/general/determine-username.js";
 
 export const initializeP1ChatButtons = () => {
     const attackButton = document.getElementById('attackButton');
-    attackButton.addEventListener('click', () => {
-        resetCounters();
-        const user = systemState.pov.user;
-        const message = determineUsername(user) + ' attacked';
-        appendMessage(user, message, 'player');
-        discardBoard(user, false);
-    });
+    attackButton.addEventListener('click', () => attack(systemState.initiator));
 
     const passButton = document.getElementById('passButton');
-    passButton.addEventListener('click', () => {
-        resetCounters();
-        const user = systemState.pov.user;
-        const message = determineUsername(user) + ' passed';
-        appendMessage(user, message, 'player');
-        discardBoard(user, false);
-    });
+    passButton.addEventListener('click', () => pass(systemState.initiator));
 
     const messageInput = document.getElementById('messageInput');
     messageInput.addEventListener('keydown', (event) => {
@@ -29,7 +16,7 @@ export const initializeP1ChatButtons = () => {
             event.preventDefault();
             const message = messageInput.value.trim();
             if (message !== '') {
-                appendMessage(systemState.pov.user, determineUsername(systemState.pov.user) + ': ' + message, 'message');
+                appendMessage(systemState.initiator, determineUsername(systemState.initiator) + ': ' + message, 'message');
                 messageInput.value = '';
             };
         };
@@ -37,6 +24,6 @@ export const initializeP1ChatButtons = () => {
 
     const FREEBUTTON = document.getElementById('FREEBUTTON');
     FREEBUTTON.addEventListener('click', () => {
-        appendMessage(systemState.pov.user, FREEBUTTON.textContent, 'player');
+        appendMessage(systemState.initiator, FREEBUTTON.textContent, 'player');
     });
 };

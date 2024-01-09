@@ -13,7 +13,7 @@ export const initializeBenchObserver = () => {
                         addDamageCounter(user, 'bench', i, false);
                     };
                     if (image.abilityCounter) {
-                        addAbilityCounter(user, 'bench', i, false);
+                        addAbilityCounter(user, 'bench', i);
                     };
                 };
             };

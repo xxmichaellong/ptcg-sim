@@ -125,7 +125,7 @@ export const flipBoard = () => {
     // Flip the stadium
     const stadiumZone = getZone('', 'stadium');
     if (stadiumZone.array[0]){
-        if (stadiumZone.array[0].image.user === systemState.pov.user){
+        if (stadiumZone.array[0].image.user === systemState.initiator){
             stadiumZone.element.style.transform = 'scaleX(1) scaleY(1)';
         } else {
             stadiumZone.element.style.transform = 'scaleX(-1) scaleY(-1)';  

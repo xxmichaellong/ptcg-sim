@@ -1,5 +1,5 @@
 import { oppContainerDocument, selfContainerDocument, socket, systemState } from '../../front-end.js';
-import { appendMessage } from '../../setup/chatbox/messages.js';
+import { appendMessage } from '../../setup/chatbox/append-message.js';
 import { buildDeck } from '../../setup/deck-constructor/build-deck.js';
 import { determineDeckData } from '../../setup/general/determine-deckdata.js';
 import { determineUsername } from '../../setup/general/determine-username.js';
@@ -21,7 +21,7 @@ export const reset = (user, clean = false, emit = true, build = true, invalidMes
     if (user === 'self'){
         selfContainerDocument.querySelectorAll('.self-circle, .opp-circle, .self-tab, .opp-tab').forEach(element => {
             element.textContent = '0'
-            element.handleRemove();
+            element.handleRemove(false);
         });
         selfContainerDocument.querySelectorAll('.used-special-move').forEach(element => {
             element.classList.remove('used-special-move');
@@ -29,7 +29,7 @@ export const reset = (user, clean = false, emit = true, build = true, invalidMes
     } else {
         oppContainerDocument.querySelectorAll('.self-circle, .opp-circle, .self-tab, .opp-tab').forEach(element => {
             element.textContent = '0'
-            element.handleRemove();
+            element.handleRemove(false);
         });
         oppContainerDocument.querySelectorAll('.used-special-move').forEach(element => {
             element.classList.remove('used-special-move');
@@ -37,7 +37,6 @@ export const reset = (user, clean = false, emit = true, build = true, invalidMes
     };
 
     const zoneIds = ['deck', 'lostZone', 'discard', 'prizes', 'active', 'bench', 'hand', 'attachedCards', 'viewCards', 'board'];
-
     zoneIds.forEach(zoneId => {
         const zone = getZone(user, zoneId);
         zone.array.length = 0;
@@ -53,19 +52,20 @@ export const reset = (user, clean = false, emit = true, build = true, invalidMes
         if (determineDeckData(user)){
             buildDeck(user);
         } else if (invalidMessage){
-            appendMessage(user, determineUsername(user) + ' has an invalid deck!', 'announcement', false);
+            appendMessage('', determineUsername(user) + ' has an invalid deck!', 'announcement', false);
         };
     };
 
     if (!clean && determineDeckData(user)){
         appendMessage(user, determineUsername(user) + ' reset', 'player', false);
     };    
-    
+    updateCount();
+
     if (systemState.isTwoPlayer && emit){
-        const oUser = user === 'self' ? 'opp' : 'self';
+        user = user === 'self' ? 'opp' : 'self';
         const data = {
-            roomId : systemState.roomId,
-            user : oUser,
+            roomId: systemState.roomId,
+            user: user,
             clean: clean,
             emit: false,
             build: build,
@@ -73,5 +73,4 @@ export const reset = (user, clean = false, emit = true, build = true, invalidMes
         };
         socket.emit('reset', data);
     };
-    updateCount();
 }

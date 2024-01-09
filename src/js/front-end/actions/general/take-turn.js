@@ -1,23 +1,21 @@
 import { socket, systemState } from '../../front-end.js';
-import { appendMessage } from '../../setup/chatbox/messages.js';
+import { appendMessage } from '../../setup/chatbox/append-message.js';
 import { determineUsername } from '../../setup/general/determine-username.js';
 import { getZone } from '../../setup/zones/get-zone.js';
-import { resetCounters } from '../counters/reset-ability-counters.js';
-import { moveCard } from '../move-card-logic/move-card.js';
+import { resetAbilityCounters } from '../counters/reset-counters.js';
+import { moveCard } from '../move-card-bundle/move-card.js';
 import { discardBoard } from './board-actions.js';
 
-export const takeTurn = (user, emit = true) => {
+export const takeTurn = (initiator, user, emit = true) => {
     const deck = getZone(user, 'deck');
-
-    const oUser = user === 'self' ? 'opp' : 'self';
-    discardBoard(user, false);
-    discardBoard(oUser, false);
-    resetCounters(false);
+    discardBoard(initiator, 'self', false, false);
+    discardBoard(initiator, 'opp', false, false);
+    resetAbilityCounters();
 
     if (deck.getCount() > 0){
         systemState.turn ++;
-        moveCard(user, 'deck', 'hand', 0, false, false);
-        appendMessage(user, 'Turn ' + systemState.turn, 'announcement', false);
+        moveCard(initiator, user, 'deck', 'hand', 0);
+        appendMessage('', 'Turn ' + systemState.turn, 'announcement', false);
 
         ['active', 'bench'].forEach(zoneId => {
             ['self', 'opp'].forEach(user => {
@@ -33,14 +31,17 @@ export const takeTurn = (user, emit = true) => {
             });
         });
 
-        appendMessage(user, determineUsername(user) + ' drew for turn', 'player', false);
+        appendMessage(initiator, determineUsername(initiator) + ' drew for turn', 'player', false);
     } else {
-        appendMessage(user, determineUsername(user) + ' has no more cards in deck!', 'announcement', false);
+        appendMessage('', determineUsername(initiator) + ' has no more cards in deck!', 'announcement', false);
     };
     if (systemState.isTwoPlayer && emit){
+        initiator = initiator === 'self' ? 'opp' : 'self';
+        user = user === 'self' ? 'opp' : 'self';
         const data = {
-            roomId : systemState.roomId,
-            user : oUser,
+            roomId: systemState.roomId,
+            initiator: initiator,
+            user: user,
             emit: false
         };
         socket.emit('takeTurn', data);

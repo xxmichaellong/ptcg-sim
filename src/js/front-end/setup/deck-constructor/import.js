@@ -1,6 +1,6 @@
 import { reset } from "../../actions/general/reset.js";
 import { oppContainer, selfContainer, socket, systemState } from "../../front-end.js";
-import { appendMessage } from "../chatbox/messages.js";
+import { appendMessage } from "../chatbox/append-message.js";
 import { determineUsername } from "../general/determine-username.js";
 import { show } from "../home-header/header-toggle.js";
 import { getCardType } from "./find-type.js";
@@ -249,7 +249,7 @@ confirmButton.addEventListener('click', () => {
     cancelButton.style.display = 'none';
     saveButton.style.display = 'none';
 
-    const user = mainDeckImportInput.style.display !== 'none' ? 'self' : 'opp';
+    let user = mainDeckImportInput.style.display !== 'none' ? 'self' : 'opp';
     let tableBody = decklistTable.getElementsByTagName('tbody')[0];
     let rows = tableBody.rows;
     let deckData = [];
@@ -280,16 +280,16 @@ confirmButton.addEventListener('click', () => {
     };
     if (!(systemState.isTwoPlayer && user === 'opp')){
         reset(user, true, false, true, false);
-        appendMessage(user, determineUsername(user) + ' imported deck', 'announcement', false);
+        appendMessage('', determineUsername(user) + ' imported deck', 'announcement', false);
     } else {
         invalidText.style.display = 'block';
     };
     if (systemState.isTwoPlayer && user === 'self'){
-        const oUser = user === 'self' ? 'opp' : 'self';
+        user = user === 'self' ? 'opp' : 'self';
         const data = {
-            roomId : systemState.roomId,
+            roomId: systemState.roomId,
             deckData : systemState.selfDeckData,
-            user: oUser
+            user: user
         };
         socket.emit('deckData', data);
     };

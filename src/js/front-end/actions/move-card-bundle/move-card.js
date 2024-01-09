@@ -16,7 +16,7 @@ import { updateCounters } from './update-counters.js';
 import { updateDestinationCover, updateOriginCover } from './update-cover.js';
 import { updateStadiumCard } from './update-stadium-card.js';
 
-export const moveCard = (user, oZoneId, dZoneId, index, targetIndex, emit = true) => {
+export const moveCard = (initiator, user, oZoneId, dZoneId, index, targetIndex) => {
     oZoneId = oZoneId.replace('Cover', '');
     dZoneId = dZoneId.replace('Cover', '');
 
@@ -59,7 +59,7 @@ export const moveCard = (user, oZoneId, dZoneId, index, targetIndex, emit = true
     const p1HideZones = ['prizes'];
     const p2HideZones = ['hand'];
     const isP1HideZone = p1HideZones.includes(dZoneId);
-    const isP2HideZone = p2HideZones.includes(dZoneId) && systemState.isTwoPlayer && systemState.pov.user !== user;
+    const isP2HideZone = p2HideZones.includes(dZoneId) && systemState.isTwoPlayer && systemState.initiator !== user;
     const isFaceDownCard = movingCard.image.faceDown && ['active', 'bench', 'board'].includes(dZoneId);
 
     if (isP1HideZone || isP2HideZone || isFaceDownCard) {
@@ -71,6 +71,10 @@ export const moveCard = (user, oZoneId, dZoneId, index, targetIndex, emit = true
         revealCard(movingCard);
         movingCard.image.faceDown = false;
     };
+    if (dZoneId !== oZoneId){
+        movingCard.image.public = false; //if the revealed card moves to another location, it no longer has the public status, 
+        //i.e., whether the card is faceup/facedown and how it's recorded in the battle log is dependent on dZone
+    };
 
     // first, check if image is being attached to another card
     const activeOrBenchZone = ['active', 'bench'];
@@ -79,9 +83,9 @@ export const moveCard = (user, oZoneId, dZoneId, index, targetIndex, emit = true
 
     if (isTargetCardValid && isAttachAllowed){
         if (movingCard.type === 'Pokémon' && !activeOrBenchZone.includes(oZoneId)){
-            evolveCard(user, movingCard, targetCard, dZoneId, dZone);
+            evolveCard(initiator, user, movingCard, targetCard, dZoneId, dZone);
         } else {
-            attachCard(user, movingCard, targetCard, dZoneId, dZone);
+            attachCard(initiator, user, movingCard, targetCard, dZoneId, dZone);
         };
     // if image is not being attached to another card, proceed with normal card move
     } else {
@@ -96,15 +100,15 @@ export const moveCard = (user, oZoneId, dZoneId, index, targetIndex, emit = true
         //update the cover of the deck/lostzone/discard if applicable
         updateDestinationCover(user, movingCard, dZoneId);
         //automatically move cards from the active to the bench and vice versa, if applicable
-        autoMoveActiveBenchCard(user, movingCard, targetCard, oZoneId, oZone, dZoneId, dZone, targetIndex, emit);
+        autoMoveActiveBenchCard(initiator, user, movingCard, targetCard, oZoneId, oZone, dZoneId, dZone, index, targetIndex);
         //automatically bump any existing stadiums and make sure it's facing right-side-up for the user
-        updateStadiumCard(user, dZoneId, dZone);
+        updateStadiumCard(initiator, user, dZoneId, dZone);
     };
    
     const zonesWithAttachedCards = ['active', 'bench', 'attachedCards'];
     // deal with any attached cards
     if (zonesWithAttachedCards.includes(oZoneId) && !movingCard.image.attached){
-        relocateAttachedCards(user, movingCard, oZoneId, oZone, dZoneId, dZone);
+        relocateAttachedCards(initiator, user, movingCard, oZoneId, oZone, dZoneId, dZone);
     };
     //update the ability, special condtion, and damage counters on all applicable cards
     updateCounters(user, movingCard, oZoneId, oZone, dZoneId, dZone);
@@ -122,19 +126,5 @@ export const moveCard = (user, oZoneId, dZoneId, index, targetIndex, emit = true
     //sort the array, if applicable
     if (['deck', 'lostZone', 'discard'].includes(dZoneId)){
         sort(user, dZoneId);
-    };
-
-    if (systemState.isTwoPlayer && emit){
-        const oUser = user === 'self' ? 'opp' : 'self';
-        const moveCardData = {
-            roomId : systemState.roomId,
-            user : oUser,
-            oZoneId: oZoneId,
-            dZoneId: dZoneId,
-            index: index,
-            targetIndex: targetIndex,
-            emit: false
-        };
-        socket.emit('moveCard', moveCardData);
     };
 }

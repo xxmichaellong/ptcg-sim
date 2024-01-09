@@ -1,9 +1,9 @@
-import { appendMessage } from '../../setup/chatbox/messages.js';
+import { appendMessage } from '../../setup/chatbox/append-message.js';
 import { determineUsername } from '../../setup/general/determine-username.js';
 
-export const flipCoin = (user, result) => {
+export const flipCoin = (initiator, result) => {
     const randomValue = Math.random();
     const coinFlipResult = result !== undefined ? result : (randomValue < 0.5 ? 'heads' : 'tails');
-    const message = determineUsername(user) + ' flipped ' + coinFlipResult;
-    appendMessage(user, message, 'player');
+    const message = determineUsername(initiator) + ' flipped ' + coinFlipResult;
+    appendMessage(initiator, message, 'player');
 }

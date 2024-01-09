@@ -1,7 +1,7 @@
 import { oppContainerDocument, selfContainerDocument, socket, systemState } from '../../front-end.js';
 import { getZone } from '../../setup/zones/get-zone.js';
 
-export const addDamageCounter = (user, zoneId, index, emit = true) => {
+export const addDamageCounter = (user, zoneId, index, damageAmount, emit = true) => {
     const zone = getZone(user, zoneId);
     const targetCard = zone.array[index];
     const targetRect = targetCard.image.getBoundingClientRect();
@@ -18,13 +18,13 @@ export const addDamageCounter = (user, zoneId, index, emit = true) => {
     } else {
         if (user === 'self'){
             damageCounter = selfContainerDocument.createElement('div');
-            damageCounter.className = systemState.pov.user === 'self' ? 'self-circle' : 'opp-circle';
+            damageCounter.className = systemState.initiator === 'self' ? 'self-circle' : 'opp-circle';
         } else {
             damageCounter = oppContainerDocument.createElement('div');
-            damageCounter.className = systemState.pov.user === 'self' ? 'opp-circle' : 'self-circle';
+            damageCounter.className = systemState.initiator === 'self' ? 'opp-circle' : 'self-circle';
         };
         damageCounter.contentEditable = 'true';
-        damageCounter.textContent = '10';
+        damageCounter.textContent = damageAmount ? damageAmount : '10';
     };
     
     damageCounter.style.display = 'inline-block';
@@ -42,25 +42,26 @@ export const addDamageCounter = (user, zoneId, index, emit = true) => {
     damageCounter.style.fontSize = `${targetRect.width/6}px`;
     damageCounter.style.zIndex = '1';
     
+    const oUser = user === 'self' ? 'opp' : 'self';
+
     const handleInput = () => {
         if (systemState.isTwoPlayer){
-            const oUser = user === 'self' ? 'opp' : 'self';
             const data = {
-                roomId : systemState.roomId,
-                user : oUser,
+                roomId: systemState.roomId,
+                user: oUser,
                 zoneId: zoneId,
                 index: index,
-                textContent: damageCounter.textContent
+                damageAmount: damageCounter.textContent
             };
             socket.emit('updateDamageCounter', data);
         };
     }
 
     const handleResize = () => {
-        addDamageCounter(user, zoneId, index, true);
+        addDamageCounter(user, zoneId, index, false, false);
     };
 
-    const handleRemove = (fromBlurEvent = false) => {
+    const handleRemove = (fromBlurEvent = false, emit = true) => {
         if (damageCounter.textContent.trim() === '' || damageCounter.textContent <= 0){
             targetCard.image.damageCounter.removeEventListener('input', targetCard.image.damageCounter.handleInput);
             targetCard.image.damageCounter.handleInput = null;
@@ -70,11 +71,10 @@ export const addDamageCounter = (user, zoneId, index, emit = true) => {
             targetCard.image.damageCounter.remove();
             targetCard.image.damageCounter = null;
         
-            if (fromBlurEvent && systemState.isTwoPlayer){
-                const oUser = user === 'self' ? 'opp' : 'self';
+            if (systemState.isTwoPlayer && fromBlurEvent && emit){
                 const data = {
-                    roomId : systemState.roomId,
-                    user : oUser,
+                    roomId: systemState.roomId,
+                    user: oUser,
                     zoneId: zoneId,
                     index: index,
                 };
@@ -97,12 +97,12 @@ export const addDamageCounter = (user, zoneId, index, emit = true) => {
     targetCard.image.damageCounter = damageCounter;
 
     if (systemState.isTwoPlayer && emit){
-        const oUser = user === 'self' ? 'opp' : 'self';
         const data = {
-            roomId : systemState.roomId,
-            user : oUser,
+            roomId: systemState.roomId,
+            user: oUser,
             zoneId : zoneId,
             index: index,
+            damageAmount: damageAmount,
             emit: false
         };
         socket.emit('addDamageCounter', data);

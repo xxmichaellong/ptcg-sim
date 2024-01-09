@@ -1,5 +1,5 @@
 import { oppContainerDocument, selfContainerDocument, socket, systemState } from "../../front-end.js";
-import { appendMessage } from "../../setup/chatbox/messages.js";
+import { appendMessage } from "../../setup/chatbox/append-message.js";
 import { determineUsername } from "../../setup/general/determine-username.js";
 
 export const VSTARGXFunction = (user, type, emit = true) => {
@@ -26,29 +26,20 @@ export const VSTARGXFunction = (user, type, emit = true) => {
         button.classList.remove('used-special-move');
         const message = determineUsername(user) + ' reset their ' + type;
         appendMessage(user, message, 'player', false);
-        if (systemState.isTwoPlayer && emit){
-            const oUser = user === 'self' ? 'opp' : 'self';
-            const data = {
-                roomId : systemState.roomId,
-                user : oUser,
-                type: type,
-                emit : false
-            };
-            socket.emit('VSTARGXFunction', data);
-        };
     } else {
         button.classList.add('used-special-move');
         const message = determineUsername(user) + ' used their ' + type + '!';
         appendMessage(user, message, 'player', false);
-        if (systemState.isTwoPlayer && emit){
-            const oUser = user === 'self' ? 'opp' : 'self';
-            const data = {
-                roomId : systemState.roomId,
-                user : oUser,
-                type: type,
-                emit : false
-            }
-            socket.emit('VSTARGXFunction', data);
+    };
+    
+    if (systemState.isTwoPlayer && emit){
+        user = user === 'self' ? 'opp' : 'self';
+        const data = {
+            roomId: systemState.roomId,
+            user: user,
+            type: type,
+            emit: false
         };
+        socket.emit('VSTARGXFunction', data);
     };
 }

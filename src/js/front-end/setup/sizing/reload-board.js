@@ -1,5 +1,5 @@
 import { rotateCard } from "../../actions/general/rotate-card.js";
-import { moveCard } from "../../actions/move-card-logic/move-card.js";
+import { moveCard } from "../../actions/move-card-bundle/move-card.js";
 import { getZone } from "../zones/get-zone.js";
 
 const reloadContainer = (user, zoneId) => {
@@ -22,7 +22,7 @@ const reloadContainer = (user, zoneId) => {
                 };
                 const numberRotations = currentRotation / 90;
                 const index = zone.array.findIndex(card => card.image === image);
-                moveCard(user, zoneId, zoneId, index, false, false);
+                moveCard(user, user, zoneId, zoneId, index);
                 const newIndex = zone.array.findIndex(card => card.image === image);
                 for (let i = 0; i < numberRotations; i ++){
                     rotateCard(user, zoneId, newIndex, false, false);

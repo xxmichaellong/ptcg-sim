@@ -11,18 +11,17 @@ export const addSpecialCondition = (user, zoneId, index, emit = true) => {
     //clean up existing event listeners
     if (specialCondition){
         specialCondition.removeEventListener('input', specialCondition.handleColor);
-        specialCondition.removeEventListener('input', specialCondition.handleInput);
-        specialCondition.handleInput = null;
+        specialCondition.handleColor = null;
         specialCondition.removeEventListener('blur', specialCondition.handleRemoveWrapper);
         specialCondition.handleRemove = null;
         window.removeEventListener('resize', specialCondition.handleResize);
     } else {
         if (user === 'self'){
             specialCondition = selfContainerDocument.createElement('div');
-            specialCondition.className = systemState.pov.user === 'self' ? 'self-circle' : 'opp-circle';
+            specialCondition.className = systemState.initiator === 'self' ? 'self-circle' : 'opp-circle';
         } else {
             specialCondition = oppContainerDocument.createElement('div');
-            specialCondition.className = systemState.pov.user === 'self' ? 'opp-circle' : 'self-circle';
+            specialCondition.className = systemState.initiator === 'self' ? 'opp-circle' : 'self-circle';
         };
         specialCondition.contentEditable = 'true';
         specialCondition.textContent = 'P';
@@ -45,7 +44,9 @@ export const addSpecialCondition = (user, zoneId, index, emit = true) => {
     specialCondition.style.fontSize = `${targetRect.width/4}px`;
     specialCondition.style.zIndex = '1';
 
-    const handleColor = () => {
+    const oUser = user === 'self' ? 'opp' : 'self';
+
+    const handleColor = (emit = true) => {
         let text = specialCondition.textContent.toUpperCase();
         switch (text){
             case 'P':
@@ -73,17 +74,14 @@ export const addSpecialCondition = (user, zoneId, index, emit = true) => {
                 specialCondition.style.color = 'black';
                 break;
         };
-    }
-
-    const handleInput = () => {
-        if (systemState.isTwoPlayer){
-            const oUser = user === 'self' ? 'opp' : 'self';
+        if (systemState.isTwoPlayer && emit){
             const data = {
-                roomId : systemState.roomId,
-                user : oUser,
+                roomId: systemState.roomId,
+                user: oUser,
                 zoneId: zoneId,
                 index: index,
-                textContent: specialCondition.textContent
+                textContent: specialCondition.textContent,
+                emit: false,
             };
             socket.emit('updateSpecialCondition', data);
         };
@@ -93,22 +91,20 @@ export const addSpecialCondition = (user, zoneId, index, emit = true) => {
         addSpecialCondition(user, zoneId, index, false);
     }
 
-    const handleRemove = (fromBlurEvent = false) => {
+    const handleRemove = (fromBlurEvent = false, emit = true) => {
         if (specialCondition.textContent.trim() === '' || specialCondition.textContent === '0'){
             targetCard.image.specialCondition.removeEventListener('input', targetCard.image.specialCondition.handleColor);
-            targetCard.image.specialCondition.removeEventListener('input', targetCard.image.specialCondition.handleInput);
-            targetCard.image.specialCondition.handleInput = null;
+            specialCondition.handleColor = null;
             targetCard.image.specialCondition.removeEventListener('blur', targetCard.image.specialCondition.handleRemoveWrapper);
             targetCard.image.specialCondition.handleRemove = null;
             window.removeEventListener('resize', targetCard.image.specialCondition.handleResize);
             targetCard.image.specialCondition.remove();
             targetCard.image.specialCondition = null;
         
-            if (fromBlurEvent){
-                const oUser = user === 'self' ? 'opp' : 'self';
+            if (systemState.isTwoPlayer && fromBlurEvent && emit){
                 const data = {
-                    roomId : systemState.roomId,
-                    user : oUser,
+                    roomId: systemState.roomId,
+                    user: oUser,
                     zoneId: zoneId,
                     index: index,
                 };
@@ -116,11 +112,8 @@ export const addSpecialCondition = (user, zoneId, index, emit = true) => {
             };
         };
     }
-    specialCondition.addEventListener('input', handleColor);
     specialCondition.handleColor = handleColor;
-
-    specialCondition.addEventListener('input', handleInput);
-    specialCondition.handleInput = handleInput;
+    specialCondition.addEventListener('input', handleColor);
 
     specialCondition.handleRemoveWrapper = () => handleRemove(true);
     specialCondition.addEventListener('blur', specialCondition.handleRemoveWrapper);
@@ -133,10 +126,9 @@ export const addSpecialCondition = (user, zoneId, index, emit = true) => {
     targetCard.image.specialCondition = specialCondition;
 
     if (systemState.isTwoPlayer && emit){
-        const oUser = user === 'self' ? 'opp' : 'self';
         const data = {
-            roomId : systemState.roomId,
-            user : oUser,
+            roomId: systemState.roomId,
+            user: oUser,
             zoneId : zoneId,
             index: index,
             emit: false
@@ -144,4 +136,3 @@ export const addSpecialCondition = (user, zoneId, index, emit = true) => {
         socket.emit('addSpecialCondition', data);
     };
 }
-

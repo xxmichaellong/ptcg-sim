@@ -1,41 +1,27 @@
-import { hideCards, revealCards, revealShortcut } from '../../../actions/general/reveal-and-hide.js';
+import { stopLookingAtCards, playRandomCardFaceDown, lookAtCards } from '../../../actions/general/reveal-and-hide.js';
 import { discardAndDraw, shuffleAndDraw, shuffleBottomAndDraw } from '../../../actions/zones/hand-actions.js';
 import { mouseClick, systemState } from '../../../front-end.js';
-import { appendMessage } from '../../../setup/chatbox/messages.js';
-import { determineUsername } from '../../../setup/general/determine-username.js';
-import { getZone } from '../../../setup/zones/get-zone.js';
 
 export const initializeHandButtons = () => {
-    const revealHideHandButton = document.getElementById('revealHideHandButton');
-    revealHideHandButton.addEventListener('click', () => {
-        const user = mouseClick.user;
+    const lookHandButton = document.getElementById('lookHandButton');
+    lookHandButton.addEventListener('click', () => {
         let rootDirectory = window.location.origin;
-
         if (mouseClick.card.image.src === rootDirectory + '/src/cardback.png') {
-            revealCards(user, 'hand');
-            appendMessage(systemState.pov.user, determineUsername(systemState.pov.user) + " revealed " + determineUsername(user) + "'s hand", 'player');
+            lookAtCards(systemState.initiator, mouseClick.cardUser, 'hand');
         } else {
-            hideCards(user, 'hand');
-            appendMessage(systemState.pov.user, determineUsername(systemState.pov.user) + " stopped looking at " + determineUsername(user) + "'s hand", 'player');
+            stopLookingAtCards(systemState.initiator, mouseClick.cardUser, 'hand');
         };
     });
 
-    const revealRandomHandButton = document.getElementById('revealRandomHandButton');
-    revealRandomHandButton.addEventListener('click', () => {
-        const user = mouseClick.user;
-        const selectedHandCount = getZone(user, 'hand').getCount();
-        const randomIndex = Math.floor(Math.random() * selectedHandCount);
-
-        mouseClick.cardIndex = randomIndex;
-        revealShortcut(user, mouseClick.zoneId, mouseClick.cardIndex);
-    });
+    const randomHandButton = document.getElementById('randomHandButton');
+    randomHandButton.addEventListener('click', () => playRandomCardFaceDown(systemState.initiator, mouseClick.cardUser));
 
     const discardHandButton = document.getElementById('discardHandButton');
-    discardHandButton.addEventListener('click', () => discardAndDraw(mouseClick.user));
+    discardHandButton.addEventListener('click', () => discardAndDraw(systemState.initiator, mouseClick.cardUser));
 
     const shuffleHandButton = document.getElementById('shuffleHandButton');
-    shuffleHandButton.addEventListener('click', () => shuffleAndDraw(mouseClick.user));
+    shuffleHandButton.addEventListener('click', () => shuffleAndDraw(systemState.initiator, mouseClick.cardUser));
 
     const shuffleHandBottomButton = document.getElementById('shuffleHandBottomButton');
-    shuffleHandBottomButton.addEventListener('click', () => shuffleBottomAndDraw(mouseClick.user));
+    shuffleHandBottomButton.addEventListener('click', () => shuffleBottomAndDraw(systemState.initiator, mouseClick.cardUser));
 };

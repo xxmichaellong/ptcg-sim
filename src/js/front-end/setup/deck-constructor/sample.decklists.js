@@ -300,8 +300,7 @@ const decklistsByYear = {
         1 Forest Seal Stone SIT 156
         2 Temple of Sinnoh ASR 155
         2 Pokémon League Headquarters OBF 192
-        
-        Energy (0)`,
+        `,
     },
     "2022-2023 S&S": {
         "Lugia": `

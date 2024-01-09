@@ -13,4 +13,3 @@ export const decreaseCardLayer = (movingCard) => {
         movingCard.image.relative.layer -= 1;
     };
 }
-
