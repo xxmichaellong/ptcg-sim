@@ -12,7 +12,7 @@ export const convertZoneName = (zoneId) => {
     return specialCases[zoneId] || zoneId;
 };
 
-export const moveCardMessage = (initiator, user, oZoneId, dZoneId, index, targetIndex, action) => {
+export const moveCardMessage = (user, initiator, oZoneId, dZoneId, index, targetIndex, action) => {
     let targetCard;
     if (typeof targetIndex === 'number'){
         targetCard = getZone(user, dZoneId).array[targetIndex];

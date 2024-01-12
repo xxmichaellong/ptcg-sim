@@ -7,21 +7,21 @@ export const initializeHandButtons = () => {
     lookHandButton.addEventListener('click', () => {
         let rootDirectory = window.location.origin;
         if (mouseClick.card.image.src === rootDirectory + '/src/cardback.png') {
-            lookAtCards(systemState.initiator, mouseClick.cardUser, 'hand');
+            lookAtCards(mouseClick.cardUser, systemState.initiator, 'hand');
         } else {
-            stopLookingAtCards(systemState.initiator, mouseClick.cardUser, 'hand');
+            stopLookingAtCards(mouseClick.cardUser, systemState.initiator, 'hand');
         };
     });
 
     const randomHandButton = document.getElementById('randomHandButton');
-    randomHandButton.addEventListener('click', () => playRandomCardFaceDown(systemState.initiator, mouseClick.cardUser));
+    randomHandButton.addEventListener('click', () => playRandomCardFaceDown(mouseClick.cardUser, systemState.initiator));
 
     const discardHandButton = document.getElementById('discardHandButton');
-    discardHandButton.addEventListener('click', () => discardAndDraw(systemState.initiator, mouseClick.cardUser));
+    discardHandButton.addEventListener('click', () => discardAndDraw(mouseClick.cardUser, systemState.initiator));
 
     const shuffleHandButton = document.getElementById('shuffleHandButton');
-    shuffleHandButton.addEventListener('click', () => shuffleAndDraw(systemState.initiator, mouseClick.cardUser));
+    shuffleHandButton.addEventListener('click', () => shuffleAndDraw(mouseClick.cardUser, systemState.initiator));
 
     const shuffleHandBottomButton = document.getElementById('shuffleHandBottomButton');
-    shuffleHandBottomButton.addEventListener('click', () => shuffleBottomAndDraw(systemState.initiator, mouseClick.cardUser));
+    shuffleHandBottomButton.addEventListener('click', () => shuffleBottomAndDraw(mouseClick.cardUser, systemState.initiator));
 };

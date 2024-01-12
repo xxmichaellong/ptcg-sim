@@ -5,11 +5,11 @@ import { mouseClick, systemState } from '../../../front-end.js';
 export const initializeDeckButtons = () => {
     const shuffleDeckButton = document.getElementById('shuffleDeckButton');
     shuffleDeckButton.addEventListener('click', () => {
-        shuffleZone(systemState.initiator, mouseClick.cardUser, 'deck');
+        shuffleZone(mouseClick.cardUser, systemState.initiator, 'deck');
     });
 
     const drawButton = document.getElementById('drawButton');
-    drawButton.addEventListener('click', () => draw(systemState.initiator, mouseClick.cardUser));
+    drawButton.addEventListener('click', () => draw(mouseClick.cardUser, systemState.initiator));
 
     const viewTopButton = document.getElementById('viewTopButton');
     viewTopButton.addEventListener('click', () => handleViewButtonClick(mouseClick.cardUser, true));

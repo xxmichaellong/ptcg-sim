@@ -1,4 +1,5 @@
 export const resetImage = (image, zoneId = '') => {
+    image.style.opacity = 1;
     image.style.position = 'relative';
     image.style.bottom = '0%';
     image.style.zIndex = '0';

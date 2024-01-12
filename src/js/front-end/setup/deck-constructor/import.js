@@ -2,6 +2,7 @@ import { reset } from "../../actions/general/reset.js";
 import { oppContainer, selfContainer, socket, systemState } from "../../front-end.js";
 import { appendMessage } from "../chatbox/append-message.js";
 import { determineUsername } from "../general/determine-username.js";
+import { processAction } from "../general/process-action.js";
 import { show } from "../home-header/header-toggle.js";
 import { getCardType } from "./find-type.js";
 
@@ -240,6 +241,23 @@ cancelButton.addEventListener('click', () => {
     decklistTable.style.display = 'none';
 });
 
+export const loadDeckData = (user, deckData, emit = true) => {
+    if (user === 'self') {
+        systemState.selfDeckData = deckData;
+    } else if (systemState.isTwoPlayer) {
+        systemState.p2OppDeckData = emit ? systemState.p2OppDeckData : deckData;
+        invalidText.style.display = emit ? 'block' : invalidText.style.display;
+    } else {
+        systemState.p1OppDeckData = deckData;
+    };
+    if (!(user === 'opp' && systemState.isTwoPlayer && emit)) {
+        reset(user, true, true, false, false);
+        appendMessage('', determineUsername(user) + ' imported deck', 'announcement', false);
+    };
+    
+    processAction(user, emit, 'loadDeckData', [deckData]);
+}
+
 confirmButton.addEventListener('click', () => {
     selfContainer.style.zIndex = 0;
     oppContainer.style.zIndex = 0;
@@ -268,31 +286,12 @@ confirmButton.addEventListener('click', () => {
         tableBody.removeChild(tableBody.firstChild);
     };
     decklistTable.style.display = 'none';
-    if (user === 'self'){
-        systemState.selfDeckData = deckData;
-    } else {
-        systemState.p1OppDeckData = deckData;
-    };
     if (!systemState.isTwoPlayer){
         show('p1Box', p1Button);
     } else if (user === 'self'){
         show('p2Box', p2Button);
     };
-    if (!(systemState.isTwoPlayer && user === 'opp')){
-        reset(user, true, false, true, false);
-        appendMessage('', determineUsername(user) + ' imported deck', 'announcement', false);
-    } else {
-        invalidText.style.display = 'block';
-    };
-    if (systemState.isTwoPlayer && user === 'self'){
-        user = user === 'self' ? 'opp' : 'self';
-        const data = {
-            roomId: systemState.roomId,
-            deckData : systemState.selfDeckData,
-            user: user
-        };
-        socket.emit('deckData', data);
-    };
+    loadDeckData(user, deckData);
 })
        
 const downloadCSV = (csv, filename) => {

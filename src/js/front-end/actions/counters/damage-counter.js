@@ -1,7 +1,46 @@
-import { oppContainerDocument, selfContainerDocument, socket, systemState } from '../../front-end.js';
+import { oppContainerDocument, selfContainerDocument, systemState } from '../../front-end.js';
+import { processAction } from '../../setup/general/process-action.js';
 import { getZone } from '../../setup/zones/get-zone.js';
 
+export const updateDamageCounter = (user, zoneId, index, damageAmount, emit = true) => {
+    if (user === 'opp' && emit && systemState.isTwoPlayer){
+        processAction(user, emit, 'updateDamageCounter', [zoneId, index, damageAmount]);
+        return;
+    };
+
+    const damageCounter = getZone(user, zoneId).array[index].image.damageCounter;
+    damageCounter.textContent = damageAmount;
+
+    processAction(user, emit, 'updateDamageCounter', [zoneId, index, damageAmount]);
+}
+
+export const removeDamageCounter = (user, zoneId, index, emit = true) => {
+    if (user === 'opp' && emit && systemState.isTwoPlayer){
+        processAction(user, emit, 'removeDamageCounter', [zoneId, index]);
+        return;
+    };
+
+    const targetCard = getZone(user, zoneId).array[index];
+    //make sure targetCard exists (it won't exist if it's already been removed)
+    if (targetCard.image.damageCounter){
+        targetCard.image.damageCounter.removeEventListener('input', targetCard.image.damageCounter.handleInput);
+        targetCard.image.damageCounter.handleInput = null;
+        targetCard.image.damageCounter.removeEventListener('blur', targetCard.image.damageCounter.handleRemoveWrapper);
+        targetCard.image.damageCounter.handleRemove = null;
+        window.removeEventListener('resize', targetCard.image.damageCounter.handleResize);
+        targetCard.image.damageCounter.remove();
+        targetCard.image.damageCounter = null;
+    };
+
+    processAction(user, emit, 'removeDamageCounter', [zoneId, index]);
+}
+
 export const addDamageCounter = (user, zoneId, index, damageAmount, emit = true) => {
+    if (user === 'opp' && emit && systemState.isTwoPlayer){
+        processAction(user, emit, 'addDamageCounter', [zoneId, index, damageAmount]);
+        return;
+    };
+
     const zone = getZone(user, zoneId);
     const targetCard = zone.array[index];
     const targetRect = targetCard.image.getBoundingClientRect();
@@ -45,24 +84,17 @@ export const addDamageCounter = (user, zoneId, index, damageAmount, emit = true)
     const oUser = user === 'self' ? 'opp' : 'self';
 
     const handleInput = () => {
-        if (systemState.isTwoPlayer){
-            const data = {
-                roomId: systemState.roomId,
-                user: oUser,
-                zoneId: zoneId,
-                index: index,
-                damageAmount: damageCounter.textContent
-            };
-            socket.emit('updateDamageCounter', data);
-        };
+        updateDamageCounter(user, zoneId, index, damageCounter.textContent);
     }
 
     const handleResize = () => {
         addDamageCounter(user, zoneId, index, false, false);
-    };
+    }
 
-    const handleRemove = (fromBlurEvent = false, emit = true) => {
-        if (damageCounter.textContent.trim() === '' || damageCounter.textContent <= 0){
+    const handleRemove = (fromBlurEvent = false) => {
+        //the reason the code below is repeated in removeDamageCounter is because it's difficult to get reference to the damage counter element when it's being removed through moving (i.e., move to hand)
+        //since targetCard.image is already defined here, it's easier to deal with the removal on both sides separately when it's automatic removal, while still having the blur event function for manual removal.
+        if (targetCard.image.damageCounter.textContent.trim() === '' || targetCard.image.damageCounter.textContent <= 0){
             targetCard.image.damageCounter.removeEventListener('input', targetCard.image.damageCounter.handleInput);
             targetCard.image.damageCounter.handleInput = null;
             targetCard.image.damageCounter.removeEventListener('blur', targetCard.image.damageCounter.handleRemoveWrapper);
@@ -70,15 +102,9 @@ export const addDamageCounter = (user, zoneId, index, damageAmount, emit = true)
             window.removeEventListener('resize', targetCard.image.damageCounter.handleResize);
             targetCard.image.damageCounter.remove();
             targetCard.image.damageCounter = null;
-        
-            if (systemState.isTwoPlayer && fromBlurEvent && emit){
-                const data = {
-                    roomId: systemState.roomId,
-                    user: oUser,
-                    zoneId: zoneId,
-                    index: index,
-                };
-                socket.emit('removeDamageCounter', data);
+            //manual removal
+            if (fromBlurEvent){
+                removeDamageCounter(user, zoneId, index);
             };
         };
     }
@@ -96,16 +122,5 @@ export const addDamageCounter = (user, zoneId, index, damageAmount, emit = true)
     //save the damageCounter on the card
     targetCard.image.damageCounter = damageCounter;
 
-    if (systemState.isTwoPlayer && emit){
-        const data = {
-            roomId: systemState.roomId,
-            user: oUser,
-            zoneId : zoneId,
-            index: index,
-            damageAmount: damageAmount,
-            emit: false
-        };
-        socket.emit('addDamageCounter', data);
-    };
+    processAction(user, emit, 'addDamageCounter', [zoneId, index, damageAmount]);
 }
-

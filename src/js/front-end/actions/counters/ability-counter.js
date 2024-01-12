@@ -1,5 +1,24 @@
-import { oppContainerDocument, selfContainerDocument, socket, systemState } from '../../front-end.js';
+import { oppContainerDocument, selfContainerDocument, systemState } from '../../front-end.js';
+import { processAction } from '../../setup/general/process-action.js';
 import { getZone } from '../../setup/zones/get-zone.js';
+
+export const removeAbilityCounter = (user, zoneId, index, emit = true) => {
+    if (user === 'opp' && emit && systemState.isTwoPlayer){
+        processAction(user, emit, 'removeAbilityCounter', [zoneId, index]);
+        return;
+    };
+
+    const targetCard = getZone(user, zoneId).array[index];
+    //make sure targetCard exists (it won't exist if it's already been removed)
+    if (targetCard.image.abilityCounter){
+        targetCard.image.abilityCounter.handleRemove = null;
+        window.removeEventListener('resize', targetCard.image.abilityCounter.handleResize);
+        targetCard.image.abilityCounter.remove();
+        targetCard.image.abilityCounter = null;
+    };
+
+    processAction(user, emit, 'removeAbilityCounter', [zoneId, index]);
+}
 
 export const addAbilityCounter = (user, zoneId, index) => {
     //identify target image and zone
@@ -51,17 +70,9 @@ export const addAbilityCounter = (user, zoneId, index) => {
         window.removeEventListener('resize', targetCard.image.abilityCounter.handleResize);
         targetCard.image.abilityCounter.remove();
         targetCard.image.abilityCounter = null;
-    
-        if (systemState.isTwoPlayer && emit){
-            user = user === 'self' ? 'opp' : 'self';
-            const data = {
-                roomId: systemState.roomId,
-                user: user,
-                zoneId: zoneId,
-                index: index,
-                emit: false
-            };
-            socket.emit('removeAbilityCounter', data);
+
+        if (emit){
+            removeAbilityCounter(user, zoneId, index, emit);
         };
     }
 

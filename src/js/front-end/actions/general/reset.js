@@ -1,14 +1,20 @@
-import { oppContainerDocument, selfContainerDocument, socket, systemState } from '../../front-end.js';
+import { oppContainerDocument, selfContainerDocument, systemState } from '../../front-end.js';
 import { appendMessage } from '../../setup/chatbox/append-message.js';
 import { buildDeck } from '../../setup/deck-constructor/build-deck.js';
 import { determineDeckData } from '../../setup/general/determine-deckdata.js';
 import { determineUsername } from '../../setup/general/determine-username.js';
+import { processAction } from '../../setup/general/process-action.js';
 import { removeImages } from '../../setup/image-logic/remove-images.js';
 import { getZone } from '../../setup/zones/get-zone.js';
 import { hideZoneElementsIfEmpty } from './close-popups.js';
 import { updateCount } from './count.js';
 
-export const reset = (user, clean = false, emit = true, build = true, invalidMessage = true) => {
+export const reset = (user, clean = false, build = true, invalidMessage = true, emit = true) => {
+    if (user === 'opp' && emit && systemState.isTwoPlayer){
+        processAction(user, emit, 'reset', [clean, build, invalidMessage]);
+        return;
+    };
+    
     const stadium = getZone('neutral', 'stadium');
     systemState.turn = 0;
     if (stadium.array[0] && ((stadium.array[0].image.user === 'self' && user === 'self') || (stadium.array[0].image.user !== 'self' && user !== 'self'))){
@@ -61,16 +67,5 @@ export const reset = (user, clean = false, emit = true, build = true, invalidMes
     };    
     updateCount();
 
-    if (systemState.isTwoPlayer && emit){
-        user = user === 'self' ? 'opp' : 'self';
-        const data = {
-            roomId: systemState.roomId,
-            user: user,
-            clean: clean,
-            emit: false,
-            build: build,
-            invalidMessage: invalidMessage
-        };
-        socket.emit('reset', data);
-    };
+    processAction(user, emit, 'reset', [clean, build, invalidMessage]);
 }

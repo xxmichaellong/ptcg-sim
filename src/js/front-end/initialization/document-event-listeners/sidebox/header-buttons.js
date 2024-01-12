@@ -1,5 +1,6 @@
 import { reset } from '../../../actions/general/reset.js';
 import { socket, systemState } from '../../../front-end.js';
+import { cleanActionData } from '../../../setup/general/clean-action-data.js';
 import { show } from '../../../setup/home-header/header-toggle.js';
 
 export const initializeHeaderButtons = () => {
@@ -23,10 +24,11 @@ export const initializeHeaderButtons = () => {
             connectedRoom.style.display = 'none';
             systemState.isTwoPlayer = false;
             systemState.roomId = '';
-            reset('opp', true, false, true, false);
-            reset('self', true, false, true, false);
+            reset('opp', true, true, false, false);
+            reset('self', true, true, false, false);
             p2Chatbox.innerHTML = '';
-            systemState.p2OppDeckData = '';
+            cleanActionData('self');
+            cleanActionData('opp');
             show('p1Box', p1Button);
         }
     });

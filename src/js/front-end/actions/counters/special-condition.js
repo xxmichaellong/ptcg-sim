@@ -1,7 +1,73 @@
-import { oppContainerDocument, selfContainerDocument, socket, systemState } from '../../front-end.js';
+import { oppContainerDocument, selfContainerDocument, systemState } from '../../front-end.js';
+import { processAction } from '../../setup/general/process-action.js';
 import { getZone } from '../../setup/zones/get-zone.js';
 
+export const updateSpecialCondition = (user, zoneId, index, textContent, emit = true) => {
+    if (user === 'opp' && emit && systemState.isTwoPlayer){
+        processAction(user, emit, 'updateSpecialCondition', [zoneId, index, textContent]);
+        return;
+    };
+    
+    const specialCondition = getZone(user, zoneId).array[index].image.specialCondition;
+    specialCondition.textContent = textContent;
+    let text = specialCondition.textContent.toUpperCase();
+        switch (text){
+            case 'P':
+                specialCondition.style.backgroundColor = 'green';
+                specialCondition.style.color = 'white';
+                break;
+            case 'B':
+                specialCondition.style.backgroundColor = 'red';
+                specialCondition.style.color = 'white';
+                break;
+            case 'A':
+                specialCondition.style.backgroundColor = 'blue';
+                specialCondition.style.color = 'white';
+                break;
+            case 'PA':
+                specialCondition.style.backgroundColor = 'yellow';
+                specialCondition.style.color = 'black';
+                break;
+            case 'C':
+                specialCondition.style.backgroundColor = 'purple';
+                specialCondition.style.color = 'white';
+                break;
+            default:
+                specialCondition.style.backgroundColor = 'white';
+                specialCondition.style.color = 'black';
+                break;
+        };
+
+    processAction(user, emit, 'updateSpecialCondition', [zoneId, index, textContent]);
+}
+
+export const removeSpecialCondition = (user, zoneId, index, emit = true) => {
+    if (user === 'opp' && emit && systemState.isTwoPlayer){
+        processAction(user, emit, 'removeSpecialCondition', [zoneId, index]);
+        return;
+    };
+
+    const targetCard = getZone(user, zoneId).array[index];
+    //make sure targetCard exists (it won't exist if it's already been removed)
+    if (targetCard.image.specialCondition){
+        targetCard.image.specialCondition.removeEventListener('input', targetCard.image.specialCondition.handleColor);
+        targetCard.image.specialCondition.handleColor = null;
+        targetCard.image.specialCondition.removeEventListener('blur', targetCard.image.specialCondition.handleRemoveWrapper);
+        targetCard.image.specialCondition.handleRemove = null;
+        window.removeEventListener('resize', targetCard.image.specialCondition.handleResize);
+        targetCard.image.specialCondition.remove();
+        targetCard.image.specialCondition = null;
+    };
+
+    processAction(user, emit, 'removeSpecialCondition', [zoneId, index]);
+}
+
 export const addSpecialCondition = (user, zoneId, index, emit = true) => {
+    if (user === 'opp' && emit && systemState.isTwoPlayer){
+        processAction(user, emit, 'addSpecialCondition', [zoneId, index]);
+        return;
+    };
+
     const zone = getZone(user, zoneId);
     const targetCard = zone.array[index];
     const targetRect = targetCard.image.getBoundingClientRect();
@@ -46,52 +112,15 @@ export const addSpecialCondition = (user, zoneId, index, emit = true) => {
 
     const oUser = user === 'self' ? 'opp' : 'self';
 
-    const handleColor = (emit = true) => {
-        let text = specialCondition.textContent.toUpperCase();
-        switch (text){
-            case 'P':
-                specialCondition.style.backgroundColor = 'green';
-                specialCondition.style.color = 'white';
-                break;
-            case 'B':
-                specialCondition.style.backgroundColor = 'red';
-                specialCondition.style.color = 'white';
-                break;
-            case 'A':
-                specialCondition.style.backgroundColor = 'blue';
-                specialCondition.style.color = 'white';
-                break;
-            case 'PA':
-                specialCondition.style.backgroundColor = 'yellow';
-                specialCondition.style.color = 'black';
-                break;
-            case 'C':
-                specialCondition.style.backgroundColor = 'purple';
-                specialCondition.style.color = 'white';
-                break;
-            default:
-                specialCondition.style.backgroundColor = 'white';
-                specialCondition.style.color = 'black';
-                break;
-        };
-        if (systemState.isTwoPlayer && emit){
-            const data = {
-                roomId: systemState.roomId,
-                user: oUser,
-                zoneId: zoneId,
-                index: index,
-                textContent: specialCondition.textContent,
-                emit: false,
-            };
-            socket.emit('updateSpecialCondition', data);
-        };
+    const handleColor = () => {
+        updateSpecialCondition(user, zoneId, index, specialCondition.textContent);
     }
 
     const handleResize = () => {
         addSpecialCondition(user, zoneId, index, false);
     }
 
-    const handleRemove = (fromBlurEvent = false, emit = true) => {
+    const handleRemove = (fromBlurEvent = false) => {
         if (specialCondition.textContent.trim() === '' || specialCondition.textContent === '0'){
             targetCard.image.specialCondition.removeEventListener('input', targetCard.image.specialCondition.handleColor);
             specialCondition.handleColor = null;
@@ -101,14 +130,8 @@ export const addSpecialCondition = (user, zoneId, index, emit = true) => {
             targetCard.image.specialCondition.remove();
             targetCard.image.specialCondition = null;
         
-            if (systemState.isTwoPlayer && fromBlurEvent && emit){
-                const data = {
-                    roomId: systemState.roomId,
-                    user: oUser,
-                    zoneId: zoneId,
-                    index: index,
-                };
-                socket.emit('removeSpecialCondition', data);            
+            if (fromBlurEvent){
+                removeSpecialCondition(user, zoneId, index);
             };
         };
     }
@@ -125,14 +148,5 @@ export const addSpecialCondition = (user, zoneId, index, emit = true) => {
     //save the specialCondition on the card
     targetCard.image.specialCondition = specialCondition;
 
-    if (systemState.isTwoPlayer && emit){
-        const data = {
-            roomId: systemState.roomId,
-            user: oUser,
-            zoneId : zoneId,
-            index: index,
-            emit: false
-        };
-        socket.emit('addSpecialCondition', data);
-    };
+    processAction(user, emit, 'addSpecialCondition', [zoneId, index]);
 }

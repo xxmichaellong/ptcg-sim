@@ -1,4 +1,5 @@
 import { attack, pass } from "../../../../actions/chat-buttons/chat-buttons.js";
+import { undo } from "../../../../actions/general/undo.js";
 import { systemState } from "../../../../front-end.js";
 import { appendMessage } from "../../../../setup/chatbox/append-message.js";
 import { determineUsername } from "../../../../setup/general/determine-username.js";
@@ -21,6 +22,11 @@ export const initializeP1ChatButtons = () => {
             };
         };
     });
+
+    const undoButton = document.getElementById('undoButton');
+    undoButton.addEventListener('click', () => {
+        undo(systemState.initiator);
+    })
 
     const FREEBUTTON = document.getElementById('FREEBUTTON');
     FREEBUTTON.addEventListener('click', () => {

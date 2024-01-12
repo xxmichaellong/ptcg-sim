@@ -1,24 +1,31 @@
-import { oppContainerDocument, selfContainerDocument, socket, systemState } from "../../front-end.js";
+import { oppContainerDocument, selfContainerDocument, systemState } from "../../front-end.js";
 import { appendMessage } from "../../setup/chatbox/append-message.js";
 import { determineDeckData } from "../../setup/general/determine-deckdata.js";
 import { determineUsername } from "../../setup/general/determine-username.js";
+import { processAction } from "../../setup/general/process-action.js";
 import { shuffleIndices } from "../../setup/general/shuffle.js";
 import { removeImages } from "../../setup/image-logic/remove-images.js";
 import { getZone } from "../../setup/zones/get-zone.js";
 import { moveCard } from "../move-card-bundle/move-card.js";
 import { shuffleZone } from "./shuffle-zone.js";
 
-export const shuffleAll = (initiator, user, zoneId, indices, emit = true) => {
+export const shuffleAll = (user, initiator, zoneId, indices, emit = true) => {
+    const oInitiator = initiator === 'self' ? 'opp' : 'self';
+    if (user === 'opp' && emit && systemState.isTwoPlayer){
+        processAction(user, emit, 'shuffleAll', [oInitiator, zoneId, indices]);
+        return;
+    };
+
     const zone = getZone(user, zoneId);
     const count = zone.getCount();
 
     for (let i = 0; i < count; i++) {
-        moveCard(initiator, user, zoneId, 'deck', 0);
+        moveCard(user, initiator, zoneId, 'deck', 0);
     };
 
     const deck = getZone(user, 'deck');
     indices = indices ? indices : shuffleIndices(deck.getCount());
-    shuffleZone(initiator, user, 'deck', indices, false, false);
+    shuffleZone(user, initiator, 'deck', indices, false, false);
 
     zone.element.style.display = 'none';
 
@@ -36,27 +43,21 @@ export const shuffleAll = (initiator, user, zoneId, indices, emit = true) => {
         appendMessage(initiator, message, 'player', false);
     };
 
-    if (systemState.isTwoPlayer && emit){
-        initiator = initiator === 'self' ? 'opp' : 'self';
-        user = user === 'self' ? 'opp' : 'self';
-        const data = {
-            roomId: systemState.roomId,
-            initiator: initiator,
-            user: user,
-            zoneId: zoneId,
-            indices: indices,
-            emit: false
-        };
-        socket.emit('shuffleAll', data);
-    };
+    processAction(user, emit, 'shuffleAll', [oInitiator, zoneId, indices]);
 }
 
-export const discardAll = (initiator, user, zoneId, emit = true) => {
+export const discardAll = (user, initiator, zoneId, emit = true) => {
+    const oInitiator = initiator === 'self' ? 'opp' : 'self';
+    if (user === 'opp' && emit && systemState.isTwoPlayer){
+        processAction(user, emit, 'discardAll', [oInitiator, zoneId]);
+        return;
+    };
+
     const zone = getZone(user, zoneId);
     const count = zone.getCount();
 
     for (let i = 0; i < count; i++) {
-        moveCard(initiator, user, zoneId, 'discard', 0)
+        moveCard(user, initiator, zoneId, 'discard', 0)
     };
 
     zone.element.style.display = 'none';
@@ -71,26 +72,21 @@ export const discardAll = (initiator, user, zoneId, emit = true) => {
         appendMessage(initiator, message, 'player', false);
     };
 
-    if (systemState.isTwoPlayer && emit){
-        initiator = initiator === 'self' ? 'opp' : 'self';
-        user = user === 'self' ? 'opp' : 'self';
-        const data = {
-            roomId: systemState.roomId,
-            initiator: initiator,
-            user: user,
-            zoneId: zoneId,
-            emit: false
-        };
-        socket.emit('discardAll', data);
-    };
+    processAction(user, emit, 'discardAll', [oInitiator, zoneId]);
 }
 
-export const lostZoneAll = (initiator, user, zoneId, emit = true) => {
+export const lostZoneAll = (user, initiator, zoneId, emit = true) => {
+    const oInitiator = initiator === 'self' ? 'opp' : 'self';
+    if (user === 'opp' && emit && systemState.isTwoPlayer){
+        processAction(user, emit, 'lostZoneAll', [oInitiator, zoneId]);
+        return;
+    };
+
     const zone = getZone(user, zoneId);
     const count = zone.getCount();
 
     for (let i = 0; i < count; i++) {
-        moveCard(initiator, user, zoneId, 'lostZone', 0)
+        moveCard(user, initiator, zoneId, 'lostZone', 0)
     };
 
     zone.element.style.display = 'none';
@@ -105,26 +101,21 @@ export const lostZoneAll = (initiator, user, zoneId, emit = true) => {
         appendMessage(initiator, message, 'player', false);
     };
 
-    if (systemState.isTwoPlayer && emit){
-        initiator = initiator === 'self' ? 'opp' : 'self';
-        user = user === 'self' ? 'opp' : 'self';
-        const data = {
-            roomId: systemState.roomId,
-            initiator: initiator,
-            user: user,
-            zoneId: zoneId,
-            emit: false
-        };
-        socket.emit('lostZoneAll', data);
-    };
+    processAction(user, emit, 'lostZoneAll', [oInitiator, zoneId]);
 }
 
-export const handAll = (initiator, user, zoneId, emit = true) => {
+export const handAll = (user, initiator, zoneId, emit = true) => {
+    const oInitiator = initiator === 'self' ? 'opp' : 'self';
+    if (user === 'opp' && emit && systemState.isTwoPlayer){
+        processAction(user, emit, 'handAll', [oInitiator, zoneId]);
+        return;
+    };
+
     const zone = getZone(user, zoneId);
     const count = zone.getCount();
 
     for (let i = 0; i < count; i++) {
-        moveCard(initiator, user, zoneId, 'hand', 0)
+        moveCard(user, initiator, zoneId, 'hand', 0)
     };
     zone.element.style.display = 'none';
 
@@ -138,18 +129,7 @@ export const handAll = (initiator, user, zoneId, emit = true) => {
         appendMessage(initiator, message, 'player', false);
     };
 
-    if (systemState.isTwoPlayer && emit){
-        initiator = initiator === 'self' ? 'opp' : 'self';
-        user = user === 'self' ? 'opp' : 'self';
-        const data = {
-            roomId: systemState.roomId,
-            initiator: initiator,
-            user: user,
-            zoneId: zoneId,
-            emit: false
-        };
-        socket.emit('handAll', data);
-    };
+    processAction(user, emit, 'handAll', [oInitiator, zoneId]);
 }
 
 export const closeDisplay = (user, zoneId) => {
@@ -157,7 +137,13 @@ export const closeDisplay = (user, zoneId) => {
     zone.element.style.display = 'none';
 }
 
-export const leaveAll = (initiator, user, oZoneId, emit = true) => {
+export const leaveAll = (user, initiator, oZoneId, emit = true) => {
+    const oInitiator = initiator === 'self' ? 'opp' : 'self';
+    if (user === 'opp' && emit && systemState.isTwoPlayer){
+        processAction(user, emit, 'leaveAll', [oInitiator, oZoneId]);
+        return;
+    };
+
     const oZone = getZone(user, oZoneId);
     const selectedActiveZone = getZone(user, 'active');
     const dZoneId = selectedActiveZone.getCount() === 0 ? 'active' : 'bench';
@@ -173,7 +159,7 @@ export const leaveAll = (initiator, user, oZoneId, emit = true) => {
     for (let i = oZoneCount1; i >= 0; i--){
         if (oZone.array[i].type === 'Pokémon'){
             targetImage = oZone.array[i].image;
-            moveCard(initiator, user, oZoneId, dZoneId, i);
+            moveCard(user, initiator, oZoneId, dZoneId, i);
             break;
         };
     };
@@ -182,28 +168,17 @@ export const leaveAll = (initiator, user, oZoneId, emit = true) => {
         if (oZone.array[i].type === 'Pokémon'){
             const targetIndex = dZone.array.findIndex(card => card.image === targetImage);
             targetImage = oZone.array[i].image;
-            moveCard(initiator, user, oZoneId, dZoneId, i, targetIndex);
+            moveCard(user, initiator, oZoneId, dZoneId, i, targetIndex);
         };
     };
     const oZoneCount3 = oZone.getCount();
     for (let i = 0; i < oZoneCount3; i++){
         const targetIndex = dZone.array.findIndex(card => card.image === targetImage);
-        moveCard(initiator, user, oZoneId, dZoneId, 0, targetIndex);
+        moveCard(user, initiator, oZoneId, dZoneId, 0, targetIndex);
     };
     oZone.element.style.display = 'none';
 
-    if (systemState.isTwoPlayer && emit){
-        initiator = initiator === 'self' ? 'opp' : 'self';
-        user = user === 'self' ? 'opp' : 'self';
-        const data = {
-            roomId: systemState.roomId,
-            initiator: initiator,
-            user: user,
-            oZoneId: oZoneId,
-            emit: false
-        };
-        socket.emit('leaveAll', data);
-    };
+    processAction(user, emit, 'leaveAll', [oInitiator, oZoneId]);
 };
 
 export const sort = (user, zoneId) => {

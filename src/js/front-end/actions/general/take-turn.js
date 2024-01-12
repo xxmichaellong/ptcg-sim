@@ -1,12 +1,19 @@
-import { socket, systemState } from '../../front-end.js';
+import { systemState } from '../../front-end.js';
 import { appendMessage } from '../../setup/chatbox/append-message.js';
 import { determineUsername } from '../../setup/general/determine-username.js';
+import { processAction } from '../../setup/general/process-action.js';
 import { getZone } from '../../setup/zones/get-zone.js';
 import { resetAbilityCounters } from '../counters/reset-counters.js';
 import { moveCard } from '../move-card-bundle/move-card.js';
 import { discardBoard } from './board-actions.js';
 
-export const takeTurn = (initiator, user, emit = true) => {
+export const takeTurn = (user, initiator, emit = true) => {
+    const oInitiator = initiator === 'self' ? 'opp' : 'self';
+    if (user === 'opp' && emit && systemState.isTwoPlayer){
+        processAction(user, emit, 'takeTurn', [oInitiator]);
+        return;
+    };
+
     const deck = getZone(user, 'deck');
     discardBoard(initiator, 'self', false, false);
     discardBoard(initiator, 'opp', false, false);
@@ -14,7 +21,7 @@ export const takeTurn = (initiator, user, emit = true) => {
 
     if (deck.getCount() > 0){
         systemState.turn ++;
-        moveCard(initiator, user, 'deck', 'hand', 0);
+        moveCard(user, initiator, 'deck', 'hand', 0);
         appendMessage('', 'Turn ' + systemState.turn, 'announcement', false);
 
         ['active', 'bench'].forEach(zoneId => {
@@ -35,15 +42,6 @@ export const takeTurn = (initiator, user, emit = true) => {
     } else {
         appendMessage('', determineUsername(initiator) + ' has no more cards in deck!', 'announcement', false);
     };
-    if (systemState.isTwoPlayer && emit){
-        initiator = initiator === 'self' ? 'opp' : 'self';
-        user = user === 'self' ? 'opp' : 'self';
-        const data = {
-            roomId: systemState.roomId,
-            initiator: initiator,
-            user: user,
-            emit: false
-        };
-        socket.emit('takeTurn', data);
-    };
+
+    processAction(user, emit, 'takeTurn', [oInitiator]);
 }

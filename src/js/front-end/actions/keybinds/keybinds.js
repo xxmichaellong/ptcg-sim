@@ -16,6 +16,7 @@ import { hideShortcut, lookShortcut, revealShortcut, stopLookingShortcut } from 
 import { rotateCard } from '../general/rotate-card.js';
 import { setup } from '../general/setup.js';
 import { takeTurn } from '../general/take-turn.js';
+import { undo } from '../general/undo.js';
 import { moveCardBundle } from '../move-card-bundle/move-card-bundle.js';
 import { draw, moveToDeckBottom, moveToDeckTop, shuffleIntoDeck, switchWithDeckTop, viewDeck } from '../zones/deck-actions.js';
 import { discardAndDraw, shuffleAndDraw, shuffleBottomAndDraw } from '../zones/hand-actions.js';
@@ -97,6 +98,9 @@ export const keyDown = (event) => {
         if (event.key === 'ArrowDown' && event.altKey) {
             shuffleBottomAndDraw(systemState.initiator, systemState.initiator);
         };
+        if (event.key === 'u') {
+            undo(systemState.initiator);
+        };
     };
     if (mouseClick.selectingCard){
         event.preventDefault();
@@ -120,15 +124,15 @@ export const keyDown = (event) => {
             const dZoneId = bind;
             deselectCard();
             if (event.key === 'ArrowUp'){
-                moveToDeckTop(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex);
+                moveToDeckTop(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
             } else if (event.key === 'ArrowDown'){
-                moveToDeckBottom(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex);
+                moveToDeckBottom(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
             } else if (event.key === 'ArrowRight'){
-                switchWithDeckTop(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex);
+                switchWithDeckTop(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
             } else if (event.key === 's'){
-                shuffleIntoDeck(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex);
+                shuffleIntoDeck(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
             } else {
-                moveCardBundle(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, dZoneId, mouseClick.cardIndex, false, 'move');
+                moveCardBundle(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, dZoneId, mouseClick.cardIndex, false, 'move');
             };
         };
         if ((event.key === 'e' || event.key === 'q') && !event.altKey && (!['active', 'bench'].includes(mouseClick.zoneId) || mouseClick.card.image.attached)){
@@ -153,7 +157,7 @@ export const keyDown = (event) => {
             if (mouseClick.card.image.abilityCounter){
                 mouseClick.card.image.abilityCounter.handleRemove();
             } else {
-                useAbility(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex);
+                useAbility(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
             };
         };
         if (event.key >= 1 && event.key <= 9 && ['active', 'bench'].includes(mouseClick.zoneId)){
@@ -225,25 +229,25 @@ export const keyDown = (event) => {
         if (event.key ==='c'){
             let rootDirectory = window.location.origin;
             if (mouseClick.card.image.src === rootDirectory + '/src/cardback.png'){
-                lookShortcut(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex);
+                lookShortcut(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
             } else {
-                stopLookingShortcut(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex);
+                stopLookingShortcut(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
             };
         };
         if (event.key === 'z' && !event.altKey){
             let rootDirectory = window.location.origin;
             if (mouseClick.card.image.src !== rootDirectory + '/src/cardback.png'){
-                hideShortcut(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex);
+                hideShortcut(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
             };
         };
         if (event.key === 'z' && event.altKey){
-            revealShortcut(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex);
+            revealShortcut(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
         };
         if (event.key === 'e' && event.altKey){
-            changeType(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex, 'Energy');
+            changeType(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex, 'Energy');
         };
         if (event.key === 't' && event.altKey){
-            changeType(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex, 'Trainer');
+            changeType(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex, 'Trainer');
         };
     };
 }

@@ -7,24 +7,24 @@ export const initializePrizesButtons = () => {
 
     const shufflePrizesButton = document.getElementById('shufflePrizesButton');
     shufflePrizesButton.addEventListener('click', () => {
-        shuffleZone(systemState.initiator, mouseClick.cardUser, 'prizes');
+        shuffleZone(mouseClick.cardUser, systemState.initiator, 'prizes');
     });
 
     const lookPrizesButton = document.getElementById('lookPrizesButton');
     lookPrizesButton.addEventListener('click', () => {
         if (mouseClick.card.image.src === rootDirectory + '/src/cardback.png') {
-            lookAtCards(systemState.initiator, mouseClick.cardUser, 'prizes');
+            lookAtCards(mouseClick.cardUser, systemState.initiator, 'prizes');
         } else {
-            stopLookingAtCards(systemState.initiator, mouseClick.cardUser, 'prizes');
+            stopLookingAtCards(mouseClick.cardUser, systemState.initiator, 'prizes');
         };
     });
 
     const revealHidePrizesButton = document.getElementById('revealHidePrizesButton');
     revealHidePrizesButton.addEventListener('click', () => {
         if (mouseClick.card.image.src === rootDirectory + '/src/cardback.png') {
-            revealCards(systemState.initiator, mouseClick.cardUser, 'prizes');
+            revealCards(mouseClick.cardUser, systemState.initiator, 'prizes');
         } else {
-            hideCards(systemState.initiator, mouseClick.cardUser, 'prizes');
+            hideCards(mouseClick.cardUser, systemState.initiator, 'prizes');
         };
     });
 };

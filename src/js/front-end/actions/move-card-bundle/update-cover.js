@@ -24,7 +24,7 @@ export const updateOriginCover = (user, oZoneId, index) => {
 }
 
 export const updateDestinationCover = (user, movingCard, dZoneId) => {
-    const imageURL = movingCard.image.src;
+    let imageURL = movingCard.image.src;
     const dZone = getZone(user, dZoneId);
     //update discard/lostzone cover
     if (['lostZone', 'discard'].includes(dZoneId)){
@@ -42,7 +42,7 @@ export const updateDestinationCover = (user, movingCard, dZoneId) => {
             dZone.elementCover.removeChild(dZone.elementCover.firstElementChild);
         };
         imageURL = systemState.cardBackSrc;
-        const cover = new Cover(user, 'deckCoverElement', imageURL);
+        const cover = new Cover(user, 'deckCover', imageURL);
         dZone.elementCover.appendChild(cover.image);
     };
 }

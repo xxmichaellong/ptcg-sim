@@ -1,4 +1,4 @@
-import { socket, systemState } from '../../front-end.js';
+import { systemState } from '../../front-end.js';
 import { resetImage } from '../../setup/image-logic/reset-image.js';
 import { getZone } from '../../setup/zones/get-zone.js';
 import { deselectCard, hideZoneElementsIfEmpty } from '../general/close-popups.js';
@@ -16,7 +16,7 @@ import { updateCounters } from './update-counters.js';
 import { updateDestinationCover, updateOriginCover } from './update-cover.js';
 import { updateStadiumCard } from './update-stadium-card.js';
 
-export const moveCard = (initiator, user, oZoneId, dZoneId, index, targetIndex) => {
+export const moveCard = (user, initiator, oZoneId, dZoneId, index, targetIndex) => {
     oZoneId = oZoneId.replace('Cover', '');
     dZoneId = dZoneId.replace('Cover', '');
 
@@ -83,9 +83,9 @@ export const moveCard = (initiator, user, oZoneId, dZoneId, index, targetIndex) 
 
     if (isTargetCardValid && isAttachAllowed){
         if (movingCard.type === 'Pokémon' && !activeOrBenchZone.includes(oZoneId)){
-            evolveCard(initiator, user, movingCard, targetCard, dZoneId, dZone);
+            evolveCard(user, initiator, movingCard, targetCard, dZoneId, dZone);
         } else {
-            attachCard(initiator, user, movingCard, targetCard, dZoneId, dZone);
+            attachCard(user, initiator, movingCard, targetCard, dZoneId, dZone);
         };
     // if image is not being attached to another card, proceed with normal card move
     } else {
@@ -100,15 +100,15 @@ export const moveCard = (initiator, user, oZoneId, dZoneId, index, targetIndex) 
         //update the cover of the deck/lostzone/discard if applicable
         updateDestinationCover(user, movingCard, dZoneId);
         //automatically move cards from the active to the bench and vice versa, if applicable
-        autoMoveActiveBenchCard(initiator, user, movingCard, targetCard, oZoneId, oZone, dZoneId, dZone, index, targetIndex);
+        autoMoveActiveBenchCard(user, initiator, movingCard, targetCard, oZoneId, oZone, dZoneId, dZone, targetIndex);
         //automatically bump any existing stadiums and make sure it's facing right-side-up for the user
-        updateStadiumCard(initiator, user, dZoneId, dZone);
+        updateStadiumCard(user, initiator, dZoneId, dZone);
     };
    
     const zonesWithAttachedCards = ['active', 'bench', 'attachedCards'];
     // deal with any attached cards
     if (zonesWithAttachedCards.includes(oZoneId) && !movingCard.image.attached){
-        relocateAttachedCards(initiator, user, movingCard, oZoneId, oZone, dZoneId, dZone);
+        relocateAttachedCards(user, initiator, movingCard, oZoneId, oZone, dZoneId, dZone);
     };
     //update the ability, special condtion, and damage counters on all applicable cards
     updateCounters(user, movingCard, oZoneId, oZone, dZoneId, dZone);

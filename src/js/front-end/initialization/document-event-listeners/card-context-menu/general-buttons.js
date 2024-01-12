@@ -4,27 +4,27 @@ import { mouseClick, systemState } from '../../global-variables/global-variables
 
 export const initializeGeneralButtons = () => {
     const moveToTopButton = document.getElementById('moveToTopButton');
-    moveToTopButton.addEventListener('click', () => moveToDeckTop(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex));
+    moveToTopButton.addEventListener('click', () => moveToDeckTop(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex));
 
     const moveToBottomButton = document.getElementById('moveToBottomButton');
-    moveToBottomButton.addEventListener('click', () => moveToDeckBottom(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex));
+    moveToBottomButton.addEventListener('click', () => moveToDeckBottom(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex));
 
     const switchWithTopButton = document.getElementById('switchWithTopButton');
-    switchWithTopButton.addEventListener('click', () => switchWithDeckTop(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex));
+    switchWithTopButton.addEventListener('click', () => switchWithDeckTop(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex));
 
     const shuffleIntoDeckButton = document.getElementById('shuffleIntoDeckButton');
-    shuffleIntoDeckButton.addEventListener('click', () => shuffleIntoDeck(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex));
+    shuffleIntoDeckButton.addEventListener('click', () => shuffleIntoDeck(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex));
 
     const moveToBoardButton = document.getElementById('moveToBoardButton');
-    moveToBoardButton.addEventListener('click', () => moveToBoard(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex));
+    moveToBoardButton.addEventListener('click', () => moveToBoard(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex));
 
     const revealHideButton = document.getElementById('revealHideButton');
     revealHideButton.addEventListener('click', () => {
         let rootDirectory = window.location.origin;
         if (mouseClick.card.image.src !== rootDirectory + '/src/cardback.png'){
-            hideShortcut(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex);
+            hideShortcut(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
         } else {
-            revealShortcut(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex);
+            revealShortcut(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
         };
     });
 };

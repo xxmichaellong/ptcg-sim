@@ -3,7 +3,7 @@ import { addDamageCounter } from "../counters/damage-counter.js";
 import { resetRotation } from "../general/rotate-card.js";
 import { moveCard } from "./move-card.js";
 
-export const evolveCard = (initiator, user, movingCard, targetCard, dZoneId, dZone) => {
+export const evolveCard = (user, initiator, movingCard, targetCard, dZoneId, dZone) => {
     resetImage(movingCard.image);
     targetCard.image.after(movingCard.image);
     targetCard.image.relative = movingCard.image;
@@ -44,7 +44,7 @@ export const evolveCard = (initiator, user, movingCard, targetCard, dZoneId, dZo
             resetImage(card.image);
             card.image.attached = true;
             const targetIndex = dZone.array.findIndex(card => card.image === movingCard.image);
-            moveCard(initiator, user, dZoneId, dZoneId, i, targetIndex);
+            moveCard(user, initiator, dZoneId, dZoneId, i, targetIndex);
             i--;
         };
     };

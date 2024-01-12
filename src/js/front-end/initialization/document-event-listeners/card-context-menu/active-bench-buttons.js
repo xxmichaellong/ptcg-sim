@@ -20,16 +20,16 @@ export const initializeActiveAndBenchButtons = () => {
         if (mouseClick.card.image.abilityCounter){
             mouseClick.card.image.abilityCounter.handleRemove();
         } else {
-            useAbility(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex);
+            useAbility(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
         };
     });
 
     const changeToEnergyButton = document.getElementById('changeToEnergyButton');
     changeToEnergyButton.addEventListener('click', () => {
-        changeType(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex, 'Energy');
+        changeType(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex, 'Energy');
     });
     const changeToToolButton = document.getElementById('changeToToolButton');
     changeToToolButton.addEventListener('click', () => {
-        changeType(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex, 'Trainer');
+        changeType(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex, 'Trainer');
     });
 }

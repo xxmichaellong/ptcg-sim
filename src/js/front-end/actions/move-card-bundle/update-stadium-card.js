@@ -1,7 +1,7 @@
 import { systemState } from "../../front-end.js";
 import { moveCard } from "./move-card.js";
 
-export const updateStadiumCard = (initiator, user, dZoneId, dZone) => {
+export const updateStadiumCard = (user, initiator, dZoneId, dZone) => {
     if (['stadium'].includes(dZoneId) && dZone.array[1]) {
         if (dZone.array[0].image.user === 'self') {
             moveCard(initiator, 'self', 'stadium', 'discard', 0);

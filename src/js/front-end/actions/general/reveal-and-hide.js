@@ -2,6 +2,7 @@ import { socket, systemState } from '../../front-end.js';
 import { appendMessage } from '../../setup/chatbox/append-message.js';
 import { determineUsername } from '../../setup/general/determine-username.js';
 import { showPopup } from '../../setup/general/pop-up-message.js';
+import { processAction } from '../../setup/general/process-action.js';
 import { removeImages } from '../../setup/image-logic/remove-images.js';
 import { getZone } from '../../setup/zones/get-zone.js';
 import { convertZoneName } from '../move-card-bundle/move-card-message.js';
@@ -23,7 +24,7 @@ export const revealCard = (card) => {
     };
 }
 
-export const lookAtCards = (initiator, user, zoneId, emit = true) => {
+export const lookAtCards = (user, initiator, zoneId, emit = true) => {
     if (emit){
         const zone = getZone(user, zoneId);
         removeImages(zone.element);
@@ -48,7 +49,7 @@ export const lookAtCards = (initiator, user, zoneId, emit = true) => {
     };
 }
 
-export const stopLookingAtCards = (initiator, user, zoneId, message = true, emit = true) => {
+export const stopLookingAtCards = (user, initiator, zoneId, message = true, emit = true) => {
     if (emit){
         const zone = getZone(user, zoneId);
         removeImages(zone.element);
@@ -76,10 +77,10 @@ export const stopLookingAtCards = (initiator, user, zoneId, message = true, emit
     };
 }
 
-export const revealCards = (initiator, user, zoneId, emit = true) => {
+export const revealCards = (user, initiator, zoneId, emit = true) => {
     const prizesCount = getZone(user, 'prizes').getCount();
     for (let i = 0; i < prizesCount; i++) {
-        revealShortcut(initiator, user, zoneId, i, false, false);
+        revealShortcut(user, initiator, zoneId, i, false, false);
     };
     appendMessage(initiator, determineUsername(initiator) + ' revealed ' + determineUsername(user) + "'s " + zoneId, 'player', false);
 
@@ -97,10 +98,10 @@ export const revealCards = (initiator, user, zoneId, emit = true) => {
     };
 }
 
-export const hideCards = (initiator, user, zoneId, emit = true) => {
+export const hideCards = (user, initiator, zoneId, emit = true) => {
     const prizesCount = getZone(user, 'prizes').getCount();
     for (let i = 0; i < prizesCount; i++) {
-        hideShortcut(initiator, user, zoneId, i, false, false);
+        hideShortcut(user, initiator, zoneId, i, false, false);
     };
     appendMessage(initiator, determineUsername(initiator) + ' hid ' + determineUsername(user) + "'s " + zoneId, 'player', false);
 
@@ -118,7 +119,7 @@ export const hideCards = (initiator, user, zoneId, emit = true) => {
     };
 }
 
-export const revealShortcut = (initiator, user, zoneId, index, message = true, emit = true) => {
+export const revealShortcut = (user, initiator, zoneId, index, message = true, emit = true) => {
     const zone = getZone(user, zoneId);
     const card = zone.array[index];
     card.image.faceDown = false;
@@ -162,7 +163,7 @@ export const revealShortcut = (initiator, user, zoneId, index, message = true, e
     };
 }
 
-export const hideShortcut = (initiator, user, zoneId, index, message = true, emit = true) => {
+export const hideShortcut = (user, initiator, zoneId, index, message = true, emit = true) => {
     const zone = getZone(user, zoneId);
     const card = zone.array[index];
 
@@ -193,7 +194,7 @@ export const hideShortcut = (initiator, user, zoneId, index, message = true, emi
     };
 }
 
-export const lookShortcut = (initiator, user, zoneId, index, emit = true) => {
+export const lookShortcut = (user, initiator, zoneId, index, emit = true) => {
     if (emit){ //only apply for initiator
         const zone = getZone(user, zoneId);
         const card = zone.array[index];    
@@ -216,7 +217,7 @@ export const lookShortcut = (initiator, user, zoneId, index, emit = true) => {
     };
 }
 
-export const stopLookingShortcut = (initiator, user, zoneId, index, emit = true) => {
+export const stopLookingShortcut = (user, initiator, zoneId, index, emit = true) => {
     if (emit){ //only apply for initiator
         const zone = getZone(user, zoneId);
         const card = zone.array[index];
@@ -240,24 +241,19 @@ export const stopLookingShortcut = (initiator, user, zoneId, index, emit = true)
     };
 }
 
-export const playRandomCardFaceDown = (initiator, user, randomIndex, emit = true) => {
-    const hand = getZone(user, 'hand')
+export const playRandomCardFaceDown = (user, initiator, randomIndex, emit = true) => {
+    const oInitiator = initiator === 'self' ? 'opp' : 'self';
+    if (user === 'opp' && emit && systemState.isTwoPlayer){
+        processAction(user, emit, 'playRandomCardFaceDown', [oInitiator, randomIndex]);
+        return;
+    };
+
+    const hand = getZone(user, 'hand');
     randomIndex = typeof randomIndex === 'number' ? randomIndex : Math.floor(Math.random() * hand.getCount());
     hand.array[randomIndex].image.faceDown = true;
-    hideShortcut(initiator, user, 'hand', randomIndex, false, false);
-    moveCard(initiator, user, 'hand', 'board', randomIndex);
+    hideShortcut(user, initiator, 'hand', randomIndex, false, false);
+    moveCard(user, initiator, 'hand', 'board', randomIndex);
     appendMessage(initiator, determineUsername(initiator) + ' moved a random card from ' + determineUsername(user) + "'s hand to board", 'player', false);
 
-    if (systemState.isTwoPlayer && emit){
-        initiator = initiator === 'self' ? 'opp' : 'self';
-        user = user === 'self' ? 'opp' : 'self';
-        const data = {
-            roomId: systemState.roomId,
-            initiator: initiator,
-            user: user,
-            randomIndex: randomIndex,
-            emit: false
-        };
-        socket.emit('playRandomCardFaceDown', data);
-    };
+    processAction(user, emit, 'playRandomCardFaceDown', [oInitiator, randomIndex]);
 }

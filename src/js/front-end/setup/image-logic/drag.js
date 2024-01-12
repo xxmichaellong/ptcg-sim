@@ -81,7 +81,7 @@ export const dragOver = (event) => {
 
     if (targetIsNotPlayContainer && targetParentIsContainer && (!targetParentIsActiveOrBench || (cardIsFromActiveOrBench && !cardIsAttached))){
         if (targetParentIsActiveOrBench && cardIsFromActiveOrBench && targetParentParentIsNotOwnContainer){
-            event.target.parentElement.parentElement.classList.add('highlight');
+            event.target.parentElement.parentElement.classList.add('highlightBox');
         } else if (!targetParentIsActiveOrBench && targetParentIsNotOwnContainer){
             if (event.target.parentElement.id === 'board'){
                 event.target.parentElement.classList.add('highlightBox');
@@ -177,9 +177,9 @@ export const drop = (event) => {
         
         if ((mouseClick.zoneId !== dZoneId || draggedImage.attached) && (!draggedImage.attached || !['active', 'bench'].includes(dZoneId) || targetIndex !== undefined)){
             if (dZoneId === 'deckCover'){
-                moveToDeckTop(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex);
+                moveToDeckTop(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
             } else {
-                moveCardBundle(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, dZoneId, mouseClick.cardIndex, targetIndex, 'move');
+                moveCardBundle(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, dZoneId, mouseClick.cardIndex, targetIndex, 'move');
             };
         };
     };

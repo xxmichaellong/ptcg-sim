@@ -127,7 +127,7 @@ export const imageClick = (event) => {
         closePopups(event);
         const dZoneId = event.target.parentElement.parentElement.id;
         const targetIndex = getZone(event.target.user, dZoneId).array.findIndex(card => card.image === event.target);
-        moveCardBundle(systemState.initiator, mouseClick.cardUser, mouseClick.zoneId, dZoneId, mouseClick.cardIndex, targetIndex, 'move');
+        moveCardBundle(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, dZoneId, mouseClick.cardIndex, targetIndex, 'move');
     } else {
         closePopups(event); //need both because of highlights condition in the if block above
         identifyCard(event);

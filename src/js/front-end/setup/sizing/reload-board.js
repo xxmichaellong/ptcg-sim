@@ -1,6 +1,7 @@
 import { rotateCard } from "../../actions/general/rotate-card.js";
 import { moveCard } from "../../actions/move-card-bundle/move-card.js";
 import { getZone } from "../zones/get-zone.js";
+import { adjustCards } from "./resizer.js";
 
 const reloadContainer = (user, zoneId) => {
     const zone = getZone(user, zoneId);
@@ -30,6 +31,7 @@ const reloadContainer = (user, zoneId) => {
             };
         });
     });
+    adjustCards(user, zoneId, 1);
 }
 
 export const reloadBoard = () => {

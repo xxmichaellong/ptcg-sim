@@ -1,10 +1,16 @@
-import { socket, systemState } from "../../front-end.js";
+import { systemState } from "../../front-end.js";
+import { processAction } from "../../setup/general/process-action.js";
 import { getZone } from "../../setup/zones/get-zone.js";
 import { addAbilityCounter } from "../counters/ability-counter.js";
 import { addDamageCounter } from "../counters/damage-counter.js";
 import { addSpecialCondition } from "../counters/special-condition.js";
 
 export const rotateCard = (user, zoneId, index, single = false, emit = true) => {
+    if (user === 'opp' && emit && systemState.isTwoPlayer){
+        processAction(user, emit, 'rotateCard', [zoneId, index, single]);
+        return;
+    };
+
     const zone = getZone(user, zoneId);
 
     const rotatingImage = zone.array[index].image;
@@ -49,18 +55,8 @@ export const rotateCard = (user, zoneId, index, single = false, emit = true) => 
             addAbilityCounter(user, zoneId, i);
         };
     };
-    if (systemState.isTwoPlayer && emit){
-        user = user === 'self' ? 'opp' : 'self';
-        const data = {
-            roomId: systemState.roomId,
-            user: user,
-            zoneId : zoneId,
-            index: index,
-            single: single,
-            emit: false
-        };
-        socket.emit('rotateCard', data);
-    };
+    
+    processAction(user, emit, 'rotateCard', [zoneId, index, single]);
 }
 
 export const resetRotation = (targetImage) => {

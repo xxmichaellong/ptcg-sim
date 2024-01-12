@@ -1,25 +1,17 @@
-import { socket, systemState } from "../../front-end.js";
+import { systemState } from "../../front-end.js";
+import { processAction } from "../../setup/general/process-action.js";
 import { moveCardMessage } from "./move-card-message.js";
 import { moveCard } from "./move-card.js";
 
-export const moveCardBundle = (initiator, user, oZoneId, dZoneId, index, targetIndex, action, emit = true) => {
-    moveCardMessage(initiator, user, oZoneId, dZoneId, index, targetIndex, action);
-    moveCard(initiator, user, oZoneId, dZoneId, index, targetIndex);
-
-    if (systemState.isTwoPlayer && emit){
-        initiator = initiator === 'self' ? 'opp' : 'self';
-        user = user === 'self' ? 'opp' : 'self';
-        const data = {
-            roomId: systemState.roomId,
-            initiator: initiator,
-            user: user,
-            oZoneId: oZoneId,
-            dZoneId: dZoneId,
-            index: index,
-            targetIndex: targetIndex,
-            action: action,
-            emit: false
-        };
-        socket.emit('moveCardBundle', data);
+export const moveCardBundle = (user, initiator, oZoneId, dZoneId, index, targetIndex, action, emit = true) => {
+    const oInitiator = initiator === 'self' ? 'opp' : 'self';
+    if (user === 'opp' && emit && systemState.isTwoPlayer){
+        processAction(user, emit, 'moveCardBundle', [oInitiator, oZoneId, dZoneId, index, targetIndex, action]);
+        return;
     };
+
+    moveCardMessage(user, initiator, oZoneId, dZoneId, index, targetIndex, action);
+    moveCard(user, initiator, oZoneId, dZoneId, index, targetIndex);
+
+    processAction(user, emit, 'moveCardBundle', [oInitiator, oZoneId, dZoneId, index, targetIndex, action]);
 }

@@ -3,14 +3,14 @@ import { mouseClick, systemState } from "../../../front-end.js";
 
 export const initializeBoardButtons = () => {
     const discardBoardButton = document.getElementById('discardBoardButton');
-    discardBoardButton.addEventListener('click', () => discardBoard(systemState.initiator, mouseClick.cardUser));
+    discardBoardButton.addEventListener('click', () => discardBoard(mouseClick.cardUser, systemState.initiator));
 
     const shuffleBoardButton = document.getElementById('shuffleBoardButton');
-    shuffleBoardButton.addEventListener('click', () => shuffleBoard(systemState.initiator, mouseClick.cardUser));
+    shuffleBoardButton.addEventListener('click', () => shuffleBoard(mouseClick.cardUser, systemState.initiator));
 
     const lostZoneBoardButton = document.getElementById('lostZoneBoardButton');
-    lostZoneBoardButton.addEventListener('click', () => lostZoneBoard(systemState.initiator, mouseClick.cardUser));
+    lostZoneBoardButton.addEventListener('click', () => lostZoneBoard(mouseClick.cardUser, systemState.initiator));
 
     const handBoardButton = document.getElementById('handBoardButton');
-    handBoardButton.addEventListener('click', () => handBoard(systemState.initiator, mouseClick.cardUser));
+    handBoardButton.addEventListener('click', () => handBoard(mouseClick.cardUser, systemState.initiator));
 };

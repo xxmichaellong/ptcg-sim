@@ -1,10 +1,17 @@
-import { socket, systemState } from "../../front-end.js";
+import { systemState } from "../../front-end.js";
 import { appendMessage } from "../../setup/chatbox/append-message.js";
 import { determineUsername } from "../../setup/general/determine-username.js";
+import { processAction } from "../../setup/general/process-action.js";
 import { getZone } from "../../setup/zones/get-zone.js";
 import { moveCard } from "../move-card-bundle/move-card.js";
 
-export const changeType = (initiator, user, zoneId, index, type, emit = true) => {
+export const changeType = (user, initiator, zoneId, index, type, emit = true) => {
+    const oInitiator = initiator === 'self' ? 'opp' : 'self';
+    if (user === 'opp' && emit && systemState.isTwoPlayer){
+        processAction(user, emit, 'changeType', [oInitiator, zoneId, index, type]);
+        return;
+    };
+
     const zone = getZone(user, zoneId);
     const card = zone.array[index];
 
@@ -16,20 +23,7 @@ export const changeType = (initiator, user, zoneId, index, type, emit = true) =>
     const cardName = card.image.faceDown ? 'card' : card.name;
     const typeName = type === 'Energy' ? 'energy' : 'tool';
     appendMessage(initiator, determineUsername(initiator) + ' changed ' + cardName + ' into an ' + typeName, 'player', false);
-    moveCard(initiator, user, zoneId, 'board', index);    
+    moveCard(user, initiator, zoneId, 'board', index);    
     
-    if (systemState.isTwoPlayer && emit){
-        initiator = initiator === 'self' ? 'opp' : 'self';
-        user = user === 'self' ? 'opp' : 'self';
-        const data = {
-            roomId: systemState.roomId,
-            initiator: initiator,
-            user: user,
-            zoneId: zoneId,
-            index: index,
-            type: type,
-            emit: false
-        };
-        socket.emit('changeType', data);
-    };
+    processAction(user, emit, 'changeType', [oInitiator, zoneId, index, type]);
 }

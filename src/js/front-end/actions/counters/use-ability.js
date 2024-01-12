@@ -1,10 +1,17 @@
-import { socket, systemState } from "../../front-end.js";
+import { systemState } from "../../front-end.js";
 import { appendMessage } from "../../setup/chatbox/append-message.js";
 import { determineUsername } from "../../setup/general/determine-username.js";
+import { processAction } from "../../setup/general/process-action.js";
 import { getZone } from "../../setup/zones/get-zone.js";
 import { addAbilityCounter } from "./ability-counter.js";
 
-export const useAbility = (initiator, user, zoneId, index, emit = true) => {
+export const useAbility = (user, initiator, zoneId, index, emit = true) => {
+    const oInitiator = initiator === 'self' ? 'opp' : 'self';
+    if (user === 'opp' && emit && systemState.isTwoPlayer){
+        processAction(user, emit, 'useAbility', [oInitiator, zoneId, index]);
+        return;
+    };
+
     const cardName = getZone(user, zoneId).array[index].name;
     addAbilityCounter(user, zoneId, index);
     if (zoneId !== 'stadium'){
@@ -12,17 +19,6 @@ export const useAbility = (initiator, user, zoneId, index, emit = true) => {
     } else {
         appendMessage(initiator, determineUsername(initiator) + ' used ' + cardName, 'player', false);
     };
-    if (systemState.isTwoPlayer && emit){
-        initiator = initiator === 'self' ? 'opp' : 'self';
-        user = user === 'self' ? 'opp' : 'self';
-        const data = {
-            roomId: systemState.roomId,
-            initiator: initiator,
-            user: user,
-            zoneId : zoneId,
-            index: index,
-            emit: false
-        };
-        socket.emit('useAbility', data);
-    };
+    
+    processAction(user, emit, 'useAbility', [oInitiator, zoneId, index]);
 }
