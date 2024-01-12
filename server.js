@@ -33,7 +33,6 @@ async function main() {
     // Bcrypt Configuration
     const saltRounds = 10;
     const plainPassword = process.env.ADMIN_PASSWORD || "defaultPassword";
-    console.log('Admin Password:', plainPassword);
     const hashedPassword = bcrypt.hashSync(plainPassword, saltRounds);
 
     // Socket.IO Admin Instrumentation

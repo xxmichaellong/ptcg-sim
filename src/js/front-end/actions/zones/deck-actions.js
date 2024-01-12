@@ -3,8 +3,9 @@ import { appendMessage } from '../../setup/chatbox/append-message.js';
 import { determineUsername } from '../../setup/general/determine-username.js';
 import { processAction } from '../../setup/general/process-action.js';
 import { shuffleIndices } from '../../setup/general/shuffle.js';
+import { removeImages } from '../../setup/image-logic/remove-images.js';
 import { getZone } from '../../setup/zones/get-zone.js';
-import { stopLookingAtCards } from '../general/reveal-and-hide.js';
+import { hideCard } from '../general/reveal-and-hide.js';
 import { moveCardBundle } from '../move-card-bundle/move-card-bundle.js';
 import { moveCard } from '../move-card-bundle/move-card.js';
 import { shuffleZone } from './shuffle-zone.js';
@@ -78,8 +79,8 @@ export const draw = (user, initiator, drawAmount, emit = true) => {
     processAction(user, emit, 'draw', [oInitiator, drawAmount]);
 }
 
-export const handleViewButtonClick = (user, top) => {
-    const targetIsOpp = user !== systemState.initiator;
+export const handleViewButtonClick = (user, initiator, top) => {
+    const targetIsOpp = user !== initiator;
 
     let viewAmount;
     const userInput = window.prompt('How many cards do you want to look at?', '1');
@@ -88,7 +89,7 @@ export const handleViewButtonClick = (user, top) => {
     
     viewAmount = Math.min(viewAmount, selectedDeckCount);
     if (!isNaN(viewAmount) && viewAmount >= 1){
-        viewDeck(systemState.user, initiator, viewAmount, top, selectedDeckCount, targetIsOpp);
+        viewDeck(user, initiator, viewAmount, top, selectedDeckCount, targetIsOpp);
     } else {
         window.alert('Please enter a valid number for the view amount.');
     };
@@ -113,8 +114,13 @@ export const viewDeck = (user, initiator, viewAmount, top, selectedDeckCount, ta
             moveCard(user, initiator, 'deck', 'viewCards', i);
         };
     };
-    if (!emit && ((initiator !== user && !targetIsOpp) || (initiator === user && targetIsOpp))){
-        stopLookingAtCards(user, initiator, 'viewCards', false, false);
+    if ((systemState.initiator !== user && !targetIsOpp) || (systemState.initiator === user && targetIsOpp)){
+        const zone = getZone(user, 'viewCards');
+        removeImages(zone.element);
+        zone.array.forEach(card => {
+            hideCard(card);
+            zone.element.appendChild(card.image);
+        });
     };
 
     const location = top ? 'top ' : 'bottom ';

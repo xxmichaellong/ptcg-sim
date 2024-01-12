@@ -12,8 +12,8 @@ export const initializeDeckButtons = () => {
     drawButton.addEventListener('click', () => draw(mouseClick.cardUser, systemState.initiator));
 
     const viewTopButton = document.getElementById('viewTopButton');
-    viewTopButton.addEventListener('click', () => handleViewButtonClick(mouseClick.cardUser, true));
+    viewTopButton.addEventListener('click', () => handleViewButtonClick(mouseClick.cardUser, systemState.initiator, true));
 
     const viewBottomButton = document.getElementById('viewBottomButton');
-    viewBottomButton.addEventListener('click', () => handleViewButtonClick(mouseClick.cardUser, false));
+    viewBottomButton.addEventListener('click', () => handleViewButtonClick(mouseClick.cardUser, systemState.initiator, false));
 };
