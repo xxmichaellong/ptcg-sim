@@ -4,7 +4,10 @@ const http = require('http');
 const { Server } = require('socket.io');
 const { instrument } = require("@socket.io/admin-ui");
 const bcrypt = require('bcryptjs');
-require('dotenv').config();
+const path = require('path');
+const dotenv = require('dotenv');
+const envFilePath = path.join(__dirname, 'socket-admin-password.env');
+dotenv.config({ path: envFilePath });
 
 async function main() {
     // Express App Configuration
@@ -30,6 +33,7 @@ async function main() {
     // Bcrypt Configuration
     const saltRounds = 10;
     const plainPassword = process.env.ADMIN_PASSWORD || "defaultPassword";
+    console.log('Admin Password:', plainPassword);
     const hashedPassword = bcrypt.hashSync(plainPassword, saltRounds);
 
     // Socket.IO Admin Instrumentation
