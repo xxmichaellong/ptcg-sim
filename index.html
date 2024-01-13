@@ -48,7 +48,7 @@
             <br><br>
             <strong id="changelogLink" style="cursor: pointer; text-decoration: underline;">v1.1.0 is here!! 😮</strong>
             <br><br>
-            PTCG-sim is a free desktop tool to simulate card games. It supports single player (1P) and online multiplayer (2P). 
+            PTCG-sim is an <a href="https://github.com/xxmichaellong/ptcg-sim" target="_blank">open-source</a> desktop tool to simulate card games. It supports single player (1P) and online multiplayer (2P). 
             <br><br>
             Import your decklist by clicking the “Import” tab above, then press “Set Up” to start a game.
             <br><br>
@@ -56,7 +56,10 @@
             <br><br>
             <button id="tutorialButton">Watch Tutorial</button>
             <br><br>
-            <div id="discord"><strong><a href="https://discord.gg/Kj8fhVns4g" target="_blank">Join our Discord</a></strong></div>
+            <div id="links">
+                <div id="discordLink"><strong><a href="https://discord.gg/Kj8fhVns4g" target="_blank">🎮 Join our Discord</a></strong></div>
+                <div id="donationsLink">🎁 Donations</div>
+            </div>
             <div id="line"></div>
         </div>
         <div id="chatboxButtonContainer" class="chat-button-container">
@@ -339,7 +342,7 @@
     <!-- home page -->
     <div id="videoContainer"></div>
     <div id="changelog">
-        <strong>v1.1.0 Update 01/12/24</strong><br><br>
+        <h2>v1.1.0 Update 01/12/24</h2>
         Welcome to the new year! I’ve been working through some major fixes and adding new features to PTCG-sim. I’m pretty stoked to be getting the sim polished up.<br><br>
 
         I’ve also created a <a href="https://www.paypal.com/donate/?hosted_button_id=VWFSCL73GDHF4" target="_blank" style="text-decoration: underline;">donation page</a> if you want to support my journey in building open-source tools for tabletop card games (entirely optional, but greatly appreciated). More on this below!<br><br>
@@ -347,70 +350,70 @@
         Now, let’s get into v1.1.0: <br><br>
         
         <strong>MAJOR CHANGES</strong><br><br>
-        <li style="font-size: 1.2em; margin-bottom: 10px;"><strong>Open source:</strong> The PTCG-sim repo is now <a href="https://github.com/xxmichaellong/ptcg-sim" target="_blank" style="text-decoration: underline;">open-source on GitHub!</a> I’m currently figuring out the best way to go about receiving contributions, but in the meantime, feel free to explore the codebase and play around with the sim. I'm happy to answer any questions and I'm always open to suggestions.</li>
-        <li style="font-size: 1.2em; margin-bottom: 10px;"><strong>Fixed desync issues:</strong> This has been continuously reported since launch, and a lot of work was put into finding a solution to players disconnecting/reconnecting and seeing different/no cards being put in play. The main issue stemmed from one or both players losing connection. Now, any moves that are missed on either side will automatically be updated upon reconnection. If you continue to see any more problems re: desyncing, please report it on the #bugs-and-suggestions channel.</li>
-        <li style="font-size: 1.2em; margin-bottom: 10px;"><strong>Undo button:</strong> There is now the option to undo your last move, and it is stackable (ie. you can undo X times to undo your last X moves). This is currently only available in 1P mode, but will soon be implemented for 2P.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;"><strong>Open source:</strong> The PTCG-sim repo is now <a href="https://github.com/xxmichaellong/ptcg-sim" target="_blank" style="text-decoration: underline;">open-source on GitHub!</a> I’m currently figuring out the best way to go about receiving contributions, but in the meantime, feel free to explore the codebase and play around with the sim. I'm happy to answer any questions and I'm always open to suggestions.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;"><strong>Fixed desync issues:</strong> This has been continuously reported since launch, and a lot of work was put into finding a solution to players disconnecting/reconnecting and seeing different/no cards being put in play. The main issue stemmed from one or both players losing connection. Now, any moves that are missed on either side will automatically be updated upon reconnection. If you continue to see any more problems re: desyncing, please report it on the #bugs-and-suggestions channel.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;"><strong>Undo button:</strong> There is now the option to undo your last move, and it is stackable (ie. you can undo X times to undo your last X moves). This is currently only available in 1P mode, but will soon be implemented for 2P.</li>
         <br>
 
         <strong>BUG FIXES</strong><br>
         <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Fixed issue where you couldn't drag cards from the "view cards" or "attached cards" zone to the board zone.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Fixed highlighting of bench zone when hovering a card from active to bench.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Fixed positioning of cards when reloading the board.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Fixed positioning of special condition markers when certain images are appended.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Fixed bug where the Escape key did not work for exiting the full preview of an image on the opponent’s side.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Fixed battlelog message when viewing top cards of the opponent's deck when playing from the opponent's side.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Added a battlelog message for when you look through a deck (yours or your opponents).</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Battlelog message changed from "P1 setup" to "P1 drew 7 cards and set aside 6 prizes".</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Added reveal/hide card button to right-click menu.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">The name of a face-down card will now not be revealed in the battlelog when you change its type.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Cards are defaulted to “Pokemon” when they are played onto the bench/active (ie. if you put a Trainer onto the bench, it will be identified as a Pokemon). </li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">The “play random card” mechanic has been changed to play a random card faceDown on the board (for cards like Empoleon lvl X).</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Updated some legacy decklists that had incorrect decklist entries or were missing cards.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Updated the visuals of some containers in dark-mode (decklist book, full-decklist view).</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">New logo and cardback! Shoutout to <a href="https://twitter.com/The_EPSD" target="_blank">Joe Myerscough</a> for creating these for the sim - they look awesome!!!</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Fixed issue where you couldn't drag cards from the "view cards" or "attached cards" zone to the board zone.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Fixed highlighting of bench zone when hovering a card from active to bench.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Fixed positioning of cards when reloading the board.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Fixed positioning of special condition markers when certain images are appended.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Fixed bug where the Escape key did not work for exiting the full preview of an image on the opponent’s side.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Fixed battlelog message when viewing top cards of the opponent's deck when playing from the opponent's side.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Added a battlelog message for when you look through a deck (yours or your opponents).</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Battlelog message changed from "P1 setup" to "P1 drew 7 cards and set aside 6 prizes".</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Added reveal/hide card button to right-click menu.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">The name of a face-down card will now not be revealed in the battlelog when you change its type.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Cards are defaulted to “Pokemon” when they are played onto the bench/active (ie. if you put a Trainer onto the bench, it will be identified as a Pokemon). </li>
+            <li style="font-size: 16px; margin-bottom: 10px;">The “play random card” mechanic has been changed to play a random card faceDown on the board (for cards like Empoleon lvl X).</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Updated some legacy decklists that had incorrect decklist entries or were missing cards.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Updated the visuals of some containers in dark-mode (decklist book, full-decklist view).</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">New logo and cardback! Shoutout to <a href="https://twitter.com/The_EPSD" target="_blank">Joe Myerscough</a> for creating these for the sim - they look awesome!!!</li>
         </ul>
 
         <strong>COMING SOON</strong><br>
         <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Ability to change custom cardbacks.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Ability to change the language of cards.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Ability to select multiple cards at once.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Ability to attach cards on opponent's side (e.g., Head Ringer).</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Changing how tools are currently appended for better user visual experience.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Adding a visual deck editor.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Using more user-friendly expansion codes instead of ptcg.io's naming (note: we're currently using that as that is how we pull the data for the older cards).</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Ability to change custom cardbacks.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Ability to change the language of cards.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Ability to select multiple cards at once.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Ability to attach cards on opponent's side (e.g., Head Ringer).</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Changing how tools are currently appended for better user visual experience.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Adding a visual deck editor.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Using more user-friendly expansion codes instead of ptcg.io's naming (note: we're currently using that as that is how we pull the data for the older cards).</li>
         </ul>
         
         <strong>DONATION TIERS</strong>
         <br><br>
         <strong>$5/mo - SoulSilver Tier</strong>
         <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Custom flair on Discord & open reign on self-nicknames.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Access to early beta testing.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Shoutout in every changelog during the time you are subscribed for.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Get a sponsor tag on your GitHub profile (if sponsoring via GitHub, not applicable for sponsors through PayPal. Currently in the process of getting my GH sponsor page approved 😛).</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">My eternal thanks!!!!!</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Custom flair on Discord & open reign on self-nicknames.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Access to early beta testing.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Shoutout in every changelog during the time you are subscribed for.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Get a sponsor tag on your GitHub profile (if sponsoring via GitHub, not applicable for sponsors through PayPal. Currently in the process of getting my GH sponsor page approved 😛).</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">My eternal thanks!!!!!</li>
         </ul>
 
         <strong>$25/mo - HeartGold Tier</strong>
         <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Receive all of the benefits of the previous tiers.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Access to an exclusive Discord channel for priority suggestions/feature proposals/troubleshooting support.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Receive all of the benefits of the previous tiers.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Access to an exclusive Discord channel for priority suggestions/feature proposals/troubleshooting support.</li>
         </ul>
 
         <strong>$100/mo - Platinum Tier</strong>
         <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Receive all of the benefits of the previous tiers.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Seriously do not think anyone will subscribe to this, but I would be immensely grateful.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Direct access to me (I will give you my phone number).</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">I'll sign, kiss, and mail you a signed bulk card of your choice (if I have it lol).</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Receive all of the benefits of the previous tiers.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Seriously do not think anyone will subscribe to this, but I would be immensely grateful.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Direct access to me (I will give you my phone number).</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">I'll sign, kiss, and mail you a signed bulk card of your choice (if I have it lol).</li>
         </ul>
 
         <strong>$15 - One-time Donation</strong>
         <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Shoutout in the next changelog.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">My eternal thanks!!!!!</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Shoutout in the next changelog.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">My eternal thanks!!!!!</li>
         </ul>
 
         Thanks to everyone who has continuously been playing and reporting bugs on #bugs-and-suggestions. Please continue providing as much feedback as you can! 
@@ -421,43 +424,42 @@
         
         <strong>-XXL &lt;3</strong>
         
+        <br><br>
+        <hr>
 
-        <br><br><br><br>
-
-
-        <strong>v1.0.1 Update 12/31/2023</strong><br><br>
+        <h2>v1.0.1 Update 12/31/2023</h2>
 
         Happy New Year's Eve! This is a small update reworking some features and patching bugs. Thanks to everyone on Discord/Twitter for the feedback — keep 'em coming!
         <br><br>
 
         <strong>NEW FEATURES</strong><br>
         <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Right-click menu for your opponent's hand now has an option to reveal a random card from their hand (e.g., for attacks like Astonish).</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Revealing and hiding cards are now two separate keybinds, alt + z and z. When revealing a card from your hand, the game will prompt you to hide the card from your opponent when finished revealing.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Deck/Discard/Lost Zone button headers are now frozen at the top when scrolling.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">The UI and UX of dragging and clicking on cards should now be easier and more intuitive.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Changing card type now has keybinds (alt + e, alt + t, and alt + p).</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">When viewing cards from top/bottom of your opponent's deck, images are now right-side-up.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Right-click menu for your opponent's hand now has an option to reveal a random card from their hand (e.g., for attacks like Astonish).</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Revealing and hiding cards are now two separate keybinds, alt + z and z. When revealing a card from your hand, the game will prompt you to hide the card from your opponent when finished revealing.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Deck/Discard/Lost Zone button headers are now frozen at the top when scrolling.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">The UI and UX of dragging and clicking on cards should now be easier and more intuitive.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Changing card type now has keybinds (alt + e, alt + t, and alt + p).</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">When viewing cards from top/bottom of your opponent's deck, images are now right-side-up.</li>
         </ul>
         
         <strong>BUG FIXES</strong><br>
         <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Changing card types now properly updates on the opponent's side in 2P.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">In the right-click menu, the submenus for “Move card” and “Change type” now display to the right to prevent overlap.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Battle log now properly conceals the name of a hidden card when dragging to a new zone.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Any cards in the stadium zone are now properly removed upon reset.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Decklist menu now resizes based on window size.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Decklist errors from the HS era are now fixed.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Classification errors of cards from the Hidden Fates expansion are now fixed.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Changing card types now properly updates on the opponent's side in 2P.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">In the right-click menu, the submenus for “Move card” and “Change type” now display to the right to prevent overlap.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Battle log now properly conceals the name of a hidden card when dragging to a new zone.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Any cards in the stadium zone are now properly removed upon reset.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Decklist menu now resizes based on window size.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Decklist errors from the HS era are now fixed.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Classification errors of cards from the Hidden Fates expansion are now fixed.</li>
         </ul>
         
         <strong>COMING SOON</strong><br>
         <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Fixing desync issues and adding a refresh/resync feature.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Attaching cards on the opponent's side (e.g., Head Ringer).</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Custom card backs.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Selecting multiple cards at once.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Feature to draw arrows to/from cards.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Fixing desync issues and adding a refresh/resync feature.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Attaching cards on the opponent's side (e.g., Head Ringer).</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Custom card backs.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Selecting multiple cards at once.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Feature to draw arrows to/from cards.</li>
         </ul>
         
         And that’s all for 2023, folks. See you next year!!!
@@ -465,8 +467,10 @@
 
         <strong>-XXL &lt;3</strong>
         
-        <br><br><br><br>
-        <strong>v1.0.0 Update 12/29/2023</strong><br><br>
+        <br><br>
+        <hr>  
+        
+        <h2>v1.0.0 Update 12/29/2023</h2>
         
         Hi everyone! Thank you all for your support during PTCG-sim’s launch. The feedback and general reception has been overwhelming (in a great way), and I’m happy that so many people in the community are finding great usage out of the sim. If you haven’t already, <strong><a href="https://discord.gg/jMfhQa38mh" target="_blank">join our Discord server here</a></strong> to receive the latest updates, report bugs, find matches, share decklists, and more! You can also read the previous Changelog (v0.9.1) following the below.
         <br><br>
@@ -475,22 +479,22 @@
         
         <strong>DECK SUPPORT</strong><br>
         <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-            <li style="font-size: 1.2em; margin-bottom: 10px;"><strong>Legacy Formats:</strong> All expansions prior to 2011 have been added. A spreadsheet containing all information related to cards, including decklist syntax for PTCG-sim imports, will be available in the Discord server.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;"><strong>Decklist Library:</strong> Popular legacy decklists have now been added to the library. We’d like to extend our thanks to <a href="https://jklaczPokémon.com/" target="_blank">Jason K</a> for being an awesome Pokémon archivist.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;"><strong>Import/Export Decks:</strong> Importing a deck now breaks down cards by quantity, name, type, and image URL. Decklists can also now be saved using the “Save” button to export CSV files.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;"><strong>Custom Image Imports:</strong> With the above feature, you can now upload your own image URLs. This means every card is now supported on PTCG-sim!</li>
+            <li style="font-size: 16px; margin-bottom: 10px;"><strong>Legacy Formats:</strong> All expansions prior to 2011 have been added. A spreadsheet containing all information related to cards, including decklist syntax for PTCG-sim imports, will be available in the Discord server.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;"><strong>Decklist Library:</strong> Popular legacy decklists have now been added to the library. We’d like to extend our thanks to <a href="https://jklaczPokémon.com/" target="_blank">Jason K</a> for being an awesome Pokémon archivist.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;"><strong>Import/Export Decks:</strong> Importing a deck now breaks down cards by quantity, name, type, and image URL. Decklists can also now be saved using the “Save” button to export CSV files.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;"><strong>Custom Image Imports:</strong> With the above feature, you can now upload your own image URLs. This means every card is now supported on PTCG-sim!</li>
         </ul>
         
         <strong>BUG FIXES</strong><br>
         <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-        <li style="font-size: 1.2em; margin-bottom: 10px;">Fixed issue where stadium toggle doesn’t disappear on reset.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Fixed issue where stadium toggle doesn’t disappear on reset.</li>
         </ul>
 
         <strong>COMING SOON</strong><br>
         <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Selecting multiple cards at once.</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Attaching cards on opponent’s side (e.g., Head Ringer).</li>
-            <li style="font-size: 1.2em; margin-bottom: 10px;">Fixing appending/overlap issues.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Selecting multiple cards at once.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Attaching cards on opponent’s side (e.g., Head Ringer).</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Fixing appending/overlap issues.</li>
         </ul>
         There have been reports of desyncing issues. We’re looking into this - if you’ve experienced anything similar, please share on our Discord server in the #bugs-and-suggestions channel!<br><br>
         
@@ -498,11 +502,9 @@
         <br><br>
         
         <strong>-XXL &lt;3</strong>
-
         <br><br>
-        <br><br>
-        
-        <strong>v0.9.1 Changelog 12/28/2023</strong><br><br>
+        <hr>        
+        <h2>v0.9.1 Update 12/28/2023</h2>
       
         <strong>Rotating Stadium/Pokémon BREAK Cards:</strong> You can now rotate cards using the keybind [r]. This can be used for dual stadiums (e.g., Parallel City) as well as special conditions.<br><br>
       
@@ -546,6 +548,51 @@
         <strong>-XXL</strong>
       </div>
 
+      <div id="donationsPage">
+        <h2>Donations</h2>
+
+        <p>Hi everyone! I'm Michael/Xiao Xiao Long. I'm a 21-year-old from Guelph, Canada, who started programming in the fall of 2023. I've been playing the Pokémon TCG for over 8 years, and I spent the last 3 months building PTCG-Sim, a free tool for the community to use to test and play our favorite card game.</p>
+
+        <p>I publicly launched the sim on Christmas, and it has already grown an incredible community of players and developers. I’m planning on open sourcing the code this month and would love your support in the days ahead. There’s a lot more to do, and I could use as much help as I can get!</p>
+
+        <p>Should you find joy in using the sim and wish to support its ongoing development, you can sponsor me/the project through the donation link. However, please know that sponsorship is completely optional. Your enjoyment of the sim is contribution enough, and I’m thrilled to have you as part of our community :)</p>
+
+        <p>-XXL <3</p>
+
+
+        <h2><a href="https://www.paypal.com/donate/?hosted_button_id=VWFSCL73GDHF4" target="_blank" style="color: blue; text-decoration: underline;">Donation Link</a></h2>
+        
+        <strong>DONATION TIERS</strong>
+                <br><br>
+                <strong>$5/mo - SoulSilver Tier</strong>
+                <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+                    <li style="font-size: 16px; margin-bottom: 10px;">Custom flair on Discord & open reign on self-nicknames.</li>
+                    <li style="font-size: 16px; margin-bottom: 10px;">Access to early beta testing.</li>
+                    <li style="font-size: 16px; margin-bottom: 10px;">Shoutout in every changelog during the time you are subscribed for.</li>
+                    <li style="font-size: 16px; margin-bottom: 10px;">Get a sponsor tag on your GitHub profile (if sponsoring via GitHub, not applicable for sponsors through PayPal. Currently in the process of getting my GH sponsor page approved 😛).</li>
+                    <li style="font-size: 16px; margin-bottom: 10px;">My eternal thanks!!!!!</li>
+                </ul>
+        
+                <strong>$25/mo - HeartGold Tier</strong>
+                <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+                    <li style="font-size: 16px; margin-bottom: 10px;">Receive all of the benefits of the previous tiers.</li>
+                    <li style="font-size: 16px; margin-bottom: 10px;">Access to an exclusive Discord channel for priority suggestions/feature proposals/troubleshooting support.</li>
+                </ul>
+        
+                <strong>$100/mo - Platinum Tier</strong>
+                <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+                    <li style="font-size: 16px; margin-bottom: 10px;">Receive all of the benefits of the previous tiers.</li>
+                    <li style="font-size: 16px; margin-bottom: 10px;">Seriously do not think anyone will subscribe to this, but I would be immensely grateful.</li>
+                    <li style="font-size: 16px; margin-bottom: 10px;">Direct access to me (I will give you my phone number).</li>
+                    <li style="font-size: 16px; margin-bottom: 10px;">I'll sign, kiss, and mail you a signed bulk card of your choice (if I have it lol).</li>
+                </ul>
+        
+                <strong>$15 - One-time Donation</strong>
+                <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+                    <li style="font-size: 16px; margin-bottom: 10px;">Shoutout in the next changelog.</li>
+                    <li style="font-size: 16px; margin-bottom: 10px;">My eternal thanks!!!!!</li>
+                </ul>        
+      </div>
 <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "2abae72112d74a619e3de341e1d4aa18"}'></script><!-- End Cloudflare Web Analytics -->
 
 </body>

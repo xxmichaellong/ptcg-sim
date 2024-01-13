@@ -252,11 +252,20 @@ ul, li {
 }
 #tutorialButton:hover {
   background: #8c7e46;
+  cursor: pointer;
 }
-#discord {
+#links {
   font-size: small;
   width: 100%;
   text-align: center;
+}
+#donationsLink  {
+  margin-top: 1vh;
+  font-weight: bold;
+}
+#donationsLink:hover {
+  text-decoration: underline;
+  cursor: pointer;
 }
 #videoContainer {
   display: none;
@@ -276,7 +285,7 @@ ul, li {
   bottom: 50%;
   transform: translateY(50%);
 }
-#changelog {
+#changelog, #donationsPage {
   display: none;
   position: fixed;
   top: 0;
