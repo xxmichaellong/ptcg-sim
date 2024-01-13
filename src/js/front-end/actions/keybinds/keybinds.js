@@ -35,6 +35,7 @@ export const keyDown = (event) => {
     if (event.key === 'Escape'){
         hideZoneElements();
         closePopups();
+        document.getElementById('keybindModal').style.display = 'none';
     };
     if (event.key === 'Enter' && !event.altKey){
         discardBoard(systemState.initiator, systemState.initiator);
