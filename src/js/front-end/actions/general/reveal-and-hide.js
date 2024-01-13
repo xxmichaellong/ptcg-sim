@@ -166,6 +166,7 @@ export const revealShortcut = (user, initiator, zoneId, index, message = true, e
 export const hideShortcut = (user, initiator, zoneId, index, message = true, emit = true) => {
     const zone = getZone(user, zoneId);
     const card = zone.array[index];
+    card.image.public = false;
 
     if (card.image.src !== rootDirectory + '/src/cardback.png'){
         card.image.src2 = card.image.src;

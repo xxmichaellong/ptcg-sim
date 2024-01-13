@@ -1,4 +1,4 @@
-import { mouseClick, systemState } from '../../front-end.js';
+import { systemState } from '../../front-end.js';
 import { appendMessage } from '../../setup/chatbox/append-message.js';
 import { determineUsername } from '../../setup/general/determine-username.js';
 import { processAction } from '../../setup/general/process-action.js';
@@ -33,7 +33,7 @@ export const moveToDeckTop = (user, initiator, oZoneId, index, emit = true) => {
     };
     moveCardBundle(user, initiator, oZoneId, 'deck', index, false, 'top', false);
     //since card is appended to bottom, move all existing cards in deck to the bottom afterwards
-    const selectedDeckCount = getZone(mouseClick.cardUser, 'deck').getCount();
+    const selectedDeckCount = getZone(user, 'deck').getCount();
     for (let i = 0; i < selectedDeckCount - 1; i++){
         moveCard(user, initiator, 'deck', 'deck', 0);
     };
