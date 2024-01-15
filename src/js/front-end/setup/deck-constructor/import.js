@@ -46,7 +46,7 @@ export const importDecklist = (user) => {
         //ptcglive conversion for GG/TG cards (the alt art bs) (don't apply to promo sets)
         line = line.replace(/(?!PR-)(\w{2,3})-(\w{2,3}) (\d+)/g, '$1 $2$3');
         //special case for double crisis set
-        line = line.replace(/xy5-5/g, 'DCR');
+        line = line.replace(/xy5-5 /g, 'DCR ');
 
         let matchWithOldSet = line.match(regexWithOldSet);
         let matchWithSet = line.match(regexWithSet);
