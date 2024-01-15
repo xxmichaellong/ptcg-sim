@@ -3,7 +3,7 @@ import { moveCard } from "../../actions/move-card-bundle/move-card.js";
 import { getZone } from "../zones/get-zone.js";
 import { adjustCards } from "./resizer.js";
 
-const reloadContainer = (user, zoneId) => {
+const refreshZone = (user, zoneId) => {
     const zone = getZone(user, zoneId);
     //find all playContainers
     const playContainers = zone.element.querySelectorAll('DIV')
@@ -34,7 +34,7 @@ const reloadContainer = (user, zoneId) => {
     adjustCards(user, zoneId, 1);
 }
 
-export const reloadBoard = () => {
+export const refreshBoard = () => {
     const zones = [
         ['self', 'active'],
         ['self', 'bench'],
@@ -43,6 +43,6 @@ export const reloadBoard = () => {
     ];
 
     zones.forEach(([user, zoneId]) => {
-        reloadContainer(user, zoneId);
+        refreshZone(user, zoneId);
     });
 }

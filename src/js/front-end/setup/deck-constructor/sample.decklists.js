@@ -3252,7 +3252,7 @@ const decklistsByYear = {
         1 Toxicroak G dpp-DP41
         1 Bronzong G pl1-41
         1 Ambipom G pl2-56
-        2 Uxie dp6-143
+        2 Uxie dp6-43
         1 Uxie Lv.X dp6-146
         1 Azelf dp6-19
         1 Unown G dp4-57

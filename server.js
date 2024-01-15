@@ -86,6 +86,7 @@ async function main() {
             'pushAction',
             'resyncActions',
             'catchUpActions',
+            'syncCheck',
             'appendMessage',
             // 'exchangeData',
             // 'loadDeckData',

@@ -1,5 +1,5 @@
 import { mouseClick, oppContainerDocument, selfContainerDocument } from '../../front-end.js';
-import { reloadBoard } from '../../setup/sizing/reload-board.js';
+import { refreshBoard } from '../../setup/sizing/refresh-board.js';
 import { getZone } from '../../setup/zones/get-zone.js';
 
 export const hideZoneElements = () => {
@@ -81,7 +81,7 @@ export const closeFullView = (event) => {
         // Revert the z-indexes
         fullViewElement.parentElement.style.zIndex = '0';
         document.getElementById('stadium').style.zIndex = '0';
-        reloadBoard();
+        refreshBoard();
     };
 }
 

@@ -47,6 +47,15 @@ export const initializeSocketEventListeners = () => {
         reset('opp', true, false, false, false);
         exchangeData('self', systemState.p2SelfUsername, systemState.selfDeckData);
         appendMessage('', systemState.p2SelfUsername + ' joined', 'announcement', false);
+
+        //initialize sync checker, which will routinely make sure game are synced
+        setInterval(() => {
+            const data = {
+                roomId: systemState.roomId,
+                counter: systemState.selfCounter
+            };
+            socket.emit('syncCheck', data);
+        }, 3000);
     });
     socket.on('roomReject', () => {
         let overlay = document.createElement('div');
@@ -130,6 +139,15 @@ export const initializeSocketEventListeners = () => {
     socket.on('catchUpActions', (data) => {
         catchUpActions(data.actionData);
     });
+    socket.on('syncCheck', (data) => {
+        if (data.counter >= (parseInt(systemState.oppCounter) + 1)){
+            const data = {
+                roomId: systemState.roomId,
+                counter: systemState.oppCounter,
+            };
+            socket.emit('resyncActions', data);
+        };
+    })
     // socket.on('exchangeData', (data) => {
     //     exchangeData(data.user, data.username, data.deckData, data.emit);
     // });

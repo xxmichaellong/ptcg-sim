@@ -1,11 +1,9 @@
 import { closePopups } from '../../actions/general/close-popups.js';
-import { moveCard } from '../../actions/move-card-bundle/move-card.js';
+import { moveCardBundle } from '../../actions/move-card-bundle/move-card-bundle.js';
 import { moveToDeckTop } from '../../actions/zones/deck-actions.js';
 import { mouseClick, oppContainerDocument, selfContainerDocument, systemState } from '../../front-end.js';
-import { moveCardMessage } from '../../actions/move-card-bundle/move-card-message.js';
 import { getZone } from '../zones/get-zone.js';
 import { identifyCard } from './click-events.js';
-import { moveCardBundle } from '../../actions/move-card-bundle/move-card-bundle.js';
 
 const popupContainers = ['lostZone', 'discard', 'deck', 'attachedCards', 'viewCards'];
 

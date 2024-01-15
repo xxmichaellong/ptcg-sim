@@ -1,5 +1,5 @@
 import { oppContainer, oppContainerDocument, selfContainer, selfContainerDocument, systemState } from '../../front-end.js';
-import { reloadBoard } from '../../setup/sizing/reload-board.js';
+import { refreshBoard } from '../../setup/sizing/refresh-board.js';
 import { flippedOppHandleMouseDown, flippedSelfHandleMouseDown, oppHandleMouseDown, selfHandleMouseDown } from '../../setup/sizing/resizer.js';
 import { getZone } from '../../setup/zones/get-zone.js';
 
@@ -135,5 +135,5 @@ export const flipBoard = () => {
             stadiumZone.element.style.transform = 'scaleX(-1) scaleY(-1)';  
         };
     };
-    reloadBoard();
+    refreshBoard();
 }
