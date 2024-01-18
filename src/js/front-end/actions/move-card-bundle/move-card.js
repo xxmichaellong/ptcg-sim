@@ -51,8 +51,8 @@ export const moveCard = (user, initiator, oZoneId, dZoneId, index, targetIndex) 
     //redraw trick. for some reason, sometimes images disappear, so we will use this trick to make sure they properly load in the DOM
     const nonRedrawElements = ['active', 'bench', 'attachedCards'];
     if (!nonRedrawElements.includes(dZoneId)){
-        hideCard(movingCard);
-        revealCard(movingCard);
+        hideCard(user, movingCard);
+        revealCard(user, movingCard);
     };
 
     // determine whether to hide/reveal card
@@ -63,12 +63,12 @@ export const moveCard = (user, initiator, oZoneId, dZoneId, index, targetIndex) 
     const isFaceDownCard = movingCard.image.faceDown && ['active', 'bench', 'board'].includes(dZoneId);
 
     if (isP1HideZone || isP2HideZone || isFaceDownCard) {
-        hideCard(movingCard);
+        hideCard(user, movingCard);
         if (isP1HideZone || isP2HideZone) {
             movingCard.image.faceDown = false;
         };
     } else {
-        revealCard(movingCard);
+        revealCard(user, movingCard);
         movingCard.image.faceDown = false;
     };
     if (dZoneId !== oZoneId){

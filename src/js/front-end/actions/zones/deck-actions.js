@@ -118,7 +118,7 @@ export const viewDeck = (user, initiator, viewAmount, top, selectedDeckCount, ta
         const zone = getZone(user, 'viewCards');
         removeImages(zone.element);
         zone.array.forEach(card => {
-            hideCard(card);
+            hideCard(user, card);
             zone.element.appendChild(card.image);
         });
     };

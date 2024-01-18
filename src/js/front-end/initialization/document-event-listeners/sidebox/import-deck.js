@@ -7,7 +7,6 @@ export const initializeImport = () => {
     const invalidText = document.getElementById('invalidText');
     const mainDeckImportInput = document.getElementById('mainDeckImportInput');
     const successText = document.getElementById('successText');
-
     const loadingText = document.getElementById('loadingText');
     const updateLoadingText = () => {
         const dots = loadingText.innerHTML.match(/\./g) || [];
@@ -18,6 +17,8 @@ export const initializeImport = () => {
         loadingText.innerHTML = newText;
     }
     setInterval(updateLoadingText, 500);
+    const uploadFileButton = document.getElementById('uploadFileButton');
+    const changeCardBackButton = document.getElementById('changeCardBackButton');
 
     const mainImportHeaderButton = document.getElementById('mainImportHeaderButton');
     mainImportHeaderButton.addEventListener('click', () => {
@@ -26,12 +27,16 @@ export const initializeImport = () => {
         } else {
             mainImportHeaderButton.classList.toggle('main-select');
             altImportHeaderButton.classList.toggle('alt-select');
+            uploadFileButton.classList.toggle('self-color');
+            uploadFileButton.classList.toggle('opp-color');
+            changeCardBackButton.classList.toggle('self-color');
+            changeCardBackButton.classList.toggle('opp-color');
             mainDeckImportInput.style.display = 'inline-block';
             altDeckImportInput.style.display = 'none';
             successText.style.display = 'none';
             failedText.style.display = 'none';
             invalidText.style.display = 'none';
-        }
+        };
     });
 
     const altImportHeaderButton = document.getElementById('altImportHeaderButton');
@@ -41,12 +46,16 @@ export const initializeImport = () => {
         } else {
             mainImportHeaderButton.classList.toggle('main-select');
             altImportHeaderButton.classList.toggle('alt-select');
+            uploadFileButton.classList.toggle('self-color');
+            uploadFileButton.classList.toggle('opp-color');
+            changeCardBackButton.classList.toggle('self-color');
+            changeCardBackButton.classList.toggle('opp-color');
             altDeckImportInput.style.display = 'inline-block';
             mainDeckImportInput.style.display = 'none';
             successText.style.display = 'none';
             failedText.style.display = 'none';
             invalidText.style.display = 'none';
-        }
+        };
     });
 
     const importButton = document.getElementById('importButton');

@@ -228,16 +228,14 @@ export const keyDown = (event) => {
             rotateCard(mouseClick.cardUser, mouseClick.zoneId,mouseClick.cardIndex, true);
         };
         if (event.key ==='c'){
-            let rootDirectory = window.location.origin;
-            if (mouseClick.card.image.src === rootDirectory + '/src/cardback.png'){
+            if ([systemState.cardBackSrc, systemState.p1OppCardBackSrc, systemState.p2OppCardBackSrc].includes(mouseClick.card.image.src)){
                 lookShortcut(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
             } else {
                 stopLookingShortcut(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
             };
         };
         if (event.key === 'z' && !event.altKey){
-            let rootDirectory = window.location.origin;
-            if (mouseClick.card.image.src !== rootDirectory + '/src/cardback.png'){
+            if (![systemState.cardBackSrc, systemState.p1OppCardBackSrc, systemState.p2OppCardBackSrc].includes(mouseClick.card.image.src)){
                 hideShortcut(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
             };
         };

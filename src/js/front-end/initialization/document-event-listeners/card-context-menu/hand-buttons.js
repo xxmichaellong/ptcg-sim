@@ -5,8 +5,7 @@ import { mouseClick, systemState } from '../../../front-end.js';
 export const initializeHandButtons = () => {
     const lookHandButton = document.getElementById('lookHandButton');
     lookHandButton.addEventListener('click', () => {
-        let rootDirectory = window.location.origin;
-        if (mouseClick.card.image.src === rootDirectory + '/src/cardback.png') {
+        if ([systemState.cardBackSrc, systemState.p1OppCardBackSrc, systemState.p2OppCardBackSrc].includes(mouseClick.card.image.src)) {
             lookAtCards(mouseClick.cardUser, systemState.initiator, 'hand');
         } else {
             stopLookingAtCards(mouseClick.cardUser, systemState.initiator, 'hand');

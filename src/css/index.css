@@ -663,21 +663,40 @@ ul, li {
 #saveButton:hover {
   background-color: #aeaeae;
 }
-.custom-file-upload {
+#uploadFileButton {
   padding: 3px 6px;
   cursor: pointer;
-  background-color: #757474;
   color: white;
   border: none;
-  border-radius: .5rem;
-  display: block;
-  margin: 1vh;
-  font-size: 1.75vh;
+  border-radius: .3rem;
+  margin: 1.5vh 1vh 1vh 1vh;
+  margin-left: 0.3vw;
+  font-size: 1.5vh;
+}
+#uploadFileButton.self-color:hover {
+  background-color: rgba(116, 129, 183, 0.864);
+}
+#uploadFileButton.opp-color:hover {
+  background-color: rgba(189, 112, 130, 0.864);  
+}
+#changeCardBackButton {
+  padding: 3px 6px;
+  cursor: pointer;
+  color: white;
+  border: none;
+  border-radius: .3rem;
+  margin: 1.5vh 1vh 1vh 0vh;
+  font-size: 1.5vh; 
+}
+#changeCardBackButton.self-color:hover {
+  background-color: rgba(116, 129, 183, 0.864);
+}
+#changeCardBackButton.opp-color:hover {
+  background-color: rgba(189, 112, 130, 0.864);  
 }
 #randomButton {
   position: absolute;
   right: 5%;
-  background-color: transparent;
   border: none;
   font-size: x-large;
   cursor: pointer;
@@ -689,9 +708,7 @@ ul, li {
 }
 #decklistsButton {
   margin-left: .3vw;
-  background-color: transparent;
   border: none;
-  color: white;
   font-size: x-large;
   cursor: pointer;
   background: rgb(161, 161, 161);

@@ -38,10 +38,12 @@ export const updateDestinationCover = (user, movingCard, dZoneId) => {
         dZone.elementCover.appendChild(cover.image);
     //add deck cover if it's the only card in deck
     } else if (['deck'].includes(dZoneId) && dZone.getCount() === 1){
+        const targetCardBackSrc = user === 'self' ? systemState.cardBackSrc : (systemState.isTwoPlayer ? systemState.p2OppCardBackSrc : systemState.p1OppCardBackSrc);
+
         if (dZone.elementCover.firstElementChild){
             dZone.elementCover.removeChild(dZone.elementCover.firstElementChild);
         };
-        imageURL = systemState.cardBackSrc;
+        imageURL = targetCardBackSrc;
         const cover = new Cover(user, 'deckCover', imageURL);
         dZone.elementCover.appendChild(cover.image);
     };

@@ -9,17 +9,19 @@ import { convertZoneName } from '../move-card-bundle/move-card-message.js';
 import { moveCard } from '../move-card-bundle/move-card.js';
 import { deselectCard } from './close-popups.js';
 
-let rootDirectory = window.location.origin;
+export const hideCard = (user, card) => {
+    const targetCardBackSrc = user === 'self' ? systemState.cardBackSrc : (systemState.isTwoPlayer ? systemState.p2OppCardBackSrc : systemState.p1OppCardBackSrc);
 
-export const hideCard = (card) => {
-    if (card.image.src !== rootDirectory + '/src/cardback.png'){
+    if (card.image.src !== targetCardBackSrc) {
         card.image.src2 = card.image.src;
-        card.image.src = '/src/cardback.png';
+        card.image.src = targetCardBackSrc;
     };
-}
+};
 
-export const revealCard = (card) => {
-    if (card.image.src === rootDirectory + '/src/cardback.png'){
+export const revealCard = (user, card) => {
+    const targetCardBackSrc = user === 'self' ? systemState.cardBackSrc : (systemState.isTwoPlayer ? systemState.p2OppCardBackSrc : systemState.p1OppCardBackSrc);
+
+    if (card.image.src === targetCardBackSrc){
         card.image.src = card.image.src2;
     };
 }
@@ -29,7 +31,7 @@ export const lookAtCards = (user, initiator, zoneId, emit = true) => {
         const zone = getZone(user, zoneId);
         removeImages(zone.element);
         zone.array.forEach(card => {
-            revealCard(card);
+            revealCard(user, card);
             zone.element.appendChild(card.image);
         });
     };
@@ -54,7 +56,7 @@ export const stopLookingAtCards = (user, initiator, zoneId, message = true, emit
         const zone = getZone(user, zoneId);
         removeImages(zone.element);
         zone.array.forEach(card => {
-            hideCard(card);
+            hideCard(user, card);
             zone.element.appendChild(card.image);
         });
     };
@@ -125,7 +127,8 @@ export const revealShortcut = (user, initiator, zoneId, index, message = true, e
     card.image.faceDown = false;
     card.image.public = true;
 
-    if (card.image.src === rootDirectory + '/src/cardback.png'){
+    const targetCardBackSrc = user === 'self' ? systemState.cardBackSrc : (systemState.isTwoPlayer ? systemState.p2OppCardBackSrc : systemState.p1OppCardBackSrc);
+    if (card.image.src === targetCardBackSrc){
         card.image.src = card.image.src2;
     };
     if (message){
@@ -168,16 +171,17 @@ export const hideShortcut = (user, initiator, zoneId, index, message = true, emi
     const card = zone.array[index];
     card.image.public = false;
 
-    if (card.image.src !== rootDirectory + '/src/cardback.png'){
+    const targetCardBackSrc = user === 'self' ? systemState.cardBackSrc : (systemState.isTwoPlayer ? systemState.p2OppCardBackSrc : systemState.p1OppCardBackSrc);
+    if (card.image.src !== targetCardBackSrc){
         card.image.src2 = card.image.src;
-        card.image.src = '/src/cardback.png';
+        card.image.src = targetCardBackSrc;
     };
     const appendMessageEmit = zoneId === 'hand' && initiator !== user;
     if (message){
         appendMessage(initiator, determineUsername(initiator) + ' hid card in ' + determineUsername(user) + "'s " + convertZoneName(zoneId), 'player', appendMessageEmit);
     };
     //deal with handling faceDown card locations
-    if (zoneId !== 'prizes' && !(zoneId === 'hand' && initiator !== user)){
+    if (zoneId !== 'prizes' && !(zoneId === 'hand' && initiator !== user && systemState.isTwoPlayer)){
         card.image.faceDown = true;
     };
     if (systemState.isTwoPlayer && emit && !appendMessageEmit){
@@ -219,11 +223,13 @@ export const lookShortcut = (user, initiator, zoneId, index, emit = true) => {
 }
 
 export const stopLookingShortcut = (user, initiator, zoneId, index, emit = true) => {
+    const targetCardBackSrc = user === 'self' ? systemState.cardBackSrc : (systemState.isTwoPlayer ? systemState.p2OppCardBackSrc : systemState.p1OppCardBackSrc);
+
     if (emit){ //only apply for initiator
         const zone = getZone(user, zoneId);
         const card = zone.array[index];
         card.image.src2 = card.image.src;
-        card.image.src = '/src/cardback.png';
+        card.image.src = targetCardBackSrc;
     };
     appendMessage(initiator, determineUsername(initiator) + ' stopped looking at card in ' + determineUsername(user) + "'s " + zoneId, 'player', false);
 

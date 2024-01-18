@@ -1,5 +1,5 @@
 import { reset } from "../../actions/general/reset.js";
-import { oppContainer, selfContainer, socket, systemState } from "../../front-end.js";
+import { oppContainer, oppContainerDocument, selfContainer, selfContainerDocument, systemState } from "../../front-end.js";
 import { appendMessage } from "../chatbox/append-message.js";
 import { determineUsername } from "../general/determine-username.js";
 import { processAction } from "../general/process-action.js";
@@ -13,6 +13,7 @@ const confirmButton = document.getElementById('confirmButton');
 const decklistsButton = document.getElementById('decklistsButton');
 const failedText = document.getElementById('failedText');
 const importButton = document.getElementById('importButton');
+const randomButton = document.getElementById('randomButton');
 const invalidText = document.getElementById('invalidText');
 const loadingText = document.getElementById('loadingText');
 const mainDeckImportInput = document.getElementById('mainDeckImportInput');
@@ -20,6 +21,7 @@ const p1Button = document.getElementById('p1Button');
 const p2Button = document.getElementById('p2Button');
 const saveButton = document.getElementById('saveButton');
 const csvFile = document.getElementById('csvFile');
+const changeCardBackButton = document.getElementById('changeCardBackButton');
 
 export const importDecklist = (user) => {
     failedText.style.display = 'none';
@@ -136,29 +138,26 @@ export const importDecklist = (user) => {
     decklistArray.forEach((entry) => {
         if (!entry[2].match(/\w*-\w*\d*$/)){
             const [q, name, set] = entry;
-
             const energyUrl = energies[name];
-    
-            if (energyUrl) {
+
+            let [firstPart, secondPart] = set.split(/(?<=\S)\s/);
+            if (firstPart && secondPart){
+                if (specialCases[firstPart]){
+                    firstPart = specialCases[firstPart];
+                };
+                const paddedSecondPart = secondPart.replace(/^(\d+)([a-zA-Z])?$/, (_, digits, letter) => {
+                    const paddedDigits = digits.length < 3 ? digits.padStart(3, '0') : digits;
+                    return letter ? paddedDigits + letter : paddedDigits;
+                });
+                const url = `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/${firstPart.replace(/ /g, '/')}/${firstPart.replace(/ /g, '_')}_${paddedSecondPart}_R_EN.png`;
+                entry.push(url);
+                entry.push(getCardType(firstPart, secondPart));
+            } else if (energyUrl){
                 entry.push(energyUrl);
                 entry.push('Energy');
             } else {
-                let [firstPart, secondPart] = set.split(/(?<=\S)\s/);
-                if (firstPart && secondPart){
-                    if (specialCases[firstPart]){
-                        firstPart = specialCases[firstPart];
-                    };
-                    const paddedSecondPart = secondPart.replace(/^(\d+)([a-zA-Z])?$/, (_, digits, letter) => {
-                        const paddedDigits = digits.length < 3 ? digits.padStart(3, '0') : digits;
-                        return letter ? paddedDigits + letter : paddedDigits;
-                    });
-                    const url = `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/${firstPart.replace(/ /g, '/')}/${firstPart.replace(/ /g, '_')}_${paddedSecondPart}_R_EN.png`;
-                    entry.push(url);
-                    entry.push(getCardType(firstPart, secondPart));
-                } else {
-                    failedText.style.display = 'block';
-                    loadingText.style.display = 'none';
-                };
+                failedText.style.display = 'block';
+                loadingText.style.display = 'none';
             };
         };
     });
@@ -217,6 +216,7 @@ export const importDecklist = (user) => {
         loadingText.style.display = 'none';
         decklistsButton.style.display = 'none';
         importButton.style.display = 'none';
+        randomButton.style.display = 'none';
         confirmButton.style.display = 'block';
         cancelButton.style.display = 'block';
         saveButton.style.display = 'block';
@@ -231,6 +231,7 @@ cancelButton.addEventListener('click', () => {
     oppContainer.style.zIndex = 0;
     decklistsButton.style.display = 'block';
     importButton.style.display = 'block';
+    randomButton.style.display = 'block';
     confirmButton.style.display = 'none';
     cancelButton.style.display = 'none';
     saveButton.style.display = 'none';
@@ -263,6 +264,7 @@ confirmButton.addEventListener('click', () => {
     oppContainer.style.zIndex = 0;
     decklistsButton.style.display = 'block';
     importButton.style.display = 'block';
+    randomButton.style.display = 'block';
     confirmButton.style.display = 'none';
     cancelButton.style.display = 'none';
     saveButton.style.display = 'none';
@@ -336,6 +338,7 @@ csvFile.addEventListener('change', (evt) => {
     loadingText.style.display = 'none';
     decklistsButton.style.display = 'none';
     importButton.style.display = 'none';
+    randomButton.style.display = 'none';
     failedText.style.display = 'none';
     decklistTable.style.display = 'block';
     confirmButton.style.display = 'block';
@@ -365,4 +368,43 @@ csvFile.addEventListener('change', (evt) => {
     };
     reader.readAsText(file);
     evt.target.value = '';
+});
+
+export const changeCardBack = (user, userInput, emit = true) => {
+    const containerDocument = user === 'self' ? selfContainerDocument : oppContainerDocument;
+    containerDocument.querySelectorAll('img').forEach(img => {
+        if ([systemState.cardBackSrc, systemState.p1OppCardBackSrc, systemState.p2OppCardBackSrc].includes(img.src)){
+            img.src = userInput;
+        };
+    });
+    if (user === 'self'){
+        systemState.cardBackSrc = userInput;
+    } else if (systemState.isTwoPlayer){
+        systemState.p2OppCardBackSrc = userInput;
+    } else {
+        systemState.p1OppCardBackSrc = userInput;
+    };
+
+    processAction(user, emit, 'changeCardBack', [userInput]);
+}
+
+changeCardBackButton.addEventListener('click', () => {
+    let userInput = window.prompt("Paste your image URL or type 'default':");
+    const user = mainDeckImportInput.style.display !== 'none' ? 'self' : 'opp';
+
+    if (userInput !== null && userInput.trim() !== '' && userInput.toLowerCase() === 'default') {
+        userInput = 'https://ptcgsim.online/src/cardback.png';
+    };
+    const img = new Image();
+    img.onload = () => {
+        if (user === 'self' || !systemState.isTwoPlayer){
+            changeCardBack(user, userInput);
+        } else {
+            changeCardBack(user, userInput, false);
+        };
+    };
+    img.onerror = () => {
+        alert('Please enter a valid image URL.');
+    };
+    img.src = userInput;
 });

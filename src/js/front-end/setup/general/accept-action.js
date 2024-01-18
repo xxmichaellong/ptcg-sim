@@ -11,18 +11,18 @@ import { hideCards, hideShortcut, lookAtCards, lookShortcut, playRandomCardFaceD
 import { rotateCard } from "../../actions/general/rotate-card.js"
 import { setup } from "../../actions/general/setup.js"
 import { takeTurn } from "../../actions/general/take-turn.js"
-import { undo } from "../../actions/general/undo.js"
 import { moveCardBundle } from "../../actions/move-card-bundle/move-card-bundle.js"
 import { draw, moveToDeckTop, shuffleIntoDeck, switchWithDeckTop, viewDeck } from "../../actions/zones/deck-actions.js"
 import { discardAll, handAll, leaveAll, lostZoneAll, shuffleAll } from "../../actions/zones/general.js"
 import { discardAndDraw, shuffleAndDraw, shuffleBottomAndDraw } from "../../actions/zones/hand-actions.js"
 import { shuffleZone } from "../../actions/zones/shuffle-zone.js"
 import { exchangeData } from "../deck-constructor/exchange-data.js"
-import { loadDeckData } from "../deck-constructor/import.js"
+import { changeCardBack, loadDeckData } from "../deck-constructor/import.js"
 
 const functions = {
     exchangeData: exchangeData,
     loadDeckData: loadDeckData,
+    changeCardBack: changeCardBack,
     reset: reset,
     setup: setup,
     takeTurn: takeTurn,

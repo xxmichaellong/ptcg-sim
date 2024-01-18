@@ -20,11 +20,10 @@ export const initializeGeneralButtons = () => {
 
     const revealHideButton = document.getElementById('revealHideButton');
     revealHideButton.addEventListener('click', () => {
-        let rootDirectory = window.location.origin;
-        if (mouseClick.card.image.src !== rootDirectory + '/src/cardback.png'){
-            hideShortcut(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
-        } else {
+        if ([systemState.cardBackSrc, systemState.p1OppCardBackSrc, systemState.p2OppCardBackSrc].includes(mouseClick.card.image.src)){
             revealShortcut(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
+        } else {
+            hideShortcut(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
         };
     });
 };

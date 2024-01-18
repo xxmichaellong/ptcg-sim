@@ -31,8 +31,9 @@ export const systemState = {
     selfDeckData : '',
     p1OppDeckData: '', // refers to the opponent's data in 1 player mode, i.e., the "alt" deck data
     p2OppDeckData: '', // refers to the opponent's data in 2 player mode, i.e., the other player's deck data
-    cardBackSrc: '../src/cardback.png',
-    oppCardBackSrc: ''
+    cardBackSrc: "https://ptcgsim.online/src/cardback.png",
+    p1OppCardBackSrc: "https://ptcgsim.online/src/cardback.png",
+    p2OppCardBackSrc: "https://ptcgsim.online/src/cardback.png"
 };
 // create global variable that holds the information of a selected card, i.e., the card that has been clicked and highlighted and can trigger keybinds
 export const mouseClick = {

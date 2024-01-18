@@ -45,7 +45,7 @@ export const initializeSocketEventListeners = () => {
         cleanActionData('self');
         cleanActionData('opp');
         reset('opp', true, false, false, false);
-        exchangeData('self', systemState.p2SelfUsername, systemState.selfDeckData);
+        exchangeData('self', systemState.p2SelfUsername, systemState.selfDeckData, systemState.cardBackSrc);
         appendMessage('', systemState.p2SelfUsername + ' joined', 'announcement', false);
 
         //initialize sync checker, which will routinely make sure game are synced

@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <title>PTCG-sim | Trading Card Game (TCG) Simulator </title>
+    <meta name="description" content="PTCG-sim is an open-source trading card game simulator supporting single player and online multiplayer. Simulate your favorite card game on PTCG-sim!">
     <meta charset="UTF-8">
-    <meta property="og:title" content="PTCG-sim"/>
+    <meta property="og:title" content="Pokemon Trading Card Game Simulator, TCG simulator, singe player, online multiplayer, and more | PTCG-sim"/>
     <meta property="og:type" content="website"/>
     <meta property="og:image" content="https://ptcgsim.online/blank-logo.png"/>
     <meta property="og:url" content="https://ptcgsim.online"/>
+    <meta property="og:description" content = "PTCG-sim is an open-source trading card game simulator supporting single player and online multiplayer. Simulate your favorite card game on PTCG-sim!">
+    <meta property="og:site_name" content="PTCG-sim">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ptcg sim</title>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="src/css/index.css">
     <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
@@ -127,11 +130,11 @@
         </div>
         <textarea id="mainDeckImportInput" spellcheck="false"></textarea>
         <script>
-            document.getElementById("mainDeckImportInput").placeholder = "Paste your main decklist here. \n\nClick the book 📖 to look through popular decks or click the wand 🪄 for a random deck!";
+            document.getElementById("mainDeckImportInput").placeholder = "Paste your main decklist here. \n\nClick the book 📖 to look through popular decks or click the wand 🪄 for a random deck! \n\nFor uploading custom images, write the quantity and name (i.e. 2 Pikachu) and click on the 'import' button.";
         </script>          
         <textarea id="altDeckImportInput" spellcheck="false"></textarea>
         <script>
-          document.getElementById("altDeckImportInput").placeholder = "Paste your alternative decklist here if you are playing against yourself. \n\nClick the book 📖 to look through popular decks or click the wand 🪄 for a random deck!";
+          document.getElementById("altDeckImportInput").placeholder = "Paste your alternative decklist here if you are playing against yourself. \n\nClick the book 📖 to look through popular decks or click the wand 🪄 for a random deck! \n\nFor uploading custom images, write the quantity and name (i.e. 2 Pikachu) and click on the 'import' button.";
         </script>
         <div id="importBottom">
             <button id="decklistsButton">📖</button>
@@ -143,10 +146,13 @@
             <button id="randomButton">🪄</button>
             <div id="successText">Success!</div><div id="failedText">Error!</div><div id="loadingText"></div><div id="invalidText">1P only!</div>
         </div>
-        <label for="csvFile" class="custom-file-upload">
-            Upload File
-        </label>
-        <input type="file" id="csvFile" accept=".csv" style="display:none;">        
+        <div id="uploadButtonsContainer">
+            <label for="csvFile" id="uploadFileButton" class="self-color">
+                Upload File
+            </label>
+            <input type="file" id="csvFile" accept=".csv" style="display:none;">
+            <button id="changeCardBackButton" class="self-color">Change Card Back</button>
+        </div>
     </div>
     
     <div id="settings" class="sidebox">
@@ -371,15 +377,15 @@
             <li style="font-size: 16px; margin-bottom: 10px;">The “play random card” mechanic has been changed to play a random card faceDown on the board (for cards like Empoleon lvl X).</li>
             <li style="font-size: 16px; margin-bottom: 10px;">Updated some legacy decklists that had incorrect decklist entries or were missing cards.</li>
             <li style="font-size: 16px; margin-bottom: 10px;">Updated the visuals of some containers in dark-mode (decklist book, full-decklist view).</li>
-            <li style="font-size: 16px; margin-bottom: 10px;">New logo and cardback! Shoutout to <a href="https://twitter.com/The_EPSD" target="_blank">Joe Myerscough</a> for creating these for the sim - they look awesome!!!</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">New logo and card back! Shoutout to <a href="https://twitter.com/The_EPSD" target="_blank">Joe Myerscough</a> for creating these for the sim - they look awesome!!!</li>
         </ul>
 
         <strong>COMING SOON</strong><br>
         <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-            <li style="font-size: 16px; margin-bottom: 10px;">Ability to change custom cardbacks.</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Ability to change custom card backs.</li>
             <li style="font-size: 16px; margin-bottom: 10px;">Ability to change the language of cards.</li>
             <li style="font-size: 16px; margin-bottom: 10px;">Ability to select multiple cards at once.</li>
-            <li style="font-size: 16px; margin-bottom: 10px;">Ability to attach cards on opponent's side (e.g., Head Ringer).</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Ability to attach cards on opponent's side (e.g. Head Ringer).</li>
             <li style="font-size: 16px; margin-bottom: 10px;">Changing how tools are currently appended for better user visual experience.</li>
             <li style="font-size: 16px; margin-bottom: 10px;">Adding a visual deck editor.</li>
             <li style="font-size: 16px; margin-bottom: 10px;">Using more user-friendly expansion codes instead of ptcg.io's naming (note: we're currently using that as that is how we pull the data for the older cards).</li>
@@ -434,7 +440,7 @@
 
         <strong>NEW FEATURES</strong><br>
         <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-            <li style="font-size: 16px; margin-bottom: 10px;">Right-click menu for your opponent's hand now has an option to reveal a random card from their hand (e.g., for attacks like Astonish).</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Right-click menu for your opponent's hand now has an option to reveal a random card from their hand (e.g. for attacks like Astonish).</li>
             <li style="font-size: 16px; margin-bottom: 10px;">Revealing and hiding cards are now two separate keybinds, alt + z and z. When revealing a card from your hand, the game will prompt you to hide the card from your opponent when finished revealing.</li>
             <li style="font-size: 16px; margin-bottom: 10px;">Deck/Discard/Lost Zone button headers are now frozen at the top when scrolling.</li>
             <li style="font-size: 16px; margin-bottom: 10px;">The UI and UX of dragging and clicking on cards should now be easier and more intuitive.</li>
@@ -456,7 +462,7 @@
         <strong>COMING SOON</strong><br>
         <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
             <li style="font-size: 16px; margin-bottom: 10px;">Fixing desync issues and adding a refresh/resync feature.</li>
-            <li style="font-size: 16px; margin-bottom: 10px;">Attaching cards on the opponent's side (e.g., Head Ringer).</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Attaching cards on the opponent's side (e.g. Head Ringer).</li>
             <li style="font-size: 16px; margin-bottom: 10px;">Custom card backs.</li>
             <li style="font-size: 16px; margin-bottom: 10px;">Selecting multiple cards at once.</li>
             <li style="font-size: 16px; margin-bottom: 10px;">Feature to draw arrows to/from cards.</li>
@@ -493,7 +499,7 @@
         <strong>COMING SOON</strong><br>
         <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
             <li style="font-size: 16px; margin-bottom: 10px;">Selecting multiple cards at once.</li>
-            <li style="font-size: 16px; margin-bottom: 10px;">Attaching cards on opponent’s side (e.g., Head Ringer).</li>
+            <li style="font-size: 16px; margin-bottom: 10px;">Attaching cards on opponent’s side (e.g. Head Ringer).</li>
             <li style="font-size: 16px; margin-bottom: 10px;">Fixing appending/overlap issues.</li>
         </ul>
         There have been reports of desyncing issues. We’re looking into this - if you’ve experienced anything similar, please share on our Discord server in the #bugs-and-suggestions channel!<br><br>
@@ -506,19 +512,19 @@
         <hr>        
         <h2>v0.9.1 Update 12/28/2023</h2>
       
-        <strong>Rotating Stadium/Pokémon BREAK Cards:</strong> You can now rotate cards using the keybind [r]. This can be used for dual stadiums (e.g., Parallel City) as well as special conditions.<br><br>
+        <strong>Rotating Stadium/Pokémon BREAK Cards:</strong> You can now rotate cards using the keybind [r]. This can be used for dual stadiums (e.g. Parallel City) as well as special conditions.<br><br>
       
         <strong>Resetting Conditions:</strong> Evolving Pokémon now removes ability counters, special conditions, and rotates Pokémon upright.<br><br>
       
         <strong>Active/Benched Pokémon Switching:</strong> Moving the active Pokémon to a target bench Pokémon now automatically switches the target Pokémon to the active zone. Battle log messages are also fixed.<br><br>
       
-        <strong>Revealing/Hiding versus Looking/Covering Cards:</strong> The process of flipping over cards is now divided into two types: revealing/hiding will show for both players (e.g., Town Map, Blacephalon UNB) while looking/covering only shows for the user who triggered the action (e.g., Hisuian Heavy Ball). Cards like Sidney/Grabber can work either by looking at/revealing the opponent's hand, or the opponent revealing their cards. <br><strong>NOTE:</strong> To put a face-down card from your hand in play, hide it in your hand using [z], and then move the card into play. Starting a turn will automatically reveal cards in play.<br><br>
+        <strong>Revealing/Hiding versus Looking/Covering Cards:</strong> The process of flipping over cards is now divided into two types: revealing/hiding will show for both players (e.g. Town Map, Blacephalon UNB) while looking/covering only shows for the user who triggered the action (e.g. Hisuian Heavy Ball). Cards like Sidney/Grabber can work either by looking at/revealing the opponent's hand, or the opponent revealing their cards. <br><strong>NOTE:</strong> To put a face-down card from your hand in play, hide it in your hand using [z], and then move the card into play. Starting a turn will automatically reveal cards in play.<br><br>
       
-        <strong>Attaching Pokémon:</strong> There is now a "Change type" function that can be accessed by right-clicking on cards in the active/bench. Changing a Pokémon to a tool/energy type (e.g., Electrode EVO, Klefki STS) enables the correct attachment to other cards.<br><br>
+        <strong>Attaching Pokémon:</strong> There is now a "Change type" function that can be accessed by right-clicking on cards in the active/bench. Changing a Pokémon to a tool/energy type (e.g. Electrode EVO, Klefki STS) enables the correct attachment to other cards.<br><br>
       
         <strong>Leaving cards in play:</strong> There is now a "Leave cards in play" button when dealing with attached cards to make handling cards like Devolution Spray easier.<br><br>
       
-        <strong>Prizes Sizing:</strong> Prizes now adjust size if a 7th prize is added (e.g., Xurkitree GX).<br>
+        <strong>Prizes Sizing:</strong> Prizes now adjust size if a 7th prize is added (e.g. Xurkitree GX).<br>
       
         <ul style="list-style-type: disc; padding-left: 15px; margin-top: 10px; margin-bottom: 20px; font-size: 2em;">
             <li style="margin-bottom: 10px;">Added option button in the bottom right to clear battle log and export battle log.</li>
@@ -540,7 +546,7 @@
             <li style="margin-bottom: 10px;">Adding all expansions prior to 2011.</li>
             <li style="margin-bottom: 10px;">Custom image imports.</li>
             <li style="margin-bottom: 10px;">Selecting multiple cards at once.</li>
-            <li style="margin-bottom: 10px;">Attaching cards on opponent's side (e.g., Head Ringer).</li>
+            <li style="margin-bottom: 10px;">Attaching cards on opponent's side (e.g. Head Ringer).</li>
         </ul>        
       
         <strong>Thank you to everyone for the support these past three days. I'm going to continue working hard to add new features and fix bugs! Come say hi in the Discord channel :)</strong><br><br>
