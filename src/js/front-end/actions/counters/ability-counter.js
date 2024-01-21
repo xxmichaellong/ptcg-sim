@@ -61,7 +61,12 @@ export const addAbilityCounter = (user, zoneId, index) => {
     } else {
         abilityCounter.style.left = '';
         abilityCounter.style.top = '';
-        abilityCounter.style.right = `${targetRect.left - zoneElementRect.left}px`;
+        abilityCounter.style.right = '';
+        if (zoneId === 'discard'){
+            abilityCounter.style.right = `${targetRect.left - zoneElementRect.left}px`;
+        } else {
+            abilityCounter.style.left = `${targetRect.left - zoneElementRect.left}px`;
+        };
         abilityCounter.style.bottom = `${targetRect.top - zoneElementRect.top + targetRect.height/2 - parseFloat(abilityCounter.style.height)}px`;
     };
     zone.element.appendChild(abilityCounter);
