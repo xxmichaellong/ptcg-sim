@@ -35,7 +35,9 @@ export const lookAtCards = (user, initiator, zoneId, message = true, emit = true
             revealCard(user, card);
             zone.element.appendChild(card.image);
         });
-        sort(user, zoneId);
+        if (zoneId === 'hand'){
+            sort(user, zoneId);
+        };
     };
     if (message){
         appendMessage(initiator, determineUsername(initiator) + ' looked at ' + determineUsername(user) + "'s " + zoneId, 'player', false);
@@ -66,7 +68,9 @@ export const stopLookingAtCards = (user, initiator, zoneId, message = true, emit
             hideCard(user, card);
             zone.element.appendChild(card.image);
         });
-        sort(user, zoneId);
+        if (zoneId === 'hand'){
+            sort(user, zoneId);
+        };    
     };
     if (message){
         appendMessage(initiator, determineUsername(initiator) + ' stopped looking at ' + determineUsername(user) + "'s " + zoneId, 'player', false);
