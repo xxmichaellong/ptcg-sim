@@ -4697,8 +4697,6 @@ const decklistsByYear = {
     }
 };
 
-
-
 const altDeckImportInput = document.getElementById('altDeckImportInput');
 const deckImport = document.getElementById('deckImport');
 const decklistsButton = document.getElementById('decklistsButton');
@@ -4773,7 +4771,7 @@ export const showDecklistsContextMenu = () => {
 };
 
 // Function to hide the context menu
-export const hidedecklistsContextMenu = (event) => {
+const hidedecklistsContextMenu = (event) => {
     if (!decklistsContextMenu.contains(event.target)) {
         decklistsContextMenu.style.display = 'none';
         document.removeEventListener('mousedown', hidedecklistsContextMenu);

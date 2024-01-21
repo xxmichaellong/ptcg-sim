@@ -2,15 +2,21 @@
 <html lang="en">
 <head>
     <title>PTCG-sim | Trading Card Game (TCG) Tabletop Simulator </title>
-    <meta name="description" content="PTCG-sim is an open-source trading card game tabletop simulator supporting single player and online multiplayer. Simulate your favorite card game on PTCG-sim!">
+    <meta name="description" content="PTCG-sim is an open-source trading card game tabletop simulator supporting single player and online multiplayer. Simulate your favorite card games!">
     <meta charset="UTF-8">
-    <meta property="og:title" content="Pokemon Trading Card Game Simulator, PTCG sim, TCG tabletop simulator, single player, online multiplayer, and more | PTCG-sim"/>
+    <meta property="og:title" content="Pokemon Trading Card Game Simulator, Pokemon sim, PTCG sim, TCG tabletop simulator, single player, online multiplayer, and more | PTCG-sim"/>
     <meta property="og:type" content="website"/>
     <meta property="og:image" content="https://ptcgsim.online/blank-logo.png"/>
     <meta property="og:url" content="https://ptcgsim.online"/>
     <meta property="og:description" content = "PTCG-sim is an open-source trading card game tabletop simulator supporting single player and online multiplayer. Simulate your favorite card game on PTCG-sim!">
     <meta property="og:site_name" content="PTCG-sim">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Below is SEO stuff -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="Content-Language" content="en">
+    <meta name="PTCG-sim | Trading Card Game (TCG) Tabletop Simulator" />
+    <meta name="keywords" content="ptcg sim,ptcg,pokemon sim,pokemon simulator,pokemon card simulator,pokemon card sim,pokemon tabletop simulator,pokemon tabletop sim,ptcg os,pokemon open source" />
+    <!-- Above is SEO stuff -->
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="src/css/index.css">
     <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
@@ -49,19 +55,15 @@
     <div id="p1Box" class="sidebox">
         <div id="chatbox"><strong>Welcome to PTCG-sim!</strong>
             <br><br>
-            <strong id="changelogLink" style="cursor: pointer; text-decoration: underline;">v1.1.0 is here!! 😮</strong>
-            <br><br>
-            PTCG-sim is an <a href="https://github.com/xxmichaellong/ptcg-sim" target="_blank">open-source</a> desktop tool to simulate card games. It supports single player (1P) and online multiplayer (2P). 
-            <br><br>
-            Import your decklist by clicking the “Import” tab above, then press “Set Up” to start a game.
-            <br><br>
-            Drag or use keybinds (hold <span class="shift-font">shift</span>) to move cards. Happy testing! 🎉
-            <br><br>
+            <strong id="changelogLink" style="cursor: pointer; text-decoration: none; color: #4CAF50; border-bottom: 1px solid #4CAF50;">Check out v1.2.0!! 😁</strong>
+            <p>PTCG-sim is an <a href="https://github.com/xxmichaellong/ptcg-sim" target="_blank">open-source</a> tool to simulate card games. It supports single player and online multiplayer.</p> 
+            <p>Import your decklist by clicking the “Import” tab above, then press “Set Up” to start a game.</p>
+            <p>Drag or use keybinds (hold <span class="shift-font">shift</span>) to move cards. Happy testing!</p>
             <button id="tutorialButton">Watch Tutorial</button>
             <br><br>
             <div id="links">
                 <div id="discordLink"><strong><a href="https://discord.gg/Kj8fhVns4g" target="_blank">🎮 Join our Discord</a></strong></div>
-                <div id="donationsLink">🎁 Donations</div>
+                <div id="donationsLink">🎁 Sponsors & Donations</div>
             </div>
             <div id="line"></div>
         </div>
@@ -97,6 +99,14 @@
                 </button>                
                 <button id="generateIdButton">Generate</button>
             </div>
+            <div id="coachingModeLabel">
+                <input type="checkbox" id="coachingModeCheckbox">
+                <label style="cursor: pointer;" for="coachingModeCheckbox">Enable board flip <span style="font-style: italic; font-size: smaller;">(both players must select)</span></label>
+            </div>
+            <div id="spectatorModeLabel">
+                <input type="checkbox" id="spectatorModeCheckbox">
+                <label style="cursor: pointer;" for="spectatorModeCheckbox">Spectator mode</label>
+            </div>
             <div id="joinRoomButton"> Join Room </div>
         </div>
         <div id="connectedRoom">
@@ -110,7 +120,7 @@
             <div id="p2ChatboxButtonContainer" class="chat-button-container">
                 <button id="p2AttackButton" class="self-color">Attack</button>
                 <button id="p2PassButton" class="self-color">Pass</button>
-                <!-- <button id="p2UndoButton" class="self-color">Undo</button> -->
+                <button id="p2UndoButton" class="self-color">Undo</button>
                 <button id="p2FREEBUTTON" class="self-color">🥳</button>
             </div>
             <input id="p2MessageInput" type="text" placeholder="Type your message here...">
@@ -130,11 +140,11 @@
         </div>
         <textarea id="mainDeckImportInput" spellcheck="false"></textarea>
         <script>
-            document.getElementById("mainDeckImportInput").placeholder = "Paste your main decklist here. \n\nClick the book 📖 to look through popular decks or click the wand 🪄 for a random deck! \n\nFor uploading custom images, write the quantity and name (i.e. 2 Pikachu) and click on the 'import' button.";
+            document.getElementById("mainDeckImportInput").placeholder = "Paste your main decklist here. \n\nClick the book 📖 to look through popular decks or click the wand 🪄 for a random deck! \n\nFor uploading custom images, write the quantity and name (i.e. 2 Pikachu) and click on the 'Import' button. \n\nInternational languages are supported for cards using Limitless URLs.";
         </script>          
         <textarea id="altDeckImportInput" spellcheck="false"></textarea>
         <script>
-          document.getElementById("altDeckImportInput").placeholder = "Paste your alternative decklist here if you are playing against yourself. \n\nClick the book 📖 to look through popular decks or click the wand 🪄 for a random deck! \n\nFor uploading custom images, write the quantity and name (i.e. 2 Pikachu) and click on the 'import' button.";
+            document.getElementById("altDeckImportInput").placeholder = "Paste your alternative decklist here if you are playing against yourself. \n\nClick the book 📖 to look through popular decks or click the wand 🪄 for a random deck! \n\nFor uploading custom images, write the quantity and name (i.e. 2 Pikachu) and click on the 'Import' button. \n\nInternational languages are supported for cards using Limitless URLs.";
         </script>
         <div id="importBottom">
             <button id="decklistsButton">📖</button>
@@ -144,15 +154,27 @@
             <button id="saveButton">Save</button>
             <div id="decklistsContextMenu" class="decklists-context-menu"></div>
             <button id="randomButton">🪄</button>
-            <div id="successText">Success!</div><div id="failedText">Error!</div><div id="loadingText"></div><div id="invalidText">1P only!</div>
+            <div id="successText">Success!</div><div id="failedText">Error!</div><div id="loadingText"></div><div id="invalidText">Not allowed!</div>
         </div>
         <div id="uploadButtonsContainer">
-            <label for="csvFile" id="uploadFileButton" class="self-color">
-                Upload File
-            </label>
+            <label for="csvFile" id="uploadFileButton" class="self-color">Upload File</label>
             <input type="file" id="csvFile" accept=".csv" style="display:none;">
             <button id="changeCardBackButton" class="self-color">Change Card Back</button>
-        </div>
+            <div class="language-container">
+                <button id="changeLanguageButton">Language: English</button>
+                <div id="languageDropdown">
+                    <ul>
+                        <li>English</li>
+                        <li>French</li>
+                        <li>German</li>
+                        <li>Italian</li>
+                        <li>Portuguese</li>
+                        <li>Spanish</li>
+                    </ul>
+                </div>
+            </div>
+        </div>       
+        <button id="saveCurrentButton" class="self-color">Save Current Deck</button>                
     </div>
     
     <div id="settings" class="sidebox">
@@ -160,11 +182,15 @@
             <div>
                 <input type="checkbox" id="darkModeCheckbox">
                 <label for="darkModeCheckbox">Dark mode</label>
-              </div>
-              <div>
+            </div>
+            <div>
                 <input type="checkbox" id="showZonesCheckbox">
                 <label for="showZonesCheckbox">Hide containers</label>
-              </div>
+            </div>
+            <div>
+                <input type="checkbox" id="hideHandCheckbox">
+                <label for="hideHandCheckbox">Hide opponent's hand (1P mode)</label>
+            </div>
         </div>
         <div id="keybindReminder">
           Hold (<span class="shift-font">shift</span>) to view keybinds
@@ -182,7 +208,7 @@
       
     <div id="cardContextMenu" class="card-context-menu">
         <ul>
-            <li id="abilityCounterButton">Toggle ability</li>
+            <li id="abilityCounterButton">Toggle ability/effect</li>
             <li id="damageCounterButton">Damage counter</li>
             <li id="specialConditionButton">Special condition</li>
 
@@ -289,7 +315,7 @@
                         <li>Attach <code>[q]</code></li>
                         <li>Evolve <code>[e]</code></li>
                         <li>View <code>[v]</code></li>
-                        <li>Toggle ability/Use stadium<code>[w]</code></li>
+                        <li>Toggle ability/effect<code>[w]</code></li>
                         <li>Damage counter</li>
                         <ul>
                             <li>Increase <code>[1-9]</code></li>
@@ -345,9 +371,62 @@
         </tbody>
     </table>
 
+    <table id="selfCurrentDecklistTable" style="display: none;"></table>
+    <table id="oppCurrentDecklistTable" style="display: none;"></table>
+
     <!-- home page -->
     <div id="videoContainer"></div>
     <div id="changelog">
+        <h2>v1.2.0 Update 01/21/24</h2>
+        <p>This update was HUGE. Proud to have pushed it; lots of requested changes have been implemented, and I’m relieved to release them. Also, <a href="https://github.com/sponsors/xxmichaellong?o=esc" target="_blank" style="text-decoration: underline;">my Github Sponsors page</a> was finally approved if you want to support the continuous open-source development of the sim!</p>
+
+        <p><strong>HUGE SHOUTOUTS</strong> (the sim is run by your generosity!!!):</p>
+        <p><strong>One-time sponsors:</strong> Robert Weidman, Jay Cristiano, Robin Schulz, & Song You.<br>
+        <strong>SoulSilver sponsors:</strong> Bertie Vos, Jack Shwartz, Morgan Gallant & Anonymous.<br>
+        <strong>HeartGold sponsors:</strong> Arielle Lok <3.</p>        
+
+        <p><strong>NEW FEATURES:</strong></p>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+        <li style="font-size: 16px; margin-bottom: 10px;"><strong>Coaching Mode/Safe Play: </strong>Enable the ‘Flip Board’ function for 2P so you can switch to your student’s POV and tutor/analyze their play! Also, flipping the board now automatically reveals the opponent’s hand and hides your own hand — this feature can be turned on for 1P mode as well (see Settings) for authentic solo testing.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;"><strong>Spectator Mode: </strong>Enable Spectator mode in 2P so you can watch and comment on games!</li>
+        <li style="font-size: 16px; margin-bottom: 10px;"><strong>2 Player Undo: </strong>Undo moves in 2P using the ‘Undo’ button or ‘u’ keybind.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;"><strong>Custom Card Backs: </strong>Import your own card backs on the Import page.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;"><strong>Change Card Language: </strong>Change the language of cards on the Import page.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;"><strong>Save Current Deck: </strong>Save your decklist after play/testing on the Import page.</li>
+        </ul>
+
+        <p><strong>OTHER ADDITIONS/CHANGES:</strong></p>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+        <li style="font-size: 16px; margin-bottom: 10px;">“Shuffle to Bottom” button added when viewing cards from the top or bottom of the deck (e.g. to handle the ability of Metang from Temporal Forces).</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Ability/effect toggle added to the keybinds and right-click menu of cards in the Stadium and Discard (for cards like Ho-Oh EX).</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">‘Sort’ toggle added for the Hand.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Tools are now attached sideways when in play.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">“Shuffle Deck” keybind now automatically closes the view of the Deck (if open).</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Special energies with the same name as basic energy cards (e.g. Metal Energy from past sets like Neo Genesis) are now properly imported.</li>
+        </ul>
+
+        <p><strong>BUG FIXES:</strong></p>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+        <li style="font-size: 16px; margin-bottom: 10px;">Added alt/option key support for macOS devices using keybinds.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Fixed bug where you could import deck for opponent in 2P.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Rotating cards now only rotates the Pokémon and not the Tool or Energy cards attached.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Prize cards on the opponent's side now automatically resize when resizing the board.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Improved loading speed of card backs.</li>
+        </ul>
+
+        <p><strong>COMING SOON</strong></p>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+        <li style="font-size: 16px; margin-bottom: 10px;">Ability to attach cards on the opponent's side (e.g., Head Ringer).</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Ability to select multiple cards at once.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Visual deck editor.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Interactive battle log, so you can click on a log and rewind to a specific board state.</li>
+        </ul>
+
+        <p>So happy to be working on this and to have so much love from the community. I need some sleep doe.</p>
+        <strong>- XXL &lt;3333</strong>
+        <br><br>
+        <hr>
+
         <h2>v1.1.0 Update 01/12/24</h2>
         Welcome to the new year! I’ve been working through some major fixes and adding new features to PTCG-sim. I’m pretty stoked to be getting the sim polished up.<br><br>
 
@@ -555,20 +634,20 @@
       </div>
 
       <div id="donationsPage">
-        <h2>Donations</h2>
+        <h2>Sponsors & Donations</h2>
 
-        <p>Hi everyone! I'm Michael/Xiao Xiao Long. I'm a 21-year-old from Guelph, Canada, who started programming in the fall of 2023. I've been playing the Pokémon TCG for over 8 years, and I spent the last 3 months building PTCG-Sim, a free tool for the community to use to test and play our favorite card game.</p>
+        <p>Hi everyone! I'm Michael/Xiao Xiao Long. I'm a 21-year-old from Guelph, Canada, who started programming in the fall of 2023. I've been playing the Pokémon TCG for over 8 years, and I spent the last 3 months building PTCG-sim, a free tool for the community to use to test and play our favorite card game.</p>
 
-        <p>I publicly launched the sim on Christmas, and it has already grown an incredible community of players and developers. I’m planning on open sourcing the code this month and would love your support in the days ahead. There’s a lot more to do, and I could use as much help as I can get!</p>
+        <p>I publicly launched the sim on Christmas, and it has already grown an incredible community of players and developers. There’s a lot more to do, and I could use as much help as I can get!</p>
 
-        <p>Should you find joy in using the sim and wish to support its ongoing development, you can sponsor me/the project through the donation link. However, please know that sponsorship is completely optional. Your enjoyment of the sim is contribution enough, and I’m thrilled to have you as part of our community :)</p>
+        <p>Should you find joy in using the sim and wish to support its ongoing development, you can sponsor me/the project through one of the links below. However, please know that sponsorship is completely optional. Your enjoyment of the sim is contribution enough, and I’m thrilled to have you as part of our community :)</p>
 
         <p>-XXL <3</p>
 
+        <h3><a href="https://github.com/sponsors/xxmichaellong?o=esc" target="_blank" style="color: rgb(91, 91, 173); text-decoration: underline;">Github Sponsors Link</a></h3>
+        <h3><a href="https://www.paypal.com/donate/?hosted_button_id=VWFSCL73GDHF4" target="_blank"  style="color: rgb(91, 91, 173); text-decoration: underline;">Paypal Donation Link</a></h3>
 
-        <h2><a href="https://www.paypal.com/donate/?hosted_button_id=VWFSCL73GDHF4" target="_blank" style="color: blue; text-decoration: underline;">Donation Link</a></h2>
-        
-        <strong>DONATION TIERS</strong>
+        <strong>SPONSOR TIERS</strong>
                 <br><br>
                 <strong>$5/mo - SoulSilver Tier</strong>
                 <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">

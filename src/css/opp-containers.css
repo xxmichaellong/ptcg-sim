@@ -106,6 +106,13 @@ body, input, textarea, button {
   bottom: 30%;
   color: rgba(188, 90, 113, 0.864);  
 }
+#handLabel {
+  position: fixed;
+  left: 0%;
+  bottom: 29%;
+  color: rgba(188, 90, 113, 0.864);
+  font-size: 5vh;
+}
 #bench {
   position: fixed;
 	bottom: 35%;
@@ -150,18 +157,24 @@ body, input, textarea, button {
   width: auto;
   max-width: calc(50% - .1vw);
 }
+.prizes-normal-size {
+  max-height: 33%;
+}
+.prizes-small-size {
+  max-height: 23%;
+}
 #lostZoneCover {
   position: fixed;
   bottom: 84%;
   left: 1%;
-  width: 8%;
+  width: 7%;
   height: 15%;
   z-index: 0;
   background-color: rgba(233, 198, 233, 0.111);
   display: flex;
   justify-content: center; 
   align-items:flex-start;
-  border-radius: 2rem;
+  border-radius: 1rem;
 }
 #lostZoneCover img {
   width: auto;
@@ -173,7 +186,7 @@ body, input, textarea, button {
 }
 #lostZoneText {
 	position: fixed;
-  left: 9.5%;
+  left: 8.5%;
   bottom: 90%;
 }
 #deckCover {
@@ -362,7 +375,7 @@ body, input, textarea, button {
   height: 33%;
   margin: 0.5%;
 }
-#attachedCards button {
+#attachedCards button, #viewCards button {
   width: 17%;
 }
 .header {

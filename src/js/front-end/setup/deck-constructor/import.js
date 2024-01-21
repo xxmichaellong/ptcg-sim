@@ -20,8 +20,10 @@ const mainDeckImportInput = document.getElementById('mainDeckImportInput');
 const p1Button = document.getElementById('p1Button');
 const p2Button = document.getElementById('p2Button');
 const saveButton = document.getElementById('saveButton');
+const saveCurrentButton = document.getElementById('saveCurrentButton');
 const csvFile = document.getElementById('csvFile');
 const changeCardBackButton = document.getElementById('changeCardBackButton');
+const changeLanguageButton = document.getElementById('changeLanguageButton');
 
 export const importDecklist = (user) => {
     failedText.style.display = 'none';
@@ -96,34 +98,60 @@ export const importDecklist = (user) => {
         importButton.disabled = false;
         return;
     };
+
+    const languageText = changeLanguageButton.textContent;
+    let language;
+    switch (languageText) {
+      case "Language: English":
+        language = "EN";
+        break;
+      case "Language: French":
+        language = "FR";
+        break;
+      case "Language: German":
+        language = "DE";
+        break;
+      case "Language: Italian":
+        language = "IT";
+        break;
+      case "Language: Portuguese":
+        language = "PT";
+        break;
+      case "Language: Spanish":
+        language = "ES";
+        break;
+      default:
+        language = "EN";
+    };
+
     const energies = {
-        'Fire Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_R_R_EN.png',
-        'Grass Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_G_R_EN.png',
-        'Fairy Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TEU/TEU_Y_R_EN.png',
-        'Darkness Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_D_R_EN.png',
-        'Lightning Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_L_R_EN.png',
-        'Fighting Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_F_R_EN.png',
-        'Psychic Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_P_R_EN.png',
-        'Metal Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_M_R_EN.png',
-        'Water Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_W_R_EN.png',
-        'Basic Fire Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_R_R_EN.png',
-        'Basic Grass Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_G_R_EN.png',
-        'Basic Fairy Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TEU/TEU_Y_R_EN.png',
-        'Basic Darkness Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_D_R_EN.png',
-        'Basic Lightning Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_L_R_EN.png',
-        'Basic Fighting Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_F_R_EN.png',
-        'Basic Psychic Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_P_R_EN.png',
-        'Basic Metal Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_M_R_EN.png',
-        'Basic Water Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_W_R_EN.png',
-        'Basic {W} Energy Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_W_R_EN.png',
-        'Basic {R} Energy Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_R_R_EN.png',
-        'Basic {G} Energy Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_G_R_EN.png',
-        'Basic {Y} Energy Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TEU/TEU_Y_R_EN.png',
-        'Basic {D} Energy Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_D_R_EN.png',
-        'Basic {L} Energy Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_L_R_EN.png',
-        'Basic {F} Energy Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_F_R_EN.png',
-        'Basic {P} Energy Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_P_R_EN.png',
-        'Basic {M} Energy Energy': 'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_M_R_EN.png'
+        'Fire Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_R_R_${language}.png`,
+        'Grass Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_G_R_${language}.png`,
+        'Fairy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TEU/TEU_Y_R_${language}.png`,
+        'Darkness Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_D_R_${language}.png`,
+        'Lightning Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_L_R_${language}.png`,
+        'Fighting Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_F_R_${language}.png`,
+        'Psychic Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_P_R_${language}.png`,
+        'Metal Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_M_R_${language}.png`,
+        'Water Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_W_R_${language}.png`,
+        'Basic Fire Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_R_R_${language}.png`,
+        'Basic Grass Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_G_R_${language}.png`,
+        'Basic Fairy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TEU/TEU_Y_R_${language}.png`,
+        'Basic Darkness Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_D_R_${language}.png`,
+        'Basic Lightning Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_L_R_${language}.png`,
+        'Basic Fighting Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_F_R_${language}.png`,
+        'Basic Psychic Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_P_R_${language}.png`,
+        'Basic Metal Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_M_R_${language}.png`,
+        'Basic Water Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_W_R_${language}.png`,
+        'Basic {W} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_W_R_${language}.png`,
+        'Basic {R} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_R_R_${language}.png`,
+        'Basic {G} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_G_R_${language}.png`,
+        'Basic {Y} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TEU/TEU_Y_R_${language}.png`,
+        'Basic {D} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_D_R_${language}.png`,
+        'Basic {L} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_L_R_${language}.png`,
+        'Basic {F} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_F_R_${language}.png`,
+        'Basic {P} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_P_R_${language}.png`,
+        'Basic {M} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_M_R_${language}.png`
     };
 
     const specialCases = {
@@ -139,7 +167,6 @@ export const importDecklist = (user) => {
         if (!entry[2].match(/\w*-\w*\d*$/)){
             const [q, name, set] = entry;
             const energyUrl = energies[name];
-
             let [firstPart, secondPart] = set.split(/(?<=\S)\s/);
             if (firstPart && secondPart){
                 if (specialCases[firstPart]){
@@ -149,7 +176,7 @@ export const importDecklist = (user) => {
                     const paddedDigits = digits.length < 3 ? digits.padStart(3, '0') : digits;
                     return letter ? paddedDigits + letter : paddedDigits;
                 });
-                const url = `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/${firstPart.replace(/ /g, '/')}/${firstPart.replace(/ /g, '_')}_${paddedSecondPart}_R_EN.png`;
+                const url = `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/${firstPart.replace(/ /g, '/')}/${firstPart.replace(/ /g, '_')}_${paddedSecondPart}_R_${language}.png`;
                 entry.push(url);
                 entry.push(getCardType(firstPart, secondPart));
             } else if (energyUrl){
@@ -217,6 +244,7 @@ export const importDecklist = (user) => {
         decklistsButton.style.display = 'none';
         importButton.style.display = 'none';
         randomButton.style.display = 'none';
+        changeLanguageButton.style.display = 'none';
         confirmButton.style.display = 'block';
         cancelButton.style.display = 'block';
         saveButton.style.display = 'block';
@@ -226,12 +254,26 @@ export const importDecklist = (user) => {
     });
 }
 
+export const loadDeckData = (user, deckData, emit = true) => {
+    if (user === 'self') {
+        systemState.selfDeckData = deckData;
+    } else if (systemState.isTwoPlayer) {
+        systemState.p2OppDeckData = deckData;
+    } else {
+        systemState.p1OppDeckData = deckData;
+    };
+    reset(user, true, true, false, false);
+    appendMessage('', determineUsername(user) + ' imported deck', 'announcement', false);
+    processAction(user, emit, 'loadDeckData', [deckData]);
+}
+
 cancelButton.addEventListener('click', () => {
     selfContainer.style.zIndex = 0;
     oppContainer.style.zIndex = 0;
     decklistsButton.style.display = 'block';
     importButton.style.display = 'block';
     randomButton.style.display = 'block';
+    changeLanguageButton.style.display = 'inline-block';
     confirmButton.style.display = 'none';
     cancelButton.style.display = 'none';
     saveButton.style.display = 'none';
@@ -242,29 +284,14 @@ cancelButton.addEventListener('click', () => {
     decklistTable.style.display = 'none';
 });
 
-export const loadDeckData = (user, deckData, emit = true) => {
-    if (user === 'self') {
-        systemState.selfDeckData = deckData;
-    } else if (systemState.isTwoPlayer) {
-        systemState.p2OppDeckData = emit ? systemState.p2OppDeckData : deckData;
-        invalidText.style.display = emit ? 'block' : invalidText.style.display;
-    } else {
-        systemState.p1OppDeckData = deckData;
-    };
-    if (!(user === 'opp' && systemState.isTwoPlayer && emit)) {
-        reset(user, true, true, false, false);
-        appendMessage('', determineUsername(user) + ' imported deck', 'announcement', false);
-    };
-    
-    processAction(user, emit, 'loadDeckData', [deckData]);
-}
-
 confirmButton.addEventListener('click', () => {
     selfContainer.style.zIndex = 0;
     oppContainer.style.zIndex = 0;
     decklistsButton.style.display = 'block';
     importButton.style.display = 'block';
     randomButton.style.display = 'block';
+    saveCurrentButton.style.display = 'block';
+    changeLanguageButton.style.display = 'inline-block';
     confirmButton.style.display = 'none';
     cancelButton.style.display = 'none';
     saveButton.style.display = 'none';
@@ -273,6 +300,7 @@ confirmButton.addEventListener('click', () => {
     let tableBody = decklistTable.getElementsByTagName('tbody')[0];
     let rows = tableBody.rows;
     let deckData = [];
+
     for (let i = 0; i < rows.length; i++) {
         let cells = rows[i].cells;
         
@@ -284,18 +312,34 @@ confirmButton.addEventListener('click', () => {
         let cardData = [quantity, name, type, url];
         deckData.push(cardData);
     };
+
+    // Create a copy of the current table and append it to currentDecklistTable
+    const currentDecklistTable = user === 'self' ? document.getElementById('selfCurrentDecklistTable') : document.getElementById('oppCurrentDecklistTable');
+    currentDecklistTable.innerHTML = '';
+    // Clone the content (rows) of decklistTable
+    rows = decklistTable.rows;
+    let clonedContent = document.createDocumentFragment();
+
+    for (let i = 0; i < rows.length; i++) {
+        let clonedRow = rows[i].cloneNode(true);
+        clonedContent.appendChild(clonedRow);
+    };
+    // Append the cloned content to currentDecklistTable
+    currentDecklistTable.appendChild(clonedContent);
+
     while (tableBody.firstChild) {
         tableBody.removeChild(tableBody.firstChild);
     };
     decklistTable.style.display = 'none';
     if (!systemState.isTwoPlayer){
         show('p1Box', p1Button);
-    } else if (user === 'self'){
+    } else if (user === 'self' && !(document.getElementById('spectatorModeCheckbox').checked && systemState.isTwoPlayer)){
         show('p2Box', p2Button);
     };
     loadDeckData(user, deckData);
 })
-       
+
+// ************ logic for saving decklists********************//
 const downloadCSV = (csv, filename) => {
     let csvFile;
     let downloadLink;
@@ -311,9 +355,9 @@ const downloadCSV = (csv, filename) => {
     downloadLink.click();
 }
 
-const exportTableToCSV = (filename) => {
+const exportTableToCSV = (filename, table) => {
     let csv = [];
-    let rows = document.querySelectorAll("#decklistTable tr");
+    let rows = document.querySelectorAll(table);
     
     for (let i = 0; i < rows.length; i++) {
         let row = [], cols = rows[i].querySelectorAll("td, th");
@@ -328,7 +372,12 @@ const exportTableToCSV = (filename) => {
 }
 
 saveButton.addEventListener('click', () => {
-    exportTableToCSV('decklist.csv');
+    exportTableToCSV('decklist.csv', "#decklistTable tr");
+});
+
+saveCurrentButton.addEventListener('click', () => {
+    let table = mainDeckImportInput.style.display !== 'none' ? "#selfCurrentDecklistTable tr" : "#oppCurrentDecklistTable tr";
+    exportTableToCSV('decklist.csv', table);
 });
 
 csvFile.addEventListener('change', (evt) => {
@@ -339,6 +388,7 @@ csvFile.addEventListener('change', (evt) => {
     decklistsButton.style.display = 'none';
     importButton.style.display = 'none';
     randomButton.style.display = 'none';
+    changeLanguageButton.style.display = 'none';
     failedText.style.display = 'none';
     decklistTable.style.display = 'block';
     confirmButton.style.display = 'block';
@@ -370,6 +420,7 @@ csvFile.addEventListener('change', (evt) => {
     evt.target.value = '';
 });
 
+// ************ logic for changing cardbacks********************//
 export const changeCardBack = (user, userInput, emit = true) => {
     const containerDocument = user === 'self' ? selfContainerDocument : oppContainerDocument;
     containerDocument.querySelectorAll('img').forEach(img => {
@@ -408,3 +459,31 @@ changeCardBackButton.addEventListener('click', () => {
     };
     img.src = userInput;
 });
+
+// ************ logic for changing language********************//
+const languageDropdown = document.getElementById("languageDropdown");
+changeLanguageButton.addEventListener("click", () => {
+    languageDropdown.style.display = "block";
+    document.addEventListener('mousedown', hideLanguageDropdown);
+});
+// Add click event listeners to dropdown items
+const dropdownItems = languageDropdown.querySelectorAll("li");
+dropdownItems.forEach((item) => {
+    item.addEventListener("click", () => {
+        const selectedLanguage = item.textContent;
+        changeLanguage(selectedLanguage);
+        languageDropdown.style.display = 'none';
+    });
+});
+
+const changeLanguage = (language) => {
+    changeLanguageButton.textContent = `Language: ${language}`;
+};
+
+// Function to hide the context menu
+const hideLanguageDropdown = (event) => {
+    if (!languageDropdown.contains(event.target)) {
+        languageDropdown.style.display = 'none';
+        document.removeEventListener('mousedown', hideLanguageDropdown);
+    };
+};

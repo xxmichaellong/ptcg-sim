@@ -29,10 +29,14 @@
     <div class="zone-button-container">
         <button id="closeLostZoneButton" class="zone-button">Close</button>
         <input type="checkbox" id="sortLostZoneCheckbox">
-        <label for="sortLostZoneCheckbox">Sort</label>
+        <label for="sortLostZoneCheckbox" >Sort</label>
     </div>
 </div>
 
+<div id="handLabel">
+    <input type="checkbox" class="opp-text" id="sortHandCheckbox">
+    <label style="cursor: pointer;" for="sortHandCheckbox"><div id="sortHandText" class="opp-text" style="display: inline-block;">Sort</div></label>
+</div>
 <div id="handText" class="opp-text">(<span id="handCount">0</span>)</div>
 <div id="hand"></div>
 <div id="discardCover" class="outline"></div>
@@ -64,6 +68,7 @@
     <div id="viewCardsButtonContainer" class="opp-zone-button-container">
         <button id="discardViewCardsButton" class="zone-button">Discard all</button>
         <button id="shuffleViewCardsButton" class="zone-button">Shuffle all</button>
+        <button id="shuffleBottomViewCardsButton" class="zone-button">Shuffle to bottom</button>
         <button id="lostZoneViewCardsButton" class="zone-button">Lost Zone all</button>
         <button id="handViewCardsButton" class="zone-button">To Hand</button>
     </div>

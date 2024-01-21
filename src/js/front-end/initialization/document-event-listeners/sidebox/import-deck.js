@@ -1,5 +1,6 @@
 import { importDecklist } from "../../../setup/deck-constructor/import.js";
 import { getRandomDeckList, showDecklistsContextMenu } from "../../../setup/deck-constructor/sample.decklists.js";
+import { systemState } from "../../global-variables/global-variables.js";
 
 export const initializeImport = () => {
     const altDeckImportInput = document.getElementById('altDeckImportInput');
@@ -19,6 +20,9 @@ export const initializeImport = () => {
     setInterval(updateLoadingText, 500);
     const uploadFileButton = document.getElementById('uploadFileButton');
     const changeCardBackButton = document.getElementById('changeCardBackButton');
+    const selfCurrentDecklistTable = document.getElementById('selfCurrentDecklistTable');
+    const oppCurrentDecklistTable = document.getElementById('oppCurrentDecklistTable');
+    const saveCurrentButton = document.getElementById('saveCurrentButton');
 
     const mainImportHeaderButton = document.getElementById('mainImportHeaderButton');
     mainImportHeaderButton.addEventListener('click', () => {
@@ -31,11 +35,15 @@ export const initializeImport = () => {
             uploadFileButton.classList.toggle('opp-color');
             changeCardBackButton.classList.toggle('self-color');
             changeCardBackButton.classList.toggle('opp-color');
+            saveCurrentButton.classList.toggle('self-color');
+            saveCurrentButton.classList.toggle('opp-color');
             mainDeckImportInput.style.display = 'inline-block';
             altDeckImportInput.style.display = 'none';
             successText.style.display = 'none';
             failedText.style.display = 'none';
             invalidText.style.display = 'none';
+
+            saveCurrentButton.style.display = selfCurrentDecklistTable.innerHTML === '' ? 'none' : 'block';
         };
     });
 
@@ -50,18 +58,28 @@ export const initializeImport = () => {
             uploadFileButton.classList.toggle('opp-color');
             changeCardBackButton.classList.toggle('self-color');
             changeCardBackButton.classList.toggle('opp-color');
+            saveCurrentButton.classList.toggle('self-color');
+            saveCurrentButton.classList.toggle('opp-color');
             altDeckImportInput.style.display = 'inline-block';
             mainDeckImportInput.style.display = 'none';
             successText.style.display = 'none';
             failedText.style.display = 'none';
             invalidText.style.display = 'none';
+
+            saveCurrentButton.style.display = oppCurrentDecklistTable.innerHTML === '' ? 'none' : 'block';
         };
     });
 
     const importButton = document.getElementById('importButton');
     importButton.addEventListener('click', () => {
         const user = mainDeckImportInput.style.display !== 'none' ? 'self' : 'opp';
-        importDecklist(user);
+        const notSpectator = !(document.getElementById('spectatorModeCheckbox').checked && systemState.isTwoPlayer);
+        const notOpp2P = !(systemState.isTwoPlayer && user === 'opp');
+        if (notSpectator && notOpp2P){
+            importDecklist(user);
+        } else {
+            invalidText.style.display = 'block';
+        };
     });
 
     const randomButton = document.getElementById('randomButton');

@@ -14,6 +14,7 @@ export class Card {
         this.type = type;
         this.imageAttributes = {
             user: user,
+            type: type,
             src: imageURL,
             alt: name,
             draggable: true,
@@ -35,6 +36,8 @@ export class Card {
                 this.image.addEventListener(attr, imageAttributes[attr]);
             } else if (attr === 'user') {
                 this.image.user = imageAttributes[attr];
+            } else if (attr === 'type') {
+                this.image.type = imageAttributes[attr];
             } else {
                 this.image.setAttribute(attr, imageAttributes[attr]);
             };

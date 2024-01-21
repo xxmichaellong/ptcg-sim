@@ -80,7 +80,9 @@ export const darkMode = () => {
 
     // Dark Mode 6
     document.getElementById('changelog').classList.toggle('dark-mode-6');
+    document.getElementById('donationsPage').classList.toggle('dark-mode-6');
     document.getElementById('keybindModal').classList.toggle('dark-mode-6');
+    document.getElementById('languageDropdown').classList.toggle('dark-mode-6');
     document.getElementById('decklistTable').classList.toggle('dark-mode-6');
     document.querySelectorAll('.decklists-context-menu').forEach(menu => {
         menu.classList.toggle('dark-mode-6');

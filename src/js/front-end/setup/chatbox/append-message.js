@@ -24,7 +24,8 @@ export const appendMessage = (user, message, type, emit = true) => {
                 user: user,
                 message: message,
                 type : type,
-                emit: false
+                emit: false,
+                socketId: socket.id,
             };
             socket.emit('appendMessage', data);
         };

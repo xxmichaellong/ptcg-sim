@@ -6,6 +6,8 @@ import { processAction } from "../../setup/general/process-action.js";
 import { shuffleIndices } from "../../setup/general/shuffle.js";
 import { removeImages } from "../../setup/image-logic/remove-images.js";
 import { getZone } from "../../setup/zones/get-zone.js";
+import { addAbilityCounter } from "../counters/ability-counter.js";
+import { hideCard, revealCard } from "../general/reveal-and-hide.js";
 import { moveCard } from "../move-card-bundle/move-card.js";
 import { shuffleZone } from "./shuffle-zone.js";
 
@@ -44,6 +46,32 @@ export const shuffleAll = (user, initiator, zoneId, indices, emit = true) => {
     };
 
     processAction(user, emit, 'shuffleAll', [oInitiator, zoneId, indices]);
+}
+
+export const shuffleBottom = (user, initiator, zoneId, indices, emit = true) => {
+    const oInitiator = initiator === 'self' ? 'opp' : 'self';
+    if (user === 'opp' && emit && systemState.isTwoPlayer){
+        processAction(user, emit, 'shuffleBottom', [oInitiator, zoneId, indices]);
+        return;
+    };
+
+    const zone = getZone(user, zoneId);
+    const count = zone.getCount();
+    indices = indices ? indices : shuffleIndices(count);
+    shuffleZone(user, initiator, zoneId, indices, false, false);
+
+    for (let i = 0; i < count; i++) {
+        moveCard(user, initiator, zoneId, 'deck', 0);
+    };
+
+    zone.element.style.display = 'none';
+
+    if (count > 0){
+        const message = determineUsername(initiator) + ' shuffled ' + count + ' card(s) to bottom of deck';
+        appendMessage(initiator, message, 'player', false);
+    };
+
+    processAction(user, emit, 'shuffleBottom', [oInitiator, zoneId, indices]);
 }
 
 export const discardAll = (user, initiator, zoneId, emit = true) => {
@@ -183,11 +211,13 @@ export const leaveAll = (user, initiator, oZoneId, emit = true) => {
 
 export const sort = (user, zoneId) => {
     const selfCheckboxMap = {
+        'hand': selfContainerDocument.getElementById('sortHandCheckbox'),
         'deck': selfContainerDocument.getElementById('sortDeckCheckbox'),
         'discard': selfContainerDocument.getElementById('sortDiscardCheckbox'),
-        'lostZone': selfContainerDocument.getElementById('sortLostZoneCheckbox')
+        'lostZone': selfContainerDocument.getElementById('sortLostZoneCheckbox'),
     };
     const oppCheckboxMap = {
+        'hand': oppContainerDocument.getElementById('sortHandCheckbox'),
         'deck': oppContainerDocument.getElementById('sortDeckCheckbox'),
         'discard': oppContainerDocument.getElementById('sortDiscardCheckbox'),
         'lostZone': oppContainerDocument.getElementById('sortLostZoneCheckbox'),
@@ -199,16 +229,28 @@ export const sort = (user, zoneId) => {
 
     removeImages(zone.element);
 
-    if (checkbox.checked) {
+    if (checkbox.checked && deckData) {
         deckData.forEach(entry => {
             const name = entry[1];
             zone.array.forEach(card => {
                 if (card.name === name) {
+                    card.image.src = card.image.src; //redraw trick as insurance
                     zone.element.appendChild(card.image);
+                    if (card.image.abilityCounter){
+                        const index = zone.array.findIndex(selectedCard => selectedCard === card);
+                        addAbilityCounter(user, zoneId, index);
+                    };
                 };
             });
         });
     } else {
-        zone.array.forEach(card => zone.element.appendChild(card.image));
+        zone.array.forEach(card => {
+            card.image.src = card.image.src; //redraw trick as insurance
+            zone.element.appendChild(card.image)
+            if (card.image.abilityCounter){
+                const index = zone.array.findIndex(selectedCard => selectedCard === card);
+                addAbilityCounter(user, zoneId, index);
+            };
+        });
     };
 };

@@ -25,7 +25,14 @@ import { acceptAction } from '../../setup/general/accept-action.js'
 import { catchUpActions } from '../../setup/general/catch-up-actions.js'
 import { cleanActionData } from '../../setup/general/clean-action-data.js'
 import { resyncActions } from '../../setup/general/resync-actions.js'
+import { spectatorJoin } from '../../setup/spectator/spectator-join.js'
 
+let syncCheckInterval;
+let spectatorActionInterval;
+export const removeSyncIntervals = () => {
+    clearInterval(syncCheckInterval);
+    clearInterval(spectatorActionInterval);
+}
 export const initializeSocketEventListeners = () => {
     socket.on('joinGame', () => {
         const connectedRoom = document.getElementById('connectedRoom');
@@ -33,11 +40,13 @@ export const initializeSocketEventListeners = () => {
         const roomHeaderText = document.getElementById('roomHeaderText');
         const chatbox = document.getElementById('chatbox');
         const p2ExplanationBox = document.getElementById('p2ExplanationBox');
+        const flipBoardButton = document.getElementById('flipBoardButton');
         roomHeaderText.textContent = 'id: ' + systemState.roomId;
         chatbox.innerHTML = '';
         connectedRoom.style.display = 'flex';
         lobby.style.display = 'none';
         p2ExplanationBox.style.display = 'none';
+        flipBoardButton.style.display = 'none';
         if (systemState.initiator === 'opp'){
             flipBoard();
         };
@@ -45,17 +54,34 @@ export const initializeSocketEventListeners = () => {
         cleanActionData('self');
         cleanActionData('opp');
         reset('opp', true, false, false, false);
-        exchangeData('self', systemState.p2SelfUsername, systemState.selfDeckData, systemState.cardBackSrc);
-        appendMessage('', systemState.p2SelfUsername + ' joined', 'announcement', false);
+        exchangeData('self', systemState.p2SelfUsername, systemState.selfDeckData, systemState.cardBackSrc, document.getElementById('coachingModeCheckbox').checked);
 
         //initialize sync checker, which will routinely make sure game are synced
-        setInterval(() => {
-            const data = {
-                roomId: systemState.roomId,
-                counter: systemState.selfCounter
+        syncCheckInterval = setInterval(() => {
+            if (systemState.isTwoPlayer){
+                const data = {
+                    roomId: systemState.roomId,
+                    counter: systemState.selfCounter
+                };
+                socket.emit('syncCheck', data);
             };
-            socket.emit('syncCheck', data);
         }, 3000);
+
+        spectatorActionInterval = setInterval(() => {
+            if (systemState.isTwoPlayer){
+                const data = {
+                    selfUsername: systemState.p2SelfUsername,
+                    oppUsername: systemState.p2OppUsername,
+                    roomId: systemState.roomId,
+                    spectatorActionData: systemState.spectatorActionData,
+                    socketId: socket.id,
+                };
+                socket.emit('spectatorActionData', data);
+            };
+        }, 1000);
+    });
+    socket.on('spectatorJoin', () => {
+        spectatorJoin();
     });
     socket.on('roomReject', () => {
         let overlay = document.createElement('div');
@@ -75,7 +101,7 @@ export const initializeSocketEventListeners = () => {
         container.style.color = '#fff';
     
         let message = document.createElement('p');
-        message.textContent = 'Room is full!';
+        message.innerHTML = 'Room is full.<br>Enable spectator mode to watch the game.';
         message.style.fontSize = '24px';
     
         container.appendChild(message);
@@ -87,12 +113,17 @@ export const initializeSocketEventListeners = () => {
         });
     });
     socket.on('connect', () => {
+        const notSpectator = !(document.getElementById('spectatorModeCheckbox').checked && systemState.isTwoPlayer);
         if (systemState.isTwoPlayer){
             const data = {
                 roomId: systemState.roomId,
-                username: systemState.p2SelfUsername
+                username: systemState.p2SelfUsername,
+                notSpectator: notSpectator
             };
             socket.emit('userReconnected', data);
+            if (!notSpectator){
+                appendMessage('', systemState.spectatorUsername + ' reconnected!', 'announcement', false);
+            };
         };
     });
     socket.on('userReconnected', (data) => {
@@ -102,52 +133,71 @@ export const initializeSocketEventListeners = () => {
         appendMessage('', username + ' disconnected', 'announcement', false);
     });
     socket.on('disconnect', () => {
-        if(systemState.isTwoPlayer){
-            appendMessage('', systemState.p2SelfUsername + ' disconnected', 'announcement', false);
+        if (systemState.isTwoPlayer){
+            const isSpectator = systemState.isTwoPlayer && document.getElementById('spectatorModeCheckbox').checked;
+            const username = isSpectator ? systemState.spectatorUsername : systemState.p2SelfUsername;
+            appendMessage('', username + ' disconnected', 'announcement', false);
         };
     });
     socket.on('leaveRoom', (data) => {
-        cleanActionData('opp');
+        if (!data.isSpectator){
+            cleanActionData('opp');
+        };
         appendMessage('', data.username + ' left the room', 'announcement', false);
     });
     socket.on('appendMessage', (data) => {
+        if (data.socketId === systemState.spectatorId){
+            data.user = data.user === 'self' ? 'opp' : 'self';   
+        };
         appendMessage(data.user, data.message, data.type, data.emit);
     });
     socket.on('requestAction', (data) => {
-        if (data.counter === systemState.selfCounter){
+        const notSpectator = !(document.getElementById('spectatorModeCheckbox').checked && systemState.isTwoPlayer);
+        if (notSpectator && data.counter === systemState.selfCounter){
             acceptAction('self', data.action, data.parameters);
         };
     });
     socket.on('pushAction', (data) => {
-        if (data.action === 'exchangeData'){
-            cleanActionData('opp');
-        };
-        if (data.counter === (parseInt(systemState.oppCounter) + 1)){
-            systemState.oppCounter ++;
-            acceptAction('opp', data.action, data.parameters);
-        } else if (data.counter > (parseInt(systemState.oppCounter) + 1)){
-            const data = {
-                roomId: systemState.roomId,
-                counter: systemState.oppCounter,
+        const notSpectator = !(document.getElementById('spectatorModeCheckbox').checked && systemState.isTwoPlayer);
+        if (notSpectator){
+            if (data.action === 'exchangeData'){
+                cleanActionData('opp');
             };
-            socket.emit('resyncActions', data);
+            if (data.counter === (parseInt(systemState.oppCounter) + 1)){
+                systemState.oppCounter ++;
+                systemState.spectatorActionData.push({user: 'opp', action: data.action, parameters: data.parameters});
+                acceptAction('opp', data.action, data.parameters);
+            } else if (data.counter > (parseInt(systemState.oppCounter) + 1)){
+                const data = {
+                    roomId: systemState.roomId,
+                    counter: systemState.oppCounter,
+                };
+                socket.emit('resyncActions', data);
+            };
         };
     });
     socket.on('resyncActions', () => {
-        resyncActions();
+        const notSpectator = !(document.getElementById('spectatorModeCheckbox').checked && systemState.isTwoPlayer);
+        if (notSpectator){
+            resyncActions();
+        };
     });
     socket.on('catchUpActions', (data) => {
-        catchUpActions(data.actionData);
+        const notSpectator = !(document.getElementById('spectatorModeCheckbox').checked && systemState.isTwoPlayer);
+        if (notSpectator){
+            catchUpActions(data.actionData);
+        };
     });
     socket.on('syncCheck', (data) => {
-        if (data.counter >= (parseInt(systemState.oppCounter) + 1)){
+        const notSpectator = !(document.getElementById('spectatorModeCheckbox').checked && systemState.isTwoPlayer);
+        if (notSpectator && data.counter >= (parseInt(systemState.oppCounter) + 1)){
             const data = {
                 roomId: systemState.roomId,
                 counter: systemState.oppCounter,
             };
             socket.emit('resyncActions', data);
         };
-    })
+    });
     // socket.on('exchangeData', (data) => {
     //     exchangeData(data.user, data.username, data.deckData, data.emit);
     // });
@@ -245,27 +295,59 @@ export const initializeSocketEventListeners = () => {
     //     lostZoneBoard(data.user, data.initiator, data.message, data.emit);
     // });
     socket.on('lookAtCards', (data) => {
-        lookAtCards(data.user, data.initiator, data.zoneId, data.emit);
+        if (data.socketId === systemState.spectatorId){
+            data.user = data.user === 'self' ? 'opp' : 'self';
+            data.initiator = data.initiator === 'self' ? 'opp' : 'self';   
+        };
+        lookAtCards(data.user, data.initiator, data.zoneId, data.message, data.emit);
     });
     socket.on('stopLookingAtCards', (data) => {
+        if (data.socketId === systemState.spectatorId){
+            data.user = data.user === 'self' ? 'opp' : 'self';
+            data.initiator = data.initiator === 'self' ? 'opp' : 'self';   
+        };
         stopLookingAtCards(data.user, data.initiator, data.zoneId, data.message, data.emit);
     });
     socket.on('revealCards', (data) => {
+        if (data.socketId === systemState.spectatorId){
+            data.user = data.user === 'self' ? 'opp' : 'self';
+            data.initiator = data.initiator === 'self' ? 'opp' : 'self';   
+        };
         revealCards(data.user, data.initiator, data.zoneId, data.emit);
     });
     socket.on('hideCards', (data) => {
+        if (data.socketId === systemState.spectatorId){
+            data.user = data.user === 'self' ? 'opp' : 'self';
+            data.initiator = data.initiator === 'self' ? 'opp' : 'self';   
+        };
         hideCards(data.user, data.initiator, data.zoneId, data.emit);
     });
     socket.on('revealShortcut', (data) => {
+        if (data.socketId === systemState.spectatorId){
+            data.user = data.user === 'self' ? 'opp' : 'self';
+            data.initiator = data.initiator === 'self' ? 'opp' : 'self';   
+        };
         revealShortcut(data.user, data.initiator, data.zoneId, data.index, data.message, data.emit);
     });
     socket.on('hideShortcut', (data) => {
+        if (data.socketId === systemState.spectatorId){
+            data.user = data.user === 'self' ? 'opp' : 'self';
+            data.initiator = data.initiator === 'self' ? 'opp' : 'self';   
+        };
         hideShortcut(data.user, data.initiator, data.zoneId, data.index, data.message, data.emit);
     });
     socket.on('lookShortcut', (data) => {
+        if (data.socketId === systemState.spectatorId){
+            data.user = data.user === 'self' ? 'opp' : 'self';
+            data.initiator = data.initiator === 'self' ? 'opp' : 'self';   
+        };
         lookShortcut(data.user, data.initiator, data.zoneId, data.index, data.emit);
     });
     socket.on('stopLookingShortcut', (data) => {
+        if (data.socketId === systemState.spectatorId){
+            data.user = data.user === 'self' ? 'opp' : 'self';
+            data.initiator = data.initiator === 'self' ? 'opp' : 'self';   
+        };
         stopLookingShortcut(data.user, data.initiator, data.zoneId, data.index, data.emit);
     });
     // socket.on('playRandomCardFaceDown', (data) => {

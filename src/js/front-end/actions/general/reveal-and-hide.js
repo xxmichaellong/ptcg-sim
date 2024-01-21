@@ -7,6 +7,7 @@ import { removeImages } from '../../setup/image-logic/remove-images.js';
 import { getZone } from '../../setup/zones/get-zone.js';
 import { convertZoneName } from '../move-card-bundle/move-card-message.js';
 import { moveCard } from '../move-card-bundle/move-card.js';
+import { sort } from '../zones/general.js';
 import { deselectCard } from './close-popups.js';
 
 export const hideCard = (user, card) => {
@@ -26,7 +27,7 @@ export const revealCard = (user, card) => {
     };
 }
 
-export const lookAtCards = (user, initiator, zoneId, emit = true) => {
+export const lookAtCards = (user, initiator, zoneId, message = true, emit = true) => {
     if (emit){
         const zone = getZone(user, zoneId);
         removeImages(zone.element);
@@ -34,8 +35,12 @@ export const lookAtCards = (user, initiator, zoneId, emit = true) => {
             revealCard(user, card);
             zone.element.appendChild(card.image);
         });
+        sort(user, zoneId);
     };
-    appendMessage(initiator, determineUsername(initiator) + ' looked at ' + determineUsername(user) + "'s " + zoneId, 'player', false);
+    if (message){
+        appendMessage(initiator, determineUsername(initiator) + ' looked at ' + determineUsername(user) + "'s " + zoneId, 'player', false);
+    };
+
 
     if (systemState.isTwoPlayer && emit){
         initiator = initiator === 'self' ? 'opp' : 'self';
@@ -45,7 +50,9 @@ export const lookAtCards = (user, initiator, zoneId, emit = true) => {
             initiator: initiator,
             user: user,
             zoneId: zoneId,
+            message: message,
             emit: false,
+            socketId: socket.id,
         };
         socket.emit('lookAtCards', data);
     };
@@ -59,10 +66,12 @@ export const stopLookingAtCards = (user, initiator, zoneId, message = true, emit
             hideCard(user, card);
             zone.element.appendChild(card.image);
         });
+        sort(user, zoneId);
     };
-    if(message){
+    if (message){
         appendMessage(initiator, determineUsername(initiator) + ' stopped looking at ' + determineUsername(user) + "'s " + zoneId, 'player', false);
     };
+
 
     if (systemState.isTwoPlayer && emit){
         initiator = initiator === 'self' ? 'opp' : 'self';
@@ -74,6 +83,7 @@ export const stopLookingAtCards = (user, initiator, zoneId, message = true, emit
             zoneId: zoneId,
             message: message,
             emit: false,
+            socketId: socket.id,
         };
         socket.emit('stopLookingAtCards', data);
     };
@@ -94,7 +104,8 @@ export const revealCards = (user, initiator, zoneId, emit = true) => {
             initiator: initiator,
             user: user,
             zoneId: zoneId,
-            emit: false
+            emit: false,
+            socketId: socket.id,
         };
         socket.emit('revealCards', data);
     };
@@ -115,7 +126,8 @@ export const hideCards = (user, initiator, zoneId, emit = true) => {
             initiator: initiator,
             user: user,
             zoneId: zoneId,
-            emit: false
+            emit: false,
+            socketId: socket.id,
         };
         socket.emit('hideCards', data);
     };
@@ -144,7 +156,8 @@ export const revealShortcut = (user, initiator, zoneId, index, message = true, e
             zoneId: zoneId,
             index: index,
             message: message,
-            emit: false
+            emit: false,
+            socketId: socket.id,
         };
         socket.emit('revealShortcut', data);
     };
@@ -193,7 +206,8 @@ export const hideShortcut = (user, initiator, zoneId, index, message = true, emi
             user: user,
             zoneId: zoneId,
             index: index,
-            emit: false
+            emit: false,
+            socketId: socket.id,
         };
         socket.emit('hideShortcut', data);
     };
@@ -216,7 +230,8 @@ export const lookShortcut = (user, initiator, zoneId, index, emit = true) => {
             user: user,
             zoneId: zoneId,
             index: index,
-            emit: false
+            emit: false,
+            socketId: socket.id,
         };
         socket.emit('lookShortcut', data);
     };
@@ -242,7 +257,8 @@ export const stopLookingShortcut = (user, initiator, zoneId, index, emit = true)
             user: user,
             zoneId: zoneId,
             index: index,
-            emit: false
+            emit: false,
+            socketId: socket.id,
         };
         socket.emit('stopLookingShortcut', data);
     };

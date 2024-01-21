@@ -17,20 +17,25 @@ export const initializeP2ChatButtons = () => {
             event.preventDefault();
             const message = p2MessageInput.value.trim();
             if (message !== '') {
-                appendMessage(systemState.initiator, determineUsername(systemState.initiator) + ': ' + message, 'message');
+                const isSpectator = systemState.isTwoPlayer && document.getElementById('spectatorModeCheckbox').checked;
+                const type = isSpectator ? 'spectator-message' : 'player';
+                const username = isSpectator ? systemState.spectatorUsername : determineUsername(systemState.initiator);
+                appendMessage(systemState.initiator,  username + ': ' + message, type);
                 p2MessageInput.value = '';
-            }
-        }
+            };
+        };
     });
 
-    // const p2UndoButton = document.getElementById('p2UndoButton');
-    // p2UndoButton.addEventListener('click', () => {
-    //     undo(systemState.initiator);
-    // })
+    const p2UndoButton = document.getElementById('p2UndoButton');
+    p2UndoButton.addEventListener('click', () => {
+        undo(systemState.initiator);
+    });
 
     const p2FREEBUTTON = document.getElementById('p2FREEBUTTON');
     p2FREEBUTTON.addEventListener('click', () => {
-        appendMessage(systemState.initiator, p2FREEBUTTON.textContent, 'player');
+        const isSpectator = systemState.isTwoPlayer && document.getElementById('spectatorModeCheckbox').checked;
+        const type = isSpectator ? 'spectator-message' : 'player';
+        appendMessage(systemState.initiator, p2FREEBUTTON.textContent, type);
 
         // const disconnectAndReconnect = (socket, delay) => {
         //     // Disconnect the socket

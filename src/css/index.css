@@ -164,6 +164,9 @@ ul, li {
 .opp-color {
   background-color: rgba(188, 90, 113, 0.864);  
 }
+.spectator-color {
+  background-color:rgb(205 188 103);
+}
 .neutral-color {
   background-color: rgba(112, 112, 112, 0.864);  
 }
@@ -363,6 +366,9 @@ ul, li {
 .chat-button-container button.neutral-color:hover {
   background-color: rgba(150, 144, 144, 0.864);  
 }
+.chat-button-container button.spectator-color:hover {
+  background-color:rgb(217, 200, 117);
+}
 #optionsContextMenu {
   position: absolute;
   display: none;
@@ -463,6 +469,10 @@ ul, li {
 }
 #generateIdButton:hover {
   background: #8c7e46;
+}
+#coachingModeLabel, #spectatorModeLabel {
+  font-size: small;
+  margin-bottom: 1.5vh;
 }
 #joinRoomButton {
   width: 100%;
@@ -663,36 +673,65 @@ ul, li {
 #saveButton:hover {
   background-color: #aeaeae;
 }
-#uploadFileButton {
+#uploadButtonsContainer {
+  margin: 0.3vw;
+}
+#uploadFileButton, #changeCardBackButton, #changeLanguageButton, #saveCurrentButton {
   padding: 3px 6px;
   cursor: pointer;
   color: white;
   border: none;
   border-radius: .3rem;
-  margin: 1.5vh 1vh 1vh 1vh;
-  margin-left: 0.3vw;
   font-size: 1.5vh;
 }
-#uploadFileButton.self-color:hover {
+#uploadFileButton.self-color:hover,
+#changeCardBackButton.self-color:hover,
+#saveCurrentButton.self-color:hover {
   background-color: rgba(116, 129, 183, 0.864);
 }
-#uploadFileButton.opp-color:hover {
+
+#uploadFileButton.opp-color:hover,
+#changeCardBackButton.opp-color:hover,
+#saveCurrentButton.opp-color:hover {
   background-color: rgba(189, 112, 130, 0.864);  
 }
-#changeCardBackButton {
-  padding: 3px 6px;
+#changeLanguageButton {
+  background-color: #8c8c8c;
+  position: relative;
+}
+#changeLanguageButton:hover {
+  background-color: #aeaeae;
+}
+.language-container {
+  position: relative;
+  display: inline-block; /* Prevents line break */
+}
+#languageDropdown {
+  display: none;
+  position: absolute;
+  bottom: 100%; /* Position dropdown below the button */
+  left: 0;
+  background-color: #f9f9f9;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  border-radius: 5px;
+}
+#languageDropdown ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+#languageDropdown li {
+  padding: 10px;
   cursor: pointer;
-  color: white;
-  border: none;
-  border-radius: .3rem;
-  margin: 1.5vh 1vh 1vh 0vh;
-  font-size: 1.5vh; 
 }
-#changeCardBackButton.self-color:hover {
-  background-color: rgba(116, 129, 183, 0.864);
+#languageDropdown li:hover {
+  background-color: #d7d7d7;
+  color: #141414;
 }
-#changeCardBackButton.opp-color:hover {
-  background-color: rgba(189, 112, 130, 0.864);  
+#saveCurrentButton {
+  display: none;
+  margin-left: 0.3vw;
 }
 #randomButton {
   position: absolute;
@@ -739,7 +778,7 @@ ul, li {
   position: relative;
   cursor: pointer;
 }
-#darkModeCheckbox, #showZonesCheckbox, #keybindReminder {
+#darkModeCheckbox, #showZonesCheckbox, #hideHandCheckbox, #keybindReminder {
   margin-top: 1vh;
 }
 #keybindReminder {
@@ -835,7 +874,7 @@ a:hover {
   height: 2px;
   background-color: #525252;
 }
-.self-text, .announcement, .opp-text, .self-message, .opp-message {
+.self-text, .announcement, .opp-text, .self-message, .opp-message, .spectator-message, .loading-spectator {
   word-wrap: break-word;
   display: block;
   font-size: 1.75vh;
@@ -848,6 +887,10 @@ a:hover {
   background-color: rgb(205, 203, 203);
   text-align: center;
 }
+.loading-spectator {
+  background-color:rgb(205 188 103);
+  text-align: center;
+}
 .self-message {
   background-color: rgba(142, 155, 209, 0.864);
   text-align: left;
@@ -855,6 +898,11 @@ a:hover {
 }
 .opp-message {
   background-color: rgba(187, 120, 136, 0.864);  
+  text-align: left;
+  width: fit-content;
+}
+.spectator-message {
+  background-color:rgb(228, 214, 145);
   text-align: left;
   width: fit-content;
 }

@@ -2,6 +2,7 @@ import { oppContainer, oppContainerDocument, selfContainer, selfContainerDocumen
 import { refreshBoard } from '../../setup/sizing/refresh-board.js';
 import { flippedOppHandleMouseDown, flippedSelfHandleMouseDown, oppHandleMouseDown, selfHandleMouseDown } from '../../setup/sizing/resizer.js';
 import { getZone } from '../../setup/zones/get-zone.js';
+import { lookAtCards, stopLookingAtCards } from './reveal-and-hide.js';
 
 export const flipBoard = () => {   
     const selfResizer = document.getElementById('selfResizer');
@@ -14,7 +15,7 @@ export const flipBoard = () => {
     const resetButton = document.getElementById('resetButton');
     const p2AttackButton = document.getElementById('p2AttackButton');
     const p2PassButton = document.getElementById('p2PassButton');
-    // const p2UndoButton = document.getElementById('p2UndoButton');
+    const p2UndoButton = document.getElementById('p2UndoButton');
     const p2FREEBUTTON = document.getElementById('p2FREEBUTTON');
     const p2SetupButton = document.getElementById('p2SetupButton');
     const p2ResetButton = document.getElementById('p2ResetButton');
@@ -23,16 +24,26 @@ export const flipBoard = () => {
     const viewCardsElement = selfContainerDocument.getElementById('viewCards');
     const oppViewCardsElement = oppContainerDocument.getElementById('viewCards');
 
-    if (selfContainer.classList.contains('self')){
+    if (systemState.initiator === 'self'){
         selfResizer.removeEventListener('mousedown', selfHandleMouseDown);
         oppResizer.removeEventListener('mousedown', oppHandleMouseDown);
         selfResizer.addEventListener('mousedown', flippedSelfHandleMouseDown);
         oppResizer.addEventListener('mousedown', flippedOppHandleMouseDown);
+
+        if (systemState.isTwoPlayer || (!systemState.isTwoPlayer && document.getElementById('hideHandCheckbox').checked)){
+            lookAtCards('opp', '', 'hand', false, true);
+            stopLookingAtCards('self', '', 'hand', false, true);
+        };
     } else {
         selfResizer.addEventListener('mousedown', selfHandleMouseDown);
         oppResizer.addEventListener('mousedown', oppHandleMouseDown);
         selfResizer.removeEventListener('mousedown', flippedSelfHandleMouseDown);
         oppResizer.removeEventListener('mousedown', flippedOppHandleMouseDown);
+
+        if (systemState.isTwoPlayer || (!systemState.isTwoPlayer && document.getElementById('hideHandCheckbox').checked)){
+            lookAtCards('self', '', 'hand', false, true);
+            stopLookingAtCards('opp', '', 'hand', false, true);
+        };
     };
 
     viewCardsElement.classList.toggle('flip-image');
@@ -57,13 +68,13 @@ export const flipBoard = () => {
     toggleClasses(resetButton, 'self-color', 'opp-color');
     toggleClasses(p2AttackButton, 'self-color', 'opp-color');
     toggleClasses(p2PassButton, 'self-color', 'opp-color');
-    // toggleClasses(p2UndoButton, 'self-color', 'opp-color');
+    toggleClasses(p2UndoButton, 'self-color', 'opp-color');
     toggleClasses(p2FREEBUTTON, 'self-color', 'opp-color');
     toggleClasses(p2SetupButton, 'self-color', 'opp-color');
     toggleClasses(p2ResetButton, 'self-color', 'opp-color');
 
     const users = ['self', 'opp'];
-    const textIds = ['deckText', 'discardText', 'lostZoneText', 'handText'];
+    const textIds = ['deckText', 'discardText', 'lostZoneText', 'handText', 'sortHandText', 'sortHandCheckbox'];
     const zoneIds = ['deck', 'discard', 'lostZone', 'attachedCards', 'viewCards'];
     const buttonContainers = ['viewCardsButtonContainer', 'attachedCardsButtonContainer'];
     const headerIds = ['attachedCardsHeader', 'viewCardsHeader'];

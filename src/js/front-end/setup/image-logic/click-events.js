@@ -25,7 +25,10 @@ export const coverClick = (event) => {
     if (selectedZone.elementCover) {
         selectedZone.element.style.display = 'block';
     };
-    if (event.target.id === 'deckCover'){
+
+    const notSpectator = !(document.getElementById('spectatorModeCheckbox').checked && systemState.isTwoPlayer);
+
+    if (event.target.id === 'deckCover' && notSpectator){
         appendMessage(systemState.initiator, determineUsername(systemState.initiator) + ' is looking through ' + determineUsername(event.target.user) + "'s deck", 'player');
     };
 }
@@ -46,30 +49,30 @@ export const openCardContextMenu = (event) => {
     const oppView = (!selfContainerDocument.body.contains(event.target) && selfContainer.classList.contains('self')) || (selfContainerDocument.body.contains(event.target) && !selfContainer.classList.contains('self'));
     
     const buttonConditions = {
-        'abilityCounterButton': [[selfView, 'active'], [oppView, 'active'], [selfView, 'bench'], [oppView, 'bench']],
-        'damageCounterButton': [[selfView, 'active'], [oppView, 'active'], [selfView, 'bench'], [oppView, 'bench']],
-        'specialConditionButton': [[selfView, 'active'], [oppView, 'active']],
+        'abilityCounterButton': [[true, 'active'], [true, 'bench'], [true, 'stadium'], [true, 'discard']],
+        'damageCounterButton': [[true, 'active'], [true, 'bench']],
+        'specialConditionButton': [[true, 'active']],
         'shufflePrizesButton': [[selfView, 'prizes']],
-        'lookPrizesButton': [[selfView, 'prizes'], [oppView, 'prizes']],
-        'revealHidePrizesButton': [[selfView, 'prizes'], [oppView, 'prizes']],
+        'lookPrizesButton': [[true, 'prizes']],
+        'revealHidePrizesButton': [[true, 'prizes']],
         'lookHandButton': [[oppView, 'hand']],
         'randomHandButton': [[oppView, 'hand']],
-        'shuffleDeckButton': [[selfView, 'deckCover'], [oppView, 'deckCover']],
+        'shuffleDeckButton': [[true, 'deckCover']],
         'drawButton': [[selfView, 'deckCover']],
-        'viewTopButton': [[selfView, 'deckCover'], [oppView, 'deckCover']],
-        'viewBottomButton': [[selfView, 'deckCover'], [oppView, 'deckCover']],
+        'viewTopButton': [[true, 'deckCover']],
+        'viewBottomButton': [[true, 'deckCover']],
         'discardHandButton': [[selfView, 'hand']],
         'shuffleHandButton': [[selfView, 'hand']],
         'shuffleHandBottomButton': [[selfView, 'hand']],
-        'prizesHeader': [[selfView, 'prizes'], [oppView, 'prizes']],
-        'handHeader': [[selfView, 'hand'], [oppView, 'hand']],
-        'deckHeader': [[selfView, 'deckCover'], [oppView, 'deckCover']],
-        'boardHeader': [[selfView, 'board'], [oppView, 'board']],
-        'discardBoardButton': [[selfView, 'board'], [oppView, 'board']],
-        'handBoardButton': [[selfView, 'board'], [oppView, 'board']],
-        'shuffleBoardButton': [[selfView, 'board'], [oppView, 'board']],
-        'lostZoneBoardButton': [[selfView, 'board'], [oppView, 'board']],
-        'changeButton': [[selfView, 'active'], [oppView, 'active'], [selfView, 'bench'], [oppView, 'bench']]
+        'prizesHeader': [[true, 'prizes']],
+        'handHeader': [[true, 'hand']],
+        'deckHeader': [[true, 'deckCover']],
+        'boardHeader': [[true, 'board']],
+        'discardBoardButton': [[true, 'board']],
+        'handBoardButton': [[true, 'board']],
+        'shuffleBoardButton': [[true, 'board']],
+        'lostZoneBoardButton': [[true, 'board']],
+        'changeButton': [[true, 'active'], [true, 'bench']]
     };    
     
     for (const [buttonId, conditionsArray] of Object.entries(buttonConditions)){
@@ -86,7 +89,7 @@ export const openCardContextMenu = (event) => {
     const atLeastOneButtonVisible = Array.from(cardContextMenu.children).some(button => button.style.display !== 'none');
     
     // Set the display property based on the visibility of buttons
-    cardContextMenu.style.display = atLeastOneButtonVisible ? 'block' : 'none';
+    cardContextMenu.style.display = (atLeastOneButtonVisible && !(document.getElementById('spectatorModeCheckbox').checked && systemState.isTwoPlayer)) ? 'block' : 'none';
 
     // get the position of the context menu
     const targetRect = event.target.getBoundingClientRect();

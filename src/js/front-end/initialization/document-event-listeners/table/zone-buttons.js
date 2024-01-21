@@ -1,40 +1,43 @@
-import { closeDisplay, discardAll, handAll, leaveAll, lostZoneAll, shuffleAll, sort } from '../../../actions/zones/general.js';
+import { closeDisplay, discardAll, handAll, leaveAll, lostZoneAll, shuffleAll, shuffleBottom, sort } from '../../../actions/zones/general.js';
 import { oppContainerDocument, selfContainerDocument, systemState } from '../../../front-end.js';
 
 export const initializeZoneButtons = () => {
     // Self buttons
     const selfShuffleDeckButton = selfContainerDocument.getElementById('shuffleDeckButton');
-    selfShuffleDeckButton.addEventListener('click', () => shuffleAll(systemState.initiator, 'self', 'deck'));
+    selfShuffleDeckButton.addEventListener('click', () => shuffleAll('self', systemState.initiator, 'deck'));
 
     const selfShuffleDiscardButton = selfContainerDocument.getElementById('shuffleDiscardButton');
-    selfShuffleDiscardButton.addEventListener('click', () => shuffleAll(systemState.initiator, 'self', 'discard'));
+    selfShuffleDiscardButton.addEventListener('click', () => shuffleAll('self', systemState.initiator, 'discard'));
 
     const selfDiscardAttachedCardsButton = selfContainerDocument.getElementById('discardAttachedCardsButton');
-    selfDiscardAttachedCardsButton.addEventListener('click', () => discardAll(systemState.initiator, 'self', 'attachedCards'));
+    selfDiscardAttachedCardsButton.addEventListener('click', () => discardAll('self', systemState.initiator, 'attachedCards'));
 
     const selfShuffleAttachedCardsButton = selfContainerDocument.getElementById('shuffleAttachedCardsButton');
-    selfShuffleAttachedCardsButton.addEventListener('click', () => shuffleAll(systemState.initiator, 'self', 'attachedCards'));
+    selfShuffleAttachedCardsButton.addEventListener('click', () => shuffleAll('self', systemState.initiator, 'attachedCards'));
 
     const selfLostZoneAttachedCardsButton = selfContainerDocument.getElementById('lostZoneAttachedCardsButton');
-    selfLostZoneAttachedCardsButton.addEventListener('click', () => lostZoneAll(systemState.initiator, 'self', 'attachedCards'));
+    selfLostZoneAttachedCardsButton.addEventListener('click', () => lostZoneAll('self', systemState.initiator, 'attachedCards'));
 
     const selfHandAttachedCardsButton = selfContainerDocument.getElementById('handAttachedCardsButton');
-    selfHandAttachedCardsButton.addEventListener('click', () => handAll(systemState.initiator, 'self', 'attachedCards'));
+    selfHandAttachedCardsButton.addEventListener('click', () => handAll('self', systemState.initiator, 'attachedCards'));
 
     const selfLeaveAttachedCardsButton = selfContainerDocument.getElementById('leaveAttachedCardsButton');
-    selfLeaveAttachedCardsButton.addEventListener('click', () => leaveAll(systemState.initiator, 'self', 'attachedCards'));
+    selfLeaveAttachedCardsButton.addEventListener('click', () => leaveAll('self', systemState.initiator, 'attachedCards'));
 
     const selfDiscardViewCardsButton = selfContainerDocument.getElementById('discardViewCardsButton');
-    selfDiscardViewCardsButton.addEventListener('click', () => discardAll(systemState.initiator, 'self', 'viewCards'));
+    selfDiscardViewCardsButton.addEventListener('click', () => discardAll('self', systemState.initiator, 'viewCards'));
 
     const selfShuffleViewCardsButton = selfContainerDocument.getElementById('shuffleViewCardsButton');
-    selfShuffleViewCardsButton.addEventListener('click', () => shuffleAll(systemState.initiator, 'self', 'viewCards'));
+    selfShuffleViewCardsButton.addEventListener('click', () => shuffleAll('self', systemState.initiator, 'viewCards'));
+
+    const selfShuffleBottomViewCardsButton = selfContainerDocument.getElementById('shuffleBottomViewCardsButton');
+    selfShuffleBottomViewCardsButton.addEventListener('click', () => shuffleBottom('self', systemState.initiator, 'viewCards'));
 
     const selfLostZoneViewCardsButton = selfContainerDocument.getElementById('lostZoneViewCardsButton');
-    selfLostZoneViewCardsButton.addEventListener('click', () => lostZoneAll(systemState.initiator, 'self', 'viewCards'));
+    selfLostZoneViewCardsButton.addEventListener('click', () => lostZoneAll('self', systemState.initiator, 'viewCards'));
 
     const selfHandViewCardsButton = selfContainerDocument.getElementById('handViewCardsButton');
-    selfHandViewCardsButton.addEventListener('click', () => handAll(systemState.initiator, 'self', 'viewCards'));
+    selfHandViewCardsButton.addEventListener('click', () => handAll('self', systemState.initiator, 'viewCards'));
 
     const selfCloseDeckButton = selfContainerDocument.getElementById('closeDeckButton');
     selfCloseDeckButton.addEventListener('click', () => closeDisplay('self', 'deck'));
@@ -44,6 +47,9 @@ export const initializeZoneButtons = () => {
 
     const selfCloseLostZoneButton = selfContainerDocument.getElementById('closeLostZoneButton');
     selfCloseLostZoneButton.addEventListener('click', () => closeDisplay('self', 'lostZone'));
+
+    const selfSortHandCheckbox = selfContainerDocument.getElementById('sortHandCheckbox');
+    selfSortHandCheckbox.addEventListener('change', () => sort('self', 'hand'));
 
     const selfSortDeckCheckbox = selfContainerDocument.getElementById('sortDeckCheckbox');
     selfSortDeckCheckbox.addEventListener('change', () => sort('self', 'deck'));
@@ -56,37 +62,40 @@ export const initializeZoneButtons = () => {
 
     // Opp buttons
     const oppShuffleDeckButton = oppContainerDocument.getElementById('shuffleDeckButton');
-    oppShuffleDeckButton.addEventListener('click', () => shuffleAll(systemState.initiator, 'opp', 'deck'));
+    oppShuffleDeckButton.addEventListener('click', () => shuffleAll('opp', systemState.initiator, 'deck'));
 
     const oppShuffleDiscardButton = oppContainerDocument.getElementById('shuffleDiscardButton');
-    oppShuffleDiscardButton.addEventListener('click', () => shuffleAll(systemState.initiator, 'opp', 'discard'));
+    oppShuffleDiscardButton.addEventListener('click', () => shuffleAll('opp', systemState.initiator, 'discard'));
 
     const oppDiscardAttachedCardsButton = oppContainerDocument.getElementById('discardAttachedCardsButton');
-    oppDiscardAttachedCardsButton.addEventListener('click', () => discardAll(systemState.initiator, 'opp', 'attachedCards'));
+    oppDiscardAttachedCardsButton.addEventListener('click', () => discardAll('opp', systemState.initiator, 'attachedCards'));
 
     const oppShuffleAttachedCardsButton = oppContainerDocument.getElementById('shuffleAttachedCardsButton');
-    oppShuffleAttachedCardsButton.addEventListener('click', () => shuffleAll(systemState.initiator, 'opp', 'attachedCards'));
+    oppShuffleAttachedCardsButton.addEventListener('click', () => shuffleAll('opp', systemState.initiator, 'attachedCards'));
 
     const oppLostZoneAttachedCardsButton = oppContainerDocument.getElementById('lostZoneAttachedCardsButton');
-    oppLostZoneAttachedCardsButton.addEventListener('click', () => lostZoneAll(systemState.initiator, 'opp', 'attachedCards'));
+    oppLostZoneAttachedCardsButton.addEventListener('click', () => lostZoneAll('opp', systemState.initiator, 'attachedCards'));
 
     const oppHandAttachedCardsButton = oppContainerDocument.getElementById('handAttachedCardsButton');
-    oppHandAttachedCardsButton.addEventListener('click', () => handAll(systemState.initiator, 'opp', 'attachedCards'));
+    oppHandAttachedCardsButton.addEventListener('click', () => handAll('opp', systemState.initiator, 'attachedCards'));
 
     const oppLeaveAttachedCardsButton = oppContainerDocument.getElementById('leaveAttachedCardsButton');
-    oppLeaveAttachedCardsButton.addEventListener('click', () => leaveAll(systemState.initiator, 'opp', 'attachedCards'));
+    oppLeaveAttachedCardsButton.addEventListener('click', () => leaveAll('opp', systemState.initiator, 'attachedCards'));
 
     const oppDiscardViewCardsButton = oppContainerDocument.getElementById('discardViewCardsButton');
-    oppDiscardViewCardsButton.addEventListener('click', () => discardAll(systemState.initiator, 'opp', 'viewCards'));
+    oppDiscardViewCardsButton.addEventListener('click', () => discardAll('opp', systemState.initiator, 'viewCards'));
 
     const oppShuffleViewCardsButton = oppContainerDocument.getElementById('shuffleViewCardsButton');
-    oppShuffleViewCardsButton.addEventListener('click', () => shuffleAll(systemState.initiator, 'opp', 'viewCards'));
+    oppShuffleViewCardsButton.addEventListener('click', () => shuffleAll('opp', systemState.initiator, 'viewCards'));
+
+    const oppShuffleBottomViewCardsButton = oppContainerDocument.getElementById('shuffleBottomViewCardsButton');
+    oppShuffleBottomViewCardsButton.addEventListener('click', () => shuffleBottom('opp', systemState.initiator, 'viewCards'));
 
     const oppLostZoneViewCardsButton = oppContainerDocument.getElementById('lostZoneViewCardsButton');
-    oppLostZoneViewCardsButton.addEventListener('click', () => lostZoneAll(systemState.initiator, 'opp', 'viewCards'));
+    oppLostZoneViewCardsButton.addEventListener('click', () => lostZoneAll('opp', systemState.initiator, 'viewCards'));
 
     const oppHandViewCardsButton = oppContainerDocument.getElementById('handViewCardsButton');
-    oppHandViewCardsButton.addEventListener('click', () => handAll(systemState.initiator, 'opp', 'viewCards'));
+    oppHandViewCardsButton.addEventListener('click', () => handAll('opp', systemState.initiator, 'viewCards'));
 
     const oppCloseDeckButton = oppContainerDocument.getElementById('closeDeckButton');
     oppCloseDeckButton.addEventListener('click', () => closeDisplay('opp', 'deck'));
@@ -96,6 +105,9 @@ export const initializeZoneButtons = () => {
 
     const oppCloseLostZoneButton = oppContainerDocument.getElementById('closeLostZoneButton');
     oppCloseLostZoneButton.addEventListener('click', () => closeDisplay('opp', 'lostZone'));
+
+    const oppSortHandCheckbox = oppContainerDocument.getElementById('sortHandCheckbox');
+    oppSortHandCheckbox.addEventListener('change', () => sort('opp', 'hand'));
 
     const oppSortDeckCheckbox = oppContainerDocument.getElementById('sortDeckCheckbox');
     oppSortDeckCheckbox.addEventListener('change', () => sort('opp', 'deck'));

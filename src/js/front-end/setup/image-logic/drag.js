@@ -159,8 +159,10 @@ export const drop = (event) => {
     });
 
     const targetIsNotPlayContainer = !event.target.classList.contains('full-view') && !event.target.classList.contains('play-container');
+    const notSpectator = !(document.getElementById('spectatorModeCheckbox').checked && systemState.isTwoPlayer);
+
     //make sure only card images can trigger drop (that's why we check for a unique property called layer);
-    if (targetIsNotPlayContainer && draggedImage.layer !== undefined && (!event.target.attached || event.target.tagName === 'DIV')){
+    if (notSpectator && targetIsNotPlayContainer && draggedImage.layer !== undefined && (!event.target.attached || event.target.tagName === 'DIV')){
         let dZoneId;
         let targetIndex;
         // if target image exists and it isn't itself

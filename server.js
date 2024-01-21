@@ -45,38 +45,83 @@ async function main() {
         mode: "development",
     });
 
+    const roomInfo = new Map();
+    // Function to periodically clean up empty rooms
+    const cleanUpEmptyRooms = () => {
+        roomInfo.forEach((room, roomId) => {
+            if (room.players.size === 0 && room.spectators.size === 0) {
+                roomInfo.delete(roomId);
+            };
+        });
+    }
+    // Set up a timer to clean up empty rooms every 5 minutes (adjust as needed)
+    setInterval(cleanUpEmptyRooms, 5 * 60 * 1000);
     //Socket.IO Connection Handling
     io.on('connection', async (socket) => {
         // Function to handle disconnections (unintended)
         const disconnectHandler = (roomId, username) => {
             socket.to(roomId).emit('userDisconnected', username);
-        }
+        
+            // Remove the disconnected user from the roomInfo map
+            if (roomInfo.has(roomId)) {
+                const room = roomInfo.get(roomId);
+        
+                if (room.players.has(username)) {
+                    room.players.delete(username);
+                } else if (room.spectators.has(username)) {
+                    room.spectators.delete(username);
+                };
+        
+                // If both players and spectators are empty, remove the roomInfo entry
+                if (room.players.size === 0 && room.spectators.size === 0) {
+                    roomInfo.delete(roomId);
+                };
+            };
+        };        
         // Function to handle event emission
         const emitToRoom = (eventName, data) => {
+            socket.broadcast.to(data.roomId).emit(eventName, data);
             if (eventName === 'leaveRoom'){
                 socket.leave(data.roomId);
-                socket.removeListener('disconnect', socket.data.disconnectListener);
+                if (socket.data.disconnectListener){
+                    socket.data.disconnectListener();
+                    socket.removeListener('disconnect', socket.data.disconnectListener);
+                };
             };
-            socket.broadcast.to(data.roomId).emit(eventName, data);
         };
 
-        socket.on('joinGame', (roomId, username) => {
-            socket.join(roomId);
-            const clientsInRoom = io.sockets.adapter.rooms.get(roomId);
-            if (clientsInRoom.size < 3){
-                socket.data.disconnectListener = () => disconnectHandler(roomId, username);
-                socket.emit('joinGame');
-                socket.on('disconnect', socket.data.disconnectListener);
+        socket.on('joinGame', (roomId, username, isSpectator) => {
+        
+            if (!roomInfo.has(roomId)) {
+                roomInfo.set(roomId, { players: new Set(), spectators: new Set() });
+            };
+            const room = roomInfo.get(roomId);
+        
+            if (room.players.size < 2 || isSpectator) {
+                // Check if the user is a spectator or there are fewer than 2 players
+                if (isSpectator) {
+                    socket.join(roomId);
+                    room.spectators.add(username);
+                    socket.emit('spectatorJoin');
+                } else {
+                    socket.join(roomId);
+                    room.players.add(username);
+                    socket.emit('joinGame');
+                    socket.data.disconnectListener = () => disconnectHandler(roomId, username);
+                    socket.on('disconnect', socket.data.disconnectListener);
+                };
             } else {
-                socket.leave(roomId);
                 socket.emit('roomReject');
             };
         });
+
         socket.on('userReconnected', (data) => {
-            socket.data.disconnectListener = () => disconnectHandler(data.roomId, data.username);
             socket.join(data.roomId);
-            socket.on('disconnect', socket.data.disconnectListener);
-            io.to(data.roomId).emit('userReconnected', data);
+            if (data.notSpectator){
+                socket.data.disconnectListener = () => disconnectHandler(data.roomId, data.username);
+                socket.on('disconnect', socket.data.disconnectListener);
+                io.to(data.roomId).emit('userReconnected', data);
+            };
         });
 
         // List of socket events
@@ -88,6 +133,7 @@ async function main() {
             'catchUpActions',
             'syncCheck',
             'appendMessage',
+            'spectatorActionData',
             // 'exchangeData',
             // 'loadDeckData',
             // 'reset',
@@ -151,5 +197,4 @@ async function main() {
         console.log(`Server is running at http://localhost:${port}`);
     });
 }
-
 main();

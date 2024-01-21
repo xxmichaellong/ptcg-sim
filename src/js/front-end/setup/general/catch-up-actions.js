@@ -4,11 +4,14 @@ import { acceptAction } from "./accept-action.js";
 export const catchUpActions = (actionData) => {
     const missingData = actionData.slice(systemState.oppCounter); // make sure you are only implementing actions that you don't have
 
-    missingData.forEach(() => systemState.oppCounter++);
+    missingData.forEach(entry => {
+        systemState.oppCounter++
+        systemState.spectatorActionData.push({user: 'opp', action: entry.action, parameters: entry.parameters});
+    });
 
     const mostRecentDeckDataIndex = [...missingData]
     .reverse()
-    .findIndex(entry => entry.action === 'exchangeData' || entry.action === 'uploadDeckData');
+    .findIndex(entry => entry.action === 'exchangeData' || entry.action === 'loadDeckData');
 
     const mostRecentResetEntryIndex = [...missingData]
     .reverse()

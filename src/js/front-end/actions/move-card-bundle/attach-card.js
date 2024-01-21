@@ -1,5 +1,5 @@
 import { resetImage } from "../../setup/image-logic/reset-image.js";
-import { matchRotation } from "../general/rotate-card.js";
+import { syncRotation } from "../general/rotate-card.js";
 import { moveCard } from "./move-card.js";
 
 export const attachCard = (user, initiator, movingCard, targetCard, dZoneId, dZone) => {
@@ -25,17 +25,16 @@ export const attachCard = (user, initiator, movingCard, targetCard, dZoneId, dZo
         const newWidth = currentWidth + adjustment;
         targetCard.image.parentElement.style.width = newWidth + 'px';
     } else {
-        const adjustment = targetCard.image.clientWidth/14;
+        const adjustment = targetCard.image.clientWidth/15;
         targetCard.image.layer += 1;
         layer = targetCard.image.layer;
         movingCard.image.style.bottom = `${layer * adjustment}px`;
     };
     movingCard.image.style.zIndex -= layer;
 
-    //rotate tool/energy to the same orientation of card
-    matchRotation(movingCard.image, targetCard.image);
-
     targetCard.image.after(movingCard.image);
+    //rotate tool/energy to the same orientation of card
+    syncRotation(movingCard, targetCard.image);
 
     // move tools to the back of the image, index cannot be zero to prevent being called when evolving Pokémon
     if (movingCard.type === 'Energy' && nonEvolveAttachment){

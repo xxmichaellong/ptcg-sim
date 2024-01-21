@@ -48,18 +48,27 @@ export const addAbilityCounter = (user, zoneId, index) => {
     };
    
     abilityCounter.style.display = 'inline-block';
-    abilityCounter.style.left = `${targetRect.left - zoneElementRect.left}px`;
-    abilityCounter.style.top = `${targetRect.height/2}px`;
+    abilityCounter.style.width = `${targetRect.width}px`;
+    abilityCounter.style.height = `${targetRect.width/5}px`;
+    abilityCounter.style.lineHeight = `${targetRect.width/3}px`;
+    abilityCounter.style.zIndex = '1';
+
+    if (systemState.initiator === user) {
+        abilityCounter.style.right = '';
+        abilityCounter.style.bottom = '';
+        abilityCounter.style.left = `${targetRect.left - zoneElementRect.left}px`;
+        abilityCounter.style.top = `${targetRect.top - zoneElementRect.top + targetRect.height/2}px`;
+    } else {
+        abilityCounter.style.left = '';
+        abilityCounter.style.top = '';
+        abilityCounter.style.right = `${targetRect.left - zoneElementRect.left}px`;
+        abilityCounter.style.bottom = `${targetRect.top - zoneElementRect.top + targetRect.height/2 - parseFloat(abilityCounter.style.height)}px`;
+    };
     zone.element.appendChild(abilityCounter);
 
     if (targetCard.image.parentElement.classList.contains('full-view')){
         abilityCounter.style.display = 'none';
     };
-    //adjust size of the circle based on card size
-    abilityCounter.style.width = `${targetRect.width}px`;
-    abilityCounter.style.height = `${targetRect.width/5}px`;
-    abilityCounter.style.lineHeight = `${targetRect.width/3}px`;
-    abilityCounter.style.zIndex = '1';
 
     const handleResize = () => {
         addAbilityCounter(user, zoneId, index);
@@ -84,4 +93,3 @@ export const addAbilityCounter = (user, zoneId, index) => {
     //save the abilityCounter on the card
     targetCard.image.abilityCounter = abilityCounter;
 }
-

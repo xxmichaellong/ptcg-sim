@@ -11,10 +11,13 @@ export const oppContainer = document.getElementById('oppContainer');
 export const oppContainerDocument = oppContainer.contentWindow.document;
 // create globally accessible variable systemState, which holds information relevant to the state of the user's game
 export const systemState = {
+    coachingMode: false,
     undo: false,
     selfCounter: 0,
     selfActionData: [],
     oppActionData: [],
+    spectatorActionData: [],
+    spectatorId: '',
     oppCounter: 0,
     isTwoPlayer: false,
     turn: 0,
@@ -28,12 +31,13 @@ export const systemState = {
     },
     p2SelfUsername: '',
     p2OppUsername: '',
+    spectatorUsername: '',
     selfDeckData : '',
     p1OppDeckData: '', // refers to the opponent's data in 1 player mode, i.e., the "alt" deck data
     p2OppDeckData: '', // refers to the opponent's data in 2 player mode, i.e., the other player's deck data
-    cardBackSrc: "https://ptcgsim.online/src/cardback.png",
-    p1OppCardBackSrc: "https://ptcgsim.online/src/cardback.png",
-    p2OppCardBackSrc: "https://ptcgsim.online/src/cardback.png"
+    cardBackSrc: "https://pbs.twimg.com/media/GEMhsB9XkAAFUnd?format=jpg&name=small",
+    p1OppCardBackSrc: "https://pbs.twimg.com/media/GEMhsB9XkAAFUnd?format=jpg&name=small",
+    p2OppCardBackSrc: "https://pbs.twimg.com/media/GEMhsB9XkAAFUnd?format=jpg&name=small"
 };
 // create global variable that holds the information of a selected card, i.e., the card that has been clicked and highlighted and can trigger keybinds
 export const mouseClick = {

@@ -1,7 +1,9 @@
 import { socket, systemState } from "../../front-end.js";
 
 export const processAction = (user, emit, action, parameters) => {
-    if (!systemState.undo && emit){
+    const notSpectator = !(document.getElementById('spectatorModeCheckbox').checked && systemState.isTwoPlayer);
+
+    if (!systemState.undo && emit && notSpectator){
         if (!systemState.isTwoPlayer || user === 'self'){ //log the move if it's 1 player, or if it's yourself
             const data = {
                 user: user,
@@ -24,7 +26,7 @@ export const processAction = (user, emit, action, parameters) => {
                     roomId: systemState.roomId,
                     parameters: parameters
                 };
-                socket.emit('pushAction', data)
+                socket.emit('pushAction', data);
             };
         } else { //if it's two player and you're moving an opponent's card, request the action before implementing
             const data = {
@@ -34,6 +36,23 @@ export const processAction = (user, emit, action, parameters) => {
                 parameters: parameters
             };
             socket.emit('requestAction', data);
+        };
+
+        if (systemState.isTwoPlayer && user === 'self'){ //for storing spectator data (note we edited the parameter metric here to reverse the initatior change)
+            if (parameters[0]){
+                if (parameters[0] === 'self'){
+                    parameters[0] = 'opp' 
+                } else if (parameters[0] === 'opp'){
+                    parameters[0] = 'self'; 
+                };
+            };
+            const data = {
+                user: user,
+                emit: emit,
+                action: action,
+                parameters: parameters,
+            };
+            systemState.spectatorActionData.push(data);
         };
     };
 }

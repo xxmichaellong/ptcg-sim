@@ -28,7 +28,7 @@ export const rotateCard = (user, zoneId, index, single = false, emit = true) => 
     };
     if (!single){
         rotatingImage.parentElement.querySelectorAll('img').forEach(image => {
-            if (image !== rotatingImage){
+            if (image !== rotatingImage && image.type === 'Pokémon'){
                 const currentRotation = parseInt(image.style.transform.replace(/[^0-9-]/g, '')) || 0;
                 const newRotation = (currentRotation + 90) % 360;
                 image.style.transform = `rotate(${newRotation}deg)`;
@@ -70,11 +70,15 @@ export const resetRotation = (targetImage) => {
     targetImage.parentElement.style.marginLeft = '0%';
 }
 
-export const matchRotation = (image, targetImage) => {
+export const syncRotation = (card, targetImage) => {
     const currentRotation = parseInt(targetImage.style.transform.replace(/[^0-9-]/g, '')) || 0;
+    let rotationOffset = 0;
     if (targetImage.PokémonBreak){
-        image.style.transform = `rotate(${currentRotation - 90}deg)`
-    } else {
-        image.style.transform = `rotate(${currentRotation}deg)`
+        rotationOffset ++;
     };
+    if (card.type === 'Trainer'){
+        rotationOffset--;
+        card.image.parentElement.style.marginRight = '2%';
+    };
+    card.image.style.transform = `rotate(${currentRotation - 90 * rotationOffset}deg)`
 }

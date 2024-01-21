@@ -19,7 +19,7 @@ export const updateAttachedCardsPosition = (oZone, movingCard) => {
 
             if (movingCard.image.relative instanceof HTMLImageElement && movingCard.image.relative === card.image.relative 
             && parseInt(cardPosition) > parseInt(movingCardPosition) && movingCard.type === 'Pokémon'){
-                const adjustment = movingCard.image.relative.clientWidth/14;
+                const adjustment = movingCard.image.relative.clientWidth/15;
                 card.image.style.bottom = (parseInt(cardPosition) - adjustment) + 'px';
                 card.image.style.zIndex = (parseInt(card.image.style.zIndex) + 1).toString();
             };

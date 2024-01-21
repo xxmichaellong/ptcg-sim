@@ -15,5 +15,5 @@ export const resetImage = (image, zoneId = '') => {
         image.style.transform = 'rotate(0deg)';
         image.PokémonBreak = false;
     };
-    image.classList.remove('prizes-normal-size', 'prizes-small-size');
+    image.classList.remove('default-rotation', 'prizes-normal-size', 'prizes-small-size');
 }

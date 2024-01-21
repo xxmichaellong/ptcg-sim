@@ -1,11 +1,11 @@
 import { draw, handleViewButtonClick } from '../../../actions/zones/deck-actions.js';
-import { shuffleZone } from '../../../actions/zones/shuffle-zone.js';
+import { shuffleAll } from '../../../actions/zones/general.js';
 import { mouseClick, systemState } from '../../../front-end.js';
 
 export const initializeDeckButtons = () => {
     const shuffleDeckButton = document.getElementById('shuffleDeckButton');
     shuffleDeckButton.addEventListener('click', () => {
-        shuffleZone(mouseClick.cardUser, systemState.initiator, 'deck');
+        shuffleAll(mouseClick.cardUser, systemState.initiator, 'deck');
     });
 
     const drawButton = document.getElementById('drawButton');

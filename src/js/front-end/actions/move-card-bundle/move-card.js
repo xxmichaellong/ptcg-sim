@@ -56,10 +56,8 @@ export const moveCard = (user, initiator, oZoneId, dZoneId, index, targetIndex) 
     };
 
     // determine whether to hide/reveal card
-    const p1HideZones = ['prizes'];
-    const p2HideZones = ['hand'];
-    const isP1HideZone = p1HideZones.includes(dZoneId);
-    const isP2HideZone = p2HideZones.includes(dZoneId) && systemState.isTwoPlayer && systemState.initiator !== user;
+    const isP1HideZone = ['prizes'].includes(dZoneId) || (document.getElementById('hideHandCheckbox').checked && ['hand'].includes(dZoneId) && systemState.initiator !== user);
+    const isP2HideZone = ['hand'].includes(dZoneId) && systemState.isTwoPlayer && systemState.initiator !== user;
     const isFaceDownCard = movingCard.image.faceDown && ['active', 'bench', 'board'].includes(dZoneId);
 
     if (isP1HideZone || isP2HideZone || isFaceDownCard) {
@@ -124,7 +122,7 @@ export const moveCard = (user, initiator, oZoneId, dZoneId, index, targetIndex) 
     hideZoneElementsIfEmpty();
 
     //sort the array, if applicable
-    if (['deck', 'lostZone', 'discard'].includes(dZoneId)){
+    if (['deck', 'lostZone', 'discard', 'hand'].includes(dZoneId)){
         sort(user, dZoneId);
     };
 }
