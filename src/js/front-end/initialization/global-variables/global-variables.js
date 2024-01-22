@@ -39,6 +39,22 @@ export const systemState = {
     p1OppCardBackSrc: "https://pbs.twimg.com/media/GEMhsB9XkAAFUnd?format=jpg&name=small",
     p2OppCardBackSrc: "https://pbs.twimg.com/media/GEMhsB9XkAAFUnd?format=jpg&name=small"
 };
+
+const cardBackImage = new Image();
+cardBackImage.src = "https://pbs.twimg.com/media/GEMhsB9XkAAFUnd?format=jpg&name=small";
+cardBackImage.style.width = '0';
+cardBackImage.style.height = '0';
+cardBackImage.style.position = 'absolute';
+cardBackImage.style.top = '-9999px';
+cardBackImage.style.left = '-9999px';
+
+document.body.appendChild(cardBackImage);
+
+cardBackImage.addEventListener('load', () => {
+    console.log('Image has loaded');
+    document.body.removeChild(cardBackImage);
+});
+
 // create global variable that holds the information of a selected card, i.e., the card that has been clicked and highlighted and can trigger keybinds
 export const mouseClick = {
     cardIndex: '',
