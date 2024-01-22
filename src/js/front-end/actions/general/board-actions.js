@@ -56,12 +56,12 @@ export const shuffleBoard = (user, initiator, message = true, indices, emit = tr
 
     const selectedBoardCount = getZone(user, 'board').getCount();
     const deck = getZone(user, 'deck');
-    indices = indices ? indices : shuffleIndices(deck.getCount());
 
     if (selectedBoardCount > 0){
         for (let i = 0; i < selectedBoardCount; i++){
             moveCard(user, initiator, 'board', 'deck', 0);
         };
+        indices = indices ? indices : shuffleIndices(deck.getCount());
         shuffleZone(user, initiator, 'deck', indices, false, false);
         if (message){
             appendMessage(initiator, determineUsername(initiator) + ' shuffled ' + selectedBoardCount + ' card(s) from board to deck', 'player', false);
