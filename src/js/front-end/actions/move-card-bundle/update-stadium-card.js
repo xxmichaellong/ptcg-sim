@@ -4,9 +4,9 @@ import { moveCard } from "./move-card.js";
 export const updateStadiumCard = (user, initiator, dZoneId, dZone) => {
     if (['stadium'].includes(dZoneId) && dZone.array[1]) {
         if (dZone.array[0].image.user === 'self') {
-            moveCard(initiator, 'self', 'stadium', 'discard', 0);
+            moveCard('self', initiator, 'stadium', 'discard', 0);
         } else {
-            moveCard(initiator, 'opp', 'stadium', 'discard', 0);
+            moveCard('opp', initiator, 'stadium', 'discard', 0);
         };
     };
     if ('stadium' === dZoneId){
