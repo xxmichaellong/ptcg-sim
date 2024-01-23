@@ -107,6 +107,7 @@ export const keyDown = (event) => {
             appendMessage('', determineUsername(systemState.initiator) + ' mulligans', 'announcement');
         };
         if (event.key === 'd' && (event.altKey || event.getModifierState('Alt'))) {
+            event.preventDefault();
             discardAndDraw(systemState.initiator, systemState.initiator);
         };
         if (event.key === 's' && (event.altKey || event.getModifierState('Alt'))) {
