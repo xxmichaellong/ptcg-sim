@@ -98,13 +98,12 @@ async function main() {
             const room = roomInfo.get(roomId);
         
             if (room.players.size < 2 || isSpectator) {
+                socket.join(roomId);
                 // Check if the user is a spectator or there are fewer than 2 players
                 if (isSpectator) {
-                    socket.join(roomId);
                     room.spectators.add(username);
                     socket.emit('spectatorJoin');
                 } else {
-                    socket.join(roomId);
                     room.players.add(username);
                     socket.emit('joinGame');
                     socket.data.disconnectListener = () => disconnectHandler(roomId, username);
@@ -116,8 +115,15 @@ async function main() {
         });
 
         socket.on('userReconnected', (data) => {
+            if (!roomInfo.has(data.roomId)) {
+                roomInfo.set(data.roomId, { players: new Set(), spectators: new Set() });
+            };
+            const room = roomInfo.get(data.roomId);
             socket.join(data.roomId);
-            if (data.notSpectator){
+            if (!data.notSpectator) {
+                room.spectators.add(data.username);
+            } else {
+                room.players.add(data.username);
                 socket.data.disconnectListener = () => disconnectHandler(data.roomId, data.username);
                 socket.on('disconnect', socket.data.disconnectListener);
                 io.to(data.roomId).emit('userReconnected', data);
