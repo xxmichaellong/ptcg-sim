@@ -6,6 +6,11 @@ export const catchUpActions = (actionData) => {
 
     missingData.forEach(entry => {
         systemState.oppCounter++
+        if (entry.parameters[0] === 'self'){
+            entry.parameters[0] = 'opp';
+        } else if (entry.parameters[0] === 'opp'){
+            entry.parameters[0] = 'self';
+        };
         systemState.spectatorActionData.push({user: 'opp', action: entry.action, parameters: entry.parameters});
     });
 

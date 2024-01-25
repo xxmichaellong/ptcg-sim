@@ -10,7 +10,7 @@ export const updateCounters = (user, movingCard, oZoneId, oZone, dZoneId, dZone)
         //redefine index of movingCard because its index could have changed due to attached cards.
         const index = dZone.array.findIndex(card => card === movingCard);
 
-        if (zonesWithAttachedCards.includes(oZoneId) && zonesWithAttachedCards.includes(dZoneId)){
+        if (zonesWithAttachedCards.includes(dZoneId)){
             addDamageCounter(user, dZoneId, index, false, false);
         } else {
             movingCard.image.damageCounter.textContent = '0';
@@ -21,7 +21,7 @@ export const updateCounters = (user, movingCard, oZoneId, oZone, dZoneId, dZone)
         //redefine index of movingCard because its index could have changed due to attached cards.
         const index = dZone.array.findIndex(card => card === movingCard);
 
-        if (zonesWithAttachedCards.includes(oZoneId) && zonesWithAttachedCards.includes(dZoneId)){
+        if (zonesWithAttachedCards.includes(dZoneId)){
             addAbilityCounter(user, dZoneId, index);
         } else {
             movingCard.image.abilityCounter.handleRemove(false);
