@@ -243,7 +243,13 @@ body, input, textarea, button {
   max-height: 100%;
   object-fit: contain;
   left: 0;
-} 
+}
+#shuffleDiscardButton {
+  background-color: rgba(188, 90, 113, 0.864);
+}
+#shuffleDiscardButton:hover {
+  background-color: rgba(189, 112, 130, 0.864);  
+}
 #board {
   position: fixed;
   display: flex;
