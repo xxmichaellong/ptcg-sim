@@ -1,4 +1,13 @@
 const SVEra = {
+    "PAF": {
+        76: "Pokémon",
+        92: "Trainer",
+        227: "Pokémon",
+        232: "Trainer",
+        235: "Pokémon",
+        240: "Trainer",
+        246: "Pokémon",
+    },
     "PAR": {
         159: "Pokémon",
         182: "Trainer",
