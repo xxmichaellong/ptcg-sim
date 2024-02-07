@@ -85,7 +85,7 @@ export const discardAll = (user, initiator, zoneId, emit = true) => {
     const count = zone.getCount();
 
     for (let i = 0; i < count; i++) {
-        moveCard(user, initiator, zoneId, 'discard', 0)
+        moveCard(user, initiator, zoneId, 'discard', 0);
     };
 
     zone.element.style.display = 'none';

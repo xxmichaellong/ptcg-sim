@@ -66,6 +66,6 @@ socket.on('spectatorActionData', (data) => {
                 acceptAction(data.user, data.action, data.parameters);
             });
         };
-        refreshBoard();
+        // refreshBoard();
     };
 });

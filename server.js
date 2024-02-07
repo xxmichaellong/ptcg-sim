@@ -60,7 +60,9 @@ async function main() {
     io.on('connection', async (socket) => {
         // Function to handle disconnections (unintended)
         const disconnectHandler = (roomId, username) => {
-            socket.to(roomId).emit('userDisconnected', username);
+            if (!socket.data.leaveRoom){
+                socket.to(roomId).emit('userDisconnected', username);
+            };
         
             // Remove the disconnected user from the roomInfo map
             if (roomInfo.has(roomId)) {
@@ -84,14 +86,15 @@ async function main() {
             if (eventName === 'leaveRoom'){
                 socket.leave(data.roomId);
                 if (socket.data.disconnectListener){
+                    socket.data.leaveRoom = true;
                     socket.data.disconnectListener();
                     socket.removeListener('disconnect', socket.data.disconnectListener);
+                    socket.data.leaveRoom = false;
                 };
             };
         };
 
         socket.on('joinGame', (roomId, username, isSpectator) => {
-        
             if (!roomInfo.has(roomId)) {
                 roomInfo.set(roomId, { players: new Set(), spectators: new Set() });
             };
