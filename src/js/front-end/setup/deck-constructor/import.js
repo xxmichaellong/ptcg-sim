@@ -40,6 +40,7 @@ export const importDecklist = (user) => {
     const regexWithoutSet = /(\d+) (.+?)(?=\s\d|$|(\s\d+))/;
     
     // Initialize an array to store the results
+    // Each card will be stored as [quantity, name, set code, number, pokemontcg.io id, image url, type]
     const decklistArray = [];
     
     // Split the decklist into lines
@@ -60,7 +61,7 @@ export const importDecklist = (user) => {
     
         if (matchWithOldSet) {
             const [, quantity, name, id,] = matchWithOldSet;
-            decklistArray.push([parseInt(quantity), name, id, null, null]);
+            decklistArray.push([parseInt(quantity), name, null, null, id, null, undefined]);
             
             fetch('https://api.pokemontcg.io/v2/cards/' + id, {
                 method: 'GET',
@@ -79,16 +80,17 @@ export const importDecklist = (user) => {
             });
         } else if (matchWithSet) {
             const [, quantity, name, set, setNumber] = matchWithSet;
-            decklistArray.push([parseInt(quantity), name, `${set} ${setNumber}`]);
+            decklistArray.push([parseInt(quantity), name, set, setNumber, null, null, undefined]);
         } else if (matchWithPRSet) {
             const [, quantity, name, prSet, setNumber] = matchWithPRSet;
-            decklistArray.push([parseInt(quantity), name, `${prSet} ${setNumber}`]);
+            decklistArray.push([parseInt(quantity), name, prSet, setNumber, null, null, undefined]);
         } else if (matchWithSpecialSet) {
-            const [, quantity, name, set] = matchWithSpecialSet;
-            decklistArray.push([parseInt(quantity), name, set.trim()]);
+            const [, quantity, name, setAll] = matchWithSpecialSet;
+            const [set, setNumber] = setAll.trim().split(/(?<=\S)\s/);
+            decklistArray.push([parseInt(quantity), name, set, setNumber, null, null, undefined]);
         } else if (matchWithoutSet) {
             const [, quantity, name] = matchWithoutSet;
-            decklistArray.push([parseInt(quantity), name, '']);
+            decklistArray.push([parseInt(quantity), name, null, null, null, null, undefined]);
         };
     });
         
@@ -164,10 +166,10 @@ export const importDecklist = (user) => {
     };
       
     decklistArray.forEach((entry) => {
-        if (!entry[2].match(/\w*-\w*\d*$/)){
-            const [q, name, set] = entry;
+        if (!entry[4]){
+            const [q, name, set, setNumber] = entry;
+            let [firstPart, secondPart] = [set, setNumber]
             const energyUrl = energies[name];
-            let [firstPart, secondPart] = set.split(/(?<=\S)\s/);
             if (firstPart && secondPart){
                 if (specialCases[firstPart]){
                     firstPart = specialCases[firstPart];
@@ -177,11 +179,11 @@ export const importDecklist = (user) => {
                     return letter ? paddedDigits + letter : paddedDigits;
                 });
                 const url = `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/${firstPart.replace(/ /g, '/')}/${firstPart.replace(/ /g, '_')}_${paddedSecondPart}_R_${language}.png`;
-                entry.push(url);
-                entry.push(getCardType(firstPart, secondPart));
+                entry[5] = url;
+                entry[6] = getCardType(firstPart, secondPart);
             } else if (energyUrl){
-                entry.push(energyUrl);
-                entry.push('Energy');
+                entry[5] = energyUrl;
+                entry[6] = 'Energy';
             } else {
                 failedText.style.display = 'block';
                 loadingText.style.display = 'none';
@@ -189,8 +191,8 @@ export const importDecklist = (user) => {
         };
     });
 
-    let fetchPromises = decklistArray.map(([quantity, name, id]) => {
-        if (id.match(/\w*-\w*\d*$/)) {
+    let fetchPromises = decklistArray.map(([quantity, name, set, setNumber, id]) => {
+        if (id) {
             return fetch('https://api.pokemontcg.io/v2/cards/' + id, {
                 method: 'GET',
                 headers: {
@@ -199,9 +201,10 @@ export const importDecklist = (user) => {
             })
             .then(response => response.json())
             .then(({data}) => {
-                const index = decklistArray.findIndex(item => item[2] === id && item[3] === null);
+                const index = decklistArray.findIndex(item => item[4] === id);
                 if (index !== -1) {
-                    decklistArray[index] = [parseInt(quantity), name, id, data.images.large, data.supertype];
+                    decklistArray[index][5] = data.images.large;
+                    decklistArray[index][6] = data.supertype;
                 }
             })
             .catch((error) => {
@@ -219,7 +222,7 @@ export const importDecklist = (user) => {
     .then(() => {
         let tableBody = decklistTable.getElementsByTagName('tbody')[0];
         decklistTable.style.display = 'block';
-        decklistArray.forEach(([quantity, name, , url, type]) => {
+        decklistArray.forEach(([quantity, name, , , , url, type]) => {
             let newRow = tableBody.insertRow();
             
             let qtyCell = newRow.insertCell(0);
