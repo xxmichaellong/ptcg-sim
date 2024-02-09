@@ -63,6 +63,8 @@ export const importDecklist = (user) => {
             const [, quantity, name, id,] = matchWithOldSet;
             decklistArray.push([parseInt(quantity), name, null, null, id, null, undefined]);
             
+            // the following is commented out because it's done below anyway
+            /*
             fetch('https://api.pokemontcg.io/v2/cards/' + id, {
                 method: 'GET',
                 headers: {
@@ -78,6 +80,7 @@ export const importDecklist = (user) => {
             .catch((error) => {
                 console.error('Error:', error);
             });
+            */
         } else if (matchWithSet) {
             const [, quantity, name, set, setNumber] = matchWithSet;
             decklistArray.push([parseInt(quantity), name, set, setNumber, null, null, undefined]);
@@ -164,6 +167,9 @@ export const importDecklist = (user) => {
         'PR-BLW' : 'BWP',
         'PR-HS' : 'HSP'
     };
+    
+    // the following are taken from pokemontcg.io (v2)'s ptcgoCode
+    const oldSetCode_to_id = {'BS': 'base1', 'JU': 'base2', 'PR': 'basep', 'FO': 'base3', 'B2': 'base4', 'TR': 'base5', 'G1': 'gym1', 'G2': 'gym2', 'N1': 'neo1', 'N2': 'neo2', 'N3': 'neo3', 'N4': 'neo4', 'LC': 'base6', 'EX': 'ecard1', 'BP': 'bp', 'AQ': 'ecard2', 'SK': 'ecard3', 'RS': 'ex1', 'SS': 'ex2', 'DR': 'ex3', 'PR-NP': 'np', 'MA': 'ex4', 'HL': 'ex5', 'RG': 'ex6', 'TRR': 'ex7', 'DX': 'ex8', 'EM': 'ex9', 'UF': 'ex10', 'DS': 'ex11', 'LM': 'ex12', 'HP': 'ex13', 'CG': 'ex14', 'DF': 'ex15', 'PK': 'ex16', 'DP': 'dp1', 'PR-DPP': 'dpp', 'MT': 'dp2', 'SW': 'dp3', 'GE': 'dp4', 'MD': 'dp5', 'LA': 'dp6', 'SF': 'dp7', 'PL': 'pl1', 'RR': 'pl2', 'SV': 'pl3', 'AR': 'pl4'};
       
     decklistArray.forEach((entry) => {
         if (!entry[4]){
@@ -174,6 +180,11 @@ export const importDecklist = (user) => {
                 if (specialCases[firstPart]){
                     firstPart = specialCases[firstPart];
                 };
+                if(oldSetCode_to_id[firstPart]){
+                    entry[4] = oldSetCode_to_id[firstPart]+'-'+secondPart;
+                }
+            }
+            if (firstPart && secondPart && !entry[4]){
                 const paddedSecondPart = secondPart.replace(/^(\d+)([a-zA-Z])?$/, (_, digits, letter) => {
                     const paddedDigits = digits.length < 3 ? digits.padStart(3, '0') : digits;
                     return letter ? paddedDigits + letter : paddedDigits;
@@ -184,7 +195,7 @@ export const importDecklist = (user) => {
             } else if (energyUrl){
                 entry[5] = energyUrl;
                 entry[6] = 'Energy';
-            } else {
+            } else if(!entry[4] && (!entry[5] || !entry[6])) {
                 failedText.style.display = 'block';
                 loadingText.style.display = 'none';
             };
