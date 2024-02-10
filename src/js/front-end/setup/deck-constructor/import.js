@@ -62,25 +62,6 @@ export const importDecklist = (user) => {
         if (matchWithOldSet) {
             const [, quantity, name, id,] = matchWithOldSet;
             decklistArray.push([parseInt(quantity), name, null, null, id, null, undefined]);
-            
-            // the following is commented out because it's done below anyway
-            /*
-            fetch('https://api.pokemontcg.io/v2/cards/' + id, {
-                method: 'GET',
-                headers: {
-                    'X-Api-Key': 'cde33a60-5d8a-414e-ae04-b447090dd6ba'
-                }
-            })
-            .then(response => response.json())
-            .then(({data}) => {
-                const index = decklistArray.findIndex(item => item[2] === id && item[3] === null);
-                decklistArray[index] = [parseInt(quantity), name, id, data.images.large, data.supertype]
-
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
-            */
         } else if (matchWithSet) {
             const [, quantity, name, set, setNumber] = matchWithSet;
             decklistArray.push([parseInt(quantity), name, set, setNumber, null, null, undefined]);
@@ -182,8 +163,8 @@ export const importDecklist = (user) => {
                 };
                 if(oldSetCode_to_id[firstPart]){
                     entry[4] = oldSetCode_to_id[firstPart]+'-'+secondPart;
-                }
-            }
+                };
+            };
             if (firstPart && secondPart && !entry[4]){
                 const paddedSecondPart = secondPart.replace(/^(\d+)([a-zA-Z])?$/, (_, digits, letter) => {
                     const paddedDigits = digits.length < 3 ? digits.padStart(3, '0') : digits;
@@ -195,7 +176,7 @@ export const importDecklist = (user) => {
             } else if (energyUrl){
                 entry[5] = energyUrl;
                 entry[6] = 'Energy';
-            } else if(!entry[4] && (!entry[5] || !entry[6])) {
+            } else if (!entry[4] && (!entry[5] || !entry[6])){
                 failedText.style.display = 'block';
                 loadingText.style.display = 'none';
             };
