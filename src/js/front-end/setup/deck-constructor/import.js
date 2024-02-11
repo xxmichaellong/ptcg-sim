@@ -34,7 +34,7 @@ export const importDecklist = (user) => {
     const decklist = user === 'self' ? mainDeckImportInput.value : altDeckImportInput.value;
 
     const regexWithOldSet = /(\d+) (.+?)(?= \w*-\w*\d*$) (\w*-\w*\d*)/;
-    const regexWithSet = /(\d+) (.+?) (\w{2,3}) (\d+[a-zA-Z]?)/;
+    const regexWithSet = /(\d+) (.+?) (\w{2,3}[1-9]?) (\d+[a-zA-Z]?)/;
     const regexWithPRSet = /(\d+) (.+?) (PR-\w{2,3}) (\d+)/;
     const regexWithSpecialSet = /(\d+) (.+?) ((?:\w{2,3}(?:\s+[a-zA-Z\d]+)*)(?:\s+(\w{2,3}\s*[a-zA-Z\d]+)\s*)*)$/;
     const regexWithoutSet = /(\d+) (.+?)(?=\s\d|$|(\s\d+))/;
@@ -150,8 +150,12 @@ export const importDecklist = (user) => {
         'PR-HS' : 'HSP'
     };
     
-    // the following are taken from pokemontcg.io (v2)'s ptcgoCode
-    const oldSetCode_to_id = {'BS': 'base1', 'JU': 'base2', 'PR': 'basep', 'FO': 'base3', 'B2': 'base4', 'TR': 'base5', 'G1': 'gym1', 'G2': 'gym2', 'N1': 'neo1', 'N2': 'neo2', 'N3': 'neo3', 'N4': 'neo4', 'LC': 'base6', 'EX': 'ecard1', 'BP': 'bp', 'AQ': 'ecard2', 'SK': 'ecard3', 'RS': 'ex1', 'SS': 'ex2', 'DR': 'ex3', 'PR-NP': 'np', 'MA': 'ex4', 'HL': 'ex5', 'RG': 'ex6', 'TRR': 'ex7', 'DX': 'ex8', 'EM': 'ex9', 'UF': 'ex10', 'DS': 'ex11', 'LM': 'ex12', 'HP': 'ex13', 'CG': 'ex14', 'DF': 'ex15', 'PK': 'ex16', 'DP': 'dp1', 'PR-DPP': 'dpp', 'MT': 'dp2', 'SW': 'dp3', 'GE': 'dp4', 'MD': 'dp5', 'LA': 'dp6', 'SF': 'dp7', 'PL': 'pl1', 'RR': 'pl2', 'SV': 'pl3', 'AR': 'pl4'};
+    const oldSetCode_to_id = {
+        // the following are taken from pokemontcg.io (v2)'s ptcgoCode
+        'BS': 'base1', 'JU': 'base2', 'PR': 'basep', 'FO': 'base3', 'B2': 'base4', 'TR': 'base5', 'G1': 'gym1', 'G2': 'gym2', 'N1': 'neo1', 'N2': 'neo2', 'N3': 'neo3', 'N4': 'neo4', 'LC': 'base6', 'EX': 'ecard1', 'BP': 'bp', 'AQ': 'ecard2', 'SK': 'ecard3', 'RS': 'ex1', 'SS': 'ex2', 'DR': 'ex3', 'PR-NP': 'np', 'MA': 'ex4', 'HL': 'ex5', 'RG': 'ex6', 'TRR': 'ex7', 'DX': 'ex8', 'EM': 'ex9', 'UF': 'ex10', 'DS': 'ex11', 'LM': 'ex12', 'HP': 'ex13', 'CG': 'ex14', 'DF': 'ex15', 'PK': 'ex16', 'DP': 'dp1', 'PR-DPP': 'dpp', 'MT': 'dp2', 'SW': 'dp3', 'GE': 'dp4', 'MD': 'dp5', 'LA': 'dp6', 'SF': 'dp7', 'PL': 'pl1', 'RR': 'pl2', 'SV': 'pl3', 'AR': 'pl4',
+        // the following were written by hand
+        'POP1': 'pop1', 'POP2': 'pop2', 'POP3': 'pop3', 'POP4': 'pop4', 'POP5': 'pop5', 'POP6': 'pop6', 'POP7': 'pop7', 'POP8': 'pop8', 'POP9': 'pop9', 'SI': 'si1', 'RM': 'ru1'
+    };
       
     decklistArray.forEach((entry) => {
         if (!entry[4]){
