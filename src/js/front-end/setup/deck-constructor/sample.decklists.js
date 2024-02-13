@@ -2810,26 +2810,28 @@ const decklistsByYear = {
         1 Rainbow Energy hgss1-104
     `,
     "Typhlosion, Rayquaza & Deoxys-LEGEND": `
-        Pokémon (14)
+        Pokémon (19)
         4 Cyndaquil hgss1-61
         2 Quilava hgss1-49
         4 Typhlosion hgss1-110
         2 Vulpix hgss2-68
         2 Ninetales hgss1-7
+        2 Rayquaza & Deoxys-LEGEND UD 89
+        2 Rayquaza & Deoxys-LEGEND UD 90 
+        1 Cleffa HS 17
 
-        Trainer (24)
+        Trainer (23)
         4 Pokémon Collector hgss1-97
         4 Professor Elm's Training Method hgss1-100
         3 Sage's Training hgss3-77
         2 Flower Shop Lady hgss3-74
         4 Pokémon Communication hgss1-98
         4 Rare Candy hgss2-82
-        3 Lightning Energy hgss1-118
+        2 Burned Tower UD 71
 
-        Energy (22)
+        Energy (18)
         15 Fire Energy hgss1-116
         3 Lightning Energy hgss1-118
-        4 Double Colorless Energy hgss1-103
     `,
     "Leafeon, Roserade, & Houndoom": `
         Pokémon (20)
