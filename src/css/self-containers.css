@@ -47,7 +47,7 @@ body, input, textarea, button {
   bottom: calc(100% - 2vw);
   left: calc(50% - 2vw);
   border-radius: 50%;
-  background: white;
+  background: rgba(255, 255, 255, 0.6);
   z-index: -2;
 }
 .outline {
@@ -107,7 +107,7 @@ body, input, textarea, button {
 #handLabel {
   position: fixed;
   left: 0%;
-  bottom: 29%;
+  bottom: 29.5%;
   color:rgba(90, 110, 188, 0.864);
   font-size: 5vh;
 }
@@ -305,16 +305,38 @@ body, input, textarea, button {
   border-radius: 10px;
   font-size: clamp(6px, 3vh, 15px);
   cursor: pointer;
-  background: rgb(231, 228, 228);
-  color: rgb(149, 149, 149);
-  border: none;
+  background: linear-gradient(to bottom, rgb(250, 250, 250), rgb(230, 230, 230));
+  color: rgb(60, 60, 60);
+  border: 1px solid rgb(200, 200, 200);
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+#specialMoveButtonContainer button.dark-mode-2 {
+  background: linear-gradient(to bottom, rgb(60, 60, 60), rgb(40, 40, 40));
+  color: rgb(250, 250, 250);
+  border-color: rgb(100, 100, 100);
+  box-shadow: 0px 2px 4px rgba(255, 255, 255, 0.1);
 }
 #specialMoveButtonContainer button:hover {
-  background-color: rgb(117, 117, 117);
-  color: rgb(255, 255, 255);
+  background: linear-gradient(to bottom, rgb(220, 220, 220), rgb(200, 200, 200));
+  color: rgb(40, 40, 40);
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+#specialMoveButtonContainer button.dark-mode-2:hover {
+  background: linear-gradient(to bottom, rgb(80, 80, 80), rgb(60, 60, 60));
+  color: rgb(220, 220, 220);
+  box-shadow: 0px 4px 8px rgba(255, 255, 255, 0.2);
 }
 .used-special-move {
-  background-color: rgba(90, 110, 188, 0.3) !important;
+  background: linear-gradient(to bottom, rgba(90, 110, 188, 0.7), rgba(90, 110, 188, 0.3)) !important;
+  border-color: rgba(90, 110, 188, 0.864) !important;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+.used-special-move:not(.dark-mode-2) {
+  color: rgb(0, 0, 0) !important;
 }
 .play-container {
   display: inline-block;
@@ -427,7 +449,7 @@ body, input, textarea, button {
   width: 96%;
   left: 50%;
   transform: translateX(-50%);
-  background-color: #dddddd;
+  background-color: #dadada;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
   text-align: center;
   padding: 10px;
@@ -452,19 +474,21 @@ body, input, textarea, button {
   padding: 5px;
   border-radius: 5px;
   border: none;
-  background-color: #4c4d4f;
+  background: linear-gradient(to bottom, #6e6f71, #4c4d4f);
   color: white;
   cursor: pointer;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s;
 }
 .zone-button:hover {
-  background-color: #adadad;
+  background: linear-gradient(to bottom, #898989, #7b7c7d);
 }
 .zone-button-container {
   position: sticky;
   top: 0;
   width: 100%;
   left: 0;
-  background-color: #dddddd;
+  background-color: #dadada;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
   text-align: center;
   padding: 5px;

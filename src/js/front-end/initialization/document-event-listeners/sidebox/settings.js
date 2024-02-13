@@ -1,4 +1,4 @@
-import { darkMode, showOutlines } from "../../../setup/settings/settings.js";
+import { changeBackground, darkMode, showOutlines } from "../../../setup/settings/settings.js";
 import { systemState } from "../../../front-end.js";
 import { lookAtCards, stopLookingAtCards } from "../../../actions/general/reveal-and-hide.js";
 
@@ -25,4 +25,9 @@ export const initializeSettings = () => {
             };
         };
     });
-};
+
+    const changeBackgroundButton = document.getElementById('changeBackgroundButton');
+    changeBackgroundButton.addEventListener('click', () => {
+        changeBackground();
+    });
+}

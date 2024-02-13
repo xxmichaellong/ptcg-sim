@@ -91,4 +91,9 @@ export const initializeImport = () => {
 
     const decklistsButton = document.getElementById('decklistsButton');
     decklistsButton.addEventListener('click', showDecklistsContextMenu);
+
+    const deckBuilderButton = document.getElementById('deckBuilderButton');
+    deckBuilderButton.addEventListener('click', function() {
+        window.open('https://tishinator.github.io/PTCGDeckBuilder/');
+    });
 };

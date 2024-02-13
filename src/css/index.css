@@ -5,11 +5,22 @@ body, input, textarea, button {
   font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif
 }
 body {
-  background: rgb(250, 250, 250);
-  background-size: 100% 100%;
+  position: relative;
   margin: 0;
   height: 100vh;
-  overflow: none;
+  overflow: hidden;
+}
+#cover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.85);
+}
+body {
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
 }
 .dark-mode-1 {
   background-color: rgb(8, 18, 18) !important;
@@ -31,6 +42,9 @@ body {
 }
 .dark-mode-6 {
   background-color: rgba(21, 21, 21, 0.87) !important;
+}
+.dark-mode-7 {
+  background-color: rgba(0, 0, 0, 0.9) !important;
 }
 #keybindModal {
   display: none;
@@ -136,9 +150,6 @@ ul, li {
   bottom: 49%;
   cursor: row-resize;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   width: 1vw;
   height: 2%;
   border-radius: 50%;
@@ -150,25 +161,26 @@ ul, li {
   bottom: 51%;
   cursor: row-resize;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   width: 1vw;
   height: 2%;
   border-radius: 50%;
   transform: translateY(50%);
 }
 .self-color {
-  background-color: rgba(90, 110, 188, 0.864);
+  background: linear-gradient(to bottom, rgba(90, 110, 188, 0.864), rgba(60, 80, 158, 0.864));
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
 }
 .opp-color {
-  background-color: rgba(188, 90, 113, 0.864);  
+  background: linear-gradient(to bottom, rgba(188, 90, 113, 0.864), rgba(158, 60, 83, 0.864));
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
 }
 .spectator-color {
-  background-color:rgb(205 188 103);
+  background: linear-gradient(to bottom, rgba(205, 188, 103, 1), rgba(175, 158, 83, 1));
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
 }
 .neutral-color {
-  background-color: rgba(112, 112, 112, 0.864);  
+  background: linear-gradient(to bottom, rgba(112, 112, 112, 0.864), rgba(82, 82, 82, 0.864));
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
 }
 #boardButtonContainer {
   position: fixed;
@@ -181,27 +193,55 @@ ul, li {
   gap: 5px;
 }
 #boardButtonContainer button {
-  border-radius: 10px; 
-  font-size: 2vh; 
+  border-radius: 10px;
+  font-size: 2vh;
   cursor: pointer;
-  background: rgb(231, 228, 228);
-  color: rgb(149, 149, 149); 
-  border: none;
+  background: linear-gradient(to bottom, rgb(250, 250, 250), rgb(230, 230, 230));
+  color: rgb(60, 60, 60);
+  border: 1px solid rgb(200, 200, 200);
+  margin: .1vw;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+#boardButtonContainer button.dark-mode-2 {
+  background: linear-gradient(to bottom, rgb(60, 60, 60), rgb(40, 40, 40));
+  color: rgb(250, 250, 250);
+  border-color: rgb(100, 100, 100);
+  box-shadow: 0px 2px 4px rgba(255, 255, 255, 0.1);
 }
 #boardButtonContainer button:hover {
-  background-color: rgb(117, 117, 117);
-  color: rgb(255, 255, 255);
+  background: linear-gradient(to bottom, rgb(220, 220, 220), rgb(200, 200, 200));
+  color: rgb(40, 40, 40);
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+#boardButtonContainer button.dark-mode-2:hover {
+  background: linear-gradient(to bottom, rgb(80, 80, 80), rgb(60, 60, 60));
+  color: rgb(220, 220, 220);
+  box-shadow: 0px 4px 8px rgba(255, 255, 255, 0.2);
 }
 #topButtonContainer {
   position: fixed;
   right: 0;
   bottom: 95vh;
-  height: 5vh;
+  height: 4.8vh;
   width: 24%;
   display: flex;
   overflow: hidden; 
   background: rgb(145, 145, 145);
-  align-items: flex-end; 
+  align-items: flex-end;
+  border-top-left-radius: 5px;
+  border-left: 2px solid rgb(145, 145, 145);
+  box-sizing: border-box;
+}
+#greyFiller {
+  position: fixed;
+  right: 0;
+  bottom: 90vh;
+  height: 5vh;
+  width: 24%;
+  display: flex;
+  background: rgb(145, 145, 145);
+  box-sizing: border-box;
 }
 #topButtonContainer button {
   padding: 1vh;
@@ -233,6 +273,10 @@ ul, li {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  border-left: 2px solid rgb(145, 145, 145);
+}
+#p1Box {
+  border-radius: 0 10px 0 0;
 }
 #chatbox {
   width: 100%;
@@ -251,10 +295,12 @@ ul, li {
   border: none;
   padding: 0 6px 2px 6px;
   color: white;
-  background: #a89850;
+  border: 2px solid #a89850;
+  background: linear-gradient(to bottom, #c2b07f, #ac9c52);
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
 }
 #tutorialButton:hover {
-  background: #8c7e46;
+  background: linear-gradient(to bottom, #bca668, #8c7e46);
   cursor: pointer;
 }
 #links {
@@ -335,7 +381,7 @@ ul, li {
   background-color: rgba(189, 112, 130, 0.864);  
 }
 .sidebox-button-container button.neutral-color:hover {
-  background-color: rgba(150, 144, 144, 0.864);  
+  background-color: rgba(150, 144, 144, 0.864);
 }
 .chat-button-container {
   width: 100%;
@@ -399,12 +445,20 @@ ul, li {
   box-sizing: border-box;
   border-radius: 0 0 10px 10px;
   border: none;
+  background-color: #f9f9f9;
+  font-size: 2vh;
+  color: #333;
+  outline: none;
+}
+#messageInput::placeholder {
+  color: #999;
 }
 #bottomP1ButtonContainer {
   width: 100%;
 }
 #p2Box {
   display: none;
+  border-radius: 10px 10px 0 0;
 }
 #p2ExplanationBox {
   width: 100%;
@@ -460,15 +514,17 @@ ul, li {
 }
 #generateIdButton {
   padding: 1vh;
-  background: #a89850;
   color: white;
   border-radius: 10px;
   border: none;
   cursor: pointer;
   font-size: 2vh;
+  background: linear-gradient(to bottom, #c2b07f, #ac9c52);
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s;
 }
 #generateIdButton:hover {
-  background: #8c7e46;
+  background: linear-gradient(to bottom, #bca668, #8c7e46);
 }
 #coachingModeLabel, #spectatorModeLabel {
   font-size: small;
@@ -476,7 +532,6 @@ ul, li {
 }
 #joinRoomButton {
   width: 100%;
-  background: #333;
   color: white;
   text-align: center;
   padding: 10px;
@@ -485,9 +540,12 @@ ul, li {
   border: none;
   cursor: pointer;
   font-size: 2.5vh;
+  background: linear-gradient(to bottom, #666, #4c4b46);
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); 
+  transition: all 0.3s; 
 }
 #joinRoomButton:hover {
-  background: #78766e;
+  background: linear-gradient(to bottom, #555, #333);
 }
 #connectedRoom {
   display: none;
@@ -554,16 +612,21 @@ ul, li {
 }
 #deckImport {
   display: none;
+  border-radius: 10px 10px 0 0;
 }
-#deckImportExplanationBox {
-  width: 100%;
-  background: white;
-  padding: 10px;
-  box-sizing: border-box;
-  display: block;
-  border-radius: 10px 10px;
-  margin-bottom: 10px;
-  height: fit-content;
+#deckBuilderButton {
+  color: white;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  font-size: 2vh;
+  border: 2px solid #a89850;
+  background: linear-gradient(to bottom, #c2b07f, #ac9c52);
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  margin-bottom: 1vh;
+}
+#deckBuilderButton:hover {
+  background: linear-gradient(to bottom, #bca668, #8c7e46);
 }
 #importButtonContainer {
   width: 100%;
@@ -615,7 +678,7 @@ ul, li {
   height: 100%;
   width: 100%;
   padding: 2vh;
-  border-radius: 0 0 10px 10px;
+  border-radius: 5px 5px 10px 10px;
   font-size: 1.75vh;
   box-sizing: border-box;
   resize: none;
@@ -637,8 +700,11 @@ ul, li {
   gap: 0.5vw;
 }
 #importButton, #confirmButton {
-  background-color: #7bb9a2;
+  background: linear-gradient(to bottom, #95c6b4, #72ab97);
   color: white;
+}
+#confirmButton {
+  margin-left: 0.3vw;
 }
 #importButton {
   cursor: pointer;
@@ -649,7 +715,7 @@ ul, li {
   font-weight: bold;
 }
 #importButton:hover, #confirmButton:hover {
-  background-color: #95c6b4;
+  background: linear-gradient(to bottom, #7bb9a2, #5faa96);
 }
 #cancelButton, #confirmButton, #saveButton {
   cursor: pointer;
@@ -662,21 +728,15 @@ ul, li {
   font-weight: bold;
 }
 #cancelButton {
-  background-color: #b9857b;
+  background: linear-gradient(to bottom, #e19b94, #b9857b);
 }
 #cancelButton:hover {
-  background-color: #b97d7b;
-}
-#saveButton {
-  background-color: #8c8c8c;
-}
-#saveButton:hover {
-  background-color: #aeaeae;
+  background: linear-gradient(to bottom, #c97571, #ab7270);
 }
 #uploadButtonsContainer {
   margin: 0.3vw;
 }
-#uploadFileButton, #changeCardBackButton, #changeLanguageButton, #saveCurrentButton {
+#uploadFileButton, #changeCardBackButton, #changeLanguageButton, #saveCurrentButton, #changeBackgroundButton {
   padding: 3px 6px;
   cursor: pointer;
   color: white;
@@ -695,21 +755,17 @@ ul, li {
 #saveCurrentButton.opp-color:hover {
   background-color: rgba(189, 112, 130, 0.864);  
 }
-#changeLanguageButton {
-  background-color: #8c8c8c;
-  position: relative;
-}
-#changeLanguageButton:hover {
-  background-color: #aeaeae;
+#changeLanguageButton:hover, #saveButton:hover, #changeBackgroundButton:hover {
+  background-color: rgba(150, 144, 144, 0.864);  
 }
 .language-container {
   position: relative;
-  display: inline-block; /* Prevents line break */
+  display: inline-block;
 }
 #languageDropdown {
   display: none;
   position: absolute;
-  bottom: 100%; /* Position dropdown below the button */
+  bottom: 100%;
   left: 0;
   background-color: #f9f9f9;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
@@ -739,30 +795,35 @@ ul, li {
   border: none;
   font-size: x-large;
   cursor: pointer;
-  background: rgb(185, 160, 103);
   border-radius: .5rem;
+  background: linear-gradient(to bottom, #c2b07f, #ac9c52);
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
 }
 #randomButton:hover {
-  background: rgb(202, 177, 117);
+  background: linear-gradient(to bottom, #bca668, #8c7e46);
 }
 #decklistsButton {
   margin-left: .3vw;
   border: none;
   font-size: x-large;
   cursor: pointer;
-  background: rgb(161, 161, 161);
   border-radius: .5rem;
   box-sizing: border-box;
   padding-bottom: .8vh;
+  background: linear-gradient(to bottom, #b0b0b0, #909090);
 }
 #decklistsButton:hover {
-  background: rgb(197, 197, 197);
+  background: linear-gradient(to bottom, #a4a4a4, #807f7f);
 }
 #successText, #failedText, #loadingText, #invalidText {
   display: none;
 }
 #settings {
   display: none;
+  border-radius: 10px 0 0 0;
+}
+#changeBackgroundButton {
+  margin: 1vh;
 }
 #settingsToggles {
   background: white;

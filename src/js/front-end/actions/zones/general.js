@@ -1,4 +1,4 @@
-import { oppContainerDocument, selfContainerDocument, systemState } from "../../front-end.js";
+import { mouseClick, oppContainerDocument, selfContainerDocument, systemState } from "../../front-end.js";
 import { appendMessage } from "../../setup/chatbox/append-message.js";
 import { determineDeckData } from "../../setup/general/determine-deckdata.js";
 import { determineUsername } from "../../setup/general/determine-username.js";
@@ -173,8 +173,7 @@ export const leaveAll = (user, initiator, oZoneId, emit = true) => {
     };
 
     const oZone = getZone(user, oZoneId);
-    const selectedActiveZone = getZone(user, 'active');
-    const dZoneId = selectedActiveZone.getCount() === 0 ? 'active' : 'bench';
+    const dZoneId = mouseClick.isActiveZone ? 'active' : 'bench';
     const dZone = getZone(user, dZoneId);
 
     if (oZone.getCount() > 0){

@@ -52,9 +52,12 @@ cardBackImage.style.left = '-9999px';
 document.body.appendChild(cardBackImage);
 
 cardBackImage.addEventListener('load', () => {
-    console.log('Image has loaded');
     document.body.removeChild(cardBackImage);
 });
+
+const randomNumber = Math.random();
+const backgroundUrl = randomNumber < 0.5 ? 'https://ptcgsim.online/background1.jpg' : 'https://ptcgsim.online/background2.webp';
+document.body.style.backgroundImage = `url('${backgroundUrl}')`;
 
 // create global variable that holds the information of a selected card, i.e., the card that has been clicked and highlighted and can trigger keybinds
 export const mouseClick = {
@@ -64,6 +67,7 @@ export const mouseClick = {
     playContainer: '',
     playContainerParent: '',
     selectingCard: false,
+    isActiveZone: '',
     get card(){
         if (this.zoneId){
             return getZone(this.cardUser, this.zoneId).array[this.cardIndex];

@@ -1,3 +1,4 @@
+import { mouseClick } from "../../front-end.js";
 import { resetImage } from "../../setup/image-logic/reset-image.js";
 import { getZone } from "../../setup/zones/get-zone.js";
 import { addDamageCounter } from "../counters/damage-counter.js";
@@ -23,6 +24,7 @@ export const relocateAttachedCards = (user, initiator, movingCard, oZoneId, oZon
                 };
                 getZone(user, 'attachedCards').element.style.display = 'block';
                 moveCard(user, initiator, oZoneId, 'attachedCards', i);
+                mouseClick.isActiveZone = oZoneId === 'active';
             };
             i--;
         };

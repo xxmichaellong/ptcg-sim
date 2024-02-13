@@ -87,4 +87,29 @@ export const darkMode = () => {
     document.querySelectorAll('.decklists-context-menu').forEach(menu => {
         menu.classList.toggle('dark-mode-6');
     });
+
+    //HTML body
+    document.getElementById('cover').classList.toggle('dark-mode-7');
+}
+
+export const changeBackground = () => {
+    let userInput = window.prompt("Paste your image URL, or type 'blank' or 'default':");
+
+    if (userInput !== null && userInput.trim() !== '') {
+        if (userInput.toLowerCase() === 'default') {
+            const randomNumber = Math.random();
+            userInput = randomNumber < 0.5 ? 'https://ptcgsim.online/background1.jpg' : 'https://ptcgsim.online/background2.webp';
+        } else if (userInput.toLowerCase() === 'blank') {
+            document.body.style.backgroundImage = 'none';
+            return;
+        };
+    };
+    const img = new Image();
+    img.onload = () => {
+        document.body.style.backgroundImage = `url('${userInput}')`;
+    };
+    img.onerror = () => {
+        alert('Please enter a valid image URL.');
+    };
+    img.src = userInput;
 }
