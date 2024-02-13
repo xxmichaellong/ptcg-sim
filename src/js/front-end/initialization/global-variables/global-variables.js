@@ -55,9 +55,9 @@ cardBackImage.addEventListener('load', () => {
     document.body.removeChild(cardBackImage);
 });
 
-const randomNumber = Math.random();
-const backgroundUrl = randomNumber < 0.5 ? 'https://ptcgsim.online/background1.jpg' : 'https://ptcgsim.online/background2.webp';
-document.body.style.backgroundImage = `url('${backgroundUrl}')`;
+// const randomNumber = Math.random();
+// const backgroundUrl = randomNumber < 0.5 ? 'https://ptcgsim.online/background1.jpg' : 'https://ptcgsim.online/background2.webp';
+// document.body.style.backgroundImage = `url('${backgroundUrl}')`;
 
 // create global variable that holds the information of a selected card, i.e., the card that has been clicked and highlighted and can trigger keybinds
 export const mouseClick = {

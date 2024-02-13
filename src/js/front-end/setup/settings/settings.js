@@ -93,13 +93,13 @@ export const darkMode = () => {
 }
 
 export const changeBackground = () => {
-    let userInput = window.prompt("Paste your image URL, or type 'blank' or 'default':");
+    let userInput = window.prompt("Paste your image URL, or type 'default' or 'theme':");
 
-    if (userInput !== null && userInput.trim() !== '') {
-        if (userInput.toLowerCase() === 'default') {
+    if (userInput !== null && userInput.trim() !== ''){
+        if (userInput.toLowerCase() === 'theme'){
             const randomNumber = Math.random();
             userInput = randomNumber < 0.5 ? 'https://ptcgsim.online/background1.jpg' : 'https://ptcgsim.online/background2.webp';
-        } else if (userInput.toLowerCase() === 'blank') {
+        } else if (userInput.toLowerCase() === 'default'){
             document.body.style.backgroundImage = 'none';
             return;
         };
