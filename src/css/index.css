@@ -744,6 +744,9 @@ ul, li {
   border-radius: .3rem;
   font-size: 1.5vh;
 }
+#changeBackgroundButton {
+  font-size: 2vh;
+}
 #uploadFileButton.self-color:hover,
 #changeCardBackButton.self-color:hover,
 #saveCurrentButton.self-color:hover {
