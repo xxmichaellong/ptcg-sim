@@ -1,0 +1,136 @@
+body {
+    background-image: url('https://i.imgur.com/l3ng8tN.jpeg'); /* Background image URL */
+    background-repeat: repeat-y; /* Repeat vertically */
+    background-size: contain; /* Ensure the entire background image is visible without stretching */
+    font-family: "Futura", "Trebuchet MS", Arial, sans-serif;
+    font-size: 16px;
+    font-style: normal; 
+    font-variant: normal; 
+    font-weight: 400; 
+}
+#cover {
+    position: fixed; /* Position the cover element relative to the viewport */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.75); /* White background with 85% opacity */
+    z-index: -1; /* Ensure the cover is above other content */
+}
+
+
+.title {
+    font-family: "Gill Sans", "Gill Sans MT", "Calibri", sans-serif;
+    font-variant: normal;
+    font-weight: 700;
+}
+
+.title-change {
+    font-family: "Gill Sans", "Gill Sans MT", "Calibri", sans-serif;
+    font-style: italic;
+    font-variant: normal;
+    font-weight: 700;
+    line-height: 26.4px;
+    color: white;
+    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-color: black;
+}
+
+.yellow-background {
+    background-color: #FFE164;
+    width: 100%; 
+    border-radius: 20px;
+}
+  
+  .neutral-background {
+    background-color: #f3f3f3;
+    padding: 20px;
+    border-radius: 10px;
+  }
+  
+  a:hover {
+    text-decoration: underline;
+  }
+  
+.row {
+    display: flex;
+    flex-direction: row;
+  }
+  
+.col {
+    flex: 1;
+}
+.flex-container {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .flex-item {
+    flex: 1 1 400px; /* Set a fixed width for all items */
+    margin: 10px; /* Add some spacing between items */
+    background-color: #f5f5f5; /* Background color for the items */
+    padding: 20px; /* Add padding inside the items */
+    box-sizing: border-box; /* Include padding and border in the item's total width */
+    border-radius: 30px;
+  }
+#ImageContainer{
+text-align: center;
+}
+
+th, td {
+    padding: 10px;
+  }
+
+  #parent {
+    display: flex;
+  }
+  #narrow {
+    width: 25%;
+  }
+  #wide {
+    flex: 1;
+    /* Grow to rest of container */
+  }
+
+  .CodeButton {
+    font-family: "Futura", "Trebuchet MS", Arial, sans-serif;
+    background-color: #FFE164;
+    border: none;
+    color: black;
+    border-radius: 24px;
+    padding: 10px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    transition-duration: 0.4s;
+  }
+
+  .CodeButton:hover {
+    background-color: #f6c913;
+  }
+
+  .selected:hover {
+    transition-duration: 0.4s;
+    background-color: #f6ae13;
+  }
+  .pokeball-bullet {
+    list-style: none;
+    padding-left: 40px;
+    background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Pok%C3%A9_Ball_icon.svg/770px-Pok%C3%A9_Ball_icon.svg.png') no-repeat left center;
+    background-size: 30px 30px;
+    margin-bottom: 20px; /* Increased spacing between bullet points */
+    font-size: 16px; /* Increased font size */
+  }
+  .image-column {
+    width: 40%;
+    max-width: 50%;
+    position: relative;
+  }
+  .image-column img {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
+  }
