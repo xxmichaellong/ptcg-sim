@@ -24,13 +24,18 @@
         const texts = [
           "turn 1 supporter",
           "addition to TPCi",
-          "like no one ever was",
+          "(like no one ever was)",
           "Pokédeveloper",
         ];
         let index = 0;
   
         function changeText() {
           document.getElementById("changingText").textContent = texts[index];
+          if (texts[index] === "(like no one ever was)") {
+              document.getElementById("changingText").style.fontSize = "4.4vw";
+          } else {
+              document.getElementById("changingText").style.fontSize = "5.8vw";
+          };
           index = (index + 1) % texts.length;
         }
         setInterval(changeText, 2000);
