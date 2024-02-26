@@ -35,7 +35,7 @@ export const importDecklist = (user) => {
 
     const regexWithOldSet = /(\d+) (.+?)(?= \w*-\w*\d*$) (\w*-\w*\d*)/;
     const regexWithSet = /(\d+) (.+?) (\w{2,3}[1-9]?) (\d+[a-zA-Z]?)/;
-    const regexWithPRSet = /(\d+) (.+?) (PR-\w{2,3}) (\d+)/;
+    const regexWithPRSet = /(\d+) (.+?) (PR-\w{2,3}) ((?:DP|HGSS|BW|XY|SM|SWSH)?)(\d+)/;
     const regexWithSpecialSet = /(\d+) (.+?) ((?:\w{2,3}(?:\s+[a-zA-Z\d]+)*)(?:\s+(\w{2,3}\s*[a-zA-Z\d]+)\s*)*)$/;
     const regexWithoutSet = /(\d+) (.+?)(?=\s\d|$|(\s\d+))/;
     
@@ -67,7 +67,7 @@ export const importDecklist = (user) => {
             const [, quantity, name, set, setNumber] = matchWithSet;
             decklistArray.push([parseInt(quantity), name, set, setNumber, null, null, undefined]);
         } else if (matchWithPRSet) {
-            const [, quantity, name, prSet, setNumber] = matchWithPRSet;
+            const [, quantity, name, prSet,, setNumber] = matchWithPRSet;
             decklistArray.push([parseInt(quantity), name, prSet, setNumber, null, null, undefined]);
         } else if (matchWithSpecialSet) {
             const [, quantity, name, setAll] = matchWithSpecialSet;
@@ -152,13 +152,32 @@ export const importDecklist = (user) => {
     
     const oldSetCode_to_id = {
         // the following are taken from pokemontcg.io (v2)'s ptcgoCode
-        'BS': 'base1', 'JU': 'base2', 'PR': 'basep', 'FO': 'base3', 'B2': 'base4', 'TR': 'base5', 'G1': 'gym1', 'G2': 'gym2', 'N1': 'neo1', 'N2': 'neo2', 'N3': 'neo3', 'N4': 'neo4', 'LC': 'base6', 'EX': 'ecard1', 'BP': 'bp', 'AQ': 'ecard2', 'SK': 'ecard3', 'RS': 'ex1', 'SS': 'ex2', 'DR': 'ex3', 'PR-NP': 'np', 'MA': 'ex4', 'HL': 'ex5', 'RG': 'ex6', 'TRR': 'ex7', 'DX': 'ex8', 'EM': 'ex9', 'UF': 'ex10', 'DS': 'ex11', 'LM': 'ex12', 'HP': 'ex13', 'CG': 'ex14', 'DF': 'ex15', 'PK': 'ex16', 'DP': 'dp1', 'PR-DPP': 'dpp', 'MT': 'dp2', 'SW': 'dp3', 'GE': 'dp4', 'MD': 'dp5', 'LA': 'dp6', 'SF': 'dp7', 'PL': 'pl1', 'RR': 'pl2', 'SV': 'pl3', 'AR': 'pl4',
+        'BS': 'base1', 'JU': 'base2', 'PR': 'basep', 'FO': 'base3', 'B2': 'base4', 'TR': 'base5', 'G1': 'gym1', 'G2': 'gym2', 'N1': 'neo1', 'N2': 'neo2', 'N3': 'neo3', 'N4': 'neo4', 'LC': 'base6', 'EX': 'ecard1', 'BP': 'bp', 'AQ': 'ecard2', 'SK': 'ecard3', 'RS': 'ex1', 'SS': 'ex2', 'DR': 'ex3', 'PR-NP': 'np', 'MA': 'ex4', 'HL': 'ex5', 'RG': 'ex6', 'TRR': 'ex7', 'DX': 'ex8', 'EM': 'ex9', 'UF': 'ex10', 'DS': 'ex11', 'LM': 'ex12', 'HP': 'ex13', 'CG': 'ex14', 'DF': 'ex15', 'PK': 'ex16', 'DP': 'dp1', 'MT': 'dp2', 'SW': 'dp3', 'GE': 'dp4', 'MD': 'dp5', 'LA': 'dp6', 'SF': 'dp7', 'PL': 'pl1', 'RR': 'pl2', 'SV': 'pl3', 'AR': 'pl4',
         // the following were written by hand
         'POP1': 'pop1', 'POP2': 'pop2', 'POP3': 'pop3', 'POP4': 'pop4', 'POP5': 'pop5', 'POP6': 'pop6', 'POP7': 'pop7', 'POP8': 'pop8', 'POP9': 'pop9',
-        'P1': 'pop1', 'P2': 'pop2', 'P3': 'pop3', 'P4': 'pop4', 'P5': 'pop5', 'P6': 'pop6', 'P7': 'pop7', 'P8': 'pop8', 'P9': 'pop9', 
+        'P1': 'pop1', 'P2': 'pop2', 'P3': 'pop3', 'P4': 'pop4', 'P5': 'pop5', 'P6': 'pop6', 'P7': 'pop7', 'P8': 'pop8', 'P9': 'pop9',
+        'pop1': 'pop1', 'pop2': 'pop2', 'pop3': 'pop3', 'pop4': 'pop4', 'pop5': 'pop5', 'pop6': 'pop6', 'pop7': 'pop7', 'pop8': 'pop8', 'pop9': 'pop9',
         'SI': 'si1', 'RM': 'ru1'
     };
-      
+    
+    // the following cards have no image on limitless
+    const noImg_to_id = {
+        'BUS 112a' : 'sm3-112a',
+        'FLI 102a' : 'sm6-102a',
+        'UNM 191a' : 'sm11-191a',
+        'GRI 121a' : 'sm2-121a',
+        'UPR 119a' : 'sm5-119a',
+        'BUS 115a' : 'sm3-115a',
+        'UPR 125a' : 'sm5-125a',
+        'UPR 153a' : 'sm5-153a',
+        'UNB 182a' : 'sm10-182a',
+        'TEU 152a' : 'sm9-152a',
+        'LOT 188a' : 'sm8-188a',
+        'SLG 68a' : 'sm35-68a',
+        'UPR 135a' : 'sm5-135a',
+        'UNB 189a' : 'sm10-189a'
+    }
+    
     decklistArray.forEach((entry) => {
         if (!entry[4]){
             const [q, name, set, setNumber] = entry;
@@ -170,6 +189,17 @@ export const importDecklist = (user) => {
                 };
                 if(oldSetCode_to_id[firstPart]){
                     entry[4] = oldSetCode_to_id[firstPart]+'-'+secondPart;
+                };
+                if(noImg_to_id[firstPart+' '+secondPart]){
+                    entry[4] = noImg_to_id[firstPart+' '+secondPart];
+                };
+                // special case for PR-DPP
+                if(firstPart === 'PR-DPP'){
+                    const paddedSecondPart = secondPart.replace(/^(\d+)?$/, (_, digits) => {
+                    const paddedDigits = digits.length < 3 ? digits.padStart(2, '0') : digits;
+                    return 'dpp-DP' + paddedDigits;
+                });
+                    entry[4] = paddedSecondPart;
                 };
             };
             if (firstPart && secondPart && !entry[4]){
