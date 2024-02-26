@@ -187,18 +187,18 @@ export const importDecklist = (user) => {
                 if (specialCases[firstPart]){
                     firstPart = specialCases[firstPart];
                 };
-                if(oldSetCode_to_id[firstPart]){
+                if (oldSetCode_to_id[firstPart]){
                     entry[4] = oldSetCode_to_id[firstPart]+'-'+secondPart;
                 };
-                if(noImg_to_id[firstPart+' '+secondPart]){
+                if (noImg_to_id[firstPart+' '+secondPart]){
                     entry[4] = noImg_to_id[firstPart+' '+secondPart];
                 };
                 // special case for PR-DPP
-                if(firstPart === 'PR-DPP'){
+                if (firstPart === 'PR-DPP'){
                     const paddedSecondPart = secondPart.replace(/^(\d+)?$/, (_, digits) => {
-                    const paddedDigits = digits.length < 3 ? digits.padStart(2, '0') : digits;
-                    return 'dpp-DP' + paddedDigits;
-                });
+                        const paddedDigits = digits.length < 3 ? digits.padStart(2, '0') : digits;
+                        return 'dpp-DP' + paddedDigits;
+                    });
                     entry[4] = paddedSecondPart;
                 };
             };

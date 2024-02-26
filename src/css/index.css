@@ -251,8 +251,10 @@ ul, li {
   border: none;
 }
 .selected-page {
-  background: rgb(231, 228, 228);
   border-radius: 10px 10px 0 0;
+  background: linear-gradient(to bottom, rgb(250, 250, 250), rgb(230, 230, 230));
+  border: 1px solid rgb(200, 200, 200);
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
 }
 .not-selected-page {
   background: rgb(145, 145, 145);
@@ -664,15 +666,17 @@ ul, li {
 }
 .main-select {
   font-weight: bold;
-  background-color: rgba(90, 110, 188, 0.864) !important;
+  background: linear-gradient(to bottom, rgba(90, 110, 188, 0.864), rgba(60, 80, 158, 0.864))  !important;
   color: white;
   border: .25vw solid rgba(40, 57, 124, 0.864) !important;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
 }
 .alt-select {
   font-weight: bold;
+  background: linear-gradient(to bottom, rgba(188, 90, 113, 0.864), rgba(158, 60, 83, 0.864)) !important;
   color: white;
-  background-color: rgba(188, 90, 113, 0.864) !important;
   border: .25vw solid rgba(153, 58, 81, 0.864) !important;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
 }
 #mainDeckImportInput, #altDeckImportInput {
   height: 100%;
