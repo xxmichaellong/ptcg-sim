@@ -13,26 +13,22 @@ const refreshZone = (user, zoneId) => {
         const images = (playContainer).querySelectorAll('img');
         //loop through each image and update the attached cards
         images.forEach((image) => {
-            const img = new Image();
-            img.onload = () => {
-                if (!image.attached){
-                    //re-append the card to the end of the same zone
-                    let currentRotation;
-                    if (image.PokémonBreak){
-                        currentRotation = (parseInt(image.style.transform.replace(/[^0-9-]/g, '')) || 0) - 90;
-                    } else {
-                        currentRotation = parseInt(image.style.transform.replace(/[^0-9-]/g, '')) || 0;
-                    };
-                    const numberRotations = currentRotation / 90;
-                    const index = zone.array.findIndex(card => card.image === image);      
-                    moveCard(user, user, zoneId, zoneId, index);
-                    const newIndex = zone.array.findIndex(card => card.image === image);
-                    for (let i = 0; i < numberRotations; i ++){
-                        rotateCard(user, zoneId, newIndex, false, false);
-                    };
+            if (!image.attached){
+                //re-append the card to the end of the same zone
+                let currentRotation;
+                if (image.PokémonBreak){
+                    currentRotation = (parseInt(image.style.transform.replace(/[^0-9-]/g, '')) || 0) - 90;
+                } else {
+                    currentRotation = parseInt(image.style.transform.replace(/[^0-9-]/g, '')) || 0;
+                };
+                const numberRotations = currentRotation / 90;
+                const index = zone.array.findIndex(card => card.image === image);      
+                moveCard(user, user, zoneId, zoneId, index);
+                const newIndex = zone.array.findIndex(card => card.image === image);
+                for (let i = 0; i < numberRotations; i ++){
+                    rotateCard(user, zoneId, newIndex, false, false);
                 };
             };
-            img.src = image.src;
         });
     });
     adjustCards(user, zoneId, 1);

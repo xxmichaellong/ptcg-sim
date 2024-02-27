@@ -1,6 +1,7 @@
 import { systemState } from "../../front-end.js";
 import { processAction } from "../../setup/general/process-action.js";
 import { refreshBoard } from "../../setup/sizing/refresh-board.js";
+import { getZone } from "../../setup/zones/get-zone.js";
 import { moveCardMessage } from "./move-card-message.js";
 import { moveCard } from "./move-card.js";
 
@@ -11,8 +12,13 @@ export const moveCardBundle = (user, initiator, oZoneId, dZoneId, index, targetI
         return;
     };
 
-    moveCardMessage(user, initiator, oZoneId, dZoneId, index, targetIndex, action);
-    moveCard(user, initiator, oZoneId, dZoneId, index, targetIndex);
+    const img = new Image();
+
+    img.onload = () => {
+        moveCardMessage(user, initiator, oZoneId, dZoneId, index, targetIndex, action);
+        moveCard(user, initiator, oZoneId, dZoneId, index, targetIndex);
+    };
+    img.src = getZone(user, oZoneId).array[index].image.src;
 
     refreshBoard(); //refreshing the board rearranges the array of the cards on the active/bench. to prevent desyncs, refresh the board whenever a user moves a card to ensure that the array for both users is the same 
     // the issue arised when one player would refresh their board by flipping board/resizing window, changing their arrays, but the other player would still have the original arrays.
