@@ -616,19 +616,29 @@ ul, li {
   display: none;
   border-radius: 10px 10px 0 0;
 }
-#deckBuilderButton {
+#deckBuilderButton, #decklistButton {
   color: white;
   border-radius: 5px;
   border: none;
   cursor: pointer;
   font-size: 2vh;
-  border: 2px solid #a89850;
-  background: linear-gradient(to bottom, #c2b07f, #ac9c52);
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
   margin-bottom: 1vh;
 }
+#deckBuilderButton {
+  border: 2px solid #a89850;
+  background: linear-gradient(to bottom, #c2b07f, #ac9c52);
+}
+#decklistButton {
+  border: 2px solid #8b50a8;
+  background: linear-gradient(to bottom, #8b50a8, #6f527d);
+  margin-left: 0.5vw;
+}
 #deckBuilderButton:hover {
   background: linear-gradient(to bottom, #bca668, #8c7e46);
+}
+#decklistButton:hover {
+  background: linear-gradient(to bottom, #8b50a8, #46364f);
 }
 #importButtonContainer {
   width: 100%;
