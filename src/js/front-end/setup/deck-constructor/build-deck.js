@@ -7,9 +7,9 @@ import { Cover } from './cover.js';
 export const buildDeck = (user) => {
     const deckData = determineDeckData(user);
     const deck = getZone(user, 'deck');
-    for (const [quantity, name, imageURL, type] of deckData){
+    for (const [quantity, name, type, imageURL] of deckData){
         for (let i = 0; i < quantity; i++){
-            const card = new Card(user, name, imageURL, type);
+            const card = new Card(user, name, type, imageURL);
             deck.array.push(card);
             deck.element.appendChild(card.image);
         };

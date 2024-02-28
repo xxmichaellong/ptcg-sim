@@ -7,7 +7,6 @@ const refreshZone = (user, zoneId) => {
     const zone = getZone(user, zoneId);
     //find all playContainers
     const playContainers = zone.element.querySelectorAll('DIV');
-    //loop through each box
     playContainers.forEach((playContainer) => {
         //find all images within box
         const images = (playContainer).querySelectorAll('img');
@@ -22,7 +21,7 @@ const refreshZone = (user, zoneId) => {
                     currentRotation = parseInt(image.style.transform.replace(/[^0-9-]/g, '')) || 0;
                 };
                 const numberRotations = currentRotation / 90;
-                const index = zone.array.findIndex(card => card.image === image);      
+                const index = zone.array.findIndex(card => card.image === image); 
                 moveCard(user, user, zoneId, zoneId, index);
                 const newIndex = zone.array.findIndex(card => card.image === image);
                 for (let i = 0; i < numberRotations; i ++){

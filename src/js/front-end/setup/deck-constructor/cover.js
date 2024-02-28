@@ -26,7 +26,7 @@ export class Cover {
     }
 
     buildImage(imageAttributes) {
-        this.image = document.createElement('img');
+        this.image = new Image();
         for (const attr in imageAttributes) {
             if (typeof imageAttributes[attr] === 'function') {
                 this.image.addEventListener(attr, imageAttributes[attr]);

@@ -49,11 +49,11 @@ export const moveCard = (user, initiator, oZoneId, dZoneId, index, targetIndex) 
     };
 
     //redraw trick. for some reason, sometimes images disappear, so we will use this trick to make sure they properly load in the DOM
-    const nonRedrawElements = ['active', 'bench', 'attachedCards'];
-    if (!nonRedrawElements.includes(dZoneId)){
-        hideCard(user, movingCard);
-        revealCard(user, movingCard);
-    };
+    // const nonRedrawElements = ['active', 'bench', 'attachedCards'];
+    // if (!nonRedrawElements.includes(dZoneId)){
+    //     hideCard(user, movingCard);
+    //     revealCard(user, movingCard);
+    // };
 
     // determine whether to hide/reveal card
     const isP1HideZone = ['prizes'].includes(dZoneId) || (document.getElementById('hideHandCheckbox').checked && ['hand'].includes(dZoneId) && systemState.initiator !== user);
