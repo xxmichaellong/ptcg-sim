@@ -28,7 +28,10 @@ export const initializeP2ChatButtons = () => {
 
     const p2UndoButton = document.getElementById('p2UndoButton');
     p2UndoButton.addEventListener('click', () => {
-        undo(systemState.initiator);
+        p2UndoButton.textContent = "Loading...";
+        setTimeout(()=>{
+            undo(systemState.initiator);
+        }, 1);
     });
 
     const p2FREEBUTTON = document.getElementById('p2FREEBUTTON');

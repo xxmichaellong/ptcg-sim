@@ -117,7 +117,11 @@ export const keyDown = (event) => {
             shuffleBottomAndDraw(systemState.initiator, systemState.initiator);
         };
         if (event.key === 'u') {
-            undo(systemState.initiator);
+            const undoButton = systemState.isTwoPlayer ? document.getElementById('p2UndoButton') : document.getElementById('undoButton');
+            undoButton.textContent = "Loading...";
+            setTimeout(()=>{
+                undo(systemState.initiator);
+            }, 1);
         };
     };
     if (mouseClick.selectingCard && notSpectator){

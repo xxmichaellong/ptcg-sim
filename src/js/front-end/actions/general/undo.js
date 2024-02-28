@@ -53,4 +53,6 @@ export const undo = (user, filteredActionData, emit = true) => {
         appendMessage('', determineUsername(user) + ' took back their last move!', 'announcement', false);
         processAction(user, emit, 'undo', [filteredActionData]);
     };
+    const undoButton = systemState.isTwoPlayer ? document.getElementById('p2UndoButton') : document.getElementById('undoButton');
+    undoButton.textContent = "Undo";
 }

@@ -25,8 +25,11 @@ export const initializeP1ChatButtons = () => {
 
     const undoButton = document.getElementById('undoButton');
     undoButton.addEventListener('click', () => {
-        undo(systemState.initiator);
-    })
+        undoButton.textContent = "Loading...";
+        setTimeout(()=>{
+            undo(systemState.initiator);
+        }, 1);
+    });
 
     const FREEBUTTON = document.getElementById('FREEBUTTON');
     FREEBUTTON.addEventListener('click', () => {
