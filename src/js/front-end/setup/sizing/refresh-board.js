@@ -12,6 +12,10 @@ const refreshZone = (user, zoneId) => {
         const images = (playContainer).querySelectorAll('img');
         //loop through each image and update the attached cards
         images.forEach((image) => {
+            const img = new Image();
+            img.src = image.src;
+            document.body.appendChild(img);
+            document.body.removeChild(img);
             if (!image.attached){
                 //re-append the card to the end of the same zone
                 let currentRotation;

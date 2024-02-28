@@ -17,4 +17,11 @@ export const buildDeck = (user) => {
     const targetCardBackSrc = user === 'self' ? systemState.cardBackSrc : (systemState.isTwoPlayer ? systemState.p2OppCardBackSrc : systemState.p1OppCardBackSrc);
     const cover = new Cover(user, 'deckCover', targetCardBackSrc);
     deck.elementCover.appendChild(cover.image);
+
+    deck.array.forEach(card => {
+        const img = new Image();
+        img.src = card.image.src;
+        document.body.appendChild(img);
+        document.body.removeChild(img);
+    });
 }
