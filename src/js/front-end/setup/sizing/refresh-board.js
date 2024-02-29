@@ -48,3 +48,53 @@ export const refreshBoard = () => {
         refreshZone(user, zoneId);
     });
 }
+
+export const refreshBoardImages = () => {
+    document.getElementById('refreshIcon').style.display = 'none';
+    document.getElementById('loadingCircle').style.display = 'block';
+    const zones = [
+        ['self', 'active'],
+        ['self', 'bench'],
+        ['opp', 'active'],
+        ['opp', 'bench'],
+    ];
+
+    const reloadImages = (images) => {
+        // Convert images to an array
+        const imagesArray = Array.from(images);
+        return Promise.all(imagesArray.map(image => {
+            return new Promise((resolve, reject) => {
+                image.onload = () => resolve();
+                image.onerror = () => reject();
+                image.src = image.src;
+            });
+        }));
+    };
+
+    const loadImagesForZone = ([user, zoneId]) => {
+        const zone = getZone(user, zoneId);
+        const playContainers = zone.element.querySelectorAll('div');
+
+        const promises = [];
+
+        playContainers.forEach((playContainer) => {
+            const images = playContainer.querySelectorAll('img');
+            promises.push(reloadImages(images));
+        });
+
+        return Promise.all(promises);
+    };
+
+    Promise.all(zones.map(zone => loadImagesForZone(zone)))
+        .then(() => {
+            refreshBoard();
+            console.log('Image refresh successful');
+            document.getElementById('refreshIcon').style.display = 'block';
+            document.getElementById('loadingCircle').style.display = 'none';        
+        })
+        .catch(error => {
+            console.error('Error loading images:', error);
+            document.getElementById('refreshIcon').style.display = 'block';
+            document.getElementById('loadingCircle').style.display = 'none';        
+        });
+};

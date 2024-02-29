@@ -332,10 +332,8 @@ confirmButton.addEventListener('click', () => {
     let tableBody = decklistTable.getElementsByTagName('tbody')[0];
     let rows = tableBody.rows;
     let deckData = [];
-
     for (let i = 0; i < rows.length; i++) {
         let cells = rows[i].cells;
-        
         let quantity = cells[0].innerText;
         let name = cells[1].innerText;
         let type = cells[2].innerText;
@@ -440,11 +438,13 @@ csvFile.addEventListener('change', (evt) => {
         // Populate the table with the CSV data, skipping the first line (i.e., the headers)
         for (let i = 1; i < lines.length; i++) {
             let cells = lines[i].split(',');
-            let newRow = tableBody.insertRow();
-            for (let j = 0; j < cells.length; j++) {
-                let newCell = newRow.insertCell();
-                newCell.innerText = cells[j];
-                newCell.contentEditable = "true";
+            if (cells.length === 4){
+                let newRow = tableBody.insertRow();
+                for (let j = 0; j < cells.length; j++) {
+                    let newCell = newRow.insertCell();
+                    newCell.innerText = cells[j];
+                    newCell.contentEditable = "true";
+                };
             };
         };
     };

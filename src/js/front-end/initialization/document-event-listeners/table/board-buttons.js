@@ -3,6 +3,7 @@ import { flipBoard } from '../../../actions/general/flip-board.js';
 import { flipCoin } from '../../../actions/general/flip-coin.js';
 import { takeTurn } from '../../../actions/general/take-turn.js';
 import { oppContainerDocument, selfContainerDocument, systemState } from '../../../front-end.js';
+import { refreshBoardImages } from '../../../setup/sizing/refresh-board.js';
 
 export const initializeBoardButtons = () => {
     const turnButton = document.getElementById('turnButton');
@@ -13,6 +14,9 @@ export const initializeBoardButtons = () => {
     
     const flipBoardButton = document.getElementById('flipBoardButton');
     flipBoardButton.addEventListener('click', flipBoard);
+
+    const refreshButton = document.getElementById('refreshButton');
+    refreshButton.addEventListener('click', refreshBoardImages);
 
     const selfVSTARButton = selfContainerDocument.getElementById('VSTARButton');
     selfVSTARButton.addEventListener('click', () => {

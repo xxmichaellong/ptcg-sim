@@ -41,6 +41,7 @@
         <button id="turnButton">+Turn</button>
         <button id="flipCoinButton">Coin</button>
         <button id="flipBoardButton">⇅</button>
+        <button id="refreshButton"><div id="refreshIcon">↻</div><div id="loadingCircle"></div></button>
     </div>
 
     <div id="topButtonContainer">
@@ -53,7 +54,7 @@
 
     <div id="p1Box" class="sidebox">
         <div id="chatbox"><strong>Welcome to PTCG-sim!</strong>
-            <p><strong id="changelogLink" style="cursor: pointer; text-decoration: none; color: #af4c4c; border-bottom: 1px solid #af4c4c;">This is v1.3.1 🌷</strong></p>
+            <p><strong id="changelogLink" style="cursor: pointer; text-decoration: none; color: #af4c4c; border-bottom: 1px solid #af4c4c;">(╯°□°)╯︵◓ this is v1.3.2</strong></p>
             <p style="font-size: 90%;">PTCG-sim is an <a href="https://github.com/xxmichaellong/ptcg-sim" target="_blank">open-source</a> desktop tool to simulate card games. It supports single player and online multiplayer.</p> 
             <p style="font-size: 90%;">Import your decklist by clicking the “Import” tab above, then press “Set Up” to start a game.</p>
             <p style="font-size: 90%;">Drag or use keybinds (hold <span class="shift-font">shift</span>) to move cards. Happy testing!</p>
@@ -359,6 +360,7 @@
                         <li>Announce mulligan <code>[m]</code></li>
                         <li>Undo <code>[u]</code></li>
                         <li>Close popups <code>[esc]</code></li>
+                        <li>Refresh images <code>[r]</code></li>
                     </ul>
                 </div>
             </div>
@@ -384,8 +386,38 @@
     <!-- home page -->
     <div id="videoContainer"></div>
     <div id="changelog">
+        <h2>v1.3.2 Mini Update 02/28/24</h2>
+        <p><strong style="color: #af4c4c;">NOTE! Decklists from Fukuako were updated due to an issue with the original images used. Please re-download any decklists prior to Feb 28 <a href="https://drive.google.com/drive/folders/1Vk04FldAH9dTzOI38O_KCUP4zPhm6pyn?usp=sharing" target="_blank" style="font-weight: bold; text-decoration: underline;">here</a>. See v1.3.1 announcement for more details.</strong></p>
+        <p><strong>NEW FEATURE</strong></p>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+        <li style="font-size: 16px; margin-bottom: 10px;"><strong>Refresh Button: </strong>Press the refresh button '↻' or use the keybind 'r' to refresh cards in play. This is useful for when cards fail to load (e.g., custom images, new cards, etc.) or aren't appearing in the correct position.</li></ul>
+
+        <p><strong>BUG FIXES</strong></p>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+        <li style="font-size: 16px; margin-bottom: 10px;">Fixed issue where card images would momentarily appear before updating to the card back, exposing the card to the opponent.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Fixed issue where CSV files wouldn't import properly after editing the file.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Undo button should be less laggy, especially after a lot of moves have been made.</li>
+        </ul>
+
+        <p><strong>COMING SOON</strong></p>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+        <li style="font-size: 16px; margin-bottom: 10px;">Personal accounts to save decklists and user configurations.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Importing/exporting game states and entire games.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Ability to attach cards on the opponent's side.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Ability to select multiple cards at once.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Interactive battle log, so you can click on a log and rewind to a specific board state.</li>
+        </ul>
+
+        <p><strong>BIG THANKS:</strong> (the sim is run by your generosity!!):</p>
+        <p><strong>One-time sponsors:</strong> Vu Thach.<br>
+        <strong>SoulSilver sponsors:</strong> Bertie Vos, Jack Shwartz, Morgan Gallant & Anonymous.<br>
+        <strong>HeartGold sponsors:</strong> Arielle Lok.</p>
+
+        <p>More to come soon! If you have any features or suggestions, please message me and/or join the Discord.</p>
+        <strong>- XXL <3</strong>
+        <br><br>
+        <hr>
         <h2>v1.3.1 Announcement 02/26/24</h2>
-        <p><strong style="color: #af4c4c;">NOTE! Decklists from Fukuako were updated on Feburary 28th due to an issue with the images originally used. Please re-download any decklists prior to Feb 28.</strong></p>
         <p>Hi :) Two quick things:</p>
         <li style="font-size: 16px; margin-bottom: 10px;"><strong>Fukuako Decklists: </strong>Looking to test the upcoming format? I've made a folder containing the top 16 decks from the Champions League Fukuako, which took place in Japan earlier this month. All of the decklists are in English and can be found <a href="https://drive.google.com/drive/folders/1Vk04FldAH9dTzOI38O_KCUP4zPhm6pyn?usp=sharing" target="_blank" style="font-weight: bold;">here</a>. Simply download the decklist(s) and upload them on the Import tab or the Deck Builder. Also, check out new English proxies <a href="https://www.justinbasil.com/proxies/sv5" target="_blank" style="font-weight: bold;">here</a>.</li>
         <li style="font-size: 16px; margin-bottom: 10px;"><strong>Cube Koga Support: </strong>PTCG-sim now has full support for decklist imports from <a href="https://cubekoga.net/" target="_blank">Cube Koga</a> thanks to the work of Cealgair. Set codes for POP series, several promo sets, and select cases from Limitless should be patched. Please export from Cube Koga using the PTCGO export option.</li>

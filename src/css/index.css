@@ -82,7 +82,7 @@ h1 {
 ul, li {
   margin: 0;
   padding: 0;
-  font-size: 1.7vh;
+  font-size: 1.65vh;
 }
 .keybind-column ul ul {
   margin-left: 10px;
@@ -1058,4 +1058,18 @@ a:hover {
 }
 .popup-button:hover {
   background-color: #555;
+}
+#loadingCircle {
+  width: 1vh; /* Adjust size as needed */
+  height: 1vh; /* Adjust size as needed */
+  border: .4vh solid #f3f3f3; /* Light gray border */
+  border-top: .4vh solid #3498db; /* Blue border for animation */
+  border-radius: 50%; /* Circle shape */
+  animation: spin .5s linear infinite; /* Spin animation */
+  display: none;
+  margin: 0.5vh 0vh 0.5vh 0vh;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); } /* Start at 0 degrees */
+  100% { transform: rotate(360deg); } /* End at 360 degrees (full circle) */
 }

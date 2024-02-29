@@ -2,6 +2,7 @@ import { mouseClick, systemState } from '../../front-end.js';
 import { appendMessage } from '../../setup/chatbox/append-message.js';
 import { determineUsername } from '../../setup/general/determine-username.js';
 import { doubleClick } from '../../setup/image-logic/click-events.js';
+import { refreshBoardImages } from '../../setup/sizing/refresh-board.js';
 import { getZone } from '../../setup/zones/get-zone.js';
 import { addDamageCounter } from '../counters/damage-counter.js';
 import { addSpecialCondition } from '../counters/special-condition.js';
@@ -48,6 +49,9 @@ export const keyDown = (event) => {
         };
     };
     if (!mouseClick.selectingCard){
+        if (event.key === 'r'){
+            refreshBoardImages();
+        };
         if (event.key === 'v') {
             const selectedDeckElement = getZone(systemState.initiator, 'deck').element;
             selectedDeckElement.style.display = 'block';

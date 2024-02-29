@@ -1,3 +1,4 @@
+import { preloadImage } from "../../setup/general/preload-image.js";
 import { getZone } from "../../setup/zones/get-zone.js";
 
 // exports a WebSocket connection using the Socket.IO library.
@@ -41,19 +42,7 @@ export const systemState = {
 };
 
 // preload image
-const cardBackImage = new Image();
-cardBackImage.src = "https://ptcgsim.online/src/cardback.png";
-cardBackImage.style.width = '0';
-cardBackImage.style.height = '0';
-cardBackImage.style.position = 'absolute';
-cardBackImage.style.top = '-9999px';
-cardBackImage.style.left = '-9999px';
-
-document.body.appendChild(cardBackImage);
-
-cardBackImage.addEventListener('load', () => {
-    document.body.removeChild(cardBackImage);
-});
+preloadImage("https://ptcgsim.online/src/cardback.png");
 
 // const randomNumber = Math.random();
 // const backgroundUrl = randomNumber < 0.5 ? 'https://ptcgsim.online/background1.jpg' : 'https://ptcgsim.online/background2.webp';
