@@ -1,7 +1,7 @@
 import { systemState } from '../../front-end.js';
 import { resetImage } from '../../setup/image-logic/reset-image.js';
 import { getZone } from '../../setup/zones/get-zone.js';
-import { deselectCard, hideZoneElementsIfEmpty } from '../general/close-popups.js';
+import { closePopups, deselectCard } from '../general/close-popups.js';
 import { updateCount } from '../general/count.js';
 import { hideCard, revealCard } from '../general/reveal-and-hide.js';
 import { sort } from "../zones/general.js";
@@ -119,7 +119,7 @@ export const moveCard = (user, initiator, oZoneId, dZoneId, index, targetIndex) 
     updateCount();
 
     //hide any empty arrays, such as attachedCards or viewCards if there's no more cards left
-    hideZoneElementsIfEmpty();
+    closePopups();
 
     //sort the array, if applicable
     if (['deck', 'lostZone', 'discard', 'hand'].includes(dZoneId)){

@@ -174,6 +174,7 @@ export const doubleClick = (event) => {
         document.getElementById('stadium').style.zIndex = '-1';
     } else {
         let overlay = document.createElement('div');
+        overlay.id = 'fullImage';
         overlay.style.position = 'fixed';
         overlay.style.top = '0';
         overlay.style.left = '0';

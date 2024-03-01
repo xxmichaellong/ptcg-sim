@@ -6,7 +6,7 @@ import { determineUsername } from '../../setup/general/determine-username.js';
 import { processAction } from '../../setup/general/process-action.js';
 import { removeImages } from '../../setup/image-logic/remove-images.js';
 import { getZone } from '../../setup/zones/get-zone.js';
-import { hideZoneElementsIfEmpty } from './close-popups.js';
+import { hideZoneElements } from './close-popups.js';
 import { updateCount } from './count.js';
 
 export const reset = (user, clean = false, build = true, invalidMessage = true, emit = true) => {
@@ -52,7 +52,7 @@ export const reset = (user, clean = false, build = true, invalidMessage = true, 
         };
     });
 
-    hideZoneElementsIfEmpty();
+    hideZoneElements();
 
     if (build){
         if (determineDeckData(user)){

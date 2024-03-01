@@ -16,14 +16,31 @@ export const hideZoneElements = () => {
         oppContainerDocument.getElementById(zoneId).style.display = 'none';
     });
 }
-export const hideZoneElementsIfEmpty = () => {
+
+const isOutsideZoneClick = (event, zone) => {
+    if (!event) {
+        return false;
+    } else if (zone.element.contains(event.target)){
+        return false;
+    } else if (zone.elementCover && zone.elementCover.contains(event.target)){
+        return false;
+    } else if (event.target.id && event.target.id === 'fullImage'){
+        return false;
+    } else if (event.target.parentElement && event.target.parentElement.id && event.target.parentElement.id === 'fullImage'){
+        return false;
+    };
+    return true;
+};
+
+export const hideZoneElementsIfEmpty = (event) => {
     const zoneIds = ['discard', 'lostZone', 'deck', 'attachedCards', 'viewCards'];
     const users = ['self', 'opp'];
 
     users.forEach(user => {
         zoneIds.forEach(zoneId =>{
             const zone = getZone(user, zoneId);
-            if (zone.getCount() === 0){
+            const outsideZoneClick = isOutsideZoneClick(event, zone);
+            if (zone.getCount() === 0 || (outsideZoneClick && !['attachedCards', 'viewCards'].includes(zoneId))){
                 zone.element.style.display = 'none';
             } else if (zone.getCount() !== 0 && ['attachedCards', 'viewCards'].includes(zoneId)){
                 zone.element.style.display = 'block';
@@ -88,6 +105,6 @@ export const closeFullView = (event) => {
 export const closePopups = (event) => {
     deselectCard();
     closeFullView(event);
-    hideZoneElementsIfEmpty();
+    hideZoneElementsIfEmpty(event);
     document.getElementById('cardContextMenu').style.display = 'none';
 }
