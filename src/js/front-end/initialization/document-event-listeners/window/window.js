@@ -9,4 +9,10 @@ export const initializeWindow = () => {
         [handElement, oppHandElement].forEach(adjustAlignment);
         refreshBoard();
     });
+
+    window.addEventListener('beforeunload', function(event) {
+        const confirmationMessage = 'Are you sure you want to leave? Any unsaved game data will be lost.';
+        event.returnValue = confirmationMessage;
+        return confirmationMessage;
+    });
 }
