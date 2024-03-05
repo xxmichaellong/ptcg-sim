@@ -27,6 +27,7 @@ body {
   color: white;
 }
 .dark-mode-2 {
+  background: none !important;
   background-color: rgb(0, 0, 0) !important;
   color: white;
 }
