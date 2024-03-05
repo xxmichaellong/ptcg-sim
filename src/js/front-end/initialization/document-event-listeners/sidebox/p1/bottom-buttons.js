@@ -46,4 +46,20 @@ export const initializeP1BottomButtons = () => {
         exportChatboxContent();
         optionsContextMenu.style.display = 'none';
     });
+
+    const fullscreenButton = document.getElementById('fullscreenButton');
+
+    fullscreenButton.addEventListener('click', function () {
+        const element = document.documentElement;
+        if (element.requestFullscreen) {
+            element.requestFullscreen();
+        } else if (element.mozRequestFullScreen) {
+            element.mozRequestFullScreen();
+        } else if (element.webkitRequestFullScreen) {
+            element.webkitRequestFullScreen();
+        } else if (element.msRequestFullscreen) {
+            element.msRequestFullscreen();
+        }
+        optionsContextMenu.style.display = 'none';
+    });
 }
