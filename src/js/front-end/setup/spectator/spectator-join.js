@@ -5,6 +5,7 @@ import { acceptAction } from "../general/accept-action.js";
 import { cleanActionData } from "../general/clean-action-data.js";
 import { refreshBoard } from "../sizing/refresh-board.js";
 import { handleSpectatorButtons } from "./handle-spectator-buttons.js";
+import { lookAtCards, stopLookingAtCards } from "../../actions/general/reveal-and-hide.js";
 
 let socketId = '';
 let spectatorCounter = 0;
@@ -66,6 +67,10 @@ socket.on('spectatorActionData', (data) => {
                 acceptAction(data.user, data.action, data.parameters);
             });
         };
-        // refreshBoard();
+    	
+	stopLookingAtCards('opp', '', 'hand', false, true);
+    	stopLookingAtCards('self', '', 'hand', false, true);
+        
+	// refreshBoard();
     };
 });
