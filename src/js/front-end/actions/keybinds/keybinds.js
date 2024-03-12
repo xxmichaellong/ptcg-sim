@@ -270,5 +270,8 @@ export const keyDown = (event) => {
         if (event.key === 't' && (event.altKey || event.getModifierState('Alt'))){
             changeType(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex, 'Trainer');
         };
+        if (event.key === 'p' && (event.altKey || event.getModifierState('Alt'))){
+            changeType(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex, 'Pokémon');
+        };
     };
 }

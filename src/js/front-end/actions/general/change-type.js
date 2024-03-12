@@ -21,7 +21,14 @@ export const changeType = (user, initiator, zoneId, index, type, emit = true) =>
     card.type = type;
 
     const cardName = card.image.faceDown ? 'card' : card.name;
-    const typeName = type === 'Energy' ? 'energy' : 'tool';
+    let typeName;
+    if (type === 'Trainer') {
+        typeName = 'tool';
+    } else if (type === 'Energy') {
+        typeName = 'energy';
+    } else if (type === 'Pokémon') {
+        typeName = 'Pokémon';
+    };
     appendMessage(initiator, determineUsername(initiator) + ' changed ' + cardName + ' into an ' + typeName, 'player', false);
     moveCard(user, initiator, zoneId, 'board', index);    
     

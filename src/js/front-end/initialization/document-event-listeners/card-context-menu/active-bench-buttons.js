@@ -32,4 +32,8 @@ export const initializeActiveAndBenchButtons = () => {
     changeToToolButton.addEventListener('click', () => {
         changeType(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex, 'Trainer');
     });
+    const changeToPokémonButton = document.getElementById('changeToPokémonButton');
+    changeToPokémonButton.addEventListener('click', () => {
+        changeType(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex, 'Pokémon');
+    });
 }

@@ -47,6 +47,41 @@ export const initializeP1BottomButtons = () => {
         optionsContextMenu.style.display = 'none';
     });
 
+    const importState = document.getElementById('importState');
+    importState.addEventListener('click', (event) => {
+        event.preventDefault();
+        alert("Coming soon!");
+        // const file = event.target.files[0]; // Get the selected file
+        // const reader = new FileReader(); // Create a new FileReader object
+    
+        // // Define the callback function to handle the file reading
+        // reader.onload = function(event) {
+        //     const content = event.target.result; // Get the content of the file
+        //     console.log('ari')
+        //     try {
+        //         const data = JSON.parse(content); // Parse the JSON content
+        //         // Now you have access to the unpackaged JSON data in the 'data' variable
+        //         console.log(data);
+        //         // You can perform further processing with the unpackaged data here
+        //     } catch (error) {
+        //         console.error('Error parsing JSON file:', error);
+        //     }
+        // };
+        // // Read the selected file as text
+        // reader.readAsText(file);
+    });
+
+    const exportState = document.getElementById('exportState');
+    exportState.addEventListener('click', () => {
+        alert("Coming soon!");
+        // const jsonData = JSON.stringify(systemState.spectatorActionData, null, 2); // The null and 2 parameters are for pretty-printing
+        // const blob = new Blob([jsonData], { type: 'application/json' });
+        // const link = document.createElement('a');
+        // link.href = window.URL.createObjectURL(blob);
+        // link.download = 'data.json';
+        // link.click();
+    });
+
     const fullscreenButton = document.getElementById('fullscreenButton');
 
     fullscreenButton.addEventListener('click', function () {

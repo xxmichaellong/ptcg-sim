@@ -38,7 +38,7 @@ export const spectatorJoin = () => {
 }
 
 socket.on('spectatorActionData', (data) => {
-    const isSpectator = (document.getElementById('spectatorModeCheckbox').checked && systemState.isTwoPlayer);            
+    const isSpectator = (document.getElementById('spectatorModeCheckbox').checked && systemState.isTwoPlayer);        
 
     if (isSpectator){
         if (socketId === ''){
@@ -58,7 +58,7 @@ socket.on('spectatorActionData', (data) => {
 
             systemState.p2SelfUsername = data.selfUsername;
             systemState.p2OppUsername = data.oppUsername;
-            const actionData = data.spectatorActionData
+            const actionData = data.spectatorActionData;
             const missingActions = actionData.slice(spectatorCounter);
             spectatorCounter = actionData.length;
     

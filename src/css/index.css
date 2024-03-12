@@ -22,6 +22,29 @@ body {
   background-size: 100% 100%;
   background-repeat: no-repeat;
 }
+.tooltip {
+  position: relative;
+}
+.tooltiptext {
+  visibility: hidden;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px;
+  position: absolute;
+  z-index: 1;
+  bottom: 120%;
+  opacity: 0;
+  transition: opacity 0.3s;
+  transform: translateX(-50%);
+  left: 50%;
+  font-size: 1.75vh;
+}
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
 .dark-mode-1 {
   background-color: rgb(8, 18, 18) !important;
   color: white;
@@ -83,7 +106,7 @@ h1 {
 ul, li {
   margin: 0;
   padding: 0;
-  font-size: 1.65vh;
+  font-size: 1.60vh;
 }
 .keybind-column ul ul {
   margin-left: 10px;
@@ -194,6 +217,7 @@ ul, li {
   gap: 5px;
 }
 #boardButtonContainer button {
+  margin-left: 5px;
   border-radius: 10px;
   font-size: 2vh;
   cursor: pointer;

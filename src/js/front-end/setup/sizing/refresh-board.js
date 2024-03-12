@@ -1,5 +1,6 @@
 import { rotateCard } from "../../actions/general/rotate-card.js";
 import { moveCard } from "../../actions/move-card-bundle/move-card.js";
+import { systemState } from "../../front-end.js";
 import { getZone } from "../zones/get-zone.js";
 import { adjustCards } from "./resizer.js";
 
@@ -57,6 +58,10 @@ export const refreshBoardImages = () => {
         ['self', 'bench'],
         ['opp', 'active'],
         ['opp', 'bench'],
+        ['self', 'deck'],
+        ['self', 'prizes'],
+        ['opp', 'deck'],
+        ['opp', 'prizes'],
     ];
 
     const reloadImages = (images) => {
@@ -72,16 +77,21 @@ export const refreshBoardImages = () => {
     };
 
     const loadImagesForZone = ([user, zoneId]) => {
-        const zone = getZone(user, zoneId);
-        const playContainers = zone.element.querySelectorAll('div');
-
         const promises = [];
-
-        playContainers.forEach((playContainer) => {
-            const images = playContainer.querySelectorAll('img');
+        const zone = getZone(user, zoneId);
+        if (zoneId === 'deck'){
+            const images = zone.elementCover.querySelectorAll('img');
             promises.push(reloadImages(images));
-        });
-
+        } else if (zoneId === 'prizes'){
+            const images = zone.element.querySelectorAll('img');
+            promises.push(reloadImages(images));
+        } else {
+            const playContainers = zone.element.querySelectorAll('div');
+            playContainers.forEach((playContainer) => {
+                const images = playContainer.querySelectorAll('img');
+                promises.push(reloadImages(images));
+            });
+        };
         return Promise.all(promises);
     };
 

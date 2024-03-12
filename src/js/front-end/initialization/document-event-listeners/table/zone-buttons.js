@@ -7,8 +7,12 @@ export const initializeZoneButtons = () => {
     selfShuffleDeckButton.addEventListener('click', () => shuffleAll('self', systemState.initiator, 'deck'));
 
     const selfShuffleDiscardButton = selfContainerDocument.getElementById('shuffleDiscardButton');
-    selfShuffleDiscardButton.addEventListener('click', () => shuffleAll('self', systemState.initiator, 'discard'));
-
+    selfShuffleDiscardButton.addEventListener('click', () => {
+        if (confirm("Are you sure you want to shuffle all cards into the deck?")) {
+            shuffleAll('self', systemState.initiator, 'discard');
+        };
+    });
+    
     const selfDiscardAttachedCardsButton = selfContainerDocument.getElementById('discardAttachedCardsButton');
     selfDiscardAttachedCardsButton.addEventListener('click', () => discardAll('self', systemState.initiator, 'attachedCards'));
 
@@ -65,7 +69,11 @@ export const initializeZoneButtons = () => {
     oppShuffleDeckButton.addEventListener('click', () => shuffleAll('opp', systemState.initiator, 'deck'));
 
     const oppShuffleDiscardButton = oppContainerDocument.getElementById('shuffleDiscardButton');
-    oppShuffleDiscardButton.addEventListener('click', () => shuffleAll('opp', systemState.initiator, 'discard'));
+    oppShuffleDiscardButton.addEventListener('click', () => {
+        if (confirm("Are you sure you want to shuffle all cards into the deck?")) {
+            shuffleAll('opp', systemState.initiator, 'discard');
+        };
+    });
 
     const oppDiscardAttachedCardsButton = oppContainerDocument.getElementById('discardAttachedCardsButton');
     oppDiscardAttachedCardsButton.addEventListener('click', () => discardAll('opp', systemState.initiator, 'attachedCards'));

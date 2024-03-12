@@ -38,10 +38,22 @@
     <div id="oppResizer" class="opp-color"></div>
 
     <div id="boardButtonContainer">
-        <button id="turnButton">+Turn</button>
-        <button id="flipCoinButton">Coin</button>
-        <button id="flipBoardButton">⇅</button>
-        <button id="refreshButton"><div id="refreshIcon">↻</div><div id="loadingCircle"></div></button>
+        <div class="tooltip" id="turnButton">
+            <button>+Turn</button>
+            <span class="tooltiptext">Start turn</span>
+        </div>
+        <div class="tooltip" id="flipCoinButton">
+            <button>Coin</button>
+            <span class="tooltiptext">Flip coin</span>
+        </div>
+        <div class="tooltip" id="flipBoardButton">
+            <button>⇅</button>
+            <span class="tooltiptext">Flip board</span>
+        </div>
+        <div class="tooltip" id="refreshButton">
+            <button><div id="refreshIcon">↻</div><div id="loadingCircle"></div></button>
+            <span class="tooltiptext">Refresh images</span>
+        </div>
     </div>
 
     <div id="topButtonContainer">
@@ -258,15 +270,19 @@
                 <ul class="card-sub-menu">
                     <li id="changeToEnergyButton">to Energy</li>
                     <li id="changeToToolButton">to Tool</li>
-                    <!-- <li id="changeToPokémonButton">to Pokémon</li> -->
+                    <li id="changeToPokémonButton">to Pokémon</li>
                 </ul>
             </li>
         </ul>
     </div>
 
     <div id="optionsContextMenu">
-        <div id="clearLog">Clear battle log</div>
+        <div id="exportState">Export game state</div>
+        <div><label for="jsonFile" id="importState" style="cursor: pointer;">Import game state</label>
+            <input type="file" id="jsonFile" accept=".json" style="display:none;">
+        </div>
         <div id="exportLog">Export battle log</div>
+        <div id="clearLog">Clear battle log</div>
         <div id="fullscreenButton">Full screen</div>
     </div>
 
@@ -346,7 +362,7 @@
                         <ul>
                             <li>to Tool <code>[alt + t]</code></li>
                             <li>to Energy <code>[alt + e]</code></li>
-                            <!-- <li>to Pokémon <code>[alt + p]</code></li> -->
+                            <li>to Pokémon <code>[alt + p]</code></li>
                         </ul>
                     </ul>
                 </div>
