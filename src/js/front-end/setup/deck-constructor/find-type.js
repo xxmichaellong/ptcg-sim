@@ -1,4 +1,16 @@
+//number: every card UP until that number is of that type, i.e., it's the first card that's type is different
+
 const SVEra = {
+    "TEF": {
+        140: "Pokémon",
+        161: "Trainer",
+        163: "Energy",
+        197: "Pokémon",
+        203: "Trainer",
+        209: "Pokémon",
+        213: "Trainer",
+        218: "Pokémon",
+    },
     "PAF": {
         76: "Pokémon",
         92: "Trainer",
