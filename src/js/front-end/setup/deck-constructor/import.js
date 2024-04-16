@@ -138,7 +138,16 @@ export const importDecklist = (user) => {
         'Basic {L} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_L_R_${language}.png`,
         'Basic {F} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_F_R_${language}.png`,
         'Basic {P} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_P_R_${language}.png`,
-        'Basic {M} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_M_R_${language}.png`
+        'Basic {M} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_M_R_${language}.png`,
+        // cubekoga compatibility
+        'Basic Fire Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_002_R_${language}.png`,
+        'Basic Grass Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_001_R_${language}.png`,
+        'Basic Darkness Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_007_R_${language}.png`,
+        'Basic Lightning Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_004_R_${language}.png`,
+        'Basic Fighting Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_006_R_${language}.png`,
+        'Basic Psychic Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_005_R_${language}.png`,
+        'Basic Metal Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_008_R_${language}.png`,
+        'Basic Water Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_003_R_${language}.png`
     };
 
     const specialCases = {
@@ -147,7 +156,9 @@ export const importDecklist = (user) => {
         'PR-SM' : 'SMP',
         'PR-XY' : 'XYP',
         'PR-BLW' : 'BWP',
-        'PR-HS' : 'HSP'
+        'PR-HS' : 'HSP',
+        // cubekoga compatibility
+        'sma' : 'HIF'
     };
     
     const oldSetCode_to_id = {
@@ -213,6 +224,9 @@ export const importDecklist = (user) => {
             } else if (energyUrl){
                 entry[5] = energyUrl;
                 entry[6] = 'Energy';
+                if (name.slice(-5) === ' null'){
+                    entry[2] = name.slice(0, -5);
+                }
             } else if (!entry[4] && (!entry[5] || !entry[6])){
                 failedText.style.display = 'block';
                 loadingText.style.display = 'none';

@@ -82,6 +82,9 @@ const SVEra = {
         46: "Trainer",
         102: "Pokémon",
     },
+    "SVE": {
+        7: "Energy",
+    },
 };
 
 const SSEra = {
