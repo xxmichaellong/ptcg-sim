@@ -72,6 +72,8 @@ export const initializeSocketEventListeners = () => {
             if (systemState.isTwoPlayer){
                 const data = {
                     selfUsername: systemState.p2SelfUsername,
+                    selfDeckData: systemState.selfDeckData,
+                    oppDeckData: systemState.p2OppDeckData,
                     oppUsername: systemState.p2OppUsername,
                     roomId: systemState.roomId,
                     spectatorActionData: systemState.exportActionData,

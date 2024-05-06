@@ -56,7 +56,9 @@ socket.on('spectatorActionData', (data) => {
             spectatorTimerId = timerId;
 
             systemState.p2SelfUsername = data.selfUsername;
+            systemState.selfDeckData = data.selfDeckData;
             systemState.p2OppUsername = data.oppUsername;
+            systemState.p2OppDeckData = data.oppDeckData;
             const actionData = data.spectatorActionData;
             const missingActions = actionData.slice(systemState.spectatorCounter);
             systemState.spectatorCounter = actionData.length;

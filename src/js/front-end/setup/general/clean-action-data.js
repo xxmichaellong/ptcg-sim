@@ -6,6 +6,7 @@ export const cleanActionData = (user) => {
         systemState.selfActionData = [];
         // systemState.spectatorActionData = [];
         systemState.exportActionData = [];
+        systemState.spectatorCounter = 0;
     } else {
         systemState.oppCounter = 0;
         systemState.oppActionData = [];
