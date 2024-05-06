@@ -11,7 +11,10 @@ export const catchUpActions = (actionData) => {
         } else if (entry.parameters[0] === 'opp'){
             entry.parameters[0] = 'self';
         };
-        systemState.spectatorActionData.push({user: 'opp', action: entry.action, parameters: entry.parameters});
+        // systemState.spectatorActionData.push({user: 'opp', action: entry.action, parameters: entry.parameters});
+        if (entry.action !== 'exchangeData' && entry.action !== 'loadDeckData'){
+            systemState.exportActionData.push({user: 'opp', emit: true, action: entry.action, parameters: entry.parameters});
+        };
     });
 
     const mostRecentDeckDataIndex = [...missingData]

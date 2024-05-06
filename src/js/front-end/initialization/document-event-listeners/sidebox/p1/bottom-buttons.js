@@ -1,8 +1,11 @@
 import { reset } from '../../../../actions/general/reset.js';
 import { setup } from '../../../../actions/general/setup.js';
-import { systemState } from '../../../../front-end.js';
+import { socket, systemState } from '../../../../front-end.js';
 import { clearChatboxContent, exportChatboxContent } from '../../../../setup/chatbox/export-chat.js';
 import { hideOptionsContextMenu } from '../../../../setup/chatbox/hide-options-context-menu.js';
+import { acceptAction } from '../../../../setup/general/accept-action.js';
+import { cleanActionData } from '../../../../setup/general/clean-action-data.js';
+import { refreshBoardImages } from '../../../../setup/sizing/refresh-board.js';
 
 export const initializeP1BottomButtons = () => {
     const setupButton = document.getElementById('setupButton');
@@ -47,39 +50,65 @@ export const initializeP1BottomButtons = () => {
         optionsContextMenu.style.display = 'none';
     });
 
+    const fileInput = document.getElementById('jsonFile');
     const importState = document.getElementById('importState');
     importState.addEventListener('click', (event) => {
         event.preventDefault();
-        alert("Coming soon!");
-        // const file = event.target.files[0]; // Get the selected file
-        // const reader = new FileReader(); // Create a new FileReader object
-    
-        // // Define the callback function to handle the file reading
-        // reader.onload = function(event) {
-        //     const content = event.target.result; // Get the content of the file
-        //     console.log('ari')
-        //     try {
-        //         const data = JSON.parse(content); // Parse the JSON content
-        //         // Now you have access to the unpackaged JSON data in the 'data' variable
-        //         console.log(data);
-        //         // You can perform further processing with the unpackaged data here
-        //     } catch (error) {
-        //         console.error('Error parsing JSON file:', error);
-        //     }
-        // };
-        // // Read the selected file as text
-        // reader.readAsText(file);
+        fileInput.click();
     });
+    fileInput.addEventListener('change', handleFileSelect);
+
+    function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            try {
+                socket.emit('initiateImport', {roomId: systemState.roomId});
+                cleanActionData('self');
+                cleanActionData('opp');
+                const jsonData = JSON.parse(e.target.result);
+                const actions = jsonData;
+                actions.forEach(data => {
+                    acceptAction(data.user, data.action, data.parameters, true);
+                });
+                socket.emit('resetCounter', {roomId: systemState.roomId});
+            } catch (error) {
+                console.error('Error reading file:', error);
+                alert('Error reading file. Please make sure the file is valid.');
+            } finally {
+                refreshBoardImages();
+                socket.emit('endImport', {roomId: systemState.roomId});
+                fileInput.value = '';
+                optionsContextMenu.style.display = 'none';
+            }
+        };
+        reader.readAsText(file);
+    }
 
     const exportState = document.getElementById('exportState');
     exportState.addEventListener('click', () => {
-        alert("Coming soon!");
-        // const jsonData = JSON.stringify(systemState.spectatorActionData, null, 2); // The null and 2 parameters are for pretty-printing
-        // const blob = new Blob([jsonData], { type: 'application/json' });
-        // const link = document.createElement('a');
-        // link.href = window.URL.createObjectURL(blob);
-        // link.download = 'data.json';
-        // link.click();
+        const selfData = {
+            user: 'self',
+            emit: true,
+            action: 'loadDeckData',
+            parameters: [systemState.selfDeckData],
+        }
+        const oppData = {
+            user: 'opp',
+            emit: true,
+            action: 'loadDeckData',
+            parameters: [systemState.isTwoPlayer ? systemState.p2OppDeckData : systemState.p1OppDeckData],
+        }
+        systemState.exportActionData.unshift(selfData, oppData);
+
+        const jsonData = JSON.stringify(systemState.exportActionData, null, 2);
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = 'data.json';
+        link.click();
+        optionsContextMenu.style.display = 'none';
     });
 
     const fullscreenButton = document.getElementById('fullscreenButton');

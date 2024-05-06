@@ -309,7 +309,9 @@ export const loadDeckData = (user, deckData, emit = true) => {
         systemState.p1OppDeckData = deckData;
     };
     reset(user, true, true, false, false);
-    appendMessage('', determineUsername(user) + ' imported deck', 'announcement', false);
+    if (deckData){
+        appendMessage('', determineUsername(user) + ' imported deck', 'announcement', false);
+    }
     processAction(user, emit, 'loadDeckData', [deckData]);
 }
 

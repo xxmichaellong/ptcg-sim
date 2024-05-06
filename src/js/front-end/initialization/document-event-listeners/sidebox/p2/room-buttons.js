@@ -1,6 +1,7 @@
 import { reset } from "../../../../actions/general/reset.js";
 import { socket, systemState } from '../../../../front-end.js';
 import { cleanActionData } from "../../../../setup/general/clean-action-data.js";
+import { processAction } from "../../../../setup/general/process-action.js";
 import { handleSpectatorButtons } from "../../../../setup/spectator/handle-spectator-buttons.js";
 import { removeSyncIntervals } from "../../../socket-event-listeners/socket-event-listeners.js";
 
@@ -44,7 +45,7 @@ export const initializeRoomButtons = () => {
     
     const leaveRoomButton = document.getElementById('leaveRoomButton');
     leaveRoomButton.addEventListener('click', () => {
-        if (window.confirm('Are you sure you want to leave the room? Battle log will be erased.')) {
+        if (window.confirm('Are you sure you want to leave the room? Current game state will be lost.')) {
             const isSpectator = systemState.isTwoPlayer && document.getElementById('spectatorModeCheckbox').checked;
             const username = isSpectator ? systemState.spectatorUsername : systemState.p2SelfUsername;
             const data = {
@@ -95,6 +96,13 @@ export const initializeRoomButtons = () => {
             handleSpectatorButtons();
             removeSyncIntervals();
             systemState.spectatorId = '';
+            //add the deck data back to the actiondata list
+            if (systemState.selfDeckData){
+                processAction('self', true, 'loadDeckData', [systemState.selfDeckData]);
+            };
+            if (systemState.p1OppDeckData){
+                processAction('opp', true, 'loadDeckData', [systemState.p1OppDeckData]);
+            };
         };
     });
 };

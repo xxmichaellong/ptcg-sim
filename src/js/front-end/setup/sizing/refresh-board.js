@@ -98,7 +98,6 @@ export const refreshBoardImages = () => {
     Promise.all(zones.map(zone => loadImagesForZone(zone)))
         .then(() => {
             refreshBoard();
-            console.log('Image refresh successful');
             document.getElementById('refreshIcon').style.display = 'block';
             document.getElementById('loadingCircle').style.display = 'none';        
         })

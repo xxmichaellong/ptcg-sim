@@ -27,6 +27,7 @@ import { cleanActionData } from '../../setup/general/clean-action-data.js'
 import { resyncActions } from '../../setup/general/resync-actions.js'
 import { spectatorJoin } from '../../setup/spectator/spectator-join.js'
 
+let isImporting = false;
 let syncCheckInterval;
 let spectatorActionInterval;
 export const removeSyncIntervals = () => {
@@ -73,7 +74,7 @@ export const initializeSocketEventListeners = () => {
                     selfUsername: systemState.p2SelfUsername,
                     oppUsername: systemState.p2OppUsername,
                     roomId: systemState.roomId,
-                    spectatorActionData: systemState.spectatorActionData,
+                    spectatorActionData: systemState.exportActionData,
                     socketId: socket.id,
                 };
                 socket.emit('spectatorActionData', data);
@@ -153,9 +154,19 @@ export const initializeSocketEventListeners = () => {
     });
     socket.on('requestAction', (data) => {
         const notSpectator = !(document.getElementById('spectatorModeCheckbox').checked && systemState.isTwoPlayer);
-        if (notSpectator && data.counter === systemState.selfCounter){
+        if (notSpectator && data.counter === systemState.selfCounter || isImporting){
             acceptAction('self', data.action, data.parameters);
         };
+    });
+    // reset counter when importing game state
+    socket.on('initiateImport', () => {
+        systemState.spectatorCounter = 0; //reset spectator counter to make sure it catches all of the actions
+        isImporting = true;
+        cleanActionData('self');
+        cleanActionData('opp');
+    });
+    socket.on('endImport', () => {
+        isImporting = false;
     });
     socket.on('pushAction', (data) => {
         const notSpectator = !(document.getElementById('spectatorModeCheckbox').checked && systemState.isTwoPlayer);
@@ -165,7 +176,10 @@ export const initializeSocketEventListeners = () => {
             };
             if (data.counter === (parseInt(systemState.oppCounter) + 1)){
                 systemState.oppCounter ++;
-                systemState.spectatorActionData.push({user: 'opp', action: data.action, parameters: data.parameters});
+                // systemState.spectatorActionData.push({user: 'opp', emit: true, action: data.action, parameters: data.parameters});
+                if (data.action !== 'exchangeData' && data.action !== 'loadDeckData'){
+                    systemState.exportActionData.push({user: 'opp', emit: true, action: data.action, parameters: data.parameters});
+                };
                 acceptAction('opp', data.action, data.parameters);
             } else if (data.counter > (parseInt(systemState.oppCounter) + 1)){
                 const data = {

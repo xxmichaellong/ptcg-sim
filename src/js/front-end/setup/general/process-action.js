@@ -2,9 +2,8 @@ import { socket, systemState } from "../../front-end.js";
 
 export const processAction = (user, emit, action, parameters) => {
     const notSpectator = !(document.getElementById('spectatorModeCheckbox').checked && systemState.isTwoPlayer);
-
     if (!systemState.undo && emit && notSpectator){
-        if (!systemState.isTwoPlayer || user === 'self'){ //log the move if it's 1 player, or if it's yourself
+        if (!systemState.isTwoPlayer || user === 'self'){
             const data = {
                 user: user,
                 emit: emit,
@@ -15,20 +14,21 @@ export const processAction = (user, emit, action, parameters) => {
                 systemState.selfCounter++;
                 systemState.selfActionData.push(data);
             } else {
+                // in 1p, we want to log oppAction data and counter so undo button works. in 2p, we do not need to do this because we directly request the undo action, and then
+                // their action data takes care of it (and they push the action back to us if our request is successful)
                 systemState.oppCounter++;
                 systemState.oppActionData.push(data);
             };
-
-            if (systemState.isTwoPlayer){ //if it's two player, push your move to the opponent
-                const data = {
-                    action: action,
-                    counter: systemState.selfCounter,
-                    roomId: systemState.roomId,
-                    parameters: parameters
-                };
-                socket.emit('pushAction', data);
+        }
+        if (user === 'self' && systemState.isTwoPlayer){ //log the move if it's 1 player, or if it's yourself
+            const data = {
+                action: action,
+                counter: systemState.selfCounter,
+                roomId: systemState.roomId,
+                parameters: parameters
             };
-        } else { //if it's two player and you're moving an opponent's card, request the action before implementing
+            socket.emit('pushAction', data);
+        } else if (systemState.isTwoPlayer) { //if it's two player and you're moving an opponent's card, request the action before implementing
             const data = {
                 action: action,
                 counter: systemState.oppCounter,
@@ -38,7 +38,7 @@ export const processAction = (user, emit, action, parameters) => {
             socket.emit('requestAction', data);
         };
 
-        if (systemState.isTwoPlayer && user === 'self'){ //for storing spectator data (note we edited the parameter metric here to reverse the initatior change)
+        if (!systemState.isTwoPlayer || user === 'self'){ //for storing spectator data (note we edited the parameter metric here to reverse the initatior change)
             if (parameters[0]){
                 if (parameters[0] === 'self'){
                     parameters[0] = 'opp' 
@@ -52,7 +52,10 @@ export const processAction = (user, emit, action, parameters) => {
                 action: action,
                 parameters: parameters,
             };
-            systemState.spectatorActionData.push(data);
+            // systemState.spectatorActionData.push(data);
+            if (action !== 'exchangeData' && action !== 'loadDeckData'){
+                systemState.exportActionData.push(data);
+            };
         };
     };
 }

@@ -84,8 +84,8 @@ const actionToFunction = (action) => {
     };
 };
 
-export const acceptAction = (user, action, parameters) => {
-    const emit = (user === 'self') ? true : false;
+export const acceptAction = (user, action, parameters, isStateImport = false) => {
+    const emit = (user === 'self' || isStateImport) ? true : false;
     if (parameters){
         actionToFunction(action)(user, ...parameters, emit);
     } else {

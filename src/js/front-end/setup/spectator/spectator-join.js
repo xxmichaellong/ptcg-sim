@@ -3,11 +3,10 @@ import { socket, systemState } from "../../front-end.js";
 import { appendMessage } from "../chatbox/append-message.js";
 import { acceptAction } from "../general/accept-action.js";
 import { cleanActionData } from "../general/clean-action-data.js";
-import { refreshBoard } from "../sizing/refresh-board.js";
+import { refreshBoardImages } from "../sizing/refresh-board.js";
 import { handleSpectatorButtons } from "./handle-spectator-buttons.js";
 
 let socketId = '';
-let spectatorCounter = 0;
 let spectatorTimerId;
 
 export const spectatorJoin = () => {
@@ -34,7 +33,7 @@ export const spectatorJoin = () => {
     appendMessage('', systemState.spectatorUsername + ' joined', 'announcement', true);
     
     socketId = '';
-    spectatorCounter = 0;
+    systemState.spectatorCounter = 0;
 }
 
 socket.on('spectatorActionData', (data) => {
@@ -52,20 +51,20 @@ socket.on('spectatorActionData', (data) => {
             };
             const timerId = setTimeout(() => {
                 socketId = '';
-                spectatorCounter = 0;
+                systemState.spectatorCounter = 0;
             }, 5000);
             spectatorTimerId = timerId;
 
             systemState.p2SelfUsername = data.selfUsername;
             systemState.p2OppUsername = data.oppUsername;
             const actionData = data.spectatorActionData;
-            const missingActions = actionData.slice(spectatorCounter);
-            spectatorCounter = actionData.length;
+            const missingActions = actionData.slice(systemState.spectatorCounter);
+            systemState.spectatorCounter = actionData.length;
     
             missingActions.forEach(data => {
                 acceptAction(data.user, data.action, data.parameters);
             });
         };
-        // refreshBoard();
+        // refreshBoardImages();
     };
 });

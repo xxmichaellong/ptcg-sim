@@ -1,6 +1,7 @@
 import { reset } from '../../../actions/general/reset.js';
 import { socket, systemState } from '../../../front-end.js';
 import { cleanActionData } from '../../../setup/general/clean-action-data.js';
+import { processAction } from '../../../setup/general/process-action.js';
 import { show } from '../../../setup/home-header/header-toggle.js';
 import { handleSpectatorButtons } from '../../../setup/spectator/handle-spectator-buttons.js';
 import { removeSyncIntervals } from '../../socket-event-listeners/socket-event-listeners.js';
@@ -63,6 +64,12 @@ export const initializeHeaderButtons = () => {
             handleSpectatorButtons();
             removeSyncIntervals();
             systemState.spectatorId = '';
+            if (systemState.selfDeckData){
+                processAction('self', true, 'loadDeckData', [systemState.selfDeckData]);
+            };
+            if (systemState.p1OppDeckData){
+                processAction('opp', true, 'loadDeckData', [systemState.p1OppDeckData]);
+            };
         }
     });
 
