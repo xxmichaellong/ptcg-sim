@@ -15,14 +15,9 @@ export const exchangeData = (user, username, deckData, cardBack, coachingMode, c
         systemState.p2OppCardBackSrc = cardBack;
         reset('self', true, true, false, false);
     } else if (user === 'opp'){
-        if (systemState.isTwoPlayer){
-            systemState.p2OppUsername = username;
-            systemState.p2OppDeckData = deckData;
-            systemState.p2OppCardBackSrc = cardBack;
-        } else { //for the edge case where exchange data is called to load the deck in 1p mode..
-            systemState.p1OppDeckData = deckData;
-            systemState.p1OppCardBackSrc = cardBack;
-        };
+        systemState.p2OppUsername = username;
+        systemState.p2OppDeckData = deckData;
+        systemState.p2OppCardBackSrc = cardBack;
         if (coachingModeCheckbox.checked && coachingMode){
             systemState.coachingMode = true;
             flipBoardButton.style.display = 'inline-block';

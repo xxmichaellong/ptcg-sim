@@ -60,6 +60,7 @@ export const initializeRoomButtons = () => {
             const p2Chatbox = document.getElementById('p2Chatbox');
             lobby.style.display = 'block';
             p2ExplanationBox.style.display = 'block';
+            document.getElementById('importState').style.display = 'inline';
             document.getElementById('flipBoardButton').style.display = 'inline-block';
             connectedRoom.style.display = 'none';
             systemState.isTwoPlayer = false;
