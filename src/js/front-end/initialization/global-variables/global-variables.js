@@ -2,9 +2,9 @@ import { preloadImage } from "../../setup/general/preload-image.js";
 import { getZone } from "../../setup/zones/get-zone.js";
 
 // exports a WebSocket connection using the Socket.IO library.
-// export const socket = io('https://ptcgsim.online');
+export const socket = io('https://ptcgsim.online');
 
-export const socket = io('http://localhost:4000/');
+// export const socket = io('http://localhost:4000/');
 // export references to HTML elements 'selfContainer' and 'oppContainer', and their respective content window documents for ease of access to the iframes
 export const selfContainer = document.getElementById('selfContainer');
 export const selfContainerDocument = selfContainer.contentWindow.document;
