@@ -989,6 +989,7 @@ a:hover {
 .announcement {
   background-color: rgb(205, 203, 203);
   text-align: center;
+  user-select: text;
 }
 .loading-spectator {
   background-color:rgb(205 188 103);
@@ -998,16 +999,19 @@ a:hover {
   background-color: rgba(142, 155, 209, 0.864);
   text-align: left;
   width: fit-content;
+  user-select: text;
 }
 .opp-message {
   background-color: rgba(187, 120, 136, 0.864);  
   text-align: left;
   width: fit-content;
+  user-select: text;
 }
 .spectator-message {
   background-color:rgb(228, 214, 145);
   text-align: left;
   width: fit-content;
+  user-select: text;
 }
 .self-text {
   background-color: rgba(211, 219, 250, 0.864);

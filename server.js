@@ -7,17 +7,22 @@ const bcrypt = require('bcryptjs');
 const path = require('path');
 const dotenv = require('dotenv');
 const envFilePath = path.join(__dirname, 'socket-admin-password.env');
+const sqlite3 = require('sqlite3').verbose();
+const fs = require('fs');
 dotenv.config({ path: envFilePath });
 
-async function main() {
-    // Express App Configuration
-    const app = express();
-    app.use(cors());
-    app.get('/', (req, res) => {
-        res.sendFile(__dirname + '/index.html');
-    });
-    app.use(express.static(__dirname));
+function generateRandomKey(length) {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let key = '';
+    for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        key += characters.charAt(randomIndex);
+    }
+    return key;
+}
 
+async function main() {
+    const app = express();
     // HTTP Server Setup
     const server = http.createServer(app);
 
@@ -28,6 +33,32 @@ async function main() {
             origin: ["https://admin.socket.io", "https://ptcgsim.online/"],
             credentials: true
         }
+    });
+    // Create a new SQLite database
+    const dbFilePath = 'data/db.sqlite';
+    const maxSizeGB = 15;
+    const db = new sqlite3.Database(dbFilePath);
+    let isDatabaseCapacityReached = false;
+
+    // Check database size
+    const checkDatabaseSizeGB = () => {
+        const stats = fs.statSync(dbFilePath);
+        const fileSizeInBytes = stats.size;
+        const fileSizeInGB = fileSizeInBytes / (1024 * 1024 * 1024); // Convert bytes to gigabytes
+        return fileSizeInGB;
+    };
+
+    // Perform size check periodically
+    setInterval(() => {
+        const currentSize = checkDatabaseSizeGB();
+        if (currentSize > maxSizeGB) {
+            isDatabaseCapacityReached = true;
+        };
+    }, 1000 * 60 * 60);
+
+    // Create a table to store key-value pairs
+    db.serialize(() => {
+        db.run('CREATE TABLE IF NOT EXISTS KeyValuePairs (key TEXT PRIMARY KEY, value TEXT)');
     });
 
     // Bcrypt Configuration
@@ -43,6 +74,33 @@ async function main() {
             password: hashedPassword,
         },
         mode: "development",
+    });
+
+    app.set('view engine', 'ejs'); // Set EJS as the view engine
+    app.set('views', path.join(__dirname, 'views')); // Set the views directory
+    // Express App Configuration
+    app.use(cors());
+    app.use(express.static(__dirname));
+    app.get('/', (_, res) => {
+        res.render('index', { importDataJSON: null });
+    });
+    app.get('/import', (req, res) => {
+        const key = req.query.key;
+        if (!key) {
+            return res.status(400).json({ error: 'Key parameter is missing' });
+        }
+    
+        db.get('SELECT value FROM KeyValuePairs WHERE key = ?', [key], (err, row) => {
+            if (err) {
+                console.error('Error fetching value from database:', err);
+                return res.status(500).json({ error: 'Internal server error' });
+            }
+            if (row) {
+                res.render('index', { importDataJSON: row.value });
+            } else {
+                res.status(404).json({ error: 'Key not found' });
+            }
+        });
     });
 
     const roomInfo = new Map();
@@ -62,8 +120,7 @@ async function main() {
         const disconnectHandler = (roomId, username) => {
             if (!socket.data.leaveRoom){
                 socket.to(roomId).emit('userDisconnected', username);
-            };
-        
+            };        
             // Remove the disconnected user from the roomInfo map
             if (roomInfo.has(roomId)) {
                 const room = roomInfo.get(roomId);
@@ -93,7 +150,21 @@ async function main() {
                 };
             };
         };
-
+        socket.on('storeGameState', (exportData) => {
+            if (isDatabaseCapacityReached) {
+                socket.emit('exportGameStateFailed', 'No more storage for game states! You should probably tell Michael/Xiao Xiao.');
+            } else {
+                const key = generateRandomKey(4);
+                db.run('INSERT OR REPLACE INTO KeyValuePairs (key, value) VALUES (?, ?)', [key, exportData], (err) => {
+                    if (err) {
+                        console.error('Error storing key-value pair in database:', err);
+                        socket.emit('exportGameStateFailed', 'Error exporting game! Please try again or save as a file.');
+                    } else {
+                        socket.emit('exportGameStateSuccessful', key);
+                    };
+                });
+            }
+        });
         socket.on('joinGame', (roomId, username, isSpectator) => {
             if (!roomInfo.has(roomId)) {
                 roomInfo.set(roomId, { players: new Set(), spectators: new Set() });

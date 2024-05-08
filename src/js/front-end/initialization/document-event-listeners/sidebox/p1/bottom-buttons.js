@@ -87,6 +87,22 @@ export const initializeP1BottomButtons = () => {
     }
 
     const exportState = document.getElementById('exportState');
+
+    // Function to handle the user's choice
+    function handleUserChoice(choice, jsonData) {
+        if (choice === '2') {
+            socket.emit('storeGameState', jsonData);
+        } else if (choice === '1') {
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = 'data.json';
+            link.click();
+        }
+        // Hide the options menu after handling the choice
+        optionsContextMenu.style.display = 'none';
+    }
+
     exportState.addEventListener('click', () => {
         const selfData = {
             user: 'self',
@@ -103,12 +119,11 @@ export const initializeP1BottomButtons = () => {
         systemState.exportActionData.unshift(selfData, oppData);
 
         const jsonData = JSON.stringify(systemState.exportActionData, null, 2);
-        const blob = new Blob([jsonData], { type: 'application/json' });
-        const link = document.createElement('a');
-        link.href = window.URL.createObjectURL(blob);
-        link.download = 'data.json';
-        link.click();
-        optionsContextMenu.style.display = 'none';
+
+        const userChoice = prompt("Enter '1' to save a file or enter '2' to generate a URL");
+        if (userChoice === '1' || userChoice === '2') {
+            handleUserChoice(userChoice, jsonData);
+        }
     });
 
     const fullscreenButton = document.getElementById('fullscreenButton');
