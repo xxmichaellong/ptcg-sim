@@ -31,7 +31,6 @@ export const initializeP1BottomButtons = () => {
     const optionsButton = document.getElementById('optionsButton');
     optionsButton.addEventListener('click', () => {
         const p1Box = document.getElementById('p1Box');
-
         optionsContextMenu.style.display = 'block';
         const adjustment = p1Box.offsetHeight - optionsButton.offsetTop;
         optionsContextMenu.style.bottom = `${adjustment}px`;

@@ -67,10 +67,12 @@
 
     <div id="p1Box" class="sidebox">
         <div id="chatbox"><strong>Welcome to PTCG-sim!</strong>
-            <p><strong id="changelogLink" style="cursor: pointer; text-decoration: none; color: #af4c4c; border-bottom: 1px solid #af4c4c;">(╯°□°)╯︵◓ this is v1.3.2</strong></p>
+            <p><strong id="changelogLink" style="cursor: pointer; text-decoration: none; color: #4caf56; border-bottom: 1px solid #4caf56;">v1.4!! Ϟ(๑⚈ ․̫ ⚈๑)</strong></p>
             <p style="font-size: 90%;">PTCG-sim is an <a href="https://github.com/xxmichaellong/ptcg-sim" target="_blank">open-source</a> Pokémon Trading Card Game (Pokémon TCG) tabletop simulator. It supports single player and online multiplayer.</p> 
             <p style="font-size: 90%;">Import your deck in the “Import” tab above, then press “Set Up” to start a game.</p>
-            <p style="font-size: 90%;">Drag or use keybinds (hold <span class="shift-font">shift</span>) to move cards. Happy testing!</p>
+            <p style="font-size: 90%;">Drag or use keybinds (hold <span class="shift-font">shift</span>) to move cards. </p>
+            <p style="font-size: 90%;">To import/export a game, see the "Options" button below.</p>
+            <p style="font-size: 90%;">Happy testing! (╯°□°)╯︵◓ </p>
             <button id="tutorialButton">Watch Tutorial</button>
             <br><br>
             <div id="links">
@@ -146,6 +148,7 @@
     <div id="deckImport" class="sidebox">
         <div>
             <button id="deckBuilderButton">Deck builder</button>
+            <button id="importExportGameStateButton">Import/Export Game</button>
             <!-- <button id="decklistButton">New format decks</button>
             <script>
                 const decklistButton = document.getElementById('decklistButton');
@@ -405,6 +408,45 @@
     <!-- home page -->
     <div id="videoContainer"></div>
     <div id="changelog">
+        <h2>v1.4.0 Update 05/08/24</h2>
+        <p>Yoyoyo! It's been a fat second guys — life has been busy, but I'm super happy to release this update :)</p>
+
+        <p><strong>NEW FEATURE</strong></p>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+        <li style="font-size: 16px; margin-bottom: 10px;"><strong>Importing/Exporting Game States (BETA): </strong>You can now export your game state as a JSON file or custom URL! 
+            <li style="font-size: 14px; margin-bottom: 10px; margin-left: 20px"><strong>JSON file: </strong>This is great for saving/organizing games that you want to revisit in the future. JSON files supports importing in 2P, which means that it loads the game state for the opponent too. This is useful if a player has disconnected during a game* or players want to analyze a game together. 
+            <br><br>
+            <em>*The connected player MUST export the game BEFORE the other player rejoins, or else the game state will be reset and lost.</em></li>
+            <li style="font-size: 14px; margin-bottom: 10px; margin-left: 20px"><strong>Custom URL: </strong>This is great for sharing cool games with friends on social media! The link directly loads the game state, making it super accessible. Only 1P is supported.</li></ul>
+        </li>
+        </ul>
+
+        <p><strong>OTHER ADDITIONS/CHANGES</strong></p>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+        <li style="font-size: 16px; margin-bottom: 10px;">Hovering over the board buttons now explains its function (e.g., the refresh images and flip board buttons).</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">"Change type" now supports changing type to Pokemon. Note that putting a card directly into play (i.e., putting it in an empty active or bench spot) still automatically changes the type of the card to Pokemon.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">"Refresh Images" button now refreshes the images of the deck and prizes in addition to all cards in play.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Added a full screen button in the "Options" menu. Highly recommend playing in full screen!</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Added CubeKoga support for compatibility with SVE Basic Energies and Hidden Fates Shiny Vault.</li>
+        </ul>
+
+        <p><strong>COMING SOON</strong></p>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+        <li style="font-size: 16px; margin-bottom: 10px;">Personal accounts to save decklists and user configurations.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Ability to attach cards on the opponent's side.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Ability to select multiple cards at once.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Interactive battle log, so you can click on a log and rewind to a specific board state.</li>
+        </ul>
+
+        <p><strong>HUUUUGE THANKS</strong> (the sim servers are literally being run by your generosity):</p>
+        <p><strong>One-time sponsors:</strong> Quentin Carlier.<br>
+        <strong>SoulSilver sponsors:</strong> Bertie Vos, Jack Shwartz, Morgan Gallant & Anonymous.<br>
+        <strong>HeartGold sponsors:</strong> Arielle Lok.</p>
+
+        <p>That's all for now! As always, please reach out if you have any suggestions.</p>
+        <strong>- XXL <3 :D</strong>
+        <br><br>
+        <hr>
         <h2>v1.3.2 Mini Update 02/28/24</h2>
         <p><strong style="color: #af4c4c;">NOTE! Decklists from Fukuako were updated due to an issue with the original images used. Please re-download any decklists prior to Feb 28 <a href="https://drive.google.com/drive/folders/1Vk04FldAH9dTzOI38O_KCUP4zPhm6pyn?usp=sharing" target="_blank" style="font-weight: bold; text-decoration: underline;">here</a>. See v1.3.1 announcement for more details.</strong></p>
         <p><strong>NEW FEATURE</strong></p>

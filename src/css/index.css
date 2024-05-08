@@ -641,7 +641,7 @@ ul, li {
   display: none;
   border-radius: 10px 10px 0 0;
 }
-#deckBuilderButton, #decklistButton {
+#deckBuilderButton, #importExportGameStateButton {
   color: white;
   border-radius: 5px;
   border: none;
@@ -654,9 +654,9 @@ ul, li {
   border: 2px solid #a89850;
   background: linear-gradient(to bottom, #c2b07f, #ac9c52);
 }
-#decklistButton {
-  border: 2px solid #8b50a8;
-  background: linear-gradient(to bottom, #8b50a8, #6f527d);
+#importExportGameStateButton {
+  border: 2px solid #54a850;
+  background: linear-gradient(to bottom, #57a850, #527d57);
   margin-left: 0.5vw;
 }
 #deckBuilderButton:hover {

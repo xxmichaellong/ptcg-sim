@@ -1,5 +1,7 @@
+import { hideOptionsContextMenu } from "../../../setup/chatbox/hide-options-context-menu.js";
 import { importDecklist } from "../../../setup/deck-constructor/import.js";
 import { getRandomDeckList, showDecklistsContextMenu } from "../../../setup/deck-constructor/sample.decklists.js";
+import { show } from "../../../setup/home-header/header-toggle.js";
 import { systemState } from "../../global-variables/global-variables.js";
 
 export const initializeImport = () => {
@@ -95,5 +97,26 @@ export const initializeImport = () => {
     const deckBuilderButton = document.getElementById('deckBuilderButton');
     deckBuilderButton.addEventListener('click', function() {
         window.open('https://tishinator.github.io/PTCGDeckBuilder/');
+    });
+
+    const importExportGameStateButton = document.getElementById('importExportGameStateButton');
+    importExportGameStateButton.addEventListener('click', () => {
+        const optionsContextMenu = document.getElementById('optionsContextMenu');    
+        optionsContextMenu.style.display = 'block';
+        if (systemState.isTwoPlayer) {
+            const p2Button = document.getElementById('p2Button');
+            show('p2Box', p2Button)
+            const p2OptionsButton = document.getElementById('p2OptionsButton');
+            const p2Box = document.getElementById('p2Box');
+            const adjustment = p2Box.offsetHeight - p2OptionsButton.offsetTop;
+            optionsContextMenu.style.bottom = `${adjustment}px`;
+        } else {
+            const p1Button = document.getElementById('p1Button');
+            show('p1Box', p1Button);
+            const optionsButton = document.getElementById('optionsButton');                      
+            const adjustment = p1Box.offsetHeight - optionsButton.offsetTop;
+            optionsContextMenu.style.bottom = `${adjustment}px`;
+        }
+        document.addEventListener('mousedown', hideOptionsContextMenu);
     });
 };
