@@ -34,7 +34,8 @@ export const importDecklist = (user) => {
     const decklist = user === 'self' ? mainDeckImportInput.value : altDeckImportInput.value;
 
     const regexWithOldSet = /(\d+) (.+?)(?= \w*-\w*\d*$) (\w*-\w*\d*)/;
-    const regexWithSet = /(\d+) (.+?) (\w{2,3}[1-9]?) (\d+[a-zA-Z]?)/;
+    //const regexWithSet = /(\d+) (.+?) (\w{2,3}[1-9]?) (\d+[a-zA-Z]?)/;
+    const regexWithSet = /(\d+) (.+?) (\w{2,3}[1-9]?|WBSP|NBSP|FRLG|FUT20) (\d+[a-zA-Z]?)/;
     const regexWithPRSet = /(\d+) (.+?) (PR-\w{2,3}) ((?:DP|HGSS|BW|XY|SM|SWSH)?)(\d+)/;
     const regexWithSpecialSet = /(\d+) (.+?) ((?:\w{2,3}(?:\s+[a-zA-Z\d]+)*)(?:\s+(\w{2,3}\s*[a-zA-Z\d]+)\s*)*)$/;
     const regexWithoutSet = /(\d+) (.+?)(?=\s\d|$|(\s\d+))/;
@@ -168,7 +169,9 @@ export const importDecklist = (user) => {
         'POP1': 'pop1', 'POP2': 'pop2', 'POP3': 'pop3', 'POP4': 'pop4', 'POP5': 'pop5', 'POP6': 'pop6', 'POP7': 'pop7', 'POP8': 'pop8', 'POP9': 'pop9',
         'P1': 'pop1', 'P2': 'pop2', 'P3': 'pop3', 'P4': 'pop4', 'P5': 'pop5', 'P6': 'pop6', 'P7': 'pop7', 'P8': 'pop8', 'P9': 'pop9',
         'pop1': 'pop1', 'pop2': 'pop2', 'pop3': 'pop3', 'pop4': 'pop4', 'pop5': 'pop5', 'pop6': 'pop6', 'pop7': 'pop7', 'pop8': 'pop8', 'pop9': 'pop9',
-        'SI': 'si1', 'RM': 'ru1'
+        'SI': 'si1', 'RM': 'ru1', 'FUT20': 'fut20',
+        // https://limitlesstcg.com/set-codes
+        'BS2': 'base4', 'EXP': 'ecard1', 'AQP': 'ecard2', 'SKR': 'ecard3', 'E1': 'ecard1', 'E2': 'ecard2', 'E3': 'ecard3', 'WBP': 'basep', 'WBSP': 'basep', 'NP': 'np', 'NBSP': 'np', 'FRLG': 'ex6'
     };
     
     // the following cards have no image on limitless
