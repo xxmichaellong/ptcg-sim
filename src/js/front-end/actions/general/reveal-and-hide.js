@@ -230,6 +230,8 @@ export const hideShortcut = (user, initiator, zoneId, index, message = true, emi
 }
 
 export const lookShortcut = (user, initiator, zoneId, index, emit = true) => {
+    const targetCardBackSrc = user === 'self' ? systemState.cardBackSrc : (systemState.isTwoPlayer ? systemState.p2OppCardBackSrc : systemState.p1OppCardBackSrc);
+
     if (emit){ //only apply for initiator
         const zone = getZone(user, zoneId);
         const card = zone.array[index];    
