@@ -10,12 +10,24 @@ import { moveCard } from '../move-card-bundle/move-card.js';
 import { sort } from '../zones/general.js';
 import { deselectCard } from './close-popups.js';
 
+const toggleCard = (card, targetCardBackSrc) => {
+    if (card.image.src !== targetCardBackSrc) {
+        card.image.src2 = card.image.src;
+        card.image.src = targetCardBackSrc;
+        card.image.alt2 = card.image.alt;
+        card.image.alt = 'Card back';
+    }
+    else {
+        card.image.src = card.image.src2;
+        card.image.alt = card.image.alt2;
+    };
+};
+
 export const hideCard = (user, card) => {
     const targetCardBackSrc = user === 'self' ? systemState.cardBackSrc : (systemState.isTwoPlayer ? systemState.p2OppCardBackSrc : systemState.p1OppCardBackSrc);
 
     if (card.image.src !== targetCardBackSrc) {
-        card.image.src2 = card.image.src;
-        card.image.src = targetCardBackSrc;
+        toggleCard(card, targetCardBackSrc);
     };
 };
 
@@ -23,7 +35,7 @@ export const revealCard = (user, card) => {
     const targetCardBackSrc = user === 'self' ? systemState.cardBackSrc : (systemState.isTwoPlayer ? systemState.p2OppCardBackSrc : systemState.p1OppCardBackSrc);
 
     if (card.image.src === targetCardBackSrc){
-        card.image.src = card.image.src2;
+        toggleCard(card, targetCardBackSrc);
     };
 }
 
@@ -145,7 +157,7 @@ export const revealShortcut = (user, initiator, zoneId, index, message = true, e
 
     const targetCardBackSrc = user === 'self' ? systemState.cardBackSrc : (systemState.isTwoPlayer ? systemState.p2OppCardBackSrc : systemState.p1OppCardBackSrc);
     if (card.image.src === targetCardBackSrc){
-        card.image.src = card.image.src2;
+        toggleCard(card, targetCardBackSrc);
     };
     if (message){
         appendMessage(initiator, determineUsername(initiator) + ' revealed ' + card.name + ' in ' + determineUsername(card.image.user) + "'s " + convertZoneName(zoneId), 'player', false);
@@ -186,12 +198,12 @@ export const revealShortcut = (user, initiator, zoneId, index, message = true, e
 export const hideShortcut = (user, initiator, zoneId, index, message = true, emit = true) => {
     const zone = getZone(user, zoneId);
     const card = zone.array[index];
+
     card.image.public = false;
 
     const targetCardBackSrc = user === 'self' ? systemState.cardBackSrc : (systemState.isTwoPlayer ? systemState.p2OppCardBackSrc : systemState.p1OppCardBackSrc);
     if (card.image.src !== targetCardBackSrc){
-        card.image.src2 = card.image.src;
-        card.image.src = targetCardBackSrc;
+        toggleCard(card, targetCardBackSrc);
     };
     const appendMessageEmit = zoneId === 'hand' && initiator !== user;
     if (message){
@@ -218,10 +230,12 @@ export const hideShortcut = (user, initiator, zoneId, index, message = true, emi
 }
 
 export const lookShortcut = (user, initiator, zoneId, index, emit = true) => {
+    const targetCardBackSrc = user === 'self' ? systemState.cardBackSrc : (systemState.isTwoPlayer ? systemState.p2OppCardBackSrc : systemState.p1OppCardBackSrc);
+
     if (emit){ //only apply for initiator
         const zone = getZone(user, zoneId);
         const card = zone.array[index];    
-        card.image.src = card.image.src2;
+        toggleCard(card, targetCardBackSrc);
     };
     appendMessage(initiator, determineUsername(initiator) + ' looked at card in ' + determineUsername(user) + "'s " + zoneId, 'player', false);
 
@@ -247,8 +261,7 @@ export const stopLookingShortcut = (user, initiator, zoneId, index, emit = true)
     if (emit){ //only apply for initiator
         const zone = getZone(user, zoneId);
         const card = zone.array[index];
-        card.image.src2 = card.image.src;
-        card.image.src = targetCardBackSrc;
+        toggleCard(card, targetCardBackSrc);
     };
     appendMessage(initiator, determineUsername(initiator) + ' stopped looking at card in ' + determineUsername(user) + "'s " + zoneId, 'player', false);
 
