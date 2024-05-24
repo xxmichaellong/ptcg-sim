@@ -2,6 +2,18 @@
 
 const SVEra = {
     "TEF": {
+        142: "Pokémon",
+        166: "Trainer",
+        168: "Energy",
+        203: "Pokémon",
+        210: "Trainer",
+        217: "Pokémon",
+        221: "Trainer",
+        223: "Pokémon",
+        226: "Trainer",
+        227: "Energy",
+    },
+    "TEF": {
         140: "Pokémon",
         161: "Trainer",
         163: "Energy",
@@ -80,7 +92,11 @@ const SVEra = {
     "SVP": {
         45: "Pokémon",
         46: "Trainer",
-        102: "Pokémon",
+        114: "Pokémon",
+        115: "Trainer",
+        124: "Pokémon",
+        125: "Trainer",
+        133: "Pokémon",
     },
     "SVE": {
         7: "Energy",
