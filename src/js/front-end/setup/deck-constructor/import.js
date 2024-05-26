@@ -230,7 +230,7 @@ export const importDecklist = (user) => {
                 entry[5] = energyUrl;
                 entry[6] = 'Energy';
                 if (name.slice(-5) === ' null'){
-                    entry[2] = name.slice(0, -5);
+                    entry[1] = name.slice(0, -5);
                 }
             } else if (!entry[4] && (!entry[5] || !entry[6])){
                 failedText.style.display = 'block';
