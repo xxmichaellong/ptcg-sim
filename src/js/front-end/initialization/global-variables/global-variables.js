@@ -23,6 +23,8 @@ export const systemState = {
     spectatorId: '',
     oppCounter: 0,
     isTwoPlayer: false,
+    isReplay: false, // should be treated as false no matter what if isTwoPlayer is true
+    replayActionData: [],
     turn: 0,
     get initiator() {
         return selfContainer.classList.contains('self') ? 'self' : 'opp'; 
