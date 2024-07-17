@@ -10,8 +10,12 @@ import { addAbilityCounter } from "../counters/ability-counter.js";
 import { hideCard, revealCard } from "../general/reveal-and-hide.js";
 import { moveCard } from "../move-card-bundle/move-card.js";
 import { shuffleZone } from "./shuffle-zone.js";
+import { replayBlock } from "../../setup/general/replay-block.js";
 
-export const shuffleAll = (user, initiator, zoneId, indices, emit = true) => {
+export const shuffleAll = (user, initiator, zoneId, indices, emit = true, isFromReplay = false) => {
+    if (replayBlock('action','shuffleAll',isFromReplay)){
+        return;
+    }
     const oInitiator = initiator === 'self' ? 'opp' : 'self';
     if (user === 'opp' && emit && systemState.isTwoPlayer){
         processAction(user, emit, 'shuffleAll', [oInitiator, zoneId, indices]);
@@ -48,7 +52,10 @@ export const shuffleAll = (user, initiator, zoneId, indices, emit = true) => {
     processAction(user, emit, 'shuffleAll', [oInitiator, zoneId, indices]);
 }
 
-export const shuffleBottom = (user, initiator, zoneId, indices, emit = true) => {
+export const shuffleBottom = (user, initiator, zoneId, indices, emit = true, isFromReplay = false) => {
+    if (replayBlock('action','shuffleBottom',isFromReplay)){
+        return;
+    }
     const oInitiator = initiator === 'self' ? 'opp' : 'self';
     if (user === 'opp' && emit && systemState.isTwoPlayer){
         processAction(user, emit, 'shuffleBottom', [oInitiator, zoneId, indices]);
@@ -74,7 +81,10 @@ export const shuffleBottom = (user, initiator, zoneId, indices, emit = true) => 
     processAction(user, emit, 'shuffleBottom', [oInitiator, zoneId, indices]);
 }
 
-export const discardAll = (user, initiator, zoneId, emit = true) => {
+export const discardAll = (user, initiator, zoneId, emit = true, isFromReplay = false) => {
+    if (replayBlock('action','discardAll',isFromReplay)){
+        return;
+    }
     const oInitiator = initiator === 'self' ? 'opp' : 'self';
     if (user === 'opp' && emit && systemState.isTwoPlayer){
         processAction(user, emit, 'discardAll', [oInitiator, zoneId]);
@@ -103,7 +113,10 @@ export const discardAll = (user, initiator, zoneId, emit = true) => {
     processAction(user, emit, 'discardAll', [oInitiator, zoneId]);
 }
 
-export const lostZoneAll = (user, initiator, zoneId, emit = true) => {
+export const lostZoneAll = (user, initiator, zoneId, emit = true, isFromReplay = false) => {
+    if (replayBlock('action','lostZoneAll',isFromReplay)){
+        return;
+    }
     const oInitiator = initiator === 'self' ? 'opp' : 'self';
     if (user === 'opp' && emit && systemState.isTwoPlayer){
         processAction(user, emit, 'lostZoneAll', [oInitiator, zoneId]);
@@ -132,7 +145,10 @@ export const lostZoneAll = (user, initiator, zoneId, emit = true) => {
     processAction(user, emit, 'lostZoneAll', [oInitiator, zoneId]);
 }
 
-export const handAll = (user, initiator, zoneId, emit = true) => {
+export const handAll = (user, initiator, zoneId, emit = true, isFromReplay = false) => {
+    if (replayBlock('action','handAll',isFromReplay)){
+        return;
+    }
     const oInitiator = initiator === 'self' ? 'opp' : 'self';
     if (user === 'opp' && emit && systemState.isTwoPlayer){
         processAction(user, emit, 'handAll', [oInitiator, zoneId]);
@@ -165,7 +181,10 @@ export const closeDisplay = (user, zoneId) => {
     zone.element.style.display = 'none';
 }
 
-export const leaveAll = (user, initiator, oZoneId, emit = true) => {
+export const leaveAll = (user, initiator, oZoneId, emit = true, isFromReplay = false) => {
+    if (replayBlock('action','leaveAll',isFromReplay)){
+        return;
+    }
     const oInitiator = initiator === 'self' ? 'opp' : 'self';
     if (user === 'opp' && emit && systemState.isTwoPlayer){
         processAction(user, emit, 'leaveAll', [oInitiator, oZoneId]);

@@ -8,6 +8,9 @@ import { identifyCard } from './click-events.js';
 const popupContainers = ['lostZone', 'discard', 'deck', 'attachedCards', 'viewCards'];
 
 export const dragStart = (event) => {
+    if(systemState.isReplay && !systemState.isTwoPlayer){
+        return;
+    }
     event.target.classList.add('high-zIndex');
     if (event.target.attached){
         event.target.style.opacity = '0';
@@ -38,6 +41,9 @@ export const dragStart = (event) => {
 }
 
 export const dragOver = (event) => {
+    if(systemState.isReplay && !systemState.isTwoPlayer){
+        return;
+    }
     event.preventDefault();
     const blockedClasses = ['self-circle', 'opp-circle', 'self-tab', 'opp-tab']; //need to turn off pointerevents for these to allow the drop to be triggered from card images
     if (blockedClasses.some(className => event.target.classList.contains(className))) {

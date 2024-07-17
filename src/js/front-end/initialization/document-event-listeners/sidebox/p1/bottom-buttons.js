@@ -82,7 +82,7 @@ export const initializeP1BottomButtons = () => {
             return;
         }
         const data = systemState.replayActionData[0];
-        acceptAction(data.user, data.action, data.parameters, true);
+        acceptAction(data.user, data.action, data.parameters, true,true);
         systemState.replayActionData.shift();
     }
     
@@ -97,7 +97,7 @@ export const initializeP1BottomButtons = () => {
         systemState.exportActionData = [];
         clearChatboxContent();
         actions.forEach(data => {
-            acceptAction(data.user, data.action, data.parameters, true);
+            acceptAction(data.user, data.action, data.parameters, true, true);
         });
     }
     
@@ -127,6 +127,8 @@ export const initializeP1BottomButtons = () => {
         exportState.style.display='block';
         exportLog.style.display='block';
         clearLog.style.display='none';
+        document.getElementById("turnButton").style.display='none';
+        document.getElementById("flipCoinButton").style.display='none';
         
         setupButton.removeEventListener('click', setupFunction);
         setupBothButton.removeEventListener('click', setupBothFunction);
@@ -154,6 +156,8 @@ export const initializeP1BottomButtons = () => {
         exportState.style.display='block';
         exportLog.style.display='block';
         clearLog.style.display='block';
+        document.getElementById("turnButton").style.display='block';
+        document.getElementById("flipCoinButton").style.display='block';
         
         setupButton.addEventListener('click', setupFunction);
         setupBothButton.addEventListener('click', setupBothFunction);
@@ -194,8 +198,8 @@ export const initializeP1BottomButtons = () => {
                 else{
                     console.assert(actions[0].action==="loadDeckData");
                     console.assert(actions[1].action==="loadDeckData");
-                    acceptAction(actions[0].user, actions[0].action, actions[0].parameters, true);
-                    acceptAction(actions[1].user, actions[1].action, actions[1].parameters, true);
+                    acceptAction(actions[0].user, actions[0].action, actions[0].parameters, true, true);
+                    acceptAction(actions[1].user, actions[1].action, actions[1].parameters, true, true);
                     actions.shift();
                     actions.shift();
                     systemState.replayActionData = structuredClone(actions);

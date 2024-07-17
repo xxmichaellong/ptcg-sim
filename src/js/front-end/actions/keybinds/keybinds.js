@@ -22,6 +22,7 @@ import { moveCardBundle } from '../move-card-bundle/move-card-bundle.js';
 import { draw, moveToDeckBottom, moveToDeckTop, shuffleIntoDeck, switchWithDeckTop, viewDeck } from '../zones/deck-actions.js';
 import { shuffleAll } from '../zones/general.js';
 import { discardAndDraw, shuffleAndDraw, shuffleBottomAndDraw } from '../zones/hand-actions.js';
+import { replayBlock } from "../../setup/general/replay-block.js";
 
 export const keyUp = (event) => {
     if (event.key === 'Shift') {
@@ -34,6 +35,9 @@ export const keyDown = (event) => {
     if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.tagName === 'TD' || blockedClasses.some(className => event.target.classList.contains(className))){
         return;
     };
+    if (replayBlock("keybind",event.key)){
+        return;
+    }
     if (event.key === 'Escape'){
         hideZoneElements();
         closePopups();
@@ -78,6 +82,9 @@ export const keyDown = (event) => {
             shuffleBoard(systemState.initiator, systemState.initiator);
         };
         if (event.key === 'f' && !(event.altKey || event.getModifierState('Alt'))) {
+            if(systemState.isReplay && !systemState.isTwoPlayer){
+                return;
+            }
             flipCoin(systemState.initiator);
         };
     };
@@ -102,6 +109,9 @@ export const keyDown = (event) => {
             setup(systemState.initiator);
         };
         if (event.key === 'r' && (event.altKey || event.getModifierState('Alt'))) {
+            if(systemState.isReplay && !systemState.isTwoPlayer){
+                return;
+            }
             reset(systemState.initiator);
         };
         if (event.key === 't' && (event.altKey || event.getModifierState('Alt'))) {
@@ -244,9 +254,15 @@ export const keyDown = (event) => {
             };
         };
         if (event.key === 'r' && !(event.altKey || event.getModifierState('Alt')) && ['stadium', 'active', 'bench'].includes(mouseClick.zoneId) && !mouseClick.card.image.parentElement.classList.contains('full-view')) {
+            if(systemState.isReplay && !systemState.isTwoPlayer){
+                return;
+            }
             rotateCard(mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex);
         };
         if (event.key === 'r' && (event.altKey || event.getModifierState('Alt')) && ['active', 'bench'].includes(mouseClick.zoneId) && !mouseClick.card.image.parentElement.classList.contains('full-view')){
+            if(systemState.isReplay && !systemState.isTwoPlayer){
+                return;
+            }
             rotateCard(mouseClick.cardUser, mouseClick.zoneId,mouseClick.cardIndex, true);
         };
         if (event.key ==='c'){

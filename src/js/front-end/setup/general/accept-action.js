@@ -20,6 +20,7 @@ import { shuffleZone } from "../../actions/zones/shuffle-zone.js"
 import { systemState } from "../../front-end.js"
 import { exchangeData } from "../deck-constructor/exchange-data.js"
 import { changeCardBack, loadDeckData } from "../deck-constructor/import.js"
+import { replayBlock } from "./replay-block.js"
 
 const functions = {
     exchangeData: exchangeData,
@@ -84,11 +85,24 @@ const actionToFunction = (action) => {
     };
 };
 
-export const acceptAction = (user, action, parameters, isStateImport = false) => {
+export const acceptAction = (user, action, parameters, isStateImport = false, isFromReplay = false) => {
+    if (replayBlock("action",action,isFromReplay)){
+        return;
+    }
     const emit = (user === 'self' || isStateImport) ? true : false;
     if (parameters){
-        actionToFunction(action)(user, ...parameters, emit);
+        if(['shuffleAll','shuffleBottom','discardAll','lostZoneAll','handAll','leaveAll','VSTARGXFunction'].includes(action)){
+            actionToFunction(action)(user, ...parameters, emit, isFromReplay);
+        }
+        else{
+            actionToFunction(action)(user, ...parameters, emit);
+        }
     } else {
-        actionToFunction(action)(user, emit);
+        if(['shuffleAll','shuffleBottom','discardAll','lostZoneAll','handAll','leaveAll','VSTARGXFunction'].includes(action)){
+            actionToFunction(action)(user, emit, isFromReplay);
+        }
+        else{
+            actionToFunction(action)(user, emit);
+        }
     };
 }
