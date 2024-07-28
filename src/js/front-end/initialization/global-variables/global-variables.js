@@ -1,6 +1,8 @@
 import { preloadImage } from "../../setup/general/preload-image.js";
 import { getZone } from "../../setup/zones/get-zone.js";
 
+export const version = '1.4.1';
+
 // exports a WebSocket connection using the Socket.IO library.
 export const socket = io('https://ptcgsim.online');
 

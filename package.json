@@ -1,6 +1,6 @@
 {
   "name": "ptcg-sim",
-  "version": "1.0.1",
+  "version": "1.4.1",
   "description": "",
   "main": "server.js",
   "scripts": {
