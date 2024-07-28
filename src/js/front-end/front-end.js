@@ -12,8 +12,9 @@ initializeMutationObservers(); // Initializes all mutation observers for user's 
 
 // Some hacky way to get the importData (if there is any), and load the content.
 const importData = JSON.parse(document.getElementById('importDataJSON').textContent);
-if (importData){
-    importData.forEach(data => {
+const actions = importData.slice(1); // first element is the version #
+if (actions){
+    actions.forEach(data => {
       acceptAction(data.user, data.action, data.parameters, true);
     });
     refreshBoardImages();

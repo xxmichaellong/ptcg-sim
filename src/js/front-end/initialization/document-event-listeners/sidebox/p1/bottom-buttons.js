@@ -1,6 +1,6 @@
 import { reset } from '../../../../actions/general/reset.js';
 import { setup } from '../../../../actions/general/setup.js';
-import { socket, systemState } from '../../../../front-end.js';
+import { socket, systemState, version } from '../../../../front-end.js';
 import { clearChatboxContent, exportChatboxContent } from '../../../../setup/chatbox/export-chat.js';
 import { hideOptionsContextMenu } from '../../../../setup/chatbox/hide-options-context-menu.js';
 import { acceptAction } from '../../../../setup/general/accept-action.js';
@@ -67,7 +67,7 @@ export const initializeP1BottomButtons = () => {
                 cleanActionData('self');
                 cleanActionData('opp');
                 const jsonData = JSON.parse(e.target.result);
-                const actions = jsonData;
+                const actions = jsonData.slice(1); // first element is the version #
                 actions.forEach(data => {
                     acceptAction(data.user, data.action, data.parameters, true);
                 });
@@ -116,6 +116,7 @@ export const initializeP1BottomButtons = () => {
             parameters: [systemState.isTwoPlayer ? systemState.p2OppDeckData : systemState.p1OppDeckData],
         }
         systemState.exportActionData.unshift(selfData, oppData);
+        systemState.exportActionData.unshift({version: version})
 
         const jsonData = JSON.stringify(systemState.exportActionData, null, 2);
 
