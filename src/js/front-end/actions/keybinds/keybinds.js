@@ -71,73 +71,6 @@ export const keyDown = (event) => {
             doubleClick(null);
         };
     };
-    if (notSpectator){
-        if (event.key === 'Enter' && !(event.altKey || event.getModifierState('Alt'))){
-            discardBoard(systemState.initiator, systemState.initiator);
-        };
-        if (event.key === 'Enter' && (event.altKey || event.getModifierState('Alt'))){
-            handBoard(systemState.initiator, systemState.initiator);
-        };
-        if (event.key === '/'){
-            shuffleBoard(systemState.initiator, systemState.initiator);
-        };
-        if (event.key === 'f' && !(event.altKey || event.getModifierState('Alt'))) {
-            if(systemState.isReplay && !systemState.isTwoPlayer){
-                return;
-            }
-            flipCoin(systemState.initiator);
-        };
-    };
-    if (!mouseClick.selectingCard && notSpectator){
-        if (event.key >= 1 && event.key <= 9 && !(event.altKey || event.getModifierState('Alt')) && !event.ctrlKey) {
-            draw(systemState.initiator, systemState.initiator, event.key);
-        };
-        if (event.key === 's') {
-            shuffleAll(systemState.initiator, systemState.initiator, 'deck');
-        };
-        if (event.key >= 1 && event.key <= 9 && (event.altKey || event.getModifierState('Alt'))) {
-            const selectedDeckCount =  getZone(systemState.initiator, 'deck').getCount();      
-            const viewAmount = Math.min(event.key, selectedDeckCount);
-            viewDeck(systemState.initiator, systemState.initiator, viewAmount, true, selectedDeckCount, false);
-        };
-        if (event.key >= 1 && event.key <= 9 && event.ctrlKey) {
-            const selectedDeckCount =  getZone(systemState.initiator, 'deck').getCount();      
-            const viewAmount = Math.min(event.key, selectedDeckCount);
-            viewDeck(systemState.initiator, systemState.initiator, viewAmount, false, selectedDeckCount, false);
-        };
-        if (event.key === 'n' && (event.altKey || event.getModifierState('Alt'))) {
-            setup(systemState.initiator);
-        };
-        if (event.key === 'r' && (event.altKey || event.getModifierState('Alt'))) {
-            if(systemState.isReplay && !systemState.isTwoPlayer){
-                return;
-            }
-            reset(systemState.initiator);
-        };
-        if (event.key === 't' && (event.altKey || event.getModifierState('Alt'))) {
-            takeTurn(systemState.initiator, systemState.initiator);
-        };
-        if (event.key === 'm') {
-            appendMessage('', determineUsername(systemState.initiator) + ' mulligans', 'announcement');
-        };
-        if (event.key === 'd' && (event.altKey || event.getModifierState('Alt'))) {
-            event.preventDefault();
-            discardAndDraw(systemState.initiator, systemState.initiator);
-        };
-        if (event.key === 's' && (event.altKey || event.getModifierState('Alt'))) {
-            shuffleAndDraw(systemState.initiator, systemState.initiator);
-        };
-        if (event.key === 'ArrowDown' && (event.altKey || event.getModifierState('Alt'))) {
-            shuffleBottomAndDraw(systemState.initiator, systemState.initiator);
-        };
-        if (event.key === 'u') {
-            const undoButton = systemState.isTwoPlayer ? document.getElementById('p2UndoButton') : document.getElementById('undoButton');
-            undoButton.textContent = "Loading...";
-            setTimeout(()=>{
-                undo(systemState.initiator);
-            }, 1);
-        };
-    };
     if (mouseClick.selectingCard && notSpectator){
         event.preventDefault();
         
@@ -253,18 +186,6 @@ export const keyDown = (event) => {
                 };
             };
         };
-        if (event.key === 'r' && !(event.altKey || event.getModifierState('Alt')) && ['stadium', 'active', 'bench'].includes(mouseClick.zoneId) && !mouseClick.card.image.parentElement.classList.contains('full-view')) {
-            if(systemState.isReplay && !systemState.isTwoPlayer){
-                return;
-            }
-            rotateCard(mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex);
-        };
-        if (event.key === 'r' && (event.altKey || event.getModifierState('Alt')) && ['active', 'bench'].includes(mouseClick.zoneId) && !mouseClick.card.image.parentElement.classList.contains('full-view')){
-            if(systemState.isReplay && !systemState.isTwoPlayer){
-                return;
-            }
-            rotateCard(mouseClick.cardUser, mouseClick.zoneId,mouseClick.cardIndex, true);
-        };
         if (event.key ==='c'){
             if ([systemState.cardBackSrc, systemState.p1OppCardBackSrc, systemState.p2OppCardBackSrc].includes(mouseClick.card.image.src)){
                 lookShortcut(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
@@ -288,6 +209,78 @@ export const keyDown = (event) => {
         };
         if (event.key === 'p' && (event.altKey || event.getModifierState('Alt'))){
             changeType(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex, 'Pokémon');
+        };
+    };
+    if(systemState.isReplay && !systemState.isTwoPlayer){
+        return;
+    }
+    if (notSpectator){
+        if (event.key === 'Enter' && !(event.altKey || event.getModifierState('Alt'))){
+            discardBoard(systemState.initiator, systemState.initiator);
+        };
+        if (event.key === 'Enter' && (event.altKey || event.getModifierState('Alt'))){
+            handBoard(systemState.initiator, systemState.initiator);
+        };
+        if (event.key === '/'){
+            shuffleBoard(systemState.initiator, systemState.initiator);
+        };
+        if (event.key === 'f' && !(event.altKey || event.getModifierState('Alt'))) {
+            flipCoin(systemState.initiator);
+        };
+    };
+    if (!mouseClick.selectingCard && notSpectator){
+        if (event.key >= 1 && event.key <= 9 && !(event.altKey || event.getModifierState('Alt')) && !event.ctrlKey) {
+            draw(systemState.initiator, systemState.initiator, event.key);
+        };
+        if (event.key === 's') {
+            shuffleAll(systemState.initiator, systemState.initiator, 'deck');
+        };
+        if (event.key >= 1 && event.key <= 9 && (event.altKey || event.getModifierState('Alt'))) {
+            const selectedDeckCount =  getZone(systemState.initiator, 'deck').getCount();      
+            const viewAmount = Math.min(event.key, selectedDeckCount);
+            viewDeck(systemState.initiator, systemState.initiator, viewAmount, true, selectedDeckCount, false);
+        };
+        if (event.key >= 1 && event.key <= 9 && event.ctrlKey) {
+            const selectedDeckCount =  getZone(systemState.initiator, 'deck').getCount();      
+            const viewAmount = Math.min(event.key, selectedDeckCount);
+            viewDeck(systemState.initiator, systemState.initiator, viewAmount, false, selectedDeckCount, false);
+        };
+        if (event.key === 'n' && (event.altKey || event.getModifierState('Alt'))) {
+            setup(systemState.initiator);
+        };
+        if (event.key === 'r' && (event.altKey || event.getModifierState('Alt'))) {
+            reset(systemState.initiator);
+        };
+        if (event.key === 't' && (event.altKey || event.getModifierState('Alt'))) {
+            takeTurn(systemState.initiator, systemState.initiator);
+        };
+        if (event.key === 'm') {
+            appendMessage('', determineUsername(systemState.initiator) + ' mulligans', 'announcement');
+        };
+        if (event.key === 'd' && (event.altKey || event.getModifierState('Alt'))) {
+            event.preventDefault();
+            discardAndDraw(systemState.initiator, systemState.initiator);
+        };
+        if (event.key === 's' && (event.altKey || event.getModifierState('Alt'))) {
+            shuffleAndDraw(systemState.initiator, systemState.initiator);
+        };
+        if (event.key === 'ArrowDown' && (event.altKey || event.getModifierState('Alt'))) {
+            shuffleBottomAndDraw(systemState.initiator, systemState.initiator);
+        };
+        if (event.key === 'u') {
+            const undoButton = systemState.isTwoPlayer ? document.getElementById('p2UndoButton') : document.getElementById('undoButton');
+            undoButton.textContent = "Loading...";
+            setTimeout(()=>{
+                undo(systemState.initiator);
+            }, 1);
+        };
+    };
+    if (mouseClick.selectingCard && notSpectator){
+        if (event.key === 'r' && !(event.altKey || event.getModifierState('Alt')) && ['stadium', 'active', 'bench'].includes(mouseClick.zoneId) && !mouseClick.card.image.parentElement.classList.contains('full-view')) {
+            rotateCard(mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex);
+        };
+        if (event.key === 'r' && (event.altKey || event.getModifierState('Alt')) && ['active', 'bench'].includes(mouseClick.zoneId) && !mouseClick.card.image.parentElement.classList.contains('full-view')){
+            rotateCard(mouseClick.cardUser, mouseClick.zoneId,mouseClick.cardIndex, true);
         };
     };
 }
