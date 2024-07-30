@@ -24,8 +24,25 @@ import { shuffleAll } from '../zones/general.js';
 import { discardAndDraw, shuffleAndDraw, shuffleBottomAndDraw } from '../zones/hand-actions.js';
 import { replayBlock } from "../../setup/general/replay-block.js";
 
+const isAltKeyPressed = (event) => {
+    return event.altKey || event.getModifierState('Alt');
+};
+
+const isNonZeroDigitKeyPressed = (event) => {
+    return (event.key >= '1' && event.key <= '9') || (event.code >= 'Digit1' && event.code <= 'Digit9');
+};
+
+const convertDigitEventCodeToKey = (event) => {
+    const digitMap = {
+        'Digit1': '1', 'Digit2': '2', 'Digit3': '3',
+        'Digit4': '4', 'Digit5': '5', 'Digit6': '6',
+        'Digit7': '7', 'Digit8': '8', 'Digit9': '9'
+    };
+    return digitMap[event.code] || event.key;
+};
+
 export const keyUp = (event) => {
-    if (event.key === 'Shift') {
+    if (event.key === 'Shift' || event.code === 'ShiftLeft' || event.code === 'ShiftRight') {
         document.getElementById('keybindModal').style.display = 'none';
     };
 }
@@ -38,25 +55,25 @@ export const keyDown = (event) => {
     if (replayBlock("keybind",event.key)){
         return;
     }
-    if (event.key === 'Escape'){
+    if (event.key === 'Escape' || event.code === 'Escape'){
         hideZoneElements();
         closePopups();
         document.getElementById('keybindModal').style.display = 'none';
     };
-    if (event.key === 'Shift') {
+    if (event.key === 'Shift' || event.code === 'ShiftLeft' || event.code === 'ShiftRight') {
         document.getElementById('keybindModal').style.display = 'block';
     };
-    if (event.key === 'f' && (event.altKey || event.getModifierState('Alt'))) {
+    if ((event.key === 'f' || event.code === 'KeyF') && isAltKeyPressed(event)) {
         event.preventDefault();
         if (systemState.coachingMode || !systemState.isTwoPlayer || !notSpectator){
             flipBoard();
         };
     };
     if (!mouseClick.selectingCard){
-        if (event.key === 'r'){
+        if (event.key === 'r' || event.code === 'KeyR'){
             refreshBoardImages();
         };
-        if (event.key === 'v') {
+        if (event.key === 'v' || event.code === 'KeyV') {
             const selectedDeckElement = getZone(systemState.initiator, 'deck').element;
             selectedDeckElement.style.display = 'block';
 
@@ -67,7 +84,7 @@ export const keyDown = (event) => {
         };
     };
     if (mouseClick.selectingCard){
-        if (event.key === 'v') {
+        if (event.key === 'v' || event.code === 'KeyV') {
             doubleClick(null);
         };
     };
@@ -88,23 +105,23 @@ export const keyDown = (event) => {
             'ArrowRight': 'deck',
             's': 'deck',
         };
-        const bind = keyBinds[event.key];
-        if (bind && !(event.altKey || event.getModifierState('Alt'))) {
+        const bind = keyBinds[event.key] || keyBinds[event.code];
+        if (bind && !isAltKeyPressed(event)) {
             const dZoneId = bind;
             deselectCard();
-            if (event.key === 'ArrowUp'){
+            if (event.key === 'ArrowUp' || event.code === 'ArrowUp'){
                 moveToDeckTop(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
-            } else if (event.key === 'ArrowDown'){
+            } else if (event.key === 'ArrowDown' || event.code === 'ArrowDown'){
                 moveToDeckBottom(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
-            } else if (event.key === 'ArrowRight'){
+            } else if (event.key === 'ArrowRight' || event.code === 'ArrowRight'){
                 switchWithDeckTop(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
-            } else if (event.key === 's'){
+            } else if (event.key === 's' || event.code === 'KeyS'){
                 shuffleIntoDeck(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
             } else {
                 moveCardBundle(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, dZoneId, mouseClick.cardIndex, false, 'move');
             };
         };
-        if ((event.key === 'e' || event.key === 'q') && !(event.altKey || event.getModifierState('Alt')) && (!['active', 'bench'].includes(mouseClick.zoneId) || mouseClick.card.image.attached)){
+        if (((event.key === 'e' || event.code === 'KeyE') || (event.key === 'q' || event.code === 'KeyQ')) && !isAltKeyPressed(event) && (!['active', 'bench'].includes(mouseClick.zoneId) || mouseClick.card.image.attached)){
             closeFullView(event);
             hideZoneElements();
             deselectCard();
@@ -117,7 +134,7 @@ export const keyDown = (event) => {
                 });
             });
         };
-        if (event.key === 'w' && ['active', 'bench', 'stadium', 'discard'].includes(mouseClick.zoneId)) {
+        if ((event.key === 'w' || event.code === 'KeyW') && ['active', 'bench', 'stadium', 'discard'].includes(mouseClick.zoneId)) {
             deselectCard();
             event.preventDefault();
             if (mouseClick.card.image.abilityCounter){
@@ -126,14 +143,15 @@ export const keyDown = (event) => {
                 useAbility(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
             };
         };
-        if (event.key >= 1 && event.key <= 9 && ['active', 'bench'].includes(mouseClick.zoneId)){
+        if (isNonZeroDigitKeyPressed(event) && ['active', 'bench'].includes(mouseClick.zoneId)){
+            const numberPressed = convertDigitEventCodeToKey(event);
             if (!mouseClick.card.image.damageCounter){
-                const damageAmount = parseInt(event.key * 10).toString();
+                const damageAmount = parseInt(numberPressed * 10).toString();
                 addDamageCounter(mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex, damageAmount);
             } else {
                 let damageAmount = parseInt(mouseClick.card.image.damageCounter.textContent);
-                const adjustment = parseInt(event.key * 10);
-                if ((event.altKey || event.getModifierState('Alt'))) {
+                const adjustment = parseInt(numberPressed * 10);
+                if (isAltKeyPressed(event)) {
                     damageAmount -= adjustment;
                 } else {
                     damageAmount += adjustment;
@@ -147,16 +165,16 @@ export const keyDown = (event) => {
                 };
             };
         };
-        if (event.key === '0' && mouseClick.card.image.damageCounter){
+        if ((event.key === '0' || event.code === 'Digit0') && mouseClick.card.image.damageCounter){
             deselectCard();
             mouseClick.card.image.damageCounter.textContent = event.key;
             mouseClick.card.image.damageCounter.handleRemove(true);
         };
-        if (event.key === 'y' && mouseClick.zoneId === 'active'){
+        if ((event.key === 'y' || event.code === 'KeyY') && mouseClick.zoneId === 'active'){
             if (!mouseClick.card.image.specialCondition){
                 addSpecialCondition(mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex);
             } else {
-                if (!(event.altKey || event.getModifierState('Alt'))){
+                if (!isAltKeyPressed(event)){
                     switch (mouseClick.card.image.specialCondition.textContent.toUpperCase()) {
                         case 'P':
                             mouseClick.card.image.specialCondition.textContent = 'B';
@@ -186,28 +204,28 @@ export const keyDown = (event) => {
                 };
             };
         };
-        if (event.key ==='c'){
+        if (event.key === 'c' || event.code === 'KeyC'){
             if ([systemState.cardBackSrc, systemState.p1OppCardBackSrc, systemState.p2OppCardBackSrc].includes(mouseClick.card.image.src)){
                 lookShortcut(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
             } else {
                 stopLookingShortcut(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
             };
         };
-        if (event.key === 'z' && !(event.altKey || event.getModifierState('Alt'))){
+        if ((event.key === 'z' || event.code === 'KeyZ') && !isAltKeyPressed(event)){
             if (![systemState.cardBackSrc, systemState.p1OppCardBackSrc, systemState.p2OppCardBackSrc].includes(mouseClick.card.image.src)){
                 hideShortcut(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
             };
         };
-        if (event.key === 'z' && (event.altKey || event.getModifierState('Alt'))){
+        if ((event.key === 'z' || event.code === 'KeyZ') && isAltKeyPressed(event)){
             revealShortcut(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex);
         };
-        if (event.key === 'e' && (event.altKey || event.getModifierState('Alt'))){
+        if ((event.key === 'e' || event.code === 'KeyE') && isAltKeyPressed(event)){
             changeType(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex, 'Energy');
         };
-        if (event.key === 't' && (event.altKey || event.getModifierState('Alt'))){
+        if ((event.key === 't' || event.code === 'KeyT') && isAltKeyPressed(event)){
             changeType(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex, 'Trainer');
         };
-        if (event.key === 'p' && (event.altKey || event.getModifierState('Alt'))){
+        if ((event.key === 'p' || event.code === 'KeyP') && isAltKeyPressed(event)){
             changeType(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex, 'Pokémon');
         };
     };
@@ -215,59 +233,59 @@ export const keyDown = (event) => {
         return;
     }
     if (notSpectator){
-        if (event.key === 'Enter' && !(event.altKey || event.getModifierState('Alt'))){
+        if ((event.key === 'Enter' || event.code === 'Enter') && !isAltKeyPressed(event)){
             discardBoard(systemState.initiator, systemState.initiator);
         };
-        if (event.key === 'Enter' && (event.altKey || event.getModifierState('Alt'))){
+        if ((event.key === 'Enter' || event.code === 'Enter') && isAltKeyPressed(event)){
             handBoard(systemState.initiator, systemState.initiator);
         };
-        if (event.key === '/'){
+        if (event.key === '/' || event.code === 'Slash'){
             shuffleBoard(systemState.initiator, systemState.initiator);
         };
-        if (event.key === 'f' && !(event.altKey || event.getModifierState('Alt'))) {
+        if ((event.key === 'f' || event.code === 'KeyF') && !isAltKeyPressed(event)) {
             flipCoin(systemState.initiator);
         };
     };
     if (!mouseClick.selectingCard && notSpectator){
-        if (event.key >= 1 && event.key <= 9 && !(event.altKey || event.getModifierState('Alt')) && !event.ctrlKey) {
-            draw(systemState.initiator, systemState.initiator, event.key);
+        if (isNonZeroDigitKeyPressed(event) && !isAltKeyPressed(event) && !event.ctrlKey) {
+            draw(systemState.initiator, systemState.initiator, convertDigitEventCodeToKey(event));
         };
-        if (event.key === 's') {
+        if ((event.key === 's' || event.code === 'KeyS') && !isAltKeyPressed(event)){
             shuffleAll(systemState.initiator, systemState.initiator, 'deck');
-        };
-        if (event.key >= 1 && event.key <= 9 && (event.altKey || event.getModifierState('Alt'))) {
+        };  
+        if (isNonZeroDigitKeyPressed(event) && isAltKeyPressed(event)) {
             const selectedDeckCount =  getZone(systemState.initiator, 'deck').getCount();      
-            const viewAmount = Math.min(event.key, selectedDeckCount);
+            const viewAmount = Math.min(convertDigitEventCodeToKey(event), selectedDeckCount);
             viewDeck(systemState.initiator, systemState.initiator, viewAmount, true, selectedDeckCount, false);
         };
-        if (event.key >= 1 && event.key <= 9 && event.ctrlKey) {
+        if (isNonZeroDigitKeyPressed(event) && event.ctrlKey) {
             const selectedDeckCount =  getZone(systemState.initiator, 'deck').getCount();      
-            const viewAmount = Math.min(event.key, selectedDeckCount);
+            const viewAmount = Math.min(convertDigitEventCodeToKey(event), selectedDeckCount);
             viewDeck(systemState.initiator, systemState.initiator, viewAmount, false, selectedDeckCount, false);
         };
-        if (event.key === 'n' && (event.altKey || event.getModifierState('Alt'))) {
+        if ((event.key === 'n' || event.code === 'KeyN') && isAltKeyPressed(event)) {
             setup(systemState.initiator);
         };
-        if (event.key === 'r' && (event.altKey || event.getModifierState('Alt'))) {
+        if ((event.key === 'r' || event.code === 'KeyR') && isAltKeyPressed(event)) {
             reset(systemState.initiator);
         };
-        if (event.key === 't' && (event.altKey || event.getModifierState('Alt'))) {
+        if ((event.key === 't' || event.code === 'KeyT') && isAltKeyPressed(event)) {
             takeTurn(systemState.initiator, systemState.initiator);
         };
-        if (event.key === 'm') {
+        if (event.key === 'm' || event.code === 'KeyM') {
             appendMessage('', determineUsername(systemState.initiator) + ' mulligans', 'announcement');
         };
-        if (event.key === 'd' && (event.altKey || event.getModifierState('Alt'))) {
+        if ((event.key === 'd' || event.code === 'KeyD') && isAltKeyPressed(event)) {
             event.preventDefault();
             discardAndDraw(systemState.initiator, systemState.initiator);
         };
-        if (event.key === 's' && (event.altKey || event.getModifierState('Alt'))) {
+        if ((event.key === 's' || event.code === 'KeyS') && isAltKeyPressed(event)) {
             shuffleAndDraw(systemState.initiator, systemState.initiator);
         };
-        if (event.key === 'ArrowDown' && (event.altKey || event.getModifierState('Alt'))) {
+        if ((event.key === 'ArrowDown' || event.code === 'ArrowDown') && isAltKeyPressed(event)) {
             shuffleBottomAndDraw(systemState.initiator, systemState.initiator);
         };
-        if (event.key === 'u') {
+        if (event.key === 'u' || event.code === 'KeyU') {
             const undoButton = systemState.isTwoPlayer ? document.getElementById('p2UndoButton') : document.getElementById('undoButton');
             undoButton.textContent = "Loading...";
             setTimeout(()=>{
@@ -276,10 +294,10 @@ export const keyDown = (event) => {
         };
     };
     if (mouseClick.selectingCard && notSpectator){
-        if (event.key === 'r' && !(event.altKey || event.getModifierState('Alt')) && ['stadium', 'active', 'bench'].includes(mouseClick.zoneId) && !mouseClick.card.image.parentElement.classList.contains('full-view')) {
+        if ((event.key === 'r' || event.code === 'KeyR') && !(event.altKey || event.getModifierState('Alt')) && ['stadium', 'active', 'bench'].includes(mouseClick.zoneId) && !mouseClick.card.image.parentElement.classList.contains('full-view')) {
             rotateCard(mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex);
         };
-        if (event.key === 'r' && (event.altKey || event.getModifierState('Alt')) && ['active', 'bench'].includes(mouseClick.zoneId) && !mouseClick.card.image.parentElement.classList.contains('full-view')){
+        if ((event.key === 'r' || event.code === 'KeyR') && (event.altKey || event.getModifierState('Alt')) && ['active', 'bench'].includes(mouseClick.zoneId) && !mouseClick.card.image.parentElement.classList.contains('full-view')){
             rotateCard(mouseClick.cardUser, mouseClick.zoneId,mouseClick.cardIndex, true);
         };
     };
