@@ -119,6 +119,7 @@ export const initializeP1BottomButtons = () => {
     function enterReplayMode() {
         clearChatboxContent();
         
+        document.getElementById("deckImportButton").style.display='none';
         document.getElementById("chatboxButtonContainer").style.display='none';
         document.getElementById("messageInput").style.display='none';
         exitReplay.style.display='block';
@@ -141,14 +142,15 @@ export const initializeP1BottomButtons = () => {
         resetBothButton.addEventListener('click', replayRewFunction);
         
         setupButton.innerHTML = "Next";
-        setupBothButton.innerHTML = "Fast Forward";
+        setupBothButton.innerHTML = "End";
         resetButton.innerHTML = "Prev";
-        resetBothButton.innerHTML = "Rewind";
+        resetBothButton.innerHTML = "Start";
         
         optionsContextMenu.style.display = 'none'; // for good measure
     }
     
     function exitReplayMode() {
+        document.getElementById("deckImportButton").style.display='';
         exitReplay.style.display='none';
         document.getElementById("chatboxButtonContainer").style.display='flex';
         document.getElementById("messageInput").style.display='inline-block'; document.getElementById("jsonReplayDiv").style.display='block';
@@ -180,7 +182,12 @@ export const initializeP1BottomButtons = () => {
 
     function handleFileSelect(event) {
         const file = event.target.files[0];
-        if (!file) return;
+        if (!file){
+            if (systemState.isReplay) {
+                exitReplayMode();
+            };
+            return;
+        }
         const reader = new FileReader();
         reader.onload = function (e) {
             try {
@@ -208,7 +215,9 @@ export const initializeP1BottomButtons = () => {
             } catch (error) {
                 console.error('Error reading file:', error);
                 alert('Error reading file. Please make sure the file is valid.');
-                systemState.isReplay = false;
+                if (systemState.isReplay) {
+                    exitReplayMode();
+                };
             } finally {
                 refreshBoardImages();
                 socket.emit('endImport', {roomId: systemState.roomId});
