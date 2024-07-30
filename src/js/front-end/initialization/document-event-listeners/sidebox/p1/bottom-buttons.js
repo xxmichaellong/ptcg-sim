@@ -67,7 +67,12 @@ export const initializeP1BottomButtons = () => {
                 cleanActionData('self');
                 cleanActionData('opp');
                 const jsonData = JSON.parse(e.target.result);
-                const actions = jsonData.slice(1); // first element is the version #
+                let actions;
+                if ('version' in jsonData[0]) {
+                    actions = jsonData.slice(1); // first element is the version #
+                } else {
+                    actions = jsonData; // no version object, treat all data as actions
+                }
                 actions.forEach(data => {
                     acceptAction(data.user, data.action, data.parameters, true);
                 });
