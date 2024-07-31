@@ -78,15 +78,18 @@ export const initializeP1BottomButtons = () => {
     });
     
     const replayNextFunction = () => {
+        removeReplayListeners();
         if (systemState.replayActionData.length == 0){
             return;
         }
         const data = systemState.replayActionData[0];
         acceptAction(data.user, data.action, data.parameters, true,true);
         systemState.replayActionData.shift();
+        addReplayListeners();
     }
     
     const replayPrevFunction = () => {
+        removeReplayListeners();
         if (systemState.exportActionData.length == 0){
             return;
         }
@@ -99,29 +102,51 @@ export const initializeP1BottomButtons = () => {
         actions.forEach(data => {
             acceptAction(data.user, data.action, data.parameters, true, true);
         });
+        addReplayListeners();
     }
     
     const replayFFFunction = () => {
+        removeReplayListeners();
         while (systemState.replayActionData.length > 0){
             replayNextFunction();
         }
+        addReplayListeners();
     }
     
     const replayRewFunction = () => {
+        removeReplayListeners();
         while (systemState.exportActionData.length > 0){
             systemState.replayActionData.unshift(systemState.exportActionData.pop());
         }
         resetBothFunction();
         systemState.exportActionData = [];
         clearChatboxContent();
+        addReplayListeners();
+    }
+    
+    function addReplayListeners(){
+        setupButton.addEventListener('click', replayNextFunction);
+        setupBothButton.addEventListener('click', replayFFFunction);
+        resetButton.addEventListener('click', replayPrevFunction);
+        resetBothButton.addEventListener('click', replayRewFunction);
+    }
+    
+    function removeReplayListeners(){
+        setupButton.removeEventListener('click', replayNextFunction);
+        setupBothButton.removeEventListener('click', replayFFFunction);
+        resetButton.removeEventListener('click', replayPrevFunction);
+        resetBothButton.removeEventListener('click', replayRewFunction);
     }
     
     function enterReplayMode() {
         clearChatboxContent();
         
         document.getElementById("p1Button").innerHTML='Replay';
+        document.getElementById("p1Button").style.width='50%';
+        document.getElementById("settingsButton").style.width='50%';
         document.getElementById("p2Button").style.display='none';
         document.getElementById("deckImportButton").style.display='none';
+        document.getElementById("keybindReminder").style.display='none';
         document.getElementById("chatboxButtonContainer").style.display='none';
         document.getElementById("messageInput").style.display='none';
         exitReplay.style.display='block';
@@ -138,10 +163,7 @@ export const initializeP1BottomButtons = () => {
         resetButton.removeEventListener('click', resetFunction);
         resetBothButton.removeEventListener('click', resetBothFunction);
         
-        setupButton.addEventListener('click', replayNextFunction);
-        setupBothButton.addEventListener('click', replayFFFunction);
-        resetButton.addEventListener('click', replayPrevFunction);
-        resetBothButton.addEventListener('click', replayRewFunction);
+        addReplayListeners();
         
         setupButton.innerHTML = "Next";
         setupBothButton.innerHTML = "End";
@@ -153,8 +175,11 @@ export const initializeP1BottomButtons = () => {
     
     function exitReplayMode() {
         document.getElementById("p1Button").innerHTML='1P';
+        document.getElementById("p1Button").style.width='';
+        document.getElementById("settingsButton").style.width='';
         document.getElementById("p2Button").style.display='';
         document.getElementById("deckImportButton").style.display='';
+        document.getElementById("keybindReminder").style.display='';
         exitReplay.style.display='none';
         document.getElementById("chatboxButtonContainer").style.display='flex';
         document.getElementById("messageInput").style.display='inline-block'; document.getElementById("jsonReplayDiv").style.display='block';
@@ -170,10 +195,7 @@ export const initializeP1BottomButtons = () => {
         resetButton.addEventListener('click', resetFunction);
         resetBothButton.addEventListener('click', resetBothFunction);
         
-        setupButton.removeEventListener('click', replayNextFunction);
-        setupBothButton.removeEventListener('click', replayFFFunction);
-        resetButton.removeEventListener('click', replayPrevFunction);
-        resetBothButton.removeEventListener('click', replayRewFunction);
+        removeReplayListeners();
         
         setupButton.innerHTML = "Set Up";
         setupBothButton.innerHTML = "Set Up Both";
