@@ -22,7 +22,7 @@ import { moveCardBundle } from '../move-card-bundle/move-card-bundle.js';
 import { draw, moveToDeckBottom, moveToDeckTop, shuffleIntoDeck, switchWithDeckTop, viewDeck } from '../zones/deck-actions.js';
 import { shuffleAll } from '../zones/general.js';
 import { discardAndDraw, shuffleAndDraw, shuffleBottomAndDraw } from '../zones/hand-actions.js';
-import { replayBlock } from "../../setup/general/replay-block.js";
+import { isBlockedByReplay } from "../../setup/general/replay-block.js";
 
 const isAltKeyPressed = (event) => {
     return event.altKey || event.getModifierState('Alt');
@@ -52,7 +52,7 @@ export const keyDown = (event) => {
     if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.tagName === 'TD' || blockedClasses.some(className => event.target.classList.contains(className))){
         return;
     };
-    if (replayBlock("keybind",event.key)){
+    if (isBlockedByReplay("keybind",event.key)){
         return;
     }
     if (event.key === 'Escape' || event.code === 'Escape'){

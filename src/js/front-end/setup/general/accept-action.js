@@ -20,7 +20,7 @@ import { shuffleZone } from "../../actions/zones/shuffle-zone.js"
 import { systemState } from "../../front-end.js"
 import { exchangeData } from "../deck-constructor/exchange-data.js"
 import { changeCardBack, loadDeckData } from "../deck-constructor/import.js"
-import { replayBlock } from "./replay-block.js"
+import { isBlockedByReplay } from "./replay-block.js"
 
 const functions = {
     exchangeData: exchangeData,
@@ -86,7 +86,7 @@ const actionToFunction = (action) => {
 };
 
 export const acceptAction = (user, action, parameters, isStateImport = false, isFromReplay = false) => {
-    if (replayBlock("action",action,isFromReplay)){
+    if (isBlockedByReplay("action",action,isFromReplay)){
         return;
     }
     const emit = (user === 'self' || isStateImport) ? true : false;

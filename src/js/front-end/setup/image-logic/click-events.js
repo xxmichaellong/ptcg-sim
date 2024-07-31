@@ -4,7 +4,7 @@ import { mouseClick, oppContainer, oppContainerDocument, selfContainer, selfCont
 import { appendMessage } from '../chatbox/append-message.js';
 import { determineUsername } from '../general/determine-username.js';
 import { getZone } from '../zones/get-zone.js';
-import { replayBlock } from "../../setup/general/replay-block.js";
+import { isBlockedByReplay } from "../../setup/general/replay-block.js";
 
 export const identifyCard = (event) => {
     mouseClick.cardUser = event.target.user === 'self' ? 'self' : 'opp';
@@ -82,11 +82,11 @@ export const openCardContextMenu = (event) => {
         // Check each condition array
         const shouldDisplay = conditionsArray.some(conditions => {
             const [userCondition, containerCondition] = conditions;
-            return userCondition && !replayBlock("contextMenu",buttonId) && containerCondition === mouseClick.zoneId;
+            return userCondition && !isBlockedByReplay("contextMenu",buttonId) && containerCondition === mouseClick.zoneId;
         });
         button.style.display = shouldDisplay ? 'block' : 'none';
     };
-    document.getElementById("moveButton").style.display = !replayBlock("contextMenu","moveButton") ? 'block' : 'none';
+    document.getElementById("moveButton").style.display = !isBlockedByReplay("contextMenu","moveButton") ? 'block' : 'none';
 
     const atLeastOneButtonVisible = Array.from(cardContextMenu.children).some(button => button.style.display !== 'none');
     

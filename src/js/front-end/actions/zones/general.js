@@ -10,10 +10,10 @@ import { addAbilityCounter } from "../counters/ability-counter.js";
 import { hideCard, revealCard } from "../general/reveal-and-hide.js";
 import { moveCard } from "../move-card-bundle/move-card.js";
 import { shuffleZone } from "./shuffle-zone.js";
-import { replayBlock } from "../../setup/general/replay-block.js";
+import { isBlockedByReplay } from "../../setup/general/replay-block.js";
 
 export const shuffleAll = (user, initiator, zoneId, indices, emit = true, isFromReplay = false) => {
-    if (replayBlock('action','shuffleAll',isFromReplay)){
+    if (isBlockedByReplay('action','shuffleAll',isFromReplay)){
         return;
     }
     const oInitiator = initiator === 'self' ? 'opp' : 'self';
@@ -53,7 +53,7 @@ export const shuffleAll = (user, initiator, zoneId, indices, emit = true, isFrom
 }
 
 export const shuffleBottom = (user, initiator, zoneId, indices, emit = true, isFromReplay = false) => {
-    if (replayBlock('action','shuffleBottom',isFromReplay)){
+    if (isBlockedByReplay('action','shuffleBottom',isFromReplay)){
         return;
     }
     const oInitiator = initiator === 'self' ? 'opp' : 'self';
@@ -82,7 +82,7 @@ export const shuffleBottom = (user, initiator, zoneId, indices, emit = true, isF
 }
 
 export const discardAll = (user, initiator, zoneId, emit = true, isFromReplay = false) => {
-    if (replayBlock('action','discardAll',isFromReplay)){
+    if (isBlockedByReplay('action','discardAll',isFromReplay)){
         return;
     }
     const oInitiator = initiator === 'self' ? 'opp' : 'self';
@@ -114,7 +114,7 @@ export const discardAll = (user, initiator, zoneId, emit = true, isFromReplay = 
 }
 
 export const lostZoneAll = (user, initiator, zoneId, emit = true, isFromReplay = false) => {
-    if (replayBlock('action','lostZoneAll',isFromReplay)){
+    if (isBlockedByReplay('action','lostZoneAll',isFromReplay)){
         return;
     }
     const oInitiator = initiator === 'self' ? 'opp' : 'self';
@@ -146,7 +146,7 @@ export const lostZoneAll = (user, initiator, zoneId, emit = true, isFromReplay =
 }
 
 export const handAll = (user, initiator, zoneId, emit = true, isFromReplay = false) => {
-    if (replayBlock('action','handAll',isFromReplay)){
+    if (isBlockedByReplay('action','handAll',isFromReplay)){
         return;
     }
     const oInitiator = initiator === 'self' ? 'opp' : 'self';
@@ -182,7 +182,7 @@ export const closeDisplay = (user, zoneId) => {
 }
 
 export const leaveAll = (user, initiator, oZoneId, emit = true, isFromReplay = false) => {
-    if (replayBlock('action','leaveAll',isFromReplay)){
+    if (isBlockedByReplay('action','leaveAll',isFromReplay)){
         return;
     }
     const oInitiator = initiator === 'self' ? 'opp' : 'self';

@@ -6,6 +6,6 @@ const allowedDuringReplay = {
     "contextMenu": ['lookPrizesButton','revealHidePrizesButton','lookHandButton','prizesHeader','handHeader','deckHeader','boardHeader'],
 };
 
-export const replayBlock = (type, value, isFromReplay = false) => {
+export const isBlockedByReplay = (type, value, isFromReplay = false) => {
     return systemState.isReplay && !systemState.isTwoPlayer && !isFromReplay && !allowedDuringReplay[type].includes(value);
 };

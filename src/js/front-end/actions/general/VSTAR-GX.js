@@ -2,10 +2,10 @@ import { oppContainerDocument, selfContainerDocument, systemState } from "../../
 import { appendMessage } from "../../setup/chatbox/append-message.js";
 import { determineUsername } from "../../setup/general/determine-username.js";
 import { processAction } from "../../setup/general/process-action.js";
-import { replayBlock } from "../../setup/general/replay-block.js";
+import { isBlockedByReplay } from "../../setup/general/replay-block.js";
 
 export const VSTARGXFunction = (user, type, emit = true, isFromReplay = false) => {
-    if (replayBlock('action','VSTARGXFunction',isFromReplay)){
+    if (isBlockedByReplay('action','VSTARGXFunction',isFromReplay)){
         return;
     }
     if (user === 'opp' && emit && systemState.isTwoPlayer){
