@@ -119,6 +119,8 @@ export const initializeP1BottomButtons = () => {
     function enterReplayMode() {
         clearChatboxContent();
         
+        document.getElementById("p1Button").innerHTML='Replay';
+        document.getElementById("p2Button").style.display='none';
         document.getElementById("deckImportButton").style.display='none';
         document.getElementById("chatboxButtonContainer").style.display='none';
         document.getElementById("messageInput").style.display='none';
@@ -150,6 +152,8 @@ export const initializeP1BottomButtons = () => {
     }
     
     function exitReplayMode() {
+        document.getElementById("p1Button").innerHTML='1P';
+        document.getElementById("p2Button").style.display='';
         document.getElementById("deckImportButton").style.display='';
         exitReplay.style.display='none';
         document.getElementById("chatboxButtonContainer").style.display='flex';
