@@ -1,6 +1,6 @@
 import { reset } from '../../../../actions/general/reset.js';
 import { setup } from '../../../../actions/general/setup.js';
-import { socket, systemState, version } from '../../../../front-end.js';
+import { socket, systemState, version, oppContainerDocument, selfContainerDocument } from '../../../../front-end.js';
 import { clearChatboxContent, exportChatboxContent } from '../../../../setup/chatbox/export-chat.js';
 import { hideOptionsContextMenu } from '../../../../setup/chatbox/hide-options-context-menu.js';
 import { acceptAction } from '../../../../setup/general/accept-action.js';
@@ -158,6 +158,14 @@ export const initializeP1BottomButtons = () => {
         document.getElementById("turnButton").style.display='none';
         document.getElementById("flipCoinButton").style.display='none';
         
+        [oppContainerDocument, selfContainerDocument].forEach((doc) => {
+            ['shuffleDeckButton','shuffleDiscardButton',
+             'discardViewCardsButton','shuffleViewCardsButton','shuffleBottomViewCardsButton','lostZoneViewCardsButton','handViewCardsButton',
+             'discardAttachedCardsButton','shuffleAttachedCardsButton','lostZoneAttachedCardsButton','handAttachedCardsButton','leaveAttachedCardsButton'].forEach((id) =>{
+                doc.getElementById(id).style.display='none';
+            });
+        });
+        
         setupButton.removeEventListener('click', setupFunction);
         setupBothButton.removeEventListener('click', setupBothFunction);
         resetButton.removeEventListener('click', resetFunction);
@@ -189,6 +197,14 @@ export const initializeP1BottomButtons = () => {
         clearLog.style.display='block';
         document.getElementById("turnButton").style.display='block';
         document.getElementById("flipCoinButton").style.display='block';
+        
+        [oppContainerDocument, selfContainerDocument].forEach((doc) => {
+            ['shuffleDeckButton','shuffleDiscardButton',
+             'discardViewCardsButton','shuffleViewCardsButton','shuffleBottomViewCardsButton','lostZoneViewCardsButton','handViewCardsButton',
+             'discardAttachedCardsButton','shuffleAttachedCardsButton','lostZoneAttachedCardsButton','handAttachedCardsButton','leaveAttachedCardsButton'].forEach((id) =>{
+                doc.getElementById(id).style.display='';
+            });
+        });
         
         setupButton.addEventListener('click', setupFunction);
         setupBothButton.addEventListener('click', setupBothFunction);
