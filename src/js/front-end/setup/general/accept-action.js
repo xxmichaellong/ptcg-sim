@@ -91,14 +91,14 @@ export const acceptAction = (user, action, parameters, isStateImport = false, is
     }
     const emit = (user === 'self' || isStateImport) ? true : false;
     if (parameters){
-        if(['shuffleAll','shuffleBottom','discardAll','lostZoneAll','handAll','leaveAll','VSTARGXFunction'].includes(action)){
+        if('VSTARGXFunction' === action){
             actionToFunction(action)(user, ...parameters, emit, isFromReplay);
         }
         else{
             actionToFunction(action)(user, ...parameters, emit);
         }
     } else {
-        if(['shuffleAll','shuffleBottom','discardAll','lostZoneAll','handAll','leaveAll','VSTARGXFunction'].includes(action)){
+        if('VSTARGXFunction' === action){
             actionToFunction(action)(user, emit, isFromReplay);
         }
         else{
