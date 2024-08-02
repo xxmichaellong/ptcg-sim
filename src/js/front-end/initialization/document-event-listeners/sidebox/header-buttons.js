@@ -20,7 +20,11 @@ export const initializeHeaderButtons = () => {
                 document.getElementById("jsonReplayDiv").display="none";
                 document.getElementById("exitReplay").display="block";
             }
-            else{
+            else if (systemState.isReplayLocked) {
+                document.getElementById("jsonReplayDiv").display="none";
+                document.getElementById("exitReplay").display="none";
+            }
+            else {
                 document.getElementById("jsonReplayDiv").display="block";
                 document.getElementById("exitReplay").display="none";
             }

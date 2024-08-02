@@ -26,6 +26,7 @@ export const systemState = {
     oppCounter: 0,
     isTwoPlayer: false,
     isReplay: false, // should be treated as false no matter what if isTwoPlayer is true
+    isReplayLocked: false, // because there's a bug that doesn't let you enter it again
     replayActionData: [],
     turn: 0,
     get initiator() {

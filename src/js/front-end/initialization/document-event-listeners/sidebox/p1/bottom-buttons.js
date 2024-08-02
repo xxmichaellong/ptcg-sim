@@ -220,6 +220,11 @@ export const initializeP1BottomButtons = () => {
         
         systemState.isReplay = false;
         optionsContextMenu.style.display = 'none';
+        
+        //the following is because there's a bug that doesn't let you enter it again
+        systemState.isReplayLocked = true;
+        alert('To enter replay mode again, please reload this page.');
+        document.getElementById("jsonReplayDiv").style.display='none';
     }
 
     function handleFileSelect(event) {
