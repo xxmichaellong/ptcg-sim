@@ -4,9 +4,9 @@ import { getZone } from "../../setup/zones/get-zone.js";
 export const version = '1.4.1';
 
 // exports a WebSocket connection using the Socket.IO library.
-export const socket = io('https://ptcgsim.online');
+// export const socket = io('https://ptcgsim.online');
 
-// export const socket = io('http://localhost:4000/');
+export const socket = io('http://localhost:4000/');
 // export references to HTML elements 'selfContainer' and 'oppContainer', and their respective content window documents for ease of access to the iframes
 export const selfContainer = document.getElementById('selfContainer');
 export const selfContainerDocument = selfContainer.contentWindow.document;
@@ -26,7 +26,6 @@ export const systemState = {
     oppCounter: 0,
     isTwoPlayer: false,
     isReplay: false, // should be treated as false no matter what if isTwoPlayer is true
-    isReplayLocked: false, // because there's a bug that doesn't let you enter it again
     replayActionData: [],
     turn: 0,
     get initiator() {

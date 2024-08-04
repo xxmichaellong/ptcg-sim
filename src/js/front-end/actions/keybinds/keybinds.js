@@ -52,7 +52,7 @@ export const keyDown = (event) => {
     if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.tagName === 'TD' || blockedClasses.some(className => event.target.classList.contains(className))){
         return;
     };
-    if (isBlockedByReplay("keybind",event.key)){
+    if (!isAltKeyPressed && isBlockedByReplay("keybind", event.key) && !isBlockedByReplay("keybind", event.code)){
         return;
     }
     if (event.key === 'Escape' || event.code === 'Escape'){
@@ -93,17 +93,26 @@ export const keyDown = (event) => {
         
         const keyBinds = {
             'h': 'hand',
+            'KeyH': 'hand',
             'd': 'discard',
+            'KeyD': 'discard',
             'b': 'bench',
+            'KeyB': 'bench',
             'a': 'active',
+            'KeyA': 'active',
             'g': 'stadium',
+            'KeyG': 'stadium',
             'l': 'lostZone',
+            'KeyL': 'lostZone',
             'p': 'prizes',
+            'KeyP': 'prizes',
             ' ': 'board',
+            'KeySpace': 'board',
             'ArrowUp': 'deck',
             'ArrowDown': 'deck',
             'ArrowRight': 'deck',
             's': 'deck',
+            'KeyS': 'deck',
         };
         const bind = keyBinds[event.key] || keyBinds[event.code];
         if (bind && !isAltKeyPressed(event)) {
@@ -228,10 +237,13 @@ export const keyDown = (event) => {
         if ((event.key === 'p' || event.code === 'KeyP') && isAltKeyPressed(event)){
             changeType(mouseClick.cardUser, systemState.initiator, mouseClick.zoneId, mouseClick.cardIndex, 'Pokémon');
         };
+        if ((event.key === 'r' || event.code === 'KeyR') && !(event.altKey || event.getModifierState('Alt')) && ['stadium', 'active', 'bench'].includes(mouseClick.zoneId) && !mouseClick.card.image.parentElement.classList.contains('full-view') && !systemState.isReplay) {
+            rotateCard(mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex);
+        };
+        if ((event.key === 'r' || event.code === 'KeyR') && (event.altKey || event.getModifierState('Alt')) && ['active', 'bench'].includes(mouseClick.zoneId) && !mouseClick.card.image.parentElement.classList.contains('full-view') && !systemState.isReplay){
+            rotateCard(mouseClick.cardUser, mouseClick.zoneId,mouseClick.cardIndex, true);
+        };
     };
-    if(systemState.isReplay && !systemState.isTwoPlayer){
-        return;
-    }
     if (notSpectator){
         if ((event.key === 'Enter' || event.code === 'Enter') && !isAltKeyPressed(event)){
             discardBoard(systemState.initiator, systemState.initiator);
@@ -242,7 +254,7 @@ export const keyDown = (event) => {
         if (event.key === '/' || event.code === 'Slash'){
             shuffleBoard(systemState.initiator, systemState.initiator);
         };
-        if ((event.key === 'f' || event.code === 'KeyF') && !isAltKeyPressed(event)) {
+        if ((event.key === 'f' || event.code === 'KeyF') && !isAltKeyPressed(event) && !systemState.isReplay) {
             flipCoin(systemState.initiator);
         };
     };
@@ -288,17 +300,7 @@ export const keyDown = (event) => {
         if (event.key === 'u' || event.code === 'KeyU') {
             const undoButton = systemState.isTwoPlayer ? document.getElementById('p2UndoButton') : document.getElementById('undoButton');
             undoButton.textContent = "Loading...";
-            setTimeout(()=>{
-                undo(systemState.initiator);
-            }, 1);
-        };
-    };
-    if (mouseClick.selectingCard && notSpectator){
-        if ((event.key === 'r' || event.code === 'KeyR') && !(event.altKey || event.getModifierState('Alt')) && ['stadium', 'active', 'bench'].includes(mouseClick.zoneId) && !mouseClick.card.image.parentElement.classList.contains('full-view')) {
-            rotateCard(mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex);
-        };
-        if ((event.key === 'r' || event.code === 'KeyR') && (event.altKey || event.getModifierState('Alt')) && ['active', 'bench'].includes(mouseClick.zoneId) && !mouseClick.card.image.parentElement.classList.contains('full-view')){
-            rotateCard(mouseClick.cardUser, mouseClick.zoneId,mouseClick.cardIndex, true);
+            undo(systemState.initiator);
         };
     };
 }

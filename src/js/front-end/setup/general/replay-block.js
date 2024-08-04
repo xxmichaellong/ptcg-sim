@@ -2,7 +2,7 @@ import { systemState } from "../../front-end.js"
 
 const allowedDuringReplay = {
     "action": ["changeCardBack", "viewDeck", "lookAtCards", "stopLookingAtCards", "revealCards", "hideCards", "revealShortcut", "hideShortcut", "lookShortcut", "stopLookingShortcut"],
-    "keybind": ['v','c','z','r','f','esc'],
+    "keybind": ['v','KeyV','c','KeyC','z','KeyZ','r','KeyR','f','KeyF','esc','Escape', 'Shift', 'ShiftLeft', 'ShiftRight'],
     "contextMenu": ['lookPrizesButton','revealHidePrizesButton','lookHandButton','prizesHeader','handHeader','deckHeader','boardHeader'],
 };
 
