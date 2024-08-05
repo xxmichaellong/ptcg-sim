@@ -17,9 +17,9 @@ import { draw, moveToDeckTop, shuffleIntoDeck, switchWithDeckTop, viewDeck } fro
 import { discardAll, handAll, leaveAll, lostZoneAll, shuffleAll, shuffleBottom } from "../../actions/zones/general.js"
 import { discardAndDraw, shuffleAndDraw, shuffleBottomAndDraw } from "../../actions/zones/hand-actions.js"
 import { shuffleZone } from "../../actions/zones/shuffle-zone.js"
-import { systemState } from "../../front-end.js"
 import { exchangeData } from "../deck-constructor/exchange-data.js"
 import { changeCardBack, loadDeckData } from "../deck-constructor/import.js"
+import { isBlockedByReplay } from "./replay-block.js"
 
 const functions = {
     exchangeData: exchangeData,
@@ -84,7 +84,10 @@ const actionToFunction = (action) => {
     };
 };
 
-export const acceptAction = (user, action, parameters, isStateImport = false) => {
+export const acceptAction = (user, action, parameters, isStateImport = false, isFromReplay = false) => {
+    if (isBlockedByReplay("action", action, isFromReplay)){
+        return;
+    }
     const emit = (user === 'self' || isStateImport) ? true : false;
     if (parameters){
         actionToFunction(action)(user, ...parameters, emit);
