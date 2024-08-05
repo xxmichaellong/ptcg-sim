@@ -57,7 +57,6 @@ export const initializeP1BottomButtons = () => {
     const importState = document.getElementById('importState');
     importState.addEventListener('click', (event) => {
         event.preventDefault();
-        systemState.isReplay = false; // for good measure
         fileInput.click();
     });
     fileInput.addEventListener('change', handleFileSelect);
@@ -77,20 +76,17 @@ export const initializeP1BottomButtons = () => {
         optionsContextMenu.style.display = 'none';
     });
     
-    const replayNextFunction = () => {
-        removeReplayListeners();
-        if (systemState.replayActionData.length == 0){
+    const playNextReplayAction = () => {
+        if (systemState.replayActionData.length === 0){
             return;
         }
         const data = systemState.replayActionData[0];
-        acceptAction(data.user, data.action, data.parameters, true,true);
+        acceptAction(data.user, data.action, data.parameters, true, true);
         systemState.replayActionData.shift();
-        addReplayListeners();
     }
     
-    const replayPrevFunction = () => {
-        removeReplayListeners();
-        if (systemState.exportActionData.length == 0){
+    const rewindPreviousReplayAction = () => {
+        if (systemState.exportActionData.length === 0){
             return;
         }
         const lastAction = systemState.exportActionData.pop();
@@ -102,40 +98,35 @@ export const initializeP1BottomButtons = () => {
         actions.forEach(data => {
             acceptAction(data.user, data.action, data.parameters, true, true);
         });
-        addReplayListeners();
     }
     
-    const replayFFFunction = () => {
-        removeReplayListeners();
+    const fastForwardReplay = () => {
         while (systemState.replayActionData.length > 0){
-            replayNextFunction();
+            playNextReplayAction();
         }
-        addReplayListeners();
     }
     
-    const replayRewFunction = () => {
-        removeReplayListeners();
+    const rewindToStartReplay = () => {
         while (systemState.exportActionData.length > 0){
             systemState.replayActionData.unshift(systemState.exportActionData.pop());
         }
         resetBothFunction();
         systemState.exportActionData = [];
         clearChatboxContent();
-        addReplayListeners();
     }
     
     function addReplayListeners(){
-        setupButton.addEventListener('click', replayNextFunction);
-        setupBothButton.addEventListener('click', replayFFFunction);
-        resetButton.addEventListener('click', replayPrevFunction);
-        resetBothButton.addEventListener('click', replayRewFunction);
+        setupButton.addEventListener('click', rewindToStartReplay);
+        resetButton.addEventListener('click', rewindPreviousReplayAction);
+        setupBothButton.addEventListener('click', playNextReplayAction);
+        resetBothButton.addEventListener('click', fastForwardReplay);
     }
     
     function removeReplayListeners(){
-        setupButton.removeEventListener('click', replayNextFunction);
-        setupBothButton.removeEventListener('click', replayFFFunction);
-        resetButton.removeEventListener('click', replayPrevFunction);
-        resetBothButton.removeEventListener('click', replayRewFunction);
+        setupButton.removeEventListener('click', rewindToStartReplay);
+        resetButton.removeEventListener('click', rewindPreviousReplayAction);
+        setupBothButton.removeEventListener('click', playNextReplayAction);
+        resetBothButton.removeEventListener('click', fastForwardReplay);
     }
     
     function enterReplayMode() {
@@ -173,21 +164,29 @@ export const initializeP1BottomButtons = () => {
         
         addReplayListeners();
         
-        setupButton.innerHTML = "Next";
-        setupBothButton.innerHTML = "End";
-        resetButton.innerHTML = "Prev";
-        resetBothButton.innerHTML = "Start";
+        setupButton.innerHTML = "⏮";
+        resetButton.innerHTML = "◀";
+        setupBothButton.innerHTML = "▶";
+        resetBothButton.innerHTML = "⏭";
+        setupButton.className = '';
+        resetButton.className = '';
+        setupBothButton.className = '';
+        resetBothButton.className = '';
         
-        optionsContextMenu.style.display = 'none'; // for good measure
+        setupButton.classList.add('neutral-color');
+        resetButton.classList.add('spectator-color');
+        setupBothButton.classList.add('spectator-color');
+        resetBothButton.classList.add('neutral-color');
+        optionsContextMenu.style.display = 'none';
     }
     
     function exitReplayMode() {
-        document.getElementById("p1Button").innerHTML='1P';
-        document.getElementById("p1Button").style.width='';
-        document.getElementById("settingsButton").style.width='';
-        document.getElementById("p2Button").style.display='';
-        document.getElementById("deckImportButton").style.display='';
-        document.getElementById("keybindReminder").style.display='';
+        document.getElementById("p1Button").innerHTML = '1P';
+        document.getElementById("p1Button").style.width = '';
+        document.getElementById("settingsButton").style.width = '';
+        document.getElementById("p2Button").style.display = '';
+        document.getElementById("deckImportButton").style.display = '';
+        document.getElementById("keybindReminder").style.display = '';
         exitReplay.style.display='none';
         document.getElementById("chatboxButtonContainer").style.display='flex';
         document.getElementById("messageInput").style.display='inline-block'; document.getElementById("jsonReplayDiv").style.display='block';
@@ -218,21 +217,24 @@ export const initializeP1BottomButtons = () => {
         resetButton.innerHTML = "Reset";
         resetBothButton.innerHTML = "Reset Both";
         
-        systemState.isReplay = false;
-        optionsContextMenu.style.display = 'none';
+        setupButton.className = '';
+        resetButton.className = '';
+        setupBothButton.className = '';
+        resetBothButton.className = '';
+        setupButton.classList.add(systemState.initiator === 'self' ? 'self-color' : 'opp-color');
+        resetButton.classList.add(systemState.initiator === 'self' ? 'self-color' : 'opp-color');
+        setupBothButton.classList.add('neutral-color');
+        resetBothButton.classList.add('neutral-color');        
         
         //the following is because there's a bug that doesn't let you enter it again
         systemState.isReplayLocked = true;
-        alert('To enter replay mode again, please reload this page.');
         document.getElementById("jsonReplayDiv").style.display='none';
     }
 
     function handleFileSelect(event) {
         const file = event.target.files[0];
-        if (!file){
-            if (systemState.isReplay) {
-                exitReplayMode();
-            };
+        if (!file && systemState.isReplay){
+            exitReplayMode();
             return;
         }
         const reader = new FileReader();

@@ -64,14 +64,16 @@ export const flipBoard = () => {
     toggleClasses(passButton, 'self-color', 'opp-color');
     toggleClasses(undoButton, 'self-color', 'opp-color');
     toggleClasses(FREEBUTTON, 'self-color', 'opp-color');
-    toggleClasses(setupButton, 'self-color', 'opp-color');
-    toggleClasses(resetButton, 'self-color', 'opp-color');
     toggleClasses(p2AttackButton, 'self-color', 'opp-color');
     toggleClasses(p2PassButton, 'self-color', 'opp-color');
     toggleClasses(p2UndoButton, 'self-color', 'opp-color');
     toggleClasses(p2FREEBUTTON, 'self-color', 'opp-color');
     toggleClasses(p2SetupButton, 'self-color', 'opp-color');
     toggleClasses(p2ResetButton, 'self-color', 'opp-color');
+    if (!systemState.isReplay){
+        toggleClasses(setupButton, 'self-color', 'opp-color');
+        toggleClasses(resetButton, 'self-color', 'opp-color');
+    }
 
     const users = ['self', 'opp'];
     const textIds = ['deckText', 'discardText', 'lostZoneText', 'handText', 'sortHandText', 'sortHandCheckbox'];
