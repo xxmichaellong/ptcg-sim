@@ -16,18 +16,6 @@ export const initializeHeaderButtons = () => {
     p1Button.addEventListener('click', () => {
         if (!systemState.isTwoPlayer) {
             show('p1Box', p1Button);
-            if (systemState.isReplay){
-                document.getElementById("jsonReplayDiv").display="none";
-                document.getElementById("exitReplay").display="block";
-            }
-            else if (systemState.isReplayLocked) {
-                document.getElementById("jsonReplayDiv").display="none";
-                document.getElementById("exitReplay").display="none";
-            }
-            else {
-                document.getElementById("jsonReplayDiv").display="block";
-                document.getElementById("exitReplay").display="none";
-            }
         } else if (window.confirm('Are you sure you want to leave the room? Battle log will be erased.')) {
             const isSpectator = systemState.isTwoPlayer && document.getElementById('spectatorModeCheckbox').checked;
             const username = isSpectator ? systemState.spectatorUsername : systemState.p2SelfUsername;
@@ -48,7 +36,7 @@ export const initializeHeaderButtons = () => {
             cleanActionData('opp');
             reset('opp', true, true, false, true);
             
-            //repopulate self deck with the correct current decklist
+            // repopulate self deck with the correct current decklist
             systemState.selfDeckData = '';
             let decklistTable = document.getElementById('selfCurrentDecklistTable');
             if (decklistTable){
@@ -82,14 +70,6 @@ export const initializeHeaderButtons = () => {
             };
             if (systemState.p1OppDeckData){
                 processAction('opp', true, 'loadDeckData', [systemState.p1OppDeckData]);
-            };
-            if (systemState.isReplay){
-                document.getElementById("jsonReplayDiv").display="none";
-                document.getElementById("exitReplay").display="block";
-            }
-            else{
-                document.getElementById("jsonReplayDiv").display="block";
-                document.getElementById("exitReplay").display="none";
             }
         }
     });
@@ -97,8 +77,6 @@ export const initializeHeaderButtons = () => {
     const p2Button = document.getElementById('p2Button');
     p2Button.addEventListener('click', () => {
         show('p2Box', p2Button);
-        document.getElementById("jsonReplayDiv").display="none";
-        document.getElementById("exitReplay").display="none";
     });
 
     const deckImportButton = document.getElementById('deckImportButton');
