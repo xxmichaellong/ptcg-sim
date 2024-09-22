@@ -7,7 +7,6 @@ import { shuffleIndices } from "../../setup/general/shuffle.js";
 import { removeImages } from "../../setup/image-logic/remove-images.js";
 import { getZone } from "../../setup/zones/get-zone.js";
 import { addAbilityCounter } from "../counters/ability-counter.js";
-import { hideCard, revealCard } from "../general/reveal-and-hide.js";
 import { moveCard } from "../move-card-bundle/move-card.js";
 import { shuffleZone } from "./shuffle-zone.js";
 
