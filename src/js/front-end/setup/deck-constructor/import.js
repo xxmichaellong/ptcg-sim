@@ -172,8 +172,8 @@ export const importDecklist = (user) => {
         'P1': 'pop1', 'P2': 'pop2', 'P3': 'pop3', 'P4': 'pop4', 'P5': 'pop5', 'P6': 'pop6', 'P7': 'pop7', 'P8': 'pop8', 'P9': 'pop9',
         'pop1': 'pop1', 'pop2': 'pop2', 'pop3': 'pop3', 'pop4': 'pop4', 'pop5': 'pop5', 'pop6': 'pop6', 'pop7': 'pop7', 'pop8': 'pop8', 'pop9': 'pop9',
         'SI': 'si1', 'RM': 'ru1', 'FUT20': 'fut20',
-        // https://limitlesstcg.com/set-codes
-        'BS2': 'base4', 'EXP': 'ecard1', 'AQP': 'ecard2', 'SKR': 'ecard3', 'E1': 'ecard1', 'E2': 'ecard2', 'E3': 'ecard3', 'WBP': 'basep', 'WBSP': 'basep', 'NP': 'np', 'NBSP': 'np', 'FRLG': 'ex6'
+        // https://limitlesstcg.com/cards
+        'BS2': 'base4', 'EXP': 'ecard1', 'AQP': 'ecard2', 'SKR': 'ecard3', 'E1': 'ecard1', 'E2': 'ecard2', 'E3': 'ecard3', 'WBP': 'basep', 'WBSP': 'basep', 'NP': 'np', 'NBSP': 'np', 'FRLG': 'ex6', 'BG': 'bp'
     };
     
     // the following cards have no image on limitless
