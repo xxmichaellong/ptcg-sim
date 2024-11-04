@@ -62,6 +62,7 @@ export const initializeP1BottomButtons = () => {
         if (!file) return;
         const reader = new FileReader();
         reader.onload = function (e) {
+            var actionErrors = 0;
             try {
                 socket.emit('initiateImport', {roomId: systemState.roomId});
                 cleanActionData('self');
@@ -74,17 +75,25 @@ export const initializeP1BottomButtons = () => {
                     actions = jsonData; // no version object, treat all data as actions
                 }
                 actions.forEach(data => {
-                    acceptAction(data.user, data.action, data.parameters, true);
+                    try {
+                        acceptAction(data.user, data.action, data.parameters, true);
+                    } catch (error) {
+                        actionErrors++;
+                        console.warn('Error at action: '+JSON.stringify(data))
+                    }
                 });
                 socket.emit('resetCounter', {roomId: systemState.roomId});
             } catch (error) {
                 console.error('Error reading file:', error);
-                alert('Error reading file. Please make sure the file is valid.');
+                alert('Error: could not read file. Please make sure the file is valid.');
             } finally {
                 refreshBoardImages();
                 socket.emit('endImport', {roomId: systemState.roomId});
                 fileInput.value = '';
                 optionsContextMenu.style.display = 'none';
+                if (actionErrors>0) {
+                    alert('File read with '+actionErrors+' error'+((actionErrors===1)?'':'s')+'. Please make sure the file is valid.');
+                }
             }
         };
         reader.readAsText(file);
