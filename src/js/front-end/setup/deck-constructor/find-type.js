@@ -356,7 +356,7 @@ const SSEra = {
         213: "Pokémon",
         217: "Trainer",
     },
-    "SSP": {
+    "SP": {
         120: "Pokémon",
         122: "Trainer",
         146: "Pokémon",

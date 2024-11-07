@@ -155,7 +155,7 @@ export const importDecklist = (user) => {
 
     const specialCases = {
         'PR-SV' : 'SVP',
-        'PR-SW' : 'SSP',
+        'PR-SW' : 'SP',
         'PR-SM' : 'SMP',
         'PR-XY' : 'XYP',
         'PR-BLW' : 'BWP',
