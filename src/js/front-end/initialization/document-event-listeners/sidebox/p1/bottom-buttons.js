@@ -67,12 +67,7 @@ export const initializeP1BottomButtons = () => {
                 cleanActionData('self');
                 cleanActionData('opp');
                 const jsonData = JSON.parse(e.target.result);
-                let actions;
-                if ('version' in jsonData[0]) {
-                    actions = jsonData.slice(1); // first element is the version #
-                } else {
-                    actions = jsonData; // no version object, treat all data as actions
-                }
+                let actions = jsonData.filter(obj => !('version' in obj)); // Remove any objects containing version property
                 actions.forEach(data => {
                     acceptAction(data.user, data.action, data.parameters, true);
                 });
@@ -120,10 +115,9 @@ export const initializeP1BottomButtons = () => {
             action: 'loadDeckData',
             parameters: [systemState.isTwoPlayer ? systemState.p2OppDeckData : systemState.p1OppDeckData],
         }
-        systemState.exportActionData.unshift(selfData, oppData);
-        systemState.exportActionData.unshift({version: version})
-
-        const jsonData = JSON.stringify(systemState.exportActionData, null, 2);
+        const versionData = {version: version};
+        const exportData = [versionData, selfData, oppData, systemState.exportActionData];
+        const jsonData = JSON.stringify(exportData, null, 2);
 
         const userChoice = prompt("Enter '1' to save a file or enter '2' to generate a URL");
         if (userChoice === '1' || userChoice === '2') {
