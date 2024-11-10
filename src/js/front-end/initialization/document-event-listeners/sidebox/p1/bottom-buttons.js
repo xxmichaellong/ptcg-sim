@@ -254,9 +254,8 @@ export const initializeP1BottomButtons = () => {
                             actionErrors++;
                             console.warn('Error at action: '+JSON.stringify(data))
                         }
-                    }
-                });
-                socket.emit('resetCounter', {roomId: systemState.roomId});
+                    });
+                    socket.emit('resetCounter', {roomId: systemState.roomId});
                 }
                 else {
                     console.assert(actions[0].action==="loadDeckData");
