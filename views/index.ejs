@@ -282,8 +282,12 @@
     </div>
 
     <div id="optionsContextMenu">
-        <div><label for="jsonFile" id="importState" style="cursor: pointer;">Import game state</label>
-            <input type="file" id="jsonFile" accept=".json" style="display:none;">
+        <div id="exitReplay" style="display:none">Exit replay mode</div>
+        <div id="jsonReplayDiv"><label for="jsonReplay" id="importReplay" style="cursor: pointer;">Enter replay mode</label>
+            <input type="file" id="jsonReplay" accept=".json" style="display:none;" />
+        </div>
+        <div id="jsonDiv"><label for="jsonFile" id="importState" style="cursor: pointer;">Import game state</label>
+            <input type="file" id="jsonFile" accept=".json" style="display:none;" />
         </div>
         <div id="exportState">Export game state</div>
         <div id="exportLog">Export battle log</div>

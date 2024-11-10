@@ -1,6 +1,6 @@
 import { reset } from '../../../../actions/general/reset.js';
 import { setup } from '../../../../actions/general/setup.js';
-import { socket, systemState, version } from '../../../../front-end.js';
+import { socket, systemState, version, oppContainerDocument, selfContainerDocument } from '../../../../front-end.js';
 import { clearChatboxContent, exportChatboxContent } from '../../../../setup/chatbox/export-chat.js';
 import { hideOptionsContextMenu } from '../../../../setup/chatbox/hide-options-context-menu.js';
 import { acceptAction } from '../../../../setup/general/accept-action.js';
@@ -9,22 +9,26 @@ import { refreshBoardImages } from '../../../../setup/sizing/refresh-board.js';
 
 export const initializeP1BottomButtons = () => {
     const setupButton = document.getElementById('setupButton');
-    setupButton.addEventListener('click', () => setup(systemState.initiator));
+    const setupFunction = () => setup(systemState.initiator)
+    setupButton.addEventListener('click', setupFunction);
 
     const setupBothButton = document.getElementById('setupBothButton');
-    setupBothButton.addEventListener('click', () => {
+    const setupBothFunction = () => {
         setup('self');
         setup('opp');
-    });
+    }
+    setupBothButton.addEventListener('click', setupBothFunction);
 
     const resetButton = document.getElementById('resetButton');
-    resetButton.addEventListener('click', () => reset(systemState.initiator));
+    const resetFunction = () => reset(systemState.initiator)
+    resetButton.addEventListener('click', resetFunction);
 
     const resetBothButton = document.getElementById('resetBothButton');
-    resetBothButton.addEventListener('click', () => {
+    const resetBothFunction = () => {
         reset('self');
         reset('opp');
-    });
+    }
+    resetBothButton.addEventListener('click', resetBothFunction);
 
     const optionsContextMenu = document.getElementById('optionsContextMenu');
 
@@ -56,10 +60,183 @@ export const initializeP1BottomButtons = () => {
         fileInput.click();
     });
     fileInput.addEventListener('change', handleFileSelect);
+    
+    const fileReplay = document.getElementById('jsonReplay');
+    const importReplay = document.getElementById('importReplay');
+    importReplay.addEventListener('click', (event) => {
+        event.preventDefault();
+        systemState.isReplay = true;
+        fileReplay.click();
+    });
+    fileReplay.addEventListener('change', handleFileSelect);
+    
+    const exitReplay = document.getElementById('exitReplay');
+    exitReplay.addEventListener('click', () => {
+        exitReplayMode();
+        optionsContextMenu.style.display = 'none';
+    });
+    
+    const playNextReplayAction = () => {
+        if (systemState.replayActionData.length === 0){
+            return;
+        }
+        const data = systemState.replayActionData[0];
+        acceptAction(data.user, data.action, data.parameters, true, true);
+        systemState.replayActionData.shift();
+    }
+    
+    const rewindPreviousReplayAction = () => {
+        if (systemState.exportActionData.length === 0){
+            return;
+        }
+        const lastAction = systemState.exportActionData.pop();
+        systemState.replayActionData.unshift(lastAction);
+        const actions = structuredClone(systemState.exportActionData);
+        resetBothFunction();
+        systemState.exportActionData = [];
+        clearChatboxContent();
+        actions.forEach(data => {
+            acceptAction(data.user, data.action, data.parameters, true, true);
+        });
+    }
+    
+    const fastForwardReplay = () => {
+        while (systemState.replayActionData.length > 0){
+            playNextReplayAction();
+        }
+    }
+    
+    const rewindToStartReplay = () => {
+        while (systemState.exportActionData.length > 0){
+            systemState.replayActionData.unshift(systemState.exportActionData.pop());
+        }
+        resetBothFunction();
+        systemState.exportActionData = [];
+        clearChatboxContent();
+    }
+    
+    function addReplayListeners(){
+        setupButton.addEventListener('click', rewindToStartReplay);
+        resetButton.addEventListener('click', rewindPreviousReplayAction);
+        setupBothButton.addEventListener('click', playNextReplayAction);
+        resetBothButton.addEventListener('click', fastForwardReplay);
+    }
+    
+    function removeReplayListeners(){
+        setupButton.removeEventListener('click', rewindToStartReplay);
+        resetButton.removeEventListener('click', rewindPreviousReplayAction);
+        setupBothButton.removeEventListener('click', playNextReplayAction);
+        resetBothButton.removeEventListener('click', fastForwardReplay);
+    }
+    
+    function enterReplayMode() {
+        clearChatboxContent();
+        
+        document.getElementById("p1Button").innerHTML='Replay';
+        document.getElementById("p1Button").style.width='50%';
+        document.getElementById("settingsButton").style.width='50%';
+        document.getElementById("p2Button").style.display='none';
+        document.getElementById("deckImportButton").style.display='none';
+        document.getElementById("keybindReminder").style.display='none';
+        document.getElementById("chatboxButtonContainer").style.display='none';
+        document.getElementById("messageInput").style.display='none';
+        exitReplay.style.display='block';
+        document.getElementById("jsonReplayDiv").style.display='none';
+        document.getElementById("jsonDiv").style.display='none';
+        exportState.style.display='block';
+        exportLog.style.display='block';
+        clearLog.style.display='none';
+        document.getElementById("turnButton").style.display='none';
+        document.getElementById("flipCoinButton").style.display='none';
+        
+        [oppContainerDocument, selfContainerDocument].forEach((doc) => {
+            ['shuffleDeckButton','shuffleDiscardButton',
+             'discardViewCardsButton','shuffleViewCardsButton','shuffleBottomViewCardsButton','lostZoneViewCardsButton','handViewCardsButton',
+             'discardAttachedCardsButton','shuffleAttachedCardsButton','lostZoneAttachedCardsButton','handAttachedCardsButton','leaveAttachedCardsButton'].forEach((id) =>{
+                doc.getElementById(id).style.display='none';
+            });
+        });
+        
+        setupButton.removeEventListener('click', setupFunction);
+        setupBothButton.removeEventListener('click', setupBothFunction);
+        resetButton.removeEventListener('click', resetFunction);
+        resetBothButton.removeEventListener('click', resetBothFunction);
+        
+        addReplayListeners();
+        
+        setupButton.innerHTML = "⏮";
+        resetButton.innerHTML = "◀";
+        setupBothButton.innerHTML = "▶";
+        resetBothButton.innerHTML = "⏭";
+        setupButton.className = '';
+        resetButton.className = '';
+        setupBothButton.className = '';
+        resetBothButton.className = '';
+        
+        setupButton.classList.add('neutral-color');
+        resetButton.classList.add('spectator-color');
+        setupBothButton.classList.add('spectator-color');
+        resetBothButton.classList.add('neutral-color');
+        optionsContextMenu.style.display = 'none';
+    }
+    
+    function exitReplayMode() {
+        document.getElementById("p1Button").innerHTML = '1P';
+        document.getElementById("p1Button").style.width = '';
+        document.getElementById("settingsButton").style.width = '';
+        document.getElementById("p2Button").style.display = '';
+        document.getElementById("deckImportButton").style.display = '';
+        document.getElementById("keybindReminder").style.display = '';
+        exitReplay.style.display='none';
+        document.getElementById("chatboxButtonContainer").style.display='flex';
+        document.getElementById("messageInput").style.display='inline-block'; document.getElementById("jsonReplayDiv").style.display='block';
+        document.getElementById("jsonDiv").style.display='block';
+        exportState.style.display='block';
+        exportLog.style.display='block';
+        clearLog.style.display='block';
+        document.getElementById("turnButton").style.display='block';
+        document.getElementById("flipCoinButton").style.display='block';
+        
+        [oppContainerDocument, selfContainerDocument].forEach((doc) => {
+            ['shuffleDeckButton','shuffleDiscardButton',
+             'discardViewCardsButton','shuffleViewCardsButton','shuffleBottomViewCardsButton','lostZoneViewCardsButton','handViewCardsButton',
+             'discardAttachedCardsButton','shuffleAttachedCardsButton','lostZoneAttachedCardsButton','handAttachedCardsButton','leaveAttachedCardsButton'].forEach((id) =>{
+                doc.getElementById(id).style.display='';
+            });
+        });
+        
+        setupButton.addEventListener('click', setupFunction);
+        setupBothButton.addEventListener('click', setupBothFunction);
+        resetButton.addEventListener('click', resetFunction);
+        resetBothButton.addEventListener('click', resetBothFunction);
+        
+        removeReplayListeners();
+        
+        setupButton.innerHTML = "Set Up";
+        setupBothButton.innerHTML = "Set Up Both";
+        resetButton.innerHTML = "Reset";
+        resetBothButton.innerHTML = "Reset Both";
+        
+        setupButton.className = '';
+        resetButton.className = '';
+        setupBothButton.className = '';
+        resetBothButton.className = '';
+        setupButton.classList.add(systemState.initiator === 'self' ? 'self-color' : 'opp-color');
+        resetButton.classList.add(systemState.initiator === 'self' ? 'self-color' : 'opp-color');
+        setupBothButton.classList.add('neutral-color');
+        resetBothButton.classList.add('neutral-color');        
+        
+        //the following is because there's a bug that doesn't let you enter it again
+        systemState.isReplayLocked = true;
+        document.getElementById("jsonReplayDiv").style.display='none';
+    }
 
     function handleFileSelect(event) {
         const file = event.target.files[0];
-        if (!file) return;
+        if (!file && systemState.isReplay){
+            exitReplayMode();
+            return;
+        }
         const reader = new FileReader();
         reader.onload = function (e) {
             var actionErrors = 0;
@@ -69,18 +246,33 @@ export const initializeP1BottomButtons = () => {
                 cleanActionData('opp');
                 const jsonData = JSON.parse(e.target.result);
                 let actions = jsonData.filter(obj => !('version' in obj)); // Remove any objects containing version property
-                actions.forEach(data => {
-                    try {
-                        acceptAction(data.user, data.action, data.parameters, true);
-                    } catch (error) {
-                        actionErrors++;
-                        console.warn('Error at action: '+JSON.stringify(data))
-                    }
-                });
-                socket.emit('resetCounter', {roomId: systemState.roomId});
+                if (systemState.isTwoPlayer || !systemState.isReplay) {
+                    actions.forEach(data => {
+                        try {
+                            acceptAction(data.user, data.action, data.parameters, true);
+                        } catch (error) {
+                            actionErrors++;
+                            console.warn('Error at action: '+JSON.stringify(data))
+                        }
+                    });
+                    socket.emit('resetCounter', {roomId: systemState.roomId});
+                }
+                else {
+                    console.assert(actions[0].action==="loadDeckData");
+                    console.assert(actions[1].action==="loadDeckData");
+                    acceptAction(actions[0].user, actions[0].action, actions[0].parameters, true, true);
+                    acceptAction(actions[1].user, actions[1].action, actions[1].parameters, true, true);
+                    actions.shift();
+                    actions.shift();
+                    systemState.replayActionData = structuredClone(actions);
+                    enterReplayMode();
+                }
             } catch (error) {
                 console.error('Error reading file:', error);
-                alert('Error: could not read file. Please make sure the file is valid.');
+                alert('Error reading file. Please make sure the file is valid.');
+                if (systemState.isReplay) {
+                    exitReplayMode();
+                };
             } finally {
                 refreshBoardImages();
                 socket.emit('endImport', {roomId: systemState.roomId});

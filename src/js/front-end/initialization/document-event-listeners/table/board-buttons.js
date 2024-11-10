@@ -20,28 +20,28 @@ export const initializeBoardButtons = () => {
 
     const selfVSTARButton = selfContainerDocument.getElementById('VSTARButton');
     selfVSTARButton.addEventListener('click', () => {
-        if (!(systemState.isTwoPlayer && document.getElementById('spectatorModeCheckbox').checked)){
+        if (!(systemState.isTwoPlayer && document.getElementById('spectatorModeCheckbox').checked) && !systemState.isReplay){
             VSTARGXFunction('self', 'VSTAR');
         };
     });
 
     const selfGXButton = selfContainerDocument.getElementById('GXButton');
     selfGXButton.addEventListener('click', () => {
-        if (!(systemState.isTwoPlayer && document.getElementById('spectatorModeCheckbox').checked)){
+        if (!(systemState.isTwoPlayer && document.getElementById('spectatorModeCheckbox').checked) && !systemState.isReplay){
             VSTARGXFunction('self', 'GX');
         };
     });
 
     const oppVSTARButton = oppContainerDocument.getElementById('VSTARButton');
     oppVSTARButton.addEventListener('click', () => {
-        if (!(systemState.isTwoPlayer && document.getElementById('spectatorModeCheckbox').checked)){
+        if (!(systemState.isTwoPlayer && document.getElementById('spectatorModeCheckbox').checked) && !systemState.isReplay){
             VSTARGXFunction('opp', 'VSTAR');
         };
     });
 
     const oppGXButton = oppContainerDocument.getElementById('GXButton');
     oppGXButton.addEventListener('click', () => {
-        if (!(systemState.isTwoPlayer && document.getElementById('spectatorModeCheckbox').checked)){
+        if (!(systemState.isTwoPlayer && document.getElementById('spectatorModeCheckbox').checked) && !systemState.isReplay){
             VSTARGXFunction('opp', 'GX');
         };
     });
