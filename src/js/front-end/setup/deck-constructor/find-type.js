@@ -129,11 +129,7 @@ const SVEra = {
         125: "Trainer",
         150: "Pokémon",
         151: "Trainer",
-        167: "Pokémon",
-        177: undefined,
-        178: "Pokémon",
-        190: undefined,
-        193: "Pokémon",
+        166: "Pokémon",
     },
     "SVE": {
         17: "Energy",
