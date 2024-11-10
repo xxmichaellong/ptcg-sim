@@ -1,6 +1,18 @@
 //number: every card UP until that number is of that type, i.e., it's the first card that's type is different
 
 const SVEra = {
+    "SSP": {
+        162: "Pokémon",
+        191: "Trainer",
+        192: "Energy",
+        229: "Pokémon",
+        236: "Trainer",
+        243: "Pokémon",
+        247: "Trainer",
+        249: "Pokémon",
+        252: "Trainer",
+        253: "Energy",
+    },
     "SCR": {
         129: "Pokémon",
         143: "Trainer",
@@ -117,7 +129,7 @@ const SVEra = {
         125: "Trainer",
         150: "Pokémon",
         151: "Trainer",
-        163: "Pokémon",
+        166: "Pokémon",
     },
     "SVE": {
         17: "Energy",
@@ -340,7 +352,7 @@ const SSEra = {
         213: "Pokémon",
         217: "Trainer",
     },
-    "SSP": {
+    "SP": {
         120: "Pokémon",
         122: "Trainer",
         146: "Pokémon",

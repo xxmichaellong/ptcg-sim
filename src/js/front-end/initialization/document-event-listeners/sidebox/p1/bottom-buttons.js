@@ -239,22 +239,24 @@ export const initializeP1BottomButtons = () => {
         }
         const reader = new FileReader();
         reader.onload = function (e) {
+            var actionErrors = 0;
             try {
                 socket.emit('initiateImport', {roomId: systemState.roomId});
                 cleanActionData('self');
                 cleanActionData('opp');
                 const jsonData = JSON.parse(e.target.result);
-                let actions;
-                if ('version' in jsonData[0]) {
-                    actions = jsonData.slice(1); // first element is the version #
-                } else {
-                    actions = jsonData; // no version object, treat all data as actions
-                }
+                let actions = jsonData.filter(obj => !('version' in obj)); // Remove any objects containing version property
                 if (systemState.isTwoPlayer || !systemState.isReplay) {
                     actions.forEach(data => {
-                        acceptAction(data.user, data.action, data.parameters, true);
-                    });
-                    socket.emit('resetCounter', {roomId: systemState.roomId});
+                        try {
+                            acceptAction(data.user, data.action, data.parameters, true);
+                        } catch (error) {
+                            actionErrors++;
+                            console.warn('Error at action: '+JSON.stringify(data))
+                        }
+                    }
+                });
+                socket.emit('resetCounter', {roomId: systemState.roomId});
                 }
                 else {
                     console.assert(actions[0].action==="loadDeckData");
@@ -277,6 +279,9 @@ export const initializeP1BottomButtons = () => {
                 socket.emit('endImport', {roomId: systemState.roomId});
                 fileInput.value = '';
                 optionsContextMenu.style.display = 'none';
+                if (actionErrors>0) {
+                    alert('File read with '+actionErrors+' error'+((actionErrors===1)?'':'s')+'. Please make sure the file is valid.');
+                }
             }
         };
         reader.readAsText(file);
@@ -312,10 +317,9 @@ export const initializeP1BottomButtons = () => {
             action: 'loadDeckData',
             parameters: [systemState.isTwoPlayer ? systemState.p2OppDeckData : systemState.p1OppDeckData],
         }
-        systemState.exportActionData.unshift(selfData, oppData);
-        systemState.exportActionData.unshift({version: version})
-
-        const jsonData = JSON.stringify(systemState.exportActionData, null, 2);
+        const versionData = {version: version};
+        const exportData = [versionData, selfData, oppData, systemState.exportActionData];
+        const jsonData = JSON.stringify(exportData, null, 2);
 
         const userChoice = prompt("Enter '1' to save a file or enter '2' to generate a URL");
         if (userChoice === '1' || userChoice === '2') {

@@ -6,12 +6,7 @@ export function loadImportData() {
         const importDataJSON = document.getElementById('importDataJSON').textContent;
         if (importDataJSON && importDataJSON.trim() !== '') {
             const importData = JSON.parse(importDataJSON);
-            let actions;
-            if ('version' in importData[0]) {
-                actions = importData.slice(1); // first element is the version #
-            } else {
-                actions = importData; // no version object, treat all data as actions
-            }
+            let actions = importData.filter(obj => !('version' in obj)); // Remove any objects containing version property
             actions.forEach(data => {
                 acceptAction(data.user, data.action, data.parameters, true);
             });
