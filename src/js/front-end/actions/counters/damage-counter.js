@@ -9,7 +9,9 @@ export const updateDamageCounter = (user, zoneId, index, damageAmount, emit = tr
     };
 
     const damageCounter = getZone(user, zoneId).array[index].image.damageCounter;
-    damageCounter.textContent = damageAmount;
+    if (damageCounter.textContent != damageAmount){
+        damageCounter.textContent = damageAmount;
+    }
 
     processAction(user, emit, 'updateDamageCounter', [zoneId, index, damageAmount]);
 }
