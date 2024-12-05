@@ -224,7 +224,9 @@ export const initializeP1BottomButtons = () => {
         setupButton.classList.add(systemState.initiator === 'self' ? 'self-color' : 'opp-color');
         resetButton.classList.add(systemState.initiator === 'self' ? 'self-color' : 'opp-color');
         setupBothButton.classList.add('neutral-color');
-        resetBothButton.classList.add('neutral-color');        
+        resetBothButton.classList.add('neutral-color');
+        
+        systemState.isReplay = false;
         
         //the following is because there's a bug that doesn't let you enter it again
         systemState.isReplayLocked = true;
