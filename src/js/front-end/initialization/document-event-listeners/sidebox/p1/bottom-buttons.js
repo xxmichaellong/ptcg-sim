@@ -227,10 +227,6 @@ export const initializeP1BottomButtons = () => {
         resetBothButton.classList.add('neutral-color');
         
         systemState.isReplay = false;
-        
-        //the following is because there's a bug that doesn't let you enter it again
-        systemState.isReplayLocked = true;
-        document.getElementById("jsonReplayDiv").style.display='none';
     }
 
     function handleFileSelect(event) {
