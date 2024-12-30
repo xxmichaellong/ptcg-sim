@@ -1,7 +1,7 @@
 import { preloadImage } from "../../setup/general/preload-image.js";
 import { getZone } from "../../setup/zones/get-zone.js";
 
-export const version = '1.4.1';
+export const version = '1.5';
 
 // exports a WebSocket connection using the Socket.IO library.
 export const socket = io('https://ptcgsim.online');
@@ -51,7 +51,7 @@ preloadImage("https://ptcgsim.online/src/cardback.png");
 
 // const randomNumber = Math.random();
 // const backgroundUrl = randomNumber < 0.5 ? 'https://ptcgsim.online/background1.jpg' : 'https://ptcgsim.online/background2.webp';
-// document.body.style.backgroundImage = `url('${backgroundUrl}')`;
+document.body.style.backgroundImage = `linear-gradient(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.5)), url('https://imgcdn.stablediffusionweb.com/2024/11/7/dd71dffd-ba64-48a0-a575-c7c51d741d37.jpg')`;
 
 // create global variable that holds the information of a selected card, i.e., the card that has been clicked and highlighted and can trigger keybinds
 export const mouseClick = {
