@@ -11,7 +11,7 @@ import { hideCards, hideShortcut, lookAtCards, lookShortcut, playRandomCardFaceD
 import { rotateCard } from "../../actions/general/rotate-card.js"
 import { setup } from "../../actions/general/setup.js"
 import { takeTurn } from "../../actions/general/take-turn.js"
-import { undoAsync } from "../../actions/general/undo.js"
+import { undo } from "../../actions/general/undo.js"
 import { moveCardBundle } from "../../actions/move-card-bundle/move-card-bundle.js"
 import { draw, moveToDeckTop, shuffleIntoDeck, switchWithDeckTop, viewDeck } from "../../actions/zones/deck-actions.js"
 import { discardAll, handAll, leaveAll, lostZoneAll, shuffleAll, shuffleBottom } from "../../actions/zones/general.js"
@@ -70,7 +70,7 @@ const functions = {
     attack: attack,
     pass: pass,
     VSTARGXFunction: VSTARGXFunction,
-    undo: undoAsync
+    undo: undo
 };
 
 const actionToFunction = (action) => {
