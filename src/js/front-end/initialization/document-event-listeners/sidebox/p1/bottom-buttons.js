@@ -243,6 +243,9 @@ export const initializeP1BottomButtons = () => {
 
     function handleFileSelect(event) {
         const file = event.target.files[0];
+        if (!file) {
+            return;
+        }
         const reader = new FileReader();
         reader.onload = function (e) {
             var actionErrors = 0;
