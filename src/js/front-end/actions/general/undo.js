@@ -42,9 +42,9 @@ const undoAsync = async (user, filteredActionData, emit = true) => {
             : 0;
             
             if (mostRecentResetAndAfterEntries){
-                mostRecentResetAndAfterEntries.forEach(data => acceptAction(user, data.action, data.parameters));
+                mostRecentResetAndAfterEntries.forEach(data => acceptAction(user, data.action, data.parameters, false, systemState.isReplay));
             } else {
-                filteredActionData.forEach(data => acceptAction(user, data.action, data.parameters));
+                filteredActionData.forEach(data => acceptAction(user, data.action, data.parameters, false, systemState.isReplay));
             };
             resolve();
         };
