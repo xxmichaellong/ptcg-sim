@@ -36,7 +36,7 @@ export const initializeHeaderButtons = () => {
             cleanActionData('opp');
             reset('opp', true, true, false, true);
             
-            //repopulate self deck with the correct current decklist
+            // repopulate self deck with the correct current decklist
             systemState.selfDeckData = '';
             let decklistTable = document.getElementById('selfCurrentDecklistTable');
             if (decklistTable){
@@ -70,12 +70,14 @@ export const initializeHeaderButtons = () => {
             };
             if (systemState.p1OppDeckData){
                 processAction('opp', true, 'loadDeckData', [systemState.p1OppDeckData]);
-            };
+            }
         }
     });
 
     const p2Button = document.getElementById('p2Button');
-    p2Button.addEventListener('click', () => { show('p2Box', p2Button) });
+    p2Button.addEventListener('click', () => {
+        show('p2Box', p2Button);
+    });
 
     const deckImportButton = document.getElementById('deckImportButton');
     deckImportButton.addEventListener('click', () => { show('deckImport', deckImportButton) });

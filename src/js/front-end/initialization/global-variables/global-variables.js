@@ -15,16 +15,17 @@ export const oppContainerDocument = oppContainer.contentWindow.document;
 // create globally accessible variable systemState, which holds information relevant to the state of the user's game
 export const systemState = {
     coachingMode: false,
-    undo: false,
+    isUndoInProgress: false,
     selfCounter: 0,
     selfActionData: [],
     oppActionData: [],
-    // spectatorActionData: [],
     spectatorCounter: 0,
     exportActionData: [],
     spectatorId: '',
     oppCounter: 0,
     isTwoPlayer: false,
+    isReplay: false, // should be treated as false no matter what if isTwoPlayer is true
+    replayActionData: [],
     turn: 0,
     get initiator() {
         return selfContainer.classList.contains('self') ? 'self' : 'opp'; 

@@ -2,7 +2,7 @@ import { socket, systemState } from "../../front-end.js";
 
 export const processAction = (user, emit, action, parameters) => {
     const notSpectator = !(document.getElementById('spectatorModeCheckbox').checked && systemState.isTwoPlayer);
-    if (!systemState.undo && emit && notSpectator){
+    if (!systemState.isUndoInProgress && emit && notSpectator){
         if (!systemState.isTwoPlayer || user === 'self'){
             const data = {
                 user: user,
