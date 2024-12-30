@@ -61,14 +61,21 @@ export const initializeP1BottomButtons = () => {
     });
     fileInput.addEventListener('change', handleFileSelect);
     
-    const fileReplay = document.getElementById('jsonReplay');
     const importReplay = document.getElementById('importReplay');
-    importReplay.addEventListener('click', (event) => {
+    importReplay.addEventListener('click', async (event) => {
         event.preventDefault();
         systemState.isReplay = true;
-        fileReplay.click();
+        
+        try {
+            const [fileHandle] = await window.showOpenFilePicker();
+            const file = await fileHandle.getFile();
+            const event = { target: { files: [file] } };
+            handleFileSelect(event);
+        } catch (err) {
+            // User cancelled the file picker, set isReplay to false
+            systemState.isReplay = false;
+        }
     });
-    fileReplay.addEventListener('change', handleFileSelect);
     
     const exitReplay = document.getElementById('exitReplay');
     exitReplay.addEventListener('click', () => {
@@ -122,11 +129,25 @@ export const initializeP1BottomButtons = () => {
         resetBothButton.addEventListener('click', fastForwardReplay);
     }
     
+    function addNormalListeners(){
+        setupButton.addEventListener('click', setupFunction);
+        setupBothButton.addEventListener('click', setupBothFunction);
+        resetButton.addEventListener('click', resetFunction);
+        resetBothButton.addEventListener('click', resetBothFunction);
+    }
+    
     function removeReplayListeners(){
         setupButton.removeEventListener('click', rewindToStartReplay);
         resetButton.removeEventListener('click', rewindPreviousReplayAction);
         setupBothButton.removeEventListener('click', playNextReplayAction);
         resetBothButton.removeEventListener('click', fastForwardReplay);
+    }
+
+    function removeNormalListeners(){
+        setupButton.removeEventListener('click', setupFunction);
+        setupBothButton.removeEventListener('click', setupBothFunction);
+        resetButton.removeEventListener('click', resetFunction);
+        resetBothButton.removeEventListener('click', resetBothFunction);
     }
     
     function enterReplayMode() {
@@ -137,7 +158,6 @@ export const initializeP1BottomButtons = () => {
         document.getElementById("settingsButton").style.width='50%';
         document.getElementById("p2Button").style.display='none';
         document.getElementById("deckImportButton").style.display='none';
-        document.getElementById("keybindReminder").style.display='none';
         document.getElementById("chatboxButtonContainer").style.display='none';
         document.getElementById("messageInput").style.display='none';
         exitReplay.style.display='block';
@@ -157,11 +177,7 @@ export const initializeP1BottomButtons = () => {
             });
         });
         
-        setupButton.removeEventListener('click', setupFunction);
-        setupBothButton.removeEventListener('click', setupBothFunction);
-        resetButton.removeEventListener('click', resetFunction);
-        resetBothButton.removeEventListener('click', resetBothFunction);
-        
+        removeNormalListeners(); 
         addReplayListeners();
         
         setupButton.innerHTML = "⏮";
@@ -186,10 +202,10 @@ export const initializeP1BottomButtons = () => {
         document.getElementById("settingsButton").style.width = '';
         document.getElementById("p2Button").style.display = '';
         document.getElementById("deckImportButton").style.display = '';
-        document.getElementById("keybindReminder").style.display = '';
         exitReplay.style.display='none';
         document.getElementById("chatboxButtonContainer").style.display='flex';
-        document.getElementById("messageInput").style.display='inline-block'; document.getElementById("jsonReplayDiv").style.display='block';
+        document.getElementById("messageInput").style.display='inline-block'; 
+        document.getElementById("jsonReplayDiv").style.display='block';
         document.getElementById("jsonDiv").style.display='block';
         exportState.style.display='block';
         exportLog.style.display='block';
@@ -205,12 +221,8 @@ export const initializeP1BottomButtons = () => {
             });
         });
         
-        setupButton.addEventListener('click', setupFunction);
-        setupBothButton.addEventListener('click', setupBothFunction);
-        resetButton.addEventListener('click', resetFunction);
-        resetBothButton.addEventListener('click', resetBothFunction);
-        
         removeReplayListeners();
+        addNormalListeners();
         
         setupButton.innerHTML = "Set Up";
         setupBothButton.innerHTML = "Set Up Both";
@@ -227,18 +239,10 @@ export const initializeP1BottomButtons = () => {
         resetBothButton.classList.add('neutral-color');
         
         systemState.isReplay = false;
-        
-        //the following is because there's a bug that doesn't let you enter it again
-        systemState.isReplayLocked = true;
-        document.getElementById("jsonReplayDiv").style.display='none';
     }
 
     function handleFileSelect(event) {
         const file = event.target.files[0];
-        if (!file && systemState.isReplay){
-            exitReplayMode();
-            return;
-        }
         const reader = new FileReader();
         reader.onload = function (e) {
             var actionErrors = 0;
@@ -247,7 +251,7 @@ export const initializeP1BottomButtons = () => {
                 cleanActionData('self');
                 cleanActionData('opp');
                 const jsonData = JSON.parse(e.target.result);
-                let actions = jsonData.filter(obj => !('version' in obj)); // Remove any objects containing version property
+                let actions = jsonData.filter(data => !('version' in data)); // Remove any objects containing version property
                 if (systemState.isTwoPlayer || !systemState.isReplay) {
                     actions.forEach(data => {
                         try {
@@ -260,8 +264,6 @@ export const initializeP1BottomButtons = () => {
                     socket.emit('resetCounter', {roomId: systemState.roomId});
                 }
                 else {
-                    console.assert(actions[0].action==="loadDeckData");
-                    console.assert(actions[1].action==="loadDeckData");
                     acceptAction(actions[0].user, actions[0].action, actions[0].parameters, true, true);
                     acceptAction(actions[1].user, actions[1].action, actions[1].parameters, true, true);
                     actions.shift();
@@ -280,7 +282,7 @@ export const initializeP1BottomButtons = () => {
                 socket.emit('endImport', {roomId: systemState.roomId});
                 fileInput.value = '';
                 optionsContextMenu.style.display = 'none';
-                if (actionErrors>0) {
+                if (actionErrors > 0) {
                     alert('File read with '+actionErrors+' error'+((actionErrors===1)?'':'s')+'. Please make sure the file is valid.');
                 }
             }
@@ -319,7 +321,7 @@ export const initializeP1BottomButtons = () => {
             parameters: [systemState.isTwoPlayer ? systemState.p2OppDeckData : systemState.p1OppDeckData],
         }
         const versionData = {version: version};
-        const exportData = [versionData, selfData, oppData, systemState.exportActionData];
+        const exportData = [versionData, selfData, oppData, ...systemState.exportActionData];
         const jsonData = JSON.stringify(exportData, null, 2);
 
         const userChoice = prompt("Enter '1' to save a file or enter '2' to generate a URL");

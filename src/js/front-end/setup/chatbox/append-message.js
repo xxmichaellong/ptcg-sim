@@ -1,7 +1,7 @@
 import { socket, systemState } from '../../front-end.js';
 
 export const appendMessage = (user, message, type, emit = true) => {
-    if (!systemState.undo){
+    if (!systemState.isUndoInProgress){
         const chatbox = document.getElementById('chatbox');
         const p2Chatbox = document.getElementById('p2Chatbox');
     

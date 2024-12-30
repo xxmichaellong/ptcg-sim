@@ -4,9 +4,9 @@ import { getZone } from "../../setup/zones/get-zone.js";
 export const version = '1.4.1';
 
 // exports a WebSocket connection using the Socket.IO library.
-export const socket = io('https://ptcgsim.online');
+// export const socket = io('https://ptcgsim.online');
 
-// export const socket = io('http://localhost:4000/');
+export const socket = io('http://localhost:4000/');
 // export references to HTML elements 'selfContainer' and 'oppContainer', and their respective content window documents for ease of access to the iframes
 export const selfContainer = document.getElementById('selfContainer');
 export const selfContainerDocument = selfContainer.contentWindow.document;
@@ -15,11 +15,10 @@ export const oppContainerDocument = oppContainer.contentWindow.document;
 // create globally accessible variable systemState, which holds information relevant to the state of the user's game
 export const systemState = {
     coachingMode: false,
-    undo: false,
+    isUndoInProgress: false,
     selfCounter: 0,
     selfActionData: [],
     oppActionData: [],
-    // spectatorActionData: [],
     spectatorCounter: 0,
     exportActionData: [],
     spectatorId: '',

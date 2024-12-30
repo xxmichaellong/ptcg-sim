@@ -1,6 +1,7 @@
 import { mouseClick, systemState } from '../../front-end.js';
 import { appendMessage } from '../../setup/chatbox/append-message.js';
 import { determineUsername } from '../../setup/general/determine-username.js';
+import { isBlockedByReplay } from "../../setup/general/replay-block.js";
 import { doubleClick } from '../../setup/image-logic/click-events.js';
 import { refreshBoardImages } from '../../setup/sizing/refresh-board.js';
 import { getZone } from '../../setup/zones/get-zone.js';
@@ -22,7 +23,6 @@ import { moveCardBundle } from '../move-card-bundle/move-card-bundle.js';
 import { draw, moveToDeckBottom, moveToDeckTop, shuffleIntoDeck, switchWithDeckTop, viewDeck } from '../zones/deck-actions.js';
 import { shuffleAll } from '../zones/general.js';
 import { discardAndDraw, shuffleAndDraw, shuffleBottomAndDraw } from '../zones/hand-actions.js';
-import { isBlockedByReplay } from "../../setup/general/replay-block.js";
 
 const isAltKeyPressed = (event) => {
     return event.altKey || event.getModifierState('Alt');
@@ -298,8 +298,6 @@ export const keyDown = (event) => {
             shuffleBottomAndDraw(systemState.initiator, systemState.initiator);
         };
         if (event.key === 'u' || event.code === 'KeyU') {
-            const undoButton = systemState.isTwoPlayer ? document.getElementById('p2UndoButton') : document.getElementById('undoButton');
-            undoButton.textContent = "Loading...";
             undo(systemState.initiator);
         };
     };
