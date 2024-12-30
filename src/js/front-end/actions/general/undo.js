@@ -4,7 +4,7 @@ import { acceptAction } from "../../setup/general/accept-action.js";
 import { determineUsername } from "../../setup/general/determine-username.js";
 import { processAction } from "../../setup/general/process-action.js";
 
-export const undoAsync = async (user, filteredActionData, emit = true) => {
+const undoAsync = async (user, filteredActionData, emit = true) => {
     return new Promise((resolve, reject) => {
         if (user === 'opp' && emit && systemState.isTwoPlayer){
             processAction(user, emit, 'undo', [filteredActionData]);
