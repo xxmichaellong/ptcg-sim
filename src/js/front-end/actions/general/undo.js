@@ -59,7 +59,8 @@ export const undo = async (user, filteredActionData, emit = true) => {
         return;
     }
 
-    const undoButton = systemState.isTwoPlayer ? document.getElementById('p2UndoButton') : document.getElementById('undoButton');
+    // const undoButton = systemState.isTwoPlayer ? document.getElementById('p2UndoButton') : document.getElementById('undoButton');
+    const undoButton = document.getElementById('undoButton');
 
     systemState.isUndoInProgress = true;
     undoButton.textContent = "Loading...";

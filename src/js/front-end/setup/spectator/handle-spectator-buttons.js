@@ -23,7 +23,7 @@ const toggleZoneElementsVisibility = (elementIds, isVisible) => {
 
 export const handleSpectatorButtons = () => {
 
-    const buttonIdsToToggle = ['p2AttackButton', 'p2PassButton', 'p2UndoButton', 'p2SetupButton', 'p2ResetButton', 'turnButton', 'flipCoinButton'];
+    const buttonIdsToToggle = ['p2AttackButton', 'p2PassButton', 'p2SetupButton', 'p2ResetButton', 'turnButton', 'flipCoinButton'];
     toggleElementsVisibility(buttonIdsToToggle, !(document.getElementById('spectatorModeCheckbox').checked && systemState.isTwoPlayer));
 
     const zoneButtonIdsToToggle = ['shuffleDeckButton', 'shuffleDiscardButton', 'viewCardsButtonContainer', 'attachedCardsButtonContainer'];

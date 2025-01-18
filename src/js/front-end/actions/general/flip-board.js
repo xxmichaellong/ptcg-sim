@@ -15,7 +15,7 @@ export const flipBoard = () => {
     const resetButton = document.getElementById('resetButton');
     const p2AttackButton = document.getElementById('p2AttackButton');
     const p2PassButton = document.getElementById('p2PassButton');
-    const p2UndoButton = document.getElementById('p2UndoButton');
+    // const p2UndoButton = document.getElementById('p2UndoButton');
     const p2FREEBUTTON = document.getElementById('p2FREEBUTTON');
     const p2SetupButton = document.getElementById('p2SetupButton');
     const p2ResetButton = document.getElementById('p2ResetButton');
@@ -66,7 +66,7 @@ export const flipBoard = () => {
     toggleClasses(FREEBUTTON, 'self-color', 'opp-color');
     toggleClasses(p2AttackButton, 'self-color', 'opp-color');
     toggleClasses(p2PassButton, 'self-color', 'opp-color');
-    toggleClasses(p2UndoButton, 'self-color', 'opp-color');
+    // toggleClasses(p2UndoButton, 'self-color', 'opp-color');
     toggleClasses(p2FREEBUTTON, 'self-color', 'opp-color');
     toggleClasses(p2SetupButton, 'self-color', 'opp-color');
     toggleClasses(p2ResetButton, 'self-color', 'opp-color');

@@ -26,10 +26,10 @@ export const initializeP2ChatButtons = () => {
         };
     });
 
-    const p2UndoButton = document.getElementById('p2UndoButton');
-    p2UndoButton.addEventListener('click', () => {
-        undo(systemState.initiator);
-    });
+    // const p2UndoButton = document.getElementById('p2UndoButton');
+    // p2UndoButton.addEventListener('click', () => {
+    //     undo(systemState.initiator);
+    // });
 
     const p2FREEBUTTON = document.getElementById('p2FREEBUTTON');
     p2FREEBUTTON.addEventListener('click', () => {
