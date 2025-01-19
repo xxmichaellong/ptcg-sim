@@ -1,6 +1,12 @@
-//number: every card UP until that number is of that type, i.e., it's the first card that's type is different
-
+// number: every card UP until that number is of that type, i.e., that number's card is the first card whose type is different. this currently needs to be updated for the new sets manually.
 const SVEra = {
+    "PRE": {
+        93: "Pokémon",
+        144: "Trainer",
+        170: "Pokémon",
+        176: "Trainer",
+        180: "Pokémon",
+    },
     "SSP": {
         162: "Pokémon",
         191: "Trainer",
