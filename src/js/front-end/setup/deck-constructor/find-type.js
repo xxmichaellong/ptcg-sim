@@ -1,5 +1,14 @@
 // number: every card UP until that number is of that type, i.e., that number's card is the first card whose type is different. this currently needs to be updated for the new sets manually.
 const SVEra = {
+    "SV8a": {
+        137: "Pokémon",
+        185: "Trainer",
+        188: "Energy",
+        200: "Trainer",
+        227: "Pokémon",
+        233: "Trainer",
+        237: "Pokémon",
+    },
     "PRE": {
         93: "Pokémon",
         144: "Trainer",
