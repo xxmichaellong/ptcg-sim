@@ -255,7 +255,6 @@ export const importDecklist = (user) => {
                         resolve(true);
                     };
                     img.onerror = () => {
-                        console.log('img onerror');
                         const alternateUrl = `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpc/${firstPart}/${firstPart}_${paddedSecondPart}_R_JP_LG.png`;
                         const altImg = new Image();
                         altImg.onload = () => {
@@ -264,7 +263,6 @@ export const importDecklist = (user) => {
                             resolve(true);
                         };
                         altImg.onerror = () => {
-                            console.log('altImg onerror');
                             resolve(false);
                         };
                         altImg.src = alternateUrl;
@@ -415,7 +413,7 @@ confirmButton.addEventListener('click', () => {
         let cells = rows[i].cells;
         let quantity = cells[0].innerText;
         let name = cells[1].innerText;
-        let type = cells[2].innerText;
+        let type = cells[2].querySelector('select').value;
         let url = cells[3].innerText;
 
         let cardData = [quantity, name, type, url];
@@ -431,6 +429,14 @@ confirmButton.addEventListener('click', () => {
 
     for (let i = 0; i < rows.length; i++) {
         let clonedRow = rows[i].cloneNode(true);
+        
+        // Copy the selected type value from original to cloned row
+        const originalSelect = rows[i].querySelector('select');
+        const clonedSelect = clonedRow.querySelector('select');
+        
+        if (originalSelect && clonedSelect) {
+            clonedSelect.value = originalSelect.value;
+        }
         clonedContent.appendChild(clonedRow);
     };
     // Append the cloned content to currentDecklistTable
@@ -471,9 +477,15 @@ const exportTableToCSV = (filename, table) => {
     for (let i = 0; i < rows.length; i++) {
         let row = [], cols = rows[i].querySelectorAll("td, th");
         
-        for (let j = 0; j < cols.length; j++) 
-            row.push(cols[j].innerText);
-        
+        for (let j = 0; j < cols.length; j++) {
+            let cell = cols[j];
+            let select = cell.querySelector('select');
+            if (select) {
+                row.push(select.value);
+            } else {
+                row.push(cell.innerText);
+            }
+        }
         csv.push(row.join(","));        
     };
 
@@ -519,13 +531,51 @@ csvFile.addEventListener('change', (evt) => {
             let cells = lines[i].split(',');
             if (cells.length === 4){
                 let newRow = tableBody.insertRow();
-                for (let j = 0; j < cells.length; j++) {
-                    let newCell = newRow.insertCell();
-                    newCell.innerText = cells[j];
-                    newCell.contentEditable = "true";
-                };
-            };
-        };
+                let [quantity, name, type, url] = cells;
+
+                let qtyCell = newRow.insertCell();
+                let nameCell = newRow.insertCell();
+                let typeCell = newRow.insertCell();
+                let urlCell = newRow.insertCell();
+
+                qtyCell.contentEditable = "true";
+                nameCell.contentEditable = "true";
+                urlCell.contentEditable = "true";
+
+                let typeSelect = document.createElement('select');
+                typeSelect.innerHTML = `
+                    <option value="">Select type...</option>
+                    <option value="Pokémon">Pokémon</option>
+                    <option value="Trainer">Trainer</option>
+                    <option value="Energy">Energy</option>
+                `;
+
+                // Set initial value if type exists
+                if (type) {
+                    typeSelect.value = type;
+                }
+
+                typeCell.appendChild(typeSelect);
+
+                qtyCell.innerHTML = quantity;
+                nameCell.innerHTML = name;
+                urlCell.innerHTML = url;
+
+                // Add red outline for empty/undefined/null values
+                if (!quantity || quantity === 'undefined' || quantity === 'null') {
+                    qtyCell.style.outline = '2px solid red';
+                }
+                if (!name || name === 'undefined' || name === 'null') {
+                    nameCell.style.outline = '2px solid red';
+                }
+                if (!url || url === 'undefined' || url === 'null') {
+                    urlCell.style.outline = '2px solid red';
+                }
+                if (!type || type === 'undefined' || type === 'null' || type === 'Unknown') {
+                    typeCell.style.outline = '2px solid red';
+                }
+            }
+        }
     };
     reader.readAsText(file);
     evt.target.value = '';
