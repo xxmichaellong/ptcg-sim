@@ -196,27 +196,7 @@ export const importDecklist = (user) => {
     let fetchPromises = decklistArray.map(entry => {
         const [_quantity, name, set, setNumber, id] = entry;
         
-        if (id) {
-            return fetch('https://api.pokemontcg.io/v2/cards/' + id, {
-                method: 'GET',
-                headers: {
-                    'X-Api-Key': 'cde33a60-5d8a-414e-ae04-b447090dd6ba'
-                }
-            })
-            .then(response => response.json())
-            .then(({data}) => {
-                const index = decklistArray.findIndex(item => item[4] === id);
-                if (index !== -1) {
-                    decklistArray[index][5] = data.images.large;
-                    decklistArray[index][6] = data.supertype;
-                }
-                return true;
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-                return false;
-            });
-        } else {
+        if (!id) {
             let [firstPart, secondPart] = [set, setNumber];
             const energyUrl = energies[name];
             
@@ -276,6 +256,27 @@ export const importDecklist = (user) => {
                     entry[1] = name.slice(0, -5);
                 }
                 return Promise.resolve(true);
+            } else if (entry[4]) {
+                var ID = entry[4]
+                return fetch('https://api.pokemontcg.io/v2/cards/' + ID, {
+                    method: 'GET',
+                    headers: {
+                        'X-Api-Key': 'cde33a60-5d8a-414e-ae04-b447090dd6ba'
+                    }
+                })
+                .then(response => response.json())
+                .then(({data}) => {
+                    const index = decklistArray.findIndex(item => item[4] === ID);
+                    if (index !== -1) {
+                        decklistArray[index][5] = data.images.large;
+                        decklistArray[index][6] = data.supertype;
+                    }
+                    return true;
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    return false;
+                });
             } else if (!entry[5] || !entry[6]) {
                  return Promise.resolve(false);
             }
