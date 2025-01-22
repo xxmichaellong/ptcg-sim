@@ -298,6 +298,9 @@ export const keyDown = (event) => {
             shuffleBottomAndDraw(systemState.initiator, systemState.initiator);
         };
         if (event.key === 'u' || event.code === 'KeyU') {
+            if (systemState.isTwoPlayer){
+                return;
+            };
             undo(systemState.initiator);
         };
     };
