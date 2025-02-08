@@ -47,7 +47,7 @@ export const initializeHeaderButtons = () => {
                     
                     let quantity = cells[0].innerText;
                     let name = cells[1].innerText;
-                    let type = cells[2].innerText;
+                    let type = cells[2].querySelector('select').value;
                     let url = cells[3].innerText;
             
                     let cardData = [quantity, name, type, url];

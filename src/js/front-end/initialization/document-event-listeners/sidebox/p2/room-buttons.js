@@ -69,7 +69,7 @@ export const initializeRoomButtons = () => {
             cleanActionData('opp');
             reset('opp', true, true, false, true);
 
-            //repopulate self deck with the correct current decklist
+            // repopulate self deck with the correct current decklist
             systemState.selfDeckData = '';
             let decklistTable = document.getElementById('selfCurrentDecklistTable');
             if (decklistTable){
@@ -80,7 +80,7 @@ export const initializeRoomButtons = () => {
                     
                     let quantity = cells[0].innerText;
                     let name = cells[1].innerText;
-                    let type = cells[2].innerText;
+                    let type = cells[2].querySelector('select').value;
                     let url = cells[3].innerText;
             
                     let cardData = [quantity, name, type, url];
@@ -97,7 +97,7 @@ export const initializeRoomButtons = () => {
             handleSpectatorButtons();
             removeSyncIntervals();
             systemState.spectatorId = '';
-            //add the deck data back to the actiondata list
+            // add the deck data back to the actiondata list
             if (systemState.selfDeckData){
                 processAction('self', true, 'loadDeckData', [systemState.selfDeckData]);
             };
