@@ -194,29 +194,8 @@ export const importDecklist = (user) => {
     }
 
     let fetchPromises = decklistArray.map(entry => {
-        const [_quantity, name, set, setNumber, id] = entry;
+        const [_quantity, name, set, setNumber] = entry;
         
-        if (id) {
-            return fetch('https://api.pokemontcg.io/v2/cards/' + id, {
-                method: 'GET',
-                headers: {
-                    'X-Api-Key': 'cde33a60-5d8a-414e-ae04-b447090dd6ba'
-                }
-            })
-            .then(response => response.json())
-            .then(({data}) => {
-                const index = decklistArray.findIndex(item => item[4] === id);
-                if (index !== -1) {
-                    decklistArray[index][5] = data.images.large;
-                    decklistArray[index][6] = data.supertype;
-                }
-                return true;
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-                return false;
-            });
-        } else {
             let [firstPart, secondPart] = [set, setNumber];
             const energyUrl = energies[name];
             
@@ -240,6 +219,7 @@ export const importDecklist = (user) => {
                 }
             }
 
+            // If the card doesn't have an id but contains a set code and set number, we assume it's a limitless card
             if (firstPart && secondPart && !entry[4]) {
                 const paddedSecondPart = secondPart.replace(/^(\d+)([a-zA-Z])?$/, (_, digits, letter) => {
                     const paddedDigits = digits.length < 3 ? digits.padStart(3, '0') : digits;
@@ -276,11 +256,32 @@ export const importDecklist = (user) => {
                     entry[1] = name.slice(0, -5);
                 }
                 return Promise.resolve(true);
+            // If the card has an id, we fetch the card from the pokemontcg.io api
+            } else if (entry[4]) {
+                var ID = entry[4]
+                return fetch('https://api.pokemontcg.io/v2/cards/' + ID, {
+                    method: 'GET',
+                    headers: {
+                        'X-Api-Key': 'cde33a60-5d8a-414e-ae04-b447090dd6ba'
+                    }
+                })
+                .then(response => response.json())
+                .then(({data}) => {
+                    const index = decklistArray.findIndex(item => item[4] === ID);
+                    if (index !== -1) {
+                        decklistArray[index][5] = data.images.large;
+                        decklistArray[index][6] = data.supertype;
+                    }
+                    return true;
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    return false;
+                });
             } else if (!entry[5] || !entry[6]) {
                  return Promise.resolve(false);
             }
             return Promise.resolve(true);
-        }
     });
 
     Promise.all(fetchPromises)
