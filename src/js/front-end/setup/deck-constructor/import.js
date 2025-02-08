@@ -194,9 +194,8 @@ export const importDecklist = (user) => {
     }
 
     let fetchPromises = decklistArray.map(entry => {
-        const [_quantity, name, set, setNumber, id] = entry;
+        const [_quantity, name, set, setNumber] = entry;
         
-        if (!id) {
             let [firstPart, secondPart] = [set, setNumber];
             const energyUrl = energies[name];
             
@@ -220,6 +219,7 @@ export const importDecklist = (user) => {
                 }
             }
 
+            // If the card doesn't have an id but contains a set code and set number, we assume it's a limitless card
             if (firstPart && secondPart && !entry[4]) {
                 const paddedSecondPart = secondPart.replace(/^(\d+)([a-zA-Z])?$/, (_, digits, letter) => {
                     const paddedDigits = digits.length < 3 ? digits.padStart(3, '0') : digits;
@@ -256,6 +256,7 @@ export const importDecklist = (user) => {
                     entry[1] = name.slice(0, -5);
                 }
                 return Promise.resolve(true);
+            // If the card has an id, we fetch the card from the pokemontcg.io api
             } else if (entry[4]) {
                 var ID = entry[4]
                 return fetch('https://api.pokemontcg.io/v2/cards/' + ID, {
@@ -281,7 +282,6 @@ export const importDecklist = (user) => {
                  return Promise.resolve(false);
             }
             return Promise.resolve(true);
-        }
     });
 
     Promise.all(fetchPromises)
