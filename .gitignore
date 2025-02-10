@@ -1,3 +1,2 @@
 node_modules/
-socket-admin-password.env
-data/db.sqlite
+server/database/db.sqlite
