@@ -3,6 +3,6 @@
     "esbenp.prettier-vscode",
     "dbaeumer.vscode-eslint",
     "styled-components.vscode-styled-components",
-    "unifiedjs.vscode-mdx",
+    "unifiedjs.vscode-mdx"
   ]
 }

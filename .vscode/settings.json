@@ -3,9 +3,7 @@
   "[javascript]": {
     "editor.defaultFormatter": "dbaeumer.vscode-eslint"
   },
-  "eslint.validate": [
-    "javascript"
-  ],
+  "eslint.validate": ["javascript"],
   "eslint.enable": true,
   "eslint.rules.customizations": [{ "rule": "*", "severity": "warn" }],
   "editor.codeActionsOnSave": {
@@ -14,5 +12,5 @@
   "editor.formatOnPaste": false,
   "editor.formatOnType": false,
   "editor.formatOnSave": true,
-  "editor.formatOnSaveMode": "file",
+  "editor.formatOnSaveMode": "file"
 }

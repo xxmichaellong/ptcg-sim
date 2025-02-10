@@ -1,17 +1,8 @@
 {
-  "name": "ptcg-sim",
-  "version": "1.5",
-  "description": "",
-  "main": "server.js",
+  "name": "ptcg-sim-server",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "format": "prettier --write \"**/*.{js,json,md}\""
+    "start": "nodemon server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "@socket.io/admin-ui": "^0.5.1",
     "bcryptjs": "^2.4.3",
@@ -20,13 +11,10 @@
     "ejs": "^3.1.10",
     "express": "^4.18.2",
     "socket.io": "^4.7.4",
-    "sqlite3": "^5.1.7",
-    "@eslint/js": "^9.20.0",
-    "eslint": "^9.20.0",
-    "eslint-config-prettier": "^10.0.1",
-    "eslint-plugin-prettier": "^5.2.3",
-    "globals": "^15.14.0",
-    "prettier": "^3.4.2"
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
   },
   "type": "module"
 }
