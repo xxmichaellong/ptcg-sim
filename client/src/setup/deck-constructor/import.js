@@ -326,10 +326,76 @@ export const importDecklist = (user) => {
   };
 
   let fetchPromises = decklistArray.map((entry) => {
-    const [, name, set, setNumber, id] = entry;
+    const [, name, set, setNumber] = entry;
 
-    if (id) {
-      return fetch('https://api.pokemontcg.io/v2/cards/' + id, {
+    let [firstPart, secondPart] = [set, setNumber];
+    const energyUrl = energies[name];
+
+    if (firstPart && secondPart) {
+      if (specialCases[firstPart]) {
+        firstPart = specialCases[firstPart];
+      }
+      if (oldSetCode_to_id[firstPart]) {
+        entry[4] = oldSetCode_to_id[firstPart] + '-' + secondPart;
+      }
+      if (noImg_to_id[firstPart + ' ' + secondPart]) {
+        entry[4] = noImg_to_id[firstPart + ' ' + secondPart];
+      }
+      // special case for PR-DPP
+      if (firstPart === 'PR-DPP') {
+        const paddedSecondPart = secondPart.replace(/^(\d+)?$/, (_, digits) => {
+          const paddedDigits =
+            digits.length < 3 ? digits.padStart(2, '0') : digits;
+          return 'dpp-DP' + paddedDigits;
+        });
+        entry[4] = paddedSecondPart;
+      }
+    }
+    // If the card doesn't have an id but contains a set code and set number, we assume it's a limitless card
+    if (firstPart && secondPart && !entry[4]) {
+      const paddedSecondPart = secondPart.replace(
+        /^(\d+)([a-zA-Z])?$/,
+        (_, digits, letter) => {
+          const paddedDigits =
+            digits.length < 3 ? digits.padStart(3, '0') : digits;
+          return letter ? paddedDigits + letter : paddedDigits;
+        }
+      );
+      const url = `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/${firstPart.replace(/ /g, '/')}/${firstPart.replace(/ /g, '_')}_${paddedSecondPart}_R_${language}.png`;
+
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          entry[5] = url;
+          entry[6] = getCardType(firstPart, secondPart);
+          resolve(true);
+        };
+        img.onerror = () => {
+          const alternateUrl = `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpc/${firstPart}/${firstPart}_${paddedSecondPart}_R_JP_LG.png`;
+          const altImg = new Image();
+          altImg.onload = () => {
+            entry[5] = alternateUrl;
+            entry[6] = getCardType(firstPart, secondPart);
+            resolve(true);
+          };
+          altImg.onerror = () => {
+            resolve(false);
+          };
+          altImg.src = alternateUrl;
+        };
+        img.src = url;
+      });
+    } else if (energyUrl) {
+      entry[5] = energyUrl;
+      entry[6] = 'Energy';
+      if (name.slice(-5) === ' null') {
+        entry[1] = name.slice(0, -5);
+      }
+      return Promise.resolve(true);
+      // If the card has an id, we fetch the card from the pokemontcg.io api
+    } else if (entry[4]) {
+      var ID = entry[4];
+      return fetch('https://api.pokemontcg.io/v2/cards/' + ID, {
         method: 'GET',
         headers: {
           'X-Api-Key': 'cde33a60-5d8a-414e-ae04-b447090dd6ba',
@@ -337,7 +403,7 @@ export const importDecklist = (user) => {
       })
         .then((response) => response.json())
         .then(({ data }) => {
-          const index = decklistArray.findIndex((item) => item[4] === id);
+          const index = decklistArray.findIndex((item) => item[4] === ID);
           if (index !== -1) {
             decklistArray[index][5] = data.images.large;
             decklistArray[index][6] = data.supertype;
@@ -347,79 +413,10 @@ export const importDecklist = (user) => {
         .catch(() => {
           return false;
         });
-    } else {
-      let [firstPart, secondPart] = [set, setNumber];
-      const energyUrl = energies[name];
-
-      if (firstPart && secondPart) {
-        if (specialCases[firstPart]) {
-          firstPart = specialCases[firstPart];
-        }
-        if (oldSetCode_to_id[firstPart]) {
-          entry[4] = oldSetCode_to_id[firstPart] + '-' + secondPart;
-        }
-        if (noImg_to_id[firstPart + ' ' + secondPart]) {
-          entry[4] = noImg_to_id[firstPart + ' ' + secondPart];
-        }
-        // special case for PR-DPP
-        if (firstPart === 'PR-DPP') {
-          const paddedSecondPart = secondPart.replace(
-            /^(\d+)?$/,
-            (_, digits) => {
-              const paddedDigits =
-                digits.length < 3 ? digits.padStart(2, '0') : digits;
-              return 'dpp-DP' + paddedDigits;
-            }
-          );
-          entry[4] = paddedSecondPart;
-        }
-      }
-
-      if (firstPart && secondPart && !entry[4]) {
-        const paddedSecondPart = secondPart.replace(
-          /^(\d+)([a-zA-Z])?$/,
-          (_, digits, letter) => {
-            const paddedDigits =
-              digits.length < 3 ? digits.padStart(3, '0') : digits;
-            return letter ? paddedDigits + letter : paddedDigits;
-          }
-        );
-        const url = `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/${firstPart.replace(/ /g, '/')}/${firstPart.replace(/ /g, '_')}_${paddedSecondPart}_R_${language}.png`;
-
-        return new Promise((resolve) => {
-          const img = new Image();
-          img.onload = () => {
-            entry[5] = url;
-            entry[6] = getCardType(firstPart, secondPart);
-            resolve(true);
-          };
-          img.onerror = () => {
-            const alternateUrl = `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpc/${firstPart}/${firstPart}_${paddedSecondPart}_R_JP_LG.png`;
-            const altImg = new Image();
-            altImg.onload = () => {
-              entry[5] = alternateUrl;
-              entry[6] = getCardType(firstPart, secondPart);
-              resolve(true);
-            };
-            altImg.onerror = () => {
-              resolve(false);
-            };
-            altImg.src = alternateUrl;
-          };
-          img.src = url;
-        });
-      } else if (energyUrl) {
-        entry[5] = energyUrl;
-        entry[6] = 'Energy';
-        if (name.slice(-5) === ' null') {
-          entry[1] = name.slice(0, -5);
-        }
-        return Promise.resolve(true);
-      } else if (!entry[5] || !entry[6]) {
-        return Promise.resolve(false);
-      }
-      return Promise.resolve(true);
+    } else if (!entry[5] || !entry[6]) {
+      return Promise.resolve(false);
     }
+    return Promise.resolve(true);
   });
 
   Promise.all(fetchPromises)
