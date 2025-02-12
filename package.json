@@ -18,5 +18,8 @@
     "eslint-plugin-prettier": "^5.2.3",
     "globals": "^15.14.0",
     "nodemon": "^3.1.9"
+  },
+  "dependencies": {
+    "sqlite3": "^5.1.7"
   }
 }
