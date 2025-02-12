@@ -42,13 +42,13 @@ export const systemState = {
   selfDeckData: '',
   p1OppDeckData: '', // refers to the opponent's data in 1 player mode, i.e., the "alt" deck data
   p2OppDeckData: '', // refers to the opponent's data in 2 player mode, i.e., the other player's deck data
-  cardBackSrc: 'https://ptcgsim.online/client/src/assets/cardback.png',
-  p1OppCardBackSrc: 'https://ptcgsim.online/client/src/assets/cardback.png',
-  p2OppCardBackSrc: 'https://ptcgsim.online/client/src/assets/cardback.png',
+  cardBackSrc: 'https://ptcgsim.online/src/assets/cardback.png',
+  p1OppCardBackSrc: 'https://ptcgsim.online/src/assets/cardback.png',
+  p2OppCardBackSrc: 'https://ptcgsim.online/src/assets/cardback.png',
 };
 
 // preload image
-preloadImage('https://ptcgsim.online/client/src/assets/cardback.png');
+preloadImage('https://ptcgsim.online/src/assets/cardback.png');
 
 document.body.style.backgroundImage = `linear-gradient(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.5)), url('https://imgcdn.stablediffusionweb.com/2024/11/7/dd71dffd-ba64-48a0-a575-c7c51d741d37.jpg')`;
 

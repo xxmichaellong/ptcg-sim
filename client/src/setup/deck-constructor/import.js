@@ -779,7 +779,7 @@ changeCardBackButton.addEventListener('click', () => {
     userInput.trim() !== '' &&
     userInput.toLowerCase() === 'default'
   ) {
-    userInput = 'https://ptcgsim.online/client/src/assets/cardback.png';
+    userInput = 'https://ptcgsim.online/src/assets/cardback.png';
   }
   const img = new Image();
   img.onload = () => {

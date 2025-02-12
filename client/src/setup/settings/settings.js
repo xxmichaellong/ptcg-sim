@@ -153,8 +153,8 @@ export const changeBackground = () => {
       const randomNumber = Math.random();
       userInput =
         randomNumber < 0.5
-          ? 'https://ptcgsim.online/client/src/assets/background1.jpg'
-          : 'https://ptcgsim.online/client/src/assets/background2.webp';
+          ? 'https://ptcgsim.online/src/assets/background1.jpg'
+          : 'https://ptcgsim.online/src/assets/background2.webp';
     } else if (userInput.toLowerCase() === 'default') {
       document.body.style.backgroundImage = 'none';
       return;
