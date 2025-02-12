@@ -5,19 +5,19 @@ import { adjustCards } from './resizer.js';
 
 const refreshZone = (user, zoneId) => {
   const zone = getZone(user, zoneId);
-  //find all playContainers
+  // find all playContainers
   const playContainers = zone.element.querySelectorAll('DIV');
   playContainers.forEach((playContainer) => {
-    //find all images within box
+    // find all images within box
     const images = playContainer.querySelectorAll('img');
-    //loop through each image and update the attached cards
+    // loop through each image and update the attached cards
     images.forEach((image) => {
       const img = new Image();
       img.src = image.src;
       document.body.appendChild(img);
       document.body.removeChild(img);
       if (!image.attached) {
-        //re-append the card to the end of the same zone
+        // re-append the card to the end of the same zone
         let currentRotation;
         if (image.PokémonBreak) {
           currentRotation =
@@ -70,9 +70,9 @@ export const refreshBoardImages = () => {
     const imagesArray = Array.from(images);
     return Promise.all(
       imagesArray.map((image) => {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
           image.onload = () => resolve();
-          image.onerror = () => reject();
+          image.onerror = () => resolve();
           // eslint-disable-next-line no-self-assign
           image.src = image.src;
         });
@@ -99,14 +99,9 @@ export const refreshBoardImages = () => {
     return Promise.all(promises);
   };
 
-  Promise.all(zones.map((zone) => loadImagesForZone(zone)))
-    .then(() => {
-      refreshBoard();
-      document.getElementById('refreshIcon').style.display = 'block';
-      document.getElementById('loadingCircle').style.display = 'none';
-    })
-    .catch(() => {
-      document.getElementById('refreshIcon').style.display = 'block';
-      document.getElementById('loadingCircle').style.display = 'none';
-    });
+  Promise.all(zones.map((zone) => loadImagesForZone(zone))).finally(() => {
+    document.getElementById('refreshIcon').style.display = 'block';
+    document.getElementById('loadingCircle').style.display = 'none';
+    refreshBoard();
+  });
 };
