@@ -145,7 +145,7 @@ export const darkMode = () => {
 
 export const changeBackground = () => {
   let userInput = window.prompt(
-    "Paste your image URL, or type 'default' or 'theme':"
+    "Paste your image URL, or type 'blank' or 'theme':"
   );
 
   if (userInput !== null && userInput.trim() !== '') {
@@ -155,7 +155,7 @@ export const changeBackground = () => {
         randomNumber < 0.5
           ? 'https://ptcgsim.online/src/assets/background1.jpg'
           : 'https://ptcgsim.online/src/assets/background2.webp';
-    } else if (userInput.toLowerCase() === 'default') {
+    } else if (userInput.toLowerCase() === 'blank') {
       document.body.style.backgroundImage = 'none';
       return;
     }
