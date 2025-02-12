@@ -1,0 +1,16 @@
+{
+  "json.schemaDownload.enable": true,
+  "[javascript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "eslint.validate": ["javascript"],
+  "eslint.enable": true,
+  "eslint.rules.customizations": [{ "rule": "*", "severity": "warn" }],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "editor.formatOnPaste": false,
+  "editor.formatOnType": false,
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file"
+}

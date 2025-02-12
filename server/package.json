@@ -1,0 +1,20 @@
+{
+  "name": "ptcg-sim-server",
+  "scripts": {
+    "start": "nodemon server.js"
+  },
+  "dependencies": {
+    "@socket.io/admin-ui": "^0.5.1",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.2",
+    "ejs": "^3.1.10",
+    "express": "^4.18.2",
+    "socket.io": "^4.7.4",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "type": "module"
+}
