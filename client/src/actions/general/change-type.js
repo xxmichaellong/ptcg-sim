@@ -30,18 +30,18 @@ export const changeType = (
   const cardName = card.image.faceDown ? 'card' : card.name;
   let typeName;
   if (type === 'Trainer') {
-    typeName = 'tool';
+    typeName = 'a tool';
   } else if (type === 'Energy') {
-    typeName = 'energy';
+    typeName = 'an energy';
   } else if (type === 'Pokémon') {
-    typeName = 'Pokémon';
+    typeName = 'a Pokémon';
   }
   appendMessage(
     initiator,
     determineUsername(initiator) +
       ' changed ' +
       cardName +
-      ' into an ' +
+      ' into ' +
       typeName,
     'player',
     false
