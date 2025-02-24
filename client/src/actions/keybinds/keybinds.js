@@ -49,6 +49,8 @@ import {
   shuffleBottomAndDraw,
 } from '../zones/hand-actions.js';
 
+import { areKeybindsSleeping } from './sleep.js';
+
 const isAltKeyPressed = (event) => {
   return event.altKey || event.getModifierState('Alt');
 };
@@ -96,7 +98,8 @@ export const keyDown = (event) => {
     event.target.tagName === 'TD' ||
     blockedClasses.some((className) =>
       event.target.classList.contains(className)
-    )
+    ) ||
+    areKeybindsSleeping
   ) {
     return;
   }
