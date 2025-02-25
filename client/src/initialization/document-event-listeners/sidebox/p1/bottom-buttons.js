@@ -282,7 +282,7 @@ export const initializeP1BottomButtons = () => {
     }
     const reader = new FileReader();
     reader.onload = function (e) {
-      var actionErrors = 0;
+      let actionErrors = 0;
       try {
         socket.emit('initiateImport', { roomId: systemState.roomId });
         cleanActionData('self');

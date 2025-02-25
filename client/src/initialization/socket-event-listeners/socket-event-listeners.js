@@ -18,6 +18,7 @@ import { catchUpActions } from '../../setup/general/catch-up-actions.js';
 import { cleanActionData } from '../../setup/general/clean-action-data.js';
 import { resyncActions } from '../../setup/general/resync-actions.js';
 import { spectatorJoin } from '../../setup/spectator/spectator-join.js';
+import { startKeybindsSleep } from '../../actions/keybinds/keybindSleep.js';
 
 let isImporting = false;
 let syncCheckInterval;
@@ -174,6 +175,7 @@ export const initializeSocketEventListeners = () => {
       (notSpectator && data.counter === systemState.selfCounter) ||
       isImporting
     ) {
+      startKeybindsSleep();
       acceptAction('self', data.action, data.parameters);
     }
   });
@@ -207,6 +209,7 @@ export const initializeSocketEventListeners = () => {
             parameters: data.parameters,
           });
         }
+        startKeybindsSleep();
         acceptAction('opp', data.action, data.parameters);
       } else if (data.counter > parseInt(systemState.oppCounter) + 1) {
         const data = {
