@@ -425,6 +425,7 @@ export const keyDown = (event) => {
         mouseClick.cardIndex,
         'Trainer'
       );
+      return; // otherwise it will also takeTurn
     }
     if (
       (event.key === 'p' || event.code === 'KeyP') &&
