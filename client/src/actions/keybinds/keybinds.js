@@ -49,7 +49,7 @@ import {
   shuffleBottomAndDraw,
 } from '../zones/hand-actions.js';
 
-import { areKeybindsSleeping } from './sleep.js';
+import { areKeybindsSleeping } from './keybindSleep.js';
 
 const isAltKeyPressed = (event) => {
   return event.altKey || event.getModifierState('Alt');

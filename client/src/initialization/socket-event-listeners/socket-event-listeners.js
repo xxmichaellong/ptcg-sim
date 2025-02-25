@@ -18,7 +18,7 @@ import { catchUpActions } from '../../setup/general/catch-up-actions.js';
 import { cleanActionData } from '../../setup/general/clean-action-data.js';
 import { resyncActions } from '../../setup/general/resync-actions.js';
 import { spectatorJoin } from '../../setup/spectator/spectator-join.js';
-import { startKeybindsSleep } from '../../actions/keybinds/sleep.js';
+import { startKeybindsSleep } from '../../actions/keybinds/keybindSleep.js';
 
 let isImporting = false;
 let syncCheckInterval;

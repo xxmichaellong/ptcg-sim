@@ -394,7 +394,7 @@ export const importDecklist = (user) => {
       return Promise.resolve(true);
       // If the card has an id, we fetch the card from the pokemontcg.io api
     } else if (entry[4]) {
-      var ID = entry[4];
+      const ID = entry[4];
       return fetch('https://api.pokemontcg.io/v2/cards/' + ID, {
         method: 'GET',
         headers: {
