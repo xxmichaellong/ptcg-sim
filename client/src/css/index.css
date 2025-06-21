@@ -1103,3 +1103,24 @@ a:hover {
   0% { transform: rotate(0deg); } /* Start at 0 degrees */
   100% { transform: rotate(360deg); } /* End at 360 degrees (full circle) */
 }
+
+/* Styles when sidebox is hidden */
+.sidebox-hidden .self {
+  width: 100%;
+}
+
+.sidebox-hidden .opp {
+  width: 100%;
+}
+
+.sidebox-hidden #selfResizer {
+  left: 99.5%;
+}
+
+.sidebox-hidden #oppResizer {
+  left: 99.5%;
+}
+
+.sidebox-hidden #boardButtonContainer {
+  left: 67%;
+}
