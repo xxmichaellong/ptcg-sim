@@ -42,7 +42,7 @@ export const importDecklist = (user) => {
 
   const regexWithOldSet = /(\d+) (.+?)(?= \w*-\w*\d*$) (\w*-\w*\d*)/;
   const regexWithSet =
-    /(\d+) (.+?) (\w{2,3}[1-9]?|WBSP|NBSP|FRLG|FUT20) (\d+[a-zA-Z]?)/;
+    /(\d+) (.+?) (\w{2,5}[1-9]?[A-Z]?|WBSP|NBSP|FRLG|FUT20) (\d+[a-zA-Z]?)/;
   const regexWithPRSet =
     /(\d+) (.+?) (PR-\w{2,3}) ((?:DP|HGSS|BW|XY|SM|SWSH)?)(\d+)/;
   const regexWithSpecialSet =
@@ -307,6 +307,32 @@ export const importDecklist = (user) => {
     BG: 'bp',
   };
 
+  // Special set codes that should use tpc format directly
+  const tpcSets = new Set([
+    'SV11W',
+    'SV11',
+    'SV10W',
+    'SV10',
+    'SV9W',
+    'SV9',
+    'SV8W',
+    'SV8',
+    'SV7W',
+    'SV7',
+    'SV6W',
+    'SV6',
+    'SV5W',
+    'SV5',
+    'SV4W',
+    'SV4',
+    'SV3W',
+    'SV3',
+    'SV2W',
+    'SV2',
+    'SV1W',
+    'SV1',
+  ]);
+
   // the following cards have no image on limitless
   const noImg_to_id = {
     'BUS 112a': 'sm3-112a',
@@ -361,6 +387,15 @@ export const importDecklist = (user) => {
           return letter ? paddedDigits + letter : paddedDigits;
         }
       );
+
+      // Check if this set should use tpc format directly
+      if (tpcSets.has(firstPart)) {
+        const tpcUrl = `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpc/${firstPart}/${firstPart}_${secondPart}_R_JP_LG.png`;
+        entry[5] = tpcUrl;
+        entry[6] = getCardType(firstPart, secondPart);
+        return Promise.resolve(true);
+      }
+
       const url = `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/${firstPart.replace(/ /g, '/')}/${firstPart.replace(/ /g, '_')}_${paddedSecondPart}_R_${language}.png`;
 
       return new Promise((resolve) => {

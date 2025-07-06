@@ -1,5 +1,35 @@
 // number: every card UP until that number is of that type, i.e., that number's card is the first card whose type is different. this currently needs to be updated for the new sets manually.
 const SVEra = {
+  DRG: {
+    161: 'Pokémon',
+    182: 'Trainer',
+    183: 'Energy',
+    220: 'Pokémon',
+    228: 'Trainer',
+    236: 'Pokémon',
+    239: 'Trainer',
+    243: 'Pokémon',
+    245: 'Trainer',
+  },
+  JTG: {
+    142: 'Pokémon',
+    159: 'Trainer',
+    160: 'Energy',
+    179: 'Pokémon',
+    182: 'Trainer',
+    190: 'Pokémon',
+    191: 'Energy',
+  },
+  SV11B: {
+    79: 'Pokémon',
+    86: 'Trainer',
+    87: 'Energy',
+  },
+  SV11W: {
+    79: 'Pokémon',
+    86: 'Trainer',
+    87: 'Energy',
+  },
   SV8a: {
     137: 'Pokémon',
     185: 'Trainer',
