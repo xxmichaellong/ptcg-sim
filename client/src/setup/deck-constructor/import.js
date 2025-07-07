@@ -310,6 +310,7 @@ export const importDecklist = (user) => {
   // Special set codes that should use tpc format directly
   const tpcSets = new Set([
     'SV11W',
+    'SV11B',
     'SV11',
     'SV10W',
     'SV10',
