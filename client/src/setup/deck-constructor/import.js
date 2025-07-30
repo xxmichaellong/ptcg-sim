@@ -11,6 +11,7 @@ import { determineUsername } from '../general/determine-username.js';
 import { processAction } from '../general/process-action.js';
 import { show } from '../home-header/header-toggle.js';
 import { getCardType } from './find-type.js';
+import { getOldCardType } from './find-old-type.js';
 
 const decklistTable = document.getElementById('decklistTable');
 const altDeckImportInput = document.getElementById('altDeckImportInput');
@@ -429,8 +430,10 @@ export const importDecklist = (user) => {
       }
       return Promise.resolve(true);
       // If the card has an id, we fetch the card from the pokemontcg.io api
+      // jk we don't anymore
     } else if (entry[4]) {
       const ID = entry[4];
+      /*
       return fetch('https://api.pokemontcg.io/v2/cards/' + ID, {
         method: 'GET',
         headers: {
@@ -449,6 +452,12 @@ export const importDecklist = (user) => {
         .catch(() => {
           return false;
         });
+        */
+        const index = decklistArray.findIndex((item) => item[4] === ID);
+        const [set_ID, set_Number] = ID.split('-');
+        decklistArray[index][5] = 'https://images.pokemontcg.io/' + set_ID + '/' + set_Number + '_hires.png';
+        decklistArray[index][6] = getOldCardType(ID)
+        return Promise.resolve(true);
     } else if (!entry[5] || !entry[6]) {
       return Promise.resolve(false);
     }
