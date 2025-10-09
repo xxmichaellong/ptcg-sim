@@ -15,7 +15,27 @@ const MEGEra = {
   },
 };
 const SVEra = {
-  DRG: {
+  BLK: {
+    79: 'Pokémon',
+    86: 'Trainer',
+    87: 'Energy',
+    162: 'Pokémon',
+    164: 'Trainer',
+    170: 'Pokémon',
+    171: 'Trainer',
+    173: 'Pokémon',
+  },
+  WHT: {
+    79: 'Pokémon',
+    86: 'Trainer',
+    87: 'Energy',
+    163: 'Pokémon',
+    165: 'Trainer',
+    171: 'Pokémon',
+    172: 'Trainer',
+    174: 'Pokémon',
+  },
+  DRI: {
     161: 'Pokémon',
     182: 'Trainer',
     183: 'Energy',
