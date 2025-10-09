@@ -1,4 +1,19 @@
 // number: every card UP until that number is of that type, i.e., that number's card is the first card whose type is different. this currently needs to be updated for the new sets manually.
+const MEGEra = {
+  BAN: {
+    113: 'Pokémon',
+    133: 'Trainer',
+    165: 'Pokémon',
+    177: 'Trainer',
+    183: 'Pokémon',
+    187: 'Trainer',
+    189: 'Pokémon',
+  },
+  MEP: {
+    // Note: Only 10 cards have been released, but assuming the rest are Pokémon until 45
+    45: 'Pokémon',
+  },
+};
 const SVEra = {
   DRG: {
     161: 'Pokémon',
@@ -177,7 +192,7 @@ const SVEra = {
     166: 'Pokémon',
   },
   SVE: {
-    17: 'Energy',
+    25: 'Energy',
   },
 };
 
@@ -866,6 +881,7 @@ const HSEra = {
 };
 
 const setList = {
+  ...MEGEra,
   ...SVEra,
   ...SSEra,
   ...SMEra,
