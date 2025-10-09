@@ -1,6 +1,6 @@
 // number: every card UP until that number is of that type, i.e., that number's card is the first card whose type is different. this currently needs to be updated for the new sets manually.
 const MEGEra = {
-  BAN: {
+  MEG: {
     113: 'Pokémon',
     133: 'Trainer',
     165: 'Pokémon',
