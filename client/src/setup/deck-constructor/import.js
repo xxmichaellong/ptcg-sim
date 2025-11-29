@@ -351,6 +351,11 @@ export const importDecklist = (user) => {
     'SLG 68a': 'sm35-68a',
     'UPR 135a': 'sm5-135a',
     'UNB 189a': 'sm10-189a',
+    'SVP 85': 'svp-85',
+    'SVP 102': 'svp-102',
+    'SVP 190': 'svp-190',
+    'SVP 191': 'svp-191',
+    'SVP 192': 'svp-192', 
   };
 
   let fetchPromises = decklistArray.map((entry) => {
