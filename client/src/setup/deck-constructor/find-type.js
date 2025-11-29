@@ -1,5 +1,15 @@
 // number: every card UP until that number is of that type, i.e., that number's card is the first card whose type is different. this currently needs to be updated for the new sets manually.
 const MEGEra = {
+  PFL: {
+    85: 'Pokémon',
+    95: 'Trainer',
+    116: 'Pokémon',
+    124: 'Trainer',
+    125: 'Energy',
+    129: 'Pokémon',
+    130: 'Trainer',
+    131: 'Pokémon',
+  },
   MEG: {
     113: 'Pokémon',
     133: 'Trainer',
@@ -10,9 +20,14 @@ const MEGEra = {
     189: 'Pokémon',
   },
   MEP: {
-    // Note: Only 10 cards have been released, but assuming the rest are Pokémon until 45
+    // Note: Only 28 cards have been released, but assuming the rest are Pokémon until 45
+    28: 'Pokémon',
+    29: 'Trainer',
     45: 'Pokémon',
   },
+  MEE: {
+    9: 'Energy',
+  }
 };
 const SVEra = {
   BLK: {
@@ -209,7 +224,8 @@ const SVEra = {
     125: 'Trainer',
     150: 'Pokémon',
     151: 'Trainer',
-    166: 'Pokémon',
+    224: 'Pokémon',
+    225: 'Trainer',
   },
   SVE: {
     25: 'Energy',
