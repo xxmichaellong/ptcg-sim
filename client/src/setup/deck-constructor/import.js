@@ -20,6 +20,7 @@ const confirmButton = document.getElementById('confirmButton');
 const decklistsButton = document.getElementById('decklistsButton');
 const failedText = document.getElementById('failedText');
 const importButton = document.getElementById('importButton');
+const importLimitlessButton = document.getElementById('importLimitlessButton');
 const randomButton = document.getElementById('randomButton');
 const invalidText = document.getElementById('invalidText');
 const loadingText = document.getElementById('loadingText');
@@ -32,187 +33,28 @@ const csvFile = document.getElementById('csvFile');
 const changeCardBackButton = document.getElementById('changeCardBackButton');
 const changeLanguageButton = document.getElementById('changeLanguageButton');
 
-export const importDecklist = (user) => {
-  failedText.style.display = 'none';
-  invalidText.style.display = 'none';
-  loadingText.style.display = 'block';
-  importButton.disabled = true;
-
-  const decklist =
-    user === 'self' ? mainDeckImportInput.value : altDeckImportInput.value;
-
-  const regexWithOldSet = /(\d+) (.+?)(?= \w*-\w*\d*$) (\w*-\w*\d*)/;
-  const regexWithSet =
-    /(\d+) (.+?) (\w{2,5}[1-9]?[A-Z]?|WBSP|NBSP|FRLG|FUT20) (\d+[a-zA-Z]?)/;
-  const regexWithPRSet =
-    /(\d+) (.+?) (PR-\w{2,3}) ((?:DP|HGSS|BW|XY|SM|SWSH)?)(\d+)/;
-  const regexWithSpecialSet =
-    /(\d+) (.+?) ((?:\w{2,3}[a-zA-Z]\d*|\w{2,3}(?:\s+[a-zA-Z\d]+)*)(?:\s+(\w{2,3}\s*[a-zA-Z\d]+)\s*)*)$/;
-  const regexWithoutSet = /(\d+) (.+?)(?=\s\d|$|(\s\d+))/;
-
-  // Initialize an array to store the results
-  // Each card will be stored as [quantity, name, set code, number, pokemontcg.io id, image url, type]
-  const decklistArray = [];
-
-  // Split the decklist into lines
-  const lines = decklist.split('\n');
-
-  // Process each line
-  lines.forEach((line) => {
-    line = line.replace(/[[\]()]/g, '');
-    //ptcglive conversion for GG/TG cards (the alt art bs) (don't apply to promo sets)
-    line = line.replace(/(?!PR-)(\w{2,3})-(\w{2,3}) (\d+)/g, '$1 $2$3');
-    //special case for double crisis set
-    line = line.replace(/xy5-5 /g, 'DCR ');
-    //special case for DPP
-    line = line.replace(/ DPP /g, ' PR-DPP ');
-
-    let matchWithOldSet = line.match(regexWithOldSet);
-    let matchWithSet = line.match(regexWithSet);
-    let matchWithPRSet = line.match(regexWithPRSet);
-    let matchWithSpecialSet = line.match(regexWithSpecialSet);
-    let matchWithoutSet = line.match(regexWithoutSet);
-
-    if (matchWithOldSet) {
-      const [, quantity, name, id] = matchWithOldSet;
-      decklistArray.push([
-        parseInt(quantity),
-        name,
-        null,
-        null,
-        id,
-        null,
-        undefined,
-      ]);
-    } else if (matchWithSet) {
-      const [, quantity, name, set, setNumber] = matchWithSet;
-      decklistArray.push([
-        parseInt(quantity),
-        name,
-        set,
-        setNumber,
-        null,
-        null,
-        undefined,
-      ]);
-    } else if (matchWithPRSet) {
-      const [, quantity, name, prSet, , setNumber] = matchWithPRSet;
-      decklistArray.push([
-        parseInt(quantity),
-        name,
-        prSet,
-        setNumber,
-        null,
-        null,
-        undefined,
-      ]);
-    } else if (matchWithSpecialSet) {
-      const [, quantity, name, setAll] = matchWithSpecialSet;
-      const [set, setNumber] = setAll.trim().split(/(?<=\S)\s/);
-      decklistArray.push([
-        parseInt(quantity),
-        name,
-        set,
-        setNumber,
-        null,
-        null,
-        undefined,
-      ]);
-    } else if (matchWithoutSet) {
-      const [, quantity, name] = matchWithoutSet;
-      decklistArray.push([
-        parseInt(quantity),
-        name,
-        null,
-        null,
-        null,
-        null,
-        undefined,
-      ]);
-    }
-  });
-
-  if (decklistArray.length < 1) {
-    failedText.style.display = 'block';
-    loadingText.style.display = 'none';
-    importButton.disabled = false;
-    return;
+const cardDataToID = (card) => {
+  /*
+   card is expected to be as follows (things can be undefined):
+   {
+    "set": "set code",
+    "number": "card number",
+    "id": "pokemontcg.io id"
+    "name": "card name",
+    "region": "int for international, tpc for Japanese"
+  }
+  */
+  let id = card["id"];
+  if(id){
+    return id;
+  }
+  let set = card["set"];
+  let number = card["number"];
+  let region = card["region"];
+  if(region==="tpc"){
+    return null;
   }
 
-  const languageText = changeLanguageButton.textContent;
-  let language;
-  switch (languageText) {
-    case 'Language: English':
-      language = 'EN';
-      break;
-    case 'Language: French':
-      language = 'FR';
-      break;
-    case 'Language: German':
-      language = 'DE';
-      break;
-    case 'Language: Italian':
-      language = 'IT';
-      break;
-    case 'Language: Portuguese':
-      language = 'PT';
-      break;
-    case 'Language: Spanish':
-      language = 'ES';
-      break;
-    default:
-      language = 'EN';
-  }
-
-  const energies = {
-    'Fire Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_R_R_${language}.png`,
-    'Grass Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_G_R_${language}.png`,
-    'Fairy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TEU/TEU_Y_R_${language}.png`,
-    'Darkness Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_D_R_${language}.png`,
-    'Lightning Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_L_R_${language}.png`,
-    'Fighting Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_F_R_${language}.png`,
-    'Psychic Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_P_R_${language}.png`,
-    'Metal Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_M_R_${language}.png`,
-    'Water Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_W_R_${language}.png`,
-    'Basic Fire Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_R_R_${language}.png`,
-    'Basic Grass Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_G_R_${language}.png`,
-    'Basic Fairy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TEU/TEU_Y_R_${language}.png`,
-    'Basic Darkness Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_D_R_${language}.png`,
-    'Basic Lightning Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_L_R_${language}.png`,
-    'Basic Fighting Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_F_R_${language}.png`,
-    'Basic Psychic Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_P_R_${language}.png`,
-    'Basic Metal Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_M_R_${language}.png`,
-    'Basic Water Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_W_R_${language}.png`,
-    'Basic {W} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_W_R_${language}.png`,
-    'Basic {R} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_R_R_${language}.png`,
-    'Basic {G} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_G_R_${language}.png`,
-    'Basic {Y} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TEU/TEU_Y_R_${language}.png`,
-    'Basic {D} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_D_R_${language}.png`,
-    'Basic {L} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_L_R_${language}.png`,
-    'Basic {F} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_F_R_${language}.png`,
-    'Basic {P} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_P_R_${language}.png`,
-    'Basic {M} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_M_R_${language}.png`,
-    // cubekoga compatibility
-    'Basic Fire Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_002_R_${language}.png`,
-    'Basic Grass Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_001_R_${language}.png`,
-    'Basic Darkness Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_007_R_${language}.png`,
-    'Basic Lightning Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_004_R_${language}.png`,
-    'Basic Fighting Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_006_R_${language}.png`,
-    'Basic Psychic Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_005_R_${language}.png`,
-    'Basic Metal Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_008_R_${language}.png`,
-    'Basic Water Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_003_R_${language}.png`,
-  };
-
-  const specialCases = {
-    'PR-SV': 'SVP',
-    'PR-SW': 'SP',
-    'PR-SM': 'SMP',
-    'PR-XY': 'XYP',
-    'PR-BLW': 'BWP',
-    'PR-HS': 'HSP',
-    // cubekoga compatibility
-    sma: 'HIF',
-  };
 
   const oldSetCode_to_id = {
     // the following are taken from pokemontcg.io (v2)'s ptcgoCode
@@ -307,6 +149,170 @@ export const importDecklist = (user) => {
     FRLG: 'ex6',
     BG: 'bp',
   };
+  if(oldSetCode_to_id[set]){
+    return oldSetCode_to_id[set] + '-' + number;
+  }
+
+  // special case for PR-DPP
+  if (set === 'PR-DPP' || set === 'DPP') {
+    return number.replace(/^(\d+)?$/, (_, digits) => {
+      const paddedDigits =
+      digits.length < 3 ? digits.padStart(2, '0') : digits;
+      return 'dpp-DP' + paddedDigits;
+    });
+  }
+
+  // the following cards have no image on limitless
+  const noImg_to_id = {
+    'BUS 112a': 'sm3-112a',
+    'FLI 102a': 'sm6-102a',
+    'UNM 191a': 'sm11-191a',
+    'GRI 121a': 'sm2-121a',
+    'UPR 119a': 'sm5-119a',
+    'BUS 115a': 'sm3-115a',
+    'UPR 125a': 'sm5-125a',
+    'UPR 153a': 'sm5-153a',
+    'UNB 182a': 'sm10-182a',
+    'TEU 152a': 'sm9-152a',
+    'LOT 188a': 'sm8-188a',
+    'SLG 68a': 'sm35-68a',
+    'UPR 135a': 'sm5-135a',
+    'UNB 189a': 'sm10-189a',
+    'SVP 85': 'svp-85',
+    'SVP 102': 'svp-102',
+    'SVP 190': 'svp-190',
+    'SVP 191': 'svp-191',
+    'SVP 192': 'svp-192',
+  };
+  if(region==="int"){
+    if(set){
+      if(noImg_to_id[`${set} ${number}`]){
+        return noImg_to_id[`${set} ${number}`];
+      }
+    }
+  }
+
+  return null;
+}
+
+const getLanguage = () => {
+  const languageText = changeLanguageButton.textContent;
+  let language;
+  switch (languageText) {
+    case 'Language: English':
+      language = 'EN';
+      break;
+    case 'Language: French':
+      language = 'FR';
+      break;
+    case 'Language: German':
+      language = 'DE';
+      break;
+    case 'Language: Italian':
+      language = 'IT';
+      break;
+    case 'Language: Portuguese':
+      language = 'PT';
+      break;
+    case 'Language: Spanish':
+      language = 'ES';
+      break;
+    default:
+      language = 'EN';
+  }
+  return language;
+}
+
+const getEnergies = (language) => {
+  if(!language){
+    language = getLanguage();
+  }
+  return {
+    'Fire Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_R_R_${language}.png`,
+    'Grass Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_G_R_${language}.png`,
+    'Fairy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TEU/TEU_Y_R_${language}.png`,
+    'Darkness Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_D_R_${language}.png`,
+    'Lightning Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_L_R_${language}.png`,
+    'Fighting Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_F_R_${language}.png`,
+    'Psychic Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_P_R_${language}.png`,
+    'Metal Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_M_R_${language}.png`,
+    'Water Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_W_R_${language}.png`,
+    'Basic Fire Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_R_R_${language}.png`,
+    'Basic Grass Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_G_R_${language}.png`,
+    'Basic Fairy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TEU/TEU_Y_R_${language}.png`,
+    'Basic Darkness Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_D_R_${language}.png`,
+    'Basic Lightning Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_L_R_${language}.png`,
+    'Basic Fighting Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_F_R_${language}.png`,
+    'Basic Psychic Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_P_R_${language}.png`,
+    'Basic Metal Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_M_R_${language}.png`,
+    'Basic Water Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_W_R_${language}.png`,
+    'Basic {W} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_W_R_${language}.png`,
+    'Basic {R} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_R_R_${language}.png`,
+    'Basic {G} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_G_R_${language}.png`,
+    'Basic {Y} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TEU/TEU_Y_R_${language}.png`,
+    'Basic {D} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_D_R_${language}.png`,
+    'Basic {L} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_L_R_${language}.png`,
+    'Basic {F} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_F_R_${language}.png`,
+    'Basic {P} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_P_R_${language}.png`,
+    'Basic {M} Energy Energy': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_M_R_${language}.png`,
+    // cubekoga compatibility
+    'Basic Fire Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_002_R_${language}.png`,
+    'Basic Grass Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_001_R_${language}.png`,
+    'Basic Darkness Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_007_R_${language}.png`,
+    'Basic Lightning Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_004_R_${language}.png`,
+    'Basic Fighting Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_006_R_${language}.png`,
+    'Basic Psychic Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_005_R_${language}.png`,
+    'Basic Metal Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_008_R_${language}.png`,
+    'Basic Water Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_003_R_${language}.png`,
+  };
+}
+
+const cardDataToImageURL = (card) => {
+  /*
+  card is expected to be as follows (things can be undefined):
+    {
+      "set": "set code",
+      "number": "card number",
+      "id": "pokemontcg.io id"
+      "name": "card name",
+      "region": "int for international, tpc for Japanese"
+    }
+  */
+
+  let set = card["set"];
+  let number = card["number"];
+  let id = cardDataToID(card);
+  let name = card["name"];
+  let region = card["region"];
+  if(!region){
+    region = "int";
+  }
+
+  let language = getLanguage();
+  const energies = getEnergies(language);
+  if((set==='null') || !set){
+    if(!id){
+      if(energies[name]){
+        return energies[name];
+      }
+      return "";
+    }
+  }
+
+  const specialCases = {
+    'PR-SV': 'SVP',
+    'PR-SW': 'SP',
+    'PR-SM': 'SMP',
+    'PR-XY': 'XYP',
+    'PR-BLW': 'BWP',
+    'PR-HS': 'HSP',
+    // cubekoga compatibility
+    sma: 'HIF',
+  };
+  if(specialCases[set]){
+    set = specialCases[set];
+  }
+
 
   // Special set codes that should use tpc format directly
   const tpcSets = new Set([
@@ -334,139 +340,270 @@ export const importDecklist = (user) => {
     'SV1W',
     'SV1',
   ]);
+  if(tpcSets.has(set)){
+    region = "tpc";
+  }
 
-  // the following cards have no image on limitless
-  const noImg_to_id = {
-    'BUS 112a': 'sm3-112a',
-    'FLI 102a': 'sm6-102a',
-    'UNM 191a': 'sm11-191a',
-    'GRI 121a': 'sm2-121a',
-    'UPR 119a': 'sm5-119a',
-    'BUS 115a': 'sm3-115a',
-    'UPR 125a': 'sm5-125a',
-    'UPR 153a': 'sm5-153a',
-    'UNB 182a': 'sm10-182a',
-    'TEU 152a': 'sm9-152a',
-    'LOT 188a': 'sm8-188a',
-    'SLG 68a': 'sm35-68a',
-    'UPR 135a': 'sm5-135a',
-    'UNB 189a': 'sm10-189a',
-    'SVP 85': 'svp-85',
-    'SVP 102': 'svp-102',
-    'SVP 190': 'svp-190',
-    'SVP 191': 'svp-191',
-    'SVP 192': 'svp-192', 
-  };
+
+  if(id){
+    const [set_ID, set_Number] = id.split('-');
+    return 'https://images.pokemontcg.io/' + set_ID + '/' + set_Number + '_hires.png';
+  }
+  if(region==="tpc"){
+    return `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpc/${set}/${set}_${number}_R_JP_LG.png`;
+  }
+  if(set){
+    if(!number) return;
+    const paddedNumber = number.replace(
+      /^(\d+)([a-zA-Z])?$/,
+      (_, digits, letter) => {
+        const paddedDigits =
+        digits.length < 3 ? digits.padStart(3, '0') : digits;
+        return letter ? paddedDigits + letter : paddedDigits;
+      }
+    );
+    return `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/${set.replace(/ /g, '/')}/${set.replace(/ /g, '_')}_${paddedNumber}_R_${language}.png`;
+  }
+  return;
+}
+
+const escapeRegExp = (string) => {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+const LimitlessDecklistArray = async (decklist) => {
+  // Each card will be stored as [quantity, name, set code, number, pokemontcg.io id, image url, type]
+
+  const card_types = {
+    "pokemon": "Pokémon",
+    "trainer": "Trainer",
+    "energy": "Energy"
+  }
+
+  let response;
+  try {
+    response = await (await fetch('https://limitlesstcg.com/api/dm/import', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ input: decklist })
+    })).json();
+  } catch {
+    return [];
+  }
+
+  let decklistArray = [];
+  const cards = response["cards"] || [];
+  const errors = response["errors"] || [];
+
+  for (let card of cards) {
+    decklistArray.push([
+      card["count"],
+      card["name"],
+      null,null,null,
+      cardDataToImageURL({
+        "name": card["name"],
+        "set": card["set"],
+        "number": card["number"],
+        "region": card["region"]
+      }),
+      card_types[card["card_type"]]
+    ])
+  }
+  for (let error of errors) {
+    let card_name = error.match(/Card \"(.+)\" was not found./);
+    if (card_name) {
+      card_name = card_name[1];
+      let qty = decklist.match(new RegExp('(\\d+) ' + escapeRegExp(card_name.trim())));
+      if (qty) {
+        decklistArray.push([
+          qty[1],
+          card_name,
+          null,null,null,null,null
+        ])
+      } else {
+        // in theory this should never happen, but sometimes Limitless adds inexplicable spaces and it ends up happening
+        decklistArray.push([
+          0,
+          card_name,
+          null,null,null,null,null
+        ])
+      }
+    }
+  }
+  return decklistArray;
+}
+
+const ptcgsimDecklistArray = (decklist) => {
+  const regexWithOldSet = /(\d+) (.+?)(?= \w*-\w*\d*$) (\w*-\w*\d*)/;
+  const regexWithSet =
+  /(\d+) (.+?) (\w{2,5}[1-9]?[A-Z]?|WBSP|NBSP|FRLG|FUT20) (\d+[a-zA-Z]?)/;
+  const regexWithPRSet =
+  /(\d+) (.+?) (PR-\w{2,3}) ((?:DP|HGSS|BW|XY|SM|SWSH)?)(\d+)/;
+  const regexWithSpecialSet =
+  /(\d+) (.+?) ((?:\w{2,3}[a-zA-Z]\d*|\w{2,3}(?:\s+[a-zA-Z\d]+)*)(?:\s+(\w{2,3}\s*[a-zA-Z\d]+)\s*)*)$/;
+  const regexWithoutSet = /(\d+) (.+?)(?=\s\d|$|(\s\d+))/;
+
+  // Initialize an array to store the results
+  // Each card will be stored as [quantity, name, set code, number, pokemontcg.io id, image url, type]
+  const decklistArray = [];
+
+  // Split the decklist into lines
+  const lines = decklist.split('\n');
+
+  // Process each line
+  lines.forEach((line) => {
+    line = line.replace(/[[\]()]/g, '');
+    //ptcglive conversion for GG/TG cards (the alt art bs) (don't apply to promo sets)
+    line = line.replace(/(?!PR-)(\w{2,3})-(\w{2,3}) (\d+)/g, '$1 $2$3');
+    //special case for double crisis set
+    line = line.replace(/xy5-5 /g, 'DCR ');
+    //special case for DPP
+    line = line.replace(/ DPP /g, ' PR-DPP ');
+
+    let matchWithOldSet = line.match(regexWithOldSet);
+    let matchWithSet = line.match(regexWithSet);
+    let matchWithPRSet = line.match(regexWithPRSet);
+    let matchWithSpecialSet = line.match(regexWithSpecialSet);
+    let matchWithoutSet = line.match(regexWithoutSet);
+
+    if (matchWithOldSet) {
+      const [, quantity, name, id] = matchWithOldSet;
+      decklistArray.push([
+        parseInt(quantity),
+                         name,
+                         null,
+                         null,
+                         id,
+                         null,
+                         undefined,
+      ]);
+    } else if (matchWithSet) {
+      const [, quantity, name, set, setNumber] = matchWithSet;
+      decklistArray.push([
+        parseInt(quantity),
+                         name,
+                         set,
+                         setNumber,
+                         null,
+                         null,
+                         undefined,
+      ]);
+    } else if (matchWithPRSet) {
+      const [, quantity, name, prSet, , setNumber] = matchWithPRSet;
+      decklistArray.push([
+        parseInt(quantity),
+                         name,
+                         prSet,
+                         setNumber,
+                         null,
+                         null,
+                         undefined,
+      ]);
+    } else if (matchWithSpecialSet) {
+      const [, quantity, name, setAll] = matchWithSpecialSet;
+      const [set, setNumber] = setAll.trim().split(/(?<=\S)\s/);
+      decklistArray.push([
+        parseInt(quantity),
+                         name,
+                         set,
+                         setNumber,
+                         null,
+                         null,
+                         undefined,
+      ]);
+    } else if (matchWithoutSet) {
+      const [, quantity, name] = matchWithoutSet;
+      decklistArray.push([
+        parseInt(quantity),
+                         name,
+                         null,
+                         null,
+                         null,
+                         null,
+                         undefined,
+      ]);
+    }
+  });
+
+  return decklistArray;
+}
+
+const DecklistArray = async (decklist,limitless) => {
+  // Each card will be stored as [quantity, name, set code, number, pokemontcg.io id, image url, type]
+  if(limitless){
+    return await LimitlessDecklistArray(decklist);
+  }
+  let decklistArray = ptcgsimDecklistArray(decklist);
+  const energies = getEnergies();
+  for (let i = 0; i < decklistArray.length; i++) {
+    decklistArray[i][4] = cardDataToID({
+      "set": decklistArray[i][2],
+      "number": decklistArray[i][3],
+      "id": decklistArray[i][4],
+      "name": decklistArray[i][1]
+    });
+    decklistArray[i][5] = cardDataToImageURL({
+       "set": decklistArray[i][2],
+       "number": decklistArray[i][3],
+       "id": decklistArray[i][4],
+       "name": decklistArray[i][1]
+    });
+    if(!decklistArray[i][6]){
+      if(decklistArray[i][2]){
+        if(decklistArray[i][3]){
+          decklistArray[i][6] = getCardType(decklistArray[i][2], decklistArray[i][3]);
+        }
+      }
+      if(decklistArray[i][4]){
+        decklistArray[i][6] = getOldCardType(decklistArray[i][4]);
+      }
+      if(energies[decklistArray[i][1]]){
+        decklistArray[i][6] = 'Energy'
+      }
+    }
+  }
+  return decklistArray;
+}
+
+export const importDecklist = async (user,limitless) => {
+  failedText.style.display = 'none';
+  invalidText.style.display = 'none';
+  loadingText.style.display = 'block';
+  importButton.disabled = true;
+  importLimitlessButton.disabled = true;
+
+  const decklist =
+    user === 'self' ? mainDeckImportInput.value : altDeckImportInput.value;
+
+  let decklistArray = await DecklistArray(decklist,limitless);
+
+  if (decklistArray.length < 1) {
+    failedText.style.display = 'block';
+    loadingText.style.display = 'none';
+    importButton.disabled = false;
+    importLimitlessButton.disabled = false;
+    return;
+  }
+
 
   let fetchPromises = decklistArray.map((entry) => {
-    const [, name, set, setNumber] = entry;
-
-    let [firstPart, secondPart] = [set, setNumber];
-    const energyUrl = energies[name];
-
-    if (firstPart && secondPart) {
-      if (specialCases[firstPart]) {
-        firstPart = specialCases[firstPart];
-      }
-      if (oldSetCode_to_id[firstPart]) {
-        entry[4] = oldSetCode_to_id[firstPart] + '-' + secondPart;
-      }
-      if (noImg_to_id[firstPart + ' ' + secondPart]) {
-        entry[4] = noImg_to_id[firstPart + ' ' + secondPart];
-      }
-      // special case for PR-DPP
-      if (firstPart === 'PR-DPP') {
-        const paddedSecondPart = secondPart.replace(/^(\d+)?$/, (_, digits) => {
-          const paddedDigits =
-            digits.length < 3 ? digits.padStart(2, '0') : digits;
-          return 'dpp-DP' + paddedDigits;
-        });
-        entry[4] = paddedSecondPart;
-      }
-    }
-    // If the card doesn't have an id but contains a set code and set number, we assume it's a limitless card
-    if (firstPart && secondPart && !entry[4]) {
-      const paddedSecondPart = secondPart.replace(
-        /^(\d+)([a-zA-Z])?$/,
-        (_, digits, letter) => {
-          const paddedDigits =
-            digits.length < 3 ? digits.padStart(3, '0') : digits;
-          return letter ? paddedDigits + letter : paddedDigits;
-        }
-      );
-
-      // Check if this set should use tpc format directly
-      if (tpcSets.has(firstPart)) {
-        const tpcUrl = `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpc/${firstPart}/${firstPart}_${secondPart}_R_JP_LG.png`;
-        entry[5] = tpcUrl;
-        entry[6] = getCardType(firstPart, secondPart);
-        return Promise.resolve(true);
-      }
-
-      const url = `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/${firstPart.replace(/ /g, '/')}/${firstPart.replace(/ /g, '_')}_${paddedSecondPart}_R_${language}.png`;
-
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-          entry[5] = url;
-          entry[6] = getCardType(firstPart, secondPart);
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        if(entry[6]){
           resolve(true);
-        };
-        img.onerror = () => {
-          const alternateUrl = `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpc/${firstPart}/${firstPart}_${paddedSecondPart}_R_JP_LG.png`;
-          const altImg = new Image();
-          altImg.onload = () => {
-            entry[5] = alternateUrl;
-            entry[6] = getCardType(firstPart, secondPart);
-            resolve(true);
-          };
-          altImg.onerror = () => {
-            resolve(false);
-          };
-          altImg.src = alternateUrl;
-        };
-        img.src = url;
-      });
-    } else if (energyUrl) {
-      entry[5] = energyUrl;
-      entry[6] = 'Energy';
-      if (name.slice(-5) === ' null') {
-        entry[1] = name.slice(0, -5);
-      }
-      return Promise.resolve(true);
-      // If the card has an id, we fetch the card from the pokemontcg.io api
-      // jk we don't anymore
-    } else if (entry[4]) {
-      const ID = entry[4];
-      /*
-      return fetch('https://api.pokemontcg.io/v2/cards/' + ID, {
-        method: 'GET',
-        headers: {
-          'X-Api-Key': 'cde33a60-5d8a-414e-ae04-b447090dd6ba',
-        },
-      })
-        .then((response) => response.json())
-        .then(({ data }) => {
-          const index = decklistArray.findIndex((item) => item[4] === ID);
-          if (index !== -1) {
-            decklistArray[index][5] = data.images.large;
-            decklistArray[index][6] = data.supertype;
-          }
-          return true;
-        })
-        .catch(() => {
-          return false;
-        });
-        */
-        const index = decklistArray.findIndex((item) => item[4] === ID);
-        const [set_ID, set_Number] = ID.split('-');
-        decklistArray[index][5] = 'https://images.pokemontcg.io/' + set_ID + '/' + set_Number + '_hires.png';
-        decklistArray[index][6] = getOldCardType(ID)
-        return Promise.resolve(true);
-    } else if (!entry[5] || !entry[6]) {
-      return Promise.resolve(false);
-    }
-    return Promise.resolve(true);
+        }
+        else{
+          resolve(false);
+        }
+      };
+      img.onerror = () => {
+        resolve(false);
+      };
+      img.src = entry[5];
+    });
   });
 
   Promise.all(fetchPromises)
@@ -528,11 +665,13 @@ export const importDecklist = (user) => {
       });
 
       importButton.disabled = false;
+      importLimitlessButton.disabled = false;
       selfContainer.style.zIndex = -1;
       oppContainer.style.zIndex = -1;
       loadingText.style.display = 'none';
       decklistsButton.style.display = 'none';
       importButton.style.display = 'none';
+      importLimitlessButton.style.display = 'none';
       randomButton.style.display = 'none';
       changeLanguageButton.style.display = 'none';
       confirmButton.style.display = 'block';
@@ -576,6 +715,7 @@ cancelButton.addEventListener('click', () => {
   oppContainer.style.zIndex = 0;
   decklistsButton.style.display = 'block';
   importButton.style.display = 'block';
+  importLimitlessButton.style.display = 'block';
   randomButton.style.display = 'block';
   changeLanguageButton.style.display = 'inline-block';
   confirmButton.style.display = 'none';
@@ -593,6 +733,7 @@ confirmButton.addEventListener('click', () => {
   oppContainer.style.zIndex = 0;
   decklistsButton.style.display = 'block';
   importButton.style.display = 'block';
+  importLimitlessButton.style.display = 'block';
   randomButton.style.display = 'block';
   saveCurrentButton.style.display = 'block';
   changeLanguageButton.style.display = 'inline-block';
@@ -711,11 +852,13 @@ saveCurrentButton.addEventListener('click', () => {
 
 csvFile.addEventListener('change', (evt) => {
   importButton.disabled = false;
+  importLimitlessButton.disabled = false;
   selfContainer.style.zIndex = -1;
   oppContainer.style.zIndex = -1;
   loadingText.style.display = 'none';
   decklistsButton.style.display = 'none';
   importButton.style.display = 'none';
+  importLimitlessButton.style.display = 'none';
   randomButton.style.display = 'none';
   changeLanguageButton.style.display = 'none';
   failedText.style.display = 'none';

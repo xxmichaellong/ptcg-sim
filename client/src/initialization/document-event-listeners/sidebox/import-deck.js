@@ -94,7 +94,22 @@ export const initializeImport = () => {
     );
     const notOpp2P = !(systemState.isTwoPlayer && user === 'opp');
     if (notSpectator && notOpp2P) {
-      importDecklist(user);
+      importDecklist(user,false);
+    } else {
+      invalidText.style.display = 'block';
+    }
+  });
+
+  const importLimitlessButton = document.getElementById('importLimitlessButton');
+  importLimitlessButton.addEventListener('click', () => {
+    const user = mainDeckImportInput.style.display !== 'none' ? 'self' : 'opp';
+    const notSpectator = !(
+      document.getElementById('spectatorModeCheckbox').checked &&
+      systemState.isTwoPlayer
+    );
+    const notOpp2P = !(systemState.isTwoPlayer && user === 'opp');
+    if (notSpectator && notOpp2P) {
+      importDecklist(user,true);
     } else {
       invalidText.style.display = 'block';
     }

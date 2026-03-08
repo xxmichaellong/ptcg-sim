@@ -742,19 +742,28 @@ ul, li {
   background: linear-gradient(to bottom, #95c6b4, #72ab97);
   color: white;
 }
+#importLimitlessButton {
+  background: linear-gradient(to bottom, #90d4a3, #6fbf85);
+  color: white;
+  font-size: 0.75em;
+  line-height: 1;
+}
 #confirmButton {
   margin-left: 0.3vw;
 }
-#importButton {
+#importButton, #importLimitlessButton {
   cursor: pointer;
   width: 25%;
+  height: 3.5vh;
   border-radius: .5rem;
-  padding: 1vh;
   border: none;
   font-weight: bold;
 }
 #importButton:hover, #confirmButton:hover {
   background: linear-gradient(to bottom, #7bb9a2, #5faa96);
+}
+#importLimitlessButton:hover {
+  background: linear-gradient(to bottom, #7cc492, #5faf75);
 }
 #cancelButton, #confirmButton, #saveButton {
   cursor: pointer;
