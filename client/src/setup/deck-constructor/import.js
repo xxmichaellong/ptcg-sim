@@ -35,7 +35,7 @@ const changeLanguageButton = document.getElementById('changeLanguageButton');
 
 const cardDataToID = (card) => {
   /*
-   card is espected to be as follows (things can be undefined):
+   card is expected to be as follows (things can be undefined):
    {
     "set": "set code",
     "number": "card number",
@@ -269,7 +269,7 @@ const getEnergies = (language) => {
 
 const cardDataToImageURL = (card) => {
   /*
-  card is espected to be as follows (things can be undefined):
+  card is expected to be as follows (things can be undefined):
     {
       "set": "set code",
       "number": "card number",
@@ -279,12 +279,8 @@ const cardDataToImageURL = (card) => {
     }
   */
 
-
-  //console.log(card);
-
   let set = card["set"];
   let number = card["number"];
-  //let id = card["id"];
   let id = cardDataToID(card);
   let name = card["name"];
   let region = card["region"];
@@ -357,10 +353,7 @@ const cardDataToImageURL = (card) => {
     return `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpc/${set}/${set}_${number}_R_JP_LG.png`;
   }
   if(set){
-    if(!number){
-      console.log(set);
-      console.log(card);
-    }
+    if(!number) return;
     const paddedNumber = number.replace(
       /^(\d+)([a-zA-Z])?$/,
       (_, digits, letter) => {
@@ -374,6 +367,10 @@ const cardDataToImageURL = (card) => {
   return;
 }
 
+const escapeRegExp = (string) => {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 const LimitlessDecklistArray = async (decklist) => {
   // Each card will be stored as [quantity, name, set code, number, pokemontcg.io id, image url, type]
 
@@ -383,16 +380,24 @@ const LimitlessDecklistArray = async (decklist) => {
     "energy": "Energy"
   }
 
-  let response = await (await fetch('https://limitlesstcg.com/api/dm/import', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ input: decklist })
-  })).json();
+  let response;
+  try {
+    response = await (await fetch('https://limitlesstcg.com/api/dm/import', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ input: decklist })
+    })).json();
+  } catch {
+    return [];
+  }
 
   let decklistArray = [];
-  for(let card of response["cards"]){
+  const cards = response["cards"] || [];
+  const errors = response["errors"] || [];
+
+  for (let card of cards) {
     decklistArray.push([
       card["count"],
       card["name"],
@@ -406,19 +411,18 @@ const LimitlessDecklistArray = async (decklist) => {
       card_types[card["card_type"]]
     ])
   }
-  for(let error of response["errors"]){
+  for (let error of errors) {
     let card_name = error.match(/Card \"(.+)\" was not found./);
-    if(card_name){
+    if (card_name) {
       card_name = card_name[1];
-      let qty = decklist.match(RegExp('(\\d+) '+card_name.trim()));
-      if(qty){
+      let qty = decklist.match(new RegExp('(\\d+) ' + escapeRegExp(card_name.trim())));
+      if (qty) {
         decklistArray.push([
           qty[1],
           card_name,
           null,null,null,null,null
         ])
-      }
-      else{
+      } else {
         // in theory this should never happen, but sometimes Limitless adds inexplicable spaces and it ends up happening
         decklistArray.push([
           0,
@@ -428,7 +432,6 @@ const LimitlessDecklistArray = async (decklist) => {
       }
     }
   }
-  //console.log(decklistArray);
   return decklistArray;
 }
 
@@ -533,7 +536,8 @@ const DecklistArray = async (decklist,limitless) => {
     return await LimitlessDecklistArray(decklist);
   }
   let decklistArray = ptcgsimDecklistArray(decklist);
-  for(let i in decklistArray){
+  const energies = getEnergies();
+  for (let i = 0; i < decklistArray.length; i++) {
     decklistArray[i][4] = cardDataToID({
       "set": decklistArray[i][2],
       "number": decklistArray[i][3],
@@ -555,7 +559,7 @@ const DecklistArray = async (decklist,limitless) => {
       if(decklistArray[i][4]){
         decklistArray[i][6] = getOldCardType(decklistArray[i][4]);
       }
-      if(getEnergies()[decklistArray[i][1]]){
+      if(energies[decklistArray[i][1]]){
         decklistArray[i][6] = 'Energy'
       }
     }
