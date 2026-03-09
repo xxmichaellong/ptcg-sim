@@ -161,6 +161,10 @@
                 });
             </script> -->
             </div>
+        <!-- Render targets populated by the native deck builder; hidden until in use. -->
+        <div id="nativeDeckBuilderSummary" style="display:none;"></div>
+        <div id="nativeDeckBuilderValidation" style="display:none;"></div>
+        <div id="nativeDeckBuilderCards" style="display:none;"></div>
         <div id="importButtonContainer">
             <button id="mainImportHeaderButton" class="main-select">Main</button>
             <button id="altImportHeaderButton">Alt (1P only)</button>
@@ -205,6 +209,81 @@
         <button id="saveCurrentButton" class="self-color">Save Current Deck</button>                
     </div>
     
+    <div id="nativeDeckBuilderWorkspace" class="native-deck-builder-workspace">
+        <button id="nativeDeckBuilderEdgeToggle" class="native-deck-builder-edge-toggle" aria-label="Collapse deck builder workspace" title="Collapse deck builder workspace">❮</button>
+        <div class="native-deck-builder-inner">
+            <div class="native-deck-builder-header">
+                <div>
+                    <strong>Deck Builder</strong>
+                    <div class="native-deck-builder-subtitle">Search cards, build decks, and load them directly into the simulator.</div>
+                </div>
+                <div class="native-deck-builder-actions">
+                    <button id="nativeDeckBuilderExportCsv" class="neutral-color">Export CSV</button>
+                    <label for="nativeDeckBuilderCsvImport" id="nativeDeckBuilderImportCsvLabel" class="neutral-color native-deck-builder-inline-label">Import CSV</label>
+                    <input id="nativeDeckBuilderCsvImport" type="file" accept=".csv" style="display:none;" />
+                    <button id="closeNativeDeckBuilderButton" class="neutral-color">Close</button>
+                </div>
+            </div>
+            <div class="native-deck-builder-targetbar">
+                <div class="native-deck-builder-target-copy">
+                    <strong>Load Target:</strong>
+                    <span id="nativeDeckBuilderTargetLabel">P1 Deck</span>
+                    <span id="nativeDeckBuilderLoadStatus" class="native-deck-builder-load-status" aria-live="polite"></span>
+                </div>
+                <div class="native-deck-builder-target-controls">
+                    <button id="nativeDeckBuilderTargetMain" class="native-target-button native-target-selected">P1</button>
+                    <button id="nativeDeckBuilderTargetAlt" class="native-target-button">P2</button>
+                    <button id="nativeDeckBuilderLoadCurrentTarget" class="self-color">Load Deck</button>
+                </div>
+            </div>
+            <div class="native-deck-builder-body">
+                <div class="native-deck-builder-pane native-deck-builder-pane-main">
+                    <div class="native-deck-builder-section-title">Builder Workspace</div>
+                    <div class="native-deck-builder-search-row">
+                        <input id="nativeDeckBuilderSearchInput" class="native-deck-builder-search-input" type="text" placeholder="Search cards by name" />
+                        <select id="nativeDeckBuilderCardTypeFilter" class="native-deck-builder-search-select">
+                            <option value="all">All</option>
+                            <option value="tcg">TCG</option>
+                            <option value="pocket">Pocket</option>
+                        </select>
+                        <select id="nativeDeckBuilderSortBy" class="native-deck-builder-search-select">
+                            <option value="releaseDate">Release Date</option>
+                            <option value="name">Name</option>
+                        </select>
+                        <select id="nativeDeckBuilderSortDirection" class="native-deck-builder-search-select">
+                            <option value="desc">Desc</option>
+                            <option value="asc">Asc</option>
+                        </select>
+                        <button id="nativeDeckBuilderSearchButton" class="self-color">Search</button>
+                    </div>
+                    <div id="nativeDeckBuilderSearchStatus" class="native-deck-builder-search-status">Search for a card to begin.</div>
+                    <div class="native-deck-builder-results-shell">
+                        <div id="nativeDeckBuilderSearchResults" class="native-deck-builder-search-results"></div>
+                        <div class="native-deck-builder-results-footer">
+                            <select id="nativeDeckBuilderShowCount" class="native-deck-builder-search-select" style="display: none;" aria-hidden="true" tabindex="-1">
+                                <option value="all" selected>All</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="native-deck-builder-pane native-deck-builder-pane-side">
+                    <div class="native-deck-builder-section-title-row">
+                        <div class="native-deck-builder-section-title-wrap">
+                            <div class="native-deck-builder-section-title">Deck Summary</div>
+                            <span id="nativeDeckBuilderValidationDot" class="native-deck-builder-validation-dot invalid" aria-label="Deck invalid" title="Deck invalid"></span>
+                        </div>
+                        <button id="nativeDeckBuilderClear" class="neutral-color native-deck-builder-section-button">Clear</button>
+                    </div>
+                    <div id="nativeDeckBuilderSummaryPanel" class="native-deck-builder-summary"></div>
+                    <div id="nativeDeckBuilderCardsPanel" class="native-deck-builder-cards"></div>
+                </div>
+            </div>
+            <div id="nativeDeckBuilderHoverPreview" class="native-deck-builder-hover-preview" aria-hidden="true">
+                <img id="nativeDeckBuilderHoverPreviewImage" class="native-deck-builder-hover-preview-image" alt="Card preview" />
+            </div>
+        </div>
+    </div>
+
     <div id="settings" class="sidebox">
         <div id="settingsToggles">
             <div>
