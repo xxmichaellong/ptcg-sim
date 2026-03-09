@@ -707,6 +707,10 @@ export const loadDeckData = (user, deckData, emit = true) => {
       false
     );
   }
+  // Notify the native deck builder so it can sync its state after a load.
+  document.dispatchEvent(new CustomEvent('native-deck-builder:deck-loaded', {
+    detail: { user, deckData }
+  }));
   processAction(user, emit, 'loadDeckData', [deckData]);
 };
 
