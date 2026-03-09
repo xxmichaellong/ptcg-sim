@@ -128,10 +128,9 @@ export const initializeImport = () => {
   const decklistsButton = document.getElementById('decklistsButton');
   decklistsButton.addEventListener('click', showDecklistsContextMenu);
 
+  // Click handler is registered in native-deck-builder.js.
   const deckBuilderButton = document.getElementById('deckBuilderButton');
-  deckBuilderButton.addEventListener('click', function () {
-    window.open('https://tishinator.github.io/PTCGDeckBuilder/');
-  });
+  deckBuilderButton.title = 'Open the in-app deck builder';
 
   const importExportGameStateButton = document.getElementById(
     'importExportGameStateButton'
