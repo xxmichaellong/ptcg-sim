@@ -238,7 +238,10 @@
             </div>
             <div class="native-deck-builder-body">
                 <div class="native-deck-builder-pane native-deck-builder-pane-main">
-                    <div class="native-deck-builder-section-title">Builder Workspace</div>
+                    <div class="native-deck-builder-section-title-row">
+                        <div class="native-deck-builder-section-title">Builder Workspace</div>
+                        <button id="nativeDeckBuilderAddCustomCard" class="neutral-color native-deck-builder-section-button">+ Custom Card</button>
+                    </div>
                     <div class="native-deck-builder-search-row">
                         <input id="nativeDeckBuilderSearchInput" class="native-deck-builder-search-input" type="text" placeholder="Search cards by name" />
                         <select id="nativeDeckBuilderCardTypeFilter" class="native-deck-builder-search-select">
@@ -276,6 +279,44 @@
                     </div>
                     <div id="nativeDeckBuilderSummaryPanel" class="native-deck-builder-summary"></div>
                     <div id="nativeDeckBuilderCardsPanel" class="native-deck-builder-cards"></div>
+                </div>
+            </div>
+            <div id="nativeDeckBuilderCustomCardModal" class="native-deck-builder-modal" role="dialog" aria-modal="true" aria-label="Add custom card" hidden>
+                <div class="native-deck-builder-modal-box">
+                    <div class="native-deck-builder-modal-title">Add Custom Card</div>
+                    <div class="native-deck-builder-modal-body">
+                        <div class="native-deck-builder-modal-fields">
+                            <label class="native-deck-builder-modal-label">
+                                Quantity
+                                <input id="nativeCustomCardQty" class="native-deck-builder-modal-input" type="number" min="1" max="99" value="1" />
+                            </label>
+                            <label class="native-deck-builder-modal-label">
+                                Card Name
+                                <input id="nativeCustomCardName" class="native-deck-builder-modal-input" type="text" placeholder="e.g. Charizard" />
+                            </label>
+                            <label class="native-deck-builder-modal-label">
+                                Card Type
+                                <select id="nativeCustomCardType" class="native-deck-builder-modal-input">
+                                    <option value="Pokémon">Pokémon</option>
+                                    <option value="Trainer">Trainer</option>
+                                    <option value="Energy">Energy</option>
+                                </select>
+                            </label>
+                            <label class="native-deck-builder-modal-label">
+                                Image URL
+                                <input id="nativeCustomCardImageUrl" class="native-deck-builder-modal-input" type="url" placeholder="https://..." />
+                            </label>
+                        </div>
+                        <div class="native-deck-builder-modal-preview">
+                            <img id="nativeCustomCardPreviewImage" class="native-deck-builder-modal-preview-image" alt="Card preview" style="display:none;" />
+                            <div id="nativeCustomCardPreviewPlaceholder" class="native-deck-builder-modal-preview-placeholder">No image</div>
+                        </div>
+                    </div>
+                    <div id="nativeCustomCardError" class="native-deck-builder-modal-error" aria-live="polite"></div>
+                    <div class="native-deck-builder-modal-actions">
+                        <button id="nativeCustomCardCancel" class="neutral-color">Cancel</button>
+                        <button id="nativeCustomCardSubmit" class="self-color">Add to Deck</button>
+                    </div>
                 </div>
             </div>
             <div id="nativeDeckBuilderHoverPreview" class="native-deck-builder-hover-preview" aria-hidden="true">

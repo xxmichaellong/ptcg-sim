@@ -52,6 +52,17 @@ export const initializeNativeDeckBuilder = () => {
   const showCountSelect = document.getElementById('nativeDeckBuilderShowCount');
   const hoverPreview = document.getElementById('nativeDeckBuilderHoverPreview');
   const hoverPreviewImage = document.getElementById('nativeDeckBuilderHoverPreviewImage');
+  const addCustomCardButton = document.getElementById('nativeDeckBuilderAddCustomCard');
+  const customCardModal = document.getElementById('nativeDeckBuilderCustomCardModal');
+  const customCardQty = document.getElementById('nativeCustomCardQty');
+  const customCardName = document.getElementById('nativeCustomCardName');
+  const customCardType = document.getElementById('nativeCustomCardType');
+  const customCardImageUrl = document.getElementById('nativeCustomCardImageUrl');
+  const customCardError = document.getElementById('nativeCustomCardError');
+  const customCardCancel = document.getElementById('nativeCustomCardCancel');
+  const customCardSubmit = document.getElementById('nativeCustomCardSubmit');
+  const customCardPreviewImage = document.getElementById('nativeCustomCardPreviewImage');
+  const customCardPreviewPlaceholder = document.getElementById('nativeCustomCardPreviewPlaceholder');
 
   const syncedDecks = {
     self: createEmptyDeck(),
@@ -151,6 +162,102 @@ export const initializeNativeDeckBuilder = () => {
       clearLoadFeedback();
       render();
     }
+  });
+
+  const showPreviewImage = () => {
+    customCardPreviewImage.style.display = '';
+    customCardPreviewPlaceholder.style.display = 'none';
+  };
+
+  const showPreviewPlaceholder = (text = 'No image') => {
+    customCardPreviewImage.style.display = 'none';
+    customCardPreviewPlaceholder.style.display = '';
+    customCardPreviewPlaceholder.textContent = text;
+  };
+
+  const updateCustomCardPreview = (url) => {
+    const trimmed = url.trim();
+    if (!trimmed) {
+      showPreviewPlaceholder('No image');
+      return;
+    }
+    customCardPreviewImage.src = trimmed;
+  };
+
+  customCardImageUrl.addEventListener('input', () => {
+    updateCustomCardPreview(customCardImageUrl.value);
+  });
+
+  customCardPreviewImage.addEventListener('error', () => {
+    showPreviewPlaceholder('Invalid image');
+  });
+
+  customCardPreviewImage.addEventListener('load', () => {
+    showPreviewImage();
+  });
+
+  const openCustomCardModal = () => {
+    customCardQty.value = '1';
+    customCardName.value = '';
+    customCardType.value = 'Pokémon';
+    customCardImageUrl.value = '';
+    customCardError.textContent = '';
+    customCardPreviewImage.removeAttribute('src');
+    showPreviewPlaceholder('No image');
+    customCardModal.removeAttribute('hidden');
+    customCardName.focus();
+  };
+
+  const closeCustomCardModal = () => {
+    customCardModal.setAttribute('hidden', '');
+  };
+
+  addCustomCardButton.addEventListener('click', openCustomCardModal);
+  customCardCancel.addEventListener('click', closeCustomCardModal);
+
+  customCardModal.addEventListener('click', (event) => {
+    if (event.target === customCardModal) closeCustomCardModal();
+  });
+
+  customCardSubmit.addEventListener('click', () => {
+    const qty = parseInt(customCardQty.value, 10);
+    const name = customCardName.value.trim();
+    const type = customCardType.value;
+    const imageUrl = customCardImageUrl.value.trim();
+
+    if (!name) {
+      customCardError.textContent = 'Card Name is required.';
+      return;
+    }
+    if (!qty || qty < 1) {
+      customCardError.textContent = 'Quantity must be at least 1.';
+      return;
+    }
+    try {
+      const parsed = new URL(imageUrl);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new Error();
+    } catch {
+      customCardError.textContent = 'Image URL must be a valid http or https URL.';
+      return;
+    }
+
+    const card = {
+      id: `custom:${name}:${type}:${imageUrl}`,
+      name,
+      supertype: type,
+      images: { small: imageUrl, large: imageUrl },
+      image: imageUrl,
+      set: { id: '', name: '', releaseDate: '' },
+      number: '',
+      _provider: 'custom',
+    };
+
+    for (let i = 0; i < qty; i++) {
+      deck = addCard(deck, card);
+    }
+
+    closeCustomCardModal();
+    render();
   });
 
   const render = () => {
