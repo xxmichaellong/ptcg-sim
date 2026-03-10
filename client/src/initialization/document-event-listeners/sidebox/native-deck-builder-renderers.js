@@ -15,20 +15,16 @@ export const renderSearchResults = ({ searchResultsEl, results, onSelect }) => {
 
   searchResultsEl.innerHTML = results
     .map((card, index) => {
-      const detailParts = [];
-      if (card.number) detailParts.push(card.number);
-      if (card.set?.releaseDate) detailParts.push(card.set.releaseDate);
-      const detailLine = detailParts.length > 0 ? `<span>${detailParts.join(' · ')}</span>` : '';
-
       const previewImage = card.images?.large || card.images?.small || card.image || '';
+      const thumbImage = card.images?.small || card.image || '';
+      const setName = escapeHtml(card.set?.name || 'Unknown Set');
 
       return `
-        <button class="native-deck-builder-result" data-result-index="${index}"${previewImage ? ` data-preview-image="${escapeHtml(previewImage)}"` : ''}>
-          <img src="${card.images?.small || card.image}" alt="${card.name}" class="native-deck-builder-result-image" />
+        <button class="native-deck-builder-result" data-result-index="${index}"${previewImage ? ` data-preview-image="${escapeHtml(previewImage)}"` : ''} title="${escapeHtml(card.name)} · ${setName}">
+          <img src="${escapeHtml(thumbImage)}" alt="${escapeHtml(card.name)}" class="native-deck-builder-result-image" />
           <span class="native-deck-builder-result-text">
-            <strong>${card.name}</strong>
-            <span>${card.supertype} · ${card.set?.name || 'Unknown Set'}</span>
-            ${detailLine}
+            <strong>${escapeHtml(card.name)}</strong>
+            <span>${setName}</span>
           </span>
         </button>
       `;

@@ -922,12 +922,14 @@ ul, li {
   min-height: 0;
 }
 .native-deck-builder-search-results {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35vh;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7.5vw, 1fr));
+  gap: 0.5vw;
   overflow: auto;
   flex: 1;
   min-height: 0;
+  align-content: start;
+  padding: 0.2vw;
 }
 .native-deck-builder-results-footer {
   display: flex;
@@ -946,34 +948,53 @@ ul, li {
 }
 .native-deck-builder-result {
   display: flex;
-  align-items: center;
-  gap: 0.6vw;
-  text-align: left;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: center;
   width: 100%;
   border: 1px solid rgba(0,0,0,0.06);
   background: rgba(248,249,250,0.72);
-  padding: 0.45vh 0.4vw;
+  padding: 0.25vw;
+  border-radius: 0.3vw;
   cursor: pointer;
   transition: transform 140ms ease, background 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+  gap: 0.3vh;
 }
 .native-deck-builder-result:hover {
   background: rgba(233,237,244,0.94);
   border-color: rgba(65, 91, 168, 0.28);
-  box-shadow: 0 10px 24px rgba(38, 49, 84, 0.14);
-  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(38, 49, 84, 0.18);
+  transform: translateY(-2px);
 }
 .native-deck-builder-result-image {
-  width: 44px;
-  height: 60px;
+  width: 100%;
+  aspect-ratio: 63 / 88;
   object-fit: cover;
-  flex: 0 0 auto;
+  border-radius: 0.2vw;
+  display: block;
 }
 .native-deck-builder-result-text {
   display: flex;
   flex-direction: column;
-  gap: 0.2vh;
-  font-size: 1.25vh;
+  gap: 0.1vh;
+  font-size: 1.05vh;
   color: inherit;
+  padding: 0 0.1vw 0.15vw;
+  overflow: hidden;
+}
+.native-deck-builder-result-text strong {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  font-size: 1.1vh;
+}
+.native-deck-builder-result-text span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  opacity: 0.7;
 }
 .native-deck-builder-summary,
 .native-deck-builder-cards {
