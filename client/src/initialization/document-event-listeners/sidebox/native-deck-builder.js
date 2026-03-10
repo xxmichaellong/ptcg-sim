@@ -164,6 +164,8 @@ export const initializeNativeDeckBuilder = () => {
     }
   });
 
+  let customCardImageLoaded = false;
+
   const showPreviewImage = () => {
     customCardPreviewImage.style.display = '';
     customCardPreviewPlaceholder.style.display = 'none';
@@ -177,10 +179,27 @@ export const initializeNativeDeckBuilder = () => {
 
   const updateCustomCardPreview = (url) => {
     const trimmed = url.trim();
+    customCardImageLoaded = false;
+
     if (!trimmed) {
       showPreviewPlaceholder('No image');
       return;
     }
+
+    let parsed;
+    try {
+      parsed = new URL(trimmed);
+    } catch {
+      showPreviewPlaceholder('Invalid URL');
+      return;
+    }
+
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      showPreviewPlaceholder('http/https only');
+      return;
+    }
+
+    showPreviewPlaceholder('Loading…');
     customCardPreviewImage.src = trimmed;
   };
 
@@ -189,10 +208,12 @@ export const initializeNativeDeckBuilder = () => {
   });
 
   customCardPreviewImage.addEventListener('error', () => {
-    showPreviewPlaceholder('Invalid image');
+    customCardImageLoaded = false;
+    showPreviewPlaceholder('Image not found');
   });
 
   customCardPreviewImage.addEventListener('load', () => {
+    customCardImageLoaded = true;
     showPreviewImage();
   });
 
@@ -202,6 +223,7 @@ export const initializeNativeDeckBuilder = () => {
     customCardType.value = 'Pokémon';
     customCardImageUrl.value = '';
     customCardError.textContent = '';
+    customCardImageLoaded = false;
     customCardPreviewImage.removeAttribute('src');
     showPreviewPlaceholder('No image');
     customCardModal.removeAttribute('hidden');
@@ -233,11 +255,12 @@ export const initializeNativeDeckBuilder = () => {
       customCardError.textContent = 'Quantity must be at least 1.';
       return;
     }
-    try {
-      const parsed = new URL(imageUrl);
-      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new Error();
-    } catch {
-      customCardError.textContent = 'Image URL must be a valid http or https URL.';
+    if (!imageUrl) {
+      customCardError.textContent = 'Image URL is required.';
+      return;
+    }
+    if (!customCardImageLoaded) {
+      customCardError.textContent = 'Image URL must point to a loadable image.';
       return;
     }
 

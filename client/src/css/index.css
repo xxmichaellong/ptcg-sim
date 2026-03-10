@@ -1054,8 +1054,8 @@ ul, li {
 .native-deck-builder-deck-minus {
   position: relative;
   z-index: 1;
-  width: 24px;
-  height: 24px;
+  width: 1.1vw;
+  height: 1.1vw;
   border: none;
   cursor: pointer;
   color: white;
