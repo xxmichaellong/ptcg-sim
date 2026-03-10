@@ -847,6 +847,10 @@ ul, li {
 .native-deck-builder-section-button {
   flex: 0 0 auto;
   white-space: nowrap;
+  font-size: 1.35vh;
+  padding: 0.48vh 0.58vw;
+  border: none;
+  cursor: pointer;
 }
 .native-deck-builder-validation-dot {
   width: 0.9vh;
@@ -872,14 +876,14 @@ ul, li {
 }
 .native-deck-builder-search-input {
   flex: 1 1 auto;
-  min-width: 0;
+  min-width: 4vw;
   font-size: 1.4vh;
   padding: 0.55vh 0.6vw;
   border: 1px solid rgba(0,0,0,0.1);
   background: rgba(255,255,255,0.78);
 }
 .native-deck-builder-search-select {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   min-width: 0;
   font-size: 1.3vh;
   padding: 0.5vh 0.4vw;
@@ -895,6 +899,16 @@ ul, li {
   flex: 0 0 auto;
   white-space: nowrap;
   min-width: fit-content;
+  font-size: 1.35vh;
+  padding: 0.48vh 0.58vw;
+  border: none;
+  cursor: pointer;
+}
+#nativeDeckBuilderLoadCurrentTarget {
+  font-size: 1.35vh;
+  padding: 0.48vh 0.58vw;
+  border: none;
+  cursor: pointer;
 }
 #nativeDeckBuilderLoadCurrentTarget.load-success {
   box-shadow: 0 0 0 2px rgba(55, 160, 84, 0.22), 0 10px 24px rgba(34, 125, 63, 0.22);
