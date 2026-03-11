@@ -2,7 +2,7 @@ import { addCard, createEmptyDeck, getDeckCounts, removeCard } from '../../../se
 import { applyLocalControls, queryCardsByName } from '../../../setup/deck-builder/core/card-search.mjs';
 import { formatImageUrl, parseSimCsv, serializeDeckToSimCsv } from '../../../setup/deck-builder/core/csv-adapter.mjs';
 import { getSortedDeckCardArray } from '../../../setup/deck-builder/core/card-sort.mjs';
-import { DECK_FORMATS, validateDeck } from '../../../setup/deck-builder/core/deck-validation.mjs';
+import { DECK_FORMATS, detectDeckFormat, validateDeck } from '../../../setup/deck-builder/core/deck-validation.mjs';
 import { loadDeckData } from '../../../setup/deck-constructor/import.js';
 import { renderDeckCards, renderSearchResults } from './native-deck-builder-renderers.js';
 import { applyLoadFeedback } from './native-deck-builder-load-feedback.js';
@@ -285,7 +285,7 @@ export const initializeNativeDeckBuilder = () => {
 
   const render = () => {
     const counts = getDeckCounts(deck);
-    const result = validateDeck(deck, DECK_FORMATS.TCG);
+    const result = validateDeck(deck, detectDeckFormat(deck));
     const sortedCards = getSortedDeckCardArray(deck);
     const isOpen = panel.classList.contains('open');
 
@@ -310,10 +310,15 @@ export const initializeNativeDeckBuilder = () => {
     ].join(' · ');
 
     if (validationDot) {
+      const formatLabel = result.formatName;
+      const validationTitle = result.isValid
+        ? `${formatLabel} · Valid (${result.totalCards} cards)`
+        : `${formatLabel} · ${result.errors.join('\n')}`;
+
       validationDot.classList.toggle('valid', result.isValid);
       validationDot.classList.toggle('invalid', !result.isValid);
-      validationDot.setAttribute('aria-label', result.isValid ? `${result.formatName} deck valid` : (result.errors[0] || 'Deck invalid'));
-      validationDot.title = result.isValid ? `${result.formatName} deck valid` : (result.errors[0] || 'Deck invalid');
+      validationDot.setAttribute('aria-label', validationTitle);
+      validationDot.title = validationTitle;
     }
 
     renderDeckCards({

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   DECK_FORMATS,
+  detectDeckFormat,
   isPocketCard,
   validateDeck,
 } from '../core/deck-validation.mjs';
@@ -137,4 +138,52 @@ test('TCG format rejects Pocket cards', () => {
   const result = validateDeck(deck, DECK_FORMATS.TCG);
   assert.equal(result.isValid, false);
   assert.ok(result.errors.some((e) => e.includes('TCG format selected, but deck contains Pocket cards.')));
+});
+
+// ---------------------------------------------------------------------------
+// detectDeckFormat
+// ---------------------------------------------------------------------------
+
+test('detectDeckFormat: all pocket cards → POCKET', () => {
+  const deck = buildDeck([
+    makeGroup({ name: 'Pikachu', count: 10, pocket: true }),
+    makeGroup({ name: 'Potion', count: 10, supertype: 'Trainer', pocket: true }),
+  ]);
+  assert.equal(detectDeckFormat(deck), DECK_FORMATS.POCKET);
+});
+
+test('detectDeckFormat: all TCG cards → TCG', () => {
+  const deck = buildDeck([
+    makeGroup({ name: 'Charizard', count: 4, pocket: false }),
+    makeGroup({ name: 'Switch', count: 56, supertype: 'Trainer', pocket: false }),
+  ]);
+  assert.equal(detectDeckFormat(deck), DECK_FORMATS.TCG);
+});
+
+test('detectDeckFormat: more pocket than TCG → POCKET', () => {
+  const deck = buildDeck([
+    makeGroup({ name: 'Pikachu', count: 11, pocket: true }),
+    makeGroup({ name: 'Charizard', count: 9, pocket: false }),
+  ]);
+  assert.equal(detectDeckFormat(deck), DECK_FORMATS.POCKET);
+});
+
+test('detectDeckFormat: more TCG than pocket → TCG', () => {
+  const deck = buildDeck([
+    makeGroup({ name: 'Pikachu', count: 9, pocket: true }),
+    makeGroup({ name: 'Charizard', count: 11, pocket: false }),
+  ]);
+  assert.equal(detectDeckFormat(deck), DECK_FORMATS.TCG);
+});
+
+test('detectDeckFormat: equal pocket and TCG → TCG (tie defaults to TCG)', () => {
+  const deck = buildDeck([
+    makeGroup({ name: 'Pikachu', count: 10, pocket: true }),
+    makeGroup({ name: 'Charizard', count: 10, pocket: false }),
+  ]);
+  assert.equal(detectDeckFormat(deck), DECK_FORMATS.TCG);
+});
+
+test('detectDeckFormat: empty deck → TCG', () => {
+  assert.equal(detectDeckFormat({}), DECK_FORMATS.TCG);
 });

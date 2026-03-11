@@ -27,6 +27,18 @@ export function isPocketCard(card = {}) {
   return String(image).includes('/tcgp/');
 }
 
+export function detectDeckFormat(deck = {}) {
+  let pocketCount = 0;
+  let tcgCount = 0;
+  for (const group of Object.values(deck)) {
+    for (const variant of group?.cards || []) {
+      if (isPocketCard(variant?.data)) pocketCount += variant.count || 0;
+      else tcgCount += variant.count || 0;
+    }
+  }
+  return pocketCount > tcgCount ? DECK_FORMATS.POCKET : DECK_FORMATS.TCG;
+}
+
 export function validateDeck(decklist = {}, selectedFormat = DECK_FORMATS.POCKET) {
   const rules = RULES_BY_FORMAT[selectedFormat] || POCKET_DECK_RULES;
   const errors = [];
