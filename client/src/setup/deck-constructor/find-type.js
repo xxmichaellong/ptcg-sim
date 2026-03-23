@@ -27,7 +27,7 @@ const MEGEra = {
   },
   MEE: {
     9: 'Energy',
-  }
+  },
 };
 const SVEra = {
   BLK: {

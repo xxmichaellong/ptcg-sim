@@ -151,8 +151,6 @@
     </div>
     <div id="deckImport" class="sidebox">
         <div>
-            <button id="deckBuilderButton">Deck Builder</button>
-            <button id="importExportGameStateButton">Import/Export Game</button>
             <!-- <button id="decklistButton">New format decks</button>
             <script>
                 const decklistButton = document.getElementById('decklistButton');
@@ -171,7 +169,7 @@
         </div>
         <textarea id="mainDeckImportInput" spellcheck="false"></textarea>
         <script>
-            document.getElementById("mainDeckImportInput").placeholder = "Paste your main decklist here. \n\nClick the book 📖 to look through popular decks or click the wand 🪄 for a random deck! \n\nFor uploading custom images, write the quantity and name (i.e. 2 Pikachu) and click on the 'Import' button. \n\nInternational languages are supported for cards using Limitless URLs.";
+            document.getElementById("mainDeckImportInput").placeholder = "Paste your decklist here or use the deck builder. \n\nClick the book 📖 to look through popular decks or click the wand 🪄 for a random deck! \n\nFor uploading custom images, write the quantity and name (i.e. 2 Pikachu) and click on the 'Import' button. \n\nInternational languages are supported for cards using Limitless URLs.";
         </script>          
         <textarea id="altDeckImportInput" spellcheck="false"></textarea>
         <script>
@@ -221,7 +219,6 @@
                     <button id="nativeDeckBuilderExportCsv" class="neutral-color">Export CSV</button>
                     <label for="nativeDeckBuilderCsvImport" id="nativeDeckBuilderImportCsvLabel" class="neutral-color native-deck-builder-inline-label">Import CSV</label>
                     <input id="nativeDeckBuilderCsvImport" type="file" accept=".csv" style="display:none;" />
-                    <button id="closeNativeDeckBuilderButton" class="neutral-color">Close</button>
                 </div>
             </div>
             <div class="native-deck-builder-targetbar">
@@ -231,8 +228,8 @@
                     <span id="nativeDeckBuilderLoadStatus" class="native-deck-builder-load-status" aria-live="polite"></span>
                 </div>
                 <div class="native-deck-builder-target-controls">
-                    <button id="nativeDeckBuilderTargetMain" class="native-target-button native-target-selected">P1</button>
-                    <button id="nativeDeckBuilderTargetAlt" class="native-target-button">P2</button>
+                    <button id="nativeDeckBuilderTargetMain" class="native-target-button native-target-selected">Main</button>
+                    <button id="nativeDeckBuilderTargetAlt" class="native-target-button">Alt (1P only)</button>
                     <button id="nativeDeckBuilderLoadCurrentTarget" class="self-color">Load Deck</button>
                 </div>
             </div>

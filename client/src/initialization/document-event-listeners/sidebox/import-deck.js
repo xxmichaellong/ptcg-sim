@@ -1,10 +1,8 @@
-import { hideOptionsContextMenu } from '../../../setup/chatbox/hide-options-context-menu.js';
 import { importDecklist } from '../../../setup/deck-constructor/import.js';
 import {
   getRandomDeckList,
   showDecklistsContextMenu,
 } from '../../../setup/deck-constructor/sample.decklists.js';
-import { show } from '../../../setup/home-header/header-toggle.js';
 import { systemState } from '../../global-variables/global-variables.js';
 
 export const initializeImport = () => {
@@ -36,53 +34,61 @@ export const initializeImport = () => {
   const mainImportHeaderButton = document.getElementById(
     'mainImportHeaderButton'
   );
-  mainImportHeaderButton.addEventListener('click', () => {
-    if (mainImportHeaderButton.classList.contains('main-select')) {
-      return;
-    } else {
-      mainImportHeaderButton.classList.toggle('main-select');
-      altImportHeaderButton.classList.toggle('alt-select');
-      uploadFileButton.classList.toggle('self-color');
-      uploadFileButton.classList.toggle('opp-color');
-      changeCardBackButton.classList.toggle('self-color');
-      changeCardBackButton.classList.toggle('opp-color');
-      saveCurrentButton.classList.toggle('self-color');
-      saveCurrentButton.classList.toggle('opp-color');
-      mainDeckImportInput.style.display = 'inline-block';
-      altDeckImportInput.style.display = 'none';
-      successText.style.display = 'none';
-      failedText.style.display = 'none';
-      invalidText.style.display = 'none';
+  const switchToMain = () => {
+    if (mainImportHeaderButton.classList.contains('main-select')) return;
+    mainImportHeaderButton.classList.toggle('main-select');
+    altImportHeaderButton.classList.toggle('alt-select');
+    uploadFileButton.classList.toggle('self-color');
+    uploadFileButton.classList.toggle('opp-color');
+    changeCardBackButton.classList.toggle('self-color');
+    changeCardBackButton.classList.toggle('opp-color');
+    saveCurrentButton.classList.toggle('self-color');
+    saveCurrentButton.classList.toggle('opp-color');
+    mainDeckImportInput.style.display = 'inline-block';
+    altDeckImportInput.style.display = 'none';
+    successText.style.display = 'none';
+    failedText.style.display = 'none';
+    invalidText.style.display = 'none';
+    saveCurrentButton.style.display =
+      selfCurrentDecklistTable.innerHTML === '' ? 'none' : 'block';
+  };
 
-      saveCurrentButton.style.display =
-        selfCurrentDecklistTable.innerHTML === '' ? 'none' : 'block';
-    }
+  const switchToAlt = () => {
+    if (altImportHeaderButton.classList.contains('alt-select')) return;
+    mainImportHeaderButton.classList.toggle('main-select');
+    altImportHeaderButton.classList.toggle('alt-select');
+    uploadFileButton.classList.toggle('self-color');
+    uploadFileButton.classList.toggle('opp-color');
+    changeCardBackButton.classList.toggle('self-color');
+    changeCardBackButton.classList.toggle('opp-color');
+    saveCurrentButton.classList.toggle('self-color');
+    saveCurrentButton.classList.toggle('opp-color');
+    altDeckImportInput.style.display = 'inline-block';
+    mainDeckImportInput.style.display = 'none';
+    successText.style.display = 'none';
+    failedText.style.display = 'none';
+    invalidText.style.display = 'none';
+    saveCurrentButton.style.display =
+      oppCurrentDecklistTable.innerHTML === '' ? 'none' : 'block';
+  };
+
+  mainImportHeaderButton.addEventListener('click', () => {
+    switchToMain();
+    document.dispatchEvent(new CustomEvent('deck-target-changed', { detail: { target: 'self' } }));
   });
 
   const altImportHeaderButton = document.getElementById(
     'altImportHeaderButton'
   );
   altImportHeaderButton.addEventListener('click', () => {
-    if (altImportHeaderButton.classList.contains('alt-select')) {
-      return;
-    } else {
-      mainImportHeaderButton.classList.toggle('main-select');
-      altImportHeaderButton.classList.toggle('alt-select');
-      uploadFileButton.classList.toggle('self-color');
-      uploadFileButton.classList.toggle('opp-color');
-      changeCardBackButton.classList.toggle('self-color');
-      changeCardBackButton.classList.toggle('opp-color');
-      saveCurrentButton.classList.toggle('self-color');
-      saveCurrentButton.classList.toggle('opp-color');
-      altDeckImportInput.style.display = 'inline-block';
-      mainDeckImportInput.style.display = 'none';
-      successText.style.display = 'none';
-      failedText.style.display = 'none';
-      invalidText.style.display = 'none';
+    switchToAlt();
+    document.dispatchEvent(new CustomEvent('deck-target-changed', { detail: { target: 'opp' } }));
+  });
 
-      saveCurrentButton.style.display =
-        oppCurrentDecklistTable.innerHTML === '' ? 'none' : 'block';
-    }
+  document.addEventListener('deck-target-changed', (event) => {
+    const target = event.detail?.target;
+    if (target === 'self') switchToMain();
+    else if (target === 'opp') switchToAlt();
   });
 
   const importButton = document.getElementById('importButton');
@@ -128,31 +134,4 @@ export const initializeImport = () => {
   const decklistsButton = document.getElementById('decklistsButton');
   decklistsButton.addEventListener('click', showDecklistsContextMenu);
 
-  // Click handler is registered in native-deck-builder.js.
-  const deckBuilderButton = document.getElementById('deckBuilderButton');
-  deckBuilderButton.title = 'Open the in-app deck builder';
-
-  const importExportGameStateButton = document.getElementById(
-    'importExportGameStateButton'
-  );
-  importExportGameStateButton.addEventListener('click', () => {
-    const optionsContextMenu = document.getElementById('optionsContextMenu');
-    optionsContextMenu.style.display = 'block';
-    if (systemState.isTwoPlayer) {
-      const p2Button = document.getElementById('p2Button');
-      show('p2Box', p2Button);
-      const p2OptionsButton = document.getElementById('p2OptionsButton');
-      const p2Box = document.getElementById('p2Box');
-      const adjustment = p2Box.offsetHeight - p2OptionsButton.offsetTop;
-      optionsContextMenu.style.bottom = `${adjustment}px`;
-    } else {
-      const p1Button = document.getElementById('p1Button');
-      show('p1Box', p1Button);
-      const optionsButton = document.getElementById('optionsButton');
-      const p1Box = document.getElementById('p1Box');
-      const adjustment = p1Box.offsetHeight - optionsButton.offsetTop;
-      optionsContextMenu.style.bottom = `${adjustment}px`;
-    }
-    document.addEventListener('mousedown', hideOptionsContextMenu);
-  });
 };

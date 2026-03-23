@@ -16,6 +16,8 @@ export const initializeHeaderButtons = () => {
   p1Button.addEventListener('click', () => {
     if (!systemState.isTwoPlayer) {
       show('p1Box', p1Button);
+      const panel = document.getElementById('nativeDeckBuilderWorkspace');
+      if (panel) panel.classList.remove('open');
     } else if (
       window.confirm(
         'Are you sure you want to leave the room? Battle log will be erased.'
@@ -84,18 +86,27 @@ export const initializeHeaderButtons = () => {
     }
   });
 
+  const closeDeckBuilder = () => {
+    const panel = document.getElementById('nativeDeckBuilderWorkspace');
+    if (panel) panel.classList.remove('open');
+  };
+
   const p2Button = document.getElementById('p2Button');
   p2Button.addEventListener('click', () => {
     show('p2Box', p2Button);
+    closeDeckBuilder();
   });
 
   const deckImportButton = document.getElementById('deckImportButton');
   deckImportButton.addEventListener('click', () => {
     show('deckImport', deckImportButton);
+    const panel = document.getElementById('nativeDeckBuilderWorkspace');
+    if (panel) panel.classList.add('open');
   });
 
   const settingsButton = document.getElementById('settingsButton');
   settingsButton.addEventListener('click', () => {
     show('settings', settingsButton);
+    closeDeckBuilder();
   });
 };

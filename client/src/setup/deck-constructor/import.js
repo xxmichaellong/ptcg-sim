@@ -789,17 +789,6 @@ confirmButton.addEventListener('click', () => {
     tableBody.removeChild(tableBody.firstChild);
   }
   decklistTable.style.display = 'none';
-  if (!systemState.isTwoPlayer) {
-    show('p1Box', p1Button);
-  } else if (
-    user === 'self' &&
-    !(
-      document.getElementById('spectatorModeCheckbox').checked &&
-      systemState.isTwoPlayer
-    )
-  ) {
-    show('p2Box', p2Button);
-  }
   loadDeckData(user, deckData);
 });
 

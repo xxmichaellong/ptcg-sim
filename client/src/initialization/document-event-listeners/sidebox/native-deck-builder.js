@@ -28,9 +28,6 @@ const deckToSimRows = (deck = {}) => {
 
 export const initializeNativeDeckBuilder = () => {
   const panel = document.getElementById('nativeDeckBuilderWorkspace');
-  const deckBuilderButton = document.getElementById('deckBuilderButton');
-  const closeButton = document.getElementById('closeNativeDeckBuilderButton');
-  const edgeToggleButton = document.getElementById('nativeDeckBuilderEdgeToggle');
   const targetMainButton = document.getElementById('nativeDeckBuilderTargetMain');
   const targetAltButton = document.getElementById('nativeDeckBuilderTargetAlt');
   const loadCurrentTargetButton = document.getElementById('nativeDeckBuilderLoadCurrentTarget');
@@ -288,16 +285,7 @@ export const initializeNativeDeckBuilder = () => {
     const sortedCards = getSortedDeckCardArray(deck);
     const isOpen = panel.classList.contains('open');
 
-    edgeToggleButton.textContent = isOpen ? '❮' : '❯';
-    edgeToggleButton.setAttribute(
-      'aria-label',
-      isOpen ? 'Collapse deck builder workspace' : 'Expand deck builder workspace'
-    );
-    edgeToggleButton.title = isOpen
-      ? 'Collapse deck builder workspace'
-      : 'Expand deck builder workspace';
-
-    targetLabel.textContent = currentLoadTarget === 'self' ? 'P1 Deck' : 'P2 Deck';
+    targetLabel.textContent = currentLoadTarget === 'self' ? 'Main Deck' : 'Alt Deck';
     targetMainButton.classList.toggle('native-target-selected', currentLoadTarget === 'self');
     targetAltButton.classList.toggle('native-target-selected', currentLoadTarget === 'opp');
 
@@ -385,17 +373,13 @@ export const initializeNativeDeckBuilder = () => {
     render();
   };
 
-  deckBuilderButton.addEventListener('click', togglePanel);
-  edgeToggleButton.addEventListener('click', togglePanel);
-
-  closeButton.addEventListener('click', closePanel);
-
   targetMainButton.addEventListener('click', () => {
     syncedDecks[currentLoadTarget] = deck;
     currentLoadTarget = 'self';
     deck = syncedDecks.self;
     clearLoadFeedback();
     render();
+    document.dispatchEvent(new CustomEvent('deck-target-changed', { detail: { target: 'self' } }));
   });
 
   targetAltButton.addEventListener('click', () => {
@@ -404,11 +388,22 @@ export const initializeNativeDeckBuilder = () => {
     deck = syncedDecks.opp;
     clearLoadFeedback();
     render();
+    document.dispatchEvent(new CustomEvent('deck-target-changed', { detail: { target: 'opp' } }));
+  });
+
+  document.addEventListener('deck-target-changed', (event) => {
+    const target = event.detail?.target;
+    if (!target || target === currentLoadTarget) return;
+    syncedDecks[currentLoadTarget] = deck;
+    currentLoadTarget = target;
+    deck = syncedDecks[target];
+    clearLoadFeedback();
+    render();
   });
 
   loadCurrentTargetButton.addEventListener('click', () => {
     const deckRows = deckToSimRows(deck);
-    const targetName = currentLoadTarget === 'self' ? 'P1' : 'P2';
+    const targetName = currentLoadTarget === 'self' ? 'Main' : 'Alt';
 
     clearLoadFeedback();
 

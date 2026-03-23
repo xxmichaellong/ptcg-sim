@@ -649,7 +649,7 @@ ul, li {
   position: fixed;
   top: 0;
   right: calc(24% - 8px);
-  width: 56%;
+  left: 0;
   height: 100vh;
   background: transparent;
   border: none;
@@ -677,22 +677,7 @@ ul, li {
   flex-direction: column;
 }
 .native-deck-builder-edge-toggle {
-  position: absolute;
-  left: -22px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 22px;
-  height: 88px;
-  border-radius: 6px 0 0 6px;
-  border: 1px solid rgba(40, 57, 124, 0.14);
-  border-right: none;
-  background: linear-gradient(to bottom, rgba(186,191,199,0.88), rgba(171,176,184,0.88));
-  color: #1a1a1a;
-  font-size: 1.8vh;
-  font-weight: bold;
-  cursor: pointer;
-  z-index: 2;
-  box-shadow: none;
+  display: none;
 }
 .native-deck-builder-edge-toggle:hover {
   background: linear-gradient(to bottom, rgba(194,199,207,0.92), rgba(176,181,189,0.92));
