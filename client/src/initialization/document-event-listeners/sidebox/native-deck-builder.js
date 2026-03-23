@@ -49,7 +49,6 @@ export const initializeNativeDeckBuilder = () => {
   const searchButton = document.getElementById('nativeDeckBuilderSearchButton');
   const searchStatus = document.getElementById('nativeDeckBuilderSearchStatus');
   const searchResults = document.getElementById('nativeDeckBuilderSearchResults');
-  const showCountSelect = document.getElementById('nativeDeckBuilderShowCount');
   const hoverPreview = document.getElementById('nativeDeckBuilderHoverPreview');
   const hoverPreviewImage = document.getElementById('nativeDeckBuilderHoverPreviewImage');
   const addCustomCardButton = document.getElementById('nativeDeckBuilderAddCustomCard');
@@ -347,7 +346,6 @@ export const initializeNativeDeckBuilder = () => {
     }
 
     searchButton.disabled = true;
-    showCountSelect.disabled = true;
     searchStatus.textContent = `Searching for “${term}”...`;
 
     try {
@@ -371,7 +369,6 @@ export const initializeNativeDeckBuilder = () => {
       searchStatus.textContent = `Search failed: ${error.message}`;
     } finally {
       searchButton.disabled = false;
-      showCountSelect.disabled = false;
       render();
     }
   };
@@ -394,6 +391,7 @@ export const initializeNativeDeckBuilder = () => {
   closeButton.addEventListener('click', closePanel);
 
   targetMainButton.addEventListener('click', () => {
+    syncedDecks[currentLoadTarget] = deck;
     currentLoadTarget = 'self';
     deck = syncedDecks.self;
     clearLoadFeedback();
@@ -401,6 +399,7 @@ export const initializeNativeDeckBuilder = () => {
   });
 
   targetAltButton.addEventListener('click', () => {
+    syncedDecks[currentLoadTarget] = deck;
     currentLoadTarget = 'opp';
     deck = syncedDecks.opp;
     clearLoadFeedback();
@@ -483,7 +482,6 @@ export const initializeNativeDeckBuilder = () => {
     renderResults();
   };
 
-  showCountSelect.addEventListener('change', rerenderSearchLocally);
   cardTypeFilter.addEventListener('change', rerenderSearchLocally);
   sortBySelect.addEventListener('change', rerenderSearchLocally);
   sortDirectionSelect.addEventListener('change', rerenderSearchLocally);

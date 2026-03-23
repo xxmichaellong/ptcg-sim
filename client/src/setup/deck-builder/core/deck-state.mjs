@@ -48,13 +48,12 @@ export function removeCard(deck = {}, card = {}) {
       if (cardVariant.count <= 0) {
         newDeck[cardName].cards.splice(index, 1);
       }
+      newDeck[cardName].totalCount -= 1;
+      if (newDeck[cardName].totalCount <= 0) {
+        delete newDeck[cardName];
+      }
       break;
     }
-  }
-
-  newDeck[cardName].totalCount -= 1;
-  if (newDeck[cardName].totalCount <= 0) {
-    delete newDeck[cardName];
   }
 
   return newDeck;

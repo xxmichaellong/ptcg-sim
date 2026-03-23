@@ -1,11 +1,4 @@
-function isDatabaseCard(card = {}) {
-  return Object.prototype.hasOwnProperty.call(card, 'id') &&
-    Object.prototype.hasOwnProperty.call(card, 'images');
-}
-
-function isFormattedDeckCard(card = {}) {
-  return Object.prototype.hasOwnProperty.call(card, 'image');
-}
+import { isDatabaseCard, isFormattedDeckCard } from './card-compare.mjs';
 
 export function formatImageUrl(cardObj = {}) {
   if (isDatabaseCard(cardObj)) {

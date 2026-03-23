@@ -248,7 +248,7 @@ ul, li {
   position: fixed;
   right: 0;
   bottom: 95vh;
-  height: 4.8vh;
+  height: 5vh;
   width: 24%;
   display: flex;
   overflow: hidden; 
@@ -489,7 +489,6 @@ ul, li {
 }
 #p2Box {
   display: none;
-  border-radius: 10px 10px 0 0;
 }
 #p2ExplanationBox {
   width: 100%;
@@ -643,14 +642,13 @@ ul, li {
 }
 #deckImport {
   display: none;
-  border-radius: 10px 10px 0 0;
   z-index: 1300;
 }
 /* Native deck builder — slides in over the main layout (z-index 900, below sidebox). */
 .native-deck-builder-workspace {
   position: fixed;
   top: 0;
-  right: 23.5%;
+  right: calc(24% - 8px);
   width: 56%;
   height: 100vh;
   background: transparent;
@@ -668,10 +666,11 @@ ul, li {
   transform: translateX(0);
 }
 .native-deck-builder-inner {
+  position: relative;
   width: 100%;
   height: 100%;
   margin-left: 0;
-  background: rgba(214, 218, 224, 0.72);
+  background: rgba(214, 218, 224, 0.88);
   border-left: 1px solid rgba(40, 57, 124, 0.08);
   box-shadow: inset 8px 0 18px rgba(255,255,255,0.08);
   display: flex;
@@ -687,8 +686,8 @@ ul, li {
   border-radius: 6px 0 0 6px;
   border: 1px solid rgba(40, 57, 124, 0.14);
   border-right: none;
-  background: linear-gradient(to bottom, rgba(186,191,199,0.82), rgba(171,176,184,0.82));
-  color: #24387a;
+  background: linear-gradient(to bottom, rgba(186,191,199,0.88), rgba(171,176,184,0.88));
+  color: #1a1a1a;
   font-size: 1.8vh;
   font-weight: bold;
   cursor: pointer;
@@ -696,7 +695,7 @@ ul, li {
   box-shadow: none;
 }
 .native-deck-builder-edge-toggle:hover {
-  background: linear-gradient(to bottom, rgba(194,199,207,0.86), rgba(176,181,189,0.86));
+  background: linear-gradient(to bottom, rgba(194,199,207,0.92), rgba(176,181,189,0.92));
 }
 .native-deck-builder-header {
   display: flex;
@@ -705,7 +704,7 @@ ul, li {
   gap: 1vw;
   padding: 0.85vh 0.8vw;
   border-bottom: 1px solid rgba(0, 0, 0, 0.035);
-  background: rgba(207, 211, 218, 0.5);
+  background: rgba(207, 211, 218, 0.7);
 }
 .native-deck-builder-subtitle {
   font-size: 1.28vh;
@@ -727,6 +726,9 @@ ul, li {
   padding: 0.48vh 0.58vw;
   opacity: 0.92;
 }
+#closeNativeDeckBuilderButton {
+  background: linear-gradient(to bottom, rgba(188, 90, 113, 0.864), rgba(158, 60, 83, 0.864));
+}
 .native-deck-builder-inline-label {
   display: inline-flex;
   align-items: center;
@@ -744,7 +746,7 @@ ul, li {
   align-items: center;
   gap: 0.8vw;
   padding: 0.65vh 0.8vw;
-  background: rgba(198, 203, 211, 0.55);
+  background: rgba(198, 203, 211, 0.72);
   border-bottom: 1px solid rgba(0,0,0,0.04);
 }
 .native-deck-builder-target-copy {
@@ -806,7 +808,7 @@ ul, li {
 .native-deck-builder-pane {
   flex: 1 1 0;
   min-width: 0;
-  background: rgba(243,245,247,0.36);
+  background: rgba(243,245,247,0.56);
   border-radius: 0;
   border: 1px solid rgba(255, 255, 255, 0.18);
   padding: 0.8vh 0.75vw;
@@ -904,12 +906,14 @@ ul, li {
   padding: 0.48vh 0.58vw;
   border: none;
   cursor: pointer;
+  color: white;
 }
 #nativeDeckBuilderLoadCurrentTarget {
   font-size: 1.35vh;
   padding: 0.48vh 0.58vw;
   border: none;
   cursor: pointer;
+  color: white;
 }
 #nativeDeckBuilderLoadCurrentTarget.load-success {
   box-shadow: 0 0 0 2px rgba(55, 160, 84, 0.22), 0 10px 24px rgba(34, 125, 63, 0.22);
@@ -930,21 +934,6 @@ ul, li {
   min-height: 0;
   align-content: start;
   padding: 0.2vw;
-}
-.native-deck-builder-results-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.35vw;
-  margin-top: 0;
-  padding: 0.45vh 0 0 0;
-  position: sticky;
-  bottom: 0;
-  background: linear-gradient(to bottom, rgba(243,245,247,0), rgba(243,245,247,0.92) 35%, rgba(243,245,247,0.98));
-}
-.native-deck-builder-results-footer-label {
-  font-size: 1.2vh;
-  opacity: 0.75;
 }
 .native-deck-builder-result {
   display: flex;
@@ -1009,7 +998,7 @@ ul, li {
   border: 1px solid rgba(255,255,255,0.14);
   border-radius: 0;
   padding: 0.7vh;
-  background: rgba(238,240,243,0.28);
+  background: rgba(238,240,243,0.48);
 }
 .native-deck-builder-deck-row {
   position: relative;
@@ -1022,7 +1011,7 @@ ul, li {
   border: 1px solid rgba(0,0,0,0.06);
   overflow: hidden;
   isolation: isolate;
-  background: rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.38);
   transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
 }
 .native-deck-builder-deck-row:hover {
@@ -1108,9 +1097,6 @@ ul, li {
 }
 
 /* Custom card modal */
-.native-deck-builder-inner {
-  position: relative;
-}
 .native-deck-builder-modal {
   position: absolute;
   inset: 0;
@@ -1296,8 +1282,7 @@ body.dark-mode-1 .native-deck-builder-deck-row:hover {
 body.dark-mode-1 .native-deck-builder-deck-overlay {
   background: linear-gradient(to right, rgba(11, 14, 18, 0.97) 0%, rgba(11, 14, 18, 0.92) 40%, rgba(11, 14, 18, 0.7) 66%, rgba(11, 14, 18, 0.26) 84%, rgba(11, 14, 18, 0.08) 100%);
 }
-body.dark-mode-1 .native-deck-builder-deck-type,
-body.dark-mode-1 .native-deck-builder-results-footer-label {
+body.dark-mode-1 .native-deck-builder-deck-type {
   color: rgba(214, 224, 247, 0.72);
 }
 body.dark-mode-1 .native-deck-builder-hover-preview {
@@ -1366,6 +1351,7 @@ body.dark-mode-1 .native-deck-builder-edge-toggle:hover {
   border: none;
   font-size: 2vh;
   background-color: rgba(171, 171, 171, 0.864);
+  cursor: pointer;
 }
 #decklistTable {
   z-index: 1000;
@@ -1558,7 +1544,6 @@ body.dark-mode-1 .native-deck-builder-edge-toggle:hover {
 }
 #settings {
   display: none;
-  border-radius: 10px 0 0 0;
 }
 #changeBackgroundButton {
   margin: 1vh;

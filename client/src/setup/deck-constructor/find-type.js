@@ -927,6 +927,20 @@ const setList = {
 };
 
 export const getCardType = (setName, cardNumber) => {
+  // Map promo/alternate set codes to the codes used in setList
+  const specialCases = {
+    'PR-SV': 'SVP',
+    'PR-SW': 'SP',
+    'PR-SM': 'SMP',
+    'PR-XY': 'XYP',
+    'PR-BLW': 'BWP',
+    'PR-HS': 'HSP',
+    sma: 'HIF',
+  };
+  if (specialCases[setName]) {
+    setName = specialCases[setName];
+  }
+
   // Function to check for letters at the beginning and separate them
   const separateLettersAndNumbers = (str) => {
     const match = str.match(/^([a-zA-Z]+)(\d+)$/);
