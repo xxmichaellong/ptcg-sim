@@ -44,17 +44,16 @@ const cardDataToID = (card) => {
     "region": "int for international, tpc for Japanese"
   }
   */
-  let id = card["id"];
-  if(id){
+  let id = card['id'];
+  if (id) {
     return id;
   }
-  let set = card["set"];
-  let number = card["number"];
-  let region = card["region"];
-  if(region==="tpc"){
+  let set = card['set'];
+  let number = card['number'];
+  let region = card['region'];
+  if (region === 'tpc') {
     return null;
   }
-
 
   const oldSetCode_to_id = {
     // the following are taken from pokemontcg.io (v2)'s ptcgoCode
@@ -149,15 +148,14 @@ const cardDataToID = (card) => {
     FRLG: 'ex6',
     BG: 'bp',
   };
-  if(oldSetCode_to_id[set]){
+  if (oldSetCode_to_id[set]) {
     return oldSetCode_to_id[set] + '-' + number;
   }
 
   // special case for PR-DPP
   if (set === 'PR-DPP' || set === 'DPP') {
     return number.replace(/^(\d+)?$/, (_, digits) => {
-      const paddedDigits =
-      digits.length < 3 ? digits.padStart(2, '0') : digits;
+      const paddedDigits = digits.length < 3 ? digits.padStart(2, '0') : digits;
       return 'dpp-DP' + paddedDigits;
     });
   }
@@ -184,16 +182,16 @@ const cardDataToID = (card) => {
     'SVP 191': 'svp-191',
     'SVP 192': 'svp-192',
   };
-  if(region==="int"){
-    if(set){
-      if(noImg_to_id[`${set} ${number}`]){
+  if (region === 'int') {
+    if (set) {
+      if (noImg_to_id[`${set} ${number}`]) {
         return noImg_to_id[`${set} ${number}`];
       }
     }
   }
 
   return null;
-}
+};
 
 const getLanguage = () => {
   const languageText = changeLanguageButton.textContent;
@@ -221,10 +219,10 @@ const getLanguage = () => {
       language = 'EN';
   }
   return language;
-}
+};
 
 const getEnergies = (language) => {
-  if(!language){
+  if (!language) {
     language = getLanguage();
   }
   return {
@@ -265,7 +263,7 @@ const getEnergies = (language) => {
     'Basic Metal Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_008_R_${language}.png`,
     'Basic Water Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_003_R_${language}.png`,
   };
-}
+};
 
 const cardDataToImageURL = (card) => {
   /*
@@ -279,23 +277,23 @@ const cardDataToImageURL = (card) => {
     }
   */
 
-  let set = card["set"];
-  let number = card["number"];
+  let set = card['set'];
+  let number = card['number'];
   let id = cardDataToID(card);
-  let name = card["name"];
-  let region = card["region"];
-  if(!region){
-    region = "int";
+  let name = card['name'];
+  let region = card['region'];
+  if (!region) {
+    region = 'int';
   }
 
   let language = getLanguage();
   const energies = getEnergies(language);
-  if((set==='null') || !set){
-    if(!id){
-      if(energies[name]){
+  if (set === 'null' || !set) {
+    if (!id) {
+      if (energies[name]) {
         return energies[name];
       }
-      return "";
+      return '';
     }
   }
 
@@ -309,10 +307,9 @@ const cardDataToImageURL = (card) => {
     // cubekoga compatibility
     sma: 'HIF',
   };
-  if(specialCases[set]){
+  if (specialCases[set]) {
     set = specialCases[set];
   }
-
 
   // Special set codes that should use tpc format directly
   const tpcSets = new Set([
@@ -340,109 +337,108 @@ const cardDataToImageURL = (card) => {
     'SV1W',
     'SV1',
   ]);
-  if(tpcSets.has(set)){
-    region = "tpc";
+  if (tpcSets.has(set)) {
+    region = 'tpc';
   }
 
-
-  if(id){
+  if (id) {
     const [set_ID, set_Number] = id.split('-');
-    return 'https://images.pokemontcg.io/' + set_ID + '/' + set_Number + '_hires.png';
+    return (
+      'https://images.pokemontcg.io/' + set_ID + '/' + set_Number + '_hires.png'
+    );
   }
-  if(region==="tpc"){
+  if (region === 'tpc') {
     return `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpc/${set}/${set}_${number}_R_JP_LG.png`;
   }
-  if(set){
-    if(!number) return;
+  if (set) {
+    if (!number) return;
     const paddedNumber = number.replace(
       /^(\d+)([a-zA-Z])?$/,
       (_, digits, letter) => {
         const paddedDigits =
-        digits.length < 3 ? digits.padStart(3, '0') : digits;
+          digits.length < 3 ? digits.padStart(3, '0') : digits;
         return letter ? paddedDigits + letter : paddedDigits;
       }
     );
     return `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/${set.replace(/ /g, '/')}/${set.replace(/ /g, '_')}_${paddedNumber}_R_${language}.png`;
   }
   return;
-}
+};
 
 const escapeRegExp = (string) => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
+};
 
 const LimitlessDecklistArray = async (decklist) => {
   // Each card will be stored as [quantity, name, set code, number, pokemontcg.io id, image url, type]
 
   const card_types = {
-    "pokemon": "Pokémon",
-    "trainer": "Trainer",
-    "energy": "Energy"
-  }
+    pokemon: 'Pokémon',
+    trainer: 'Trainer',
+    energy: 'Energy',
+  };
 
   let response;
   try {
-    response = await (await fetch('https://limitlesstcg.com/api/dm/import', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ input: decklist })
-    })).json();
+    response = await (
+      await fetch('https://limitlesstcg.com/api/dm/import', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ input: decklist }),
+      })
+    ).json();
   } catch {
     return [];
   }
 
   let decklistArray = [];
-  const cards = response["cards"] || [];
-  const errors = response["errors"] || [];
+  const cards = response['cards'] || [];
+  const errors = response['errors'] || [];
 
   for (let card of cards) {
     decklistArray.push([
-      card["count"],
-      card["name"],
-      null,null,null,
+      card['count'],
+      card['name'],
+      null,
+      null,
+      null,
       cardDataToImageURL({
-        "name": card["name"],
-        "set": card["set"],
-        "number": card["number"],
-        "region": card["region"]
+        name: card['name'],
+        set: card['set'],
+        number: card['number'],
+        region: card['region'],
       }),
-      card_types[card["card_type"]]
-    ])
+      card_types[card['card_type']],
+    ]);
   }
   for (let error of errors) {
     let card_name = error.match(/Card \"(.+)\" was not found./);
     if (card_name) {
       card_name = card_name[1];
-      let qty = decklist.match(new RegExp('(\\d+) ' + escapeRegExp(card_name.trim())));
+      let qty = decklist.match(
+        new RegExp('(\\d+) ' + escapeRegExp(card_name.trim()))
+      );
       if (qty) {
-        decklistArray.push([
-          qty[1],
-          card_name,
-          null,null,null,null,null
-        ])
+        decklistArray.push([qty[1], card_name, null, null, null, null, null]);
       } else {
         // in theory this should never happen, but sometimes Limitless adds inexplicable spaces and it ends up happening
-        decklistArray.push([
-          0,
-          card_name,
-          null,null,null,null,null
-        ])
+        decklistArray.push([0, card_name, null, null, null, null, null]);
       }
     }
   }
   return decklistArray;
-}
+};
 
 const ptcgsimDecklistArray = (decklist) => {
   const regexWithOldSet = /(\d+) (.+?)(?= \w*-\w*\d*$) (\w*-\w*\d*)/;
   const regexWithSet =
-  /(\d+) (.+?) (\w{2,5}[1-9]?[A-Z]?|WBSP|NBSP|FRLG|FUT20) (\d+[a-zA-Z]?)/;
+    /(\d+) (.+?) (\w{2,5}[1-9]?[A-Z]?|WBSP|NBSP|FRLG|FUT20) (\d+[a-zA-Z]?)/;
   const regexWithPRSet =
-  /(\d+) (.+?) (PR-\w{2,3}) ((?:DP|HGSS|BW|XY|SM|SWSH)?)(\d+)/;
+    /(\d+) (.+?) (PR-\w{2,3}) ((?:DP|HGSS|BW|XY|SM|SWSH)?)(\d+)/;
   const regexWithSpecialSet =
-  /(\d+) (.+?) ((?:\w{2,3}[a-zA-Z]\d*|\w{2,3}(?:\s+[a-zA-Z\d]+)*)(?:\s+(\w{2,3}\s*[a-zA-Z\d]+)\s*)*)$/;
+    /(\d+) (.+?) ((?:\w{2,3}[a-zA-Z]\d*|\w{2,3}(?:\s+[a-zA-Z\d]+)*)(?:\s+(\w{2,3}\s*[a-zA-Z\d]+)\s*)*)$/;
   const regexWithoutSet = /(\d+) (.+?)(?=\s\d|$|(\s\d+))/;
 
   // Initialize an array to store the results
@@ -472,102 +468,105 @@ const ptcgsimDecklistArray = (decklist) => {
       const [, quantity, name, id] = matchWithOldSet;
       decklistArray.push([
         parseInt(quantity),
-                         name,
-                         null,
-                         null,
-                         id,
-                         null,
-                         undefined,
+        name,
+        null,
+        null,
+        id,
+        null,
+        undefined,
       ]);
     } else if (matchWithSet) {
       const [, quantity, name, set, setNumber] = matchWithSet;
       decklistArray.push([
         parseInt(quantity),
-                         name,
-                         set,
-                         setNumber,
-                         null,
-                         null,
-                         undefined,
+        name,
+        set,
+        setNumber,
+        null,
+        null,
+        undefined,
       ]);
     } else if (matchWithPRSet) {
       const [, quantity, name, prSet, , setNumber] = matchWithPRSet;
       decklistArray.push([
         parseInt(quantity),
-                         name,
-                         prSet,
-                         setNumber,
-                         null,
-                         null,
-                         undefined,
+        name,
+        prSet,
+        setNumber,
+        null,
+        null,
+        undefined,
       ]);
     } else if (matchWithSpecialSet) {
       const [, quantity, name, setAll] = matchWithSpecialSet;
       const [set, setNumber] = setAll.trim().split(/(?<=\S)\s/);
       decklistArray.push([
         parseInt(quantity),
-                         name,
-                         set,
-                         setNumber,
-                         null,
-                         null,
-                         undefined,
+        name,
+        set,
+        setNumber,
+        null,
+        null,
+        undefined,
       ]);
     } else if (matchWithoutSet) {
       const [, quantity, name] = matchWithoutSet;
       decklistArray.push([
         parseInt(quantity),
-                         name,
-                         null,
-                         null,
-                         null,
-                         null,
-                         undefined,
+        name,
+        null,
+        null,
+        null,
+        null,
+        undefined,
       ]);
     }
   });
 
   return decklistArray;
-}
+};
 
-const DecklistArray = async (decklist,limitless) => {
+const DecklistArray = async (decklist, limitless) => {
   // Each card will be stored as [quantity, name, set code, number, pokemontcg.io id, image url, type]
-  if(limitless){
+  if (limitless) {
     return await LimitlessDecklistArray(decklist);
   }
   let decklistArray = ptcgsimDecklistArray(decklist);
   const energies = getEnergies();
   for (let i = 0; i < decklistArray.length; i++) {
     decklistArray[i][4] = cardDataToID({
-      "set": decklistArray[i][2],
-      "number": decklistArray[i][3],
-      "id": decklistArray[i][4],
-      "name": decklistArray[i][1]
+      set: decklistArray[i][2],
+      number: decklistArray[i][3],
+      id: decklistArray[i][4],
+      name: decklistArray[i][1],
     });
     decklistArray[i][5] = cardDataToImageURL({
-       "set": decklistArray[i][2],
-       "number": decklistArray[i][3],
-       "id": decklistArray[i][4],
-       "name": decklistArray[i][1]
+      set: decklistArray[i][2],
+      number: decklistArray[i][3],
+      id: decklistArray[i][4],
+      name: decklistArray[i][1],
     });
-    if(!decklistArray[i][6]){
-      if(decklistArray[i][2]){
-        if(decklistArray[i][3]){
-          decklistArray[i][6] = getCardType(decklistArray[i][2], decklistArray[i][3]);
+    if (!decklistArray[i][6]) {
+      if (decklistArray[i][2]) {
+        if (decklistArray[i][3]) {
+          decklistArray[i][6] = getCardType(
+            decklistArray[i][2],
+            decklistArray[i][3]
+          );
         }
       }
-      if(decklistArray[i][4]){
+      if (decklistArray[i][4]) {
         decklistArray[i][6] = getOldCardType(decklistArray[i][4]);
       }
-      if(energies[decklistArray[i][1]]){
-        decklistArray[i][6] = 'Energy'
+      if (energies[decklistArray[i][1]]) {
+        decklistArray[i][6] = 'Energy';
       }
     }
   }
   return decklistArray;
-}
+};
 
-export const importDecklist = async (user,limitless) => {
+export const importDecklist = async (user, limitless) => {
   failedText.style.display = 'none';
   invalidText.style.display = 'none';
   loadingText.style.display = 'block';
@@ -577,7 +576,7 @@ export const importDecklist = async (user,limitless) => {
   const decklist =
     user === 'self' ? mainDeckImportInput.value : altDeckImportInput.value;
 
-  let decklistArray = await DecklistArray(decklist,limitless);
+  let decklistArray = await DecklistArray(decklist, limitless);
 
   if (decklistArray.length < 1) {
     failedText.style.display = 'block';
@@ -587,15 +586,13 @@ export const importDecklist = async (user,limitless) => {
     return;
   }
 
-
   let fetchPromises = decklistArray.map((entry) => {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
-        if(entry[6]){
+        if (entry[6]) {
           resolve(true);
-        }
-        else{
+        } else {
           resolve(false);
         }
       };
@@ -702,15 +699,17 @@ export const loadDeckData = (user, deckData, emit = true) => {
   if (deckData) {
     appendMessage(
       '',
-      determineUsername(user) + ' imported deck',
+      determineUsername(user) + ' loaded deck',
       'announcement',
       false
     );
   }
   // Notify the native deck builder so it can sync its state after a load.
-  document.dispatchEvent(new CustomEvent('native-deck-builder:deck-loaded', {
-    detail: { user, deckData }
-  }));
+  document.dispatchEvent(
+    new CustomEvent('native-deck-builder:deck-loaded', {
+      detail: { user, deckData },
+    })
+  );
   processAction(user, emit, 'loadDeckData', [deckData]);
 };
 

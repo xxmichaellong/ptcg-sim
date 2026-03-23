@@ -16,6 +16,7 @@ export const initializeHeaderButtons = () => {
   p1Button.addEventListener('click', () => {
     if (!systemState.isTwoPlayer) {
       show('p1Box', p1Button);
+      document.dispatchEvent(new CustomEvent('deck-builder-closing'));
       const panel = document.getElementById('nativeDeckBuilderWorkspace');
       if (panel) panel.classList.remove('open');
     } else if (
@@ -87,6 +88,7 @@ export const initializeHeaderButtons = () => {
   });
 
   const closeDeckBuilder = () => {
+    document.dispatchEvent(new CustomEvent('deck-builder-closing'));
     const panel = document.getElementById('nativeDeckBuilderWorkspace');
     if (panel) panel.classList.remove('open');
   };

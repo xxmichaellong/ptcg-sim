@@ -456,6 +456,7 @@ ul, li {
   color: white;
   background-color: #595959;
   font-size: 1.75vh;
+  z-index: 1500;
 }
 #optionsContextMenu div {
   cursor: pointer;
@@ -777,10 +778,14 @@ ul, li {
   padding: 0.45vh 0.65vw;
   font-size: 1.3vh;
   background: rgba(170,170,170,0.95);
-  color: rgb(35,35,35);
+  color: white;
 }
-.native-target-selected {
-  background: linear-gradient(to bottom, rgba(250,250,250,0.96), rgba(227,227,227,0.96));
+#nativeDeckBuilderTargetMain.native-target-selected {
+  background: linear-gradient(to bottom, rgba(90, 110, 188, 0.864), rgba(60, 80, 158, 0.864));
+  font-weight: bold;
+}
+#nativeDeckBuilderTargetAlt.native-target-selected {
+  background: linear-gradient(to bottom, rgba(188, 90, 113, 0.864), rgba(158, 60, 83, 0.864));
   font-weight: bold;
 }
 .native-deck-builder-body {
@@ -892,6 +897,7 @@ ul, li {
   border: none;
   cursor: pointer;
   color: white;
+  background: linear-gradient(to bottom, #95c6b4, #72ab97);
 }
 #nativeDeckBuilderLoadCurrentTarget {
   font-size: 1.35vh;

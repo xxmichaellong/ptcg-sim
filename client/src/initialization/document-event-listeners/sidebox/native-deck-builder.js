@@ -5,7 +5,6 @@ import { getSortedDeckCardArray } from '../../../setup/deck-builder/core/card-so
 import { DECK_FORMATS, detectDeckFormat, validateDeck } from '../../../setup/deck-builder/core/deck-validation.mjs';
 import { loadDeckData } from '../../../setup/deck-constructor/import.js';
 import { renderDeckCards, renderSearchResults } from './native-deck-builder-renderers.js';
-import { applyLoadFeedback } from './native-deck-builder-load-feedback.js';
 import { syncDeckFromLoadedRows } from './native-deck-builder-sync.js';
 
 const deckToSimRows = (deck = {}) => {
@@ -30,9 +29,7 @@ export const initializeNativeDeckBuilder = () => {
   const panel = document.getElementById('nativeDeckBuilderWorkspace');
   const targetMainButton = document.getElementById('nativeDeckBuilderTargetMain');
   const targetAltButton = document.getElementById('nativeDeckBuilderTargetAlt');
-  const loadCurrentTargetButton = document.getElementById('nativeDeckBuilderLoadCurrentTarget');
   const targetLabel = document.getElementById('nativeDeckBuilderTargetLabel');
-  const loadStatus = document.getElementById('nativeDeckBuilderLoadStatus');
   const exportCsvButton = document.getElementById('nativeDeckBuilderExportCsv');
   const importCsvInput = document.getElementById('nativeDeckBuilderCsvImport');
   const clearButton = document.getElementById('nativeDeckBuilderClear');
@@ -72,8 +69,6 @@ export const initializeNativeDeckBuilder = () => {
   let currentSearchTerm = '';
   let currentTotalSummaries = 0;
   let currentHugeResultSet = false;
-  let loadFeedbackTimer = null;
-
   const renderResults = () => {
     renderSearchResults({
       searchResultsEl: searchResults,
@@ -100,19 +95,6 @@ export const initializeNativeDeckBuilder = () => {
     hoverPreviewImage.removeAttribute('src');
   };
 
-  const clearLoadFeedback = () => {
-    if (loadFeedbackTimer) {
-      clearTimeout(loadFeedbackTimer);
-      loadFeedbackTimer = null;
-    }
-
-    if (loadStatus) {
-      loadStatus.textContent = '';
-      loadStatus.classList.remove('visible', 'error');
-    }
-
-    loadCurrentTargetButton?.classList.remove('load-success');
-  };
 
   const showHoverPreview = (imageUrl) => {
     if (!hoverPreview || !hoverPreviewImage || !imageUrl) return;
@@ -155,7 +137,7 @@ export const initializeNativeDeckBuilder = () => {
 
     if (currentLoadTarget === user) {
       deck = syncedDecks[user];
-      clearLoadFeedback();
+
       render();
     }
   });
@@ -320,6 +302,14 @@ export const initializeNativeDeckBuilder = () => {
     renderResults();
   };
 
+  const loadCurrentDeck = () => {
+    syncedDecks[currentLoadTarget] = deck;
+    const deckRows = deckToSimRows(deck);
+    if (deckRows.length > 0) {
+      loadDeckData(currentLoadTarget, deckRows);
+    }
+  };
+
   const runSearch = async (options = {}) => {
     const term = (options.term ?? searchInput.value).trim();
 
@@ -328,7 +318,7 @@ export const initializeNativeDeckBuilder = () => {
       currentResults = [];
       currentRawResults = [];
       currentTotalSummaries = 0;
-      searchStatus.textContent = 'Search for a card to begin.';
+      searchStatus.textContent = '';
       render();
       return;
     }
@@ -369,7 +359,6 @@ export const initializeNativeDeckBuilder = () => {
   const closePanel = () => {
     panel.classList.remove('open');
     hideHoverPreview();
-    clearLoadFeedback();
     render();
   };
 
@@ -377,7 +366,6 @@ export const initializeNativeDeckBuilder = () => {
     syncedDecks[currentLoadTarget] = deck;
     currentLoadTarget = 'self';
     deck = syncedDecks.self;
-    clearLoadFeedback();
     render();
     document.dispatchEvent(new CustomEvent('deck-target-changed', { detail: { target: 'self' } }));
   });
@@ -386,7 +374,6 @@ export const initializeNativeDeckBuilder = () => {
     syncedDecks[currentLoadTarget] = deck;
     currentLoadTarget = 'opp';
     deck = syncedDecks.opp;
-    clearLoadFeedback();
     render();
     document.dispatchEvent(new CustomEvent('deck-target-changed', { detail: { target: 'opp' } }));
   });
@@ -397,38 +384,7 @@ export const initializeNativeDeckBuilder = () => {
     syncedDecks[currentLoadTarget] = deck;
     currentLoadTarget = target;
     deck = syncedDecks[target];
-    clearLoadFeedback();
     render();
-  });
-
-  loadCurrentTargetButton.addEventListener('click', () => {
-    const deckRows = deckToSimRows(deck);
-    const targetName = currentLoadTarget === 'self' ? 'Main' : 'Alt';
-
-    clearLoadFeedback();
-
-    if (deckRows.length === 0) {
-      applyLoadFeedback({
-        loadStatusEl: loadStatus,
-        loadButtonEl: loadCurrentTargetButton,
-        targetName,
-        rowCount: 0,
-        isError: true,
-      });
-      return;
-    }
-
-    syncedDecks[currentLoadTarget] = deck;
-    loadDeckData(currentLoadTarget, deckRows);
-    applyLoadFeedback({
-      loadStatusEl: loadStatus,
-      loadButtonEl: loadCurrentTargetButton,
-      targetName,
-      rowCount: deckRows.length,
-    });
-    loadFeedbackTimer = setTimeout(() => {
-      clearLoadFeedback();
-    }, 2400);
   });
 
   exportCsvButton.addEventListener('click', () => {
@@ -490,6 +446,8 @@ export const initializeNativeDeckBuilder = () => {
       runSearch();
     }
   });
+
+  document.addEventListener('deck-builder-closing', loadCurrentDeck);
 
   render();
 };

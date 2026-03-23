@@ -225,12 +225,10 @@
                 <div class="native-deck-builder-target-copy">
                     <strong>Load Target:</strong>
                     <span id="nativeDeckBuilderTargetLabel">P1 Deck</span>
-                    <span id="nativeDeckBuilderLoadStatus" class="native-deck-builder-load-status" aria-live="polite"></span>
                 </div>
                 <div class="native-deck-builder-target-controls">
                     <button id="nativeDeckBuilderTargetMain" class="native-target-button native-target-selected">Main</button>
                     <button id="nativeDeckBuilderTargetAlt" class="native-target-button">Alt (1P only)</button>
-                    <button id="nativeDeckBuilderLoadCurrentTarget" class="self-color">Load Deck</button>
                 </div>
             </div>
             <div class="native-deck-builder-body">
@@ -240,7 +238,7 @@
                         <button id="nativeDeckBuilderAddCustomCard" class="neutral-color native-deck-builder-section-button">+ Custom Card</button>
                     </div>
                     <div class="native-deck-builder-search-row">
-                        <input id="nativeDeckBuilderSearchInput" class="native-deck-builder-search-input" type="text" placeholder="Search cards by name" />
+                        <input id="nativeDeckBuilderSearchInput" class="native-deck-builder-search-input" type="text" placeholder="Search for a card" />
                         <select id="nativeDeckBuilderCardTypeFilter" class="native-deck-builder-search-select">
                             <option value="all">All</option>
                             <option value="tcg">TCG</option>
@@ -256,7 +254,7 @@
                         </select>
                         <button id="nativeDeckBuilderSearchButton" class="self-color">Search</button>
                     </div>
-                    <div id="nativeDeckBuilderSearchStatus" class="native-deck-builder-search-status">Search for a card to begin.</div>
+                    <div id="nativeDeckBuilderSearchStatus" class="native-deck-builder-search-status"></div>
                     <div class="native-deck-builder-results-shell">
                         <div id="nativeDeckBuilderSearchResults" class="native-deck-builder-search-results"></div>
                     </div>
