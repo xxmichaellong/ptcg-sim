@@ -53,6 +53,7 @@ export const initializeNativeDeckBuilder = () => {
   const importCsvLabel = document.getElementById('nativeDeckBuilderImportCsvLabel');
   const importCsvInput = document.getElementById('nativeDeckBuilderCsvImport');
   const clearButton = document.getElementById('nativeDeckBuilderClear');
+  const deckStatus = document.getElementById('nativeDeckBuilderDeckStatus');
   const summary = document.getElementById('nativeDeckBuilderSummaryPanel');
   const validationDot = document.getElementById(
     'nativeDeckBuilderValidationDot'
@@ -111,6 +112,21 @@ export const initializeNativeDeckBuilder = () => {
   let currentTotalSummaries = 0;
   let currentHugeResultSet = false;
   let deckDirty = false;
+  let flashFrame = null;
+
+  const flashDeckStatus = () => {
+    if (!deckStatus) return;
+    if (flashFrame) cancelAnimationFrame(flashFrame);
+    deckStatus.classList.remove('flash');
+    flashFrame = requestAnimationFrame(() => {
+      deckStatus.classList.add('flash');
+      flashFrame = requestAnimationFrame(() => {
+        deckStatus.classList.remove('flash');
+        flashFrame = null;
+      });
+    });
+  };
+
   const renderResults = () => {
     renderSearchResults({
       searchResultsEl: searchResults,
@@ -119,6 +135,7 @@ export const initializeNativeDeckBuilder = () => {
         deck = addCard(deck, card);
         deckDirty = true;
         render();
+        flashDeckStatus();
       },
     });
   };
@@ -179,8 +196,8 @@ export const initializeNativeDeckBuilder = () => {
     cards.addEventListener('click', (event) => {
       const target = event.target.closest('[data-preview-image]');
       if (!target) return;
-      // Don't open preview if clicking the remove button
-      if (event.target.closest('[data-deck-index]')) return;
+      // Don't open preview if clicking the add/remove buttons
+      if (event.target.closest('.native-deck-builder-deck-btn')) return;
       showCardPreview(target.dataset.previewImage);
     });
   }
@@ -317,6 +334,7 @@ export const initializeNativeDeckBuilder = () => {
     deckDirty = true;
     closeCustomCardModal();
     render();
+    flashDeckStatus();
   });
 
   const render = () => {
@@ -326,6 +344,10 @@ export const initializeNativeDeckBuilder = () => {
     const hasDeckCards = Object.keys(deck).length > 0;
 
     clearButton.style.display = hasDeckCards ? '' : 'none';
+
+    if (deckStatus) {
+      deckStatus.textContent = hasDeckCards ? 'Saved ✓' : '';
+    }
 
     targetLabel.textContent =
       currentLoadTarget === 'self' ? 'P1 Deck' : 'P2 Deck';
@@ -367,10 +389,17 @@ export const initializeNativeDeckBuilder = () => {
     renderDeckCards({
       cardsEl: cards,
       sortedCards,
+      onAdd: (card) => {
+        deck = addCard(deck, card);
+        deckDirty = true;
+        render();
+        flashDeckStatus();
+      },
       onRemove: (card) => {
         deck = removeCard(deck, card);
         deckDirty = true;
         render();
+        flashDeckStatus();
       },
     });
 
@@ -385,6 +414,7 @@ export const initializeNativeDeckBuilder = () => {
     if (deckRows.length > 0) {
       loadDeckData(currentLoadTarget, deckRows);
     }
+    render();
   };
 
   const runSearch = async (options = {}) => {

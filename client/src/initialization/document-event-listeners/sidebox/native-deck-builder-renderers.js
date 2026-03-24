@@ -44,7 +44,7 @@ export const renderSearchResults = ({ searchResultsEl, results, onSelect }) => {
   });
 };
 
-export const renderDeckCards = ({ cardsEl, sortedCards, onRemove }) => {
+export const renderDeckCards = ({ cardsEl, sortedCards, onAdd, onRemove }) => {
   if (!cardsEl) return;
 
   if (!sortedCards || sortedCards.length === 0) {
@@ -64,15 +64,25 @@ export const renderDeckCards = ({ cardsEl, sortedCards, onRemove }) => {
         <div class="native-deck-builder-deck-row"${safeImageUrl ? ` data-preview-image="${safeImageUrl}"` : ''}>
           <div class="native-deck-builder-deck-art"${imageUrl ? ` style="background-image: url('${safeCssUrl}');"` : ''} aria-hidden="true"></div>
           <div class="native-deck-builder-deck-overlay" aria-hidden="true"></div>
-          <button class="native-deck-builder-deck-minus" data-deck-index="${index}" aria-label="Remove one ${safeName}" title="Remove one ${safeName}">−</button>
+          <div class="native-deck-builder-deck-buttons">
+            <button class="native-deck-builder-deck-btn native-deck-builder-deck-plus" data-add-index="${index}" aria-label="Add one ${safeName}" title="Add one ${safeName}">+</button>
+            <button class="native-deck-builder-deck-btn native-deck-builder-deck-minus" data-remove-index="${index}" aria-label="Remove one ${safeName}" title="Remove one ${safeName}">−</button>
+          </div>
           <div class="native-deck-builder-deck-text">x${card.count} — ${safeName} <span class="native-deck-builder-deck-type">(${safeSupertype})</span></div>
         </div>`;
     })
     .join('');
 
-  cardsEl.querySelectorAll('[data-deck-index]').forEach((button) => {
+  cardsEl.querySelectorAll('[data-add-index]').forEach((button) => {
     button.addEventListener('click', () => {
-      const card = sortedCards[Number(button.dataset.deckIndex)];
+      const card = sortedCards[Number(button.dataset.addIndex)];
+      onAdd(card);
+    });
+  });
+
+  cardsEl.querySelectorAll('[data-remove-index]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const card = sortedCards[Number(button.dataset.removeIndex)];
       onRemove(card);
     });
   });
