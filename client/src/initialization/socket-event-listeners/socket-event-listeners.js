@@ -135,6 +135,12 @@ export const initializeSocketEventListeners = () => {
           false
         );
       }
+      // Trigger immediate resync to recover any actions missed during disconnect
+      if (notSpectator) {
+        socket.emit('resyncActions', {
+          roomId: systemState.roomId,
+        });
+      }
     }
   });
   socket.on('userReconnected', (data) => {

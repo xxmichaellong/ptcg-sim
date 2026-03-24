@@ -202,15 +202,20 @@ export const closeDisplay = (user, zoneId) => {
   zone.element.style.display = 'none';
 };
 
-export const leaveAll = (user, initiator, oZoneId, emit = true) => {
+export const leaveAll = (user, initiator, oZoneId, dZoneIdParam, emit = true) => {
+  // Handle backward compatibility: if dZoneIdParam is boolean, it's the old emit parameter
+  if (typeof dZoneIdParam === 'boolean') {
+    emit = dZoneIdParam;
+    dZoneIdParam = undefined;
+  }
   const oInitiator = initiator === 'self' ? 'opp' : 'self';
+  const dZoneId = dZoneIdParam || (mouseClick.isActiveZone ? 'active' : 'bench');
   if (user === 'opp' && emit && systemState.isTwoPlayer) {
-    processAction(user, emit, 'leaveAll', [oInitiator, oZoneId]);
+    processAction(user, emit, 'leaveAll', [oInitiator, oZoneId, dZoneId]);
     return;
   }
 
   const oZone = getZone(user, oZoneId);
-  const dZoneId = mouseClick.isActiveZone ? 'active' : 'bench';
   const dZone = getZone(user, dZoneId);
 
   if (oZone.getCount() > 0) {
@@ -250,7 +255,7 @@ export const leaveAll = (user, initiator, oZoneId, emit = true) => {
   }
   oZone.element.style.display = 'none';
 
-  processAction(user, emit, 'leaveAll', [oInitiator, oZoneId]);
+  processAction(user, emit, 'leaveAll', [oInitiator, oZoneId, dZoneId]);
 };
 
 export const sort = (user, zoneId) => {
