@@ -71,9 +71,9 @@
 
     <div id="p1Box" class="sidebox">
         <div id="chatbox"><strong>Welcome to PTCG-sim!</strong>
-            <p><strong id="changelogLink" style="cursor: pointer; text-decoration: none; color: #ffcc00; border-bottom: 1px solid #ffcc00;">v1.5.1 Ϟ(๑⚈ ․̫ ⚈๑)⋆ </strong></p>
+            <p><strong id="changelogLink" style="cursor: pointer; text-decoration: none; color: #5b9bd5; border-bottom: 1px solid #5b9bd5;">v1.6 ⊹ ࣪ ﹏𓊝﹏𓂁﹏⊹ ࣪ ˖</strong></p>
             <p style="font-size: 90%;">PTCG-sim is an <a href="https://github.com/xxmichaellong/ptcg-sim" target="_blank">open-source</a> Pokémon Trading Card Game (Pokémon TCG) tabletop simulator. It supports single player and online multiplayer.</p> 
-            <p style="font-size: 90%;">Use the <strong>Import</strong> tab above to import your deck, then press <strong>Set Up</strong> to start a game.</p>
+            <p style="font-size: 90%;">Use the <strong>Deck</strong> tab above to import your deck, then press <strong>Set Up</strong> to start a game.</p>
             <p style="font-size: 90%;">Drag or use keybinds (hold <span class="shift-font">shift</span>) to move cards. </p>
             <p style="font-size: 90%;">See the <strong>Options</strong> button below to import, export, and replay games.</p>
             <p style="font-size: 90%;">Happy testing!</p>
@@ -89,7 +89,7 @@
             <button id="attackButton" class="self-color">Attack</button>
             <button id="passButton" class="self-color">Pass</button>
             <button id="undoButton" class="self-color">Undo</button>
-            <button id="FREEBUTTON" class="self-color">⚡</button>
+            <button id="FREEBUTTON" class="self-color">🌺</button>
         </div>
         <input id="messageInput" type="text" placeholder="Type your message here...">
         <div id="bottomP1ButtonContainer" class="sidebox-button-container">
@@ -137,7 +137,7 @@
                 <button id="p2AttackButton" class="self-color">Attack</button>
                 <button id="p2PassButton" class="self-color">Pass</button>
                 <!-- <button id="p2UndoButton" class="self-color">Undo</button> -->
-                <button id="p2FREEBUTTON" class="self-color">⚡</button>
+                <button id="p2FREEBUTTON" class="self-color">🌺</button>
             </div>
             <input id="p2MessageInput" type="text" placeholder="Type your message here...">
             <div id="p2BottomButtonContainer" class="sidebox-button-container">
@@ -183,7 +183,7 @@
             <button id="saveButton" class="neutral-color">Save</button>
             <div id="decklistsContextMenu" class="decklists-context-menu"></div>
             <button id="randomButton">🪄</button>
-            <div id="successText">Success!</div><div id="failedText">Error!</div><div id="loadingText"></div><div id="invalidText">Not allowed!</div>
+            <div id="successText">Success!</div><div id="failedText">Error!</div><div id="loadingText"></div><div id="invalidText">1P only!</div>
         </div>
         <div id="uploadButtonsContainer">
             <button id="changeCardBackButton" class="self-color">Change Card Back</button>
@@ -527,6 +527,30 @@
     <!-- home page -->
     <div id="videoContainer"></div>
     <div id="changelog">
+        <h2>v1.6 Update 03/24/26</h2>
+        <p>Hello everyone! I'm so excited to bring you guys this update — it's been a long time coming!</p>
+
+        <p><strong>NEW FEATURE</strong></p>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+        <li style="font-size: 16px; margin-bottom: 10px;"><strong>Deck Builder: </strong>You can now build decks directly inside the simulator! Search for cards (including TCG Pocket), add custom cards, and load your deck straight into P1 or P2. Export and import decks to save and share your builds.</li>
+        </ul>
+
+        <p><strong>OTHER ADDITIONS/CHANGES</strong></p>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+        <li style="font-size: 16px; margin-bottom: 10px;">Deck validation now supports both TCG (60-card, 4-copy) and TCG Pocket (20-card, 2-copy) formats with automatic format detection.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Streamlined the import page — removed redundant buttons and consolidated the UI.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Made "Import" button for text decklists more robust, so hopefully more cards will be correctly imported (especially new ones).</li>
+        </ul>
+
+        <p><strong>SHOUTOUTS:</strong></p>
+        <p>Huge thanks to <a href="https://twitter.com/MrTishingo" target="_blank" style="text-decoration: underline;">Tish</a> for building the original deck builder and porting it into the sim, and to Cealgair for helping review!</p>
+        <p><strong>SoulSilver sponsors: </strong>Arielle Lok, Bertie Vos, Morgan Gallant & Anonymous.<br>
+        <strong>HeartGold sponsors: </strong>Ciaran Farah!</p>
+
+        <strong>- XXL</strong>
+        <br><br>
+        <hr>
+
         <h2>v1.5.1 Update 02/12/25</h2>
         <p>Super quick update here—there are only a few visual changes to the site, but the codebase had a HUGE cleanup (which makes me feel great lol).</p>
 
@@ -659,7 +683,7 @@
         <p><strong>NEW FEATURES</strong></p>
         <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
         <li style="font-size: 16px; margin-bottom: 10px;"><strong>Custom Backgrounds: </strong>Upload custom backgrounds or switch to a themed background in the Settings tab.</li>
-        <li style="font-size: 16px; margin-bottom: 10px;"><strong>Visual Deck Builder: </strong>Build, edit, and upload your own decks to PTCG-sim! Shoutout to <a href="https://twitter.com/TishingoTish" target="_blank" style="text-decoration: underline;">Tish</a> for working hard on this initiative.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;"><strong>Visual Deck Builder: </strong>Build, edit, and upload your own decks to PTCG-sim! Shoutout to <a href="https://twitter.com/MrTishingo" target="_blank" style="text-decoration: underline;">Tish</a> for working hard on this initiative.</li>
         <li style="font-size: 16px; margin-bottom: 10px;"><strong>Set Code Support: </strong>Added set code support when importing decklists for sets prior to HGSS, as well as POP series, SI, and RM, courtesy of Cealgair.</li>
         </ul>
 
