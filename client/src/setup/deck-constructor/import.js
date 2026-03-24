@@ -20,7 +20,6 @@ const confirmButton = document.getElementById('confirmButton');
 const decklistsButton = document.getElementById('decklistsButton');
 const failedText = document.getElementById('failedText');
 const importButton = document.getElementById('importButton');
-const importLimitlessButton = document.getElementById('importLimitlessButton');
 const randomButton = document.getElementById('randomButton');
 const invalidText = document.getElementById('invalidText');
 const loadingText = document.getElementById('loadingText');
@@ -28,8 +27,6 @@ const mainDeckImportInput = document.getElementById('mainDeckImportInput');
 const p1Button = document.getElementById('p1Button');
 const p2Button = document.getElementById('p2Button');
 const saveButton = document.getElementById('saveButton');
-const saveCurrentButton = document.getElementById('saveCurrentButton');
-const csvFile = document.getElementById('csvFile');
 const changeCardBackButton = document.getElementById('changeCardBackButton');
 const changeLanguageButton = document.getElementById('changeLanguageButton');
 
@@ -526,11 +523,8 @@ const ptcgsimDecklistArray = (decklist) => {
   return decklistArray;
 };
 
-const DecklistArray = async (decklist, limitless) => {
+const DecklistArray = async (decklist) => {
   // Each card will be stored as [quantity, name, set code, number, pokemontcg.io id, image url, type]
-  if (limitless) {
-    return await LimitlessDecklistArray(decklist);
-  }
   let decklistArray = ptcgsimDecklistArray(decklist);
   const energies = getEnergies();
   for (let i = 0; i < decklistArray.length; i++) {
@@ -563,26 +557,50 @@ const DecklistArray = async (decklist, limitless) => {
       }
     }
   }
+
+  // Fallback: use Limitless API for entries missing type or image
+  const incompleteIndices = [];
+  for (let i = 0; i < decklistArray.length; i++) {
+    if (!decklistArray[i][5] || !decklistArray[i][6] || decklistArray[i][6] === 'Unknown') {
+      incompleteIndices.push(i);
+    }
+  }
+
+  if (incompleteIndices.length > 0) {
+    const miniDecklist = incompleteIndices
+      .map((i) => `${decklistArray[i][0]} ${decklistArray[i][1]}`)
+      .join('\n');
+
+    const limitlessResults = await LimitlessDecklistArray(miniDecklist);
+
+    for (let idx of incompleteIndices) {
+      const entry = decklistArray[idx];
+      const match = limitlessResults.find((r) => r[1] === entry[1]);
+      if (match) {
+        if (!entry[5] && match[5]) entry[5] = match[5];
+        if ((!entry[6] || entry[6] === 'Unknown') && match[6]) entry[6] = match[6];
+      }
+    }
+  }
+
   return decklistArray;
 };
 
-export const importDecklist = async (user, limitless) => {
+export const importDecklist = async (user) => {
   failedText.style.display = 'none';
   invalidText.style.display = 'none';
   loadingText.style.display = 'block';
   importButton.disabled = true;
-  importLimitlessButton.disabled = true;
 
   const decklist =
     user === 'self' ? mainDeckImportInput.value : altDeckImportInput.value;
 
-  let decklistArray = await DecklistArray(decklist, limitless);
+  let decklistArray = await DecklistArray(decklist);
 
   if (decklistArray.length < 1) {
     failedText.style.display = 'block';
     loadingText.style.display = 'none';
     importButton.disabled = false;
-    importLimitlessButton.disabled = false;
     return;
   }
 
@@ -662,13 +680,11 @@ export const importDecklist = async (user, limitless) => {
       });
 
       importButton.disabled = false;
-      importLimitlessButton.disabled = false;
       selfContainer.style.zIndex = -1;
       oppContainer.style.zIndex = -1;
       loadingText.style.display = 'none';
       decklistsButton.style.display = 'none';
       importButton.style.display = 'none';
-      importLimitlessButton.style.display = 'none';
       randomButton.style.display = 'none';
       changeLanguageButton.style.display = 'none';
       confirmButton.style.display = 'block';
@@ -718,7 +734,6 @@ cancelButton.addEventListener('click', () => {
   oppContainer.style.zIndex = 0;
   decklistsButton.style.display = 'block';
   importButton.style.display = 'block';
-  importLimitlessButton.style.display = 'block';
   randomButton.style.display = 'block';
   changeLanguageButton.style.display = 'inline-block';
   confirmButton.style.display = 'none';
@@ -736,9 +751,7 @@ confirmButton.addEventListener('click', () => {
   oppContainer.style.zIndex = 0;
   decklistsButton.style.display = 'block';
   importButton.style.display = 'block';
-  importLimitlessButton.style.display = 'block';
   randomButton.style.display = 'block';
-  saveCurrentButton.style.display = 'block';
   changeLanguageButton.style.display = 'inline-block';
   confirmButton.style.display = 'none';
   cancelButton.style.display = 'none';
@@ -832,101 +845,6 @@ const exportTableToCSV = (filename, table) => {
 
 saveButton.addEventListener('click', () => {
   exportTableToCSV('decklist.csv', '#decklistTable tr');
-});
-
-saveCurrentButton.addEventListener('click', () => {
-  let table =
-    mainDeckImportInput.style.display !== 'none'
-      ? '#selfCurrentDecklistTable tr'
-      : '#oppCurrentDecklistTable tr';
-  exportTableToCSV('decklist.csv', table);
-});
-
-csvFile.addEventListener('change', (evt) => {
-  importButton.disabled = false;
-  importLimitlessButton.disabled = false;
-  selfContainer.style.zIndex = -1;
-  oppContainer.style.zIndex = -1;
-  loadingText.style.display = 'none';
-  decklistsButton.style.display = 'none';
-  importButton.style.display = 'none';
-  importLimitlessButton.style.display = 'none';
-  randomButton.style.display = 'none';
-  changeLanguageButton.style.display = 'none';
-  failedText.style.display = 'none';
-  decklistTable.style.display = 'block';
-  confirmButton.style.display = 'block';
-  cancelButton.style.display = 'block';
-  saveButton.style.display = 'block';
-
-  let file = evt.target.files[0];
-  let reader = new FileReader();
-  reader.onload = (e) => {
-    let contents = e.target.result;
-    let lines = contents.split('\n');
-    let tableBody = decklistTable.getElementsByTagName('tbody')[0];
-    // Clear the table body
-    while (tableBody.firstChild) {
-      tableBody.removeChild(tableBody.firstChild);
-    }
-    // Populate the table with the CSV data, skipping the first line (i.e., the headers)
-    for (let i = 1; i < lines.length; i++) {
-      let cells = lines[i].split(',');
-      if (cells.length === 4) {
-        let newRow = tableBody.insertRow();
-        let [quantity, name, type, url] = cells;
-
-        let qtyCell = newRow.insertCell();
-        let nameCell = newRow.insertCell();
-        let typeCell = newRow.insertCell();
-        let urlCell = newRow.insertCell();
-
-        qtyCell.contentEditable = 'true';
-        nameCell.contentEditable = 'true';
-        urlCell.contentEditable = 'true';
-
-        let typeSelect = document.createElement('select');
-        typeSelect.innerHTML = `
-                    <option value="">Select type...</option>
-                    <option value="Pokémon">Pokémon</option>
-                    <option value="Trainer">Trainer</option>
-                    <option value="Energy">Energy</option>
-                `;
-
-        // Set initial value if type exists
-        if (type) {
-          typeSelect.value = type;
-        }
-
-        typeCell.appendChild(typeSelect);
-
-        qtyCell.innerHTML = quantity;
-        nameCell.innerHTML = name;
-        urlCell.innerHTML = url;
-
-        // Add red outline for empty/undefined/null values
-        if (!quantity || quantity === 'undefined' || quantity === 'null') {
-          qtyCell.style.outline = '2px solid red';
-        }
-        if (!name || name === 'undefined' || name === 'null') {
-          nameCell.style.outline = '2px solid red';
-        }
-        if (!url || url === 'undefined' || url === 'null') {
-          urlCell.style.outline = '2px solid red';
-        }
-        if (
-          !type ||
-          type === 'undefined' ||
-          type === 'null' ||
-          type === 'Unknown'
-        ) {
-          typeCell.style.outline = '2px solid red';
-        }
-      }
-    }
-  };
-  reader.readAsText(file);
-  evt.target.value = '';
 });
 
 // ************ logic for changing cardbacks********************//

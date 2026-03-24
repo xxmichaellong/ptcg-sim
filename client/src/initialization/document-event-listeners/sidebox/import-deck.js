@@ -21,15 +21,7 @@ export const initializeImport = () => {
     loadingText.innerHTML = newText;
   };
   setInterval(updateLoadingText, 500);
-  const uploadFileButton = document.getElementById('uploadFileButton');
   const changeCardBackButton = document.getElementById('changeCardBackButton');
-  const selfCurrentDecklistTable = document.getElementById(
-    'selfCurrentDecklistTable'
-  );
-  const oppCurrentDecklistTable = document.getElementById(
-    'oppCurrentDecklistTable'
-  );
-  const saveCurrentButton = document.getElementById('saveCurrentButton');
 
   const mainImportHeaderButton = document.getElementById(
     'mainImportHeaderButton'
@@ -38,38 +30,26 @@ export const initializeImport = () => {
     if (mainImportHeaderButton.classList.contains('main-select')) return;
     mainImportHeaderButton.classList.toggle('main-select');
     altImportHeaderButton.classList.toggle('alt-select');
-    uploadFileButton.classList.toggle('self-color');
-    uploadFileButton.classList.toggle('opp-color');
     changeCardBackButton.classList.toggle('self-color');
     changeCardBackButton.classList.toggle('opp-color');
-    saveCurrentButton.classList.toggle('self-color');
-    saveCurrentButton.classList.toggle('opp-color');
     mainDeckImportInput.style.display = 'inline-block';
     altDeckImportInput.style.display = 'none';
     successText.style.display = 'none';
     failedText.style.display = 'none';
     invalidText.style.display = 'none';
-    saveCurrentButton.style.display =
-      selfCurrentDecklistTable.innerHTML === '' ? 'none' : 'block';
   };
 
   const switchToAlt = () => {
     if (altImportHeaderButton.classList.contains('alt-select')) return;
     mainImportHeaderButton.classList.toggle('main-select');
     altImportHeaderButton.classList.toggle('alt-select');
-    uploadFileButton.classList.toggle('self-color');
-    uploadFileButton.classList.toggle('opp-color');
     changeCardBackButton.classList.toggle('self-color');
     changeCardBackButton.classList.toggle('opp-color');
-    saveCurrentButton.classList.toggle('self-color');
-    saveCurrentButton.classList.toggle('opp-color');
     altDeckImportInput.style.display = 'inline-block';
     mainDeckImportInput.style.display = 'none';
     successText.style.display = 'none';
     failedText.style.display = 'none';
     invalidText.style.display = 'none';
-    saveCurrentButton.style.display =
-      oppCurrentDecklistTable.innerHTML === '' ? 'none' : 'block';
   };
 
   mainImportHeaderButton.addEventListener('click', () => {
@@ -100,26 +80,12 @@ export const initializeImport = () => {
     );
     const notOpp2P = !(systemState.isTwoPlayer && user === 'opp');
     if (notSpectator && notOpp2P) {
-      importDecklist(user,false);
+      importDecklist(user);
     } else {
       invalidText.style.display = 'block';
     }
   });
 
-  const importLimitlessButton = document.getElementById('importLimitlessButton');
-  importLimitlessButton.addEventListener('click', () => {
-    const user = mainDeckImportInput.style.display !== 'none' ? 'self' : 'opp';
-    const notSpectator = !(
-      document.getElementById('spectatorModeCheckbox').checked &&
-      systemState.isTwoPlayer
-    );
-    const notOpp2P = !(systemState.isTwoPlayer && user === 'opp');
-    if (notSpectator && notOpp2P) {
-      importDecklist(user,true);
-    } else {
-      invalidText.style.display = 'block';
-    }
-  });
 
   const randomButton = document.getElementById('randomButton');
   randomButton.addEventListener('click', () => {

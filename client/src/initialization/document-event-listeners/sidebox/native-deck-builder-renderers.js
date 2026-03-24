@@ -5,6 +5,11 @@ const escapeHtml = (value = '') => String(value)
   .replaceAll('"', '&quot;')
   .replaceAll("'", '&#39;');
 
+const escapeCssUrl = (url = '') => String(url)
+  .replaceAll("'", '%27')
+  .replaceAll(')', '%29')
+  .replaceAll('\\', '%5C');
+
 export const renderSearchResults = ({ searchResultsEl, results, onSelect }) => {
   if (!searchResultsEl) return;
 
@@ -53,10 +58,11 @@ export const renderDeckCards = ({ cardsEl, sortedCards, onRemove }) => {
       const safeName = escapeHtml(card.name || 'Unknown Card');
       const safeSupertype = escapeHtml(card.supertype || 'Unknown');
       const safeImageUrl = escapeHtml(imageUrl);
+      const safeCssUrl = escapeHtml(escapeCssUrl(imageUrl));
 
       return `
         <div class="native-deck-builder-deck-row"${safeImageUrl ? ` data-preview-image="${safeImageUrl}"` : ''}>
-          <div class="native-deck-builder-deck-art"${safeImageUrl ? ` style="background-image: url('${safeImageUrl}');"` : ''} aria-hidden="true"></div>
+          <div class="native-deck-builder-deck-art"${imageUrl ? ` style="background-image: url('${safeCssUrl}');"` : ''} aria-hidden="true"></div>
           <div class="native-deck-builder-deck-overlay" aria-hidden="true"></div>
           <button class="native-deck-builder-deck-minus" data-deck-index="${index}" aria-label="Remove one ${safeName}" title="Remove one ${safeName}">−</button>
           <div class="native-deck-builder-deck-text">x${card.count} — ${safeName} <span class="native-deck-builder-deck-type">(${safeSupertype})</span></div>

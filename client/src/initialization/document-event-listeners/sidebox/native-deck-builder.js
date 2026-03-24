@@ -1,11 +1,29 @@
-import { addCard, createEmptyDeck, getDeckCounts, removeCard } from '../../../setup/deck-builder/core/deck-state.mjs';
-import { applyLocalControls, queryCardsByName } from '../../../setup/deck-builder/core/card-search.mjs';
-import { formatImageUrl, parseSimCsv, serializeDeckToSimCsv } from '../../../setup/deck-builder/core/csv-adapter.mjs';
+import {
+  formatImageUrl,
+  parseSimCsv,
+  serializeDeckToSimCsv,
+} from '../../../setup/deck-builder/core/csv-adapter.mjs';
 import { getSortedDeckCardArray } from '../../../setup/deck-builder/core/card-sort.mjs';
-import { DECK_FORMATS, detectDeckFormat, validateDeck } from '../../../setup/deck-builder/core/deck-validation.mjs';
+import {
+  detectDeckFormat,
+  validateDeck,
+} from '../../../setup/deck-builder/core/deck-validation.mjs';
 import { loadDeckData } from '../../../setup/deck-constructor/import.js';
-import { renderDeckCards, renderSearchResults } from './native-deck-builder-renderers.js';
+import {
+  renderDeckCards,
+  renderSearchResults,
+} from './native-deck-builder-renderers.js';
 import { syncDeckFromLoadedRows } from './native-deck-builder-sync.js';
+import {
+  addCard,
+  createEmptyDeck,
+  getDeckCounts,
+  removeCard,
+} from '../../../setup/deck-builder/core/deck-state.mjs';
+import {
+  applyLocalControls,
+  queryCardsByName,
+} from '../../../setup/deck-builder/core/card-search.mjs';
 
 const deckToSimRows = (deck = {}) => {
   const rows = [];
@@ -26,36 +44,60 @@ const deckToSimRows = (deck = {}) => {
 };
 
 export const initializeNativeDeckBuilder = () => {
-  const panel = document.getElementById('nativeDeckBuilderWorkspace');
-  const targetMainButton = document.getElementById('nativeDeckBuilderTargetMain');
+  const targetMainButton = document.getElementById(
+    'nativeDeckBuilderTargetMain'
+  );
   const targetAltButton = document.getElementById('nativeDeckBuilderTargetAlt');
   const targetLabel = document.getElementById('nativeDeckBuilderTargetLabel');
   const exportCsvButton = document.getElementById('nativeDeckBuilderExportCsv');
+  const importCsvLabel = document.getElementById('nativeDeckBuilderImportCsvLabel');
   const importCsvInput = document.getElementById('nativeDeckBuilderCsvImport');
   const clearButton = document.getElementById('nativeDeckBuilderClear');
   const summary = document.getElementById('nativeDeckBuilderSummaryPanel');
-  const validationDot = document.getElementById('nativeDeckBuilderValidationDot');
+  const validationDot = document.getElementById(
+    'nativeDeckBuilderValidationDot'
+  );
   const cards = document.getElementById('nativeDeckBuilderCardsPanel');
   const searchInput = document.getElementById('nativeDeckBuilderSearchInput');
-  const cardTypeFilter = document.getElementById('nativeDeckBuilderCardTypeFilter');
+  const cardTypeFilter = document.getElementById(
+    'nativeDeckBuilderCardTypeFilter'
+  );
   const sortBySelect = document.getElementById('nativeDeckBuilderSortBy');
-  const sortDirectionSelect = document.getElementById('nativeDeckBuilderSortDirection');
+  const sortDirectionSelect = document.getElementById(
+    'nativeDeckBuilderSortDirection'
+  );
   const searchButton = document.getElementById('nativeDeckBuilderSearchButton');
   const searchStatus = document.getElementById('nativeDeckBuilderSearchStatus');
-  const searchResults = document.getElementById('nativeDeckBuilderSearchResults');
-  const hoverPreview = document.getElementById('nativeDeckBuilderHoverPreview');
-  const hoverPreviewImage = document.getElementById('nativeDeckBuilderHoverPreviewImage');
-  const addCustomCardButton = document.getElementById('nativeDeckBuilderAddCustomCard');
-  const customCardModal = document.getElementById('nativeDeckBuilderCustomCardModal');
+  const searchResults = document.getElementById(
+    'nativeDeckBuilderSearchResults'
+  );
+  const previewScrim = document.getElementById(
+    'nativeDeckBuilderCardPreviewScrim'
+  );
+  const previewImage = document.getElementById(
+    'nativeDeckBuilderCardPreviewImage'
+  );
+  const addCustomCardButton = document.getElementById(
+    'nativeDeckBuilderAddCustomCard'
+  );
+  const customCardModal = document.getElementById(
+    'nativeDeckBuilderCustomCardModal'
+  );
   const customCardQty = document.getElementById('nativeCustomCardQty');
   const customCardName = document.getElementById('nativeCustomCardName');
   const customCardType = document.getElementById('nativeCustomCardType');
-  const customCardImageUrl = document.getElementById('nativeCustomCardImageUrl');
+  const customCardImageUrl = document.getElementById(
+    'nativeCustomCardImageUrl'
+  );
   const customCardError = document.getElementById('nativeCustomCardError');
   const customCardCancel = document.getElementById('nativeCustomCardCancel');
   const customCardSubmit = document.getElementById('nativeCustomCardSubmit');
-  const customCardPreviewImage = document.getElementById('nativeCustomCardPreviewImage');
-  const customCardPreviewPlaceholder = document.getElementById('nativeCustomCardPreviewPlaceholder');
+  const customCardPreviewImage = document.getElementById(
+    'nativeCustomCardPreviewImage'
+  );
+  const customCardPreviewPlaceholder = document.getElementById(
+    'nativeCustomCardPreviewPlaceholder'
+  );
 
   const syncedDecks = {
     self: createEmptyDeck(),
@@ -66,15 +108,16 @@ export const initializeNativeDeckBuilder = () => {
   let currentResults = [];
   let currentRawResults = [];
   let currentLoadTarget = 'self';
-  let currentSearchTerm = '';
   let currentTotalSummaries = 0;
   let currentHugeResultSet = false;
+  let deckDirty = false;
   const renderResults = () => {
     renderSearchResults({
       searchResultsEl: searchResults,
       results: currentResults,
       onSelect: (card) => {
         deck = addCard(deck, card);
+        deckDirty = true;
         render();
       },
     });
@@ -88,45 +131,59 @@ export const initializeNativeDeckBuilder = () => {
     });
   };
 
-  const hideHoverPreview = () => {
-    if (!hoverPreview || !hoverPreviewImage) return;
-    hoverPreview.classList.remove('visible');
-    hoverPreview.setAttribute('aria-hidden', 'true');
-    hoverPreviewImage.removeAttribute('src');
+  const getSearchStatusText = () => {
+    if (currentHugeResultSet) {
+      return `Too many results (${currentTotalSummaries}). Please redefine your search terms.`;
+    }
+    return currentResults.length > 0
+      ? `Showing all ${currentResults.length} result(s). Click a card to add it.`
+      : 'No matching cards found.';
   };
 
-
-  const showHoverPreview = (imageUrl) => {
-    if (!hoverPreview || !hoverPreviewImage || !imageUrl) return;
-    hoverPreviewImage.src = imageUrl;
-    hoverPreview.classList.add('visible');
-    hoverPreview.setAttribute('aria-hidden', 'false');
+  const switchTarget = (target) => {
+    if (target === currentLoadTarget) return;
+    syncedDecks[currentLoadTarget] = deck;
+    currentLoadTarget = target;
+    deck = syncedDecks[target];
+    render();
   };
 
-  const bindHoverPreview = (container) => {
-    if (!container) return;
+  const showCardPreview = (imageUrl) => {
+    if (!previewScrim || !previewImage || !imageUrl) return;
+    previewImage.src = imageUrl;
+    previewScrim.removeAttribute('hidden');
+  };
 
-    container.addEventListener('mouseover', (event) => {
-      const previewTarget = event.target.closest('[data-preview-image]');
-      if (!previewTarget || !container.contains(previewTarget)) return;
-      showHoverPreview(previewTarget.dataset.previewImage);
+  const hideCardPreview = () => {
+    if (!previewScrim) return;
+    previewScrim.setAttribute('hidden', '');
+    previewImage.removeAttribute('src');
+  };
+
+  if (previewScrim) {
+    previewScrim.addEventListener('click', hideCardPreview);
+  }
+
+  // Right-click on search results opens preview
+  if (searchResults) {
+    searchResults.addEventListener('contextmenu', (event) => {
+      const target = event.target.closest('[data-preview-image]');
+      if (!target) return;
+      event.preventDefault();
+      showCardPreview(target.dataset.previewImage);
     });
+  }
 
-    container.addEventListener('mouseout', (event) => {
-      const previewTarget = event.target.closest('[data-preview-image]');
-      if (!previewTarget || !container.contains(previewTarget)) return;
-
-      const related = event.relatedTarget;
-      if (related && previewTarget.contains(related)) return;
-
-      hideHoverPreview();
+  // Click on deck cards opens preview
+  if (cards) {
+    cards.addEventListener('click', (event) => {
+      const target = event.target.closest('[data-preview-image]');
+      if (!target) return;
+      // Don't open preview if clicking the remove button
+      if (event.target.closest('[data-deck-index]')) return;
+      showCardPreview(target.dataset.previewImage);
     });
-  };
-
-  bindHoverPreview(searchResults);
-  bindHoverPreview(cards);
-
-  panel.addEventListener('mouseleave', hideHoverPreview);
+  }
 
   document.addEventListener('native-deck-builder:deck-loaded', (event) => {
     const user = event.detail?.user;
@@ -257,6 +314,7 @@ export const initializeNativeDeckBuilder = () => {
       deck = addCard(deck, card);
     }
 
+    deckDirty = true;
     closeCustomCardModal();
     render();
   });
@@ -265,11 +323,27 @@ export const initializeNativeDeckBuilder = () => {
     const counts = getDeckCounts(deck);
     const result = validateDeck(deck, detectDeckFormat(deck));
     const sortedCards = getSortedDeckCardArray(deck);
-    const isOpen = panel.classList.contains('open');
+    const hasDeckCards = Object.keys(deck).length > 0;
 
-    targetLabel.textContent = currentLoadTarget === 'self' ? 'Main Deck' : 'Alt Deck';
-    targetMainButton.classList.toggle('native-target-selected', currentLoadTarget === 'self');
-    targetAltButton.classList.toggle('native-target-selected', currentLoadTarget === 'opp');
+    clearButton.style.display = hasDeckCards ? '' : 'none';
+
+    targetLabel.textContent =
+      currentLoadTarget === 'self' ? 'Main Deck' : 'Alt Deck';
+    targetMainButton.classList.toggle(
+      'native-target-selected',
+      currentLoadTarget === 'self'
+    );
+    targetAltButton.classList.toggle(
+      'native-target-selected',
+      currentLoadTarget === 'opp'
+    );
+
+    const isSelf = currentLoadTarget === 'self';
+    for (const el of [exportCsvButton, importCsvLabel, clearButton]) {
+      if (!el) continue;
+      el.classList.toggle('self-color', isSelf);
+      el.classList.toggle('opp-color', !isSelf);
+    }
 
     summary.innerHTML = [
       `Total: <strong>${counts.total}</strong>`,
@@ -295,6 +369,7 @@ export const initializeNativeDeckBuilder = () => {
       sortedCards,
       onRemove: (card) => {
         deck = removeCard(deck, card);
+        deckDirty = true;
         render();
       },
     });
@@ -303,6 +378,8 @@ export const initializeNativeDeckBuilder = () => {
   };
 
   const loadCurrentDeck = () => {
+    if (!deckDirty) return;
+    deckDirty = false;
     syncedDecks[currentLoadTarget] = deck;
     const deckRows = deckToSimRows(deck);
     if (deckRows.length > 0) {
@@ -314,7 +391,6 @@ export const initializeNativeDeckBuilder = () => {
     const term = (options.term ?? searchInput.value).trim();
 
     if (!term) {
-      currentSearchTerm = '';
       currentResults = [];
       currentRawResults = [];
       currentTotalSummaries = 0;
@@ -328,17 +404,12 @@ export const initializeNativeDeckBuilder = () => {
 
     try {
       const searchResponse = await queryCardsByName(term);
-      currentSearchTerm = searchResponse.term;
       currentRawResults = searchResponse.results;
       currentTotalSummaries = searchResponse.totalSummaries;
       currentHugeResultSet = searchResponse.isHugeResultSet;
       updateVisibleResults();
 
-      searchStatus.textContent = currentHugeResultSet
-        ? `Too many results (${currentTotalSummaries}). Please redefine your search terms.`
-        : currentResults.length > 0
-          ? `Showing all ${currentResults.length} result(s). Click a card to add it.`
-          : 'No matching cards found.';
+      searchStatus.textContent = getSearchStatusText();
     } catch (error) {
       currentResults = [];
       currentRawResults = [];
@@ -351,40 +422,23 @@ export const initializeNativeDeckBuilder = () => {
     }
   };
 
-  const togglePanel = () => {
-    panel.classList.toggle('open');
-    render();
-  };
-
-  const closePanel = () => {
-    panel.classList.remove('open');
-    hideHoverPreview();
-    render();
-  };
-
   targetMainButton.addEventListener('click', () => {
-    syncedDecks[currentLoadTarget] = deck;
-    currentLoadTarget = 'self';
-    deck = syncedDecks.self;
-    render();
-    document.dispatchEvent(new CustomEvent('deck-target-changed', { detail: { target: 'self' } }));
+    switchTarget('self');
+    document.dispatchEvent(
+      new CustomEvent('deck-target-changed', { detail: { target: 'self' } })
+    );
   });
 
   targetAltButton.addEventListener('click', () => {
-    syncedDecks[currentLoadTarget] = deck;
-    currentLoadTarget = 'opp';
-    deck = syncedDecks.opp;
-    render();
-    document.dispatchEvent(new CustomEvent('deck-target-changed', { detail: { target: 'opp' } }));
+    switchTarget('opp');
+    document.dispatchEvent(
+      new CustomEvent('deck-target-changed', { detail: { target: 'opp' } })
+    );
   });
 
   document.addEventListener('deck-target-changed', (event) => {
     const target = event.detail?.target;
-    if (!target || target === currentLoadTarget) return;
-    syncedDecks[currentLoadTarget] = deck;
-    currentLoadTarget = target;
-    deck = syncedDecks[target];
-    render();
+    if (target) switchTarget(target);
   });
 
   exportCsvButton.addEventListener('click', () => {
@@ -408,6 +462,7 @@ export const initializeNativeDeckBuilder = () => {
       const csvText = await file.text();
       deck = parseSimCsv(csvText);
       syncedDecks[currentLoadTarget] = deck;
+      deckDirty = true;
       render();
     } catch (error) {
       searchStatus.textContent = `CSV import failed: ${error.message}`;
@@ -417,19 +472,17 @@ export const initializeNativeDeckBuilder = () => {
   });
 
   clearButton.addEventListener('click', () => {
+    if (!window.confirm('Are you sure you want to delete your deck?')) return;
     deck = createEmptyDeck();
     syncedDecks[currentLoadTarget] = deck;
+    deckDirty = true;
     render();
   });
 
   const rerenderSearchLocally = () => {
-    if (!currentSearchTerm) return;
+    if (currentRawResults.length === 0) return;
     updateVisibleResults();
-    searchStatus.textContent = currentHugeResultSet
-      ? `Too many results (${currentTotalSummaries}). Please redefine your search terms.`
-      : currentResults.length > 0
-        ? `Showing all ${currentResults.length} result(s). Click a card to add it.`
-        : 'No matching cards found.';
+    searchStatus.textContent = getSearchStatusText();
     renderResults();
   };
 

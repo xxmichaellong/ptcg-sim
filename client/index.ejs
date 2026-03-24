@@ -169,16 +169,15 @@
         </div>
         <textarea id="mainDeckImportInput" spellcheck="false"></textarea>
         <script>
-            document.getElementById("mainDeckImportInput").placeholder = "Paste your decklist here or use the deck builder. \n\nClick the book 📖 to look through popular decks or click the wand 🪄 for a random deck! \n\nFor uploading custom images, write the quantity and name (i.e. 2 Pikachu) and click on the 'Import' button. \n\nInternational languages are supported for cards using Limitless URLs.";
+            document.getElementById("mainDeckImportInput").placeholder = "Paste your decklist here or use the deck builder. \n\nClick the book 📖 to look through popular decks or click the wand 🪄 for a random deck! \n\nFor uploading custom images, write the quantity and name (i.e. 2 Pikachu) and click on the 'Import' button below. \n\nInternational languages are supported for cards using Limitless URLs.";
         </script>          
         <textarea id="altDeckImportInput" spellcheck="false"></textarea>
         <script>
-            document.getElementById("altDeckImportInput").placeholder = "Paste your alternative decklist here if you are playing against yourself. \n\nClick the book 📖 to look through popular decks or click the wand 🪄 for a random deck! \n\nFor uploading custom images, write the quantity and name (i.e. 2 Pikachu) and click on the 'Import' button. \n\nInternational languages are supported for cards using Limitless URLs.";
+            document.getElementById("altDeckImportInput").placeholder = "Paste your alternative decklist here if you are playing against yourself. \n\nClick the book 📖 to look through popular decks or click the wand 🪄 for a random deck! \n\nFor uploading custom images, write the quantity and name (i.e. 2 Pikachu) and click on the 'Import' button below. \n\nInternational languages are supported for cards using Limitless URLs.";
         </script>
         <div id="importBottom">
             <button id="decklistsButton">📖</button>
             <button id="importButton">Import</button>
-            <button id="importLimitlessButton">Limitless<br><span style="white-space:nowrap">Import <span style="font-size:0.7em">(Beta)</span></span></button>
             <button id="confirmButton">Confirm</button>
             <button id="cancelButton">Cancel</button>
             <button id="saveButton" class="neutral-color">Save</button>
@@ -187,8 +186,6 @@
             <div id="successText">Success!</div><div id="failedText">Error!</div><div id="loadingText"></div><div id="invalidText">Not allowed!</div>
         </div>
         <div id="uploadButtonsContainer">
-            <label for="csvFile" id="uploadFileButton" class="self-color">Upload File</label>
-            <input type="file" id="csvFile" accept=".csv" style="display:none;">
             <button id="changeCardBackButton" class="self-color">Change Card Back</button>
             <div class="language-container">
                 <button id="changeLanguageButton" class="neutral-color">Language: English</button>
@@ -203,8 +200,7 @@
                     </ul>
                 </div>
             </div>
-        </div>       
-        <button id="saveCurrentButton" class="self-color">Save Current Deck</button>                
+        </div>                
     </div>
     
     <div id="nativeDeckBuilderWorkspace" class="native-deck-builder-workspace">
@@ -216,8 +212,8 @@
                     <div class="native-deck-builder-subtitle">Search cards, build decks, and load them directly into the simulator.</div>
                 </div>
                 <div class="native-deck-builder-actions">
-                    <button id="nativeDeckBuilderExportCsv" class="neutral-color">Export CSV</button>
-                    <label for="nativeDeckBuilderCsvImport" id="nativeDeckBuilderImportCsvLabel" class="neutral-color native-deck-builder-inline-label">Import CSV</label>
+                    <button id="nativeDeckBuilderExportCsv" class="self-color">Export Deck</button>
+                    <label for="nativeDeckBuilderCsvImport" id="nativeDeckBuilderImportCsvLabel" class="self-color native-deck-builder-inline-label">Import Deck</label>
                     <input id="nativeDeckBuilderCsvImport" type="file" accept=".csv" style="display:none;" />
                 </div>
             </div>
@@ -309,10 +305,10 @@
                     </div>
                 </div>
             </div>
-            <div id="nativeDeckBuilderHoverPreview" class="native-deck-builder-hover-preview" aria-hidden="true">
-                <img id="nativeDeckBuilderHoverPreviewImage" class="native-deck-builder-hover-preview-image" alt="Card preview" />
-            </div>
         </div>
+    </div>
+    <div id="nativeDeckBuilderCardPreviewScrim" class="native-deck-builder-card-preview-scrim" hidden>
+        <img id="nativeDeckBuilderCardPreviewImage" class="native-deck-builder-card-preview-image" alt="Card preview" />
     </div>
 
     <div id="settings" class="sidebox">

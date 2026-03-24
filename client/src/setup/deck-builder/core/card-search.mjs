@@ -1,4 +1,5 @@
 const HUGE_RESULT_THRESHOLD = 2000;
+const DETAIL_FETCH_LIMIT = 150;
 const tcgdexSetReleaseDateCache = new Map();
 
 function compareReleaseDate(a, b, direction = 'desc') {
@@ -223,8 +224,10 @@ export async function queryCardsByName(term = '') {
     };
   }
 
+  const summariesToFetch = allSummaries.slice(0, DETAIL_FETCH_LIMIT);
+
   const detailedCards = await Promise.all(
-    allSummaries.map(async (summary) => {
+    summariesToFetch.map(async (summary) => {
       try {
         const detail = await fetchJson(`https://api.tcgdex.net/v2/en/cards/${summary.id}`);
         return normalizeTcgdexCard(detail);

@@ -671,7 +671,7 @@ ul, li {
   width: 100%;
   height: 100%;
   margin-left: 0;
-  background: rgba(214, 218, 224, 0.88);
+  background: rgb(214, 218, 224);
   border-left: 1px solid rgba(40, 57, 124, 0.08);
   box-shadow: inset 8px 0 18px rgba(255,255,255,0.08);
   display: flex;
@@ -690,10 +690,10 @@ ul, li {
   gap: 1vw;
   padding: 0.85vh 0.8vw;
   border-bottom: 1px solid rgba(0, 0, 0, 0.035);
-  background: rgba(207, 211, 218, 0.7);
+  background: rgb(207, 211, 218);
 }
 .native-deck-builder-subtitle {
-  font-size: 1.28vh;
+  font-size: 1.55vh;
   opacity: 0.62;
   margin-top: 0.2vh;
 }
@@ -708,8 +708,8 @@ ul, li {
   border-radius: 4px;
   border: none;
   cursor: pointer;
-  font-size: 1.35vh;
-  padding: 0.48vh 0.58vw;
+  font-size: 1.65vh;
+  padding: 0.6vh 0.7vw;
   opacity: 0.92;
 }
 #closeNativeDeckBuilderButton {
@@ -719,11 +719,11 @@ ul, li {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.48vh 0.58vw;
+  padding: 0.6vh 0.7vw;
   border-radius: 4px;
   color: white;
   cursor: pointer;
-  font-size: 1.35vh;
+  font-size: 1.65vh;
   opacity: 0.92;
 }
 .native-deck-builder-targetbar {
@@ -732,14 +732,14 @@ ul, li {
   align-items: center;
   gap: 0.8vw;
   padding: 0.65vh 0.8vw;
-  background: rgba(198, 203, 211, 0.72);
+  background: rgb(198, 203, 211);
   border-bottom: 1px solid rgba(0,0,0,0.04);
 }
 .native-deck-builder-target-copy {
   display: flex;
   gap: 0.35vw;
   align-items: center;
-  font-size: 1.35vh;
+  font-size: 1.65vh;
   flex-wrap: wrap;
 }
 .native-deck-builder-load-status {
@@ -775,8 +775,8 @@ ul, li {
 .native-target-button {
   border: none;
   cursor: pointer;
-  padding: 0.45vh 0.65vw;
-  font-size: 1.3vh;
+  padding: 0.55vh 0.75vw;
+  font-size: 1.6vh;
   background: rgba(170,170,170,0.95);
   color: white;
 }
@@ -798,7 +798,7 @@ ul, li {
 .native-deck-builder-pane {
   flex: 1 1 0;
   min-width: 0;
-  background: rgba(243,245,247,0.56);
+  background: rgb(243,245,247);
   border-radius: 0;
   border: 1px solid rgba(255, 255, 255, 0.18);
   padding: 0.8vh 0.75vw;
@@ -832,15 +832,15 @@ ul, li {
   min-width: 0;
 }
 .native-deck-builder-section-title {
-  font-size: 1.55vh;
+  font-size: 1.85vh;
   font-weight: 700;
   margin-bottom: 0;
 }
 .native-deck-builder-section-button {
   flex: 0 0 auto;
   white-space: nowrap;
-  font-size: 1.35vh;
-  padding: 0.48vh 0.58vw;
+  font-size: 1.65vh;
+  padding: 0.6vh 0.7vw;
   border: none;
   cursor: pointer;
   color: #fff;
@@ -870,21 +870,21 @@ ul, li {
 .native-deck-builder-search-input {
   flex: 1 1 auto;
   min-width: 4vw;
-  font-size: 1.4vh;
-  padding: 0.55vh 0.6vw;
+  font-size: 1.7vh;
+  padding: 0.65vh 0.7vw;
   border: 1px solid rgba(0,0,0,0.1);
-  background: rgba(255,255,255,0.78);
+  background: rgb(255,255,255);
 }
 .native-deck-builder-search-select {
   flex: 0 1 auto;
   min-width: 0;
-  font-size: 1.3vh;
-  padding: 0.5vh 0.4vw;
+  font-size: 1.6vh;
+  padding: 0.6vh 0.5vw;
   border: 1px solid rgba(0,0,0,0.1);
-  background: rgba(255,255,255,0.78);
+  background: rgb(255,255,255);
 }
 .native-deck-builder-search-status {
-  font-size: 1.25vh;
+  font-size: 1.5vh;
   opacity: 0.75;
   margin-bottom: 0.6vh;
 }
@@ -892,8 +892,8 @@ ul, li {
   flex: 0 0 auto;
   white-space: nowrap;
   min-width: fit-content;
-  font-size: 1.35vh;
-  padding: 0.48vh 0.58vw;
+  font-size: 1.65vh;
+  padding: 0.6vh 0.7vw;
   border: none;
   cursor: pointer;
   color: white;
@@ -933,7 +933,7 @@ ul, li {
   text-align: center;
   width: 100%;
   border: 1px solid rgba(0,0,0,0.06);
-  background: rgba(248,249,250,0.72);
+  background: rgb(248,249,250);
   padding: 0.25vw;
   border-radius: 0.3vw;
   cursor: pointer;
@@ -957,7 +957,7 @@ ul, li {
   display: flex;
   flex-direction: column;
   gap: 0.1vh;
-  font-size: 1.05vh;
+  font-size: 1.3vh;
   color: inherit;
   padding: 0 0.1vw 0.15vw;
   overflow: hidden;
@@ -967,7 +967,7 @@ ul, li {
   overflow: hidden;
   text-overflow: ellipsis;
   display: block;
-  font-size: 1.1vh;
+  font-size: 1.35vh;
 }
 .native-deck-builder-result-text span {
   white-space: nowrap;
@@ -978,7 +978,7 @@ ul, li {
 }
 .native-deck-builder-summary,
 .native-deck-builder-cards {
-  font-size: 1.42vh;
+  font-size: 1.75vh;
 }
 .native-deck-builder-summary {
   padding: 0.2vh 0;
@@ -989,12 +989,13 @@ ul, li {
   border: 1px solid rgba(255,255,255,0.14);
   border-radius: 0;
   padding: 0.7vh;
-  background: rgba(238,240,243,0.48);
+  background: rgb(238,240,243);
 }
 .native-deck-builder-deck-row {
   position: relative;
   display: flex;
   align-items: center;
+  cursor: pointer;
   gap: 0.55vw;
   min-height: 6.6vh;
   padding: 0.75vh 0.55vw;
@@ -1002,7 +1003,7 @@ ul, li {
   border: 1px solid rgba(0,0,0,0.06);
   overflow: hidden;
   isolation: isolate;
-  background: rgba(255,255,255,0.38);
+  background: rgb(255,255,255);
   transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
 }
 .native-deck-builder-deck-row:hover {
@@ -1034,21 +1035,21 @@ ul, li {
 .native-deck-builder-deck-minus {
   position: relative;
   z-index: 1;
-  width: 1.1vw;
-  height: 1.1vw;
+  width: 1.4vw;
+  height: 1.4vw;
   border: none;
   cursor: pointer;
   color: white;
   background: linear-gradient(to bottom, rgba(188, 90, 113, 0.9), rgba(158, 60, 83, 0.9));
   line-height: 1;
-  font-size: 1.7vh;
+  font-size: 2vh;
   flex: 0 0 auto;
 }
 .native-deck-builder-deck-text {
   position: relative;
   z-index: 1;
   min-width: 0;
-  font-size: 1.42vh;
+  font-size: 1.75vh;
   font-weight: 600;
   color: rgba(27, 33, 39, 0.96);
   text-shadow: 0 1px 0 rgba(255,255,255,0.22);
@@ -1057,34 +1058,28 @@ ul, li {
   opacity: 0.72;
   font-weight: 500;
 }
-.native-deck-builder-hover-preview {
-  position: absolute;
-  top: clamp(7vh, 9.4vh, 12vh);
-  right: calc(100% + clamp(0.45vw, 1.1vw, 1.25vw));
-  width: clamp(160px, 18vw, 320px);
-  max-height: min(72vh, 520px);
-  padding: clamp(4px, 0.5vh, 8px) clamp(4px, 0.35vw, 8px);
-  background: rgba(235, 239, 246, 0.92);
-  border: 1px solid rgba(56, 70, 116, 0.14);
-  box-shadow: 0 22px 40px rgba(28, 36, 62, 0.24);
-  opacity: 0;
-  transform: translateX(10px) scale(0.98);
-  pointer-events: none;
-  transition: opacity 140ms ease, transform 140ms ease;
-  z-index: 4;
-  box-sizing: border-box;
-}
-.native-deck-builder-hover-preview.visible {
-  opacity: 1;
-  transform: translateX(0) scale(1);
-}
-.native-deck-builder-hover-preview-image {
-  display: block;
+.native-deck-builder-card-preview-scrim {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
-  max-width: 100%;
-  height: auto;
-  max-height: calc(min(72vh, 520px) - 16px);
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  cursor: pointer;
+}
+.native-deck-builder-card-preview-scrim[hidden] {
+  display: none;
+}
+.native-deck-builder-card-preview-image {
+  max-width: 90vw;
+  max-height: 90vh;
   object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
 /* Custom card modal */
@@ -1276,11 +1271,6 @@ body.dark-mode-1 .native-deck-builder-deck-overlay {
 body.dark-mode-1 .native-deck-builder-deck-type {
   color: rgba(214, 224, 247, 0.72);
 }
-body.dark-mode-1 .native-deck-builder-hover-preview {
-  background: rgba(18, 24, 32, 0.96);
-  border-color: rgba(119, 139, 196, 0.22);
-  box-shadow: 0 22px 40px rgba(0, 0, 0, 0.46);
-}
 body.dark-mode-1 .native-deck-builder-load-status.visible {
   color: #dff7e5;
   background: rgba(28, 90, 49, 0.95);
@@ -1405,16 +1395,10 @@ body.dark-mode-1 .native-deck-builder-edge-toggle:hover {
   background: linear-gradient(to bottom, #95c6b4, #72ab97);
   color: white;
 }
-#importLimitlessButton {
-  background: linear-gradient(to bottom, #90d4a3, #6fbf85);
-  color: white;
-  font-size: 0.75em;
-  line-height: 1;
-}
 #confirmButton {
   margin-left: 0.3vw;
 }
-#importButton, #importLimitlessButton {
+#importButton {
   cursor: pointer;
   width: 25%;
   height: 3.5vh;
@@ -1424,9 +1408,6 @@ body.dark-mode-1 .native-deck-builder-edge-toggle:hover {
 }
 #importButton:hover, #confirmButton:hover {
   background: linear-gradient(to bottom, #7bb9a2, #5faa96);
-}
-#importLimitlessButton:hover {
-  background: linear-gradient(to bottom, #7cc492, #5faf75);
 }
 #cancelButton, #confirmButton, #saveButton {
   cursor: pointer;

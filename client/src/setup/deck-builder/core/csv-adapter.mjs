@@ -47,7 +47,6 @@ export function serializeDeckToSimCsv(decklist = {}) {
 export function parseSimCsv(csvData = '') {
   const rows = String(csvData).split('\n');
   const newDecklist = {};
-  const seenCardUrl = [];
 
   for (const [index, row] of rows.entries()) {
     if (index === 0 || !row.trim()) continue;
@@ -61,26 +60,23 @@ export function parseSimCsv(csvData = '') {
     };
 
     if (!newDecklist[card.name]) {
-      newDecklist[card.name] = { cards: [], totalCount: Number(0) };
+      newDecklist[card.name] = { cards: [], totalCount: 0 };
     }
 
-    if (newDecklist[card.name].totalCount < 4) {
-      let cardFound = false;
-      for (const cardEntry of newDecklist[card.name].cards) {
-        if (seenCardUrl.includes(card.image)) {
-          cardEntry.count += 1;
-          cardFound = true;
-          break;
-        }
+    let cardFound = false;
+    for (const cardEntry of newDecklist[card.name].cards) {
+      if (cardEntry.data.image === card.image) {
+        cardEntry.count += Number(card.count);
+        cardFound = true;
+        break;
       }
-
-      if (!cardFound) {
-        newDecklist[card.name].cards.push({ data: card, count: Number(card.count) });
-        seenCardUrl.push(card.image);
-      }
-
-      newDecklist[card.name].totalCount += Number(card.count);
     }
+
+    if (!cardFound) {
+      newDecklist[card.name].cards.push({ data: card, count: Number(card.count) });
+    }
+
+    newDecklist[card.name].totalCount += Number(card.count);
   }
 
   return newDecklist;
