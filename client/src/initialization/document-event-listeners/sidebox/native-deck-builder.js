@@ -328,7 +328,7 @@ export const initializeNativeDeckBuilder = () => {
     clearButton.style.display = hasDeckCards ? '' : 'none';
 
     targetLabel.textContent =
-      currentLoadTarget === 'self' ? 'Main Deck' : 'Alt Deck';
+      currentLoadTarget === 'self' ? 'P1 Deck' : 'P2 Deck';
     targetMainButton.classList.toggle(
       'native-target-selected',
       currentLoadTarget === 'self'

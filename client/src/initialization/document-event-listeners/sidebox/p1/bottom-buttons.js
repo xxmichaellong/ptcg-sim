@@ -216,7 +216,7 @@ export const initializeP1BottomButtons = () => {
   }
 
   function exitReplayMode() {
-    document.getElementById('p1Button').innerHTML = '1P';
+    document.getElementById('p1Button').innerHTML = 'Solo';
     document.getElementById('p1Button').style.width = '';
     document.getElementById('settingsButton').style.width = '';
     document.getElementById('p2Button').style.display = '';

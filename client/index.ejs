@@ -62,8 +62,8 @@
     </div>
 
     <div id="topButtonContainer">
-        <button id="p1Button" class="selected-page">1P</button>
-        <button id="p2Button" class="not-selected-page">2P</button>
+        <button id="p1Button" class="selected-page">Solo</button>
+        <button id="p2Button" class="not-selected-page">Multiplayer</button>
         <button id="deckImportButton" class="not-selected-page">Deck</button>
         <button id="settingsButton" class="not-selected-page">Settings</button>
     </div>
@@ -164,8 +164,8 @@
         <div id="nativeDeckBuilderValidation" style="display:none;"></div>
         <div id="nativeDeckBuilderCards" style="display:none;"></div>
         <div id="importButtonContainer">
-            <button id="mainImportHeaderButton" class="main-select">Main</button>
-            <button id="altImportHeaderButton">Alt (1P only)</button>
+            <button id="mainImportHeaderButton" class="main-select">P1</button>
+            <button id="altImportHeaderButton">P2 (Solo only)</button>
         </div>
         <textarea id="mainDeckImportInput" spellcheck="false"></textarea>
         <script>
@@ -173,7 +173,7 @@
         </script>          
         <textarea id="altDeckImportInput" spellcheck="false"></textarea>
         <script>
-            document.getElementById("altDeckImportInput").placeholder = "Paste your alternative decklist here if you are playing against yourself. \n\nClick the book 📖 to look through popular decks or click the wand 🪄 for a random deck! \n\nFor uploading custom images, write the quantity and name (i.e. 2 Pikachu) and click on the 'Import' button below. \n\nInternational languages are supported for cards using Limitless URLs.";
+            document.getElementById("altDeckImportInput").placeholder = "Paste the P2 decklist here for Solo mode. \n\nClick the book 📖 to look through popular decks or click the wand 🪄 for a random deck! \n\nFor uploading custom images, write the quantity and name (i.e. 2 Pikachu) and click on the 'Import' button below. \n\nInternational languages are supported for cards using Limitless URLs.";
         </script>
         <div id="importBottom">
             <button id="decklistsButton">📖</button>
@@ -183,7 +183,7 @@
             <button id="saveButton" class="neutral-color">Save</button>
             <div id="decklistsContextMenu" class="decklists-context-menu"></div>
             <button id="randomButton">🪄</button>
-            <div id="successText">Success!</div><div id="failedText">Error!</div><div id="loadingText"></div><div id="invalidText">1P only!</div>
+            <div id="successText">Success!</div><div id="failedText">Error!</div><div id="loadingText"></div><div id="invalidText">Solo only!</div>
         </div>
         <div id="uploadButtonsContainer">
             <button id="changeCardBackButton" class="self-color">Change Card Back</button>
@@ -223,8 +223,8 @@
                     <span id="nativeDeckBuilderTargetLabel">P1 Deck</span>
                 </div>
                 <div class="native-deck-builder-target-controls">
-                    <button id="nativeDeckBuilderTargetMain" class="native-target-button native-target-selected">Main</button>
-                    <button id="nativeDeckBuilderTargetAlt" class="native-target-button">Alt (1P only)</button>
+                    <button id="nativeDeckBuilderTargetMain" class="native-target-button native-target-selected">P1</button>
+                    <button id="nativeDeckBuilderTargetAlt" class="native-target-button">P2 (Solo only)</button>
                 </div>
             </div>
             <div class="native-deck-builder-body">
@@ -323,7 +323,7 @@
             </div>
             <div>
                 <input type="checkbox" id="hideHandCheckbox">
-                <label for="hideHandCheckbox">Hide opponent's hand (1P mode)</label>
+                <label for="hideHandCheckbox">Hide opponent's hand (Solo mode)</label>
             </div>
         </div>
         <button id="changeBackgroundButton" class="neutral-color">Change background</button>
@@ -537,9 +537,10 @@
 
         <p><strong>OTHER ADDITIONS/CHANGES</strong></p>
         <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-        <li style="font-size: 16px; margin-bottom: 10px;">Deck validation now supports both TCG (60-card, 4-copy) and TCG Pocket (20-card, 2-copy) formats with automatic format detection.</li>
-        <li style="font-size: 16px; margin-bottom: 10px;">Streamlined the import page — removed redundant buttons and consolidated the UI.</li>
-        <li style="font-size: 16px; margin-bottom: 10px;">Made "Import" button for text decklists more robust, so hopefully more cards will be correctly imported (especially new ones).</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">The tabs in the top right have been renamed: 1P and 2P are now called Solo and Multiplayer, and the Import tab is now the Deck tab, which has the Deck Builder.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Main and Alt deck have been renamed to P1 and P2, which better reflects their purpose.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Importing text decklists should now correctly import more cards (especially new ones).</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Deck validation now supports both TCG and TCG Pocket formats with automatic detection.</li>
         </ul>
 
         <p><strong>SHOUTOUTS:</strong></p>

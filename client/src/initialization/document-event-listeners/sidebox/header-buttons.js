@@ -16,9 +16,7 @@ export const initializeHeaderButtons = () => {
   p1Button.addEventListener('click', () => {
     if (!systemState.isTwoPlayer) {
       show('p1Box', p1Button);
-      document.dispatchEvent(new CustomEvent('deck-builder-closing'));
-      const panel = document.getElementById('nativeDeckBuilderWorkspace');
-      if (panel) panel.classList.remove('open');
+      closeOverlays();
     } else if (
       window.confirm(
         'Are you sure you want to leave the room? Battle log will be erased.'
@@ -87,21 +85,29 @@ export const initializeHeaderButtons = () => {
     }
   });
 
-  const closeDeckBuilder = () => {
+  const closeOverlays = () => {
     document.dispatchEvent(new CustomEvent('deck-builder-closing'));
     const panel = document.getElementById('nativeDeckBuilderWorkspace');
     if (panel) panel.classList.remove('open');
+    const changelog = document.getElementById('changelog');
+    if (changelog) changelog.style.display = 'none';
+    const donationsPage = document.getElementById('donationsPage');
+    if (donationsPage) donationsPage.style.display = 'none';
   };
 
   const p2Button = document.getElementById('p2Button');
   p2Button.addEventListener('click', () => {
     show('p2Box', p2Button);
-    closeDeckBuilder();
+    closeOverlays();
   });
 
   const deckImportButton = document.getElementById('deckImportButton');
   deckImportButton.addEventListener('click', () => {
     show('deckImport', deckImportButton);
+    const changelog = document.getElementById('changelog');
+    if (changelog) changelog.style.display = 'none';
+    const donationsPage = document.getElementById('donationsPage');
+    if (donationsPage) donationsPage.style.display = 'none';
     const panel = document.getElementById('nativeDeckBuilderWorkspace');
     if (panel) panel.classList.add('open');
   });
@@ -109,6 +115,6 @@ export const initializeHeaderButtons = () => {
   const settingsButton = document.getElementById('settingsButton');
   settingsButton.addEventListener('click', () => {
     show('settings', settingsButton);
-    closeDeckBuilder();
+    closeOverlays();
   });
 };
