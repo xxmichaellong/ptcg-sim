@@ -44,19 +44,20 @@ export const processAction = (user, emit, action, parameters) => {
     }
 
     if (!systemState.isTwoPlayer || user === 'self') {
-      //for storing spectator data (note we edited the parameter metric here to reverse the initatior change)
-      if (parameters[0]) {
-        if (parameters[0] === 'self') {
-          parameters[0] = 'opp';
-        } else if (parameters[0] === 'opp') {
-          parameters[0] = 'self';
+      //for storing spectator/export data (use a copy to avoid mutating selfActionData)
+      const exportParameters = [...parameters];
+      if (exportParameters[0]) {
+        if (exportParameters[0] === 'self') {
+          exportParameters[0] = 'opp';
+        } else if (exportParameters[0] === 'opp') {
+          exportParameters[0] = 'self';
         }
       }
       const data = {
         user: user,
         emit: emit,
         action: action,
-        parameters: parameters,
+        parameters: exportParameters,
       };
       // systemState.spectatorActionData.push(data);
       if (action !== 'exchangeData' && action !== 'loadDeckData') {

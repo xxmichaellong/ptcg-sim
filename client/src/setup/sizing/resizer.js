@@ -93,10 +93,10 @@ export const selfResize = (e) => {
     : '51%';
   if (selfResizerBottom + selfResizer.offsetHeight > oppResizerBottom) {
     oppResizer.style.bottom =
-      100 + 2 - (clientY / window.innerHeight) * 100 + '%';
+      100 + 2.5 - (clientY / window.innerHeight) * 100 + '%';
     oppContainer.style.height = Math.max(1, newOppHeight) + '%';
     oppContainer.style.bottom =
-      100 + 1 - (clientY / window.innerHeight) * 100 + '%';
+      100 + 1.5 - (clientY / window.innerHeight) * 100 + '%';
     newOppHeight = parseInt(oppContainer.offsetHeight);
     const oppRatio = newOppHeight / oldOppHeight;
     adjustCards('opp', 'bench', oppRatio);
@@ -118,13 +118,13 @@ export const selfResize = (e) => {
         2 -
         3
     ) + '%';
-  oppResizer.style.height = '2%';
-  if (parseFloat(oppResizer.style.bottom) > 100) {
-    oppResizer.style.height = '6%';
+  oppResizer.style.height = '2.5%';
+  if (parseFloat(oppResizer.style.bottom) > 95) {
+    oppResizer.style.height = '10%';
   }
-  selfResizer.style.height = '2%';
-  if (parseFloat(selfResizer.style.bottom) < 0) {
-    selfResizer.style.height = '6%';
+  selfResizer.style.height = '2.5%';
+  if (parseFloat(selfResizer.style.bottom) < 5) {
+    selfResizer.style.height = '10%';
   }
 };
 
@@ -164,7 +164,7 @@ export const oppResize = (e) => {
   if (selfResizerBottom + selfResizer.offsetHeight > oppResizerBottom) {
     selfContainer.style.height = Math.max(1, newSelfHeight) + '%';
     selfResizer.style.bottom =
-      100 - 2 - (clientY / window.innerHeight) * 100 + '%';
+      100 - 2.5 - (clientY / window.innerHeight) * 100 + '%';
     newSelfHeight = parseInt(selfContainer.offsetHeight);
     const selfRatio = newSelfHeight / oldSelfHeight;
     adjustCards('self', 'bench', selfRatio);
@@ -186,13 +186,13 @@ export const oppResize = (e) => {
         2 -
         3
     ) + '%';
-  oppResizer.style.height = '2%';
-  if (parseFloat(oppResizer.style.bottom) > 100) {
-    oppResizer.style.height = '6%';
+  oppResizer.style.height = '2.5%';
+  if (parseFloat(oppResizer.style.bottom) > 95) {
+    oppResizer.style.height = '10%';
   }
-  selfResizer.style.height = '2%';
-  if (parseFloat(selfResizer.style.bottom) < 0) {
-    selfResizer.style.height = '6%';
+  selfResizer.style.height = '2.5%';
+  if (parseFloat(selfResizer.style.bottom) < 5) {
+    selfResizer.style.height = '10%';
   }
 };
 
@@ -295,7 +295,7 @@ export const flippedSelfResize = (e) => {
     : '51%';
   if (selfResizerBottom + selfResizer.offsetHeight > oppResizerBottom) {
     oppResizer.style.bottom =
-      100 + 1 - (clientY / window.innerHeight) * 100 + '%';
+      100 + 1.5 - (clientY / window.innerHeight) * 100 + '%';
     selfContainer.style.height = newSelfHeight + '%';
     selfContainer.style.bottom =
       100 - (clientY / window.innerHeight) * 100 + '%';
@@ -320,13 +320,13 @@ export const flippedSelfResize = (e) => {
         2 -
         3
     ) + '%';
-  oppResizer.style.height = '2%';
-  if (parseFloat(oppResizer.style.bottom) > 100) {
-    oppResizer.style.height = '5%';
+  oppResizer.style.height = '2.5%';
+  if (parseFloat(oppResizer.style.bottom) > 95) {
+    oppResizer.style.height = '10%';
   }
-  selfResizer.style.height = '2%';
-  if (parseFloat(selfResizer.style.bottom) < 0) {
-    selfResizer.style.height = '6%';
+  selfResizer.style.height = '2.5%';
+  if (parseFloat(selfResizer.style.bottom) < 5) {
+    selfResizer.style.height = '10%';
   }
 };
 
@@ -363,7 +363,7 @@ export const flippedOppResize = (e) => {
   if (selfResizerBottom + selfResizer.offsetHeight > oppResizerBottom) {
     oppContainer.style.height = newOppHeight + '%';
     selfResizer.style.bottom =
-      100 - 1 - (clientY / window.innerHeight) * 100 + '%';
+      100 - 1.5 - (clientY / window.innerHeight) * 100 + '%';
     newOppHeight = parseInt(oppContainer.offsetHeight);
     const oppRatio = newOppHeight / oldOppHeight;
     adjustCards('opp', 'bench', oppRatio);
@@ -385,12 +385,12 @@ export const flippedOppResize = (e) => {
         2 -
         3
     ) + '%';
-  oppResizer.style.height = '2%';
-  if (parseFloat(oppResizer.style.bottom) > 100) {
-    oppResizer.style.height = '5%';
+  oppResizer.style.height = '2.5%';
+  if (parseFloat(oppResizer.style.bottom) > 95) {
+    oppResizer.style.height = '10%';
   }
-  selfResizer.style.height = '2%';
-  if (parseFloat(selfResizer.style.bottom) < 0) {
-    selfResizer.style.height = '6%';
+  selfResizer.style.height = '2.5%';
+  if (parseFloat(selfResizer.style.bottom) < 5) {
+    selfResizer.style.height = '10%';
   }
 };

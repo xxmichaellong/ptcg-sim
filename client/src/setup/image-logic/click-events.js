@@ -98,6 +98,7 @@ export const openCardContextMenu = (event) => {
     shufflePrizesButton: [[selfView, 'prizes']],
     lookPrizesButton: [[true, 'prizes']],
     revealHidePrizesButton: [[true, 'prizes']],
+    shufflePrizesToDeckBottomButton: [[selfView, 'prizes']],
     lookHandButton: [[oppView, 'hand']],
     randomHandButton: [[oppView, 'hand']],
     shuffleDeckButton: [[true, 'deckCover']],
@@ -174,6 +175,9 @@ export const openCardContextMenu = (event) => {
       cardContextMenu.style.left = `${targetRect.left - cardContextMenu.clientWidth}px`;
       cardContextMenu.style.top = `${targetRect.top + offsetHeight}px`;
     } else if (event.target.parentElement.id === 'hand') {
+      cardContextMenu.style.left = `${targetRect.left}px`;
+      cardContextMenu.style.top = `${targetRect.top + offsetHeight - cardContextMenu.offsetHeight}px`;
+    } else if (event.target.parentElement.id === 'prizes') {
       cardContextMenu.style.left = `${targetRect.left}px`;
       cardContextMenu.style.top = `${targetRect.top + offsetHeight - cardContextMenu.offsetHeight}px`;
     } else {

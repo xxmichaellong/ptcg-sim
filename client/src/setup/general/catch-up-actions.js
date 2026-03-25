@@ -6,6 +6,8 @@ export const catchUpActions = (actionData) => {
 
   missingData.forEach((entry) => {
     systemState.oppCounter++;
+    // Deep-copy parameters to avoid mutating the sender's action data
+    entry.parameters = [...entry.parameters];
     if (entry.parameters[0] === 'self') {
       entry.parameters[0] = 'opp';
     } else if (entry.parameters[0] === 'opp') {

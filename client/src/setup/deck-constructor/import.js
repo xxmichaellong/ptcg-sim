@@ -20,7 +20,6 @@ const confirmButton = document.getElementById('confirmButton');
 const decklistsButton = document.getElementById('decklistsButton');
 const failedText = document.getElementById('failedText');
 const importButton = document.getElementById('importButton');
-const importLimitlessButton = document.getElementById('importLimitlessButton');
 const randomButton = document.getElementById('randomButton');
 const invalidText = document.getElementById('invalidText');
 const loadingText = document.getElementById('loadingText');
@@ -28,8 +27,6 @@ const mainDeckImportInput = document.getElementById('mainDeckImportInput');
 const p1Button = document.getElementById('p1Button');
 const p2Button = document.getElementById('p2Button');
 const saveButton = document.getElementById('saveButton');
-const saveCurrentButton = document.getElementById('saveCurrentButton');
-const csvFile = document.getElementById('csvFile');
 const changeCardBackButton = document.getElementById('changeCardBackButton');
 const changeLanguageButton = document.getElementById('changeLanguageButton');
 
@@ -44,17 +41,16 @@ const cardDataToID = (card) => {
     "region": "int for international, tpc for Japanese"
   }
   */
-  let id = card["id"];
-  if(id){
+  let id = card['id'];
+  if (id) {
     return id;
   }
-  let set = card["set"];
-  let number = card["number"];
-  let region = card["region"];
-  if(region==="tpc"){
+  let set = card['set'];
+  let number = card['number'];
+  let region = card['region'];
+  if (region === 'tpc') {
     return null;
   }
-
 
   const oldSetCode_to_id = {
     // the following are taken from pokemontcg.io (v2)'s ptcgoCode
@@ -149,15 +145,14 @@ const cardDataToID = (card) => {
     FRLG: 'ex6',
     BG: 'bp',
   };
-  if(oldSetCode_to_id[set]){
+  if (oldSetCode_to_id[set]) {
     return oldSetCode_to_id[set] + '-' + number;
   }
 
   // special case for PR-DPP
   if (set === 'PR-DPP' || set === 'DPP') {
     return number.replace(/^(\d+)?$/, (_, digits) => {
-      const paddedDigits =
-      digits.length < 3 ? digits.padStart(2, '0') : digits;
+      const paddedDigits = digits.length < 3 ? digits.padStart(2, '0') : digits;
       return 'dpp-DP' + paddedDigits;
     });
   }
@@ -184,16 +179,16 @@ const cardDataToID = (card) => {
     'SVP 191': 'svp-191',
     'SVP 192': 'svp-192',
   };
-  if(region==="int"){
-    if(set){
-      if(noImg_to_id[`${set} ${number}`]){
+  if (region === 'int') {
+    if (set) {
+      if (noImg_to_id[`${set} ${number}`]) {
         return noImg_to_id[`${set} ${number}`];
       }
     }
   }
 
   return null;
-}
+};
 
 const getLanguage = () => {
   const languageText = changeLanguageButton.textContent;
@@ -221,10 +216,10 @@ const getLanguage = () => {
       language = 'EN';
   }
   return language;
-}
+};
 
 const getEnergies = (language) => {
-  if(!language){
+  if (!language) {
     language = getLanguage();
   }
   return {
@@ -265,7 +260,7 @@ const getEnergies = (language) => {
     'Basic Metal Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_008_R_${language}.png`,
     'Basic Water Energy null': `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SVE/SVE_003_R_${language}.png`,
   };
-}
+};
 
 const cardDataToImageURL = (card) => {
   /*
@@ -279,23 +274,23 @@ const cardDataToImageURL = (card) => {
     }
   */
 
-  let set = card["set"];
-  let number = card["number"];
+  let set = card['set'];
+  let number = card['number'];
   let id = cardDataToID(card);
-  let name = card["name"];
-  let region = card["region"];
-  if(!region){
-    region = "int";
+  let name = card['name'];
+  let region = card['region'];
+  if (!region) {
+    region = 'int';
   }
 
   let language = getLanguage();
   const energies = getEnergies(language);
-  if((set==='null') || !set){
-    if(!id){
-      if(energies[name]){
+  if (set === 'null' || !set) {
+    if (!id) {
+      if (energies[name]) {
         return energies[name];
       }
-      return "";
+      return '';
     }
   }
 
@@ -309,10 +304,9 @@ const cardDataToImageURL = (card) => {
     // cubekoga compatibility
     sma: 'HIF',
   };
-  if(specialCases[set]){
+  if (specialCases[set]) {
     set = specialCases[set];
   }
-
 
   // Special set codes that should use tpc format directly
   const tpcSets = new Set([
@@ -340,109 +334,108 @@ const cardDataToImageURL = (card) => {
     'SV1W',
     'SV1',
   ]);
-  if(tpcSets.has(set)){
-    region = "tpc";
+  if (tpcSets.has(set)) {
+    region = 'tpc';
   }
 
-
-  if(id){
+  if (id) {
     const [set_ID, set_Number] = id.split('-');
-    return 'https://images.pokemontcg.io/' + set_ID + '/' + set_Number + '_hires.png';
+    return (
+      'https://images.pokemontcg.io/' + set_ID + '/' + set_Number + '_hires.png'
+    );
   }
-  if(region==="tpc"){
+  if (region === 'tpc') {
     return `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpc/${set}/${set}_${number}_R_JP_LG.png`;
   }
-  if(set){
-    if(!number) return;
+  if (set) {
+    if (!number) return;
     const paddedNumber = number.replace(
       /^(\d+)([a-zA-Z])?$/,
       (_, digits, letter) => {
         const paddedDigits =
-        digits.length < 3 ? digits.padStart(3, '0') : digits;
+          digits.length < 3 ? digits.padStart(3, '0') : digits;
         return letter ? paddedDigits + letter : paddedDigits;
       }
     );
     return `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/${set.replace(/ /g, '/')}/${set.replace(/ /g, '_')}_${paddedNumber}_R_${language}.png`;
   }
   return;
-}
+};
 
 const escapeRegExp = (string) => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
+};
 
 const LimitlessDecklistArray = async (decklist) => {
   // Each card will be stored as [quantity, name, set code, number, pokemontcg.io id, image url, type]
 
   const card_types = {
-    "pokemon": "Pokémon",
-    "trainer": "Trainer",
-    "energy": "Energy"
-  }
+    pokemon: 'Pokémon',
+    trainer: 'Trainer',
+    energy: 'Energy',
+  };
 
   let response;
   try {
-    response = await (await fetch('https://limitlesstcg.com/api/dm/import', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ input: decklist })
-    })).json();
+    response = await (
+      await fetch('https://limitlesstcg.com/api/dm/import', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ input: decklist }),
+      })
+    ).json();
   } catch {
     return [];
   }
 
   let decklistArray = [];
-  const cards = response["cards"] || [];
-  const errors = response["errors"] || [];
+  const cards = response['cards'] || [];
+  const errors = response['errors'] || [];
 
   for (let card of cards) {
     decklistArray.push([
-      card["count"],
-      card["name"],
-      null,null,null,
+      card['count'],
+      card['name'],
+      null,
+      null,
+      null,
       cardDataToImageURL({
-        "name": card["name"],
-        "set": card["set"],
-        "number": card["number"],
-        "region": card["region"]
+        name: card['name'],
+        set: card['set'],
+        number: card['number'],
+        region: card['region'],
       }),
-      card_types[card["card_type"]]
-    ])
+      card_types[card['card_type']],
+    ]);
   }
   for (let error of errors) {
     let card_name = error.match(/Card \"(.+)\" was not found./);
     if (card_name) {
       card_name = card_name[1];
-      let qty = decklist.match(new RegExp('(\\d+) ' + escapeRegExp(card_name.trim())));
+      let qty = decklist.match(
+        new RegExp('(\\d+) ' + escapeRegExp(card_name.trim()))
+      );
       if (qty) {
-        decklistArray.push([
-          qty[1],
-          card_name,
-          null,null,null,null,null
-        ])
+        decklistArray.push([qty[1], card_name, null, null, null, null, null]);
       } else {
         // in theory this should never happen, but sometimes Limitless adds inexplicable spaces and it ends up happening
-        decklistArray.push([
-          0,
-          card_name,
-          null,null,null,null,null
-        ])
+        decklistArray.push([0, card_name, null, null, null, null, null]);
       }
     }
   }
   return decklistArray;
-}
+};
 
 const ptcgsimDecklistArray = (decklist) => {
   const regexWithOldSet = /(\d+) (.+?)(?= \w*-\w*\d*$) (\w*-\w*\d*)/;
   const regexWithSet =
-  /(\d+) (.+?) (\w{2,5}[1-9]?[A-Z]?|WBSP|NBSP|FRLG|FUT20) (\d+[a-zA-Z]?)/;
+    /(\d+) (.+?) (\w{2,5}[1-9]?[A-Z]?|WBSP|NBSP|FRLG|FUT20) (\d+[a-zA-Z]?)/;
   const regexWithPRSet =
-  /(\d+) (.+?) (PR-\w{2,3}) ((?:DP|HGSS|BW|XY|SM|SWSH)?)(\d+)/;
+    /(\d+) (.+?) (PR-\w{2,3}) ((?:DP|HGSS|BW|XY|SM|SWSH)?)(\d+)/;
   const regexWithSpecialSet =
-  /(\d+) (.+?) ((?:\w{2,3}[a-zA-Z]\d*|\w{2,3}(?:\s+[a-zA-Z\d]+)*)(?:\s+(\w{2,3}\s*[a-zA-Z\d]+)\s*)*)$/;
+    /(\d+) (.+?) ((?:\w{2,3}[a-zA-Z]\d*|\w{2,3}(?:\s+[a-zA-Z\d]+)*)(?:\s+(\w{2,3}\s*[a-zA-Z\d]+)\s*)*)$/;
   const regexWithoutSet = /(\d+) (.+?)(?=\s\d|$|(\s\d+))/;
 
   // Initialize an array to store the results
@@ -472,130 +465,152 @@ const ptcgsimDecklistArray = (decklist) => {
       const [, quantity, name, id] = matchWithOldSet;
       decklistArray.push([
         parseInt(quantity),
-                         name,
-                         null,
-                         null,
-                         id,
-                         null,
-                         undefined,
+        name,
+        null,
+        null,
+        id,
+        null,
+        undefined,
       ]);
     } else if (matchWithSet) {
       const [, quantity, name, set, setNumber] = matchWithSet;
       decklistArray.push([
         parseInt(quantity),
-                         name,
-                         set,
-                         setNumber,
-                         null,
-                         null,
-                         undefined,
+        name,
+        set,
+        setNumber,
+        null,
+        null,
+        undefined,
       ]);
     } else if (matchWithPRSet) {
       const [, quantity, name, prSet, , setNumber] = matchWithPRSet;
       decklistArray.push([
         parseInt(quantity),
-                         name,
-                         prSet,
-                         setNumber,
-                         null,
-                         null,
-                         undefined,
+        name,
+        prSet,
+        setNumber,
+        null,
+        null,
+        undefined,
       ]);
     } else if (matchWithSpecialSet) {
       const [, quantity, name, setAll] = matchWithSpecialSet;
       const [set, setNumber] = setAll.trim().split(/(?<=\S)\s/);
       decklistArray.push([
         parseInt(quantity),
-                         name,
-                         set,
-                         setNumber,
-                         null,
-                         null,
-                         undefined,
+        name,
+        set,
+        setNumber,
+        null,
+        null,
+        undefined,
       ]);
     } else if (matchWithoutSet) {
       const [, quantity, name] = matchWithoutSet;
       decklistArray.push([
         parseInt(quantity),
-                         name,
-                         null,
-                         null,
-                         null,
-                         null,
-                         undefined,
+        name,
+        null,
+        null,
+        null,
+        null,
+        undefined,
       ]);
     }
   });
 
   return decklistArray;
-}
+};
 
-const DecklistArray = async (decklist,limitless) => {
+const DecklistArray = async (decklist) => {
   // Each card will be stored as [quantity, name, set code, number, pokemontcg.io id, image url, type]
-  if(limitless){
-    return await LimitlessDecklistArray(decklist);
-  }
   let decklistArray = ptcgsimDecklistArray(decklist);
   const energies = getEnergies();
   for (let i = 0; i < decklistArray.length; i++) {
     decklistArray[i][4] = cardDataToID({
-      "set": decklistArray[i][2],
-      "number": decklistArray[i][3],
-      "id": decklistArray[i][4],
-      "name": decklistArray[i][1]
+      set: decklistArray[i][2],
+      number: decklistArray[i][3],
+      id: decklistArray[i][4],
+      name: decklistArray[i][1],
     });
     decklistArray[i][5] = cardDataToImageURL({
-       "set": decklistArray[i][2],
-       "number": decklistArray[i][3],
-       "id": decklistArray[i][4],
-       "name": decklistArray[i][1]
+      set: decklistArray[i][2],
+      number: decklistArray[i][3],
+      id: decklistArray[i][4],
+      name: decklistArray[i][1],
     });
-    if(!decklistArray[i][6]){
-      if(decklistArray[i][2]){
-        if(decklistArray[i][3]){
-          decklistArray[i][6] = getCardType(decklistArray[i][2], decklistArray[i][3]);
+    if (!decklistArray[i][6]) {
+      if (decklistArray[i][2]) {
+        if (decklistArray[i][3]) {
+          decklistArray[i][6] = getCardType(
+            decklistArray[i][2],
+            decklistArray[i][3]
+          );
         }
       }
-      if(decklistArray[i][4]){
+      if (decklistArray[i][4]) {
         decklistArray[i][6] = getOldCardType(decklistArray[i][4]);
       }
-      if(energies[decklistArray[i][1]]){
-        decklistArray[i][6] = 'Energy'
+      if (energies[decklistArray[i][1]]) {
+        decklistArray[i][6] = 'Energy';
       }
     }
   }
-  return decklistArray;
-}
 
-export const importDecklist = async (user,limitless) => {
+  // Fallback: use Limitless API for entries missing type or image
+  const incompleteIndices = [];
+  for (let i = 0; i < decklistArray.length; i++) {
+    if (!decklistArray[i][5] || !decklistArray[i][6] || decklistArray[i][6] === 'Unknown') {
+      incompleteIndices.push(i);
+    }
+  }
+
+  if (incompleteIndices.length > 0) {
+    const miniDecklist = incompleteIndices
+      .map((i) => `${decklistArray[i][0]} ${decklistArray[i][1]}`)
+      .join('\n');
+
+    const limitlessResults = await LimitlessDecklistArray(miniDecklist);
+
+    for (let idx of incompleteIndices) {
+      const entry = decklistArray[idx];
+      const match = limitlessResults.find((r) => r[1] === entry[1]);
+      if (match) {
+        if (!entry[5] && match[5]) entry[5] = match[5];
+        if ((!entry[6] || entry[6] === 'Unknown') && match[6]) entry[6] = match[6];
+      }
+    }
+  }
+
+  return decklistArray;
+};
+
+export const importDecklist = async (user) => {
   failedText.style.display = 'none';
   invalidText.style.display = 'none';
   loadingText.style.display = 'block';
   importButton.disabled = true;
-  importLimitlessButton.disabled = true;
 
   const decklist =
     user === 'self' ? mainDeckImportInput.value : altDeckImportInput.value;
 
-  let decklistArray = await DecklistArray(decklist,limitless);
+  let decklistArray = await DecklistArray(decklist);
 
   if (decklistArray.length < 1) {
     failedText.style.display = 'block';
     loadingText.style.display = 'none';
     importButton.disabled = false;
-    importLimitlessButton.disabled = false;
     return;
   }
-
 
   let fetchPromises = decklistArray.map((entry) => {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
-        if(entry[6]){
+        if (entry[6]) {
           resolve(true);
-        }
-        else{
+        } else {
           resolve(false);
         }
       };
@@ -665,13 +680,11 @@ export const importDecklist = async (user,limitless) => {
       });
 
       importButton.disabled = false;
-      importLimitlessButton.disabled = false;
       selfContainer.style.zIndex = -1;
       oppContainer.style.zIndex = -1;
       loadingText.style.display = 'none';
       decklistsButton.style.display = 'none';
       importButton.style.display = 'none';
-      importLimitlessButton.style.display = 'none';
       randomButton.style.display = 'none';
       changeLanguageButton.style.display = 'none';
       confirmButton.style.display = 'block';
@@ -702,11 +715,17 @@ export const loadDeckData = (user, deckData, emit = true) => {
   if (deckData) {
     appendMessage(
       '',
-      determineUsername(user) + ' imported deck',
+      determineUsername(user) + ' loaded deck',
       'announcement',
       false
     );
   }
+  // Notify the native deck builder so it can sync its state after a load.
+  document.dispatchEvent(
+    new CustomEvent('native-deck-builder:deck-loaded', {
+      detail: { user, deckData },
+    })
+  );
   processAction(user, emit, 'loadDeckData', [deckData]);
 };
 
@@ -715,7 +734,6 @@ cancelButton.addEventListener('click', () => {
   oppContainer.style.zIndex = 0;
   decklistsButton.style.display = 'block';
   importButton.style.display = 'block';
-  importLimitlessButton.style.display = 'block';
   randomButton.style.display = 'block';
   changeLanguageButton.style.display = 'inline-block';
   confirmButton.style.display = 'none';
@@ -733,9 +751,7 @@ confirmButton.addEventListener('click', () => {
   oppContainer.style.zIndex = 0;
   decklistsButton.style.display = 'block';
   importButton.style.display = 'block';
-  importLimitlessButton.style.display = 'block';
   randomButton.style.display = 'block';
-  saveCurrentButton.style.display = 'block';
   changeLanguageButton.style.display = 'inline-block';
   confirmButton.style.display = 'none';
   cancelButton.style.display = 'none';
@@ -785,17 +801,6 @@ confirmButton.addEventListener('click', () => {
     tableBody.removeChild(tableBody.firstChild);
   }
   decklistTable.style.display = 'none';
-  if (!systemState.isTwoPlayer) {
-    show('p1Box', p1Button);
-  } else if (
-    user === 'self' &&
-    !(
-      document.getElementById('spectatorModeCheckbox').checked &&
-      systemState.isTwoPlayer
-    )
-  ) {
-    show('p2Box', p2Button);
-  }
   loadDeckData(user, deckData);
 });
 
@@ -840,101 +845,6 @@ const exportTableToCSV = (filename, table) => {
 
 saveButton.addEventListener('click', () => {
   exportTableToCSV('decklist.csv', '#decklistTable tr');
-});
-
-saveCurrentButton.addEventListener('click', () => {
-  let table =
-    mainDeckImportInput.style.display !== 'none'
-      ? '#selfCurrentDecklistTable tr'
-      : '#oppCurrentDecklistTable tr';
-  exportTableToCSV('decklist.csv', table);
-});
-
-csvFile.addEventListener('change', (evt) => {
-  importButton.disabled = false;
-  importLimitlessButton.disabled = false;
-  selfContainer.style.zIndex = -1;
-  oppContainer.style.zIndex = -1;
-  loadingText.style.display = 'none';
-  decklistsButton.style.display = 'none';
-  importButton.style.display = 'none';
-  importLimitlessButton.style.display = 'none';
-  randomButton.style.display = 'none';
-  changeLanguageButton.style.display = 'none';
-  failedText.style.display = 'none';
-  decklistTable.style.display = 'block';
-  confirmButton.style.display = 'block';
-  cancelButton.style.display = 'block';
-  saveButton.style.display = 'block';
-
-  let file = evt.target.files[0];
-  let reader = new FileReader();
-  reader.onload = (e) => {
-    let contents = e.target.result;
-    let lines = contents.split('\n');
-    let tableBody = decklistTable.getElementsByTagName('tbody')[0];
-    // Clear the table body
-    while (tableBody.firstChild) {
-      tableBody.removeChild(tableBody.firstChild);
-    }
-    // Populate the table with the CSV data, skipping the first line (i.e., the headers)
-    for (let i = 1; i < lines.length; i++) {
-      let cells = lines[i].split(',');
-      if (cells.length === 4) {
-        let newRow = tableBody.insertRow();
-        let [quantity, name, type, url] = cells;
-
-        let qtyCell = newRow.insertCell();
-        let nameCell = newRow.insertCell();
-        let typeCell = newRow.insertCell();
-        let urlCell = newRow.insertCell();
-
-        qtyCell.contentEditable = 'true';
-        nameCell.contentEditable = 'true';
-        urlCell.contentEditable = 'true';
-
-        let typeSelect = document.createElement('select');
-        typeSelect.innerHTML = `
-                    <option value="">Select type...</option>
-                    <option value="Pokémon">Pokémon</option>
-                    <option value="Trainer">Trainer</option>
-                    <option value="Energy">Energy</option>
-                `;
-
-        // Set initial value if type exists
-        if (type) {
-          typeSelect.value = type;
-        }
-
-        typeCell.appendChild(typeSelect);
-
-        qtyCell.innerHTML = quantity;
-        nameCell.innerHTML = name;
-        urlCell.innerHTML = url;
-
-        // Add red outline for empty/undefined/null values
-        if (!quantity || quantity === 'undefined' || quantity === 'null') {
-          qtyCell.style.outline = '2px solid red';
-        }
-        if (!name || name === 'undefined' || name === 'null') {
-          nameCell.style.outline = '2px solid red';
-        }
-        if (!url || url === 'undefined' || url === 'null') {
-          urlCell.style.outline = '2px solid red';
-        }
-        if (
-          !type ||
-          type === 'undefined' ||
-          type === 'null' ||
-          type === 'Unknown'
-        ) {
-          typeCell.style.outline = '2px solid red';
-        }
-      }
-    }
-  };
-  reader.readAsText(file);
-  evt.target.value = '';
 });
 
 // ************ logic for changing cardbacks********************//

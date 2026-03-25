@@ -62,24 +62,24 @@
     </div>
 
     <div id="topButtonContainer">
-        <button id="p1Button" class="selected-page">1P</button>
-        <button id="p2Button" class="not-selected-page">2P</button>
-        <button id="deckImportButton" class="not-selected-page">Import</button>
+        <button id="p1Button" class="selected-page">Solo</button>
+        <button id="p2Button" class="not-selected-page">Multiplayer</button>
+        <button id="deckImportButton" class="not-selected-page">Deck</button>
         <button id="settingsButton" class="not-selected-page">Settings</button>
     </div>
     <div id="greyFiller"></div>
 
     <div id="p1Box" class="sidebox">
-        <div id="chatbox"><strong>Welcome to PTCG-sim!</strong>
-            <p><strong id="changelogLink" style="cursor: pointer; text-decoration: none; color: #ffcc00; border-bottom: 1px solid #ffcc00;">v1.5.1 Ϟ(๑⚈ ․̫ ⚈๑)⋆ </strong></p>
-            <p style="font-size: 90%;">PTCG-sim is an <a href="https://github.com/xxmichaellong/ptcg-sim" target="_blank">open-source</a> Pokémon Trading Card Game (Pokémon TCG) tabletop simulator. It supports single player and online multiplayer.</p> 
-            <p style="font-size: 90%;">Use the <strong>Import</strong> tab above to import your deck, then press <strong>Set Up</strong> to start a game.</p>
-            <p style="font-size: 90%;">Drag or use keybinds (hold <span class="shift-font">shift</span>) to move cards. </p>
-            <p style="font-size: 90%;">See the <strong>Options</strong> button below to import, export, and replay games.</p>
-            <p style="font-size: 90%;">Happy testing!</p>
-            <button id="tutorialButton">Watch Tutorial</button>
+        <div id="chatbox"><strong style="font-size: 115%;">Welcome to PTCG-sim!</strong>
+            <p style="font-size: 105%;"><strong id="changelogLink" style="cursor: pointer; text-decoration: none; color: #5b9bd5; border-bottom: 1px solid #5b9bd5;">v1.6 ⊹ ࣪ ﹏𓊝﹏𓂁﹏⊹ ࣪ ˖</strong></p>
+            <p style="font-size: 105%;">PTCG-sim is an <a href="https://github.com/xxmichaellong/ptcg-sim" target="_blank">open-source</a> Pokémon Trading Card Game (Pokémon TCG) tabletop simulator. It supports single player and online multiplayer.</p>
+            <p style="font-size: 105%;">Use the <strong>Deck</strong> tab above to import your deck, then press <strong>Set Up</strong> to start a game.</p>
+            <p style="font-size: 105%;">Drag or use keybinds (hold <span class="shift-font">shift</span>) to move cards. </p>
+            <p style="font-size: 105%;">See the <strong>Options</strong> button below to import, export, and replay games.</p>
+            <p style="font-size: 105%;">Happy testing!</p>
+            <button id="tutorialButton" style="font-size: 105%;">Watch Tutorial</button>
             <br><br>
-            <div id="links">
+            <div id="links" style="font-size: 105%;">
                 <div id="discordLink"><strong><a href="https://discord.gg/jMfhQa38mh" target="_blank">🎮 Join our Discord</a></strong></div>
                 <div id="donationsLink">🎁 Sponsors & Donations</div>
             </div>
@@ -89,7 +89,7 @@
             <button id="attackButton" class="self-color">Attack</button>
             <button id="passButton" class="self-color">Pass</button>
             <button id="undoButton" class="self-color">Undo</button>
-            <button id="FREEBUTTON" class="self-color">⚡</button>
+            <button id="FREEBUTTON" class="self-color">🌺</button>
         </div>
         <input id="messageInput" type="text" placeholder="Type your message here...">
         <div id="bottomP1ButtonContainer" class="sidebox-button-container">
@@ -103,7 +103,7 @@
     <div id="p2Box" class="sidebox">
         <div id="p2ExplanationBox">
             <strong>Online Multiplayer Mode</strong>
-            <br><br>
+            <div style="margin-top: 0.5em;"></div>
             Enter or generate a unique room ID to share with your friends. Players must enter the same ID (case-sensitive) to join.
         </div>
         <div id="lobby">
@@ -137,7 +137,7 @@
                 <button id="p2AttackButton" class="self-color">Attack</button>
                 <button id="p2PassButton" class="self-color">Pass</button>
                 <!-- <button id="p2UndoButton" class="self-color">Undo</button> -->
-                <button id="p2FREEBUTTON" class="self-color">⚡</button>
+                <button id="p2FREEBUTTON" class="self-color">🌺</button>
             </div>
             <input id="p2MessageInput" type="text" placeholder="Type your message here...">
             <div id="p2BottomButtonContainer" class="sidebox-button-container">
@@ -151,8 +151,6 @@
     </div>
     <div id="deckImport" class="sidebox">
         <div>
-            <button id="deckBuilderButton">Deck Builder</button>
-            <button id="importExportGameStateButton">Import/Export Game</button>
             <!-- <button id="decklistButton">New format decks</button>
             <script>
                 const decklistButton = document.getElementById('decklistButton');
@@ -161,32 +159,33 @@
                 });
             </script> -->
             </div>
+        <!-- Render targets populated by the native deck builder; hidden until in use. -->
+        <div id="nativeDeckBuilderSummary" style="display:none;"></div>
+        <div id="nativeDeckBuilderValidation" style="display:none;"></div>
+        <div id="nativeDeckBuilderCards" style="display:none;"></div>
         <div id="importButtonContainer">
-            <button id="mainImportHeaderButton" class="main-select">Main</button>
-            <button id="altImportHeaderButton">Alt (1P only)</button>
+            <button id="mainImportHeaderButton" class="main-select">P1</button>
+            <button id="altImportHeaderButton">P2 (Solo only)</button>
         </div>
         <textarea id="mainDeckImportInput" spellcheck="false"></textarea>
         <script>
-            document.getElementById("mainDeckImportInput").placeholder = "Paste your main decklist here. \n\nClick the book 📖 to look through popular decks or click the wand 🪄 for a random deck! \n\nFor uploading custom images, write the quantity and name (i.e. 2 Pikachu) and click on the 'Import' button. \n\nInternational languages are supported for cards using Limitless URLs.";
+            document.getElementById("mainDeckImportInput").placeholder = "Paste your decklist here or use the deck builder. \n\nClick the book 📖 to look through popular decks or click the wand 🪄 for a random deck! \n\nFor uploading custom images, write the quantity and name (i.e. 2 Pikachu) and click on the 'Import' button below. \n\nInternational languages are supported for cards using Limitless URLs.";
         </script>          
         <textarea id="altDeckImportInput" spellcheck="false"></textarea>
         <script>
-            document.getElementById("altDeckImportInput").placeholder = "Paste your alternative decklist here if you are playing against yourself. \n\nClick the book 📖 to look through popular decks or click the wand 🪄 for a random deck! \n\nFor uploading custom images, write the quantity and name (i.e. 2 Pikachu) and click on the 'Import' button. \n\nInternational languages are supported for cards using Limitless URLs.";
+            document.getElementById("altDeckImportInput").placeholder = "Paste the P2 decklist here for Solo mode. \n\nClick the book 📖 to look through popular decks or click the wand 🪄 for a random deck! \n\nFor uploading custom images, write the quantity and name (i.e. 2 Pikachu) and click on the 'Import' button below. \n\nInternational languages are supported for cards using Limitless URLs.";
         </script>
         <div id="importBottom">
             <button id="decklistsButton">📖</button>
             <button id="importButton">Import</button>
-            <button id="importLimitlessButton">Limitless<br><span style="white-space:nowrap">Import <span style="font-size:0.7em">(Beta)</span></span></button>
             <button id="confirmButton">Confirm</button>
             <button id="cancelButton">Cancel</button>
             <button id="saveButton" class="neutral-color">Save</button>
             <div id="decklistsContextMenu" class="decklists-context-menu"></div>
             <button id="randomButton">🪄</button>
-            <div id="successText">Success!</div><div id="failedText">Error!</div><div id="loadingText"></div><div id="invalidText">Not allowed!</div>
+            <div id="successText">Success!</div><div id="failedText">Error!</div><div id="loadingText"></div><div id="invalidText">Solo only!</div>
         </div>
         <div id="uploadButtonsContainer">
-            <label for="csvFile" id="uploadFileButton" class="self-color">Upload File</label>
-            <input type="file" id="csvFile" accept=".csv" style="display:none;">
             <button id="changeCardBackButton" class="self-color">Change Card Back</button>
             <div class="language-container">
                 <button id="changeLanguageButton" class="neutral-color">Language: English</button>
@@ -201,10 +200,118 @@
                     </ul>
                 </div>
             </div>
-        </div>       
-        <button id="saveCurrentButton" class="self-color">Save Current Deck</button>                
+        </div>                
     </div>
     
+    <div id="nativeDeckBuilderWorkspace" class="native-deck-builder-workspace">
+        <button id="nativeDeckBuilderEdgeToggle" class="native-deck-builder-edge-toggle" aria-label="Collapse deck builder workspace" title="Collapse deck builder workspace">❮</button>
+        <div class="native-deck-builder-inner">
+            <div class="native-deck-builder-header">
+                <div>
+                    <strong>Deck Builder</strong>
+                    <div class="native-deck-builder-subtitle">Search cards, build decks, and load them directly into the simulator.</div>
+                </div>
+                <div class="native-deck-builder-actions">
+                    <button id="nativeDeckBuilderExportCsv" class="self-color">Export Deck</button>
+                    <label for="nativeDeckBuilderCsvImport" id="nativeDeckBuilderImportCsvLabel" class="self-color native-deck-builder-inline-label">Import Deck</label>
+                    <input id="nativeDeckBuilderCsvImport" type="file" accept=".csv" style="display:none;" />
+                </div>
+            </div>
+            <div class="native-deck-builder-targetbar">
+                <strong class="native-deck-builder-target-label">Current Deck</strong>
+                <div class="native-deck-builder-target-controls">
+                    <button id="nativeDeckBuilderTargetMain" class="native-target-button native-target-selected">P1</button>
+                    <button id="nativeDeckBuilderTargetAlt" class="native-target-button">P2 (Solo only)</button>
+                </div>
+                <button id="nativeDeckBuilderPlayButton" class="native-deck-builder-play-button" disabled>Play</button>
+            </div>
+            <div class="native-deck-builder-body">
+                <div class="native-deck-builder-pane native-deck-builder-pane-main">
+                    <div class="native-deck-builder-pane-main-header">
+                        <div class="native-deck-builder-section-title-row">
+                            <div class="native-deck-builder-section-title">Search</div>
+                            <button id="nativeDeckBuilderAddCustomCard" class="neutral-color native-deck-builder-section-button">+ Custom Card</button>
+                        </div>
+                        <div class="native-deck-builder-search-row">
+                            <input id="nativeDeckBuilderSearchInput" class="native-deck-builder-search-input" type="text" placeholder="Type a card name..." />
+                            <select id="nativeDeckBuilderCardTypeFilter" class="native-deck-builder-search-select">
+                                <option value="all">All</option>
+                                <option value="tcg">TCG</option>
+                                <option value="pocket">Pocket</option>
+                            </select>
+                            <select id="nativeDeckBuilderSortBy" class="native-deck-builder-search-select">
+                                <option value="releaseDate">Release Date</option>
+                                <option value="name">Name</option>
+                            </select>
+                            <select id="nativeDeckBuilderSortDirection" class="native-deck-builder-search-select">
+                                <option value="desc">Desc</option>
+                                <option value="asc">Asc</option>
+                            </select>
+                            <button id="nativeDeckBuilderSearchButton" class="self-color">Search</button>
+                        </div>
+                        <div id="nativeDeckBuilderSearchStatus" class="native-deck-builder-search-status"></div>
+                    </div>
+                    <div class="native-deck-builder-results-shell">
+                        <div id="nativeDeckBuilderSearchResults" class="native-deck-builder-search-results"></div>
+                    </div>
+                </div>
+                <div class="native-deck-builder-pane native-deck-builder-pane-side">
+                    <div class="native-deck-builder-section-title-row">
+                        <div class="native-deck-builder-section-title-wrap">
+                            <div class="native-deck-builder-section-title">Summary</div>
+                            <span id="nativeDeckBuilderValidationDot" class="native-deck-builder-validation-dot invalid" aria-label="Deck invalid" title="Deck invalid"></span>
+                            <span id="nativeDeckBuilderDeckStatus" class="native-deck-builder-deck-status"></span>
+                        </div>
+                        <button id="nativeDeckBuilderClear" class="neutral-color native-deck-builder-section-button">Clear</button>
+                    </div>
+                    <div id="nativeDeckBuilderSummaryPanel" class="native-deck-builder-summary"></div>
+                    <div id="nativeDeckBuilderCardsPanel" class="native-deck-builder-cards"></div>
+                </div>
+            </div>
+            <div id="nativeDeckBuilderCustomCardModal" class="native-deck-builder-modal" role="dialog" aria-modal="true" aria-label="Add custom card" hidden>
+                <div class="native-deck-builder-modal-box">
+                    <div class="native-deck-builder-modal-title">Add Custom Card</div>
+                    <div class="native-deck-builder-modal-body">
+                        <div class="native-deck-builder-modal-fields">
+                            <label class="native-deck-builder-modal-label">
+                                Quantity
+                                <input id="nativeCustomCardQty" class="native-deck-builder-modal-input" type="number" min="1" max="99" value="1" />
+                            </label>
+                            <label class="native-deck-builder-modal-label">
+                                Card Name
+                                <input id="nativeCustomCardName" class="native-deck-builder-modal-input" type="text" placeholder="e.g. Charizard" />
+                            </label>
+                            <label class="native-deck-builder-modal-label">
+                                Card Type
+                                <select id="nativeCustomCardType" class="native-deck-builder-modal-input">
+                                    <option value="Pokémon">Pokémon</option>
+                                    <option value="Trainer">Trainer</option>
+                                    <option value="Energy">Energy</option>
+                                </select>
+                            </label>
+                            <label class="native-deck-builder-modal-label">
+                                Image URL
+                                <input id="nativeCustomCardImageUrl" class="native-deck-builder-modal-input" type="url" placeholder="https://..." />
+                            </label>
+                        </div>
+                        <div class="native-deck-builder-modal-preview">
+                            <img id="nativeCustomCardPreviewImage" class="native-deck-builder-modal-preview-image" alt="Card preview" style="display:none;" />
+                            <div id="nativeCustomCardPreviewPlaceholder" class="native-deck-builder-modal-preview-placeholder">No image</div>
+                        </div>
+                    </div>
+                    <div id="nativeCustomCardError" class="native-deck-builder-modal-error" aria-live="polite"></div>
+                    <div class="native-deck-builder-modal-actions">
+                        <button id="nativeCustomCardCancel" class="neutral-color">Cancel</button>
+                        <button id="nativeCustomCardSubmit" class="self-color">Add to Deck</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="nativeDeckBuilderCardPreviewScrim" class="native-deck-builder-card-preview-scrim" hidden>
+        <img id="nativeDeckBuilderCardPreviewImage" class="native-deck-builder-card-preview-image" alt="Card preview" />
+    </div>
+
     <div id="settings" class="sidebox">
         <div id="settingsToggles">
             <div>
@@ -217,7 +324,7 @@
             </div>
             <div>
                 <input type="checkbox" id="hideHandCheckbox">
-                <label for="hideHandCheckbox">Hide opponent's hand (1P mode)</label>
+                <label for="hideHandCheckbox">Hide opponent's hand (Solo mode)</label>
             </div>
         </div>
         <button id="changeBackgroundButton" class="neutral-color">Change background</button>
@@ -246,10 +353,11 @@
             <li id="shufflePrizesButton">Shuffle prizes</li>
             <li id="revealHidePrizesButton">Reveal/hide prizes</li>
             <li id="lookPrizesButton">Look/cover prizes</li>
+            <li id="shufflePrizesToDeckBottomButton">Shuffle to deck (bottom)</li>
 
             <li id="handHeader">Hand</li>
             <li id="discardHandButton">Discard hand</li>
-            <li id="shuffleHandButton">Shuffle hand into deck</li>
+            <li id="shuffleHandButton">Shuffle hand to deck</li>
             <li id="shuffleHandBottomButton">Shuffle hand to bottom</li>
             <li id="lookHandButton">Look/cover hand</li>
             <li id="randomHandButton">Pick random card</li>
@@ -263,7 +371,7 @@
             <li id="boardHeader">Playboard</li>
             <li id="discardBoardButton">Discard all</li>
             <li id="handBoardButton">Move all to hand</li>
-            <li id="shuffleBoardButton">Shuffle all into deck</li>
+            <li id="shuffleBoardButton">Shuffle all to deck</li>
             <li id="lostZoneBoardButton">Lost Zone all</li>
 
             <li id="moveButton">Move card...
@@ -334,7 +442,7 @@
                     <h1>Hand</h1>
                     <ul>
                         <li>Discard hand<code>[alt + d]</code></li>
-                        <li>Shuffle hand into deck <code>[alt + s]</code></li>
+                        <li>Shuffle hand to deck <code>[alt + s]</code></li>
                         <li>Shuffle hand to bottom <code>[alt + ↓]</code></li>
                     </ul>
                 </div>
@@ -421,6 +529,33 @@
     <!-- home page -->
     <div id="videoContainer"></div>
     <div id="changelog">
+        <h2>v1.6 Update 03/25/26</h2>
+        <p>Hello everyone! I'm so excited to bring you guys this update — it's been a long time coming!</p>
+
+        <p><strong>NEW FEATURE</strong></p>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+        <li style="font-size: 16px; margin-bottom: 10px;"><strong>Deck Builder: </strong>You can now build decks directly inside the simulator! Search for cards (including TCG Pocket), add custom cards, and load your deck straight into P1 or P2. Export and import decks to save and share your builds.</li>
+        </ul>
+
+        <p><strong>OTHER ADDITIONS/CHANGES</strong></p>
+        <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
+        <li style="font-size: 16px; margin-bottom: 10px;">The tabs in the top right have been renamed: 1P and 2P are now called Solo and Multiplayer, and the Import tab is now the Deck tab, which has the Deck Builder.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Main and Alt deck have been renamed to P1 and P2, which better reflects their purpose.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Importing text decklists should now correctly import more cards (especially new ones).</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Deck validation now supports both TCG and TCG Pocket formats with automatic detection.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Multiplayer mode should be much more reliable and some desync issues have been fixed.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;">Added "Shuffle prizes to deck (bottom)" option for prize cards.</li>
+        </ul>
+
+        <p><strong>SHOUTOUTS:</strong></p>
+        <p>Huge thanks to <a href="https://twitter.com/MrTishingo" target="_blank" style="text-decoration: underline;">Tish</a> for building the original deck builder and porting it into the sim, and to Cealgair for helping review!</p>
+        <p><strong>SoulSilver sponsors: </strong>Arielle Lok, Bertie Vos, Morgan Gallant & Anonymous.<br>
+        <strong>HeartGold sponsors: </strong>Ciaran Farah!</p>
+
+        <strong>- XXL</strong>
+        <br><br>
+        <hr>
+
         <h2>v1.5.1 Update 02/12/25</h2>
         <p>Super quick update here—there are only a few visual changes to the site, but the codebase had a HUGE cleanup (which makes me feel great lol).</p>
 
@@ -434,13 +569,13 @@
         <p><strong>SoulSilver sponsors: </strong>Arielle Lok, Bertie Vos, Jack Shwartz, Morgan Gallant & Anonymous.<br>
         <strong>HeartGold sponsors: </strong>Ciaran Farah!</p>
 
-        <p>Happy early Valentine's Day <3</p>
+        <p>Happy early Valentine's Day &lt;3</p>
         <strong>- XXL</strong>
         <br><br>
         <hr>
 
         <h2>v1.5.0 Update 12/30/24</h2>
-        <p>HAPPY HOLIDAYS!!! I've missed you guys... I can't believe it's already been a year since PTCG-sim was launched — the past 365 days have brought incredible changes to my life, and it's all thanks to you guys <3</p>
+        <p>HAPPY HOLIDAYS!!! I've missed you guys... I can't believe it's already been a year since PTCG-sim was launched — the past 365 days have brought incredible changes to my life, and it's all thanks to you guys &lt;3</p>
 
         <p><strong>NEW FEATURE</strong></p>
         <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
@@ -466,7 +601,7 @@
         <strong>HeartGold sponsors:</strong> Arielle Lok.</p>
 
         <p>Enjoy the holidays everyone, and cheers to 2025! 🍻</p>
-        <strong>- XXL <3 :D</strong>
+        <strong>- XXL &lt;3 :D</strong>
         <br><br>
         <hr>
         <h2>v1.4.0 Update 05/08/24</h2>
@@ -474,11 +609,13 @@
 
         <p><strong>NEW FEATURE</strong></p>
         <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-        <li style="font-size: 16px; margin-bottom: 10px;"><strong>Importing/Exporting Game States (BETA): </strong>You can now export your game state as a JSON file or custom URL! 
-            <li style="font-size: 14px; margin-bottom: 10px; margin-left: 20px"><strong>JSON file: </strong>This is great for saving/organizing games that you want to revisit in the future. JSON files supports importing in 2P, which means that it loads the game state for the opponent too. This is useful if a player has disconnected during a game* or players want to analyze a game together. 
+        <li style="font-size: 16px; margin-bottom: 10px;"><strong>Importing/Exporting Game States (BETA): </strong>You can now export your game state as a JSON file or custom URL!
+            <ul>
+            <li style="font-size: 14px; margin-bottom: 10px; margin-left: 20px"><strong>JSON file: </strong>This is great for saving/organizing games that you want to revisit in the future. JSON files supports importing in 2P, which means that it loads the game state for the opponent too. This is useful if a player has disconnected during a game* or players want to analyze a game together.
             <br><br>
             <em>*The connected player MUST export the game BEFORE the other player rejoins, or else the game state will be reset and lost.</em></li>
-            <li style="font-size: 14px; margin-bottom: 10px; margin-left: 20px"><strong>Custom URL: </strong>This is great for sharing cool games with friends on social media! The link directly loads the game state, making it super accessible. Only 1P is supported.</li></ul>
+            <li style="font-size: 14px; margin-bottom: 10px; margin-left: 20px"><strong>Custom URL: </strong>This is great for sharing cool games with friends on social media! The link directly loads the game state, making it super accessible. Only 1P is supported.</li>
+            </ul>
         </li>
         </ul>
 
@@ -505,7 +642,7 @@
         <strong>HeartGold sponsors:</strong> Arielle Lok.</p>
 
         <p>That's all for now! As always, please reach out if you have any suggestions.</p>
-        <strong>- XXL <3 :D</strong>
+        <strong>- XXL &lt;3 :D</strong>
         <br><br>
         <hr>
         <h2>v1.3.2 Mini Update 02/28/24</h2>
@@ -536,7 +673,7 @@
         <strong>HeartGold sponsors:</strong> Arielle Lok.</p>
 
         <p>More to come soon! If you have any features or suggestions, please message me and/or join the Discord.</p>
-        <strong>- XXL <3</strong>
+        <strong>- XXL &lt;3</strong>
         <br><br>
         <hr>
         <h2>v1.3.1 Announcement 02/26/24</h2>
@@ -544,7 +681,7 @@
         <li style="font-size: 16px; margin-bottom: 10px;"><strong>Fukuako Decklists: </strong>Looking to test the upcoming format? I've made a folder containing the top 16 decks from the Champions League Fukuako, which took place in Japan earlier this month. All of the decklists are in English and can be found <a href="https://drive.google.com/drive/folders/1Vk04FldAH9dTzOI38O_KCUP4zPhm6pyn?usp=sharing" target="_blank" style="font-weight: bold;">here</a>. Simply download the decklist(s) and upload them on the Import tab or the Deck Builder. Also, check out new English proxies <a href="https://www.justinbasil.com/proxies/sv5" target="_blank" style="font-weight: bold;">here</a>.</li>
         <li style="font-size: 16px; margin-bottom: 10px;"><strong>Cube Koga Support: </strong>PTCG-sim now has full support for decklist imports from <a href="https://cubekoga.net/" target="_blank">Cube Koga</a> thanks to the work of Cealgair. Set codes for POP series, several promo sets, and select cases from Limitless should be patched. Please export from Cube Koga using the PTCGO export option.</li>
         <p>A bigger update is on the way. Hope everyone and their pets (if you have any) are doing superb!!</p>
-        <strong>- XXL <3</strong>
+        <strong>- XXL &lt;3</strong>
         <br><br>
         <hr>
         <h2>v1.3.0 Update 02/12/24</h2>
@@ -553,7 +690,7 @@
         <p><strong>NEW FEATURES</strong></p>
         <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
         <li style="font-size: 16px; margin-bottom: 10px;"><strong>Custom Backgrounds: </strong>Upload custom backgrounds or switch to a themed background in the Settings tab.</li>
-        <li style="font-size: 16px; margin-bottom: 10px;"><strong>Visual Deck Builder: </strong>Build, edit, and upload your own decks to PTCG-sim! Shoutout to <a href="https://twitter.com/TishingoTish" target="_blank" style="text-decoration: underline;">Tish</a> for working hard on this initiative.</li>
+        <li style="font-size: 16px; margin-bottom: 10px;"><strong>Visual Deck Builder: </strong>Build, edit, and upload your own decks to PTCG-sim! Shoutout to <a href="https://twitter.com/MrTishingo" target="_blank" style="text-decoration: underline;">Tish</a> for working hard on this initiative.</li>
         <li style="font-size: 16px; margin-bottom: 10px;"><strong>Set Code Support: </strong>Added set code support when importing decklists for sets prior to HGSS, as well as POP series, SI, and RM, courtesy of Cealgair.</li>
         </ul>
 
@@ -586,7 +723,7 @@
         <p><strong>HUGE SHOUTOUTS</strong> (the sim is run by your generosity!!!):</p>
         <p><strong>One-time sponsors:</strong> Robert Weidman, Jay Cristiano, Robin Schulz, & Song You.<br>
         <strong>SoulSilver sponsors:</strong> Bertie Vos, Jack Shwartz, Morgan Gallant & Anonymous.<br>
-        <strong>HeartGold sponsors:</strong> Arielle Lok <3.</p>        
+        <strong>HeartGold sponsors:</strong> Arielle Lok &lt;3.</p>        
 
         <p><strong>NEW FEATURES</strong></p>
         <ul style="list-style-type: disc; padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
@@ -844,7 +981,7 @@
 
         <p>Should you find joy in using the sim and wish to support its ongoing development, you can sponsor me/the project through one of the links below. However, please know that sponsorship is completely optional. Your enjoyment of the sim is contribution enough, and I’m thrilled to have you as part of our community :)</p>
 
-        <p>-XXL <3</p>
+        <p>-XXL &lt;3</p>
 
         <h3><a href="https://github.com/sponsors/xxmichaellong?o=esc" target="_blank" style="color: rgb(91, 91, 173); text-decoration: underline;">Github Sponsors Link</a></h3>
         <h3><a href="https://www.paypal.com/donate/?hosted_button_id=VWFSCL73GDHF4" target="_blank"  style="color: rgb(91, 91, 173); text-decoration: underline;">Paypal Donation Link</a></h3>
@@ -880,7 +1017,7 @@
                     <li style="font-size: 16px; margin-bottom: 10px;">My eternal thanks!!!!!</li>
                 </ul>        
       </div>
-<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "2abae72112d74a619e3de341e1d4aa18"}'></script><!-- End Cloudflare Web Analytics -->
+<!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon="{&quot;token&quot;: &quot;2abae72112d74a619e3de341e1d4aa18&quot;}"></script><!-- End Cloudflare Web Analytics -->
 
 </body>
 </html>
