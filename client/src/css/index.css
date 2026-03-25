@@ -1142,36 +1142,36 @@ ul, li {
 }
 .native-deck-builder-modal-box {
   background: #f0f2f7;
-  border-radius: 0.55vw;
+  border-radius: 0.7vw;
   border: 1px solid rgba(40, 57, 124, 0.14);
   box-shadow: 0 4px 24px rgba(20, 30, 80, 0.22);
-  padding: 1.6vh 1.4vw;
-  min-width: 18vw;
-  max-width: 26vw;
+  padding: 2vh 1.8vw;
+  min-width: 22vw;
+  max-width: 30vw;
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.9vh;
+  gap: 1.1vh;
 }
 .native-deck-builder-modal-title {
-  font-size: 1.6vh;
+  font-size: 2vh;
   font-weight: 700;
   color: #1a2560;
 }
 .native-deck-builder-modal-body {
   display: flex;
-  gap: 1vw;
+  gap: 1.2vw;
   align-items: flex-start;
 }
 .native-deck-builder-modal-fields {
   flex: 1 1 0;
   display: flex;
   flex-direction: column;
-  gap: 0.65vh;
+  gap: 0.85vh;
 }
 .native-deck-builder-modal-preview {
   flex: 0 0 auto;
-  width: 7vw;
+  width: 8.5vw;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1186,11 +1186,11 @@ ul, li {
 .native-deck-builder-modal-preview-placeholder {
   width: 100%;
   height: 100%;
-  min-height: 8vh;
+  min-height: 10vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1vh;
+  font-size: 1.35vh;
   color: #8898bb;
   background: rgba(40, 57, 124, 0.06);
   border: 1px dashed rgba(40, 57, 124, 0.2);
@@ -1200,15 +1200,15 @@ ul, li {
 .native-deck-builder-modal-label {
   display: flex;
   flex-direction: column;
-  gap: 0.2vh;
-  font-size: 1.2vh;
+  gap: 0.25vh;
+  font-size: 1.5vh;
   color: #3b4a7a;
 }
 .native-deck-builder-modal-input {
-  font-size: 1.3vh;
-  padding: 0.4vh 0.45vw;
+  font-size: 1.6vh;
+  padding: 0.55vh 0.55vw;
   border: 1px solid rgba(40, 57, 124, 0.22);
-  border-radius: 0.3vw;
+  border-radius: 0.35vw;
   background: #fff;
   color: #1a2560;
   min-width: 0;
@@ -1216,20 +1216,21 @@ ul, li {
   box-sizing: border-box;
 }
 .native-deck-builder-modal-error {
-  font-size: 1.15vh;
+  font-size: 1.4vh;
   color: #c0392b;
-  min-height: 1.5vh;
+  min-height: 1.8vh;
 }
 .native-deck-builder-modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.5vw;
+  gap: 0.6vw;
 }
 .native-deck-builder-modal-actions button {
-  font-size: 1.35vh;
-  padding: 0.48vh 0.7vw;
+  font-size: 1.65vh;
+  padding: 0.6vh 0.9vw;
   border: none;
   cursor: pointer;
+  color: white;
 }
 
 body.dark-mode-1 .native-deck-builder-inner {
