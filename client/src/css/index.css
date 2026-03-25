@@ -73,17 +73,17 @@ body {
 #keybindModal {
   display: none;
   position: fixed;
-  width: 70%;
+  width: 72%;
   height: 95%;
   top: 50%;
-  left: 37.5%;
+  left: 38%;
   transform: translate(-50%, -50%);
   padding: 0 15px 15px 15px;
   background-color: rgba(200, 200, 200, 0.873);
   border: 1px solid #ccc;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   z-index: 1000;
-  border-radius: 4%;
+  border-radius: 1%;
 }
 .keybind-section-container {
   display: flex;
@@ -112,12 +112,12 @@ ul, li {
   margin-left: 10px;
 }
 .keybind-column ul ul li {
-  margin-bottom: 1px;
+  margin-bottom: 0;
   margin-top: 0;
-  font-size: 1.7vh;
+  font-size: 1.5vh;
 }
 .keybind-column ul li {
-  margin-top: 1vh;
+  margin-top: 0.4vh;
   display: flex;
   justify-content: space-between;
 }
@@ -558,7 +558,10 @@ ul, li {
   background: linear-gradient(to bottom, #bca668, #8c7e46);
 }
 #coachingModeLabel, #spectatorModeLabel {
-  font-size: small;
+  font-size: medium;
+  margin-bottom: 0.3vh;
+}
+#spectatorModeLabel {
   margin-bottom: 1.5vh;
 }
 #joinRoomButton {
