@@ -4,6 +4,7 @@ import {
   revealCards,
   stopLookingAtCards,
 } from '../../../actions/general/reveal-and-hide.js';
+import { shufflePrizesToDeckBottom } from '../../../actions/zones/prizes-actions.js';
 import { shuffleZone } from '../../../actions/zones/shuffle-zone.js';
 import { mouseClick, systemState } from '../../../front-end.js';
 
@@ -43,5 +44,12 @@ export const initializePrizesButtons = () => {
     } else {
       hideCards(mouseClick.cardUser, systemState.initiator, 'prizes');
     }
+  });
+
+  const shufflePrizesToDeckBottomButton = document.getElementById(
+    'shufflePrizesToDeckBottomButton'
+  );
+  shufflePrizesToDeckBottomButton.addEventListener('click', () => {
+    shufflePrizesToDeckBottom(mouseClick.cardUser, systemState.initiator);
   });
 };
