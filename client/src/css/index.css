@@ -170,25 +170,25 @@ ul, li {
 }
 #selfResizer {
   position: fixed;
-  left: 75.5%;
-  bottom: 49%;
+  left: -0.55%;
+  bottom: 50.5%;
   cursor: row-resize;
   display: flex;
-  width: 1vw;
-  height: 2%;
+  width: 1.3vw;
+  height: 2.5%;
   border-radius: 50%;
-  transform: translateY(50%);
+  transform: translateY(50%) scaleX(-1);
 }
 #oppResizer {
   position: fixed;
-  left: 75.5%;
-  bottom: 51%;
+  left: -0.55%;
+  bottom: 53%;
   cursor: row-resize;
   display: flex;
-  width: 1vw;
-  height: 2%;
+  width: 1.3vw;
+  height: 2.5%;
   border-radius: 50%;
-  transform: translateY(50%);
+  transform: translateY(50%) scaleX(-1);
 }
 .self-color {
   background: linear-gradient(to bottom, rgba(90, 110, 188, 0.864), rgba(60, 80, 158, 0.864));
@@ -735,12 +735,8 @@ ul, li {
   background: rgb(198, 203, 211);
   border-bottom: 1px solid rgba(0,0,0,0.04);
 }
-.native-deck-builder-target-copy {
-  display: flex;
-  gap: 0.35vw;
-  align-items: center;
+.native-deck-builder-target-label {
   font-size: 1.65vh;
-  flex-wrap: wrap;
 }
 .native-deck-builder-load-status {
   display: inline-flex;
@@ -787,6 +783,22 @@ ul, li {
 #nativeDeckBuilderTargetAlt.native-target-selected {
   background: linear-gradient(to bottom, rgba(188, 90, 113, 0.864), rgba(158, 60, 83, 0.864));
   font-weight: bold;
+}
+.native-deck-builder-play-button {
+  margin-left: auto;
+  border: none;
+  cursor: pointer;
+  padding: 0.55vh 1vw;
+  font-size: 1.6vh;
+  font-weight: bold;
+  color: #000;
+  background: rgb(240, 200, 50);
+  border-radius: 4px;
+}
+.native-deck-builder-play-button:disabled {
+  background: rgba(170, 170, 170, 0.95);
+  color: #666;
+  cursor: default;
 }
 .native-deck-builder-body {
   display: flex;
@@ -1269,7 +1281,7 @@ body.dark-mode-1 .native-deck-builder-pane {
 }
 body.dark-mode-1 .native-deck-builder-section-title,
 body.dark-mode-1 .native-deck-builder-summary,
-body.dark-mode-1 .native-deck-builder-target-copy,
+body.dark-mode-1 .native-deck-builder-target-label,
 body.dark-mode-1 .native-deck-builder-search-status,
 body.dark-mode-1 .native-deck-builder-deck-text,
 body.dark-mode-1 .native-deck-builder-result-text {
@@ -1817,11 +1829,11 @@ a:hover {
 }
 
 .sidebox-hidden #selfResizer {
-  left: 99.5%;
+  left: -0.55%;
 }
 
 .sidebox-hidden #oppResizer {
-  left: 99.5%;
+  left: -0.55%;
 }
 
 .sidebox-hidden #boardButtonContainer {

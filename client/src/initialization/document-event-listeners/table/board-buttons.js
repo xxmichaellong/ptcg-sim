@@ -55,12 +55,16 @@ export const initializeBoardButtons = () => {
       sidebox.style.display = isVisible ? 'none' : '';
     });
 
-    // Also toggle the top button container and grey filler
+    // Also toggle the top button container, grey filler, and deck builder
     if (topButtonContainer) {
       topButtonContainer.style.display = isVisible ? 'none' : '';
     }
     if (greyFiller) {
       greyFiller.style.display = isVisible ? 'none' : '';
+    }
+    const deckBuilderWorkspace = document.getElementById('nativeDeckBuilderWorkspace');
+    if (deckBuilderWorkspace) {
+      deckBuilderWorkspace.style.display = isVisible ? 'none' : '';
     }
   });
 

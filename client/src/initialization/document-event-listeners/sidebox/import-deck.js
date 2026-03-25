@@ -61,6 +61,7 @@ export const initializeImport = () => {
     'altImportHeaderButton'
   );
   altImportHeaderButton.addEventListener('click', () => {
+    if (systemState.isTwoPlayer) return;
     switchToAlt();
     document.dispatchEvent(new CustomEvent('deck-target-changed', { detail: { target: 'opp' } }));
   });
@@ -68,8 +69,16 @@ export const initializeImport = () => {
   document.addEventListener('deck-target-changed', (event) => {
     const target = event.detail?.target;
     if (target === 'self') switchToMain();
-    else if (target === 'opp') switchToAlt();
+    else if (target === 'opp' && !systemState.isTwoPlayer) switchToAlt();
   });
+
+  const updateAltButtonState = () => {
+    altImportHeaderButton.style.cursor = systemState.isTwoPlayer ? 'default' : 'pointer';
+    altImportHeaderButton.style.opacity = systemState.isTwoPlayer ? '0.5' : '';
+  };
+  updateAltButtonState();
+  const deckImportButton = document.getElementById('deckImportButton');
+  if (deckImportButton) deckImportButton.addEventListener('click', updateAltButtonState);
 
   const importButton = document.getElementById('importButton');
   importButton.addEventListener('click', () => {

@@ -218,24 +218,22 @@
                 </div>
             </div>
             <div class="native-deck-builder-targetbar">
-                <div class="native-deck-builder-target-copy">
-                    <strong>Load Target:</strong>
-                    <span id="nativeDeckBuilderTargetLabel">P1 Deck</span>
-                </div>
+                <strong class="native-deck-builder-target-label">Current Deck</strong>
                 <div class="native-deck-builder-target-controls">
                     <button id="nativeDeckBuilderTargetMain" class="native-target-button native-target-selected">P1</button>
                     <button id="nativeDeckBuilderTargetAlt" class="native-target-button">P2 (Solo only)</button>
                 </div>
+                <button id="nativeDeckBuilderPlayButton" class="native-deck-builder-play-button" disabled>Play</button>
             </div>
             <div class="native-deck-builder-body">
                 <div class="native-deck-builder-pane native-deck-builder-pane-main">
                     <div class="native-deck-builder-pane-main-header">
                         <div class="native-deck-builder-section-title-row">
-                            <div class="native-deck-builder-section-title">Builder Workspace</div>
+                            <div class="native-deck-builder-section-title">Search</div>
                             <button id="nativeDeckBuilderAddCustomCard" class="neutral-color native-deck-builder-section-button">+ Custom Card</button>
                         </div>
                         <div class="native-deck-builder-search-row">
-                            <input id="nativeDeckBuilderSearchInput" class="native-deck-builder-search-input" type="text" placeholder="Search for a card" />
+                            <input id="nativeDeckBuilderSearchInput" class="native-deck-builder-search-input" type="text" placeholder="Type a card name..." />
                             <select id="nativeDeckBuilderCardTypeFilter" class="native-deck-builder-search-select">
                                 <option value="all">All</option>
                                 <option value="tcg">TCG</option>
@@ -260,7 +258,7 @@
                 <div class="native-deck-builder-pane native-deck-builder-pane-side">
                     <div class="native-deck-builder-section-title-row">
                         <div class="native-deck-builder-section-title-wrap">
-                            <div class="native-deck-builder-section-title">Deck Summary</div>
+                            <div class="native-deck-builder-section-title">Summary</div>
                             <span id="nativeDeckBuilderValidationDot" class="native-deck-builder-validation-dot invalid" aria-label="Deck invalid" title="Deck invalid"></span>
                             <span id="nativeDeckBuilderDeckStatus" class="native-deck-builder-deck-status"></span>
                         </div>

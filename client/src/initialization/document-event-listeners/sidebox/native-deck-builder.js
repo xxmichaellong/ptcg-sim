@@ -8,7 +8,9 @@ import {
   detectDeckFormat,
   validateDeck,
 } from '../../../setup/deck-builder/core/deck-validation.mjs';
+import { systemState } from '../../../front-end.js';
 import { loadDeckData } from '../../../setup/deck-constructor/import.js';
+import { show } from '../../../setup/home-header/header-toggle.js';
 import {
   renderDeckCards,
   renderSearchResults,
@@ -48,7 +50,8 @@ export const initializeNativeDeckBuilder = () => {
     'nativeDeckBuilderTargetMain'
   );
   const targetAltButton = document.getElementById('nativeDeckBuilderTargetAlt');
-  const targetLabel = document.getElementById('nativeDeckBuilderTargetLabel');
+
+  const playButton = document.getElementById('nativeDeckBuilderPlayButton');
   const exportCsvButton = document.getElementById('nativeDeckBuilderExportCsv');
   const importCsvLabel = document.getElementById('nativeDeckBuilderImportCsvLabel');
   const importCsvInput = document.getElementById('nativeDeckBuilderCsvImport');
@@ -99,6 +102,17 @@ export const initializeNativeDeckBuilder = () => {
   const customCardPreviewPlaceholder = document.getElementById(
     'nativeCustomCardPreviewPlaceholder'
   );
+
+  playButton.addEventListener('click', () => {
+    if (systemState.isTwoPlayer) {
+      show('p2Box', document.getElementById('p2Button'));
+    } else {
+      show('p1Box', document.getElementById('p1Button'));
+    }
+    document.dispatchEvent(new CustomEvent('deck-builder-closing'));
+    const panel = document.getElementById('nativeDeckBuilderWorkspace');
+    if (panel) panel.classList.remove('open');
+  });
 
   const syncedDecks = {
     self: createEmptyDeck(),
@@ -344,13 +358,14 @@ export const initializeNativeDeckBuilder = () => {
     const hasDeckCards = Object.keys(deck).length > 0;
 
     clearButton.style.display = hasDeckCards ? '' : 'none';
+    playButton.disabled = !hasDeckCards;
+    targetAltButton.style.cursor = systemState.isTwoPlayer ? 'default' : 'pointer';
+    targetAltButton.style.opacity = systemState.isTwoPlayer ? '0.5' : '';
 
     if (deckStatus) {
       deckStatus.textContent = hasDeckCards ? 'Saved ✓' : '';
     }
 
-    targetLabel.textContent =
-      currentLoadTarget === 'self' ? 'P1 Deck' : 'P2 Deck';
     targetMainButton.classList.toggle(
       'native-target-selected',
       currentLoadTarget === 'self'
@@ -460,6 +475,7 @@ export const initializeNativeDeckBuilder = () => {
   });
 
   targetAltButton.addEventListener('click', () => {
+    if (systemState.isTwoPlayer) return;
     switchTarget('opp');
     document.dispatchEvent(
       new CustomEvent('deck-target-changed', { detail: { target: 'opp' } })
@@ -531,6 +547,15 @@ export const initializeNativeDeckBuilder = () => {
   });
 
   document.addEventListener('deck-builder-closing', loadCurrentDeck);
+
+  const deckImportButton = document.getElementById('deckImportButton');
+  if (deckImportButton) deckImportButton.addEventListener('click', () => {
+    if (systemState.isTwoPlayer && currentLoadTarget === 'opp') {
+      switchTarget('self');
+      document.dispatchEvent(new CustomEvent('deck-target-changed', { detail: { target: 'self' } }));
+    }
+    render();
+  });
 
   render();
 };
