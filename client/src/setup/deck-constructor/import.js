@@ -357,6 +357,9 @@ const cardDataToImageURL = (card) => {
         return letter ? paddedDigits + letter : paddedDigits;
       }
     );
+    if (/^[A-Z]\d[a-z]?$/.test(set) || set === 'P-A') {
+      return `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/${set}/${set}_${paddedNumber}_EN_SM.webp`;
+    }
     return `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/${set.replace(/ /g, '/')}/${set.replace(/ /g, '_')}_${paddedNumber}_R_${language}.png`;
   }
   return;
@@ -538,9 +541,6 @@ const ptcgsimDecklistArray = (decklist) => {
 
 const DecklistArray = async (decklist) => {
   // Each card will be stored as [quantity, name, set code, number, pokemontcg.io id, image url, type]
-
-  const isPocketSet = (setCode) => /^[A-Z]\d[a-z]?$/.test(setCode) || setCode === 'P-A';
-
   let decklistArray = ptcgsimDecklistArray(decklist);
   const energies = getEnergies();
   for (let i = 0; i < decklistArray.length; i++) {
@@ -550,16 +550,12 @@ const DecklistArray = async (decklist) => {
       id: decklistArray[i][4],
       name: decklistArray[i][1],
     });
-
-    if (!isPocketSet(decklistArray[i][2])) {
-      decklistArray[i][5] = cardDataToImageURL({
-        set: decklistArray[i][2],
-        number: decklistArray[i][3],
-        id: decklistArray[i][4],
-        name: decklistArray[i][1],
-      });
-    }
-
+    decklistArray[i][5] = cardDataToImageURL({
+      set: decklistArray[i][2],
+      number: decklistArray[i][3],
+      id: decklistArray[i][4],
+      name: decklistArray[i][1],
+    });
     if (!decklistArray[i][6]) {
       if (decklistArray[i][2]) {
         if (decklistArray[i][3]) {
@@ -601,19 +597,12 @@ const DecklistArray = async (decklist) => {
         if (!entry[5] && match[5]) entry[5] = match[5];
         if ((!entry[6] || entry[6] === 'Unknown') && match[6]) entry[6] = match[6];
       }
-    }
-  }
-
-  for (const entry of decklistArray) {
-    if (entry[2] && entry[3] && isPocketSet(entry[2]) && (!entry[6] || entry[6] === 'Unknown')) {
-      entry[6] = 'Trainer';
-    }
-  }
-
-  for (const entry of decklistArray) {
-    if (entry[2] && entry[3] && isPocketSet(entry[2])) {
-      const paddedNum = String(entry[3]).padStart(3, '0');
-      entry[5] = `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/${entry[2]}/${entry[2]}_${paddedNum}_EN_SM.webp`;
+      // Pocket-exclusive cards (e.g. X Speed) don't exist in the TCG database so
+      // Limitless returns no type for them. Default to Trainer — Pocket-exclusive
+      // cards that aren't Pokémon are always Trainers.
+      if (entry[2] && (/^[A-Z]\d[a-z]?$/.test(entry[2]) || entry[2] === 'P-A') && (!entry[6] || entry[6] === 'Unknown')) {
+        entry[6] = 'Trainer';
+      }
     }
   }
 
