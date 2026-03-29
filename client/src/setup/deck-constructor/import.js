@@ -434,6 +434,7 @@ const ptcgsimDecklistArray = (decklist) => {
     /(\d+) (.+?) (\w{2,5}[1-9]?[A-Z]?|WBSP|NBSP|FRLG|FUT20) (\d+[a-zA-Z]?)/;
   const regexWithPRSet =
     /(\d+) (.+?) (PR-\w{2,3}) ((?:DP|HGSS|BW|XY|SM|SWSH)?)(\d+)/;
+  const regexWithPocketPromoSet = /(\d+) (.+?) (P-[A-Z]) (\d+)/;
   const regexWithSpecialSet =
     /(\d+) (.+?) ((?:\w{2,3}[a-zA-Z]\d*|\w{2,3}(?:\s+[a-zA-Z\d]+)*)(?:\s+(\w{2,3}\s*[a-zA-Z\d]+)\s*)*)$/;
   const regexWithoutSet = /(\d+) (.+?)(?=\s\d|$|(\s\d+))/;
@@ -458,6 +459,7 @@ const ptcgsimDecklistArray = (decklist) => {
     let matchWithOldSet = line.match(regexWithOldSet);
     let matchWithSet = line.match(regexWithSet);
     let matchWithPRSet = line.match(regexWithPRSet);
+    let matchWithPocketPromoSet = line.match(regexWithPocketPromoSet);
     let matchWithSpecialSet = line.match(regexWithSpecialSet);
     let matchWithoutSet = line.match(regexWithoutSet);
 
@@ -494,6 +496,17 @@ const ptcgsimDecklistArray = (decklist) => {
         null,
         undefined,
       ]);
+    } else if (matchWithPocketPromoSet) {
+      const [, quantity, name, promoSet, setNumber] = matchWithPocketPromoSet;
+      decklistArray.push([
+        parseInt(quantity),
+        name,
+        promoSet,
+        setNumber,
+        null,
+        null,
+        undefined,
+      ]);
     } else if (matchWithSpecialSet) {
       const [, quantity, name, setAll] = matchWithSpecialSet;
       const [set, setNumber] = setAll.trim().split(/(?<=\S)\s/);
@@ -525,6 +538,9 @@ const ptcgsimDecklistArray = (decklist) => {
 
 const DecklistArray = async (decklist) => {
   // Each card will be stored as [quantity, name, set code, number, pokemontcg.io id, image url, type]
+
+  const isPocketSet = (setCode) => /^[A-Z]\d[a-z]?$/.test(setCode) || setCode === 'P-A';
+
   let decklistArray = ptcgsimDecklistArray(decklist);
   const energies = getEnergies();
   for (let i = 0; i < decklistArray.length; i++) {
@@ -534,12 +550,16 @@ const DecklistArray = async (decklist) => {
       id: decklistArray[i][4],
       name: decklistArray[i][1],
     });
-    decklistArray[i][5] = cardDataToImageURL({
-      set: decklistArray[i][2],
-      number: decklistArray[i][3],
-      id: decklistArray[i][4],
-      name: decklistArray[i][1],
-    });
+
+    if (!isPocketSet(decklistArray[i][2])) {
+      decklistArray[i][5] = cardDataToImageURL({
+        set: decklistArray[i][2],
+        number: decklistArray[i][3],
+        id: decklistArray[i][4],
+        name: decklistArray[i][1],
+      });
+    }
+
     if (!decklistArray[i][6]) {
       if (decklistArray[i][2]) {
         if (decklistArray[i][3]) {
@@ -573,13 +593,27 @@ const DecklistArray = async (decklist) => {
 
     const limitlessResults = await LimitlessDecklistArray(miniDecklist);
 
+    const normalize = (s) => s.trim().toLowerCase().replace(/-/g, ' ').replace(/\s+/g, ' ');
     for (let idx of incompleteIndices) {
       const entry = decklistArray[idx];
-      const match = limitlessResults.find((r) => r[1] === entry[1]);
+      const match = limitlessResults.find((r) => normalize(r[1]) === normalize(entry[1]));
       if (match) {
         if (!entry[5] && match[5]) entry[5] = match[5];
         if ((!entry[6] || entry[6] === 'Unknown') && match[6]) entry[6] = match[6];
       }
+    }
+  }
+
+  for (const entry of decklistArray) {
+    if (entry[2] && entry[3] && isPocketSet(entry[2]) && (!entry[6] || entry[6] === 'Unknown')) {
+      entry[6] = 'Trainer';
+    }
+  }
+
+  for (const entry of decklistArray) {
+    if (entry[2] && entry[3] && isPocketSet(entry[2])) {
+      const paddedNum = String(entry[3]).padStart(3, '0');
+      entry[5] = `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/${entry[2]}/${entry[2]}_${paddedNum}_EN_SM.webp`;
     }
   }
 
