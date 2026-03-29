@@ -357,13 +357,15 @@ const cardDataToImageURL = (card) => {
         return letter ? paddedDigits + letter : paddedDigits;
       }
     );
-    if (/^[A-Z]\d[a-z]?$/.test(set) || set === 'P-A') {
+    if (isPocketSet(set)) {
       return `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/${set}/${set}_${paddedNumber}_EN_SM.webp`;
     }
     return `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/${set.replace(/ /g, '/')}/${set.replace(/ /g, '_')}_${paddedNumber}_R_${language}.png`;
   }
   return;
 };
+
+const isPocketSet = (set) => /^[A-Z]\d[a-z]?$/.test(set) || set === 'P-A';
 
 const escapeRegExp = (string) => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -600,7 +602,7 @@ const DecklistArray = async (decklist) => {
       // Pocket-exclusive cards (e.g. X Speed) don't exist in the TCG database so
       // Limitless returns no type for them. Default to Trainer — Pocket-exclusive
       // cards that aren't Pokémon are always Trainers.
-      if (entry[2] && (/^[A-Z]\d[a-z]?$/.test(entry[2]) || entry[2] === 'P-A') && (!entry[6] || entry[6] === 'Unknown')) {
+      if (entry[2] && isPocketSet(entry[2]) && (!entry[6] || entry[6] === 'Unknown')) {
         entry[6] = 'Trainer';
       }
     }
