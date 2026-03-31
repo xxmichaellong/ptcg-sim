@@ -93,9 +93,10 @@ export const closeFullView = (event) => {
     fullViewElement.style.zIndex = '';
     fullViewElement.style.height = '';
 
-    const allImages = fullViewElement.querySelectorAll('*');
-    const targetImage = Array.from(allImages).filter((element) => {
-      return !element.attached;
+    const targetImage = Array.from(
+      fullViewElement.querySelectorAll('img')
+    ).filter((image) => {
+      return !image.attached;
     });
 
     // Revert the position of the images
@@ -107,15 +108,19 @@ export const closeFullView = (event) => {
       }
     });
 
-    const currentWidth = parseFloat(targetImage[0].clientWidth);
-    const newWidth =
-      currentWidth +
-      (targetImage[0].clientWidth / 6) * targetImage[0].energyLayer;
-    fullViewElement.style.width = newWidth + 'px';
+    if (targetImage.length > 0) {
+      const currentWidth = parseFloat(targetImage[0].clientWidth);
+      const newWidth =
+        currentWidth +
+        (targetImage[0].clientWidth / 6) * targetImage[0].energyLayer;
+      fullViewElement.style.width = newWidth + 'px';
+    }
     fullViewElement.style.zIndex = '0';
 
     // Revert the z-indexes
-    fullViewElement.parentElement.style.zIndex = '0';
+    if (fullViewElement.parentElement) {
+      fullViewElement.parentElement.style.zIndex = '0';
+    }
     document.getElementById('stadium').style.zIndex = '0';
     refreshBoard();
   }

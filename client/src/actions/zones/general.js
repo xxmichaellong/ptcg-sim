@@ -227,33 +227,38 @@ export const leaveAll = (user, initiator, oZoneId, dZoneIdParam, emit = true) =>
     appendMessage(initiator, message, 'player', false);
   }
 
-  let targetImage;
-  const oZoneCount1 = oZone.getCount() - 1;
-  for (let i = oZoneCount1; i >= 0; i--) {
-    if (oZone.array[i].type === 'Pokémon') {
-      targetImage = oZone.array[i].image;
-      moveCard(user, initiator, oZoneId, dZoneId, i);
-      break;
+  try {
+    let targetImage;
+    const oZoneCount1 = oZone.getCount() - 1;
+    for (let i = oZoneCount1; i >= 0; i--) {
+      if (oZone.array[i].type === 'Pokémon') {
+        targetImage = oZone.array[i].image;
+        moveCard(user, initiator, oZoneId, dZoneId, i);
+        break;
+      }
     }
-  }
-  const oZoneCount2 = oZone.getCount() - 1;
-  for (let i = oZoneCount2; i >= 0; i--) {
-    if (oZone.array[i].type === 'Pokémon') {
+    const oZoneCount2 = oZone.getCount() - 1;
+    for (let i = oZoneCount2; i >= 0; i--) {
+      if (oZone.array[i].type === 'Pokémon') {
+        const targetIndex = dZone.array.findIndex(
+          (card) => card.image === targetImage
+        );
+        targetImage = oZone.array[i].image;
+        moveCard(user, initiator, oZoneId, dZoneId, i, targetIndex);
+      }
+    }
+    const oZoneCount3 = oZone.getCount();
+    for (let i = 0; i < oZoneCount3; i++) {
       const targetIndex = dZone.array.findIndex(
         (card) => card.image === targetImage
       );
-      targetImage = oZone.array[i].image;
-      moveCard(user, initiator, oZoneId, dZoneId, i, targetIndex);
+      moveCard(user, initiator, oZoneId, dZoneId, 0, targetIndex);
     }
+    oZone.element.style.display = 'none';
+  } catch (e) {
+    console.error('Error in leaveAll:', e, { user, oZoneId, dZoneId });
+    return;
   }
-  const oZoneCount3 = oZone.getCount();
-  for (let i = 0; i < oZoneCount3; i++) {
-    const targetIndex = dZone.array.findIndex(
-      (card) => card.image === targetImage
-    );
-    moveCard(user, initiator, oZoneId, dZoneId, 0, targetIndex);
-  }
-  oZone.element.style.display = 'none';
 
   processAction(user, emit, 'leaveAll', [oInitiator, oZoneId, dZoneId]);
 };
