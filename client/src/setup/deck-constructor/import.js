@@ -145,7 +145,7 @@ const cardDataToID = (card) => {
     FRLG: 'ex6',
     BG: 'bp',
   };
-  if (oldSetCode_to_id[set]) {
+  if (oldSetCode_to_id[set] && !isPocketSet(set)) {
     return oldSetCode_to_id[set] + '-' + number;
   }
 
@@ -357,10 +357,15 @@ const cardDataToImageURL = (card) => {
         return letter ? paddedDigits + letter : paddedDigits;
       }
     );
+    if (isPocketSet(set)) {
+      return `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/${set}/${set}_${paddedNumber}_EN_SM.webp`;
+    }
     return `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/${set.replace(/ /g, '/')}/${set.replace(/ /g, '_')}_${paddedNumber}_R_${language}.png`;
   }
   return;
 };
+
+const isPocketSet = (set) => /^[A-Z]\d[a-z]?$/.test(set) || set === 'P-A';
 
 const escapeRegExp = (string) => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -434,6 +439,7 @@ const ptcgsimDecklistArray = (decklist) => {
     /(\d+) (.+?) (\w{2,5}[1-9]?[A-Z]?|WBSP|NBSP|FRLG|FUT20) (\d+[a-zA-Z]?)/;
   const regexWithPRSet =
     /(\d+) (.+?) (PR-\w{2,3}) ((?:DP|HGSS|BW|XY|SM|SWSH)?)(\d+)/;
+  const regexWithPocketPromoSet = /(\d+) (.+?) (P-[A-Z]) (\d+)/;
   const regexWithSpecialSet =
     /(\d+) (.+?) ((?:\w{2,3}[a-zA-Z]\d*|\w{2,3}(?:\s+[a-zA-Z\d]+)*)(?:\s+(\w{2,3}\s*[a-zA-Z\d]+)\s*)*)$/;
   const regexWithoutSet = /(\d+) (.+?)(?=\s\d|$|(\s\d+))/;
@@ -448,8 +454,8 @@ const ptcgsimDecklistArray = (decklist) => {
   // Process each line
   lines.forEach((line) => {
     line = line.replace(/[[\]()]/g, '');
-    //ptcglive conversion for GG/TG cards (the alt art bs) (don't apply to promo sets)
-    line = line.replace(/(?!PR-)(\w{2,3})-(\w{2,3}) (\d+)/g, '$1 $2$3');
+    //ptcglive conversion for GG/TG cards (the alt art bs) (don't apply to promo sets or Pocket promo set P-A)
+    line = line.replace(/(?!PR-|P-A)(\w{2,3})-(\w{2,3}) (\d+)/g, '$1 $2$3');
     //special case for double crisis set
     line = line.replace(/xy5-5 /g, 'DCR ');
     //special case for DPP
@@ -458,6 +464,7 @@ const ptcgsimDecklistArray = (decklist) => {
     let matchWithOldSet = line.match(regexWithOldSet);
     let matchWithSet = line.match(regexWithSet);
     let matchWithPRSet = line.match(regexWithPRSet);
+    let matchWithPocketPromoSet = line.match(regexWithPocketPromoSet);
     let matchWithSpecialSet = line.match(regexWithSpecialSet);
     let matchWithoutSet = line.match(regexWithoutSet);
 
@@ -489,6 +496,17 @@ const ptcgsimDecklistArray = (decklist) => {
         parseInt(quantity),
         name,
         prSet,
+        setNumber,
+        null,
+        null,
+        undefined,
+      ]);
+    } else if (matchWithPocketPromoSet) {
+      const [, quantity, name, promoSet, setNumber] = matchWithPocketPromoSet;
+      decklistArray.push([
+        parseInt(quantity),
+        name,
+        promoSet,
         setNumber,
         null,
         null,
@@ -573,12 +591,19 @@ const DecklistArray = async (decklist) => {
 
     const limitlessResults = await LimitlessDecklistArray(miniDecklist);
 
+    const normalize = (s) => s.trim().toLowerCase().replace(/-/g, ' ').replace(/\s+/g, ' ');
     for (let idx of incompleteIndices) {
       const entry = decklistArray[idx];
-      const match = limitlessResults.find((r) => r[1] === entry[1]);
+      const match = limitlessResults.find((r) => normalize(r[1]) === normalize(entry[1]));
       if (match) {
         if (!entry[5] && match[5]) entry[5] = match[5];
         if ((!entry[6] || entry[6] === 'Unknown') && match[6]) entry[6] = match[6];
+      }
+      // Pocket-exclusive cards (e.g. X Speed) don't exist in the TCG database so
+      // Limitless returns no type for them. Default to Trainer — Pocket-exclusive
+      // cards that aren't Pokémon are always Trainers.
+      if (entry[2] && isPocketSet(entry[2]) && (!entry[6] || entry[6] === 'Unknown')) {
+        entry[6] = 'Trainer';
       }
     }
   }

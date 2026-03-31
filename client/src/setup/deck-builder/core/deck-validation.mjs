@@ -24,7 +24,9 @@ const RULES_BY_FORMAT = {
 
 export function isPocketCard(card = {}) {
   const image = card?.image || card?.images?.large || card?.images?.small || '';
-  return String(image).includes('/tcgp/');
+  // Cards from TCGdex contain /tcgp/
+  // Cards from Limitless contain /pocket/
+  return String(image).includes('/tcgp/') || String(image).includes('/pocket/');
 }
 
 export function detectDeckFormat(deck = {}) {
