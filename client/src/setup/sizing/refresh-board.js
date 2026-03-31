@@ -28,6 +28,7 @@ const refreshZone = (user, zoneId) => {
         }
         const numberRotations = currentRotation / 90;
         const index = zone.array.findIndex((card) => card.image === image);
+        if (index === -1) return; // skip stale DOM references
         moveCard(user, user, zoneId, zoneId, index);
         const newIndex = zone.array.findIndex((card) => card.image === image);
         for (let i = 0; i < numberRotations; i++) {
