@@ -145,7 +145,7 @@ const cardDataToID = (card) => {
     FRLG: 'ex6',
     BG: 'bp',
   };
-  if (oldSetCode_to_id[set]) {
+  if (oldSetCode_to_id[set] && !isPocketSet(set)) {
     return oldSetCode_to_id[set] + '-' + number;
   }
 
@@ -454,8 +454,8 @@ const ptcgsimDecklistArray = (decklist) => {
   // Process each line
   lines.forEach((line) => {
     line = line.replace(/[[\]()]/g, '');
-    //ptcglive conversion for GG/TG cards (the alt art bs) (don't apply to promo sets)
-    line = line.replace(/(?!PR-)(\w{2,3})-(\w{2,3}) (\d+)/g, '$1 $2$3');
+    //ptcglive conversion for GG/TG cards (the alt art bs) (don't apply to promo sets or Pocket promo set P-A)
+    line = line.replace(/(?!PR-|P-A)(\w{2,3})-(\w{2,3}) (\d+)/g, '$1 $2$3');
     //special case for double crisis set
     line = line.replace(/xy5-5 /g, 'DCR ');
     //special case for DPP
