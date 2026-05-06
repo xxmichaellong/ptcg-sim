@@ -365,7 +365,20 @@ const cardDataToImageURL = (card) => {
   return;
 };
 
-const isPocketSet = (set) => /^[A-Z]\d[a-z]?$/.test(set) || set === 'P-A';
+// Pocket set codes share shape `[A-Z]\d[a-z]?` with several legacy TCG set codes
+// (Neo Genesis "N1", Gym Heroes "G1", e-Card "E1", Pop promos "P1"…). Those are mapped
+// to real legacy sets in oldSetCode_to_id and don't exist in Pokémon TCG Pocket, so
+// exclude them here. B1/B2 stay matched — Base Set 2 ("B2") and Pocket B1/B2 collide,
+// and Pocket wins by intent of the original Pocket-import support.
+const POCKET_LEGACY_COLLISIONS = new Set([
+  'N1', 'N2', 'N3', 'N4',
+  'G1', 'G2',
+  'E1', 'E2', 'E3',
+  'P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9',
+]);
+const isPocketSet = (set) =>
+  !POCKET_LEGACY_COLLISIONS.has(set) &&
+  (/^[A-Z]\d[a-z]?$/.test(set) || set === 'P-A');
 
 const escapeRegExp = (string) => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
