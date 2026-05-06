@@ -30,7 +30,7 @@ const saveButton = document.getElementById('saveButton');
 const changeCardBackButton = document.getElementById('changeCardBackButton');
 const changeLanguageButton = document.getElementById('changeLanguageButton');
 
-const cardDataToID = (card) => {
+const cardDataToID = (card, formatHint) => {
   /*
    card is expected to be as follows (things can be undefined):
    {
@@ -40,6 +40,8 @@ const cardDataToID = (card) => {
     "name": "card name",
     "region": "int for international, tpc for Japanese"
   }
+  formatHint: optional 'pocket' | 'legacy' | 'unknown' — used to disambiguate set
+  codes valid in both games (currently just B2).
   */
   let id = card['id'];
   if (id) {
@@ -145,7 +147,7 @@ const cardDataToID = (card) => {
     FRLG: 'ex6',
     BG: 'bp',
   };
-  if (oldSetCode_to_id[set] && !isPocketSet(set)) {
+  if (oldSetCode_to_id[set] && !isPocketSet(set, formatHint)) {
     return oldSetCode_to_id[set] + '-' + number;
   }
 
@@ -262,7 +264,7 @@ const getEnergies = (language) => {
   };
 };
 
-const cardDataToImageURL = (card) => {
+const cardDataToImageURL = (card, formatHint) => {
   /*
   card is expected to be as follows (things can be undefined):
     {
@@ -272,11 +274,12 @@ const cardDataToImageURL = (card) => {
       "name": "card name",
       "region": "int for international, tpc for Japanese"
     }
+  formatHint: optional 'pocket' | 'legacy' | 'unknown' (see cardDataToID).
   */
 
   let set = card['set'];
   let number = card['number'];
-  let id = cardDataToID(card);
+  let id = cardDataToID(card, formatHint);
   let name = card['name'];
   let region = card['region'];
   if (!region) {
@@ -357,7 +360,7 @@ const cardDataToImageURL = (card) => {
         return letter ? paddedDigits + letter : paddedDigits;
       }
     );
-    if (isPocketSet(set)) {
+    if (isPocketSet(set, formatHint)) {
       return `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/pocket/${set}/${set}_${paddedNumber}_EN_SM.webp`;
     }
     return `https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/${set.replace(/ /g, '/')}/${set.replace(/ /g, '_')}_${paddedNumber}_R_${language}.png`;
@@ -368,17 +371,57 @@ const cardDataToImageURL = (card) => {
 // Pocket set codes share shape `[A-Z]\d[a-z]?` with several legacy TCG set codes
 // (Neo Genesis "N1", Gym Heroes "G1", e-Card "E1", Pop promos "P1"…). Those are mapped
 // to real legacy sets in oldSetCode_to_id and don't exist in Pokémon TCG Pocket, so
-// exclude them here. B1/B2 stay matched — Base Set 2 ("B2") and Pocket B1/B2 collide,
-// and Pocket wins by intent of the original Pocket-import support.
+// exclude them here. B1 is unique to Pocket. B2 collides between Pocket B2 and Base
+// Set 2 — disambiguated via formatHint (see detectDecklistFormat); defaults to Pocket.
 const POCKET_LEGACY_COLLISIONS = new Set([
-  'N1', 'N2', 'N3', 'N4',
-  'G1', 'G2',
-  'E1', 'E2', 'E3',
-  'P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9',
+  'N1',
+  'N2',
+  'N3',
+  'N4',
+  'G1',
+  'G2',
+  'E1',
+  'E2',
+  'E3',
+  'P1',
+  'P2',
+  'P3',
+  'P4',
+  'P5',
+  'P6',
+  'P7',
+  'P8',
+  'P9',
 ]);
-const isPocketSet = (set) =>
-  !POCKET_LEGACY_COLLISIONS.has(set) &&
-  (/^[A-Z]\d[a-z]?$/.test(set) || set === 'P-A');
+const isPocketSet = (set, formatHint) => {
+  if (POCKET_LEGACY_COLLISIONS.has(set)) return false;
+  if (set === 'B2' && formatHint === 'legacy') return false;
+  return /^[A-Z]\d[a-z]?$/.test(set) || set === 'P-A';
+};
+
+// Look at the parsed decklist to decide whether ambiguous codes (B2) should be
+// treated as Pocket or legacy. Returns 'pocket' / 'legacy' / 'unknown'.
+const isUnambiguousPocketCode = (set) =>
+  set === 'P-A' || set === 'B1' || /^A\d+[a-z]?$/.test(set);
+const detectDecklistFormat = (decklistArray) => {
+  let pocket = false;
+  let legacy = false;
+  for (const entry of decklistArray) {
+    const set = entry[2];
+    if (!set || set === 'B2') continue;
+    if (isUnambiguousPocketCode(set)) {
+      pocket = true;
+    } else if (
+      POCKET_LEGACY_COLLISIONS.has(set) ||
+      !/^[A-Z]\d[a-z]?$/.test(set)
+    ) {
+      legacy = true;
+    }
+  }
+  if (legacy && !pocket) return 'legacy';
+  if (pocket && !legacy) return 'pocket';
+  return 'unknown';
+};
 
 const escapeRegExp = (string) => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -557,20 +600,27 @@ const ptcgsimDecklistArray = (decklist) => {
 const DecklistArray = async (decklist) => {
   // Each card will be stored as [quantity, name, set code, number, pokemontcg.io id, image url, type]
   let decklistArray = ptcgsimDecklistArray(decklist);
+  const formatHint = detectDecklistFormat(decklistArray);
   const energies = getEnergies();
   for (let i = 0; i < decklistArray.length; i++) {
-    decklistArray[i][4] = cardDataToID({
-      set: decklistArray[i][2],
-      number: decklistArray[i][3],
-      id: decklistArray[i][4],
-      name: decklistArray[i][1],
-    });
-    decklistArray[i][5] = cardDataToImageURL({
-      set: decklistArray[i][2],
-      number: decklistArray[i][3],
-      id: decklistArray[i][4],
-      name: decklistArray[i][1],
-    });
+    decklistArray[i][4] = cardDataToID(
+      {
+        set: decklistArray[i][2],
+        number: decklistArray[i][3],
+        id: decklistArray[i][4],
+        name: decklistArray[i][1],
+      },
+      formatHint
+    );
+    decklistArray[i][5] = cardDataToImageURL(
+      {
+        set: decklistArray[i][2],
+        number: decklistArray[i][3],
+        id: decklistArray[i][4],
+        name: decklistArray[i][1],
+      },
+      formatHint
+    );
     if (!decklistArray[i][6]) {
       if (decklistArray[i][2]) {
         if (decklistArray[i][3]) {
@@ -592,7 +642,11 @@ const DecklistArray = async (decklist) => {
   // Fallback: use Limitless API for entries missing type or image
   const incompleteIndices = [];
   for (let i = 0; i < decklistArray.length; i++) {
-    if (!decklistArray[i][5] || !decklistArray[i][6] || decklistArray[i][6] === 'Unknown') {
+    if (
+      !decklistArray[i][5] ||
+      !decklistArray[i][6] ||
+      decklistArray[i][6] === 'Unknown'
+    ) {
       incompleteIndices.push(i);
     }
   }
@@ -604,18 +658,26 @@ const DecklistArray = async (decklist) => {
 
     const limitlessResults = await LimitlessDecklistArray(miniDecklist);
 
-    const normalize = (s) => s.trim().toLowerCase().replace(/-/g, ' ').replace(/\s+/g, ' ');
+    const normalize = (s) =>
+      s.trim().toLowerCase().replace(/-/g, ' ').replace(/\s+/g, ' ');
     for (let idx of incompleteIndices) {
       const entry = decklistArray[idx];
-      const match = limitlessResults.find((r) => normalize(r[1]) === normalize(entry[1]));
+      const match = limitlessResults.find(
+        (r) => normalize(r[1]) === normalize(entry[1])
+      );
       if (match) {
         if (!entry[5] && match[5]) entry[5] = match[5];
-        if ((!entry[6] || entry[6] === 'Unknown') && match[6]) entry[6] = match[6];
+        if ((!entry[6] || entry[6] === 'Unknown') && match[6])
+          entry[6] = match[6];
       }
       // Pocket-exclusive cards (e.g. X Speed) don't exist in the TCG database so
       // Limitless returns no type for them. Default to Trainer — Pocket-exclusive
       // cards that aren't Pokémon are always Trainers.
-      if (entry[2] && isPocketSet(entry[2]) && (!entry[6] || entry[6] === 'Unknown')) {
+      if (
+        entry[2] &&
+        isPocketSet(entry[2], formatHint) &&
+        (!entry[6] || entry[6] === 'Unknown')
+      ) {
         entry[6] = 'Trainer';
       }
     }
