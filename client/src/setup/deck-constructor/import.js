@@ -396,7 +396,7 @@ const POCKET_LEGACY_COLLISIONS = new Set([
 const isPocketSet = (set, formatHint) => {
   if (POCKET_LEGACY_COLLISIONS.has(set)) return false;
   if (set === 'B2' && formatHint === 'legacy') return false;
-  return /^[A-Z]\d[a-z]?$/.test(set) || set === 'P-A';
+  return /^[A-Z]\d+[a-z]?$/.test(set) || set === 'P-A';
 };
 
 // Look at the parsed decklist to decide whether ambiguous codes (B2) should be
@@ -413,7 +413,7 @@ const detectDecklistFormat = (decklistArray) => {
       pocket = true;
     } else if (
       POCKET_LEGACY_COLLISIONS.has(set) ||
-      !/^[A-Z]\d[a-z]?$/.test(set)
+      !/^[A-Z]\d+[a-z]?$/.test(set)
     ) {
       legacy = true;
     }
@@ -456,6 +456,9 @@ const LimitlessDecklistArray = async (decklist) => {
   const errors = response['errors'] || [];
 
   for (let card of cards) {
+    // No formatHint passed: this is the per-card API fallback, called without the
+    // surrounding decklist's context. Ambiguous codes (B2) keep the default Pocket
+    // routing here; format auto-detection only applies in the local pipeline.
     decklistArray.push([
       card['count'],
       card['name'],
