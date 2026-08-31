@@ -121,16 +121,16 @@ work do not change.
 
 ## Dispatch, networking, and multiplayer
 
-| Current files                                            | Target files                                                                               | Treatment                                                                    |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
-| `setup/general/accept-action.js`                         | exhaustive command/event unions, schema-validated dispatch                                 | No function-name lookup; compiler and runtime reject unknown variants.       |
-| `setup/general/process-action.js`, add/clean action data | client session/outbox + server command pipeline/journal                                    | Remove peer logs/counters as authority.                                      |
-| catch-up/resync/sync/replay-block files                  | `ReliableRoomConnection.ts`, snapshot install/reconcile, server session frontiers          | Full projected snapshots replace client action replay for sync.              |
-| socket event listeners                                   | `apps/web/src/session/RemoteGameSession.ts`, protocol client codec                         | Runtime-validate every message and explicitly manage reconnect/supersession. |
-| `setup/spectator/**`                                     | server spectator role/projector + client session view                                      | Spectator never receives player action log/deck data.                        |
-| reveal/look relay events                                 | visibility commands and per-recipient publications                                         | Role-scoped server truth.                                                    |
-| `server/server.js` room relay                            | `apps/server/src/do/MatchRoom.ts`, admission, ingress, persistence, projection publication | Replace username sets/generic relay with authoritative room service.         |
-| Socket.IO CDN in `index.ejs`                             | typed native WebSocket transport adapter                                                   | Exact transport selected by backend ADR; no global `io`.                     |
+| Current files                                            | Target files                                                                                   | Treatment                                                                    |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `setup/general/accept-action.js`                         | exhaustive command/event unions, schema-validated dispatch                                     | No function-name lookup; compiler and runtime reject unknown variants.       |
+| `setup/general/process-action.js`, add/clean action data | client session/outbox + server command pipeline/journal                                        | Remove peer logs/counters as authority.                                      |
+| catch-up/resync/sync/replay-block files                  | `packages/client-session/src/session.ts`, snapshot install/reconcile, server session frontiers | Full projected snapshots replace client action replay for sync.              |
+| socket event listeners                                   | `packages/client-session/src/session.ts`, `transport.ts`, protocol client codec                | Runtime-validate every message and explicitly manage reconnect/supersession. |
+| `setup/spectator/**`                                     | server spectator role/projector + client session view                                          | Spectator never receives player action log/deck data.                        |
+| reveal/look relay events                                 | visibility commands and per-recipient publications                                             | Role-scoped server truth.                                                    |
+| `server/server.js` room relay                            | `apps/server/src/do/MatchRoom.ts`, admission, ingress, persistence, projection publication     | Replace username sets/generic relay with authoritative room service.         |
+| Socket.IO CDN in `index.ejs`                             | typed native WebSocket transport adapter                                                       | Exact transport selected by backend ADR; no global `io`.                     |
 
 Proposed authority/server files:
 
@@ -151,12 +151,14 @@ apps/server/src/
   saves/SavedMatch.ts
   observability/*
 
+packages/client-session/src/
+  model.ts
+  session.ts
+  transport.ts
+
 apps/web/src/session/
-  GameSessionPort.ts
+  useGameSession.ts
   LocalGameSession.ts
-  RemoteGameSession.ts
-  ReliableRoomConnection.ts
-  PendingCommandOutbox.ts
 ```
 
 ## Import, export, replay, and decks

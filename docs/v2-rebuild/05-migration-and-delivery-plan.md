@@ -257,8 +257,10 @@ Work:
 - Implement schema validation, role authorization, rate limits, idempotency,
   client sequencing, durable transaction pipeline, projection publication, and
   typed rejection.
-- Build `RoomConnection` with heartbeat, bounded pending commands, reconnect,
-  authoritative replacement, and stale-intent cancellation.
+- Integrate the implemented `packages/client-session` controller, which owns
+  bounded gap-free commands, byte-identical ambiguity retries, heartbeat,
+  authoritative replacement, generation-safe reconnect, and supersession.
+  Add stale presentation-intent cancellation at the application boundary.
 - Implement opponent-action request semantics, coaching/flip behavior, presence,
   chat, spectator projection, and hidden inspection/reveal. Preserve the current
   absence of multiplayer undo unless a separate product ADR authorizes it.

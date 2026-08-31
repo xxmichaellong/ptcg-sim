@@ -97,6 +97,15 @@ importers:
 
   client: {}
 
+  packages/client-session:
+    dependencies:
+      '@ptcgsim/game-core':
+        specifier: workspace:*
+        version: link:../game-core
+      '@ptcgsim/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+
   packages/game-core: {}
 
   packages/protocol:

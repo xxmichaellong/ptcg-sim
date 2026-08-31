@@ -38,6 +38,9 @@ apps/
     src/persistence/         snapshots, event chunks, share links
     src/observability/       structured logs and metrics
 packages/
+  client-session/
+    src/session.ts           connection, pending commands, authoritative view store
+    src/transport.ts         browser-neutral socket boundary + native WebSocket adapter
   game-core/
     src/state/               canonical schema and constructors
     src/commands/            command union, decisions and preconditions
@@ -98,10 +101,11 @@ Allowed dependencies:
 ```text
 game-core        -> no UI, renderer, server-runtime, storage, or network package
 protocol         -> game-core public IDs/value types and schema library only
+client-session   -> protocol + projected view hashing; no React or renderer dependency
 deck-core        -> no DOM or application state
 legacy-import    -> game-core + protocol version adapters
 renderer-*       -> selected renderer + projected view/presentation types only
-apps/web         -> protocol + renderer contract/selected adapter + deck-core
+apps/web         -> client-session + protocol + renderer contract/selected adapter + deck-core
 apps/server      -> protocol + game-core + storage/runtime adapters
 tests            -> any public package API; internals only in package-local tests
 ```
@@ -111,6 +115,8 @@ Forbidden dependencies:
 - `game-core` importing React, Pixi, browser globals, Socket.IO, Worker APIs, a
   database driver, or `Math.random()`.
 - any renderer importing server or canonical secret-state types.
+- `client-session` importing React, a renderer, server runtime, or canonical
+  secret-state types.
 - `apps/web` importing canonical state constructors or visibility internals.
 - Any v2 runtime importing files from legacy `client/src/actions/` or
   `server/server.js`.

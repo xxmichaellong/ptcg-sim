@@ -1,6 +1,6 @@
 # PTCG Sim v2 rebuild blueprint
 
-- Status: **proposal for audit; implementation is not authorized by this document**
+- Status: **approved implementation in progress on the isolated v2 feature branch**
 - Last updated: 2026-08-31
 - Primary objective: replace the internals while preserving the current UI and UX.
 
@@ -76,7 +76,8 @@ to each affected section.
 The first three-lane review and its dispositions are recorded in
 [`reviews/2026-08-31-initial-parallel-audit.md`](./reviews/2026-08-31-initial-parallel-audit.md).
 
-The blueprint is ready for implementation only when:
+The following remain release gates even though the owner has authorized
+incremental implementation behind the isolated v2 route and draft PR:
 
 - every item marked `BLOCKING` has an owner and accepted resolution;
 - the current behavior inventory and visual baselines exist;
