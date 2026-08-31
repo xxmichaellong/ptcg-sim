@@ -27,6 +27,7 @@ const p2 = asPlayerId('player-two');
 
 const snapshot = (): RoomAuthoritySnapshot => ({
   schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+  authorityVersion: 0,
   state: createEmptyMatch(asMatchId('coordinator-match'), [
     { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
     { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
@@ -100,7 +101,9 @@ describe('room command coordinator', () => {
           firstCommitEntered.resolve();
           await releaseFirstCommit.promise;
         }
-        expect(transaction.expectedRevision).toBe(durable.state.revision);
+        expect(transaction.expectedAuthorityVersion).toBe(
+          durable.authorityVersion
+        );
         durable = transaction.snapshot;
       },
     };

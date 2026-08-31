@@ -8,5 +8,9 @@
   },
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts", "lib"],
-  "references": [{ "path": "../../packages/room-authority" }]
+  "references": [
+    { "path": "../../packages/game-core" },
+    { "path": "../../packages/protocol" },
+    { "path": "../../packages/room-authority" }
+  ]
 }

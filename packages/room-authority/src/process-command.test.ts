@@ -28,6 +28,7 @@ type CommandEnvelope = Extract<ClientMessage, { type: 'Command' }>;
 
 const createSnapshot = (): RoomAuthoritySnapshot => ({
   schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+  authorityVersion: 0,
   state: createEmptyMatch(asMatchId('authority-test-match'), [
     {
       playerId: p1,

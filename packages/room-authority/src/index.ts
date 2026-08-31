@@ -1,3 +1,4 @@
+export * from './admission.js';
 export * from './coordinator.js';
 export * from './identity-registry.js';
 export * from './invariants.js';

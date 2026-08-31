@@ -40,16 +40,31 @@ export interface AuthoritySession {
   readonly active: boolean;
   readonly nextClientSequence: number;
   readonly recentOutcomes: readonly PersistedCommandOutcome[];
+  readonly resumeCapabilityDigest?: string;
+}
+
+export interface AdmissionSeat {
+  readonly playerId: PlayerId;
+  readonly claimCapabilityDigest: string;
+  readonly claimedSessionId: string | null;
+}
+
+export interface RoomAdmissionState {
+  readonly seats: Readonly<Record<string, AdmissionSeat>>;
+  readonly spectatorCapabilityDigest: string | null;
 }
 
 export interface RoomAuthoritySnapshot {
   readonly schemaVersion: typeof AUTHORITY_SNAPSHOT_SCHEMA_VERSION;
+  readonly authorityVersion: number;
   readonly state: MatchState;
   readonly identities: ProjectionIdentityState;
   readonly sessions: Readonly<Record<string, AuthoritySession>>;
+  readonly admission?: RoomAdmissionState;
 }
 
 export interface PersistedAuthorityTransaction {
+  readonly expectedAuthorityVersion: number;
   readonly expectedRevision: number;
   readonly snapshot: RoomAuthoritySnapshot;
   readonly sessionId: string;
@@ -65,6 +80,19 @@ export interface AuthorityPersistence {
 
 export interface AuthoritySnapshotStore extends AuthorityPersistence {
   readonly load: () => Promise<RoomAuthoritySnapshot | undefined>;
+}
+
+export interface PersistedAdmissionTransaction {
+  readonly expectedAuthorityVersion: number;
+  readonly snapshot: RoomAuthoritySnapshot;
+  readonly sessionId: string;
+  readonly kind: 'seat_claimed' | 'spectator_joined' | 'session_resumed';
+}
+
+export interface AdmissionPersistence {
+  readonly commitAdmission: (
+    transaction: PersistedAdmissionTransaction
+  ) => Promise<void>;
 }
 
 export interface AuthorityPolicy {

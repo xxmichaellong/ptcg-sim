@@ -246,6 +246,7 @@ export const processAuthorityCommand = async (
   );
   let candidate: RoomAuthoritySnapshot = {
     schemaVersion: current.schemaVersion,
+    authorityVersion: current.authorityVersion + 1,
     state: accepted
       ? cloneMatchState(nextState)
       : cloneMatchState(current.state),
@@ -273,6 +274,7 @@ export const processAuthorityCommand = async (
   assertAuthoritySnapshotInvariants(candidate);
 
   await dependencies.persistence.commit({
+    expectedAuthorityVersion: current.authorityVersion,
     expectedRevision: current.state.revision,
     snapshot: candidate,
     sessionId: session.id,

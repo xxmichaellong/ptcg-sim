@@ -23,6 +23,12 @@ export const collectAuthoritySnapshotProblems = (
   if (snapshot.schemaVersion !== AUTHORITY_SNAPSHOT_SCHEMA_VERSION) {
     problems.push(`unsupported authority schema ${snapshot.schemaVersion}`);
   }
+  if (
+    !Number.isSafeInteger(snapshot.authorityVersion) ||
+    snapshot.authorityVersion < 0
+  ) {
+    problems.push('authority version must be a non-negative safe integer');
+  }
 
   const activePlayerSessions = new Set<string>();
   for (const [key, session] of Object.entries(snapshot.sessions)) {
@@ -32,6 +38,13 @@ export const collectAuthoritySnapshotProblems = (
       session.nextClientSequence < 1
     ) {
       problems.push(`session ${session.id} has invalid sequence frontier`);
+    }
+    if (
+      session.resumeCapabilityDigest !== undefined &&
+      (session.resumeCapabilityDigest.length < 32 ||
+        session.resumeCapabilityDigest.length > 128)
+    ) {
+      problems.push(`session ${session.id} has an invalid resume digest`);
     }
     if (session.viewer.kind === 'player') {
       if (!snapshot.state.players[session.viewer.playerId]) {
@@ -62,6 +75,64 @@ export const collectAuthoritySnapshotProblems = (
       if (outcome.revision > snapshot.state.revision) {
         problems.push(`session ${session.id} caches a future revision`);
       }
+    }
+  }
+
+  if (snapshot.admission) {
+    const seatPlayerIds = new Set<string>();
+    for (const [key, seat] of Object.entries(snapshot.admission.seats)) {
+      if (key !== seat.playerId) {
+        problems.push(`admission seat key ${key} mismatches player ID`);
+      }
+      if (!snapshot.state.players[seat.playerId]) {
+        problems.push(
+          `admission seat references unknown player ${seat.playerId}`
+        );
+      }
+      if (seatPlayerIds.has(seat.playerId)) {
+        problems.push(`admission duplicates player ${seat.playerId}`);
+      }
+      seatPlayerIds.add(seat.playerId);
+      if (
+        seat.claimCapabilityDigest.length < 32 ||
+        seat.claimCapabilityDigest.length > 128
+      ) {
+        problems.push(`admission seat ${seat.playerId} has invalid digest`);
+      }
+      const claimedSession =
+        seat.claimedSessionId === null
+          ? undefined
+          : snapshot.sessions[seat.claimedSessionId];
+      if (
+        seat.claimedSessionId !== null &&
+        claimedSession?.viewer.kind !== 'player'
+      ) {
+        problems.push(
+          `admission seat ${seat.playerId} has invalid claim session`
+        );
+      }
+      if (
+        claimedSession?.viewer.kind === 'player' &&
+        claimedSession.viewer.playerId !== seat.playerId
+      ) {
+        problems.push(
+          `admission seat ${seat.playerId} claim belongs to another player`
+        );
+      }
+    }
+    if (
+      snapshot.state.playerOrder.some(
+        (playerId) => !seatPlayerIds.has(playerId)
+      )
+    ) {
+      problems.push('admission does not define every player seat');
+    }
+    if (
+      snapshot.admission.spectatorCapabilityDigest !== null &&
+      (snapshot.admission.spectatorCapabilityDigest.length < 32 ||
+        snapshot.admission.spectatorCapabilityDigest.length > 128)
+    ) {
+      problems.push('admission spectator digest is invalid');
     }
   }
 

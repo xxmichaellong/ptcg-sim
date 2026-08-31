@@ -1,12 +1,15 @@
 import {
   assertAuthoritySnapshotInvariants,
+  type AdmissionPersistence,
   type AuthoritySnapshotStore,
+  type PersistedAdmissionTransaction,
   type PersistedAuthorityTransaction,
   type RoomAuthoritySnapshot,
 } from '@ptcgsim/room-authority';
 
 export const AUTHORITY_SNAPSHOT_STORAGE_KEY = 'authority:snapshot';
 const JOURNAL_PREFIX = 'authority:journal:';
+const ADMISSION_JOURNAL_PREFIX = 'authority:admission:';
 const STORAGE_FORMAT = 'ptcgsim-room-authority-v1';
 
 export interface DurableStorageTransactionLike {
@@ -28,6 +31,8 @@ interface StoredAuthoritySnapshot {
 
 export interface StoredAuthorityJournalEntry {
   readonly format: typeof STORAGE_FORMAT;
+  readonly expectedAuthorityVersion: number;
+  readonly resultingAuthorityVersion: number;
   readonly expectedRevision: number;
   readonly resultingRevision: number;
   readonly sessionId: string;
@@ -35,13 +40,21 @@ export interface StoredAuthorityJournalEntry {
   readonly eventBatch?: PersistedAuthorityTransaction['eventBatch'];
 }
 
+export interface StoredAdmissionJournalEntry {
+  readonly format: typeof STORAGE_FORMAT;
+  readonly expectedAuthorityVersion: number;
+  readonly resultingAuthorityVersion: number;
+  readonly sessionId: string;
+  readonly kind: PersistedAdmissionTransaction['kind'];
+}
+
 export class ConcurrentRoomWriteError extends Error {
   constructor(
-    readonly expectedRevision: number,
-    readonly actualRevision: number
+    readonly expectedAuthorityVersion: number,
+    readonly actualAuthorityVersion: number
   ) {
     super(
-      `Room revision changed from ${expectedRevision} to ${actualRevision}`
+      `Room authority version changed from ${expectedAuthorityVersion} to ${actualAuthorityVersion}`
     );
     this.name = 'ConcurrentRoomWriteError';
   }
@@ -75,7 +88,9 @@ const readStoredSnapshot = (
 const journalKey = (transaction: PersistedAuthorityTransaction): string =>
   `${JOURNAL_PREFIX}${encodeURIComponent(transaction.sessionId)}:${transaction.outcome.clientSequence}:${encodeURIComponent(transaction.outcome.commandId)}`;
 
-export class DurableRoomSnapshotStore implements AuthoritySnapshotStore {
+export class DurableRoomSnapshotStore
+  implements AuthoritySnapshotStore, AdmissionPersistence
+{
   constructor(private readonly storage: DurableStorageLike) {}
 
   async load(): Promise<RoomAuthoritySnapshot | undefined> {
@@ -108,10 +123,10 @@ export class DurableRoomSnapshotStore implements AuthoritySnapshotStore {
       );
       if (!current)
         throw new Error('Room authority snapshot is not initialized');
-      if (current.state.revision !== transaction.expectedRevision) {
+      if (current.authorityVersion !== transaction.expectedAuthorityVersion) {
         throw new ConcurrentRoomWriteError(
-          transaction.expectedRevision,
-          current.state.revision
+          transaction.expectedAuthorityVersion,
+          current.authorityVersion
         );
       }
       const key = journalKey(transaction);
@@ -120,6 +135,8 @@ export class DurableRoomSnapshotStore implements AuthoritySnapshotStore {
       }
       const journalEntry: StoredAuthorityJournalEntry = {
         format: STORAGE_FORMAT,
+        expectedAuthorityVersion: transaction.expectedAuthorityVersion,
+        resultingAuthorityVersion: transaction.snapshot.authorityVersion,
         expectedRevision: transaction.expectedRevision,
         resultingRevision: transaction.snapshot.state.revision,
         sessionId: transaction.sessionId,
@@ -127,6 +144,43 @@ export class DurableRoomSnapshotStore implements AuthoritySnapshotStore {
         ...(transaction.eventBatch
           ? { eventBatch: transaction.eventBatch }
           : {}),
+      };
+      await storageTransaction.put({
+        [AUTHORITY_SNAPSHOT_STORAGE_KEY]: {
+          format: STORAGE_FORMAT,
+          snapshot: transaction.snapshot,
+        } satisfies StoredAuthoritySnapshot,
+        [key]: journalEntry,
+      });
+    });
+  }
+
+  async commitAdmission(
+    transaction: PersistedAdmissionTransaction
+  ): Promise<void> {
+    assertAuthoritySnapshotInvariants(transaction.snapshot);
+    await this.storage.transaction(async (storageTransaction) => {
+      const current = readStoredSnapshot(
+        await storageTransaction.get<unknown>(AUTHORITY_SNAPSHOT_STORAGE_KEY)
+      );
+      if (!current)
+        throw new Error('Room authority snapshot is not initialized');
+      if (current.authorityVersion !== transaction.expectedAuthorityVersion) {
+        throw new ConcurrentRoomWriteError(
+          transaction.expectedAuthorityVersion,
+          current.authorityVersion
+        );
+      }
+      const key = `${ADMISSION_JOURNAL_PREFIX}${encodeURIComponent(transaction.sessionId)}`;
+      if ((await storageTransaction.get<unknown>(key)) !== undefined) {
+        throw new Error('Admission journal key collision');
+      }
+      const journalEntry: StoredAdmissionJournalEntry = {
+        format: STORAGE_FORMAT,
+        expectedAuthorityVersion: transaction.expectedAuthorityVersion,
+        resultingAuthorityVersion: transaction.snapshot.authorityVersion,
+        sessionId: transaction.sessionId,
+        kind: transaction.kind,
       };
       await storageTransaction.put({
         [AUTHORITY_SNAPSHOT_STORAGE_KEY]: {

@@ -61,6 +61,7 @@ const p2 = asPlayerId('player-two');
 
 const initialSnapshot = (): RoomAuthoritySnapshot => ({
   schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+  authorityVersion: 0,
   state: createEmptyMatch(asMatchId('durable-room'), [
     { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
     { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
@@ -87,6 +88,7 @@ const acceptedTransaction = (
     revision: 1,
   } as const;
   return {
+    expectedAuthorityVersion: 0,
     expectedRevision: 0,
     sessionId: 'session',
     outcome,
@@ -96,6 +98,7 @@ const acceptedTransaction = (
     },
     snapshot: {
       ...current,
+      authorityVersion: 1,
       state: { ...cloneMatchState(current.state), revision: 1 },
       sessions: {
         session: {
@@ -136,11 +139,54 @@ describe('Durable Object authority snapshot store', () => {
     );
     expect(journalKeys).toHaveLength(1);
     expect(storage.values.get(journalKeys[0]!)).toMatchObject({
+      expectedAuthorityVersion: 0,
+      resultingAuthorityVersion: 1,
       expectedRevision: 0,
       resultingRevision: 1,
       sessionId: 'session',
       outcome: { commandId: 'command-1', accepted: true },
       eventBatch: { revision: 1 },
+    });
+  });
+
+  it('atomically persists admission metadata on the authority frontier', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    const initial = initialSnapshot();
+    await store.initialize(initial);
+    const spectatorSession = {
+      id: 'spectator-session-0000000001',
+      viewer: { kind: 'spectator' as const },
+      active: true,
+      nextClientSequence: 1,
+      recentOutcomes: [],
+      resumeCapabilityDigest: 'a'.repeat(64),
+    };
+
+    await store.commitAdmission({
+      expectedAuthorityVersion: 0,
+      sessionId: spectatorSession.id,
+      kind: 'spectator_joined',
+      snapshot: {
+        ...initial,
+        authorityVersion: 1,
+        sessions: {
+          ...initial.sessions,
+          [spectatorSession.id]: spectatorSession,
+        },
+      },
+    });
+
+    expect((await store.load())?.authorityVersion).toBe(1);
+    const admissionKeys = [...storage.values.keys()].filter((key) =>
+      key.startsWith('authority:admission:')
+    );
+    expect(admissionKeys).toHaveLength(1);
+    expect(storage.values.get(admissionKeys[0]!)).toMatchObject({
+      expectedAuthorityVersion: 0,
+      resultingAuthorityVersion: 1,
+      kind: 'spectator_joined',
+      sessionId: spectatorSession.id,
     });
   });
 
