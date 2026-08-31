@@ -156,8 +156,8 @@ chunk graph will be measured in the browser evidence run.
   without renderer remount;
 - an in-memory vertical multiplayer test covering admission, deck setup,
   projected scene creation, semantic drop resolution, client sequencing,
-  authority commit, reconciled stack publication, and an explicit stack-to-zone
-  departure through revision 4;
+  authority commit, reconciled stack publication, bench-to-active promotion,
+  and an explicit stack-to-zone departure through revision 5;
 - TypeScript project boundaries and circular-dependency check;
 - Vite production build; and
 - the repository-wide v2 and 79-test legacy gates.
@@ -173,16 +173,24 @@ logical state; the application boundary accepts either the harness recorder or
 compile-time view-ID brands at one explicit protocol boundary before entering
 the external client store.
 
-At this checkpoint the v2 suite contains 98 passing tests across 22 files. A
+Whole-stack movement is also explicit: the top evolution card may represent a
+stack for active/bench promotion, demotion, swapping, or bench reordering. The
+resolved event replaces the complete board stack layout with exact old-layout
+preconditions, while attachment drags and lower evolution cards cannot
+accidentally move the stack.
+
+At this checkpoint the v2 suite contains 101 passing tests across 22 files. A
 separate Playwright suite also passes three real Chromium 151 scenarios:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
    resolves the drop to `MoveCardToPlay` with the expected source zone,
+   resolves an active-to-bench stack drag to `MovePlayStack`,
    produces a screenshot, and has no runtime errors.
 2. Pixi creates one live WebGL canvas with 61 card views, handles a real pointer
    click and pointer-captured drag, resolves the drop through the same command
-   boundary, loses its actual WebGL2 context through `WEBGL_lose_context`,
+   boundary including whole-stack movement, loses its actual WebGL2 context
+   through `WEBGL_lose_context`,
    rebuilds to a later renderer generation with all 61 views, produces a
    post-recovery screenshot, and has no runtime errors.
 3. Three Pixi → DOM → Pixi transitions leave exactly one selected renderer each

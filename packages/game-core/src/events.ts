@@ -91,6 +91,14 @@ export type DomainEvent =
       readonly concealIdentity: boolean;
     }
   | {
+      readonly type: 'PlayStackLayoutSet';
+      readonly boardPlayerId: PlayerId;
+      readonly expectedActiveStackId: StackId | null;
+      readonly expectedBenchStackIds: readonly StackId[];
+      readonly activeStackId: StackId | null;
+      readonly benchStackIds: readonly StackId[];
+    }
+  | {
       readonly type: 'InspectedCardMoved';
       readonly playerId: PlayerId;
       readonly inspectionId: InspectionId;

@@ -49,6 +49,11 @@ const emptyMatch = () =>
     { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
   ]);
 
+const expectedLayout = (state: ReturnType<typeof emptyMatch>) => ({
+  expectedActiveStackId: state.boards[p1]!.activeStackId,
+  expectedBenchStackIds: [...state.boards[p1]!.benchStackIds],
+});
+
 describe('explicit card departures', () => {
   it('detaches attachments before atomically removing a stack base', () => {
     const commandContext = context();
@@ -209,6 +214,196 @@ describe('explicit card departures', () => {
     if (!departed.accepted) throw new Error(departed.message);
     expect(departed.state.stacks[stackId]?.evolutionCardIds).toEqual([baseId]);
     assertMatchInvariants(departed.state);
+  });
+
+  it('promotes, swaps, reorders, and demotes whole play stacks atomically', () => {
+    const commandContext = context();
+    const loaded = executeCommand(
+      emptyMatch(),
+      {
+        type: 'LoadDeck',
+        playerId: p1,
+        entries: deck('Pokémon', 'Pokémon', 'Pokémon'),
+      },
+      commandContext
+    );
+    if (!loaded.accepted) throw new Error(loaded.message);
+    let state = loaded.state;
+    const deckId = playerZoneId(p1, 'deck');
+    const [activeCard, firstBenchCard, secondBenchCard] =
+      state.zones[deckId]!.cardIds;
+    for (const [cardId, slot] of [
+      [activeCard!, 'active'],
+      [firstBenchCard!, 'bench'],
+      [secondBenchCard!, 'bench'],
+    ] as const) {
+      const played = executeCommand(
+        state,
+        {
+          type: 'MoveCardToPlay',
+          cardId,
+          expectedSourceZoneId: deckId,
+          boardPlayerId: p1,
+          slot,
+        },
+        commandContext
+      );
+      if (!played.accepted) throw new Error(played.message);
+      state = played.state;
+    }
+    const originalActive = state.boards[p1]!.activeStackId!;
+    const [firstBench, secondBench] = state.boards[p1]!.benchStackIds;
+
+    const promoted = executeCommand(
+      state,
+      {
+        type: 'MovePlayStack',
+        stackId: firstBench!,
+        expectedSourceSlot: 'bench',
+        ...expectedLayout(state),
+        destinationSlot: 'active',
+      },
+      commandContext
+    );
+    if (!promoted.accepted) throw new Error(promoted.message);
+    state = promoted.state;
+    expect(state.boards[p1]).toEqual({
+      activeStackId: firstBench,
+      benchStackIds: [secondBench, originalActive],
+    });
+    expect(state.stacks[firstBench!]?.slot).toBe('active');
+    expect(state.stacks[originalActive]?.slot).toBe('bench');
+
+    const reordered = executeCommand(
+      state,
+      {
+        type: 'MovePlayStack',
+        stackId: originalActive,
+        expectedSourceSlot: 'bench',
+        ...expectedLayout(state),
+        destinationSlot: 'bench',
+        targetStackId: secondBench!,
+      },
+      commandContext
+    );
+    if (!reordered.accepted) throw new Error(reordered.message);
+    state = reordered.state;
+    expect(state.boards[p1]?.benchStackIds).toEqual([
+      originalActive,
+      secondBench,
+    ]);
+
+    const swapped = executeCommand(
+      state,
+      {
+        type: 'MovePlayStack',
+        stackId: firstBench!,
+        expectedSourceSlot: 'active',
+        ...expectedLayout(state),
+        destinationSlot: 'bench',
+        targetStackId: secondBench!,
+      },
+      commandContext
+    );
+    if (!swapped.accepted) throw new Error(swapped.message);
+    state = swapped.state;
+    expect(state.boards[p1]).toEqual({
+      activeStackId: secondBench,
+      benchStackIds: [originalActive, firstBench],
+    });
+
+    expect(
+      executeCommand(
+        state,
+        {
+          type: 'MovePlayStack',
+          stackId: secondBench!,
+          expectedSourceSlot: 'bench',
+          ...expectedLayout(state),
+          destinationSlot: 'active',
+        },
+        commandContext
+      )
+    ).toMatchObject({ accepted: false, code: 'stale_reference' });
+    expect(
+      executeCommand(
+        state,
+        {
+          type: 'MovePlayStack',
+          stackId: secondBench!,
+          expectedSourceSlot: 'active',
+          expectedActiveStackId: secondBench!,
+          expectedBenchStackIds: [...state.boards[p1]!.benchStackIds].reverse(),
+          destinationSlot: 'bench',
+        },
+        commandContext
+      )
+    ).toMatchObject({ accepted: false, code: 'stale_reference' });
+
+    const demoted = executeCommand(
+      state,
+      {
+        type: 'MovePlayStack',
+        stackId: secondBench!,
+        expectedSourceSlot: 'active',
+        ...expectedLayout(state),
+        destinationSlot: 'bench',
+      },
+      commandContext
+    );
+    if (!demoted.accepted) throw new Error(demoted.message);
+    expect(demoted.state.boards[p1]).toEqual({
+      activeStackId: null,
+      benchStackIds: [originalActive, firstBench, secondBench],
+    });
+    assertMatchInvariants(demoted.state);
+  });
+
+  it('preserves the legacy automatic swap when active moves to a lone bench', () => {
+    const commandContext = context();
+    const loaded = executeCommand(
+      emptyMatch(),
+      { type: 'LoadDeck', playerId: p1, entries: deck('Pokémon', 'Pokémon') },
+      commandContext
+    );
+    if (!loaded.accepted) throw new Error(loaded.message);
+    let state = loaded.state;
+    const deckId = playerZoneId(p1, 'deck');
+    for (const slot of ['active', 'bench'] as const) {
+      const cardId = state.zones[deckId]!.cardIds[0]!;
+      const played = executeCommand(
+        state,
+        {
+          type: 'MoveCardToPlay',
+          cardId,
+          expectedSourceZoneId: deckId,
+          boardPlayerId: p1,
+          slot,
+        },
+        commandContext
+      );
+      if (!played.accepted) throw new Error(played.message);
+      state = played.state;
+    }
+    const oldActive = state.boards[p1]!.activeStackId!;
+    const oldBench = state.boards[p1]!.benchStackIds[0]!;
+    const moved = executeCommand(
+      state,
+      {
+        type: 'MovePlayStack',
+        stackId: oldActive,
+        expectedSourceSlot: 'active',
+        ...expectedLayout(state),
+        destinationSlot: 'bench',
+      },
+      commandContext
+    );
+    if (!moved.accepted) throw new Error(moved.message);
+    expect(moved.state.boards[p1]).toEqual({
+      activeStackId: oldBench,
+      benchStackIds: [oldActive],
+    });
+    assertMatchInvariants(moved.state);
   });
 
   it('moves inspected cards individually and closes an empty work area', () => {

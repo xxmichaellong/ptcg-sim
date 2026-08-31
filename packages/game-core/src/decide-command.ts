@@ -60,6 +60,13 @@ const uniqueCardIds = (
   cardIds: readonly CardInstanceId[]
 ): readonly CardInstanceId[] => [...new Set(cardIds)];
 
+const sameOrder = <Value>(
+  left: readonly Value[],
+  right: readonly Value[]
+): boolean =>
+  left.length === right.length &&
+  left.every((value, index) => value === right[index]);
+
 const decideLoadDeck = (
   state: MatchState,
   command: Extract<GameCommand, { type: 'LoadDeck' }>,
@@ -353,6 +360,100 @@ export const decideCommand = (
           )
         ),
         concealIdentity: isConcealedZone(destination),
+      });
+    }
+    case 'MovePlayStack': {
+      const stack = state.stacks[command.stackId];
+      if (!stack) {
+        return reject('not_found', `Stack ${command.stackId} does not exist`);
+      }
+      if (stack.slot !== command.expectedSourceSlot) {
+        return reject('stale_reference', 'Play stack source slot changed');
+      }
+      const board = state.boards[stack.boardPlayerId];
+      if (!board) {
+        return reject('not_found', 'Play stack board does not exist');
+      }
+      if (
+        board.activeStackId !== command.expectedActiveStackId ||
+        !sameOrder(board.benchStackIds, command.expectedBenchStackIds)
+      ) {
+        return reject('stale_reference', 'Play stack board layout changed');
+      }
+      const sourceBenchIndex = board.benchStackIds.indexOf(stack.id);
+      if (
+        (stack.slot === 'active' && board.activeStackId !== stack.id) ||
+        (stack.slot === 'bench' && sourceBenchIndex < 0)
+      ) {
+        return reject('stale_reference', 'Play stack placement changed');
+      }
+      const target = command.targetStackId
+        ? state.stacks[command.targetStackId]
+        : undefined;
+      if (command.targetStackId && !target) {
+        return reject('stale_reference', 'Target play stack no longer exists');
+      }
+      if (
+        target &&
+        (target.id === stack.id ||
+          target.boardPlayerId !== stack.boardPlayerId ||
+          target.slot !== command.destinationSlot)
+      ) {
+        return reject('stale_reference', 'Target play stack placement changed');
+      }
+
+      let activeStackId = board.activeStackId;
+      const benchStackIds = [...board.benchStackIds];
+      if (target) {
+        if (stack.slot === 'active') {
+          const targetIndex = benchStackIds.indexOf(target.id);
+          if (targetIndex < 0) {
+            return reject('stale_reference', 'Target bench stack moved');
+          }
+          activeStackId = target.id;
+          benchStackIds[targetIndex] = stack.id;
+        } else if (target.slot === 'active') {
+          activeStackId = stack.id;
+          benchStackIds[sourceBenchIndex] = target.id;
+        } else {
+          const targetIndex = benchStackIds.indexOf(target.id);
+          if (targetIndex < 0) {
+            return reject('stale_reference', 'Target bench stack moved');
+          }
+          benchStackIds[sourceBenchIndex] = target.id;
+          benchStackIds[targetIndex] = stack.id;
+        }
+      } else if (command.destinationSlot === 'active') {
+        if (stack.slot === 'active') {
+          return reject('invalid_command', 'Play stack is already active');
+        }
+        benchStackIds.splice(sourceBenchIndex, 1);
+        if (activeStackId) benchStackIds.push(activeStackId);
+        activeStackId = stack.id;
+      } else if (stack.slot === 'active') {
+        activeStackId = null;
+        benchStackIds.push(stack.id);
+        if (benchStackIds.length === 2) {
+          activeStackId = benchStackIds.shift()!;
+        }
+      } else {
+        benchStackIds.splice(sourceBenchIndex, 1);
+        benchStackIds.push(stack.id);
+      }
+
+      if (
+        activeStackId === board.activeStackId &&
+        sameOrder(benchStackIds, board.benchStackIds)
+      ) {
+        return reject('invalid_command', 'Play stack move is a no-op');
+      }
+      return accept({
+        type: 'PlayStackLayoutSet',
+        boardPlayerId: stack.boardPlayerId,
+        expectedActiveStackId: board.activeStackId,
+        expectedBenchStackIds: [...board.benchStackIds],
+        activeStackId,
+        benchStackIds,
       });
     }
     case 'MoveInspectedCard': {

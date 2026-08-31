@@ -75,6 +75,8 @@ export const resolveBoardDrop = (
     (workArea) =>
       containsCard(workArea.attachmentResolution?.cards ?? [], intent.cardId)
   );
+  const sourceMovesWholeStack =
+    sourceStack?.evolutionCards.at(-1)?.id === intent.cardId;
   if (!sourceZone && !sourceStack && !sourceInspection) {
     return rejected(
       sourceAttachmentResolution ? 'unsupported_source' : 'stale_card'
@@ -134,13 +136,34 @@ export const resolveBoardDrop = (
     return rejected('unsupported_source');
   }
 
-  if (!sourceZone) return rejected('unsupported_target');
-
   const targetStack = view.stacks[intent.targetId];
   if (targetStack) {
     if (!scene.cards.some((card) => card.parentId === targetStack.id)) {
       return rejected('stale_target');
     }
+    if (sourceStack) {
+      if (!sourceMovesWholeStack) return rejected('unsupported_source');
+      if (sourceStack.id === targetStack.id) return rejected('no_op');
+      if (sourceStack.boardPlayerId !== targetStack.boardPlayerId) {
+        return rejected('unsupported_target');
+      }
+      return {
+        ok: true,
+        command: {
+          type: 'MovePlayStack',
+          stackId: sourceStack.id,
+          expectedSourceSlot: sourceStack.slot,
+          expectedActiveStackId:
+            view.boards[sourceStack.boardPlayerId]?.activeStackId ?? null,
+          expectedBenchStackIds: [
+            ...(view.boards[sourceStack.boardPlayerId]?.benchStackIds ?? []),
+          ],
+          destinationSlot: targetStack.slot,
+          targetStackId: targetStack.id,
+        },
+      };
+    }
+    if (!sourceZone) return rejected('unsupported_target');
     return {
       ok: true,
       command: {
@@ -156,6 +179,31 @@ export const resolveBoardDrop = (
 
   const slot = playSlotTarget(scene, intent.targetId);
   if (slot?.playerId) {
+    const destinationSlot = slot.kind === 'active' ? 'active' : 'bench';
+    if (sourceStack) {
+      if (!sourceMovesWholeStack) return rejected('unsupported_source');
+      if (sourceStack.boardPlayerId !== slot.playerId) {
+        return rejected('unsupported_target');
+      }
+      if (sourceStack.slot === 'active' && destinationSlot === 'active') {
+        return rejected('no_op');
+      }
+      return {
+        ok: true,
+        command: {
+          type: 'MovePlayStack',
+          stackId: sourceStack.id,
+          expectedSourceSlot: sourceStack.slot,
+          expectedActiveStackId:
+            view.boards[sourceStack.boardPlayerId]?.activeStackId ?? null,
+          expectedBenchStackIds: [
+            ...(view.boards[sourceStack.boardPlayerId]?.benchStackIds ?? []),
+          ],
+          destinationSlot,
+        },
+      };
+    }
+    if (!sourceZone) return rejected('unsupported_target');
     return {
       ok: true,
       command: {
@@ -163,7 +211,7 @@ export const resolveBoardDrop = (
         cardId: intent.cardId,
         expectedSourceZoneId: sourceZone.id,
         boardPlayerId: slot.playerId,
-        slot: slot.kind === 'active' ? 'active' : 'bench',
+        slot: destinationSlot,
       },
     };
   }

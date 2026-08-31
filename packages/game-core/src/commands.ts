@@ -53,6 +53,15 @@ export type GameCommand =
       readonly destinationIndex?: number;
     }
   | {
+      readonly type: 'MovePlayStack';
+      readonly stackId: StackId;
+      readonly expectedSourceSlot: PlaySlot;
+      readonly expectedActiveStackId: StackId | null;
+      readonly expectedBenchStackIds: readonly StackId[];
+      readonly destinationSlot: PlaySlot;
+      readonly targetStackId?: StackId;
+    }
+  | {
       readonly type: 'MoveInspectedCard';
       readonly cardId: CardInstanceId;
       readonly expectedWorkAreaId: WorkAreaId;

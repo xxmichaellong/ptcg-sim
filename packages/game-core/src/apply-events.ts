@@ -615,6 +615,62 @@ export const applyEvent = (
         },
       };
     }
+    case 'PlayStackLayoutSet': {
+      const board = state.boards[event.boardPlayerId];
+      if (!board) throw new Error(`Missing board ${event.boardPlayerId}`);
+      if (
+        board.activeStackId !== event.expectedActiveStackId ||
+        board.benchStackIds.length !== event.expectedBenchStackIds.length ||
+        board.benchStackIds.some(
+          (stackId, index) => stackId !== event.expectedBenchStackIds[index]
+        )
+      ) {
+        throw new Error('Play stack layout does not match expected placement');
+      }
+      const before = [
+        ...(board.activeStackId ? [board.activeStackId] : []),
+        ...board.benchStackIds,
+      ].sort();
+      const after = [
+        ...(event.activeStackId ? [event.activeStackId] : []),
+        ...event.benchStackIds,
+      ].sort();
+      if (
+        before.length !== after.length ||
+        before.some((stackId, index) => stackId !== after[index]) ||
+        new Set(after).size !== after.length
+      ) {
+        throw new Error('Play stack layout changes the board stack set');
+      }
+      const stacks = { ...state.stacks };
+      for (const stackId of event.benchStackIds) {
+        const stack = requireStack(state, stackId);
+        if (stack.boardPlayerId !== event.boardPlayerId) {
+          throw new Error(`Stack ${stackId} belongs to another board`);
+        }
+        stacks[stackId] = { ...stack, slot: 'bench' };
+      }
+      if (event.activeStackId) {
+        const active = requireStack(state, event.activeStackId);
+        if (active.boardPlayerId !== event.boardPlayerId) {
+          throw new Error(
+            `Stack ${event.activeStackId} belongs to another board`
+          );
+        }
+        stacks[event.activeStackId] = { ...active, slot: 'active' };
+      }
+      return {
+        ...state,
+        boards: {
+          ...state.boards,
+          [event.boardPlayerId]: {
+            activeStackId: event.activeStackId,
+            benchStackIds: [...event.benchStackIds],
+          },
+        },
+        stacks,
+      };
+    }
     case 'InspectedCardMoved': {
       const areas = state.workAreas[event.playerId];
       const inspection = areas?.inspection;

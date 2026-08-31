@@ -120,6 +120,37 @@ describe('board drop command resolution', () => {
       resolveBoardDrop(input.view, input.scene, {
         kind: 'CardDropRequested',
         cardId: stackCard.id,
+        targetId: 'slot:spike-blue:bench',
+      })
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'MovePlayStack',
+        stackId: stack.id,
+        expectedSourceSlot: 'active',
+        expectedActiveStackId: stack.id,
+        expectedBenchStackIds: [],
+        destinationSlot: 'bench',
+      },
+    });
+    expect(
+      resolveBoardDrop(input.view, input.scene, {
+        kind: 'CardDropRequested',
+        cardId: stackCard.id,
+        targetId: 'stack:red:active',
+      })
+    ).toEqual({ ok: false, reason: 'unsupported_target' });
+    expect(
+      resolveBoardDrop(input.view, input.scene, {
+        kind: 'CardDropRequested',
+        cardId: stack.attachmentCards[0]!.id,
+        targetId: 'slot:spike-blue:bench',
+      })
+    ).toEqual({ ok: false, reason: 'unsupported_source' });
+    expect(
+      resolveBoardDrop(input.view, input.scene, {
+        kind: 'CardDropRequested',
+        cardId: stackCard.id,
         targetId: 'zone:spike-blue:discard',
       })
     ).toEqual({

@@ -316,7 +316,43 @@ describe('client/server multiplayer contract', () => {
     );
     expect(player.session.getSnapshot().pendingCommands).toEqual([]);
     if (!after || !stackId) throw new Error('Missing published bench stack');
-    const departureScene = createBoardScene(after, {
+    const movementScene = createBoardScene(after, {
+      viewport: { width: 1208, height: 900, devicePixelRatio: 1 },
+      bottomPlayerId: playerId,
+      splitRatio: 0.5,
+      geometryVersion: 1,
+    });
+    submitted = false;
+    const movement = submitBoardDrop(
+      after,
+      movementScene,
+      {
+        kind: 'CardDropRequested',
+        cardId: card.id,
+        targetId: `slot:${playerId}:active`,
+      },
+      (command) => {
+        submitted = player.session.submit(command).queued;
+      }
+    );
+    expect(movement).toMatchObject({
+      ok: true,
+      command: {
+        type: 'MovePlayStack',
+        stackId,
+        expectedSourceSlot: 'bench',
+        destinationSlot: 'active',
+      },
+    });
+    expect(submitted).toBe(true);
+    await player.factory.flush();
+
+    const moved = player.session.getSnapshot().view;
+    expect(moved?.revision).toBe(4);
+    expect(moved?.boards[playerId]?.activeStackId).toBe(stackId);
+    expect(moved?.stacks[stackId]?.slot).toBe('active');
+    if (!moved) throw new Error('Missing published active stack');
+    const departureScene = createBoardScene(moved, {
       viewport: { width: 1208, height: 900, devicePixelRatio: 1 },
       bottomPlayerId: playerId,
       splitRatio: 0.5,
@@ -324,7 +360,7 @@ describe('client/server multiplayer contract', () => {
     });
     submitted = false;
     const departure = submitBoardDrop(
-      after,
+      moved,
       departureScene,
       {
         kind: 'CardDropRequested',
@@ -346,12 +382,12 @@ describe('client/server multiplayer contract', () => {
     await player.factory.flush();
 
     const departed = player.session.getSnapshot().view;
-    expect(departed?.revision).toBe(4);
+    expect(departed?.revision).toBe(5);
     expect(departed?.stacks[stackId]).toBeUndefined();
     expect(departed?.zones[`zone:${playerId}:discard`]?.cards).toContainEqual(
       expect.objectContaining({ id: card.id })
     );
-    expect(room.store.commandCommits).toHaveLength(4);
+    expect(room.store.commandCommits).toHaveLength(5);
   });
 
   it('publishes one authoritative revision to a player and spectator', async () => {

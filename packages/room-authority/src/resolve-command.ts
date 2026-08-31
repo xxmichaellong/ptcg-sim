@@ -201,6 +201,43 @@ export const resolveWireCommand = (
         },
       };
     }
+    case 'MovePlayStack': {
+      const stack = state.stacks[wire.stackId];
+      if (!stack) return rejected('stale_reference');
+      if (
+        !ownsStack(state, actorId, wire.stackId) &&
+        !policy.allowOpponentPublicInteraction
+      ) {
+        return rejected('unauthorized');
+      }
+      const target = wire.targetStackId
+        ? state.stacks[wire.targetStackId]
+        : undefined;
+      if (
+        (wire.targetStackId && !target) ||
+        (target &&
+          (target.boardPlayerId !== stack.boardPlayerId ||
+            target.slot !== wire.destinationSlot))
+      ) {
+        return rejected('stale_reference');
+      }
+      return {
+        accepted: true,
+        command: {
+          type: 'MovePlayStack',
+          stackId: asStackId(wire.stackId),
+          expectedSourceSlot: wire.expectedSourceSlot,
+          expectedActiveStackId: wire.expectedActiveStackId
+            ? asStackId(wire.expectedActiveStackId)
+            : null,
+          expectedBenchStackIds: wire.expectedBenchStackIds.map(asStackId),
+          destinationSlot: wire.destinationSlot,
+          ...(wire.targetStackId
+            ? { targetStackId: asStackId(wire.targetStackId) }
+            : {}),
+        },
+      };
+    }
     case 'MoveInspectedCard': {
       const card = resolveCard(wire.cardId);
       if (!card) return rejected('stale_reference');

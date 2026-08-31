@@ -65,6 +65,51 @@ const dragLocalHandCardToBench = async (
   await expect(dragSurface).toHaveAttribute('data-dragging', 'false');
 };
 
+const dragLocalActiveStackToBench = async (
+  page: Page,
+  renderer: 'dom' | 'pixi'
+) => {
+  const gesture = await page.evaluate(() => {
+    const scene = window.__PTCG_RENDERER_SPIKE__?.scene;
+    if (!scene) throw new Error('Missing renderer scene');
+    const source = scene.cards
+      .filter((card) => card.side === 'local' && card.role === 'stackEvolution')
+      .sort((left, right) => right.zIndex - left.zIndex)[0];
+    const target = scene.zones.find(
+      (zone) => zone.side === 'local' && zone.kind === 'bench'
+    );
+    if (!source || !target) throw new Error('Missing stack drag fixture nodes');
+    return {
+      cardId: source.id,
+      stackId: source.parentId,
+      targetId: target.id,
+      start: {
+        x: source.bounds.x + source.bounds.width / 2,
+        y: source.bounds.y + source.bounds.height / 2,
+      },
+      end: {
+        x: target.bounds.x + target.bounds.width / 2,
+        y: target.bounds.y + target.bounds.height / 2,
+      },
+    };
+  });
+  await page.mouse.move(gesture.start.x, gesture.start.y);
+  await page.mouse.down();
+  await page.mouse.move(gesture.end.x, gesture.end.y, { steps: 8 });
+  const dragSurface =
+    renderer === 'dom'
+      ? page.locator('.ptcgsim-board-surface')
+      : page.locator('canvas');
+  await expect(dragSurface).toHaveAttribute('data-dragging', 'true');
+  await page.mouse.up();
+  await expect(page.locator('output')).toContainText('MovePlayStack');
+  await expect(page.locator('output')).toContainText(gesture.cardId);
+  await expect(page.locator('output')).toContainText(gesture.stackId);
+  await expect(page.locator('output')).toContainText('active');
+  await expect(page.locator('output')).toContainText('bench');
+  await expect(dragSurface).toHaveAttribute('data-dragging', 'false');
+};
+
 test('normalized React DOM renderer mounts the shared fixture with legacy geometry', async ({
   page,
 }, testInfo) => {
@@ -88,6 +133,7 @@ test('normalized React DOM renderer mounts the shared fixture with legacy geomet
   await page.locator('[data-card-id]').first().click();
   await expect(page.locator('output')).toContainText('CardSelected');
   await dragLocalHandCardToBench(page, 'dom');
+  await dragLocalActiveStackToBench(page, 'dom');
   await testInfo.attach('react-dom-renderer.png', {
     body: await page.screenshot(),
     contentType: 'image/png',
@@ -124,6 +170,7 @@ test('raw Pixi renderer creates 61 stable views, handles input, and reconstructs
   await page.mouse.click(firstCardCenter.x, firstCardCenter.y);
   await expect(page.locator('output')).toContainText('CardSelected');
   await dragLocalHandCardToBench(page, 'pixi');
+  await dragLocalActiveStackToBench(page, 'pixi');
 
   const requestedLoss = await page.evaluate(() => {
     const target = document.querySelector('canvas');

@@ -57,6 +57,31 @@ describe('client protocol ingress', () => {
     expect(result).toEqual({ ok: false, reason: 'frame_too_large' });
   });
 
+  it('bounds client-supplied expected stack layouts', () => {
+    const result = parseClientFrame(
+      JSON.stringify({
+        type: 'Command',
+        protocolVersion: PROTOCOL_VERSION,
+        sessionId: 'session',
+        clientSequence: 1,
+        commandId: 'command',
+        lastSeenRevision: 0,
+        command: {
+          type: 'MovePlayStack',
+          stackId: 'source-stack',
+          expectedSourceSlot: 'bench',
+          expectedActiveStackId: 'active-stack',
+          expectedBenchStackIds: Array.from(
+            { length: 201 },
+            (_, index) => `bench-stack-${index}`
+          ),
+          destinationSlot: 'active',
+        },
+      })
+    );
+    expect(result.ok).toBe(false);
+  });
+
   it('never echoes rejected values in issue summaries', () => {
     const secret = 'SECRET-DECK-VALUE';
     const result = parseClientFrame(
