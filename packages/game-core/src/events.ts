@@ -14,6 +14,7 @@ import type {
   QuarterTurns,
   SpecialCondition,
 } from './model.js';
+import type { StagedCardsDestination } from './commands.js';
 
 export type DomainEvent =
   | {
@@ -146,6 +147,18 @@ export type DomainEvent =
       readonly stackId: StackId;
       readonly destinationSlot: PlaySlot;
       readonly benchIndex: number;
+    }
+  | {
+      readonly type: 'StagedCardsResolved';
+      readonly playerId: PlayerId;
+      readonly expectedWorkAreaId: WorkAreaId;
+      readonly expectedEvolutionCardIds: readonly CardInstanceId[];
+      readonly expectedAttachmentCardIds: readonly CardInstanceId[];
+      readonly destination: StagedCardsDestination;
+      readonly destinationZoneId: ZoneId;
+      readonly expectedDestinationCardIds: readonly CardInstanceId[];
+      readonly destinationCardIds: readonly CardInstanceId[];
+      readonly concealedCardIds: readonly CardInstanceId[];
     }
   | {
       readonly type: 'StackDamageSet';

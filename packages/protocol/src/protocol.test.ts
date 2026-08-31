@@ -48,6 +48,23 @@ describe('client protocol ingress', () => {
       })
     );
     expect(invalidSequence.ok).toBe(false);
+
+    const invalidStagedDestination = parseClientFrame(
+      JSON.stringify({
+        type: 'Command',
+        protocolVersion: PROTOCOL_VERSION,
+        sessionId: 'session',
+        clientSequence: 1,
+        commandId: 'command',
+        lastSeenRevision: 0,
+        command: {
+          type: 'ResolveStagedCards',
+          expectedWorkAreaId: 'work-area',
+          destination: 'arbitrary-zone',
+        },
+      })
+    );
+    expect(invalidStagedDestination.ok).toBe(false);
   });
 
   it('rejects oversized input before JSON traversal', () => {

@@ -334,6 +334,21 @@ export const resolveWireCommand = (
         },
       };
     }
+    case 'ResolveStagedCards': {
+      const resolution = state.workAreas[actorId]?.attachmentResolution;
+      if (!resolution || resolution.id !== wire.expectedWorkAreaId) {
+        return rejected('stale_reference');
+      }
+      return {
+        accepted: true,
+        command: {
+          type: 'ResolveStagedCards',
+          playerId: actorId,
+          expectedWorkAreaId: asWorkAreaId(wire.expectedWorkAreaId),
+          destination: wire.destination,
+        },
+      };
+    }
     case 'ShuffleZone': {
       const zone = state.zones[wire.zoneId];
       if (!zone) return rejected('stale_reference');

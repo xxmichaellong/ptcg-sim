@@ -6,6 +6,7 @@ import {
   type SessionSocketHandlers,
 } from '../../packages/client-session/src/index.js';
 import { submitBoardDrop } from '../../apps/web/src/board/resolveBoardDrop.js';
+import { submitStagedCardsAction } from '../../apps/web/src/board/resolveStagedCardsAction.js';
 import {
   RoomSessionHub,
   WebCryptoAuthoritySource,
@@ -523,6 +524,122 @@ describe('client/server multiplayer contract', () => {
     expect(restored?.stacks[restoredStackId!]?.evolutionCards).toHaveLength(1);
     expect(restored?.workAreas[playerId]?.attachmentResolution).toBeNull();
     expect(room.store.commandCommits).toHaveLength(6);
+  });
+
+  it('resolves a resumed staged work area to the deck bottom atomically', async () => {
+    const room = await fixture();
+    const scheduler = new ManualScheduler();
+    const player = await connectClient({
+      hub: room.hub,
+      name: 'Blue',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+      scheduler,
+    });
+    const playerId = player.session.getSnapshot().playerId;
+    if (!playerId) throw new Error('Missing admitted player identity');
+    expect(
+      player.session.submit({
+        type: 'LoadDeck',
+        entries: Array.from({ length: 3 }, (_, index) => ({
+          definition: {
+            id: `bulk-integration-definition-${index}`,
+            name: `Bulk integration Pokémon ${index}`,
+            category: 'Pokémon' as const,
+            imageUrl: `/bulk-integration-${index}.png`,
+          },
+          count: 1,
+        })),
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+
+    let view = player.session.getSnapshot().view;
+    const deckId = `zone:${playerId}:deck`;
+    const firstDeckCard = view?.zones[deckId]?.cards[0];
+    if (!view || !firstDeckCard) throw new Error('Deck was not published');
+    expect(
+      player.session.submit({
+        type: 'MoveCardToPlay',
+        cardId: firstDeckCard.id,
+        expectedSourceZoneId: deckId,
+        boardPlayerId: playerId,
+        slot: 'active',
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+
+    view = player.session.getSnapshot().view;
+    const stackId = view?.boards[playerId]?.activeStackId;
+    const secondDeckCard = view?.zones[deckId]?.cards[0];
+    if (!view || !stackId || !secondDeckCard) {
+      throw new Error('Base stack was not published');
+    }
+    expect(
+      player.session.submit({
+        type: 'MoveCardToPlay',
+        cardId: secondDeckCard.id,
+        expectedSourceZoneId: deckId,
+        boardPlayerId: playerId,
+        slot: 'active',
+        targetStackId: stackId,
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+
+    view = player.session.getSnapshot().view;
+    const topCard = view?.stacks[stackId]?.evolutionCards.at(-1);
+    if (!view || !topCard) throw new Error('Evolution was not published');
+    expect(
+      player.session.submit({
+        type: 'MoveCardFromStack',
+        cardId: topCard.id,
+        expectedStackId: stackId,
+        destinationZoneId: `zone:${playerId}:discard`,
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+    view = player.session.getSnapshot().view;
+    const stagedBeforeReconnect =
+      view?.workAreas[playerId]?.attachmentResolution;
+    const oldDeckTopId = view?.zones[deckId]?.cards[0]?.id;
+    if (!stagedBeforeReconnect || !oldDeckTopId) {
+      throw new Error('Dependent cards were not staged');
+    }
+    expect(stagedBeforeReconnect?.evolutionCards).toHaveLength(1);
+    expect(view?.zones[deckId]?.cards).toHaveLength(1);
+
+    player.factory.latest().networkDrop();
+    scheduler.runNext();
+    player.factory.latest().open();
+    await player.factory.flush();
+    view = player.session.getSnapshot().view;
+    if (!view) throw new Error('Authoritative view did not resume');
+    let submitted = false;
+    const resolution = submitStagedCardsAction(
+      view,
+      'shuffleToDeckBottom',
+      (command) => {
+        submitted = player.session.submit(command).queued;
+      }
+    );
+    expect(resolution).toMatchObject({
+      ok: true,
+      command: {
+        type: 'ResolveStagedCards',
+        expectedWorkAreaId: stagedBeforeReconnect.id,
+        destination: 'shuffleToDeckBottom',
+      },
+    });
+    expect(submitted).toBe(true);
+    await player.factory.flush();
+
+    const resolved = player.session.getSnapshot().view;
+    expect(resolved?.revision).toBe(5);
+    expect(resolved?.workAreas[playerId]?.attachmentResolution).toBeNull();
+    expect(resolved?.zones[deckId]?.cards).toHaveLength(2);
+    expect(resolved?.zones[deckId]?.cards[0]?.id).toBe(oldDeckTopId);
+    expect(room.store.commandCommits).toHaveLength(5);
   });
 
   it('publishes one authoritative revision to a player and spectator', async () => {

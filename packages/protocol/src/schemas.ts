@@ -99,6 +99,17 @@ export const WireGameCommandSchema = v.variant('type', [
     destinationSlot: v.picklist(['active', 'bench'] as const),
     benchIndex: v.optional(NonNegativeIntegerSchema),
   }),
+  v.object({
+    type: v.literal('ResolveStagedCards'),
+    expectedWorkAreaId: IdentifierSchema,
+    destination: v.picklist([
+      'discard',
+      'lostZone',
+      'hand',
+      'shuffleIntoDeck',
+      'shuffleToDeckBottom',
+    ] as const),
+  }),
   v.object({ type: v.literal('ShuffleZone'), zoneId: IdentifierSchema }),
   v.object({
     type: v.literal('DrawCards'),

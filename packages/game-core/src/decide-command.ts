@@ -630,6 +630,74 @@ export const decideCommand = (
         ),
       });
     }
+    case 'ResolveStagedCards': {
+      const playerError = requirePlayer(state, command.playerId);
+      if (playerError) return playerError;
+      const resolution =
+        state.workAreas[command.playerId]?.attachmentResolution;
+      if (!resolution || resolution.id !== command.expectedWorkAreaId) {
+        return reject('stale_reference', 'Attached-card work area changed');
+      }
+      const stagedCardIds = [
+        ...resolution.evolutionCardIds,
+        ...resolution.attachmentCardIds,
+      ];
+      const destinationKind =
+        command.destination === 'shuffleIntoDeck' ||
+        command.destination === 'shuffleToDeckBottom'
+          ? 'deck'
+          : command.destination;
+      const destination =
+        state.zones[playerZoneId(command.playerId, destinationKind)];
+      if (!destination) {
+        return reject('not_found', 'Staged-card destination does not exist');
+      }
+      if (destination.cardIds.length + stagedCardIds.length > 200) {
+        return reject(
+          'precondition_failed',
+          'Staged-card destination cannot contain more than 200 cards'
+        );
+      }
+
+      let destinationCardIds: readonly CardInstanceId[];
+      let concealedCardIds: readonly CardInstanceId[];
+      if (command.destination === 'shuffleIntoDeck') {
+        const combined = [...destination.cardIds, ...stagedCardIds];
+        destinationCardIds = context.shuffle(combined);
+        if (!validatePermutation(combined, destinationCardIds)) {
+          return reject(
+            'invalid_command',
+            'Shuffle adapter returned an invalid permutation'
+          );
+        }
+        concealedCardIds = destinationCardIds;
+      } else if (command.destination === 'shuffleToDeckBottom') {
+        const shuffledStaged = context.shuffle(stagedCardIds);
+        if (!validatePermutation(stagedCardIds, shuffledStaged)) {
+          return reject(
+            'invalid_command',
+            'Shuffle adapter returned an invalid permutation'
+          );
+        }
+        destinationCardIds = [...destination.cardIds, ...shuffledStaged];
+        concealedCardIds = shuffledStaged;
+      } else {
+        destinationCardIds = [...destination.cardIds, ...stagedCardIds];
+        concealedCardIds = command.destination === 'hand' ? stagedCardIds : [];
+      }
+      return accept({
+        type: 'StagedCardsResolved',
+        playerId: command.playerId,
+        expectedWorkAreaId: resolution.id,
+        expectedEvolutionCardIds: [...resolution.evolutionCardIds],
+        expectedAttachmentCardIds: [...resolution.attachmentCardIds],
+        destination: command.destination,
+        destinationZoneId: destination.id,
+        expectedDestinationCardIds: [...destination.cardIds],
+        destinationCardIds,
+        concealedCardIds,
+      });
+    }
     case 'ShuffleZone': {
       const zone = state.zones[command.zoneId];
       if (!zone)

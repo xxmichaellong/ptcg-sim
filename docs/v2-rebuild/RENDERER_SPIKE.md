@@ -158,7 +158,8 @@ chunk graph will be measured in the browser evidence run.
   projected scene creation, semantic drop resolution, client sequencing,
   authority commit, reconciled stack publication, bench-to-active promotion,
   explicit stack-to-zone departure, dependent-card staging across a resumed
-  session, and staged-stack restoration;
+  session, staged-stack restoration, and an atomic resumed bulk move to the
+  deck bottom;
 - TypeScript project boundaries and circular-dependency check;
 - Vite production build; and
 - the repository-wide v2 and 79-test legacy gates.
@@ -177,13 +178,19 @@ application boundary accepts either the harness recorder or
 compile-time view-ID brands at one explicit protocol boundary before entering
 the external client store.
 
+The side-panel command boundary also maps the five legacy attached-card bulk
+buttons to one bounded `ResolveStagedCards` command. The authority derives the
+player and destination zone, validates the exact work-area ID, resolves random
+ordering server-side, and publishes the whole result as one revision. No bulk
+operation loops through transient client-visible card moves.
+
 Whole-stack movement is also explicit: the top evolution card may represent a
 stack for active/bench promotion, demotion, swapping, or bench reordering. The
 resolved event replaces the complete board stack layout with exact old-layout
 preconditions, while attachment drags and lower evolution cards cannot
 accidentally move the stack.
 
-At this checkpoint the v2 suite contains 105 passing tests across 22 files. A
+At this checkpoint the v2 suite contains 115 passing tests across 24 files. A
 separate Playwright suite also passes three real Chromium 151 scenarios:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
