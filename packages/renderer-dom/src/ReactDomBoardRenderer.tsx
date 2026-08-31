@@ -10,7 +10,6 @@ import {
 } from '@ptcgsim/renderer-contract';
 import { StrictMode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { flushSync } from 'react-dom';
 import { BoardSurface } from './BoardSurface.js';
 
 export class ReactDomBoardRenderer implements BoardRenderer {
@@ -22,6 +21,7 @@ export class ReactDomBoardRenderer implements BoardRenderer {
   private preferences: BoardPreferences = DEFAULT_BOARD_PREFERENCES;
   private generation = 0;
   private destroyed = false;
+  private finishPendingMount: (() => void) | null = null;
 
   constructor(adapters: BoardRendererAdapters) {
     this.adapters = adapters;
@@ -40,7 +40,20 @@ export class ReactDomBoardRenderer implements BoardRenderer {
     this.presentation = presentation;
     this.root = createRoot(host);
     this.generation += 1;
-    this.renderNow();
+    await new Promise<void>((resolve) => {
+      let finished = false;
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        this.finishPendingMount = null;
+        resolve();
+      };
+      this.finishPendingMount = finish;
+      this.renderNow(finish);
+    });
+    if (this.destroyed) {
+      throw new Error('Renderer initialization was superseded');
+    }
     this.adapters.reportStatus?.({
       kind: 'ready',
       generation: this.generation,
@@ -87,12 +100,15 @@ export class ReactDomBoardRenderer implements BoardRenderer {
   destroy(): void {
     if (this.destroyed) return;
     this.destroyed = true;
-    this.root?.unmount();
+    this.finishPendingMount?.();
+    this.finishPendingMount = null;
+    const root = this.root;
     this.root = null;
     this.host = null;
     this.scene = null;
     this.presentation = null;
     this.adapters.reportStatus?.({ kind: 'destroyed' });
+    if (root) queueMicrotask(() => root.unmount());
   }
 
   private requireMounted(): {
@@ -110,7 +126,7 @@ export class ReactDomBoardRenderer implements BoardRenderer {
     };
   }
 
-  private renderNow(): void {
+  private renderNow(onCommit?: () => void): void {
     const { root, scene, presentation } = this.requireMounted();
     const surface = (
       <StrictMode>
@@ -119,10 +135,11 @@ export class ReactDomBoardRenderer implements BoardRenderer {
           presentation={presentation}
           preferences={this.preferences}
           adapters={this.adapters}
+          onCommit={onCommit}
         />
       </StrictMode>
     );
-    flushSync(() => root.render(surface));
+    root.render(surface);
   }
 }
 

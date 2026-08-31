@@ -3,5 +3,7 @@ packages/*/lib/
 apps/*/lib/
 apps/*/dist/
 apps/server/worker-configuration.d.ts
+playwright-report/
+test-results/
 *.tsbuildinfo
 server/database/db.sqlite

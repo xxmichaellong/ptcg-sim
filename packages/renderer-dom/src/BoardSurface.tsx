@@ -8,7 +8,11 @@ import type {
   Rect,
   ZoneSceneNode,
 } from '@ptcgsim/renderer-contract';
-import type { CSSProperties, MouseEvent as ReactMouseEvent } from 'react';
+import {
+  useLayoutEffect,
+  type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
+} from 'react';
 
 const absoluteRect = (bounds: Rect, zIndex: number): CSSProperties => ({
   position: 'absolute',
@@ -133,43 +137,50 @@ export const BoardSurface = ({
   presentation,
   preferences,
   adapters,
+  onCommit,
 }: {
   readonly scene: BoardScene;
   readonly presentation: BoardPresentation;
   readonly preferences: BoardPreferences;
   readonly adapters: BoardRendererAdapters;
-}) => (
-  <div
-    className="ptcgsim-board-surface"
-    data-match-id={scene.matchId}
-    data-revision={scene.revision}
-    data-reduced-motion={preferences.reducedMotion ? 'true' : 'false'}
-    data-high-contrast={preferences.highContrast ? 'true' : 'false'}
-    data-dark-mode={preferences.darkMode ? 'true' : 'false'}
-    style={{
-      position: 'relative',
-      width: scene.viewport.width,
-      height: scene.viewport.height,
-      overflow: 'hidden',
-      background: preferences.darkMode ? '#081212' : 'transparent',
-      touchAction: 'none',
-      userSelect: 'none',
-      contain: 'strict',
-    }}
-  >
-    {scene.zones.map((zone) => (
-      <ZoneNode key={zone.id} zone={zone} emitIntent={adapters.emitIntent} />
-    ))}
-    {scene.cards.map((card) => (
-      <CardNode
-        key={card.id}
-        card={card}
-        presentation={presentation}
-        emitIntent={adapters.emitIntent}
-      />
-    ))}
-    {scene.markers.map((marker) => (
-      <MarkerNode key={marker.id} marker={marker} />
-    ))}
-  </div>
-);
+  readonly onCommit?: () => void;
+}) => {
+  useLayoutEffect(() => {
+    onCommit?.();
+  }, [onCommit]);
+  return (
+    <div
+      className="ptcgsim-board-surface"
+      data-match-id={scene.matchId}
+      data-revision={scene.revision}
+      data-reduced-motion={preferences.reducedMotion ? 'true' : 'false'}
+      data-high-contrast={preferences.highContrast ? 'true' : 'false'}
+      data-dark-mode={preferences.darkMode ? 'true' : 'false'}
+      style={{
+        position: 'relative',
+        width: scene.viewport.width,
+        height: scene.viewport.height,
+        overflow: 'hidden',
+        background: preferences.darkMode ? '#081212' : 'transparent',
+        touchAction: 'none',
+        userSelect: 'none',
+        contain: 'strict',
+      }}
+    >
+      {scene.zones.map((zone) => (
+        <ZoneNode key={zone.id} zone={zone} emitIntent={adapters.emitIntent} />
+      ))}
+      {scene.cards.map((card) => (
+        <CardNode
+          key={card.id}
+          card={card}
+          presentation={presentation}
+          emitIntent={adapters.emitIntent}
+        />
+      ))}
+      {scene.markers.map((marker) => (
+        <MarkerNode key={marker.id} marker={marker} />
+      ))}
+    </div>
+  );
+};

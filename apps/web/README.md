@@ -6,3 +6,7 @@ mount the same deterministic 61-card scene behind either adapter.
 
 This shell intentionally preserves the v1 75.5% board / 24% side-panel split so
 geometry evidence can be gathered before broader UI migration.
+
+Run the Chromium decision suite with `pnpm run test:renderer:browser` after
+installing Playwright's Chromium browser. On NixOS, set
+`PTCGSIM_CHROMIUM_PATH` to the Nix-provided Chromium executable.

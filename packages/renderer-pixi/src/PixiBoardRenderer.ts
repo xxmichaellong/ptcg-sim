@@ -344,6 +344,12 @@ export class PixiBoardRenderer implements BoardRenderer {
       root.addChild(circle, text);
       layers.markers.addChild(root);
     }
+    if (this.app) {
+      this.app.canvas.dataset.cardViews = String(this.cardViews.size);
+      this.app.canvas.dataset.zoneViews = String(scene.zones.length);
+      this.app.canvas.dataset.revision = String(scene.revision);
+      this.app.canvas.dataset.rendererGeneration = String(this.generation);
+    }
   }
 
   private applyCardView(view: CardView): void {

@@ -13,6 +13,16 @@ export type RendererKind = 'dom' | 'pixi';
 
 const view = createRendererSpikeView();
 
+declare global {
+  interface Window {
+    __PTCG_RENDERER_SPIKE__?: {
+      readonly rendererKind: RendererKind;
+      readonly renderer: BoardRenderer;
+      readonly scene: ReturnType<typeof createBoardScene>;
+    };
+  }
+}
+
 export const RendererSpikeBoard = ({
   rendererKind,
   onIntent,
@@ -80,11 +90,21 @@ export const RendererSpikeBoard = ({
       try {
         await renderer.mount(host, scene, DEFAULT_BOARD_PRESENTATION);
         if (disposed) return;
+        window.__PTCG_RENDERER_SPIKE__ = {
+          rendererKind,
+          renderer,
+          scene,
+        };
         const installSize = () => {
           if (!renderer || disposed) return;
           const next = sceneForHost();
           renderer.resize(next.viewport);
           renderer.installScene(next.scene, []);
+          window.__PTCG_RENDERER_SPIKE__ = {
+            rendererKind,
+            renderer,
+            scene: next.scene,
+          };
         };
         installSize();
         resizeObserver = new ResizeObserver(() => {
@@ -105,6 +125,9 @@ export const RendererSpikeBoard = ({
       resizeObserver?.disconnect();
       if (resizeFrame !== null) cancelAnimationFrame(resizeFrame);
       renderer?.destroy();
+      if (window.__PTCG_RENDERER_SPIKE__?.renderer === renderer) {
+        delete window.__PTCG_RENDERER_SPIKE__;
+      }
       if (rendererRef.current === renderer) rendererRef.current = null;
     };
   }, [onIntent, rendererKind]);
@@ -116,7 +139,14 @@ export const RendererSpikeBoard = ({
   return (
     <div className="board-spike-host">
       <div className="renderer-surface-host" ref={hostRef} />
-      <span className="renderer-status" role="status">
+      <span
+        className="renderer-status"
+        role="status"
+        data-renderer-status={status.kind}
+        data-renderer-generation={
+          status.kind === 'ready' ? status.generation : undefined
+        }
+      >
         {status.kind}
       </span>
     </div>

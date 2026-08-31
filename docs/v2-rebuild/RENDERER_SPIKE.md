@@ -144,7 +144,32 @@ chunk graph will be measured in the browser evidence run.
 - Vite production build; and
 - the repository-wide v2 and 79-test legacy gates.
 
-At this checkpoint the v2 suite contains 66 passing tests across 15 files.
+At this checkpoint the v2 suite contains 66 passing tests across 15 files. A
+separate Playwright suite also passes three real Chromium 151 scenarios:
+
+1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
+   hand geometry, emits a card intent, produces a screenshot, and has no runtime
+   errors.
+2. Pixi creates one live WebGL canvas with 61 card views, handles a real pointer
+   click, loses its actual WebGL2 context through `WEBGL_lose_context`, rebuilds
+   to a later renderer generation with all 61 views, produces a post-recovery
+   screenshot, and has no runtime errors.
+3. Three Pixi → DOM → Pixi transitions leave exactly one selected renderer each
+   time with no runtime errors or accumulated DOM/canvas views.
+
+The first browser run exposed a React integration defect that DOM emulation did
+not: the nested renderer root used `flushSync()` and synchronous `unmount()`
+inside its parent React lifecycle. The adapter now resolves mount from a real
+layout-effect commit, uses scheduled React updates, resolves superseded mounts,
+and queues unmount outside the parent lifecycle. The same tests then passed with
+a clean console. This is retained as evidence for keeping browser tests separate
+from happy-DOM lifecycle tests.
+
+The suite lives in `tests/browser/renderer-spike.spec.ts`. Standard Linux CI can
+install Playwright's pinned Chromium build. This NixOS workspace used the Nix
+Chromium 151 package through `PTCGSIM_CHROMIUM_PATH`, because Playwright's
+Debian/Ubuntu dependency installer requires `apt-get` and downloaded generic
+ELF binaries cannot directly resolve Nix store libraries.
 
 ## Gates still required before ADR-004 can be accepted
 

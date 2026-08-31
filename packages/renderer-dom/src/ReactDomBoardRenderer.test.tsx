@@ -55,6 +55,18 @@ const createScene = (revision = 1, x = 10): BoardScene => ({
   markers: [],
 });
 
+const mountInAct = async (
+  renderer: ReactDomBoardRenderer,
+  host: HTMLElement,
+  scene: BoardScene
+): Promise<void> => {
+  let pending: Promise<void> | null = null;
+  await act(async () => {
+    pending = renderer.mount(host, scene, DEFAULT_BOARD_PRESENTATION);
+  });
+  await pending;
+};
+
 describe('React DOM board renderer', () => {
   beforeEach(() => {
     document.body.replaceChildren();
@@ -71,9 +83,7 @@ describe('React DOM board renderer', () => {
     const host = document.createElement('div');
     document.body.append(host);
 
-    await act(async () => {
-      await renderer.mount(host, createScene(), DEFAULT_BOARD_PRESENTATION);
-    });
+    await mountInAct(renderer, host, createScene());
     const before = host.querySelector<HTMLElement>(
       '[data-card-id="visible-card"]'
     );
@@ -100,7 +110,10 @@ describe('React DOM board renderer', () => {
       { kind: 'ready', generation: 1 },
     ]);
 
-    act(() => renderer.destroy());
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
     expect(host.childElementCount).toBe(0);
     renderer.destroy();
     expect(statuses.at(-1)).toEqual({ kind: 'destroyed' });
@@ -112,9 +125,7 @@ describe('React DOM board renderer', () => {
       reportError: vi.fn(),
     });
     const host = document.createElement('div');
-    await act(async () => {
-      await renderer.mount(host, createScene(3), DEFAULT_BOARD_PRESENTATION);
-    });
+    await mountInAct(renderer, host, createScene(3));
     expect(() => renderer.installScene(createScene(2), [])).toThrow(
       'older board scene revision'
     );
@@ -124,7 +135,10 @@ describe('React DOM board renderer', () => {
       ])
     ).toThrow('does not match');
     act(() => renderer.setPreferences(DEFAULT_BOARD_PREFERENCES));
-    act(() => renderer.destroy());
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
   });
 
   it('survives repeated StrictMode-compatible mount and teardown without nodes accumulating', async () => {
@@ -134,15 +148,12 @@ describe('React DOM board renderer', () => {
         emitIntent: vi.fn(),
         reportError: vi.fn(),
       });
-      await act(async () => {
-        await renderer.mount(
-          host,
-          createScene(index),
-          DEFAULT_BOARD_PRESENTATION
-        );
-      });
+      await mountInAct(renderer, host, createScene(index));
       expect(host.querySelectorAll('[data-card-id]').length).toBe(1);
-      act(() => renderer.destroy());
+      await act(async () => {
+        renderer.destroy();
+        await Promise.resolve();
+      });
       expect(host.childElementCount).toBe(0);
     }
   });
