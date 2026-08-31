@@ -57,7 +57,12 @@ export const cloneMatchState = (state: MatchState): MatchState => ({
         attachmentResolution: areas.attachmentResolution
           ? {
               ...areas.attachmentResolution,
-              cardIds: [...areas.attachmentResolution.cardIds],
+              evolutionCardIds: [
+                ...areas.attachmentResolution.evolutionCardIds,
+              ],
+              attachmentCardIds: [
+                ...areas.attachmentResolution.attachmentCardIds,
+              ],
             }
           : null,
       },

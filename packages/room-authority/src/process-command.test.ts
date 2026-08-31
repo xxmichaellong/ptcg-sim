@@ -4,6 +4,7 @@ import {
   asMatchId,
   asPlayerId,
   asStackId,
+  asWorkAreaId,
   createEmptyMatch,
   playerZoneId,
   type CommandContext,
@@ -80,10 +81,12 @@ const createContext = (): CommandContext => {
   let card = 0;
   let stack = 0;
   let inspection = 0;
+  let workArea = 0;
   return {
     nextCardId: () => asCardInstanceId(`canonical-card-${++card}`),
     nextStackId: () => asStackId(`canonical-stack-${++stack}`),
     nextInspectionId: () => asInspectionId(`inspection-${++inspection}`),
+    nextWorkAreaId: () => asWorkAreaId(`work-area-${++workArea}`),
     shuffle: (values) => [...values].reverse(),
     randomInt: () => 0,
   };

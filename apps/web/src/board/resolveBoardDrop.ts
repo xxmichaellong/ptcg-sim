@@ -71,16 +71,27 @@ export const resolveBoardDrop = (
       (inspection) =>
         inspection !== null && containsCard(inspection.cards, intent.cardId)
     );
-  const sourceAttachmentResolution = Object.values(view.workAreas).some(
-    (workArea) =>
-      containsCard(workArea.attachmentResolution?.cards ?? [], intent.cardId)
+  const sourceStagedEntry = Object.entries(view.workAreas).find(
+    ([, workArea]) => {
+      const resolution = workArea.attachmentResolution;
+      return Boolean(
+        resolution &&
+        (containsCard(resolution.evolutionCards, intent.cardId) ||
+          containsCard(resolution.attachmentCards, intent.cardId))
+      );
+    }
   );
+  const sourceStaged = sourceStagedEntry?.[1].attachmentResolution ?? null;
+  const sourceStagedPlayerId = sourceStagedEntry?.[0];
+  const sourceRepresentsStagedStack =
+    sourceStaged?.evolutionCards.at(-1)?.id === intent.cardId;
   const sourceMovesWholeStack =
     sourceStack?.evolutionCards.at(-1)?.id === intent.cardId;
-  if (!sourceZone && !sourceStack && !sourceInspection) {
-    return rejected(
-      sourceAttachmentResolution ? 'unsupported_source' : 'stale_card'
-    );
+  if (!sourceZone && !sourceStack && !sourceInspection && !sourceStaged) {
+    return rejected('stale_card');
+  }
+  if (sourceStaged && sourceStagedPlayerId !== view.viewer.playerId) {
+    return rejected('unsupported_source');
   }
 
   const destinationZone = view.zones[intent.targetId];
@@ -106,9 +117,7 @@ export const resolveBoardDrop = (
       );
       if (
         evolutionIndex >= 0 &&
-        (evolutionIndex !== sourceStack.evolutionCards.length - 1 ||
-          (sourceStack.evolutionCards.length === 1 &&
-            sourceStack.attachmentCards.length > 0))
+        evolutionIndex !== sourceStack.evolutionCards.length - 1
       ) {
         return rejected('unsupported_source');
       }
@@ -129,6 +138,17 @@ export const resolveBoardDrop = (
           type: 'MoveInspectedCard',
           cardId: intent.cardId,
           expectedWorkAreaId: sourceInspection.id,
+          destinationZoneId: destinationZone.id,
+        },
+      };
+    }
+    if (sourceStaged) {
+      return {
+        ok: true,
+        command: {
+          type: 'MoveStagedCard',
+          cardId: intent.cardId,
+          expectedWorkAreaId: sourceStaged.id,
           destinationZoneId: destinationZone.id,
         },
       };
@@ -180,6 +200,29 @@ export const resolveBoardDrop = (
   const slot = playSlotTarget(scene, intent.targetId);
   if (slot?.playerId) {
     const destinationSlot = slot.kind === 'active' ? 'active' : 'bench';
+    if (sourceStaged) {
+      if (
+        !sourceRepresentsStagedStack ||
+        sourceStagedPlayerId !== view.viewer.playerId
+      ) {
+        return rejected('unsupported_source');
+      }
+      if (slot.playerId !== sourceStagedPlayerId) {
+        return rejected('unsupported_target');
+      }
+      const board = view.boards[sourceStagedPlayerId];
+      if (!board) return rejected('stale_target');
+      return {
+        ok: true,
+        command: {
+          type: 'RestoreStagedStack',
+          expectedWorkAreaId: sourceStaged.id,
+          expectedActiveStackId: board.activeStackId,
+          expectedBenchStackIds: [...board.benchStackIds],
+          destinationSlot,
+        },
+      };
+    }
     if (sourceStack) {
       if (!sourceMovesWholeStack) return rejected('unsupported_source');
       if (sourceStack.boardPlayerId !== slot.playerId) {

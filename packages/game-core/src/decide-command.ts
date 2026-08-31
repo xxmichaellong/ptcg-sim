@@ -336,30 +336,70 @@ export const decideCommand = (
           'Only the top evolution card may leave a play stack directly'
         );
       }
+      const destinationIndex = Math.max(
+        0,
+        Math.min(
+          command.destinationIndex ?? destination.cardIds.length,
+          destination.cardIds.length
+        )
+      );
+      if (location.kind === 'stackAttachment') {
+        return accept({
+          type: 'CardMovedFromStack',
+          cardId: card.id,
+          expectedStackId: stack.id,
+          source: 'attachment',
+          destinationZoneId: destination.id,
+          destinationIndex,
+          concealIdentity: isConcealedZone(destination),
+        });
+      }
+      const evolutionCardIds = stack.evolutionCardIds.slice(0, -1);
+      const attachmentCardIds = [...stack.attachmentCardIds];
+      const hasDependents =
+        evolutionCardIds.length + attachmentCardIds.length > 0;
+      const areas = state.workAreas[stack.boardPlayerId];
+      if (!areas) {
+        return reject('not_found', 'Play stack owner has no work areas');
+      }
+      if (hasDependents && areas.attachmentResolution) {
+        return reject(
+          'conflict',
+          'Resolve the existing attached-card work area first'
+        );
+      }
+      const workAreaId = hasDependents ? context.nextWorkAreaId() : null;
       if (
-        location.kind === 'stackEvolution' &&
-        stack.evolutionCardIds.length === 1 &&
-        stack.attachmentCardIds.length > 0
+        workAreaId &&
+        Object.values(state.workAreas).some(
+          (candidate) =>
+            candidate.inspection?.id === workAreaId ||
+            candidate.attachmentResolution?.id === workAreaId
+        )
       ) {
         return reject(
-          'precondition_failed',
-          'Resolve attached cards before removing the stack base'
+          'conflict',
+          `Work area ID factory returned duplicate ${workAreaId}`
         );
       }
       return accept({
-        type: 'CardMovedFromStack',
+        type: 'PlayStackDeparted',
         cardId: card.id,
         expectedStackId: stack.id,
-        source: location.kind === 'stackEvolution' ? 'evolution' : 'attachment',
+        boardPlayerId: stack.boardPlayerId,
+        expectedEvolutionCardIds: [...stack.evolutionCardIds],
+        expectedAttachmentCardIds: [...stack.attachmentCardIds],
         destinationZoneId: destination.id,
-        destinationIndex: Math.max(
-          0,
-          Math.min(
-            command.destinationIndex ?? destination.cardIds.length,
-            destination.cardIds.length
-          )
-        ),
+        destinationIndex,
         concealIdentity: isConcealedZone(destination),
+        attachmentResolution: workAreaId
+          ? {
+              id: workAreaId,
+              evolutionCardIds,
+              attachmentCardIds,
+              suggestedSlot: stack.slot,
+            }
+          : null,
       });
     }
     case 'MovePlayStack': {
@@ -496,6 +536,98 @@ export const decideCommand = (
           )
         ),
         concealIdentity: isConcealedZone(destination),
+      });
+    }
+    case 'MoveStagedCard': {
+      const card = state.cards[command.cardId];
+      if (!card) {
+        return reject('not_found', `Card ${command.cardId} does not exist`);
+      }
+      const location = findCardLocation(state, command.cardId);
+      if (!location || location.kind !== 'attachmentResolutionWorkArea') {
+        return reject(
+          'stale_reference',
+          'Card is no longer in an attached-card work area'
+        );
+      }
+      const resolution =
+        state.workAreas[location.playerId]?.attachmentResolution;
+      if (!resolution || resolution.id !== command.expectedWorkAreaId) {
+        return reject('stale_reference', 'Attached-card work area changed');
+      }
+      const destination = state.zones[command.destinationZoneId];
+      if (!destination) {
+        return reject('not_found', 'Destination zone does not exist');
+      }
+      if (destination.kind === 'stadium' && destination.cardIds.length > 0) {
+        return reject(
+          'precondition_failed',
+          'Resolve the existing stadium before moving a staged card'
+        );
+      }
+      return accept({
+        type: 'StagedCardMoved',
+        playerId: location.playerId,
+        expectedWorkAreaId: resolution.id,
+        source: location.source,
+        cardId: card.id,
+        destinationZoneId: destination.id,
+        destinationIndex: Math.max(
+          0,
+          Math.min(
+            command.destinationIndex ?? destination.cardIds.length,
+            destination.cardIds.length
+          )
+        ),
+        concealIdentity: isConcealedZone(destination),
+      });
+    }
+    case 'RestoreStagedStack': {
+      const playerError = requirePlayer(state, command.playerId);
+      if (playerError) return playerError;
+      const areas = state.workAreas[command.playerId];
+      const resolution = areas?.attachmentResolution;
+      if (!resolution || resolution.id !== command.expectedWorkAreaId) {
+        return reject('stale_reference', 'Attached-card work area changed');
+      }
+      if (resolution.evolutionCardIds.length === 0) {
+        return reject(
+          'precondition_failed',
+          'At least one staged Pokémon is required to restore a play stack'
+        );
+      }
+      const board = state.boards[command.playerId];
+      if (!board) return reject('not_found', 'Player board does not exist');
+      if (
+        board.activeStackId !== command.expectedActiveStackId ||
+        !sameOrder(board.benchStackIds, command.expectedBenchStackIds)
+      ) {
+        return reject('stale_reference', 'Player board layout changed');
+      }
+      const stackId = context.nextStackId();
+      if (state.stacks[stackId]) {
+        return reject(
+          'conflict',
+          `Stack ID factory returned duplicate ${stackId}`
+        );
+      }
+      return accept({
+        type: 'StagedStackRestored',
+        playerId: command.playerId,
+        expectedWorkAreaId: resolution.id,
+        expectedEvolutionCardIds: [...resolution.evolutionCardIds],
+        expectedAttachmentCardIds: [...resolution.attachmentCardIds],
+        expectedActiveStackId: board.activeStackId,
+        expectedBenchStackIds: [...board.benchStackIds],
+        stackId,
+        destinationSlot: command.destinationSlot,
+        benchIndex: Math.max(
+          0,
+          Math.min(
+            command.benchIndex ?? board.benchStackIds.length,
+            board.benchStackIds.length
+          )
+        ),
       });
     }
     case 'ShuffleZone': {

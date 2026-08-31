@@ -10,21 +10,36 @@ import {
   asMatchId,
   asPlayerId,
   asStackId,
+  asViewCardId,
+  asViewDefinitionId,
+  asWorkAreaId,
 } from './ids.js';
 import { assertMatchInvariants } from './invariants.js';
+import { projectMatch, type ProjectionIdentityAdapter } from './projection.js';
 
 const p1 = asPlayerId('departure-player-one');
 const p2 = asPlayerId('departure-player-two');
+
+const projectionIdentities: ProjectionIdentityAdapter = {
+  viewCardId: ({ viewerKey, cardId, known, visibilityGeneration }) =>
+    asViewCardId(
+      `${viewerKey}:${known ? 'known' : 'concealed'}:${visibilityGeneration}:${cardId}`
+    ),
+  viewDefinitionId: ({ viewerKey, definitionId }) =>
+    asViewDefinitionId(`${viewerKey}:${definitionId}`),
+};
 
 const context = (): CommandContext => {
   let card = 0;
   let stack = 0;
   let inspection = 0;
+  let workArea = 0;
   return {
     nextCardId: () => asCardInstanceId(`departure-card-${++card}`),
     nextStackId: () => asStackId(`departure-stack-${++stack}`),
     nextInspectionId: () =>
       asInspectionId(`departure-inspection-${++inspection}`),
+    nextWorkAreaId: () => asWorkAreaId(`departure-work-${++workArea}`),
     shuffle: (values) => [...values],
     randomInt: () => 0,
   };
@@ -55,7 +70,7 @@ const expectedLayout = (state: ReturnType<typeof emptyMatch>) => ({
 });
 
 describe('explicit card departures', () => {
-  it('detaches attachments before atomically removing a stack base', () => {
+  it('stages attachments when a stack base leaves and resolves them individually', () => {
     const commandContext = context();
     const loaded = executeCommand(
       emptyMatch(),
@@ -97,36 +112,6 @@ describe('explicit card departures', () => {
     if (!attached.accepted) throw new Error(attached.message);
     state = attached.state;
 
-    const orphaning = executeCommand(
-      state,
-      {
-        type: 'MoveCardFromStack',
-        cardId: baseId,
-        expectedStackId: stackId,
-        destinationZoneId: discardId,
-      },
-      commandContext
-    );
-    expect(orphaning).toMatchObject({
-      accepted: false,
-      code: 'precondition_failed',
-    });
-
-    const detached = executeCommand(
-      state,
-      {
-        type: 'MoveCardFromStack',
-        cardId: attachmentId,
-        expectedStackId: stackId,
-        destinationZoneId: discardId,
-      },
-      commandContext
-    );
-    if (!detached.accepted) throw new Error(detached.message);
-    state = detached.state;
-    expect(state.stacks[stackId]?.attachmentCardIds).toEqual([]);
-    expect(state.zones[discardId]?.cardIds).toEqual([attachmentId]);
-
     const departed = executeCommand(
       state,
       {
@@ -138,16 +123,69 @@ describe('explicit card departures', () => {
       commandContext
     );
     if (!departed.accepted) throw new Error(departed.message);
-    expect(departed.state.stacks[stackId]).toBeUndefined();
-    expect(departed.state.boards[p1]?.activeStackId).toBeNull();
-    expect(departed.state.zones[discardId]?.cardIds).toEqual([
-      attachmentId,
+    state = departed.state;
+    expect(state.stacks[stackId]).toBeUndefined();
+    expect(state.boards[p1]?.activeStackId).toBeNull();
+    expect(state.zones[discardId]?.cardIds).toEqual([baseId]);
+    const staged = state.workAreas[p1]?.attachmentResolution;
+    expect(staged).toMatchObject({
+      sourceStackId: stackId,
+      evolutionCardIds: [],
+      attachmentCardIds: [attachmentId],
+      suggestedSlot: 'active',
+    });
+    if (!staged) throw new Error('Missing attached-card work area');
+    const ownerArea = projectMatch(
+      state,
+      { kind: 'player', playerId: p1 },
+      projectionIdentities
+    ).workAreas[p1]!.attachmentResolution!;
+    const opponentArea = projectMatch(
+      state,
+      { kind: 'player', playerId: p2 },
+      projectionIdentities
+    ).workAreas[p1]!.attachmentResolution!;
+    expect(ownerArea).toMatchObject({
+      sourceStackId: stackId,
+      suggestedSlot: 'active',
+      evolutionCards: [],
+    });
+    expect(ownerArea.attachmentCards[0]?.kind).toBe('known');
+    expect(opponentArea.attachmentCards[0]?.kind).toBe('concealed');
+    expect(
+      executeCommand(
+        state,
+        {
+          type: 'RestoreStagedStack',
+          playerId: p1,
+          expectedWorkAreaId: staged.id,
+          ...expectedLayout(state),
+          destinationSlot: 'active',
+        },
+        commandContext
+      )
+    ).toMatchObject({ accepted: false, code: 'precondition_failed' });
+
+    const resolved = executeCommand(
+      state,
+      {
+        type: 'MoveStagedCard',
+        cardId: attachmentId,
+        expectedWorkAreaId: staged.id,
+        destinationZoneId: discardId,
+      },
+      commandContext
+    );
+    if (!resolved.accepted) throw new Error(resolved.message);
+    expect(resolved.state.workAreas[p1]?.attachmentResolution).toBeNull();
+    expect(resolved.state.zones[discardId]?.cardIds).toEqual([
       baseId,
+      attachmentId,
     ]);
-    assertMatchInvariants(departed.state);
+    assertMatchInvariants(resolved.state);
   });
 
-  it('allows only the top evolution card to leave an existing stack', () => {
+  it('stages and restores ordered evolutions after only the top may leave', () => {
     const commandContext = context();
     const loaded = executeCommand(
       emptyMatch(),
@@ -212,8 +250,289 @@ describe('explicit card departures', () => {
       commandContext
     );
     if (!departed.accepted) throw new Error(departed.message);
-    expect(departed.state.stacks[stackId]?.evolutionCardIds).toEqual([baseId]);
-    assertMatchInvariants(departed.state);
+    state = departed.state;
+    expect(state.stacks[stackId]).toBeUndefined();
+    const staged = state.workAreas[p1]?.attachmentResolution;
+    expect(staged).toMatchObject({
+      sourceStackId: stackId,
+      evolutionCardIds: [baseId],
+      attachmentCardIds: [],
+      suggestedSlot: 'bench',
+    });
+    if (!staged) throw new Error('Missing attached-card work area');
+    const restored = executeCommand(
+      state,
+      {
+        type: 'RestoreStagedStack',
+        playerId: p1,
+        expectedWorkAreaId: staged.id,
+        ...expectedLayout(state),
+        destinationSlot: 'bench',
+      },
+      commandContext
+    );
+    if (!restored.accepted) throw new Error(restored.message);
+    const restoredStackId = restored.state.boards[p1]!.benchStackIds[0]!;
+    expect(restoredStackId).not.toBe(stackId);
+    expect(restored.state.stacks[restoredStackId]).toMatchObject({
+      boardPlayerId: p1,
+      slot: 'bench',
+      evolutionCardIds: [baseId],
+      attachmentCardIds: [],
+    });
+    expect(restored.state.workAreas[p1]?.attachmentResolution).toBeNull();
+    assertMatchInvariants(restored.state);
+  });
+
+  it('preserves evolution order and Pokémon attachment classification across restore', () => {
+    const commandContext = context();
+    const loaded = executeCommand(
+      emptyMatch(),
+      {
+        type: 'LoadDeck',
+        playerId: p1,
+        entries: deck(
+          'Pokémon',
+          'Pokémon',
+          'Pokémon',
+          'Trainer',
+          'Pokémon',
+          'Pokémon'
+        ),
+      },
+      commandContext
+    );
+    if (!loaded.accepted) throw new Error(loaded.message);
+    let state = loaded.state;
+    const deckId = playerZoneId(p1, 'deck');
+    const discardId = playerZoneId(p1, 'discard');
+    const [
+      baseId,
+      middleId,
+      topId,
+      trainerId,
+      pokemonAttachmentId,
+      replacementId,
+    ] = state.zones[deckId]!.cardIds;
+
+    const base = executeCommand(
+      state,
+      {
+        type: 'MoveCardToPlay',
+        cardId: baseId!,
+        expectedSourceZoneId: deckId,
+        boardPlayerId: p1,
+        slot: 'active',
+      },
+      commandContext
+    );
+    if (!base.accepted) throw new Error(base.message);
+    state = base.state;
+    const oldStackId = state.boards[p1]!.activeStackId!;
+    for (const cardId of [middleId!, topId!, trainerId!]) {
+      const moved = executeCommand(
+        state,
+        {
+          type: 'MoveCardToPlay',
+          cardId,
+          expectedSourceZoneId: deckId,
+          boardPlayerId: p1,
+          slot: 'active',
+          targetStackId: oldStackId,
+        },
+        commandContext
+      );
+      if (!moved.accepted) throw new Error(moved.message);
+      state = moved.state;
+    }
+    const recategorized = executeCommand(
+      state,
+      {
+        type: 'SetCardCategory',
+        cardId: pokemonAttachmentId!,
+        category: 'Energy',
+      },
+      commandContext
+    );
+    if (!recategorized.accepted) throw new Error(recategorized.message);
+    state = recategorized.state;
+    const attachedPokemon = executeCommand(
+      state,
+      {
+        type: 'MoveCardToPlay',
+        cardId: pokemonAttachmentId!,
+        expectedSourceZoneId: deckId,
+        boardPlayerId: p1,
+        slot: 'active',
+        targetStackId: oldStackId,
+      },
+      commandContext
+    );
+    if (!attachedPokemon.accepted) throw new Error(attachedPokemon.message);
+    state = attachedPokemon.state;
+
+    const departed = executeCommand(
+      state,
+      {
+        type: 'MoveCardFromStack',
+        cardId: topId!,
+        expectedStackId: oldStackId,
+        destinationZoneId: discardId,
+      },
+      commandContext
+    );
+    if (!departed.accepted) throw new Error(departed.message);
+    state = departed.state;
+    const staged = state.workAreas[p1]!.attachmentResolution!;
+    expect(staged.evolutionCardIds).toEqual([baseId, middleId]);
+    expect(staged.attachmentCardIds).toEqual([trainerId, pokemonAttachmentId]);
+    const layoutBeforeReplacement = expectedLayout(state);
+
+    const replacement = executeCommand(
+      state,
+      {
+        type: 'MoveCardToPlay',
+        cardId: replacementId!,
+        expectedSourceZoneId: deckId,
+        boardPlayerId: p1,
+        slot: 'active',
+      },
+      commandContext
+    );
+    if (!replacement.accepted) throw new Error(replacement.message);
+    state = replacement.state;
+    expect(
+      executeCommand(
+        state,
+        {
+          type: 'RestoreStagedStack',
+          playerId: p1,
+          expectedWorkAreaId: staged.id,
+          ...layoutBeforeReplacement,
+          destinationSlot: 'active',
+        },
+        commandContext
+      )
+    ).toMatchObject({ accepted: false, code: 'stale_reference' });
+
+    const restored = executeCommand(
+      state,
+      {
+        type: 'RestoreStagedStack',
+        playerId: p1,
+        expectedWorkAreaId: staged.id,
+        ...expectedLayout(state),
+        destinationSlot: 'active',
+      },
+      commandContext
+    );
+    if (!restored.accepted) throw new Error(restored.message);
+    const restoredId = restored.state.boards[p1]!.activeStackId!;
+    expect(restored.state.stacks[restoredId]).toMatchObject({
+      evolutionCardIds: [baseId, middleId],
+      attachmentCardIds: [trainerId, pokemonAttachmentId],
+      damage: null,
+      specialCondition: null,
+      abilityUsed: false,
+    });
+    expect(restored.state.boards[p1]!.benchStackIds).toHaveLength(1);
+    expect(restored.state.cards[pokemonAttachmentId!]?.currentCategory).toBe(
+      'Energy'
+    );
+    assertMatchInvariants(restored.state);
+  });
+
+  it('protects an occupied work area without blocking independent stack departures', () => {
+    const commandContext = context();
+    const loaded = executeCommand(
+      emptyMatch(),
+      {
+        type: 'LoadDeck',
+        playerId: p1,
+        entries: deck('Pokémon', 'Pokémon', 'Pokémon', 'Pokémon', 'Pokémon'),
+      },
+      commandContext
+    );
+    if (!loaded.accepted) throw new Error(loaded.message);
+    let state = loaded.state;
+    const deckId = playerZoneId(p1, 'deck');
+    const discardId = playerZoneId(p1, 'discard');
+    const [firstBase, firstTop, secondBase, secondTop, independent] =
+      state.zones[deckId]!.cardIds;
+    const play = (
+      cardId: NonNullable<typeof firstBase>,
+      slot: 'active' | 'bench',
+      targetStackId?: ReturnType<typeof asStackId>
+    ) => {
+      const result = executeCommand(
+        state,
+        {
+          type: 'MoveCardToPlay',
+          cardId,
+          expectedSourceZoneId: deckId,
+          boardPlayerId: p1,
+          slot,
+          ...(targetStackId ? { targetStackId } : {}),
+        },
+        commandContext
+      );
+      if (!result.accepted) throw new Error(result.message);
+      state = result.state;
+    };
+
+    play(firstBase!, 'active');
+    const firstStackId = state.boards[p1]!.activeStackId!;
+    play(firstTop!, 'active', firstStackId);
+    play(secondBase!, 'bench');
+    const secondStackId = state.boards[p1]!.benchStackIds[0]!;
+    play(secondTop!, 'bench', secondStackId);
+    play(independent!, 'bench');
+    const independentStackId = state.boards[p1]!.benchStackIds[1]!;
+
+    const firstDeparture = executeCommand(
+      state,
+      {
+        type: 'MoveCardFromStack',
+        cardId: firstTop!,
+        expectedStackId: firstStackId,
+        destinationZoneId: discardId,
+      },
+      commandContext
+    );
+    if (!firstDeparture.accepted) throw new Error(firstDeparture.message);
+    state = firstDeparture.state;
+    const occupied = state.workAreas[p1]!.attachmentResolution!;
+
+    expect(
+      executeCommand(
+        state,
+        {
+          type: 'MoveCardFromStack',
+          cardId: secondTop!,
+          expectedStackId: secondStackId,
+          destinationZoneId: discardId,
+        },
+        commandContext
+      )
+    ).toMatchObject({ accepted: false, code: 'conflict' });
+
+    const independentDeparture = executeCommand(
+      state,
+      {
+        type: 'MoveCardFromStack',
+        cardId: independent!,
+        expectedStackId: independentStackId,
+        destinationZoneId: discardId,
+      },
+      commandContext
+    );
+    if (!independentDeparture.accepted) {
+      throw new Error(independentDeparture.message);
+    }
+    expect(
+      independentDeparture.state.workAreas[p1]?.attachmentResolution
+    ).toEqual(occupied);
+    assertMatchInvariants(independentDeparture.state);
   });
 
   it('promotes, swaps, reorders, and demotes whole play stacks atomically', () => {

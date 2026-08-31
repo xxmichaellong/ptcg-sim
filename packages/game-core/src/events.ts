@@ -85,10 +85,27 @@ export type DomainEvent =
       readonly type: 'CardMovedFromStack';
       readonly cardId: CardInstanceId;
       readonly expectedStackId: StackId;
-      readonly source: 'evolution' | 'attachment';
+      readonly source: 'attachment';
       readonly destinationZoneId: ZoneId;
       readonly destinationIndex: number;
       readonly concealIdentity: boolean;
+    }
+  | {
+      readonly type: 'PlayStackDeparted';
+      readonly cardId: CardInstanceId;
+      readonly expectedStackId: StackId;
+      readonly boardPlayerId: PlayerId;
+      readonly expectedEvolutionCardIds: readonly CardInstanceId[];
+      readonly expectedAttachmentCardIds: readonly CardInstanceId[];
+      readonly destinationZoneId: ZoneId;
+      readonly destinationIndex: number;
+      readonly concealIdentity: boolean;
+      readonly attachmentResolution: {
+        readonly id: WorkAreaId;
+        readonly evolutionCardIds: readonly CardInstanceId[];
+        readonly attachmentCardIds: readonly CardInstanceId[];
+        readonly suggestedSlot: PlaySlot;
+      } | null;
     }
   | {
       readonly type: 'PlayStackLayoutSet';
@@ -107,6 +124,28 @@ export type DomainEvent =
       readonly destinationZoneId: ZoneId;
       readonly destinationIndex: number;
       readonly concealIdentity: boolean;
+    }
+  | {
+      readonly type: 'StagedCardMoved';
+      readonly playerId: PlayerId;
+      readonly expectedWorkAreaId: WorkAreaId;
+      readonly source: 'evolution' | 'attachment';
+      readonly cardId: CardInstanceId;
+      readonly destinationZoneId: ZoneId;
+      readonly destinationIndex: number;
+      readonly concealIdentity: boolean;
+    }
+  | {
+      readonly type: 'StagedStackRestored';
+      readonly playerId: PlayerId;
+      readonly expectedWorkAreaId: WorkAreaId;
+      readonly expectedEvolutionCardIds: readonly CardInstanceId[];
+      readonly expectedAttachmentCardIds: readonly CardInstanceId[];
+      readonly expectedActiveStackId: StackId | null;
+      readonly expectedBenchStackIds: readonly StackId[];
+      readonly stackId: StackId;
+      readonly destinationSlot: PlaySlot;
+      readonly benchIndex: number;
     }
   | {
       readonly type: 'StackDamageSet';

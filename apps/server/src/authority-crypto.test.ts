@@ -15,6 +15,7 @@ describe('Web Crypto authority source', () => {
       source.nextCardId(),
       source.nextStackId(),
       source.nextInspectionId(),
+      source.nextWorkAreaId(),
     ];
 
     expect(new Set(values).size).toBe(values.length);

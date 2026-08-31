@@ -10,6 +10,7 @@ import {
   asMatchId,
   asPlayerId,
   asStackId,
+  asWorkAreaId,
 } from './ids.js';
 import { assertMatchInvariants } from './invariants.js';
 import type { MatchState } from './model.js';
@@ -23,10 +24,12 @@ const createContext = (
   let card = 0;
   let stack = 0;
   let inspection = 0;
+  let workArea = 0;
   return {
     nextCardId: () => asCardInstanceId(`card-${++card}`),
     nextStackId: () => asStackId(`stack-${++stack}`),
     nextInspectionId: () => asInspectionId(`inspection-${++inspection}`),
+    nextWorkAreaId: () => asWorkAreaId(`work-area-${++workArea}`),
     shuffle,
     randomInt: () => 0,
   };

@@ -89,7 +89,8 @@ export interface InspectionWorkArea {
 export interface AttachmentResolutionWorkArea {
   readonly id: WorkAreaId;
   readonly sourceStackId: StackId;
-  readonly cardIds: readonly CardInstanceId[];
+  readonly evolutionCardIds: readonly CardInstanceId[];
+  readonly attachmentCardIds: readonly CardInstanceId[];
   readonly suggestedSlot: PlaySlot;
 }
 
@@ -157,6 +158,7 @@ export type CardLocation =
   | {
       readonly kind: 'attachmentResolutionWorkArea';
       readonly playerId: PlayerId;
+      readonly source: 'evolution' | 'attachment';
       readonly index: number;
     };
 

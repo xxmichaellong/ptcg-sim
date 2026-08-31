@@ -145,10 +145,27 @@ export const collectInvariantProblems = (
         problems.push(`card ${cardId} appears in two work areas`);
       workAreaCardIds.add(cardId);
     }
-    for (const cardId of areas.attachmentResolution?.cardIds ?? []) {
+    const stagedIds = areas.attachmentResolution
+      ? [
+          ...areas.attachmentResolution.evolutionCardIds,
+          ...areas.attachmentResolution.attachmentCardIds,
+        ]
+      : [];
+    if (hasDuplicates(stagedIds)) {
+      problems.push(`attachment resolution for ${playerId} duplicates a card`);
+    }
+    for (const cardId of stagedIds) {
       if (workAreaCardIds.has(cardId))
         problems.push(`card ${cardId} appears in two work areas`);
       workAreaCardIds.add(cardId);
+      if (!state.cards[cardId]) {
+        problems.push(
+          `attachment resolution for ${playerId} references missing card ${cardId}`
+        );
+      }
+    }
+    if (areas.attachmentResolution && stagedIds.length === 0) {
+      problems.push(`attachment resolution for ${playerId} is empty`);
     }
     if (
       areas.inspection &&

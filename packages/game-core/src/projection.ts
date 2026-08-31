@@ -125,7 +125,10 @@ export interface MatchViewState {
         } | null;
         readonly attachmentResolution: {
           readonly id: string;
-          readonly cards: readonly ViewCard[];
+          readonly sourceStackId: string;
+          readonly evolutionCards: readonly ViewCard[];
+          readonly attachmentCards: readonly ViewCard[];
+          readonly suggestedSlot: 'active' | 'bench';
         } | null;
       }
     >
@@ -307,7 +310,12 @@ export const projectMatch = (
           attachmentResolution: areas.attachmentResolution
             ? {
                 id: areas.attachmentResolution.id,
-                cards: areas.attachmentResolution.cardIds.map(projectCard),
+                sourceStackId: areas.attachmentResolution.sourceStackId,
+                evolutionCards:
+                  areas.attachmentResolution.evolutionCardIds.map(projectCard),
+                attachmentCards:
+                  areas.attachmentResolution.attachmentCardIds.map(projectCard),
+                suggestedSlot: areas.attachmentResolution.suggestedSlot,
               }
             : null,
         },

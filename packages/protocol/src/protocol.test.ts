@@ -58,28 +58,40 @@ describe('client protocol ingress', () => {
   });
 
   it('bounds client-supplied expected stack layouts', () => {
-    const result = parseClientFrame(
-      JSON.stringify({
-        type: 'Command',
-        protocolVersion: PROTOCOL_VERSION,
-        sessionId: 'session',
-        clientSequence: 1,
-        commandId: 'command',
-        lastSeenRevision: 0,
-        command: {
-          type: 'MovePlayStack',
-          stackId: 'source-stack',
-          expectedSourceSlot: 'bench',
-          expectedActiveStackId: 'active-stack',
-          expectedBenchStackIds: Array.from(
-            { length: 201 },
-            (_, index) => `bench-stack-${index}`
-          ),
-          destinationSlot: 'active',
-        },
-      })
+    const expectedBenchStackIds = Array.from(
+      { length: 201 },
+      (_, index) => `bench-stack-${index}`
     );
-    expect(result.ok).toBe(false);
+    for (const command of [
+      {
+        type: 'MovePlayStack',
+        stackId: 'source-stack',
+        expectedSourceSlot: 'bench',
+        expectedActiveStackId: 'active-stack',
+        expectedBenchStackIds,
+        destinationSlot: 'active',
+      },
+      {
+        type: 'RestoreStagedStack',
+        expectedWorkAreaId: 'work-area',
+        expectedActiveStackId: 'active-stack',
+        expectedBenchStackIds,
+        destinationSlot: 'active',
+      },
+    ]) {
+      const result = parseClientFrame(
+        JSON.stringify({
+          type: 'Command',
+          protocolVersion: PROTOCOL_VERSION,
+          sessionId: 'session',
+          clientSequence: 1,
+          commandId: 'command',
+          lastSeenRevision: 0,
+          command,
+        })
+      );
+      expect(result.ok).toBe(false);
+    }
   });
 
   it('never echoes rejected values in issue summaries', () => {

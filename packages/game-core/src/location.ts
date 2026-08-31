@@ -36,15 +36,30 @@ export const findCardLocations = (
         locations.push({ kind: 'inspectionWorkArea', playerId, index });
       }
     });
-    areas.attachmentResolution?.cardIds.forEach((candidateId, index) => {
-      if (candidateId === cardId) {
-        locations.push({
-          kind: 'attachmentResolutionWorkArea',
-          playerId,
-          index,
-        });
+    areas.attachmentResolution?.evolutionCardIds.forEach(
+      (candidateId, index) => {
+        if (candidateId === cardId) {
+          locations.push({
+            kind: 'attachmentResolutionWorkArea',
+            playerId,
+            source: 'evolution',
+            index,
+          });
+        }
       }
-    });
+    );
+    areas.attachmentResolution?.attachmentCardIds.forEach(
+      (candidateId, index) => {
+        if (candidateId === cardId) {
+          locations.push({
+            kind: 'attachmentResolutionWorkArea',
+            playerId,
+            source: 'attachment',
+            index,
+          });
+        }
+      }
+    );
   }
 
   return locations;

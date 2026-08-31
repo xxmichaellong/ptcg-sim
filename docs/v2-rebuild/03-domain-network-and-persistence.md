@@ -65,6 +65,9 @@ MatchState
   workAreas[playerId]
     inspectionSession?
     attachmentResolution?
+      source stack ID; suggested active/bench slot
+      ordered evolution card IDs (bottom -> top)
+      ordered attachment card IDs
   turn/logical markers
     turnNumber, currentPlayer?, VSTAR/GX state, match options
   rng/audit metadata
@@ -86,8 +89,9 @@ Legacy `attachedCards` and `viewCards` arrays are not ordinary permanent zones:
 
 - an **inspection session** records the source, ordered cards being inspected,
   allowed viewer(s), and return/move policy; and
-- an **attachment-resolution work area** records cards detached from a host while
-  the player chooses discard, hand, lost zone, shuffle, or leave-in-play.
+- an **attachment-resolution work area** records the removed host stack, its
+  suggested slot, ordered lower evolutions, and separately ordered attachments
+  while the player chooses discard, hand, lost zone, shuffle, or leave-in-play.
 
 These are canonical when unresolved because reconnect and multiplayer must not
 lose them. Opening a visual deck/discard popup without moving cards is local

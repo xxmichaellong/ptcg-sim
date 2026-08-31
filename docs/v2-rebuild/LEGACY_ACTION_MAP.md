@@ -34,7 +34,7 @@ a hard-to-find behavior. Proposed names are not final APIs.
 | `discardAll`                | `MoveWorkAreaContents(discard)`                                                                                            | Detached/viewed source semantics, order, card category reset, message                                          |
 | `lostZoneAll`               | `MoveWorkAreaContents(lostZone)`                                                                                           | Same dimensions as discard, label/message differences                                                          |
 | `handAll`                   | `MoveWorkAreaContents(hand)`                                                                                               | Hidden owner view, opponent projection, order, message                                                         |
-| `leaveAll`                  | `ResolveDepartingStack(leaveInPlay)`                                                                                       | Reconstruct evolution order and attachments into active/bench, selected destination, marker/rotation semantics |
+| `leaveAll`                  | `RestoreStagedStack`                                                                                                       | Reconstruct evolution order and attachments into active/bench, selected destination, marker/rotation semantics |
 | `discardAndDraw`            | Atomic `DiscardHandAndDraw`                                                                                                | Zero count, clamps, order, hidden data, message                                                                |
 | `shuffleAndDraw`            | Atomic `ShuffleHandIntoDeckAndDraw`                                                                                        | Authority permutation, requested count, empty/short cases, concealment handles                                 |
 | `shuffleBottomAndDraw`      | Atomic `PutHandOnDeckBottomAndDraw`                                                                                        | Which subset is shuffled, bottom/top convention, draw after placement                                          |
@@ -106,12 +106,23 @@ a hard-to-find behavior. Proposed names are not final APIs.
 
 ### Implemented movement subset
 
-The v2 core now distinguishes zone-to-play, stack-to-zone, and
-inspection-work-area-to-zone movement. Stack departure permits individual
-attachments and the top evolution card, removes an empty stack atomically, and
-refuses to orphan attachments. Whole-stack active/bench movement uses an
-explicit atomic layout command for promotion, demotion, swapping, and bench
-reordering, including v1's asymmetric no-target append behavior and automatic
-swap when active moves onto a lone bench. Dependent-card staging and `leaveAll`
-remain separate unimplemented commands so the renderer cannot infer legacy
-relative-image behavior.
+The v2 core now distinguishes zone-to-play, stack-to-zone, inspection-work-area,
+and attachment-resolution-work-area movement. An individual attachment can
+leave a live stack directly. When the top evolution card leaves play, the old
+stack is removed atomically and every lower evolution and attachment is staged
+in separate ordered sequences. This also handles a base leaving attachments
+without orphaning them.
+
+`RestoreStagedStack` implements the logical `leaveAll` transition. It consumes
+the exact work-area version, preserves evolution and attachment classification,
+creates a fresh stack in active or bench, and validates the complete prior board
+layout. `MoveStagedCard` resolves staged cards individually when no Pokémon
+remains to restore. An occupied work area rejects another dependent-producing
+departure but does not block an independent single-card stack departure.
+
+Whole-stack active/bench movement uses a separate atomic layout command for
+promotion, demotion, swapping, and bench reordering, including v1's asymmetric
+no-target append behavior and automatic swap when active moves onto a lone
+bench. Bulk `discardAll`, `handAll`, `lostZoneAll`, and shuffle operations for
+the staged work area remain future explicit commands; the renderer does not
+infer legacy relative-image behavior.

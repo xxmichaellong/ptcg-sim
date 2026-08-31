@@ -2,6 +2,7 @@ import {
   asCardInstanceId,
   asInspectionId,
   asStackId,
+  asWorkAreaId,
   type CommandContext,
 } from '@ptcgsim/game-core';
 import type { AdmissionCrypto, OpaqueIdSource } from '@ptcgsim/room-authority';
@@ -76,6 +77,10 @@ export class WebCryptoAuthoritySource
 
   nextInspectionId() {
     return asInspectionId(randomToken('inspection', 18));
+  }
+
+  nextWorkAreaId() {
+    return asWorkAreaId(randomToken('work', 18));
   }
 
   randomInt(exclusiveMaximum: number): number {

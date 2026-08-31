@@ -84,6 +84,21 @@ export const WireGameCommandSchema = v.variant('type', [
     destinationZoneId: IdentifierSchema,
     destinationIndex: v.optional(NonNegativeIntegerSchema),
   }),
+  v.object({
+    type: v.literal('MoveStagedCard'),
+    cardId: IdentifierSchema,
+    expectedWorkAreaId: IdentifierSchema,
+    destinationZoneId: IdentifierSchema,
+    destinationIndex: v.optional(NonNegativeIntegerSchema),
+  }),
+  v.object({
+    type: v.literal('RestoreStagedStack'),
+    expectedWorkAreaId: IdentifierSchema,
+    expectedActiveStackId: v.nullable(IdentifierSchema),
+    expectedBenchStackIds: v.pipe(v.array(IdentifierSchema), v.maxLength(200)),
+    destinationSlot: v.picklist(['active', 'bench'] as const),
+    benchIndex: v.optional(NonNegativeIntegerSchema),
+  }),
   v.object({ type: v.literal('ShuffleZone'), zoneId: IdentifierSchema }),
   v.object({
     type: v.literal('DrawCards'),
@@ -296,7 +311,10 @@ const WorkAreaViewSchema = v.object({
   attachmentResolution: v.nullable(
     v.object({
       id: IdentifierSchema,
-      cards: v.pipe(v.array(ViewCardSchema), v.maxLength(200)),
+      sourceStackId: IdentifierSchema,
+      evolutionCards: v.pipe(v.array(ViewCardSchema), v.maxLength(200)),
+      attachmentCards: v.pipe(v.array(ViewCardSchema), v.maxLength(200)),
+      suggestedSlot: v.picklist(['active', 'bench'] as const),
     })
   ),
 });

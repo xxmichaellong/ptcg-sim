@@ -9,6 +9,7 @@ import {
   asMatchId,
   asPlayerId,
   asStackId,
+  asWorkAreaId,
   asViewCardId,
   asViewDefinitionId,
 } from './ids.js';
@@ -23,10 +24,12 @@ const createContext = (): CommandContext => {
   let card = 0;
   let stack = 0;
   let inspection = 0;
+  let workArea = 0;
   return {
     nextCardId: () => asCardInstanceId(`card-${++card}`),
     nextStackId: () => asStackId(`stack-${++stack}`),
     nextInspectionId: () => asInspectionId(`inspection-${++inspection}`),
+    nextWorkAreaId: () => asWorkAreaId(`work-area-${++workArea}`),
     shuffle: (values) => [...values].reverse(),
     randomInt: () => 0,
   };

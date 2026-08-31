@@ -214,6 +214,74 @@ describe('board drop command resolution', () => {
     });
   });
 
+  it('moves staged cards individually or restores the represented stack', () => {
+    const input = fixture();
+    const sceneCard = localHandCard(input);
+    const playerId = input.view.playerOrder[0]!;
+    const hand = input.view.zones[`zone:${playerId}:hand`]!;
+    const viewCard = hand.cards.find((card) => card.id === sceneCard.id)!;
+    const view: MatchViewState = {
+      ...input.view,
+      zones: {
+        ...input.view.zones,
+        [hand.id]: {
+          ...hand,
+          cards: hand.cards.filter((card) => card.id !== viewCard.id),
+        },
+      },
+      workAreas: {
+        ...input.view.workAreas,
+        [playerId]: {
+          ...input.view.workAreas[playerId]!,
+          attachmentResolution: {
+            id: 'staged-work-area',
+            sourceStackId: 'removed-stack',
+            evolutionCards: [viewCard],
+            attachmentCards: [],
+            suggestedSlot: 'bench',
+          },
+        },
+      },
+    };
+    const scene = createBoardScene(view, {
+      viewport: input.scene.viewport,
+      bottomPlayerId: playerId,
+      splitRatio: 0.5,
+      geometryVersion: 1,
+    });
+    expect(
+      resolveBoardDrop(view, scene, {
+        kind: 'CardDropRequested',
+        cardId: viewCard.id,
+        targetId: `zone:${playerId}:discard`,
+      })
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'MoveStagedCard',
+        cardId: viewCard.id,
+        expectedWorkAreaId: 'staged-work-area',
+        destinationZoneId: `zone:${playerId}:discard`,
+      },
+    });
+    expect(
+      resolveBoardDrop(view, scene, {
+        kind: 'CardDropRequested',
+        cardId: viewCard.id,
+        targetId: `slot:${playerId}:bench`,
+      })
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'RestoreStagedStack',
+        expectedWorkAreaId: 'staged-work-area',
+        expectedActiveStackId: 'stack:blue:active',
+        expectedBenchStackIds: [],
+        destinationSlot: 'bench',
+      },
+    });
+  });
+
   it('fails closed for spectators and unknown or work-area targets', () => {
     const input = fixture();
     const card = localHandCard(input);

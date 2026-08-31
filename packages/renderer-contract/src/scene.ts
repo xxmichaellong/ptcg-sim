@@ -381,13 +381,17 @@ export const createBoardScene = (
       ['attachmentResolution', workArea.attachmentResolution],
     ] as const) {
       if (!area) continue;
+      const areaCards =
+        kind === 'inspection'
+          ? area.cards
+          : [...area.evolutionCards, ...area.attachmentCards];
       zones.push({
         id: area.id,
         playerId,
         side,
         kind,
         bounds: workAreaBounds,
-        count: area.cards.length,
+        count: areaCards.length,
         zIndex: 900,
         label:
           kind === 'inspection'
@@ -395,8 +399,8 @@ export const createBoardScene = (
             : 'Attached cards being moved',
         interactive: true,
       });
-      const rects = layoutRow(workAreaBounds, area.cards.length, 0.55);
-      area.cards.forEach((card, index) => {
+      const rects = layoutRow(workAreaBounds, areaCards.length, 0.55);
+      areaCards.forEach((card, index) => {
         const bounds = rects[index];
         if (!bounds) return;
         registerCard(

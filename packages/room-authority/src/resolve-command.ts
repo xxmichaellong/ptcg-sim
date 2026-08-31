@@ -279,6 +279,61 @@ export const resolveWireCommand = (
         },
       };
     }
+    case 'MoveStagedCard': {
+      const card = resolveCard(wire.cardId);
+      if (!card) return rejected('stale_reference');
+      const location = findCardLocation(state, card.cardId);
+      if (
+        !location ||
+        location.kind !== 'attachmentResolutionWorkArea' ||
+        location.playerId !== actorId
+      ) {
+        return rejected('unauthorized');
+      }
+      const resolution = state.workAreas[actorId]?.attachmentResolution;
+      if (
+        !resolution ||
+        resolution.id !== wire.expectedWorkAreaId ||
+        !state.zones[wire.destinationZoneId]
+      ) {
+        return rejected('stale_reference');
+      }
+      return {
+        accepted: true,
+        command: {
+          type: 'MoveStagedCard',
+          cardId: card.cardId,
+          expectedWorkAreaId: asWorkAreaId(wire.expectedWorkAreaId),
+          destinationZoneId: asZoneId(wire.destinationZoneId),
+          ...(wire.destinationIndex === undefined
+            ? {}
+            : { destinationIndex: wire.destinationIndex }),
+        },
+      };
+    }
+    case 'RestoreStagedStack': {
+      const resolution = state.workAreas[actorId]?.attachmentResolution;
+      const board = state.boards[actorId];
+      if (!resolution || resolution.id !== wire.expectedWorkAreaId || !board) {
+        return rejected('stale_reference');
+      }
+      return {
+        accepted: true,
+        command: {
+          type: 'RestoreStagedStack',
+          playerId: actorId,
+          expectedWorkAreaId: asWorkAreaId(wire.expectedWorkAreaId),
+          expectedActiveStackId: wire.expectedActiveStackId
+            ? asStackId(wire.expectedActiveStackId)
+            : null,
+          expectedBenchStackIds: wire.expectedBenchStackIds.map(asStackId),
+          destinationSlot: wire.destinationSlot,
+          ...(wire.benchIndex === undefined
+            ? {}
+            : { benchIndex: wire.benchIndex }),
+        },
+      };
+    }
     case 'ShuffleZone': {
       const zone = state.zones[wire.zoneId];
       if (!zone) return rejected('stale_reference');

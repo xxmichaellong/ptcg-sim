@@ -69,6 +69,22 @@ export type GameCommand =
       readonly destinationIndex?: number;
     }
   | {
+      readonly type: 'MoveStagedCard';
+      readonly cardId: CardInstanceId;
+      readonly expectedWorkAreaId: WorkAreaId;
+      readonly destinationZoneId: ZoneId;
+      readonly destinationIndex?: number;
+    }
+  | {
+      readonly type: 'RestoreStagedStack';
+      readonly playerId: PlayerId;
+      readonly expectedWorkAreaId: WorkAreaId;
+      readonly expectedActiveStackId: StackId | null;
+      readonly expectedBenchStackIds: readonly StackId[];
+      readonly destinationSlot: PlaySlot;
+      readonly benchIndex?: number;
+    }
+  | {
       readonly type: 'ShuffleZone';
       readonly zoneId: ZoneId;
     }
@@ -183,6 +199,7 @@ export interface CommandContext {
   ) => CardInstanceId;
   readonly nextStackId: () => StackId;
   readonly nextInspectionId: () => InspectionId;
+  readonly nextWorkAreaId: () => WorkAreaId;
   readonly shuffle: <Value>(values: readonly Value[]) => readonly Value[];
   readonly randomInt: (exclusiveMaximum: number) => number;
 }
