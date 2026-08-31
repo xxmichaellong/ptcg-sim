@@ -63,6 +63,7 @@ a manual tabletop simulator.
 | [REQUIREMENTS.md](./REQUIREMENTS.md)                                                   | Stable requirement IDs and blueprint-level traceability                                                     |
 | [LEGACY_ACTION_MAP.md](./LEGACY_ACTION_MAP.md)                                         | Preliminary mapping of all 50 synchronized v1 actions into v2 responsibilities                              |
 | [MAGICCIRCLE_REUSE.md](./MAGICCIRCLE_REUSE.md)                                         | Exact reuse/adaptation boundary for the local MagicCircle client, Pixi, and room patterns                   |
+| [RENDERER_SPIKE.md](./RENDERER_SPIKE.md)                                               | Live DOM/Pixi implementation evidence, research, current result, and remaining decision gates               |
 | [AUDIT.md](./AUDIT.md)                                                                 | Multi-agent review process, change protocol, and audit checklists                                           |
 
 ## How to read and approve this blueprint

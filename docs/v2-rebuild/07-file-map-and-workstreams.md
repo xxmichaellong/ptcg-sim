@@ -64,11 +64,30 @@ and dependency direction are required.
 | `setup/sizing/resizer.js`, table resizer listeners     | `BoardViewport.tsx`, pure layout, persisted presentation split  | Pointer-safe, frame-coalesced, flip-aware parity behavior.                                      |
 | mutation observers                                     | explicit render/app selectors                                   | Entire mechanism retired.                                                                       |
 
-Provisional renderer files if Pixi wins the Phase 4 decision:
+Implemented competitive renderer-spike files (the winner remains provisional):
+
+```text
+packages/renderer-contract/src/
+  model.ts
+  geometry.ts
+  scene.ts
+  spike-fixture.ts
+packages/renderer-dom/src/
+  ReactDomBoardRenderer.tsx
+  BoardSurface.tsx
+packages/renderer-pixi/src/
+  PixiBoardRenderer.ts
+  CardTextureRegistry.ts
+apps/web/src/
+  RendererSpikeBoard.tsx
+```
+
+If Pixi wins, split the compact spike adapter into the following production
+systems as those responsibilities gain behavior. Do not create empty structure
+before it has real ownership to contain:
 
 ```text
 packages/renderer-pixi/src/
-  PixiBoardRenderer.ts
   host/PixiRendererHost.ts
   scene/BoardScene.ts
   scene/layers.ts

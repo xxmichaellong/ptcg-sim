@@ -1,0 +1,172 @@
+# Renderer decision spike
+
+Status: `IN_PROGRESS`  
+Implementation branch: `codex/v2-engine-rebuild`  
+Decision: not yet ratified; ADR-004 remains `SPIKE_REQUIRED`
+
+## Research result
+
+The viable client boundary is React for application chrome and DOM overlays,
+with a renderer-neutral board adapter beneath it. React's
+`useSyncExternalStore` is explicitly intended for subscribing to non-React
+external stores, while Strict Mode deliberately repeats effect setup/cleanup in
+development. The renderer host therefore has to be externally owned,
+idempotently destructible, and safe when an asynchronous mount is superseded.
+
+PixiJS v8 fits the imperative side of that boundary:
+
+- `Application` uses asynchronous `init()` and exposes explicit renderer,
+  ticker, resize, and destroy ownership;
+- WebGL is the documented production recommendation; WebGPU is still described
+  as susceptible to browser inconsistencies and Canvas is not an available v8
+  fallback;
+- v8 federated pointer events require explicit event modes and distinguish
+  object-local from global pointer movement;
+- accessibility is opt-in and implemented through DOM overlays; and
+- `Assets` is promise-based and URL-cached, with explicit `unload()` for memory
+  release. Automatic frame-count texture GC cannot be the only policy for this
+  app because the board intentionally has no permanent ticker.
+
+Primary sources:
+
+- [PixiJS Application](https://pixijs.com/8.x/guides/components/application)
+- [PixiJS renderers](https://pixijs.com/8.x/guides/components/renderers)
+- [PixiJS events](https://pixijs.com/8.x/guides/components/events)
+- [PixiJS accessibility](https://pixijs.com/8.x/guides/components/accessibility)
+- [PixiJS Assets](https://pixijs.com/8.x/guides/components/assets)
+- [PixiJS texture lifecycle](https://pixijs.com/8.x/guides/components/textures)
+- [React external-store subscription](https://react.dev/reference/react/useSyncExternalStore)
+- [React Strict Mode](https://react.dev/reference/react/StrictMode)
+
+Versions used by the spike are pinned through the lockfile:
+
+- React / React DOM `19.2.8`;
+- PixiJS `8.20.1`;
+- Vite `8.2.2`; and
+- `@vitejs/plugin-react` `6.1.1`.
+
+MagicCircle currently uses React 18.3.1 and PixiJS 8.20.0 at source commit
+`39f871cd63800e2317326425345a26e4d61846de`. Its
+`QuinoaCanvas.tsx`/`PixiAppHost.ts` establish the reusable operational pattern:
+React owns a small imperative mount, every async continuation is scoped to a
+renderer generation, startup and context recovery are bounded, resize/listener
+ownership is explicit, and teardown precedes application destruction. PTCG Sim
+adapts those behaviors without copying Quinoa's simulation ticker, layout/ECS,
+Rive, or game-specific systems.
+
+## Implemented common contract
+
+`packages/renderer-contract` now contains:
+
+- the `BoardRenderer` lifecycle used by both candidates;
+- immutable recipient-safe scene nodes for zones, cards, stacks, markers, and
+  work areas;
+- semantic intents rather than legacy action names or network payloads;
+- versioned geometry transcribed from the v1 self/opponent CSS;
+- board flip/opponent rotation, the asymmetric legacy free-board placement, and
+  top-index-zero cover ordering;
+- stable-ID scene diffing and topmost deterministic hit testing;
+- face/back URL selection that cannot request a definition image for a
+  concealed or face-down card; and
+- a deterministic 61-card competitive fixture with covers, hands, prizes,
+  free-board cards, active evolution/attachments, damage, condition, ability
+  marker, rotation, and stadium.
+
+The contract rejects invalid viewport/split inputs and any projection that puts
+one recipient-safe card ID in more than one render location.
+
+## Candidate A: normalized React DOM
+
+`packages/renderer-dom` is a real stable-keyed React renderer, not a throwaway
+HTML mock. It:
+
+- mounts behind the same imperative lifecycle;
+- reuses card elements across scene revisions;
+- uses native buttons and images for board card semantics;
+- rejects older revisions and mismatched presentation events;
+- emits the shared semantic interaction intents; and
+- has automated repeated mount/destroy coverage under React Strict Mode.
+
+This is the lower-complexity fallback and is expected to have the closest image,
+CORS, browser-menu, and native accessibility behavior to v1.
+
+## Candidate B: raw PixiJS
+
+`packages/renderer-pixi` deliberately does not use `@pixi/react`. It:
+
+- uses a raw v8 `Application` with WebGL, a private stopped ticker, and explicit
+  one-shot renders;
+- maintains stable sprites keyed by recipient-safe card ID;
+- creates separate playmat/card/marker/interaction layers;
+- deduplicates URL loads while visible and guards every asynchronous completion
+  against card reuse/removal;
+- releases a no-longer-referenced URL so a private face texture is not retained
+  after concealment or a role/room transition;
+- renders a safe placeholder on load failure;
+- emits the same card/zone intents as the DOM candidate;
+- reconstructs the display tree from the current immutable scene after WebGL
+  context loss, with a three-attempt recovery ceiling; and
+- has idempotent teardown of listeners, sprites, layers, application, and asset
+  bindings.
+
+The implementation is intentionally smaller than MagicCircle's host. Browser
+testing must decide which additional recovery workarounds are necessary for the
+supported PTCG device matrix instead of importing every Quinoa-specific branch.
+
+## Runnable harness and build evidence
+
+`apps/web` is an isolated decision harness; it does not replace the production
+v1 route. It keeps the v1 75.5% board / 24% sidebar split and mounts the same
+61-card scene with either:
+
+- `?renderer=pixi`; or
+- `?renderer=dom`.
+
+The renderer candidates are dynamically imported, so loading one does not force
+the other candidate into the initial route. Current production build evidence:
+
+- initial application chunk: approximately 65.5 KiB gzip;
+- normalized DOM adapter chunk: approximately 1.9 KiB gzip; and
+- raw Pixi adapter entry chunk: approximately 78.3 KiB gzip, plus lazily loaded
+  Pixi implementation chunks.
+
+These are build outputs, not a final route-size accounting; the full transitive
+chunk graph will be measured in the browser evidence run.
+
+## Automated evidence currently passing
+
+- common geometry, privacy, ordering, identity, diff, and hit-test tests;
+- DOM stable-key reuse, intent, stale-revision, mismatched-event, and repeated
+  teardown tests;
+- Pixi texture deduplication, final-reference unloading, stale face-to-back
+  completion, and post-destroy completion suppression tests;
+- TypeScript project boundaries and circular-dependency check;
+- Vite production build; and
+- the repository-wide v2 and 79-test legacy gates.
+
+At this checkpoint the v2 suite contains 66 passing tests across 15 files.
+
+## Gates still required before ADR-004 can be accepted
+
+No renderer winner is claimed yet. The following require a real controlled
+browser/device run:
+
+- fixed-viewport overlays against legacy screenshots and structured 2 px / 1%
+  geometry thresholds;
+- full click, double-click, right-click, pointer-capture drag/drop, flip, split
+  resize, zone browser, keyboard, and DOM-overlay anchor parity;
+- actual external card/image hosts, redirects, CORS failures, oversized/corrupt
+  images, and the proxy/hybrid policy in ADR-013;
+- WebGL unavailable at startup, repeated/permanent context loss, background
+  resume, 0x0 host, DPR changes, and silent GPU eviction;
+- 100 mount/destroy and setup/reset cycles with listener, display object,
+  decoded-image, CPU-heap, and GPU-texture counters;
+- the p95 reconciliation/input/drag budgets from the verification plan on the
+  ratified four-core reference profile;
+- keyboard and screen-reader audit of the dedicated compact accessibility
+  bridge (Pixi's optional overlay alone is not the product contract); and
+- Chromium automation plus Firefox and Safari approval.
+
+Pixi wins only if it passes every parity/reliability gate and materially beats
+the normalized DOM candidate on a measured v1 bottleneck. Otherwise React DOM is
+selected without changing the new core, protocol, authority, or scene model.

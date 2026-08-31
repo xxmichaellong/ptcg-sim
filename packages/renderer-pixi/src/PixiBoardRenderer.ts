@@ -1,0 +1,482 @@
+import 'pixi.js/accessibility';
+
+import {
+  DEFAULT_BOARD_PREFERENCES,
+  type BoardPreferences,
+  type BoardPresentation,
+  type BoardPresentationEvent,
+  type BoardRenderer,
+  type BoardRendererAdapters,
+  type BoardScene,
+  type BoardViewport,
+  type CardSceneNode,
+} from '@ptcgsim/renderer-contract';
+import {
+  Application,
+  Assets,
+  Container,
+  type FederatedPointerEvent,
+  Graphics,
+  Rectangle,
+  Sprite,
+  Text,
+  Texture,
+} from 'pixi.js';
+import { CardTextureRegistry } from './CardTextureRegistry.js';
+
+const MAX_CONTEXT_RECOVERY_ATTEMPTS = 3;
+
+interface CardView {
+  readonly sprite: Sprite;
+  descriptor: CardSceneNode;
+}
+
+interface SceneLayers {
+  readonly playmat: Container;
+  readonly cards: Container;
+  readonly markers: Container;
+  readonly interaction: Container;
+}
+
+export interface PixiBoardRendererOptions {
+  readonly createApplication?: () => Application;
+}
+
+export class PixiBoardRenderer implements BoardRenderer {
+  private readonly adapters: BoardRendererAdapters;
+  private readonly createApplication: () => Application;
+  private readonly textures = new CardTextureRegistry<Texture>({
+    placeholder: Texture.WHITE,
+    load: (url) => Assets.load<Texture>(url),
+    unload: async (url) => {
+      await Assets.unload(url);
+    },
+  });
+  private readonly cardViews = new Map<string, CardView>();
+  private app: Application | null = null;
+  private layers: SceneLayers | null = null;
+  private host: HTMLElement | null = null;
+  private scene: BoardScene | null = null;
+  private presentation: BoardPresentation | null = null;
+  private preferences: BoardPreferences = DEFAULT_BOARD_PREFERENCES;
+  private generation = 0;
+  private destroyed = false;
+  private mounted = false;
+  private recoveryTask: Promise<void> | null = null;
+  private recoveryAttempts = 0;
+  private contextLostCanvas: HTMLCanvasElement | null = null;
+
+  constructor(
+    adapters: BoardRendererAdapters,
+    options: PixiBoardRendererOptions = {}
+  ) {
+    this.adapters = adapters;
+    this.createApplication =
+      options.createApplication ?? (() => new Application());
+  }
+
+  async mount(
+    host: HTMLElement,
+    scene: BoardScene,
+    presentation: BoardPresentation
+  ): Promise<void> {
+    if (this.destroyed) throw new Error('Cannot mount a destroyed renderer');
+    if (this.mounted || this.app)
+      throw new Error('Board renderer is already mounted');
+    this.mounted = true;
+    this.host = host;
+    this.scene = scene;
+    this.presentation = presentation;
+    this.adapters.reportStatus?.({ kind: 'mounting' });
+    const generation = ++this.generation;
+    try {
+      await this.buildApplication(generation);
+      this.assertLiveGeneration(generation);
+      this.recoveryAttempts = 0;
+      this.adapters.reportStatus?.({ kind: 'ready', generation });
+    } catch (error) {
+      if (!this.destroyed) {
+        this.adapters.reportStatus?.({ kind: 'failed', error });
+        this.adapters.reportError(error);
+      }
+      throw error;
+    }
+  }
+
+  installScene(
+    scene: BoardScene,
+    events: readonly BoardPresentationEvent[]
+  ): void {
+    const current = this.requireScene();
+    if (scene.revision < current.revision) {
+      throw new Error('Cannot install an older board scene revision');
+    }
+    for (const event of events) {
+      if (event.revision !== scene.revision) {
+        throw new Error('Presentation event revision does not match the scene');
+      }
+    }
+    this.scene = scene;
+    if (this.app && this.layers) {
+      this.syncScene();
+      this.renderOnce();
+    }
+  }
+
+  installPresentation(presentation: BoardPresentation): void {
+    this.requireScene();
+    this.presentation = presentation;
+    if (this.app && this.layers) {
+      for (const view of this.cardViews.values()) this.applyCardView(view);
+      this.renderOnce();
+    }
+  }
+
+  resize(viewport: BoardViewport): void {
+    this.requireScene();
+    if (!this.app) return;
+    this.app.renderer.resolution = viewport.devicePixelRatio;
+    this.app.renderer.resize(viewport.width, viewport.height);
+    this.renderOnce();
+  }
+
+  setPreferences(preferences: BoardPreferences): void {
+    this.requireScene();
+    this.preferences = preferences;
+    if (this.app) {
+      this.app.canvas.dataset.reducedMotion = String(preferences.reducedMotion);
+      this.app.canvas.dataset.highContrast = String(preferences.highContrast);
+      this.app.canvas.dataset.darkMode = String(preferences.darkMode);
+      this.renderOnce();
+    }
+  }
+
+  destroy(): void {
+    if (this.destroyed) return;
+    this.destroyed = true;
+    this.mounted = false;
+    this.generation += 1;
+    this.detachContextLossListener();
+    this.destroyApplication();
+    this.textures.destroy();
+    this.host = null;
+    this.scene = null;
+    this.presentation = null;
+    this.adapters.reportStatus?.({ kind: 'destroyed' });
+  }
+
+  private async buildApplication(generation: number): Promise<void> {
+    const scene = this.requireScene();
+    const host = this.host;
+    if (!host) throw new Error('Board host is unavailable');
+    const app = this.createApplication();
+    try {
+      await app.init({
+        width: scene.viewport.width,
+        height: scene.viewport.height,
+        resolution: scene.viewport.devicePixelRatio,
+        autoDensity: true,
+        autoStart: false,
+        sharedTicker: false,
+        antialias: false,
+        backgroundAlpha: 0,
+        preference: 'webgl',
+        textureGCActive: true,
+        eventFeatures: { globalMove: false },
+      });
+      this.assertLiveGeneration(generation);
+    } catch (error) {
+      this.destroyAppInstance(app);
+      throw error;
+    }
+    this.app = app;
+    app.ticker.stop();
+    app.stage.sortableChildren = true;
+    this.layers = this.createLayers(app.stage);
+    app.canvas.setAttribute('aria-label', 'Pokémon Trading Card Game board');
+    app.canvas.style.display = 'block';
+    app.canvas.style.touchAction = 'none';
+    host.appendChild(app.canvas);
+    this.attachContextLossListener(app.canvas);
+    this.syncScene();
+    this.setPreferences(this.preferences);
+    this.renderOnce();
+  }
+
+  private createLayers(stage: Container): SceneLayers {
+    const playmat = new Container({ label: 'playmat', sortableChildren: true });
+    const cards = new Container({ label: 'cards', sortableChildren: true });
+    const markers = new Container({ label: 'markers', sortableChildren: true });
+    const interaction = new Container({
+      label: 'interaction',
+      sortableChildren: true,
+    });
+    playmat.zIndex = 0;
+    cards.zIndex = 100;
+    markers.zIndex = 1_000;
+    interaction.zIndex = 10_000;
+    stage.addChild(playmat, cards, markers, interaction);
+    return { playmat, cards, markers, interaction };
+  }
+
+  private syncScene(): void {
+    const scene = this.requireScene();
+    const layers = this.layers;
+    if (!layers) return;
+
+    for (const child of layers.playmat.removeChildren())
+      child.destroy({ children: true });
+    for (const zone of scene.zones) {
+      const graphic = new Graphics({ label: zone.id });
+      graphic
+        .roundRect(
+          zone.bounds.x,
+          zone.bounds.y,
+          zone.bounds.width,
+          zone.bounds.height,
+          15
+        )
+        .fill({ color: 0xffffff, alpha: 0.1 })
+        .stroke({ color: 0x000000, alpha: 0.1, width: 2 });
+      graphic.zIndex = zone.zIndex;
+      graphic.eventMode = zone.interactive ? 'static' : 'none';
+      graphic.cursor = zone.interactive ? 'pointer' : 'default';
+      graphic.accessible = zone.interactive;
+      graphic.accessibleTitle = `${zone.label}, ${zone.count} cards`;
+      graphic.on('pointertap', () =>
+        this.adapters.emitIntent({ kind: 'ZoneOpened', zoneId: zone.id })
+      );
+      layers.playmat.addChild(graphic);
+    }
+
+    const nextIds = new Set(scene.cards.map((card) => String(card.id)));
+    for (const [id, view] of this.cardViews) {
+      if (nextIds.has(id)) continue;
+      this.cardViews.delete(id);
+      this.textures.release(id);
+      view.sprite.removeFromParent();
+      view.sprite.destroy({ texture: false, textureSource: false });
+    }
+    for (const descriptor of scene.cards) {
+      const id = String(descriptor.id);
+      let view = this.cardViews.get(id);
+      if (!view) {
+        const sprite = new Sprite({
+          texture: this.textures.placeholder,
+          label: id,
+        });
+        sprite.anchor.set(0.5);
+        sprite.eventMode = 'static';
+        sprite.cursor = 'pointer';
+        sprite.accessible = true;
+        sprite.on('click', (event: FederatedPointerEvent) => {
+          if (event.detail >= 2) {
+            this.adapters.emitIntent({
+              kind: 'CardPreviewRequested',
+              cardId: view!.descriptor.id,
+            });
+          } else {
+            this.adapters.emitIntent({
+              kind: 'CardSelected',
+              cardId: view!.descriptor.id,
+            });
+          }
+        });
+        sprite.on('rightclick', () =>
+          this.adapters.emitIntent({
+            kind: 'CardContextRequested',
+            cardId: view!.descriptor.id,
+          })
+        );
+        view = { sprite, descriptor };
+        this.cardViews.set(id, view);
+        layers.cards.addChild(sprite);
+      } else {
+        view.descriptor = descriptor;
+      }
+      this.applyCardView(view);
+      const expectedUrl = descriptor.imageUrl;
+      this.textures.bind(
+        id,
+        expectedUrl,
+        (texture) => {
+          const current = this.cardViews.get(id);
+          if (!current || current.descriptor.imageUrl !== expectedUrl) return;
+          current.sprite.texture = texture;
+          current.sprite.tint = 0xffffff;
+          this.renderOnce();
+        },
+        (error) => {
+          const current = this.cardViews.get(id);
+          if (!current || current.descriptor.imageUrl !== expectedUrl) return;
+          current.sprite.texture = this.textures.placeholder;
+          current.sprite.tint = 0x777777;
+          this.adapters.reportError(error);
+          this.renderOnce();
+        }
+      );
+    }
+
+    for (const child of layers.markers.removeChildren())
+      child.destroy({ children: true });
+    for (const marker of scene.markers) {
+      const root = new Container({ label: marker.id });
+      const circle = new Graphics()
+        .circle(
+          marker.bounds.width / 2,
+          marker.bounds.height / 2,
+          marker.bounds.width / 2
+        )
+        .fill({ color: marker.kind === 'damage' ? 0xe64242 : 0xefefef });
+      const text = new Text({
+        text: marker.value,
+        style: {
+          fill: marker.kind === 'damage' ? 0xffffff : 0x111111,
+          fontSize: Math.max(10, marker.bounds.height * 0.42),
+          fontWeight: 'bold',
+        },
+      });
+      text.anchor.set(0.5);
+      text.position.set(marker.bounds.width / 2, marker.bounds.height / 2);
+      root.position.set(marker.bounds.x, marker.bounds.y);
+      root.zIndex = marker.zIndex;
+      root.eventMode = 'none';
+      root.addChild(circle, text);
+      layers.markers.addChild(root);
+    }
+  }
+
+  private applyCardView(view: CardView): void {
+    const { sprite, descriptor } = view;
+    const drag = this.presentation?.drag;
+    const dragging = drag?.cardId === descriptor.id;
+    sprite.position.set(
+      dragging ? drag.x : descriptor.bounds.x + descriptor.bounds.width / 2,
+      dragging ? drag.y : descriptor.bounds.y + descriptor.bounds.height / 2
+    );
+    sprite.width = descriptor.bounds.width;
+    sprite.height = descriptor.bounds.height;
+    sprite.rotation = descriptor.rotationQuarterTurns * (Math.PI / 2);
+    sprite.zIndex = dragging ? 10_000 : descriptor.zIndex;
+    sprite.hitArea = new Rectangle(
+      -descriptor.bounds.width / 2,
+      -descriptor.bounds.height / 2,
+      descriptor.bounds.width,
+      descriptor.bounds.height
+    );
+    sprite.eventMode = descriptor.interactive ? 'static' : 'none';
+    sprite.cursor = descriptor.interactive ? 'pointer' : 'default';
+    sprite.accessible = descriptor.interactive;
+    sprite.accessibleTitle = descriptor.label;
+    sprite.accessibleHint = 'Select card';
+    const selected = this.presentation?.selectedCardId === descriptor.id;
+    sprite.alpha = selected ? 0.88 : 1;
+  }
+
+  private renderOnce(): void {
+    if (this.destroyed || !this.app) return;
+    try {
+      this.app.render();
+    } catch (error) {
+      this.adapters.reportError(error);
+    }
+  }
+
+  private attachContextLossListener(canvas: HTMLCanvasElement): void {
+    this.detachContextLossListener();
+    this.contextLostCanvas = canvas;
+    canvas.addEventListener('webglcontextlost', this.handleContextLost);
+  }
+
+  private detachContextLossListener(): void {
+    this.contextLostCanvas?.removeEventListener(
+      'webglcontextlost',
+      this.handleContextLost
+    );
+    this.contextLostCanvas = null;
+  }
+
+  private readonly handleContextLost = (event: Event): void => {
+    event.preventDefault();
+    if (this.destroyed || this.recoveryTask) return;
+    this.recoveryTask = this.recoverFromContextLoss().finally(() => {
+      this.recoveryTask = null;
+    });
+  };
+
+  private async recoverFromContextLoss(): Promise<void> {
+    while (
+      !this.destroyed &&
+      this.recoveryAttempts < MAX_CONTEXT_RECOVERY_ATTEMPTS
+    ) {
+      const attempt = ++this.recoveryAttempts;
+      this.adapters.reportStatus?.({ kind: 'recovering', attempt });
+      const generation = ++this.generation;
+      this.detachContextLossListener();
+      this.destroyApplication();
+      try {
+        await this.buildApplication(generation);
+        this.assertLiveGeneration(generation);
+        this.recoveryAttempts = 0;
+        this.adapters.reportStatus?.({ kind: 'ready', generation });
+        return;
+      } catch (error) {
+        if (this.destroyed) return;
+        this.adapters.reportError(error);
+        if (attempt === MAX_CONTEXT_RECOVERY_ATTEMPTS) {
+          this.adapters.reportStatus?.({ kind: 'failed', error });
+          return;
+        }
+      }
+    }
+  }
+
+  private destroyApplication(): void {
+    this.detachContextLossListener();
+    for (const [id, view] of this.cardViews) {
+      this.textures.release(id);
+      view.sprite.removeFromParent();
+      view.sprite.destroy({ texture: false, textureSource: false });
+    }
+    this.cardViews.clear();
+    this.layers = null;
+    const app = this.app;
+    this.app = null;
+    if (app) this.destroyAppInstance(app);
+  }
+
+  private destroyAppInstance(app: Application): void {
+    try {
+      app.destroy(
+        { removeView: true },
+        {
+          children: true,
+          context: true,
+          texture: false,
+          textureSource: false,
+          style: true,
+        }
+      );
+    } catch (error) {
+      this.adapters.reportError(error);
+    }
+  }
+
+  private requireScene(): BoardScene {
+    if (this.destroyed || !this.mounted || !this.scene || !this.presentation) {
+      throw new Error('Board renderer is not mounted');
+    }
+    return this.scene;
+  }
+
+  private assertLiveGeneration(generation: number): void {
+    if (this.destroyed || generation !== this.generation) {
+      throw new Error('Renderer initialization was superseded');
+    }
+  }
+}
+
+export const createPixiBoardRenderer = (
+  adapters: BoardRendererAdapters,
+  options?: PixiBoardRendererOptions
+): BoardRenderer => new PixiBoardRenderer(adapters, options);
