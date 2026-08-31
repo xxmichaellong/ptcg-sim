@@ -43,11 +43,7 @@ const containsCard = (
   cardId: string
 ): boolean => cards.some((card) => card.id === cardId);
 
-/**
- * Converts one renderer-safe drop into a protocol command. It deliberately
- * refuses stack/work-area sources until the core has explicit commands for
- * those transitions instead of guessing from visual parentage.
- */
+/** Converts one renderer-safe drop into an explicit, preconditioned command. */
 export const resolveBoardDrop = (
   view: BoardDropView,
   scene: BoardScene,
@@ -64,40 +60,81 @@ export const resolveBoardDrop = (
   const sourceZone = Object.values(view.zones).find((zone) =>
     containsCard(zone.cards, intent.cardId)
   );
-  if (!sourceZone) {
-    const existsOutsideZone =
-      Object.values(view.stacks).some(
-        (stack) =>
-          containsCard(stack.evolutionCards, intent.cardId) ||
-          containsCard(stack.attachmentCards, intent.cardId)
-      ) ||
-      Object.values(view.workAreas).some(
-        (workArea) =>
-          containsCard(workArea.inspection?.cards ?? [], intent.cardId) ||
-          containsCard(
-            workArea.attachmentResolution?.cards ?? [],
-            intent.cardId
-          )
-      );
-    return rejected(existsOutsideZone ? 'unsupported_source' : 'stale_card');
+  const sourceStack = Object.values(view.stacks).find(
+    (stack) =>
+      containsCard(stack.evolutionCards, intent.cardId) ||
+      containsCard(stack.attachmentCards, intent.cardId)
+  );
+  const sourceInspection = Object.values(view.workAreas)
+    .map((workArea) => workArea.inspection)
+    .find(
+      (inspection) =>
+        inspection !== null && containsCard(inspection.cards, intent.cardId)
+    );
+  const sourceAttachmentResolution = Object.values(view.workAreas).some(
+    (workArea) =>
+      containsCard(workArea.attachmentResolution?.cards ?? [], intent.cardId)
+  );
+  if (!sourceZone && !sourceStack && !sourceInspection) {
+    return rejected(
+      sourceAttachmentResolution ? 'unsupported_source' : 'stale_card'
+    );
   }
 
   const destinationZone = view.zones[intent.targetId];
   if (destinationZone) {
-    if (destinationZone.id === sourceZone.id) return rejected('no_op');
     if (!scene.zones.some((zone) => zone.id === destinationZone.id)) {
       return rejected('stale_target');
     }
-    return {
-      ok: true,
-      command: {
-        type: 'MoveCard',
-        cardId: intent.cardId,
-        expectedSourceZoneId: sourceZone.id,
-        destinationZoneId: destinationZone.id,
-      },
-    };
+    if (sourceZone) {
+      if (destinationZone.id === sourceZone.id) return rejected('no_op');
+      return {
+        ok: true,
+        command: {
+          type: 'MoveCard',
+          cardId: intent.cardId,
+          expectedSourceZoneId: sourceZone.id,
+          destinationZoneId: destinationZone.id,
+        },
+      };
+    }
+    if (sourceStack) {
+      const evolutionIndex = sourceStack.evolutionCards.findIndex(
+        (card) => card.id === intent.cardId
+      );
+      if (
+        evolutionIndex >= 0 &&
+        (evolutionIndex !== sourceStack.evolutionCards.length - 1 ||
+          (sourceStack.evolutionCards.length === 1 &&
+            sourceStack.attachmentCards.length > 0))
+      ) {
+        return rejected('unsupported_source');
+      }
+      return {
+        ok: true,
+        command: {
+          type: 'MoveCardFromStack',
+          cardId: intent.cardId,
+          expectedStackId: sourceStack.id,
+          destinationZoneId: destinationZone.id,
+        },
+      };
+    }
+    if (sourceInspection) {
+      return {
+        ok: true,
+        command: {
+          type: 'MoveInspectedCard',
+          cardId: intent.cardId,
+          expectedWorkAreaId: sourceInspection.id,
+          destinationZoneId: destinationZone.id,
+        },
+      };
+    }
+    return rejected('unsupported_source');
   }
+
+  if (!sourceZone) return rejected('unsupported_target');
 
   const targetStack = view.stacks[intent.targetId];
   if (targetStack) {

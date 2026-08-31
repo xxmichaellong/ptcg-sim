@@ -82,6 +82,25 @@ export type DomainEvent =
       readonly previousActiveToBench: boolean;
     }
   | {
+      readonly type: 'CardMovedFromStack';
+      readonly cardId: CardInstanceId;
+      readonly expectedStackId: StackId;
+      readonly source: 'evolution' | 'attachment';
+      readonly destinationZoneId: ZoneId;
+      readonly destinationIndex: number;
+      readonly concealIdentity: boolean;
+    }
+  | {
+      readonly type: 'InspectedCardMoved';
+      readonly playerId: PlayerId;
+      readonly inspectionId: InspectionId;
+      readonly expectedWorkAreaId: WorkAreaId;
+      readonly cardId: CardInstanceId;
+      readonly destinationZoneId: ZoneId;
+      readonly destinationIndex: number;
+      readonly concealIdentity: boolean;
+    }
+  | {
       readonly type: 'StackDamageSet';
       readonly stackId: StackId;
       readonly damage: number | null;

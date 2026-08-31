@@ -4,6 +4,7 @@ import type {
   InspectionId,
   PlayerId,
   StackId,
+  WorkAreaId,
   ZoneId,
 } from './ids.js';
 import type {
@@ -43,6 +44,20 @@ export type GameCommand =
       readonly slot: PlaySlot;
       readonly targetStackId?: StackId;
       readonly benchIndex?: number;
+    }
+  | {
+      readonly type: 'MoveCardFromStack';
+      readonly cardId: CardInstanceId;
+      readonly expectedStackId: StackId;
+      readonly destinationZoneId: ZoneId;
+      readonly destinationIndex?: number;
+    }
+  | {
+      readonly type: 'MoveInspectedCard';
+      readonly cardId: CardInstanceId;
+      readonly expectedWorkAreaId: WorkAreaId;
+      readonly destinationZoneId: ZoneId;
+      readonly destinationIndex?: number;
     }
   | {
       readonly type: 'ShuffleZone';

@@ -156,20 +156,24 @@ chunk graph will be measured in the browser evidence run.
   without renderer remount;
 - an in-memory vertical multiplayer test covering admission, deck setup,
   projected scene creation, semantic drop resolution, client sequencing,
-  authority commit, and reconciled stack publication;
+  authority commit, reconciled stack publication, and an explicit stack-to-zone
+  departure through revision 4;
 - TypeScript project boundaries and circular-dependency check;
 - Vite production build; and
 - the repository-wide v2 and 79-test legacy gates.
 
 The drop resolver also refuses spectator submissions, stale scenes/cards/targets,
-same-zone no-ops, and stack/work-area transitions for which the core does not
-yet expose an explicit command. Renderers never infer or mutate logical state;
-the application boundary now accepts either the harness recorder or
+same-zone no-ops, lower-evolution departures, base departures that would orphan
+attachments, and transitions for which the core does not yet expose an explicit
+command. Safe top-evolution/attachment stack departures and individual
+inspection-work-area departures now have their own commands, resolved events,
+authority checks, and source preconditions. Renderers never infer or mutate
+logical state; the application boundary accepts either the harness recorder or
 `RemoteGameSession.submit`. Runtime-validated wire snapshots regain their
 compile-time view-ID brands at one explicit protocol boundary before entering
 the external client store.
 
-At this checkpoint the v2 suite contains 94 passing tests across 21 files. A
+At this checkpoint the v2 suite contains 98 passing tests across 22 files. A
 separate Playwright suite also passes three real Chromium 151 scenarios:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and

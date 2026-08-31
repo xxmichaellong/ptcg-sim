@@ -293,6 +293,110 @@ export const decideCommand = (
           command.slot === 'active' && board.activeStackId !== null,
       });
     }
+    case 'MoveCardFromStack': {
+      const card = state.cards[command.cardId];
+      if (!card)
+        return reject('not_found', `Card ${command.cardId} does not exist`);
+      const location = findCardLocation(state, command.cardId);
+      if (
+        !location ||
+        (location.kind !== 'stackEvolution' &&
+          location.kind !== 'stackAttachment') ||
+        location.stackId !== command.expectedStackId
+      ) {
+        return reject(
+          'stale_reference',
+          'Card is no longer in the expected play stack'
+        );
+      }
+      const stack = state.stacks[command.expectedStackId];
+      const destination = state.zones[command.destinationZoneId];
+      if (!stack || !destination) {
+        return reject('not_found', 'Stack or destination zone does not exist');
+      }
+      if (destination.kind === 'stadium' && destination.cardIds.length > 0) {
+        return reject(
+          'precondition_failed',
+          'Resolve the existing stadium before this departure'
+        );
+      }
+      if (
+        location.kind === 'stackEvolution' &&
+        location.index !== stack.evolutionCardIds.length - 1
+      ) {
+        return reject(
+          'precondition_failed',
+          'Only the top evolution card may leave a play stack directly'
+        );
+      }
+      if (
+        location.kind === 'stackEvolution' &&
+        stack.evolutionCardIds.length === 1 &&
+        stack.attachmentCardIds.length > 0
+      ) {
+        return reject(
+          'precondition_failed',
+          'Resolve attached cards before removing the stack base'
+        );
+      }
+      return accept({
+        type: 'CardMovedFromStack',
+        cardId: card.id,
+        expectedStackId: stack.id,
+        source: location.kind === 'stackEvolution' ? 'evolution' : 'attachment',
+        destinationZoneId: destination.id,
+        destinationIndex: Math.max(
+          0,
+          Math.min(
+            command.destinationIndex ?? destination.cardIds.length,
+            destination.cardIds.length
+          )
+        ),
+        concealIdentity: isConcealedZone(destination),
+      });
+    }
+    case 'MoveInspectedCard': {
+      const card = state.cards[command.cardId];
+      if (!card)
+        return reject('not_found', `Card ${command.cardId} does not exist`);
+      const location = findCardLocation(state, command.cardId);
+      if (!location || location.kind !== 'inspectionWorkArea') {
+        return reject(
+          'stale_reference',
+          'Card is no longer in an inspection work area'
+        );
+      }
+      const inspection = state.workAreas[location.playerId]?.inspection;
+      if (!inspection || inspection.id !== command.expectedWorkAreaId) {
+        return reject('stale_reference', 'Inspection work area changed');
+      }
+      const destination = state.zones[command.destinationZoneId];
+      if (!destination) {
+        return reject('not_found', 'Destination zone does not exist');
+      }
+      if (destination.kind === 'stadium' && destination.cardIds.length > 0) {
+        return reject(
+          'precondition_failed',
+          'Resolve the existing stadium before moving an inspected card'
+        );
+      }
+      return accept({
+        type: 'InspectedCardMoved',
+        playerId: location.playerId,
+        inspectionId: inspection.inspectionId,
+        expectedWorkAreaId: inspection.id,
+        cardId: card.id,
+        destinationZoneId: destination.id,
+        destinationIndex: Math.max(
+          0,
+          Math.min(
+            command.destinationIndex ?? destination.cardIds.length,
+            destination.cardIds.length
+          )
+        ),
+        concealIdentity: isConcealedZone(destination),
+      });
+    }
     case 'ShuffleZone': {
       const zone = state.zones[command.zoneId];
       if (!zone)

@@ -61,6 +61,20 @@ export const WireGameCommandSchema = v.variant('type', [
     targetStackId: v.optional(IdentifierSchema),
     benchIndex: v.optional(NonNegativeIntegerSchema),
   }),
+  v.object({
+    type: v.literal('MoveCardFromStack'),
+    cardId: IdentifierSchema,
+    expectedStackId: IdentifierSchema,
+    destinationZoneId: IdentifierSchema,
+    destinationIndex: v.optional(NonNegativeIntegerSchema),
+  }),
+  v.object({
+    type: v.literal('MoveInspectedCard'),
+    cardId: IdentifierSchema,
+    expectedWorkAreaId: IdentifierSchema,
+    destinationZoneId: IdentifierSchema,
+    destinationIndex: v.optional(NonNegativeIntegerSchema),
+  }),
   v.object({ type: v.literal('ShuffleZone'), zoneId: IdentifierSchema }),
   v.object({
     type: v.literal('DrawCards'),

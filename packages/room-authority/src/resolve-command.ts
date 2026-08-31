@@ -3,7 +3,9 @@ import {
   asInspectionId,
   asPlayerId,
   asStackId,
+  asWorkAreaId,
   asZoneId,
+  findCardLocation,
   type GameCommand,
   type MatchState,
   type PlayerId,
@@ -158,6 +160,85 @@ export const resolveWireCommand = (
           ...(wire.benchIndex === undefined
             ? {}
             : { benchIndex: wire.benchIndex }),
+        },
+      };
+    }
+    case 'MoveCardFromStack': {
+      const card = resolveCard(wire.cardId);
+      if (!card) return rejected('stale_reference');
+      const canonicalCard = state.cards[card.cardId]!;
+      if (
+        !canControlCard(
+          state,
+          actorId,
+          canonicalCard.ownerId,
+          card.known,
+          policy
+        )
+      ) {
+        return rejected('unauthorized');
+      }
+      const location = findCardLocation(state, card.cardId);
+      if (
+        !location ||
+        (location.kind !== 'stackEvolution' &&
+          location.kind !== 'stackAttachment') ||
+        location.stackId !== wire.expectedStackId ||
+        !state.zones[wire.destinationZoneId]
+      ) {
+        return rejected('stale_reference');
+      }
+      return {
+        accepted: true,
+        command: {
+          type: 'MoveCardFromStack',
+          cardId: card.cardId,
+          expectedStackId: asStackId(wire.expectedStackId),
+          destinationZoneId: asZoneId(wire.destinationZoneId),
+          ...(wire.destinationIndex === undefined
+            ? {}
+            : { destinationIndex: wire.destinationIndex }),
+        },
+      };
+    }
+    case 'MoveInspectedCard': {
+      const card = resolveCard(wire.cardId);
+      if (!card) return rejected('stale_reference');
+      const canonicalCard = state.cards[card.cardId]!;
+      const location = findCardLocation(state, card.cardId);
+      if (!location || location.kind !== 'inspectionWorkArea') {
+        return rejected('stale_reference');
+      }
+      if (
+        location.playerId !== actorId ||
+        !canControlCard(
+          state,
+          actorId,
+          canonicalCard.ownerId,
+          card.known,
+          policy
+        )
+      ) {
+        return rejected('unauthorized');
+      }
+      const inspection = state.workAreas[actorId]?.inspection;
+      if (
+        !inspection ||
+        inspection.id !== wire.expectedWorkAreaId ||
+        !state.zones[wire.destinationZoneId]
+      ) {
+        return rejected('stale_reference');
+      }
+      return {
+        accepted: true,
+        command: {
+          type: 'MoveInspectedCard',
+          cardId: card.cardId,
+          expectedWorkAreaId: asWorkAreaId(wire.expectedWorkAreaId),
+          destinationZoneId: asZoneId(wire.destinationZoneId),
+          ...(wire.destinationIndex === undefined
+            ? {}
+            : { destinationIndex: wire.destinationIndex }),
         },
       };
     }

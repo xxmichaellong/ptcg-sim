@@ -103,3 +103,12 @@ a hard-to-find behavior. Proposed names are not final APIs.
 - Exact prompt validation, announcements, target permissions, and edge behavior
   remain blocking characterization fields even where the architectural mapping
   is clear.
+
+### Implemented movement subset
+
+The v2 core now distinguishes zone-to-play, stack-to-zone, and
+inspection-work-area-to-zone movement. Stack departure permits individual
+attachments and the top evolution card, removes an empty stack atomically, and
+refuses to orphan attachments. Complex stack swaps, dependent-card staging, and
+`leaveAll` remain separate unimplemented commands so the renderer cannot infer
+legacy relative-image behavior.

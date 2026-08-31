@@ -536,6 +536,163 @@ export const applyEvent = (
         },
       };
     }
+    case 'CardMovedFromStack': {
+      const stack = requireStack(state, event.expectedStackId);
+      const sourceIds =
+        event.source === 'evolution'
+          ? stack.evolutionCardIds
+          : stack.attachmentCardIds;
+      const sourceIndex = sourceIds.indexOf(event.cardId);
+      if (sourceIndex < 0) {
+        throw new Error(`Card ${event.cardId} is not in the expected stack`);
+      }
+      if (
+        event.source === 'evolution' &&
+        sourceIndex !== stack.evolutionCardIds.length - 1
+      ) {
+        throw new Error('Stack departure is not the top evolution card');
+      }
+      if (
+        event.source === 'evolution' &&
+        stack.evolutionCardIds.length === 1 &&
+        stack.attachmentCardIds.length > 0
+      ) {
+        throw new Error('Stack departure would orphan attached cards');
+      }
+      const destination = requireZone(state, event.destinationZoneId);
+      if (destination.kind === 'stadium' && destination.cardIds.length > 0) {
+        throw new Error('Stack departure would replace an occupied stadium');
+      }
+      const destinationCards = [...destination.cardIds];
+      destinationCards.splice(
+        Math.min(event.destinationIndex, destinationCards.length),
+        0,
+        event.cardId
+      );
+      const card = state.cards[event.cardId];
+      if (!card) throw new Error(`Missing moved card ${event.cardId}`);
+      const normalizedCard = {
+        ...card,
+        currentCategory: card.originalCategory,
+        face: 'up' as const,
+        orientationQuarterTurns: 0 as const,
+      };
+      const nextCard = event.concealIdentity
+        ? incrementVisibility(normalizedCard)
+        : normalizedCard;
+      const evolutionCardIds = stack.evolutionCardIds.filter(
+        (cardId) => cardId !== event.cardId
+      );
+      const attachmentCardIds = stack.attachmentCardIds.filter(
+        (cardId) => cardId !== event.cardId
+      );
+      const stacks = { ...state.stacks };
+      let boards = state.boards;
+      if (evolutionCardIds.length === 0) {
+        delete stacks[stack.id];
+        boards = removeStackFromBoards(state, new Set([stack.id]));
+      } else {
+        stacks[stack.id] = {
+          ...stack,
+          evolutionCardIds,
+          attachmentCardIds,
+        };
+      }
+      return {
+        ...state,
+        cards: { ...state.cards, [card.id]: nextCard },
+        zones: {
+          ...state.zones,
+          [destination.id]: { ...destination, cardIds: destinationCards },
+        },
+        stacks,
+        boards,
+        visibility: {
+          ...state.visibility,
+          publicCardIds: state.visibility.publicCardIds.filter(
+            (cardId) => cardId !== event.cardId
+          ),
+        },
+      };
+    }
+    case 'InspectedCardMoved': {
+      const areas = state.workAreas[event.playerId];
+      const inspection = areas?.inspection;
+      if (
+        !inspection ||
+        inspection.id !== event.expectedWorkAreaId ||
+        inspection.inspectionId !== event.inspectionId ||
+        !inspection.cardIds.includes(event.cardId)
+      ) {
+        throw new Error('Inspected card departure does not match work area');
+      }
+      const destination = requireZone(state, event.destinationZoneId);
+      if (destination.kind === 'stadium' && destination.cardIds.length > 0) {
+        throw new Error('Inspected card would replace an occupied stadium');
+      }
+      const destinationCards = [...destination.cardIds];
+      destinationCards.splice(
+        Math.min(event.destinationIndex, destinationCards.length),
+        0,
+        event.cardId
+      );
+      const remaining = inspection.cardIds.filter(
+        (cardId) => cardId !== event.cardId
+      );
+      const card = state.cards[event.cardId];
+      if (!card) throw new Error(`Missing inspected card ${event.cardId}`);
+      const normalizedCard = {
+        ...card,
+        currentCategory: card.originalCategory,
+        face: 'up' as const,
+        orientationQuarterTurns: 0 as const,
+      };
+      const nextCard = event.concealIdentity
+        ? incrementVisibility(normalizedCard)
+        : normalizedCard;
+      const inspectionGrants = Object.fromEntries(
+        Object.entries(state.visibility.inspectionGrants)
+          .map(([inspectionId, grant]) => [
+            inspectionId,
+            {
+              ...grant,
+              cardIds: grant.cardIds.filter(
+                (cardId) => cardId !== event.cardId
+              ),
+            },
+          ])
+          .filter(([, grant]) =>
+            Boolean(
+              (grant as { readonly cardIds: readonly CardInstanceId[] }).cardIds
+                .length
+            )
+          )
+      ) as MatchState['visibility']['inspectionGrants'];
+      return {
+        ...state,
+        cards: { ...state.cards, [card.id]: nextCard },
+        zones: {
+          ...state.zones,
+          [destination.id]: { ...destination, cardIds: destinationCards },
+        },
+        workAreas: {
+          ...state.workAreas,
+          [event.playerId]: {
+            ...areas,
+            inspection:
+              remaining.length === 0
+                ? null
+                : { ...inspection, cardIds: remaining },
+          },
+        },
+        visibility: {
+          publicCardIds: state.visibility.publicCardIds.filter(
+            (cardId) => cardId !== event.cardId
+          ),
+          inspectionGrants,
+        },
+      };
+    }
     case 'StackDamageSet': {
       const stack = requireStack(state, event.stackId);
       return {

@@ -315,7 +315,43 @@ describe('client/server multiplayer contract', () => {
       expect.objectContaining({ id: card.id })
     );
     expect(player.session.getSnapshot().pendingCommands).toEqual([]);
-    expect(room.store.commandCommits).toHaveLength(3);
+    if (!after || !stackId) throw new Error('Missing published bench stack');
+    const departureScene = createBoardScene(after, {
+      viewport: { width: 1208, height: 900, devicePixelRatio: 1 },
+      bottomPlayerId: playerId,
+      splitRatio: 0.5,
+      geometryVersion: 1,
+    });
+    submitted = false;
+    const departure = submitBoardDrop(
+      after,
+      departureScene,
+      {
+        kind: 'CardDropRequested',
+        cardId: card.id,
+        targetId: `zone:${playerId}:discard`,
+      },
+      (command) => {
+        submitted = player.session.submit(command).queued;
+      }
+    );
+    expect(departure).toMatchObject({
+      ok: true,
+      command: {
+        type: 'MoveCardFromStack',
+        expectedStackId: stackId,
+      },
+    });
+    expect(submitted).toBe(true);
+    await player.factory.flush();
+
+    const departed = player.session.getSnapshot().view;
+    expect(departed?.revision).toBe(4);
+    expect(departed?.stacks[stackId]).toBeUndefined();
+    expect(departed?.zones[`zone:${playerId}:discard`]?.cards).toContainEqual(
+      expect.objectContaining({ id: card.id })
+    );
+    expect(room.store.commandCommits).toHaveLength(4);
   });
 
   it('publishes one authoritative revision to a player and spectator', async () => {

@@ -93,7 +93,7 @@ describe('board drop command resolution', () => {
     });
   });
 
-  it('refuses no-ops, stale scenes, and unsupported stack sources', () => {
+  it('refuses no-ops and stale scenes while resolving safe stack departures', () => {
     const input = fixture();
     const card = localHandCard(input);
     expect(
@@ -114,16 +114,73 @@ describe('board drop command resolution', () => {
         }
       )
     ).toEqual({ ok: false, reason: 'stale_scene' });
-    const stackCard = input.scene.cards.find(
-      (candidate) => candidate.parentId === 'stack:blue:active'
-    )!;
+    const stack = input.view.stacks['stack:blue:active']!;
+    const stackCard = stack.evolutionCards.at(-1)!;
     expect(
       resolveBoardDrop(input.view, input.scene, {
         kind: 'CardDropRequested',
         cardId: stackCard.id,
         targetId: 'zone:spike-blue:discard',
       })
-    ).toEqual({ ok: false, reason: 'unsupported_source' });
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'MoveCardFromStack',
+        cardId: stackCard.id,
+        expectedStackId: stack.id,
+        destinationZoneId: 'zone:spike-blue:discard',
+      },
+    });
+  });
+
+  it('moves a card out of an explicit inspection work area', () => {
+    const input = fixture();
+    const sceneCard = localHandCard(input);
+    const playerId = input.view.playerOrder[0]!;
+    const hand = input.view.zones[`zone:${playerId}:hand`]!;
+    const viewCard = hand.cards.find((card) => card.id === sceneCard.id)!;
+    const view: MatchViewState = {
+      ...input.view,
+      zones: {
+        ...input.view.zones,
+        [hand.id]: {
+          ...hand,
+          cards: hand.cards.filter((card) => card.id !== viewCard.id),
+        },
+      },
+      workAreas: {
+        ...input.view.workAreas,
+        [playerId]: {
+          ...input.view.workAreas[playerId]!,
+          inspection: {
+            id: 'inspection-work-area',
+            sourceZoneId: hand.id,
+            cards: [viewCard],
+          },
+        },
+      },
+    };
+    const scene = createBoardScene(view, {
+      viewport: input.scene.viewport,
+      bottomPlayerId: playerId,
+      splitRatio: 0.5,
+      geometryVersion: 1,
+    });
+    expect(
+      resolveBoardDrop(view, scene, {
+        kind: 'CardDropRequested',
+        cardId: viewCard.id,
+        targetId: `zone:${playerId}:discard`,
+      })
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'MoveInspectedCard',
+        cardId: viewCard.id,
+        expectedWorkAreaId: 'inspection-work-area',
+        destinationZoneId: `zone:${playerId}:discard`,
+      },
+    });
   });
 
   it('fails closed for spectators and unknown or work-area targets', () => {
