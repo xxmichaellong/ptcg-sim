@@ -1,5 +1,6 @@
 import type { ClientMessage } from '@ptcgsim/protocol';
 
+import { assertAuthoritySnapshotInvariants } from './invariants.js';
 import type {
   AuthorityDependencies,
   AuthorityProcessResult,
@@ -36,6 +37,14 @@ export class RoomAuthorityCoordinator {
 
   currentSnapshot(): RoomAuthoritySnapshot {
     return this.snapshot;
+  }
+
+  installCommittedSnapshot(snapshot: RoomAuthoritySnapshot): void {
+    assertAuthoritySnapshotInvariants(snapshot);
+    if (snapshot.authorityVersion < this.snapshot.authorityVersion) {
+      throw new Error('Cannot install an older authority snapshot');
+    }
+    this.snapshot = snapshot;
   }
 
   submit(envelope: CommandEnvelope): Promise<AuthorityProcessResult> {

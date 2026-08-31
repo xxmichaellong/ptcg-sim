@@ -125,10 +125,13 @@ describe('room capability admission', () => {
       dependencies(createCrypto(), storage)
     );
     expect(reused).toMatchObject({
-      accepted: false,
-      code: 'seat_unavailable',
+      accepted: true,
+      committed: true,
+      session: { id: result.session.id },
+      resumeCapability: seatOneToken,
     });
-    expect(storage.transactions).toHaveLength(1);
+    expect(storage.transactions).toHaveLength(2);
+    expect(storage.transactions[1]?.kind).toBe('session_resumed');
   });
 
   it('resumes the same command session without a durable mutation', async () => {
@@ -157,6 +160,51 @@ describe('room capability admission', () => {
     });
     expect(storage.transactions).toHaveLength(2);
     expect(storage.transactions[1]?.kind).toBe('session_resumed');
+  });
+
+  it('recovers a seat claim committed before its welcome reply was lost', async () => {
+    const crypto = createCrypto();
+    let durable = createSnapshot();
+    await expect(
+      admitRoomSession(
+        durable,
+        {
+          type: 'ClaimSeat',
+          seatCapability: seatOneToken,
+          displayName: 'Blue',
+        },
+        {
+          ...dependencies(crypto, persistence()),
+          persistence: {
+            commitAdmission: async (transaction) => {
+              durable = transaction.snapshot;
+              throw new Error('reply path crashed after commit');
+            },
+          },
+        }
+      )
+    ).rejects.toThrow('reply path crashed after commit');
+    expect(durable.authorityVersion).toBe(1);
+    const committedSessionId = durable.admission?.seats[p1]?.claimedSessionId;
+
+    const retryStorage = persistence();
+    const retried = await admitRoomSession(
+      durable,
+      {
+        type: 'ClaimSeat',
+        seatCapability: seatOneToken,
+        displayName: 'Ignored Retry Name',
+      },
+      dependencies(crypto, retryStorage)
+    );
+
+    expect(retried).toMatchObject({
+      accepted: true,
+      session: { id: committedSessionId },
+      resumeCapability: seatOneToken,
+    });
+    expect(retryStorage.transactions[0]?.kind).toBe('session_resumed');
+    expect(retried.snapshot.state.players[p1]?.displayName).toBe('Blue');
   });
 
   it('creates independent spectator sessions from the spectator capability', async () => {

@@ -85,7 +85,7 @@ describe('session handshake', () => {
       nextClientSequence: 1,
       snapshot: { revision: 0 },
     });
-    expect(result.message.resumeToken).toMatch(/^resume_/);
+    expect(result.message.resumeToken).toBe(setup.seatToken);
   });
 
   it('rejects ambiguous or missing credentials before hashing or persistence', async () => {

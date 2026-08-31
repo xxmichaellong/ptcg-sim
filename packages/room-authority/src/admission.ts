@@ -97,6 +97,40 @@ const rejection = (
   code: Exclude<AdmissionResult, { accepted: true }>['code']
 ): AdmissionResult => ({ accepted: false, code, snapshot });
 
+const persistSessionResume = async (
+  current: RoomAuthoritySnapshot,
+  session: AuthoritySession,
+  resumeCapability: string,
+  dependencies: AdmissionDependencies
+): Promise<AdmissionResult> => {
+  const projected = projectRecipient(
+    current.state,
+    session.viewer,
+    current.identities,
+    dependencies.opaqueIds
+  );
+  const candidate: RoomAuthoritySnapshot = {
+    ...current,
+    authorityVersion: current.authorityVersion + 1,
+    identities: projected.identities,
+  };
+  assertAuthoritySnapshotInvariants(candidate);
+  await dependencies.persistence.commitAdmission({
+    expectedAuthorityVersion: current.authorityVersion,
+    snapshot: candidate,
+    sessionId: session.id,
+    kind: 'session_resumed',
+  });
+  return {
+    accepted: true,
+    committed: true,
+    snapshot: candidate,
+    session,
+    resumeCapability,
+    view: projected.snapshot,
+  };
+};
+
 export const admitRoomSession = async (
   current: RoomAuthoritySnapshot,
   request: AdmissionRequest,
@@ -127,33 +161,14 @@ export const admitRoomSession = async (
           suppliedDigest
         )
     );
-    if (!session) return rejection(current, 'invalid_capability');
-    const projected = projectRecipient(
-      current.state,
-      session.viewer,
-      current.identities,
-      dependencies.opaqueIds
-    );
-    const candidate: RoomAuthoritySnapshot = {
-      ...current,
-      authorityVersion: current.authorityVersion + 1,
-      identities: projected.identities,
-    };
-    assertAuthoritySnapshotInvariants(candidate);
-    await dependencies.persistence.commitAdmission({
-      expectedAuthorityVersion: current.authorityVersion,
-      snapshot: candidate,
-      sessionId: session.id,
-      kind: 'session_resumed',
-    });
-    return {
-      accepted: true,
-      committed: true,
-      snapshot: candidate,
-      session,
-      resumeCapability: request.resumeCapability,
-      view: projected.snapshot,
-    };
+    return session
+      ? persistSessionResume(
+          current,
+          session,
+          request.resumeCapability,
+          dependencies
+        )
+      : rejection(current, 'invalid_capability');
   }
 
   let viewer: AuthoritySession['viewer'];
@@ -170,7 +185,15 @@ export const admitRoomSession = async (
     );
     if (!seat) return rejection(current, 'invalid_capability');
     if (seat.claimedSessionId !== null) {
-      return rejection(current, 'seat_unavailable');
+      const claimedSession = current.sessions[seat.claimedSessionId];
+      return claimedSession?.active
+        ? persistSessionResume(
+            current,
+            claimedSession,
+            request.seatCapability,
+            dependencies
+          )
+        : rejection(current, 'seat_unavailable');
     }
     claimedPlayerId = seat.playerId;
     viewer = { kind: 'player', playerId: seat.playerId };
@@ -185,7 +208,9 @@ export const admitRoomSession = async (
     viewer = { kind: 'spectator' };
   }
 
-  const resumeCapability = dependencies.crypto.nextResumeCapability();
+  const resumeCapability = claimedPlayerId
+    ? suppliedCapability
+    : dependencies.crypto.nextResumeCapability();
   if (!validBoundedCapability(resumeCapability)) {
     throw new Error('Resume capability source returned an invalid token');
   }
