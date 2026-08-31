@@ -1,0 +1,27 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "ptcgsim-v2",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-08-31",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "BUILD_ID": "local-development",
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "PTCG_ROOM",
+        "class_name": "PtcgRoom",
+      },
+    ],
+  },
+  "exports": {
+    "PtcgRoom": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+  },
+  "observability": {
+    "enabled": true,
+  },
+}

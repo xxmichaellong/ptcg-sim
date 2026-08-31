@@ -88,7 +88,7 @@ const fixture = async () => {
     store,
     admission: { crypto, opaqueIds: crypto, persistence: store },
   });
-  return { hub, store, seatToken };
+  return { hub, store, seatToken, crypto };
 };
 
 const helloFrame = (input: {
@@ -168,6 +168,59 @@ describe('serialized room session hub', () => {
       revision: 1,
     });
     expect(setup.store.commandCommits).toHaveLength(1);
+  });
+
+  it('restores a serialized session binding after hibernation', async () => {
+    const setup = await fixture();
+    const beforeSleep = connection('connection-before-sleep');
+    await setup.hub.handleFrame(
+      beforeSleep.value,
+      helloFrame({ admissionTicket: setup.seatToken })
+    );
+    const welcome = beforeSleep.messages[0];
+    if (welcome?.type !== 'Welcome') throw new Error('missing welcome');
+
+    const restoredCoordinator = new RoomAuthorityCoordinator(
+      setup.store.durable,
+      setup.store,
+      {
+        commandContext: setup.crypto,
+        opaqueIds: setup.crypto,
+        policy: DEFAULT_AUTHORITY_POLICY,
+      }
+    );
+    const restoredHub = new RoomSessionHub(
+      restoredCoordinator,
+      'server-build',
+      {
+        store: setup.store,
+        admission: {
+          crypto: setup.crypto,
+          opaqueIds: setup.crypto,
+          persistence: setup.store,
+        },
+      }
+    );
+    const afterWake = connection('connection-after-wake');
+    restoredHub.restoreBinding(afterWake.value, welcome.sessionId);
+    await restoredHub.handleFrame(
+      afterWake.value,
+      JSON.stringify({
+        type: 'Command',
+        protocolVersion: PROTOCOL_VERSION,
+        sessionId: welcome.sessionId,
+        clientSequence: 1,
+        commandId: 'post-hibernation-command',
+        lastSeenRevision: 0,
+        command: { type: 'FlipCoin' },
+      })
+    );
+
+    expect(afterWake.messages.map((message) => message.type)).toEqual([
+      'StatePublication',
+      'CommandResult',
+    ]);
+    expect(setup.store.durable.state.revision).toBe(1);
   });
 
   it('rejects commands before Hello and session spoofing without mutation', async () => {

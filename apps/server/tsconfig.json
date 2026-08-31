@@ -6,7 +6,7 @@
     "rootDir": "./src",
     "tsBuildInfoFile": "./lib/.tsbuildinfo"
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "worker-configuration.d.ts"],
   "exclude": ["src/**/*.test.ts", "lib"],
   "references": [
     { "path": "../../packages/game-core" },

@@ -63,6 +63,38 @@ export class RoomSessionHub {
     }
   }
 
+  restoreBinding(connection: RuntimeConnection, sessionId?: string): void {
+    this.connections.set(connection.id, connection);
+    if (!sessionId) return;
+    const session = this.coordinator.currentSnapshot().sessions[sessionId];
+    if (!session?.active) return;
+    const previousConnectionId = this.sessionConnections.get(sessionId);
+    if (previousConnectionId && previousConnectionId !== connection.id) {
+      const previous = this.connections.get(previousConnectionId);
+      if (previous) {
+        this.send(previous, {
+          type: 'SessionSuperseded',
+          protocolVersion: PROTOCOL_VERSION,
+        });
+        previous.close(4409, 'Session superseded');
+      }
+      this.connectionSessions.delete(previousConnectionId);
+    }
+    this.connectionSessions.set(connection.id, sessionId);
+    this.sessionConnections.set(sessionId, connection.id);
+  }
+
+  bindingForConnection(connectionId: string): {
+    readonly sessionId?: string;
+    readonly authorityVersion: number;
+  } {
+    const sessionId = this.connectionSessions.get(connectionId);
+    return {
+      ...(sessionId ? { sessionId } : {}),
+      authorityVersion: this.coordinator.currentSnapshot().authorityVersion,
+    };
+  }
+
   private send(connection: RuntimeConnection, message: ServerMessage): void {
     try {
       connection.send(JSON.stringify(message));

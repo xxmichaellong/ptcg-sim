@@ -10,6 +10,9 @@
     }
   },
   "scripts": {
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "cf-typegen": "wrangler types",
+    "dev": "wrangler dev",
     "test": "vitest run",
     "typecheck": "tsc --build"
   },
@@ -17,5 +20,8 @@
     "@ptcgsim/game-core": "workspace:*",
     "@ptcgsim/protocol": "workspace:*",
     "@ptcgsim/room-authority": "workspace:*"
+  },
+  "devDependencies": {
+    "wrangler": "4.120.0"
   }
 }
