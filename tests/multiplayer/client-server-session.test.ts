@@ -1,0 +1,319 @@
+import {
+  RemoteGameSession,
+  type ClientSessionScheduler,
+  type SessionSocket,
+  type SessionSocketFactory,
+  type SessionSocketHandlers,
+} from '../../packages/client-session/src/index.js';
+import {
+  RoomSessionHub,
+  WebCryptoAuthoritySource,
+  initializeNewRoom,
+  type RuntimeConnection,
+} from '../../apps/server/src/index.js';
+import {
+  DEFAULT_AUTHORITY_POLICY,
+  RoomAuthorityCoordinator,
+  type AuthoritySnapshotStore,
+  type PersistedAdmissionTransaction,
+  type PersistedAuthorityTransaction,
+  type RoomAuthoritySnapshot,
+} from '../../packages/room-authority/src/index.js';
+import { describe, expect, it } from 'vitest';
+
+class MemoryRoomStore implements AuthoritySnapshotStore {
+  snapshot?: RoomAuthoritySnapshot;
+  readonly commandCommits: PersistedAuthorityTransaction[] = [];
+
+  async initialize(snapshot: RoomAuthoritySnapshot): Promise<void> {
+    if (this.snapshot) throw new Error('Room is already initialized');
+    this.snapshot = snapshot;
+  }
+
+  async load(): Promise<RoomAuthoritySnapshot | undefined> {
+    return this.snapshot;
+  }
+
+  async commit(transaction: PersistedAuthorityTransaction): Promise<void> {
+    if (
+      transaction.expectedAuthorityVersion !== this.snapshot?.authorityVersion
+    ) {
+      throw new Error('Authority version conflict');
+    }
+    this.commandCommits.push(transaction);
+    this.snapshot = transaction.snapshot;
+  }
+
+  async commitAdmission(
+    transaction: PersistedAdmissionTransaction
+  ): Promise<void> {
+    if (
+      transaction.expectedAuthorityVersion !== this.snapshot?.authorityVersion
+    ) {
+      throw new Error('Admission version conflict');
+    }
+    this.snapshot = transaction.snapshot;
+  }
+}
+
+class ManualScheduler implements ClientSessionScheduler {
+  private nextId = 1;
+  readonly tasks = new Map<number, () => void>();
+
+  schedule = (callback: () => void): number => {
+    const id = this.nextId++;
+    this.tasks.set(id, callback);
+    return id;
+  };
+
+  cancel = (handle: unknown): void => {
+    this.tasks.delete(handle as number);
+  };
+
+  runNext(): void {
+    const entry = this.tasks.entries().next().value;
+    if (!entry) throw new Error('No reconnect is scheduled');
+    this.tasks.delete(entry[0]);
+    entry[1]();
+  }
+}
+
+class InMemorySocketLink implements SessionSocket {
+  readonly clientFrames: string[] = [];
+  dropServerFrames = false;
+  private disconnected = false;
+
+  readonly connection: RuntimeConnection;
+
+  constructor(
+    id: string,
+    private readonly hub: RoomSessionHub,
+    private readonly handlers: SessionSocketHandlers,
+    private readonly enqueue: (operation: () => Promise<void>) => void
+  ) {
+    this.connection = {
+      id,
+      send: (frame) => {
+        if (!this.dropServerFrames) this.handlers.message(frame);
+      },
+      close: (code, reason) => {
+        if (this.disconnected) return;
+        this.disconnected = true;
+        this.hub.disconnect(id);
+        this.handlers.close({ code, reason, wasClean: code === 1000 });
+      },
+    };
+  }
+
+  send = (frame: string): void => {
+    if (this.disconnected) throw new Error('Socket is disconnected');
+    this.clientFrames.push(frame);
+    this.enqueue(() => this.hub.handleFrame(this.connection, frame));
+  };
+
+  close = (): void => {
+    if (this.disconnected) return;
+    this.disconnected = true;
+    this.hub.disconnect(this.connection.id);
+  };
+
+  open(): void {
+    this.handlers.open();
+  }
+
+  networkDrop(): void {
+    if (this.disconnected) return;
+    this.disconnected = true;
+    this.hub.disconnect(this.connection.id);
+    this.handlers.close({
+      code: 1006,
+      reason: 'simulated network loss',
+      wasClean: false,
+    });
+  }
+}
+
+class InMemorySocketFactory implements SessionSocketFactory {
+  readonly links: InMemorySocketLink[] = [];
+  private tail: Promise<void> = Promise.resolve();
+
+  constructor(
+    private readonly hub: RoomSessionHub,
+    private readonly connectionPrefix: string
+  ) {}
+
+  open = (_url: string, handlers: SessionSocketHandlers): SessionSocket => {
+    const link = new InMemorySocketLink(
+      `${this.connectionPrefix}-${this.links.length + 1}`,
+      this.hub,
+      handlers,
+      (operation) => {
+        this.tail = this.tail.then(operation);
+      }
+    );
+    this.links.push(link);
+    return link;
+  };
+
+  latest(): InMemorySocketLink {
+    const link = this.links.at(-1);
+    if (!link) throw new Error('No socket link exists');
+    return link;
+  }
+
+  async flush(): Promise<void> {
+    for (;;) {
+      const current = this.tail;
+      await current;
+      if (current === this.tail) return;
+    }
+  }
+}
+
+const fixture = async () => {
+  const cryptoSource = new WebCryptoAuthoritySource();
+  const store = new MemoryRoomStore();
+  const initialized = await initializeNewRoom(
+    {
+      matchId: 'multiplayer-client-contract',
+      playerOneCardBackUrl: '/blue.png',
+      playerTwoCardBackUrl: '/red.png',
+      spectatorsAllowed: true,
+    },
+    store,
+    cryptoSource
+  );
+  const coordinator = new RoomAuthorityCoordinator(
+    initialized.snapshot,
+    store,
+    {
+      commandContext: cryptoSource,
+      opaqueIds: cryptoSource,
+      policy: DEFAULT_AUTHORITY_POLICY,
+    }
+  );
+  const hub = new RoomSessionHub(coordinator, 'server-build', {
+    store,
+    admission: {
+      crypto: cryptoSource,
+      opaqueIds: cryptoSource,
+      persistence: store,
+    },
+  });
+  return { ...initialized, store, hub };
+};
+
+const connectClient = async (input: {
+  readonly hub: RoomSessionHub;
+  readonly name: string;
+  readonly role: 'player' | 'spectator';
+  readonly capability: string;
+  readonly scheduler?: ManualScheduler;
+}) => {
+  const factory = new InMemorySocketFactory(input.hub, input.name);
+  let nextCommandId = 0;
+  const session = new RemoteGameSession({
+    socketFactory: factory,
+    scheduler: input.scheduler,
+    random: () => 0.5,
+    createCommandId: () => `${input.name}-command-${++nextCommandId}`,
+  });
+  session.connect({
+    url: 'ws://in-memory.test/room',
+    buildId: 'client-build',
+    roomCode: 'ROOM',
+    displayName: input.name,
+    requestedRole: input.role,
+    admissionTicket: input.capability,
+  });
+  factory.latest().open();
+  await factory.flush();
+  return { factory, session };
+};
+
+describe('client/server multiplayer contract', () => {
+  it('publishes one authoritative revision to a player and spectator', async () => {
+    const room = await fixture();
+    const spectatorCapability = room.credentials.spectatorCapability;
+    if (!spectatorCapability) throw new Error('Missing spectator capability');
+    const player = await connectClient({
+      hub: room.hub,
+      name: 'Blue',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+    });
+    const spectator = await connectClient({
+      hub: room.hub,
+      name: 'Observer',
+      role: 'spectator',
+      capability: spectatorCapability,
+    });
+
+    expect(player.session.getSnapshot()).toMatchObject({
+      phase: 'ready',
+      role: 'player',
+      view: { revision: 0 },
+    });
+    expect(spectator.session.getSnapshot()).toMatchObject({
+      phase: 'ready',
+      role: 'spectator',
+      view: { revision: 0 },
+    });
+    expect(spectator.session.submit({ type: 'FlipCoin' })).toEqual({
+      queued: false,
+      reason: 'spectator',
+    });
+
+    expect(player.session.submit({ type: 'FlipCoin' }).queued).toBe(true);
+    await player.factory.flush();
+
+    expect(player.session.getSnapshot()).toMatchObject({
+      view: { revision: 1 },
+      pendingCommands: [],
+      completedCommands: [{ accepted: true, revision: 1 }],
+    });
+    expect(spectator.session.getSnapshot()).toMatchObject({
+      view: { revision: 1 },
+    });
+    expect(room.store.commandCommits).toHaveLength(1);
+  });
+
+  it('recovers a committed-but-undelivered command through exact replay', async () => {
+    const room = await fixture();
+    const scheduler = new ManualScheduler();
+    const player = await connectClient({
+      hub: room.hub,
+      name: 'Blue',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+      scheduler,
+    });
+    const firstLink = player.factory.latest();
+    firstLink.dropServerFrames = true;
+
+    player.session.submit({ type: 'FlipCoin' });
+    await player.factory.flush();
+    const originalCommand = firstLink.clientFrames[1];
+    expect(room.store.snapshot?.state.revision).toBe(1);
+    expect(player.session.getSnapshot()).toMatchObject({
+      view: { revision: 0 },
+      pendingCommands: [{ state: 'in_flight' }],
+    });
+
+    firstLink.networkDrop();
+    expect(player.session.getSnapshot().phase).toBe('reconnecting');
+    scheduler.runNext();
+    const secondLink = player.factory.latest();
+    secondLink.open();
+    await player.factory.flush();
+
+    expect(secondLink.clientFrames[1]).toBe(originalCommand);
+    expect(player.session.getSnapshot()).toMatchObject({
+      phase: 'ready',
+      view: { revision: 1 },
+      pendingCommands: [],
+      completedCommands: [{ accepted: true, revision: 1 }],
+    });
+    expect(room.store.commandCommits).toHaveLength(1);
+  });
+});

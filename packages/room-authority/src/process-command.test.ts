@@ -11,6 +11,7 @@ import {
 import { PROTOCOL_VERSION, type ClientMessage } from '@ptcgsim/protocol';
 import { describe, expect, it } from 'vitest';
 
+import { createRoomAdmissionState } from './admission.js';
 import { emptyProjectionIdentityState } from './identity-registry.js';
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
@@ -42,6 +43,14 @@ const createSnapshot = (): RoomAuthoritySnapshot => ({
     },
   ]),
   identities: emptyProjectionIdentityState(),
+  admission: createRoomAdmissionState({
+    playerIds: [p1, p2],
+    seatCapabilityDigests: {
+      [p1]: 'a'.repeat(32),
+      [p2]: 'b'.repeat(32),
+    },
+    spectatorCapabilityDigest: 'c'.repeat(32),
+  }),
   sessions: {
     'session-player-one': {
       id: 'session-player-one',
@@ -152,6 +161,7 @@ describe('authoritative room command transaction', () => {
     expect(result.committed).toBe(true);
     expect(current.state.revision).toBe(0);
     expect(result.snapshot.state.revision).toBe(1);
+    expect(result.snapshot.admission).toEqual(current.admission);
     expect(persistence.transactions).toHaveLength(1);
     expect(persistence.transactions[0]?.eventBatch?.revision).toBe(1);
     expect(persistence.transactions[0]?.outcome).toMatchObject({

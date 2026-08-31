@@ -259,6 +259,7 @@ export const processAuthorityCommand = async (
       })),
     },
     sessions,
+    ...(current.admission ? { admission: current.admission } : {}),
   };
   let publications: readonly AuthorityDelivery[] = [];
   if (accepted) {
