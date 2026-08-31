@@ -1,0 +1,110 @@
+# Requirements and traceability
+
+## Purpose
+
+These stable IDs let architecture, implementation, tests, and audits refer to the
+same obligations. The table is the initial blueprint-level traceability map.
+Phase 1 adds one row per detailed legacy behavior/action in the parity and action
+catalogs; it does not renumber these IDs.
+
+Status values are `REQUIRED`, `BLOCKED_BY_DECISION`, `DEFERRED`, and `VERIFIED`.
+`VERIFIED` requires a linked artifact from the named gate; prose or code review
+alone is not verification.
+
+## Product and parity
+
+| ID         | Status     | Requirement                                                                                                                        | Source/evidence                | Target / verification                                          |
+| ---------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | -------------------------------------------------------------- |
+| PARITY-001 | `REQUIRED` | Preserve current visual layout, controls, labels, and board composition; no bundled redesign.                                      | Legacy HTML/CSS/screenshots    | React shell + selected renderer; geometry and screenshot gates |
+| PARITY-002 | `REQUIRED` | Preserve drag, selection, preview, context-menu, zone-view, counter, flip, resize, and full-screen interactions.                   | Legacy handlers/workflows      | Input/controller/overlay E2E matrix                            |
+| PARITY-003 | `REQUIRED` | Preserve every documented shortcut/modifier and suppress board input while editing text.                                           | `keybinds.js`, Shift reference | Declarative keymap; parameterized browser tests                |
+| PARITY-004 | `REQUIRED` | Preserve solo, multiplayer, coaching, spectator, replay, deck, chat, settings, import/export workflows except approved exceptions. | Characterization inventory     | Parity matrix and Playwright journeys                          |
+| PARITY-005 | `REQUIRED` | Remain a permissive manual tabletop rather than enforcing Pokémon rules.                                                           | Current product behavior       | Permission/command catalog and negative rules-engine tests     |
+| PARITY-006 | `REQUIRED` | Record every observed behavior as contract, approved bug fix/security exception, ambiguity, or deferred.                           | Phase 1 baseline               | Parity/action/exception catalogs complete                      |
+| PARITY-007 | `REQUIRED` | Preserve external/custom visual assets or approve and document a security/CORS-compatible exception.                               | Current URL inputs             | ADR-013 spike and asset failure/parity tests                   |
+| PARITY-008 | `REQUIRED` | UX remains responsive while authority is pending; rejections/reconnect cancel stale interactions cleanly.                          | Current immediate gestures     | Presentation overlay/reconcile tests and latency budgets       |
+
+## Architecture and domain
+
+| ID         | Status                | Requirement                                                                                                                    | Source/evidence                    | Target / verification                                       |
+| ---------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------- | ----------------------------------------------------------- |
+| ARCH-001   | `REQUIRED`            | Canonical state, recipient view state, and local presentation state are separate.                                              | Current DOM/array/log coupling     | Package/import rules and state ownership tests              |
+| ARCH-002   | `REQUIRED`            | Core has no browser, renderer, network, storage, clock, or implicit RNG dependency.                                            | Circular legacy graph              | TypeScript projects/import lint/determinism tests           |
+| ARCH-003   | `REQUIRED`            | React/Pixi/DOM never own or repair logical state.                                                                              | `refreshBoard`, mutation observers | One-way render model; forbidden imports and invariant tests |
+| ARCH-004   | `REQUIRED`            | Solo and multiplayer use the same domain decision/event application semantics.                                                 | Current mode branches              | Local/remote authority contract tests                       |
+| ARCH-005   | `REQUIRED`            | Package graph is acyclic with narrow public exports.                                                                           | Current client SCC                 | Cycle/import/API CI gates                                   |
+| ARCH-006   | `BLOCKED_BY_DECISION` | Board renderer implements a neutral interface selected by measured React DOM/Pixi spike.                                       | ADR-004                            | Phase 4 renderer ADR/evidence                               |
+| ARCH-007   | `REQUIRED`            | No v2 production runtime imports a v1 action/server module.                                                                    | Migration safety                   | Dependency scan and bundle inspection                       |
+| DOMAIN-001 | `REQUIRED`            | Every card has stable canonical identity; clients command through recipient-safe view identity, never zone index/canonical ID. | Positional legacy actions          | State/view schema, command schemas, concealment tests       |
+| DOMAIN-002 | `REQUIRED`            | Every card is in exactly one ordered zone, play stack, or work area.                                                           | Split arrays/DOM                   | Invariant/property suite                                    |
+| DOMAIN-003 | `REQUIRED`            | Active/bench evolution and attachment state is explicit, acyclic, ordered, and atomic.                                         | Relative image properties          | `PlayStack` schema/commands/invariants                      |
+| DOMAIN-004 | `REQUIRED`            | Card ownership is immutable and distinct from current placement/board ownership.                                               | Manual/cross-side moves            | Cross-owner attachment/movement fixtures                    |
+| DOMAIN-005 | `REQUIRED`            | One command yields one resolved atomic event batch and at most one revision.                                                   | Multi-function legacy actions      | Decision/apply/invariant and crash tests                    |
+| DOMAIN-006 | `REQUIRED`            | Random outcomes are authority-provided and persisted as resolved facts.                                                        | Client shuffle/coin                | RNG adapters, deterministic replay tests                    |
+| DOMAIN-007 | `REQUIRED`            | Rejected commands do not modify state; errors use stable safe codes.                                                           | Runtime failure risk               | State-hash rejection assertions                             |
+| DOMAIN-008 | `REQUIRED`            | Domain state is deterministic, JSON-safe, finite/bounded, and canonically hashable.                                            | DOM/functions/NaN risk             | Schema/invariant/cross-runtime hash tests                   |
+| DOMAIN-009 | `REQUIRED`            | Inspection and detached-card staging survive reconnect as explicit canonical work areas.                                       | `viewCards`, `attachedCards`       | Work-area command/recovery fixtures                         |
+| DOMAIN-010 | `REQUIRED`            | Presentation-only sorting/open views never mutate canonical order.                                                             | DOM sorting/refresh coupling       | Selector/render tests and state-hash assertion              |
+
+## Visibility and security
+
+| ID      | Status                | Requirement                                                                                                     | Source/evidence                | Target / verification                        |
+| ------- | --------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------ | -------------------------------------------- |
+| VIS-001 | `REQUIRED`            | Authority computes a separate projection for every player/coach/spectator capability.                           | Relay/shared logs              | Pure projector and role fixture matrix       |
+| VIS-002 | `REQUIRED`            | Unauthorized payloads contain no hidden identity/order/name/URL/canonical ID.                                   | Client-rendered secrecy        | Non-interference and serialized leak scans   |
+| VIS-003 | `REQUIRED`            | Concealed view handles cannot track a card through a shuffle/new concealment generation.                        | Stable-ID privacy risk         | Handle generation and shuffle tests          |
+| VIS-004 | `REQUIRED`            | Hidden faces are not requested as assets or exposed through accessibility/diagnostics/errors/timeline.          | Side-channel risk              | Browser request/tree/log interception        |
+| VIS-005 | `BLOCKED_BY_DECISION` | Private inspection/coaching grant and reconnect/revocation semantics are explicit.                              | ADR-017                        | Permission/visibility matrix approval        |
+| SEC-001 | `REQUIRED`            | Role/actor derives from authenticated room connection; username/room code/payload is not authority.             | Current username sets/relay    | Admission/permission attack tests            |
+| SEC-002 | `REQUIRED`            | All ingress/egress/persistence data is runtime validated and bounded; unknown variants fail closed.             | Dynamic action dispatch/import | Protocol/import schemas and fuzz/limit tests |
+| SEC-003 | `REQUIRED`            | Room, seat, resume, socket-admission, and save capabilities use cryptographic entropy and safe storage/logging. | Four-character saves           | Token/admission tests and log scan           |
+| SEC-004 | `BLOCKED_BY_DECISION` | External image policy prevents tracking, SSRF, private network access, unsafe type/decode, and unbounded load.  | Arbitrary URLs/WebGL CORS      | ADR-013 threat/spike tests                   |
+| SEC-005 | `REQUIRED`            | Production admin/configuration fails closed without explicit secure credentials.                                | Default password               | Config/startup tests                         |
+
+## Protocol, authority, and persistence
+
+| ID          | Status                | Requirement                                                                                                                      | Source/evidence                 | Target / verification                                                            |
+| ----------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- | -------------------------------------------------------------------------------- |
+| PROTO-001   | `REQUIRED`            | Wire messages are versioned discriminated schemas with byte/depth/count bounds.                                                  | Generic Socket.IO events        | `protocol` codec/limit/fuzz tests                                                |
+| PROTO-002   | `REQUIRED`            | Commands are sequenced and idempotent across duplicate delivery, reconnect, and authority restart.                               | Peer counters/resync            | Persisted `(seatId, sessionId, clientSequence, commandId)` frontier/dedupe tests |
+| PROTO-003   | `REQUIRED`            | Stable entity preconditions handle stale views; unrelated serialized commands may both succeed.                                  | Global counter limitations      | Conflict/concurrency model tests                                                 |
+| PROTO-004   | `REQUIRED`            | Accepted view publication covers the revision before success result is sent.                                                     | Reconciliation race             | Transport ordering tests                                                         |
+| PROTO-005   | `REQUIRED`            | Welcome/reconnect installs a full current recipient projection; missed intermediate publications are harmless.                   | Catch-up action replay          | Reconnect/drop/reorder tests                                                     |
+| PROTO-006   | `REQUIRED`            | One active controlling connection exists per seat; spectator cannot submit game commands.                                        | Username/socket ambiguity       | Supersession/role tests                                                          |
+| PERSIST-001 | `REQUIRED`            | Event batch, revision, session frontier, and command outcome commit atomically before publication/result.                        | Acknowledged-loss risk          | Boundary crash matrix                                                            |
+| PERSIST-002 | `REQUIRED`            | Checkpoints plus bounded event tail restore the identical canonical hash after restart/hibernation.                              | Unbounded client logs           | Recovery/compaction/corruption tests                                             |
+| PERSIST-003 | `REQUIRED`            | State, event, wire, export, and legacy versions evolve independently through tested migrations.                                  | v1 version mismatch             | Fixture per supported migration hop                                              |
+| PERSIST-004 | `REQUIRED`            | Saves have collision-safe high-entropy capabilities, TTL/limits/revocation/integrity, and separate active/save storage concerns. | SQLite key-value implementation | Save API/storage/security tests                                                  |
+| PERSIST-005 | `BLOCKED_BY_DECISION` | Multiplayer continuation/export never leaks concealed opponent data.                                                             | ADR-012                         | Product decision and projection/export tests                                     |
+
+## Migration, rendering, performance, and operations
+
+| ID         | Status                | Requirement                                                                                                                      | Source/evidence               | Target / verification                 |
+| ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | ------------------------------------- |
+| MIG-001    | `REQUIRED`            | A room/session belongs entirely to v1 or v2; mixed protocol/engine admission is rejected.                                        | Positional vs stable identity | Route/namespace/cohort tests          |
+| MIG-002    | `REQUIRED`            | Legacy conversion is bounded, allowlisted, deterministic, one-way, and atomically installed only after invariants pass.          | Incremental current import    | Conversion/error/transaction tests    |
+| MIG-003    | `REQUIRED`            | Existing v1 rooms finish on v1; rollback changes only new-room routing and never live-downgrades v2 state.                       | Safe cutover                  | Staging rollout/rollback rehearsal    |
+| MIG-004    | `BLOCKED_BY_DECISION` | Supported v1 formats/share links and retention window are explicitly documented.                                                 | Unknown historical shapes     | Phase 0 product decision/fixture list |
+| RENDER-001 | `REQUIRED`            | Renderer consumes recipient-safe immutable render model and emits semantic intents only.                                         | DOM event/model coupling      | Contract/import tests                 |
+| RENDER-002 | `REQUIRED`            | Stable keyed views, input capture, async assets, listeners, textures, context and teardown remain bounded/recoverable.           | Current listener/preload risk | Lifecycle/context/churn/soak tests    |
+| RENDER-003 | `REQUIRED`            | Idle board schedules no continuous frames; drag/animation/resize work is frame-coalesced.                                        | Discrete tabletop             | Instrumented scheduler tests          |
+| RENDER-004 | `REQUIRED`            | Hidden/private texture lifecycle is session/generation scoped and cannot flash or survive role/room changes.                     | Asset side-channel            | Texture race and request tests        |
+| PERF-001   | `REQUIRED`            | Ratified renderer, network, recovery, memory, bundle, and soak budgets in the verification plan all pass.                        | Main project objective        | Attached benchmark evidence           |
+| PERF-002   | `REQUIRED`            | V2 is no worse than v1 for protected p95 input latency and materially improves named baseline bottlenecks.                       | “Faster” goal                 | Phase 1/4 comparative report          |
+| OPS-001    | `REQUIRED`            | Structured redacted telemetry, alerts, build/protocol/schema identifiers, and incident runbooks exist before multiplayer cohort. | Current low observability     | Dashboard/alert/runbook rehearsal     |
+| OPS-002    | `REQUIRED`            | Rollout is sticky per full room, staged, automatically pausable, and reversible for new sessions.                                | Migration risk                | Cohort/rollback tests and evidence    |
+| OPS-003    | `REQUIRED`            | Legacy retirement waits for observation/rollback window and preserves tagged source, fixtures, and converter.                    | Irreversible deletion risk    | Phase 10 approval/checklist           |
+
+## Verification ownership
+
+Every implementation issue and pull request must list applicable IDs. Every ID
+must eventually link to:
+
+1. current-system evidence or approved product decision;
+2. target schema/module/API;
+3. automated tests and fixtures;
+4. operational metric when applicable; and
+5. ADR/parity exception/migration notes when behavior or stored data changes.
+
+The audit integrator prevents marking a row `VERIFIED` until all relevant links
+exist and the release owner accepts the evidence.

@@ -2,22 +2,43 @@
   "name": "ptcg-sim",
   "version": "1.5.1",
   "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.24.0",
+  "engines": {
+    "node": ">=24"
+  },
   "workspaces": [
     "client",
-    "server"
+    "server",
+    "apps/*",
+    "packages/*"
   ],
   "scripts": {
-    "start": "pnpm -C server start",
-    "test": "node --test client/src/setup/deck-builder/__tests__/card-compare.test.mjs client/src/setup/deck-builder/__tests__/card-search.test.mjs client/src/setup/deck-builder/__tests__/card-search-sort.test.mjs client/src/setup/deck-builder/__tests__/card-sort.test.mjs client/src/setup/deck-builder/__tests__/csv-adapter.test.mjs client/src/setup/deck-builder/__tests__/deck-state.test.mjs client/src/setup/deck-builder/__tests__/deck-validation.test.mjs",
+    "start": "corepack pnpm -C server start",
+    "dev:v2": "corepack pnpm --filter @ptcgsim/web dev",
+    "build:v2": "corepack pnpm --filter @ptcgsim/web --if-present run build",
+    "test": "corepack pnpm run test:legacy && corepack pnpm run test:v2",
+    "test:legacy": "node --test client/src/setup/deck-builder/__tests__/card-compare.test.mjs client/src/setup/deck-builder/__tests__/card-search.test.mjs client/src/setup/deck-builder/__tests__/card-search-sort.test.mjs client/src/setup/deck-builder/__tests__/card-sort.test.mjs client/src/setup/deck-builder/__tests__/csv-adapter.test.mjs client/src/setup/deck-builder/__tests__/deck-state.test.mjs client/src/setup/deck-builder/__tests__/deck-validation.test.mjs",
+    "test:v2": "vitest run",
+    "test:v2:watch": "vitest",
+    "typecheck:v2": "tsc --build",
+    "check:cycles:v2": "madge --circular --extensions ts,tsx apps packages",
+    "check:v2": "corepack pnpm run typecheck:v2 && corepack pnpm run check:cycles:v2 && corepack pnpm run test:v2 && corepack pnpm run build:v2",
     "lint": "eslint .",
-    "format": "prettier --write \"**/*.{js,json,md}\""
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md,css}\""
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",
+    "@types/node": "^24.3.0",
     "eslint": "^9.20.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.3",
     "globals": "^15.14.0",
-    "nodemon": "^3.1.9"
+    "madge": "^8.0.0",
+    "nodemon": "^3.1.9",
+    "prettier": "^3.9.6",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.2",
+    "vitest": "^4.1.11"
   }
 }

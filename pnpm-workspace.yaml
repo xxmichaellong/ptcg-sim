@@ -1,3 +1,8 @@
 packages:
-  - "client"
-  - "server"
+  - 'client'
+  - 'server'
+  - 'apps/*'
+  - 'packages/*'
+allowBuilds:
+  esbuild: true
+  sqlite3: true

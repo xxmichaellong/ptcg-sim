@@ -1,0 +1,349 @@
+# Client, renderer, and UI parity
+
+## Boundary between React and PixiJS
+
+React owns the existing application chrome:
+
+- Solo, Multiplayer, Deck, and Settings tabs;
+- room lobby/status, chat, buttons, tooltips, menus, dialogs, tutorial, and
+  import/export/replay controls;
+- deck builder and deck import feedback;
+- native-scrolling zone browsers, context menus, full-card preview, counter
+  editor, and popup/button chrome anchored to the board;
+- accessible announcements and focus management; and
+- one `BoardCanvasHost` component that creates, resizes, recovers, and destroys
+  the imperative board engine.
+
+PixiJS owns the play surface:
+
+- playmat geometry and zone outlines;
+- all card sprites, stacks, attachment/evolution offsets, covers, counters,
+  conditions, and target highlights;
+- card dragging/selection visuals and board flip; and
+- only those transient card surfaces that the parity spike proves cannot remain
+  reliable DOM overlays.
+
+Keeping these overlays in React preserves native scrolling, form focus, keyboard
+behavior, accessibility, arbitrary non-CORS `<img>` display, and screenshot
+parity. Ownership for every visible element is recorded in the parity matrix so
+two renderers never race to show the same object. A Pixi `zIndex` can never place
+content above a DOM overlay, so the cross-surface layer registry is explicit.
+
+Raw Pixi behind a thin React host is the provisional target. Phase 4 implements a
+representative normalized React DOM board as a competing spike. `@pixi/react` is
+a secondary alternative, not the default: a card-heavy declarative React tree may
+introduce reconciliation work and blur lifecycle ownership without helping the
+mostly imperative interactions.
+
+## Renderer public contract
+
+The renderer-neutral board package exposes a deliberately small API; the Pixi
+adapter implements it:
+
+```text
+createBoardRenderer(adapters, options)
+  mount(hostElement, initialRenderModel, initialPresentation)
+  installSnapshot(nextRenderModel, presentationEvents)
+  installPresentation(nextPresentation)
+  resize(viewport)
+  setPreferences(renderPreferences)
+  destroy()
+```
+
+The Pixi adapter additionally owns context recovery behind this interface. The
+renderer emits semantic intents such as `CardSelected`, `CardDropRequested`,
+`ZoneOpened`, `CardContextRequested`, and `BoardResizeRequested`. It never emits
+legacy function names, zone indices, or network messages.
+
+All public calls are safe after rapid reconnect, route changes, React strict-mode
+development remounts, and WebGL context loss. `destroy()` is idempotent and
+releases listeners, pointer capture, timers, textures, and GPU resources.
+
+## Scene structure
+
+```text
+Stage
+  PlaymatRoot
+    OpponentBoardRoot
+      zone backgrounds / cards / markers
+    SharedRoot
+      stadium / shared highlights
+    LocalBoardRoot
+      zone backgrounds / cards / markers
+  InteractionRoot
+    drag ghost / selection / drop highlights
+  PixiOverlayRoot
+    opened-zone card surfaces / temporary work areas
+  DebugRoot (development only)
+```
+
+Each recipient-safe `ViewCardId` maps to at most one `CardView` in a registry. A `CardView`
+is a rendering object, never the data model. It contains sprite/container
+references and the last render descriptor needed for diffing. When a card moves,
+the registry reparents or animates the existing view; it does not destroy and
+reload the image because its zone index changed.
+
+Counters and conditions are child views keyed by their card ID and marker type.
+Evolution/attachment layouts derive from projected play stacks. Z-order is a pure
+function of zone, relationship order, board orientation, and drag/popup state.
+
+## Renderer systems
+
+Keep systems small and explicit:
+
+| System                | Responsibility                                                                                    |
+| --------------------- | ------------------------------------------------------------------------------------------------- |
+| `BoardLayout`         | Converts normalized parity geometry, viewport, side heights, and board flip into world transforms |
+| `CardViewRegistry`    | Creates/reuses/releases stable-ID card views and applies render descriptors                       |
+| `ZoneViewSystem`      | Outlines, covers, counts, ordered roots, opened-zone layout, and highlights                       |
+| `RelationshipLayout`  | Evolution/attachment offsets and child z-order                                                    |
+| `MarkerViewSystem`    | Damage, condition, ability, VSTAR/GX, rotation, and visible annotations                           |
+| `InteractionSystem`   | Hit testing, selection, pointer capture, drag ghost, drop candidate, double/right click           |
+| `AnimationSystem`     | Short parity-preserving transitions and completion/cancellation                                   |
+| `TextureManager`      | Resolution selection, fetch/deduplication, leases, fallback, LRU eviction, and metrics            |
+| `RenderScheduler`     | Coalesced invalidation and temporary animation/drag frame loop                                    |
+| `OverlayAnchorSystem` | Converts card/zone world bounds to DOM screen coordinates                                         |
+| `AccessibilityBridge` | Maintains semantic focus targets, labels, and live announcements outside the canvas               |
+| `Diagnostics`         | Development-only bounds, IDs, frame timing, allocations, and texture budget                       |
+
+Systems communicate through typed calls/events and have `mount`, `update`, and
+`destroy` lifecycles. A monolithic engine class modeled after the full Quinoa
+engine is explicitly out of scope.
+
+## Layout migration
+
+Phase 1 extracts current CSS geometry from `index.css`, `self-containers.css`,
+and `opp-containers.css` into versioned parity data:
+
+- canonical desktop viewport(s);
+- side-panel width and board viewport;
+- normalized bounds for each zone, label, outline, and shared stadium;
+- card aspect ratio, scale, overlap, fan, stack and attachment offsets;
+- local/opponent transform and flip behavior;
+- draggable self/opponent split-resizer behavior; and
+- popup/menu/preview anchors and clipping.
+
+`BoardLayout` consumes this data; logical reducers do not. The first Pixi spike
+must render a fixed fixture over a legacy screenshot and demonstrate acceptable
+geometry before broader renderer work.
+
+The current duplicated self/opponent CSS becomes one declarative player-board
+layout with transforms for top/bottom orientation. Any asymmetry found during
+characterization is represented explicitly instead of assumed to be duplication.
+
+Initial repository measurements that the Phase 1 extractor must confirm include
+a roughly 75.5%-wide play area and 24%-wide right sidebar, two half-height player
+boards, and a 180-degree opponent iframe transform. Each half includes a
+bottom-30% horizontally scrolling hand, a lower bench, central active zone,
+vertical prizes, upper deck/lost-zone covers, lower discard cover, and an offset
+free board. These measurements are evidence, not hard-coded truth until captured
+at all reference viewports.
+
+Board flip is not a simple stage rotation: it changes which player is at the
+bottom, blue/red chrome, resize behavior, stadium/card readability, and which
+hand is concealed. Full-screen playmat hides sidebar/tabs/deck workspace and
+expands the play surface. Both interactions require structured geometry and
+semantic tests.
+
+## State-to-view synchronization
+
+On each authoritative view publication:
+
+1. Build compact render descriptors keyed by stable IDs.
+2. Diff maps and zone/relationship order, not serialized whole objects.
+3. Create views for newly visible IDs; update changed descriptors; reparent moved
+   views; release disappeared or newly concealed views.
+4. Apply presentation events only when their revision matches the view they
+   describe.
+5. Reconcile selection, menus, preview, and drag against the new view. If a
+   target disappeared or a pending command was rejected, cancel cleanly.
+6. Invalidate one frame; continue frames only while drag/animation requires it.
+
+The renderer must not reorder canonical zones to make the screen look correct.
+Layout derives a visible ordering without changing state.
+
+## Input behavior
+
+### Pointer input
+
+- Use Pointer Events and explicit pointer capture so leaving the canvas or moving
+  over overlays does not orphan a drag.
+- Apply a small characterized movement threshold before treating a press as
+  drag, preserving click/double-click behavior.
+- Hit areas match current card and zone target geometry, including attached card
+  stacks.
+- During drag, update only presentation transforms and target highlighting.
+- On drop, resolve a stable-ID intent with source preconditions and one target
+  anchor/card ID; the application submits one command.
+- On rejection or reconnect, animate/snap the drag view back to authoritative
+  placement and announce the reason without leaving stale highlight state.
+- Context menus suppress the browser menu only over valid game targets.
+- Double-click on active/bench preserves the expanded whole-stack view and marker
+  behavior; double-click elsewhere preserves full-resolution preview behavior.
+- Direct marker/counter editing uses one temporary React input anchored to the
+  Pixi marker rather than a listener-bearing input per display object.
+
+### Keyboard input
+
+- A central keymap replaces scattered global handlers but preserves every
+  characterized shortcut and modifier.
+- Shortcuts do not fire while typing in inputs, textareas, editable elements, or
+  dialogs unless current behavior deliberately requires it.
+- The selected stable card ID, not zone/index, is the shortcut target.
+- `KeyboardEvent.code`/`key` and Alt/Shift behavior are tested across supported
+  browsers. Known legacy mistakes are labeled before correction rather than
+  silently copied.
+- Shortcuts and menu items invoke the same semantic intent functions.
+
+### Local versus networked feedback
+
+Hover, selection, initial drag, popup open/close, and preview are instant/local.
+Domain changes reconcile against authority. A safe optimistic overlay may show a
+card at its proposed location while a move is pending, but canonical view state
+is never mutated. Randomized actions, hidden-information actions, undo, and
+multi-card transactions are not predicted unless a later ADR proves them safe.
+
+## React application state
+
+Use one small client controller/store outside React that exposes selectors for:
+
+- connection/session status;
+- latest view state and revision;
+- bounded pending command records;
+- room presence and role;
+- chat messages with bounded history; and
+- local presentation/preferences.
+
+React components subscribe narrowly. No component receives the entire canonical
+state because the browser never has it in multiplayer. Do not mirror the Pixi
+display tree in React state. Derived selectors are memoized only after profiling
+identifies a need.
+
+The deck builder ports the existing pure `.mjs` core into `deck-core`, preserving
+the current UI. Its state must distinguish main and alternate/opponent deck dirty
+status, validate empty/unload transitions, and use a robust CSV parser/serializer
+with compatibility fixtures.
+
+## Rendering cadence and performance
+
+PTCG Sim is a discrete tabletop, so a permanent 60 Hz game loop is wasteful.
+
+- Idle: render only after invalidation, resize, asset completion, or context
+  recovery.
+- Drag/animation: use `requestAnimationFrame` until the interaction settles.
+- Network publication: coalesce all changes for the revision into one render.
+- Resize: debounce layout computation to a frame, but keep the resizer visually
+  responsive.
+- Hidden tab: stop animation work and resume from state, never simulated elapsed
+  frames.
+
+Performance tests record frame time, long tasks, texture bytes, display-object
+count, fetch count, heap trend, and update time. Budgets and hardware profiles are
+defined in the verification document.
+
+## Texture and asset strategy
+
+Card images are the dominant memory and reliability risk.
+
+1. Use controlled resolution tiers: board thumbnail/standard and full-resolution
+   preview. Never upload full-resolution textures for every card by default.
+2. Deduplicate loads by normalized definition/image variant, including language.
+3. Use reference-counted leases plus a byte-aware LRU cache. A released texture
+   can stay warm only within the configured GPU budget.
+4. Abort obsolete requests and limit fetch/decode concurrency.
+5. Display the existing card back or a stable placeholder immediately; failures
+   are retryable and do not block logical actions.
+6. Preload only the imminent visible set and small likely-next set, not both full
+   decks at maximum resolution.
+7. Instrument cache hits, decodes, bytes, failures, and evictions.
+8. Use a controlled image proxy/CDN or verified CORS-capable allowlist so WebGL
+   uploads and screenshots are reliable. Validate content type, dimensions,
+   response size, and upstream URL to avoid proxy abuse.
+9. Recover after WebGL context loss by rebuilding GPU views from current view
+   state and cache/source descriptors; never ask the game core to repair state.
+10. Fall back to Canvas rendering or a clear compatibility message only if the
+    approved browser matrix requires it and the spike demonstrates viability.
+
+The spike must explicitly cover every supported Limitless/language/native-builder
+host, redirects, card backs/backgrounds, and user-supplied URLs with and without
+CORS. If arbitrary URLs remain a guaranteed feature, choose and security-test one
+of: a hardened proxy; a DOM image fallback for non-uploadable cards; or a
+documented hybrid renderer. Silently losing a formerly valid custom image is not
+parity. Opponent-controlled direct URLs also leak participant network metadata,
+so visual compatibility cannot be the only decision driver.
+
+A hidden card must never trigger a face-image request. Private textures and async
+loads are scoped to renderer generation, room/session, viewer role, view-card ID,
+and visibility generation; a reused sprite must receive its back before it can
+display, and old private textures are purged on role/room transition.
+
+The provisional desktop target is 128 MiB for board-tier textures plus 16 MiB for
+the tiny preview cache, configurable and validated on actual fixtures. If the
+representative maximum board cannot fit, the resolution/cache strategy changes
+before raising the budget.
+
+## Accessibility preservation and minimum improvement
+
+A canvas removes implicit DOM semantics, so v2 must not regress keyboard and
+screen-reader access that exists through current controls.
+
+- All React controls keep native elements, labels, focus order, and visible focus.
+- Context menus/dialogs use correct focus trapping, Escape behavior, and return
+  focus to the selected card/zone.
+- The accessibility bridge provides a compact, virtualized DOM representation of
+  selectable visible cards/zones with labels, actions, and roving focus; it is not
+  a second visual renderer.
+- Chat, command rejection, coin flip, turn, attack/pass, reconnect, and import
+  errors use a bounded live region.
+- Reduced-motion preference shortens/removes nonessential transitions without
+  changing command timing.
+- High-contrast/dark settings continue to affect outlines and controls according
+  to characterized behavior.
+
+Accessibility work here restores semantics lost by moving images into canvas; it
+is part of parity and reliability, not a visual redesign.
+
+## Visual parity verification
+
+At fixed viewport/device-pixel-ratio/font/asset fixtures:
+
+- compare full-screen screenshots for the baseline states;
+- compare extracted zone/card bounding boxes and z-order;
+- test popup and context-menu screen anchors near every edge;
+- exercise drag/drop videos or frame captures for source opacity, ghost,
+  highlight, final placement, and cancellation;
+- test board flip and both split resizers across their range;
+- verify text/control DOM snapshots separately from the canvas; and
+- manually review anti-aliasing differences that exceed automated thresholds.
+
+A blanket large screenshot threshold is forbidden because it can hide shifted
+cards. Use region-specific thresholds plus geometry assertions. Any intentional
+visual difference requires a parity exception decision.
+
+## Renderer spike exit gate
+
+Before implementing the whole board, a vertical slice must demonstrate:
+
+- the empty playmat and a representative mid-game fixture at parity geometry;
+- at least 60 distinct card sprites with stacks, damage, conditions, face-down
+  cards, attachments/evolution, shared stadium, and an opened zone;
+- click, double-click, right-click menu, shortcut, drag/drop, board flip, and
+  resize behavior;
+- on-demand idle rendering and smooth interaction on the baseline device;
+- resolution-tier texture loading, eviction, failure fallback, and no unbounded
+  memory growth through repeated setup/reset;
+- context-loss recovery with the same logical state; and
+- clean mount/destroy through 100 cycles without duplicate listeners/resources.
+
+The same fixture and interaction set runs in a stable-keyed React DOM renderer.
+Select Pixi only if it passes every gate and materially improves measured
+interaction consistency, CPU time, or memory enough to justify CORS,
+accessibility, context-recovery, and dual-layer complexity. Failure does not mean
+abandoning the rebuild: the normalized DOM renderer can win while the core/server
+design remains unchanged.
+
+The spike also exercises renderer unavailable at startup, permanent/repeated
+context loss, silent GPU eviction on resume, a temporarily 0×0 host, DPR change,
+stale image completion after card/room/renderer destruction, oversized/corrupt
+images, state replacement mid-drag/menu/edit, overlay-anchor movement after
+resize/fullscreen, and private texture eviction/role change.

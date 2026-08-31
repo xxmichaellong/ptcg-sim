@@ -1,5 +1,4 @@
 node_modules/
 packages/*/lib/
 apps/*/dist/
-*.tsbuildinfo
-server/database/db.sqlite
+client/src/assets/

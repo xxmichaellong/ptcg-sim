@@ -1,0 +1,10 @@
+# Legacy characterization locks
+
+These tests freeze externally visible v1 surfaces while v2 is developed beside
+it. They deliberately read the legacy source as data; they do not import its DOM
+modules or make the new engine depend on v1.
+
+If a legacy action, replay exception, or key binding changes, update the manifest
+only after recording its explicit preserve/fix decision in
+`docs/v2-rebuild/LEGACY_ACTION_MAP.md`. These inventory locks are the first layer;
+scenario fixtures will add state, message, visibility, and ordering outcomes.
