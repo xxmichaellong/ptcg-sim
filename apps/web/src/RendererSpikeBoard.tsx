@@ -4,6 +4,7 @@ import {
   DEFAULT_BOARD_PRESENTATION,
   type BoardIntent,
   type BoardPresentation,
+  type BoardPresentationUpdate,
   type BoardRenderer,
   type BoardRendererStatus,
 } from '@ptcgsim/renderer-contract';
@@ -71,6 +72,14 @@ export const RendererSpikeBoard = ({
             setPresentation((current) => ({
               ...current,
               selectedCardId: intent.cardId,
+            }));
+          }
+        },
+        emitPresentationUpdate: (update: BoardPresentationUpdate) => {
+          if (update.kind === 'DragChanged') {
+            setPresentation((current) => ({
+              ...current,
+              drag: update.drag,
             }));
           }
         },

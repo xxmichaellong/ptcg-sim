@@ -77,6 +77,7 @@ describe('React DOM board renderer', () => {
     const statuses: BoardRendererStatus[] = [];
     const renderer = new ReactDomBoardRenderer({
       emitIntent: (intent) => intents.push(intent),
+      emitPresentationUpdate: vi.fn(),
       reportError: vi.fn(),
       reportStatus: (status) => statuses.push(status),
     });
@@ -122,6 +123,7 @@ describe('React DOM board renderer', () => {
   it('rejects stale scenes and presentation events for the wrong revision', async () => {
     const renderer = new ReactDomBoardRenderer({
       emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
       reportError: vi.fn(),
     });
     const host = document.createElement('div');
@@ -146,6 +148,7 @@ describe('React DOM board renderer', () => {
     for (let index = 0; index < 10; index += 1) {
       const renderer = new ReactDomBoardRenderer({
         emitIntent: vi.fn(),
+        emitPresentationUpdate: vi.fn(),
         reportError: vi.fn(),
       });
       await mountInAct(renderer, host, createScene(index));

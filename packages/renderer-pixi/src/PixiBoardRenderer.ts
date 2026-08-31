@@ -1,6 +1,7 @@
 import 'pixi.js/accessibility';
 
 import {
+  BoardDragController,
   DEFAULT_BOARD_PREFERENCES,
   type BoardPreferences,
   type BoardPresentation,
@@ -45,6 +46,7 @@ export interface PixiBoardRendererOptions {
 export class PixiBoardRenderer implements BoardRenderer {
   private readonly adapters: BoardRendererAdapters;
   private readonly createApplication: () => Application;
+  private readonly dragController: BoardDragController;
   private readonly textures = new CardTextureRegistry<Texture>({
     placeholder: Texture.WHITE,
     load: (url) => Assets.load<Texture>(url),
@@ -71,6 +73,7 @@ export class PixiBoardRenderer implements BoardRenderer {
     options: PixiBoardRendererOptions = {}
   ) {
     this.adapters = adapters;
+    this.dragController = new BoardDragController(adapters);
     this.createApplication =
       options.createApplication ?? (() => new Application());
   }
@@ -117,6 +120,7 @@ export class PixiBoardRenderer implements BoardRenderer {
       }
     }
     this.scene = scene;
+    this.dragController.reconcile(scene);
     if (this.app && this.layers) {
       this.syncScene();
       this.renderOnce();
@@ -127,6 +131,8 @@ export class PixiBoardRenderer implements BoardRenderer {
     this.requireScene();
     this.presentation = presentation;
     if (this.app && this.layers) {
+      this.app.canvas.dataset.dragging = presentation.drag ? 'true' : 'false';
+      this.app.canvas.dataset.dragTarget = presentation.drag?.targetId ?? '';
       for (const view of this.cardViews.values()) this.applyCardView(view);
       this.renderOnce();
     }
@@ -137,6 +143,12 @@ export class PixiBoardRenderer implements BoardRenderer {
     if (!this.app) return;
     this.app.renderer.resolution = viewport.devicePixelRatio;
     this.app.renderer.resize(viewport.width, viewport.height);
+    this.app.stage.hitArea = new Rectangle(
+      0,
+      0,
+      viewport.width,
+      viewport.height
+    );
     this.renderOnce();
   }
 
@@ -157,6 +169,7 @@ export class PixiBoardRenderer implements BoardRenderer {
     this.mounted = false;
     this.generation += 1;
     this.detachContextLossListener();
+    this.dragController.destroy();
     this.destroyApplication();
     this.textures.destroy();
     this.host = null;
@@ -182,7 +195,7 @@ export class PixiBoardRenderer implements BoardRenderer {
         backgroundAlpha: 0,
         preference: 'webgl',
         textureGCActive: true,
-        eventFeatures: { globalMove: false },
+        eventFeatures: { globalMove: true },
       });
       this.assertLiveGeneration(generation);
     } catch (error) {
@@ -192,6 +205,17 @@ export class PixiBoardRenderer implements BoardRenderer {
     this.app = app;
     app.ticker.stop();
     app.stage.sortableChildren = true;
+    app.stage.eventMode = 'static';
+    app.stage.hitArea = new Rectangle(
+      0,
+      0,
+      scene.viewport.width,
+      scene.viewport.height
+    );
+    app.stage.on('globalpointermove', this.handleGlobalPointerMove);
+    app.stage.on('pointerup', this.handlePointerUp);
+    app.stage.on('pointerupoutside', this.handlePointerUp);
+    app.stage.on('pointercancel', this.handlePointerCancel);
     this.layers = this.createLayers(app.stage);
     app.canvas.setAttribute('aria-label', 'Pokémon Trading Card Game board');
     app.canvas.style.display = 'block';
@@ -267,9 +291,12 @@ export class PixiBoardRenderer implements BoardRenderer {
         });
         sprite.anchor.set(0.5);
         sprite.eventMode = 'static';
-        sprite.cursor = 'pointer';
+        sprite.cursor = 'grab';
         sprite.accessible = true;
         sprite.on('click', (event: FederatedPointerEvent) => {
+          if (this.dragController.consumeSuppressedClick(view!.descriptor.id)) {
+            return;
+          }
           if (event.detail >= 2) {
             this.adapters.emitIntent({
               kind: 'CardPreviewRequested',
@@ -288,6 +315,21 @@ export class PixiBoardRenderer implements BoardRenderer {
             cardId: view!.descriptor.id,
           })
         );
+        sprite.on('pointerdown', (event: FederatedPointerEvent) => {
+          if (
+            this.dragController.pointerDown(
+              this.requireScene(),
+              view!.descriptor.id,
+              this.pointerInput(event)
+            )
+          ) {
+            try {
+              this.app?.canvas.setPointerCapture(event.pointerId);
+            } catch {
+              // Pixi's global/up-outside events remain the fallback.
+            }
+          }
+        });
         view = { sprite, descriptor };
         this.cardViews.set(id, view);
         layers.cards.addChild(sprite);
@@ -349,6 +391,11 @@ export class PixiBoardRenderer implements BoardRenderer {
       this.app.canvas.dataset.zoneViews = String(scene.zones.length);
       this.app.canvas.dataset.revision = String(scene.revision);
       this.app.canvas.dataset.rendererGeneration = String(this.generation);
+      this.app.canvas.dataset.dragging = this.presentation?.drag
+        ? 'true'
+        : 'false';
+      this.app.canvas.dataset.dragTarget =
+        this.presentation?.drag?.targetId ?? '';
     }
   }
 
@@ -371,7 +418,11 @@ export class PixiBoardRenderer implements BoardRenderer {
       descriptor.bounds.height
     );
     sprite.eventMode = descriptor.interactive ? 'static' : 'none';
-    sprite.cursor = descriptor.interactive ? 'pointer' : 'default';
+    sprite.cursor = descriptor.interactive
+      ? dragging
+        ? 'grabbing'
+        : 'grab'
+      : 'default';
     sprite.accessible = descriptor.interactive;
     sprite.accessibleTitle = descriptor.label;
     sprite.accessibleHint = 'Select card';
@@ -385,6 +436,49 @@ export class PixiBoardRenderer implements BoardRenderer {
       this.app.render();
     } catch (error) {
       this.adapters.reportError(error);
+    }
+  }
+
+  private pointerInput(event: FederatedPointerEvent) {
+    return {
+      pointerId: event.pointerId,
+      x: event.global.x,
+      y: event.global.y,
+      button: event.button,
+    };
+  }
+
+  private readonly handleGlobalPointerMove = (
+    event: FederatedPointerEvent
+  ): void => {
+    this.dragController.pointerMove(
+      this.requireScene(),
+      this.pointerInput(event)
+    );
+  };
+
+  private readonly handlePointerUp = (event: FederatedPointerEvent): void => {
+    this.dragController.pointerUp(
+      this.requireScene(),
+      this.pointerInput(event)
+    );
+    this.releasePointerCapture(event.pointerId);
+  };
+
+  private readonly handlePointerCancel = (
+    event: FederatedPointerEvent
+  ): void => {
+    this.dragController.cancel(event.pointerId);
+    this.releasePointerCapture(event.pointerId);
+  };
+
+  private releasePointerCapture(pointerId: number): void {
+    try {
+      if (this.app?.canvas.hasPointerCapture(pointerId)) {
+        this.app.canvas.releasePointerCapture(pointerId);
+      }
+    } catch {
+      // Capture can already be gone after cancellation or context loss.
     }
   }
 
@@ -405,6 +499,7 @@ export class PixiBoardRenderer implements BoardRenderer {
   private readonly handleContextLost = (event: Event): void => {
     event.preventDefault();
     if (this.destroyed || this.recoveryTask) return;
+    this.dragController.cancel();
     this.recoveryTask = this.recoverFromContextLoss().finally(() => {
       this.recoveryTask = null;
     });

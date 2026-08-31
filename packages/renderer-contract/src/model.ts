@@ -134,8 +134,14 @@ export type BoardPresentationEvent =
       readonly result: 'heads' | 'tails';
     };
 
+export type BoardPresentationUpdate = {
+  readonly kind: 'DragChanged';
+  readonly drag: BoardPresentation['drag'];
+};
+
 export interface BoardRendererAdapters {
   readonly emitIntent: (intent: BoardIntent) => void;
+  readonly emitPresentationUpdate: (update: BoardPresentationUpdate) => void;
   readonly reportError: (error: unknown) => void;
   readonly reportStatus?: (status: BoardRendererStatus) => void;
 }

@@ -66,6 +66,9 @@ Rive, or game-specific systems.
 - board flip/opponent rotation, the asymmetric legacy free-board placement, and
   top-index-zero cover ordering;
 - stable-ID scene diffing and topmost deterministic hit testing;
+- one shared drag gesture state machine with a five-pixel threshold, preserved
+  grab offset, stable parent/zone target resolution, cancellation, and
+  click-after-drag suppression;
 - face/back URL selection that cannot request a definition image for a
   concealed or face-down card; and
 - a deterministic 61-card competitive fixture with covers, hands, prizes,
@@ -84,7 +87,9 @@ HTML mock. It:
 - reuses card elements across scene revisions;
 - uses native buttons and images for board card semantics;
 - rejects older revisions and mismatched presentation events;
-- emits the shared semantic interaction intents; and
+- emits the shared semantic interaction intents;
+- uses Pointer Events and pointer capture while keeping drag position entirely
+  in presentation state; and
 - has automated repeated mount/destroy coverage under React Strict Mode.
 
 This is the lower-complexity fallback and is expected to have the closest image,
@@ -104,6 +109,9 @@ CORS, browser-menu, and native accessibility behavior to v1.
   after concealment or a role/room transition;
 - renders a safe placeholder on load failure;
 - emits the same card/zone intents as the DOM candidate;
+- uses one stage-level global move listener plus canvas pointer capture for drag,
+  avoiding per-card global work while sharing the DOM candidate's gesture
+  semantics;
 - reconstructs the display tree from the current immutable scene after WebGL
   context loss, with a three-attempt recovery ceiling; and
 - has idempotent teardown of listeners, sprites, layers, application, and asset
@@ -125,9 +133,10 @@ v1 route. It keeps the v1 75.5% board / 24% sidebar split and mounts the same
 The renderer candidates are dynamically imported, so loading one does not force
 the other candidate into the initial route. Current production build evidence:
 
-- initial application chunk: approximately 65.5 KiB gzip;
-- normalized DOM adapter chunk: approximately 1.9 KiB gzip; and
-- raw Pixi adapter entry chunk: approximately 78.3 KiB gzip, plus lazily loaded
+- initial application chunk: approximately 65.7 KiB gzip;
+- shared drag controller chunk: approximately 0.9 KiB gzip;
+- normalized DOM adapter chunk: approximately 2.5 KiB gzip; and
+- raw Pixi adapter entry chunk: approximately 78.8 KiB gzip, plus lazily loaded
   Pixi implementation chunks.
 
 These are build outputs, not a final route-size accounting; the full transitive
@@ -144,16 +153,16 @@ chunk graph will be measured in the browser evidence run.
 - Vite production build; and
 - the repository-wide v2 and 79-test legacy gates.
 
-At this checkpoint the v2 suite contains 66 passing tests across 15 files. A
+At this checkpoint the v2 suite contains 86 passing tests across 18 files. A
 separate Playwright suite also passes three real Chromium 151 scenarios:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
-   hand geometry, emits a card intent, produces a screenshot, and has no runtime
-   errors.
+   hand geometry, emits card and pointer-captured stable-target drag intents,
+   produces a screenshot, and has no runtime errors.
 2. Pixi creates one live WebGL canvas with 61 card views, handles a real pointer
-   click, loses its actual WebGL2 context through `WEBGL_lose_context`, rebuilds
-   to a later renderer generation with all 61 views, produces a post-recovery
-   screenshot, and has no runtime errors.
+   click and pointer-captured drag, loses its actual WebGL2 context through
+   `WEBGL_lose_context`, rebuilds to a later renderer generation with all 61
+   views, produces a post-recovery screenshot, and has no runtime errors.
 3. Three Pixi → DOM → Pixi transitions leave exactly one selected renderer each
    time with no runtime errors or accumulated DOM/canvas views.
 
@@ -178,8 +187,8 @@ browser/device run:
 
 - fixed-viewport overlays against legacy screenshots and structured 2 px / 1%
   geometry thresholds;
-- full click, double-click, right-click, pointer-capture drag/drop, flip, split
-  resize, zone browser, keyboard, and DOM-overlay anchor parity;
+- full double-click, right-click, flip, split resize, zone browser, keyboard,
+  DOM-overlay anchor parity, and drag rejection/reconnect snap-back behavior;
 - actual external card/image hosts, redirects, CORS failures, oversized/corrupt
   images, and the proxy/hybrid policy in ADR-013;
 - WebGL unavailable at startup, repeated/permanent context loss, background
