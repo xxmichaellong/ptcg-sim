@@ -1,4 +1,5 @@
 node_modules/
 packages/*/lib/
+apps/*/lib/
 apps/*/dist/
 client/src/assets/

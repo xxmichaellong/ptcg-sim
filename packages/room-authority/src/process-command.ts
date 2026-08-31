@@ -12,6 +12,7 @@ import {
 } from '@ptcgsim/protocol';
 
 import { projectRecipient } from './identity-registry.js';
+import { assertAuthoritySnapshotInvariants } from './invariants.js';
 import type {
   AuthorityDelivery,
   AuthorityDependencies,
@@ -135,6 +136,7 @@ export const processAuthorityCommand = async (
   envelope: CommandEnvelope,
   dependencies: AuthorityDependencies
 ): Promise<AuthorityProcessResult> => {
+  assertAuthoritySnapshotInvariants(current);
   const session = current.sessions[envelope.sessionId];
   if (!session || !session.active) {
     return immediateRejection(current, envelope, 'session_superseded');
@@ -243,6 +245,7 @@ export const processAuthorityCommand = async (
     dependencies.policy.maximumRecentOutcomesPerSession
   );
   let candidate: RoomAuthoritySnapshot = {
+    schemaVersion: current.schemaVersion,
     state: accepted
       ? cloneMatchState(nextState)
       : cloneMatchState(current.state),
@@ -266,6 +269,8 @@ export const processAuthorityCommand = async (
     candidate = projected.snapshot;
     publications = projected.deliveries;
   }
+
+  assertAuthoritySnapshotInvariants(candidate);
 
   await dependencies.persistence.commit({
     expectedRevision: current.state.revision,

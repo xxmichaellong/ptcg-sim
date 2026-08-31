@@ -67,6 +67,31 @@ export const WireGameCommandSchema = v.variant('type', [
     count: v.pipe(PositiveIntegerSchema, v.maxValue(200)),
   }),
   v.object({
+    type: v.literal('MoveZoneContents'),
+    sourceZoneId: IdentifierSchema,
+    destinationZoneId: IdentifierSchema,
+  }),
+  v.object({
+    type: v.literal('ShuffleZoneIntoDeck'),
+    sourceZoneId: IdentifierSchema,
+  }),
+  v.object({
+    type: v.literal('ShuffleZoneToDeckBottom'),
+    sourceZoneId: IdentifierSchema,
+  }),
+  v.object({
+    type: v.literal('DiscardHandAndDraw'),
+    count: v.pipe(NonNegativeIntegerSchema, v.maxValue(200)),
+  }),
+  v.object({
+    type: v.literal('ShuffleHandIntoDeckAndDraw'),
+    count: v.pipe(NonNegativeIntegerSchema, v.maxValue(200)),
+  }),
+  v.object({
+    type: v.literal('ShuffleHandToDeckBottomAndDraw'),
+    count: v.pipe(NonNegativeIntegerSchema, v.maxValue(200)),
+  }),
+  v.object({
     type: v.literal('SetDamage'),
     stackId: IdentifierSchema,
     damage: v.nullable(v.pipe(NonNegativeIntegerSchema, v.maxValue(9_990))),

@@ -55,6 +55,22 @@ export type DomainEvent =
       readonly concealedCardIds: readonly CardInstanceId[];
     }
   | {
+      readonly type: 'ZoneOrdersSet';
+      readonly reason:
+        | 'move-zone-contents'
+        | 'shuffle-zone-into-deck'
+        | 'shuffle-zone-to-deck-bottom'
+        | 'discard-hand-and-draw'
+        | 'shuffle-hand-into-deck-and-draw'
+        | 'shuffle-hand-to-deck-bottom-and-draw';
+      readonly zones: readonly {
+        readonly zoneId: ZoneId;
+        readonly expectedCardIds: readonly CardInstanceId[];
+        readonly cardIds: readonly CardInstanceId[];
+      }[];
+      readonly concealedCardIds: readonly CardInstanceId[];
+    }
+  | {
       readonly type: 'CardMovedToPlay';
       readonly cardId: CardInstanceId;
       readonly expectedSourceZoneId: ZoneId;

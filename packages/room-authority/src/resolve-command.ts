@@ -175,6 +175,47 @@ export const resolveWireCommand = (
         accepted: true,
         command: { type: 'DrawCards', playerId: actorId, count: wire.count },
       };
+    case 'MoveZoneContents': {
+      const source = state.zones[wire.sourceZoneId];
+      const destination = state.zones[wire.destinationZoneId];
+      if (!source || !destination) return rejected('stale_reference');
+      if (source.ownerId !== actorId || destination.ownerId !== actorId) {
+        return rejected('unauthorized');
+      }
+      return {
+        accepted: true,
+        command: {
+          type: 'MoveZoneContents',
+          sourceZoneId: asZoneId(wire.sourceZoneId),
+          destinationZoneId: asZoneId(wire.destinationZoneId),
+        },
+      };
+    }
+    case 'ShuffleZoneIntoDeck':
+    case 'ShuffleZoneToDeckBottom': {
+      const source = state.zones[wire.sourceZoneId];
+      if (!source) return rejected('stale_reference');
+      if (source.ownerId !== actorId) return rejected('unauthorized');
+      return {
+        accepted: true,
+        command: {
+          type: wire.type,
+          playerId: actorId,
+          sourceZoneId: asZoneId(wire.sourceZoneId),
+        },
+      };
+    }
+    case 'DiscardHandAndDraw':
+    case 'ShuffleHandIntoDeckAndDraw':
+    case 'ShuffleHandToDeckBottomAndDraw':
+      return {
+        accepted: true,
+        command: {
+          type: wire.type,
+          playerId: actorId,
+          count: wire.count,
+        },
+      };
     case 'SetDamage':
     case 'SetSpecialCondition':
     case 'SetAbilityUsed':

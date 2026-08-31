@@ -12,6 +12,8 @@ import type {
   ProjectionIdentityState,
 } from './identity-registry.js';
 
+export const AUTHORITY_SNAPSHOT_SCHEMA_VERSION = 1 as const;
+
 export type AuthorityRejectionCode =
   | 'invalid_message'
   | 'invalid_sequence'
@@ -41,6 +43,7 @@ export interface AuthoritySession {
 }
 
 export interface RoomAuthoritySnapshot {
+  readonly schemaVersion: typeof AUTHORITY_SNAPSHOT_SCHEMA_VERSION;
   readonly state: MatchState;
   readonly identities: ProjectionIdentityState;
   readonly sessions: Readonly<Record<string, AuthoritySession>>;
@@ -58,6 +61,10 @@ export interface AuthorityPersistence {
   readonly commit: (
     transaction: PersistedAuthorityTransaction
   ) => Promise<void>;
+}
+
+export interface AuthoritySnapshotStore extends AuthorityPersistence {
+  readonly load: () => Promise<RoomAuthoritySnapshot | undefined>;
 }
 
 export interface AuthorityPolicy {

@@ -363,6 +363,64 @@ export const applyEvent = (
         },
       };
     }
+    case 'ZoneOrdersSet': {
+      const zoneIds = event.zones.map((zone) => zone.zoneId);
+      if (new Set(zoneIds).size !== zoneIds.length) {
+        throw new Error('Zone order event contains a duplicate zone');
+      }
+      const before: CardInstanceId[] = [];
+      const after: CardInstanceId[] = [];
+      for (const update of event.zones) {
+        const zone = requireZone(state, update.zoneId);
+        if (
+          zone.cardIds.length !== update.expectedCardIds.length ||
+          zone.cardIds.some(
+            (cardId, index) => cardId !== update.expectedCardIds[index]
+          )
+        ) {
+          throw new Error(`Zone ${zone.id} does not match expected order`);
+        }
+        before.push(...zone.cardIds);
+        after.push(...update.cardIds);
+      }
+      const sortedBefore = [...before].sort();
+      const sortedAfter = [...after].sort();
+      if (
+        sortedBefore.length !== sortedAfter.length ||
+        sortedBefore.some((cardId, index) => cardId !== sortedAfter[index])
+      ) {
+        throw new Error('Zone order event changes the affected card set');
+      }
+      const concealed = new Set(event.concealedCardIds);
+      if ([...concealed].some((cardId) => !after.includes(cardId))) {
+        throw new Error(
+          'Zone order event conceals a card outside affected zones'
+        );
+      }
+      const zones = { ...state.zones };
+      for (const update of event.zones) {
+        const zone = requireZone(state, update.zoneId);
+        zones[zone.id] = { ...zone, cardIds: [...update.cardIds] };
+      }
+      return {
+        ...state,
+        cards: Object.fromEntries(
+          Object.entries(state.cards).map(([cardId, card]) => [
+            cardId,
+            concealed.has(card.id)
+              ? incrementVisibility({ ...card, face: 'up' as const })
+              : card,
+          ])
+        ),
+        zones,
+        visibility: {
+          ...state.visibility,
+          publicCardIds: state.visibility.publicCardIds.filter(
+            (cardId) => !concealed.has(cardId)
+          ),
+        },
+      };
+    }
     case 'CardMovedToPlay': {
       const source = requireZone(state, event.expectedSourceZoneId);
       if (!source.cardIds.includes(event.cardId)) {

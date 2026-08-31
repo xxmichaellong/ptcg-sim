@@ -51,6 +51,15 @@ const validatePermutation = <Value>(
   return remaining.length === 0;
 };
 
+const validateRequestedCount = (count: number): CommandRejection | null =>
+  Number.isSafeInteger(count) && count >= 0 && count <= 200
+    ? null
+    : reject('invalid_command', 'Card count must be an integer from 0 to 200');
+
+const uniqueCardIds = (
+  cardIds: readonly CardInstanceId[]
+): readonly CardInstanceId[] => [...new Set(cardIds)];
+
 const decideLoadDeck = (
   state: MatchState,
   command: Extract<GameCommand, { type: 'LoadDeck' }>,
@@ -322,6 +331,227 @@ export const decideCommand = (
           0,
           Math.min(command.count, deck.cardIds.length)
         ),
+      });
+    }
+    case 'MoveZoneContents': {
+      const source = state.zones[command.sourceZoneId];
+      const destination = state.zones[command.destinationZoneId];
+      if (!source || !destination) {
+        return reject('not_found', 'Source or destination zone does not exist');
+      }
+      if (source.id === destination.id) {
+        return reject('invalid_command', 'Source and destination must differ');
+      }
+      if (
+        destination.kind === 'stadium' &&
+        source.cardIds.length + destination.cardIds.length > 1
+      ) {
+        return reject('precondition_failed', 'Stadium accepts one card');
+      }
+      return accept({
+        type: 'ZoneOrdersSet',
+        reason: 'move-zone-contents',
+        zones: [
+          {
+            zoneId: source.id,
+            expectedCardIds: [...source.cardIds],
+            cardIds: [],
+          },
+          {
+            zoneId: destination.id,
+            expectedCardIds: [...destination.cardIds],
+            cardIds: [...destination.cardIds, ...source.cardIds],
+          },
+        ],
+        concealedCardIds: isConcealedZone(destination)
+          ? [...source.cardIds]
+          : [],
+      });
+    }
+    case 'ShuffleZoneIntoDeck': {
+      const playerError = requirePlayer(state, command.playerId);
+      if (playerError) return playerError;
+      const source = state.zones[command.sourceZoneId];
+      const deck = state.zones[playerZoneId(command.playerId, 'deck')];
+      if (!source || !deck) return reject('not_found', 'Zone does not exist');
+      if (source.ownerId !== command.playerId) {
+        return reject('precondition_failed', 'Source is not owned by player');
+      }
+      const combined =
+        source.id === deck.id
+          ? [...deck.cardIds]
+          : [...deck.cardIds, ...source.cardIds];
+      const shuffled = context.shuffle(combined);
+      if (!validatePermutation(combined, shuffled)) {
+        return reject(
+          'invalid_command',
+          'Shuffle adapter returned an invalid permutation'
+        );
+      }
+      if (source.id === deck.id) {
+        return accept({
+          type: 'ZoneShuffled',
+          zoneId: deck.id,
+          cardOrder: shuffled,
+          concealedCardIds: shuffled,
+        });
+      }
+      return accept({
+        type: 'ZoneOrdersSet',
+        reason: 'shuffle-zone-into-deck',
+        zones: [
+          {
+            zoneId: source.id,
+            expectedCardIds: [...source.cardIds],
+            cardIds: [],
+          },
+          {
+            zoneId: deck.id,
+            expectedCardIds: [...deck.cardIds],
+            cardIds: shuffled,
+          },
+        ],
+        concealedCardIds: shuffled,
+      });
+    }
+    case 'ShuffleZoneToDeckBottom': {
+      const playerError = requirePlayer(state, command.playerId);
+      if (playerError) return playerError;
+      const source = state.zones[command.sourceZoneId];
+      const deck = state.zones[playerZoneId(command.playerId, 'deck')];
+      if (!source || !deck) return reject('not_found', 'Zone does not exist');
+      if (source.id === deck.id) {
+        return reject('invalid_command', 'Source cannot be the deck');
+      }
+      if (source.ownerId !== command.playerId) {
+        return reject('precondition_failed', 'Source is not owned by player');
+      }
+      const shuffledSource = context.shuffle(source.cardIds);
+      if (!validatePermutation(source.cardIds, shuffledSource)) {
+        return reject(
+          'invalid_command',
+          'Shuffle adapter returned an invalid permutation'
+        );
+      }
+      return accept({
+        type: 'ZoneOrdersSet',
+        reason: 'shuffle-zone-to-deck-bottom',
+        zones: [
+          {
+            zoneId: source.id,
+            expectedCardIds: [...source.cardIds],
+            cardIds: [],
+          },
+          {
+            zoneId: deck.id,
+            expectedCardIds: [...deck.cardIds],
+            cardIds: [...deck.cardIds, ...shuffledSource],
+          },
+        ],
+        concealedCardIds: shuffledSource,
+      });
+    }
+    case 'DiscardHandAndDraw': {
+      const playerError = requirePlayer(state, command.playerId);
+      if (playerError) return playerError;
+      const countError = validateRequestedCount(command.count);
+      if (countError) return countError;
+      const hand = state.zones[playerZoneId(command.playerId, 'hand')]!;
+      const deck = state.zones[playerZoneId(command.playerId, 'deck')]!;
+      const discard = state.zones[playerZoneId(command.playerId, 'discard')]!;
+      const drawCount = Math.min(command.count, deck.cardIds.length);
+      const drawn = deck.cardIds.slice(0, drawCount);
+      return accept({
+        type: 'ZoneOrdersSet',
+        reason: 'discard-hand-and-draw',
+        zones: [
+          {
+            zoneId: hand.id,
+            expectedCardIds: [...hand.cardIds],
+            cardIds: drawn,
+          },
+          {
+            zoneId: deck.id,
+            expectedCardIds: [...deck.cardIds],
+            cardIds: deck.cardIds.slice(drawCount),
+          },
+          {
+            zoneId: discard.id,
+            expectedCardIds: [...discard.cardIds],
+            cardIds: [...discard.cardIds, ...hand.cardIds],
+          },
+        ],
+        concealedCardIds: drawn,
+      });
+    }
+    case 'ShuffleHandIntoDeckAndDraw': {
+      const playerError = requirePlayer(state, command.playerId);
+      if (playerError) return playerError;
+      const countError = validateRequestedCount(command.count);
+      if (countError) return countError;
+      const hand = state.zones[playerZoneId(command.playerId, 'hand')]!;
+      const deck = state.zones[playerZoneId(command.playerId, 'deck')]!;
+      const combined = [...deck.cardIds, ...hand.cardIds];
+      const shuffled = context.shuffle(combined);
+      if (!validatePermutation(combined, shuffled)) {
+        return reject(
+          'invalid_command',
+          'Shuffle adapter returned an invalid permutation'
+        );
+      }
+      const drawCount = Math.min(command.count, shuffled.length);
+      const drawn = shuffled.slice(0, drawCount);
+      return accept({
+        type: 'ZoneOrdersSet',
+        reason: 'shuffle-hand-into-deck-and-draw',
+        zones: [
+          {
+            zoneId: hand.id,
+            expectedCardIds: [...hand.cardIds],
+            cardIds: drawn,
+          },
+          {
+            zoneId: deck.id,
+            expectedCardIds: [...deck.cardIds],
+            cardIds: shuffled.slice(drawCount),
+          },
+        ],
+        concealedCardIds: shuffled,
+      });
+    }
+    case 'ShuffleHandToDeckBottomAndDraw': {
+      const playerError = requirePlayer(state, command.playerId);
+      if (playerError) return playerError;
+      const countError = validateRequestedCount(command.count);
+      if (countError) return countError;
+      const hand = state.zones[playerZoneId(command.playerId, 'hand')]!;
+      const deck = state.zones[playerZoneId(command.playerId, 'deck')]!;
+      const shuffledHand = context.shuffle(hand.cardIds);
+      if (!validatePermutation(hand.cardIds, shuffledHand)) {
+        return reject(
+          'invalid_command',
+          'Shuffle adapter returned an invalid permutation'
+        );
+      }
+      const combined = [...deck.cardIds, ...shuffledHand];
+      const drawCount = Math.min(command.count, combined.length);
+      const drawn = combined.slice(0, drawCount);
+      return accept({
+        type: 'ZoneOrdersSet',
+        reason: 'shuffle-hand-to-deck-bottom-and-draw',
+        zones: [
+          {
+            zoneId: hand.id,
+            expectedCardIds: [...hand.cardIds],
+            cardIds: drawn,
+          },
+          {
+            zoneId: deck.id,
+            expectedCardIds: [...deck.cardIds],
+            cardIds: combined.slice(drawCount),
+          },
+        ],
+        concealedCardIds: uniqueCardIds([...shuffledHand, ...drawn]),
       });
     }
     case 'SetDamage': {

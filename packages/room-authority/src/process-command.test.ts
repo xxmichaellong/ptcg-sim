@@ -13,6 +13,7 @@ import { describe, expect, it } from 'vitest';
 
 import { emptyProjectionIdentityState } from './identity-registry.js';
 import {
+  AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
   DEFAULT_AUTHORITY_POLICY,
   type AuthorityDependencies,
   type AuthorityPersistence,
@@ -26,6 +27,7 @@ const p2 = asPlayerId('player-two');
 type CommandEnvelope = Extract<ClientMessage, { type: 'Command' }>;
 
 const createSnapshot = (): RoomAuthoritySnapshot => ({
+  schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
   state: createEmptyMatch(asMatchId('authority-test-match'), [
     {
       playerId: p1,

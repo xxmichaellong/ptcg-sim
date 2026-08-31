@@ -54,6 +54,36 @@ export type GameCommand =
       readonly count: number;
     }
   | {
+      readonly type: 'MoveZoneContents';
+      readonly sourceZoneId: ZoneId;
+      readonly destinationZoneId: ZoneId;
+    }
+  | {
+      readonly type: 'ShuffleZoneIntoDeck';
+      readonly playerId: PlayerId;
+      readonly sourceZoneId: ZoneId;
+    }
+  | {
+      readonly type: 'ShuffleZoneToDeckBottom';
+      readonly playerId: PlayerId;
+      readonly sourceZoneId: ZoneId;
+    }
+  | {
+      readonly type: 'DiscardHandAndDraw';
+      readonly playerId: PlayerId;
+      readonly count: number;
+    }
+  | {
+      readonly type: 'ShuffleHandIntoDeckAndDraw';
+      readonly playerId: PlayerId;
+      readonly count: number;
+    }
+  | {
+      readonly type: 'ShuffleHandToDeckBottomAndDraw';
+      readonly playerId: PlayerId;
+      readonly count: number;
+    }
+  | {
       readonly type: 'SetDamage';
       readonly stackId: StackId;
       readonly damage: number | null;

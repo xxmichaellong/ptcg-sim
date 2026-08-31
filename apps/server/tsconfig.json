@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "WebWorker"],
+    "outDir": "./lib",
+    "rootDir": "./src",
+    "tsBuildInfoFile": "./lib/.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.test.ts", "lib"],
+  "references": [{ "path": "../../packages/room-authority" }]
+}
