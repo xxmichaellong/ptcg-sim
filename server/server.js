@@ -9,6 +9,7 @@ import dotenv from 'dotenv';
 import sqlite3 from 'sqlite3';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { createCardFallbackHandler } from './card-fallback.js';
 
 // Handle __dirname in ES modules and adjust for client folder
 const __filename = fileURLToPath(import.meta.url);
@@ -31,6 +32,10 @@ function generateRandomKey(length) {
 
 async function main() {
   const app = express();
+  const trustProxyHops = Number(process.env.TRUST_PROXY_HOPS);
+  if (Number.isInteger(trustProxyHops) && trustProxyHops > 0) {
+    app.set('trust proxy', trustProxyHops);
+  }
   // HTTP Server Setup
   const server = http.createServer(app);
 
@@ -117,6 +122,21 @@ async function main() {
       }
     );
   });
+
+  // Same-origin proxy for the deck builder's fallback card provider (pokemontcg.io).
+  // The browser cannot call pokemontcg.io directly on its error responses: its 5xx
+  // pages omit CORS headers, so a client-side failure surfaces as an opaque
+  // "Failed to fetch". Proxying keeps the fallback same-origin and lets us attach an
+  // API key server-side (set POKEMONTCG_API_KEY for higher rate limits).
+  app.get(
+    '/api/card-fallback',
+    createCardFallbackHandler({
+      apiKey: process.env.POKEMONTCG_API_KEY,
+      perIpRateLimitMax: process.env.POKEMONTCG_PER_IP_RATE_LIMIT,
+      globalRateLimitMax: process.env.POKEMONTCG_GLOBAL_RATE_LIMIT,
+      globalDailyRateLimitMax: process.env.POKEMONTCG_GLOBAL_DAILY_LIMIT,
+    })
+  );
 
   const roomInfo = new Map();
   // Function to periodically clean up empty rooms

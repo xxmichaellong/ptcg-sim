@@ -1,5 +1,13 @@
+import { buildPokemonTcgQuery } from './pokemon-tcg-query.mjs';
+
 const HUGE_RESULT_THRESHOLD = 2000;
 const DETAIL_FETCH_LIMIT = 150;
+
+// How long the primary provider gets before we treat it as "slow" and fail over.
+// Covers tcgdex's multi-request search (summaries + per-card details + set hydration).
+export const SEARCH_TIMEOUT_MS = 4000;
+export const FALLBACK_SEARCH_TIMEOUT_MS = 7000;
+
 const tcgdexSetReleaseDateCache = new Map();
 
 function compareReleaseDate(a, b, direction = 'desc') {
@@ -7,7 +15,9 @@ function compareReleaseDate(a, b, direction = 'desc') {
   const dateB = String(b.set?.releaseDate || '');
 
   if (dateA && dateB && dateA !== dateB) {
-    return direction === 'asc' ? dateA.localeCompare(dateB) : dateB.localeCompare(dateA);
+    return direction === 'asc'
+      ? dateA.localeCompare(dateB)
+      : dateB.localeCompare(dateA);
   }
 
   if (dateA && !dateB) return direction === 'asc' ? 1 : -1;
@@ -36,14 +46,22 @@ function compareName(a, b, direction = 'asc') {
 }
 
 export function applyLocalControls(cards = [], options = {}) {
-  const { cardType = 'all', sortBy = 'releaseDate', sortDirection = 'desc' } = options;
+  const {
+    cardType = 'all',
+    sortBy = 'releaseDate',
+    sortDirection = 'desc',
+  } = options;
 
   let filtered = [...cards];
 
   if (cardType === 'pocket') {
-    filtered = filtered.filter((card) => String(card.image || '').includes('/tcgp/'));
+    filtered = filtered.filter((card) =>
+      String(card.image || '').includes('/tcgp/')
+    );
   } else if (cardType === 'tcg') {
-    filtered = filtered.filter((card) => !String(card.image || '').includes('/tcgp/'));
+    filtered = filtered.filter(
+      (card) => !String(card.image || '').includes('/tcgp/')
+    );
   }
 
   if (sortBy === 'name') {
@@ -56,7 +74,9 @@ export function applyLocalControls(cards = [], options = {}) {
 }
 
 function stripWildcards(value = '') {
-  return String(value).replace(/^\*+|\*+$/g, '').trim();
+  return String(value)
+    .replace(/^\*+|\*+$/g, '')
+    .trim();
 }
 
 // Transforms well-known user-facing suffixes into the form stored in the database.
@@ -107,24 +127,118 @@ export function resolveSearchPlan(term) {
   // LV.X: API supports ?stage=LEVEL-UP, optionally combined with ?name for the base Pokémon.
   // \b matches a word boundary so both "Torterra LV. X" and standalone "LV. X" are caught.
   if (/\bLV\. X$/i.test(term)) {
-    return { type: 'stage', stage: 'LEVEL-UP', baseName: term.replace(/\s*\bLV\. X$/i, '').trim() };
+    return {
+      type: 'stage',
+      stage: 'LEVEL-UP',
+      baseName: term.replace(/\s*\bLV\. X$/i, '').trim(),
+    };
   }
 
   // EX / GX: the database uses both "-EX"/"-GX" and " EX"/" GX" inconsistently.
   // Search both forms and merge the results.
-  if (/-EX$/i.test(term)) return { type: 'name', queries: [term, term.replace(/-EX$/i, ' EX')] };
-  if (/ EX$/i.test(term)) return { type: 'name', queries: [term, term.replace(/ EX$/i, '-EX')] };
-  if (/-GX$/i.test(term)) return { type: 'name', queries: [term, term.replace(/-GX$/i, ' GX')] };
-  if (/ GX$/i.test(term)) return { type: 'name', queries: [term, term.replace(/ GX$/i, '-GX')] };
+  if (/-EX$/i.test(term))
+    return { type: 'name', queries: [term, term.replace(/-EX$/i, ' EX')] };
+  if (/ EX$/i.test(term))
+    return { type: 'name', queries: [term, term.replace(/ EX$/i, '-EX')] };
+  if (/-GX$/i.test(term))
+    return { type: 'name', queries: [term, term.replace(/-GX$/i, ' GX')] };
+  if (/ GX$/i.test(term))
+    return { type: 'name', queries: [term, term.replace(/ GX$/i, '-GX')] };
 
   return { type: 'name', queries: [term] };
 }
 
-async function fetchCardSummaries({ cardName, cardStage } = {}) {
+// Different providers report set release dates with different separators
+// (tcgdex: YYYY-MM-DD, pokemontcg.io: YYYY/MM/DD). Normalise to dashes so the
+// string-based release-date sort in applyLocalControls stays consistent across
+// providers and across a mixed result set.
+export function normalizeReleaseDate(value = '') {
+  return String(value || '').replace(/\//g, '-');
+}
+
+async function fetchJson(url, { signal, ...options } = {}) {
+  const response = await fetch(url, { signal, ...options });
+  if (!response.ok) {
+    throw new Error(`Request failed (${response.status}) for ${url}`);
+  }
+  return response.json();
+}
+
+// Races a provider search against a timeout so a slow (not just failed) provider
+// still triggers failover. `factory` receives an AbortSignal so the underlying
+// fetches can be cancelled when the timeout fires.
+function toAbortError(reason) {
+  if (reason instanceof Error) return reason;
+  return new DOMException('The operation was aborted', 'AbortError');
+}
+
+function isAbortError(error) {
+  return error?.name === 'AbortError';
+}
+
+export async function withTimeout(
+  factory,
+  timeoutMs = SEARCH_TIMEOUT_MS,
+  { signal: parentSignal } = {}
+) {
+  if (parentSignal?.aborted) {
+    throw toAbortError(parentSignal.reason);
+  }
+
+  const controller = new AbortController();
+  let timer;
+  let removeParentAbortListener = () => {};
+
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      const error = new Error(`Provider timed out after ${timeoutMs}ms`);
+      reject(error);
+      controller.abort(error);
+    }, timeoutMs);
+  });
+
+  const parentAbort = parentSignal
+    ? new Promise((_, reject) => {
+        let handled = false;
+        const onAbort = () => {
+          if (handled) return;
+          handled = true;
+          const error = toAbortError(parentSignal.reason);
+          reject(error);
+          controller.abort(error);
+        };
+        parentSignal.addEventListener('abort', onAbort, { once: true });
+        if (parentSignal.aborted) onAbort();
+        removeParentAbortListener = () =>
+          parentSignal.removeEventListener('abort', onAbort);
+      })
+    : null;
+
+  try {
+    const providerPromise = Promise.resolve().then(() =>
+      factory(controller.signal)
+    );
+    return await Promise.race(
+      parentAbort
+        ? [providerPromise, timeout, parentAbort]
+        : [providerPromise, timeout]
+    );
+  } finally {
+    clearTimeout(timer);
+    removeParentAbortListener();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Provider: tcgdex (primary) — covers both TCG and TCG Pocket cards.
+// Two-step: search for summaries, then fetch full detail per card.
+// ---------------------------------------------------------------------------
+
+async function fetchCardSummaries({ cardName, cardStage, signal } = {}) {
   const url = new URL('https://api.tcgdex.net/v2/en/cards');
   if (cardName) url.searchParams.set('name', cardName);
   if (cardStage) url.searchParams.set('stage', cardStage);
-  const summaries = await fetchJson(url.toString());
+  const summaries = await fetchJson(url.toString(), { signal });
   return Array.isArray(summaries) ? summaries : [];
 }
 
@@ -147,7 +261,7 @@ function normalizeTcgdexCard(card) {
     set: {
       id: card.set?.id || '',
       name: card.set?.name || '',
-      releaseDate: card.set?.releaseDate || '',
+      releaseDate: normalizeReleaseDate(card.set?.releaseDate || ''),
     },
     images: {
       small: image,
@@ -159,25 +273,28 @@ function normalizeTcgdexCard(card) {
   };
 }
 
-async function fetchJson(url, options = {}) {
-  const response = await fetch(url, options);
-  if (!response.ok) {
-    throw new Error(`Request failed (${response.status}) for ${url}`);
-  }
-  return response.json();
-}
-
-async function hydrateTcgdexSetReleaseDates(cards = []) {
-  const uniqueSetIds = [...new Set(cards.map((card) => card?.set?.id).filter(Boolean))];
-  const missingSetIds = uniqueSetIds.filter((setId) => !tcgdexSetReleaseDateCache.has(setId));
+async function hydrateTcgdexSetReleaseDates(cards = [], signal) {
+  const uniqueSetIds = [
+    ...new Set(cards.map((card) => card?.set?.id).filter(Boolean)),
+  ];
+  const missingSetIds = uniqueSetIds.filter(
+    (setId) => !tcgdexSetReleaseDateCache.has(setId)
+  );
 
   await Promise.all(
     missingSetIds.map(async (setId) => {
       try {
-        const setData = await fetchJson(`https://api.tcgdex.net/v2/en/sets/${setId}`);
-        tcgdexSetReleaseDateCache.set(setId, setData?.releaseDate || '');
-      } catch {
-        tcgdexSetReleaseDateCache.set(setId, '');
+        const setData = await fetchJson(
+          `https://api.tcgdex.net/v2/en/sets/${setId}`,
+          { signal }
+        );
+        tcgdexSetReleaseDateCache.set(
+          setId,
+          normalizeReleaseDate(setData?.releaseDate || '')
+        );
+      } catch (error) {
+        if (signal?.aborted || isAbortError(error)) throw error;
+        // A transient set lookup failure should be retried by a later search.
       }
     })
   );
@@ -186,26 +303,33 @@ async function hydrateTcgdexSetReleaseDates(cards = []) {
     ...card,
     set: {
       ...card.set,
-      releaseDate: card?.set?.releaseDate || tcgdexSetReleaseDateCache.get(card?.set?.id) || '',
+      releaseDate:
+        card?.set?.releaseDate ||
+        tcgdexSetReleaseDateCache.get(card?.set?.id) ||
+        '',
     },
   }));
 }
 
-export async function queryCardsByName(term = '') {
+async function searchTcgdex(term = '', { signal } = {}) {
   const cleanName = stripWildcards(normalizeSearchQuery(String(term)));
   if (!cleanName) {
-    return { results: [], totalSummaries: 0, term: cleanName, isHugeResultSet: false };
+    return { results: [], totalSummaries: 0, isHugeResultSet: false };
   }
 
   const plan = resolveSearchPlan(cleanName);
   let allSummaries = [];
 
   if (plan.type === 'stage') {
-    allSummaries = await fetchCardSummaries({ cardName: plan.baseName, cardStage: plan.stage });
+    allSummaries = await fetchCardSummaries({
+      cardName: plan.baseName,
+      cardStage: plan.stage,
+      signal,
+    });
   } else {
     const seen = new Set();
     for (const query of plan.queries) {
-      const summaries = await fetchCardSummaries({ cardName: query });
+      const summaries = await fetchCardSummaries({ cardName: query, signal });
       for (const s of summaries) {
         if (!seen.has(s.id)) {
           seen.add(s.id);
@@ -219,32 +343,219 @@ export async function queryCardsByName(term = '') {
     return {
       results: [],
       totalSummaries: allSummaries.length,
-      term: cleanName,
       isHugeResultSet: true,
     };
   }
 
   const summariesToFetch = allSummaries.slice(0, DETAIL_FETCH_LIMIT);
 
-  const detailedCards = await Promise.all(
+  const detailResults = await Promise.allSettled(
     summariesToFetch.map(async (summary) => {
-      try {
-        const detail = await fetchJson(`https://api.tcgdex.net/v2/en/cards/${summary.id}`);
-        return normalizeTcgdexCard(detail);
-      } catch {
-        return null;
-      }
+      const detail = await fetchJson(
+        `https://api.tcgdex.net/v2/en/cards/${summary.id}`,
+        { signal }
+      );
+      return normalizeTcgdexCard(detail);
     })
   );
 
-  const validCards = detailedCards.filter((card) => card && card.image);
+  if (signal?.aborted) throw toAbortError(signal.reason);
 
-  const hydratedCards = await hydrateTcgdexSetReleaseDates(validCards);
+  const failedDetails = detailResults.filter(
+    (result) => result.status === 'rejected'
+  );
+  const detailedCards = detailResults
+    .filter((result) => result.status === 'fulfilled')
+    .map((result) => result.value);
+
+  if (
+    detailResults.length > 0 &&
+    failedDetails.length === detailResults.length
+  ) {
+    throw new AggregateError(
+      failedDetails.map((result) => result.reason),
+      'TCGdex card details were unavailable'
+    );
+  }
+
+  const validCards = detailedCards.filter((card) => card && card.image);
+  const hydratedCards = await hydrateTcgdexSetReleaseDates(validCards, signal);
 
   return {
     results: hydratedCards,
     totalSummaries: allSummaries.length,
-    term: cleanName,
     isHugeResultSet: allSummaries.length > HUGE_RESULT_THRESHOLD,
+    notice:
+      failedDetails.length > 0
+        ? `TCGdex returned partial results (${failedDetails.length} card detail request(s) failed).`
+        : '',
   };
+}
+
+// ---------------------------------------------------------------------------
+// Provider: pokemontcg.io (fallback) — TCG only, no TCG Pocket coverage.
+// Single request returns full card objects (no per-card detail fetch needed).
+// ---------------------------------------------------------------------------
+
+export function normalizePokemonTcgCard(card = {}) {
+  const image = card.images?.large || card.images?.small || '';
+
+  return {
+    id: card.id,
+    name: card.name,
+    supertype: card.supertype || 'Unknown',
+    // pokemontcg.io has no single "stage" field; subtypes carry Basic/Stage 1/etc.
+    stage: Array.isArray(card.subtypes)
+      ? card.subtypes.join(' ')
+      : card.subtypes || '',
+    number: card.number || '',
+    set: {
+      id: card.set?.id || '',
+      name: card.set?.name || '',
+      releaseDate: normalizeReleaseDate(card.set?.releaseDate || ''),
+    },
+    images: {
+      small: card.images?.small || image,
+      large: card.images?.large || image,
+    },
+    image,
+    rarity: card.rarity,
+    _provider: 'pokemontcg',
+  };
+}
+
+// Same-origin proxy (see server/server.js) that forwards to pokemontcg.io. Calling
+// pokemontcg.io from the browser directly is unreliable: its 5xx error responses
+// carry no CORS headers, so an upstream outage surfaces as an opaque "Failed to
+// fetch" rather than a clean status. The proxy also attaches the API key server-side.
+export const POKEMONTCG_FALLBACK_PATH = '/api/card-fallback';
+
+export { buildPokemonTcgQuery };
+
+export function normalizePokemonTcgSearchQuery(term = '') {
+  const canonicalName = stripWildcards(normalizeSearchQuery(String(term)));
+  // TCGdex models LV.X through a stage filter; pokemontcg.io stores it in the name.
+  return canonicalName.replace(/\bLV\. X$/i, 'LV.X');
+}
+
+async function searchPokemonTcg(term = '', { signal } = {}) {
+  const cleanName = normalizePokemonTcgSearchQuery(term);
+  if (!cleanName) {
+    return { results: [], totalSummaries: 0, isHugeResultSet: false };
+  }
+
+  // URLSearchParams (not `new URL`) so the request stays a same-origin relative
+  // path in the browser and needs no base URL under Node during tests.
+  const params = new URLSearchParams({
+    term: cleanName,
+  });
+
+  const payload = await fetchJson(`${POKEMONTCG_FALLBACK_PATH}?${params}`, {
+    signal,
+  });
+  const data = Array.isArray(payload?.data) ? payload.data : [];
+  const totalSummaries =
+    Number(payload?.totalCount ?? data.length) || data.length;
+
+  if (totalSummaries > HUGE_RESULT_THRESHOLD) {
+    return { results: [], totalSummaries, isHugeResultSet: true };
+  }
+
+  const results = data
+    .map(normalizePokemonTcgCard)
+    .filter((card) => card && card.image);
+  return { results, totalSummaries, isHugeResultSet: false };
+}
+
+// ---------------------------------------------------------------------------
+// Orchestration: try each provider in order, failing over on error OR timeout.
+// ---------------------------------------------------------------------------
+
+export const CARD_PROVIDERS = [
+  {
+    name: 'tcgdex',
+    search: searchTcgdex,
+    cardTypes: ['tcg', 'pocket'],
+    timeoutMs: SEARCH_TIMEOUT_MS,
+  },
+  {
+    name: 'pokemontcg',
+    search: searchPokemonTcg,
+    cardTypes: ['tcg'],
+    timeoutMs: FALLBACK_SEARCH_TIMEOUT_MS,
+    fallbackNotice:
+      'tcgdex is unavailable — showing results from pokemontcg.io. TCG Pocket cards are not available from this source.',
+  },
+];
+
+// Tries providers in order; each is raced against a timeout. Returns the first
+// success (annotated with which provider served it and any fallback notice), or
+// throws an AggregateError if every compatible provider fails.
+export async function queryWithFallback(term = '', options = {}) {
+  const {
+    providers = CARD_PROVIDERS,
+    timeoutMs,
+    cardType = 'all',
+    signal,
+  } = options;
+  const errors = [];
+  let skippedForCardType = false;
+
+  for (let i = 0; i < providers.length; i += 1) {
+    const provider = providers[i];
+    if (
+      cardType !== 'all' &&
+      Array.isArray(provider.cardTypes) &&
+      !provider.cardTypes.includes(cardType)
+    ) {
+      skippedForCardType = true;
+      continue;
+    }
+
+    try {
+      const result = await withTimeout(
+        (signal) => provider.search(term, { signal }),
+        timeoutMs ?? provider.timeoutMs ?? SEARCH_TIMEOUT_MS,
+        { signal }
+      );
+      return {
+        ...result,
+        term,
+        provider: provider.name,
+        usedFallback: i > 0,
+        notice: result.notice || (i > 0 ? provider.fallbackNotice || '' : ''),
+      };
+    } catch (error) {
+      if (signal?.aborted) throw error;
+      errors.push(
+        new Error(`${provider.name} failed: ${error.message}`, { cause: error })
+      );
+      // Fall through to the next provider.
+    }
+  }
+
+  const message =
+    cardType === 'pocket' && skippedForCardType
+      ? 'TCGdex is unavailable and no fallback provider supports TCG Pocket.'
+      : 'All card providers failed.';
+  throw new AggregateError(errors, message);
+}
+
+export async function queryCardsByName(term = '', options = {}) {
+  const raw = String(term);
+
+  // Empty/whitespace-only terms short-circuit without hitting the network.
+  if (!stripWildcards(normalizeSearchQuery(raw))) {
+    return {
+      results: [],
+      totalSummaries: 0,
+      term: '',
+      isHugeResultSet: false,
+      provider: null,
+      usedFallback: false,
+      notice: '',
+    };
+  }
+
+  return queryWithFallback(raw, options);
 }
