@@ -1,4 +1,5 @@
 import * as v from 'valibot';
+import type { MatchViewState } from '@ptcgsim/game-core';
 import {
   MAX_CLIENT_FRAME_CODE_UNITS,
   MAX_SERVER_FRAME_CODE_UNITS,
@@ -72,3 +73,12 @@ export const parseServerFrame = (
 export const serializeMatchViewState = (
   value: unknown
 ): SerializedMatchViewState => v.parse(MatchViewStateSchema, value);
+
+/**
+ * Restores compile-time view-ID brands after a server frame has passed the
+ * runtime schema. Brands have no wire representation, so this is intentionally
+ * the only transport-to-client-view cast.
+ */
+export const hydrateMatchViewState = (
+  value: SerializedMatchViewState
+): MatchViewState => value as unknown as MatchViewState;

@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react';
 import type { WireGameCommand } from '@ptcgsim/protocol';
-import type { BoardIntent } from '@ptcgsim/renderer-contract';
+import {
+  createRendererSpikeView,
+  type BoardIntent,
+} from '@ptcgsim/renderer-contract';
 import { RendererSpikeBoard, type RendererKind } from './RendererSpikeBoard.js';
 
 const initialRenderer = (): RendererKind =>
@@ -9,6 +12,7 @@ const initialRenderer = (): RendererKind =>
     : 'pixi';
 
 export const App = () => {
+  const view = useMemo(createRendererSpikeView, []);
   const [renderer, setRenderer] = useState<RendererKind>(initialRenderer);
   const [lastIntent, setLastIntent] = useState<BoardIntent | null>(null);
   const [lastCommand, setLastCommand] = useState<WireGameCommand | null>(null);
@@ -24,9 +28,10 @@ export const App = () => {
       <section className="board-column" aria-label="Renderer comparison board">
         <RendererSpikeBoard
           key={renderer}
+          view={view}
           rendererKind={renderer}
           onIntent={setLastIntent}
-          onCommand={setLastCommand}
+          submitCommand={setLastCommand}
         />
       </section>
       <aside className="legacy-sidebar">

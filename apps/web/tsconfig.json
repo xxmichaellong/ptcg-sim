@@ -11,6 +11,7 @@
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "lib", "dist"],
   "references": [
+    { "path": "../../packages/client-session" },
     { "path": "../../packages/game-core" },
     { "path": "../../packages/protocol" },
     { "path": "../../packages/renderer-contract" },

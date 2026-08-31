@@ -1,5 +1,6 @@
 import { stableSerialize } from '@ptcgsim/game-core';
 import {
+  hydrateMatchViewState,
   PROTOCOL_VERSION,
   parseServerFrame,
   type ClientMessage,
@@ -389,7 +390,8 @@ export class RemoteGameSession {
       });
       return;
     }
-    if (!this.installView(message.snapshot, true)) return;
+    if (!this.installView(hydrateMatchViewState(message.snapshot), true))
+      return;
     this.sessionId = message.sessionId;
     this.resumeToken = message.resumeToken ?? this.resumeToken;
     this.admissionTicket = undefined;
@@ -421,7 +423,7 @@ export class RemoteGameSession {
     message: Extract<ServerMessage, { type: 'StatePublication' }>
   ): void {
     if (this.state.phase !== 'ready') return;
-    if (!this.installView(message.snapshot)) return;
+    if (!this.installView(hydrateMatchViewState(message.snapshot))) return;
     if (message.coveringCommandId) {
       const pending = this.pending.find(
         (item) => item.envelope.commandId === message.coveringCommandId

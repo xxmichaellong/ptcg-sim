@@ -9,6 +9,7 @@
     "typecheck": "tsc --build"
   },
   "dependencies": {
+    "@ptcgsim/client-session": "workspace:*",
     "@ptcgsim/game-core": "workspace:*",
     "@ptcgsim/protocol": "workspace:*",
     "@ptcgsim/renderer-contract": "workspace:*",

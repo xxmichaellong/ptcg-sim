@@ -1,8 +1,5 @@
 import type { MatchViewState } from '@ptcgsim/game-core';
-import type {
-  SerializedMatchViewState,
-  WireGameCommand,
-} from '@ptcgsim/protocol';
+import type { WireGameCommand } from '@ptcgsim/protocol';
 import type {
   BoardIntent,
   BoardScene,
@@ -10,7 +7,7 @@ import type {
 } from '@ptcgsim/renderer-contract';
 
 type DropIntent = Extract<BoardIntent, { kind: 'CardDropRequested' }>;
-type BoardDropView = MatchViewState | SerializedMatchViewState;
+type BoardDropView = MatchViewState;
 
 export type BoardDropResolution =
   | { readonly ok: true; readonly command: WireGameCommand }

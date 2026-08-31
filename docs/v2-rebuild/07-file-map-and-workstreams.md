@@ -158,6 +158,7 @@ packages/client-session/src/
 
 apps/web/src/session/
   useGameSession.ts
+  RemoteSessionBoard.tsx
   LocalGameSession.ts
 ```
 

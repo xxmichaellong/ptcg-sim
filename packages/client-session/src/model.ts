@@ -1,7 +1,5 @@
-import type {
-  SerializedMatchViewState,
-  ServerMessage,
-} from '@ptcgsim/protocol';
+import type { MatchViewState } from '@ptcgsim/game-core';
+import type { ServerMessage } from '@ptcgsim/protocol';
 
 export type ClientSessionPhase =
   | 'idle'
@@ -47,7 +45,7 @@ export interface ClientSessionState {
   readonly phase: ClientSessionPhase;
   readonly role?: 'player' | 'spectator';
   readonly playerId?: string;
-  readonly view?: SerializedMatchViewState;
+  readonly view?: MatchViewState;
   readonly nextClientSequence: number;
   readonly pendingCommands: readonly PendingCommandSummary[];
   readonly completedCommands: readonly CompletedCommandSummary[];

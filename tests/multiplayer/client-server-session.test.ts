@@ -5,6 +5,7 @@ import {
   type SessionSocketFactory,
   type SessionSocketHandlers,
 } from '../../packages/client-session/src/index.js';
+import { submitBoardDrop } from '../../apps/web/src/board/resolveBoardDrop.js';
 import {
   RoomSessionHub,
   WebCryptoAuthoritySource,
@@ -19,6 +20,7 @@ import {
   type PersistedAuthorityTransaction,
   type RoomAuthoritySnapshot,
 } from '../../packages/room-authority/src/index.js';
+import { createBoardScene } from '../../packages/renderer-contract/src/index.js';
 import { describe, expect, it } from 'vitest';
 
 class MemoryRoomStore implements AuthoritySnapshotStore {
@@ -232,6 +234,90 @@ const connectClient = async (input: {
 };
 
 describe('client/server multiplayer contract', () => {
+  it('carries a renderer drop through the client queue and room authority', async () => {
+    const room = await fixture();
+    const player = await connectClient({
+      hub: room.hub,
+      name: 'Blue',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+    });
+    const playerId = player.session.getSnapshot().playerId;
+    if (!playerId) throw new Error('Missing admitted player identity');
+
+    expect(
+      player.session.submit({
+        type: 'LoadDeck',
+        entries: Array.from({ length: 14 }, (_, index) => ({
+          definition: {
+            id: `integration-definition-${index}`,
+            name: `Integration card ${index}`,
+            category: 'Pokémon' as const,
+            imageUrl: `/integration-card-${index}.png`,
+          },
+          count: 1,
+        })),
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+    expect(player.session.submit({ type: 'SetupPlayer' }).queued).toBe(true);
+    await player.factory.flush();
+
+    const before = player.session.getSnapshot().view;
+    if (!before) throw new Error('Missing authoritative player view');
+    const hand = Object.values(before.zones).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'hand'
+    );
+    const card = hand?.cards[0];
+    if (!hand || !card) throw new Error('Setup did not publish a hand card');
+    const scene = createBoardScene(before, {
+      viewport: { width: 1208, height: 900, devicePixelRatio: 1 },
+      bottomPlayerId: playerId,
+      splitRatio: 0.5,
+      geometryVersion: 1,
+    });
+
+    let submitted = false;
+    const resolution = submitBoardDrop(
+      before,
+      scene,
+      {
+        kind: 'CardDropRequested',
+        cardId: card.id,
+        targetId: `slot:${playerId}:bench`,
+      },
+      (command) => {
+        submitted = player.session.submit(command).queued;
+      }
+    );
+    expect(resolution).toMatchObject({
+      ok: true,
+      command: {
+        type: 'MoveCardToPlay',
+        cardId: card.id,
+        expectedSourceZoneId: hand.id,
+        boardPlayerId: playerId,
+        slot: 'bench',
+      },
+    });
+    if (!resolution.ok) throw new Error('Drop did not resolve');
+    expect(submitted).toBe(true);
+    await player.factory.flush();
+
+    const after = player.session.getSnapshot().view;
+    const stackId = after?.boards[playerId]?.benchStackIds[0];
+    expect(after?.revision).toBe(3);
+    expect(stackId).toBeDefined();
+    expect(after?.stacks[stackId!]?.evolutionCards).toContainEqual(
+      expect.objectContaining({ id: card.id })
+    );
+    expect(after?.zones[hand.id]?.cards).not.toContainEqual(
+      expect.objectContaining({ id: card.id })
+    );
+    expect(player.session.getSnapshot().pendingCommands).toEqual([]);
+    expect(room.store.commandCommits).toHaveLength(3);
+  });
+
   it('publishes one authoritative revision to a player and spectator', async () => {
     const room = await fixture();
     const spectatorCapability = room.credentials.spectatorCapability;

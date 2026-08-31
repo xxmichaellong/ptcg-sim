@@ -66,6 +66,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@ptcgsim/client-session':
+        specifier: workspace:*
+        version: link:../../packages/client-session
       '@ptcgsim/game-core':
         specifier: workspace:*
         version: link:../../packages/game-core
@@ -116,6 +119,9 @@ importers:
 
   packages/protocol:
     dependencies:
+      '@ptcgsim/game-core':
+        specifier: workspace:*
+        version: link:../game-core
       valibot:
         specifier: ^1.4.2
         version: 1.4.2(typescript@5.9.3)

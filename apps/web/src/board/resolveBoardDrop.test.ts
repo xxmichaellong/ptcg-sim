@@ -1,4 +1,4 @@
-import type { SerializedMatchViewState } from '@ptcgsim/protocol';
+import type { MatchViewState } from '@ptcgsim/game-core';
 import {
   createBoardScene,
   createRendererSpikeView,
@@ -9,7 +9,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { resolveBoardDrop, submitBoardDrop } from './resolveBoardDrop.js';
 
 const fixture = (): {
-  readonly view: SerializedMatchViewState;
+  readonly view: MatchViewState;
   readonly scene: BoardScene;
 } => {
   const view = createRendererSpikeView();
