@@ -9,6 +9,8 @@
     "typecheck": "tsc --build"
   },
   "dependencies": {
+    "@ptcgsim/game-core": "workspace:*",
+    "@ptcgsim/protocol": "workspace:*",
     "@ptcgsim/renderer-contract": "workspace:*",
     "@ptcgsim/renderer-dom": "workspace:*",
     "@ptcgsim/renderer-pixi": "workspace:*",

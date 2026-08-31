@@ -8,7 +8,9 @@ import {
   type BoardRenderer,
   type BoardRendererStatus,
 } from '@ptcgsim/renderer-contract';
+import type { WireGameCommand } from '@ptcgsim/protocol';
 import { useEffect, useRef, useState } from 'react';
+import { submitBoardDrop } from './board/resolveBoardDrop.js';
 
 export type RendererKind = 'dom' | 'pixi';
 
@@ -27,9 +29,11 @@ declare global {
 export const RendererSpikeBoard = ({
   rendererKind,
   onIntent,
+  onCommand,
 }: {
   readonly rendererKind: RendererKind;
   readonly onIntent: (intent: BoardIntent) => void;
+  readonly onCommand: (command: WireGameCommand) => void;
 }) => {
   const hostRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<BoardRenderer | null>(null);
@@ -65,9 +69,13 @@ export const RendererSpikeBoard = ({
     };
     const mount = async () => {
       const { scene } = sceneForHost();
+      let installedScene = scene;
       const adapters = {
         emitIntent: (intent: BoardIntent) => {
           onIntent(intent);
+          if (intent.kind === 'CardDropRequested') {
+            submitBoardDrop(view, installedScene, intent, onCommand);
+          }
           if (intent.kind === 'CardSelected') {
             setPresentation((current) => ({
               ...current,
@@ -107,6 +115,7 @@ export const RendererSpikeBoard = ({
         const installSize = () => {
           if (!renderer || disposed) return;
           const next = sceneForHost();
+          installedScene = next.scene;
           renderer.resize(next.viewport);
           renderer.installScene(next.scene, []);
           window.__PTCG_RENDERER_SPIKE__ = {
@@ -139,7 +148,7 @@ export const RendererSpikeBoard = ({
       }
       if (rendererRef.current === renderer) rendererRef.current = null;
     };
-  }, [onIntent, rendererKind]);
+  }, [onCommand, onIntent, rendererKind]);
 
   useEffect(() => {
     rendererRef.current?.installPresentation(presentation);

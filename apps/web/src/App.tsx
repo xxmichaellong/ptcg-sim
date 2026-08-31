@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import type { WireGameCommand } from '@ptcgsim/protocol';
 import type { BoardIntent } from '@ptcgsim/renderer-contract';
 import { RendererSpikeBoard, type RendererKind } from './RendererSpikeBoard.js';
 
@@ -10,10 +11,13 @@ const initialRenderer = (): RendererKind =>
 export const App = () => {
   const [renderer, setRenderer] = useState<RendererKind>(initialRenderer);
   const [lastIntent, setLastIntent] = useState<BoardIntent | null>(null);
+  const [lastCommand, setLastCommand] = useState<WireGameCommand | null>(null);
   const description = useMemo(
     () =>
-      lastIntent ? JSON.stringify(lastIntent) : 'No board interaction yet',
-    [lastIntent]
+      lastIntent
+        ? JSON.stringify({ intent: lastIntent, command: lastCommand })
+        : 'No board interaction yet',
+    [lastCommand, lastIntent]
   );
   return (
     <main className="app-shell">
@@ -22,6 +26,7 @@ export const App = () => {
           key={renderer}
           rendererKind={renderer}
           onIntent={setLastIntent}
+          onCommand={setLastCommand}
         />
       </section>
       <aside className="legacy-sidebar">

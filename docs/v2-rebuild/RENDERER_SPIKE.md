@@ -69,6 +69,9 @@ Rive, or game-specific systems.
 - one shared drag gesture state machine with a five-pixel threshold, preserved
   grab offset, stable parent/zone target resolution, cancellation, and
   click-after-drag suppression;
+- a renderer-independent, fail-closed drop resolver that validates the current
+  recipient view and scene revision before producing a typed protocol command
+  with an explicit source-zone precondition;
 - face/back URL selection that cannot request a definition image for a
   concealed or face-down card; and
 - a deterministic 61-card competitive fixture with covers, hands, prizes,
@@ -153,16 +156,24 @@ chunk graph will be measured in the browser evidence run.
 - Vite production build; and
 - the repository-wide v2 and 79-test legacy gates.
 
-At this checkpoint the v2 suite contains 86 passing tests across 18 files. A
+The drop resolver also refuses spectator submissions, stale scenes/cards/targets,
+same-zone no-ops, and stack/work-area transitions for which the core does not
+yet expose an explicit command. Renderers never infer or mutate logical state;
+the harness's command callback has the same shape as the future remote-session
+submission boundary.
+
+At this checkpoint the v2 suite contains 91 passing tests across 19 files. A
 separate Playwright suite also passes three real Chromium 151 scenarios:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
+   resolves the drop to `MoveCardToPlay` with the expected source zone,
    produces a screenshot, and has no runtime errors.
 2. Pixi creates one live WebGL canvas with 61 card views, handles a real pointer
-   click and pointer-captured drag, loses its actual WebGL2 context through
-   `WEBGL_lose_context`, rebuilds to a later renderer generation with all 61
-   views, produces a post-recovery screenshot, and has no runtime errors.
+   click and pointer-captured drag, resolves the drop through the same command
+   boundary, loses its actual WebGL2 context through `WEBGL_lose_context`,
+   rebuilds to a later renderer generation with all 61 views, produces a
+   post-recovery screenshot, and has no runtime errors.
 3. Three Pixi → DOM → Pixi transitions leave exactly one selected renderer each
    time with no runtime errors or accumulated DOM/canvas views.
 

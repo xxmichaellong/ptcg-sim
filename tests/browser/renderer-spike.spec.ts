@@ -60,6 +60,8 @@ const dragLocalHandCardToBench = async (
   await expect(page.locator('output')).toContainText('CardDropRequested');
   await expect(page.locator('output')).toContainText(gesture.cardId);
   await expect(page.locator('output')).toContainText(gesture.targetId);
+  await expect(page.locator('output')).toContainText('MoveCardToPlay');
+  await expect(page.locator('output')).toContainText('zone:spike-blue:hand');
   await expect(dragSurface).toHaveAttribute('data-dragging', 'false');
 };
 
