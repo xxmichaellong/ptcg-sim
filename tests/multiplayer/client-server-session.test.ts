@@ -316,4 +316,43 @@ describe('client/server multiplayer contract', () => {
     });
     expect(room.store.commandCommits).toHaveLength(1);
   });
+
+  it('replaces equal-revision metadata from an authoritative reconnect Welcome', async () => {
+    const room = await fixture();
+    const spectatorCapability = room.credentials.spectatorCapability;
+    if (!spectatorCapability) throw new Error('Missing spectator capability');
+    const scheduler = new ManualScheduler();
+    const spectator = await connectClient({
+      hub: room.hub,
+      name: 'Observer',
+      role: 'spectator',
+      capability: spectatorCapability,
+      scheduler,
+    });
+    const firstPlayerId = spectator.session.getSnapshot().view?.playerOrder[0];
+    if (!firstPlayerId) throw new Error('Missing player in spectator view');
+    expect(
+      spectator.session.getSnapshot().view?.players[firstPlayerId]?.displayName
+    ).toBe('Player 1');
+
+    await connectClient({
+      hub: room.hub,
+      name: 'Blue',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+    });
+    const firstLink = spectator.factory.latest();
+    firstLink.networkDrop();
+    scheduler.runNext();
+    spectator.factory.latest().open();
+    await spectator.factory.flush();
+
+    expect(spectator.session.getSnapshot()).toMatchObject({
+      phase: 'ready',
+      view: { revision: 0 },
+    });
+    expect(
+      spectator.session.getSnapshot().view?.players[firstPlayerId]?.displayName
+    ).toBe('Blue');
+  });
 });

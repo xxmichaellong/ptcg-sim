@@ -389,7 +389,7 @@ export class RemoteGameSession {
       });
       return;
     }
-    if (!this.installView(message.snapshot)) return;
+    if (!this.installView(message.snapshot, true)) return;
     this.sessionId = message.sessionId;
     this.resumeToken = message.resumeToken ?? this.resumeToken;
     this.admissionTicket = undefined;
@@ -493,7 +493,8 @@ export class RemoteGameSession {
   }
 
   private installView(
-    candidate: NonNullable<ClientSessionState['view']>
+    candidate: NonNullable<ClientSessionState['view']>,
+    authoritativeReplacement = false
   ): boolean {
     const current = this.state.view;
     if (current && candidate.revision < current.revision) return true;
@@ -502,6 +503,10 @@ export class RemoteGameSession {
       candidate.revision === current.revision &&
       stableSerialize(candidate) !== stableSerialize(current)
     ) {
+      if (authoritativeReplacement) {
+        this.updateState({ view: candidate });
+        return true;
+      }
       this.fail({
         code: 'inconsistent_publication',
         message: 'Equal state revisions contained different projections',

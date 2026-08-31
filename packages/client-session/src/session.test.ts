@@ -548,4 +548,22 @@ describe('RemoteGameSession', () => {
       failure: { code: 'sequence_divergence' },
     });
   });
+
+  it('accepts an authoritative reconnect replacement at the same game revision', () => {
+    const test = setup();
+    const firstSocket = test.admit();
+    firstSocket.serverClose();
+    test.scheduler.runNext();
+    const secondSocket = test.factory.sockets[1]!;
+    secondSocket.serverOpen();
+    secondSocket.serverMessage(welcome(1, view(0, 'Renamed while offline')));
+
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'ready',
+      view: {
+        revision: 0,
+        players: { blue: { displayName: 'Renamed while offline' } },
+      },
+    });
+  });
 });
