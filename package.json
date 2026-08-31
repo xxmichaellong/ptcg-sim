@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "start": "pnpm -C server start",
-    "test": "node --test client/src/setup/deck-builder/__tests__/card-compare.test.mjs client/src/setup/deck-builder/__tests__/card-search.test.mjs client/src/setup/deck-builder/__tests__/card-search-sort.test.mjs client/src/setup/deck-builder/__tests__/card-sort.test.mjs client/src/setup/deck-builder/__tests__/csv-adapter.test.mjs client/src/setup/deck-builder/__tests__/deck-state.test.mjs client/src/setup/deck-builder/__tests__/deck-validation.test.mjs",
+    "test": "node --test client/src/setup/deck-builder/__tests__/card-compare.test.mjs client/src/setup/deck-builder/__tests__/card-search.test.mjs client/src/setup/deck-builder/__tests__/card-search-sort.test.mjs client/src/setup/deck-builder/__tests__/card-fallback.test.mjs client/src/setup/deck-builder/__tests__/card-sort.test.mjs client/src/setup/deck-builder/__tests__/csv-adapter.test.mjs client/src/setup/deck-builder/__tests__/deck-state.test.mjs client/src/setup/deck-builder/__tests__/deck-validation.test.mjs",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{js,json,md}\""
   },

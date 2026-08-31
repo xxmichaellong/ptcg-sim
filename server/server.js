@@ -118,6 +118,56 @@ async function main() {
     );
   });
 
+  // Same-origin proxy for the deck builder's fallback card provider (pokemontcg.io).
+  // The browser cannot call pokemontcg.io directly on its error responses: its 5xx
+  // pages omit CORS headers, so a client-side failure surfaces as an opaque
+  // "Failed to fetch". Proxying keeps the fallback same-origin and lets us attach an
+  // API key server-side (set POKEMONTCG_API_KEY for higher rate limits).
+  app.get('/api/card-fallback', async (req, res) => {
+    const q = req.query.q;
+    if (!q) {
+      return res.status(400).json({ error: 'Query parameter "q" is required' });
+    }
+
+    const upstreamUrl = new URL('https://api.pokemontcg.io/v2/cards');
+    upstreamUrl.searchParams.set('q', String(q));
+    upstreamUrl.searchParams.set(
+      'pageSize',
+      String(req.query.pageSize || '150')
+    );
+    upstreamUrl.searchParams.set(
+      'orderBy',
+      String(req.query.orderBy || '-set.releaseDate')
+    );
+
+    const headers = { Accept: 'application/json' };
+    if (process.env.POKEMONTCG_API_KEY) {
+      headers['X-Api-Key'] = process.env.POKEMONTCG_API_KEY;
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    try {
+      const upstream = await fetch(upstreamUrl.toString(), {
+        headers,
+        signal: controller.signal,
+      });
+      if (!upstream.ok) {
+        return res
+          .status(502)
+          .json({ error: `Fallback provider error (${upstream.status})` });
+      }
+      const payload = await upstream.json();
+      res.json(payload);
+    } catch (error) {
+      res
+        .status(504)
+        .json({ error: `Fallback provider unavailable: ${error.message}` });
+    } finally {
+      clearTimeout(timer);
+    }
+  });
+
   const roomInfo = new Map();
   // Function to periodically clean up empty rooms
   const cleanUpEmptyRooms = () => {

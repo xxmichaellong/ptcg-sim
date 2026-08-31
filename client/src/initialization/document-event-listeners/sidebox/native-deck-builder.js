@@ -53,7 +53,9 @@ export const initializeNativeDeckBuilder = () => {
 
   const playButton = document.getElementById('nativeDeckBuilderPlayButton');
   const exportCsvButton = document.getElementById('nativeDeckBuilderExportCsv');
-  const importCsvLabel = document.getElementById('nativeDeckBuilderImportCsvLabel');
+  const importCsvLabel = document.getElementById(
+    'nativeDeckBuilderImportCsvLabel'
+  );
   const importCsvInput = document.getElementById('nativeDeckBuilderCsvImport');
   const clearButton = document.getElementById('nativeDeckBuilderClear');
   const deckStatus = document.getElementById('nativeDeckBuilderDeckStatus');
@@ -125,6 +127,7 @@ export const initializeNativeDeckBuilder = () => {
   let currentLoadTarget = 'self';
   let currentTotalSummaries = 0;
   let currentHugeResultSet = false;
+  let currentProviderNotice = '';
   let deckDirty = false;
   let flashFrame = null;
 
@@ -163,12 +166,15 @@ export const initializeNativeDeckBuilder = () => {
   };
 
   const getSearchStatusText = () => {
+    const notice = currentProviderNotice ? `${currentProviderNotice} ` : '';
     if (currentHugeResultSet) {
-      return `Too many results (${currentTotalSummaries}). Please redefine your search terms.`;
+      return `${notice}Too many results (${currentTotalSummaries}). Please redefine your search terms.`;
     }
-    return currentResults.length > 0
-      ? `Showing all ${currentResults.length} result(s). Click a card to add it.`
-      : 'No matching cards found.';
+    const base =
+      currentResults.length > 0
+        ? `Showing all ${currentResults.length} result(s). Click a card to add it.`
+        : 'No matching cards found.';
+    return `${notice}${base}`;
   };
 
   const switchTarget = (target) => {
@@ -359,7 +365,9 @@ export const initializeNativeDeckBuilder = () => {
 
     clearButton.style.display = hasDeckCards ? '' : 'none';
     playButton.disabled = !hasDeckCards;
-    targetAltButton.style.cursor = systemState.isTwoPlayer ? 'default' : 'pointer';
+    targetAltButton.style.cursor = systemState.isTwoPlayer
+      ? 'default'
+      : 'pointer';
     targetAltButton.style.opacity = systemState.isTwoPlayer ? '0.5' : '';
 
     if (deckStatus) {
@@ -439,6 +447,7 @@ export const initializeNativeDeckBuilder = () => {
       currentResults = [];
       currentRawResults = [];
       currentTotalSummaries = 0;
+      currentProviderNotice = '';
       searchStatus.textContent = '';
       render();
       return;
@@ -452,6 +461,7 @@ export const initializeNativeDeckBuilder = () => {
       currentRawResults = searchResponse.results;
       currentTotalSummaries = searchResponse.totalSummaries;
       currentHugeResultSet = searchResponse.isHugeResultSet;
+      currentProviderNotice = searchResponse.notice || '';
       updateVisibleResults();
 
       searchStatus.textContent = getSearchStatusText();
@@ -460,6 +470,7 @@ export const initializeNativeDeckBuilder = () => {
       currentRawResults = [];
       currentTotalSummaries = 0;
       currentHugeResultSet = false;
+      currentProviderNotice = '';
       searchStatus.textContent = `Search failed: ${error.message}`;
     } finally {
       searchButton.disabled = false;
@@ -549,13 +560,16 @@ export const initializeNativeDeckBuilder = () => {
   document.addEventListener('deck-builder-closing', loadCurrentDeck);
 
   const deckImportButton = document.getElementById('deckImportButton');
-  if (deckImportButton) deckImportButton.addEventListener('click', () => {
-    if (systemState.isTwoPlayer && currentLoadTarget === 'opp') {
-      switchTarget('self');
-      document.dispatchEvent(new CustomEvent('deck-target-changed', { detail: { target: 'self' } }));
-    }
-    render();
-  });
+  if (deckImportButton)
+    deckImportButton.addEventListener('click', () => {
+      if (systemState.isTwoPlayer && currentLoadTarget === 'opp') {
+        switchTarget('self');
+        document.dispatchEvent(
+          new CustomEvent('deck-target-changed', { detail: { target: 'self' } })
+        );
+      }
+      render();
+    });
 
   render();
 };
