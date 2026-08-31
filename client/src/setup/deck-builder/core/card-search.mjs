@@ -1,9 +1,12 @@
+import { buildPokemonTcgQuery } from './pokemon-tcg-query.mjs';
+
 const HUGE_RESULT_THRESHOLD = 2000;
 const DETAIL_FETCH_LIMIT = 150;
 
-// How long a provider gets before we treat it as "slow" and fail over.
+// How long the primary provider gets before we treat it as "slow" and fail over.
 // Covers tcgdex's multi-request search (summaries + per-card details + set hydration).
 export const SEARCH_TIMEOUT_MS = 4000;
+export const FALLBACK_SEARCH_TIMEOUT_MS = 7000;
 
 const tcgdexSetReleaseDateCache = new Map();
 
@@ -150,7 +153,7 @@ export function resolveSearchPlan(term) {
 // string-based release-date sort in applyLocalControls stays consistent across
 // providers and across a mixed result set.
 export function normalizeReleaseDate(value = '') {
-  return String(value).replace(/\//g, '-');
+  return String(value || '').replace(/\//g, '-');
 }
 
 async function fetchJson(url, { signal, ...options } = {}) {
@@ -164,19 +167,66 @@ async function fetchJson(url, { signal, ...options } = {}) {
 // Races a provider search against a timeout so a slow (not just failed) provider
 // still triggers failover. `factory` receives an AbortSignal so the underlying
 // fetches can be cancelled when the timeout fires.
-export function withTimeout(factory, timeoutMs = SEARCH_TIMEOUT_MS) {
+function toAbortError(reason) {
+  if (reason instanceof Error) return reason;
+  return new DOMException('The operation was aborted', 'AbortError');
+}
+
+function isAbortError(error) {
+  return error?.name === 'AbortError';
+}
+
+export async function withTimeout(
+  factory,
+  timeoutMs = SEARCH_TIMEOUT_MS,
+  { signal: parentSignal } = {}
+) {
+  if (parentSignal?.aborted) {
+    throw toAbortError(parentSignal.reason);
+  }
+
   const controller = new AbortController();
   let timer;
+  let removeParentAbortListener = () => {};
+
   const timeout = new Promise((_, reject) => {
     timer = setTimeout(() => {
-      controller.abort();
-      reject(new Error(`Provider timed out after ${timeoutMs}ms`));
+      const error = new Error(`Provider timed out after ${timeoutMs}ms`);
+      reject(error);
+      controller.abort(error);
     }, timeoutMs);
   });
-  return Promise.race([
-    Promise.resolve(factory(controller.signal)),
-    timeout,
-  ]).finally(() => clearTimeout(timer));
+
+  const parentAbort = parentSignal
+    ? new Promise((_, reject) => {
+        let handled = false;
+        const onAbort = () => {
+          if (handled) return;
+          handled = true;
+          const error = toAbortError(parentSignal.reason);
+          reject(error);
+          controller.abort(error);
+        };
+        parentSignal.addEventListener('abort', onAbort, { once: true });
+        if (parentSignal.aborted) onAbort();
+        removeParentAbortListener = () =>
+          parentSignal.removeEventListener('abort', onAbort);
+      })
+    : null;
+
+  try {
+    const providerPromise = Promise.resolve().then(() =>
+      factory(controller.signal)
+    );
+    return await Promise.race(
+      parentAbort
+        ? [providerPromise, timeout, parentAbort]
+        : [providerPromise, timeout]
+    );
+  } finally {
+    clearTimeout(timer);
+    removeParentAbortListener();
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -242,8 +292,9 @@ async function hydrateTcgdexSetReleaseDates(cards = [], signal) {
           setId,
           normalizeReleaseDate(setData?.releaseDate || '')
         );
-      } catch {
-        tcgdexSetReleaseDateCache.set(setId, '');
+      } catch (error) {
+        if (signal?.aborted || isAbortError(error)) throw error;
+        // A transient set lookup failure should be retried by a later search.
       }
     })
   );
@@ -298,19 +349,34 @@ async function searchTcgdex(term = '', { signal } = {}) {
 
   const summariesToFetch = allSummaries.slice(0, DETAIL_FETCH_LIMIT);
 
-  const detailedCards = await Promise.all(
+  const detailResults = await Promise.allSettled(
     summariesToFetch.map(async (summary) => {
-      try {
-        const detail = await fetchJson(
-          `https://api.tcgdex.net/v2/en/cards/${summary.id}`,
-          { signal }
-        );
-        return normalizeTcgdexCard(detail);
-      } catch {
-        return null;
-      }
+      const detail = await fetchJson(
+        `https://api.tcgdex.net/v2/en/cards/${summary.id}`,
+        { signal }
+      );
+      return normalizeTcgdexCard(detail);
     })
   );
+
+  if (signal?.aborted) throw toAbortError(signal.reason);
+
+  const failedDetails = detailResults.filter(
+    (result) => result.status === 'rejected'
+  );
+  const detailedCards = detailResults
+    .filter((result) => result.status === 'fulfilled')
+    .map((result) => result.value);
+
+  if (
+    detailResults.length > 0 &&
+    failedDetails.length === detailResults.length
+  ) {
+    throw new AggregateError(
+      failedDetails.map((result) => result.reason),
+      'TCGdex card details were unavailable'
+    );
+  }
 
   const validCards = detailedCards.filter((card) => card && card.image);
   const hydratedCards = await hydrateTcgdexSetReleaseDates(validCards, signal);
@@ -319,6 +385,10 @@ async function searchTcgdex(term = '', { signal } = {}) {
     results: hydratedCards,
     totalSummaries: allSummaries.length,
     isHugeResultSet: allSummaries.length > HUGE_RESULT_THRESHOLD,
+    notice:
+      failedDetails.length > 0
+        ? `TCGdex returned partial results (${failedDetails.length} card detail request(s) failed).`
+        : '',
   };
 }
 
@@ -360,16 +430,16 @@ export function normalizePokemonTcgCard(card = {}) {
 // fetch" rather than a clean status. The proxy also attaches the API key server-side.
 export const POKEMONTCG_FALLBACK_PATH = '/api/card-fallback';
 
-// Builds the Lucene-style `q` value pokemontcg.io expects. Wildcards only work
-// unquoted, so a single-word term gets a prefix wildcard while a multi-word term
-// falls back to a quoted phrase match.
-export function buildPokemonTcgQuery(cleanName) {
-  const escaped = cleanName.replace(/"/g, '\\"');
-  return cleanName.includes(' ') ? `name:"${escaped}"` : `name:${escaped}*`;
+export { buildPokemonTcgQuery };
+
+export function normalizePokemonTcgSearchQuery(term = '') {
+  const canonicalName = stripWildcards(normalizeSearchQuery(String(term)));
+  // TCGdex models LV.X through a stage filter; pokemontcg.io stores it in the name.
+  return canonicalName.replace(/\bLV\. X$/i, 'LV.X');
 }
 
 async function searchPokemonTcg(term = '', { signal } = {}) {
-  const cleanName = stripWildcards(String(term).trim());
+  const cleanName = normalizePokemonTcgSearchQuery(term);
   if (!cleanName) {
     return { results: [], totalSummaries: 0, isHugeResultSet: false };
   }
@@ -377,9 +447,7 @@ async function searchPokemonTcg(term = '', { signal } = {}) {
   // URLSearchParams (not `new URL`) so the request stays a same-origin relative
   // path in the browser and needs no base URL under Node during tests.
   const params = new URLSearchParams({
-    q: buildPokemonTcgQuery(cleanName),
-    pageSize: String(DETAIL_FETCH_LIMIT),
-    orderBy: '-set.releaseDate',
+    term: cleanName,
   });
 
   const payload = await fetchJson(`${POKEMONTCG_FALLBACK_PATH}?${params}`, {
@@ -404,10 +472,17 @@ async function searchPokemonTcg(term = '', { signal } = {}) {
 // ---------------------------------------------------------------------------
 
 export const CARD_PROVIDERS = [
-  { name: 'tcgdex', search: searchTcgdex },
+  {
+    name: 'tcgdex',
+    search: searchTcgdex,
+    cardTypes: ['tcg', 'pocket'],
+    timeoutMs: SEARCH_TIMEOUT_MS,
+  },
   {
     name: 'pokemontcg',
     search: searchPokemonTcg,
+    cardTypes: ['tcg'],
+    timeoutMs: FALLBACK_SEARCH_TIMEOUT_MS,
     fallbackNotice:
       'tcgdex is unavailable — showing results from pokemontcg.io. TCG Pocket cards are not available from this source.',
   },
@@ -415,35 +490,58 @@ export const CARD_PROVIDERS = [
 
 // Tries providers in order; each is raced against a timeout. Returns the first
 // success (annotated with which provider served it and any fallback notice), or
-// throws the last error if every provider fails.
+// throws an AggregateError if every compatible provider fails.
 export async function queryWithFallback(term = '', options = {}) {
-  const { providers = CARD_PROVIDERS, timeoutMs = SEARCH_TIMEOUT_MS } = options;
-  let lastError;
+  const {
+    providers = CARD_PROVIDERS,
+    timeoutMs,
+    cardType = 'all',
+    signal,
+  } = options;
+  const errors = [];
+  let skippedForCardType = false;
 
   for (let i = 0; i < providers.length; i += 1) {
     const provider = providers[i];
+    if (
+      cardType !== 'all' &&
+      Array.isArray(provider.cardTypes) &&
+      !provider.cardTypes.includes(cardType)
+    ) {
+      skippedForCardType = true;
+      continue;
+    }
+
     try {
       const result = await withTimeout(
         (signal) => provider.search(term, { signal }),
-        timeoutMs
+        timeoutMs ?? provider.timeoutMs ?? SEARCH_TIMEOUT_MS,
+        { signal }
       );
       return {
         ...result,
         term,
         provider: provider.name,
         usedFallback: i > 0,
-        notice: i > 0 ? provider.fallbackNotice || '' : '',
+        notice: result.notice || (i > 0 ? provider.fallbackNotice || '' : ''),
       };
     } catch (error) {
-      lastError = error;
+      if (signal?.aborted) throw error;
+      errors.push(
+        new Error(`${provider.name} failed: ${error.message}`, { cause: error })
+      );
       // Fall through to the next provider.
     }
   }
 
-  throw lastError || new Error('All card providers failed');
+  const message =
+    cardType === 'pocket' && skippedForCardType
+      ? 'TCGdex is unavailable and no fallback provider supports TCG Pocket.'
+      : 'All card providers failed.';
+  throw new AggregateError(errors, message);
 }
 
-export async function queryCardsByName(term = '') {
+export async function queryCardsByName(term = '', options = {}) {
   const raw = String(term);
 
   // Empty/whitespace-only terms short-circuit without hitting the network.
@@ -459,5 +557,5 @@ export async function queryCardsByName(term = '') {
     };
   }
 
-  return queryWithFallback(raw);
+  return queryWithFallback(raw, options);
 }

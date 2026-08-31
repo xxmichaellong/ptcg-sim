@@ -9,6 +9,7 @@ import dotenv from 'dotenv';
 import sqlite3 from 'sqlite3';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { createCardFallbackHandler } from './card-fallback.js';
 
 // Handle __dirname in ES modules and adjust for client folder
 const __filename = fileURLToPath(import.meta.url);
@@ -31,6 +32,10 @@ function generateRandomKey(length) {
 
 async function main() {
   const app = express();
+  const trustProxyHops = Number(process.env.TRUST_PROXY_HOPS);
+  if (Number.isInteger(trustProxyHops) && trustProxyHops > 0) {
+    app.set('trust proxy', trustProxyHops);
+  }
   // HTTP Server Setup
   const server = http.createServer(app);
 
@@ -123,50 +128,15 @@ async function main() {
   // pages omit CORS headers, so a client-side failure surfaces as an opaque
   // "Failed to fetch". Proxying keeps the fallback same-origin and lets us attach an
   // API key server-side (set POKEMONTCG_API_KEY for higher rate limits).
-  app.get('/api/card-fallback', async (req, res) => {
-    const q = req.query.q;
-    if (!q) {
-      return res.status(400).json({ error: 'Query parameter "q" is required' });
-    }
-
-    const upstreamUrl = new URL('https://api.pokemontcg.io/v2/cards');
-    upstreamUrl.searchParams.set('q', String(q));
-    upstreamUrl.searchParams.set(
-      'pageSize',
-      String(req.query.pageSize || '150')
-    );
-    upstreamUrl.searchParams.set(
-      'orderBy',
-      String(req.query.orderBy || '-set.releaseDate')
-    );
-
-    const headers = { Accept: 'application/json' };
-    if (process.env.POKEMONTCG_API_KEY) {
-      headers['X-Api-Key'] = process.env.POKEMONTCG_API_KEY;
-    }
-
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 8000);
-    try {
-      const upstream = await fetch(upstreamUrl.toString(), {
-        headers,
-        signal: controller.signal,
-      });
-      if (!upstream.ok) {
-        return res
-          .status(502)
-          .json({ error: `Fallback provider error (${upstream.status})` });
-      }
-      const payload = await upstream.json();
-      res.json(payload);
-    } catch (error) {
-      res
-        .status(504)
-        .json({ error: `Fallback provider unavailable: ${error.message}` });
-    } finally {
-      clearTimeout(timer);
-    }
-  });
+  app.get(
+    '/api/card-fallback',
+    createCardFallbackHandler({
+      apiKey: process.env.POKEMONTCG_API_KEY,
+      perIpRateLimitMax: process.env.POKEMONTCG_PER_IP_RATE_LIMIT,
+      globalRateLimitMax: process.env.POKEMONTCG_GLOBAL_RATE_LIMIT,
+      globalDailyRateLimitMax: process.env.POKEMONTCG_GLOBAL_DAILY_LIMIT,
+    })
+  );
 
   const roomInfo = new Map();
   // Function to periodically clean up empty rooms

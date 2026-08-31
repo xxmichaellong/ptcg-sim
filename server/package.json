@@ -1,5 +1,8 @@
 {
   "name": "ptcg-sim-server",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "nodemon server.js"
   },

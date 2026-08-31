@@ -128,6 +128,7 @@ export const initializeNativeDeckBuilder = () => {
   let currentTotalSummaries = 0;
   let currentHugeResultSet = false;
   let currentProviderNotice = '';
+  let currentSearchController = null;
   let deckDirty = false;
   let flashFrame = null;
 
@@ -443,11 +444,17 @@ export const initializeNativeDeckBuilder = () => {
   const runSearch = async (options = {}) => {
     const term = (options.term ?? searchInput.value).trim();
 
+    currentSearchController?.abort();
+    const searchController = new AbortController();
+    currentSearchController = searchController;
+
     if (!term) {
       currentResults = [];
       currentRawResults = [];
       currentTotalSummaries = 0;
+      currentHugeResultSet = false;
       currentProviderNotice = '';
+      currentSearchController = null;
       searchStatus.textContent = '';
       render();
       return;
@@ -457,7 +464,12 @@ export const initializeNativeDeckBuilder = () => {
     searchStatus.textContent = `Searching for “${term}”...`;
 
     try {
-      const searchResponse = await queryCardsByName(term);
+      const searchResponse = await queryCardsByName(term, {
+        cardType: cardTypeFilter.value,
+        signal: searchController.signal,
+      });
+      if (currentSearchController !== searchController) return;
+
       currentRawResults = searchResponse.results;
       currentTotalSummaries = searchResponse.totalSummaries;
       currentHugeResultSet = searchResponse.isHugeResultSet;
@@ -466,6 +478,7 @@ export const initializeNativeDeckBuilder = () => {
 
       searchStatus.textContent = getSearchStatusText();
     } catch (error) {
+      if (searchController.signal.aborted) return;
       currentResults = [];
       currentRawResults = [];
       currentTotalSummaries = 0;
@@ -473,8 +486,11 @@ export const initializeNativeDeckBuilder = () => {
       currentProviderNotice = '';
       searchStatus.textContent = `Search failed: ${error.message}`;
     } finally {
-      searchButton.disabled = false;
-      render();
+      if (currentSearchController === searchController) {
+        currentSearchController = null;
+        searchButton.disabled = false;
+        render();
+      }
     }
   };
 
@@ -557,7 +573,12 @@ export const initializeNativeDeckBuilder = () => {
     }
   });
 
-  document.addEventListener('deck-builder-closing', loadCurrentDeck);
+  document.addEventListener('deck-builder-closing', () => {
+    currentSearchController?.abort();
+    currentSearchController = null;
+    searchButton.disabled = false;
+    loadCurrentDeck();
+  });
 
   const deckImportButton = document.getElementById('deckImportButton');
   if (deckImportButton)
