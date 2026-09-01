@@ -29,11 +29,11 @@ a hard-to-find behavior. Proposed names are not final APIs.
 | `moveToDeckTop`             | `MoveCardToDeckEdge(top)`                                                                                                  | v1 index-zero top convention, visibility clearing, stack policy                                                |
 | `switchWithDeckTop`         | Atomic `SwapCardWithDeckTop`                                                                                               | Empty/one-card deck, original destination, concealment, message                                                |
 | `viewDeck`                  | `ExtractDeckCardsForInspection`                                                                                            | Top/bottom selection, count clamp, target's deck, inspection viewer, ordered holding work area                 |
-| `shuffleAll`                | `ResolveStagedCards(shuffleIntoDeck)` or zone/inspection equivalent                                                        | Supported sources (deck/discard/view/detached), messages, popup close, no-op                                   |
-| `shuffleBottom`             | `ResolveStagedCards(shuffleToDeckBottom)` or inspection equivalent                                                         | Shuffle only selected source cards, bottom order relative to existing deck, visibility generation              |
-| `discardAll`                | `ResolveStagedCards(discard)` or inspection equivalent                                                                     | Detached/viewed source semantics, order, card category reset, message                                          |
-| `lostZoneAll`               | `ResolveStagedCards(lostZone)` or inspection equivalent                                                                    | Same dimensions as discard, label/message differences                                                          |
-| `handAll`                   | `ResolveStagedCards(hand)` or inspection equivalent                                                                        | Hidden owner view, opponent projection, order, message                                                         |
+| `shuffleAll`                | `ResolveStagedCards(shuffleIntoDeck)` or `ResolveInspectionCards(shuffleIntoDeck)`                                         | Supported sources (deck/discard/view/detached), messages, popup close, no-op                                   |
+| `shuffleBottom`             | `ResolveStagedCards(shuffleToDeckBottom)` or `ResolveInspectionCards(shuffleToDeckBottom)`                                 | Shuffle only selected source cards, bottom order relative to existing deck, visibility generation              |
+| `discardAll`                | `ResolveStagedCards(discard)` or `ResolveInspectionCards(discard)`                                                         | Detached/viewed source semantics, order, card category reset, message                                          |
+| `lostZoneAll`               | `ResolveStagedCards(lostZone)` or `ResolveInspectionCards(lostZone)`                                                       | Same dimensions as discard, label/message differences                                                          |
+| `handAll`                   | `ResolveStagedCards(hand)` or `ResolveInspectionCards(hand)`                                                               | Hidden owner view, opponent projection, order, message                                                         |
 | `leaveAll`                  | `RestoreStagedStack`                                                                                                       | Reconstruct evolution order and attachments into active/bench, selected destination, marker/rotation semantics |
 | `discardAndDraw`            | Atomic `DiscardHandAndDraw`                                                                                                | Zero count, clamps, order, hidden data, message                                                                |
 | `shuffleAndDraw`            | Atomic `ShuffleHandIntoDeckAndDraw`                                                                                        | Authority permutation, requested count, empty/short cases, concealment handles                                 |
@@ -128,6 +128,9 @@ bench. `ResolveStagedCards` now covers the staged-work-area forms of
 atomic revision. It preserves flat work-area order for visible/hand moves,
 shuffles the full combined deck for `shuffleAll`, and shuffles only staged cards
 before appending them for `shuffleBottom`. Cross-owner cards retain immutable
-ownership while entering the work-area player's destination zone. Equivalent
-bulk commands for the inspection work area remain separate future work; the
+ownership while entering the work-area player's destination zone.
+`ResolveInspectionCards` applies the same bounded, authority-resolved semantics
+to the active inspection work area and retires its visibility grant atomically.
+An ordinary inspection close now also retires persisted grants and public
+reveal metadata while normalizing temporary face and category state. The
 renderer does not infer legacy relative-image behavior.

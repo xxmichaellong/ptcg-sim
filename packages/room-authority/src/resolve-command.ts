@@ -349,6 +349,21 @@ export const resolveWireCommand = (
         },
       };
     }
+    case 'ResolveInspectionCards': {
+      const inspection = state.workAreas[actorId]?.inspection;
+      if (!inspection || inspection.id !== wire.expectedWorkAreaId) {
+        return rejected('stale_reference');
+      }
+      return {
+        accepted: true,
+        command: {
+          type: 'ResolveInspectionCards',
+          playerId: actorId,
+          expectedWorkAreaId: asWorkAreaId(wire.expectedWorkAreaId),
+          destination: wire.destination,
+        },
+      };
+    }
     case 'ShuffleZone': {
       const zone = state.zones[wire.zoneId];
       if (!zone) return rejected('stale_reference');

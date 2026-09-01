@@ -21,8 +21,10 @@ export interface DeckEntry {
   readonly count: number;
 }
 
-export type StagedCardsDestination =
+export type WorkAreaCardsDestination =
   'discard' | 'lostZone' | 'hand' | 'shuffleIntoDeck' | 'shuffleToDeckBottom';
+
+export type StagedCardsDestination = WorkAreaCardsDestination;
 
 export type GameCommand =
   | {
@@ -92,6 +94,12 @@ export type GameCommand =
       readonly playerId: PlayerId;
       readonly expectedWorkAreaId: WorkAreaId;
       readonly destination: StagedCardsDestination;
+    }
+  | {
+      readonly type: 'ResolveInspectionCards';
+      readonly playerId: PlayerId;
+      readonly expectedWorkAreaId: WorkAreaId;
+      readonly destination: WorkAreaCardsDestination;
     }
   | {
       readonly type: 'ShuffleZone';

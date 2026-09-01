@@ -6,6 +6,7 @@ import {
   type SessionSocketHandlers,
 } from '../../packages/client-session/src/index.js';
 import { submitBoardDrop } from '../../apps/web/src/board/resolveBoardDrop.js';
+import { submitInspectionCardsAction } from '../../apps/web/src/board/resolveInspectionCardsAction.js';
 import { submitStagedCardsAction } from '../../apps/web/src/board/resolveStagedCardsAction.js';
 import {
   RoomSessionHub,
@@ -640,6 +641,85 @@ describe('client/server multiplayer contract', () => {
     expect(resolved?.zones[deckId]?.cards).toHaveLength(2);
     expect(resolved?.zones[deckId]?.cards[0]?.id).toBe(oldDeckTopId);
     expect(room.store.commandCommits).toHaveLength(5);
+  });
+
+  it('resolves inspected cards to hand after reconnect without retaining grants', async () => {
+    const room = await fixture();
+    const scheduler = new ManualScheduler();
+    const player = await connectClient({
+      hub: room.hub,
+      name: 'Blue',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+      scheduler,
+    });
+    const playerId = player.session.getSnapshot().playerId;
+    if (!playerId) throw new Error('Missing admitted player identity');
+    expect(
+      player.session.submit({
+        type: 'LoadDeck',
+        entries: Array.from({ length: 4 }, (_, index) => ({
+          definition: {
+            id: `inspection-integration-definition-${index}`,
+            name: `Inspection integration card ${index}`,
+            category: 'Trainer' as const,
+            imageUrl: `/inspection-integration-${index}.png`,
+          },
+          count: 1,
+        })),
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+    expect(
+      player.session.submit({
+        type: 'ExtractDeckCardsForInspection',
+        ownerPlayerId: playerId,
+        count: 2,
+        edge: 'top',
+        visibility: 'private',
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+
+    let view = player.session.getSnapshot().view;
+    const inspectionBeforeReconnect = view?.workAreas[playerId]?.inspection;
+    expect(inspectionBeforeReconnect?.cards).toHaveLength(2);
+    expect(
+      inspectionBeforeReconnect?.cards.every((card) => card.kind === 'known')
+    ).toBe(true);
+    if (!inspectionBeforeReconnect) {
+      throw new Error('Inspection work area was not published');
+    }
+
+    player.factory.latest().networkDrop();
+    scheduler.runNext();
+    player.factory.latest().open();
+    await player.factory.flush();
+    view = player.session.getSnapshot().view;
+    if (!view) throw new Error('Authoritative view did not resume');
+    let submitted = false;
+    const resolution = submitInspectionCardsAction(view, 'hand', (command) => {
+      submitted = player.session.submit(command).queued;
+    });
+    expect(resolution).toMatchObject({
+      ok: true,
+      command: {
+        type: 'ResolveInspectionCards',
+        expectedWorkAreaId: inspectionBeforeReconnect.id,
+        destination: 'hand',
+      },
+    });
+    expect(submitted).toBe(true);
+    await player.factory.flush();
+
+    const resolved = player.session.getSnapshot().view;
+    const hand = resolved?.zones[`zone:${playerId}:hand`];
+    expect(resolved?.revision).toBe(3);
+    expect(resolved?.workAreas[playerId]?.inspection).toBeNull();
+    expect(hand?.cards).toHaveLength(2);
+    expect(hand?.cards.every((card) => card.kind === 'known')).toBe(true);
+    expect(resolved?.zones[`zone:${playerId}:deck`]?.cards).toHaveLength(2);
+    expect(room.store.commandCommits).toHaveLength(3);
   });
 
   it('publishes one authoritative revision to a player and spectator', async () => {

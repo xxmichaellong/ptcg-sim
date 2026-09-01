@@ -2,6 +2,7 @@ import type {
   CommandContext,
   CommandRejection,
   GameCommand,
+  WorkAreaCardsDestination,
 } from './commands.js';
 import { playerZoneId, stadiumZoneId } from './create-match.js';
 import type { DomainEvent } from './events.js';
@@ -55,6 +56,74 @@ const validateRequestedCount = (count: number): CommandRejection | null =>
   Number.isSafeInteger(count) && count >= 0 && count <= 200
     ? null
     : reject('invalid_command', 'Card count must be an integer from 0 to 200');
+
+type WorkAreaDestinationDecision =
+  | CommandRejection
+  | {
+      readonly accepted: true;
+      readonly destinationZoneId: CardZone['id'];
+      readonly expectedDestinationCardIds: readonly CardInstanceId[];
+      readonly destinationCardIds: readonly CardInstanceId[];
+      readonly concealedCardIds: readonly CardInstanceId[];
+    };
+
+const decideWorkAreaDestination = (
+  state: MatchState,
+  playerId: PlayerId,
+  cardIds: readonly CardInstanceId[],
+  destinationMode: WorkAreaCardsDestination,
+  context: CommandContext
+): WorkAreaDestinationDecision => {
+  const destinationKind =
+    destinationMode === 'shuffleIntoDeck' ||
+    destinationMode === 'shuffleToDeckBottom'
+      ? 'deck'
+      : destinationMode;
+  const destination = state.zones[playerZoneId(playerId, destinationKind)];
+  if (!destination) {
+    return reject('not_found', 'Work-area destination does not exist');
+  }
+  if (destination.cardIds.length + cardIds.length > 200) {
+    return reject(
+      'precondition_failed',
+      'Work-area destination cannot contain more than 200 cards'
+    );
+  }
+
+  let destinationCardIds: readonly CardInstanceId[];
+  let concealedCardIds: readonly CardInstanceId[];
+  if (destinationMode === 'shuffleIntoDeck') {
+    const combined = [...destination.cardIds, ...cardIds];
+    destinationCardIds = context.shuffle(combined);
+    if (!validatePermutation(combined, destinationCardIds)) {
+      return reject(
+        'invalid_command',
+        'Shuffle adapter returned an invalid permutation'
+      );
+    }
+    concealedCardIds = destinationCardIds;
+  } else if (destinationMode === 'shuffleToDeckBottom') {
+    const shuffled = context.shuffle(cardIds);
+    if (!validatePermutation(cardIds, shuffled)) {
+      return reject(
+        'invalid_command',
+        'Shuffle adapter returned an invalid permutation'
+      );
+    }
+    destinationCardIds = [...destination.cardIds, ...shuffled];
+    concealedCardIds = shuffled;
+  } else {
+    destinationCardIds = [...destination.cardIds, ...cardIds];
+    concealedCardIds = destinationMode === 'hand' ? cardIds : [];
+  }
+  return {
+    accepted: true,
+    destinationZoneId: destination.id,
+    expectedDestinationCardIds: [...destination.cardIds],
+    destinationCardIds,
+    concealedCardIds,
+  };
+};
 
 const uniqueCardIds = (
   cardIds: readonly CardInstanceId[]
@@ -642,49 +711,14 @@ export const decideCommand = (
         ...resolution.evolutionCardIds,
         ...resolution.attachmentCardIds,
       ];
-      const destinationKind =
-        command.destination === 'shuffleIntoDeck' ||
-        command.destination === 'shuffleToDeckBottom'
-          ? 'deck'
-          : command.destination;
-      const destination =
-        state.zones[playerZoneId(command.playerId, destinationKind)];
-      if (!destination) {
-        return reject('not_found', 'Staged-card destination does not exist');
-      }
-      if (destination.cardIds.length + stagedCardIds.length > 200) {
-        return reject(
-          'precondition_failed',
-          'Staged-card destination cannot contain more than 200 cards'
-        );
-      }
-
-      let destinationCardIds: readonly CardInstanceId[];
-      let concealedCardIds: readonly CardInstanceId[];
-      if (command.destination === 'shuffleIntoDeck') {
-        const combined = [...destination.cardIds, ...stagedCardIds];
-        destinationCardIds = context.shuffle(combined);
-        if (!validatePermutation(combined, destinationCardIds)) {
-          return reject(
-            'invalid_command',
-            'Shuffle adapter returned an invalid permutation'
-          );
-        }
-        concealedCardIds = destinationCardIds;
-      } else if (command.destination === 'shuffleToDeckBottom') {
-        const shuffledStaged = context.shuffle(stagedCardIds);
-        if (!validatePermutation(stagedCardIds, shuffledStaged)) {
-          return reject(
-            'invalid_command',
-            'Shuffle adapter returned an invalid permutation'
-          );
-        }
-        destinationCardIds = [...destination.cardIds, ...shuffledStaged];
-        concealedCardIds = shuffledStaged;
-      } else {
-        destinationCardIds = [...destination.cardIds, ...stagedCardIds];
-        concealedCardIds = command.destination === 'hand' ? stagedCardIds : [];
-      }
+      const destination = decideWorkAreaDestination(
+        state,
+        command.playerId,
+        stagedCardIds,
+        command.destination,
+        context
+      );
+      if (!destination.accepted) return destination;
       return accept({
         type: 'StagedCardsResolved',
         playerId: command.playerId,
@@ -692,10 +726,38 @@ export const decideCommand = (
         expectedEvolutionCardIds: [...resolution.evolutionCardIds],
         expectedAttachmentCardIds: [...resolution.attachmentCardIds],
         destination: command.destination,
-        destinationZoneId: destination.id,
-        expectedDestinationCardIds: [...destination.cardIds],
-        destinationCardIds,
-        concealedCardIds,
+        destinationZoneId: destination.destinationZoneId,
+        expectedDestinationCardIds: destination.expectedDestinationCardIds,
+        destinationCardIds: destination.destinationCardIds,
+        concealedCardIds: destination.concealedCardIds,
+      });
+    }
+    case 'ResolveInspectionCards': {
+      const playerError = requirePlayer(state, command.playerId);
+      if (playerError) return playerError;
+      const inspection = state.workAreas[command.playerId]?.inspection;
+      if (!inspection || inspection.id !== command.expectedWorkAreaId) {
+        return reject('stale_reference', 'Inspection work area changed');
+      }
+      const destination = decideWorkAreaDestination(
+        state,
+        command.playerId,
+        inspection.cardIds,
+        command.destination,
+        context
+      );
+      if (!destination.accepted) return destination;
+      return accept({
+        type: 'InspectionCardsResolved',
+        playerId: command.playerId,
+        inspectionId: inspection.inspectionId,
+        expectedWorkAreaId: inspection.id,
+        expectedCardIds: [...inspection.cardIds],
+        destination: command.destination,
+        destinationZoneId: destination.destinationZoneId,
+        expectedDestinationCardIds: destination.expectedDestinationCardIds,
+        destinationCardIds: destination.destinationCardIds,
+        concealedCardIds: destination.concealedCardIds,
       });
     }
     case 'ShuffleZone': {

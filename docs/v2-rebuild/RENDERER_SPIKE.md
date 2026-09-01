@@ -159,7 +159,8 @@ chunk graph will be measured in the browser evidence run.
   authority commit, reconciled stack publication, bench-to-active promotion,
   explicit stack-to-zone departure, dependent-card staging across a resumed
   session, staged-stack restoration, and an atomic resumed bulk move to the
-  deck bottom;
+  deck bottom, plus inspection extraction across a resumed session and an
+  atomic bulk move to hand;
 - TypeScript project boundaries and circular-dependency check;
 - Vite production build; and
 - the repository-wide v2 and 79-test legacy gates.
@@ -178,11 +179,13 @@ application boundary accepts either the harness recorder or
 compile-time view-ID brands at one explicit protocol boundary before entering
 the external client store.
 
-The side-panel command boundary also maps the five legacy attached-card bulk
-buttons to one bounded `ResolveStagedCards` command. The authority derives the
-player and destination zone, validates the exact work-area ID, resolves random
-ordering server-side, and publishes the whole result as one revision. No bulk
-operation loops through transient client-visible card moves.
+The side-panel command boundary maps the five legacy attached-card and viewed-
+card bulk buttons to bounded `ResolveStagedCards` and `ResolveInspectionCards`
+commands through one shared application path. The authority derives the player
+and destination zone, validates the exact work-area ID, resolves random ordering
+server-side, retires inspection visibility grants, and publishes the whole
+result as one revision. No bulk operation loops through transient client-visible
+card moves.
 
 Whole-stack movement is also explicit: the top evolution card may represent a
 stack for active/bench promotion, demotion, swapping, or bench reordering. The
@@ -190,7 +193,7 @@ resolved event replaces the complete board stack layout with exact old-layout
 preconditions, while attachment drags and lower evolution cards cannot
 accidentally move the stack.
 
-At this checkpoint the v2 suite contains 115 passing tests across 24 files. A
+At this checkpoint the v2 suite contains 125 passing tests across 26 files. A
 separate Playwright suite also passes three real Chromium 151 scenarios:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and

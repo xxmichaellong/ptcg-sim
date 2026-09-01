@@ -3,29 +3,20 @@ import type {
   StagedCardsDestination,
 } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
+import {
+  resolveWorkAreaCardsAction,
+  submitWorkAreaCardsAction,
+  type WorkAreaCardsActionResolution,
+} from './resolveWorkAreaCardsAction.js';
 
-export type StagedCardsActionResolution =
-  | { readonly ok: true; readonly command: WireGameCommand }
-  | { readonly ok: false; readonly reason: 'not_player' | 'no_work_area' };
+export type StagedCardsActionResolution = WorkAreaCardsActionResolution;
 
 /** Resolves one legacy attached-card bulk button into a stale-safe command. */
 export const resolveStagedCardsAction = (
   view: MatchViewState,
   destination: StagedCardsDestination
 ): StagedCardsActionResolution => {
-  if (view.viewer.kind !== 'player') {
-    return { ok: false, reason: 'not_player' };
-  }
-  const resolution = view.workAreas[view.viewer.playerId]?.attachmentResolution;
-  if (!resolution) return { ok: false, reason: 'no_work_area' };
-  return {
-    ok: true,
-    command: {
-      type: 'ResolveStagedCards',
-      expectedWorkAreaId: resolution.id,
-      destination,
-    },
-  };
+  return resolveWorkAreaCardsAction(view, 'staged', destination);
 };
 
 export const submitStagedCardsAction = (
@@ -33,7 +24,5 @@ export const submitStagedCardsAction = (
   destination: StagedCardsDestination,
   submit: (command: WireGameCommand) => void
 ): StagedCardsActionResolution => {
-  const resolution = resolveStagedCardsAction(view, destination);
-  if (resolution.ok) submit(resolution.command);
-  return resolution;
+  return submitWorkAreaCardsAction(view, 'staged', destination, submit);
 };

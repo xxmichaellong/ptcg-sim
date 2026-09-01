@@ -196,6 +196,127 @@ const requireStack = (state: MatchState, stackId: string) => {
   return stack;
 };
 
+type WorkAreaCardsResolvedEvent = Extract<
+  DomainEvent,
+  { readonly type: 'StagedCardsResolved' | 'InspectionCardsResolved' }
+>;
+
+const applyWorkAreaCardsResolved = (
+  state: MatchState,
+  event: WorkAreaCardsResolvedEvent,
+  workAreaCardIds: readonly CardInstanceId[]
+): MatchState => {
+  const expectedDestinationKind =
+    event.destination === 'shuffleIntoDeck' ||
+    event.destination === 'shuffleToDeckBottom'
+      ? 'deck'
+      : event.destination;
+  const expectedDestinationZoneId = playerZoneId(
+    event.playerId,
+    expectedDestinationKind
+  );
+  if (event.destinationZoneId !== expectedDestinationZoneId) {
+    throw new Error('Work-area resolution has an invalid destination');
+  }
+  const destination = requireZone(state, event.destinationZoneId);
+  if (
+    destination.cardIds.length !== event.expectedDestinationCardIds.length ||
+    destination.cardIds.some(
+      (cardId, index) => cardId !== event.expectedDestinationCardIds[index]
+    )
+  ) {
+    throw new Error('Work-area destination order changed');
+  }
+  const before = [...destination.cardIds, ...workAreaCardIds].sort();
+  const after = [...event.destinationCardIds].sort();
+  if (
+    event.destinationCardIds.length > 200 ||
+    before.length !== after.length ||
+    before.some((cardId, index) => cardId !== after[index]) ||
+    new Set(event.destinationCardIds).size !== event.destinationCardIds.length
+  ) {
+    throw new Error('Work-area resolution changes the destination card set');
+  }
+  if (
+    event.destination !== 'shuffleIntoDeck' &&
+    event.destination !== 'shuffleToDeckBottom' &&
+    (event.destinationCardIds.length !==
+      destination.cardIds.length + workAreaCardIds.length ||
+      [...destination.cardIds, ...workAreaCardIds].some(
+        (cardId, index) => cardId !== event.destinationCardIds[index]
+      ))
+  ) {
+    throw new Error('Work-area resolution changes append ordering');
+  }
+  if (
+    event.destination === 'shuffleToDeckBottom' &&
+    destination.cardIds.some(
+      (cardId, index) => cardId !== event.destinationCardIds[index]
+    )
+  ) {
+    throw new Error('Deck-bottom resolution changes the existing deck');
+  }
+  const concealed = new Set(event.concealedCardIds);
+  if (
+    concealed.size !== event.concealedCardIds.length ||
+    event.concealedCardIds.some(
+      (cardId) => !event.destinationCardIds.includes(cardId)
+    )
+  ) {
+    throw new Error('Work-area resolution conceals an invalid card');
+  }
+  const expectedConcealedCardIds =
+    event.destination === 'shuffleIntoDeck'
+      ? [...event.destinationCardIds]
+      : event.destination === 'hand' ||
+          event.destination === 'shuffleToDeckBottom'
+        ? [...workAreaCardIds]
+        : [];
+  const sortedConcealed = [...concealed].sort();
+  const sortedExpectedConcealed = expectedConcealedCardIds.sort();
+  if (
+    sortedConcealed.length !== sortedExpectedConcealed.length ||
+    sortedConcealed.some(
+      (cardId, index) => cardId !== sortedExpectedConcealed[index]
+    )
+  ) {
+    throw new Error('Work-area resolution has invalid concealment');
+  }
+  const workAreaCards = new Set(workAreaCardIds);
+  return {
+    ...state,
+    cards: Object.fromEntries(
+      Object.entries(state.cards).map(([cardId, card]) => {
+        const normalized = workAreaCards.has(card.id)
+          ? {
+              ...card,
+              currentCategory: card.originalCategory,
+              face: 'up' as const,
+              orientationQuarterTurns: 0 as const,
+            }
+          : card;
+        return [
+          cardId,
+          concealed.has(card.id) ? incrementVisibility(normalized) : normalized,
+        ];
+      })
+    ),
+    zones: {
+      ...state.zones,
+      [destination.id]: {
+        ...destination,
+        cardIds: [...event.destinationCardIds],
+      },
+    },
+    visibility: {
+      ...state.visibility,
+      publicCardIds: state.visibility.publicCardIds.filter(
+        (cardId) => !workAreaCards.has(cardId) && !concealed.has(cardId)
+      ),
+    },
+  };
+};
+
 export const applyEvent = (
   state: MatchState,
   event: DomainEvent
@@ -1037,126 +1158,51 @@ export const applyEvent = (
       ) {
         throw new Error('Staged-card resolution has stale card ordering');
       }
-      const expectedDestinationKind =
-        event.destination === 'shuffleIntoDeck' ||
-        event.destination === 'shuffleToDeckBottom'
-          ? 'deck'
-          : event.destination;
-      const expectedDestinationZoneId = playerZoneId(
-        event.playerId,
-        expectedDestinationKind
-      );
-      if (event.destinationZoneId !== expectedDestinationZoneId) {
-        throw new Error('Staged-card resolution has an invalid destination');
-      }
-      const destination = requireZone(state, event.destinationZoneId);
-      if (
-        destination.cardIds.length !==
-          event.expectedDestinationCardIds.length ||
-        destination.cardIds.some(
-          (cardId, index) => cardId !== event.expectedDestinationCardIds[index]
-        )
-      ) {
-        throw new Error('Staged-card destination order changed');
-      }
       const stagedCardIds = [
         ...resolution.evolutionCardIds,
         ...resolution.attachmentCardIds,
       ];
-      const before = [...destination.cardIds, ...stagedCardIds].sort();
-      const after = [...event.destinationCardIds].sort();
-      if (
-        event.destinationCardIds.length > 200 ||
-        before.length !== after.length ||
-        before.some((cardId, index) => cardId !== after[index]) ||
-        new Set(event.destinationCardIds).size !==
-          event.destinationCardIds.length
-      ) {
-        throw new Error(
-          'Staged-card resolution changes the destination card set'
-        );
-      }
-      if (
-        event.destination !== 'shuffleIntoDeck' &&
-        event.destination !== 'shuffleToDeckBottom' &&
-        (event.destinationCardIds.length !==
-          destination.cardIds.length + stagedCardIds.length ||
-          [...destination.cardIds, ...stagedCardIds].some(
-            (cardId, index) => cardId !== event.destinationCardIds[index]
-          ))
-      ) {
-        throw new Error('Staged-card resolution changes append ordering');
-      }
-      if (
-        event.destination === 'shuffleToDeckBottom' &&
-        destination.cardIds.some(
-          (cardId, index) => cardId !== event.destinationCardIds[index]
-        )
-      ) {
-        throw new Error('Deck-bottom resolution changes the existing deck');
-      }
-      const concealed = new Set(event.concealedCardIds);
-      if (
-        concealed.size !== event.concealedCardIds.length ||
-        event.concealedCardIds.some(
-          (cardId) => !event.destinationCardIds.includes(cardId)
-        )
-      ) {
-        throw new Error('Staged-card resolution conceals an invalid card');
-      }
-      const expectedConcealedCardIds =
-        event.destination === 'shuffleIntoDeck'
-          ? [...event.destinationCardIds]
-          : event.destination === 'hand' ||
-              event.destination === 'shuffleToDeckBottom'
-            ? [...stagedCardIds]
-            : [];
-      const sortedConcealed = [...concealed].sort();
-      const sortedExpectedConcealed = expectedConcealedCardIds.sort();
-      if (
-        sortedConcealed.length !== sortedExpectedConcealed.length ||
-        sortedConcealed.some(
-          (cardId, index) => cardId !== sortedExpectedConcealed[index]
-        )
-      ) {
-        throw new Error('Staged-card resolution has invalid concealment');
-      }
-      const staged = new Set(stagedCardIds);
+      const resolved = applyWorkAreaCardsResolved(state, event, stagedCardIds);
       return {
-        ...state,
-        cards: Object.fromEntries(
-          Object.entries(state.cards).map(([cardId, card]) => {
-            const normalized = staged.has(card.id)
-              ? {
-                  ...card,
-                  currentCategory: card.originalCategory,
-                  face: 'up' as const,
-                  orientationQuarterTurns: 0 as const,
-                }
-              : card;
-            return [
-              cardId,
-              concealed.has(card.id)
-                ? incrementVisibility(normalized)
-                : normalized,
-            ];
-          })
-        ),
-        zones: {
-          ...state.zones,
-          [destination.id]: {
-            ...destination,
-            cardIds: [...event.destinationCardIds],
-          },
-        },
+        ...resolved,
         workAreas: {
-          ...state.workAreas,
+          ...resolved.workAreas,
           [event.playerId]: { ...areas, attachmentResolution: null },
         },
+      };
+    }
+    case 'InspectionCardsResolved': {
+      const areas = state.workAreas[event.playerId];
+      const inspection = areas?.inspection;
+      if (
+        !areas ||
+        !inspection ||
+        inspection.id !== event.expectedWorkAreaId ||
+        inspection.inspectionId !== event.inspectionId ||
+        inspection.cardIds.length !== event.expectedCardIds.length ||
+        inspection.cardIds.some(
+          (cardId, index) => cardId !== event.expectedCardIds[index]
+        )
+      ) {
+        throw new Error('Inspection-card resolution has stale card ordering');
+      }
+      const resolved = applyWorkAreaCardsResolved(
+        state,
+        event,
+        inspection.cardIds
+      );
+      return {
+        ...resolved,
+        workAreas: {
+          ...resolved.workAreas,
+          [event.playerId]: { ...areas, inspection: null },
+        },
         visibility: {
-          ...state.visibility,
-          publicCardIds: state.visibility.publicCardIds.filter(
-            (cardId) => !staged.has(cardId) && !concealed.has(cardId)
+          ...resolved.visibility,
+          inspectionGrants: Object.fromEntries(
+            Object.entries(resolved.visibility.inspectionGrants).filter(
+              ([inspectionId]) => inspectionId !== event.inspectionId
+            )
           ),
         },
       };
@@ -1302,14 +1348,23 @@ export const applyEvent = (
       }
       return {
         ...state,
-        cards: event.concealIdentity
-          ? Object.fromEntries(
-              Object.entries(state.cards).map(([cardId, card]) => [
-                cardId,
-                returned.has(card.id) ? incrementVisibility(card) : card,
-              ])
-            )
-          : state.cards,
+        cards: Object.fromEntries(
+          Object.entries(state.cards).map(([cardId, card]) => {
+            if (!returned.has(card.id)) return [cardId, card];
+            const normalized = {
+              ...card,
+              currentCategory: card.originalCategory,
+              face: 'up' as const,
+              orientationQuarterTurns: 0 as const,
+            };
+            return [
+              cardId,
+              event.concealIdentity
+                ? incrementVisibility(normalized)
+                : normalized,
+            ];
+          })
+        ),
         zones: {
           ...state.zones,
           [destination.id]: { ...destination, cardIds: [...event.cardOrder] },
@@ -1317,6 +1372,16 @@ export const applyEvent = (
         workAreas: {
           ...state.workAreas,
           [event.playerId]: { ...areas, inspection: null },
+        },
+        visibility: {
+          publicCardIds: state.visibility.publicCardIds.filter(
+            (cardId) => !event.concealIdentity || !returned.has(cardId)
+          ),
+          inspectionGrants: Object.fromEntries(
+            Object.entries(state.visibility.inspectionGrants).filter(
+              ([inspectionId]) => inspectionId !== event.inspectionId
+            )
+          ),
         },
       };
     }

@@ -14,7 +14,7 @@ import type {
   QuarterTurns,
   SpecialCondition,
 } from './model.js';
-import type { StagedCardsDestination } from './commands.js';
+import type { WorkAreaCardsDestination } from './commands.js';
 
 export type DomainEvent =
   | {
@@ -154,7 +154,19 @@ export type DomainEvent =
       readonly expectedWorkAreaId: WorkAreaId;
       readonly expectedEvolutionCardIds: readonly CardInstanceId[];
       readonly expectedAttachmentCardIds: readonly CardInstanceId[];
-      readonly destination: StagedCardsDestination;
+      readonly destination: WorkAreaCardsDestination;
+      readonly destinationZoneId: ZoneId;
+      readonly expectedDestinationCardIds: readonly CardInstanceId[];
+      readonly destinationCardIds: readonly CardInstanceId[];
+      readonly concealedCardIds: readonly CardInstanceId[];
+    }
+  | {
+      readonly type: 'InspectionCardsResolved';
+      readonly playerId: PlayerId;
+      readonly inspectionId: InspectionId;
+      readonly expectedWorkAreaId: WorkAreaId;
+      readonly expectedCardIds: readonly CardInstanceId[];
+      readonly destination: WorkAreaCardsDestination;
       readonly destinationZoneId: ZoneId;
       readonly expectedDestinationCardIds: readonly CardInstanceId[];
       readonly destinationCardIds: readonly CardInstanceId[];
