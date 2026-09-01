@@ -167,7 +167,8 @@ chunk graph will be measured in the browser evidence run.
   plus stadium/BREAK orientation, exact-card ability markers, and an atomic
   category-change departure that survive the same projection/reconnect path,
   plus independent, explicitly targeted GX/VSTAR state across reconnect and
-  per-player reset;
+  per-player reset, plus an exact-source loose-board shuffle that normalizes
+  cards, rotates hidden identities, and survives reconnect as one revision;
 - TypeScript project boundaries and circular-dependency check;
 - Vite production build; and
 - the repository-wide v2 and 79-test legacy gates.
@@ -225,7 +226,15 @@ board, while authority validates the target and opponent-interaction policy.
 The existing side-button UX can consume this state directly; no renderer-local
 toggle or new visible control is introduced.
 
-At this checkpoint the v2 suite contains 176 passing tests across 36 files. A
+Loose-board bulk controls now use one semantic resolver for discard, hand, lost
+zone, and shuffle-into-deck. It snapshots the ordered projected card handles;
+authority rejects any stale list and publishes one normalized event. Generic
+zone commands cannot target the loose board, preventing an alternate path around
+identity rotation and leaving-play cleanup. Both renderers consume only the
+resulting recipient-safe zone projection, so no batch loop or transient card
+location is visible locally.
+
+At this checkpoint the v2 suite contains 192 passing tests across 39 files. A
 separate Playwright suite also passes three real Chromium 151 scenarios:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and

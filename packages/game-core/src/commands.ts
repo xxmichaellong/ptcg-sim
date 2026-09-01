@@ -26,6 +26,11 @@ export type WorkAreaCardsDestination =
 
 export type StagedCardsDestination = WorkAreaCardsDestination;
 
+export type LooseBoardCardsDestination = Exclude<
+  WorkAreaCardsDestination,
+  'shuffleToDeckBottom'
+>;
+
 export type GameCommand =
   | {
       readonly type: 'LoadDeck';
@@ -139,6 +144,12 @@ export type GameCommand =
       readonly type: 'MoveZoneContents';
       readonly sourceZoneId: ZoneId;
       readonly destinationZoneId: ZoneId;
+    }
+  | {
+      readonly type: 'ResolveLooseBoardCards';
+      readonly playerId: PlayerId;
+      readonly expectedBoardCardIds: readonly CardInstanceId[];
+      readonly destination: LooseBoardCardsDestination;
     }
   | {
       readonly type: 'ShuffleZoneIntoDeck';

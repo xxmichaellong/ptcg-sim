@@ -1359,6 +1359,12 @@ export const decideCommand = (
       if (source.id === destination.id) {
         return reject('invalid_command', 'Source and destination must differ');
       }
+      if (source.kind === 'board' || destination.kind === 'board') {
+        return reject(
+          'precondition_failed',
+          'Loose-board batches require the semantic loose-board command'
+        );
+      }
       if (
         destination.kind === 'stadium' &&
         source.cardIds.length + destination.cardIds.length > 1
@@ -1385,6 +1391,63 @@ export const decideCommand = (
           : [],
       });
     }
+    case 'ResolveLooseBoardCards': {
+      const playerError = requirePlayer(state, command.playerId);
+      if (playerError) return playerError;
+      const board = state.zones[playerZoneId(command.playerId, 'board')];
+      if (!board) return reject('not_found', 'Loose board does not exist');
+      if (!sameOrder(board.cardIds, command.expectedBoardCardIds)) {
+        return reject('stale_reference', 'Loose board contents changed');
+      }
+      if (board.cardIds.length === 0) {
+        return reject('precondition_failed', 'Loose board is empty');
+      }
+      const destinationKind =
+        command.destination === 'shuffleIntoDeck'
+          ? 'deck'
+          : command.destination;
+      const destination =
+        state.zones[playerZoneId(command.playerId, destinationKind)];
+      if (!destination) {
+        return reject('not_found', 'Loose-board destination does not exist');
+      }
+      if (destination.cardIds.length + board.cardIds.length > 200) {
+        return reject(
+          'precondition_failed',
+          'Loose-board destination cannot contain more than 200 cards'
+        );
+      }
+      const combined = [...destination.cardIds, ...board.cardIds];
+      const destinationCardIds =
+        command.destination === 'shuffleIntoDeck'
+          ? context.shuffle(combined)
+          : combined;
+      if (
+        command.destination === 'shuffleIntoDeck' &&
+        !validatePermutation(combined, destinationCardIds)
+      ) {
+        return reject(
+          'invalid_command',
+          'Shuffle adapter returned an invalid permutation'
+        );
+      }
+      return accept({
+        type: 'LooseBoardCardsResolved',
+        playerId: command.playerId,
+        destination: command.destination,
+        boardZoneId: board.id,
+        destinationZoneId: destination.id,
+        expectedBoardCardIds: [...board.cardIds],
+        expectedDestinationCardIds: [...destination.cardIds],
+        destinationCardIds,
+        concealedCardIds:
+          command.destination === 'shuffleIntoDeck'
+            ? destinationCardIds
+            : command.destination === 'hand'
+              ? [...board.cardIds]
+              : [],
+      });
+    }
     case 'ShuffleZoneIntoDeck': {
       const playerError = requirePlayer(state, command.playerId);
       if (playerError) return playerError;
@@ -1393,6 +1456,12 @@ export const decideCommand = (
       if (!source || !deck) return reject('not_found', 'Zone does not exist');
       if (source.ownerId !== command.playerId) {
         return reject('precondition_failed', 'Source is not owned by player');
+      }
+      if (source.kind === 'board') {
+        return reject(
+          'precondition_failed',
+          'Loose-board shuffles require the semantic loose-board command'
+        );
       }
       const combined =
         source.id === deck.id
@@ -1437,6 +1506,12 @@ export const decideCommand = (
       const source = state.zones[command.sourceZoneId];
       const deck = state.zones[playerZoneId(command.playerId, 'deck')];
       if (!source || !deck) return reject('not_found', 'Zone does not exist');
+      if (source.kind === 'board') {
+        return reject(
+          'precondition_failed',
+          'Loose-board shuffles require the semantic loose-board command'
+        );
+      }
       if (source.id === deck.id) {
         return reject('invalid_command', 'Source cannot be the deck');
       }

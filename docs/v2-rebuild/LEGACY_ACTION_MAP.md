@@ -60,12 +60,12 @@ a hard-to-find behavior. Proposed names are not final APIs.
 
 ## Loose board batches
 
-| v1 action       | Proposed v2 responsibility                     | Critical characterization                                      |
-| --------------- | ---------------------------------------------- | -------------------------------------------------------------- |
-| `discardBoard`  | Atomic `MoveLooseBoardContents(discard)`       | Both-board turn cleanup, ownership destination, order/messages |
-| `handBoard`     | Atomic `MoveLooseBoardContents(hand)`          | Ownership versus board placement, hidden projection            |
-| `shuffleBoard`  | Atomic `MoveLooseBoardContents(deck, shuffle)` | Per-owner deck/permutation and message batching                |
-| `lostZoneBoard` | Atomic `MoveLooseBoardContents(lostZone)`      | Ownership destination and ordering                             |
+| v1 action       | Proposed v2 responsibility                | Critical characterization                                      |
+| --------------- | ----------------------------------------- | -------------------------------------------------------------- |
+| `discardBoard`  | `ResolveLooseBoardCards(discard)`         | Both-board turn cleanup, ownership destination, order/messages |
+| `handBoard`     | `ResolveLooseBoardCards(hand)`            | Ownership versus board placement, hidden projection            |
+| `shuffleBoard`  | `ResolveLooseBoardCards(shuffleIntoDeck)` | Per-board deck, authority permutation, message batching        |
+| `lostZoneBoard` | `ResolveLooseBoardCards(lostZone)`        | Ownership destination and ordering                             |
 
 ## Visibility and per-card shortcuts
 
@@ -202,3 +202,28 @@ reconnect, and durable room restoration. Duplicate target values are rejected
 without a revision. Reset clears both markers only for the reset player. The
 existing UI can continue to render its VSTAR and GX buttons from projected
 player state; this slice does not alter their labels, placement, or styling.
+
+### Implemented loose-board batch subset
+
+The four legacy loose-board batch actions now map to one bounded
+`ResolveLooseBoardCards` command with discard, hand, lost-zone, and full-deck
+shuffle destinations. The command names the target board player and carries the
+complete ordered opaque card list seen by the submitter. Authority resolves
+those handles against that recipient only, requires an exact current board
+match, and policy-gates opponent-board interaction before producing canonical
+IDs. Empty, stale, oversized, foreign-policy, and malformed-randomness requests
+fail without a revision.
+
+Each accepted action publishes one `LooseBoardCardsResolved` event. Visible
+destinations append the board's current order after existing cards; shuffle
+combines the existing deck followed by the board and asks authority randomness
+for a full permutation. Cards leaving the loose board restore printed category,
+face-up state, zero orientation, and no per-card ability marker. Public reveal
+grants are retired. Hand-bound cards rotate their opaque identities; a deck
+shuffle rotates identities for the entire shuffled pool. Immutable card owner
+IDs survive even when a cross-owned card enters the board player's destination.
+
+Generic whole-zone commands are explicitly forbidden from using the loose board
+as source or destination, so clients cannot bypass these preconditions or
+normalization rules. The application boundary produces one command rather than
+the legacy loop of individually visible moves.

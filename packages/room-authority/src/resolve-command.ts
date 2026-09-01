@@ -6,6 +6,7 @@ import {
   asWorkAreaId,
   asZoneId,
   findCardLocation,
+  playerZoneId,
   type GameCommand,
   type MatchState,
   type PlayerId,
@@ -490,6 +491,9 @@ export const resolveWireCommand = (
       if (source.ownerId !== actorId || destination.ownerId !== actorId) {
         return rejected('unauthorized');
       }
+      if (source.kind === 'board' || destination.kind === 'board') {
+        return rejected('precondition_failed');
+      }
       return {
         accepted: true,
         command: {
@@ -499,11 +503,48 @@ export const resolveWireCommand = (
         },
       };
     }
+    case 'ResolveLooseBoardCards': {
+      const targetPlayerId = asPlayerId(wire.targetPlayerId);
+      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (
+        targetPlayerId !== actorId &&
+        !policy.allowOpponentPublicInteraction
+      ) {
+        return rejected('unauthorized');
+      }
+      const board = state.zones[playerZoneId(targetPlayerId, 'board')];
+      if (!board || board.ownerId !== targetPlayerId) {
+        return rejected('stale_reference');
+      }
+      const resolvedCards = wire.expectedBoardCardIds.map(resolveCard);
+      if (resolvedCards.some((card) => !card)) {
+        return rejected('stale_reference');
+      }
+      const expectedBoardCardIds = resolvedCards.map((card) => card!.cardId);
+      if (
+        board.cardIds.length !== expectedBoardCardIds.length ||
+        board.cardIds.some(
+          (cardId, index) => cardId !== expectedBoardCardIds[index]
+        )
+      ) {
+        return rejected('stale_reference');
+      }
+      return {
+        accepted: true,
+        command: {
+          type: 'ResolveLooseBoardCards',
+          playerId: targetPlayerId,
+          expectedBoardCardIds,
+          destination: wire.destination,
+        },
+      };
+    }
     case 'ShuffleZoneIntoDeck':
     case 'ShuffleZoneToDeckBottom': {
       const source = state.zones[wire.sourceZoneId];
       if (!source) return rejected('stale_reference');
       if (source.ownerId !== actorId) return rejected('unauthorized');
+      if (source.kind === 'board') return rejected('precondition_failed');
       return {
         accepted: true,
         command: {

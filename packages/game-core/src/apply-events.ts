@@ -9,6 +9,13 @@ const incrementVisibility = (card: CardInstance): CardInstance => ({
   visibilityGeneration: card.visibilityGeneration + 1,
 });
 
+const sameCardOrder = (
+  left: readonly CardInstanceId[],
+  right: readonly CardInstanceId[]
+): boolean =>
+  left.length === right.length &&
+  left.every((cardId, index) => cardId === right[index]);
+
 const removeStackFromBoards = (
   state: MatchState,
   removedStackIds: ReadonlySet<StackId>
@@ -562,6 +569,98 @@ export const applyEvent = (
           ...state.visibility,
           publicCardIds: state.visibility.publicCardIds.filter(
             (cardId) => !concealed.has(cardId)
+          ),
+        },
+      };
+    }
+    case 'LooseBoardCardsResolved': {
+      const board = requireZone(state, event.boardZoneId);
+      const destination = requireZone(state, event.destinationZoneId);
+      if (
+        board.kind !== 'board' ||
+        board.ownerId !== event.playerId ||
+        destination.ownerId !== event.playerId
+      ) {
+        throw new Error('Loose-board event has invalid zone ownership');
+      }
+      if (!(
+        (event.destination === 'shuffleIntoDeck' &&
+          destination.kind === 'deck') ||
+        event.destination === destination.kind
+      )) {
+        throw new Error('Loose-board event destination does not match mode');
+      }
+      if (
+        !sameCardOrder(board.cardIds, event.expectedBoardCardIds) ||
+        !sameCardOrder(destination.cardIds, event.expectedDestinationCardIds)
+      ) {
+        throw new Error('Loose-board event has stale zone contents');
+      }
+      if (event.expectedBoardCardIds.length === 0) {
+        throw new Error('Loose-board event cannot resolve an empty board');
+      }
+      if (event.destinationCardIds.length > 200) {
+        throw new Error('Loose-board event exceeds destination capacity');
+      }
+      const before = [
+        ...event.expectedDestinationCardIds,
+        ...event.expectedBoardCardIds,
+      ].sort();
+      const after = [...event.destinationCardIds].sort();
+      if (
+        before.length !== after.length ||
+        before.some((cardId, index) => cardId !== after[index])
+      ) {
+        throw new Error('Loose-board event changes the affected card set');
+      }
+      const moved = new Set(event.expectedBoardCardIds);
+      const concealed = new Set(event.concealedCardIds);
+      const expectedConcealed = new Set(
+        event.destination === 'shuffleIntoDeck'
+          ? event.destinationCardIds
+          : event.destination === 'hand'
+            ? event.expectedBoardCardIds
+            : []
+      );
+      if (
+        concealed.size !== expectedConcealed.size ||
+        [...concealed].some((cardId) => !expectedConcealed.has(cardId))
+      ) {
+        throw new Error('Loose-board event has invalid concealed cards');
+      }
+      return {
+        ...state,
+        cards: Object.fromEntries(
+          Object.entries(state.cards).map(([cardId, card]) => {
+            const normalized = moved.has(card.id)
+              ? {
+                  ...card,
+                  currentCategory: card.originalCategory,
+                  face: 'up' as const,
+                  orientationQuarterTurns: 0 as const,
+                  abilityUsed: false,
+                }
+              : card;
+            return [
+              cardId,
+              concealed.has(card.id)
+                ? incrementVisibility(normalized)
+                : normalized,
+            ];
+          })
+        ),
+        zones: {
+          ...state.zones,
+          [board.id]: { ...board, cardIds: [] },
+          [destination.id]: {
+            ...destination,
+            cardIds: [...event.destinationCardIds],
+          },
+        },
+        visibility: {
+          ...state.visibility,
+          publicCardIds: state.visibility.publicCardIds.filter(
+            (cardId) => !moved.has(cardId) && !concealed.has(cardId)
           ),
         },
       };

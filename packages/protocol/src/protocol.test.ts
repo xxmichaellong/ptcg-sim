@@ -260,6 +260,66 @@ describe('client protocol ingress', () => {
     }
   });
 
+  it('bounds semantic loose-board batch commands', () => {
+    const parseCommand = (command: unknown) =>
+      parseClientFrame(
+        JSON.stringify({
+          type: 'Command',
+          protocolVersion: PROTOCOL_VERSION,
+          sessionId: 'session',
+          clientSequence: 1,
+          commandId: 'command',
+          lastSeenRevision: 0,
+          command,
+        })
+      );
+    for (const destination of [
+      'discard',
+      'hand',
+      'lostZone',
+      'shuffleIntoDeck',
+    ]) {
+      expect(
+        parseCommand({
+          type: 'ResolveLooseBoardCards',
+          targetPlayerId: 'target-player',
+          expectedBoardCardIds: ['board-card-one', 'board-card-two'],
+          destination,
+        }).ok
+      ).toBe(true);
+    }
+    for (const command of [
+      {
+        type: 'ResolveLooseBoardCards',
+        targetPlayerId: 'target-player',
+        expectedBoardCardIds: [],
+        destination: 'discard',
+      },
+      {
+        type: 'ResolveLooseBoardCards',
+        targetPlayerId: 'target-player',
+        expectedBoardCardIds: Array.from(
+          { length: 201 },
+          (_, index) => `card-${index}`
+        ),
+        destination: 'discard',
+      },
+      {
+        type: 'ResolveLooseBoardCards',
+        targetPlayerId: 'target-player',
+        expectedBoardCardIds: ['board-card'],
+        destination: 'shuffleToDeckBottom',
+      },
+      {
+        type: 'ResolveLooseBoardCards',
+        expectedBoardCardIds: ['board-card'],
+        destination: 'hand',
+      },
+    ]) {
+      expect(parseCommand(command).ok).toBe(false);
+    }
+  });
+
   it('bounds client-supplied expected stack layouts', () => {
     const expectedBenchStackIds = Array.from(
       { length: 201 },

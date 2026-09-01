@@ -12,6 +12,7 @@ import {
 } from '../../apps/web/src/board/resolveDeckRelativeAction.js';
 import { submitCardAnnotationAction } from '../../apps/web/src/board/resolveCardAnnotationAction.js';
 import { submitInspectionCardsAction } from '../../apps/web/src/board/resolveInspectionCardsAction.js';
+import { submitLooseBoardAction } from '../../apps/web/src/board/resolveLooseBoardAction.js';
 import { submitOncePerGameAction } from '../../apps/web/src/board/resolveOncePerGameAction.js';
 import { submitStackStateAction } from '../../apps/web/src/board/resolveStackStateAction.js';
 import { submitStagedCardsAction } from '../../apps/web/src/board/resolveStagedCardsAction.js';
@@ -1235,6 +1236,129 @@ describe('client/server multiplayer contract', () => {
       vstarUsed: true,
     });
     expect(room.store.commandCommits).toHaveLength(3);
+  });
+
+  it('shuffles the exact loose board into deck in one reconnect-safe revision', async () => {
+    const room = await fixture();
+    const scheduler = new ManualScheduler();
+    const player = await connectClient({
+      hub: room.hub,
+      name: 'Blue',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+      scheduler,
+    });
+    const playerId = player.session.getSnapshot().playerId;
+    if (!playerId) throw new Error('Missing admitted player identity');
+    expect(
+      player.session.submit({
+        type: 'LoadDeck',
+        entries: Array.from({ length: 14 }, (_, index) => ({
+          definition: {
+            id: `loose-integration-definition-${index}`,
+            name: `Loose integration card ${index}`,
+            category:
+              index % 2 === 0 ? ('Pokémon' as const) : ('Trainer' as const),
+            imageUrl: `/loose-integration-${index}.png`,
+          },
+          count: 1,
+        })),
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+    expect(player.session.submit({ type: 'SetupPlayer' }).queued).toBe(true);
+    await player.factory.flush();
+
+    let view = player.session.getSnapshot().view;
+    let hand = Object.values(view?.zones ?? {}).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'hand'
+    );
+    const first = hand?.cards[0];
+    if (!view || !hand || !first) throw new Error('Missing setup hand');
+    let submitted = false;
+    expect(
+      submitCardAnnotationAction(
+        view,
+        first.id,
+        { type: 'changeCategory', category: 'Energy' },
+        (command) => {
+          submitted = player.session.submit(command).queued;
+        }
+      ).ok
+    ).toBe(true);
+    expect(submitted).toBe(true);
+    await player.factory.flush();
+
+    view = player.session.getSnapshot().view;
+    hand = Object.values(view?.zones ?? {}).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'hand'
+    );
+    const second = hand?.cards[0];
+    const board = Object.values(view?.zones ?? {}).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'board'
+    );
+    if (!view || !hand || !second || !board) {
+      throw new Error('Missing loose-board setup state');
+    }
+    expect(
+      player.session.submit({
+        type: 'MoveCard',
+        cardId: second.id,
+        expectedSourceZoneId: hand.id,
+        destinationZoneId: board.id,
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+
+    view = player.session.getSnapshot().view;
+    const preparedBoard = Object.values(view?.zones ?? {}).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'board'
+    );
+    if (!view || !preparedBoard || preparedBoard.cards.length !== 2) {
+      throw new Error('Loose board was not published');
+    }
+    const priorBoardAliases = preparedBoard.cards.map((card) => card.id);
+    submitted = false;
+    expect(
+      submitLooseBoardAction(view, playerId, 'shuffleIntoDeck', (command) => {
+        submitted = player.session.submit(command).queued;
+      }).ok
+    ).toBe(true);
+    expect(submitted).toBe(true);
+    await player.factory.flush();
+
+    view = player.session.getSnapshot().view;
+    const nextBoard = Object.values(view?.zones ?? {}).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'board'
+    );
+    const deck = Object.values(view?.zones ?? {}).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'deck'
+    );
+    if (!view || !nextBoard || !deck) throw new Error('Missing resolved board');
+    expect(view.revision).toBe(5);
+    expect(nextBoard.cards).toEqual([]);
+    expect(deck.cards).toHaveLength(3);
+    expect(
+      deck.cards.every((card) => !priorBoardAliases.includes(card.id))
+    ).toBe(true);
+    expect(room.store.commandCommits).toHaveLength(5);
+    expect(room.store.commandCommits[4]?.eventBatch?.events).toEqual([
+      expect.objectContaining({
+        type: 'LooseBoardCardsResolved',
+        destination: 'shuffleIntoDeck',
+      }),
+    ]);
+
+    player.factory.latest().networkDrop();
+    scheduler.runNext();
+    player.factory.latest().open();
+    await player.factory.flush();
+    view = player.session.getSnapshot().view;
+    const resumedDeck = Object.values(view?.zones ?? {}).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'deck'
+    );
+    expect(view?.revision).toBe(5);
+    expect(resumedDeck?.cards).toHaveLength(3);
   });
 
   it('publishes one authoritative revision to a player and spectator', async () => {

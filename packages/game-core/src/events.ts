@@ -14,7 +14,10 @@ import type {
   QuarterTurns,
   SpecialCondition,
 } from './model.js';
-import type { WorkAreaCardsDestination } from './commands.js';
+import type {
+  LooseBoardCardsDestination,
+  WorkAreaCardsDestination,
+} from './commands.js';
 
 export type DomainEvent =
   | {
@@ -72,6 +75,17 @@ export type DomainEvent =
         readonly expectedCardIds: readonly CardInstanceId[];
         readonly cardIds: readonly CardInstanceId[];
       }[];
+      readonly concealedCardIds: readonly CardInstanceId[];
+    }
+  | {
+      readonly type: 'LooseBoardCardsResolved';
+      readonly playerId: PlayerId;
+      readonly destination: LooseBoardCardsDestination;
+      readonly boardZoneId: ZoneId;
+      readonly destinationZoneId: ZoneId;
+      readonly expectedBoardCardIds: readonly CardInstanceId[];
+      readonly expectedDestinationCardIds: readonly CardInstanceId[];
+      readonly destinationCardIds: readonly CardInstanceId[];
       readonly concealedCardIds: readonly CardInstanceId[];
     }
   | {
