@@ -1793,6 +1793,17 @@ export const decideCommand = (
     case 'SetOncePerGameMarker': {
       const playerError = requirePlayer(state, command.playerId);
       if (playerError) return playerError;
+      const player = state.players[command.playerId]!;
+      const current =
+        command.marker === 'gx'
+          ? player.oncePerGame.gxUsed
+          : player.oncePerGame.vstarUsed;
+      if (current === command.used) {
+        return reject(
+          'invalid_command',
+          `${command.marker.toUpperCase()} marker is already set`
+        );
+      }
       return accept({
         type: 'OncePerGameMarkerSet',
         playerId: command.playerId,

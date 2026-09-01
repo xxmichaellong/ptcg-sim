@@ -56,7 +56,7 @@ a hard-to-find behavior. Proposed names are not final APIs.
 | `removeSpecialCondition` | `SetSpecialCondition(null)`                         | Empty/zero/Alt behavior and automatic move/evolution cleanup                                     |
 | `rotateCard`             | `RotateStack` or `SetCardOrientation`               | Whole stack versus individual/BREAK orientation, quarter-turn convention, face/zone restrictions |
 | `changeType`             | `ChangeCardCategory`                                | Pokémon/Energy/Trainer shortcuts, atomic loose-board departure, original category restoration    |
-| `VSTARGXFunction`        | `SetOncePerGameMarker`                              | VSTAR/GX mutual/individual state, used styling, self/opponent control, reset                     |
+| `VSTARGXFunction`        | `SetOncePerGameMarker`                              | Independent VSTAR/GX state, used styling, policy-gated self/opponent control, reset              |
 
 ## Loose board batches
 
@@ -187,3 +187,18 @@ one of Pokémon/Trainer/Energy. The authority resolves the source and owner, the
 publishes the legal departure to that player's loose board and category change
 as one revision. Lower evolution cards, stale handles, foreign targets, board
 capacity overflow, and exact no-ops fail without an intermediate state.
+
+### Implemented once-per-game marker subset
+
+GX and VSTAR are independent player-level booleans, matching the two legacy
+buttons rather than treating them as mutually exclusive. The application
+boundary converts toggle clicks into explicit target values using the current
+projected player state. The wire command names the intended player board; room
+authority verifies that target exists and permits opponent-board changes only
+under the same public-interaction policy used by other tabletop controls.
+
+Accepted changes publish one `OncePerGameMarkerSet` event and survive projection,
+reconnect, and durable room restoration. Duplicate target values are rejected
+without a revision. Reset clears both markers only for the reset player. The
+existing UI can continue to render its VSTAR and GX buttons from projected
+player state; this slice does not alter their labels, placement, or styling.

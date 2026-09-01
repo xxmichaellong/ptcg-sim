@@ -12,6 +12,7 @@ import {
 } from '../../apps/web/src/board/resolveDeckRelativeAction.js';
 import { submitCardAnnotationAction } from '../../apps/web/src/board/resolveCardAnnotationAction.js';
 import { submitInspectionCardsAction } from '../../apps/web/src/board/resolveInspectionCardsAction.js';
+import { submitOncePerGameAction } from '../../apps/web/src/board/resolveOncePerGameAction.js';
 import { submitStackStateAction } from '../../apps/web/src/board/resolveStackStateAction.js';
 import { submitStagedCardsAction } from '../../apps/web/src/board/resolveStagedCardsAction.js';
 import {
@@ -1152,6 +1153,88 @@ describe('client/server multiplayer contract', () => {
     });
     expect(room.store.commandCommits).toHaveLength(6);
     expect(room.store.commandCommits[5]?.eventBatch?.events).toHaveLength(3);
+  });
+
+  it('persists independent GX/VSTAR targets across reconnect and player reset', async () => {
+    const room = await fixture();
+    const scheduler = new ManualScheduler();
+    const player = await connectClient({
+      hub: room.hub,
+      name: 'Blue',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+      scheduler,
+    });
+    const playerId = player.session.getSnapshot().playerId;
+    let view = player.session.getSnapshot().view;
+    const opponentId = view?.playerOrder.find((id) => id !== playerId);
+    if (!view || !playerId || !opponentId) {
+      throw new Error('Missing once-per-game player identities');
+    }
+
+    for (const [targetPlayerId, marker] of [
+      [playerId, 'gx'],
+      [opponentId, 'vstar'],
+    ] as const) {
+      view = player.session.getSnapshot().view;
+      if (!view) throw new Error('Missing once-per-game view');
+      let submitted = false;
+      expect(
+        submitOncePerGameAction(
+          view,
+          targetPlayerId,
+          { type: 'toggle', marker },
+          (command) => {
+            submitted = player.session.submit(command).queued;
+          }
+        ).ok
+      ).toBe(true);
+      expect(submitted).toBe(true);
+      await player.factory.flush();
+    }
+
+    view = player.session.getSnapshot().view;
+    expect(view?.players[playerId]?.oncePerGame).toEqual({
+      gxUsed: true,
+      vstarUsed: false,
+    });
+    expect(view?.players[opponentId]?.oncePerGame).toEqual({
+      gxUsed: false,
+      vstarUsed: true,
+    });
+    if (!view) throw new Error('Missing marked once-per-game view');
+    expect(
+      submitOncePerGameAction(
+        view,
+        playerId,
+        { type: 'set', marker: 'gx', used: true },
+        () => {
+          throw new Error('No-op marker command must not submit');
+        }
+      )
+    ).toEqual({ ok: false, reason: 'no_op' });
+
+    player.factory.latest().networkDrop();
+    scheduler.runNext();
+    player.factory.latest().open();
+    await player.factory.flush();
+    view = player.session.getSnapshot().view;
+    expect(view?.players[playerId]?.oncePerGame.gxUsed).toBe(true);
+    expect(view?.players[opponentId]?.oncePerGame.vstarUsed).toBe(true);
+
+    expect(player.session.submit({ type: 'ResetPlayer' }).queued).toBe(true);
+    await player.factory.flush();
+    view = player.session.getSnapshot().view;
+    expect(view?.revision).toBe(3);
+    expect(view?.players[playerId]?.oncePerGame).toEqual({
+      gxUsed: false,
+      vstarUsed: false,
+    });
+    expect(view?.players[opponentId]?.oncePerGame).toEqual({
+      gxUsed: false,
+      vstarUsed: true,
+    });
+    expect(room.store.commandCommits).toHaveLength(3);
   });
 
   it('publishes one authoritative revision to a player and spectator', async () => {

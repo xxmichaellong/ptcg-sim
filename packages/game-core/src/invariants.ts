@@ -26,7 +26,14 @@ export const collectInvariantProblems = (
     problems.push('match must contain exactly two distinct ordered players');
   }
   for (const playerId of state.playerOrder) {
-    if (!state.players[playerId]) problems.push(`missing player ${playerId}`);
+    const player = state.players[playerId];
+    if (!player) problems.push(`missing player ${playerId}`);
+    else if (
+      typeof player.oncePerGame.gxUsed !== 'boolean' ||
+      typeof player.oncePerGame.vstarUsed !== 'boolean'
+    ) {
+      problems.push(`player ${playerId} has invalid once-per-game markers`);
+    }
     if (!state.boards[playerId]) problems.push(`missing board ${playerId}`);
     if (!state.workAreas[playerId])
       problems.push(`missing work areas ${playerId}`);

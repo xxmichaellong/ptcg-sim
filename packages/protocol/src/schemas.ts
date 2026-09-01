@@ -232,6 +232,7 @@ export const WireGameCommandSchema = v.variant('type', [
   }),
   v.object({
     type: v.literal('SetOncePerGameMarker'),
+    targetPlayerId: IdentifierSchema,
     marker: v.picklist(['gx', 'vstar'] as const),
     used: v.boolean(),
   }),

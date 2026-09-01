@@ -663,16 +663,25 @@ export const resolveWireCommand = (
           returnTo: wire.returnTo,
         },
       };
-    case 'SetOncePerGameMarker':
+    case 'SetOncePerGameMarker': {
+      const targetPlayerId = asPlayerId(wire.targetPlayerId);
+      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (
+        targetPlayerId !== actorId &&
+        !policy.allowOpponentPublicInteraction
+      ) {
+        return rejected('unauthorized');
+      }
       return {
         accepted: true,
         command: {
           type: 'SetOncePerGameMarker',
-          playerId: actorId,
+          playerId: targetPlayerId,
           marker: wire.marker,
           used: wire.used,
         },
       };
+    }
     case 'FlipCoin':
       return { accepted: true, command: { type: 'FlipCoin' } };
   }

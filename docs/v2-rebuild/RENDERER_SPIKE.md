@@ -165,7 +165,9 @@ chunk graph will be measured in the browser evidence run.
   to the deck bottom, plus damage, condition, ability-used, and group-rotation
   targets that survive reconnect and follow the characterized evolution cleanup,
   plus stadium/BREAK orientation, exact-card ability markers, and an atomic
-  category-change departure that survive the same projection/reconnect path;
+  category-change departure that survive the same projection/reconnect path,
+  plus independent, explicitly targeted GX/VSTAR state across reconnect and
+  per-player reset;
 - TypeScript project boundaries and circular-dependency check;
 - Vite production build; and
 - the repository-wide v2 and 79-test legacy gates.
@@ -217,7 +219,13 @@ low-level property mutation over the wire. The renderer composes card and stack
 quarter turns and creates marker nodes from recipient-safe projected state; it
 does not retain annotation state locally.
 
-At this checkpoint the v2 suite contains 167 passing tests across 33 files. A
+The projected player model also carries independent GX and VSTAR target state.
+A UI-neutral action resolver derives explicit set/reset commands for either
+board, while authority validates the target and opponent-interaction policy.
+The existing side-button UX can consume this state directly; no renderer-local
+toggle or new visible control is introduced.
+
+At this checkpoint the v2 suite contains 176 passing tests across 36 files. A
 separate Playwright suite also passes three real Chromium 151 scenarios:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and

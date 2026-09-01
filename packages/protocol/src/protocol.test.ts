@@ -220,6 +220,46 @@ describe('client protocol ingress', () => {
     }
   });
 
+  it('requires an explicit target for once-per-game marker commands', () => {
+    const parseCommand = (command: unknown) =>
+      parseClientFrame(
+        JSON.stringify({
+          type: 'Command',
+          protocolVersion: PROTOCOL_VERSION,
+          sessionId: 'session',
+          clientSequence: 1,
+          commandId: 'command',
+          lastSeenRevision: 0,
+          command,
+        })
+      );
+    expect(
+      parseCommand({
+        type: 'SetOncePerGameMarker',
+        targetPlayerId: 'target-player',
+        marker: 'vstar',
+        used: true,
+      }).ok
+    ).toBe(true);
+    for (const command of [
+      { type: 'SetOncePerGameMarker', marker: 'gx', used: true },
+      {
+        type: 'SetOncePerGameMarker',
+        targetPlayerId: 'target-player',
+        marker: 'ace-spec',
+        used: true,
+      },
+      {
+        type: 'SetOncePerGameMarker',
+        targetPlayerId: 'target-player',
+        marker: 'gx',
+        used: 'yes',
+      },
+    ]) {
+      expect(parseCommand(command).ok).toBe(false);
+    }
+  });
+
   it('bounds client-supplied expected stack layouts', () => {
     const expectedBenchStackIds = Array.from(
       { length: 201 },
