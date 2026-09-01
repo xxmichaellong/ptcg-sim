@@ -59,6 +59,8 @@ export type DomainEvent =
       readonly type: 'ZoneOrdersSet';
       readonly reason:
         | 'move-zone-contents'
+        | 'move-card-to-deck-top'
+        | 'move-prizes-to-deck-bottom'
         | 'shuffle-zone-into-deck'
         | 'shuffle-zone-to-deck-bottom'
         | 'discard-hand-and-draw'
@@ -171,6 +173,27 @@ export type DomainEvent =
       readonly expectedDestinationCardIds: readonly CardInstanceId[];
       readonly destinationCardIds: readonly CardInstanceId[];
       readonly concealedCardIds: readonly CardInstanceId[];
+    }
+  | {
+      readonly type: 'InspectionCardSwappedWithDeckTop';
+      readonly playerId: PlayerId;
+      readonly inspectionId: InspectionId;
+      readonly expectedWorkAreaId: WorkAreaId;
+      readonly cardId: CardInstanceId;
+      readonly deckTopCardId: CardInstanceId;
+      readonly expectedInspectionCardIds: readonly CardInstanceId[];
+      readonly expectedDeckCardIds: readonly CardInstanceId[];
+    }
+  | {
+      readonly type: 'StagedCardSwappedWithDeckTop';
+      readonly playerId: PlayerId;
+      readonly expectedWorkAreaId: WorkAreaId;
+      readonly source: 'evolution' | 'attachment';
+      readonly cardId: CardInstanceId;
+      readonly deckTopCardId: CardInstanceId;
+      readonly expectedEvolutionCardIds: readonly CardInstanceId[];
+      readonly expectedAttachmentCardIds: readonly CardInstanceId[];
+      readonly expectedDeckCardIds: readonly CardInstanceId[];
     }
   | {
       readonly type: 'StackDamageSet';

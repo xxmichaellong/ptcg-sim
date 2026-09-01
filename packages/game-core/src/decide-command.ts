@@ -8,7 +8,13 @@ import { playerZoneId, stadiumZoneId } from './create-match.js';
 import type { DomainEvent } from './events.js';
 import { asWorkAreaId, type CardInstanceId, type PlayerId } from './ids.js';
 import { findCardLocation } from './location.js';
-import type { CardInstance, CardZone, MatchState } from './model.js';
+import type {
+  CardInstance,
+  CardLocation,
+  CardZone,
+  MatchState,
+  PlayStack,
+} from './model.js';
 
 export interface CommandAccepted {
   readonly accepted: true;
@@ -135,6 +141,149 @@ const sameOrder = <Value>(
 ): boolean =>
   left.length === right.length &&
   left.every((value, index) => value === right[index]);
+
+type DeckRelativeCommand = Extract<
+  GameCommand,
+  { readonly type: 'MoveCardToDeckTop' | 'SwapCardWithDeckTop' }
+>;
+
+type DeckRelativeSource = {
+  readonly accepted: true;
+  readonly card: CardInstance;
+  readonly location: CardLocation;
+  readonly deck: CardZone;
+};
+
+const sourceIdForLocation = (
+  state: MatchState,
+  location: CardLocation
+): string | null => {
+  switch (location.kind) {
+    case 'zone':
+      return location.zoneId;
+    case 'stackEvolution':
+    case 'stackAttachment':
+      return location.stackId;
+    case 'inspectionWorkArea':
+      return state.workAreas[location.playerId]?.inspection?.id ?? null;
+    case 'attachmentResolutionWorkArea':
+      return (
+        state.workAreas[location.playerId]?.attachmentResolution?.id ?? null
+      );
+  }
+};
+
+const playerForLocation = (
+  state: MatchState,
+  card: CardInstance,
+  location: CardLocation
+): PlayerId | null => {
+  switch (location.kind) {
+    case 'zone':
+      return state.zones[location.zoneId]?.ownerId ?? card.ownerId;
+    case 'stackEvolution':
+    case 'stackAttachment':
+      return state.stacks[location.stackId]?.boardPlayerId ?? null;
+    case 'inspectionWorkArea':
+    case 'attachmentResolutionWorkArea':
+      return location.playerId;
+  }
+};
+
+const resolveDeckRelativeSource = (
+  state: MatchState,
+  command: DeckRelativeCommand
+): DeckRelativeSource | CommandRejection => {
+  const playerError = requirePlayer(state, command.playerId);
+  if (playerError) return playerError;
+  const card = state.cards[command.cardId];
+  if (!card)
+    return reject('not_found', `Card ${command.cardId} does not exist`);
+  const location = findCardLocation(state, command.cardId);
+  if (
+    !location ||
+    sourceIdForLocation(state, location) !== command.expectedSourceId ||
+    playerForLocation(state, card, location) !== command.playerId
+  ) {
+    return reject('stale_reference', 'Deck-relative card source changed');
+  }
+  const deck = state.zones[playerZoneId(command.playerId, 'deck')];
+  if (!deck) return reject('not_found', 'Player deck does not exist');
+  return { accepted: true, card, location, deck };
+};
+
+type TopEvolutionDeparture =
+  | CommandRejection
+  | {
+      readonly accepted: true;
+      readonly event: Extract<
+        DomainEvent,
+        { readonly type: 'PlayStackDeparted' }
+      >;
+    };
+
+const decideTopEvolutionDeparture = (
+  state: MatchState,
+  stack: PlayStack,
+  cardId: CardInstanceId,
+  destination: CardZone,
+  destinationIndex: number,
+  context: CommandContext
+): TopEvolutionDeparture => {
+  if (stack.evolutionCardIds.at(-1) !== cardId) {
+    return reject(
+      'precondition_failed',
+      'Only the top evolution card may leave a play stack directly'
+    );
+  }
+  const evolutionCardIds = stack.evolutionCardIds.slice(0, -1);
+  const attachmentCardIds = [...stack.attachmentCardIds];
+  const hasDependents = evolutionCardIds.length + attachmentCardIds.length > 0;
+  const areas = state.workAreas[stack.boardPlayerId];
+  if (!areas) return reject('not_found', 'Play stack has no work areas');
+  if (hasDependents && areas.attachmentResolution) {
+    return reject(
+      'conflict',
+      'Resolve the existing attached-card work area first'
+    );
+  }
+  const workAreaId = hasDependents ? context.nextWorkAreaId() : null;
+  if (
+    workAreaId &&
+    Object.values(state.workAreas).some(
+      (candidate) =>
+        candidate.inspection?.id === workAreaId ||
+        candidate.attachmentResolution?.id === workAreaId
+    )
+  ) {
+    return reject(
+      'conflict',
+      `Work area ID factory returned duplicate ${workAreaId}`
+    );
+  }
+  return {
+    accepted: true,
+    event: {
+      type: 'PlayStackDeparted',
+      cardId,
+      expectedStackId: stack.id,
+      boardPlayerId: stack.boardPlayerId,
+      expectedEvolutionCardIds: [...stack.evolutionCardIds],
+      expectedAttachmentCardIds: [...stack.attachmentCardIds],
+      destinationZoneId: destination.id,
+      destinationIndex,
+      concealIdentity: isConcealedZone(destination),
+      attachmentResolution: workAreaId
+        ? {
+            id: workAreaId,
+            evolutionCardIds,
+            attachmentCardIds,
+            suggestedSlot: stack.slot,
+          }
+        : null,
+    },
+  };
+};
 
 const decideLoadDeck = (
   state: MatchState,
@@ -396,15 +545,6 @@ export const decideCommand = (
           'Resolve the existing stadium before this departure'
         );
       }
-      if (
-        location.kind === 'stackEvolution' &&
-        location.index !== stack.evolutionCardIds.length - 1
-      ) {
-        return reject(
-          'precondition_failed',
-          'Only the top evolution card may leave a play stack directly'
-        );
-      }
       const destinationIndex = Math.max(
         0,
         Math.min(
@@ -423,53 +563,15 @@ export const decideCommand = (
           concealIdentity: isConcealedZone(destination),
         });
       }
-      const evolutionCardIds = stack.evolutionCardIds.slice(0, -1);
-      const attachmentCardIds = [...stack.attachmentCardIds];
-      const hasDependents =
-        evolutionCardIds.length + attachmentCardIds.length > 0;
-      const areas = state.workAreas[stack.boardPlayerId];
-      if (!areas) {
-        return reject('not_found', 'Play stack owner has no work areas');
-      }
-      if (hasDependents && areas.attachmentResolution) {
-        return reject(
-          'conflict',
-          'Resolve the existing attached-card work area first'
-        );
-      }
-      const workAreaId = hasDependents ? context.nextWorkAreaId() : null;
-      if (
-        workAreaId &&
-        Object.values(state.workAreas).some(
-          (candidate) =>
-            candidate.inspection?.id === workAreaId ||
-            candidate.attachmentResolution?.id === workAreaId
-        )
-      ) {
-        return reject(
-          'conflict',
-          `Work area ID factory returned duplicate ${workAreaId}`
-        );
-      }
-      return accept({
-        type: 'PlayStackDeparted',
-        cardId: card.id,
-        expectedStackId: stack.id,
-        boardPlayerId: stack.boardPlayerId,
-        expectedEvolutionCardIds: [...stack.evolutionCardIds],
-        expectedAttachmentCardIds: [...stack.attachmentCardIds],
-        destinationZoneId: destination.id,
+      const departure = decideTopEvolutionDeparture(
+        state,
+        stack,
+        card.id,
+        destination,
         destinationIndex,
-        concealIdentity: isConcealedZone(destination),
-        attachmentResolution: workAreaId
-          ? {
-              id: workAreaId,
-              evolutionCardIds,
-              attachmentCardIds,
-              suggestedSlot: stack.slot,
-            }
-          : null,
-      });
+        context
+      );
+      return departure.accepted ? accept(departure.event) : departure;
     }
     case 'MovePlayStack': {
       const stack = state.stacks[command.stackId];
@@ -758,6 +860,289 @@ export const decideCommand = (
         expectedDestinationCardIds: destination.expectedDestinationCardIds,
         destinationCardIds: destination.destinationCardIds,
         concealedCardIds: destination.concealedCardIds,
+      });
+    }
+    case 'MoveCardToDeckTop': {
+      const source = resolveDeckRelativeSource(state, command);
+      if (!source.accepted) return source;
+      const { card, location, deck } = source;
+      if (
+        !(location.kind === 'zone' && location.zoneId === deck.id) &&
+        deck.cardIds.length >= 200
+      ) {
+        return reject(
+          'precondition_failed',
+          'Deck cannot contain more than 200 cards'
+        );
+      }
+      switch (location.kind) {
+        case 'zone': {
+          const zone = state.zones[location.zoneId]!;
+          if (zone.id === deck.id) {
+            if (location.index === 0) {
+              return reject('invalid_command', 'Card is already on deck top');
+            }
+            return accept({
+              type: 'ZoneOrdersSet',
+              reason: 'move-card-to-deck-top',
+              zones: [
+                {
+                  zoneId: deck.id,
+                  expectedCardIds: [...deck.cardIds],
+                  cardIds: [
+                    card.id,
+                    ...deck.cardIds.filter((cardId) => cardId !== card.id),
+                  ],
+                },
+              ],
+              concealedCardIds: [card.id],
+            });
+          }
+          return accept({
+            type: 'CardMoved',
+            cardId: card.id,
+            expectedSourceZoneId: zone.id,
+            destinationZoneId: deck.id,
+            destinationIndex: 0,
+            concealIdentity: true,
+          });
+        }
+        case 'stackAttachment':
+          return accept({
+            type: 'CardMovedFromStack',
+            cardId: card.id,
+            expectedStackId: location.stackId,
+            source: 'attachment',
+            destinationZoneId: deck.id,
+            destinationIndex: 0,
+            concealIdentity: true,
+          });
+        case 'stackEvolution': {
+          const stack = state.stacks[location.stackId]!;
+          const departure = decideTopEvolutionDeparture(
+            state,
+            stack,
+            card.id,
+            deck,
+            0,
+            context
+          );
+          return departure.accepted ? accept(departure.event) : departure;
+        }
+        case 'inspectionWorkArea': {
+          const inspection = state.workAreas[location.playerId]?.inspection;
+          if (!inspection) {
+            return reject('stale_reference', 'Inspection work area changed');
+          }
+          return accept({
+            type: 'InspectedCardMoved',
+            playerId: location.playerId,
+            inspectionId: inspection.inspectionId,
+            expectedWorkAreaId: inspection.id,
+            cardId: card.id,
+            destinationZoneId: deck.id,
+            destinationIndex: 0,
+            concealIdentity: true,
+          });
+        }
+        case 'attachmentResolutionWorkArea': {
+          const resolution =
+            state.workAreas[location.playerId]?.attachmentResolution;
+          if (!resolution) {
+            return reject('stale_reference', 'Attached-card work area changed');
+          }
+          return accept({
+            type: 'StagedCardMoved',
+            playerId: location.playerId,
+            expectedWorkAreaId: resolution.id,
+            source: location.source,
+            cardId: card.id,
+            destinationZoneId: deck.id,
+            destinationIndex: 0,
+            concealIdentity: true,
+          });
+        }
+      }
+    }
+    case 'SwapCardWithDeckTop': {
+      const source = resolveDeckRelativeSource(state, command);
+      if (!source.accepted) return source;
+      const { card, location, deck } = source;
+      if (deck.cardIds.length === 0) {
+        return reject('precondition_failed', 'Deck is empty');
+      }
+      if (location.kind === 'zone' && location.zoneId === deck.id) {
+        return reject(
+          'invalid_command',
+          'Deck cards cannot swap with deck top'
+        );
+      }
+      const deckTopCardId = deck.cardIds[0]!;
+      switch (location.kind) {
+        case 'zone': {
+          const zone = state.zones[location.zoneId]!;
+          return accept(
+            {
+              type: 'CardMoved',
+              cardId: card.id,
+              expectedSourceZoneId: zone.id,
+              destinationZoneId: deck.id,
+              destinationIndex: 0,
+              concealIdentity: true,
+            },
+            {
+              type: 'CardMoved',
+              cardId: deckTopCardId,
+              expectedSourceZoneId: deck.id,
+              destinationZoneId: zone.id,
+              destinationIndex: location.index,
+              concealIdentity: isConcealedZone(zone),
+            }
+          );
+        }
+        case 'inspectionWorkArea': {
+          const inspection = state.workAreas[location.playerId]?.inspection;
+          if (!inspection) {
+            return reject('stale_reference', 'Inspection work area changed');
+          }
+          return accept({
+            type: 'InspectionCardSwappedWithDeckTop',
+            playerId: location.playerId,
+            inspectionId: inspection.inspectionId,
+            expectedWorkAreaId: inspection.id,
+            cardId: card.id,
+            deckTopCardId,
+            expectedInspectionCardIds: [...inspection.cardIds],
+            expectedDeckCardIds: [...deck.cardIds],
+          });
+        }
+        case 'attachmentResolutionWorkArea': {
+          const resolution =
+            state.workAreas[location.playerId]?.attachmentResolution;
+          if (!resolution) {
+            return reject('stale_reference', 'Attached-card work area changed');
+          }
+          return accept({
+            type: 'StagedCardSwappedWithDeckTop',
+            playerId: location.playerId,
+            expectedWorkAreaId: resolution.id,
+            source: location.source,
+            cardId: card.id,
+            deckTopCardId,
+            expectedEvolutionCardIds: [...resolution.evolutionCardIds],
+            expectedAttachmentCardIds: [...resolution.attachmentCardIds],
+            expectedDeckCardIds: [...deck.cardIds],
+          });
+        }
+        case 'stackEvolution':
+        case 'stackAttachment': {
+          const stack = state.stacks[location.stackId]!;
+          const board = state.boards[stack.boardPlayerId];
+          if (!board)
+            return reject('not_found', 'Play stack board does not exist');
+          if (
+            location.kind === 'stackEvolution' &&
+            location.index !== stack.evolutionCardIds.length - 1
+          ) {
+            return reject(
+              'precondition_failed',
+              'Only the top evolution card may leave a play stack directly'
+            );
+          }
+          const replacementStackId = context.nextStackId();
+          if (state.stacks[replacementStackId]) {
+            return reject(
+              'conflict',
+              `Stack ID factory returned duplicate ${replacementStackId}`
+            );
+          }
+          const sourceBenchIndex = board.benchStackIds.indexOf(stack.id);
+          if (
+            (stack.slot === 'active' && board.activeStackId !== stack.id) ||
+            (stack.slot === 'bench' && sourceBenchIndex < 0)
+          ) {
+            return reject('stale_reference', 'Play stack placement changed');
+          }
+          if (location.kind === 'stackAttachment') {
+            return accept(
+              {
+                type: 'CardMovedFromStack',
+                cardId: card.id,
+                expectedStackId: stack.id,
+                source: 'attachment',
+                destinationZoneId: deck.id,
+                destinationIndex: 0,
+                concealIdentity: true,
+              },
+              {
+                type: 'CardMovedToPlay',
+                cardId: deckTopCardId,
+                expectedSourceZoneId: deck.id,
+                boardPlayerId: stack.boardPlayerId,
+                slot: stack.slot,
+                mode: 'newStack',
+                stackId: replacementStackId,
+                benchIndex: board.benchStackIds.length,
+                previousActiveToBench: stack.slot === 'active',
+              }
+            );
+          }
+          const departure = decideTopEvolutionDeparture(
+            state,
+            stack,
+            card.id,
+            deck,
+            0,
+            context
+          );
+          if (!departure.accepted) return departure;
+          return accept(departure.event, {
+            type: 'CardMovedToPlay',
+            cardId: deckTopCardId,
+            expectedSourceZoneId: deck.id,
+            boardPlayerId: stack.boardPlayerId,
+            slot: stack.slot,
+            mode: 'newStack',
+            stackId: replacementStackId,
+            benchIndex: Math.max(0, sourceBenchIndex),
+            previousActiveToBench: false,
+          });
+        }
+      }
+    }
+    case 'MovePrizesToDeckBottom': {
+      const playerError = requirePlayer(state, command.playerId);
+      if (playerError) return playerError;
+      const prizes = state.zones[playerZoneId(command.playerId, 'prizes')];
+      const deck = state.zones[playerZoneId(command.playerId, 'deck')];
+      if (!prizes || !deck)
+        return reject('not_found', 'Player zone is missing');
+      if (prizes.cardIds.length === 0) {
+        return reject('precondition_failed', 'Prize zone is empty');
+      }
+      const shuffledPrizes = context.shuffle(prizes.cardIds);
+      if (!validatePermutation(prizes.cardIds, shuffledPrizes)) {
+        return reject(
+          'invalid_command',
+          'Shuffle adapter returned an invalid permutation'
+        );
+      }
+      return accept({
+        type: 'ZoneOrdersSet',
+        reason: 'move-prizes-to-deck-bottom',
+        zones: [
+          {
+            zoneId: prizes.id,
+            expectedCardIds: [...prizes.cardIds],
+            cardIds: [],
+          },
+          {
+            zoneId: deck.id,
+            expectedCardIds: [...deck.cardIds],
+            cardIds: [...deck.cardIds, ...shuffledPrizes],
+          },
+        ],
+        concealedCardIds: shuffledPrizes,
       });
     }
     case 'ShuffleZone': {

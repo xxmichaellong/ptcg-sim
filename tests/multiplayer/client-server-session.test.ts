@@ -6,6 +6,10 @@ import {
   type SessionSocketHandlers,
 } from '../../packages/client-session/src/index.js';
 import { submitBoardDrop } from '../../apps/web/src/board/resolveBoardDrop.js';
+import {
+  submitDeckRelativeCardAction,
+  submitPrizeDeckBottomAction,
+} from '../../apps/web/src/board/resolveDeckRelativeAction.js';
 import { submitInspectionCardsAction } from '../../apps/web/src/board/resolveInspectionCardsAction.js';
 import { submitStagedCardsAction } from '../../apps/web/src/board/resolveStagedCardsAction.js';
 import {
@@ -720,6 +724,122 @@ describe('client/server multiplayer contract', () => {
     expect(hand?.cards.every((card) => card.kind === 'known')).toBe(true);
     expect(resolved?.zones[`zone:${playerId}:deck`]?.cards).toHaveLength(2);
     expect(room.store.commandCommits).toHaveLength(3);
+  });
+
+  it('resolves deck-relative intents atomically after reconnect', async () => {
+    const room = await fixture();
+    const scheduler = new ManualScheduler();
+    const player = await connectClient({
+      hub: room.hub,
+      name: 'Blue',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+      scheduler,
+    });
+    const playerId = player.session.getSnapshot().playerId;
+    if (!playerId) throw new Error('Missing admitted player identity');
+    expect(
+      player.session.submit({
+        type: 'LoadDeck',
+        entries: Array.from({ length: 15 }, (_, index) => ({
+          definition: {
+            id: `deck-relative-integration-definition-${index}`,
+            name: `Deck relative integration card ${index}`,
+            category: 'Trainer' as const,
+            imageUrl: `/deck-relative-integration-${index}.png`,
+          },
+          count: 1,
+        })),
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+    expect(player.session.submit({ type: 'SetupPlayer' }).queued).toBe(true);
+    await player.factory.flush();
+
+    let view = player.session.getSnapshot().view;
+    if (!view) throw new Error('Setup view was not published');
+    const handId = `zone:${playerId}:hand`;
+    const discardId = `zone:${playerId}:discard`;
+    const handCard = view.zones[handId]!.cards[0]!;
+    expect(
+      player.session.submit({
+        type: 'MoveCard',
+        cardId: handCard.id,
+        expectedSourceZoneId: handId,
+        destinationZoneId: discardId,
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+
+    player.factory.latest().networkDrop();
+    scheduler.runNext();
+    player.factory.latest().open();
+    await player.factory.flush();
+    view = player.session.getSnapshot().view;
+    if (!view) throw new Error('Authoritative view did not resume');
+    const discardCard = view.zones[discardId]!.cards[0]!;
+    let submitted = false;
+    const swap = submitDeckRelativeCardAction(
+      view,
+      discardCard.id,
+      'swapWithTop',
+      (command) => {
+        submitted = player.session.submit(command).queued;
+      }
+    );
+    expect(swap).toMatchObject({
+      ok: true,
+      command: {
+        type: 'SwapCardWithDeckTop',
+        cardId: discardCard.id,
+        expectedSourceId: discardId,
+      },
+    });
+    expect(submitted).toBe(true);
+    await player.factory.flush();
+
+    view = player.session.getSnapshot().view;
+    if (!view) throw new Error('Swap view was not published');
+    const nextHandCard = view.zones[handId]!.cards[0]!;
+    submitted = false;
+    expect(
+      submitDeckRelativeCardAction(
+        view,
+        nextHandCard.id,
+        'moveToTop',
+        (command) => {
+          submitted = player.session.submit(command).queued;
+        }
+      )
+    ).toMatchObject({
+      ok: true,
+      command: { type: 'MoveCardToDeckTop', cardId: nextHandCard.id },
+    });
+    expect(submitted).toBe(true);
+    await player.factory.flush();
+
+    view = player.session.getSnapshot().view;
+    if (!view) throw new Error('Move-to-top view was not published');
+    submitted = false;
+    expect(
+      submitPrizeDeckBottomAction(view, (command) => {
+        submitted = player.session.submit(command).queued;
+      })
+    ).toEqual({
+      ok: true,
+      command: { type: 'MovePrizesToDeckBottom' },
+    });
+    expect(submitted).toBe(true);
+    await player.factory.flush();
+
+    const resolved = player.session.getSnapshot().view;
+    expect(resolved?.revision).toBe(6);
+    expect(resolved?.zones[`zone:${playerId}:prizes`]?.cards).toEqual([]);
+    expect(resolved?.zones[`zone:${playerId}:deck`]?.cards).toHaveLength(9);
+    expect(resolved?.zones[discardId]?.cards).toHaveLength(1);
+    expect(resolved?.zones[handId]?.cards).toHaveLength(5);
+    expect(room.store.commandCommits).toHaveLength(6);
+    expect(room.store.commandCommits[3]?.eventBatch?.events).toHaveLength(2);
   });
 
   it('publishes one authoritative revision to a player and spectator', async () => {

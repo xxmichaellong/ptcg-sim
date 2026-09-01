@@ -26,7 +26,7 @@ a hard-to-find behavior. Proposed names are not final APIs.
 | `draw`                      | `DrawCards` using authority-resolved deck top                                                                              | Count validation/clamp, empty/short deck, hidden identities, message grammar                                   |
 | `moveCardBundle`            | Intent resolves to `MoveCard`, `MoveStack`, `AttachCard`, `EvolveCard`, `ReplaceStadium`, or active/bench swap event batch | Every source/destination, target, cover, stack/work-area/counter/face/category effect and message              |
 | `shuffleIntoDeck`           | Atomic `MoveCardAndShuffleDeck`                                                                                            | Source removal/stack policy, full authority permutation, concealment generation                                |
-| `moveToDeckTop`             | `MoveCardToDeckEdge(top)`                                                                                                  | v1 index-zero top convention, visibility clearing, stack policy                                                |
+| `moveToDeckTop`             | `MoveCardToDeckTop`                                                                                                        | v1 index-zero top convention, visibility clearing, stack policy                                                |
 | `switchWithDeckTop`         | Atomic `SwapCardWithDeckTop`                                                                                               | Empty/one-card deck, original destination, concealment, message                                                |
 | `viewDeck`                  | `ExtractDeckCardsForInspection`                                                                                            | Top/bottom selection, count clamp, target's deck, inspection viewer, ordered holding work area                 |
 | `shuffleAll`                | `ResolveStagedCards(shuffleIntoDeck)` or `ResolveInspectionCards(shuffleIntoDeck)`                                         | Supported sources (deck/discard/view/detached), messages, popup close, no-op                                   |
@@ -134,3 +134,14 @@ to the active inspection work area and retires its visibility grant atomically.
 An ordinary inspection close now also retires persisted grants and public
 reveal metadata while normalizing temporary face and category state. The
 renderer does not infer legacy relative-image behavior.
+
+`MoveCardToDeckTop` and `SwapCardWithDeckTop` now resolve the source container
+from an opaque card handle plus an exact expected source ID. Index zero remains
+the deck top. Both actions support ordinary zones, top evolution cards,
+attachments, inspection cards, and staged cards without publishing an
+intermediate state. A swap returns the prior deck top to the selected card's
+exact zone index or logical stack/work-area position. Stack dependents remain
+transactionally staged, concealed handles rotate on entry to the deck, and
+temporary face/category/rotation state is normalized. `MovePrizesToDeckBottom`
+shuffles only the prize cards on the authority and appends them after the
+unchanged deck; an empty prize zone fails without creating a revision.

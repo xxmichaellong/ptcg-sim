@@ -76,6 +76,47 @@ describe('client protocol ingress', () => {
     expect(result).toEqual({ ok: false, reason: 'frame_too_large' });
   });
 
+  it('accepts only bounded deck-relative intent shapes', () => {
+    for (const command of [
+      {
+        type: 'MoveCardToDeckTop',
+        cardId: 'view-card',
+        expectedSourceId: 'source-zone',
+      },
+      {
+        type: 'SwapCardWithDeckTop',
+        cardId: 'view-card',
+        expectedSourceId: 'source-stack',
+      },
+      { type: 'MovePrizesToDeckBottom' },
+    ]) {
+      const result = parseClientFrame(
+        JSON.stringify({
+          type: 'Command',
+          protocolVersion: PROTOCOL_VERSION,
+          sessionId: 'session',
+          clientSequence: 1,
+          commandId: 'command',
+          lastSeenRevision: 0,
+          command,
+        })
+      );
+      expect(result.ok).toBe(true);
+    }
+    const missingSource = parseClientFrame(
+      JSON.stringify({
+        type: 'Command',
+        protocolVersion: PROTOCOL_VERSION,
+        sessionId: 'session',
+        clientSequence: 1,
+        commandId: 'command',
+        lastSeenRevision: 0,
+        command: { type: 'SwapCardWithDeckTop', cardId: 'view-card' },
+      })
+    );
+    expect(missingSource.ok).toBe(false);
+  });
+
   it('bounds client-supplied expected stack layouts', () => {
     const expectedBenchStackIds = Array.from(
       { length: 201 },

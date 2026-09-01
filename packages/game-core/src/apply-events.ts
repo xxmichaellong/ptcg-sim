@@ -423,9 +423,18 @@ export const applyEvent = (
       destinationCards.splice(destinationIndex, 0, event.cardId);
       const card = state.cards[event.cardId];
       if (!card) throw new Error(`Missing moved card ${event.cardId}`);
+      const normalizedCard =
+        destination.kind === 'board'
+          ? { ...card, face: 'up' as const }
+          : {
+              ...card,
+              currentCategory: card.originalCategory,
+              face: 'up' as const,
+              orientationQuarterTurns: 0 as const,
+            };
       const nextCard = event.concealIdentity
-        ? incrementVisibility({ ...card, face: 'up' })
-        : { ...card, face: 'up' as const };
+        ? incrementVisibility(normalizedCard)
+        : normalizedCard;
       return {
         ...state,
         cards: { ...state.cards, [event.cardId]: nextCard },
@@ -1204,6 +1213,220 @@ export const applyEvent = (
               ([inspectionId]) => inspectionId !== event.inspectionId
             )
           ),
+        },
+      };
+    }
+    case 'InspectionCardSwappedWithDeckTop': {
+      const areas = state.workAreas[event.playerId];
+      const inspection = areas?.inspection;
+      const deckId = playerZoneId(event.playerId, 'deck');
+      const deck = requireZone(state, deckId);
+      if (
+        !areas ||
+        !inspection ||
+        inspection.id !== event.expectedWorkAreaId ||
+        inspection.inspectionId !== event.inspectionId ||
+        inspection.cardIds.length !== event.expectedInspectionCardIds.length ||
+        inspection.cardIds.some(
+          (cardId, index) => cardId !== event.expectedInspectionCardIds[index]
+        ) ||
+        !inspection.cardIds.includes(event.cardId)
+      ) {
+        throw new Error('Inspection deck-top swap has a stale work area');
+      }
+      if (
+        deck.cardIds.length !== event.expectedDeckCardIds.length ||
+        deck.cardIds.some(
+          (cardId, index) => cardId !== event.expectedDeckCardIds[index]
+        ) ||
+        deck.cardIds[0] !== event.deckTopCardId
+      ) {
+        throw new Error('Inspection deck-top swap has a stale deck');
+      }
+      const selected = state.cards[event.cardId];
+      const deckTop = state.cards[event.deckTopCardId];
+      if (!selected || !deckTop) {
+        throw new Error('Inspection deck-top swap references a missing card');
+      }
+      const inspectionCardIds = inspection.cardIds.map((cardId) =>
+        cardId === event.cardId ? event.deckTopCardId : cardId
+      );
+      const normalizedSelected = {
+        ...selected,
+        currentCategory: selected.originalCategory,
+        face: 'up' as const,
+        orientationQuarterTurns: 0 as const,
+      };
+      const normalizedDeckTop = {
+        ...deckTop,
+        currentCategory: deckTop.originalCategory,
+        face: 'up' as const,
+        orientationQuarterTurns: 0 as const,
+      };
+      const inspectionGrants = Object.fromEntries(
+        Object.entries(state.visibility.inspectionGrants)
+          .map(([inspectionId, grant]) => [
+            inspectionId,
+            {
+              ...grant,
+              cardIds:
+                inspectionId === event.inspectionId
+                  ? grant.cardIds.map((cardId) =>
+                      cardId === event.cardId ? event.deckTopCardId : cardId
+                    )
+                  : grant.cardIds.filter((cardId) => cardId !== event.cardId),
+            },
+          ])
+          .filter(([, grant]) =>
+            Boolean(
+              (grant as { readonly cardIds: readonly CardInstanceId[] }).cardIds
+                .length
+            )
+          )
+      ) as MatchState['visibility']['inspectionGrants'];
+      return {
+        ...state,
+        cards: {
+          ...state.cards,
+          [selected.id]: incrementVisibility(normalizedSelected),
+          [deckTop.id]: normalizedDeckTop,
+        },
+        zones: {
+          ...state.zones,
+          [deck.id]: {
+            ...deck,
+            cardIds: [event.cardId, ...deck.cardIds.slice(1)],
+          },
+        },
+        workAreas: {
+          ...state.workAreas,
+          [event.playerId]: {
+            ...areas,
+            inspection: { ...inspection, cardIds: inspectionCardIds },
+          },
+        },
+        visibility: {
+          publicCardIds: state.visibility.publicCardIds.filter(
+            (cardId) =>
+              cardId !== event.cardId && cardId !== event.deckTopCardId
+          ),
+          inspectionGrants,
+        },
+      };
+    }
+    case 'StagedCardSwappedWithDeckTop': {
+      const areas = state.workAreas[event.playerId];
+      const resolution = areas?.attachmentResolution;
+      const deckId = playerZoneId(event.playerId, 'deck');
+      const deck = requireZone(state, deckId);
+      if (
+        !areas ||
+        !resolution ||
+        resolution.id !== event.expectedWorkAreaId ||
+        resolution.evolutionCardIds.length !==
+          event.expectedEvolutionCardIds.length ||
+        resolution.evolutionCardIds.some(
+          (cardId, index) => cardId !== event.expectedEvolutionCardIds[index]
+        ) ||
+        resolution.attachmentCardIds.length !==
+          event.expectedAttachmentCardIds.length ||
+        resolution.attachmentCardIds.some(
+          (cardId, index) => cardId !== event.expectedAttachmentCardIds[index]
+        )
+      ) {
+        throw new Error('Staged deck-top swap has a stale work area');
+      }
+      const sourceIds =
+        event.source === 'evolution'
+          ? resolution.evolutionCardIds
+          : resolution.attachmentCardIds;
+      if (!sourceIds.includes(event.cardId)) {
+        throw new Error('Staged deck-top swap has a stale source sequence');
+      }
+      if (
+        deck.cardIds.length !== event.expectedDeckCardIds.length ||
+        deck.cardIds.some(
+          (cardId, index) => cardId !== event.expectedDeckCardIds[index]
+        ) ||
+        deck.cardIds[0] !== event.deckTopCardId
+      ) {
+        throw new Error('Staged deck-top swap has a stale deck');
+      }
+      const selected = state.cards[event.cardId];
+      const deckTop = state.cards[event.deckTopCardId];
+      if (!selected || !deckTop) {
+        throw new Error('Staged deck-top swap references a missing card');
+      }
+      const swap = (cardIds: readonly CardInstanceId[]) =>
+        cardIds.map((cardId) =>
+          cardId === event.cardId ? event.deckTopCardId : cardId
+        );
+      const normalizedSelected = {
+        ...selected,
+        currentCategory: selected.originalCategory,
+        face: 'up' as const,
+        orientationQuarterTurns: 0 as const,
+      };
+      const normalizedDeckTop = {
+        ...deckTop,
+        currentCategory: deckTop.originalCategory,
+        face: 'up' as const,
+        orientationQuarterTurns: 0 as const,
+      };
+      return {
+        ...state,
+        cards: {
+          ...state.cards,
+          [selected.id]: incrementVisibility(normalizedSelected),
+          [deckTop.id]: normalizedDeckTop,
+        },
+        zones: {
+          ...state.zones,
+          [deck.id]: {
+            ...deck,
+            cardIds: [event.cardId, ...deck.cardIds.slice(1)],
+          },
+        },
+        workAreas: {
+          ...state.workAreas,
+          [event.playerId]: {
+            ...areas,
+            attachmentResolution: {
+              ...resolution,
+              evolutionCardIds:
+                event.source === 'evolution'
+                  ? swap(resolution.evolutionCardIds)
+                  : resolution.evolutionCardIds,
+              attachmentCardIds:
+                event.source === 'attachment'
+                  ? swap(resolution.attachmentCardIds)
+                  : resolution.attachmentCardIds,
+            },
+          },
+        },
+        visibility: {
+          publicCardIds: state.visibility.publicCardIds.filter(
+            (cardId) =>
+              cardId !== event.cardId && cardId !== event.deckTopCardId
+          ),
+          inspectionGrants: Object.fromEntries(
+            Object.entries(state.visibility.inspectionGrants)
+              .map(([inspectionId, grant]) => [
+                inspectionId,
+                {
+                  ...grant,
+                  cardIds: grant.cardIds.filter(
+                    (cardId) => cardId !== event.cardId
+                  ),
+                },
+              ])
+              .filter(([, grant]) =>
+                Boolean(
+                  (grant as { readonly cardIds: readonly CardInstanceId[] })
+                    .cardIds.length
+                )
+              )
+          ) as MatchState['visibility']['inspectionGrants'],
         },
       };
     }

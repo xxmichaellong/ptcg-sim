@@ -102,6 +102,19 @@ export type GameCommand =
       readonly destination: WorkAreaCardsDestination;
     }
   | {
+      readonly type: 'MoveCardToDeckTop';
+      readonly playerId: PlayerId;
+      readonly cardId: CardInstanceId;
+      readonly expectedSourceId: ZoneId | StackId | WorkAreaId;
+    }
+  | {
+      readonly type: 'SwapCardWithDeckTop';
+      readonly playerId: PlayerId;
+      readonly cardId: CardInstanceId;
+      readonly expectedSourceId: ZoneId | StackId | WorkAreaId;
+    }
+  | { readonly type: 'MovePrizesToDeckBottom'; readonly playerId: PlayerId }
+  | {
       readonly type: 'ShuffleZone';
       readonly zoneId: ZoneId;
     }
