@@ -7,6 +7,10 @@ import {
 } from './lifecycle-reset.js';
 import { findCardLocation } from './location.js';
 import type { CardInstance, CardZone, MatchState, PlayStack } from './model.js';
+import {
+  cardSourceSnapshot,
+  publicVisibilityFace,
+} from './public-visibility.js';
 
 const incrementVisibility = (card: CardInstance): CardInstance => ({
   ...card,
@@ -1868,6 +1872,15 @@ export const applyEvent = (
             ? incrementVisibility({ ...card, face: event.face })
             : { ...card, face: event.face },
         },
+        visibility: {
+          ...state.visibility,
+          publicCardIds:
+            event.face === 'down'
+              ? state.visibility.publicCardIds.filter(
+                  (cardId) => cardId !== event.cardId
+                )
+              : state.visibility.publicCardIds,
+        },
       };
     }
     case 'CardCategorySet': {
@@ -1882,20 +1895,57 @@ export const applyEvent = (
       };
     }
     case 'PublicRevealSet': {
-      if (!state.cards[event.cardId]) {
-        throw new Error(`Missing card ${event.cardId}`);
+      const targetIds = new Set(event.cardIds);
+      const firstCard = state.cards[event.cardIds[0]!];
+      const firstLocation = firstCard
+        ? findCardLocation(state, firstCard.id)
+        : null;
+      const source =
+        firstCard && firstLocation
+          ? cardSourceSnapshot(state, firstCard, firstLocation)
+          : null;
+      if (
+        event.cardIds.length === 0 ||
+        targetIds.size !== event.cardIds.length ||
+        !source ||
+        source.id !== event.expectedSourceId ||
+        source.playerId !== event.playerId ||
+        !sameCardOrder(source.cardIds, event.expectedSourceCardIds) ||
+        event.cardIds.some((cardId) => !source.cardIds.includes(cardId))
+      ) {
+        throw new Error('Public visibility event source is malformed');
+      }
+      const face = publicVisibilityFace(source, event.revealed);
+      if (
+        event.cardIds.some((cardId) => {
+          const card = state.cards[cardId];
+          return (
+            !card ||
+            (state.visibility.publicCardIds.includes(cardId) ===
+              event.revealed &&
+              card.face === face)
+          );
+        })
+      ) {
+        throw new Error('Public visibility event contains an unchanged card');
       }
       const revealed = new Set(state.visibility.publicCardIds);
-      if (event.revealed) revealed.add(event.cardId);
-      else revealed.delete(event.cardId);
+      for (const cardId of event.cardIds) {
+        if (event.revealed) revealed.add(cardId);
+        else revealed.delete(cardId);
+      }
       return {
         ...state,
-        cards: event.revealed
-          ? state.cards
-          : {
-              ...state.cards,
-              [event.cardId]: incrementVisibility(state.cards[event.cardId]!),
-            },
+        cards: Object.fromEntries(
+          Object.entries(state.cards).map(([cardId, card]) => [
+            cardId,
+            targetIds.has(card.id)
+              ? event.revealed
+                ? { ...card, face }
+                : incrementVisibility({ ...card, face })
+              : card,
+          ])
+        ),
         visibility: {
           ...state.visibility,
           publicCardIds: [...revealed],

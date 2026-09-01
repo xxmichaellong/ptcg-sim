@@ -5,6 +5,7 @@ import {
   asStackId,
   asWorkAreaId,
   asZoneId,
+  cardSourceSnapshot,
   findCardLocation,
   playerZoneId,
   type GameCommand,
@@ -64,7 +65,9 @@ export const resolveWireCommand = (
       wire.type === 'PassTurn' ||
       wire.type === 'SetupPlayer' ||
       wire.type === 'ResetPlayer' ||
-      wire.type === 'LoadDeck') &&
+      wire.type === 'LoadDeck' ||
+      wire.type === 'SetPublicReveal' ||
+      wire.type === 'SetZonePublicReveal') &&
     observedRevision !== state.revision
   ) {
     return rejected('stale_reference');
@@ -672,8 +675,7 @@ export const resolveWireCommand = (
     }
     case 'SetCardFace':
     case 'SetCardOrientation':
-    case 'SetCardAbilityUsed':
-    case 'SetPublicReveal': {
+    case 'SetCardAbilityUsed': {
       const card = resolveCard(wire.cardId);
       if (!card) return rejected('stale_reference');
       const canonicalCard = state.cards[card.cardId]!;
@@ -718,11 +720,77 @@ export const resolveWireCommand = (
           },
         };
       }
+      throw new Error('Unreachable card annotation command');
+    }
+    case 'SetPublicReveal': {
+      const card = resolveCard(wire.cardId);
+      if (!card) return rejected('stale_reference');
+      const canonicalCard = state.cards[card.cardId]!;
+      const location = findCardLocation(state, card.cardId);
+      const source = location
+        ? cardSourceSnapshot(state, canonicalCard, location)
+        : null;
+      if (!source || source.id !== wire.expectedSourceId) {
+        return rejected('stale_reference');
+      }
+      if (
+        !canControlCard(
+          state,
+          actorId,
+          canonicalCard.ownerId,
+          card.known,
+          policy
+        )
+      ) {
+        return rejected('unauthorized');
+      }
       return {
         accepted: true,
         command: {
           type: 'SetPublicReveal',
+          playerId: source.playerId,
           cardId: card.cardId,
+          expectedSourceId: source.id,
+          revealed: wire.revealed,
+        },
+      };
+    }
+    case 'SetZonePublicReveal': {
+      const targetPlayerId = asPlayerId(wire.targetPlayerId);
+      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (
+        targetPlayerId !== actorId &&
+        !policy.allowOpponentPublicInteraction
+      ) {
+        return rejected('unauthorized');
+      }
+      const zone = state.zones[wire.zoneId];
+      if (
+        !zone ||
+        zone.id !== playerZoneId(targetPlayerId, 'prizes') ||
+        zone.kind !== 'prizes' ||
+        zone.ownerId !== targetPlayerId
+      ) {
+        return rejected('stale_reference');
+      }
+      const cardIds = wire.expectedCardIds.map(
+        (alias) => resolveCard(alias)?.cardId
+      );
+      if (
+        cardIds.some((cardId) => cardId === undefined) ||
+        new Set(cardIds).size !== cardIds.length ||
+        cardIds.length !== zone.cardIds.length ||
+        cardIds.some((cardId, index) => cardId !== zone.cardIds[index])
+      ) {
+        return rejected('stale_reference');
+      }
+      return {
+        accepted: true,
+        command: {
+          type: 'SetZonePublicReveal',
+          playerId: targetPlayerId,
+          zoneId: zone.id,
+          expectedCardIds: [...zone.cardIds],
           revealed: wire.revealed,
         },
       };

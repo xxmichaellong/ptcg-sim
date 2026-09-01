@@ -41,6 +41,7 @@ export interface KnownViewCard {
   readonly face: CardFace;
   readonly orientationQuarterTurns: QuarterTurns;
   readonly abilityUsed: boolean;
+  readonly publiclyRevealed: boolean;
 }
 
 export interface ConcealedViewCard {
@@ -48,6 +49,7 @@ export interface ConcealedViewCard {
   readonly id: ViewCardId;
   readonly ownerId: PlayerId;
   readonly cardBackUrl: string;
+  readonly publiclyRevealed: false;
 }
 
 export type ViewCard = KnownViewCard | ConcealedViewCard;
@@ -216,6 +218,7 @@ export const projectMatch = (
         id,
         ownerId: card.ownerId,
         cardBackUrl: state.players[card.ownerId]?.cardBackUrl ?? '',
+        publiclyRevealed: false,
       };
     }
     const definition = state.definitions[card.definitionId];
@@ -240,6 +243,7 @@ export const projectMatch = (
       face: card.face,
       orientationQuarterTurns: card.orientationQuarterTurns,
       abilityUsed: card.abilityUsed,
+      publiclyRevealed: state.visibility.publicCardIds.includes(card.id),
     };
   };
 

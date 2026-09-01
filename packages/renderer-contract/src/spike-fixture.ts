@@ -46,6 +46,7 @@ export const createRendererSpikeView = (): MatchViewState => {
       face: 'up',
       orientationQuarterTurns: 0,
       abilityUsed: false,
+      publiclyRevealed: false,
     };
   };
   const concealed = (ownerId: PlayerId, back: string): ViewCard => ({
@@ -53,6 +54,7 @@ export const createRendererSpikeView = (): MatchViewState => {
     id: asViewCardId(`spike-card-${nextCard++}`),
     ownerId,
     cardBackUrl: back,
+    publiclyRevealed: false,
   });
   const many = (count: number, create: () => ViewCard): ViewCard[] =>
     Array.from({ length: count }, create);

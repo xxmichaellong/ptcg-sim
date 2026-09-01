@@ -299,3 +299,36 @@ Accepted lifecycle commands publish typed `DeckLoaded`, `PlayerSetup`, or
 safe hand/prize counts but no identities. The client applies the facts once,
 retains them in its bounded timeline across reconnect, and rejects a mismatched
 event revision. This slice changes no button, layout, label, or interaction.
+
+### Implemented public reveal/hide subset
+
+`revealShortcut` and `hideShortcut` now map to one source-relative
+`SetPublicReveal` command carrying an opaque card handle and its exact zone,
+stack, or work-area ID. `revealCards` and `hideCards` map to one atomic
+`SetZonePublicReveal` transaction for the complete ordered prize zone rather
+than the legacy loop of six separately observable mutations. Both command
+families require the submitter's current revision. Empty, stale, duplicate,
+wrong-source, unsupported-zone, and exact no-op requests fail without a
+revision.
+
+Reveal makes the selected cards face-up and explicitly public. Hide removes the
+public grant, rotates each newly concealed opaque identity exactly once, and
+turns ordinary public-zone/in-play cards face-down. Hand and prize cards retain
+their legacy canonical face-up state because their zone itself provides
+concealment. The projector exposes only a `publiclyRevealed` boolean alongside
+recipient-safe card views; hidden definitions, names, image URLs, and canonical
+IDs remain absent.
+
+Either seat may reveal or hide a complete opponent prize zone when the existing
+room public-interaction policy permits it. Selectively revealing a still-unknown
+opponent card remains forbidden: this intentional privacy hardening prevents an
+opaque positional handle from becoming a private-information oracle. Once a
+card is already known, ordinary opponent interaction follows the existing
+policy.
+
+Accepted batches publish `PublicCardsRevealed` or `PublicCardsHidden` with only
+the target player and affected count. They persist and reconnect as canonical
+state while their presentation facts are applied once and never replayed during
+duplicate recovery. Private `lookAtCards`/`lookShortcut` grants and
+`playRandomCardFaceDown` remain separate capability/randomness slices; no
+visible control, label, placement, or styling changes in this slice.

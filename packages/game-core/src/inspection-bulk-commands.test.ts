@@ -127,7 +127,9 @@ const prepareInspection = (
     state,
     {
       type: 'SetPublicReveal',
+      playerId: p1,
       cardId: normalizedCardId,
+      expectedSourceId: inspection.id,
       revealed: true,
     },
     context

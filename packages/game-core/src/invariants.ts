@@ -239,8 +239,12 @@ export const collectInvariantProblems = (
   }
 
   for (const cardId of state.visibility.publicCardIds) {
-    if (!state.cards[cardId])
+    const card = state.cards[cardId];
+    if (!card) {
       problems.push(`public reveal references missing card ${cardId}`);
+    } else if (card.face !== 'up') {
+      problems.push(`public reveal references face-down card ${cardId}`);
+    }
   }
   if (hasDuplicates(state.visibility.publicCardIds)) {
     problems.push('public reveal list contains duplicates');

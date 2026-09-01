@@ -416,6 +416,85 @@ describe('authoritative room command transaction', () => {
     }
   });
 
+  it('publishes privacy-safe public visibility facts with the atomic batch', async () => {
+    const persistence = createPersistence();
+    const dependencies = createDependencies(persistence);
+    const loaded = await processAuthorityCommand(
+      createSnapshot(),
+      loadDeck(),
+      dependencies
+    );
+    const setup = await processAuthorityCommand(
+      loaded.snapshot,
+      command(
+        'session-player-one',
+        2,
+        'visibility-setup',
+        { type: 'SetupPlayer', targetPlayerId: p1 },
+        1
+      ),
+      dependencies
+    );
+    const ownerPublication = setup.deliveries.find(
+      (delivery) =>
+        delivery.sessionId === 'session-player-one' &&
+        delivery.message.type === 'StatePublication'
+    );
+    if (ownerPublication?.message.type !== 'StatePublication') {
+      throw new Error('missing owner setup publication');
+    }
+    const prizeId = playerZoneId(p1, 'prizes');
+    const aliases = ownerPublication.message.snapshot.zones[prizeId]!.cards.map(
+      (card) => card.id
+    );
+    const revealed = await processAuthorityCommand(
+      setup.snapshot,
+      command(
+        'session-player-one',
+        3,
+        'reveal-prizes',
+        {
+          type: 'SetZonePublicReveal',
+          targetPlayerId: p1,
+          zoneId: prizeId,
+          expectedCardIds: aliases,
+          revealed: true,
+        },
+        2
+      ),
+      dependencies
+    );
+    expect(persistence.transactions[2]?.eventBatch?.events).toEqual([
+      expect.objectContaining({
+        type: 'PublicRevealSet',
+        playerId: p1,
+        cardIds: expect.arrayContaining([
+          expect.stringMatching(/^canonical-card-/),
+        ]),
+        revealed: true,
+      }),
+    ]);
+    for (const delivery of revealed.deliveries) {
+      if (delivery.message.type !== 'StatePublication') continue;
+      expect(delivery.message.presentationEvents).toEqual([
+        {
+          type: 'PublicCardsRevealed',
+          revision: 3,
+          playerId: p1,
+          cardCount: 6,
+        },
+      ]);
+      expect(JSON.stringify(delivery.message.presentationEvents)).not.toContain(
+        'canonical-card-'
+      );
+      expect(
+        delivery.message.snapshot.zones[prizeId]!.cards.every(
+          (card) => card.kind === 'known' && card.publiclyRevealed
+        )
+      ).toBe(true);
+    }
+  });
+
   it('never publishes canonical hidden IDs and invalidates concealed handles on shuffle', async () => {
     const persistence = createPersistence();
     const dependencies = createDependencies(persistence);
@@ -458,7 +537,12 @@ describe('authoritative room command transaction', () => {
         'session-player-two',
         1,
         'stale-reveal-command',
-        { type: 'SetPublicReveal', cardId: oldAlias!, revealed: true },
+        {
+          type: 'SetPublicReveal',
+          cardId: oldAlias!,
+          expectedSourceId: deckId,
+          revealed: true,
+        },
         2
       ),
       dependencies

@@ -249,6 +249,10 @@ and server-only. A username or board orientation does not select a role.
   durable full-order payload.
 - Prize identities follow current reveal/look semantics but default to
   concealed.
+- Public reveal/hide commands bind to an exact source and revision. Whole-zone
+  commands are limited to the complete ordered prize zone; selective reveal of
+  an unknown opponent card is forbidden even when public opponent interaction
+  is enabled.
 - Public zones expose identity unless a card is intentionally face down.
 - Temporary reveals are scoped by exact viewers and end atomically.
 - A spectator view is computed independently; it is not copied from either
@@ -266,7 +270,9 @@ disclosed only where the current UI requires them.
 
 Card definitions and face-image URLs are cataloged to a connection only while
 visible. A known card becoming concealed removes its definition from subsequent
-view state and rotates the view handle according to policy.
+view state and rotates the view handle according to policy. Projected cards
+carry a boolean public-reveal status, never a canonical visibility grant or
+identity.
 
 ### Projection tests are security tests
 

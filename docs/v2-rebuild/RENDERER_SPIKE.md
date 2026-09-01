@@ -168,7 +168,9 @@ chunk graph will be measured in the browser evidence run.
   category-change departure that survive the same projection/reconnect path,
   plus independent, explicitly targeted GX/VSTAR state across reconnect and
   per-player reset, plus an exact-source loose-board shuffle that normalizes
-  cards, rotates hidden identities, and survives reconnect as one revision;
+  cards, rotates hidden identities, and survives reconnect as one revision,
+  plus atomic opponent-targeted prize reveal/hide that publishes safe counts,
+  rotates re-concealed handles, and survives reconnect without replaying facts;
 - TypeScript project boundaries and circular-dependency check;
 - Vite production build; and
 - the repository-wide v2 and 79-test legacy gates.
@@ -246,7 +248,7 @@ recipient-safe snapshot. Hidden setup cards remain concealed for the other
 player; lifecycle announcements travel through the bounded presentation stream,
 not renderer-owned state.
 
-At this checkpoint the v2 suite contains 232 passing tests across 45 files. A
+At this checkpoint the v2 suite contains 248 passing tests across 48 files. A
 separate Playwright suite also passes three real Chromium 151 scenarios:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and

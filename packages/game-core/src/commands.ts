@@ -228,7 +228,16 @@ export type GameCommand =
     }
   | {
       readonly type: 'SetPublicReveal';
+      readonly playerId: PlayerId;
       readonly cardId: CardInstanceId;
+      readonly expectedSourceId: ZoneId | StackId | WorkAreaId;
+      readonly revealed: boolean;
+    }
+  | {
+      readonly type: 'SetZonePublicReveal';
+      readonly playerId: PlayerId;
+      readonly zoneId: ZoneId;
+      readonly expectedCardIds: readonly CardInstanceId[];
       readonly revealed: boolean;
     }
   | {

@@ -15,6 +15,10 @@ import { submitInspectionCardsAction } from '../../apps/web/src/board/resolveIns
 import { submitLooseBoardAction } from '../../apps/web/src/board/resolveLooseBoardAction.js';
 import { submitLifecycleAction } from '../../apps/web/src/board/resolveLifecycleAction.js';
 import { submitOncePerGameAction } from '../../apps/web/src/board/resolveOncePerGameAction.js';
+import {
+  resolvePrizeVisibilityAction,
+  submitPublicVisibilityAction,
+} from '../../apps/web/src/board/resolvePublicVisibilityAction.js';
 import { submitStackStateAction } from '../../apps/web/src/board/resolveStackStateAction.js';
 import { submitStagedCardsAction } from '../../apps/web/src/board/resolveStagedCardsAction.js';
 import { submitTableAction } from '../../apps/web/src/board/resolveTableAction.js';
@@ -1645,6 +1649,143 @@ describe('client/server multiplayer contract', () => {
     await opponent.factory.flush();
     expect(opponent.session.getSnapshot().presentationEvents).toHaveLength(3);
     expect(opponent.session.getSnapshot().view?.revision).toBe(3);
+  });
+
+  it('reveals and re-conceals an opponent prize zone without leaking stable identities', async () => {
+    const room = await fixture();
+    const opponentScheduler = new ManualScheduler();
+    const player = await connectClient({
+      hub: room.hub,
+      name: 'Blue',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+    });
+    const opponent = await connectClient({
+      hub: room.hub,
+      name: 'Red',
+      role: 'player',
+      capability: room.credentials.playerTwoSeatCapability,
+      scheduler: opponentScheduler,
+    });
+    const playerId = player.session.getSnapshot().playerId;
+    if (!playerId) throw new Error('Missing visibility player identity');
+
+    expect(
+      player.session.submit({
+        type: 'LoadDeck',
+        entries: Array.from({ length: 14 }, (_, index) => ({
+          definition: {
+            id: `visibility-session-definition-${index}`,
+            name: `Visibility session card ${index}`,
+            category: index === 0 ? ('Pokémon' as const) : ('Trainer' as const),
+            imageUrl: `/visibility-session-card-${index}.png`,
+          },
+          count: 1,
+        })),
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+    const loadedView = player.session.getSnapshot().view;
+    if (!loadedView) throw new Error('Missing loaded visibility view');
+    let queued = false;
+    expect(
+      submitLifecycleAction(loadedView, playerId, 'setup', (wire) => {
+        queued = player.session.submit(wire).queued;
+      }).ok
+    ).toBe(true);
+    expect(queued).toBe(true);
+    await player.factory.flush();
+
+    let opponentView = opponent.session.getSnapshot().view;
+    if (!opponentView) throw new Error('Missing opponent visibility view');
+    const prizeId = Object.values(opponentView.zones).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'prizes'
+    )!.id;
+    const concealedAliases = opponentView.zones[prizeId]!.cards.map(
+      (card) => card.id
+    );
+    expect(
+      opponentView.zones[prizeId]!.cards.every(
+        (card) => card.kind === 'concealed' && !card.publiclyRevealed
+      )
+    ).toBe(true);
+
+    queued = false;
+    submitPublicVisibilityAction(
+      resolvePrizeVisibilityAction(opponentView, playerId, true),
+      (wire) => {
+        queued = opponent.session.submit(wire).queued;
+      }
+    );
+    expect(queued).toBe(true);
+    await opponent.factory.flush();
+
+    opponentView = opponent.session.getSnapshot().view;
+    const playerView = player.session.getSnapshot().view;
+    expect(
+      opponentView?.zones[prizeId]!.cards.every(
+        (card) => card.kind === 'known' && card.publiclyRevealed
+      )
+    ).toBe(true);
+    expect(
+      playerView?.zones[prizeId]!.cards.every(
+        (card) => card.kind === 'known' && card.publiclyRevealed
+      )
+    ).toBe(true);
+    const publicAliases = opponentView!.zones[prizeId]!.cards.map(
+      (card) => card.id
+    );
+    expect(publicAliases).not.toEqual(concealedAliases);
+    expect(opponent.session.getSnapshot().presentationEvents.at(-1)).toEqual({
+      type: 'PublicCardsRevealed',
+      revision: 3,
+      playerId,
+      cardCount: 6,
+    });
+
+    queued = false;
+    submitPublicVisibilityAction(
+      resolvePrizeVisibilityAction(opponentView!, playerId, false),
+      (wire) => {
+        queued = opponent.session.submit(wire).queued;
+      }
+    );
+    expect(queued).toBe(true);
+    await opponent.factory.flush();
+
+    opponentView = opponent.session.getSnapshot().view;
+    expect(
+      opponentView?.zones[prizeId]!.cards.every(
+        (card) => card.kind === 'concealed' && !card.publiclyRevealed
+      )
+    ).toBe(true);
+    expect(
+      opponentView?.zones[prizeId]!.cards.map((card) => card.id)
+    ).not.toEqual(publicAliases);
+    expect(opponent.session.getSnapshot().presentationEvents.at(-1)).toEqual({
+      type: 'PublicCardsHidden',
+      revision: 4,
+      playerId,
+      cardCount: 6,
+    });
+    expect(room.store.commandCommits).toHaveLength(4);
+    expect(room.store.commandCommits[3]?.eventBatch?.events[0]).toMatchObject({
+      type: 'PublicRevealSet',
+      playerId,
+      revealed: false,
+    });
+
+    opponent.factory.latest().networkDrop();
+    opponentScheduler.runNext();
+    opponent.factory.latest().open();
+    await opponent.factory.flush();
+    expect(opponent.session.getSnapshot().view?.revision).toBe(4);
+    expect(opponent.session.getSnapshot().presentationEvents).toHaveLength(4);
+    expect(
+      opponent.session
+        .getSnapshot()
+        .view?.zones[prizeId]!.cards.every((card) => card.kind === 'concealed')
+    ).toBe(true);
   });
 
   it('recovers a committed-but-undelivered command through exact replay', async () => {

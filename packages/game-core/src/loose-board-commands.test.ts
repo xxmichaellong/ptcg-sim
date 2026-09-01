@@ -99,7 +99,13 @@ const fixture = (context = createContext()) => {
   );
   state = accepted(
     state,
-    { type: 'SetPublicReveal', cardId: p1Card, revealed: true },
+    {
+      type: 'SetPublicReveal',
+      playerId: p1,
+      cardId: p1Card,
+      expectedSourceId: playerZoneId(p1, 'board'),
+      revealed: true,
+    },
     context
   );
   return { state, context, boardCards: [p1Card, p2Card] as const };

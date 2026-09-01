@@ -250,6 +250,18 @@ export const WireGameCommandSchema = v.variant('type', [
   v.object({
     type: v.literal('SetPublicReveal'),
     cardId: IdentifierSchema,
+    expectedSourceId: IdentifierSchema,
+    revealed: v.boolean(),
+  }),
+  v.object({
+    type: v.literal('SetZonePublicReveal'),
+    targetPlayerId: IdentifierSchema,
+    zoneId: IdentifierSchema,
+    expectedCardIds: v.pipe(
+      v.array(IdentifierSchema),
+      v.minLength(1),
+      v.maxLength(200)
+    ),
     revealed: v.boolean(),
   }),
   v.object({
@@ -328,6 +340,7 @@ const KnownViewCardSchema = v.object({
   face: v.picklist(['up', 'down'] as const),
   orientationQuarterTurns: QuarterTurnsSchema,
   abilityUsed: v.boolean(),
+  publiclyRevealed: v.boolean(),
 });
 
 const ConcealedViewCardSchema = v.object({
@@ -335,6 +348,7 @@ const ConcealedViewCardSchema = v.object({
   id: IdentifierSchema,
   ownerId: IdentifierSchema,
   cardBackUrl: UrlSchema,
+  publiclyRevealed: v.literal(false),
 });
 
 export const ViewCardSchema = v.variant('kind', [
@@ -489,6 +503,18 @@ export const PresentationEventSchema = v.variant('type', [
     revision: RevisionSchema,
     playerId: IdentifierSchema,
     turnNumber: NonNegativeIntegerSchema,
+  }),
+  v.object({
+    type: v.literal('PublicCardsRevealed'),
+    revision: RevisionSchema,
+    playerId: IdentifierSchema,
+    cardCount: PositiveIntegerSchema,
+  }),
+  v.object({
+    type: v.literal('PublicCardsHidden'),
+    revision: RevisionSchema,
+    playerId: IdentifierSchema,
+    cardCount: PositiveIntegerSchema,
   }),
 ]);
 

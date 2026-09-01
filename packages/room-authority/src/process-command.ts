@@ -137,6 +137,16 @@ const presentationEventsForBatch = (batch: EventBatch): PresentationEvent[] =>
         },
       ];
     }
+    if (event.type === 'PublicRevealSet') {
+      return [
+        {
+          type: event.revealed ? 'PublicCardsRevealed' : 'PublicCardsHidden',
+          revision: batch.revision,
+          playerId: event.playerId,
+          cardCount: event.cardIds.length,
+        },
+      ];
+    }
     if (event.type !== 'TableActionDeclared') return [];
     const common = {
       revision: batch.revision,

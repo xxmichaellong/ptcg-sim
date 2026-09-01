@@ -260,6 +260,60 @@ describe('client protocol ingress', () => {
     }
   });
 
+  it('accepts bounded source-aware public visibility intents', () => {
+    const parseCommand = (command: unknown) =>
+      parseClientFrame(
+        JSON.stringify({
+          type: 'Command',
+          protocolVersion: PROTOCOL_VERSION,
+          sessionId: 'session',
+          clientSequence: 1,
+          commandId: 'command',
+          lastSeenRevision: 0,
+          command,
+        })
+      );
+    expect(
+      parseCommand({
+        type: 'SetPublicReveal',
+        cardId: 'view-card',
+        expectedSourceId: 'source-zone',
+        revealed: true,
+      }).ok
+    ).toBe(true);
+    expect(
+      parseCommand({
+        type: 'SetZonePublicReveal',
+        targetPlayerId: 'target-player',
+        zoneId: 'prize-zone',
+        expectedCardIds: ['prize-one', 'prize-two'],
+        revealed: false,
+      }).ok
+    ).toBe(true);
+    for (const command of [
+      { type: 'SetPublicReveal', cardId: 'view-card', revealed: true },
+      {
+        type: 'SetZonePublicReveal',
+        targetPlayerId: 'target-player',
+        zoneId: 'prize-zone',
+        expectedCardIds: [],
+        revealed: true,
+      },
+      {
+        type: 'SetZonePublicReveal',
+        targetPlayerId: 'target-player',
+        zoneId: 'prize-zone',
+        expectedCardIds: Array.from(
+          { length: 201 },
+          (_, index) => `prize-${index}`
+        ),
+        revealed: true,
+      },
+    ]) {
+      expect(parseCommand(command).ok).toBe(false);
+    }
+  });
+
   it('bounds semantic loose-board batch commands', () => {
     const parseCommand = (command: unknown) =>
       parseClientFrame(

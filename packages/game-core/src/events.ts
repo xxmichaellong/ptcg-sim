@@ -276,7 +276,10 @@ export type DomainEvent =
     }
   | {
       readonly type: 'PublicRevealSet';
-      readonly cardId: CardInstanceId;
+      readonly playerId: PlayerId;
+      readonly expectedSourceId: ZoneId | StackId | WorkAreaId;
+      readonly expectedSourceCardIds: readonly CardInstanceId[];
+      readonly cardIds: readonly CardInstanceId[];
       readonly revealed: boolean;
     }
   | {

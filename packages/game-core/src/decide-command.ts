@@ -20,6 +20,10 @@ import type {
   MatchState,
   PlayStack,
 } from './model.js';
+import {
+  cardSourceSnapshot,
+  publicVisibilityFace,
+} from './public-visibility.js';
 
 export interface CommandAccepted {
   readonly accepted: true;
@@ -167,7 +171,10 @@ type DeckRelativeCommand = Extract<
 
 type SourceRelativeCardCommand =
   | DeckRelativeCommand
-  | Extract<GameCommand, { readonly type: 'ChangeCardCategory' }>;
+  | Extract<
+      GameCommand,
+      { readonly type: 'ChangeCardCategory' | 'SetPublicReveal' }
+    >;
 
 type CardActionSource = {
   readonly accepted: true;
@@ -1973,14 +1980,74 @@ export const decideCommand = (
             category: command.category,
           })
         : reject('not_found', `Card ${command.cardId} does not exist`);
-    case 'SetPublicReveal':
-      return state.cards[command.cardId]
-        ? accept({
-            type: 'PublicRevealSet',
-            cardId: command.cardId,
-            revealed: command.revealed,
-          })
-        : reject('not_found', `Card ${command.cardId} does not exist`);
+    case 'SetPublicReveal': {
+      const source = resolveCardActionSource(state, command);
+      if (!source.accepted) return source;
+      const snapshot = cardSourceSnapshot(state, source.card, source.location);
+      if (!snapshot) {
+        return reject('stale_reference', 'Card visibility source changed');
+      }
+      const face = publicVisibilityFace(snapshot, command.revealed);
+      const isPublic = state.visibility.publicCardIds.includes(source.card.id);
+      if (isPublic === command.revealed && source.card.face === face) {
+        return reject('invalid_command', 'Card visibility is already set');
+      }
+      return accept({
+        type: 'PublicRevealSet',
+        playerId: snapshot.playerId,
+        expectedSourceId: snapshot.id,
+        expectedSourceCardIds: snapshot.cardIds,
+        cardIds: [source.card.id],
+        revealed: command.revealed,
+      });
+    }
+    case 'SetZonePublicReveal': {
+      const playerError = requirePlayer(state, command.playerId);
+      if (playerError) return playerError;
+      const zone = state.zones[command.zoneId];
+      if (!zone) return reject('not_found', 'Visibility zone does not exist');
+      if (zone.kind !== 'prizes' || zone.ownerId !== command.playerId) {
+        return reject(
+          'precondition_failed',
+          'Whole-zone public visibility is only available for player prizes'
+        );
+      }
+      if (
+        command.expectedCardIds.length === 0 ||
+        new Set(command.expectedCardIds).size !==
+          command.expectedCardIds.length ||
+        !sameOrder(command.expectedCardIds, zone.cardIds)
+      ) {
+        return reject('stale_reference', 'Prize zone contents changed');
+      }
+      const source = cardSourceSnapshot(state, state.cards[zone.cardIds[0]!]!, {
+        kind: 'zone',
+        zoneId: zone.id,
+        index: 0,
+      });
+      if (!source) return reject('stale_reference', 'Prize zone changed');
+      const face = publicVisibilityFace(source, command.revealed);
+      const changedCardIds = zone.cardIds.filter((cardId) => {
+        const card = state.cards[cardId];
+        return (
+          card !== undefined &&
+          (state.visibility.publicCardIds.includes(cardId) !==
+            command.revealed ||
+            card.face !== face)
+        );
+      });
+      if (changedCardIds.length === 0) {
+        return reject('invalid_command', 'Prize visibility is already set');
+      }
+      return accept({
+        type: 'PublicRevealSet',
+        playerId: command.playerId,
+        expectedSourceId: zone.id,
+        expectedSourceCardIds: [...zone.cardIds],
+        cardIds: changedCardIds,
+        revealed: command.revealed,
+      });
+    }
     case 'ExtractDeckCardsForInspection': {
       const playerError = requirePlayer(state, command.playerId);
       if (playerError) return playerError;
