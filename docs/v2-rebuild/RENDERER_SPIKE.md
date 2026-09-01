@@ -162,7 +162,8 @@ chunk graph will be measured in the browser evidence run.
   deck bottom, plus inspection extraction across a resumed session and an
   atomic bulk move to hand, plus resumed deck-top swapping, moving cards to both
   deck edges, shuffling a selected card into the full deck, and shuffling prizes
-  to the deck bottom;
+  to the deck bottom, plus damage, condition, ability-used, and group-rotation
+  targets that survive reconnect and follow the characterized evolution cleanup;
 - TypeScript project boundaries and circular-dependency check;
 - Vite production build; and
 - the repository-wide v2 and 79-test legacy gates.
@@ -207,7 +208,7 @@ resolved event replaces the complete board stack layout with exact old-layout
 preconditions, while attachment drags and lower evolution cards cannot
 accidentally move the stack.
 
-At this checkpoint the v2 suite contains 141 passing tests across 28 files. A
+At this checkpoint the v2 suite contains 153 passing tests across 31 files. A
 separate Playwright suite also passes three real Chromium 151 scenarios:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and

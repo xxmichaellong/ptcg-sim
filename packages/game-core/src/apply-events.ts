@@ -595,7 +595,11 @@ export const applyEvent = (
             benchStackIds.push(activeStackId);
             const stacks = {
               ...state.stacks,
-              [priorStack.id]: { ...priorStack, slot: 'bench' as const },
+              [priorStack.id]: {
+                ...priorStack,
+                slot: 'bench' as const,
+                specialCondition: null,
+              },
               [nextStack.id]: nextStack,
             };
             return {
@@ -674,6 +678,13 @@ export const applyEvent = (
               event.mode === 'attachment'
                 ? [...stack.attachmentCardIds, event.cardId]
                 : stack.attachmentCardIds,
+            ...(event.mode === 'evolution'
+              ? {
+                  rotationQuarterTurns: 0 as const,
+                  specialCondition: null,
+                  abilityUsed: false,
+                }
+              : {}),
           },
         },
       };
@@ -878,7 +889,11 @@ export const applyEvent = (
         if (stack.boardPlayerId !== event.boardPlayerId) {
           throw new Error(`Stack ${stackId} belongs to another board`);
         }
-        stacks[stackId] = { ...stack, slot: 'bench' };
+        stacks[stackId] = {
+          ...stack,
+          slot: 'bench',
+          specialCondition: null,
+        };
       }
       if (event.activeStackId) {
         const active = requireStack(state, event.activeStackId);
@@ -1103,7 +1118,11 @@ export const applyEvent = (
           if (previousActive.boardPlayerId !== event.playerId) {
             throw new Error('Previous active stack belongs to another board');
           }
-          stacks[previousActive.id] = { ...previousActive, slot: 'bench' };
+          stacks[previousActive.id] = {
+            ...previousActive,
+            slot: 'bench',
+            specialCondition: null,
+          };
           benchStackIds.push(previousActive.id);
         }
         activeStackId = nextStack.id;

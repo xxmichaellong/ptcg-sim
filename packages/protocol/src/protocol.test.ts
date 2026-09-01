@@ -127,6 +127,43 @@ describe('client protocol ingress', () => {
     expect(missingSource.ok).toBe(false);
   });
 
+  it('accepts bounded stack-state targets and rejects malformed values', () => {
+    const parseCommand = (command: unknown) =>
+      parseClientFrame(
+        JSON.stringify({
+          type: 'Command',
+          protocolVersion: PROTOCOL_VERSION,
+          sessionId: 'session',
+          clientSequence: 1,
+          commandId: 'command',
+          lastSeenRevision: 0,
+          command,
+        })
+      );
+    for (const command of [
+      { type: 'SetDamage', stackId: 'stack', damage: 120 },
+      { type: 'SetDamage', stackId: 'stack', damage: null },
+      { type: 'SetSpecialCondition', stackId: 'stack', condition: 'Pa' },
+      { type: 'SetAbilityUsed', stackId: 'stack', used: true },
+      { type: 'RotateStack', stackId: 'stack', rotationQuarterTurns: 3 },
+    ]) {
+      expect(parseCommand(command).ok).toBe(true);
+    }
+    for (const command of [
+      { type: 'SetDamage', stackId: 'stack', damage: -10 },
+      { type: 'SetDamage', stackId: 'stack', damage: 10_000 },
+      {
+        type: 'SetSpecialCondition',
+        stackId: 'stack',
+        condition: 'x'.repeat(17),
+      },
+      { type: 'SetAbilityUsed', stackId: 'stack', used: 'yes' },
+      { type: 'RotateStack', stackId: 'stack', rotationQuarterTurns: 4 },
+    ]) {
+      expect(parseCommand(command).ok).toBe(false);
+    }
+  });
+
   it('bounds client-supplied expected stack layouts', () => {
     const expectedBenchStackIds = Array.from(
       { length: 201 },

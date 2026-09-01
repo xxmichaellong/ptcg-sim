@@ -128,13 +128,23 @@ export const collectInvariantProblems = (
     if (
       stack.damage !== null &&
       (!Number.isSafeInteger(stack.damage) ||
-        stack.damage < 0 ||
+        stack.damage <= 0 ||
         stack.damage > 9990)
     ) {
       problems.push(`stack ${stack.id} has invalid damage`);
     }
-    if (stack.specialCondition !== null && stack.specialCondition.length > 16) {
+    if (
+      stack.specialCondition !== null &&
+      (stack.slot !== 'active' ||
+        stack.specialCondition.trim() !== stack.specialCondition ||
+        stack.specialCondition === '' ||
+        stack.specialCondition === '0' ||
+        stack.specialCondition.length > 16)
+    ) {
       problems.push(`stack ${stack.id} has invalid condition`);
+    }
+    if (![0, 1, 2, 3].includes(stack.rotationQuarterTurns)) {
+      problems.push(`stack ${stack.id} has invalid rotation`);
     }
   }
 

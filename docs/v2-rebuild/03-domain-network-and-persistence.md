@@ -126,8 +126,9 @@ command on the server. At minimum:
 5. Immutable card ownership and current placement/board ownership are both valid;
    cross-owner placement is allowed where the manual tabletop permits it.
 6. A face-down or concealed card still has a definition in canonical state.
-7. Damage is a bounded non-negative integer; rotation and marker values are from
-   their declared domains.
+7. Damage is a bounded positive integer or absent; zero/negative UI outcomes
+   normalize to removal. Rotation and marker values are from their declared
+   domains.
 8. Active and stadium cardinality rules match the current tabletop behavior.
 9. Inspection/work-area sessions reference cards actually located in them and
    have a valid owner/viewer/source.
@@ -173,7 +174,7 @@ Names may change, but semantic coverage may not.
 | Card movement         | `MoveCard`, `MoveCards`, `MoveZoneContents`, `MoveCardToDeckTop`, `MoveCardToDeckBottom`, `ShuffleCardIntoDeck`, `SwapCardWithDeckTop`, `MovePrizesToDeckBottom` | Explicit source/target IDs and attachment policy.                                                                                                |
 | Randomized movement   | `ShuffleZone`, `DrawCards`, `ShuffleAndDraw`, `PlayRandomFaceDown`, `FlipCoin`                                                                                   | Random choices are made by the authority, never trusted from client payloads.                                                                    |
 | Card properties       | `SetCardFace`, `RotateCard`, `SetCategoryOverride`                                                                                                               | Covers reveal/hide/rotate/change-type behavior.                                                                                                  |
-| Markers               | `SetDamage`, `SetSpecialCondition`, `SetAbilityMarkers`, `SetOncePerGameMarker`                                                                                  | Prefer target values over increment-only operations for idempotency.                                                                             |
+| Markers               | `SetDamage`, `SetSpecialCondition`, `SetAbilityUsed`, `SetOncePerGameMarker`                                                                                     | Prefer target values over increment-only operations for idempotency.                                                                             |
 | Relationships         | `AttachCard`, `EvolveCard`, `RestoreStagedStack`, `ResolveStagedCards`, `ResolveInspectionCards`                                                                 | Departure, restoration, and bulk work-area resolution remain transactional.                                                                      |
 | Inspection/visibility | `BeginInspection`, `EndInspection`, `RevealCards`, `EndReveal`                                                                                                   | Authority controls viewer set and opaque handles.                                                                                                |
 | Turn/table signals    | `StartTurn`, `DeclareAttack`, `PassTurn`                                                                                                                         | Preserve current logs/signals; do not enforce rules.                                                                                             |

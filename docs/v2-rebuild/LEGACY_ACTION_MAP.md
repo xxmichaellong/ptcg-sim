@@ -150,3 +150,21 @@ transactionally staged, concealed handles rotate on entry to the deck, and
 temporary face/category/rotation state is normalized. `MovePrizesToDeckBottom`
 shuffles only the prize cards on the authority and appends them after the
 unchanged deck; an empty prize zone fails without creating a revision.
+
+### Implemented in-play stack-state subset
+
+The active/bench forms of damage, special-condition, ability-used, and group-
+rotation controls now resolve a selected projected stack card to bounded target-
+value commands. Damage uses a positive integer or `null`, with zero and negative
+UI outcomes normalized to removal. Conditions trim outer whitespace, normalize
+empty or `0` to removal, retain the legacy `P`/`B`/`Pa`/`C`/`A` cycle, and may
+only be added to the active stack. Duplicate target values fail without creating
+a revision.
+
+These markers survive authoritative publication and reconnect. Evolution keeps
+damage while clearing the old condition, ability marker, and group rotation.
+Any transition from active to bench clears the special condition, including
+direct movement, swaps, active replacement, and staged-stack restoration.
+Per-card BREAK orientation and the legacy discard/stadium ability-marker forms
+remain explicitly assigned to the later card-annotation slice; this stack-state
+checkpoint does not claim those actions as complete.

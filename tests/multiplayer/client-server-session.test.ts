@@ -11,6 +11,7 @@ import {
   submitPrizeDeckBottomAction,
 } from '../../apps/web/src/board/resolveDeckRelativeAction.js';
 import { submitInspectionCardsAction } from '../../apps/web/src/board/resolveInspectionCardsAction.js';
+import { submitStackStateAction } from '../../apps/web/src/board/resolveStackStateAction.js';
 import { submitStagedCardsAction } from '../../apps/web/src/board/resolveStagedCardsAction.js';
 import {
   RoomSessionHub,
@@ -881,6 +882,137 @@ describe('client/server multiplayer contract', () => {
     expect(room.store.commandCommits).toHaveLength(8);
     expect(room.store.commandCommits[3]?.eventBatch?.events).toHaveLength(2);
     expect(room.store.commandCommits[7]?.eventBatch?.events).toHaveLength(2);
+  });
+
+  it('persists semantic stack-state controls across reconnect and evolution', async () => {
+    const room = await fixture();
+    const scheduler = new ManualScheduler();
+    const player = await connectClient({
+      hub: room.hub,
+      name: 'Blue',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+      scheduler,
+    });
+    const playerId = player.session.getSnapshot().playerId;
+    if (!playerId) throw new Error('Missing admitted player identity');
+    expect(
+      player.session.submit({
+        type: 'LoadDeck',
+        entries: Array.from({ length: 14 }, (_, index) => ({
+          definition: {
+            id: `stack-state-integration-definition-${index}`,
+            name: `Stack state integration Pokémon ${index}`,
+            category: 'Pokémon' as const,
+            imageUrl: `/stack-state-integration-${index}.png`,
+          },
+          count: 1,
+        })),
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+    expect(player.session.submit({ type: 'SetupPlayer' }).queued).toBe(true);
+    await player.factory.flush();
+
+    let view = player.session.getSnapshot().view;
+    const hand = Object.values(view?.zones ?? {}).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'hand'
+    );
+    const [baseCard, evolutionCard] = hand?.cards ?? [];
+    if (!view || !hand || !baseCard || !evolutionCard) {
+      throw new Error('Setup did not publish two hand cards');
+    }
+    expect(
+      player.session.submit({
+        type: 'MoveCardToPlay',
+        cardId: baseCard.id,
+        expectedSourceZoneId: hand.id,
+        boardPlayerId: playerId,
+        slot: 'active',
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+
+    for (const action of [
+      { type: 'setDamage', damage: 40 },
+      { type: 'setSpecialCondition', condition: 'P' },
+      { type: 'toggleAbilityUsed' },
+      { type: 'rotateClockwise' },
+    ] as const) {
+      view = player.session.getSnapshot().view;
+      const stackId = view?.boards[playerId]?.activeStackId;
+      const topCard = stackId
+        ? view?.stacks[stackId]?.evolutionCards.at(-1)
+        : undefined;
+      if (!view || !topCard) throw new Error('Active stack was not published');
+      let submitted = false;
+      expect(
+        submitStackStateAction(view, topCard.id, action, (command) => {
+          submitted = player.session.submit(command).queued;
+        }).ok
+      ).toBe(true);
+      expect(submitted).toBe(true);
+      await player.factory.flush();
+    }
+
+    view = player.session.getSnapshot().view;
+    let stackId = view?.boards[playerId]?.activeStackId;
+    if (!view || !stackId) throw new Error('Marked stack was not published');
+    expect(view.stacks[stackId]).toMatchObject({
+      damage: 40,
+      specialCondition: 'P',
+      abilityUsed: true,
+      rotationQuarterTurns: 1,
+    });
+    expect(
+      createBoardScene(view, {
+        viewport: { width: 1208, height: 900, devicePixelRatio: 1 },
+        bottomPlayerId: playerId,
+        splitRatio: 0.5,
+        geometryVersion: 1,
+      }).markers.map((marker) => [marker.kind, marker.value])
+    ).toEqual(
+      expect.arrayContaining([
+        ['damage', '40'],
+        ['specialCondition', 'P'],
+        ['abilityUsed', 'used'],
+      ])
+    );
+
+    player.factory.latest().networkDrop();
+    scheduler.runNext();
+    player.factory.latest().open();
+    await player.factory.flush();
+    view = player.session.getSnapshot().view;
+    stackId = view?.boards[playerId]?.activeStackId;
+    expect(view?.stacks[stackId!]).toMatchObject({
+      damage: 40,
+      specialCondition: 'P',
+      abilityUsed: true,
+      rotationQuarterTurns: 1,
+    });
+
+    if (!view || !stackId) throw new Error('Marked stack did not resume');
+    expect(
+      player.session.submit({
+        type: 'MoveCardToPlay',
+        cardId: evolutionCard.id,
+        expectedSourceZoneId: hand.id,
+        boardPlayerId: playerId,
+        slot: 'active',
+        targetStackId: stackId,
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+    const evolved = player.session.getSnapshot().view;
+    expect(evolved?.revision).toBe(8);
+    expect(evolved?.stacks[stackId]).toMatchObject({
+      damage: 40,
+      specialCondition: null,
+      abilityUsed: false,
+      rotationQuarterTurns: 0,
+    });
+    expect(room.store.commandCommits).toHaveLength(8);
   });
 
   it('publishes one authoritative revision to a player and spectator', async () => {

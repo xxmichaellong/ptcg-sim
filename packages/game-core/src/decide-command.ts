@@ -1494,7 +1494,8 @@ export const decideCommand = (
       });
     }
     case 'SetDamage': {
-      if (!state.stacks[command.stackId]) {
+      const stack = state.stacks[command.stackId];
+      if (!stack) {
         return reject('not_found', `Stack ${command.stackId} does not exist`);
       }
       if (
@@ -1508,41 +1509,74 @@ export const decideCommand = (
           'Damage must be null or an integer from 0 to 9990'
         );
       }
+      const damage = command.damage === 0 ? null : command.damage;
+      if (stack.damage === damage) {
+        return reject('invalid_command', 'Stack damage is already set');
+      }
       return accept({
         type: 'StackDamageSet',
         stackId: command.stackId,
-        damage: command.damage,
+        damage,
       });
     }
     case 'SetSpecialCondition': {
-      if (!state.stacks[command.stackId]) {
+      const stack = state.stacks[command.stackId];
+      if (!stack) {
         return reject('not_found', `Stack ${command.stackId} does not exist`);
       }
-      if (command.condition !== null && command.condition.length > 16) {
+      const normalized = command.condition?.trim() ?? null;
+      const condition =
+        normalized === '' || normalized === '0' ? null : normalized;
+      if (condition !== null && condition.length > 16) {
         return reject('invalid_command', 'Condition marker is too long');
+      }
+      if (condition !== null && stack.slot !== 'active') {
+        return reject(
+          'precondition_failed',
+          'Special conditions can only be set on the active stack'
+        );
+      }
+      if (stack.specialCondition === condition) {
+        return reject('invalid_command', 'Stack condition is already set');
       }
       return accept({
         type: 'StackConditionSet',
         stackId: command.stackId,
-        condition: command.condition,
+        condition,
       });
     }
-    case 'SetAbilityUsed':
-      return state.stacks[command.stackId]
-        ? accept({
-            type: 'StackAbilitySet',
-            stackId: command.stackId,
-            used: command.used,
-          })
-        : reject('not_found', `Stack ${command.stackId} does not exist`);
-    case 'RotateStack':
-      return state.stacks[command.stackId]
-        ? accept({
-            type: 'StackRotationSet',
-            stackId: command.stackId,
-            rotationQuarterTurns: command.rotationQuarterTurns,
-          })
-        : reject('not_found', `Stack ${command.stackId} does not exist`);
+    case 'SetAbilityUsed': {
+      const stack = state.stacks[command.stackId];
+      if (!stack)
+        return reject('not_found', `Stack ${command.stackId} does not exist`);
+      if (stack.abilityUsed === command.used) {
+        return reject('invalid_command', 'Stack ability marker is already set');
+      }
+      return accept({
+        type: 'StackAbilitySet',
+        stackId: command.stackId,
+        used: command.used,
+      });
+    }
+    case 'RotateStack': {
+      const stack = state.stacks[command.stackId];
+      if (!stack)
+        return reject('not_found', `Stack ${command.stackId} does not exist`);
+      if (![0, 1, 2, 3].includes(command.rotationQuarterTurns)) {
+        return reject(
+          'invalid_command',
+          'Stack rotation must be 0, 1, 2, or 3'
+        );
+      }
+      if (stack.rotationQuarterTurns === command.rotationQuarterTurns) {
+        return reject('invalid_command', 'Stack rotation is already set');
+      }
+      return accept({
+        type: 'StackRotationSet',
+        stackId: command.stackId,
+        rotationQuarterTurns: command.rotationQuarterTurns,
+      });
+    }
     case 'SetCardFace':
       return state.cards[command.cardId]
         ? accept({
