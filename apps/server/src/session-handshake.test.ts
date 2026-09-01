@@ -2,6 +2,7 @@ import { asMatchId, asPlayerId, createEmptyMatch } from '@ptcgsim/game-core';
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
   createRoomAdmissionState,
+  createReplayHistory,
   emptyProjectionIdentityState,
   type RoomAuthoritySnapshot,
 } from '@ptcgsim/room-authority';
@@ -19,15 +20,17 @@ const fixture = async () => {
   const crypto = new WebCryptoAuthoritySource();
   const seatToken = crypto.nextSeatCapability();
   const otherSeatToken = crypto.nextSeatCapability();
+  const state = createEmptyMatch(asMatchId('handshake-room'), [
+    { playerId: p1, displayName: 'Player 1', cardBackUrl: '/blue.png' },
+    { playerId: p2, displayName: 'Player 2', cardBackUrl: '/red.png' },
+  ]);
   const snapshot: RoomAuthoritySnapshot = {
     schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
     authorityVersion: 0,
     mode: 'multiplayer',
-    state: createEmptyMatch(asMatchId('handshake-room'), [
-      { playerId: p1, displayName: 'Player 1', cardBackUrl: '/blue.png' },
-      { playerId: p2, displayName: 'Player 2', cardBackUrl: '/red.png' },
-    ]),
+    state,
     soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
+    replayHistory: createReplayHistory(state),
     identities: emptyProjectionIdentityState(),
     sessions: {},
     admission: createRoomAdmissionState({

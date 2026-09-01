@@ -1,6 +1,7 @@
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
   assertAuthoritySnapshotInvariants,
+  createReplayHistory,
   type AdmissionPersistence,
   type AuthoritySnapshotStore,
   type PersistedAdmissionTransaction,
@@ -12,7 +13,8 @@ export const AUTHORITY_SNAPSHOT_STORAGE_KEY = 'authority:snapshot';
 const JOURNAL_PREFIX = 'authority:journal:';
 const ADMISSION_JOURNAL_PREFIX = 'authority:admission:';
 const LEGACY_STORAGE_FORMAT = 'ptcgsim-room-authority-v1';
-const STORAGE_FORMAT = 'ptcgsim-room-authority-v2';
+const PREVIOUS_STORAGE_FORMAT = 'ptcgsim-room-authority-v2';
+const STORAGE_FORMAT = 'ptcgsim-room-authority-v3';
 
 export interface DurableStorageTransactionLike {
   readonly get: <Value>(key: string) => Promise<Value | undefined>;
@@ -27,7 +29,10 @@ export interface DurableStorageLike {
 }
 
 interface StoredAuthoritySnapshot {
-  readonly format: typeof STORAGE_FORMAT | typeof LEGACY_STORAGE_FORMAT;
+  readonly format:
+    | typeof STORAGE_FORMAT
+    | typeof PREVIOUS_STORAGE_FORMAT
+    | typeof LEGACY_STORAGE_FORMAT;
   readonly snapshot: RoomAuthoritySnapshot;
 }
 
@@ -73,28 +78,41 @@ const isStoredSnapshot = (value: unknown): value is StoredAuthoritySnapshot =>
   typeof value === 'object' &&
   value !== null &&
   (Reflect.get(value, 'format') === STORAGE_FORMAT ||
+    Reflect.get(value, 'format') === PREVIOUS_STORAGE_FORMAT ||
     Reflect.get(value, 'format') === LEGACY_STORAGE_FORMAT) &&
   typeof Reflect.get(value, 'snapshot') === 'object' &&
   Reflect.get(value, 'snapshot') !== null;
 
-const migrateLegacySnapshot = (value: unknown): RoomAuthoritySnapshot => {
-  if (
-    typeof value !== 'object' ||
-    value === null ||
-    Reflect.get(value, 'schemaVersion') !== 1
-  ) {
+const migrateStoredSnapshot = (value: unknown): RoomAuthoritySnapshot => {
+  if (typeof value !== 'object' || value === null) {
     throw new Error('Stored room snapshot has an unsupported schema');
   }
-  const candidate = {
-    ...(value as Omit<RoomAuthoritySnapshot, 'schemaVersion'>),
-    schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
-    mode: 'multiplayer',
-    soloUndoHistory: {
-      baseState: null,
-      baseStateHash: null,
-      entries: [],
-    },
-  } satisfies RoomAuthoritySnapshot;
+  const schemaVersion = Reflect.get(value, 'schemaVersion');
+  const state = Reflect.get(value, 'state') as RoomAuthoritySnapshot['state'];
+  let candidate: RoomAuthoritySnapshot;
+  if (schemaVersion === 1) {
+    candidate = {
+      ...(value as Omit<RoomAuthoritySnapshot, 'schemaVersion'>),
+      schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+      mode: 'multiplayer',
+      soloUndoHistory: {
+        baseState: null,
+        baseStateHash: null,
+        entries: [],
+      },
+      replayHistory: createReplayHistory(state),
+    };
+  } else if (schemaVersion === 2) {
+    candidate = {
+      ...(value as Omit<RoomAuthoritySnapshot, 'schemaVersion'>),
+      schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+      replayHistory: createReplayHistory(state),
+    };
+  } else if (schemaVersion === AUTHORITY_SNAPSHOT_SCHEMA_VERSION) {
+    candidate = value as RoomAuthoritySnapshot;
+  } else {
+    throw new Error('Stored room snapshot has an unsupported schema');
+  }
   assertAuthoritySnapshotInvariants(candidate);
   return candidate;
 };
@@ -106,11 +124,7 @@ const readStoredSnapshot = (
   if (!isStoredSnapshot(value)) {
     throw new Error('Stored room snapshot has an unsupported envelope');
   }
-  if (value.format === LEGACY_STORAGE_FORMAT) {
-    return migrateLegacySnapshot(value.snapshot);
-  }
-  assertAuthoritySnapshotInvariants(value.snapshot);
-  return value.snapshot;
+  return migrateStoredSnapshot(value.snapshot);
 };
 
 const journalKey = (transaction: PersistedAuthorityTransaction): string =>

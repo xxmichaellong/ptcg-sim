@@ -4,5 +4,8 @@ export * from './identity-registry.js';
 export * from './invariants.js';
 export * from './model.js';
 export * from './process-command.js';
+export * from './presentation-events.js';
+export * from './projected-replay.js';
+export * from './replay-history.js';
 export * from './resolve-command.js';
 export * from './solo-undo-history.js';

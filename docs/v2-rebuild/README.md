@@ -1,7 +1,7 @@
 # PTCG Sim v2 rebuild blueprint
 
 - Status: **approved implementation in progress on the isolated v2 feature branch**
-- Last updated: 2026-08-31
+- Last updated: 2026-09-01
 - Primary objective: replace the internals while preserving the current UI and UX.
 
 This directory is the implementation contract for the PTCG Sim v2 rebuild. The
@@ -22,6 +22,8 @@ and Phase 0 exit criteria are accepted.
   its operational model is a better fit after the spike.
 - Per-recipient state projections so private hands, deck identities/order, and
   private looks never reach unauthorized clients.
+- A bounded authoritative replay ledger and session-bound streamed projected
+  replay; replay UI and downloadable/export formats remain later parity work.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 

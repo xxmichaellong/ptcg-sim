@@ -4,6 +4,7 @@ import {
   DEFAULT_AUTHORITY_POLICY,
   RoomAuthorityCoordinator,
   createRoomAdmissionState,
+  createReplayHistory,
   emptyProjectionIdentityState,
   type AuthoritySnapshotStore,
   type PersistedAdmissionTransaction,
@@ -61,15 +62,17 @@ const fixture = async () => {
   const crypto = new WebCryptoAuthoritySource();
   const seatToken = crypto.nextSeatCapability();
   const otherSeatToken = crypto.nextSeatCapability();
+  const state = createEmptyMatch(asMatchId('hub-room'), [
+    { playerId: p1, displayName: 'Player 1', cardBackUrl: '/blue.png' },
+    { playerId: p2, displayName: 'Player 2', cardBackUrl: '/red.png' },
+  ]);
   const initial: RoomAuthoritySnapshot = {
     schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
     authorityVersion: 0,
     mode: 'multiplayer',
-    state: createEmptyMatch(asMatchId('hub-room'), [
-      { playerId: p1, displayName: 'Player 1', cardBackUrl: '/blue.png' },
-      { playerId: p2, displayName: 'Player 2', cardBackUrl: '/red.png' },
-    ]),
+    state,
     soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
+    replayHistory: createReplayHistory(state),
     identities: emptyProjectionIdentityState(),
     sessions: {},
     admission: createRoomAdmissionState({
@@ -170,6 +173,61 @@ describe('serialized room session hub', () => {
       revision: 1,
     });
     expect(setup.store.commandCommits).toHaveLength(1);
+  });
+
+  it('streams only the requesting session perspective from retained history', async () => {
+    const setup = await fixture();
+    const client = connection('replay-connection');
+    await setup.hub.handleFrame(
+      client.value,
+      helloFrame({ admissionTicket: setup.seatToken })
+    );
+    const welcome = client.messages[0];
+    if (welcome?.type !== 'Welcome') throw new Error('missing welcome');
+    await setup.hub.handleFrame(
+      client.value,
+      JSON.stringify({
+        type: 'Command',
+        protocolVersion: PROTOCOL_VERSION,
+        sessionId: welcome.sessionId,
+        clientSequence: 1,
+        commandId: 'replay-flip-command',
+        lastSeenRevision: 0,
+        command: { type: 'FlipCoin' },
+      })
+    );
+    await setup.hub.handleFrame(
+      client.value,
+      JSON.stringify({
+        type: 'RequestReplay',
+        protocolVersion: PROTOCOL_VERSION,
+      })
+    );
+
+    const replayMessages = client.messages.slice(3);
+    expect(replayMessages.map((message) => message.type)).toEqual([
+      'ReplayStarted',
+      'ReplayFrame',
+      'ReplayFrame',
+      'ReplayCompleted',
+    ]);
+    expect(replayMessages[0]).toMatchObject({
+      type: 'ReplayStarted',
+      viewer: { kind: 'player', playerId: p1 },
+      startRevision: 0,
+      endRevision: 1,
+      truncated: false,
+      frameCount: 2,
+    });
+    expect(replayMessages[2]).toMatchObject({
+      type: 'ReplayFrame',
+      index: 1,
+      snapshot: {
+        revision: 1,
+        viewer: { kind: 'player', playerId: p1 },
+      },
+      presentationEvents: [{ type: 'CoinFlipped', revision: 1 }],
+    });
   });
 
   it('restores a serialized session binding after hibernation', async () => {

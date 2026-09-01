@@ -7,10 +7,16 @@ import {
 import { viewerIdentityKey } from './identity-registry.js';
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+  MAX_REPLAY_EVENT_BATCHES,
+  MAX_REPLAY_EVENT_BYTES,
   MAX_SOLO_UNDO_CHECKPOINTS,
   type RoomAuthoritySnapshot,
 } from './model.js';
 import { replaySoloUndoHistory } from './solo-undo-history.js';
+import {
+  replayHistoryEventBytes,
+  replayHistoryStates,
+} from './replay-history.js';
 
 export class AuthoritySnapshotInvariantError extends Error {
   readonly problems: readonly string[];
@@ -111,6 +117,53 @@ export const collectAuthoritySnapshotProblems = (
       } catch {
         problems.push('solo undo history cannot be replayed');
       }
+    }
+  }
+
+  if (
+    typeof snapshot.replayHistory !== 'object' ||
+    snapshot.replayHistory === null ||
+    !Array.isArray(snapshot.replayHistory.entries)
+  ) {
+    problems.push('authority replay history is malformed');
+  } else {
+    const history = snapshot.replayHistory;
+    try {
+      if (history.entries.length > MAX_REPLAY_EVENT_BATCHES) {
+        problems.push('authority has too many replay history entries');
+      }
+      if (replayHistoryEventBytes(history) > MAX_REPLAY_EVENT_BYTES) {
+        problems.push('authority replay history exceeds its byte bound');
+      }
+      if (stableHash(history.baseState) !== history.baseStateHash) {
+        problems.push('replay base hash does not match its state');
+      }
+      if (history.baseState.matchId !== snapshot.state.matchId) {
+        problems.push('replay base belongs to another match');
+      }
+      let expectedRevision = history.baseState.revision + 1;
+      for (const entry of history.entries) {
+        if (entry.batch.revision !== expectedRevision) {
+          problems.push('replay history revisions are not contiguous');
+        }
+        expectedRevision += 1;
+        if (entry.batch.events.length === 0) {
+          problems.push('replay history contains an empty event batch');
+        }
+        if (
+          typeof entry.resultingStateHash !== 'string' ||
+          entry.resultingStateHash.length < 1 ||
+          entry.resultingStateHash.length > 128
+        ) {
+          problems.push('replay history entry has an invalid result hash');
+        }
+      }
+      const replayed = replayHistoryStates(history).at(-1);
+      if (!replayed || stableHash(replayed) !== stableHash(snapshot.state)) {
+        problems.push('replay history does not reconstruct current state');
+      }
+    } catch {
+      problems.push('replay history is malformed or cannot be replayed');
     }
   }
 

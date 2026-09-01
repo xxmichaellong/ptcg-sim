@@ -5,3 +5,5 @@ export const MAX_CHAT_CODE_UNITS = 1_000;
 export const MAX_ROOM_CODE_LENGTH = 64;
 export const MAX_DECK_ENTRIES = 200;
 export const MAX_DECK_CARDS = 200;
+/** One base projection plus at most 128 accepted revision projections. */
+export const MAX_REPLAY_FRAMES = 129;

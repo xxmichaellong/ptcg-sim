@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_CLIENT_FRAME_CODE_UNITS, PROTOCOL_VERSION } from './constants.js';
-import { parseClientFrame } from './ingress.js';
+import {
+  MAX_CLIENT_FRAME_CODE_UNITS,
+  MAX_REPLAY_FRAMES,
+  PROTOCOL_VERSION,
+} from './constants.js';
+import { parseClientFrame, parseServerFrame } from './ingress.js';
 
 describe('client protocol ingress', () => {
   it('accepts a bounded typed command and strips unknown keys', () => {
@@ -594,5 +598,62 @@ describe('client protocol ingress', () => {
     );
     expect(result.ok).toBe(false);
     expect(JSON.stringify(result)).not.toContain(secret);
+  });
+
+  it('allows replay requests without accepting a perspective selector', () => {
+    expect(
+      parseClientFrame(
+        JSON.stringify({
+          type: 'RequestReplay',
+          protocolVersion: PROTOCOL_VERSION,
+        })
+      ).ok
+    ).toBe(true);
+    for (const injected of [
+      { playerId: 'another-player' },
+      { viewer: { kind: 'spectator' } },
+      { startRevision: 0 },
+    ]) {
+      expect(
+        parseClientFrame(
+          JSON.stringify({
+            type: 'RequestReplay',
+            protocolVersion: PROTOCOL_VERSION,
+            ...injected,
+          })
+        ).ok
+      ).toBe(false);
+    }
+  });
+
+  it('bounds streamed replay transfer metadata', () => {
+    expect(
+      parseServerFrame(
+        JSON.stringify({
+          type: 'ReplayStarted',
+          protocolVersion: PROTOCOL_VERSION,
+          replayId: 'replay-1',
+          viewer: { kind: 'spectator' },
+          startRevision: 0,
+          endRevision: MAX_REPLAY_FRAMES - 1,
+          truncated: false,
+          frameCount: MAX_REPLAY_FRAMES,
+        })
+      ).ok
+    ).toBe(true);
+    expect(
+      parseServerFrame(
+        JSON.stringify({
+          type: 'ReplayStarted',
+          protocolVersion: PROTOCOL_VERSION,
+          replayId: 'replay-1',
+          viewer: { kind: 'spectator' },
+          startRevision: 0,
+          endRevision: MAX_REPLAY_FRAMES,
+          truncated: false,
+          frameCount: MAX_REPLAY_FRAMES + 1,
+        })
+      ).ok
+    ).toBe(false);
   });
 });

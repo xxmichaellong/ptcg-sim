@@ -335,10 +335,10 @@ capabilities rather than trusting a display name.
 
 ### Message families
 
-| Direction        | Messages                                                                                                                     |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Client to server | `Hello`, `SubmitCommand`, `SendChat`, `Ping`, `Leave`, save/replay requests                                                  |
-| Server to client | `Welcome`, `StatePublication`, `CommandResult`, `ChatMessage`, `Presence`, `Pong`, `ProtocolError`, maintenance/close notice |
+| Direction        | Messages                                                                                                                                                                  |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Client to server | `Hello`, `Command`, `SendChat`, `Ping`, `RequestReplay`, `Leave`, save requests                                                                                           |
+| Server to client | `Welcome`, `StatePublication`, `CommandResult`, `ReplayStarted`, `ReplayFrame`, `ReplayCompleted`, `ChatMessage`, `Presence`, `Pong`, `ServerNotice`, maintenance notices |
 
 `StatePublication` initially carries the full projected state plus revision and
 small presentation events. PTCG state is discrete and small enough that this is
@@ -346,6 +346,14 @@ the safest reconnect and reconciliation model. Card definitions/image metadata
 are deduplicated and cached separately. Patch/delta transport is a later
 optimization only if measured payloads exceed the budget; any patch design must
 retain periodic/full-snapshot recovery.
+
+`RequestReplay` has no role, player, revision, or canonical-history selector.
+The server derives the perspective from the capability-bound active session and
+streams one bounded projected snapshot per message between `ReplayStarted` and
+`ReplayCompleted`. Streaming keeps each frame under the same transport boundary
+as a live full projection and lets the client publish only a complete,
+contiguous artifact. A malformed, incomplete, wrong-perspective, or out-of-order
+stream is discarded; an interrupted transfer is not resumed across reconnect.
 
 ### Ordering and delivery
 
@@ -433,15 +441,42 @@ for full continuation and a role-projected downloadable replay for viewing.
 ### Replay and undo
 
 Replay is reconstructed from an initial snapshot plus accepted resolved domain
-event batches under a pinned event/state version. New clients never execute arbitrary
-legacy function names. Public replay uses projected frames and cannot reveal
-secrets that were not public at that revision.
+event batches under a pinned event/state version. New clients never execute
+arbitrary legacy function names. Public replay uses projected frames and cannot
+reveal secrets that were not public at that revision.
+
+The implemented authority schema v3 persists one hashed canonical replay base
+plus a contiguous accepted resolved-event tail bounded by both 128 batches and
+512 KiB of serialized event data. Rejected commands do not enter replay
+history. When either bound is exceeded, the oldest event is applied to the base
+before it is dropped, so the retained suffix still reconstructs and hash-checks
+the current canonical state. A single oversized batch safely compacts into the
+base instead of making retention unbounded. A first-time seat claim rebases the
+ledger because display-name metadata changes outside gameplay revisions. Stored
+schema-v1 and schema-v2 rooms migrate to a v3 replay rooted at their current
+state; a nonzero root is explicitly exposed as `truncated` rather than
+pretending earlier revisions are available.
+
+Projection happens only inside the authority boundary. Each request starts a
+fresh artifact-local opaque identity registry, preserves aliases while the same
+visibility generation remains active, and clears the registry after
+`UndoApplied` so identities from a discarded branch cannot correlate with the
+restored branch. The canonical base, batches, hashes, card IDs, and definition
+IDs never appear in replay protocol messages. Player sessions receive only that
+player's historical projection; spectator sessions receive only the public
+projection. The client session assembles the bounded frames atomically and
+exposes them to a future replay controller without changing current UI/UX.
+
+This bounded ledger and stream are the runtime replay foundation, not the final
+archive/export contract. Phase 7 still owns long-retention journal chunks,
+download/import schemas, share capabilities, quotas, and the unresolved
+multiplayer export policy in ADR-012.
 
 Solo undo is a new authoritative transition with a monotonically increasing
 revision: it restores the prior approved logical checkpoint, records
 `UndoApplied`, and publishes the resulting view. Audit history is not deleted.
 The v2 authority snapshot records an explicit `solo` or `multiplayer` mode; live
-connection count is never used to infer permission. Authority schema v2 stores
+connection count is never used to infer permission. Authority schema v3 stores
 one hashed base state plus a bounded active-branch tail of resolved event
 batches. It reconstructs the selected checkpoint inside the trusted boundary,
 then persists the exact restored canonical state in the resolved undo event so
@@ -457,7 +492,9 @@ rerun. Undo rotates every projection alias before publication to prevent
 correlation with a discarded hidden branch. Audit history is not deleted,
 reconnect restores the new branch without replaying the presentation fact, and
 multiplayer undo is not added by this rebuild. Stored authority-v1 rooms migrate
-explicitly to multiplayer schema v2 with empty solo history.
+explicitly to multiplayer schema v3 with empty solo history and a replay base
+rooted at their current canonical state; schema-v2 rooms preserve their explicit
+mode and solo history while receiving the same safe replay rebase.
 
 The provisional command order is whole-match authority order, not v1's two
 independent client action arrays. This avoids replaying one seat's JavaScript

@@ -14,6 +14,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createRoomAdmissionState } from './admission.js';
 import { emptyProjectionIdentityState } from './identity-registry.js';
+import { createReplayHistory } from './replay-history.js';
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
   DEFAULT_AUTHORITY_POLICY,
@@ -28,11 +29,8 @@ const p1 = asPlayerId('player-one');
 const p2 = asPlayerId('player-two');
 type CommandEnvelope = Extract<ClientMessage, { type: 'Command' }>;
 
-const createSnapshot = (): RoomAuthoritySnapshot => ({
-  schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
-  authorityVersion: 0,
-  mode: 'multiplayer',
-  state: createEmptyMatch(asMatchId('authority-test-match'), [
+const createSnapshot = (): RoomAuthoritySnapshot => {
+  const state = createEmptyMatch(asMatchId('authority-test-match'), [
     {
       playerId: p1,
       displayName: 'Blue',
@@ -43,41 +41,48 @@ const createSnapshot = (): RoomAuthoritySnapshot => ({
       displayName: 'Red',
       cardBackUrl: '/cardback-red.png',
     },
-  ]),
-  soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
-  identities: emptyProjectionIdentityState(),
-  admission: createRoomAdmissionState({
-    playerIds: [p1, p2],
-    seatCapabilityDigests: {
-      [p1]: 'a'.repeat(32),
-      [p2]: 'b'.repeat(32),
+  ]);
+  return {
+    schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+    authorityVersion: 0,
+    mode: 'multiplayer',
+    state,
+    soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
+    replayHistory: createReplayHistory(state),
+    identities: emptyProjectionIdentityState(),
+    admission: createRoomAdmissionState({
+      playerIds: [p1, p2],
+      seatCapabilityDigests: {
+        [p1]: 'a'.repeat(32),
+        [p2]: 'b'.repeat(32),
+      },
+      spectatorCapabilityDigest: 'c'.repeat(32),
+    }),
+    sessions: {
+      'session-player-one': {
+        id: 'session-player-one',
+        viewer: { kind: 'player', playerId: p1 },
+        active: true,
+        nextClientSequence: 1,
+        recentOutcomes: [],
+      },
+      'session-player-two': {
+        id: 'session-player-two',
+        viewer: { kind: 'player', playerId: p2 },
+        active: true,
+        nextClientSequence: 1,
+        recentOutcomes: [],
+      },
+      'session-spectator': {
+        id: 'session-spectator',
+        viewer: { kind: 'spectator' },
+        active: true,
+        nextClientSequence: 1,
+        recentOutcomes: [],
+      },
     },
-    spectatorCapabilityDigest: 'c'.repeat(32),
-  }),
-  sessions: {
-    'session-player-one': {
-      id: 'session-player-one',
-      viewer: { kind: 'player', playerId: p1 },
-      active: true,
-      nextClientSequence: 1,
-      recentOutcomes: [],
-    },
-    'session-player-two': {
-      id: 'session-player-two',
-      viewer: { kind: 'player', playerId: p2 },
-      active: true,
-      nextClientSequence: 1,
-      recentOutcomes: [],
-    },
-    'session-spectator': {
-      id: 'session-spectator',
-      viewer: { kind: 'spectator' },
-      active: true,
-      nextClientSequence: 1,
-      recentOutcomes: [],
-    },
-  },
-});
+  };
+};
 
 const createContext = (): CommandContext => {
   let card = 0;
@@ -166,6 +171,10 @@ describe('authoritative room command transaction', () => {
     expect(result.committed).toBe(true);
     expect(current.state.revision).toBe(0);
     expect(result.snapshot.state.revision).toBe(1);
+    expect(result.snapshot.replayHistory).toMatchObject({
+      baseState: { revision: 0 },
+      entries: [{ batch: { revision: 1 } }],
+    });
     expect(result.snapshot.admission).toEqual(current.admission);
     expect(persistence.transactions).toHaveLength(1);
     expect(persistence.transactions[0]?.eventBatch?.revision).toBe(1);
@@ -263,6 +272,9 @@ describe('authoritative room command transaction', () => {
       code: 'unauthorized',
     });
     expect(persistence.transactions[0]?.eventBatch).toBeUndefined();
+    expect(result.snapshot.replayHistory).toEqual(
+      createSnapshot().replayHistory
+    );
   });
 
   it('publishes typed table signals once and persists stale broad-action rejection', async () => {

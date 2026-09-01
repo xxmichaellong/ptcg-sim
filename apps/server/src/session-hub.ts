@@ -1,4 +1,5 @@
 import {
+  buildProjectedReplay,
   RoomAuthorityCoordinator,
   type AdmissionDependencies,
   type AuthoritySnapshotStore,
@@ -6,6 +7,7 @@ import {
 import {
   PROTOCOL_VERSION,
   parseClientFrame,
+  serializeMatchViewState,
   type ClientMessage,
   type ServerMessage,
 } from '@ptcgsim/protocol';
@@ -40,6 +42,7 @@ export class RoomSessionHub {
   private readonly connections = new Map<string, RuntimeConnection>();
   private readonly connectionSessions = new Map<string, string>();
   private readonly sessionConnections = new Map<string, string>();
+  private nextReplayId = 1;
 
   constructor(
     private readonly coordinator: RoomAuthorityCoordinator,
@@ -185,6 +188,62 @@ export class RoomSessionHub {
           notice('not_implemented', 'Chat migration is not implemented yet')
         );
         return;
+      case 'RequestReplay': {
+        const snapshot = this.coordinator.currentSnapshot();
+        const session = snapshot.sessions[boundSessionId];
+        if (!session?.active) {
+          this.send(
+            connection,
+            notice('session_superseded', 'Replay session is no longer active')
+          );
+          return;
+        }
+        try {
+          const replay = buildProjectedReplay(
+            snapshot.replayHistory,
+            session.viewer,
+            this.dependencies.admission.opaqueIds
+          );
+          const replayId = `replay-${this.nextReplayId++}`;
+          this.send(connection, {
+            type: 'ReplayStarted',
+            protocolVersion: PROTOCOL_VERSION,
+            replayId,
+            viewer: replay.viewer,
+            startRevision: replay.startRevision,
+            endRevision: replay.endRevision,
+            truncated: replay.truncated,
+            frameCount: replay.frames.length,
+          });
+          replay.frames.forEach((frame, index) => {
+            this.send(connection, {
+              type: 'ReplayFrame',
+              protocolVersion: PROTOCOL_VERSION,
+              replayId,
+              index,
+              snapshot: serializeMatchViewState(frame.snapshot),
+              ...(frame.presentationEvents.length > 0
+                ? { presentationEvents: [...frame.presentationEvents] }
+                : {}),
+            });
+          });
+          this.send(connection, {
+            type: 'ReplayCompleted',
+            protocolVersion: PROTOCOL_VERSION,
+            replayId,
+            frameCount: replay.frames.length,
+          });
+        } catch {
+          this.send(
+            connection,
+            notice(
+              'replay_unavailable',
+              'The retained replay could not be projected'
+            )
+          );
+        }
+        return;
+      }
       case 'Leave':
         this.disconnect(connection.id);
         connection.close(1000, 'Client left room');

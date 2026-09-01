@@ -16,6 +16,7 @@ import {
   type CompletedCommandSummary,
   type ConnectSessionOptions,
   type PendingCommandSummary,
+  type ProjectedReplayArtifact,
 } from './model.js';
 import type {
   SessionSocket,
@@ -32,6 +33,16 @@ interface PendingCommand {
   retries: number;
   publicationRevision?: number;
   result?: CommandResult;
+}
+
+interface ReplayTransfer {
+  readonly replayId: string;
+  readonly viewer: Extract<ServerMessage, { type: 'ReplayStarted' }>['viewer'];
+  readonly startRevision: number;
+  readonly endRevision: number;
+  readonly truncated: boolean;
+  readonly frameCount: number;
+  readonly frames: ProjectedReplayArtifact['frames'][number][];
 }
 
 export interface ClientSessionScheduler {
@@ -68,6 +79,7 @@ const initialState = (): ClientSessionState => ({
   chatMessages: [],
   presence: [],
   notices: [],
+  replayLoading: false,
   reconnectAttempt: 0,
 });
 
@@ -133,6 +145,7 @@ export class RemoteGameSession {
   private reconnectAttempts = 0;
   private manualClose = false;
   private nextPingId = 0;
+  private replayTransfer?: ReplayTransfer;
 
   constructor(dependencies: ClientSessionDependencies) {
     this.socketFactory = dependencies.socketFactory;
@@ -159,6 +172,7 @@ export class RemoteGameSession {
     this.socketGeneration += 1;
     this.pending.length = 0;
     this.pingTimes.clear();
+    this.replayTransfer = undefined;
     this.options = {
       url: options.url,
       buildId: options.buildId,
@@ -213,6 +227,22 @@ export class RemoteGameSession {
     });
   }
 
+  requestReplay(): boolean {
+    if (
+      this.state.phase !== 'ready' ||
+      this.state.replayLoading ||
+      this.replayTransfer
+    ) {
+      return false;
+    }
+    const sent = this.send({
+      type: 'RequestReplay',
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    if (sent) this.updateState({ replayLoading: true });
+    return sent;
+  }
+
   ping(): number | undefined {
     if (this.state.phase !== 'ready') return undefined;
     const id = this.nextPingId++;
@@ -238,7 +268,11 @@ export class RemoteGameSession {
     this.closeSocket(1000, 'Client left room');
     this.socketGeneration += 1;
     this.clearCapabilities();
-    this.updateState({ phase: 'closed', reconnectAttempt: 0 });
+    this.updateState({
+      phase: 'closed',
+      reconnectAttempt: 0,
+      replayLoading: false,
+    });
   }
 
   private openSocket(): void {
@@ -314,6 +348,15 @@ export class RemoteGameSession {
       case 'CommandResult':
         this.handleCommandResult(message);
         return;
+      case 'ReplayStarted':
+        this.handleReplayStarted(message);
+        return;
+      case 'ReplayFrame':
+        this.handleReplayFrame(message);
+        return;
+      case 'ReplayCompleted':
+        this.handleReplayCompleted(message);
+        return;
       case 'ChatMessage':
         this.updateState({
           chatMessages: appendBounded(
@@ -347,6 +390,10 @@ export class RemoteGameSession {
             this.policy.maximumNotices
           ),
         });
+        if (message.code === 'replay_unavailable') {
+          this.replayTransfer = undefined;
+          this.updateState({ replayLoading: false });
+        }
         if (message.retryable && this.state.phase === 'ready') {
           this.retryHead();
         } else if (message.retryable && this.state.phase === 'handshaking') {
@@ -367,6 +414,98 @@ export class RemoteGameSession {
         this.updateState({ phase: 'superseded', reconnectAttempt: 0 });
         return;
     }
+  }
+
+  private handleReplayStarted(
+    message: Extract<ServerMessage, { type: 'ReplayStarted' }>
+  ): void {
+    if (
+      this.state.phase !== 'ready' ||
+      !this.state.replayLoading ||
+      this.replayTransfer ||
+      message.endRevision < message.startRevision ||
+      message.frameCount !== message.endRevision - message.startRevision + 1 ||
+      message.truncated !== message.startRevision > 0 ||
+      message.viewer.kind !== this.state.role ||
+      (message.viewer.kind === 'player' &&
+        message.viewer.playerId !== this.state.playerId)
+    ) {
+      this.failReplay('Replay start metadata is inconsistent with the session');
+      return;
+    }
+    this.replayTransfer = {
+      replayId: message.replayId,
+      viewer: message.viewer,
+      startRevision: message.startRevision,
+      endRevision: message.endRevision,
+      truncated: message.truncated,
+      frameCount: message.frameCount,
+      frames: [],
+    };
+  }
+
+  private handleReplayFrame(
+    message: Extract<ServerMessage, { type: 'ReplayFrame' }>
+  ): void {
+    const transfer = this.replayTransfer;
+    const expectedRevision = transfer
+      ? transfer.startRevision + transfer.frames.length
+      : -1;
+    if (
+      !transfer ||
+      message.replayId !== transfer.replayId ||
+      message.index !== transfer.frames.length ||
+      message.index >= transfer.frameCount ||
+      message.snapshot.revision !== expectedRevision ||
+      message.snapshot.matchId !== this.state.view?.matchId ||
+      message.snapshot.viewer.kind !== transfer.viewer.kind ||
+      (message.snapshot.viewer.kind === 'player' &&
+        (transfer.viewer.kind !== 'player' ||
+          message.snapshot.viewer.playerId !== transfer.viewer.playerId)) ||
+      message.presentationEvents?.some(
+        (event) => event.revision !== message.snapshot.revision
+      ) ||
+      (message.index === 0 && (message.presentationEvents?.length ?? 0) > 0)
+    ) {
+      this.failReplay('Replay frame sequence or perspective is inconsistent');
+      return;
+    }
+    transfer.frames.push({
+      snapshot: hydrateMatchViewState(message.snapshot),
+      presentationEvents: message.presentationEvents ?? [],
+    });
+  }
+
+  private handleReplayCompleted(
+    message: Extract<ServerMessage, { type: 'ReplayCompleted' }>
+  ): void {
+    const transfer = this.replayTransfer;
+    if (
+      !transfer ||
+      message.replayId !== transfer.replayId ||
+      message.frameCount !== transfer.frameCount ||
+      transfer.frames.length !== transfer.frameCount ||
+      transfer.frames.at(-1)?.snapshot.revision !== transfer.endRevision
+    ) {
+      this.failReplay('Replay completion metadata is inconsistent');
+      return;
+    }
+    const replayArtifact: ProjectedReplayArtifact = {
+      replayId: transfer.replayId,
+      viewer: transfer.frames[0]!.snapshot.viewer,
+      startRevision: transfer.startRevision,
+      endRevision: transfer.endRevision,
+      truncated: transfer.truncated,
+      frames: transfer.frames,
+    };
+    this.replayTransfer = undefined;
+    this.updateState({ replayLoading: false, replayArtifact });
+  }
+
+  private failReplay(message: string): void {
+    this.replayTransfer = undefined;
+    this.updateState({ replayLoading: false });
+    this.fail({ code: 'inconsistent_replay', message });
   }
 
   private handleWelcome(
@@ -596,6 +735,8 @@ export class RemoteGameSession {
 
   private handleClose(event: SessionSocketCloseEvent): void {
     this.socket = undefined;
+    this.replayTransfer = undefined;
+    if (this.state.replayLoading) this.updateState({ replayLoading: false });
     this.socketGeneration += 1;
     if (
       this.manualClose ||
@@ -667,6 +808,7 @@ export class RemoteGameSession {
     this.admissionTicket = undefined;
     this.resumeToken = undefined;
     this.sessionId = undefined;
+    this.replayTransfer = undefined;
   }
 
   private closeSocket(code: number, reason: string): void {

@@ -13,6 +13,7 @@ import { describe, expect, it } from 'vitest';
 
 import { RoomAuthorityCoordinator } from './coordinator.js';
 import { emptyProjectionIdentityState } from './identity-registry.js';
+import { createReplayHistory } from './replay-history.js';
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
   DEFAULT_AUTHORITY_POLICY,
@@ -26,26 +27,30 @@ type CommandEnvelope = Extract<ClientMessage, { type: 'Command' }>;
 const p1 = asPlayerId('player-one');
 const p2 = asPlayerId('player-two');
 
-const snapshot = (): RoomAuthoritySnapshot => ({
-  schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
-  authorityVersion: 0,
-  mode: 'multiplayer',
-  state: createEmptyMatch(asMatchId('coordinator-match'), [
+const snapshot = (): RoomAuthoritySnapshot => {
+  const state = createEmptyMatch(asMatchId('coordinator-match'), [
     { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
     { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
-  ]),
-  soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
-  identities: emptyProjectionIdentityState(),
-  sessions: {
-    session: {
-      id: 'session',
-      viewer: { kind: 'player', playerId: p1 },
-      active: true,
-      nextClientSequence: 1,
-      recentOutcomes: [],
+  ]);
+  return {
+    schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+    authorityVersion: 0,
+    mode: 'multiplayer',
+    state,
+    soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
+    replayHistory: createReplayHistory(state),
+    identities: emptyProjectionIdentityState(),
+    sessions: {
+      session: {
+        id: 'session',
+        viewer: { kind: 'player', playerId: p1 },
+        active: true,
+        nextClientSequence: 1,
+        recentOutcomes: [],
+      },
     },
-  },
-});
+  };
+};
 
 const context = (): CommandContext => {
   let card = 0;

@@ -8,6 +8,7 @@ import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
   assertAuthoritySnapshotInvariants,
   createRoomAdmissionState,
+  createReplayHistory,
   emptyProjectionIdentityState,
   type AdmissionCrypto,
   type RoomAuthoritySnapshot,
@@ -81,27 +82,29 @@ export const initializeNewRoom = async (
         : Promise.resolve(undefined),
     ]
   );
+  const state = createEmptyMatch(asMatchId(input.matchId), [
+    {
+      playerId: playerOneId,
+      displayName: 'Player 1',
+      cardBackUrl: input.playerOneCardBackUrl,
+    },
+    {
+      playerId: playerTwoId,
+      displayName: 'Player 2',
+      cardBackUrl: input.playerTwoCardBackUrl,
+    },
+  ]);
   const snapshot: RoomAuthoritySnapshot = {
     schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
     authorityVersion: 0,
     mode: 'multiplayer',
-    state: createEmptyMatch(asMatchId(input.matchId), [
-      {
-        playerId: playerOneId,
-        displayName: 'Player 1',
-        cardBackUrl: input.playerOneCardBackUrl,
-      },
-      {
-        playerId: playerTwoId,
-        displayName: 'Player 2',
-        cardBackUrl: input.playerTwoCardBackUrl,
-      },
-    ]),
+    state,
     soloUndoHistory: {
       baseState: null,
       baseStateHash: null,
       entries: [],
     },
+    replayHistory: createReplayHistory(state),
     identities: emptyProjectionIdentityState(),
     sessions: {},
     admission: createRoomAdmissionState({

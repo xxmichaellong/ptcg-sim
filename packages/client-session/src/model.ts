@@ -35,10 +35,27 @@ export interface ClientSessionFailure {
     | 'invalid_server_frame'
     | 'admission_rejected'
     | 'inconsistent_publication'
+    | 'inconsistent_replay'
     | 'sequence_divergence'
     | 'command_retry_exhausted'
     | 'reconnect_exhausted';
   readonly message: string;
+}
+
+export interface ProjectedReplayFrame {
+  readonly snapshot: MatchViewState;
+  readonly presentationEvents: readonly NonNullable<
+    Extract<ServerMessage, { type: 'ReplayFrame' }>['presentationEvents']
+  >[number][];
+}
+
+export interface ProjectedReplayArtifact {
+  readonly replayId: string;
+  readonly viewer: MatchViewState['viewer'];
+  readonly startRevision: number;
+  readonly endRevision: number;
+  readonly truncated: boolean;
+  readonly frames: readonly ProjectedReplayFrame[];
 }
 
 export interface ClientSessionState {
@@ -58,6 +75,8 @@ export interface ClientSessionState {
   >[];
   readonly presence: readonly Extract<ServerMessage, { type: 'Presence' }>[];
   readonly notices: readonly Extract<ServerMessage, { type: 'ServerNotice' }>[];
+  readonly replayLoading: boolean;
+  readonly replayArtifact?: ProjectedReplayArtifact;
   readonly latencyMs?: number;
   readonly reconnectAttempt: number;
   readonly failure?: ClientSessionFailure;

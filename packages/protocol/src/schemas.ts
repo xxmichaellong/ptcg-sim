@@ -2,6 +2,7 @@ import * as v from 'valibot';
 import {
   MAX_CHAT_CODE_UNITS,
   MAX_DECK_ENTRIES,
+  MAX_REPLAY_FRAMES,
   MAX_ROOM_CODE_LENGTH,
   PROTOCOL_VERSION,
 } from './constants.js';
@@ -350,11 +351,17 @@ const LeaveSchema = v.object({
   protocolVersion: v.literal(PROTOCOL_VERSION),
 });
 
+const RequestReplaySchema = v.strictObject({
+  type: v.literal('RequestReplay'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+});
+
 export const ClientMessageSchema = v.variant('type', [
   HelloSchema,
   CommandSchema,
   SendChatSchema,
   PingSchema,
+  RequestReplaySchema,
   LeaveSchema,
 ]);
 
@@ -457,14 +464,16 @@ const PrivateInspectionViewSchema = v.object({
   cardIds: v.pipe(v.array(IdentifierSchema), v.minLength(1), v.maxLength(200)),
 });
 
+export const ViewerRoleSchema = v.variant('kind', [
+  v.object({ kind: v.literal('player'), playerId: IdentifierSchema }),
+  v.object({ kind: v.literal('spectator') }),
+]);
+
 export const MatchViewStateSchema = v.object({
   matchId: IdentifierSchema,
   revision: RevisionSchema,
   lifecycle: v.picklist(['lobby', 'playing', 'finished'] as const),
-  viewer: v.variant('kind', [
-    v.object({ kind: v.literal('player'), playerId: IdentifierSchema }),
-    v.object({ kind: v.literal('spectator') }),
-  ]),
+  viewer: ViewerRoleSchema,
   playerOrder: v.pipe(v.array(IdentifierSchema), v.length(2)),
   players: v.record(IdentifierSchema, PlayerViewSchema),
   definitions: v.record(IdentifierSchema, ViewDefinitionSchema),
@@ -659,6 +668,35 @@ const SessionSupersededSchema = v.object({
   protocolVersion: v.literal(PROTOCOL_VERSION),
 });
 
+const ReplayStartedSchema = v.strictObject({
+  type: v.literal('ReplayStarted'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  replayId: IdentifierSchema,
+  viewer: ViewerRoleSchema,
+  startRevision: RevisionSchema,
+  endRevision: RevisionSchema,
+  truncated: v.boolean(),
+  frameCount: v.pipe(PositiveIntegerSchema, v.maxValue(MAX_REPLAY_FRAMES)),
+});
+
+const ReplayFrameSchema = v.strictObject({
+  type: v.literal('ReplayFrame'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  replayId: IdentifierSchema,
+  index: v.pipe(NonNegativeIntegerSchema, v.maxValue(MAX_REPLAY_FRAMES - 1)),
+  snapshot: MatchViewStateSchema,
+  presentationEvents: v.optional(
+    v.pipe(v.array(PresentationEventSchema), v.maxLength(100))
+  ),
+});
+
+const ReplayCompletedSchema = v.strictObject({
+  type: v.literal('ReplayCompleted'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  replayId: IdentifierSchema,
+  frameCount: v.pipe(PositiveIntegerSchema, v.maxValue(MAX_REPLAY_FRAMES)),
+});
+
 export const ServerMessageSchema = v.variant('type', [
   WelcomeSchema,
   StatePublicationSchema,
@@ -668,6 +706,9 @@ export const ServerMessageSchema = v.variant('type', [
   PongSchema,
   ServerNoticeSchema,
   SessionSupersededSchema,
+  ReplayStartedSchema,
+  ReplayFrameSchema,
+  ReplayCompletedSchema,
 ]);
 
 export type WireGameCommand = v.InferOutput<typeof WireGameCommandSchema>;

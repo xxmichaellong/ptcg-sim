@@ -3,6 +3,7 @@ import type { MatchViewState, PlayerId } from '@ptcgsim/game-core';
 import { projectRecipient, type OpaqueIdSource } from './identity-registry.js';
 import { assertAuthoritySnapshotInvariants } from './invariants.js';
 import { emptySoloUndoHistory } from './solo-undo-history.js';
+import { createReplayHistory } from './replay-history.js';
 import type {
   AdmissionPersistence,
   AuthoritySession,
@@ -261,6 +262,11 @@ export const admitRoomSession = async (
     soloUndoHistory: claimedPlayerId
       ? emptySoloUndoHistory()
       : current.soloUndoHistory,
+    // Display names are canonical metadata but are not gameplay events. Rebase
+    // so every retained replay frame has the metadata actually shown live.
+    replayHistory: claimedPlayerId
+      ? createReplayHistory(state)
+      : current.replayHistory,
     sessions,
     admission,
   };

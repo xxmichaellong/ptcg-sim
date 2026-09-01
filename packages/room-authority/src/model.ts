@@ -7,14 +7,17 @@ import type {
   ViewerRole,
 } from '@ptcgsim/game-core';
 import type { ServerMessage } from '@ptcgsim/protocol';
+import { MAX_REPLAY_FRAMES } from '@ptcgsim/protocol';
 
 import type {
   OpaqueIdSource,
   ProjectionIdentityState,
 } from './identity-registry.js';
 
-export const AUTHORITY_SNAPSHOT_SCHEMA_VERSION = 2 as const;
+export const AUTHORITY_SNAPSHOT_SCHEMA_VERSION = 3 as const;
 export const MAX_SOLO_UNDO_CHECKPOINTS = 128;
+export const MAX_REPLAY_EVENT_BATCHES = MAX_REPLAY_FRAMES - 1;
+export const MAX_REPLAY_EVENT_BYTES = 512 * 1024;
 
 export type AuthorityMode = 'solo' | 'multiplayer';
 
@@ -64,6 +67,7 @@ export interface RoomAuthoritySnapshot {
   readonly mode: AuthorityMode;
   readonly state: MatchState;
   readonly soloUndoHistory: SoloUndoHistory;
+  readonly replayHistory: ReplayHistory;
   readonly identities: ProjectionIdentityState;
   readonly sessions: Readonly<Record<string, AuthoritySession>>;
   readonly admission?: RoomAdmissionState;
@@ -88,6 +92,21 @@ export interface SoloUndoHistory {
   readonly baseState: MatchState | null;
   readonly baseStateHash: string | null;
   readonly entries: readonly SoloUndoHistoryEntry[];
+}
+
+export interface ReplayHistoryEntry {
+  readonly batch: EventBatch;
+  readonly resultingStateHash: string;
+}
+
+/**
+ * A bounded canonical replay source. It is durable authority data and must
+ * never be sent to a client; clients receive only role-projected frames.
+ */
+export interface ReplayHistory {
+  readonly baseState: MatchState;
+  readonly baseStateHash: string;
+  readonly entries: readonly ReplayHistoryEntry[];
 }
 
 export interface PersistedAuthorityTransaction {
@@ -126,6 +145,8 @@ export interface AuthorityPolicy {
   readonly allowOpponentPublicInteraction: boolean;
   readonly maximumRecentOutcomesPerSession: number;
   readonly maximumSoloUndoCheckpoints: number;
+  readonly maximumReplayEventBatches: number;
+  readonly maximumReplayEventBytes: number;
 }
 
 export interface AuthorityDependencies {
@@ -150,6 +171,8 @@ export const DEFAULT_AUTHORITY_POLICY: AuthorityPolicy = {
   allowOpponentPublicInteraction: true,
   maximumRecentOutcomesPerSession: 128,
   maximumSoloUndoCheckpoints: MAX_SOLO_UNDO_CHECKPOINTS,
+  maximumReplayEventBatches: MAX_REPLAY_EVENT_BATCHES,
+  maximumReplayEventBytes: MAX_REPLAY_EVENT_BYTES,
 };
 
 export const sessionPlayerId = (

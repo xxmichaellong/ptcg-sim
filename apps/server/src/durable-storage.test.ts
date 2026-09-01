@@ -6,6 +6,8 @@ import {
 } from '@ptcgsim/game-core';
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+  appendReplayHistory,
+  createReplayHistory,
   emptyProjectionIdentityState,
   type PersistedAuthorityTransaction,
   type RoomAuthoritySnapshot,
@@ -59,26 +61,30 @@ class MemoryDurableStorage implements DurableStorageLike {
 const p1 = asPlayerId('player-one');
 const p2 = asPlayerId('player-two');
 
-const initialSnapshot = (): RoomAuthoritySnapshot => ({
-  schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
-  authorityVersion: 0,
-  mode: 'multiplayer',
-  state: createEmptyMatch(asMatchId('durable-room'), [
+const initialSnapshot = (): RoomAuthoritySnapshot => {
+  const state = createEmptyMatch(asMatchId('durable-room'), [
     { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
     { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
-  ]),
-  soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
-  identities: emptyProjectionIdentityState(),
-  sessions: {
-    session: {
-      id: 'session',
-      viewer: { kind: 'player', playerId: p1 },
-      active: true,
-      nextClientSequence: 1,
-      recentOutcomes: [],
+  ]);
+  return {
+    schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+    authorityVersion: 0,
+    mode: 'multiplayer',
+    state,
+    soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
+    replayHistory: createReplayHistory(state),
+    identities: emptyProjectionIdentityState(),
+    sessions: {
+      session: {
+        id: 'session',
+        viewer: { kind: 'player', playerId: p1 },
+        active: true,
+        nextClientSequence: 1,
+        recentOutcomes: [],
+      },
     },
-  },
-});
+  };
+};
 
 const acceptedTransaction = (
   current: RoomAuthoritySnapshot
@@ -89,19 +95,27 @@ const acceptedTransaction = (
     accepted: true,
     revision: 1,
   } as const;
+  const eventBatch = {
+    revision: 1,
+    events: [{ type: 'CoinFlipped' as const, result: 'heads' as const }],
+  };
+  const state = { ...cloneMatchState(current.state), revision: 1 };
   return {
     expectedAuthorityVersion: 0,
     expectedRevision: 0,
     sessionId: 'session',
     outcome,
-    eventBatch: {
-      revision: 1,
-      events: [{ type: 'CoinFlipped', result: 'heads' }],
-    },
+    eventBatch,
     snapshot: {
       ...current,
       authorityVersion: 1,
-      state: { ...cloneMatchState(current.state), revision: 1 },
+      state,
+      replayHistory: appendReplayHistory(
+        current.replayHistory,
+        eventBatch,
+        state,
+        128
+      ),
       sessions: {
         session: {
           ...current.sessions.session!,
@@ -126,11 +140,12 @@ describe('Durable Object authority snapshot store', () => {
     );
   });
 
-  it('migrates v1 snapshots to explicit multiplayer mode without undo history', async () => {
+  it('migrates v1 snapshots to explicit mode with safe empty histories', async () => {
     const storage = new MemoryDurableStorage();
     const {
       mode: _mode,
       soloUndoHistory: _history,
+      replayHistory: _replayHistory,
       ...legacy
     } = initialSnapshot();
     storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
@@ -147,6 +162,30 @@ describe('Durable Object authority snapshot store', () => {
         baseStateHash: null,
         entries: [],
       },
+      replayHistory: {
+        baseState: { revision: 0 },
+        entries: [],
+      },
+    });
+  });
+
+  it('migrates v2 snapshots to a truncated replay rooted at current state', async () => {
+    const storage = new MemoryDurableStorage();
+    const current = acceptedTransaction(initialSnapshot()).snapshot;
+    const { replayHistory: _replayHistory, ...previous } = current;
+    storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
+      format: 'ptcgsim-room-authority-v2',
+      snapshot: { ...previous, schemaVersion: 2 },
+    });
+
+    const restored = await new DurableRoomSnapshotStore(storage).load();
+    expect(restored).toMatchObject({
+      schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+      state: { revision: 1 },
+      replayHistory: {
+        baseState: { revision: 1 },
+        entries: [],
+      },
     });
   });
 
@@ -155,6 +194,9 @@ describe('Durable Object authority snapshot store', () => {
     const store = new DurableRoomSnapshotStore(storage);
     const initial = initialSnapshot();
     await store.initialize(initial);
+    expect(storage.values.get(AUTHORITY_SNAPSHOT_STORAGE_KEY)).toMatchObject({
+      format: 'ptcgsim-room-authority-v3',
+    });
 
     const transaction = acceptedTransaction(initial);
     await store.commit(transaction);
@@ -246,6 +288,25 @@ describe('Durable Object authority snapshot store', () => {
         key.startsWith('authority:journal:')
       )
     ).toHaveLength(0);
+  });
+
+  it('fails closed on a corrupt replay checkpoint', async () => {
+    const storage = new MemoryDurableStorage();
+    const snapshot = initialSnapshot();
+    storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
+      format: 'ptcgsim-room-authority-v3',
+      snapshot: {
+        ...snapshot,
+        replayHistory: {
+          ...snapshot.replayHistory,
+          baseStateHash: 'corrupt',
+        },
+      },
+    });
+
+    await expect(new DurableRoomSnapshotStore(storage).load()).rejects.toThrow(
+      'replay base hash does not match'
+    );
   });
 
   it('fails closed on a corrupt stored envelope', async () => {

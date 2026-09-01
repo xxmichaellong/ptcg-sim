@@ -14,9 +14,11 @@ const initialState = (): ClientSessionState => ({
   nextClientSequence: 1,
   pendingCommands: [],
   completedCommands: [],
+  presentationEvents: [],
   chatMessages: [],
   presence: [],
   notices: [],
+  replayLoading: false,
   reconnectAttempt: 0,
 });
 

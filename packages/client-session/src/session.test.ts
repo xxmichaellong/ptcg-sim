@@ -397,6 +397,135 @@ describe('RemoteGameSession', () => {
     expect(socket.close).toHaveBeenCalledWith(4400, 'inconsistent_publication');
   });
 
+  it('assembles a streamed role-projected replay atomically', () => {
+    const test = setup();
+    const socket = test.admit();
+    expect(test.session.requestReplay()).toBe(true);
+    expect(test.session.requestReplay()).toBe(false);
+    expect(clientFrame(socket, 1)).toEqual({
+      type: 'RequestReplay',
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    expect(test.session.getSnapshot()).toMatchObject({ replayLoading: true });
+
+    socket.serverMessage({
+      type: 'ReplayStarted',
+      protocolVersion: PROTOCOL_VERSION,
+      replayId: 'replay-1',
+      viewer: { kind: 'player', playerId: 'blue' },
+      startRevision: 0,
+      endRevision: 1,
+      truncated: false,
+      frameCount: 2,
+    });
+    socket.serverMessage({
+      type: 'ReplayFrame',
+      protocolVersion: PROTOCOL_VERSION,
+      replayId: 'replay-1',
+      index: 0,
+      snapshot: view(0),
+    });
+    expect(test.session.getSnapshot().replayArtifact).toBeUndefined();
+    socket.serverMessage({
+      type: 'ReplayFrame',
+      protocolVersion: PROTOCOL_VERSION,
+      replayId: 'replay-1',
+      index: 1,
+      snapshot: view(1),
+      presentationEvents: [
+        { type: 'CoinFlipped', revision: 1, result: 'heads' },
+      ],
+    });
+    socket.serverMessage({
+      type: 'ReplayCompleted',
+      protocolVersion: PROTOCOL_VERSION,
+      replayId: 'replay-1',
+      frameCount: 2,
+    });
+
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'ready',
+      replayLoading: false,
+      replayArtifact: {
+        replayId: 'replay-1',
+        startRevision: 0,
+        endRevision: 1,
+        truncated: false,
+        viewer: { kind: 'player', playerId: 'blue' },
+      },
+    });
+    expect(
+      test.session.getSnapshot().replayArtifact?.frames.map((frame) => ({
+        revision: frame.snapshot.revision,
+        events: frame.presentationEvents,
+      }))
+    ).toEqual([
+      { revision: 0, events: [] },
+      {
+        revision: 1,
+        events: [{ type: 'CoinFlipped', revision: 1, result: 'heads' }],
+      },
+    ]);
+  });
+
+  it('fails closed on an out-of-order or wrong-perspective replay stream', () => {
+    const test = setup();
+    const socket = test.admit();
+    test.session.requestReplay();
+    socket.serverMessage({
+      type: 'ReplayStarted',
+      protocolVersion: PROTOCOL_VERSION,
+      replayId: 'replay-corrupt',
+      viewer: { kind: 'player', playerId: 'blue' },
+      startRevision: 0,
+      endRevision: 0,
+      truncated: false,
+      frameCount: 1,
+    });
+    socket.serverMessage({
+      type: 'ReplayFrame',
+      protocolVersion: PROTOCOL_VERSION,
+      replayId: 'replay-corrupt',
+      index: 1,
+      snapshot: view(0),
+    });
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'failed',
+      replayLoading: false,
+      failure: { code: 'inconsistent_replay' },
+    });
+    expect(socket.close).toHaveBeenCalledWith(4400, 'inconsistent_replay');
+  });
+
+  it('discards an incomplete replay transfer across reconnect', () => {
+    const test = setup();
+    const socket = test.admit();
+    test.session.requestReplay();
+    socket.serverMessage({
+      type: 'ReplayStarted',
+      protocolVersion: PROTOCOL_VERSION,
+      replayId: 'replay-interrupted',
+      viewer: { kind: 'player', playerId: 'blue' },
+      startRevision: 0,
+      endRevision: 1,
+      truncated: false,
+      frameCount: 2,
+    });
+    socket.serverMessage({
+      type: 'ReplayFrame',
+      protocolVersion: PROTOCOL_VERSION,
+      replayId: 'replay-interrupted',
+      index: 0,
+      snapshot: view(0),
+    });
+    socket.serverClose();
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'reconnecting',
+      replayLoading: false,
+    });
+    expect(test.session.getSnapshot().replayArtifact).toBeUndefined();
+  });
+
   it('reconnects with the resume capability and retries the exact envelope', () => {
     const test = setup();
     const firstSocket = test.admit();

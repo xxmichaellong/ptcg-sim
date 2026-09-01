@@ -8,7 +8,6 @@ import {
   PROTOCOL_VERSION,
   serializeMatchViewState,
   type ClientMessage,
-  type PresentationEvent,
   type ServerMessage,
 } from '@ptcgsim/protocol';
 
@@ -17,7 +16,11 @@ import {
   projectRecipient,
 } from './identity-registry.js';
 import { assertAuthoritySnapshotInvariants } from './invariants.js';
-import { MAX_SOLO_UNDO_CHECKPOINTS } from './model.js';
+import {
+  MAX_REPLAY_EVENT_BATCHES,
+  MAX_REPLAY_EVENT_BYTES,
+  MAX_SOLO_UNDO_CHECKPOINTS,
+} from './model.js';
 import type {
   AuthorityDelivery,
   AuthorityDependencies,
@@ -28,6 +31,8 @@ import type {
   RoomAuthoritySnapshot,
 } from './model.js';
 import { resolveWireCommand } from './resolve-command.js';
+import { presentationEventsForBatch } from './presentation-events.js';
+import { appendReplayHistory } from './replay-history.js';
 import {
   appendSoloUndoHistory,
   cloneSoloUndoHistory,
@@ -107,119 +112,6 @@ const appendOutcome = (
   recentOutcomes: [...session.recentOutcomes, outcome].slice(-maximum),
 });
 
-const presentationEventsForBatch = (batch: EventBatch): PresentationEvent[] =>
-  batch.events.flatMap((event): PresentationEvent[] => {
-    if (event.type === 'CoinFlipped') {
-      return [
-        {
-          type: 'CoinFlipped',
-          revision: batch.revision,
-          result: event.result,
-        },
-      ];
-    }
-    if (event.type === 'PlayerReset') {
-      return [
-        {
-          type: 'PlayerReset',
-          revision: batch.revision,
-          playerId: event.playerId,
-        },
-      ];
-    }
-    if (event.type === 'DeckLoaded') {
-      return [
-        {
-          type: 'DeckLoaded',
-          revision: batch.revision,
-          playerId: event.playerId,
-          cardCount: event.deckOrder.length,
-        },
-      ];
-    }
-    if (event.type === 'PlayerSetup') {
-      return [
-        {
-          type: 'PlayerSetup',
-          revision: batch.revision,
-          playerId: event.playerId,
-          handCount: event.handOrder.length,
-          prizeCount: event.prizeOrder.length,
-        },
-      ];
-    }
-    if (event.type === 'RandomHandCardPlayedFaceDown') {
-      return [
-        {
-          type: 'RandomCardPlayedFaceDown',
-          revision: batch.revision,
-          actorPlayerId: event.actorPlayerId,
-          targetPlayerId: event.targetPlayerId,
-        },
-      ];
-    }
-    if (event.type === 'PublicRevealSet') {
-      return [
-        {
-          type: event.revealed ? 'PublicCardsRevealed' : 'PublicCardsHidden',
-          revision: batch.revision,
-          playerId: event.playerId,
-          cardCount: event.cardIds.length,
-        },
-      ];
-    }
-    if (event.type === 'InspectionGrantOpened') {
-      return event.viewerIds.map((viewerPlayerId) => ({
-        type: 'PrivateInspectionStarted',
-        revision: batch.revision,
-        sourcePlayerId: event.sourcePlayerId,
-        viewerPlayerId,
-        cardCount: event.cardIds.length,
-      }));
-    }
-    if (event.type === 'InspectionGrantClosed') {
-      return [
-        {
-          type: 'PrivateInspectionEnded',
-          revision: batch.revision,
-          sourcePlayerId: event.sourcePlayerId,
-          viewerPlayerId: event.viewerId,
-          cardCount: event.expectedCardIds.length,
-        },
-      ];
-    }
-    if (event.type === 'UndoApplied') {
-      return [
-        {
-          type: 'UndoApplied',
-          revision: batch.revision,
-          actorPlayerId: event.actorPlayerId,
-          targetPlayerId: event.targetPlayerId,
-          revertedRevision: event.revertedRevision,
-        },
-      ];
-    }
-    if (event.type !== 'TableActionDeclared') return [];
-    const common = {
-      revision: batch.revision,
-      playerId: event.playerId,
-      turnNumber: event.turnNumber,
-    };
-    if (event.action === 'attack') {
-      return [{ type: 'AttackDeclared', ...common }];
-    }
-    if (event.action === 'pass') {
-      return [{ type: 'PassDeclared', ...common }];
-    }
-    return [
-      {
-        type:
-          event.outcome === 'drawn' ? 'TurnStarted' : 'TurnStartFailedNoDeck',
-        ...common,
-      },
-    ];
-  });
-
 const projectForSessions = (
   snapshot: RoomAuthoritySnapshot,
   dependencies: AuthorityDependencies,
@@ -249,7 +141,9 @@ const projectForSessions = (
         coveringCommandId,
         executedClientSequence: session.nextClientSequence - 1,
         snapshot: serializeMatchViewState(projected.snapshot),
-        ...(presentationEvents.length > 0 ? { presentationEvents } : {}),
+        ...(presentationEvents.length > 0
+          ? { presentationEvents: [...presentationEvents] }
+          : {}),
       },
     });
   }
@@ -271,6 +165,20 @@ export const processAuthorityCommand = async (
     dependencies.policy.maximumSoloUndoCheckpoints > MAX_SOLO_UNDO_CHECKPOINTS
   ) {
     throw new Error('Solo undo checkpoint policy is invalid');
+  }
+  if (
+    !Number.isSafeInteger(dependencies.policy.maximumReplayEventBatches) ||
+    dependencies.policy.maximumReplayEventBatches < 1 ||
+    dependencies.policy.maximumReplayEventBatches > MAX_REPLAY_EVENT_BATCHES
+  ) {
+    throw new Error('Replay history policy is invalid');
+  }
+  if (
+    !Number.isSafeInteger(dependencies.policy.maximumReplayEventBytes) ||
+    dependencies.policy.maximumReplayEventBytes < 1 ||
+    dependencies.policy.maximumReplayEventBytes > MAX_REPLAY_EVENT_BYTES
+  ) {
+    throw new Error('Replay history byte policy is invalid');
   }
   const session = current.sessions[envelope.sessionId];
   if (!session || !session.active) {
@@ -399,6 +307,19 @@ export const processAuthorityCommand = async (
       );
     }
   }
+  let replayHistory = current.replayHistory;
+  if (accepted) {
+    if (!eventBatch) {
+      throw new Error('Accepted command did not produce an event batch');
+    }
+    replayHistory = appendReplayHistory(
+      replayHistory,
+      eventBatch,
+      nextState,
+      dependencies.policy.maximumReplayEventBatches,
+      dependencies.policy.maximumReplayEventBytes
+    );
+  }
 
   const sessions = Object.fromEntries(
     Object.entries(current.sessions).map(([id, value]) => [
@@ -419,6 +340,7 @@ export const processAuthorityCommand = async (
       ? cloneMatchState(nextState)
       : cloneMatchState(current.state),
     soloUndoHistory,
+    replayHistory,
     identities:
       accepted && envelope.command.type === 'ApplySoloUndo'
         ? emptyProjectionIdentityState()

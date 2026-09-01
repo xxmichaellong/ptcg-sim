@@ -1,4 +1,9 @@
-import { asMatchId, asPlayerId, createEmptyMatch } from '@ptcgsim/game-core';
+import {
+  applyEventBatch,
+  asMatchId,
+  asPlayerId,
+  createEmptyMatch,
+} from '@ptcgsim/game-core';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -7,6 +12,7 @@ import {
   type AdmissionCrypto,
 } from './admission.js';
 import { emptyProjectionIdentityState } from './identity-registry.js';
+import { appendReplayHistory, createReplayHistory } from './replay-history.js';
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
   type PersistedAdmissionTransaction,
@@ -28,26 +34,30 @@ const digest = (capability: string): string => {
   return value.toString(16).padStart(8, '0').repeat(8);
 };
 
-const createSnapshot = (): RoomAuthoritySnapshot => ({
-  schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
-  authorityVersion: 0,
-  mode: 'multiplayer',
-  state: createEmptyMatch(asMatchId('admission-match'), [
+const createSnapshot = (): RoomAuthoritySnapshot => {
+  const state = createEmptyMatch(asMatchId('admission-match'), [
     { playerId: p1, displayName: 'Player 1', cardBackUrl: '/blue.png' },
     { playerId: p2, displayName: 'Player 2', cardBackUrl: '/red.png' },
-  ]),
-  soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
-  identities: emptyProjectionIdentityState(),
-  sessions: {},
-  admission: createRoomAdmissionState({
-    playerIds: [p1, p2],
-    seatCapabilityDigests: {
-      [p1]: digest(seatOneToken),
-      [p2]: digest(seatTwoToken),
-    },
-    spectatorCapabilityDigest: digest(spectatorToken),
-  }),
-});
+  ]);
+  return {
+    schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+    authorityVersion: 0,
+    mode: 'multiplayer',
+    state,
+    soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
+    replayHistory: createReplayHistory(state),
+    identities: emptyProjectionIdentityState(),
+    sessions: {},
+    admission: createRoomAdmissionState({
+      playerIds: [p1, p2],
+      seatCapabilityDigests: {
+        [p1]: digest(seatOneToken),
+        [p2]: digest(seatTwoToken),
+      },
+      spectatorCapabilityDigest: digest(spectatorToken),
+    }),
+  };
+};
 
 const createCrypto = (): AdmissionCrypto => {
   let session = 0;
@@ -134,6 +144,44 @@ describe('room capability admission', () => {
     });
     expect(storage.transactions).toHaveLength(2);
     expect(storage.transactions[1]?.kind).toBe('session_resumed');
+  });
+
+  it('rebases replay when a first seat claim changes unversioned metadata', async () => {
+    const initial = createSnapshot();
+    const batch = {
+      revision: 1,
+      events: [{ type: 'CoinFlipped' as const, result: 'heads' as const }],
+    };
+    const state = applyEventBatch(initial.state, batch);
+    const current: RoomAuthoritySnapshot = {
+      ...initial,
+      state,
+      replayHistory: appendReplayHistory(
+        initial.replayHistory,
+        batch,
+        state,
+        128
+      ),
+    };
+    const storage = persistence();
+    const result = await admitRoomSession(
+      current,
+      {
+        type: 'ClaimSeat',
+        seatCapability: seatOneToken,
+        displayName: 'Renamed Blue',
+      },
+      dependencies(createCrypto(), storage)
+    );
+    expect(result.accepted).toBe(true);
+    if (!result.accepted) return;
+    expect(result.snapshot.replayHistory).toMatchObject({
+      baseState: {
+        revision: 1,
+        players: { [p1]: { displayName: 'Renamed Blue' } },
+      },
+      entries: [],
+    });
   });
 
   it('resumes the same command session without a durable mutation', async () => {
