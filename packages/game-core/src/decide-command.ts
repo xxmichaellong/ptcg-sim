@@ -153,10 +153,17 @@ type DeckRelativeCommand = Extract<
   }
 >;
 
-type DeckRelativeSource = {
+type SourceRelativeCardCommand =
+  | DeckRelativeCommand
+  | Extract<GameCommand, { readonly type: 'ChangeCardCategory' }>;
+
+type CardActionSource = {
   readonly accepted: true;
   readonly card: CardInstance;
   readonly location: CardLocation;
+};
+
+type DeckRelativeSource = CardActionSource & {
   readonly deck: CardZone;
 };
 
@@ -196,10 +203,10 @@ const playerForLocation = (
   }
 };
 
-const resolveDeckRelativeSource = (
+const resolveCardActionSource = (
   state: MatchState,
-  command: DeckRelativeCommand
-): DeckRelativeSource | CommandRejection => {
+  command: SourceRelativeCardCommand
+): CardActionSource | CommandRejection => {
   const playerError = requirePlayer(state, command.playerId);
   if (playerError) return playerError;
   const card = state.cards[command.cardId];
@@ -211,11 +218,20 @@ const resolveDeckRelativeSource = (
     sourceIdForLocation(state, location) !== command.expectedSourceId ||
     playerForLocation(state, card, location) !== command.playerId
   ) {
-    return reject('stale_reference', 'Deck-relative card source changed');
+    return reject('stale_reference', 'Card action source changed');
   }
+  return { accepted: true, card, location };
+};
+
+const resolveDeckRelativeSource = (
+  state: MatchState,
+  command: DeckRelativeCommand
+): DeckRelativeSource | CommandRejection => {
+  const source = resolveCardActionSource(state, command);
+  if (!source.accepted) return source;
   const deck = state.zones[playerZoneId(command.playerId, 'deck')];
   if (!deck) return reject('not_found', 'Player deck does not exist');
-  return { accepted: true, card, location, deck };
+  return { ...source, deck };
 };
 
 type TopEvolutionDeparture =
@@ -292,14 +308,15 @@ const decideTopEvolutionDeparture = (
   };
 };
 
-const decideCardDepartureToDeck = (
+const decideCardDepartureToZone = (
   state: MatchState,
-  source: DeckRelativeSource,
+  source: CardActionSource,
+  destination: CardZone,
   destinationIndex: number,
   context: CommandContext,
-  concealIdentity = true
+  concealIdentity = isConcealedZone(destination)
 ): CommandDecision => {
-  const { card, location, deck } = source;
+  const { card, location } = source;
   switch (location.kind) {
     case 'zone': {
       const zone = state.zones[location.zoneId]!;
@@ -307,7 +324,7 @@ const decideCardDepartureToDeck = (
         type: 'CardMoved',
         cardId: card.id,
         expectedSourceZoneId: zone.id,
-        destinationZoneId: deck.id,
+        destinationZoneId: destination.id,
         destinationIndex,
         concealIdentity,
       });
@@ -318,7 +335,7 @@ const decideCardDepartureToDeck = (
         cardId: card.id,
         expectedStackId: location.stackId,
         source: 'attachment',
-        destinationZoneId: deck.id,
+        destinationZoneId: destination.id,
         destinationIndex,
         concealIdentity,
       });
@@ -328,7 +345,7 @@ const decideCardDepartureToDeck = (
         state,
         stack,
         card.id,
-        deck,
+        destination,
         destinationIndex,
         context,
         concealIdentity
@@ -346,7 +363,7 @@ const decideCardDepartureToDeck = (
         inspectionId: inspection.inspectionId,
         expectedWorkAreaId: inspection.id,
         cardId: card.id,
-        destinationZoneId: deck.id,
+        destinationZoneId: destination.id,
         destinationIndex,
         concealIdentity,
       });
@@ -363,7 +380,7 @@ const decideCardDepartureToDeck = (
         expectedWorkAreaId: resolution.id,
         source: location.source,
         cardId: card.id,
-        destinationZoneId: deck.id,
+        destinationZoneId: destination.id,
         destinationIndex,
         concealIdentity,
       });
@@ -413,9 +430,10 @@ const decideMoveCardToDeckEdge = (
       concealedCardIds: [card.id],
     });
   }
-  return decideCardDepartureToDeck(
+  return decideCardDepartureToZone(
     state,
     source,
+    deck,
     edge === 'top' ? 0 : deck.cardIds.length,
     context
   );
@@ -438,9 +456,10 @@ const decideShuffleCardIntoDeck = (
   }
   const departure = sourceIsDeck
     ? null
-    : decideCardDepartureToDeck(
+    : decideCardDepartureToZone(
         state,
         source,
+        deck,
         deck.cardIds.length,
         context,
         false
@@ -467,6 +486,62 @@ const decideShuffleCardIntoDeck = (
     accepted: true,
     events: [...departure!.events, shuffleEvent],
   };
+};
+
+const decideChangeCardCategory = (
+  state: MatchState,
+  command: Extract<GameCommand, { readonly type: 'ChangeCardCategory' }>,
+  context: CommandContext
+): CommandDecision => {
+  const source = resolveCardActionSource(state, command);
+  if (!source.accepted) return source;
+  if (!['Pokémon', 'Trainer', 'Energy'].includes(command.category)) {
+    return reject('invalid_command', 'Unsupported card category');
+  }
+  const board = state.zones[playerZoneId(command.playerId, 'board')];
+  if (!board) return reject('not_found', 'Player board zone does not exist');
+  const sourceIsBoard =
+    source.location.kind === 'zone' && source.location.zoneId === board.id;
+  if (!sourceIsBoard && board.cardIds.length >= 200) {
+    return reject(
+      'precondition_failed',
+      'Loose board cannot contain more than 200 cards'
+    );
+  }
+  if (
+    sourceIsBoard &&
+    source.location.index === board.cardIds.length - 1 &&
+    source.card.currentCategory === command.category &&
+    source.card.orientationQuarterTurns === 0 &&
+    !source.card.abilityUsed
+  ) {
+    return reject('invalid_command', 'Card annotation change is a no-op');
+  }
+  const departure = decideCardDepartureToZone(
+    state,
+    source,
+    board,
+    board.cardIds.length,
+    context,
+    false
+  );
+  if (!departure.accepted) return departure;
+  const events: DomainEvent[] = [
+    ...departure.events,
+    {
+      type: 'CardCategorySet',
+      cardId: source.card.id,
+      category: command.category,
+    },
+  ];
+  if (source.card.orientationQuarterTurns !== 0) {
+    events.push({
+      type: 'CardOrientationSet',
+      cardId: source.card.id,
+      orientationQuarterTurns: 0,
+    });
+  }
+  return { accepted: true, events };
 };
 
 const decideLoadDeck = (
@@ -523,6 +598,7 @@ const decideLoadDeck = (
         currentCategory: entry.definition.category,
         face: 'up',
         orientationQuarterTurns: 0,
+        abilityUsed: false,
         visibilityGeneration: 0,
       };
       cards.push(card);
@@ -1051,6 +1127,8 @@ export const decideCommand = (
       return decideMoveCardToDeckEdge(state, command, context);
     case 'ShuffleCardIntoDeck':
       return decideShuffleCardIntoDeck(state, command, context);
+    case 'ChangeCardCategory':
+      return decideChangeCardCategory(state, command, context);
     case 'SwapCardWithDeckTop': {
       const source = resolveDeckRelativeSource(state, command);
       if (!source.accepted) return source;
@@ -1575,6 +1653,60 @@ export const decideCommand = (
         type: 'StackRotationSet',
         stackId: command.stackId,
         rotationQuarterTurns: command.rotationQuarterTurns,
+      });
+    }
+    case 'SetCardOrientation': {
+      const card = state.cards[command.cardId];
+      if (!card)
+        return reject('not_found', `Card ${command.cardId} does not exist`);
+      const location = findCardLocation(state, command.cardId);
+      const allowed =
+        location?.kind === 'stackEvolution' ||
+        location?.kind === 'stackAttachment' ||
+        (location?.kind === 'zone' &&
+          state.zones[location.zoneId]?.kind === 'stadium');
+      if (!allowed) {
+        return reject(
+          'precondition_failed',
+          'Per-card rotation is only available in play or the stadium'
+        );
+      }
+      if (![0, 1, 2, 3].includes(command.orientationQuarterTurns)) {
+        return reject('invalid_command', 'Card rotation must be 0, 1, 2, or 3');
+      }
+      if (card.orientationQuarterTurns === command.orientationQuarterTurns) {
+        return reject('invalid_command', 'Card rotation is already set');
+      }
+      return accept({
+        type: 'CardOrientationSet',
+        cardId: card.id,
+        orientationQuarterTurns: command.orientationQuarterTurns,
+      });
+    }
+    case 'SetCardAbilityUsed': {
+      const card = state.cards[command.cardId];
+      if (!card)
+        return reject('not_found', `Card ${command.cardId} does not exist`);
+      const location = findCardLocation(state, command.cardId);
+      const allowed =
+        location?.kind === 'stackAttachment' ||
+        (location?.kind === 'zone' &&
+          ['discard', 'stadium'].includes(
+            state.zones[location.zoneId]?.kind ?? ''
+          ));
+      if (!allowed) {
+        return reject(
+          'precondition_failed',
+          'Per-card ability markers require a discard, stadium, or attachment card'
+        );
+      }
+      if (card.abilityUsed === command.used) {
+        return reject('invalid_command', 'Card ability marker is already set');
+      }
+      return accept({
+        type: 'CardAbilitySet',
+        cardId: card.id,
+        used: command.used,
       });
     }
     case 'SetCardFace':

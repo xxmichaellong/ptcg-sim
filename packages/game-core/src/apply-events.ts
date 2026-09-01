@@ -164,6 +164,7 @@ const resetPlayerCards = (
               currentCategory: card.originalCategory,
               face: 'up' as const,
               orientationQuarterTurns: 0 as const,
+              abilityUsed: false,
               visibilityGeneration: card.visibilityGeneration + 1,
             }
           : card,
@@ -293,6 +294,7 @@ const applyWorkAreaCardsResolved = (
               currentCategory: card.originalCategory,
               face: 'up' as const,
               orientationQuarterTurns: 0 as const,
+              abilityUsed: false,
             }
           : card;
         return [
@@ -425,12 +427,13 @@ export const applyEvent = (
       if (!card) throw new Error(`Missing moved card ${event.cardId}`);
       const normalizedCard =
         destination.kind === 'board'
-          ? { ...card, face: 'up' as const }
+          ? { ...card, face: 'up' as const, abilityUsed: false }
           : {
               ...card,
               currentCategory: card.originalCategory,
               face: 'up' as const,
               orientationQuarterTurns: 0 as const,
+              abilityUsed: false,
             };
       const nextCard = event.concealIdentity
         ? incrementVisibility(normalizedCard)
@@ -585,7 +588,7 @@ export const applyEvent = (
           rotationQuarterTurns: 0,
           damage: null,
           specialCondition: null,
-          abilityUsed: false,
+          abilityUsed: card.abilityUsed,
         };
         let activeStackId = board.activeStackId;
         let benchStackIds = [...board.benchStackIds];
@@ -610,6 +613,7 @@ export const applyEvent = (
                   ...card,
                   currentCategory: 'Pokémon',
                   face: 'up',
+                  abilityUsed: false,
                 },
               },
               zones: {
@@ -642,6 +646,7 @@ export const applyEvent = (
               ...card,
               currentCategory: 'Pokémon',
               face: 'up',
+              abilityUsed: false,
             },
           },
           zones: {
@@ -660,7 +665,11 @@ export const applyEvent = (
         ...state,
         cards: {
           ...state.cards,
-          [event.cardId]: { ...card, face: 'up' },
+          [event.cardId]: {
+            ...card,
+            face: 'up',
+            ...(event.mode === 'attachment' ? {} : { abilityUsed: false }),
+          },
         },
         zones: {
           ...state.zones,
@@ -682,7 +691,7 @@ export const applyEvent = (
               ? {
                   rotationQuarterTurns: 0 as const,
                   specialCondition: null,
-                  abilityUsed: false,
+                  abilityUsed: card.abilityUsed,
                 }
               : {}),
           },
@@ -714,6 +723,7 @@ export const applyEvent = (
         currentCategory: card.originalCategory,
         face: 'up' as const,
         orientationQuarterTurns: 0 as const,
+        abilityUsed: false,
       };
       const nextCard = event.concealIdentity
         ? incrementVisibility(normalizedCard)
@@ -806,6 +816,7 @@ export const applyEvent = (
         currentCategory: departedCard.originalCategory,
         face: 'up' as const,
         orientationQuarterTurns: 0 as const,
+        abilityUsed: false,
       };
       const nextDepartedCard = event.concealIdentity
         ? incrementVisibility(normalizedCard)
@@ -947,6 +958,7 @@ export const applyEvent = (
         currentCategory: card.originalCategory,
         face: 'up' as const,
         orientationQuarterTurns: 0 as const,
+        abilityUsed: false,
       };
       const nextCard = event.concealIdentity
         ? incrementVisibility(normalizedCard)
@@ -1024,6 +1036,7 @@ export const applyEvent = (
         currentCategory: card.originalCategory,
         face: 'up' as const,
         orientationQuarterTurns: 0 as const,
+        abilityUsed: false,
       };
       const nextCard = event.concealIdentity
         ? incrementVisibility(normalizedCard)
@@ -1151,6 +1164,9 @@ export const applyEvent = (
                     : card.currentCategory,
                   face: 'up' as const,
                   orientationQuarterTurns: 0 as const,
+                  abilityUsed: restoredEvolutionIds.has(card.id)
+                    ? false
+                    : card.abilityUsed,
                 }
               : card,
           ])
@@ -1275,12 +1291,14 @@ export const applyEvent = (
         currentCategory: selected.originalCategory,
         face: 'up' as const,
         orientationQuarterTurns: 0 as const,
+        abilityUsed: false,
       };
       const normalizedDeckTop = {
         ...deckTop,
         currentCategory: deckTop.originalCategory,
         face: 'up' as const,
         orientationQuarterTurns: 0 as const,
+        abilityUsed: false,
       };
       const inspectionGrants = Object.fromEntries(
         Object.entries(state.visibility.inspectionGrants)
@@ -1385,12 +1403,14 @@ export const applyEvent = (
         currentCategory: selected.originalCategory,
         face: 'up' as const,
         orientationQuarterTurns: 0 as const,
+        abilityUsed: false,
       };
       const normalizedDeckTop = {
         ...deckTop,
         currentCategory: deckTop.originalCategory,
         face: 'up' as const,
         orientationQuarterTurns: 0 as const,
+        abilityUsed: false,
       };
       return {
         ...state,
@@ -1489,6 +1509,31 @@ export const applyEvent = (
             ...stack,
             rotationQuarterTurns: event.rotationQuarterTurns,
           },
+        },
+      };
+    }
+    case 'CardOrientationSet': {
+      const card = state.cards[event.cardId];
+      if (!card) throw new Error(`Missing card ${event.cardId}`);
+      return {
+        ...state,
+        cards: {
+          ...state.cards,
+          [card.id]: {
+            ...card,
+            orientationQuarterTurns: event.orientationQuarterTurns,
+          },
+        },
+      };
+    }
+    case 'CardAbilitySet': {
+      const card = state.cards[event.cardId];
+      if (!card) throw new Error(`Missing card ${event.cardId}`);
+      return {
+        ...state,
+        cards: {
+          ...state.cards,
+          [card.id]: { ...card, abilityUsed: event.used },
         },
       };
     }
@@ -1598,6 +1643,7 @@ export const applyEvent = (
               currentCategory: card.originalCategory,
               face: 'up' as const,
               orientationQuarterTurns: 0 as const,
+              abilityUsed: false,
             };
             return [
               cardId,

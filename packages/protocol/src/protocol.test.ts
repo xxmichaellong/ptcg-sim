@@ -164,6 +164,62 @@ describe('client protocol ingress', () => {
     }
   });
 
+  it('accepts semantic card annotations and rejects the low-level category setter', () => {
+    const parseCommand = (command: unknown) =>
+      parseClientFrame(
+        JSON.stringify({
+          type: 'Command',
+          protocolVersion: PROTOCOL_VERSION,
+          sessionId: 'session',
+          clientSequence: 1,
+          commandId: 'command',
+          lastSeenRevision: 0,
+          command,
+        })
+      );
+    for (const command of [
+      {
+        type: 'SetCardOrientation',
+        cardId: 'view-card',
+        orientationQuarterTurns: 1,
+      },
+      { type: 'SetCardAbilityUsed', cardId: 'view-card', used: true },
+      {
+        type: 'ChangeCardCategory',
+        cardId: 'view-card',
+        expectedSourceId: 'source-stack',
+        category: 'Energy',
+      },
+    ]) {
+      expect(parseCommand(command).ok).toBe(true);
+    }
+    for (const command of [
+      {
+        type: 'SetCardOrientation',
+        cardId: 'view-card',
+        orientationQuarterTurns: 4,
+      },
+      {
+        type: 'ChangeCardCategory',
+        cardId: 'view-card',
+        expectedSourceId: 'source-stack',
+        category: 'Unknown',
+      },
+      {
+        type: 'ChangeCardCategory',
+        cardId: 'view-card',
+        category: 'Trainer',
+      },
+      {
+        type: 'SetCardCategory',
+        cardId: 'view-card',
+        category: 'Trainer',
+      },
+    ]) {
+      expect(parseCommand(command).ok).toBe(false);
+    }
+  });
+
   it('bounds client-supplied expected stack layouts', () => {
     const expectedBenchStackIds = Array.from(
       { length: 201 },

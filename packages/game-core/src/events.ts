@@ -217,6 +217,16 @@ export type DomainEvent =
       readonly rotationQuarterTurns: QuarterTurns;
     }
   | {
+      readonly type: 'CardOrientationSet';
+      readonly cardId: CardInstanceId;
+      readonly orientationQuarterTurns: QuarterTurns;
+    }
+  | {
+      readonly type: 'CardAbilitySet';
+      readonly cardId: CardInstanceId;
+      readonly used: boolean;
+    }
+  | {
       readonly type: 'CardFaceSet';
       readonly cardId: CardInstanceId;
       readonly face: CardFace;

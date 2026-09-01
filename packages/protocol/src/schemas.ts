@@ -193,14 +193,25 @@ export const WireGameCommandSchema = v.variant('type', [
     rotationQuarterTurns: QuarterTurnsSchema,
   }),
   v.object({
+    type: v.literal('SetCardOrientation'),
+    cardId: IdentifierSchema,
+    orientationQuarterTurns: QuarterTurnsSchema,
+  }),
+  v.object({
+    type: v.literal('SetCardAbilityUsed'),
+    cardId: IdentifierSchema,
+    used: v.boolean(),
+  }),
+  v.object({
+    type: v.literal('ChangeCardCategory'),
+    cardId: IdentifierSchema,
+    expectedSourceId: IdentifierSchema,
+    category: v.picklist(['Pokémon', 'Trainer', 'Energy'] as const),
+  }),
+  v.object({
     type: v.literal('SetCardFace'),
     cardId: IdentifierSchema,
     face: v.picklist(['up', 'down'] as const),
-  }),
-  v.object({
-    type: v.literal('SetCardCategory'),
-    cardId: IdentifierSchema,
-    category: CardCategorySchema,
   }),
   v.object({
     type: v.literal('SetPublicReveal'),
@@ -281,6 +292,7 @@ const KnownViewCardSchema = v.object({
   category: CardCategorySchema,
   face: v.picklist(['up', 'down'] as const),
   orientationQuarterTurns: QuarterTurnsSchema,
+  abilityUsed: v.boolean(),
 });
 
 const ConcealedViewCardSchema = v.object({

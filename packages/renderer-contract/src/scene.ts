@@ -204,6 +204,30 @@ const addMarkers = (
   if (stack.abilityUsed) marker('abilityUsed', 'used', 2);
 };
 
+const addCardAbilityMarker = (
+  markers: MarkerSceneNode[],
+  node: CardSceneNode
+): void => {
+  const size = Math.max(
+    14,
+    Math.min(node.bounds.width, node.bounds.height) * 0.22
+  );
+  markers.push({
+    id: `${node.id}:abilityUsed`,
+    parentCardId: node.id,
+    kind: 'abilityUsed',
+    value: 'used',
+    bounds: {
+      x: node.bounds.x + node.bounds.width - size,
+      y: node.bounds.y,
+      width: size,
+      height: size,
+    },
+    zIndex: node.zIndex + 100,
+    label: 'abilityUsed: used',
+  });
+};
+
 export const createBoardScene = (
   view: MatchViewState,
   options: BoardLayoutOptions
@@ -215,12 +239,15 @@ export const createBoardScene = (
   const cards: CardSceneNode[] = [];
   const markers: MarkerSceneNode[] = [];
   const seenCards = new Set<ViewCardId>();
-  const registerCard = (card: CardSceneNode) => {
-    if (seenCards.has(card.id)) {
-      throw new Error(`Projected card appears more than once: ${card.id}`);
+  const registerCard = (node: CardSceneNode, card: ViewCard) => {
+    if (seenCards.has(node.id)) {
+      throw new Error(`Projected card appears more than once: ${node.id}`);
     }
-    seenCards.add(card.id);
-    cards.push(card);
+    seenCards.add(node.id);
+    cards.push(node);
+    if (card.kind === 'known' && card.abilityUsed) {
+      addCardAbilityMarker(markers, node);
+    }
   };
 
   for (const zone of Object.values(view.zones)) {
@@ -267,7 +294,8 @@ export const createBoardScene = (
               ? 100 + zone.cards.length - index
               : 100 + index,
           interactive: true,
-        })
+        }),
+        card
       );
     });
   }
@@ -338,10 +366,12 @@ export const createBoardScene = (
               evolutionOffset * (stack.evolutionCards.length - index - 1),
           },
           zIndex: 300 + index,
-          rotationQuarterTurns: stack.rotationQuarterTurns,
+          rotationQuarterTurns: ((stack.rotationQuarterTurns +
+            (card.kind === 'known' ? card.orientationQuarterTurns : 0)) %
+            4) as 0 | 1 | 2 | 3,
           interactive: true,
         });
-        registerCard(node);
+        registerCard(node, card);
         evolutionNodes.push(node);
       });
       const attachmentWidth = baseBounds.width * 0.7;
@@ -359,7 +389,8 @@ export const createBoardScene = (
             },
             zIndex: 250 + index,
             interactive: true,
-          })
+          }),
+          card
         );
       });
       const topCard = evolutionNodes.at(-1);
@@ -411,7 +442,8 @@ export const createBoardScene = (
             bounds,
             zIndex: 1000 + index,
             interactive: true,
-          })
+          }),
+          card
         );
       });
     }

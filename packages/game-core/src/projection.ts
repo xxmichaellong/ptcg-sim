@@ -40,6 +40,7 @@ export interface KnownViewCard {
   readonly category: CardCategory;
   readonly face: CardFace;
   readonly orientationQuarterTurns: QuarterTurns;
+  readonly abilityUsed: boolean;
 }
 
 export interface ConcealedViewCard {
@@ -238,6 +239,7 @@ export const projectMatch = (
       category: card.currentCategory,
       face: card.face,
       orientationQuarterTurns: card.orientationQuarterTurns,
+      abilityUsed: card.abilityUsed,
     };
   };
 

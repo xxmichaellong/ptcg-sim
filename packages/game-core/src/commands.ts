@@ -186,6 +186,23 @@ export type GameCommand =
       readonly rotationQuarterTurns: QuarterTurns;
     }
   | {
+      readonly type: 'SetCardOrientation';
+      readonly cardId: CardInstanceId;
+      readonly orientationQuarterTurns: QuarterTurns;
+    }
+  | {
+      readonly type: 'SetCardAbilityUsed';
+      readonly cardId: CardInstanceId;
+      readonly used: boolean;
+    }
+  | {
+      readonly type: 'ChangeCardCategory';
+      readonly playerId: PlayerId;
+      readonly cardId: CardInstanceId;
+      readonly expectedSourceId: ZoneId | StackId | WorkAreaId;
+      readonly category: Exclude<CardCategory, 'Unknown'>;
+    }
+  | {
       readonly type: 'SetCardFace';
       readonly cardId: CardInstanceId;
       readonly face: CardFace;

@@ -10,6 +10,7 @@ import {
   submitDeckRelativeCardAction,
   submitPrizeDeckBottomAction,
 } from '../../apps/web/src/board/resolveDeckRelativeAction.js';
+import { submitCardAnnotationAction } from '../../apps/web/src/board/resolveCardAnnotationAction.js';
 import { submitInspectionCardsAction } from '../../apps/web/src/board/resolveInspectionCardsAction.js';
 import { submitStackStateAction } from '../../apps/web/src/board/resolveStackStateAction.js';
 import { submitStagedCardsAction } from '../../apps/web/src/board/resolveStagedCardsAction.js';
@@ -1013,6 +1014,144 @@ describe('client/server multiplayer contract', () => {
       rotationQuarterTurns: 0,
     });
     expect(room.store.commandCommits).toHaveLength(8);
+  });
+
+  it('persists card annotations and changes category with one atomic board move', async () => {
+    const room = await fixture();
+    const scheduler = new ManualScheduler();
+    const player = await connectClient({
+      hub: room.hub,
+      name: 'Blue',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+      scheduler,
+    });
+    const playerId = player.session.getSnapshot().playerId;
+    if (!playerId) throw new Error('Missing admitted player identity');
+    expect(
+      player.session.submit({
+        type: 'LoadDeck',
+        entries: Array.from({ length: 14 }, (_, index) => ({
+          definition: {
+            id: `annotation-integration-definition-${index}`,
+            name: `Annotation integration card ${index}`,
+            category: 'Pokémon' as const,
+            imageUrl: `/annotation-integration-${index}.png`,
+          },
+          count: 1,
+        })),
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+    expect(player.session.submit({ type: 'SetupPlayer' }).queued).toBe(true);
+    await player.factory.flush();
+
+    let view = player.session.getSnapshot().view;
+    const hand = Object.values(view?.zones ?? {}).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'hand'
+    );
+    const card = hand?.cards[0];
+    if (!view || !hand || !card) {
+      throw new Error('Setup did not publish an annotation card');
+    }
+    expect(
+      player.session.submit({
+        type: 'MoveCard',
+        cardId: card.id,
+        expectedSourceZoneId: hand.id,
+        destinationZoneId: 'zone:shared:stadium',
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+
+    for (const action of [
+      { type: 'rotate', single: false },
+      { type: 'toggleAbilityUsed' },
+    ] as const) {
+      view = player.session.getSnapshot().view;
+      const stadiumCard = view?.zones['zone:shared:stadium']?.cards[0];
+      if (!view || !stadiumCard) {
+        throw new Error('Stadium annotation card was not published');
+      }
+      let submitted = false;
+      expect(
+        submitCardAnnotationAction(view, stadiumCard.id, action, (command) => {
+          submitted = player.session.submit(command).queued;
+        }).ok
+      ).toBe(true);
+      expect(submitted).toBe(true);
+      await player.factory.flush();
+    }
+
+    view = player.session.getSnapshot().view;
+    let stadiumCard = view?.zones['zone:shared:stadium']?.cards[0];
+    if (!view || !stadiumCard || stadiumCard.kind !== 'known') {
+      throw new Error('Annotated stadium card was not published');
+    }
+    expect(stadiumCard).toMatchObject({
+      orientationQuarterTurns: 1,
+      abilityUsed: true,
+    });
+    expect(
+      createBoardScene(view, {
+        viewport: { width: 1208, height: 900, devicePixelRatio: 1 },
+        bottomPlayerId: playerId,
+        splitRatio: 0.5,
+        geometryVersion: 1,
+      }).markers
+    ).toContainEqual(
+      expect.objectContaining({
+        id: `${stadiumCard.id}:abilityUsed`,
+        parentCardId: stadiumCard.id,
+      })
+    );
+
+    player.factory.latest().networkDrop();
+    scheduler.runNext();
+    player.factory.latest().open();
+    await player.factory.flush();
+    view = player.session.getSnapshot().view;
+    stadiumCard = view?.zones['zone:shared:stadium']?.cards[0];
+    if (!view || !stadiumCard || stadiumCard.kind !== 'known') {
+      throw new Error('Annotated stadium card did not survive reconnect');
+    }
+    expect(stadiumCard).toMatchObject({
+      orientationQuarterTurns: 1,
+      abilityUsed: true,
+    });
+
+    let submitted = false;
+    expect(
+      submitCardAnnotationAction(
+        view,
+        stadiumCard.id,
+        { type: 'changeCategory', category: 'Energy' },
+        (command) => {
+          submitted = player.session.submit(command).queued;
+        }
+      )
+    ).toMatchObject({
+      ok: true,
+      command: {
+        type: 'ChangeCardCategory',
+        expectedSourceId: 'zone:shared:stadium',
+        category: 'Energy',
+      },
+    });
+    expect(submitted).toBe(true);
+    await player.factory.flush();
+
+    const changed = player.session.getSnapshot().view;
+    const boardCard = changed?.zones[`zone:${playerId}:board`]?.cards.at(-1);
+    expect(changed?.revision).toBe(6);
+    expect(changed?.zones['zone:shared:stadium']?.cards).toEqual([]);
+    expect(boardCard).toMatchObject({
+      category: 'Energy',
+      orientationQuarterTurns: 0,
+      abilityUsed: false,
+    });
+    expect(room.store.commandCommits).toHaveLength(6);
+    expect(room.store.commandCommits[5]?.eventBatch?.events).toHaveLength(3);
   });
 
   it('publishes one authoritative revision to a player and spectator', async () => {

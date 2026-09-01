@@ -45,6 +45,7 @@ export const createRendererSpikeView = (): MatchViewState => {
       category: definitions[definitionId]!.category,
       face: 'up',
       orientationQuarterTurns: 0,
+      abilityUsed: false,
     };
   };
   const concealed = (ownerId: PlayerId, back: string): ViewCard => ({

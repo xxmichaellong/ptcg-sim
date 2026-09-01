@@ -367,6 +367,7 @@ export const resolveWireCommand = (
     case 'MoveCardToDeckTop':
     case 'MoveCardToDeckBottom':
     case 'ShuffleCardIntoDeck':
+    case 'ChangeCardCategory':
     case 'SwapCardWithDeckTop': {
       const card = resolveCard(wire.cardId);
       if (!card) return rejected('stale_reference');
@@ -440,6 +441,18 @@ export const resolveWireCommand = (
         )
       ) {
         return rejected('unauthorized');
+      }
+      if (wire.type === 'ChangeCardCategory') {
+        return {
+          accepted: true,
+          command: {
+            type: 'ChangeCardCategory',
+            playerId: sourcePlayerId,
+            cardId: card.cardId,
+            expectedSourceId,
+            category: wire.category,
+          },
+        };
       }
       return {
         accepted: true,
@@ -563,7 +576,8 @@ export const resolveWireCommand = (
       };
     }
     case 'SetCardFace':
-    case 'SetCardCategory':
+    case 'SetCardOrientation':
+    case 'SetCardAbilityUsed':
     case 'SetPublicReveal': {
       const card = resolveCard(wire.cardId);
       if (!card) return rejected('stale_reference');
@@ -589,13 +603,23 @@ export const resolveWireCommand = (
           },
         };
       }
-      if (wire.type === 'SetCardCategory') {
+      if (wire.type === 'SetCardOrientation') {
         return {
           accepted: true,
           command: {
-            type: 'SetCardCategory',
+            type: 'SetCardOrientation',
             cardId: card.cardId,
-            category: wire.category,
+            orientationQuarterTurns: wire.orientationQuarterTurns,
+          },
+        };
+      }
+      if (wire.type === 'SetCardAbilityUsed') {
+        return {
+          accepted: true,
+          command: {
+            type: 'SetCardAbilityUsed',
+            cardId: card.cardId,
+            used: wire.used,
           },
         };
       }

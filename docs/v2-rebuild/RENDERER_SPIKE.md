@@ -76,7 +76,7 @@ Rive, or game-specific systems.
   concealed or face-down card; and
 - a deterministic 61-card competitive fixture with covers, hands, prizes,
   free-board cards, active evolution/attachments, damage, condition, ability
-  marker, rotation, and stadium.
+  marker, group and BREAK rotation, per-card markers, and stadium.
 
 The contract rejects invalid viewport/split inputs and any projection that puts
 one recipient-safe card ID in more than one render location.
@@ -163,7 +163,9 @@ chunk graph will be measured in the browser evidence run.
   atomic bulk move to hand, plus resumed deck-top swapping, moving cards to both
   deck edges, shuffling a selected card into the full deck, and shuffling prizes
   to the deck bottom, plus damage, condition, ability-used, and group-rotation
-  targets that survive reconnect and follow the characterized evolution cleanup;
+  targets that survive reconnect and follow the characterized evolution cleanup,
+  plus stadium/BREAK orientation, exact-card ability markers, and an atomic
+  category-change departure that survive the same projection/reconnect path;
 - TypeScript project boundaries and circular-dependency check;
 - Vite production build; and
 - the repository-wide v2 and 79-test legacy gates.
@@ -208,7 +210,14 @@ resolved event replaces the complete board stack layout with exact old-layout
 preconditions, while attachment drags and lower evolution cards cannot
 accidentally move the stack.
 
-At this checkpoint the v2 suite contains 153 passing tests across 31 files. A
+The card-annotation boundary now separates stack rotation from BREAK/per-card
+orientation and stack-host ability state from exact-card markers. It maps
+category shortcuts to one `ChangeCardCategory` command instead of exposing a
+low-level property mutation over the wire. The renderer composes card and stack
+quarter turns and creates marker nodes from recipient-safe projected state; it
+does not retain annotation state locally.
+
+At this checkpoint the v2 suite contains 167 passing tests across 33 files. A
 separate Playwright suite also passes three real Chromium 151 scenarios:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and

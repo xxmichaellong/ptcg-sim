@@ -32,6 +32,7 @@ export interface CardInstance {
   readonly currentCategory: CardCategory;
   readonly face: CardFace;
   readonly orientationQuarterTurns: QuarterTurns;
+  readonly abilityUsed: boolean;
   readonly visibilityGeneration: number;
 }
 

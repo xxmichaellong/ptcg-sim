@@ -54,8 +54,8 @@ a hard-to-find behavior. Proposed names are not final APIs.
 | `addSpecialCondition`    | `SetSpecialCondition(default)`                      | Default poison, active-only shortcut rules, marker/color mapping                                 |
 | `updateSpecialCondition` | `SetSpecialCondition(value)`                        | P/B/Pa/C/A cycle, free-form content today, normalization/bounds decision                         |
 | `removeSpecialCondition` | `SetSpecialCondition(null)`                         | Empty/zero/Alt behavior and automatic move/evolution cleanup                                     |
-| `rotateCard`             | `RotateCardOrStack`                                 | Whole stack versus individual/BREAK orientation, quarter-turn convention, face/zone restrictions |
-| `changeType`             | `SetCategoryOverride`                               | Pokémon/Energy/Trainer shortcuts, original category restoration when leaving play                |
+| `rotateCard`             | `RotateStack` or `SetCardOrientation`               | Whole stack versus individual/BREAK orientation, quarter-turn convention, face/zone restrictions |
+| `changeType`             | `ChangeCardCategory`                                | Pokémon/Energy/Trainer shortcuts, atomic loose-board departure, original category restoration    |
 | `VSTARGXFunction`        | `SetOncePerGameMarker`                              | VSTAR/GX mutual/individual state, used styling, self/opponent control, reset                     |
 
 ## Loose board batches
@@ -165,6 +165,25 @@ These markers survive authoritative publication and reconnect. Evolution keeps
 damage while clearing the old condition, ability marker, and group rotation.
 Any transition from active to bench clears the special condition, including
 direct movement, swaps, active replacement, and staged-stack restoration.
-Per-card BREAK orientation and the legacy discard/stadium ability-marker forms
-remain explicitly assigned to the later card-annotation slice; this stack-state
-checkpoint does not claim those actions as complete.
+
+### Implemented card-annotation subset
+
+The legacy whole-stack and single-card rotation paths are now distinct target-
+value commands. `RotateStack` changes the play aggregate, while
+`SetCardOrientation` changes one evolution/BREAK card, attachment, or stadium
+card. The scene projection composes stack and per-card quarter turns, so a BREAK
+rotation remains attached to the exact card without losing group rotation.
+
+Ability markers likewise have explicit ownership. The top evolution card maps
+to the stack-level marker; attachment, discard, and stadium cards use
+`SetCardAbilityUsed` and render a marker on that exact card. Attachment markers
+survive attachment staging/restoration. A marked discard card promoted to a new
+host transfers the marker to its new stack, while ordinary movement and card
+normalization clear transient per-card markers.
+
+`ChangeCardCategory` replaces the unsafe client sequence of moving and then
+mutating a card. It carries an opaque card handle, exact expected source, and
+one of Pokémon/Trainer/Energy. The authority resolves the source and owner, then
+publishes the legal departure to that player's loose board and category change
+as one revision. Lower evolution cards, stale handles, foreign targets, board
+capacity overflow, and exact no-ops fail without an intermediate state.

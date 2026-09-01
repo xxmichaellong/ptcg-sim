@@ -65,6 +65,7 @@ const createView = (): MatchViewState => ({
           category: 'Pokémon',
           face: 'up',
           orientationQuarterTurns: 0,
+          abilityUsed: false,
         },
       ],
     },
@@ -147,6 +148,76 @@ describe('renderer-neutral board scene', () => {
       rotationQuarterTurns: 2,
     });
     expect(JSON.stringify(hidden)).not.toContain('full-secret');
+  });
+
+  it('composes BREAK offsets with group rotation and projects per-card ability markers', () => {
+    const base = createRendererSpikeView();
+    const stadium = base.zones['zone:shared:stadium']!;
+    const stadiumCard = stadium.cards[0]!;
+    const stack = base.stacks['stack:blue:active']!;
+    const top = stack.evolutionCards.at(-1)!;
+    const attachment = stack.attachmentCards[0]!;
+    if (
+      stadiumCard.kind !== 'known' ||
+      top.kind !== 'known' ||
+      attachment.kind !== 'known'
+    ) {
+      throw new Error('Spike annotation cards must be known');
+    }
+    const view: MatchViewState = {
+      ...base,
+      zones: {
+        ...base.zones,
+        [stadium.id]: {
+          ...stadium,
+          cards: [
+            {
+              ...stadiumCard,
+              orientationQuarterTurns: 1,
+              abilityUsed: true,
+            },
+          ],
+        },
+      },
+      stacks: {
+        ...base.stacks,
+        [stack.id]: {
+          ...stack,
+          rotationQuarterTurns: 1,
+          evolutionCards: [
+            ...stack.evolutionCards.slice(0, -1),
+            { ...top, orientationQuarterTurns: 1 },
+          ],
+          attachmentCards: [
+            { ...attachment, abilityUsed: true },
+            ...stack.attachmentCards.slice(1),
+          ],
+        },
+      },
+    };
+    const scene = createBoardScene(view, {
+      ...options,
+      bottomPlayerId: view.playerOrder[0]!,
+    });
+    expect(
+      scene.cards.find((card) => card.id === stadiumCard.id)
+        ?.rotationQuarterTurns
+    ).toBe(1);
+    expect(
+      scene.cards.find((card) => card.id === top.id)?.rotationQuarterTurns
+    ).toBe(2);
+    expect(scene.markers).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: `${stadiumCard.id}:abilityUsed`,
+          parentCardId: stadiumCard.id,
+        }),
+        expect.objectContaining({
+          id: `${attachment.id}:abilityUsed`,
+          parentCardId: attachment.id,
+        }),
+      ])
+    );
   });
 
   it('builds the shared 61-card spike and keeps index zero visually atop cover piles', () => {

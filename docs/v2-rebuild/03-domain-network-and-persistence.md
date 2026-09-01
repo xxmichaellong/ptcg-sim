@@ -51,7 +51,7 @@ MatchState
   cards[cardInstanceId]
     ownerId, definitionId
     originalCategory, currentCategory
-    face, per-card/BREAK orientation
+    face, per-card/BREAK orientation, per-card ability marker
     visibilityGeneration
   zones[zoneId]
     ownerId?; kind; ordered card IDs
@@ -75,9 +75,10 @@ MatchState
 ```
 
 Card definitions and card instances are separate. Repeated copies share static
-definition metadata. Per-card face/category/BREAK state belongs to instances;
-damage, conditions, group rotation, and attachment/evolution membership belong
-to explicit play stacks where applicable.
+definition metadata. Per-card face/category/BREAK and attachment/discard/stadium
+ability-marker state belongs to instances; damage, conditions, group rotation,
+host ability markers, and attachment/evolution membership belong to explicit
+play stacks where applicable.
 
 ### Zones and work areas
 
@@ -173,8 +174,8 @@ Names may change, but semantic coverage may not.
 | Match/deck lifecycle  | `ConfigureSeat`, `LoadDeck`, `SetupSeat`, `ResetSeat`, `ResetMatch`                                                                                              | Deck validation and instance creation are atomic.                                                                                                |
 | Card movement         | `MoveCard`, `MoveCards`, `MoveZoneContents`, `MoveCardToDeckTop`, `MoveCardToDeckBottom`, `ShuffleCardIntoDeck`, `SwapCardWithDeckTop`, `MovePrizesToDeckBottom` | Explicit source/target IDs and attachment policy.                                                                                                |
 | Randomized movement   | `ShuffleZone`, `DrawCards`, `ShuffleAndDraw`, `PlayRandomFaceDown`, `FlipCoin`                                                                                   | Random choices are made by the authority, never trusted from client payloads.                                                                    |
-| Card properties       | `SetCardFace`, `RotateCard`, `SetCategoryOverride`                                                                                                               | Covers reveal/hide/rotate/change-type behavior.                                                                                                  |
-| Markers               | `SetDamage`, `SetSpecialCondition`, `SetAbilityUsed`, `SetOncePerGameMarker`                                                                                     | Prefer target values over increment-only operations for idempotency.                                                                             |
+| Card properties       | `SetCardFace`, `SetCardOrientation`, `ChangeCardCategory`                                                                                                        | Per-card rotation is separate from stack rotation; category change atomically departs to the loose board.                                        |
+| Markers               | `SetDamage`, `SetSpecialCondition`, `SetAbilityUsed`, `SetCardAbilityUsed`, `SetOncePerGameMarker`                                                               | Host and per-card ability markers are distinct; target values avoid increment/toggle replay ambiguity.                                           |
 | Relationships         | `AttachCard`, `EvolveCard`, `RestoreStagedStack`, `ResolveStagedCards`, `ResolveInspectionCards`                                                                 | Departure, restoration, and bulk work-area resolution remain transactional.                                                                      |
 | Inspection/visibility | `BeginInspection`, `EndInspection`, `RevealCards`, `EndReveal`                                                                                                   | Authority controls viewer set and opaque handles.                                                                                                |
 | Turn/table signals    | `StartTurn`, `DeclareAttack`, `PassTurn`                                                                                                                         | Preserve current logs/signals; do not enforce rules.                                                                                             |

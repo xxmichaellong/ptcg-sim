@@ -128,4 +128,105 @@ describe('stack-state authority resolution', () => {
       )
     ).toEqual({ accepted: false, code: 'unauthorized' });
   });
+
+  it('resolves card annotations through recipient aliases and exact sources', () => {
+    const state = stateWithStack();
+    const stackId = state.boards[p1]!.activeStackId!;
+    const cardId = state.stacks[stackId]!.evolutionCardIds[0]!;
+    const ownerAlias = 'owner-card-alias-00000001';
+    const opponentAlias = 'opponent-card-alias-0001';
+    const identities = {
+      cardAliases: [
+        {
+          alias: ownerAlias,
+          viewerKey: `player:${p1}`,
+          cardId,
+          visibilityGeneration: state.cards[cardId]!.visibilityGeneration,
+          known: true,
+        },
+        {
+          alias: opponentAlias,
+          viewerKey: `player:${p2}`,
+          cardId,
+          visibilityGeneration: state.cards[cardId]!.visibilityGeneration,
+          known: true,
+        },
+      ],
+      definitionAliases: [],
+    };
+
+    expect(
+      resolveWireCommand(
+        state,
+        identities,
+        playerSession(p1),
+        {
+          type: 'SetCardOrientation',
+          cardId: ownerAlias,
+          orientationQuarterTurns: 1,
+        },
+        DEFAULT_AUTHORITY_POLICY
+      )
+    ).toMatchObject({
+      accepted: true,
+      command: {
+        type: 'SetCardOrientation',
+        cardId,
+        orientationQuarterTurns: 1,
+      },
+    });
+    expect(
+      resolveWireCommand(
+        state,
+        identities,
+        playerSession(p1),
+        {
+          type: 'ChangeCardCategory',
+          cardId: ownerAlias,
+          expectedSourceId: stackId,
+          category: 'Energy',
+        },
+        DEFAULT_AUTHORITY_POLICY
+      )
+    ).toMatchObject({
+      accepted: true,
+      command: {
+        type: 'ChangeCardCategory',
+        playerId: p1,
+        cardId,
+        expectedSourceId: stackId,
+        category: 'Energy',
+      },
+    });
+    expect(
+      resolveWireCommand(
+        state,
+        identities,
+        playerSession(p1),
+        {
+          type: 'ChangeCardCategory',
+          cardId: ownerAlias,
+          expectedSourceId: playerZoneId(p1, 'board'),
+          category: 'Energy',
+        },
+        DEFAULT_AUTHORITY_POLICY
+      )
+    ).toEqual({ accepted: false, code: 'stale_reference' });
+    expect(
+      resolveWireCommand(
+        state,
+        identities,
+        playerSession(p2),
+        {
+          type: 'SetCardOrientation',
+          cardId: opponentAlias,
+          orientationQuarterTurns: 1,
+        },
+        {
+          ...DEFAULT_AUTHORITY_POLICY,
+          allowOpponentPublicInteraction: false,
+        }
+      )
+    ).toEqual({ accepted: false, code: 'unauthorized' });
+  });
 });

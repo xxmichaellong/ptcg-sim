@@ -64,6 +64,26 @@ export const collectInvariantProblems = (
         `card ${card.id} has ${locations.length} locations instead of one`
       );
     }
+    if (![0, 1, 2, 3].includes(card.orientationQuarterTurns)) {
+      problems.push(`card ${card.id} has invalid orientation`);
+    }
+    if (typeof card.abilityUsed !== 'boolean') {
+      problems.push(`card ${card.id} has invalid ability marker`);
+    }
+    const location = locations[0];
+    if (card.abilityUsed && location) {
+      const allowed =
+        location.kind === 'stackAttachment' ||
+        (location.kind === 'attachmentResolutionWorkArea' &&
+          location.source === 'attachment') ||
+        (location.kind === 'zone' &&
+          ['discard', 'stadium'].includes(
+            state.zones[location.zoneId]?.kind ?? ''
+          ));
+      if (!allowed) {
+        problems.push(`card ${card.id} has an ability marker outside play`);
+      }
+    }
   }
 
   for (const [zoneId, zone] of Object.entries(state.zones)) {
