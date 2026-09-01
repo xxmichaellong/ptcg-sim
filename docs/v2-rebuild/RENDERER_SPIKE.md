@@ -234,7 +234,13 @@ identity rotation and leaving-play cleanup. Both renderers consume only the
 resulting recipient-safe zone projection, so no batch loop or transient card
 location is visible locally.
 
-At this checkpoint the v2 suite contains 192 passing tests across 39 files. A
+Turn, attack, and pass controls now have a UI-neutral semantic boundary as
+well. The commands preserve the legacy cleanup behavior in a single authority
+revision and publish typed presentation facts through the remote session's
+bounded timeline. This adds no renderer-owned state and does not alter the
+existing controls, labels, or board geometry.
+
+At this checkpoint the v2 suite contains 209 passing tests across 42 files. A
 separate Playwright suite also passes three real Chromium 151 scenarios:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and

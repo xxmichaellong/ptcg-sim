@@ -320,6 +320,28 @@ describe('client protocol ingress', () => {
     }
   });
 
+  it('accepts only target-aware table-action intents', () => {
+    const parseCommand = (command: unknown) =>
+      parseClientFrame(
+        JSON.stringify({
+          type: 'Command',
+          protocolVersion: PROTOCOL_VERSION,
+          sessionId: 'session',
+          clientSequence: 1,
+          commandId: 'command',
+          lastSeenRevision: 0,
+          command,
+        })
+      );
+    for (const type of ['StartTurn', 'DeclareAttack', 'PassTurn']) {
+      expect(parseCommand({ type, targetPlayerId: 'target-player' }).ok).toBe(
+        true
+      );
+      expect(parseCommand({ type }).ok).toBe(false);
+      expect(parseCommand({ type, targetPlayerId: '' }).ok).toBe(false);
+    }
+  });
+
   it('bounds client-supplied expected stack layouts', () => {
     const expectedBenchStackIds = Array.from(
       { length: 201 },

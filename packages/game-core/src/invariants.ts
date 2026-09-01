@@ -25,6 +25,15 @@ export const collectInvariantProblems = (
   if (state.playerOrder.length !== 2 || hasDuplicates(state.playerOrder)) {
     problems.push('match must contain exactly two distinct ordered players');
   }
+  if (!Number.isSafeInteger(state.turn.number) || state.turn.number < 0) {
+    problems.push('turn number must be a non-negative safe integer');
+  }
+  if (
+    state.turn.currentPlayerId !== null &&
+    !state.players[state.turn.currentPlayerId]
+  ) {
+    problems.push('turn references an unknown current player');
+  }
   for (const playerId of state.playerOrder) {
     const player = state.players[playerId];
     if (!player) problems.push(`missing player ${playerId}`);

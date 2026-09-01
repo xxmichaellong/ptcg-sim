@@ -53,6 +53,29 @@ export type DomainEvent =
       readonly cardIds: readonly CardInstanceId[];
     }
   | {
+      readonly type: 'AbilityMarkersReset';
+      readonly stackIds: readonly StackId[];
+      readonly cardIds: readonly CardInstanceId[];
+    }
+  | {
+      readonly type: 'InPlayCardsRevealed';
+      readonly cardIds: readonly CardInstanceId[];
+    }
+  | {
+      readonly type: 'TurnAdvanced';
+      readonly playerId: PlayerId;
+      readonly expectedTurnNumber: number;
+      readonly expectedCurrentPlayerId: PlayerId | null;
+      readonly turnNumber: number;
+    }
+  | {
+      readonly type: 'TableActionDeclared';
+      readonly action: 'startTurn' | 'attack' | 'pass';
+      readonly playerId: PlayerId;
+      readonly outcome: 'drawn' | 'emptyDeck' | 'declared';
+      readonly turnNumber: number;
+    }
+  | {
       readonly type: 'ZoneShuffled';
       readonly zoneId: ZoneId;
       readonly cardOrder: readonly CardInstanceId[];

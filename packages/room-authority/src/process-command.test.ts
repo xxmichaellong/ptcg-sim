@@ -263,6 +263,80 @@ describe('authoritative room command transaction', () => {
     expect(persistence.transactions[0]?.eventBatch).toBeUndefined();
   });
 
+  it('publishes typed table signals once and persists stale broad-action rejection', async () => {
+    const persistence = createPersistence();
+    const dependencies = createDependencies(persistence);
+    const started = await processAuthorityCommand(
+      createSnapshot(),
+      command('session-player-one', 1, 'start-empty-turn', {
+        type: 'StartTurn',
+        targetPlayerId: p1,
+      }),
+      dependencies
+    );
+    expect(started.snapshot.state.revision).toBe(1);
+    expect(persistence.transactions[0]?.eventBatch?.events.at(-1)).toEqual({
+      type: 'TableActionDeclared',
+      action: 'startTurn',
+      playerId: p1,
+      outcome: 'emptyDeck',
+      turnNumber: 0,
+    });
+    const publications = started.deliveries.filter(
+      (delivery) => delivery.message.type === 'StatePublication'
+    );
+    expect(publications).toHaveLength(3);
+    for (const delivery of publications) {
+      if (delivery.message.type !== 'StatePublication') continue;
+      expect(delivery.message.presentationEvents).toEqual([
+        {
+          type: 'TurnStartFailedNoDeck',
+          revision: 1,
+          playerId: p1,
+          turnNumber: 0,
+        },
+      ]);
+    }
+
+    const duplicate = await processAuthorityCommand(
+      started.snapshot,
+      command('session-player-one', 1, 'start-empty-turn', {
+        type: 'StartTurn',
+        targetPlayerId: p1,
+      }),
+      dependencies
+    );
+    expect(duplicate.committed).toBe(false);
+    expect(duplicate.deliveries[0]?.message).toMatchObject({
+      type: 'StatePublication',
+    });
+    if (duplicate.deliveries[0]?.message.type === 'StatePublication') {
+      expect(
+        duplicate.deliveries[0].message.presentationEvents
+      ).toBeUndefined();
+    }
+
+    const stale = await processAuthorityCommand(
+      started.snapshot,
+      command(
+        'session-player-one',
+        2,
+        'stale-pass',
+        { type: 'PassTurn', targetPlayerId: p1 },
+        0
+      ),
+      dependencies
+    );
+    expect(stale.committed).toBe(true);
+    expect(stale.snapshot.state.revision).toBe(1);
+    expect(stale.deliveries[0]?.message).toMatchObject({
+      type: 'CommandResult',
+      accepted: false,
+      code: 'stale_reference',
+    });
+    expect(persistence.transactions.at(-1)?.eventBatch).toBeUndefined();
+  });
+
   it('never publishes canonical hidden IDs and invalidates concealed handles on shuffle', async () => {
     const persistence = createPersistence();
     const dependencies = createDependencies(persistence);

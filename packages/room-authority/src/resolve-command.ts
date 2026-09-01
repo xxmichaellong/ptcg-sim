@@ -53,10 +53,19 @@ export const resolveWireCommand = (
   identities: ProjectionIdentityState,
   session: AuthoritySession,
   wire: WireGameCommand,
-  policy: AuthorityPolicy
+  policy: AuthorityPolicy,
+  observedRevision: number = state.revision
 ): CommandResolution => {
   if (session.viewer.kind !== 'player') return rejected('unauthorized');
   const actorId = session.viewer.playerId;
+  if (
+    (wire.type === 'StartTurn' ||
+      wire.type === 'DeclareAttack' ||
+      wire.type === 'PassTurn') &&
+    observedRevision !== state.revision
+  ) {
+    return rejected('stale_reference');
+  }
 
   const resolveCard = (alias: string) => {
     const entry = resolveViewCard(identities, session.viewer, alias);
@@ -484,6 +493,27 @@ export const resolveWireCommand = (
         accepted: true,
         command: { type: 'DrawCards', playerId: actorId, count: wire.count },
       };
+    case 'StartTurn':
+    case 'DeclareAttack':
+    case 'PassTurn': {
+      const targetPlayerId = asPlayerId(wire.targetPlayerId);
+      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (
+        targetPlayerId !== actorId &&
+        !policy.allowOpponentPublicInteraction
+      ) {
+        return rejected('unauthorized');
+      }
+      return {
+        accepted: true,
+        command:
+          wire.type === 'StartTurn'
+            ? { type: 'StartTurn', playerId: targetPlayerId }
+            : wire.type === 'DeclareAttack'
+              ? { type: 'DeclareAttack', playerId: targetPlayerId }
+              : { type: 'PassTurn', playerId: targetPlayerId },
+      };
+    }
     case 'MoveZoneContents': {
       const source = state.zones[wire.sourceZoneId];
       const destination = state.zones[wire.destinationZoneId];

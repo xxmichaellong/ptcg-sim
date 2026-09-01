@@ -85,8 +85,8 @@ a hard-to-find behavior. Proposed names are not final APIs.
 
 | v1 action | Proposed v2 responsibility                                     | Critical characterization                                                                         |
 | --------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `attack`  | Structured safe timeline event `AttackDeclared`                | Exact text/user color/sound/announcement; no board mutation                                       |
-| `pass`    | Structured safe timeline event `PassDeclared`                  | Exact text/user color/sound/announcement; no board mutation                                       |
+| `attack`  | Atomic `DeclareAttack` plus safe timeline event                | Reset all ability markers, discard the acting loose board, preserve turn/faces, announcement      |
+| `pass`    | Atomic `PassTurn` plus safe timeline event                     | Reset all ability markers, discard the acting loose board, preserve turn/faces, announcement      |
 | `undo`    | Solo `ApplySoloUndo` to previous checkpoint plus `UndoApplied` | Stackable solo-only UX, reset/setup boundary, replay mode, log text, hidden random outcome policy |
 
 ## Mapping rules
@@ -227,3 +227,37 @@ Generic whole-zone commands are explicitly forbidden from using the loose board
 as source or destination, so clients cannot bypass these preconditions or
 normalization rules. The application boundary produces one command rather than
 the legacy loop of individually visible moves.
+
+### Implemented table-action subset
+
+`StartTurn`, `DeclareAttack`, and `PassTurn` are explicit target-aware commands.
+Because they reset markers across the table, authority requires the submitting
+client's complete view revision to be current; a stale declaration is consumed
+as a typed rejection and cannot clear a newly added marker. Opponent targeting
+uses the existing public-interaction room policy.
+
+All three reset stack-level and legal per-card ability markers. Attack and pass
+discard only the target player's loose board and leave turn state and card faces
+unchanged. Start-turn discards both players' loose boards, reveals every
+face-down evolution and attachment card in play, then draws from the target
+player's deck and advances the shared turn. Matching legacy behavior, an empty
+deck still commits cleanup and an `emptyDeck` fact but does not increment the
+turn or draw a card. GX and VSTAR markers are independent and are not reset.
+
+This intentionally fixes one clear v1 call-site defect: `takeTurn` invokes
+`discardBoard(initiator, ...)` twice while changing only the message initiator,
+so it clears the acting board twice. The surrounding loop and prior blueprint
+show that the intended behavior is one cleanup per player board; v2 performs
+that intended atomic cleanup.
+
+Each command produces one replayable event batch and one bounded, typed
+recipient-safe presentation event. Publications carry `TurnStarted`,
+`TurnStartFailedNoDeck`, `AttackDeclared`, or `PassDeclared` at the resulting
+revision. The client retains a bounded timeline, ignores stale publications,
+and does not replay presentation events for duplicate command recovery. No
+labels, layout, or visible interaction have changed in this under-the-hood
+slice.
+
+The same publication bridge now carries the existing persisted `CoinFlipped`
+fact as a typed result, completing the already-modeled renderer presentation
+path without adding canonical state.

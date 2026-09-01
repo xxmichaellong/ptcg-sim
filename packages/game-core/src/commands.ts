@@ -140,6 +140,9 @@ export type GameCommand =
       readonly playerId: PlayerId;
       readonly count: number;
     }
+  | { readonly type: 'StartTurn'; readonly playerId: PlayerId }
+  | { readonly type: 'DeclareAttack'; readonly playerId: PlayerId }
+  | { readonly type: 'PassTurn'; readonly playerId: PlayerId }
   | {
       readonly type: 'MoveZoneContents';
       readonly sourceZoneId: ZoneId;

@@ -49,6 +49,9 @@ export interface ClientSessionState {
   readonly nextClientSequence: number;
   readonly pendingCommands: readonly PendingCommandSummary[];
   readonly completedCommands: readonly CompletedCommandSummary[];
+  readonly presentationEvents: readonly NonNullable<
+    Extract<ServerMessage, { type: 'StatePublication' }>['presentationEvents']
+  >[number][];
   readonly chatMessages: readonly Extract<
     ServerMessage,
     { type: 'ChatMessage' }
@@ -73,6 +76,7 @@ export interface ConnectSessionOptions {
 export interface ClientSessionPolicy {
   readonly maximumPendingCommands: number;
   readonly maximumCompletedCommands: number;
+  readonly maximumPresentationEvents: number;
   readonly maximumChatMessages: number;
   readonly maximumPresenceEvents: number;
   readonly maximumNotices: number;
@@ -86,6 +90,7 @@ export interface ClientSessionPolicy {
 export const DEFAULT_CLIENT_SESSION_POLICY: ClientSessionPolicy = {
   maximumPendingCommands: 32,
   maximumCompletedCommands: 128,
+  maximumPresentationEvents: 100,
   maximumChatMessages: 100,
   maximumPresenceEvents: 100,
   maximumNotices: 50,

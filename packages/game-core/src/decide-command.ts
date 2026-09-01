@@ -614,6 +614,125 @@ const decideLoadDeck = (
   });
 };
 
+const decideTableAction = (
+  state: MatchState,
+  command: Extract<
+    GameCommand,
+    { readonly type: 'StartTurn' | 'DeclareAttack' | 'PassTurn' }
+  >
+): CommandDecision => {
+  const playerError = requirePlayer(state, command.playerId);
+  if (playerError) return playerError;
+
+  const events: DomainEvent[] = [];
+  const stackIds = Object.values(state.stacks)
+    .filter((stack) => stack.abilityUsed)
+    .map((stack) => stack.id)
+    .sort();
+  const cardIds = Object.values(state.cards)
+    .filter((card) => card.abilityUsed)
+    .map((card) => card.id)
+    .sort();
+  if (stackIds.length > 0 || cardIds.length > 0) {
+    events.push({ type: 'AbilityMarkersReset', stackIds, cardIds });
+  }
+
+  const boardPlayerIds =
+    command.type === 'StartTurn' ? state.playerOrder : [command.playerId];
+  for (const playerId of boardPlayerIds) {
+    const board = state.zones[playerZoneId(playerId, 'board')];
+    const discard = state.zones[playerZoneId(playerId, 'discard')];
+    if (!board || !discard) {
+      return reject('not_found', 'Table-action board or discard is missing');
+    }
+    if (board.cardIds.length === 0) continue;
+    if (discard.cardIds.length + board.cardIds.length > 200) {
+      return reject(
+        'precondition_failed',
+        'Table-action discard cannot contain more than 200 cards'
+      );
+    }
+    events.push({
+      type: 'LooseBoardCardsResolved',
+      playerId,
+      destination: 'discard',
+      boardZoneId: board.id,
+      destinationZoneId: discard.id,
+      expectedBoardCardIds: [...board.cardIds],
+      expectedDestinationCardIds: [...discard.cardIds],
+      destinationCardIds: [...discard.cardIds, ...board.cardIds],
+      concealedCardIds: [],
+    });
+  }
+
+  if (command.type === 'StartTurn') {
+    const revealedCardIds = Object.values(state.stacks)
+      .flatMap((stack) => [
+        ...stack.evolutionCardIds,
+        ...stack.attachmentCardIds,
+      ])
+      .filter((cardId) => state.cards[cardId]?.face === 'down')
+      .sort();
+    if (revealedCardIds.length > 0) {
+      events.push({ type: 'InPlayCardsRevealed', cardIds: revealedCardIds });
+    }
+
+    const deck = state.zones[playerZoneId(command.playerId, 'deck')];
+    const hand = state.zones[playerZoneId(command.playerId, 'hand')];
+    if (!deck || !hand) {
+      return reject('not_found', 'Turn deck or hand is missing');
+    }
+    if (deck.cardIds.length === 0) {
+      events.push({
+        type: 'TableActionDeclared',
+        action: 'startTurn',
+        playerId: command.playerId,
+        outcome: 'emptyDeck',
+        turnNumber: state.turn.number,
+      });
+      return accept(...events);
+    }
+    if (state.turn.number >= Number.MAX_SAFE_INTEGER) {
+      return reject('precondition_failed', 'Turn number cannot advance safely');
+    }
+    if (hand.cardIds.length >= 200) {
+      return reject(
+        'precondition_failed',
+        'Turn draw cannot make the hand exceed 200 cards'
+      );
+    }
+    events.push({
+      type: 'CardsDrawn',
+      playerId: command.playerId,
+      cardIds: [deck.cardIds[0]!],
+    });
+    events.push({
+      type: 'TurnAdvanced',
+      playerId: command.playerId,
+      expectedTurnNumber: state.turn.number,
+      expectedCurrentPlayerId: state.turn.currentPlayerId,
+      turnNumber: state.turn.number + 1,
+    });
+    events.push({
+      type: 'TableActionDeclared',
+      action: 'startTurn',
+      playerId: command.playerId,
+      outcome: 'drawn',
+      turnNumber: state.turn.number + 1,
+    });
+    return accept(...events);
+  }
+
+  events.push({
+    type: 'TableActionDeclared',
+    action: command.type === 'DeclareAttack' ? 'attack' : 'pass',
+    playerId: command.playerId,
+    outcome: 'declared',
+    turnNumber: state.turn.number,
+  });
+  return accept(...events);
+};
+
 export const decideCommand = (
   state: MatchState,
   command: GameCommand,
@@ -1350,6 +1469,10 @@ export const decideCommand = (
         ),
       });
     }
+    case 'StartTurn':
+    case 'DeclareAttack':
+    case 'PassTurn':
+      return decideTableAction(state, command);
     case 'MoveZoneContents': {
       const source = state.zones[command.sourceZoneId];
       const destination = state.zones[command.destinationZoneId];

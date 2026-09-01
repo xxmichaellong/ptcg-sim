@@ -16,6 +16,7 @@ import { submitLooseBoardAction } from '../../apps/web/src/board/resolveLooseBoa
 import { submitOncePerGameAction } from '../../apps/web/src/board/resolveOncePerGameAction.js';
 import { submitStackStateAction } from '../../apps/web/src/board/resolveStackStateAction.js';
 import { submitStagedCardsAction } from '../../apps/web/src/board/resolveStagedCardsAction.js';
+import { submitTableAction } from '../../apps/web/src/board/resolveTableAction.js';
 import {
   RoomSessionHub,
   WebCryptoAuthoritySource,
@@ -1404,7 +1405,110 @@ describe('client/server multiplayer contract', () => {
     expect(spectator.session.getSnapshot()).toMatchObject({
       view: { revision: 1 },
     });
+    expect(player.session.getSnapshot().presentationEvents).toEqual([
+      {
+        type: 'CoinFlipped',
+        revision: 1,
+        result: expect.stringMatching(/^(heads|tails)$/),
+      },
+    ]);
+    expect(spectator.session.getSnapshot().presentationEvents).toEqual(
+      player.session.getSnapshot().presentationEvents
+    );
     expect(room.store.commandCommits).toHaveLength(1);
+  });
+
+  it('runs a turn atomically through projection and does not replay its signal on reconnect', async () => {
+    const room = await fixture();
+    const opponentScheduler = new ManualScheduler();
+    const player = await connectClient({
+      hub: room.hub,
+      name: 'Blue',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+    });
+    const opponent = await connectClient({
+      hub: room.hub,
+      name: 'Red',
+      role: 'player',
+      capability: room.credentials.playerTwoSeatCapability,
+      scheduler: opponentScheduler,
+    });
+    const playerId = player.session.getSnapshot().playerId;
+    if (!playerId) throw new Error('Missing admitted player identity');
+
+    expect(
+      player.session.submit({
+        type: 'LoadDeck',
+        entries: Array.from({ length: 3 }, (_, index) => ({
+          definition: {
+            id: `turn-definition-${index}`,
+            name: `Turn card ${index}`,
+            category: 'Pokémon' as const,
+            imageUrl: `/turn-card-${index}.png`,
+          },
+          count: 1,
+        })),
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+
+    const before = player.session.getSnapshot().view;
+    if (!before) throw new Error('Missing view before turn');
+    let queued = false;
+    expect(
+      submitTableAction(before, playerId, 'startTurn', (wire) => {
+        queued = player.session.submit(wire).queued;
+      }).ok
+    ).toBe(true);
+    expect(queued).toBe(true);
+    await player.factory.flush();
+
+    const playerState = player.session.getSnapshot();
+    const opponentState = opponent.session.getSnapshot();
+    const playerHand = Object.values(playerState.view?.zones ?? {}).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'hand'
+    );
+    const opponentHand = Object.values(opponentState.view?.zones ?? {}).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'hand'
+    );
+    expect(playerState.view?.turn).toEqual({
+      number: 1,
+      currentPlayerId: playerId,
+    });
+    expect(playerHand?.cards).toHaveLength(1);
+    expect(playerHand?.cards[0]?.kind).toBe('known');
+    expect(opponentHand?.cards).toHaveLength(1);
+    expect(opponentHand?.cards[0]?.kind).toBe('concealed');
+    expect(playerState.presentationEvents).toEqual([
+      {
+        type: 'TurnStarted',
+        revision: 2,
+        playerId,
+        turnNumber: 1,
+      },
+    ]);
+    expect(opponentState.presentationEvents).toEqual(
+      playerState.presentationEvents
+    );
+    expect(
+      room.store.commandCommits[1]?.eventBatch?.events.map(
+        (event) => event.type
+      )
+    ).toEqual(['CardsDrawn', 'TurnAdvanced', 'TableActionDeclared']);
+
+    opponent.factory.latest().networkDrop();
+    opponentScheduler.runNext();
+    opponent.factory.latest().open();
+    await opponent.factory.flush();
+    expect(opponent.session.getSnapshot().presentationEvents).toEqual([
+      {
+        type: 'TurnStarted',
+        revision: 2,
+        playerId,
+        turnNumber: 1,
+      },
+    ]);
   });
 
   it('recovers a committed-but-undelivered command through exact replay', async () => {

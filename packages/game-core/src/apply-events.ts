@@ -9,9 +9,9 @@ const incrementVisibility = (card: CardInstance): CardInstance => ({
   visibilityGeneration: card.visibilityGeneration + 1,
 });
 
-const sameCardOrder = (
-  left: readonly CardInstanceId[],
-  right: readonly CardInstanceId[]
+const sameCardOrder = <Value>(
+  left: readonly Value[],
+  right: readonly Value[]
 ): boolean =>
   left.length === right.length &&
   left.every((cardId, index) => cardId === right[index]);
@@ -489,6 +489,111 @@ export const applyEvent = (
           [handId]: { ...hand, cardIds: [...hand.cardIds, ...event.cardIds] },
         },
       };
+    }
+    case 'AbilityMarkersReset': {
+      const currentStackIds = Object.values(state.stacks)
+        .filter((stack) => stack.abilityUsed)
+        .map((stack) => stack.id)
+        .sort();
+      const currentCardIds = Object.values(state.cards)
+        .filter((card) => card.abilityUsed)
+        .map((card) => card.id)
+        .sort();
+      if (
+        !sameCardOrder(currentStackIds, [...event.stackIds].sort()) ||
+        !sameCardOrder(currentCardIds, [...event.cardIds].sort())
+      ) {
+        throw new Error('Ability reset event does not match current markers');
+      }
+      const resetStacks = new Set(event.stackIds);
+      const resetCards = new Set(event.cardIds);
+      return {
+        ...state,
+        stacks: Object.fromEntries(
+          Object.entries(state.stacks).map(([stackId, stack]) => [
+            stackId,
+            resetStacks.has(stack.id)
+              ? { ...stack, abilityUsed: false }
+              : stack,
+          ])
+        ),
+        cards: Object.fromEntries(
+          Object.entries(state.cards).map(([cardId, card]) => [
+            cardId,
+            resetCards.has(card.id) ? { ...card, abilityUsed: false } : card,
+          ])
+        ),
+      };
+    }
+    case 'InPlayCardsRevealed': {
+      const currentCardIds = Object.values(state.stacks)
+        .flatMap((stack) => [
+          ...stack.evolutionCardIds,
+          ...stack.attachmentCardIds,
+        ])
+        .filter((cardId) => state.cards[cardId]?.face === 'down')
+        .sort();
+      if (!sameCardOrder(currentCardIds, [...event.cardIds].sort())) {
+        throw new Error('In-play reveal event does not match face-down cards');
+      }
+      const revealed = new Set(event.cardIds);
+      return {
+        ...state,
+        cards: Object.fromEntries(
+          Object.entries(state.cards).map(([cardId, card]) => [
+            cardId,
+            revealed.has(card.id) ? { ...card, face: 'up' as const } : card,
+          ])
+        ),
+      };
+    }
+    case 'TurnAdvanced': {
+      if (
+        state.turn.number !== event.expectedTurnNumber ||
+        state.turn.currentPlayerId !== event.expectedCurrentPlayerId ||
+        event.turnNumber !== event.expectedTurnNumber + 1 ||
+        !Number.isSafeInteger(event.turnNumber) ||
+        !state.players[event.playerId]
+      ) {
+        throw new Error('Turn event does not match current turn state');
+      }
+      return {
+        ...state,
+        turn: {
+          number: event.turnNumber,
+          currentPlayerId: event.playerId,
+        },
+      };
+    }
+    case 'TableActionDeclared': {
+      if (
+        !state.players[event.playerId] ||
+        event.turnNumber !== state.turn.number
+      ) {
+        throw new Error('Table action does not match current match state');
+      }
+      if (
+        (event.action === 'startTurn' && event.outcome === 'declared') ||
+        (event.action !== 'startTurn' && event.outcome !== 'declared')
+      ) {
+        throw new Error('Table action has an invalid outcome');
+      }
+      if (
+        event.action === 'startTurn' &&
+        event.outcome === 'drawn' &&
+        state.turn.currentPlayerId !== event.playerId
+      ) {
+        throw new Error('Started turn does not belong to the declared player');
+      }
+      if (
+        event.action === 'startTurn' &&
+        event.outcome === 'emptyDeck' &&
+        requireZone(state, playerZoneId(event.playerId, 'deck')).cardIds
+          .length !== 0
+      ) {
+        throw new Error('Empty-deck turn action has a non-empty deck');
+      }
+      return state;
     }
     case 'ZoneShuffled': {
       const zone = requireZone(state, event.zoneId);

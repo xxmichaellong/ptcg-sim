@@ -148,6 +148,18 @@ export const WireGameCommandSchema = v.variant('type', [
     count: v.pipe(PositiveIntegerSchema, v.maxValue(200)),
   }),
   v.object({
+    type: v.literal('StartTurn'),
+    targetPlayerId: IdentifierSchema,
+  }),
+  v.object({
+    type: v.literal('DeclareAttack'),
+    targetPlayerId: IdentifierSchema,
+  }),
+  v.object({
+    type: v.literal('PassTurn'),
+    targetPlayerId: IdentifierSchema,
+  }),
+  v.object({
     type: v.literal('MoveZoneContents'),
     sourceZoneId: IdentifierSchema,
     destinationZoneId: IdentifierSchema,
@@ -423,6 +435,38 @@ const WelcomeSchema = v.object({
   snapshot: MatchViewStateSchema,
 });
 
+export const PresentationEventSchema = v.variant('type', [
+  v.object({
+    type: v.literal('CoinFlipped'),
+    revision: RevisionSchema,
+    result: v.picklist(['heads', 'tails'] as const),
+  }),
+  v.object({
+    type: v.literal('TurnStarted'),
+    revision: RevisionSchema,
+    playerId: IdentifierSchema,
+    turnNumber: NonNegativeIntegerSchema,
+  }),
+  v.object({
+    type: v.literal('TurnStartFailedNoDeck'),
+    revision: RevisionSchema,
+    playerId: IdentifierSchema,
+    turnNumber: NonNegativeIntegerSchema,
+  }),
+  v.object({
+    type: v.literal('AttackDeclared'),
+    revision: RevisionSchema,
+    playerId: IdentifierSchema,
+    turnNumber: NonNegativeIntegerSchema,
+  }),
+  v.object({
+    type: v.literal('PassDeclared'),
+    revision: RevisionSchema,
+    playerId: IdentifierSchema,
+    turnNumber: NonNegativeIntegerSchema,
+  }),
+]);
+
 const StatePublicationSchema = v.object({
   type: v.literal('StatePublication'),
   protocolVersion: v.literal(PROTOCOL_VERSION),
@@ -430,15 +474,7 @@ const StatePublicationSchema = v.object({
   executedClientSequence: NonNegativeIntegerSchema,
   snapshot: MatchViewStateSchema,
   presentationEvents: v.optional(
-    v.pipe(
-      v.array(
-        v.object({
-          type: boundedString(64),
-          payload: v.optional(v.unknown()),
-        })
-      ),
-      v.maxLength(100)
-    )
+    v.pipe(v.array(PresentationEventSchema), v.maxLength(100))
   ),
 });
 
@@ -519,6 +555,7 @@ export const ServerMessageSchema = v.variant('type', [
 ]);
 
 export type WireGameCommand = v.InferOutput<typeof WireGameCommandSchema>;
+export type PresentationEvent = v.InferOutput<typeof PresentationEventSchema>;
 export type ClientMessage = v.InferOutput<typeof ClientMessageSchema>;
 export type ServerMessage = v.InferOutput<typeof ServerMessageSchema>;
 export type SerializedMatchViewState = v.InferOutput<

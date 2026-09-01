@@ -64,6 +64,7 @@ const initialState = (): ClientSessionState => ({
   nextClientSequence: 1,
   pendingCommands: [],
   completedCommands: [],
+  presentationEvents: [],
   chatMessages: [],
   presence: [],
   notices: [],
@@ -83,6 +84,13 @@ const appendBounded = <Value>(
   maximum: number
 ): readonly Value[] =>
   maximum === 0 ? [] : [...values, value].slice(-maximum);
+
+const appendManyBounded = <Value>(
+  values: readonly Value[],
+  additions: readonly Value[],
+  maximum: number
+): readonly Value[] =>
+  maximum === 0 ? [] : [...values, ...additions].slice(-maximum);
 
 const validPolicy = (policy: ClientSessionPolicy): ClientSessionPolicy => {
   for (const [key, value] of Object.entries(policy)) {
@@ -423,7 +431,31 @@ export class RemoteGameSession {
     message: Extract<ServerMessage, { type: 'StatePublication' }>
   ): void {
     if (this.state.phase !== 'ready') return;
+    if (
+      message.presentationEvents?.some(
+        (event) => event.revision !== message.snapshot.revision
+      )
+    ) {
+      this.fail({
+        code: 'inconsistent_publication',
+        message: 'Presentation event revision does not match its snapshot',
+      });
+      return;
+    }
+    const previousRevision = this.state.view?.revision ?? -1;
     if (!this.installView(hydrateMatchViewState(message.snapshot))) return;
+    if (
+      message.snapshot.revision > previousRevision &&
+      message.presentationEvents
+    ) {
+      this.updateState({
+        presentationEvents: appendManyBounded(
+          this.state.presentationEvents,
+          message.presentationEvents,
+          this.policy.maximumPresentationEvents
+        ),
+      });
+    }
     if (message.coveringCommandId) {
       const pending = this.pending.find(
         (item) => item.envelope.commandId === message.coveringCommandId

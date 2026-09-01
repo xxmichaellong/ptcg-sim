@@ -313,6 +313,89 @@ describe('RemoteGameSession', () => {
     });
   });
 
+  it('retains bounded typed presentation events without replaying duplicates', () => {
+    const test = setup({ maximumPresentationEvents: 2 });
+    const socket = test.admit();
+    const firstPublication: ServerMessage = {
+      type: 'StatePublication',
+      protocolVersion: PROTOCOL_VERSION,
+      executedClientSequence: 0,
+      snapshot: view(1),
+      presentationEvents: [
+        {
+          type: 'AttackDeclared',
+          revision: 1,
+          playerId: 'blue',
+          turnNumber: 0,
+        },
+      ],
+    };
+    socket.serverMessage(firstPublication);
+    socket.serverMessage(firstPublication);
+    expect(test.session.getSnapshot().presentationEvents).toEqual([
+      firstPublication.presentationEvents![0],
+    ]);
+
+    socket.serverMessage({
+      type: 'StatePublication',
+      protocolVersion: PROTOCOL_VERSION,
+      executedClientSequence: 0,
+      snapshot: view(2),
+      presentationEvents: [
+        {
+          type: 'PassDeclared',
+          revision: 2,
+          playerId: 'red',
+          turnNumber: 0,
+        },
+        {
+          type: 'TurnStarted',
+          revision: 2,
+          playerId: 'blue',
+          turnNumber: 1,
+        },
+      ],
+    });
+    expect(test.session.getSnapshot().presentationEvents).toEqual([
+      {
+        type: 'PassDeclared',
+        revision: 2,
+        playerId: 'red',
+        turnNumber: 0,
+      },
+      {
+        type: 'TurnStarted',
+        revision: 2,
+        playerId: 'blue',
+        turnNumber: 1,
+      },
+    ]);
+  });
+
+  it('fails closed when a presentation event does not cover its snapshot', () => {
+    const test = setup();
+    const socket = test.admit();
+    socket.serverMessage({
+      type: 'StatePublication',
+      protocolVersion: PROTOCOL_VERSION,
+      executedClientSequence: 0,
+      snapshot: view(1),
+      presentationEvents: [
+        {
+          type: 'CoinFlipped',
+          revision: 2,
+          result: 'heads',
+        },
+      ],
+    });
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'failed',
+      view: { revision: 0 },
+      failure: { code: 'inconsistent_publication' },
+    });
+    expect(socket.close).toHaveBeenCalledWith(4400, 'inconsistent_publication');
+  });
+
   it('reconnects with the resume capability and retries the exact envelope', () => {
     const test = setup();
     const firstSocket = test.admit();

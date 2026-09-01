@@ -8,6 +8,7 @@ import {
   PROTOCOL_VERSION,
   serializeMatchViewState,
   type ClientMessage,
+  type PresentationEvent,
   type ServerMessage,
 } from '@ptcgsim/protocol';
 
@@ -95,16 +96,50 @@ const appendOutcome = (
   recentOutcomes: [...session.recentOutcomes, outcome].slice(-maximum),
 });
 
+const presentationEventsForBatch = (batch: EventBatch): PresentationEvent[] =>
+  batch.events.flatMap((event): PresentationEvent[] => {
+    if (event.type === 'CoinFlipped') {
+      return [
+        {
+          type: 'CoinFlipped',
+          revision: batch.revision,
+          result: event.result,
+        },
+      ];
+    }
+    if (event.type !== 'TableActionDeclared') return [];
+    const common = {
+      revision: batch.revision,
+      playerId: event.playerId,
+      turnNumber: event.turnNumber,
+    };
+    if (event.action === 'attack') {
+      return [{ type: 'AttackDeclared', ...common }];
+    }
+    if (event.action === 'pass') {
+      return [{ type: 'PassDeclared', ...common }];
+    }
+    return [
+      {
+        type:
+          event.outcome === 'drawn' ? 'TurnStarted' : 'TurnStartFailedNoDeck',
+        ...common,
+      },
+    ];
+  });
+
 const projectForSessions = (
   snapshot: RoomAuthoritySnapshot,
   dependencies: AuthorityDependencies,
-  coveringCommandId: string
+  coveringCommandId: string,
+  eventBatch: EventBatch
 ): {
   readonly snapshot: RoomAuthoritySnapshot;
   readonly deliveries: readonly AuthorityDelivery[];
 } => {
   let identities = snapshot.identities;
   const deliveries: AuthorityDelivery[] = [];
+  const presentationEvents = presentationEventsForBatch(eventBatch);
   for (const session of Object.values(snapshot.sessions)) {
     if (!session.active) continue;
     const projected = projectRecipient(
@@ -122,6 +157,7 @@ const projectForSessions = (
         coveringCommandId,
         executedClientSequence: session.nextClientSequence - 1,
         snapshot: serializeMatchViewState(projected.snapshot),
+        ...(presentationEvents.length > 0 ? { presentationEvents } : {}),
       },
     });
   }
@@ -193,7 +229,8 @@ export const processAuthorityCommand = async (
     current.identities,
     session,
     envelope.command,
-    dependencies.policy
+    dependencies.policy,
+    envelope.lastSeenRevision
   );
   let nextState: MatchState = current.state;
   let eventBatch: EventBatch | undefined;
@@ -263,10 +300,14 @@ export const processAuthorityCommand = async (
   };
   let publications: readonly AuthorityDelivery[] = [];
   if (accepted) {
+    if (!eventBatch) {
+      throw new Error('Accepted command did not produce an event batch');
+    }
     const projected = projectForSessions(
       candidate,
       dependencies,
-      envelope.commandId
+      envelope.commandId,
+      eventBatch
     );
     candidate = projected.snapshot;
     publications = projected.deliveries;
