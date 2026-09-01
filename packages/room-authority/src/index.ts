@@ -5,3 +5,4 @@ export * from './invariants.js';
 export * from './model.js';
 export * from './process-command.js';
 export * from './resolve-command.js';
+export * from './solo-undo-history.js';

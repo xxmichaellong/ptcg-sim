@@ -20,11 +20,14 @@ import type {
   MatchState,
   PlayStack,
 } from './model.js';
+import { cloneMatchState } from './clone.js';
 import {
   cardSourceSnapshot,
   publicVisibilityFace,
 } from './public-visibility.js';
 import { isCardKnownToViewer } from './projection.js';
+import { soloUndoCheckpointProblem } from './solo-undo.js';
+import { stableHash } from './stable-hash.js';
 
 export interface CommandAccepted {
   readonly accepted: true;
@@ -2317,6 +2320,43 @@ export const decideCommand = (
         playerId: command.playerId,
         marker: command.marker,
         used: command.used,
+      });
+    }
+    case 'ApplySoloUndo': {
+      const actorError = requirePlayer(state, command.actorPlayerId);
+      if (actorError) return actorError;
+      const targetError = requirePlayer(state, command.targetPlayerId);
+      if (targetError) return targetError;
+      if (
+        command.revertedCommandId.length < 1 ||
+        command.revertedCommandId.length > 128 ||
+        !Number.isSafeInteger(command.revertedRevision) ||
+        command.revertedRevision !== command.checkpoint.revision + 1 ||
+        command.revertedRevision > state.revision
+      ) {
+        return reject(
+          'invalid_command',
+          'Reverted command metadata is invalid'
+        );
+      }
+      const checkpointProblem = soloUndoCheckpointProblem(
+        state,
+        command.checkpoint
+      );
+      if (checkpointProblem) {
+        return reject('precondition_failed', checkpointProblem);
+      }
+      const restoredState = cloneMatchState(command.checkpoint);
+      return accept({
+        type: 'UndoApplied',
+        actorPlayerId: command.actorPlayerId,
+        targetPlayerId: command.targetPlayerId,
+        revertedCommandId: command.revertedCommandId,
+        revertedRevision: command.revertedRevision,
+        fromRevision: state.revision,
+        checkpointRevision: restoredState.revision,
+        checkpointHash: stableHash(restoredState),
+        restoredState,
       });
     }
     case 'FlipCoin': {

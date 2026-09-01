@@ -12,8 +12,12 @@ import {
   type ServerMessage,
 } from '@ptcgsim/protocol';
 
-import { projectRecipient } from './identity-registry.js';
+import {
+  emptyProjectionIdentityState,
+  projectRecipient,
+} from './identity-registry.js';
 import { assertAuthoritySnapshotInvariants } from './invariants.js';
+import { MAX_SOLO_UNDO_CHECKPOINTS } from './model.js';
 import type {
   AuthorityDelivery,
   AuthorityDependencies,
@@ -24,6 +28,13 @@ import type {
   RoomAuthoritySnapshot,
 } from './model.js';
 import { resolveWireCommand } from './resolve-command.js';
+import {
+  appendSoloUndoHistory,
+  cloneSoloUndoHistory,
+  emptySoloUndoHistory,
+  materializeSoloUndoCheckpoint,
+  popSoloUndoHistory,
+} from './solo-undo-history.js';
 
 type CommandEnvelope = Extract<ClientMessage, { type: 'Command' }>;
 
@@ -177,6 +188,17 @@ const presentationEventsForBatch = (batch: EventBatch): PresentationEvent[] =>
         },
       ];
     }
+    if (event.type === 'UndoApplied') {
+      return [
+        {
+          type: 'UndoApplied',
+          revision: batch.revision,
+          actorPlayerId: event.actorPlayerId,
+          targetPlayerId: event.targetPlayerId,
+          revertedRevision: event.revertedRevision,
+        },
+      ];
+    }
     if (event.type !== 'TableActionDeclared') return [];
     const common = {
       revision: batch.revision,
@@ -243,6 +265,13 @@ export const processAuthorityCommand = async (
   dependencies: AuthorityDependencies
 ): Promise<AuthorityProcessResult> => {
   assertAuthoritySnapshotInvariants(current);
+  if (
+    !Number.isSafeInteger(dependencies.policy.maximumSoloUndoCheckpoints) ||
+    dependencies.policy.maximumSoloUndoCheckpoints < 1 ||
+    dependencies.policy.maximumSoloUndoCheckpoints > MAX_SOLO_UNDO_CHECKPOINTS
+  ) {
+    throw new Error('Solo undo checkpoint policy is invalid');
+  }
   const session = current.sessions[envelope.sessionId];
   if (!session || !session.active) {
     return immediateRejection(current, envelope, 'session_superseded');
@@ -294,13 +323,22 @@ export const processAuthorityCommand = async (
     return immediateRejection(current, envelope, 'invalid_sequence');
   }
 
+  const undoCheckpoint =
+    current.mode === 'solo' && envelope.command.type === 'ApplySoloUndo'
+      ? materializeSoloUndoCheckpoint(current.soloUndoHistory)
+      : undefined;
+
   const resolution = resolveWireCommand(
     current.state,
     current.identities,
     session,
     envelope.command,
     dependencies.policy,
-    envelope.lastSeenRevision
+    envelope.lastSeenRevision,
+    {
+      mode: current.mode,
+      ...(undoCheckpoint ? { checkpoint: undoCheckpoint } : {}),
+    }
   );
   let nextState: MatchState = current.state;
   let eventBatch: EventBatch | undefined;
@@ -340,6 +378,28 @@ export const processAuthorityCommand = async (
   }
   const accepted = outcome.accepted;
 
+  let soloUndoHistory = cloneSoloUndoHistory(current.soloUndoHistory);
+  if (accepted && current.mode === 'solo') {
+    if (envelope.command.type === 'ApplySoloUndo') {
+      soloUndoHistory = popSoloUndoHistory(soloUndoHistory);
+    } else if (envelope.command.type === 'LoadDeck') {
+      // Loading a new deck replaces canonical card identities and is the same
+      // non-undoable history boundary as the legacy deck exchange.
+      soloUndoHistory = emptySoloUndoHistory();
+    } else {
+      if (!eventBatch) {
+        throw new Error('Accepted solo command did not produce an event batch');
+      }
+      soloUndoHistory = appendSoloUndoHistory(
+        soloUndoHistory,
+        current.state,
+        envelope.commandId,
+        eventBatch,
+        dependencies.policy.maximumSoloUndoCheckpoints
+      );
+    }
+  }
+
   const sessions = Object.fromEntries(
     Object.entries(current.sessions).map(([id, value]) => [
       id,
@@ -354,17 +414,22 @@ export const processAuthorityCommand = async (
   let candidate: RoomAuthoritySnapshot = {
     schemaVersion: current.schemaVersion,
     authorityVersion: current.authorityVersion + 1,
+    mode: current.mode,
     state: accepted
       ? cloneMatchState(nextState)
       : cloneMatchState(current.state),
-    identities: {
-      cardAliases: current.identities.cardAliases.map((entry) => ({
-        ...entry,
-      })),
-      definitionAliases: current.identities.definitionAliases.map((entry) => ({
-        ...entry,
-      })),
-    },
+    soloUndoHistory,
+    identities:
+      accepted && envelope.command.type === 'ApplySoloUndo'
+        ? emptyProjectionIdentityState()
+        : {
+            cardAliases: current.identities.cardAliases.map((entry) => ({
+              ...entry,
+            })),
+            definitionAliases: current.identities.definitionAliases.map(
+              (entry) => ({ ...entry })
+            ),
+          },
     sessions,
     ...(current.admission ? { admission: current.admission } : {}),
   };

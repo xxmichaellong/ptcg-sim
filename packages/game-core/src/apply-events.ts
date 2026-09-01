@@ -1,4 +1,5 @@
 import { playerZoneId } from './create-match.js';
+import { cloneMatchState } from './clone.js';
 import type { DomainEvent, EventBatch } from './events.js';
 import type { CardInstanceId, PlayerId, StackId } from './ids.js';
 import {
@@ -12,6 +13,8 @@ import {
   publicVisibilityFace,
 } from './public-visibility.js';
 import { isCardKnownToViewer } from './projection.js';
+import { soloUndoCheckpointProblem } from './solo-undo.js';
+import { stableHash } from './stable-hash.js';
 
 const incrementVisibility = (card: CardInstance): CardInstance => ({
   ...card,
@@ -2216,6 +2219,32 @@ export const applyEvent = (
         },
       };
     }
+    case 'UndoApplied': {
+      if (
+        event.fromRevision !== state.revision ||
+        event.checkpointRevision !== event.restoredState.revision ||
+        stableHash(event.restoredState) !== event.checkpointHash ||
+        event.revertedCommandId.length < 1 ||
+        event.revertedCommandId.length > 128 ||
+        !Number.isSafeInteger(event.revertedRevision) ||
+        event.revertedRevision !== event.checkpointRevision + 1 ||
+        event.revertedRevision > event.fromRevision ||
+        !state.players[event.actorPlayerId] ||
+        !state.players[event.targetPlayerId] ||
+        !event.restoredState.players[event.actorPlayerId] ||
+        !event.restoredState.players[event.targetPlayerId] ||
+        soloUndoCheckpointProblem(state, event.restoredState)
+      ) {
+        throw new Error('Undo event is malformed');
+      }
+      return {
+        ...cloneMatchState(event.restoredState),
+        // applyEventBatch owns the public monotonic revision. Keeping the
+        // current value here ensures the next event in a malformed multi-event
+        // batch cannot observe an old checkpoint revision.
+        revision: state.revision,
+      };
+    }
     case 'CoinFlipped':
       return state;
   }
@@ -2255,6 +2284,12 @@ export const applyEventBatch = (
     throw new Error(
       `Expected revision ${state.revision + 1}, received ${batch.revision}`
     );
+  }
+  if (
+    batch.events.some((event) => event.type === 'UndoApplied') &&
+    (batch.events.length !== 1 || batch.events[0]?.type !== 'UndoApplied')
+  ) {
+    throw new Error('Undo event must be the only event in its batch');
   }
   let next = state;
   for (const event of batch.events) {

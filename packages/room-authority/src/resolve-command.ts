@@ -18,7 +18,12 @@ import {
   resolveViewCard,
   type ProjectionIdentityState,
 } from './identity-registry.js';
-import type { AuthorityPolicy, AuthoritySession } from './model.js';
+import type {
+  AuthorityMode,
+  AuthorityPolicy,
+  AuthoritySession,
+  SoloUndoCheckpoint,
+} from './model.js';
 
 export type CommandResolution =
   | { readonly accepted: true; readonly command: GameCommand }
@@ -70,7 +75,11 @@ export const resolveWireCommand = (
   session: AuthoritySession,
   wire: WireGameCommand,
   policy: AuthorityPolicy,
-  observedRevision: number = state.revision
+  observedRevision: number = state.revision,
+  undoContext: {
+    readonly mode: AuthorityMode;
+    readonly checkpoint?: SoloUndoCheckpoint;
+  } = { mode: 'multiplayer' }
 ): CommandResolution => {
   if (session.viewer.kind !== 'player') return rejected('unauthorized');
   const actorId = session.viewer.playerId;
@@ -82,6 +91,7 @@ export const resolveWireCommand = (
       wire.type === 'SetupPlayer' ||
       wire.type === 'ResetPlayer' ||
       wire.type === 'LoadDeck' ||
+      wire.type === 'ApplySoloUndo' ||
       wire.type === 'SetPublicReveal' ||
       wire.type === 'SetZonePublicReveal' ||
       wire.type === 'BeginZoneInspection' ||
@@ -955,6 +965,23 @@ export const resolveWireCommand = (
           playerId: targetPlayerId,
           marker: wire.marker,
           used: wire.used,
+        },
+      };
+    }
+    case 'ApplySoloUndo': {
+      if (undoContext.mode !== 'solo') return rejected('unauthorized');
+      const targetPlayerId = asPlayerId(wire.targetPlayerId);
+      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (!undoContext.checkpoint) return rejected('precondition_failed');
+      return {
+        accepted: true,
+        command: {
+          type: 'ApplySoloUndo',
+          actorPlayerId: actorId,
+          targetPlayerId,
+          revertedCommandId: undoContext.checkpoint.revertedCommandId,
+          revertedRevision: undoContext.checkpoint.revertedRevision,
+          checkpoint: undoContext.checkpoint.state,
         },
       };
     }

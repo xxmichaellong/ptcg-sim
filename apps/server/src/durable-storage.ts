@@ -1,4 +1,5 @@
 import {
+  AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
   assertAuthoritySnapshotInvariants,
   type AdmissionPersistence,
   type AuthoritySnapshotStore,
@@ -10,7 +11,8 @@ import {
 export const AUTHORITY_SNAPSHOT_STORAGE_KEY = 'authority:snapshot';
 const JOURNAL_PREFIX = 'authority:journal:';
 const ADMISSION_JOURNAL_PREFIX = 'authority:admission:';
-const STORAGE_FORMAT = 'ptcgsim-room-authority-v1';
+const LEGACY_STORAGE_FORMAT = 'ptcgsim-room-authority-v1';
+const STORAGE_FORMAT = 'ptcgsim-room-authority-v2';
 
 export interface DurableStorageTransactionLike {
   readonly get: <Value>(key: string) => Promise<Value | undefined>;
@@ -25,7 +27,7 @@ export interface DurableStorageLike {
 }
 
 interface StoredAuthoritySnapshot {
-  readonly format: typeof STORAGE_FORMAT;
+  readonly format: typeof STORAGE_FORMAT | typeof LEGACY_STORAGE_FORMAT;
   readonly snapshot: RoomAuthoritySnapshot;
 }
 
@@ -70,9 +72,32 @@ export class RoomAlreadyInitializedError extends Error {
 const isStoredSnapshot = (value: unknown): value is StoredAuthoritySnapshot =>
   typeof value === 'object' &&
   value !== null &&
-  Reflect.get(value, 'format') === STORAGE_FORMAT &&
+  (Reflect.get(value, 'format') === STORAGE_FORMAT ||
+    Reflect.get(value, 'format') === LEGACY_STORAGE_FORMAT) &&
   typeof Reflect.get(value, 'snapshot') === 'object' &&
   Reflect.get(value, 'snapshot') !== null;
+
+const migrateLegacySnapshot = (value: unknown): RoomAuthoritySnapshot => {
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    Reflect.get(value, 'schemaVersion') !== 1
+  ) {
+    throw new Error('Stored room snapshot has an unsupported schema');
+  }
+  const candidate = {
+    ...(value as Omit<RoomAuthoritySnapshot, 'schemaVersion'>),
+    schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+    mode: 'multiplayer',
+    soloUndoHistory: {
+      baseState: null,
+      baseStateHash: null,
+      entries: [],
+    },
+  } satisfies RoomAuthoritySnapshot;
+  assertAuthoritySnapshotInvariants(candidate);
+  return candidate;
+};
 
 const readStoredSnapshot = (
   value: unknown
@@ -80,6 +105,9 @@ const readStoredSnapshot = (
   if (value === undefined) return undefined;
   if (!isStoredSnapshot(value)) {
     throw new Error('Stored room snapshot has an unsupported envelope');
+  }
+  if (value.format === LEGACY_STORAGE_FORMAT) {
+    return migrateLegacySnapshot(value.snapshot);
   }
   assertAuthoritySnapshotInvariants(value.snapshot);
   return value.snapshot;

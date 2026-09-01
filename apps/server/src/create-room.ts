@@ -84,6 +84,7 @@ export const initializeNewRoom = async (
   const snapshot: RoomAuthoritySnapshot = {
     schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
     authorityVersion: 0,
+    mode: 'multiplayer',
     state: createEmptyMatch(asMatchId(input.matchId), [
       {
         playerId: playerOneId,
@@ -96,6 +97,11 @@ export const initializeNewRoom = async (
         cardBackUrl: input.playerTwoCardBackUrl,
       },
     ]),
+    soloUndoHistory: {
+      baseState: null,
+      baseStateHash: null,
+      entries: [],
+    },
     identities: emptyProjectionIdentityState(),
     sessions: {},
     admission: createRoomAdmissionState({

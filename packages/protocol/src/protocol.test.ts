@@ -403,6 +403,38 @@ describe('client protocol ingress', () => {
     }
   });
 
+  it('accepts selector-free solo undo intent and rejects injected history', () => {
+    const base = {
+      type: 'Command',
+      protocolVersion: PROTOCOL_VERSION,
+      sessionId: 'session',
+      clientSequence: 1,
+      commandId: 'undo-command',
+      lastSeenRevision: 4,
+    } as const;
+    expect(
+      parseClientFrame(
+        JSON.stringify({
+          ...base,
+          command: { type: 'ApplySoloUndo', targetPlayerId: 'player-one' },
+        })
+      ).ok
+    ).toBe(true);
+    for (const command of [
+      { type: 'ApplySoloUndo' },
+      { type: 'ApplySoloUndo', targetPlayerId: '' },
+      {
+        type: 'ApplySoloUndo',
+        targetPlayerId: 'player-one',
+        checkpointRevision: 2,
+      },
+    ]) {
+      expect(parseClientFrame(JSON.stringify({ ...base, command })).ok).toBe(
+        false
+      );
+    }
+  });
+
   it('bounds semantic loose-board batch commands', () => {
     const parseCommand = (command: unknown) =>
       parseClientFrame(

@@ -305,6 +305,10 @@ export const WireGameCommandSchema = v.variant('type', [
     marker: v.picklist(['gx', 'vstar'] as const),
     used: v.boolean(),
   }),
+  v.strictObject({
+    type: v.literal('ApplySoloUndo'),
+    targetPlayerId: IdentifierSchema,
+  }),
   v.object({ type: v.literal('FlipCoin') }),
 ]);
 
@@ -569,6 +573,13 @@ export const PresentationEventSchema = v.variant('type', [
     sourcePlayerId: IdentifierSchema,
     viewerPlayerId: IdentifierSchema,
     cardCount: PositiveIntegerSchema,
+  }),
+  v.object({
+    type: v.literal('UndoApplied'),
+    revision: RevisionSchema,
+    actorPlayerId: IdentifierSchema,
+    targetPlayerId: IdentifierSchema,
+    revertedRevision: RevisionSchema,
   }),
 ]);
 

@@ -14,6 +14,7 @@ import type {
   PlaySlot,
   QuarterTurns,
   SpecialCondition,
+  MatchState,
 } from './model.js';
 
 export interface DeckEntry {
@@ -282,6 +283,14 @@ export type GameCommand =
       readonly playerId: PlayerId;
       readonly marker: 'gx' | 'vstar';
       readonly used: boolean;
+    }
+  | {
+      readonly type: 'ApplySoloUndo';
+      readonly actorPlayerId: PlayerId;
+      readonly targetPlayerId: PlayerId;
+      readonly revertedCommandId: string;
+      readonly revertedRevision: number;
+      readonly checkpoint: MatchState;
     }
   | { readonly type: 'FlipCoin' };
 

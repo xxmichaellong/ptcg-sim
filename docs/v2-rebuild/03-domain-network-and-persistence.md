@@ -440,8 +440,30 @@ secrets that were not public at that revision.
 Solo undo is a new authoritative transition with a monotonically increasing
 revision: it restores the prior approved logical checkpoint, records
 `UndoApplied`, and publishes the resulting view. Audit history is not deleted.
-The effect on hidden random outcomes must match characterized v1 behavior or be
-an approved integrity exception. Multiplayer undo is not added by this rebuild.
+The v2 authority snapshot records an explicit `solo` or `multiplayer` mode; live
+connection count is never used to infer permission. Authority schema v2 stores
+one hashed base state plus a bounded active-branch tail of resolved event
+batches. It reconstructs the selected checkpoint inside the trusted boundary,
+then persists the exact restored canonical state in the resolved undo event so
+ordinary event replay remains self-contained. The event must be alone in its
+batch. The client supplies only the announcement target and cannot select or
+upload history.
+
+The tail contains at most 128 entries by default and advances its base through
+the oldest resolved event when compacted. Deck replacement and first-time seat
+metadata mutation clear it; rejected commands and undo itself never create a
+new checkpoint. Random decisions are therefore restored exactly and are never
+rerun. Undo rotates every projection alias before publication to prevent
+correlation with a discarded hidden branch. Audit history is not deleted,
+reconnect restores the new branch without replaying the presentation fact, and
+multiplayer undo is not added by this rebuild. Stored authority-v1 rooms migrate
+explicitly to multiplayer schema v2 with empty solo history.
+
+The provisional command order is whole-match authority order, not v1's two
+independent client action arrays. This avoids replaying one seat's JavaScript
+side effects over later shared-state changes. The target player remains only a
+presentation/announcement field. ADR-014 keeps this narrow interleaved-history
+difference visible for product parity ratification.
 
 ## Legacy conversion
 

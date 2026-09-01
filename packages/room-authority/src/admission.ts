@@ -2,6 +2,7 @@ import type { MatchViewState, PlayerId } from '@ptcgsim/game-core';
 
 import { projectRecipient, type OpaqueIdSource } from './identity-registry.js';
 import { assertAuthoritySnapshotInvariants } from './invariants.js';
+import { emptySoloUndoHistory } from './solo-undo-history.js';
 import type {
   AdmissionPersistence,
   AuthoritySession,
@@ -254,6 +255,12 @@ export const admitRoomSession = async (
     ...current,
     authorityVersion: current.authorityVersion + 1,
     state,
+    // A first-time seat claim changes canonical player metadata outside the
+    // gameplay revision stream, so older whole-state checkpoints cannot be
+    // restored safely across that boundary.
+    soloUndoHistory: claimedPlayerId
+      ? emptySoloUndoHistory()
+      : current.soloUndoHistory,
     sessions,
     admission,
   };

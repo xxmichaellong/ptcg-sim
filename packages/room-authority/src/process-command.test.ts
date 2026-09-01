@@ -31,6 +31,7 @@ type CommandEnvelope = Extract<ClientMessage, { type: 'Command' }>;
 const createSnapshot = (): RoomAuthoritySnapshot => ({
   schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
   authorityVersion: 0,
+  mode: 'multiplayer',
   state: createEmptyMatch(asMatchId('authority-test-match'), [
     {
       playerId: p1,
@@ -43,6 +44,7 @@ const createSnapshot = (): RoomAuthoritySnapshot => ({
       cardBackUrl: '/cardback-red.png',
     },
   ]),
+  soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
   identities: emptyProjectionIdentityState(),
   admission: createRoomAdmissionState({
     playerIds: [p1, p2],
@@ -855,6 +857,295 @@ describe('authoritative room command transaction', () => {
       accepted: false,
       code: 'stale_reference',
     });
+  });
+
+  it('applies bounded stackable solo checkpoints without replaying randomness', async () => {
+    const persistence = createPersistence();
+    const dependencies = createDependencies(persistence);
+    const solo = { ...createSnapshot(), mode: 'solo' as const };
+    const loaded = await processAuthorityCommand(
+      solo,
+      loadDeck(),
+      dependencies
+    );
+    expect(loaded.snapshot.soloUndoHistory).toEqual({
+      baseState: null,
+      baseStateHash: null,
+      entries: [],
+    });
+
+    const setup = await processAuthorityCommand(
+      loaded.snapshot,
+      command(
+        'session-player-one',
+        2,
+        'setup-for-undo',
+        { type: 'SetupPlayer' },
+        1
+      ),
+      dependencies
+    );
+    expect(setup.snapshot.soloUndoHistory.entries).toHaveLength(1);
+    const setupState = setup.snapshot.state;
+    const handId = playerZoneId(p1, 'hand');
+    const setupOpponentPublication = setup.deliveries.find(
+      (delivery) =>
+        delivery.sessionId === 'session-player-two' &&
+        delivery.message.type === 'StatePublication'
+    );
+    if (setupOpponentPublication?.message.type !== 'StatePublication') {
+      throw new Error('missing pre-undo opponent publication');
+    }
+    const setupAliases = setupOpponentPublication.message.snapshot.zones[
+      handId
+    ]!.cards.map((card) => card.id);
+
+    const played = await processAuthorityCommand(
+      setup.snapshot,
+      command(
+        'session-player-one',
+        3,
+        'random-command-to-undo',
+        { type: 'PlayRandomCardFaceDown', targetPlayerId: p1 },
+        2
+      ),
+      dependencies
+    );
+    expect(played.snapshot.soloUndoHistory.entries).toHaveLength(2);
+
+    const undone = await processAuthorityCommand(
+      played.snapshot,
+      command(
+        'session-player-one',
+        4,
+        'first-undo-command',
+        { type: 'ApplySoloUndo', targetPlayerId: p1 },
+        3
+      ),
+      dependencies
+    );
+    expect(undone.snapshot.state).toEqual({ ...setupState, revision: 4 });
+    expect(undone.snapshot.soloUndoHistory.entries).toHaveLength(1);
+    expect(persistence.transactions.at(-1)?.eventBatch?.events).toEqual([
+      expect.objectContaining({
+        type: 'UndoApplied',
+        actorPlayerId: p1,
+        targetPlayerId: p1,
+        revertedCommandId: 'random-command-to-undo',
+        revertedRevision: 3,
+        fromRevision: 3,
+        checkpointRevision: 2,
+      }),
+    ]);
+    const undoPublications = undone.deliveries.filter(
+      (delivery) => delivery.message.type === 'StatePublication'
+    );
+    expect(undoPublications).toHaveLength(3);
+    for (const delivery of undoPublications) {
+      if (delivery.message.type !== 'StatePublication') continue;
+      expect(delivery.message.presentationEvents).toEqual([
+        {
+          type: 'UndoApplied',
+          revision: 4,
+          actorPlayerId: p1,
+          targetPlayerId: p1,
+          revertedRevision: 3,
+        },
+      ]);
+      expect(JSON.stringify(delivery.message)).not.toContain('canonical-card-');
+      expect(JSON.stringify(delivery.message)).not.toContain(
+        'secret-definition-'
+      );
+    }
+    const undoOpponentPublication = undoPublications.find(
+      (delivery) => delivery.sessionId === 'session-player-two'
+    );
+    if (undoOpponentPublication?.message.type !== 'StatePublication') {
+      throw new Error('missing post-undo opponent publication');
+    }
+    const undoAliases = undoOpponentPublication.message.snapshot.zones[
+      handId
+    ]!.cards.map((card) => card.id);
+    expect(undoAliases).toHaveLength(7);
+    expect(undoAliases.every((alias) => !setupAliases.includes(alias))).toBe(
+      true
+    );
+
+    const branched = await processAuthorityCommand(
+      undone.snapshot,
+      command(
+        'session-player-one',
+        5,
+        'branched-marker-command',
+        {
+          type: 'SetOncePerGameMarker',
+          targetPlayerId: p1,
+          marker: 'gx',
+          used: true,
+        },
+        4
+      ),
+      dependencies
+    );
+    expect(branched.snapshot.state.players[p1]?.oncePerGame.gxUsed).toBe(true);
+    expect(branched.snapshot.soloUndoHistory.entries).toHaveLength(2);
+
+    const branchUndo = await processAuthorityCommand(
+      branched.snapshot,
+      command(
+        'session-player-one',
+        6,
+        'branch-undo-command',
+        { type: 'ApplySoloUndo', targetPlayerId: p1 },
+        5
+      ),
+      dependencies
+    );
+    expect(branchUndo.snapshot.state.players[p1]?.oncePerGame.gxUsed).toBe(
+      false
+    );
+    expect(branchUndo.snapshot.soloUndoHistory.entries).toHaveLength(1);
+
+    const secondUndo = await processAuthorityCommand(
+      branchUndo.snapshot,
+      command(
+        'session-player-one',
+        7,
+        'second-undo-command',
+        { type: 'ApplySoloUndo', targetPlayerId: p2 },
+        6
+      ),
+      dependencies
+    );
+    expect(secondUndo.snapshot.state.revision).toBe(7);
+    expect(secondUndo.snapshot.soloUndoHistory.entries).toEqual([]);
+    expect(secondUndo.snapshot.state.zones[handId]?.cardIds).toEqual([]);
+
+    const emptyUndo = await processAuthorityCommand(
+      secondUndo.snapshot,
+      command(
+        'session-player-one',
+        8,
+        'empty-undo-command',
+        { type: 'ApplySoloUndo', targetPlayerId: p1 },
+        7
+      ),
+      dependencies
+    );
+    expect(emptyUndo.snapshot.state.revision).toBe(7);
+    expect(emptyUndo.deliveries.at(-1)?.message).toMatchObject({
+      type: 'CommandResult',
+      accepted: false,
+      code: 'precondition_failed',
+    });
+  });
+
+  it('rejects undo through the multiplayer authority transaction', async () => {
+    const persistence = createPersistence();
+    const result = await processAuthorityCommand(
+      createSnapshot(),
+      command('session-player-one', 1, 'multiplayer-undo-command', {
+        type: 'ApplySoloUndo',
+        targetPlayerId: p1,
+      }),
+      createDependencies(persistence)
+    );
+    expect(result.snapshot.state.revision).toBe(0);
+    expect(result.deliveries.at(-1)?.message).toMatchObject({
+      type: 'CommandResult',
+      accepted: false,
+      code: 'unauthorized',
+    });
+    expect(persistence.transactions[0]?.eventBatch).toBeUndefined();
+  });
+
+  it('retains only the configured suffix of solo checkpoints', async () => {
+    const persistence = createPersistence();
+    const base = createDependencies(persistence);
+    const dependencies = {
+      ...base,
+      policy: { ...base.policy, maximumSoloUndoCheckpoints: 2 },
+    };
+    let current = { ...createSnapshot(), mode: 'solo' as const };
+    const markerCommands = [
+      {
+        type: 'SetOncePerGameMarker' as const,
+        targetPlayerId: p1,
+        marker: 'gx' as const,
+        used: true,
+      },
+      {
+        type: 'SetOncePerGameMarker' as const,
+        targetPlayerId: p2,
+        marker: 'gx' as const,
+        used: true,
+      },
+      {
+        type: 'SetOncePerGameMarker' as const,
+        targetPlayerId: p1,
+        marker: 'vstar' as const,
+        used: true,
+      },
+    ];
+    for (let sequence = 1; sequence <= markerCommands.length; sequence += 1) {
+      const result = await processAuthorityCommand(
+        current,
+        command(
+          'session-player-one',
+          sequence,
+          `bounded-command-${sequence}`,
+          markerCommands[sequence - 1]!,
+          sequence - 1
+        ),
+        dependencies
+      );
+      current = result.snapshot;
+    }
+    expect(
+      current.soloUndoHistory.entries.map(
+        (checkpoint) => checkpoint.revertedCommandId
+      )
+    ).toEqual(['bounded-command-2', 'bounded-command-3']);
+    expect(
+      current.soloUndoHistory.entries.map(
+        (checkpoint) => checkpoint.checkpointRevision
+      )
+    ).toEqual([1, 2]);
+
+    const firstUndo = await processAuthorityCommand(
+      current,
+      command(
+        'session-player-one',
+        4,
+        'bounded-undo-1',
+        { type: 'ApplySoloUndo', targetPlayerId: p1 },
+        3
+      ),
+      dependencies
+    );
+    expect(firstUndo.snapshot.state.players[p1]?.oncePerGame).toEqual({
+      gxUsed: true,
+      vstarUsed: false,
+    });
+    expect(firstUndo.snapshot.state.players[p2]?.oncePerGame.gxUsed).toBe(true);
+
+    const secondUndo = await processAuthorityCommand(
+      firstUndo.snapshot,
+      command(
+        'session-player-one',
+        5,
+        'bounded-undo-2',
+        { type: 'ApplySoloUndo', targetPlayerId: p2 },
+        4
+      ),
+      dependencies
+    );
+    expect(secondUndo.snapshot.state.players[p1]?.oncePerGame.gxUsed).toBe(
+      true
+    );
+    expect(secondUndo.snapshot.state.players[p2]?.oncePerGame.gxUsed).toBe(
+      false
+    );
   });
 
   it('rejects gaps and command-id reuse without consuming sequence', async () => {

@@ -291,8 +291,8 @@ Work:
   integrity verification.
 - Implement high-entropy share/save capabilities, TTL/limits/revocation, and
   encrypted/server-hosted multiplayer continuation policy.
-- Implement projected replay, authoritative undo checkpoints, and download/import
-  formats.
+- Integrate the implemented authoritative solo undo checkpoint/event-tail
+  foundation with projected replay and download/import formats.
 - Expose v1 conversion through an isolated upload/import transaction.
 - Add storage migration rehearsal, corrupt/truncated data recovery, quotas, and
   cleanup jobs.

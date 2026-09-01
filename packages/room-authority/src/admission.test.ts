@@ -31,10 +31,12 @@ const digest = (capability: string): string => {
 const createSnapshot = (): RoomAuthoritySnapshot => ({
   schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
   authorityVersion: 0,
+  mode: 'multiplayer',
   state: createEmptyMatch(asMatchId('admission-match'), [
     { playerId: p1, displayName: 'Player 1', cardBackUrl: '/blue.png' },
     { playerId: p2, displayName: 'Player 2', cardBackUrl: '/red.png' },
   ]),
+  soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
   identities: emptyProjectionIdentityState(),
   sessions: {},
   admission: createRoomAdmissionState({

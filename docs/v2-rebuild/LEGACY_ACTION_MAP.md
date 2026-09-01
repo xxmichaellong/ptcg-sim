@@ -83,11 +83,11 @@ a hard-to-find behavior. Proposed names are not final APIs.
 
 ## Timeline and history
 
-| v1 action | Proposed v2 responsibility                                     | Critical characterization                                                                         |
-| --------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `attack`  | Atomic `DeclareAttack` plus safe timeline event                | Reset all ability markers, discard the acting loose board, preserve turn/faces, announcement      |
-| `pass`    | Atomic `PassTurn` plus safe timeline event                     | Reset all ability markers, discard the acting loose board, preserve turn/faces, announcement      |
-| `undo`    | Solo `ApplySoloUndo` to previous checkpoint plus `UndoApplied` | Stackable solo-only UX, reset/setup boundary, replay mode, log text, hidden random outcome policy |
+| v1 action | Proposed v2 responsibility                                     | Critical characterization                                                                                                     |
+| --------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `attack`  | Atomic `DeclareAttack` plus safe timeline event                | Reset all ability markers, discard the acting loose board, preserve turn/faces, announcement                                  |
+| `pass`    | Atomic `PassTurn` plus safe timeline event                     | Reset all ability markers, discard the acting loose board, preserve turn/faces, announcement                                  |
+| `undo`    | Solo `ApplySoloUndo` to previous checkpoint plus `UndoApplied` | Implemented bounded stackable solo-only history; deck-load boundary; exact resolved randomness; unchanged announcement target |
 
 ## Mapping rules
 
@@ -391,3 +391,48 @@ card data. It is delivered once, survives as state across reconnect, and is not
 replayed as a new presentation signal. A UI-neutral resolver maps the existing
 hand-menu button to this command without changing its label, placement, or
 interaction.
+
+### Implemented solo undo subset
+
+The existing solo Undo control now maps to strict `ApplySoloUndo` intent that
+contains only the target player used by the unchanged announcement. The
+authenticated session supplies the actor, the client cannot select a revision,
+checkpoint, event, or random result, and the authority requires the exact
+current revision. An explicit persisted `solo`/`multiplayer` authority mode is
+the permission boundary; a multiplayer authority rejects the command even when
+only one player happens to be connected.
+
+Solo history is a bounded checkpoint plus resolved-event tail rather than v1's
+growing arrays of executable action names and positional parameters. The
+authority retains one canonical base state and at most 128 active-branch event
+batches. Each entry records the exact pre-command revision/hash, resolved
+events, command ID, and resulting revision. Trimming advances the base through
+the oldest resolved event, so retained depth stays bounded without storing 128
+complete match snapshots. `LoadDeck` and first-time seat metadata changes clear
+history because they replace identities or mutate state outside the gameplay
+revision stream; setup, reset, and ordinary accepted commands remain undoable.
+
+Undo materializes the last approved checkpoint by replaying persisted resolved
+events, verifies every hash/precondition, pops that branch entry, and applies a
+single durable `UndoApplied` event in a new monotonically increasing revision.
+It never re-executes a command or invokes randomness, and the prior command and
+undo event both remain in the audit journal. Empty history is a safe typed
+rejection. Stackable undo after branch changes and after bounded-tail compaction
+is covered by authority tests.
+
+Because undo can return to a pre-shuffle or pre-concealment generation, the
+authority discards all recipient alias registries before projecting the restored
+state. Every active recipient receives a fresh safe view, while reconnect keeps
+the new branch's aliases stable and does not replay the announcement. No card
+identity, definition, name, image URL, hidden order, checkpoint, or history
+depth appears in the wire command or `UndoApplied` presentation fact. No label,
+layout, shortcut, or visible interaction changed in this slice.
+
+V1 kept separate `selfActionData` and `oppActionData` arrays even though many
+entries could mutate shared or opposite-seat state. Replaying one lane after
+interleaved moves can therefore erase or repeat unrelated shared effects. The
+provisional v2 integrity rule defines “last move” as the most recent accepted
+canonical whole-match command. `targetPlayerId` preserves the current
+bottom-seat announcement; it does not select an independent history lane. This
+rare interleaved/flip-board distinction is recorded under ADR-014 for parity
+review rather than hidden in implementation code.

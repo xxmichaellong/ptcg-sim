@@ -13,6 +13,7 @@ import type {
   PlaySlot,
   QuarterTurns,
   SpecialCondition,
+  MatchState,
 } from './model.js';
 import type {
   LooseBoardCardsDestination,
@@ -333,6 +334,17 @@ export type DomainEvent =
       readonly playerId: PlayerId;
       readonly marker: 'gx' | 'vstar';
       readonly used: boolean;
+    }
+  | {
+      readonly type: 'UndoApplied';
+      readonly actorPlayerId: PlayerId;
+      readonly targetPlayerId: PlayerId;
+      readonly revertedCommandId: string;
+      readonly revertedRevision: number;
+      readonly fromRevision: number;
+      readonly checkpointRevision: number;
+      readonly checkpointHash: string;
+      readonly restoredState: MatchState;
     }
   | { readonly type: 'CoinFlipped'; readonly result: 'heads' | 'tails' };
 

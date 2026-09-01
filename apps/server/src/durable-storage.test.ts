@@ -62,10 +62,12 @@ const p2 = asPlayerId('player-two');
 const initialSnapshot = (): RoomAuthoritySnapshot => ({
   schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
   authorityVersion: 0,
+  mode: 'multiplayer',
   state: createEmptyMatch(asMatchId('durable-room'), [
     { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
     { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
   ]),
+  soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
   identities: emptyProjectionIdentityState(),
   sessions: {
     session: {
@@ -122,6 +124,30 @@ describe('Durable Object authority snapshot store', () => {
     await expect(store.initialize(initial)).rejects.toBeInstanceOf(
       RoomAlreadyInitializedError
     );
+  });
+
+  it('migrates v1 snapshots to explicit multiplayer mode without undo history', async () => {
+    const storage = new MemoryDurableStorage();
+    const {
+      mode: _mode,
+      soloUndoHistory: _history,
+      ...legacy
+    } = initialSnapshot();
+    storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
+      format: 'ptcgsim-room-authority-v1',
+      snapshot: { ...legacy, schemaVersion: 1 },
+    });
+
+    const restored = await new DurableRoomSnapshotStore(storage).load();
+    expect(restored).toMatchObject({
+      schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+      mode: 'multiplayer',
+      soloUndoHistory: {
+        baseState: null,
+        baseStateHash: null,
+        entries: [],
+      },
+    });
   });
 
   it('atomically writes the snapshot and resolved journal record', async () => {

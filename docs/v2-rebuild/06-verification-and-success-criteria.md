@@ -81,6 +81,12 @@ Release requires all of the following:
 10. Property suites cover at least 1,000 deterministic seeds with mixed valid and
     invalid command sequences before release; failures persist their seed as a
     regression fixture.
+11. Solo undo restores the last retained resolved checkpoint without invoking
+    randomness, advances revision, keeps the reverted audit event, and remains
+    forbidden in explicit multiplayer mode.
+12. Undo after a hidden/random action rotates discarded-branch handles for every
+    recipient; reconnect preserves only the restored branch and does not replay
+    the presentation fact.
 
 ## Privacy and security gates
 

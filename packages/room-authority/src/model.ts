@@ -1,5 +1,6 @@
 import type {
   CommandContext,
+  DomainEvent,
   EventBatch,
   MatchState,
   PlayerId,
@@ -12,7 +13,10 @@ import type {
   ProjectionIdentityState,
 } from './identity-registry.js';
 
-export const AUTHORITY_SNAPSHOT_SCHEMA_VERSION = 1 as const;
+export const AUTHORITY_SNAPSHOT_SCHEMA_VERSION = 2 as const;
+export const MAX_SOLO_UNDO_CHECKPOINTS = 128;
+
+export type AuthorityMode = 'solo' | 'multiplayer';
 
 export type AuthorityRejectionCode =
   | 'invalid_message'
@@ -57,10 +61,33 @@ export interface RoomAdmissionState {
 export interface RoomAuthoritySnapshot {
   readonly schemaVersion: typeof AUTHORITY_SNAPSHOT_SCHEMA_VERSION;
   readonly authorityVersion: number;
+  readonly mode: AuthorityMode;
   readonly state: MatchState;
+  readonly soloUndoHistory: SoloUndoHistory;
   readonly identities: ProjectionIdentityState;
   readonly sessions: Readonly<Record<string, AuthoritySession>>;
   readonly admission?: RoomAdmissionState;
+}
+
+export interface SoloUndoCheckpoint {
+  readonly state: MatchState;
+  readonly stateHash: string;
+  readonly revertedCommandId: string;
+  readonly revertedRevision: number;
+}
+
+export interface SoloUndoHistoryEntry {
+  readonly checkpointRevision: number;
+  readonly checkpointHash: string;
+  readonly revertedCommandId: string;
+  readonly revertedRevision: number;
+  readonly events: readonly DomainEvent[];
+}
+
+export interface SoloUndoHistory {
+  readonly baseState: MatchState | null;
+  readonly baseStateHash: string | null;
+  readonly entries: readonly SoloUndoHistoryEntry[];
 }
 
 export interface PersistedAuthorityTransaction {
@@ -98,6 +125,7 @@ export interface AdmissionPersistence {
 export interface AuthorityPolicy {
   readonly allowOpponentPublicInteraction: boolean;
   readonly maximumRecentOutcomesPerSession: number;
+  readonly maximumSoloUndoCheckpoints: number;
 }
 
 export interface AuthorityDependencies {
@@ -121,6 +149,7 @@ export interface AuthorityProcessResult {
 export const DEFAULT_AUTHORITY_POLICY: AuthorityPolicy = {
   allowOpponentPublicInteraction: true,
   maximumRecentOutcomesPerSession: 128,
+  maximumSoloUndoCheckpoints: MAX_SOLO_UNDO_CHECKPOINTS,
 };
 
 export const sessionPlayerId = (

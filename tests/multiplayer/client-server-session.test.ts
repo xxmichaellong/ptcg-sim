@@ -20,6 +20,7 @@ import {
   submitPrivateInspectionAction,
 } from '../../apps/web/src/board/resolvePrivateInspectionAction.js';
 import { submitRandomFaceDownAction } from '../../apps/web/src/board/resolveRandomFaceDownAction.js';
+import { submitSoloUndoAction } from '../../apps/web/src/board/resolveSoloUndoAction.js';
 import {
   resolvePrizeVisibilityAction,
   submitPublicVisibilityAction,
@@ -193,7 +194,7 @@ class InMemorySocketFactory implements SessionSocketFactory {
   }
 }
 
-const fixture = async () => {
+const fixture = async (mode: 'solo' | 'multiplayer' = 'multiplayer') => {
   const cryptoSource = new WebCryptoAuthoritySource();
   const store = new MemoryRoomStore();
   const initialized = await initializeNewRoom(
@@ -206,15 +207,13 @@ const fixture = async () => {
     store,
     cryptoSource
   );
-  const coordinator = new RoomAuthorityCoordinator(
-    initialized.snapshot,
-    store,
-    {
-      commandContext: cryptoSource,
-      opaqueIds: cryptoSource,
-      policy: DEFAULT_AUTHORITY_POLICY,
-    }
-  );
+  const authoritySnapshot = { ...initialized.snapshot, mode };
+  store.snapshot = authoritySnapshot;
+  const coordinator = new RoomAuthorityCoordinator(authoritySnapshot, store, {
+    commandContext: cryptoSource,
+    opaqueIds: cryptoSource,
+    policy: DEFAULT_AUTHORITY_POLICY,
+  });
   const hub = new RoomSessionHub(coordinator, 'server-build', {
     store,
     admission: {
@@ -223,7 +222,7 @@ const fixture = async () => {
       persistence: store,
     },
   });
-  return { ...initialized, store, hub };
+  return { ...initialized, snapshot: authoritySnapshot, store, hub };
 };
 
 const connectClient = async (input: {
@@ -2135,6 +2134,108 @@ describe('client/server multiplayer contract', () => {
       completedCommands: [{ accepted: true, revision: 1 }],
     });
     expect(room.store.commandCommits).toHaveLength(1);
+  });
+
+  it('restores a solo checkpoint through the client queue and reconnects to the same branch', async () => {
+    const room = await fixture('solo');
+    const scheduler = new ManualScheduler();
+    const player = await connectClient({
+      hub: room.hub,
+      name: 'Blue',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+      scheduler,
+    });
+    const playerId = player.session.getSnapshot().playerId;
+    if (!playerId) throw new Error('Missing solo player identity');
+
+    expect(
+      player.session.submit({
+        type: 'LoadDeck',
+        entries: Array.from({ length: 14 }, (_, index) => ({
+          definition: {
+            id: `solo-undo-definition-${index}`,
+            name: `Solo undo card ${index}`,
+            category: index === 0 ? ('Pokémon' as const) : ('Trainer' as const),
+            imageUrl: `/solo-undo-card-${index}.png`,
+          },
+          count: 1,
+        })),
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+    expect(player.session.submit({ type: 'SetupPlayer' }).queued).toBe(true);
+    await player.factory.flush();
+    const setup = player.session.getSnapshot().view;
+    if (!setup) throw new Error('Missing solo setup view');
+    const hand = Object.values(setup.zones).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'hand'
+    );
+    const deck = Object.values(setup.zones).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'deck'
+    );
+    if (!hand || !deck) throw new Error('Missing solo deck zones');
+    const setupAliases = hand.cards.map((card) => card.id);
+
+    expect(player.session.submit({ type: 'DrawCards', count: 1 }).queued).toBe(
+      true
+    );
+    await player.factory.flush();
+    const drawn = player.session.getSnapshot().view;
+    expect(drawn?.zones[hand.id]?.cards).toHaveLength(8);
+    expect(drawn?.revision).toBe(3);
+
+    let queued = false;
+    if (!drawn) throw new Error('Missing solo drawn view');
+    expect(
+      submitSoloUndoAction(drawn, playerId, (wire) => {
+        queued = player.session.submit(wire).queued;
+      }).ok
+    ).toBe(true);
+    expect(queued).toBe(true);
+    await player.factory.flush();
+
+    const undone = player.session.getSnapshot().view;
+    if (!undone) throw new Error('Missing solo undo view');
+    expect(undone.revision).toBe(4);
+    expect(undone.zones[hand.id]?.cards).toHaveLength(7);
+    expect(undone.zones[deck.id]?.cards).toHaveLength(1);
+    const undoAliases = undone.zones[hand.id]!.cards.map((card) => card.id);
+    expect(undoAliases.every((alias) => !setupAliases.includes(alias))).toBe(
+      true
+    );
+    expect(player.session.getSnapshot().presentationEvents.at(-1)).toEqual({
+      type: 'UndoApplied',
+      revision: 4,
+      actorPlayerId: playerId,
+      targetPlayerId: playerId,
+      revertedRevision: 3,
+    });
+    expect(room.store.snapshot?.soloUndoHistory.entries).toHaveLength(1);
+    expect(
+      room.store.commandCommits.at(-1)?.eventBatch?.events[0]
+    ).toMatchObject({
+      type: 'UndoApplied',
+      revertedCommandId: 'Blue-command-3',
+      checkpointRevision: 2,
+    });
+
+    const presentationCount =
+      player.session.getSnapshot().presentationEvents.length;
+    player.factory.latest().networkDrop();
+    scheduler.runNext();
+    player.factory.latest().open();
+    await player.factory.flush();
+    expect(player.session.getSnapshot().view?.revision).toBe(4);
+    expect(
+      player.session
+        .getSnapshot()
+        .view?.zones[hand.id]?.cards.map((card) => card.id)
+    ).toEqual(undoAliases);
+    expect(player.session.getSnapshot().presentationEvents).toHaveLength(
+      presentationCount
+    );
+    expect(room.store.commandCommits).toHaveLength(4);
   });
 
   it('replaces equal-revision metadata from an authoritative reconnect Welcome', async () => {

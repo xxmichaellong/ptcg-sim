@@ -254,7 +254,13 @@ recipient-safe hand and loose-board projection. A newly played hidden card uses
 a fresh opaque handle, and reconnect restores that handle without rerunning the
 random choice or presentation signal.
 
-At this checkpoint the v2 suite contains 278 passing tests across 54 files. A
+The UI-neutral solo Undo boundary now submits the same semantic intent from
+either renderer without carrying history. Authority restores and publishes one
+recipient-safe checkpoint view, so neither renderer replays legacy actions or
+repairs board state locally. No renderer component, geometry, label, shortcut,
+or asset lifecycle changed in the slice.
+
+At this checkpoint the v2 suite contains 295 passing tests across 57 files. A
 separate Playwright suite also passes three real Chromium 151 scenarios:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and

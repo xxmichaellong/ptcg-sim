@@ -1,10 +1,16 @@
-import { assertMatchInvariants } from '@ptcgsim/game-core';
+import {
+  assertMatchInvariants,
+  soloUndoCheckpointProblem,
+  stableHash,
+} from '@ptcgsim/game-core';
 
 import { viewerIdentityKey } from './identity-registry.js';
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+  MAX_SOLO_UNDO_CHECKPOINTS,
   type RoomAuthoritySnapshot,
 } from './model.js';
+import { replaySoloUndoHistory } from './solo-undo-history.js';
 
 export class AuthoritySnapshotInvariantError extends Error {
   readonly problems: readonly string[];
@@ -28,6 +34,84 @@ export const collectAuthoritySnapshotProblems = (
     snapshot.authorityVersion < 0
   ) {
     problems.push('authority version must be a non-negative safe integer');
+  }
+  if (snapshot.mode !== 'solo' && snapshot.mode !== 'multiplayer') {
+    problems.push('authority mode must be solo or multiplayer');
+  }
+  if (
+    typeof snapshot.soloUndoHistory !== 'object' ||
+    snapshot.soloUndoHistory === null ||
+    !Array.isArray(snapshot.soloUndoHistory.entries)
+  ) {
+    problems.push('authority solo undo history is malformed');
+  } else {
+    const history = snapshot.soloUndoHistory;
+    if (history.entries.length > MAX_SOLO_UNDO_CHECKPOINTS) {
+      problems.push('authority has too many solo undo history entries');
+    }
+    if (
+      snapshot.mode === 'multiplayer' &&
+      (history.baseState !== null || history.entries.length > 0)
+    ) {
+      problems.push('multiplayer authority cannot retain solo undo history');
+    }
+    if ((history.baseState === null) !== (history.baseStateHash === null)) {
+      problems.push('solo undo base state and hash must both be present');
+    }
+    if (history.entries.length > 0 && history.baseState === null) {
+      problems.push('solo undo entries require a base state');
+    }
+    if (history.baseState) {
+      const baseProblem = soloUndoCheckpointProblem(
+        snapshot.state,
+        history.baseState
+      );
+      if (baseProblem) problems.push(baseProblem);
+      if (stableHash(history.baseState) !== history.baseStateHash) {
+        problems.push('solo undo base hash does not match its state');
+      }
+    }
+    let priorRevision = -1;
+    for (const entry of history.entries) {
+      if (
+        entry.revertedCommandId.length < 1 ||
+        entry.revertedCommandId.length > 128
+      ) {
+        problems.push('solo undo entry has an invalid command ID');
+      }
+      if (
+        !Number.isSafeInteger(entry.checkpointRevision) ||
+        entry.checkpointRevision < 0 ||
+        !Number.isSafeInteger(entry.revertedRevision) ||
+        entry.revertedRevision !== entry.checkpointRevision + 1 ||
+        entry.revertedRevision > snapshot.state.revision
+      ) {
+        problems.push('solo undo entry has invalid revision metadata');
+      }
+      if (entry.checkpointRevision <= priorRevision) {
+        problems.push('solo undo entry revisions are not increasing');
+      }
+      priorRevision = entry.checkpointRevision;
+      if (
+        entry.events.length === 0 ||
+        entry.events.some((event) => event.type === 'UndoApplied')
+      ) {
+        problems.push('solo undo entry has an invalid resolved event tail');
+      }
+    }
+    if (history.baseState) {
+      try {
+        const replayed = replaySoloUndoHistory(
+          history,
+          snapshot.state.revision
+        );
+        if (!replayed || stableHash(replayed) !== stableHash(snapshot.state)) {
+          problems.push('solo undo history does not reconstruct current state');
+        }
+      } catch {
+        problems.push('solo undo history cannot be replayed');
+      }
+    }
   }
 
   const activePlayerSessions = new Set<string>();

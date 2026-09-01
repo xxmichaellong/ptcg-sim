@@ -29,10 +29,12 @@ const p2 = asPlayerId('player-two');
 const snapshot = (): RoomAuthoritySnapshot => ({
   schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
   authorityVersion: 0,
+  mode: 'multiplayer',
   state: createEmptyMatch(asMatchId('coordinator-match'), [
     { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
     { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
   ]),
+  soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
   identities: emptyProjectionIdentityState(),
   sessions: {
     session: {
