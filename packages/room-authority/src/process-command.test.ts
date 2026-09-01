@@ -674,6 +674,128 @@ describe('authoritative room command transaction', () => {
     );
   });
 
+  it('publishes an authority-random face-down play without leaking the selection', async () => {
+    const persistence = createPersistence();
+    const dependencies = createDependencies(persistence);
+    const loaded = await processAuthorityCommand(
+      createSnapshot(),
+      loadDeck(),
+      dependencies
+    );
+    const setup = await processAuthorityCommand(
+      loaded.snapshot,
+      command(
+        'session-player-one',
+        2,
+        'random-face-down-setup',
+        { type: 'SetupPlayer', targetPlayerId: p1 },
+        1
+      ),
+      dependencies
+    );
+    const opponentSetupPublication = setup.deliveries.find(
+      (delivery) =>
+        delivery.sessionId === 'session-player-two' &&
+        delivery.message.type === 'StatePublication'
+    );
+    if (opponentSetupPublication?.message.type !== 'StatePublication') {
+      throw new Error('missing random-play opponent setup publication');
+    }
+    const handId = playerZoneId(p1, 'hand');
+    const boardId = playerZoneId(p1, 'board');
+    const oldOpponentAliases = opponentSetupPublication.message.snapshot.zones[
+      handId
+    ]!.cards.map((card) => card.id);
+
+    const played = await processAuthorityCommand(
+      setup.snapshot,
+      command(
+        'session-player-two',
+        1,
+        'play-random-face-down',
+        { type: 'PlayRandomCardFaceDown', targetPlayerId: p1 },
+        2
+      ),
+      dependencies
+    );
+    expect(persistence.transactions[2]?.eventBatch?.events).toEqual([
+      expect.objectContaining({
+        type: 'RandomHandCardPlayedFaceDown',
+        actorPlayerId: p2,
+        targetPlayerId: p1,
+        cardId: expect.stringMatching(/^canonical-card-/),
+      }),
+    ]);
+    const publications = played.deliveries.filter(
+      (delivery) => delivery.message.type === 'StatePublication'
+    );
+    expect(publications).toHaveLength(3);
+    for (const delivery of publications) {
+      if (delivery.message.type !== 'StatePublication') continue;
+      expect(delivery.message.presentationEvents).toEqual([
+        {
+          type: 'RandomCardPlayedFaceDown',
+          revision: 3,
+          actorPlayerId: p2,
+          targetPlayerId: p1,
+        },
+      ]);
+      expect(JSON.stringify(delivery.message.presentationEvents)).not.toContain(
+        'canonical-card-'
+      );
+      expect(JSON.stringify(delivery.message.presentationEvents)).not.toContain(
+        'secret-definition-'
+      );
+    }
+
+    const ownerPublication = publications.find(
+      (delivery) => delivery.sessionId === 'session-player-one'
+    );
+    const opponentPublication = publications.find(
+      (delivery) => delivery.sessionId === 'session-player-two'
+    );
+    const spectatorPublication = publications.find(
+      (delivery) => delivery.sessionId === 'session-spectator'
+    );
+    if (
+      ownerPublication?.message.type !== 'StatePublication' ||
+      opponentPublication?.message.type !== 'StatePublication' ||
+      spectatorPublication?.message.type !== 'StatePublication'
+    ) {
+      throw new Error('missing random-play recipient publication');
+    }
+    expect(ownerPublication.message.snapshot.zones[handId]!.cards).toHaveLength(
+      6
+    );
+    expect(ownerPublication.message.snapshot.zones[boardId]!.cards).toEqual([
+      expect.objectContaining({ kind: 'known', face: 'down' }),
+    ]);
+    const opponentBoardCard =
+      opponentPublication.message.snapshot.zones[boardId]!.cards[0]!;
+    expect(opponentBoardCard.kind).toBe('concealed');
+    expect(oldOpponentAliases).not.toContain(opponentBoardCard.id);
+    for (const privatePublication of [
+      opponentPublication,
+      spectatorPublication,
+    ]) {
+      expect(
+        privatePublication.message.snapshot.zones[handId]!.cards
+      ).toHaveLength(6);
+      expect(
+        privatePublication.message.snapshot.zones[boardId]!.cards[0]?.kind
+      ).toBe('concealed');
+      expect(JSON.stringify(privatePublication.message.snapshot)).not.toContain(
+        'canonical-card-'
+      );
+      expect(JSON.stringify(privatePublication.message.snapshot)).not.toContain(
+        'secret-definition-'
+      );
+      expect(JSON.stringify(privatePublication.message.snapshot)).not.toContain(
+        'Secret card'
+      );
+    }
+  });
+
   it('never publishes canonical hidden IDs and invalidates concealed handles on shuffle', async () => {
     const persistence = createPersistence();
     const dependencies = createDependencies(persistence);

@@ -53,6 +53,17 @@ export type DomainEvent =
       readonly cardIds: readonly CardInstanceId[];
     }
   | {
+      readonly type: 'RandomHandCardPlayedFaceDown';
+      readonly actorPlayerId: PlayerId;
+      readonly targetPlayerId: PlayerId;
+      readonly handZoneId: ZoneId;
+      readonly boardZoneId: ZoneId;
+      readonly expectedHandCardIds: readonly CardInstanceId[];
+      readonly expectedBoardCardIds: readonly CardInstanceId[];
+      readonly cardId: CardInstanceId;
+      readonly destinationIndex: number;
+    }
+  | {
       readonly type: 'AbilityMarkersReset';
       readonly stackIds: readonly StackId[];
       readonly cardIds: readonly CardInstanceId[];

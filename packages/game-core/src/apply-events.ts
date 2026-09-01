@@ -611,6 +611,64 @@ export const applyEvent = (
         },
       };
     }
+    case 'RandomHandCardPlayedFaceDown': {
+      const expectedHandId = playerZoneId(event.targetPlayerId, 'hand');
+      const expectedBoardId = playerZoneId(event.targetPlayerId, 'board');
+      const hand = state.zones[event.handZoneId];
+      const board = state.zones[event.boardZoneId];
+      const card = state.cards[event.cardId];
+      if (
+        !state.players[event.actorPlayerId] ||
+        !state.players[event.targetPlayerId] ||
+        !hand ||
+        hand.id !== expectedHandId ||
+        hand.ownerId !== event.targetPlayerId ||
+        hand.kind !== 'hand' ||
+        !board ||
+        board.id !== expectedBoardId ||
+        board.ownerId !== event.targetPlayerId ||
+        board.kind !== 'board' ||
+        event.expectedHandCardIds.length === 0 ||
+        event.expectedHandCardIds.length > 200 ||
+        event.expectedBoardCardIds.length >= 200 ||
+        !sameCardOrder(hand.cardIds, event.expectedHandCardIds) ||
+        !sameCardOrder(board.cardIds, event.expectedBoardCardIds) ||
+        !card ||
+        !hand.cardIds.includes(event.cardId) ||
+        event.destinationIndex !== board.cardIds.length
+      ) {
+        throw new Error('Random face-down play event is malformed');
+      }
+      return {
+        ...state,
+        cards: {
+          ...state.cards,
+          [card.id]: incrementVisibility({
+            ...card,
+            face: 'down',
+            orientationQuarterTurns: 0,
+            abilityUsed: false,
+          }),
+        },
+        zones: {
+          ...state.zones,
+          [hand.id]: {
+            ...hand,
+            cardIds: hand.cardIds.filter((cardId) => cardId !== card.id),
+          },
+          [board.id]: {
+            ...board,
+            cardIds: [...board.cardIds, card.id],
+          },
+        },
+        visibility: {
+          ...state.visibility,
+          publicCardIds: state.visibility.publicCardIds.filter(
+            (cardId) => cardId !== card.id
+          ),
+        },
+      };
+    }
     case 'AbilityMarkersReset': {
       const currentStackIds = Object.values(state.stacks)
         .filter((stack) => stack.abilityUsed)

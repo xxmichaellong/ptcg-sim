@@ -369,6 +369,40 @@ describe('client protocol ingress', () => {
     }
   });
 
+  it('accepts random face-down intent without a client-selected card', () => {
+    const base = {
+      type: 'Command',
+      protocolVersion: PROTOCOL_VERSION,
+      sessionId: 'session',
+      clientSequence: 1,
+      commandId: 'random-face-down-command',
+      lastSeenRevision: 4,
+    } as const;
+    expect(
+      parseClientFrame(
+        JSON.stringify({
+          ...base,
+          command: {
+            type: 'PlayRandomCardFaceDown',
+            targetPlayerId: 'target-player',
+          },
+        })
+      ).ok
+    ).toBe(true);
+    for (const command of [
+      { type: 'PlayRandomCardFaceDown' },
+      { type: 'PlayRandomCardFaceDown', targetPlayerId: '' },
+      {
+        type: 'PlayRandomCardFaceDown',
+        targetPlayerId: 'target-player',
+        cardId: 'client-chosen-card',
+      },
+    ]) {
+      const parsed = parseClientFrame(JSON.stringify({ ...base, command }));
+      expect(parsed.ok).toBe(false);
+    }
+  });
+
   it('bounds semantic loose-board batch commands', () => {
     const parseCommand = (command: unknown) =>
       parseClientFrame(

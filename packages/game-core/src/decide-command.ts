@@ -1551,6 +1551,61 @@ export const decideCommand = (
         ),
       });
     }
+    case 'PlayRandomCardFaceDown': {
+      const actorError = requirePlayer(state, command.actorPlayerId);
+      if (actorError) return actorError;
+      const targetError = requirePlayer(state, command.targetPlayerId);
+      if (targetError) return targetError;
+      const hand = state.zones[playerZoneId(command.targetPlayerId, 'hand')];
+      const board = state.zones[playerZoneId(command.targetPlayerId, 'board')];
+      if (
+        !hand ||
+        hand.ownerId !== command.targetPlayerId ||
+        hand.kind !== 'hand' ||
+        !board ||
+        board.ownerId !== command.targetPlayerId ||
+        board.kind !== 'board'
+      ) {
+        return reject('not_found', 'Player hand or loose board is missing');
+      }
+      if (hand.cardIds.length === 0) {
+        return reject('precondition_failed', 'Hand is empty');
+      }
+      if (hand.cardIds.length > 200) {
+        return reject(
+          'precondition_failed',
+          'Hand cannot contain more than 200 cards'
+        );
+      }
+      if (board.cardIds.length >= 200) {
+        return reject(
+          'precondition_failed',
+          'Loose board cannot contain more than 200 cards'
+        );
+      }
+      const randomIndex = context.randomInt(hand.cardIds.length);
+      if (
+        !Number.isSafeInteger(randomIndex) ||
+        randomIndex < 0 ||
+        randomIndex >= hand.cardIds.length
+      ) {
+        return reject(
+          'invalid_command',
+          'Random adapter returned an invalid hand index'
+        );
+      }
+      return accept({
+        type: 'RandomHandCardPlayedFaceDown',
+        actorPlayerId: command.actorPlayerId,
+        targetPlayerId: command.targetPlayerId,
+        handZoneId: hand.id,
+        boardZoneId: board.id,
+        expectedHandCardIds: [...hand.cardIds],
+        expectedBoardCardIds: [...board.cardIds],
+        cardId: hand.cardIds[randomIndex]!,
+        destinationIndex: board.cardIds.length,
+      });
+    }
     case 'StartTurn':
     case 'DeclareAttack':
     case 'PassTurn':

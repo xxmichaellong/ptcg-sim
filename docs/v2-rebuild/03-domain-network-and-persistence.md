@@ -173,7 +173,7 @@ Names may change, but semantic coverage may not.
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Match/deck lifecycle  | `ConfigureSeat`, `LoadDeck`, `SetupPlayer`, `ResetPlayer`, `ResetMatch`                                                                                                                    | Deck replacement and per-seat setup/reset use one current-revision transaction with deterministic displaced-card recovery.                       |
 | Card movement         | `MoveCard`, `MoveCards`, `MoveZoneContents`, `ResolveLooseBoardCards`, `MoveCardToDeckTop`, `MoveCardToDeckBottom`, `ShuffleCardIntoDeck`, `SwapCardWithDeckTop`, `MovePrizesToDeckBottom` | Broad loose-board actions require an exact ordered source snapshot and one normalized transactional event.                                       |
-| Randomized movement   | `ShuffleZone`, `DrawCards`, `ShuffleAndDraw`, `PlayRandomFaceDown`, `FlipCoin`                                                                                                             | Random choices are made by the authority, never trusted from client payloads.                                                                    |
+| Randomized movement   | `ShuffleZone`, `DrawCards`, `ShuffleAndDraw`, `PlayRandomCardFaceDown`, `FlipCoin`                                                                                                         | Random choices are made by the authority, never trusted from client payloads.                                                                    |
 | Table actions         | `StartTurn`, `DeclareAttack`, `PassTurn`                                                                                                                                                   | Whole-table cleanup requires a current view revision and resolves as one persisted batch plus a typed presentation fact.                         |
 | Card properties       | `SetCardFace`, `SetCardOrientation`, `ChangeCardCategory`                                                                                                                                  | Per-card rotation is separate from stack rotation; category change atomically departs to the loose board.                                        |
 | Markers               | `SetDamage`, `SetSpecialCondition`, `SetAbilityUsed`, `SetCardAbilityUsed`, `SetOncePerGameMarker`                                                                                         | Host/card ability and independent GX/VSTAR markers use target values; opponent-board targets remain policy-gated.                                |
@@ -186,6 +186,15 @@ A composite UX action can be one transactional command. It should not be split
 into several client-submitted primitives if intermediate states would violate
 invariants or make reconnect observable. `SetupSeat`, shuffle-and-draw, moving a
 Pokémon with its stack, and board-wide moves are examples.
+
+`PlayRandomCardFaceDown` is intentionally selector-free on the wire. It names
+only the target player; the authority validates the current revision and room
+policy, selects from the canonical hand with its cryptographic random source,
+and persists a resolved event containing exact pre-action hand/board snapshots.
+The chosen card moves to the loose board face-down in one revision and receives
+a new visibility generation. Only the trusted event contains its canonical ID;
+recipient snapshots use fresh opaque handles, and the presentation fact carries
+only actor and target player IDs.
 
 Chat, presence, heartbeat, opening a popup, sorting a local visual view, hover,
 selection, preview, drag coordinates, animation, and theme changes are not game

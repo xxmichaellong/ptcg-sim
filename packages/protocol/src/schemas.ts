@@ -154,6 +154,10 @@ export const WireGameCommandSchema = v.variant('type', [
     type: v.literal('DrawCards'),
     count: v.pipe(PositiveIntegerSchema, v.maxValue(200)),
   }),
+  v.strictObject({
+    type: v.literal('PlayRandomCardFaceDown'),
+    targetPlayerId: IdentifierSchema,
+  }),
   v.object({
     type: v.literal('StartTurn'),
     targetPlayerId: IdentifierSchema,
@@ -509,6 +513,12 @@ export const PresentationEventSchema = v.variant('type', [
     playerId: IdentifierSchema,
     handCount: NonNegativeIntegerSchema,
     prizeCount: NonNegativeIntegerSchema,
+  }),
+  v.object({
+    type: v.literal('RandomCardPlayedFaceDown'),
+    revision: RevisionSchema,
+    actorPlayerId: IdentifierSchema,
+    targetPlayerId: IdentifierSchema,
   }),
   v.object({
     type: v.literal('TurnStarted'),

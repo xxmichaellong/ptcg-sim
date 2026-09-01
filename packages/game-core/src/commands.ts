@@ -140,6 +140,11 @@ export type GameCommand =
       readonly playerId: PlayerId;
       readonly count: number;
     }
+  | {
+      readonly type: 'PlayRandomCardFaceDown';
+      readonly actorPlayerId: PlayerId;
+      readonly targetPlayerId: PlayerId;
+    }
   | { readonly type: 'StartTurn'; readonly playerId: PlayerId }
   | { readonly type: 'DeclareAttack'; readonly playerId: PlayerId }
   | { readonly type: 'PassTurn'; readonly playerId: PlayerId }

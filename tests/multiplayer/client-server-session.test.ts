@@ -19,6 +19,7 @@ import {
   resolveZoneInspectionAction,
   submitPrivateInspectionAction,
 } from '../../apps/web/src/board/resolvePrivateInspectionAction.js';
+import { submitRandomFaceDownAction } from '../../apps/web/src/board/resolveRandomFaceDownAction.js';
 import {
   resolvePrizeVisibilityAction,
   submitPublicVisibilityAction,
@@ -1961,6 +1962,140 @@ describe('client/server multiplayer contract', () => {
     });
     expect(room.store.commandCommits).toHaveLength(4);
     expect(room.store.snapshot?.state.visibility.inspectionGrants).toEqual({});
+  });
+
+  it('plays from an opponent hand with authority randomness and reconnect-safe secrecy', async () => {
+    const room = await fixture();
+    const actorScheduler = new ManualScheduler();
+    const actor = await connectClient({
+      hub: room.hub,
+      name: 'Blue',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+      scheduler: actorScheduler,
+    });
+    const owner = await connectClient({
+      hub: room.hub,
+      name: 'Red',
+      role: 'player',
+      capability: room.credentials.playerTwoSeatCapability,
+    });
+    const spectatorCapability = room.credentials.spectatorCapability;
+    if (!spectatorCapability) throw new Error('Missing spectator capability');
+    const spectator = await connectClient({
+      hub: room.hub,
+      name: 'Observer',
+      role: 'spectator',
+      capability: spectatorCapability,
+    });
+    const ownerId = owner.session.getSnapshot().playerId;
+    const actorId = actor.session.getSnapshot().playerId;
+    if (!ownerId || !actorId) {
+      throw new Error('Missing random-play player identity');
+    }
+
+    expect(
+      owner.session.submit({
+        type: 'LoadDeck',
+        entries: Array.from({ length: 14 }, (_, index) => ({
+          definition: {
+            id: `random-session-definition-${index}`,
+            name: `Random session card ${index}`,
+            category: index === 0 ? ('Pokémon' as const) : ('Trainer' as const),
+            imageUrl: `/random-session-card-${index}.png`,
+          },
+          count: 1,
+        })),
+      }).queued
+    ).toBe(true);
+    await owner.factory.flush();
+    expect(owner.session.submit({ type: 'SetupPlayer' }).queued).toBe(true);
+    await owner.factory.flush();
+
+    let actorView = actor.session.getSnapshot().view;
+    const spectatorBefore = spectator.session.getSnapshot().view;
+    if (!actorView || !spectatorBefore) {
+      throw new Error('Missing random-play setup views');
+    }
+    const handId = Object.values(actorView.zones).find(
+      (zone) => zone.ownerId === ownerId && zone.kind === 'hand'
+    )!.id;
+    const boardId = Object.values(actorView.zones).find(
+      (zone) => zone.ownerId === ownerId && zone.kind === 'board'
+    )!.id;
+    const oldActorAliases = actorView.zones[handId]!.cards.map(
+      (card) => card.id
+    );
+    const oldSpectatorAliases = spectatorBefore.zones[handId]!.cards.map(
+      (card) => card.id
+    );
+    let queued = false;
+    expect(
+      submitRandomFaceDownAction(actorView, ownerId, (wire) => {
+        queued = actor.session.submit(wire).queued;
+      }).ok
+    ).toBe(true);
+    expect(queued).toBe(true);
+    await actor.factory.flush();
+
+    actorView = actor.session.getSnapshot().view;
+    const ownerView = owner.session.getSnapshot().view;
+    const spectatorView = spectator.session.getSnapshot().view;
+    if (!actorView || !ownerView || !spectatorView) {
+      throw new Error('Missing random-play recipient views');
+    }
+    const actorBoardCard = actorView.zones[boardId]!.cards[0]!;
+    const spectatorBoardCard = spectatorView.zones[boardId]!.cards[0]!;
+    expect(actorView.zones[handId]!.cards).toHaveLength(6);
+    expect(actorBoardCard.kind).toBe('concealed');
+    expect(oldActorAliases).not.toContain(actorBoardCard.id);
+    expect(spectatorBoardCard.kind).toBe('concealed');
+    expect(oldSpectatorAliases).not.toContain(spectatorBoardCard.id);
+    expect(ownerView.zones[boardId]!.cards).toEqual([
+      expect.objectContaining({ kind: 'known', face: 'down' }),
+    ]);
+    for (const privateView of [actorView, spectatorView]) {
+      expect(JSON.stringify(privateView)).not.toContain(
+        'random-session-definition-'
+      );
+      expect(JSON.stringify(privateView)).not.toContain('Random session card');
+      expect(JSON.stringify(privateView)).not.toContain(
+        '/random-session-card-'
+      );
+    }
+    const presentation = {
+      type: 'RandomCardPlayedFaceDown' as const,
+      revision: 3,
+      actorPlayerId: actorId,
+      targetPlayerId: ownerId,
+    };
+    expect(actor.session.getSnapshot().presentationEvents.at(-1)).toEqual(
+      presentation
+    );
+    expect(owner.session.getSnapshot().presentationEvents.at(-1)).toEqual(
+      presentation
+    );
+    expect(spectator.session.getSnapshot().presentationEvents.at(-1)).toEqual(
+      presentation
+    );
+    expect(room.store.commandCommits[2]?.eventBatch?.events[0]).toMatchObject({
+      type: 'RandomHandCardPlayedFaceDown',
+      actorPlayerId: actorId,
+      targetPlayerId: ownerId,
+      cardId: expect.any(String),
+    });
+
+    const boardAlias = actorBoardCard.id;
+    actor.factory.latest().networkDrop();
+    actorScheduler.runNext();
+    actor.factory.latest().open();
+    await actor.factory.flush();
+    actorView = actor.session.getSnapshot().view;
+    expect(actorView?.revision).toBe(3);
+    expect(actorView?.zones[boardId]!.cards[0]?.id).toBe(boardAlias);
+    expect(actorView?.zones[boardId]!.cards[0]?.kind).toBe('concealed');
+    expect(actor.session.getSnapshot().presentationEvents).toHaveLength(3);
+    expect(room.store.commandCommits).toHaveLength(3);
   });
 
   it('recovers a committed-but-undelivered command through exact replay', async () => {

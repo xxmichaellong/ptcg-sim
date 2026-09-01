@@ -248,7 +248,13 @@ recipient-safe snapshot. Hidden setup cards remain concealed for the other
 player; lifecycle announcements travel through the bounded presentation stream,
 not renderer-owned state.
 
-At this checkpoint the v2 suite contains 264 passing tests across 51 files. A
+The random-hand control now has a selector-free UI-neutral boundary as well.
+Authority chooses the card, while both renderers receive only the resulting
+recipient-safe hand and loose-board projection. A newly played hidden card uses
+a fresh opaque handle, and reconnect restores that handle without rerunning the
+random choice or presentation signal.
+
+At this checkpoint the v2 suite contains 278 passing tests across 54 files. A
 separate Playwright suite also passes three real Chromium 151 scenarios:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and

@@ -137,6 +137,16 @@ const presentationEventsForBatch = (batch: EventBatch): PresentationEvent[] =>
         },
       ];
     }
+    if (event.type === 'RandomHandCardPlayedFaceDown') {
+      return [
+        {
+          type: 'RandomCardPlayedFaceDown',
+          revision: batch.revision,
+          actorPlayerId: event.actorPlayerId,
+          targetPlayerId: event.targetPlayerId,
+        },
+      ];
+    }
     if (event.type === 'PublicRevealSet') {
       return [
         {

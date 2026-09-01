@@ -69,17 +69,17 @@ a hard-to-find behavior. Proposed names are not final APIs.
 
 ## Visibility and per-card shortcuts
 
-| v1 action                | Proposed v2 responsibility                                           | Critical characterization                                                            |
-| ------------------------ | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `lookAtCards`            | `BeginZoneInspection` grant; view-only unless a work area is created | Viewer/target combinations, hand/prize zones, coaching, relay timing                 |
-| `stopLookingAtCards`     | `EndPrivateInspection(inspectionId)`                                 | What becomes concealed, reconnect lifetime, movement/reset invalidation              |
-| `revealCards`            | `RevealZonePublicly`                                                 | Exact audience, card faces/names, logs, later move/hide cleanup                      |
-| `hideCards`              | `EndZoneReveal`                                                      | Handle generation and destination/default face behavior                              |
-| `revealShortcut`         | `RevealCardPublicly(viewCardId)`                                     | Selected hidden card, prize/hand/board constraints, logs                             |
-| `hideShortcut`           | `HideCard(viewCardId)`                                               | Who may hide, face-down in-play versus zone concealment, public flag cleanup         |
-| `lookShortcut`           | `BeginCardInspection(viewCardId)`                                    | Exact source, private viewer, opponent card capability, asset/catalog lifecycle      |
-| `stopLookingShortcut`    | `EndPrivateInspection(inspectionId)`                                 | Viewer-scoped close, re-conceal timing, and stale handle behavior                    |
-| `playRandomCardFaceDown` | `PlayRandomCardFaceDown`                                             | Authority chooses source card; destination/position; no identity leak in event/error |
+| v1 action                | Proposed v2 responsibility                                           | Critical characterization                                                                   |
+| ------------------------ | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `lookAtCards`            | `BeginZoneInspection` grant; view-only unless a work area is created | Viewer/target combinations, hand/prize zones, coaching, relay timing                        |
+| `stopLookingAtCards`     | `EndPrivateInspection(inspectionId)`                                 | What becomes concealed, reconnect lifetime, movement/reset invalidation                     |
+| `revealCards`            | `RevealZonePublicly`                                                 | Exact audience, card faces/names, logs, later move/hide cleanup                             |
+| `hideCards`              | `EndZoneReveal`                                                      | Handle generation and destination/default face behavior                                     |
+| `revealShortcut`         | `RevealCardPublicly(viewCardId)`                                     | Selected hidden card, prize/hand/board constraints, logs                                    |
+| `hideShortcut`           | `HideCard(viewCardId)`                                               | Who may hide, face-down in-play versus zone concealment, public flag cleanup                |
+| `lookShortcut`           | `BeginCardInspection(viewCardId)`                                    | Exact source, private viewer, opponent card capability, asset/catalog lifecycle             |
+| `stopLookingShortcut`    | `EndPrivateInspection(inspectionId)`                                 | Viewer-scoped close, re-conceal timing, and stale handle behavior                           |
+| `playRandomCardFaceDown` | `PlayRandomCardFaceDown`                                             | Authority chooses source card; destination/position; no identity leak in public event/error |
 
 ## Timeline and history
 
@@ -329,8 +329,7 @@ policy.
 Accepted batches publish `PublicCardsRevealed` or `PublicCardsHidden` with only
 the target player and affected count. They persist and reconnect as canonical
 state while their presentation facts are applied once and never replayed during
-duplicate recovery. `playRandomCardFaceDown` remains a separate authority-
-randomness slice; no visible control, label, placement, or styling changes in
+duplicate recovery. No visible control, label, placement, or styling changes in
 this slice.
 
 ### Implemented private-look subset
@@ -365,3 +364,30 @@ definition IDs, names, and image URLs never enter those facts. Closing rotates
 the viewer's known handle back to a fresh concealed handle. The web layer now
 provides UI-neutral toggle resolvers for the existing menu/shortcut behavior;
 no control, label, layout, or styling was changed.
+
+### Implemented authority-random face-down subset
+
+`playRandomCardFaceDown` now submits only the explicit target player; authority
+derives the actor from the authenticated session. The client sends no card
+handle, position, random index, hand order, or random result. Authority requires
+the actor's current revision,
+applies the existing public opponent-interaction policy, and requests one
+bounded cryptographic index only after confirming that the target hand is
+nonempty and its loose board has capacity.
+
+The resolved `RandomHandCardPlayedFaceDown` event persists the exact pre-action
+hand/board orders and selected canonical card for deterministic replay inside
+the trusted authority boundary. Application validates those snapshots, appends
+the card to the target's loose board, forces the legacy face-down/reset state,
+removes public/private visibility, and rotates its visibility generation once.
+An invalid randomness adapter, empty hand, stale revision, missing player, or
+full board fails without a state revision.
+
+Unauthorized players and spectators see only the hand count decrease and a new
+fresh concealed board handle; the old hand handle, definition, name, image URL,
+and canonical ID are absent. The typed `RandomCardPlayedFaceDown` presentation
+fact retains the legacy-safe actor and target player IDs but contains no chosen
+card data. It is delivered once, survives as state across reconnect, and is not
+replayed as a new presentation signal. A UI-neutral resolver maps the existing
+hand-menu button to this command without changing its label, placement, or
+interaction.

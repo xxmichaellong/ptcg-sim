@@ -78,6 +78,7 @@ export const resolveWireCommand = (
     (wire.type === 'StartTurn' ||
       wire.type === 'DeclareAttack' ||
       wire.type === 'PassTurn' ||
+      wire.type === 'PlayRandomCardFaceDown' ||
       wire.type === 'SetupPlayer' ||
       wire.type === 'ResetPlayer' ||
       wire.type === 'LoadDeck' ||
@@ -538,6 +539,24 @@ export const resolveWireCommand = (
         accepted: true,
         command: { type: 'DrawCards', playerId: actorId, count: wire.count },
       };
+    case 'PlayRandomCardFaceDown': {
+      const targetPlayerId = asPlayerId(wire.targetPlayerId);
+      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (
+        targetPlayerId !== actorId &&
+        !policy.allowOpponentPublicInteraction
+      ) {
+        return rejected('unauthorized');
+      }
+      return {
+        accepted: true,
+        command: {
+          type: 'PlayRandomCardFaceDown',
+          actorPlayerId: actorId,
+          targetPlayerId,
+        },
+      };
+    }
     case 'StartTurn':
     case 'DeclareAttack':
     case 'PassTurn': {
