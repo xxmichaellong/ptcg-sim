@@ -1,7 +1,17 @@
 import type { MatchViewState, ViewCard } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 
-export type DeckRelativeAction = 'moveToTop' | 'swapWithTop';
+export type DeckRelativeAction =
+  'moveToTop' | 'moveToBottom' | 'shuffleIntoDeck' | 'swapWithTop';
+
+const commandTypeByAction = {
+  moveToTop: 'MoveCardToDeckTop',
+  moveToBottom: 'MoveCardToDeckBottom',
+  shuffleIntoDeck: 'ShuffleCardIntoDeck',
+  swapWithTop: 'SwapCardWithDeckTop',
+} as const satisfies Readonly<
+  Record<DeckRelativeAction, WireGameCommand['type']>
+>;
 
 export type DeckRelativeActionResolution =
   | { readonly ok: true; readonly command: WireGameCommand }
@@ -136,7 +146,12 @@ export const resolveDeckRelativeCardAction = (
   );
   if (!deck) return { ok: false, reason: 'no_deck' };
   if (located.sourceId === deck.id) {
-    if (action === 'swapWithTop' || located.sourceIndex === 0) {
+    if (
+      action === 'swapWithTop' ||
+      (action === 'moveToTop' && located.sourceIndex === 0) ||
+      (action === 'moveToBottom' &&
+        located.sourceIndex === deck.cards.length - 1)
+    ) {
       return { ok: false, reason: 'no_op' };
     }
   }
@@ -146,8 +161,7 @@ export const resolveDeckRelativeCardAction = (
   return {
     ok: true,
     command: {
-      type:
-        action === 'moveToTop' ? 'MoveCardToDeckTop' : 'SwapCardWithDeckTop',
+      type: commandTypeByAction[action],
       cardId,
       expectedSourceId: located.sourceId,
     },

@@ -365,6 +365,8 @@ export const resolveWireCommand = (
       };
     }
     case 'MoveCardToDeckTop':
+    case 'MoveCardToDeckBottom':
+    case 'ShuffleCardIntoDeck':
     case 'SwapCardWithDeckTop': {
       const card = resolveCard(wire.cardId);
       if (!card) return rejected('stale_reference');

@@ -127,6 +127,16 @@ export const WireGameCommandSchema = v.variant('type', [
     expectedSourceId: IdentifierSchema,
   }),
   v.object({
+    type: v.literal('MoveCardToDeckBottom'),
+    cardId: IdentifierSchema,
+    expectedSourceId: IdentifierSchema,
+  }),
+  v.object({
+    type: v.literal('ShuffleCardIntoDeck'),
+    cardId: IdentifierSchema,
+    expectedSourceId: IdentifierSchema,
+  }),
+  v.object({
     type: v.literal('SwapCardWithDeckTop'),
     cardId: IdentifierSchema,
     expectedSourceId: IdentifierSchema,

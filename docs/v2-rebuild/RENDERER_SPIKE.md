@@ -160,8 +160,9 @@ chunk graph will be measured in the browser evidence run.
   explicit stack-to-zone departure, dependent-card staging across a resumed
   session, staged-stack restoration, and an atomic resumed bulk move to the
   deck bottom, plus inspection extraction across a resumed session and an
-  atomic bulk move to hand, plus resumed deck-top swapping, moving another card
-  to deck top, and shuffling prizes to the deck bottom;
+  atomic bulk move to hand, plus resumed deck-top swapping, moving cards to both
+  deck edges, shuffling a selected card into the full deck, and shuffling prizes
+  to the deck bottom;
 - TypeScript project boundaries and circular-dependency check;
 - Vite production build; and
 - the repository-wide v2 and 79-test legacy gates.
@@ -188,12 +189,15 @@ server-side, retires inspection visibility grants, and publishes the whole
 result as one revision. No bulk operation loops through transient client-visible
 card moves.
 
-The same semantic boundary now maps the legacy per-card deck-top and switch
-controls to `MoveCardToDeckTop` and `SwapCardWithDeckTop`, carrying only an
-opaque card handle and its expected source ID. The authority derives the deck
-owner and rejects stale, foreign, lower-evolution, empty-deck, and self-swap
-cases. Zone and stack swaps reuse existing movement events; inspection and
-staged swaps use narrow work-area events with exact old-order preconditions.
+The same semantic boundary now maps all four legacy per-card deck controls to
+`MoveCardToDeckTop`, `MoveCardToDeckBottom`, `ShuffleCardIntoDeck`, and
+`SwapCardWithDeckTop`, carrying only an opaque card handle and its expected
+source ID. The authority derives the deck owner and rejects stale, foreign,
+lower-evolution, empty-deck, edge no-op, and self-swap cases. Zone and stack
+swaps reuse existing movement events; inspection and staged swaps use narrow
+work-area events with exact old-order preconditions. Shuffle-into-deck validates
+the complete source departure before using authority randomness and publishes
+the departure plus full-deck permutation in one revision.
 `MovePrizesToDeckBottom` takes no client-selected zone or permutation and keeps
 the existing deck prefix unchanged.
 
@@ -203,7 +207,7 @@ resolved event replaces the complete board stack layout with exact old-layout
 preconditions, while attachment drags and lower evolution cards cannot
 accidentally move the stack.
 
-At this checkpoint the v2 suite contains 139 passing tests across 28 files. A
+At this checkpoint the v2 suite contains 141 passing tests across 28 files. A
 separate Playwright suite also passes three real Chromium 151 scenarios:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and

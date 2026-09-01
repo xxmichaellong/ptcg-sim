@@ -84,6 +84,16 @@ describe('client protocol ingress', () => {
         expectedSourceId: 'source-zone',
       },
       {
+        type: 'MoveCardToDeckBottom',
+        cardId: 'view-card',
+        expectedSourceId: 'source-zone',
+      },
+      {
+        type: 'ShuffleCardIntoDeck',
+        cardId: 'view-card',
+        expectedSourceId: 'source-work-area',
+      },
+      {
         type: 'SwapCardWithDeckTop',
         cardId: 'view-card',
         expectedSourceId: 'source-stack',

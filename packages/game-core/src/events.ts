@@ -60,6 +60,7 @@ export type DomainEvent =
       readonly reason:
         | 'move-zone-contents'
         | 'move-card-to-deck-top'
+        | 'move-card-to-deck-bottom'
         | 'move-prizes-to-deck-bottom'
         | 'shuffle-zone-into-deck'
         | 'shuffle-zone-to-deck-bottom'

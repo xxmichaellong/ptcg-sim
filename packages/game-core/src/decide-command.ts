@@ -144,7 +144,13 @@ const sameOrder = <Value>(
 
 type DeckRelativeCommand = Extract<
   GameCommand,
-  { readonly type: 'MoveCardToDeckTop' | 'SwapCardWithDeckTop' }
+  {
+    readonly type:
+      | 'MoveCardToDeckTop'
+      | 'MoveCardToDeckBottom'
+      | 'ShuffleCardIntoDeck'
+      | 'SwapCardWithDeckTop';
+  }
 >;
 
 type DeckRelativeSource = {
@@ -228,7 +234,8 @@ const decideTopEvolutionDeparture = (
   cardId: CardInstanceId,
   destination: CardZone,
   destinationIndex: number,
-  context: CommandContext
+  context: CommandContext,
+  concealIdentity = isConcealedZone(destination)
 ): TopEvolutionDeparture => {
   if (stack.evolutionCardIds.at(-1) !== cardId) {
     return reject(
@@ -272,7 +279,7 @@ const decideTopEvolutionDeparture = (
       expectedAttachmentCardIds: [...stack.attachmentCardIds],
       destinationZoneId: destination.id,
       destinationIndex,
-      concealIdentity: isConcealedZone(destination),
+      concealIdentity,
       attachmentResolution: workAreaId
         ? {
             id: workAreaId,
@@ -282,6 +289,183 @@ const decideTopEvolutionDeparture = (
           }
         : null,
     },
+  };
+};
+
+const decideCardDepartureToDeck = (
+  state: MatchState,
+  source: DeckRelativeSource,
+  destinationIndex: number,
+  context: CommandContext,
+  concealIdentity = true
+): CommandDecision => {
+  const { card, location, deck } = source;
+  switch (location.kind) {
+    case 'zone': {
+      const zone = state.zones[location.zoneId]!;
+      return accept({
+        type: 'CardMoved',
+        cardId: card.id,
+        expectedSourceZoneId: zone.id,
+        destinationZoneId: deck.id,
+        destinationIndex,
+        concealIdentity,
+      });
+    }
+    case 'stackAttachment':
+      return accept({
+        type: 'CardMovedFromStack',
+        cardId: card.id,
+        expectedStackId: location.stackId,
+        source: 'attachment',
+        destinationZoneId: deck.id,
+        destinationIndex,
+        concealIdentity,
+      });
+    case 'stackEvolution': {
+      const stack = state.stacks[location.stackId]!;
+      const departure = decideTopEvolutionDeparture(
+        state,
+        stack,
+        card.id,
+        deck,
+        destinationIndex,
+        context,
+        concealIdentity
+      );
+      return departure.accepted ? accept(departure.event) : departure;
+    }
+    case 'inspectionWorkArea': {
+      const inspection = state.workAreas[location.playerId]?.inspection;
+      if (!inspection) {
+        return reject('stale_reference', 'Inspection work area changed');
+      }
+      return accept({
+        type: 'InspectedCardMoved',
+        playerId: location.playerId,
+        inspectionId: inspection.inspectionId,
+        expectedWorkAreaId: inspection.id,
+        cardId: card.id,
+        destinationZoneId: deck.id,
+        destinationIndex,
+        concealIdentity,
+      });
+    }
+    case 'attachmentResolutionWorkArea': {
+      const resolution =
+        state.workAreas[location.playerId]?.attachmentResolution;
+      if (!resolution) {
+        return reject('stale_reference', 'Attached-card work area changed');
+      }
+      return accept({
+        type: 'StagedCardMoved',
+        playerId: location.playerId,
+        expectedWorkAreaId: resolution.id,
+        source: location.source,
+        cardId: card.id,
+        destinationZoneId: deck.id,
+        destinationIndex,
+        concealIdentity,
+      });
+    }
+  }
+};
+
+const decideMoveCardToDeckEdge = (
+  state: MatchState,
+  command: Extract<
+    GameCommand,
+    { readonly type: 'MoveCardToDeckTop' | 'MoveCardToDeckBottom' }
+  >,
+  context: CommandContext
+): CommandDecision => {
+  const source = resolveDeckRelativeSource(state, command);
+  if (!source.accepted) return source;
+  const { card, location, deck } = source;
+  const sourceIsDeck = location.kind === 'zone' && location.zoneId === deck.id;
+  if (!sourceIsDeck && deck.cardIds.length >= 200) {
+    return reject(
+      'precondition_failed',
+      'Deck cannot contain more than 200 cards'
+    );
+  }
+  const edge = command.type === 'MoveCardToDeckTop' ? 'top' : 'bottom';
+  if (sourceIsDeck) {
+    const edgeIndex = edge === 'top' ? 0 : deck.cardIds.length - 1;
+    if (location.index === edgeIndex) {
+      return reject('invalid_command', `Card is already on deck ${edge}`);
+    }
+    const withoutCard = deck.cardIds.filter((cardId) => cardId !== card.id);
+    return accept({
+      type: 'ZoneOrdersSet',
+      reason:
+        edge === 'top' ? 'move-card-to-deck-top' : 'move-card-to-deck-bottom',
+      zones: [
+        {
+          zoneId: deck.id,
+          expectedCardIds: [...deck.cardIds],
+          cardIds:
+            edge === 'top'
+              ? [card.id, ...withoutCard]
+              : [...withoutCard, card.id],
+        },
+      ],
+      concealedCardIds: [card.id],
+    });
+  }
+  return decideCardDepartureToDeck(
+    state,
+    source,
+    edge === 'top' ? 0 : deck.cardIds.length,
+    context
+  );
+};
+
+const decideShuffleCardIntoDeck = (
+  state: MatchState,
+  command: Extract<GameCommand, { readonly type: 'ShuffleCardIntoDeck' }>,
+  context: CommandContext
+): CommandDecision => {
+  const source = resolveDeckRelativeSource(state, command);
+  if (!source.accepted) return source;
+  const { location, deck, card } = source;
+  const sourceIsDeck = location.kind === 'zone' && location.zoneId === deck.id;
+  if (!sourceIsDeck && deck.cardIds.length >= 200) {
+    return reject(
+      'precondition_failed',
+      'Deck cannot contain more than 200 cards'
+    );
+  }
+  const departure = sourceIsDeck
+    ? null
+    : decideCardDepartureToDeck(
+        state,
+        source,
+        deck.cardIds.length,
+        context,
+        false
+      );
+  if (departure && !departure.accepted) return departure;
+  const combined = sourceIsDeck
+    ? [...deck.cardIds]
+    : [...deck.cardIds, card.id];
+  const shuffled = context.shuffle(combined);
+  if (!validatePermutation(combined, shuffled)) {
+    return reject(
+      'invalid_command',
+      'Shuffle adapter returned an invalid permutation'
+    );
+  }
+  const shuffleEvent: DomainEvent = {
+    type: 'ZoneShuffled',
+    zoneId: deck.id,
+    cardOrder: shuffled,
+    concealedCardIds: shuffled,
+  };
+  if (sourceIsDeck) return accept(shuffleEvent);
+  return {
+    accepted: true,
+    events: [...departure!.events, shuffleEvent],
   };
 };
 
@@ -862,108 +1046,11 @@ export const decideCommand = (
         concealedCardIds: destination.concealedCardIds,
       });
     }
-    case 'MoveCardToDeckTop': {
-      const source = resolveDeckRelativeSource(state, command);
-      if (!source.accepted) return source;
-      const { card, location, deck } = source;
-      if (
-        !(location.kind === 'zone' && location.zoneId === deck.id) &&
-        deck.cardIds.length >= 200
-      ) {
-        return reject(
-          'precondition_failed',
-          'Deck cannot contain more than 200 cards'
-        );
-      }
-      switch (location.kind) {
-        case 'zone': {
-          const zone = state.zones[location.zoneId]!;
-          if (zone.id === deck.id) {
-            if (location.index === 0) {
-              return reject('invalid_command', 'Card is already on deck top');
-            }
-            return accept({
-              type: 'ZoneOrdersSet',
-              reason: 'move-card-to-deck-top',
-              zones: [
-                {
-                  zoneId: deck.id,
-                  expectedCardIds: [...deck.cardIds],
-                  cardIds: [
-                    card.id,
-                    ...deck.cardIds.filter((cardId) => cardId !== card.id),
-                  ],
-                },
-              ],
-              concealedCardIds: [card.id],
-            });
-          }
-          return accept({
-            type: 'CardMoved',
-            cardId: card.id,
-            expectedSourceZoneId: zone.id,
-            destinationZoneId: deck.id,
-            destinationIndex: 0,
-            concealIdentity: true,
-          });
-        }
-        case 'stackAttachment':
-          return accept({
-            type: 'CardMovedFromStack',
-            cardId: card.id,
-            expectedStackId: location.stackId,
-            source: 'attachment',
-            destinationZoneId: deck.id,
-            destinationIndex: 0,
-            concealIdentity: true,
-          });
-        case 'stackEvolution': {
-          const stack = state.stacks[location.stackId]!;
-          const departure = decideTopEvolutionDeparture(
-            state,
-            stack,
-            card.id,
-            deck,
-            0,
-            context
-          );
-          return departure.accepted ? accept(departure.event) : departure;
-        }
-        case 'inspectionWorkArea': {
-          const inspection = state.workAreas[location.playerId]?.inspection;
-          if (!inspection) {
-            return reject('stale_reference', 'Inspection work area changed');
-          }
-          return accept({
-            type: 'InspectedCardMoved',
-            playerId: location.playerId,
-            inspectionId: inspection.inspectionId,
-            expectedWorkAreaId: inspection.id,
-            cardId: card.id,
-            destinationZoneId: deck.id,
-            destinationIndex: 0,
-            concealIdentity: true,
-          });
-        }
-        case 'attachmentResolutionWorkArea': {
-          const resolution =
-            state.workAreas[location.playerId]?.attachmentResolution;
-          if (!resolution) {
-            return reject('stale_reference', 'Attached-card work area changed');
-          }
-          return accept({
-            type: 'StagedCardMoved',
-            playerId: location.playerId,
-            expectedWorkAreaId: resolution.id,
-            source: location.source,
-            cardId: card.id,
-            destinationZoneId: deck.id,
-            destinationIndex: 0,
-            concealIdentity: true,
-          });
-        }
-      }
-    }
+    case 'MoveCardToDeckTop':
+    case 'MoveCardToDeckBottom':
+      return decideMoveCardToDeckEdge(state, command, context);
+    case 'ShuffleCardIntoDeck':
+      return decideShuffleCardIntoDeck(state, command, context);
     case 'SwapCardWithDeckTop': {
       const source = resolveDeckRelativeSource(state, command);
       if (!source.accepted) return source;

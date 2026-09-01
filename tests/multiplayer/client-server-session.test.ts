@@ -832,14 +832,55 @@ describe('client/server multiplayer contract', () => {
     expect(submitted).toBe(true);
     await player.factory.flush();
 
+    view = player.session.getSnapshot().view;
+    if (!view) throw new Error('Prize-bottom view was not published');
+    const returnedDeckTop = view.zones[discardId]!.cards[0]!;
+    submitted = false;
+    expect(
+      submitDeckRelativeCardAction(
+        view,
+        returnedDeckTop.id,
+        'moveToBottom',
+        (command) => {
+          submitted = player.session.submit(command).queued;
+        }
+      )
+    ).toMatchObject({
+      ok: true,
+      command: { type: 'MoveCardToDeckBottom', cardId: returnedDeckTop.id },
+    });
+    expect(submitted).toBe(true);
+    await player.factory.flush();
+
+    view = player.session.getSnapshot().view;
+    if (!view) throw new Error('Move-to-bottom view was not published');
+    const shuffledHandCard = view.zones[handId]!.cards[0]!;
+    submitted = false;
+    expect(
+      submitDeckRelativeCardAction(
+        view,
+        shuffledHandCard.id,
+        'shuffleIntoDeck',
+        (command) => {
+          submitted = player.session.submit(command).queued;
+        }
+      )
+    ).toMatchObject({
+      ok: true,
+      command: { type: 'ShuffleCardIntoDeck', cardId: shuffledHandCard.id },
+    });
+    expect(submitted).toBe(true);
+    await player.factory.flush();
+
     const resolved = player.session.getSnapshot().view;
-    expect(resolved?.revision).toBe(6);
+    expect(resolved?.revision).toBe(8);
     expect(resolved?.zones[`zone:${playerId}:prizes`]?.cards).toEqual([]);
-    expect(resolved?.zones[`zone:${playerId}:deck`]?.cards).toHaveLength(9);
-    expect(resolved?.zones[discardId]?.cards).toHaveLength(1);
-    expect(resolved?.zones[handId]?.cards).toHaveLength(5);
-    expect(room.store.commandCommits).toHaveLength(6);
+    expect(resolved?.zones[`zone:${playerId}:deck`]?.cards).toHaveLength(11);
+    expect(resolved?.zones[discardId]?.cards).toHaveLength(0);
+    expect(resolved?.zones[handId]?.cards).toHaveLength(4);
+    expect(room.store.commandCommits).toHaveLength(8);
     expect(room.store.commandCommits[3]?.eventBatch?.events).toHaveLength(2);
+    expect(room.store.commandCommits[7]?.eventBatch?.events).toHaveLength(2);
   });
 
   it('publishes one authoritative revision to a player and spectator', async () => {

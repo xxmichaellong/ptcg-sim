@@ -142,7 +142,131 @@ describe('atomic deck-relative commands', () => {
     assertMatchInvariants(state);
   });
 
-  it('moves a top evolution to deck top and stages every dependent', () => {
+  it('moves a loose card to deck bottom and reorders an existing deck card', () => {
+    const fixture = loaded(8);
+    const deckId = playerZoneId(p1, 'deck');
+    const handId = playerZoneId(p1, 'hand');
+    const originalDeck = [...fixture.state.zones[deckId]!.cardIds];
+    const selected = originalDeck[0]!;
+    let state = accepted(
+      fixture.state,
+      {
+        type: 'MoveCard',
+        cardId: selected,
+        expectedSourceZoneId: deckId,
+        destinationZoneId: handId,
+      },
+      fixture.context
+    );
+    state = accepted(
+      state,
+      {
+        type: 'MoveCardToDeckBottom',
+        playerId: p1,
+        cardId: selected,
+        expectedSourceId: handId,
+      },
+      fixture.context
+    );
+    expect(state.zones[deckId]?.cardIds).toEqual([
+      ...originalDeck.slice(1),
+      selected,
+    ]);
+    expect(state.zones[handId]?.cardIds).toEqual([]);
+
+    const movedWithinDeck = originalDeck[2]!;
+    state = accepted(
+      state,
+      {
+        type: 'MoveCardToDeckBottom',
+        playerId: p1,
+        cardId: movedWithinDeck,
+        expectedSourceId: deckId,
+      },
+      fixture.context
+    );
+    expect(state.zones[deckId]?.cardIds).toEqual([
+      ...originalDeck.slice(1).filter((cardId) => cardId !== movedWithinDeck),
+      selected,
+      movedWithinDeck,
+    ]);
+    assertMatchInvariants(state);
+  });
+
+  it('adds a loose card and shuffles the entire combined deck once', () => {
+    const fixture = loaded(8);
+    const deckId = playerZoneId(p1, 'deck');
+    const discardId = playerZoneId(p1, 'discard');
+    const originalDeck = [...fixture.state.zones[deckId]!.cardIds];
+    const selected = originalDeck[0]!;
+    let state = accepted(
+      fixture.state,
+      {
+        type: 'MoveCard',
+        cardId: selected,
+        expectedSourceZoneId: deckId,
+        destinationZoneId: discardId,
+      },
+      fixture.context
+    );
+    state = accepted(
+      state,
+      { type: 'SetCardCategory', cardId: selected, category: 'Energy' },
+      fixture.context
+    );
+    const beforeGeneration = state.cards[selected]!.visibilityGeneration;
+    const result = executeCommand(
+      state,
+      {
+        type: 'ShuffleCardIntoDeck',
+        playerId: p1,
+        cardId: selected,
+        expectedSourceId: discardId,
+      },
+      fixture.context
+    );
+    if (!result.accepted) throw new Error(result.message);
+    state = result.state;
+    expect(result.batch.events.map((event) => event.type)).toEqual([
+      'CardMoved',
+      'ZoneShuffled',
+    ]);
+    expect(state.zones[deckId]?.cardIds).toEqual([
+      selected,
+      ...originalDeck.slice(1).reverse(),
+    ]);
+    expect(state.cards[selected]).toMatchObject({
+      currentCategory: 'Pokémon',
+      face: 'up',
+      visibilityGeneration: beforeGeneration + 1,
+    });
+    expect(
+      state.zones[deckId]!.cardIds.every(
+        (cardId) =>
+          state.cards[cardId]!.visibilityGeneration === beforeGeneration + 1
+      )
+    ).toBe(true);
+    const beforeReshuffle = [...state.zones[deckId]!.cardIds];
+    const reshuffled = executeCommand(
+      state,
+      {
+        type: 'ShuffleCardIntoDeck',
+        playerId: p1,
+        cardId: beforeReshuffle[3]!,
+        expectedSourceId: deckId,
+      },
+      fixture.context
+    );
+    if (!reshuffled.accepted) throw new Error(reshuffled.message);
+    state = reshuffled.state;
+    expect(reshuffled.batch.events.map((event) => event.type)).toEqual([
+      'ZoneShuffled',
+    ]);
+    expect(state.zones[deckId]?.cardIds).toEqual(beforeReshuffle.reverse());
+    assertMatchInvariants(state);
+  });
+
+  it('moves a top evolution to deck bottom and stages every dependent', () => {
     const fixture = loaded(8);
     const deckId = playerZoneId(p1, 'deck');
     const originalDeck = fixture.state.zones[deckId]!.cardIds;
@@ -172,17 +296,37 @@ describe('atomic deck-relative commands', () => {
       },
       fixture.context
     );
+    let shuffleCalled = false;
+    expect(
+      executeCommand(
+        state,
+        {
+          type: 'ShuffleCardIntoDeck',
+          playerId: p1,
+          cardId: baseId,
+          expectedSourceId: stackId,
+        },
+        {
+          ...fixture.context,
+          shuffle: (values) => {
+            shuffleCalled = true;
+            return values;
+          },
+        }
+      )
+    ).toMatchObject({ accepted: false, code: 'precondition_failed' });
+    expect(shuffleCalled).toBe(false);
     state = accepted(
       state,
       {
-        type: 'MoveCardToDeckTop',
+        type: 'MoveCardToDeckBottom',
         playerId: p1,
         cardId: evolutionId,
         expectedSourceId: stackId,
       },
       fixture.context
     );
-    expect(state.zones[deckId]?.cardIds[0]).toBe(evolutionId);
+    expect(state.zones[deckId]?.cardIds.at(-1)).toBe(evolutionId);
     expect(state.stacks[stackId]).toBeUndefined();
     expect(state.workAreas[p1]?.attachmentResolution).toMatchObject({
       sourceStackId: stackId,
@@ -276,7 +420,7 @@ describe('atomic deck-relative commands', () => {
     state = accepted(
       state,
       {
-        type: 'MoveCardToDeckTop',
+        type: 'ShuffleCardIntoDeck',
         playerId: p1,
         cardId: movedToTop,
         expectedSourceId: inspection.id,
@@ -561,6 +705,33 @@ describe('atomic deck-relative commands', () => {
           expectedSourceId: deckId,
         },
         fixture.context
+      )
+    ).toMatchObject({ accepted: false, code: 'invalid_command' });
+    expect(
+      executeCommand(
+        fixture.state,
+        {
+          type: 'MoveCardToDeckBottom',
+          playerId: p1,
+          cardId: fixture.state.zones[deckId]!.cardIds.at(-1)!,
+          expectedSourceId: deckId,
+        },
+        fixture.context
+      )
+    ).toMatchObject({ accepted: false, code: 'invalid_command' });
+    expect(
+      executeCommand(
+        fixture.state,
+        {
+          type: 'ShuffleCardIntoDeck',
+          playerId: p1,
+          cardId,
+          expectedSourceId: deckId,
+        },
+        {
+          ...fixture.context,
+          shuffle: (values) => values.slice(1),
+        }
       )
     ).toMatchObject({ accepted: false, code: 'invalid_command' });
     expect(

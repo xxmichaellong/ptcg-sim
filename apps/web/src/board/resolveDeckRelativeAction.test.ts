@@ -10,29 +10,26 @@ import {
 } from './resolveDeckRelativeAction.js';
 
 describe('deck-relative application actions', () => {
-  it('maps move-top and swap-top to semantic stale-safe commands', () => {
+  it('maps all four per-card deck actions to semantic stale-safe commands', () => {
     const view = createRendererSpikeView();
     const playerId = view.playerOrder[0]!;
     const hand = view.zones[`zone:${playerId}:hand`]!;
     const card = hand.cards[0]!;
-    expect(resolveDeckRelativeCardAction(view, card.id, 'moveToTop')).toEqual({
-      ok: true,
-      command: {
-        type: 'MoveCardToDeckTop',
-        cardId: card.id,
-        expectedSourceId: hand.id,
-      },
-    });
-    expect(resolveDeckRelativeCardAction(view, card.id, 'swapWithTop')).toEqual(
-      {
+    for (const [action, type] of [
+      ['moveToTop', 'MoveCardToDeckTop'],
+      ['moveToBottom', 'MoveCardToDeckBottom'],
+      ['shuffleIntoDeck', 'ShuffleCardIntoDeck'],
+      ['swapWithTop', 'SwapCardWithDeckTop'],
+    ] as const) {
+      expect(resolveDeckRelativeCardAction(view, card.id, action)).toEqual({
         ok: true,
         command: {
-          type: 'SwapCardWithDeckTop',
+          type,
           cardId: card.id,
           expectedSourceId: hand.id,
         },
-      }
-    );
+      });
+    }
   });
 
   it('fails closed for spectators, stale cards, deck no-ops, and empty decks', () => {
@@ -56,6 +53,13 @@ describe('deck-relative application actions', () => {
     expect(
       resolveDeckRelativeCardAction(view, deck.cards[1]!.id, 'swapWithTop')
     ).toEqual({ ok: false, reason: 'no_op' });
+    expect(
+      resolveDeckRelativeCardAction(view, deck.cards.at(-1)!.id, 'moveToBottom')
+    ).toEqual({ ok: false, reason: 'no_op' });
+    expect(
+      resolveDeckRelativeCardAction(view, deck.cards[0]!.id, 'shuffleIntoDeck')
+        .ok
+    ).toBe(true);
     const emptyDeckView: MatchViewState = {
       ...view,
       zones: { ...view.zones, [deck.id]: { ...deck, cards: [] } },
