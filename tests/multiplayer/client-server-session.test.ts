@@ -16,6 +16,10 @@ import { submitLooseBoardAction } from '../../apps/web/src/board/resolveLooseBoa
 import { submitLifecycleAction } from '../../apps/web/src/board/resolveLifecycleAction.js';
 import { submitOncePerGameAction } from '../../apps/web/src/board/resolveOncePerGameAction.js';
 import {
+  resolveZoneInspectionAction,
+  submitPrivateInspectionAction,
+} from '../../apps/web/src/board/resolvePrivateInspectionAction.js';
+import {
   resolvePrizeVisibilityAction,
   submitPublicVisibilityAction,
 } from '../../apps/web/src/board/resolvePublicVisibilityAction.js';
@@ -1786,6 +1790,177 @@ describe('client/server multiplayer contract', () => {
         .getSnapshot()
         .view?.zones[prizeId]!.cards.every((card) => card.kind === 'concealed')
     ).toBe(true);
+  });
+
+  it('persists a private prize look across reconnect without leaking it to other views', async () => {
+    const room = await fixture();
+    const playerScheduler = new ManualScheduler();
+    const player = await connectClient({
+      hub: room.hub,
+      name: 'Blue',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+      scheduler: playerScheduler,
+    });
+    const opponent = await connectClient({
+      hub: room.hub,
+      name: 'Red',
+      role: 'player',
+      capability: room.credentials.playerTwoSeatCapability,
+    });
+    const spectatorCapability = room.credentials.spectatorCapability;
+    if (!spectatorCapability) throw new Error('Missing spectator capability');
+    const spectator = await connectClient({
+      hub: room.hub,
+      name: 'Observer',
+      role: 'spectator',
+      capability: spectatorCapability,
+    });
+    const playerId = player.session.getSnapshot().playerId;
+    if (!playerId) throw new Error('Missing private-look player identity');
+
+    expect(
+      player.session.submit({
+        type: 'LoadDeck',
+        entries: Array.from({ length: 14 }, (_, index) => ({
+          definition: {
+            id: `private-look-definition-${index}`,
+            name: `Private look card ${index}`,
+            category: index === 0 ? ('Pokémon' as const) : ('Trainer' as const),
+            imageUrl: `/private-look-card-${index}.png`,
+          },
+          count: 1,
+        })),
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+    expect(player.session.submit({ type: 'SetupPlayer' }).queued).toBe(true);
+    await player.factory.flush();
+
+    let playerView = player.session.getSnapshot().view;
+    if (!playerView) throw new Error('Missing private-look setup view');
+    const prizeId = Object.values(playerView.zones).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'prizes'
+    )!.id;
+    const concealedAliases = playerView.zones[prizeId]!.cards.map(
+      (card) => card.id
+    );
+    expect(
+      playerView.zones[prizeId]!.cards.every(
+        (card) => card.kind === 'concealed'
+      )
+    ).toBe(true);
+
+    let queued = false;
+    submitPrivateInspectionAction(
+      resolveZoneInspectionAction(playerView, playerId, 'prizes', true),
+      (wire) => {
+        queued = player.session.submit(wire).queued;
+      }
+    );
+    expect(queued).toBe(true);
+    await player.factory.flush();
+
+    playerView = player.session.getSnapshot().view;
+    const opponentView = opponent.session.getSnapshot().view;
+    const spectatorView = spectator.session.getSnapshot().view;
+    if (!playerView || !opponentView || !spectatorView) {
+      throw new Error('Missing private-look recipient view');
+    }
+    const knownAliases = playerView.zones[prizeId]!.cards.map(
+      (card) => card.id
+    );
+    expect(
+      playerView.zones[prizeId]!.cards.every((card) => card.kind === 'known')
+    ).toBe(true);
+    expect(knownAliases).not.toEqual(concealedAliases);
+    expect(playerView.privateInspections).toEqual([
+      expect.objectContaining({
+        sourcePlayerId: playerId,
+        sourceId: prizeId,
+        cardIds: knownAliases,
+      }),
+    ]);
+    for (const privateView of [opponentView, spectatorView]) {
+      expect(
+        privateView.zones[prizeId]!.cards.every(
+          (card) => card.kind === 'concealed'
+        )
+      ).toBe(true);
+      expect(privateView.privateInspections).toEqual([]);
+      expect(JSON.stringify(privateView)).not.toContain(
+        'private-look-definition-'
+      );
+      expect(JSON.stringify(privateView)).not.toContain(
+        playerView.privateInspections[0]!.id
+      );
+    }
+    expect(player.session.getSnapshot().presentationEvents.at(-1)).toEqual({
+      type: 'PrivateInspectionStarted',
+      revision: 3,
+      sourcePlayerId: playerId,
+      viewerPlayerId: playerId,
+      cardCount: 6,
+    });
+    expect(opponent.session.getSnapshot().presentationEvents.at(-1)).toEqual(
+      player.session.getSnapshot().presentationEvents.at(-1)
+    );
+    expect(spectator.session.getSnapshot().presentationEvents.at(-1)).toEqual(
+      player.session.getSnapshot().presentationEvents.at(-1)
+    );
+    expect(room.store.commandCommits[2]?.eventBatch?.events[0]).toMatchObject({
+      type: 'InspectionGrantOpened',
+      sourcePlayerId: playerId,
+      sourceId: prizeId,
+    });
+
+    player.factory.latest().networkDrop();
+    playerScheduler.runNext();
+    player.factory.latest().open();
+    await player.factory.flush();
+    playerView = player.session.getSnapshot().view;
+    if (!playerView) throw new Error('Missing reconnected private-look view');
+    expect(playerView.revision).toBe(3);
+    expect(
+      playerView.zones[prizeId]!.cards.every((card) => card.kind === 'known')
+    ).toBe(true);
+    expect(playerView.privateInspections).toHaveLength(1);
+    expect(player.session.getSnapshot().presentationEvents).toHaveLength(3);
+
+    queued = false;
+    submitPrivateInspectionAction(
+      resolveZoneInspectionAction(playerView, playerId, 'prizes', false),
+      (wire) => {
+        queued = player.session.submit(wire).queued;
+      }
+    );
+    expect(queued).toBe(true);
+    await player.factory.flush();
+
+    playerView = player.session.getSnapshot().view;
+    if (!playerView) throw new Error('Missing closed private-look view');
+    expect(playerView.revision).toBe(4);
+    expect(playerView.privateInspections).toEqual([]);
+    expect(
+      playerView.zones[prizeId]!.cards.every(
+        (card) => card.kind === 'concealed'
+      )
+    ).toBe(true);
+    expect(playerView.zones[prizeId]!.cards.map((card) => card.id)).not.toEqual(
+      concealedAliases
+    );
+    expect(playerView.zones[prizeId]!.cards.map((card) => card.id)).not.toEqual(
+      knownAliases
+    );
+    expect(player.session.getSnapshot().presentationEvents.at(-1)).toEqual({
+      type: 'PrivateInspectionEnded',
+      revision: 4,
+      sourcePlayerId: playerId,
+      viewerPlayerId: playerId,
+      cardCount: 6,
+    });
+    expect(room.store.commandCommits).toHaveLength(4);
+    expect(room.store.snapshot?.state.visibility.inspectionGrants).toEqual({});
   });
 
   it('recovers a committed-but-undelivered command through exact replay', async () => {

@@ -202,11 +202,25 @@ export const collectInvariantProblems = (
   }
 
   const workAreaCardIds = new Set<CardInstanceId>();
+  const activeInspectionIds = new Set<string>();
   for (const [playerId, areas] of Object.entries(state.workAreas)) {
+    if (areas.inspection) {
+      if (activeInspectionIds.has(areas.inspection.inspectionId)) {
+        problems.push(
+          `inspection ID ${areas.inspection.inspectionId} is duplicated`
+        );
+      }
+      activeInspectionIds.add(areas.inspection.inspectionId);
+    }
     for (const cardId of areas.inspection?.cardIds ?? []) {
       if (workAreaCardIds.has(cardId))
         problems.push(`card ${cardId} appears in two work areas`);
       workAreaCardIds.add(cardId);
+      if (!state.cards[cardId]) {
+        problems.push(
+          `inspection for ${playerId} references missing card ${cardId}`
+        );
+      }
     }
     const stagedIds = areas.attachmentResolution
       ? [
@@ -235,6 +249,76 @@ export const collectInvariantProblems = (
       areas.inspection.viewerIds.some((viewerId) => !state.players[viewerId])
     ) {
       problems.push(`inspection for ${playerId} contains unknown viewer`);
+    }
+  }
+
+  if (Object.keys(state.visibility.inspectionGrants).length > 200) {
+    problems.push('too many private inspection grants are active');
+  }
+  for (const [inspectionId, grant] of Object.entries(
+    state.visibility.inspectionGrants
+  )) {
+    if (grant.inspectionId !== inspectionId) {
+      problems.push(
+        `inspection grant key ${inspectionId} does not match its ID`
+      );
+    }
+    if (!state.players[grant.sourcePlayerId]) {
+      problems.push(`inspection ${inspectionId} has an unknown source player`);
+    }
+    if (
+      grant.cardIds.length === 0 ||
+      grant.cardIds.length > 200 ||
+      hasDuplicates(grant.cardIds)
+    ) {
+      problems.push(`inspection ${inspectionId} has invalid cards`);
+    }
+    if (
+      grant.viewerIds.length === 0 ||
+      grant.viewerIds.length > state.playerOrder.length ||
+      hasDuplicates(grant.viewerIds)
+    ) {
+      problems.push(`inspection ${inspectionId} has invalid viewers`);
+    }
+    for (const viewerId of grant.viewerIds) {
+      if (!state.players[viewerId]) {
+        problems.push(
+          `inspection ${inspectionId} has unknown viewer ${viewerId}`
+        );
+      }
+    }
+    for (const cardId of grant.cardIds) {
+      const card = state.cards[cardId];
+      const locations = card ? findCardLocations(state, cardId) : [];
+      const location = locations.length === 1 ? locations[0] : undefined;
+      const sourceId = location
+        ? location.kind === 'zone'
+          ? location.zoneId
+          : location.kind === 'stackEvolution' ||
+              location.kind === 'stackAttachment'
+            ? location.stackId
+            : location.kind === 'inspectionWorkArea'
+              ? state.workAreas[location.playerId]?.inspection?.id
+              : state.workAreas[location.playerId]?.attachmentResolution?.id
+        : undefined;
+      const sourcePlayerId =
+        card && location
+          ? location.kind === 'zone'
+            ? (state.zones[location.zoneId]?.ownerId ?? card.ownerId)
+            : location.kind === 'stackEvolution' ||
+                location.kind === 'stackAttachment'
+              ? state.stacks[location.stackId]?.boardPlayerId
+              : location.playerId
+          : undefined;
+      if (
+        !card ||
+        sourceId !== grant.sourceId ||
+        sourcePlayerId !== grant.sourcePlayerId
+      ) {
+        problems.push(
+          `inspection ${inspectionId} references card ${cardId} outside its source`
+        );
+      }
     }
   }
 

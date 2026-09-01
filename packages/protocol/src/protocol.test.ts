@@ -314,6 +314,61 @@ describe('client protocol ingress', () => {
     }
   });
 
+  it('accepts bounded private inspection grant intents', () => {
+    const parseCommand = (command: unknown) =>
+      parseClientFrame(
+        JSON.stringify({
+          type: 'Command',
+          protocolVersion: PROTOCOL_VERSION,
+          sessionId: 'session',
+          clientSequence: 1,
+          commandId: 'command',
+          lastSeenRevision: 0,
+          command,
+        })
+      );
+    for (const command of [
+      {
+        type: 'BeginZoneInspection',
+        targetPlayerId: 'target-player',
+        zoneId: 'prize-zone',
+        expectedCardIds: ['private-card-one', 'private-card-two'],
+      },
+      {
+        type: 'BeginCardInspection',
+        cardId: 'private-card',
+        expectedSourceId: 'private-source',
+      },
+      {
+        type: 'EndPrivateInspection',
+        inspectionId: 'private-inspection',
+      },
+    ]) {
+      expect(parseCommand(command).ok).toBe(true);
+    }
+    for (const command of [
+      {
+        type: 'BeginZoneInspection',
+        targetPlayerId: 'target-player',
+        zoneId: 'prize-zone',
+        expectedCardIds: [],
+      },
+      {
+        type: 'BeginZoneInspection',
+        targetPlayerId: 'target-player',
+        zoneId: 'prize-zone',
+        expectedCardIds: Array.from(
+          { length: 201 },
+          (_, index) => `private-card-${index}`
+        ),
+      },
+      { type: 'BeginCardInspection', cardId: 'private-card' },
+      { type: 'EndPrivateInspection', inspectionId: '' },
+    ]) {
+      expect(parseCommand(command).ok).toBe(false);
+    }
+  });
+
   it('bounds semantic loose-board batch commands', () => {
     const parseCommand = (command: unknown) =>
       parseClientFrame(

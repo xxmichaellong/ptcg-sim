@@ -248,7 +248,7 @@ recipient-safe snapshot. Hidden setup cards remain concealed for the other
 player; lifecycle announcements travel through the bounded presentation stream,
 not renderer-owned state.
 
-At this checkpoint the v2 suite contains 248 passing tests across 48 files. A
+At this checkpoint the v2 suite contains 264 passing tests across 51 files. A
 separate Playwright suite also passes three real Chromium 151 scenarios:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and

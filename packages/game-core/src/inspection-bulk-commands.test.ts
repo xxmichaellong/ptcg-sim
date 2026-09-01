@@ -142,6 +142,8 @@ const prepareInspection = (
         ...state.visibility.inspectionGrants,
         [inspection.inspectionId]: {
           inspectionId: inspection.inspectionId,
+          sourcePlayerId: p1,
+          sourceId: inspection.id,
           cardIds: [...inspection.cardIds],
           viewerIds: [...inspection.viewerIds],
         },

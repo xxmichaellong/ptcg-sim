@@ -195,6 +195,7 @@ export const createRendererSpikeView = (): MatchViewState => {
       [p1]: { inspection: null, attachmentResolution: null },
       [p2]: { inspection: null, attachmentResolution: null },
     },
+    privateInspections: [],
     turn: { number: 4, currentPlayerId: p1 },
   };
 };

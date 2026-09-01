@@ -265,6 +265,25 @@ export const WireGameCommandSchema = v.variant('type', [
     revealed: v.boolean(),
   }),
   v.object({
+    type: v.literal('BeginZoneInspection'),
+    targetPlayerId: IdentifierSchema,
+    zoneId: IdentifierSchema,
+    expectedCardIds: v.pipe(
+      v.array(IdentifierSchema),
+      v.minLength(1),
+      v.maxLength(200)
+    ),
+  }),
+  v.object({
+    type: v.literal('BeginCardInspection'),
+    cardId: IdentifierSchema,
+    expectedSourceId: IdentifierSchema,
+  }),
+  v.object({
+    type: v.literal('EndPrivateInspection'),
+    inspectionId: IdentifierSchema,
+  }),
+  v.object({
     type: v.literal('ExtractDeckCardsForInspection'),
     ownerPlayerId: IdentifierSchema,
     count: v.pipe(PositiveIntegerSchema, v.maxValue(200)),
@@ -423,6 +442,13 @@ const WorkAreaViewSchema = v.object({
   ),
 });
 
+const PrivateInspectionViewSchema = v.object({
+  id: IdentifierSchema,
+  sourcePlayerId: IdentifierSchema,
+  sourceId: IdentifierSchema,
+  cardIds: v.pipe(v.array(IdentifierSchema), v.minLength(1), v.maxLength(200)),
+});
+
 export const MatchViewStateSchema = v.object({
   matchId: IdentifierSchema,
   revision: RevisionSchema,
@@ -438,6 +464,10 @@ export const MatchViewStateSchema = v.object({
   boards: v.record(IdentifierSchema, BoardViewSchema),
   stacks: v.record(IdentifierSchema, StackViewSchema),
   workAreas: v.record(IdentifierSchema, WorkAreaViewSchema),
+  privateInspections: v.pipe(
+    v.array(PrivateInspectionViewSchema),
+    v.maxLength(200)
+  ),
   turn: v.object({
     number: NonNegativeIntegerSchema,
     currentPlayerId: v.nullable(IdentifierSchema),
@@ -514,6 +544,20 @@ export const PresentationEventSchema = v.variant('type', [
     type: v.literal('PublicCardsHidden'),
     revision: RevisionSchema,
     playerId: IdentifierSchema,
+    cardCount: PositiveIntegerSchema,
+  }),
+  v.object({
+    type: v.literal('PrivateInspectionStarted'),
+    revision: RevisionSchema,
+    sourcePlayerId: IdentifierSchema,
+    viewerPlayerId: IdentifierSchema,
+    cardCount: PositiveIntegerSchema,
+  }),
+  v.object({
+    type: v.literal('PrivateInspectionEnded'),
+    revision: RevisionSchema,
+    sourcePlayerId: IdentifierSchema,
+    viewerPlayerId: IdentifierSchema,
     cardCount: PositiveIntegerSchema,
   }),
 ]);

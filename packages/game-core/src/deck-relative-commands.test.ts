@@ -411,6 +411,8 @@ describe('atomic deck-relative commands', () => {
         inspectionGrants: {
           [inspection.inspectionId]: {
             inspectionId: inspection.inspectionId,
+            sourcePlayerId: p1,
+            sourceId: inspection.id,
             cardIds: [...inspection.cardIds],
             viewerIds: [...inspection.viewerIds],
           },

@@ -49,6 +49,21 @@ const canControlCard = (
     known &&
     Boolean(state.players[ownerId]));
 
+const canInspectPrivateCards = (
+  state: MatchState,
+  actorId: PlayerId,
+  cardIds: readonly string[]
+): boolean =>
+  cardIds.every((cardId) => {
+    const ownerId = state.cards[cardId]?.ownerId;
+    if (!ownerId) return false;
+    return (
+      ownerId === actorId ||
+      (state.players[actorId]?.coachingConsent === true &&
+        state.players[ownerId]?.coachingConsent === true)
+    );
+  });
+
 export const resolveWireCommand = (
   state: MatchState,
   identities: ProjectionIdentityState,
@@ -67,7 +82,10 @@ export const resolveWireCommand = (
       wire.type === 'ResetPlayer' ||
       wire.type === 'LoadDeck' ||
       wire.type === 'SetPublicReveal' ||
-      wire.type === 'SetZonePublicReveal') &&
+      wire.type === 'SetZonePublicReveal' ||
+      wire.type === 'BeginZoneInspection' ||
+      wire.type === 'BeginCardInspection' ||
+      wire.type === 'EndPrivateInspection') &&
     observedRevision !== state.revision
   ) {
     return rejected('stale_reference');
@@ -792,6 +810,82 @@ export const resolveWireCommand = (
           zoneId: zone.id,
           expectedCardIds: [...zone.cardIds],
           revealed: wire.revealed,
+        },
+      };
+    }
+    case 'BeginZoneInspection': {
+      const sourcePlayerId = asPlayerId(wire.targetPlayerId);
+      if (!state.players[sourcePlayerId]) return rejected('stale_reference');
+      const zone = state.zones[wire.zoneId];
+      if (
+        !zone ||
+        zone.ownerId !== sourcePlayerId ||
+        (zone.kind !== 'hand' && zone.kind !== 'prizes')
+      ) {
+        return rejected('stale_reference');
+      }
+      const cardIds = wire.expectedCardIds.map(
+        (alias) => resolveCard(alias)?.cardId
+      );
+      if (
+        cardIds.some((cardId) => cardId === undefined) ||
+        new Set(cardIds).size !== cardIds.length ||
+        cardIds.length !== zone.cardIds.length ||
+        cardIds.some((cardId, index) => cardId !== zone.cardIds[index])
+      ) {
+        return rejected('stale_reference');
+      }
+      if (!canInspectPrivateCards(state, actorId, zone.cardIds)) {
+        return rejected('unauthorized');
+      }
+      return {
+        accepted: true,
+        command: {
+          type: 'BeginZoneInspection',
+          sourcePlayerId,
+          viewerPlayerId: actorId,
+          sourceZoneId: zone.id,
+          expectedCardIds: [...zone.cardIds],
+        },
+      };
+    }
+    case 'BeginCardInspection': {
+      const card = resolveCard(wire.cardId);
+      if (!card) return rejected('stale_reference');
+      const canonicalCard = state.cards[card.cardId]!;
+      const location = findCardLocation(state, card.cardId);
+      const source = location
+        ? cardSourceSnapshot(state, canonicalCard, location)
+        : null;
+      if (!source || source.id !== wire.expectedSourceId) {
+        return rejected('stale_reference');
+      }
+      if (!canInspectPrivateCards(state, actorId, [card.cardId])) {
+        return rejected('unauthorized');
+      }
+      return {
+        accepted: true,
+        command: {
+          type: 'BeginCardInspection',
+          playerId: source.playerId,
+          viewerPlayerId: actorId,
+          cardId: card.cardId,
+          expectedSourceId: source.id,
+        },
+      };
+    }
+    case 'EndPrivateInspection': {
+      const inspectionId = asInspectionId(wire.inspectionId);
+      const grant = state.visibility.inspectionGrants[inspectionId];
+      if (!grant || !grant.viewerIds.includes(actorId)) {
+        return rejected('stale_reference');
+      }
+      return {
+        accepted: true,
+        command: {
+          type: 'EndPrivateInspection',
+          viewerPlayerId: actorId,
+          inspectionId,
         },
       };
     }

@@ -147,6 +147,26 @@ const presentationEventsForBatch = (batch: EventBatch): PresentationEvent[] =>
         },
       ];
     }
+    if (event.type === 'InspectionGrantOpened') {
+      return event.viewerIds.map((viewerPlayerId) => ({
+        type: 'PrivateInspectionStarted',
+        revision: batch.revision,
+        sourcePlayerId: event.sourcePlayerId,
+        viewerPlayerId,
+        cardCount: event.cardIds.length,
+      }));
+    }
+    if (event.type === 'InspectionGrantClosed') {
+      return [
+        {
+          type: 'PrivateInspectionEnded',
+          revision: batch.revision,
+          sourcePlayerId: event.sourcePlayerId,
+          viewerPlayerId: event.viewerId,
+          cardCount: event.expectedCardIds.length,
+        },
+      ];
+    }
     if (event.type !== 'TableActionDeclared') return [];
     const common = {
       revision: batch.revision,

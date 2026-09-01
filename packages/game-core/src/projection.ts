@@ -136,6 +136,12 @@ export interface MatchViewState {
       }
     >
   >;
+  readonly privateInspections: readonly {
+    readonly id: string;
+    readonly sourcePlayerId: PlayerId;
+    readonly sourceId: string;
+    readonly cardIds: readonly ViewCardId[];
+  }[];
   readonly turn: MatchState['turn'];
 }
 
@@ -163,7 +169,7 @@ const isGrantedInspection = (
   );
 };
 
-const isCardKnown = (
+export const isCardKnownToViewer = (
   state: MatchState,
   viewer: ViewerRole,
   card: CardInstance
@@ -205,7 +211,7 @@ export const projectMatch = (
   const projectCard = (cardId: CardInstanceId): ViewCard => {
     const card = state.cards[cardId];
     if (!card) throw new Error(`Projection references missing card ${cardId}`);
-    const known = isCardKnown(state, viewer, card);
+    const known = isCardKnownToViewer(state, viewer, card);
     const id = identities.viewCardId({
       viewerKey: key,
       cardId: card.id,
@@ -327,6 +333,17 @@ export const projectMatch = (
         },
       ])
     ),
+    privateInspections:
+      viewer.kind === 'player'
+        ? Object.values(state.visibility.inspectionGrants)
+            .filter((grant) => grant.viewerIds.includes(viewer.playerId))
+            .map((grant) => ({
+              id: grant.inspectionId,
+              sourcePlayerId: grant.sourcePlayerId,
+              sourceId: grant.sourceId,
+              cardIds: grant.cardIds.map((cardId) => projectCard(cardId).id),
+            }))
+        : [],
     turn: { ...state.turn },
   };
 };

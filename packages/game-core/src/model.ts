@@ -102,6 +102,8 @@ export interface PlayerWorkAreas {
 
 export interface VisibilityGrant {
   readonly inspectionId: InspectionId;
+  readonly sourcePlayerId: PlayerId;
+  readonly sourceId: ZoneId | StackId | WorkAreaId;
   readonly cardIds: readonly CardInstanceId[];
   readonly viewerIds: readonly PlayerId[];
 }

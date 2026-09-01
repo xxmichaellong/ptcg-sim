@@ -241,6 +241,25 @@ export type GameCommand =
       readonly revealed: boolean;
     }
   | {
+      readonly type: 'BeginZoneInspection';
+      readonly sourcePlayerId: PlayerId;
+      readonly viewerPlayerId: PlayerId;
+      readonly sourceZoneId: ZoneId;
+      readonly expectedCardIds: readonly CardInstanceId[];
+    }
+  | {
+      readonly type: 'BeginCardInspection';
+      readonly playerId: PlayerId;
+      readonly viewerPlayerId: PlayerId;
+      readonly cardId: CardInstanceId;
+      readonly expectedSourceId: ZoneId | StackId | WorkAreaId;
+    }
+  | {
+      readonly type: 'EndPrivateInspection';
+      readonly viewerPlayerId: PlayerId;
+      readonly inspectionId: InspectionId;
+    }
+  | {
       readonly type: 'ExtractDeckCardsForInspection';
       readonly playerId: PlayerId;
       readonly viewerIds: readonly PlayerId[];

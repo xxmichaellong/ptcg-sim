@@ -35,6 +35,14 @@
 Phase 0 turns each non-deferred row into an ADR file containing context, options,
 decision, consequences, evidence, migration, rollback, and review date.
 
+ADR-017 now has a deliberately replaceable implementation default for audit:
+self-private inspection is allowed; opponent-private inspection requires mutual
+persisted coaching consent; grants survive reconnect and replay; explicit close
+or movement/reset out of the recorded source revokes them. Grant data is
+projected only to its viewer, while presentation facts expose only player IDs
+and counts. The row remains `PRODUCT_REQUIRED`: changing this policy should be a
+narrow authority decision, and no software can revoke knowledge already shown.
+
 ## Major alternatives
 
 ### Board renderer

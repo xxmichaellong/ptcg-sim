@@ -283,6 +283,24 @@ export type DomainEvent =
       readonly revealed: boolean;
     }
   | {
+      readonly type: 'InspectionGrantOpened';
+      readonly inspectionId: InspectionId;
+      readonly sourcePlayerId: PlayerId;
+      readonly sourceId: ZoneId | StackId | WorkAreaId;
+      readonly expectedSourceCardIds: readonly CardInstanceId[];
+      readonly cardIds: readonly CardInstanceId[];
+      readonly viewerIds: readonly PlayerId[];
+    }
+  | {
+      readonly type: 'InspectionGrantClosed';
+      readonly inspectionId: InspectionId;
+      readonly sourcePlayerId: PlayerId;
+      readonly sourceId: ZoneId | StackId | WorkAreaId;
+      readonly expectedCardIds: readonly CardInstanceId[];
+      readonly expectedViewerIds: readonly PlayerId[];
+      readonly viewerId: PlayerId;
+    }
+  | {
       readonly type: 'InspectionOpened';
       readonly playerId: PlayerId;
       readonly workAreaId: WorkAreaId;

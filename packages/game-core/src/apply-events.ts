@@ -11,6 +11,7 @@ import {
   cardSourceSnapshot,
   publicVisibilityFace,
 } from './public-visibility.js';
+import { isCardKnownToViewer } from './projection.js';
 
 const incrementVisibility = (card: CardInstance): CardInstance => ({
   ...card,
@@ -1952,10 +1953,107 @@ export const applyEvent = (
         },
       };
     }
+    case 'InspectionGrantOpened': {
+      const targetIds = new Set(event.cardIds);
+      const viewers = new Set(event.viewerIds);
+      const firstCard = state.cards[event.cardIds[0]!];
+      const firstLocation = firstCard
+        ? findCardLocation(state, firstCard.id)
+        : null;
+      const source =
+        firstCard && firstLocation
+          ? cardSourceSnapshot(state, firstCard, firstLocation)
+          : null;
+      if (
+        event.cardIds.length === 0 ||
+        event.cardIds.length > 200 ||
+        targetIds.size !== event.cardIds.length ||
+        event.expectedSourceCardIds.length > 200 ||
+        event.viewerIds.length === 0 ||
+        event.viewerIds.length > state.playerOrder.length ||
+        viewers.size !== event.viewerIds.length ||
+        Object.keys(state.visibility.inspectionGrants).length >= 200 ||
+        state.visibility.inspectionGrants[event.inspectionId] ||
+        Object.values(state.workAreas).some(
+          (areas) => areas.inspection?.inspectionId === event.inspectionId
+        ) ||
+        !source ||
+        source.id !== event.sourceId ||
+        source.playerId !== event.sourcePlayerId ||
+        !sameCardOrder(source.cardIds, event.expectedSourceCardIds) ||
+        event.cardIds.some((cardId) => !source.cardIds.includes(cardId)) ||
+        event.viewerIds.some((viewerId) => !state.players[viewerId]) ||
+        event.cardIds.some((cardId) => {
+          const card = state.cards[cardId];
+          return (
+            !card ||
+            event.viewerIds.some((viewerId) =>
+              isCardKnownToViewer(
+                state,
+                { kind: 'player', playerId: viewerId },
+                card
+              )
+            )
+          );
+        })
+      ) {
+        throw new Error('Private inspection grant event is malformed');
+      }
+      return {
+        ...state,
+        visibility: {
+          ...state.visibility,
+          inspectionGrants: {
+            ...state.visibility.inspectionGrants,
+            [event.inspectionId]: {
+              inspectionId: event.inspectionId,
+              sourcePlayerId: event.sourcePlayerId,
+              sourceId: event.sourceId,
+              cardIds: [...event.cardIds],
+              viewerIds: [...event.viewerIds],
+            },
+          },
+        },
+      };
+    }
+    case 'InspectionGrantClosed': {
+      const grant = state.visibility.inspectionGrants[event.inspectionId];
+      if (
+        !grant ||
+        event.expectedCardIds.length > 200 ||
+        event.expectedViewerIds.length > state.playerOrder.length ||
+        grant.sourcePlayerId !== event.sourcePlayerId ||
+        grant.sourceId !== event.sourceId ||
+        !sameCardOrder(grant.cardIds, event.expectedCardIds) ||
+        !sameCardOrder(grant.viewerIds, event.expectedViewerIds) ||
+        !grant.viewerIds.includes(event.viewerId)
+      ) {
+        throw new Error('Private inspection close event is malformed');
+      }
+      const remainingViewerIds = grant.viewerIds.filter(
+        (viewerId) => viewerId !== event.viewerId
+      );
+      const inspectionGrants = { ...state.visibility.inspectionGrants };
+      if (remainingViewerIds.length === 0) {
+        delete inspectionGrants[event.inspectionId];
+      } else {
+        inspectionGrants[event.inspectionId] = {
+          ...grant,
+          viewerIds: remainingViewerIds,
+        };
+      }
+      return {
+        ...state,
+        visibility: { ...state.visibility, inspectionGrants },
+      };
+    }
     case 'InspectionOpened': {
       const source = requireZone(state, event.sourceZoneId);
       if (state.workAreas[event.playerId]?.inspection) {
         throw new Error(`Player ${event.playerId} already has an inspection`);
+      }
+      if (state.visibility.inspectionGrants[event.inspectionId]) {
+        throw new Error(`Inspection ${event.inspectionId} already exists`);
       }
       const selected = new Set(event.cardIds);
       if (event.cardIds.some((cardId) => !source.cardIds.includes(cardId))) {
@@ -2065,6 +2163,32 @@ export const applyEvent = (
   }
 };
 
+const pruneInvalidInspectionGrants = (state: MatchState): MatchState => {
+  let changed = false;
+  const inspectionGrants = Object.fromEntries(
+    Object.entries(state.visibility.inspectionGrants).flatMap(
+      ([inspectionId, grant]) => {
+        const cardIds = grant.cardIds.filter((cardId) => {
+          const card = state.cards[cardId];
+          const location = card ? findCardLocation(state, cardId) : null;
+          const source =
+            card && location ? cardSourceSnapshot(state, card, location) : null;
+          return source?.id === grant.sourceId;
+        });
+        if (cardIds.length !== grant.cardIds.length) changed = true;
+        if (cardIds.length === 0) return [];
+        return [[inspectionId, { ...grant, cardIds }]];
+      }
+    )
+  ) as MatchState['visibility']['inspectionGrants'];
+  return changed
+    ? {
+        ...state,
+        visibility: { ...state.visibility, inspectionGrants },
+      }
+    : state;
+};
+
 export const applyEventBatch = (
   state: MatchState,
   batch: EventBatch
@@ -2075,6 +2199,8 @@ export const applyEventBatch = (
     );
   }
   let next = state;
-  for (const event of batch.events) next = applyEvent(next, event);
+  for (const event of batch.events) {
+    next = pruneInvalidInspectionGrants(applyEvent(next, event));
+  }
   return { ...next, revision: batch.revision };
 };

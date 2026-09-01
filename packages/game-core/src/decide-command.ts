@@ -24,6 +24,7 @@ import {
   cardSourceSnapshot,
   publicVisibilityFace,
 } from './public-visibility.js';
+import { isCardKnownToViewer } from './projection.js';
 
 export interface CommandAccepted {
   readonly accepted: true;
@@ -173,7 +174,10 @@ type SourceRelativeCardCommand =
   | DeckRelativeCommand
   | Extract<
       GameCommand,
-      { readonly type: 'ChangeCardCategory' | 'SetPublicReveal' }
+      {
+        readonly type:
+          'ChangeCardCategory' | 'SetPublicReveal' | 'BeginCardInspection';
+      }
     >;
 
 type CardActionSource = {
@@ -251,6 +255,28 @@ const resolveDeckRelativeSource = (
   const deck = state.zones[playerZoneId(command.playerId, 'deck')];
   if (!deck) return reject('not_found', 'Player deck does not exist');
   return { ...source, deck };
+};
+
+const inspectionIdIsUsed = (
+  state: MatchState,
+  inspectionId: ReturnType<CommandContext['nextInspectionId']>
+): boolean =>
+  Boolean(state.visibility.inspectionGrants[inspectionId]) ||
+  Object.values(state.workAreas).some(
+    (areas) => areas.inspection?.inspectionId === inspectionId
+  );
+
+const nextInspectionId = (
+  state: MatchState,
+  context: CommandContext
+): ReturnType<CommandContext['nextInspectionId']> | CommandRejection => {
+  if (Object.keys(state.visibility.inspectionGrants).length >= 200) {
+    return reject('conflict', 'Too many private inspections are active');
+  }
+  const inspectionId = context.nextInspectionId();
+  return inspectionIdIsUsed(state, inspectionId)
+    ? reject('conflict', 'Inspection ID factory returned a duplicate')
+    : inspectionId;
 };
 
 type TopEvolutionDeparture =
@@ -2048,6 +2074,116 @@ export const decideCommand = (
         revealed: command.revealed,
       });
     }
+    case 'BeginZoneInspection': {
+      const sourcePlayerError = requirePlayer(state, command.sourcePlayerId);
+      if (sourcePlayerError) return sourcePlayerError;
+      const viewerError = requirePlayer(state, command.viewerPlayerId);
+      if (viewerError) return viewerError;
+      const zone = state.zones[command.sourceZoneId];
+      if (!zone) return reject('not_found', 'Inspection zone does not exist');
+      if (
+        zone.ownerId !== command.sourcePlayerId ||
+        (zone.kind !== 'hand' && zone.kind !== 'prizes')
+      ) {
+        return reject(
+          'precondition_failed',
+          'Whole-zone private inspection is only available for a player hand or prizes'
+        );
+      }
+      if (
+        command.expectedCardIds.length === 0 ||
+        command.expectedCardIds.length > 200 ||
+        new Set(command.expectedCardIds).size !==
+          command.expectedCardIds.length ||
+        !sameOrder(command.expectedCardIds, zone.cardIds)
+      ) {
+        return reject('stale_reference', 'Inspection zone contents changed');
+      }
+      const cardIds = zone.cardIds.filter((cardId) => {
+        const card = state.cards[cardId];
+        return (
+          card !== undefined &&
+          !isCardKnownToViewer(
+            state,
+            { kind: 'player', playerId: command.viewerPlayerId },
+            card
+          )
+        );
+      });
+      if (cardIds.length === 0) {
+        return reject(
+          'invalid_command',
+          'Inspection would reveal no new cards'
+        );
+      }
+      const inspectionId = nextInspectionId(state, context);
+      if (typeof inspectionId !== 'string') return inspectionId;
+      return accept({
+        type: 'InspectionGrantOpened',
+        inspectionId,
+        sourcePlayerId: command.sourcePlayerId,
+        sourceId: zone.id,
+        expectedSourceCardIds: [...zone.cardIds],
+        cardIds,
+        viewerIds: [command.viewerPlayerId],
+      });
+    }
+    case 'BeginCardInspection': {
+      const source = resolveCardActionSource(state, command);
+      if (!source.accepted) return source;
+      const viewerError = requirePlayer(state, command.viewerPlayerId);
+      if (viewerError) return viewerError;
+      const snapshot = cardSourceSnapshot(state, source.card, source.location);
+      if (!snapshot) {
+        return reject('stale_reference', 'Card inspection source changed');
+      }
+      if (snapshot.cardIds.length > 200) {
+        return reject(
+          'precondition_failed',
+          'Card inspection source cannot contain more than 200 cards'
+        );
+      }
+      if (
+        isCardKnownToViewer(
+          state,
+          { kind: 'player', playerId: command.viewerPlayerId },
+          source.card
+        )
+      ) {
+        return reject('invalid_command', 'Card is already known to the viewer');
+      }
+      const inspectionId = nextInspectionId(state, context);
+      if (typeof inspectionId !== 'string') return inspectionId;
+      return accept({
+        type: 'InspectionGrantOpened',
+        inspectionId,
+        sourcePlayerId: snapshot.playerId,
+        sourceId: snapshot.id,
+        expectedSourceCardIds: snapshot.cardIds,
+        cardIds: [source.card.id],
+        viewerIds: [command.viewerPlayerId],
+      });
+    }
+    case 'EndPrivateInspection': {
+      const viewerError = requirePlayer(state, command.viewerPlayerId);
+      if (viewerError) return viewerError;
+      const grant = state.visibility.inspectionGrants[command.inspectionId];
+      if (!grant || !grant.viewerIds.includes(command.viewerPlayerId)) {
+        return reject(
+          'stale_reference',
+          'Private inspection is no longer active'
+        );
+      }
+      return accept({
+        type: 'InspectionGrantClosed',
+        inspectionId: grant.inspectionId,
+        sourcePlayerId: grant.sourcePlayerId,
+        sourceId: grant.sourceId,
+        expectedCardIds: [...grant.cardIds],
+        expectedViewerIds: [...grant.viewerIds],
+        viewerId: command.viewerPlayerId,
+      });
+    }
     case 'ExtractDeckCardsForInspection': {
       const playerError = requirePlayer(state, command.playerId);
       if (playerError) return playerError;
@@ -2071,6 +2207,9 @@ export const decideCommand = (
           ? deck.cardIds.slice(0, count)
           : deck.cardIds.slice(deck.cardIds.length - count);
       const inspectionId = context.nextInspectionId();
+      if (inspectionIdIsUsed(state, inspectionId)) {
+        return reject('conflict', 'Inspection ID factory returned a duplicate');
+      }
       return accept({
         type: 'InspectionOpened',
         playerId: command.playerId,

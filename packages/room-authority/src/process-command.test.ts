@@ -495,6 +495,185 @@ describe('authoritative room command transaction', () => {
     }
   });
 
+  it('publishes private inspections only to their viewer with privacy-safe facts', async () => {
+    const persistence = createPersistence();
+    const dependencies = createDependencies(persistence);
+    const loaded = await processAuthorityCommand(
+      createSnapshot(),
+      loadDeck(),
+      dependencies
+    );
+    const setup = await processAuthorityCommand(
+      loaded.snapshot,
+      command(
+        'session-player-one',
+        2,
+        'private-inspection-setup',
+        { type: 'SetupPlayer', targetPlayerId: p1 },
+        1
+      ),
+      dependencies
+    );
+    const ownerSetupPublication = setup.deliveries.find(
+      (delivery) =>
+        delivery.sessionId === 'session-player-one' &&
+        delivery.message.type === 'StatePublication'
+    );
+    if (ownerSetupPublication?.message.type !== 'StatePublication') {
+      throw new Error('missing private-inspection owner setup publication');
+    }
+    const prizeId = playerZoneId(p1, 'prizes');
+    const concealedAliases = ownerSetupPublication.message.snapshot.zones[
+      prizeId
+    ]!.cards.map((card) => card.id);
+    const opened = await processAuthorityCommand(
+      setup.snapshot,
+      command(
+        'session-player-one',
+        3,
+        'open-private-inspection',
+        {
+          type: 'BeginZoneInspection',
+          targetPlayerId: p1,
+          zoneId: prizeId,
+          expectedCardIds: concealedAliases,
+        },
+        2
+      ),
+      dependencies
+    );
+    expect(persistence.transactions[2]?.eventBatch?.events).toEqual([
+      expect.objectContaining({
+        type: 'InspectionGrantOpened',
+        sourcePlayerId: p1,
+        sourceId: prizeId,
+        cardIds: expect.arrayContaining([
+          expect.stringMatching(/^canonical-card-/),
+        ]),
+        viewerIds: [p1],
+      }),
+    ]);
+
+    const publications = opened.deliveries.filter(
+      (delivery) => delivery.message.type === 'StatePublication'
+    );
+    expect(publications).toHaveLength(3);
+    for (const delivery of publications) {
+      if (delivery.message.type !== 'StatePublication') continue;
+      expect(delivery.message.presentationEvents).toEqual([
+        {
+          type: 'PrivateInspectionStarted',
+          revision: 3,
+          sourcePlayerId: p1,
+          viewerPlayerId: p1,
+          cardCount: 6,
+        },
+      ]);
+      expect(JSON.stringify(delivery.message.presentationEvents)).not.toContain(
+        'canonical-card-'
+      );
+    }
+
+    const ownerPublication = publications.find(
+      (delivery) => delivery.sessionId === 'session-player-one'
+    );
+    const opponentPublication = publications.find(
+      (delivery) => delivery.sessionId === 'session-player-two'
+    );
+    const spectatorPublication = publications.find(
+      (delivery) => delivery.sessionId === 'session-spectator'
+    );
+    if (
+      ownerPublication?.message.type !== 'StatePublication' ||
+      opponentPublication?.message.type !== 'StatePublication' ||
+      spectatorPublication?.message.type !== 'StatePublication'
+    ) {
+      throw new Error('missing private-inspection publication');
+    }
+    const ownerPrize = ownerPublication.message.snapshot.zones[prizeId]!;
+    expect(ownerPrize.cards.every((card) => card.kind === 'known')).toBe(true);
+    expect(ownerPublication.message.snapshot.privateInspections).toEqual([
+      {
+        id: 'inspection-1',
+        sourcePlayerId: p1,
+        sourceId: prizeId,
+        cardIds: ownerPrize.cards.map((card) => card.id),
+      },
+    ]);
+    for (const privatePublication of [
+      opponentPublication,
+      spectatorPublication,
+    ]) {
+      expect(
+        privatePublication.message.snapshot.zones[prizeId]!.cards.every(
+          (card) => card.kind === 'concealed'
+        )
+      ).toBe(true);
+      expect(privatePublication.message.snapshot.privateInspections).toEqual(
+        []
+      );
+      expect(JSON.stringify(privatePublication.message.snapshot)).not.toContain(
+        'inspection-1'
+      );
+      expect(JSON.stringify(privatePublication.message.snapshot)).not.toContain(
+        'secret-definition-'
+      );
+    }
+
+    const closed = await processAuthorityCommand(
+      opened.snapshot,
+      command(
+        'session-player-one',
+        4,
+        'close-private-inspection',
+        {
+          type: 'EndPrivateInspection',
+          inspectionId: 'inspection-1',
+        },
+        3
+      ),
+      dependencies
+    );
+    expect(persistence.transactions[3]?.eventBatch?.events).toEqual([
+      expect.objectContaining({
+        type: 'InspectionGrantClosed',
+        sourcePlayerId: p1,
+        sourceId: prizeId,
+        viewerId: p1,
+      }),
+    ]);
+    const ownerClosedPublication = closed.deliveries.find(
+      (delivery) =>
+        delivery.sessionId === 'session-player-one' &&
+        delivery.message.type === 'StatePublication'
+    );
+    if (ownerClosedPublication?.message.type !== 'StatePublication') {
+      throw new Error('missing closed private-inspection publication');
+    }
+    expect(ownerClosedPublication.message.presentationEvents).toEqual([
+      {
+        type: 'PrivateInspectionEnded',
+        revision: 4,
+        sourcePlayerId: p1,
+        viewerPlayerId: p1,
+        cardCount: 6,
+      },
+    ]);
+    expect(
+      ownerClosedPublication.message.snapshot.zones[prizeId]!.cards.every(
+        (card) => card.kind === 'concealed'
+      )
+    ).toBe(true);
+    expect(
+      ownerClosedPublication.message.snapshot.zones[prizeId]!.cards.map(
+        (card) => card.id
+      )
+    ).not.toEqual(concealedAliases);
+    expect(ownerClosedPublication.message.snapshot.privateInspections).toEqual(
+      []
+    );
+  });
+
   it('never publishes canonical hidden IDs and invalidates concealed handles on shuffle', async () => {
     const persistence = createPersistence();
     const dependencies = createDependencies(persistence);

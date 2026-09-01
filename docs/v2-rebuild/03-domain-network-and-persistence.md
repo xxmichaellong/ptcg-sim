@@ -249,6 +249,21 @@ and server-only. A username or board orientation does not select a role.
   durable full-order payload.
 - Prize identities follow current reveal/look semantics but default to
   concealed.
+- A private whole-zone look is limited to the exact current hand or prize order.
+  A private per-card look binds one projected card handle to its exact zone,
+  stack, or work-area source. The player may inspect their own private cards;
+  opponent-private inspection requires mutual persisted `coachingConsent` and
+  is not enabled by the public opponent-interaction policy.
+- Private inspection grants are canonical, bounded, replay-validated records of
+  source player, exact source container, card set, and viewer set. A grant
+  survives reconnect/restoration until the viewer closes it, but movement out
+  of its recorded source removes the moved cards and deletes an empty grant.
+  Setup/reset therefore revoke affected grants through the same movement rule.
+- Grant metadata and newly visible definitions are projected only to a named
+  viewer. Other players and spectators receive no grant ID/card list. Safe
+  presentation facts may disclose only source player, viewer player, and count.
+  Consent revocation cannot erase knowledge already delivered, so ADR-017 still
+  requires product ratification of this draft policy.
 - Public reveal/hide commands bind to an exact source and revision. Whole-zone
   commands are limited to the complete ordered prize zone; selective reveal of
   an unknown opponent card is forbidden even when public opponent interaction
@@ -271,8 +286,9 @@ disclosed only where the current UI requires them.
 Card definitions and face-image URLs are cataloged to a connection only while
 visible. A known card becoming concealed removes its definition from subsequent
 view state and rotates the view handle according to policy. Projected cards
-carry a boolean public-reveal status, never a canonical visibility grant or
-identity.
+carry a boolean public-reveal status, never a canonical identity. Viewer-private
+grant metadata uses recipient-safe card handles and is omitted entirely from
+unauthorized projections.
 
 ### Projection tests are security tests
 

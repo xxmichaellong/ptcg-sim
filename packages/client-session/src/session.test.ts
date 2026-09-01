@@ -54,6 +54,7 @@ const view = (
     blue: { inspection: null, attachmentResolution: null },
     red: { inspection: null, attachmentResolution: null },
   },
+  privateInspections: [],
   turn: { number: 1, currentPlayerId: 'blue' },
 });
 
