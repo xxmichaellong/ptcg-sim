@@ -8,7 +8,12 @@ import { playerZoneId, stadiumZoneId } from './create-match.js';
 import type { DomainEvent } from './events.js';
 import { asWorkAreaId, type CardInstanceId, type PlayerId } from './ids.js';
 import { findCardLocation } from './location.js';
+import {
+  analyzePlayerReset,
+  resetReturnCapacityIsValid,
+} from './lifecycle-reset.js';
 import type {
+  CardDefinition,
   CardInstance,
   CardLocation,
   CardZone,
@@ -141,6 +146,13 @@ const sameOrder = <Value>(
 ): boolean =>
   left.length === right.length &&
   left.every((value, index) => value === right[index]);
+
+const sameDefinition = (left: CardDefinition, right: CardDefinition): boolean =>
+  left.id === right.id &&
+  left.name === right.name &&
+  left.category === right.category &&
+  left.imageUrl === right.imageUrl &&
+  left.imageUrlSmall === right.imageUrlSmall;
 
 type DeckRelativeCommand = Extract<
   GameCommand,
@@ -551,6 +563,13 @@ const decideLoadDeck = (
 ): CommandDecision => {
   const playerError = requirePlayer(state, command.playerId);
   if (playerError) return playerError;
+  const resetAnalysis = analyzePlayerReset(state, command.playerId);
+  if (!resetReturnCapacityIsValid(state, resetAnalysis)) {
+    return reject(
+      'precondition_failed',
+      'Deck load cannot safely return displaced cards'
+    );
+  }
   const totalCards = command.entries.reduce(
     (sum, entry) => sum + entry.count,
     0
@@ -578,6 +597,22 @@ const decideLoadDeck = (
       return reject(
         'invalid_command',
         `Duplicate deck definition ${entry.definition.id}`
+      );
+    }
+    const existingDefinition = state.definitions[entry.definition.id];
+    const usedByAnotherPlayer = Object.values(state.cards).some(
+      (card) =>
+        card.ownerId !== command.playerId &&
+        card.definitionId === entry.definition.id
+    );
+    if (
+      existingDefinition &&
+      usedByAnotherPlayer &&
+      !sameDefinition(existingDefinition, entry.definition)
+    ) {
+      return reject(
+        'conflict',
+        `Definition ${entry.definition.id} is already used by another player`
       );
     }
     definitionIds.add(entry.definition.id);
@@ -744,6 +779,13 @@ export const decideCommand = (
     case 'ResetPlayer': {
       const playerError = requirePlayer(state, command.playerId);
       if (playerError) return playerError;
+      const analysis = analyzePlayerReset(state, command.playerId);
+      if (!resetReturnCapacityIsValid(state, analysis)) {
+        return reject(
+          'precondition_failed',
+          'Reset cannot safely return displaced cards'
+        );
+      }
       return accept({
         type: 'PlayerReset',
         playerId: command.playerId,
@@ -753,6 +795,13 @@ export const decideCommand = (
     case 'SetupPlayer': {
       const playerError = requirePlayer(state, command.playerId);
       if (playerError) return playerError;
+      const analysis = analyzePlayerReset(state, command.playerId);
+      if (!resetReturnCapacityIsValid(state, analysis)) {
+        return reject(
+          'precondition_failed',
+          'Setup cannot safely return displaced cards'
+        );
+      }
       const baseline = state.deckLists[command.playerId] ?? [];
       const shuffled = context.shuffle(baseline);
       if (!validatePermutation(baseline, shuffled)) {

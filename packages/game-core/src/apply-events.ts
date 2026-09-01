@@ -1,6 +1,10 @@
 import { playerZoneId } from './create-match.js';
 import type { DomainEvent, EventBatch } from './events.js';
 import type { CardInstanceId, PlayerId, StackId } from './ids.js';
+import {
+  analyzePlayerReset,
+  resetReturnCapacityIsValid,
+} from './lifecycle-reset.js';
 import { findCardLocation } from './location.js';
 import type { CardInstance, CardZone, MatchState, PlayStack } from './model.js';
 
@@ -15,6 +19,16 @@ const sameCardOrder = <Value>(
 ): boolean =>
   left.length === right.length &&
   left.every((cardId, index) => cardId === right[index]);
+
+const sameDefinition = (
+  left: MatchState['definitions'][string],
+  right: MatchState['definitions'][string]
+): boolean =>
+  left.id === right.id &&
+  left.name === right.name &&
+  left.category === right.category &&
+  left.imageUrl === right.imageUrl &&
+  left.imageUrlSmall === right.imageUrlSmall;
 
 const removeStackFromBoards = (
   state: MatchState,
@@ -152,14 +166,28 @@ const removeCardsFromAllLocations = (
 
 const resetPlayerCards = (
   state: MatchState,
-  playerId: PlayerId
+  playerId: PlayerId,
+  incrementOwnedVisibility: boolean
 ): MatchState => {
-  const cardIds = new Set(
-    Object.values(state.cards)
-      .filter((card) => card.ownerId === playerId)
-      .map((card) => card.id)
-  );
-  const removed = removeCardsFromAllLocations(state, cardIds);
+  const analysis = analyzePlayerReset(state, playerId);
+  if (!resetReturnCapacityIsValid(state, analysis)) {
+    throw new Error('Reset cannot safely return displaced cards');
+  }
+  const removed = removeCardsFromAllLocations(state, analysis.removedCardIds);
+  const zones = { ...removed.zones };
+  for (const cardId of analysis.foreignSurfaceCardIds) {
+    const card = state.cards[cardId];
+    if (!card) throw new Error(`Reset references missing card ${cardId}`);
+    const discardId = playerZoneId(card.ownerId, 'discard');
+    const discard = zones[discardId];
+    if (!discard)
+      throw new Error(`Reset references missing discard ${discardId}`);
+    zones[discardId] = {
+      ...discard,
+      cardIds: [...discard.cardIds, cardId],
+    };
+  }
+  const returnedCardIds = new Set(analysis.returnedCardIds);
   return {
     ...removed,
     cards: Object.fromEntries(
@@ -172,11 +200,21 @@ const resetPlayerCards = (
               face: 'up' as const,
               orientationQuarterTurns: 0 as const,
               abilityUsed: false,
-              visibilityGeneration: card.visibilityGeneration + 1,
+              visibilityGeneration:
+                card.visibilityGeneration + (incrementOwnedVisibility ? 1 : 0),
             }
-          : card,
+          : returnedCardIds.has(card.id)
+            ? {
+                ...card,
+                currentCategory: card.originalCategory,
+                face: 'up' as const,
+                orientationQuarterTurns: 0 as const,
+                abilityUsed: false,
+              }
+            : card,
       ])
     ),
+    zones,
     players: {
       ...removed.players,
       [playerId]: {
@@ -332,39 +370,94 @@ export const applyEvent = (
 ): MatchState => {
   switch (event.type) {
     case 'DeckLoaded': {
+      if (
+        !state.players[event.playerId] ||
+        event.cards.length > 200 ||
+        event.deckOrder.length !== event.cards.length ||
+        new Set(event.deckOrder).size !== event.deckOrder.length ||
+        event.cards.some(
+          (card) =>
+            Boolean(state.cards[card.id]) ||
+            card.ownerId !== event.playerId ||
+            !event.deckOrder.includes(card.id) ||
+            card.face !== 'up' ||
+            card.orientationQuarterTurns !== 0 ||
+            card.abilityUsed ||
+            card.visibilityGeneration !== 0 ||
+            event.definitions.every(
+              (definition) =>
+                definition.id !== card.definitionId ||
+                definition.category !== card.originalCategory ||
+                definition.category !== card.currentCategory
+            )
+        ) ||
+        new Set(event.cards.map((card) => card.id)).size !==
+          event.cards.length ||
+        new Set(event.definitions.map((definition) => definition.id)).size !==
+          event.definitions.length ||
+        event.definitions.some((definition) =>
+          event.cards.every((card) => card.definitionId !== definition.id)
+        ) ||
+        event.definitions.some((definition) => {
+          const existing = state.definitions[definition.id];
+          return (
+            existing !== undefined &&
+            Object.values(state.cards).some(
+              (card) =>
+                card.ownerId !== event.playerId &&
+                card.definitionId === definition.id
+            ) &&
+            !sameDefinition(existing, definition)
+          );
+        })
+      ) {
+        throw new Error('Loaded deck event is malformed');
+      }
       const oldCardIds = new Set(
         Object.values(state.cards)
           .filter((card) => card.ownerId === event.playerId)
           .map((card) => card.id)
       );
-      const removed = removeCardsFromAllLocations(state, oldCardIds);
-      const cards = { ...removed.cards };
+      const reset = resetPlayerCards(state, event.playerId, false);
+      const cards = { ...reset.cards };
       for (const oldCardId of oldCardIds) delete cards[oldCardId];
       for (const card of event.cards) cards[card.id] = card;
-      const definitions = { ...removed.definitions };
-      for (const definition of event.definitions) {
-        definitions[definition.id] = definition;
-      }
+      const referencedDefinitionIds = new Set<string>(
+        Object.values(cards).map((card) => card.definitionId)
+      );
+      const definitions = Object.fromEntries([
+        ...Object.entries(reset.definitions).filter(([definitionId]) =>
+          referencedDefinitionIds.has(definitionId)
+        ),
+        ...event.definitions.map(
+          (definition) => [definition.id, definition] as const
+        ),
+      ]) as MatchState['definitions'];
       const deckId = playerZoneId(event.playerId, 'deck');
       return {
-        ...removed,
+        ...reset,
+        lifecycle: 'lobby',
         definitions,
         cards,
         deckLists: {
-          ...removed.deckLists,
+          ...reset.deckLists,
           [event.playerId]: [...event.deckOrder],
         },
         zones: {
-          ...removed.zones,
+          ...reset.zones,
           [deckId]: {
-            ...requireZone(removed, deckId),
+            ...requireZone(reset, deckId),
             cardIds: [...event.deckOrder],
           },
         },
       };
     }
     case 'PlayerReset': {
-      const reset = resetPlayerCards(state, event.playerId);
+      const baseline = state.deckLists[event.playerId];
+      if (!baseline || !sameCardOrder(event.deckOrder, baseline)) {
+        throw new Error('Reset deck does not match the loaded deck baseline');
+      }
+      const reset = resetPlayerCards(state, event.playerId, true);
       const deckId = playerZoneId(event.playerId, 'deck');
       return {
         ...reset,
@@ -379,7 +472,30 @@ export const applyEvent = (
       };
     }
     case 'PlayerSetup': {
-      const reset = resetPlayerCards(state, event.playerId);
+      const baseline = state.deckLists[event.playerId];
+      const combined = [
+        ...event.handOrder,
+        ...event.prizeOrder,
+        ...event.deckOrder,
+      ];
+      const sortedBaseline = [...(baseline ?? [])].sort();
+      const sortedCombined = [...combined].sort();
+      const expectedHandCount = Math.min(7, sortedBaseline.length);
+      const expectedPrizeCount = Math.min(
+        6,
+        sortedBaseline.length - expectedHandCount
+      );
+      if (
+        !baseline ||
+        combined.length !== baseline.length ||
+        new Set(combined).size !== combined.length ||
+        !sameCardOrder(sortedCombined, sortedBaseline) ||
+        event.handOrder.length !== expectedHandCount ||
+        event.prizeOrder.length !== expectedPrizeCount
+      ) {
+        throw new Error('Setup event does not partition the loaded deck');
+      }
+      const reset = resetPlayerCards(state, event.playerId, false);
       const deckId = playerZoneId(event.playerId, 'deck');
       const handId = playerZoneId(event.playerId, 'hand');
       const prizesId = playerZoneId(event.playerId, 'prizes');

@@ -13,6 +13,7 @@ import {
 import { submitCardAnnotationAction } from '../../apps/web/src/board/resolveCardAnnotationAction.js';
 import { submitInspectionCardsAction } from '../../apps/web/src/board/resolveInspectionCardsAction.js';
 import { submitLooseBoardAction } from '../../apps/web/src/board/resolveLooseBoardAction.js';
+import { submitLifecycleAction } from '../../apps/web/src/board/resolveLifecycleAction.js';
 import { submitOncePerGameAction } from '../../apps/web/src/board/resolveOncePerGameAction.js';
 import { submitStackStateAction } from '../../apps/web/src/board/resolveStackStateAction.js';
 import { submitStagedCardsAction } from '../../apps/web/src/board/resolveStagedCardsAction.js';
@@ -1482,6 +1483,12 @@ describe('client/server multiplayer contract', () => {
     expect(opponentHand?.cards[0]?.kind).toBe('concealed');
     expect(playerState.presentationEvents).toEqual([
       {
+        type: 'DeckLoaded',
+        revision: 1,
+        playerId,
+        cardCount: 3,
+      },
+      {
         type: 'TurnStarted',
         revision: 2,
         playerId,
@@ -1503,12 +1510,141 @@ describe('client/server multiplayer contract', () => {
     await opponent.factory.flush();
     expect(opponent.session.getSnapshot().presentationEvents).toEqual([
       {
+        type: 'DeckLoaded',
+        revision: 1,
+        playerId,
+        cardCount: 3,
+      },
+      {
         type: 'TurnStarted',
         revision: 2,
         playerId,
         turnNumber: 1,
       },
     ]);
+  });
+
+  it('sets up and resets either seat with private projections and reconnect-safe facts', async () => {
+    const room = await fixture();
+    const opponentScheduler = new ManualScheduler();
+    const player = await connectClient({
+      hub: room.hub,
+      name: 'Blue',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+    });
+    const opponent = await connectClient({
+      hub: room.hub,
+      name: 'Red',
+      role: 'player',
+      capability: room.credentials.playerTwoSeatCapability,
+      scheduler: opponentScheduler,
+    });
+    const opponentId = opponent.session.getSnapshot().playerId;
+    if (!opponentId) throw new Error('Missing opponent player identity');
+
+    expect(
+      opponent.session.submit({
+        type: 'LoadDeck',
+        entries: Array.from({ length: 14 }, (_, index) => ({
+          definition: {
+            id: `lifecycle-definition-${index}`,
+            name: `Lifecycle card ${index}`,
+            category: index === 0 ? ('Pokémon' as const) : ('Trainer' as const),
+            imageUrl: `/lifecycle-card-${index}.png`,
+          },
+          count: 1,
+        })),
+      }).queued
+    ).toBe(true);
+    await opponent.factory.flush();
+
+    let playerView = player.session.getSnapshot().view;
+    if (!playerView) throw new Error('Missing lifecycle actor view');
+    let queued = false;
+    expect(
+      submitLifecycleAction(playerView, opponentId, 'setup', (wire) => {
+        queued = player.session.submit(wire).queued;
+      }).ok
+    ).toBe(true);
+    expect(queued).toBe(true);
+    await player.factory.flush();
+
+    playerView = player.session.getSnapshot().view;
+    let opponentView = opponent.session.getSnapshot().view;
+    const actorHand = Object.values(playerView?.zones ?? {}).find(
+      (zone) => zone.ownerId === opponentId && zone.kind === 'hand'
+    );
+    const ownerHand = Object.values(opponentView?.zones ?? {}).find(
+      (zone) => zone.ownerId === opponentId && zone.kind === 'hand'
+    );
+    expect(actorHand?.cards).toHaveLength(7);
+    expect(actorHand?.cards.every((card) => card.kind === 'concealed')).toBe(
+      true
+    );
+    expect(ownerHand?.cards).toHaveLength(7);
+    expect(ownerHand?.cards.every((card) => card.kind === 'known')).toBe(true);
+    expect(player.session.getSnapshot().presentationEvents).toEqual([
+      {
+        type: 'DeckLoaded',
+        revision: 1,
+        playerId: opponentId,
+        cardCount: 14,
+      },
+      {
+        type: 'PlayerSetup',
+        revision: 2,
+        playerId: opponentId,
+        handCount: 7,
+        prizeCount: 6,
+      },
+    ]);
+
+    if (!playerView) throw new Error('Missing post-setup actor view');
+    queued = false;
+    expect(
+      submitLifecycleAction(playerView, opponentId, 'reset', (wire) => {
+        queued = player.session.submit(wire).queued;
+      }).ok
+    ).toBe(true);
+    expect(queued).toBe(true);
+    await player.factory.flush();
+
+    opponentView = opponent.session.getSnapshot().view;
+    const resetHand = Object.values(opponentView?.zones ?? {}).find(
+      (zone) => zone.ownerId === opponentId && zone.kind === 'hand'
+    );
+    const resetDeck = Object.values(opponentView?.zones ?? {}).find(
+      (zone) => zone.ownerId === opponentId && zone.kind === 'deck'
+    );
+    expect(opponentView?.lifecycle).toBe('lobby');
+    expect(opponentView?.turn).toEqual({ number: 0, currentPlayerId: null });
+    expect(resetHand?.cards).toEqual([]);
+    expect(resetDeck?.cards).toHaveLength(14);
+    expect(opponent.session.getSnapshot().presentationEvents).toEqual([
+      {
+        type: 'DeckLoaded',
+        revision: 1,
+        playerId: opponentId,
+        cardCount: 14,
+      },
+      {
+        type: 'PlayerSetup',
+        revision: 2,
+        playerId: opponentId,
+        handCount: 7,
+        prizeCount: 6,
+      },
+      { type: 'PlayerReset', revision: 3, playerId: opponentId },
+    ]);
+    expect(room.store.commandCommits).toHaveLength(3);
+
+    opponent.factory.latest().networkDrop();
+    opponentScheduler.runNext();
+    opponent.factory.latest().open();
+    await opponent.factory.flush();
+    expect(opponent.session.getSnapshot().presentationEvents).toHaveLength(3);
+    expect(opponent.session.getSnapshot().view?.revision).toBe(3);
   });
 
   it('recovers a committed-but-undelivered command through exact replay', async () => {

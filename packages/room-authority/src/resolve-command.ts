@@ -61,7 +61,10 @@ export const resolveWireCommand = (
   if (
     (wire.type === 'StartTurn' ||
       wire.type === 'DeclareAttack' ||
-      wire.type === 'PassTurn') &&
+      wire.type === 'PassTurn' ||
+      wire.type === 'SetupPlayer' ||
+      wire.type === 'ResetPlayer' ||
+      wire.type === 'LoadDeck') &&
     observedRevision !== state.revision
   ) {
     return rejected('stale_reference');
@@ -74,12 +77,22 @@ export const resolveWireCommand = (
   };
 
   switch (wire.type) {
-    case 'LoadDeck':
+    case 'LoadDeck': {
+      const targetPlayerId = wire.targetPlayerId
+        ? asPlayerId(wire.targetPlayerId)
+        : actorId;
+      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (
+        targetPlayerId !== actorId &&
+        !policy.allowOpponentPublicInteraction
+      ) {
+        return rejected('unauthorized');
+      }
       return {
         accepted: true,
         command: {
           type: 'LoadDeck',
-          playerId: actorId,
+          playerId: targetPlayerId,
           entries: wire.entries.map((entry) => ({
             definition: {
               ...entry.definition,
@@ -89,16 +102,27 @@ export const resolveWireCommand = (
           })),
         },
       };
+    }
     case 'ResetPlayer':
+    case 'SetupPlayer': {
+      const targetPlayerId = wire.targetPlayerId
+        ? asPlayerId(wire.targetPlayerId)
+        : actorId;
+      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (
+        targetPlayerId !== actorId &&
+        !policy.allowOpponentPublicInteraction
+      ) {
+        return rejected('unauthorized');
+      }
       return {
         accepted: true,
-        command: { type: 'ResetPlayer', playerId: actorId },
+        command:
+          wire.type === 'SetupPlayer'
+            ? { type: 'SetupPlayer', playerId: targetPlayerId }
+            : { type: 'ResetPlayer', playerId: targetPlayerId },
       };
-    case 'SetupPlayer':
-      return {
-        accepted: true,
-        command: { type: 'SetupPlayer', playerId: actorId },
-      };
+    }
     case 'MoveCard': {
       const card = resolveCard(wire.cardId);
       if (!card) return rejected('stale_reference');

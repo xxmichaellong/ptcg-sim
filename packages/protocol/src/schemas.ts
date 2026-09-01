@@ -38,13 +38,20 @@ const WireDeckEntrySchema = v.object({
 export const WireGameCommandSchema = v.variant('type', [
   v.object({
     type: v.literal('LoadDeck'),
+    targetPlayerId: v.optional(IdentifierSchema),
     entries: v.pipe(
       v.array(WireDeckEntrySchema),
       v.maxLength(MAX_DECK_ENTRIES)
     ),
   }),
-  v.object({ type: v.literal('ResetPlayer') }),
-  v.object({ type: v.literal('SetupPlayer') }),
+  v.object({
+    type: v.literal('ResetPlayer'),
+    targetPlayerId: v.optional(IdentifierSchema),
+  }),
+  v.object({
+    type: v.literal('SetupPlayer'),
+    targetPlayerId: v.optional(IdentifierSchema),
+  }),
   v.object({
     type: v.literal('MoveCard'),
     cardId: IdentifierSchema,
@@ -440,6 +447,24 @@ export const PresentationEventSchema = v.variant('type', [
     type: v.literal('CoinFlipped'),
     revision: RevisionSchema,
     result: v.picklist(['heads', 'tails'] as const),
+  }),
+  v.object({
+    type: v.literal('PlayerReset'),
+    revision: RevisionSchema,
+    playerId: IdentifierSchema,
+  }),
+  v.object({
+    type: v.literal('DeckLoaded'),
+    revision: RevisionSchema,
+    playerId: IdentifierSchema,
+    cardCount: NonNegativeIntegerSchema,
+  }),
+  v.object({
+    type: v.literal('PlayerSetup'),
+    revision: RevisionSchema,
+    playerId: IdentifierSchema,
+    handCount: NonNegativeIntegerSchema,
+    prizeCount: NonNegativeIntegerSchema,
   }),
   v.object({
     type: v.literal('TurnStarted'),

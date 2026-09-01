@@ -107,6 +107,36 @@ const presentationEventsForBatch = (batch: EventBatch): PresentationEvent[] =>
         },
       ];
     }
+    if (event.type === 'PlayerReset') {
+      return [
+        {
+          type: 'PlayerReset',
+          revision: batch.revision,
+          playerId: event.playerId,
+        },
+      ];
+    }
+    if (event.type === 'DeckLoaded') {
+      return [
+        {
+          type: 'DeckLoaded',
+          revision: batch.revision,
+          playerId: event.playerId,
+          cardCount: event.deckOrder.length,
+        },
+      ];
+    }
+    if (event.type === 'PlayerSetup') {
+      return [
+        {
+          type: 'PlayerSetup',
+          revision: batch.revision,
+          playerId: event.playerId,
+          handCount: event.handOrder.length,
+          prizeCount: event.prizeOrder.length,
+        },
+      ];
+    }
     if (event.type !== 'TableActionDeclared') return [];
     const common = {
       revision: batch.revision,

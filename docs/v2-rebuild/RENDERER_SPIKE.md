@@ -240,7 +240,13 @@ revision and publish typed presentation facts through the remote session's
 bounded timeline. This adds no renderer-owned state and does not alter the
 existing controls, labels, or board geometry.
 
-At this checkpoint the v2 suite contains 209 passing tests across 42 files. A
+Deck load, setup, and reset now use a matching UI-neutral boundary. Each legacy
+per-side control submits one explicit seat target and renders only the resulting
+recipient-safe snapshot. Hidden setup cards remain concealed for the other
+player; lifecycle announcements travel through the bounded presentation stream,
+not renderer-owned state.
+
+At this checkpoint the v2 suite contains 232 passing tests across 45 files. A
 separate Playwright suite also passes three real Chromium 151 scenarios:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and

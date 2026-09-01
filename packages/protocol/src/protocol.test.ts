@@ -342,6 +342,39 @@ describe('client protocol ingress', () => {
     }
   });
 
+  it('accepts backward-compatible or explicit lifecycle targets', () => {
+    const parseCommand = (command: unknown) =>
+      parseClientFrame(
+        JSON.stringify({
+          type: 'Command',
+          protocolVersion: PROTOCOL_VERSION,
+          sessionId: 'session',
+          clientSequence: 1,
+          commandId: 'command',
+          lastSeenRevision: 0,
+          command,
+        })
+      );
+    for (const type of ['SetupPlayer', 'ResetPlayer']) {
+      expect(parseCommand({ type }).ok).toBe(true);
+      expect(parseCommand({ type, targetPlayerId: 'target-player' }).ok).toBe(
+        true
+      );
+      expect(parseCommand({ type, targetPlayerId: '' }).ok).toBe(false);
+    }
+    expect(parseCommand({ type: 'LoadDeck', entries: [] }).ok).toBe(true);
+    expect(
+      parseCommand({
+        type: 'LoadDeck',
+        targetPlayerId: 'target-player',
+        entries: [],
+      }).ok
+    ).toBe(true);
+    expect(
+      parseCommand({ type: 'LoadDeck', targetPlayerId: '', entries: [] }).ok
+    ).toBe(false);
+  });
+
   it('bounds client-supplied expected stack layouts', () => {
     const expectedBenchStackIds = Array.from(
       { length: 201 },

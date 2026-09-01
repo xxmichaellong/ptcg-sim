@@ -261,3 +261,41 @@ slice.
 The same publication bridge now carries the existing persisted `CoinFlipped`
 fact as a typed result, completing the already-modeled renderer presentation
 path without adding canonical state.
+
+### Implemented deck and lifecycle subset
+
+`LoadDeck`, `SetupPlayer`, and `ResetPlayer` now share one authoritative seat-
+reset boundary. Existing actor-only wire commands remain valid; the application
+boundary sends an explicit target player so the unchanged solo controls can
+operate either side. Authority verifies the target, applies the configured
+opponent-interaction policy, and requires the submitter's full snapshot revision
+to be current because these actions can affect cards spread across the table.
+
+Reset retrieves every card owned by the target player from every zone, stack,
+stadium, or work area, restores the exact loaded deck baseline, normalizes card
+annotations, rotates hidden identities once, clears only that player's GX/VSTAR
+and stack/card markers, closes their work areas, removes their owned stadium,
+sets the shared turn to zero, and returns lifecycle to `lobby`. Setup performs
+the same cleanup, asks authority randomness for one full baseline permutation,
+deals up to seven cards to hand and then up to six prizes, leaves the remainder
+in deck, and enters `playing`. Decks of 0–6, 7–12, and 13+ cards retain the
+legacy clamped hand/prize behavior.
+
+Deck replacement also performs this cleanup before atomically installing new
+definitions and instances. This matches the legacy `loadDeckData -> reset`
+sequence without exposing an intermediate empty board or rebuilt deck. Obsolete
+unreferenced definitions are pruned, while a conflicting definition ID still
+used by the other seat is rejected instead of silently changing its cards.
+
+Two v1 data-loss/duplication defects are intentionally fixed. Resetting a seat
+while one of its cards sits on the other side now retrieves that same canonical
+instance instead of rebuilding a duplicate. Conversely, foreign cards cleared
+from the reset seat—including attachments—are normalized and returned to their
+owners' discard piles rather than disappearing. Destination capacity is checked
+before acceptance, and the resolved batch is replay deterministic.
+
+Accepted lifecycle commands publish typed `DeckLoaded`, `PlayerSetup`, or
+`PlayerReset` presentation facts at the exact snapshot revision. Setup includes
+safe hand/prize counts but no identities. The client applies the facts once,
+retains them in its bounded timeline across reconnect, and rejects a mismatched
+event revision. This slice changes no button, layout, label, or interaction.

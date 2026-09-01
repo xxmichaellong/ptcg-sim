@@ -337,6 +337,85 @@ describe('authoritative room command transaction', () => {
     expect(persistence.transactions.at(-1)?.eventBatch).toBeUndefined();
   });
 
+  it('publishes setup and reset lifecycle facts with their durable batches', async () => {
+    const persistence = createPersistence();
+    const dependencies = createDependencies(persistence);
+    const loaded = await processAuthorityCommand(
+      createSnapshot(),
+      loadDeck(),
+      dependencies
+    );
+    for (const delivery of loaded.deliveries) {
+      if (delivery.message.type !== 'StatePublication') continue;
+      expect(delivery.message.presentationEvents).toEqual([
+        {
+          type: 'DeckLoaded',
+          revision: 1,
+          playerId: p1,
+          cardCount: 14,
+        },
+      ]);
+    }
+    const setup = await processAuthorityCommand(
+      loaded.snapshot,
+      command(
+        'session-player-one',
+        2,
+        'setup-player-command',
+        { type: 'SetupPlayer', targetPlayerId: p1 },
+        1
+      ),
+      dependencies
+    );
+    expect(setup.snapshot.state.revision).toBe(2);
+    expect(persistence.transactions[1]?.eventBatch?.events).toEqual([
+      expect.objectContaining({
+        type: 'PlayerSetup',
+        playerId: p1,
+        handOrder: expect.any(Array),
+        prizeOrder: expect.any(Array),
+      }),
+    ]);
+    for (const delivery of setup.deliveries) {
+      if (delivery.message.type !== 'StatePublication') continue;
+      expect(delivery.message.presentationEvents).toEqual([
+        {
+          type: 'PlayerSetup',
+          revision: 2,
+          playerId: p1,
+          handCount: 7,
+          prizeCount: 6,
+        },
+      ]);
+    }
+
+    const reset = await processAuthorityCommand(
+      setup.snapshot,
+      command(
+        'session-player-one',
+        3,
+        'reset-player-command',
+        { type: 'ResetPlayer', targetPlayerId: p1 },
+        2
+      ),
+      dependencies
+    );
+    expect(reset.snapshot.state.revision).toBe(3);
+    expect(reset.snapshot.state.turn).toEqual({
+      number: 0,
+      currentPlayerId: null,
+    });
+    expect(persistence.transactions[2]?.eventBatch?.events).toEqual([
+      expect.objectContaining({ type: 'PlayerReset', playerId: p1 }),
+    ]);
+    for (const delivery of reset.deliveries) {
+      if (delivery.message.type !== 'StatePublication') continue;
+      expect(delivery.message.presentationEvents).toEqual([
+        { type: 'PlayerReset', revision: 3, playerId: p1 },
+      ]);
+    }
+  });
+
   it('never publishes canonical hidden IDs and invalidates concealed handles on shuffle', async () => {
     const persistence = createPersistence();
     const dependencies = createDependencies(persistence);

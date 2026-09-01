@@ -46,8 +46,25 @@ export const collectInvariantProblems = (
     if (!state.boards[playerId]) problems.push(`missing board ${playerId}`);
     if (!state.workAreas[playerId])
       problems.push(`missing work areas ${playerId}`);
-    if (!state.deckLists[playerId])
+    const deckList = state.deckLists[playerId];
+    if (!deckList) {
       problems.push(`missing deck list ${playerId}`);
+    } else {
+      if (hasDuplicates(deckList)) {
+        problems.push(`deck list ${playerId} contains duplicate cards`);
+      }
+      const ownedCardIds = Object.values(state.cards)
+        .filter((card) => card.ownerId === playerId)
+        .map((card) => card.id)
+        .sort();
+      const baselineCardIds = [...deckList].sort();
+      if (
+        ownedCardIds.length !== baselineCardIds.length ||
+        ownedCardIds.some((cardId, index) => cardId !== baselineCardIds[index])
+      ) {
+        problems.push(`deck list ${playerId} does not match owned cards`);
+      }
+    }
   }
 
   for (const definition of Object.values(state.definitions)) {

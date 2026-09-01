@@ -7,6 +7,7 @@ export * from './events.js';
 export * from './execute-command.js';
 export * from './ids.js';
 export * from './invariants.js';
+export * from './lifecycle-reset.js';
 export * from './location.js';
 export * from './model.js';
 export * from './projection.js';
