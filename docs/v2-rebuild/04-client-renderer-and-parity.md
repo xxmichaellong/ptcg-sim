@@ -355,7 +355,7 @@ active replay, and post-exit `discarding` return the local typed
 `replay_mode` rejection without allocating a command ID or writing transport.
 Mutating drop intents are not forwarded to a second parent submission path;
 local selection/preview/context/zone/resize intents remain available. The board
-enables explicit renderer replacement only in replay mode. The unmounted
+enables explicit renderer replacement only in replay mode.
 `LegacyReplayControls` preserves the four original IDs, symbols, ordering, color
 classes, and action mappings without disabling boundary buttons. The headless
 `ReplayModeShell` binds those controls and exit to the coordinator and exposes an
@@ -367,10 +367,21 @@ active. `LegacyPresentationSurface` now concretely renders the existing
 `#chatbox` contract from keyed recipient-safe rows, preserves self/opponent and
 announcement styling plus bottom scrolling, and uses a separate visually hidden
 polite live region with serial dwell. Its integration tests mount live and
-replay sources and verify seek cancellation and teardown. The current spike
-application still has no room-session route, so the later parity slice must
-place this surface and the replay shell into the reconstructed sidebar beside
-the existing Options button and verify focus/keyboard and full visual parity.
+replay sources and verify seek cancellation and teardown. `RemoteRoomRoute` now
+mounts that surface as `#p2Chatbox` in connected live mode and `#chatbox` in
+replay, mounts the replay controls beside the existing Options label, and wires
+Exit through the coordinator. `RemoteRoomRuntime` creates all dependent owners
+before transport connects and disposes presentation, replay, then session; it
+is intentionally created outside React so StrictMode cannot duplicate a socket
+or destroy a live resource during its effect probe. The application branch is
+lazy, keeping the room-route implementation out of the default renderer-spike
+chunk.
+
+The room branch still requires an explicit trusted `ConnectSessionOptions`
+handoff. `main.tsx` does not select it until one-time browser admission tickets
+from ADR-018 can replace unsafe long-lived capability transport. Normal live
+sidebar actions, chat, navigation, and complete focus/keyboard/visual parity
+remain later slices.
 
 ## Rendering cadence and performance
 

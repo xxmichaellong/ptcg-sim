@@ -34,12 +34,15 @@ export interface LegacyPresentationSurfaceProps {
   >;
   /** The coordinator's effective live-or-replay view perspective. */
   readonly perspective?: LegacyActivityPerspective;
+  /** Uses the matching legacy solo/replay or connected multiplayer DOM ID. */
+  readonly feedId?: 'chatbox' | 'p2Chatbox';
 }
 
 /** Concrete React mount for the existing activity panel and polite live region. */
 export const LegacyPresentationSurface = ({
   runtime,
   perspective,
+  feedId = 'chatbox',
 }: LegacyPresentationSurfaceProps) => {
   const feed = usePresentationState(runtime.activityFeed);
   const liveRegion = usePresentationState(runtime.liveRegion);
@@ -53,9 +56,11 @@ export const LegacyPresentationSurface = ({
   return (
     <div className="legacy-presentation-surface">
       <div
-        id="chatbox"
+        id={feedId}
         ref={feedElement}
-        className="legacy-activity-feed"
+        className={`legacy-activity-feed${
+          feedId === 'p2Chatbox' ? ' legacy-activity-feed--multiplayer' : ''
+        }`}
         role="log"
         aria-label="Game activity"
         aria-live="off"

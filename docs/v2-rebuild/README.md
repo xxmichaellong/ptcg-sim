@@ -38,8 +38,12 @@ and Phase 0 exit criteria are accepted.
   presentation owner and tested React surface now preserve `#chatbox` colors,
   scrolling, replay replacement, and an off-screen live region. The legacy coin
   action is log-only, so its resolved animation request is drained without new
-  motion. Room-route/full-sidebar mounting and downloadable/export formats
-  remain later parity work.
+  motion. An externally owned remote-room runtime now composes the real session,
+  replay, presentation, effective board, legacy multiplayer/replay feed IDs,
+  replay controls, and Exit path behind a lazy application branch. It requires a
+  trusted in-memory connection handoff; public browser admission remains closed
+  until ADR-018's one-time ticket flow exists. Normal sidebar/chat/navigation
+  and downloadable/export formats remain later parity work.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 

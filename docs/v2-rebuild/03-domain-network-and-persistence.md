@@ -540,11 +540,14 @@ a valid replacement installs atomically. Completed playback survives a
 same-session reconnect, while terminal sessions and changed match/viewer
 identities clear it. The remote board binding selects the coordinator's
 effective view and blocks command submission while replay is loading, active,
-or draining. Legacy-shaped controls and a headless exact chrome selector remain
-route-integration work. The bounded presentation runtime now has a concrete
-route-scoped owner plus a tested React activity/live-region surface. The
-renderer-spike entry has no room session to supply those components yet, so this
-implementation still changes no current UI/UX.
+or draining. `RemoteRoomRuntime` now constructs the session, replay coordinator,
+and presentation owner before connecting, then disposes them outside-in before
+closing transport. The lazy `RemoteRoomRoute` composes that runtime with the
+board, exact replay chrome, multiplayer/replay activity IDs, live region, and
+Options/Exit path. It accepts only an explicit trusted connection handoff; the
+renderer-spike entry remains the default while ADR-018's one-time browser ticket
+bootstrap is absent, so no capability enters a URL, storage, DOM, or log and the
+current UI/UX remains unchanged.
 
 This bounded ledger, stream, and playback state machine are the runtime replay
 foundation, not the final archive/export contract. Phase 7 still owns

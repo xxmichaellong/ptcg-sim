@@ -126,6 +126,13 @@ Release requires all of the following:
     replaces activity and cancels stale dwell across replay seek, drains the
     legacy log-only coin result without adding motion, and releases every
     subscription and scheduled callback on teardown.
+22. A remote room route constructs session, replay, and presentation owners
+    before connection; renders the effective live/replay view; uses the legacy
+    multiplayer/replay feed IDs and chrome; blocks replay submissions; wires
+    controls and Exit once; and tears down presentation, replay, then transport
+    idempotently. React StrictMode cannot create or dispose that external owner,
+    the default spike loads the room branch lazily, and no admission capability
+    appears in public snapshots or rendered markup.
 
 ## Privacy and security gates
 

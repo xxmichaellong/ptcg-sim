@@ -124,6 +124,55 @@ select {
   height: 100%;
 }
 
+.legacy-room-sidebar {
+  border-left: 0;
+}
+
+.legacy-room-tabs button {
+  width: 30%;
+  padding: 1vh;
+  font-size: 1.75vh;
+}
+
+.legacy-room-sidebox {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  height: 95vh;
+  min-height: 0;
+  padding: 0.5%;
+  border-left: 2px solid rgb(145 145 145);
+  background: rgb(231 228 228);
+}
+
+.legacy-room-sidebox > .legacy-presentation-surface {
+  flex: 1;
+  min-height: 0;
+}
+
+.legacy-room-sidebox #roomHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 2.5vh;
+  margin-bottom: 8px;
+  color: #000;
+}
+
+.legacy-room-sidebox #roomHeaderText {
+  width: 98%;
+  margin-right: 5px;
+  padding-block: 0.1vh;
+  border: 2px solid rgb(97 206 164);
+  border-radius: 10px;
+  background: rgb(157 209 189);
+  font-size: 2vh;
+  text-align: center;
+}
+
 .legacy-activity-feed {
   width: 100%;
   height: 85%;
@@ -131,6 +180,10 @@ select {
   overflow-y: auto;
   border-radius: 10px 10px 0 0;
   background: #fff;
+}
+
+.legacy-activity-feed--multiplayer {
+  height: 80%;
 }
 
 .legacy-activity-feed .self-text,
@@ -175,7 +228,30 @@ select {
   border: 0;
 }
 
-/* Dormant until the v2 replay shell replaces the legacy bottom controls. */
+.legacy-room-sidebox #optionsContextMenu {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 3.5rem;
+  z-index: 2;
+  padding: 0.35rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+}
+
+.legacy-room-sidebox #optionsContextMenu[hidden] {
+  display: none;
+}
+
+.legacy-room-sidebox #exitReplay {
+  padding: 0.3vh 1vw;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Shared by the mounted room replay shell and later normal sidebox actions. */
 .sidebox-button-container {
   display: flex;
   align-items: center;

@@ -293,13 +293,14 @@ Work:
   encrypted/server-hosted multiplayer continuation policy.
 - Extend the implemented authoritative replay ledger, role-projected streaming,
   client artifact assembly, renderer-neutral playback controller, and
-  live/replay application coordinator/board guard by mounting the implemented
-  headless legacy-chrome shell and `LegacyPresentationSurface` in the
-  reconstructed sidebar. Reuse the implemented route-scoped presentation owner,
-  bounded local stores, keyed feed model, serial consumers, live-region dwell,
-  and narrow React bindings. The legacy coin action is log-only, so retain the
-  implemented no-motion acknowledgement adapter; adding a separate coin visual
-  requires an approved parity exception. Preserve the
+  live/replay application coordinator/board guard and implemented
+  `RemoteRoomRuntime`/`RemoteRoomRoute` by completing normal sidebar actions,
+  chat, navigation, focus/keyboard/visual parity, and the ADR-018 one-time
+  browser ticket bootstrap. Reuse the mounted legacy chrome, presentation
+  surface, bounded stores, keyed feed, serial consumers, and live-region dwell.
+  The legacy coin action is log-only, so retain the implemented no-motion
+  acknowledgement adapter; adding a separate coin visual requires an approved
+  parity exception. Preserve the
   implemented recipient-safe actor/scope/source facts and spectator-public
   single-reveal names while adding long-retention journal chunks plus
   download/import formats.

@@ -1,17 +1,22 @@
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 import {
   createRendererSpikeView,
   type BoardIntent,
 } from '@ptcgsim/renderer-contract';
 import { RendererSpikeBoard, type RendererKind } from './RendererSpikeBoard.js';
+import type { RemoteRoomRuntime } from './session/RemoteRoomRuntime.js';
+
+const RemoteRoomRoute = lazy(async () => ({
+  default: (await import('./session/RemoteRoomRoute.js')).RemoteRoomRoute,
+}));
 
 const initialRenderer = (): RendererKind =>
   new URLSearchParams(window.location.search).get('renderer') === 'dom'
     ? 'dom'
     : 'pixi';
 
-export const App = () => {
+const RendererSpikeApp = () => {
   const view = useMemo(createRendererSpikeView, []);
   const [renderer, setRenderer] = useState<RendererKind>(initialRenderer);
   const [lastIntent, setLastIntent] = useState<BoardIntent | null>(null);
@@ -67,3 +72,31 @@ export const App = () => {
     </main>
   );
 };
+
+export type AppRoute =
+  | { readonly kind: 'renderer-spike' }
+  | {
+      readonly kind: 'remote-room';
+      readonly runtime: RemoteRoomRuntime;
+      readonly rendererKind: RendererKind;
+    };
+
+export const App = ({
+  route = { kind: 'renderer-spike' },
+}: {
+  readonly route?: AppRoute;
+}) =>
+  route.kind === 'remote-room' ? (
+    <Suspense
+      fallback={
+        <main className="app-shell" data-app-route="remote-room-loading" />
+      }
+    >
+      <RemoteRoomRoute
+        runtime={route.runtime}
+        rendererKind={route.rendererKind}
+      />
+    </Suspense>
+  ) : (
+    <RendererSpikeApp />
+  );
