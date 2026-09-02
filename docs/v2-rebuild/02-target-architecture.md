@@ -32,6 +32,7 @@ apps/
     src/features/            room, chat, deck, settings, replay, imports
     src/game-client/         authority client, pending commands, view store
     src/legacy-parity/       temporary parity metadata, not v1 runtime imports
+    src/replay/              React replay adapters; no playback ownership
   server/
     src/room/                room lifecycle and connection sessions
     src/authority/           command authorization and transaction pipeline
@@ -40,6 +41,7 @@ apps/
 packages/
   client-session/
     src/session.ts           connection, pending commands, authoritative view store
+    src/replay-playback.ts   isolated projected-replay playback state machine
     src/transport.ts         browser-neutral socket boundary + native WebSocket adapter
   game-core/
     src/state/               canonical schema and constructors

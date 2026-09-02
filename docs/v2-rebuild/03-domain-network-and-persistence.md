@@ -464,13 +464,28 @@ visibility generation remains active, and clears the registry after
 restored branch. The canonical base, batches, hashes, card IDs, and definition
 IDs never appear in replay protocol messages. Player sessions receive only that
 player's historical projection; spectator sessions receive only the public
-projection. The client session assembles the bounded frames atomically and
-exposes them to a future replay controller without changing current UI/UX.
+projection. The client session assembles the bounded frames atomically. A
+separate renderer-neutral playback controller validates and installs that
+projected artifact without gaining transport, command, or canonical-history
+access.
 
-This bounded ledger and stream are the runtime replay foundation, not the final
-archive/export contract. Phase 7 still owns long-retention journal chunks,
-download/import schemas, share capabilities, quotas, and the unresolved
-multiplayer export policy in ADR-012.
+Playback consumes the retained snapshots directly; it never reruns domain
+events or randomness. `restart`, `previous`, `next`, and `fastForward` preserve
+the four legacy replay-control meanings while remaining bounded at both ends.
+Every installed frame exposes the deterministic presentation-event timeline up
+to that frame. A separate forward-crossing list lets render effects run once per
+controller generation: rewind/restart emit no effects, stepping forward emits
+the entered frame's effects, and fast-forward emits all crossed effects in
+revision order. A truncated artifact starts at its retained base revision and
+cannot seek into history the authority did not send. React subscribes through a
+thin external-store adapter; visible replay controls and parity binding remain a
+later UI slice, so this implementation changes no current UI/UX.
+
+This bounded ledger, stream, and playback state machine are the runtime replay
+foundation, not the final archive/export contract. Phase 7 still owns
+long-retention journal chunks, download/import schemas, share capabilities,
+quotas, visible replay integration, and the unresolved multiplayer export
+policy in ADR-012.
 
 Solo undo is a new authoritative transition with a monotonically increasing
 revision: it restores the prior approved logical checkpoint, records

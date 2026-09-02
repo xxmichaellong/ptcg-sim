@@ -87,6 +87,9 @@ Release requires all of the following:
 12. Undo after a hidden/random action rotates discarded-branch handles for every
     recipient; reconnect preserves only the restored branch and does not replay
     the presentation fact.
+13. Projected replay playback is bounded and deterministic: backward navigation
+    never reruns domain logic or randomness, forward effects match only the
+    frames crossed, and a rejected replacement leaves the active replay intact.
 
 ## Privacy and security gates
 

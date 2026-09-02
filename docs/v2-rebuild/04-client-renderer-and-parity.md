@@ -211,7 +211,8 @@ Use one small client controller/store outside React that exposes selectors for:
 - latest view state and revision;
 - bounded pending command records;
 - room presence and role;
-- chat messages with bounded history; and
+- chat messages with bounded history;
+- an isolated projected-replay playback controller; and
 - local presentation/preferences.
 
 React components subscribe narrowly. No component receives the entire canonical
@@ -223,6 +224,24 @@ The deck builder ports the existing pure `.mjs` core into `deck-core`, preservin
 the current UI. Its state must distinguish main and alternate/opponent deck dirty
 status, validate empty/unload transitions, and use a robust CSV parser/serializer
 with compatibility fixtures.
+
+### Replay playback state
+
+Replay does not replace or rewind the live session store. The client-session
+playback controller accepts only a completed role-projected artifact, exposes
+one immutable `MatchViewState` at a time, and has no transport or command API.
+React observes it with `useSyncExternalStore`; either board renderer can consume
+the same current view.
+
+The controller maps the existing buttons exactly: `setupButton`/`⏮` restarts,
+`resetButton`/`◀` steps backward, `setupBothButton`/`▶` steps forward, and
+`resetBothButton`/`⏭` fast-forwards. Boundary actions are stable no-ops. Rewind
+rebuilds the visible event timeline from recorded frames and does not execute
+domain logic; forward transitions separately report newly crossed presentation
+facts, keyed by generation, for effect deduplication. Loading is transactional,
+so a malformed replacement cannot disturb the active replay. The eventual React
+controls must preserve the legacy labels, placement, colors, keyboard/focus
+behavior, and replay-mode visibility changes.
 
 ## Rendering cadence and performance
 

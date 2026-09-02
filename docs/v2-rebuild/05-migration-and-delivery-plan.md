@@ -292,7 +292,8 @@ Work:
 - Implement high-entropy share/save capabilities, TTL/limits/revocation, and
   encrypted/server-hosted multiplayer continuation policy.
 - Extend the implemented authoritative replay ledger, role-projected streaming,
-  and client artifact assembly with long-retention journal chunks and
+  client artifact assembly, and renderer-neutral playback controller with
+  visible legacy-control integration, long-retention journal chunks, and
   download/import formats.
 - Expose v1 conversion through an isolated upload/import transaction.
 - Add storage migration rehearsal, corrupt/truncated data recovery, quotas, and

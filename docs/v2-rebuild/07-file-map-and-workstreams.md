@@ -153,6 +153,7 @@ apps/server/src/
 
 packages/client-session/src/
   model.ts
+  replay-playback.ts
   session.ts
   transport.ts
 
@@ -160,19 +161,22 @@ apps/web/src/session/
   useGameSession.ts
   RemoteSessionBoard.tsx
   LocalGameSession.ts
+
+apps/web/src/replay/
+  useReplayPlayback.ts
 ```
 
 ## Import, export, replay, and decks
 
-| Current files                                         | Target files                                                                                                                | Treatment                                                                                                                      |
-| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `setup/deck-builder/core/*.mjs`                       | `packages/deck-core/src/*.ts`                                                                                               | Port pure behavior and existing tests; fix only approved issues with fixtures.                                                 |
-| deck-builder tests                                    | package tests plus React/E2E adapter tests                                                                                  | Preserve 79 passing cases and extend boundary/CSV/self-alt cases.                                                              |
-| `setup/deck-constructor/import.js`, find-type files   | `deck-core` input adapters and card catalog service                                                                         | Break large module into bounded parsers/resolvers; preserve supported formats/languages.                                       |
-| native deck-builder listener/render/sync files        | `apps/web/src/features/deck/*`                                                                                              | React DOM, independent main/alternate state, unchanged visible workflow.                                                       |
-| `initialization/load-import-data/load-import-data.js` | route loader + `legacy-import` transaction                                                                                  | Validate completely, convert once, install only on success.                                                                    |
-| sidebox import/export/replay handlers                 | `room-authority/{replay-history,projected-replay}.ts`, `client-session/session.ts`, `features/saves/*`, `features/replay/*` | Bounded session-safe replay foundation is implemented; keep save/export/continuation and replay UI as separate later concepts. |
-| legacy action arrays/version                          | `packages/legacy-import/src/v1/*`                                                                                           | Frozen allowlisted interpreter only; never imported by live v2 core.                                                           |
+| Current files                                         | Target files                                                                                                                                                           | Treatment                                                                                                                                          |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `setup/deck-builder/core/*.mjs`                       | `packages/deck-core/src/*.ts`                                                                                                                                          | Port pure behavior and existing tests; fix only approved issues with fixtures.                                                                     |
+| deck-builder tests                                    | package tests plus React/E2E adapter tests                                                                                                                             | Preserve 79 passing cases and extend boundary/CSV/self-alt cases.                                                                                  |
+| `setup/deck-constructor/import.js`, find-type files   | `deck-core` input adapters and card catalog service                                                                                                                    | Break large module into bounded parsers/resolvers; preserve supported formats/languages.                                                           |
+| native deck-builder listener/render/sync files        | `apps/web/src/features/deck/*`                                                                                                                                         | React DOM, independent main/alternate state, unchanged visible workflow.                                                                           |
+| `initialization/load-import-data/load-import-data.js` | route loader + `legacy-import` transaction                                                                                                                             | Validate completely, convert once, install only on success.                                                                                        |
+| sidebox import/export/replay handlers                 | `room-authority/{replay-history,projected-replay}.ts`, `client-session/{session,replay-playback}.ts`, `apps/web/src/replay/*`, `features/saves/*`, `features/replay/*` | Bounded session-safe replay delivery and playback are implemented; keep save/export/continuation and visible replay UI as separate later concepts. |
+| legacy action arrays/version                          | `packages/legacy-import/src/v1/*`                                                                                                                                      | Frozen allowlisted interpreter only; never imported by live v2 core.                                                                               |
 
 ## Files added during characterization
 
