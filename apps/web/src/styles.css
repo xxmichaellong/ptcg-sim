@@ -118,6 +118,63 @@ select {
   background: #ececf1;
 }
 
+.legacy-presentation-surface {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.legacy-activity-feed {
+  width: 100%;
+  height: 85%;
+  padding: 10px;
+  overflow-y: auto;
+  border-radius: 10px 10px 0 0;
+  background: #fff;
+}
+
+.legacy-activity-feed .self-text,
+.legacy-activity-feed .opp-text,
+.legacy-activity-feed .announcement {
+  display: block;
+  margin: 0.5vh 0 0;
+  padding: 0.25vh 1vh;
+  overflow-wrap: break-word;
+  border-radius: 10px;
+  color: #000;
+  font-size: 1.75vh;
+}
+
+.legacy-activity-feed .self-text {
+  width: fit-content;
+  background: rgb(211 219 250 / 86.4%);
+  text-align: left;
+}
+
+.legacy-activity-feed .opp-text {
+  width: fit-content;
+  background: rgb(247 217 223 / 86.4%);
+  text-align: left;
+}
+
+.legacy-activity-feed .announcement {
+  background: rgb(205 203 203);
+  text-align: center;
+  user-select: text;
+}
+
+.presentation-live-region {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* Dormant until the v2 replay shell replaces the legacy bottom controls. */
 .sidebox-button-container {
   display: flex;

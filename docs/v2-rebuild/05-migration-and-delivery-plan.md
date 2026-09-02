@@ -294,10 +294,12 @@ Work:
 - Extend the implemented authoritative replay ledger, role-projected streaming,
   client artifact assembly, renderer-neutral playback controller, and
   live/replay application coordinator/board guard by mounting the implemented
-  headless legacy-chrome shell, mode-gated presentation adapters, bounded local
-  stores, keyed feed model, serial announcement/animation consumers, and narrow
-  React bindings in the reconstructed sidebar. Supply the live-region dwell
-  handler and concrete coin visual at that mounting boundary. Preserve the
+  headless legacy-chrome shell and `LegacyPresentationSurface` in the
+  reconstructed sidebar. Reuse the implemented route-scoped presentation owner,
+  bounded local stores, keyed feed model, serial consumers, live-region dwell,
+  and narrow React bindings. The legacy coin action is log-only, so retain the
+  implemented no-motion acknowledgement adapter; adding a separate coin visual
+  requires an approved parity exception. Preserve the
   implemented recipient-safe actor/scope/source facts and spectator-public
   single-reveal names while adding long-retention journal chunks plus
   download/import formats.

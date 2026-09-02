@@ -8,7 +8,7 @@ import type {
   PresentationStateSource,
 } from './PresentationRuntime.js';
 
-const usePresentationState = <Snapshot>(
+export const usePresentationState = <Snapshot>(
   source: PresentationStateSource<Snapshot>
 ): Snapshot =>
   useSyncExternalStore(

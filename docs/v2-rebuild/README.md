@@ -33,9 +33,12 @@ and Phase 0 exit criteria are accepted.
   semantic source, and only spectator-public single-reveal names, restoring the
   legacy reveal/hide/look wording without exposing canonical or private card
   data.
-  Dormant renderer-neutral consumers now project keyed feed rows, serialize
-  polite announcements, and run cancellable reduced-motion-aware animation,
-  but remain unmounted; full sidebar mounting and downloadable/export formats
+  Renderer-neutral consumers project keyed feed rows and serialize polite
+  announcements and cancellable animation work. A route-scoped legacy
+  presentation owner and tested React surface now preserve `#chatbox` colors,
+  scrolling, replay replacement, and an off-screen live region. The legacy coin
+  action is log-only, so its resolved animation request is drained without new
+  motion. Room-route/full-sidebar mounting and downloadable/export formats
   remain later parity work.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.

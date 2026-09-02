@@ -120,6 +120,12 @@ Release requires all of the following:
     replay paths; only a spectator-public single reveal may include a bounded
     card name, while hide/private facts pass hidden-identity non-interference and
     serialized leak scans.
+21. The mounted legacy presentation surface renders only recipient-safe keyed
+    text, preserves the existing `#chatbox` row classes and bottom-scroll
+    behavior, announces FIFO entries through a cancellable polite live region,
+    replaces activity and cancels stale dwell across replay seek, drains the
+    legacy log-only coin result without adding motion, and releases every
+    subscription and scheduled callback on teardown.
 
 ## Privacy and security gates
 

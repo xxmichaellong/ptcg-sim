@@ -16,7 +16,7 @@ export interface GamePresentationRuntimeOptions {
   readonly replay: ReplayPresentationSource;
   readonly policy?: Partial<PresentationRuntimePolicy>;
   readonly reportFailure?: GamePresentationFailureReporter;
-  /** Dormant until the matching activity/accessibility/animation surfaces mount. */
+  /** Optional renderer-facing consumers owned at the same lifecycle boundary. */
   readonly consumers?: PresentationConsumerRuntimeOptions;
 }
 

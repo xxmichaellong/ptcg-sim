@@ -275,12 +275,14 @@ before notifying subscribers and blocks reentrant writes during teardown.
 React bindings subscribe to only the requested channel. A match/viewer identity
 binding preserves state across same-session remounts while purging every channel
 before a changed identity or terminal session can publish new effects.
-`GamePresentationRuntime` is the required owning composition: it wires the
+`GamePresentationRuntime` is the required base composition: it wires the
 runtime's adapters, timeline replacement, transient cancellation, and identity
 binding to `GamePresentationCoordinator`, then disposes subscriptions before
-purging store data. When surfaces are ready, its optional
-`PresentationConsumerRuntime` constructs the correctly paired queue consumers;
-mounting code does not assemble sources and acknowledgements manually.
+purging store data. Its optional `PresentationConsumerRuntime` constructs the
+correctly paired queue consumers; mounting code does not assemble sources and
+acknowledgements manually. `LegacyGamePresentationRuntime` is the concrete
+route-scoped sidebar owner: it adds the live-region dwell lifecycle, owns those
+consumers, and exposes only the feed and live-region sources needed by React.
 
 `ActivityFeedModel` projects only the ordered recipient-safe display fields and
 local entry identity. It contains no DOM class, mutable node, scroll position,
@@ -298,6 +300,12 @@ instantaneous/static result callback and then acknowledges the same already-
 resolved effect, so command timing and authoritative state cannot depend on the
 preference. Turning reduced motion on while an animation is running aborts that
 work and reprocesses its still-current head through the non-animated path.
+The legacy `flip-coin.js` has no separate coin visual: it appends only the
+resolved text row. To honor the no-UX-change constraint, the legacy sidebar
+owner acknowledges the already-resolved animation request without motion while
+the activity and accessibility channels present the result. A future visible
+coin animation requires an approved parity exception rather than being slipped
+into the rebuild.
 
 Live activity appends to the bounded history. In replay, activity is seekable
 state: the coordinator maps `timelinePresentationEvents` and replaces the log on
@@ -347,18 +355,22 @@ active replay, and post-exit `discarding` return the local typed
 `replay_mode` rejection without allocating a command ID or writing transport.
 Mutating drop intents are not forwarded to a second parent submission path;
 local selection/preview/context/zone/resize intents remain available. The board
-enables explicit renderer replacement only in replay mode. The dormant
-`LegacyReplayControls` renders the four original IDs, symbols, ordering, color
-classes, and action mappings without boundary disabling. The headless
+enables explicit renderer replacement only in replay mode. The unmounted
+`LegacyReplayControls` preserves the four original IDs, symbols, ordering, color
+classes, and action mappings without disabling boundary buttons. The headless
 `ReplayModeShell` binds those controls and exit to the coordinator and exposes an
 exact legacy chrome selector: Replay/Solo label and 50% tab widths; multiplayer,
 deck, chat, import, clear-log, turn, coin, and twelve private mutation-action
 visibility; persistent export and Options actions; and the exit action. Loading
 and post-exit discarding deliberately retain live chrome until replay mode is
-active. The shell, presentation runtime, and its React bindings are not mounted
-in the current spike application, so the later parity slice must place them into
-the reconstructed sidebar beside the existing Options button and verify
-focus/keyboard and visual parity.
+active. `LegacyPresentationSurface` now concretely renders the existing
+`#chatbox` contract from keyed recipient-safe rows, preserves self/opponent and
+announcement styling plus bottom scrolling, and uses a separate visually hidden
+polite live region with serial dwell. Its integration tests mount live and
+replay sources and verify seek cancellation and teardown. The current spike
+application still has no room-session route, so the later parity slice must
+place this surface and the replay shell into the reconstructed sidebar beside
+the existing Options button and verify focus/keyboard and full visual parity.
 
 ## Rendering cadence and performance
 
