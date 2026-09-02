@@ -276,7 +276,26 @@ before a changed identity or terminal session can publish new effects.
 `GamePresentationRuntime` is the required owning composition: it wires the
 runtime's adapters, timeline replacement, transient cancellation, and identity
 binding to `GamePresentationCoordinator`, then disposes subscriptions before
-purging store data. Mounting code does not assemble these callbacks manually.
+purging store data. When surfaces are ready, its optional
+`PresentationConsumerRuntime` constructs the correctly paired queue consumers;
+mounting code does not assemble sources and acknowledgements manually.
+
+`ActivityFeedModel` projects only the ordered recipient-safe display fields and
+local entry identity. It contains no DOM class, mutable node, scroll position,
+or renderer object, and memoizes by immutable activity snapshot identity. The
+accessibility drain invokes one polite-announcement handler at a time and waits
+for its settlement before acknowledging the FIFO head. The animation executor
+does the same for visual work. Both hand an `AbortSignal` to the surface and
+cancel the active handler when the queue head is cleared or evicted, on runtime
+teardown, or—only for animation—when motion preference changes. A late resolve
+or rejection from cancelled work is ignored by exact local entry identity.
+Failures are reported without wedging later entries.
+
+Reduced motion never invokes the animated callback. It uses an optional
+instantaneous/static result callback and then acknowledges the same already-
+resolved effect, so command timing and authoritative state cannot depend on the
+preference. Turning reduced motion on while an animation is running aborts that
+work and reprocesses its still-current head through the non-animated path.
 
 Live activity appends to the bounded history. In replay, activity is seekable
 state: the coordinator maps `timelinePresentationEvents` and replaces the log on

@@ -295,7 +295,9 @@ Work:
   client artifact assembly, renderer-neutral playback controller, and
   live/replay application coordinator/board guard by mounting the implemented
   headless legacy-chrome shell, mode-gated presentation adapters, bounded local
-  stores, and narrow React bindings in the reconstructed sidebar. Complete
+  stores, keyed feed model, serial announcement/animation consumers, and narrow
+  React bindings in the reconstructed sidebar. Supply the live-region dwell
+  handler and concrete coin visual at that mounting boundary. Complete
   recipient-safe view-diff facts needed for legacy per-card activity wording,
   then add long-retention journal chunks plus download/import formats.
 - Expose v1 conversion through an isolated upload/import transaction.

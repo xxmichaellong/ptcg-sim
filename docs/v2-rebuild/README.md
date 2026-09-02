@@ -28,7 +28,9 @@ and Phase 0 exit criteria are accepted.
   session. A headless legacy-chrome shell and generation-safe presentation
   pipeline now map live or replay facts into isolated activity,
   accessibility, and animation effects. Bounded narrow-channel stores preserve
-  live history, rebuild replay history on seek, and cancel stale one-shot work,
+  live history, rebuild replay history on seek, and cancel stale one-shot work.
+  Dormant renderer-neutral consumers now project keyed feed rows, serialize
+  polite announcements, and run cancellable reduced-motion-aware animation,
   but remain unmounted; full sidebar mounting and downloadable/export formats
   remain later parity work.
 - A strangler migration: v1 stays available while v2 reaches parity behind a

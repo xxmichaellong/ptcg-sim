@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 
+import type { ActivityFeedSnapshot } from './ActivityFeedModel.js';
 import type {
   AccessibilityPresentationSnapshot,
   ActivityPresentationSnapshot,
@@ -27,3 +28,7 @@ export const useAccessibilityPresentation = (
 export const useAnimationPresentation = (
   source: PresentationStateSource<AnimationPresentationSnapshot>
 ): AnimationPresentationSnapshot => usePresentationState(source);
+
+export const useActivityFeed = (
+  source: PresentationStateSource<ActivityFeedSnapshot>
+): ActivityFeedSnapshot => usePresentationState(source);

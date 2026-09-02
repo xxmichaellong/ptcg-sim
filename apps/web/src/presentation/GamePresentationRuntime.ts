@@ -3,6 +3,10 @@ import {
   GamePresentationCoordinator,
   type GamePresentationFailureReporter,
 } from './GamePresentationCoordinator.js';
+import {
+  PresentationConsumerRuntime,
+  type PresentationConsumerRuntimeOptions,
+} from './PresentationConsumerRuntime.js';
 import type { PresentationRuntimePolicy } from './PresentationRuntime.js';
 import { PresentationRuntime } from './PresentationRuntime.js';
 import type { SessionPresentationSource } from './SessionPresentationDispatcher.js';
@@ -12,6 +16,8 @@ export interface GamePresentationRuntimeOptions {
   readonly replay: ReplayPresentationSource;
   readonly policy?: Partial<PresentationRuntimePolicy>;
   readonly reportFailure?: GamePresentationFailureReporter;
+  /** Dormant until the matching activity/accessibility/animation surfaces mount. */
+  readonly consumers?: PresentationConsumerRuntimeOptions;
 }
 
 /**
@@ -20,12 +26,14 @@ export interface GamePresentationRuntimeOptions {
  */
 export class GamePresentationRuntime extends PresentationRuntime {
   private readonly coordinator: GamePresentationCoordinator;
+  readonly consumers?: PresentationConsumerRuntime;
 
   constructor({
     live,
     replay,
     policy,
     reportFailure,
+    consumers,
   }: GamePresentationRuntimeOptions) {
     super(policy);
     this.coordinator = new GamePresentationCoordinator({
@@ -37,10 +45,28 @@ export class GamePresentationRuntime extends PresentationRuntime {
       bindPresentationIdentity: this.bindIdentity,
       ...(reportFailure ? { reportFailure } : {}),
     });
+    try {
+      if (consumers)
+        this.consumers = new PresentationConsumerRuntime(this, consumers);
+    } catch (error) {
+      try {
+        this.coordinator.dispose();
+      } finally {
+        super.dispose();
+      }
+      throw error;
+    }
   }
 
   override dispose(): void {
-    this.coordinator.dispose();
-    super.dispose();
+    try {
+      this.coordinator.dispose();
+    } finally {
+      try {
+        this.consumers?.dispose();
+      } finally {
+        super.dispose();
+      }
+    }
   }
 }

@@ -445,4 +445,60 @@ describe('GamePresentationCoordinator', () => {
 
     runtime.dispose();
   });
+
+  it('owns and tears down optional presentation consumers after stopping producers', () => {
+    const live = new FakeLiveSource();
+    const replay = new FakeReplaySource();
+    const signals: AbortSignal[] = [];
+    const never = new Promise<void>(() => undefined);
+    const announceAccessibility = vi.fn((_entry, signal: AbortSignal) => {
+      signals.push(signal);
+      return never;
+    });
+    const animate = vi.fn((_entry, signal: AbortSignal) => {
+      signals.push(signal);
+      return never;
+    });
+    const runtime = new GamePresentationRuntime({
+      live,
+      replay,
+      consumers: { announceAccessibility, animate },
+    });
+
+    live.publish([coin(1, 'heads')]);
+    expect(runtime.consumers?.activityFeed.getSnapshot().items).toHaveLength(1);
+    expect(announceAccessibility).toHaveBeenCalledOnce();
+    expect(animate).toHaveBeenCalledOnce();
+    expect(signals.every((signal) => !signal.aborted)).toBe(true);
+
+    runtime.dispose();
+    expect(signals.every((signal) => signal.aborted)).toBe(true);
+    expect(live.listenerCount()).toBe(0);
+    expect(replay.listenerCount()).toBe(0);
+    expect(runtime.activity.getSnapshot().entries).toEqual([]);
+  });
+
+  it('releases coordinator subscriptions if optional consumer construction fails', () => {
+    const live = new FakeLiveSource();
+    const replay = new FakeReplaySource();
+
+    expect(
+      () =>
+        new GamePresentationRuntime({
+          live,
+          replay,
+          consumers: {
+            animate: () => undefined,
+            reducedMotion: {
+              getSnapshot: () => false,
+              subscribe: () => {
+                throw new Error('preference subscription failed');
+              },
+            },
+          },
+        })
+    ).toThrow('preference subscription failed');
+    expect(live.listenerCount()).toBe(0);
+    expect(replay.listenerCount()).toBe(0);
+  });
 });

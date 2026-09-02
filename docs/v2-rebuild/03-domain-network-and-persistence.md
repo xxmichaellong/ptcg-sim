@@ -504,6 +504,13 @@ backward seeks atomically cancel queued one-shot work.
 The runtime binds to the effective match/viewer identity, retaining state across
 same-identity remounts but atomically purging it after identity change or a
 terminal live session.
+The optional consumer runtime derives stable keyed activity rows without
+copying DOM state and drains each transient channel serially. Queue overflow,
+clear/reset, replay lifecycle changes, and consumer disposal abort obsolete
+work; settlement from an obsolete promise cannot acknowledge a newer entry.
+Handler and diagnostics failures are isolated and the failed head is removed so
+later work is not wedged. A live reduced-motion preference aborts the animated
+path and settles the same resolved result through a non-animated callback.
 A truncated artifact starts at its retained base revision and cannot seek into
 history the authority did not send. React subscribes through a thin
 external-store adapter. An application coordinator correlates each request to

@@ -143,6 +143,10 @@ separate bounded external-store channels. This prevents a coin animation from
 rerendering the activity panel and gives one-shot consumers explicit FIFO
 acknowledgement. One owning composition wires every live/replay and identity
 lifecycle callback; room/viewer teardown atomically clears all three channels.
+The consumer boundary exposes a memoized renderer-neutral activity feed and
+identity-checked serial drains for announcements and animation. In-flight work
+is abortable and may acknowledge only the exact current head. Reduced motion
+restarts the current animation through a non-animated result path.
 
 The board renderer reads a composed render model. It cannot write authoritative
 view state. Input handlers emit semantic intents to the application controller,

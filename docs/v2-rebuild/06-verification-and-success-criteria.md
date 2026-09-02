@@ -110,6 +110,11 @@ Release requires all of the following:
     reentrant stale writes; replay rewind deterministically removes future
     activity and transient work without replaying effects on remount; changed or
     terminal match/viewer identity purges all local presentation data.
+19. Activity feed projection is stable and renderer-neutral; announcement and
+    animation consumers are serialized; overflow, clear, replacement, preference
+    change, and disposal abort obsolete work; late settlements cannot consume a
+    newer head; handler/diagnostic failures cannot wedge the queue; and reduced
+    motion never enters the animated path or changes command timing.
 
 ## Privacy and security gates
 

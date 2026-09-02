@@ -271,6 +271,11 @@ clear-and-replay behavior on restart/previous without rerunning game logic.
 Only newly crossed forward facts enqueue screen-reader announcements and coin
 animation. Backward seek, replay replacement, and mode changes cancel queued
 one-shot work so effects from a future frame cannot appear after rewind.
+The dormant consumer layer projects keyed activity rows and processes each
+one-shot queue serially. It aborts work removed by overflow or lifecycle reset,
+ignores late completion by exact entry identity, and drains past handler errors.
+Reduced motion skips the coin animation callback and optionally presents only
+the resolved static outcome; it never rerolls or changes command timing.
 
 ### Implemented deck and lifecycle subset
 

@@ -9,9 +9,11 @@ import type {
   ActivityPresentationEffect,
   AnimationPresentationEffect,
 } from './PresentationEffects.js';
+import { createActivityFeedSource } from './ActivityFeedModel.js';
 import { PresentationRuntime } from './PresentationRuntime.js';
 import {
   useAccessibilityPresentation,
+  useActivityFeed,
   useActivityPresentation,
   useAnimationPresentation,
 } from './usePresentationRuntime.js';
@@ -47,11 +49,22 @@ describe('presentation runtime React bindings', () => {
 
   it('subscribes each surface only to its own channel and releases on unmount', async () => {
     const runtime = new PresentationRuntime();
-    const renders = { activity: 0, accessibility: 0, animation: 0 };
+    const activityFeed = createActivityFeedSource(runtime.activity);
+    const renders = {
+      activity: 0,
+      activityFeed: 0,
+      accessibility: 0,
+      animation: 0,
+    };
     const ActivityProbe = () => {
       renders.activity += 1;
       const snapshot = useActivityPresentation(runtime.activity);
       return <output id="activity">{snapshot.entries.length}</output>;
+    };
+    const ActivityFeedProbe = () => {
+      renders.activityFeed += 1;
+      const snapshot = useActivityFeed(activityFeed);
+      return <output id="activity-feed">{snapshot.items.length}</output>;
     };
     const AccessibilityProbe = () => {
       renders.accessibility += 1;
@@ -73,30 +86,57 @@ describe('presentation runtime React bindings', () => {
       root.render(
         <>
           <ActivityProbe />
+          <ActivityFeedProbe />
           <AccessibilityProbe />
           <AnimationProbe />
         </>
       )
     );
-    expect(renders).toEqual({ activity: 1, accessibility: 1, animation: 1 });
+    expect(renders).toEqual({
+      activity: 1,
+      activityFeed: 1,
+      accessibility: 1,
+      animation: 1,
+    });
 
     await act(async () => runtime.adapters.appendActivity?.(activity));
-    expect(renders).toEqual({ activity: 2, accessibility: 1, animation: 1 });
+    expect(renders).toEqual({
+      activity: 2,
+      activityFeed: 2,
+      accessibility: 1,
+      animation: 1,
+    });
     expect(host.querySelector('#activity')?.textContent).toBe('1');
+    expect(host.querySelector('#activity-feed')?.textContent).toBe('1');
 
     await act(async () =>
       runtime.adapters.announceAccessibility?.(accessibility)
     );
-    expect(renders).toEqual({ activity: 2, accessibility: 2, animation: 1 });
+    expect(renders).toEqual({
+      activity: 2,
+      activityFeed: 2,
+      accessibility: 2,
+      animation: 1,
+    });
 
     await act(async () => runtime.adapters.presentAnimation?.(animation));
-    expect(renders).toEqual({ activity: 2, accessibility: 2, animation: 2 });
+    expect(renders).toEqual({
+      activity: 2,
+      activityFeed: 2,
+      accessibility: 2,
+      animation: 2,
+    });
 
     await act(async () => root.unmount());
     runtime.adapters.appendActivity?.(activity);
     runtime.adapters.announceAccessibility?.(accessibility);
     runtime.adapters.presentAnimation?.(animation);
-    expect(renders).toEqual({ activity: 2, accessibility: 2, animation: 2 });
+    expect(renders).toEqual({
+      activity: 2,
+      activityFeed: 2,
+      accessibility: 2,
+      animation: 2,
+    });
     runtime.dispose();
   });
 });
