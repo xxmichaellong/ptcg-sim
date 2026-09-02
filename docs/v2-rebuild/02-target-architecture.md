@@ -138,6 +138,12 @@ The web application holds three distinct stores:
 3. **Presentation state**: hover, selection, drag preview, open popup/menu,
    preview card, animation progress, camera/board flip, and local preferences.
 
+Activity history, accessibility announcements, and animation requests are
+separate bounded external-store channels. This prevents a coin animation from
+rerendering the activity panel and gives one-shot consumers explicit FIFO
+acknowledgement. One owning composition wires every live/replay and identity
+lifecycle callback; room/viewer teardown atomically clears all three channels.
+
 The board renderer reads a composed render model. It cannot write authoritative
 view state. Input handlers emit semantic intents to the application controller,
 which converts valid intents into commands. Drag motion updates presentation

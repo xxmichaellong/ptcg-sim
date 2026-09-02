@@ -258,10 +258,34 @@ even when its bounded source drops older entries. `ReplayPresentationDispatcher`
 uses replay ID plus monotonic playback generation. `GamePresentationCoordinator`
 owns both, provides their shared adapters and failure boundary, and gates each
 delivery against the effective mode. Each path reads the matching live or replay
-view when resolving names. It silently consumes live facts received
-during replay and suppresses the remainder of a replay batch if mode exits
-reentrantly. Dispatcher and effect failures are isolated per fact/effect and all
-teardown operations are idempotent.
+view when resolving names. It silently consumes live facts received during
+replay and suppresses the remainder of an event's effects and replay batch if
+mode exits reentrantly. Dispatcher, timeline, lifecycle, and effect failures are
+isolated, and all teardown operations are idempotent.
+
+`PresentationRuntime` is the concrete local adapter target. Activity,
+accessibility, and animation are independent immutable external-store channels,
+with defaults of 100 history entries, 32 queued announcements, and 16 queued
+animations; every configured bound is validated and capped at 1,000. Entries
+receive local monotonic IDs. Announcement and animation consumers acknowledge
+only the FIFO head, while clear/reset installs all affected empty snapshots
+before notifying subscribers and blocks reentrant writes during teardown.
+React bindings subscribe to only the requested channel. A match/viewer identity
+binding preserves state across same-session remounts while purging every channel
+before a changed identity or terminal session can publish new effects.
+`GamePresentationRuntime` is the required owning composition: it wires the
+runtime's adapters, timeline replacement, transient cancellation, and identity
+binding to `GamePresentationCoordinator`, then disposes subscriptions before
+purging store data. Mounting code does not assemble these callbacks manually.
+
+Live activity appends to the bounded history. In replay, activity is seekable
+state: the coordinator maps `timelinePresentationEvents` and replaces the log on
+every effective frame, so restart/previous remove future entries and remount
+hydrates the current timeline without firing announcements or animation.
+Forward-crossed facts alone enqueue those one-shot effects. Enter/exit,
+replacement, and backward seek cancel stale transient queues; forward movement
+keeps valid queued work. The replay-only activity adapter is removed to prevent
+duplicate append after timeline replacement.
 
 ### Replay playback state
 
@@ -310,10 +334,10 @@ exact legacy chrome selector: Replay/Solo label and 50% tab widths; multiplayer,
 deck, chat, import, clear-log, turn, coin, and twelve private mutation-action
 visibility; persistent export and Options actions; and the exit action. Loading
 and post-exit discarding deliberately retain live chrome until replay mode is
-active. The shell and presentation adapters are not mounted in the current spike
-application, so the later parity slice must place them into the reconstructed
-sidebar beside the existing Options button and verify focus/keyboard and visual
-parity.
+active. The shell, presentation runtime, and its React bindings are not mounted
+in the current spike application, so the later parity slice must place them into
+the reconstructed sidebar beside the existing Options button and verify
+focus/keyboard and visual parity.
 
 ## Rendering cadence and performance
 

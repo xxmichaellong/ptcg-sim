@@ -3,6 +3,7 @@ import type { PresentationEvent } from '@ptcgsim/protocol';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  activityPresentationEffectsForEvents,
   createPresentationEffectSink,
   presentationEffectsForEvent,
   type PresentationEffect,
@@ -195,6 +196,20 @@ describe('presentationEffectsForEvent', () => {
       'accessibility:Player flipped tails',
     ]);
     expect(visibleMessages.join(' ')).not.toContain('opaque-routing-id');
+  });
+
+  it('rebuilds only ordered activity entries for a seekable timeline', () => {
+    const effects = activityPresentationEffectsForEvents(
+      [events[0]!, events[5]!],
+      createRendererSpikeView()
+    );
+
+    expect(effects.map((effect) => effect.message)).toEqual([
+      'Blue flipped heads',
+      'Turn 3',
+      'Blue drew for turn',
+    ]);
+    expect(effects.every((effect) => effect.kind === 'activity')).toBe(true);
   });
 });
 

@@ -105,6 +105,11 @@ Release requires all of the following:
     and accessibility effects; coin facts carry the trusted actor and persisted
     outcome; live facts are consumed exactly once, including while replay mode
     suppresses them without bleed or delayed backlog.
+18. Local presentation channels are independently subscribable and bounded;
+    transient consumers acknowledge FIFO entries; reset/disposal block
+    reentrant stale writes; replay rewind deterministically removes future
+    activity and transient work without replaying effects on remount; changed or
+    terminal match/viewer identity purges all local presentation data.
 
 ## Privacy and security gates
 

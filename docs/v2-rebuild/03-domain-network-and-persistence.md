@@ -494,6 +494,16 @@ paths use the same exhaustive pure mapper and isolated activity,
 accessibility-announcement, and animation adapters. One failed adapter or
 diagnostics callback cannot suppress later effects or facts. Coin animation is
 a standalone effect carrying actor and resolved outcome; it is never rerolled.
+The concrete local runtime bounds each independently subscribable channel,
+assigns local monotonic identities, and requires FIFO acknowledgement for
+one-shot announcements and animations. Replay activity is synchronized from the
+complete timeline through the effective frame instead of being appended as an
+effect: backward seeks remove future entries, while only forward-crossed facts
+produce announcements or animations. Mode changes, replay replacement, and
+backward seeks atomically cancel queued one-shot work.
+The runtime binds to the effective match/viewer identity, retaining state across
+same-identity remounts but atomically purging it after identity change or a
+terminal live session.
 A truncated artifact starts at its retained base revision and cannot seek into
 history the authority did not send. React subscribes through a thin
 external-store adapter. An application coordinator correlates each request to
@@ -506,8 +516,8 @@ same-session reconnect, while terminal sessions and changed match/viewer
 identities clear it. The remote board binding selects the coordinator's
 effective view and blocks command submission while replay is loading, active,
 or draining. Legacy-shaped controls, a headless exact chrome selector, and the
-presentation pipeline now exist but remain unmounted, so this implementation
-changes no current UI/UX.
+bounded presentation runtime now exist but remain unmounted, so this
+implementation changes no current UI/UX.
 
 This bounded ledger, stream, and playback state machine are the runtime replay
 foundation, not the final archive/export contract. Phase 7 still owns

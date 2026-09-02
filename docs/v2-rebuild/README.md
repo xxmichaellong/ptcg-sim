@@ -27,8 +27,10 @@ and Phase 0 exit criteria are accepted.
   coordinator/board binding that never rewinds or submits through the live
   session. A headless legacy-chrome shell and generation-safe presentation
   pipeline now map live or replay facts into isolated activity,
-  accessibility, and animation effects, but remain unmounted; full sidebar
-  mounting and downloadable/export formats remain later parity work.
+  accessibility, and animation effects. Bounded narrow-channel stores preserve
+  live history, rebuild replay history on seek, and cancel stale one-shot work,
+  but remain unmounted; full sidebar mounting and downloadable/export formats
+  remain later parity work.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 

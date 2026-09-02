@@ -265,6 +265,13 @@ the legacy "name flipped result" activity text and one standalone coin
 animation without guessing an actor or rerolling during live or replay
 delivery. This adds no canonical board state.
 
+The local activity store appends live facts, but replay treats the complete
+timeline through the selected frame as replaceable state, matching the legacy
+clear-and-replay behavior on restart/previous without rerunning game logic.
+Only newly crossed forward facts enqueue screen-reader announcements and coin
+animation. Backward seek, replay replacement, and mode changes cancel queued
+one-shot work so effects from a future frame cannot appear after rewind.
+
 ### Implemented deck and lifecycle subset
 
 `LoadDeck`, `SetupPlayer`, and `ResetPlayer` now share one authoritative seat-

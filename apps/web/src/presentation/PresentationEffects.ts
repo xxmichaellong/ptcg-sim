@@ -248,6 +248,18 @@ export const presentationEffectsForEvent = (
   return unhandled;
 };
 
+/** Rebuilds seekable activity state without replaying one-shot local effects. */
+export const activityPresentationEffectsForEvents = (
+  events: readonly PresentationEvent[],
+  view?: PresentationView
+): readonly ActivityPresentationEffect[] =>
+  events.flatMap((event) =>
+    presentationEffectsForEvent(event, view).filter(
+      (effect): effect is ActivityPresentationEffect =>
+        effect.kind === 'activity'
+    )
+  );
+
 const deliverEffect = (
   effect: PresentationEffect,
   adapters: PresentationEffectAdapters
@@ -273,11 +285,13 @@ export const createPresentationEffectSink =
     getView: () => PresentationView | undefined,
     adapters: PresentationEffectAdapters,
     reportFailure: PresentationEffectFailureReporter = (error, effect) =>
-      console.error('Presentation effect failed', effect, error)
+      console.error('Presentation effect failed', effect, error),
+    shouldDeliver: () => boolean = () => true
   ): PresentationEventSink =>
   (event) => {
     const effects = presentationEffectsForEvent(event, getView());
     for (const effect of effects) {
+      if (!shouldDeliver()) return;
       try {
         deliverEffect(effect, adapters);
       } catch (error) {

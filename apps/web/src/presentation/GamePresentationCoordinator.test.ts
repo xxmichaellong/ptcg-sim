@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ReplaySessionCoordinatorState } from '../replay/ReplaySessionCoordinator.js';
 import type { ReplayPresentationSource } from '../replay/ReplayPresentationDispatcher.js';
 import { GamePresentationCoordinator } from './GamePresentationCoordinator.js';
+import { GamePresentationRuntime } from './GamePresentationRuntime.js';
 import type { SessionPresentationSource } from './SessionPresentationDispatcher.js';
 
 const coin = (
@@ -39,7 +40,10 @@ const liveState = (
 const coordinatorState = (
   generation: number,
   mode: ReplaySessionCoordinatorState['mode'],
-  enteredPresentationEvents: readonly PresentationEvent[] = []
+  enteredPresentationEvents: readonly PresentationEvent[] = [],
+  timelinePresentationEvents = enteredPresentationEvents,
+  frameIndex = generation - 1,
+  replayId = 'presentation-replay'
 ): ReplaySessionCoordinatorState => {
   const view = createRendererSpikeView();
   if (mode === 'live') {
@@ -67,16 +71,16 @@ const coordinatorState = (
     playback: {
       phase: 'ready',
       generation,
-      replayId: 'presentation-replay',
-      frameIndex: generation - 1,
-      frameCount: generation,
+      replayId,
+      frameIndex,
+      frameCount: Math.max(generation, frameIndex + 1),
       startRevision: 0,
-      endRevision: enteredPresentationEvents.at(-1)?.revision ?? view.revision,
+      endRevision: timelinePresentationEvents.at(-1)?.revision ?? view.revision,
       truncated: false,
       view,
-      atStart: generation === 1,
+      atStart: frameIndex === 0,
       atEnd: true,
-      timelinePresentationEvents: enteredPresentationEvents,
+      timelinePresentationEvents,
       enteredPresentationEvents,
     },
   };
@@ -98,14 +102,23 @@ class FakeLiveSource implements SessionPresentationSource {
     for (const listener of [...this.listeners]) listener();
   }
 
+  publishState(state: ClientSessionState): void {
+    this.state = state;
+    for (const listener of [...this.listeners]) listener();
+  }
+
   listenerCount(): number {
     return this.listeners.size;
   }
 }
 
 class FakeReplaySource implements ReplayPresentationSource {
-  private state = coordinatorState(0, 'live');
+  private state: ReplaySessionCoordinatorState;
   private readonly listeners = new Set<() => void>();
+
+  constructor(state = coordinatorState(0, 'live')) {
+    this.state = state;
+  }
 
   getSnapshot = (): ReplaySessionCoordinatorState => this.state;
 
@@ -206,6 +219,8 @@ describe('GamePresentationCoordinator', () => {
     const live = new FakeLiveSource();
     const replay = new FakeReplaySource();
     const activity: number[] = [];
+    const accessibility: number[] = [];
+    const animations: number[] = [];
     const coordinator = new GamePresentationCoordinator({
       live,
       replay,
@@ -214,6 +229,8 @@ describe('GamePresentationCoordinator', () => {
           activity.push(effect.revision);
           replay.publish(coordinatorState(2, 'live'));
         },
+        announceAccessibility: (effect) => accessibility.push(effect.revision),
+        presentAnimation: (effect) => animations.push(effect.revision),
       },
     });
 
@@ -222,6 +239,210 @@ describe('GamePresentationCoordinator', () => {
     );
 
     expect(activity).toEqual([8]);
+    expect(accessibility).toEqual([]);
+    expect(animations).toEqual([]);
     coordinator.dispose();
+  });
+
+  it('rebuilds replay activity on rewind while queueing only crossed one-shot effects', () => {
+    const live = new FakeLiveSource();
+    const replay = new FakeReplaySource();
+    const runtime = new GamePresentationRuntime({ live, replay });
+    const liveEffect = coin(1, 'heads');
+    const replayEffect = coin(8, 'tails');
+    const replacementReplayEffect = coin(9, 'heads');
+    const laterLiveEffect = coin(2, 'tails');
+
+    expect(live.listenerCount()).toBe(2);
+    expect(replay.listenerCount()).toBe(2);
+    live.publish([liveEffect]);
+    expect(
+      runtime.activity
+        .getSnapshot()
+        .entries.map((entry) => entry.effect.revision)
+    ).toEqual([1]);
+    expect(runtime.accessibility.getSnapshot().announcements).toHaveLength(1);
+    expect(runtime.animation.getSnapshot().animations).toHaveLength(1);
+
+    replay.publish(coordinatorState(1, 'replay', [], [], 0));
+    expect(runtime.activity.getSnapshot().entries).toEqual([]);
+    expect(runtime.accessibility.getSnapshot().announcements).toEqual([]);
+    expect(runtime.animation.getSnapshot().animations).toEqual([]);
+
+    replay.publish(
+      coordinatorState(2, 'replay', [replayEffect], [replayEffect], 1)
+    );
+    expect(
+      runtime.activity
+        .getSnapshot()
+        .entries.map((entry) => entry.effect.revision)
+    ).toEqual([8]);
+    expect(
+      runtime.accessibility
+        .getSnapshot()
+        .announcements.map((entry) => entry.effect.revision)
+    ).toEqual([8]);
+    expect(
+      runtime.animation
+        .getSnapshot()
+        .animations.map((entry) => entry.effect.revision)
+    ).toEqual([8]);
+
+    replay.publish(
+      coordinatorState(
+        3,
+        'replay',
+        [replacementReplayEffect],
+        [replacementReplayEffect],
+        1,
+        'replacement-replay'
+      )
+    );
+    expect(
+      runtime.activity
+        .getSnapshot()
+        .entries.map((entry) => entry.effect.revision)
+    ).toEqual([9]);
+    expect(
+      runtime.accessibility
+        .getSnapshot()
+        .announcements.map((entry) => entry.effect.revision)
+    ).toEqual([9]);
+    expect(
+      runtime.animation
+        .getSnapshot()
+        .animations.map((entry) => entry.effect.revision)
+    ).toEqual([9]);
+
+    replay.publish(
+      coordinatorState(4, 'replay', [], [], 0, 'replacement-replay')
+    );
+    expect(runtime.activity.getSnapshot().entries).toEqual([]);
+    expect(runtime.accessibility.getSnapshot().announcements).toEqual([]);
+    expect(runtime.animation.getSnapshot().animations).toEqual([]);
+
+    replay.publish(
+      coordinatorState(
+        5,
+        'replay',
+        [replacementReplayEffect],
+        [replacementReplayEffect],
+        1,
+        'replacement-replay'
+      )
+    );
+    expect(
+      runtime.activity
+        .getSnapshot()
+        .entries.map((entry) => entry.effect.revision)
+    ).toEqual([9]);
+    expect(runtime.accessibility.getSnapshot().announcements).toHaveLength(1);
+    expect(runtime.animation.getSnapshot().animations).toHaveLength(1);
+
+    replay.publish(coordinatorState(6, 'live'));
+    expect(runtime.accessibility.getSnapshot().announcements).toEqual([]);
+    expect(runtime.animation.getSnapshot().animations).toEqual([]);
+    live.publish([liveEffect, laterLiveEffect]);
+    expect(
+      runtime.activity
+        .getSnapshot()
+        .entries.map((entry) => entry.effect.revision)
+    ).toEqual([9, 2]);
+
+    runtime.dispose();
+    expect(live.listenerCount()).toBe(0);
+    expect(replay.listenerCount()).toBe(0);
+  });
+
+  it('isolates replay timeline, lifecycle, and diagnostic failures', () => {
+    const live = new FakeLiveSource();
+    const replay = new FakeReplaySource();
+    const announcement = vi.fn();
+    const replaceReplayActivity = vi.fn(() => {
+      throw new Error('timeline failed');
+    });
+    const reportFailure = vi.fn(() => {
+      throw new Error('diagnostics failed');
+    });
+    const coordinator = new GamePresentationCoordinator({
+      live,
+      replay,
+      adapters: { announceAccessibility: announcement },
+      replaceReplayActivity,
+      clearTransientEffects: () => {
+        throw new Error('lifecycle failed');
+      },
+      reportFailure,
+    });
+    const event = coin(8, 'heads');
+
+    const replayState = coordinatorState(1, 'replay', [event], [event], 0);
+    replay.publish(replayState);
+    replay.publish(replayState);
+
+    expect(reportFailure).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'lifecycle failed' }),
+      expect.objectContaining({
+        stage: 'lifecycle',
+        reason: 'mode_changed',
+      })
+    );
+    expect(reportFailure).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'timeline failed' }),
+      expect.objectContaining({ stage: 'timeline', events: [event] })
+    );
+    expect(replaceReplayActivity).toHaveBeenCalledTimes(2);
+    expect(announcement).toHaveBeenCalledOnce();
+    coordinator.dispose();
+  });
+
+  it('hydrates an already-active replay timeline without replaying one-shot effects', () => {
+    const event = coin(8, 'tails');
+    const live = new FakeLiveSource();
+    const replay = new FakeReplaySource(
+      coordinatorState(4, 'replay', [event], [event], 3)
+    );
+    const runtime = new GamePresentationRuntime({ live, replay });
+
+    expect(
+      runtime.activity
+        .getSnapshot()
+        .entries.map((entry) => entry.effect.revision)
+    ).toEqual([8]);
+    expect(runtime.accessibility.getSnapshot().announcements).toEqual([]);
+    expect(runtime.animation.getSnapshot().animations).toEqual([]);
+
+    runtime.dispose();
+  });
+
+  it('purges local presentation data at changed and terminal identity boundaries', () => {
+    const live = new FakeLiveSource();
+    const replay = new FakeReplaySource();
+    const runtime = new GamePresentationRuntime({ live, replay });
+    const first = coin(1, 'heads');
+
+    live.publish([first]);
+    expect(runtime.activity.getSnapshot().entries).toHaveLength(1);
+    expect(runtime.accessibility.getSnapshot().announcements).toHaveLength(1);
+    expect(runtime.animation.getSnapshot().animations).toHaveLength(1);
+
+    const playerView = live.getSnapshot().view;
+    if (!playerView) throw new Error('Missing live player view');
+    live.publishState({
+      ...live.getSnapshot(),
+      view: { ...playerView, viewer: { kind: 'spectator' } },
+    });
+    expect(runtime.activity.getSnapshot().entries).toEqual([]);
+    expect(runtime.accessibility.getSnapshot().announcements).toEqual([]);
+    expect(runtime.animation.getSnapshot().animations).toEqual([]);
+
+    live.publish([first, coin(2, 'tails')]);
+    expect(runtime.activity.getSnapshot().entries).toHaveLength(1);
+    live.publishState({ ...live.getSnapshot(), phase: 'closed' });
+    expect(runtime.activity.getSnapshot().entries).toEqual([]);
+    expect(runtime.accessibility.getSnapshot().announcements).toEqual([]);
+    expect(runtime.animation.getSnapshot().animations).toEqual([]);
+
+    runtime.dispose();
   });
 });
