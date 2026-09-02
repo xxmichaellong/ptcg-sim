@@ -243,6 +243,17 @@ so a malformed replacement cannot disturb the active replay. The eventual React
 controls must preserve the legacy labels, placement, colors, keyboard/focus
 behavior, and replay-mode visibility changes.
 
+`ReplaySessionCoordinator` is the application mode boundary. Its immutable
+external-store snapshot contains the live/replay mode, request phase, effective
+projected view, live revision, playback state, and bounded safe failure. It is
+the only layer that asks `RemoteGameSession` for replay and installs a completed
+artifact into playback. Existing artifacts are request baselines, not implicit
+navigation targets. A request can be loading, or `discarding` after the user
+exits while the uninterruptible network transfer drains. The coordinator blocks
+replay controls outside replay mode, disposes its session subscription on route
+teardown, and retains no completed replay after a room/viewer identity change or
+terminal session. Renderers continue to consume only the selected `view`.
+
 ## Rendering cadence and performance
 
 PTCG Sim is a discrete tabletop, so a permanent 60 Hz game loop is wasteful.

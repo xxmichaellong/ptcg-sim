@@ -32,7 +32,7 @@ apps/
     src/features/            room, chat, deck, settings, replay, imports
     src/game-client/         authority client, pending commands, view store
     src/legacy-parity/       temporary parity metadata, not v1 runtime imports
-    src/replay/              React replay adapters; no playback ownership
+    src/replay/              session/playback coordinator + React adapters
   server/
     src/room/                room lifecycle and connection sessions
     src/authority/           command authorization and transaction pipeline

@@ -478,8 +478,15 @@ controller generation: rewind/restart emit no effects, stepping forward emits
 the entered frame's effects, and fast-forward emits all crossed effects in
 revision order. A truncated artifact starts at its retained base revision and
 cannot seek into history the authority did not send. React subscribes through a
-thin external-store adapter; visible replay controls and parity binding remain a
-later UI slice, so this implementation changes no current UI/UX.
+thin external-store adapter. An application coordinator correlates each request
+to the artifact present when it began, enters only a fresh completed artifact,
+and exposes either the live projection or one replay projection as the effective
+view. It never replaces or rewinds the live session. Exiting during transfer
+marks the eventual artifact for discard; refresh keeps the current replay until
+a valid replacement installs atomically. Completed playback survives a
+same-session reconnect, while terminal sessions and changed match/viewer
+identities clear it. Visible replay controls and parity binding remain a later
+UI slice, so this implementation changes no current UI/UX.
 
 This bounded ledger, stream, and playback state machine are the runtime replay
 foundation, not the final archive/export contract. Phase 7 still owns

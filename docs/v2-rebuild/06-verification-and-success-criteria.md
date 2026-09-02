@@ -90,6 +90,10 @@ Release requires all of the following:
 13. Projected replay playback is bounded and deterministic: backward navigation
     never reruns domain logic or randomness, forward effects match only the
     frames crossed, and a rejected replacement leaves the active replay intact.
+14. Replay application mode never mutates the live session: only a fresh
+    request-correlated artifact is entered, exit discards late completion,
+    reconnect/new-room boundaries retain or clear playback as specified, and
+    malformed refresh leaves the current replay intact.
 
 ## Privacy and security gates
 

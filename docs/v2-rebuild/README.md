@@ -23,7 +23,8 @@ and Phase 0 exit criteria are accepted.
 - Per-recipient state projections so private hands, deck identities/order, and
   private looks never reach unauthorized clients.
 - A bounded authoritative replay ledger, session-bound streamed projected
-  replay, and renderer-neutral deterministic playback controller; replay UI and
+  replay, renderer-neutral deterministic playback, and an application
+  coordinator that never rewinds the live session; replay UI and
   downloadable/export formats remain later parity work.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
