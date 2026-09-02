@@ -175,7 +175,7 @@ describe('role-projected replay', () => {
     [state, history] = executeAndAppend(
       state,
       history,
-      { type: 'FlipCoin' },
+      { type: 'FlipCoin', playerId: p1 },
       adapter
     );
     [state, history] = executeAndAppend(
@@ -228,7 +228,7 @@ describe('role-projected replay', () => {
       [state, history] = executeAndAppend(
         state,
         history,
-        { type: 'FlipCoin' },
+        { type: 'FlipCoin', playerId: p1 },
         adapter,
         2
       );
@@ -253,7 +253,11 @@ describe('role-projected replay', () => {
   it('compacts an oversized event tail even before the count bound', () => {
     const adapter = context();
     const initial = initialState();
-    const result = executeCommand(initial, { type: 'FlipCoin' }, adapter);
+    const result = executeCommand(
+      initial,
+      { type: 'FlipCoin', playerId: p1 },
+      adapter
+    );
     if (!result.accepted) throw new Error(result.message);
     const history = appendReplayHistory(
       createReplayHistory(initial),
@@ -277,7 +281,7 @@ describe('role-projected replay', () => {
     [state, history] = executeAndAppend(
       state,
       history,
-      { type: 'FlipCoin' },
+      { type: 'FlipCoin', playerId: p1 },
       adapter
     );
     const corrupt: ReplayHistory = {

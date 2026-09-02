@@ -258,9 +258,12 @@ and does not replay presentation events for duplicate command recovery. No
 labels, layout, or visible interaction have changed in this under-the-hood
 slice.
 
-The same publication bridge now carries the existing persisted `CoinFlipped`
-fact as a typed result, completing the already-modeled renderer presentation
-path without adding canonical state.
+The parameterless `FlipCoin` wire intent is resolved for the trusted session
+player; the persisted `CoinFlipped` fact now carries both that actor and the
+authority-provided result. The shared presentation mapper can therefore produce
+the legacy "name flipped result" activity text and one standalone coin
+animation without guessing an actor or rerolling during live or replay
+delivery. This adds no canonical board state.
 
 ### Implemented deck and lifecycle subset
 

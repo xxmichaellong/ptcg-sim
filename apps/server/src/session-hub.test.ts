@@ -226,7 +226,7 @@ describe('serialized room session hub', () => {
         revision: 1,
         viewer: { kind: 'player', playerId: p1 },
       },
-      presentationEvents: [{ type: 'CoinFlipped', revision: 1 }],
+      presentationEvents: [{ type: 'CoinFlipped', revision: 1, playerId: p1 }],
     });
   });
 

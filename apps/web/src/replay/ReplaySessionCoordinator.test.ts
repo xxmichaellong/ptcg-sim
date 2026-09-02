@@ -58,6 +58,7 @@ const view = (
 const coin = (revision: number): PresentationEvent => ({
   type: 'CoinFlipped',
   revision,
+  playerId: 'blue',
   result: revision % 2 === 0 ? 'tails' : 'heads',
 });
 

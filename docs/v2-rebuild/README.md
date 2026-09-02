@@ -26,8 +26,9 @@ and Phase 0 exit criteria are accepted.
   replay, renderer-neutral deterministic playback, and an application
   coordinator/board binding that never rewinds or submits through the live
   session. A headless legacy-chrome shell and generation-safe presentation
-  dispatcher are implemented but unmounted; full sidebar mounting and
-  downloadable/export formats remain later parity work.
+  pipeline now map live or replay facts into isolated activity,
+  accessibility, and animation effects, but remain unmounted; full sidebar
+  mounting and downloadable/export formats remain later parity work.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 

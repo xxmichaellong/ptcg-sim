@@ -294,9 +294,10 @@ Work:
 - Extend the implemented authoritative replay ledger, role-projected streaming,
   client artifact assembly, renderer-neutral playback controller, and
   live/replay application coordinator/board guard by mounting the implemented
-  headless legacy-chrome shell and presentation dispatcher in the reconstructed
-  sidebar, then adding long-retention journal chunks plus download/import
-  formats.
+  headless legacy-chrome shell and mode-gated presentation adapters in the
+  reconstructed sidebar. Complete recipient-safe view-diff facts needed for
+  legacy per-card activity wording, then add long-retention journal chunks plus
+  download/import formats.
 - Expose v1 conversion through an isolated upload/import transaction.
 - Add storage migration rehearsal, corrupt/truncated data recovery, quotas, and
   cleanup jobs.

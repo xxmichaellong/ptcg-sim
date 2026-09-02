@@ -986,6 +986,9 @@ export const resolveWireCommand = (
       };
     }
     case 'FlipCoin':
-      return { accepted: true, command: { type: 'FlipCoin' } };
+      return {
+        accepted: true,
+        command: { type: 'FlipCoin', playerId: actorId },
+      };
   }
 };

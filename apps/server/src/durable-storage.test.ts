@@ -97,7 +97,13 @@ const acceptedTransaction = (
   } as const;
   const eventBatch = {
     revision: 1,
-    events: [{ type: 'CoinFlipped' as const, result: 'heads' as const }],
+    events: [
+      {
+        type: 'CoinFlipped' as const,
+        playerId: p1,
+        result: 'heads' as const,
+      },
+    ],
   };
   const state = { ...cloneMatchState(current.state), revision: 1 };
   return {

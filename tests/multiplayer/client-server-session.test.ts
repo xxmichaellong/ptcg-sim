@@ -1387,6 +1387,8 @@ describe('client/server multiplayer contract', () => {
       role: 'spectator',
       capability: spectatorCapability,
     });
+    const playerId = player.session.getSnapshot().playerId;
+    if (!playerId) throw new Error('Missing admitted player identity');
 
     expect(player.session.getSnapshot()).toMatchObject({
       phase: 'ready',
@@ -1418,6 +1420,7 @@ describe('client/server multiplayer contract', () => {
       {
         type: 'CoinFlipped',
         revision: 1,
+        playerId,
         result: expect.stringMatching(/^(heads|tails)$/),
       },
     ]);

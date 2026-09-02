@@ -54,6 +54,7 @@ const view = (
 const coin: PresentationEvent = {
   type: 'CoinFlipped',
   revision: 5,
+  playerId: 'blue',
   result: 'heads',
 };
 const attack: PresentationEvent = {

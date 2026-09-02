@@ -101,6 +101,10 @@ Release requires all of the following:
     controls and exit call the coordinator exactly once, and presentation facts
     are delivered once per later playback generation in recorded order across
     fast-forward, reentrancy, adapter errors, remount, rewind, and teardown.
+17. Every presentation-event variant maps exhaustively to privacy-safe activity
+    and accessibility effects; coin facts carry the trusted actor and persisted
+    outcome; live facts are consumed exactly once, including while replay mode
+    suppresses them without bleed or delayed backlog.
 
 ## Privacy and security gates
 

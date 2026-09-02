@@ -385,6 +385,7 @@ describe('RemoteGameSession', () => {
         {
           type: 'CoinFlipped',
           revision: 2,
+          playerId: 'blue',
           result: 'heads',
         },
       ],
@@ -433,7 +434,12 @@ describe('RemoteGameSession', () => {
       index: 1,
       snapshot: view(1),
       presentationEvents: [
-        { type: 'CoinFlipped', revision: 1, result: 'heads' },
+        {
+          type: 'CoinFlipped',
+          revision: 1,
+          playerId: 'blue',
+          result: 'heads',
+        },
       ],
     });
     socket.serverMessage({
@@ -463,7 +469,14 @@ describe('RemoteGameSession', () => {
       { revision: 0, events: [] },
       {
         revision: 1,
-        events: [{ type: 'CoinFlipped', revision: 1, result: 'heads' }],
+        events: [
+          {
+            type: 'CoinFlipped',
+            revision: 1,
+            playerId: 'blue',
+            result: 'heads',
+          },
+        ],
       },
     ]);
   });

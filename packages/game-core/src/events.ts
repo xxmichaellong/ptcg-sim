@@ -346,7 +346,11 @@ export type DomainEvent =
       readonly checkpointHash: string;
       readonly restoredState: MatchState;
     }
-  | { readonly type: 'CoinFlipped'; readonly result: 'heads' | 'tails' };
+  | {
+      readonly type: 'CoinFlipped';
+      readonly playerId: PlayerId;
+      readonly result: 'heads' | 'tails';
+    };
 
 export interface EventBatch {
   readonly revision: number;

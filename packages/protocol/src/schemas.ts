@@ -507,6 +507,7 @@ export const PresentationEventSchema = v.variant('type', [
   v.object({
     type: v.literal('CoinFlipped'),
     revision: RevisionSchema,
+    playerId: IdentifierSchema,
     result: v.picklist(['heads', 'tails'] as const),
   }),
   v.object({

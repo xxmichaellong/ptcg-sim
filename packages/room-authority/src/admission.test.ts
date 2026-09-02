@@ -150,7 +150,13 @@ describe('room capability admission', () => {
     const initial = createSnapshot();
     const batch = {
       revision: 1,
-      events: [{ type: 'CoinFlipped' as const, result: 'heads' as const }],
+      events: [
+        {
+          type: 'CoinFlipped' as const,
+          playerId: p1,
+          result: 'heads' as const,
+        },
+      ],
     };
     const state = applyEventBatch(initial.state, batch);
     const current: RoomAuthoritySnapshot = {

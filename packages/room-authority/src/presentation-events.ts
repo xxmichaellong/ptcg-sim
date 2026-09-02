@@ -10,6 +10,7 @@ export const presentationEventsForBatch = (
         {
           type: 'CoinFlipped',
           revision: batch.revision,
+          playerId: event.playerId,
           result: event.result,
         },
       ];

@@ -219,7 +219,7 @@ describe('solo undo domain transition', () => {
             checkpointHash: stableHash(checkpoint),
             restoredState: checkpoint,
           },
-          { type: 'CoinFlipped', result: 'heads' },
+          { type: 'CoinFlipped', playerId: p1, result: 'heads' },
         ],
       })
     ).toThrow('Undo event must be the only event');

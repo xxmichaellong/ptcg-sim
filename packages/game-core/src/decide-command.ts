@@ -2360,6 +2360,8 @@ export const decideCommand = (
       });
     }
     case 'FlipCoin': {
+      const playerError = requirePlayer(state, command.playerId);
+      if (playerError) return playerError;
       const result = context.randomInt(2);
       if (result !== 0 && result !== 1) {
         return reject(
@@ -2369,6 +2371,7 @@ export const decideCommand = (
       }
       return accept({
         type: 'CoinFlipped',
+        playerId: command.playerId,
         result: result === 0 ? 'heads' : 'tails',
       });
     }

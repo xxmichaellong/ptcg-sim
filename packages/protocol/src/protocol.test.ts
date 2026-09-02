@@ -73,6 +73,24 @@ describe('client protocol ingress', () => {
     }
   });
 
+  it('strips client-supplied attribution from the parameterless coin intent', () => {
+    const result = parseClientFrame(
+      JSON.stringify({
+        type: 'Command',
+        protocolVersion: PROTOCOL_VERSION,
+        sessionId: 'session',
+        clientSequence: 1,
+        commandId: 'coin-command',
+        lastSeenRevision: 0,
+        command: { type: 'FlipCoin', playerId: 'forged-player' },
+      })
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok || result.value.type !== 'Command') return;
+    expect(result.value.command).toEqual({ type: 'FlipCoin' });
+  });
+
   it('rejects oversized input before JSON traversal', () => {
     const result = parseClientFrame(
       ' '.repeat(MAX_CLIENT_FRAME_CODE_UNITS + 1)

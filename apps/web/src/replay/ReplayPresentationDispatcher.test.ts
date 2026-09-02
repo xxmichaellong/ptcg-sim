@@ -11,6 +11,7 @@ import {
 const coin = (revision: number): PresentationEvent => ({
   type: 'CoinFlipped',
   revision,
+  playerId: 'spike-blue',
   result: revision % 2 === 0 ? 'tails' : 'heads',
 });
 

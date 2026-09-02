@@ -292,7 +292,7 @@ export type GameCommand =
       readonly revertedRevision: number;
       readonly checkpoint: MatchState;
     }
-  | { readonly type: 'FlipCoin' };
+  | { readonly type: 'FlipCoin'; readonly playerId: PlayerId };
 
 export type CommandRejectionCode =
   | 'invalid_command'

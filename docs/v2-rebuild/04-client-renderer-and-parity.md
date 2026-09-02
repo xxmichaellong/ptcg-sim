@@ -233,6 +233,36 @@ the current UI. Its state must distinguish main and alternate/opponent deck dirt
 status, validate empty/unload transitions, and use a robust CSV parser/serializer
 with compatibility fixtures.
 
+### Presentation effect routing
+
+Recipient-safe protocol facts do not write directly to chat DOM, React state, or
+Pixi objects. `presentationEffectsForEvent` exhaustively maps every current
+variant into typed local effects:
+
+- activity entries retain the legacy `player`/`announcement` distinction and
+  projected blue/red player metadata;
+- a separate polite accessibility announcement never depends on whether the
+  activity panel is mounted; and
+- `CoinFlipped` additionally emits a standalone animation request containing
+  the trusted actor and already-resolved heads/tails result.
+
+The mapper uses only projected display names. If a referenced player is absent,
+visible text says `Player` rather than printing an opaque routing ID. Public
+visibility and private-look facts deliberately use count-only wording because
+their protocol forms contain no canonical card identity; restoring legacy
+per-card name/zone wording requires a later recipient-safe view-diff contract,
+not access to secret history.
+
+`SessionPresentationDispatcher` consumes newly retained live event objects once
+even when its bounded source drops older entries. `ReplayPresentationDispatcher`
+uses replay ID plus monotonic playback generation. `GamePresentationCoordinator`
+owns both, provides their shared adapters and failure boundary, and gates each
+delivery against the effective mode. Each path reads the matching live or replay
+view when resolving names. It silently consumes live facts received
+during replay and suppresses the remainder of a replay batch if mode exits
+reentrantly. Dispatcher and effect failures are isolated per fact/effect and all
+teardown operations are idempotent.
+
 ### Replay playback state
 
 Replay does not replace or rewind the live session store. The client-session
@@ -251,9 +281,9 @@ facts, keyed by generation, for effect deduplication. The non-React
 recorded order. It serializes reentrant playback publications, continues after
 one sink or diagnostic failure, and treats the generation visible at its own
 construction as already consumed. Fast-forward effects can span revisions, so
-they are presentation-adapter inputs rather than renderer `installScene` events.
-Loading is transactional, so a malformed replacement cannot disturb the active
-replay.
+they enter the shared presentation effect pipeline rather than renderer
+`installScene`. Loading is transactional, so a malformed replacement cannot
+disturb the active replay.
 
 `ReplaySessionCoordinator` is the application mode boundary. Its immutable
 external-store snapshot contains the live/replay mode, request phase, effective
@@ -280,9 +310,10 @@ exact legacy chrome selector: Replay/Solo label and 50% tab widths; multiplayer,
 deck, chat, import, clear-log, turn, coin, and twelve private mutation-action
 visibility; persistent export and Options actions; and the exit action. Loading
 and post-exit discarding deliberately retain live chrome until replay mode is
-active. Neither component is mounted in the current spike application, so the
-later parity slice must place the shell output into the reconstructed sidebar
-beside the existing Options button and verify focus/keyboard and visual parity.
+active. The shell and presentation adapters are not mounted in the current spike
+application, so the later parity slice must place them into the reconstructed
+sidebar beside the existing Options button and verify focus/keyboard and visual
+parity.
 
 ## Rendering cadence and performance
 

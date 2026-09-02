@@ -216,7 +216,9 @@ assertInvariants(state)
 
 One accepted command produces one atomic resolved event batch and increments the
 revision once. A shuffle event persists the resulting private order; a flip event
-persists the resolved result. Replaying history never relies on a future PRNG or
+persists both its authority-resolved result and trusted session actor. The public
+`FlipCoin` wire intent remains parameterless, so a client cannot spoof that
+attribution. Replaying history never relies on a future PRNG, guessed actor, or
 changed decision algorithm.
 
 Decision and application functions:
@@ -483,6 +485,15 @@ It queues reentrant generations behind the batch already being presented and
 seeds from the current snapshot without replaying effects merely because a UI
 surface mounted. These effects intentionally stay outside renderer
 `installScene`, whose event inputs must all match its one installed revision.
+A parallel live dispatcher uses retained immutable event identity as its cursor,
+which remains correct as the session's bounded timeline drops older entries.
+`GamePresentationCoordinator` owns both paths and selects the effective mode:
+live facts arriving during replay are marked consumed but remain invisible, so
+they cannot bleed into replay or burst into the activity log after exit. Both
+paths use the same exhaustive pure mapper and isolated activity,
+accessibility-announcement, and animation adapters. One failed adapter or
+diagnostics callback cannot suppress later effects or facts. Coin animation is
+a standalone effect carrying actor and resolved outcome; it is never rerolled.
 A truncated artifact starts at its retained base revision and cannot seek into
 history the authority did not send. React subscribes through a thin
 external-store adapter. An application coordinator correlates each request to
@@ -494,8 +505,9 @@ a valid replacement installs atomically. Completed playback survives a
 same-session reconnect, while terminal sessions and changed match/viewer
 identities clear it. The remote board binding selects the coordinator's
 effective view and blocks command submission while replay is loading, active,
-or draining. Legacy-shaped controls and a headless exact chrome selector now
-exist but remain unmounted, so this implementation changes no current UI/UX.
+or draining. Legacy-shaped controls, a headless exact chrome selector, and the
+presentation pipeline now exist but remain unmounted, so this implementation
+changes no current UI/UX.
 
 This bounded ledger, stream, and playback state machine are the runtime replay
 foundation, not the final archive/export contract. Phase 7 still owns

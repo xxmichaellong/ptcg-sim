@@ -158,6 +158,8 @@ pointer/key/menu intent
   -> StatePublication(revision, view state, presentation events)
   -> CommandResult after the sender's publication covers the command
   -> client reconciles pending overlay
+  -> effective live/replay presentation coordinator consumes each fact once
+  -> isolated activity, accessibility, and animation adapters
   -> React/Pixi update only affected views
 ```
 
