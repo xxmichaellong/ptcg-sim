@@ -341,11 +341,15 @@ opaque positional handle from becoming a private-information oracle. Once a
 card is already known, ordinary opponent interaction follows the existing
 policy.
 
-Accepted batches publish `PublicCardsRevealed` or `PublicCardsHidden` with only
-the target player and affected count. They persist and reconnect as canonical
-state while their presentation facts are applied once and never replayed during
-duplicate recovery. No visible control, label, placement, or styling changes in
-this slice.
+Accepted batches persist the authority-derived actor and card-versus-zone scope.
+Their recipient-safe presentation facts add the target player and a fixed
+semantic source. A single-card reveal also carries its bounded display name only
+after the resulting state proves it spectator-public; whole-zone reveals and all
+hides contain no card identity. This restores the exact legacy reveal/hide
+wording and actor styling in live and projected replay paths without canonical
+IDs, definition IDs, or image URLs. The facts are applied once and never replayed
+during duplicate recovery. No visible control, label, placement, or styling
+changes in this slice.
 
 ### Implemented private-look subset
 
@@ -374,11 +378,13 @@ reconnect flash or client-owned secrecy state.
 Only the named viewer receives the grant metadata and known definitions. Every
 other player and spectator continues to receive concealed cards and an empty
 `privateInspections` list. Starting and ending publish typed facts containing
-only revision, source player, viewer player, and card count; canonical card IDs,
-definition IDs, names, and image URLs never enter those facts. Closing rotates
-the viewer's known handle back to a fresh concealed handle. The web layer now
-provides UI-neutral toggle resolvers for the existing menu/shortcut behavior;
-no control, label, layout, or styling was changed.
+revision, source player, viewer player, card-versus-zone scope, fixed semantic
+source, and count. They restore the legacy whole-zone and generic per-card
+wording without ever carrying canonical card IDs, definition IDs, names, image
+URLs, or recipient-only handles. Closing rotates the viewer's known handle back
+to a fresh concealed handle. The web layer now provides UI-neutral toggle
+resolvers for the existing menu/shortcut behavior; no control, label, layout,
+or styling was changed.
 
 ### Implemented authority-random face-down subset
 

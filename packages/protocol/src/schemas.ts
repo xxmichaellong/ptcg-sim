@@ -503,6 +503,22 @@ const WelcomeSchema = v.object({
   snapshot: MatchViewStateSchema,
 });
 
+const PresentationCardSourceSchema = v.picklist([
+  'deck',
+  'hand',
+  'prizes',
+  'discard',
+  'lostZone',
+  'board',
+  'stadium',
+  'active',
+  'bench',
+  'inspection',
+  'attachmentResolution',
+] as const);
+
+const PresentationScopeSchema = v.picklist(['card', 'zone'] as const);
+
 export const PresentationEventSchema = v.variant('type', [
   v.object({
     type: v.literal('CoinFlipped'),
@@ -561,13 +577,20 @@ export const PresentationEventSchema = v.variant('type', [
   v.object({
     type: v.literal('PublicCardsRevealed'),
     revision: RevisionSchema,
+    actorPlayerId: IdentifierSchema,
     playerId: IdentifierSchema,
+    scope: PresentationScopeSchema,
+    source: PresentationCardSourceSchema,
     cardCount: PositiveIntegerSchema,
+    cardName: v.optional(boundedString(256)),
   }),
   v.object({
     type: v.literal('PublicCardsHidden'),
     revision: RevisionSchema,
+    actorPlayerId: IdentifierSchema,
     playerId: IdentifierSchema,
+    scope: PresentationScopeSchema,
+    source: PresentationCardSourceSchema,
     cardCount: PositiveIntegerSchema,
   }),
   v.object({
@@ -575,6 +598,8 @@ export const PresentationEventSchema = v.variant('type', [
     revision: RevisionSchema,
     sourcePlayerId: IdentifierSchema,
     viewerPlayerId: IdentifierSchema,
+    scope: PresentationScopeSchema,
+    source: PresentationCardSourceSchema,
     cardCount: PositiveIntegerSchema,
   }),
   v.object({
@@ -582,6 +607,8 @@ export const PresentationEventSchema = v.variant('type', [
     revision: RevisionSchema,
     sourcePlayerId: IdentifierSchema,
     viewerPlayerId: IdentifierSchema,
+    scope: PresentationScopeSchema,
+    source: PresentationCardSourceSchema,
     cardCount: PositiveIntegerSchema,
   }),
   v.object({

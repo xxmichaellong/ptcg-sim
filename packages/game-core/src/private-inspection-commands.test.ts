@@ -110,6 +110,7 @@ describe('private inspection grants', () => {
     const event = opened.batch.events[0];
     expect(event).toEqual({
       type: 'InspectionGrantOpened',
+      scope: 'zone',
       inspectionId: asInspectionId('inspection-grant-1'),
       sourcePlayerId: p1,
       sourceId: prizeId,
@@ -171,6 +172,7 @@ describe('private inspection grants', () => {
     expect(closed.batch.events).toEqual([
       {
         type: 'InspectionGrantClosed',
+        scope: 'zone',
         inspectionId: event.inspectionId,
         sourcePlayerId: p1,
         sourceId: prizeId,
@@ -326,10 +328,28 @@ describe('private inspection grants', () => {
         events: [
           {
             type: 'InspectionGrantOpened',
+            scope: 'card',
             inspectionId: asInspectionId('malformed-inspection'),
             sourcePlayerId: p1,
             sourceId: prizeId,
             expectedSourceCardIds: [...prizeCards].reverse(),
+            cardIds: [prizeCards[0]!],
+            viewerIds: [p1],
+          },
+        ],
+      })
+    ).toThrow('Private inspection grant event is malformed');
+    expect(() =>
+      applyEventBatch(prepared.state, {
+        revision: prepared.state.revision + 1,
+        events: [
+          {
+            type: 'InspectionGrantOpened',
+            scope: 'invalid' as never,
+            inspectionId: asInspectionId('malformed-scope-inspection'),
+            sourcePlayerId: p1,
+            sourceId: prizeId,
+            expectedSourceCardIds: prizeCards,
             cardIds: [prizeCards[0]!],
             viewerIds: [p1],
           },
@@ -358,6 +378,7 @@ describe('private inspection grants', () => {
         events: [
           {
             type: 'InspectionGrantClosed',
+            scope: 'card',
             inspectionId,
             sourcePlayerId: p1,
             sourceId: prizeId,

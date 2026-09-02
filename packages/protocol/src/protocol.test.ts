@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import * as v from 'valibot';
 import {
   MAX_CLIENT_FRAME_CODE_UNITS,
   MAX_REPLAY_FRAMES,
   PROTOCOL_VERSION,
 } from './constants.js';
 import { parseClientFrame, parseServerFrame } from './ingress.js';
+import { PresentationEventSchema } from './schemas.js';
 
 describe('client protocol ingress', () => {
   it('accepts a bounded typed command and strips unknown keys', () => {
@@ -616,6 +618,73 @@ describe('client protocol ingress', () => {
     );
     expect(result.ok).toBe(false);
     expect(JSON.stringify(result)).not.toContain(secret);
+  });
+
+  it('validates bounded recipient-safe activity detail', () => {
+    const events = [
+      {
+        type: 'PublicCardsRevealed',
+        revision: 4,
+        actorPlayerId: 'actor',
+        playerId: 'owner',
+        scope: 'card',
+        source: 'deck',
+        cardCount: 1,
+        cardName: 'Pikachu',
+      },
+      {
+        type: 'PublicCardsHidden',
+        revision: 5,
+        actorPlayerId: 'actor',
+        playerId: 'owner',
+        scope: 'zone',
+        source: 'prizes',
+        cardCount: 6,
+      },
+      {
+        type: 'PrivateInspectionStarted',
+        revision: 6,
+        sourcePlayerId: 'owner',
+        viewerPlayerId: 'viewer',
+        scope: 'zone',
+        source: 'hand',
+        cardCount: 7,
+      },
+      {
+        type: 'PrivateInspectionEnded',
+        revision: 7,
+        sourcePlayerId: 'owner',
+        viewerPlayerId: 'viewer',
+        scope: 'card',
+        source: 'bench',
+        cardCount: 1,
+      },
+    ] as const;
+
+    for (const event of events) {
+      const result = v.safeParse(PresentationEventSchema, event);
+      expect(result.success).toBe(true);
+      if (result.success) expect(result.output).toEqual(event);
+    }
+
+    for (const event of [
+      {
+        type: 'PublicCardsRevealed',
+        revision: 4,
+        playerId: 'owner',
+        scope: 'card',
+        source: 'deck',
+        cardCount: 1,
+        cardName: 'Pikachu',
+      },
+      { ...events[0], source: 'secret-pile' },
+      { ...events[0], scope: 'cards' },
+      { ...events[0], cardName: 'x'.repeat(257) },
+      { ...events[2], scope: undefined },
+      { ...events[3], cardCount: 0 },
+    ]) {
+      expect(v.safeParse(PresentationEventSchema, event).success).toBe(false);
+    }
   });
 
   it('allows replay requests without accepting a perspective selector', () => {

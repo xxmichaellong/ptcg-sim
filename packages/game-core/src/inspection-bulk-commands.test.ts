@@ -127,6 +127,7 @@ const prepareInspection = (
     state,
     {
       type: 'SetPublicReveal',
+      actorPlayerId: p1,
       playerId: p1,
       cardId: normalizedCardId,
       expectedSourceId: inspection.id,
@@ -142,6 +143,7 @@ const prepareInspection = (
         ...state.visibility.inspectionGrants,
         [inspection.inspectionId]: {
           inspectionId: inspection.inspectionId,
+          scope: 'zone',
           sourcePlayerId: p1,
           sourceId: inspection.id,
           cardIds: [...inspection.cardIds],

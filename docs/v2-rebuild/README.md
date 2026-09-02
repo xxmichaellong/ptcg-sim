@@ -29,6 +29,10 @@ and Phase 0 exit criteria are accepted.
   pipeline now map live or replay facts into isolated activity,
   accessibility, and animation effects. Bounded narrow-channel stores preserve
   live history, rebuild replay history on seek, and cancel stale one-shot work.
+  Recipient-safe activity facts preserve trusted actor, card-versus-zone scope,
+  semantic source, and only spectator-public single-reveal names, restoring the
+  legacy reveal/hide/look wording without exposing canonical or private card
+  data.
   Dormant renderer-neutral consumers now project keyed feed rows, serialize
   polite announcements, and run cancellable reduced-motion-aware animation,
   but remain unmounted; full sidebar mounting and downloadable/export formats

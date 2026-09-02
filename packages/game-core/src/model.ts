@@ -9,7 +9,7 @@ import type {
   ZoneId,
 } from './ids.js';
 
-export const MATCH_STATE_SCHEMA_VERSION = 1 as const;
+export const MATCH_STATE_SCHEMA_VERSION = 2 as const;
 
 export type CardCategory = 'Pokémon' | 'Trainer' | 'Energy' | 'Unknown';
 export type CardFace = 'up' | 'down';
@@ -102,6 +102,7 @@ export interface PlayerWorkAreas {
 
 export interface VisibilityGrant {
   readonly inspectionId: InspectionId;
+  readonly scope: 'card' | 'zone';
   readonly sourcePlayerId: PlayerId;
   readonly sourceId: ZoneId | StackId | WorkAreaId;
   readonly cardIds: readonly CardInstanceId[];

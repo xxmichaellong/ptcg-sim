@@ -248,10 +248,12 @@ variant into typed local effects:
 
 The mapper uses only projected display names. If a referenced player is absent,
 visible text says `Player` rather than printing an opaque routing ID. Public
-visibility and private-look facts deliberately use count-only wording because
-their protocol forms contain no canonical card identity; restoring legacy
-per-card name/zone wording requires a later recipient-safe view-diff contract,
-not access to secret history.
+visibility and private-look facts preserve the legacy actor, owner, semantic
+source, and card-versus-zone wording. The authority includes a card name only
+for a single-card public reveal after checking the resulting spectator
+projection; hides and private looks use the legacy generic `card` wording and
+never receive a private name. The activity category/color follows the trusted
+actor or viewer rather than the owner of the affected source.
 
 `SessionPresentationDispatcher` consumes newly retained live event objects once
 even when its bounded source drops older entries. `ReplayPresentationDispatcher`

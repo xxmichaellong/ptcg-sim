@@ -1,4 +1,8 @@
 import {
+  MATCH_STATE_SCHEMA_VERSION,
+  type MatchState,
+} from '@ptcgsim/game-core';
+import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
   assertAuthoritySnapshotInvariants,
   createReplayHistory,
@@ -14,7 +18,8 @@ const JOURNAL_PREFIX = 'authority:journal:';
 const ADMISSION_JOURNAL_PREFIX = 'authority:admission:';
 const LEGACY_STORAGE_FORMAT = 'ptcgsim-room-authority-v1';
 const PREVIOUS_STORAGE_FORMAT = 'ptcgsim-room-authority-v2';
-const STORAGE_FORMAT = 'ptcgsim-room-authority-v3';
+const PRIOR_STORAGE_FORMAT = 'ptcgsim-room-authority-v3';
+const STORAGE_FORMAT = 'ptcgsim-room-authority-v4';
 
 export interface DurableStorageTransactionLike {
   readonly get: <Value>(key: string) => Promise<Value | undefined>;
@@ -31,6 +36,7 @@ export interface DurableStorageLike {
 interface StoredAuthoritySnapshot {
   readonly format:
     | typeof STORAGE_FORMAT
+    | typeof PRIOR_STORAGE_FORMAT
     | typeof PREVIOUS_STORAGE_FORMAT
     | typeof LEGACY_STORAGE_FORMAT;
   readonly snapshot: RoomAuthoritySnapshot;
@@ -78,22 +84,70 @@ const isStoredSnapshot = (value: unknown): value is StoredAuthoritySnapshot =>
   typeof value === 'object' &&
   value !== null &&
   (Reflect.get(value, 'format') === STORAGE_FORMAT ||
+    Reflect.get(value, 'format') === PRIOR_STORAGE_FORMAT ||
     Reflect.get(value, 'format') === PREVIOUS_STORAGE_FORMAT ||
     Reflect.get(value, 'format') === LEGACY_STORAGE_FORMAT) &&
   typeof Reflect.get(value, 'snapshot') === 'object' &&
   Reflect.get(value, 'snapshot') !== null;
+
+const migrateMatchState = (value: unknown): MatchState => {
+  if (typeof value !== 'object' || value === null) {
+    throw new Error('Stored match state has an unsupported schema');
+  }
+  const schemaVersion = Reflect.get(value, 'schemaVersion');
+  if (schemaVersion !== 1 && schemaVersion !== MATCH_STATE_SCHEMA_VERSION) {
+    throw new Error('Stored match state has an unsupported schema');
+  }
+  const state = value as MatchState;
+  if (schemaVersion === MATCH_STATE_SCHEMA_VERSION) return state;
+  const visibility = Reflect.get(value, 'visibility');
+  if (typeof visibility !== 'object' || visibility === null) {
+    throw new Error('Stored match visibility is malformed');
+  }
+  const grants = Reflect.get(visibility, 'inspectionGrants');
+  if (typeof grants !== 'object' || grants === null || Array.isArray(grants)) {
+    throw new Error('Stored match inspection grants are malformed');
+  }
+  const inspectionGrants = Object.fromEntries(
+    Object.entries(grants).map(([id, grant]) => {
+      if (typeof grant !== 'object' || grant === null) {
+        throw new Error('Stored match inspection grant is malformed');
+      }
+      const cardIds = Reflect.get(grant, 'cardIds');
+      if (!Array.isArray(cardIds)) {
+        throw new Error('Stored match inspection grant cards are malformed');
+      }
+      return [
+        id,
+        {
+          ...grant,
+          // Old state did not distinguish a one-card zone look from a card
+          // look. Prefer the privacy-safe generic wording when ambiguous.
+          scope: cardIds.length === 1 ? 'card' : 'zone',
+        },
+      ];
+    })
+  ) as MatchState['visibility']['inspectionGrants'];
+  return {
+    ...state,
+    schemaVersion: MATCH_STATE_SCHEMA_VERSION,
+    visibility: { ...state.visibility, inspectionGrants },
+  };
+};
 
 const migrateStoredSnapshot = (value: unknown): RoomAuthoritySnapshot => {
   if (typeof value !== 'object' || value === null) {
     throw new Error('Stored room snapshot has an unsupported schema');
   }
   const schemaVersion = Reflect.get(value, 'schemaVersion');
-  const state = Reflect.get(value, 'state') as RoomAuthoritySnapshot['state'];
+  const rawState = Reflect.get(value, 'state');
   let candidate: RoomAuthoritySnapshot;
   if (schemaVersion === 1) {
+    const state = migrateMatchState(rawState);
     candidate = {
       ...(value as Omit<RoomAuthoritySnapshot, 'schemaVersion'>),
       schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+      state,
       mode: 'multiplayer',
       soloUndoHistory: {
         baseState: null,
@@ -103,9 +157,29 @@ const migrateStoredSnapshot = (value: unknown): RoomAuthoritySnapshot => {
       replayHistory: createReplayHistory(state),
     };
   } else if (schemaVersion === 2) {
+    const state = migrateMatchState(rawState);
     candidate = {
       ...(value as Omit<RoomAuthoritySnapshot, 'schemaVersion'>),
       schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+      state,
+      soloUndoHistory: {
+        baseState: null,
+        baseStateHash: null,
+        entries: [],
+      },
+      replayHistory: createReplayHistory(state),
+    };
+  } else if (schemaVersion === 3) {
+    const state = migrateMatchState(rawState);
+    candidate = {
+      ...(value as Omit<RoomAuthoritySnapshot, 'schemaVersion'>),
+      schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+      state,
+      soloUndoHistory: {
+        baseState: null,
+        baseStateHash: null,
+        entries: [],
+      },
       replayHistory: createReplayHistory(state),
     };
   } else if (schemaVersion === AUTHORITY_SNAPSHOT_SCHEMA_VERSION) {

@@ -288,7 +288,9 @@ export type DomainEvent =
     }
   | {
       readonly type: 'PublicRevealSet';
+      readonly actorPlayerId: PlayerId;
       readonly playerId: PlayerId;
+      readonly scope: 'card' | 'zone';
       readonly expectedSourceId: ZoneId | StackId | WorkAreaId;
       readonly expectedSourceCardIds: readonly CardInstanceId[];
       readonly cardIds: readonly CardInstanceId[];
@@ -296,6 +298,7 @@ export type DomainEvent =
     }
   | {
       readonly type: 'InspectionGrantOpened';
+      readonly scope: 'card' | 'zone';
       readonly inspectionId: InspectionId;
       readonly sourcePlayerId: PlayerId;
       readonly sourceId: ZoneId | StackId | WorkAreaId;
@@ -305,6 +308,7 @@ export type DomainEvent =
     }
   | {
       readonly type: 'InspectionGrantClosed';
+      readonly scope: 'card' | 'zone';
       readonly inspectionId: InspectionId;
       readonly sourcePlayerId: PlayerId;
       readonly sourceId: ZoneId | StackId | WorkAreaId;

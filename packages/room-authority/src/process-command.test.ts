@@ -494,7 +494,10 @@ describe('authoritative room command transaction', () => {
         {
           type: 'PublicCardsRevealed',
           revision: 3,
+          actorPlayerId: p1,
           playerId: p1,
+          scope: 'zone',
+          source: 'prizes',
           cardCount: 6,
         },
       ]);
@@ -580,6 +583,8 @@ describe('authoritative room command transaction', () => {
           revision: 3,
           sourcePlayerId: p1,
           viewerPlayerId: p1,
+          scope: 'zone',
+          source: 'prizes',
           cardCount: 6,
         },
       ]);
@@ -670,6 +675,8 @@ describe('authoritative room command transaction', () => {
         revision: 4,
         sourcePlayerId: p1,
         viewerPlayerId: p1,
+        scope: 'zone',
+        source: 'prizes',
         cardCount: 6,
       },
     ]);

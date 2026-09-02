@@ -234,6 +234,7 @@ export type GameCommand =
     }
   | {
       readonly type: 'SetPublicReveal';
+      readonly actorPlayerId: PlayerId;
       readonly playerId: PlayerId;
       readonly cardId: CardInstanceId;
       readonly expectedSourceId: ZoneId | StackId | WorkAreaId;
@@ -241,6 +242,7 @@ export type GameCommand =
     }
   | {
       readonly type: 'SetZonePublicReveal';
+      readonly actorPlayerId: PlayerId;
       readonly playerId: PlayerId;
       readonly zoneId: ZoneId;
       readonly expectedCardIds: readonly CardInstanceId[];

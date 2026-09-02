@@ -49,7 +49,9 @@ export const buildProjectedReplay = (
     identities = projected.identities;
     frames.push({
       snapshot: projected.snapshot,
-      presentationEvents: entry ? presentationEventsForBatch(entry.batch) : [],
+      presentationEvents: entry
+        ? presentationEventsForBatch(entry.batch, state)
+        : [],
     });
   }
   const startRevision = frames[0]!.snapshot.revision;

@@ -1969,11 +1969,16 @@ export const applyEvent = (
       if (
         event.cardIds.length === 0 ||
         targetIds.size !== event.cardIds.length ||
+        !state.players[event.actorPlayerId] ||
+        (event.scope !== 'card' && event.scope !== 'zone') ||
         !source ||
         source.id !== event.expectedSourceId ||
         source.playerId !== event.playerId ||
         !sameCardOrder(source.cardIds, event.expectedSourceCardIds) ||
-        event.cardIds.some((cardId) => !source.cardIds.includes(cardId))
+        event.cardIds.some((cardId) => !source.cardIds.includes(cardId)) ||
+        (event.scope === 'card' && event.cardIds.length !== 1) ||
+        (event.scope === 'zone' &&
+          (source.kind !== 'zone' || source.zoneKind !== 'prizes'))
       ) {
         throw new Error('Public visibility event source is malformed');
       }
@@ -2038,11 +2043,16 @@ export const applyEvent = (
         Object.values(state.workAreas).some(
           (areas) => areas.inspection?.inspectionId === event.inspectionId
         ) ||
+        (event.scope !== 'card' && event.scope !== 'zone') ||
         !source ||
         source.id !== event.sourceId ||
         source.playerId !== event.sourcePlayerId ||
         !sameCardOrder(source.cardIds, event.expectedSourceCardIds) ||
         event.cardIds.some((cardId) => !source.cardIds.includes(cardId)) ||
+        (event.scope === 'card' && event.cardIds.length !== 1) ||
+        (event.scope === 'zone' &&
+          (source.kind !== 'zone' ||
+            (source.zoneKind !== 'hand' && source.zoneKind !== 'prizes'))) ||
         event.viewerIds.some((viewerId) => !state.players[viewerId]) ||
         event.cardIds.some((cardId) => {
           const card = state.cards[cardId];
@@ -2068,6 +2078,7 @@ export const applyEvent = (
             ...state.visibility.inspectionGrants,
             [event.inspectionId]: {
               inspectionId: event.inspectionId,
+              scope: event.scope,
               sourcePlayerId: event.sourcePlayerId,
               sourceId: event.sourceId,
               cardIds: [...event.cardIds],
@@ -2084,6 +2095,7 @@ export const applyEvent = (
         event.expectedCardIds.length > 200 ||
         event.expectedViewerIds.length > state.playerOrder.length ||
         grant.sourcePlayerId !== event.sourcePlayerId ||
+        grant.scope !== event.scope ||
         grant.sourceId !== event.sourceId ||
         !sameCardOrder(grant.cardIds, event.expectedCardIds) ||
         !sameCardOrder(grant.viewerIds, event.expectedViewerIds) ||

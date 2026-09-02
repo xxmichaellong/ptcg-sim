@@ -220,6 +220,95 @@ describe('role-projected replay', () => {
     ]);
   });
 
+  it('reconstructs public reveal wording detail from each resulting state', () => {
+    const adapter = context();
+    let state = initialState();
+    let history = createReplayHistory(state);
+    [state, history] = executeAndAppend(
+      state,
+      history,
+      {
+        type: 'LoadDeck',
+        playerId: p1,
+        entries: [
+          {
+            definition: {
+              id: asCardDefinitionId('public-replay-definition'),
+              name: 'Replay Pikachu',
+              category: 'Pokémon',
+              imageUrl: 'https://cards.invalid/replay-pikachu.png',
+            },
+            count: 14,
+          },
+        ],
+      },
+      adapter
+    );
+    [state, history] = executeAndAppend(
+      state,
+      history,
+      { type: 'SetupPlayer', playerId: p1 },
+      adapter
+    );
+    const prizeId = playerZoneId(p1, 'prizes');
+    const cardId = state.zones[prizeId]!.cardIds[0]!;
+    [state, history] = executeAndAppend(
+      state,
+      history,
+      {
+        type: 'SetPublicReveal',
+        actorPlayerId: p2,
+        playerId: p1,
+        cardId,
+        expectedSourceId: prizeId,
+        revealed: true,
+      },
+      adapter
+    );
+    [state, history] = executeAndAppend(
+      state,
+      history,
+      {
+        type: 'SetPublicReveal',
+        actorPlayerId: p2,
+        playerId: p1,
+        cardId,
+        expectedSourceId: prizeId,
+        revealed: false,
+      },
+      adapter
+    );
+
+    const replay = buildProjectedReplay(
+      history,
+      { kind: 'spectator' },
+      opaqueSource()
+    );
+    expect(replay.frames[3]!.presentationEvents).toEqual([
+      {
+        type: 'PublicCardsRevealed',
+        revision: 3,
+        actorPlayerId: p2,
+        playerId: p1,
+        scope: 'card',
+        source: 'prizes',
+        cardCount: 1,
+        cardName: 'Replay Pikachu',
+      },
+    ]);
+    expect(replay.frames[4]!.presentationEvents).toEqual([
+      {
+        type: 'PublicCardsHidden',
+        revision: 4,
+        actorPlayerId: p2,
+        playerId: p1,
+        scope: 'card',
+        source: 'prizes',
+        cardCount: 1,
+      },
+    ]);
+  });
+
   it('compacts to a reconstructable suffix and marks the projection truncated', () => {
     const adapter = context();
     let state = initialState();

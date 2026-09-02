@@ -131,6 +131,7 @@ describe('public visibility authority resolution', () => {
       accepted: true,
       command: {
         type: 'SetPublicReveal',
+        actorPlayerId: p1,
         playerId: p1,
         cardId: prepared.cardIds[0],
         expectedSourceId: prepared.prizeId,
@@ -192,6 +193,7 @@ describe('public visibility authority resolution', () => {
       accepted: true,
       command: {
         type: 'SetZonePublicReveal',
+        actorPlayerId: p2,
         playerId: p1,
         zoneId: prepared.prizeId,
         expectedCardIds: prepared.cardIds,

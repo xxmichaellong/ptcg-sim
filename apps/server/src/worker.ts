@@ -4,6 +4,7 @@ import {
   RoomAuthorityCoordinator,
   type RoomAuthoritySnapshot,
 } from '@ptcgsim/room-authority';
+import { PROTOCOL_VERSION } from '@ptcgsim/protocol';
 
 import { WebCryptoAuthoritySource } from './authority-crypto.js';
 import { initializeNewRoom, type NewRoomCredentials } from './create-room.js';
@@ -103,7 +104,7 @@ export class PtcgRoom extends DurableObject<Env> {
       socket.send(
         JSON.stringify({
           type: 'ServerNotice',
-          protocolVersion: 1,
+          protocolVersion: PROTOCOL_VERSION,
           code: 'invalid_message',
           message: 'Binary messages are not supported',
           retryable: false,

@@ -1,8 +1,13 @@
 import {
+  asCardDefinitionId,
+  asCardInstanceId,
+  asInspectionId,
   asMatchId,
   asPlayerId,
   cloneMatchState,
   createEmptyMatch,
+  MATCH_STATE_SCHEMA_VERSION,
+  playerZoneId,
 } from '@ptcgsim/game-core';
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
@@ -195,13 +200,120 @@ describe('Durable Object authority snapshot store', () => {
     });
   });
 
+  it('migrates v3 state scopes and truncates incompatible event tails', async () => {
+    const storage = new MemoryDurableStorage();
+    const current = acceptedTransaction(initialSnapshot()).snapshot;
+    const definitionId = asCardDefinitionId('legacy-definition');
+    const firstCardId = asCardInstanceId('legacy-card-one');
+    const secondCardId = asCardInstanceId('legacy-card-two');
+    const handId = playerZoneId(p1, 'hand');
+    const legacyCard = (id: typeof firstCardId) => ({
+      id,
+      definitionId,
+      ownerId: p1,
+      originalCategory: 'Trainer' as const,
+      currentCategory: 'Trainer' as const,
+      face: 'up' as const,
+      orientationQuarterTurns: 0 as const,
+      abilityUsed: false,
+      visibilityGeneration: 0,
+    });
+    const legacyState = {
+      ...current.state,
+      schemaVersion: 1,
+      definitions: {
+        [definitionId]: {
+          id: definitionId,
+          name: 'Legacy card',
+          category: 'Trainer' as const,
+          imageUrl: '/legacy-card.png',
+        },
+      },
+      cards: {
+        [firstCardId]: legacyCard(firstCardId),
+        [secondCardId]: legacyCard(secondCardId),
+      },
+      deckLists: {
+        ...current.state.deckLists,
+        [p1]: [firstCardId, secondCardId],
+      },
+      zones: {
+        ...current.state.zones,
+        [handId]: {
+          ...current.state.zones[handId]!,
+          cardIds: [firstCardId, secondCardId],
+        },
+      },
+      visibility: {
+        ...current.state.visibility,
+        inspectionGrants: {
+          'legacy-card-inspection': {
+            inspectionId: asInspectionId('legacy-card-inspection'),
+            sourcePlayerId: p1,
+            sourceId: handId,
+            cardIds: [firstCardId],
+            viewerIds: [p1],
+          },
+          'legacy-zone-inspection': {
+            inspectionId: asInspectionId('legacy-zone-inspection'),
+            sourcePlayerId: p1,
+            sourceId: handId,
+            cardIds: [firstCardId, secondCardId],
+            viewerIds: [p1],
+          },
+        },
+      },
+    };
+    storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
+      format: 'ptcgsim-room-authority-v3',
+      snapshot: { ...current, schemaVersion: 3, state: legacyState },
+    });
+
+    const restored = await new DurableRoomSnapshotStore(storage).load();
+    expect(restored).toMatchObject({
+      schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+      state: {
+        schemaVersion: MATCH_STATE_SCHEMA_VERSION,
+        visibility: {
+          inspectionGrants: {
+            'legacy-card-inspection': { scope: 'card' },
+            'legacy-zone-inspection': { scope: 'zone' },
+          },
+        },
+      },
+      soloUndoHistory: {
+        baseState: null,
+        baseStateHash: null,
+        entries: [],
+      },
+      replayHistory: {
+        baseState: { revision: 1 },
+        entries: [],
+      },
+    });
+
+    const corruptCurrent = structuredClone(restored!);
+    delete (
+      corruptCurrent.state.visibility.inspectionGrants[
+        'legacy-card-inspection'
+      ] as { scope?: 'card' | 'zone' }
+    ).scope;
+    storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
+      format: 'ptcgsim-room-authority-v4',
+      snapshot: corruptCurrent,
+    });
+    await expect(new DurableRoomSnapshotStore(storage).load()).rejects.toThrow(
+      'invalid scope'
+    );
+  });
+
   it('atomically writes the snapshot and resolved journal record', async () => {
     const storage = new MemoryDurableStorage();
     const store = new DurableRoomSnapshotStore(storage);
     const initial = initialSnapshot();
     await store.initialize(initial);
     expect(storage.values.get(AUTHORITY_SNAPSHOT_STORAGE_KEY)).toMatchObject({
-      format: 'ptcgsim-room-authority-v3',
+      format: 'ptcgsim-room-authority-v4',
     });
 
     const transaction = acceptedTransaction(initial);
@@ -300,7 +412,7 @@ describe('Durable Object authority snapshot store', () => {
     const storage = new MemoryDurableStorage();
     const snapshot = initialSnapshot();
     storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
-      format: 'ptcgsim-room-authority-v3',
+      format: 'ptcgsim-room-authority-v4',
       snapshot: {
         ...snapshot,
         replayHistory: {

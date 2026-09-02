@@ -1,6 +1,6 @@
 import type { CardInstanceId, StackId } from './ids.js';
 import { findCardLocations } from './location.js';
-import type { MatchState } from './model.js';
+import { MATCH_STATE_SCHEMA_VERSION, type MatchState } from './model.js';
 
 export class MatchInvariantError extends Error {
   readonly problems: readonly string[];
@@ -19,6 +19,9 @@ export const collectInvariantProblems = (
   state: MatchState
 ): readonly string[] => {
   const problems: string[] = [];
+  if (state.schemaVersion !== MATCH_STATE_SCHEMA_VERSION) {
+    problems.push(`unsupported match schema ${state.schemaVersion}`);
+  }
   if (!Number.isSafeInteger(state.revision) || state.revision < 0) {
     problems.push('revision must be a non-negative safe integer');
   }
@@ -265,6 +268,11 @@ export const collectInvariantProblems = (
     }
     if (!state.players[grant.sourcePlayerId]) {
       problems.push(`inspection ${inspectionId} has an unknown source player`);
+    }
+    if (grant.scope !== 'card' && grant.scope !== 'zone') {
+      problems.push(`inspection ${inspectionId} has an invalid scope`);
+    } else if (grant.scope === 'card' && grant.cardIds.length !== 1) {
+      problems.push(`inspection ${inspectionId} card scope is not singular`);
     }
     if (
       grant.cardIds.length === 0 ||

@@ -100,6 +100,7 @@ describe('atomic public visibility commands', () => {
       prepared.state,
       {
         type: 'SetZonePublicReveal',
+        actorPlayerId: p1,
         playerId: p1,
         zoneId: prizeId,
         expectedCardIds: prizeCards,
@@ -110,7 +111,9 @@ describe('atomic public visibility commands', () => {
     expect(revealed.batch.events).toEqual([
       {
         type: 'PublicRevealSet',
+        actorPlayerId: p1,
         playerId: p1,
+        scope: 'zone',
         expectedSourceId: prizeId,
         expectedSourceCardIds: prizeCards,
         cardIds: prizeCards,
@@ -142,6 +145,7 @@ describe('atomic public visibility commands', () => {
       revealed.state,
       {
         type: 'SetZonePublicReveal',
+        actorPlayerId: p1,
         playerId: p1,
         zoneId: prizeId,
         expectedCardIds: prizeCards,
@@ -183,6 +187,7 @@ describe('atomic public visibility commands', () => {
       prepared.state,
       {
         type: 'SetPublicReveal',
+        actorPlayerId: p1,
         playerId: p1,
         cardId: selected!,
         expectedSourceId: prizeId,
@@ -212,6 +217,7 @@ describe('atomic public visibility commands', () => {
       revealed.state,
       {
         type: 'SetPublicReveal',
+        actorPlayerId: p1,
         playerId: p1,
         cardId: selected!,
         expectedSourceId: prizeId,
@@ -246,6 +252,7 @@ describe('atomic public visibility commands', () => {
       moved.state,
       {
         type: 'SetPublicReveal',
+        actorPlayerId: p1,
         playerId: p1,
         cardId,
         expectedSourceId: boardId,
@@ -263,6 +270,7 @@ describe('atomic public visibility commands', () => {
       hidden.state,
       {
         type: 'SetPublicReveal',
+        actorPlayerId: p1,
         playerId: p1,
         cardId,
         expectedSourceId: boardId,
@@ -294,6 +302,7 @@ describe('atomic public visibility commands', () => {
     const rejectedCommands: GameCommand[] = [
       {
         type: 'SetZonePublicReveal',
+        actorPlayerId: p1,
         playerId: p1,
         zoneId: prizeId,
         expectedCardIds: [...prizeCards].reverse(),
@@ -301,6 +310,7 @@ describe('atomic public visibility commands', () => {
       },
       {
         type: 'SetZonePublicReveal',
+        actorPlayerId: p1,
         playerId: p1,
         zoneId: prizeId,
         expectedCardIds: [prizeCards[0]!, prizeCards[0]!],
@@ -308,6 +318,7 @@ describe('atomic public visibility commands', () => {
       },
       {
         type: 'SetZonePublicReveal',
+        actorPlayerId: p1,
         playerId: p1,
         zoneId: playerZoneId(p1, 'hand'),
         expectedCardIds:
@@ -316,6 +327,7 @@ describe('atomic public visibility commands', () => {
       },
       {
         type: 'SetPublicReveal',
+        actorPlayerId: p1,
         playerId: p2,
         cardId: prizeCards[0]!,
         expectedSourceId: prizeId,
@@ -323,6 +335,7 @@ describe('atomic public visibility commands', () => {
       },
       {
         type: 'SetPublicReveal',
+        actorPlayerId: p1,
         playerId: p1,
         cardId: prizeCards[0]!,
         expectedSourceId: playerZoneId(p1, 'deck'),
@@ -340,6 +353,7 @@ describe('atomic public visibility commands', () => {
       prepared.state,
       {
         type: 'SetZonePublicReveal',
+        actorPlayerId: p1,
         playerId: p1,
         zoneId: prizeId,
         expectedCardIds: prizeCards,
@@ -352,6 +366,7 @@ describe('atomic public visibility commands', () => {
         revealed.state,
         {
           type: 'SetZonePublicReveal',
+          actorPlayerId: p1,
           playerId: p1,
           zoneId: prizeId,
           expectedCardIds: prizeCards,
@@ -373,9 +388,28 @@ describe('atomic public visibility commands', () => {
         events: [
           {
             type: 'PublicRevealSet',
+            actorPlayerId: p1,
             playerId: p1,
+            scope: 'card',
             expectedSourceId: prizeId,
             expectedSourceCardIds: [...prizeCards].reverse(),
+            cardIds: [prizeCards[0]!],
+            revealed: true,
+          },
+        ],
+      })
+    ).toThrow('Public visibility event source is malformed');
+    expect(() =>
+      applyEventBatch(prepared.state, {
+        revision: prepared.state.revision + 1,
+        events: [
+          {
+            type: 'PublicRevealSet',
+            actorPlayerId: p1,
+            playerId: p1,
+            scope: 'invalid' as never,
+            expectedSourceId: prizeId,
+            expectedSourceCardIds: prizeCards,
             cardIds: [prizeCards[0]!],
             revealed: true,
           },

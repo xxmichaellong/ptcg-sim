@@ -238,6 +238,7 @@ describe('random face-down hand play', () => {
       inspected.state,
       {
         type: 'SetPublicReveal',
+        actorPlayerId: p1,
         playerId: p1,
         cardId: selectedId,
         expectedSourceId: handId,

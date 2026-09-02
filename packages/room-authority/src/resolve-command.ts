@@ -795,6 +795,7 @@ export const resolveWireCommand = (
         accepted: true,
         command: {
           type: 'SetPublicReveal',
+          actorPlayerId: actorId,
           playerId: source.playerId,
           cardId: card.cardId,
           expectedSourceId: source.id,
@@ -835,6 +836,7 @@ export const resolveWireCommand = (
         accepted: true,
         command: {
           type: 'SetZonePublicReveal',
+          actorPlayerId: actorId,
           playerId: targetPlayerId,
           zoneId: zone.id,
           expectedCardIds: [...zone.cardIds],

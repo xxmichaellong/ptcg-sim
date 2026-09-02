@@ -1675,7 +1675,11 @@ describe('client/server multiplayer contract', () => {
       scheduler: opponentScheduler,
     });
     const playerId = player.session.getSnapshot().playerId;
+    const opponentPlayerId = opponent.session.getSnapshot().playerId;
     if (!playerId) throw new Error('Missing visibility player identity');
+    if (!opponentPlayerId) {
+      throw new Error('Missing visibility opponent identity');
+    }
 
     expect(
       player.session.submit({
@@ -1746,7 +1750,10 @@ describe('client/server multiplayer contract', () => {
     expect(opponent.session.getSnapshot().presentationEvents.at(-1)).toEqual({
       type: 'PublicCardsRevealed',
       revision: 3,
+      actorPlayerId: opponentPlayerId,
       playerId,
+      scope: 'zone',
+      source: 'prizes',
       cardCount: 6,
     });
 
@@ -1772,7 +1779,10 @@ describe('client/server multiplayer contract', () => {
     expect(opponent.session.getSnapshot().presentationEvents.at(-1)).toEqual({
       type: 'PublicCardsHidden',
       revision: 4,
+      actorPlayerId: opponentPlayerId,
       playerId,
+      scope: 'zone',
+      source: 'prizes',
       cardCount: 6,
     });
     expect(room.store.commandCommits).toHaveLength(4);
@@ -1903,6 +1913,8 @@ describe('client/server multiplayer contract', () => {
       revision: 3,
       sourcePlayerId: playerId,
       viewerPlayerId: playerId,
+      scope: 'zone',
+      source: 'prizes',
       cardCount: 6,
     });
     expect(opponent.session.getSnapshot().presentationEvents.at(-1)).toEqual(
@@ -1960,6 +1972,8 @@ describe('client/server multiplayer contract', () => {
       revision: 4,
       sourcePlayerId: playerId,
       viewerPlayerId: playerId,
+      scope: 'zone',
+      source: 'prizes',
       cardCount: 6,
     });
     expect(room.store.commandCommits).toHaveLength(4);

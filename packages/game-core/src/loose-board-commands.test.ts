@@ -101,6 +101,7 @@ const fixture = (context = createContext()) => {
     state,
     {
       type: 'SetPublicReveal',
+      actorPlayerId: p1,
       playerId: p1,
       cardId: p1Card,
       expectedSourceId: playerZoneId(p1, 'board'),

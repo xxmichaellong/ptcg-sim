@@ -115,6 +115,11 @@ Release requires all of the following:
     change, and disposal abort obsolete work; late settlements cannot consume a
     newer head; handler/diagnostic failures cannot wedge the queue; and reduced
     motion never enters the animated path or changes command timing.
+20. Reveal/hide/private-look facts preserve the trusted actor or viewer,
+    card-versus-zone scope, semantic source, and legacy wording in live and
+    replay paths; only a spectator-public single reveal may include a bounded
+    card name, while hide/private facts pass hidden-identity non-interference and
+    serialized leak scans.
 
 ## Privacy and security gates
 

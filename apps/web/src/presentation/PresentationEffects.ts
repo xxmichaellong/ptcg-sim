@@ -55,6 +55,11 @@ export type PresentationEventSink = (event: PresentationEvent) => void;
 
 export type PresentationView = Pick<MatchViewState, 'players'>;
 
+type PresentationCardSource = Extract<
+  PresentationEvent,
+  { readonly type: 'PublicCardsRevealed' }
+>['source'];
+
 const playerName = (
   view: PresentationView | undefined,
   playerId: string
@@ -62,6 +67,27 @@ const playerName = (
   const displayName = view?.players[playerId]?.displayName.trim();
   // Opaque player IDs are routing metadata, not safe fallback UI labels.
   return displayName ? displayName : 'Player';
+};
+
+const cardSourceName = (source: PresentationCardSource): string => {
+  switch (source) {
+    case 'lostZone':
+      return 'lost zone';
+    case 'attachmentResolution':
+      return 'attached cards';
+    case 'deck':
+    case 'hand':
+    case 'prizes':
+    case 'discard':
+    case 'board':
+    case 'stadium':
+    case 'active':
+    case 'bench':
+    case 'inspection':
+      return source;
+  }
+  const unhandled: never = source;
+  return unhandled;
 };
 
 const activity = (
@@ -186,46 +212,52 @@ export const presentationEffectsForEvent = (
       ];
     }
     case 'PublicCardsRevealed': {
-      const message = `${event.cardCount} of ${playerName(
-        view,
-        event.playerId
-      )}'s cards ${event.cardCount === 1 ? 'was' : 'were'} revealed`;
+      const actor = playerName(view, event.actorPlayerId);
+      const owner = playerName(view, event.playerId);
+      const source = cardSourceName(event.source);
+      const message =
+        event.scope === 'zone'
+          ? `${actor} revealed ${owner}'s ${source}`
+          : `${actor} revealed ${event.cardName ?? 'card'} in ${owner}'s ${source}`;
       return [
-        activity(event, 'player', message, event.playerId),
+        activity(event, 'player', message, event.actorPlayerId),
         accessibility(event, message),
       ];
     }
     case 'PublicCardsHidden': {
-      const message = `${event.cardCount} of ${playerName(
-        view,
-        event.playerId
-      )}'s cards ${event.cardCount === 1 ? 'was' : 'were'} hidden`;
+      const actor = playerName(view, event.actorPlayerId);
+      const owner = playerName(view, event.playerId);
+      const source = cardSourceName(event.source);
+      const message =
+        event.scope === 'zone'
+          ? `${actor} hid ${owner}'s ${source}`
+          : `${actor} hid card in ${owner}'s ${source}`;
       return [
-        activity(event, 'player', message, event.playerId),
+        activity(event, 'player', message, event.actorPlayerId),
         accessibility(event, message),
       ];
     }
     case 'PrivateInspectionStarted': {
-      const message = `${playerName(
-        view,
-        event.viewerPlayerId
-      )} looked at ${event.cardCount} of ${playerName(
-        view,
-        event.sourcePlayerId
-      )}'s cards`;
+      const viewer = playerName(view, event.viewerPlayerId);
+      const owner = playerName(view, event.sourcePlayerId);
+      const source = cardSourceName(event.source);
+      const message =
+        event.scope === 'zone'
+          ? `${viewer} looked at ${owner}'s ${source}`
+          : `${viewer} looked at card in ${owner}'s ${source}`;
       return [
         activity(event, 'player', message, event.viewerPlayerId),
         accessibility(event, message),
       ];
     }
     case 'PrivateInspectionEnded': {
-      const message = `${playerName(
-        view,
-        event.viewerPlayerId
-      )} stopped looking at ${event.cardCount} of ${playerName(
-        view,
-        event.sourcePlayerId
-      )}'s cards`;
+      const viewer = playerName(view, event.viewerPlayerId);
+      const owner = playerName(view, event.sourcePlayerId);
+      const source = cardSourceName(event.source);
+      const message =
+        event.scope === 'zone'
+          ? `${viewer} stopped looking at ${owner}'s ${source}`
+          : `${viewer} stopped looking at card in ${owner}'s ${source}`;
       return [
         activity(event, 'player', message, event.viewerPlayerId),
         accessibility(event, message),

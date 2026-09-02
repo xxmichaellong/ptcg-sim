@@ -63,13 +63,20 @@ const events: readonly PresentationEvent[] = [
   {
     type: 'PublicCardsRevealed',
     revision: 10,
+    actorPlayerId: 'spike-blue',
     playerId: 'spike-red',
+    scope: 'card',
+    source: 'prizes',
     cardCount: 1,
+    cardName: 'Pikachu',
   },
   {
     type: 'PublicCardsHidden',
     revision: 11,
+    actorPlayerId: 'spike-red',
     playerId: 'spike-blue',
+    scope: 'zone',
+    source: 'prizes',
     cardCount: 2,
   },
   {
@@ -77,6 +84,8 @@ const events: readonly PresentationEvent[] = [
     revision: 12,
     sourcePlayerId: 'spike-red',
     viewerPlayerId: 'spike-blue',
+    scope: 'zone',
+    source: 'hand',
     cardCount: 3,
   },
   {
@@ -84,6 +93,8 @@ const events: readonly PresentationEvent[] = [
     revision: 13,
     sourcePlayerId: 'spike-blue',
     viewerPlayerId: 'spike-red',
+    scope: 'card',
+    source: 'prizes',
     cardCount: 1,
   },
   {
@@ -133,20 +144,17 @@ describe('presentationEffectsForEvent', () => {
       ['player:Blue attacked', 'accessibility:Blue attacked'],
       ['player:Red passed', 'accessibility:Red passed'],
       [
-        "player:1 of Red's cards was revealed",
-        "accessibility:1 of Red's cards was revealed",
+        "player:Blue revealed Pikachu in Red's prizes",
+        "accessibility:Blue revealed Pikachu in Red's prizes",
+      ],
+      ["player:Red hid Blue's prizes", "accessibility:Red hid Blue's prizes"],
+      [
+        "player:Blue looked at Red's hand",
+        "accessibility:Blue looked at Red's hand",
       ],
       [
-        "player:2 of Blue's cards were hidden",
-        "accessibility:2 of Blue's cards were hidden",
-      ],
-      [
-        "player:Blue looked at 3 of Red's cards",
-        "accessibility:Blue looked at 3 of Red's cards",
-      ],
-      [
-        "player:Red stopped looking at 1 of Blue's cards",
-        "accessibility:Red stopped looking at 1 of Blue's cards",
+        "player:Red stopped looking at card in Blue's prizes",
+        "accessibility:Red stopped looking at card in Blue's prizes",
       ],
       [
         'announcement:Blue took back their last move!',

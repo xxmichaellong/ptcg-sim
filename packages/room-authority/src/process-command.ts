@@ -123,7 +123,12 @@ const projectForSessions = (
 } => {
   let identities = snapshot.identities;
   const deliveries: AuthorityDelivery[] = [];
-  const presentationEvents = presentationEventsForBatch(eventBatch);
+  // Details are intentionally safe for the least-privileged spectator, so one
+  // immutable event list can be shared by every recipient projection.
+  const presentationEvents = presentationEventsForBatch(
+    eventBatch,
+    snapshot.state
+  );
   for (const session of Object.values(snapshot.sessions)) {
     if (!session.active) continue;
     const projected = projectRecipient(

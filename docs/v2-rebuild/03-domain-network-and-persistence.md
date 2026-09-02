@@ -349,6 +349,24 @@ are deduplicated and cached separately. Patch/delta transport is a later
 optimization only if measured payloads exceed the budget; any patch design must
 retain periodic/full-snapshot recovery.
 
+Reveal/hide and private-inspection presentation facts carry the trusted actor or
+viewer, target/source player, card-versus-zone scope, and a fixed semantic
+source (`hand`, `prizes`, `deck`, stack slot, or work-area kind). A single-card
+public reveal may additionally carry its bounded display name, but only after
+the resulting canonical state proves that identity is visible to a spectator.
+Hide and private-inspection facts never carry card names, handles, definition
+IDs, image URLs, or canonical IDs. This least-privileged event list is identical
+for every recipient and is rebuilt from the matching resulting state during
+projected replay.
+
+This state/event shape change advances wire protocol to v2, match state to
+schema v2, and the Durable Object snapshot/storage envelope to v4. Migration
+adds explicit scope to active inspection grants, choosing generic single-card
+scope for the old ambiguous one-card case. Prior authority schemas root fresh
+replay/solo-undo histories at the migrated current state because older resolved
+visibility events lack the trusted actor/scope fields required for deterministic
+application. Current-schema snapshots missing scope fail invariant validation.
+
 `RequestReplay` has no role, player, revision, or canonical-history selector.
 The server derives the perspective from the capability-bound active session and
 streams one bounded projected snapshot per message between `ReplayStarted` and
@@ -447,7 +465,7 @@ event batches under a pinned event/state version. New clients never execute
 arbitrary legacy function names. Public replay uses projected frames and cannot
 reveal secrets that were not public at that revision.
 
-The implemented authority schema v3 persists one hashed canonical replay base
+The implemented authority schema v4 persists one hashed canonical replay base
 plus a contiguous accepted resolved-event tail bounded by both 128 batches and
 512 KiB of serialized event data. Rejected commands do not enter replay
 history. When either bound is exceeded, the oldest event is applied to the base
@@ -455,8 +473,8 @@ before it is dropped, so the retained suffix still reconstructs and hash-checks
 the current canonical state. A single oversized batch safely compacts into the
 base instead of making retention unbounded. A first-time seat claim rebases the
 ledger because display-name metadata changes outside gameplay revisions. Stored
-schema-v1 and schema-v2 rooms migrate to a v3 replay rooted at their current
-state; a nonzero root is explicitly exposed as `truncated` rather than
+schema-v1, schema-v2, and schema-v3 rooms migrate to a v4 replay rooted at their
+current state; a nonzero root is explicitly exposed as `truncated` rather than
 pretending earlier revisions are available.
 
 Projection happens only inside the authority boundary. Each request starts a
@@ -536,7 +554,7 @@ Solo undo is a new authoritative transition with a monotonically increasing
 revision: it restores the prior approved logical checkpoint, records
 `UndoApplied`, and publishes the resulting view. Audit history is not deleted.
 The v2 authority snapshot records an explicit `solo` or `multiplayer` mode; live
-connection count is never used to infer permission. Authority schema v3 stores
+connection count is never used to infer permission. Authority schema v4 stores
 one hashed base state plus a bounded active-branch tail of resolved event
 batches. It reconstructs the selected checkpoint inside the trusted boundary,
 then persists the exact restored canonical state in the resolved undo event so
@@ -552,9 +570,11 @@ rerun. Undo rotates every projection alias before publication to prevent
 correlation with a discarded hidden branch. Audit history is not deleted,
 reconnect restores the new branch without replaying the presentation fact, and
 multiplayer undo is not added by this rebuild. Stored authority-v1 rooms migrate
-explicitly to multiplayer schema v3 with empty solo history and a replay base
-rooted at their current canonical state; schema-v2 rooms preserve their explicit
-mode and solo history while receiving the same safe replay rebase.
+explicitly to multiplayer schema v4, while schema-v2 and schema-v3 rooms retain
+their explicit mode. All prior schemas receive empty solo history and a replay
+base rooted at their migrated current canonical state because their older event
+tails do not contain the v2 match-state visibility scope required for safe
+deterministic replay.
 
 The provisional command order is whole-match authority order, not v1's two
 independent client action arrays. This avoids replaying one seat's JavaScript

@@ -2065,6 +2065,8 @@ export const decideCommand = (
           })
         : reject('not_found', `Card ${command.cardId} does not exist`);
     case 'SetPublicReveal': {
+      const actorError = requirePlayer(state, command.actorPlayerId);
+      if (actorError) return actorError;
       const source = resolveCardActionSource(state, command);
       if (!source.accepted) return source;
       const snapshot = cardSourceSnapshot(state, source.card, source.location);
@@ -2078,7 +2080,9 @@ export const decideCommand = (
       }
       return accept({
         type: 'PublicRevealSet',
+        actorPlayerId: command.actorPlayerId,
         playerId: snapshot.playerId,
+        scope: 'card',
         expectedSourceId: snapshot.id,
         expectedSourceCardIds: snapshot.cardIds,
         cardIds: [source.card.id],
@@ -2086,6 +2090,8 @@ export const decideCommand = (
       });
     }
     case 'SetZonePublicReveal': {
+      const actorError = requirePlayer(state, command.actorPlayerId);
+      if (actorError) return actorError;
       const playerError = requirePlayer(state, command.playerId);
       if (playerError) return playerError;
       const zone = state.zones[command.zoneId];
@@ -2125,7 +2131,9 @@ export const decideCommand = (
       }
       return accept({
         type: 'PublicRevealSet',
+        actorPlayerId: command.actorPlayerId,
         playerId: command.playerId,
+        scope: 'zone',
         expectedSourceId: zone.id,
         expectedSourceCardIds: [...zone.cardIds],
         cardIds: changedCardIds,
@@ -2178,6 +2186,7 @@ export const decideCommand = (
       if (typeof inspectionId !== 'string') return inspectionId;
       return accept({
         type: 'InspectionGrantOpened',
+        scope: 'zone',
         inspectionId,
         sourcePlayerId: command.sourcePlayerId,
         sourceId: zone.id,
@@ -2214,6 +2223,7 @@ export const decideCommand = (
       if (typeof inspectionId !== 'string') return inspectionId;
       return accept({
         type: 'InspectionGrantOpened',
+        scope: 'card',
         inspectionId,
         sourcePlayerId: snapshot.playerId,
         sourceId: snapshot.id,
@@ -2234,6 +2244,7 @@ export const decideCommand = (
       }
       return accept({
         type: 'InspectionGrantClosed',
+        scope: grant.scope,
         inspectionId: grant.inspectionId,
         sourcePlayerId: grant.sourcePlayerId,
         sourceId: grant.sourceId,
