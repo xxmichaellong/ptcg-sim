@@ -6,6 +6,10 @@ import {
 } from '@ptcgsim/room-authority';
 import { PROTOCOL_VERSION } from '@ptcgsim/protocol';
 
+import {
+  handleAdmissionTicketRequest,
+  isSameOriginBrowserRequest,
+} from './admission-ticket-http.js';
 import { WebCryptoAuthoritySource } from './authority-crypto.js';
 import { initializeNewRoom, type NewRoomCredentials } from './create-room.js';
 import { DurableRoomSnapshotStore } from './durable-storage.js';
@@ -46,6 +50,13 @@ const roomCodeFromPath = (pathname: string): string | undefined => {
   return match?.[1];
 };
 
+const admissionRoomCodeFromPath = (pathname: string): string | undefined => {
+  const match = /^\/v2\/rooms\/([A-Z2-9]{12})\/admission-tickets$/u.exec(
+    pathname
+  );
+  return match?.[1];
+};
+
 export class PtcgRoom extends DurableObject<Env> {
   private readonly cryptoSource = new WebCryptoAuthoritySource();
   private readonly store: DurableRoomSnapshotStore;
@@ -75,6 +86,21 @@ export class PtcgRoom extends DurableObject<Env> {
   }
 
   override async fetch(request: Request): Promise<Response> {
+    const requestUrl = new URL(request.url);
+    if (admissionRoomCodeFromPath(requestUrl.pathname)) {
+      const runtime = await this.runtimePromise;
+      if (!runtime)
+        return new Response('Room not initialized', { status: 404 });
+      return handleAdmissionTicketRequest(request, (input) =>
+        runtime.hub.issueAdmissionTicket(input)
+      );
+    }
+    if (requestUrl.search || !isSameOriginBrowserRequest(request)) {
+      return new Response('Forbidden', {
+        status: 403,
+        headers: { 'Cache-Control': 'no-store' },
+      });
+    }
     if (request.headers.get('Upgrade')?.toLowerCase() !== 'websocket') {
       return new Response('Upgrade Required', { status: 426 });
     }
@@ -173,6 +199,7 @@ export class PtcgRoom extends DurableObject<Env> {
           crypto: this.cryptoSource,
           opaqueIds: this.cryptoSource,
           persistence: this.store,
+          now: Date.now,
         },
       }),
     };
@@ -215,7 +242,14 @@ const worker: ExportedHandler<Env> = {
         const stub = env.PTCG_ROOM.getByName(code);
         try {
           const initialized = await stub.initialize(code);
-          return Response.json(initialized, { status: 201 });
+          return Response.json(initialized, {
+            status: 201,
+            headers: {
+              'Cache-Control': 'no-store, max-age=0',
+              'Referrer-Policy': 'no-referrer',
+              'X-Content-Type-Options': 'nosniff',
+            },
+          });
         } catch (error) {
           if (
             error instanceof Error &&
@@ -231,6 +265,10 @@ const worker: ExportedHandler<Env> = {
     const code = roomCodeFromPath(url.pathname);
     if (request.method === 'GET' && code) {
       return env.PTCG_ROOM.getByName(code).fetch(request);
+    }
+    const admissionCode = admissionRoomCodeFromPath(url.pathname);
+    if (request.method === 'POST' && admissionCode) {
+      return env.PTCG_ROOM.getByName(admissionCode).fetch(request);
     }
     return new Response('Not Found', { status: 404 });
   },

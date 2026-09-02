@@ -23,6 +23,7 @@ const p2 = asPlayerId('player-two');
 class MemoryAuthorityStore implements AuthoritySnapshotStore {
   commandCommits: PersistedAuthorityTransaction[] = [];
   admissionCommits: PersistedAdmissionTransaction[] = [];
+  failAdmissionAfterCommitOnce = false;
 
   constructor(public durable: RoomAuthoritySnapshot) {}
 
@@ -44,6 +45,10 @@ class MemoryAuthorityStore implements AuthoritySnapshotStore {
     );
     this.admissionCommits.push(transaction);
     this.durable = transaction.snapshot;
+    if (this.failAdmissionAfterCommitOnce) {
+      this.failAdmissionAfterCommitOnce = false;
+      throw new Error('simulated response-path failure');
+    }
   }
 }
 
@@ -91,9 +96,26 @@ const fixture = async () => {
   });
   const hub = new RoomSessionHub(coordinator, 'server-build', {
     store,
-    admission: { crypto, opaqueIds: crypto, persistence: store },
+    admission: {
+      crypto,
+      opaqueIds: crypto,
+      persistence: store,
+      now: () => 10_000,
+    },
   });
-  return { hub, store, seatToken, crypto };
+  const issued = await hub.issueAdmissionTicket({
+    capability: seatToken,
+    displayName: 'Blue',
+    requestedRole: 'player',
+  });
+  if (!issued.accepted) throw new Error(issued.code);
+  return {
+    hub,
+    store,
+    admissionTicket: issued.admissionTicket,
+    seatCapability: seatToken,
+    crypto,
+  };
 };
 
 const helloFrame = (input: {
@@ -111,16 +133,47 @@ const helloFrame = (input: {
   });
 
 describe('serialized room session hub', () => {
+  it('reloads a ticket commit when persistence reports failure after durability', async () => {
+    const setup = await fixture();
+    setup.store.failAdmissionAfterCommitOnce = true;
+    await expect(
+      setup.hub.issueAdmissionTicket({
+        capability: setup.seatCapability,
+        displayName: 'Blue',
+        requestedRole: 'player',
+      })
+    ).rejects.toThrow('simulated response-path failure');
+
+    const recovered = await setup.hub.issueAdmissionTicket({
+      capability: setup.seatCapability,
+      displayName: 'Blue',
+      requestedRole: 'player',
+    });
+    expect(recovered.accepted).toBe(true);
+    expect(setup.store.durable.authorityVersion).toBe(3);
+  });
+
   it('admits, resumes, and supersedes one controlling connection per session', async () => {
     const setup = await fixture();
     const first = connection('connection-one');
     await setup.hub.handleFrame(
       first.value,
-      helloFrame({ admissionTicket: setup.seatToken })
+      helloFrame({ admissionTicket: setup.admissionTicket })
     );
     const welcome = first.messages[0];
     expect(welcome).toMatchObject({ type: 'Welcome', role: 'player' });
     if (welcome?.type !== 'Welcome') throw new Error('missing welcome');
+
+    const replay = connection('connection-ticket-replay');
+    await setup.hub.handleFrame(
+      replay.value,
+      helloFrame({ admissionTicket: setup.admissionTicket })
+    );
+    expect(replay.messages[0]).toMatchObject({
+      type: 'ServerNotice',
+      code: 'invalid_capability',
+      retryable: false,
+    });
 
     const second = connection('connection-two');
     await setup.hub.handleFrame(
@@ -135,6 +188,7 @@ describe('serialized room session hub', () => {
       sessionId: welcome.sessionId,
     });
     expect(setup.store.admissionCommits.map((item) => item.kind)).toEqual([
+      'ticket_issued',
       'seat_claimed',
       'session_resumed',
     ]);
@@ -145,7 +199,7 @@ describe('serialized room session hub', () => {
     const client = connection('connection');
     await setup.hub.handleFrame(
       client.value,
-      helloFrame({ admissionTicket: setup.seatToken })
+      helloFrame({ admissionTicket: setup.admissionTicket })
     );
     const welcome = client.messages[0];
     if (welcome?.type !== 'Welcome') throw new Error('missing welcome');
@@ -180,7 +234,7 @@ describe('serialized room session hub', () => {
     const client = connection('replay-connection');
     await setup.hub.handleFrame(
       client.value,
-      helloFrame({ admissionTicket: setup.seatToken })
+      helloFrame({ admissionTicket: setup.admissionTicket })
     );
     const welcome = client.messages[0];
     if (welcome?.type !== 'Welcome') throw new Error('missing welcome');
@@ -235,7 +289,7 @@ describe('serialized room session hub', () => {
     const beforeSleep = connection('connection-before-sleep');
     await setup.hub.handleFrame(
       beforeSleep.value,
-      helloFrame({ admissionTicket: setup.seatToken })
+      helloFrame({ admissionTicket: setup.admissionTicket })
     );
     const welcome = beforeSleep.messages[0];
     if (welcome?.type !== 'Welcome') throw new Error('missing welcome');
@@ -258,6 +312,7 @@ describe('serialized room session hub', () => {
           crypto: setup.crypto,
           opaqueIds: setup.crypto,
           persistence: setup.store,
+          now: () => 10_001,
         },
       }
     );
@@ -303,7 +358,7 @@ describe('serialized room session hub', () => {
 
     await setup.hub.handleFrame(
       client.value,
-      helloFrame({ admissionTicket: setup.seatToken })
+      helloFrame({ admissionTicket: setup.admissionTicket })
     );
     await setup.hub.handleFrame(client.value, JSON.stringify(command));
     expect(client.messages.at(-1)).toMatchObject({

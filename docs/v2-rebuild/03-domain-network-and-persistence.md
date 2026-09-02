@@ -318,11 +318,11 @@ room runtime.
 
 ### Connection and role lifecycle
 
-1. Client opens a transport with protocol/build capability metadata.
-2. Server validates origin and bounded room code, then atomically allocates a role
-   through a high-entropy seat/resume capability and short-lived one-time socket
-   admission ticket.
-3. `Hello` establishes a new session or proves a reconnect session; room code and
+1. Client exchanges a high-entropy seat/spectator capability for a short-lived
+   one-time socket ticket through a same-origin bounded POST.
+2. Client opens a credential-free transport URL with protocol/build metadata.
+3. `Hello` consumes the socket ticket to establish a new session or proves a
+   reconnect with its resume capability; room code and
    display username are never authorization.
 4. Server replies with `Welcome`: room metadata, role, session/sequence, current
    revision, and a full role-specific snapshot.
@@ -334,6 +334,20 @@ room runtime.
 
 Anonymous guest play can remain. It still requires unguessable seat/reconnect
 capabilities rather than trusting a display name.
+
+The implemented browser boundary accepts the long-lived seat or spectator
+capability only in a bounded, strict, same-origin JSON `POST` to
+`/v2/rooms/:roomCode/admission-tickets`. It returns a `no-store` 30-second
+socket ticket. Authority schema v5 stores at most 32 unexpired ticket digests,
+never bearer values; each record is bound to the requested role and normalized
+display name. Issuance and redemption are serialized with room messages.
+Redemption removes the digest in the same compare-and-swap transaction that
+claims/resumes the session and rotates to a fresh resume capability. Expired,
+replayed, wrong-role, wrong-name, cross-origin, oversized, and malformed inputs
+fail without reflecting credential material. The browser uses redirect-error,
+no-referrer, omitted-credential fetch semantics, derives credential-free HTTP
+and WebSocket URLs from the same origin, and hands only the resulting runtime
+and route descriptor to React.
 
 ### Message families
 
@@ -465,7 +479,7 @@ event batches under a pinned event/state version. New clients never execute
 arbitrary legacy function names. Public replay uses projected frames and cannot
 reveal secrets that were not public at that revision.
 
-The implemented authority schema v4 persists one hashed canonical replay base
+The implemented authority schema v5 persists one hashed canonical replay base
 plus a contiguous accepted resolved-event tail bounded by both 128 batches and
 512 KiB of serialized event data. Rejected commands do not enter replay
 history. When either bound is exceeded, the oldest event is applied to the base
@@ -473,8 +487,9 @@ before it is dropped, so the retained suffix still reconstructs and hash-checks
 the current canonical state. A single oversized batch safely compacts into the
 base instead of making retention unbounded. A first-time seat claim rebases the
 ledger because display-name metadata changes outside gameplay revisions. Stored
-schema-v1, schema-v2, and schema-v3 rooms migrate to a v4 replay rooted at their
-current state; a nonzero root is explicitly exposed as `truncated` rather than
+schema-v1, schema-v2, and schema-v3 rooms migrate to a replay rooted at their
+current state. Schema-v4 rooms retain that replay while gaining an empty ticket
+registry. A nonzero root is explicitly exposed as `truncated` rather than
 pretending earlier revisions are available.
 
 Projection happens only inside the authority boundary. Each request starts a
@@ -544,10 +559,11 @@ or draining. `RemoteRoomRuntime` now constructs the session, replay coordinator,
 and presentation owner before connecting, then disposes them outside-in before
 closing transport. The lazy `RemoteRoomRoute` composes that runtime with the
 board, exact replay chrome, multiplayer/replay activity IDs, live region, and
-Options/Exit path. It accepts only an explicit trusted connection handoff; the
-renderer-spike entry remains the default while ADR-018's one-time browser ticket
-bootstrap is absent, so no capability enters a URL, storage, DOM, or log and the
-current UI/UX remains unchanged.
+Options/Exit path. `RemoteRoomBootstrap` now creates that trusted connection
+handoff by exchanging an in-memory long-lived capability for a one-time ticket;
+no credential enters a URL, storage, DOM, React state, or log. The
+renderer-spike entry remains the default until the visible create/join workflow
+can supply that in-memory input, so the current UI/UX remains unchanged.
 
 This bounded ledger, stream, and playback state machine are the runtime replay
 foundation, not the final archive/export contract. Phase 7 still owns
@@ -559,7 +575,7 @@ Solo undo is a new authoritative transition with a monotonically increasing
 revision: it restores the prior approved logical checkpoint, records
 `UndoApplied`, and publishes the resulting view. Audit history is not deleted.
 The v2 authority snapshot records an explicit `solo` or `multiplayer` mode; live
-connection count is never used to infer permission. Authority schema v4 stores
+connection count is never used to infer permission. Authority schema v5 stores
 one hashed base state plus a bounded active-branch tail of resolved event
 batches. It reconstructs the selected checkpoint inside the trusted boundary,
 then persists the exact restored canonical state in the resolved undo event so
@@ -575,11 +591,12 @@ rerun. Undo rotates every projection alias before publication to prevent
 correlation with a discarded hidden branch. Audit history is not deleted,
 reconnect restores the new branch without replaying the presentation fact, and
 multiplayer undo is not added by this rebuild. Stored authority-v1 rooms migrate
-explicitly to multiplayer schema v4, while schema-v2 and schema-v3 rooms retain
+explicitly to multiplayer schema v5, while schema-v2 and schema-v3 rooms retain
 their explicit mode. All prior schemas receive empty solo history and a replay
 base rooted at their migrated current canonical state because their older event
 tails do not contain the v2 match-state visibility scope required for safe
-deterministic replay.
+deterministic replay. Schema-v4 rooms keep their compatible state and replay
+history while receiving an empty one-time-ticket registry.
 
 The provisional command order is whole-match authority order, not v1's two
 independent client action arrays. This avoids replaying one seat's JavaScript

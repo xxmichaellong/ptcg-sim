@@ -41,9 +41,12 @@ and Phase 0 exit criteria are accepted.
   motion. An externally owned remote-room runtime now composes the real session,
   replay, presentation, effective board, legacy multiplayer/replay feed IDs,
   replay controls, and Exit path behind a lazy application branch. It requires a
-  trusted in-memory connection handoff; public browser admission remains closed
-  until ADR-018's one-time ticket flow exists. Normal sidebar/chat/navigation
-  and downloadable/export formats remain later parity work.
+  trusted in-memory connection handoff. ADR-018 now supplies that handoff through
+  a bounded same-origin no-store POST: authority stores only a short-lived
+  role/name-bound ticket digest, atomically consumes it into a fresh resume
+  capability, and the browser passes only the runtime/route descriptor to React.
+  Visible create/join wiring, normal sidebar/chat/navigation, and
+  downloadable/export formats remain later parity work.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 

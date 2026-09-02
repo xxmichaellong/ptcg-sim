@@ -17,7 +17,7 @@ export interface RemoteRoomSessionDependencies extends Omit<
 }
 
 export interface RemoteRoomRuntimeOptions {
-  /** Trusted handoff from the eventual admission-ticket route loader. */
+  /** Trusted handoff from the one-time admission-ticket bootstrap. */
   readonly connection: ConnectSessionOptions;
   readonly session?: RemoteRoomSessionDependencies;
   readonly presentation?: Omit<

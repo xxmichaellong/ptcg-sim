@@ -23,6 +23,17 @@ const CardCategorySchema = v.picklist([
 ] as const);
 const QuarterTurnsSchema = v.picklist([0, 1, 2, 3] as const);
 
+export const RoomAdmissionTicketRequestSchema = v.strictObject({
+  capability: boundedString(512, 32),
+  displayName: boundedString(64),
+  requestedRole: v.picklist(['player', 'spectator'] as const),
+});
+
+export const RoomAdmissionTicketResponseSchema = v.strictObject({
+  admissionTicket: boundedString(512, 32),
+  expiresAt: NonNegativeIntegerSchema,
+});
+
 export const SerializedCardDefinitionSchema = v.object({
   id: IdentifierSchema,
   name: boundedString(256),
@@ -740,6 +751,12 @@ export const ServerMessageSchema = v.variant('type', [
 ]);
 
 export type WireGameCommand = v.InferOutput<typeof WireGameCommandSchema>;
+export type RoomAdmissionTicketRequest = v.InferOutput<
+  typeof RoomAdmissionTicketRequestSchema
+>;
+export type RoomAdmissionTicketResponse = v.InferOutput<
+  typeof RoomAdmissionTicketResponseSchema
+>;
 export type PresentationEvent = v.InferOutput<typeof PresentationEventSchema>;
 export type ClientMessage = v.InferOutput<typeof ClientMessageSchema>;
 export type ServerMessage = v.InferOutput<typeof ServerMessageSchema>;

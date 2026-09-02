@@ -9,7 +9,9 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   admitRoomSession,
   createRoomAdmissionState,
-  type AdmissionCrypto,
+  issueRoomAdmissionTicket,
+  redeemRoomAdmissionTicket,
+  type AdmissionTicketCrypto,
 } from './admission.js';
 import { emptyProjectionIdentityState } from './identity-registry.js';
 import { appendReplayHistory, createReplayHistory } from './replay-history.js';
@@ -59,15 +61,18 @@ const createSnapshot = (): RoomAuthoritySnapshot => {
   };
 };
 
-const createCrypto = (): AdmissionCrypto => {
+const createCrypto = (): AdmissionTicketCrypto => {
   let session = 0;
   let resume = 0;
+  let ticket = 0;
   return {
     digestCapability: vi.fn(async (capability) => digest(capability)),
     equalDigest: (left, right) => left === right,
     nextSessionId: () => `session-${String(++session).padStart(24, '0')}`,
     nextResumeCapability: () =>
       `resume-capability-${String(++resume).padStart(24, '0')}`,
+    nextAdmissionTicket: () =>
+      `socket-admission-${String(++ticket).padStart(24, '0')}`,
   };
 };
 
@@ -82,7 +87,7 @@ const persistence = () => {
 };
 
 const dependencies = (
-  crypto: AdmissionCrypto,
+  crypto: AdmissionTicketCrypto,
   storage: ReturnType<typeof persistence>
 ) => {
   let opaque = 0;
@@ -97,6 +102,180 @@ const dependencies = (
 };
 
 describe('room capability admission', () => {
+  it('issues a digest-only ticket and consumes it atomically into a fresh resume capability', async () => {
+    const storage = persistence();
+    const crypto = createCrypto();
+    const issued = await issueRoomAdmissionTicket(
+      createSnapshot(),
+      {
+        capability: seatOneToken,
+        displayName: '  Blue  ',
+        requestedRole: 'player',
+      },
+      10_000,
+      dependencies(crypto, storage)
+    );
+    expect(issued.accepted).toBe(true);
+    if (!issued.accepted) return;
+
+    expect(issued.expiresAt).toBe(40_000);
+    expect(issued.snapshot.authorityVersion).toBe(1);
+    expect(Object.keys(issued.snapshot.admission?.tickets ?? {})).toEqual([
+      digest(issued.admissionTicket),
+    ]);
+    expect(JSON.stringify(issued.snapshot)).not.toContain(
+      issued.admissionTicket
+    );
+    expect(JSON.stringify(issued.snapshot)).not.toContain(seatOneToken);
+    expect(storage.transactions[0]).toMatchObject({
+      kind: 'ticket_issued',
+      ticketDigest: digest(issued.admissionTicket),
+    });
+
+    const redeemed = await redeemRoomAdmissionTicket(
+      issued.snapshot,
+      {
+        admissionTicket: issued.admissionTicket,
+        displayName: 'Blue',
+        requestedRole: 'player',
+      },
+      10_001,
+      dependencies(crypto, storage)
+    );
+    expect(redeemed.accepted).toBe(true);
+    if (!redeemed.accepted) return;
+    expect(redeemed.resumeCapability).not.toBe(seatOneToken);
+    expect(redeemed.session.resumeCapabilityDigest).toBe(
+      digest(redeemed.resumeCapability)
+    );
+    expect(redeemed.snapshot.admission?.tickets).toEqual({});
+    expect(storage.transactions[1]).toMatchObject({
+      kind: 'seat_claimed',
+      admissionTicketDigest: digest(issued.admissionTicket),
+    });
+
+    const replayed = await redeemRoomAdmissionTicket(
+      redeemed.snapshot,
+      {
+        admissionTicket: issued.admissionTicket,
+        displayName: 'Blue',
+        requestedRole: 'player',
+      },
+      10_002,
+      dependencies(crypto, storage)
+    );
+    expect(replayed).toMatchObject({
+      accepted: false,
+      code: 'invalid_capability',
+    });
+    expect(storage.transactions).toHaveLength(2);
+  });
+
+  it('binds tickets to role and normalized display name and rejects expiry', async () => {
+    const storage = persistence();
+    const crypto = createCrypto();
+    const issued = await issueRoomAdmissionTicket(
+      createSnapshot(),
+      {
+        capability: spectatorToken,
+        displayName: 'Viewer',
+        requestedRole: 'spectator',
+      },
+      50_000,
+      dependencies(crypto, storage),
+      { lifetimeMs: 1_000, maximumOutstandingTickets: 2 }
+    );
+    if (!issued.accepted) throw new Error(issued.code);
+
+    for (const request of [
+      { displayName: 'Other', requestedRole: 'spectator' as const },
+      { displayName: 'Viewer', requestedRole: 'player' as const },
+    ]) {
+      const result = await redeemRoomAdmissionTicket(
+        issued.snapshot,
+        { admissionTicket: issued.admissionTicket, ...request },
+        50_500,
+        dependencies(crypto, storage)
+      );
+      expect(result).toMatchObject({
+        accepted: false,
+        code: 'invalid_capability',
+      });
+    }
+    const expired = await redeemRoomAdmissionTicket(
+      issued.snapshot,
+      {
+        admissionTicket: issued.admissionTicket,
+        displayName: 'Viewer',
+        requestedRole: 'spectator',
+      },
+      51_000,
+      dependencies(crypto, storage)
+    );
+    expect(expired).toMatchObject({
+      accepted: false,
+      code: 'invalid_capability',
+    });
+    expect(storage.transactions).toHaveLength(1);
+  });
+
+  it('caps live tickets and prunes expired records during the next issue', async () => {
+    const storage = persistence();
+    const crypto = createCrypto();
+    const policy = { lifetimeMs: 1_000, maximumOutstandingTickets: 2 };
+    let snapshot = createSnapshot();
+    for (const displayName of ['First', 'Second']) {
+      const issued = await issueRoomAdmissionTicket(
+        snapshot,
+        {
+          capability: spectatorToken,
+          displayName,
+          requestedRole: 'spectator',
+        },
+        1_000,
+        dependencies(crypto, storage),
+        policy
+      );
+      if (!issued.accepted) throw new Error(issued.code);
+      snapshot = issued.snapshot;
+    }
+    const full = await issueRoomAdmissionTicket(
+      snapshot,
+      {
+        capability: spectatorToken,
+        displayName: 'Third',
+        requestedRole: 'spectator',
+      },
+      1_500,
+      dependencies(crypto, storage),
+      policy
+    );
+    expect(full).toMatchObject({ accepted: false, code: 'ticket_capacity' });
+
+    const afterExpiry = await issueRoomAdmissionTicket(
+      snapshot,
+      {
+        capability: spectatorToken,
+        displayName: 'Third',
+        requestedRole: 'spectator',
+      },
+      2_000,
+      dependencies(crypto, storage),
+      policy
+    );
+    expect(afterExpiry.accepted).toBe(true);
+    if (!afterExpiry.accepted) return;
+    expect(
+      Object.values(afterExpiry.snapshot.admission?.tickets ?? {})
+    ).toEqual([
+      {
+        role: 'spectator',
+        displayName: 'Third',
+        expiresAt: 3_000,
+      },
+    ]);
+  });
+
   it('claims a seat once and persists only the resume digest', async () => {
     const storage = persistence();
     const result = await admitRoomSession(

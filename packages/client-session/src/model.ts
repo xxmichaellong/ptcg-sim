@@ -88,7 +88,7 @@ export interface ConnectSessionOptions {
   readonly roomCode: string;
   readonly displayName: string;
   readonly requestedRole: 'player' | 'spectator';
-  /** A bearer capability. It is retained only in private, in-memory fields. */
+  /** Short-lived one-time socket ticket, retained only in private memory. */
   readonly admissionTicket: string;
 }
 

@@ -51,6 +51,10 @@ export class WebCryptoAuthoritySource
     return randomToken('spectator', 32);
   }
 
+  nextAdmissionTicket(): string {
+    return randomToken('socket', 32);
+  }
+
   nextResumeCapability(): string {
     return randomToken('resume', 32);
   }

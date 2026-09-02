@@ -5,8 +5,45 @@ import {
   MAX_REPLAY_FRAMES,
   PROTOCOL_VERSION,
 } from './constants.js';
-import { parseClientFrame, parseServerFrame } from './ingress.js';
+import {
+  parseClientFrame,
+  parseRoomAdmissionTicketRequest,
+  parseRoomAdmissionTicketResponse,
+  parseServerFrame,
+} from './ingress.js';
 import { PresentationEventSchema } from './schemas.js';
+
+describe('room admission HTTP schemas', () => {
+  it('accepts only bounded exact ticket exchanges', () => {
+    expect(
+      parseRoomAdmissionTicketRequest({
+        capability: 'seat-capability-00000000000000000001',
+        displayName: 'Blue',
+        requestedRole: 'player',
+      }).ok
+    ).toBe(true);
+    expect(
+      parseRoomAdmissionTicketRequest({
+        capability: 'seat-capability-00000000000000000001',
+        displayName: 'Blue',
+        requestedRole: 'player',
+        injected: true,
+      }).ok
+    ).toBe(false);
+    expect(
+      parseRoomAdmissionTicketResponse({
+        admissionTicket: 'socket-ticket-0000000000000000000001',
+        expiresAt: 40_000,
+      }).ok
+    ).toBe(true);
+    expect(
+      parseRoomAdmissionTicketResponse({
+        admissionTicket: 'short',
+        expiresAt: 40_000,
+      }).ok
+    ).toBe(false);
+  });
+});
 
 describe('client protocol ingress', () => {
   it('accepts a bounded typed command and strips unknown keys', () => {

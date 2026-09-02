@@ -253,7 +253,10 @@ Goal: replace peer replication with safe room authority.
 
 Work:
 
-- Implement room/session/seat capability lifecycle and version negotiation.
+- Extend the implemented room/session/seat capability lifecycle and version
+  negotiation. The current boundary already provides digest-only 30-second
+  socket tickets, atomic one-time redemption, resume rotation, same-origin
+  no-store HTTP exchange, and a credential-free browser route handoff.
 - Implement schema validation, role authorization, rate limits, idempotency,
   client sequencing, durable transaction pipeline, projection publication, and
   typed rejection.
@@ -295,9 +298,10 @@ Work:
   client artifact assembly, renderer-neutral playback controller, and
   live/replay application coordinator/board guard and implemented
   `RemoteRoomRuntime`/`RemoteRoomRoute` by completing normal sidebar actions,
-  chat, navigation, focus/keyboard/visual parity, and the ADR-018 one-time
-  browser ticket bootstrap. Reuse the mounted legacy chrome, presentation
-  surface, bounded stores, keyed feed, serial consumers, and live-region dwell.
+  chat, create/join form wiring, navigation, and focus/keyboard/visual parity.
+  Reuse the implemented ADR-018 browser ticket bootstrap, mounted legacy chrome,
+  presentation surface, bounded stores, keyed feed, serial consumers, and
+  live-region dwell.
   The legacy coin action is log-only, so retain the implemented no-motion
   acknowledgement adapter; adding a separate coin visual requires an approved
   parity exception. Preserve the

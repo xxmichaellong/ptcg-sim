@@ -1,7 +1,10 @@
 import {
   buildProjectedReplay,
+  issueRoomAdmissionTicket,
   RoomAuthorityCoordinator,
-  type AdmissionDependencies,
+  type AdmissionTicketDependencies,
+  type AdmissionTicketIssueRequest,
+  type AdmissionTicketIssueResult,
   type AuthoritySnapshotStore,
 } from '@ptcgsim/room-authority';
 import {
@@ -21,7 +24,9 @@ export interface RuntimeConnection {
 }
 
 export interface SessionHubDependencies {
-  readonly admission: AdmissionDependencies;
+  readonly admission: AdmissionTicketDependencies & {
+    readonly now: () => number;
+  };
   readonly store: AuthoritySnapshotStore;
 }
 
@@ -54,6 +59,34 @@ export class RoomSessionHub {
     this.connections.set(connection.id, connection);
     const run = this.tail.then(() => this.processFrame(connection, frame));
     this.tail = run.catch(() => undefined);
+    return run;
+  }
+
+  issueAdmissionTicket(
+    request: AdmissionTicketIssueRequest
+  ): Promise<AdmissionTicketIssueResult> {
+    const run = this.tail.then(async () => {
+      try {
+        const result = await issueRoomAdmissionTicket(
+          this.coordinator.currentSnapshot(),
+          request,
+          this.dependencies.admission.now(),
+          this.dependencies.admission
+        );
+        if (result.accepted) {
+          this.coordinator.installCommittedSnapshot(result.snapshot);
+        }
+        return result;
+      } catch (error) {
+        const durable = await this.dependencies.store.load();
+        if (durable) this.coordinator.installCommittedSnapshot(durable);
+        throw error;
+      }
+    });
+    this.tail = run.then(
+      () => undefined,
+      () => undefined
+    );
     return run;
   }
 

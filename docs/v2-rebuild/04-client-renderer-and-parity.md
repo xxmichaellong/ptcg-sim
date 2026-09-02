@@ -377,11 +377,15 @@ or destroy a live resource during its effect probe. The application branch is
 lazy, keeping the room-route implementation out of the default renderer-spike
 chunk.
 
-The room branch still requires an explicit trusted `ConnectSessionOptions`
-handoff. `main.tsx` does not select it until one-time browser admission tickets
-from ADR-018 can replace unsafe long-lived capability transport. Normal live
-sidebar actions, chat, navigation, and complete focus/keyboard/visual parity
-remain later slices.
+`RemoteRoomBootstrap` now produces the trusted `ConnectSessionOptions` handoff.
+It validates and normalizes room input, exchanges the caller's in-memory
+long-lived capability in a same-origin no-store POST, rejects redirects and
+malformed/expired responses, derives a credential-free WebSocket URL, and gives
+only the short-lived ticket to `RemoteRoomRuntime`. React receives the runtime
+and route descriptor, never either credential. `main.tsx` still selects the
+renderer spike until the existing create/join form can supply the bootstrap
+input. Normal live sidebar actions, chat, navigation, and complete
+focus/keyboard/visual parity remain later slices.
 
 ## Rendering cadence and performance
 

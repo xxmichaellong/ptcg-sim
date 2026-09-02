@@ -7,8 +7,12 @@ import {
 import {
   ClientMessageSchema,
   MatchViewStateSchema,
+  RoomAdmissionTicketRequestSchema,
+  RoomAdmissionTicketResponseSchema,
   ServerMessageSchema,
   type ClientMessage,
+  type RoomAdmissionTicketRequest,
+  type RoomAdmissionTicketResponse,
   type SerializedMatchViewState,
   type ServerMessage,
 } from './schemas.js';
@@ -19,6 +23,16 @@ export type FrameParseResult<Value> =
       readonly ok: false;
       readonly reason: 'frame_too_large' | 'invalid_json' | 'invalid_message';
       readonly issues?: readonly {
+        readonly path: string;
+        readonly message: string;
+      }[];
+    };
+
+export type SchemaParseResult<Value> =
+  | { readonly ok: true; readonly value: Value }
+  | {
+      readonly ok: false;
+      readonly issues: readonly {
         readonly path: string;
         readonly message: string;
       }[];
@@ -35,6 +49,16 @@ const issueSummary = (
         .join('.') ?? '',
     message: issue.message.slice(0, 200),
   }));
+
+const parseSchema = <Schema extends v.GenericSchema>(
+  value: unknown,
+  schema: Schema
+): SchemaParseResult<v.InferOutput<Schema>> => {
+  const parsed = v.safeParse(schema, value);
+  return parsed.success
+    ? { ok: true, value: parsed.output }
+    : { ok: false, issues: issueSummary(parsed.issues) };
+};
 
 const parseFrame = <Schema extends v.GenericSchema>(
   frame: string,
@@ -69,6 +93,16 @@ export const parseServerFrame = (
   frame: string
 ): FrameParseResult<ServerMessage> =>
   parseFrame(frame, MAX_SERVER_FRAME_CODE_UNITS, ServerMessageSchema);
+
+export const parseRoomAdmissionTicketRequest = (
+  value: unknown
+): SchemaParseResult<RoomAdmissionTicketRequest> =>
+  parseSchema(value, RoomAdmissionTicketRequestSchema);
+
+export const parseRoomAdmissionTicketResponse = (
+  value: unknown
+): SchemaParseResult<RoomAdmissionTicketResponse> =>
+  parseSchema(value, RoomAdmissionTicketResponseSchema);
 
 export const serializeMatchViewState = (
   value: unknown

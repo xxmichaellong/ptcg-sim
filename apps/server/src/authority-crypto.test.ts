@@ -8,6 +8,7 @@ describe('Web Crypto authority source', () => {
     const values = [
       source.nextSeatCapability(),
       source.nextSpectatorCapability(),
+      source.nextAdmissionTicket(),
       source.nextResumeCapability(),
       source.nextSessionId(),
       source.nextOpaqueId('card'),

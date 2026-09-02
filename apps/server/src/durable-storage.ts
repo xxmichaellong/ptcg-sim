@@ -19,7 +19,8 @@ const ADMISSION_JOURNAL_PREFIX = 'authority:admission:';
 const LEGACY_STORAGE_FORMAT = 'ptcgsim-room-authority-v1';
 const PREVIOUS_STORAGE_FORMAT = 'ptcgsim-room-authority-v2';
 const PRIOR_STORAGE_FORMAT = 'ptcgsim-room-authority-v3';
-const STORAGE_FORMAT = 'ptcgsim-room-authority-v4';
+const FORMER_STORAGE_FORMAT = 'ptcgsim-room-authority-v4';
+const STORAGE_FORMAT = 'ptcgsim-room-authority-v5';
 
 export interface DurableStorageTransactionLike {
   readonly get: <Value>(key: string) => Promise<Value | undefined>;
@@ -36,6 +37,7 @@ export interface DurableStorageLike {
 interface StoredAuthoritySnapshot {
   readonly format:
     | typeof STORAGE_FORMAT
+    | typeof FORMER_STORAGE_FORMAT
     | typeof PRIOR_STORAGE_FORMAT
     | typeof PREVIOUS_STORAGE_FORMAT
     | typeof LEGACY_STORAGE_FORMAT;
@@ -57,8 +59,10 @@ export interface StoredAdmissionJournalEntry {
   readonly format: typeof STORAGE_FORMAT;
   readonly expectedAuthorityVersion: number;
   readonly resultingAuthorityVersion: number;
-  readonly sessionId: string;
   readonly kind: PersistedAdmissionTransaction['kind'];
+  readonly sessionId?: string;
+  readonly ticketDigest?: string;
+  readonly admissionTicketDigest?: string;
 }
 
 export class ConcurrentRoomWriteError extends Error {
@@ -84,6 +88,7 @@ const isStoredSnapshot = (value: unknown): value is StoredAuthoritySnapshot =>
   typeof value === 'object' &&
   value !== null &&
   (Reflect.get(value, 'format') === STORAGE_FORMAT ||
+    Reflect.get(value, 'format') === FORMER_STORAGE_FORMAT ||
     Reflect.get(value, 'format') === PRIOR_STORAGE_FORMAT ||
     Reflect.get(value, 'format') === PREVIOUS_STORAGE_FORMAT ||
     Reflect.get(value, 'format') === LEGACY_STORAGE_FORMAT) &&
@@ -142,6 +147,11 @@ const migrateStoredSnapshot = (value: unknown): RoomAuthoritySnapshot => {
   const schemaVersion = Reflect.get(value, 'schemaVersion');
   const rawState = Reflect.get(value, 'state');
   let candidate: RoomAuthoritySnapshot;
+  const legacySchema =
+    schemaVersion === 1 ||
+    schemaVersion === 2 ||
+    schemaVersion === 3 ||
+    schemaVersion === 4;
   if (schemaVersion === 1) {
     const state = migrateMatchState(rawState);
     candidate = {
@@ -182,10 +192,21 @@ const migrateStoredSnapshot = (value: unknown): RoomAuthoritySnapshot => {
       },
       replayHistory: createReplayHistory(state),
     };
+  } else if (schemaVersion === 4) {
+    candidate = {
+      ...(value as Omit<RoomAuthoritySnapshot, 'schemaVersion'>),
+      schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+    };
   } else if (schemaVersion === AUTHORITY_SNAPSHOT_SCHEMA_VERSION) {
     candidate = value as RoomAuthoritySnapshot;
   } else {
     throw new Error('Stored room snapshot has an unsupported schema');
+  }
+  if (legacySchema && candidate.admission) {
+    candidate = {
+      ...candidate,
+      admission: { ...candidate.admission, tickets: {} },
+    };
   }
   assertAuthoritySnapshotInvariants(candidate);
   return candidate;
@@ -287,7 +308,11 @@ export class DurableRoomSnapshotStore
           current.authorityVersion
         );
       }
-      const key = `${ADMISSION_JOURNAL_PREFIX}${encodeURIComponent(transaction.sessionId)}`;
+      const transactionId =
+        transaction.kind === 'ticket_issued'
+          ? transaction.ticketDigest
+          : transaction.sessionId;
+      const key = `${ADMISSION_JOURNAL_PREFIX}${transaction.snapshot.authorityVersion}:${transaction.kind}:${encodeURIComponent(transactionId)}`;
       if ((await storageTransaction.get<unknown>(key)) !== undefined) {
         throw new Error('Admission journal key collision');
       }
@@ -295,8 +320,17 @@ export class DurableRoomSnapshotStore
         format: STORAGE_FORMAT,
         expectedAuthorityVersion: transaction.expectedAuthorityVersion,
         resultingAuthorityVersion: transaction.snapshot.authorityVersion,
-        sessionId: transaction.sessionId,
         kind: transaction.kind,
+        ...(transaction.kind === 'ticket_issued'
+          ? { ticketDigest: transaction.ticketDigest }
+          : {
+              sessionId: transaction.sessionId,
+              ...(transaction.admissionTicketDigest
+                ? {
+                    admissionTicketDigest: transaction.admissionTicketDigest,
+                  }
+                : {}),
+            }),
       };
       await storageTransaction.put({
         [AUTHORITY_SNAPSHOT_STORAGE_KEY]: {

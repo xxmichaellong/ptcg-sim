@@ -14,10 +14,11 @@ import type {
   ProjectionIdentityState,
 } from './identity-registry.js';
 
-export const AUTHORITY_SNAPSHOT_SCHEMA_VERSION = 4 as const;
+export const AUTHORITY_SNAPSHOT_SCHEMA_VERSION = 5 as const;
 export const MAX_SOLO_UNDO_CHECKPOINTS = 128;
 export const MAX_REPLAY_EVENT_BATCHES = MAX_REPLAY_FRAMES - 1;
 export const MAX_REPLAY_EVENT_BYTES = 512 * 1024;
+export const MAX_OUTSTANDING_ADMISSION_TICKETS = 32;
 
 export type AuthorityMode = 'solo' | 'multiplayer';
 
@@ -56,9 +57,28 @@ export interface AdmissionSeat {
   readonly claimedSessionId: string | null;
 }
 
+/**
+ * Durable authorization attached to a short-lived bearer ticket. The record
+ * contains only the ticket digest; the raw credential exists only in the
+ * issuing response and the client's private session state.
+ */
+export type RoomAdmissionTicket =
+  | {
+      readonly role: 'player';
+      readonly playerId: PlayerId;
+      readonly displayName: string;
+      readonly expiresAt: number;
+    }
+  | {
+      readonly role: 'spectator';
+      readonly displayName: string;
+      readonly expiresAt: number;
+    };
+
 export interface RoomAdmissionState {
   readonly seats: Readonly<Record<string, AdmissionSeat>>;
   readonly spectatorCapabilityDigest: string | null;
+  readonly tickets: Readonly<Record<string, RoomAdmissionTicket>>;
 }
 
 export interface RoomAuthoritySnapshot {
@@ -128,12 +148,21 @@ export interface AuthoritySnapshotStore extends AuthorityPersistence {
   readonly load: () => Promise<RoomAuthoritySnapshot | undefined>;
 }
 
-export interface PersistedAdmissionTransaction {
-  readonly expectedAuthorityVersion: number;
-  readonly snapshot: RoomAuthoritySnapshot;
-  readonly sessionId: string;
-  readonly kind: 'seat_claimed' | 'spectator_joined' | 'session_resumed';
-}
+export type PersistedAdmissionTransaction =
+  | {
+      readonly expectedAuthorityVersion: number;
+      readonly snapshot: RoomAuthoritySnapshot;
+      readonly kind: 'ticket_issued';
+      readonly ticketDigest: string;
+    }
+  | {
+      readonly expectedAuthorityVersion: number;
+      readonly snapshot: RoomAuthoritySnapshot;
+      readonly sessionId: string;
+      readonly kind: 'seat_claimed' | 'spectator_joined' | 'session_resumed';
+      /** Present only when this commit atomically consumes a socket ticket. */
+      readonly admissionTicketDigest?: string;
+    };
 
 export interface AdmissionPersistence {
   readonly commitAdmission: (

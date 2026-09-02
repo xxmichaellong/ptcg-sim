@@ -1,5 +1,6 @@
 import {
   admitRoomSession,
+  redeemRoomAdmissionTicket,
   type AdmissionDependencies,
   type RoomAuthoritySnapshot,
 } from '@ptcgsim/room-authority';
@@ -11,6 +12,10 @@ import {
 } from '@ptcgsim/protocol';
 
 type HelloMessage = Extract<ClientMessage, { type: 'Hello' }>;
+
+export interface SessionHandshakeDependencies extends AdmissionDependencies {
+  readonly now: () => number;
+}
 
 export type HandshakeResult =
   | {
@@ -45,7 +50,7 @@ export const establishSession = async (
   current: RoomAuthoritySnapshot,
   hello: HelloMessage,
   buildId: string,
-  dependencies: AdmissionDependencies
+  dependencies: SessionHandshakeDependencies
 ): Promise<HandshakeResult> => {
   if (hello.resumeToken && hello.admissionTicket) {
     return rejection(
@@ -58,26 +63,29 @@ export const establishSession = async (
     return rejection(
       current,
       'admission_required',
-      'A room admission capability is required'
+      'A room admission ticket or resume token is required'
     );
   }
 
-  const request = hello.resumeToken
-    ? ({
-        type: 'Resume',
-        resumeCapability: hello.resumeToken,
-      } as const)
-    : hello.requestedRole === 'player'
-      ? ({
-          type: 'ClaimSeat',
-          seatCapability: hello.admissionTicket!,
+  const result = hello.resumeToken
+    ? await admitRoomSession(
+        current,
+        {
+          type: 'Resume',
+          resumeCapability: hello.resumeToken,
+        },
+        dependencies
+      )
+    : await redeemRoomAdmissionTicket(
+        current,
+        {
+          admissionTicket: hello.admissionTicket!,
           displayName: hello.displayName,
-        } as const)
-      : ({
-          type: 'JoinSpectator',
-          spectatorCapability: hello.admissionTicket!,
-        } as const);
-  const result = await admitRoomSession(current, request, dependencies);
+          requestedRole: hello.requestedRole,
+        },
+        dependencies.now(),
+        dependencies
+      );
   if (!result.accepted) {
     return rejection(
       result.snapshot,

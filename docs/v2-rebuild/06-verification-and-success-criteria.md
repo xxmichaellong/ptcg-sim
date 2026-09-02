@@ -133,6 +133,16 @@ Release requires all of the following:
     idempotently. React StrictMode cannot create or dispose that external owner,
     the default spike loads the room branch lazily, and no admission capability
     appears in public snapshots or rendered markup.
+23. Browser admission sends a long-lived seat/spectator capability only in a
+    bounded same-origin no-store POST body, rejects redirects and unsafe
+    response shapes, and derives credential-free room/socket URLs. Authority
+    persists only a role/name-bound ticket digest, enforces a 30-second expiry
+    and 32-ticket room cap, consumes it atomically with session admission,
+    rotates a distinct resume capability, rejects replay/expiry/mismatch, and
+    restores its committed frontier after an ambiguous persistence failure.
+    Schema-v4 rooms migrate to v5 with no outstanding tickets, and no bearer is
+    exposed through snapshots, journals, errors, DOM, React state, storage, or
+    URLs.
 
 ## Privacy and security gates
 

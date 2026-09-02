@@ -7,6 +7,7 @@ import {
 import { viewerIdentityKey } from './identity-registry.js';
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+  MAX_OUTSTANDING_ADMISSION_TICKETS,
   MAX_REPLAY_EVENT_BATCHES,
   MAX_REPLAY_EVENT_BYTES,
   MAX_SOLO_UNDO_CHECKPOINTS,
@@ -270,6 +271,39 @@ export const collectAuthoritySnapshotProblems = (
         snapshot.admission.spectatorCapabilityDigest.length > 128)
     ) {
       problems.push('admission spectator digest is invalid');
+    }
+    if (
+      typeof snapshot.admission.tickets !== 'object' ||
+      snapshot.admission.tickets === null ||
+      Array.isArray(snapshot.admission.tickets)
+    ) {
+      problems.push('admission tickets are malformed');
+    } else {
+      const tickets = Object.entries(snapshot.admission.tickets);
+      if (tickets.length > MAX_OUTSTANDING_ADMISSION_TICKETS) {
+        problems.push('admission has too many outstanding tickets');
+      }
+      for (const [digest, ticket] of tickets) {
+        if (digest.length < 32 || digest.length > 128) {
+          problems.push('admission ticket has an invalid digest');
+        }
+        if (!Number.isSafeInteger(ticket.expiresAt) || ticket.expiresAt < 0) {
+          problems.push('admission ticket has an invalid expiry');
+        }
+        if (
+          ticket.displayName.trim().length < 1 ||
+          ticket.displayName.length > 64
+        ) {
+          problems.push('admission ticket has an invalid display name');
+        }
+        if (ticket.role === 'player') {
+          if (!snapshot.admission.seats[ticket.playerId]) {
+            problems.push('admission ticket references an unknown player seat');
+          }
+        } else if (ticket.role !== 'spectator') {
+          problems.push('admission ticket has an invalid role');
+        }
+      }
     }
   }
 

@@ -4,6 +4,7 @@ import {
   createRoomAdmissionState,
   createReplayHistory,
   emptyProjectionIdentityState,
+  issueRoomAdmissionTicket,
   type RoomAuthoritySnapshot,
 } from '@ptcgsim/room-authority';
 import { PROTOCOL_VERSION, type ClientMessage } from '@ptcgsim/protocol';
@@ -55,6 +56,7 @@ const fixture = async () => {
           transactions.push(transaction);
         },
       },
+      now: () => 10_001,
     },
   };
 };
@@ -72,16 +74,27 @@ const hello = (overrides: Partial<Hello> = {}): Hello => ({
 describe('session handshake', () => {
   it('returns a full welcome snapshot only after capability admission commits', async () => {
     const setup = await fixture();
-    const result = await establishSession(
+    const issued = await issueRoomAdmissionTicket(
       setup.snapshot,
-      hello({ admissionTicket: setup.seatToken }),
+      {
+        capability: setup.seatToken,
+        displayName: 'Blue',
+        requestedRole: 'player',
+      },
+      10_000,
+      setup.dependencies
+    );
+    if (!issued.accepted) throw new Error(issued.code);
+    const result = await establishSession(
+      issued.snapshot,
+      hello({ admissionTicket: issued.admissionTicket }),
       'server-build',
       setup.dependencies
     );
 
     expect(result.accepted).toBe(true);
     if (!result.accepted) return;
-    expect(setup.transactions).toHaveLength(1);
+    expect(setup.transactions).toHaveLength(2);
     expect(result.message).toMatchObject({
       type: 'Welcome',
       buildId: 'server-build',
@@ -90,7 +103,8 @@ describe('session handshake', () => {
       nextClientSequence: 1,
       snapshot: { revision: 0 },
     });
-    expect(result.message.resumeToken).toBe(setup.seatToken);
+    expect(result.message.resumeToken).not.toBe(setup.seatToken);
+    expect(result.snapshot.admission?.tickets).toEqual({});
   });
 
   it('rejects ambiguous or missing credentials before hashing or persistence', async () => {
@@ -137,5 +151,21 @@ describe('session handshake', () => {
       message: { code: 'invalid_capability' },
     });
     expect(JSON.stringify(result)).not.toContain(invalid);
+  });
+
+  it('does not accept a long-lived seat capability directly over the socket', async () => {
+    const setup = await fixture();
+    const result = await establishSession(
+      setup.snapshot,
+      hello({ admissionTicket: setup.seatToken }),
+      'server-build',
+      setup.dependencies
+    );
+
+    expect(result).toMatchObject({
+      accepted: false,
+      message: { code: 'invalid_capability' },
+    });
+    expect(setup.transactions).toHaveLength(0);
   });
 });

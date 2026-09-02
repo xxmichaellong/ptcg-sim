@@ -12,6 +12,7 @@ import {
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
   appendReplayHistory,
+  createRoomAdmissionState,
   createReplayHistory,
   emptyProjectionIdentityState,
   type PersistedAuthorityTransaction,
@@ -299,7 +300,7 @@ describe('Durable Object authority snapshot store', () => {
       ] as { scope?: 'card' | 'zone' }
     ).scope;
     storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
-      format: 'ptcgsim-room-authority-v4',
+      format: 'ptcgsim-room-authority-v5',
       snapshot: corruptCurrent,
     });
     await expect(new DurableRoomSnapshotStore(storage).load()).rejects.toThrow(
@@ -313,7 +314,7 @@ describe('Durable Object authority snapshot store', () => {
     const initial = initialSnapshot();
     await store.initialize(initial);
     expect(storage.values.get(AUTHORITY_SNAPSHOT_STORAGE_KEY)).toMatchObject({
-      format: 'ptcgsim-room-authority-v4',
+      format: 'ptcgsim-room-authority-v5',
     });
 
     const transaction = acceptedTransaction(initial);
@@ -376,6 +377,139 @@ describe('Durable Object authority snapshot store', () => {
     });
   });
 
+  it('journals ticket issuance and redemption without persisting the bearer', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    const ticket = 'socket-ticket-never-persisted-000000000001';
+    const ticketDigest = 'd'.repeat(64);
+    const initial: RoomAuthoritySnapshot = {
+      ...initialSnapshot(),
+      admission: createRoomAdmissionState({
+        playerIds: [p1, p2],
+        seatCapabilityDigests: {
+          [p1]: 'a'.repeat(64),
+          [p2]: 'b'.repeat(64),
+        },
+      }),
+    };
+    await store.initialize(initial);
+    const issued: RoomAuthoritySnapshot = {
+      ...initial,
+      authorityVersion: 1,
+      admission: {
+        ...initial.admission!,
+        tickets: {
+          [ticketDigest]: {
+            role: 'player',
+            playerId: p1,
+            displayName: 'Blue',
+            expiresAt: 40_000,
+          },
+        },
+      },
+    };
+    await store.commitAdmission({
+      expectedAuthorityVersion: 0,
+      snapshot: issued,
+      kind: 'ticket_issued',
+      ticketDigest,
+    });
+
+    const sessionId = 'ticket-session-000000000001';
+    const session = {
+      id: sessionId,
+      viewer: { kind: 'player' as const, playerId: p1 },
+      active: true,
+      nextClientSequence: 1,
+      recentOutcomes: [],
+      resumeCapabilityDigest: 'c'.repeat(64),
+    };
+    const redeemed: RoomAuthoritySnapshot = {
+      ...issued,
+      authorityVersion: 2,
+      sessions: { [sessionId]: session },
+      admission: {
+        ...issued.admission!,
+        seats: {
+          ...issued.admission!.seats,
+          [p1]: {
+            ...issued.admission!.seats[p1]!,
+            claimedSessionId: sessionId,
+          },
+        },
+        tickets: {},
+      },
+    };
+    storage.failPutWhenKeyStartsWith = 'authority:admission:';
+    await expect(
+      store.commitAdmission({
+        expectedAuthorityVersion: 1,
+        snapshot: redeemed,
+        sessionId,
+        kind: 'seat_claimed',
+        admissionTicketDigest: ticketDigest,
+      })
+    ).rejects.toThrow('injected transactional put failure');
+    expect(
+      (await store.load())?.admission?.tickets[ticketDigest]
+    ).toBeDefined();
+
+    storage.failPutWhenKeyStartsWith = undefined;
+    await store.commitAdmission({
+      expectedAuthorityVersion: 1,
+      snapshot: redeemed,
+      sessionId,
+      kind: 'seat_claimed',
+      admissionTicketDigest: ticketDigest,
+    });
+
+    expect((await store.load())?.admission?.tickets).toEqual({});
+    const serialized = JSON.stringify([...storage.values]);
+    expect(serialized).not.toContain(ticket);
+    const entries = [...storage.values.values()].filter(
+      (value) =>
+        typeof value === 'object' &&
+        value !== null &&
+        'kind' in value &&
+        (value.kind === 'ticket_issued' || value.kind === 'seat_claimed')
+    );
+    expect(entries).toEqual([
+      expect.objectContaining({ kind: 'ticket_issued', ticketDigest }),
+      expect.objectContaining({
+        kind: 'seat_claimed',
+        sessionId,
+        admissionTicketDigest: ticketDigest,
+      }),
+    ]);
+  });
+
+  it('migrates v4 admission state with an empty ticket registry', async () => {
+    const storage = new MemoryDurableStorage();
+    const current = initialSnapshot();
+    const admission = createRoomAdmissionState({
+      playerIds: [p1, p2],
+      seatCapabilityDigests: {
+        [p1]: 'a'.repeat(64),
+        [p2]: 'b'.repeat(64),
+      },
+    });
+    const { tickets: _tickets, ...legacyAdmission } = admission;
+    storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
+      format: 'ptcgsim-room-authority-v4',
+      snapshot: {
+        ...current,
+        schemaVersion: 4,
+        admission: legacyAdmission,
+      },
+    });
+
+    const restored = await new DurableRoomSnapshotStore(storage).load();
+    expect(restored).toMatchObject({
+      schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+      admission: { tickets: {} },
+    });
+  });
+
   it('rejects stale compare-and-swap commits', async () => {
     const storage = new MemoryDurableStorage();
     const store = new DurableRoomSnapshotStore(storage);
@@ -412,7 +546,7 @@ describe('Durable Object authority snapshot store', () => {
     const storage = new MemoryDurableStorage();
     const snapshot = initialSnapshot();
     storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
-      format: 'ptcgsim-room-authority-v4',
+      format: 'ptcgsim-room-authority-v5',
       snapshot: {
         ...snapshot,
         replayHistory: {

@@ -1,3 +1,4 @@
+export * from './admission-ticket-http.js';
 export * from './authority-crypto.js';
 export * from './create-room.js';
 export * from './durable-storage.js';

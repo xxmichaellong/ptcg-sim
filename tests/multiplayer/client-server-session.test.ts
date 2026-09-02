@@ -220,6 +220,7 @@ const fixture = async (mode: 'solo' | 'multiplayer' = 'multiplayer') => {
       crypto: cryptoSource,
       opaqueIds: cryptoSource,
       persistence: store,
+      now: () => 10_000,
     },
   });
   return { ...initialized, snapshot: authoritySnapshot, store, hub };
@@ -240,13 +241,19 @@ const connectClient = async (input: {
     random: () => 0.5,
     createCommandId: () => `${input.name}-command-${++nextCommandId}`,
   });
+  const issued = await input.hub.issueAdmissionTicket({
+    capability: input.capability,
+    displayName: input.name,
+    requestedRole: input.role,
+  });
+  if (!issued.accepted) throw new Error(issued.code);
   session.connect({
     url: 'ws://in-memory.test/room',
     buildId: 'client-build',
     roomCode: 'ROOM',
     displayName: input.name,
     requestedRole: input.role,
-    admissionTicket: input.capability,
+    admissionTicket: issued.admissionTicket,
   });
   factory.latest().open();
   await factory.flush();
