@@ -476,25 +476,31 @@ Every installed frame exposes the deterministic presentation-event timeline up
 to that frame. A separate forward-crossing list lets render effects run once per
 controller generation: rewind/restart emit no effects, stepping forward emits
 the entered frame's effects, and fast-forward emits all crossed effects in
-revision order. A truncated artifact starts at its retained base revision and
-cannot seek into history the authority did not send. React subscribes through a
-thin external-store adapter. An application coordinator correlates each request
-to the artifact present when it began, enters only a fresh completed artifact,
-and exposes either the live projection or one replay projection as the effective
+revision order. The application presentation dispatcher consumes each replay ID
+and playback generation once, preserves cross-revision fast-forward order, and
+isolates an individual effect-adapter failure without suppressing later facts.
+It queues reentrant generations behind the batch already being presented and
+seeds from the current snapshot without replaying effects merely because a UI
+surface mounted. These effects intentionally stay outside renderer
+`installScene`, whose event inputs must all match its one installed revision.
+A truncated artifact starts at its retained base revision and cannot seek into
+history the authority did not send. React subscribes through a thin
+external-store adapter. An application coordinator correlates each request to
+the artifact present when it began, enters only a fresh completed artifact, and
+exposes either the live projection or one replay projection as the effective
 view. It never replaces or rewinds the live session. Exiting during transfer
 marks the eventual artifact for discard; refresh keeps the current replay until
 a valid replacement installs atomically. Completed playback survives a
 same-session reconnect, while terminal sessions and changed match/viewer
-identities clear it. Visible replay controls and parity binding remain a later
-UI slice. The remote board binding already selects the coordinator's effective
-view and blocks command submission while replay is loading, active, or draining;
-the legacy-shaped controls exist only as an unmounted component, so this
-implementation changes no current UI/UX.
+identities clear it. The remote board binding selects the coordinator's
+effective view and blocks command submission while replay is loading, active,
+or draining. Legacy-shaped controls and a headless exact chrome selector now
+exist but remain unmounted, so this implementation changes no current UI/UX.
 
 This bounded ledger, stream, and playback state machine are the runtime replay
 foundation, not the final archive/export contract. Phase 7 still owns
 long-retention journal chunks, download/import schemas, share capabilities,
-quotas, visible replay integration, and the unresolved multiplayer export
+quotas, full-sidebar replay integration, and the unresolved multiplayer export
 policy in ADR-012.
 
 Solo undo is a new authoritative transition with a monotonically increasing

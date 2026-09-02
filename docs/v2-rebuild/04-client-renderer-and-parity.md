@@ -246,10 +246,14 @@ The controller maps the existing buttons exactly: `setupButton`/`⏮` restarts,
 `resetBothButton`/`⏭` fast-forwards. Boundary actions are stable no-ops. Rewind
 rebuilds the visible event timeline from recorded frames and does not execute
 domain logic; forward transitions separately report newly crossed presentation
-facts, keyed by generation, for effect deduplication. Loading is transactional,
-so a malformed replacement cannot disturb the active replay. The eventual React
-controls must preserve the legacy labels, placement, colors, keyboard/focus
-behavior, and replay-mode visibility changes.
+facts, keyed by generation, for effect deduplication. The non-React
+`ReplayPresentationDispatcher` delivers each later replay ID/generation once in
+recorded order. It serializes reentrant playback publications, continues after
+one sink or diagnostic failure, and treats the generation visible at its own
+construction as already consumed. Fast-forward effects can span revisions, so
+they are presentation-adapter inputs rather than renderer `installScene` events.
+Loading is transactional, so a malformed replacement cannot disturb the active
+replay.
 
 `ReplaySessionCoordinator` is the application mode boundary. Its immutable
 external-store snapshot contains the live/replay mode, request phase, effective
@@ -270,10 +274,15 @@ Mutating drop intents are not forwarded to a second parent submission path;
 local selection/preview/context/zone/resize intents remain available. The board
 enables explicit renderer replacement only in replay mode. The dormant
 `LegacyReplayControls` renders the four original IDs, symbols, ordering, color
-classes, and action mappings without boundary disabling. It is not mounted in
-the current spike shell; the later parity slice must place it beside the
-existing Options button and apply the remaining replay-mode chrome visibility
-changes.
+classes, and action mappings without boundary disabling. The headless
+`ReplayModeShell` binds those controls and exit to the coordinator and exposes an
+exact legacy chrome selector: Replay/Solo label and 50% tab widths; multiplayer,
+deck, chat, import, clear-log, turn, coin, and twelve private mutation-action
+visibility; persistent export and Options actions; and the exit action. Loading
+and post-exit discarding deliberately retain live chrome until replay mode is
+active. Neither component is mounted in the current spike application, so the
+later parity slice must place the shell output into the reconstructed sidebar
+beside the existing Options button and verify focus/keyboard and visual parity.
 
 ## Rendering cadence and performance
 

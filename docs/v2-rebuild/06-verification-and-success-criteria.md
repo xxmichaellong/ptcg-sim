@@ -97,6 +97,10 @@ Release requires all of the following:
 15. The remote board renders the effective live/replay projection, blocks every
     command during loading/active/discarding replay phases, and rewinds through
     explicit renderer replacement without weakening monotonic live installs.
+16. Replay chrome matches the legacy live/active visibility map, all four
+    controls and exit call the coordinator exactly once, and presentation facts
+    are delivered once per later playback generation in recorded order across
+    fast-forward, reentrancy, adapter errors, remount, rewind, and teardown.
 
 ## Privacy and security gates
 
