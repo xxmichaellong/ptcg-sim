@@ -93,6 +93,21 @@ describe('RendererSpikeBoard application boundary', () => {
     expect(rendererHarness.mount).toHaveBeenCalledTimes(1);
     expect(rendererHarness.destroy).not.toHaveBeenCalled();
 
+    const replayView = { ...secondView, revision: 0 };
+    await act(async () => {
+      root.render(
+        <RendererSpikeBoard
+          view={replayView}
+          rendererKind="dom"
+          onIntent={onIntent}
+          submitCommand={secondSubmit}
+          allowRevisionRegression
+        />
+      );
+    });
+    expect(rendererHarness.installScene.mock.calls.at(-1)?.[2]).toBe('replace');
+    expect(rendererHarness.mount).toHaveBeenCalledTimes(1);
+
     const handCard = installedScene?.cards.find(
       (card) => card.side === 'local' && card.parentId.endsWith(':hand')
     );

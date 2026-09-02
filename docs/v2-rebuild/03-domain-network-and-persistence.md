@@ -486,7 +486,10 @@ marks the eventual artifact for discard; refresh keeps the current replay until
 a valid replacement installs atomically. Completed playback survives a
 same-session reconnect, while terminal sessions and changed match/viewer
 identities clear it. Visible replay controls and parity binding remain a later
-UI slice, so this implementation changes no current UI/UX.
+UI slice. The remote board binding already selects the coordinator's effective
+view and blocks command submission while replay is loading, active, or draining;
+the legacy-shaped controls exist only as an unmounted component, so this
+implementation changes no current UI/UX.
 
 This bounded ledger, stream, and playback state machine are the runtime replay
 foundation, not the final archive/export contract. Phase 7 still owns

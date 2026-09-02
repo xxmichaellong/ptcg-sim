@@ -293,8 +293,9 @@ Work:
   encrypted/server-hosted multiplayer continuation policy.
 - Extend the implemented authoritative replay ledger, role-projected streaming,
   client artifact assembly, renderer-neutral playback controller, and
-  live/replay application coordinator with visible legacy-control integration,
-  long-retention journal chunks, and download/import formats.
+  live/replay application coordinator/board guard by mounting the implemented
+  legacy-shaped controls, completing replay-mode chrome visibility, and adding
+  long-retention journal chunks plus download/import formats.
 - Expose v1 conversion through an isolated upload/import transaction.
 - Add storage migration rehearsal, corrupt/truncated data recovery, quotas, and
   cleanup jobs.

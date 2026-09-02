@@ -94,6 +94,9 @@ Release requires all of the following:
     request-correlated artifact is entered, exit discards late completion,
     reconnect/new-room boundaries retain or clear playback as specified, and
     malformed refresh leaves the current replay intact.
+15. The remote board renders the effective live/replay projection, blocks every
+    command during loading/active/discarding replay phases, and rewinds through
+    explicit renderer replacement without weakening monotonic live installs.
 
 ## Privacy and security gates
 

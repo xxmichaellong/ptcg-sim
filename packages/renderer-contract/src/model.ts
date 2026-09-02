@@ -134,6 +134,8 @@ export type BoardPresentationEvent =
       readonly result: 'heads' | 'tails';
     };
 
+export type BoardSceneInstallMode = 'advance' | 'replace';
+
 export type BoardPresentationUpdate = {
   readonly kind: 'DragChanged';
   readonly drag: BoardPresentation['drag'];
@@ -161,7 +163,8 @@ export interface BoardRenderer {
   ): Promise<void>;
   installScene(
     scene: BoardScene,
-    events: readonly BoardPresentationEvent[]
+    events: readonly BoardPresentationEvent[],
+    mode?: BoardSceneInstallMode
   ): void;
   installPresentation(presentation: BoardPresentation): void;
   resize(viewport: BoardViewport): void;

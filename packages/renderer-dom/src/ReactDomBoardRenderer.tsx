@@ -6,6 +6,7 @@ import {
   type BoardRenderer,
   type BoardRendererAdapters,
   type BoardScene,
+  type BoardSceneInstallMode,
   type BoardViewport,
 } from '@ptcgsim/renderer-contract';
 import { StrictMode } from 'react';
@@ -62,10 +63,11 @@ export class ReactDomBoardRenderer implements BoardRenderer {
 
   installScene(
     scene: BoardScene,
-    events: readonly BoardPresentationEvent[]
+    events: readonly BoardPresentationEvent[],
+    mode: BoardSceneInstallMode = 'advance'
   ): void {
     const mounted = this.requireMounted();
-    if (scene.revision < mounted.scene.revision) {
+    if (mode !== 'replace' && scene.revision < mounted.scene.revision) {
       throw new Error('Cannot install an older board scene revision');
     }
     for (const event of events) {

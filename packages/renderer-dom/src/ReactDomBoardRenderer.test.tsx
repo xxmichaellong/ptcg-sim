@@ -132,6 +132,9 @@ describe('React DOM board renderer', () => {
       'older board scene revision'
     );
     expect(() =>
+      act(() => renderer.installScene(createScene(2), [], 'replace'))
+    ).not.toThrow();
+    expect(() =>
       renderer.installScene(createScene(4), [
         { kind: 'CommandRejected', revision: 3, reason: 'stale' },
       ])

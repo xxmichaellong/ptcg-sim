@@ -43,7 +43,7 @@ adapter implements it:
 ```text
 createBoardRenderer(adapters, options)
   mount(hostElement, initialRenderModel, initialPresentation)
-  installSnapshot(nextRenderModel, presentationEvents)
+  installScene(nextRenderModel, presentationEvents, mode = "advance")
   installPresentation(nextPresentation)
   resize(viewport)
   setPreferences(renderPreferences)
@@ -58,6 +58,14 @@ legacy function names, zone indices, or network messages.
 All public calls are safe after rapid reconnect, route changes, React strict-mode
 development remounts, and WebGL context loss. `destroy()` is idempotent and
 releases listeners, pointer capture, timers, textures, and GPU resources.
+
+`installScene` rejects a lower revision in its default `advance` mode. Replay is
+the only caller allowed to request explicit `replace` mode when previous or
+restart selects an older recorded projection. Both DOM and Pixi implementations
+replace in place, so rewind does not require renderer destruction/recreation and
+live stale-snapshot protection remains intact. Multi-revision fast-forward
+effects are dispatched by the presentation layer rather than mislabeled as
+events for only the final scene.
 
 ## Scene structure
 
@@ -253,6 +261,19 @@ exits while the uninterruptible network transfer drains. The coordinator blocks
 replay controls outside replay mode, disposes its session subscription on route
 teardown, and retains no completed replay after a room/viewer identity change or
 terminal session. Renderers continue to consume only the selected `view`.
+
+`RemoteSessionBoard` now consumes that effective view. Its submit adapter calls
+the live session only while mode is live and request phase is idle; loading,
+active replay, and post-exit `discarding` return the local typed
+`replay_mode` rejection without allocating a command ID or writing transport.
+Mutating drop intents are not forwarded to a second parent submission path;
+local selection/preview/context/zone/resize intents remain available. The board
+enables explicit renderer replacement only in replay mode. The dormant
+`LegacyReplayControls` renders the four original IDs, symbols, ordering, color
+classes, and action mappings without boundary disabling. It is not mounted in
+the current spike shell; the later parity slice must place it beside the
+existing Options button and apply the remaining replay-mode chrome visibility
+changes.
 
 ## Rendering cadence and performance
 

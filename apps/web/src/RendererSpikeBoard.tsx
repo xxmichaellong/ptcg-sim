@@ -49,17 +49,21 @@ export const RendererSpikeBoard = ({
   rendererKind,
   onIntent,
   submitCommand,
+  allowRevisionRegression = false,
 }: {
   readonly view: MatchViewState;
   readonly rendererKind: RendererKind;
   readonly onIntent: (intent: BoardIntent) => void;
   readonly submitCommand: (command: WireGameCommand) => unknown;
+  /** Replay-only escape hatch; live callers retain monotonic stale protection. */
+  readonly allowRevisionRegression?: boolean;
 }) => {
   const hostRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<BoardRenderer | null>(null);
   const viewRef = useRef(view);
   const onIntentRef = useRef(onIntent);
   const submitCommandRef = useRef(submitCommand);
+  const allowRevisionRegressionRef = useRef(allowRevisionRegression);
   const presentationRef = useRef(DEFAULT_BOARD_PRESENTATION);
   const installedRef = useRef<{
     readonly view: MatchViewState;
@@ -68,6 +72,7 @@ export const RendererSpikeBoard = ({
   viewRef.current = view;
   onIntentRef.current = onIntent;
   submitCommandRef.current = submitCommand;
+  allowRevisionRegressionRef.current = allowRevisionRegression;
   const [status, setStatus] = useState<BoardRendererStatus>({
     kind: 'mounting',
   });
@@ -136,9 +141,16 @@ export const RendererSpikeBoard = ({
           if (!renderer || disposed) return;
           const latestView = viewRef.current;
           const next = sceneForHost(host, latestView);
-          installedRef.current = { view: latestView, scene: next.scene };
+          const installed = installedRef.current;
+          const mode =
+            allowRevisionRegressionRef.current &&
+            installed &&
+            next.scene.revision < installed.scene.revision
+              ? 'replace'
+              : 'advance';
           renderer.resize(next.viewport);
-          renderer.installScene(next.scene, []);
+          renderer.installScene(next.scene, [], mode);
+          installedRef.current = { view: latestView, scene: next.scene };
           window.__PTCG_RENDERER_SPIKE__ = {
             rendererKind,
             renderer,
@@ -177,14 +189,21 @@ export const RendererSpikeBoard = ({
     const host = hostRef.current;
     if (!renderer || !host) return;
     const next = sceneForHost(host, view);
+    const installed = installedRef.current;
+    const mode =
+      allowRevisionRegression &&
+      installed &&
+      next.scene.revision < installed.scene.revision
+        ? 'replace'
+        : 'advance';
+    renderer.installScene(next.scene, [], mode);
     installedRef.current = { view, scene: next.scene };
-    renderer.installScene(next.scene, []);
     window.__PTCG_RENDERER_SPIKE__ = {
       rendererKind,
       renderer,
       scene: next.scene,
     };
-  }, [rendererKind, view]);
+  }, [allowRevisionRegression, rendererKind, view]);
 
   useEffect(() => {
     rendererRef.current?.installPresentation(presentation);

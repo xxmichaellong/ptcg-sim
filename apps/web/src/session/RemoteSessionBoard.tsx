@@ -10,30 +10,54 @@ import {
   RendererSpikeBoard,
   type RendererKind,
 } from '../RendererSpikeBoard.js';
-import { useGameSession } from './useGameSession.js';
+import type { ReplaySessionCoordinator } from '../replay/ReplaySessionCoordinator.js';
+import { useReplaySession } from '../replay/useReplaySession.js';
+
+export type ReplayBlockedSubmissionResult = {
+  readonly queued: false;
+  readonly reason: 'replay_mode';
+};
+
+export type RemoteBoardSubmissionResult =
+  SubmitCommandResult | ReplayBlockedSubmissionResult;
+
+export type RemoteBoardSession = Pick<RemoteGameSession, 'submit'>;
 
 export const RemoteSessionBoard = ({
   session,
+  replay,
   rendererKind,
   onIntent,
   onSubmission,
 }: {
-  readonly session: RemoteGameSession;
+  readonly session: RemoteBoardSession;
+  readonly replay: ReplaySessionCoordinator;
   readonly rendererKind: RendererKind;
   readonly onIntent: (intent: BoardIntent) => void;
   readonly onSubmission?: (
     command: WireGameCommand,
-    result: SubmitCommandResult
+    result: RemoteBoardSubmissionResult
   ) => void;
 }) => {
-  const state = useGameSession(session);
+  const state = useReplaySession(replay);
+  const submissionsBlocked =
+    state.mode === 'replay' || state.requestPhase !== 'idle';
+  const forwardIntent = useCallback(
+    (intent: BoardIntent) => {
+      if (submissionsBlocked && intent.kind === 'CardDropRequested') return;
+      onIntent(intent);
+    },
+    [onIntent, submissionsBlocked]
+  );
   const submitCommand = useCallback(
     (command: WireGameCommand) => {
-      const result = session.submit(command);
+      const result: RemoteBoardSubmissionResult = submissionsBlocked
+        ? { queued: false, reason: 'replay_mode' }
+        : session.submit(command);
       onSubmission?.(command, result);
       return result;
     },
-    [onSubmission, session]
+    [onSubmission, session, submissionsBlocked]
   );
 
   if (!state.view) {
@@ -42,9 +66,9 @@ export const RemoteSessionBoard = ({
         <span
           className="renderer-status"
           role="status"
-          data-session-phase={state.phase}
+          data-session-phase={state.sessionPhase}
         >
-          {state.phase}
+          {state.sessionPhase}
         </span>
       </div>
     );
@@ -52,10 +76,16 @@ export const RemoteSessionBoard = ({
 
   return (
     <RendererSpikeBoard
+      key={`${state.view.matchId}:${
+        state.view.viewer.kind === 'player'
+          ? state.view.viewer.playerId
+          : 'spectator'
+      }`}
       view={state.view}
       rendererKind={rendererKind}
-      onIntent={onIntent}
+      onIntent={forwardIntent}
       submitCommand={submitCommand}
+      allowRevisionRegression={state.mode === 'replay'}
     />
   );
 };

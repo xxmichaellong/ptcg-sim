@@ -24,8 +24,9 @@ and Phase 0 exit criteria are accepted.
   private looks never reach unauthorized clients.
 - A bounded authoritative replay ledger, session-bound streamed projected
   replay, renderer-neutral deterministic playback, and an application
-  coordinator that never rewinds the live session; replay UI and
-  downloadable/export formats remain later parity work.
+  coordinator/board binding that never rewinds or submits through the live
+  session; mounting the replay UI and downloadable/export formats remain later
+  parity work.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 
