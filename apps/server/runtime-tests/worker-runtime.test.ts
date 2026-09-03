@@ -4,6 +4,7 @@ import {
   parseRoomAdmissionTicketResponse,
   parseRoomCreationResponse,
   parseServerFrame,
+  type RoomAdmissionTicketResponse,
   type RoomCreationResponse,
   type ServerMessage,
 } from '@ptcgsim/protocol';
@@ -17,6 +18,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   AUTHORITY_SNAPSHOT_STORAGE_KEY,
+  DurableRoomSnapshotStore,
   ROOM_LIFECYCLE_STORAGE_KEY,
 } from '../src/durable-storage.js';
 
@@ -42,6 +44,8 @@ interface SocketAttachment {
   readonly authorityVersion: number;
 }
 
+type Welcome = Extract<ServerMessage, { readonly type: 'Welcome' }>;
+
 const createRoom = async () => {
   const response = await exports.default.fetch(
     new Request(`${ORIGIN}/v2/rooms`, {
@@ -64,7 +68,11 @@ const createRoom = async () => {
 const roomStub = (created: RoomCreationResponse) =>
   env.PTCG_ROOM.getByName(created.roomCode);
 
-const issuePlayerTicket = async (created: RoomCreationResponse) => {
+const issuePlayerTicket = async (
+  created: RoomCreationResponse,
+  seat: 'one' | 'two' = 'one',
+  displayName = 'Runtime Player'
+) => {
   const response = await exports.default.fetch(
     new Request(`${ORIGIN}/v2/rooms/${created.roomCode}/admission-tickets`, {
       method: 'POST',
@@ -73,8 +81,11 @@ const issuePlayerTicket = async (created: RoomCreationResponse) => {
         Origin: ORIGIN,
       },
       body: JSON.stringify({
-        capability: created.credentials.playerOneSeatCapability,
-        displayName: 'Runtime Player',
+        capability:
+          seat === 'one'
+            ? created.credentials.playerOneSeatCapability
+            : created.credentials.playerTwoSeatCapability,
+        displayName,
         requestedRole: 'player',
       }),
     })
@@ -85,6 +96,32 @@ const issuePlayerTicket = async (created: RoomCreationResponse) => {
   if (!parsed.ok) throw new Error(JSON.stringify(parsed.issues));
   return parsed.value;
 };
+
+const helloFrame = (
+  created: RoomCreationResponse,
+  ticket: RoomAdmissionTicketResponse,
+  displayName = 'Runtime Player'
+): string =>
+  JSON.stringify({
+    type: 'Hello',
+    protocolVersion: PROTOCOL_VERSION,
+    buildId: 'local-development',
+    roomCode: created.roomCode,
+    displayName,
+    requestedRole: 'player',
+    admissionTicket: ticket.admissionTicket,
+  });
+
+const flipCommandFrame = (welcome: Welcome, commandId: string): string =>
+  JSON.stringify({
+    type: 'Command',
+    protocolVersion: PROTOCOL_VERSION,
+    sessionId: welcome.sessionId,
+    clientSequence: welcome.nextClientSequence,
+    commandId,
+    lastSeenRevision: welcome.snapshot.revision,
+    command: { type: 'FlipCoin' },
+  });
 
 const connect = async (created: RoomCreationResponse): Promise<WebSocket> => {
   const response = await exports.default.fetch(
@@ -240,17 +277,7 @@ describe('Cloudflare Worker runtime', () => {
     const socket = await connect(created);
     const welcomePromise = nextServerMessage(socket);
 
-    socket.send(
-      JSON.stringify({
-        type: 'Hello',
-        protocolVersion: PROTOCOL_VERSION,
-        buildId: 'local-development',
-        roomCode: created.roomCode,
-        displayName: 'Runtime Player',
-        requestedRole: 'player',
-        admissionTicket: ticket.admissionTicket,
-      })
-    );
+    socket.send(helloFrame(created, ticket));
     const welcome = await welcomePromise;
     expect(welcome.type).toBe('Welcome');
     if (welcome.type !== 'Welcome') throw new Error('Expected Welcome');
@@ -292,17 +319,7 @@ describe('Cloudflare Worker runtime', () => {
     expect(afterEviction.attachment).toEqual(beforeEviction.attachment);
 
     const commandMessagesPromise = nextServerMessages(socket, 2);
-    socket.send(
-      JSON.stringify({
-        type: 'Command',
-        protocolVersion: PROTOCOL_VERSION,
-        sessionId: welcome.sessionId,
-        clientSequence: welcome.nextClientSequence,
-        commandId: 'runtime-post-hibernation-flip',
-        lastSeenRevision: welcome.snapshot.revision,
-        command: { type: 'FlipCoin' },
-      })
-    );
+    socket.send(flipCommandFrame(welcome, 'runtime-post-hibernation-flip'));
     const commandMessages = await commandMessagesPromise;
     expect(commandMessages.map((message) => message.type)).toEqual([
       'StatePublication',
@@ -329,5 +346,255 @@ describe('Cloudflare Worker runtime', () => {
         },
       ],
     });
+  });
+
+  it('keeps an admission ticket retryable when its durable claim fails', async () => {
+    const created = await createRoom();
+    const ticket = await issuePlayerTicket(created);
+    const socket = await connect(created);
+    const commitAdmission = vi
+      .spyOn(DurableRoomSnapshotStore.prototype, 'commitAdmission')
+      .mockRejectedValueOnce(new Error('injected durable admission failure'));
+
+    const failedAdmissionPromise = nextServerMessage(socket);
+    socket.send(helloFrame(created, ticket));
+    await expect(failedAdmissionPromise).resolves.toMatchObject({
+      type: 'ServerNotice',
+      code: 'internal_retryable',
+      retryable: true,
+    });
+
+    const afterFailure = await runtimeEvidence(created);
+    expect(afterFailure.lifecycle).toMatchObject({ state: 'unclaimed' });
+    expect(afterFailure.alarm).toBeGreaterThan(Date.now());
+    expect(afterFailure.snapshot?.sessions).toEqual({});
+    expect(
+      Object.keys(afterFailure.snapshot?.admission?.tickets ?? {})
+    ).toHaveLength(1);
+    expect(afterFailure.attachment?.sessionId).toBeUndefined();
+
+    const retriedAdmissionPromise = nextServerMessage(socket);
+    socket.send(helloFrame(created, ticket));
+    const retriedAdmission = await retriedAdmissionPromise;
+    expect(retriedAdmission.type).toBe('Welcome');
+    if (retriedAdmission.type !== 'Welcome') {
+      throw new Error('Expected Welcome after retry');
+    }
+
+    const afterRetry = await runtimeEvidence(created);
+    expect(afterRetry.lifecycle).toMatchObject({ state: 'claimed' });
+    expect(afterRetry.alarm).toBeNull();
+    expect(Object.keys(afterRetry.snapshot?.sessions ?? {})).toEqual([
+      retriedAdmission.sessionId,
+    ]);
+    expect(afterRetry.snapshot?.admission?.tickets).toEqual({});
+    expect(afterRetry.attachment?.sessionId).toBe(retriedAdmission.sessionId);
+    expect(commitAdmission).toHaveBeenCalledTimes(2);
+  });
+
+  it('serializes concurrent admission around a failed command without phantom acknowledgement', async () => {
+    const created = await createRoom();
+    const firstTicket = await issuePlayerTicket(created);
+    const firstSocket = await connect(created);
+    const firstWelcomePromise = nextServerMessage(firstSocket);
+    firstSocket.send(helloFrame(created, firstTicket));
+    const firstWelcome = await firstWelcomePromise;
+    expect(firstWelcome.type).toBe('Welcome');
+    if (firstWelcome.type !== 'Welcome') throw new Error('Expected Welcome');
+
+    const secondTicket = await issuePlayerTicket(
+      created,
+      'two',
+      'Runtime Opponent'
+    );
+    const secondSocket = await connect(created);
+    const commit = vi
+      .spyOn(DurableRoomSnapshotStore.prototype, 'commit')
+      .mockRejectedValueOnce(new Error('injected durable command failure'));
+    const commandFrame = flipCommandFrame(
+      firstWelcome,
+      'runtime-concurrent-fault-flip'
+    );
+    const secondWelcomePromise = nextServerMessage(secondSocket);
+    const failedCommandPromise = nextServerMessage(firstSocket);
+
+    secondSocket.send(helloFrame(created, secondTicket, 'Runtime Opponent'));
+    firstSocket.send(commandFrame);
+
+    const [secondWelcome, failedCommand] = await Promise.all([
+      secondWelcomePromise,
+      failedCommandPromise,
+    ]);
+    expect(secondWelcome.type).toBe('Welcome');
+    expect(failedCommand).toMatchObject({
+      type: 'ServerNotice',
+      code: 'internal_retryable',
+      retryable: true,
+    });
+
+    const afterFailure = await runtimeEvidence(created);
+    expect(afterFailure.snapshot?.state.revision).toBe(
+      firstWelcome.snapshot.revision
+    );
+    expect(Object.keys(afterFailure.snapshot?.sessions ?? {})).toHaveLength(2);
+    expect(
+      afterFailure.snapshot?.sessions[firstWelcome.sessionId]
+    ).toMatchObject({
+      nextClientSequence: firstWelcome.nextClientSequence,
+      recentOutcomes: [],
+    });
+
+    const retriedCommandPromise = nextServerMessages(firstSocket, 2);
+    firstSocket.send(commandFrame);
+    const retriedCommand = await retriedCommandPromise;
+    expect(retriedCommand.map((message) => message.type)).toEqual([
+      'StatePublication',
+      'CommandResult',
+    ]);
+    expect(retriedCommand[1]).toMatchObject({
+      type: 'CommandResult',
+      commandId: 'runtime-concurrent-fault-flip',
+      accepted: true,
+      revision: firstWelcome.snapshot.revision + 1,
+    });
+
+    const committed = await runtimeEvidence(created);
+    expect(committed.snapshot?.state.revision).toBe(
+      firstWelcome.snapshot.revision + 1
+    );
+    expect(committed.snapshot?.sessions[firstWelcome.sessionId]).toMatchObject({
+      nextClientSequence: firstWelcome.nextClientSequence + 1,
+      recentOutcomes: [
+        {
+          commandId: 'runtime-concurrent-fault-flip',
+          accepted: true,
+          revision: firstWelcome.snapshot.revision + 1,
+        },
+      ],
+    });
+    expect(commit).toHaveBeenCalledTimes(2);
+
+    await evictDurableObject(roomStub(created));
+    const pongPromise = nextServerMessage(firstSocket);
+    firstSocket.send(
+      JSON.stringify({
+        type: 'Ping',
+        protocolVersion: PROTOCOL_VERSION,
+        id: 29,
+      })
+    );
+    await expect(pongPromise).resolves.toMatchObject({
+      type: 'Pong',
+      id: 29,
+    });
+    expect((await runtimeEvidence(created)).snapshot).toEqual(
+      committed.snapshot
+    );
+
+    const duplicatePromise = nextServerMessages(firstSocket, 2);
+    firstSocket.send(commandFrame);
+    const duplicate = await duplicatePromise;
+    expect(duplicate.map((message) => message.type)).toEqual([
+      'StatePublication',
+      'CommandResult',
+    ]);
+    expect(duplicate[1]).toMatchObject({
+      type: 'CommandResult',
+      commandId: 'runtime-concurrent-fault-flip',
+      accepted: true,
+      revision: firstWelcome.snapshot.revision + 1,
+    });
+    expect((await runtimeEvidence(created)).snapshot).toEqual(
+      committed.snapshot
+    );
+    expect(commit).toHaveBeenCalledTimes(2);
+  });
+
+  it('deduplicates an ambiguously committed command before and after eviction', async () => {
+    const created = await createRoom();
+    const ticket = await issuePlayerTicket(created);
+    const socket = await connect(created);
+    const welcomePromise = nextServerMessage(socket);
+    socket.send(helloFrame(created, ticket));
+    const welcome = await welcomePromise;
+    expect(welcome.type).toBe('Welcome');
+    if (welcome.type !== 'Welcome') throw new Error('Expected Welcome');
+
+    const originalCommit = DurableRoomSnapshotStore.prototype.commit;
+    const commit = vi
+      .spyOn(DurableRoomSnapshotStore.prototype, 'commit')
+      .mockImplementationOnce(async function (
+        this: DurableRoomSnapshotStore,
+        transaction
+      ) {
+        await originalCommit.call(this, transaction);
+        throw new Error('injected failure after durable commit');
+      });
+    const commandFrame = flipCommandFrame(
+      welcome,
+      'runtime-ambiguous-commit-flip'
+    );
+    const ambiguousResultPromise = nextServerMessage(socket);
+    socket.send(commandFrame);
+    await expect(ambiguousResultPromise).resolves.toMatchObject({
+      type: 'ServerNotice',
+      code: 'internal_retryable',
+      retryable: true,
+    });
+
+    const committedWithoutAck = await runtimeEvidence(created);
+    expect(committedWithoutAck.snapshot?.state.revision).toBe(
+      welcome.snapshot.revision + 1
+    );
+    expect(
+      committedWithoutAck.snapshot?.sessions[welcome.sessionId]
+    ).toMatchObject({
+      nextClientSequence: welcome.nextClientSequence + 1,
+      recentOutcomes: [
+        {
+          commandId: 'runtime-ambiguous-commit-flip',
+          accepted: true,
+          revision: welcome.snapshot.revision + 1,
+        },
+      ],
+    });
+    expect(commit).toHaveBeenCalledTimes(1);
+
+    const retryPromise = nextServerMessages(socket, 2);
+    socket.send(commandFrame);
+    const retry = await retryPromise;
+    expect(retry.map((message) => message.type)).toEqual([
+      'StatePublication',
+      'CommandResult',
+    ]);
+    expect(retry[1]).toMatchObject({
+      type: 'CommandResult',
+      commandId: 'runtime-ambiguous-commit-flip',
+      accepted: true,
+      revision: welcome.snapshot.revision + 1,
+    });
+    expect((await runtimeEvidence(created)).snapshot).toEqual(
+      committedWithoutAck.snapshot
+    );
+    expect(commit).toHaveBeenCalledTimes(1);
+
+    await evictDurableObject(roomStub(created));
+    const postEvictionRetryPromise = nextServerMessages(socket, 2);
+    socket.send(commandFrame);
+    const postEvictionRetry = await postEvictionRetryPromise;
+    expect(postEvictionRetry.map((message) => message.type)).toEqual([
+      'StatePublication',
+      'CommandResult',
+    ]);
+    expect(postEvictionRetry[1]).toMatchObject({
+      type: 'CommandResult',
+      commandId: 'runtime-ambiguous-commit-flip',
+      accepted: true,
+      revision: welcome.snapshot.revision + 1,
+    });
+    expect((await runtimeEvidence(created)).snapshot).toEqual(
+      committedWithoutAck.snapshot
+    );
+    expect(commit).toHaveBeenCalledTimes(1);
   });
 });

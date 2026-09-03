@@ -164,9 +164,13 @@ Release requires all of the following:
     binding use, persisted creation/alarm state, early and due alarm behavior,
     atomic first-admission claim, and WebSocket attachment/session recovery
     across a forced hibernating eviction. The resumed socket answers an
-    application ping and commits the next sequenced command durably. Preview
-    storage-fault traffic, load/cost measurement, and platform alarm/rate-limit
-    distribution remain explicit pre-rollout gates.
+    application ping and commits the next sequenced command durably. Bounded
+    adapter-fault cases cover retryable initial admission, concurrent admission
+    with a pre-commit command failure, and a committed-but-unacknowledged
+    command; exact retries before and after eviction never create a phantom
+    acknowledgement or second mutation. Preview managed-service fault rehearsal,
+    load/cost measurement, and platform alarm/rate-limit distribution remain
+    explicit pre-rollout gates.
 
 ## Privacy and security gates
 

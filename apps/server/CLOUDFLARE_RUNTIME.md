@@ -1,9 +1,9 @@
 # Cloudflare runtime spike record
 
-Status: provisionally selected; local bundle/type checks and real `workerd`
-lifecycle/hibernation tests pass. Preview deployment, injected storage-fault
-traffic, load/cost measurements, and rollback evidence remain required before
-ADR-005 becomes accepted.
+Status: provisionally selected; local bundle/type checks plus real `workerd`
+lifecycle, hibernation, concurrency, and bounded persistence-fault tests pass.
+Preview deployment, platform-fault rehearsal, load/cost measurements, and
+rollback evidence remain required before ADR-005 becomes accepted.
 
 ## Implemented runtime boundary
 
@@ -63,13 +63,26 @@ ADR-005 becomes accepted.
   room, retains its serialized connection/session attachment and identical
   durable authority snapshot, answers an application ping, and durably accepts
   the next sequenced command.
+- One-shot faults at the production persistence-adapter boundary prove that a
+  failed initial admission neither consumes its ticket nor cancels unclaimed
+  expiry, and that retrying the same ticket commits exactly once. Concurrent
+  second-seat admission and command traffic proves a failed pre-commit command
+  has no durable effect or phantom acknowledgement before its exact retry.
+- A separate ambiguous-write case commits the native storage transaction and
+  then reports failure before publication. The room reloads that durable
+  frontier, and exact retries both before and after eviction return the stored
+  outcome without executing or writing the command again. The fault trigger is
+  deterministic test instrumentation around the real adapter; the surrounding
+  Worker, WebSocket, Durable Object, alarm, and SQLite storage paths remain the
+  production runtime paths.
 - The platform adapter has no game rules. It delegates all decisions to
   `@ptcgsim/room-authority` and `@ptcgsim/game-core`.
 
 ## Remaining spike gates
 
-1. Verify simultaneous admission and command traffic under storage fault
-   injection with the real runtime input/output gates.
+1. Rehearse Cloudflare platform-level storage unavailability and alarm retries
+   in preview; local tests intentionally do not claim to synthesize failures
+   inside the managed SQLite service.
 2. Measure full-snapshot payloads, command latency including durable commit,
    memory, CPU, hibernation wake latency, and practical sockets per room.
 3. Connect the implemented structured events to production dashboards and

@@ -13,5 +13,7 @@ accepted game command requires an atomic per-room journal commit.
 `pnpm run test:runtime` executes the isolated Cloudflare runtime suite through
 `@cloudflare/vitest-plugin`. It covers the deployed Worker boundary, SQLite
 Durable Object storage and alarms, WebSocket admission, real eviction with a
-hibernated socket, attachment reconstruction, and a post-wake durable command.
-The repository-level `check:v2` gate runs this suite after the fast unit tests.
+hibernated socket, attachment reconstruction, concurrent admission/command
+traffic, pre-commit and ambiguous post-commit persistence failures, exact
+retries, and post-wake idempotency. The repository-level `check:v2` gate runs
+this suite after the fast unit tests.
