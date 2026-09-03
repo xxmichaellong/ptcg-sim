@@ -31,4 +31,6 @@ integer `clientWidth` offsets, logical versus DOM versus hit order, transient
 rotation margins, and the MutationObserver-delayed empty-wrapper removal. The
 transient phase is diagnostic rather than user-visible. Attachments, counters,
 BREAK/rotation, overflow/flex shrink, history-dependent restore paths, face
-hide/reveal/source mutation, and candidate-renderer parity remain excluded.
+hide/reveal/source mutation, and Pixi parity remain excluded. Its browser
+companion now compares the exact stable three-card boundary with a separately
+mounted React DOM candidate; this does not broaden the source oracle's scope.

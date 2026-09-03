@@ -16,6 +16,7 @@ import {
   findBoardLayoutRegion,
   LEGACY_BOARD_RESIZER_V1,
   layoutLegacyContainedCard,
+  layoutLegacyOrdinaryEvolutionStack,
   legacyPileTopIndex,
   type BoardLayoutSnapshot,
   type BoardLayoutState,
@@ -250,6 +251,87 @@ const isLegacyPileKind = (
   kind === 'lostZone' ||
   kind === 'stadium';
 
+const hasExactBounds = (actual: Rect, expected: Rect): boolean =>
+  actual.x === expected.x &&
+  actual.y === expected.y &&
+  actual.width === expected.width &&
+  actual.height === expected.height;
+
+const isCharacterizedOrdinaryEvolutionLayout = (
+  view: MatchViewState,
+  layout: BoardLayoutSnapshot
+): boolean => {
+  const firstPlayerId = view.playerOrder[0];
+  const local = layout.players.find((player) => player.side === 'local');
+  const opponent = layout.players.find((player) => player.side === 'opponent');
+  return (
+    firstPlayerId !== undefined &&
+    layout.bottomPlayerId === firstPlayerId &&
+    layout.shellMode === 'sidebar' &&
+    layout.viewport.width === 1600 &&
+    layout.viewport.height === 900 &&
+    layout.viewport.devicePixelRatio === 1 &&
+    hasExactBounds(layout.playAreaBounds, {
+      x: 0,
+      y: 0,
+      width: 1208,
+      height: 900,
+    }) &&
+    local !== undefined &&
+    hasExactBounds(local.frameBounds, {
+      x: 0,
+      y: 450,
+      width: 1208,
+      height: 450,
+    }) &&
+    opponent !== undefined &&
+    hasExactBounds(opponent.frameBounds, {
+      x: 0,
+      y: 0,
+      width: 1208,
+      height: 450,
+    })
+  );
+};
+
+const isCharacterizedOrdinaryEvolutionStack = (
+  stack: MatchViewState['stacks'][string],
+  board: MatchViewState['boards'][string],
+  playerId: PlayerId,
+  region: BoardLayoutSnapshot['players'][number]['regions'][number],
+  layoutIsCharacterized: boolean
+): boolean => {
+  const isOnlyStackInSlot =
+    stack.slot === 'active'
+      ? board.activeStackId === stack.id
+      : board.benchStackIds.length === 1 && board.benchStackIds[0] === stack.id;
+  const bounds = region.physicalDeclaredBounds;
+  const flexOuterWidth =
+    Math.round(bounds.height * CARD_ASPECT_RATIO) +
+    (region.kind === 'bench' ? bounds.width * 0.01 : 0);
+  return (
+    layoutIsCharacterized &&
+    isOnlyStackInSlot &&
+    stack.boardPlayerId === playerId &&
+    stack.evolutionCards.length === 3 &&
+    stack.attachmentCards.length === 0 &&
+    stack.rotationQuarterTurns === 0 &&
+    stack.damage === null &&
+    stack.specialCondition === null &&
+    stack.abilityUsed === false &&
+    flexOuterWidth <= bounds.width &&
+    stack.evolutionCards.every(
+      (card) =>
+        card.kind === 'known' &&
+        card.ownerId === playerId &&
+        card.category === 'Pokémon' &&
+        card.face === 'up' &&
+        card.orientationQuarterTurns === 0 &&
+        card.abilityUsed === false
+    )
+  );
+};
+
 const makeCardNode = (
   view: MatchViewState,
   card: ViewCard,
@@ -362,6 +444,8 @@ export const createBoardScene = (
     height: layout.playAreaBounds.height,
     devicePixelRatio: layout.viewport.devicePixelRatio,
   };
+  const ordinaryEvolutionLayoutIsCharacterized =
+    isCharacterizedOrdinaryEvolutionLayout(view, layout);
   const zones: ZoneSceneNode[] = [];
   const cards: CardSceneNode[] = [];
   const markers: MarkerSceneNode[] = [];
@@ -544,19 +628,37 @@ export const createBoardScene = (
         stack.slot === 'active' ? activeRects[0] : benchRects[slotIndex];
       if (!baseBounds) throw new Error(`No layout slot for stack ${stackId}`);
       const evolutionOffset = Math.min(10, baseBounds.height * 0.035);
+      const ordinaryEvolutionLayout = isCharacterizedOrdinaryEvolutionStack(
+        stack,
+        board,
+        playerId,
+        slotRegions[stack.slot],
+        ordinaryEvolutionLayoutIsCharacterized
+      )
+        ? layoutLegacyOrdinaryEvolutionStack(
+            slotRegions[stack.slot],
+            CARD_ASPECT_RATIO,
+            3
+          )
+        : null;
       const evolutionNodes: CardSceneNode[] = [];
       stack.evolutionCards.forEach((card, index) => {
+        const ordinaryCardLayout = ordinaryEvolutionLayout?.cards[index];
         const node = makeCardNode(view, card, {
           parentId: stack.id,
           side,
           role: 'stackEvolution',
-          bounds: {
-            ...baseBounds,
-            y:
-              baseBounds.y -
-              evolutionOffset * (stack.evolutionCards.length - index - 1),
-          },
-          zIndex: 300 + index,
+          bounds: ordinaryCardLayout
+            ? copyRect(ordinaryCardLayout.bounds)
+            : {
+                ...baseBounds,
+                y:
+                  baseBounds.y -
+                  evolutionOffset * (stack.evolutionCards.length - index - 1),
+              },
+          zIndex: ordinaryCardLayout
+            ? 300 + ordinaryCardLayout.sourceZIndex
+            : 300 + index,
           rotationQuarterTurns: ((stack.rotationQuarterTurns +
             (card.kind === 'known' ? card.orientationQuarterTurns : 0)) %
             4) as 0 | 1 | 2 | 3,

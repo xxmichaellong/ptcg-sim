@@ -1,4 +1,16 @@
 import { expect, test } from '@playwright/test';
+import {
+  asViewCardId,
+  type MatchViewState,
+  type PlayerId,
+} from '../../packages/game-core/src/index.js';
+import {
+  BOARD_LAYOUT_GEOMETRY_VERSION,
+  createBoardLayoutSnapshot,
+  createBoardScene,
+  createRendererSpikeView,
+  DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+} from '../../packages/renderer-contract/src/index.js';
 
 import oracle from '../legacy-fixtures/renderer/evolution-reflow-v1.json' with { type: 'json' };
 
@@ -55,6 +67,82 @@ const modularDegreesBetween = (left: number, right: number): number => {
   return Math.min(distance, 360 - distance);
 };
 
+const createCandidateEvolutionScene = () => {
+  const base = createRendererSpikeView();
+  const localPlayerId = base.playerOrder[0];
+  const opponentPlayerId = base.playerOrder[1];
+  const definition = Object.values(base.definitions)[0];
+  if (!localPlayerId || !opponentPlayerId || !definition) {
+    throw new Error('Renderer spike fixture lacks evolution scene inputs');
+  }
+  const makeCard = (id: string, ownerId: PlayerId) => ({
+    kind: 'known' as const,
+    id: asViewCardId(id),
+    definitionId: definition.id,
+    ownerId,
+    category: 'Pokémon' as const,
+    face: 'up' as const,
+    orientationQuarterTurns: 0 as const,
+    abilityUsed: false,
+    publiclyRevealed: true,
+  });
+  const makeStack = (
+    side: 'local' | 'opponent',
+    slot: 'active' | 'bench',
+    boardPlayerId: PlayerId
+  ) => {
+    const id = `${side}-${slot}-evolution-stack`;
+    return {
+      id,
+      boardPlayerId,
+      slot,
+      evolutionCards: ['base', 'middle', 'top'].map((role) =>
+        makeCard(`${side}-${slot}-evolution-${role}`, boardPlayerId)
+      ),
+      attachmentCards: [],
+      rotationQuarterTurns: 0 as const,
+      damage: null,
+      specialCondition: null,
+      abilityUsed: false,
+    };
+  };
+  const localActive = makeStack('local', 'active', localPlayerId);
+  const localBench = makeStack('local', 'bench', localPlayerId);
+  const opponentActive = makeStack('opponent', 'active', opponentPlayerId);
+  const opponentBench = makeStack('opponent', 'bench', opponentPlayerId);
+  const view: MatchViewState = {
+    ...base,
+    revision: base.revision + 1,
+    boards: {
+      [localPlayerId]: {
+        activeStackId: localActive.id,
+        benchStackIds: [localBench.id],
+      },
+      [opponentPlayerId]: {
+        activeStackId: opponentActive.id,
+        benchStackIds: [opponentBench.id],
+      },
+    },
+    stacks: Object.fromEntries(
+      [localActive, localBench, opponentActive, opponentBench].map((stack) => [
+        stack.id,
+        stack,
+      ])
+    ),
+  };
+  return createBoardScene(
+    view,
+    createBoardLayoutSnapshot({
+      geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
+      viewport: oracle.input.viewport,
+      playerIds: [localPlayerId, opponentPlayerId],
+      bottomPlayerId: localPlayerId,
+      shellMode: 'sidebar',
+      vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+    })
+  );
+};
+
 const expectStructuredNumber = (
   actual: number,
   expected: number,
@@ -66,7 +154,7 @@ const expectStructuredNumber = (
   ).toBeLessThanOrEqual(oracle.tolerances.structuredPixels);
 };
 
-test('checked-in legacy sources retain ordinary evolution reflow semantics', async ({
+test('checked-in legacy sources and React DOM share ordinary evolution reflow semantics', async ({
   page,
 }, testInfo) => {
   test.skip(
@@ -362,4 +450,184 @@ test('checked-in legacy sources retain ordinary evolution reflow semantics', asy
       expect(middle.physicalBounds.y).toBeGreaterThan(top.physicalBounds.y);
     }
   }
+
+  const candidateScene = createCandidateEvolutionScene();
+  await page.unrouteAll({ behavior: 'wait' });
+  const candidateRuntimeErrors: string[] = [];
+  page.on('pageerror', (error) => {
+    candidateRuntimeErrors.push(`pageerror: ${error.message}`);
+  });
+  page.on('console', (message) => {
+    if (message.type() === 'error') {
+      candidateRuntimeErrors.push(`console: ${message.text()}`);
+    }
+  });
+  await page.goto('/?renderer=dom');
+  await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
+    'data-renderer-status',
+    'ready'
+  );
+  await page.evaluate(async (scene) => {
+    const spike = window.__PTCG_RENDERER_SPIKE__;
+    if (!spike?.createRenderer) {
+      throw new Error('Missing renderer spike factory test seam');
+    }
+    const host = document.createElement('div');
+    host.dataset.evolutionCandidateHost = 'true';
+    Object.assign(host.style, {
+      position: 'fixed',
+      left: '0px',
+      top: '0px',
+      width: `${scene.viewport.width}px`,
+      height: `${scene.viewport.height}px`,
+      zIndex: '20000',
+    });
+    document.body.append(host);
+    const renderer = spike.createRenderer({
+      emitIntent: () => undefined,
+      emitPresentationUpdate: () => undefined,
+      reportError: (error) => {
+        host.dataset.rendererError = String(error);
+      },
+    });
+    await renderer.mount(host, scene, {
+      selectedCardId: null,
+      hoveredCardId: null,
+      drag: null,
+      openedZoneId: null,
+    });
+    (
+      window as typeof window & {
+        __PTCG_EVOLUTION_CANDIDATE_RENDERER__?: { destroy(): void };
+      }
+    ).__PTCG_EVOLUTION_CANDIDATE_RENDERER__ = renderer;
+  }, candidateScene);
+  await expect(
+    page.locator('[data-evolution-candidate-host]')
+  ).not.toHaveAttribute('data-renderer-error', /.+/u);
+  await expect(
+    page.locator('[data-card-id="local-active-evolution-top"]')
+  ).toBeVisible();
+
+  for (const sourceCard of capture.cards) {
+    const candidate = candidateScene.cards.find(
+      (card) => card.id === sourceCard.id
+    );
+    if (!candidate) {
+      throw new Error(`Missing candidate evolution card ${sourceCard.id}`);
+    }
+    expectCardAnchorWithin(
+      candidate.bounds,
+      sourceCard.physicalBounds,
+      `${sourceCard.id}.scene`
+    );
+    expectCardSizeWithin(
+      candidate.bounds,
+      sourceCard.physicalBounds,
+      `${sourceCard.id}.scene`
+    );
+    const locator = page.locator(`[data-card-id="${sourceCard.id}"]`);
+    const renderedBounds = await locator.boundingBox();
+    if (!renderedBounds) {
+      throw new Error(`Candidate card is not visible: ${sourceCard.id}`);
+    }
+    expectCardAnchorWithin(
+      renderedBounds,
+      sourceCard.physicalBounds,
+      `${sourceCard.id}.rendered`
+    );
+    expectCardSizeWithin(
+      renderedBounds,
+      sourceCard.physicalBounds,
+      `${sourceCard.id}.rendered`
+    );
+    const rendered = await locator.evaluate((element) => {
+      const styles = getComputedStyle(element);
+      const matrix = new DOMMatrixReadOnly(styles.transform);
+      return {
+        rotationDegrees:
+          ((Math.atan2(matrix.b, matrix.a) * 180) / Math.PI + 360) % 360,
+        zIndex: Number.parseInt(styles.zIndex, 10),
+      };
+    });
+    expect(
+      modularDegreesBetween(
+        rendered.rotationDegrees,
+        sourceCard.effectiveRotationDegrees
+      )
+    ).toBeLessThanOrEqual(oracle.tolerances.rotationDegrees);
+    expect(rendered.zIndex).toBe(
+      sourceCard.role === 'topEvolution' ? 300 : 300 + sourceCard.zIndex
+    );
+  }
+
+  for (const sourceStack of capture.stacks) {
+    const prefix = sourceStack.id.replace(/-stack$/u, '');
+    const candidateHitOrder = await page.evaluate(
+      ({ prefix, side }) => {
+        const requireCard = (role: 'base' | 'middle' | 'top') => {
+          const element = document.querySelector<HTMLElement>(
+            `[data-card-id="${prefix}-${role}"]`
+          );
+          if (!element) throw new Error(`Missing candidate ${prefix}-${role}`);
+          return element.getBoundingClientRect();
+        };
+        const base = requireCard('base');
+        const middle = requireCard('middle');
+        const top = requireCard('top');
+        const idsAt = (x: number, y: number) =>
+          document
+            .elementsFromPoint(x, y)
+            .flatMap((element) => {
+              const card = element.closest<HTMLElement>('[data-card-id]');
+              return card?.dataset.cardId?.startsWith(prefix)
+                ? [card.dataset.cardId]
+                : [];
+            })
+            .filter((id, index, ids) => ids.indexOf(id) === index);
+        const left = Math.max(base.left, middle.left, top.left);
+        const right = Math.min(base.right, middle.right, top.right);
+        const topEdge = Math.max(base.top, middle.top, top.top);
+        const bottom = Math.min(base.bottom, middle.bottom, top.bottom);
+        const x = (left + right) / 2;
+        const commonY = (topEdge + bottom) / 2;
+        return {
+          commonOverlap: idsAt(x, commonY),
+          middleAndBaseOverlap: idsAt(
+            x,
+            side === 'local'
+              ? (middle.top + top.top) / 2
+              : (middle.bottom + top.bottom) / 2
+          ),
+          outermostBase: idsAt(
+            x,
+            side === 'local'
+              ? (base.top + middle.top) / 2
+              : (base.bottom + middle.bottom) / 2
+          ),
+        };
+      },
+      { prefix, side: sourceStack.side }
+    );
+    expect(candidateHitOrder).toEqual(sourceStack.hitOrder);
+  }
+  await expect(
+    page.locator('[data-evolution-candidate-host]')
+  ).not.toHaveAttribute('data-renderer-error', /.+/u);
+  const teardownError = await page.evaluate(async () => {
+    const fixtureWindow = window as typeof window & {
+      __PTCG_EVOLUTION_CANDIDATE_RENDERER__?: { destroy(): void };
+    };
+    const host = document.querySelector<HTMLElement>(
+      '[data-evolution-candidate-host]'
+    );
+    fixtureWindow.__PTCG_EVOLUTION_CANDIDATE_RENDERER__?.destroy();
+    delete fixtureWindow.__PTCG_EVOLUTION_CANDIDATE_RENDERER__;
+    await new Promise<void>((resolve) => queueMicrotask(resolve));
+    const error = host?.dataset.rendererError ?? null;
+    host?.remove();
+    return error;
+  });
+  expect(teardownError).toBeNull();
+  expect(candidateRuntimeErrors).toEqual([]);
 });

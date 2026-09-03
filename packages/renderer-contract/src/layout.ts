@@ -252,6 +252,24 @@ export interface BoardPlayStackCardHitRegion {
   readonly affordances: typeof LEGACY_BOARD_AFFORDANCES_V1.playStackCard;
 }
 
+export interface LegacyOrdinaryEvolutionCardLayout {
+  /** Index in the canonical bottom-to-top evolution array. */
+  readonly canonicalIndex: number;
+  readonly layerFromTop: number;
+  readonly bounds: Rect;
+  /** The exact image z-index emitted by v1 attachCard. */
+  readonly sourceZIndex: number;
+}
+
+export interface LegacyOrdinaryEvolutionStackLayout {
+  /** Stable post-refresh play-container border box, excluding its flex margin. */
+  readonly flexItemBounds: Rect;
+  /** Integer CSSOM width used by v1 for width/15 offsets. */
+  readonly cssomClientWidth: number;
+  /** Returned in the same bottom-to-top order supplied by canonical state. */
+  readonly cards: readonly LegacyOrdinaryEvolutionCardLayout[];
+}
+
 const ZERO_EDGES: BoxEdgesPx = { top: 0, right: 0, bottom: 0, left: 0 };
 const FIVE_PIXEL_PADDING: BoxEdgesPx = {
   top: 5,
@@ -961,6 +979,97 @@ export const layoutLegacyPlaySlotCards = (
     width,
     height: cardHeight,
   }));
+};
+
+/**
+ * Stable geometry for the narrowly characterized ordinary-evolution path.
+ * This differs from the older attachment fixture: v1 rebuilds an integer-width
+ * flex item during refresh and then derives every evolution offset from that
+ * CSSOM `clientWidth`, while the image can retain a fractional painted width.
+ * Rotation/BREAK, other attachments, multiple-stack shrink and overflow remain
+ * caller-side exclusions.
+ */
+export const layoutLegacyOrdinaryEvolutionStack = (
+  region: BoardLayoutRegion,
+  cardAspectRatio: number,
+  evolutionCount: number
+): LegacyOrdinaryEvolutionStackLayout => {
+  if (
+    region.surface !== 'playSlot' ||
+    (region.kind !== 'active' && region.kind !== 'bench')
+  ) {
+    throw new Error(
+      'Ordinary evolution layout requires an active or bench play slot'
+    );
+  }
+  if (!Number.isFinite(cardAspectRatio) || cardAspectRatio <= 0) {
+    throw new Error('Evolution card aspect ratio must be positive');
+  }
+  if (evolutionCount !== 3) {
+    throw new Error(
+      'Ordinary evolution layout requires exactly three evolution cards'
+    );
+  }
+  const bounds = region.physicalDeclaredBounds;
+  if (
+    !Number.isFinite(bounds.x) ||
+    !Number.isFinite(bounds.y) ||
+    !Number.isFinite(bounds.width) ||
+    !Number.isFinite(bounds.height) ||
+    bounds.width <= 0 ||
+    bounds.height <= 0
+  ) {
+    throw new Error('Evolution play-slot bounds must be finite and positive');
+  }
+
+  const cardHeight = bounds.height;
+  const cardWidth = cardHeight * cardAspectRatio;
+  const cssomClientWidth = Math.round(cardWidth);
+  if (cssomClientWidth <= 0) {
+    throw new Error('Evolution CSSOM client width must be positive');
+  }
+  const marginRight = region.kind === 'bench' ? bounds.width * 0.01 : 0;
+  const flexOuterWidth = cssomClientWidth + marginRight;
+  if (flexOuterWidth > bounds.width) {
+    throw new Error(
+      'Ordinary evolution flex shrink requires browser characterization'
+    );
+  }
+  const centeredOuterX = bounds.x + (bounds.width - flexOuterWidth) / 2;
+  // The authored trailing bench margin becomes a physical leading margin when
+  // the enclosing opponent frame rotates. physicalDeclaredBounds is already
+  // mirrored, so only the margin edge changes here.
+  const flexItemX =
+    region.side === 'local' ? centeredOuterX : centeredOuterX + marginRight;
+  const cardX =
+    region.side === 'local'
+      ? flexItemX
+      : flexItemX + cssomClientWidth - cardWidth;
+  const offsetDirection = region.side === 'local' ? -1 : 1;
+  const offsetStep = cssomClientWidth / 15;
+  return {
+    flexItemBounds: {
+      x: flexItemX,
+      y: bounds.y,
+      width: cssomClientWidth,
+      height: cardHeight,
+    },
+    cssomClientWidth,
+    cards: Array.from({ length: evolutionCount }, (_, canonicalIndex) => {
+      const layerFromTop = evolutionCount - canonicalIndex - 1;
+      return {
+        canonicalIndex,
+        layerFromTop,
+        bounds: {
+          x: cardX,
+          y: bounds.y + offsetDirection * offsetStep * layerFromTop,
+          width: cardWidth,
+          height: cardHeight,
+        },
+        sourceZIndex: layerFromTop === 0 ? 0 : -layerFromTop,
+      };
+    }),
+  };
 };
 
 /**

@@ -10,6 +10,9 @@ import { layoutPlayerZone } from './geometry.js';
 import {
   BOARD_LAYOUT_GEOMETRY_VERSION,
   createBoardLayoutSnapshot,
+  findBoardLayoutRegion,
+  layoutLegacyOrdinaryEvolutionStack,
+  type BoardLayoutState,
 } from './layout.js';
 import {
   createBoardScene,
@@ -106,12 +109,80 @@ const createView = (): MatchViewState => ({
   turn: { number: 2, currentPlayerId: p1 },
 });
 
+const createOrdinaryEvolutionView = (): MatchViewState => {
+  const base = createView();
+  const card = (id: string, ownerId: typeof p1 | typeof p2) => ({
+    kind: 'known' as const,
+    id: asViewCardId(id),
+    definitionId,
+    ownerId,
+    category: 'Pokémon' as const,
+    face: 'up' as const,
+    orientationQuarterTurns: 0 as const,
+    abilityUsed: false,
+    publiclyRevealed: true,
+  });
+  const stack = (
+    id: string,
+    boardPlayerId: typeof p1 | typeof p2,
+    slot: 'active' | 'bench'
+  ) => ({
+    id,
+    boardPlayerId,
+    slot,
+    evolutionCards: [
+      card(`${id}:base`, boardPlayerId),
+      card(`${id}:middle`, boardPlayerId),
+      card(`${id}:top`, boardPlayerId),
+    ],
+    attachmentCards: [],
+    rotationQuarterTurns: 0 as const,
+    damage: null,
+    specialCondition: null,
+    abilityUsed: false,
+  });
+  return {
+    ...base,
+    boards: {
+      [p1]: {
+        activeStackId: 'stack:p1:active',
+        benchStackIds: ['stack:p1:bench'],
+      },
+      [p2]: {
+        activeStackId: 'stack:p2:active',
+        benchStackIds: ['stack:p2:bench'],
+      },
+    },
+    stacks: {
+      'stack:p1:active': stack('stack:p1:active', p1, 'active'),
+      'stack:p1:bench': stack('stack:p1:bench', p1, 'bench'),
+      'stack:p2:active': stack('stack:p2:active', p2, 'active'),
+      'stack:p2:bench': stack('stack:p2:bench', p2, 'bench'),
+    },
+  };
+};
+
 const options = {
   viewport: DEFAULT_BOARD_VIEWPORT,
   bottomPlayerId: p1,
   splitRatio: 0.5,
   geometryVersion: 1 as const,
 };
+
+const characterizedEvolutionLayoutState = {
+  geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
+  viewport: { width: 1600, height: 900, devicePixelRatio: 1 },
+  playerIds: [p1, p2],
+  bottomPlayerId: p1,
+  shellMode: 'sidebar',
+  vertical: {
+    lowerFrame: { bottomRatio: 0, heightRatio: 0.5 },
+    upperFrame: { bottomRatio: 0.5, heightRatio: 0.5 },
+    lowerHandle: { bottomRatio: 0.505, heightRatio: 0.025 },
+    upperHandle: { bottomRatio: 0.53, heightRatio: 0.025 },
+    sharedPlacement: 'cssDefault',
+  },
+} as const satisfies BoardLayoutState;
 
 describe('renderer-neutral board scene', () => {
   it('transcribes legacy player-half geometry without depending on CSS layout', () => {
@@ -223,6 +294,205 @@ describe('renderer-neutral board scene', () => {
         }),
       ])
     );
+  });
+
+  it('uses the characterized stable ordinary-evolution layout without definition leakage', () => {
+    const view = createOrdinaryEvolutionView();
+    const layout = createBoardLayoutSnapshot(characterizedEvolutionLayoutState);
+    const scene = createBoardScene(view, layout);
+    for (const [playerId, side] of [
+      [p1, 'local'],
+      [p2, 'opponent'],
+    ] as const) {
+      for (const slot of ['active', 'bench'] as const) {
+        const stackId = `stack:${playerId}:${slot}`;
+        const stack = view.stacks[stackId]!;
+        const expected = layoutLegacyOrdinaryEvolutionStack(
+          findBoardLayoutRegion(layout, side, slot),
+          63 / 88,
+          3
+        );
+        const nodes = stack.evolutionCards.map((card) => {
+          const node = scene.cards.find(
+            (candidate) => candidate.id === card.id
+          );
+          if (!node)
+            throw new Error(`Missing ordinary evolution node ${card.id}`);
+          return node;
+        });
+        expect(nodes.map((node) => node.bounds)).toEqual(
+          expected.cards.map((card) => card.bounds)
+        );
+        expect(nodes.map((node) => node.zIndex)).toEqual([298, 299, 300]);
+        expect(nodes.map((node) => node.rotationQuarterTurns)).toEqual(
+          side === 'local' ? [0, 0, 0] : [2, 2, 2]
+        );
+
+        const [base, middle, top] = nodes;
+        if (!base || !middle || !top) {
+          throw new Error(`Incomplete ordinary evolution stack ${stackId}`);
+        }
+        const x = top.bounds.x + top.bounds.width / 2;
+        const commonY =
+          Math.max(base.bounds.y, middle.bounds.y, top.bounds.y) +
+          Math.min(
+            base.bounds.height,
+            middle.bounds.height,
+            top.bounds.height
+          ) /
+            2;
+        expect(hitTestBoardScene(scene, x, commonY)).toEqual({
+          kind: 'card',
+          id: top.id,
+        });
+        const middleStripY =
+          side === 'local'
+            ? (middle.bounds.y + top.bounds.y) / 2
+            : (middle.bounds.y +
+                middle.bounds.height +
+                top.bounds.y +
+                top.bounds.height) /
+              2;
+        expect(hitTestBoardScene(scene, x, middleStripY)).toEqual({
+          kind: 'card',
+          id: middle.id,
+        });
+        const baseStripY =
+          side === 'local'
+            ? (base.bounds.y + middle.bounds.y) / 2
+            : (base.bounds.y +
+                base.bounds.height +
+                middle.bounds.y +
+                middle.bounds.height) /
+              2;
+        expect(hitTestBoardScene(scene, x, baseStripY)).toEqual({
+          kind: 'card',
+          id: base.id,
+        });
+      }
+    }
+    expect(scene.markers).toEqual([]);
+
+    const changedDefinitions: MatchViewState = {
+      ...view,
+      definitions: {
+        ...view.definitions,
+        [definitionId]: {
+          ...view.definitions[definitionId]!,
+          imageUrl: 'https://cards.invalid/different-secret-dimensions.png',
+          imageUrlSmall: 'https://cards.invalid/different-board-dimensions.png',
+        },
+      },
+    };
+    const changedScene = createBoardScene(changedDefinitions, layout);
+    for (const stack of Object.values(view.stacks)) {
+      for (const card of stack.evolutionCards) {
+        expect(
+          changedScene.cards.find((candidate) => candidate.id === card.id)
+            ?.bounds
+        ).toEqual(
+          scene.cards.find((candidate) => candidate.id === card.id)?.bounds
+        );
+      }
+    }
+  });
+
+  it('retains the existing stack fallback outside the narrow evolution gate', () => {
+    const base = createOrdinaryEvolutionView();
+    const localActive = base.stacks['stack:p1:active']!;
+    const opponentActive = base.stacks['stack:p2:active']!;
+    const localBench = base.stacks['stack:p1:bench']!;
+    const attachment = {
+      ...localActive.evolutionCards[0]!,
+      id: asViewCardId('fallback-attachment'),
+      category: 'Energy' as const,
+    };
+    const extraBenchCard = {
+      ...localBench.evolutionCards[0]!,
+      id: asViewCardId('fallback-extra-bench-card'),
+    };
+    const view: MatchViewState = {
+      ...base,
+      boards: {
+        ...base.boards,
+        [p1]: {
+          ...base.boards[p1]!,
+          benchStackIds: ['stack:p1:bench', 'stack:p1:bench-extra'],
+        },
+      },
+      stacks: {
+        ...base.stacks,
+        [localActive.id]: {
+          ...localActive,
+          attachmentCards: [attachment],
+        },
+        [opponentActive.id]: {
+          ...opponentActive,
+          rotationQuarterTurns: 1,
+        },
+        'stack:p1:bench-extra': {
+          id: 'stack:p1:bench-extra',
+          boardPlayerId: p1,
+          slot: 'bench',
+          evolutionCards: [extraBenchCard],
+          attachmentCards: [],
+          rotationQuarterTurns: 0,
+          damage: null,
+          specialCondition: null,
+          abilityUsed: false,
+        },
+      },
+    };
+    const scene = createBoardScene(
+      view,
+      createBoardLayoutSnapshot(characterizedEvolutionLayoutState)
+    );
+    for (const stackId of [localActive.id, opponentActive.id, localBench.id]) {
+      const nodes = view.stacks[stackId]!.evolutionCards.map((card) =>
+        scene.cards.find((candidate) => candidate.id === card.id)
+      );
+      expect(nodes.map((node) => node?.zIndex)).toEqual([300, 301, 302]);
+    }
+    expect(
+      view.stacks['stack:p2:bench']!.evolutionCards.map(
+        (card) =>
+          scene.cards.find((candidate) => candidate.id === card.id)?.zIndex
+      )
+    ).toEqual([298, 299, 300]);
+
+    const expectFallbackForLayout = (layoutState: BoardLayoutState) => {
+      const fallbackScene = createBoardScene(
+        base,
+        createBoardLayoutSnapshot(layoutState)
+      );
+      expect(
+        base.stacks['stack:p1:active']!.evolutionCards.map(
+          (card) =>
+            fallbackScene.cards.find((candidate) => candidate.id === card.id)
+              ?.zIndex
+        )
+      ).toEqual([300, 301, 302]);
+    };
+    expectFallbackForLayout({
+      ...characterizedEvolutionLayoutState,
+      shellMode: 'fullscreen',
+    });
+    expectFallbackForLayout({
+      ...characterizedEvolutionLayoutState,
+      vertical: {
+        ...characterizedEvolutionLayoutState.vertical,
+        lowerFrame: { bottomRatio: 0, heightRatio: 0.6 },
+        upperFrame: { bottomRatio: 0.6, heightRatio: 0.4 },
+      },
+    });
+    expectFallbackForLayout({
+      ...characterizedEvolutionLayoutState,
+      bottomPlayerId: p2,
+    });
+    expectFallbackForLayout({
+      ...characterizedEvolutionLayoutState,
+      viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+    });
   });
 
   it('builds the shared 61-card spike with legacy pile-top paint and input priority', () => {

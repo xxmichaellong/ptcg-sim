@@ -290,7 +290,7 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 656 v2 tests across 101 files. A separate suite
+The repository-wide gate passes 660 v2 tests across 101 files. A separate suite
 passes 11 Playwright checks: ten browser-backed Chromium 151 scenarios and
 one source-digest lock:
 
@@ -341,16 +341,23 @@ one source-digest lock:
    unit-tested but not browser-compared; cover-open UX, opened zones, undersized
    assets, retained covered nodes, Pixi geometry, and quarter-turn hit regions
    are not claimed.
-9. A fourth source-only, digest-pinned fixture isolates ordinary second
+9. A fourth digest-pinned fixture isolates ordinary second
    evolution across local/opponent active and bench slots. It records the
    transient `evolveCard` result, the synchronous ghost wrapper created by
    `refreshBoard`, and the stable two-animation-frame result after observer
    cleanup. It pins top/middle/base logical and hit order, top/base/middle DOM
    order, integer `clientWidth / 15` offsets despite fractional painted widths,
    negative lower-layer z order, transient margins, and opponent-direction
-   reversal. Candidate parity, attachments, markers, BREAK/rotation,
-   multi-stack flex shrink/overflow, history-dependent restoration, and input
-   behavior are not claimed.
+   reversal. A narrowly gated renderer-contract helper now handles only the
+   measured three-card, face-up, marker-free, unrotated, attachment-free,
+   single-stack state at the captured default 1600×900 DPR-1 sidebar layout,
+   even split, and unflipped bottom identity. Chromium directly matches all 12
+   React DOM boxes, rotations, and common/exposed-strip hit order to the source
+   within 2 px / 1% / 0.1 degrees. Attachments, markers, BREAK/rotation,
+   multi-stack flex shrink/overflow, history-dependent restoration, alternate
+   layout states, and input behavior are not claimed and retain the prior scene
+   path. Pixi consumes the qualifying renderer-neutral geometry, but its paint
+   and hit parity remain unverified.
 10. The selected DOM implementation completes 100 mount → clear/reset → destroy
     cycles on one warmed route-owned host with the exact status sequence,
     complete scene IDs at mount, zero rendered scene children/IDs after clear and
@@ -371,7 +378,7 @@ The suites live in `tests/browser/renderer-spike.spec.ts`,
 `tests/browser/legacy-dom-geometry.spec.ts`, and
 `tests/browser/legacy-card-stack-geometry.spec.ts`, plus the contained-card
 comparison in `tests/browser/legacy-contained-card-geometry.spec.ts` and the
-source-only evolution replay in
+source-backed evolution comparison in
 `tests/browser/legacy-evolution-reflow-geometry.spec.ts`. Standard
 Linux CI can install Playwright's pinned Chromium build. This NixOS workspace
 used the Nix Chromium 151 package through `PTCGSIM_CHROMIUM_PATH`, because Playwright's

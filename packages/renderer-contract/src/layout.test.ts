@@ -10,6 +10,7 @@ import {
   flipBoardLayoutState,
   LEGACY_BOARD_AFFORDANCES_V1,
   layoutLegacyContainedCard,
+  layoutLegacyOrdinaryEvolutionStack,
   layoutLegacyPlaySlotCards,
   layoutLegacyPlayStackHitRegions,
   legacyPileTopIndex,
@@ -539,6 +540,125 @@ describe('renderer-neutral legacy board layout', () => {
     const benchEdgeRatio =
       bench.physicalDeclaredBounds.width / bench.physicalDeclaredBounds.height;
     expect(() => layoutLegacyPlaySlotCards(bench, [benchEdgeRatio])).toThrow(
+      'flex shrink'
+    );
+  });
+
+  it('pins stable ordinary-evolution integer reflow on both physical sides', () => {
+    const layout = createBoardLayoutSnapshot(
+      state({
+        viewport: { width: 1600, height: 900, devicePixelRatio: 1 },
+      })
+    );
+    const cases = [
+      {
+        side: 'local',
+        slot: 'active',
+        flexX: 558.5,
+        cardX: 558.5,
+        topY: 481.5,
+        direction: -1,
+      },
+      {
+        side: 'local',
+        slot: 'bench',
+        flexX: 552.6884,
+        cardX: 552.6884,
+        topY: 630,
+        direction: -1,
+      },
+      {
+        side: 'opponent',
+        slot: 'active',
+        flexX: 558.5,
+        cardX: 558.9375,
+        topY: 292.5,
+        direction: 1,
+      },
+      {
+        side: 'opponent',
+        slot: 'bench',
+        flexX: 574.3116,
+        cardX: 574.452225,
+        topY: 157.5,
+        direction: 1,
+      },
+    ] as const;
+    for (const input of cases) {
+      const region = findBoardLayoutRegion(layout, input.side, input.slot);
+      const result = layoutLegacyOrdinaryEvolutionStack(region, 736 / 1024, 3);
+      expect(result.cssomClientWidth).toBe(input.slot === 'active' ? 91 : 81);
+      expect(result.flexItemBounds.x).toBeCloseTo(input.flexX, 5);
+      expect(result.flexItemBounds.y).toBeCloseTo(input.topY, 10);
+      expect(result.flexItemBounds.width).toBe(result.cssomClientWidth);
+      expect(result.cards.map((card) => card.canonicalIndex)).toEqual([
+        0, 1, 2,
+      ]);
+      expect(result.cards.map((card) => card.layerFromTop)).toEqual([2, 1, 0]);
+      expect(result.cards.map((card) => card.sourceZIndex)).toEqual([
+        -2, -1, 0,
+      ]);
+      for (const card of result.cards) {
+        expect(card.bounds.x).toBeCloseTo(input.cardX, 5);
+        expect(card.bounds.width).toBeCloseTo(
+          region.physicalDeclaredBounds.height * (736 / 1024),
+          10
+        );
+        expect(card.bounds.y).toBeCloseTo(
+          input.topY +
+            (input.direction * result.cssomClientWidth * card.layerFromTop) /
+              15,
+          5
+        );
+      }
+    }
+
+    const localActive = findBoardLayoutRegion(layout, 'local', 'active');
+    const localBench = findBoardLayoutRegion(layout, 'local', 'bench');
+    const opponentActive = findBoardLayoutRegion(layout, 'opponent', 'active');
+    const opponentBench = findBoardLayoutRegion(layout, 'opponent', 'bench');
+    const canonicalCases = [
+      [localActive, 559, 559],
+      [localBench, 552.6884, 552.6884],
+      [opponentActive, 559, 558.7954545454545],
+      [opponentBench, 574.3116, 574.7718272727273],
+    ] as const;
+    for (const [region, flexX, cardX] of canonicalCases) {
+      const result = layoutLegacyOrdinaryEvolutionStack(
+        region,
+        CARD_ASPECT_RATIO,
+        3
+      );
+      expect(result.cssomClientWidth).toBe(region.kind === 'active' ? 90 : 81);
+      expect(result.flexItemBounds.x).toBeCloseTo(flexX, 5);
+      expect(result.cards[2]!.bounds.x).toBeCloseTo(cardX, 5);
+      expect(result.cards[0]!.bounds.width).toBeCloseTo(
+        region.physicalDeclaredBounds.height * CARD_ASPECT_RATIO,
+        10
+      );
+    }
+  });
+
+  it('fails closed outside the characterized ordinary-evolution inputs', () => {
+    const layout = createBoardLayoutSnapshot(state());
+    const active = findBoardLayoutRegion(layout, 'local', 'active');
+    const hand = findBoardLayoutRegion(layout, 'local', 'hand');
+    expect(() =>
+      layoutLegacyOrdinaryEvolutionStack(hand, CARD_ASPECT_RATIO, 3)
+    ).toThrow('active or bench');
+    expect(() => layoutLegacyOrdinaryEvolutionStack(active, 0, 3)).toThrow(
+      'aspect ratio'
+    );
+    for (const evolutionCount of [0, 1, 2, 4]) {
+      expect(() =>
+        layoutLegacyOrdinaryEvolutionStack(
+          active,
+          CARD_ASPECT_RATIO,
+          evolutionCount
+        )
+      ).toThrow('exactly three');
+    }
+    expect(() => layoutLegacyOrdinaryEvolutionStack(active, 100, 3)).toThrow(
       'flex shrink'
     );
   });

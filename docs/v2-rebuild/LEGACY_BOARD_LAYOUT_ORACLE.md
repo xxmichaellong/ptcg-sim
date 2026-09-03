@@ -287,8 +287,8 @@ candidate-browser comparison. Opened-zone cards/markers, exact one-node cover
 rendering, Pixi geometry, noncanonical or undersized assets, and rotated hit
 regions remain outside this checkpoint.
 
-`tests/browser/legacy-evolution-reflow-geometry.spec.ts` adds a fourth,
-source-only card checkpoint with the separately digest-pinned
+`tests/browser/legacy-evolution-reflow-geometry.spec.ts` adds a fourth card
+checkpoint with the separately digest-pinned
 `tests/legacy-fixtures/renderer/evolution-reflow-v1.json`. It runs one isolated,
 unrotated portrait base → middle → top chain in each local/opponent active and
 bench slot. The fixture records the stable two-card prestate, the synchronous
@@ -305,23 +305,38 @@ image. The lower-frame cards extend physically upward and the upper-frame
 cards extend downward through its 180-degree transform. It also prevents the
 synchronous empty wrapper from being mistaken for a stable flex child.
 
-The evolution fixture does not execute the networked modules and does not yet
-compare either candidate renderer. It excludes Energy/Trainer/Tool and
-unrelated attachments, markers, BREAK/rotation, multiple-stack flex shrink and
-overflow, resize/flip, transfer/removal/promotion, `leaveAll` and other
-history-dependent restoration, noncanonical dimensions, face hide/reveal and
-source mutation, previews, and input or network behavior. The production stack
-replacement must consume this
-oracle in a later checkpoint rather than generalize beyond it.
+The production `layoutLegacyOrdinaryEvolutionStack` helper uses the public
+canonical card ratio while preserving the integer CSSOM-width rule, physical
+bench margin, opponent direction, canonical index, and source z rank.
+`createBoardScene` selects it only for the exact three-card, face-up, unrotated,
+marker-free, attachment-free, common-owner, single-stack, non-shrinking state
+at the captured default 1600×900 DPR-1 sidebar layout, even split, and
+unflipped bottom identity. The same Chromium test mounts a separate React DOM
+candidate scene and compares all 12 card boxes, effective rotations, and
+common/middle/base overlap hit order directly with the source capture within
+2 px / 1% / 0.1 degrees. Canonical bottom-to-top state remains unchanged, and
+the candidate need not reproduce the legacy wrapper or top/base/middle DOM
+sibling implementation detail.
+
+The evolution fixture does not execute the networked modules. It excludes
+Energy/Trainer/Tool and unrelated attachments, markers, BREAK/rotation,
+multiple-stack flex shrink and overflow, resize/flip,
+transfer/removal/promotion, `leaveAll` and other history-dependent restoration,
+noncanonical dimensions, face hide/reveal and source mutation, previews, and
+input or network behavior. Those states retain the previous scene path or
+require a later oracle rather than inheriting this narrow result. Pixi consumes
+the same renderer-neutral scene geometry for qualifying stacks, but its paint
+and hit parity remain unverified.
 
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
 renderer-neutral scene and has structured scene assertions for all four board
 oracle fixtures, including asymmetric resize, flipped ownership, midpoint
 shared placement, compact and fullscreen states. The controlled hand/bench/
-stack and ordinary-evolution fixtures are source-only and do not yet feed or
-validate those `BoardScene` card geometries; the narrower contained-card
-fixture does feed and compare cover/stadium geometry. Raw
+attachment-stack fixture is source-only and does not yet feed or validate its
+`BoardScene` card geometries; the narrower contained-card and ordinary-evolution
+fixtures feed and compare their cover/stadium and strict three-card geometries.
+Raw
 normalized/authored inputs, box edges, affordances, and semantic z evidence
 remain in the richer characterization snapshot rather than being duplicated in
 `BoardScene`. Real-browser measurements for additional layout states,

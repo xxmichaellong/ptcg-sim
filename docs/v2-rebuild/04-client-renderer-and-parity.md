@@ -187,7 +187,7 @@ opened-zone layout, undersized/noncanonical asset no-upscale behavior, removal
 of retained covered renderer nodes, Pixi geometry, and 90/270-degree hit boxes
 remain explicit gates.
 
-A fourth, source-only Chromium checkpoint now isolates ordinary evolution
+A fourth source-backed Chromium checkpoint now isolates ordinary evolution
 reflow from the generic attachment fixture. It replays an attachment-free
 base → middle → top chain independently in local/opponent active and bench
 slots. `evolution-reflow-v1.json` digest-pins the legacy sources behind a
@@ -200,11 +200,23 @@ overlap. Lower layers use the top image's integer CSSOM `clientWidth / 15`, not
 its fractional painted width, and physical extension reverses through the
 opponent frame half-turn.
 
-This checkpoint does not yet modify or compare production stack geometry.
+`layoutLegacyOrdinaryEvolutionStack` now reproduces that stable, integer-width
+geometry without adding image dimensions to the projection. `createBoardScene`
+uses it only for the exact characterized state: three face-up, unrotated,
+marker-free Pokémon, no attachments, one stack in the slot, common ownership,
+and no flex shrink, at the captured default 1600×900 DPR-1 sidebar layout with
+an even split and unflipped bottom identity. The React DOM browser gate directly
+matches all 12 card boxes, rotations, and common/exposed-strip hit order to the
+live source capture within 2 px / 1% / 0.1 degrees. The candidate keeps
+canonical bottom-to-top state and flat DOM nodes; legacy wrapper identity and
+sibling order are not part of the observable contract.
+
 Energy/Trainer/Tool interaction, counters, BREAK/rotation, multiple-stack flex
 shrink and overflow, transfers/removal, `leaveAll` restoration, noncanonical
-assets, face hide/reveal/source mutation, and input behavior remain explicit
-later slices.
+assets, face hide/reveal/source mutation, other viewport/split/fullscreen/flip
+states, and input behavior retain the previous scene path or remain explicit
+later slices. Pixi consumes the same renderer-neutral scene geometry for the
+qualifying state, but its paint and hit parity remain unverified.
 
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during
