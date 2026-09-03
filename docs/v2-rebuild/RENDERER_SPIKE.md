@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 653 v2 tests across 100 files. A separate suite
-passes 10 Playwright checks: nine browser-backed Chromium 151 scenarios and
+The repository-wide gate passes 656 v2 tests across 101 files. A separate suite
+passes 11 Playwright checks: ten browser-backed Chromium 151 scenarios and
 one source-digest lock:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
@@ -341,13 +341,23 @@ one source-digest lock:
    unit-tested but not browser-compared; cover-open UX, opened zones, undersized
    assets, retained covered nodes, Pixi geometry, and quarter-turn hit regions
    are not claimed.
-9. The selected DOM implementation completes 100 mount → clear/reset → destroy
-   cycles on one warmed route-owned host with the exact status sequence,
-   complete scene IDs at mount, zero rendered scene children/IDs after clear and
-   destroy, zero non-DOM diagnostic resources, and post-GC Chromium
-   document/node/listener counts no higher than the warmed baseline. The React
-   root/host is intentionally retained across clear/reset; heap sizes are
-   attached as observations, not asserted as a portable retention budget.
+9. A fourth source-only, digest-pinned fixture isolates ordinary second
+   evolution across local/opponent active and bench slots. It records the
+   transient `evolveCard` result, the synchronous ghost wrapper created by
+   `refreshBoard`, and the stable two-animation-frame result after observer
+   cleanup. It pins top/middle/base logical and hit order, top/base/middle DOM
+   order, integer `clientWidth / 15` offsets despite fractional painted widths,
+   negative lower-layer z order, transient margins, and opponent-direction
+   reversal. Candidate parity, attachments, markers, BREAK/rotation,
+   multi-stack flex shrink/overflow, history-dependent restoration, and input
+   behavior are not claimed.
+10. The selected DOM implementation completes 100 mount → clear/reset → destroy
+    cycles on one warmed route-owned host with the exact status sequence,
+    complete scene IDs at mount, zero rendered scene children/IDs after clear and
+    destroy, zero non-DOM diagnostic resources, and post-GC Chromium
+    document/node/listener counts no higher than the warmed baseline. The React
+    root/host is intentionally retained across clear/reset; heap sizes are
+    attached as observations, not asserted as a portable retention budget.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -360,7 +370,9 @@ from happy-DOM lifecycle tests.
 The suites live in `tests/browser/renderer-spike.spec.ts`,
 `tests/browser/legacy-dom-geometry.spec.ts`, and
 `tests/browser/legacy-card-stack-geometry.spec.ts`, plus the contained-card
-comparison in `tests/browser/legacy-contained-card-geometry.spec.ts`. Standard
+comparison in `tests/browser/legacy-contained-card-geometry.spec.ts` and the
+source-only evolution replay in
+`tests/browser/legacy-evolution-reflow-geometry.spec.ts`. Standard
 Linux CI can install Playwright's pinned Chromium build. This NixOS workspace
 used the Nix Chromium 151 package through `PTCGSIM_CHROMIUM_PATH`, because Playwright's
 Debian/Ubuntu dependency installer requires `apt-get` and downloaded generic

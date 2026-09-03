@@ -287,14 +287,41 @@ candidate-browser comparison. Opened-zone cards/markers, exact one-node cover
 rendering, Pixi geometry, noncanonical or undersized assets, and rotated hit
 regions remain outside this checkpoint.
 
+`tests/browser/legacy-evolution-reflow-geometry.spec.ts` adds a fourth,
+source-only card checkpoint with the separately digest-pinned
+`tests/legacy-fixtures/renderer/evolution-reflow-v1.json`. It runs one isolated,
+unrotated portrait base → middle → top chain in each local/opponent active and
+bench slot. The fixture records the stable two-card prestate, the synchronous
+second-`evolveCard` diagnostic state, and the post-`refreshBoard` state after
+two animation frames allow the empty-wrapper MutationObserver to settle.
+
+The source boundary establishes that ordinary three-card evolution normalizes
+to top/middle/base logical order, top/base/middle DOM order, and
+top/middle/base paint and hit order. The top retains layer two while lower
+cards use negative z ranks and offsets of one and two times the top image's
+integer CSSOM `clientWidth / 15`. At the pinned viewport, active uses 91 even
+though the image paints at 90.5625 CSS px; bench uses 81 for an 80.859375 px
+image. The lower-frame cards extend physically upward and the upper-frame
+cards extend downward through its 180-degree transform. It also prevents the
+synchronous empty wrapper from being mistaken for a stable flex child.
+
+The evolution fixture does not execute the networked modules and does not yet
+compare either candidate renderer. It excludes Energy/Trainer/Tool and
+unrelated attachments, markers, BREAK/rotation, multiple-stack flex shrink and
+overflow, resize/flip, transfer/removal/promotion, `leaveAll` and other
+history-dependent restoration, noncanonical dimensions, face hide/reveal and
+source mutation, previews, and input or network behavior. The production stack
+replacement must consume this
+oracle in a later checkpoint rather than generalize beyond it.
+
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
 renderer-neutral scene and has structured scene assertions for all four board
 oracle fixtures, including asymmetric resize, flipped ownership, midpoint
 shared placement, compact and fullscreen states. The controlled hand/bench/
-stack fixture is source-only and does not yet feed or validate those
-`BoardScene` card geometries; the narrower contained-card fixture does feed and
-compare cover/stadium geometry. Raw
+stack and ordinary-evolution fixtures are source-only and do not yet feed or
+validate those `BoardScene` card geometries; the narrower contained-card
+fixture does feed and compare cover/stadium geometry. Raw
 normalized/authored inputs, box edges, affordances, and semantic z evidence
 remain in the richer characterization snapshot rather than being duplicated in
 `BoardScene`. Real-browser measurements for additional layout states,

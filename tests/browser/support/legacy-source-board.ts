@@ -138,6 +138,102 @@ export interface LegacySourceContainedCardFixture {
   readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
 }
 
+export type LegacyEvolutionCardRole = 'topEvolution' | 'lowerEvolution';
+
+export interface LegacyEvolutionFixtureStageCard {
+  readonly id: string;
+  readonly frameLocalBounds: CapturedRect;
+  readonly clientWidth: number;
+  readonly clientHeight: number;
+  readonly localRotationDegrees: number;
+  readonly zIndex: number;
+  readonly layer: number;
+  readonly energyLayer: number;
+  readonly inlineLeftPx: number;
+  readonly inlineBottomPx: number;
+  readonly position: string;
+  readonly attached: boolean;
+  readonly target: string;
+  readonly relativeId: string | null;
+  readonly domOrdinal: number;
+  readonly logicalOrdinal: number;
+}
+
+export interface LegacyEvolutionFixtureCard {
+  readonly id: string;
+  readonly side: LegacyFixtureSide;
+  readonly role: LegacyEvolutionCardRole;
+  readonly physicalBounds: CapturedRect;
+  readonly frameLocalBounds: CapturedRect;
+  readonly naturalWidth: number;
+  readonly naturalHeight: number;
+  readonly clientWidth: number;
+  readonly clientHeight: number;
+  readonly localRotationDegrees: number;
+  readonly effectiveRotationDegrees: number;
+  readonly zIndex: number;
+  readonly layer: number;
+  readonly energyLayer: number;
+  readonly inlineLeftPx: number;
+  readonly inlineBottomPx: number;
+  readonly position: string;
+  readonly attached: boolean;
+  readonly target: string;
+  readonly relativeId: string | null;
+  readonly domOrdinal: number;
+  readonly logicalOrdinal: number;
+  readonly sourcePath: string;
+}
+
+export interface LegacyEvolutionFixtureStage {
+  readonly logicalOrder: readonly string[];
+  readonly domOrder: readonly string[];
+  readonly containerFrameLocalBounds: CapturedRect;
+  readonly containerClientWidth: number;
+  readonly computedWidthPx: number;
+  readonly authoredWidthPx: number | null;
+  readonly inlineMarginRight: string;
+  readonly inlineMarginLeft: string;
+  readonly computedMarginRightPx: number;
+  readonly computedMarginLeftPx: number;
+  readonly cards: readonly LegacyEvolutionFixtureStageCard[];
+}
+
+export interface LegacyEvolutionFixtureStack {
+  readonly id: string;
+  readonly side: LegacyFixtureSide;
+  readonly physicalBounds: CapturedRect;
+  readonly frameLocalBounds: CapturedRect;
+  readonly topClientWidth: number;
+  readonly topLayer: number;
+  readonly preEvolution: LegacyEvolutionFixtureStage;
+  readonly transientResetClientWidth: number;
+  readonly transientResetAuthoredWidthPx: number;
+  readonly transientPostEvolution: LegacyEvolutionFixtureStage;
+  readonly stablePostRefresh: LegacyEvolutionFixtureStage;
+  readonly synchronousPostRefreshContainerCount: number;
+  readonly oldContainerConnectedImmediatelyAfterRefresh: boolean;
+  readonly stableContainerCount: number;
+  readonly oldContainerConnected: boolean;
+  readonly childDomOrder: readonly string[];
+  readonly logicalOrder: readonly string[];
+  readonly hitOrder: {
+    readonly commonOverlap: readonly string[];
+    readonly middleAndBaseOverlap: readonly string[];
+    readonly outermostBase: readonly string[];
+  };
+}
+
+export interface LegacySourceEvolutionReflowFixture {
+  readonly frames: Readonly<Record<LegacyFixtureSide, CapturedRect>>;
+  readonly frameTransforms: Readonly<
+    Record<LegacyFixtureSide, LegacyFrameTransform>
+  >;
+  readonly cards: readonly LegacyEvolutionFixtureCard[];
+  readonly stacks: readonly LegacyEvolutionFixtureStack[];
+  readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
+}
+
 const repositoryRoot = fileURLToPath(new URL('../../../', import.meta.url));
 
 const sourceResponses = {
@@ -990,4 +1086,587 @@ export const captureLegacySourceContainedCardFixture = async (
   requireServedPaths(loaded, containedCardFixtureAssetPaths);
   requireNoUnexpectedSameOriginPaths(loaded);
   return { cards, sourceFulfillment: sourceFulfillment(loaded) };
+};
+
+const evolutionFixtureAssetPaths = new Set(['/src/assets/cardback.png']);
+
+const evolutionFixtureCardIds = (
+  side: LegacyFixtureSide,
+  slot: 'active' | 'bench'
+) =>
+  [
+    `${side}-${slot}-evolution-base`,
+    `${side}-${slot}-evolution-middle`,
+    `${side}-${slot}-evolution-top`,
+  ] as const;
+
+const captureEvolutionFixtureCard = async (
+  locator: Locator,
+  side: LegacyFixtureSide,
+  role: LegacyEvolutionCardRole,
+  frameRotationDegrees: number
+): Promise<LegacyEvolutionFixtureCard> => {
+  const physicalBounds = await requireRect(
+    locator,
+    `${side} ${role} evolution card`
+  );
+  const details = await locator.evaluate((element) => {
+    if (!(element instanceof HTMLImageElement)) {
+      throw new Error('Legacy evolution fixture target must be an image');
+    }
+    type EvolutionImage = HTMLImageElement & {
+      readonly attached?: boolean;
+      readonly target?: string;
+      readonly relative?: EvolutionImage | 0;
+      readonly layer?: number;
+      readonly energyLayer?: number;
+    };
+    const image = element as EvolutionImage;
+    const bounds = image.getBoundingClientRect();
+    const styles = getComputedStyle(image);
+    const transform =
+      styles.transform === 'none'
+        ? new DOMMatrixReadOnly()
+        : new DOMMatrixReadOnly(styles.transform);
+    const container = image.closest<HTMLElement>(
+      '[data-legacy-evolution-stack-id]'
+    );
+    if (!container) throw new Error('Evolution card is outside its stack');
+    const domImages = [
+      ...container.querySelectorAll<HTMLImageElement>(':scope > img'),
+    ];
+    const logicalOrder = JSON.parse(
+      container.dataset.legacyEvolutionLogicalOrder ?? '[]'
+    ) as string[];
+    return {
+      id: image.dataset.legacyEvolutionCardId ?? '',
+      frameLocalBounds: {
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.width,
+        height: bounds.height,
+      },
+      naturalWidth: image.naturalWidth,
+      naturalHeight: image.naturalHeight,
+      clientWidth: image.clientWidth,
+      clientHeight: image.clientHeight,
+      localRotationDegrees:
+        ((Math.atan2(transform.b, transform.a) * 180) / Math.PI + 360) % 360,
+      zIndex: Number.parseInt(styles.zIndex, 10) || 0,
+      layer: image.layer ?? 0,
+      energyLayer: image.energyLayer ?? 0,
+      inlineLeftPx: Number.parseFloat(image.style.left) || 0,
+      inlineBottomPx: Number.parseFloat(image.style.bottom) || 0,
+      position: styles.position,
+      attached: image.attached === true,
+      target: image.target ?? '',
+      relativeId:
+        image.relative && image.relative !== 0
+          ? (image.relative.dataset.legacyEvolutionCardId ?? null)
+          : null,
+      domOrdinal: domImages.indexOf(image),
+      logicalOrdinal: logicalOrder.indexOf(
+        image.dataset.legacyEvolutionCardId ?? ''
+      ),
+      sourcePath: new URL(image.currentSrc).pathname,
+    };
+  });
+  return {
+    ...details,
+    side,
+    role,
+    physicalBounds,
+    effectiveRotationDegrees:
+      (details.localRotationDegrees + frameRotationDegrees) % 360,
+  };
+};
+
+const captureEvolutionFixtureStack = async (
+  locator: Locator,
+  side: LegacyFixtureSide
+): Promise<LegacyEvolutionFixtureStack> => {
+  const physicalBounds = await requireRect(locator, `${side} evolution stack`);
+  const details = await locator.evaluate((element) => {
+    if (!(element instanceof HTMLElement)) {
+      throw new Error('Legacy evolution stack target must be an element');
+    }
+    type EvolutionImage = HTMLImageElement & {
+      readonly layer?: number;
+    };
+    const fixture = JSON.parse(
+      element.dataset.legacyEvolutionResult ?? '{}'
+    ) as Omit<
+      LegacyEvolutionFixtureStack,
+      | 'id'
+      | 'side'
+      | 'physicalBounds'
+      | 'frameLocalBounds'
+      | 'topClientWidth'
+      | 'topLayer'
+      | 'childDomOrder'
+      | 'logicalOrder'
+      | 'hitOrder'
+    >;
+    const card = (suffix: 'base' | 'middle' | 'top') => {
+      const match = element.querySelector<HTMLImageElement>(
+        `[data-legacy-evolution-card-id$="-${suffix}"]`
+      );
+      if (!match) throw new Error(`Missing evolution fixture card ${suffix}`);
+      return match as EvolutionImage;
+    };
+    const base = card('base');
+    const middle = card('middle');
+    const top = card('top');
+    const baseBounds = base.getBoundingClientRect();
+    const middleBounds = middle.getBoundingClientRect();
+    const topBounds = top.getBoundingClientRect();
+    const idsAt = (x: number, y: number) =>
+      document
+        .elementsFromPoint(x, y)
+        .flatMap((candidate) =>
+          candidate instanceof HTMLImageElement &&
+          candidate.dataset.legacyEvolutionCardId
+            ? [candidate.dataset.legacyEvolutionCardId]
+            : []
+        );
+    const intersectionCenter = (rectangles: readonly DOMRect[]) => {
+      const left = Math.max(...rectangles.map((bounds) => bounds.left));
+      const topEdge = Math.max(...rectangles.map((bounds) => bounds.top));
+      const right = Math.min(...rectangles.map((bounds) => bounds.right));
+      const bottom = Math.min(...rectangles.map((bounds) => bounds.bottom));
+      if (left >= right || topEdge >= bottom) {
+        throw new Error('Legacy evolution fixture cards do not overlap');
+      }
+      return { x: (left + right) / 2, y: (topEdge + bottom) / 2 };
+    };
+    const common = intersectionCenter([baseBounds, middleBounds, topBounds]);
+    const horizontalCenter = common.x;
+    const containerBounds = element.getBoundingClientRect();
+    return {
+      ...fixture,
+      id: element.dataset.legacyEvolutionStackId ?? '',
+      frameLocalBounds: {
+        x: containerBounds.x,
+        y: containerBounds.y,
+        width: containerBounds.width,
+        height: containerBounds.height,
+      },
+      topClientWidth: top.clientWidth,
+      topLayer: top.layer ?? 0,
+      childDomOrder: [
+        ...element.querySelectorAll<HTMLImageElement>(':scope > img'),
+      ].map((image) => image.dataset.legacyEvolutionCardId ?? ''),
+      logicalOrder: JSON.parse(
+        element.dataset.legacyEvolutionLogicalOrder ?? '[]'
+      ) as string[],
+      hitOrder: {
+        commonOverlap: idsAt(common.x, common.y),
+        middleAndBaseOverlap: idsAt(
+          horizontalCenter,
+          (middleBounds.top + topBounds.top) / 2
+        ),
+        outermostBase: idsAt(
+          horizontalCenter,
+          (baseBounds.top + middleBounds.top) / 2
+        ),
+      },
+    };
+  });
+  return { ...details, side, physicalBounds };
+};
+
+/**
+ * Replays the layout-relevant mutation output of the narrow, ordinary v1
+ * evolution path against checked-in HTML/CSS and card assets. Application and
+ * network modules remain inert; this is a manually reviewed transcription, not
+ * module execution. The synchronous empty wrapper is measured but only the
+ * post-MutationObserver state is treated as stable layout output.
+ */
+export const captureLegacySourceEvolutionReflowFixture = async (
+  page: Page
+): Promise<LegacySourceEvolutionReflowFixture> => {
+  const loaded = await loadLegacySourceBoard(page);
+  for (const [side, frameSelector] of [
+    ['local', '#selfContainer'],
+    ['opponent', '#oppContainer'],
+  ] as const) {
+    await page
+      .frameLocator(frameSelector)
+      .locator('body')
+      .evaluate(async (body, fixtureSide) => {
+        type EvolutionImage = HTMLImageElement & {
+          attached: boolean;
+          target: string;
+          relative: EvolutionImage | 0;
+          layer: number;
+          energyLayer: number;
+        };
+        type EvolutionCard = {
+          readonly type: 'Pokémon';
+          readonly image: EvolutionImage;
+        };
+
+        const waitForStableLayout = () =>
+          new Promise<void>((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+          );
+        const rect = (bounds: DOMRect) => ({
+          x: bounds.x,
+          y: bounds.y,
+          width: bounds.width,
+          height: bounds.height,
+        });
+        const resetImageOutput = (image: EvolutionImage) => {
+          image.style.opacity = '1';
+          image.style.position = 'relative';
+          image.style.bottom = '0%';
+          image.style.zIndex = '0';
+          image.energyLayer = 0;
+          image.layer = 0;
+          image.relative = 0;
+          image.style.left = '0px';
+          image.attached = false;
+          image.target = 'off';
+          image.style.transform = 'rotate(0deg)';
+          image.classList.remove(
+            'default-rotation',
+            'prizes-normal-size',
+            'prizes-small-size'
+          );
+        };
+        const makeImage = (id: string) => {
+          const image = document.createElement('img') as EvolutionImage;
+          image.dataset.legacyEvolutionCardId = id;
+          image.alt = '';
+          image.src = `${location.origin}/src/assets/cardback.png`;
+          resetImageOutput(image);
+          return image;
+        };
+        const makePlayContainer = (id: string) => {
+          const container = document.createElement('div');
+          container.className = 'play-container';
+          container.style.zIndex = '0';
+          container.dataset.legacyEvolutionStackId = id;
+          const observer = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+              if (
+                mutation.removedNodes.length > 0 &&
+                container.getElementsByTagName('img').length === 0
+              ) {
+                container.remove();
+              }
+            }
+          });
+          observer.observe(container, { childList: true });
+          return container;
+        };
+        const captureStage = (
+          container: HTMLElement,
+          logical: readonly EvolutionCard[]
+        ): LegacyEvolutionFixtureStage => {
+          const domImages = [
+            ...container.querySelectorAll<HTMLImageElement>(':scope > img'),
+          ] as EvolutionImage[];
+          const logicalOrder = logical.map(
+            (card) => card.image.dataset.legacyEvolutionCardId ?? ''
+          );
+          const styles = getComputedStyle(container);
+          return {
+            logicalOrder,
+            domOrder: domImages.map(
+              (image) => image.dataset.legacyEvolutionCardId ?? ''
+            ),
+            containerFrameLocalBounds: rect(container.getBoundingClientRect()),
+            containerClientWidth: container.clientWidth,
+            computedWidthPx: Number.parseFloat(styles.width),
+            authoredWidthPx: container.style.width
+              ? Number.parseFloat(container.style.width)
+              : null,
+            inlineMarginRight: container.style.marginRight,
+            inlineMarginLeft: container.style.marginLeft,
+            computedMarginRightPx: Number.parseFloat(styles.marginRight) || 0,
+            computedMarginLeftPx: Number.parseFloat(styles.marginLeft) || 0,
+            cards: logical.map((card, logicalOrdinal) => {
+              const image = card.image;
+              const imageStyles = getComputedStyle(image);
+              const transform =
+                imageStyles.transform === 'none'
+                  ? new DOMMatrixReadOnly()
+                  : new DOMMatrixReadOnly(imageStyles.transform);
+              return {
+                id: image.dataset.legacyEvolutionCardId ?? '',
+                frameLocalBounds: rect(image.getBoundingClientRect()),
+                clientWidth: image.clientWidth,
+                clientHeight: image.clientHeight,
+                localRotationDegrees:
+                  ((Math.atan2(transform.b, transform.a) * 180) / Math.PI +
+                    360) %
+                  360,
+                zIndex: Number.parseInt(imageStyles.zIndex, 10) || 0,
+                layer: image.layer,
+                energyLayer: image.energyLayer,
+                inlineLeftPx: Number.parseFloat(image.style.left) || 0,
+                inlineBottomPx: Number.parseFloat(image.style.bottom) || 0,
+                position: imageStyles.position,
+                attached: image.attached === true,
+                target: image.target,
+                relativeId:
+                  image.relative && image.relative !== 0
+                    ? (image.relative.dataset.legacyEvolutionCardId ?? null)
+                    : null,
+                domOrdinal: domImages.indexOf(image),
+                logicalOrdinal,
+              };
+            }),
+          };
+        };
+        const attachPokemon = (
+          moving: EvolutionCard,
+          target: EvolutionCard
+        ) => {
+          resetImageOutput(moving.image);
+          moving.image.attached = true;
+          moving.image.target = 'on';
+          moving.image.relative = target.image;
+          moving.image.style.position = 'absolute';
+          const adjustment = target.image.clientWidth / 15;
+          target.image.layer += 1;
+          const layer = target.image.layer;
+          moving.image.style.bottom = `${layer * adjustment}px`;
+          moving.image.style.zIndex = String(
+            (Number.parseInt(moving.image.style.zIndex, 10) || 0) - layer
+          );
+          target.image.after(moving.image);
+          const currentRotation =
+            Number.parseInt(
+              target.image.style.transform.replace(/[^0-9-]/gu, ''),
+              10
+            ) || 0;
+          moving.image.style.transform = `rotate(${currentRotation}deg)`;
+        };
+        const moveAttachedWithinZone = (
+          logical: EvolutionCard[],
+          index: number,
+          target: EvolutionCard
+        ) => {
+          const [moving] = logical.splice(index, 1);
+          if (!moving) throw new Error('Missing attached evolution card');
+          logical.push(moving);
+          attachPokemon(moving, target);
+        };
+        const evolve = (
+          logical: EvolutionCard[],
+          moving: EvolutionCard,
+          target: EvolutionCard
+        ) => {
+          logical.push(moving);
+          resetImageOutput(moving.image);
+          target.image.after(moving.image);
+          target.image.relative = moving.image;
+          const container = target.image.parentElement;
+          if (!(container instanceof HTMLElement)) {
+            throw new Error('Evolution target has no play container');
+          }
+          container.style.marginRight = '1%';
+          container.style.marginLeft = '0%';
+          const transientResetClientWidth = moving.image.clientWidth;
+          container.style.width = `${Number.parseFloat(
+            String(transientResetClientWidth)
+          )}px`;
+          for (const card of logical) {
+            if (card.image.relative === target.image) {
+              card.image.relative = moving.image;
+            }
+          }
+          for (let index = 0; index < logical.length; index += 1) {
+            const card = logical[index];
+            if (!card) throw new Error('Missing evolution logical card');
+            if (card.image === moving.image) break;
+            if (card.image.relative === moving.image) {
+              resetImageOutput(card.image);
+              card.image.attached = true;
+              moveAttachedWithinZone(logical, index, moving);
+              index -= 1;
+            }
+          }
+          return {
+            transientResetClientWidth,
+            transientResetAuthoredWidthPx: Number.parseFloat(
+              container.style.width
+            ),
+            container,
+          };
+        };
+        const refresh = (
+          zone: Element,
+          logical: EvolutionCard[],
+          currentContainer: HTMLElement
+        ) => {
+          const topIndex = logical.findIndex(
+            (card) => card.image.attached !== true
+          );
+          if (topIndex < 0) throw new Error('Evolution stack has no top card');
+          const [top] = logical.splice(topIndex, 1);
+          if (!top) throw new Error('Missing top evolution card');
+          logical.push(top);
+          resetImageOutput(top.image);
+          const nextContainer = makePlayContainer(
+            currentContainer.dataset.legacyEvolutionStackId ?? ''
+          );
+          zone.append(nextContainer);
+          nextContainer.append(top.image);
+          for (let index = 0; index < logical.length; index += 1) {
+            const card = logical[index];
+            if (!card) throw new Error('Missing refresh logical card');
+            if (card.image === top.image) break;
+            if (card.image.relative === top.image) {
+              resetImageOutput(card.image);
+              card.image.attached = true;
+              moveAttachedWithinZone(logical, index, top);
+              index -= 1;
+            }
+          }
+          const baseWidth = Number.parseFloat(String(top.image.clientWidth));
+          const adjustment = Number.parseFloat(
+            String(top.image.clientWidth / 6)
+          );
+          nextContainer.style.width = `${
+            baseWidth + top.image.energyLayer * adjustment
+          }px`;
+          return nextContainer;
+        };
+
+        const hand = body.querySelector('#hand');
+        if (!(hand instanceof HTMLElement)) {
+          throw new Error('Legacy evolution fixture hand is missing');
+        }
+        for (const slot of ['active', 'bench'] as const) {
+          const zone = body.querySelector(`#${slot}`);
+          if (!(zone instanceof HTMLElement)) {
+            throw new Error(`Legacy evolution fixture ${slot} is missing`);
+          }
+          const stackId = `${fixtureSide}-${slot}-evolution-stack`;
+          const [baseId, middleId, topId] = [
+            `${fixtureSide}-${slot}-evolution-base`,
+            `${fixtureSide}-${slot}-evolution-middle`,
+            `${fixtureSide}-${slot}-evolution-top`,
+          ];
+          const base: EvolutionCard = {
+            type: 'Pokémon',
+            image: makeImage(baseId),
+          };
+          const middle: EvolutionCard = {
+            type: 'Pokémon',
+            image: makeImage(middleId),
+          };
+          const top: EvolutionCard = {
+            type: 'Pokémon',
+            image: makeImage(topId),
+          };
+          let container = makePlayContainer(stackId);
+          container.append(base.image);
+          zone.append(container);
+          hand.append(middle.image, top.image);
+          await Promise.all(
+            [base.image, middle.image, top.image].map((image) => image.decode())
+          );
+          const logical = [base];
+
+          evolve(logical, middle, base);
+          container = refresh(zone, logical, container);
+          await waitForStableLayout();
+          const preEvolution = captureStage(container, logical);
+
+          const secondEvolution = evolve(logical, top, middle);
+          const transientPostEvolution = captureStage(container, logical);
+          const oldContainer = container;
+          container = refresh(zone, logical, oldContainer);
+          const synchronousPostRefreshContainerCount = zone.querySelectorAll(
+            ':scope > .play-container'
+          ).length;
+          const oldContainerConnectedImmediatelyAfterRefresh =
+            oldContainer.isConnected;
+          await waitForStableLayout();
+          const stablePostRefresh = captureStage(container, logical);
+          container.dataset.legacyEvolutionLogicalOrder = JSON.stringify(
+            logical.map(
+              (card) => card.image.dataset.legacyEvolutionCardId ?? ''
+            )
+          );
+          container.dataset.legacyEvolutionResult = JSON.stringify({
+            preEvolution,
+            transientResetClientWidth:
+              secondEvolution.transientResetClientWidth,
+            transientResetAuthoredWidthPx:
+              secondEvolution.transientResetAuthoredWidthPx,
+            transientPostEvolution,
+            stablePostRefresh,
+            synchronousPostRefreshContainerCount,
+            oldContainerConnectedImmediatelyAfterRefresh,
+            stableContainerCount: zone.querySelectorAll(
+              ':scope > .play-container'
+            ).length,
+            oldContainerConnected: oldContainer.isConnected,
+          });
+        }
+      }, side);
+  }
+
+  requireServedPaths(loaded, evolutionFixtureAssetPaths);
+  requireNoUnexpectedSameOriginPaths(loaded);
+  const frameTransforms = {
+    local: await captureFrameTransform(page.locator('#selfContainer')),
+    opponent: await captureFrameTransform(page.locator('#oppContainer')),
+  };
+  const cards: LegacyEvolutionFixtureCard[] = [];
+  const stacks: LegacyEvolutionFixtureStack[] = [];
+  for (const [side, frameSelector] of [
+    ['local', '#selfContainer'],
+    ['opponent', '#oppContainer'],
+  ] as const) {
+    const frame = page.frameLocator(frameSelector);
+    for (const slot of ['active', 'bench'] as const) {
+      const [baseId, middleId, topId] = evolutionFixtureCardIds(side, slot);
+      for (const [id, role] of [
+        [baseId, 'lowerEvolution'],
+        [middleId, 'lowerEvolution'],
+        [topId, 'topEvolution'],
+      ] as const) {
+        cards.push(
+          await captureEvolutionFixtureCard(
+            frame.locator(`[data-legacy-evolution-card-id="${id}"]`),
+            side,
+            role,
+            frameTransforms[side].rotationDegrees
+          )
+        );
+      }
+      stacks.push(
+        await captureEvolutionFixtureStack(
+          frame.locator(
+            `[data-legacy-evolution-stack-id="${side}-${slot}-evolution-stack"]`
+          ),
+          side
+        )
+      );
+    }
+  }
+
+  requireNoUnexpectedSameOriginPaths(loaded);
+  return {
+    frames: {
+      local: await requireRect(
+        page.locator('#selfContainer'),
+        '#selfContainer'
+      ),
+      opponent: await requireRect(
+        page.locator('#oppContainer'),
+        '#oppContainer'
+      ),
+    },
+    frameTransforms,
+    cards,
+    stacks,
+    sourceFulfillment: sourceFulfillment(loaded),
+  };
 };

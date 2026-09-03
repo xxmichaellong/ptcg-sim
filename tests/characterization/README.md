@@ -22,3 +22,13 @@ asset sources behind those claims. Its browser companion compares contained
 cover/stadium boxes with the React DOM candidate while retaining explicit
 exclusions for cover-open UX, opened-zone layout, top-owner candidate browser
 parity, undersized assets, Pixi geometry, and rotated hit regions.
+
+`legacy-evolution-reflow-layout.test.ts` pins the separate ordinary-evolution
+boundary. Four isolated local/opponent active/bench cases record a second
+attachment-free evolution both immediately after `evolveCard` and after the
+unconditional `refreshBoard` reconstruction settles. The fixture preserves
+integer `clientWidth` offsets, logical versus DOM versus hit order, transient
+rotation margins, and the MutationObserver-delayed empty-wrapper removal. The
+transient phase is diagnostic rather than user-visible. Attachments, counters,
+BREAK/rotation, overflow/flex shrink, history-dependent restore paths, face
+hide/reveal/source mutation, and candidate-renderer parity remain excluded.

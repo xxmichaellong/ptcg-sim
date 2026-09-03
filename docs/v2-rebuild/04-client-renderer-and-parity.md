@@ -187,6 +187,25 @@ opened-zone layout, undersized/noncanonical asset no-upscale behavior, removal
 of retained covered renderer nodes, Pixi geometry, and 90/270-degree hit boxes
 remain explicit gates.
 
+A fourth, source-only Chromium checkpoint now isolates ordinary evolution
+reflow from the generic attachment fixture. It replays an attachment-free
+base → middle → top chain independently in local/opponent active and bench
+slots. `evolution-reflow-v1.json` digest-pins the legacy sources behind a
+manually reviewed geometry transcription of move/evolve/reattach/refresh and
+distinguishes the synchronous diagnostic result of
+`evolveCard` from the stable result after `refreshBoard` and the empty-wrapper
+MutationObserver settle. The stable legacy order is top/middle/base in the zone
+array, top/base/middle in DOM siblings, and top/middle/base at shared hit
+overlap. Lower layers use the top image's integer CSSOM `clientWidth / 15`, not
+its fractional painted width, and physical extension reverses through the
+opponent frame half-turn.
+
+This checkpoint does not yet modify or compare production stack geometry.
+Energy/Trainer/Tool interaction, counters, BREAK/rotation, multiple-stack flex
+shrink and overflow, transfers/removal, `leaveAll` restoration, noncanonical
+assets, face hide/reveal/source mutation, and input behavior remain explicit
+later slices.
+
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during
 characterization is represented explicitly instead of assumed to be duplication.
