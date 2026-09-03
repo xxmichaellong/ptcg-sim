@@ -1,7 +1,11 @@
 import type { MatchViewState } from '@ptcgsim/game-core';
 import {
+  BOARD_LAYOUT_GEOMETRY_VERSION,
   createBoardScene,
+  createBoardLayoutSnapshot,
+  DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
   DEFAULT_BOARD_PRESENTATION,
+  LEGACY_BOARD_SHELL_V1,
   type BoardIntent,
   type BoardPresentation,
   type BoardPresentationUpdate,
@@ -17,22 +21,35 @@ export type RendererKind = 'dom' | 'pixi';
 type BoardRendererFactory = (adapters: BoardRendererAdapters) => BoardRenderer;
 
 const sceneForHost = (host: HTMLElement, view: MatchViewState) => {
-  const viewport = {
-    width: Math.max(1, host.clientWidth || 1208),
-    height: Math.max(1, host.clientHeight || 900),
+  const outerViewport = {
+    width: Math.max(
+      1,
+      window.innerWidth ||
+        host.clientWidth / LEGACY_BOARD_SHELL_V1.playAreaWidthRatio ||
+        1600
+    ),
+    height: Math.max(1, window.innerHeight || host.clientHeight || 900),
     devicePixelRatio: Math.max(1, window.devicePixelRatio),
   };
+  const firstPlayerId = view.playerOrder[0];
+  const secondPlayerId = view.playerOrder[1];
+  if (!firstPlayerId || !secondPlayerId || view.playerOrder.length !== 2) {
+    throw new Error('Projected match must have exactly two board players');
+  }
   const bottomPlayerId =
-    view.viewer.kind === 'player' ? view.viewer.playerId : view.playerOrder[0];
-  if (!bottomPlayerId) throw new Error('Projected match has no board player');
+    view.viewer.kind === 'player' ? view.viewer.playerId : firstPlayerId;
+  const layout = createBoardLayoutSnapshot({
+    geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
+    viewport: outerViewport,
+    playerIds: [firstPlayerId, secondPlayerId],
+    bottomPlayerId,
+    shellMode: 'sidebar',
+    vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+  });
+  const scene = createBoardScene(view, layout);
   return {
-    viewport,
-    scene: createBoardScene(view, {
-      viewport,
-      bottomPlayerId,
-      splitRatio: 0.5,
-      geometryVersion: 1,
-    }),
+    viewport: scene.viewport,
+    scene,
   };
 };
 

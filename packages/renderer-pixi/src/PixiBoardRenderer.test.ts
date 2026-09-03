@@ -2,7 +2,7 @@
 
 import {
   BoardDragController,
-  createBoardScene,
+  createBoardSceneForViewport,
   createRendererSpikeView,
   DEFAULT_BOARD_PRESENTATION,
   type BoardPresentation,
@@ -16,7 +16,7 @@ import { PixiBoardRenderer } from './PixiBoardRenderer.js';
 
 const scene = (): BoardScene => {
   const view = createRendererSpikeView();
-  return createBoardScene(view, {
+  return createBoardSceneForViewport(view, {
     viewport: { width: 1208, height: 900, devicePixelRatio: 1 },
     bottomPlayerId:
       view.viewer.kind === 'player'

@@ -126,23 +126,22 @@ The concrete adapter performs the mode/phase/role checks again immediately
 before submit, so a reentrant or stale readiness change fails closed.
 
 `BoardResizeRequested` remains unsupported here. The opt-in DOM runtime exposes
-only a narrowed layout bridge for the existing provisional scene: sidebar vs.
-fullscreen play width, bottom-player perspective, and one complementary
-upper/lower split. It rejects gaps, overlaps, asymmetric independent frame
-heights, non-default shared placement, a split outside `0.2..0.8`, and a layout
-player tuple that differs from the projected view. The complete layout oracle
-is available as a **characterization snapshot**, not a claim that every field
-is rendered. Independent handles, moved shared anchors, and exact internal
-stadium/zone geometry require the later full-layout scene contract.
+the complete renderer-neutral layout bridge. Sidebar/fullscreen width,
+bottom-player perspective, independent upper/lower frame positions and heights,
+both resize handles, shared placement, stadium/control anchors, region border
+boxes, and region content boxes all flow from the source-characterized snapshot
+into `BoardScene`. Valid characterized gaps, overscan, asymmetric frames, and
+handle-midpoint placement are retained; invalid oracle state and a layout player
+tuple that differs from the projected view still fail closed.
 The runtime clones and recursively freezes retained layout input and returns a
 fresh frozen characterization snapshot, so untyped caller mutation cannot
 change later scene generation.
 
-Changing supported local layout calls `RefreshScene`: it cancels interaction,
+Changing local layout calls `RefreshScene`: it cancels interaction,
 re-runs the scene factory on the exact installed safe view, validates the
 result, and replaces it without advancing source/playback cursors. The adapter
 then synchronizes once so a previously rejected upstream generation can retry.
-Repeating an equivalent scene-driving layout is a no-op and does not duplicate
+Repeating an equivalent complete layout is a no-op and does not duplicate
 effects or presentation work.
 
 ## Effects and renderer cancellation

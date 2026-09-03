@@ -1,7 +1,12 @@
 import type { PlayerId } from '@ptcgsim/game-core';
 
 import { assertViewport } from './geometry.js';
-import type { BoardSide, BoardViewport, Rect } from './model.js';
+import type {
+  BoardSide,
+  BoardViewport,
+  BoardZoneSurface,
+  Rect,
+} from './model.js';
 
 export const BOARD_LAYOUT_GEOMETRY_VERSION = 1 as const;
 
@@ -147,7 +152,7 @@ export type BoardLayoutRegionKind =
   | 'discard'
   | 'board';
 
-export type BoardLayoutRegionSurface = 'zone' | 'cover' | 'playSlot';
+export type BoardLayoutRegionSurface = BoardZoneSurface;
 
 export interface BoardLayoutRegion {
   readonly id: `${BoardSide}:${BoardLayoutRegionKind}`;
@@ -379,6 +384,12 @@ const finite = (value: number, label: string): void => {
 };
 
 const assertVerticalState = (state: BoardVerticalLayoutState): void => {
+  if (
+    state.sharedPlacement !== 'cssDefault' &&
+    state.sharedPlacement !== 'handleMidpoint'
+  ) {
+    throw new Error('Unsupported board shared placement');
+  }
   for (const [label, frame] of [
     ['Lower board frame', state.lowerFrame],
     ['Upper board frame', state.upperFrame],
@@ -662,8 +673,14 @@ export const createBoardLayoutSnapshot = (
   if (state.geometryVersion !== BOARD_LAYOUT_GEOMETRY_VERSION) {
     throw new Error('Unsupported board layout geometry version');
   }
+  if (!Array.isArray(state.playerIds) || state.playerIds.length !== 2) {
+    throw new Error('Board layout requires exactly two players');
+  }
   if (state.playerIds[0] === state.playerIds[1]) {
     throw new Error('Board layout requires two distinct players');
+  }
+  if (state.shellMode !== 'sidebar' && state.shellMode !== 'fullscreen') {
+    throw new Error('Unsupported board shell mode');
   }
   const topPlayerId = otherPlayer(state.playerIds, state.bottomPlayerId);
   assertVerticalState(state.vertical);

@@ -7,18 +7,22 @@ import type {
 } from '@ptcgsim/game-core';
 import {
   CARD_ASPECT_RATIO,
+  assertLayoutOptions,
   containsPoint,
   insetRect,
-  layoutPlayerZone,
-  layoutStadium,
-  sideForPlayer,
-  type PlayerZoneGeometryKind,
 } from './geometry.js';
+import {
+  createBoardLayoutSnapshot,
+  findBoardLayoutRegion,
+  LEGACY_BOARD_RESIZER_V1,
+  type BoardLayoutSnapshot,
+  type BoardLayoutState,
+} from './layout.js';
 import type {
   BoardLayoutOptions,
   BoardScene,
   BoardSceneDiff,
-  BoardSide,
+  BoardSceneLayout,
   CardSceneNode,
   MarkerSceneNode,
   Rect,
@@ -47,6 +51,96 @@ const cardImageUrl = (view: MatchViewState, card: ViewCard): string => {
 
 const isConcealedForRendering = (card: ViewCard): boolean =>
   card.kind === 'concealed' || card.face === 'down';
+
+const copyRect = (bounds: Rect): Rect => ({ ...bounds });
+
+const projectPlayerFrame = (
+  player: BoardLayoutSnapshot['players'][number]
+): BoardSceneLayout['players'][number] => ({
+  playerId: player.playerId,
+  side: player.side,
+  physicalSide: player.physicalSide,
+  rotationQuarterTurns: player.rotationQuarterTurns,
+  bounds: copyRect(player.frameBounds),
+});
+
+const projectResizeHandle = (
+  handle: BoardLayoutSnapshot['resizeHandles'][number]
+): BoardSceneLayout['resizeHandles'][number] => ({
+  id: handle.id,
+  controlsPhysicalSide: handle.controlsPhysicalSide,
+  bounds: copyRect(handle.bounds),
+});
+
+export const createBoardSceneLayout = (
+  snapshot: BoardLayoutSnapshot
+): BoardSceneLayout => ({
+  geometryVersion: snapshot.geometryVersion,
+  outerViewport: { ...snapshot.viewport },
+  shellMode: snapshot.shellMode,
+  playAreaBounds: copyRect(snapshot.playAreaBounds),
+  shellGapBounds: snapshot.shellGapBounds
+    ? copyRect(snapshot.shellGapBounds)
+    : null,
+  sidebarBounds: snapshot.sidebarBounds
+    ? copyRect(snapshot.sidebarBounds)
+    : null,
+  tabsBounds: snapshot.tabsBounds ? copyRect(snapshot.tabsBounds) : null,
+  players: [
+    projectPlayerFrame(snapshot.players[0]),
+    projectPlayerFrame(snapshot.players[1]),
+  ],
+  resizeHandles: [
+    projectResizeHandle(snapshot.resizeHandles[0]),
+    projectResizeHandle(snapshot.resizeHandles[1]),
+  ],
+  shared: {
+    stadiumBounds: copyRect(snapshot.shared.stadium.physicalDeclaredBounds),
+    boardControlsAnchor: { ...snapshot.shared.boardControlsAnchor },
+  },
+});
+
+/**
+ * Convenience for renderer/controller tests that own a standalone full-screen
+ * play-area viewport. Production route composition should pass its complete
+ * source-characterized BoardLayoutSnapshot to createBoardScene instead.
+ */
+export const createBoardSceneForViewport = (
+  view: MatchViewState,
+  options: BoardLayoutOptions
+): BoardScene => {
+  assertLayoutOptions(options);
+  const firstPlayer = view.playerOrder[0];
+  const secondPlayer = view.playerOrder[1];
+  if (!firstPlayer || !secondPlayer || view.playerOrder.length !== 2) {
+    throw new Error('Board scene requires exactly two projected players');
+  }
+  const boundary = 1 - options.splitRatio;
+  const layoutState: BoardLayoutState = {
+    geometryVersion: options.geometryVersion,
+    viewport: { ...options.viewport },
+    playerIds: [firstPlayer, secondPlayer],
+    bottomPlayerId: options.bottomPlayerId,
+    shellMode: 'fullscreen',
+    vertical: {
+      lowerFrame: { bottomRatio: 0, heightRatio: boundary },
+      upperFrame: {
+        bottomRatio: boundary,
+        heightRatio: options.splitRatio,
+      },
+      lowerHandle: {
+        bottomRatio: boundary + 0.005,
+        heightRatio: LEGACY_BOARD_RESIZER_V1.baseHeightRatio,
+      },
+      upperHandle: {
+        bottomRatio: boundary + 0.03,
+        heightRatio: LEGACY_BOARD_RESIZER_V1.baseHeightRatio,
+      },
+      sharedPlacement: 'cssDefault',
+    },
+  };
+  return createBoardScene(view, createBoardLayoutSnapshot(layoutState));
+};
 
 const fitCard = (bounds: Rect, heightRatio = 0.92): Rect => {
   const height = bounds.height * heightRatio;
@@ -230,11 +324,27 @@ const addCardAbilityMarker = (
 
 export const createBoardScene = (
   view: MatchViewState,
-  options: BoardLayoutOptions
+  layout: BoardLayoutSnapshot
 ): BoardScene => {
-  if (!view.playerOrder.includes(options.bottomPlayerId)) {
-    throw new Error('Bottom player must exist in the projected match');
+  const projectedPlayers = new Set(view.playerOrder);
+  if (
+    view.playerOrder.length !== 2 ||
+    layout.players.length !== 2 ||
+    layout.players.some((player) => !projectedPlayers.has(player.playerId)) ||
+    view.playerOrder.some(
+      (playerId) =>
+        !layout.players.some((player) => player.playerId === playerId)
+    )
+  ) {
+    throw new Error(
+      'Board layout players must exactly match the projected match'
+    );
   }
+  const viewport = {
+    width: layout.playAreaBounds.width,
+    height: layout.playAreaBounds.height,
+    devicePixelRatio: layout.viewport.devicePixelRatio,
+  };
   const zones: ZoneSceneNode[] = [];
   const cards: CardSceneNode[] = [];
   const markers: MarkerSceneNode[] = [];
@@ -250,24 +360,43 @@ export const createBoardScene = (
     }
   };
 
+  const playerLayout = (playerId: PlayerId) => {
+    const player = layout.players.find(
+      (candidate) => candidate.playerId === playerId
+    );
+    if (!player) throw new Error(`Missing board layout player ${playerId}`);
+    return player;
+  };
+
   for (const zone of Object.values(view.zones)) {
-    const side = zone.ownerId
-      ? sideForPlayer(zone.ownerId, options.bottomPlayerId)
-      : 'shared';
-    const bounds =
-      zone.kind === 'stadium'
-        ? layoutStadium(options.viewport)
-        : layoutPlayerZone(
-            zone.kind as PlayerZoneGeometryKind,
-            side as BoardSide,
-            options
-          );
+    let region = null;
+    if (zone.ownerId) {
+      if (zone.kind === 'stadium') {
+        throw new Error('Stadium zone must be shared');
+      }
+      region = findBoardLayoutRegion(
+        layout,
+        playerLayout(zone.ownerId).side,
+        zone.kind
+      );
+    } else if (zone.kind !== 'stadium') {
+      throw new Error(`${zone.kind} zone must belong to a player`);
+    }
+    const side = region?.side ?? 'shared';
+    const bounds = region
+      ? copyRect(region.physicalBorderBoxBounds)
+      : copyRect(layout.shared.stadium.physicalDeclaredBounds);
+    const contentBounds = region
+      ? copyRect(region.physicalContentBoxBounds)
+      : copyRect(bounds);
     zones.push({
       id: zone.id,
       playerId: zone.ownerId,
       side,
       kind: zone.kind,
       bounds,
+      contentBounds,
+      surface: region?.surface ?? 'zone',
       count: zone.cards.length,
       zIndex: zone.kind === 'stadium' ? 30 : 10,
       label: zoneLabel(
@@ -276,7 +405,11 @@ export const createBoardScene = (
       ),
       interactive: true,
     });
-    const cardBounds = layoutZoneCards(zone.kind, bounds, zone.cards.length);
+    const cardBounds = layoutZoneCards(
+      zone.kind,
+      contentBounds,
+      zone.cards.length
+    );
     zone.cards.forEach((card, index) => {
       const cardRect = cardBounds[index];
       if (!cardRect) return;
@@ -302,13 +435,18 @@ export const createBoardScene = (
 
   for (const [playerIdValue, board] of Object.entries(view.boards)) {
     const playerId = playerIdValue as PlayerId;
-    const side = sideForPlayer(playerId, options.bottomPlayerId);
+    const player = playerLayout(playerId);
+    const side = player.side;
     const stackIds = [board.activeStackId, ...board.benchStackIds].filter(
       (id): id is string => id !== null
     );
+    const slotRegions = {
+      active: findBoardLayoutRegion(layout, side, 'active'),
+      bench: findBoardLayoutRegion(layout, side, 'bench'),
+    } as const;
     const slotBounds = {
-      active: layoutPlayerZone('active', side, options),
-      bench: layoutPlayerZone('bench', side, options),
+      active: copyRect(slotRegions.active.physicalContentBoxBounds),
+      bench: copyRect(slotRegions.bench.physicalContentBoxBounds),
     } as const;
     const activeRects = layoutRow(
       slotBounds.active,
@@ -326,7 +464,9 @@ export const createBoardScene = (
         playerId,
         side,
         kind: 'active',
-        bounds: slotBounds.active,
+        bounds: copyRect(slotRegions.active.physicalBorderBoxBounds),
+        contentBounds: copyRect(slotRegions.active.physicalContentBoxBounds),
+        surface: slotRegions.active.surface,
         count: board.activeStackId ? 1 : 0,
         zIndex: 20,
         label: `${view.players[playerId]?.displayName ?? 'Player'} active`,
@@ -337,7 +477,9 @@ export const createBoardScene = (
         playerId,
         side,
         kind: 'bench',
-        bounds: slotBounds.bench,
+        bounds: copyRect(slotRegions.bench.physicalBorderBoxBounds),
+        contentBounds: copyRect(slotRegions.bench.physicalContentBoxBounds),
+        surface: slotRegions.bench.surface,
         count: board.benchStackIds.length,
         zIndex: 20,
         label: `${view.players[playerId]?.displayName ?? 'Player'} bench`,
@@ -399,14 +541,14 @@ export const createBoardScene = (
   }
 
   const workAreaBounds: Rect = {
-    x: options.viewport.width * 0.2,
-    y: options.viewport.height * 0.2,
-    width: options.viewport.width * 0.6,
-    height: options.viewport.height * 0.6,
+    x: viewport.width * 0.2,
+    y: viewport.height * 0.2,
+    width: viewport.width * 0.6,
+    height: viewport.height * 0.6,
   };
   for (const [playerIdValue, workArea] of Object.entries(view.workAreas)) {
     const playerId = playerIdValue as PlayerId;
-    const side = sideForPlayer(playerId, options.bottomPlayerId);
+    const side = playerLayout(playerId).side;
     for (const [kind, area] of [
       ['inspection', workArea.inspection],
       ['attachmentResolution', workArea.attachmentResolution],
@@ -422,6 +564,8 @@ export const createBoardScene = (
         side,
         kind,
         bounds: workAreaBounds,
+        contentBounds: copyRect(workAreaBounds),
+        surface: 'zone',
         count: areaCards.length,
         zIndex: 900,
         label:
@@ -452,9 +596,9 @@ export const createBoardScene = (
   return {
     matchId: view.matchId,
     revision: view.revision,
-    viewport: { ...options.viewport },
-    bottomPlayerId: options.bottomPlayerId,
-    splitRatio: options.splitRatio,
+    viewport,
+    bottomPlayerId: layout.bottomPlayerId,
+    layout: createBoardSceneLayout(layout),
     zones: zones.sort(
       (left, right) =>
         left.zIndex - right.zIndex || left.id.localeCompare(right.id)

@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_BOARD_VIEWPORT } from './defaults.js';
 import { layoutPlayerZone } from './geometry.js';
 import {
-  createBoardScene,
+  createBoardSceneForViewport,
   diffBoardScenes,
   hitTestBoardScene,
 } from './scene.js';
@@ -133,7 +133,7 @@ describe('renderer-neutral board scene', () => {
   });
 
   it('uses board-tier face images only for visible cards and backs for concealed cards', () => {
-    const scene = createBoardScene(createView(), options);
+    const scene = createBoardSceneForViewport(createView(), options);
     const known = scene.cards.find((card) => card.id === knownCardId);
     const hidden = scene.cards.find((card) => card.id === hiddenCardId);
     expect(known).toMatchObject({
@@ -195,7 +195,7 @@ describe('renderer-neutral board scene', () => {
         },
       },
     };
-    const scene = createBoardScene(view, {
+    const scene = createBoardSceneForViewport(view, {
       ...options,
       bottomPlayerId: view.playerOrder[0]!,
     });
@@ -222,7 +222,7 @@ describe('renderer-neutral board scene', () => {
 
   it('builds the shared 61-card spike and keeps index zero visually atop cover piles', () => {
     const view = createRendererSpikeView();
-    const scene = createBoardScene(view, {
+    const scene = createBoardSceneForViewport(view, {
       ...options,
       bottomPlayerId: view.playerOrder[0]!,
     });
@@ -254,14 +254,45 @@ describe('renderer-neutral board scene', () => {
         },
       },
     };
-    expect(() => createBoardScene(duplicated, options)).toThrow(
+    expect(() => createBoardSceneForViewport(duplicated, options)).toThrow(
       'Projected card appears more than once'
     );
   });
 
+  it('rejects player-owned stadiums and shared player zones', () => {
+    const view = createView();
+    const stadium = view.zones['zone:shared:stadium']!;
+    expect(() =>
+      createBoardSceneForViewport(
+        {
+          ...view,
+          zones: {
+            ...view.zones,
+            [stadium.id]: { ...stadium, ownerId: p1 },
+          },
+        },
+        options
+      )
+    ).toThrow('Stadium zone must be shared');
+
+    const hand = view.zones['zone:p1:hand']!;
+    expect(() =>
+      createBoardSceneForViewport(
+        {
+          ...view,
+          zones: {
+            ...view.zones,
+            [hand.id]: { ...hand, ownerId: null },
+          },
+        },
+        options
+      )
+    ).toThrow('hand zone must belong to a player');
+  });
+
   it('diffs by stable view identity and hit-tests the topmost card before its zone', () => {
-    const first = createBoardScene(createView(), options);
-    const moved = createBoardScene(createView(), {
+    const first = createBoardSceneForViewport(createView(), options);
+    const moved = createBoardSceneForViewport(createView(), {
       ...options,
       viewport: { ...options.viewport, width: 1000 },
     });
@@ -284,13 +315,16 @@ describe('renderer-neutral board scene', () => {
 
   it('fails closed for invalid viewports and unsafe split ratios', () => {
     expect(() =>
-      createBoardScene(createView(), {
+      createBoardSceneForViewport(createView(), {
         ...options,
         viewport: { width: 0, height: 900, devicePixelRatio: 1 },
       })
     ).toThrow('positive');
     expect(() =>
-      createBoardScene(createView(), { ...options, splitRatio: 0.99 })
+      createBoardSceneForViewport(createView(), {
+        ...options,
+        splitRatio: 0.99,
+      })
     ).toThrow('between 0.2 and 0.8');
   });
 });

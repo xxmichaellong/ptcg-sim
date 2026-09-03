@@ -31,6 +31,60 @@ const absoluteRect = (bounds: Rect, zIndex: number): CSSProperties => ({
   boxSizing: 'border-box',
 });
 
+/** Geometry sentinels only; visible chrome and resize input remain route-owned. */
+const PlayerFrameNode = memo(function PlayerFrameNode({
+  frame,
+}: {
+  readonly frame: BoardScene['layout']['players'][number];
+}) {
+  return (
+    <div
+      data-player-frame-id={frame.playerId}
+      data-player-frame-side={frame.side}
+      data-player-physical-side={frame.physicalSide}
+      data-player-rotation={frame.rotationQuarterTurns}
+      aria-hidden="true"
+      style={{ ...absoluteRect(frame.bounds, -10), pointerEvents: 'none' }}
+    />
+  );
+});
+
+const ResizeHandleNode = memo(function ResizeHandleNode({
+  handle,
+}: {
+  readonly handle: BoardScene['layout']['resizeHandles'][number];
+}) {
+  return (
+    <div
+      data-resize-handle-id={handle.id}
+      data-controls-physical-side={handle.controlsPhysicalSide}
+      aria-hidden="true"
+      style={{ ...absoluteRect(handle.bounds, 10_000), pointerEvents: 'none' }}
+    />
+  );
+});
+
+const BoardControlsAnchorNode = memo(function BoardControlsAnchorNode({
+  anchor,
+}: {
+  readonly anchor: BoardScene['layout']['shared']['boardControlsAnchor'];
+}) {
+  return (
+    <div
+      data-board-controls-anchor="true"
+      aria-hidden="true"
+      style={{
+        position: 'absolute',
+        left: anchor.x,
+        top: anchor.y,
+        width: 0,
+        height: anchor.height,
+        pointerEvents: 'none',
+      }}
+    />
+  );
+});
+
 const ZoneNode = memo(function ZoneNode({
   zone,
   emitIntent,
@@ -43,6 +97,7 @@ const ZoneNode = memo(function ZoneNode({
       className={`ptcgsim-zone ptcgsim-zone-${zone.kind}`}
       data-zone-id={zone.id}
       data-zone-kind={zone.kind}
+      data-zone-surface={zone.surface}
       aria-label={`${zone.label}, ${zone.count} cards`}
       style={{
         ...absoluteRect(zone.bounds, zone.zIndex),
@@ -52,7 +107,20 @@ const ZoneNode = memo(function ZoneNode({
         pointerEvents: zone.interactive ? 'auto' : 'none',
       }}
       onDoubleClick={() => emitIntent({ kind: 'ZoneOpened', zoneId: zone.id })}
-    />
+    >
+      <div
+        data-zone-content-id={zone.id}
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          left: zone.contentBounds.x - zone.bounds.x,
+          top: zone.contentBounds.y - zone.bounds.y,
+          width: zone.contentBounds.width,
+          height: zone.contentBounds.height,
+          pointerEvents: 'none',
+        }}
+      />
+    </div>
   );
 });
 
@@ -269,6 +337,7 @@ export const BoardSurface = ({
       className="ptcgsim-board-surface"
       data-match-id={scene.matchId}
       data-revision={scene.revision}
+      data-shell-mode={scene.layout.shellMode}
       data-reduced-motion={preferences.reducedMotion ? 'true' : 'false'}
       data-high-contrast={preferences.highContrast ? 'true' : 'false'}
       data-dark-mode={preferences.darkMode ? 'true' : 'false'}
@@ -323,6 +392,15 @@ export const BoardSurface = ({
         contain: 'strict',
       }}
     >
+      {scene.layout.players.map((frame) => (
+        <PlayerFrameNode key={frame.playerId} frame={frame} />
+      ))}
+      {scene.layout.resizeHandles.map((handle) => (
+        <ResizeHandleNode key={handle.id} handle={handle} />
+      ))}
+      <BoardControlsAnchorNode
+        anchor={scene.layout.shared.boardControlsAnchor}
+      />
       {scene.zones.map((zone) => (
         <ZoneNode key={zone.id} zone={zone} emitIntent={adapters.emitIntent} />
       ))}

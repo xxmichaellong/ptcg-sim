@@ -290,7 +290,7 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 636 v2 tests across 98 files. A separate
+The repository-wide gate passes 641 v2 tests across 98 files. A separate
 Playwright suite passes seven real Chromium 151 scenarios:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
@@ -317,8 +317,11 @@ Playwright suite passes seven real Chromium 151 scenarios:
 6. The checked-in v1 HTML/CSS is served through a deny-by-default, inert-module
    browser harness. Its default 1600×900 shell, frames, handles, shared anchors,
    opponent rotation, and all 16 region border boxes match the independently
-   pinned oracle; the v2 play area and 12 currently equivalent unpadded region
-   surfaces match that measured source within the 2 CSS px gate.
+   pinned oracle. The React DOM candidate's 16 visible region border boxes and
+   stadium match that measured source; structural content boxes, opponent
+   rotation, and non-painting frame/handle/control projection anchors match the
+   pinned layout within the 2 CSS px gate. The sidebar content rectangle is
+   derived from measured shell/tab edges, not a corresponding content element.
 7. The selected DOM implementation completes 100 mount → clear/reset → destroy
    cycles on one warmed route-owned host with the exact status sequence,
    complete scene IDs at mount, zero rendered scene children/IDs after clear and
@@ -355,8 +358,8 @@ bottleneck and the full cross-browser matrix.
 The following still require controlled browser/device runs before production
 wiring:
 
-- expand the source-driven default 12-surface checkpoint to prizes, free board,
-  stadium, frames, handles, controls, cards/stacks, screenshots, every declared
+- expand the source-driven default geometry checkpoint to painted/interactable
+  frames, handles and controls, cards/stacks, screenshots, every declared
   viewport, split/flip state, and the structured 2 px / 1% thresholds;
 - full double-click, right-click, flip, split resize, zone browser, keyboard,
   DOM-overlay anchor parity, and drag rejection/reconnect snap-back behavior;

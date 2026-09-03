@@ -62,43 +62,11 @@ const retainLayoutState = (state: BoardLayoutState): BoardLayoutState =>
 const retainLayoutSnapshot = (state: BoardLayoutState): BoardLayoutSnapshot =>
   deepFreeze(createBoardLayoutSnapshot(state));
 
-const sceneSplitRatio = (layout: BoardLayoutState): number => {
-  const ratio = layout.vertical.upperFrame.heightRatio;
-  if (ratio < 0.2 || ratio > 0.8) {
-    throw new Error(
-      'The provisional scene contract cannot represent this legacy frame height'
-    );
-  }
-  return ratio;
-};
-
-const SUPPORTED_LAYOUT_TOLERANCE = 1e-9;
-
-const closeEnough = (left: number, right: number): boolean =>
-  Math.abs(left - right) <= SUPPORTED_LAYOUT_TOLERANCE;
-
-const assertSceneLayoutSupported = (layout: BoardLayoutState): void => {
-  const { lowerFrame, upperFrame, sharedPlacement } = layout.vertical;
-  if (sharedPlacement !== 'cssDefault') {
-    throw new Error(
-      'The provisional scene contract only supports default shared placement'
-    );
-  }
-  if (
-    !closeEnough(lowerFrame.bottomRatio, 0) ||
-    !closeEnough(upperFrame.bottomRatio + upperFrame.heightRatio, 1) ||
-    !closeEnough(lowerFrame.heightRatio, 1 - upperFrame.heightRatio)
-  ) {
-    throw new Error(
-      'The provisional scene contract only supports complementary player frames'
-    );
-  }
-};
-
-const sameSceneLayoutProjection = (
+const sameLayoutState = (
   left: BoardLayoutState,
   right: BoardLayoutState
 ): boolean =>
+  left.geometryVersion === right.geometryVersion &&
   left.viewport.width === right.viewport.width &&
   left.viewport.height === right.viewport.height &&
   left.viewport.devicePixelRatio === right.viewport.devicePixelRatio &&
@@ -106,8 +74,23 @@ const sameSceneLayoutProjection = (
   left.bottomPlayerId === right.bottomPlayerId &&
   left.playerIds[0] === right.playerIds[0] &&
   left.playerIds[1] === right.playerIds[1] &&
+  left.vertical.lowerFrame.bottomRatio ===
+    right.vertical.lowerFrame.bottomRatio &&
+  left.vertical.lowerFrame.heightRatio ===
+    right.vertical.lowerFrame.heightRatio &&
+  left.vertical.upperFrame.bottomRatio ===
+    right.vertical.upperFrame.bottomRatio &&
   left.vertical.upperFrame.heightRatio ===
-    right.vertical.upperFrame.heightRatio;
+    right.vertical.upperFrame.heightRatio &&
+  left.vertical.lowerHandle.bottomRatio ===
+    right.vertical.lowerHandle.bottomRatio &&
+  left.vertical.lowerHandle.heightRatio ===
+    right.vertical.lowerHandle.heightRatio &&
+  left.vertical.upperHandle.bottomRatio ===
+    right.vertical.upperHandle.bottomRatio &&
+  left.vertical.upperHandle.heightRatio ===
+    right.vertical.upperHandle.heightRatio &&
+  left.vertical.sharedPlacement === right.vertical.sharedPlacement;
 
 /**
  * Renderer-neutral vertical composition for opt-in board candidates. It owns
@@ -139,9 +122,7 @@ export class BoardSessionRuntime {
 
   constructor(private readonly options: BoardSessionRuntimeOptions) {
     this.layoutState = retainLayoutState(options.layout);
-    assertSceneLayoutSupported(this.layoutState);
     this.layoutSnapshot = retainLayoutSnapshot(this.layoutState);
-    sceneSplitRatio(this.layoutState);
     this.createRenderer = options.createRenderer;
   }
 
@@ -182,7 +163,7 @@ export class BoardSessionRuntime {
     return copyLayoutState(this.layoutState);
   }
 
-  /** Full source characterization; only the documented subset drives BoardScene. */
+  /** Full source characterization used to derive renderer scene geometry. */
   getCharacterizedLayoutSnapshot(): BoardLayoutSnapshot {
     return retainLayoutSnapshot(this.layoutState);
   }
@@ -196,18 +177,13 @@ export class BoardSessionRuntime {
     if (this.rendererMountError) throw this.rendererMountError;
   }
 
-  replaceSupportedLayoutState(layout: BoardLayoutState): boolean {
+  replaceLayoutState(layout: BoardLayoutState): boolean {
     this.assertUsable();
     const nextState = retainLayoutState(layout);
-    assertSceneLayoutSupported(nextState);
     const nextSnapshot = retainLayoutSnapshot(nextState);
-    sceneSplitRatio(nextState);
     const view = this.adapter?.getSnapshot().view;
     if (view) this.createScene(view, nextState, nextSnapshot);
-    const changesScene = !sameSceneLayoutProjection(
-      this.layoutState,
-      nextState
-    );
+    const changesScene = !sameLayoutState(this.layoutState, nextState);
     this.layoutState = nextState;
     this.layoutSnapshot = nextSnapshot;
     if (!changesScene) return false;
@@ -216,19 +192,24 @@ export class BoardSessionRuntime {
     return true;
   }
 
+  /** @deprecated Use replaceLayoutState; retained for candidate-wrapper compatibility. */
+  replaceSupportedLayoutState(layout: BoardLayoutState): boolean {
+    return this.replaceLayoutState(layout);
+  }
+
   setViewport(viewport: BoardViewport): void {
-    this.replaceSupportedLayoutState({
+    this.replaceLayoutState({
       ...this.layoutState,
       viewport: { ...viewport },
     });
   }
 
   setShellMode(shellMode: BoardShellMode): void {
-    this.replaceSupportedLayoutState({ ...this.layoutState, shellMode });
+    this.replaceLayoutState({ ...this.layoutState, shellMode });
   }
 
   flipBoard(): void {
-    this.replaceSupportedLayoutState(flipBoardLayoutState(this.layoutState));
+    this.replaceLayoutState(flipBoardLayoutState(this.layoutState));
   }
 
   dispose(): void {
@@ -284,17 +265,7 @@ export class BoardSessionRuntime {
         'Characterized layout player order does not match the projected view'
       );
     }
-    const viewport = {
-      width: snapshot.playAreaBounds.width,
-      height: snapshot.playAreaBounds.height,
-      devicePixelRatio: layout.viewport.devicePixelRatio,
-    };
-    return createBoardScene(view, {
-      viewport,
-      bottomPlayerId: layout.bottomPlayerId,
-      splitRatio: sceneSplitRatio(layout),
-      geometryVersion: 1,
-    });
+    return createBoardScene(view, snapshot);
   }
 
   private readonly handleBoardEffect = (

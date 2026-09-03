@@ -1,6 +1,6 @@
 import type { MatchViewState, ViewCardId } from '@ptcgsim/game-core';
 import {
-  createBoardScene,
+  createBoardSceneForViewport,
   createRendererSpikeView,
   DEFAULT_BOARD_PRESENTATION,
   type BoardIntent,
@@ -20,7 +20,7 @@ import {
 
 const viewport = { width: 1208, height: 900, devicePixelRatio: 1 } as const;
 const createScene = (view: MatchViewState): BoardScene =>
-  createBoardScene(view, {
+  createBoardSceneForViewport(view, {
     viewport,
     bottomPlayerId:
       view.viewer.kind === 'player'

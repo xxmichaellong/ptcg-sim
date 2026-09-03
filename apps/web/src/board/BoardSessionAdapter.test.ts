@@ -13,7 +13,7 @@ import {
   type ServerMessage,
 } from '@ptcgsim/protocol';
 import {
-  createBoardScene,
+  createBoardSceneForViewport,
   createRendererSpikeView,
   type BoardScene,
 } from '@ptcgsim/renderer-contract';
@@ -41,7 +41,7 @@ const coin = (revision: number): PresentationEvent => ({
   result: revision % 2 === 0 ? 'tails' : 'heads',
 });
 const createScene = (view: MatchViewState): BoardScene =>
-  createBoardScene(view, {
+  createBoardSceneForViewport(view, {
     viewport: { width: 1208, height: 900, devicePixelRatio: 1 },
     bottomPlayerId:
       view.viewer.kind === 'player'

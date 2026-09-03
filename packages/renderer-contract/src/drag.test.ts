@@ -2,22 +2,40 @@ import { asPlayerId, asViewCardId } from '@ptcgsim/game-core';
 import { describe, expect, it, vi } from 'vitest';
 
 import { BoardDragController, resolveBoardDropTarget } from './drag.js';
+import {
+  BOARD_LAYOUT_GEOMETRY_VERSION,
+  createBoardLayoutSnapshot,
+  DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+} from './layout.js';
 import type {
   BoardIntent,
   BoardPresentationUpdate,
   BoardScene,
 } from './model.js';
+import { createBoardSceneLayout } from './scene.js';
 
 const playerId = asPlayerId('player');
+const opponentId = asPlayerId('opponent');
 const sourceId = asViewCardId('source');
 const targetCardId = asViewCardId('target-card');
+
+const layout = createBoardSceneLayout(
+  createBoardLayoutSnapshot({
+    geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
+    viewport: { width: 800, height: 600, devicePixelRatio: 1 },
+    playerIds: [playerId, opponentId],
+    bottomPlayerId: playerId,
+    shellMode: 'fullscreen',
+    vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+  })
+);
 
 const scene = (): BoardScene => ({
   matchId: 'drag-test',
   revision: 1,
   viewport: { width: 800, height: 600, devicePixelRatio: 1 },
   bottomPlayerId: playerId,
-  splitRatio: 0.5,
+  layout,
   zones: [
     {
       id: 'source-zone',
@@ -25,6 +43,8 @@ const scene = (): BoardScene => ({
       side: 'local',
       kind: 'hand',
       bounds: { x: 0, y: 400, width: 300, height: 200 },
+      contentBounds: { x: 0, y: 400, width: 300, height: 200 },
+      surface: 'zone',
       count: 1,
       zIndex: 10,
       label: 'Source',
@@ -36,6 +56,8 @@ const scene = (): BoardScene => ({
       side: 'local',
       kind: 'bench',
       bounds: { x: 400, y: 100, width: 300, height: 200 },
+      contentBounds: { x: 400, y: 100, width: 300, height: 200 },
+      surface: 'playSlot',
       count: 1,
       zIndex: 20,
       label: 'Target',

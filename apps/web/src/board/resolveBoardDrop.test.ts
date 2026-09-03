@@ -1,6 +1,6 @@
 import type { MatchViewState } from '@ptcgsim/game-core';
 import {
-  createBoardScene,
+  createBoardSceneForViewport,
   createRendererSpikeView,
   type BoardScene,
 } from '@ptcgsim/renderer-contract';
@@ -15,7 +15,7 @@ const fixture = (): {
   const view = createRendererSpikeView();
   return {
     view,
-    scene: createBoardScene(view, {
+    scene: createBoardSceneForViewport(view, {
       viewport: { width: 1208, height: 900, devicePixelRatio: 1 },
       bottomPlayerId: view.playerOrder[0]!,
       splitRatio: 0.5,
@@ -191,7 +191,7 @@ describe('board drop command resolution', () => {
         },
       },
     };
-    const scene = createBoardScene(view, {
+    const scene = createBoardSceneForViewport(view, {
       viewport: input.scene.viewport,
       bottomPlayerId: playerId,
       splitRatio: 0.5,
@@ -243,7 +243,7 @@ describe('board drop command resolution', () => {
         },
       },
     };
-    const scene = createBoardScene(view, {
+    const scene = createBoardSceneForViewport(view, {
       viewport: input.scene.viewport,
       bottomPlayerId: playerId,
       splitRatio: 0.5,
@@ -313,6 +313,8 @@ describe('board drop command resolution', () => {
           side: 'local',
           kind: 'inspection',
           bounds: { x: 100, y: 100, width: 200, height: 200 },
+          contentBounds: { x: 100, y: 100, width: 200, height: 200 },
+          surface: 'zone',
           count: 1,
           zIndex: 900,
           label: 'Inspection',

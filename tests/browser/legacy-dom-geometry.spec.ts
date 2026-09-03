@@ -37,35 +37,48 @@ const collectRuntimeErrors = (page: Page): string[] => {
 };
 
 const v2RegionIds: Readonly<
-  Record<LegacySide, Readonly<Record<MatchingRegionKind, string>>>
+  Record<LegacySide, Readonly<Record<LegacyRegionKind, string>>>
 > = {
   local: {
     hand: 'zone:spike-blue:hand',
     bench: 'slot:spike-blue:bench',
     active: 'slot:spike-blue:active',
+    prizes: 'zone:spike-blue:prizes',
     lostZone: 'zone:spike-blue:lostZone',
     deck: 'zone:spike-blue:deck',
     discard: 'zone:spike-blue:discard',
+    board: 'zone:spike-blue:board',
   },
   opponent: {
     hand: 'zone:spike-red:hand',
     bench: 'slot:spike-red:bench',
     active: 'slot:spike-red:active',
+    prizes: 'zone:spike-red:prizes',
     lostZone: 'zone:spike-red:lostZone',
     deck: 'zone:spike-red:deck',
     discard: 'zone:spike-red:discard',
+    board: 'zone:spike-red:board',
   },
 };
 
-type MatchingRegionKind = Extract<
-  LegacyRegionKind,
-  'hand' | 'bench' | 'active' | 'lostZone' | 'deck' | 'discard'
->;
-
 interface V2Geometry {
   readonly playAreaBounds: CapturedRect;
+  readonly shellGapBounds: CapturedRect;
+  readonly sidebarBounds: CapturedRect;
+  readonly tabsBounds: CapturedRect;
+  readonly frames: Readonly<Record<LegacySide, CapturedRect>>;
+  readonly frameRotationQuarterTurns: Readonly<Record<LegacySide, number>>;
+  readonly stadiumBounds: CapturedRect;
+  readonly boardControlsBounds: CapturedRect;
+  readonly resizeHandles: {
+    readonly lower: CapturedRect;
+    readonly upper: CapturedRect;
+  };
   readonly regions: Readonly<
-    Record<LegacySide, Readonly<Record<MatchingRegionKind, CapturedRect>>>
+    Record<LegacySide, Readonly<Record<LegacyRegionKind, CapturedRect>>>
+  >;
+  readonly regionContentBounds: Readonly<
+    Record<LegacySide, Readonly<Record<LegacyRegionKind, CapturedRect>>>
   >;
 }
 
@@ -86,37 +99,116 @@ const captureV2Geometry = async (page: Page): Promise<V2Geometry> => {
   );
 
   const captureSide = async (
-    side: LegacySide
-  ): Promise<Record<MatchingRegionKind, CapturedRect>> => {
+    side: LegacySide,
+    box: 'border' | 'content'
+  ): Promise<Record<LegacyRegionKind, CapturedRect>> => {
     const entries = await Promise.all(
-      Object.entries(v2RegionIds[side]).map(async ([kind, id]) => [
-        kind,
-        await requireRect(
-          page.locator(`[data-zone-id="${id}"]`),
-          `${side}.${kind}`
-        ),
-      ])
+      Object.entries(v2RegionIds[side]).map(async ([kind, id]) => {
+        const selector =
+          box === 'border'
+            ? `[data-zone-id="${id}"]`
+            : `[data-zone-content-id="${id}"]`;
+        return [
+          kind,
+          await requireRect(page.locator(selector), `${side}.${kind}.${box}`),
+        ];
+      })
     );
     return Object.fromEntries(entries) as Record<
-      MatchingRegionKind,
+      LegacyRegionKind,
       CapturedRect
     >;
   };
 
-  const [local, opponent] = await Promise.all([
-    captureSide('local'),
-    captureSide('opponent'),
+  const [local, opponent, localContent, opponentContent] = await Promise.all([
+    captureSide('local', 'border'),
+    captureSide('opponent', 'border'),
+    captureSide('local', 'content'),
+    captureSide('opponent', 'content'),
   ]);
+  const playAreaBounds = await requireRect(
+    page.locator('.board-column'),
+    '.board-column'
+  );
+  const sidebarShellBounds = await requireRect(
+    page.locator('.legacy-sidebar'),
+    '.legacy-sidebar'
+  );
+  const tabsBounds = await requireRect(
+    page.locator('.legacy-tabs'),
+    '.legacy-tabs'
+  );
+  const sidebarBounds = {
+    x: sidebarShellBounds.x,
+    y: tabsBounds.y + tabsBounds.height,
+    width: sidebarShellBounds.width,
+    height:
+      sidebarShellBounds.y +
+      sidebarShellBounds.height -
+      (tabsBounds.y + tabsBounds.height),
+  };
+  const frameRotationQuarterTurns = Object.fromEntries(
+    await Promise.all(
+      (['local', 'opponent'] as const).map(async (side) => {
+        const value = await page
+          .locator(`[data-player-frame-side="${side}"]`)
+          .getAttribute('data-player-rotation');
+        const rotation = Number(value);
+        if (!Number.isInteger(rotation)) {
+          throw new Error(`Invalid ${side} frame rotation: ${value}`);
+        }
+        return [side, rotation];
+      })
+    )
+  ) as Record<LegacySide, number>;
   return {
-    playAreaBounds: await requireRect(
-      page.locator('.board-column'),
-      '.board-column'
+    playAreaBounds,
+    shellGapBounds: {
+      x: playAreaBounds.x + playAreaBounds.width,
+      y: playAreaBounds.y,
+      width: sidebarBounds.x - (playAreaBounds.x + playAreaBounds.width),
+      height: playAreaBounds.height,
+    },
+    sidebarBounds,
+    tabsBounds,
+    frames: {
+      local: await requireRect(
+        page.locator('[data-player-frame-side="local"]'),
+        'local frame'
+      ),
+      opponent: await requireRect(
+        page.locator('[data-player-frame-side="opponent"]'),
+        'opponent frame'
+      ),
+    },
+    frameRotationQuarterTurns,
+    stadiumBounds: await requireRect(
+      page.locator('[data-zone-kind="stadium"]'),
+      'stadium'
     ),
+    boardControlsBounds: await requireRect(
+      page.locator('[data-board-controls-anchor]'),
+      'board controls anchor'
+    ),
+    resizeHandles: {
+      lower: await requireRect(
+        page.locator('[data-resize-handle-id="lower"]'),
+        'lower resize handle'
+      ),
+      upper: await requireRect(
+        page.locator('[data-resize-handle-id="upper"]'),
+        'upper resize handle'
+      ),
+    },
     regions: { local, opponent },
+    regionContentBounds: {
+      local: localContent,
+      opponent: opponentContent,
+    },
   };
 };
 
-test('checked-in legacy CSS and React DOM share the verified default board geometry', async ({
+test('checked-in legacy CSS and React DOM share default region geometry and structural anchors', async ({
   browser,
   page,
 }, testInfo) => {
@@ -167,20 +259,7 @@ test('checked-in legacy CSS and React DOM share the verified default board geome
         {
           fixture: fixture.name,
           comparedRegions: Object.keys(v2RegionIds.local),
-          legacy: {
-            playAreaBounds: legacy.playAreaBounds,
-            regions: Object.fromEntries(
-              (['local', 'opponent'] as const).map((side) => [
-                side,
-                Object.fromEntries(
-                  Object.keys(v2RegionIds[side]).map((kind) => [
-                    kind,
-                    legacy.regions[side][kind as MatchingRegionKind],
-                  ])
-                ),
-              ])
-            ),
-          },
+          legacy,
           v2,
         },
         null,
@@ -285,15 +364,73 @@ test('checked-in legacy CSS and React DOM share the verified default board geome
     tolerance,
     'v2.playArea'
   );
+  expectRectWithin(
+    v2.shellGapBounds,
+    legacy.shellGapBounds,
+    tolerance,
+    'v2.shellGap'
+  );
+  expectRectWithin(
+    v2.sidebarBounds,
+    legacy.sidebarBounds,
+    tolerance,
+    'v2.sidebar'
+  );
+  expectRectWithin(v2.tabsBounds, legacy.tabsBounds, tolerance, 'v2.tabs');
+  expectRectWithin(
+    v2.stadiumBounds,
+    legacy.stadiumBounds,
+    tolerance,
+    'v2.stadium'
+  );
+  for (const key of ['x', 'y', 'height'] as const) {
+    expect(
+      Math.abs(v2.boardControlsBounds[key] - legacy.boardControlsBounds[key]),
+      `v2.boardControls.${key}`
+    ).toBeLessThanOrEqual(tolerance);
+  }
   for (const side of ['local', 'opponent'] as const) {
-    for (const kind of Object.keys(v2RegionIds[side]) as MatchingRegionKind[]) {
+    const expectedPlayer = fixture.expected.players.find(
+      (player) => player.side === side
+    );
+    if (!expectedPlayer) throw new Error(`Missing expected ${side} player`);
+    expectRectWithin(
+      v2.frames[side],
+      legacy.frames[side],
+      tolerance,
+      `v2.${side}.frame`
+    );
+    expect(v2.frameRotationQuarterTurns[side]).toBe(
+      expectedPlayer.rotationQuarterTurns
+    );
+    for (const kind of Object.keys(v2RegionIds[side]) as LegacyRegionKind[]) {
+      const expectedRegion = fixture.expected.regions.find(
+        (region) => region.side === side && region.kind === kind
+      );
+      if (!expectedRegion) {
+        throw new Error(`Missing expected ${side}.${kind} region`);
+      }
       expectRectWithin(
         v2.regions[side][kind],
         legacy.regions[side][kind],
         tolerance,
         `v2.${side}.${kind}`
       );
+      expectRectWithin(
+        v2.regionContentBounds[side][kind],
+        expectedRegion.contentBoxBounds,
+        tolerance,
+        `v2.${side}.${kind}.content`
+      );
     }
+  }
+  for (const handleId of ['lower', 'upper'] as const) {
+    expectRectWithin(
+      v2.resizeHandles[handleId],
+      legacy.resizeHandles[handleId],
+      tolerance,
+      `v2.${handleId}Handle`
+    );
   }
   expect(v2Errors).toEqual([]);
 });

@@ -767,7 +767,7 @@ describe('opt-in React DOM board session runtime', () => {
     presentation.dispose();
   });
 
-  it('rejects unrepresentable oracle layouts without changing the installed scene', async () => {
+  it('projects every characterized frame and shared-placement change into the installed scene', async () => {
     const initial = readyState(atRevision(1));
     const live = new MutableLiveSource(initial);
     const replay = new MutableReplaySource(initial);
@@ -806,9 +806,8 @@ describe('opt-in React DOM board session runtime', () => {
     });
     expect(runtime.getBoardSnapshot()?.scene?.viewport.width).toBe(906);
     const beforeLayout = runtime.getLayoutState();
-    const beforeScene = runtime.getBoardSnapshot()?.scene;
-    const beforeEffects = effects.length;
-    const unsupported: BoardLayoutState[] = [
+    let previousScene = runtime.getBoardSnapshot()?.scene;
+    const characterized: BoardLayoutState[] = [
       {
         ...beforeLayout,
         vertical: {
@@ -847,14 +846,49 @@ describe('opt-in React DOM board session runtime', () => {
         },
       },
     ];
-    for (const candidate of unsupported) {
-      expect(() => runtime.replaceSupportedLayoutState(candidate)).toThrow();
-      expect(runtime.getLayoutState()).toEqual(beforeLayout);
-      expect(runtime.getBoardSnapshot()?.scene).toBe(beforeScene);
-      expect(effects).toHaveLength(beforeEffects);
+    for (const candidate of characterized) {
+      let changed = false;
+      await act(async () => {
+        changed = runtime.replaceLayoutState(candidate);
+      });
+      expect(changed).toBe(true);
+      const snapshot = runtime.getCharacterizedLayoutSnapshot();
+      const scene = runtime.getBoardSnapshot()?.scene;
+      expect(scene).not.toBe(previousScene);
+      expect(scene?.layout.players.map((player) => player.bounds)).toEqual(
+        snapshot.players.map((player) => player.frameBounds)
+      );
+      expect(
+        scene?.layout.resizeHandles.map((handle) => handle.bounds)
+      ).toEqual(snapshot.resizeHandles.map((handle) => handle.bounds));
+      expect(scene?.layout.shared.stadiumBounds).toEqual(
+        snapshot.shared.stadium.physicalDeclaredBounds
+      );
+      expect(scene?.layout.shared.boardControlsAnchor).toEqual(
+        snapshot.shared.boardControlsAnchor
+      );
+      previousScene = scene;
     }
-    expect(runtime.replaceSupportedLayoutState(beforeLayout)).toBe(false);
-    expect(effects).toHaveLength(beforeEffects);
+    const currentLayout = runtime.getLayoutState();
+    const effectCount = effects.length;
+    expect(runtime.replaceLayoutState(currentLayout)).toBe(false);
+    expect(effects).toHaveLength(effectCount);
+
+    const invalid: BoardLayoutState = {
+      ...currentLayout,
+      vertical: {
+        ...currentLayout.vertical,
+        upperFrame: {
+          ...currentLayout.vertical.upperFrame,
+          heightRatio: -1,
+        },
+      },
+    };
+    expect(() => runtime.replaceLayoutState(invalid)).toThrow(
+      'Upper board frame height ratio must be positive'
+    );
+    expect(runtime.getLayoutState()).toEqual(currentLayout);
+    expect(runtime.getBoardSnapshot()?.scene).toBe(previousScene);
 
     await act(async () => {
       runtime.dispose();
@@ -916,7 +950,7 @@ describe('opt-in React DOM board session runtime', () => {
       playerIds: [baseView.playerOrder[1]!, baseView.playerOrder[0]!],
     };
     await act(async () => {
-      expect(runtime.replaceSupportedLayoutState(correctedLayout)).toBe(true);
+      expect(runtime.replaceLayoutState(correctedLayout)).toBe(true);
     });
     expect(replay.getSnapshot().generation).toBe(rejectedGeneration);
     expect(runtime.getBoardSnapshot()).toMatchObject({
@@ -925,7 +959,7 @@ describe('opt-in React DOM board session runtime', () => {
     });
     expect(host.querySelectorAll('[data-card-id]').length).toBeGreaterThan(0);
     const effectCount = effects.length;
-    expect(runtime.replaceSupportedLayoutState(correctedLayout)).toBe(false);
+    expect(runtime.replaceLayoutState(correctedLayout)).toBe(false);
     expect(effects).toHaveLength(effectCount);
 
     await act(async () => {

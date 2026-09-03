@@ -211,18 +211,24 @@ oracle:
 - stadium and board-control anchors plus both resize handles; and
 - all eight border-box regions for both physical player sides.
 
-The same test separately verifies the v2 play area and the 12 region surfaces
-whose current simplified geometry is genuinely equivalent: hand, bench,
-active, lost zone, deck, and discard for both players. The recorded run stayed
-within 0.04 CSS px; the enforced acceptance remains the declared 2 CSS px
-browser tolerance.
+The same test now independently measures the React DOM candidate and verifies
+all 16 visible player-region border boxes against the live legacy-source capture
+and their structural content boxes against the source-pinned oracle. It also
+checks the visible stadium plus non-painting player-frame, resize-handle, and
+board-control projection anchors and the projected opponent rotation. The
+sidebar content rectangle is reconstructed from the measured shell/tab edges.
+The enforced acceptance remains the declared 2 CSS px browser tolerance; these
+sentinels do not claim visible controls or resize interaction parity.
 
 This is a characterization checkpoint, not a blanket parity pass. It
-deliberately does not weaken tolerances around current failures: v2 prizes and
-free board omit the legacy content-box padding, stadium still uses play-area
-rather than outer-viewport units, and the v2 spike does not yet render player
-frames, handles, or board controls. Other fixture viewports, split/flip states,
-cards/stacks, screenshots, and interaction surfaces remain in the gate below.
+feeds every renderer-relevant derived geometry field into the renderer-neutral
+scene and has structured scene assertions for all four oracle fixtures,
+including asymmetric resize, flipped ownership, midpoint shared placement,
+compact and fullscreen states. Raw normalized/authored inputs, box edges,
+affordances, and semantic z evidence remain in the richer characterization
+snapshot rather than being duplicated in `BoardScene`. Real-browser
+measurements for those additional states, cards/stacks, screenshots, and
+interaction surfaces remain in the gate below.
 
 ## Required real-browser acceptance gate
 

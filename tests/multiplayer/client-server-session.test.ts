@@ -43,7 +43,7 @@ import {
   type PersistedAuthorityTransaction,
   type RoomAuthoritySnapshot,
 } from '../../packages/room-authority/src/index.js';
-import { createBoardScene } from '../../packages/renderer-contract/src/index.js';
+import { createBoardSceneForViewport } from '../../packages/renderer-contract/src/index.js';
 import { describe, expect, it } from 'vitest';
 
 class MemoryRoomStore implements AuthoritySnapshotStore {
@@ -306,7 +306,7 @@ describe('client/server multiplayer contract', () => {
     );
     const card = hand?.cards[0];
     if (!hand || !card) throw new Error('Setup did not publish a hand card');
-    const scene = createBoardScene(before, {
+    const scene = createBoardSceneForViewport(before, {
       viewport: { width: 1208, height: 900, devicePixelRatio: 1 },
       bottomPlayerId: playerId,
       splitRatio: 0.5,
@@ -352,7 +352,7 @@ describe('client/server multiplayer contract', () => {
     );
     expect(player.session.getSnapshot().pendingCommands).toEqual([]);
     if (!after || !stackId) throw new Error('Missing published bench stack');
-    const movementScene = createBoardScene(after, {
+    const movementScene = createBoardSceneForViewport(after, {
       viewport: { width: 1208, height: 900, devicePixelRatio: 1 },
       bottomPlayerId: playerId,
       splitRatio: 0.5,
@@ -388,7 +388,7 @@ describe('client/server multiplayer contract', () => {
     expect(moved?.boards[playerId]?.activeStackId).toBe(stackId);
     expect(moved?.stacks[stackId]?.slot).toBe('active');
     if (!moved) throw new Error('Missing published active stack');
-    const departureScene = createBoardScene(moved, {
+    const departureScene = createBoardSceneForViewport(moved, {
       viewport: { width: 1208, height: 900, devicePixelRatio: 1 },
       bottomPlayerId: playerId,
       splitRatio: 0.5,
@@ -522,7 +522,7 @@ describe('client/server multiplayer contract', () => {
       throw new Error('Staged stack did not survive session resume');
     }
     expect(staged.id).toBe(stagedBeforeReconnect?.id);
-    const scene = createBoardScene(view, {
+    const scene = createBoardSceneForViewport(view, {
       viewport: { width: 1208, height: 900, devicePixelRatio: 1 },
       bottomPlayerId: playerId,
       splitRatio: 0.5,
@@ -994,7 +994,7 @@ describe('client/server multiplayer contract', () => {
       rotationQuarterTurns: 1,
     });
     expect(
-      createBoardScene(view, {
+      createBoardSceneForViewport(view, {
         viewport: { width: 1208, height: 900, devicePixelRatio: 1 },
         bottomPlayerId: playerId,
         splitRatio: 0.5,
@@ -1121,7 +1121,7 @@ describe('client/server multiplayer contract', () => {
       abilityUsed: true,
     });
     expect(
-      createBoardScene(view, {
+      createBoardSceneForViewport(view, {
         viewport: { width: 1208, height: 900, devicePixelRatio: 1 },
         bottomPlayerId: playerId,
         splitRatio: 0.5,

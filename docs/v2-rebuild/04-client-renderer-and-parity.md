@@ -150,11 +150,14 @@ independent resize handles, shared geometry, fullscreen, flip asymmetry, and
 semantic input/z evidence. A deny-by-default Playwright harness now measures the
 checked-in legacy HTML/CSS in Chromium at the default 1600×900 fixture and
 confirms every recorded shell, frame, handle, and region border box plus the
-shared stadium bounds and board-control anchor. It also confirms the v2 play
-area and the 12 player surfaces that are equivalent before padding. Prizes,
-free board, stadium, frames/handles/controls, card packing, other viewports, and
-screenshot paint parity remain explicit failing or unimplemented expansions;
-this checkpoint does not replace the production layout. See
+shared stadium bounds and board-control anchor. The React DOM candidate now
+consumes that snapshot and the same browser harness confirms all 16 visible
+player-region border boxes plus their structural content boxes, the visible
+stadium, and non-painting frame/handle/control projection anchors. The sidebar
+content rectangle is reconstructed from its measured shell and tabs; these
+anchors do not claim visible control or resize interaction parity. Card packing,
+other browser-measured viewports, and screenshot paint parity remain explicit
+expansions; this checkpoint does not replace the production layout. See
 [`LEGACY_BOARD_LAYOUT_ORACLE.md`](./LEGACY_BOARD_LAYOUT_ORACLE.md).
 
 The current duplicated self/opponent CSS becomes one declarative player-board
@@ -193,9 +196,9 @@ adapter, effect-order, cleanup, and deferred-browser-parity contract.
 
 The runtime borrows the route-owned live/replay sources and does not accept,
 construct, subscribe, or dispose a second presentation coordinator. Its layout
-bridge intentionally supports only play-area shell width, bottom perspective,
-and complementary player halves. It rejects independent asymmetric frames and
-moved shared placement until `BoardScene` consumes the full layout oracle.
+bridge now projects the full characterized layout into `BoardScene`, including
+independent asymmetric frames, handle positions, moved shared placement,
+region border/content boxes, shell mode, and flipped physical ownership.
 
 On each authoritative view publication:
 

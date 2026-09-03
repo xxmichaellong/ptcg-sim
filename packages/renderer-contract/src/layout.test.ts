@@ -478,6 +478,34 @@ describe('renderer-neutral legacy board layout', () => {
     ).toThrow('distinct');
     expect(() =>
       createBoardLayoutSnapshot(
+        state({
+          playerIds: [
+            blue,
+            red,
+            asPlayerId('unexpected'),
+          ] as unknown as BoardLayoutState['playerIds'],
+        })
+      )
+    ).toThrow('exactly two players');
+    expect(() =>
+      createBoardLayoutSnapshot(
+        state({
+          shellMode: 'unexpected' as BoardLayoutState['shellMode'],
+        })
+      )
+    ).toThrow('Unsupported board shell mode');
+    expect(() =>
+      createBoardLayoutSnapshot(
+        state({
+          vertical: {
+            ...DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+            sharedPlacement: 'unexpected',
+          } as unknown as BoardLayoutState['vertical'],
+        })
+      )
+    ).toThrow('Unsupported board shared placement');
+    expect(() =>
+      createBoardLayoutSnapshot(
         state({ bottomPlayerId: asPlayerId('missing') })
       )
     ).toThrow('Bottom player');

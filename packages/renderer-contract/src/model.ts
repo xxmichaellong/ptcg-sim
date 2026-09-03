@@ -55,12 +55,18 @@ export type BoardZoneKind =
   | 'inspection'
   | 'attachmentResolution';
 
+export type BoardZoneSurface = 'zone' | 'cover' | 'playSlot';
+
 export interface ZoneSceneNode {
   readonly id: string;
   readonly playerId: PlayerId | null;
   readonly side: BoardSide | 'shared';
   readonly kind: BoardZoneKind;
+  /** Physical legacy border box used for paint, input, and drop targeting. */
   readonly bounds: Rect;
+  /** Physical content box used by child/card packing. */
+  readonly contentBounds: Rect;
+  readonly surface: BoardZoneSurface;
   readonly count: number;
   readonly zIndex: number;
   readonly label: string;
@@ -99,12 +105,54 @@ export interface MarkerSceneNode {
   readonly label: string;
 }
 
+export interface BoardScenePlayerFrame {
+  readonly playerId: PlayerId;
+  readonly side: BoardSide;
+  readonly physicalSide: 'lower' | 'upper';
+  readonly rotationQuarterTurns: 0 | 2;
+  readonly bounds: Rect;
+}
+
+export interface BoardSceneResizeHandle {
+  readonly id: 'lower' | 'upper';
+  readonly controlsPhysicalSide: 'lower' | 'upper';
+  readonly bounds: Rect;
+}
+
+/**
+ * Renderer-facing projection of the source-pinned layout snapshot. It retains
+ * independent frames and outer-shell coordinates without duplicating every
+ * region descriptor already carried by the scene's zone nodes.
+ */
+export interface BoardSceneLayout {
+  readonly geometryVersion: 1;
+  readonly outerViewport: BoardViewport;
+  readonly shellMode: 'sidebar' | 'fullscreen';
+  readonly playAreaBounds: Rect;
+  readonly shellGapBounds: Rect | null;
+  readonly sidebarBounds: Rect | null;
+  readonly tabsBounds: Rect | null;
+  readonly players: readonly [BoardScenePlayerFrame, BoardScenePlayerFrame];
+  readonly resizeHandles: readonly [
+    BoardSceneResizeHandle,
+    BoardSceneResizeHandle,
+  ];
+  readonly shared: {
+    readonly stadiumBounds: Rect;
+    readonly boardControlsAnchor: {
+      readonly x: number;
+      readonly y: number;
+      readonly height: number;
+    };
+  };
+}
+
 export interface BoardScene {
   readonly matchId: string;
   readonly revision: number;
   readonly viewport: BoardViewport;
   readonly bottomPlayerId: PlayerId;
-  readonly splitRatio: number;
+  readonly layout: BoardSceneLayout;
   readonly zones: readonly ZoneSceneNode[];
   readonly cards: readonly CardSceneNode[];
   readonly markers: readonly MarkerSceneNode[];

@@ -2,6 +2,10 @@
 
 import { asPlayerId, asViewCardId } from '@ptcgsim/game-core';
 import {
+  BOARD_LAYOUT_GEOMETRY_VERSION,
+  createBoardLayoutSnapshot,
+  createBoardSceneLayout,
+  DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
   DEFAULT_BOARD_PREFERENCES,
   DEFAULT_BOARD_PRESENTATION,
   type BoardIntent,
@@ -16,13 +20,24 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const cardId = asViewCardId('visible-card');
 const playerId = asPlayerId('p1');
+const opponentId = asPlayerId('p2');
+const layout = createBoardSceneLayout(
+  createBoardLayoutSnapshot({
+    geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
+    viewport: { width: 800, height: 600, devicePixelRatio: 1 },
+    playerIds: [playerId, opponentId],
+    bottomPlayerId: playerId,
+    shellMode: 'fullscreen',
+    vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+  })
+);
 
 const createScene = (revision = 1, x = 10): BoardScene => ({
   matchId: 'match',
   revision,
   viewport: { width: 800, height: 600, devicePixelRatio: 1 },
   bottomPlayerId: playerId,
-  splitRatio: 0.5,
+  layout,
   zones: [
     {
       id: 'zone:p1:hand',
@@ -30,6 +45,8 @@ const createScene = (revision = 1, x = 10): BoardScene => ({
       side: 'local',
       kind: 'hand',
       bounds: { x: 0, y: 400, width: 800, height: 200 },
+      contentBounds: { x: 0, y: 403, width: 800, height: 197 },
+      surface: 'zone',
       count: 1,
       zIndex: 10,
       label: 'Blue hand',
@@ -90,6 +107,26 @@ describe('React DOM board renderer', () => {
     );
     expect(before).not.toBeNull();
     expect(before?.getAttribute('aria-label')).toBe('Visible card');
+    const surface = host.querySelector<HTMLElement>('.ptcgsim-board-surface');
+    expect(surface?.dataset.shellMode).toBe('fullscreen');
+    expect(host.querySelectorAll('[data-player-frame-id]')).toHaveLength(2);
+    expect(host.querySelectorAll('[data-resize-handle-id]')).toHaveLength(2);
+    expect(
+      host.querySelector<HTMLElement>('[data-player-frame-side="local"]')?.style
+        .top
+    ).toBe('300px');
+    expect(
+      host.querySelector<HTMLElement>('[data-board-controls-anchor]')?.style
+        .left
+    ).toBe('536px');
+    const zoneContent = host.querySelector<HTMLElement>(
+      '[data-zone-content-id="zone:p1:hand"]'
+    );
+    expect(zoneContent?.style.top).toBe('3px');
+    expect(zoneContent?.style.height).toBe('197px');
+    expect(
+      host.querySelector<HTMLElement>('[data-zone-id]')?.dataset.zoneSurface
+    ).toBe('zone');
 
     act(() => renderer.installScene(createScene(2, 40), []));
     const after = host.querySelector<HTMLElement>(

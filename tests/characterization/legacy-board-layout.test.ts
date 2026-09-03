@@ -5,6 +5,8 @@ import { resolve } from 'node:path';
 import { asPlayerId } from '../../packages/game-core/src/index.js';
 import {
   createBoardLayoutSnapshot,
+  createBoardScene,
+  createRendererSpikeView,
   findBoardLayoutRegion,
   LEGACY_BOARD_AFFORDANCES_V1,
   LEGACY_BOARD_Z_ORDER_V1,
@@ -61,6 +63,22 @@ const layoutState = (input: (typeof oracle.cases)[number]['input']) => ({
   shellMode: input.shellMode as BoardLayoutState['shellMode'],
   vertical: input.vertical as BoardVerticalLayoutState,
 });
+
+const spikeLayoutState = (
+  input: (typeof oracle.cases)[number]['input']
+): BoardLayoutState => {
+  const view = createRendererSpikeView();
+  const firstPlayerId = view.playerOrder[0]!;
+  const secondPlayerId = view.playerOrder[1]!;
+  return {
+    ...layoutState(input),
+    playerIds: [firstPlayerId, secondPlayerId],
+    bottomPlayerId:
+      input.bottomPlayerId === input.playerIds[0]
+        ? firstPlayerId
+        : secondPlayerId,
+  };
+};
 
 describe('source-pinned legacy board layout oracle', () => {
   it('invalidates the oracle when any recorded legacy source changes', () => {
@@ -193,6 +211,64 @@ describe('source-pinned legacy board layout oracle', () => {
           tolerance
         );
       }
+    });
+
+    it(`projects renderer-required characterized geometry into BoardScene: ${fixture.name}`, () => {
+      const view = createRendererSpikeView();
+      const snapshot = createBoardLayoutSnapshot(
+        spikeLayoutState(fixture.input)
+      );
+      const scene = createBoardScene(view, snapshot);
+
+      expect(scene.viewport).toEqual({
+        width: snapshot.playAreaBounds.width,
+        height: snapshot.playAreaBounds.height,
+        devicePixelRatio: snapshot.viewport.devicePixelRatio,
+      });
+      expect(scene.bottomPlayerId).toBe(snapshot.bottomPlayerId);
+      expect(scene.layout).toMatchObject({
+        geometryVersion: snapshot.geometryVersion,
+        outerViewport: snapshot.viewport,
+        shellMode: snapshot.shellMode,
+        playAreaBounds: snapshot.playAreaBounds,
+        shellGapBounds: snapshot.shellGapBounds,
+        sidebarBounds: snapshot.sidebarBounds,
+        tabsBounds: snapshot.tabsBounds,
+      });
+      expect(scene.layout.players.map((player) => player.bounds)).toEqual(
+        snapshot.players.map((player) => player.frameBounds)
+      );
+      expect(scene.layout.resizeHandles.map((handle) => handle.bounds)).toEqual(
+        snapshot.resizeHandles.map((handle) => handle.bounds)
+      );
+      expect(scene.layout.shared).toEqual({
+        stadiumBounds: snapshot.shared.stadium.physicalDeclaredBounds,
+        boardControlsAnchor: snapshot.shared.boardControlsAnchor,
+      });
+
+      for (const player of snapshot.players) {
+        for (const region of player.regions) {
+          const zone = scene.zones.find(
+            (candidate) =>
+              candidate.playerId === player.playerId &&
+              candidate.kind === region.kind
+          );
+          expect(zone, `${player.side}:${region.kind}`).toMatchObject({
+            side: region.side,
+            surface: region.surface,
+            bounds: region.physicalBorderBoxBounds,
+            contentBounds: region.physicalContentBoxBounds,
+          });
+        }
+      }
+      expect(
+        scene.zones.find((candidate) => candidate.kind === 'stadium')
+      ).toMatchObject({
+        side: 'shared',
+        surface: 'zone',
+        bounds: snapshot.shared.stadium.physicalDeclaredBounds,
+        contentBounds: snapshot.shared.stadium.physicalDeclaredBounds,
+      });
     });
   }
 });
