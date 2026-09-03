@@ -7,6 +7,8 @@ import {
 } from './constants.js';
 import {
   parseClientFrame,
+  parseRoomCreationRequest,
+  parseRoomCreationResponse,
   parseRoomAdmissionTicketRequest,
   parseRoomAdmissionTicketResponse,
   parseServerFrame,
@@ -40,6 +42,41 @@ describe('room admission HTTP schemas', () => {
       parseRoomAdmissionTicketResponse({
         admissionTicket: 'short',
         expiresAt: 40_000,
+      }).ok
+    ).toBe(false);
+  });
+});
+
+describe('room creation HTTP schemas', () => {
+  const response = {
+    roomCode: 'ABCDEFGH2345',
+    credentials: {
+      playerOneSeatCapability: 'player-one-capability-0000000000000001',
+      playerTwoSeatCapability: 'player-two-capability-0000000000000002',
+      spectatorCapability: 'spectator-capability-000000000000000003',
+    },
+  };
+
+  it('accepts only an empty request and an exact bounded credential bundle', () => {
+    expect(parseRoomCreationRequest({}).ok).toBe(true);
+    expect(parseRoomCreationRequest({ injected: true }).ok).toBe(false);
+    expect(parseRoomCreationResponse(response).ok).toBe(true);
+    expect(
+      parseRoomCreationResponse({ ...response, roomCode: 'ambiguous-I0' }).ok
+    ).toBe(false);
+    expect(
+      parseRoomCreationResponse({ ...response, roomCode: 'ABCDEFGHI234' }).ok
+    ).toBe(false);
+    expect(parseRoomCreationResponse({ ...response, injected: true }).ok).toBe(
+      false
+    );
+    expect(
+      parseRoomCreationResponse({
+        ...response,
+        credentials: {
+          ...response.credentials,
+          playerTwoSeatCapability: 'short',
+        },
       }).ok
     ).toBe(false);
   });

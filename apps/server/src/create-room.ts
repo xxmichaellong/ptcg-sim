@@ -13,6 +13,7 @@ import {
   type AdmissionCrypto,
   type RoomAuthoritySnapshot,
 } from '@ptcgsim/room-authority';
+import type { RoomCreationResponse } from '@ptcgsim/protocol';
 
 export interface RoomCreationCrypto extends AdmissionCrypto {
   readonly nextPlayerId: () => string;
@@ -31,11 +32,7 @@ export interface NewRoomInput {
   readonly spectatorsAllowed: boolean;
 }
 
-export interface NewRoomCredentials {
-  readonly playerOneSeatCapability: string;
-  readonly playerTwoSeatCapability: string;
-  readonly spectatorCapability?: string;
-}
+export type NewRoomCredentials = RoomCreationResponse['credentials'];
 
 const nextDistinctPlayerIds = (
   cryptoSource: RoomCreationCrypto
@@ -56,6 +53,40 @@ const nextDistinctPlayerIds = (
   throw new Error('Player ID source failed to produce distinct bounded IDs');
 };
 
+const boundedCapability = (value: string): boolean =>
+  value.length >= 32 && value.length <= 512;
+
+const nextDistinctCredentials = (
+  cryptoSource: RoomCreationCrypto,
+  spectatorsAllowed: boolean
+): NewRoomCredentials => {
+  for (let attempt = 0; attempt < 32; attempt += 1) {
+    const playerOneSeatCapability = cryptoSource.nextSeatCapability();
+    const playerTwoSeatCapability = cryptoSource.nextSeatCapability();
+    const spectatorCapability = spectatorsAllowed
+      ? cryptoSource.nextSpectatorCapability()
+      : undefined;
+    const values = [
+      playerOneSeatCapability,
+      playerTwoSeatCapability,
+      ...(spectatorCapability ? [spectatorCapability] : []),
+    ];
+    if (
+      values.every(boundedCapability) &&
+      new Set(values).size === values.length
+    ) {
+      return {
+        playerOneSeatCapability,
+        playerTwoSeatCapability,
+        ...(spectatorCapability ? { spectatorCapability } : {}),
+      };
+    }
+  }
+  throw new Error(
+    'Capability source failed to produce distinct bounded credentials'
+  );
+};
+
 export const initializeNewRoom = async (
   input: NewRoomInput,
   store: InitialRoomStore,
@@ -68,11 +99,15 @@ export const initializeNewRoom = async (
     throw new Error('Match ID must be a bounded non-empty string');
   }
   const [playerOneId, playerTwoId] = nextDistinctPlayerIds(cryptoSource);
-  const playerOneSeatCapability = cryptoSource.nextSeatCapability();
-  const playerTwoSeatCapability = cryptoSource.nextSeatCapability();
-  const spectatorCapability = input.spectatorsAllowed
-    ? cryptoSource.nextSpectatorCapability()
-    : undefined;
+  const credentials = nextDistinctCredentials(
+    cryptoSource,
+    input.spectatorsAllowed
+  );
+  const {
+    playerOneSeatCapability,
+    playerTwoSeatCapability,
+    spectatorCapability,
+  } = credentials;
   const [playerOneDigest, playerTwoDigest, spectatorDigest] = await Promise.all(
     [
       cryptoSource.digestCapability(playerOneSeatCapability),
@@ -82,6 +117,14 @@ export const initializeNewRoom = async (
         : Promise.resolve(undefined),
     ]
   );
+  const credentialDigests = [
+    playerOneDigest,
+    playerTwoDigest,
+    ...(spectatorDigest ? [spectatorDigest] : []),
+  ];
+  if (new Set(credentialDigests).size !== credentialDigests.length) {
+    throw new Error('Capability digest source produced duplicate credentials');
+  }
   const state = createEmptyMatch(asMatchId(input.matchId), [
     {
       playerId: playerOneId,
@@ -122,10 +165,6 @@ export const initializeNewRoom = async (
   await store.initialize(snapshot);
   return {
     snapshot,
-    credentials: {
-      playerOneSeatCapability,
-      playerTwoSeatCapability,
-      ...(spectatorCapability ? { spectatorCapability } : {}),
-    },
+    credentials,
   };
 };

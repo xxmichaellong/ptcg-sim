@@ -5,6 +5,7 @@ import {
   MAX_REPLAY_FRAMES,
   MAX_ROOM_CODE_LENGTH,
   PROTOCOL_VERSION,
+  V2_ROOM_CODE_PATTERN,
 } from './constants.js';
 
 const boundedString = (maximum: number, minimum = 1) =>
@@ -22,15 +23,31 @@ const CardCategorySchema = v.picklist([
   'Unknown',
 ] as const);
 const QuarterTurnsSchema = v.picklist([0, 1, 2, 3] as const);
+const CapabilitySchema = boundedString(512, 32);
+const RoomCodeSchema = v.pipe(
+  v.string(),
+  v.regex(V2_ROOM_CODE_PATTERN, 'Invalid room code')
+);
+
+export const RoomCreationRequestSchema = v.strictObject({});
+
+export const RoomCreationResponseSchema = v.strictObject({
+  roomCode: RoomCodeSchema,
+  credentials: v.strictObject({
+    playerOneSeatCapability: CapabilitySchema,
+    playerTwoSeatCapability: CapabilitySchema,
+    spectatorCapability: v.optional(CapabilitySchema),
+  }),
+});
 
 export const RoomAdmissionTicketRequestSchema = v.strictObject({
-  capability: boundedString(512, 32),
+  capability: CapabilitySchema,
   displayName: boundedString(64),
   requestedRole: v.picklist(['player', 'spectator'] as const),
 });
 
 export const RoomAdmissionTicketResponseSchema = v.strictObject({
-  admissionTicket: boundedString(512, 32),
+  admissionTicket: CapabilitySchema,
   expiresAt: NonNegativeIntegerSchema,
 });
 
@@ -751,6 +768,12 @@ export const ServerMessageSchema = v.variant('type', [
 ]);
 
 export type WireGameCommand = v.InferOutput<typeof WireGameCommandSchema>;
+export type RoomCreationRequest = v.InferOutput<
+  typeof RoomCreationRequestSchema
+>;
+export type RoomCreationResponse = v.InferOutput<
+  typeof RoomCreationResponseSchema
+>;
 export type RoomAdmissionTicketRequest = v.InferOutput<
   typeof RoomAdmissionTicketRequestSchema
 >;

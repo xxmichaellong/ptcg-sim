@@ -45,8 +45,11 @@ and Phase 0 exit criteria are accepted.
   a bounded same-origin no-store POST: authority stores only a short-lived
   role/name-bound ticket digest, atomically consumes it into a fresh resume
   capability, and the browser passes only the runtime/route descriptor to React.
-  Visible create/join wiring, normal sidebar/chat/navigation, and
-  downloadable/export formats remain later parity work.
+  Room creation is also a strict bounded same-origin no-store exchange. The
+  creator is bootstrapped immediately while the other credentials remain in a
+  one-time, non-serializing in-memory custodian. Visible create/join wiring waits
+  on ADR-020's cross-browser invitation decision; normal sidebar/chat/navigation
+  and downloadable/export formats remain later parity work.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 

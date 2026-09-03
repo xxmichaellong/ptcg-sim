@@ -8,11 +8,10 @@ PTCG Sim should reuse knowledge and narrowly extracted infrastructure only after
 PTCG-owned contracts and tests exist. It must not depend directly on MagicCircle
 terminal application source or fork its large Quinoa/room classes.
 
-Before copying implementation rather than reimplementing a pattern, confirm that
-the code's ownership/license permits incorporation into this MIT repository and
-preserve required notices. No license file was present at the MagicCircle root
-during this audit, so code-copy authorization is a blocking legal/repository
-decision even if both projects share maintainers.
+The project owner explicitly authorized direct MagicCircle implementation reuse
+on 2026-08-31 (ADR-019). Preserve provenance and any required notices when code
+is copied; still extract only the smallest PTCG-owned unit whose dependencies and
+failure behavior are covered by this repository's contracts.
 
 ## Client and renderer candidates
 
@@ -56,6 +55,14 @@ PTCG must redesign:
 
 The target is a small PTCG `ReliableRoomConnection` implementing
 `GameSessionPort`, not a general multi-game connection framework.
+
+MagicCircle's visible room-code travel is not a drop-in anonymous invitation
+design. Its room connection is bound to authenticated user identity (including
+JWT-backed admission), so a shareable room code can remain discovery rather than
+seat authority. PTCG Sim currently promises account-free named guests. ADR-020
+must therefore choose a separate high-entropy cross-browser invitation channel;
+copying MagicCircle's code-only navigation would silently restore v1's room-ID
+authorization flaw.
 
 ## Server candidates
 

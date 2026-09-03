@@ -70,4 +70,74 @@ describe('new durable room initialization', () => {
     ).rejects.toThrow('Match ID');
     expect(initialize).not.toHaveBeenCalled();
   });
+
+  it('retries colliding capabilities and fails closed before persistence when entropy stays invalid', async () => {
+    class ControlledSource extends WebCryptoAuthoritySource {
+      readonly seatCapabilities: string[] = [];
+      spectatorCapability = 'spectator-capability-000000000000000003';
+
+      override nextSeatCapability(): string {
+        return this.seatCapabilities.shift() ?? 'short';
+      }
+
+      override nextSpectatorCapability(): string {
+        return this.spectatorCapability;
+      }
+    }
+
+    const recovered = new ControlledSource();
+    recovered.seatCapabilities.push(
+      'colliding-capability-00000000000000001',
+      'colliding-capability-00000000000000001',
+      'player-one-capability-00000000000000001',
+      'player-two-capability-00000000000000002'
+    );
+    const initialize = vi.fn(async () => undefined);
+    const result = await initializeNewRoom(
+      {
+        matchId: 'ROOM_RECOVERED',
+        playerOneCardBackUrl: '/cardback.png',
+        playerTwoCardBackUrl: '/cardback.png',
+        spectatorsAllowed: true,
+      },
+      { initialize },
+      recovered
+    );
+    expect(new Set(Object.values(result.credentials)).size).toBe(3);
+    expect(initialize).toHaveBeenCalledOnce();
+
+    const invalid = new ControlledSource();
+    invalid.spectatorCapability = 'short';
+    const rejectedInitialize = vi.fn();
+    await expect(
+      initializeNewRoom(
+        {
+          matchId: 'ROOM_REJECTED',
+          playerOneCardBackUrl: '/cardback.png',
+          playerTwoCardBackUrl: '/cardback.png',
+          spectatorsAllowed: true,
+        },
+        { initialize: rejectedInitialize },
+        invalid
+      )
+    ).rejects.toThrow('distinct bounded credentials');
+    expect(rejectedInitialize).not.toHaveBeenCalled();
+
+    const duplicateDigest = new WebCryptoAuthoritySource();
+    duplicateDigest.digestCapability = vi.fn(async () => 'd'.repeat(43));
+    const digestInitialize = vi.fn();
+    await expect(
+      initializeNewRoom(
+        {
+          matchId: 'ROOM_DIGEST_REJECTED',
+          playerOneCardBackUrl: '/cardback.png',
+          playerTwoCardBackUrl: '/cardback.png',
+          spectatorsAllowed: true,
+        },
+        { initialize: digestInitialize },
+        duplicateDigest
+      )
+    ).rejects.toThrow('duplicate credentials');
+    expect(digestInitialize).not.toHaveBeenCalled();
+  });
 });

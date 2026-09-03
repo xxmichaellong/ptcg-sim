@@ -335,6 +335,17 @@ room runtime.
 Anonymous guest play can remain. It still requires unguessable seat/reconnect
 capabilities rather than trusting a display name.
 
+The implemented creation boundary accepts only an empty, bounded, strict,
+same-origin JSON `POST` to `/v2/rooms`; room configuration remains server-owned.
+It returns a runtime-validated, `no-store` room code plus three distinct
+high-entropy credentials only after durable initialization. A faulty entropy
+source cannot persist duplicate or out-of-bounds credentials. The browser
+validates its lobby input before creation, immediately exchanges the creator's
+seat credential, and retains the player-two and spectator credentials only in a
+one-time, non-serializing in-memory custodian. Creation and bootstrap failures
+are redacted. This closes the same-browser owner path without deciding how a
+bearer invitation crosses safely to another browser.
+
 The implemented browser boundary accepts the long-lived seat or spectator
 capability only in a bounded, strict, same-origin JSON `POST` to
 `/v2/rooms/:roomCode/admission-tickets`. It returns a `no-store` 30-second
@@ -348,6 +359,12 @@ fail without reflecting credential material. The browser uses redirect-error,
 no-referrer, omitted-credential fetch semantics, derives credential-free HTTP
 and WebSocket URLs from the same origin, and hands only the resulting runtime
 and route descriptor to React.
+
+ADR-020 blocks visible create/join wiring. The v1 room ID is both discovery and
+authorization; retaining that behavior would negate SEC-001/SEC-003. A v2 guest
+invitation needs an explicitly approved transfer mechanism for the second-seat
+or spectator credential. Raw credentials must not be added to URLs, logs,
+analytics, storage, React state, or hidden DOM fields as a convenience.
 
 ### Message families
 
@@ -563,7 +580,8 @@ Options/Exit path. `RemoteRoomBootstrap` now creates that trusted connection
 handoff by exchanging an in-memory long-lived capability for a one-time ticket;
 no credential enters a URL, storage, DOM, React state, or log. The
 renderer-spike entry remains the default until the visible create/join workflow
-can supply that in-memory input, so the current UI/UX remains unchanged.
+can supply that in-memory input through the ADR-020 mechanism, so the current
+UI/UX remains unchanged.
 
 This bounded ledger, stream, and playback state machine are the runtime replay
 foundation, not the final archive/export contract. Phase 7 still owns

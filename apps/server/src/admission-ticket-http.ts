@@ -4,88 +4,20 @@ import {
 } from '@ptcgsim/protocol';
 import type { AdmissionTicketIssueResult } from '@ptcgsim/room-authority';
 
+import {
+  browserJsonResponse as json,
+  isIdentityJsonRequest,
+  isSameOriginBrowserRequest,
+  readBoundedJsonRequest,
+} from './browser-json-http.js';
+
+export { isSameOriginBrowserRequest } from './browser-json-http.js';
+
 export const MAX_ADMISSION_REQUEST_BYTES = 2_048;
 
 export type AdmissionTicketIssuer = (
   request: RoomAdmissionTicketRequest
 ) => Promise<AdmissionTicketIssueResult>;
-
-const responseHeaders = {
-  'Cache-Control': 'no-store, max-age=0',
-  'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'",
-  'Referrer-Policy': 'no-referrer',
-  'X-Content-Type-Options': 'nosniff',
-} as const;
-
-const json = (
-  body: Record<string, unknown>,
-  status: number,
-  headers: Record<string, string> = {}
-): Response =>
-  Response.json(body, {
-    status,
-    headers: { ...responseHeaders, ...headers },
-  });
-
-export const isSameOriginBrowserRequest = (request: Request): boolean => {
-  const origin = request.headers.get('Origin');
-  if (!origin) return false;
-  try {
-    return new URL(origin).origin === new URL(request.url).origin;
-  } catch {
-    return false;
-  }
-};
-
-const readBoundedText = async (
-  stream: ReadableStream<Uint8Array> | null
-): Promise<string> => {
-  if (!stream) return '';
-  const reader = stream.getReader();
-  const chunks: Uint8Array[] = [];
-  let byteLength = 0;
-  try {
-    for (;;) {
-      const chunk = await reader.read();
-      if (chunk.done) break;
-      byteLength += chunk.value.byteLength;
-      if (byteLength > MAX_ADMISSION_REQUEST_BYTES) {
-        await reader.cancel();
-        throw new RangeError('request_too_large');
-      }
-      chunks.push(chunk.value);
-    }
-  } finally {
-    reader.releaseLock();
-  }
-  const body = new Uint8Array(byteLength);
-  let offset = 0;
-  for (const chunk of chunks) {
-    body.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return new TextDecoder('utf-8', { fatal: true }).decode(body);
-};
-
-const readBoundedJson = async (request: Request): Promise<unknown> => {
-  const declaredLength = request.headers.get('Content-Length');
-  if (declaredLength) {
-    const parsedLength = Number(declaredLength);
-    if (
-      !Number.isSafeInteger(parsedLength) ||
-      parsedLength < 0 ||
-      parsedLength > MAX_ADMISSION_REQUEST_BYTES
-    ) {
-      throw new RangeError('request_too_large');
-    }
-  }
-  const body = await readBoundedText(request.body);
-  try {
-    return JSON.parse(body) as unknown;
-  } catch {
-    throw new SyntaxError('invalid_json');
-  }
-};
 
 /** Strict browser-only exchange. Capability material is accepted only in JSON. */
 export const handleAdmissionTicketRequest = async (
@@ -101,20 +33,13 @@ export const handleAdmissionTicketRequest = async (
   if (!isSameOriginBrowserRequest(request)) {
     return json({ error: 'forbidden_origin' }, 403);
   }
-  if (
-    (request.headers.get('Content-Encoding') ?? 'identity') !== 'identity' ||
-    request.headers
-      .get('Content-Type')
-      ?.split(';', 1)[0]
-      ?.trim()
-      .toLowerCase() !== 'application/json'
-  ) {
+  if (!isIdentityJsonRequest(request)) {
     return json({ error: 'unsupported_media_type' }, 415);
   }
 
   let body: unknown;
   try {
-    body = await readBoundedJson(request);
+    body = await readBoundedJsonRequest(request, MAX_ADMISSION_REQUEST_BYTES);
   } catch (error) {
     return json(
       {

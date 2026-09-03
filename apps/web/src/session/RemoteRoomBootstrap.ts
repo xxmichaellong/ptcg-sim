@@ -2,6 +2,7 @@ import {
   parseRoomAdmissionTicketRequest,
   parseRoomAdmissionTicketResponse,
   type RoomAdmissionTicketRequest,
+  V2_ROOM_CODE_PATTERN,
 } from '@ptcgsim/protocol';
 
 import type { RendererKind } from '../RendererSpikeBoard.js';
@@ -9,10 +10,14 @@ import {
   RemoteRoomRuntime,
   type RemoteRoomRuntimeOptions,
 } from './RemoteRoomRuntime.js';
+import {
+  currentBrowserOrigin,
+  normalizeHttpOrigin,
+  readBoundedJsonResponse,
+} from './browser-json.js';
 
 const MAX_RESPONSE_BYTES = 2_048;
 const MAX_TICKET_LIFETIME_MS = 5 * 60_000;
-const ROOM_CODE_PATTERN = /^[A-Z2-9]{12}$/u;
 
 export type RemoteRoomBootstrapFailureCode =
   'invalid_input' | 'exchange_failed' | 'invalid_response' | 'expired_ticket';
@@ -54,88 +59,6 @@ export interface RemoteRoomBootstrapResult {
   };
 }
 
-const browserOrigin = (): string => {
-  if (typeof window === 'undefined') {
-    throw new RemoteRoomBootstrapError('invalid_input');
-  }
-  return window.location.origin;
-};
-
-const normalizedOrigin = (value: string): URL => {
-  let url: URL;
-  try {
-    url = new URL(value);
-  } catch {
-    throw new RemoteRoomBootstrapError('invalid_input');
-  }
-  if (
-    (url.protocol !== 'http:' && url.protocol !== 'https:') ||
-    url.username ||
-    url.password ||
-    url.pathname !== '/' ||
-    url.search ||
-    url.hash
-  ) {
-    throw new RemoteRoomBootstrapError('invalid_input');
-  }
-  return url;
-};
-
-const boundedResponseJson = async (response: Response): Promise<unknown> => {
-  const contentType = response.headers
-    .get('Content-Type')
-    ?.split(';', 1)[0]
-    ?.trim()
-    .toLowerCase();
-  const declaredLength = response.headers.get('Content-Length');
-  if (contentType !== 'application/json') {
-    throw new RemoteRoomBootstrapError('invalid_response');
-  }
-  if (declaredLength) {
-    const parsedLength = Number(declaredLength);
-    if (
-      !Number.isSafeInteger(parsedLength) ||
-      parsedLength < 0 ||
-      parsedLength > MAX_RESPONSE_BYTES
-    ) {
-      throw new RemoteRoomBootstrapError('invalid_response');
-    }
-  }
-  if (!response.body) {
-    throw new RemoteRoomBootstrapError('invalid_response');
-  }
-  const reader = response.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let byteLength = 0;
-  try {
-    for (;;) {
-      const chunk = await reader.read();
-      if (chunk.done) break;
-      byteLength += chunk.value.byteLength;
-      if (byteLength > MAX_RESPONSE_BYTES) {
-        await reader.cancel();
-        throw new RemoteRoomBootstrapError('invalid_response');
-      }
-      chunks.push(chunk.value);
-    }
-  } finally {
-    reader.releaseLock();
-  }
-  const bytes = new Uint8Array(byteLength);
-  let offset = 0;
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  try {
-    return JSON.parse(
-      new TextDecoder('utf-8', { fatal: true }).decode(bytes)
-    ) as unknown;
-  } catch {
-    throw new RemoteRoomBootstrapError('invalid_response');
-  }
-};
-
 /**
  * Exchanges an in-memory seat/spectator capability through a same-origin POST,
  * then gives only the short-lived ticket to the externally owned room runtime.
@@ -152,7 +75,7 @@ export const bootstrapRemoteRoom = async (
     requestedRole: input.requestedRole,
   };
   if (
-    !ROOM_CODE_PATTERN.test(roomCode) ||
+    !V2_ROOM_CODE_PATTERN.test(roomCode) ||
     input.buildId.length < 1 ||
     input.buildId.length > 128 ||
     !parseRoomAdmissionTicketRequest(requestBody).ok
@@ -160,7 +83,10 @@ export const bootstrapRemoteRoom = async (
     throw new RemoteRoomBootstrapError('invalid_input');
   }
 
-  const origin = normalizedOrigin(dependencies.origin ?? browserOrigin());
+  const origin = normalizeHttpOrigin(
+    dependencies.origin ?? currentBrowserOrigin() ?? ''
+  );
+  if (!origin) throw new RemoteRoomBootstrapError('invalid_input');
   const endpoint = new URL(
     `/v2/rooms/${encodeURIComponent(roomCode)}/admission-tickets`,
     origin
@@ -193,9 +119,14 @@ export const bootstrapRemoteRoom = async (
   if (response.status !== 201) {
     throw new RemoteRoomBootstrapError('exchange_failed');
   }
-  const parsed = parseRoomAdmissionTicketResponse(
-    await boundedResponseJson(response)
+  const responseBody = await readBoundedJsonResponse(
+    response,
+    MAX_RESPONSE_BYTES
   );
+  if (!responseBody.ok) {
+    throw new RemoteRoomBootstrapError('invalid_response');
+  }
+  const parsed = parseRoomAdmissionTicketResponse(responseBody.value);
   if (!parsed.ok) {
     throw new RemoteRoomBootstrapError('invalid_response');
   }

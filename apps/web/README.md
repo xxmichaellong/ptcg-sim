@@ -8,8 +8,12 @@ mount the same deterministic 61-card scene behind either adapter.
 spectator capability through a same-origin, no-store POST and constructs the
 room runtime with only the returned short-lived ticket. Neither credential is
 placed in a URL, browser storage, DOM, React state, or log. The bootstrap returns
-the lazy `RemoteRoomRoute` input, but `main.tsx` still selects the renderer spike
-until the existing visible create/join workflow is ported.
+the lazy `RemoteRoomRoute` input. `RemoteRoomCreation` now validates lobby input,
+creates a room through a strict bounded same-origin POST, immediately bootstraps
+the creator, and keeps the other credentials in one-time, non-serializing
+in-memory custody. `main.tsx` still selects the renderer spike until ADR-020
+chooses the secure cross-browser invitation handoff and the existing visible
+create/join workflow is ported.
 
 Both screens preserve the v1 75.5% board / 24% side-panel split. The room screen
 mounts the effective live/replay board, multiplayer/replay activity surface,

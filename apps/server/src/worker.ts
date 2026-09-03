@@ -4,15 +4,14 @@ import {
   RoomAuthorityCoordinator,
   type RoomAuthoritySnapshot,
 } from '@ptcgsim/room-authority';
-import { PROTOCOL_VERSION } from '@ptcgsim/protocol';
+import { PROTOCOL_VERSION, type RoomCreationResponse } from '@ptcgsim/protocol';
 
-import {
-  handleAdmissionTicketRequest,
-  isSameOriginBrowserRequest,
-} from './admission-ticket-http.js';
+import { handleAdmissionTicketRequest } from './admission-ticket-http.js';
+import { isSameOriginBrowserRequest } from './browser-json-http.js';
 import { WebCryptoAuthoritySource } from './authority-crypto.js';
-import { initializeNewRoom, type NewRoomCredentials } from './create-room.js';
+import { initializeNewRoom } from './create-room.js';
 import { DurableRoomSnapshotStore } from './durable-storage.js';
+import { handleRoomCreationRequest } from './room-creation-http.js';
 import { RoomSessionHub, type RuntimeConnection } from './session-hub.js';
 
 interface Env {
@@ -26,10 +25,7 @@ interface SocketAttachment {
   readonly authorityVersion: number;
 }
 
-interface InitializedRoom {
-  readonly roomCode: string;
-  readonly credentials: NewRoomCredentials;
-}
+type InitializedRoom = RoomCreationResponse;
 
 interface RoomRuntime {
   readonly coordinator: RoomAuthorityCoordinator;
@@ -46,12 +42,12 @@ const roomCode = (): string => {
 };
 
 const roomCodeFromPath = (pathname: string): string | undefined => {
-  const match = /^\/v2\/rooms\/([A-Z2-9]{12})\/connect$/u.exec(pathname);
+  const match = /^\/v2\/rooms\/([A-HJ-NP-Z2-9]{12})\/connect$/u.exec(pathname);
   return match?.[1];
 };
 
 const admissionRoomCodeFromPath = (pathname: string): string | undefined => {
-  const match = /^\/v2\/rooms\/([A-Z2-9]{12})\/admission-tickets$/u.exec(
+  const match = /^\/v2\/rooms\/([A-HJ-NP-Z2-9]{12})\/admission-tickets$/u.exec(
     pathname
   );
   return match?.[1];
@@ -236,38 +232,32 @@ export class PtcgRoom extends DurableObject<Env> {
 const worker: ExportedHandler<Env> = {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (request.method === 'POST' && url.pathname === '/v2/rooms') {
-      for (let attempt = 0; attempt < 8; attempt += 1) {
-        const code = roomCode();
-        const stub = env.PTCG_ROOM.getByName(code);
-        try {
-          const initialized = await stub.initialize(code);
-          return Response.json(initialized, {
-            status: 201,
-            headers: {
-              'Cache-Control': 'no-store, max-age=0',
-              'Referrer-Policy': 'no-referrer',
-              'X-Content-Type-Options': 'nosniff',
-            },
-          });
-        } catch (error) {
-          if (
-            error instanceof Error &&
-            error.message.includes('already initialized')
-          ) {
-            continue;
+    if (url.pathname === '/v2/rooms') {
+      return handleRoomCreationRequest(request, async () => {
+        for (let attempt = 0; attempt < 8; attempt += 1) {
+          const code = roomCode();
+          const stub = env.PTCG_ROOM.getByName(code);
+          try {
+            return await stub.initialize(code);
+          } catch (error) {
+            if (
+              error instanceof Error &&
+              error.message.includes('already initialized')
+            ) {
+              continue;
+            }
+            throw error;
           }
-          throw error;
         }
-      }
-      return Response.json({ error: 'room_code_exhausted' }, { status: 503 });
+        throw new Error('room_code_exhausted');
+      });
     }
     const code = roomCodeFromPath(url.pathname);
     if (request.method === 'GET' && code) {
       return env.PTCG_ROOM.getByName(code).fetch(request);
     }
     const admissionCode = admissionRoomCodeFromPath(url.pathname);
-    if (request.method === 'POST' && admissionCode) {
+    if (admissionCode) {
       return env.PTCG_ROOM.getByName(admissionCode).fetch(request);
     }
     return new Response('Not Found', { status: 404 });

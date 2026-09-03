@@ -7,10 +7,14 @@ import {
 import {
   ClientMessageSchema,
   MatchViewStateSchema,
+  RoomCreationRequestSchema,
+  RoomCreationResponseSchema,
   RoomAdmissionTicketRequestSchema,
   RoomAdmissionTicketResponseSchema,
   ServerMessageSchema,
   type ClientMessage,
+  type RoomCreationRequest,
+  type RoomCreationResponse,
   type RoomAdmissionTicketRequest,
   type RoomAdmissionTicketResponse,
   type SerializedMatchViewState,
@@ -98,6 +102,16 @@ export const parseRoomAdmissionTicketRequest = (
   value: unknown
 ): SchemaParseResult<RoomAdmissionTicketRequest> =>
   parseSchema(value, RoomAdmissionTicketRequestSchema);
+
+export const parseRoomCreationRequest = (
+  value: unknown
+): SchemaParseResult<RoomCreationRequest> =>
+  parseSchema(value, RoomCreationRequestSchema);
+
+export const parseRoomCreationResponse = (
+  value: unknown
+): SchemaParseResult<RoomCreationResponse> =>
+  parseSchema(value, RoomCreationResponseSchema);
 
 export const parseRoomAdmissionTicketResponse = (
   value: unknown
