@@ -13,6 +13,7 @@ import { describe, expect, it } from 'vitest';
 
 import { RoomAuthorityCoordinator } from './coordinator.js';
 import { emptyProjectionIdentityState } from './identity-registry.js';
+import { authoritySnapshotValidationMatches } from './invariants.js';
 import { createReplayHistory } from './replay-history.js';
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
@@ -165,6 +166,14 @@ describe('room command coordinator', () => {
     const retry = await coordinator.submit(envelope(1));
     expect(retry.committed).toBe(false);
     expect(retry.snapshot.state.revision).toBe(1);
+    expect(retry.snapshot.replayHistory.entries).toHaveLength(1);
+    expect(
+      authoritySnapshotValidationMatches(
+        retry.snapshotValidation,
+        retry.snapshot
+      )
+    ).toBe(true);
+    expect(Object.isFrozen(transactions[0]?.eventBatch)).toBe(true);
     expect(transactions).toHaveLength(1);
     expect(retry.deliveries.map((item) => item.message.type)).toEqual([
       'StatePublication',

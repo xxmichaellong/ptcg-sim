@@ -353,7 +353,7 @@ describe('role-projected replay', () => {
       result.batch,
       result.state,
       128,
-      1
+      2
     );
 
     expect(history).toMatchObject({

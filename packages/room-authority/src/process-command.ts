@@ -17,7 +17,10 @@ import {
 } from './identity-registry.js';
 import {
   authoritySnapshotValidationMatches,
+  prepareValidatedReplayHistoryTransition,
   validateAuthoritySnapshot,
+  validateMultiplayerAuthorityCandidate,
+  type ValidatedReplayHistoryTransition,
 } from './invariants.js';
 import {
   MAX_REPLAY_EVENT_BATCHES,
@@ -291,7 +294,7 @@ export const processAuthorityCommand = async (
       }
       if (
         !Number.isSafeInteger(dependencies.policy.maximumReplayEventBytes) ||
-        dependencies.policy.maximumReplayEventBytes < 1 ||
+        dependencies.policy.maximumReplayEventBytes < 2 ||
         dependencies.policy.maximumReplayEventBytes > MAX_REPLAY_EVENT_BYTES
       ) {
         throw new Error('Replay history byte policy is invalid');
@@ -435,9 +438,14 @@ export const processAuthorityCommand = async (
   });
   const { nextState, eventBatch, outcome } = resolved;
   const accepted = outcome.accepted;
+  let replayTransition: ValidatedReplayHistoryTransition | undefined;
+  let canonicalEventBatch = eventBatch;
 
   let candidate = timer.measureAuthority('historyAndCandidateMs', () => {
-    let soloUndoHistory = cloneSoloUndoHistory(current.soloUndoHistory);
+    let soloUndoHistory =
+      current.mode === 'multiplayer'
+        ? current.soloUndoHistory
+        : cloneSoloUndoHistory(current.soloUndoHistory);
     if (accepted && current.mode === 'solo') {
       if (envelope.command.type === 'ApplySoloUndo') {
         soloUndoHistory = popSoloUndoHistory(soloUndoHistory);
@@ -461,25 +469,47 @@ export const processAuthorityCommand = async (
       }
     }
     let replayHistory = current.replayHistory;
+    let candidateState: MatchState =
+      current.mode === 'multiplayer'
+        ? current.state
+        : cloneMatchState(current.state);
     if (accepted) {
       if (!eventBatch) {
         throw new Error('Accepted command did not produce an event batch');
       }
-      replayHistory = appendReplayHistory(
-        replayHistory,
-        eventBatch,
-        nextState,
-        dependencies.policy.maximumReplayEventBatches,
-        dependencies.policy.maximumReplayEventBytes
-      );
+      if (current.mode === 'multiplayer') {
+        replayTransition = prepareValidatedReplayHistoryTransition(
+          current,
+          currentSnapshotValidation,
+          eventBatch,
+          nextState,
+          dependencies.policy.maximumReplayEventBatches,
+          dependencies.policy.maximumReplayEventBytes
+        );
+        canonicalEventBatch = replayTransition.eventBatch;
+        candidateState = replayTransition.resultingState;
+        replayHistory = replayTransition.replayHistory;
+      } else {
+        candidateState = cloneMatchState(nextState);
+        replayHistory = appendReplayHistory(
+          replayHistory,
+          eventBatch,
+          candidateState,
+          dependencies.policy.maximumReplayEventBatches,
+          dependencies.policy.maximumReplayEventBytes
+        );
+      }
     }
 
-    const sessions = Object.fromEntries(
-      Object.entries(current.sessions).map(([id, value]) => [
-        id,
-        cloneSession(value),
-      ])
-    );
+    const sessions =
+      current.mode === 'multiplayer'
+        ? { ...current.sessions }
+        : Object.fromEntries(
+            Object.entries(current.sessions).map(([id, value]) => [
+              id,
+              cloneSession(value),
+            ])
+          );
     sessions[session.id] = appendOutcome(
       sessions[session.id]!,
       outcome,
@@ -489,29 +519,30 @@ export const processAuthorityCommand = async (
       schemaVersion: current.schemaVersion,
       authorityVersion: current.authorityVersion + 1,
       mode: current.mode,
-      state: accepted
-        ? cloneMatchState(nextState)
-        : cloneMatchState(current.state),
+      state: candidateState,
       soloUndoHistory,
       replayHistory,
       identities:
         accepted && envelope.command.type === 'ApplySoloUndo'
           ? emptyProjectionIdentityState()
-          : {
-              cardAliases: current.identities.cardAliases.map((entry) => ({
-                ...entry,
-              })),
-              definitionAliases: current.identities.definitionAliases.map(
-                (entry) => ({ ...entry })
-              ),
-            },
+          : current.mode === 'multiplayer'
+            ? current.identities
+            : {
+                cardAliases: current.identities.cardAliases.map((entry) => ({
+                  ...entry,
+                })),
+                definitionAliases: current.identities.definitionAliases.map(
+                  (entry) => ({ ...entry })
+                ),
+              },
       sessions,
       ...(current.admission ? { admission: current.admission } : {}),
     } satisfies RoomAuthoritySnapshot;
   });
   let publications: readonly AuthorityDelivery[] = [];
   if (accepted) {
-    if (!eventBatch) {
+    const publicationEventBatch = canonicalEventBatch;
+    if (!publicationEventBatch) {
       throw new Error('Accepted command did not produce an event batch');
     }
     const projected = timer.measureProjection(() =>
@@ -519,7 +550,7 @@ export const processAuthorityCommand = async (
         candidate,
         dependencies,
         envelope.commandId,
-        eventBatch
+        publicationEventBatch
       )
     );
     candidate = projected.snapshot;
@@ -528,7 +559,20 @@ export const processAuthorityCommand = async (
 
   const candidateSnapshotValidation = timer.measureAuthority(
     'candidateValidationMs',
-    () => validateAuthoritySnapshot(candidate)
+    () =>
+      current.mode === 'multiplayer'
+        ? validateMultiplayerAuthorityCandidate(
+            current,
+            currentSnapshotValidation,
+            candidate,
+            session.id,
+            outcome,
+            dependencies.policy.maximumRecentOutcomesPerSession,
+            dependencies.policy.maximumReplayEventBatches,
+            dependencies.policy.maximumReplayEventBytes,
+            replayTransition?.validation
+          )
+        : validateAuthoritySnapshot(candidate)
   );
 
   await timer.measurePersistence(() =>
@@ -538,7 +582,7 @@ export const processAuthorityCommand = async (
       snapshot: candidate,
       sessionId: session.id,
       outcome,
-      ...(eventBatch ? { eventBatch } : {}),
+      ...(canonicalEventBatch ? { eventBatch: canonicalEventBatch } : {}),
       snapshotValidation: candidateSnapshotValidation,
     })
   );

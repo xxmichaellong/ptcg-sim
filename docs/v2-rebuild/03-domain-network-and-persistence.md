@@ -522,33 +522,49 @@ digest material. See the
 
 This closes monotonic audit-row growth, but per-command full-snapshot replacement
 is still an interim checkpoint strategy. The first bounded-history `workerd`
-measurement showed three whole-snapshot invariant scans: current input, the new
-candidate, and the adapter's repeat validation of that candidate. The authority
-now mints opaque in-process validation evidence for an exact recursively frozen
-snapshot object. The proof is bound to object identity, its recorded top-level
-references, and authority/state revision; it is not a security credential or
-content signature and is never persisted or sent over the wire. The serialized
-coordinator carries the current proof, each new candidate is fully validated and
-recursively frozen once, and storage skips only its redundant scan when it
-receives the same object and matching proof. Missing, forged, stale, or
-mismatched proofs and unproven direct authority-commit calls fail closed through
-complete validation and recursive freezing; attempted mutation of a proof-bound
-graph fails at runtime. Restore, migration, and external snapshot install remain
-full-validation trust boundaries.
+measurement showed three whole-snapshot invariant scans. Exact-object validation
+proofs first removed the current and adapter duplicates. The current multiplayer
+path additionally prepares a verified incremental replay transition from that
+frozen predecessor: it clones one canonical event batch, reapplies only that
+batch to derive the next state, and uses cached canonical UTF-8 entry sizes to
+remove the minimum replay prefix required by count and byte bounds. Only an
+actually removed prefix is applied to advance the base; the retained frozen
+suffix is carried by construction and is not replayed. A single-use opaque proof
+binds the exact predecessor/proof, batch, result state/history roots, and replay
+limits. Rejected commands retain the predecessor's state and replay roots and
+validate only their session/outcome delta.
 
-The freeze-hardened post-proof named run reduced mature
-command-to-publication p95 from 648 ms to 357 ms, server-handling p95 from 636
-ms to 343 ms, and both current-snapshot and adapter-revalidation p95 to the
-timer's 0 ms resolution. Total measured scenario duration fell from 58.6
-seconds to 35.4 seconds, about 40%. The mature result is still 107 ms above the
-provisional 250 ms objective. The next optimization target is verified
-incremental candidate replay validation: prove that applying the accepted event
-batch to an already validated snapshot preserves the affected invariants, while
-retaining complete validation on restore, migration, external install, and any
-path without valid internal proof. A bounded
-checkpoint plus verified tail, or another measured persistence representation,
-remains available if that does not meet the objective without changing
-persist-before-publish, exact retry, or fail-closed recovery semantics.
+After the cheap non-replay invariant families pass, the candidate is recursively
+frozen and receives the ordinary opaque snapshot proof, additionally bound to
+its serialized source frontier, exact outcome, session, and canonical batch.
+That same canonical batch drives presentation, replay, persistence, and the
+command journal even when it is immediately compacted into the replay base.
+These proofs are internal correctness evidence, not credentials or portable
+signatures, and are never persisted or sent over the wire. Missing, forged,
+stale, reused, cross-room, mutated, or mismatched evidence cannot take the fast
+path. Proofless persistence performs complete candidate validation and checks
+the full accepted/rejected transition against the fully validated durable
+predecessor. Restore, migration, retry reload, and external snapshot install
+remain full-validation boundaries. No durable schema changed.
+
+The canonical incremental-replay run took 26.204 seconds for its scenario and
+30.50 seconds for the complete Vitest invocation. Mature
+command-to-publication p50/p95/p99/max was 207/252/262/262 ms; server handling was
+199/243/255/255 ms. Authority, projection, persistence/transaction, and candidate
+validation p50/p95 were respectively 25/29, 7/10, 165/207, and 12/16 ms. Adapter
+snapshot validation remained 0/0 ms. Against the immediately preceding
+freeze-hardened proof result, p95 moved from 357 to 252 ms end to end, 343 to 243
+ms server-side, and 184 to 16 ms for candidate validation. Server p95 now clears
+the provisional 250 ms objective by 7 ms; end-to-end p95 misses by 2 ms.
+
+Persistence is now the dominant measured phase because the atomic transaction
+still reads and fully validates/replays the proofless durable predecessor before
+comparing its frontier. The next target is a small authority frontier maintained
+atomically with snapshot, journal, and retention writes. Commands can compare
+that bounded record without replaying the whole stored snapshot, while any
+snapshot actually restored into memory continues through complete validation.
+This must preserve persist-before-publish, exact retry, visibility, atomic
+rollback, and fail-closed recovery semantics.
 
 ### Saved games and links
 

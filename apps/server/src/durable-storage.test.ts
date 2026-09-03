@@ -4,25 +4,31 @@ import {
   asInspectionId,
   asMatchId,
   asPlayerId,
+  asStackId,
+  asWorkAreaId,
   cloneMatchState,
   createEmptyMatch,
   MATCH_STATE_SCHEMA_VERSION,
   playerZoneId,
+  stableHash,
 } from '@ptcgsim/game-core';
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
   DEFAULT_AUTHORITY_POLICY,
   appendReplayHistory,
+  authoritySnapshotCommandValidationMatches,
   authoritySnapshotValidationFor,
   createRoomAdmissionState,
   createReplayHistory,
   emptyProjectionIdentityState,
+  processAuthorityCommand,
   validateAuthoritySnapshot,
   type PersistedAdmissionTransaction,
   type PersistedAuthorityTransaction,
   type AuthoritySnapshotValidation,
   type RoomAuthoritySnapshot,
 } from '@ptcgsim/room-authority';
+import { PROTOCOL_VERSION } from '@ptcgsim/protocol';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -135,8 +141,10 @@ class MemoryDurableStorage implements DurableStorageLike {
 const p1 = asPlayerId('player-one');
 const p2 = asPlayerId('player-two');
 
-const initialSnapshot = (): RoomAuthoritySnapshot => {
-  const state = createEmptyMatch(asMatchId('durable-room'), [
+const initialSnapshot = (
+  matchId: string = 'durable-room'
+): RoomAuthoritySnapshot => {
+  const state = createEmptyMatch(asMatchId(matchId), [
     { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
     { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
   ]);
@@ -659,6 +667,76 @@ describe('Durable Object authority snapshot store', () => {
       transactionMs: 0,
     });
     expect(await clockFailureStore.load()).toEqual(nextTransaction.snapshot);
+  });
+
+  it('persists the exact canonical command batch without serializing proof metadata', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    const initial = initialSnapshot();
+    await store.initialize(initial);
+    let card = 0;
+    let stack = 0;
+    let inspection = 0;
+    let workArea = 0;
+    let opaque = 0;
+
+    const result = await processAuthorityCommand(
+      initial,
+      {
+        type: 'Command',
+        protocolVersion: PROTOCOL_VERSION,
+        sessionId: 'session',
+        clientSequence: 1,
+        commandId: 'canonical-batch-command',
+        lastSeenRevision: 0,
+        command: { type: 'FlipCoin' },
+      },
+      {
+        commandContext: {
+          nextCardId: () => asCardInstanceId(`canonical-card-${++card}`),
+          nextStackId: () => asStackId(`canonical-stack-${++stack}`),
+          nextInspectionId: () =>
+            asInspectionId(`canonical-inspection-${++inspection}`),
+          nextWorkAreaId: () =>
+            asWorkAreaId(`canonical-work-area-${++workArea}`),
+          shuffle: (values) => [...values].reverse(),
+          randomInt: () => 0,
+        },
+        opaqueIds: {
+          nextOpaqueId: (kind) =>
+            `canonical-${kind}-${String(++opaque).padStart(12, '0')}`,
+        },
+        persistence: store,
+        policy: DEFAULT_AUTHORITY_POLICY,
+      }
+    );
+
+    const journal = [...storage.values.entries()].find(([key]) =>
+      key.startsWith('authority:journal:')
+    )?.[1] as { eventBatch?: unknown } | undefined;
+    const outcome = result.snapshot.sessions.session?.recentOutcomes.at(-1);
+    const eventBatch = result.snapshot.replayHistory.entries.at(-1)?.batch;
+    expect(outcome).toBeDefined();
+    expect(eventBatch).toBeDefined();
+    expect(
+      authoritySnapshotCommandValidationMatches(
+        result.snapshotValidation,
+        result.snapshot,
+        initial,
+        0,
+        0,
+        'session',
+        outcome!,
+        eventBatch
+      )
+    ).toBe(true);
+    expect(journal?.eventBatch).toEqual(eventBatch);
+    expect(JSON.stringify([...storage.values.values()])).not.toContain(
+      'snapshotValidation'
+    );
+    expect(JSON.stringify([...storage.values.values()])).not.toContain(
+      'replayHistoryTransition'
+    );
   });
 
   it('bounds recent room audit rows while retaining the snapshot idempotency frontier', async () => {
@@ -1208,6 +1286,271 @@ describe('Durable Object authority snapshot store', () => {
     expect(await store.load()).toEqual(initial);
   });
 
+  it('validates every proofless command envelope field against durable current', async () => {
+    const cases: readonly {
+      readonly name: string;
+      readonly mutate: (
+        transaction: PersistedAuthorityTransaction
+      ) => PersistedAuthorityTransaction;
+      readonly message: string;
+    }[] = [
+      {
+        name: 'wrong expected revision',
+        mutate: (transaction) => ({ ...transaction, expectedRevision: 1 }),
+        message: 'state revision changed',
+      },
+      {
+        name: 'missing accepted batch',
+        mutate: ({ eventBatch: _eventBatch, ...transaction }) => transaction,
+        message: 'invalid or missing event batch',
+      },
+      {
+        name: 'mismatched accepted batch',
+        mutate: (transaction) => ({
+          ...transaction,
+          eventBatch: {
+            revision: 1,
+            events: [
+              {
+                type: 'CoinFlipped',
+                playerId: p1,
+                result: 'tails',
+              },
+            ],
+          },
+        }),
+        message: 'replay is not an appended suffix',
+      },
+      {
+        name: 'reclassified accepted outcome',
+        mutate: (transaction) => ({
+          ...transaction,
+          outcome: {
+            ...transaction.outcome,
+            accepted: false,
+            code: 'precondition_failed',
+          },
+        }),
+        message: 'rejected command cannot contain an event batch',
+      },
+      {
+        name: 'accepted outcome with rejection code',
+        mutate: (transaction) => ({
+          ...transaction,
+          outcome: {
+            ...transaction.outcome,
+            code: 'precondition_failed',
+          },
+        }),
+        message: 'accepted command outcome cannot contain a rejection code',
+      },
+      {
+        name: 'empty command ID',
+        mutate: (transaction) => ({
+          ...transaction,
+          outcome: { ...transaction.outcome, commandId: '' },
+        }),
+        message: 'command outcome metadata is malformed',
+      },
+      {
+        name: 'oversized command ID',
+        mutate: (transaction) => ({
+          ...transaction,
+          outcome: { ...transaction.outcome, commandId: 'x'.repeat(129) },
+        }),
+        message: 'command outcome metadata is malformed',
+      },
+      {
+        name: 'empty session ID',
+        mutate: (transaction) => ({ ...transaction, sessionId: '' }),
+        message: 'command session ID is malformed',
+      },
+      {
+        name: 'wrong session',
+        mutate: (transaction) => ({
+          ...transaction,
+          sessionId: 'another-session',
+        }),
+        message: 'changed the session registry',
+      },
+      {
+        name: 'wrong client sequence',
+        mutate: (transaction) => ({
+          ...transaction,
+          outcome: { ...transaction.outcome, clientSequence: 2 },
+        }),
+        message: 'sequence does not match session frontier',
+      },
+      {
+        name: 'wrong outcome revision',
+        mutate: (transaction) => ({
+          ...transaction,
+          outcome: { ...transaction.outcome, revision: 0 },
+        }),
+        message: 'invalid resulting revision',
+      },
+    ];
+
+    for (const testCase of cases) {
+      const storage = new MemoryDurableStorage();
+      const store = new DurableRoomSnapshotStore(storage);
+      const initial = initialSnapshot();
+      await store.initialize(initial);
+
+      await expect(
+        store.commit(testCase.mutate(acceptedTransaction(initial))),
+        testCase.name
+      ).rejects.toThrow(testCase.message);
+      expect(await store.load(), testCase.name).toEqual(initial);
+      expect(storedKeys(storage, 'authority:journal:'), testCase.name).toEqual(
+        []
+      );
+    }
+  });
+
+  it('rejects proofless rejected outcomes with missing or invalid codes', async () => {
+    for (const code of [undefined, 'not-a-rejection-code'] as const) {
+      const storage = new MemoryDurableStorage();
+      const store = new DurableRoomSnapshotStore(storage);
+      const initial = initialSnapshot();
+      await store.initialize(initial);
+      const valid = rejectedTransaction(initial);
+      const outcome = {
+        ...valid.outcome,
+        code,
+      } as PersistedAuthorityTransaction['outcome'];
+      const malformed: PersistedAuthorityTransaction = {
+        ...valid,
+        outcome,
+        snapshot: {
+          ...valid.snapshot,
+          sessions: {
+            ...valid.snapshot.sessions,
+            session: {
+              ...valid.snapshot.sessions.session!,
+              recentOutcomes: [outcome],
+            },
+          },
+        },
+      };
+
+      await expect(store.commit(malformed)).rejects.toThrow(
+        'rejected command outcome has an invalid rejection code'
+      );
+      expect(await store.load()).toEqual(initial);
+      expect(storedKeys(storage, 'authority:journal:')).toEqual([]);
+    }
+  });
+
+  it('rejects an accepted envelope for a structurally valid rejected candidate', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    const initial = initialSnapshot();
+    await store.initialize(initial);
+    const rejected = rejectedTransaction(initial);
+
+    await expect(
+      store.commit({
+        ...rejected,
+        outcome: {
+          ...rejected.outcome,
+          accepted: true,
+          revision: 1,
+          code: undefined,
+        },
+        eventBatch: acceptedTransaction(initial).eventBatch,
+      })
+    ).rejects.toThrow('does not produce the candidate state');
+    expect(await store.load()).toEqual(initial);
+    expect(storedKeys(storage, 'authority:journal:')).toEqual([]);
+  });
+
+  it('accepts a structurally verified batch that compaction removed immediately', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    const initial = initialSnapshot();
+    await store.initialize(initial);
+    const transaction = acceptedTransaction(initial);
+    const compacted: PersistedAuthorityTransaction = {
+      ...transaction,
+      snapshot: {
+        ...transaction.snapshot,
+        replayHistory: {
+          baseState: transaction.snapshot.state,
+          baseStateHash: stableHash(transaction.snapshot.state),
+          entries: [],
+        },
+      },
+    };
+
+    await expect(store.commit(compacted)).resolves.toEqual({
+      snapshotValidationMs: expect.any(Number),
+      transactionMs: expect.any(Number),
+    });
+    expect((await store.load())?.state).toEqual(transaction.snapshot.state);
+    const journal = [...storage.values.entries()].find(([key]) =>
+      key.startsWith('authority:journal:')
+    )?.[1];
+    expect(journal).toMatchObject({
+      expectedAuthorityVersion: transaction.expectedAuthorityVersion,
+      resultingAuthorityVersion: compacted.snapshot.authorityVersion,
+      expectedRevision: transaction.expectedRevision,
+      resultingRevision: compacted.snapshot.state.revision,
+      sessionId: transaction.sessionId,
+      outcome: transaction.outcome,
+      eventBatch: transaction.eventBatch,
+    });
+  });
+
+  it('does not accept a command proof minted for another room at the same frontier', async () => {
+    const foreign = initialSnapshot('foreign-room');
+    let captured: PersistedAuthorityTransaction | undefined;
+    let opaque = 0;
+    await processAuthorityCommand(
+      foreign,
+      {
+        type: 'Command',
+        protocolVersion: PROTOCOL_VERSION,
+        sessionId: 'session',
+        clientSequence: 1,
+        commandId: 'foreign-command',
+        lastSeenRevision: 0,
+        command: { type: 'FlipCoin' },
+      },
+      {
+        commandContext: {
+          nextCardId: () => asCardInstanceId('foreign-card'),
+          nextStackId: () => asStackId('foreign-stack'),
+          nextInspectionId: () => asInspectionId('foreign-inspection'),
+          nextWorkAreaId: () => asWorkAreaId('foreign-work-area'),
+          shuffle: (values) => [...values],
+          randomInt: () => 0,
+        },
+        opaqueIds: {
+          nextOpaqueId: (kind) =>
+            `foreign-${kind}-${String(++opaque).padStart(16, '0')}`,
+        },
+        persistence: {
+          commit: async (transaction) => {
+            captured = transaction;
+          },
+        },
+        policy: DEFAULT_AUTHORITY_POLICY,
+      }
+    );
+    if (!captured) throw new Error('foreign command was not captured');
+
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    const local = initialSnapshot('local-room');
+    await store.initialize(local);
+    await expect(store.commit(captured)).rejects.toThrow(
+      'does not produce the candidate state'
+    );
+    expect(await store.load()).toEqual(local);
+    expect(storedKeys(storage, 'authority:journal:')).toEqual([]);
+  });
+
   it('validates and recursively freezes a proofless direct commit snapshot', async () => {
     const storage = new MemoryDurableStorage();
     const store = new DurableRoomSnapshotStore(storage);
@@ -1223,7 +1566,24 @@ describe('Durable Object authority snapshot store', () => {
     expect(Object.isFrozen(transaction.snapshot)).toBe(true);
     expect(Object.isFrozen(transaction.snapshot.state)).toBe(true);
     expect(Object.isFrozen(transaction.snapshot.replayHistory)).toBe(true);
+    expect(
+      Object.isFrozen(
+        transaction.snapshot.replayHistory.entries[0]?.batch.events[0]
+      )
+    ).toBe(true);
     expect(authoritySnapshotValidationFor(transaction.snapshot)).toBeDefined();
+    const authorityJournal = [...storage.values.entries()].find(([key]) =>
+      key.startsWith('authority:journal:')
+    )?.[1] as { eventBatch?: unknown } | undefined;
+    expect(authorityJournal?.eventBatch).toEqual(
+      transaction.snapshot.replayHistory.entries.at(-1)?.batch
+    );
+    expect(JSON.stringify([...storage.values.values()])).not.toContain(
+      'snapshotValidation'
+    );
+    expect(JSON.stringify([...storage.values.values()])).not.toContain(
+      'replayHistoryTransition'
+    );
   });
 
   it('returns a recursively frozen proof-bound snapshot after loading', async () => {

@@ -4,7 +4,9 @@ import {
 } from '@ptcgsim/game-core';
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+  authoritySnapshotCommandValidationMatches,
   authoritySnapshotValidationMatches,
+  assertAuthorityTransactionTransition,
   assertAuthoritySnapshotInvariants,
   createReplayHistory,
   validateAuthoritySnapshot,
@@ -467,12 +469,11 @@ export class DurableRoomSnapshotStore
     transaction: PersistedAuthorityTransaction
   ): Promise<AuthorityPersistenceTiming> {
     const validationStartedAt = safeMonotonicMark(this.monotonicNow);
-    if (
-      !authoritySnapshotValidationMatches(
-        transaction.snapshotValidation,
-        transaction.snapshot
-      )
-    ) {
+    const trustedSnapshot = authoritySnapshotValidationMatches(
+      transaction.snapshotValidation,
+      transaction.snapshot
+    );
+    if (!trustedSnapshot) {
       validateAuthoritySnapshot(transaction.snapshot);
     }
     const snapshotValidationMs = measuredDuration(
@@ -495,6 +496,24 @@ export class DurableRoomSnapshotStore
           transaction.expectedAuthorityVersion,
           current.authorityVersion
         );
+      }
+      if (current.state.revision !== transaction.expectedRevision) {
+        throw new Error('Room state revision changed before authority commit');
+      }
+      const trustedCommand =
+        trustedSnapshot &&
+        authoritySnapshotCommandValidationMatches(
+          transaction.snapshotValidation,
+          transaction.snapshot,
+          current,
+          transaction.expectedAuthorityVersion,
+          transaction.expectedRevision,
+          transaction.sessionId,
+          transaction.outcome,
+          transaction.eventBatch
+        );
+      if (!trustedCommand) {
+        assertAuthorityTransactionTransition(current, transaction);
       }
       if (
         transaction.snapshot.authorityVersion !==

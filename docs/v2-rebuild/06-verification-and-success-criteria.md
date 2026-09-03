@@ -312,20 +312,30 @@ preview phase splits, reconnect timing, platform resource/cost distributions,
 and persistence optimization remain release gates. Command/admission audit rows
 now have transactional count/byte retention and a real-runtime storage plateau.
 Telemetry v2 separates authority processing, projection, persistence,
-publication serialization, and socket send. An opaque internal proof now binds
-the exact recursively frozen snapshot object and recorded top-level
-references/revision; it is not persisted or treated as a security credential.
-Missing, forged, stale, mismatched, and unproven direct-authority-adapter inputs
-still receive full fail-closed validation and recursive freezing. Restore and
-external trust boundaries retain full validation. Attempted mutation of a
-proof-bound graph fails at runtime. The freeze-hardened post-proof run reduced mature
-command-to-publication p95 from 648 ms to 357 ms, server-handling p95 from 636
-ms to 343 ms, current and adapter validation p95 to 0 ms, and total measured
-scenario duration from 58.6 seconds to 35.4 seconds (about 40%). The result
-remains 107 ms above the provisional 250 ms objective.
-Verified incremental candidate replay validation, with full boundary
-validation retained, is therefore the next performance gate; bounded storage
-or removal of redundant scans alone is not adequate release evidence.
+publication serialization, and socket send. The multiplayer hot path now derives
+one canonical batch/state transition from an exact recursively frozen validated
+predecessor. A single-use opaque proof binds that predecessor and proof, the
+resulting state/history objects, and replay limits; cached canonical UTF-8 entry
+sizes drive exact minimal prefix compaction without replaying the retained
+suffix. The completed candidate is recursively frozen and bound to its source
+frontier, session, outcome, and canonical batch. The proofs are not persisted or
+treated as security credentials. Missing, forged, stale, reused, cross-room,
+mutated, mismatched, and unproven direct-adapter inputs receive complete
+fail-closed candidate and transition validation. Restore, migration, retry
+reload, and external install retain full validation. No durable schema changed.
+
+The canonical incremental-replay observation took 26.204 seconds for its
+scenario and 30.50 seconds overall. Mature command-to-publication
+p50/p95/p99/max is 207/252/262/262 ms and server handling is 199/243/255/255 ms.
+Authority, projection, persistence/transaction, and candidate-validation p50/p95
+are 25/29, 7/10, 165/207, and 12/16 ms; adapter snapshot validation remains 0/0
+ms. Relative to the immediately preceding freeze-hardened proof run, p95 falls
+from 357 to 252 ms end to end, 343 to 243 ms server-side, and 184 to 16 ms for
+candidate validation. Server p95 clears the provisional 250 ms objective by 7
+ms; end-to-end p95 misses by 2 ms. The next performance gate is a small atomic
+authority frontier that removes in-transaction full predecessor replay without
+weakening complete restore validation. Managed preview/network measurements and
+the existing load, soak, payload, and correctness evidence remain required.
 
 ## Load and soak gates
 

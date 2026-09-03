@@ -145,10 +145,10 @@ socket attachment size.
 
 The run intentionally fills the 128-command outcome/audit window, advances 32
 commands past it, forces repeated hibernating eviction, and commits once after
-wake. The freeze-hardened post-proof named run took 35.4 seconds on the
-development host, down from the explicitly pre-optimization 58.6 seconds (about
-40%), and remains outside the fast CI gate; the smaller deterministic payload
-envelope stays in `test:v2:runtime`.
+wake. The current incremental-replay run took 26.204 seconds for the measured
+scenario and 30.50 seconds for the complete Vitest invocation. It remains
+outside the fast CI gate; the smaller deterministic payload envelope stays in
+`test:v2:runtime`.
 
 The Durable Object keeps only the 32 latest accepted-command observations in
 memory so the harness can collect the same numeric durations without parsing
@@ -159,23 +159,35 @@ resolution/execution, history/candidate construction, adapter validation, and
 the atomic transaction. Production monitoring continues to use the structured
 telemetry sink's coarser v2 phases.
 
-The optimization passes an opaque, non-persisted validation proof from the
-serialized authority coordinator to the persistence adapter. It applies only
-to the exact recursively frozen snapshot object, its recorded top-level
-references, and revision; it is not a security credential or portable integrity
-claim. Missing, forged, stale, or mismatched proofs, including unproven direct
-authority-commit calls, fall back to complete fail-closed invariant validation
-and recursive freezing. Attempted mutation of a proof-bound graph fails at
-runtime. Restore, migration, and other external trust boundaries always perform
-full validation.
+The multiplayer optimization uses two opaque, non-persisted proof layers. A
+single-use transition proof binds the exact recursively frozen predecessor and
+its proof to one canonical cloned event batch, the exact resulting state/replay
+objects, and the configured replay limits. Cached canonical UTF-8 entry sizes
+select the minimum compacted prefix without serializing or replaying the retained
+suffix. The resulting snapshot proof is bound to the exact candidate plus its
+source frontier, session, outcome, and canonical batch. It is correctness
+evidence, not a security credential or portable integrity claim, and neither
+proof changes the durable schema or enters storage, telemetry, or the wire.
+Missing, forged, stale, reused, cross-room, mutated, or mismatched evidence falls
+back to complete candidate and predecessor-transition validation. Restore,
+migration, retry reload, external install, and other trust boundaries always
+perform full validation and recursive freezing.
 
-The current named result is p95 357 ms from command send through all
-publications, versus the explicitly pre-proof 648 ms, and p95 343 ms inside
-server handling versus 636 ms. Current-snapshot and adapter-revalidation p95
-both measure 0 ms after the handoff. This remains 107 ms above the provisional
-250 ms objective, so verified incremental candidate replay validation is the
-next optimization target; the incident thresholds above must not be relaxed to
-accommodate the remaining local miss.
+The current mature plateau is p50/p95/p99/max 207/252/262/262 ms from command
+send through all publications and 199/243/255/255 ms inside server handling.
+Authority, projection, and persistence p50/p95 are 25/29, 7/10, and 165/207 ms;
+candidate validation is 12/16 ms, while adapter snapshot validation remains
+0/0 ms. The immediately preceding freeze-hardened proof run measured p95
+357/343/184 ms for end-to-end/server/candidate validation, so the incremental
+result improves those to 252/243/16 ms. Server p95 clears 250 ms by 7 ms, while
+end-to-end p95 remains 2 ms above the provisional objective. The post-hibernation
+command measured 401 ms end to end and 270 ms server-side: 29 ms authority, 42
+ms projection, 198 ms persistence, 1 ms publication serialization, and 0 ms
+socket send; its inner execution/history/candidate/adapter/transaction split was
+6/11/12/0/198 ms. The next target is a small atomically maintained authority
+frontier that avoids fully replaying the durable predecessor inside every
+transaction while leaving full restore validation intact; incident thresholds
+must not be relaxed around the remaining local miss.
 
 This local observation is diagnostic evidence, not a substitute for managed
 Cloudflare preview load, CPU/memory/cost, alarm, or network distributions. The

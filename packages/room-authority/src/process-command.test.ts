@@ -6,6 +6,7 @@ import {
   asStackId,
   asWorkAreaId,
   createEmptyMatch,
+  executeCommand,
   playerZoneId,
   type CommandContext,
 } from '@ptcgsim/game-core';
@@ -15,10 +16,14 @@ import { describe, expect, it } from 'vitest';
 import { createRoomAdmissionState } from './admission.js';
 import { emptyProjectionIdentityState } from './identity-registry.js';
 import {
+  authoritySnapshotCommandValidationMatches,
   authoritySnapshotValidationMatches,
   authoritySnapshotValidationFor,
   assertAuthoritySnapshotInvariants,
+  prepareValidatedReplayHistoryTransition,
   validateAuthoritySnapshot,
+  validateMultiplayerAuthorityCandidate,
+  type ReplayHistoryTransitionValidation,
 } from './invariants.js';
 import { createReplayHistory } from './replay-history.js';
 import {
@@ -28,6 +33,7 @@ import {
   type AuthorityPersistence,
   type AuthoritySnapshotValidation,
   type PersistedAuthorityTransaction,
+  type PersistedCommandOutcome,
   type RoomAuthoritySnapshot,
 } from './model.js';
 import { processAuthorityCommand } from './process-command.js';
@@ -194,6 +200,22 @@ describe('authoritative room command transaction', () => {
       )
     ).toBe(true);
     expect(persistence.transactions[0]?.eventBatch?.revision).toBe(1);
+    expect(persistence.transactions[0]?.eventBatch).toBe(
+      result.snapshot.replayHistory.entries.at(-1)?.batch
+    );
+    expect(Object.isFrozen(persistence.transactions[0]?.eventBatch)).toBe(true);
+    expect(
+      authoritySnapshotCommandValidationMatches(
+        result.snapshotValidation,
+        result.snapshot,
+        current,
+        persistence.transactions[0]!.expectedAuthorityVersion,
+        persistence.transactions[0]!.expectedRevision,
+        'session-player-one',
+        persistence.transactions[0]!.outcome,
+        persistence.transactions[0]!.eventBatch
+      )
+    ).toBe(true);
     expect(persistence.transactions[0]?.outcome).toMatchObject({
       accepted: true,
       revision: 1,
@@ -313,6 +335,311 @@ describe('authoritative room command transaction', () => {
     expect(authoritySnapshotValidationMatches(validation, snapshot)).toBe(true);
   });
 
+  it('fails closed for forged replay evidence and consumes valid evidence once', () => {
+    const current = createSnapshot();
+    const currentValidation = validateAuthoritySnapshot(current);
+    const execution = executeCommand(
+      current.state,
+      { type: 'FlipCoin', playerId: p1 },
+      createContext()
+    );
+    if (!execution.accepted) throw new Error(execution.message);
+    const transition = prepareValidatedReplayHistoryTransition(
+      current,
+      currentValidation,
+      execution.batch,
+      execution.state,
+      DEFAULT_AUTHORITY_POLICY.maximumReplayEventBatches,
+      DEFAULT_AUTHORITY_POLICY.maximumReplayEventBytes
+    );
+    const outcome = {
+      commandId: 'incremental-command',
+      clientSequence: 1,
+      accepted: true,
+      revision: 1,
+    } as const;
+    const candidate = {
+      ...current,
+      authorityVersion: 1,
+      state: transition.resultingState,
+      replayHistory: transition.replayHistory,
+      sessions: {
+        ...current.sessions,
+        'session-player-one': {
+          ...current.sessions['session-player-one']!,
+          nextClientSequence: 2,
+          recentOutcomes: [outcome],
+        },
+      },
+    };
+
+    const wrongLimitValidation = validateMultiplayerAuthorityCandidate(
+      current,
+      currentValidation,
+      candidate,
+      'session-player-one',
+      outcome,
+      DEFAULT_AUTHORITY_POLICY.maximumRecentOutcomesPerSession,
+      DEFAULT_AUTHORITY_POLICY.maximumReplayEventBatches - 1,
+      DEFAULT_AUTHORITY_POLICY.maximumReplayEventBytes,
+      transition.validation
+    );
+    expect(
+      authoritySnapshotCommandValidationMatches(
+        wrongLimitValidation,
+        candidate,
+        current,
+        current.authorityVersion,
+        current.state.revision,
+        'session-player-one',
+        outcome,
+        transition.eventBatch
+      )
+    ).toBe(false);
+
+    const validation = validateMultiplayerAuthorityCandidate(
+      current,
+      currentValidation,
+      candidate,
+      'session-player-one',
+      outcome,
+      DEFAULT_AUTHORITY_POLICY.maximumRecentOutcomesPerSession,
+      DEFAULT_AUTHORITY_POLICY.maximumReplayEventBatches,
+      DEFAULT_AUTHORITY_POLICY.maximumReplayEventBytes,
+      transition.validation
+    );
+    expect(authoritySnapshotValidationMatches(validation, candidate)).toBe(
+      true
+    );
+    expect(
+      authoritySnapshotCommandValidationMatches(
+        validation,
+        candidate,
+        current,
+        current.authorityVersion,
+        current.state.revision,
+        'session-player-one',
+        outcome,
+        transition.eventBatch
+      )
+    ).toBe(true);
+    expect(
+      authoritySnapshotCommandValidationMatches(
+        validation,
+        candidate,
+        current,
+        current.authorityVersion + 1,
+        current.state.revision,
+        'session-player-one',
+        outcome,
+        transition.eventBatch
+      )
+    ).toBe(false);
+    expect(
+      authoritySnapshotCommandValidationMatches(
+        validation,
+        candidate,
+        current,
+        current.authorityVersion,
+        current.state.revision + 1,
+        'session-player-one',
+        outcome,
+        transition.eventBatch
+      )
+    ).toBe(false);
+
+    const replayedCandidate = structuredClone(candidate);
+    const replayedValidation = validateMultiplayerAuthorityCandidate(
+      current,
+      currentValidation,
+      replayedCandidate,
+      'session-player-one',
+      replayedCandidate.sessions['session-player-one']!.recentOutcomes[0]!,
+      DEFAULT_AUTHORITY_POLICY.maximumRecentOutcomesPerSession,
+      DEFAULT_AUTHORITY_POLICY.maximumReplayEventBatches,
+      DEFAULT_AUTHORITY_POLICY.maximumReplayEventBytes,
+      transition.validation
+    );
+    expect(
+      authoritySnapshotCommandValidationMatches(
+        replayedValidation,
+        replayedCandidate,
+        current,
+        current.authorityVersion,
+        current.state.revision,
+        'session-player-one',
+        replayedCandidate.sessions['session-player-one']!.recentOutcomes[0]!,
+        replayedCandidate.replayHistory.entries.at(-1)?.batch
+      )
+    ).toBe(false);
+
+    const corrupt = structuredClone(candidate);
+    corrupt.replayHistory.entries[0]!.resultingStateHash = 'corrupt';
+    expect(() =>
+      validateMultiplayerAuthorityCandidate(
+        current,
+        currentValidation,
+        corrupt,
+        'session-player-one',
+        corrupt.sessions['session-player-one']!.recentOutcomes[0]!,
+        DEFAULT_AUTHORITY_POLICY.maximumRecentOutcomesPerSession,
+        DEFAULT_AUTHORITY_POLICY.maximumReplayEventBatches,
+        DEFAULT_AUTHORITY_POLICY.maximumReplayEventBytes,
+        {} as ReplayHistoryTransitionValidation
+      )
+    ).toThrow('replay history is malformed or cannot be replayed');
+  });
+
+  it('never mints command proof for malformed command outcome metadata', () => {
+    const acceptedCurrent = createSnapshot();
+    const acceptedCurrentValidation =
+      validateAuthoritySnapshot(acceptedCurrent);
+    const execution = executeCommand(
+      acceptedCurrent.state,
+      { type: 'FlipCoin', playerId: p1 },
+      createContext()
+    );
+    if (!execution.accepted) throw new Error(execution.message);
+    const transition = prepareValidatedReplayHistoryTransition(
+      acceptedCurrent,
+      acceptedCurrentValidation,
+      execution.batch,
+      execution.state,
+      DEFAULT_AUTHORITY_POLICY.maximumReplayEventBatches,
+      DEFAULT_AUTHORITY_POLICY.maximumReplayEventBytes
+    );
+    const acceptedWithCode = {
+      commandId: 'accepted-with-code',
+      clientSequence: 1,
+      accepted: true,
+      revision: 1,
+      code: 'precondition_failed',
+    } as const;
+    const acceptedCandidate: RoomAuthoritySnapshot = {
+      ...acceptedCurrent,
+      authorityVersion: 1,
+      state: transition.resultingState,
+      replayHistory: transition.replayHistory,
+      sessions: {
+        ...acceptedCurrent.sessions,
+        'session-player-one': {
+          ...acceptedCurrent.sessions['session-player-one']!,
+          nextClientSequence: 2,
+          recentOutcomes: [acceptedWithCode],
+        },
+      },
+    };
+    expect(() =>
+      validateMultiplayerAuthorityCandidate(
+        acceptedCurrent,
+        acceptedCurrentValidation,
+        acceptedCandidate,
+        'session-player-one',
+        acceptedWithCode,
+        DEFAULT_AUTHORITY_POLICY.maximumRecentOutcomesPerSession,
+        DEFAULT_AUTHORITY_POLICY.maximumReplayEventBatches,
+        DEFAULT_AUTHORITY_POLICY.maximumReplayEventBytes,
+        transition.validation
+      )
+    ).toThrow('accepted command outcome cannot contain a rejection code');
+
+    const invalidRejectedOutcomes = [
+      {
+        commandId: 'missing-code',
+        clientSequence: 1,
+        accepted: false,
+        revision: 0,
+      },
+      {
+        commandId: 'invalid-code',
+        clientSequence: 1,
+        accepted: false,
+        revision: 0,
+        code: 'not-a-rejection-code',
+      },
+      {
+        commandId: '',
+        clientSequence: 1,
+        accepted: false,
+        revision: 0,
+        code: 'precondition_failed',
+      },
+      {
+        commandId: 'x'.repeat(129),
+        clientSequence: 1,
+        accepted: false,
+        revision: 0,
+        code: 'precondition_failed',
+      },
+    ] as unknown as readonly PersistedCommandOutcome[];
+    for (const outcome of invalidRejectedOutcomes) {
+      const current = createSnapshot();
+      const currentValidation = validateAuthoritySnapshot(current);
+      const candidate: RoomAuthoritySnapshot = {
+        ...current,
+        authorityVersion: 1,
+        sessions: {
+          ...current.sessions,
+          'session-player-one': {
+            ...current.sessions['session-player-one']!,
+            nextClientSequence: 2,
+            recentOutcomes: [outcome],
+          },
+        },
+      };
+      expect(() =>
+        validateMultiplayerAuthorityCandidate(
+          current,
+          currentValidation,
+          candidate,
+          'session-player-one',
+          outcome,
+          DEFAULT_AUTHORITY_POLICY.maximumRecentOutcomesPerSession,
+          DEFAULT_AUTHORITY_POLICY.maximumReplayEventBatches,
+          DEFAULT_AUTHORITY_POLICY.maximumReplayEventBytes
+        )
+      ).toThrow(
+        outcome.commandId.length < 1 || outcome.commandId.length > 128
+          ? 'command outcome metadata is malformed'
+          : 'rejected command outcome has an invalid rejection code'
+      );
+    }
+
+    const validRejection = {
+      commandId: 'empty-session-id',
+      clientSequence: 1,
+      accepted: false,
+      revision: 0,
+      code: 'precondition_failed',
+    } as const;
+    const current = createSnapshot();
+    const currentValidation = validateAuthoritySnapshot(current);
+    const candidate: RoomAuthoritySnapshot = {
+      ...current,
+      authorityVersion: 1,
+      sessions: {
+        ...current.sessions,
+        'session-player-one': {
+          ...current.sessions['session-player-one']!,
+          nextClientSequence: 2,
+          recentOutcomes: [validRejection],
+        },
+      },
+    };
+    expect(() =>
+      validateMultiplayerAuthorityCandidate(
+        current,
+        currentValidation,
+        candidate,
+        '',
+        validRejection,
+        DEFAULT_AUTHORITY_POLICY.maximumRecentOutcomesPerSession,
+        DEFAULT_AUTHORITY_POLICY.maximumReplayEventBatches,
+        DEFAULT_AUTHORITY_POLICY.maximumReplayEventBytes
+      )
+    ).toThrow('command session ID is malformed');
+  });
+
   it('does not install or acknowledge a mutation when persistence fails before commit', async () => {
     const current = createSnapshot();
     const dependencies = createDependencies({
@@ -370,8 +697,9 @@ describe('authoritative room command transaction', () => {
 
   it('persists spectator rejection and sequence consumption without mutating state', async () => {
     const persistence = createPersistence();
+    const current = createSnapshot();
     const result = await processAuthorityCommand(
-      createSnapshot(),
+      current,
       loadDeck('session-spectator'),
       createDependencies(persistence)
     );
@@ -388,9 +716,102 @@ describe('authoritative room command transaction', () => {
       code: 'unauthorized',
     });
     expect(persistence.transactions[0]?.eventBatch).toBeUndefined();
-    expect(result.snapshot.replayHistory).toEqual(
-      createSnapshot().replayHistory
+    expect(result.snapshot.state).toBe(current.state);
+    expect(result.snapshot.replayHistory).toBe(current.replayHistory);
+    expect(result.snapshot.soloUndoHistory).toBe(current.soloUndoHistory);
+    expect(result.snapshot.identities).toBe(current.identities);
+    expect(result.snapshot.admission).toBe(current.admission);
+    expect(result.snapshot.sessions['session-player-one']).toBe(
+      current.sessions['session-player-one']
     );
+    expect(result.snapshot.sessions['session-player-two']).toBe(
+      current.sessions['session-player-two']
+    );
+    expect(result.snapshot.sessions['session-spectator']).not.toBe(
+      current.sessions['session-spectator']
+    );
+    expect(
+      authoritySnapshotCommandValidationMatches(
+        result.snapshotValidation,
+        result.snapshot,
+        current,
+        persistence.transactions[0]!.expectedAuthorityVersion,
+        persistence.transactions[0]!.expectedRevision,
+        'session-spectator',
+        persistence.transactions[0]!.outcome,
+        undefined
+      )
+    ).toBe(true);
+  });
+
+  it('retains the canonical frozen batch when the new replay entry is immediately compacted', async () => {
+    const persistence = createPersistence();
+    const current = createSnapshot();
+    const result = await processAuthorityCommand(current, loadDeck(), {
+      ...createDependencies(persistence),
+      policy: {
+        ...DEFAULT_AUTHORITY_POLICY,
+        maximumReplayEventBytes: 2,
+      },
+    });
+
+    expect(result.snapshot.replayHistory.entries).toEqual([]);
+    expect(result.snapshot.replayHistory.baseState).toBe(result.snapshot.state);
+    expect(persistence.transactions[0]?.eventBatch).toBeDefined();
+    expect(Object.isFrozen(persistence.transactions[0]?.eventBatch)).toBe(true);
+    expect(
+      authoritySnapshotCommandValidationMatches(
+        result.snapshotValidation,
+        result.snapshot,
+        current,
+        persistence.transactions[0]!.expectedAuthorityVersion,
+        persistence.transactions[0]!.expectedRevision,
+        'session-player-one',
+        persistence.transactions[0]!.outcome,
+        persistence.transactions[0]!.eventBatch
+      )
+    ).toBe(true);
+    expect(() =>
+      assertAuthoritySnapshotInvariants(structuredClone(result.snapshot))
+    ).not.toThrow();
+  });
+
+  it('matches full replay validation across a long compacting command chain', async () => {
+    const persistence = createPersistence();
+    const dependencies = {
+      ...createDependencies(persistence),
+      policy: {
+        ...DEFAULT_AUTHORITY_POLICY,
+        maximumReplayEventBatches: 3,
+      },
+    };
+    let current = createSnapshot();
+
+    for (let sequence = 1; sequence <= 48; sequence += 1) {
+      const result = await processAuthorityCommand(
+        current,
+        command(
+          'session-player-one',
+          sequence,
+          `long-chain-${sequence}`,
+          { type: 'FlipCoin' },
+          current.state.revision
+        ),
+        dependencies
+      );
+      expect(result.committed).toBe(true);
+      expect(result.snapshot.replayHistory.entries.length).toBeLessThanOrEqual(
+        3
+      );
+      expect(() =>
+        assertAuthoritySnapshotInvariants(structuredClone(result.snapshot))
+      ).not.toThrow();
+      current = result.snapshot;
+    }
+
+    expect(current.state.revision).toBe(48);
+    expect(current.replayHistory.baseState.revision).toBe(45);
+    expect(persistence.transactions).toHaveLength(48);
   });
 
   it('publishes typed table signals once and persists stale broad-action rejection', async () => {
