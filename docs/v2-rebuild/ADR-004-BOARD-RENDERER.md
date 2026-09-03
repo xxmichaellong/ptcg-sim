@@ -136,13 +136,16 @@ Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
   Chromium checkpoint covers all 16 default player-region border/content boxes,
   structural frame/handle/control anchors, all six contained pile covers, and
   the bottom-owner stadium; the source also measures the top-owner stadium but
-  that candidate branch is unit-only. A separate strict ordinary-evolution gate
-  matches all 12 local/opponent active/bench three-card boxes, rotations, and
-  overlap hit order at the default 1600×900 DPR-1 sidebar, even-split,
-  unflipped state. It does not yet claim alternate layout states, attachment,
-  marker, BREAK/rotation, overflow, Pixi paint/hit behavior, full paint or
-  interaction parity, cover-open UX, or opened-zone layout, and the sidebar
-  content rectangle is derived from measured shell/tab edges);
+  that candidate branch is unit-only. Separate strict gates match all 12
+  local/opponent active/bench ordinary-evolution boxes and the four-card
+  local/opponent one-Energy and Trainer-as-Tool active fixtures at the default
+  1600×900 DPR-1 sidebar, even-split, unflipped state. Tool coverage separates
+  pre-transform and painted quarter-turn bounds and verifies shared/native hit
+  regions. These paths do not yet claim alternate layout states, mixed/multiple
+  attachments, markers, BREAK/compound rotation, overflow, Tool-specific Pixi
+  paint parity, full paint or interaction parity, cover-open UX, or opened-zone
+  layout, and the sidebar content rectangle is derived from measured shell/tab
+  edges);
 - all protected pointer, keyboard, menu, zone-browser, replay, reconnect, and
   accessibility workflows;
 - a 120-distinct-asset cache/network test and hidden-image request scan;

@@ -50,14 +50,16 @@ card geometry; this does not broaden the source oracle's scope or claim Pixi,
 wrapper-identity, or sibling-order parity.
 
 `legacy-trainer-tool-attachment-reflow-layout.test.ts` pins the corresponding
-source-only current-category `Trainer` presentation as a separate checkpoint.
+current-category `Trainer` presentation as a separate source checkpoint.
 It records the shared non-Pokémon `clientWidth / 6` offset plus the
 Trainer-specific 90-degree turn and `2%` right wrapper margin, preserving both
 the authored pre-transform layout box and the transformed painted box. The
 stable oracle also covers rotated paint overflow, z/DOM/hit order, attachment
-state, and observer-settled wrapper cleanup. Shared center-rotated hit/drop
-containment is now independently verified in both candidates, but strict Tool
-production geometry and source-to-candidate Tool parity remain deferred. Energy
-and mixed/multiple attachments, category history, departure and stale margins,
-evolution, bench/flex competition, markers, BREAK/compound rotation, alternate
-layouts, and Tool-specific input/Pixi parity remain excluded.
+state, and observer-settled wrapper cleanup. Its browser companion now compares
+the strict one-base/one-Trainer production scene and React DOM paint to all four
+source boxes, rotations, z ranks, and hit regions. Shared center-rotated hit/drop
+containment is independently verified in both candidates. Energy and
+mixed/multiple attachments, category history, departure and stale margins,
+evolution combinations, bench/flex competition, markers, BREAK/compound
+rotation, alternate layouts, wrapper/sibling identity, and Tool-specific Pixi
+paint parity remain excluded.

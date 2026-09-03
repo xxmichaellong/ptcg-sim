@@ -19,6 +19,7 @@ import {
   layoutLegacyContainedCard,
   layoutLegacyOrdinaryEvolutionStack,
   layoutLegacySingleEnergyAttachmentStack,
+  layoutLegacySingleTrainerToolAttachmentStack,
   legacyPileTopIndex,
   type BoardLayoutSnapshot,
   type BoardLayoutState,
@@ -357,7 +358,7 @@ const isCharacterizedDefaultInPlayLayout = (
   );
 };
 
-const isCharacterizedSingleEnergyAttachmentStack = (
+const isCharacterizedSingleActiveAttachmentStructure = (
   stack: MatchViewState['stacks'][string],
   board: MatchViewState['boards'][string],
   playerId: PlayerId,
@@ -366,7 +367,7 @@ const isCharacterizedSingleEnergyAttachmentStack = (
   layoutIsCharacterized: boolean
 ): boolean => {
   const base = stack.evolutionCards[0];
-  const energy = stack.attachmentCards[0];
+  const attachment = stack.attachmentCards[0];
   const bounds = region.physicalDeclaredBounds;
   const expectedDeclaredBounds =
     side === 'local'
@@ -427,19 +428,74 @@ const isCharacterizedSingleEnergyAttachmentStack = (
     bounds.height > 0 &&
     Number.isFinite(authoredWidth) &&
     authoredWidth > 0 &&
-    authoredWidth <= bounds.width &&
     base?.kind === 'known' &&
     base.ownerId === playerId &&
     base.category === 'Pokémon' &&
     base.face === 'up' &&
     base.orientationQuarterTurns === 0 &&
     base.abilityUsed === false &&
+    attachment?.kind === 'known' &&
+    attachment.ownerId === playerId &&
+    attachment.face === 'up' &&
+    attachment.orientationQuarterTurns === 0 &&
+    attachment.abilityUsed === false
+  );
+};
+
+const isCharacterizedSingleEnergyAttachmentStack = (
+  stack: MatchViewState['stacks'][string],
+  board: MatchViewState['boards'][string],
+  playerId: PlayerId,
+  side: BoardSide,
+  region: BoardLayoutSnapshot['players'][number]['regions'][number],
+  layoutIsCharacterized: boolean
+): boolean => {
+  const energy = stack.attachmentCards[0];
+  const bounds = region.physicalDeclaredBounds;
+  const authoredWidth = (Math.round(bounds.height * CARD_ASPECT_RATIO) * 7) / 6;
+  return (
+    isCharacterizedSingleActiveAttachmentStructure(
+      stack,
+      board,
+      playerId,
+      side,
+      region,
+      layoutIsCharacterized
+    ) &&
+    authoredWidth <= bounds.width &&
     energy?.kind === 'known' &&
-    energy.ownerId === playerId &&
-    energy.category === 'Energy' &&
-    energy.face === 'up' &&
-    energy.orientationQuarterTurns === 0 &&
-    energy.abilityUsed === false
+    energy.category === 'Energy'
+  );
+};
+
+const isCharacterizedSingleTrainerToolAttachmentStack = (
+  stack: MatchViewState['stacks'][string],
+  board: MatchViewState['boards'][string],
+  playerId: PlayerId,
+  side: BoardSide,
+  region: BoardLayoutSnapshot['players'][number]['regions'][number],
+  layoutIsCharacterized: boolean
+): boolean => {
+  // Legacy persists no separate Tool category/history: current-category
+  // Trainer is the only recipient-safe discriminator and matches syncRotation.
+  const tool = stack.attachmentCards[0];
+  const bounds = region.physicalDeclaredBounds;
+  const authoredWidth = (Math.round(bounds.height * CARD_ASPECT_RATIO) * 7) / 6;
+  const marginRight = bounds.width * 0.02;
+  return (
+    isCharacterizedSingleActiveAttachmentStructure(
+      stack,
+      board,
+      playerId,
+      side,
+      region,
+      layoutIsCharacterized
+    ) &&
+    Number.isFinite(marginRight) &&
+    marginRight >= 0 &&
+    authoredWidth + marginRight <= bounds.width &&
+    tool?.kind === 'known' &&
+    tool.category === 'Trainer'
   );
 };
 
@@ -793,6 +849,20 @@ export const createBoardScene = (
               CARD_ASPECT_RATIO
             )
           : null;
+      const singleTrainerToolAttachmentLayout =
+        isCharacterizedSingleTrainerToolAttachmentStack(
+          stack,
+          board,
+          playerId,
+          side,
+          slotRegions[stack.slot],
+          defaultInPlayLayoutIsCharacterized
+        )
+          ? layoutLegacySingleTrainerToolAttachmentStack(
+              slotRegions[stack.slot],
+              CARD_ASPECT_RATIO
+            )
+          : null;
       const ordinaryEvolutionLayout = isCharacterizedOrdinaryEvolutionStack(
         stack,
         board,
@@ -811,8 +881,12 @@ export const createBoardScene = (
         const ordinaryCardLayout = ordinaryEvolutionLayout?.cards[index];
         const singleEnergyBaseLayout =
           index === 0 ? singleEnergyAttachmentLayout?.base : undefined;
+        const singleTrainerToolBaseLayout =
+          index === 0 ? singleTrainerToolAttachmentLayout?.base : undefined;
         const characterizedCardLayout =
-          ordinaryCardLayout ?? singleEnergyBaseLayout;
+          ordinaryCardLayout ??
+          singleEnergyBaseLayout ??
+          singleTrainerToolBaseLayout;
         const node = makeCardNode(view, card, {
           parentId: stack.id,
           side,
@@ -840,22 +914,27 @@ export const createBoardScene = (
       stack.attachmentCards.forEach((card, index) => {
         const singleEnergyLayout =
           index === 0 ? singleEnergyAttachmentLayout?.energy : undefined;
+        const singleTrainerToolLayout =
+          index === 0 ? singleTrainerToolAttachmentLayout?.tool : undefined;
+        const characterizedAttachmentLayout =
+          singleEnergyLayout ?? singleTrainerToolLayout;
         registerCard(
           makeCardNode(view, card, {
             parentId: stack.id,
             side,
             role: 'stackAttachment',
-            bounds: singleEnergyLayout
-              ? copyRect(singleEnergyLayout.bounds)
+            bounds: characterizedAttachmentLayout
+              ? copyRect(characterizedAttachmentLayout.bounds)
               : {
                   x: baseBounds.x + baseBounds.width * 0.42 + index * 8,
                   y: baseBounds.y + baseBounds.height * 0.18 + index * 5,
                   width: attachmentWidth,
                   height: attachmentWidth / CARD_ASPECT_RATIO,
                 },
-            zIndex: singleEnergyLayout
-              ? 300 + singleEnergyLayout.sourceZIndex
+            zIndex: characterizedAttachmentLayout
+              ? 300 + characterizedAttachmentLayout.sourceZIndex
               : 250 + index,
+            rotationQuarterTurns: singleTrainerToolLayout ? 1 : undefined,
             interactive: true,
           }),
           card

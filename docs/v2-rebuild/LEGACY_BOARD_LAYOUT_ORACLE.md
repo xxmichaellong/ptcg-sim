@@ -356,17 +356,17 @@ boxes, rotations, mapped z ranks `300/299`, and common/Energy-only hit order to
 the source within 2 px / 1% / 0.1 degrees. The renderer list stays back-to-front
 and does not reproduce legacy wrapper or sibling identity.
 
-This result does not cover Trainer-as-Tool production parity, multiple Energy
-or mixed-order normalization, departures/compaction, Pokémon evolution layers
-or Pokémon-classified attachments, bench/flex overflow, markers,
-BREAK/rotation, noncanonical assets, alternate layouts, input, Pixi paint/hit
-behavior, or network behavior. Every structurally detectable excluded card,
-stack, or layout state retains the prior generic scene path; asset shape,
+This Energy checkpoint does not itself cover the separate Trainer-as-Tool path,
+multiple Energy or mixed-order normalization, departures/compaction, Pokémon
+evolution layers or Pokémon-classified attachments, bench/flex overflow,
+markers, BREAK/rotation, noncanonical assets, alternate layouts, input, Pixi
+paint/hit behavior, or network behavior. States excluded from every
+characterized strict path retain the prior generic scene geometry; asset shape,
 input, Pixi paint/hit, and network behavior remain uncharacterized rather than
 eligibility inputs.
 
 `tests/browser/legacy-trainer-tool-attachment-reflow-geometry.spec.ts` adds a
-sixth, source-only card checkpoint with its own digest-pinned
+sixth source-backed card checkpoint with its own digest-pinned
 `trainer-tool-attachment-reflow-v1.json`. It isolates the legacy convention in
 which the Tool UI action assigns category `Trainer`; any current-category
 Trainer attached to an ordinary active Pokémon receives the non-Pokémon
@@ -385,16 +385,26 @@ authored Tool layout rectangle containing no painted card. Stable geometry is
 accepted only after the synchronous two-wrapper refresh state settles to one
 wrapper through the legacy MutationObserver.
 
-This is deliberately not yet a production Tool geometry claim.
-`CardSceneNode.bounds` is the pre-transform layout/paint box; shared hit and
-drop containment now inverse-rotates points around its center for all four
-quarter turns. A synthetic real-browser fixture verifies painted-only and
-authored-layout-only click/drop regions in both candidates and removes Pixi's
-incorrect CSS-pixel explicit sprite hit area. The narrow Tool production gate
-and source-to-candidate Tool comparison remain next. Energy/mixed ordering,
-multiple attachments, departures and stale margins, category history,
-evolution, bench/flex variants, markers, BREAK/compound rotation, alternate
-layouts, and Tool-specific input/Pixi parity remain excluded.
+The narrow production path selects only the exact one-base/one-current-category
+Trainer active stack described above at the captured default layout. It uses
+the public 63:88 ratio, giving a 90 px rounded base width, 15 px offset, 105 px
+wrapper, and an active-region `2%` margin; it does not consult definitions,
+asset URLs or intrinsic dimensions, viewer role, or public-reveal metadata.
+`CardSceneNode.bounds` stays the pre-transform box, base/Tool z ranks map to
+`300/299`, and the Tool rotates one quarter-turn locally and three for the
+opponent. Shared hit/drop containment inverse-rotates around the box center.
+Chromium compares all four scene boxes and painted React DOM boxes, rotations,
+z ranks, and common/Tool-only/base-only/empty-layout native hit order to source
+within 2 px / 1% / 0.1 degrees. A separate both-candidate fixture verifies the
+same painted-only versus authored-layout-only click/drop boundary and removes
+Pixi's incorrect CSS-pixel explicit sprite hit area.
+
+Energy retains its separate strict path; mixed ordering, multiple attachments,
+departures and stale margins, category history, evolution combinations,
+bench/flex variants, markers, BREAK/compound rotation, alternate layouts,
+candidate wrapper/sibling identity, and Tool-specific Pixi paint parity remain
+excluded from this Tool gate. Every state excluded from all characterized
+strict paths retains generic scene geometry with no implicit Tool turn.
 
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
@@ -402,10 +412,9 @@ renderer-neutral scene and has structured scene assertions for all four board
 oracle fixtures, including asymmetric resize, flipped ownership, midpoint
 shared placement, compact and fullscreen states. The controlled hand/bench/
 attachment-stack fixture remains source-only; the narrower contained-card,
-ordinary-evolution, and single-Energy fixtures feed and compare their strict
-production geometries; Trainer-as-Tool remains source-only until its narrow
-production geometry and candidate comparison are implemented. Raw
-normalized/authored inputs, box edges, affordances,
+ordinary-evolution, single-Energy, and Trainer-as-Tool fixtures feed and compare
+their strict production geometries. Raw normalized/authored inputs, box edges,
+affordances,
 and semantic z evidence remain in the richer characterization snapshot rather
 than being duplicated in
 `BoardScene`. Real-browser measurements for additional layout states,

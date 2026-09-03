@@ -239,26 +239,32 @@ bench/overflow, rotation, markers, alternate layouts, candidate DOM
 wrapper/order identity, Pixi paint/hit behavior, and input remain explicit
 later gates.
 
-A sixth, independent source-only checkpoint isolates the corresponding
-Trainer-as-Tool presentation before any production wiring. Legacy has no
-distinct Tool category: its Tool action assigns the current category
+A sixth, independent source-backed checkpoint isolates the corresponding
+Trainer-as-Tool presentation. Legacy has no distinct Tool category: its Tool
+action assigns the current category
 `Trainer`, and `syncRotation` gives any such attachment an extra 90-degree
 presentation turn plus a `2%` right wrapper margin. The fixture preserves both
 the 90.5625×126 px pre-transform layout box used by attachment reflow and the
 126×90.5625 px painted bounding box, along with transform matrix/origin,
 opponent 270-degree effective rotation, wrapper overflow, z/DOM order, and
 common, Tool-only, base-only, and empty authored-layout hit regions. It also
-pins the same transient two-wrapper cleanup boundary as Energy. Production
-selection is still intentionally deferred, but its shared-input prerequisite is
-now resolved: card bounds remain the pre-transform layout box and shared hit and
-drop containment inverse-rotates points around its center. Unit coverage pins
-all four quarter turns and a real-browser fixture proves painted-only versus
-authored-layout-only click/drop behavior in both candidates; Pixi now relies on
-its native inverse-transformed sprite hit testing instead of scaling a CSS-pixel
-hit rectangle twice. The strict Tool production geometry gate, Tool-specific
-candidate comparison, multiple/mixed attachments, category history,
-removal/stale margins, BREAK or compound rotations, and bench/layout variants
-remain outside this source checkpoint.
+pins the same transient two-wrapper cleanup boundary as Energy.
+
+A dedicated renderer-contract path now selects only one known current-category
+Trainer attached to one same-owner known Pokémon in the marker-free active
+stack, with no bench stacks, at the exact default 1600×900 DPR-1 sidebar,
+even-split, unflipped layout. It uses the public 63:88 ratio, rounded 90 px base
+width, 15 px offset, 105 px wrapper, and active-region `2%` margin without
+reading definition or asset dimensions. Scene bounds remain pre-transform;
+base/Tool z ranks are `300/299`, and the Tool's effective quarter-turn is 1
+locally and 3 for the opponent. Chromium matches all four scene/layout and
+painted React DOM boxes, rotations, z ranks, and common/Tool-only/base-only/
+empty-layout hit order to the source within 2 px / 1% / 0.1 degrees. Shared hit
+and drop containment inverse-rotates around the card center in both renderers;
+Pixi uses native sprite containment instead of a double-scaled CSS-pixel hit
+rectangle. Multiple/mixed attachments, category history, removal/stale margins,
+evolution combinations, BREAK or compound rotations, bench/overflow, alternate
+layouts, and candidate wrapper/sibling identity remain explicit later gates.
 
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during

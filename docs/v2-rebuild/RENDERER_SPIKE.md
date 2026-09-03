@@ -290,7 +290,7 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 680 v2 tests across 104 files. A separate suite
+The repository-wide gate passes 684 v2 tests across 104 files. A separate suite
 passes 14 Playwright checks across seven Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
@@ -378,17 +378,24 @@ passes 14 Playwright checks across seven Chromium 151 browser files:
     evolution combinations, bench/overflow, rotation, markers, alternate
     layouts, candidate wrapper/DOM-order identity, Pixi paint/hit behavior, and
     input are not claimed and retain the prior scene path.
-12. A sixth source-only, digest-pinned card fixture isolates one current-category
+12. A sixth digest-pinned card fixture isolates one current-category
     Trainer attached as a Tool to one active Pokémon in each legacy frame. It
     pins the shared integer non-Pokémon offset/width path plus Tool-specific
     90-degree rotation and `2%` wrapper margin, and distinguishes each
     pre-transform layout box from its swapped painted bounding box. The oracle
     covers opponent-effective 270-degree rotation, rotated wrapper overflow,
     common/Tool-only/base-only/empty-layout hit regions, attachment state and z
-    order, and transient-to-stable wrapper cleanup. Shared rotation-aware input
-    is now independently verified, but production DOM/Pixi Tool geometry parity
-    remains deferred; multiple/mixed attachments, category history, removal,
-    BREAK/compound rotation, and alternate layouts remain excluded.
+    order, and transient-to-stable wrapper cleanup. A strict renderer-contract
+    path now selects only the one-base/one-Trainer marker-free active state at
+    the exact default layout, using the public ratio, a rounded 90 px base, 15 px
+    offset, 105 px wrapper, `2%` active-region margin, and z ranks `300/299`.
+    Chromium matches all four pre-transform scene and painted React DOM boxes,
+    effective rotations, z ranks, and four native hit regions within 2 px / 1% /
+    0.1 degrees. Shared rotated input is independently verified in both
+    candidates. Multiple/mixed attachments, category history, removal/stale
+    margins, evolution combinations, BREAK/compound rotation, alternate
+    layouts, wrapper/sibling identity, and Tool-specific Pixi paint parity
+    remain excluded.
 13. The selected DOM implementation completes 100 mount → clear/reset → destroy
     cycles on one warmed route-owned host with the exact status sequence,
     complete scene IDs at mount, zero rendered scene children/IDs after clear and
@@ -413,7 +420,7 @@ source-backed evolution comparison in
 `tests/browser/legacy-evolution-reflow-geometry.spec.ts` and the source-backed
 single-Energy comparison in
 `tests/browser/legacy-energy-attachment-reflow-geometry.spec.ts`, plus the
-source-only Trainer-as-Tool checkpoint in
+source-backed Trainer-as-Tool comparison in
 `tests/browser/legacy-trainer-tool-attachment-reflow-geometry.spec.ts`. Standard
 Linux CI can install Playwright's pinned Chromium build. This NixOS workspace
 used the Nix Chromium 151 package through `PTCGSIM_CHROMIUM_PATH`, because Playwright's

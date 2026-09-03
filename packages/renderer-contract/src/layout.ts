@@ -291,6 +291,29 @@ export interface LegacySingleEnergyAttachmentStackLayout {
   readonly energy: LegacySingleEnergyAttachmentCardLayout;
 }
 
+export interface LegacySingleTrainerToolAttachmentCardLayout {
+  readonly bounds: Rect;
+  /** The exact image z-index emitted by v1 attachCard. */
+  readonly sourceZIndex: number;
+}
+
+export interface LegacySingleTrainerToolAttachmentStackLayout {
+  /** Stable post-refresh play-container border box, excluding its flex margin. */
+  readonly flexItemBounds: Rect;
+  /** Integer base-image width read by v1 through CSSOM clientWidth. */
+  readonly baseCssomClientWidth: number;
+  /** Horizontal offset authored by attachCard from base clientWidth / 6. */
+  readonly attachmentOffset: number;
+  /** Fractional width authored by adjustCards after refresh. */
+  readonly authoredWidth: number;
+  /** Integer width exposed by the stable wrapper through CSSOM clientWidth. */
+  readonly stableCssomClientWidth: number;
+  /** The Tool wrapper's authored 2% trailing flex margin. */
+  readonly marginRight: number;
+  readonly base: LegacySingleTrainerToolAttachmentCardLayout;
+  readonly tool: LegacySingleTrainerToolAttachmentCardLayout;
+}
+
 const ZERO_EDGES: BoxEdgesPx = { top: 0, right: 0, bottom: 0, left: 0 };
 const FIVE_PIXEL_PADDING: BoxEdgesPx = {
   top: 5,
@@ -1093,22 +1116,41 @@ export const layoutLegacyOrdinaryEvolutionStack = (
   };
 };
 
-/**
- * Stable geometry for the narrow one-base/one-Energy active-stack path. The
- * public canonical card ratio determines paint size; v1 derives the Energy
- * offset and refreshed wrapper width from the rounded CSSOM base width. Tool
- * rotation/margins, multiple attachments, bench placement, flex shrink, and
- * every noncanonical state remain caller-side exclusions.
- */
-export const layoutLegacySingleEnergyAttachmentStack = (
+type LegacySingleAttachmentKind = 'energy' | 'trainerTool';
+
+interface LegacySingleAttachmentStackGeometry {
+  readonly flexItemBounds: Rect;
+  readonly baseCssomClientWidth: number;
+  readonly attachmentOffset: number;
+  readonly authoredWidth: number;
+  readonly stableCssomClientWidth: number;
+  readonly marginRight: number;
+  readonly base: LegacySingleEnergyAttachmentCardLayout;
+  readonly attachment: LegacySingleEnergyAttachmentCardLayout;
+}
+
+const layoutLegacySingleAttachmentStack = (
   region: BoardLayoutRegion,
-  cardAspectRatio: number
-): LegacySingleEnergyAttachmentStackLayout => {
+  cardAspectRatio: number,
+  kind: LegacySingleAttachmentKind
+): LegacySingleAttachmentStackGeometry => {
+  let sourceName: 'Single-Energy' | 'Single-Trainer-as-Tool';
+  let marginRightRatio: 0 | 0.02;
+  switch (kind) {
+    case 'energy':
+      sourceName = 'Single-Energy';
+      marginRightRatio = 0;
+      break;
+    case 'trainerTool':
+      sourceName = 'Single-Trainer-as-Tool';
+      marginRightRatio = 0.02;
+      break;
+  }
   if (region.surface !== 'playSlot' || region.kind !== 'active') {
-    throw new Error('Single-Energy layout requires an active play slot');
+    throw new Error(`${sourceName} layout requires an active play slot`);
   }
   if (!Number.isFinite(cardAspectRatio) || cardAspectRatio <= 0) {
-    throw new Error('Single-Energy card aspect ratio must be positive');
+    throw new Error(`${sourceName} card aspect ratio must be positive`);
   }
   const bounds = region.physicalDeclaredBounds;
   if (
@@ -1119,26 +1161,32 @@ export const layoutLegacySingleEnergyAttachmentStack = (
     bounds.width <= 0 ||
     bounds.height <= 0
   ) {
-    throw new Error('Single-Energy active bounds must be finite and positive');
+    throw new Error(`${sourceName} active bounds must be finite and positive`);
   }
 
   const cardHeight = bounds.height;
   const cardWidth = cardHeight * cardAspectRatio;
   const baseCssomClientWidth = Math.round(cardWidth);
   if (baseCssomClientWidth <= 0) {
-    throw new Error('Single-Energy CSSOM base width must be positive');
+    throw new Error(`${sourceName} CSSOM base width must be positive`);
   }
   const attachmentOffset = baseCssomClientWidth / 6;
   const authoredWidth = baseCssomClientWidth + attachmentOffset;
-  if (authoredWidth > bounds.width) {
+  const marginRight = bounds.width * marginRightRatio;
+  const flexOuterWidth = authoredWidth + marginRight;
+  if (flexOuterWidth > bounds.width) {
     throw new Error(
-      'Single-Energy flex shrink requires browser characterization'
+      `${sourceName} flex shrink requires browser characterization`
     );
   }
-  const flexItemX = bounds.x + (bounds.width - authoredWidth) / 2;
+  const centeredOuterX = bounds.x + (bounds.width - flexOuterWidth) / 2;
+  // A trailing Tool margin becomes a physical leading margin when the enclosing
+  // opponent frame rotates. Energy passes a zero margin through the same path.
+  const flexItemX =
+    region.side === 'local' ? centeredOuterX : centeredOuterX + marginRight;
   const baseX =
     region.side === 'local' ? flexItemX : flexItemX + authoredWidth - cardWidth;
-  const energyX =
+  const attachmentX =
     region.side === 'local'
       ? baseX + attachmentOffset
       : baseX - attachmentOffset;
@@ -1153,19 +1201,75 @@ export const layoutLegacySingleEnergyAttachmentStack = (
     attachmentOffset,
     authoredWidth,
     stableCssomClientWidth: Math.round(authoredWidth),
+    marginRight,
     base: {
       bounds: { x: baseX, y: bounds.y, width: cardWidth, height: cardHeight },
       sourceZIndex: 0,
     },
-    energy: {
+    attachment: {
       bounds: {
-        x: energyX,
+        x: attachmentX,
         y: bounds.y,
         width: cardWidth,
         height: cardHeight,
       },
       sourceZIndex: -1,
     },
+  };
+};
+
+/**
+ * Stable geometry for the narrow one-base/one-Energy active-stack path. The
+ * public canonical card ratio determines paint size; v1 derives the Energy
+ * offset and refreshed wrapper width from the rounded CSSOM base width. Tool
+ * rotation/margins, multiple attachments, bench placement, flex shrink, and
+ * every noncanonical state remain caller-side exclusions.
+ */
+export const layoutLegacySingleEnergyAttachmentStack = (
+  region: BoardLayoutRegion,
+  cardAspectRatio: number
+): LegacySingleEnergyAttachmentStackLayout => {
+  const result = layoutLegacySingleAttachmentStack(
+    region,
+    cardAspectRatio,
+    'energy'
+  );
+  return {
+    flexItemBounds: result.flexItemBounds,
+    baseCssomClientWidth: result.baseCssomClientWidth,
+    attachmentOffset: result.attachmentOffset,
+    authoredWidth: result.authoredWidth,
+    stableCssomClientWidth: result.stableCssomClientWidth,
+    base: result.base,
+    energy: result.attachment,
+  };
+};
+
+/**
+ * Stable geometry for the narrow one-base/one-Trainer-as-Tool active-stack
+ * path. Like the Energy path, v1 derives the attachment offset and wrapper
+ * width from the rounded CSSOM base width. The Tool additionally contributes a
+ * 2% trailing flex margin. Its presentation-only quarter-turn is deliberately
+ * owned by the scene rather than encoded in these pre-transform boxes.
+ */
+export const layoutLegacySingleTrainerToolAttachmentStack = (
+  region: BoardLayoutRegion,
+  cardAspectRatio: number
+): LegacySingleTrainerToolAttachmentStackLayout => {
+  const result = layoutLegacySingleAttachmentStack(
+    region,
+    cardAspectRatio,
+    'trainerTool'
+  );
+  return {
+    flexItemBounds: result.flexItemBounds,
+    baseCssomClientWidth: result.baseCssomClientWidth,
+    attachmentOffset: result.attachmentOffset,
+    authoredWidth: result.authoredWidth,
+    stableCssomClientWidth: result.stableCssomClientWidth,
+    marginRight: result.marginRight,
+    base: result.base,
+    tool: result.attachment,
   };
 };
 
