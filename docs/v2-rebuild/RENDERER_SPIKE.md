@@ -104,10 +104,10 @@ HTML mock. It:
 - rejects older revisions and mismatched presentation events;
 - emits the shared semantic interaction intents;
 - uses Pointer Events and pointer capture while keeping drag position entirely
-  in presentation state; and
+  in presentation state;
 - validates every mount/install/resize viewport before mutation;
 - reports actual committed recipient-safe IDs and retains teardown diagnostics
-  until the deferred React unmount physically removes nodes; and
+  until the deferred React unmount physically removes nodes;
 - has automated repeated mount/destroy coverage under React Strict Mode.
 
 This is the lower-complexity fallback and is expected to have the closest image,
@@ -291,7 +291,7 @@ repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
 The repository-wide gate passes 636 v2 tests across 98 files. A separate
-Playwright suite passes five real Chromium 151 scenarios:
+Playwright suite passes seven real Chromium 151 scenarios:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -314,6 +314,18 @@ Playwright suite passes five real Chromium 151 scenarios:
    evidence, and schedule zero additional commits across five idle frames. The
    JSON attachment records environment and p50/p95 observations; it is
    diagnostic rather than a portable physical-device release result.
+6. The checked-in v1 HTML/CSS is served through a deny-by-default, inert-module
+   browser harness. Its default 1600×900 shell, frames, handles, shared anchors,
+   opponent rotation, and all 16 region border boxes match the independently
+   pinned oracle; the v2 play area and 12 currently equivalent unpadded region
+   surfaces match that measured source within the 2 CSS px gate.
+7. The selected DOM implementation completes 100 mount → clear/reset → destroy
+   cycles on one warmed route-owned host with the exact status sequence,
+   complete scene IDs at mount, zero rendered scene children/IDs after clear and
+   destroy, zero non-DOM diagnostic resources, and post-GC Chromium
+   document/node/listener counts no higher than the warmed baseline. The React
+   root/host is intentionally retained across clear/reset; heap sizes are
+   attached as observations, not asserted as a portable retention budget.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -323,11 +335,12 @@ and queues unmount outside the parent lifecycle. The same tests then passed with
 a clean console. This is retained as evidence for keeping browser tests separate
 from happy-DOM lifecycle tests.
 
-The suite lives in `tests/browser/renderer-spike.spec.ts`. Standard Linux CI can
-install Playwright's pinned Chromium build. This NixOS workspace used the Nix
-Chromium 151 package through `PTCGSIM_CHROMIUM_PATH`, because Playwright's
-Debian/Ubuntu dependency installer requires `apt-get` and downloaded generic
-ELF binaries cannot directly resolve Nix store libraries.
+The suites live in `tests/browser/renderer-spike.spec.ts` and
+`tests/browser/legacy-dom-geometry.spec.ts`. Standard Linux CI can install
+Playwright's pinned Chromium build. This NixOS workspace used the Nix Chromium
+151 package through `PTCGSIM_CHROMIUM_PATH`, because Playwright's Debian/Ubuntu
+dependency installer requires `apt-get` and downloaded generic ELF binaries
+cannot directly resolve Nix store libraries.
 
 ## Decision and remaining production gates
 
@@ -342,16 +355,19 @@ bottleneck and the full cross-browser matrix.
 The following still require controlled browser/device runs before production
 wiring:
 
-- fixed-viewport overlays against legacy screenshots and structured 2 px / 1%
-  geometry thresholds, including the independently recorded layout oracle;
+- expand the source-driven default 12-surface checkpoint to prizes, free board,
+  stadium, frames, handles, controls, cards/stacks, screenshots, every declared
+  viewport, split/flip state, and the structured 2 px / 1% thresholds;
 - full double-click, right-click, flip, split resize, zone browser, keyboard,
   DOM-overlay anchor parity, and drag rejection/reconnect snap-back behavior;
 - actual external card/image hosts, redirects, CORS failures, oversized/corrupt
   images, and the proxy/hybrid policy in ADR-013;
 - background resume, 0x0 host, DPR changes, and resize coalescing; WebGL-only
   recovery/eviction cases remain gates for any future Pixi rollout;
-- 100 mount/destroy and setup/reset cycles with listener, display object,
-  decoded-image, CPU-heap, and GPU-texture counters;
+- complete the resource gate beyond the green warmed-host Chromium lifecycle:
+  route-host churn, 120 distinct cacheable network assets, decoded-image/request
+  accounting, and retained heap on the ratified profile; display-object/GPU
+  counters remain required only for a future Pixi rollout;
 - the p95 reconciliation/input/drag budgets from the verification plan on the
   ratified four-core reference profile;
 - keyboard and screen-reader audit of the selected semantic DOM surface; and

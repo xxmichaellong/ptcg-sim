@@ -198,6 +198,32 @@ fixture comparisons, renderer-contract tests, and TypeScript build pass without
 wiring the model into production. It establishes a dependency for later
 renderer parity; it does not itself satisfy UI/UX parity.
 
+## Current real-browser checkpoint
+
+`tests/browser/legacy-dom-geometry.spec.ts` now serves only the allowlisted,
+checked-in v1 HTML/CSS/assets through Playwright, replaces the networked legacy
+application module with an inert module, and blocks every external request. At
+the default 1600×900 DPR 1 fixture, Chromium measures and verifies against this
+oracle:
+
+- the play area, shell gap, sidebar, and tabs;
+- both player iframe frames and the opponent's 180-degree transform;
+- stadium and board-control anchors plus both resize handles; and
+- all eight border-box regions for both physical player sides.
+
+The same test separately verifies the v2 play area and the 12 region surfaces
+whose current simplified geometry is genuinely equivalent: hand, bench,
+active, lost zone, deck, and discard for both players. The recorded run stayed
+within 0.04 CSS px; the enforced acceptance remains the declared 2 CSS px
+browser tolerance.
+
+This is a characterization checkpoint, not a blanket parity pass. It
+deliberately does not weaken tolerances around current failures: v2 prizes and
+free board omit the legacy content-box padding, stadium still uses play-area
+rather than outer-viewport units, and the v2 spike does not yet render player
+frames, handles, or board controls. Other fixture viewports, split/flip states,
+cards/stacks, screenshots, and interaction surfaces remain in the gate below.
+
 ## Required real-browser acceptance gate
 
 Before either DOM or Pixi may replace the v1 board, a Playwright/Chromium

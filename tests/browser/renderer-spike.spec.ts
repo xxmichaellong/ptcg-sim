@@ -110,7 +110,7 @@ const dragLocalActiveStackToBench = async (
   await expect(dragSurface).toHaveAttribute('data-dragging', 'false');
 };
 
-test('normalized React DOM renderer mounts the shared fixture with legacy geometry', async ({
+test('normalized React DOM mounts the shared fixture at characterized board and hand geometry', async ({
   page,
 }, testInfo) => {
   const errors = collectRuntimeErrors(page);
@@ -217,6 +217,237 @@ test('switching candidates repeatedly leaves exactly one live renderer', async (
   await expect(page.locator('canvas')).toHaveCount(1);
   await expect(page.locator('[data-card-id]')).toHaveCount(0);
   expect(errors).toEqual([]);
+});
+
+test('normalized React DOM releases board resources through 100 lifecycle cycles', async ({
+  context,
+  page,
+}, testInfo) => {
+  test.setTimeout(90_000);
+  const errors = collectRuntimeErrors(page);
+  await page.goto('/?renderer=dom');
+  await waitForReady(page);
+  // React delegates native events to its root container. Warm and retain the
+  // route-owned host so the resource comparison measures repeated session
+  // lifecycles rather than 100 deliberately abandoned EventTargets.
+  await page.evaluate(async () => {
+    const spike = window.__PTCG_RENDERER_SPIKE__;
+    if (!spike) throw new Error('Missing renderer spike');
+    const createRenderer = spike.createRenderer;
+    if (!createRenderer)
+      throw new Error('Missing development renderer factory');
+    const harness = document.createElement('div');
+    harness.dataset.rendererLifecycleHarness = 'true';
+    harness.setAttribute('aria-hidden', 'true');
+    Object.assign(harness.style, {
+      position: 'fixed',
+      left: '-100000px',
+      top: '0',
+      width: `${spike.scene.viewport.width}px`,
+      height: `${spike.scene.viewport.height}px`,
+      visibility: 'hidden',
+    });
+    const host = document.createElement('div');
+    host.dataset.rendererLifecycleHost = 'true';
+    harness.append(host);
+    document.body.append(harness);
+    let reportedError: unknown;
+    const renderer = createRenderer({
+      emitIntent: () => undefined,
+      emitPresentationUpdate: () => undefined,
+      reportError: (error) => {
+        reportedError = error;
+      },
+    });
+    await renderer.mount(host, spike.scene, {
+      selectedCardId: null,
+      hoveredCardId: null,
+      drag: null,
+      openedZoneId: null,
+    });
+    renderer.clearScene();
+    renderer.destroy();
+    await new Promise<void>((resolve) => queueMicrotask(resolve));
+    if (reportedError) throw reportedError;
+    if (host.childElementCount !== 0) {
+      throw new Error('Warm lifecycle retained rendered children');
+    }
+  });
+  const cdp = await context.newCDPSession(page);
+  await cdp.send('HeapProfiler.enable');
+  await cdp.send('HeapProfiler.collectGarbage');
+  const baselineCounters = await cdp.send('Memory.getDOMCounters');
+  const baselineHeap = await cdp.send('Runtime.getHeapUsage');
+
+  const evidence = await page.evaluate(async () => {
+    const spike = window.__PTCG_RENDERER_SPIKE__;
+    if (!spike) throw new Error('Missing renderer spike');
+    const createRenderer = spike.createRenderer;
+    if (!createRenderer)
+      throw new Error('Missing development renderer factory');
+    const baselineSurfaces = document.querySelectorAll(
+      '.ptcgsim-board-surface'
+    ).length;
+    const harness = document.querySelector<HTMLElement>(
+      '[data-renderer-lifecycle-harness]'
+    );
+    const host = document.querySelector<HTMLElement>(
+      '[data-renderer-lifecycle-host]'
+    );
+    if (!harness || !host) throw new Error('Missing warmed lifecycle harness');
+
+    const reportedErrors: string[] = [];
+    let readyStatuses = 0;
+    let destroyedStatuses = 0;
+    let maximumMountedNodes = 0;
+    const mountedNodeCounts = new Set<number>();
+    for (let cycle = 0; cycle < 100; cycle += 1) {
+      const statuses: string[] = [];
+      const renderer = createRenderer({
+        emitIntent: () => undefined,
+        emitPresentationUpdate: () => undefined,
+        reportError: (error) => reportedErrors.push(String(error)),
+        reportStatus: (status) => statuses.push(status.kind),
+      });
+      try {
+        await renderer.mount(host, spike.scene, {
+          selectedCardId: null,
+          hoveredCardId: null,
+          drag: null,
+          openedZoneId: null,
+        });
+        const mounted = renderer.getDiagnostics?.();
+        if (!mounted) throw new Error('Missing lifecycle diagnostics');
+        if (!mounted.mounted || mounted.destroyed) {
+          throw new Error(`Cycle ${cycle} did not reach mounted state`);
+        }
+        if (
+          mounted.renderedCardIds.length !== spike.scene.cards.length ||
+          mounted.renderedZoneIds.length !== spike.scene.zones.length ||
+          mounted.renderedMarkerIds.length !== spike.scene.markers.length
+        ) {
+          throw new Error(`Cycle ${cycle} mounted an incomplete scene`);
+        }
+        maximumMountedNodes = Math.max(maximumMountedNodes, mounted.domNodes);
+        mountedNodeCounts.add(mounted.domNodes);
+        if (
+          mounted.displayObjects !== 0 ||
+          mounted.localTextureBindings !== 0 ||
+          mounted.globalTextureLeaseEntries !== 0 ||
+          mounted.globalPendingTextureLoads !== 0 ||
+          mounted.globalUnloadingTextures !== 0 ||
+          mounted.globalTextureReferences !== 0 ||
+          mounted.contextLossListeners !== 0
+        ) {
+          throw new Error(`Cycle ${cycle} reported non-DOM resources`);
+        }
+
+        renderer.clearScene();
+        const cleared = renderer.getDiagnostics?.();
+        if (
+          !cleared ||
+          !cleared.mounted ||
+          cleared.sceneRevision !== null ||
+          cleared.renderedCardIds.length !== 0 ||
+          cleared.renderedZoneIds.length !== 0 ||
+          cleared.renderedMarkerIds.length !== 0 ||
+          cleared.domNodes !== 0
+        ) {
+          throw new Error(`Cycle ${cycle} retained reset resources`);
+        }
+      } finally {
+        renderer.destroy();
+        await new Promise<void>((resolve) => queueMicrotask(resolve));
+        const destroyed = renderer.getDiagnostics?.();
+        if (
+          !destroyed ||
+          destroyed.mounted ||
+          !destroyed.destroyed ||
+          destroyed.renderedCardIds.length !== 0 ||
+          destroyed.renderedZoneIds.length !== 0 ||
+          destroyed.renderedMarkerIds.length !== 0 ||
+          destroyed.domNodes !== 0 ||
+          host.childElementCount !== 0
+        ) {
+          throw new Error(`Cycle ${cycle} retained destroyed resources`);
+        }
+        if (statuses.join(',') !== 'mounting,ready,destroyed') {
+          throw new Error(
+            `Cycle ${cycle} reported an invalid lifecycle: ${statuses.join(',')}`
+          );
+        }
+        readyStatuses += statuses.filter((status) => status === 'ready').length;
+        destroyedStatuses += statuses.filter(
+          (status) => status === 'destroyed'
+        ).length;
+      }
+    }
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => resolve())
+    );
+    return {
+      cycles: 100,
+      baselineSurfaces,
+      finalSurfaces: document.querySelectorAll('.ptcgsim-board-surface').length,
+      transientHarnesses: document.querySelectorAll(
+        '[data-renderer-lifecycle-harness]'
+      ).length,
+      readyStatuses,
+      destroyedStatuses,
+      maximumMountedNodes,
+      distinctMountedNodeCounts: mountedNodeCounts.size,
+      reportedErrors,
+    };
+  });
+
+  await cdp.send('HeapProfiler.collectGarbage');
+  const finalCounters = await cdp.send('Memory.getDOMCounters');
+  const finalHeap = await cdp.send('Runtime.getHeapUsage');
+  const cleanup = await page.evaluate(() => {
+    document.querySelector('[data-renderer-lifecycle-harness]')?.remove();
+    return {
+      surfaces: document.querySelectorAll('.ptcgsim-board-surface').length,
+      harnesses: document.querySelectorAll('[data-renderer-lifecycle-harness]')
+        .length,
+    };
+  });
+
+  expect(evidence).toMatchObject({
+    cycles: 100,
+    baselineSurfaces: 1,
+    finalSurfaces: 1,
+    transientHarnesses: 1,
+    readyStatuses: 100,
+    destroyedStatuses: 100,
+    distinctMountedNodeCounts: 1,
+    reportedErrors: [],
+  });
+  expect(evidence.maximumMountedNodes).toBeGreaterThan(0);
+  expect(finalCounters.documents).toBeLessThanOrEqual(
+    baselineCounters.documents
+  );
+  expect(finalCounters.nodes).toBeLessThanOrEqual(baselineCounters.nodes);
+  expect(finalCounters.jsEventListeners).toBeLessThanOrEqual(
+    baselineCounters.jsEventListeners
+  );
+  expect(cleanup).toEqual({ surfaces: 1, harnesses: 0 });
+  expect(errors).toEqual([]);
+  await testInfo.attach('react-dom-100-cycle-evidence.json', {
+    body: Buffer.from(
+      JSON.stringify(
+        {
+          lifecycle: evidence,
+          baselineCounters,
+          finalCounters,
+          baselineHeap,
+          finalHeap,
+        },
+        null,
+        2
+      )
+    ),
+    contentType: 'application/json',
+  });
 });
 
 test('native pointer boundaries preserve rapid-click, primary-button, and touch semantics', async ({

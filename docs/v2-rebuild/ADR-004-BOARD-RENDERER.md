@@ -129,12 +129,15 @@ recovery diagnostics merely to reach the current shared baseline.
 Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
 
 - source-pinned v1 screenshot and structured geometry parity at the declared
-  viewports, split ratios, flip states, themes, and fullscreen mode;
+  viewports, split ratios, flip states, themes, and fullscreen mode (the current
+  Chromium checkpoint covers the default source shell and 12 equivalent player
+  surfaces only);
 - all protected pointer, keyboard, menu, zone-browser, replay, reconnect, and
   accessibility workflows;
 - a 120-distinct-asset cache/network test and hidden-image request scan;
-- 100 setup/reset/mount/destroy cycles with DOM-node, listener, request, and
-  retained-heap return-to-baseline evidence;
+- finish resource evidence beyond the current green 100-cycle warmed-host
+  Chromium DOM-node/listener gate: route-host churn, request accounting, and
+  retained heap on the ratified profile;
 - the ratified physical-device/browser performance matrix; and
 - Chromium automation plus Firefox and Safari approval.
 

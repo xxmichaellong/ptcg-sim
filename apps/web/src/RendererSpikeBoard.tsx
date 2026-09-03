@@ -6,6 +6,7 @@ import {
   type BoardPresentation,
   type BoardPresentationUpdate,
   type BoardRenderer,
+  type BoardRendererAdapters,
   type BoardRendererStatus,
 } from '@ptcgsim/renderer-contract';
 import type { WireGameCommand } from '@ptcgsim/protocol';
@@ -13,6 +14,7 @@ import { useEffect, useRef, useState } from 'react';
 import { submitBoardDrop } from './board/resolveBoardDrop.js';
 
 export type RendererKind = 'dom' | 'pixi';
+type BoardRendererFactory = (adapters: BoardRendererAdapters) => BoardRenderer;
 
 const sceneForHost = (host: HTMLElement, view: MatchViewState) => {
   const viewport = {
@@ -40,6 +42,8 @@ declare global {
       readonly rendererKind: RendererKind;
       readonly renderer: BoardRenderer;
       readonly scene: ReturnType<typeof createBoardScene>;
+      /** Development-only browser-test seam for lifecycle gates. */
+      readonly createRenderer?: BoardRendererFactory;
     };
   }
 }
@@ -60,6 +64,7 @@ export const RendererSpikeBoard = ({
 }) => {
   const hostRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<BoardRenderer | null>(null);
+  const rendererFactoryRef = useRef<BoardRendererFactory | null>(null);
   const viewRef = useRef(view);
   const onIntentRef = useRef(onIntent);
   const submitCommandRef = useRef(submitCommand);
@@ -132,6 +137,7 @@ export const RendererSpikeBoard = ({
           ? (await import('@ptcgsim/renderer-pixi')).createPixiBoardRenderer
           : (await import('@ptcgsim/renderer-dom')).createReactDomBoardRenderer;
       if (disposed) return;
+      rendererFactoryRef.current = createRenderer;
       renderer = createRenderer(adapters);
       try {
         await renderer.mount(host, initial.scene, presentationRef.current);
@@ -155,6 +161,7 @@ export const RendererSpikeBoard = ({
             rendererKind,
             renderer,
             scene: next.scene,
+            ...(import.meta.env.DEV ? { createRenderer } : {}),
           };
         };
         installSize();
@@ -180,14 +187,16 @@ export const RendererSpikeBoard = ({
         delete window.__PTCG_RENDERER_SPIKE__;
       }
       if (rendererRef.current === renderer) rendererRef.current = null;
+      rendererFactoryRef.current = null;
       installedRef.current = null;
     };
   }, [rendererKind]);
 
   useEffect(() => {
     const renderer = rendererRef.current;
+    const createRenderer = rendererFactoryRef.current;
     const host = hostRef.current;
-    if (!renderer || !host) return;
+    if (!renderer || !createRenderer || !host) return;
     const next = sceneForHost(host, view);
     const installed = installedRef.current;
     const mode =
@@ -202,6 +211,7 @@ export const RendererSpikeBoard = ({
       rendererKind,
       renderer,
       scene: next.scene,
+      ...(import.meta.env.DEV ? { createRenderer } : {}),
     };
   }, [allowRevisionRegression, rendererKind, view]);
 

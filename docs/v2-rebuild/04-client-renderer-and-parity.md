@@ -147,8 +147,14 @@ The first source-pinned ideal-CSS-pixel oracle is now executable in
 `tests/legacy-fixtures/renderer/board-layout-v1.json`. It records every primary
 zone, separate content/padding/border boxes, physical frame ownership, the two
 independent resize handles, shared geometry, fullscreen, flip asymmetry, and
-semantic input/z evidence. It does not yet replace the production layout or the
-browser measurement gate. See
+semantic input/z evidence. A deny-by-default Playwright harness now measures the
+checked-in legacy HTML/CSS in Chromium at the default 1600×900 fixture and
+confirms every recorded shell, frame, handle, and region border box plus the
+shared stadium bounds and board-control anchor. It also confirms the v2 play
+area and the 12 player surfaces that are equivalent before padding. Prizes,
+free board, stadium, frames/handles/controls, card packing, other viewports, and
+screenshot paint parity remain explicit failing or unimplemented expansions;
+this checkpoint does not replace the production layout. See
 [`LEGACY_BOARD_LAYOUT_ORACLE.md`](./LEGACY_BOARD_LAYOUT_ORACLE.md).
 
 The current duplicated self/opponent CSS becomes one declarative player-board
