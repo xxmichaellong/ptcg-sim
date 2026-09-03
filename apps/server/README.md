@@ -80,9 +80,8 @@ corepack pnpm exec vitest run apps/server/src/generative-authority-model.test.ts
 
 Set `PTCGSIM_MODEL_SEED` to a uint32 start seed, and override
 `PTCGSIM_MODEL_COUNT`, `PTCGSIM_MODEL_STEPS`, or the bounded per-matrix
-`PTCGSIM_MODEL_TIMEOUT_MS` for diagnosis and soaks. The pre-release 1,000-seed
-command allows one hour for the matrix because the current named machine takes
-about 22 minutes at the default per-seed rate:
+`PTCGSIM_MODEL_TIMEOUT_MS` for diagnosis and soaks. The release-scale
+1,000-seed command allows one hour for the matrix:
 
 ```sh
 PTCGSIM_MODEL_COUNT=1000 PTCGSIM_MODEL_STEPS=50 \
@@ -107,8 +106,16 @@ Every generated type yielded and accepted at least once; all seven named
 scenario types yielded and accepted; the run performed 500 durable
 reconstructions, 1,998 actual replay-compaction transitions, and 3,600
 authority-frontier hits.
-This is routine deterministic evidence, not a substitute for the required
-1,000-seed pre-release run or long-duration runtime soak.
+
+The release-scale command above was then run in an isolated detached worktree at
+exact commit `e681ab41463cc6502093bb56ebbbae6f3dac7dd9`. All 1,000 seeds by 50
+transitions and all 9 tests passed with no failure trace. The matrix took
+1,261.892 seconds and the command took 1,271.16 seconds wall time. All 41
+generated command types yielded and accepted, all seven named hard-precondition
+scenarios passed, and the run recorded 5,000 durable reconstructions, 19,987
+actual replay-compaction transitions, and 36,000 authority-frontier hits. This
+evidence is bound to that exact commit and does not replace the separate
+long-duration runtime soak.
 
 `pnpm run measure:runtime` is the longer, non-CI timing/plateau observation. It
 fills the command outcome and audit windows, advances beyond them, forces

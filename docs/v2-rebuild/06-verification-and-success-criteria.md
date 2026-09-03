@@ -99,12 +99,28 @@ PTCGSIM_MODEL_REPORT=1 \
 ```
 
 `PTCGSIM_MODEL_SEED`, `PTCGSIM_MODEL_COUNT`, `PTCGSIM_MODEL_STEPS`, and
-`PTCGSIM_MODEL_TIMEOUT_MS` provide bounded diagnostics or a larger soak. The
-required pre-release gate remains 1,000 seeds; run it with
-`PTCGSIM_MODEL_COUNT=1000 PTCGSIM_MODEL_TIMEOUT_MS=3600000` and retain its
-artifact before satisfying core correctness gate 10. Small debug overrides
-still enforce registry completeness and named scenarios but scale statistical
-coverage expectations to the available transition budget.
+`PTCGSIM_MODEL_TIMEOUT_MS` provide bounded diagnostics or a larger soak. Small
+debug overrides still enforce registry completeness and named scenarios but
+scale statistical coverage expectations to the available transition budget.
+
+The release-scale gate was run in an isolated detached worktree at exact commit
+`e681ab41463cc6502093bb56ebbbae6f3dac7dd9` with:
+
+```sh
+PTCGSIM_MODEL_COUNT=1000 PTCGSIM_MODEL_STEPS=50 \
+  PTCGSIM_MODEL_TIMEOUT_MS=3600000 PTCGSIM_MODEL_REPORT=1 \
+  corepack pnpm exec vitest run apps/server/src/generative-authority-model.test.ts
+```
+
+All 1,000 seeds by 50 transitions and all 9 tests passed with no failure trace.
+The matrix took 1,261.892 seconds and the command took 1,271.16 seconds wall
+time. All 41 projection-driven command types yielded and accepted, and all seven
+named hard-precondition scenarios passed. The run recorded 5,000 durable
+reconstructions, 19,987 actual replay-compaction transitions, and 36,000
+authority-frontier hits. This satisfies the seeded-count evidence in core
+correctness gate 10 for that exact commit; later behavioral changes require
+fresh evidence, and the separate long-duration runtime soak remains a release
+gate.
 
 ## Core correctness gates
 
