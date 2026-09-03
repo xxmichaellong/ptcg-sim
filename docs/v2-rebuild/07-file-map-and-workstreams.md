@@ -70,6 +70,7 @@ Implemented competitive renderer-spike files (the winner remains provisional):
 packages/renderer-contract/src/
   model.ts
   geometry.ts
+  layout.ts
   scene.ts
   spike-fixture.ts
 packages/renderer-dom/src/
@@ -223,6 +224,8 @@ docs/v2-rebuild/parity-matrix.*
 docs/v2-rebuild/legacy-action-catalog.*
 docs/v2-rebuild/parity-exceptions.md
 tests/legacy-fixtures/{decks,saves,replays,network}/
+tests/legacy-fixtures/renderer/board-layout-v1.json
+tests/characterization/legacy-board-layout.test.ts
 tests/e2e/legacy-baselines/{screenshots,geometry}/
 tests/e2e/legacy-workflows/
 tests/fixtures/{canonical,views,assets}/

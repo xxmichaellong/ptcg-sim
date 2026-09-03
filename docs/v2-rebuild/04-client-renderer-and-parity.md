@@ -135,6 +135,15 @@ and `opp-containers.css` into versioned parity data:
 must render a fixed fixture over a legacy screenshot and demonstrate acceptable
 geometry before broader renderer work.
 
+The first source-pinned ideal-CSS-pixel oracle is now executable in
+`packages/renderer-contract/src/layout.ts` and
+`tests/legacy-fixtures/renderer/board-layout-v1.json`. It records every primary
+zone, separate content/padding/border boxes, physical frame ownership, the two
+independent resize handles, shared geometry, fullscreen, flip asymmetry, and
+semantic input/z evidence. It does not yet replace the production layout or the
+browser measurement gate. See
+[`LEGACY_BOARD_LAYOUT_ORACLE.md`](./LEGACY_BOARD_LAYOUT_ORACLE.md).
+
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during
 characterization is represented explicitly instead of assumed to be duplication.

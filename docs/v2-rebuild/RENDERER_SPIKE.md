@@ -78,6 +78,13 @@ Rive, or game-specific systems.
   free-board cards, active evolution/attachments, damage, condition, ability
   marker, group and BREAK rotation, per-card markers, and stadium.
 
+It also exports a source-pinned ideal-CSS-pixel layout state and executable
+legacy oracle for every primary player region, shell mode, physical frame,
+resize handle, and shared anchor. This is additive and is not wired into either
+renderer yet. Its coordinate spaces, source hashes, tolerances, known gaps, and
+required browser comparison are recorded in
+[`LEGACY_BOARD_LAYOUT_ORACLE.md`](./LEGACY_BOARD_LAYOUT_ORACLE.md).
+
 The contract rejects invalid viewport/split inputs and any projection that puts
 one recipient-safe card ID in more than one render location.
 
@@ -297,7 +304,7 @@ No renderer winner is claimed yet. The following require a real controlled
 browser/device run:
 
 - fixed-viewport overlays against legacy screenshots and structured 2 px / 1%
-  geometry thresholds;
+  geometry thresholds, including the independently recorded layout oracle;
 - full double-click, right-click, flip, split resize, zone browser, keyboard,
   DOM-overlay anchor parity, and drag rejection/reconnect snap-back behavior;
 - actual external card/image hosts, redirects, CORS failures, oversized/corrupt
