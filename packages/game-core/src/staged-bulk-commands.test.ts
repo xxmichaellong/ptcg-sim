@@ -138,6 +138,15 @@ const prepareStagedCards = (
   state = accepted(
     state,
     {
+      type: 'SetCardCategory',
+      cardId: trainerId!,
+      category: 'Energy',
+    },
+    context
+  );
+  state = accepted(
+    state,
+    {
       type: 'MoveCardToPlay',
       cardId: baseId!,
       expectedSourceZoneId: blueDeckId,
@@ -167,15 +176,6 @@ const prepareStagedCards = (
       context
     );
   }
-  state = accepted(
-    state,
-    {
-      type: 'SetCardCategory',
-      cardId: trainerId!,
-      category: 'Energy',
-    },
-    context
-  );
   state = accepted(
     state,
     { type: 'SetCardFace', cardId: trainerId!, face: 'down' },

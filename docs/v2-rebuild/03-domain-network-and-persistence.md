@@ -117,6 +117,34 @@ card owned by one player attached or moved to the other player's public board.
 Moving a stack out of play has an explicit atomic policy for evolution layers and
 attachments, including creation of the detached-card work area.
 
+Ordinary direct non-Pokémon attachment ingress has a frozen v1 ordering rule. A
+Trainer appends to the existing attachment list. An incoming Energy stable-
+partitions a fully supported Energy/Trainer list so every Energy precedes every
+Trainer while preserving arrival order within each category. If an incoming
+attachment is not Energy, or any member is missing or has another current
+category, the operation fails closed to append order rather than guessing at
+legacy relationships. The rule reads `currentCategory`; changing the category
+of a card already inside a play stack is therefore rejected at the internal
+command boundary and requires a semantic departure first.
+
+Newly decided ordinary attachments persist `CardAttachedToPlayStack` with
+literal `attachmentOrderVersion: 1`, the exact expected source and prior
+attachment order, and the resolved destination order. Replay dispatches through
+that frozen version and rejects unsupported versions, stale prior order, wrong
+board ownership, invalid membership, Pokémon ingress, or a forged destination.
+Previously stored `CardMovedToPlay` events with `mode: attachment` deliberately
+retain their append-only reducer behavior. This compatibility can reproduce an
+older reverse `[Trainer, Energy]` list; a later Trainer still appends, while a
+later incoming Energy normalizes the fully supported list under version 1.
+
+Version 1 is intentionally limited to ordinary ingress onto an existing live
+stack. Staged restoration and attachment-resolution work areas preserve their
+recorded order; work-area/deck-top swaps preserve the replaced logical position;
+and whole-stack active/bench moves are not implicit normalization boundaries.
+Reversed historical lists and lists containing Pokémon-, Unknown-, or missing-
+category members remain noncanonical inputs for later explicit conversion
+policy rather than being silently repaired.
+
 ## Required invariants
 
 The invariant checker runs after every reducer in tests and after every accepted

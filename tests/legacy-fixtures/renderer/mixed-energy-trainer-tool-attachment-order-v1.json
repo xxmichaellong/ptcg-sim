@@ -1,0 +1,811 @@
+{
+  "schemaVersion": 1,
+  "recordingMethod": "Manually reviewed Chromium 151 CSS-pixel capture of eight isolated source-pinned inert DOM replays of the checked-in legacy attachCard, Energy-triggered recursive Trainer-as-Tool move, departure compaction, and refresh reconstruction paths. The legacy HTML, CSS, and cardback are served directly while application/network modules remain inert. Every refresh uses the real empty-wrapper MutationObserver and two animation frames.",
+  "input": {
+    "viewport": { "width": 1600, "height": 900, "devicePixelRatio": 1 },
+    "asset": {
+      "path": "/src/assets/cardback.png",
+      "naturalWidth": 736,
+      "naturalHeight": 1024
+    },
+    "attachmentOrders": ["energyThenTrainer", "trainerThenEnergy"],
+    "departureRoles": ["energy", "trainerTool"],
+    "attachmentCases": [
+      "local-energy-trainer-attachment-order",
+      "local-trainer-energy-attachment-order",
+      "opponent-energy-trainer-attachment-order",
+      "opponent-trainer-energy-attachment-order"
+    ],
+    "departureCases": [
+      "local-remove-energy-departure",
+      "local-remove-trainer-tool-departure",
+      "opponent-remove-energy-departure",
+      "opponent-remove-trainer-tool-departure"
+    ]
+  },
+  "tolerances": {
+    "anchorPixels": 2,
+    "cardSizeRelative": 0.01,
+    "rotationDegrees": 0.1,
+    "structuredPixels": 0.001
+  },
+  "scope": {
+    "included": [
+      "exactly one unrotated active Pokémon base, one ordinary face-up Energy, and one current-category face-up Trainer treated as a Tool",
+      "Energy then Trainer and Trainer then Energy attachment histories for local and opponent active at the default 1600x900 DPR-1 sidebar layout",
+      "legacy Tool action reclassification to the current Trainer category before loose-board attachment",
+      "post-first attach, immediate post-second attach, synchronous post-refresh, and observer-settled stable post-refresh phases",
+      "independent Energy-departure and Trainer-as-Tool-departure histories from the canonical refreshed Energy-then-Trainer stack",
+      "legacy recursive Tool reattachment, parseInt compaction, Tool quarter-turn and margin, z and logical/DOM order, painted and authored boxes, safe interior hit order, reset state, and real asynchronous cleanup"
+    ],
+    "excluded": [
+      "candidate DOM or Pixi parity and production renderer correctness",
+      "more than two attachments, duplicate attachment categories, Pokémon-classified attachments, evolution layers, and mixed card dimensions",
+      "base departure, attachment transfer, reattachment to another base, staging, bench, multiple stacks, resize, fullscreen, and explicit board flip",
+      "damage, ability, special-condition, BREAK, group rotation, concealed metadata, reveal, hide, previews, pointer gestures, network, and server behavior",
+      "the synchronous ghost wrapper as a stable or user-visible rendered result"
+    ]
+  },
+  "provenance": [
+    {
+      "path": "client/index.ejs",
+      "encoding": "utf8",
+      "sha256": "6d3382c2c531048888aae36ae7fc0472819f4ca0ed32a8180f029710ec90fdeb"
+    },
+    {
+      "path": "client/self-containers.html",
+      "encoding": "utf8",
+      "sha256": "1efb80b3f4e179866db35b15de9826027b8bfa3e57946a07c121ceb893804549"
+    },
+    {
+      "path": "client/opp-containers.html",
+      "encoding": "utf8",
+      "sha256": "48255e88bac184754a675ba26400d2932f8e3f39cb27d704b8f826fec97ebfd4"
+    },
+    {
+      "path": "client/src/css/index.css",
+      "encoding": "utf8",
+      "sha256": "06ebdcb074244bfa34915be1a06f963d89f8e29feaf0634f8398042071640936"
+    },
+    {
+      "path": "client/src/css/self-containers.css",
+      "encoding": "utf8",
+      "sha256": "98b237d94f4618f311bee6e707e2db73a12bf78514f0b74ef5e291d66b1eb917"
+    },
+    {
+      "path": "client/src/css/opp-containers.css",
+      "encoding": "utf8",
+      "sha256": "192b505a25794f1a50a22a9f618e9477fec89b80d8a0416e250cf21bf4e2df07"
+    },
+    {
+      "path": "client/src/assets/cardback.png",
+      "encoding": "binary",
+      "sha256": "44a5ffdcd9df23d3322250da733099c2c29c984362260efc5914a5a8745fa327"
+    },
+    {
+      "path": "client/src/setup/deck-constructor/card.js",
+      "encoding": "utf8",
+      "sha256": "1335c2b7ac9bbb2bef64dfb3632b6c05c1f45554b3c314422a98cd9a4ae85011"
+    },
+    {
+      "path": "client/src/setup/zones/get-zone.js",
+      "encoding": "utf8",
+      "sha256": "8a1a1aaaf0994d8528438b701cb028faf742c3577a8183cd650cbda40b4bc8c3"
+    },
+    {
+      "path": "client/src/setup/image-logic/reset-image.js",
+      "encoding": "utf8",
+      "sha256": "166b5fb2936424c8cb895fdfec26a3499d15995eecbeaf1f2c25040a0e44b613"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/move-card-bundle.js",
+      "encoding": "utf8",
+      "sha256": "06ffbe2fd8b39eb78eee817667d059aef4ea56772b12393ffc1d625c4f949ed2"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/move-card.js",
+      "encoding": "utf8",
+      "sha256": "5737c45ff7b45a71dee661b42cbba7b2ee6e1c852ee530ec4369b85493e794e3"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/update-attached-cards-position.js",
+      "encoding": "utf8",
+      "sha256": "4e9d65ca703a1949fb6d603b596acf30eb0bf141c5228c3496542ae086ef822c"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/decrease-card-layer.js",
+      "encoding": "utf8",
+      "sha256": "30aec3ad82a6da83d669e660ba4816576724cc2e3b48f7e2bb2f6b7548c552c3"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/attach-card.js",
+      "encoding": "utf8",
+      "sha256": "711302b5dfdf757aa21b3a4ef1c83c582f6a14d60db31aaf8f81afdcd05203b4"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/initialize-active-bench-card.js",
+      "encoding": "utf8",
+      "sha256": "808f35ca24ac549dd83305a9ec23d9edeccd414506db04b680a6175c549ec605"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/relocate-attached-cards.js",
+      "encoding": "utf8",
+      "sha256": "b682db984c742521ee231d8e273ea0dc28e7561ce47234ef58971f6c8ab1c86e"
+    },
+    {
+      "path": "client/src/actions/general/rotate-card.js",
+      "encoding": "utf8",
+      "sha256": "d0870b070c5fedc7225e81661e3bbbfd31225731cf5ac516972d4fe5ac17f5d1"
+    },
+    {
+      "path": "client/src/setup/sizing/refresh-board.js",
+      "encoding": "utf8",
+      "sha256": "b786a66c078de9623e46884e640db2e80f6b9ea8f1078573fee96bd71ecade7d"
+    },
+    {
+      "path": "client/src/setup/sizing/resizer.js",
+      "encoding": "utf8",
+      "sha256": "7cc88360ef8798e25f09b89b8eae24b131dd14965f46e9859c380634795e9c91"
+    },
+    {
+      "path": "client/src/actions/general/change-type.js",
+      "encoding": "utf8",
+      "sha256": "7a746ae9ccc04a6180817f661b8a885c028c4c88d36c92f85a3ee8c34b54b108"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/card-context-menu/active-bench-buttons.js",
+      "encoding": "utf8",
+      "sha256": "a7d50832cea32727a2bbb1957887d45a52f701c6b6d465e84e32338e42217940"
+    }
+  ],
+  "provenanceClaims": [
+    {
+      "claim": "outer frames, opponent half-turn, active regions, portrait sizing, and checked-in cardback",
+      "sources": [
+        "client/index.ejs",
+        "client/self-containers.html",
+        "client/opp-containers.html",
+        "client/src/css/index.css",
+        "client/src/css/self-containers.css",
+        "client/src/css/opp-containers.css",
+        "client/src/assets/cardback.png"
+      ]
+    },
+    {
+      "claim": "card defaults, reset state, zone lookup, and active play-container construction",
+      "sources": [
+        "client/src/setup/deck-constructor/card.js",
+        "client/src/setup/zones/get-zone.js",
+        "client/src/setup/image-logic/reset-image.js",
+        "client/src/actions/move-card-bundle/initialize-active-bench-card.js"
+      ]
+    },
+    {
+      "claim": "ordinary move entry, mixed attachment order, recursive Energy-triggered Tool move, offsets, z order, Tool rotation, and margin",
+      "sources": [
+        "client/src/actions/move-card-bundle/move-card-bundle.js",
+        "client/src/actions/move-card-bundle/move-card.js",
+        "client/src/actions/move-card-bundle/attach-card.js",
+        "client/src/actions/general/rotate-card.js"
+      ]
+    },
+    {
+      "claim": "departure compaction, base layer decrement, and transient integer wrapper shrink",
+      "sources": [
+        "client/src/actions/move-card-bundle/update-attached-cards-position.js",
+        "client/src/actions/move-card-bundle/decrease-card-layer.js"
+      ]
+    },
+    {
+      "claim": "refresh reconstruction, ordered mixed attachment relocation, stable wrapper width, and asynchronous old-wrapper cleanup",
+      "sources": [
+        "client/src/actions/move-card-bundle/relocate-attached-cards.js",
+        "client/src/setup/sizing/refresh-board.js",
+        "client/src/setup/sizing/resizer.js"
+      ]
+    },
+    {
+      "claim": "legacy Tool action maps the card's current category to Trainer before loose-board attachment",
+      "sources": [
+        "client/src/actions/general/change-type.js",
+        "client/src/initialization/document-event-listeners/card-context-menu/active-bench-buttons.js"
+      ]
+    }
+  ],
+  "expected": {
+    "frames": {
+      "local": { "x": 0, "y": 450, "width": 1208, "height": 450 },
+      "opponent": { "x": 0, "y": 0, "width": 1208, "height": 450 }
+    },
+    "frameTransforms": {
+      "local": { "a": 1, "b": 0, "c": 0, "d": 1, "rotationDegrees": 0 },
+      "opponent": { "a": -1, "b": 0, "c": 0, "d": -1, "rotationDegrees": 180 }
+    },
+    "sourceFulfillment": {
+      "servedPaths": [
+        "/",
+        "/opp-containers.html",
+        "/self-containers.html",
+        "/src/assets/cardback.png",
+        "/src/css/index.css",
+        "/src/css/opp-containers.css",
+        "/src/css/self-containers.css",
+        "/src/front-end.js"
+      ],
+      "requiredBlockedExternalOrigins": [
+        "https://cdn.socket.io",
+        "https://static.cloudflareinsights.com",
+        "https://upload.wikimedia.org",
+        "https://www.svgrepo.com"
+      ],
+      "unexpectedSameOriginPaths": []
+    },
+    "caseCleanup": {
+      "observedWrapperCount": 0,
+      "observedCardCount": 0,
+      "sinkConnected": false
+    },
+    "cardMetrics": {
+      "naturalWidth": 736,
+      "naturalHeight": 1024,
+      "clientWidth": 91,
+      "clientHeight": 126,
+      "offsetWidth": 91,
+      "offsetHeight": 126,
+      "computedWidthPx": 90.5625,
+      "computedHeightPx": 126,
+      "transformOrigin": "45.2812px 63px"
+    },
+    "removedCardAfterDeparture": {
+      "naturalWidth": 736,
+      "naturalHeight": 1024,
+      "localRotationDegrees": 0,
+      "zIndex": 0,
+      "inlineLeftPx": 0,
+      "inlineBottomPx": 0,
+      "attached": false,
+      "target": "off",
+      "relativeId": null,
+      "energyLayer": 0,
+      "layer": 0,
+      "sourcePath": "/src/assets/cardback.png",
+      "sinkConnected": true,
+      "parentIsDepartureSink": true
+    },
+    "immediateAttachTrace": {
+      "energyThenTrainer": [
+        {
+          "role": "energy",
+          "clientWidthBefore": 91,
+          "authoredWidthAfterPx": 106.167,
+          "inlineLeftPx": 15.1667,
+          "zIndex": -1
+        },
+        {
+          "role": "trainerTool",
+          "clientWidthBefore": 106,
+          "authoredWidthAfterPx": 121.167,
+          "inlineLeftPx": 30.3333,
+          "zIndex": -2
+        }
+      ],
+      "trainerThenEnergy": [
+        {
+          "role": "trainerTool",
+          "clientWidthBefore": 91,
+          "authoredWidthAfterPx": 106.167,
+          "inlineLeftPx": 15.1667,
+          "zIndex": -1
+        },
+        {
+          "role": "energy",
+          "clientWidthBefore": 106,
+          "authoredWidthAfterPx": 121.167,
+          "inlineLeftPx": 30.3333,
+          "zIndex": -2
+        },
+        {
+          "role": "trainerTool",
+          "clientWidthBefore": 106,
+          "authoredWidthAfterPx": 121.167,
+          "inlineLeftPx": 30.3333,
+          "zIndex": -2
+        }
+      ]
+    },
+    "refreshAttachTrace": [
+      {
+        "role": "energy",
+        "clientWidthBefore": 91,
+        "authoredWidthAfterPx": 106.167,
+        "inlineLeftPx": 15.1667,
+        "zIndex": -1
+      },
+      {
+        "role": "trainerTool",
+        "clientWidthBefore": 106,
+        "authoredWidthAfterPx": 121.167,
+        "inlineLeftPx": 30.3333,
+        "zIndex": -2
+      }
+    ],
+    "phaseTemplates": {
+      "singleEnergy": {
+        "stack": {
+          "x": 550.90625,
+          "width": 106.15625,
+          "baseEnergyLayer": 1,
+          "clientWidth": 106,
+          "authoredWidthPx": 106.167,
+          "marginRight": "",
+          "computedMarginRightPx": 0,
+          "wrapperCount": 1,
+          "superseded": false
+        },
+        "cards": [
+          {
+            "role": "base",
+            "paintedX": 550.90625,
+            "untransformedX": 550.90625,
+            "inlineLeftPx": 0,
+            "zIndex": 0,
+            "rotationDegrees": 0
+          },
+          {
+            "role": "energy",
+            "paintedX": 566.0625,
+            "untransformedX": 566.0625,
+            "inlineLeftPx": 15.1667,
+            "zIndex": -1,
+            "rotationDegrees": 0
+          }
+        ],
+        "domRoles": ["base", "energy"],
+        "hitOrderRoles": {
+          "commonOverlap": ["base", "energy"],
+          "energyOnly": ["energy"]
+        },
+        "hitPoints": {
+          "commonOverlap": { "x": 603.765625, "y": 94.5 },
+          "energyOnly": { "x": 649.046875, "y": 94.5 }
+        }
+      },
+      "singleTool": {
+        "stack": {
+          "x": 547.046875,
+          "width": 106.15625,
+          "baseEnergyLayer": 1,
+          "clientWidth": 106,
+          "authoredWidthPx": 106.167,
+          "marginRight": "2%",
+          "computedMarginRightPx": 7.71875,
+          "wrapperCount": 1,
+          "superseded": false
+        },
+        "cards": [
+          {
+            "role": "base",
+            "paintedX": 547.046875,
+            "untransformedX": 547.046875,
+            "inlineLeftPx": 0,
+            "zIndex": 0,
+            "rotationDegrees": 0
+          },
+          {
+            "role": "trainerTool",
+            "paintedX": 544.484375,
+            "untransformedX": 562.203125,
+            "inlineLeftPx": 15.1667,
+            "zIndex": -1,
+            "rotationDegrees": 90
+          }
+        ],
+        "domRoles": ["base", "trainerTool"],
+        "hitOrderRoles": {
+          "commonOverlap": ["base", "trainerTool"],
+          "toolOnly": ["trainerTool"],
+          "baseOnly": ["base"],
+          "authoredLayoutOnly": []
+        },
+        "hitPoints": {
+          "commonOverlap": { "x": 592.328125, "y": 94.5 },
+          "toolOnly": { "x": 661.625, "y": 94.5 },
+          "baseOnly": { "x": 592.328125, "y": 40.359375 },
+          "authoredLayoutOnly": { "x": 645.1875, "y": 148.640625 }
+        }
+      },
+      "mixedImmediateEnergyThenTrainer": {
+        "stack": {
+          "x": 539.546875,
+          "width": 121.15625,
+          "baseEnergyLayer": 2,
+          "clientWidth": 121,
+          "authoredWidthPx": 121.167,
+          "marginRight": "2%",
+          "computedMarginRightPx": 7.71875,
+          "wrapperCount": 1,
+          "superseded": false
+        },
+        "cards": [
+          {
+            "role": "base",
+            "paintedX": 539.546875,
+            "untransformedX": 539.546875,
+            "inlineLeftPx": 0,
+            "zIndex": 0,
+            "rotationDegrees": 0
+          },
+          {
+            "role": "energy",
+            "paintedX": 554.703125,
+            "untransformedX": 554.703125,
+            "inlineLeftPx": 15.1667,
+            "zIndex": -1,
+            "rotationDegrees": 0
+          },
+          {
+            "role": "trainerTool",
+            "paintedX": 552.15625,
+            "untransformedX": 569.875,
+            "inlineLeftPx": 30.3333,
+            "zIndex": -2,
+            "rotationDegrees": 90
+          }
+        ],
+        "domRoles": ["base", "trainerTool", "energy"],
+        "hitOrderRoles": {
+          "baseOnly": ["base"],
+          "baseEnergyAboveTool": ["base", "energy"],
+          "energyAboveTool": ["energy"],
+          "allCardOverlap": ["base", "energy", "trainerTool"],
+          "energyToolOverlap": ["energy", "trainerTool"],
+          "toolPaintedOnly": ["trainerTool"]
+        },
+        "hitPoints": {
+          "baseOnly": { "x": 545.8515625, "y": 40.359375 },
+          "baseEnergyAboveTool": { "x": 592.40625, "y": 40.359375 },
+          "energyAboveTool": { "x": 637.6875, "y": 40.359375 },
+          "allCardOverlap": { "x": 592.40625, "y": 94.5 },
+          "energyToolOverlap": { "x": 637.6875, "y": 94.5 },
+          "toolPaintedOnly": { "x": 669.296875, "y": 94.5 }
+        }
+      },
+      "mixedImmediateTrainerThenEnergy": {
+        "stack": {
+          "x": 539.546875,
+          "width": 121.15625,
+          "baseEnergyLayer": 2,
+          "clientWidth": 121,
+          "authoredWidthPx": 121.167,
+          "marginRight": "2%",
+          "computedMarginRightPx": 7.71875,
+          "wrapperCount": 1,
+          "superseded": false
+        },
+        "cards": [
+          {
+            "role": "base",
+            "paintedX": 539.546875,
+            "untransformedX": 539.546875,
+            "inlineLeftPx": 0,
+            "zIndex": 0,
+            "rotationDegrees": 0
+          },
+          {
+            "role": "energy",
+            "paintedX": 554.375,
+            "untransformedX": 554.375,
+            "inlineLeftPx": 14.8333,
+            "zIndex": -1,
+            "rotationDegrees": 0
+          },
+          {
+            "role": "trainerTool",
+            "paintedX": 552.15625,
+            "untransformedX": 569.875,
+            "inlineLeftPx": 30.3333,
+            "zIndex": -2,
+            "rotationDegrees": 90
+          }
+        ],
+        "domRoles": ["base", "trainerTool", "energy"],
+        "hitOrderRoles": {
+          "baseOnly": ["base"],
+          "baseEnergyAboveTool": ["base", "energy"],
+          "energyAboveTool": ["energy"],
+          "allCardOverlap": ["base", "energy", "trainerTool"],
+          "energyToolOverlap": ["energy", "trainerTool"],
+          "toolPaintedOnly": ["trainerTool"]
+        },
+        "hitPoints": {
+          "baseOnly": { "x": 545.8515625, "y": 40.359375 },
+          "baseEnergyAboveTool": { "x": 592.2421875, "y": 40.359375 },
+          "energyAboveTool": { "x": 637.5234375, "y": 40.359375 },
+          "allCardOverlap": { "x": 592.2421875, "y": 94.5 },
+          "energyToolOverlap": { "x": 637.5234375, "y": 94.5 },
+          "toolPaintedOnly": { "x": 669.296875, "y": 94.5 }
+        }
+      },
+      "mixedSynchronousRefresh": {
+        "stack": {
+          "x": 603.90625,
+          "width": 121.328125,
+          "baseEnergyLayer": 2,
+          "clientWidth": 121,
+          "authoredWidthPx": 121.333,
+          "marginRight": "2%",
+          "computedMarginRightPx": 7.71875,
+          "wrapperCount": 2,
+          "superseded": true
+        },
+        "cards": [
+          {
+            "role": "base",
+            "paintedX": 603.90625,
+            "untransformedX": 603.90625,
+            "inlineLeftPx": 0,
+            "zIndex": 0,
+            "rotationDegrees": 0
+          },
+          {
+            "role": "energy",
+            "paintedX": 619.0625,
+            "untransformedX": 619.0625,
+            "inlineLeftPx": 15.1667,
+            "zIndex": -1,
+            "rotationDegrees": 0
+          },
+          {
+            "role": "trainerTool",
+            "paintedX": 616.515625,
+            "untransformedX": 634.234375,
+            "inlineLeftPx": 30.3333,
+            "zIndex": -2,
+            "rotationDegrees": 90
+          }
+        ],
+        "domRoles": ["base", "trainerTool", "energy"],
+        "hitOrderRoles": {
+          "baseOnly": ["base"],
+          "baseEnergyAboveTool": ["base", "energy"],
+          "energyAboveTool": ["energy"],
+          "allCardOverlap": ["base", "energy", "trainerTool"],
+          "energyToolOverlap": ["energy", "trainerTool"],
+          "toolPaintedOnly": ["trainerTool"]
+        },
+        "hitPoints": {
+          "baseOnly": { "x": 610.2109375, "y": 40.359375 },
+          "baseEnergyAboveTool": { "x": 656.765625, "y": 40.359375 },
+          "energyAboveTool": { "x": 702.046875, "y": 40.359375 },
+          "allCardOverlap": { "x": 656.765625, "y": 94.5 },
+          "energyToolOverlap": { "x": 702.046875, "y": 94.5 },
+          "toolPaintedOnly": { "x": 733.65625, "y": 94.5 }
+        }
+      },
+      "mixedStable": {
+        "stack": {
+          "x": 539.46875,
+          "width": 121.328125,
+          "baseEnergyLayer": 2,
+          "clientWidth": 121,
+          "authoredWidthPx": 121.333,
+          "marginRight": "2%",
+          "computedMarginRightPx": 7.71875,
+          "wrapperCount": 1,
+          "superseded": false
+        },
+        "cards": [
+          {
+            "role": "base",
+            "paintedX": 539.46875,
+            "untransformedX": 539.46875,
+            "inlineLeftPx": 0,
+            "zIndex": 0,
+            "rotationDegrees": 0
+          },
+          {
+            "role": "energy",
+            "paintedX": 554.625,
+            "untransformedX": 554.625,
+            "inlineLeftPx": 15.1667,
+            "zIndex": -1,
+            "rotationDegrees": 0
+          },
+          {
+            "role": "trainerTool",
+            "paintedX": 552.078125,
+            "untransformedX": 569.796875,
+            "inlineLeftPx": 30.3333,
+            "zIndex": -2,
+            "rotationDegrees": 90
+          }
+        ],
+        "domRoles": ["base", "trainerTool", "energy"],
+        "hitOrderRoles": {
+          "baseOnly": ["base"],
+          "baseEnergyAboveTool": ["base", "energy"],
+          "energyAboveTool": ["energy"],
+          "allCardOverlap": ["base", "energy", "trainerTool"],
+          "energyToolOverlap": ["energy", "trainerTool"],
+          "toolPaintedOnly": ["trainerTool"]
+        },
+        "hitPoints": {
+          "baseOnly": { "x": 545.7734375, "y": 40.359375 },
+          "baseEnergyAboveTool": { "x": 592.328125, "y": 40.359375 },
+          "energyAboveTool": { "x": 637.609375, "y": 40.359375 },
+          "allCardOverlap": { "x": 592.328125, "y": 94.5 },
+          "energyToolOverlap": { "x": 637.609375, "y": 94.5 },
+          "toolPaintedOnly": { "x": 669.21875, "y": 94.5 }
+        }
+      },
+      "toolTransient": {
+        "stack": {
+          "x": 547.21875,
+          "width": 105.828125,
+          "baseEnergyLayer": 1,
+          "clientWidth": 106,
+          "authoredWidthPx": 105.833,
+          "marginRight": "2%",
+          "computedMarginRightPx": 7.71875,
+          "wrapperCount": 1,
+          "superseded": false
+        },
+        "cards": [
+          {
+            "role": "base",
+            "paintedX": 547.21875,
+            "untransformedX": 547.21875,
+            "inlineLeftPx": 0,
+            "zIndex": 0,
+            "rotationDegrees": 0
+          },
+          {
+            "role": "trainerTool",
+            "paintedX": 544.328125,
+            "untransformedX": 562.046875,
+            "inlineLeftPx": 14.8333,
+            "zIndex": -1,
+            "rotationDegrees": 90
+          }
+        ],
+        "domRoles": ["base", "trainerTool"],
+        "hitOrderRoles": {
+          "commonOverlap": ["base", "trainerTool"],
+          "toolOnly": ["trainerTool"],
+          "baseOnly": ["base"],
+          "authoredLayoutOnly": []
+        },
+        "hitPoints": {
+          "commonOverlap": { "x": 592.5, "y": 94.5 },
+          "toolOnly": { "x": 661.46875, "y": 94.5 },
+          "baseOnly": { "x": 592.5, "y": 40.359375 },
+          "authoredLayoutOnly": { "x": 645.1953125, "y": 148.640625 }
+        }
+      },
+      "toolSynchronousRefresh": {
+        "stack": {
+          "x": 603.828125,
+          "width": 106.15625,
+          "baseEnergyLayer": 1,
+          "clientWidth": 106,
+          "authoredWidthPx": 106.167,
+          "marginRight": "2%",
+          "computedMarginRightPx": 7.71875,
+          "wrapperCount": 2,
+          "superseded": true
+        },
+        "cards": [
+          {
+            "role": "base",
+            "paintedX": 603.828125,
+            "untransformedX": 603.828125,
+            "inlineLeftPx": 0,
+            "zIndex": 0,
+            "rotationDegrees": 0
+          },
+          {
+            "role": "trainerTool",
+            "paintedX": 601.265625,
+            "untransformedX": 618.984375,
+            "inlineLeftPx": 15.1667,
+            "zIndex": -1,
+            "rotationDegrees": 90
+          }
+        ],
+        "domRoles": ["base", "trainerTool"],
+        "hitOrderRoles": {
+          "commonOverlap": ["base", "trainerTool"],
+          "toolOnly": ["trainerTool"],
+          "baseOnly": ["base"],
+          "authoredLayoutOnly": []
+        },
+        "hitPoints": {
+          "commonOverlap": { "x": 649.109375, "y": 94.5 },
+          "toolOnly": { "x": 718.40625, "y": 94.5 },
+          "baseOnly": { "x": 649.109375, "y": 40.359375 },
+          "authoredLayoutOnly": { "x": 701.96875, "y": 148.640625 }
+        }
+      },
+      "energyTransient": {
+        "stack": {
+          "x": 547.21875,
+          "width": 105.828125,
+          "baseEnergyLayer": 1,
+          "clientWidth": 106,
+          "authoredWidthPx": 105.833,
+          "marginRight": "2%",
+          "computedMarginRightPx": 7.71875,
+          "wrapperCount": 1,
+          "superseded": false
+        },
+        "cards": [
+          {
+            "role": "base",
+            "paintedX": 547.21875,
+            "untransformedX": 547.21875,
+            "inlineLeftPx": 0,
+            "zIndex": 0,
+            "rotationDegrees": 0
+          },
+          {
+            "role": "energy",
+            "paintedX": 562.375,
+            "untransformedX": 562.375,
+            "inlineLeftPx": 15.1667,
+            "zIndex": -1,
+            "rotationDegrees": 0
+          }
+        ],
+        "domRoles": ["base", "energy"],
+        "hitOrderRoles": {
+          "commonOverlap": ["base", "energy"],
+          "energyOnly": ["energy"]
+        },
+        "hitPoints": {
+          "commonOverlap": { "x": 600.078125, "y": 94.5 },
+          "energyOnly": { "x": 645.359375, "y": 94.5 }
+        }
+      },
+      "energySynchronousRefresh": {
+        "stack": {
+          "x": 607.6875,
+          "width": 106.15625,
+          "baseEnergyLayer": 1,
+          "clientWidth": 106,
+          "authoredWidthPx": 106.167,
+          "marginRight": "",
+          "computedMarginRightPx": 0,
+          "wrapperCount": 2,
+          "superseded": true
+        },
+        "cards": [
+          {
+            "role": "base",
+            "paintedX": 607.6875,
+            "untransformedX": 607.6875,
+            "inlineLeftPx": 0,
+            "zIndex": 0,
+            "rotationDegrees": 0
+          },
+          {
+            "role": "energy",
+            "paintedX": 622.84375,
+            "untransformedX": 622.84375,
+            "inlineLeftPx": 15.1667,
+            "zIndex": -1,
+            "rotationDegrees": 0
+          }
+        ],
+        "domRoles": ["base", "energy"],
+        "hitOrderRoles": {
+          "commonOverlap": ["base", "energy"],
+          "energyOnly": ["energy"]
+        },
+        "hitPoints": {
+          "commonOverlap": { "x": 660.546875, "y": 94.5 },
+          "energyOnly": { "x": 705.828125, "y": 94.5 }
+        }
+      }
+    }
+  }
+}

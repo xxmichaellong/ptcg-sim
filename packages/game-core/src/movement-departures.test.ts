@@ -385,7 +385,7 @@ describe('explicit card departures', () => {
     state = departed.state;
     const staged = state.workAreas[p1]!.attachmentResolution!;
     expect(staged.evolutionCardIds).toEqual([baseId, middleId]);
-    expect(staged.attachmentCardIds).toEqual([trainerId, pokemonAttachmentId]);
+    expect(staged.attachmentCardIds).toEqual([pokemonAttachmentId, trainerId]);
     const layoutBeforeReplacement = expectedLayout(state);
 
     const replacement = executeCommand(
@@ -430,7 +430,7 @@ describe('explicit card departures', () => {
     const restoredId = restored.state.boards[p1]!.activeStackId!;
     expect(restored.state.stacks[restoredId]).toMatchObject({
       evolutionCardIds: [baseId, middleId],
-      attachmentCardIds: [trainerId, pokemonAttachmentId],
+      attachmentCardIds: [pokemonAttachmentId, trainerId],
       damage: null,
       specialCondition: null,
       abilityUsed: false,

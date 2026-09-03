@@ -12,6 +12,14 @@ export type CapturedRect = {
   readonly height: number;
 };
 
+export type CapturedPoint = { readonly x: number; readonly y: number };
+
+export interface LegacyFixtureCleanup {
+  readonly observedWrapperCount: number;
+  readonly observedCardCount: number;
+  readonly sinkConnected: boolean;
+}
+
 export type LegacyRegionKind =
   | 'hand'
   | 'bench'
@@ -286,6 +294,141 @@ export interface LegacySourceTwoEnergyCompactionFixture {
     Record<LegacyFixtureSide, LegacyFrameTransform>
   >;
   readonly cases: readonly LegacyTwoEnergyCompactionFixtureCase[];
+  readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
+}
+
+export type LegacyMixedAttachmentRole = 'base' | 'energy' | 'trainerTool';
+export type LegacyMixedAttachmentOrder =
+  'energyThenTrainer' | 'trainerThenEnergy';
+export type LegacyMixedAttachmentDeparture = 'energy' | 'trainerTool';
+
+export interface LegacyMixedAttachmentFixtureCard {
+  readonly id: string;
+  readonly side: LegacyFixtureSide;
+  readonly role: LegacyMixedAttachmentRole;
+  readonly currentCategory: 'Pokémon' | 'Energy' | 'Trainer';
+  readonly physicalBounds: CapturedRect;
+  readonly frameLocalBounds: CapturedRect;
+  readonly untransformedPhysicalBounds: CapturedRect;
+  readonly untransformedFrameLocalBounds: CapturedRect;
+  readonly naturalWidth: number;
+  readonly naturalHeight: number;
+  readonly clientWidth: number;
+  readonly clientHeight: number;
+  readonly offsetWidth: number;
+  readonly offsetHeight: number;
+  readonly computedWidthPx: number;
+  readonly computedHeightPx: number;
+  readonly localRotationDegrees: number;
+  readonly effectiveRotationDegrees: number;
+  readonly transformMatrix: {
+    readonly a: number;
+    readonly b: number;
+    readonly c: number;
+    readonly d: number;
+  };
+  readonly transformOrigin: string;
+  readonly zIndex: number;
+  readonly inlineLeftPx: number;
+  readonly inlineBottomPx: number;
+  readonly attached: boolean;
+  readonly target: string;
+  readonly relativeId: string | null;
+  readonly energyLayer: number;
+  readonly layer: number;
+  readonly domOrdinal: number;
+  readonly logicalOrdinal: number;
+  readonly sourcePath: string;
+}
+
+export interface LegacyMixedAttachmentFixtureStack {
+  readonly id: string;
+  readonly side: LegacyFixtureSide;
+  readonly physicalBounds: CapturedRect;
+  readonly frameLocalBounds: CapturedRect;
+  readonly baseClientWidth: number;
+  readonly baseEnergyLayer: number;
+  readonly clientWidth: number;
+  readonly authoredWidthPx: number;
+  readonly inlineMarginRight: string;
+  readonly inlineMarginLeft: string;
+  readonly computedMarginRightPx: number;
+  readonly computedMarginLeftPx: number;
+  readonly childDomOrder: readonly string[];
+  readonly logicalOrder: readonly string[];
+  readonly hitOrder: Readonly<Record<string, readonly string[]>>;
+  readonly hitPointsFrameLocal: Readonly<Record<string, CapturedPoint>>;
+  readonly hitPointsPhysical: Readonly<Record<string, CapturedPoint>>;
+}
+
+export interface LegacyMixedAttachmentFixturePhase {
+  readonly cards: readonly LegacyMixedAttachmentFixtureCard[];
+  readonly stack: LegacyMixedAttachmentFixtureStack;
+  readonly observedWrapperCount: number;
+  readonly supersededWrapperConnected: boolean;
+}
+
+export interface LegacyMixedAttachmentAttachTraceEntry {
+  readonly role: 'energy' | 'trainerTool';
+  readonly clientWidthBefore: number;
+  readonly authoredWidthAfterPx: number;
+  readonly inlineLeftPx: number;
+  readonly zIndex: number;
+}
+
+export interface LegacyMixedAttachmentOrderFixtureCase {
+  readonly id: string;
+  readonly side: LegacyFixtureSide;
+  readonly order: LegacyMixedAttachmentOrder;
+  readonly postFirstAttachment: LegacyMixedAttachmentFixturePhase;
+  readonly immediatePostSecondAttachment: LegacyMixedAttachmentFixturePhase;
+  readonly synchronousPostRefresh: LegacyMixedAttachmentFixturePhase;
+  readonly stablePostRefresh: LegacyMixedAttachmentFixturePhase;
+  readonly immediateAttachTrace: readonly LegacyMixedAttachmentAttachTraceEntry[];
+  readonly refreshAttachTrace: readonly LegacyMixedAttachmentAttachTraceEntry[];
+  readonly cleanup: LegacyFixtureCleanup;
+}
+
+export interface LegacyMixedAttachmentRemovedCard {
+  readonly id: string;
+  readonly side: LegacyFixtureSide;
+  readonly role: 'energy' | 'trainerTool';
+  readonly naturalWidth: number;
+  readonly naturalHeight: number;
+  readonly localRotationDegrees: number;
+  readonly effectiveRotationDegrees: number;
+  readonly zIndex: number;
+  readonly inlineLeftPx: number;
+  readonly inlineBottomPx: number;
+  readonly attached: boolean;
+  readonly target: string;
+  readonly relativeId: null;
+  readonly energyLayer: number;
+  readonly layer: number;
+  readonly sourcePath: string;
+  readonly sinkConnected: boolean;
+  readonly parentIsDepartureSink: boolean;
+}
+
+export interface LegacyMixedAttachmentDepartureFixtureCase {
+  readonly id: string;
+  readonly side: LegacyFixtureSide;
+  readonly removedRole: LegacyMixedAttachmentDeparture;
+  readonly stablePreDeparture: LegacyMixedAttachmentFixturePhase;
+  readonly removedCardAfterDeparture: LegacyMixedAttachmentRemovedCard;
+  readonly transientPostDeparture: LegacyMixedAttachmentFixturePhase;
+  readonly synchronousPostRefresh: LegacyMixedAttachmentFixturePhase;
+  readonly stablePostRefresh: LegacyMixedAttachmentFixturePhase;
+  readonly cleanup: LegacyFixtureCleanup;
+}
+
+export interface LegacySourceMixedAttachmentOrderFixture {
+  readonly frames: Readonly<Record<LegacyFixtureSide, CapturedRect>>;
+  readonly frameTransforms: Readonly<
+    Record<LegacyFixtureSide, LegacyFrameTransform>
+  >;
+  readonly attachmentCases: readonly LegacyMixedAttachmentOrderFixtureCase[];
+  readonly departureCases: readonly LegacyMixedAttachmentDepartureFixtureCase[];
   readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
 }
 
@@ -2251,6 +2394,963 @@ export const captureLegacySourceTwoEnergyCompactionFixture = async (
     frames,
     frameTransforms,
     cases,
+    sourceFulfillment: sourceFulfillment(loaded),
+  };
+};
+
+type RawMixedAttachmentCard = Omit<
+  LegacyMixedAttachmentFixtureCard,
+  | 'side'
+  | 'physicalBounds'
+  | 'untransformedPhysicalBounds'
+  | 'effectiveRotationDegrees'
+>;
+
+type RawMixedAttachmentStack = Omit<
+  LegacyMixedAttachmentFixtureStack,
+  'side' | 'physicalBounds' | 'hitPointsPhysical'
+>;
+
+interface RawMixedAttachmentPhase {
+  readonly cards: readonly RawMixedAttachmentCard[];
+  readonly stack: RawMixedAttachmentStack;
+  readonly observedWrapperCount: number;
+  readonly supersededWrapperConnected: boolean;
+}
+
+interface RawMixedAttachmentOrderCase {
+  readonly id: string;
+  readonly order: LegacyMixedAttachmentOrder;
+  readonly postFirstAttachment: RawMixedAttachmentPhase;
+  readonly immediatePostSecondAttachment: RawMixedAttachmentPhase;
+  readonly synchronousPostRefresh: RawMixedAttachmentPhase;
+  readonly stablePostRefresh: RawMixedAttachmentPhase;
+  readonly immediateAttachTrace: readonly LegacyMixedAttachmentAttachTraceEntry[];
+  readonly refreshAttachTrace: readonly LegacyMixedAttachmentAttachTraceEntry[];
+  readonly cleanup: LegacyFixtureCleanup;
+}
+
+interface RawMixedAttachmentDepartureCase {
+  readonly id: string;
+  readonly removedRole: LegacyMixedAttachmentDeparture;
+  readonly stablePreDeparture: RawMixedAttachmentPhase;
+  readonly removedCardAfterDeparture: Omit<
+    LegacyMixedAttachmentRemovedCard,
+    'side' | 'effectiveRotationDegrees'
+  >;
+  readonly transientPostDeparture: RawMixedAttachmentPhase;
+  readonly synchronousPostRefresh: RawMixedAttachmentPhase;
+  readonly stablePostRefresh: RawMixedAttachmentPhase;
+  readonly cleanup: LegacyFixtureCleanup;
+}
+
+/**
+ * Characterizes v1's mixed ordinary-Energy/current-category-Trainer attachment
+ * order without executing the application module. In particular, this keeps
+ * attachCard's recursive Energy-triggered Tool move, parseInt compaction,
+ * syncRotation margin/quarter-turn, unconditional refresh reconstruction, and
+ * the real empty-wrapper MutationObserver observable in Chromium.
+ */
+export const captureLegacySourceMixedAttachmentOrderFixture = async (
+  page: Page
+): Promise<LegacySourceMixedAttachmentOrderFixture> => {
+  const loaded = await loadLegacySourceBoard(page);
+  const frameTransforms = {
+    local: await captureFrameTransform(page.locator('#selfContainer')),
+    opponent: await captureFrameTransform(page.locator('#oppContainer')),
+  };
+  const frames = {
+    local: await requireRect(page.locator('#selfContainer'), '#selfContainer'),
+    opponent: await requireRect(page.locator('#oppContainer'), '#oppContainer'),
+  };
+  const rawAttachmentCases: Array<{
+    readonly side: LegacyFixtureSide;
+    readonly value: RawMixedAttachmentOrderCase;
+  }> = [];
+  const rawDepartureCases: Array<{
+    readonly side: LegacyFixtureSide;
+    readonly value: RawMixedAttachmentDepartureCase;
+  }> = [];
+
+  for (const [side, frameSelector] of [
+    ['local', '#selfContainer'],
+    ['opponent', '#oppContainer'],
+  ] as const) {
+    const captured = await page
+      .frameLocator(frameSelector)
+      .locator('body')
+      .evaluate(
+        async (
+          body,
+          input
+        ): Promise<{
+          attachmentCases: RawMixedAttachmentOrderCase[];
+          departureCases: RawMixedAttachmentDepartureCase[];
+        }> => {
+          type FixtureImage = HTMLImageElement & {
+            attached: boolean;
+            target: string;
+            relative: HTMLImageElement | number;
+            energyLayer: number;
+            layer: number;
+          };
+          interface FixtureCard {
+            readonly role: LegacyMixedAttachmentRole;
+            readonly currentCategory: 'Pokémon' | 'Energy' | 'Trainer';
+            readonly image: FixtureImage;
+          }
+
+          const active = body.querySelector('#active');
+          if (!(active instanceof HTMLElement)) {
+            throw new Error('Legacy mixed fixture active region is missing');
+          }
+          const twoAnimationFrames = () =>
+            new Promise<void>((resolve) =>
+              requestAnimationFrame(() =>
+                requestAnimationFrame(() => resolve())
+              )
+            );
+          const resetImage = (image: FixtureImage) => {
+            image.style.opacity = '1';
+            image.style.position = 'relative';
+            image.style.bottom = '0%';
+            image.style.zIndex = '0';
+            image.energyLayer = 0;
+            image.layer = 0;
+            image.relative = 0;
+            image.style.left = '0px';
+            image.attached = false;
+            image.target = 'off';
+            image.style.transform = 'rotate(0deg)';
+          };
+          const makeCard = (
+            id: string,
+            role: LegacyMixedAttachmentRole,
+            currentCategory: FixtureCard['currentCategory'],
+            sink: HTMLElement
+          ): FixtureCard => {
+            const image = document.createElement('img') as FixtureImage;
+            image.dataset.legacyMixedAttachmentCardId = id;
+            image.alt = '';
+            image.src = `${location.origin}/src/assets/cardback.png`;
+            resetImage(image);
+            sink.append(image);
+            return { role, currentCategory, image };
+          };
+          const makeStack = (id: string) => {
+            const stack = document.createElement('div');
+            stack.className = 'play-container';
+            stack.style.zIndex = '0';
+            stack.dataset.legacyMixedAttachmentStackId = id;
+            active.append(stack);
+            return stack;
+          };
+          const updateAttachedCardsPosition = (
+            logicalCards: readonly FixtureCard[],
+            movingCard: FixtureCard
+          ) => {
+            for (const card of logicalCards) {
+              if (
+                card.currentCategory !== 'Pokémon' &&
+                movingCard.currentCategory !== 'Pokémon'
+              ) {
+                const cardPosition = card.image.style.left;
+                const movingCardPosition = movingCard.image.style.left;
+                if (
+                  movingCard.image.relative instanceof HTMLImageElement &&
+                  movingCard.image.relative === card.image.relative &&
+                  Number.parseInt(cardPosition) >
+                    Number.parseInt(movingCardPosition)
+                ) {
+                  const adjustment = movingCard.image.relative.clientWidth / 6;
+                  card.image.style.left = `${Number.parseInt(cardPosition) - adjustment}px`;
+                  card.image.style.zIndex = String(
+                    Number.parseInt(card.image.style.zIndex) + 1
+                  );
+                }
+              }
+            }
+          };
+          const decreaseCardLayer = (movingCard: FixtureCard) => {
+            if (!(movingCard.image.relative instanceof HTMLImageElement)) {
+              throw new Error('Mixed departure lost its relative base');
+            }
+            const base = movingCard.image.relative as FixtureImage;
+            base.energyLayer -= 1;
+            const stack = base.parentElement;
+            if (!(stack instanceof HTMLElement)) {
+              throw new Error('Mixed departure lost its source wrapper');
+            }
+            const adjustment = base.clientWidth / 6;
+            stack.style.width = `${Number.parseFloat(String(stack.clientWidth)) - adjustment}px`;
+          };
+          const attachCard = (
+            logicalCards: FixtureCard[],
+            movingCard: FixtureCard,
+            baseCard: FixtureCard,
+            stack: HTMLElement,
+            trace: LegacyMixedAttachmentAttachTraceEntry[],
+            allowEnergyToolMove: boolean
+          ) => {
+            const nonEvolveAttachment =
+              movingCard.image.target === 'on' ||
+              !movingCard.image.parentElement?.classList.contains(
+                'play-container'
+              );
+            resetImage(movingCard.image);
+            movingCard.image.attached = true;
+            movingCard.image.target = 'on';
+            movingCard.image.relative = baseCard.image;
+            movingCard.image.style.position = 'absolute';
+            const adjustment = baseCard.image.clientWidth / 6;
+            baseCard.image.energyLayer += 1;
+            const layer = baseCard.image.energyLayer;
+            movingCard.image.style.left = `${layer * adjustment}px`;
+            const clientWidthBefore = stack.clientWidth;
+            stack.style.width = `${Number.parseFloat(String(clientWidthBefore)) + adjustment}px`;
+            movingCard.image.style.zIndex = String(-layer);
+            baseCard.image.after(movingCard.image);
+            if (movingCard.currentCategory === 'Trainer') {
+              stack.style.marginRight = '2%';
+              movingCard.image.style.transform = 'rotate(90deg)';
+            } else {
+              movingCard.image.style.transform = 'rotate(0deg)';
+            }
+            trace.push({
+              role: movingCard.role === 'energy' ? 'energy' : 'trainerTool',
+              clientWidthBefore,
+              authoredWidthAfterPx: Number.parseFloat(stack.style.width),
+              inlineLeftPx: Number.parseFloat(movingCard.image.style.left) || 0,
+              zIndex: Number.parseInt(movingCard.image.style.zIndex),
+            });
+
+            if (
+              allowEnergyToolMove &&
+              movingCard.currentCategory === 'Energy' &&
+              nonEvolveAttachment
+            ) {
+              for (let index = 0; index < logicalCards.length - 1; index += 1) {
+                const card = logicalCards[index];
+                if (!card) throw new Error('Mixed logical card disappeared');
+                if (
+                  card.image.relative === movingCard.image.relative &&
+                  card.currentCategory !== 'Pokémon' &&
+                  card.currentCategory !== 'Energy'
+                ) {
+                  const baseIndex = logicalCards.findIndex(
+                    (candidate) => candidate.image === movingCard.image.relative
+                  );
+                  const target = logicalCards[baseIndex];
+                  const moved = logicalCards[index];
+                  if (!target || !moved) {
+                    throw new Error('Mixed Tool move lost target or card');
+                  }
+                  logicalCards.push(...logicalCards.splice(index, 1));
+                  updateAttachedCardsPosition(logicalCards, moved);
+                  if (moved.image.target === 'on') decreaseCardLayer(moved);
+                  attachCard(logicalCards, moved, target, stack, trace, false);
+                  index -= 1;
+                }
+                if (logicalCards[index] === movingCard) break;
+              }
+            }
+          };
+          const observeEmptyStack = (stack: HTMLElement) => {
+            const observer = new MutationObserver((mutations) => {
+              for (const mutation of mutations) {
+                const removedNode = mutation.removedNodes[0];
+                if (
+                  removedNode?.nodeName === 'IMG' &&
+                  stack.getElementsByTagName('img').length === 0
+                ) {
+                  stack.remove();
+                }
+              }
+            });
+            observer.observe(stack, { childList: true });
+            return observer;
+          };
+          const reconstruct = (
+            logicalCards: FixtureCard[],
+            oldStack: HTMLElement,
+            stackId: string
+          ) => {
+            const observer = observeEmptyStack(oldStack);
+            const nextStack = makeStack(stackId);
+            const base = logicalCards[0];
+            if (!base) throw new Error('Mixed refresh lost its base');
+            resetImage(base.image);
+            nextStack.append(base.image);
+            const trace: LegacyMixedAttachmentAttachTraceEntry[] = [];
+            for (const card of logicalCards.slice(1)) {
+              resetImage(card.image);
+              attachCard(logicalCards, card, base, nextStack, trace, false);
+            }
+            nextStack.style.width = `${base.image.clientWidth + (base.image.energyLayer * base.image.clientWidth) / 6}px`;
+            return { nextStack, observer, trace };
+          };
+          const rect = (bounds: DOMRect): CapturedRect => ({
+            x: bounds.x,
+            y: bounds.y,
+            width: bounds.width,
+            height: bounds.height,
+          });
+          const center = (bounds: {
+            left: number;
+            top: number;
+            right: number;
+            bottom: number;
+          }): CapturedPoint => ({
+            x: (bounds.left + bounds.right) / 2,
+            y: (bounds.top + bounds.bottom) / 2,
+          });
+          const requireInterior = (
+            bounds: {
+              left: number;
+              top: number;
+              right: number;
+              bottom: number;
+            },
+            label: string
+          ) => {
+            if (
+              bounds.right - bounds.left <= 0 ||
+              bounds.bottom - bounds.top <= 0
+            ) {
+              throw new Error(`${label} lacks a safe interior`);
+            }
+            return bounds;
+          };
+          const snapshot = (
+            stack: HTMLElement,
+            logicalCards: readonly FixtureCard[],
+            supersededStack: HTMLElement | null
+          ): RawMixedAttachmentPhase => {
+            const stackCards = logicalCards.filter(
+              (card) => card.image.parentElement === stack
+            );
+            const paintedBounds = new Map(
+              stackCards.map((card) => [
+                card.role,
+                card.image.getBoundingClientRect(),
+              ])
+            );
+            const untransformedBounds = new Map<
+              LegacyMixedAttachmentRole,
+              DOMRect
+            >();
+            for (const card of stackCards) {
+              const transform = card.image.style.transform;
+              try {
+                card.image.style.transform = 'none';
+                untransformedBounds.set(
+                  card.role,
+                  card.image.getBoundingClientRect()
+                );
+              } finally {
+                card.image.style.transform = transform;
+              }
+            }
+            const baseBounds = paintedBounds.get('base');
+            if (!baseBounds) throw new Error('Mixed snapshot lacks its base');
+            const idsAt = (point: CapturedPoint) =>
+              document
+                .elementsFromPoint(point.x, point.y)
+                .flatMap((candidate) => {
+                  const image = candidate.closest<HTMLImageElement>(
+                    '[data-legacy-mixed-attachment-card-id]'
+                  );
+                  return image?.dataset.legacyMixedAttachmentCardId &&
+                    stackCards.some((card) => card.image === image)
+                    ? [image.dataset.legacyMixedAttachmentCardId]
+                    : [];
+                })
+                .filter((id, index, ids) => ids.indexOf(id) === index);
+            const hitPointsFrameLocal: Record<string, CapturedPoint> = {};
+            const energyBounds = paintedBounds.get('energy');
+            const toolBounds = paintedBounds.get('trainerTool');
+            const toolLayoutBounds = untransformedBounds.get('trainerTool');
+            if (energyBounds && toolBounds && toolLayoutBounds) {
+              const topBand = {
+                top: baseBounds.top + 2,
+                bottom: toolBounds.top - 2,
+              };
+              hitPointsFrameLocal['baseOnly'] = center(
+                requireInterior(
+                  {
+                    left: baseBounds.left + 2,
+                    right: Math.min(energyBounds.left, toolBounds.left) - 2,
+                    ...topBand,
+                  },
+                  'Mixed base-only region'
+                )
+              );
+              hitPointsFrameLocal['baseEnergyAboveTool'] = center(
+                requireInterior(
+                  {
+                    left: Math.max(baseBounds.left, energyBounds.left),
+                    right: Math.min(baseBounds.right, energyBounds.right),
+                    ...topBand,
+                  },
+                  'Mixed base/Energy authored-Tool-only region'
+                )
+              );
+              hitPointsFrameLocal['energyAboveTool'] = center(
+                requireInterior(
+                  {
+                    left: baseBounds.right + 2,
+                    right: energyBounds.right - 2,
+                    ...topBand,
+                  },
+                  'Mixed Energy authored-Tool-only region'
+                )
+              );
+              const commonVertical = {
+                top: Math.max(baseBounds.top, energyBounds.top, toolBounds.top),
+                bottom: Math.min(
+                  baseBounds.bottom,
+                  energyBounds.bottom,
+                  toolBounds.bottom
+                ),
+              };
+              hitPointsFrameLocal['allCardOverlap'] = center(
+                requireInterior(
+                  {
+                    left: Math.max(
+                      baseBounds.left,
+                      energyBounds.left,
+                      toolBounds.left
+                    ),
+                    right: Math.min(
+                      baseBounds.right,
+                      energyBounds.right,
+                      toolBounds.right
+                    ),
+                    ...commonVertical,
+                  },
+                  'Mixed all-card region'
+                )
+              );
+              hitPointsFrameLocal['energyToolOverlap'] = center(
+                requireInterior(
+                  {
+                    left: baseBounds.right + 2,
+                    right: Math.min(energyBounds.right, toolBounds.right) - 2,
+                    ...commonVertical,
+                  },
+                  'Mixed Energy/Tool region'
+                )
+              );
+              hitPointsFrameLocal['toolPaintedOnly'] = center(
+                requireInterior(
+                  {
+                    left:
+                      Math.max(
+                        baseBounds.right,
+                        energyBounds.right,
+                        toolLayoutBounds.right
+                      ) + 2,
+                    right: toolBounds.right - 2,
+                    top: toolBounds.top,
+                    bottom: toolBounds.bottom,
+                  },
+                  'Mixed painted-only Tool region'
+                )
+              );
+            } else if (energyBounds) {
+              hitPointsFrameLocal['commonOverlap'] = center({
+                left: Math.max(baseBounds.left, energyBounds.left),
+                right: Math.min(baseBounds.right, energyBounds.right),
+                top: Math.max(baseBounds.top, energyBounds.top),
+                bottom: Math.min(baseBounds.bottom, energyBounds.bottom),
+              });
+              hitPointsFrameLocal['energyOnly'] = center(
+                requireInterior(
+                  {
+                    left: baseBounds.right + 2,
+                    right: energyBounds.right - 2,
+                    top: energyBounds.top,
+                    bottom: energyBounds.bottom,
+                  },
+                  'Mixed fixture Energy-only region'
+                )
+              );
+            } else if (toolBounds && toolLayoutBounds) {
+              hitPointsFrameLocal['commonOverlap'] = center({
+                left: Math.max(baseBounds.left, toolBounds.left),
+                right: Math.min(baseBounds.right, toolBounds.right),
+                top: Math.max(baseBounds.top, toolBounds.top),
+                bottom: Math.min(baseBounds.bottom, toolBounds.bottom),
+              });
+              hitPointsFrameLocal['toolOnly'] = center(
+                requireInterior(
+                  {
+                    left:
+                      Math.max(baseBounds.right, toolLayoutBounds.right) + 2,
+                    right: toolBounds.right - 2,
+                    top: toolBounds.top,
+                    bottom: toolBounds.bottom,
+                  },
+                  'Mixed fixture Tool-only region'
+                )
+              );
+              hitPointsFrameLocal['baseOnly'] = center(
+                requireInterior(
+                  {
+                    left: baseBounds.left,
+                    right: baseBounds.right,
+                    top: baseBounds.top + 2,
+                    bottom: toolBounds.top - 2,
+                  },
+                  'Mixed fixture base-only region'
+                )
+              );
+              hitPointsFrameLocal['authoredLayoutOnly'] = center(
+                requireInterior(
+                  {
+                    left: baseBounds.right + 2,
+                    right: toolLayoutBounds.right - 2,
+                    top: toolBounds.bottom + 2,
+                    bottom: toolLayoutBounds.bottom - 2,
+                  },
+                  'Mixed fixture authored-layout-only region'
+                )
+              );
+            } else {
+              throw new Error('Mixed snapshot has no attachment');
+            }
+
+            const stackBounds = stack.getBoundingClientRect();
+            const stackStyles = getComputedStyle(stack);
+            const base = stackCards.find((card) => card.role === 'base');
+            if (!base) throw new Error('Mixed wrapper lacks its base');
+            return {
+              cards: stackCards.map((card) => {
+                const painted = paintedBounds.get(card.role);
+                const untransformed = untransformedBounds.get(card.role);
+                if (!painted || !untransformed) {
+                  throw new Error(`Mixed ${card.role} bounds are missing`);
+                }
+                const styles = getComputedStyle(card.image);
+                const matrix = new DOMMatrixReadOnly(styles.transform);
+                return {
+                  id: card.image.dataset.legacyMixedAttachmentCardId ?? '',
+                  role: card.role,
+                  currentCategory: card.currentCategory,
+                  frameLocalBounds: rect(painted),
+                  untransformedFrameLocalBounds: rect(untransformed),
+                  naturalWidth: card.image.naturalWidth,
+                  naturalHeight: card.image.naturalHeight,
+                  clientWidth: card.image.clientWidth,
+                  clientHeight: card.image.clientHeight,
+                  offsetWidth: card.image.offsetWidth,
+                  offsetHeight: card.image.offsetHeight,
+                  computedWidthPx: Number.parseFloat(styles.width),
+                  computedHeightPx: Number.parseFloat(styles.height),
+                  localRotationDegrees:
+                    ((Math.atan2(matrix.b, matrix.a) * 180) / Math.PI + 360) %
+                    360,
+                  transformMatrix: {
+                    a: matrix.a,
+                    b: matrix.b,
+                    c: matrix.c,
+                    d: matrix.d,
+                  },
+                  transformOrigin: styles.transformOrigin,
+                  zIndex: Number.parseInt(styles.zIndex, 10) || 0,
+                  inlineLeftPx: Number.parseFloat(card.image.style.left) || 0,
+                  inlineBottomPx:
+                    Number.parseFloat(card.image.style.bottom) || 0,
+                  attached: card.image.attached,
+                  target: card.image.target,
+                  relativeId:
+                    card.image.relative instanceof HTMLImageElement
+                      ? (card.image.relative.dataset
+                          .legacyMixedAttachmentCardId ?? null)
+                      : null,
+                  energyLayer: card.image.energyLayer,
+                  layer: card.image.layer,
+                  domOrdinal: [
+                    ...stack.querySelectorAll<HTMLImageElement>(':scope > img'),
+                  ].indexOf(card.image),
+                  logicalOrdinal: logicalCards.indexOf(card),
+                  sourcePath: new URL(card.image.currentSrc).pathname,
+                };
+              }),
+              stack: {
+                id: stack.dataset.legacyMixedAttachmentStackId ?? '',
+                frameLocalBounds: rect(stackBounds),
+                baseClientWidth: base.image.clientWidth,
+                baseEnergyLayer: base.image.energyLayer,
+                clientWidth: stack.clientWidth,
+                authoredWidthPx: Number.parseFloat(stack.style.width),
+                inlineMarginRight: stack.style.marginRight,
+                inlineMarginLeft: stack.style.marginLeft,
+                computedMarginRightPx:
+                  Number.parseFloat(stackStyles.marginRight) || 0,
+                computedMarginLeftPx:
+                  Number.parseFloat(stackStyles.marginLeft) || 0,
+                childDomOrder: [
+                  ...stack.querySelectorAll<HTMLImageElement>(':scope > img'),
+                ].map(
+                  (image) => image.dataset.legacyMixedAttachmentCardId ?? ''
+                ),
+                logicalOrder: stackCards.map(
+                  (card) => card.image.dataset.legacyMixedAttachmentCardId ?? ''
+                ),
+                hitOrder: Object.fromEntries(
+                  Object.entries(hitPointsFrameLocal).map(([label, point]) => [
+                    label,
+                    idsAt(point),
+                  ])
+                ),
+                hitPointsFrameLocal,
+              },
+              observedWrapperCount: active.querySelectorAll(
+                '[data-legacy-mixed-attachment-stack-id]'
+              ).length,
+              supersededWrapperConnected: supersededStack?.isConnected ?? false,
+            };
+          };
+          const snapshotRemovedCard = (
+            card: FixtureCard,
+            sink: HTMLElement
+          ): RawMixedAttachmentDepartureCase['removedCardAfterDeparture'] => {
+            const styles = getComputedStyle(card.image);
+            const matrix = new DOMMatrixReadOnly(styles.transform);
+            return {
+              id: card.image.dataset.legacyMixedAttachmentCardId ?? '',
+              role: card.role === 'energy' ? 'energy' : 'trainerTool',
+              naturalWidth: card.image.naturalWidth,
+              naturalHeight: card.image.naturalHeight,
+              localRotationDegrees:
+                ((Math.atan2(matrix.b, matrix.a) * 180) / Math.PI + 360) % 360,
+              zIndex: Number.parseInt(styles.zIndex, 10) || 0,
+              inlineLeftPx: Number.parseFloat(card.image.style.left) || 0,
+              inlineBottomPx: Number.parseFloat(card.image.style.bottom) || 0,
+              attached: card.image.attached,
+              target: card.image.target,
+              relativeId: null,
+              energyLayer: card.image.energyLayer,
+              layer: card.image.layer,
+              sourcePath: new URL(card.image.currentSrc).pathname,
+              sinkConnected: sink.isConnected,
+              parentIsDepartureSink: card.image.parentElement === sink,
+            };
+          };
+          const cleanup = (sink: HTMLElement): LegacyFixtureCleanup => {
+            const result = {
+              observedWrapperCount: active.querySelectorAll(
+                '[data-legacy-mixed-attachment-stack-id]'
+              ).length,
+              observedCardCount: body.querySelectorAll(
+                '[data-legacy-mixed-attachment-card-id]'
+              ).length,
+              sinkConnected: sink.isConnected,
+            };
+            return result;
+          };
+          const cardId = (prefix: string, role: LegacyMixedAttachmentRole) =>
+            `${prefix}-${role === 'trainerTool' ? 'trainer-tool' : role}`;
+          const buildCards = async (prefix: string, sink: HTMLElement) => {
+            const base = makeCard(
+              cardId(prefix, 'base'),
+              'base',
+              'Pokémon',
+              sink
+            );
+            const energy = makeCard(
+              cardId(prefix, 'energy'),
+              'energy',
+              'Energy',
+              sink
+            );
+            const trainerTool = makeCard(
+              cardId(prefix, 'trainerTool'),
+              'trainerTool',
+              'Trainer',
+              sink
+            );
+            await Promise.all(
+              [base, energy, trainerTool].map((card) => card.image.decode())
+            );
+            return { base, energy, trainerTool };
+          };
+
+          const attachmentCases: RawMixedAttachmentOrderCase[] = [];
+          for (const order of [
+            'energyThenTrainer',
+            'trainerThenEnergy',
+          ] as const) {
+            active.replaceChildren();
+            const sink = document.createElement('div');
+            sink.dataset.legacyMixedAttachmentSink = order;
+            body.append(sink);
+            const prefix = `${input.side}-${order === 'energyThenTrainer' ? 'energy-trainer' : 'trainer-energy'}`;
+            const cards = await buildCards(prefix, sink);
+            const logicalCards: FixtureCard[] = [cards.base];
+            const stackId = `${prefix}-mixed-stack`;
+            const stack = makeStack(stackId);
+            stack.append(cards.base.image);
+            const attachTrace: LegacyMixedAttachmentAttachTraceEntry[] = [];
+            const orderedAttachments =
+              order === 'energyThenTrainer'
+                ? [cards.energy, cards.trainerTool]
+                : [cards.trainerTool, cards.energy];
+            const first = orderedAttachments[0];
+            const second = orderedAttachments[1];
+            if (!first || !second) {
+              throw new Error('Mixed attachment order is incomplete');
+            }
+            logicalCards.push(first);
+            attachCard(
+              logicalCards,
+              first,
+              cards.base,
+              stack,
+              attachTrace,
+              true
+            );
+            const postFirstAttachment = snapshot(stack, logicalCards, null);
+            logicalCards.push(second);
+            attachCard(
+              logicalCards,
+              second,
+              cards.base,
+              stack,
+              attachTrace,
+              true
+            );
+            const immediatePostSecondAttachment = snapshot(
+              stack,
+              logicalCards,
+              null
+            );
+            const refresh = reconstruct(logicalCards, stack, stackId);
+            const synchronousPostRefresh = snapshot(
+              refresh.nextStack,
+              logicalCards,
+              stack
+            );
+            await twoAnimationFrames();
+            refresh.observer.disconnect();
+            const stablePostRefresh = snapshot(
+              refresh.nextStack,
+              logicalCards,
+              stack
+            );
+            refresh.nextStack.remove();
+            sink.remove();
+            attachmentCases.push({
+              id: `${prefix}-attachment-order`,
+              order,
+              postFirstAttachment,
+              immediatePostSecondAttachment,
+              synchronousPostRefresh,
+              stablePostRefresh,
+              immediateAttachTrace: attachTrace,
+              refreshAttachTrace: refresh.trace,
+              cleanup: cleanup(sink),
+            });
+          }
+
+          const departureCases: RawMixedAttachmentDepartureCase[] = [];
+          for (const removedRole of ['energy', 'trainerTool'] as const) {
+            active.replaceChildren();
+            const sink = document.createElement('div');
+            sink.dataset.legacyMixedAttachmentSink = `remove-${removedRole}`;
+            body.append(sink);
+            const prefix = `${input.side}-remove-${removedRole === 'trainerTool' ? 'trainer-tool' : 'energy'}`;
+            const cards = await buildCards(prefix, sink);
+            const logicalCards: FixtureCard[] = [cards.base];
+            const stackId = `${prefix}-mixed-stack`;
+            const initialStack = makeStack(stackId);
+            initialStack.append(cards.base.image);
+            const ignoredTrace: LegacyMixedAttachmentAttachTraceEntry[] = [];
+            for (const card of [cards.energy, cards.trainerTool]) {
+              logicalCards.push(card);
+              attachCard(
+                logicalCards,
+                card,
+                cards.base,
+                initialStack,
+                ignoredTrace,
+                true
+              );
+            }
+            const initialRefresh = reconstruct(
+              logicalCards,
+              initialStack,
+              stackId
+            );
+            await twoAnimationFrames();
+            initialRefresh.observer.disconnect();
+            const stablePreDeparture = snapshot(
+              initialRefresh.nextStack,
+              logicalCards,
+              initialStack
+            );
+            const removed =
+              removedRole === 'energy' ? cards.energy : cards.trainerTool;
+            const removedIndex = logicalCards.indexOf(removed);
+            if (removedIndex < 0) {
+              throw new Error('Mixed departure card is missing');
+            }
+            logicalCards.splice(removedIndex, 1);
+            updateAttachedCardsPosition(logicalCards, removed);
+            decreaseCardLayer(removed);
+            resetImage(removed.image);
+            sink.append(removed.image);
+            const removedCardAfterDeparture = snapshotRemovedCard(
+              removed,
+              sink
+            );
+            const transientPostDeparture = snapshot(
+              initialRefresh.nextStack,
+              logicalCards,
+              null
+            );
+            const refresh = reconstruct(
+              logicalCards,
+              initialRefresh.nextStack,
+              stackId
+            );
+            const synchronousPostRefresh = snapshot(
+              refresh.nextStack,
+              logicalCards,
+              initialRefresh.nextStack
+            );
+            await twoAnimationFrames();
+            refresh.observer.disconnect();
+            const stablePostRefresh = snapshot(
+              refresh.nextStack,
+              logicalCards,
+              initialRefresh.nextStack
+            );
+            refresh.nextStack.remove();
+            sink.remove();
+            departureCases.push({
+              id: `${prefix}-departure`,
+              removedRole,
+              stablePreDeparture,
+              removedCardAfterDeparture,
+              transientPostDeparture,
+              synchronousPostRefresh,
+              stablePostRefresh,
+              cleanup: cleanup(sink),
+            });
+          }
+          return { attachmentCases, departureCases };
+        },
+        { side }
+      );
+    rawAttachmentCases.push(
+      ...captured.attachmentCases.map((value) => ({ side, value }))
+    );
+    rawDepartureCases.push(
+      ...captured.departureCases.map((value) => ({ side, value }))
+    );
+  }
+
+  const physicalRect = (
+    side: LegacyFixtureSide,
+    bounds: CapturedRect
+  ): CapturedRect =>
+    side === 'local'
+      ? {
+          x: frames.local.x + bounds.x,
+          y: frames.local.y + bounds.y,
+          width: bounds.width,
+          height: bounds.height,
+        }
+      : {
+          x:
+            frames.opponent.x + frames.opponent.width - bounds.x - bounds.width,
+          y:
+            frames.opponent.y +
+            frames.opponent.height -
+            bounds.y -
+            bounds.height,
+          width: bounds.width,
+          height: bounds.height,
+        };
+  const physicalPoint = (
+    side: LegacyFixtureSide,
+    point: CapturedPoint
+  ): CapturedPoint =>
+    side === 'local'
+      ? { x: frames.local.x + point.x, y: frames.local.y + point.y }
+      : {
+          x: frames.opponent.x + frames.opponent.width - point.x,
+          y: frames.opponent.y + frames.opponent.height - point.y,
+        };
+  const convertPhase = (
+    side: LegacyFixtureSide,
+    phase: RawMixedAttachmentPhase
+  ): LegacyMixedAttachmentFixturePhase => ({
+    ...phase,
+    cards: phase.cards.map((card) => ({
+      ...card,
+      side,
+      physicalBounds: physicalRect(side, card.frameLocalBounds),
+      untransformedPhysicalBounds: physicalRect(
+        side,
+        card.untransformedFrameLocalBounds
+      ),
+      effectiveRotationDegrees:
+        (card.localRotationDegrees + frameTransforms[side].rotationDegrees) %
+        360,
+    })),
+    stack: {
+      ...phase.stack,
+      side,
+      physicalBounds: physicalRect(side, phase.stack.frameLocalBounds),
+      hitPointsPhysical: Object.fromEntries(
+        Object.entries(phase.stack.hitPointsFrameLocal).map(
+          ([label, point]) => [label, physicalPoint(side, point)]
+        )
+      ),
+    },
+  });
+  const attachmentCases = rawAttachmentCases.map(
+    ({ side, value }): LegacyMixedAttachmentOrderFixtureCase => ({
+      ...value,
+      side,
+      postFirstAttachment: convertPhase(side, value.postFirstAttachment),
+      immediatePostSecondAttachment: convertPhase(
+        side,
+        value.immediatePostSecondAttachment
+      ),
+      synchronousPostRefresh: convertPhase(side, value.synchronousPostRefresh),
+      stablePostRefresh: convertPhase(side, value.stablePostRefresh),
+    })
+  );
+  const departureCases = rawDepartureCases.map(
+    ({ side, value }): LegacyMixedAttachmentDepartureFixtureCase => ({
+      ...value,
+      side,
+      stablePreDeparture: convertPhase(side, value.stablePreDeparture),
+      removedCardAfterDeparture: {
+        ...value.removedCardAfterDeparture,
+        side,
+        effectiveRotationDegrees:
+          (value.removedCardAfterDeparture.localRotationDegrees +
+            frameTransforms[side].rotationDegrees) %
+          360,
+      },
+      transientPostDeparture: convertPhase(side, value.transientPostDeparture),
+      synchronousPostRefresh: convertPhase(side, value.synchronousPostRefresh),
+      stablePostRefresh: convertPhase(side, value.stablePostRefresh),
+    })
+  );
+
+  requireServedPaths(loaded, containedCardFixtureAssetPaths);
+  requireNoUnexpectedSameOriginPaths(loaded);
+  return {
+    frames,
+    frameTransforms,
+    attachmentCases,
+    departureCases,
     sourceFulfillment: sourceFulfillment(loaded),
   };
 };

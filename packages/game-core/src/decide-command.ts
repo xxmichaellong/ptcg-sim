@@ -4,6 +4,7 @@ import type {
   GameCommand,
   WorkAreaCardsDestination,
 } from './commands.js';
+import { orderAttachmentCardIdsV1 } from './attachment-order.js';
 import { playerZoneId, stadiumZoneId } from './create-match.js';
 import type { DomainEvent } from './events.js';
 import { asWorkAreaId, type CardInstanceId, type PlayerId } from './ids.js';
@@ -941,13 +942,29 @@ export const decideCommand = (
             'Target stack no longer exists on this board'
           );
         }
+        if (card.currentCategory !== 'Pokémon') {
+          return accept({
+            type: 'CardAttachedToPlayStack',
+            cardId: card.id,
+            expectedSourceZoneId: command.expectedSourceZoneId,
+            boardPlayerId: command.boardPlayerId,
+            stackId: stack.id,
+            attachmentOrderVersion: 1,
+            expectedAttachmentCardIds: [...stack.attachmentCardIds],
+            attachmentCardIds: orderAttachmentCardIdsV1(
+              state.cards,
+              stack.attachmentCardIds,
+              card.id
+            ),
+          });
+        }
         return accept({
           type: 'CardMovedToPlay',
           cardId: card.id,
           expectedSourceZoneId: command.expectedSourceZoneId,
           boardPlayerId: command.boardPlayerId,
           slot: stack.slot,
-          mode: card.currentCategory === 'Pokémon' ? 'evolution' : 'attachment',
+          mode: 'evolution',
           stackId: stack.id,
           benchIndex: board.benchStackIds.indexOf(stack.id),
           previousActiveToBench: false,
@@ -2061,14 +2078,26 @@ export const decideCommand = (
             concealIdentity: command.face === 'down',
           })
         : reject('not_found', `Card ${command.cardId} does not exist`);
-    case 'SetCardCategory':
-      return state.cards[command.cardId]
-        ? accept({
-            type: 'CardCategorySet',
-            cardId: command.cardId,
-            category: command.category,
-          })
-        : reject('not_found', `Card ${command.cardId} does not exist`);
+    case 'SetCardCategory': {
+      if (!state.cards[command.cardId]) {
+        return reject('not_found', `Card ${command.cardId} does not exist`);
+      }
+      const location = findCardLocation(state, command.cardId);
+      if (
+        location?.kind === 'stackEvolution' ||
+        location?.kind === 'stackAttachment'
+      ) {
+        return reject(
+          'precondition_failed',
+          'Play-stack category changes require semantic departure'
+        );
+      }
+      return accept({
+        type: 'CardCategorySet',
+        cardId: command.cardId,
+        category: command.category,
+      });
+    }
     case 'SetPublicReveal': {
       const actorError = requirePlayer(state, command.actorPlayerId);
       if (actorError) return actorError;

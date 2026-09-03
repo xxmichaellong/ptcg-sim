@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 692 v2 tests across 105 files. A separate suite
-passes 16 Playwright checks across eight Chromium 151 browser files:
+The repository-wide gate passes 705 v2 tests across 107 files. A separate suite
+passes 17 Playwright checks across nine Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -414,7 +414,22 @@ passes 16 Playwright checks across eight Chromium 151 browser files:
     category-history interactions, evolution/base departure, restore,
     bench/flex variants, rotation, alternate layouts/assets, Pixi paint/hit,
     and network behavior remain excluded.
-14. The selected DOM implementation completes 100 mount → clear/reset → destroy
+14. An eighth source-only Chromium capture constructs four independent mixed
+    attachment histories—both Energy/Trainer ingress orders in both physical
+    frames—and four independent departure histories—remove either attachment
+    in both frames. Both orders settle to logical `[base, Energy, Trainer]`, DOM
+    `[base, Trainer, Energy]`, z `[0, -1, -2]`, 91/6 and 2×91/6 px source
+    offsets, a 121.333 px wrapper, and the Tool's 90-degree local turn plus `2%`
+    right margin. It also records native hit order, the Trainer-first recursive
+    detach/reattach and 14.8333 px Energy drift, survivor compaction, stale
+    departure margin, synchronous ghost wrapper, removed-card reset, and real
+    observer cleanup. Departure settles to the existing single-Energy or
+    single-Tool source geometry. This evidence does not add a renderer-contract
+    helper, scene path, candidate comparison, or mixed production claim;
+    reverse/unsupported histories, staging/work-area restoration or deck-top
+    swaps, whole-stack swaps, broader overflow, and Pixi parity remain generic,
+    noncanonical, or deferred.
+15. The selected DOM implementation completes 100 mount → clear/reset → destroy
     cycles on one warmed route-owned host with the exact status sequence,
     complete scene IDs at mount, zero rendered scene children/IDs after clear and
     destroy, zero non-DOM diagnostic resources, and post-GC Chromium
@@ -441,7 +456,11 @@ single-Energy comparison in
 source-backed Trainer-as-Tool comparison in
 `tests/browser/legacy-trainer-tool-attachment-reflow-geometry.spec.ts`, and the
 source-backed stable two-Energy comparison plus departure capture in
-`tests/browser/legacy-two-energy-attachment-compaction-geometry.spec.ts`.
+`tests/browser/legacy-two-energy-attachment-compaction-geometry.spec.ts`, and
+the separate source-only mixed Energy/Trainer order and departure check in
+`tests/browser/legacy-mixed-energy-trainer-tool-attachment-order-geometry.spec.ts`.
+The latter validates its checked-in numeric oracle but mounts no candidate
+renderer.
 Standard
 Linux CI can install Playwright's pinned Chromium build. This NixOS workspace
 used the Nix Chromium 151 package through `PTCGSIM_CHROMIUM_PATH`, because Playwright's

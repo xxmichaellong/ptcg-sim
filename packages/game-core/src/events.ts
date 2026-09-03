@@ -135,6 +135,21 @@ export type DomainEvent =
       readonly previousActiveToBench: boolean;
     }
   | {
+      /**
+       * Versioned attachment semantics. Older CardMovedToPlay/attachment
+       * events retain append-only replay behavior; newly decided attachment
+       * moves carry both the exact prior order and v1-computed destination.
+       */
+      readonly type: 'CardAttachedToPlayStack';
+      readonly cardId: CardInstanceId;
+      readonly expectedSourceZoneId: ZoneId;
+      readonly boardPlayerId: PlayerId;
+      readonly stackId: StackId;
+      readonly attachmentOrderVersion: 1;
+      readonly expectedAttachmentCardIds: readonly CardInstanceId[];
+      readonly attachmentCardIds: readonly CardInstanceId[];
+    }
+  | {
       readonly type: 'CardMovedFromStack';
       readonly cardId: CardInstanceId;
       readonly expectedStackId: StackId;

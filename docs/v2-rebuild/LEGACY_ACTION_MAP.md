@@ -121,6 +121,24 @@ layout. `MoveStagedCard` resolves staged cards individually when no Pokémon
 remains to restore. An occupied work area rejects another dependent-producing
 departure but does not block an independent single-card stack departure.
 
+Ordinary direct non-Pokémon ingress onto an existing live stack now emits the
+versioned `CardAttachedToPlayStack` event. `attachmentOrderVersion: 1` freezes
+the observed incoming-card rule: Trainer appends; incoming Energy stable-
+partitions only a fully supported Energy/Trainer result, preserving relative
+arrival order inside both categories; unsupported membership retains append
+order. The event carries and validates the exact prior and destination lists.
+Older `CardMovedToPlay` attachment events remain append-only during replay, so
+historical reverse order is not rewritten merely by loading it.
+
+`SetCardCategory` is prohibited while the target is an evolution or attachment
+member of a live stack. Such a category change must first perform a semantic
+departure. Restoration from staging, attachment-resolution work areas, and
+whole-stack active/bench swaps preserve recorded order and do not run the
+ordinary-ingress rule. Work-area/deck-top swaps preserve the selected logical
+position rather than normalizing the surrounding staged list. Reverse and
+unsupported histories remain noncanonical or deferred. This domain
+normalization does not claim a production mixed Energy/Trainer renderer.
+
 Whole-stack active/bench movement uses a separate atomic layout command for
 promotion, demotion, swapping, and bench reordering, including v1's asymmetric
 no-target append behavior and automatic swap when active moves onto a lone

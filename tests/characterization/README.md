@@ -82,3 +82,33 @@ attachments, three or more Energy, category history, evolution or base
 departures, staged restore, bench/flex contention, markers, BREAK/rotation,
 alternate layouts and assets, destination UX, candidate click/drag behavior,
 and server/network behavior remain excluded.
+
+`legacy-mixed-energy-trainer-tool-attachment-order-geometry.spec.ts` checks the
+source-only
+`tests/legacy-fixtures/renderer/mixed-energy-trainer-tool-attachment-order-v1.json`
+without selecting a production renderer path. Four independent attachment
+histories cover Energy-then-Trainer and
+Trainer-then-Energy on the local and opponent active stacks; four more histories
+start from the same stable mixed stack and independently remove the Energy or
+the current-category Trainer-as-Tool on each side. Both attachment orders settle
+to logical `[base, Energy, Trainer]`, DOM `[base, Trainer, Energy]`, and source z
+`[0, -1, -2]`. With the 90.5625×126 px source card and its 91 px integer
+`clientWidth`, the stable offsets are `91 / 6 = 15.1667` px and
+`2 * 91 / 6 = 30.3333` px, the authored wrapper width is `121.333` px, and the
+Tool retains its 90-degree local turn and `2%` right wrapper margin. The
+opponent frame applies its enclosing half-turn, so effective rotations are
+`[180, 180, 270]` rather than changing the frame-local layout.
+
+The capture also keeps mutation-history diagnostics out of the parity contract.
+Trainer-first/Energy-second briefly moves the Energy to `14.8333` px while the
+Tool is recursively detached and reattached; Energy departure applies the same
+`parseInt` drift to the surviving Tool, and Tool departure temporarily leaves
+its old wrapper margin behind. Refresh reconstructs the respective strict
+single-Tool or single-Energy source state, first with the superseded wrapper
+still connected and then with one wrapper after the real MutationObserver
+settles. Removed cards are reset in an independent sink, and every case records
+zero fixture cards/wrappers after cleanup. These phases are diagnostic only.
+There is no production mixed renderer claim: mixed stacks, reversed or
+unsupported attachment lists, staged restoration, work-area resolution,
+deck-top or active/bench swaps, broader overflow/flex competition, and Pixi
+parity remain generic, noncanonical, or deferred as applicable.

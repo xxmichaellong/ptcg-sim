@@ -1,5 +1,6 @@
 import { playerZoneId } from './create-match.js';
 import { cloneMatchState } from './clone.js';
+import { orderAttachmentCardIdsV1 } from './attachment-order.js';
 import type { DomainEvent, EventBatch } from './events.js';
 import type { CardInstanceId, PlayerId, StackId, ZoneId } from './ids.js';
 import {
@@ -1460,6 +1461,63 @@ const applyEventInternal = (
                   abilityUsed: card.abilityUsed,
                 }
               : {}),
+          },
+        },
+        visibility: retireVisibility(
+          state,
+          new Set([event.cardId]),
+          new Set([event.cardId])
+        ),
+      };
+    }
+    case 'CardAttachedToPlayStack': {
+      if (event.attachmentOrderVersion !== 1) {
+        throw new Error('Unsupported attachment order version');
+      }
+      const source = requireZone(state, event.expectedSourceZoneId);
+      if (!source.cardIds.includes(event.cardId)) {
+        throw new Error(`Card ${event.cardId} is not in expected source zone`);
+      }
+      const card = state.cards[event.cardId];
+      if (!card) throw new Error(`Missing card ${event.cardId}`);
+      if (card.currentCategory === 'Pokémon') {
+        throw new Error('Pokémon cannot use attachment event semantics');
+      }
+      const stack = requireStack(state, event.stackId);
+      if (stack.boardPlayerId !== event.boardPlayerId) {
+        throw new Error('Attachment target belongs to another board');
+      }
+      if (
+        !sameCardOrder(stack.attachmentCardIds, event.expectedAttachmentCardIds)
+      ) {
+        throw new Error('Attachment event has stale card ordering');
+      }
+      const expectedAttachmentCardIds = orderAttachmentCardIdsV1(
+        state.cards,
+        stack.attachmentCardIds,
+        event.cardId
+      );
+      if (!sameCardOrder(event.attachmentCardIds, expectedAttachmentCardIds)) {
+        throw new Error('Attachment event has invalid v1 ordering');
+      }
+      return {
+        ...state,
+        cards: {
+          ...state.cards,
+          [event.cardId]: { ...card, face: 'up' },
+        },
+        zones: {
+          ...state.zones,
+          [source.id]: {
+            ...source,
+            cardIds: source.cardIds.filter((cardId) => cardId !== event.cardId),
+          },
+        },
+        stacks: {
+          ...state.stacks,
+          [stack.id]: {
+            ...stack,
+            attachmentCardIds: [...event.attachmentCardIds],
           },
         },
         visibility: retireVisibility(

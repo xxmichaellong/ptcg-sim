@@ -142,12 +142,16 @@ Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
   stable local/opponent two-Energy boxes at the default 1600×900 DPR-1 sidebar,
   even-split, unflipped state. Tool coverage separates pre-transform and painted
   quarter-turn bounds; the two-Energy path verifies canonical inner/outer z and
-  native hit order. These paths do not yet claim alternate layout states,
-  mixed/three-plus attachments, transition animation or transient departure
-  DOM, markers, BREAK/compound rotation, overflow, Tool-specific Pixi paint
-  parity, full paint or interaction parity, cover-open UX, or opened-zone
-  layout, and the sidebar content rectangle is derived from measured shell/tab
-  edges);
+  native hit order. A separate source-only mixed Energy/Trainer capture covers
+  both ingress orders and both single-attachment departures on both sides,
+  including stable geometry/order and diagnostic reorder, compaction, stale-
+  margin and ghost-wrapper phases; it does not feed a renderer-contract helper
+  or candidate parity gate. These paths do not yet claim alternate layout
+  states, mixed/three-plus production geometry, transition animation or
+  transient departure DOM, markers, BREAK/compound rotation, overflow,
+  Tool-specific Pixi paint parity, full paint or interaction parity, cover-open
+  UX, or opened-zone layout, and the sidebar content rectangle is derived from
+  measured shell/tab edges);
 - all protected pointer, keyboard, menu, zone-browser, replay, reconnect, and
   accessibility workflows;
 - a 120-distinct-asset cache/network test and hidden-image request scan;

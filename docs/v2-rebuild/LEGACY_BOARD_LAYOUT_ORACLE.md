@@ -447,6 +447,58 @@ bench/flex contention, markers, BREAK/rotation, alternate layouts and assets,
 destination UX, candidate click/drag behavior, Pixi paint/hit, and
 server/network behavior remain excluded.
 
+`tests/browser/legacy-mixed-energy-trainer-tool-attachment-order-geometry.spec.ts`
+checks the source-only
+`tests/legacy-fixtures/renderer/mixed-energy-trainer-tool-attachment-order-v1.json`.
+It records four isolated attachment histories—both Energy/Trainer ingress
+orders in the local and opponent active frames—and four isolated departure
+histories—remove Energy or Trainer-as-Tool on each side. This is a checked-in-
+source capture, not a candidate renderer comparison or a new production
+eligibility path.
+
+For the stable three-card source stack, both ingress orders converge on logical
+`[base, Energy, Trainer]`, sibling `[base, Trainer, Energy]`, and z-index
+`[0, -1, -2]`. The captured source asset has a 90.5625×126 px untransformed box
+and a 91 px integer `clientWidth`. Thus Energy and Tool begin at `91 / 6 =
+15.1667` px and `2 * 91 / 6 = 30.3333` px from the base; post-refresh
+`adjustCards` writes `91 + 2 * 91 / 6 = 121.333` px. The Tool sets a `2%`
+right wrapper margin, computed as `7.71875` px at the captured active region,
+and its center-origin quarter-turn swaps its painted box to 126×90.5625 px.
+Frame-local rotations are `[0, 0, 90]`; the opponent enclosure makes their
+physical effective rotations `[180, 180, 270]` and reverses extension direction
+without changing relative layout math.
+
+At the stable checkpoint the shared frame-local wrapper is
+`(x=539.46875, y=31.5, width=121.328125, height=126)`. The base and Energy
+paint at x `539.46875/554.625`, y `31.5`, with 90.5625×126 px bounds. The
+Tool's authored box begins at `(569.796875, 31.5)` with that same size, while
+its rotated painted box is `(552.078125, 49.21875, 126, 90.5625)`. The local
+physical frame adds 450 px to y. The opponent physical frame maps each box by
+`x = 1208 - localX - width` and `y = 450 - localY - height`, then contributes
+the effective half-turn above.
+
+The six sampled stable regions report base-only `[base]`, base/Energy above the
+Tool `[base, Energy]`, Energy above the Tool `[Energy]`, common overlap
+`[base, Energy, Trainer]`, Energy/Tool overlap `[Energy, Trainer]`, and
+Tool-painted-only `[Trainer]`. On Trainer-first ingress, attaching Energy first
+places it at `30.3333` px, then recursive Tool movement compacts it to
+`parseInt(30.3333) - 91 / 6 = 14.8333` px before refresh restores `15.1667` px.
+Energy departure applies the same transient compaction to the surviving Tool;
+Tool departure leaves a stale `2%` margin on the old wrapper until refresh.
+Both departure branches first author an integer-width contraction of
+`121 - 91 / 6 = 105.833` px, reset the removed card, and then converge on the
+already characterized stable single-Tool or single-Energy state. Refresh
+synchronously exposes the superseded empty wrapper and the new wrapper; the
+real MutationObserver settles this to one, and fixture cleanup leaves no cards,
+wrappers, or sink.
+
+Those attach/reorder/departure transients are diagnostic and must not become
+renderer state. There is currently no strict production mixed-stack geometry.
+Mixed stacks continue through generic layout; reverse or unsupported category
+lists are noncanonical; staged restoration, attachment-resolution work areas,
+work-area/deck-top or whole-stack swaps, broader overflow/flex behavior, and
+Pixi parity are deferred.
+
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
 renderer-neutral scene and has structured scene assertions for all four board
@@ -456,7 +508,8 @@ attachment-stack fixture remains source-only; the narrower contained-card,
 ordinary-evolution, single-Energy, Trainer-as-Tool, and stable two-Energy
 fixtures feed and compare their strict production geometries. The two-Energy
 departure phases remain source-only and prove stable convergence to the
-single-Energy source state. Raw normalized/authored inputs, box edges,
+single-Energy source state. The mixed Energy/Trainer fixture remains source-only
+and supplies no strict production branch. Raw normalized/authored inputs, box edges,
 affordances,
 and semantic z evidence remain in the richer characterization snapshot rather
 than being duplicated in

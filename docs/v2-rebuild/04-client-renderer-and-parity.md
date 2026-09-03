@@ -300,6 +300,35 @@ staged restore, bench/flex contention, markers, BREAK/rotation, alternate
 layouts and assets, destination UX, candidate click/drag behavior, Pixi
 paint/hit, and network behavior remain later gates.
 
+An eighth, source-only Chromium capture now isolates the mixed
+one-Energy/one-current-category-Trainer case without broadening those production
+gates. Four fresh attachment histories cover both ingress orders on both
+physical sides, and four fresh departure histories independently remove either
+attachment on both sides. The Trainer-first path exercises the legacy
+Energy-triggered recursive Tool move; both ingress orders settle to logical
+`[base, Energy, Trainer]`, DOM `[base, Trainer, Energy]`, and source z
+`[0, -1, -2]`. The 91 px source `clientWidth` yields stable offsets
+`15.1667/30.3333` px and a `121.333` px authored wrapper. Its `2%` right margin
+is `7.71875` px at this active region; every card retains a 90.5625×126 px
+untransformed box, while the Tool paints as 126×90.5625 px after its 90-degree
+local turn. Opponent placement mirrors through the enclosing half-turn, giving
+effective rotations `[180, 180, 270]`.
+
+The stable hit samples distinguish exact native order in six regions: base-only
+`[base]`, base/Energy above Tool `[base, Energy]`, Energy above Tool `[Energy]`,
+common overlap `[base, Energy, Trainer]`, Energy/Tool overlap
+`[Energy, Trainer]`, and rotated Tool-only paint `[Trainer]`. Diagnostics also
+record the Trainer-first recursive detach/reattach, its temporary `14.8333` px
+Energy offset, the corresponding Tool-survivor drift after Energy departure,
+the stale old-wrapper margin immediately after Tool departure, synchronous
+two-wrapper refresh, reset removed-card state, and observer-settled cleanup.
+Stable departure converges to the existing one-Tool or one-Energy source
+fixture. No mixed renderer-contract helper, scene eligibility branch, DOM/Pixi
+candidate comparison, or transition rendering is claimed. Mixed production
+geometry, reversed/unsupported histories, staged restoration and work-area
+resolution or deck-top swaps, whole-stack swaps, and broader overflow remain
+generic, noncanonical, or deferred.
+
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during
 characterization is represented explicitly instead of assumed to be duplication.
