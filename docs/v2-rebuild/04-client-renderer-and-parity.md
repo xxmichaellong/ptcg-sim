@@ -234,10 +234,27 @@ geometry uses the public 63:88 card ratio, a 90 px CSSOM base width, 15 px
 offset, and 105 px wrapper width rather than leaking source-asset dimensions.
 Chromium matches all four React DOM boxes, rotations, z ranks, and common/
 Energy-only hit order to the live source within 2 px / 1% / 0.1 degrees.
-Trainer-as-Tool, multiple/order-normalized attachments, departure, evolution
-combinations, bench/overflow, rotation, markers, alternate layouts, candidate
-DOM wrapper/order identity, Pixi paint/hit behavior, and input remain explicit
+Multiple/order-normalized attachments, departure, evolution combinations,
+bench/overflow, rotation, markers, alternate layouts, candidate DOM
+wrapper/order identity, Pixi paint/hit behavior, and input remain explicit
 later gates.
+
+A sixth, independent source-only checkpoint isolates the corresponding
+Trainer-as-Tool presentation before any production wiring. Legacy has no
+distinct Tool category: its Tool action assigns the current category
+`Trainer`, and `syncRotation` gives any such attachment an extra 90-degree
+presentation turn plus a `2%` right wrapper margin. The fixture preserves both
+the 90.5625×126 px pre-transform layout box used by attachment reflow and the
+126×90.5625 px painted bounding box, along with transform matrix/origin,
+opponent 270-degree effective rotation, wrapper overflow, z/DOM order, and
+common, Tool-only, base-only, and empty authored-layout hit regions. It also
+pins the same transient two-wrapper cleanup boundary as Energy. Production
+selection is intentionally deferred: shared scene hit and drop helpers still
+treat card bounds as unrotated axis-aligned rectangles, so sideways Tool input
+must become rotation-aware before a strict renderer path can safely claim
+parity. Multiple/mixed attachments, category history, removal/stale margins,
+BREAK or other rotations, bench/layout variants, and input/Pixi behavior remain
+outside this source checkpoint.
 
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during

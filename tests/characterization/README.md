@@ -48,3 +48,16 @@ remain excluded. Its browser companion now compares the exact stable four-card
 boundary with a separately mounted React DOM candidate using public canonical
 card geometry; this does not broaden the source oracle's scope or claim Pixi,
 wrapper-identity, or sibling-order parity.
+
+`legacy-trainer-tool-attachment-reflow-layout.test.ts` pins the corresponding
+source-only current-category `Trainer` presentation as a separate checkpoint.
+It records the shared non-Pokémon `clientWidth / 6` offset plus the
+Trainer-specific 90-degree turn and `2%` right wrapper margin, preserving both
+the authored pre-transform layout box and the transformed painted box. The
+stable oracle also covers rotated paint overflow, z/DOM/hit order, attachment
+state, and observer-settled wrapper cleanup. Production parity is deferred
+because shared scene hit/drop helpers are not yet rotation-aware. Energy and
+mixed/multiple attachments, category history, departure and stale margins,
+evolution, bench/flex competition, markers, BREAK/base rotation, alternate
+layouts, input behavior, candidate renderers, Pixi, and network behavior remain
+excluded.

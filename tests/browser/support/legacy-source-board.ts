@@ -178,6 +178,95 @@ export interface LegacySourceEnergyAttachmentReflowFixture {
   readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
 }
 
+export interface LegacyTrainerToolAttachmentFixtureCard {
+  readonly id: string;
+  readonly side: LegacyFixtureSide;
+  readonly role: 'base' | 'tool';
+  readonly physicalBounds: CapturedRect;
+  readonly frameLocalBounds: CapturedRect;
+  readonly untransformedPhysicalBounds: CapturedRect;
+  readonly untransformedFrameLocalBounds: CapturedRect;
+  readonly naturalWidth: number;
+  readonly naturalHeight: number;
+  readonly clientWidth: number;
+  readonly clientHeight: number;
+  readonly offsetWidth: number;
+  readonly offsetHeight: number;
+  readonly computedWidthPx: number;
+  readonly computedHeightPx: number;
+  readonly localRotationDegrees: number;
+  readonly effectiveRotationDegrees: number;
+  readonly transformMatrix: {
+    readonly a: number;
+    readonly b: number;
+    readonly c: number;
+    readonly d: number;
+  };
+  readonly transformOrigin: string;
+  readonly zIndex: number;
+  readonly inlineLeftPx: number;
+  readonly inlineBottomPx: number;
+  readonly attached: boolean;
+  readonly target: string;
+  readonly relativeId: string | null;
+  readonly energyLayer: number;
+  readonly layer: number;
+  readonly domOrdinal: number;
+  readonly sourcePath: string;
+}
+
+export interface LegacyTrainerToolAttachmentFixtureStack {
+  readonly id: string;
+  readonly side: LegacyFixtureSide;
+  readonly physicalBounds: CapturedRect;
+  readonly frameLocalBounds: CapturedRect;
+  readonly baseClientWidth: number;
+  readonly clientWidth: number;
+  readonly authoredWidthPx: number;
+  readonly attachmentClientWidthsBefore: readonly number[];
+  readonly attachmentAuthoredWidthsPx: readonly number[];
+  readonly inlineMarginRight: string;
+  readonly inlineMarginLeft: string;
+  readonly computedMarginRightPx: number;
+  readonly computedMarginLeftPx: number;
+  readonly transientPostAttach: {
+    readonly logicalOrder: readonly string[];
+    readonly domOrder: readonly string[];
+    readonly clientWidth: number;
+    readonly authoredWidthPx: number;
+    readonly inlineMarginRight: string;
+    readonly computedMarginRightPx: number;
+  };
+  readonly synchronousPostRefreshContainerCount: number;
+  readonly oldContainerConnectedImmediatelyAfterRefresh: boolean;
+  readonly stableContainerCount: number;
+  readonly oldContainerConnected: boolean;
+  readonly childDomOrder: readonly string[];
+  readonly logicalOrder: readonly string[];
+  readonly hitOrder: {
+    readonly commonOverlap: readonly string[];
+    readonly toolOnly: readonly string[];
+    readonly baseOnly: readonly string[];
+    readonly authoredLayoutOnly: readonly string[];
+  };
+  readonly hitPointsFrameLocal: {
+    readonly commonOverlap: { readonly x: number; readonly y: number };
+    readonly toolOnly: { readonly x: number; readonly y: number };
+    readonly baseOnly: { readonly x: number; readonly y: number };
+    readonly authoredLayoutOnly: { readonly x: number; readonly y: number };
+  };
+}
+
+export interface LegacySourceTrainerToolAttachmentReflowFixture {
+  readonly frames: Readonly<Record<LegacyFixtureSide, CapturedRect>>;
+  readonly frameTransforms: Readonly<
+    Record<LegacyFixtureSide, LegacyFrameTransform>
+  >;
+  readonly cards: readonly LegacyTrainerToolAttachmentFixtureCard[];
+  readonly stacks: readonly LegacyTrainerToolAttachmentFixtureStack[];
+  readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
+}
+
 export type LegacyContainedCardKind =
   'deck' | 'discard' | 'lostZone' | 'stadium';
 
@@ -1175,9 +1264,10 @@ const captureCanonicalAttachmentStack = async (
       ),
       oldContainerConnectedImmediatelyAfterRefresh:
         element.dataset.legacyOldContainerConnectedImmediately === 'true',
-      stableContainerCount: element.parentElement?.querySelectorAll(
-        '[data-legacy-canonical-attachment-stack-id]'
-      ).length,
+      stableContainerCount:
+        element.parentElement?.querySelectorAll(
+          '[data-legacy-canonical-attachment-stack-id]'
+        ).length ?? 0,
       oldContainerConnected:
         element.dataset.legacyOldContainerConnected === 'true',
       childDomOrder: [
@@ -1432,6 +1522,537 @@ export const captureLegacySourceEnergyAttachmentReflowFixture = async (
   };
 };
 
+const canonicalTrainerToolFixtureCardIds = (side: LegacyFixtureSide) =>
+  [`${side}-tool-base`, `${side}-tool-attachment`] as const;
+
+const captureCanonicalTrainerToolCard = async (
+  locator: Locator,
+  side: LegacyFixtureSide,
+  role: LegacyTrainerToolAttachmentFixtureCard['role'],
+  frameRotationDegrees: number,
+  frameBounds: CapturedRect
+): Promise<LegacyTrainerToolAttachmentFixtureCard> => {
+  const physicalBounds = await requireRect(
+    locator,
+    `${side} canonical Trainer-as-Tool ${role} card`
+  );
+  const details = await locator.evaluate((element) => {
+    if (!(element instanceof HTMLImageElement)) {
+      throw new Error(
+        'Legacy canonical Trainer-as-Tool target must be an image'
+      );
+    }
+    const legacyImage = element as HTMLImageElement & {
+      attached?: boolean;
+      target?: string;
+      relative?: unknown;
+      energyLayer?: number;
+      layer?: number;
+    };
+    const bounds = element.getBoundingClientRect();
+    const styles = getComputedStyle(element);
+    const transform =
+      styles.transform === 'none'
+        ? new DOMMatrixReadOnly()
+        : new DOMMatrixReadOnly(styles.transform);
+    const computedWidthPx = Number.parseFloat(styles.width);
+    const computedHeightPx = Number.parseFloat(styles.height);
+    const inlineLeftPx = Number.parseFloat(element.style.left) || 0;
+    const inlineBottomPx = Number.parseFloat(element.style.bottom) || 0;
+    const inlineTransform = element.style.transform;
+    let untransformedBounds: DOMRect;
+    try {
+      element.style.transform = 'none';
+      untransformedBounds = element.getBoundingClientRect();
+    } finally {
+      element.style.transform = inlineTransform;
+    }
+    const parentImages = element.parentElement
+      ? [...element.parentElement.querySelectorAll(':scope > img')]
+      : [];
+    return {
+      id: element.dataset.legacyCanonicalTrainerToolCardId ?? '',
+      frameLocalBounds: {
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.width,
+        height: bounds.height,
+      },
+      untransformedFrameLocalBounds: {
+        x: untransformedBounds.x,
+        y: untransformedBounds.y,
+        width: untransformedBounds.width,
+        height: untransformedBounds.height,
+      },
+      naturalWidth: element.naturalWidth,
+      naturalHeight: element.naturalHeight,
+      clientWidth: element.clientWidth,
+      clientHeight: element.clientHeight,
+      offsetWidth: element.offsetWidth,
+      offsetHeight: element.offsetHeight,
+      computedWidthPx,
+      computedHeightPx,
+      localRotationDegrees:
+        ((Math.atan2(transform.b, transform.a) * 180) / Math.PI + 360) % 360,
+      transformMatrix: {
+        a: transform.a,
+        b: transform.b,
+        c: transform.c,
+        d: transform.d,
+      },
+      transformOrigin: styles.transformOrigin,
+      zIndex: Number.parseInt(styles.zIndex, 10) || 0,
+      inlineLeftPx,
+      inlineBottomPx,
+      attached: legacyImage.attached === true,
+      target: legacyImage.target ?? '',
+      relativeId:
+        legacyImage.relative instanceof HTMLImageElement
+          ? (legacyImage.relative.dataset.legacyCanonicalTrainerToolCardId ??
+            null)
+          : null,
+      energyLayer: legacyImage.energyLayer ?? 0,
+      layer: legacyImage.layer ?? 0,
+      domOrdinal: parentImages.indexOf(element),
+      sourcePath: new URL(element.currentSrc).pathname,
+    };
+  });
+  const untransformedPhysicalBounds =
+    side === 'local'
+      ? {
+          x: frameBounds.x + details.untransformedFrameLocalBounds.x,
+          y: frameBounds.y + details.untransformedFrameLocalBounds.y,
+          width: details.untransformedFrameLocalBounds.width,
+          height: details.untransformedFrameLocalBounds.height,
+        }
+      : {
+          x:
+            frameBounds.x +
+            frameBounds.width -
+            details.untransformedFrameLocalBounds.x -
+            details.untransformedFrameLocalBounds.width,
+          y:
+            frameBounds.y +
+            frameBounds.height -
+            details.untransformedFrameLocalBounds.y -
+            details.untransformedFrameLocalBounds.height,
+          width: details.untransformedFrameLocalBounds.width,
+          height: details.untransformedFrameLocalBounds.height,
+        };
+  return {
+    ...details,
+    side,
+    role,
+    physicalBounds,
+    untransformedPhysicalBounds,
+    effectiveRotationDegrees:
+      (details.localRotationDegrees + frameRotationDegrees) % 360,
+  };
+};
+
+const captureCanonicalTrainerToolStack = async (
+  locator: Locator,
+  side: LegacyFixtureSide
+): Promise<LegacyTrainerToolAttachmentFixtureStack> => {
+  const physicalBounds = await requireRect(
+    locator,
+    `${side} canonical Trainer-as-Tool stack`
+  );
+  const details = await locator.evaluate((element) => {
+    if (!(element instanceof HTMLElement)) {
+      throw new Error(
+        'Legacy canonical Trainer-as-Tool stack must be an element'
+      );
+    }
+    const card = (role: 'base' | 'attachment') => {
+      const match = element.querySelector<HTMLImageElement>(
+        `[data-legacy-canonical-trainer-tool-card-id$="-${role}"]`
+      );
+      if (!match) throw new Error(`Missing canonical Trainer-as-Tool ${role}`);
+      return match;
+    };
+    const base = card('base');
+    const tool = card('attachment');
+    const baseBounds = base.getBoundingClientRect();
+    const toolBounds = tool.getBoundingClientRect();
+    const inlineToolTransform = tool.style.transform;
+    let untransformedToolBounds: DOMRect;
+    try {
+      tool.style.transform = 'none';
+      untransformedToolBounds = tool.getBoundingClientRect();
+    } finally {
+      tool.style.transform = inlineToolTransform;
+    }
+    const idsAt = (x: number, y: number) =>
+      document
+        .elementsFromPoint(x, y)
+        .flatMap((candidate) => {
+          const image = candidate.closest<HTMLImageElement>(
+            '[data-legacy-canonical-trainer-tool-card-id]'
+          );
+          return image?.dataset.legacyCanonicalTrainerToolCardId
+            ? [image.dataset.legacyCanonicalTrainerToolCardId]
+            : [];
+        })
+        .filter((id, index, ids) => ids.indexOf(id) === index);
+    const intersection = (rectangles: readonly DOMRect[]) => {
+      const left = Math.max(...rectangles.map((bounds) => bounds.left));
+      const top = Math.max(...rectangles.map((bounds) => bounds.top));
+      const right = Math.min(...rectangles.map((bounds) => bounds.right));
+      const bottom = Math.min(...rectangles.map((bounds) => bounds.bottom));
+      if (right - left <= 2 || bottom - top <= 2) {
+        throw new Error('Trainer-as-Tool overlap lacks a safe interior');
+      }
+      return { left, top, right, bottom };
+    };
+    const common = intersection([baseBounds, toolBounds]);
+    const toolOnly = {
+      left: Math.max(baseBounds.right, untransformedToolBounds.right) + 2,
+      right: toolBounds.right - 2,
+    };
+    if (toolOnly.right - toolOnly.left <= 0) {
+      throw new Error('Trainer-as-Tool-only strip lacks a safe interior');
+    }
+    const baseOnly = {
+      top: baseBounds.top + 2,
+      bottom: toolBounds.top - 2,
+    };
+    if (baseOnly.bottom - baseOnly.top <= 0) {
+      throw new Error('Trainer-as-Tool base-only strip lacks a safe interior');
+    }
+    const authoredLayoutOnly = {
+      left: baseBounds.right + 2,
+      right: untransformedToolBounds.right - 2,
+      top: toolBounds.bottom + 2,
+      bottom: untransformedToolBounds.bottom - 2,
+    };
+    if (
+      authoredLayoutOnly.right - authoredLayoutOnly.left <= 0 ||
+      authoredLayoutOnly.bottom - authoredLayoutOnly.top <= 0
+    ) {
+      throw new Error(
+        'Trainer-as-Tool authored-layout-only region lacks a safe interior'
+      );
+    }
+    const hitPointsFrameLocal = {
+      commonOverlap: {
+        x: (common.left + common.right) / 2,
+        y: (common.top + common.bottom) / 2,
+      },
+      toolOnly: {
+        x: (toolOnly.left + toolOnly.right) / 2,
+        y: toolBounds.top + toolBounds.height / 2,
+      },
+      baseOnly: {
+        x: baseBounds.left + baseBounds.width / 2,
+        y: (baseOnly.top + baseOnly.bottom) / 2,
+      },
+      authoredLayoutOnly: {
+        x: (authoredLayoutOnly.left + authoredLayoutOnly.right) / 2,
+        y: (authoredLayoutOnly.top + authoredLayoutOnly.bottom) / 2,
+      },
+    };
+    const frameLocalBounds = element.getBoundingClientRect();
+    const styles = getComputedStyle(element);
+    return {
+      id: element.dataset.legacyCanonicalTrainerToolStackId ?? '',
+      frameLocalBounds: {
+        x: frameLocalBounds.x,
+        y: frameLocalBounds.y,
+        width: frameLocalBounds.width,
+        height: frameLocalBounds.height,
+      },
+      baseClientWidth: base.clientWidth,
+      clientWidth: element.clientWidth,
+      authoredWidthPx: Number.parseFloat(element.style.width),
+      attachmentClientWidthsBefore: JSON.parse(
+        element.dataset.legacyTrainerToolClientWidthsBefore ?? '[]'
+      ) as number[],
+      attachmentAuthoredWidthsPx: JSON.parse(
+        element.dataset.legacyTrainerToolAuthoredWidths ?? '[]'
+      ) as number[],
+      inlineMarginRight: element.style.marginRight,
+      inlineMarginLeft: element.style.marginLeft,
+      computedMarginRightPx: Number.parseFloat(styles.marginRight) || 0,
+      computedMarginLeftPx: Number.parseFloat(styles.marginLeft) || 0,
+      transientPostAttach: JSON.parse(
+        element.dataset.legacyTransientTrainerToolStage ?? '{}'
+      ) as LegacyTrainerToolAttachmentFixtureStack['transientPostAttach'],
+      synchronousPostRefreshContainerCount: Number.parseInt(
+        element.dataset.legacyTrainerToolSynchronousContainerCount ?? '',
+        10
+      ),
+      oldContainerConnectedImmediatelyAfterRefresh:
+        element.dataset.legacyTrainerToolOldContainerConnectedImmediately ===
+        'true',
+      stableContainerCount:
+        element.parentElement?.querySelectorAll(
+          '[data-legacy-canonical-trainer-tool-stack-id]'
+        ).length ?? 0,
+      oldContainerConnected:
+        element.dataset.legacyTrainerToolOldContainerConnected === 'true',
+      childDomOrder: [
+        ...element.querySelectorAll<HTMLImageElement>(':scope > img'),
+      ].map((image) => image.dataset.legacyCanonicalTrainerToolCardId ?? ''),
+      logicalOrder: JSON.parse(
+        element.dataset.legacyTrainerToolLogicalOrder ?? '[]'
+      ) as string[],
+      hitOrder: {
+        commonOverlap: idsAt(
+          hitPointsFrameLocal.commonOverlap.x,
+          hitPointsFrameLocal.commonOverlap.y
+        ),
+        toolOnly: idsAt(
+          hitPointsFrameLocal.toolOnly.x,
+          hitPointsFrameLocal.toolOnly.y
+        ),
+        baseOnly: idsAt(
+          hitPointsFrameLocal.baseOnly.x,
+          hitPointsFrameLocal.baseOnly.y
+        ),
+        authoredLayoutOnly: idsAt(
+          hitPointsFrameLocal.authoredLayoutOnly.x,
+          hitPointsFrameLocal.authoredLayoutOnly.y
+        ),
+      },
+      hitPointsFrameLocal,
+    };
+  });
+  return { ...details, side, physicalBounds };
+};
+
+/**
+ * Isolates one v1 Trainer attached as a Tool to an active Pokémon across the
+ * immediate attach and stable post-refresh phases. Application modules remain
+ * inert; the DOM/state mutations narrowly transcribe the checked-in sources.
+ */
+export const captureLegacySourceTrainerToolAttachmentReflowFixture = async (
+  page: Page
+): Promise<LegacySourceTrainerToolAttachmentReflowFixture> => {
+  const loaded = await loadLegacySourceBoard(page);
+  for (const [side, frameSelector] of [
+    ['local', '#selfContainer'],
+    ['opponent', '#oppContainer'],
+  ] as const) {
+    await page
+      .frameLocator(frameSelector)
+      .locator('body')
+      .evaluate(
+        async (body, input) => {
+          const makeImage = (id: string) => {
+            const image = document.createElement('img') as HTMLImageElement & {
+              attached: boolean;
+              target: string;
+              relative: HTMLImageElement | number;
+              energyLayer: number;
+              layer: number;
+            };
+            image.dataset.legacyCanonicalTrainerToolCardId = id;
+            image.alt = '';
+            image.src = `${location.origin}/src/assets/cardback.png`;
+            image.style.opacity = '1';
+            image.style.position = 'relative';
+            image.style.bottom = '0%';
+            image.style.zIndex = '0';
+            image.style.left = '0px';
+            image.style.transform = 'rotate(0deg)';
+            image.attached = false;
+            image.target = 'off';
+            image.relative = 0;
+            image.energyLayer = 0;
+            image.layer = 0;
+            return image;
+          };
+          const active = body.querySelector('#active');
+          if (!(active instanceof HTMLElement)) {
+            throw new Error('Legacy canonical active region is missing');
+          }
+          const stack = document.createElement('div');
+          stack.className = 'play-container';
+          stack.style.zIndex = '0';
+          stack.dataset.legacyCanonicalTrainerToolStackId = `${input.side}-canonical-trainer-tool-stack`;
+          const [baseId, toolId] = input.cardIds;
+          const base = makeImage(baseId);
+          const tool = makeImage(toolId);
+          stack.append(base);
+          active.append(stack);
+          await Promise.all([base, tool].map((image) => image.decode()));
+
+          const attachTool = (
+            image: HTMLImageElement,
+            targetStack: HTMLElement,
+            clientWidthsBefore: number[],
+            authoredWidths: number[]
+          ) => {
+            const attachedImage = image as typeof base;
+            attachedImage.attached = true;
+            attachedImage.target = 'on';
+            attachedImage.relative = base;
+            image.style.position = 'absolute';
+            const adjustment = base.clientWidth / 6;
+            base.energyLayer += 1;
+            image.style.left = `${adjustment}px`;
+            image.style.zIndex = String(-base.energyLayer);
+            clientWidthsBefore.push(targetStack.clientWidth);
+            targetStack.style.width = `${Number.parseFloat(String(targetStack.clientWidth)) + adjustment}px`;
+            authoredWidths.push(Number.parseFloat(targetStack.style.width));
+            base.after(image);
+            targetStack.style.marginRight = '2%';
+            image.style.transform = 'rotate(90deg)';
+          };
+          const transientClientWidthsBefore: number[] = [];
+          const transientAuthoredWidths: number[] = [];
+          attachTool(
+            tool,
+            stack,
+            transientClientWidthsBefore,
+            transientAuthoredWidths
+          );
+          const transientStyles = getComputedStyle(stack);
+          const transientPostAttach = {
+            logicalOrder: [baseId, toolId],
+            domOrder: [
+              ...stack.querySelectorAll<HTMLImageElement>(':scope > img'),
+            ].map(
+              (image) => image.dataset.legacyCanonicalTrainerToolCardId ?? ''
+            ),
+            clientWidth: stack.clientWidth,
+            authoredWidthPx: Number.parseFloat(stack.style.width),
+            inlineMarginRight: stack.style.marginRight,
+            computedMarginRightPx:
+              Number.parseFloat(transientStyles.marginRight) || 0,
+          };
+
+          const oldStack = stack;
+          const oldStackObserver = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+              const removedNode = mutation.removedNodes[0];
+              if (
+                removedNode?.nodeName === 'IMG' &&
+                oldStack.getElementsByTagName('img').length === 0
+              ) {
+                oldStack.remove();
+              }
+            }
+          });
+          oldStackObserver.observe(oldStack, { childList: true });
+          const stableStack = document.createElement('div');
+          stableStack.className = 'play-container';
+          stableStack.style.zIndex = '0';
+          stableStack.dataset.legacyCanonicalTrainerToolStackId = `${input.side}-canonical-trainer-tool-stack`;
+          base.style.opacity = '1';
+          base.style.position = 'relative';
+          base.style.bottom = '0%';
+          base.style.zIndex = '0';
+          base.style.left = '0px';
+          base.style.transform = 'rotate(0deg)';
+          base.attached = false;
+          base.target = 'off';
+          base.relative = 0;
+          base.energyLayer = 0;
+          base.layer = 0;
+          stableStack.append(base);
+          active.append(stableStack);
+          tool.style.opacity = '1';
+          tool.style.position = 'relative';
+          tool.style.bottom = '0%';
+          tool.style.zIndex = '0';
+          tool.style.left = '0px';
+          tool.style.transform = 'rotate(0deg)';
+          tool.attached = false;
+          tool.target = 'off';
+          tool.relative = 0;
+          tool.energyLayer = 0;
+          tool.layer = 0;
+          const stableClientWidthsBefore: number[] = [];
+          const stableAuthoredWidths: number[] = [];
+          attachTool(
+            tool,
+            stableStack,
+            stableClientWidthsBefore,
+            stableAuthoredWidths
+          );
+          stableStack.style.width = `${base.clientWidth + base.clientWidth / 6}px`;
+          stableStack.dataset.legacyTrainerToolClientWidthsBefore =
+            JSON.stringify(stableClientWidthsBefore);
+          stableStack.dataset.legacyTrainerToolAuthoredWidths =
+            JSON.stringify(stableAuthoredWidths);
+          stableStack.dataset.legacyTransientTrainerToolStage =
+            JSON.stringify(transientPostAttach);
+          stableStack.dataset.legacyTrainerToolLogicalOrder = JSON.stringify([
+            baseId,
+            toolId,
+          ]);
+          stableStack.dataset.legacyTrainerToolSynchronousContainerCount =
+            String(
+              active.querySelectorAll(
+                '[data-legacy-canonical-trainer-tool-stack-id]'
+              ).length
+            );
+          stableStack.dataset.legacyTrainerToolOldContainerConnectedImmediately =
+            String(oldStack.isConnected);
+          await new Promise<void>((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+          );
+          oldStackObserver.disconnect();
+          stableStack.dataset.legacyTrainerToolOldContainerConnected = String(
+            oldStack.isConnected
+          );
+        },
+        { side, cardIds: canonicalTrainerToolFixtureCardIds(side) }
+      );
+  }
+
+  requireServedPaths(loaded, containedCardFixtureAssetPaths);
+  requireNoUnexpectedSameOriginPaths(loaded);
+  const frameTransforms = {
+    local: await captureFrameTransform(page.locator('#selfContainer')),
+    opponent: await captureFrameTransform(page.locator('#oppContainer')),
+  };
+  const frames = {
+    local: await requireRect(page.locator('#selfContainer'), '#selfContainer'),
+    opponent: await requireRect(page.locator('#oppContainer'), '#oppContainer'),
+  };
+  const cards: LegacyTrainerToolAttachmentFixtureCard[] = [];
+  const stacks: LegacyTrainerToolAttachmentFixtureStack[] = [];
+  for (const [side, frameSelector] of [
+    ['local', '#selfContainer'],
+    ['opponent', '#oppContainer'],
+  ] as const) {
+    const frame = page.frameLocator(frameSelector);
+    for (const [id, role] of [
+      [`${side}-tool-base`, 'base'],
+      [`${side}-tool-attachment`, 'tool'],
+    ] as const) {
+      cards.push(
+        await captureCanonicalTrainerToolCard(
+          frame.locator(`[data-legacy-canonical-trainer-tool-card-id="${id}"]`),
+          side,
+          role,
+          frameTransforms[side].rotationDegrees,
+          frames[side]
+        )
+      );
+    }
+    stacks.push(
+      await captureCanonicalTrainerToolStack(
+        frame.locator(
+          `[data-legacy-canonical-trainer-tool-stack-id="${side}-canonical-trainer-tool-stack"]`
+        ),
+        side
+      )
+    );
+  }
+  requireNoUnexpectedSameOriginPaths(loaded);
+  return {
+    frames,
+    frameTransforms,
+    cards,
+    stacks,
+    sourceFulfillment: sourceFulfillment(loaded),
+  };
+};
+
 /**
  * Constructs the one cover image emitted by v1 for each contained pile and
  * records both owner-readable stadium orientations. This is a source-pinned
@@ -1639,7 +2260,7 @@ const captureEvolutionFixtureCard = async (
       attached: image.attached === true,
       target: image.target ?? '',
       relativeId:
-        image.relative && image.relative !== 0
+        image.relative instanceof HTMLImageElement
           ? (image.relative.dataset.legacyEvolutionCardId ?? null)
           : null,
       domOrdinal: domImages.indexOf(image),
@@ -1889,7 +2510,7 @@ export const captureLegacySourceEvolutionReflowFixture = async (
                 attached: image.attached === true,
                 target: image.target,
                 relativeId:
-                  image.relative && image.relative !== 0
+                  image.relative instanceof HTMLImageElement
                     ? (image.relative.dataset.legacyEvolutionCardId ?? null)
                     : null,
                 domOrdinal: domImages.indexOf(image),

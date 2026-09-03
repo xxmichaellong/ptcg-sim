@@ -232,9 +232,9 @@ docs/v2-rebuild/parity-matrix.*
 docs/v2-rebuild/legacy-action-catalog.*
 docs/v2-rebuild/parity-exceptions.md
 tests/legacy-fixtures/{decks,saves,replays,network}/
-tests/legacy-fixtures/renderer/{board-layout-v1,card-stack-layout-v1,contained-card-layout-v1,evolution-reflow-v1,energy-attachment-reflow-v1}.json
-tests/characterization/{legacy-board-layout,legacy-card-stack-layout,legacy-contained-card-layout,legacy-evolution-reflow-layout,legacy-energy-attachment-reflow-layout}.test.ts
-tests/browser/{legacy-dom-geometry,legacy-card-stack-geometry,legacy-contained-card-geometry,legacy-evolution-reflow-geometry,legacy-energy-attachment-reflow-geometry}.spec.ts
+tests/legacy-fixtures/renderer/{board-layout-v1,card-stack-layout-v1,contained-card-layout-v1,evolution-reflow-v1,energy-attachment-reflow-v1,trainer-tool-attachment-reflow-v1}.json
+tests/characterization/{legacy-board-layout,legacy-card-stack-layout,legacy-contained-card-layout,legacy-evolution-reflow-layout,legacy-energy-attachment-reflow-layout,legacy-trainer-tool-attachment-reflow-layout}.test.ts
+tests/browser/{legacy-dom-geometry,legacy-card-stack-geometry,legacy-contained-card-geometry,legacy-evolution-reflow-geometry,legacy-energy-attachment-reflow-geometry,legacy-trainer-tool-attachment-reflow-geometry}.spec.ts
 tests/e2e/legacy-baselines/{screenshots,geometry}/
 tests/e2e/legacy-workflows/
 tests/fixtures/{canonical,views,assets}/

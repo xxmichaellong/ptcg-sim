@@ -356,13 +356,44 @@ boxes, rotations, mapped z ranks `300/299`, and common/Energy-only hit order to
 the source within 2 px / 1% / 0.1 degrees. The renderer list stays back-to-front
 and does not reproduce legacy wrapper or sibling identity.
 
-This result does not cover Trainer-as-Tool rotation/margins, multiple Energy or
-mixed-order normalization, departures/compaction, Pokémon evolution layers or
-Pokémon-classified attachments, bench/flex overflow, markers, BREAK/rotation,
-noncanonical assets, alternate layouts, input, Pixi paint/hit behavior, or
-network behavior. Every structurally detectable excluded card, stack, or layout
-state retains the prior generic scene path; asset shape, input, Pixi paint/hit,
-and network behavior remain uncharacterized rather than eligibility inputs.
+This result does not cover Trainer-as-Tool production parity, multiple Energy
+or mixed-order normalization, departures/compaction, Pokémon evolution layers
+or Pokémon-classified attachments, bench/flex overflow, markers,
+BREAK/rotation, noncanonical assets, alternate layouts, input, Pixi paint/hit
+behavior, or network behavior. Every structurally detectable excluded card,
+stack, or layout state retains the prior generic scene path; asset shape,
+input, Pixi paint/hit, and network behavior remain uncharacterized rather than
+eligibility inputs.
+
+`tests/browser/legacy-trainer-tool-attachment-reflow-geometry.spec.ts` adds a
+sixth, source-only card checkpoint with its own digest-pinned
+`trainer-tool-attachment-reflow-v1.json`. It isolates the legacy convention in
+which the Tool UI action assigns category `Trainer`; any current-category
+Trainer attached to an ordinary active Pokémon receives the non-Pokémon
+`clientWidth / 6` offset and z decrement, then `syncRotation` adds a 90-degree
+presentation turn and writes `margin-right: 2%` on the wrapper. The stable
+wrapper retains the same 91 px integer base width and 106.167 px authored width
+as the single-Energy case, but its computed 7.71875 px margin shifts the
+centered stack.
+
+The Tool checkpoint explicitly separates the pre-transform 90.5625×126 px
+layout box from the 126×90.5625 px painted bounding box. It records the local
+90-degree and opponent-effective 270-degree rotations, transform matrix and
+origin, rotated overflow beyond the wrapper, `[base, tool]` logical/DOM/z hit
+priority, exposed Tool-only and base-only regions, and a portion of the
+authored Tool layout rectangle containing no painted card. Stable geometry is
+accepted only after the synchronous two-wrapper refresh state settles to one
+wrapper through the legacy MutationObserver.
+
+This is deliberately not a production geometry claim. `CardSceneNode.bounds`
+is currently both a pre-transform paint box and an axis-aligned input box, while
+the shared hit/drop helpers do not account for rotation. A later production
+slice must make shared interaction rotation-aware (or introduce an explicit
+separate hit shape) before rendering a sideways Tool through the narrow parity
+gate. Energy/mixed ordering, multiple attachments, departures and stale
+margins, category history, evolution, bench/flex variants, markers, BREAK/base
+rotation, alternate layouts, input behavior itself, and Pixi parity remain
+excluded.
 
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
@@ -371,7 +402,8 @@ oracle fixtures, including asymmetric resize, flipped ownership, midpoint
 shared placement, compact and fullscreen states. The controlled hand/bench/
 attachment-stack fixture remains source-only; the narrower contained-card,
 ordinary-evolution, and single-Energy fixtures feed and compare their strict
-production geometries. Raw normalized/authored inputs, box edges, affordances,
+production geometries; Trainer-as-Tool remains source-only until rotated input
+geometry is resolved. Raw normalized/authored inputs, box edges, affordances,
 and semantic z evidence remain in the richer characterization snapshot rather
 than being duplicated in
 `BoardScene`. Real-browser measurements for additional layout states,
