@@ -166,6 +166,27 @@ screenshot paint parity remain explicit expansions; these checkpoints do not
 replace the production layout. See
 [`LEGACY_BOARD_LAYOUT_ORACLE.md`](./LEGACY_BOARD_LAYOUT_ORACLE.md).
 
+A third source-backed checkpoint now covers the contained image path used by
+deck, discard, lost-zone, and stadium cards. The renderer contract maximally
+fits the public canonical card ratio in each source-derived content rectangle,
+centers it on the inline axis, resolves upper-frame/stadium transforms to a
+physical start/end edge, and exposes only the source-defined pile top to input:
+deck index zero, discard/lost-zone last index, and the only stadium card.
+Covered scene nodes are retained for stable reconciliation but are disabled and
+paint below the cover; closed cover piles do not paint ability markers. Stadium
+orientation composes recipient-visible card orientation with owner-versus-
+bottom readability, and malformed foreign-owner or multi-card stadium views
+fail closed. No definition dimensions enter recipient projections.
+
+`contained-card-layout-v1.json` digest-pins the legacy source for those claims.
+Chromium measures both player covers and both owner-readable stadium states,
+then compares all six covers and the bottom-owner stadium against the React DOM
+candidate within 2 px / 1% / 0.1 degrees. The top-owner candidate stadium path
+is unit-tested but not yet browser-compared. Exact cover-click/open-zone UX,
+opened-zone layout, undersized/noncanonical asset no-upscale behavior, removal
+of retained covered renderer nodes, Pixi geometry, and 90/270-degree hit boxes
+remain explicit gates.
+
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during
 characterization is represented explicitly instead of assumed to be duplication.

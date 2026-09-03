@@ -248,12 +248,53 @@ observational only: it does not authorize adding secret definition dimensions
 to recipient projections. Until a safe asset-metadata boundary exists,
 production scene geometry must remain a function of recipient-visible inputs.
 
+The next bounded card slice is implemented by
+`layoutLegacyContainedCard` and `legacyPileTopIndex`. It covers the optional
+image in each deck/discard/lost-zone cover and the shared stadium:
+
+- cover images use the legacy `object-fit: contain` constraints; the stadium
+  reaches the same intrinsic-ratio element box through auto sizing and maximum
+  width/height rather than an authored `object-fit` value;
+- inline placement is centered, while physical block placement is start for
+  the lower frame and end after an upper-frame or top-owner-stadium rotation;
+- deck index zero is the cover; discard and lost-zone use their last index;
+  stadium admits at most one card;
+- only that top scene node paints above and accepts input; covered nodes remain
+  present but disabled for stable reconciliation, and cover-pile ability
+  markers remain hidden until an opened-zone presentation exists; and
+- stadium orientation composes a known card's explicit quarter turns with the
+  recipient-visible owner-versus-bottom half-turn.
+
+The production helper intentionally uses the public canonical `63/88` ratio.
+The source fixture's 736×1024 intrinsic size is observational and stays out of
+`MatchViewState`; exact no-upscale behavior for an undersized or custom-ratio
+asset requires a separately designed safe metadata boundary.
+
+`tests/browser/legacy-contained-card-geometry.spec.ts` is the first card-level
+source-to-candidate comparison. Its separate
+`tests/legacy-fixtures/renderer/contained-card-layout-v1.json` manifest pins
+the HTML/CSS/asset plus cover update, deck order, stadium update/flip, and
+ability-marker sources. The deny-by-default Chromium fixture measures six
+player cover images and both owner-readable stadium states. It then compares
+the six covers and bottom-owner stadium against the live React DOM candidate,
+including physical anchors, dimensions, rotation, one enabled/top-painted
+scene node per pile, and disabled covered nodes.
+
+This does not yet prove the legacy cover-click behavior: v1 opens the zone,
+whereas the current candidate's top card still emits its ordinary card intent.
+The source-measured top-owner stadium branch has structured scene tests but no
+candidate-browser comparison. Opened-zone cards/markers, exact one-node cover
+rendering, Pixi geometry, noncanonical or undersized assets, and rotated hit
+regions remain outside this checkpoint.
+
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
 renderer-neutral scene and has structured scene assertions for all four board
 oracle fixtures, including asymmetric resize, flipped ownership, midpoint
-shared placement, compact and fullscreen states. The new card/stack fixture is
-source-only and does not yet feed or validate `BoardScene` card geometry. Raw
+shared placement, compact and fullscreen states. The controlled hand/bench/
+stack fixture is source-only and does not yet feed or validate those
+`BoardScene` card geometries; the narrower contained-card fixture does feed and
+compare cover/stadium geometry. Raw
 normalized/authored inputs, box edges, affordances, and semantic z evidence
 remain in the richer characterization snapshot rather than being duplicated in
 `BoardScene`. Real-browser measurements for additional layout states,

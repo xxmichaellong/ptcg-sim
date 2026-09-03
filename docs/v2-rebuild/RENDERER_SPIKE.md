@@ -65,7 +65,7 @@ Rive, or game-specific systems.
 - semantic intents rather than legacy action names or network payloads;
 - versioned geometry transcribed from the v1 self/opponent CSS;
 - board flip/opponent rotation, the asymmetric legacy free-board placement, and
-  top-index-zero cover ordering;
+  deck-first versus discard/lost-zone-last cover ordering;
 - stable-ID scene diffing and topmost deterministic hit testing;
 - one shared drag gesture state machine with a five-pixel threshold, preserved
   grab offset, stable parent/zone target resolution, cancellation, and
@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 643 v2 tests across 99 files. A separate suite
-passes nine Playwright checks: eight browser-backed Chromium 151 scenarios and
+The repository-wide gate passes 653 v2 tests across 100 files. A separate suite
+passes 10 Playwright checks: nine browser-backed Chromium 151 scenarios and
 one source-digest lock:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
@@ -331,7 +331,17 @@ one source-digest lock:
    expanded-container centering, negative z order,
    `base.after()` DOM reversal, and browser overlap hit order. This does not yet
    claim candidate-renderer card parity or ordinary `evolveCard` reflow parity.
-8. The selected DOM implementation completes 100 mount → clear/reset → destroy
+8. A separate digest-pinned contained-card fixture measures six player cover
+   images and both owner-readable stadium states from the inert legacy source.
+   The live DOM candidate matches both players' deck/discard/lost-zone cards and
+   the bottom-owner stadium within 2 px / 1% / 0.1 degrees, exposes only deck
+   first or discard/lost-zone last to input/top-paint priority, suppresses
+   closed-cover markers, and fails closed for foreign stadium owners or more
+   than one stadium card. The source-measured top-owner candidate branch is
+   unit-tested but not browser-compared; cover-open UX, opened zones, undersized
+   assets, retained covered nodes, Pixi geometry, and quarter-turn hit regions
+   are not claimed.
+9. The selected DOM implementation completes 100 mount → clear/reset → destroy
    cycles on one warmed route-owned host with the exact status sequence,
    complete scene IDs at mount, zero rendered scene children/IDs after clear and
    destroy, zero non-DOM diagnostic resources, and post-GC Chromium
@@ -349,9 +359,10 @@ from happy-DOM lifecycle tests.
 
 The suites live in `tests/browser/renderer-spike.spec.ts`,
 `tests/browser/legacy-dom-geometry.spec.ts`, and
-`tests/browser/legacy-card-stack-geometry.spec.ts`. Standard Linux CI can
-install Playwright's pinned Chromium build. This NixOS workspace used the Nix
-Chromium 151 package through `PTCGSIM_CHROMIUM_PATH`, because Playwright's
+`tests/browser/legacy-card-stack-geometry.spec.ts`, plus the contained-card
+comparison in `tests/browser/legacy-contained-card-geometry.spec.ts`. Standard
+Linux CI can install Playwright's pinned Chromium build. This NixOS workspace
+used the Nix Chromium 151 package through `PTCGSIM_CHROMIUM_PATH`, because Playwright's
 Debian/Ubuntu dependency installer requires `apt-get` and downloaded generic
 ELF binaries cannot directly resolve Nix store libraries.
 

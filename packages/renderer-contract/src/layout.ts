@@ -831,6 +831,85 @@ export const findBoardLayoutRegion = (
   return region;
 };
 
+export type LegacyContainedCardBlockAlignment = 'start' | 'end';
+export type LegacyPileKind = 'deck' | 'discard' | 'lostZone' | 'stadium';
+
+/**
+ * Source-faithful contained element box for cover and stadium images. Covers
+ * explicitly use `object-fit: contain`; stadium images preserve their intrinsic
+ * ratio through auto sizing plus max-width/max-height constraints.
+ * `start`/`end` describe the physical block edge after any enclosing legacy
+ * frame/stadium rotation has been resolved by the caller.
+ *
+ * The legacy browser also refuses to upscale images past their intrinsic pixel
+ * dimensions. MatchViewState intentionally carries no image dimensions, so
+ * production scenes use the public canonical card ratio and assume a normal
+ * card asset large enough to reach one of the container constraints. Exact
+ * small/custom-asset no-upscale behavior remains an asset-metadata gate.
+ */
+export const layoutLegacyContainedCard = (
+  bounds: Rect,
+  intrinsicAspectRatio: number,
+  blockAlignment: LegacyContainedCardBlockAlignment
+): Rect => {
+  if (
+    !Number.isFinite(bounds.x) ||
+    !Number.isFinite(bounds.y) ||
+    !Number.isFinite(bounds.width) ||
+    !Number.isFinite(bounds.height) ||
+    bounds.width <= 0 ||
+    bounds.height <= 0
+  ) {
+    throw new Error(
+      'Contained-card bounds must have finite positive dimensions'
+    );
+  }
+  if (!Number.isFinite(intrinsicAspectRatio) || intrinsicAspectRatio <= 0) {
+    throw new Error('Contained-card aspect ratio must be positive');
+  }
+  if (blockAlignment !== 'start' && blockAlignment !== 'end') {
+    throw new Error('Unsupported contained-card block alignment');
+  }
+
+  const containerAspectRatio = bounds.width / bounds.height;
+  const widthLimited = intrinsicAspectRatio >= containerAspectRatio;
+  const width = widthLimited
+    ? bounds.width
+    : bounds.height * intrinsicAspectRatio;
+  const height = widthLimited
+    ? bounds.width / intrinsicAspectRatio
+    : bounds.height;
+  return {
+    x: bounds.x + (bounds.width - width) / 2,
+    y:
+      blockAlignment === 'start' ? bounds.y : bounds.y + bounds.height - height,
+    width,
+    height,
+  };
+};
+
+/** Returns the legacy card selected for top paint priority and input. */
+export const legacyPileTopIndex = (
+  kind: LegacyPileKind,
+  count: number
+): number | null => {
+  if (!Number.isSafeInteger(count) || count < 0) {
+    throw new Error('Pile card count must be a non-negative integer');
+  }
+  if (kind === 'stadium' && count > 1) {
+    throw new Error('Stadium zone can contain at most one card');
+  }
+  if (count === 0) return null;
+  switch (kind) {
+    case 'deck':
+    case 'stadium':
+      return 0;
+    case 'discard':
+    case 'lostZone':
+      return count - 1;
+  }
+};
+
 /**
  * Source-faithful unadorned card boxes for a non-overflowing active/bench flex
  * row. The caller must exclude expanded attachment widths, Rotation/BREAK

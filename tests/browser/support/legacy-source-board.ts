@@ -112,6 +112,32 @@ export interface LegacySourceCardFixture {
   readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
 }
 
+export type LegacyContainedCardKind =
+  'deck' | 'discard' | 'lostZone' | 'stadium';
+
+export interface LegacyContainedCardFixtureCard {
+  readonly id: string;
+  readonly kind: LegacyContainedCardKind;
+  readonly side: LegacyFixtureSide | 'shared';
+  readonly readableBy: LegacyFixtureSide;
+  readonly physicalBounds: CapturedRect;
+  readonly containerBounds: CapturedRect;
+  readonly naturalWidth: number;
+  readonly naturalHeight: number;
+  readonly localRotationDegrees: number;
+  readonly enclosingRotationDegrees: number;
+  readonly effectiveRotationDegrees: number;
+  readonly objectFit: string;
+  readonly maxWidth: string;
+  readonly maxHeight: string;
+  readonly sourcePath: string;
+}
+
+export interface LegacySourceContainedCardFixture {
+  readonly cards: readonly LegacyContainedCardFixtureCard[];
+  readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
+}
+
 const repositoryRoot = fileURLToPath(new URL('../../../', import.meta.url));
 
 const sourceResponses = {
@@ -394,6 +420,8 @@ const cardFixtureAssetPaths = new Set([
   '/src/assets/blank-logo.png',
 ]);
 
+const containedCardFixtureAssetPaths = new Set(['/src/assets/cardback.png']);
+
 const fixtureCardIds = (side: LegacyFixtureSide) =>
   [
     `${side}-hand-portrait`,
@@ -426,6 +454,54 @@ const captureFrameTransform = async (
       rotationDegrees,
     };
   });
+
+const captureContainedCard = async (
+  locator: Locator,
+  container: Locator,
+  input: Pick<LegacyContainedCardFixtureCard, 'kind' | 'side' | 'readableBy'>,
+  ancestorRotationDegrees = 0
+): Promise<LegacyContainedCardFixtureCard> => {
+  const [physicalBounds, containerBounds, containerTransform] =
+    await Promise.all([
+      requireRect(locator, `${input.side} ${input.kind} contained card`),
+      requireRect(container, `${input.side} ${input.kind} container`),
+      captureFrameTransform(container),
+    ]);
+  const details = await locator.evaluate((element) => {
+    if (!(element instanceof HTMLImageElement)) {
+      throw new Error('Legacy contained-card target must be an image');
+    }
+    const styles = getComputedStyle(element);
+    const transform =
+      styles.transform === 'none'
+        ? new DOMMatrixReadOnly()
+        : new DOMMatrixReadOnly(styles.transform);
+    return {
+      id: element.dataset.legacyContainedCardId ?? '',
+      naturalWidth: element.naturalWidth,
+      naturalHeight: element.naturalHeight,
+      localRotationDegrees:
+        ((Math.atan2(transform.b, transform.a) * 180) / Math.PI + 360) % 360,
+      objectFit: styles.objectFit,
+      maxWidth: styles.maxWidth,
+      maxHeight: styles.maxHeight,
+      sourcePath: new URL(element.currentSrc).pathname,
+    };
+  });
+  return {
+    ...input,
+    ...details,
+    physicalBounds,
+    containerBounds,
+    enclosingRotationDegrees:
+      (ancestorRotationDegrees + containerTransform.rotationDegrees) % 360,
+    effectiveRotationDegrees:
+      (details.localRotationDegrees +
+        ancestorRotationDegrees +
+        containerTransform.rotationDegrees) %
+      360,
+  };
+};
 
 const captureFixtureCard = async (
   locator: Locator,
@@ -780,4 +856,138 @@ export const captureLegacySourceCardFixture = async (
     stacks,
     sourceFulfillment: sourceFulfillment(loaded),
   };
+};
+
+/**
+ * Constructs the one cover image emitted by v1 for each contained pile and
+ * records both owner-readable stadium orientations. This is a source-pinned
+ * DOM transcription: application modules stay inert and no room is contacted.
+ */
+export const captureLegacySourceContainedCardFixture = async (
+  page: Page
+): Promise<LegacySourceContainedCardFixture> => {
+  const loaded = await loadLegacySourceBoard(page);
+  for (const [side, frameSelector] of [
+    ['local', '#selfContainer'],
+    ['opponent', '#oppContainer'],
+  ] as const) {
+    await page
+      .frameLocator(frameSelector)
+      .locator('body')
+      .evaluate(async (body, fixtureSide) => {
+        const resetImageOutput = (image: HTMLImageElement) => {
+          image.style.opacity = '1';
+          image.style.position = 'relative';
+          image.style.bottom = '0%';
+          image.style.zIndex = '0';
+          image.style.left = '0px';
+          image.style.transform = 'rotate(0deg)';
+        };
+        const images: HTMLImageElement[] = [];
+        for (const [kind, selector] of [
+          ['lostZone', '#lostZoneCover'],
+          ['deck', '#deckCover'],
+          ['discard', '#discardCover'],
+        ] as const) {
+          const container = body.querySelector(selector);
+          if (!(container instanceof HTMLElement)) {
+            throw new Error(`Missing legacy contained-card region ${selector}`);
+          }
+          const image = document.createElement('img');
+          image.dataset.legacyContainedCardId = `${fixtureSide}-${kind}-cover`;
+          image.alt = '';
+          image.src = `${location.origin}/src/assets/cardback.png`;
+          resetImageOutput(image);
+          container.replaceChildren(image);
+          images.push(image);
+        }
+        await Promise.all(images.map((image) => image.decode()));
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+        );
+      }, side);
+  }
+
+  const stadiumImage = page.locator('#stadium').evaluate(async (container) => {
+    if (!(container instanceof HTMLElement)) {
+      throw new Error('Missing legacy stadium');
+    }
+    const image = document.createElement('img');
+    image.dataset.legacyContainedCardId = 'shared-stadium';
+    image.alt = '';
+    image.src = `${location.origin}/src/assets/cardback.png`;
+    image.style.opacity = '1';
+    image.style.position = 'relative';
+    image.style.bottom = '0%';
+    image.style.zIndex = '0';
+    image.style.left = '0px';
+    image.style.transform = 'rotate(0deg)';
+    container.replaceChildren(image);
+    await image.decode();
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+    );
+  });
+  await stadiumImage;
+
+  const cards: LegacyContainedCardFixtureCard[] = [];
+  const frameRotations = {
+    local: (await captureFrameTransform(page.locator('#selfContainer')))
+      .rotationDegrees,
+    opponent: (await captureFrameTransform(page.locator('#oppContainer')))
+      .rotationDegrees,
+  };
+  for (const [side, frameSelector] of [
+    ['local', '#selfContainer'],
+    ['opponent', '#oppContainer'],
+  ] as const) {
+    const frame = page.frameLocator(frameSelector);
+    for (const [kind, selector] of [
+      ['lostZone', '#lostZoneCover'],
+      ['deck', '#deckCover'],
+      ['discard', '#discardCover'],
+    ] as const) {
+      cards.push(
+        await captureContainedCard(
+          frame.locator(
+            `[data-legacy-contained-card-id="${side}-${kind}-cover"]`
+          ),
+          frame.locator(selector),
+          { kind, side, readableBy: side },
+          frameRotations[side]
+        )
+      );
+    }
+  }
+
+  const stadium = page.locator('#stadium');
+  const stadiumCard = page.locator(
+    '[data-legacy-contained-card-id="shared-stadium"]'
+  );
+  await stadium.evaluate((element) => {
+    if (!(element instanceof HTMLElement)) return;
+    element.style.transform = 'scaleX(1) scaleY(1)';
+  });
+  cards.push(
+    await captureContainedCard(stadiumCard, stadium, {
+      kind: 'stadium',
+      side: 'shared',
+      readableBy: 'local',
+    })
+  );
+  await stadium.evaluate((element) => {
+    if (!(element instanceof HTMLElement)) return;
+    element.style.transform = 'scaleX(-1) scaleY(-1)';
+  });
+  cards.push(
+    await captureContainedCard(stadiumCard, stadium, {
+      kind: 'stadium',
+      side: 'shared',
+      readableBy: 'opponent',
+    })
+  );
+
+  requireServedPaths(loaded, containedCardFixtureAssetPaths);
+  requireNoUnexpectedSameOriginPaths(loaded);
+  return { cards, sourceFulfillment: sourceFulfillment(loaded) };
 };

@@ -131,9 +131,11 @@ Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
 - source-pinned v1 screenshot and structured geometry parity at the declared
   viewports, split ratios, flip states, themes, and fullscreen mode (the current
   Chromium checkpoint covers all 16 default player-region border/content boxes,
-  the visible stadium, and structural frame/handle/control anchors; it does not
-  yet claim their paint or interaction parity, and the sidebar content rectangle
-  is derived from measured shell/tab edges);
+  structural frame/handle/control anchors, all six contained pile covers, and
+  the bottom-owner stadium; the source also measures the top-owner stadium but
+  that candidate branch is unit-only. It does not yet claim full paint or
+  interaction parity, cover-open UX, or opened-zone layout, and the sidebar
+  content rectangle is derived from measured shell/tab edges);
 - all protected pointer, keyboard, menu, zone-browser, replay, reconnect, and
   accessibility workflows;
 - a 120-distinct-asset cache/network test and hidden-image request scan;

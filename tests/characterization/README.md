@@ -14,3 +14,11 @@ with source digests. Text sources are normalized to LF for portable hashing;
 image fixtures are hashed as raw bytes. The browser harness loads those sources
 through a deny-by-default origin and records CSS geometry without contacting the
 legacy application server.
+
+`legacy-contained-card-layout.test.ts` pins the narrower pile/stadium contract:
+deck-first versus discard/lost-zone-last covers, single-card owner-readable
+stadium orientation, closed-cover marker placement, and the exact HTML/CSS/JS/
+asset sources behind those claims. Its browser companion compares contained
+cover/stadium boxes with the React DOM candidate while retaining explicit
+exclusions for cover-open UX, opened-zone layout, top-owner candidate browser
+parity, undersized assets, Pixi geometry, and rotated hit regions.

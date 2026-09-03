@@ -9,8 +9,10 @@ import {
   findBoardLayoutRegion,
   flipBoardLayoutState,
   LEGACY_BOARD_AFFORDANCES_V1,
+  layoutLegacyContainedCard,
   layoutLegacyPlaySlotCards,
   layoutLegacyPlayStackHitRegions,
+  legacyPileTopIndex,
   legacyResizeHandlesCollide,
   type BoardLayoutState,
 } from './layout.js';
@@ -200,6 +202,80 @@ describe('renderer-neutral legacy board layout', () => {
         LEGACY_BOARD_AFFORDANCES_V1.coverCard
       );
     }
+  });
+
+  it('contains cover/stadium cards, centers inline and honors physical block alignment', () => {
+    const bounds = { x: 10, y: 20, width: 120, height: 100 };
+    expectRectClose(layoutLegacyContainedCard(bounds, 0.5, 'start'), {
+      x: 45,
+      y: 20,
+      width: 50,
+      height: 100,
+    });
+    expectRectClose(layoutLegacyContainedCard(bounds, 1, 'start'), {
+      x: 20,
+      y: 20,
+      width: 100,
+      height: 100,
+    });
+    expectRectClose(layoutLegacyContainedCard(bounds, 2, 'start'), {
+      x: 10,
+      y: 20,
+      width: 120,
+      height: 60,
+    });
+    expectRectClose(layoutLegacyContainedCard(bounds, 2, 'end'), {
+      x: 10,
+      y: 60,
+      width: 120,
+      height: 60,
+    });
+  });
+
+  it('selects the source-defined cover card for each pile kind', () => {
+    expect(legacyPileTopIndex('deck', 0)).toBeNull();
+    expect(legacyPileTopIndex('deck', 4)).toBe(0);
+    expect(legacyPileTopIndex('discard', 4)).toBe(3);
+    expect(legacyPileTopIndex('lostZone', 4)).toBe(3);
+    expect(legacyPileTopIndex('stadium', 1)).toBe(0);
+    expect(() => legacyPileTopIndex('stadium', 2)).toThrow('at most one');
+    expect(() => legacyPileTopIndex('deck', -1)).toThrow(
+      'non-negative integer'
+    );
+    expect(() => legacyPileTopIndex('deck', 1.5)).toThrow(
+      'non-negative integer'
+    );
+  });
+
+  it('fails closed for invalid contained-card inputs', () => {
+    expect(() =>
+      layoutLegacyContainedCard(
+        { x: 0, y: 0, width: 0, height: 100 },
+        CARD_ASPECT_RATIO,
+        'start'
+      )
+    ).toThrow('finite positive dimensions');
+    expect(() =>
+      layoutLegacyContainedCard(
+        { x: Number.NaN, y: 0, width: 100, height: 100 },
+        CARD_ASPECT_RATIO,
+        'start'
+      )
+    ).toThrow('finite positive dimensions');
+    expect(() =>
+      layoutLegacyContainedCard(
+        { x: 0, y: 0, width: 100, height: 100 },
+        Number.POSITIVE_INFINITY,
+        'start'
+      )
+    ).toThrow('aspect ratio');
+    expect(() =>
+      layoutLegacyContainedCard(
+        { x: 0, y: 0, width: 100, height: 100 },
+        CARD_ASPECT_RATIO,
+        'middle' as 'start'
+      )
+    ).toThrow('block alignment');
   });
 
   it('uses outer viewport units for stadium, controls and resize handles', () => {

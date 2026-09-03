@@ -15,8 +15,12 @@ import {
   createBoardLayoutSnapshot,
   findBoardLayoutRegion,
   LEGACY_BOARD_RESIZER_V1,
+  layoutLegacyContainedCard,
+  legacyPileTopIndex,
   type BoardLayoutSnapshot,
   type BoardLayoutState,
+  type LegacyContainedCardBlockAlignment,
+  type LegacyPileKind,
 } from './layout.js';
 import type {
   BoardLayoutOptions,
@@ -214,7 +218,8 @@ const layoutBoardGrid = (bounds: Rect, count: number): Rect[] => {
 const layoutZoneCards = (
   kind: MatchViewState['zones'][string]['kind'],
   bounds: Rect,
-  count: number
+  count: number,
+  containedBlockAlignment: LegacyContainedCardBlockAlignment = 'start'
 ): Rect[] => {
   switch (kind) {
     case 'hand':
@@ -227,11 +232,23 @@ const layoutZoneCards = (
     case 'deck':
     case 'discard':
     case 'lostZone': {
-      const top = fitCard(insetRect(bounds, 1), 1);
+      const top = layoutLegacyContainedCard(
+        bounds,
+        CARD_ASPECT_RATIO,
+        containedBlockAlignment
+      );
       return Array.from({ length: count }, () => top);
     }
   }
 };
+
+const isLegacyPileKind = (
+  kind: MatchViewState['zones'][string]['kind']
+): kind is LegacyPileKind =>
+  kind === 'deck' ||
+  kind === 'discard' ||
+  kind === 'lostZone' ||
+  kind === 'stadium';
 
 const makeCardNode = (
   view: MatchViewState,
@@ -349,13 +366,22 @@ export const createBoardScene = (
   const cards: CardSceneNode[] = [];
   const markers: MarkerSceneNode[] = [];
   const seenCards = new Set<ViewCardId>();
-  const registerCard = (node: CardSceneNode, card: ViewCard) => {
+  const registerCard = (
+    node: CardSceneNode,
+    card: ViewCard,
+    showAbilityMarker = true
+  ) => {
+    if (!projectedPlayers.has(card.ownerId)) {
+      throw new Error(
+        `Projected card owner is not a board player: ${card.ownerId}`
+      );
+    }
     if (seenCards.has(node.id)) {
       throw new Error(`Projected card appears more than once: ${node.id}`);
     }
     seenCards.add(node.id);
     cards.push(node);
-    if (card.kind === 'known' && card.abilityUsed) {
+    if (showAbilityMarker && card.kind === 'known' && card.abilityUsed) {
       addCardAbilityMarker(markers, node);
     }
   };
@@ -405,30 +431,53 @@ export const createBoardScene = (
       ),
       interactive: true,
     });
+    const pileTopIndex = isLegacyPileKind(zone.kind)
+      ? legacyPileTopIndex(zone.kind, zone.cards.length)
+      : null;
+    const containedBlockAlignment: LegacyContainedCardBlockAlignment =
+      zone.kind === 'stadium'
+        ? zone.cards[0]?.ownerId === layout.bottomPlayerId
+          ? 'start'
+          : 'end'
+        : side === 'opponent'
+          ? 'end'
+          : 'start';
     const cardBounds = layoutZoneCards(
       zone.kind,
       contentBounds,
-      zone.cards.length
+      zone.cards.length,
+      containedBlockAlignment
     );
     zone.cards.forEach((card, index) => {
       const cardRect = cardBounds[index];
       if (!cardRect) return;
+      const isPileTop = pileTopIndex === index;
+      const pileZIndex =
+        zone.kind === 'deck' ? 100 + zone.cards.length - index : 100 + index;
+      const stadiumRotation =
+        zone.kind === 'stadium'
+          ? ((card.kind === 'known' ? card.orientationQuarterTurns : 0) +
+              (card.ownerId === layout.bottomPlayerId ? 0 : 2)) %
+            4
+          : undefined;
       registerCard(
         makeCardNode(view, card, {
           parentId: zone.id,
           side,
           role: 'zone',
           bounds: cardRect,
-          zIndex:
-            zone.kind === 'deck' ||
-            zone.kind === 'discard' ||
-            zone.kind === 'lostZone' ||
-            zone.kind === 'stadium'
-              ? 100 + zone.cards.length - index
-              : 100 + index,
-          interactive: true,
+          zIndex: isLegacyPileKind(zone.kind) ? pileZIndex : 100 + index,
+          interactive: isLegacyPileKind(zone.kind) ? isPileTop : true,
+          ...(stadiumRotation === undefined
+            ? {}
+            : {
+                rotationQuarterTurns: stadiumRotation as QuarterTurns,
+              }),
         }),
-        card
+        card,
+        zone.kind !== 'deck' &&
+          zone.kind !== 'discard' &&
+          zone.kind !== 'lostZone'
       );
     });
   }
