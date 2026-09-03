@@ -3,6 +3,7 @@ import 'pixi.js/accessibility';
 import {
   BoardDragController,
   DEFAULT_BOARD_PREFERENCES,
+  DEFAULT_BOARD_PRESENTATION,
   type BoardPreferences,
   type BoardPresentation,
   type BoardPresentationEvent,
@@ -66,6 +67,7 @@ export class PixiBoardRenderer implements BoardRenderer {
   private destroyed = false;
   private mounted = false;
   private recoveryTask: Promise<void> | null = null;
+  private recoveryPendingForScene = false;
   private recoveryAttempts = 0;
   private contextLostCanvas: HTMLCanvasElement | null = null;
 
@@ -112,8 +114,9 @@ export class PixiBoardRenderer implements BoardRenderer {
     events: readonly BoardPresentationEvent[],
     mode: BoardSceneInstallMode = 'advance'
   ): void {
-    const current = this.requireScene();
-    if (mode !== 'replace' && scene.revision < current.revision) {
+    this.requireMounted();
+    const current = this.scene;
+    if (mode !== 'replace' && current && scene.revision < current.revision) {
       throw new Error('Cannot install an older board scene revision');
     }
     for (const event of events) {
@@ -123,6 +126,11 @@ export class PixiBoardRenderer implements BoardRenderer {
     }
     this.scene = scene;
     this.dragController.reconcile(scene);
+    if (this.recoveryPendingForScene && !this.recoveryTask) {
+      this.recoveryPendingForScene = false;
+      this.startContextRecovery();
+      return;
+    }
     if (this.app && this.layers) {
       this.syncScene();
       this.renderOnce();
@@ -130,9 +138,9 @@ export class PixiBoardRenderer implements BoardRenderer {
   }
 
   installPresentation(presentation: BoardPresentation): void {
-    this.requireScene();
+    this.requireMounted();
     this.presentation = presentation;
-    if (this.app && this.layers) {
+    if (this.scene && this.app && this.layers) {
       this.app.canvas.dataset.dragging = presentation.drag ? 'true' : 'false';
       this.app.canvas.dataset.dragTarget = presentation.drag?.targetId ?? '';
       for (const view of this.cardViews.values()) this.applyCardView(view);
@@ -153,8 +161,17 @@ export class PixiBoardRenderer implements BoardRenderer {
     }
   }
 
+  clearScene(): void {
+    this.requireMounted();
+    this.cancelInteraction();
+    this.scene = null;
+    this.presentation = DEFAULT_BOARD_PRESENTATION;
+    this.clearRenderedScene();
+    this.renderOnce();
+  }
+
   resize(viewport: BoardViewport): void {
-    this.requireScene();
+    this.requireMounted();
     if (!this.app) return;
     this.app.renderer.resolution = viewport.devicePixelRatio;
     this.app.renderer.resize(viewport.width, viewport.height);
@@ -168,7 +185,7 @@ export class PixiBoardRenderer implements BoardRenderer {
   }
 
   setPreferences(preferences: BoardPreferences): void {
-    this.requireScene();
+    this.requireMounted();
     this.preferences = preferences;
     if (this.app) {
       this.app.canvas.dataset.reducedMotion = String(preferences.reducedMotion);
@@ -184,6 +201,7 @@ export class PixiBoardRenderer implements BoardRenderer {
     this.destroyed = true;
     this.mounted = false;
     this.generation += 1;
+    this.recoveryPendingForScene = false;
     this.detachContextLossListener();
     this.dragController.destroy();
     this.destroyApplication();
@@ -222,12 +240,11 @@ export class PixiBoardRenderer implements BoardRenderer {
     app.ticker.stop();
     app.stage.sortableChildren = true;
     app.stage.eventMode = 'static';
-    app.stage.hitArea = new Rectangle(
-      0,
-      0,
-      scene.viewport.width,
-      scene.viewport.height
-    );
+    const installedScene = this.scene;
+    const viewport = installedScene?.viewport ?? scene.viewport;
+    app.renderer.resolution = viewport.devicePixelRatio;
+    app.renderer.resize(viewport.width, viewport.height);
+    app.stage.hitArea = new Rectangle(0, 0, viewport.width, viewport.height);
     app.stage.on('globalpointermove', this.handleGlobalPointerMove);
     app.stage.on('pointerup', this.handlePointerUp);
     app.stage.on('pointerupoutside', this.handlePointerUp);
@@ -238,7 +255,8 @@ export class PixiBoardRenderer implements BoardRenderer {
     app.canvas.style.touchAction = 'none';
     host.appendChild(app.canvas);
     this.attachContextLossListener(app.canvas);
-    this.syncScene();
+    if (this.scene) this.syncScene();
+    else this.clearRenderedScene();
     this.setPreferences(this.preferences);
     this.renderOnce();
   }
@@ -522,16 +540,33 @@ export class PixiBoardRenderer implements BoardRenderer {
     if (this.presentation?.drag) {
       this.presentation = { ...this.presentation, drag: null };
     }
+    if (!this.scene) {
+      this.recoveryPendingForScene = true;
+      this.recoveryAttempts = 0;
+      this.generation += 1;
+      this.detachContextLossListener();
+      this.destroyApplication();
+      return;
+    }
+    this.startContextRecovery();
+  };
+
+  private startContextRecovery(): void {
+    if (this.destroyed || this.recoveryTask || !this.scene) return;
     this.recoveryTask = this.recoverFromContextLoss().finally(() => {
       this.recoveryTask = null;
     });
-  };
+  }
 
   private async recoverFromContextLoss(): Promise<void> {
     while (
       !this.destroyed &&
       this.recoveryAttempts < MAX_CONTEXT_RECOVERY_ATTEMPTS
     ) {
+      if (!this.scene) {
+        this.recoveryPendingForScene = true;
+        return;
+      }
       const attempt = ++this.recoveryAttempts;
       this.adapters.reportStatus?.({ kind: 'recovering', attempt });
       const generation = ++this.generation;
@@ -556,12 +591,7 @@ export class PixiBoardRenderer implements BoardRenderer {
 
   private destroyApplication(): void {
     this.detachContextLossListener();
-    for (const [id, view] of this.cardViews) {
-      this.textures.release(id);
-      view.sprite.removeFromParent();
-      view.sprite.destroy({ texture: false, textureSource: false });
-    }
-    this.cardViews.clear();
+    this.clearRenderedScene();
     this.layers = null;
     const app = this.app;
     this.app = null;
@@ -586,10 +616,46 @@ export class PixiBoardRenderer implements BoardRenderer {
   }
 
   private requireScene(): BoardScene {
-    if (this.destroyed || !this.mounted || !this.scene || !this.presentation) {
+    this.requireMounted();
+    if (!this.scene) {
       throw new Error('Board renderer is not mounted');
     }
     return this.scene;
+  }
+
+  private requireMounted(): void {
+    if (this.destroyed || !this.mounted) {
+      throw new Error('Board renderer is not mounted');
+    }
+  }
+
+  private clearRenderedScene(): void {
+    for (const [id, view] of this.cardViews) {
+      this.textures.release(id);
+      view.sprite.removeFromParent();
+      view.sprite.destroy({ texture: false, textureSource: false });
+    }
+    this.cardViews.clear();
+    const layers = this.layers;
+    if (layers) {
+      for (const layer of [
+        layers.playmat,
+        layers.cards,
+        layers.markers,
+        layers.interaction,
+      ]) {
+        for (const child of layer.removeChildren()) {
+          child.destroy({ children: true });
+        }
+      }
+    }
+    if (this.app) {
+      delete this.app.canvas.dataset.cardViews;
+      delete this.app.canvas.dataset.zoneViews;
+      delete this.app.canvas.dataset.revision;
+      delete this.app.canvas.dataset.dragging;
+      delete this.app.canvas.dataset.dragTarget;
+    }
   }
 
   private assertLiveGeneration(generation: number): void {

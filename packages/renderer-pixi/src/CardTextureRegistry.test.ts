@@ -12,6 +12,35 @@ const deferred = <Value>() => {
 };
 
 describe('Pixi card texture registry', () => {
+  it('reuses a zero-reference pending load when the same URL is rebound', async () => {
+    const pending = deferred<string>();
+    const load = vi.fn(() => pending.promise);
+    const unload = vi.fn(async () => undefined);
+    const registry = new CardTextureRegistry({
+      placeholder: 'placeholder',
+      load,
+      unload,
+    });
+    const staleReady = vi.fn();
+    const currentReady = vi.fn();
+
+    registry.bind('card', '/same.png', staleReady, vi.fn());
+    registry.release('card');
+    registry.bind('card', '/same.png', currentReady, vi.fn());
+    expect(load).toHaveBeenCalledOnce();
+
+    pending.resolve('texture');
+    await pending.promise;
+    await Promise.resolve();
+    expect(staleReady).not.toHaveBeenCalled();
+    expect(currentReady).toHaveBeenCalledWith('texture');
+    expect(unload).not.toHaveBeenCalled();
+
+    registry.release('card');
+    await Promise.resolve();
+    expect(unload).toHaveBeenCalledOnce();
+  });
+
   it('deduplicates loads and unloads only after the final card releases the URL', async () => {
     const pending = deferred<{ readonly name: string }>();
     const load = vi.fn(() => pending.promise);

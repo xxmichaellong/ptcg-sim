@@ -79,13 +79,31 @@ export class CardTextureRegistry<Texture> {
     this.bindings.delete(cardId);
     binding.entry.references -= 1;
     if (binding.entry.references !== 0) return;
-    if (this.entries.get(binding.url) === binding.entry) {
-      this.entries.delete(binding.url);
-    }
-    void binding.entry.promise.then(
-      () => this.assets.unload(binding.url),
-      () => undefined
-    );
+    void binding.entry.promise
+      .then(
+        async () => {
+          if (
+            binding.entry.references !== 0 ||
+            this.entries.get(binding.url) !== binding.entry ||
+            [...this.bindings.values()].some(
+              (candidate) => candidate.entry === binding.entry
+            )
+          ) {
+            return;
+          }
+          this.entries.delete(binding.url);
+          await this.assets.unload(binding.url);
+        },
+        () => {
+          if (
+            binding.entry.references === 0 &&
+            this.entries.get(binding.url) === binding.entry
+          ) {
+            this.entries.delete(binding.url);
+          }
+        }
+      )
+      .catch(() => undefined);
   }
 
   destroy(): void {
@@ -93,7 +111,6 @@ export class CardTextureRegistry<Texture> {
     this.disposed = true;
     for (const cardId of [...this.bindings.keys()]) this.release(cardId);
     this.bindings.clear();
-    this.entries.clear();
   }
 
   private isCurrent(cardId: string, binding: CardBinding<Texture>): boolean {

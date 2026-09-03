@@ -134,6 +134,10 @@ export class BoardSessionAdapter {
     return this.controller.dispatch({ kind: 'RendererIntent', intent });
   }
 
+  refreshScene(): boolean {
+    return this.controller.dispatch({ kind: 'RefreshScene' });
+  }
+
   emitPresentationUpdate(update: BoardPresentationUpdate): boolean {
     return this.controller.dispatch({
       kind: 'RendererPresentationUpdated',
@@ -157,12 +161,15 @@ export class BoardSessionAdapter {
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
-    this.unsubscribeReplay();
-    this.controller.dispose();
+    try {
+      this.unsubscribeReplay();
+    } finally {
+      this.controller.dispose();
+    }
   }
 
-  private readonly synchronize = (): void => {
-    if (this.disposed) return;
+  synchronize = (): boolean => {
+    if (this.disposed) return false;
     const replayState = this.options.replay.getSnapshot();
     const liveState = this.options.live.getSnapshot();
     const source = sourceFor(replayState);
@@ -180,7 +187,7 @@ export class BoardSessionAdapter {
         liveState.phase !== 'ready' ||
         view?.viewer.kind !== 'player',
     };
-    this.controller.dispatch({ kind: 'FrameReceived', frame });
+    return this.controller.dispatch({ kind: 'FrameReceived', frame });
   };
 
   private boundaryFor(

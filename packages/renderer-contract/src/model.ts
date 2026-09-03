@@ -169,6 +169,11 @@ export interface BoardRenderer {
   installPresentation(presentation: BoardPresentation): void;
   /** Clears renderer-owned pointer capture, drag, and suppressed-click state. */
   cancelInteraction(): void;
+  /**
+   * Clears retained scene/presentation state and rendered board children while
+   * keeping the renderer mounted for a later replacement scene.
+   */
+  clearScene(): void;
   resize(viewport: BoardViewport): void;
   setPreferences(preferences: BoardPreferences): void;
   destroy(): void;

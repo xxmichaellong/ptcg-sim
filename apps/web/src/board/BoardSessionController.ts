@@ -79,6 +79,7 @@ export interface BoardSessionControllerState {
 
 export type BoardSessionControllerAction =
   | { readonly kind: 'FrameReceived'; readonly frame: BoardProjectionFrame }
+  | { readonly kind: 'RefreshScene' }
   | { readonly kind: 'RendererIntent'; readonly intent: BoardIntent }
   | {
       readonly kind: 'RendererPresentationUpdated';
@@ -116,7 +117,7 @@ export type BoardSessionControllerEffect =
     }
   | {
       readonly kind: 'CancelRendererInteraction';
-      readonly reason: 'session_not_ready';
+      readonly reason: 'session_not_ready' | 'projection_config_changed';
     }
   | { readonly kind: 'SubmitCommand'; readonly command: WireGameCommand }
   | {
@@ -127,9 +128,9 @@ export type BoardSessionControllerEffect =
 
 export interface BoardSessionControllerReduction {
   readonly state: BoardSessionControllerState;
-  /** One-shot work from this accepted action; it is never retained in state. */
+  /** One-shot work from this reduction; it is never retained in state. */
   readonly effects: readonly BoardSessionControllerEffect[];
-  readonly outcome: 'accepted' | 'ignored' | 'rejected';
+  readonly outcome: 'accepted' | 'ignored' | 'rejected' | 'purged';
 }
 
 export interface BoardSessionControllerDependencies {
@@ -195,6 +196,11 @@ const accepted = (
   state: BoardSessionControllerState,
   effects: readonly BoardSessionControllerEffect[] = []
 ): BoardSessionControllerReduction => ({ state, effects, outcome: 'accepted' });
+
+const purged = (
+  state: BoardSessionControllerState,
+  effects: readonly BoardSessionControllerEffect[]
+): BoardSessionControllerReduction => ({ state, effects, outcome: 'purged' });
 
 const validCounter = (value: number): boolean =>
   Number.isSafeInteger(value) && value >= 0;
@@ -274,6 +280,22 @@ const clearLocalPresentation = (
     : emptyPresentation(),
   overlays: overlaysAreEmpty(state.overlays) ? state.overlays : emptyOverlays(),
 });
+
+const purgeRejectedRecipientProjection = (
+  state: BoardSessionControllerState,
+  sessionPhase: ClientSessionPhase
+): BoardSessionControllerReduction =>
+  purged(
+    nextState(state, {
+      sessionPhase,
+      view: undefined,
+      scene: undefined,
+      sceneInstallMode: 'replace',
+      ...clearLocalPresentation(state),
+      canSubmitCommands: false,
+    }),
+    state.scene ? [{ kind: 'ResetRenderer', reason: 'identity_changed' }] : []
+  );
 
 const hasCard = (scene: BoardScene, cardId: ViewCardId): boolean =>
   scene.cards.some((card) => card.id === cardId && card.interactive);
@@ -664,6 +686,7 @@ const installFrame = (
   }
 
   const resetsRenderer =
+    state.scene !== undefined &&
     cursor !== null &&
     (recipientChanged || timelineChanged || replacementBoundary);
 
@@ -671,9 +694,17 @@ const installFrame = (
   try {
     scene = dependencies.createScene(frame.view);
   } catch {
+    if (recipientChanged) {
+      return purgeRejectedRecipientProjection(state, frame.sessionPhase);
+    }
     return rejected(state);
   }
-  if (!sceneMatchesProjection(frame.view, scene)) return rejected(state);
+  if (!sceneMatchesProjection(frame.view, scene)) {
+    if (recipientChanged) {
+      return purgeRejectedRecipientProjection(state, frame.sessionPhase);
+    }
+    return rejected(state);
+  }
 
   const mustClearLocal =
     cursor === null ||
@@ -886,6 +917,42 @@ const handlePresentationUpdate = (
   return ignored(state);
 };
 
+const refreshScene = (
+  state: BoardSessionControllerState,
+  dependencies: BoardSessionControllerDependencies
+): BoardSessionControllerReduction => {
+  const view = state.view;
+  if (!view) return rejected(state);
+  let scene: BoardScene;
+  try {
+    scene = dependencies.createScene(view);
+  } catch {
+    return rejected(state);
+  }
+  if (!sceneMatchesProjection(view, scene)) return rejected(state);
+  const reconciled = reconcilePresentation(state, view, scene);
+  const presentation = reconciled.presentation.drag
+    ? { ...reconciled.presentation, drag: null }
+    : reconciled.presentation;
+  const next = nextState(state, {
+    scene,
+    sceneInstallMode: 'replace',
+    presentation,
+    overlays: reconciled.overlays,
+  });
+  const effects: BoardSessionControllerEffect[] = [
+    {
+      kind: 'CancelRendererInteraction',
+      reason: 'projection_config_changed',
+    },
+    { kind: 'InstallScene', scene, mode: 'replace' },
+  ];
+  if (!samePresentation(state.presentation, presentation)) {
+    effects.push({ kind: 'InstallPresentation', presentation });
+  }
+  return accepted(next, effects);
+};
+
 const dismissPresentation = (
   state: BoardSessionControllerState,
   scope: NonNullable<
@@ -922,6 +989,8 @@ export const reduceBoardSessionController = (
   switch (action.kind) {
     case 'FrameReceived':
       return installFrame(state, action.frame, dependencies);
+    case 'RefreshScene':
+      return refreshScene(state, dependencies);
     case 'RendererIntent':
       return handleIntent(state, action.intent, dependencies);
     case 'RendererPresentationUpdated':

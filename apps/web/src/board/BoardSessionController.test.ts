@@ -2,6 +2,7 @@ import type { MatchViewState, ViewCardId } from '@ptcgsim/game-core';
 import {
   createBoardScene,
   createRendererSpikeView,
+  DEFAULT_BOARD_PRESENTATION,
   type BoardIntent,
   type BoardScene,
 } from '@ptcgsim/renderer-contract';
@@ -200,6 +201,50 @@ describe('headless board session controller', () => {
         presentation: reconnect.state.presentation,
       },
     ]);
+  });
+
+  it('refreshes local scene configuration without advancing projection cursors', () => {
+    let state = install();
+    const cursor = state.cursor;
+    const view = state.view;
+    const cardId = cardIn(state.scene!, ':hand');
+    state = apply(state, {
+      kind: 'RendererPresentationUpdated',
+      update: {
+        kind: 'DragChanged',
+        drag: { cardId, x: 10, y: 20, targetId: null },
+      },
+    }).state;
+    const result = apply(state, { kind: 'RefreshScene' });
+
+    expect(result.outcome).toBe('accepted');
+    expect(result.state.cursor).toBe(cursor);
+    expect(result.state.view).toBe(view);
+    expect(result.state.presentation.drag).toBeNull();
+    expect(result.effects).toEqual([
+      {
+        kind: 'CancelRendererInteraction',
+        reason: 'projection_config_changed',
+      },
+      { kind: 'InstallScene', scene: result.state.scene, mode: 'replace' },
+      {
+        kind: 'InstallPresentation',
+        presentation: result.state.presentation,
+      },
+    ]);
+
+    const invalid = apply(
+      result.state,
+      { kind: 'RefreshScene' },
+      {
+        createScene: () => {
+          throw new Error('invalid layout');
+        },
+      }
+    );
+    expect(invalid.outcome).toBe('rejected');
+    expect(invalid.state).toBe(result.state);
+    expect(invalid.effects).toEqual([]);
   });
 
   it('suppresses every read-only drop before resolving', () => {
@@ -547,6 +592,56 @@ describe('headless board session controller', () => {
         }
       ).outcome
     ).toBe('rejected');
+  });
+
+  it('purges a changed recipient on scene failure but retains a same-recipient last-safe scene', () => {
+    const view = createRendererSpikeView();
+    const installed = install(initialFrame(view));
+    const priorCursor = installed.cursor;
+    const priorScene = installed.scene;
+    const failingDependencies: BoardSessionControllerDependencies = {
+      createScene: () => {
+        throw new Error('scene construction failed');
+      },
+    };
+
+    const sameRecipient = apply(
+      installed,
+      {
+        kind: 'FrameReceived',
+        frame: liveFrame(2, { ...view, revision: view.revision + 1 }),
+      },
+      failingDependencies
+    );
+    expect(sameRecipient.outcome).toBe('rejected');
+    expect(sameRecipient.state).toBe(installed);
+    expect(sameRecipient.state.scene).toBe(priorScene);
+    expect(sameRecipient.effects).toEqual([]);
+
+    const changedRecipient = apply(
+      installed,
+      {
+        kind: 'FrameReceived',
+        frame: liveFrame(
+          2,
+          { ...view, matchId: 'replacement-match' },
+          { boundary: 'resync' }
+        ),
+      },
+      failingDependencies
+    );
+    expect(changedRecipient.outcome).toBe('purged');
+    expect(changedRecipient.state.cursor).toBe(priorCursor);
+    expect(changedRecipient.state.source).toBe(installed.source);
+    expect(changedRecipient.state.view).toBeUndefined();
+    expect(changedRecipient.state.scene).toBeUndefined();
+    expect(changedRecipient.state.canSubmitCommands).toBe(false);
+    expect(changedRecipient.state.presentation).toEqual(
+      DEFAULT_BOARD_PRESENTATION
+    );
+    expect(changedRecipient.effects).toEqual([
+      { kind: 'ResetRenderer', reason: 'identity_changed' },
+    ]);
   });
 
   it('does not let a no-view source transition poison the installed cursor', () => {

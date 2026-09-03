@@ -217,6 +217,40 @@ describe('React DOM board renderer', () => {
     );
   });
 
+  it('clears scene and presentation synchronously while retaining the mounted root', async () => {
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    await mountInAct(renderer, host, createScene());
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        selectedCardId: cardId,
+        openedZoneId: 'zone:p1:hand',
+      })
+    );
+    expect(host.querySelector('[aria-pressed="true"]')).not.toBeNull();
+
+    act(() => renderer.clearScene());
+    expect(host.childElementCount).toBe(0);
+    expect(() => act(() => renderer.clearScene())).not.toThrow();
+    expect(host.childElementCount).toBe(0);
+
+    act(() => renderer.installScene(createScene(2), [], 'replace'));
+    const card = host.querySelector<HTMLElement>('[data-card-id]');
+    expect(card).not.toBeNull();
+    expect(card?.getAttribute('aria-pressed')).toBe('false');
+
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
+  });
+
   it('survives repeated StrictMode-compatible mount and teardown without nodes accumulating', async () => {
     const host = document.createElement('div');
     for (let index = 0; index < 10; index += 1) {

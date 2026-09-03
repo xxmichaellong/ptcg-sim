@@ -6,9 +6,11 @@ import {
   createRendererSpikeView,
   DEFAULT_BOARD_PRESENTATION,
   type BoardPresentation,
+  type BoardRendererStatus,
   type BoardScene,
 } from '@ptcgsim/renderer-contract';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { Application, Assets, Container, Sprite, Texture } from 'pixi.js';
 
 import { PixiBoardRenderer } from './PixiBoardRenderer.js';
 
@@ -26,14 +28,48 @@ const scene = (): BoardScene => {
 };
 
 interface RendererInternals {
-  app: { readonly canvas: HTMLCanvasElement; readonly destroy: () => void };
+  app: {
+    readonly canvas: HTMLCanvasElement;
+    readonly destroy: () => void;
+    readonly render: () => void;
+  };
   mounted: boolean;
-  scene: BoardScene;
+  scene: BoardScene | null;
   presentation: BoardPresentation;
   readonly dragController: BoardDragController;
+  readonly cardViews: Map<
+    string,
+    { readonly sprite: Sprite; descriptor: BoardScene['cards'][number] }
+  >;
+  layers: {
+    readonly playmat: Container;
+    readonly cards: Container;
+    readonly markers: Container;
+    readonly interaction: Container;
+  } | null;
+  readonly textures: {
+    readonly bind: (...args: unknown[]) => void;
+    readonly release: (id: string) => void;
+  };
   readonly handleContextLost: (event: Event) => void;
   recoverFromContextLoss: () => Promise<void>;
+  recoveryTask: Promise<void> | null;
+  recoveryPendingForScene: boolean;
 }
+
+const fakeApplication = (): Application => {
+  const canvas = document.createElement('canvas');
+  const application = {
+    canvas,
+    stage: new Container(),
+    ticker: { stop: vi.fn() },
+    renderer: { resolution: 1, resize: vi.fn() },
+    init: vi.fn(async () => undefined),
+    render: vi.fn(),
+    destroy: vi.fn(() => canvas.remove()),
+  };
+  return application as unknown as Application;
+};
 
 const mountInteractionState = (
   renderer: PixiBoardRenderer,
@@ -44,7 +80,7 @@ const mountInteractionState = (
   canvas.releasePointerCapture = vi.fn();
   const currentScene = scene();
   const internals = renderer as unknown as RendererInternals;
-  internals.app = { canvas, destroy: vi.fn() };
+  internals.app = { canvas, destroy: vi.fn(), render: vi.fn() };
   internals.mounted = true;
   internals.scene = currentScene;
   internals.presentation = presentation;
@@ -99,6 +135,115 @@ describe('Pixi board interaction cancellation', () => {
     expect(canvas.releasePointerCapture).toHaveBeenCalledWith(7);
     renderer.destroy();
   });
+
+  it('clears private scene resources and can install the same aliases again', () => {
+    const renderer = new PixiBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const { currentScene, internals } = mountInteractionState(renderer, {
+      ...DEFAULT_BOARD_PRESENTATION,
+      selectedCardId: scene().cards[0]!.id,
+    });
+    const layers = {
+      playmat: new Container(),
+      cards: new Container(),
+      markers: new Container(),
+      interaction: new Container(),
+    };
+    internals.layers = layers;
+    const descriptor = currentScene.cards[0]!;
+    const sprite = new Sprite({ texture: Texture.WHITE });
+    layers.cards.addChild(sprite);
+    internals.cardViews.set(String(descriptor.id), { sprite, descriptor });
+    const release = vi.spyOn(internals.textures, 'release');
+    vi.spyOn(internals.textures, 'bind').mockImplementation(() => undefined);
+
+    renderer.clearScene();
+    expect(release).toHaveBeenCalledWith(String(descriptor.id));
+    expect(internals.scene).toBeNull();
+    expect(internals.presentation).toEqual(DEFAULT_BOARD_PRESENTATION);
+    expect(internals.cardViews.size).toBe(0);
+    expect(layers.cards.children).toHaveLength(0);
+
+    renderer.installScene(currentScene, [], 'replace');
+    expect(internals.cardViews.size).toBe(currentScene.cards.length);
+    expect(layers.cards.children).toHaveLength(currentScene.cards.length);
+    renderer.destroy();
+  });
+
+  it.each(['same', 'different'] as const)(
+    'defers a cleared-scene context loss and rebuilds one %s-alias replacement',
+    async (aliasMode) => {
+      vi.spyOn(Assets, 'load').mockResolvedValue(Texture.WHITE);
+      vi.spyOn(Assets, 'unload').mockResolvedValue(undefined);
+      const createdApplications = [fakeApplication(), fakeApplication()];
+      const applications = [...createdApplications];
+      const createApplication = vi.fn(() => applications.shift()!);
+      const statuses: BoardRendererStatus[] = [];
+      const renderer = new PixiBoardRenderer(
+        {
+          emitIntent: vi.fn(),
+          emitPresentationUpdate: vi.fn(),
+          reportError: vi.fn(),
+          reportStatus: (status) => statuses.push(status),
+        },
+        { createApplication }
+      );
+      const host = document.createElement('div');
+      const initial = scene();
+      await renderer.mount(host, initial, DEFAULT_BOARD_PRESENTATION);
+      expect(applications).toHaveLength(1);
+      renderer.clearScene();
+
+      const firstCanvas = host.querySelector('canvas')!;
+      const contextLost = new Event('webglcontextlost', { cancelable: true });
+      firstCanvas.dispatchEvent(contextLost);
+      const internals = renderer as unknown as RendererInternals;
+      expect(contextLost.defaultPrevented).toBe(true);
+      expect(internals.recoveryPendingForScene).toBe(true);
+      expect(internals.recoveryTask).toBeNull();
+      expect(createApplication).toHaveBeenCalledOnce();
+
+      const replacement: BoardScene =
+        aliasMode === 'same'
+          ? initial
+          : {
+              ...initial,
+              cards: initial.cards.map((card, index) =>
+                index === 0
+                  ? {
+                      ...card,
+                      id: 'replacement-visible-card' as typeof card.id,
+                    }
+                  : card
+              ),
+            };
+      renderer.installScene(replacement, [], 'replace');
+      expect(internals.recoveryTask).not.toBeNull();
+      await internals.recoveryTask;
+      await Promise.resolve();
+
+      expect(createApplication).toHaveBeenCalledTimes(2);
+      expect(internals.recoveryPendingForScene).toBe(false);
+      expect(internals.scene).toBe(replacement);
+      expect(internals.cardViews.size).toBe(replacement.cards.length);
+      expect(host.querySelector('canvas')?.dataset.revision).toBe(
+        String(replacement.revision)
+      );
+      expect(
+        statuses.filter((status) => status.kind === 'recovering')
+      ).toHaveLength(1);
+      expect(statuses.some((status) => status.kind === 'failed')).toBe(false);
+
+      renderer.destroy();
+      renderer.destroy();
+      for (const application of createdApplications) {
+        expect(application.destroy).toHaveBeenCalledOnce();
+      }
+    }
+  );
 
   it('clears an active drag exactly once before context-loss recovery', async () => {
     const emitPresentationUpdate = vi.fn();

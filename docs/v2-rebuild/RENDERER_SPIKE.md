@@ -94,6 +94,8 @@ one recipient-safe card ID in more than one render location.
 HTML mock. It:
 
 - mounts behind the same imperative lifecycle;
+- synchronously clears scene/private presentation children without destroying
+  the mounted root, allowing privacy-safe replacement;
 - reuses card elements across scene revisions;
 - uses native buttons and images for board card semantics;
 - rejects older revisions and mismatched presentation events;
@@ -117,13 +119,19 @@ CORS, browser-menu, and native accessibility behavior to v1.
   against card reuse/removal;
 - releases a no-longer-referenced URL so a private face texture is not retained
   after concealment or a role/room transition;
+- clears scene card views and bindings at recipient/reset boundaries while
+  safely reusing only a still-pending zero-reference URL load reacquired before
+  completion;
 - renders a safe placeholder on load failure;
 - emits the same card/zone intents as the DOM candidate;
 - uses one stage-level global move listener plus canvas pointer capture for drag,
   avoiding per-card global work while sharing the DOM candidate's gesture
   semantics;
 - reconstructs the display tree from the current immutable scene after WebGL
-  context loss, with a three-attempt recovery ceiling; and
+  context loss, with a three-attempt recovery ceiling;
+- defers a context-loss rebuild when reset has left no scene, then rebuilds once
+  from the next replacement instead of exhausting retries against an
+  intentionally empty renderer; and
 - has idempotent teardown of listeners, sprites, layers, application, and asset
   bindings.
 

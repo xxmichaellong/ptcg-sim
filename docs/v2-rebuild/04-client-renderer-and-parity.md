@@ -46,6 +46,7 @@ createBoardRenderer(adapters, options)
   installScene(nextRenderModel, presentationEvents, mode = "advance")
   installPresentation(nextPresentation)
   cancelInteraction()
+  clearScene()
   resize(viewport)
   setPreferences(renderPreferences)
   destroy()
@@ -61,9 +62,11 @@ development remounts, and WebGL context loss. `destroy()` is idempotent and
 releases listeners, pointer capture, timers, textures, and GPU resources.
 `cancelInteraction()` is the additive reconnect/resync seam: it releases active
 pointer capture and clears renderer-owned drag/suppressed-click state without a
-scene replacement. See
-[`BOARD_SESSION_CONTROLLER.md`](./BOARD_SESSION_CONTROLLER.md) for the unwired
-headless controller and concrete live/replay adapter contract.
+scene replacement. `clearScene()` is the privacy/reset seam: it cancels input,
+removes retained scene/presentation state and rendered board children
+synchronously, but keeps a healthy renderer mounted for replacement. See
+[`BOARD_SESSION_CONTROLLER.md`](./BOARD_SESSION_CONTROLLER.md) for the headless
+controller, live/replay adapter, and uninstantiated DOM composition contract.
 
 `installScene` rejects a lower revision in its default `advance` mode. Replay is
 the only caller allowed to request explicit `replace` mode when previous or
@@ -170,16 +173,24 @@ semantic tests.
 
 ## State-to-view synchronization
 
-The first additive application-boundary implementation now lives in
+The first additive application-boundary implementation lives in
 `apps/web/src/board/BoardSessionController.ts` with its concrete public-source
-adapter in `BoardSessionAdapter.ts`. Neither is wired to a spike or production
-route. Explicit frame, source, replay-generation, and replay-index cursors keep
+adapter in `BoardSessionAdapter.ts`. An exported, opt-in
+`ReactDomBoardSessionRuntime.ts` now proves that boundary against the real React
+DOM renderer and real session/replay coordinators, but no route imports or
+instantiates it. Explicit frame, source, replay-generation, and replay-index cursors keep
 stale aliases, same-revision reconnect replacement, and replay rewind from
 being inferred from revision alone. Renderer and command effects are one-shot
 and never retained. Protocol presentation facts remain exclusively owned by
 the parallel `GamePresentationCoordinator`, not this board controller. See
 [`BOARD_SESSION_CONTROLLER.md`](./BOARD_SESSION_CONTROLLER.md) for the reducer,
 adapter, effect-order, cleanup, and deferred-browser-parity contract.
+
+The runtime borrows the route-owned live/replay sources and does not accept,
+construct, subscribe, or dispose a second presentation coordinator. Its layout
+bridge intentionally supports only play-area shell width, bottom perspective,
+and complementary player halves. It rejects independent asymmetric frames and
+moved shared placement until `BoardScene` consumes the full layout oracle.
 
 On each authoritative view publication:
 

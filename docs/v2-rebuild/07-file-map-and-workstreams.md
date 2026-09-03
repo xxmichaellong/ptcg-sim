@@ -106,6 +106,7 @@ apps/web/src/board/
   BoardViewport.tsx
   BoardSessionController.ts # additive headless reducer/store implemented; not production-wired
   BoardSessionAdapter.ts    # additive public live/replay composition; not production-wired
+  ReactDomBoardSessionRuntime.ts # exported opt-in composition; uninstantiated by routes
   model/createBoardRenderModel.ts
   layout/boardGeometry.ts
   input/BoardInputController.ts

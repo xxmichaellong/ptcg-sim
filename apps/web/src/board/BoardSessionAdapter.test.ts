@@ -461,6 +461,48 @@ describe('BoardSessionAdapter with real session coordinators', () => {
     test.live.disconnect();
   });
 
+  it('disposes the controller even if replay unsubscription throws', () => {
+    const test = setup();
+    test.socket.serverOpen();
+    test.socket.serverMessage(welcome(viewAt(1)));
+    test.adapter.dispose();
+    const rendererEffects: BoardSessionRendererEffect[] = [];
+    const replay = {
+      getSnapshot: test.replay.getSnapshot,
+      subscribe: (listener: () => void) => {
+        const unsubscribe = test.replay.subscribe(listener);
+        return () => {
+          unsubscribe();
+          throw new Error('unsubscribe failed');
+        };
+      },
+    };
+    const adapter = new BoardSessionAdapter({
+      live: test.live,
+      replay,
+      createScene,
+      emitRendererEffect: (effect) => rendererEffects.push(effect),
+    });
+    const listener = vi.fn();
+    adapter.subscribe(listener);
+
+    expect(() => adapter.dispose()).toThrow('unsubscribe failed');
+    expect(listener).toHaveBeenCalledOnce();
+    const effectCount = rendererEffects.length;
+    test.socket.serverMessage({
+      type: 'StatePublication',
+      protocolVersion: PROTOCOL_VERSION,
+      executedClientSequence: 0,
+      snapshot: viewAt(2),
+    });
+    expect(rendererEffects).toHaveLength(effectCount);
+    expect(adapter.emitIntent({ kind: 'ZoneOpened', zoneId: 'stale' })).toBe(
+      false
+    );
+    test.replay.dispose();
+    test.live.disconnect();
+  });
+
   it('recovers from a rejected replay entry using the last accepted cursor', () => {
     let rejectReplayEntry = true;
     const test = setup((view) => {

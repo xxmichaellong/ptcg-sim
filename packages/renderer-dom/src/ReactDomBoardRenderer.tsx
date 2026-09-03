@@ -1,5 +1,6 @@
 import {
   DEFAULT_BOARD_PREFERENCES,
+  DEFAULT_BOARD_PRESENTATION,
   type BoardPreferences,
   type BoardPresentation,
   type BoardPresentationEvent,
@@ -10,6 +11,7 @@ import {
   type BoardViewport,
 } from '@ptcgsim/renderer-contract';
 import { StrictMode } from 'react';
+import { flushSync } from 'react-dom';
 import { createRoot, type Root } from 'react-dom/client';
 import { BoardSurface } from './BoardSurface.js';
 
@@ -51,7 +53,7 @@ export class ReactDomBoardRenderer implements BoardRenderer {
         resolve();
       };
       this.finishPendingMount = finish;
-      this.renderNow(finish);
+      this.renderNow(this.requireRoot(), finish);
     });
     if (this.destroyed) {
       throw new Error('Renderer initialization was superseded');
@@ -67,8 +69,9 @@ export class ReactDomBoardRenderer implements BoardRenderer {
     events: readonly BoardPresentationEvent[],
     mode: BoardSceneInstallMode = 'advance'
   ): void {
-    const mounted = this.requireMounted();
-    if (mode !== 'replace' && scene.revision < mounted.scene.revision) {
+    const root = this.requireRoot();
+    const current = this.scene;
+    if (mode !== 'replace' && current && scene.revision < current.revision) {
       throw new Error('Cannot install an older board scene revision');
     }
     for (const event of events) {
@@ -77,21 +80,32 @@ export class ReactDomBoardRenderer implements BoardRenderer {
       }
     }
     this.scene = scene;
-    this.renderNow();
+    if (this.presentation) this.renderNow(root);
   }
 
   installPresentation(presentation: BoardPresentation): void {
-    this.requireMounted();
+    const root = this.requireRoot();
     this.presentation = presentation;
-    this.renderNow();
+    if (this.scene) this.renderNow(root);
   }
 
   cancelInteraction(): void {
     this.cancelMountedInteraction?.();
   }
 
+  clearScene(): void {
+    const root = this.requireRoot();
+    this.cancelInteraction();
+    this.scene = null;
+    this.presentation = DEFAULT_BOARD_PRESENTATION;
+    this.finishPendingMount?.();
+    this.finishPendingMount = null;
+    flushSync(() => root.render(null));
+    this.cancelMountedInteraction = null;
+  }
+
   resize(viewport: BoardViewport): void {
-    this.requireMounted();
+    this.requireRoot();
     if (this.host) {
       this.host.style.width = `${viewport.width}px`;
       this.host.style.height = `${viewport.height}px`;
@@ -99,9 +113,9 @@ export class ReactDomBoardRenderer implements BoardRenderer {
   }
 
   setPreferences(preferences: BoardPreferences): void {
-    this.requireMounted();
+    const root = this.requireRoot();
     this.preferences = preferences;
-    this.renderNow();
+    if (this.scene && this.presentation) this.renderNow(root);
   }
 
   destroy(): void {
@@ -117,26 +131,32 @@ export class ReactDomBoardRenderer implements BoardRenderer {
     this.presentation = null;
     this.cancelMountedInteraction = null;
     this.adapters.reportStatus?.({ kind: 'destroyed' });
-    if (root) queueMicrotask(() => root.unmount());
+    if (root) {
+      queueMicrotask(() => {
+        try {
+          root.unmount();
+        } catch (error) {
+          try {
+            this.adapters.reportError(error);
+          } catch {
+            // Diagnostics cannot interrupt deferred teardown.
+          }
+        }
+      });
+    }
   }
 
-  private requireMounted(): {
-    readonly root: Root;
-    readonly scene: BoardScene;
-    readonly presentation: BoardPresentation;
-  } {
-    if (this.destroyed || !this.root || !this.scene || !this.presentation) {
+  private requireRoot(): Root {
+    if (this.destroyed || !this.root) {
       throw new Error('Board renderer is not mounted');
     }
-    return {
-      root: this.root,
-      scene: this.scene,
-      presentation: this.presentation,
-    };
+    return this.root;
   }
 
-  private renderNow(onCommit?: () => void): void {
-    const { root, scene, presentation } = this.requireMounted();
+  private renderNow(root = this.requireRoot(), onCommit?: () => void): void {
+    const scene = this.scene;
+    const presentation = this.presentation;
+    if (!scene || !presentation) return;
     const surface = (
       <StrictMode>
         <BoardSurface

@@ -1,7 +1,8 @@
 # Headless board session controller and adapter
 
-Status: additive audited candidate; not connected to the production route,
-legacy board, React DOM spike, or Pixi spike.
+Status: additive review candidate. The headless controller is exercised by an
+exported opt-in React DOM composition, but no production route, legacy board,
+or renderer-spike route imports that composition.
 
 ## Purpose and ownership
 
@@ -47,6 +48,14 @@ board adapter. Presentation events are intentionally absent from
 losing the live session's view-then-event split publication and avoids a second
 event cursor.
 
+`apps/web/src/board/ReactDomBoardSessionRuntime.ts` is the first executable,
+uninstantiated composition root. It borrows already-owned live and replay
+sources, constructs only one `BoardSessionAdapter` and one
+`ReactDomBoardRenderer`, and disposes only those objects. It neither accepts nor
+constructs a presentation owner. The route's existing presentation runtime and
+`GamePresentationCoordinator` subscribe in parallel and retain their own
+lifecycle.
+
 ## Projection and cursor contract
 
 Every `BoardProjectionFrame` has:
@@ -76,12 +85,19 @@ across the boundary. It applies the following rules:
 | reconnect/non-ready live publication            | keep last safe scene, cancel renderer interaction, clear local transients, disable commands |
 | no-view source transition                       | rejected without changing the accepted cursor                                               |
 | terminal phase                                  | purge scene/aliases; the route-owned controller remains absorbing                           |
+| new recipient whose scene cannot be built       | reject/purge: retain prior cursor, remove old view/scene/aliases, reset renderer            |
+| same recipient whose scene cannot be built      | reject and retain the last-safe view/scene/cursor                                           |
 
 The adapter compares against the controller's accepted source, frame index,
 phase, and recipient. A rejected scene factory or invalid alias projection
 therefore cannot wedge later valid replay frames. Reentrant publications are
 serialized by the controller and cannot let an older completion overwrite a
 newer accepted cursor.
+
+The explicit `purged` reducer outcome distinguishes a rejected recipient
+projection that nevertheless commits privacy cleanup from a successfully
+installed frame. Because its prior accepted cursor remains unchanged, the same
+upstream generation can be retried after local scene configuration is fixed.
 
 Within one replay ID, `revision - frameIndex` is invariant. A newer generation
 at the same index is a replay reload/replacement and the adapter labels it
@@ -107,29 +123,60 @@ controller captures one installed `{view, scene}` pair before resolving a drop.
 The concrete adapter performs the mode/phase/role checks again immediately
 before submit, so a reentrant or stale readiness change fails closed.
 
-`BoardResizeRequested` remains unsupported here. Legacy flip, fullscreen, and
-the two independent resize handles are owned by the layout oracle and later
-viewport controller, not reduced to the spike contract's provisional
-`splitRatio`.
+`BoardResizeRequested` remains unsupported here. The opt-in DOM runtime exposes
+only a narrowed layout bridge for the existing provisional scene: sidebar vs.
+fullscreen play width, bottom-player perspective, and one complementary
+upper/lower split. It rejects gaps, overlaps, asymmetric independent frame
+heights, non-default shared placement, a split outside `0.2..0.8`, and a layout
+player tuple that differs from the projected view. The complete layout oracle
+is available as a **characterization snapshot**, not a claim that every field
+is rendered. Independent handles, moved shared anchors, and exact internal
+stadium/zone geometry require the later full-layout scene contract.
+The runtime clones and recursively freezes retained layout input and returns a
+fresh frozen characterization snapshot, so untyped caller mutation cannot
+change later scene generation.
+
+Changing supported local layout calls `RefreshScene`: it cancels interaction,
+re-runs the scene factory on the exact installed safe view, validates the
+result, and replaces it without advancing source/playback cursors. The adapter
+then synchronizes once so a previously rejected upstream generation can retry.
+Repeating an equivalent scene-driving layout is a no-op and does not duplicate
+effects or presentation work.
 
 ## Effects and renderer cancellation
 
-The pure reducer returns effects for one accepted action and never stores them.
+The pure reducer returns effects for one reduction and never stores them.
 `BoardSessionController` installs state, attempts effects serially, and only
 then notifies subscribers. Reentrant actions are queued. Disposal between
 effects stops the remaining effects. Sink failures are reported as at-most-once
 attempts; diagnostics cannot interrupt later deterministic work.
 
-`CancelRendererInteraction` exists separately from scene reset. A future host
-maps it to `BoardRenderer.cancelInteraction()`, now implemented by the shared
-drag controller and both spike renderers. It clears pointer capture, active
-gesture, and suppressed-click state without changing the scene. DOM destroy
-cancels synchronously before deferred React unmount. Pixi destroy cancels
-silently; renderer-originated WebGL context loss during an active drag emits one
-drag-null update, clears retained drag presentation, releases capture, and then
-rebuilds.
+`CancelRendererInteraction` exists separately from scene reset and maps to
+`BoardRenderer.cancelInteraction()`. It clears pointer capture, active gesture,
+and suppressed-click state without changing the scene. `ResetRenderer` maps to
+the additive `BoardRenderer.clearScene()`: synchronously cancel, clear retained
+scene/private presentation, and empty board children while keeping a healthy
+renderer mounted for a later replacement install. DOM destroy still cancels
+synchronously before deferred React unmount. Pixi clear releases card views and
+private texture bindings; its texture registry reuses a zero-reference pending
+load only when it is reacquired before completion and verifies the exact entry
+is still unused before unloading. Renderer-originated WebGL context loss during
+an active drag emits one drag-null update, clears retained drag presentation,
+releases capture, and then rebuilds. If context is lost while reset has
+intentionally left no scene, Pixi tears down once and defers recovery without
+consuming retries; the next replacement triggers one generation-guarded rebuild
+from the latest scene.
 
-This method remains unwired in production in this slice.
+If `clearScene()` itself throws, the opt-in runtime is deliberately fatal and
+fail-closed: it disposes its adapter, destroys the bad renderer, synchronously
+empties the host as a final privacy boundary, suppresses subsequent install
+effects, reports one stable reset failure, and requires a new runtime instance.
+A mount superseded by disposal similarly rejects with a stable aborted error;
+late completion cannot revive the renderer. A lazy mount that fails after a
+viewless runtime has already attached uses the same fatal cleanup and stable
+error policy.
+
+None of these paths is instantiated by a production route in this slice.
 
 ## Evidence and limits
 
@@ -163,9 +210,12 @@ Focused executable coverage:
 corepack pnpm exec vitest run \
   apps/web/src/board/BoardSessionController.test.ts \
   apps/web/src/board/BoardSessionAdapter.test.ts \
+  apps/web/src/board/ReactDomBoardSessionRuntime.test.ts \
+  apps/web/src/RendererSpikeBoard.test.tsx \
   packages/renderer-contract/src/drag.test.ts \
   packages/renderer-dom/src/ReactDomBoardRenderer.test.tsx \
-  packages/renderer-pixi/src/PixiBoardRenderer.test.ts
+  packages/renderer-pixi/src/PixiBoardRenderer.test.ts \
+  packages/renderer-pixi/src/CardTextureRegistry.test.ts
 corepack pnpm --filter @ptcgsim/web run typecheck
 corepack pnpm run check:v2
 ```
@@ -177,3 +227,9 @@ stale socket rejection, replay next/fast-forward/previous/exit, silent live
 event consumption during replay, non-ready replay exit, submit-time stale gates,
 `queued: false`, rejected-scene recovery, reentrant observation ordering,
 recipient replacement, and disposal.
+
+The DOM runtime suite additionally composes those real session/replay sources
+through a real DOM renderer while an externally owned
+`GamePresentationCoordinator` runs in parallel. Mutable-source cases pin exact
+pointer, reset, privacy-failure retry, unsupported-layout, replay suppression,
+factory/mount race, and fatal clear-failure behavior without altering any route.
