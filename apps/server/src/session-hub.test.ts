@@ -20,6 +20,10 @@ import { RoomSessionHub, type RuntimeConnection } from './session-hub.js';
 const p1 = asPlayerId('player-one');
 const p2 = asPlayerId('player-two');
 
+const allowRoomOperations = {
+  attempt: async () => ({ allowed: true, remaining: 1 }) as const,
+};
+
 class MemoryAuthorityStore implements AuthoritySnapshotStore {
   commandCommits: PersistedAuthorityTransaction[] = [];
   admissionCommits: PersistedAdmissionTransaction[] = [];
@@ -94,8 +98,12 @@ const fixture = async () => {
     opaqueIds: crypto,
     policy: DEFAULT_AUTHORITY_POLICY,
   });
+  const rateLimits = {
+    attempt: vi.fn(async () => ({ allowed: true, remaining: 1 }) as const),
+  };
   const hub = new RoomSessionHub(coordinator, 'server-build', {
     store,
+    rateLimits,
     admission: {
       crypto,
       opaqueIds: crypto,
@@ -116,6 +124,7 @@ const fixture = async () => {
     seatCapability: seatToken,
     otherSeatCapability: otherSeatToken,
     crypto,
+    rateLimits,
   };
 };
 
@@ -134,6 +143,63 @@ const helloFrame = (input: {
   });
 
 describe('serialized room session hub', () => {
+  it('rejects over-budget operations before authority mutation', async () => {
+    const setup = await fixture();
+    setup.rateLimits.attempt.mockResolvedValue({
+      allowed: false,
+      retryAfterSeconds: 23,
+    });
+
+    await expect(
+      setup.hub.issueInvitation({
+        capability: setup.otherSeatCapability,
+        requestedRole: 'player',
+      })
+    ).resolves.toMatchObject({
+      accepted: false,
+      code: 'rate_limited',
+      retryAfterSeconds: 23,
+      snapshot: { authorityVersion: 1 },
+    });
+    expect(setup.store.admissionCommits).toHaveLength(1);
+
+    await expect(setup.hub.reserveSocketUpgrade()).resolves.toEqual({
+      allowed: false,
+      retryAfterSeconds: 23,
+    });
+    expect(setup.rateLimits.attempt.mock.calls.slice(-2)).toEqual([
+      ['invitation', 10_000],
+      ['socket_upgrade', 10_000],
+    ]);
+  });
+
+  it('bounds repeated Hello attempts on an already-open socket', async () => {
+    const setup = await fixture();
+    setup.rateLimits.attempt.mockResolvedValue({
+      allowed: false,
+      retryAfterSeconds: 11,
+    });
+    const client = connection('over-budget-hello');
+
+    await setup.hub.handleFrame(
+      client.value,
+      helloFrame({ admissionTicket: setup.admissionTicket })
+    );
+
+    expect(client.messages).toEqual([
+      expect.objectContaining({
+        type: 'ServerNotice',
+        code: 'rate_limited',
+        retryable: true,
+      }),
+    ]);
+    expect(setup.store.admissionCommits).toHaveLength(1);
+    expect(setup.rateLimits.attempt).toHaveBeenLastCalledWith(
+      'session_hello',
+      10_000
+    );
+  });
+
   it('reloads a ticket commit when persistence reports failure after durability', async () => {
     const setup = await fixture();
     setup.store.failAdmissionAfterCommitOnce = true;
@@ -403,6 +469,7 @@ describe('serialized room session hub', () => {
       'server-build',
       {
         store: setup.store,
+        rateLimits: allowRoomOperations,
         admission: {
           crypto: setup.crypto,
           opaqueIds: setup.crypto,

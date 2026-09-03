@@ -4,5 +4,7 @@ export * from './create-room.js';
 export * from './durable-storage.js';
 export * from './room-creation-http.js';
 export * from './room-invitation-http.js';
+export * from './room-rate-limit.js';
+export * from './request-rate-limit.js';
 export * from './session-handshake.js';
 export * from './session-hub.js';

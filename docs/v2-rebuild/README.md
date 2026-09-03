@@ -51,8 +51,12 @@ and Phase 0 exit criteria are accepted.
   expiring, one-use player or spectator claims; an untrusted guest handoff is
   validated and exchanged through the existing short-lived ticket boundary.
   Durable schema v6 stores only invitation digests and atomically consumes the
-  invitation with its final ticket. Visible create/join wiring waits on
-  ADR-020's decision about how the handoff moves between browsers; normal
+  invitation with its final ticket. Creation now atomically schedules a
+  five-minute unclaimed-room alarm, first admission cancels it, retry-safe
+  tombstones prevent resurrection, and layered edge/per-room budgets bound
+  creation, credential exchange, socket allocation, and repeated `Hello`
+  attempts. Visible create/join wiring waits on ADR-020's decision about how the
+  handoff moves between browsers; normal
   sidebar/chat/navigation and downloadable/export formats remain later parity
   work.
 - A strangler migration: v1 stays available while v2 reaches parity behind a

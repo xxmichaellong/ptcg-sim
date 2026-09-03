@@ -2,7 +2,7 @@ import {
   parseRoomInvitationIssueRequest,
   type RoomInvitationIssueRequest,
 } from '@ptcgsim/protocol';
-import type { RoomInvitationIssueResult } from '@ptcgsim/room-authority';
+import type { BoundedRoomInvitationIssueResult } from './room-rate-limit.js';
 
 import {
   browserJsonResponse as json,
@@ -15,7 +15,7 @@ export const MAX_ROOM_INVITATION_REQUEST_BYTES = 1_024;
 
 export type RoomInvitationIssuer = (
   request: RoomInvitationIssueRequest
-) => Promise<RoomInvitationIssueResult>;
+) => Promise<BoundedRoomInvitationIssueResult>;
 
 /** Mints an expiring one-use guest claim without returning the master token. */
 export const handleRoomInvitationRequest = async (
@@ -80,6 +80,10 @@ export const handleRoomInvitationRequest = async (
       case 'invitation_capacity':
         return json({ error: 'invitation_capacity' }, 429, {
           'Retry-After': '1',
+        });
+      case 'rate_limited':
+        return json({ error: 'rate_limited' }, 429, {
+          'Retry-After': String(result.retryAfterSeconds),
         });
     }
   } catch {

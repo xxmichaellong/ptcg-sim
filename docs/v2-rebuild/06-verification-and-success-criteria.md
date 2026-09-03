@@ -152,6 +152,13 @@ Release requires all of the following:
     response is recoverable. Final WebSocket admission atomically consumes the
     invitation and every linked ticket, and replay is rejected across authority,
     persistence, HTTP, hub-recovery, and client-bootstrap tests.
+25. New-room initialization atomically persists its snapshot, unclaimed
+    lifecycle, and five-minute alarm; first admission atomically claims it and
+    cancels expiry. Early, duplicate, failed-deletion, stale-marker, malformed,
+    and admission-race paths are bounded and fail closed. Coarse creation limits
+    never substitute for authorization, while exact persisted per-room limits
+    survive reconstruction and independently cap invitation, ticket, socket,
+    and repeated `Hello` work with tested retry hints.
 
 ## Privacy and security gates
 

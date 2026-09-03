@@ -10,15 +10,18 @@ import {
   isSameOriginBrowserRequest,
   readBoundedJsonRequest,
 } from './browser-json-http.js';
+import type { RequestRateLimitDecision } from './request-rate-limit.js';
 
 export const MAX_ROOM_CREATION_REQUEST_BYTES = 64;
 
 export type RoomCreator = () => Promise<RoomCreationResponse>;
+export type RoomCreationRateLimit = () => Promise<RequestRateLimitDecision>;
 
 /** Strict browser-only creation endpoint; no creation options are client-owned. */
 export const handleRoomCreationRequest = async (
   request: Request,
-  create: RoomCreator
+  create: RoomCreator,
+  rateLimit?: RoomCreationRateLimit
 ): Promise<Response> => {
   if (request.method !== 'POST') {
     return json({ error: 'method_not_allowed' }, 405, { Allow: 'POST' });
@@ -53,6 +56,14 @@ export const handleRoomCreationRequest = async (
   }
 
   try {
+    if (rateLimit) {
+      const decision = await rateLimit();
+      if (!decision.allowed) {
+        return json({ error: 'room_creation_rate_limited' }, 429, {
+          'Retry-After': String(decision.retryAfterSeconds),
+        });
+      }
+    }
     const created = parseRoomCreationResponse(await create());
     if (!created.ok) throw new Error('invalid_room_creation_result');
     return json(created.value, 201);

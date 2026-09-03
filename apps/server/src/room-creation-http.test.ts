@@ -105,6 +105,36 @@ describe('room creation HTTP boundary', () => {
     expect(create).not.toHaveBeenCalled();
   });
 
+  it('rejects a valid request when the creation budget is exhausted', async () => {
+    const create = acceptedCreator();
+    const response = await handleRoomCreationRequest(
+      request('{}'),
+      create,
+      async () => ({ allowed: false, retryAfterSeconds: 37 })
+    );
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get('Retry-After')).toBe('37');
+    expect(await response.json()).toEqual({
+      error: 'room_creation_rate_limited',
+    });
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when the platform rate limiter is unavailable', async () => {
+    const create = acceptedCreator();
+    const response = await handleRoomCreationRequest(
+      request('{}'),
+      create,
+      async () => {
+        throw new Error('limiter unavailable');
+      }
+    );
+
+    expect(response.status).toBe(503);
+    expect(create).not.toHaveBeenCalled();
+  });
+
   it('does not expose thrown errors or malformed credential bundles', async () => {
     const failed = await handleRoomCreationRequest(request('{}'), async () => {
       throw new Error(playerOneSeatCapability);

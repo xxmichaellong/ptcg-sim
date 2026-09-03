@@ -6,8 +6,12 @@ import { initializeNewRoom } from './create-room.js';
 describe('new durable room initialization', () => {
   it('persists only capability digests before returning distinct invitations', async () => {
     let persisted: unknown;
-    const initialize = vi.fn(async (snapshot) => {
+    const initialize = vi.fn(async (snapshot, lifecycle) => {
       persisted = structuredClone(snapshot);
+      expect(lifecycle).toEqual({
+        createdAt: 10_000,
+        unclaimedExpiresAt: 310_000,
+      });
     });
     const source = new WebCryptoAuthoritySource();
     const result = await initializeNewRoom(
@@ -18,7 +22,8 @@ describe('new durable room initialization', () => {
         spectatorsAllowed: true,
       },
       { initialize },
-      source
+      source,
+      10_000
     );
 
     expect(initialize).toHaveBeenCalledOnce();
@@ -49,7 +54,8 @@ describe('new durable room initialization', () => {
             throw new Error('durable initialization failed');
           },
         },
-        source
+        source,
+        10_000
       )
     ).rejects.toThrow('durable initialization failed');
   });
@@ -65,9 +71,32 @@ describe('new durable room initialization', () => {
           spectatorsAllowed: false,
         },
         { initialize },
-        new WebCryptoAuthoritySource()
+        new WebCryptoAuthoritySource(),
+        10_000
       )
     ).rejects.toThrow('Match ID');
+    expect(initialize).not.toHaveBeenCalled();
+  });
+
+  it('fails before entropy or persistence for an invalid lifecycle policy', async () => {
+    const initialize = vi.fn();
+    const source = new WebCryptoAuthoritySource();
+    const nextPlayerId = vi.spyOn(source, 'nextPlayerId');
+
+    await expect(
+      initializeNewRoom(
+        {
+          matchId: 'ROOM_INVALID_LIFECYCLE',
+          playerOneCardBackUrl: '/cardback.png',
+          playerTwoCardBackUrl: '/cardback.png',
+          spectatorsAllowed: false,
+        },
+        { initialize },
+        source,
+        -1
+      )
+    ).rejects.toThrow('lifecycle policy');
+    expect(nextPlayerId).not.toHaveBeenCalled();
     expect(initialize).not.toHaveBeenCalled();
   });
 
@@ -101,7 +130,8 @@ describe('new durable room initialization', () => {
         spectatorsAllowed: true,
       },
       { initialize },
-      recovered
+      recovered,
+      10_000
     );
     expect(new Set(Object.values(result.credentials)).size).toBe(3);
     expect(initialize).toHaveBeenCalledOnce();
@@ -118,7 +148,8 @@ describe('new durable room initialization', () => {
           spectatorsAllowed: true,
         },
         { initialize: rejectedInitialize },
-        invalid
+        invalid,
+        10_000
       )
     ).rejects.toThrow('distinct bounded credentials');
     expect(rejectedInitialize).not.toHaveBeenCalled();
@@ -135,7 +166,8 @@ describe('new durable room initialization', () => {
           spectatorsAllowed: true,
         },
         { initialize: digestInitialize },
-        duplicateDigest
+        duplicateDigest,
+        10_000
       )
     ).rejects.toThrow('duplicate credentials');
     expect(digestInitialize).not.toHaveBeenCalled();

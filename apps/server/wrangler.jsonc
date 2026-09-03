@@ -15,6 +15,16 @@
       },
     ],
   },
+  "ratelimits": [
+    {
+      "name": "ROOM_CREATION_RATE_LIMITER",
+      "namespace_id": "260903001",
+      "simple": {
+        "limit": 12,
+        "period": 60,
+      },
+    },
+  ],
   "exports": {
     "PtcgRoom": {
       "type": "durable-object",

@@ -262,9 +262,11 @@ Work:
   the prior ticket; final socket admission atomically consumes both records.
   Resolve ADR-020 before presenting or moving the handoff between browsers or
   wiring the lobby.
-- Add creation/admission rate limits and an unclaimed-room TTL/alarm before the
-  lobby can target v2; a failed creator bootstrap currently leaves an
-  unreachable but durably initialized room for later cleanup.
+- Retain the implemented layered abuse controls: a coarse location-local edge
+  creation budget plus exact persisted per-room invitation, ticket, upgrade, and
+  `Hello` budgets. Retain the atomic five-minute unclaimed lifecycle/alarm,
+  first-admission cancellation, and retry-safe deletion tombstone. Preview load
+  evidence and alert thresholds remain required before the lobby can target v2.
 - Implement schema validation, role authorization, rate limits, idempotency,
   client sequencing, durable transaction pipeline, projection publication, and
   typed rejection.

@@ -80,6 +80,10 @@ class MemoryRoomStore implements AuthoritySnapshotStore {
   }
 }
 
+const allowRoomOperations = {
+  attempt: async () => ({ allowed: true, remaining: 1 }) as const,
+};
+
 class ManualScheduler implements ClientSessionScheduler {
   private nextId = 1;
   readonly tasks = new Map<number, () => void>();
@@ -205,7 +209,8 @@ const fixture = async (mode: 'solo' | 'multiplayer' = 'multiplayer') => {
       spectatorsAllowed: true,
     },
     store,
-    cryptoSource
+    cryptoSource,
+    10_000
   );
   const authoritySnapshot = { ...initialized.snapshot, mode };
   store.snapshot = authoritySnapshot;
@@ -216,6 +221,7 @@ const fixture = async (mode: 'solo' | 'multiplayer' = 'multiplayer') => {
   });
   const hub = new RoomSessionHub(coordinator, 'server-build', {
     store,
+    rateLimits: allowRoomOperations,
     admission: {
       crypto: cryptoSource,
       opaqueIds: cryptoSource,

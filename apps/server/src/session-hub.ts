@@ -4,11 +4,9 @@ import {
   issueRoomInvitation,
   RoomAuthorityCoordinator,
   type AdmissionTicketIssueRequest,
-  type AdmissionTicketIssueResult,
   type AuthoritySnapshotStore,
   type RoomInvitationDependencies,
   type RoomInvitationIssueRequest,
-  type RoomInvitationIssueResult,
 } from '@ptcgsim/room-authority';
 import {
   PROTOCOL_VERSION,
@@ -19,6 +17,12 @@ import {
 } from '@ptcgsim/protocol';
 
 import { establishSession } from './session-handshake.js';
+import type {
+  BoundedAdmissionTicketIssueResult,
+  BoundedRoomInvitationIssueResult,
+  RoomRateLimitDecision,
+  RoomRateLimitPort,
+} from './room-rate-limit.js';
 
 export interface RuntimeConnection {
   readonly id: string;
@@ -30,6 +34,7 @@ export interface SessionHubDependencies {
   readonly admission: RoomInvitationDependencies & {
     readonly now: () => number;
   };
+  readonly rateLimits: RoomRateLimitPort;
   readonly store: AuthoritySnapshotStore;
 }
 
@@ -67,13 +72,26 @@ export class RoomSessionHub {
 
   issueAdmissionTicket(
     request: AdmissionTicketIssueRequest
-  ): Promise<AdmissionTicketIssueResult> {
+  ): Promise<BoundedAdmissionTicketIssueResult> {
     const run = this.tail.then(async () => {
       try {
+        const now = this.dependencies.admission.now();
+        const rateLimit = await this.dependencies.rateLimits.attempt(
+          'admission_ticket',
+          now
+        );
+        if (!rateLimit.allowed) {
+          return {
+            accepted: false,
+            code: 'rate_limited',
+            retryAfterSeconds: rateLimit.retryAfterSeconds,
+            snapshot: this.coordinator.currentSnapshot(),
+          } as const;
+        }
         const result = await issueRoomAdmissionTicket(
           this.coordinator.currentSnapshot(),
           request,
-          this.dependencies.admission.now(),
+          now,
           this.dependencies.admission
         );
         if (result.accepted) {
@@ -95,13 +113,26 @@ export class RoomSessionHub {
 
   issueInvitation(
     request: RoomInvitationIssueRequest
-  ): Promise<RoomInvitationIssueResult> {
+  ): Promise<BoundedRoomInvitationIssueResult> {
     const run = this.tail.then(async () => {
       try {
+        const now = this.dependencies.admission.now();
+        const rateLimit = await this.dependencies.rateLimits.attempt(
+          'invitation',
+          now
+        );
+        if (!rateLimit.allowed) {
+          return {
+            accepted: false,
+            code: 'rate_limited',
+            retryAfterSeconds: rateLimit.retryAfterSeconds,
+            snapshot: this.coordinator.currentSnapshot(),
+          } as const;
+        }
         const result = await issueRoomInvitation(
           this.coordinator.currentSnapshot(),
           request,
-          this.dependencies.admission.now(),
+          now,
           this.dependencies.admission
         );
         if (result.accepted) {
@@ -114,6 +145,20 @@ export class RoomSessionHub {
         throw error;
       }
     });
+    this.tail = run.then(
+      () => undefined,
+      () => undefined
+    );
+    return run;
+  }
+
+  reserveSocketUpgrade(): Promise<RoomRateLimitDecision> {
+    const run = this.tail.then(() =>
+      this.dependencies.rateLimits.attempt(
+        'socket_upgrade',
+        this.dependencies.admission.now()
+      )
+    );
     this.tail = run.then(
       () => undefined,
       () => undefined
@@ -320,6 +365,21 @@ export class RoomSessionHub {
     hello: Extract<ClientMessage, { type: 'Hello' }>
   ): Promise<void> {
     try {
+      const rateLimit = await this.dependencies.rateLimits.attempt(
+        'session_hello',
+        this.dependencies.admission.now()
+      );
+      if (!rateLimit.allowed) {
+        this.send(
+          connection,
+          notice(
+            'rate_limited',
+            `Too many admission attempts; retry in ${rateLimit.retryAfterSeconds} seconds`,
+            true
+          )
+        );
+        return;
+      }
       const result = await establishSession(
         this.coordinator.currentSnapshot(),
         hello,

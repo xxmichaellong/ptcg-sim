@@ -371,6 +371,26 @@ omitted-credential fetch semantics, derives credential-free HTTP and WebSocket
 URLs from the same origin, validates the untrusted handoff before exchange, and
 hands only the resulting runtime and route descriptor to React.
 
+Creation is limited at the Worker edge to 12 valid allocation requests per
+hashed anonymous network identity per 60 seconds. Because the Cloudflare binding
+is location-local and eventually consistent, it is only a coarse allocation
+guard. Each Durable Object independently enforces persisted, transactional
+60-second fixed-window limits of 24 invitation issues, 60 admission-ticket
+exchanges, 120 WebSocket upgrades, and 120 `Hello` attempts. These records are
+bounded operational state, not canonical game state or authorization evidence;
+normal authority validation still applies after the budget check.
+
+A newly initialized room is `unclaimed` for five minutes. Its lifecycle record,
+authority snapshot, and Durable Object alarm are installed atomically. The first
+successful seat or spectator admission changes the lifecycle to `claimed` and
+cancels the alarm in the same admission transaction. A due alarm transaction
+first changes `unclaimed` to `expiring`; all later mutations and allocations
+then fail closed before `deleteAll()`. If deletion fails, Cloudflare's
+at-least-once alarm retry sees the tombstone and retries deletion. An early alarm
+is rescheduled, an obsolete alarm for a claimed room is cancelled, and a stale
+unclaimed marker paired with an existing session is repaired to claimed. Rooms
+created before the lifecycle record existed are never retroactively deleted.
+
 ADR-020 blocks visible create/join wiring. The v1 room ID is both discovery and
 authorization; retaining that behavior would negate SEC-001/SEC-003. The v2
 guest invitation protocol and validated handoff now exist, but their

@@ -139,4 +139,26 @@ describe('admission ticket HTTP boundary', () => {
     expect(failed.status).toBe(503);
     expect(await failed.text()).toBe('{"error":"internal_retryable"}');
   });
+
+  it('returns a bounded retry hint when the room budget is exhausted', async () => {
+    const response = await handleAdmissionTicketRequest(
+      request(
+        JSON.stringify({
+          capability,
+          displayName: 'Blue',
+          requestedRole: 'player',
+        })
+      ),
+      async () => ({
+        accepted: false,
+        code: 'rate_limited',
+        retryAfterSeconds: 19,
+        snapshot,
+      })
+    );
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get('Retry-After')).toBe('19');
+    expect(await response.json()).toEqual({ error: 'rate_limited' });
+  });
 });

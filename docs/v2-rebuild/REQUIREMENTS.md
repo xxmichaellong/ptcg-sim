@@ -62,6 +62,7 @@ alone is not verification.
 | SEC-004 | `BLOCKED_BY_DECISION` | External image policy prevents tracking, SSRF, private network access, unsafe type/decode, and unbounded load.                                                          | Arbitrary URLs/WebGL CORS      | ADR-013 threat/spike tests                                                                               |
 | SEC-005 | `REQUIRED`            | Production admin/configuration fails closed without explicit secure credentials.                                                                                        | Default password               | Config/startup tests                                                                                     |
 | SEC-006 | `BLOCKED_BY_DECISION` | Anonymous invitations transfer seat/spectator authority across browsers without making room code, URL, storage, DOM, React state, logs, or analytics an authority/leak. | V1 shared room ID; ADR-020     | Implemented issue/exchange/redemption tests plus the pending transfer decision and multi-browser journey |
+| SEC-007 | `REQUIRED`            | Anonymous room allocation and pre-admission work are bounded, and never-claimed durable rooms expire without racing successful admission or resurrecting deleted state. | Resource exhaustion; R-018     | Edge/per-room limit tests, atomic lifecycle/alarm tests, failure retry, preview load and alarm evidence  |
 
 ## Protocol, authority, and persistence
 

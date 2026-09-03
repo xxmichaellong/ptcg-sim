@@ -2,7 +2,7 @@ import {
   parseRoomAdmissionTicketRequest,
   type RoomAdmissionTicketRequest,
 } from '@ptcgsim/protocol';
-import type { AdmissionTicketIssueResult } from '@ptcgsim/room-authority';
+import type { BoundedAdmissionTicketIssueResult } from './room-rate-limit.js';
 
 import {
   browserJsonResponse as json,
@@ -17,7 +17,7 @@ export const MAX_ADMISSION_REQUEST_BYTES = 2_048;
 
 export type AdmissionTicketIssuer = (
   request: RoomAdmissionTicketRequest
-) => Promise<AdmissionTicketIssueResult>;
+) => Promise<BoundedAdmissionTicketIssueResult>;
 
 /** Strict browser-only exchange. Capability material is accepted only in JSON. */
 export const handleAdmissionTicketRequest = async (
@@ -72,6 +72,10 @@ export const handleAdmissionTicketRequest = async (
         return json({ error: 'room_not_ready' }, 409);
       case 'ticket_capacity':
         return json({ error: 'ticket_capacity' }, 429, { 'Retry-After': '1' });
+      case 'rate_limited':
+        return json({ error: 'rate_limited' }, 429, {
+          'Retry-After': String(result.retryAfterSeconds),
+        });
     }
   } catch {
     return json({ error: 'internal_retryable' }, 503, { 'Retry-After': '1' });

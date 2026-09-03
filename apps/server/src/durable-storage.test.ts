@@ -24,17 +24,32 @@ import {
   AUTHORITY_SNAPSHOT_STORAGE_KEY,
   ConcurrentRoomWriteError,
   DurableRoomSnapshotStore,
+  ROOM_LIFECYCLE_STORAGE_KEY,
   RoomAlreadyInitializedError,
+  RoomExpiredError,
   type DurableStorageLike,
   type DurableStorageTransactionLike,
 } from './durable-storage.js';
 
 class MemoryDurableStorage implements DurableStorageLike {
   values = new Map<string, unknown>();
+  alarm: number | null = null;
   failPutWhenKeyStartsWith: string | undefined;
+  failSetAlarm = false;
+  failDeleteAlarm = false;
+  failDeleteAllOnce = false;
 
   async get<Value>(key: string): Promise<Value | undefined> {
     return structuredClone(this.values.get(key)) as Value | undefined;
+  }
+
+  async deleteAll(): Promise<void> {
+    if (this.failDeleteAllOnce) {
+      this.failDeleteAllOnce = false;
+      throw new Error('injected deleteAll failure');
+    }
+    this.values.clear();
+    this.alarm = null;
   }
 
   async transaction<Value>(
@@ -43,6 +58,7 @@ class MemoryDurableStorage implements DurableStorageLike {
     const staged = new Map(
       [...this.values].map(([key, value]) => [key, structuredClone(value)])
     );
+    let stagedAlarm = this.alarm;
     const result = await closure({
       get: async <Stored>(key: string) =>
         structuredClone(staged.get(key)) as Stored | undefined,
@@ -58,8 +74,22 @@ class MemoryDurableStorage implements DurableStorageLike {
           staged.set(key, structuredClone(value));
         }
       },
+      setAlarm: async (scheduledTime) => {
+        if (this.failSetAlarm) throw new Error('injected setAlarm failure');
+        stagedAlarm =
+          scheduledTime instanceof Date
+            ? scheduledTime.getTime()
+            : scheduledTime;
+      },
+      deleteAlarm: async () => {
+        if (this.failDeleteAlarm) {
+          throw new Error('injected deleteAlarm failure');
+        }
+        stagedAlarm = null;
+      },
     });
     this.values = staged;
+    this.alarm = stagedAlarm;
     return result;
   }
 }
@@ -91,6 +121,11 @@ const initialSnapshot = (): RoomAuthoritySnapshot => {
     },
   };
 };
+
+const unclaimedSnapshot = (): RoomAuthoritySnapshot => ({
+  ...initialSnapshot(),
+  sessions: {},
+});
 
 const acceptedTransaction = (
   current: RoomAuthoritySnapshot
@@ -149,6 +184,170 @@ describe('Durable Object authority snapshot store', () => {
     expect(await store.load()).toEqual(initial);
     await expect(store.initialize(initial)).rejects.toBeInstanceOf(
       RoomAlreadyInitializedError
+    );
+  });
+
+  it('atomically initializes an unclaimed lifecycle and its expiry alarm', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    const initial = unclaimedSnapshot();
+
+    await store.initialize(initial, {
+      createdAt: 1_000,
+      unclaimedExpiresAt: 301_000,
+    });
+
+    expect(await store.load()).toEqual(initial);
+    expect(storage.alarm).toBe(301_000);
+    expect(storage.values.get(ROOM_LIFECYCLE_STORAGE_KEY)).toEqual({
+      format: 'ptcgsim-room-lifecycle-v1',
+      state: 'unclaimed',
+      createdAt: 1_000,
+      unclaimedExpiresAt: 301_000,
+    });
+
+    const failedStorage = new MemoryDurableStorage();
+    failedStorage.failSetAlarm = true;
+    await expect(
+      new DurableRoomSnapshotStore(failedStorage).initialize(initial, {
+        createdAt: 1_000,
+        unclaimedExpiresAt: 301_000,
+      })
+    ).rejects.toThrow('injected setAlarm failure');
+    expect(failedStorage.values.size).toBe(0);
+    expect(failedStorage.alarm).toBeNull();
+  });
+
+  it('reschedules early alarms and deletes a room once its claim window ends', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    await store.initialize(unclaimedSnapshot(), {
+      createdAt: 1_000,
+      unclaimedExpiresAt: 301_000,
+    });
+    storage.alarm = 2_000;
+
+    await expect(store.expireUnclaimedRoom(2_000)).resolves.toBe('scheduled');
+    expect(storage.alarm).toBe(301_000);
+    expect(await store.load()).toBeDefined();
+
+    await expect(store.expireUnclaimedRoom(301_000)).resolves.toBe('expired');
+    expect(storage.values.size).toBe(0);
+    expect(storage.alarm).toBeNull();
+  });
+
+  it('leaves an expiring tombstone after deletion failure and retries safely', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    const initial = unclaimedSnapshot();
+    await store.initialize(initial, {
+      createdAt: 1_000,
+      unclaimedExpiresAt: 301_000,
+    });
+    storage.failDeleteAllOnce = true;
+
+    await expect(store.expireUnclaimedRoom(301_000)).rejects.toThrow(
+      'injected deleteAll failure'
+    );
+    expect(storage.values.get(ROOM_LIFECYCLE_STORAGE_KEY)).toMatchObject({
+      state: 'expiring',
+    });
+    await expect(
+      store.commit(acceptedTransaction(initialSnapshot()))
+    ).rejects.toBeInstanceOf(RoomExpiredError);
+
+    await expect(store.expireUnclaimedRoom(301_001)).resolves.toBe('expired');
+    expect(storage.values.size).toBe(0);
+  });
+
+  it('claims the lifecycle and cancels expiry with the first admission commit', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    const initial = unclaimedSnapshot();
+    await store.initialize(initial, {
+      createdAt: 1_000,
+      unclaimedExpiresAt: 301_000,
+    });
+    const session = {
+      id: 'first-session-000000000001',
+      viewer: { kind: 'spectator' as const },
+      active: true,
+      nextClientSequence: 1,
+      recentOutcomes: [],
+      resumeCapabilityDigest: 'a'.repeat(64),
+    };
+
+    const admission = {
+      expectedAuthorityVersion: 0,
+      sessionId: session.id,
+      kind: 'spectator_joined',
+      snapshot: {
+        ...initial,
+        authorityVersion: 1,
+        sessions: { [session.id]: session },
+      },
+    } as const;
+
+    storage.failDeleteAlarm = true;
+    await expect(store.commitAdmission(admission)).rejects.toThrow(
+      'injected deleteAlarm failure'
+    );
+    expect((await store.load())?.authorityVersion).toBe(0);
+    expect(storage.values.get(ROOM_LIFECYCLE_STORAGE_KEY)).toMatchObject({
+      state: 'unclaimed',
+    });
+    expect(storage.alarm).toBe(301_000);
+
+    storage.failDeleteAlarm = false;
+    await store.commitAdmission(admission);
+
+    expect(storage.alarm).toBeNull();
+    expect(storage.values.get(ROOM_LIFECYCLE_STORAGE_KEY)).toEqual({
+      format: 'ptcgsim-room-lifecycle-v1',
+      state: 'claimed',
+      createdAt: 1_000,
+      claimedAtAuthorityVersion: 1,
+    });
+    await expect(store.expireUnclaimedRoom(400_000)).resolves.toBe('claimed');
+    expect(await store.load()).toBeDefined();
+  });
+
+  it('repairs a stale unclaimed marker when durable sessions already exist', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    await store.initialize(unclaimedSnapshot(), {
+      createdAt: 1_000,
+      unclaimedExpiresAt: 301_000,
+    });
+    storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
+      format: 'ptcgsim-room-authority-v6',
+      snapshot: initialSnapshot(),
+    });
+
+    await expect(store.expireUnclaimedRoom(301_000)).resolves.toBe('claimed');
+    expect(storage.alarm).toBeNull();
+    expect(storage.values.get(ROOM_LIFECYCLE_STORAGE_KEY)).toMatchObject({
+      state: 'claimed',
+      claimedAtAuthorityVersion: 0,
+    });
+  });
+
+  it('fails closed on malformed lifecycle state', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    await store.initialize(unclaimedSnapshot(), {
+      createdAt: 1_000,
+      unclaimedExpiresAt: 301_000,
+    });
+    storage.values.set(ROOM_LIFECYCLE_STORAGE_KEY, {
+      format: 'ptcgsim-room-lifecycle-v1',
+      state: 'unclaimed',
+      createdAt: 1_000,
+      unclaimedExpiresAt: 'tomorrow',
+    });
+
+    await expect(store.expireUnclaimedRoom(301_000)).rejects.toThrow(
+      'lifecycle is malformed'
     );
   });
 

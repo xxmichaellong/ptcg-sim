@@ -7,17 +7,23 @@ import {
 import { PROTOCOL_VERSION, type RoomCreationResponse } from '@ptcgsim/protocol';
 
 import { handleAdmissionTicketRequest } from './admission-ticket-http.js';
-import { isSameOriginBrowserRequest } from './browser-json-http.js';
+import {
+  browserJsonResponse as json,
+  isSameOriginBrowserRequest,
+} from './browser-json-http.js';
 import { WebCryptoAuthoritySource } from './authority-crypto.js';
 import { initializeNewRoom } from './create-room.js';
 import { DurableRoomSnapshotStore } from './durable-storage.js';
+import { consumeRoomCreationRateLimit } from './request-rate-limit.js';
 import { handleRoomCreationRequest } from './room-creation-http.js';
 import { handleRoomInvitationRequest } from './room-invitation-http.js';
+import { DurableRoomRateLimiter } from './room-rate-limit.js';
 import { RoomSessionHub, type RuntimeConnection } from './session-hub.js';
 
 interface Env {
   readonly BUILD_ID: string;
   readonly PTCG_ROOM: DurableObjectNamespace<PtcgRoom>;
+  readonly ROOM_CREATION_RATE_LIMITER: RateLimit;
 }
 
 interface SocketAttachment {
@@ -64,11 +70,13 @@ const invitationRoomCodeFromPath = (pathname: string): string | undefined => {
 export class PtcgRoom extends DurableObject<Env> {
   private readonly cryptoSource = new WebCryptoAuthoritySource();
   private readonly store: DurableRoomSnapshotStore;
+  private readonly rateLimits: DurableRoomRateLimiter;
   private runtimePromise: Promise<RoomRuntime | undefined>;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
     this.store = new DurableRoomSnapshotStore(ctx.storage);
+    this.rateLimits = new DurableRoomRateLimiter(ctx.storage);
     this.runtimePromise = this.restoreRuntime();
   }
 
@@ -83,7 +91,8 @@ export class PtcgRoom extends DurableObject<Env> {
         spectatorsAllowed: true,
       },
       this.store,
-      this.cryptoSource
+      this.cryptoSource,
+      Date.now()
     );
     this.runtimePromise = Promise.resolve(this.createRuntime(created.snapshot));
     return { roomCode: roomCodeValue, credentials: created.credentials };
@@ -118,6 +127,19 @@ export class PtcgRoom extends DurableObject<Env> {
     }
     const runtime = await this.runtimePromise;
     if (!runtime) return new Response('Room not initialized', { status: 404 });
+    let rateLimit;
+    try {
+      rateLimit = await runtime.hub.reserveSocketUpgrade();
+    } catch {
+      return json({ error: 'internal_retryable' }, 503, {
+        'Retry-After': '1',
+      });
+    }
+    if (!rateLimit.allowed) {
+      return json({ error: 'rate_limited' }, 429, {
+        'Retry-After': String(rateLimit.retryAfterSeconds),
+      });
+    }
 
     const pair = new WebSocketPair();
     const client = pair[0];
@@ -180,6 +202,15 @@ export class PtcgRoom extends DurableObject<Env> {
     this.disconnectSocket(socket);
   }
 
+  override async alarm(): Promise<void> {
+    const result = await this.store.expireUnclaimedRoom(Date.now());
+    if (result !== 'expired') return;
+    this.runtimePromise = Promise.resolve(undefined);
+    for (const socket of this.ctx.getWebSockets()) {
+      socket.close(4404, 'Room expired before admission');
+    }
+  }
+
   private disconnectSocket(socket: WebSocket): void {
     const attachment =
       socket.deserializeAttachment() as SocketAttachment | null;
@@ -207,6 +238,7 @@ export class PtcgRoom extends DurableObject<Env> {
       coordinator,
       hub: new RoomSessionHub(coordinator, this.env.BUILD_ID, {
         store: this.store,
+        rateLimits: this.rateLimits,
         admission: {
           crypto: this.cryptoSource,
           opaqueIds: this.cryptoSource,
@@ -249,24 +281,29 @@ const worker: ExportedHandler<Env> = {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === '/v2/rooms') {
-      return handleRoomCreationRequest(request, async () => {
-        for (let attempt = 0; attempt < 8; attempt += 1) {
-          const code = roomCode();
-          const stub = env.PTCG_ROOM.getByName(code);
-          try {
-            return await stub.initialize(code);
-          } catch (error) {
-            if (
-              error instanceof Error &&
-              error.message.includes('already initialized')
-            ) {
-              continue;
+      return handleRoomCreationRequest(
+        request,
+        async () => {
+          for (let attempt = 0; attempt < 8; attempt += 1) {
+            const code = roomCode();
+            const stub = env.PTCG_ROOM.getByName(code);
+            try {
+              return await stub.initialize(code);
+            } catch (error) {
+              if (
+                error instanceof Error &&
+                error.message.includes('already initialized')
+              ) {
+                continue;
+              }
+              throw error;
             }
-            throw error;
           }
-        }
-        throw new Error('room_code_exhausted');
-      });
+          throw new Error('room_code_exhausted');
+        },
+        () =>
+          consumeRoomCreationRateLimit(request, env.ROOM_CREATION_RATE_LIMITER)
+      );
     }
     const code = roomCodeFromPath(url.pathname);
     if (request.method === 'GET' && code) {

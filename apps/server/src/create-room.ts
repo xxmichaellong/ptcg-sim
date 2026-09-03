@@ -22,8 +22,16 @@ export interface RoomCreationCrypto extends AdmissionCrypto {
 }
 
 export interface InitialRoomStore {
-  readonly initialize: (snapshot: RoomAuthoritySnapshot) => Promise<void>;
+  readonly initialize: (
+    snapshot: RoomAuthoritySnapshot,
+    lifecycle: {
+      readonly createdAt: number;
+      readonly unclaimedExpiresAt: number;
+    }
+  ) => Promise<void>;
 }
+
+export const DEFAULT_UNCLAIMED_ROOM_LIFETIME_MS = 5 * 60_000;
 
 export interface NewRoomInput {
   readonly matchId: string;
@@ -90,13 +98,25 @@ const nextDistinctCredentials = (
 export const initializeNewRoom = async (
   input: NewRoomInput,
   store: InitialRoomStore,
-  cryptoSource: RoomCreationCrypto
+  cryptoSource: RoomCreationCrypto,
+  createdAt: number,
+  unclaimedRoomLifetimeMs = DEFAULT_UNCLAIMED_ROOM_LIFETIME_MS
 ): Promise<{
   readonly snapshot: RoomAuthoritySnapshot;
   readonly credentials: NewRoomCredentials;
 }> => {
   if (input.matchId.length < 1 || input.matchId.length > 128) {
     throw new Error('Match ID must be a bounded non-empty string');
+  }
+  if (
+    !Number.isSafeInteger(createdAt) ||
+    createdAt < 0 ||
+    !Number.isSafeInteger(unclaimedRoomLifetimeMs) ||
+    unclaimedRoomLifetimeMs < 30_000 ||
+    unclaimedRoomLifetimeMs > 24 * 60 * 60_000 ||
+    !Number.isSafeInteger(createdAt + unclaimedRoomLifetimeMs)
+  ) {
+    throw new Error('Initial room lifecycle policy is invalid');
   }
   const [playerOneId, playerTwoId] = nextDistinctPlayerIds(cryptoSource);
   const credentials = nextDistinctCredentials(
@@ -162,7 +182,10 @@ export const initializeNewRoom = async (
     }),
   };
   assertAuthoritySnapshotInvariants(snapshot);
-  await store.initialize(snapshot);
+  await store.initialize(snapshot, {
+    createdAt,
+    unclaimedExpiresAt: createdAt + unclaimedRoomLifetimeMs,
+  });
   return {
     snapshot,
     credentials,

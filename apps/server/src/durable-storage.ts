@@ -14,6 +14,7 @@ import {
 } from '@ptcgsim/room-authority';
 
 export const AUTHORITY_SNAPSHOT_STORAGE_KEY = 'authority:snapshot';
+export const ROOM_LIFECYCLE_STORAGE_KEY = 'room:lifecycle';
 const JOURNAL_PREFIX = 'authority:journal:';
 const ADMISSION_JOURNAL_PREFIX = 'authority:admission:';
 const LEGACY_STORAGE_FORMAT = 'ptcgsim-room-authority-v1';
@@ -26,14 +27,45 @@ const STORAGE_FORMAT = 'ptcgsim-room-authority-v6';
 export interface DurableStorageTransactionLike {
   readonly get: <Value>(key: string) => Promise<Value | undefined>;
   readonly put: (entries: Record<string, unknown>) => Promise<void>;
+  readonly setAlarm: (scheduledTime: number | Date) => Promise<void>;
+  readonly deleteAlarm: () => Promise<void>;
 }
 
 export interface DurableStorageLike {
   readonly get: <Value>(key: string) => Promise<Value | undefined>;
+  readonly deleteAll: () => Promise<void>;
   readonly transaction: <Value>(
     closure: (transaction: DurableStorageTransactionLike) => Promise<Value>
   ) => Promise<Value>;
 }
+
+export interface RoomInitializationLifecycle {
+  readonly createdAt: number;
+  readonly unclaimedExpiresAt: number;
+}
+
+type StoredRoomLifecycle =
+  | {
+      readonly format: 'ptcgsim-room-lifecycle-v1';
+      readonly state: 'unclaimed';
+      readonly createdAt: number;
+      readonly unclaimedExpiresAt: number;
+    }
+  | {
+      readonly format: 'ptcgsim-room-lifecycle-v1';
+      readonly state: 'claimed';
+      readonly createdAt: number;
+      readonly claimedAtAuthorityVersion: number;
+    }
+  | {
+      readonly format: 'ptcgsim-room-lifecycle-v1';
+      readonly state: 'expiring';
+      readonly createdAt: number;
+      readonly unclaimedExpiresAt: number;
+    };
+
+export type UnclaimedRoomExpiryResult =
+  'expired' | 'claimed' | 'scheduled' | 'missing';
 
 interface StoredAuthoritySnapshot {
   readonly format:
@@ -83,10 +115,67 @@ export class ConcurrentRoomWriteError extends Error {
 
 export class RoomAlreadyInitializedError extends Error {
   constructor() {
-    super('Room authority snapshot already exists');
+    super('Room authority snapshot is already initialized');
     this.name = 'RoomAlreadyInitializedError';
   }
 }
+
+export class RoomExpiredError extends Error {
+  constructor() {
+    super('Room expired before its first admission');
+    this.name = 'RoomExpiredError';
+  }
+}
+
+const safeNonNegativeInteger = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+
+const readStoredRoomLifecycle = (
+  value: unknown
+): StoredRoomLifecycle | undefined => {
+  if (value === undefined) return undefined;
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    Reflect.get(value, 'format') !== 'ptcgsim-room-lifecycle-v1' ||
+    !safeNonNegativeInteger(Reflect.get(value, 'createdAt'))
+  ) {
+    throw new Error('Stored room lifecycle is malformed');
+  }
+  const state = Reflect.get(value, 'state');
+  const createdAt = Reflect.get(value, 'createdAt');
+  if (state === 'claimed') {
+    if (
+      !safeNonNegativeInteger(Reflect.get(value, 'claimedAtAuthorityVersion'))
+    ) {
+      throw new Error('Stored room lifecycle is malformed');
+    }
+    return value as StoredRoomLifecycle;
+  }
+  const unclaimedExpiresAt = Reflect.get(value, 'unclaimedExpiresAt');
+  if (
+    (state !== 'unclaimed' && state !== 'expiring') ||
+    !safeNonNegativeInteger(unclaimedExpiresAt) ||
+    !safeNonNegativeInteger(createdAt) ||
+    unclaimedExpiresAt <= createdAt
+  ) {
+    throw new Error('Stored room lifecycle is malformed');
+  }
+  return value as StoredRoomLifecycle;
+};
+
+export const storedRoomLifecycleState = (
+  value: unknown
+): StoredRoomLifecycle['state'] | undefined =>
+  readStoredRoomLifecycle(value)?.state;
+
+const validInitializationLifecycle = (
+  lifecycle: RoomInitializationLifecycle
+): boolean =>
+  safeNonNegativeInteger(lifecycle.createdAt) &&
+  safeNonNegativeInteger(lifecycle.unclaimedExpiresAt) &&
+  lifecycle.unclaimedExpiresAt > lifecycle.createdAt &&
+  lifecycle.unclaimedExpiresAt - lifecycle.createdAt <= 24 * 60 * 60_000;
 
 const isStoredSnapshot = (value: unknown): value is StoredAuthoritySnapshot =>
   typeof value === 'object' &&
@@ -256,8 +345,19 @@ export class DurableRoomSnapshotStore
     );
   }
 
-  async initialize(snapshot: RoomAuthoritySnapshot): Promise<void> {
+  async initialize(
+    snapshot: RoomAuthoritySnapshot,
+    lifecycle?: RoomInitializationLifecycle
+  ): Promise<void> {
     assertAuthoritySnapshotInvariants(snapshot);
+    if (
+      lifecycle &&
+      (!validInitializationLifecycle(lifecycle) ||
+        snapshot.authorityVersion !== 0 ||
+        Object.keys(snapshot.sessions).length > 0)
+    ) {
+      throw new Error('Initial room lifecycle is invalid');
+    }
     await this.storage.transaction(async (transaction) => {
       const existing = await transaction.get<unknown>(
         AUTHORITY_SNAPSHOT_STORAGE_KEY
@@ -268,13 +368,80 @@ export class DurableRoomSnapshotStore
           format: STORAGE_FORMAT,
           snapshot,
         } satisfies StoredAuthoritySnapshot,
+        ...(lifecycle
+          ? {
+              [ROOM_LIFECYCLE_STORAGE_KEY]: {
+                format: 'ptcgsim-room-lifecycle-v1',
+                state: 'unclaimed',
+                createdAt: lifecycle.createdAt,
+                unclaimedExpiresAt: lifecycle.unclaimedExpiresAt,
+              } satisfies StoredRoomLifecycle,
+            }
+          : {}),
       });
+      if (lifecycle) {
+        await transaction.setAlarm(lifecycle.unclaimedExpiresAt);
+      }
     });
+  }
+
+  async expireUnclaimedRoom(now: number): Promise<UnclaimedRoomExpiryResult> {
+    if (!safeNonNegativeInteger(now)) {
+      throw new Error('Room expiry clock is invalid');
+    }
+    const decision = await this.storage.transaction(async (transaction) => {
+      const lifecycle = readStoredRoomLifecycle(
+        await transaction.get<unknown>(ROOM_LIFECYCLE_STORAGE_KEY)
+      );
+      if (!lifecycle) {
+        await transaction.deleteAlarm();
+        return { status: 'missing' as const, deleteRoom: false };
+      }
+      if (lifecycle.state === 'claimed') {
+        await transaction.deleteAlarm();
+        return { status: 'claimed' as const, deleteRoom: false };
+      }
+      if (lifecycle.state === 'expiring') {
+        return { status: 'expired' as const, deleteRoom: true };
+      }
+      const snapshot = readStoredSnapshot(
+        await transaction.get<unknown>(AUTHORITY_SNAPSHOT_STORAGE_KEY)
+      );
+      if (snapshot && Object.keys(snapshot.sessions).length > 0) {
+        await transaction.put({
+          [ROOM_LIFECYCLE_STORAGE_KEY]: {
+            format: 'ptcgsim-room-lifecycle-v1',
+            state: 'claimed',
+            createdAt: lifecycle.createdAt,
+            claimedAtAuthorityVersion: snapshot.authorityVersion,
+          } satisfies StoredRoomLifecycle,
+        });
+        await transaction.deleteAlarm();
+        return { status: 'claimed' as const, deleteRoom: false };
+      }
+      if (now < lifecycle.unclaimedExpiresAt) {
+        await transaction.setAlarm(lifecycle.unclaimedExpiresAt);
+        return { status: 'scheduled' as const, deleteRoom: false };
+      }
+      await transaction.put({
+        [ROOM_LIFECYCLE_STORAGE_KEY]: {
+          ...lifecycle,
+          state: 'expiring',
+        } satisfies StoredRoomLifecycle,
+      });
+      return { status: 'expired' as const, deleteRoom: true };
+    });
+    if (decision.deleteRoom) await this.storage.deleteAll();
+    return decision.status;
   }
 
   async commit(transaction: PersistedAuthorityTransaction): Promise<void> {
     assertAuthoritySnapshotInvariants(transaction.snapshot);
     await this.storage.transaction(async (storageTransaction) => {
+      const lifecycle = readStoredRoomLifecycle(
+        await storageTransaction.get<unknown>(ROOM_LIFECYCLE_STORAGE_KEY)
+      );
+      if (lifecycle?.state === 'expiring') throw new RoomExpiredError();
       const current = readStoredSnapshot(
         await storageTransaction.get<unknown>(AUTHORITY_SNAPSHOT_STORAGE_KEY)
       );
@@ -317,6 +484,10 @@ export class DurableRoomSnapshotStore
   ): Promise<void> {
     assertAuthoritySnapshotInvariants(transaction.snapshot);
     await this.storage.transaction(async (storageTransaction) => {
+      const lifecycle = readStoredRoomLifecycle(
+        await storageTransaction.get<unknown>(ROOM_LIFECYCLE_STORAGE_KEY)
+      );
+      if (lifecycle?.state === 'expiring') throw new RoomExpiredError();
       const current = readStoredSnapshot(
         await storageTransaction.get<unknown>(AUTHORITY_SNAPSHOT_STORAGE_KEY)
       );
@@ -367,13 +538,31 @@ export class DurableRoomSnapshotStore
                   : {}),
               }),
       };
+      const claimsRoom =
+        transaction.kind === 'seat_claimed' ||
+        transaction.kind === 'spectator_joined' ||
+        transaction.kind === 'session_resumed';
       await storageTransaction.put({
         [AUTHORITY_SNAPSHOT_STORAGE_KEY]: {
           format: STORAGE_FORMAT,
           snapshot: transaction.snapshot,
         } satisfies StoredAuthoritySnapshot,
         [key]: journalEntry,
+        ...(claimsRoom && lifecycle?.state === 'unclaimed'
+          ? {
+              [ROOM_LIFECYCLE_STORAGE_KEY]: {
+                format: 'ptcgsim-room-lifecycle-v1',
+                state: 'claimed',
+                createdAt: lifecycle.createdAt,
+                claimedAtAuthorityVersion:
+                  transaction.snapshot.authorityVersion,
+              } satisfies StoredRoomLifecycle,
+            }
+          : {}),
       });
+      if (claimsRoom && lifecycle?.state === 'unclaimed') {
+        await storageTransaction.deleteAlarm();
+      }
     });
   }
 }
