@@ -13,8 +13,10 @@
     "build": "wrangler deploy --dry-run --outdir dist",
     "cf-typegen": "wrangler types",
     "dev": "wrangler dev",
-    "test": "vitest run",
-    "typecheck": "tsc --build"
+    "test": "vitest run --root ../.. --config vitest.config.ts apps/server/src",
+    "test:runtime": "vitest run --config vitest.runtime.config.ts",
+    "typecheck": "tsc --build",
+    "typecheck:runtime": "tsc --noEmit --project runtime-tests/tsconfig.json"
   },
   "dependencies": {
     "@ptcgsim/game-core": "workspace:*",
@@ -22,6 +24,7 @@
     "@ptcgsim/room-authority": "workspace:*"
   },
   "devDependencies": {
-    "wrangler": "4.120.0"
+    "@cloudflare/vitest-plugin": "1.1.3",
+    "wrangler": "4.128.0"
   }
 }

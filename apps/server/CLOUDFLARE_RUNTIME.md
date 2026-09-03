@@ -1,8 +1,9 @@
 # Cloudflare runtime spike record
 
-Status: provisionally selected; local bundle/type/hibernation-reconstruction tests
-pass. Preview deployment, Workers-pool lifecycle tests, load/cost measurements,
-and rollback evidence remain required before ADR-005 becomes accepted.
+Status: provisionally selected; local bundle/type checks and real `workerd`
+lifecycle/hibernation tests pass. Preview deployment, injected storage-fault
+traffic, load/cost measurements, and rollback evidence remain required before
+ADR-005 becomes accepted.
 
 ## Implemented runtime boundary
 
@@ -52,21 +53,29 @@ and rollback evidence remain required before ADR-005 becomes accepted.
   concurrent fixed-window enforcement, redacted edge identity, closed telemetry
   serialization/failure isolation, health metadata, and reconstruction after
   simulated hibernation.
+- `@cloudflare/vitest-plugin` 1.1.3 runs the deployed entrypoint and
+  SQLite-backed room in Cloudflare's `workerd` runtime. The runtime suite proves
+  health and creation routing through real bindings, atomic snapshot/lifecycle/
+  alarm initialization, early-alarm repair, due unclaimed-room deletion, and
+  the first admission's alarm cancellation.
+- The runtime suite also keeps an admitted WebSocket attached while forcing a
+  real Durable Object eviction. The hibernated socket wakes the reconstructed
+  room, retains its serialized connection/session attachment and identical
+  durable authority snapshot, answers an application ping, and durably accepts
+  the next sequenced command.
 - The platform adapter has no game rules. It delegates all decisions to
   `@ptcgsim/room-authority` and `@ptcgsim/game-core`.
 
 ## Remaining spike gates
 
-1. Run the Worker under `@cloudflare/vitest-pool-workers` and force Durable Object
-   eviction while live WebSockets remain attached.
-2. Verify simultaneous admission and command traffic under storage fault
+1. Verify simultaneous admission and command traffic under storage fault
    injection with the real runtime input/output gates.
-3. Measure full-snapshot payloads, command latency including durable commit,
+2. Measure full-snapshot payloads, command latency including durable commit,
    memory, CPU, hibernation wake latency, and practical sockets per room.
-4. Connect the implemented structured events to production dashboards and
+3. Connect the implemented structured events to production dashboards and
    destinations, ratify alert thresholds in preview, and rehearse the runbooks;
    verify platform rate-limit distribution and alarm behavior there.
-5. Prove sticky v2 room routing and rollback for new rooms without moving an
+4. Prove sticky v2 room routing and rollback for new rooms without moving an
    active room between protocol generations.
 
 ## Primary references checked 2026-09-03
@@ -77,5 +86,7 @@ and rollback evidence remain required before ADR-005 becomes accepted.
 - [Durable Object alarms](https://developers.cloudflare.com/durable-objects/api/alarms/)
 - [Durable Object storage API](https://developers.cloudflare.com/durable-objects/api/storage-api/)
 - [Workers Rate Limiting binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/)
+- [Workers Vitest integration](https://developers.cloudflare.com/workers/testing/vitest-integration/)
+- [Workers Vitest test APIs](https://developers.cloudflare.com/workers/testing/vitest-integration/test-apis/)
 - [Rules of Durable Objects](https://developers.cloudflare.com/durable-objects/best-practices/rules-of-durable-objects/)
 - [Wrangler configuration and declarative exports](https://developers.cloudflare.com/workers/wrangler/configuration/)

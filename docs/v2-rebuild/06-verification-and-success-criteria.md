@@ -159,6 +159,14 @@ Release requires all of the following:
     never substitute for authorization, while exact persisted per-room limits
     survive reconstruction and independently cap invitation, ticket, socket,
     and repeated `Hello` work with tested retry hints.
+26. The isolated Cloudflare Vitest gate runs the deployed Worker and
+    SQLite-backed Durable Object in `workerd`: it verifies edge routing and
+    binding use, persisted creation/alarm state, early and due alarm behavior,
+    atomic first-admission claim, and WebSocket attachment/session recovery
+    across a forced hibernating eviction. The resumed socket answers an
+    application ping and commits the next sequenced command durably. Preview
+    storage-fault traffic, load/cost measurement, and platform alarm/rate-limit
+    distribution remain explicit pre-rollout gates.
 
 ## Privacy and security gates
 

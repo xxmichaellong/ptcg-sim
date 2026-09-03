@@ -15,6 +15,7 @@ export default defineConfig({
       '**/node_modules/**',
       '**/dist/**',
       '**/lib/**',
+      'apps/server/runtime-tests/**',
       'tests/browser/**',
     ],
     passWithNoTests: false,
