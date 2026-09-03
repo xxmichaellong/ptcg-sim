@@ -91,21 +91,22 @@ a manual tabletop simulator.
 
 ## Documents
 
-| Document                                                                               | Purpose                                                                                                     |
-| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| [01-current-system-and-parity-contract.md](./01-current-system-and-parity-contract.md) | Current architecture, known hazards, and the UI/UX compatibility contract                                   |
-| [02-target-architecture.md](./02-target-architecture.md)                               | Package boundaries, runtime data flow, technology choices, and dependency rules                             |
-| [03-domain-network-and-persistence.md](./03-domain-network-and-persistence.md)         | Canonical state, commands, invariants, hidden information, room protocol, persistence, replay, and security |
-| [04-client-renderer-and-parity.md](./04-client-renderer-and-parity.md)                 | React/Pixi boundary, renderer systems, input, assets, accessibility, and visual parity                      |
-| [05-migration-and-delivery-plan.md](./05-migration-and-delivery-plan.md)               | Incremental phases, prerequisites, artifacts, exit gates, rollout, and rollback                             |
-| [06-verification-and-success-criteria.md](./06-verification-and-success-criteria.md)   | Test pyramid, failure injection, performance budgets, and release gates                                     |
-| [07-file-map-and-workstreams.md](./07-file-map-and-workstreams.md)                     | Current-to-target file mapping, work ownership, and dependency order                                        |
-| [08-decisions-risks-and-alternatives.md](./08-decisions-risks-and-alternatives.md)     | Decisions, alternatives, open questions, risk register, and stop conditions                                 |
-| [REQUIREMENTS.md](./REQUIREMENTS.md)                                                   | Stable requirement IDs and blueprint-level traceability                                                     |
-| [LEGACY_ACTION_MAP.md](./LEGACY_ACTION_MAP.md)                                         | Preliminary mapping of all 50 synchronized v1 actions into v2 responsibilities                              |
-| [MAGICCIRCLE_REUSE.md](./MAGICCIRCLE_REUSE.md)                                         | Exact reuse/adaptation boundary for the local MagicCircle client, Pixi, and room patterns                   |
-| [RENDERER_SPIKE.md](./RENDERER_SPIKE.md)                                               | Live DOM/Pixi implementation evidence, research, current result, and remaining decision gates               |
-| [AUDIT.md](./AUDIT.md)                                                                 | Multi-agent review process, change protocol, and audit checklists                                           |
+| Document                                                                               | Purpose                                                                                                      |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [01-current-system-and-parity-contract.md](./01-current-system-and-parity-contract.md) | Current architecture, known hazards, and the UI/UX compatibility contract                                    |
+| [02-target-architecture.md](./02-target-architecture.md)                               | Package boundaries, runtime data flow, technology choices, and dependency rules                              |
+| [03-domain-network-and-persistence.md](./03-domain-network-and-persistence.md)         | Canonical state, commands, invariants, hidden information, room protocol, persistence, replay, and security  |
+| [04-client-renderer-and-parity.md](./04-client-renderer-and-parity.md)                 | React/Pixi boundary, renderer systems, input, assets, accessibility, and visual parity                       |
+| [05-migration-and-delivery-plan.md](./05-migration-and-delivery-plan.md)               | Incremental phases, prerequisites, artifacts, exit gates, rollout, and rollback                              |
+| [06-verification-and-success-criteria.md](./06-verification-and-success-criteria.md)   | Test pyramid, failure injection, performance budgets, and release gates                                      |
+| [07-file-map-and-workstreams.md](./07-file-map-and-workstreams.md)                     | Current-to-target file mapping, work ownership, and dependency order                                         |
+| [08-decisions-risks-and-alternatives.md](./08-decisions-risks-and-alternatives.md)     | Decisions, alternatives, open questions, risk register, and stop conditions                                  |
+| [REQUIREMENTS.md](./REQUIREMENTS.md)                                                   | Stable requirement IDs and blueprint-level traceability                                                      |
+| [LEGACY_ACTION_MAP.md](./LEGACY_ACTION_MAP.md)                                         | Preliminary mapping of all 50 synchronized v1 actions into v2 responsibilities                               |
+| [MAGICCIRCLE_REUSE.md](./MAGICCIRCLE_REUSE.md)                                         | Exact reuse/adaptation boundary for the local MagicCircle client, Pixi, and room patterns                    |
+| [RENDERER_SPIKE.md](./RENDERER_SPIKE.md)                                               | Live DOM/Pixi implementation evidence, research, current result, and remaining decision gates                |
+| [SERVER_PERFORMANCE_BASELINE.md](./SERVER_PERFORMANCE_BASELINE.md)                     | Reproducible `workerd` payload/resource gate, named local timing observation, and remaining preview evidence |
+| [AUDIT.md](./AUDIT.md)                                                                 | Multi-agent review process, change protocol, and audit checklists                                            |
 
 ## How to read and approve this blueprint
 

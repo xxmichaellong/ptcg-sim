@@ -132,3 +132,19 @@ application logs are not an accounting source.
 
 Image-provider, save/import, and client/renderer incident procedures will be
 added with those production slices; their absence still blocks external beta.
+
+## Local runtime measurement
+
+Run `corepack pnpm run measure:v2:server` from the repository root to exercise a
+120-card, two-player, one-spectator room through the deployed Worker,
+SQLite-backed Durable Object, and runtime WebSockets. The runner writes a
+machine-readable report to the gitignored
+`artifacts/performance/server-local.json` and records frame/fanout bytes, local
+command and hibernation-wake distributions, storage category counts/bytes, and
+socket attachment size.
+
+This local observation is diagnostic evidence, not a substitute for managed
+Cloudflare preview load, CPU/memory/cost, alarm, or network distributions. The
+versioned baseline, CI envelopes, privacy limits, and open journal-retention
+finding are documented in
+[`../../docs/v2-rebuild/SERVER_PERFORMANCE_BASELINE.md`](../../docs/v2-rebuild/SERVER_PERFORMANCE_BASELINE.md).

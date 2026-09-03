@@ -1,14 +1,5 @@
-import { env, exports } from 'cloudflare:workers';
-import {
-  PROTOCOL_VERSION,
-  parseRoomAdmissionTicketResponse,
-  parseRoomCreationResponse,
-  parseServerFrame,
-  type RoomAdmissionTicketResponse,
-  type RoomCreationResponse,
-  type ServerMessage,
-} from '@ptcgsim/protocol';
-import type { RoomAuthoritySnapshot } from '@ptcgsim/room-authority';
+import { exports } from 'cloudflare:workers';
+import { PROTOCOL_VERSION } from '@ptcgsim/protocol';
 import {
   evictDurableObject,
   runDurableObjectAlarm,
@@ -17,174 +8,31 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  AUTHORITY_SNAPSHOT_STORAGE_KEY,
   DurableRoomSnapshotStore,
   ROOM_LIFECYCLE_STORAGE_KEY,
 } from '../src/durable-storage.js';
+import {
+  RUNTIME_ORIGIN as ORIGIN,
+  type StoredLifecycle,
+  connect as connectWithoutTracking,
+  createRoom,
+  flipCommandFrame,
+  helloFrame,
+  issuePlayerTicket,
+  nextServerMessage,
+  nextServerMessages,
+  roomStub,
+  runtimeEvidence,
+} from './runtime-harness.js';
 
-const ORIGIN = 'https://play.example';
 const openSockets = new Set<WebSocket>();
-
-interface StoredAuthorityEnvelope {
-  readonly format: string;
-  readonly snapshot: RoomAuthoritySnapshot;
-}
-
-interface StoredLifecycle {
-  readonly format: string;
-  readonly state: 'unclaimed' | 'claimed' | 'expiring';
-  readonly createdAt: number;
-  readonly unclaimedExpiresAt?: number;
-  readonly claimedAtAuthorityVersion?: number;
-}
-
-interface SocketAttachment {
-  readonly connectionId: string;
-  readonly sessionId?: string;
-  readonly authorityVersion: number;
-}
-
-type Welcome = Extract<ServerMessage, { readonly type: 'Welcome' }>;
-
-const createRoom = async () => {
-  const response = await exports.default.fetch(
-    new Request(`${ORIGIN}/v2/rooms`, {
-      method: 'POST',
-      headers: {
-        'CF-Connecting-IP': '192.0.2.10',
-        'Content-Type': 'application/json',
-        Origin: ORIGIN,
-      },
-      body: '{}',
-    })
-  );
-  expect(response.status).toBe(201);
-  const parsed = parseRoomCreationResponse(await response.json());
-  expect(parsed.ok).toBe(true);
-  if (!parsed.ok) throw new Error(JSON.stringify(parsed.issues));
-  return parsed.value;
+const connect = async (
+  created: Parameters<typeof connectWithoutTracking>[0]
+): Promise<WebSocket> => {
+  const socket = await connectWithoutTracking(created);
+  openSockets.add(socket);
+  return socket;
 };
-
-const roomStub = (created: RoomCreationResponse) =>
-  env.PTCG_ROOM.getByName(created.roomCode);
-
-const issuePlayerTicket = async (
-  created: RoomCreationResponse,
-  seat: 'one' | 'two' = 'one',
-  displayName = 'Runtime Player'
-) => {
-  const response = await exports.default.fetch(
-    new Request(`${ORIGIN}/v2/rooms/${created.roomCode}/admission-tickets`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Origin: ORIGIN,
-      },
-      body: JSON.stringify({
-        capability:
-          seat === 'one'
-            ? created.credentials.playerOneSeatCapability
-            : created.credentials.playerTwoSeatCapability,
-        displayName,
-        requestedRole: 'player',
-      }),
-    })
-  );
-  expect(response.status).toBe(201);
-  const parsed = parseRoomAdmissionTicketResponse(await response.json());
-  expect(parsed.ok).toBe(true);
-  if (!parsed.ok) throw new Error(JSON.stringify(parsed.issues));
-  return parsed.value;
-};
-
-const helloFrame = (
-  created: RoomCreationResponse,
-  ticket: RoomAdmissionTicketResponse,
-  displayName = 'Runtime Player'
-): string =>
-  JSON.stringify({
-    type: 'Hello',
-    protocolVersion: PROTOCOL_VERSION,
-    buildId: 'local-development',
-    roomCode: created.roomCode,
-    displayName,
-    requestedRole: 'player',
-    admissionTicket: ticket.admissionTicket,
-  });
-
-const flipCommandFrame = (welcome: Welcome, commandId: string): string =>
-  JSON.stringify({
-    type: 'Command',
-    protocolVersion: PROTOCOL_VERSION,
-    sessionId: welcome.sessionId,
-    clientSequence: welcome.nextClientSequence,
-    commandId,
-    lastSeenRevision: welcome.snapshot.revision,
-    command: { type: 'FlipCoin' },
-  });
-
-const connect = async (created: RoomCreationResponse): Promise<WebSocket> => {
-  const response = await exports.default.fetch(
-    new Request(`${ORIGIN}/v2/rooms/${created.roomCode}/connect`, {
-      headers: { Origin: ORIGIN, Upgrade: 'websocket' },
-    })
-  );
-  expect(response.status).toBe(101);
-  if (!response.webSocket)
-    throw new Error('WebSocket upgrade was not returned');
-  response.webSocket.accept();
-  openSockets.add(response.webSocket);
-  return response.webSocket;
-};
-
-const nextServerMessages = (
-  socket: WebSocket,
-  count: number
-): Promise<readonly ServerMessage[]> =>
-  new Promise((resolve, reject) => {
-    const messages: ServerMessage[] = [];
-    const onMessage = (event: MessageEvent) => {
-      if (typeof event.data !== 'string') {
-        socket.removeEventListener('message', onMessage);
-        reject(new Error('Expected a text WebSocket frame'));
-        return;
-      }
-      const parsed = parseServerFrame(event.data);
-      if (!parsed.ok) {
-        socket.removeEventListener('message', onMessage);
-        reject(new Error(`Invalid server frame: ${parsed.reason}`));
-        return;
-      }
-      messages.push(parsed.value);
-      if (messages.length === count) {
-        socket.removeEventListener('message', onMessage);
-        resolve(messages);
-      }
-    };
-    socket.addEventListener('message', onMessage);
-  });
-
-const nextServerMessage = async (socket: WebSocket): Promise<ServerMessage> =>
-  (await nextServerMessages(socket, 1))[0]!;
-
-const runtimeEvidence = (created: RoomCreationResponse) =>
-  runInDurableObject(roomStub(created), async (_instance, state) => {
-    const envelope = await state.storage.get<StoredAuthorityEnvelope>(
-      AUTHORITY_SNAPSHOT_STORAGE_KEY
-    );
-    const lifecycle = await state.storage.get<StoredLifecycle>(
-      ROOM_LIFECYCLE_STORAGE_KEY
-    );
-    return {
-      alarm: await state.storage.getAlarm(),
-      attachment: state
-        .getWebSockets()
-        .map((socket) => socket.deserializeAttachment() as SocketAttachment)[0],
-      lifecycle,
-      snapshot: envelope?.snapshot,
-      socketCount: state.getWebSockets().length,
-    };
-  });
 
 beforeEach(() => {
   vi.spyOn(console, 'info').mockImplementation(() => undefined);

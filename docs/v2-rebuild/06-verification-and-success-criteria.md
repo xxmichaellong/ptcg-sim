@@ -301,6 +301,16 @@ Track p50/p95/p99 by command family and separate network, durable commit,
 projection/serialization, send, and client-reconciliation time. A global average
 cannot hide slow hidden/bulk actions.
 
+The implemented local `workerd` harness now enforces deterministic structural,
+frame, fanout, attachment, and serialized-storage envelopes for a real
+120-card/two-player/spectator room. Its optional runner records named-host
+command and hibernation observations without treating local wall-clock values as
+portable CI thresholds. The initial evidence and its explicit limitations are
+recorded in
+[`SERVER_PERFORMANCE_BASELINE.md`](./SERVER_PERFORMANCE_BASELINE.md). Managed
+preview phase splits, reconnect timing, platform resource/cost distributions,
+and a bounded journal plateau remain release gates.
+
 ## Load and soak gates
 
 - A deterministic suite executes at least 100,000 accepted/rejected command

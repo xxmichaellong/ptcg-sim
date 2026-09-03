@@ -27,6 +27,7 @@
     "check:cycles:v2": "madge --circular --extensions ts,tsx apps packages",
     "check:v2": "corepack pnpm run typecheck:v2 && corepack pnpm run check:cycles:v2 && corepack pnpm run test:v2 && corepack pnpm run test:v2:runtime && corepack pnpm run build:v2",
     "lint": "eslint .",
+    "measure:v2:server": "corepack pnpm --filter @ptcgsim/server-v2 run measure:runtime",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md,css}\""
   },
   "devDependencies": {
