@@ -17,6 +17,7 @@ import {
   LEGACY_BOARD_RESIZER_V1,
   layoutLegacyContainedCard,
   layoutLegacyOrdinaryEvolutionStack,
+  layoutLegacySingleEnergyAttachmentStack,
   legacyPileTopIndex,
   type BoardLayoutSnapshot,
   type BoardLayoutState,
@@ -25,6 +26,7 @@ import {
 } from './layout.js';
 import type {
   BoardLayoutOptions,
+  BoardSide,
   BoardScene,
   BoardSceneDiff,
   BoardSceneLayout,
@@ -257,15 +259,23 @@ const hasExactBounds = (actual: Rect, expected: Rect): boolean =>
   actual.width === expected.width &&
   actual.height === expected.height;
 
-const isCharacterizedOrdinaryEvolutionLayout = (
+const isCharacterizedDefaultInPlayLayout = (
   view: MatchViewState,
   layout: BoardLayoutSnapshot
 ): boolean => {
   const firstPlayerId = view.playerOrder[0];
+  const secondPlayerId = view.playerOrder[1];
   const local = layout.players.find((player) => player.side === 'local');
   const opponent = layout.players.find((player) => player.side === 'opponent');
+  const lowerHandle = layout.resizeHandles.find(
+    (handle) => handle.id === 'lower'
+  );
+  const upperHandle = layout.resizeHandles.find(
+    (handle) => handle.id === 'upper'
+  );
   return (
     firstPlayerId !== undefined &&
+    secondPlayerId !== undefined &&
     layout.bottomPlayerId === firstPlayerId &&
     layout.shellMode === 'sidebar' &&
     layout.viewport.width === 1600 &&
@@ -277,7 +287,31 @@ const isCharacterizedOrdinaryEvolutionLayout = (
       width: 1208,
       height: 900,
     }) &&
+    layout.shellGapBounds !== null &&
+    hasExactBounds(layout.shellGapBounds, {
+      x: 1208,
+      y: 0,
+      width: 8,
+      height: 900,
+    }) &&
+    layout.sidebarBounds !== null &&
+    hasExactBounds(layout.sidebarBounds, {
+      x: 1216,
+      y: 45,
+      width: 384,
+      height: 855,
+    }) &&
+    layout.tabsBounds !== null &&
+    hasExactBounds(layout.tabsBounds, {
+      x: 1216,
+      y: 0,
+      width: 384,
+      height: 45,
+    }) &&
     local !== undefined &&
+    local.playerId === firstPlayerId &&
+    local.physicalSide === 'lower' &&
+    local.rotationQuarterTurns === 0 &&
     hasExactBounds(local.frameBounds, {
       x: 0,
       y: 450,
@@ -285,12 +319,126 @@ const isCharacterizedOrdinaryEvolutionLayout = (
       height: 450,
     }) &&
     opponent !== undefined &&
+    opponent.playerId === secondPlayerId &&
+    opponent.physicalSide === 'upper' &&
+    opponent.rotationQuarterTurns === 2 &&
     hasExactBounds(opponent.frameBounds, {
       x: 0,
       y: 0,
       width: 1208,
       height: 450,
-    })
+    }) &&
+    lowerHandle !== undefined &&
+    lowerHandle.controlsPhysicalSide === 'lower' &&
+    hasExactBounds(lowerHandle.bounds, {
+      x: 1600 * -0.0055,
+      y: 434.25,
+      width: 20.8,
+      height: 22.5,
+    }) &&
+    upperHandle !== undefined &&
+    upperHandle.controlsPhysicalSide === 'upper' &&
+    hasExactBounds(upperHandle.bounds, {
+      x: 1600 * -0.0055,
+      y: 900 * (1 - 0.53 - 0.025 / 2),
+      width: 20.8,
+      height: 22.5,
+    }) &&
+    hasExactBounds(layout.shared.stadium.physicalDeclaredBounds, {
+      x: 176,
+      y: 900 * (1 - 0.42 - 0.16),
+      width: 96,
+      height: 144,
+    }) &&
+    layout.shared.boardControlsAnchor.x === 832 &&
+    layout.shared.boardControlsAnchor.y === 423 &&
+    layout.shared.boardControlsAnchor.height === 54
+  );
+};
+
+const isCharacterizedSingleEnergyAttachmentStack = (
+  stack: MatchViewState['stacks'][string],
+  board: MatchViewState['boards'][string],
+  playerId: PlayerId,
+  side: BoardSide,
+  region: BoardLayoutSnapshot['players'][number]['regions'][number],
+  layoutIsCharacterized: boolean
+): boolean => {
+  const base = stack.evolutionCards[0];
+  const energy = stack.attachmentCards[0];
+  const bounds = region.physicalDeclaredBounds;
+  const expectedDeclaredBounds =
+    side === 'local'
+      ? {
+          x: 0.34 * 1208,
+          y: 450 + 0.07 * 450,
+          width: 0.32 * 1208,
+          height: 0.28 * 450,
+        }
+      : {
+          x: (1 - 0.34 - 0.32) * 1208,
+          y: (1 - 0.07 - 0.28) * 450,
+          width: 0.32 * 1208,
+          height: 0.28 * 450,
+        };
+  const expectedBoxBounds =
+    side === 'local'
+      ? expectedDeclaredBounds
+      : {
+          x: 1208 - 0.34 * 1208 - 0.32 * 1208,
+          y: 450 - (450 - 0.65 * 450 - 0.28 * 450) - 0.28 * 450,
+          width: 0.32 * 1208,
+          height: 0.28 * 450,
+        };
+  const authoredWidth = (Math.round(bounds.height * CARD_ASPECT_RATIO) * 7) / 6;
+  return (
+    layoutIsCharacterized &&
+    region.side === side &&
+    region.id === `${side}:active` &&
+    region.playerId === playerId &&
+    region.physicalSide === (side === 'local' ? 'lower' : 'upper') &&
+    region.surface === 'playSlot' &&
+    region.kind === 'active' &&
+    hasExactBounds(region.playerLocalNormalizedBounds, {
+      x: 0.34,
+      y: 0.07,
+      width: 0.32,
+      height: 0.28,
+    }) &&
+    hasExactBounds(bounds, expectedDeclaredBounds) &&
+    hasExactBounds(region.physicalBorderBoxBounds, expectedBoxBounds) &&
+    hasExactBounds(region.physicalContentBoxBounds, expectedBoxBounds) &&
+    stack.slot === 'active' &&
+    board.activeStackId === stack.id &&
+    board.benchStackIds.length === 0 &&
+    stack.boardPlayerId === playerId &&
+    stack.evolutionCards.length === 1 &&
+    stack.attachmentCards.length === 1 &&
+    stack.rotationQuarterTurns === 0 &&
+    stack.damage === null &&
+    stack.specialCondition === null &&
+    stack.abilityUsed === false &&
+    Number.isFinite(bounds.x) &&
+    Number.isFinite(bounds.y) &&
+    Number.isFinite(bounds.width) &&
+    Number.isFinite(bounds.height) &&
+    bounds.width > 0 &&
+    bounds.height > 0 &&
+    Number.isFinite(authoredWidth) &&
+    authoredWidth > 0 &&
+    authoredWidth <= bounds.width &&
+    base?.kind === 'known' &&
+    base.ownerId === playerId &&
+    base.category === 'Pokémon' &&
+    base.face === 'up' &&
+    base.orientationQuarterTurns === 0 &&
+    base.abilityUsed === false &&
+    energy?.kind === 'known' &&
+    energy.ownerId === playerId &&
+    energy.category === 'Energy' &&
+    energy.face === 'up' &&
+    energy.orientationQuarterTurns === 0 &&
+    energy.abilityUsed === false
   );
 };
 
@@ -444,8 +592,10 @@ export const createBoardScene = (
     height: layout.playAreaBounds.height,
     devicePixelRatio: layout.viewport.devicePixelRatio,
   };
-  const ordinaryEvolutionLayoutIsCharacterized =
-    isCharacterizedOrdinaryEvolutionLayout(view, layout);
+  const defaultInPlayLayoutIsCharacterized = isCharacterizedDefaultInPlayLayout(
+    view,
+    layout
+  );
   const zones: ZoneSceneNode[] = [];
   const cards: CardSceneNode[] = [];
   const markers: MarkerSceneNode[] = [];
@@ -628,12 +778,26 @@ export const createBoardScene = (
         stack.slot === 'active' ? activeRects[0] : benchRects[slotIndex];
       if (!baseBounds) throw new Error(`No layout slot for stack ${stackId}`);
       const evolutionOffset = Math.min(10, baseBounds.height * 0.035);
+      const singleEnergyAttachmentLayout =
+        isCharacterizedSingleEnergyAttachmentStack(
+          stack,
+          board,
+          playerId,
+          side,
+          slotRegions[stack.slot],
+          defaultInPlayLayoutIsCharacterized
+        )
+          ? layoutLegacySingleEnergyAttachmentStack(
+              slotRegions[stack.slot],
+              CARD_ASPECT_RATIO
+            )
+          : null;
       const ordinaryEvolutionLayout = isCharacterizedOrdinaryEvolutionStack(
         stack,
         board,
         playerId,
         slotRegions[stack.slot],
-        ordinaryEvolutionLayoutIsCharacterized
+        defaultInPlayLayoutIsCharacterized
       )
         ? layoutLegacyOrdinaryEvolutionStack(
             slotRegions[stack.slot],
@@ -644,20 +808,24 @@ export const createBoardScene = (
       const evolutionNodes: CardSceneNode[] = [];
       stack.evolutionCards.forEach((card, index) => {
         const ordinaryCardLayout = ordinaryEvolutionLayout?.cards[index];
+        const singleEnergyBaseLayout =
+          index === 0 ? singleEnergyAttachmentLayout?.base : undefined;
+        const characterizedCardLayout =
+          ordinaryCardLayout ?? singleEnergyBaseLayout;
         const node = makeCardNode(view, card, {
           parentId: stack.id,
           side,
           role: 'stackEvolution',
-          bounds: ordinaryCardLayout
-            ? copyRect(ordinaryCardLayout.bounds)
+          bounds: characterizedCardLayout
+            ? copyRect(characterizedCardLayout.bounds)
             : {
                 ...baseBounds,
                 y:
                   baseBounds.y -
                   evolutionOffset * (stack.evolutionCards.length - index - 1),
               },
-          zIndex: ordinaryCardLayout
-            ? 300 + ordinaryCardLayout.sourceZIndex
+          zIndex: characterizedCardLayout
+            ? 300 + characterizedCardLayout.sourceZIndex
             : 300 + index,
           rotationQuarterTurns: ((stack.rotationQuarterTurns +
             (card.kind === 'known' ? card.orientationQuarterTurns : 0)) %
@@ -669,18 +837,24 @@ export const createBoardScene = (
       });
       const attachmentWidth = baseBounds.width * 0.7;
       stack.attachmentCards.forEach((card, index) => {
+        const singleEnergyLayout =
+          index === 0 ? singleEnergyAttachmentLayout?.energy : undefined;
         registerCard(
           makeCardNode(view, card, {
             parentId: stack.id,
             side,
             role: 'stackAttachment',
-            bounds: {
-              x: baseBounds.x + baseBounds.width * 0.42 + index * 8,
-              y: baseBounds.y + baseBounds.height * 0.18 + index * 5,
-              width: attachmentWidth,
-              height: attachmentWidth / CARD_ASPECT_RATIO,
-            },
-            zIndex: 250 + index,
+            bounds: singleEnergyLayout
+              ? copyRect(singleEnergyLayout.bounds)
+              : {
+                  x: baseBounds.x + baseBounds.width * 0.42 + index * 8,
+                  y: baseBounds.y + baseBounds.height * 0.18 + index * 5,
+                  width: attachmentWidth,
+                  height: attachmentWidth / CARD_ASPECT_RATIO,
+                },
+            zIndex: singleEnergyLayout
+              ? 300 + singleEnergyLayout.sourceZIndex
+              : 250 + index,
             interactive: true,
           }),
           card

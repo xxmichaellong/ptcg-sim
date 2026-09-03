@@ -218,7 +218,7 @@ states, and input behavior retain the previous scene path or remain explicit
 later slices. Pixi consumes the same renderer-neutral scene geometry for the
 qualifying state, but its paint and hit parity remain unverified.
 
-A fifth source-only Chromium checkpoint now separates the simplest attachment
+A fifth source-backed Chromium checkpoint now separates the simplest attachment
 path from the older mixed five-card transcription. One face-up Energy attaches
 to one unrotated active Pokémon on each physical side at the default 1600×900
 DPR-1 layout. `energy-attachment-reflow-v1.json` distinguishes the immediate
@@ -226,10 +226,18 @@ attach diagnostic state from the stable post-`refreshBoard` result, including
 the 91 px integer base `clientWidth`, `clientWidth / 6` offset, 106.167 px
 `adjustCards` wrapper width, target/relative/energy-layer state, z and hit order,
 and the synchronous ghost wrapper that settles from two containers to one. It
-does not yet drive `BoardScene` or claim candidate parity. Trainer-as-Tool,
-multiple/order-normalized attachments, departure, evolution combinations,
-bench/overflow, rotation, markers, alternate layouts, Pixi, and input remain
-explicit later gates.
+now feeds a dedicated renderer-contract helper only for exactly one known,
+face-up Energy on exactly one known, face-up Pokémon in an unrotated,
+marker-free active stack whose player has no bench stacks at that exact default
+layout. Production
+geometry uses the public 63:88 card ratio, a 90 px CSSOM base width, 15 px
+offset, and 105 px wrapper width rather than leaking source-asset dimensions.
+Chromium matches all four React DOM boxes, rotations, z ranks, and common/
+Energy-only hit order to the live source within 2 px / 1% / 0.1 degrees.
+Trainer-as-Tool, multiple/order-normalized attachments, departure, evolution
+combinations, bench/overflow, rotation, markers, alternate layouts, candidate
+DOM wrapper/order identity, Pixi paint/hit behavior, and input remain explicit
+later gates.
 
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during

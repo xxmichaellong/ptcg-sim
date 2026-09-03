@@ -329,7 +329,7 @@ the same renderer-neutral scene geometry for qualifying stacks, but its paint
 and hit parity remain unverified.
 
 `tests/browser/legacy-energy-attachment-reflow-geometry.spec.ts` adds a fifth,
-source-only card checkpoint with the separately digest-pinned
+source-backed card checkpoint with the separately digest-pinned, source-only
 `tests/legacy-fixtures/renderer/energy-attachment-reflow-v1.json`. It isolates
 one face-up Energy attached to one unrotated active Pokémon in the local and
 opponent frames at the default 1600×900 DPR-1 sidebar layout. The replay records
@@ -345,24 +345,35 @@ outer strip. The 736×1024 source card paints at 90.5625×126 px while its integ
 adds its enclosing half-turn. Refresh synchronously leaves two wrappers before
 the old empty container settles away, so the stable wrapper count is one.
 
-This source-only result does not yet select production scene geometry. It also
-does not cover Trainer-as-Tool rotation/margins, multiple Energy or mixed-order
-normalization, departures/compaction, Pokémon evolution layers or Pokémon-
-classified attachments, bench/flex overflow, markers, BREAK/rotation,
-noncanonical assets, alternate layouts, input, Pixi, or network behavior.
+The source fixture remains an independent oracle. A strict production helper
+now selects its stable layout only for exactly one known face-up Pokémon base
+and one same-owner known face-up Energy in an unrotated, marker-free active
+stack whose player has no bench stacks at the captured default layout.
+Recipient geometry
+uses the public 63:88 ratio: the canonical base width rounds to 90 px, yielding
+a 15 px offset and 105 px wrapper. Chromium compares all four React DOM card
+boxes, rotations, mapped z ranks `300/299`, and common/Energy-only hit order to
+the source within 2 px / 1% / 0.1 degrees. The renderer list stays back-to-front
+and does not reproduce legacy wrapper or sibling identity.
+
+This result does not cover Trainer-as-Tool rotation/margins, multiple Energy or
+mixed-order normalization, departures/compaction, Pokémon evolution layers or
+Pokémon-classified attachments, bench/flex overflow, markers, BREAK/rotation,
+noncanonical assets, alternate layouts, input, Pixi paint/hit behavior, or
+network behavior. Every structurally detectable excluded card, stack, or layout
+state retains the prior generic scene path; asset shape, input, Pixi paint/hit,
+and network behavior remain uncharacterized rather than eligibility inputs.
 
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
 renderer-neutral scene and has structured scene assertions for all four board
 oracle fixtures, including asymmetric resize, flipped ownership, midpoint
 shared placement, compact and fullscreen states. The controlled hand/bench/
-attachment-stack and single-Energy stable fixtures are source-only and do not
-yet feed or validate their `BoardScene` card geometries; the narrower contained-
-card and ordinary-evolution fixtures feed and compare their cover/stadium and
-strict three-card geometries.
-Raw
-normalized/authored inputs, box edges, affordances, and semantic z evidence
-remain in the richer characterization snapshot rather than being duplicated in
+attachment-stack fixture remains source-only; the narrower contained-card,
+ordinary-evolution, and single-Energy fixtures feed and compare their strict
+production geometries. Raw normalized/authored inputs, box edges, affordances,
+and semantic z evidence remain in the richer characterization snapshot rather
+than being duplicated in
 `BoardScene`. Real-browser measurements for additional layout states,
 candidate-renderer card/stack parity, remaining card modes, screenshots, and
 interaction surfaces remain in the gate below.

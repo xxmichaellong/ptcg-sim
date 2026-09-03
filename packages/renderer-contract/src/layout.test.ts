@@ -13,6 +13,7 @@ import {
   layoutLegacyOrdinaryEvolutionStack,
   layoutLegacyPlaySlotCards,
   layoutLegacyPlayStackHitRegions,
+  layoutLegacySingleEnergyAttachmentStack,
   legacyPileTopIndex,
   legacyResizeHandlesCollide,
   type BoardLayoutState,
@@ -661,6 +662,74 @@ describe('renderer-neutral legacy board layout', () => {
     expect(() => layoutLegacyOrdinaryEvolutionStack(active, 100, 3)).toThrow(
       'flex shrink'
     );
+  });
+
+  it('pins stable one-Energy active geometry from integer CSSOM width', () => {
+    const layout = createBoardLayoutSnapshot(
+      state({ viewport: { width: 1600, height: 900, devicePixelRatio: 1 } })
+    );
+    for (const side of ['local', 'opponent'] as const) {
+      const active = findBoardLayoutRegion(layout, side, 'active');
+      const result = layoutLegacySingleEnergyAttachmentStack(
+        active,
+        CARD_ASPECT_RATIO
+      );
+      expect(result.baseCssomClientWidth).toBe(90);
+      expect(result.attachmentOffset).toBe(15);
+      expect(result.authoredWidth).toBe(105);
+      expect(result.stableCssomClientWidth).toBe(105);
+      expectRectClose(result.flexItemBounds, {
+        x: 551.5,
+        y: side === 'local' ? 481.5 : 292.5,
+        width: 105,
+        height: 126,
+      });
+      expect(result.base.sourceZIndex).toBe(0);
+      expect(result.energy.sourceZIndex).toBe(-1);
+      expect(result.base.bounds.width).toBeCloseTo(90.20454545454545, 10);
+      expect(result.base.bounds.height).toBeCloseTo(126, 10);
+      expect(result.energy.bounds.width).toBe(result.base.bounds.width);
+      expect(result.energy.bounds.height).toBe(result.base.bounds.height);
+      if (side === 'local') {
+        expect(result.base.bounds.x).toBeCloseTo(551.5, 10);
+        expect(result.energy.bounds.x).toBeCloseTo(566.5, 10);
+      } else {
+        expect(result.base.bounds.x).toBeCloseTo(566.2954545454545, 10);
+        expect(result.energy.bounds.x).toBeCloseTo(551.2954545454545, 10);
+      }
+    }
+  });
+
+  it('fails closed outside one-Energy active geometry inputs', () => {
+    const layout = createBoardLayoutSnapshot(state());
+    const active = findBoardLayoutRegion(layout, 'local', 'active');
+    const bench = findBoardLayoutRegion(layout, 'local', 'bench');
+    const hand = findBoardLayoutRegion(layout, 'local', 'hand');
+    expect(() =>
+      layoutLegacySingleEnergyAttachmentStack(bench, CARD_ASPECT_RATIO)
+    ).toThrow('active play slot');
+    expect(() =>
+      layoutLegacySingleEnergyAttachmentStack(hand, CARD_ASPECT_RATIO)
+    ).toThrow('active play slot');
+    for (const aspectRatio of [0, -1, Number.NaN]) {
+      expect(() =>
+        layoutLegacySingleEnergyAttachmentStack(active, aspectRatio)
+      ).toThrow('aspect ratio');
+    }
+    expect(() => layoutLegacySingleEnergyAttachmentStack(active, 100)).toThrow(
+      'flex shrink'
+    );
+    for (const physicalDeclaredBounds of [
+      { ...active.physicalDeclaredBounds, x: Number.NaN },
+      { ...active.physicalDeclaredBounds, width: 0 },
+    ]) {
+      expect(() =>
+        layoutLegacySingleEnergyAttachmentStack(
+          { ...active, physicalDeclaredBounds },
+          CARD_ASPECT_RATIO
+        )
+      ).toThrow('finite and positive');
+    }
   });
 
   it('fails closed for invalid viewport, player, frame and handle inputs', () => {

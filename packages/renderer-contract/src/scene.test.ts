@@ -12,6 +12,7 @@ import {
   createBoardLayoutSnapshot,
   findBoardLayoutRegion,
   layoutLegacyOrdinaryEvolutionStack,
+  layoutLegacySingleEnergyAttachmentStack,
   type BoardLayoutState,
 } from './layout.js';
 import {
@@ -27,6 +28,7 @@ const p2 = asPlayerId('p2');
 const knownCardId = asViewCardId('view-card-known');
 const hiddenCardId = asViewCardId('view-card-hidden');
 const definitionId = asViewDefinitionId('view-definition-known');
+const energyDefinitionId = asViewDefinitionId('view-definition-energy');
 
 const createView = (): MatchViewState => ({
   matchId: 'match-renderer-contract',
@@ -58,6 +60,13 @@ const createView = (): MatchViewState => ({
       imageUrl: 'https://cards.invalid/full-secret.png',
       imageUrlSmall: 'https://cards.invalid/board-visible.png',
     },
+    [energyDefinitionId]: {
+      id: energyDefinitionId,
+      name: 'Visible Energy',
+      category: 'Energy',
+      imageUrl: 'https://cards.invalid/full-energy.png',
+      imageUrlSmall: 'https://cards.invalid/board-energy.png',
+    },
   },
   zones: {
     'zone:p1:hand': {
@@ -74,6 +83,7 @@ const createView = (): MatchViewState => ({
           face: 'up',
           orientationQuarterTurns: 0,
           abilityUsed: false,
+          publiclyRevealed: false,
         },
       ],
     },
@@ -87,6 +97,7 @@ const createView = (): MatchViewState => ({
           id: hiddenCardId,
           ownerId: p2,
           cardBackUrl: '/red-back.png',
+          publiclyRevealed: false,
         },
       ],
     },
@@ -106,6 +117,7 @@ const createView = (): MatchViewState => ({
     [p1]: { inspection: null, attachmentResolution: null },
     [p2]: { inspection: null, attachmentResolution: null },
   },
+  privateInspections: [],
   turn: { number: 2, currentPlayerId: p1 },
 });
 
@@ -159,6 +171,52 @@ const createOrdinaryEvolutionView = (): MatchViewState => {
       'stack:p2:active': stack('stack:p2:active', p2, 'active'),
       'stack:p2:bench': stack('stack:p2:bench', p2, 'bench'),
     },
+  };
+};
+
+const createSingleEnergyAttachmentView = (): MatchViewState => {
+  const view = createView();
+  const card = (
+    id: string,
+    ownerId: typeof p1 | typeof p2,
+    category: 'Pokémon' | 'Energy'
+  ) => ({
+    kind: 'known' as const,
+    id: asViewCardId(id),
+    definitionId: category === 'Pokémon' ? definitionId : energyDefinitionId,
+    ownerId,
+    category,
+    face: 'up' as const,
+    orientationQuarterTurns: 0 as const,
+    abilityUsed: false,
+    publiclyRevealed: false,
+  });
+  const stack = (id: string, boardPlayerId: typeof p1 | typeof p2) => ({
+    id,
+    boardPlayerId,
+    slot: 'active' as const,
+    evolutionCards: [card(`${id}:base`, boardPlayerId, 'Pokémon')],
+    attachmentCards: [card(`${id}:energy`, boardPlayerId, 'Energy')],
+    rotationQuarterTurns: 0 as const,
+    damage: null,
+    specialCondition: null,
+    abilityUsed: false,
+  });
+  const local = stack('stack:p1:single-energy', p1);
+  const opponent = stack('stack:p2:single-energy', p2);
+  return {
+    ...view,
+    zones: Object.fromEntries(
+      Object.entries(view.zones).map(([id, zone]) => [
+        id,
+        { ...zone, cards: [] },
+      ])
+    ),
+    boards: {
+      [p1]: { activeStackId: local.id, benchStackIds: [] },
+      [p2]: { activeStackId: opponent.id, benchStackIds: [] },
+    },
+    stacks: { [local.id]: local, [opponent.id]: opponent },
   };
 };
 
@@ -397,6 +455,422 @@ describe('renderer-neutral board scene', () => {
     }
   });
 
+  it('uses stable one-Energy active geometry without definition-size leakage', () => {
+    const view = createSingleEnergyAttachmentView();
+    const layout = createBoardLayoutSnapshot(characterizedEvolutionLayoutState);
+    const scene = createBoardScene(view, layout);
+    expect(scene.cards).toHaveLength(4);
+    expect(scene.markers).toEqual([]);
+    for (const [playerId, side] of [
+      [p1, 'local'],
+      [p2, 'opponent'],
+    ] as const) {
+      const stack = view.stacks[`stack:${playerId}:single-energy`]!;
+      const expected = layoutLegacySingleEnergyAttachmentStack(
+        findBoardLayoutRegion(layout, side, 'active'),
+        63 / 88
+      );
+      const base = scene.cards.find(
+        (card) => card.id === stack.evolutionCards[0]?.id
+      );
+      const energy = scene.cards.find(
+        (card) => card.id === stack.attachmentCards[0]?.id
+      );
+      if (!base || !energy) {
+        throw new Error(`Incomplete one-Energy stack for ${playerId}`);
+      }
+      expect(
+        scene.cards
+          .filter((card) => card.parentId === stack.id)
+          .map((card) => card.role)
+      ).toEqual(['stackAttachment', 'stackEvolution']);
+      expect(base).toMatchObject({
+        parentId: stack.id,
+        side,
+        role: 'stackEvolution',
+        bounds: expected.base.bounds,
+        zIndex: 300,
+        rotationQuarterTurns: side === 'local' ? 0 : 2,
+        interactive: true,
+      });
+      expect(energy).toMatchObject({
+        parentId: stack.id,
+        side,
+        role: 'stackAttachment',
+        bounds: expected.energy.bounds,
+        zIndex: 299,
+        rotationQuarterTurns: side === 'local' ? 0 : 2,
+        interactive: true,
+      });
+      const commonX =
+        (Math.max(base.bounds.x, energy.bounds.x) +
+          Math.min(
+            base.bounds.x + base.bounds.width,
+            energy.bounds.x + energy.bounds.width
+          )) /
+        2;
+      const commonY = base.bounds.y + base.bounds.height / 2;
+      expect(hitTestBoardScene(scene, commonX, commonY)).toEqual({
+        kind: 'card',
+        id: base.id,
+      });
+      const energyOnlyX =
+        side === 'local'
+          ? (base.bounds.x +
+              base.bounds.width +
+              energy.bounds.x +
+              energy.bounds.width) /
+            2
+          : (energy.bounds.x + base.bounds.x) / 2;
+      expect(hitTestBoardScene(scene, energyOnlyX, commonY)).toEqual({
+        kind: 'card',
+        id: energy.id,
+      });
+    }
+
+    const changedDefinitions: MatchViewState = {
+      ...view,
+      definitions: Object.fromEntries(
+        Object.entries(view.definitions).map(([id, definition]) => [
+          id,
+          {
+            ...definition,
+            name: `Changed ${id}`,
+            category: 'Trainer',
+            imageUrl: 'https://cards.invalid/changed-secret-dimensions.png',
+            imageUrlSmall: 'https://cards.invalid/changed-board-dimensions.png',
+          },
+        ])
+      ),
+    };
+    const changedScene = createBoardScene(changedDefinitions, layout);
+    const geometryProjection = (candidate: typeof scene) =>
+      candidate.cards.map(({ id, bounds, role, zIndex }) => ({
+        id,
+        bounds,
+        role,
+        zIndex,
+      }));
+    expect(geometryProjection(changedScene)).toEqual(geometryProjection(scene));
+    const irrelevantVisibilityFields: MatchViewState = {
+      ...view,
+      viewer: { kind: 'spectator' },
+      stacks: Object.fromEntries(
+        Object.entries(view.stacks).map(([id, stack]) => [
+          id,
+          {
+            ...stack,
+            evolutionCards: stack.evolutionCards.map((card) =>
+              card.kind === 'known'
+                ? { ...card, publiclyRevealed: !card.publiclyRevealed }
+                : card
+            ),
+            attachmentCards: stack.attachmentCards.map((card) =>
+              card.kind === 'known'
+                ? { ...card, publiclyRevealed: !card.publiclyRevealed }
+                : card
+            ),
+          },
+        ])
+      ),
+    };
+    expect(
+      geometryProjection(createBoardScene(irrelevantVisibilityFields, layout))
+    ).toEqual(geometryProjection(scene));
+  });
+
+  it('retains exact fallback geometry outside the one-Energy eligibility gate', () => {
+    const baseView = createSingleEnergyAttachmentView();
+    const layout = createBoardLayoutSnapshot(characterizedEvolutionLayoutState);
+    const stackId = 'stack:p1:single-energy';
+    const original = baseView.stacks[stackId]!;
+    const originalBase = original.evolutionCards[0]!;
+    const originalEnergy = original.attachmentCards[0]!;
+    if (originalBase.kind !== 'known' || originalEnergy.kind !== 'known') {
+      throw new Error('One-Energy fallback fixture cards must be known');
+    }
+    const active = findBoardLayoutRegion(layout, 'local', 'active');
+    const fallbackHeight = active.physicalContentBoxBounds.height;
+    const fallbackWidth = fallbackHeight * (63 / 88);
+    const fallbackBaseBounds = {
+      x:
+        active.physicalContentBoxBounds.x +
+        (active.physicalContentBoxBounds.width - fallbackWidth) / 2,
+      y: active.physicalContentBoxBounds.y,
+      width: fallbackWidth,
+      height: fallbackHeight,
+    };
+    const fallbackEnergyBounds = {
+      x: fallbackBaseBounds.x + fallbackBaseBounds.width * 0.42,
+      y: fallbackBaseBounds.y + fallbackBaseBounds.height * 0.18,
+      width: fallbackBaseBounds.width * 0.7,
+      height: fallbackBaseBounds.height * 0.7,
+    };
+    const withLocalStack = (
+      stack: MatchViewState['stacks'][string],
+      board: MatchViewState['boards'][string] = baseView.boards[p1]!
+    ): MatchViewState => ({
+      ...baseView,
+      boards: { ...baseView.boards, [p1]: board },
+      stacks: { ...baseView.stacks, [stackId]: stack },
+    });
+    const expectFallback = (view: MatchViewState) => {
+      const scene = createBoardScene(view, layout);
+      expect(
+        scene.cards.find((card) => card.id === originalBase.id)
+      ).toMatchObject({ bounds: fallbackBaseBounds, zIndex: 300 });
+      expect(
+        scene.cards.find((card) => card.id === originalEnergy.id)
+      ).toMatchObject({ bounds: fallbackEnergyBounds, zIndex: 250 });
+    };
+    const sameShapeFallbacks: readonly MatchViewState['stacks'][string][] = [
+      {
+        ...original,
+        evolutionCards: [{ ...originalBase, category: 'Unknown' }],
+      },
+      {
+        ...original,
+        evolutionCards: [{ ...originalBase, category: 'Trainer' }],
+      },
+      {
+        ...original,
+        evolutionCards: [{ ...originalBase, category: 'Energy' }],
+      },
+      {
+        ...original,
+        attachmentCards: [{ ...originalEnergy, category: 'Trainer' }],
+      },
+      {
+        ...original,
+        attachmentCards: [{ ...originalEnergy, category: 'Pokémon' }],
+      },
+      {
+        ...original,
+        attachmentCards: [{ ...originalEnergy, category: 'Unknown' }],
+      },
+      {
+        ...original,
+        evolutionCards: [
+          {
+            kind: 'concealed',
+            id: originalBase.id,
+            ownerId: p1,
+            cardBackUrl: '/blue-back.png',
+            publiclyRevealed: false,
+          },
+        ],
+      },
+      {
+        ...original,
+        attachmentCards: [
+          {
+            kind: 'concealed',
+            id: originalEnergy.id,
+            ownerId: p1,
+            cardBackUrl: '/blue-back.png',
+            publiclyRevealed: false,
+          },
+        ],
+      },
+      { ...original, evolutionCards: [{ ...originalBase, face: 'down' }] },
+      { ...original, attachmentCards: [{ ...originalEnergy, face: 'down' }] },
+      {
+        ...original,
+        evolutionCards: [{ ...originalBase, orientationQuarterTurns: 1 }],
+      },
+      {
+        ...original,
+        attachmentCards: [{ ...originalEnergy, orientationQuarterTurns: 1 }],
+      },
+      {
+        ...original,
+        evolutionCards: [{ ...originalBase, abilityUsed: true }],
+      },
+      {
+        ...original,
+        attachmentCards: [{ ...originalEnergy, abilityUsed: true }],
+      },
+      { ...original, rotationQuarterTurns: 1 },
+      { ...original, damage: 10 },
+      { ...original, specialCondition: 'Poisoned' },
+      { ...original, abilityUsed: true },
+      { ...original, id: 'stack:mismatched-id' },
+      { ...original, boardPlayerId: p2 },
+      {
+        ...original,
+        evolutionCards: [{ ...originalBase, ownerId: p2 }],
+      },
+      {
+        ...original,
+        attachmentCards: [{ ...originalEnergy, ownerId: p2 }],
+      },
+    ];
+    for (const stack of sameShapeFallbacks) {
+      expectFallback(withLocalStack(stack));
+    }
+
+    const countFallbacks: readonly MatchViewState['stacks'][string][] = [
+      { ...original, evolutionCards: [] },
+      {
+        ...original,
+        evolutionCards: [
+          originalBase,
+          { ...originalBase, id: asViewCardId('fallback-extra-base') },
+        ],
+      },
+      { ...original, attachmentCards: [] },
+      {
+        ...original,
+        attachmentCards: [
+          originalEnergy,
+          { ...originalEnergy, id: asViewCardId('fallback-extra-energy') },
+        ],
+      },
+    ];
+    for (const stack of countFallbacks) {
+      const scene = createBoardScene(withLocalStack(stack), layout);
+      const base = scene.cards.find((card) => card.id === originalBase.id);
+      const energy = scene.cards.find((card) => card.id === originalEnergy.id);
+      if (base) expect(base.zIndex).toBe(300);
+      if (energy) expect(energy.zIndex).toBe(250);
+      if (stack.attachmentCards.length === 0) {
+        expect(base?.bounds).toEqual(fallbackBaseBounds);
+        expect(base?.bounds).not.toEqual(
+          layoutLegacySingleEnergyAttachmentStack(active, 63 / 88).base.bounds
+        );
+      }
+    }
+
+    const benchStack = { ...original, slot: 'bench' as const };
+    const benchScene = createBoardScene(
+      withLocalStack(benchStack, {
+        activeStackId: null,
+        benchStackIds: [stackId],
+      }),
+      layout
+    );
+    expect(
+      benchScene.cards.find((card) => card.id === originalEnergy.id)?.zIndex
+    ).toBe(250);
+
+    const emptyBench = {
+      id: 'stack:p1:empty-bench',
+      boardPlayerId: p1,
+      slot: 'bench' as const,
+      evolutionCards: [],
+      attachmentCards: [],
+      rotationQuarterTurns: 0 as const,
+      damage: null,
+      specialCondition: null,
+      abilityUsed: false,
+    };
+    expectFallback({
+      ...baseView,
+      boards: {
+        ...baseView.boards,
+        [p1]: {
+          ...baseView.boards[p1]!,
+          benchStackIds: [emptyBench.id],
+        },
+      },
+      stacks: { ...baseView.stacks, [emptyBench.id]: emptyBench },
+    });
+
+    const [localPlayer, opponentPlayer] = layout.players;
+    const forgedLayout = {
+      ...layout,
+      players: [
+        {
+          ...localPlayer,
+          regions: localPlayer.regions.map((region) =>
+            region.kind === 'active'
+              ? {
+                  ...region,
+                  physicalDeclaredBounds: {
+                    ...region.physicalDeclaredBounds,
+                    x: region.physicalDeclaredBounds.x + 1,
+                  },
+                }
+              : region
+          ),
+        },
+        opponentPlayer,
+      ] as const,
+    };
+    const forgedScene = createBoardScene(baseView, forgedLayout);
+    expect(
+      forgedScene.cards.find((card) => card.id === originalEnergy.id)?.zIndex
+    ).toBe(250);
+    const opponentActiveRegion = opponentPlayer.regions.find(
+      (region) => region.kind === 'active'
+    );
+    if (!opponentActiveRegion) {
+      throw new Error('Missing opponent active region for forgery test');
+    }
+    const forgedSideLayout = {
+      ...layout,
+      players: [
+        {
+          ...localPlayer,
+          regions: localPlayer.regions.map((region) =>
+            region.kind === 'active'
+              ? { ...opponentActiveRegion, playerId: p1 }
+              : region
+          ),
+        },
+        opponentPlayer,
+      ] as const,
+    };
+    const forgedSideScene = createBoardScene(baseView, forgedSideLayout);
+    expect(
+      forgedSideScene.cards.find((card) => card.id === originalEnergy.id)
+        ?.zIndex
+    ).toBe(250);
+
+    for (const layoutState of [
+      { ...characterizedEvolutionLayoutState, shellMode: 'fullscreen' },
+      {
+        ...characterizedEvolutionLayoutState,
+        vertical: {
+          ...characterizedEvolutionLayoutState.vertical,
+          lowerFrame: { bottomRatio: 0, heightRatio: 0.6 },
+          upperFrame: { bottomRatio: 0.6, heightRatio: 0.4 },
+        },
+      },
+      {
+        ...characterizedEvolutionLayoutState,
+        vertical: {
+          ...characterizedEvolutionLayoutState.vertical,
+          lowerHandle: { bottomRatio: 0.51, heightRatio: 0.025 },
+        },
+      },
+      {
+        ...characterizedEvolutionLayoutState,
+        vertical: {
+          ...characterizedEvolutionLayoutState.vertical,
+          sharedPlacement: 'handleMidpoint',
+        },
+      },
+      { ...characterizedEvolutionLayoutState, bottomPlayerId: p2 },
+      {
+        ...characterizedEvolutionLayoutState,
+        viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+      },
+      {
+        ...characterizedEvolutionLayoutState,
+        viewport: { width: 1600, height: 900, devicePixelRatio: 2 },
+      },
+    ] as const satisfies readonly BoardLayoutState[]) {
+      const scene = createBoardScene(
+        baseView,
+        createBoardLayoutSnapshot(layoutState)
+      );
+      expect(
+        scene.cards.find((card) => card.id === originalEnergy.id)?.zIndex
+      ).toBe(250);
+    }
+  });
+
   it('retains the existing stack fallback outside the narrow evolution gate', () => {
     const base = createOrdinaryEvolutionView();
     const localActive = base.stacks['stack:p1:active']!;
@@ -483,6 +957,20 @@ describe('renderer-neutral board scene', () => {
         ...characterizedEvolutionLayoutState.vertical,
         lowerFrame: { bottomRatio: 0, heightRatio: 0.6 },
         upperFrame: { bottomRatio: 0.6, heightRatio: 0.4 },
+      },
+    });
+    expectFallbackForLayout({
+      ...characterizedEvolutionLayoutState,
+      vertical: {
+        ...characterizedEvolutionLayoutState.vertical,
+        lowerHandle: { bottomRatio: 0.51, heightRatio: 0.025 },
+      },
+    });
+    expectFallbackForLayout({
+      ...characterizedEvolutionLayoutState,
+      vertical: {
+        ...characterizedEvolutionLayoutState.vertical,
+        sharedPlacement: 'handleMidpoint',
       },
     });
     expectFallbackForLayout({

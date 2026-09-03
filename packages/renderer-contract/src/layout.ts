@@ -270,6 +270,27 @@ export interface LegacyOrdinaryEvolutionStackLayout {
   readonly cards: readonly LegacyOrdinaryEvolutionCardLayout[];
 }
 
+export interface LegacySingleEnergyAttachmentCardLayout {
+  readonly bounds: Rect;
+  /** The exact image z-index emitted by v1 attachCard. */
+  readonly sourceZIndex: number;
+}
+
+export interface LegacySingleEnergyAttachmentStackLayout {
+  /** Stable post-refresh play-container border box. */
+  readonly flexItemBounds: Rect;
+  /** Integer base-image width read by v1 through CSSOM clientWidth. */
+  readonly baseCssomClientWidth: number;
+  /** Horizontal offset authored by attachCard from base clientWidth / 6. */
+  readonly attachmentOffset: number;
+  /** Fractional width authored by adjustCards after refresh. */
+  readonly authoredWidth: number;
+  /** Integer width exposed by the stable wrapper through CSSOM clientWidth. */
+  readonly stableCssomClientWidth: number;
+  readonly base: LegacySingleEnergyAttachmentCardLayout;
+  readonly energy: LegacySingleEnergyAttachmentCardLayout;
+}
+
 const ZERO_EDGES: BoxEdgesPx = { top: 0, right: 0, bottom: 0, left: 0 };
 const FIVE_PIXEL_PADDING: BoxEdgesPx = {
   top: 5,
@@ -1069,6 +1090,82 @@ export const layoutLegacyOrdinaryEvolutionStack = (
         sourceZIndex: layerFromTop === 0 ? 0 : -layerFromTop,
       };
     }),
+  };
+};
+
+/**
+ * Stable geometry for the narrow one-base/one-Energy active-stack path. The
+ * public canonical card ratio determines paint size; v1 derives the Energy
+ * offset and refreshed wrapper width from the rounded CSSOM base width. Tool
+ * rotation/margins, multiple attachments, bench placement, flex shrink, and
+ * every noncanonical state remain caller-side exclusions.
+ */
+export const layoutLegacySingleEnergyAttachmentStack = (
+  region: BoardLayoutRegion,
+  cardAspectRatio: number
+): LegacySingleEnergyAttachmentStackLayout => {
+  if (region.surface !== 'playSlot' || region.kind !== 'active') {
+    throw new Error('Single-Energy layout requires an active play slot');
+  }
+  if (!Number.isFinite(cardAspectRatio) || cardAspectRatio <= 0) {
+    throw new Error('Single-Energy card aspect ratio must be positive');
+  }
+  const bounds = region.physicalDeclaredBounds;
+  if (
+    !Number.isFinite(bounds.x) ||
+    !Number.isFinite(bounds.y) ||
+    !Number.isFinite(bounds.width) ||
+    !Number.isFinite(bounds.height) ||
+    bounds.width <= 0 ||
+    bounds.height <= 0
+  ) {
+    throw new Error('Single-Energy active bounds must be finite and positive');
+  }
+
+  const cardHeight = bounds.height;
+  const cardWidth = cardHeight * cardAspectRatio;
+  const baseCssomClientWidth = Math.round(cardWidth);
+  if (baseCssomClientWidth <= 0) {
+    throw new Error('Single-Energy CSSOM base width must be positive');
+  }
+  const attachmentOffset = baseCssomClientWidth / 6;
+  const authoredWidth = baseCssomClientWidth + attachmentOffset;
+  if (authoredWidth > bounds.width) {
+    throw new Error(
+      'Single-Energy flex shrink requires browser characterization'
+    );
+  }
+  const flexItemX = bounds.x + (bounds.width - authoredWidth) / 2;
+  const baseX =
+    region.side === 'local' ? flexItemX : flexItemX + authoredWidth - cardWidth;
+  const energyX =
+    region.side === 'local'
+      ? baseX + attachmentOffset
+      : baseX - attachmentOffset;
+  return {
+    flexItemBounds: {
+      x: flexItemX,
+      y: bounds.y,
+      width: authoredWidth,
+      height: cardHeight,
+    },
+    baseCssomClientWidth,
+    attachmentOffset,
+    authoredWidth,
+    stableCssomClientWidth: Math.round(authoredWidth),
+    base: {
+      bounds: { x: baseX, y: bounds.y, width: cardWidth, height: cardHeight },
+      sourceZIndex: 0,
+    },
+    energy: {
+      bounds: {
+        x: energyX,
+        y: bounds.y,
+        width: cardWidth,
+        height: cardHeight,
+      },
+      sourceZIndex: -1,
+    },
   };
 };
 

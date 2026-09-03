@@ -1,4 +1,16 @@
 import { expect, test } from '@playwright/test';
+import {
+  asViewCardId,
+  type MatchViewState,
+  type PlayerId,
+} from '../../packages/game-core/src/index.js';
+import {
+  BOARD_LAYOUT_GEOMETRY_VERSION,
+  createBoardLayoutSnapshot,
+  createBoardScene,
+  createRendererSpikeView,
+  DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+} from '../../packages/renderer-contract/src/index.js';
 
 import oracle from '../legacy-fixtures/renderer/energy-attachment-reflow-v1.json' with { type: 'json' };
 
@@ -53,13 +65,97 @@ const expectStructuredNumber = (
   ).toBeLessThanOrEqual(oracle.tolerances.structuredPixels);
 };
 
-test('checked-in legacy sources retain stable one-Energy attachment reflow', async ({
+const createCandidateSingleEnergyScene = () => {
+  const base = createRendererSpikeView();
+  const localPlayerId = base.playerOrder[0];
+  const opponentPlayerId = base.playerOrder[1];
+  const definitions = Object.values(base.definitions);
+  const pokemonDefinition = definitions.find(
+    (definition) => definition.category === 'Pokémon'
+  );
+  const energyDefinition = definitions.find(
+    (definition) => definition.category === 'Energy'
+  );
+  if (
+    !localPlayerId ||
+    !opponentPlayerId ||
+    !pokemonDefinition ||
+    !energyDefinition
+  ) {
+    throw new Error('Renderer spike fixture lacks one-Energy scene inputs');
+  }
+  const makeCard = (
+    id: string,
+    ownerId: PlayerId,
+    category: 'Pokémon' | 'Energy'
+  ) => ({
+    kind: 'known' as const,
+    id: asViewCardId(id),
+    definitionId:
+      category === 'Pokémon' ? pokemonDefinition.id : energyDefinition.id,
+    ownerId,
+    category,
+    face: 'up' as const,
+    orientationQuarterTurns: 0 as const,
+    abilityUsed: false,
+    publiclyRevealed: false,
+  });
+  const makeStack = (side: 'local' | 'opponent', boardPlayerId: PlayerId) => ({
+    id: `${side}-canonical-attachment-stack`,
+    boardPlayerId,
+    slot: 'active' as const,
+    evolutionCards: [
+      makeCard(`${side}-attachment-base`, boardPlayerId, 'Pokémon'),
+    ],
+    attachmentCards: [
+      makeCard(`${side}-attachment-energy`, boardPlayerId, 'Energy'),
+    ],
+    rotationQuarterTurns: 0 as const,
+    damage: null,
+    specialCondition: null,
+    abilityUsed: false,
+  });
+  const local = makeStack('local', localPlayerId);
+  const opponent = makeStack('opponent', opponentPlayerId);
+  const view: MatchViewState = {
+    ...base,
+    revision: base.revision + 1,
+    zones: Object.fromEntries(
+      Object.entries(base.zones).map(([id, zone]) => [
+        id,
+        { ...zone, cards: [] },
+      ])
+    ),
+    boards: {
+      [localPlayerId]: { activeStackId: local.id, benchStackIds: [] },
+      [opponentPlayerId]: {
+        activeStackId: opponent.id,
+        benchStackIds: [],
+      },
+    },
+    stacks: { [local.id]: local, [opponent.id]: opponent },
+  };
+  return createBoardScene(
+    view,
+    createBoardLayoutSnapshot({
+      geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
+      viewport: oracle.input.viewport,
+      playerIds: [localPlayerId, opponentPlayerId],
+      bottomPlayerId: localPlayerId,
+      shellMode: 'sidebar',
+      vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+    })
+  );
+};
+
+test('checked-in legacy sources and React DOM share stable one-Energy attachment reflow', async ({
   page,
 }, testInfo) => {
   test.skip(
     testInfo.project.name !== 'chromium',
     'This source-characterization gate is Chromium-specific.'
   );
+  const candidateScene = createCandidateSingleEnergyScene();
   await page.setViewportSize(oracle.input.viewport);
   expect(await page.evaluate(() => window.devicePixelRatio)).toBe(
     oracle.input.viewport.devicePixelRatio
@@ -226,4 +322,242 @@ test('checked-in legacy sources retain stable one-Energy attachment reflow', asy
     'https://cdn.socket.io'
   );
   expect(capture.sourceFulfillment.unexpectedSameOriginPaths).toEqual([]);
+
+  expect(candidateScene.cards).toHaveLength(4);
+  expect(new Set(candidateScene.cards.map((card) => card.id))).toEqual(
+    new Set(capture.cards.map((card) => card.id))
+  );
+  expect(candidateScene.markers).toEqual([]);
+
+  await page.unrouteAll({ behavior: 'wait' });
+  const candidateRuntimeErrors: string[] = [];
+  page.on('pageerror', (error) => {
+    candidateRuntimeErrors.push(`pageerror: ${error.message}`);
+  });
+  page.on('console', (message) => {
+    if (message.type() === 'error') {
+      candidateRuntimeErrors.push(`console: ${message.text()}`);
+    }
+  });
+  await page.goto('/?renderer=dom');
+  await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
+    'data-renderer-status',
+    'ready'
+  );
+  await page.evaluate(async (scene) => {
+    const spike = window.__PTCG_RENDERER_SPIKE__;
+    if (!spike?.createRenderer) {
+      throw new Error('Missing renderer spike factory test seam');
+    }
+    const host = document.createElement('div');
+    host.dataset.energyAttachmentCandidateHost = 'true';
+    Object.assign(host.style, {
+      position: 'fixed',
+      left: '0px',
+      top: '0px',
+      width: `${scene.viewport.width}px`,
+      height: `${scene.viewport.height}px`,
+      zIndex: '20000',
+    });
+    document.body.append(host);
+    const renderer = spike.createRenderer({
+      emitIntent: () => undefined,
+      emitPresentationUpdate: () => undefined,
+      reportError: (error) => {
+        host.dataset.rendererError = String(error);
+      },
+    });
+    await renderer.mount(host, scene, {
+      selectedCardId: null,
+      hoveredCardId: null,
+      drag: null,
+      openedZoneId: null,
+    });
+    (
+      window as typeof window & {
+        __PTCG_ENERGY_ATTACHMENT_CANDIDATE_RENDERER__?: { destroy(): void };
+      }
+    ).__PTCG_ENERGY_ATTACHMENT_CANDIDATE_RENDERER__ = renderer;
+  }, candidateScene);
+  const candidateHost = page.locator('[data-energy-attachment-candidate-host]');
+  await expect(candidateHost).not.toHaveAttribute('data-renderer-error', /.+/u);
+  await expect(
+    candidateHost.locator('[data-card-id="local-attachment-base"]')
+  ).toBeVisible();
+
+  const candidateEvidence: {
+    cards: Array<{
+      id: string;
+      sceneBounds: Rect;
+      renderedBounds: Rect;
+      rotationDegrees: number;
+      zIndex: number;
+    }>;
+    stacks: Array<{
+      id: string;
+      domOrder: string[];
+      hitOrder: { commonOverlap: string[]; energyOnly: string[] };
+    }>;
+  } = { cards: [], stacks: [] };
+  for (const sourceCard of capture.cards) {
+    const candidate = candidateScene.cards.find(
+      (card) => card.id === sourceCard.id
+    );
+    if (!candidate) {
+      throw new Error(`Missing candidate card ${sourceCard.id}`);
+    }
+    expect(candidate).toMatchObject({
+      side: sourceCard.side,
+      role: sourceCard.role === 'base' ? 'stackEvolution' : 'stackAttachment',
+      zIndex: sourceCard.role === 'base' ? 300 : 299,
+      rotationQuarterTurns: sourceCard.side === 'local' ? 0 : 2,
+      interactive: true,
+    });
+    expectRectWithin(
+      candidate.bounds,
+      sourceCard.physicalBounds,
+      `${sourceCard.id}.scene`
+    );
+    expectCardSizeWithin(
+      candidate.bounds,
+      sourceCard.physicalBounds,
+      `${sourceCard.id}.scene`
+    );
+    const locator = candidateHost.locator(`[data-card-id="${sourceCard.id}"]`);
+    const renderedBounds = await locator.boundingBox();
+    if (!renderedBounds) {
+      throw new Error(`Candidate card is not visible: ${sourceCard.id}`);
+    }
+    expectRectWithin(
+      renderedBounds,
+      sourceCard.physicalBounds,
+      `${sourceCard.id}.rendered`
+    );
+    expectCardSizeWithin(
+      renderedBounds,
+      sourceCard.physicalBounds,
+      `${sourceCard.id}.rendered`
+    );
+    const rendered = await locator.evaluate((element) => {
+      const styles = getComputedStyle(element);
+      const matrix = new DOMMatrixReadOnly(styles.transform);
+      return {
+        rotationDegrees:
+          ((Math.atan2(matrix.b, matrix.a) * 180) / Math.PI + 360) % 360,
+        zIndex: Number.parseInt(styles.zIndex, 10),
+      };
+    });
+    expect(
+      modularDegreesBetween(
+        rendered.rotationDegrees,
+        sourceCard.effectiveRotationDegrees
+      )
+    ).toBeLessThanOrEqual(oracle.tolerances.rotationDegrees);
+    expect(rendered.zIndex).toBe(sourceCard.role === 'base' ? 300 : 299);
+    candidateEvidence.cards.push({
+      id: sourceCard.id,
+      sceneBounds: candidate.bounds,
+      renderedBounds,
+      ...rendered,
+    });
+  }
+
+  for (const sourceStack of capture.stacks) {
+    const result = await page.evaluate(
+      ({ side }) => {
+        const host = document.querySelector<HTMLElement>(
+          '[data-energy-attachment-candidate-host]'
+        );
+        if (!host) throw new Error('Missing one-Energy candidate host');
+        const prefix = `${side}-attachment-`;
+        const requireCard = (role: 'base' | 'energy') => {
+          const element = host.querySelector<HTMLElement>(
+            `[data-card-id="${prefix}${role}"]`
+          );
+          if (!element) throw new Error(`Missing candidate ${side} ${role}`);
+          return element.getBoundingClientRect();
+        };
+        const base = requireCard('base');
+        const energy = requireCard('energy');
+        const idsAt = (x: number, y: number) =>
+          document
+            .elementsFromPoint(x, y)
+            .flatMap((element) => {
+              const card = element.closest<HTMLElement>('[data-card-id]');
+              return card && host.contains(card) && card.dataset.cardId
+                ? [card.dataset.cardId]
+                : [];
+            })
+            .filter(
+              (id, index, ids) =>
+                id.startsWith(prefix) && ids.indexOf(id) === index
+            );
+        const overlap = {
+          left: Math.max(base.left, energy.left),
+          top: Math.max(base.top, energy.top),
+          right: Math.min(base.right, energy.right),
+          bottom: Math.min(base.bottom, energy.bottom),
+        };
+        if (
+          overlap.right - overlap.left <= 2 ||
+          overlap.bottom - overlap.top <= 2
+        ) {
+          throw new Error('Candidate attachment overlap lacks a safe interior');
+        }
+        const energyOnly =
+          side === 'local'
+            ? { left: base.right + 2, right: energy.right }
+            : { left: energy.left, right: base.left - 2 };
+        if (energyOnly.right - energyOnly.left <= 2) {
+          throw new Error('Candidate Energy-only strip lacks a safe interior');
+        }
+        const y = (overlap.top + overlap.bottom) / 2;
+        return {
+          domOrder: [
+            ...host.querySelectorAll<HTMLElement>(
+              `[data-card-id^="${prefix}"]`
+            ),
+          ].flatMap((card) =>
+            card.dataset.cardId ? [card.dataset.cardId] : []
+          ),
+          hitOrder: {
+            commonOverlap: idsAt((overlap.left + overlap.right) / 2, y),
+            energyOnly: idsAt((energyOnly.left + energyOnly.right) / 2, y),
+          },
+        };
+      },
+      { side: sourceStack.side }
+    );
+    expect(result.hitOrder).toEqual(sourceStack.hitOrder);
+    expect(result.domOrder).toEqual([
+      `${sourceStack.side}-attachment-energy`,
+      `${sourceStack.side}-attachment-base`,
+    ]);
+    expect(new Set(result.domOrder)).toEqual(
+      new Set(sourceStack.childDomOrder)
+    );
+    candidateEvidence.stacks.push({ id: sourceStack.id, ...result });
+  }
+  await testInfo.attach('react-dom-energy-attachment-parity.json', {
+    body: Buffer.from(JSON.stringify(candidateEvidence, null, 2)),
+    contentType: 'application/json',
+  });
+  await expect(candidateHost).not.toHaveAttribute('data-renderer-error', /.+/u);
+  const teardownError = await page.evaluate(async () => {
+    const fixtureWindow = window as typeof window & {
+      __PTCG_ENERGY_ATTACHMENT_CANDIDATE_RENDERER__?: { destroy(): void };
+    };
+    const host = document.querySelector<HTMLElement>(
+      '[data-energy-attachment-candidate-host]'
+    );
+    fixtureWindow.__PTCG_ENERGY_ATTACHMENT_CANDIDATE_RENDERER__?.destroy();
+    delete fixtureWindow.__PTCG_ENERGY_ATTACHMENT_CANDIDATE_RENDERER__;
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    const error = host?.dataset.rendererError ?? null;
+    host?.remove();
+    return error;
+  });
+  expect(teardownError).toBeNull();
+  await page.waitForTimeout(0);
+  expect(candidateRuntimeErrors).toEqual([]);
 });
