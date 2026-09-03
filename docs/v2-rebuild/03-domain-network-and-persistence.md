@@ -506,6 +506,27 @@ interleaving room decisions. If the process dies after commit, restore/reconnect
 publishes the applied state; if a result is lost, retry returns the persisted
 outcome without reapplying.
 
+The current isolated server foundation atomically replaces the authority
+snapshot on every command/admission commit and retains separate recent audit
+rows. Those rows are not a second recovery source: canonical state, replay,
+session sequence frontiers, and the bounded idempotency outcomes live in the
+validated snapshot. A transactionally updated retention index keeps at most 128
+command rows/512 KiB and 64 admission rows/128 KiB. Adding a row, advancing the
+snapshot/index frontier, and deleting every displaced row are one transaction;
+if pruning fails, none of them commit. A missing or malformed index is rebuilt
+from paginated 128-row scans and stale rows are deleted in batches no larger
+than Cloudflare's documented multi-key API limit. Journal keys contain only a
+zero-padded authority version, not session, command, ticket, invitation, or
+digest material. See the
+[SQLite-backed Durable Object storage API](https://developers.cloudflare.com/durable-objects/api/sqlite-storage-api/).
+
+This closes monotonic audit-row growth, but per-command full-snapshot replacement
+is still an interim checkpoint strategy. The first bounded-history `workerd`
+measurement shows that a mature roughly 280 KiB snapshot misses the provisional
+command-latency objective. A bounded checkpoint plus verified tail, or another
+measured persistence representation, must improve that path without changing
+persist-before-publish, exact retry, or fail-closed recovery semantics.
+
 ### Saved games and links
 
 - Use at least 128 bits of cryptographically secure random capability material.

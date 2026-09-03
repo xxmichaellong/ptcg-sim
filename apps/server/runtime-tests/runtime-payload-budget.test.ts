@@ -85,6 +85,7 @@ describe('representative runtime payload budgets', () => {
     );
     expect(Object.keys(storage.categories).sort()).toEqual([
       'authority:admission:*',
+      'authority:journal-retention',
       'authority:journal:*',
       'authority:snapshot',
       'room:lifecycle',

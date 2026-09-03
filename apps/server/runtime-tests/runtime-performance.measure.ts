@@ -2,6 +2,7 @@ import { PROTOCOL_VERSION } from '@ptcgsim/protocol';
 import { evictDurableObject } from 'cloudflare:test';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { MAX_AUTHORITY_JOURNAL_ENTRIES } from '../src/journal-retention.js';
 import {
   nextServerFrames,
   roomStub,
@@ -19,6 +20,7 @@ import {
 const REPORT_MARKER = 'PTCGSIM_PERFORMANCE_REPORT=';
 const FLIP_COIN_SAMPLES = 24;
 const HIBERNATION_WAKE_SAMPLES = 9;
+const JOURNAL_PLATEAU_ADVANCE_COMMANDS = 32;
 
 interface Distribution {
   readonly samples: number;
@@ -108,6 +110,43 @@ describe('local workerd performance observation', () => {
       );
     }
 
+    const afterLatencySamplesStorage = await runtimeStorageEvidence(
+      runtime.created
+    );
+    const actorOutcomesAfterSamples = actor.nextClientSequence - 1;
+    const commandsToFillOutcomeWindow =
+      MAX_AUTHORITY_JOURNAL_ENTRIES - actorOutcomesAfterSamples;
+    const journalFillMeasurements: RuntimeCommandMeasurement[] = [];
+    for (let index = 0; index < commandsToFillOutcomeWindow; index += 1) {
+      journalFillMeasurements.push(
+        await executeRuntimeCommand(
+          actor,
+          runtime.sessions,
+          `journal_fill_${String(index + 1).padStart(3, '0')}`,
+          { type: 'FlipCoin' }
+        )
+      );
+    }
+    const atRetentionBoundaryStorage = await runtimeStorageEvidence(
+      runtime.created
+    );
+    const retentionBoundaryRevision = actor.snapshot.revision;
+    const plateauMeasurements: RuntimeCommandMeasurement[] = [];
+    for (let index = 0; index < JOURNAL_PLATEAU_ADVANCE_COMMANDS; index += 1) {
+      plateauMeasurements.push(
+        await executeRuntimeCommand(
+          actor,
+          runtime.sessions,
+          `journal_plateau_${String(index + 1).padStart(3, '0')}`,
+          { type: 'FlipCoin' }
+        )
+      );
+    }
+    const afterPlateauAdvanceStorage = await runtimeStorageEvidence(
+      runtime.created
+    );
+    const plateauAdvanceRevision = actor.snapshot.revision;
+
     const wakeDurations: number[] = [];
     for (let index = 0; index < HIBERNATION_WAKE_SAMPLES; index += 1) {
       await evictDurableObject(roomStub(runtime.created));
@@ -126,6 +165,14 @@ describe('local workerd performance observation', () => {
       }
     }
 
+    await evictDurableObject(roomStub(runtime.created));
+    const postHibernationCommand = await executeRuntimeCommand(
+      actor,
+      runtime.sessions,
+      'post_hibernation_plateau',
+      { type: 'FlipCoin' }
+    );
+
     const finalEvidence = await runtimeEvidence(runtime.created);
     const finalStorage = await runtimeStorageEvidence(runtime.created);
     if (!finalEvidence.snapshot) {
@@ -133,7 +180,12 @@ describe('local workerd performance observation', () => {
     }
     const fixturePayloads = runtime.fixtureCommands.map(payloadObservation);
     const flipPayloads = flipMeasurements.map(payloadObservation);
-    const allPayloads = [...fixturePayloads, ...flipPayloads];
+    const postHibernationPayload = payloadObservation(postHibernationCommand);
+    const allPayloads = [
+      ...fixturePayloads,
+      ...flipPayloads,
+      postHibernationPayload,
+    ];
     const attachmentBytes = fixtureEvidence.attachments.map((attachment) =>
       utf8Bytes(JSON.stringify(attachment))
     );
@@ -173,6 +225,7 @@ describe('local workerd performance observation', () => {
             ...flipPayloads.map((sample) => sample.aggregatePublicationBytes)
           ),
         },
+        postHibernationCommand: postHibernationPayload,
         maximumFrameBytes: Math.max(
           ...allPayloads.map((sample) => sample.maximumFrameBytes)
         ),
@@ -192,6 +245,17 @@ describe('local workerd performance observation', () => {
         flipCoinCommandToAllPublications: distribution(
           flipMeasurements.map((sample) => sample.durationMs)
         ),
+        journalFillTailCommandToAllPublications: distribution(
+          journalFillMeasurements
+            .slice(-FLIP_COIN_SAMPLES)
+            .map((sample) => sample.durationMs)
+        ),
+        journalPlateauCommandToAllPublications: distribution(
+          plateauMeasurements.map((sample) => sample.durationMs)
+        ),
+        postHibernationCommandToAllPublicationsMs: rounded(
+          postHibernationCommand.durationMs
+        ),
         hibernationWakePingToPong: distribution(wakeDurations),
       },
       durableResources: {
@@ -200,7 +264,25 @@ describe('local workerd performance observation', () => {
           serializedStorageBytes: fixtureStorage.serializedBytes,
           storageByCategory: fixtureStorage.categories,
         },
-        afterSamples: {
+        afterLatencySamples: {
+          storageEntryCount: afterLatencySamplesStorage.entryCount,
+          serializedStorageBytes: afterLatencySamplesStorage.serializedBytes,
+          storageByCategory: afterLatencySamplesStorage.categories,
+        },
+        atRetentionBoundary: {
+          storageEntryCount: atRetentionBoundaryStorage.entryCount,
+          serializedStorageBytes: atRetentionBoundaryStorage.serializedBytes,
+          storageByCategory: atRetentionBoundaryStorage.categories,
+          finalRevision: retentionBoundaryRevision,
+        },
+        afterPlateauAdvance: {
+          additionalCommands: JOURNAL_PLATEAU_ADVANCE_COMMANDS,
+          storageEntryCount: afterPlateauAdvanceStorage.entryCount,
+          serializedStorageBytes: afterPlateauAdvanceStorage.serializedBytes,
+          storageByCategory: afterPlateauAdvanceStorage.categories,
+          finalRevision: plateauAdvanceRevision,
+        },
+        afterPostHibernationCommit: {
           storageEntryCount: finalStorage.entryCount,
           serializedStorageBytes: finalStorage.serializedBytes,
           storageByCategory: finalStorage.categories,
@@ -222,6 +304,33 @@ describe('local workerd performance observation', () => {
     expect(report.latency.hibernationWakePingToPong.samples).toBe(
       HIBERNATION_WAKE_SAMPLES
     );
+    expect(
+      report.durableResources.atRetentionBoundary.storageByCategory[
+        'authority:journal:*'
+      ]?.count
+    ).toBe(MAX_AUTHORITY_JOURNAL_ENTRIES);
+    expect(
+      report.durableResources.afterPlateauAdvance.storageByCategory[
+        'authority:journal:*'
+      ]?.count
+    ).toBe(MAX_AUTHORITY_JOURNAL_ENTRIES);
+    expect(
+      report.durableResources.afterPostHibernationCommit.storageByCategory[
+        'authority:journal:*'
+      ]?.count
+    ).toBe(MAX_AUTHORITY_JOURNAL_ENTRIES);
+    expect(report.durableResources.afterPlateauAdvance.storageEntryCount).toBe(
+      report.durableResources.atRetentionBoundary.storageEntryCount
+    );
+    expect(
+      report.durableResources.afterPostHibernationCommit.storageEntryCount
+    ).toBe(report.durableResources.atRetentionBoundary.storageEntryCount);
+    expect(
+      Math.abs(
+        report.durableResources.afterPlateauAdvance.serializedStorageBytes -
+          report.durableResources.atRetentionBoundary.serializedStorageBytes
+      )
+    ).toBeLessThanOrEqual(32 * 1024);
     console.log(`${REPORT_MARKER}${JSON.stringify(report)}`);
   }, 120_000);
 });

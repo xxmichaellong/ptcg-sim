@@ -1,6 +1,7 @@
 # Server performance and payload baseline
 
-Status: initial local `workerd` observation and CI payload gate implemented
+Status: local `workerd` payload gate, bounded journal plateau, and timing
+observation implemented
 
 Recorded: 2026-09-03
 
@@ -38,14 +39,14 @@ values.
 `runtime-payload-budget.test.ts` runs as part of `test:v2:runtime`. For the
 six-command fixture it enforces:
 
-| Resource                                              | CI envelope | Initial observation |
-| ----------------------------------------------------- | ----------: | ------------------: |
-| Largest server frame                                  |     256 KiB |        62,306 bytes |
-| Three-recipient aggregate publication                 |     768 KiB |       148,903 bytes |
-| Serialized Durable Object keys and JSON values        |       2 MiB |       326,314 bytes |
-| Durable Object storage entries                        |          32 |                  15 |
-| Serialized hibernating WebSocket attachment           |       1 KiB |           120 bytes |
-| Delivered frames per accepted three-recipient command |   exactly 4 |                   4 |
+| Resource                                              | CI envelope | Named observation |
+| ----------------------------------------------------- | ----------: | ----------------: |
+| Largest server frame                                  |     256 KiB |      62,447 bytes |
+| Three-recipient aggregate publication                 |     768 KiB |     149,310 bytes |
+| Serialized Durable Object keys and JSON values        |       2 MiB |     327,023 bytes |
+| Durable Object storage entries                        |          32 |                16 |
+| Serialized hibernating WebSocket attachment           |       1 KiB |         120 bytes |
+| Delivered frames per accepted three-recipient command |   exactly 4 |                 4 |
 
 Client and server frames must also remain within the protocol's existing 64 KiB
 client and 512 KiB server code-unit limits. The fixture separately asserts 120
@@ -67,17 +68,20 @@ Environment:
 - Worker compatibility date 2026-08-31; and
 - local `workerd`, with no real network hop or browser reconciliation.
 
-The first named run reported:
+The current named run reported:
 
-| Observation                                                     |                                 Result |
-| --------------------------------------------------------------- | -------------------------------------: |
-| Fixture construction, including room/admission and six commands |                                 766 ms |
-| Individual fixture command to all publications                  |                               59–95 ms |
-| `FlipCoin` command to all publications, 24 samples              | p50 125 ms; p95 215 ms; p99/max 222 ms |
-| Hibernating eviction wake, ping to pong, 9 samples              |           p50 57 ms; p95/p99/max 65 ms |
-| Largest `LoadDeck` request                                      |                           15,386 bytes |
-| Largest observed server frame                                   |                           62,306 bytes |
-| Largest three-recipient aggregate publication                   |                          148,903 bytes |
+| Observation                                                           |                                 Result |
+| --------------------------------------------------------------------- | -------------------------------------: |
+| Fixture construction, including room/admission and six commands       |                                 738 ms |
+| Individual fixture command to all publications                        |                               48–90 ms |
+| Early `FlipCoin` command to all publications, 24 samples              | p50 128 ms; p95 185 ms; p99/max 197 ms |
+| Tail of journal/outcome fill, 24 samples                              | p50 506 ms; p95 624 ms; p99/max 701 ms |
+| Mature bounded-history plateau, 32 samples                            |     p50 478 ms; p95 635 ms; p99 673 ms |
+| Hibernating eviction wake, ping to pong, 9 samples                    |         p50 189 ms; p95/p99/max 199 ms |
+| First post-hibernation command at the mature plateau                  |                                 627 ms |
+| Largest `LoadDeck` request                                            |                           15,386 bytes |
+| Largest observed server frame, including the post-hibernation command |                           62,447 bytes |
+| Largest three-recipient aggregate publication                         |                          149,310 bytes |
 
 Nearest-rank percentiles are used. Command time begins immediately before the
 WebSocket send and ends after all three projected publications plus the actor's
@@ -86,29 +90,61 @@ projection, serialization, and delivery, but not an Internet round trip or
 client rendering. Serialized storage bytes are a stable JSON/key-size proxy,
 not SQLite file size or Cloudflare billable storage.
 
-These wall-clock values are observations, not universal CI assertions. They are
-consistent with the provisional 250 ms p95 server/network objective, but cannot
-ratify that objective because local `workerd` omits managed-service scheduling,
-region/network latency, and browser reconciliation. Preview measurements on a
-named Cloudflare region and client profile remain mandatory.
+These wall-clock values are observations, not universal CI assertions. The
+early-history sample is below the provisional 250 ms p95 server/network
+objective, but the mature bounded-history sample fails it locally before any
+Internet or browser cost is added. Managed preview measurements remain
+mandatory, but they cannot excuse the local regression.
 
-## Finding: journal growth remains a release gate
+## Result: bounded audit-journal plateau
 
-At revision 6 the room occupied 15 entries and 326,314 serialized bytes. After
-24 additional accepted commands it occupied 39 entries and 344,231 bytes. The
-authority journal category grew from 6 to 30 entries: one persisted journal row
-per accepted command.
+The storage adapter now retains recent audit evidence under two independent
+count and serialized-byte ceilings:
 
-The snapshot is atomically replaced and already contains the bounded command
-outcome window, while the separate storage journal currently has no compaction
-path. This is useful fault evidence but violates the blueprint requirement that
-journal tails have an enforced bound during soak. A retention/compaction design,
-crash-boundary tests, and a long-run storage plateau measurement are required
-before load or rollout sign-off.
+- command journal: at most 128 rows and 512 KiB; and
+- admission journal: at most 64 rows and 128 KiB.
+
+The snapshot, new row, retention frontier, and deletion of displaced rows are
+one transaction. A failed prune rolls all of them back. Missing/corrupt indexes
+are rebuilt with 128-row pages and old rows are pruned in batches within the
+platform's 128-key multi-delete limit. Unit evidence covers 160 command commits,
+80 admission commits, count and byte eviction, a 200-row legacy rebuild, skipped
+frontiers, and injected deletion failure.
+
+The real runtime plateau reported:
+
+| Frontier                                             | Entries | Serialized key/value proxy | Command journal rows |
+| ---------------------------------------------------- | ------: | -------------------------: | -------------------: |
+| Representative fixture, revision 6                   |      16 |              327,023 bytes |                    6 |
+| Mature retention boundary, revision 131              |     138 |              367,973 bytes |                  128 |
+| 32 more commands, revision 163                       |     138 |              357,887 bytes |                  128 |
+| Forced eviction plus committed command, revision 164 |     138 |              357,898 bytes |                  128 |
+
+The slight size reduction is expected: large initial deck/setup audit rows age
+out and are replaced by small coin rows. Most importantly, neither entry count
+nor serialized size grows monotonically after the bound, and the same plateau
+survives eviction and another durable command.
+
+## Finding: mature full-snapshot commits remain a release gate
+
+The authority snapshot itself was about 250 KiB after fixture construction and
+about 286–291 KiB once replay and idempotency histories matured. The current
+adapter atomically replaces that complete snapshot on every authority commit.
+The mature local p95 of 635 ms and post-hibernation command time of 627 ms are
+not acceptable against the provisional 250 ms reconciliation objective.
+
+This measurement strongly implicates the growing snapshot persistence path,
+but phase-level marks are still required to separate snapshot serialization,
+Durable Object storage, projection/serialization, and send cost. The next
+persistence slice must introduce a bounded checkpoint/tail representation or
+another measured optimization while preserving atomic accepted-state recovery,
+exact retries, visibility, and fail-closed migration.
 
 ## Evidence still required
 
 - managed Cloudflare preview p50/p95/p99 split by command family and phase;
+- phase-level mature-history persistence/projection/send instrumentation and a
+  local p95 below the ratified objective;
 - reconnect-to-usable timing over a real transport;
 - platform CPU, memory, storage, request, and cost distributions;
 - approved room concurrency/load targets and rate-limit behavior;

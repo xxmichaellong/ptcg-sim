@@ -38,10 +38,24 @@ class MemoryDurableStorage implements DurableStorageLike {
       const result = await closure({
         get: async <Stored>(key: string) =>
           structuredClone(staged.get(key)) as Stored | undefined,
+        list: async <Stored>() =>
+          new Map(
+            [...staged].map(([key, value]) => [
+              key,
+              structuredClone(value) as Stored,
+            ])
+          ),
         put: async (entries) => {
           for (const [key, value] of Object.entries(entries)) {
             staged.set(key, structuredClone(value));
           }
+        },
+        delete: async (keys) => {
+          let deleted = 0;
+          for (const key of keys) {
+            if (staged.delete(key)) deleted += 1;
+          }
+          return deleted;
         },
         setAlarm: async () => undefined,
         deleteAlarm: async () => undefined,

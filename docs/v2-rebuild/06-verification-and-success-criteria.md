@@ -309,7 +309,10 @@ portable CI thresholds. The initial evidence and its explicit limitations are
 recorded in
 [`SERVER_PERFORMANCE_BASELINE.md`](./SERVER_PERFORMANCE_BASELINE.md). Managed
 preview phase splits, reconnect timing, platform resource/cost distributions,
-and a bounded journal plateau remain release gates.
+and persistence optimization remain release gates. Command/admission audit rows
+now have transactional count/byte retention and a real-runtime storage plateau;
+the same run exposes an unacceptable high-history local command p95, so bounded
+storage is not being mistaken for adequate performance.
 
 ## Load and soak gates
 

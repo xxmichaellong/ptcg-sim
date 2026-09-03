@@ -143,8 +143,14 @@ machine-readable report to the gitignored
 command and hibernation-wake distributions, storage category counts/bytes, and
 socket attachment size.
 
+The run intentionally fills the 128-command outcome/audit window, advances 32
+commands past it, forces repeated hibernating eviction, and commits once after
+wake. It currently takes about one minute on the named development host and is
+kept outside the fast CI gate; the smaller deterministic payload envelope stays
+in `test:v2:runtime`.
+
 This local observation is diagnostic evidence, not a substitute for managed
 Cloudflare preview load, CPU/memory/cost, alarm, or network distributions. The
-versioned baseline, CI envelopes, privacy limits, and open journal-retention
-finding are documented in
+versioned baseline, CI envelopes, privacy limits, implemented journal-retention
+contract, and open high-history persistence-latency finding are documented in
 [`../../docs/v2-rebuild/SERVER_PERFORMANCE_BASELINE.md`](../../docs/v2-rebuild/SERVER_PERFORMANCE_BASELINE.md).

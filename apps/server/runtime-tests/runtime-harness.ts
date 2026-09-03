@@ -16,6 +16,7 @@ import {
   AUTHORITY_SNAPSHOT_STORAGE_KEY,
   ROOM_LIFECYCLE_STORAGE_KEY,
 } from '../src/durable-storage.js';
+import { JOURNAL_RETENTION_STORAGE_KEY } from '../src/journal-retention.js';
 import { ROOM_RATE_LIMIT_STORAGE_KEY } from '../src/room-rate-limit.js';
 
 export const RUNTIME_ORIGIN = 'https://play.example';
@@ -260,6 +261,9 @@ export const utf8Bytes = (value: string): number =>
 const storageEntryCategory = (key: string): string => {
   if (key.startsWith('authority:admission:')) return 'authority:admission:*';
   if (key.startsWith('authority:journal:')) return 'authority:journal:*';
+  if (key === JOURNAL_RETENTION_STORAGE_KEY) {
+    return 'authority:journal-retention';
+  }
   if (key === AUTHORITY_SNAPSHOT_STORAGE_KEY) return 'authority:snapshot';
   if (key === ROOM_LIFECYCLE_STORAGE_KEY) return 'room:lifecycle';
   if (key === ROOM_RATE_LIMIT_STORAGE_KEY) return 'room:rate-limits';

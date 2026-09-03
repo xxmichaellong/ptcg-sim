@@ -13,10 +13,16 @@ import {
   type RoomAuthoritySnapshot,
 } from '@ptcgsim/room-authority';
 
+import {
+  JOURNAL_RETENTION_STORAGE_KEY,
+  initialJournalRetentionIndex,
+  journalStorageKey,
+  prepareJournalRetention,
+  type JournalRetentionTransaction,
+} from './journal-retention.js';
+
 export const AUTHORITY_SNAPSHOT_STORAGE_KEY = 'authority:snapshot';
 export const ROOM_LIFECYCLE_STORAGE_KEY = 'room:lifecycle';
-const JOURNAL_PREFIX = 'authority:journal:';
-const ADMISSION_JOURNAL_PREFIX = 'authority:admission:';
 const LEGACY_STORAGE_FORMAT = 'ptcgsim-room-authority-v1';
 const PREVIOUS_STORAGE_FORMAT = 'ptcgsim-room-authority-v2';
 const PRIOR_STORAGE_FORMAT = 'ptcgsim-room-authority-v3';
@@ -24,8 +30,7 @@ const FORMER_STORAGE_FORMAT = 'ptcgsim-room-authority-v4';
 const RECENT_STORAGE_FORMAT = 'ptcgsim-room-authority-v5';
 const STORAGE_FORMAT = 'ptcgsim-room-authority-v6';
 
-export interface DurableStorageTransactionLike {
-  readonly get: <Value>(key: string) => Promise<Value | undefined>;
+export interface DurableStorageTransactionLike extends JournalRetentionTransaction {
   readonly put: (entries: Record<string, unknown>) => Promise<void>;
   readonly setAlarm: (scheduledTime: number | Date) => Promise<void>;
   readonly deleteAlarm: () => Promise<void>;
@@ -331,9 +336,6 @@ const readStoredSnapshot = (
   return migrateStoredSnapshot(value.snapshot);
 };
 
-const journalKey = (transaction: PersistedAuthorityTransaction): string =>
-  `${JOURNAL_PREFIX}${encodeURIComponent(transaction.sessionId)}:${transaction.outcome.clientSequence}:${encodeURIComponent(transaction.outcome.commandId)}`;
-
 export class DurableRoomSnapshotStore
   implements AuthoritySnapshotStore, AdmissionPersistence
 {
@@ -368,6 +370,9 @@ export class DurableRoomSnapshotStore
           format: STORAGE_FORMAT,
           snapshot,
         } satisfies StoredAuthoritySnapshot,
+        [JOURNAL_RETENTION_STORAGE_KEY]: initialJournalRetentionIndex(
+          snapshot.authorityVersion
+        ),
         ...(lifecycle
           ? {
               [ROOM_LIFECYCLE_STORAGE_KEY]: {
@@ -453,7 +458,16 @@ export class DurableRoomSnapshotStore
           current.authorityVersion
         );
       }
-      const key = journalKey(transaction);
+      if (
+        transaction.snapshot.authorityVersion !==
+        current.authorityVersion + 1
+      ) {
+        throw new Error('Authority commit did not advance exactly one version');
+      }
+      const key = journalStorageKey(
+        'authority',
+        transaction.snapshot.authorityVersion
+      );
       if ((await storageTransaction.get<unknown>(key)) !== undefined) {
         throw new Error('Authority journal key collision');
       }
@@ -469,13 +483,25 @@ export class DurableRoomSnapshotStore
           ? { eventBatch: transaction.eventBatch }
           : {}),
       };
+      const retained = await prepareJournalRetention(
+        storageTransaction,
+        'authority',
+        key,
+        journalEntry,
+        current.authorityVersion,
+        transaction.snapshot.authorityVersion
+      );
       await storageTransaction.put({
         [AUTHORITY_SNAPSHOT_STORAGE_KEY]: {
           format: STORAGE_FORMAT,
           snapshot: transaction.snapshot,
         } satisfies StoredAuthoritySnapshot,
         [key]: journalEntry,
+        [JOURNAL_RETENTION_STORAGE_KEY]: retained.index,
       });
+      if (retained.staleKeys.length > 0) {
+        await storageTransaction.delete([...retained.staleKeys]);
+      }
     });
   }
 
@@ -499,13 +525,16 @@ export class DurableRoomSnapshotStore
           current.authorityVersion
         );
       }
-      const transactionId =
-        transaction.kind === 'invitation_issued'
-          ? transaction.invitationDigest
-          : transaction.kind === 'ticket_issued'
-            ? transaction.ticketDigest
-            : transaction.sessionId;
-      const key = `${ADMISSION_JOURNAL_PREFIX}${transaction.snapshot.authorityVersion}:${transaction.kind}:${encodeURIComponent(transactionId)}`;
+      if (
+        transaction.snapshot.authorityVersion !==
+        current.authorityVersion + 1
+      ) {
+        throw new Error('Admission commit did not advance exactly one version');
+      }
+      const key = journalStorageKey(
+        'admission',
+        transaction.snapshot.authorityVersion
+      );
       if ((await storageTransaction.get<unknown>(key)) !== undefined) {
         throw new Error('Admission journal key collision');
       }
@@ -538,6 +567,14 @@ export class DurableRoomSnapshotStore
                   : {}),
               }),
       };
+      const retained = await prepareJournalRetention(
+        storageTransaction,
+        'admission',
+        key,
+        journalEntry,
+        current.authorityVersion,
+        transaction.snapshot.authorityVersion
+      );
       const claimsRoom =
         transaction.kind === 'seat_claimed' ||
         transaction.kind === 'spectator_joined' ||
@@ -548,6 +585,7 @@ export class DurableRoomSnapshotStore
           snapshot: transaction.snapshot,
         } satisfies StoredAuthoritySnapshot,
         [key]: journalEntry,
+        [JOURNAL_RETENTION_STORAGE_KEY]: retained.index,
         ...(claimsRoom && lifecycle?.state === 'unclaimed'
           ? {
               [ROOM_LIFECYCLE_STORAGE_KEY]: {
@@ -562,6 +600,9 @@ export class DurableRoomSnapshotStore
       });
       if (claimsRoom && lifecycle?.state === 'unclaimed') {
         await storageTransaction.deleteAlarm();
+      }
+      if (retained.staleKeys.length > 0) {
+        await storageTransaction.delete([...retained.staleKeys]);
       }
     });
   }
