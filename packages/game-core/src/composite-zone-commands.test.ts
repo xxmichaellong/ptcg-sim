@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import type { CommandContext, DeckEntry, GameCommand } from './commands.js';
-import { createEmptyMatch, playerZoneId } from './create-match.js';
+import {
+  createEmptyMatch,
+  playerZoneId,
+  stadiumZoneId,
+} from './create-match.js';
 import { executeCommand } from './execute-command.js';
 import {
   asCardDefinitionId,
@@ -182,6 +186,142 @@ describe('atomic composite zone commands', () => {
       [...before].reverse()
     );
     assertMatchInvariants(moved);
+  });
+
+  it('normalizes an ability-marked discard card shuffled to deck bottom', () => {
+    const prepared = setupState();
+    const handId = playerZoneId(p1, 'hand');
+    const discardId = playerZoneId(p1, 'discard');
+    const deckId = playerZoneId(p1, 'deck');
+    const cardId = prepared.state.zones[handId]!.cardIds[0]!;
+    let state = execute(
+      prepared.state,
+      {
+        type: 'MoveCard',
+        cardId,
+        expectedSourceZoneId: handId,
+        destinationZoneId: discardId,
+      },
+      prepared.context
+    );
+    state = execute(
+      state,
+      { type: 'SetCardAbilityUsed', cardId, used: true },
+      prepared.context
+    );
+
+    const next = execute(
+      state,
+      {
+        type: 'ShuffleZoneToDeckBottom',
+        playerId: p1,
+        sourceZoneId: discardId,
+      },
+      prepared.context
+    );
+
+    expect(next.zones[deckId]?.cardIds.at(-1)).toBe(cardId);
+    expect(next.cards[cardId]).toMatchObject({
+      currentCategory: next.cards[cardId]!.originalCategory,
+      face: 'up',
+      orientationQuarterTurns: 0,
+      abilityUsed: false,
+    });
+    assertMatchInvariants(next);
+  });
+
+  it.each(['deck', 'hand', 'prizes', 'discard', 'lostZone'] as const)(
+    'normalizes every annotation and public reveal when a bulk move enters %s',
+    (destinationKind) => {
+      const prepared = setupState();
+      const handId = playerZoneId(p1, 'hand');
+      const stadiumId = stadiumZoneId();
+      const destinationId = playerZoneId(p1, destinationKind);
+      const cardId = prepared.state.zones[handId]!.cardIds[0]!;
+      let state = execute(
+        prepared.state,
+        {
+          type: 'MoveCard',
+          cardId,
+          expectedSourceZoneId: handId,
+          destinationZoneId: stadiumId,
+        },
+        prepared.context
+      );
+      state = execute(
+        state,
+        { type: 'SetCardCategory', cardId, category: 'Energy' },
+        prepared.context
+      );
+      state = execute(
+        state,
+        { type: 'SetCardOrientation', cardId, orientationQuarterTurns: 2 },
+        prepared.context
+      );
+      state = execute(
+        state,
+        { type: 'SetCardAbilityUsed', cardId, used: true },
+        prepared.context
+      );
+      state = execute(
+        state,
+        {
+          type: 'SetPublicReveal',
+          actorPlayerId: p1,
+          playerId: p1,
+          cardId,
+          expectedSourceId: stadiumId,
+          revealed: true,
+        },
+        prepared.context
+      );
+
+      const next = execute(
+        state,
+        {
+          type: 'MoveZoneContents',
+          sourceZoneId: stadiumId,
+          destinationZoneId: destinationId,
+        },
+        prepared.context
+      );
+
+      expect(next.cards[cardId]).toMatchObject({
+        currentCategory: next.cards[cardId]!.originalCategory,
+        face: 'up',
+        orientationQuarterTurns: 0,
+        abilityUsed: false,
+      });
+      expect(next.visibility.publicCardIds).not.toContain(cardId);
+      expect(next.zones[destinationId]?.cardIds).toContain(cardId);
+      assertMatchInvariants(next);
+    }
+  );
+
+  it('normalizes face metadata when a hand is discarded atomically', () => {
+    const prepared = setupState();
+    const handId = playerZoneId(p1, 'hand');
+    const discardId = playerZoneId(p1, 'discard');
+    const cardId = prepared.state.zones[handId]!.cardIds[0]!;
+    const hidden = execute(
+      prepared.state,
+      { type: 'SetCardFace', cardId, face: 'down' },
+      prepared.context
+    );
+
+    const next = execute(
+      hidden,
+      { type: 'DiscardHandAndDraw', playerId: p1, count: 1 },
+      prepared.context
+    );
+
+    expect(next.zones[discardId]?.cardIds).toContain(cardId);
+    expect(next.cards[cardId]).toMatchObject({
+      face: 'up',
+      orientationQuarterTurns: 0,
+      abilityUsed: false,
+    });
+    assertMatchInvariants(next);
   });
 
   it('rejects invalid random adapters without changing state', () => {

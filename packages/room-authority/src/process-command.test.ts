@@ -1,4 +1,5 @@
 import {
+  asCardDefinitionId,
   asCardInstanceId,
   asInspectionId,
   asMatchId,
@@ -14,7 +15,10 @@ import { PROTOCOL_VERSION, type ClientMessage } from '@ptcgsim/protocol';
 import { describe, expect, it } from 'vitest';
 
 import { createRoomAdmissionState } from './admission.js';
-import { emptyProjectionIdentityState } from './identity-registry.js';
+import {
+  emptyProjectionIdentityState,
+  projectRecipient,
+} from './identity-registry.js';
 import {
   authoritySnapshotCommandValidationMatches,
   authoritySnapshotValidationMatches,
@@ -337,6 +341,312 @@ describe('authoritative room command transaction', () => {
       ).baseStateHash = 'corrupt';
     }).toThrow(TypeError);
     expect(authoritySnapshotValidationMatches(validation, snapshot)).toBe(true);
+  });
+
+  it('validates current alias integrity for active viewers while allowing inactive retention', () => {
+    const initial = createSnapshot();
+    const loaded = executeCommand(
+      initial.state,
+      {
+        type: 'LoadDeck',
+        playerId: p1,
+        entries: [
+          {
+            definition: {
+              id: asCardDefinitionId('alias-integrity-definition'),
+              name: 'Alias integrity',
+              category: 'Trainer',
+              imageUrl: '/alias-integrity.png',
+            },
+            count: 1,
+          },
+        ],
+      },
+      createContext()
+    );
+    if (!loaded.accepted) throw new Error(loaded.message);
+    const projected = projectRecipient(
+      loaded.state,
+      { kind: 'player', playerId: p1 },
+      emptyProjectionIdentityState(),
+      { nextOpaqueId: () => 'alias-integrity-opaque-id-0001' }
+    );
+    const snapshot: RoomAuthoritySnapshot = {
+      ...initial,
+      state: loaded.state,
+      replayHistory: createReplayHistory(loaded.state),
+      identities: projected.identities,
+    };
+    assertAuthoritySnapshotInvariants(snapshot);
+    const alias = snapshot.identities.cardAliases[0]!;
+    const forgedKnown: RoomAuthoritySnapshot = {
+      ...snapshot,
+      identities: {
+        ...snapshot.identities,
+        cardAliases: [{ ...alias, known: !alias.known }],
+      },
+    };
+    expect(() => assertAuthoritySnapshotInvariants(forgedKnown)).toThrow(
+      'active projection alias is stale or has invalid visibility'
+    );
+    expect(() =>
+      assertAuthoritySnapshotInvariants({
+        ...snapshot,
+        identities: {
+          ...snapshot.identities,
+          cardAliases: [
+            {
+              ...alias,
+              visibilityGeneration: alias.visibilityGeneration + 1,
+            },
+          ],
+        },
+      })
+    ).toThrow('active projection alias is stale or has invalid visibility');
+
+    expect(() =>
+      assertAuthoritySnapshotInvariants({
+        ...forgedKnown,
+        sessions: {
+          ...forgedKnown.sessions,
+          'session-player-one': {
+            ...forgedKnown.sessions['session-player-one']!,
+            active: false,
+          },
+        },
+      })
+    ).not.toThrow();
+  });
+
+  it('purges missing-card and missing-definition aliases while retaining another viewer', () => {
+    const initial = createSnapshot();
+    const loaded = executeCommand(
+      initial.state,
+      {
+        type: 'LoadDeck',
+        playerId: p1,
+        entries: [
+          {
+            definition: {
+              id: asCardDefinitionId('alias-old-definition'),
+              name: 'Old alias card',
+              category: 'Trainer',
+              imageUrl: '/old-alias.png',
+            },
+            count: 1,
+          },
+        ],
+      },
+      createContext()
+    );
+    if (!loaded.accepted) throw new Error(loaded.message);
+    const oldCardId = loaded.state.zones[playerZoneId(p1, 'deck')]!.cardIds[0]!;
+    const moved = executeCommand(
+      loaded.state,
+      {
+        type: 'MoveCard',
+        cardId: oldCardId,
+        expectedSourceZoneId: playerZoneId(p1, 'deck'),
+        destinationZoneId: playerZoneId(p1, 'discard'),
+      },
+      createContext()
+    );
+    if (!moved.accepted) throw new Error(moved.message);
+    const oldProjection = projectRecipient(
+      moved.state,
+      { kind: 'player', playerId: p1 },
+      emptyProjectionIdentityState(),
+      {
+        nextOpaqueId: (kind) => `old-${kind}-alias-opaque-000001`,
+      }
+    );
+    expect(oldProjection.identities.cardAliases).toHaveLength(1);
+    expect(oldProjection.identities.definitionAliases).toHaveLength(1);
+
+    const replacement = executeCommand(
+      moved.state,
+      {
+        type: 'LoadDeck',
+        playerId: p1,
+        entries: [
+          {
+            definition: {
+              id: asCardDefinitionId('alias-new-definition'),
+              name: 'New alias card',
+              category: 'Energy',
+              imageUrl: '/new-alias.png',
+            },
+            count: 1,
+          },
+        ],
+      },
+      {
+        ...createContext(),
+        nextCardId: () => asCardInstanceId('replacement-canonical-card'),
+      }
+    );
+    if (!replacement.accepted) throw new Error(replacement.message);
+    const retainedOtherViewer = projectRecipient(
+      replacement.state,
+      { kind: 'player', playerId: p2 },
+      oldProjection.identities,
+      {
+        nextOpaqueId: (kind) => `new-${kind}-alias-opaque-000001`,
+      }
+    );
+
+    expect(
+      retainedOtherViewer.identities.cardAliases.some(
+        (entry) => entry.cardId === oldCardId
+      )
+    ).toBe(false);
+    expect(
+      retainedOtherViewer.identities.definitionAliases.some(
+        (entry) => entry.definitionId === 'alias-old-definition'
+      )
+    ).toBe(false);
+    expect(
+      retainedOtherViewer.identities.cardAliases.every((entry) =>
+        Boolean(replacement.state.cards[entry.cardId])
+      )
+    ).toBe(true);
+    expect(
+      retainedOtherViewer.identities.definitionAliases.every((entry) =>
+        Boolean(replacement.state.definitions[entry.definitionId])
+      )
+    ).toBe(true);
+  });
+
+  it('commits an active player deck replacement while purging dangling aliases retained for an inactive viewer', async () => {
+    const initial = createSnapshot();
+    const context = createContext();
+    const first = executeCommand(
+      initial.state,
+      {
+        type: 'LoadDeck',
+        playerId: p1,
+        entries: [
+          {
+            definition: {
+              id: asCardDefinitionId('retained-owner-definition'),
+              name: 'Retained owner card',
+              category: 'Trainer',
+              imageUrl: '/retained-owner.png',
+            },
+            count: 1,
+          },
+        ],
+      },
+      context
+    );
+    if (!first.accepted) throw new Error(first.message);
+    const second = executeCommand(
+      first.state,
+      {
+        type: 'LoadDeck',
+        playerId: p2,
+        entries: [
+          {
+            definition: {
+              id: asCardDefinitionId('replaced-opponent-definition'),
+              name: 'Replaced opponent card',
+              category: 'Energy',
+              imageUrl: '/replaced-opponent.png',
+            },
+            count: 1,
+          },
+        ],
+      },
+      context
+    );
+    if (!second.accepted) throw new Error(second.message);
+    let retainedOpaqueId = 0;
+    const projected = projectRecipient(
+      second.state,
+      { kind: 'player', playerId: p1 },
+      emptyProjectionIdentityState(),
+      {
+        nextOpaqueId: (kind) =>
+          `retained-${kind}-opaque-id-${++retainedOpaqueId}`,
+      }
+    );
+    const p1Card = second.state.zones[playerZoneId(p1, 'deck')]!.cardIds[0]!;
+    const oldP2Card = second.state.zones[playerZoneId(p2, 'deck')]!.cardIds[0]!;
+    const retainedAlias = projected.identities.cardAliases.find(
+      (entry) => entry.cardId === p1Card
+    )!;
+    const danglingAlias = projected.identities.cardAliases.find(
+      (entry) => entry.cardId === oldP2Card
+    )!;
+    const current: RoomAuthoritySnapshot = {
+      ...initial,
+      state: second.state,
+      replayHistory: createReplayHistory(second.state),
+      identities: projected.identities,
+      sessions: {
+        ...initial.sessions,
+        'session-player-one': {
+          ...initial.sessions['session-player-one']!,
+          active: false,
+        },
+        'session-spectator': {
+          ...initial.sessions['session-spectator']!,
+          active: false,
+        },
+      },
+    };
+    const dependencies = createDependencies(createPersistence());
+    const result = await processAuthorityCommand(
+      current,
+      command(
+        'session-player-two',
+        1,
+        'replace-active-player-deck',
+        {
+          type: 'LoadDeck',
+          entries: [
+            {
+              definition: {
+                id: 'replacement-opponent-definition',
+                name: 'Replacement opponent card',
+                category: 'Pokémon',
+                imageUrl: '/replacement-opponent.png',
+              },
+              count: 1,
+            },
+          ],
+        },
+        second.state.revision
+      ),
+      {
+        ...dependencies,
+        commandContext: {
+          ...dependencies.commandContext,
+          nextCardId: () => asCardInstanceId('active-player-replacement-card'),
+        },
+      }
+    );
+
+    expect(result.committed).toBe(true);
+    expect(
+      result.snapshot.sessions['session-player-two']!.recentOutcomes.at(-1)
+    ).toMatchObject({ accepted: true });
+    expect(
+      result.snapshot.identities.cardAliases.some(
+        (entry) => entry.alias === retainedAlias.alias
+      )
+    ).toBe(true);
+    expect(
+      result.snapshot.identities.cardAliases.some(
+        (entry) => entry.alias === danglingAlias.alias
+      )
+    ).toBe(false);
+    expect(
+      result.snapshot.identities.cardAliases.every((entry) =>
+        Boolean(result.snapshot.state.cards[entry.cardId])
+      )
+    ).toBe(true);
+    assertAuthoritySnapshotInvariants(structuredClone(result.snapshot));
   });
 
   it('fails closed for forged replay evidence and consumes valid evidence once', () => {

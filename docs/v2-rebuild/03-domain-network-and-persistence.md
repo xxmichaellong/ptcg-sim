@@ -96,7 +96,11 @@ Legacy `attachedCards` and `viewCards` arrays are not ordinary permanent zones:
 
 These are canonical when unresolved because reconnect and multiplayer must not
 lose them. Opening a visual deck/discard popup without moving cards is local
-presentation state.
+presentation state. A known client/protocol reachability debt remains:
+`CloseInspection` requires the canonical inspection token, but the public work
+area projection exposes only the work-area handle. Authority/core coverage uses
+the canonical token explicitly; browser reachability must be resolved before
+claiming full command parity (R-020).
 
 ### Play stacks and ownership
 
@@ -470,7 +474,11 @@ The authority validates:
 - role is player rather than spectator for state-changing commands;
 - actor may control the target seat/card under solo, multiplayer, coaching, and
   opponent-action-request policies. Current permitted manipulation of an
-  opponent's public board must be represented in this permission matrix;
+  opponent's public board must be represented in this permission matrix. The
+  current resolver uses card-based authorization, so a player may move a card
+  they control into an opponent-owned destination even when
+  opponent-public interaction is disabled; R-015 tracks the product decision
+  and the missing source/destination/action matrix;
 - payload depth, strings, arrays, deck size, chat size, and batch size;
 - per-connection and per-room rate/burst budgets;
 - active inspection/reveal/undo capability where relevant; and

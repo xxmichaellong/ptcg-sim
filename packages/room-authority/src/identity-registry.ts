@@ -1,6 +1,7 @@
 import {
   asViewCardId,
   asViewDefinitionId,
+  isCardKnownToViewer,
   projectMatch,
   type CardDefinitionId,
   type CardInstanceId,
@@ -80,13 +81,14 @@ export const projectRecipient = (
 ): ProjectedRecipient => {
   const viewerKey = viewerIdentityKey(viewer);
   const cardByKey = new Map(
-    identities.cardAliases.map((entry) => [cardAliasKey(entry), entry])
+    identities.cardAliases
+      .filter((entry) => Boolean(state.cards[entry.cardId]))
+      .map((entry) => [cardAliasKey(entry), entry])
   );
   const definitionByKey = new Map(
-    identities.definitionAliases.map((entry) => [
-      definitionAliasKey(entry),
-      entry,
-    ])
+    identities.definitionAliases
+      .filter((entry) => Boolean(state.definitions[entry.definitionId]))
+      .map((entry) => [definitionAliasKey(entry), entry])
   );
   const usedAliases = new Set([
     ...identities.cardAliases.map((entry) => entry.alias),
@@ -155,12 +157,23 @@ export const projectRecipient = (
 };
 
 export const resolveViewCard = (
+  state: MatchState,
   identities: ProjectionIdentityState,
   viewer: ViewerRole,
   alias: string
 ): CardAlias | undefined => {
   const viewerKey = viewerIdentityKey(viewer);
-  return identities.cardAliases.find(
+  const entry = identities.cardAliases.find(
     (entry) => entry.viewerKey === viewerKey && entry.alias === alias
   );
+  if (!entry) return undefined;
+  const card = state.cards[entry.cardId];
+  if (
+    !card ||
+    entry.visibilityGeneration !== card.visibilityGeneration ||
+    entry.known !== isCardKnownToViewer(state, viewer, card)
+  ) {
+    return undefined;
+  }
+  return entry;
 };

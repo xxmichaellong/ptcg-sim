@@ -8,6 +8,7 @@ import {
   asWorkAreaId,
   cloneMatchState,
   createEmptyMatch,
+  executeCommand,
   MATCH_STATE_SCHEMA_VERSION,
   playerZoneId,
   stableHash,
@@ -22,6 +23,7 @@ import {
   createReplayHistory,
   emptyProjectionIdentityState,
   processAuthorityCommand,
+  projectRecipient,
   validateAuthoritySnapshot,
   type PersistedAdmissionTransaction,
   type PersistedAuthorityTransaction,
@@ -39,8 +41,6 @@ import {
   ROOM_LIFECYCLE_STORAGE_KEY,
   RoomAlreadyInitializedError,
   RoomExpiredError,
-  type DurableStorageLike,
-  type DurableStorageTransactionLike,
   type StoredAuthorityFrontier,
 } from './durable-storage.js';
 import {
@@ -50,116 +50,7 @@ import {
   MAX_AUTHORITY_JOURNAL_BYTES,
   MAX_AUTHORITY_JOURNAL_ENTRIES,
 } from './journal-retention.js';
-
-class MemoryDurableStorage implements DurableStorageLike {
-  values = new Map<string, unknown>();
-  alarm: number | null = null;
-  failPutWhenKeyStartsWith: string | undefined;
-  failSetAlarm = false;
-  failDeleteAlarm = false;
-  failDeleteAllOnce = false;
-  failDeleteWhenKeyStartsWith: string | undefined;
-  failAfterTransactionCommitOnce = false;
-  retryTransactionOnce = false;
-  beforeTransactionRetry: (() => void) | undefined;
-  transactionGetKeys: string[] = [];
-
-  async get<Value>(key: string): Promise<Value | undefined> {
-    return structuredClone(this.values.get(key)) as Value | undefined;
-  }
-
-  async deleteAll(): Promise<void> {
-    if (this.failDeleteAllOnce) {
-      this.failDeleteAllOnce = false;
-      throw new Error('injected deleteAll failure');
-    }
-    this.values.clear();
-    this.alarm = null;
-  }
-
-  async transaction<Value>(
-    closure: (transaction: DurableStorageTransactionLike) => Promise<Value>
-  ): Promise<Value> {
-    let staged = new Map(
-      [...this.values].map(([key, value]) => [key, structuredClone(value)])
-    );
-    let stagedAlarm = this.alarm;
-    const transaction: DurableStorageTransactionLike = {
-      get: async <Stored>(key: string) => {
-        this.transactionGetKeys.push(key);
-        return structuredClone(staged.get(key)) as Stored | undefined;
-      },
-      list: async <Stored>(options = {}) =>
-        new Map(
-          [...staged]
-            .filter(
-              ([key]) =>
-                (!options.prefix || key.startsWith(options.prefix)) &&
-                (!options.startAfter || key > options.startAfter)
-            )
-            .sort(([left], [right]) => left.localeCompare(right))
-            .slice(0, options.limit ?? Number.POSITIVE_INFINITY)
-            .map(([key, value]) => [key, structuredClone(value) as Stored])
-        ),
-      put: async (entries) => {
-        const keys = Object.keys(entries);
-        if (
-          this.failPutWhenKeyStartsWith &&
-          keys.some((key) => key.startsWith(this.failPutWhenKeyStartsWith!))
-        ) {
-          throw new Error('injected transactional put failure');
-        }
-        for (const [key, value] of Object.entries(entries)) {
-          staged.set(key, structuredClone(value));
-        }
-      },
-      delete: async (keys) => {
-        if (
-          this.failDeleteWhenKeyStartsWith &&
-          keys.some((key) => key.startsWith(this.failDeleteWhenKeyStartsWith!))
-        ) {
-          throw new Error('injected transactional delete failure');
-        }
-        let deleted = 0;
-        for (const key of keys) {
-          if (staged.delete(key)) deleted += 1;
-        }
-        return deleted;
-      },
-      setAlarm: async (scheduledTime) => {
-        if (this.failSetAlarm) throw new Error('injected setAlarm failure');
-        stagedAlarm =
-          scheduledTime instanceof Date
-            ? scheduledTime.getTime()
-            : scheduledTime;
-      },
-      deleteAlarm: async () => {
-        if (this.failDeleteAlarm) {
-          throw new Error('injected deleteAlarm failure');
-        }
-        stagedAlarm = null;
-      },
-    };
-    let result = await closure(transaction);
-    if (this.retryTransactionOnce) {
-      this.retryTransactionOnce = false;
-      this.beforeTransactionRetry?.();
-      this.beforeTransactionRetry = undefined;
-      staged = new Map(
-        [...this.values].map(([key, value]) => [key, structuredClone(value)])
-      );
-      stagedAlarm = this.alarm;
-      result = await closure(transaction);
-    }
-    this.values = staged;
-    this.alarm = stagedAlarm;
-    if (this.failAfterTransactionCommitOnce) {
-      this.failAfterTransactionCommitOnce = false;
-      throw new Error('injected ambiguous transaction failure');
-    }
-    return result;
-  }
-}
+import { MemoryDurableStorage } from './testing/memory-durable-storage.js';
 
 const p1 = asPlayerId('player-one');
 const p2 = asPlayerId('player-two');
@@ -195,6 +86,49 @@ const unclaimedSnapshot = (): RoomAuthoritySnapshot => ({
   ...initialSnapshot(),
   sessions: {},
 });
+
+const snapshotWithActiveAlias = (): RoomAuthoritySnapshot => {
+  const initial = initialSnapshot('durable-alias-integrity');
+  const loaded = executeCommand(
+    initial.state,
+    {
+      type: 'LoadDeck',
+      playerId: p1,
+      entries: [
+        {
+          definition: {
+            id: asCardDefinitionId('durable-alias-definition'),
+            name: 'Durable alias',
+            category: 'Trainer',
+            imageUrl: '/durable-alias.png',
+          },
+          count: 1,
+        },
+      ],
+    },
+    {
+      nextCardId: () => asCardInstanceId('durable-alias-card'),
+      nextStackId: () => asStackId('durable-alias-stack'),
+      nextInspectionId: () => asInspectionId('durable-alias-inspection'),
+      nextWorkAreaId: () => asWorkAreaId('durable-alias-work'),
+      shuffle: (values) => [...values],
+      randomInt: () => 0,
+    }
+  );
+  if (!loaded.accepted) throw new Error(loaded.message);
+  const projected = projectRecipient(
+    loaded.state,
+    { kind: 'player', playerId: p1 },
+    emptyProjectionIdentityState(),
+    { nextOpaqueId: () => 'durable-alias-opaque-id-0001' }
+  );
+  return {
+    ...initial,
+    state: loaded.state,
+    replayHistory: createReplayHistory(loaded.state),
+    identities: projected.identities,
+  };
+};
 
 const acceptedTransaction = (
   current: RoomAuthoritySnapshot
@@ -389,6 +323,39 @@ describe('Durable Object authority snapshot store', () => {
     await expect(store.initialize(initial)).rejects.toBeInstanceOf(
       RoomAlreadyInitializedError
     );
+  });
+
+  it('fails closed when an active-viewer alias is stale or forges knownness on restore', async () => {
+    for (const mutation of ['generation', 'known'] as const) {
+      const storage = new MemoryDurableStorage();
+      const snapshot = snapshotWithActiveAlias();
+      const alias = snapshot.identities.cardAliases[0]!;
+      const corrupted: RoomAuthoritySnapshot = {
+        ...snapshot,
+        identities: {
+          ...snapshot.identities,
+          cardAliases: [
+            mutation === 'generation'
+              ? {
+                  ...alias,
+                  visibilityGeneration: alias.visibilityGeneration + 1,
+                }
+              : { ...alias, known: !alias.known },
+          ],
+        },
+      };
+      storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
+        format: 'ptcgsim-room-authority-v6',
+        generation: 'a'.repeat(32),
+        snapshot: corrupted,
+      });
+
+      await expect(
+        new DurableRoomSnapshotStore(storage).load()
+      ).rejects.toThrow(
+        'active projection alias is stale or has invalid visibility'
+      );
+    }
   });
 
   it('atomically initializes a generated snapshot/frontier pair and rejects an orphan frontier', async () => {

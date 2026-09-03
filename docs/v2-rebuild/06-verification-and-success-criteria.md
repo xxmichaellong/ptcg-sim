@@ -59,6 +59,53 @@ versions and support window are ratified in Phase 0.
 | Performance         | Cold/warm load, setup, one-card action, drag, resize, opened zones, reset churn, reconnect, server persistence               |
 | Soak/fault          | Long randomized room sessions with drops, reconnect, restarts, hibernation, image errors, and context loss                   |
 
+### Implemented seeded authority/storage model
+
+The server model suite at
+`apps/server/src/generative-authority-model.test.ts` is a dependency-free,
+deterministic bridge across game core, room authority, recipient projection,
+replay, and the production durable snapshot adapter with in-memory Durable
+Object storage. A compile-time registry covers all 48 public wire-game-command
+variants: 41 have projection-driven generators and seven hard-precondition
+variants have named, asserted scenarios. Generated and named-scenario commands
+are runtime parsed by the public protocol schema before they reach the
+coordinator.
+
+Each accepted step verifies the exact revision/event-batch delta, recursively
+frozen snapshot invariants, independent event application and replay
+reconstruction, full-clone versus incremental validation agreement, complete
+one-per-active-session recipient publication, independently reprojected views,
+and serialized hidden-information safety including presentation-event and
+embedded-string payloads. Periodic and final durable reconstruction cover
+compaction and frontier fast paths. Generated rejected, duplicate, stale, gap,
+forged, and spectator attempts distinguish no-commit from persisted session
+outcomes. Named bounded-dedupe, pre-commit failure, transaction-retry, and
+ambiguous committed-failure cases add exact durable-head, journal, recovery,
+publication, and relevant RNG/ID call-count assertions. Named coverage also
+includes temporal VIS-003 handle retirement, twin-world non-interference,
+movement/stack/index boundaries, counts/markers, public and coaching inspection,
+policy-disabled opponent interaction, and solo undo.
+
+The checked-in default is 100 seeds by 50 transitions. The 2026-09-03 final
+root-gate run's model passed 9/9 tests in 132.801 seconds, with the generated
+matrix taking 126.293 seconds and every generated type and all seven named
+scenario types yielding and accepting. It observed 500 final-or-periodic
+durable reconstructions, 1,998 actual replay-compaction transitions, and 3,600
+authority-frontier hits. Reproduce it with:
+
+```sh
+PTCGSIM_MODEL_REPORT=1 \
+  corepack pnpm exec vitest run apps/server/src/generative-authority-model.test.ts
+```
+
+`PTCGSIM_MODEL_SEED`, `PTCGSIM_MODEL_COUNT`, `PTCGSIM_MODEL_STEPS`, and
+`PTCGSIM_MODEL_TIMEOUT_MS` provide bounded diagnostics or a larger soak. The
+required pre-release gate remains 1,000 seeds; run it with
+`PTCGSIM_MODEL_COUNT=1000 PTCGSIM_MODEL_TIMEOUT_MS=3600000` and retain its
+artifact before satisfying core correctness gate 10. Small debug overrides
+still enforce registry completeness and named scenarios but scale statistical
+coverage expectations to the available transition budget.
+
 ## Core correctness gates
 
 Release requires all of the following:

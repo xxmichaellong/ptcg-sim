@@ -502,17 +502,15 @@ const decideShuffleCardIntoDeck = (
       'Deck cannot contain more than 200 cards'
     );
   }
-  const departure = sourceIsDeck
-    ? null
-    : decideCardDepartureToZone(
-        state,
-        source,
-        deck,
-        deck.cardIds.length,
-        context,
-        false
-      );
-  if (departure && !departure.accepted) return departure;
+  const departure = decideCardDepartureToZone(
+    state,
+    source,
+    deck,
+    deck.cardIds.length,
+    context,
+    false
+  );
+  if (!departure.accepted) return departure;
   const combined = sourceIsDeck
     ? [...deck.cardIds]
     : [...deck.cardIds, card.id];
@@ -529,10 +527,9 @@ const decideShuffleCardIntoDeck = (
     cardOrder: shuffled,
     concealedCardIds: shuffled,
   };
-  if (sourceIsDeck) return accept(shuffleEvent);
   return {
     accepted: true,
-    events: [...departure!.events, shuffleEvent],
+    events: [...departure.events, shuffleEvent],
   };
 };
 
@@ -1529,7 +1526,9 @@ export const decideCommand = (
         type: 'ZoneShuffled',
         zoneId: zone.id,
         cardOrder,
-        concealedCardIds: isConcealedZone(zone) ? cardOrder : [],
+        concealedCardIds: isConcealedZone(zone)
+          ? cardOrder
+          : cardOrder.filter((cardId) => state.cards[cardId]?.face === 'down'),
       });
     }
     case 'DrawCards': {
@@ -1542,16 +1541,22 @@ export const decideCommand = (
         );
       }
       const deck = state.zones[playerZoneId(command.playerId, 'deck')];
+      const hand = state.zones[playerZoneId(command.playerId, 'hand')];
       if (!deck || deck.cardIds.length === 0) {
         return reject('precondition_failed', 'Deck is empty');
+      }
+      if (!hand) return reject('not_found', 'Hand does not exist');
+      const drawCount = Math.min(command.count, deck.cardIds.length);
+      if (hand.cardIds.length + drawCount > 200) {
+        return reject(
+          'precondition_failed',
+          'Draw cannot make the hand exceed 200 cards'
+        );
       }
       return accept({
         type: 'CardsDrawn',
         playerId: command.playerId,
-        cardIds: deck.cardIds.slice(
-          0,
-          Math.min(command.count, deck.cardIds.length)
-        ),
+        cardIds: deck.cardIds.slice(0, drawCount),
       });
     }
     case 'PlayRandomCardFaceDown': {

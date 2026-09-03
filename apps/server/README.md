@@ -61,6 +61,55 @@ traffic, pre-commit and ambiguous post-commit persistence failures, exact
 retries, payload/resource envelopes, and post-wake idempotency. The
 repository-level `check:v2` gate runs this suite after the fast unit tests.
 
+## Seeded authority/storage model
+
+`generative-authority-model.test.ts` drives schema-parsed client commands
+through the real authority coordinator, recipient projection, replay, and
+`DurableRoomSnapshotStore` backed by the reusable in-memory Durable Object
+adapter. Its compile-time registry covers all 48 public `WireGameCommand`
+variants: 41 projection-driven generators and seven named hard-precondition
+scenarios. Adding a public command without classifying and implementing its
+coverage fails the dedicated model-test typecheck, which is part of the root
+`typecheck:v2` and `check:v2` gates.
+
+The default deterministic run is 100 seeds by 50 transitions:
+
+```sh
+corepack pnpm exec vitest run apps/server/src/generative-authority-model.test.ts
+```
+
+Set `PTCGSIM_MODEL_SEED` to a uint32 start seed, and override
+`PTCGSIM_MODEL_COUNT`, `PTCGSIM_MODEL_STEPS`, or the bounded per-matrix
+`PTCGSIM_MODEL_TIMEOUT_MS` for diagnosis and soaks. The pre-release 1,000-seed
+command allows one hour for the matrix because the current named machine takes
+about 22 minutes at the default per-seed rate:
+
+```sh
+PTCGSIM_MODEL_COUNT=1000 PTCGSIM_MODEL_STEPS=50 \
+  PTCGSIM_MODEL_TIMEOUT_MS=3600000 PTCGSIM_MODEL_REPORT=1 \
+  corepack pnpm exec vitest run apps/server/src/generative-authority-model.test.ts
+```
+
+The runner uses purpose-separated deterministic randomness and IDs, emits a
+bounded trace with seed/step/actor/command on failure, and keeps discovered
+seeds in `src/testing/model-regression-seeds.ts`. It checks exact accepted and
+rejected authority/durability deltas, duplicate and bounded-dedupe semantics,
+independent event/replay reconstruction, complete recipient-specific
+publication, hidden-ID leaks across the entire serialized delivery, temporal
+handle invalidation, incremental/full validation agreement,
+compaction/frontier use, final durable reconstruction, and focused RNG/ID and
+publication assertions at the precondition, retry, and ambiguous-commit
+boundaries.
+
+On 2026-09-03 the final root-gate run's default 100-by-50 model passed all 9
+tests in 132.801 seconds; the generated matrix itself took 126.293 seconds.
+Every generated type yielded and accepted at least once; all seven named
+scenario types yielded and accepted; the run performed 500 durable
+reconstructions, 1,998 actual replay-compaction transitions, and 3,600
+authority-frontier hits.
+This is routine deterministic evidence, not a substitute for the required
+1,000-seed pre-release run or long-duration runtime soak.
+
 `pnpm run measure:runtime` is the longer, non-CI timing/plateau observation. It
 fills the command outcome and audit windows, advances beyond them, forces
 hibernating evictions, commits once more after wake, and writes a sanitized

@@ -233,6 +233,54 @@ describe('atomic public visibility commands', () => {
     );
   });
 
+  it('invalidates every public prize identity when the concealed zone is shuffled', () => {
+    const prepared = fixture();
+    const prizeId = playerZoneId(p1, 'prizes');
+    const prizeCards = [...prepared.state.zones[prizeId]!.cardIds];
+    const revealed = accepted(
+      prepared.state,
+      {
+        type: 'SetZonePublicReveal',
+        actorPlayerId: p1,
+        playerId: p1,
+        zoneId: prizeId,
+        expectedCardIds: prizeCards,
+        revealed: true,
+      },
+      prepared.context
+    );
+    const oldAliases = projectMatch(
+      revealed.state,
+      { kind: 'player', playerId: p2 },
+      identities
+    ).zones[prizeId]!.cards.map((card) => card.id);
+    const shuffled = accepted(
+      revealed.state,
+      { type: 'ShuffleZone', zoneId: prizeId },
+      prepared.context
+    );
+    const opponent = projectMatch(
+      shuffled.state,
+      { kind: 'player', playerId: p2 },
+      identities
+    );
+    const shuffledAliases = opponent.zones[prizeId]!.cards.map(
+      (card) => card.id
+    );
+
+    expect(shuffled.state.visibility.publicCardIds).toEqual([]);
+    expect(
+      opponent.zones[prizeId]!.cards.every(
+        (card) => card.kind === 'concealed' && !card.publiclyRevealed
+      )
+    ).toBe(true);
+    expect(shuffledAliases).not.toEqual(oldAliases);
+    for (const oldAlias of oldAliases) {
+      expect(shuffledAliases).not.toContain(oldAlias);
+    }
+    assertMatchInvariants(shuffled.state);
+  });
+
   it('turns a public-zone card down when hidden and restores it on reveal', () => {
     const prepared = fixture();
     const deckId = playerZoneId(p1, 'deck');

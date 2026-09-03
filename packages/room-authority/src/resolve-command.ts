@@ -103,9 +103,7 @@ export const resolveWireCommand = (
   }
 
   const resolveCard = (alias: string) => {
-    const entry = resolveViewCard(identities, session.viewer, alias);
-    if (!entry || !state.cards[entry.cardId]) return undefined;
-    return entry;
+    return resolveViewCard(state, identities, session.viewer, alias);
   };
 
   switch (wire.type) {
@@ -993,4 +991,7 @@ export const resolveWireCommand = (
         command: { type: 'FlipCoin', playerId: actorId },
       };
   }
+  const exhaustive: never = wire;
+  void exhaustive;
+  return rejected('precondition_failed');
 };

@@ -7,7 +7,7 @@ import {
   type EventBatch,
 } from '@ptcgsim/game-core';
 
-import { viewerIdentityKey } from './identity-registry.js';
+import { resolveViewCard, viewerIdentityKey } from './identity-registry.js';
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
   MAX_OUTSTANDING_ADMISSION_TICKETS,
@@ -667,6 +667,28 @@ const collectAuthoritySnapshotProblemsInternal = (
   for (const entry of snapshot.identities.cardAliases) {
     if (!snapshot.state.cards[entry.cardId]) {
       problems.push(`projection alias references missing card ${entry.cardId}`);
+    }
+  }
+  const activeViewers = new Map(
+    Object.values(snapshot.sessions)
+      .filter((session) => session.active)
+      .map((session) => [viewerIdentityKey(session.viewer), session.viewer])
+  );
+  for (const [viewerKey, viewer] of activeViewers) {
+    for (const entry of snapshot.identities.cardAliases) {
+      if (
+        entry.viewerKey === viewerKey &&
+        !resolveViewCard(
+          snapshot.state,
+          snapshot.identities,
+          viewer,
+          entry.alias
+        )
+      ) {
+        problems.push(
+          `active projection alias is stale or has invalid visibility ${entry.alias}`
+        );
+      }
     }
   }
   for (const entry of snapshot.identities.definitionAliases) {

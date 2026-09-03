@@ -16,7 +16,8 @@
     "measure:runtime": "node performance/run-local-measurement.mjs",
     "test": "vitest run --root ../.. --config vitest.config.ts apps/server/src",
     "test:runtime": "vitest run --config vitest.runtime.config.ts",
-    "typecheck": "tsc --build",
+    "typecheck": "tsc --build && corepack pnpm run typecheck:model",
+    "typecheck:model": "tsc --noEmit --project tsconfig.model-tests.json",
     "typecheck:runtime": "tsc --noEmit --project runtime-tests/tsconfig.json"
   },
   "dependencies": {

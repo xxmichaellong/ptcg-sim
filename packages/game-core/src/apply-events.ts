@@ -1,7 +1,7 @@
 import { playerZoneId } from './create-match.js';
 import { cloneMatchState } from './clone.js';
 import type { DomainEvent, EventBatch } from './events.js';
-import type { CardInstanceId, PlayerId, StackId } from './ids.js';
+import type { CardInstanceId, PlayerId, StackId, ZoneId } from './ids.js';
 import {
   analyzePlayerReset,
   resetReturnCapacityIsValid,
@@ -21,12 +21,67 @@ const incrementVisibility = (card: CardInstance): CardInstance => ({
   visibilityGeneration: card.visibilityGeneration + 1,
 });
 
+const normalizeCardForZone = (
+  card: CardInstance,
+  destination: CardZone
+): CardInstance =>
+  destination.kind === 'board'
+    ? { ...card, face: 'up', abilityUsed: false }
+    : {
+        ...card,
+        currentCategory: card.originalCategory,
+        face: 'up',
+        orientationQuarterTurns: 0,
+        abilityUsed: false,
+      };
+
+const isConcealedZone = (zone: CardZone): boolean =>
+  zone.kind === 'deck' || zone.kind === 'hand' || zone.kind === 'prizes';
+
+const retireInspectionGrants = (
+  grants: MatchState['visibility']['inspectionGrants'],
+  cardIds: ReadonlySet<CardInstanceId>
+): MatchState['visibility']['inspectionGrants'] =>
+  Object.fromEntries(
+    Object.entries(grants).flatMap(([inspectionId, grant]) => {
+      const retainedCardIds = grant.cardIds.filter(
+        (cardId) => !cardIds.has(cardId)
+      );
+      return retainedCardIds.length === 0
+        ? []
+        : [[inspectionId, { ...grant, cardIds: retainedCardIds }]];
+    })
+  ) as MatchState['visibility']['inspectionGrants'];
+
+const retireVisibility = (
+  state: MatchState,
+  publicCardIds: ReadonlySet<CardInstanceId>,
+  inspectionCardIds: ReadonlySet<CardInstanceId>
+): MatchState['visibility'] => ({
+  publicCardIds: state.visibility.publicCardIds.filter(
+    (cardId) => !publicCardIds.has(cardId)
+  ),
+  inspectionGrants: retireInspectionGrants(
+    state.visibility.inspectionGrants,
+    inspectionCardIds
+  ),
+});
+
 const sameCardOrder = <Value>(
   left: readonly Value[],
   right: readonly Value[]
 ): boolean =>
   left.length === right.length &&
   left.every((cardId, index) => cardId === right[index]);
+
+const sameCardSet = (
+  left: Iterable<CardInstanceId>,
+  right: Iterable<CardInstanceId>
+): boolean => {
+  const sortedLeft = [...left].sort();
+  const sortedRight = [...right].sort();
+  return sameCardOrder(sortedLeft, sortedRight);
+};
 
 const sameDefinition = (
   left: MatchState['definitions'][string],
@@ -143,8 +198,9 @@ const removeCardsFromAllLocations = (
     })
   ) as MatchState['workAreas'];
 
+  const visibilityRetiredCardIds = new Set([...cardIds, ...orphanedCardIds]);
   const publicCardIds = state.visibility.publicCardIds.filter(
-    (cardId) => !cardIds.has(cardId)
+    (cardId) => !visibilityRetiredCardIds.has(cardId)
   );
   const inspectionGrants = Object.fromEntries(
     Object.entries(state.visibility.inspectionGrants)
@@ -152,7 +208,9 @@ const removeCardsFromAllLocations = (
         inspectionId,
         {
           ...grant,
-          cardIds: grant.cardIds.filter((cardId) => !cardIds.has(cardId)),
+          cardIds: grant.cardIds.filter(
+            (cardId) => !visibilityRetiredCardIds.has(cardId)
+          ),
         },
       ])
       .filter(([, grant]) =>
@@ -250,6 +308,293 @@ const requireStack = (state: MatchState, stackId: string) => {
   return stack;
 };
 
+type ZoneOrdersSetEvent = Extract<
+  DomainEvent,
+  { readonly type: 'ZoneOrdersSet' }
+>;
+
+interface ZoneOrderEffects {
+  readonly zones: MatchState['zones'];
+  readonly normalizedIds: ReadonlySet<CardInstanceId>;
+  readonly concealedIds: ReadonlySet<CardInstanceId>;
+  readonly visibilityRetiredIds: ReadonlySet<CardInstanceId>;
+  readonly destinationZoneByCard: ReadonlyMap<CardInstanceId, ZoneId>;
+}
+
+const deriveZoneOrderEffects = (
+  state: MatchState,
+  event: ZoneOrdersSetEvent
+): ZoneOrderEffects => {
+  if (
+    event.zones.length === 0 ||
+    new Set(event.zones.map((zone) => zone.zoneId)).size !== event.zones.length
+  ) {
+    throw new Error('Zone order event contains invalid zone references');
+  }
+  const updates = event.zones.map((update) => {
+    const zone = requireZone(state, update.zoneId);
+    if (!sameCardOrder(zone.cardIds, update.expectedCardIds)) {
+      throw new Error(`Zone ${zone.id} does not match expected order`);
+    }
+    return { update, zone };
+  });
+  const before = updates.flatMap(({ zone }) => [...zone.cardIds]);
+  const after = updates.flatMap(({ update }) => [...update.cardIds]);
+  if (!sameCardSet(before, after)) {
+    throw new Error('Zone order event changes the affected card set');
+  }
+
+  const destinationZoneByCard = new Map<CardInstanceId, ZoneId>();
+  for (const { update, zone } of updates) {
+    for (const cardId of update.cardIds) {
+      destinationZoneByCard.set(cardId, zone.id);
+    }
+  }
+  let normalizedIds: ReadonlySet<CardInstanceId>;
+  let expectedConcealedIds: readonly CardInstanceId[];
+  let visibilityRetiredIds: readonly CardInstanceId[];
+  const invalidSemantics = (): never => {
+    throw new Error(`Zone order event has invalid ${event.reason} semantics`);
+  };
+  const exactKinds = (expectedKinds: readonly CardZone['kind'][]): boolean =>
+    updates.length === expectedKinds.length &&
+    updates.every(({ zone }, index) => zone.kind === expectedKinds[index]);
+  const sameNonNullOwner = (): boolean => {
+    const ownerId = updates[0]?.zone.ownerId;
+    return (
+      ownerId !== null &&
+      ownerId !== undefined &&
+      updates.every(({ zone }) => zone.ownerId === ownerId)
+    );
+  };
+
+  switch (event.reason) {
+    case 'move-zone-contents': {
+      if (updates.length !== 2) invalidSemantics();
+      const source = updates[0]!;
+      const destination = updates[1]!;
+      if (
+        source.zone.id === destination.zone.id ||
+        source.zone.kind === 'board' ||
+        destination.zone.kind === 'board' ||
+        source.update.cardIds.length !== 0 ||
+        !sameCardOrder(destination.update.cardIds, [
+          ...destination.zone.cardIds,
+          ...source.zone.cardIds,
+        ]) ||
+        (destination.zone.kind === 'stadium' &&
+          destination.update.cardIds.length > 1)
+      ) {
+        invalidSemantics();
+      }
+      expectedConcealedIds = isConcealedZone(destination.zone)
+        ? source.zone.cardIds
+        : [];
+      normalizedIds = new Set(source.zone.cardIds);
+      visibilityRetiredIds = source.zone.cardIds;
+      break;
+    }
+    case 'move-card-to-deck-top':
+    case 'move-card-to-deck-bottom': {
+      if (!exactKinds(['deck'])) invalidSemantics();
+      const { zone, update } = updates[0]!;
+      const movedCardIdCandidate =
+        event.reason === 'move-card-to-deck-top'
+          ? update.cardIds[0]
+          : update.cardIds.at(-1);
+      if (!movedCardIdCandidate) invalidSemantics();
+      const movedCardId = movedCardIdCandidate!;
+      const expectedRemainder = zone.cardIds.filter(
+        (cardId) => cardId !== movedCardId
+      );
+      const actualRemainder =
+        event.reason === 'move-card-to-deck-top'
+          ? update.cardIds.slice(1)
+          : update.cardIds.slice(0, -1);
+      const priorEdge =
+        event.reason === 'move-card-to-deck-top'
+          ? zone.cardIds[0]
+          : zone.cardIds.at(-1);
+      if (
+        priorEdge === movedCardId ||
+        !zone.cardIds.includes(movedCardId) ||
+        !sameCardOrder(expectedRemainder, actualRemainder)
+      ) {
+        invalidSemantics();
+      }
+      expectedConcealedIds = [movedCardId];
+      normalizedIds = new Set([movedCardId]);
+      visibilityRetiredIds = [movedCardId];
+      break;
+    }
+    case 'move-prizes-to-deck-bottom': {
+      if (!exactKinds(['prizes', 'deck']) || !sameNonNullOwner()) {
+        invalidSemantics();
+      }
+      const prizes = updates[0]!;
+      const deck = updates[1]!;
+      if (
+        prizes.zone.cardIds.length === 0 ||
+        prizes.update.cardIds.length !== 0 ||
+        !sameCardOrder(
+          deck.update.cardIds.slice(0, deck.zone.cardIds.length),
+          deck.zone.cardIds
+        ) ||
+        !sameCardSet(
+          deck.update.cardIds.slice(deck.zone.cardIds.length),
+          prizes.zone.cardIds
+        )
+      ) {
+        invalidSemantics();
+      }
+      expectedConcealedIds = prizes.zone.cardIds;
+      normalizedIds = new Set(prizes.zone.cardIds);
+      visibilityRetiredIds = prizes.zone.cardIds;
+      break;
+    }
+    case 'shuffle-zone-into-deck':
+    case 'shuffle-zone-to-deck-bottom': {
+      if (
+        updates.length !== 2 ||
+        updates[1]?.zone.kind !== 'deck' ||
+        !sameNonNullOwner()
+      ) {
+        invalidSemantics();
+      }
+      const source = updates[0]!;
+      const deck = updates[1]!;
+      if (
+        source.zone.id === deck.zone.id ||
+        source.zone.kind === 'board' ||
+        source.update.cardIds.length !== 0
+      ) {
+        invalidSemantics();
+      }
+      if (event.reason === 'shuffle-zone-into-deck') {
+        if (
+          !sameCardSet(deck.update.cardIds, [
+            ...deck.zone.cardIds,
+            ...source.zone.cardIds,
+          ])
+        ) {
+          invalidSemantics();
+        }
+        expectedConcealedIds = deck.update.cardIds;
+        visibilityRetiredIds = [...source.zone.cardIds, ...deck.zone.cardIds];
+      } else {
+        if (
+          !sameCardOrder(
+            deck.update.cardIds.slice(0, deck.zone.cardIds.length),
+            deck.zone.cardIds
+          ) ||
+          !sameCardSet(
+            deck.update.cardIds.slice(deck.zone.cardIds.length),
+            source.zone.cardIds
+          )
+        ) {
+          invalidSemantics();
+        }
+        expectedConcealedIds = source.zone.cardIds;
+        visibilityRetiredIds = source.zone.cardIds;
+      }
+      normalizedIds = new Set(source.zone.cardIds);
+      break;
+    }
+    case 'discard-hand-and-draw': {
+      if (!exactKinds(['hand', 'deck', 'discard']) || !sameNonNullOwner()) {
+        invalidSemantics();
+      }
+      const hand = updates[0]!;
+      const deck = updates[1]!;
+      const discard = updates[2]!;
+      if (
+        !sameCardOrder(discard.update.cardIds, [
+          ...discard.zone.cardIds,
+          ...hand.zone.cardIds,
+        ]) ||
+        !sameCardOrder(
+          hand.update.cardIds,
+          deck.zone.cardIds.slice(0, hand.update.cardIds.length)
+        ) ||
+        !sameCardOrder(
+          deck.update.cardIds,
+          deck.zone.cardIds.slice(hand.update.cardIds.length)
+        )
+      ) {
+        invalidSemantics();
+      }
+      expectedConcealedIds = hand.update.cardIds;
+      normalizedIds = new Set([...hand.zone.cardIds, ...hand.update.cardIds]);
+      visibilityRetiredIds = [...hand.zone.cardIds, ...hand.update.cardIds];
+      break;
+    }
+    case 'shuffle-hand-into-deck-and-draw': {
+      if (!exactKinds(['hand', 'deck']) || !sameNonNullOwner()) {
+        invalidSemantics();
+      }
+      const hand = updates[0]!;
+      const deck = updates[1]!;
+      if (
+        !sameCardSet(
+          [...hand.update.cardIds, ...deck.update.cardIds],
+          [...hand.zone.cardIds, ...deck.zone.cardIds]
+        )
+      ) {
+        invalidSemantics();
+      }
+      expectedConcealedIds = [...hand.update.cardIds, ...deck.update.cardIds];
+      normalizedIds = new Set([...hand.zone.cardIds, ...hand.update.cardIds]);
+      visibilityRetiredIds = [...hand.zone.cardIds, ...deck.zone.cardIds];
+      break;
+    }
+    case 'shuffle-hand-to-deck-bottom-and-draw': {
+      if (!exactKinds(['hand', 'deck']) || !sameNonNullOwner()) {
+        invalidSemantics();
+      }
+      const hand = updates[0]!;
+      const deck = updates[1]!;
+      const resultingOrder = [...hand.update.cardIds, ...deck.update.cardIds];
+      if (
+        !sameCardOrder(
+          resultingOrder.slice(0, deck.zone.cardIds.length),
+          deck.zone.cardIds
+        ) ||
+        !sameCardSet(
+          resultingOrder.slice(deck.zone.cardIds.length),
+          hand.zone.cardIds
+        )
+      ) {
+        invalidSemantics();
+      }
+      expectedConcealedIds = [
+        ...new Set([...hand.zone.cardIds, ...hand.update.cardIds]),
+      ];
+      normalizedIds = new Set([...hand.zone.cardIds, ...hand.update.cardIds]);
+      visibilityRetiredIds = [...hand.zone.cardIds, ...hand.update.cardIds];
+      break;
+    }
+  }
+
+  const concealedIds = new Set(event.concealedCardIds);
+  if (
+    concealedIds.size !== event.concealedCardIds.length ||
+    !sameCardSet(concealedIds, expectedConcealedIds)
+  ) {
+    throw new Error('Zone order event has invalid concealed cards');
+  }
+  const zones = { ...state.zones };
+  for (const { update, zone } of updates) {
+    zones[zone.id] = { ...zone, cardIds: [...update.cardIds] };
+  }
+  return {
+    zones,
+    normalizedIds,
+    concealedIds,
+    visibilityRetiredIds: new Set(visibilityRetiredIds),
+    destinationZoneByCard,
+  };
+};
+
 type WorkAreaCardsResolvedEvent = Extract<
   DomainEvent,
   { readonly type: 'StagedCardsResolved' | 'InspectionCardsResolved' }
@@ -342,13 +687,7 @@ const applyWorkAreaCardsResolved = (
     cards: Object.fromEntries(
       Object.entries(state.cards).map(([cardId, card]) => {
         const normalized = workAreaCards.has(card.id)
-          ? {
-              ...card,
-              currentCategory: card.originalCategory,
-              face: 'up' as const,
-              orientationQuarterTurns: 0 as const,
-              abilityUsed: false,
-            }
+          ? normalizeCardForZone(card, destination)
           : card;
         return [
           cardId,
@@ -363,18 +702,37 @@ const applyWorkAreaCardsResolved = (
         cardIds: [...event.destinationCardIds],
       },
     },
-    visibility: {
-      ...state.visibility,
-      publicCardIds: state.visibility.publicCardIds.filter(
-        (cardId) => !workAreaCards.has(cardId) && !concealed.has(cardId)
-      ),
-    },
+    visibility: retireVisibility(
+      state,
+      new Set([...workAreaCards, ...concealed]),
+      event.destination === 'shuffleIntoDeck'
+        ? new Set([...workAreaCardIds, ...destination.cardIds])
+        : new Set(workAreaCardIds)
+    ),
   };
 };
 
-export const applyEvent = (
+interface DeferredConcealment {
+  readonly zoneId: ZoneId;
+  readonly cardIds: ReadonlySet<CardInstanceId>;
+}
+
+const eventConcealmentMatchesDestination = (
+  event: { readonly cardId: CardInstanceId; readonly concealIdentity: boolean },
+  destination: CardZone,
+  deferredConcealment?: DeferredConcealment
+): boolean =>
+  event.concealIdentity ===
+  (isConcealedZone(destination) &&
+    !(
+      deferredConcealment?.zoneId === destination.id &&
+      deferredConcealment.cardIds.has(event.cardId)
+    ));
+
+const applyEventInternal = (
   state: MatchState,
-  event: DomainEvent
+  event: DomainEvent,
+  deferredConcealment?: DeferredConcealment
 ): MatchState => {
   switch (event.type) {
     case 'DeckLoaded': {
@@ -545,6 +903,21 @@ export const applyEvent = (
         throw new Error(`Card ${event.cardId} is not in expected source zone`);
       }
       const destination = requireZone(state, event.destinationZoneId);
+      if (
+        !Number.isSafeInteger(event.destinationIndex) ||
+        event.destinationIndex < 0 ||
+        event.destinationIndex > destination.cardIds.length ||
+        !eventConcealmentMatchesDestination(
+          event,
+          destination,
+          deferredConcealment
+        ) ||
+        (destination.kind === 'stadium' &&
+          source.id !== destination.id &&
+          destination.cardIds.length > 0)
+      ) {
+        throw new Error('Card move event has invalid destination semantics');
+      }
       const sourceCards = [...source.cardIds];
       sourceCards.splice(sourceIndex, 1);
       const destinationCards =
@@ -556,16 +929,7 @@ export const applyEvent = (
       destinationCards.splice(destinationIndex, 0, event.cardId);
       const card = state.cards[event.cardId];
       if (!card) throw new Error(`Missing moved card ${event.cardId}`);
-      const normalizedCard =
-        destination.kind === 'board'
-          ? { ...card, face: 'up' as const, abilityUsed: false }
-          : {
-              ...card,
-              currentCategory: card.originalCategory,
-              face: 'up' as const,
-              orientationQuarterTurns: 0 as const,
-              abilityUsed: false,
-            };
+      const normalizedCard = normalizeCardForZone(card, destination);
       const nextCard = event.concealIdentity
         ? incrementVisibility(normalizedCard)
         : normalizedCard;
@@ -577,12 +941,11 @@ export const applyEvent = (
           [source.id]: { ...source, cardIds: sourceCards },
           [destination.id]: { ...destination, cardIds: destinationCards },
         },
-        visibility: {
-          ...state.visibility,
-          publicCardIds: state.visibility.publicCardIds.filter(
-            (cardId) => cardId !== event.cardId
-          ),
-        },
+        visibility: retireVisibility(
+          state,
+          new Set([event.cardId]),
+          new Set([event.cardId])
+        ),
       };
     }
     case 'CardsDrawn': {
@@ -591,6 +954,14 @@ export const applyEvent = (
       const deck = requireZone(state, deckId);
       const hand = requireZone(state, handId);
       if (
+        event.cardIds.length === 0 ||
+        event.cardIds.length > 200 ||
+        new Set(event.cardIds).size !== event.cardIds.length ||
+        deck.kind !== 'deck' ||
+        deck.ownerId !== event.playerId ||
+        hand.kind !== 'hand' ||
+        hand.ownerId !== event.playerId ||
+        hand.cardIds.length + event.cardIds.length > 200 ||
         event.cardIds.some((cardId, index) => deck.cardIds[index] !== cardId)
       ) {
         throw new Error('Draw event does not match current deck top');
@@ -599,10 +970,15 @@ export const applyEvent = (
       return {
         ...state,
         cards: Object.fromEntries(
-          Object.entries(state.cards).map(([cardId, card]) => [
-            cardId,
-            drawn.has(card.id) ? incrementVisibility(card) : card,
-          ])
+          Object.entries(state.cards).map(([cardId, card]) => {
+            const normalized = drawn.has(card.id)
+              ? normalizeCardForZone(card, hand)
+              : card;
+            return [
+              cardId,
+              drawn.has(card.id) ? incrementVisibility(normalized) : normalized,
+            ];
+          })
         ),
         zones: {
           ...state.zones,
@@ -612,6 +988,7 @@ export const applyEvent = (
           },
           [handId]: { ...hand, cardIds: [...hand.cardIds, ...event.cardIds] },
         },
+        visibility: retireVisibility(state, drawn, drawn),
       };
     }
     case 'RandomHandCardPlayedFaceDown': {
@@ -787,59 +1164,17 @@ export const applyEvent = (
       ) {
         throw new Error('Shuffle event is not a permutation of the zone');
       }
+      const expectedConcealed = isConcealedZone(zone)
+        ? [...event.cardOrder]
+        : event.cardOrder.filter(
+            (cardId) => state.cards[cardId]?.face === 'down'
+          );
       const concealed = new Set(event.concealedCardIds);
-      return {
-        ...state,
-        cards: Object.fromEntries(
-          Object.entries(state.cards).map(([cardId, card]) => [
-            cardId,
-            concealed.has(card.id) ? incrementVisibility(card) : card,
-          ])
-        ),
-        zones: {
-          ...state.zones,
-          [event.zoneId]: { ...zone, cardIds: [...event.cardOrder] },
-        },
-      };
-    }
-    case 'ZoneOrdersSet': {
-      const zoneIds = event.zones.map((zone) => zone.zoneId);
-      if (new Set(zoneIds).size !== zoneIds.length) {
-        throw new Error('Zone order event contains a duplicate zone');
-      }
-      const before: CardInstanceId[] = [];
-      const after: CardInstanceId[] = [];
-      for (const update of event.zones) {
-        const zone = requireZone(state, update.zoneId);
-        if (
-          zone.cardIds.length !== update.expectedCardIds.length ||
-          zone.cardIds.some(
-            (cardId, index) => cardId !== update.expectedCardIds[index]
-          )
-        ) {
-          throw new Error(`Zone ${zone.id} does not match expected order`);
-        }
-        before.push(...zone.cardIds);
-        after.push(...update.cardIds);
-      }
-      const sortedBefore = [...before].sort();
-      const sortedAfter = [...after].sort();
       if (
-        sortedBefore.length !== sortedAfter.length ||
-        sortedBefore.some((cardId, index) => cardId !== sortedAfter[index])
+        concealed.size !== event.concealedCardIds.length ||
+        !sameCardSet(concealed, expectedConcealed)
       ) {
-        throw new Error('Zone order event changes the affected card set');
-      }
-      const concealed = new Set(event.concealedCardIds);
-      if ([...concealed].some((cardId) => !after.includes(cardId))) {
-        throw new Error(
-          'Zone order event conceals a card outside affected zones'
-        );
-      }
-      const zones = { ...state.zones };
-      for (const update of event.zones) {
-        const zone = requireZone(state, update.zoneId);
-        zones[zone.id] = { ...zone, cardIds: [...update.cardIds] };
+        throw new Error('Shuffle event conceals an invalid card');
       }
       return {
         ...state,
@@ -847,17 +1182,57 @@ export const applyEvent = (
           Object.entries(state.cards).map(([cardId, card]) => [
             cardId,
             concealed.has(card.id)
-              ? incrementVisibility({ ...card, face: 'up' as const })
+              ? incrementVisibility(
+                  isConcealedZone(zone)
+                    ? { ...card, face: 'up' as const }
+                    : card
+                )
               : card,
           ])
         ),
-        zones,
-        visibility: {
-          ...state.visibility,
-          publicCardIds: state.visibility.publicCardIds.filter(
-            (cardId) => !concealed.has(cardId)
-          ),
+        zones: {
+          ...state.zones,
+          [event.zoneId]: { ...zone, cardIds: [...event.cardOrder] },
         },
+        visibility: retireVisibility(state, concealed, new Set(zone.cardIds)),
+      };
+    }
+    case 'ZoneOrdersSet': {
+      const effects = deriveZoneOrderEffects(state, event);
+      const publicRetiredIds = new Set([
+        ...effects.normalizedIds,
+        ...effects.concealedIds,
+      ]);
+      return {
+        ...state,
+        cards: Object.fromEntries(
+          Object.entries(state.cards).map(([cardId, card]) => {
+            const destinationZoneId = effects.destinationZoneByCard.get(
+              card.id
+            );
+            const normalized =
+              effects.normalizedIds.has(card.id) && destinationZoneId
+                ? normalizeCardForZone(
+                    card,
+                    requireZone(state, destinationZoneId)
+                  )
+                : effects.concealedIds.has(card.id)
+                  ? { ...card, face: 'up' as const }
+                  : card;
+            return [
+              cardId,
+              effects.concealedIds.has(card.id)
+                ? incrementVisibility(normalized)
+                : normalized,
+            ];
+          })
+        ),
+        zones: effects.zones,
+        visibility: retireVisibility(
+          state,
+          publicRetiredIds,
+          effects.visibilityRetiredIds
+        ),
       };
     }
     case 'LooseBoardCardsResolved': {
@@ -920,13 +1295,7 @@ export const applyEvent = (
         cards: Object.fromEntries(
           Object.entries(state.cards).map(([cardId, card]) => {
             const normalized = moved.has(card.id)
-              ? {
-                  ...card,
-                  currentCategory: card.originalCategory,
-                  face: 'up' as const,
-                  orientationQuarterTurns: 0 as const,
-                  abilityUsed: false,
-                }
+              ? normalizeCardForZone(card, destination)
               : card;
             return [
               cardId,
@@ -944,12 +1313,13 @@ export const applyEvent = (
             cardIds: [...event.destinationCardIds],
           },
         },
-        visibility: {
-          ...state.visibility,
-          publicCardIds: state.visibility.publicCardIds.filter(
-            (cardId) => !moved.has(cardId) && !concealed.has(cardId)
-          ),
-        },
+        visibility: retireVisibility(
+          state,
+          new Set([...moved, ...concealed]),
+          event.destination === 'shuffleIntoDeck'
+            ? new Set([...moved, ...destination.cardIds])
+            : moved
+        ),
       };
     }
     case 'CardMovedToPlay': {
@@ -1014,6 +1384,11 @@ export const applyEvent = (
                   benchStackIds,
                 },
               },
+              visibility: retireVisibility(
+                state,
+                new Set([event.cardId]),
+                new Set([event.cardId])
+              ),
             };
           }
           activeStackId = nextStack.id;
@@ -1044,6 +1419,11 @@ export const applyEvent = (
             ...state.boards,
             [event.boardPlayerId]: { activeStackId, benchStackIds },
           },
+          visibility: retireVisibility(
+            state,
+            new Set([event.cardId]),
+            new Set([event.cardId])
+          ),
         };
       }
       const stack = requireStack(state, event.stackId);
@@ -1082,6 +1462,11 @@ export const applyEvent = (
               : {}),
           },
         },
+        visibility: retireVisibility(
+          state,
+          new Set([event.cardId]),
+          new Set([event.cardId])
+        ),
       };
     }
     case 'CardMovedFromStack': {
@@ -1093,8 +1478,18 @@ export const applyEvent = (
         );
       }
       const destination = requireZone(state, event.destinationZoneId);
-      if (destination.kind === 'stadium' && destination.cardIds.length > 0) {
-        throw new Error('Stack departure would replace an occupied stadium');
+      if (
+        (destination.kind === 'stadium' && destination.cardIds.length > 0) ||
+        !Number.isSafeInteger(event.destinationIndex) ||
+        event.destinationIndex < 0 ||
+        event.destinationIndex > destination.cardIds.length ||
+        !eventConcealmentMatchesDestination(
+          event,
+          destination,
+          deferredConcealment
+        )
+      ) {
+        throw new Error('Stack departure has invalid destination semantics');
       }
       const destinationCards = [...destination.cardIds];
       destinationCards.splice(
@@ -1104,13 +1499,7 @@ export const applyEvent = (
       );
       const card = state.cards[event.cardId];
       if (!card) throw new Error(`Missing moved card ${event.cardId}`);
-      const normalizedCard = {
-        ...card,
-        currentCategory: card.originalCategory,
-        face: 'up' as const,
-        orientationQuarterTurns: 0 as const,
-        abilityUsed: false,
-      };
+      const normalizedCard = normalizeCardForZone(card, destination);
       const nextCard = event.concealIdentity
         ? incrementVisibility(normalizedCard)
         : normalizedCard;
@@ -1128,12 +1517,11 @@ export const applyEvent = (
           ...state.stacks,
           [stack.id]: { ...stack, attachmentCardIds },
         },
-        visibility: {
-          ...state.visibility,
-          publicCardIds: state.visibility.publicCardIds.filter(
-            (cardId) => cardId !== event.cardId
-          ),
-        },
+        visibility: retireVisibility(
+          state,
+          new Set([event.cardId]),
+          new Set([event.cardId])
+        ),
       };
     }
     case 'PlayStackDeparted': {
@@ -1184,9 +1572,19 @@ export const applyEvent = (
         throw new Error('Attachment resolution work area is already occupied');
       }
       const destination = requireZone(state, event.destinationZoneId);
-      if (destination.kind === 'stadium' && destination.cardIds.length > 0) {
+      if (
+        (destination.kind === 'stadium' && destination.cardIds.length > 0) ||
+        !Number.isSafeInteger(event.destinationIndex) ||
+        event.destinationIndex < 0 ||
+        event.destinationIndex > destination.cardIds.length ||
+        !eventConcealmentMatchesDestination(
+          event,
+          destination,
+          deferredConcealment
+        )
+      ) {
         throw new Error(
-          'Play stack departure would replace an occupied stadium'
+          'Play stack departure has invalid destination semantics'
         );
       }
       const destinationCards = [...destination.cardIds];
@@ -1197,13 +1595,7 @@ export const applyEvent = (
       );
       const departedCard = state.cards[event.cardId];
       if (!departedCard) throw new Error(`Missing moved card ${event.cardId}`);
-      const normalizedCard = {
-        ...departedCard,
-        currentCategory: departedCard.originalCategory,
-        face: 'up' as const,
-        orientationQuarterTurns: 0 as const,
-        abilityUsed: false,
-      };
+      const normalizedCard = normalizeCardForZone(departedCard, destination);
       const nextDepartedCard = event.concealIdentity
         ? incrementVisibility(normalizedCard)
         : normalizedCard;
@@ -1245,12 +1637,7 @@ export const applyEvent = (
               : areas.attachmentResolution,
           },
         },
-        visibility: {
-          ...state.visibility,
-          publicCardIds: state.visibility.publicCardIds.filter(
-            (cardId) => !affectedCardIds.has(cardId)
-          ),
-        },
+        visibility: retireVisibility(state, affectedCardIds, affectedCardIds),
       };
     }
     case 'PlayStackLayoutSet': {
@@ -1325,8 +1712,20 @@ export const applyEvent = (
         throw new Error('Inspected card departure does not match work area');
       }
       const destination = requireZone(state, event.destinationZoneId);
-      if (destination.kind === 'stadium' && destination.cardIds.length > 0) {
-        throw new Error('Inspected card would replace an occupied stadium');
+      if (
+        (destination.kind === 'stadium' && destination.cardIds.length > 0) ||
+        !Number.isSafeInteger(event.destinationIndex) ||
+        event.destinationIndex < 0 ||
+        event.destinationIndex > destination.cardIds.length ||
+        !eventConcealmentMatchesDestination(
+          event,
+          destination,
+          deferredConcealment
+        )
+      ) {
+        throw new Error(
+          'Inspected card departure has invalid destination semantics'
+        );
       }
       const destinationCards = [...destination.cardIds];
       destinationCards.splice(
@@ -1339,34 +1738,10 @@ export const applyEvent = (
       );
       const card = state.cards[event.cardId];
       if (!card) throw new Error(`Missing inspected card ${event.cardId}`);
-      const normalizedCard = {
-        ...card,
-        currentCategory: card.originalCategory,
-        face: 'up' as const,
-        orientationQuarterTurns: 0 as const,
-        abilityUsed: false,
-      };
+      const normalizedCard = normalizeCardForZone(card, destination);
       const nextCard = event.concealIdentity
         ? incrementVisibility(normalizedCard)
         : normalizedCard;
-      const inspectionGrants = Object.fromEntries(
-        Object.entries(state.visibility.inspectionGrants)
-          .map(([inspectionId, grant]) => [
-            inspectionId,
-            {
-              ...grant,
-              cardIds: grant.cardIds.filter(
-                (cardId) => cardId !== event.cardId
-              ),
-            },
-          ])
-          .filter(([, grant]) =>
-            Boolean(
-              (grant as { readonly cardIds: readonly CardInstanceId[] }).cardIds
-                .length
-            )
-          )
-      ) as MatchState['visibility']['inspectionGrants'];
       return {
         ...state,
         cards: { ...state.cards, [card.id]: nextCard },
@@ -1384,12 +1759,11 @@ export const applyEvent = (
                 : { ...inspection, cardIds: remaining },
           },
         },
-        visibility: {
-          publicCardIds: state.visibility.publicCardIds.filter(
-            (cardId) => cardId !== event.cardId
-          ),
-          inspectionGrants,
-        },
+        visibility: retireVisibility(
+          state,
+          new Set([event.cardId]),
+          new Set([event.cardId])
+        ),
       };
     }
     case 'StagedCardMoved': {
@@ -1406,8 +1780,20 @@ export const applyEvent = (
         throw new Error('Staged card is not in the expected sequence');
       }
       const destination = requireZone(state, event.destinationZoneId);
-      if (destination.kind === 'stadium' && destination.cardIds.length > 0) {
-        throw new Error('Staged card would replace an occupied stadium');
+      if (
+        (destination.kind === 'stadium' && destination.cardIds.length > 0) ||
+        !Number.isSafeInteger(event.destinationIndex) ||
+        event.destinationIndex < 0 ||
+        event.destinationIndex > destination.cardIds.length ||
+        !eventConcealmentMatchesDestination(
+          event,
+          destination,
+          deferredConcealment
+        )
+      ) {
+        throw new Error(
+          'Staged card departure has invalid destination semantics'
+        );
       }
       const destinationCards = [...destination.cardIds];
       destinationCards.splice(
@@ -1417,13 +1803,7 @@ export const applyEvent = (
       );
       const card = state.cards[event.cardId];
       if (!card) throw new Error(`Missing staged card ${event.cardId}`);
-      const normalizedCard = {
-        ...card,
-        currentCategory: card.originalCategory,
-        face: 'up' as const,
-        orientationQuarterTurns: 0 as const,
-        abilityUsed: false,
-      };
+      const normalizedCard = normalizeCardForZone(card, destination);
       const nextCard = event.concealIdentity
         ? incrementVisibility(normalizedCard)
         : normalizedCard;
@@ -1454,12 +1834,11 @@ export const applyEvent = (
                   },
           },
         },
-        visibility: {
-          ...state.visibility,
-          publicCardIds: state.visibility.publicCardIds.filter(
-            (cardId) => cardId !== event.cardId
-          ),
-        },
+        visibility: retireVisibility(
+          state,
+          new Set([event.cardId]),
+          new Set([event.cardId])
+        ),
       };
     }
     case 'StagedStackRestored': {
@@ -2122,15 +2501,45 @@ export const applyEvent = (
     }
     case 'InspectionOpened': {
       const source = requireZone(state, event.sourceZoneId);
-      if (state.workAreas[event.playerId]?.inspection) {
+      const areas = state.workAreas[event.playerId];
+      if (areas?.inspection) {
         throw new Error(`Player ${event.playerId} already has an inspection`);
       }
-      if (state.visibility.inspectionGrants[event.inspectionId]) {
+      if (
+        state.visibility.inspectionGrants[event.inspectionId] ||
+        Object.values(state.workAreas).some(
+          (candidate) =>
+            candidate.inspection?.inspectionId === event.inspectionId
+        )
+      ) {
         throw new Error(`Inspection ${event.inspectionId} already exists`);
       }
       const selected = new Set(event.cardIds);
-      if (event.cardIds.some((cardId) => !source.cardIds.includes(cardId))) {
-        throw new Error('Inspection contains a card outside its source zone');
+      const isTop = sameCardOrder(
+        event.cardIds,
+        source.cardIds.slice(0, event.cardIds.length)
+      );
+      const isBottom = sameCardOrder(
+        event.cardIds,
+        source.cardIds.slice(source.cardIds.length - event.cardIds.length)
+      );
+      if (
+        !areas ||
+        source.id !== playerZoneId(event.playerId, 'deck') ||
+        source.kind !== 'deck' ||
+        source.ownerId !== event.playerId ||
+        event.cardIds.length === 0 ||
+        event.cardIds.length > 200 ||
+        selected.size !== event.cardIds.length ||
+        (!isTop && !isBottom) ||
+        event.viewerIds.length === 0 ||
+        event.viewerIds.length > state.playerOrder.length ||
+        new Set(event.viewerIds).size !== event.viewerIds.length ||
+        event.viewerIds.some((viewerId) => !state.players[viewerId]) ||
+        event.workAreaId !==
+          `work:${event.playerId}:inspection:${event.inspectionId}`
+      ) {
+        throw new Error('Inspection open event is malformed');
       }
       return {
         ...state,
@@ -2144,7 +2553,7 @@ export const applyEvent = (
         workAreas: {
           ...state.workAreas,
           [event.playerId]: {
-            ...state.workAreas[event.playerId]!,
+            ...areas,
             inspection: {
               id: event.workAreaId,
               inspectionId: event.inspectionId,
@@ -2154,6 +2563,7 @@ export const applyEvent = (
             },
           },
         },
+        visibility: retireVisibility(state, selected, selected),
       };
     }
     case 'InspectionClosed': {
@@ -2163,12 +2573,19 @@ export const applyEvent = (
       }
       const destination = requireZone(state, event.destinationZoneId);
       const returned = new Set(areas.inspection.cardIds);
-      const order = new Set(event.cardOrder);
+      const expectedTopOrder = [
+        ...areas.inspection.cardIds,
+        ...destination.cardIds,
+      ];
+      const expectedBottomOrder = [
+        ...destination.cardIds,
+        ...areas.inspection.cardIds,
+      ];
       if (
-        event.cardOrder.length !== destination.cardIds.length + returned.size ||
-        [...destination.cardIds, ...returned].some(
-          (cardId) => !order.has(cardId)
-        )
+        destination.id !== areas.inspection.sourceZoneId ||
+        (!sameCardOrder(event.cardOrder, expectedTopOrder) &&
+          !sameCardOrder(event.cardOrder, expectedBottomOrder)) ||
+        event.concealIdentity !== isConcealedZone(destination)
       ) {
         throw new Error(
           'Inspection close order is not a valid destination order'
@@ -2179,13 +2596,7 @@ export const applyEvent = (
         cards: Object.fromEntries(
           Object.entries(state.cards).map(([cardId, card]) => {
             if (!returned.has(card.id)) return [cardId, card];
-            const normalized = {
-              ...card,
-              currentCategory: card.originalCategory,
-              face: 'up' as const,
-              orientationQuarterTurns: 0 as const,
-              abilityUsed: false,
-            };
+            const normalized = normalizeCardForZone(card, destination);
             return [
               cardId,
               event.concealIdentity
@@ -2202,16 +2613,12 @@ export const applyEvent = (
           ...state.workAreas,
           [event.playerId]: { ...areas, inspection: null },
         },
-        visibility: {
-          publicCardIds: state.visibility.publicCardIds.filter(
-            (cardId) => !event.concealIdentity || !returned.has(cardId)
-          ),
-          inspectionGrants: Object.fromEntries(
-            Object.entries(state.visibility.inspectionGrants).filter(
-              ([inspectionId]) => inspectionId !== event.inspectionId
-            )
-          ),
-        },
+        visibility: (() => {
+          const retired = retireVisibility(state, returned, returned);
+          const inspectionGrants = { ...retired.inspectionGrants };
+          delete inspectionGrants[event.inspectionId];
+          return { ...retired, inspectionGrants };
+        })(),
       };
     }
     case 'OncePerGameMarkerSet': {
@@ -2262,6 +2669,9 @@ export const applyEvent = (
   }
 };
 
+export const applyEvent = (state: MatchState, event: DomainEvent): MatchState =>
+  applyEventInternal(state, event);
+
 const pruneInvalidInspectionGrants = (state: MatchState): MatchState => {
   let changed = false;
   const inspectionGrants = Object.fromEntries(
@@ -2304,8 +2714,18 @@ export const applyEventBatch = (
     throw new Error('Undo event must be the only event in its batch');
   }
   let next = state;
-  for (const event of batch.events) {
-    next = pruneInvalidInspectionGrants(applyEvent(next, event));
+  for (const [index, event] of batch.events.entries()) {
+    const following = batch.events[index + 1];
+    const deferredConcealment =
+      following?.type === 'ZoneShuffled'
+        ? {
+            zoneId: following.zoneId,
+            cardIds: new Set(following.concealedCardIds),
+          }
+        : undefined;
+    next = pruneInvalidInspectionGrants(
+      applyEventInternal(next, event, deferredConcealment)
+    );
   }
   return { ...next, revision: batch.revision };
 };

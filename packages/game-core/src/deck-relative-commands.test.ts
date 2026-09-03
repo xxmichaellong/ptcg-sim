@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import type { CommandContext, DeckEntry, GameCommand } from './commands.js';
-import { createEmptyMatch, playerZoneId } from './create-match.js';
+import {
+  createEmptyMatch,
+  playerZoneId,
+  stadiumZoneId,
+} from './create-match.js';
 import { executeCommand } from './execute-command.js';
 import {
   asCardDefinitionId,
@@ -247,12 +251,31 @@ describe('atomic deck-relative commands', () => {
       )
     ).toBe(true);
     const beforeReshuffle = [...state.zones[deckId]!.cardIds];
+    const reshuffledCardId = beforeReshuffle[3]!;
+    const reshuffledCard = state.cards[reshuffledCardId]!;
+    state = accepted(
+      state,
+      {
+        type: 'SetCardCategory',
+        cardId: reshuffledCardId,
+        category:
+          reshuffledCard.originalCategory === 'Energy' ? 'Trainer' : 'Energy',
+      },
+      fixture.context
+    );
+    state = accepted(
+      state,
+      { type: 'SetCardFace', cardId: reshuffledCardId, face: 'down' },
+      fixture.context
+    );
+    const beforeReshuffleGeneration =
+      state.cards[reshuffledCardId]!.visibilityGeneration;
     const reshuffled = executeCommand(
       state,
       {
         type: 'ShuffleCardIntoDeck',
         playerId: p1,
-        cardId: beforeReshuffle[3]!,
+        cardId: reshuffledCardId,
         expectedSourceId: deckId,
       },
       fixture.context
@@ -260,9 +283,79 @@ describe('atomic deck-relative commands', () => {
     if (!reshuffled.accepted) throw new Error(reshuffled.message);
     state = reshuffled.state;
     expect(reshuffled.batch.events.map((event) => event.type)).toEqual([
+      'CardMoved',
       'ZoneShuffled',
     ]);
     expect(state.zones[deckId]?.cardIds).toEqual(beforeReshuffle.reverse());
+    expect(state.cards[reshuffledCardId]).toMatchObject({
+      currentCategory: reshuffledCard.originalCategory,
+      face: 'up',
+      orientationQuarterTurns: 0,
+      abilityUsed: false,
+      visibilityGeneration: beforeReshuffleGeneration + 1,
+    });
+    assertMatchInvariants(state);
+  });
+
+  it('normalizes reachable stadium annotations when shuffling into the deck', () => {
+    const fixture = loaded(8);
+    const deckId = playerZoneId(p1, 'deck');
+    const stadiumId = stadiumZoneId();
+    const selected = fixture.state.zones[deckId]!.cardIds[0]!;
+    const originalCategory = fixture.state.cards[selected]!.originalCategory;
+    let state = accepted(
+      fixture.state,
+      {
+        type: 'MoveCard',
+        cardId: selected,
+        expectedSourceZoneId: deckId,
+        destinationZoneId: stadiumId,
+      },
+      fixture.context
+    );
+    state = accepted(
+      state,
+      {
+        type: 'SetCardCategory',
+        cardId: selected,
+        category: originalCategory === 'Energy' ? 'Trainer' : 'Energy',
+      },
+      fixture.context
+    );
+    state = accepted(
+      state,
+      {
+        type: 'SetCardOrientation',
+        cardId: selected,
+        orientationQuarterTurns: 3,
+      },
+      fixture.context
+    );
+    state = accepted(
+      state,
+      { type: 'SetCardAbilityUsed', cardId: selected, used: true },
+      fixture.context
+    );
+    const beforeGeneration = state.cards[selected]!.visibilityGeneration;
+
+    state = accepted(
+      state,
+      {
+        type: 'ShuffleCardIntoDeck',
+        playerId: p1,
+        cardId: selected,
+        expectedSourceId: stadiumId,
+      },
+      fixture.context
+    );
+
+    expect(state.cards[selected]).toMatchObject({
+      currentCategory: originalCategory,
+      face: 'up',
+      orientationQuarterTurns: 0,
+      abilityUsed: false,
+      visibilityGeneration: beforeGeneration + 1,
+    });
     assertMatchInvariants(state);
   });
 

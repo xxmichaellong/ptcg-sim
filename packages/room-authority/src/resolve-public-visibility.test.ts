@@ -13,6 +13,7 @@ import {
   type MatchState,
 } from '@ptcgsim/game-core';
 import { describe, expect, it } from 'vitest';
+import type { WireGameCommand } from '@ptcgsim/protocol';
 
 import type { ProjectionIdentityState } from './identity-registry.js';
 import { DEFAULT_AUTHORITY_POLICY, type AuthoritySession } from './model.js';
@@ -112,6 +113,19 @@ const fixture = (): {
 };
 
 describe('public visibility authority resolution', () => {
+  it('fails closed when a caller bypasses protocol parsing with an unknown command', () => {
+    const prepared = fixture();
+    expect(
+      resolveWireCommand(
+        prepared.state,
+        prepared.identities,
+        session(p1),
+        { type: 'SetCardCategory' } as unknown as WireGameCommand,
+        DEFAULT_AUTHORITY_POLICY
+      )
+    ).toEqual({ accepted: false, code: 'precondition_failed' });
+  });
+
   it('resolves an owner selective reveal against its exact source', () => {
     const prepared = fixture();
     expect(
@@ -170,6 +184,134 @@ describe('public visibility authority resolution', () => {
         DEFAULT_AUTHORITY_POLICY
       )
     ).toEqual({ accepted: false, code: 'unauthorized' });
+  });
+
+  it('rejects stale generations, forged knownness, and cross-viewer aliases', () => {
+    const prepared = fixture();
+    const move = {
+      type: 'MoveCard',
+      expectedSourceZoneId: prepared.prizeId,
+      destinationZoneId: playerZoneId(p2, 'discard'),
+    } as const;
+    const currentGeneration =
+      prepared.state.cards[prepared.cardIds[0]!]!.visibilityGeneration;
+
+    expect(
+      resolveWireCommand(
+        prepared.state,
+        {
+          ...prepared.identities,
+          cardAliases: prepared.identities.cardAliases.map((entry) =>
+            entry.alias === prepared.opponentAliases[0]
+              ? { ...entry, visibilityGeneration: currentGeneration - 1 }
+              : entry
+          ),
+        },
+        session(p2),
+        { ...move, cardId: prepared.opponentAliases[0]! },
+        DEFAULT_AUTHORITY_POLICY
+      )
+    ).toEqual({ accepted: false, code: 'stale_reference' });
+    expect(
+      resolveWireCommand(
+        prepared.state,
+        {
+          ...prepared.identities,
+          cardAliases: prepared.identities.cardAliases.map((entry) =>
+            entry.alias === prepared.opponentAliases[0]
+              ? { ...entry, known: true }
+              : entry
+          ),
+        },
+        session(p2),
+        { ...move, cardId: prepared.opponentAliases[0]! },
+        DEFAULT_AUTHORITY_POLICY
+      )
+    ).toEqual({ accepted: false, code: 'stale_reference' });
+    expect(
+      resolveWireCommand(
+        prepared.state,
+        prepared.identities,
+        session(p2),
+        { ...move, cardId: prepared.ownerAliases[0]! },
+        DEFAULT_AUTHORITY_POLICY
+      )
+    ).toEqual({ accepted: false, code: 'stale_reference' });
+  });
+
+  it('accepts a current public opponent alias with derived knownness', () => {
+    const prepared = fixture();
+    const revealed = executeCommand(
+      prepared.state,
+      {
+        type: 'SetPublicReveal',
+        actorPlayerId: p1,
+        playerId: p1,
+        cardId: prepared.cardIds[0]!,
+        expectedSourceId: prepared.prizeId,
+        revealed: true,
+      },
+      context
+    );
+    if (!revealed.accepted) throw new Error(revealed.message);
+    const identities = {
+      ...prepared.identities,
+      cardAliases: prepared.identities.cardAliases.map((entry) =>
+        entry.alias === prepared.opponentAliases[0]
+          ? { ...entry, known: true }
+          : entry
+      ),
+    };
+
+    expect(
+      resolveWireCommand(
+        revealed.state,
+        identities,
+        session(p2),
+        {
+          type: 'SetCardOrientation',
+          cardId: prepared.opponentAliases[0]!,
+          orientationQuarterTurns: 1,
+        },
+        DEFAULT_AUTHORITY_POLICY
+      )
+    ).toMatchObject({
+      accepted: true,
+      command: {
+        type: 'SetCardOrientation',
+        cardId: prepared.cardIds[0],
+      },
+    });
+  });
+
+  it('characterizes destination authorization as card-based under restrictive policy', () => {
+    const prepared = fixture();
+
+    expect(
+      resolveWireCommand(
+        prepared.state,
+        prepared.identities,
+        session(p1),
+        {
+          type: 'MoveCard',
+          cardId: prepared.ownerAliases[0]!,
+          expectedSourceZoneId: prepared.prizeId,
+          destinationZoneId: playerZoneId(p2, 'discard'),
+        },
+        {
+          ...DEFAULT_AUTHORITY_POLICY,
+          allowOpponentPublicInteraction: false,
+        }
+      )
+    ).toEqual({
+      accepted: true,
+      command: {
+        type: 'MoveCard',
+        cardId: prepared.cardIds[0],
+        expectedSourceZoneId: prepared.prizeId,
+        destinationZoneId: playerZoneId(p2, 'discard'),
+      },
+    });
   });
 
   it('allows exact whole-prize interaction only under room policy', () => {
