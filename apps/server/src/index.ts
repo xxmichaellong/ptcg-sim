@@ -8,3 +8,5 @@ export * from './room-rate-limit.js';
 export * from './request-rate-limit.js';
 export * from './session-handshake.js';
 export * from './session-hub.js';
+export * from './server-health.js';
+export * from './server-telemetry.js';

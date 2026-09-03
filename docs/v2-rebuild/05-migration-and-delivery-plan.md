@@ -124,7 +124,8 @@ Work:
 - Define the renderer-neutral `BoardRenderer` and transport-neutral
   `RoomAuthority` contracts.
 - Add a v2 route shell and feature flag that is inaccessible to normal traffic.
-- Add structured diagnostic conventions and secret-redaction tests.
+- Retain the implemented structured diagnostic schema, no-store health probe,
+  and secret-redaction/failure-isolation tests as later producers are added.
 
 Exit gate:
 
@@ -278,7 +279,10 @@ Work:
   chat, spectator projection, and hidden inspection/reveal. Preserve the current
   absence of multiplayer undo unless a separate product ADR authorizes it.
 - Build deterministic two/three-client simulations and browser contexts.
-- Add operational dashboards/alerts before external beta use.
+- Connect the implemented closed server telemetry/health boundary to operational
+  dashboards, destinations, and alerts before external beta use. Ratify the
+  provisional thresholds and rehearse `apps/server/OPERATIONS.md`; add
+  client/renderer/import/save events only with their owning slices.
 
 Exit gate:
 

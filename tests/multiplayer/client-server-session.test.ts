@@ -32,6 +32,7 @@ import {
   RoomSessionHub,
   WebCryptoAuthoritySource,
   initializeNewRoom,
+  NOOP_SERVER_TELEMETRY,
   type RuntimeConnection,
 } from '../../apps/server/src/index.js';
 import {
@@ -222,6 +223,8 @@ const fixture = async (mode: 'solo' | 'multiplayer' = 'multiplayer') => {
   const hub = new RoomSessionHub(coordinator, 'server-build', {
     store,
     rateLimits: allowRoomOperations,
+    telemetry: NOOP_SERVER_TELEMETRY,
+    monotonicNow: () => 0,
     admission: {
       crypto: cryptoSource,
       opaqueIds: cryptoSource,

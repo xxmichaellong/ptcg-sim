@@ -37,6 +37,11 @@ and rollback evidence remain required before ADR-005 becomes accepted.
   issues, 60 admission-ticket exchanges, 120 WebSocket upgrades, and 120
   `Hello` attempts per 60 seconds. These bounded operational records are outside
   canonical match state and survive object eviction.
+- `GET /v2/health` exposes only sanitized build and protocol/schema versions.
+  The Worker and room emit a closed, versioned structured telemetry union for
+  HTTP, lifecycle, rate, admission, command, publication-size, socket, and fixed
+  failure-subsystem facts. Random correlations are unrelated to room/session
+  authority, and the emitter cannot accept raw payloads or thrown errors.
 
 ## Evidence in this checkpoint
 
@@ -44,8 +49,9 @@ and rollback evidence remain required before ADR-005 becomes accepted.
   Object binding, SQLite export, rate-limit binding, and build variable.
 - Unit/integration tests cover serialized command execution, atomic storage,
   post-commit recovery, session supersession, lifecycle alarm retry/repair,
-  concurrent fixed-window enforcement, redacted edge identity, and
-  reconstruction after simulated hibernation.
+  concurrent fixed-window enforcement, redacted edge identity, closed telemetry
+  serialization/failure isolation, health metadata, and reconstruction after
+  simulated hibernation.
 - The platform adapter has no game rules. It delegates all decisions to
   `@ptcgsim/room-authority` and `@ptcgsim/game-core`.
 
@@ -57,8 +63,9 @@ and rollback evidence remain required before ADR-005 becomes accepted.
    injection with the real runtime input/output gates.
 3. Measure full-snapshot payloads, command latency including durable commit,
    memory, CPU, hibernation wake latency, and practical sockets per room.
-4. Add structured redacted logs, production alert thresholds, and a preview
-   environment; verify platform rate-limit distribution and alarm behavior there.
+4. Connect the implemented structured events to production dashboards and
+   destinations, ratify alert thresholds in preview, and rehearse the runbooks;
+   verify platform rate-limit distribution and alarm behavior there.
 5. Prove sticky v2 room routing and rollback for new rooms without moving an
    active room between protocol generations.
 

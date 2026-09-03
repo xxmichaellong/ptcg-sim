@@ -18,6 +18,14 @@ import { consumeRoomCreationRateLimit } from './request-rate-limit.js';
 import { handleRoomCreationRequest } from './room-creation-http.js';
 import { handleRoomInvitationRequest } from './room-invitation-http.js';
 import { DurableRoomRateLimiter } from './room-rate-limit.js';
+import { handleServerHealthRequest } from './server-health.js';
+import {
+  ConsoleServerTelemetrySink,
+  StructuredServerTelemetry,
+  nextTelemetryId,
+  type ServerHttpRoute,
+  type ServerTelemetryPort,
+} from './server-telemetry.js';
 import { RoomSessionHub, type RuntimeConnection } from './session-hub.js';
 
 interface Env {
@@ -38,6 +46,46 @@ interface RoomRuntime {
   readonly coordinator: RoomAuthorityCoordinator;
   readonly hub: RoomSessionHub;
 }
+
+const activeSessionCount = (snapshot: RoomAuthoritySnapshot): number =>
+  Object.values(snapshot.sessions).filter((session) => session.active).length;
+
+const telemetrySink = new ConsoleServerTelemetrySink();
+const createTelemetry = (
+  source: 'edge' | 'room',
+  buildId: string
+): StructuredServerTelemetry =>
+  new StructuredServerTelemetry(
+    source,
+    buildId,
+    telemetrySink,
+    Date.now,
+    nextTelemetryId
+  );
+
+const observeHttp = async (
+  telemetry: ServerTelemetryPort,
+  route: ServerHttpRoute,
+  operation: () => Response | Promise<Response>
+): Promise<Response> => {
+  const startedAt = performance.now();
+  try {
+    const response = await operation();
+    telemetry.httpRequest({
+      route,
+      status: response.status,
+      durationMs: performance.now() - startedAt,
+    });
+    return response;
+  } catch (error) {
+    telemetry.httpRequest({
+      route,
+      status: 500,
+      durationMs: performance.now() - startedAt,
+    });
+    throw error;
+  }
+};
 
 const ROOM_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const roomCode = (): string => {
@@ -71,89 +119,124 @@ export class PtcgRoom extends DurableObject<Env> {
   private readonly cryptoSource = new WebCryptoAuthoritySource();
   private readonly store: DurableRoomSnapshotStore;
   private readonly rateLimits: DurableRoomRateLimiter;
+  private readonly telemetry: StructuredServerTelemetry;
   private runtimePromise: Promise<RoomRuntime | undefined>;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
     this.store = new DurableRoomSnapshotStore(ctx.storage);
     this.rateLimits = new DurableRoomRateLimiter(ctx.storage);
+    this.telemetry = createTelemetry('room', env.BUILD_ID);
     this.runtimePromise = this.restoreRuntime();
   }
 
   async initialize(roomCodeValue: string): Promise<InitializedRoom> {
     const existing = await this.store.load();
     if (existing) throw new Error('Room already initialized');
-    const created = await initializeNewRoom(
-      {
-        matchId: roomCodeValue,
-        playerOneCardBackUrl: '/v2/assets/cardback.png',
-        playerTwoCardBackUrl: '/v2/assets/cardback.png',
-        spectatorsAllowed: true,
-      },
-      this.store,
-      this.cryptoSource,
-      Date.now()
-    );
+    const startedAt = performance.now();
+    let created;
+    try {
+      created = await initializeNewRoom(
+        {
+          matchId: roomCodeValue,
+          playerOneCardBackUrl: '/v2/assets/cardback.png',
+          playerTwoCardBackUrl: '/v2/assets/cardback.png',
+          spectatorsAllowed: true,
+        },
+        this.store,
+        this.cryptoSource,
+        Date.now()
+      );
+    } catch (error) {
+      this.telemetry.failure({
+        subsystem: 'room_initialization',
+        retryable: true,
+      });
+      throw error;
+    }
     this.runtimePromise = Promise.resolve(this.createRuntime(created.snapshot));
+    this.telemetry.roomLifecycle({
+      outcome: 'created',
+      authorityVersion: created.snapshot.authorityVersion,
+      activeSessions: 0,
+      activeSockets: 0,
+      durationMs: performance.now() - startedAt,
+    });
     return { roomCode: roomCodeValue, credentials: created.credentials };
   }
 
   override async fetch(request: Request): Promise<Response> {
     const requestUrl = new URL(request.url);
     if (invitationRoomCodeFromPath(requestUrl.pathname)) {
-      const runtime = await this.runtimePromise;
-      if (!runtime)
-        return new Response('Room not initialized', { status: 404 });
-      return handleRoomInvitationRequest(request, (input) =>
-        runtime.hub.issueInvitation(input)
-      );
+      return observeHttp(this.telemetry, 'room_invitation', async () => {
+        const runtime = await this.runtimePromise;
+        if (!runtime)
+          return new Response('Room not initialized', { status: 404 });
+        return handleRoomInvitationRequest(request, (input) =>
+          runtime.hub.issueInvitation(input)
+        );
+      });
     }
     if (admissionRoomCodeFromPath(requestUrl.pathname)) {
+      return observeHttp(this.telemetry, 'admission_ticket', async () => {
+        const runtime = await this.runtimePromise;
+        if (!runtime)
+          return new Response('Room not initialized', { status: 404 });
+        return handleAdmissionTicketRequest(request, (input) =>
+          runtime.hub.issueAdmissionTicket(input)
+        );
+      });
+    }
+    return observeHttp(this.telemetry, 'socket_upgrade', async () => {
+      if (requestUrl.search || !isSameOriginBrowserRequest(request)) {
+        return new Response('Forbidden', {
+          status: 403,
+          headers: { 'Cache-Control': 'no-store' },
+        });
+      }
+      if (request.headers.get('Upgrade')?.toLowerCase() !== 'websocket') {
+        return new Response('Upgrade Required', { status: 426 });
+      }
       const runtime = await this.runtimePromise;
       if (!runtime)
         return new Response('Room not initialized', { status: 404 });
-      return handleAdmissionTicketRequest(request, (input) =>
-        runtime.hub.issueAdmissionTicket(input)
-      );
-    }
-    if (requestUrl.search || !isSameOriginBrowserRequest(request)) {
-      return new Response('Forbidden', {
-        status: 403,
-        headers: { 'Cache-Control': 'no-store' },
-      });
-    }
-    if (request.headers.get('Upgrade')?.toLowerCase() !== 'websocket') {
-      return new Response('Upgrade Required', { status: 426 });
-    }
-    const runtime = await this.runtimePromise;
-    if (!runtime) return new Response('Room not initialized', { status: 404 });
-    let rateLimit;
-    try {
-      rateLimit = await runtime.hub.reserveSocketUpgrade();
-    } catch {
-      return json({ error: 'internal_retryable' }, 503, {
-        'Retry-After': '1',
-      });
-    }
-    if (!rateLimit.allowed) {
-      return json({ error: 'rate_limited' }, 429, {
-        'Retry-After': String(rateLimit.retryAfterSeconds),
-      });
-    }
+      let rateLimit;
+      try {
+        rateLimit = await runtime.hub.reserveSocketUpgrade();
+      } catch {
+        this.telemetry.failure({
+          subsystem: 'socket_upgrade',
+          retryable: true,
+        });
+        return json({ error: 'internal_retryable' }, 503, {
+          'Retry-After': '1',
+        });
+      }
+      if (!rateLimit.allowed) {
+        return json({ error: 'rate_limited' }, 429, {
+          'Retry-After': String(rateLimit.retryAfterSeconds),
+        });
+      }
 
-    const pair = new WebSocketPair();
-    const client = pair[0];
-    const server = pair[1];
-    const attachment: SocketAttachment = {
-      connectionId: this.cryptoSource.nextSessionId(),
-      authorityVersion: runtime.coordinator.currentSnapshot().authorityVersion,
-    };
-    server.serializeAttachment(attachment);
-    this.ctx.acceptWebSocket(server);
-    runtime.hub.restoreBinding(
-      this.connection(server, attachment.connectionId)
-    );
-    return new Response(null, { status: 101, webSocket: client });
+      const pair = new WebSocketPair();
+      const client = pair[0];
+      const server = pair[1];
+      const attachment: SocketAttachment = {
+        connectionId: this.cryptoSource.nextSessionId(),
+        authorityVersion:
+          runtime.coordinator.currentSnapshot().authorityVersion,
+      };
+      server.serializeAttachment(attachment);
+      this.ctx.acceptWebSocket(server);
+      runtime.hub.restoreBinding(
+        this.connection(server, attachment.connectionId)
+      );
+      this.telemetry.roomSocket({
+        outcome: 'upgraded',
+        activeSockets: this.ctx.getWebSockets().length,
+      });
+      return new Response(null, { status: 101, webSocket: client });
+    });
   }
 
   override async webSocketMessage(
@@ -194,21 +277,62 @@ export class PtcgRoom extends DurableObject<Env> {
     } satisfies SocketAttachment);
   }
 
-  override async webSocketClose(socket: WebSocket) {
+  override async webSocketClose(
+    socket: WebSocket,
+    code: number
+  ): Promise<void> {
     this.disconnectSocket(socket);
+    this.telemetry.roomSocket({
+      outcome: 'closed',
+      closeCode: code,
+      activeSockets: this.ctx.getWebSockets().length,
+    });
   }
 
-  override async webSocketError(socket: WebSocket) {
+  override async webSocketError(socket: WebSocket): Promise<void> {
     this.disconnectSocket(socket);
+    this.telemetry.roomSocket({
+      outcome: 'error',
+      activeSockets: this.ctx.getWebSockets().length,
+    });
   }
 
   override async alarm(): Promise<void> {
-    const result = await this.store.expireUnclaimedRoom(Date.now());
+    const startedAt = performance.now();
+    const runtime = await this.runtimePromise;
+    let result;
+    try {
+      result = await this.store.expireUnclaimedRoom(Date.now());
+    } catch (error) {
+      this.telemetry.failure({ subsystem: 'room_alarm', retryable: true });
+      throw error;
+    }
+    if (result === 'scheduled' || result === 'claimed') {
+      this.telemetry.roomLifecycle({
+        outcome:
+          result === 'scheduled' ? 'alarm_rescheduled' : 'alarm_cancelled',
+        authorityVersion:
+          runtime?.coordinator.currentSnapshot().authorityVersion ?? 0,
+        activeSessions: runtime
+          ? activeSessionCount(runtime.coordinator.currentSnapshot())
+          : 0,
+        activeSockets: this.ctx.getWebSockets().length,
+        durationMs: performance.now() - startedAt,
+      });
+    }
     if (result !== 'expired') return;
     this.runtimePromise = Promise.resolve(undefined);
     for (const socket of this.ctx.getWebSockets()) {
       socket.close(4404, 'Room expired before admission');
     }
+    this.telemetry.roomLifecycle({
+      outcome: 'expired',
+      authorityVersion:
+        runtime?.coordinator.currentSnapshot().authorityVersion ?? 0,
+      activeSessions: 0,
+      activeSockets: 0,
+      durationMs: performance.now() - startedAt,
+    });
   }
 
   private disconnectSocket(socket: WebSocket): void {
@@ -239,6 +363,8 @@ export class PtcgRoom extends DurableObject<Env> {
       hub: new RoomSessionHub(coordinator, this.env.BUILD_ID, {
         store: this.store,
         rateLimits: this.rateLimits,
+        telemetry: this.telemetry,
+        monotonicNow: () => performance.now(),
         admission: {
           crypto: this.cryptoSource,
           opaqueIds: this.cryptoSource,
@@ -250,7 +376,17 @@ export class PtcgRoom extends DurableObject<Env> {
   }
 
   private async restoreRuntime(): Promise<RoomRuntime | undefined> {
-    const snapshot = await this.store.load();
+    const startedAt = performance.now();
+    let snapshot;
+    try {
+      snapshot = await this.store.load();
+    } catch (error) {
+      this.telemetry.failure({
+        subsystem: 'room_restoration',
+        retryable: true,
+      });
+      throw error;
+    }
     if (!snapshot) return undefined;
     const runtime = this.createRuntime(snapshot);
     const sockets = this.ctx
@@ -273,6 +409,19 @@ export class PtcgRoom extends DurableObject<Env> {
         attachment.sessionId
       );
     }
+    this.telemetry.roomLifecycle({
+      outcome: 'restored',
+      authorityVersion: snapshot.authorityVersion,
+      activeSessions: activeSessionCount(snapshot),
+      activeSockets: sockets.length,
+      durationMs: performance.now() - startedAt,
+    });
+    if (sockets.length > 0) {
+      this.telemetry.roomSocket({
+        outcome: 'restored',
+        activeSockets: sockets.length,
+      });
+    }
     return runtime;
   }
 }
@@ -280,29 +429,40 @@ export class PtcgRoom extends DurableObject<Env> {
 const worker: ExportedHandler<Env> = {
   async fetch(request, env) {
     const url = new URL(request.url);
+    const telemetry = createTelemetry('edge', env.BUILD_ID);
+    if (url.pathname === '/v2/health') {
+      return observeHttp(telemetry, 'health', () =>
+        handleServerHealthRequest(request, env.BUILD_ID)
+      );
+    }
     if (url.pathname === '/v2/rooms') {
-      return handleRoomCreationRequest(
-        request,
-        async () => {
-          for (let attempt = 0; attempt < 8; attempt += 1) {
-            const code = roomCode();
-            const stub = env.PTCG_ROOM.getByName(code);
-            try {
-              return await stub.initialize(code);
-            } catch (error) {
-              if (
-                error instanceof Error &&
-                error.message.includes('already initialized')
-              ) {
-                continue;
+      return observeHttp(telemetry, 'room_creation', () =>
+        handleRoomCreationRequest(
+          request,
+          async () => {
+            for (let attempt = 0; attempt < 8; attempt += 1) {
+              const code = roomCode();
+              const stub = env.PTCG_ROOM.getByName(code);
+              try {
+                return await stub.initialize(code);
+              } catch (error) {
+                if (
+                  error instanceof Error &&
+                  error.message.includes('already initialized')
+                ) {
+                  continue;
+                }
+                throw error;
               }
-              throw error;
             }
-          }
-          throw new Error('room_code_exhausted');
-        },
-        () =>
-          consumeRoomCreationRateLimit(request, env.ROOM_CREATION_RATE_LIMITER)
+            throw new Error('room_code_exhausted');
+          },
+          () =>
+            consumeRoomCreationRateLimit(
+              request,
+              env.ROOM_CREATION_RATE_LIMITER
+            )
+        )
       );
     }
     const code = roomCodeFromPath(url.pathname);
@@ -317,7 +477,11 @@ const worker: ExportedHandler<Env> = {
     if (invitationCode) {
       return env.PTCG_ROOM.getByName(invitationCode).fetch(request);
     }
-    return new Response('Not Found', { status: 404 });
+    return observeHttp(
+      telemetry,
+      'not_found',
+      () => new Response('Not Found', { status: 404 })
+    );
   },
 };
 

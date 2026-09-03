@@ -619,6 +619,21 @@ handoff through the same ticket path. The renderer-spike entry remains the
 default until ADR-020 selects the cross-browser transfer/presentation adapter,
 so the current UI/UX remains unchanged.
 
+The Worker now publishes only the closed `ptcgsim-server-telemetry-v1` union.
+Its safe facts cover route status/latency, room lifecycle and bounded counts,
+rate outcomes, admission role/outcome, command type/revision/outcome and
+publication size, socket lifecycle, and fixed failure subsystems. Every record
+includes sanitized build/protocol/authority/match-schema versions and random
+event/source-instance correlations unrelated to room or session authority. The
+emitter reconstructs fields instead of spreading caller objects, bounds labels
+and numbers, and cannot receive raw errors. It excludes payloads, chat, names,
+card/deck/definition/view IDs, URLs, room/session/command IDs, all credentials
+and digests, IP identity/hash, close reasons, error messages, and stacks.
+Telemetry clock/ID/sink failure is isolated from game behavior. A no-store
+`GET /v2/health` exposes only status and sanitized build/schema versions;
+production destinations, dashboards, preview baselines, and alert/runbook
+rehearsal remain rollout gates documented in `apps/server/OPERATIONS.md`.
+
 This bounded ledger, stream, and playback state machine are the runtime replay
 foundation, not the final archive/export contract. Phase 7 still owns
 long-retention journal chunks, download/import schemas, share capabilities,

@@ -341,6 +341,16 @@ Telemetry contains opaque correlations, build/schema versions, command type,
 revision, and outcome only. It excludes raw command payloads, chat, card names,
 card/deck IDs, image URLs, room/save/seat tokens, and IP-derived identity.
 
+The implemented server foundation provides a public no-store version health
+probe and field-by-field structured events for HTTP, room lifecycle/rates,
+admission/reconnect, command outcome/revision and request/publication byte
+counts, socket state, and fixed failure subsystems. Tests inject credential-,
+username-, and exception-like
+extras and prove they cannot enter emitted records; malformed labels/numbers are
+normalized and emitter failures cannot alter the request/authority path. Actual
+Cloudflare destinations, dashboards, preview baselines, alert ownership, and
+client/renderer/import/save producers remain required before cohort rollout.
+
 Runbooks are rehearsed for persistence outage, room restart loop, reconnect
 spike, image-provider/proxy outage, import regression, hidden-data incident,
 canary pause, and v2 rollback.

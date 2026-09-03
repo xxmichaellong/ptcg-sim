@@ -15,6 +15,7 @@ import { PROTOCOL_VERSION, type ServerMessage } from '@ptcgsim/protocol';
 import { describe, expect, it, vi } from 'vitest';
 
 import { WebCryptoAuthoritySource } from './authority-crypto.js';
+import { NOOP_SERVER_TELEMETRY } from './server-telemetry.js';
 import { RoomSessionHub, type RuntimeConnection } from './session-hub.js';
 
 const p1 = asPlayerId('player-one');
@@ -101,9 +102,18 @@ const fixture = async () => {
   const rateLimits = {
     attempt: vi.fn(async () => ({ allowed: true, remaining: 1 }) as const),
   };
+  const telemetry = {
+    ...NOOP_SERVER_TELEMETRY,
+    roomRateLimit: vi.fn(),
+    roomAdmission: vi.fn(),
+    roomCommand: vi.fn(),
+    failure: vi.fn(),
+  };
   const hub = new RoomSessionHub(coordinator, 'server-build', {
     store,
     rateLimits,
+    telemetry,
+    monotonicNow: () => 0,
     admission: {
       crypto,
       opaqueIds: crypto,
@@ -125,6 +135,7 @@ const fixture = async () => {
     otherSeatCapability: otherSeatToken,
     crypto,
     rateLimits,
+    telemetry,
   };
 };
 
@@ -162,6 +173,13 @@ describe('serialized room session hub', () => {
       snapshot: { authorityVersion: 1 },
     });
     expect(setup.store.admissionCommits).toHaveLength(1);
+    expect(setup.telemetry.roomAdmission).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        operation: 'invitation_issue',
+        outcome: 'rate_limited',
+        reason: 'rate_limited',
+      })
+    );
 
     await expect(setup.hub.reserveSocketUpgrade()).resolves.toEqual({
       allowed: false,
@@ -365,18 +383,16 @@ describe('serialized room session hub', () => {
     const welcome = client.messages[0];
     if (welcome?.type !== 'Welcome') throw new Error('missing welcome');
 
-    await setup.hub.handleFrame(
-      client.value,
-      JSON.stringify({
-        type: 'Command',
-        protocolVersion: PROTOCOL_VERSION,
-        sessionId: welcome.sessionId,
-        clientSequence: 1,
-        commandId: 'flip-command',
-        lastSeenRevision: 0,
-        command: { type: 'FlipCoin' },
-      })
-    );
+    const frame = JSON.stringify({
+      type: 'Command',
+      protocolVersion: PROTOCOL_VERSION,
+      sessionId: welcome.sessionId,
+      clientSequence: 1,
+      commandId: 'flip-command',
+      lastSeenRevision: 0,
+      command: { type: 'FlipCoin' },
+    });
+    await setup.hub.handleFrame(client.value, frame);
 
     expect(client.messages.slice(1).map((message) => message.type)).toEqual([
       'StatePublication',
@@ -388,6 +404,26 @@ describe('serialized room session hub', () => {
       revision: 1,
     });
     expect(setup.store.commandCommits).toHaveLength(1);
+    expect(setup.telemetry.roomCommand).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        commandType: 'FlipCoin',
+        outcome: 'accepted',
+        startRevision: 0,
+        endRevision: 1,
+        deliveryCount: 2,
+      })
+    );
+
+    await setup.hub.handleFrame(client.value, frame);
+    expect(setup.store.commandCommits).toHaveLength(1);
+    expect(setup.telemetry.roomCommand).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        commandType: 'FlipCoin',
+        outcome: 'duplicate',
+        startRevision: 1,
+        endRevision: 1,
+      })
+    );
   });
 
   it('streams only the requesting session perspective from retained history', async () => {
@@ -470,6 +506,8 @@ describe('serialized room session hub', () => {
       {
         store: setup.store,
         rateLimits: allowRoomOperations,
+        telemetry: NOOP_SERVER_TELEMETRY,
+        monotonicNow: () => 0,
         admission: {
           crypto: setup.crypto,
           opaqueIds: setup.crypto,
@@ -541,5 +579,15 @@ describe('serialized room session hub', () => {
       code: 'invalid_message',
     });
     expect(JSON.stringify(client.messages)).not.toContain(secret);
+    expect(setup.telemetry.roomCommand).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        commandType: 'Unknown',
+        outcome: 'rejected',
+        reason: 'invalid_message',
+      })
+    );
+    expect(
+      JSON.stringify(setup.telemetry.roomCommand.mock.calls)
+    ).not.toContain(secret);
   });
 });
