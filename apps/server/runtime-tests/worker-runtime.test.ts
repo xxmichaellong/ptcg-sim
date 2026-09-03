@@ -22,6 +22,7 @@ import {
   nextServerMessage,
   nextServerMessages,
   roomStub,
+  runtimeCommandPerformanceEvidence,
   runtimeEvidence,
 } from './runtime-harness.js';
 
@@ -72,6 +73,24 @@ describe('Cloudflare Worker runtime', () => {
       created.credentials.playerTwoSeatCapability
     );
     expect(evidence.snapshot?.state.matchId).toBe(created.roomCode);
+    expect(evidence.authorityStorage).toEqual({
+      envelope: {
+        format: 'ptcgsim-room-authority-v6',
+        generation: expect.stringMatching(/^[0-9a-f]{32}$/u),
+        authorityVersion: evidence.snapshot?.authorityVersion,
+        stateRevision: evidence.snapshot?.state.revision,
+      },
+      frontier: {
+        format: 'ptcgsim-authority-frontier-v1',
+        envelopeFormat: 'ptcgsim-room-authority-v6',
+        generation: expect.stringMatching(/^[0-9a-f]{32}$/u),
+        authorityVersion: evidence.snapshot?.authorityVersion,
+        stateRevision: evidence.snapshot?.state.revision,
+      },
+    });
+    expect(evidence.authorityStorage.frontier?.generation).toBe(
+      evidence.authorityStorage.envelope?.generation
+    );
     expect(evidence.lifecycle).toMatchObject({
       format: 'ptcgsim-room-lifecycle-v1',
       state: 'unclaimed',
@@ -165,6 +184,9 @@ describe('Cloudflare Worker runtime', () => {
     expect(afterEviction.alarm).toBeNull();
     expect(afterEviction.socketCount).toBe(1);
     expect(afterEviction.attachment).toEqual(beforeEviction.attachment);
+    expect(afterEviction.authorityStorage).toEqual(
+      beforeEviction.authorityStorage
+    );
 
     const commandMessagesPromise = nextServerMessages(socket, 2);
     socket.send(flipCommandFrame(welcome, 'runtime-post-hibernation-flip'));
@@ -184,6 +206,20 @@ describe('Cloudflare Worker runtime', () => {
     expect(afterCommand.snapshot?.state.revision).toBe(
       welcome.snapshot.revision + 1
     );
+    expect(afterCommand.authorityStorage.frontier?.generation).toBe(
+      afterCommand.authorityStorage.envelope?.generation
+    );
+    expect(afterCommand.authorityStorage.envelope).toMatchObject({
+      authorityVersion: afterCommand.snapshot?.authorityVersion,
+      stateRevision: afterCommand.snapshot?.state.revision,
+    });
+    expect(afterCommand.authorityStorage.frontier).toMatchObject({
+      authorityVersion: afterCommand.snapshot?.authorityVersion,
+      stateRevision: afterCommand.snapshot?.state.revision,
+    });
+    expect(afterCommand.authorityStorage.envelope?.generation).not.toBe(
+      beforeEviction.authorityStorage.envelope?.generation
+    );
     expect(afterCommand.snapshot?.sessions[welcome.sessionId]).toMatchObject({
       active: true,
       nextClientSequence: welcome.nextClientSequence + 1,
@@ -194,6 +230,10 @@ describe('Cloudflare Worker runtime', () => {
         },
       ],
     });
+    expect(
+      (await runtimeCommandPerformanceEvidence(created)).at(-1)?.breakdown
+        .frontierFastPathHit
+    ).toBe(1);
   });
 
   it('keeps an admission ticket retryable when its durable claim fails', async () => {

@@ -53,7 +53,9 @@ export class RoomAuthorityCoordinator {
   }
 
   installCommittedSnapshot(snapshot: RoomAuthoritySnapshot): void {
-    const validation = validateAuthoritySnapshot(snapshot);
+    const validation =
+      authoritySnapshotValidationFor(snapshot) ??
+      validateAuthoritySnapshot(snapshot);
     if (snapshot.authorityVersion < this.snapshot.authorityVersion) {
       throw new Error('Cannot install an older authority snapshot');
     }

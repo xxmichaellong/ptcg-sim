@@ -106,6 +106,10 @@ const boundedCommandBreakdown = (
     breakdown.candidateValidationMs
   ),
   snapshotValidationMs: boundedObservedDuration(breakdown.snapshotValidationMs),
+  predecessorValidationMs: boundedObservedDuration(
+    breakdown.predecessorValidationMs
+  ),
+  frontierFastPathHit: breakdown.frontierFastPathHit === 1 ? 1 : 0,
   transactionMs: boundedObservedDuration(breakdown.transactionMs),
 });
 

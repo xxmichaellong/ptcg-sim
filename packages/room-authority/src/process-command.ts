@@ -102,6 +102,8 @@ const createAuthorityCommandTimer = (
     historyAndCandidateMs: 0,
     candidateValidationMs: 0,
     snapshotValidationMs: 0,
+    predecessorValidationMs: 0,
+    frontierFastPathHit: 0,
     transactionMs: 0,
   };
   return {
@@ -128,6 +130,11 @@ const createAuthorityCommandTimer = (
         breakdown.snapshotValidationMs += boundedTiming(
           detail.snapshotValidationMs
         );
+        breakdown.predecessorValidationMs += boundedTiming(
+          detail.predecessorValidationMs
+        );
+        breakdown.frontierFastPathHit =
+          detail.frontierFastPathHit === 1 ? 1 : 0;
         breakdown.transactionMs += boundedTiming(detail.transactionMs);
       }
     },

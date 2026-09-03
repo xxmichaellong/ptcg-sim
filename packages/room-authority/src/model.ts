@@ -173,6 +173,10 @@ export interface AuthorityPersistence {
 export interface AuthorityPersistenceTiming {
   /** Validation performed by the persistence adapter at its trust boundary. */
   readonly snapshotValidationMs: number;
+  /** Full predecessor validation inside the atomic transaction; included in transactionMs. */
+  readonly predecessorValidationMs: number;
+  /** Low-cardinality evidence: 1 for an exact frontier/cache hit, otherwise 0. */
+  readonly frontierFastPathHit: number;
   /** The atomic storage transaction, including reads, writes, and retention. */
   readonly transactionMs: number;
 }

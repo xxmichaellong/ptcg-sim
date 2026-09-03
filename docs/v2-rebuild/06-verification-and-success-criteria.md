@@ -308,34 +308,56 @@ command and hibernation observations without treating local wall-clock values as
 portable CI thresholds. The initial evidence and its explicit limitations are
 recorded in
 [`SERVER_PERFORMANCE_BASELINE.md`](./SERVER_PERFORMANCE_BASELINE.md). Managed
-preview phase splits, reconnect timing, platform resource/cost distributions,
-and persistence optimization remain release gates. Command/admission audit rows
-now have transactional count/byte retention and a real-runtime storage plateau.
-Telemetry v2 separates authority processing, projection, persistence,
-publication serialization, and socket send. The multiplayer hot path now derives
-one canonical batch/state transition from an exact recursively frozen validated
-predecessor. A single-use opaque proof binds that predecessor and proof, the
-resulting state/history objects, and replay limits; cached canonical UTF-8 entry
-sizes drive exact minimal prefix compaction without replaying the retained
-suffix. The completed candidate is recursively frozen and bound to its source
-frontier, session, outcome, and canonical batch. The proofs are not persisted or
-treated as security credentials. Missing, forged, stale, reused, cross-room,
-mutated, mismatched, and unproven direct-adapter inputs receive complete
-fail-closed candidate and transition validation. Restore, migration, retry
-reload, and external install retain full validation. No durable schema changed.
+preview phase splits, reconnect timing, and platform resource/cost distributions
+remain release gates. Command/admission audit rows now have transactional
+count/byte retention and a real-runtime storage plateau. Production telemetry v2
+separates authority processing, projection, persistence, publication
+serialization, and socket send; the local performance artifact alone advances
+to v3 for deeper breakdowns.
 
-The canonical incremental-replay observation took 26.204 seconds for its
-scenario and 30.50 seconds overall. Mature command-to-publication
-p50/p95/p99/max is 207/252/262/262 ms and server handling is 199/243/255/255 ms.
-Authority, projection, persistence/transaction, and candidate-validation p50/p95
-are 25/29, 7/10, 165/207, and 12/16 ms; adapter snapshot validation remains 0/0
-ms. Relative to the immediately preceding freeze-hardened proof run, p95 falls
-from 357 to 252 ms end to end, 343 to 243 ms server-side, and 184 to 16 ms for
-candidate validation. Server p95 clears the provisional 250 ms objective by 7
-ms; end-to-end p95 misses by 2 ms. The next performance gate is a small atomic
-authority frontier that removes in-transaction full predecessor replay without
-weakening complete restore validation. Managed preview/network measurements and
-the existing load, soak, payload, and correctness evidence remain required.
+The multiplayer hot path derives one canonical batch/state transition from an
+exact recursively frozen validated predecessor. A single-use opaque proof binds
+that predecessor and proof, the resulting state/history objects, and replay
+limits; cached canonical UTF-8 entry sizes drive exact minimal prefix compaction
+without replaying the retained suffix. The completed candidate is recursively
+frozen and bound to its exact source snapshot and validation, session, outcome,
+and canonical batch. The storage adapter then requires that source to be the
+exact store-local validated head and that a strict persisted v1 frontier match
+it. A hit reads no snapshot; it rotates the optional v6-envelope generation and
+atomically writes the snapshot/frontier, journal, retention, and pruning.
+
+Neither proof nor the frontier generation is a security credential. The proofs
+are not persisted, while the frontier is only bounded coherence evidence.
+Missing, forged, stale, reused, cross-room, mutated, mismatched, and unproven
+direct-adapter inputs receive complete fail-closed candidate, predecessor, and
+transition validation. Restore, migration, retry reload, external install, and
+all fallback paths retain full validation. Missing/malformed frontier data and
+generation-free rollback-era v6 envelopes are repaired only after that full
+validation; well-formed divergence fails without writes. Admission and expiry
+preserve snapshot/frontier/lifecycle/alarm pairing. The rollback-compatible
+storage addition changes no game-domain, wire, or production telemetry schema.
+
+The canonical authority-frontier observation took 8.766 seconds for its scenario
+and 12.12 seconds overall; fixture setup took 664 ms. Mature command-to-publication
+minimum/p50/p95/p99/max is 29/43/50/53/53 ms and server handling is
+21/34/42/44/44 ms. Authority, projection, persistence, publication serialization,
+and socket-send p50/p95 are 18/22, 7/11, 8/12, 1/1, and 0/1 ms. Inner input,
+resolution/execution, history/candidate, candidate validation, adapter
+validation, predecessor validation, and transaction p50/p95 are 0/0, 3/6, 9/11,
+6/8, 0/0, 0/0, and 8/12 ms. The mature window has 32 frontier hits and zero
+fallbacks. Relative to the incremental-replay run, p95 falls from 252 to 50 ms
+end to end, 243 to 42 ms server-side, and 207 to 12 ms for persistence; scenario
+time falls from 26.204 to 8.766 seconds. The provisional 250 ms objective is met
+locally by 200 ms end to end and 208 ms server-side. Managed preview/network
+measurements and the existing load, soak, payload, and correctness evidence
+remain required; further work must not bypass full restore/fallback validation.
+
+The post-hibernation command was 181 ms end to end and 43 ms server-side; its
+authority/projection/persistence/publication/socket split was 16/14/12/0/1 ms
+and its input/resolution/history/candidate/adapter/predecessor/hit/transaction
+detail was 0/3/7/6/0/0/1/11 ms. The largest frame and aggregate publication were
+62,431 and 149,276 bytes. Storage peaked at 139 entries/368,318 bytes and ended
+at 139/358,243, including a 297-byte frontier.
 
 ## Load and soak gates
 

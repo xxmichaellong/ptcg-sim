@@ -32,6 +32,7 @@ import { PROTOCOL_VERSION } from '@ptcgsim/protocol';
 import { describe, expect, it } from 'vitest';
 
 import {
+  AUTHORITY_FRONTIER_STORAGE_KEY,
   AUTHORITY_SNAPSHOT_STORAGE_KEY,
   ConcurrentRoomWriteError,
   DurableRoomSnapshotStore,
@@ -40,6 +41,7 @@ import {
   RoomExpiredError,
   type DurableStorageLike,
   type DurableStorageTransactionLike,
+  type StoredAuthorityFrontier,
 } from './durable-storage.js';
 import {
   JOURNAL_RETENTION_STORAGE_KEY,
@@ -57,6 +59,10 @@ class MemoryDurableStorage implements DurableStorageLike {
   failDeleteAlarm = false;
   failDeleteAllOnce = false;
   failDeleteWhenKeyStartsWith: string | undefined;
+  failAfterTransactionCommitOnce = false;
+  retryTransactionOnce = false;
+  beforeTransactionRetry: (() => void) | undefined;
+  transactionGetKeys: string[] = [];
 
   async get<Value>(key: string): Promise<Value | undefined> {
     return structuredClone(this.values.get(key)) as Value | undefined;
@@ -74,13 +80,15 @@ class MemoryDurableStorage implements DurableStorageLike {
   async transaction<Value>(
     closure: (transaction: DurableStorageTransactionLike) => Promise<Value>
   ): Promise<Value> {
-    const staged = new Map(
+    let staged = new Map(
       [...this.values].map(([key, value]) => [key, structuredClone(value)])
     );
     let stagedAlarm = this.alarm;
-    const result = await closure({
-      get: async <Stored>(key: string) =>
-        structuredClone(staged.get(key)) as Stored | undefined,
+    const transaction: DurableStorageTransactionLike = {
+      get: async <Stored>(key: string) => {
+        this.transactionGetKeys.push(key);
+        return structuredClone(staged.get(key)) as Stored | undefined;
+      },
       list: async <Stored>(options = {}) =>
         new Map(
           [...staged]
@@ -131,9 +139,24 @@ class MemoryDurableStorage implements DurableStorageLike {
         }
         stagedAlarm = null;
       },
-    });
+    };
+    let result = await closure(transaction);
+    if (this.retryTransactionOnce) {
+      this.retryTransactionOnce = false;
+      this.beforeTransactionRetry?.();
+      this.beforeTransactionRetry = undefined;
+      staged = new Map(
+        [...this.values].map(([key, value]) => [key, structuredClone(value)])
+      );
+      stagedAlarm = this.alarm;
+      result = await closure(transaction);
+    }
     this.values = staged;
     this.alarm = stagedAlarm;
+    if (this.failAfterTransactionCommitOnce) {
+      this.failAfterTransactionCommitOnce = false;
+      throw new Error('injected ambiguous transaction failure');
+    }
     return result;
   }
 }
@@ -253,6 +276,46 @@ const rejectedTransaction = (
   };
 };
 
+const capturedAcceptedTransaction = async (
+  current: RoomAuthoritySnapshot,
+  commandId: string
+): Promise<PersistedAuthorityTransaction> => {
+  let captured: PersistedAuthorityTransaction | undefined;
+  await processAuthorityCommand(
+    current,
+    {
+      type: 'Command',
+      protocolVersion: PROTOCOL_VERSION,
+      sessionId: 'session',
+      clientSequence: current.sessions.session!.nextClientSequence,
+      commandId,
+      lastSeenRevision: current.state.revision,
+      command: { type: 'FlipCoin' },
+    },
+    {
+      commandContext: {
+        nextCardId: () => asCardInstanceId('unused-card'),
+        nextStackId: () => asStackId('unused-stack'),
+        nextInspectionId: () => asInspectionId('unused-inspection'),
+        nextWorkAreaId: () => asWorkAreaId('unused-work-area'),
+        shuffle: (values) => [...values],
+        randomInt: () => 0,
+      },
+      opaqueIds: { nextOpaqueId: (kind) => `captured-${kind}-opaque-id` },
+      persistence: {
+        commit: async (transaction) => {
+          captured = transaction;
+        },
+      },
+      policy: DEFAULT_AUTHORITY_POLICY,
+      currentSnapshotValidation: authoritySnapshotValidationFor(current),
+    }
+  );
+  if (!captured)
+    throw new Error('Accepted command transaction was not captured');
+  return captured;
+};
+
 const resumedTransaction = (
   current: RoomAuthoritySnapshot
 ): PersistedAdmissionTransaction => ({
@@ -290,6 +353,31 @@ const storedKeys = (
 ): readonly string[] =>
   [...storage.values.keys()].filter((key) => key.startsWith(prefix)).sort();
 
+const nextGeneration = (() => {
+  let generation = 0;
+  return (): string => (++generation).toString(16).padStart(32, '0');
+})();
+
+const storedFrontier = (
+  storage: MemoryDurableStorage
+): StoredAuthorityFrontier =>
+  storage.values.get(AUTHORITY_FRONTIER_STORAGE_KEY) as StoredAuthorityFrontier;
+
+const testFrontier = (
+  snapshot: RoomAuthoritySnapshot,
+  generation = '1'.repeat(32)
+): StoredAuthorityFrontier => ({
+  format: 'ptcgsim-authority-frontier-v1',
+  envelopeFormat: 'ptcgsim-room-authority-v6',
+  authoritySchemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+  matchStateSchemaVersion: MATCH_STATE_SCHEMA_VERSION,
+  matchId: snapshot.state.matchId,
+  mode: snapshot.mode,
+  authorityVersion: snapshot.authorityVersion,
+  stateRevision: snapshot.state.revision,
+  generation,
+});
+
 describe('Durable Object authority snapshot store', () => {
   it('initializes once and restores a validated snapshot', async () => {
     const storage = new MemoryDurableStorage();
@@ -301,6 +389,190 @@ describe('Durable Object authority snapshot store', () => {
     await expect(store.initialize(initial)).rejects.toBeInstanceOf(
       RoomAlreadyInitializedError
     );
+  });
+
+  it('atomically initializes a generated snapshot/frontier pair and rejects an orphan frontier', async () => {
+    const initial = initialSnapshot();
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(
+      storage,
+      () => 0,
+      () => 'a'.repeat(32)
+    );
+
+    await store.initialize(initial);
+    expect(storage.values.get(AUTHORITY_SNAPSHOT_STORAGE_KEY)).toMatchObject({
+      format: 'ptcgsim-room-authority-v6',
+      generation: 'a'.repeat(32),
+      snapshot: initial,
+    });
+    expect(storedFrontier(storage)).toEqual(
+      testFrontier(initial, 'a'.repeat(32))
+    );
+
+    const failed = new MemoryDurableStorage();
+    failed.failPutWhenKeyStartsWith = AUTHORITY_FRONTIER_STORAGE_KEY;
+    await expect(
+      new DurableRoomSnapshotStore(failed).initialize(initialSnapshot())
+    ).rejects.toThrow('injected transactional put failure');
+    expect(failed.values.size).toBe(0);
+
+    const orphaned = new MemoryDurableStorage();
+    orphaned.values.set(AUTHORITY_FRONTIER_STORAGE_KEY, testFrontier(initial));
+    await expect(
+      new DurableRoomSnapshotStore(orphaned).initialize(initialSnapshot())
+    ).rejects.toThrow('frontier has no snapshot');
+    expect(orphaned.values.has(AUTHORITY_SNAPSHOT_STORAGE_KEY)).toBe(false);
+  });
+
+  it('backfills old v6 snapshots and repairs missing or malformed frontiers only after full validation', async () => {
+    const cases: readonly unknown[] = [
+      undefined,
+      { format: 'unsupported' },
+      { ...testFrontier(initialSnapshot()), generation: 'A'.repeat(32) },
+      { ...testFrontier(initialSnapshot()), authoritySchemaVersion: 999 },
+      { ...testFrontier(initialSnapshot()), unexpected: true },
+    ];
+
+    for (const [index, rawFrontier] of cases.entries()) {
+      const storage = new MemoryDurableStorage();
+      const initial = initialSnapshot(`repair-room-${index}`);
+      const generation = String(index + 1).padStart(32, '0');
+      storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
+        format: 'ptcgsim-room-authority-v6',
+        ...(index === 0 ? {} : { generation }),
+        snapshot: initial,
+      });
+      if (rawFrontier !== undefined) {
+        storage.values.set(AUTHORITY_FRONTIER_STORAGE_KEY, rawFrontier);
+      }
+      const restored = await new DurableRoomSnapshotStore(
+        storage,
+        () => 0,
+        () => generation
+      ).load();
+
+      expect(restored).toEqual(initial);
+      expect(Object.isFrozen(restored)).toBe(true);
+      const envelope = storage.values.get(AUTHORITY_SNAPSHOT_STORAGE_KEY) as {
+        generation?: string;
+      };
+      expect(envelope.generation).toBe(generation);
+      expect(storedFrontier(storage)).toEqual(
+        testFrontier(initial, generation)
+      );
+    }
+
+    const corruptStorage = new MemoryDurableStorage();
+    const initial = initialSnapshot('corrupt-paired-room');
+    const generation = 'c'.repeat(32);
+    corruptStorage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
+      format: 'ptcgsim-room-authority-v6',
+      generation,
+      snapshot: {
+        ...initial,
+        replayHistory: { ...initial.replayHistory, baseStateHash: 'corrupt' },
+      },
+    });
+    corruptStorage.values.set(
+      AUTHORITY_FRONTIER_STORAGE_KEY,
+      testFrontier(initial, generation)
+    );
+    const before = structuredClone([...corruptStorage.values]);
+    await expect(
+      new DurableRoomSnapshotStore(corruptStorage).load()
+    ).rejects.toThrow('replay base hash does not match');
+    expect([...corruptStorage.values]).toEqual(before);
+  });
+
+  it('fails closed on orphaned or well-formed divergent frontiers', async () => {
+    const initial = initialSnapshot();
+    const orphaned = new MemoryDurableStorage();
+    orphaned.values.set(AUTHORITY_FRONTIER_STORAGE_KEY, testFrontier(initial));
+    await expect(new DurableRoomSnapshotStore(orphaned).load()).rejects.toThrow(
+      'frontier has no snapshot'
+    );
+
+    const divergent = new MemoryDurableStorage();
+    const generation = 'd'.repeat(32);
+    divergent.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
+      format: 'ptcgsim-room-authority-v6',
+      generation,
+      snapshot: initial,
+    });
+    divergent.values.set(AUTHORITY_FRONTIER_STORAGE_KEY, {
+      ...testFrontier(initial, generation),
+      authorityVersion: 1,
+    });
+    const before = structuredClone([...divergent.values]);
+    await expect(
+      new DurableRoomSnapshotStore(divergent).load()
+    ).rejects.toThrow('frontier diverges');
+    expect([...divergent.values]).toEqual(before);
+  });
+
+  it('repairs rollback-era generation removal on the next command or admission commit', async () => {
+    const commandStorage = new MemoryDurableStorage();
+    const commandStore = new DurableRoomSnapshotStore(commandStorage);
+    const initial = initialSnapshot('rollback-command-room');
+    await commandStore.initialize(initial);
+    const first = acceptedTransaction(initial);
+    await commandStore.commit(first);
+    const firstEnvelope = commandStorage.values.get(
+      AUTHORITY_SNAPSHOT_STORAGE_KEY
+    ) as { format: string; snapshot: RoomAuthoritySnapshot };
+    commandStorage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
+      format: firstEnvelope.format,
+      snapshot: firstEnvelope.snapshot,
+    });
+
+    const second = rejectedTransaction(first.snapshot);
+    await expect(commandStore.commit(second)).resolves.toMatchObject({
+      frontierFastPathHit: 0,
+    });
+    expect(
+      commandStorage.values.get(AUTHORITY_SNAPSHOT_STORAGE_KEY)
+    ).toMatchObject({ generation: expect.stringMatching(/^[0-9a-f]{32}$/u) });
+    expect(storedFrontier(commandStorage).authorityVersion).toBe(2);
+
+    const admissionStorage = new MemoryDurableStorage();
+    const admissionStore = new DurableRoomSnapshotStore(admissionStorage);
+    const admissionInitial = initialSnapshot('rollback-admission-room');
+    await admissionStore.initialize(admissionInitial);
+    const firstAdmission = resumedTransaction(admissionInitial);
+    await admissionStore.commitAdmission(firstAdmission);
+    const admissionEnvelope = admissionStorage.values.get(
+      AUTHORITY_SNAPSHOT_STORAGE_KEY
+    ) as { format: string; snapshot: RoomAuthoritySnapshot };
+    admissionStorage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
+      format: admissionEnvelope.format,
+      snapshot: admissionEnvelope.snapshot,
+    });
+
+    await admissionStore.commitAdmission(
+      resumedTransaction(firstAdmission.snapshot)
+    );
+    expect(
+      admissionStorage.values.get(AUTHORITY_SNAPSHOT_STORAGE_KEY)
+    ).toMatchObject({ generation: expect.stringMatching(/^[0-9a-f]{32}$/u) });
+    expect(storedFrontier(admissionStorage).authorityVersion).toBe(2);
+  });
+
+  it('rejects a command against a divergent persisted frontier before writing', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    const initial = initialSnapshot();
+    await store.initialize(initial);
+    storage.values.set(AUTHORITY_FRONTIER_STORAGE_KEY, {
+      ...storedFrontier(storage),
+      stateRevision: 1,
+    });
+    const before = structuredClone([...storage.values]);
+
+    await expect(store.commit(acceptedTransaction(initial))).rejects.toThrow(
+      'frontier diverges'
+    );
+    expect([...storage.values]).toEqual(before);
   });
 
   it('atomically initializes an unclaimed lifecycle and its expiry alarm', async () => {
@@ -350,6 +622,60 @@ describe('Durable Object authority snapshot store', () => {
     await expect(store.expireUnclaimedRoom(301_000)).resolves.toBe('expired');
     expect(storage.values.size).toBe(0);
     expect(storage.alarm).toBeNull();
+  });
+
+  it('validates frontier consistency before expiry and repairs a rollback-era pair', async () => {
+    const divergentStorage = new MemoryDurableStorage();
+    const divergentStore = new DurableRoomSnapshotStore(divergentStorage);
+    await divergentStore.initialize(unclaimedSnapshot(), {
+      createdAt: 1_000,
+      unclaimedExpiresAt: 301_000,
+    });
+    divergentStorage.values.set(AUTHORITY_FRONTIER_STORAGE_KEY, {
+      ...storedFrontier(divergentStorage),
+      authorityVersion: 1,
+    });
+    const divergentBefore = structuredClone([...divergentStorage.values]);
+    await expect(divergentStore.expireUnclaimedRoom(2_000)).rejects.toThrow(
+      'frontier diverges'
+    );
+    expect([...divergentStorage.values]).toEqual(divergentBefore);
+    expect(divergentStorage.alarm).toBe(301_000);
+
+    const rollbackStorage = new MemoryDurableStorage();
+    const rollbackStore = new DurableRoomSnapshotStore(
+      rollbackStorage,
+      () => 0,
+      nextGeneration
+    );
+    await rollbackStore.initialize(unclaimedSnapshot(), {
+      createdAt: 1_000,
+      unclaimedExpiresAt: 301_000,
+    });
+    const oldGeneration = storedFrontier(rollbackStorage).generation;
+    const envelope = rollbackStorage.values.get(
+      AUTHORITY_SNAPSHOT_STORAGE_KEY
+    ) as { format: string; snapshot: RoomAuthoritySnapshot };
+    rollbackStorage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
+      format: envelope.format,
+      snapshot: envelope.snapshot,
+    });
+
+    await expect(rollbackStore.expireUnclaimedRoom(2_000)).resolves.toBe(
+      'scheduled'
+    );
+    const repairedEnvelope = rollbackStorage.values.get(
+      AUTHORITY_SNAPSHOT_STORAGE_KEY
+    ) as { generation?: string; snapshot: RoomAuthoritySnapshot };
+    expect(repairedEnvelope.generation).toMatch(/^[0-9a-f]{32}$/u);
+    expect(repairedEnvelope.generation).not.toBe(oldGeneration);
+    if (!repairedEnvelope.generation) {
+      throw new Error('Rollback-era envelope was not assigned a generation');
+    }
+    expect(storedFrontier(rollbackStorage)).toEqual(
+      testFrontier(repairedEnvelope.snapshot, repairedEnvelope.generation)
+    );
+    expect(rollbackStorage.alarm).toBe(301_000);
   });
 
   it('leaves an expiring tombstone after deletion failure and retries safely', async () => {
@@ -634,11 +960,13 @@ describe('Durable Object authority snapshot store', () => {
       format: 'ptcgsim-room-authority-v6',
     });
 
-    const marks = [0, 5, 10, 25];
+    const marks = [0, 5, 10, 15, 20, 25];
     const store = new DurableRoomSnapshotStore(storage, () => marks.shift()!);
     const transaction = acceptedTransaction(initial);
     await expect(store.commit(transaction)).resolves.toEqual({
       snapshotValidationMs: 5,
+      predecessorValidationMs: 5,
+      frontierFastPathHit: 0,
       transactionMs: 15,
     });
     expect(marks).toEqual([]);
@@ -664,9 +992,72 @@ describe('Durable Object authority snapshot store', () => {
     const nextTransaction = rejectedTransaction(transaction.snapshot);
     await expect(clockFailureStore.commit(nextTransaction)).resolves.toEqual({
       snapshotValidationMs: 0,
+      predecessorValidationMs: 0,
+      frontierFastPathHit: 0,
       transactionMs: 0,
     });
     expect(await clockFailureStore.load()).toEqual(nextTransaction.snapshot);
+  });
+
+  it('reports only the final retried transaction callback timing', async () => {
+    const storage = new MemoryDurableStorage();
+    const initial = initialSnapshot('retry-timing-room');
+    const marks = [0, 1, 2, 20, 27, 40];
+    const store = new DurableRoomSnapshotStore(storage, () => marks.shift()!);
+    await store.initialize(initial);
+    const transaction = await capturedAcceptedTransaction(
+      initial,
+      'retried-frontier-command'
+    );
+    storage.retryTransactionOnce = true;
+    storage.beforeTransactionRetry = () => {
+      storage.values.delete(AUTHORITY_FRONTIER_STORAGE_KEY);
+    };
+    storage.transactionGetKeys = [];
+
+    await expect(store.commit(transaction)).resolves.toEqual({
+      snapshotValidationMs: 1,
+      predecessorValidationMs: 7,
+      frontierFastPathHit: 0,
+      transactionMs: 38,
+    });
+    expect(
+      storage.transactionGetKeys.filter(
+        (key) => key === AUTHORITY_SNAPSHOT_STORAGE_KEY
+      )
+    ).toHaveLength(1);
+    expect(marks).toEqual([]);
+  });
+
+  it('rejects a repeated generation source before command or admission writes', async () => {
+    const repeated = 'a'.repeat(32);
+    const commandStorage = new MemoryDurableStorage();
+    const commandStore = new DurableRoomSnapshotStore(
+      commandStorage,
+      () => 0,
+      () => repeated
+    );
+    const initial = initialSnapshot('repeated-command-generation');
+    await commandStore.initialize(initial);
+    const commandBefore = structuredClone([...commandStorage.values]);
+    await expect(
+      commandStore.commit(acceptedTransaction(initial))
+    ).rejects.toThrow('generation did not rotate');
+    expect([...commandStorage.values]).toEqual(commandBefore);
+
+    const admissionStorage = new MemoryDurableStorage();
+    const admissionStore = new DurableRoomSnapshotStore(
+      admissionStorage,
+      () => 0,
+      () => repeated
+    );
+    const admissionInitial = initialSnapshot('repeated-admission-generation');
+    await admissionStore.initialize(admissionInitial);
+    const admissionBefore = structuredClone([...admissionStorage.values]);
+    await expect(
+      admissionStore.commitAdmission(resumedTransaction(admissionInitial))
+    ).rejects.toThrow('generation did not rotate');
+    expect([...admissionStorage.values]).toEqual(admissionBefore);
   });
 
   it('persists the exact canonical command batch without serializing proof metadata', async () => {
@@ -679,7 +1070,25 @@ describe('Durable Object authority snapshot store', () => {
     let inspection = 0;
     let workArea = 0;
     let opaque = 0;
+    const dependencies = {
+      commandContext: {
+        nextCardId: () => asCardInstanceId(`canonical-card-${++card}`),
+        nextStackId: () => asStackId(`canonical-stack-${++stack}`),
+        nextInspectionId: () =>
+          asInspectionId(`canonical-inspection-${++inspection}`),
+        nextWorkAreaId: () => asWorkAreaId(`canonical-work-area-${++workArea}`),
+        shuffle: <Value>(values: readonly Value[]) => [...values].reverse(),
+        randomInt: () => 0,
+      },
+      opaqueIds: {
+        nextOpaqueId: (kind: string) =>
+          `canonical-${kind}-${String(++opaque).padStart(12, '0')}`,
+      },
+      persistence: store,
+      policy: DEFAULT_AUTHORITY_POLICY,
+    };
 
+    storage.transactionGetKeys = [];
     const result = await processAuthorityCommand(
       initial,
       {
@@ -692,24 +1101,42 @@ describe('Durable Object authority snapshot store', () => {
         command: { type: 'FlipCoin' },
       },
       {
-        commandContext: {
-          nextCardId: () => asCardInstanceId(`canonical-card-${++card}`),
-          nextStackId: () => asStackId(`canonical-stack-${++stack}`),
-          nextInspectionId: () =>
-            asInspectionId(`canonical-inspection-${++inspection}`),
-          nextWorkAreaId: () =>
-            asWorkAreaId(`canonical-work-area-${++workArea}`),
-          shuffle: (values) => [...values].reverse(),
-          randomInt: () => 0,
-        },
-        opaqueIds: {
-          nextOpaqueId: (kind) =>
-            `canonical-${kind}-${String(++opaque).padStart(12, '0')}`,
-        },
-        persistence: store,
-        policy: DEFAULT_AUTHORITY_POLICY,
+        ...dependencies,
+        currentSnapshotValidation: authoritySnapshotValidationFor(initial),
       }
     );
+
+    expect(result.timing.breakdown.frontierFastPathHit).toBe(1);
+    expect(storage.transactionGetKeys).not.toContain(
+      AUTHORITY_SNAPSHOT_STORAGE_KEY
+    );
+    const firstGeneration = storedFrontier(storage).generation;
+
+    storage.transactionGetKeys = [];
+    const rejected = await processAuthorityCommand(
+      result.snapshot,
+      {
+        type: 'Command',
+        protocolVersion: PROTOCOL_VERSION,
+        sessionId: 'session',
+        clientSequence: 2,
+        commandId: 'canonical-rejected-command',
+        lastSeenRevision: 1,
+        command: { type: 'ApplySoloUndo', targetPlayerId: p1 },
+      },
+      {
+        ...dependencies,
+        currentSnapshotValidation: result.snapshotValidation,
+      }
+    );
+    expect(rejected.committed).toBe(true);
+    expect(rejected.snapshot.state).toBe(result.snapshot.state);
+    expect(rejected.snapshot.replayHistory).toBe(result.snapshot.replayHistory);
+    expect(rejected.timing.breakdown.frontierFastPathHit).toBe(1);
+    expect(storage.transactionGetKeys).not.toContain(
+      AUTHORITY_SNAPSHOT_STORAGE_KEY
+    );
+    expect(storedFrontier(storage).generation).not.toBe(firstGeneration);
 
     const journal = [...storage.values.entries()].find(([key]) =>
       key.startsWith('authority:journal:')
@@ -736,6 +1163,109 @@ describe('Durable Object authority snapshot store', () => {
     );
     expect(JSON.stringify([...storage.values.values()])).not.toContain(
       'replayHistoryTransition'
+    );
+    expect(
+      JSON.stringify(
+        [...storage.values.entries()].filter(([key]) =>
+          key.startsWith('authority:journal:')
+        )
+      )
+    ).not.toContain('generation');
+  });
+
+  it('uses the frontier fast path when an accepted batch is compacted away immediately', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    const initial = initialSnapshot();
+    await store.initialize(initial);
+    storage.transactionGetKeys = [];
+    let opaque = 0;
+
+    const result = await processAuthorityCommand(
+      initial,
+      {
+        type: 'Command',
+        protocolVersion: PROTOCOL_VERSION,
+        sessionId: 'session',
+        clientSequence: 1,
+        commandId: 'fast-compacted-command',
+        lastSeenRevision: 0,
+        command: { type: 'FlipCoin' },
+      },
+      {
+        commandContext: {
+          nextCardId: () => asCardInstanceId('unused-card'),
+          nextStackId: () => asStackId('unused-stack'),
+          nextInspectionId: () => asInspectionId('unused-inspection'),
+          nextWorkAreaId: () => asWorkAreaId('unused-work-area'),
+          shuffle: (values) => [...values],
+          randomInt: () => 0,
+        },
+        opaqueIds: {
+          nextOpaqueId: (kind) => `compacted-${kind}-${++opaque}`,
+        },
+        persistence: store,
+        policy: {
+          ...DEFAULT_AUTHORITY_POLICY,
+          maximumReplayEventBatches: 1,
+          maximumReplayEventBytes: 2,
+        },
+        currentSnapshotValidation: authoritySnapshotValidationFor(initial),
+      }
+    );
+
+    expect(result.snapshot.replayHistory.entries).toEqual([]);
+    expect(result.timing.breakdown.frontierFastPathHit).toBe(1);
+    expect(storage.transactionGetKeys).not.toContain(
+      AUTHORITY_SNAPSHOT_STORAGE_KEY
+    );
+    const journal = [...storage.values.entries()].find(([key]) =>
+      key.startsWith('authority:journal:')
+    )?.[1] as { eventBatch?: { revision: number } } | undefined;
+    expect(journal?.eventBatch?.revision).toBe(1);
+  });
+
+  it('keeps solo commands on the full predecessor-validation path', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    const initial = {
+      ...initialSnapshot('solo-frontier-room'),
+      mode: 'solo' as const,
+    };
+    await store.initialize(initial);
+    storage.transactionGetKeys = [];
+
+    const result = await processAuthorityCommand(
+      initial,
+      {
+        type: 'Command',
+        protocolVersion: PROTOCOL_VERSION,
+        sessionId: 'session',
+        clientSequence: 1,
+        commandId: 'solo-frontier-command',
+        lastSeenRevision: 0,
+        command: { type: 'FlipCoin' },
+      },
+      {
+        commandContext: {
+          nextCardId: () => asCardInstanceId('unused-card'),
+          nextStackId: () => asStackId('unused-stack'),
+          nextInspectionId: () => asInspectionId('unused-inspection'),
+          nextWorkAreaId: () => asWorkAreaId('unused-work-area'),
+          shuffle: (values) => [...values],
+          randomInt: () => 0,
+        },
+        opaqueIds: { nextOpaqueId: (kind) => `solo-${kind}-opaque-id` },
+        persistence: store,
+        policy: DEFAULT_AUTHORITY_POLICY,
+        currentSnapshotValidation: authoritySnapshotValidationFor(initial),
+      }
+    );
+
+    expect(result.committed).toBe(true);
+    expect(result.timing.breakdown.frontierFastPathHit).toBe(0);
+    expect(storage.transactionGetKeys).toContain(
+      AUTHORITY_SNAPSHOT_STORAGE_KEY
     );
   });
 
@@ -1199,10 +1729,12 @@ describe('Durable Object authority snapshot store', () => {
     await store.initialize(initial);
     const transaction = acceptedTransaction(initial);
     await store.commit(transaction);
+    const beforeRetry = structuredClone([...storage.values]);
 
     await expect(store.commit(transaction)).rejects.toBeInstanceOf(
       ConcurrentRoomWriteError
     );
+    expect([...storage.values]).toEqual(beforeRetry);
     expect((await store.load())?.state.revision).toBe(1);
   });
 
@@ -1253,6 +1785,90 @@ describe('Durable Object authority snapshot store', () => {
         key.startsWith('authority:journal:')
       )
     ).toHaveLength(0);
+  });
+
+  it('rotates the frontier for every admission kind while fully reading its predecessor', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(
+      storage,
+      () => 0,
+      nextGeneration
+    );
+    let current = initialSnapshot('admission-frontier-room');
+    await store.initialize(current);
+    let previousGeneration = storedFrontier(storage).generation;
+    const transactions: readonly PersistedAdmissionTransaction[] = [
+      {
+        expectedAuthorityVersion: 0,
+        kind: 'invitation_issued',
+        invitationDigest: 'a'.repeat(64),
+        snapshot: { ...current, authorityVersion: 1 },
+      },
+      {
+        expectedAuthorityVersion: 1,
+        kind: 'ticket_issued',
+        ticketDigest: 'b'.repeat(64),
+        snapshot: { ...current, authorityVersion: 2 },
+      },
+      {
+        expectedAuthorityVersion: 2,
+        kind: 'session_resumed',
+        sessionId: 'session',
+        snapshot: { ...current, authorityVersion: 3 },
+      },
+    ];
+
+    for (const transaction of transactions) {
+      storage.transactionGetKeys = [];
+      await store.commitAdmission(transaction);
+      current = transaction.snapshot;
+      expect(storage.transactionGetKeys).toContain(
+        AUTHORITY_SNAPSHOT_STORAGE_KEY
+      );
+      expect(storedFrontier(storage)).toMatchObject({
+        authorityVersion: transaction.snapshot.authorityVersion,
+        stateRevision: transaction.snapshot.state.revision,
+      });
+      expect(storedFrontier(storage).generation).not.toBe(previousGeneration);
+      previousGeneration = storedFrontier(storage).generation;
+    }
+  });
+
+  it('invalidates its cache after definite and ambiguous transaction failures', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    const initial = initialSnapshot('failure-cache-room');
+    await store.initialize(initial);
+    const first = acceptedTransaction(initial);
+
+    storage.failPutWhenKeyStartsWith = 'authority:journal:';
+    await expect(store.commit(first)).rejects.toThrow(
+      'injected transactional put failure'
+    );
+    storage.failPutWhenKeyStartsWith = undefined;
+    storage.transactionGetKeys = [];
+    await expect(store.commit(first)).resolves.toMatchObject({
+      frontierFastPathHit: 0,
+    });
+    expect(storage.transactionGetKeys).toContain(
+      AUTHORITY_SNAPSHOT_STORAGE_KEY
+    );
+
+    const second = rejectedTransaction(first.snapshot);
+    storage.failAfterTransactionCommitOnce = true;
+    await expect(store.commit(second)).rejects.toThrow(
+      'injected ambiguous transaction failure'
+    );
+    expect(storedFrontier(storage).authorityVersion).toBe(2);
+    const afterAmbiguousCommit = structuredClone([...storage.values]);
+    await expect(store.commit(second)).rejects.toBeInstanceOf(
+      ConcurrentRoomWriteError
+    );
+    expect([...storage.values]).toEqual(afterAmbiguousCommit);
+
+    const restored = await store.load();
+    expect(restored?.authorityVersion).toBe(2);
+    expect(authoritySnapshotValidationFor(restored!)).toBeDefined();
   });
 
   it('fails closed when a direct caller supplies a forged or stale validation proof', async () => {
@@ -1485,6 +2101,8 @@ describe('Durable Object authority snapshot store', () => {
 
     await expect(store.commit(compacted)).resolves.toEqual({
       snapshotValidationMs: expect.any(Number),
+      predecessorValidationMs: expect.any(Number),
+      frontierFastPathHit: 0,
       transactionMs: expect.any(Number),
     });
     expect((await store.load())?.state).toEqual(transaction.snapshot.state);

@@ -145,19 +145,21 @@ socket attachment size.
 
 The run intentionally fills the 128-command outcome/audit window, advances 32
 commands past it, forces repeated hibernating eviction, and commits once after
-wake. The current incremental-replay run took 26.204 seconds for the measured
-scenario and 30.50 seconds for the complete Vitest invocation. It remains
-outside the fast CI gate; the smaller deterministic payload envelope stays in
-`test:v2:runtime`.
+wake. The current authority-frontier run took 8.766 seconds for the measured
+scenario and 12.12 seconds for the complete Vitest invocation; fixture setup was
+664 ms. It remains outside the fast CI gate; the smaller deterministic payload
+envelope stays in `test:v2:runtime`.
 
 The Durable Object keeps only the 32 latest accepted-command observations in
 memory so the harness can collect the same numeric durations without parsing
 console output. The window has no room, session, command, card, or capability
 values, is not persisted, is not exposed by an HTTP route, and resets on
 eviction. It adds local-only detail for invariant validation,
-resolution/execution, history/candidate construction, adapter validation, and
-the atomic transaction. Production monitoring continues to use the structured
-telemetry sink's coarser v2 phases.
+resolution/execution, history/candidate construction, adapter and predecessor
+validation, frontier hits/fallbacks, and the atomic transaction. The
+machine-readable local report is `ptcgsim-runtime-performance-v3`; production
+monitoring continues to use the structured telemetry sink's coarser v2 schema
+and phases.
 
 The multiplayer optimization uses two opaque, non-persisted proof layers. A
 single-use transition proof binds the exact recursively frozen predecessor and
@@ -165,33 +167,57 @@ its proof to one canonical cloned event batch, the exact resulting state/replay
 objects, and the configured replay limits. Cached canonical UTF-8 entry sizes
 select the minimum compacted prefix without serializing or replaying the retained
 suffix. The resulting snapshot proof is bound to the exact candidate plus its
-source frontier, session, outcome, and canonical batch. It is correctness
-evidence, not a security credential or portable integrity claim, and neither
-proof changes the durable schema or enters storage, telemetry, or the wire.
+exact source snapshot and validation, session, outcome, and canonical batch. It
+is correctness evidence, not a security credential or portable integrity claim,
+and neither proof enters storage, telemetry, or the wire.
 Missing, forged, stale, reused, cross-room, mutated, or mismatched evidence falls
 back to complete candidate and predecessor-transition validation. Restore,
 migration, retry reload, external install, and other trust boundaries always
 perform full validation and recursive freezing.
 
-The current mature plateau is p50/p95/p99/max 207/252/262/262 ms from command
-send through all publications and 199/243/255/255 ms inside server handling.
-Authority, projection, and persistence p50/p95 are 25/29, 7/10, and 165/207 ms;
-candidate validation is 12/16 ms, while adapter snapshot validation remains
-0/0 ms. The immediately preceding freeze-hardened proof run measured p95
-357/343/184 ms for end-to-end/server/candidate validation, so the incremental
-result improves those to 252/243/16 ms. Server p95 clears 250 ms by 7 ms, while
-end-to-end p95 remains 2 ms above the provisional objective. The post-hibernation
-command measured 401 ms end to end and 270 ms server-side: 29 ms authority, 42
-ms projection, 198 ms persistence, 1 ms publication serialization, and 0 ms
-socket send; its inner execution/history/candidate/adapter/transaction split was
-6/11/12/0/198 ms. The next target is a small atomically maintained authority
-frontier that avoids fully replaying the durable predecessor inside every
-transaction while leaving full restore validation intact; incident thresholds
-must not be relaxed around the remaining local miss.
+The storage optimization adds a strict v1 `authority:frontier` record while
+keeping the snapshot envelope rollback-compatible at v6 with an optional
+128-bit generation. The record binds that generation to the envelope/domain
+schemas, match, mode, authority version, and state revision. An exact
+cache/proof/frontier hit lets a multiplayer command read only lifecycle and the
+small frontier, not the snapshot; its rotated snapshot/frontier pair, journal,
+retention index, and pruning are one transaction. Missing or malformed frontier
+data and an old writer's generation-free v6 envelope take a full-validation
+repair path. A well-formed divergent pair fails closed. Admissions retain a full
+predecessor read and pair the new frontier with journal, retention,
+lifecycle/alarm, and pruning changes. Expiry validates and repairs the pair
+before acting. This follows Cloudflare's documented
+[storage transaction](https://developers.cloudflare.com/durable-objects/api/storage-api/)
+and [alarm](https://developers.cloudflare.com/durable-objects/api/alarms/)
+lifecycle boundaries. It changes no game-domain, wire, or production telemetry
+schema.
+
+The current mature plateau minimum/p50/p95/p99/max is 29/43/50/53/53 ms from
+command send through all publications and 21/34/42/44/44 ms inside server
+handling. Authority,
+projection, persistence, publication serialization, and socket-send p50/p95 are
+18/22, 7/11, 8/12, 1/1, and 0/1 ms. Inner input, resolution/execution,
+history/candidate, candidate validation, adapter validation, predecessor
+validation, and transaction p50/p95 are 0/0, 3/6, 9/11, 6/8, 0/0, 0/0, and
+8/12 ms. All 32 mature commands hit the frontier and none fell back. Relative to
+the incremental-replay run, p95 fell from 252 to 50 ms end to end, 243 to 42 ms
+server-side, and 207 to 12 ms for persistence; scenario time fell from 26.204 to
+8.766 seconds. Both provisional 250 ms p95 objectives are met, by 200 and 208 ms
+respectively.
+
+The post-hibernation command measured 181 ms end to end and 43 ms server-side:
+16 ms authority, 14 ms projection, 12 ms persistence, 0 ms publication
+serialization, and 1 ms socket send. Its input/resolution/history/candidate/
+adapter/predecessor/frontier/transaction detail was 0/3/7/6/0/0/1/11 ms. The
+largest observed frame and three-recipient publication were 62,431 and 149,276
+bytes. Peak storage was 139 entries/368,318 serialized key/value bytes; the final
+post-wake state was 139/358,243, including a 297-byte frontier. Continue using
+the same incident threshold while managed-preview and soak evidence is gathered;
+do not introduce another shortcut around restore or fallback validation.
 
 This local observation is diagnostic evidence, not a substitute for managed
 Cloudflare preview load, CPU/memory/cost, alarm, or network distributions. The
 versioned baseline, CI envelopes, privacy limits, implemented journal-retention
-contract, validated-snapshot handoff, and open high-history latency finding are
-documented in
+contract, validated-snapshot handoff, authority-frontier result, and remaining
+managed-preview/soak gates are documented in
 [`../../docs/v2-rebuild/SERVER_PERFORMANCE_BASELINE.md`](../../docs/v2-rebuild/SERVER_PERFORMANCE_BASELINE.md).

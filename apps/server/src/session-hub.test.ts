@@ -441,6 +441,8 @@ describe('serialized room session hub', () => {
           historyAndCandidateMs: 1,
           candidateValidationMs: 1,
           snapshotValidationMs: 0,
+          predecessorValidationMs: 0,
+          frontierFastPathHit: 0,
           transactionMs: 0,
         },
       },

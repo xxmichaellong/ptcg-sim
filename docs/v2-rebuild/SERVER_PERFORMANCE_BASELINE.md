@@ -1,8 +1,9 @@
 # Server performance and payload baseline
 
 Status: local `workerd` payload gate, bounded journal plateau, numeric
-command-phase observation, validated-snapshot handoff, and incremental replay
-candidate validation implemented
+command-phase observation, validated-snapshot/incremental-replay proofs, and the
+authority-frontier fast commit implemented; provisional local server-latency
+gate achieved
 
 Recorded: 2026-09-03
 
@@ -31,9 +32,10 @@ corepack pnpm run measure:v2:server
 The command writes a machine-readable, gitignored report to
 `artifacts/performance/server-local.json`. Pass
 `--output <repository-relative-path>` after the server package script when a
-different destination is needed. The report contains only aggregate storage
-categories; it does not emit room, session, command, card, capability, or digest
-values.
+different destination is needed. The local report schema is
+`ptcgsim-runtime-performance-v3`; production structured telemetry remains v2.
+The report contains only aggregate storage categories; it does not emit room,
+session, command, card, capability, or digest values.
 
 ## CI regression envelopes
 
@@ -42,10 +44,10 @@ six-command fixture it enforces:
 
 | Resource                                              | CI envelope | Named observation |
 | ----------------------------------------------------- | ----------: | ----------------: |
-| Largest server frame                                  |     256 KiB |      62,427 bytes |
-| Three-recipient aggregate publication                 |     768 KiB |     149,270 bytes |
-| Serialized Durable Object keys and JSON values        |       2 MiB |     327,023 bytes |
-| Durable Object storage entries                        |          32 |                16 |
+| Largest server frame                                  |     256 KiB |      62,304 bytes |
+| Three-recipient aggregate publication                 |     768 KiB |     148,899 bytes |
+| Serialized Durable Object keys and JSON values        |       2 MiB |     327,365 bytes |
+| Durable Object storage entries                        |          32 |                17 |
 | Serialized hibernating WebSocket attachment           |       1 KiB |         120 bytes |
 | Delivered frames per accepted three-recipient command |   exactly 4 |                 4 |
 
@@ -71,18 +73,18 @@ Environment:
 
 The current named run reported:
 
-| Observation                                                           |                                 Result |
-| --------------------------------------------------------------------- | -------------------------------------: |
-| Fixture construction, including room/admission and six commands       |                                 593 ms |
-| Individual fixture command to all publications                        |                               41–77 ms |
-| Early `FlipCoin` command to all publications, 24 samples              |  p50 83 ms; p95 105 ms; p99/max 122 ms |
-| Tail of journal/outcome fill, 24 samples                              | p50 194 ms; p95 235 ms; p99/max 242 ms |
-| Mature bounded-history plateau, 32 samples                            | p50 207 ms; p95 252 ms; p99/max 262 ms |
-| Hibernating eviction wake, ping to pong, 9 samples                    |         p50 158 ms; p95/p99/max 204 ms |
-| First post-hibernation command at the mature plateau                  |                                 401 ms |
-| Largest `LoadDeck` request                                            |                           15,386 bytes |
-| Largest observed server frame, including the post-hibernation command |                           62,427 bytes |
-| Largest three-recipient aggregate publication                         |                          149,270 bytes |
+| Observation                                                           |                                         Result |
+| --------------------------------------------------------------------- | ---------------------------------------------: |
+| Fixture construction, including room/admission and six commands       |                                         664 ms |
+| Individual fixture command to all publications                        |                                       45–62 ms |
+| Early `FlipCoin` command to all publications, 24 samples              |            p50 42 ms; p95 49 ms; p99/max 54 ms |
+| Tail of journal/outcome fill, 24 samples                              |            p50 41 ms; p95 46 ms; p99/max 47 ms |
+| Mature bounded-history plateau, 32 samples                            | min 29 ms; p50 43 ms; p95 50 ms; p99/max 53 ms |
+| Hibernating eviction wake, ping to pong, 9 samples                    |                 p50 120 ms; p95/p99/max 186 ms |
+| First post-hibernation command at the mature plateau                  |                                         181 ms |
+| Largest `LoadDeck` request                                            |                                   15,386 bytes |
+| Largest observed server frame, including the post-hibernation command |                                   62,431 bytes |
+| Largest three-recipient aggregate publication                         |                                  149,276 bytes |
 
 Nearest-rank percentiles are used. Command time begins immediately before the
 WebSocket send and ends after all three projected publications plus the actor's
@@ -92,10 +94,10 @@ client rendering. Serialized storage bytes are a stable JSON/key-size proxy,
 not SQLite file size or Cloudflare billable storage.
 
 These wall-clock values are observations, not universal CI assertions. The
-mature server p95 is 243 ms, 7 ms below the provisional 250 ms objective; the
-252 ms command-to-publication p95 remains 2 ms above it before any Internet or
-browser reconciliation cost is added. Managed preview measurements remain
-mandatory.
+mature command-to-publication p95 is 50 ms and server p95 is 42 ms, respectively
+200 and 208 ms below the provisional 250 ms objective before any Internet or
+browser reconciliation cost is added. The provisional local gate is achieved;
+managed preview measurements remain mandatory.
 
 ## Result: bounded audit-journal plateau
 
@@ -116,59 +118,67 @@ The real runtime plateau reported:
 
 | Frontier                                             | Entries | Serialized key/value proxy | Command journal rows |
 | ---------------------------------------------------- | ------: | -------------------------: | -------------------: |
-| Representative fixture, revision 6                   |      16 |              327,023 bytes |                    6 |
-| Mature retention boundary, revision 131              |     138 |              367,973 bytes |                  128 |
-| 32 more commands, revision 163                       |     138 |              357,887 bytes |                  128 |
-| Forced eviction plus committed command, revision 164 |     138 |              357,898 bytes |                  128 |
+| Representative fixture, revision 6                   |      17 |              327,365 bytes |                    6 |
+| Mature retention boundary, revision 131              |     139 |              368,318 bytes |                  128 |
+| 32 more commands, revision 163                       |     139 |              358,232 bytes |                  128 |
+| Forced eviction plus committed command, revision 164 |     139 |              358,243 bytes |                  128 |
 
 The slight size reduction is expected: large initial deck/setup audit rows age
 out and are replaced by small coin rows. Most importantly, neither entry count
 nor serialized size grows monotonically after the bound, and the same plateau
 survives eviction and another durable command.
 
-## Finding: durable predecessor validation is the remaining local hot path
+At the retention boundary, the exact category sizes were 1,471 admission,
+297 frontier, 11,966 retention-index, 63,464 command-journal, 290,733 snapshot,
+126 lifecycle, and 261 rate-limit bytes. The final post-wake values were 1,471,
+297, 11,996, 58,190, 285,902, 126, and 261 bytes respectively. The frontier adds
+one bounded entry and does not alter the plateau conclusion.
 
-The authority snapshot is 249,813 serialized bytes after fixture construction,
-290,685 bytes at the retention boundary, 285,851 bytes after the mature advance,
-and 285,854 bytes after the post-hibernation commit. The adapter atomically
-replaces that complete snapshot on every authority commit and still reads and
-fully validates/replays the proofless durable predecessor inside the transaction.
-This now dominates the mature local distribution.
+## Result: authority frontier removes hot-path predecessor replay
+
+The authority snapshot is 249,861 serialized bytes after fixture construction,
+290,733 bytes at the retention boundary, 285,899 bytes after the mature advance,
+and 285,902 bytes after the post-hibernation commit. The adapter still atomically
+replaces that complete snapshot, but a proven normal multiplayer command now
+checks the 297-byte frontier instead of loading and replaying its predecessor.
+All 32 mature samples hit that path; none fell back, and predecessor validation
+was 0 ms throughout.
 
 Telemetry v2 now splits the 32-command mature plateau inside the Worker:
 
-| Server phase                                     | p50 | p95 | p99/max |
-| ------------------------------------------------ | --: | --: | ------: |
-| Total command handling through socket enqueue    | 199 | 243 |     255 |
-| Authority processing                             |  25 |  29 |      29 |
-| Recipient projection/protocol view serialization |   7 |  10 |      11 |
-| Durable persistence                              | 165 | 207 |     217 |
-| Publication JSON size serialization              |   0 |   1 |       1 |
-| Socket JSON serialization and enqueue            |   1 |   3 |       3 |
+| Server phase                                     | Minimum | p50 | p95 | p99/max |
+| ------------------------------------------------ | ------: | --: | --: | ------: |
+| Total command handling through socket enqueue    |      21 |  34 |  42 |      44 |
+| Authority processing                             |       9 |  18 |  22 |      23 |
+| Recipient projection/protocol view serialization |       4 |   7 |  11 |      11 |
+| Durable persistence                              |       5 |   8 |  12 |      13 |
+| Publication JSON size serialization              |       0 |   1 |   1 |       1 |
+| Socket JSON serialization and enqueue            |       0 |   0 |   1 |       2 |
 
 Durations are milliseconds and percentile rows are independent distributions,
 so percentile columns must not be added as though they describe the same
-sample. The first post-eviction command took 401 ms end-to-end and 270 ms inside
-the command handler: 29 ms authority processing, 42 ms projection, 198 ms
-persistence, 1 ms publication serialization, and 0 ms socket send.
+sample. The first post-eviction command took 181 ms end-to-end and 43 ms inside
+the command handler: 16 ms authority processing, 14 ms projection, 12 ms
+persistence, 0 ms publication serialization, and 1 ms socket send.
 
 The local-only inner diagnostic divides those two dominant phases further:
 
 | Inner server operation                  | p50 | p95 | p99/max |
 | --------------------------------------- | --: | --: | ------: |
 | Validate current authority snapshot     |   0 |   0 |       1 |
-| Resolve and execute command             |   2 |   6 |       6 |
-| Build history and candidate snapshot    |   9 |  12 |      12 |
-| Validate candidate authority snapshot   |  12 |  16 |      17 |
+| Resolve and execute command             |   3 |   6 |       6 |
+| Build history and candidate snapshot    |   9 |  11 |      11 |
+| Validate candidate authority snapshot   |   6 |   8 |       8 |
 | Persistence adapter validates candidate |   0 |   0 |       0 |
-| Atomic Durable Object transaction       | 165 | 207 |     217 |
+| Validate durable predecessor            |   0 |   0 |       0 |
+| Atomic Durable Object transaction       |   8 |  12 |      13 |
 
-The post-eviction sample has the same proof behavior: input and adapter snapshot
-validation were 0 ms, candidate validation was 12 ms, and the transaction was
-198 ms. Resolution/execution was 6 ms and history/candidate construction was 11
-ms.
+The post-eviction sample has the same proof/frontier behavior: input, adapter,
+and predecessor validation were 0 ms, candidate validation was 6 ms, and the
+transaction was 11 ms. Resolution/execution was 3 ms, history/candidate
+construction was 7 ms, and the frontier hit flag was 1.
 
-## Result: verified incremental replay removes retained-history reconstruction
+## Result: verified proof chain and rollback-compatible authority frontier
 
 The authority carries a full-validation proof for the exact recursively frozen
 current snapshot. For each accepted multiplayer command it clones one canonical
@@ -179,8 +189,8 @@ frozen suffix is not replayed. A single-use opaque transition proof binds the
 exact predecessor/proof, canonical batch, resulting state/history roots, and
 limits. Rejections instead retain exact state/history roots and prove the
 session/outcome delta. The candidate is recursively frozen and receives the
-ordinary snapshot proof plus exact source-frontier/session/outcome/batch binding
-for persistence.
+ordinary snapshot proof plus exact source-snapshot/source-validation/session/
+outcome/batch binding for persistence.
 
 The proofs are internal correctness evidence, not security credentials,
 portable signatures, or persisted fields. Missing, forged, stale, reused,
@@ -189,40 +199,65 @@ Proofless adapter calls fully validate the candidate, then validate its complete
 accepted or rejected transition against the fully validated durable predecessor;
 this includes a canonical batch compacted immediately into the replay base.
 Restore, migration, retry reload, and external snapshot install remain full
-trust-boundary validations. No durable schema changed.
+trust-boundary validations.
+
+Persistence now keeps an exact store-local validated head and a strict
+`ptcgsim-authority-frontier-v1` record. The existing v6 snapshot envelope gains
+an optional 128-bit generation, which the frontier binds to the envelope/domain
+schemas, match, mode, authority version, and state revision. A proven command
+must bind the exact cached snapshot and validation plus its session, outcome,
+canonical batch, expected authority version, and expected revision. When that
+evidence and the stored frontier match, the transaction does not read the
+snapshot. It creates one generation outside any automatic transaction retry,
+checks that it differs from the actual predecessor generation, and writes the
+new snapshot/frontier, journal, retention index, and pruning atomically.
+
+Missing or malformed frontier data is repaired only after full snapshot
+validation. A well-formed divergent pair fails closed without writes. The
+additive field is rollback-compatible: the pre-frontier v6 reader accepts and
+ignores it, its writer emits v6 without it, and a subsequent new runtime fully
+validates that generation-free snapshot before atomically replacing the stale
+pair. Admissions always read and validate the predecessor and pair the frontier
+with journal, retention, lifecycle/alarm, and pruning updates; expiry validates
+the pair before lifecycle repair or deletion. The generation is coherence
+evidence, not a security credential. There is no domain-state, wire-protocol, or
+production-telemetry schema change; v3 applies only to the local performance
+artifact. The transaction and alarm behavior follow Cloudflare's
+[Durable Object storage API](https://developers.cloudflare.com/durable-objects/api/storage-api/)
+and [alarm API](https://developers.cloudflare.com/durable-objects/api/alarms/).
 
 The same-host comparison is:
 
-| Metric                                 | Historical post-proof | Incremental replay |
-| -------------------------------------- | --------------------: | -----------------: |
-| Mature command-to-all-publications p95 |                357 ms |             252 ms |
-| Mature server command handling p95     |                343 ms |             243 ms |
-| Candidate authority validation p95     |                184 ms |              16 ms |
-| Complete measured scenario             |                35.4 s |           26.204 s |
-| Complete Vitest invocation             |                     — |            30.50 s |
+| Metric                                 | Post-proof historical | Incremental replay | Authority frontier |
+| -------------------------------------- | --------------------: | -----------------: | -----------------: |
+| Mature command-to-all-publications p95 |                357 ms |             252 ms |              50 ms |
+| Mature server command handling p95     |                343 ms |             243 ms |              42 ms |
+| Candidate authority validation p95     |                184 ms |              16 ms |               8 ms |
+| Durable persistence p95                |                     — |             207 ms |              12 ms |
+| Complete measured scenario             |                35.4 s |           26.204 s |            8.766 s |
+| Complete Vitest invocation             |                     — |            30.50 s |            12.12 s |
 
 The immediately preceding freeze-hardened proof result had itself improved
 historical pre-proof p95 from 648 to 357 ms end to end and 636 to 343 ms
-server-side; its full measurement fell from 58.6 to 35.4 seconds. The new
-incremental result further reduces mature p95 to 252/243 ms and candidate
-validation to 16 ms. Server p95 clears 250 ms by 7 ms, while end-to-end p95
-misses by 2 ms.
+server-side; its full measurement fell from 58.6 to 35.4 seconds. The subsequent
+incremental-replay result reduced mature p95 to 252/243 ms and candidate
+validation to 16 ms. The authority-frontier result now reduces mature p95 from
+252 to 50 ms end to end, 243 to 42 ms server-side, and persistence from 207 to 12
+ms; measured scenario time falls from 26.204 to 8.766 seconds. The provisional
+250 ms p95 objective is achieved locally by 200 ms end to end and 208 ms
+server-side.
 
-The next target is a small atomically maintained authority-frontier record. The
-transaction should compare that bounded record instead of loading and replaying
-the complete durable predecessor merely to verify authority/state versions. The
-frontier must be written atomically with the snapshot, journal, retention index,
-and deletions; missing or malformed frontier data must fail closed or be repaired
-only after a complete stored-snapshot validation. Any snapshot restored into
-memory still receives the full invariant/replay suite. Atomic accepted-state
-recovery, exact retries, visibility, and fail-closed migration remain
-non-negotiable.
+The next performance step is not another unsafe validation shortcut. Repeat the
+observation for stability, then gather managed-preview/network, platform
+resource/cost, and long-running soak evidence while retaining full snapshot
+validation at restore, migration, repair, external-install, and proofless or
+mismatched fallback boundaries.
 
 ## Evidence still required
 
 - managed Cloudflare preview p50/p95/p99 split by command family and phase;
-- the small atomic authority-frontier optimization and a mature end-to-end local
-  p95 below the ratified objective;
+- repeated named-host observations and a ratified managed-preview latency
+  objective;
 - reconnect-to-usable timing over a real transport;
 - platform CPU, memory, storage, request, and cost distributions;
 - approved room concurrency/load targets and rate-limit behavior;

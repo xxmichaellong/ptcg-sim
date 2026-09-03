@@ -254,6 +254,8 @@ describe('authoritative room command transaction', () => {
         historyAndCandidateMs: 30,
         candidateValidationMs: 10,
         snapshotValidationMs: 0,
+        predecessorValidationMs: 0,
+        frontierFastPathHit: 0,
         transactionMs: 0,
       },
     });
@@ -280,6 +282,8 @@ describe('authoritative room command transaction', () => {
         historyAndCandidateMs: 0,
         candidateValidationMs: 0,
         snapshotValidationMs: 0,
+        predecessorValidationMs: 0,
+        frontierFastPathHit: 0,
         transactionMs: 0,
       },
     });
@@ -423,6 +427,20 @@ describe('authoritative room command transaction', () => {
         transition.eventBatch
       )
     ).toBe(true);
+    const structurallyEquivalentCurrent = structuredClone(current);
+    validateAuthoritySnapshot(structurallyEquivalentCurrent);
+    expect(
+      authoritySnapshotCommandValidationMatches(
+        validation,
+        candidate,
+        structurallyEquivalentCurrent,
+        current.authorityVersion,
+        current.state.revision,
+        'session-player-one',
+        outcome,
+        transition.eventBatch
+      )
+    ).toBe(false);
     expect(
       authoritySnapshotCommandValidationMatches(
         validation,

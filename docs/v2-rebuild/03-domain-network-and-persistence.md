@@ -381,15 +381,19 @@ bounded operational state, not canonical game state or authorization evidence;
 normal authority validation still applies after the budget check.
 
 A newly initialized room is `unclaimed` for five minutes. Its lifecycle record,
-authority snapshot, and Durable Object alarm are installed atomically. The first
-successful seat or spectator admission changes the lifecycle to `claimed` and
-cancels the alarm in the same admission transaction. A due alarm transaction
-first changes `unclaimed` to `expiring`; all later mutations and allocations
-then fail closed before `deleteAll()`. If deletion fails, Cloudflare's
-at-least-once alarm retry sees the tombstone and retries deletion. An early alarm
-is rescheduled, an obsolete alarm for a claimed room is cancelled, and a stale
-unclaimed marker paired with an existing session is repaired to claimed. Rooms
-created before the lifecycle record existed are never retroactively deleted.
+authority snapshot/frontier pair, and Durable Object alarm are installed
+atomically. The first successful seat or spectator admission changes the
+lifecycle to `claimed`, rotates the snapshot/frontier pair, and cancels the alarm
+in the same admission transaction. A due alarm validates and, if safe, repairs
+the pair before it changes `unclaimed` to `expiring`; all later mutations and
+allocations then fail closed before `deleteAll()`. If deletion fails,
+Cloudflare's at-least-once alarm retry sees the tombstone and retries deletion.
+An early alarm is rescheduled, an obsolete alarm for a claimed room is
+cancelled, and a stale unclaimed marker paired with an existing session is
+repaired to claimed. Rooms created before the lifecycle record existed are never
+retroactively deleted. See the documented
+[Durable Object lifecycle](https://developers.cloudflare.com/durable-objects/concepts/durable-object-lifecycle/)
+and [alarm API](https://developers.cloudflare.com/durable-objects/api/alarms/).
 
 ADR-020 blocks visible create/join wiring. The v1 room ID is both discovery and
 authorization; retaining that behavior would negate SEC-001/SEC-003. The v2
@@ -523,48 +527,74 @@ digest material. See the
 This closes monotonic audit-row growth, but per-command full-snapshot replacement
 is still an interim checkpoint strategy. The first bounded-history `workerd`
 measurement showed three whole-snapshot invariant scans. Exact-object validation
-proofs first removed the current and adapter duplicates. The current multiplayer
-path additionally prepares a verified incremental replay transition from that
-frozen predecessor: it clones one canonical event batch, reapplies only that
-batch to derive the next state, and uses cached canonical UTF-8 entry sizes to
-remove the minimum replay prefix required by count and byte bounds. Only an
-actually removed prefix is applied to advance the base; the retained frozen
-suffix is carried by construction and is not replayed. A single-use opaque proof
-binds the exact predecessor/proof, batch, result state/history roots, and replay
-limits. Rejected commands retain the predecessor's state and replay roots and
-validate only their session/outcome delta.
+proofs removed the current and adapter duplicates, and verified incremental
+replay removed retained-history reconstruction. The multiplayer path clones one
+canonical event batch, reapplies only that batch to derive the next state, and
+uses cached canonical UTF-8 entry sizes to remove the minimum replay prefix
+required by count and byte bounds. Only an actually removed prefix is applied to
+advance the base; the retained frozen suffix is carried by construction and is
+not replayed. A single-use opaque proof binds the exact predecessor/proof, batch,
+result state/history roots, and replay limits. Rejected commands retain the
+predecessor's state and replay roots and validate only their session/outcome
+delta.
 
 After the cheap non-replay invariant families pass, the candidate is recursively
 frozen and receives the ordinary opaque snapshot proof, additionally bound to
-its serialized source frontier, exact outcome, session, and canonical batch.
+its exact source snapshot and validation, outcome, session, and canonical batch.
 That same canonical batch drives presentation, replay, persistence, and the
 command journal even when it is immediately compacted into the replay base.
 These proofs are internal correctness evidence, not credentials or portable
 signatures, and are never persisted or sent over the wire. Missing, forged,
 stale, reused, cross-room, mutated, or mismatched evidence cannot take the fast
-path. Proofless persistence performs complete candidate validation and checks
-the full accepted/rejected transition against the fully validated durable
-predecessor. Restore, migration, retry reload, and external snapshot install
-remain full-validation boundaries. No durable schema changed.
+path. Proofless or mismatched persistence performs complete candidate validation
+and checks the full accepted/rejected transition against the fully validated
+durable predecessor.
 
-The canonical incremental-replay run took 26.204 seconds for its scenario and
-30.50 seconds for the complete Vitest invocation. Mature
-command-to-publication p50/p95/p99/max was 207/252/262/262 ms; server handling was
-199/243/255/255 ms. Authority, projection, persistence/transaction, and candidate
-validation p50/p95 were respectively 25/29, 7/10, 165/207, and 12/16 ms. Adapter
-snapshot validation remained 0/0 ms. Against the immediately preceding
-freeze-hardened proof result, p95 moved from 357 to 252 ms end to end, 343 to 243
-ms server-side, and 184 to 16 ms for candidate validation. Server p95 now clears
-the provisional 250 ms objective by 7 ms; end-to-end p95 misses by 2 ms.
+The storage adapter now maintains an exact store-local validated head alongside
+a strict `ptcgsim-authority-frontier-v1` record. The existing v6 snapshot
+envelope accepts an optional 128-bit generation; the frontier binds it to the
+envelope and domain schema versions, match, mode, authority version, and state
+revision. An exact cache/source-proof/frontier match lets the normal proven
+multiplayer commit transaction read the small frontier without reading the
+snapshot. The generation is created once outside the retryable transaction,
+must rotate from the actual predecessor, and the new snapshot/frontier, journal,
+retention index, and pruning commit atomically.
 
-Persistence is now the dominant measured phase because the atomic transaction
-still reads and fully validates/replays the proofless durable predecessor before
-comparing its frontier. The next target is a small authority frontier maintained
-atomically with snapshot, journal, and retention writes. Commands can compare
-that bounded record without replaying the whole stored snapshot, while any
-snapshot actually restored into memory continues through complete validation.
-This must preserve persist-before-publish, exact retry, visibility, atomic
-rollback, and fail-closed recovery semantics.
+Restore, migration, retry reload, external snapshot install, proofless calls,
+and every fast-path mismatch remain full-validation boundaries. Missing or
+strictly malformed frontier data is repaired only after a complete snapshot
+validation. A well-formed frontier that diverges from its generated snapshot
+fails closed without writes. The additive v6 field is deliberately
+rollback-compatible: the old v6 reader ignores it, an old writer omits it, and
+the next new runtime fully validates the generation-free snapshot before
+atomically replacing the stale pair. Admission commits always read and validate
+their predecessor; their snapshot/frontier, journal, retention, lifecycle/alarm,
+and pruning changes remain paired. The generation/frontier is coherence
+evidence, not a bearer credential. This changes no game-domain, wire, or
+production telemetry schema; only the local performance artifact advances to
+v3.
+
+The canonical authority-frontier run took 8.766 seconds for its scenario and
+12.12 seconds for the complete Vitest invocation; fixture setup took 664 ms.
+Mature command-to-publication minimum/p50/p95/p99/max was 29/43/50/53/53 ms;
+server handling was 21/34/42/44/44 ms. Authority, projection, persistence,
+publication
+serialization, and socket-send p50/p95 were 18/22, 7/11, 8/12, 1/1, and 0/1 ms.
+Inner input, resolution/execution, history/candidate, candidate validation,
+adapter validation, predecessor validation, and transaction p50/p95 were 0/0,
+3/6, 9/11, 6/8, 0/0, 0/0, and 8/12 ms. All 32 plateau commands hit the frontier;
+none fell back. Against the incremental-replay run, p95 moved from 252 to 50 ms
+end to end, 243 to 42 ms server-side, and 207 to 12 ms for persistence; scenario
+time moved from 26.204 to 8.766 seconds. Both provisional 250 ms p95 objectives
+are met locally by 200 and 208 ms. The next gate is managed-preview and soak
+validation, without weakening complete restore/fallback validation.
+
+The post-hibernation command was 181 ms end to end and 43 ms server-side, with a
+16/14/12/0/1 ms authority/projection/persistence/publication/socket split and
+0/3/7/6/0/0/1/11 ms input/resolution/history/candidate/adapter/predecessor/hit/
+transaction detail. The largest frame and aggregate publication were 62,431 and
+149,276 bytes. Storage peaked at 139 entries/368,318 bytes and ended at
+139/358,243, including a 297-byte frontier.
 
 ### Saved games and links
 

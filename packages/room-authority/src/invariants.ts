@@ -55,7 +55,8 @@ interface AuthoritySnapshotValidationRecord {
   readonly admission: RoomAuthoritySnapshot['admission'];
   readonly replayByteFacts: ReplayHistoryByteFacts;
   readonly command?: {
-    readonly sourceSnapshotSerialization: string;
+    readonly sourceSnapshot: RoomAuthoritySnapshot;
+    readonly sourceValidation: AuthoritySnapshotValidation;
     readonly expectedAuthorityVersion: number;
     readonly expectedRevision: number;
     readonly sessionId: string;
@@ -162,7 +163,8 @@ export const authoritySnapshotCommandValidationMatches = (
   const command = validationRecords.get(validation!)?.command;
   return Boolean(
     command &&
-    command.sourceSnapshotSerialization === stableSerialize(current) &&
+    command.sourceSnapshot === current &&
+    command.sourceValidation === authoritySnapshotValidationFor(current) &&
     command.expectedAuthorityVersion === expectedAuthorityVersion &&
     command.expectedRevision === expectedRevision &&
     command.sessionId === sessionId &&
@@ -1118,7 +1120,8 @@ export const validateMultiplayerAuthorityCandidate = (
   if (problems.length > 0) throw new AuthoritySnapshotInvariantError(problems);
   freezeRecursively(candidate);
   return registerAuthoritySnapshotValidation(candidate, replayByteFacts, {
-    sourceSnapshotSerialization: stableSerialize(current),
+    sourceSnapshot: current,
+    sourceValidation: currentValidation,
     expectedAuthorityVersion: current.authorityVersion,
     expectedRevision: current.state.revision,
     sessionId,

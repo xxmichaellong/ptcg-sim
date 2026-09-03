@@ -13,8 +13,10 @@ import type { RoomAuthoritySnapshot } from '@ptcgsim/room-authority';
 import { runInDurableObject } from 'cloudflare:test';
 
 import {
+  AUTHORITY_FRONTIER_STORAGE_KEY,
   AUTHORITY_SNAPSHOT_STORAGE_KEY,
   ROOM_LIFECYCLE_STORAGE_KEY,
+  type StoredAuthorityFrontier,
 } from '../src/durable-storage.js';
 import { JOURNAL_RETENTION_STORAGE_KEY } from '../src/journal-retention.js';
 import { ROOM_RATE_LIMIT_STORAGE_KEY } from '../src/room-rate-limit.js';
@@ -23,8 +25,32 @@ export const RUNTIME_ORIGIN = 'https://play.example';
 
 interface StoredAuthorityEnvelope {
   readonly format: string;
+  readonly generation?: string;
   readonly snapshot: RoomAuthoritySnapshot;
 }
+
+const authorityStorageMetadata = (
+  envelope: StoredAuthorityEnvelope | undefined,
+  frontier: StoredAuthorityFrontier | undefined
+) => ({
+  envelope: envelope
+    ? {
+        format: envelope.format,
+        generation: envelope.generation,
+        authorityVersion: envelope.snapshot.authorityVersion,
+        stateRevision: envelope.snapshot.state.revision,
+      }
+    : undefined,
+  frontier: frontier
+    ? {
+        format: frontier.format,
+        envelopeFormat: frontier.envelopeFormat,
+        generation: frontier.generation,
+        authorityVersion: frontier.authorityVersion,
+        stateRevision: frontier.stateRevision,
+      }
+    : undefined,
+});
 
 export interface StoredLifecycle {
   readonly format: string;
@@ -239,6 +265,9 @@ export const runtimeEvidence = (created: RoomCreationResponse) =>
     const envelope = await state.storage.get<StoredAuthorityEnvelope>(
       AUTHORITY_SNAPSHOT_STORAGE_KEY
     );
+    const frontier = await state.storage.get<StoredAuthorityFrontier>(
+      AUTHORITY_FRONTIER_STORAGE_KEY
+    );
     const lifecycle = await state.storage.get<StoredLifecycle>(
       ROOM_LIFECYCLE_STORAGE_KEY
     );
@@ -249,6 +278,7 @@ export const runtimeEvidence = (created: RoomCreationResponse) =>
       alarm: await state.storage.getAlarm(),
       attachment: attachments[0],
       attachments,
+      authorityStorage: authorityStorageMetadata(envelope, frontier),
       lifecycle,
       snapshot: envelope?.snapshot,
       socketCount: state.getWebSockets().length,
@@ -265,6 +295,7 @@ const storageEntryCategory = (key: string): string => {
     return 'authority:journal-retention';
   }
   if (key === AUTHORITY_SNAPSHOT_STORAGE_KEY) return 'authority:snapshot';
+  if (key === AUTHORITY_FRONTIER_STORAGE_KEY) return 'authority:frontier';
   if (key === ROOM_LIFECYCLE_STORAGE_KEY) return 'room:lifecycle';
   if (key === ROOM_RATE_LIMIT_STORAGE_KEY) return 'room:rate-limits';
   return 'other';

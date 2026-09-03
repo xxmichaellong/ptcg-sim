@@ -120,6 +120,15 @@ const phaseDistributions = (
     snapshotValidation: distribution(
       samples.map((sample) => sample.breakdown.snapshotValidationMs)
     ),
+    predecessorValidation: distribution(
+      samples.map((sample) => sample.breakdown.predecessorValidationMs)
+    ),
+    frontierFastPathHits: samples.filter(
+      (sample) => sample.breakdown.frontierFastPathHit === 1
+    ).length,
+    frontierFallbacks: samples.filter(
+      (sample) => sample.breakdown.frontierFastPathHit !== 1
+    ).length,
     transaction: distribution(
       samples.map((sample) => sample.breakdown.transactionMs)
     ),
@@ -265,7 +274,7 @@ describe('local workerd performance observation', () => {
       utf8Bytes(JSON.stringify(attachment))
     );
     const report = {
-      schema: 'ptcgsim-runtime-performance-v2',
+      schema: 'ptcgsim-runtime-performance-v3',
       scope: 'local-workerd-observation',
       environment: {
         buildId: 'local-development',
@@ -384,6 +393,15 @@ describe('local workerd performance observation', () => {
     expect(report.latency.journalPlateauServerPhases.total.samples).toBe(
       JOURNAL_PLATEAU_ADVANCE_COMMANDS
     );
+    expect(
+      report.latency.journalPlateauServerPhases.persistenceBreakdown
+        .frontierFastPathHits
+    ).toBe(JOURNAL_PLATEAU_ADVANCE_COMMANDS);
+    expect(
+      report.latency.journalPlateauServerPhases.persistenceBreakdown
+        .frontierFallbacks
+    ).toBe(0);
+    expect(postHibernationPhases.breakdown.frontierFastPathHit).toBe(1);
     for (const sample of plateauPhaseSamples) {
       expect(
         sample.phases.authorityProcessingMs +
