@@ -146,6 +146,77 @@ describe('React DOM board renderer', () => {
     });
   });
 
+  it('allows interaction cancellation before mount and while mounted', async () => {
+    const emitIntent = vi.fn();
+    const emitPresentationUpdate = vi.fn();
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent,
+      emitPresentationUpdate,
+      reportError: vi.fn(),
+    });
+    expect(() => renderer.cancelInteraction()).not.toThrow();
+    const host = document.createElement('div');
+    await mountInAct(renderer, host, createScene());
+    const surface = host.querySelector<HTMLElement>('.ptcgsim-board-surface')!;
+    const card = host.querySelector<HTMLElement>('[data-card-id]')!;
+    surface.getBoundingClientRect = () =>
+      ({
+        x: 0,
+        y: 0,
+        left: 0,
+        top: 0,
+        right: 800,
+        bottom: 600,
+        width: 800,
+        height: 600,
+        toJSON: () => ({}),
+      }) as DOMRect;
+    const releasePointerCapture = vi.fn();
+    card.setPointerCapture = vi.fn();
+    card.hasPointerCapture = vi.fn(() => true);
+    card.releasePointerCapture = releasePointerCapture;
+    act(() => {
+      card.dispatchEvent(
+        new PointerEvent('pointerdown', {
+          bubbles: true,
+          pointerId: 7,
+          button: 0,
+          clientX: 30,
+          clientY: 440,
+        })
+      );
+      surface.dispatchEvent(
+        new PointerEvent('pointermove', {
+          bubbles: true,
+          pointerId: 7,
+          button: 0,
+          clientX: 300,
+          clientY: 300,
+        })
+      );
+    });
+    expect(emitPresentationUpdate).toHaveBeenCalled();
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
+    expect(releasePointerCapture).toHaveBeenCalledWith(7);
+    act(() => {
+      surface.dispatchEvent(
+        new PointerEvent('pointerup', {
+          bubbles: true,
+          pointerId: 7,
+          button: 0,
+          clientX: 300,
+          clientY: 300,
+        })
+      );
+    });
+    expect(emitIntent).not.toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'CardDropRequested' })
+    );
+  });
+
   it('survives repeated StrictMode-compatible mount and teardown without nodes accumulating', async () => {
     const host = document.createElement('div');
     for (let index = 0; index < 10; index += 1) {

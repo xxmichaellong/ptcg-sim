@@ -156,14 +156,20 @@ export const BoardSurface = ({
   preferences,
   adapters,
   onCommit,
+  setInteractionCancellation,
 }: {
   readonly scene: BoardScene;
   readonly presentation: BoardPresentation;
   readonly preferences: BoardPreferences;
   readonly adapters: BoardRendererAdapters;
   readonly onCommit?: () => void;
+  readonly setInteractionCancellation?: (cancel: (() => void) | null) => void;
 }) => {
   const surfaceRef = useRef<HTMLDivElement>(null);
+  const capturedPointerRef = useRef<{
+    readonly element: HTMLElement;
+    readonly pointerId: number;
+  } | null>(null);
   const dragController = useMemo(
     () => new BoardDragController(adapters),
     [adapters]
@@ -180,6 +186,30 @@ export const BoardSurface = ({
     },
     [dragController]
   );
+  useLayoutEffect(() => {
+    const cancel = () => {
+      const pointerId = dragController.cancelInteraction();
+      const captured = capturedPointerRef.current;
+      capturedPointerRef.current = null;
+      if (
+        captured &&
+        (pointerId === null || pointerId === captured.pointerId)
+      ) {
+        try {
+          if (captured.element.hasPointerCapture?.(captured.pointerId)) {
+            captured.element.releasePointerCapture(captured.pointerId);
+          }
+        } catch {
+          // Capture can already be released by the browser.
+        }
+      }
+    };
+    setInteractionCancellation?.(cancel);
+    return () => {
+      setInteractionCancellation?.(null);
+      cancel();
+    };
+  }, [dragController, setInteractionCancellation]);
 
   const pointerInput = (
     event: ReactPointerEvent<HTMLDivElement>
@@ -206,12 +236,12 @@ export const BoardSurface = ({
     return element && card ? { element, card } : null;
   };
   const releaseCapture = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const target = event.target;
-    if (!(target instanceof Element)) return;
-    const element = target.closest<HTMLElement>('[data-card-id]');
+    const captured = capturedPointerRef.current;
+    if (!captured || captured.pointerId !== event.pointerId) return;
+    capturedPointerRef.current = null;
     try {
-      if (element?.hasPointerCapture?.(event.pointerId)) {
-        element.releasePointerCapture(event.pointerId);
+      if (captured.element.hasPointerCapture?.(captured.pointerId)) {
+        captured.element.releasePointerCapture(captured.pointerId);
       }
     } catch {
       // Capture can already be released by the browser on cancellation.
@@ -234,6 +264,10 @@ export const BoardSurface = ({
         if (dragController.pointerDown(scene, target.card.id, input)) {
           try {
             target.element.setPointerCapture?.(event.pointerId);
+            capturedPointerRef.current = {
+              element: target.element,
+              pointerId: event.pointerId,
+            };
           } catch {
             // Pointer capture is best effort on older embedded browsers.
           }
@@ -258,6 +292,9 @@ export const BoardSurface = ({
       }}
       onLostPointerCapture={(event) => {
         dragController.cancel(event.pointerId);
+        if (capturedPointerRef.current?.pointerId === event.pointerId) {
+          capturedPointerRef.current = null;
+        }
       }}
       style={{
         position: 'relative',

@@ -140,6 +140,19 @@ export class PixiBoardRenderer implements BoardRenderer {
     }
   }
 
+  cancelInteraction(): void {
+    const pointerId = this.dragController.cancelInteraction();
+    if (pointerId !== null) {
+      try {
+        if (this.app?.canvas.hasPointerCapture?.(pointerId)) {
+          this.app.canvas.releasePointerCapture(pointerId);
+        }
+      } catch {
+        // Capture can already be released during browser cancellation.
+      }
+    }
+  }
+
   resize(viewport: BoardViewport): void {
     this.requireScene();
     if (!this.app) return;
@@ -167,6 +180,7 @@ export class PixiBoardRenderer implements BoardRenderer {
 
   destroy(): void {
     if (this.destroyed) return;
+    this.cancelInteraction();
     this.destroyed = true;
     this.mounted = false;
     this.generation += 1;
@@ -501,7 +515,13 @@ export class PixiBoardRenderer implements BoardRenderer {
   private readonly handleContextLost = (event: Event): void => {
     event.preventDefault();
     if (this.destroyed || this.recoveryTask) return;
-    this.dragController.cancel();
+    const cancellation = this.dragController.cancelForRendererFailure();
+    if (cancellation.pointerId !== null) {
+      this.releasePointerCapture(cancellation.pointerId);
+    }
+    if (this.presentation?.drag) {
+      this.presentation = { ...this.presentation, drag: null };
+    }
     this.recoveryTask = this.recoverFromContextLoss().finally(() => {
       this.recoveryTask = null;
     });

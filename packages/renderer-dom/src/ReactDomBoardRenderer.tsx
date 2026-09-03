@@ -23,6 +23,7 @@ export class ReactDomBoardRenderer implements BoardRenderer {
   private generation = 0;
   private destroyed = false;
   private finishPendingMount: (() => void) | null = null;
+  private cancelMountedInteraction: (() => void) | null = null;
 
   constructor(adapters: BoardRendererAdapters) {
     this.adapters = adapters;
@@ -85,6 +86,10 @@ export class ReactDomBoardRenderer implements BoardRenderer {
     this.renderNow();
   }
 
+  cancelInteraction(): void {
+    this.cancelMountedInteraction?.();
+  }
+
   resize(viewport: BoardViewport): void {
     this.requireMounted();
     if (this.host) {
@@ -101,6 +106,7 @@ export class ReactDomBoardRenderer implements BoardRenderer {
 
   destroy(): void {
     if (this.destroyed) return;
+    this.cancelInteraction();
     this.destroyed = true;
     this.finishPendingMount?.();
     this.finishPendingMount = null;
@@ -109,6 +115,7 @@ export class ReactDomBoardRenderer implements BoardRenderer {
     this.host = null;
     this.scene = null;
     this.presentation = null;
+    this.cancelMountedInteraction = null;
     this.adapters.reportStatus?.({ kind: 'destroyed' });
     if (root) queueMicrotask(() => root.unmount());
   }
@@ -138,11 +145,18 @@ export class ReactDomBoardRenderer implements BoardRenderer {
           preferences={this.preferences}
           adapters={this.adapters}
           onCommit={onCommit}
+          setInteractionCancellation={this.setInteractionCancellation}
         />
       </StrictMode>
     );
     root.render(surface);
   }
+
+  private readonly setInteractionCancellation = (
+    cancel: (() => void) | null
+  ): void => {
+    this.cancelMountedInteraction = cancel;
+  };
 }
 
 export const createReactDomBoardRenderer = (

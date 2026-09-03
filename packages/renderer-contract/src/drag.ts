@@ -24,6 +24,11 @@ interface ActiveGesture {
   dragging: boolean;
 }
 
+export interface BoardInteractionCancellation {
+  readonly pointerId: number | null;
+  readonly wasDragging: boolean;
+}
+
 const cardAt = (
   scene: BoardScene,
   cardId: ViewCardId
@@ -191,9 +196,36 @@ export class BoardDragController {
     return true;
   }
 
-  destroy(): void {
+  /** Clears one local gesture without emitting a second presentation update. */
+  cancelInteraction(): number | null {
+    const pointerId = this.active?.pointerId ?? null;
     this.active = null;
     this.suppressedClickCardId = null;
+    return pointerId;
+  }
+
+  /**
+   * Renderer-owned failure boundary. Unlike an application-requested cancel,
+   * this must tell presentation state when an in-flight drag is lost.
+   */
+  cancelForRendererFailure(): BoardInteractionCancellation {
+    const gesture = this.active;
+    if (!gesture) {
+      this.suppressedClickCardId = null;
+      return { pointerId: null, wasDragging: false };
+    }
+    const pointerId = gesture.pointerId;
+    const wasDragging = gesture.dragging;
+    this.active = null;
+    this.suppressedClickCardId = null;
+    if (wasDragging) {
+      this.adapters.emitPresentationUpdate({ kind: 'DragChanged', drag: null });
+    }
+    return { pointerId, wasDragging };
+  }
+
+  destroy(): void {
+    this.cancelInteraction();
   }
 
   private validPoint(input: BoardPointerInput): boolean {

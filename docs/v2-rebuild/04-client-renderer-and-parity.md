@@ -45,6 +45,7 @@ createBoardRenderer(adapters, options)
   mount(hostElement, initialRenderModel, initialPresentation)
   installScene(nextRenderModel, presentationEvents, mode = "advance")
   installPresentation(nextPresentation)
+  cancelInteraction()
   resize(viewport)
   setPreferences(renderPreferences)
   destroy()
@@ -58,6 +59,11 @@ legacy function names, zone indices, or network messages.
 All public calls are safe after rapid reconnect, route changes, React strict-mode
 development remounts, and WebGL context loss. `destroy()` is idempotent and
 releases listeners, pointer capture, timers, textures, and GPU resources.
+`cancelInteraction()` is the additive reconnect/resync seam: it releases active
+pointer capture and clears renderer-owned drag/suppressed-click state without a
+scene replacement. See
+[`BOARD_SESSION_CONTROLLER.md`](./BOARD_SESSION_CONTROLLER.md) for the unwired
+headless controller and concrete live/replay adapter contract.
 
 `installScene` rejects a lower revision in its default `advance` mode. Replay is
 the only caller allowed to request explicit `replace` mode when previous or
@@ -163,6 +169,17 @@ expands the play surface. Both interactions require structured geometry and
 semantic tests.
 
 ## State-to-view synchronization
+
+The first additive application-boundary implementation now lives in
+`apps/web/src/board/BoardSessionController.ts` with its concrete public-source
+adapter in `BoardSessionAdapter.ts`. Neither is wired to a spike or production
+route. Explicit frame, source, replay-generation, and replay-index cursors keep
+stale aliases, same-revision reconnect replacement, and replay rewind from
+being inferred from revision alone. Renderer and command effects are one-shot
+and never retained. Protocol presentation facts remain exclusively owned by
+the parallel `GamePresentationCoordinator`, not this board controller. See
+[`BOARD_SESSION_CONTROLLER.md`](./BOARD_SESSION_CONTROLLER.md) for the reducer,
+adapter, effect-order, cleanup, and deferred-browser-parity contract.
 
 On each authoritative view publication:
 

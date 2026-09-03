@@ -104,7 +104,8 @@ packages/renderer-pixi/src/
 
 apps/web/src/board/
   BoardViewport.tsx
-  BoardController.ts
+  BoardSessionController.ts # additive headless reducer/store implemented; not production-wired
+  BoardSessionAdapter.ts    # additive public live/replay composition; not production-wired
   model/createBoardRenderModel.ts
   layout/boardGeometry.ts
   input/BoardInputController.ts

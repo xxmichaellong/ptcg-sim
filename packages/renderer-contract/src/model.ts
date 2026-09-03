@@ -167,6 +167,8 @@ export interface BoardRenderer {
     mode?: BoardSceneInstallMode
   ): void;
   installPresentation(presentation: BoardPresentation): void;
+  /** Clears renderer-owned pointer capture, drag, and suppressed-click state. */
+  cancelInteraction(): void;
   resize(viewport: BoardViewport): void;
   setPreferences(preferences: BoardPreferences): void;
   destroy(): void;

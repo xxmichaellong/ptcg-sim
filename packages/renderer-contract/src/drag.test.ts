@@ -168,4 +168,50 @@ describe('renderer-neutral drag controller', () => {
     );
     expect(resolveBoardDropTarget(scene(), sourceId, 799, 599)).toBeNull();
   });
+
+  it('cancels active and suppressed-click state without emitting updates', () => {
+    const emitPresentationUpdate = vi.fn();
+    const controller = new BoardDragController({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate,
+    });
+    controller.pointerDown(scene(), sourceId, input(40, 450));
+    controller.pointerMove(scene(), input(450, 120));
+    emitPresentationUpdate.mockClear();
+    expect(controller.cancelInteraction()).toBe(7);
+    expect(emitPresentationUpdate).not.toHaveBeenCalled();
+    expect(controller.pointerUp(scene(), input(450, 120))).toBe(false);
+
+    controller.pointerDown(scene(), sourceId, input(40, 450));
+    controller.pointerMove(scene(), input(450, 120));
+    controller.pointerUp(scene(), input(450, 120));
+    expect(controller.cancelInteraction()).toBeNull();
+    expect(controller.consumeSuppressedClick(sourceId)).toBe(false);
+  });
+
+  it('reports a renderer-owned active-drag failure exactly once', () => {
+    const emitPresentationUpdate = vi.fn();
+    const controller = new BoardDragController({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate,
+    });
+    controller.pointerDown(scene(), sourceId, input(40, 450));
+    controller.pointerMove(scene(), input(450, 120));
+    emitPresentationUpdate.mockClear();
+
+    expect(controller.cancelForRendererFailure()).toEqual({
+      pointerId: 7,
+      wasDragging: true,
+    });
+    expect(emitPresentationUpdate).toHaveBeenCalledOnce();
+    expect(emitPresentationUpdate).toHaveBeenCalledWith({
+      kind: 'DragChanged',
+      drag: null,
+    });
+    expect(controller.cancelForRendererFailure()).toEqual({
+      pointerId: null,
+      wasDragging: false,
+    });
+    expect(emitPresentationUpdate).toHaveBeenCalledOnce();
+  });
 });
