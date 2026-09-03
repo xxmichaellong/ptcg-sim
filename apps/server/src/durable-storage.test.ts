@@ -13,11 +13,14 @@ import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
   DEFAULT_AUTHORITY_POLICY,
   appendReplayHistory,
+  authoritySnapshotValidationFor,
   createRoomAdmissionState,
   createReplayHistory,
   emptyProjectionIdentityState,
+  validateAuthoritySnapshot,
   type PersistedAdmissionTransaction,
   type PersistedAuthorityTransaction,
+  type AuthoritySnapshotValidation,
   type RoomAuthoritySnapshot,
 } from '@ptcgsim/room-authority';
 import { describe, expect, it } from 'vitest';
@@ -483,6 +486,9 @@ describe('Durable Object authority snapshot store', () => {
         entries: [],
       },
     });
+    expect(Object.isFrozen(restored)).toBe(true);
+    expect(Object.isFrozen(restored?.state)).toBe(true);
+    expect(authoritySnapshotValidationFor(restored!)).toBeDefined();
   });
 
   it('migrates v2 snapshots to a truncated replay rooted at current state', async () => {
@@ -1169,6 +1175,69 @@ describe('Durable Object authority snapshot store', () => {
         key.startsWith('authority:journal:')
       )
     ).toHaveLength(0);
+  });
+
+  it('fails closed when a direct caller supplies a forged or stale validation proof', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    const initial = initialSnapshot();
+    await store.initialize(initial);
+    const transaction = acceptedTransaction(initial);
+    const corruptSnapshot = {
+      ...transaction.snapshot,
+      replayHistory: {
+        ...transaction.snapshot.replayHistory,
+        baseStateHash: 'corrupt',
+      },
+    };
+
+    await expect(
+      store.commit({
+        ...transaction,
+        snapshot: corruptSnapshot,
+        snapshotValidation: {} as AuthoritySnapshotValidation,
+      })
+    ).rejects.toThrow('replay base hash does not match');
+    await expect(
+      store.commit({
+        ...transaction,
+        snapshot: corruptSnapshot,
+        snapshotValidation: validateAuthoritySnapshot(transaction.snapshot),
+      })
+    ).rejects.toThrow('replay base hash does not match');
+    expect(await store.load()).toEqual(initial);
+  });
+
+  it('validates and recursively freezes a proofless direct commit snapshot', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    const initial = initialSnapshot();
+    await store.initialize(initial);
+    const transaction = acceptedTransaction(initial);
+
+    expect(transaction.snapshotValidation).toBeUndefined();
+    expect(Object.isFrozen(transaction.snapshot)).toBe(false);
+
+    await store.commit(transaction);
+
+    expect(Object.isFrozen(transaction.snapshot)).toBe(true);
+    expect(Object.isFrozen(transaction.snapshot.state)).toBe(true);
+    expect(Object.isFrozen(transaction.snapshot.replayHistory)).toBe(true);
+    expect(authoritySnapshotValidationFor(transaction.snapshot)).toBeDefined();
+  });
+
+  it('returns a recursively frozen proof-bound snapshot after loading', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    await store.initialize(initialSnapshot());
+
+    const restored = await store.load();
+
+    expect(restored).toBeDefined();
+    expect(Object.isFrozen(restored)).toBe(true);
+    expect(Object.isFrozen(restored?.state)).toBe(true);
+    expect(Object.isFrozen(restored?.replayHistory)).toBe(true);
+    expect(authoritySnapshotValidationFor(restored!)).toBeDefined();
   });
 
   it('fails closed on a corrupt replay checkpoint', async () => {

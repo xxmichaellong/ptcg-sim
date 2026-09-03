@@ -12,6 +12,7 @@ import {
   MAX_REPLAY_EVENT_BATCHES,
   MAX_REPLAY_EVENT_BYTES,
   MAX_SOLO_UNDO_CHECKPOINTS,
+  type AuthoritySnapshotValidation,
   type RoomAuthoritySnapshot,
 } from './model.js';
 import { replaySoloUndoHistory } from './solo-undo-history.js';
@@ -29,6 +30,97 @@ export class AuthoritySnapshotInvariantError extends Error {
     this.problems = problems;
   }
 }
+
+interface AuthoritySnapshotValidationRecord {
+  readonly snapshot: RoomAuthoritySnapshot;
+  readonly schemaVersion: RoomAuthoritySnapshot['schemaVersion'];
+  readonly authorityVersion: number;
+  readonly mode: RoomAuthoritySnapshot['mode'];
+  readonly state: RoomAuthoritySnapshot['state'];
+  readonly stateRevision: number;
+  readonly soloUndoHistory: RoomAuthoritySnapshot['soloUndoHistory'];
+  readonly replayHistory: RoomAuthoritySnapshot['replayHistory'];
+  readonly identities: RoomAuthoritySnapshot['identities'];
+  readonly sessions: RoomAuthoritySnapshot['sessions'];
+  readonly admission: RoomAuthoritySnapshot['admission'];
+}
+
+const validationsBySnapshot = new WeakMap<
+  RoomAuthoritySnapshot,
+  AuthoritySnapshotValidation
+>();
+const validationRecords = new WeakMap<
+  AuthoritySnapshotValidation,
+  AuthoritySnapshotValidationRecord
+>();
+
+const validationRecordMatches = (
+  record: AuthoritySnapshotValidationRecord,
+  snapshot: RoomAuthoritySnapshot
+): boolean =>
+  record.snapshot === snapshot &&
+  Object.isFrozen(snapshot) &&
+  record.schemaVersion === snapshot.schemaVersion &&
+  record.authorityVersion === snapshot.authorityVersion &&
+  record.mode === snapshot.mode &&
+  record.state === snapshot.state &&
+  record.stateRevision === snapshot.state.revision &&
+  record.soloUndoHistory === snapshot.soloUndoHistory &&
+  record.replayHistory === snapshot.replayHistory &&
+  record.identities === snapshot.identities &&
+  record.sessions === snapshot.sessions &&
+  record.admission === snapshot.admission;
+
+const registerAuthoritySnapshotValidation = (
+  snapshot: RoomAuthoritySnapshot
+): AuthoritySnapshotValidation => {
+  const validation = Object.freeze({}) as AuthoritySnapshotValidation;
+  validationsBySnapshot.set(snapshot, validation);
+  validationRecords.set(validation, {
+    snapshot,
+    schemaVersion: snapshot.schemaVersion,
+    authorityVersion: snapshot.authorityVersion,
+    mode: snapshot.mode,
+    state: snapshot.state,
+    stateRevision: snapshot.state.revision,
+    soloUndoHistory: snapshot.soloUndoHistory,
+    replayHistory: snapshot.replayHistory,
+    identities: snapshot.identities,
+    sessions: snapshot.sessions,
+    admission: snapshot.admission,
+  });
+  return validation;
+};
+
+const freezeRecursively = (
+  value: unknown,
+  seen: WeakSet<object> = new WeakSet()
+): void => {
+  if (typeof value !== 'object' || value === null || seen.has(value)) return;
+  seen.add(value);
+  for (const key of Reflect.ownKeys(value)) {
+    freezeRecursively(Reflect.get(value, key), seen);
+  }
+  Object.freeze(value);
+};
+
+export const authoritySnapshotValidationMatches = (
+  validation: AuthoritySnapshotValidation | undefined,
+  snapshot: RoomAuthoritySnapshot
+): boolean => {
+  if (!validation) return false;
+  const record = validationRecords.get(validation);
+  return Boolean(record && validationRecordMatches(record, snapshot));
+};
+
+export const authoritySnapshotValidationFor = (
+  snapshot: RoomAuthoritySnapshot
+): AuthoritySnapshotValidation | undefined => {
+  const validation = validationsBySnapshot.get(snapshot);
+  return authoritySnapshotValidationMatches(validation, snapshot)
+    ? validation
+    : undefined;
+};
 
 export const collectAuthoritySnapshotProblems = (
   snapshot: RoomAuthoritySnapshot
@@ -406,4 +498,12 @@ export const assertAuthoritySnapshotInvariants = (
   assertMatchInvariants(snapshot.state);
   const problems = collectAuthoritySnapshotProblems(snapshot);
   if (problems.length > 0) throw new AuthoritySnapshotInvariantError(problems);
+};
+
+export const validateAuthoritySnapshot = (
+  snapshot: RoomAuthoritySnapshot
+): AuthoritySnapshotValidation => {
+  assertAuthoritySnapshotInvariants(snapshot);
+  freezeRecursively(snapshot);
+  return registerAuthoritySnapshotValidation(snapshot);
 };

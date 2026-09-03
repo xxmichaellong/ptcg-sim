@@ -145,9 +145,10 @@ socket attachment size.
 
 The run intentionally fills the 128-command outcome/audit window, advances 32
 commands past it, forces repeated hibernating eviction, and commits once after
-wake. It currently takes about one minute on the named development host and is
-kept outside the fast CI gate; the smaller deterministic payload envelope stays
-in `test:v2:runtime`.
+wake. The freeze-hardened post-proof named run took 35.4 seconds on the
+development host, down from the explicitly pre-optimization 58.6 seconds (about
+40%), and remains outside the fast CI gate; the smaller deterministic payload
+envelope stays in `test:v2:runtime`.
 
 The Durable Object keeps only the 32 latest accepted-command observations in
 memory so the harness can collect the same numeric durations without parsing
@@ -158,8 +159,27 @@ resolution/execution, history/candidate construction, adapter validation, and
 the atomic transaction. Production monitoring continues to use the structured
 telemetry sink's coarser v2 phases.
 
+The optimization passes an opaque, non-persisted validation proof from the
+serialized authority coordinator to the persistence adapter. It applies only
+to the exact recursively frozen snapshot object, its recorded top-level
+references, and revision; it is not a security credential or portable integrity
+claim. Missing, forged, stale, or mismatched proofs, including unproven direct
+authority-commit calls, fall back to complete fail-closed invariant validation
+and recursive freezing. Attempted mutation of a proof-bound graph fails at
+runtime. Restore, migration, and other external trust boundaries always perform
+full validation.
+
+The current named result is p95 357 ms from command send through all
+publications, versus the explicitly pre-proof 648 ms, and p95 343 ms inside
+server handling versus 636 ms. Current-snapshot and adapter-revalidation p95
+both measure 0 ms after the handoff. This remains 107 ms above the provisional
+250 ms objective, so verified incremental candidate replay validation is the
+next optimization target; the incident thresholds above must not be relaxed to
+accommodate the remaining local miss.
+
 This local observation is diagnostic evidence, not a substitute for managed
 Cloudflare preview load, CPU/memory/cost, alarm, or network distributions. The
 versioned baseline, CI envelopes, privacy limits, implemented journal-retention
-contract, and open high-history persistence-latency finding are documented in
+contract, validated-snapshot handoff, and open high-history latency finding are
+documented in
 [`../../docs/v2-rebuild/SERVER_PERFORMANCE_BASELINE.md`](../../docs/v2-rebuild/SERVER_PERFORMANCE_BASELINE.md).

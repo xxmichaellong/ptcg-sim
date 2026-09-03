@@ -522,15 +522,33 @@ digest material. See the
 
 This closes monotonic audit-row growth, but per-command full-snapshot replacement
 is still an interim checkpoint strategy. The first bounded-history `workerd`
-measurement shows that a mature roughly 280 KiB snapshot misses the provisional
-command-latency objective. Inner timing attributes most of the first
-post-eviction command to three whole-snapshot invariant scans: current input,
-the new candidate, and the adapter's repeat validation of that candidate. A
-validated handoff must remove only the redundant scans while retaining checks
-at real trust boundaries. A bounded checkpoint plus verified tail, or another
-measured persistence representation, remains available if that optimization
-cannot meet the objective without changing persist-before-publish, exact retry,
-or fail-closed recovery semantics.
+measurement showed three whole-snapshot invariant scans: current input, the new
+candidate, and the adapter's repeat validation of that candidate. The authority
+now mints opaque in-process validation evidence for an exact recursively frozen
+snapshot object. The proof is bound to object identity, its recorded top-level
+references, and authority/state revision; it is not a security credential or
+content signature and is never persisted or sent over the wire. The serialized
+coordinator carries the current proof, each new candidate is fully validated and
+recursively frozen once, and storage skips only its redundant scan when it
+receives the same object and matching proof. Missing, forged, stale, or
+mismatched proofs and unproven direct authority-commit calls fail closed through
+complete validation and recursive freezing; attempted mutation of a proof-bound
+graph fails at runtime. Restore, migration, and external snapshot install remain
+full-validation trust boundaries.
+
+The freeze-hardened post-proof named run reduced mature
+command-to-publication p95 from 648 ms to 357 ms, server-handling p95 from 636
+ms to 343 ms, and both current-snapshot and adapter-revalidation p95 to the
+timer's 0 ms resolution. Total measured scenario duration fell from 58.6
+seconds to 35.4 seconds, about 40%. The mature result is still 107 ms above the
+provisional 250 ms objective. The next optimization target is verified
+incremental candidate replay validation: prove that applying the accepted event
+batch to an already validated snapshot preserves the affected invariants, while
+retaining complete validation on restore, migration, external install, and any
+path without valid internal proof. A bounded
+checkpoint plus verified tail, or another measured persistence representation,
+remains available if that does not meet the objective without changing
+persist-before-publish, exact retry, or fail-closed recovery semantics.
 
 ### Saved games and links
 

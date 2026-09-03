@@ -18,6 +18,17 @@ together. The journal is recent operational evidence; room reconstruction and
 exact retries use the validated snapshot's canonical state, replay, sequence
 frontiers, and bounded outcomes.
 
+The hot command path carries opaque in-process evidence that the exact readonly
+snapshot object was already validated. Proof-bound snapshots are recursively
+frozen, and the proof is bound to that object identity, its recorded top-level
+references, and authority/state revision; it is neither a security credential
+nor a content signature. It is never persisted or placed on the wire. Missing,
+forged, stale, or mismatched proofs do not match, while attempted mutation of a
+proof-bound graph fails at runtime. Unproven direct persistence calls fail closed
+by running the complete invariant suite and recursively freezing the accepted
+authority-commit snapshot. The coordinator validates each new candidate once
+before passing that same object and proof to storage.
+
 `pnpm run test:runtime` executes the isolated Cloudflare runtime suite through
 `@cloudflare/vitest-plugin`. It covers the deployed Worker boundary, SQLite
 Durable Object storage and alarms, WebSocket admission, real eviction with a
@@ -35,3 +46,12 @@ projection, durable persistence, publication serialization, and socket-send
 phases. The local diagnostic adds non-telemetry detail for input/candidate
 invariants, resolution/execution, history/candidate construction, adapter
 validation, and the atomic storage transaction.
+
+The freeze-hardened post-proof named run reduced mature command-to-publication
+p95 from 648 ms to 357 ms and server handling p95 from 636 ms to 343 ms.
+Current-snapshot and adapter-revalidation p95 both fell to the timer's 0 ms
+resolution, and the measured scenario fell from 58.6 seconds to 35.4 seconds
+(about 40%). The 357 ms result still misses the provisional 250 ms objective by
+107 ms. The next measured target is verified incremental candidate replay
+validation while full validation remains mandatory at restore and external
+trust boundaries.

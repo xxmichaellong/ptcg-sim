@@ -1,15 +1,23 @@
 import type { ClientMessage } from '@ptcgsim/protocol';
 
-import { assertAuthoritySnapshotInvariants } from './invariants.js';
+import {
+  authoritySnapshotValidationFor,
+  validateAuthoritySnapshot,
+} from './invariants.js';
 import type {
   AuthorityDependencies,
   AuthorityProcessResult,
+  AuthoritySnapshotValidation,
   AuthoritySnapshotStore,
   RoomAuthoritySnapshot,
 } from './model.js';
 import { processAuthorityCommand } from './process-command.js';
 
 type CommandEnvelope = Extract<ClientMessage, { type: 'Command' }>;
+type CoordinatorDependencies = Omit<
+  AuthorityDependencies,
+  'persistence' | 'currentSnapshotValidation'
+>;
 
 /**
  * Serializes every command that can mutate one room. Durable Object event
@@ -18,16 +26,21 @@ type CommandEnvelope = Extract<ClientMessage, { type: 'Command' }>;
  */
 export class RoomAuthorityCoordinator {
   private tail: Promise<void> = Promise.resolve();
+  private snapshotValidation: AuthoritySnapshotValidation;
 
   constructor(
     private snapshot: RoomAuthoritySnapshot,
     private readonly store: AuthoritySnapshotStore,
-    private readonly dependencies: Omit<AuthorityDependencies, 'persistence'>
-  ) {}
+    private readonly dependencies: CoordinatorDependencies
+  ) {
+    this.snapshotValidation =
+      authoritySnapshotValidationFor(snapshot) ??
+      validateAuthoritySnapshot(snapshot);
+  }
 
   static async restore(
     store: AuthoritySnapshotStore,
-    dependencies: Omit<AuthorityDependencies, 'persistence'>
+    dependencies: CoordinatorDependencies
   ): Promise<RoomAuthorityCoordinator | undefined> {
     const snapshot = await store.load();
     return snapshot
@@ -40,11 +53,12 @@ export class RoomAuthorityCoordinator {
   }
 
   installCommittedSnapshot(snapshot: RoomAuthoritySnapshot): void {
-    assertAuthoritySnapshotInvariants(snapshot);
+    const validation = validateAuthoritySnapshot(snapshot);
     if (snapshot.authorityVersion < this.snapshot.authorityVersion) {
       throw new Error('Cannot install an older authority snapshot');
     }
     this.snapshot = snapshot;
+    this.snapshotValidation = validation;
   }
 
   submit(envelope: CommandEnvelope): Promise<AuthorityProcessResult> {
@@ -63,14 +77,21 @@ export class RoomAuthorityCoordinator {
       const result = await processAuthorityCommand(this.snapshot, envelope, {
         ...this.dependencies,
         persistence: this.store,
+        currentSnapshotValidation: this.snapshotValidation,
       });
       this.snapshot = result.snapshot;
+      this.snapshotValidation = result.snapshotValidation;
       return result;
     } catch (error) {
       // A storage call can fail before commit or after the durable write became
       // visible. Reloading makes the next retry safe in both cases.
       const durable = await this.store.load();
-      if (durable) this.snapshot = durable;
+      if (durable) {
+        this.snapshot = durable;
+        this.snapshotValidation =
+          authoritySnapshotValidationFor(durable) ??
+          validateAuthoritySnapshot(durable);
+      }
       throw error;
     }
   }

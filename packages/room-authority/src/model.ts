@@ -153,6 +153,15 @@ export interface PersistedAuthorityTransaction {
   readonly sessionId: string;
   readonly outcome: PersistedCommandOutcome;
   readonly eventBatch?: EventBatch;
+  /** Ephemeral proof for this exact object; adapters must validate if absent. */
+  readonly snapshotValidation?: AuthoritySnapshotValidation;
+}
+
+declare const authoritySnapshotValidationBrand: unique symbol;
+
+/** Opaque in-process evidence that one exact readonly snapshot was validated. */
+export interface AuthoritySnapshotValidation {
+  readonly [authoritySnapshotValidationBrand]: true;
 }
 
 export interface AuthorityPersistence {
@@ -219,6 +228,8 @@ export interface AuthorityDependencies {
   readonly policy: AuthorityPolicy;
   /** Optional and observational only; failures must never affect authority. */
   readonly monotonicNow?: () => number;
+  /** Coordinator-owned proof for the exact current snapshot object. */
+  readonly currentSnapshotValidation?: AuthoritySnapshotValidation;
 }
 
 export interface AuthorityDelivery {
@@ -230,6 +241,7 @@ export interface AuthorityProcessResult {
   readonly snapshot: RoomAuthoritySnapshot;
   readonly committed: boolean;
   readonly deliveries: readonly AuthorityDelivery[];
+  readonly snapshotValidation: AuthoritySnapshotValidation;
   readonly timing: AuthorityCommandTiming;
 }
 

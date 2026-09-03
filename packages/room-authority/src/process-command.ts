@@ -15,7 +15,10 @@ import {
   emptyProjectionIdentityState,
   projectRecipient,
 } from './identity-registry.js';
-import { assertAuthoritySnapshotInvariants } from './invariants.js';
+import {
+  authoritySnapshotValidationMatches,
+  validateAuthoritySnapshot,
+} from './invariants.js';
 import {
   MAX_REPLAY_EVENT_BATCHES,
   MAX_REPLAY_EVENT_BYTES,
@@ -30,6 +33,7 @@ import type {
   AuthorityProcessResult,
   AuthorityRejectionCode,
   AuthoritySession,
+  AuthoritySnapshotValidation,
   PersistedCommandOutcome,
   RoomAuthoritySnapshot,
 } from './model.js';
@@ -161,6 +165,7 @@ const immediateRejection = (
   snapshot: RoomAuthoritySnapshot,
   envelope: CommandEnvelope,
   code: AuthorityRejectionCode,
+  snapshotValidation: AuthoritySnapshotValidation,
   timer: AuthorityCommandTimer
 ): AuthorityProcessResult => ({
   snapshot,
@@ -177,6 +182,7 @@ const immediateRejection = (
       }),
     },
   ],
+  snapshotValidation,
   timing: timer.finish(),
 });
 
@@ -261,33 +267,47 @@ export const processAuthorityCommand = async (
   dependencies: AuthorityDependencies
 ): Promise<AuthorityProcessResult> => {
   const timer = createAuthorityCommandTimer(dependencies.monotonicNow);
-  timer.measureAuthority('inputValidationMs', () => {
-    assertAuthoritySnapshotInvariants(current);
-    if (
-      !Number.isSafeInteger(dependencies.policy.maximumSoloUndoCheckpoints) ||
-      dependencies.policy.maximumSoloUndoCheckpoints < 1 ||
-      dependencies.policy.maximumSoloUndoCheckpoints > MAX_SOLO_UNDO_CHECKPOINTS
-    ) {
-      throw new Error('Solo undo checkpoint policy is invalid');
+  const currentSnapshotValidation = timer.measureAuthority(
+    'inputValidationMs',
+    () => {
+      const supplied = dependencies.currentSnapshotValidation;
+      const validation = authoritySnapshotValidationMatches(supplied, current)
+        ? supplied!
+        : validateAuthoritySnapshot(current);
+      if (
+        !Number.isSafeInteger(dependencies.policy.maximumSoloUndoCheckpoints) ||
+        dependencies.policy.maximumSoloUndoCheckpoints < 1 ||
+        dependencies.policy.maximumSoloUndoCheckpoints >
+          MAX_SOLO_UNDO_CHECKPOINTS
+      ) {
+        throw new Error('Solo undo checkpoint policy is invalid');
+      }
+      if (
+        !Number.isSafeInteger(dependencies.policy.maximumReplayEventBatches) ||
+        dependencies.policy.maximumReplayEventBatches < 1 ||
+        dependencies.policy.maximumReplayEventBatches > MAX_REPLAY_EVENT_BATCHES
+      ) {
+        throw new Error('Replay history policy is invalid');
+      }
+      if (
+        !Number.isSafeInteger(dependencies.policy.maximumReplayEventBytes) ||
+        dependencies.policy.maximumReplayEventBytes < 1 ||
+        dependencies.policy.maximumReplayEventBytes > MAX_REPLAY_EVENT_BYTES
+      ) {
+        throw new Error('Replay history byte policy is invalid');
+      }
+      return validation;
     }
-    if (
-      !Number.isSafeInteger(dependencies.policy.maximumReplayEventBatches) ||
-      dependencies.policy.maximumReplayEventBatches < 1 ||
-      dependencies.policy.maximumReplayEventBatches > MAX_REPLAY_EVENT_BATCHES
-    ) {
-      throw new Error('Replay history policy is invalid');
-    }
-    if (
-      !Number.isSafeInteger(dependencies.policy.maximumReplayEventBytes) ||
-      dependencies.policy.maximumReplayEventBytes < 1 ||
-      dependencies.policy.maximumReplayEventBytes > MAX_REPLAY_EVENT_BYTES
-    ) {
-      throw new Error('Replay history byte policy is invalid');
-    }
-  });
+  );
   const session = current.sessions[envelope.sessionId];
   if (!session || !session.active) {
-    return immediateRejection(current, envelope, 'session_superseded', timer);
+    return immediateRejection(
+      current,
+      envelope,
+      'session_superseded',
+      currentSnapshotValidation,
+      timer
+    );
   }
 
   const duplicate = session.recentOutcomes.find(
@@ -295,7 +315,13 @@ export const processAuthorityCommand = async (
   );
   if (duplicate) {
     if (duplicate.clientSequence !== envelope.clientSequence) {
-      return immediateRejection(current, envelope, 'invalid_sequence', timer);
+      return immediateRejection(
+        current,
+        envelope,
+        'invalid_sequence',
+        currentSnapshotValidation,
+        timer
+      );
     }
     const replayDeliveries: AuthorityDelivery[] = [];
     if (duplicate.accepted) {
@@ -328,15 +354,28 @@ export const processAuthorityCommand = async (
           message: resultMessage(duplicate),
         },
       ],
+      snapshotValidation: currentSnapshotValidation,
       timing: timer.finish(),
     };
   }
 
   if (envelope.clientSequence !== session.nextClientSequence) {
-    return immediateRejection(current, envelope, 'invalid_sequence', timer);
+    return immediateRejection(
+      current,
+      envelope,
+      'invalid_sequence',
+      currentSnapshotValidation,
+      timer
+    );
   }
   if (envelope.lastSeenRevision > current.state.revision) {
-    return immediateRejection(current, envelope, 'invalid_sequence', timer);
+    return immediateRejection(
+      current,
+      envelope,
+      'invalid_sequence',
+      currentSnapshotValidation,
+      timer
+    );
   }
 
   const resolved = timer.measureAuthority('resolutionAndExecutionMs', () => {
@@ -487,8 +526,9 @@ export const processAuthorityCommand = async (
     publications = projected.deliveries;
   }
 
-  timer.measureAuthority('candidateValidationMs', () =>
-    assertAuthoritySnapshotInvariants(candidate)
+  const candidateSnapshotValidation = timer.measureAuthority(
+    'candidateValidationMs',
+    () => validateAuthoritySnapshot(candidate)
   );
 
   await timer.measurePersistence(() =>
@@ -499,6 +539,7 @@ export const processAuthorityCommand = async (
       sessionId: session.id,
       outcome,
       ...(eventBatch ? { eventBatch } : {}),
+      snapshotValidation: candidateSnapshotValidation,
     })
   );
 
@@ -509,6 +550,7 @@ export const processAuthorityCommand = async (
       ...publications,
       { sessionId: session.id, message: resultMessage(outcome) },
     ],
+    snapshotValidation: candidateSnapshotValidation,
     timing: timer.finish(),
   };
 };

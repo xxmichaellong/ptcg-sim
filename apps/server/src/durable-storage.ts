@@ -4,8 +4,10 @@ import {
 } from '@ptcgsim/game-core';
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+  authoritySnapshotValidationMatches,
   assertAuthoritySnapshotInvariants,
   createReplayHistory,
+  validateAuthoritySnapshot,
   type AdmissionPersistence,
   type AuthorityPersistenceTiming,
   type AuthoritySnapshotStore,
@@ -340,7 +342,7 @@ const migrateStoredSnapshot = (value: unknown): RoomAuthoritySnapshot => {
       admission: { ...candidate.admission, invitations: {}, tickets: {} },
     };
   }
-  assertAuthoritySnapshotInvariants(candidate);
+  validateAuthoritySnapshot(candidate);
   return candidate;
 };
 
@@ -465,7 +467,14 @@ export class DurableRoomSnapshotStore
     transaction: PersistedAuthorityTransaction
   ): Promise<AuthorityPersistenceTiming> {
     const validationStartedAt = safeMonotonicMark(this.monotonicNow);
-    assertAuthoritySnapshotInvariants(transaction.snapshot);
+    if (
+      !authoritySnapshotValidationMatches(
+        transaction.snapshotValidation,
+        transaction.snapshot
+      )
+    ) {
+      validateAuthoritySnapshot(transaction.snapshot);
+    }
     const snapshotValidationMs = measuredDuration(
       validationStartedAt,
       safeMonotonicMark(this.monotonicNow)

@@ -312,11 +312,20 @@ preview phase splits, reconnect timing, platform resource/cost distributions,
 and persistence optimization remain release gates. Command/admission audit rows
 now have transactional count/byte retention and a real-runtime storage plateau.
 Telemetry v2 separates authority processing, projection, persistence,
-publication serialization, and socket send; the named run shows authority and
-persistence dominate an unacceptable high-history local command p95, so bounded
-storage is not being mistaken for adequate performance. Local-only inner timing
-further attributes about 71% of the first post-eviction server command to three
-whole-snapshot invariant scans, establishing the next validated-handoff gate.
+publication serialization, and socket send. An opaque internal proof now binds
+the exact recursively frozen snapshot object and recorded top-level
+references/revision; it is not persisted or treated as a security credential.
+Missing, forged, stale, mismatched, and unproven direct-authority-adapter inputs
+still receive full fail-closed validation and recursive freezing. Restore and
+external trust boundaries retain full validation. Attempted mutation of a
+proof-bound graph fails at runtime. The freeze-hardened post-proof run reduced mature
+command-to-publication p95 from 648 ms to 357 ms, server-handling p95 from 636
+ms to 343 ms, current and adapter validation p95 to 0 ms, and total measured
+scenario duration from 58.6 seconds to 35.4 seconds (about 40%). The result
+remains 107 ms above the provisional 250 ms objective.
+Verified incremental candidate replay validation, with full boundary
+validation retained, is therefore the next performance gate; bounded storage
+or removal of redundant scans alone is not adequate release evidence.
 
 ## Load and soak gates
 

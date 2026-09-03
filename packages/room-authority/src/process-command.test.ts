@@ -14,12 +14,19 @@ import { describe, expect, it } from 'vitest';
 
 import { createRoomAdmissionState } from './admission.js';
 import { emptyProjectionIdentityState } from './identity-registry.js';
+import {
+  authoritySnapshotValidationMatches,
+  authoritySnapshotValidationFor,
+  assertAuthoritySnapshotInvariants,
+  validateAuthoritySnapshot,
+} from './invariants.js';
 import { createReplayHistory } from './replay-history.js';
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
   DEFAULT_AUTHORITY_POLICY,
   type AuthorityDependencies,
   type AuthorityPersistence,
+  type AuthoritySnapshotValidation,
   type PersistedAuthorityTransaction,
   type RoomAuthoritySnapshot,
 } from './model.js';
@@ -177,6 +184,15 @@ describe('authoritative room command transaction', () => {
     });
     expect(result.snapshot.admission).toEqual(current.admission);
     expect(persistence.transactions).toHaveLength(1);
+    expect(persistence.transactions[0]?.snapshotValidation).toBe(
+      result.snapshotValidation
+    );
+    expect(
+      authoritySnapshotValidationMatches(
+        result.snapshotValidation,
+        result.snapshot
+      )
+    ).toBe(true);
     expect(persistence.transactions[0]?.eventBatch?.revision).toBe(1);
     expect(persistence.transactions[0]?.outcome).toMatchObject({
       accepted: true,
@@ -245,6 +261,56 @@ describe('authoritative room command transaction', () => {
         transactionMs: 0,
       },
     });
+  });
+
+  it('rejects forged and stale validation proofs', async () => {
+    const forgedCurrent = { ...createSnapshot(), authorityVersion: -1 };
+    await expect(
+      processAuthorityCommand(forgedCurrent, loadDeck(), {
+        ...createDependencies(createPersistence()),
+        currentSnapshotValidation: {} as AuthoritySnapshotValidation,
+      })
+    ).rejects.toThrow('authority version must be a non-negative safe integer');
+
+    const original = createSnapshot();
+    const staleValidation = validateAuthoritySnapshot(original);
+    const differentSnapshot = { ...original, authorityVersion: -1 };
+    await expect(
+      processAuthorityCommand(differentSnapshot, loadDeck(), {
+        ...createDependencies(createPersistence()),
+        currentSnapshotValidation: staleValidation,
+      })
+    ).rejects.toThrow('authority version must be a non-negative safe integer');
+  });
+
+  it('does not mint a validation proof from assertion alone', () => {
+    const snapshot = createSnapshot();
+
+    assertAuthoritySnapshotInvariants(snapshot);
+
+    expect(authoritySnapshotValidationFor(snapshot)).toBeUndefined();
+    expect(Object.isFrozen(snapshot)).toBe(false);
+  });
+
+  it('recursively freezes proof-bound snapshots against top-level and deep mutation', () => {
+    const snapshot = createSnapshot();
+    const validation = validateAuthoritySnapshot(snapshot);
+
+    expect(Object.isFrozen(snapshot)).toBe(true);
+    expect(Object.isFrozen(snapshot.state)).toBe(true);
+    expect(Object.isFrozen(snapshot.replayHistory)).toBe(true);
+    expect(() => {
+      (snapshot as unknown as { schemaVersion: number }).schemaVersion = 999;
+    }).toThrow(TypeError);
+    expect(() => {
+      (snapshot as unknown as { mode: string }).mode = 'corrupt';
+    }).toThrow(TypeError);
+    expect(() => {
+      (
+        snapshot.replayHistory as unknown as { baseStateHash: string }
+      ).baseStateHash = 'corrupt';
+    }).toThrow(TypeError);
+    expect(authoritySnapshotValidationMatches(validation, snapshot)).toBe(true);
   });
 
   it('does not install or acknowledge a mutation when persistence fails before commit', async () => {
