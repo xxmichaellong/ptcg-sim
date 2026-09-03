@@ -328,14 +328,38 @@ require a later oracle rather than inheriting this narrow result. Pixi consumes
 the same renderer-neutral scene geometry for qualifying stacks, but its paint
 and hit parity remain unverified.
 
+`tests/browser/legacy-energy-attachment-reflow-geometry.spec.ts` adds a fifth,
+source-only card checkpoint with the separately digest-pinned
+`tests/legacy-fixtures/renderer/energy-attachment-reflow-v1.json`. It isolates
+one face-up Energy attached to one unrotated active Pokémon in the local and
+opponent frames at the default 1600×900 DPR-1 sidebar layout. The replay records
+the immediate post-attach result only as a diagnostic, then transcribes the
+unconditional `refreshBoard` reconstruction, `adjustCards` width rewrite, and
+MutationObserver-delayed old-wrapper cleanup before accepting stable geometry.
+
+The stable source state preserves `[base, energy]` logical and DOM order, z
+ranks `[0, -1]`, common-overlap priority `[base, energy]`, and an Energy-only
+outer strip. The 736×1024 source card paints at 90.5625×126 px while its integer
+`clientWidth` is 91, so the Energy offset is 91/6 and the final wrapper width is
+`91 + 91/6 = 106.167` px. The upper frame mirrors the horizontal extension and
+adds its enclosing half-turn. Refresh synchronously leaves two wrappers before
+the old empty container settles away, so the stable wrapper count is one.
+
+This source-only result does not yet select production scene geometry. It also
+does not cover Trainer-as-Tool rotation/margins, multiple Energy or mixed-order
+normalization, departures/compaction, Pokémon evolution layers or Pokémon-
+classified attachments, bench/flex overflow, markers, BREAK/rotation,
+noncanonical assets, alternate layouts, input, Pixi, or network behavior.
+
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
 renderer-neutral scene and has structured scene assertions for all four board
 oracle fixtures, including asymmetric resize, flipped ownership, midpoint
 shared placement, compact and fullscreen states. The controlled hand/bench/
-attachment-stack fixture is source-only and does not yet feed or validate its
-`BoardScene` card geometries; the narrower contained-card and ordinary-evolution
-fixtures feed and compare their cover/stadium and strict three-card geometries.
+attachment-stack and single-Energy stable fixtures are source-only and do not
+yet feed or validate their `BoardScene` card geometries; the narrower contained-
+card and ordinary-evolution fixtures feed and compare their cover/stadium and
+strict three-card geometries.
 Raw
 normalized/authored inputs, box edges, affordances, and semantic z evidence
 remain in the richer characterization snapshot rather than being duplicated in

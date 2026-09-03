@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 660 v2 tests across 101 files. A separate suite
-passes 11 Playwright checks: ten browser-backed Chromium 151 scenarios and
+The repository-wide gate passes 663 v2 tests across 102 files. A separate suite
+passes 12 Playwright checks: eleven browser-backed Chromium 151 scenarios and
 one source-digest lock:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
@@ -358,7 +358,17 @@ one source-digest lock:
    layout states, and input behavior are not claimed and retain the prior scene
    path. Pixi consumes the qualifying renderer-neutral geometry, but its paint
    and hit parity remain unverified.
-10. The selected DOM implementation completes 100 mount → clear/reset → destroy
+10. A fifth, source-only digest-pinned fixture isolates one face-up Energy on
+    one unrotated active Pokémon in both physical frames. It separates the
+    immediate attach diagnostic from stable post-refresh reconstruction and
+    pins `[base, energy]` logical/DOM order, target/relative/energy-layer state,
+    integer `clientWidth / 6` offset, the `adjustCards` wrapper width, z/hit
+    order, opponent mirroring, and two-to-one ghost-wrapper cleanup. It does not
+    yet select production scene geometry. Trainer-as-Tool, multiple/reordered
+    attachments, departure, evolution combinations, bench/overflow, rotation,
+    markers, alternate layouts, candidate parity, Pixi, and input are not
+    claimed.
+11. The selected DOM implementation completes 100 mount → clear/reset → destroy
     cycles on one warmed route-owned host with the exact status sequence,
     complete scene IDs at mount, zero rendered scene children/IDs after clear and
     destroy, zero non-DOM diagnostic resources, and post-GC Chromium
@@ -379,7 +389,9 @@ The suites live in `tests/browser/renderer-spike.spec.ts`,
 `tests/browser/legacy-card-stack-geometry.spec.ts`, plus the contained-card
 comparison in `tests/browser/legacy-contained-card-geometry.spec.ts` and the
 source-backed evolution comparison in
-`tests/browser/legacy-evolution-reflow-geometry.spec.ts`. Standard
+`tests/browser/legacy-evolution-reflow-geometry.spec.ts` and the source-only
+single-Energy replay in
+`tests/browser/legacy-energy-attachment-reflow-geometry.spec.ts`. Standard
 Linux CI can install Playwright's pinned Chromium build. This NixOS workspace
 used the Nix Chromium 151 package through `PTCGSIM_CHROMIUM_PATH`, because Playwright's
 Debian/Ubuntu dependency installer requires `apt-get` and downloaded generic

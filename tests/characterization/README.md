@@ -34,3 +34,14 @@ BREAK/rotation, overflow/flex shrink, history-dependent restore paths, face
 hide/reveal/source mutation, and Pixi parity remain excluded. Its browser
 companion now compares the exact stable three-card boundary with a separately
 mounted React DOM candidate; this does not broaden the source oracle's scope.
+
+`legacy-energy-attachment-reflow-layout.test.ts` pins the next, smaller
+attachment boundary separately from the older mixed five-card transcription.
+It records exactly one face-up Energy attached to one unrotated active Pokémon
+on both physical sides, immediately after attach and after the unconditional
+refresh reconstruction settles. The source-only fixture preserves the integer
+`clientWidth / 6` offset, stable `adjustCards` wrapper width, attachment
+target/relative/layer state, logical/DOM/hit order, and delayed ghost-wrapper
+cleanup. Trainer-as-Tool, multiple or reordered attachments, departures,
+evolution layers, bench/overflow, rotated hit regions, candidate parity, and
+interaction behavior remain excluded.

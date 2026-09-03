@@ -112,6 +112,72 @@ export interface LegacySourceCardFixture {
   readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
 }
 
+export interface LegacyEnergyAttachmentFixtureCard {
+  readonly id: string;
+  readonly side: LegacyFixtureSide;
+  readonly role: 'base' | 'energy';
+  readonly physicalBounds: CapturedRect;
+  readonly frameLocalBounds: CapturedRect;
+  readonly naturalWidth: number;
+  readonly naturalHeight: number;
+  readonly clientWidth: number;
+  readonly clientHeight: number;
+  readonly localRotationDegrees: number;
+  readonly effectiveRotationDegrees: number;
+  readonly zIndex: number;
+  readonly inlineLeftPx: number;
+  readonly inlineBottomPx: number;
+  readonly attached: boolean;
+  readonly target: string;
+  readonly relativeId: string | null;
+  readonly energyLayer: number;
+  readonly layer: number;
+  readonly domOrdinal: number;
+  readonly sourcePath: string;
+}
+
+export interface LegacyEnergyAttachmentFixtureStack {
+  readonly id: string;
+  readonly side: LegacyFixtureSide;
+  readonly physicalBounds: CapturedRect;
+  readonly frameLocalBounds: CapturedRect;
+  readonly baseClientWidth: number;
+  readonly clientWidth: number;
+  readonly authoredWidthPx: number;
+  readonly attachmentClientWidthsBefore: readonly number[];
+  readonly attachmentAuthoredWidthsPx: readonly number[];
+  readonly inlineMarginRight: string;
+  readonly inlineMarginLeft: string;
+  readonly computedMarginRightPx: number;
+  readonly computedMarginLeftPx: number;
+  readonly transientPostAttach: {
+    readonly logicalOrder: readonly string[];
+    readonly domOrder: readonly string[];
+    readonly clientWidth: number;
+    readonly authoredWidthPx: number;
+  };
+  readonly synchronousPostRefreshContainerCount: number;
+  readonly oldContainerConnectedImmediatelyAfterRefresh: boolean;
+  readonly stableContainerCount: number;
+  readonly oldContainerConnected: boolean;
+  readonly childDomOrder: readonly string[];
+  readonly logicalOrder: readonly string[];
+  readonly hitOrder: {
+    readonly commonOverlap: readonly string[];
+    readonly energyOnly: readonly string[];
+  };
+}
+
+export interface LegacySourceEnergyAttachmentReflowFixture {
+  readonly frames: Readonly<Record<LegacyFixtureSide, CapturedRect>>;
+  readonly frameTransforms: Readonly<
+    Record<LegacyFixtureSide, LegacyFrameTransform>
+  >;
+  readonly cards: readonly LegacyEnergyAttachmentFixtureCard[];
+  readonly stacks: readonly LegacyEnergyAttachmentFixtureStack[];
+  readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
+}
+
 export type LegacyContainedCardKind =
   'deck' | 'discard' | 'lostZone' | 'stadium';
 
@@ -948,6 +1014,418 @@ export const captureLegacySourceCardFixture = async (
     },
     frameTransforms,
     frameRotationDegrees,
+    cards,
+    stacks,
+    sourceFulfillment: sourceFulfillment(loaded),
+  };
+};
+
+const canonicalAttachmentFixtureCardIds = (side: LegacyFixtureSide) =>
+  [`${side}-attachment-base`, `${side}-attachment-energy`] as const;
+
+const captureCanonicalAttachmentCard = async (
+  locator: Locator,
+  side: LegacyFixtureSide,
+  role: LegacyEnergyAttachmentFixtureCard['role'],
+  frameRotationDegrees: number
+): Promise<LegacyEnergyAttachmentFixtureCard> => {
+  const physicalBounds = await requireRect(
+    locator,
+    `${side} canonical ${role} card`
+  );
+  const details = await locator.evaluate((element) => {
+    if (!(element instanceof HTMLImageElement)) {
+      throw new Error('Legacy canonical attachment target must be an image');
+    }
+    const legacyImage = element as HTMLImageElement & {
+      attached?: boolean;
+      target?: string;
+      relative?: unknown;
+      energyLayer?: number;
+      layer?: number;
+    };
+    const bounds = element.getBoundingClientRect();
+    const styles = getComputedStyle(element);
+    const transform =
+      styles.transform === 'none'
+        ? new DOMMatrixReadOnly()
+        : new DOMMatrixReadOnly(styles.transform);
+    const parentImages = element.parentElement
+      ? [...element.parentElement.querySelectorAll(':scope > img')]
+      : [];
+    return {
+      id: element.dataset.legacyCanonicalAttachmentCardId ?? '',
+      frameLocalBounds: {
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.width,
+        height: bounds.height,
+      },
+      naturalWidth: element.naturalWidth,
+      naturalHeight: element.naturalHeight,
+      clientWidth: element.clientWidth,
+      clientHeight: element.clientHeight,
+      localRotationDegrees:
+        ((Math.atan2(transform.b, transform.a) * 180) / Math.PI + 360) % 360,
+      zIndex: Number.parseInt(styles.zIndex, 10) || 0,
+      inlineLeftPx: Number.parseFloat(element.style.left) || 0,
+      inlineBottomPx: Number.parseFloat(element.style.bottom) || 0,
+      attached: legacyImage.attached === true,
+      target: legacyImage.target ?? '',
+      relativeId:
+        legacyImage.relative instanceof HTMLImageElement
+          ? (legacyImage.relative.dataset.legacyCanonicalAttachmentCardId ??
+            null)
+          : null,
+      energyLayer: legacyImage.energyLayer ?? 0,
+      layer: legacyImage.layer ?? 0,
+      domOrdinal: parentImages.indexOf(element),
+      sourcePath: new URL(element.currentSrc).pathname,
+    };
+  });
+  return {
+    ...details,
+    side,
+    role,
+    physicalBounds,
+    effectiveRotationDegrees:
+      (details.localRotationDegrees + frameRotationDegrees) % 360,
+  };
+};
+
+const captureCanonicalAttachmentStack = async (
+  locator: Locator,
+  side: LegacyFixtureSide
+): Promise<LegacyEnergyAttachmentFixtureStack> => {
+  const physicalBounds = await requireRect(
+    locator,
+    `${side} canonical attachment stack`
+  );
+  const details = await locator.evaluate((element) => {
+    if (!(element instanceof HTMLElement)) {
+      throw new Error('Legacy canonical attachment stack must be an element');
+    }
+    const card = (role: 'base' | 'energy') => {
+      const match = element.querySelector<HTMLImageElement>(
+        `[data-legacy-canonical-attachment-card-id$="-${role}"]`
+      );
+      if (!match) throw new Error(`Missing canonical attachment ${role}`);
+      return match;
+    };
+    const base = card('base');
+    const energy = card('energy');
+    const baseBounds = base.getBoundingClientRect();
+    const energyBounds = energy.getBoundingClientRect();
+    const idsAt = (x: number, y: number) =>
+      document
+        .elementsFromPoint(x, y)
+        .flatMap((candidate) => {
+          const image = candidate.closest<HTMLImageElement>(
+            '[data-legacy-canonical-attachment-card-id]'
+          );
+          return image?.dataset.legacyCanonicalAttachmentCardId
+            ? [image.dataset.legacyCanonicalAttachmentCardId]
+            : [];
+        })
+        .filter((id, index, ids) => ids.indexOf(id) === index);
+    const intersection = (rectangles: readonly DOMRect[]) => {
+      const left = Math.max(...rectangles.map((bounds) => bounds.left));
+      const top = Math.max(...rectangles.map((bounds) => bounds.top));
+      const right = Math.min(...rectangles.map((bounds) => bounds.right));
+      const bottom = Math.min(...rectangles.map((bounds) => bounds.bottom));
+      if (right - left <= 2 || bottom - top <= 2) {
+        throw new Error('Canonical attachment overlap lacks a safe interior');
+      }
+      return { left, top, right, bottom };
+    };
+    const common = intersection([baseBounds, energyBounds]);
+    const energyOnlyLeft = baseBounds.right + 2;
+    if (energyBounds.right - energyOnlyLeft <= 2) {
+      throw new Error('Energy-only strip lacks a safe interior');
+    }
+    const frameLocalBounds = element.getBoundingClientRect();
+    const styles = getComputedStyle(element);
+    return {
+      id: element.dataset.legacyCanonicalAttachmentStackId ?? '',
+      frameLocalBounds: {
+        x: frameLocalBounds.x,
+        y: frameLocalBounds.y,
+        width: frameLocalBounds.width,
+        height: frameLocalBounds.height,
+      },
+      baseClientWidth: base.clientWidth,
+      clientWidth: element.clientWidth,
+      authoredWidthPx: Number.parseFloat(element.style.width),
+      attachmentClientWidthsBefore: JSON.parse(
+        element.dataset.legacyAttachmentClientWidthsBefore ?? '[]'
+      ) as number[],
+      attachmentAuthoredWidthsPx: JSON.parse(
+        element.dataset.legacyAttachmentAuthoredWidths ?? '[]'
+      ) as number[],
+      inlineMarginRight: element.style.marginRight,
+      inlineMarginLeft: element.style.marginLeft,
+      computedMarginRightPx: Number.parseFloat(styles.marginRight) || 0,
+      computedMarginLeftPx: Number.parseFloat(styles.marginLeft) || 0,
+      transientPostAttach: JSON.parse(
+        element.dataset.legacyTransientAttachmentStage ?? '{}'
+      ) as LegacyEnergyAttachmentFixtureStack['transientPostAttach'],
+      synchronousPostRefreshContainerCount: Number.parseInt(
+        element.dataset.legacySynchronousContainerCount ?? '',
+        10
+      ),
+      oldContainerConnectedImmediatelyAfterRefresh:
+        element.dataset.legacyOldContainerConnectedImmediately === 'true',
+      stableContainerCount: element.parentElement?.querySelectorAll(
+        '[data-legacy-canonical-attachment-stack-id]'
+      ).length,
+      oldContainerConnected:
+        element.dataset.legacyOldContainerConnected === 'true',
+      childDomOrder: [
+        ...element.querySelectorAll<HTMLImageElement>(':scope > img'),
+      ].map((image) => image.dataset.legacyCanonicalAttachmentCardId ?? ''),
+      logicalOrder: JSON.parse(
+        element.dataset.legacyAttachmentLogicalOrder ?? '[]'
+      ) as string[],
+      hitOrder: {
+        commonOverlap: idsAt(
+          (common.left + common.right) / 2,
+          (common.top + common.bottom) / 2
+        ),
+        energyOnly: idsAt(
+          (energyOnlyLeft + energyBounds.right) / 2,
+          energyBounds.top + energyBounds.height / 2
+        ),
+      },
+    };
+  });
+  return { ...details, side, physicalBounds };
+};
+
+/**
+ * Isolates one v1 Energy attached to an active Pokémon across the immediate
+ * attach and stable post-refresh phases. Application modules remain inert; the
+ * DOM/state mutations narrowly transcribe the checked-in move/refresh sources.
+ */
+export const captureLegacySourceEnergyAttachmentReflowFixture = async (
+  page: Page
+): Promise<LegacySourceEnergyAttachmentReflowFixture> => {
+  const loaded = await loadLegacySourceBoard(page);
+  for (const [side, frameSelector] of [
+    ['local', '#selfContainer'],
+    ['opponent', '#oppContainer'],
+  ] as const) {
+    await page
+      .frameLocator(frameSelector)
+      .locator('body')
+      .evaluate(
+        async (body, input) => {
+          const makeImage = (id: string) => {
+            const image = document.createElement('img') as HTMLImageElement & {
+              attached: boolean;
+              target: string;
+              relative: HTMLImageElement | number;
+              energyLayer: number;
+              layer: number;
+            };
+            image.dataset.legacyCanonicalAttachmentCardId = id;
+            image.alt = '';
+            image.src = `${location.origin}/src/assets/cardback.png`;
+            image.style.opacity = '1';
+            image.style.position = 'relative';
+            image.style.bottom = '0%';
+            image.style.zIndex = '0';
+            image.style.left = '0px';
+            image.style.transform = 'rotate(0deg)';
+            image.attached = false;
+            image.target = 'off';
+            image.relative = 0;
+            image.energyLayer = 0;
+            image.layer = 0;
+            return image;
+          };
+          const active = body.querySelector('#active');
+          if (!(active instanceof HTMLElement)) {
+            throw new Error('Legacy canonical active region is missing');
+          }
+          const stack = document.createElement('div');
+          stack.className = 'play-container';
+          stack.style.zIndex = '0';
+          stack.dataset.legacyCanonicalAttachmentStackId = `${input.side}-canonical-attachment-stack`;
+          const [baseId, energyId] = input.cardIds;
+          const base = makeImage(baseId);
+          const energy = makeImage(energyId);
+          stack.append(base);
+          active.append(stack);
+          await Promise.all([base, energy].map((image) => image.decode()));
+
+          const attachEnergy = (
+            image: HTMLImageElement,
+            targetStack: HTMLElement,
+            clientWidthsBefore: number[],
+            authoredWidths: number[]
+          ) => {
+            const attachedImage = image as typeof base;
+            attachedImage.attached = true;
+            attachedImage.target = 'on';
+            attachedImage.relative = base;
+            image.style.position = 'absolute';
+            const adjustment = base.clientWidth / 6;
+            base.energyLayer += 1;
+            image.style.left = `${adjustment}px`;
+            image.style.zIndex = String(-base.energyLayer);
+            clientWidthsBefore.push(targetStack.clientWidth);
+            targetStack.style.width = `${Number.parseFloat(String(targetStack.clientWidth)) + adjustment}px`;
+            authoredWidths.push(Number.parseFloat(targetStack.style.width));
+            base.after(image);
+            image.style.transform = 'rotate(0deg)';
+          };
+          const transientClientWidthsBefore: number[] = [];
+          const transientAuthoredWidths: number[] = [];
+          attachEnergy(
+            energy,
+            stack,
+            transientClientWidthsBefore,
+            transientAuthoredWidths
+          );
+          const transientPostAttach = {
+            logicalOrder: [baseId, energyId],
+            domOrder: [
+              ...stack.querySelectorAll<HTMLImageElement>(':scope > img'),
+            ].map(
+              (image) => image.dataset.legacyCanonicalAttachmentCardId ?? ''
+            ),
+            clientWidth: stack.clientWidth,
+            authoredWidthPx: Number.parseFloat(stack.style.width),
+          };
+
+          const oldStack = stack;
+          const oldStackObserver = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+              const removedNode = mutation.removedNodes[0];
+              if (
+                removedNode?.nodeName === 'IMG' &&
+                oldStack.getElementsByTagName('img').length === 0
+              ) {
+                oldStack.remove();
+              }
+            }
+          });
+          oldStackObserver.observe(oldStack, { childList: true });
+          const stableStack = document.createElement('div');
+          stableStack.className = 'play-container';
+          stableStack.style.zIndex = '0';
+          stableStack.dataset.legacyCanonicalAttachmentStackId = `${input.side}-canonical-attachment-stack`;
+          base.style.opacity = '1';
+          base.style.position = 'relative';
+          base.style.bottom = '0%';
+          base.style.zIndex = '0';
+          base.style.left = '0px';
+          base.style.transform = 'rotate(0deg)';
+          base.attached = false;
+          base.target = 'off';
+          base.relative = 0;
+          base.energyLayer = 0;
+          base.layer = 0;
+          stableStack.append(base);
+          active.append(stableStack);
+          energy.style.opacity = '1';
+          energy.style.position = 'relative';
+          energy.style.bottom = '0%';
+          energy.style.zIndex = '0';
+          energy.style.left = '0px';
+          energy.style.transform = 'rotate(0deg)';
+          energy.attached = false;
+          energy.target = 'off';
+          energy.relative = 0;
+          energy.energyLayer = 0;
+          energy.layer = 0;
+          const stableClientWidthsBefore: number[] = [];
+          const stableAuthoredWidths: number[] = [];
+          attachEnergy(
+            energy,
+            stableStack,
+            stableClientWidthsBefore,
+            stableAuthoredWidths
+          );
+          stableStack.style.width = `${base.clientWidth + base.clientWidth / 6}px`;
+          stableStack.dataset.legacyAttachmentClientWidthsBefore =
+            JSON.stringify(stableClientWidthsBefore);
+          stableStack.dataset.legacyAttachmentAuthoredWidths =
+            JSON.stringify(stableAuthoredWidths);
+          stableStack.dataset.legacyTransientAttachmentStage =
+            JSON.stringify(transientPostAttach);
+          stableStack.dataset.legacyAttachmentLogicalOrder = JSON.stringify([
+            baseId,
+            energyId,
+          ]);
+          stableStack.dataset.legacySynchronousContainerCount = String(
+            active.querySelectorAll(
+              '[data-legacy-canonical-attachment-stack-id]'
+            ).length
+          );
+          stableStack.dataset.legacyOldContainerConnectedImmediately = String(
+            oldStack.isConnected
+          );
+          await new Promise<void>((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+          );
+          oldStackObserver.disconnect();
+          stableStack.dataset.legacyOldContainerConnected = String(
+            oldStack.isConnected
+          );
+        },
+        { side, cardIds: canonicalAttachmentFixtureCardIds(side) }
+      );
+  }
+
+  requireServedPaths(loaded, containedCardFixtureAssetPaths);
+  requireNoUnexpectedSameOriginPaths(loaded);
+  const frameTransforms = {
+    local: await captureFrameTransform(page.locator('#selfContainer')),
+    opponent: await captureFrameTransform(page.locator('#oppContainer')),
+  };
+  const cards: LegacyEnergyAttachmentFixtureCard[] = [];
+  const stacks: LegacyEnergyAttachmentFixtureStack[] = [];
+  for (const [side, frameSelector] of [
+    ['local', '#selfContainer'],
+    ['opponent', '#oppContainer'],
+  ] as const) {
+    const frame = page.frameLocator(frameSelector);
+    for (const [id, role] of [
+      [`${side}-attachment-base`, 'base'],
+      [`${side}-attachment-energy`, 'energy'],
+    ] as const) {
+      cards.push(
+        await captureCanonicalAttachmentCard(
+          frame.locator(`[data-legacy-canonical-attachment-card-id="${id}"]`),
+          side,
+          role,
+          frameTransforms[side].rotationDegrees
+        )
+      );
+    }
+    stacks.push(
+      await captureCanonicalAttachmentStack(
+        frame.locator(
+          `[data-legacy-canonical-attachment-stack-id="${side}-canonical-attachment-stack"]`
+        ),
+        side
+      )
+    );
+  }
+  requireNoUnexpectedSameOriginPaths(loaded);
+  return {
+    frames: {
+      local: await requireRect(
+        page.locator('#selfContainer'),
+        '#selfContainer'
+      ),
+      opponent: await requireRect(
+        page.locator('#oppContainer'),
+        '#oppContainer'
+      ),
+    },
+    frameTransforms,
     cards,
     stacks,
     sourceFulfillment: sourceFulfillment(loaded),
