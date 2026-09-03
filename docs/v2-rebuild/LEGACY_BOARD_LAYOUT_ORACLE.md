@@ -220,14 +220,44 @@ sidebar content rectangle is reconstructed from the measured shell/tab edges.
 The enforced acceptance remains the declared 2 CSS px browser tolerance; these
 sentinels do not claim visible controls or resize interaction parity.
 
-This is a characterization checkpoint, not a blanket parity pass. It
-feeds every renderer-relevant derived geometry field into the renderer-neutral
-scene and has structured scene assertions for all four oracle fixtures,
-including asymmetric resize, flipped ownership, midpoint shared placement,
-compact and fullscreen states. Raw normalized/authored inputs, box edges,
-affordances, and semantic z evidence remain in the richer characterization
-snapshot rather than being duplicated in `BoardScene`. Real-browser
-measurements for those additional states, cards/stacks, screenshots, and
+`tests/browser/legacy-card-stack-geometry.spec.ts` adds a separate source-only
+card checkpoint at that viewport. Its independently reviewed numeric fixture is
+`tests/legacy-fixtures/renderer/card-stack-layout-v1.json`, whose manifest pins
+both raw binary assets as well as every relevant HTML, CSS, constructor, reset,
+play-container, and attachment source. The inert harness creates the fixed
+layout-relevant DOM/inline-style output rather than importing the stateful
+legacy modules. Across both player frames it measures 18 image boxes:
+
+- portrait and deliberately square hand images, preserving intrinsic-aspect
+  sizing under the authored max height, iframe-relative margins, leading-edge
+  flow, and opponent reversal;
+- portrait and square unadorned bench play containers, preserving the authored
+  one-percent container margin and flex centering; and
+- a controlled active stack with one base, two Pokémon-style vertical
+  attachments, and two Energy-style horizontal attachments.
+
+The active-stack capture pins integer `clientWidth` rounding before the
+width/15 and width/6 calculations, sequential container-width expansion,
+full-size attachment boxes, negative layer z values, `base.after()` sibling
+reversal, and `elementsFromPoint()` order at common and exposed overlaps. It is
+explicitly a controlled `attachCard` transcription: it does not characterize
+the separate `evolveCard` action/reflow path, BREAK/rotation margins, bench
+overflow, markers, or expanded-stack presentation. It also does not yet compare
+these card boxes with either candidate renderer. The intrinsic-size evidence is
+observational only: it does not authorize adding secret definition dimensions
+to recipient projections. Until a safe asset-metadata boundary exists,
+production scene geometry must remain a function of recipient-visible inputs.
+
+These are characterization checkpoints, not a blanket parity pass. The earlier
+region checkpoint feeds every renderer-relevant derived region field into the
+renderer-neutral scene and has structured scene assertions for all four board
+oracle fixtures, including asymmetric resize, flipped ownership, midpoint
+shared placement, compact and fullscreen states. The new card/stack fixture is
+source-only and does not yet feed or validate `BoardScene` card geometry. Raw
+normalized/authored inputs, box edges, affordances, and semantic z evidence
+remain in the richer characterization snapshot rather than being duplicated in
+`BoardScene`. Real-browser measurements for additional layout states,
+candidate-renderer card/stack parity, remaining card modes, screenshots, and
 interaction surfaces remain in the gate below.
 
 ## Required real-browser acceptance gate

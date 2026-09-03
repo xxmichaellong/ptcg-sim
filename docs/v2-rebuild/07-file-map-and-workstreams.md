@@ -232,8 +232,9 @@ docs/v2-rebuild/parity-matrix.*
 docs/v2-rebuild/legacy-action-catalog.*
 docs/v2-rebuild/parity-exceptions.md
 tests/legacy-fixtures/{decks,saves,replays,network}/
-tests/legacy-fixtures/renderer/board-layout-v1.json
-tests/characterization/legacy-board-layout.test.ts
+tests/legacy-fixtures/renderer/{board-layout-v1,card-stack-layout-v1}.json
+tests/characterization/{legacy-board-layout,legacy-card-stack-layout}.test.ts
+tests/browser/{legacy-dom-geometry,legacy-card-stack-geometry}.spec.ts
 tests/e2e/legacy-baselines/{screenshots,geometry}/
 tests/e2e/legacy-workflows/
 tests/fixtures/{canonical,views,assets}/

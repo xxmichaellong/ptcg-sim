@@ -8,3 +8,9 @@ If a legacy action, replay exception, or key binding changes, update the manifes
 only after recording its explicit preserve/fix decision in
 `docs/v2-rebuild/LEGACY_ACTION_MAP.md`. These inventory locks are the first layer;
 scenario fixtures will add state, message, visibility, and ordering outcomes.
+
+Renderer geometry locks additionally pair a manually reviewed numeric fixture
+with source digests. Text sources are normalized to LF for portable hashing;
+image fixtures are hashed as raw bytes. The browser harness loads those sources
+through a deny-by-default origin and records CSS geometry without contacting the
+legacy application server.

@@ -155,9 +155,15 @@ consumes that snapshot and the same browser harness confirms all 16 visible
 player-region border boxes plus their structural content boxes, the visible
 stadium, and non-painting frame/handle/control projection anchors. The sidebar
 content rectangle is reconstructed from its measured shell and tabs; these
-anchors do not claim visible control or resize interaction parity. Card packing,
-other browser-measured viewports, and screenshot paint parity remain explicit
-expansions; this checkpoint does not replace the production layout. See
+anchors do not claim visible control or resize interaction parity. A second
+source-only Chromium fixture now pins portrait/nonstandard intrinsic-aspect
+sizing under authored constraints in both hands and benches and a controlled
+active attachment stack, including
+integer offset rounding, expanded-container centering, z/DOM order, and overlap
+hit order. It deliberately stops before candidate-renderer card comparison and
+ordinary evolution reflow. Other card modes, browser-measured viewports, and
+screenshot paint parity remain explicit expansions; these checkpoints do not
+replace the production layout. See
 [`LEGACY_BOARD_LAYOUT_ORACLE.md`](./LEGACY_BOARD_LAYOUT_ORACLE.md).
 
 The current duplicated self/opponent CSS becomes one declarative player-board

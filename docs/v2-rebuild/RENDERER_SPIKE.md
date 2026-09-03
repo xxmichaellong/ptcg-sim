@@ -290,8 +290,9 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 641 v2 tests across 98 files. A separate
-Playwright suite passes seven real Chromium 151 scenarios:
+The repository-wide gate passes 643 v2 tests across 99 files. A separate suite
+passes nine Playwright checks: eight browser-backed Chromium 151 scenarios and
+one source-digest lock:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -322,7 +323,15 @@ Playwright suite passes seven real Chromium 151 scenarios:
    rotation, and non-painting frame/handle/control projection anchors match the
    pinned layout within the 2 CSS px gate. The sidebar content rectangle is
    derived from measured shell/tab edges, not a corresponding content element.
-7. The selected DOM implementation completes 100 mount → clear/reset → destroy
+7. A second source-only fixture pins all relevant text and binary digests, then
+   measures portrait and nonstandard square cards in both hands and benches
+   plus controlled five-card active stacks in both frames. It verifies
+   intrinsic-aspect sizing under authored constraints, measured frame rotation,
+   integer-rounded width/15 and width/6 attachment offsets,
+   expanded-container centering, negative z order,
+   `base.after()` DOM reversal, and browser overlap hit order. This does not yet
+   claim candidate-renderer card parity or ordinary `evolveCard` reflow parity.
+8. The selected DOM implementation completes 100 mount → clear/reset → destroy
    cycles on one warmed route-owned host with the exact status sequence,
    complete scene IDs at mount, zero rendered scene children/IDs after clear and
    destroy, zero non-DOM diagnostic resources, and post-GC Chromium
@@ -338,12 +347,13 @@ and queues unmount outside the parent lifecycle. The same tests then passed with
 a clean console. This is retained as evidence for keeping browser tests separate
 from happy-DOM lifecycle tests.
 
-The suites live in `tests/browser/renderer-spike.spec.ts` and
-`tests/browser/legacy-dom-geometry.spec.ts`. Standard Linux CI can install
-Playwright's pinned Chromium build. This NixOS workspace used the Nix Chromium
-151 package through `PTCGSIM_CHROMIUM_PATH`, because Playwright's Debian/Ubuntu
-dependency installer requires `apt-get` and downloaded generic ELF binaries
-cannot directly resolve Nix store libraries.
+The suites live in `tests/browser/renderer-spike.spec.ts`,
+`tests/browser/legacy-dom-geometry.spec.ts`, and
+`tests/browser/legacy-card-stack-geometry.spec.ts`. Standard Linux CI can
+install Playwright's pinned Chromium build. This NixOS workspace used the Nix
+Chromium 151 package through `PTCGSIM_CHROMIUM_PATH`, because Playwright's
+Debian/Ubuntu dependency installer requires `apt-get` and downloaded generic
+ELF binaries cannot directly resolve Nix store libraries.
 
 ## Decision and remaining production gates
 
