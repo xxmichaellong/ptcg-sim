@@ -523,9 +523,14 @@ digest material. See the
 This closes monotonic audit-row growth, but per-command full-snapshot replacement
 is still an interim checkpoint strategy. The first bounded-history `workerd`
 measurement shows that a mature roughly 280 KiB snapshot misses the provisional
-command-latency objective. A bounded checkpoint plus verified tail, or another
-measured persistence representation, must improve that path without changing
-persist-before-publish, exact retry, or fail-closed recovery semantics.
+command-latency objective. Inner timing attributes most of the first
+post-eviction command to three whole-snapshot invariant scans: current input,
+the new candidate, and the adapter's repeat validation of that candidate. A
+validated handoff must remove only the redundant scans while retaining checks
+at real trust boundaries. A bounded checkpoint plus verified tail, or another
+measured persistence representation, remains available if that optimization
+cannot meet the objective without changing persist-before-publish, exact retry,
+or fail-closed recovery semantics.
 
 ### Saved games and links
 

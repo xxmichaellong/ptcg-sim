@@ -23,8 +23,10 @@ import {
 } from './model.js';
 import type {
   AuthorityDelivery,
-  AuthorityDependencies,
   AuthorityCommandTiming,
+  AuthorityCommandTimingBreakdown,
+  AuthorityDependencies,
+  AuthorityPersistenceTiming,
   AuthorityProcessResult,
   AuthorityRejectionCode,
   AuthoritySession,
@@ -45,12 +47,22 @@ import {
 type CommandEnvelope = Extract<ClientMessage, { type: 'Command' }>;
 
 interface AuthorityCommandTimer {
+  readonly measureAuthority: <Value>(
+    phase: AuthorityProcessingPhase,
+    operation: () => Value
+  ) => Value;
   readonly measureProjection: <Value>(operation: () => Value) => Value;
   readonly measurePersistence: (
-    operation: () => Promise<void>
+    operation: () => Promise<void | AuthorityPersistenceTiming>
   ) => Promise<void>;
   readonly finish: () => AuthorityCommandTiming;
 }
+
+type AuthorityProcessingPhase =
+  | 'inputValidationMs'
+  | 'resolutionAndExecutionMs'
+  | 'historyAndCandidateMs'
+  | 'candidateValidationMs';
 
 const safeMonotonicMark = (monotonicNow?: () => number): number | undefined => {
   try {
@@ -66,13 +78,35 @@ const elapsed = (startedAt?: number, finishedAt?: number): number =>
     ? 0
     : finishedAt - startedAt;
 
+const boundedTiming = (value: number): number =>
+  Number.isFinite(value) && value >= 0 ? Math.min(value, 86_400_000) : 0;
+
 const createAuthorityCommandTimer = (
   monotonicNow?: () => number
 ): AuthorityCommandTimer => {
   const startedAt = safeMonotonicMark(monotonicNow);
   let projectionMs = 0;
   let persistenceMs = 0;
+  const breakdown: {
+    -readonly [Phase in keyof AuthorityCommandTimingBreakdown]: number;
+  } = {
+    inputValidationMs: 0,
+    resolutionAndExecutionMs: 0,
+    historyAndCandidateMs: 0,
+    candidateValidationMs: 0,
+    snapshotValidationMs: 0,
+    transactionMs: 0,
+  };
   return {
+    measureAuthority: (phase, operation) => {
+      const phaseStartedAt = safeMonotonicMark(monotonicNow);
+      const value = operation();
+      breakdown[phase] += elapsed(
+        phaseStartedAt,
+        safeMonotonicMark(monotonicNow)
+      );
+      return value;
+    },
     measureProjection: (operation) => {
       const phaseStartedAt = safeMonotonicMark(monotonicNow);
       const value = operation();
@@ -81,8 +115,14 @@ const createAuthorityCommandTimer = (
     },
     measurePersistence: async (operation) => {
       const phaseStartedAt = safeMonotonicMark(monotonicNow);
-      await operation();
+      const detail = await operation();
       persistenceMs += elapsed(phaseStartedAt, safeMonotonicMark(monotonicNow));
+      if (detail) {
+        breakdown.snapshotValidationMs += boundedTiming(
+          detail.snapshotValidationMs
+        );
+        breakdown.transactionMs += boundedTiming(detail.transactionMs);
+      }
     },
     finish: () => ({
       authorityProcessingMs: Math.max(
@@ -93,6 +133,7 @@ const createAuthorityCommandTimer = (
       ),
       projectionMs,
       persistenceMs,
+      breakdown: { ...breakdown },
     }),
   };
 };
@@ -220,28 +261,30 @@ export const processAuthorityCommand = async (
   dependencies: AuthorityDependencies
 ): Promise<AuthorityProcessResult> => {
   const timer = createAuthorityCommandTimer(dependencies.monotonicNow);
-  assertAuthoritySnapshotInvariants(current);
-  if (
-    !Number.isSafeInteger(dependencies.policy.maximumSoloUndoCheckpoints) ||
-    dependencies.policy.maximumSoloUndoCheckpoints < 1 ||
-    dependencies.policy.maximumSoloUndoCheckpoints > MAX_SOLO_UNDO_CHECKPOINTS
-  ) {
-    throw new Error('Solo undo checkpoint policy is invalid');
-  }
-  if (
-    !Number.isSafeInteger(dependencies.policy.maximumReplayEventBatches) ||
-    dependencies.policy.maximumReplayEventBatches < 1 ||
-    dependencies.policy.maximumReplayEventBatches > MAX_REPLAY_EVENT_BATCHES
-  ) {
-    throw new Error('Replay history policy is invalid');
-  }
-  if (
-    !Number.isSafeInteger(dependencies.policy.maximumReplayEventBytes) ||
-    dependencies.policy.maximumReplayEventBytes < 1 ||
-    dependencies.policy.maximumReplayEventBytes > MAX_REPLAY_EVENT_BYTES
-  ) {
-    throw new Error('Replay history byte policy is invalid');
-  }
+  timer.measureAuthority('inputValidationMs', () => {
+    assertAuthoritySnapshotInvariants(current);
+    if (
+      !Number.isSafeInteger(dependencies.policy.maximumSoloUndoCheckpoints) ||
+      dependencies.policy.maximumSoloUndoCheckpoints < 1 ||
+      dependencies.policy.maximumSoloUndoCheckpoints > MAX_SOLO_UNDO_CHECKPOINTS
+    ) {
+      throw new Error('Solo undo checkpoint policy is invalid');
+    }
+    if (
+      !Number.isSafeInteger(dependencies.policy.maximumReplayEventBatches) ||
+      dependencies.policy.maximumReplayEventBatches < 1 ||
+      dependencies.policy.maximumReplayEventBatches > MAX_REPLAY_EVENT_BATCHES
+    ) {
+      throw new Error('Replay history policy is invalid');
+    }
+    if (
+      !Number.isSafeInteger(dependencies.policy.maximumReplayEventBytes) ||
+      dependencies.policy.maximumReplayEventBytes < 1 ||
+      dependencies.policy.maximumReplayEventBytes > MAX_REPLAY_EVENT_BYTES
+    ) {
+      throw new Error('Replay history byte policy is invalid');
+    }
+  });
   const session = current.sessions[envelope.sessionId];
   if (!session || !session.active) {
     return immediateRejection(current, envelope, 'session_superseded', timer);
@@ -296,130 +339,137 @@ export const processAuthorityCommand = async (
     return immediateRejection(current, envelope, 'invalid_sequence', timer);
   }
 
-  const undoCheckpoint =
-    current.mode === 'solo' && envelope.command.type === 'ApplySoloUndo'
-      ? materializeSoloUndoCheckpoint(current.soloUndoHistory)
-      : undefined;
-
-  const resolution = resolveWireCommand(
-    current.state,
-    current.identities,
-    session,
-    envelope.command,
-    dependencies.policy,
-    envelope.lastSeenRevision,
-    {
-      mode: current.mode,
-      ...(undoCheckpoint ? { checkpoint: undoCheckpoint } : {}),
-    }
-  );
-  let nextState: MatchState = current.state;
-  let eventBatch: EventBatch | undefined;
-  let outcome: PersistedCommandOutcome;
-  if (!resolution.accepted) {
-    outcome = {
-      commandId: envelope.commandId,
-      clientSequence: envelope.clientSequence,
-      accepted: false,
-      revision: current.state.revision,
-      code: resolution.code,
-    };
-  } else {
-    const execution = executeCommand(
+  const resolved = timer.measureAuthority('resolutionAndExecutionMs', () => {
+    const undoCheckpoint =
+      current.mode === 'solo' && envelope.command.type === 'ApplySoloUndo'
+        ? materializeSoloUndoCheckpoint(current.soloUndoHistory)
+        : undefined;
+    const resolution = resolveWireCommand(
       current.state,
-      resolution.command,
-      dependencies.commandContext
+      current.identities,
+      session,
+      envelope.command,
+      dependencies.policy,
+      envelope.lastSeenRevision,
+      {
+        mode: current.mode,
+        ...(undoCheckpoint ? { checkpoint: undoCheckpoint } : {}),
+      }
     );
-    if (execution.accepted) {
-      nextState = execution.state;
-      eventBatch = execution.batch;
-      outcome = {
-        commandId: envelope.commandId,
-        clientSequence: envelope.clientSequence,
-        accepted: true,
-        revision: execution.state.revision,
-      };
-    } else {
+    let nextState: MatchState = current.state;
+    let eventBatch: EventBatch | undefined;
+    let outcome: PersistedCommandOutcome;
+    if (!resolution.accepted) {
       outcome = {
         commandId: envelope.commandId,
         clientSequence: envelope.clientSequence,
         accepted: false,
         revision: current.state.revision,
-        code: coreRejectionCode(execution.code),
+        code: resolution.code,
       };
+    } else {
+      const execution = executeCommand(
+        current.state,
+        resolution.command,
+        dependencies.commandContext
+      );
+      if (execution.accepted) {
+        nextState = execution.state;
+        eventBatch = execution.batch;
+        outcome = {
+          commandId: envelope.commandId,
+          clientSequence: envelope.clientSequence,
+          accepted: true,
+          revision: execution.state.revision,
+        };
+      } else {
+        outcome = {
+          commandId: envelope.commandId,
+          clientSequence: envelope.clientSequence,
+          accepted: false,
+          revision: current.state.revision,
+          code: coreRejectionCode(execution.code),
+        };
+      }
     }
-  }
+    return { nextState, eventBatch, outcome };
+  });
+  const { nextState, eventBatch, outcome } = resolved;
   const accepted = outcome.accepted;
 
-  let soloUndoHistory = cloneSoloUndoHistory(current.soloUndoHistory);
-  if (accepted && current.mode === 'solo') {
-    if (envelope.command.type === 'ApplySoloUndo') {
-      soloUndoHistory = popSoloUndoHistory(soloUndoHistory);
-    } else if (envelope.command.type === 'LoadDeck') {
-      // Loading a new deck replaces canonical card identities and is the same
-      // non-undoable history boundary as the legacy deck exchange.
-      soloUndoHistory = emptySoloUndoHistory();
-    } else {
-      if (!eventBatch) {
-        throw new Error('Accepted solo command did not produce an event batch');
+  let candidate = timer.measureAuthority('historyAndCandidateMs', () => {
+    let soloUndoHistory = cloneSoloUndoHistory(current.soloUndoHistory);
+    if (accepted && current.mode === 'solo') {
+      if (envelope.command.type === 'ApplySoloUndo') {
+        soloUndoHistory = popSoloUndoHistory(soloUndoHistory);
+      } else if (envelope.command.type === 'LoadDeck') {
+        // Loading a new deck replaces canonical card identities and is the same
+        // non-undoable history boundary as the legacy deck exchange.
+        soloUndoHistory = emptySoloUndoHistory();
+      } else {
+        if (!eventBatch) {
+          throw new Error(
+            'Accepted solo command did not produce an event batch'
+          );
+        }
+        soloUndoHistory = appendSoloUndoHistory(
+          soloUndoHistory,
+          current.state,
+          envelope.commandId,
+          eventBatch,
+          dependencies.policy.maximumSoloUndoCheckpoints
+        );
       }
-      soloUndoHistory = appendSoloUndoHistory(
-        soloUndoHistory,
-        current.state,
-        envelope.commandId,
+    }
+    let replayHistory = current.replayHistory;
+    if (accepted) {
+      if (!eventBatch) {
+        throw new Error('Accepted command did not produce an event batch');
+      }
+      replayHistory = appendReplayHistory(
+        replayHistory,
         eventBatch,
-        dependencies.policy.maximumSoloUndoCheckpoints
+        nextState,
+        dependencies.policy.maximumReplayEventBatches,
+        dependencies.policy.maximumReplayEventBytes
       );
     }
-  }
-  let replayHistory = current.replayHistory;
-  if (accepted) {
-    if (!eventBatch) {
-      throw new Error('Accepted command did not produce an event batch');
-    }
-    replayHistory = appendReplayHistory(
-      replayHistory,
-      eventBatch,
-      nextState,
-      dependencies.policy.maximumReplayEventBatches,
-      dependencies.policy.maximumReplayEventBytes
-    );
-  }
 
-  const sessions = Object.fromEntries(
-    Object.entries(current.sessions).map(([id, value]) => [
-      id,
-      cloneSession(value),
-    ])
-  );
-  sessions[session.id] = appendOutcome(
-    sessions[session.id]!,
-    outcome,
-    dependencies.policy.maximumRecentOutcomesPerSession
-  );
-  let candidate: RoomAuthoritySnapshot = {
-    schemaVersion: current.schemaVersion,
-    authorityVersion: current.authorityVersion + 1,
-    mode: current.mode,
-    state: accepted
-      ? cloneMatchState(nextState)
-      : cloneMatchState(current.state),
-    soloUndoHistory,
-    replayHistory,
-    identities:
-      accepted && envelope.command.type === 'ApplySoloUndo'
-        ? emptyProjectionIdentityState()
-        : {
-            cardAliases: current.identities.cardAliases.map((entry) => ({
-              ...entry,
-            })),
-            definitionAliases: current.identities.definitionAliases.map(
-              (entry) => ({ ...entry })
-            ),
-          },
-    sessions,
-    ...(current.admission ? { admission: current.admission } : {}),
-  };
+    const sessions = Object.fromEntries(
+      Object.entries(current.sessions).map(([id, value]) => [
+        id,
+        cloneSession(value),
+      ])
+    );
+    sessions[session.id] = appendOutcome(
+      sessions[session.id]!,
+      outcome,
+      dependencies.policy.maximumRecentOutcomesPerSession
+    );
+    return {
+      schemaVersion: current.schemaVersion,
+      authorityVersion: current.authorityVersion + 1,
+      mode: current.mode,
+      state: accepted
+        ? cloneMatchState(nextState)
+        : cloneMatchState(current.state),
+      soloUndoHistory,
+      replayHistory,
+      identities:
+        accepted && envelope.command.type === 'ApplySoloUndo'
+          ? emptyProjectionIdentityState()
+          : {
+              cardAliases: current.identities.cardAliases.map((entry) => ({
+                ...entry,
+              })),
+              definitionAliases: current.identities.definitionAliases.map(
+                (entry) => ({ ...entry })
+              ),
+            },
+      sessions,
+      ...(current.admission ? { admission: current.admission } : {}),
+    } satisfies RoomAuthoritySnapshot;
+  });
   let publications: readonly AuthorityDelivery[] = [];
   if (accepted) {
     if (!eventBatch) {
@@ -437,7 +487,9 @@ export const processAuthorityCommand = async (
     publications = projected.deliveries;
   }
 
-  assertAuthoritySnapshotInvariants(candidate);
+  timer.measureAuthority('candidateValidationMs', () =>
+    assertAuthoritySnapshotInvariants(candidate)
+  );
 
   await timer.measurePersistence(() =>
     dependencies.persistence.commit({

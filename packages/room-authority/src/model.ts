@@ -158,7 +158,14 @@ export interface PersistedAuthorityTransaction {
 export interface AuthorityPersistence {
   readonly commit: (
     transaction: PersistedAuthorityTransaction
-  ) => Promise<void>;
+  ) => Promise<void | AuthorityPersistenceTiming>;
+}
+
+export interface AuthorityPersistenceTiming {
+  /** Validation performed by the persistence adapter at its trust boundary. */
+  readonly snapshotValidationMs: number;
+  /** The atomic storage transaction, including reads, writes, and retention. */
+  readonly transactionMs: number;
 }
 
 export interface AuthoritySnapshotStore extends AuthorityPersistence {
@@ -233,6 +240,15 @@ export interface AuthorityCommandTiming {
   readonly projectionMs: number;
   /** The complete persist-before-publish storage call. */
   readonly persistenceMs: number;
+  /** Finer local diagnostic phases; not added to production telemetry fields. */
+  readonly breakdown: AuthorityCommandTimingBreakdown;
+}
+
+export interface AuthorityCommandTimingBreakdown extends AuthorityPersistenceTiming {
+  readonly inputValidationMs: number;
+  readonly resolutionAndExecutionMs: number;
+  readonly historyAndCandidateMs: number;
+  readonly candidateValidationMs: number;
 }
 
 export const DEFAULT_AUTHORITY_POLICY: AuthorityPolicy = {

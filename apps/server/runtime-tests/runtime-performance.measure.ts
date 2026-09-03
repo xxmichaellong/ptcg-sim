@@ -102,6 +102,28 @@ const phaseDistributions = (
     samples.map((sample) => sample.phases.publicationSerializationMs)
   ),
   socketSend: distribution(samples.map((sample) => sample.phases.socketSendMs)),
+  authorityBreakdown: {
+    inputValidation: distribution(
+      samples.map((sample) => sample.breakdown.inputValidationMs)
+    ),
+    resolutionAndExecution: distribution(
+      samples.map((sample) => sample.breakdown.resolutionAndExecutionMs)
+    ),
+    historyAndCandidate: distribution(
+      samples.map((sample) => sample.breakdown.historyAndCandidateMs)
+    ),
+    candidateValidation: distribution(
+      samples.map((sample) => sample.breakdown.candidateValidationMs)
+    ),
+  },
+  persistenceBreakdown: {
+    snapshotValidation: distribution(
+      samples.map((sample) => sample.breakdown.snapshotValidationMs)
+    ),
+    transaction: distribution(
+      samples.map((sample) => sample.breakdown.transactionMs)
+    ),
+  },
 });
 
 let runtime: RepresentativeRuntime | undefined;
@@ -370,6 +392,15 @@ describe('local workerd performance observation', () => {
           sample.phases.publicationSerializationMs +
           sample.phases.socketSendMs
       ).toBeLessThanOrEqual(sample.totalMs + 0.01);
+      expect(
+        sample.breakdown.inputValidationMs +
+          sample.breakdown.resolutionAndExecutionMs +
+          sample.breakdown.historyAndCandidateMs +
+          sample.breakdown.candidateValidationMs
+      ).toBeLessThanOrEqual(sample.phases.authorityProcessingMs + 0.01);
+      expect(
+        sample.breakdown.snapshotValidationMs + sample.breakdown.transactionMs
+      ).toBeLessThanOrEqual(sample.phases.persistenceMs + 0.01);
     }
     expect(
       report.durableResources.atRetentionBoundary.storageByCategory[

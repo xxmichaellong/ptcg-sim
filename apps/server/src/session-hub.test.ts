@@ -415,25 +415,33 @@ describe('serialized room session hub', () => {
         endRevision: 1,
         deliveryCount: 2,
         phases: {
-          authorityProcessingMs: 3,
+          authorityProcessingMs: 11,
           projectionMs: 1,
           persistenceMs: 1,
           publicationSerializationMs: 1,
           socketSendMs: 1,
         },
-        durationMs: 10,
+        durationMs: 18,
       })
     );
     expect(setup.hub.recentAcceptedCommandPerformance()).toEqual([
       {
         endRevision: 1,
-        totalMs: 10,
+        totalMs: 18,
         phases: {
-          authorityProcessingMs: 3,
+          authorityProcessingMs: 11,
           projectionMs: 1,
           persistenceMs: 1,
           publicationSerializationMs: 1,
           socketSendMs: 1,
+        },
+        breakdown: {
+          inputValidationMs: 1,
+          resolutionAndExecutionMs: 1,
+          historyAndCandidateMs: 1,
+          candidateValidationMs: 1,
+          snapshotValidationMs: 0,
+          transactionMs: 0,
         },
       },
     ]);

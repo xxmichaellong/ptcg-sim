@@ -314,7 +314,9 @@ now have transactional count/byte retention and a real-runtime storage plateau.
 Telemetry v2 separates authority processing, projection, persistence,
 publication serialization, and socket send; the named run shows authority and
 persistence dominate an unacceptable high-history local command p95, so bounded
-storage is not being mistaken for adequate performance.
+storage is not being mistaken for adequate performance. Local-only inner timing
+further attributes about 71% of the first post-eviction server command to three
+whole-snapshot invariant scans, establishing the next validated-handoff gate.
 
 ## Load and soak gates
 

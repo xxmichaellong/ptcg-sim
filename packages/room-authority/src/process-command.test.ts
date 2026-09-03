@@ -199,7 +199,7 @@ describe('authoritative room command transaction', () => {
 
   it('reports isolated authority, projection, and persistence phases without affecting the transaction', async () => {
     const persistence = createPersistence();
-    const marks = [0, 10, 30, 40, 70, 80];
+    const marks = [0, 0, 10, 10, 30, 30, 60, 60, 80, 80, 90, 90, 120, 120];
     const result = await processAuthorityCommand(createSnapshot(), loadDeck(), {
       ...createDependencies(persistence),
       monotonicNow: () => marks.shift()!,
@@ -207,9 +207,17 @@ describe('authoritative room command transaction', () => {
 
     expect(result.committed).toBe(true);
     expect(result.timing).toEqual({
-      authorityProcessingMs: 30,
+      authorityProcessingMs: 70,
       projectionMs: 20,
       persistenceMs: 30,
+      breakdown: {
+        inputValidationMs: 10,
+        resolutionAndExecutionMs: 20,
+        historyAndCandidateMs: 30,
+        candidateValidationMs: 10,
+        snapshotValidationMs: 0,
+        transactionMs: 0,
+      },
     });
     expect(marks).toEqual([]);
 
@@ -228,6 +236,14 @@ describe('authoritative room command transaction', () => {
       authorityProcessingMs: 0,
       projectionMs: 0,
       persistenceMs: 0,
+      breakdown: {
+        inputValidationMs: 0,
+        resolutionAndExecutionMs: 0,
+        historyAndCandidateMs: 0,
+        candidateValidationMs: 0,
+        snapshotValidationMs: 0,
+        transactionMs: 0,
+      },
     });
   });
 

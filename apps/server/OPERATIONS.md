@@ -153,7 +153,10 @@ The Durable Object keeps only the 32 latest accepted-command observations in
 memory so the harness can collect the same numeric durations without parsing
 console output. The window has no room, session, command, card, or capability
 values, is not persisted, is not exposed by an HTTP route, and resets on
-eviction. Production monitoring continues to use the structured telemetry sink.
+eviction. It adds local-only detail for invariant validation,
+resolution/execution, history/candidate construction, adapter validation, and
+the atomic transaction. Production monitoring continues to use the structured
+telemetry sink's coarser v2 phases.
 
 This local observation is diagnostic evidence, not a substitute for managed
 Cloudflare preview load, CPU/memory/cost, alarm, or network distributions. The

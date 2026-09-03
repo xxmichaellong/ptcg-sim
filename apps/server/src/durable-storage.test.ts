@@ -614,15 +614,20 @@ describe('Durable Object authority snapshot store', () => {
 
   it('atomically writes the snapshot and resolved journal record', async () => {
     const storage = new MemoryDurableStorage();
-    const store = new DurableRoomSnapshotStore(storage);
     const initial = initialSnapshot();
-    await store.initialize(initial);
+    await new DurableRoomSnapshotStore(storage).initialize(initial);
     expect(storage.values.get(AUTHORITY_SNAPSHOT_STORAGE_KEY)).toMatchObject({
       format: 'ptcgsim-room-authority-v6',
     });
 
+    const marks = [0, 5, 10, 25];
+    const store = new DurableRoomSnapshotStore(storage, () => marks.shift()!);
     const transaction = acceptedTransaction(initial);
-    await store.commit(transaction);
+    await expect(store.commit(transaction)).resolves.toEqual({
+      snapshotValidationMs: 5,
+      transactionMs: 15,
+    });
+    expect(marks).toEqual([]);
 
     expect((await store.load())?.state.revision).toBe(1);
     const journalKeys = [...storage.values.keys()].filter((key) =>
@@ -638,6 +643,16 @@ describe('Durable Object authority snapshot store', () => {
       outcome: { commandId: 'command-1', accepted: true },
       eventBatch: { revision: 1 },
     });
+
+    const clockFailureStore = new DurableRoomSnapshotStore(storage, () => {
+      throw new Error('observation clock failed');
+    });
+    const nextTransaction = rejectedTransaction(transaction.snapshot);
+    await expect(clockFailureStore.commit(nextTransaction)).resolves.toEqual({
+      snapshotValidationMs: 0,
+      transactionMs: 0,
+    });
+    expect(await clockFailureStore.load()).toEqual(nextTransaction.snapshot);
   });
 
   it('bounds recent room audit rows while retaining the snapshot idempotency frontier', async () => {

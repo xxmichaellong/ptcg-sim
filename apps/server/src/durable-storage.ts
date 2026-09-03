@@ -7,6 +7,7 @@ import {
   assertAuthoritySnapshotInvariants,
   createReplayHistory,
   type AdmissionPersistence,
+  type AuthorityPersistenceTiming,
   type AuthoritySnapshotStore,
   type PersistedAdmissionTransaction,
   type PersistedAuthorityTransaction,
@@ -134,6 +135,23 @@ export class RoomExpiredError extends Error {
 
 const safeNonNegativeInteger = (value: unknown): value is number =>
   typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+
+const safeMonotonicMark = (monotonicNow: () => number): number | undefined => {
+  try {
+    const mark = monotonicNow();
+    return Number.isFinite(mark) ? mark : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const measuredDuration = (startedAt?: number, finishedAt?: number): number =>
+  startedAt === undefined ||
+  finishedAt === undefined ||
+  finishedAt < startedAt ||
+  !Number.isFinite(finishedAt - startedAt)
+    ? 0
+    : Math.min(finishedAt - startedAt, 86_400_000);
 
 const readStoredRoomLifecycle = (
   value: unknown
@@ -339,7 +357,10 @@ const readStoredSnapshot = (
 export class DurableRoomSnapshotStore
   implements AuthoritySnapshotStore, AdmissionPersistence
 {
-  constructor(private readonly storage: DurableStorageLike) {}
+  constructor(
+    private readonly storage: DurableStorageLike,
+    private readonly monotonicNow: () => number = () => performance.now()
+  ) {}
 
   async load(): Promise<RoomAuthoritySnapshot | undefined> {
     return readStoredSnapshot(
@@ -440,8 +461,16 @@ export class DurableRoomSnapshotStore
     return decision.status;
   }
 
-  async commit(transaction: PersistedAuthorityTransaction): Promise<void> {
+  async commit(
+    transaction: PersistedAuthorityTransaction
+  ): Promise<AuthorityPersistenceTiming> {
+    const validationStartedAt = safeMonotonicMark(this.monotonicNow);
     assertAuthoritySnapshotInvariants(transaction.snapshot);
+    const snapshotValidationMs = measuredDuration(
+      validationStartedAt,
+      safeMonotonicMark(this.monotonicNow)
+    );
+    const transactionStartedAt = safeMonotonicMark(this.monotonicNow);
     await this.storage.transaction(async (storageTransaction) => {
       const lifecycle = readStoredRoomLifecycle(
         await storageTransaction.get<unknown>(ROOM_LIFECYCLE_STORAGE_KEY)
@@ -503,6 +532,13 @@ export class DurableRoomSnapshotStore
         await storageTransaction.delete([...retained.staleKeys]);
       }
     });
+    return {
+      snapshotValidationMs,
+      transactionMs: measuredDuration(
+        transactionStartedAt,
+        safeMonotonicMark(this.monotonicNow)
+      ),
+    };
   }
 
   async commitAdmission(

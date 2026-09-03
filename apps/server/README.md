@@ -32,4 +32,6 @@ hibernating evictions, commits once more after wake, and writes a sanitized
 machine-readable artifact through the repository runner. Telemetry v2 and the
 artifact split accepted commands into authority processing, recipient
 projection, durable persistence, publication serialization, and socket-send
-phases.
+phases. The local diagnostic adds non-telemetry detail for input/candidate
+invariants, resolution/execution, history/candidate construction, adapter
+validation, and the atomic storage transaction.

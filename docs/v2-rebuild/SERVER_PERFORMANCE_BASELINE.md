@@ -41,8 +41,8 @@ six-command fixture it enforces:
 
 | Resource                                              | CI envelope | Named observation |
 | ----------------------------------------------------- | ----------: | ----------------: |
-| Largest server frame                                  |     256 KiB |      62,437 bytes |
-| Three-recipient aggregate publication                 |     768 KiB |     149,286 bytes |
+| Largest server frame                                  |     256 KiB |      62,439 bytes |
+| Three-recipient aggregate publication                 |     768 KiB |     149,294 bytes |
 | Serialized Durable Object keys and JSON values        |       2 MiB |     327,023 bytes |
 | Durable Object storage entries                        |          32 |                16 |
 | Serialized hibernating WebSocket attachment           |       1 KiB |         120 bytes |
@@ -72,16 +72,16 @@ The current named run reported:
 
 | Observation                                                           |                                 Result |
 | --------------------------------------------------------------------- | -------------------------------------: |
-| Fixture construction, including room/admission and six commands       |                                 773 ms |
-| Individual fixture command to all publications                        |                              56–100 ms |
-| Early `FlipCoin` command to all publications, 24 samples              | p50 124 ms; p95 185 ms; p99/max 198 ms |
-| Tail of journal/outcome fill, 24 samples                              | p50 485 ms; p95 620 ms; p99/max 634 ms |
-| Mature bounded-history plateau, 32 samples                            |     p50 519 ms; p95 655 ms; p99 694 ms |
-| Hibernating eviction wake, ping to pong, 9 samples                    |         p50 151 ms; p95/p99/max 184 ms |
-| First post-hibernation command at the mature plateau                  |                                 575 ms |
+| Fixture construction, including room/admission and six commands       |                                 704 ms |
+| Individual fixture command to all publications                        |                               60–99 ms |
+| Early `FlipCoin` command to all publications, 24 samples              | p50 126 ms; p95 196 ms; p99/max 215 ms |
+| Tail of journal/outcome fill, 24 samples                              | p50 488 ms; p95 634 ms; p99/max 652 ms |
+| Mature bounded-history plateau, 32 samples                            |     p50 491 ms; p95 648 ms; p99 673 ms |
+| Hibernating eviction wake, ping to pong, 9 samples                    |         p50 166 ms; p95/p99/max 196 ms |
+| First post-hibernation command at the mature plateau                  |                                 490 ms |
 | Largest `LoadDeck` request                                            |                           15,386 bytes |
-| Largest observed server frame, including the post-hibernation command |                           62,437 bytes |
-| Largest three-recipient aggregate publication                         |                          149,286 bytes |
+| Largest observed server frame, including the post-hibernation command |                           62,439 bytes |
+| Largest three-recipient aggregate publication                         |                          149,294 bytes |
 
 Nearest-rank percentiles are used. Command time begins immediately before the
 WebSocket send and ends after all three projected publications plus the actor's
@@ -130,39 +130,55 @@ survives eviction and another durable command.
 The authority snapshot itself was about 250 KiB after fixture construction and
 about 286–291 KiB once replay and idempotency histories matured. The current
 adapter atomically replaces that complete snapshot on every authority commit.
-The mature local p95 of 655 ms and post-hibernation command time of 575 ms are
+The mature local p95 of 648 ms and post-hibernation command time of 490 ms are
 not acceptable against the provisional 250 ms reconciliation objective.
 
 Telemetry v2 now splits the 32-command mature plateau inside the Worker:
 
 | Server phase                                     | p50 | p95 | p99/max |
 | ------------------------------------------------ | --: | --: | ------: |
-| Total command handling through socket enqueue    | 511 | 649 |     688 |
-| Authority processing                             | 290 | 360 |     399 |
-| Recipient projection/protocol view serialization |   3 |   9 |      10 |
-| Durable persistence                              | 235 | 326 |     339 |
+| Total command handling through socket enqueue    | 482 | 636 |     665 |
+| Authority processing                             | 272 | 358 |     362 |
+| Recipient projection/protocol view serialization |   3 |   7 |       8 |
+| Durable persistence                              | 200 | 300 |     305 |
 | Publication JSON size serialization              |   0 |   1 |       1 |
 | Socket JSON serialization and enqueue            |   1 |   1 |       1 |
 
 Durations are milliseconds and percentile rows are independent distributions,
 so percentile columns must not be added as though they describe the same
-sample. The first post-eviction command took 575 ms end-to-end and 441 ms inside
-the command handler: 208 ms authority processing, 5 ms projection, 226 ms
+sample. The first post-eviction command took 490 ms end-to-end and 390 ms inside
+the command handler: 183 ms authority processing, 5 ms projection, 201 ms
 persistence, less than 1 ms publication serialization, and 1 ms socket send.
 
+The local-only inner diagnostic divides those two dominant phases further:
+
+| Inner server operation                  | p50 | p95 | p99/max |
+| --------------------------------------- | --: | --: | ------: |
+| Validate current authority snapshot     | 138 | 186 |     189 |
+| Resolve and execute command             |   1 |   4 |       4 |
+| Build history and candidate snapshot    |   3 |   7 |       9 |
+| Validate candidate authority snapshot   | 126 | 172 |     180 |
+| Persistence adapter validates candidate |  89 | 155 |     156 |
+| Atomic Durable Object transaction       | 100 | 161 |     187 |
+
+The post-eviction sample is even clearer: current validation was 90 ms,
+candidate validation 89 ms, and adapter revalidation 98 ms—277 of the 390
+server milliseconds, about 71%. Its transaction was 102 ms; resolution was 1
+ms and history/candidate construction was 3 ms.
+
 This corrects the earlier persistence-only hypothesis. Whole-snapshot storage
-is a major cost, but authority processing is at least as material; it currently
-includes repeated invariant walks, resolution/execution, history hashing,
-whole-state cloning, and candidate construction. Projection and fanout are not
-the server bottleneck in this fixture. The next optimization slice must profile
-those inner authority/persistence operations and improve both paths before a
-checkpoint/tail representation is selected, while preserving atomic accepted
-state recovery, exact retries, visibility, and fail-closed migration.
+is material, but three invariant scans dominate the measured post-eviction
+sample; resolution, history construction, projection, and fanout do not. The
+next slice must introduce an explicit validated snapshot handoff so current and
+candidate snapshots are each checked once at the correct trust boundary, then
+remeasure before selecting a checkpoint/tail representation. Atomic accepted
+state recovery, exact retries, visibility, and fail-closed migration remain
+non-negotiable.
 
 ## Evidence still required
 
 - managed Cloudflare preview p50/p95/p99 split by command family and phase;
-- inner authority/persistence profiles and a mature-history local p95 below the
+- validated-handoff optimization and a mature-history local p95 below the
   ratified objective;
 - reconnect-to-usable timing over a real transport;
 - platform CPU, memory, storage, request, and cost distributions;

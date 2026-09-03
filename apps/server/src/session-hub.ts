@@ -4,6 +4,7 @@ import {
   issueRoomInvitation,
   RoomAuthorityCoordinator,
   type AdmissionTicketIssueRequest,
+  type AuthorityCommandTimingBreakdown,
   type AuthoritySnapshotStore,
   type RoomInvitationDependencies,
   type RoomInvitationIssueRequest,
@@ -34,6 +35,7 @@ export interface AcceptedCommandPerformanceObservation {
   readonly endRevision: number;
   readonly totalMs: number;
   readonly phases: RoomCommandPhaseDurations;
+  readonly breakdown: AuthorityCommandTimingBreakdown;
 }
 
 export interface RuntimeConnection {
@@ -88,6 +90,23 @@ const boundedCommandPhases = (
     phases.publicationSerializationMs
   ),
   socketSendMs: boundedObservedDuration(phases.socketSendMs),
+});
+
+const boundedCommandBreakdown = (
+  breakdown: AuthorityCommandTimingBreakdown
+): AuthorityCommandTimingBreakdown => ({
+  inputValidationMs: boundedObservedDuration(breakdown.inputValidationMs),
+  resolutionAndExecutionMs: boundedObservedDuration(
+    breakdown.resolutionAndExecutionMs
+  ),
+  historyAndCandidateMs: boundedObservedDuration(
+    breakdown.historyAndCandidateMs
+  ),
+  candidateValidationMs: boundedObservedDuration(
+    breakdown.candidateValidationMs
+  ),
+  snapshotValidationMs: boundedObservedDuration(breakdown.snapshotValidationMs),
+  transactionMs: boundedObservedDuration(breakdown.transactionMs),
 });
 
 export class RoomSessionHub {
@@ -335,6 +354,7 @@ export class RoomSessionHub {
     return this.acceptedCommandPerformance.map((observation) => ({
       ...observation,
       phases: { ...observation.phases },
+      breakdown: { ...observation.breakdown },
     }));
   }
 
@@ -493,7 +513,9 @@ export class RoomSessionHub {
               ? ('accepted' as const)
               : ('rejected' as const);
           const phases: RoomCommandPhaseDurations = {
-            ...result.timing,
+            authorityProcessingMs: result.timing.authorityProcessingMs,
+            projectionMs: result.timing.projectionMs,
+            persistenceMs: result.timing.persistenceMs,
             publicationSerializationMs:
               publicationSerializationFinishedAt -
               publicationSerializationStartedAt,
@@ -505,6 +527,7 @@ export class RoomSessionHub {
               endRevision: result.snapshot.state.revision,
               totalMs: boundedObservedDuration(durationMs),
               phases: boundedCommandPhases(phases),
+              breakdown: boundedCommandBreakdown(result.timing.breakdown),
             });
             this.acceptedCommandPerformance.splice(
               0,
