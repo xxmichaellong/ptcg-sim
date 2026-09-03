@@ -178,6 +178,117 @@ export interface LegacySourceEnergyAttachmentReflowFixture {
   readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
 }
 
+export type LegacyTwoEnergyDepartureBranch = 'inner' | 'outer';
+
+export interface LegacyTwoEnergyCompactionFixtureCard {
+  readonly id: string;
+  readonly side: LegacyFixtureSide;
+  readonly role: 'base' | 'energy1' | 'energy2';
+  readonly physicalBounds: CapturedRect;
+  readonly frameLocalBounds: CapturedRect;
+  readonly naturalWidth: number;
+  readonly naturalHeight: number;
+  readonly clientWidth: number;
+  readonly clientHeight: number;
+  readonly localRotationDegrees: number;
+  readonly effectiveRotationDegrees: number;
+  readonly zIndex: number;
+  readonly inlineLeftPx: number;
+  readonly inlineBottomPx: number;
+  readonly attached: boolean;
+  readonly target: string;
+  readonly relativeId: string | null;
+  readonly energyLayer: number;
+  readonly layer: number;
+  readonly domOrdinal: number;
+  readonly logicalOrdinal: number;
+  readonly sourcePath: string;
+}
+
+export interface LegacyTwoEnergyCompactionFixtureStack {
+  readonly id: string;
+  readonly side: LegacyFixtureSide;
+  readonly physicalBounds: CapturedRect;
+  readonly frameLocalBounds: CapturedRect;
+  readonly baseClientWidth: number;
+  readonly baseEnergyLayer: number;
+  readonly clientWidth: number;
+  readonly authoredWidthPx: number;
+  readonly inlineMarginRight: string;
+  readonly inlineMarginLeft: string;
+  readonly computedMarginRightPx: number;
+  readonly computedMarginLeftPx: number;
+  readonly childDomOrder: readonly string[];
+  readonly logicalOrder: readonly string[];
+  readonly hitOrder: {
+    readonly allCardOverlap: readonly string[];
+    readonly attachmentOverlap: readonly string[];
+    readonly outermostAttachment: readonly string[];
+    readonly baseOnly: readonly string[];
+  };
+  readonly hitPointsFrameLocal: {
+    readonly allCardOverlap: { readonly x: number; readonly y: number };
+    readonly attachmentOverlap: { readonly x: number; readonly y: number };
+    readonly outermostAttachment: { readonly x: number; readonly y: number };
+    readonly baseOnly: { readonly x: number; readonly y: number };
+  };
+}
+
+export interface LegacyTwoEnergyCompactionFixturePhase {
+  readonly cards: readonly LegacyTwoEnergyCompactionFixtureCard[];
+  readonly stack: LegacyTwoEnergyCompactionFixtureStack;
+  readonly observedWrapperCount: number;
+  readonly supersededWrapperConnected: boolean;
+}
+
+export interface LegacyTwoEnergyCompactionRemovedCard {
+  readonly id: string;
+  readonly side: LegacyFixtureSide;
+  readonly role: 'energy1' | 'energy2';
+  readonly naturalWidth: number;
+  readonly naturalHeight: number;
+  readonly localRotationDegrees: number;
+  readonly effectiveRotationDegrees: number;
+  readonly zIndex: number;
+  readonly inlineLeftPx: number;
+  readonly inlineBottomPx: number;
+  readonly attached: boolean;
+  readonly target: string;
+  readonly relativeId: string | null;
+  readonly energyLayer: number;
+  readonly layer: number;
+  readonly sourcePath: string;
+  readonly sinkConnected: boolean;
+  readonly parentIsDepartureSink: boolean;
+}
+
+export interface LegacyTwoEnergyCompactionFixtureCase {
+  readonly id: string;
+  readonly side: LegacyFixtureSide;
+  readonly branch: LegacyTwoEnergyDepartureBranch;
+  readonly removedCardId: string;
+  readonly remainingCardId: string;
+  readonly removedCardAfterDeparture: LegacyTwoEnergyCompactionRemovedCard;
+  readonly stablePreDeparture: LegacyTwoEnergyCompactionFixturePhase;
+  readonly transientPostDeparture: LegacyTwoEnergyCompactionFixturePhase;
+  readonly synchronousPostRefresh: LegacyTwoEnergyCompactionFixturePhase;
+  readonly stablePostRefresh: LegacyTwoEnergyCompactionFixturePhase;
+  readonly cleanup: {
+    readonly observedWrapperCount: number;
+    readonly observedCardCount: number;
+    readonly sinkConnected: boolean;
+  };
+}
+
+export interface LegacySourceTwoEnergyCompactionFixture {
+  readonly frames: Readonly<Record<LegacyFixtureSide, CapturedRect>>;
+  readonly frameTransforms: Readonly<
+    Record<LegacyFixtureSide, LegacyFrameTransform>
+  >;
+  readonly cases: readonly LegacyTwoEnergyCompactionFixtureCase[];
+  readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
+}
+
 export interface LegacyTrainerToolAttachmentFixtureCard {
   readonly id: string;
   readonly side: LegacyFixtureSide;
@@ -1518,6 +1629,628 @@ export const captureLegacySourceEnergyAttachmentReflowFixture = async (
     frameTransforms,
     cards,
     stacks,
+    sourceFulfillment: sourceFulfillment(loaded),
+  };
+};
+
+type RawTwoEnergyCompactionCard = Omit<
+  LegacyTwoEnergyCompactionFixtureCard,
+  'side' | 'physicalBounds' | 'effectiveRotationDegrees'
+>;
+
+type RawTwoEnergyCompactionStack = Omit<
+  LegacyTwoEnergyCompactionFixtureStack,
+  'side' | 'physicalBounds'
+>;
+
+interface RawTwoEnergyCompactionPhase {
+  readonly cards: readonly RawTwoEnergyCompactionCard[];
+  readonly stack: RawTwoEnergyCompactionStack;
+  readonly observedWrapperCount: number;
+  readonly supersededWrapperConnected: boolean;
+}
+
+interface RawTwoEnergyCompactionCase {
+  readonly id: string;
+  readonly branch: LegacyTwoEnergyDepartureBranch;
+  readonly removedCardId: string;
+  readonly remainingCardId: string;
+  readonly removedCardAfterDeparture: Omit<
+    LegacyTwoEnergyCompactionRemovedCard,
+    'side' | 'effectiveRotationDegrees'
+  >;
+  readonly stablePreDeparture: RawTwoEnergyCompactionPhase;
+  readonly transientPostDeparture: RawTwoEnergyCompactionPhase;
+  readonly synchronousPostRefresh: RawTwoEnergyCompactionPhase;
+  readonly stablePostRefresh: RawTwoEnergyCompactionPhase;
+  readonly cleanup: LegacyTwoEnergyCompactionFixtureCase['cleanup'];
+}
+
+/**
+ * Replays the source-visible portion of one base plus two Energy attachments,
+ * then independently removes the inner and outer Energy. Application modules
+ * stay inert; the mutation order mirrors moveCard, its layer helpers, and the
+ * unconditional refreshBoard reconstruction.
+ */
+export const captureLegacySourceTwoEnergyCompactionFixture = async (
+  page: Page
+): Promise<LegacySourceTwoEnergyCompactionFixture> => {
+  const loaded = await loadLegacySourceBoard(page);
+  const frameTransforms = {
+    local: await captureFrameTransform(page.locator('#selfContainer')),
+    opponent: await captureFrameTransform(page.locator('#oppContainer')),
+  };
+  const frames = {
+    local: await requireRect(page.locator('#selfContainer'), '#selfContainer'),
+    opponent: await requireRect(page.locator('#oppContainer'), '#oppContainer'),
+  };
+  const rawCases: Array<{
+    readonly side: LegacyFixtureSide;
+    readonly value: RawTwoEnergyCompactionCase;
+  }> = [];
+
+  for (const [side, frameSelector] of [
+    ['local', '#selfContainer'],
+    ['opponent', '#oppContainer'],
+  ] as const) {
+    const sideCases = await page
+      .frameLocator(frameSelector)
+      .locator('body')
+      .evaluate(
+        async (body, input): Promise<RawTwoEnergyCompactionCase[]> => {
+          type FixtureImage = HTMLImageElement & {
+            attached: boolean;
+            target: string;
+            relative: HTMLImageElement | number;
+            energyLayer: number;
+            layer: number;
+          };
+
+          const active = body.querySelector('#active');
+          if (!(active instanceof HTMLElement)) {
+            throw new Error('Legacy canonical active region is missing');
+          }
+          const makeImage = (id: string): FixtureImage => {
+            const image = document.createElement('img') as FixtureImage;
+            image.dataset.legacyTwoEnergyCardId = id;
+            image.alt = '';
+            image.src = `${location.origin}/src/assets/cardback.png`;
+            image.style.opacity = '1';
+            image.style.position = 'relative';
+            image.style.bottom = '0%';
+            image.style.zIndex = '0';
+            image.style.left = '0px';
+            image.style.transform = 'rotate(0deg)';
+            image.attached = false;
+            image.target = 'off';
+            image.relative = 0;
+            image.energyLayer = 0;
+            image.layer = 0;
+            return image;
+          };
+          const resetImage = (image: FixtureImage) => {
+            image.style.opacity = '1';
+            image.style.position = 'relative';
+            image.style.bottom = '0%';
+            image.style.zIndex = '0';
+            image.energyLayer = 0;
+            image.layer = 0;
+            image.relative = 0;
+            image.style.left = '0px';
+            image.attached = false;
+            image.target = 'off';
+            image.style.transform = 'rotate(0deg)';
+          };
+          const makeStack = (id: string) => {
+            const stack = document.createElement('div');
+            stack.className = 'play-container';
+            stack.style.zIndex = '0';
+            stack.dataset.legacyTwoEnergyStackId = id;
+            return stack;
+          };
+          const attachEnergy = (
+            image: FixtureImage,
+            base: FixtureImage,
+            stack: HTMLElement
+          ) => {
+            resetImage(image);
+            image.attached = true;
+            image.target = 'on';
+            image.relative = base;
+            image.style.position = 'absolute';
+            const adjustment = base.clientWidth / 6;
+            base.energyLayer += 1;
+            const attachmentLayer = base.energyLayer;
+            image.style.left = `${attachmentLayer * adjustment}px`;
+            image.style.zIndex = String(-attachmentLayer);
+            stack.style.width = `${Number.parseFloat(String(stack.clientWidth)) + adjustment}px`;
+            base.after(image);
+            image.style.transform = 'rotate(0deg)';
+          };
+          const observeEmptyStack = (stack: HTMLElement) => {
+            const observer = new MutationObserver((mutations) => {
+              for (const mutation of mutations) {
+                const removedNode = mutation.removedNodes[0];
+                if (
+                  removedNode?.nodeName === 'IMG' &&
+                  stack.getElementsByTagName('img').length === 0
+                ) {
+                  stack.remove();
+                }
+              }
+            });
+            observer.observe(stack, { childList: true });
+            return observer;
+          };
+          const reconstruct = (
+            oldStack: HTMLElement,
+            stackId: string,
+            logicalCards: FixtureImage[]
+          ) => {
+            const observer = observeEmptyStack(oldStack);
+            const nextStack = makeStack(stackId);
+            active.append(nextStack);
+            const base = logicalCards[0];
+            if (!base) throw new Error('Two-Energy fixture lost its base');
+            resetImage(base);
+            nextStack.append(base);
+            for (const attachment of logicalCards.slice(1)) {
+              resetImage(attachment);
+              attachment.attached = true;
+              attachEnergy(attachment, base, nextStack);
+            }
+            nextStack.style.width = `${base.clientWidth + (base.energyLayer * base.clientWidth) / 6}px`;
+            return { nextStack, observer };
+          };
+          const updateAttachedCardsPosition = (
+            logicalCards: readonly FixtureImage[],
+            movingCard: FixtureImage
+          ) => {
+            for (const card of logicalCards) {
+              const cardPosition = card.style.left;
+              const movingCardPosition = movingCard.style.left;
+              if (
+                movingCard.relative instanceof HTMLImageElement &&
+                movingCard.relative === card.relative &&
+                Number.parseInt(cardPosition) >
+                  Number.parseInt(movingCardPosition)
+              ) {
+                const adjustment = movingCard.relative.clientWidth / 6;
+                card.style.left = `${Number.parseInt(cardPosition) - adjustment}px`;
+                card.style.zIndex = String(
+                  Number.parseInt(card.style.zIndex) + 1
+                );
+              }
+            }
+          };
+          const decreaseCardLayer = (movingCard: FixtureImage) => {
+            if (!(movingCard.relative instanceof HTMLImageElement)) {
+              throw new Error('Departing Energy lost its relative base');
+            }
+            const relativeBase = movingCard.relative as FixtureImage;
+            relativeBase.energyLayer -= 1;
+            const adjustment = relativeBase.clientWidth / 6;
+            const stack = relativeBase.parentElement;
+            if (!(stack instanceof HTMLElement)) {
+              throw new Error('Departing Energy lost its source stack');
+            }
+            stack.style.width = `${Number.parseFloat(String(stack.clientWidth)) - adjustment}px`;
+          };
+          const snapshotRemovedCard = (
+            image: FixtureImage,
+            sink: HTMLElement
+          ): RawTwoEnergyCompactionCase['removedCardAfterDeparture'] => {
+            const styles = getComputedStyle(image);
+            const matrix = new DOMMatrixReadOnly(styles.transform);
+            const id = image.dataset.legacyTwoEnergyCardId ?? '';
+            return {
+              id,
+              role: id.endsWith('-energy-1') ? 'energy1' : 'energy2',
+              naturalWidth: image.naturalWidth,
+              naturalHeight: image.naturalHeight,
+              localRotationDegrees:
+                ((Math.atan2(matrix.b, matrix.a) * 180) / Math.PI + 360) % 360,
+              zIndex: Number.parseInt(styles.zIndex, 10) || 0,
+              inlineLeftPx: Number.parseFloat(image.style.left) || 0,
+              inlineBottomPx: Number.parseFloat(image.style.bottom) || 0,
+              attached: image.attached,
+              target: image.target,
+              relativeId:
+                image.relative instanceof HTMLImageElement
+                  ? (image.relative.dataset.legacyTwoEnergyCardId ?? null)
+                  : null,
+              energyLayer: image.energyLayer,
+              layer: image.layer,
+              sourcePath: new URL(image.currentSrc).pathname,
+              sinkConnected: sink.isConnected,
+              parentIsDepartureSink: image.parentElement === sink,
+            };
+          };
+          const rect = (bounds: DOMRect): CapturedRect => ({
+            x: bounds.x,
+            y: bounds.y,
+            width: bounds.width,
+            height: bounds.height,
+          });
+          const snapshot = (
+            stack: HTMLElement,
+            logicalCards: readonly FixtureImage[],
+            supersededStack: HTMLElement | null
+          ): RawTwoEnergyCompactionPhase => {
+            const base = logicalCards[0];
+            if (!base) throw new Error('Two-Energy snapshot lacks a base');
+            const stackCards = logicalCards.filter(
+              (image) => image.parentElement === stack
+            );
+            const cardBounds = new Map(
+              stackCards.map((image) => [image, image.getBoundingClientRect()])
+            );
+            const attachments = stackCards.slice(1);
+            if (attachments.length < 1 || attachments.length > 2) {
+              throw new Error('Two-Energy phase must retain one or two Energy');
+            }
+            const idsAt = (x: number, y: number) =>
+              document
+                .elementsFromPoint(x, y)
+                .flatMap((candidate) => {
+                  const image = candidate.closest<HTMLImageElement>(
+                    '[data-legacy-two-energy-card-id]'
+                  );
+                  return image?.dataset.legacyTwoEnergyCardId &&
+                    stackCards.includes(image as FixtureImage)
+                    ? [image.dataset.legacyTwoEnergyCardId]
+                    : [];
+                })
+                .filter((id, index, ids) => ids.indexOf(id) === index);
+            const intersection = (images: readonly FixtureImage[]) => {
+              const bounds = images.map((image) => cardBounds.get(image));
+              if (bounds.some((candidate) => candidate === undefined)) {
+                throw new Error('Missing two-Energy card bounds');
+              }
+              const rectangles = bounds as DOMRect[];
+              const left = Math.max(...rectangles.map((value) => value.left));
+              const top = Math.max(...rectangles.map((value) => value.top));
+              const right = Math.min(...rectangles.map((value) => value.right));
+              const bottom = Math.min(
+                ...rectangles.map((value) => value.bottom)
+              );
+              if (right - left <= 2 || bottom - top <= 2) {
+                throw new Error('Two-Energy overlap lacks a safe interior');
+              }
+              return { left, top, right, bottom };
+            };
+            const center = (bounds: {
+              left: number;
+              top: number;
+              right: number;
+              bottom: number;
+            }) => ({
+              x: (bounds.left + bounds.right) / 2,
+              y: (bounds.top + bounds.bottom) / 2,
+            });
+            const allCardOverlap = center(intersection(stackCards));
+            const baseBounds = cardBounds.get(base);
+            if (!baseBounds) throw new Error('Missing two-Energy base bounds');
+            const attachmentBounds = attachments.map((image) => {
+              const bounds = cardBounds.get(image);
+              if (!bounds) throw new Error('Missing Energy bounds');
+              return bounds;
+            });
+            const sharedAttachmentRight = Math.min(
+              ...attachmentBounds.map((bounds) => bounds.right)
+            );
+            const attachmentOverlapBounds = {
+              left: baseBounds.right + 2,
+              right: sharedAttachmentRight - 2,
+              top: Math.max(...attachmentBounds.map((bounds) => bounds.top)),
+              bottom: Math.min(
+                ...attachmentBounds.map((bounds) => bounds.bottom)
+              ),
+            };
+            const outerBounds = attachmentBounds.at(-1);
+            if (!outerBounds) throw new Error('Missing outer Energy bounds');
+            const priorRight =
+              attachmentBounds.length === 1
+                ? baseBounds.right
+                : attachmentBounds[attachmentBounds.length - 2]?.right;
+            if (priorRight === undefined) {
+              throw new Error('Missing inner Energy bounds');
+            }
+            const outermostBounds = {
+              left: priorRight + 2,
+              right: outerBounds.right - 2,
+              top: outerBounds.top,
+              bottom: outerBounds.bottom,
+            };
+            const baseOnlyBounds = {
+              left: baseBounds.left + 2,
+              right:
+                Math.min(...attachmentBounds.map((bounds) => bounds.left)) - 2,
+              top: baseBounds.top,
+              bottom: baseBounds.bottom,
+            };
+            for (const [label, bounds] of Object.entries({
+              attachmentOverlapBounds,
+              outermostBounds,
+              baseOnlyBounds,
+            })) {
+              if (
+                bounds.right - bounds.left <= 0 ||
+                bounds.bottom - bounds.top <= 0
+              ) {
+                throw new Error(`${label} lacks a safe interior`);
+              }
+            }
+            const hitPointsFrameLocal = {
+              allCardOverlap,
+              attachmentOverlap: center(attachmentOverlapBounds),
+              outermostAttachment: center(outermostBounds),
+              baseOnly: center(baseOnlyBounds),
+            };
+            const stackBounds = stack.getBoundingClientRect();
+            const stackStyles = getComputedStyle(stack);
+            return {
+              cards: stackCards.map((image) => {
+                const bounds = cardBounds.get(image);
+                if (!bounds) throw new Error('Missing captured Energy bounds');
+                const styles = getComputedStyle(image);
+                const matrix = new DOMMatrixReadOnly(styles.transform);
+                const id = image.dataset.legacyTwoEnergyCardId ?? '';
+                const role = id.endsWith('-base')
+                  ? 'base'
+                  : id.endsWith('-energy-1')
+                    ? 'energy1'
+                    : 'energy2';
+                return {
+                  id,
+                  role,
+                  frameLocalBounds: rect(bounds),
+                  naturalWidth: image.naturalWidth,
+                  naturalHeight: image.naturalHeight,
+                  clientWidth: image.clientWidth,
+                  clientHeight: image.clientHeight,
+                  localRotationDegrees:
+                    ((Math.atan2(matrix.b, matrix.a) * 180) / Math.PI + 360) %
+                    360,
+                  zIndex: Number.parseInt(styles.zIndex, 10) || 0,
+                  inlineLeftPx: Number.parseFloat(image.style.left) || 0,
+                  inlineBottomPx: Number.parseFloat(image.style.bottom) || 0,
+                  attached: image.attached,
+                  target: image.target,
+                  relativeId:
+                    image.relative instanceof HTMLImageElement
+                      ? (image.relative.dataset.legacyTwoEnergyCardId ?? null)
+                      : null,
+                  energyLayer: image.energyLayer,
+                  layer: image.layer,
+                  domOrdinal: [
+                    ...stack.querySelectorAll<HTMLImageElement>(':scope > img'),
+                  ].indexOf(image),
+                  logicalOrdinal: logicalCards.indexOf(image),
+                  sourcePath: new URL(image.currentSrc).pathname,
+                };
+              }),
+              stack: {
+                id: stack.dataset.legacyTwoEnergyStackId ?? '',
+                frameLocalBounds: rect(stackBounds),
+                baseClientWidth: base.clientWidth,
+                baseEnergyLayer: base.energyLayer,
+                clientWidth: stack.clientWidth,
+                authoredWidthPx: Number.parseFloat(stack.style.width),
+                inlineMarginRight: stack.style.marginRight,
+                inlineMarginLeft: stack.style.marginLeft,
+                computedMarginRightPx:
+                  Number.parseFloat(stackStyles.marginRight) || 0,
+                computedMarginLeftPx:
+                  Number.parseFloat(stackStyles.marginLeft) || 0,
+                childDomOrder: [
+                  ...stack.querySelectorAll<HTMLImageElement>(':scope > img'),
+                ].map((image) => image.dataset.legacyTwoEnergyCardId ?? ''),
+                logicalOrder: stackCards.map(
+                  (image) => image.dataset.legacyTwoEnergyCardId ?? ''
+                ),
+                hitOrder: {
+                  allCardOverlap: idsAt(
+                    hitPointsFrameLocal.allCardOverlap.x,
+                    hitPointsFrameLocal.allCardOverlap.y
+                  ),
+                  attachmentOverlap: idsAt(
+                    hitPointsFrameLocal.attachmentOverlap.x,
+                    hitPointsFrameLocal.attachmentOverlap.y
+                  ),
+                  outermostAttachment: idsAt(
+                    hitPointsFrameLocal.outermostAttachment.x,
+                    hitPointsFrameLocal.outermostAttachment.y
+                  ),
+                  baseOnly: idsAt(
+                    hitPointsFrameLocal.baseOnly.x,
+                    hitPointsFrameLocal.baseOnly.y
+                  ),
+                },
+                hitPointsFrameLocal,
+              },
+              observedWrapperCount: active.querySelectorAll(
+                '[data-legacy-two-energy-stack-id]'
+              ).length,
+              supersededWrapperConnected: supersededStack?.isConnected ?? false,
+            };
+          };
+
+          const results: RawTwoEnergyCompactionCase[] = [];
+          for (const branch of ['inner', 'outer'] as const) {
+            active.replaceChildren();
+            const sink = document.createElement('div');
+            sink.dataset.legacyTwoEnergyDepartureSink = branch;
+            body.append(sink);
+            const prefix = `${input.side}-${branch}`;
+            const stackId = `${prefix}-two-energy-stack`;
+            const base = makeImage(`${prefix}-base`);
+            const energyOne = makeImage(`${prefix}-energy-1`);
+            const energyTwo = makeImage(`${prefix}-energy-2`);
+            const logicalCards = [base, energyOne, energyTwo];
+            const initialStack = makeStack(stackId);
+            initialStack.append(base);
+            active.append(initialStack);
+            await Promise.all(logicalCards.map((image) => image.decode()));
+            attachEnergy(energyOne, base, initialStack);
+            attachEnergy(energyTwo, base, initialStack);
+
+            const initialRefresh = reconstruct(
+              initialStack,
+              stackId,
+              logicalCards
+            );
+            await new Promise<void>((resolve) =>
+              requestAnimationFrame(() =>
+                requestAnimationFrame(() => resolve())
+              )
+            );
+            initialRefresh.observer.disconnect();
+            const stablePreDeparture = snapshot(
+              initialRefresh.nextStack,
+              logicalCards,
+              initialStack
+            );
+
+            const removalIndex = branch === 'inner' ? 1 : 2;
+            const removed = logicalCards[removalIndex];
+            if (!removed) throw new Error(`Missing ${branch} departure card`);
+            logicalCards.splice(removalIndex, 1);
+            updateAttachedCardsPosition(logicalCards, removed);
+            decreaseCardLayer(removed);
+            resetImage(removed);
+            sink.append(removed);
+            const removedCardAfterDeparture = snapshotRemovedCard(
+              removed,
+              sink
+            );
+            const transientPostDeparture = snapshot(
+              initialRefresh.nextStack,
+              logicalCards,
+              null
+            );
+
+            const departureRefresh = reconstruct(
+              initialRefresh.nextStack,
+              stackId,
+              logicalCards
+            );
+            const synchronousPostRefresh = snapshot(
+              departureRefresh.nextStack,
+              logicalCards,
+              initialRefresh.nextStack
+            );
+            await new Promise<void>((resolve) =>
+              requestAnimationFrame(() =>
+                requestAnimationFrame(() => resolve())
+              )
+            );
+            departureRefresh.observer.disconnect();
+            const stablePostRefresh = snapshot(
+              departureRefresh.nextStack,
+              logicalCards,
+              initialRefresh.nextStack
+            );
+            const result = {
+              id: `${prefix}-departure`,
+              branch,
+              removedCardId: removed.dataset.legacyTwoEnergyCardId ?? '',
+              remainingCardId:
+                logicalCards[1]?.dataset.legacyTwoEnergyCardId ?? '',
+              removedCardAfterDeparture,
+              stablePreDeparture,
+              transientPostDeparture,
+              synchronousPostRefresh,
+              stablePostRefresh,
+            };
+            departureRefresh.nextStack.remove();
+            sink.remove();
+            results.push({
+              ...result,
+              cleanup: {
+                observedWrapperCount: active.querySelectorAll(
+                  '[data-legacy-two-energy-stack-id]'
+                ).length,
+                observedCardCount: body.querySelectorAll(
+                  '[data-legacy-two-energy-card-id]'
+                ).length,
+                sinkConnected: sink.isConnected,
+              },
+            });
+          }
+          return results;
+        },
+        { side }
+      );
+    rawCases.push(...sideCases.map((value) => ({ side, value })));
+  }
+
+  const physicalBounds = (
+    side: LegacyFixtureSide,
+    bounds: CapturedRect
+  ): CapturedRect =>
+    side === 'local'
+      ? {
+          x: frames.local.x + bounds.x,
+          y: frames.local.y + bounds.y,
+          width: bounds.width,
+          height: bounds.height,
+        }
+      : {
+          x:
+            frames.opponent.x + frames.opponent.width - bounds.x - bounds.width,
+          y:
+            frames.opponent.y +
+            frames.opponent.height -
+            bounds.y -
+            bounds.height,
+          width: bounds.width,
+          height: bounds.height,
+        };
+  const convertPhase = (
+    side: LegacyFixtureSide,
+    phase: RawTwoEnergyCompactionPhase
+  ): LegacyTwoEnergyCompactionFixturePhase => ({
+    ...phase,
+    cards: phase.cards.map((card) => ({
+      ...card,
+      side,
+      physicalBounds: physicalBounds(side, card.frameLocalBounds),
+      effectiveRotationDegrees:
+        (card.localRotationDegrees + frameTransforms[side].rotationDegrees) %
+        360,
+    })),
+    stack: {
+      ...phase.stack,
+      side,
+      physicalBounds: physicalBounds(side, phase.stack.frameLocalBounds),
+    },
+  });
+  const cases = rawCases.map(
+    ({ side, value }): LegacyTwoEnergyCompactionFixtureCase => ({
+      ...value,
+      side,
+      removedCardAfterDeparture: {
+        ...value.removedCardAfterDeparture,
+        side,
+        effectiveRotationDegrees:
+          (value.removedCardAfterDeparture.localRotationDegrees +
+            frameTransforms[side].rotationDegrees) %
+          360,
+      },
+      stablePreDeparture: convertPhase(side, value.stablePreDeparture),
+      transientPostDeparture: convertPhase(side, value.transientPostDeparture),
+      synchronousPostRefresh: convertPhase(side, value.synchronousPostRefresh),
+      stablePostRefresh: convertPhase(side, value.stablePostRefresh),
+    })
+  );
+
+  requireServedPaths(loaded, containedCardFixtureAssetPaths);
+  requireNoUnexpectedSameOriginPaths(loaded);
+  return {
+    frames,
+    frameTransforms,
+    cases,
     sourceFulfillment: sourceFulfillment(loaded),
   };
 };

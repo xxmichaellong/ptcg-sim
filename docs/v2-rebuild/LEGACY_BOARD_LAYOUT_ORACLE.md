@@ -406,6 +406,34 @@ candidate wrapper/sibling identity, and Tool-specific Pixi paint parity remain
 excluded from this Tool gate. Every state excluded from all characterized
 strict paths retains generic scene geometry with no implicit Tool turn.
 
+`tests/browser/legacy-two-energy-attachment-compaction-geometry.spec.ts` adds a
+seventh, source-only checkpoint for two ordinary Energy attachments followed by
+direct inner/first or outer/second departure in independently constructed local
+and opponent active stacks. The stable source state records logical order
+`[base, E1, E2]`, DOM sibling order `[base, E2, E1]`, z indexes
+`[0, -1, -2]`, common hit order `[base, E1, E2]`, the two-Energy overlap
+`[E1, E2]`, and an E2-only outer strip. With the captured 91 px base
+`clientWidth`, stable offsets are `91 / 6` and `2 * 91 / 6`; post-refresh
+`adjustCards` writes a 121.333 px wrapper even though sequential attachment had
+briefly authored 121.167 px from an integer wrapper width.
+
+Direct outer departure leaves E1 at one offset and z `-1`. Direct inner
+departure resets E1, promotes E2 to z `-1`, and briefly moves it to
+`parseInt(2 * 91 / 6) - 91 / 6 = 14.833` px. Both branches contract the
+121 px integer wrapper to 105.833 px, then full refresh rebuilds the survivor at
+15.167 px in a 106.167 px wrapper. The old empty wrapper remains synchronously
+connected and is removed by the real MutationObserver. Only the
+observer-settled state is a parity oracle; the earlier phases document legacy
+mutation history.
+
+Both departures therefore converge on the existing one-Energy source state and
+can use its strict production geometry after authoritative state compaction.
+This slice does not add a candidate comparison or production gate. It excludes
+mixed/Tool attachments, three or more Energy, category history, evolution/base
+departure, staged restore, bench/flex contention, markers, BREAK/rotation,
+alternate layouts and assets, destination UX, input, Pixi, and server/network
+behavior.
+
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
 renderer-neutral scene and has structured scene assertions for all four board
@@ -413,7 +441,9 @@ oracle fixtures, including asymmetric resize, flipped ownership, midpoint
 shared placement, compact and fullscreen states. The controlled hand/bench/
 attachment-stack fixture remains source-only; the narrower contained-card,
 ordinary-evolution, single-Energy, and Trainer-as-Tool fixtures feed and compare
-their strict production geometries. Raw normalized/authored inputs, box edges,
+their strict production geometries. The two-Energy departure fixture remains
+source-only and proves stable convergence to the single-Energy source state.
+Raw normalized/authored inputs, box edges,
 affordances,
 and semantic z evidence remain in the richer characterization snapshot rather
 than being duplicated in

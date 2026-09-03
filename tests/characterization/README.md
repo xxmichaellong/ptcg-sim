@@ -63,3 +63,18 @@ mixed/multiple attachments, category history, departure and stale margins,
 evolution combinations, bench/flex competition, markers, BREAK/compound
 rotation, alternate layouts, wrapper/sibling identity, and Tool-specific Pixi
 paint parity remain excluded.
+
+`legacy-two-energy-attachment-compaction-layout.test.ts` then isolates four
+source-only departure histories: local and opponent active stacks each remove
+either the inner/first or outer/second Energy from a stable two-Energy stack.
+It preserves the legacy integer-width contraction, inner-survivor truncation,
+removed-card reset, sibling and hit order, synchronous ghost wrapper, and real
+MutationObserver cleanup. The immediate departure and synchronous refresh
+phases are diagnostic; the observer-settled state is the parity oracle. Both
+histories converge to the already characterized one-Energy source geometry, so
+canonical post-departure state can use the existing strict production path.
+This checkpoint does not itself compare a candidate renderer or add a new
+production geometry gate. Mixed/Tool attachments, three or more Energy,
+category history, evolution or base departures, staged restore, bench/flex
+contention, markers, BREAK/rotation, alternate layouts and assets, destination
+UX, candidate input, Pixi, and server/network behavior remain excluded.

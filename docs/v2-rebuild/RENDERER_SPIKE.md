@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 684 v2 tests across 104 files. A separate suite
-passes 14 Playwright checks across seven Chromium 151 browser files:
+The repository-wide gate passes 687 v2 tests across 105 files. A separate suite
+passes 15 Playwright checks across eight Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -396,7 +396,20 @@ passes 14 Playwright checks across seven Chromium 151 browser files:
     margins, evolution combinations, BREAK/compound rotation, alternate
     layouts, wrapper/sibling identity, and Tool-specific Pixi paint parity
     remain excluded.
-13. The selected DOM implementation completes 100 mount → clear/reset → destroy
+13. A seventh digest-pinned source-only card fixture independently constructs
+    local/opponent two-Energy active stacks and removes either the inner/first
+    or outer/second attachment. It pins the stable `[base, E1, E2]` logical,
+    `[base, E2, E1]` sibling and `[0, -1, -2]` layer orders; integer-width
+    wrapper growth and contraction; inner-removal `parseInt` drift; survivor
+    and removed-card identity; overlap hit order; synchronous ghost wrapper;
+    and MutationObserver-settled cleanup. Both histories normalize to the same
+    one-Energy source geometry. Immediate phases are diagnostic, and this
+    source-only checkpoint neither adds a production layout nor independently
+    proves candidate post-departure parity. Mixed/Tool attachments, three or
+    more Energy, category history, evolution/base departure, restore,
+    bench/flex variants, rotation, alternate layouts/assets, input, Pixi, and
+    network behavior remain excluded.
+14. The selected DOM implementation completes 100 mount → clear/reset → destroy
     cycles on one warmed route-owned host with the exact status sequence,
     complete scene IDs at mount, zero rendered scene children/IDs after clear and
     destroy, zero non-DOM diagnostic resources, and post-GC Chromium
@@ -421,7 +434,10 @@ source-backed evolution comparison in
 single-Energy comparison in
 `tests/browser/legacy-energy-attachment-reflow-geometry.spec.ts`, plus the
 source-backed Trainer-as-Tool comparison in
-`tests/browser/legacy-trainer-tool-attachment-reflow-geometry.spec.ts`. Standard
+`tests/browser/legacy-trainer-tool-attachment-reflow-geometry.spec.ts`, and the
+source-only two-Energy departure capture in
+`tests/browser/legacy-two-energy-attachment-compaction-geometry.spec.ts`.
+Standard
 Linux CI can install Playwright's pinned Chromium build. This NixOS workspace
 used the Nix Chromium 151 package through `PTCGSIM_CHROMIUM_PATH`, because Playwright's
 Debian/Ubuntu dependency installer requires `apt-get` and downloaded generic

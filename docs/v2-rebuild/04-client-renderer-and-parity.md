@@ -266,6 +266,28 @@ rectangle. Multiple/mixed attachments, category history, removal/stale margins,
 evolution combinations, BREAK or compound rotations, bench/overflow, alternate
 layouts, and candidate wrapper/sibling identity remain explicit later gates.
 
+A seventh source-only checkpoint separates two ordinary Energy attachments and
+direct departure from the mixed five-card transcription. Four independently
+constructed local/opponent histories remove either the inner/first or
+outer/second Energy. The stable two-Energy source layout has logical order
+`[base, E1, E2]`, reversed attachment siblings `[base, E2, E1]`, z layers
+`[0, -1, -2]`, and integer `clientWidth / 6` offsets. Direct inner departure
+briefly compacts the surviving E2 with `parseInt(oldLeft) - clientWidth / 6`,
+while outer departure leaves E1 at its original offset; both paths decrement
+the wrapper from its integer CSSOM width. Those immediate mutations and the
+synchronous two-wrapper refresh state are diagnostic. After the real legacy
+MutationObserver settles, both histories normalize to the same one-Energy
+source geometry already covered by the strict production gate.
+
+This compaction checkpoint validates source-side convergence only: it does not
+add another renderer-contract layout or independently prove React DOM/Pixi
+post-departure parity. Renderers consume canonical post-command state and do
+not reproduce transient DOM history. Mixed/Tool ordering, three or more
+Energy, category history, evolution/base departure, staged restore,
+bench/flex contention, markers, BREAK/rotation, alternate layouts and assets,
+destination UX, candidate input, Pixi paint/hit, and network behavior remain
+later gates.
+
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during
 characterization is represented explicitly instead of assumed to be duplication.
