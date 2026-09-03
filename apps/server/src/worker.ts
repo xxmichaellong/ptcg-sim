@@ -12,6 +12,7 @@ import { WebCryptoAuthoritySource } from './authority-crypto.js';
 import { initializeNewRoom } from './create-room.js';
 import { DurableRoomSnapshotStore } from './durable-storage.js';
 import { handleRoomCreationRequest } from './room-creation-http.js';
+import { handleRoomInvitationRequest } from './room-invitation-http.js';
 import { RoomSessionHub, type RuntimeConnection } from './session-hub.js';
 
 interface Env {
@@ -53,6 +54,13 @@ const admissionRoomCodeFromPath = (pathname: string): string | undefined => {
   return match?.[1];
 };
 
+const invitationRoomCodeFromPath = (pathname: string): string | undefined => {
+  const match = /^\/v2\/rooms\/([A-HJ-NP-Z2-9]{12})\/invitations$/u.exec(
+    pathname
+  );
+  return match?.[1];
+};
+
 export class PtcgRoom extends DurableObject<Env> {
   private readonly cryptoSource = new WebCryptoAuthoritySource();
   private readonly store: DurableRoomSnapshotStore;
@@ -83,6 +91,14 @@ export class PtcgRoom extends DurableObject<Env> {
 
   override async fetch(request: Request): Promise<Response> {
     const requestUrl = new URL(request.url);
+    if (invitationRoomCodeFromPath(requestUrl.pathname)) {
+      const runtime = await this.runtimePromise;
+      if (!runtime)
+        return new Response('Room not initialized', { status: 404 });
+      return handleRoomInvitationRequest(request, (input) =>
+        runtime.hub.issueInvitation(input)
+      );
+    }
     if (admissionRoomCodeFromPath(requestUrl.pathname)) {
       const runtime = await this.runtimePromise;
       if (!runtime)
@@ -259,6 +275,10 @@ const worker: ExportedHandler<Env> = {
     const admissionCode = admissionRoomCodeFromPath(url.pathname);
     if (admissionCode) {
       return env.PTCG_ROOM.getByName(admissionCode).fetch(request);
+    }
+    const invitationCode = invitationRoomCodeFromPath(url.pathname);
+    if (invitationCode) {
+      return env.PTCG_ROOM.getByName(invitationCode).fetch(request);
     }
     return new Response('Not Found', { status: 404 });
   },

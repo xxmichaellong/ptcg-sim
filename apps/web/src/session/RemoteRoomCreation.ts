@@ -1,4 +1,10 @@
-import { parseRoomCreationResponse } from '@ptcgsim/protocol';
+import {
+  parseRoomCreationResponse,
+  parseRoomInvitationHandoff,
+  parseRoomInvitationIssueRequest,
+  parseRoomInvitationIssueResponse,
+  type RoomInvitationHandoff,
+} from '@ptcgsim/protocol';
 
 import type { RendererKind } from '../RendererSpikeBoard.js';
 import {
@@ -13,6 +19,8 @@ import {
 } from './browser-json.js';
 
 const MAX_CREATION_RESPONSE_BYTES = 4_096;
+const MAX_INVITATION_RESPONSE_BYTES = 2_048;
+const MAX_INVITATION_LIFETIME_MS = 24 * 60 * 60_000;
 
 export type RemoteRoomCreationFailureCode =
   'invalid_input' | 'creation_failed' | 'invalid_response' | 'bootstrap_failed';
@@ -31,37 +39,64 @@ export interface RemoteRoomCreationInput {
   readonly signal?: AbortSignal;
 }
 
-export interface RemoteRoomInvitation {
+export type RemoteRoomInvitation = RoomInvitationHandoff;
+
+export type RemoteRoomInvitationFailureCode =
+  | 'invalid_input'
+  | 'issue_failed'
+  | 'invalid_response'
+  | 'expired_invitation'
+  | 'disposed';
+
+export class RemoteRoomInvitationError extends Error {
+  constructor(readonly code: RemoteRoomInvitationFailureCode) {
+    super(`Remote room invitation failed: ${code}`);
+    this.name = 'RemoteRoomInvitationError';
+  }
+}
+
+export interface RemoteRoomInvitationCustodyOptions {
   readonly roomCode: string;
-  readonly requestedRole: 'player' | 'spectator';
-  readonly capability: string;
+  readonly playerCapability: string;
+  readonly spectatorCapability?: string;
+  readonly fetch: typeof globalThis.fetch;
+  readonly origin: URL;
+  readonly now: () => number;
+  readonly signal?: AbortSignal;
 }
 
 /**
- * Non-serializable, one-time-release custody for credentials the creator must
- * hand to another browser through a future trusted invitation channel.
+ * Non-serializable custody that mints bounded one-time invitations without
+ * releasing the long-lived player-two or spectator credentials to callers.
  */
 export class RemoteRoomInvitationCustody {
   readonly #roomCode: string;
+  readonly #fetch: typeof globalThis.fetch;
+  readonly #origin: URL;
+  readonly #now: () => number;
+  readonly #ownerSignal: AbortSignal | undefined;
+  readonly #abort = new AbortController();
   #playerCapability: string | undefined;
   #spectatorCapability: string | undefined;
 
-  constructor(
-    roomCode: string,
-    playerCapability: string,
-    spectatorCapability?: string
-  ) {
-    this.#roomCode = roomCode;
-    this.#playerCapability = playerCapability;
-    this.#spectatorCapability = spectatorCapability;
+  constructor(options: RemoteRoomInvitationCustodyOptions) {
+    this.#roomCode = options.roomCode;
+    this.#playerCapability = options.playerCapability;
+    this.#spectatorCapability = options.spectatorCapability;
+    this.#fetch = options.fetch;
+    this.#origin = options.origin;
+    this.#now = options.now;
+    this.#ownerSignal = options.signal;
   }
 
-  takePlayerInvitation(): RemoteRoomInvitation | undefined {
-    return this.take('player');
+  issuePlayerInvitation(signal?: AbortSignal): Promise<RemoteRoomInvitation> {
+    return this.issue('player', signal);
   }
 
-  takeSpectatorInvitation(): RemoteRoomInvitation | undefined {
-    return this.take('spectator');
+  issueSpectatorInvitation(
+    signal?: AbortSignal
+  ): Promise<RemoteRoomInvitation> {
+    return this.issue('spectator', signal);
   }
 
   get roomCode(): string {
@@ -69,25 +104,84 @@ export class RemoteRoomInvitationCustody {
   }
 
   dispose(): void {
+    this.#abort.abort();
     this.#playerCapability = undefined;
     this.#spectatorCapability = undefined;
   }
 
-  private take(
-    requestedRole: RemoteRoomInvitation['requestedRole']
-  ): RemoteRoomInvitation | undefined {
+  private async issue(
+    requestedRole: RemoteRoomInvitation['requestedRole'],
+    signal?: AbortSignal
+  ): Promise<RemoteRoomInvitation> {
+    if (this.#abort.signal.aborted) {
+      throw new RemoteRoomInvitationError('disposed');
+    }
     const capability =
       requestedRole === 'player'
         ? this.#playerCapability
         : this.#spectatorCapability;
-    if (!capability) return undefined;
-    if (requestedRole === 'player') this.#playerCapability = undefined;
-    else this.#spectatorCapability = undefined;
-    return Object.freeze({
-      roomCode: this.#roomCode,
-      requestedRole,
-      capability,
-    });
+    const requestBody = { capability, requestedRole };
+    if (!capability || !parseRoomInvitationIssueRequest(requestBody).ok) {
+      throw new RemoteRoomInvitationError('invalid_input');
+    }
+    const signals = [
+      this.#abort.signal,
+      ...(this.#ownerSignal ? [this.#ownerSignal] : []),
+      ...(signal ? [signal] : []),
+    ];
+    const activeSignal =
+      signals.length === 1 ? signals[0]! : AbortSignal.any(signals);
+    let response: Response;
+    try {
+      response = await this.#fetch(
+        new URL(
+          `/v2/rooms/${encodeURIComponent(this.#roomCode)}/invitations`,
+          this.#origin
+        ),
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+          cache: 'no-store',
+          credentials: 'omit',
+          redirect: 'error',
+          referrerPolicy: 'no-referrer',
+          signal: activeSignal,
+        }
+      );
+    } catch {
+      throw new RemoteRoomInvitationError(
+        this.#abort.signal.aborted ? 'disposed' : 'issue_failed'
+      );
+    }
+    if (response.status !== 201) {
+      throw new RemoteRoomInvitationError('issue_failed');
+    }
+    const responseBody = await readBoundedJsonResponse(
+      response,
+      MAX_INVITATION_RESPONSE_BYTES
+    );
+    if (!responseBody.ok) {
+      throw new RemoteRoomInvitationError('invalid_response');
+    }
+    const parsed = parseRoomInvitationIssueResponse(responseBody.value);
+    if (!parsed.ok || parsed.value.requestedRole !== requestedRole) {
+      throw new RemoteRoomInvitationError('invalid_response');
+    }
+    if (activeSignal.aborted) {
+      throw new RemoteRoomInvitationError(
+        this.#abort.signal.aborted ? 'disposed' : 'issue_failed'
+      );
+    }
+    const now = this.#now();
+    if (
+      !Number.isSafeInteger(now) ||
+      parsed.value.expiresAt <= now ||
+      parsed.value.expiresAt - now > MAX_INVITATION_LIFETIME_MS
+    ) {
+      throw new RemoteRoomInvitationError('expired_invitation');
+    }
+    return Object.freeze({ roomCode: this.#roomCode, ...parsed.value });
   }
 }
 
@@ -95,6 +189,7 @@ export interface RemoteRoomCreationDependencies {
   readonly fetch?: typeof globalThis.fetch;
   readonly origin?: string;
   readonly bootstrap?: typeof bootstrapRemoteRoom;
+  readonly now?: () => number;
   readonly bootstrapDependencies?: Omit<
     RemoteRoomBootstrapDependencies,
     'fetch' | 'origin'
@@ -105,6 +200,43 @@ export interface RemoteRoomCreationResult extends RemoteRoomBootstrapResult {
   readonly invitations: RemoteRoomInvitationCustody;
   readonly dispose: () => void;
 }
+
+export interface RemoteRoomInvitationBootstrapInput {
+  readonly buildId: string;
+  readonly displayName: string;
+  readonly rendererKind: RendererKind;
+  readonly invitation: unknown;
+  readonly signal?: AbortSignal;
+}
+
+/** Validates an untrusted cross-browser handoff before using its one-time claim. */
+export const bootstrapRemoteRoomInvitation = async (
+  input: RemoteRoomInvitationBootstrapInput,
+  dependencies: RemoteRoomBootstrapDependencies = {}
+): Promise<RemoteRoomBootstrapResult> => {
+  const parsed = parseRoomInvitationHandoff(input.invitation);
+  if (!parsed.ok) throw new RemoteRoomInvitationError('invalid_input');
+  const now = (dependencies.now ?? Date.now)();
+  if (
+    !Number.isSafeInteger(now) ||
+    parsed.value.expiresAt <= now ||
+    parsed.value.expiresAt - now > MAX_INVITATION_LIFETIME_MS
+  ) {
+    throw new RemoteRoomInvitationError('expired_invitation');
+  }
+  return bootstrapRemoteRoom(
+    {
+      buildId: input.buildId,
+      roomCode: parsed.value.roomCode,
+      displayName: input.displayName,
+      requestedRole: parsed.value.requestedRole,
+      capability: parsed.value.invitation,
+      rendererKind: input.rendererKind,
+      ...(input.signal ? { signal: input.signal } : {}),
+    },
+    dependencies
+  );
+};
 
 const validInput = (input: RemoteRoomCreationInput): boolean => {
   const displayName = input.displayName.trim();
@@ -180,11 +312,19 @@ export const createRemoteRoom = async (
   }
 
   const { roomCode, credentials } = parsed.value;
-  const invitations = new RemoteRoomInvitationCustody(
+  const now =
+    dependencies.now ?? dependencies.bootstrapDependencies?.now ?? Date.now;
+  const invitations = new RemoteRoomInvitationCustody({
     roomCode,
-    credentials.playerTwoSeatCapability,
-    credentials.spectatorCapability
-  );
+    playerCapability: credentials.playerTwoSeatCapability,
+    ...(credentials.spectatorCapability
+      ? { spectatorCapability: credentials.spectatorCapability }
+      : {}),
+    fetch: fetchImplementation,
+    origin,
+    now,
+    ...(input.signal ? { signal: input.signal } : {}),
+  });
   try {
     const bootstrap = dependencies.bootstrap ?? bootstrapRemoteRoom;
     const result = await bootstrap(

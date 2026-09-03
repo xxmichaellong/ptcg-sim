@@ -40,6 +40,24 @@ export const RoomCreationResponseSchema = v.strictObject({
   }),
 });
 
+export const RoomInvitationIssueRequestSchema = v.strictObject({
+  capability: CapabilitySchema,
+  requestedRole: v.picklist(['player', 'spectator'] as const),
+});
+
+export const RoomInvitationIssueResponseSchema = v.strictObject({
+  invitation: CapabilitySchema,
+  requestedRole: v.picklist(['player', 'spectator'] as const),
+  expiresAt: NonNegativeIntegerSchema,
+});
+
+export const RoomInvitationHandoffSchema = v.strictObject({
+  roomCode: RoomCodeSchema,
+  invitation: CapabilitySchema,
+  requestedRole: v.picklist(['player', 'spectator'] as const),
+  expiresAt: NonNegativeIntegerSchema,
+});
+
 export const RoomAdmissionTicketRequestSchema = v.strictObject({
   capability: CapabilitySchema,
   displayName: boundedString(64),
@@ -773,6 +791,15 @@ export type RoomCreationRequest = v.InferOutput<
 >;
 export type RoomCreationResponse = v.InferOutput<
   typeof RoomCreationResponseSchema
+>;
+export type RoomInvitationIssueRequest = v.InferOutput<
+  typeof RoomInvitationIssueRequestSchema
+>;
+export type RoomInvitationIssueResponse = v.InferOutput<
+  typeof RoomInvitationIssueResponseSchema
+>;
+export type RoomInvitationHandoff = v.InferOutput<
+  typeof RoomInvitationHandoffSchema
 >;
 export type RoomAdmissionTicketRequest = v.InferOutput<
   typeof RoomAdmissionTicketRequestSchema

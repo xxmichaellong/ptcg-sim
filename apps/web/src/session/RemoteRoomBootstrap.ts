@@ -34,7 +34,7 @@ export interface RemoteRoomBootstrapInput {
   readonly roomCode: string;
   readonly displayName: string;
   readonly requestedRole: 'player' | 'spectator';
-  /** Long-lived bearer capability. Callers must release their reference. */
+  /** Seat/spectator master or one-use invitation. Release after exchange. */
   readonly capability: string;
   readonly rendererKind: RendererKind;
   readonly signal?: AbortSignal;
@@ -60,8 +60,9 @@ export interface RemoteRoomBootstrapResult {
 }
 
 /**
- * Exchanges an in-memory seat/spectator capability through a same-origin POST,
- * then gives only the short-lived ticket to the externally owned room runtime.
+ * Exchanges an in-memory master capability or guest invitation through a
+ * same-origin POST, then gives only the short-lived ticket to the externally
+ * owned room runtime.
  */
 export const bootstrapRemoteRoom = async (
   input: RemoteRoomBootstrapInput,

@@ -1,7 +1,7 @@
 # PTCG Sim v2 rebuild blueprint
 
 - Status: **approved implementation in progress on the isolated v2 feature branch**
-- Last updated: 2026-09-02
+- Last updated: 2026-09-03
 - Primary objective: replace the internals while preserving the current UI and UX.
 
 This directory is the implementation contract for the PTCG Sim v2 rebuild. The
@@ -46,10 +46,15 @@ and Phase 0 exit criteria are accepted.
   role/name-bound ticket digest, atomically consumes it into a fresh resume
   capability, and the browser passes only the runtime/route descriptor to React.
   Room creation is also a strict bounded same-origin no-store exchange. The
-  creator is bootstrapped immediately while the other credentials remain in a
-  one-time, non-serializing in-memory custodian. Visible create/join wiring waits
-  on ADR-020's cross-browser invitation decision; normal sidebar/chat/navigation
-  and downloadable/export formats remain later parity work.
+  creator is bootstrapped immediately while the other master credentials remain
+  in a non-serializing in-memory custodian. That custodian now mints bounded,
+  expiring, one-use player or spectator claims; an untrusted guest handoff is
+  validated and exchanged through the existing short-lived ticket boundary.
+  Durable schema v6 stores only invitation digests and atomically consumes the
+  invitation with its final ticket. Visible create/join wiring waits on
+  ADR-020's decision about how the handoff moves between browsers; normal
+  sidebar/chat/navigation and downloadable/export formats remain later parity
+  work.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 

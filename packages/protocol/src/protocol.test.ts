@@ -9,6 +9,9 @@ import {
   parseClientFrame,
   parseRoomCreationRequest,
   parseRoomCreationResponse,
+  parseRoomInvitationIssueRequest,
+  parseRoomInvitationIssueResponse,
+  parseRoomInvitationHandoff,
   parseRoomAdmissionTicketRequest,
   parseRoomAdmissionTicketResponse,
   parseServerFrame,
@@ -77,6 +80,58 @@ describe('room creation HTTP schemas', () => {
           ...response.credentials,
           playerTwoSeatCapability: 'short',
         },
+      }).ok
+    ).toBe(false);
+  });
+});
+
+describe('room invitation HTTP schemas', () => {
+  const capability = 'seat-capability-00000000000000000001';
+  const invitation = 'invite-capability-00000000000000000001';
+
+  it('accepts exact bounded issue requests and responses', () => {
+    expect(
+      parseRoomInvitationIssueRequest({
+        capability,
+        requestedRole: 'player',
+      }).ok
+    ).toBe(true);
+    expect(
+      parseRoomInvitationIssueRequest({
+        capability,
+        requestedRole: 'player',
+        displayName: 'not-bound-until-ticket-exchange',
+      }).ok
+    ).toBe(false);
+    expect(
+      parseRoomInvitationIssueResponse({
+        invitation,
+        requestedRole: 'spectator',
+        expiresAt: 900_000,
+      }).ok
+    ).toBe(true);
+    expect(
+      parseRoomInvitationIssueResponse({
+        invitation: 'short',
+        requestedRole: 'spectator',
+        expiresAt: 900_000,
+      }).ok
+    ).toBe(false);
+    expect(
+      parseRoomInvitationHandoff({
+        roomCode: 'ABCDEFGH2345',
+        invitation,
+        requestedRole: 'player',
+        expiresAt: 900_000,
+      }).ok
+    ).toBe(true);
+    expect(
+      parseRoomInvitationHandoff({
+        roomCode: 'ABCDEFGH2345',
+        invitation,
+        requestedRole: 'player',
+        expiresAt: 900_000,
+        injected: true,
       }).ok
     ).toBe(false);
   });

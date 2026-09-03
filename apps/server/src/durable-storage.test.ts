@@ -300,7 +300,7 @@ describe('Durable Object authority snapshot store', () => {
       ] as { scope?: 'card' | 'zone' }
     ).scope;
     storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
-      format: 'ptcgsim-room-authority-v5',
+      format: 'ptcgsim-room-authority-v6',
       snapshot: corruptCurrent,
     });
     await expect(new DurableRoomSnapshotStore(storage).load()).rejects.toThrow(
@@ -314,7 +314,7 @@ describe('Durable Object authority snapshot store', () => {
     const initial = initialSnapshot();
     await store.initialize(initial);
     expect(storage.values.get(AUTHORITY_SNAPSHOT_STORAGE_KEY)).toMatchObject({
-      format: 'ptcgsim-room-authority-v5',
+      format: 'ptcgsim-room-authority-v6',
     });
 
     const transaction = acceptedTransaction(initial);
@@ -483,6 +483,64 @@ describe('Durable Object authority snapshot store', () => {
     ]);
   });
 
+  it('atomically journals an invitation digest without persisting its bearer', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    const invitation = 'room-invitation-never-persisted-000000001';
+    const invitationDigest = 'e'.repeat(64);
+    const initial: RoomAuthoritySnapshot = {
+      ...initialSnapshot(),
+      admission: createRoomAdmissionState({
+        playerIds: [p1, p2],
+        seatCapabilityDigests: {
+          [p1]: 'a'.repeat(64),
+          [p2]: 'b'.repeat(64),
+        },
+      }),
+    };
+    await store.initialize(initial);
+    const issued: RoomAuthoritySnapshot = {
+      ...initial,
+      authorityVersion: 1,
+      admission: {
+        ...initial.admission!,
+        invitations: {
+          [invitationDigest]: {
+            role: 'player',
+            playerId: p2,
+            expiresAt: 910_000,
+          },
+        },
+      },
+    };
+
+    await store.commitAdmission({
+      expectedAuthorityVersion: 0,
+      snapshot: issued,
+      kind: 'invitation_issued',
+      invitationDigest,
+    });
+
+    expect((await store.load())?.admission?.invitations).toEqual(
+      issued.admission?.invitations
+    );
+    expect(JSON.stringify([...storage.values])).not.toContain(invitation);
+    expect(
+      [...storage.values.values()].find(
+        (value) =>
+          typeof value === 'object' &&
+          value !== null &&
+          'kind' in value &&
+          value.kind === 'invitation_issued'
+      )
+    ).toMatchObject({
+      expectedAuthorityVersion: 0,
+      resultingAuthorityVersion: 1,
+      kind: 'invitation_issued',
+      invitationDigest,
+    });
+  });
+
   it('migrates v4 admission state with an empty ticket registry', async () => {
     const storage = new MemoryDurableStorage();
     const current = initialSnapshot();
@@ -493,7 +551,11 @@ describe('Durable Object authority snapshot store', () => {
         [p2]: 'b'.repeat(64),
       },
     });
-    const { tickets: _tickets, ...legacyAdmission } = admission;
+    const {
+      invitations: _invitations,
+      tickets: _tickets,
+      ...legacyAdmission
+    } = admission;
     storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
       format: 'ptcgsim-room-authority-v4',
       snapshot: {
@@ -506,7 +568,54 @@ describe('Durable Object authority snapshot store', () => {
     const restored = await new DurableRoomSnapshotStore(storage).load();
     expect(restored).toMatchObject({
       schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
-      admission: { tickets: {} },
+      admission: { invitations: {}, tickets: {} },
+    });
+  });
+
+  it('migrates v5 admission tickets with an empty invitation registry', async () => {
+    const storage = new MemoryDurableStorage();
+    const current = initialSnapshot();
+    const admission = createRoomAdmissionState({
+      playerIds: [p1, p2],
+      seatCapabilityDigests: {
+        [p1]: 'a'.repeat(64),
+        [p2]: 'b'.repeat(64),
+      },
+    });
+    const ticketDigest = 'd'.repeat(64);
+    const { invitations: _invitations, ...legacyAdmissionBase } = admission;
+    const legacyAdmission = {
+      ...legacyAdmissionBase,
+      tickets: {
+        [ticketDigest]: {
+          role: 'spectator' as const,
+          displayName: 'Viewer',
+          expiresAt: 40_000,
+        },
+      },
+    };
+    storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
+      format: 'ptcgsim-room-authority-v5',
+      snapshot: {
+        ...current,
+        schemaVersion: 5,
+        admission: legacyAdmission,
+      },
+    });
+
+    const restored = await new DurableRoomSnapshotStore(storage).load();
+    expect(restored).toMatchObject({
+      schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+      admission: {
+        invitations: {},
+        tickets: {
+          [ticketDigest]: {
+            role: 'spectator',
+            displayName: 'Viewer',
+            expiresAt: 40_000,
+          },
+        },
+      },
     });
   });
 
@@ -546,7 +655,7 @@ describe('Durable Object authority snapshot store', () => {
     const storage = new MemoryDurableStorage();
     const snapshot = initialSnapshot();
     storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
-      format: 'ptcgsim-room-authority-v5',
+      format: 'ptcgsim-room-authority-v6',
       snapshot: {
         ...snapshot,
         replayHistory: {

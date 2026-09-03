@@ -10,10 +10,14 @@ room runtime with only the returned short-lived ticket. Neither credential is
 placed in a URL, browser storage, DOM, React state, or log. The bootstrap returns
 the lazy `RemoteRoomRoute` input. `RemoteRoomCreation` now validates lobby input,
 creates a room through a strict bounded same-origin POST, immediately bootstraps
-the creator, and keeps the other credentials in one-time, non-serializing
-in-memory custody. `main.tsx` still selects the renderer spike until ADR-020
-chooses the secure cross-browser invitation handoff and the existing visible
-create/join workflow is ported.
+the creator, and keeps the player-two and spectator master credentials in
+non-serializing in-memory custody. Callers can mint bounded 15-minute one-use
+invitation handoffs without receiving those master credentials. Player
+invitations rotate; spectator invitations are independently bounded. The guest
+bootstrap validates an untrusted handoff and exchanges its invitation through
+the existing short-lived ticket boundary. `main.tsx` still selects the renderer
+spike until ADR-020 chooses how that handoff moves between browsers and the
+existing visible create/join workflow is ported.
 
 Both screens preserve the v1 75.5% board / 24% side-panel split. The room screen
 mounts the effective live/replay board, multiplayer/replay activity surface,

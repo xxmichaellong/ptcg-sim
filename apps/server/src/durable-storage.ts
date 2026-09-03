@@ -20,7 +20,8 @@ const LEGACY_STORAGE_FORMAT = 'ptcgsim-room-authority-v1';
 const PREVIOUS_STORAGE_FORMAT = 'ptcgsim-room-authority-v2';
 const PRIOR_STORAGE_FORMAT = 'ptcgsim-room-authority-v3';
 const FORMER_STORAGE_FORMAT = 'ptcgsim-room-authority-v4';
-const STORAGE_FORMAT = 'ptcgsim-room-authority-v5';
+const RECENT_STORAGE_FORMAT = 'ptcgsim-room-authority-v5';
+const STORAGE_FORMAT = 'ptcgsim-room-authority-v6';
 
 export interface DurableStorageTransactionLike {
   readonly get: <Value>(key: string) => Promise<Value | undefined>;
@@ -37,6 +38,7 @@ export interface DurableStorageLike {
 interface StoredAuthoritySnapshot {
   readonly format:
     | typeof STORAGE_FORMAT
+    | typeof RECENT_STORAGE_FORMAT
     | typeof FORMER_STORAGE_FORMAT
     | typeof PRIOR_STORAGE_FORMAT
     | typeof PREVIOUS_STORAGE_FORMAT
@@ -62,6 +64,8 @@ export interface StoredAdmissionJournalEntry {
   readonly kind: PersistedAdmissionTransaction['kind'];
   readonly sessionId?: string;
   readonly ticketDigest?: string;
+  readonly invitationDigest?: string;
+  readonly sourceInvitationDigest?: string;
   readonly admissionTicketDigest?: string;
 }
 
@@ -88,6 +92,7 @@ const isStoredSnapshot = (value: unknown): value is StoredAuthoritySnapshot =>
   typeof value === 'object' &&
   value !== null &&
   (Reflect.get(value, 'format') === STORAGE_FORMAT ||
+    Reflect.get(value, 'format') === RECENT_STORAGE_FORMAT ||
     Reflect.get(value, 'format') === FORMER_STORAGE_FORMAT ||
     Reflect.get(value, 'format') === PRIOR_STORAGE_FORMAT ||
     Reflect.get(value, 'format') === PREVIOUS_STORAGE_FORMAT ||
@@ -197,6 +202,21 @@ const migrateStoredSnapshot = (value: unknown): RoomAuthoritySnapshot => {
       ...(value as Omit<RoomAuthoritySnapshot, 'schemaVersion'>),
       schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
     };
+  } else if (schemaVersion === 5) {
+    candidate = {
+      ...(value as Omit<RoomAuthoritySnapshot, 'schemaVersion'>),
+      schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+      ...(Reflect.get(value, 'admission')
+        ? {
+            admission: {
+              ...(Reflect.get(value, 'admission') as NonNullable<
+                RoomAuthoritySnapshot['admission']
+              >),
+              invitations: {},
+            },
+          }
+        : {}),
+    };
   } else if (schemaVersion === AUTHORITY_SNAPSHOT_SCHEMA_VERSION) {
     candidate = value as RoomAuthoritySnapshot;
   } else {
@@ -205,7 +225,7 @@ const migrateStoredSnapshot = (value: unknown): RoomAuthoritySnapshot => {
   if (legacySchema && candidate.admission) {
     candidate = {
       ...candidate,
-      admission: { ...candidate.admission, tickets: {} },
+      admission: { ...candidate.admission, invitations: {}, tickets: {} },
     };
   }
   assertAuthoritySnapshotInvariants(candidate);
@@ -309,9 +329,11 @@ export class DurableRoomSnapshotStore
         );
       }
       const transactionId =
-        transaction.kind === 'ticket_issued'
-          ? transaction.ticketDigest
-          : transaction.sessionId;
+        transaction.kind === 'invitation_issued'
+          ? transaction.invitationDigest
+          : transaction.kind === 'ticket_issued'
+            ? transaction.ticketDigest
+            : transaction.sessionId;
       const key = `${ADMISSION_JOURNAL_PREFIX}${transaction.snapshot.authorityVersion}:${transaction.kind}:${encodeURIComponent(transactionId)}`;
       if ((await storageTransaction.get<unknown>(key)) !== undefined) {
         throw new Error('Admission journal key collision');
@@ -321,16 +343,29 @@ export class DurableRoomSnapshotStore
         expectedAuthorityVersion: transaction.expectedAuthorityVersion,
         resultingAuthorityVersion: transaction.snapshot.authorityVersion,
         kind: transaction.kind,
-        ...(transaction.kind === 'ticket_issued'
-          ? { ticketDigest: transaction.ticketDigest }
-          : {
-              sessionId: transaction.sessionId,
-              ...(transaction.admissionTicketDigest
-                ? {
-                    admissionTicketDigest: transaction.admissionTicketDigest,
-                  }
-                : {}),
-            }),
+        ...(transaction.kind === 'invitation_issued'
+          ? { invitationDigest: transaction.invitationDigest }
+          : transaction.kind === 'ticket_issued'
+            ? {
+                ticketDigest: transaction.ticketDigest,
+                ...(transaction.sourceInvitationDigest
+                  ? {
+                      sourceInvitationDigest:
+                        transaction.sourceInvitationDigest,
+                    }
+                  : {}),
+              }
+            : {
+                sessionId: transaction.sessionId,
+                ...(transaction.admissionTicketDigest
+                  ? {
+                      admissionTicketDigest: transaction.admissionTicketDigest,
+                    }
+                  : {}),
+                ...(transaction.invitationDigest
+                  ? { invitationDigest: transaction.invitationDigest }
+                  : {}),
+              }),
       };
       await storageTransaction.put({
         [AUTHORITY_SNAPSHOT_STORAGE_KEY]: {

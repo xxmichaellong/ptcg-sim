@@ -14,11 +14,12 @@ import type {
   ProjectionIdentityState,
 } from './identity-registry.js';
 
-export const AUTHORITY_SNAPSHOT_SCHEMA_VERSION = 5 as const;
+export const AUTHORITY_SNAPSHOT_SCHEMA_VERSION = 6 as const;
 export const MAX_SOLO_UNDO_CHECKPOINTS = 128;
 export const MAX_REPLAY_EVENT_BATCHES = MAX_REPLAY_FRAMES - 1;
 export const MAX_REPLAY_EVENT_BYTES = 512 * 1024;
 export const MAX_OUTSTANDING_ADMISSION_TICKETS = 32;
+export const MAX_OUTSTANDING_ROOM_INVITATIONS = 32;
 
 export type AuthorityMode = 'solo' | 'multiplayer';
 
@@ -68,16 +69,32 @@ export type RoomAdmissionTicket =
       readonly playerId: PlayerId;
       readonly displayName: string;
       readonly expiresAt: number;
+      /** Set when this ticket is a retryable exchange of an invitation. */
+      readonly sourceInvitationDigest?: string;
     }
   | {
       readonly role: 'spectator';
       readonly displayName: string;
+      readonly expiresAt: number;
+      readonly sourceInvitationDigest?: string;
+    };
+
+/** Digest-only, expiring authority that can be exchanged for one socket ticket. */
+export type RoomInvitationGrant =
+  | {
+      readonly role: 'player';
+      readonly playerId: PlayerId;
+      readonly expiresAt: number;
+    }
+  | {
+      readonly role: 'spectator';
       readonly expiresAt: number;
     };
 
 export interface RoomAdmissionState {
   readonly seats: Readonly<Record<string, AdmissionSeat>>;
   readonly spectatorCapabilityDigest: string | null;
+  readonly invitations: Readonly<Record<string, RoomInvitationGrant>>;
   readonly tickets: Readonly<Record<string, RoomAdmissionTicket>>;
 }
 
@@ -152,8 +169,16 @@ export type PersistedAdmissionTransaction =
   | {
       readonly expectedAuthorityVersion: number;
       readonly snapshot: RoomAuthoritySnapshot;
+      readonly kind: 'invitation_issued';
+      readonly invitationDigest: string;
+    }
+  | {
+      readonly expectedAuthorityVersion: number;
+      readonly snapshot: RoomAuthoritySnapshot;
       readonly kind: 'ticket_issued';
       readonly ticketDigest: string;
+      /** Present when ticket issuance rotates a prior claim attempt. */
+      readonly sourceInvitationDigest?: string;
     }
   | {
       readonly expectedAuthorityVersion: number;
@@ -162,6 +187,8 @@ export type PersistedAdmissionTransaction =
       readonly kind: 'seat_claimed' | 'spectator_joined' | 'session_resumed';
       /** Present only when this commit atomically consumes a socket ticket. */
       readonly admissionTicketDigest?: string;
+      /** Present only when the ticket consumes a one-time invitation. */
+      readonly invitationDigest?: string;
     };
 
 export interface AdmissionPersistence {

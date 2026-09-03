@@ -257,8 +257,11 @@ Work:
   negotiation. The current boundary already provides digest-only 30-second
   socket tickets, atomic one-time redemption, resume rotation, same-origin
   no-store HTTP exchange, a strict durable room-creation exchange, immediate
-  creator bootstrap, and one-time non-serializing invitation custody. Resolve
-  ADR-020 before moving those invitations between browsers or wiring the lobby.
+  creator bootstrap, non-serializing master-credential custody, and bounded
+  digest-only 15-minute guest invitations. Invitation-to-ticket retries rotate
+  the prior ticket; final socket admission atomically consumes both records.
+  Resolve ADR-020 before presenting or moving the handoff between browsers or
+  wiring the lobby.
 - Add creation/admission rate limits and an unclaimed-room TTL/alarm before the
   lobby can target v2; a failed creator bootstrap currently leaves an
   unreachable but durably initialized room for later cleanup.

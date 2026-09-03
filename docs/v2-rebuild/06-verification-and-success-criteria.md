@@ -140,9 +140,18 @@ Release requires all of the following:
     and 32-ticket room cap, consumes it atomically with session admission,
     rotates a distinct resume capability, rejects replay/expiry/mismatch, and
     restores its committed frontier after an ambiguous persistence failure.
-    Schema-v4 rooms migrate to v5 with no outstanding tickets, and no bearer is
-    exposed through snapshots, journals, errors, DOM, React state, storage, or
-    URLs.
+    Schema-v4 rooms migrate with empty ticket/invitation registries, schema-v5
+    rooms preserve their tickets while gaining an empty invitation registry,
+    and no bearer is exposed through snapshots, journals, errors, DOM, React
+    state, storage, or URLs.
+24. Creator custody never releases its long-lived player-two or spectator
+    credential. It mints only bounded 15-minute role-bound invitations; player
+    issuance revokes prior seat invitations and their tickets, spectator claims
+    respect the room cap, and expired claims fail closed. Repeating an
+    invitation-to-ticket exchange rotates the prior ticket so an ambiguous HTTP
+    response is recoverable. Final WebSocket admission atomically consumes the
+    invitation and every linked ticket, and replay is rejected across authority,
+    persistence, HTTP, hub-recovery, and client-bootstrap tests.
 
 ## Privacy and security gates
 

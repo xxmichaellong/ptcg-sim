@@ -114,6 +114,7 @@ const fixture = async () => {
     store,
     admissionTicket: issued.admissionTicket,
     seatCapability: seatToken,
+    otherSeatCapability: otherSeatToken,
     crypto,
   };
 };
@@ -151,6 +152,100 @@ describe('serialized room session hub', () => {
     });
     expect(recovered.accepted).toBe(true);
     expect(setup.store.durable.authorityVersion).toBe(3);
+  });
+
+  it('reloads and safely rotates an invitation committed before a failed response', async () => {
+    const setup = await fixture();
+    setup.store.failAdmissionAfterCommitOnce = true;
+    await expect(
+      setup.hub.issueInvitation({
+        capability: setup.otherSeatCapability,
+        requestedRole: 'player',
+      })
+    ).rejects.toThrow('simulated response-path failure');
+
+    const lostDigest = setup.store.admissionCommits.at(-1);
+    expect(lostDigest).toMatchObject({ kind: 'invitation_issued' });
+    const recovered = await setup.hub.issueInvitation({
+      capability: setup.otherSeatCapability,
+      requestedRole: 'player',
+    });
+    expect(recovered.accepted).toBe(true);
+    if (!recovered.accepted) return;
+    expect(setup.store.durable.authorityVersion).toBe(3);
+    expect(
+      Object.keys(setup.store.durable.admission?.invitations ?? {})
+    ).toEqual([await setup.crypto.digestCapability(recovered.invitation)]);
+    expect(setup.store.admissionCommits.map((item) => item.kind)).toEqual([
+      'ticket_issued',
+      'invitation_issued',
+      'invitation_issued',
+    ]);
+  });
+
+  it('recovers a lost invitation-exchange response and admits the guest exactly once', async () => {
+    const setup = await fixture();
+    const invitation = await setup.hub.issueInvitation({
+      capability: setup.otherSeatCapability,
+      requestedRole: 'player',
+    });
+    if (!invitation.accepted) throw new Error(invitation.code);
+
+    setup.store.failAdmissionAfterCommitOnce = true;
+    await expect(
+      setup.hub.issueAdmissionTicket({
+        capability: invitation.invitation,
+        displayName: 'Blue',
+        requestedRole: 'player',
+      })
+    ).rejects.toThrow('simulated response-path failure');
+    const lostTicket = setup.store.admissionCommits.at(-1);
+    if (lostTicket?.kind !== 'ticket_issued') {
+      throw new Error('missing lost ticket transaction');
+    }
+
+    const recovered = await setup.hub.issueAdmissionTicket({
+      capability: invitation.invitation,
+      displayName: 'Blue',
+      requestedRole: 'player',
+    });
+    if (!recovered.accepted) throw new Error(recovered.code);
+    const recoveredDigest = await setup.crypto.digestCapability(
+      recovered.admissionTicket
+    );
+    expect(recoveredDigest).not.toBe(lostTicket.ticketDigest);
+    expect(setup.store.durable.admission?.tickets).not.toHaveProperty(
+      lostTicket.ticketDigest
+    );
+
+    const guest = connection('invited-guest');
+    await setup.hub.handleFrame(
+      guest.value,
+      helloFrame({ admissionTicket: recovered.admissionTicket })
+    );
+    expect(guest.messages[0]).toMatchObject({
+      type: 'Welcome',
+      role: 'player',
+    });
+    expect(setup.store.durable.admission?.invitations).toEqual({});
+    expect(setup.store.durable.admission?.tickets).not.toHaveProperty(
+      recoveredDigest
+    );
+    expect(setup.store.durable.admission?.seats[p2]?.claimedSessionId).toBe(
+      guest.messages[0]?.type === 'Welcome'
+        ? guest.messages[0].sessionId
+        : undefined
+    );
+
+    const replay = await setup.hub.issueAdmissionTicket({
+      capability: invitation.invitation,
+      displayName: 'Blue',
+      requestedRole: 'player',
+    });
+    expect(replay).toMatchObject({
+      accepted: false,
+      code: 'invalid_capability',
+    });
   });
 
   it('admits, resumes, and supersedes one controlling connection per session', async () => {

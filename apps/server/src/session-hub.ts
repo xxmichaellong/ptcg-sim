@@ -1,11 +1,14 @@
 import {
   buildProjectedReplay,
   issueRoomAdmissionTicket,
+  issueRoomInvitation,
   RoomAuthorityCoordinator,
-  type AdmissionTicketDependencies,
   type AdmissionTicketIssueRequest,
   type AdmissionTicketIssueResult,
   type AuthoritySnapshotStore,
+  type RoomInvitationDependencies,
+  type RoomInvitationIssueRequest,
+  type RoomInvitationIssueResult,
 } from '@ptcgsim/room-authority';
 import {
   PROTOCOL_VERSION,
@@ -24,7 +27,7 @@ export interface RuntimeConnection {
 }
 
 export interface SessionHubDependencies {
-  readonly admission: AdmissionTicketDependencies & {
+  readonly admission: RoomInvitationDependencies & {
     readonly now: () => number;
   };
   readonly store: AuthoritySnapshotStore;
@@ -68,6 +71,34 @@ export class RoomSessionHub {
     const run = this.tail.then(async () => {
       try {
         const result = await issueRoomAdmissionTicket(
+          this.coordinator.currentSnapshot(),
+          request,
+          this.dependencies.admission.now(),
+          this.dependencies.admission
+        );
+        if (result.accepted) {
+          this.coordinator.installCommittedSnapshot(result.snapshot);
+        }
+        return result;
+      } catch (error) {
+        const durable = await this.dependencies.store.load();
+        if (durable) this.coordinator.installCommittedSnapshot(durable);
+        throw error;
+      }
+    });
+    this.tail = run.then(
+      () => undefined,
+      () => undefined
+    );
+    return run;
+  }
+
+  issueInvitation(
+    request: RoomInvitationIssueRequest
+  ): Promise<RoomInvitationIssueResult> {
+    const run = this.tail.then(async () => {
+      try {
+        const result = await issueRoomInvitation(
           this.coordinator.currentSnapshot(),
           request,
           this.dependencies.admission.now(),

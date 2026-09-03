@@ -5,7 +5,10 @@ import {
   asWorkAreaId,
   type CommandContext,
 } from '@ptcgsim/game-core';
-import type { AdmissionCrypto, OpaqueIdSource } from '@ptcgsim/room-authority';
+import type {
+  OpaqueIdSource,
+  RoomInvitationCrypto,
+} from '@ptcgsim/room-authority';
 
 const randomBytes = (length: number): Uint8Array => {
   const bytes = new Uint8Array(length);
@@ -23,7 +26,7 @@ const randomToken = (prefix: string, byteLength: number): string =>
   `${prefix}_${base64Url(randomBytes(byteLength))}`;
 
 export class WebCryptoAuthoritySource
-  implements AdmissionCrypto, OpaqueIdSource, CommandContext
+  implements RoomInvitationCrypto, OpaqueIdSource, CommandContext
 {
   async digestCapability(capability: string): Promise<string> {
     const digest = await crypto.subtle.digest(
@@ -53,6 +56,10 @@ export class WebCryptoAuthoritySource
 
   nextAdmissionTicket(): string {
     return randomToken('socket', 32);
+  }
+
+  nextRoomInvitation(): string {
+    return randomToken('invite', 32);
   }
 
   nextResumeCapability(): string {

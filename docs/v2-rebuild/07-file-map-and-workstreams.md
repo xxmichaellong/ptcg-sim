@@ -135,11 +135,12 @@ work do not change.
 Implemented authority/admission boundaries include
 `packages/room-authority/src/admission.ts`,
 `apps/server/src/browser-json-http.ts`, `room-creation-http.ts`,
-`admission-ticket-http.ts`, `session-handshake.ts`, `session-hub.ts`,
-`durable-storage.ts`, and `worker.ts`. The strict client-side creation/admission
-composition lives in `apps/web/src/session/RemoteRoomCreation.ts` and
-`RemoteRoomBootstrap.ts`; ADR-020 still owns the cross-browser invitation
-channel. The later production split remains:
+`room-invitation-http.ts`, `admission-ticket-http.ts`, `session-handshake.ts`,
+`session-hub.ts`, `durable-storage.ts`, and `worker.ts`. The strict client-side
+creation/admission/invitation composition lives in
+`apps/web/src/session/RemoteRoomCreation.ts` and `RemoteRoomBootstrap.ts`;
+ADR-020 still owns how the validated invitation handoff is presented and moved
+between browsers. The later production split remains:
 
 ```text
 apps/server/src/

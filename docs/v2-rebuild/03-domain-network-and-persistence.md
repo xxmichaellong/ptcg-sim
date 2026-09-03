@@ -318,8 +318,10 @@ room runtime.
 
 ### Connection and role lifecycle
 
-1. Client exchanges a high-entropy seat/spectator capability for a short-lived
-   one-time socket ticket through a same-origin bounded POST.
+1. Creator custody may derive a high-entropy, expiring, one-use guest invitation
+   from a seat/spectator master capability through a same-origin bounded POST.
+   The joining client exchanges either that invitation or its own master
+   capability for a short-lived one-time socket ticket.
 2. Client opens a credential-free transport URL with protocol/build metadata.
 3. `Hello` consumes the socket ticket to establish a new session or proves a
    reconnect with its resume capability; room code and
@@ -341,30 +343,41 @@ It returns a runtime-validated, `no-store` room code plus three distinct
 high-entropy credentials only after durable initialization. A faulty entropy
 source cannot persist duplicate or out-of-bounds credentials. The browser
 validates its lobby input before creation, immediately exchanges the creator's
-seat credential, and retains the player-two and spectator credentials only in a
-one-time, non-serializing in-memory custodian. Creation and bootstrap failures
-are redacted. This closes the same-browser owner path without deciding how a
-bearer invitation crosses safely to another browser.
+seat credential, and retains the player-two and spectator master credentials
+only in a non-serializing in-memory custodian. That custodian can mint a
+15-minute role-bound handoff via a second strict, bounded, same-origin `POST` to
+`/v2/rooms/:roomCode/invitations` without returning the master credential to its
+caller. Player issuance rotates the prior invitation for that seat; spectator
+issuance creates distinct invitations up to the room cap. Creation, issue, and
+bootstrap failures are redacted. This closes the creation and guest-claim
+protocol paths without deciding how the bearer handoff crosses to another
+browser.
 
-The implemented browser boundary accepts the long-lived seat or spectator
-capability only in a bounded, strict, same-origin JSON `POST` to
-`/v2/rooms/:roomCode/admission-tickets`. It returns a `no-store` 30-second
-socket ticket. Authority schema v5 stores at most 32 unexpired ticket digests,
-never bearer values; each record is bound to the requested role and normalized
-display name. Issuance and redemption are serialized with room messages.
-Redemption removes the digest in the same compare-and-swap transaction that
-claims/resumes the session and rotates to a fresh resume capability. Expired,
-replayed, wrong-role, wrong-name, cross-origin, oversized, and malformed inputs
-fail without reflecting credential material. The browser uses redirect-error,
-no-referrer, omitted-credential fetch semantics, derives credential-free HTTP
-and WebSocket URLs from the same origin, and hands only the resulting runtime
-and route descriptor to React.
+The implemented admission boundary accepts a long-lived seat/spectator master
+capability or a derived guest invitation only in a bounded, strict, same-origin
+JSON `POST` to `/v2/rooms/:roomCode/admission-tickets`. It returns a `no-store`
+30-second socket ticket. Authority schema v6 stores at most 32 unexpired
+invitation digests and 32 ticket digests, never bearer values; invitation grants
+are role-bound and ticket records also bind the normalized display name.
+Issuance and redemption are serialized with room messages. If an invitation
+exchange response is lost, retrying it revokes the previous unconsumed ticket
+and returns a new one. WebSocket redemption removes the invitation and every
+linked ticket in the same compare-and-swap transaction that claims the session
+and rotates to a fresh resume capability. Player invitation rotation also
+revokes any ticket linked to the old claim. Expired, replayed, wrong-role,
+wrong-name, cross-origin, oversized, and malformed inputs fail without
+reflecting credential material. The browser uses redirect-error, no-referrer,
+omitted-credential fetch semantics, derives credential-free HTTP and WebSocket
+URLs from the same origin, validates the untrusted handoff before exchange, and
+hands only the resulting runtime and route descriptor to React.
 
 ADR-020 blocks visible create/join wiring. The v1 room ID is both discovery and
-authorization; retaining that behavior would negate SEC-001/SEC-003. A v2 guest
-invitation needs an explicitly approved transfer mechanism for the second-seat
-or spectator credential. Raw credentials must not be added to URLs, logs,
-analytics, storage, React state, or hidden DOM fields as a convenience.
+authorization; retaining that behavior would negate SEC-001/SEC-003. The v2
+guest invitation protocol and validated handoff now exist, but their
+cross-browser presentation/transport still needs an explicitly approved choice
+(for example manual transfer versus a trusted relay). Raw credentials must not
+be added to URLs, logs, analytics, storage, React state, or hidden DOM fields as
+a convenience.
 
 ### Message families
 
@@ -496,7 +509,7 @@ event batches under a pinned event/state version. New clients never execute
 arbitrary legacy function names. Public replay uses projected frames and cannot
 reveal secrets that were not public at that revision.
 
-The implemented authority schema v5 persists one hashed canonical replay base
+The implemented authority schema v6 persists one hashed canonical replay base
 plus a contiguous accepted resolved-event tail bounded by both 128 batches and
 512 KiB of serialized event data. Rejected commands do not enter replay
 history. When either bound is exceeded, the oldest event is applied to the base
@@ -505,9 +518,10 @@ the current canonical state. A single oversized batch safely compacts into the
 base instead of making retention unbounded. A first-time seat claim rebases the
 ledger because display-name metadata changes outside gameplay revisions. Stored
 schema-v1, schema-v2, and schema-v3 rooms migrate to a replay rooted at their
-current state. Schema-v4 rooms retain that replay while gaining an empty ticket
-registry. A nonzero root is explicitly exposed as `truncated` rather than
-pretending earlier revisions are available.
+current state. Schema-v4 rooms retain that replay while gaining empty ticket and
+invitation registries; schema-v5 rooms preserve their outstanding tickets while
+gaining an empty invitation registry. A nonzero root is explicitly exposed as
+`truncated` rather than pretending earlier revisions are available.
 
 Projection happens only inside the authority boundary. Each request starts a
 fresh artifact-local opaque identity registry, preserves aliases while the same
@@ -578,10 +592,12 @@ closing transport. The lazy `RemoteRoomRoute` composes that runtime with the
 board, exact replay chrome, multiplayer/replay activity IDs, live region, and
 Options/Exit path. `RemoteRoomBootstrap` now creates that trusted connection
 handoff by exchanging an in-memory long-lived capability for a one-time ticket;
-no credential enters a URL, storage, DOM, React state, or log. The
-renderer-spike entry remains the default until the visible create/join workflow
-can supply that in-memory input through the ADR-020 mechanism, so the current
-UI/UX remains unchanged.
+no credential enters a URL, storage, DOM, React state, or log.
+`RemoteRoomCreation` keeps guest master credentials private while minting
+bounded handoff values, and the guest bootstrap validates and exchanges such a
+handoff through the same ticket path. The renderer-spike entry remains the
+default until ADR-020 selects the cross-browser transfer/presentation adapter,
+so the current UI/UX remains unchanged.
 
 This bounded ledger, stream, and playback state machine are the runtime replay
 foundation, not the final archive/export contract. Phase 7 still owns
@@ -593,7 +609,7 @@ Solo undo is a new authoritative transition with a monotonically increasing
 revision: it restores the prior approved logical checkpoint, records
 `UndoApplied`, and publishes the resulting view. Audit history is not deleted.
 The v2 authority snapshot records an explicit `solo` or `multiplayer` mode; live
-connection count is never used to infer permission. Authority schema v5 stores
+connection count is never used to infer permission. Authority schema v6 stores
 one hashed base state plus a bounded active-branch tail of resolved event
 batches. It reconstructs the selected checkpoint inside the trusted boundary,
 then persists the exact restored canonical state in the resolved undo event so
@@ -609,12 +625,14 @@ rerun. Undo rotates every projection alias before publication to prevent
 correlation with a discarded hidden branch. Audit history is not deleted,
 reconnect restores the new branch without replaying the presentation fact, and
 multiplayer undo is not added by this rebuild. Stored authority-v1 rooms migrate
-explicitly to multiplayer schema v5, while schema-v2 and schema-v3 rooms retain
+explicitly to multiplayer schema v6, while schema-v2 and schema-v3 rooms retain
 their explicit mode. All prior schemas receive empty solo history and a replay
 base rooted at their migrated current canonical state because their older event
 tails do not contain the v2 match-state visibility scope required for safe
 deterministic replay. Schema-v4 rooms keep their compatible state and replay
-history while receiving an empty one-time-ticket registry.
+history while receiving empty one-time-ticket and invitation registries.
+Schema-v5 rooms retain their compatible ticket registry and receive an empty
+invitation registry.
 
 The provisional command order is whole-match authority order, not v1's two
 independent client action arrays. This avoids replaying one seat's JavaScript

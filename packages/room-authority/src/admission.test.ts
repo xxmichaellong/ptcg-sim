@@ -10,8 +10,9 @@ import {
   admitRoomSession,
   createRoomAdmissionState,
   issueRoomAdmissionTicket,
+  issueRoomInvitation,
   redeemRoomAdmissionTicket,
-  type AdmissionTicketCrypto,
+  type RoomInvitationCrypto,
 } from './admission.js';
 import { emptyProjectionIdentityState } from './identity-registry.js';
 import { appendReplayHistory, createReplayHistory } from './replay-history.js';
@@ -61,10 +62,11 @@ const createSnapshot = (): RoomAuthoritySnapshot => {
   };
 };
 
-const createCrypto = (): AdmissionTicketCrypto => {
+const createCrypto = (): RoomInvitationCrypto => {
   let session = 0;
   let resume = 0;
   let ticket = 0;
+  let invitation = 0;
   return {
     digestCapability: vi.fn(async (capability) => digest(capability)),
     equalDigest: (left, right) => left === right,
@@ -73,6 +75,8 @@ const createCrypto = (): AdmissionTicketCrypto => {
       `resume-capability-${String(++resume).padStart(24, '0')}`,
     nextAdmissionTicket: () =>
       `socket-admission-${String(++ticket).padStart(24, '0')}`,
+    nextRoomInvitation: () =>
+      `room-invitation-${String(++invitation).padStart(24, '0')}`,
   };
 };
 
@@ -87,7 +91,7 @@ const persistence = () => {
 };
 
 const dependencies = (
-  crypto: AdmissionTicketCrypto,
+  crypto: RoomInvitationCrypto,
   storage: ReturnType<typeof persistence>
 ) => {
   let opaque = 0;
@@ -102,6 +106,319 @@ const dependencies = (
 };
 
 describe('room capability admission', () => {
+  it('mints a digest-only player invitation and consumes it only with the socket ticket', async () => {
+    const storage = persistence();
+    const crypto = createCrypto();
+    const issued = await issueRoomInvitation(
+      createSnapshot(),
+      { capability: seatTwoToken, requestedRole: 'player' },
+      10_000,
+      dependencies(crypto, storage)
+    );
+    expect(issued.accepted).toBe(true);
+    if (!issued.accepted) return;
+    const invitationDigest = digest(issued.invitation);
+    expect(issued.expiresAt).toBe(910_000);
+    expect(issued.snapshot.admission?.invitations).toEqual({
+      [invitationDigest]: {
+        role: 'player',
+        playerId: p2,
+        expiresAt: 910_000,
+      },
+    });
+    expect(JSON.stringify(issued.snapshot)).not.toContain(issued.invitation);
+    expect(JSON.stringify(issued.snapshot)).not.toContain(seatTwoToken);
+    expect(storage.transactions[0]).toMatchObject({
+      kind: 'invitation_issued',
+      invitationDigest,
+    });
+
+    const exchanged = await issueRoomAdmissionTicket(
+      issued.snapshot,
+      {
+        capability: issued.invitation,
+        displayName: 'Red',
+        requestedRole: 'player',
+      },
+      10_001,
+      dependencies(crypto, storage)
+    );
+    expect(exchanged.accepted).toBe(true);
+    if (!exchanged.accepted) return;
+    const ticketDigest = digest(exchanged.admissionTicket);
+    expect(exchanged.snapshot.admission?.invitations).toHaveProperty(
+      invitationDigest
+    );
+    expect(exchanged.snapshot.admission?.tickets[ticketDigest]).toMatchObject({
+      role: 'player',
+      playerId: p2,
+      displayName: 'Red',
+      sourceInvitationDigest: invitationDigest,
+    });
+
+    const admitted = await redeemRoomAdmissionTicket(
+      exchanged.snapshot,
+      {
+        admissionTicket: exchanged.admissionTicket,
+        displayName: 'Red',
+        requestedRole: 'player',
+      },
+      10_002,
+      dependencies(crypto, storage)
+    );
+    expect(admitted.accepted).toBe(true);
+    if (!admitted.accepted) return;
+    expect(admitted.session.viewer).toEqual({ kind: 'player', playerId: p2 });
+    expect(admitted.snapshot.admission?.invitations).toEqual({});
+    expect(admitted.snapshot.admission?.tickets).toEqual({});
+    expect(storage.transactions[2]).toMatchObject({
+      kind: 'seat_claimed',
+      admissionTicketDigest: ticketDigest,
+      invitationDigest,
+    });
+
+    const replayed = await issueRoomAdmissionTicket(
+      admitted.snapshot,
+      {
+        capability: issued.invitation,
+        displayName: 'Attacker',
+        requestedRole: 'player',
+      },
+      10_003,
+      dependencies(crypto, storage)
+    );
+    expect(replayed).toMatchObject({
+      accepted: false,
+      code: 'invalid_capability',
+    });
+  });
+
+  it('rotates a retrying invitation exchange so a lost ticket response is recoverable', async () => {
+    const storage = persistence();
+    const crypto = createCrypto();
+    const invitation = await issueRoomInvitation(
+      createSnapshot(),
+      { capability: spectatorToken, requestedRole: 'spectator' },
+      20_000,
+      dependencies(crypto, storage)
+    );
+    if (!invitation.accepted) throw new Error(invitation.code);
+    const first = await issueRoomAdmissionTicket(
+      invitation.snapshot,
+      {
+        capability: invitation.invitation,
+        displayName: 'Viewer',
+        requestedRole: 'spectator',
+      },
+      20_001,
+      dependencies(crypto, storage)
+    );
+    if (!first.accepted) throw new Error(first.code);
+    const retryTicketSource = vi
+      .fn()
+      .mockReturnValueOnce(first.admissionTicket)
+      .mockReturnValueOnce('socket-admission-retry-000000000001');
+    const second = await issueRoomAdmissionTicket(
+      first.snapshot,
+      {
+        capability: invitation.invitation,
+        displayName: 'Viewer',
+        requestedRole: 'spectator',
+      },
+      20_002,
+      dependencies(
+        { ...crypto, nextAdmissionTicket: retryTicketSource },
+        storage
+      )
+    );
+    if (!second.accepted) throw new Error(second.code);
+
+    expect(second.admissionTicket).not.toBe(first.admissionTicket);
+    expect(retryTicketSource).toHaveBeenCalledTimes(2);
+    expect(Object.keys(second.snapshot.admission?.tickets ?? {})).toEqual([
+      digest(second.admissionTicket),
+    ]);
+    const stale = await redeemRoomAdmissionTicket(
+      second.snapshot,
+      {
+        admissionTicket: first.admissionTicket,
+        displayName: 'Viewer',
+        requestedRole: 'spectator',
+      },
+      20_003,
+      dependencies(crypto, storage)
+    );
+    expect(stale).toMatchObject({
+      accepted: false,
+      code: 'invalid_capability',
+    });
+    const latest = await redeemRoomAdmissionTicket(
+      second.snapshot,
+      {
+        admissionTicket: second.admissionTicket,
+        displayName: 'Viewer',
+        requestedRole: 'spectator',
+      },
+      20_003,
+      dependencies(crypto, storage)
+    );
+    expect(latest.accepted).toBe(true);
+  });
+
+  it('rotates player invitations, permits distinct spectator invitations, and enforces expiry', async () => {
+    const storage = persistence();
+    const crypto = createCrypto();
+    const policy = {
+      lifetimeMs: 30_000,
+      maximumOutstandingInvitations: 2,
+    };
+    const firstPlayer = await issueRoomInvitation(
+      createSnapshot(),
+      { capability: seatTwoToken, requestedRole: 'player' },
+      1_000,
+      dependencies(crypto, storage),
+      policy
+    );
+    if (!firstPlayer.accepted) throw new Error(firstPlayer.code);
+    const firstPlayerTicket = await issueRoomAdmissionTicket(
+      firstPlayer.snapshot,
+      {
+        capability: firstPlayer.invitation,
+        displayName: 'Red',
+        requestedRole: 'player',
+      },
+      1_001,
+      dependencies(crypto, storage)
+    );
+    if (!firstPlayerTicket.accepted) throw new Error(firstPlayerTicket.code);
+    const replacementInvitationSource = vi
+      .fn()
+      .mockReturnValueOnce(firstPlayer.invitation)
+      .mockReturnValueOnce('room-invitation-replacement-00000001');
+    const secondPlayer = await issueRoomInvitation(
+      firstPlayerTicket.snapshot,
+      { capability: seatTwoToken, requestedRole: 'player' },
+      1_002,
+      dependencies(
+        { ...crypto, nextRoomInvitation: replacementInvitationSource },
+        storage
+      ),
+      policy
+    );
+    if (!secondPlayer.accepted) throw new Error(secondPlayer.code);
+    expect(replacementInvitationSource).toHaveBeenCalledTimes(2);
+    expect(secondPlayer.snapshot.admission?.invitations).not.toHaveProperty(
+      digest(firstPlayer.invitation)
+    );
+    expect(secondPlayer.snapshot.admission?.tickets).toEqual({});
+    const revoked = await issueRoomAdmissionTicket(
+      secondPlayer.snapshot,
+      {
+        capability: firstPlayer.invitation,
+        displayName: 'Red',
+        requestedRole: 'player',
+      },
+      1_003,
+      dependencies(crypto, storage)
+    );
+    expect(revoked).toMatchObject({
+      accepted: false,
+      code: 'invalid_capability',
+    });
+
+    const spectator = await issueRoomInvitation(
+      secondPlayer.snapshot,
+      { capability: spectatorToken, requestedRole: 'spectator' },
+      1_004,
+      dependencies(crypto, storage),
+      policy
+    );
+    if (!spectator.accepted) throw new Error(spectator.code);
+    const full = await issueRoomInvitation(
+      spectator.snapshot,
+      { capability: spectatorToken, requestedRole: 'spectator' },
+      1_005,
+      dependencies(crypto, storage),
+      policy
+    );
+    expect(full).toMatchObject({
+      accepted: false,
+      code: 'invitation_capacity',
+    });
+
+    const expired = await issueRoomAdmissionTicket(
+      spectator.snapshot,
+      {
+        capability: spectator.invitation,
+        displayName: 'Late viewer',
+        requestedRole: 'spectator',
+      },
+      31_004,
+      dependencies(crypto, storage)
+    );
+    expect(expired).toMatchObject({
+      accepted: false,
+      code: 'invalid_capability',
+    });
+  });
+
+  it('never mints an invitation or ticket that collides with a resume capability', async () => {
+    const storage = persistence();
+    const crypto = createCrypto();
+    const ticket = await issueRoomAdmissionTicket(
+      createSnapshot(),
+      {
+        capability: seatOneToken,
+        displayName: 'Blue',
+        requestedRole: 'player',
+      },
+      1_000,
+      dependencies(crypto, storage)
+    );
+    if (!ticket.accepted) throw new Error(ticket.code);
+    const claimed = await redeemRoomAdmissionTicket(
+      ticket.snapshot,
+      {
+        admissionTicket: ticket.admissionTicket,
+        displayName: 'Blue',
+        requestedRole: 'player',
+      },
+      1_001,
+      dependencies(crypto, storage)
+    );
+    if (!claimed.accepted) throw new Error(claimed.code);
+
+    const invitationSource = vi
+      .fn()
+      .mockReturnValueOnce(claimed.resumeCapability)
+      .mockReturnValueOnce('room-invitation-after-resume-0000001');
+    const invitation = await issueRoomInvitation(
+      claimed.snapshot,
+      { capability: spectatorToken, requestedRole: 'spectator' },
+      1_002,
+      dependencies({ ...crypto, nextRoomInvitation: invitationSource }, storage)
+    );
+    if (!invitation.accepted) throw new Error(invitation.code);
+    expect(invitationSource).toHaveBeenCalledTimes(2);
+
+    const ticketSource = vi
+      .fn()
+      .mockReturnValueOnce(claimed.resumeCapability)
+      .mockReturnValueOnce('socket-admission-after-resume-00000001');
+    const exchanged = await issueRoomAdmissionTicket(
+      invitation.snapshot,
+      {
+        capability: invitation.invitation,
+        displayName: 'Viewer',
+        requestedRole: 'spectator',
+      },
+      1_003,
+      dependencies({ ...crypto, nextAdmissionTicket: ticketSource }, storage)
+    );
+    expect(exchanged.accepted).toBe(true);
+    expect(ticketSource).toHaveBeenCalledTimes(2);
+  });
+
   it('issues a digest-only ticket and consumes it atomically into a fresh resume capability', async () => {
     const storage = persistence();
     const crypto = createCrypto();

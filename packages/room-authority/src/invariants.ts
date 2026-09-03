@@ -8,6 +8,7 @@ import { viewerIdentityKey } from './identity-registry.js';
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
   MAX_OUTSTANDING_ADMISSION_TICKETS,
+  MAX_OUTSTANDING_ROOM_INVITATIONS,
   MAX_REPLAY_EVENT_BATCHES,
   MAX_REPLAY_EVENT_BYTES,
   MAX_SOLO_UNDO_CHECKPOINTS,
@@ -272,6 +273,39 @@ export const collectAuthoritySnapshotProblems = (
     ) {
       problems.push('admission spectator digest is invalid');
     }
+    const invitationRegistryInvalid =
+      typeof snapshot.admission.invitations !== 'object' ||
+      snapshot.admission.invitations === null ||
+      Array.isArray(snapshot.admission.invitations);
+    const invitationRegistry = invitationRegistryInvalid
+      ? {}
+      : snapshot.admission.invitations;
+    if (invitationRegistryInvalid) {
+      problems.push('room invitations are malformed');
+    } else {
+      const invitations = Object.entries(invitationRegistry);
+      if (invitations.length > MAX_OUTSTANDING_ROOM_INVITATIONS) {
+        problems.push('room has too many outstanding invitations');
+      }
+      for (const [digest, invitation] of invitations) {
+        if (digest.length < 32 || digest.length > 128) {
+          problems.push('room invitation has an invalid digest');
+        }
+        if (
+          !Number.isSafeInteger(invitation.expiresAt) ||
+          invitation.expiresAt < 0
+        ) {
+          problems.push('room invitation has an invalid expiry');
+        }
+        if (invitation.role === 'player') {
+          if (!snapshot.admission.seats[invitation.playerId]) {
+            problems.push('room invitation references an unknown player seat');
+          }
+        } else if (invitation.role !== 'spectator') {
+          problems.push('room invitation has an invalid role');
+        }
+      }
+    }
     if (
       typeof snapshot.admission.tickets !== 'object' ||
       snapshot.admission.tickets === null ||
@@ -280,6 +314,7 @@ export const collectAuthoritySnapshotProblems = (
       problems.push('admission tickets are malformed');
     } else {
       const tickets = Object.entries(snapshot.admission.tickets);
+      const invitationTicketSources = new Set<string>();
       if (tickets.length > MAX_OUTSTANDING_ADMISSION_TICKETS) {
         problems.push('admission has too many outstanding tickets');
       }
@@ -302,6 +337,28 @@ export const collectAuthoritySnapshotProblems = (
           }
         } else if (ticket.role !== 'spectator') {
           problems.push('admission ticket has an invalid role');
+        }
+        if (ticket.sourceInvitationDigest) {
+          if (invitationTicketSources.has(ticket.sourceInvitationDigest)) {
+            problems.push('room invitation has multiple admission tickets');
+          }
+          invitationTicketSources.add(ticket.sourceInvitationDigest);
+          const invitation = invitationRegistry[ticket.sourceInvitationDigest];
+          if (!invitation) {
+            problems.push('admission ticket references a missing invitation');
+          } else {
+            if (
+              invitation.role !== ticket.role ||
+              (invitation.role === 'player' &&
+                (ticket.role !== 'player' ||
+                  invitation.playerId !== ticket.playerId))
+            ) {
+              problems.push('admission ticket invitation role does not match');
+            }
+            if (ticket.expiresAt > invitation.expiresAt) {
+              problems.push('admission ticket outlives its invitation');
+            }
+          }
         }
       }
     }

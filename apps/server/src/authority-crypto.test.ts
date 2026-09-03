@@ -9,6 +9,7 @@ describe('Web Crypto authority source', () => {
       source.nextSeatCapability(),
       source.nextSpectatorCapability(),
       source.nextAdmissionTicket(),
+      source.nextRoomInvitation(),
       source.nextResumeCapability(),
       source.nextSessionId(),
       source.nextOpaqueId('card'),
