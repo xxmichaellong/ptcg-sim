@@ -3,9 +3,11 @@ import { evictDurableObject } from 'cloudflare:test';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MAX_AUTHORITY_JOURNAL_ENTRIES } from '../src/journal-retention.js';
+import type { AcceptedCommandPerformanceObservation } from '../src/session-hub.js';
 import {
   nextServerFrames,
   roomStub,
+  runtimeCommandPerformanceEvidence,
   runtimeEvidence,
   runtimeStorageEvidence,
   utf8Bytes,
@@ -65,6 +67,41 @@ const payloadObservation = (measurement: RuntimeCommandMeasurement) => ({
   maximumFrameCodeUnits: measurement.maximumFrameCodeUnits,
   deliveredFrameCount: measurement.deliveredFrameCount,
   revision: measurement.revision,
+});
+
+const phaseSamplesFor = (
+  measurements: readonly RuntimeCommandMeasurement[],
+  observations: readonly AcceptedCommandPerformanceObservation[]
+): readonly AcceptedCommandPerformanceObservation[] => {
+  const byRevision = new Map(
+    observations.map((observation) => [observation.endRevision, observation])
+  );
+  return measurements.map((measurement) => {
+    const observation = byRevision.get(measurement.revision);
+    if (!observation) {
+      throw new Error(
+        `Missing room-command phase telemetry for revision ${measurement.revision}`
+      );
+    }
+    return observation;
+  });
+};
+
+const phaseDistributions = (
+  samples: readonly AcceptedCommandPerformanceObservation[]
+) => ({
+  total: distribution(samples.map((sample) => sample.totalMs)),
+  authorityProcessing: distribution(
+    samples.map((sample) => sample.phases.authorityProcessingMs)
+  ),
+  projection: distribution(samples.map((sample) => sample.phases.projectionMs)),
+  persistence: distribution(
+    samples.map((sample) => sample.phases.persistenceMs)
+  ),
+  publicationSerialization: distribution(
+    samples.map((sample) => sample.phases.publicationSerializationMs)
+  ),
+  socketSend: distribution(samples.map((sample) => sample.phases.socketSendMs)),
 });
 
 let runtime: RepresentativeRuntime | undefined;
@@ -145,6 +182,9 @@ describe('local workerd performance observation', () => {
     const afterPlateauAdvanceStorage = await runtimeStorageEvidence(
       runtime.created
     );
+    const plateauPhaseEvidence = await runtimeCommandPerformanceEvidence(
+      runtime.created
+    );
     const plateauAdvanceRevision = actor.snapshot.revision;
 
     const wakeDurations: number[] = [];
@@ -172,6 +212,8 @@ describe('local workerd performance observation', () => {
       'post_hibernation_plateau',
       { type: 'FlipCoin' }
     );
+    const postHibernationPhaseEvidence =
+      await runtimeCommandPerformanceEvidence(runtime.created);
 
     const finalEvidence = await runtimeEvidence(runtime.created);
     const finalStorage = await runtimeStorageEvidence(runtime.created);
@@ -181,6 +223,17 @@ describe('local workerd performance observation', () => {
     const fixturePayloads = runtime.fixtureCommands.map(payloadObservation);
     const flipPayloads = flipMeasurements.map(payloadObservation);
     const postHibernationPayload = payloadObservation(postHibernationCommand);
+    const plateauPhaseSamples = phaseSamplesFor(
+      plateauMeasurements,
+      plateauPhaseEvidence
+    );
+    const [postHibernationPhases] = phaseSamplesFor(
+      [postHibernationCommand],
+      postHibernationPhaseEvidence
+    );
+    if (!postHibernationPhases) {
+      throw new Error('Missing post-hibernation command phase telemetry');
+    }
     const allPayloads = [
       ...fixturePayloads,
       ...flipPayloads,
@@ -190,7 +243,7 @@ describe('local workerd performance observation', () => {
       utf8Bytes(JSON.stringify(attachment))
     );
     const report = {
-      schema: 'ptcgsim-runtime-performance-v1',
+      schema: 'ptcgsim-runtime-performance-v2',
       scope: 'local-workerd-observation',
       environment: {
         buildId: 'local-development',
@@ -253,9 +306,11 @@ describe('local workerd performance observation', () => {
         journalPlateauCommandToAllPublications: distribution(
           plateauMeasurements.map((sample) => sample.durationMs)
         ),
+        journalPlateauServerPhases: phaseDistributions(plateauPhaseSamples),
         postHibernationCommandToAllPublicationsMs: rounded(
           postHibernationCommand.durationMs
         ),
+        postHibernationServerPhases: postHibernationPhases,
         hibernationWakePingToPong: distribution(wakeDurations),
       },
       durableResources: {
@@ -304,6 +359,18 @@ describe('local workerd performance observation', () => {
     expect(report.latency.hibernationWakePingToPong.samples).toBe(
       HIBERNATION_WAKE_SAMPLES
     );
+    expect(report.latency.journalPlateauServerPhases.total.samples).toBe(
+      JOURNAL_PLATEAU_ADVANCE_COMMANDS
+    );
+    for (const sample of plateauPhaseSamples) {
+      expect(
+        sample.phases.authorityProcessingMs +
+          sample.phases.projectionMs +
+          sample.phases.persistenceMs +
+          sample.phases.publicationSerializationMs +
+          sample.phases.socketSendMs
+      ).toBeLessThanOrEqual(sample.totalMs + 0.01);
+    }
     expect(
       report.durableResources.atRetentionBoundary.storageByCategory[
         'authority:journal:*'

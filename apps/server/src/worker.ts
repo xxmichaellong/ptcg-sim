@@ -26,7 +26,11 @@ import {
   type ServerHttpRoute,
   type ServerTelemetryPort,
 } from './server-telemetry.js';
-import { RoomSessionHub, type RuntimeConnection } from './session-hub.js';
+import {
+  RoomSessionHub,
+  type AcceptedCommandPerformanceObservation,
+  type RuntimeConnection,
+} from './session-hub.js';
 
 interface Env {
   readonly BUILD_ID: string;
@@ -335,6 +339,13 @@ export class PtcgRoom extends DurableObject<Env> {
     });
   }
 
+  async recentAcceptedCommandPerformance(): Promise<
+    readonly AcceptedCommandPerformanceObservation[]
+  > {
+    const runtime = await this.runtimePromise;
+    return runtime?.hub.recentAcceptedCommandPerformance() ?? [];
+  }
+
   private disconnectSocket(socket: WebSocket): void {
     const attachment =
       socket.deserializeAttachment() as SocketAttachment | null;
@@ -357,6 +368,7 @@ export class PtcgRoom extends DurableObject<Env> {
       commandContext: this.cryptoSource,
       opaqueIds: this.cryptoSource,
       policy: DEFAULT_AUTHORITY_POLICY,
+      monotonicNow: () => performance.now(),
     });
     return {
       coordinator,

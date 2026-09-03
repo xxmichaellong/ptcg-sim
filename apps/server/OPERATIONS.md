@@ -22,7 +22,7 @@ execute; synthetic room creation/admission/command probes remain necessary.
 ## Structured event contract
 
 `server-telemetry.ts` emits the closed
-`ptcgsim-server-telemetry-v1` discriminated union through Cloudflare's
+`ptcgsim-server-telemetry-v2` discriminated union through Cloudflare's
 structured console sink. Every event has timestamp, random event correlation,
 ephemeral random source-instance correlation, source (`edge` or `room`), and
 sanitized build/protocol/authority/match-schema versions.
@@ -33,7 +33,7 @@ sanitized build/protocol/authority/match-schema versions.
 | `room_lifecycle`  | Create/restore/expire/alarm repair, authority frontier, and bounded counts  |
 | `room_rate_limit` | Allowed/limited room operation and retry interval                           |
 | `room_admission`  | Invitation/ticket/initial/resume operation, role, safe outcome, and latency |
-| `room_command`    | Safe command type/outcome/reason, revisions, bytes, deliveries, and latency |
+| `room_command`    | Safe command outcome, bytes, total latency, and numeric phase durations     |
 | `room_socket`     | Upgrade/restore/close/error and current socket count                        |
 | `server_failure`  | Fixed subsystem and retryability; never the thrown error                    |
 
@@ -148,6 +148,12 @@ commands past it, forces repeated hibernating eviction, and commits once after
 wake. It currently takes about one minute on the named development host and is
 kept outside the fast CI gate; the smaller deterministic payload envelope stays
 in `test:v2:runtime`.
+
+The Durable Object keeps only the 32 latest accepted-command observations in
+memory so the harness can collect the same numeric durations without parsing
+console output. The window has no room, session, command, card, or capability
+values, is not persisted, is not exposed by an HTTP route, and resets on
+eviction. Production monitoring continues to use the structured telemetry sink.
 
 This local observation is diagnostic evidence, not a substitute for managed
 Cloudflare preview load, CPU/memory/cost, alarm, or network distributions. The

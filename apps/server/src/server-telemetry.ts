@@ -7,7 +7,7 @@ import {
 
 import type { RoomRateLimitedOperation } from './room-rate-limit.js';
 
-export const SERVER_TELEMETRY_SCHEMA = 'ptcgsim-server-telemetry-v1';
+export const SERVER_TELEMETRY_SCHEMA = 'ptcgsim-server-telemetry-v2';
 
 export type ServerTelemetryLevel = 'info' | 'warn' | 'error';
 export type ServerTelemetrySource = 'edge' | 'room';
@@ -28,6 +28,13 @@ export type RoomAdmissionOutcome =
   'accepted' | 'rejected' | 'rate_limited' | 'failed';
 export type RoomCommandOutcome =
   'accepted' | 'rejected' | 'duplicate' | 'failed';
+export interface RoomCommandPhaseDurations {
+  readonly authorityProcessingMs: number;
+  readonly projectionMs: number;
+  readonly persistenceMs: number;
+  readonly publicationSerializationMs: number;
+  readonly socketSendMs: number;
+}
 export type RoomSocketOutcome = 'upgraded' | 'restored' | 'closed' | 'error';
 export type ServerFailureSubsystem =
   | 'room_initialization'
@@ -107,6 +114,7 @@ type ServerTelemetryDetail =
       readonly requestBytes: number;
       readonly publicationBytes: number;
       readonly deliveryCount: number;
+      readonly phases: RoomCommandPhaseDurations;
       readonly durationMs: number;
     }
   | {
@@ -165,6 +173,7 @@ export interface ServerTelemetryPort {
     readonly requestBytes: number;
     readonly publicationBytes: number;
     readonly deliveryCount: number;
+    readonly phases?: Partial<RoomCommandPhaseDurations>;
     readonly durationMs: number;
   }) => void;
   readonly roomSocket: (input: {
@@ -222,6 +231,18 @@ const safeDuration = (value: number): number =>
   Number.isFinite(value) && value >= 0
     ? Math.min(Math.round(value * 1_000) / 1_000, 86_400_000)
     : 0;
+
+const safeCommandPhases = (
+  value?: Partial<RoomCommandPhaseDurations>
+): RoomCommandPhaseDurations => ({
+  authorityProcessingMs: safeDuration(value?.authorityProcessingMs ?? 0),
+  projectionMs: safeDuration(value?.projectionMs ?? 0),
+  persistenceMs: safeDuration(value?.persistenceMs ?? 0),
+  publicationSerializationMs: safeDuration(
+    value?.publicationSerializationMs ?? 0
+  ),
+  socketSendMs: safeDuration(value?.socketSendMs ?? 0),
+});
 
 const safeStatus = (value: number): number =>
   Number.isSafeInteger(value) && value >= 100 && value <= 599 ? value : 500;
@@ -347,6 +368,7 @@ export class StructuredServerTelemetry implements ServerTelemetryPort {
     requestBytes,
     publicationBytes,
     deliveryCount,
+    phases,
     durationMs,
   }: Parameters<ServerTelemetryPort['roomCommand']>[0]): void {
     this.publish(levelForOutcome(outcome), {
@@ -361,6 +383,7 @@ export class StructuredServerTelemetry implements ServerTelemetryPort {
       requestBytes: safeCount(requestBytes),
       publicationBytes: safeCount(publicationBytes),
       deliveryCount: safeCount(deliveryCount),
+      phases: safeCommandPhases(phases),
       durationMs: safeDuration(durationMs),
     });
   }

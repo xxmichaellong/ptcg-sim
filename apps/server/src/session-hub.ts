@@ -23,7 +23,18 @@ import type {
   RoomRateLimitDecision,
   RoomRateLimitPort,
 } from './room-rate-limit.js';
-import type { ServerTelemetryPort } from './server-telemetry.js';
+import type {
+  RoomCommandPhaseDurations,
+  ServerTelemetryPort,
+} from './server-telemetry.js';
+
+const MAX_RECENT_ACCEPTED_COMMAND_PERFORMANCE = 32;
+
+export interface AcceptedCommandPerformanceObservation {
+  readonly endRevision: number;
+  readonly totalMs: number;
+  readonly phases: RoomCommandPhaseDurations;
+}
 
 export interface RuntimeConnection {
   readonly id: string;
@@ -64,11 +75,28 @@ const serializedMessageBytes = (message: ServerMessage): number => {
   }
 };
 
+const boundedObservedDuration = (value: number): number =>
+  Number.isFinite(value) && value >= 0 ? Math.min(value, 86_400_000) : 0;
+
+const boundedCommandPhases = (
+  phases: RoomCommandPhaseDurations
+): RoomCommandPhaseDurations => ({
+  authorityProcessingMs: boundedObservedDuration(phases.authorityProcessingMs),
+  projectionMs: boundedObservedDuration(phases.projectionMs),
+  persistenceMs: boundedObservedDuration(phases.persistenceMs),
+  publicationSerializationMs: boundedObservedDuration(
+    phases.publicationSerializationMs
+  ),
+  socketSendMs: boundedObservedDuration(phases.socketSendMs),
+});
+
 export class RoomSessionHub {
   private tail: Promise<void> = Promise.resolve();
   private readonly connections = new Map<string, RuntimeConnection>();
   private readonly connectionSessions = new Map<string, string>();
   private readonly sessionConnections = new Map<string, string>();
+  private readonly acceptedCommandPerformance: AcceptedCommandPerformanceObservation[] =
+    [];
   private nextReplayId = 1;
 
   constructor(
@@ -303,6 +331,13 @@ export class RoomSessionHub {
     };
   }
 
+  recentAcceptedCommandPerformance(): readonly AcceptedCommandPerformanceObservation[] {
+    return this.acceptedCommandPerformance.map((observation) => ({
+      ...observation,
+      phases: { ...observation.phases },
+    }));
+  }
+
   private send(connection: RuntimeConnection, message: ServerMessage): void {
     try {
       connection.send(JSON.stringify(message));
@@ -430,6 +465,8 @@ export class RoomSessionHub {
                 candidate.type === 'CommandResult' &&
                 candidate.commandId === message.commandId
             );
+          const publicationSerializationStartedAt =
+            this.dependencies.monotonicNow();
           const publicationBytes = result.deliveries.reduce(
             (total, delivery) =>
               delivery.message.type === 'StatePublication'
@@ -437,23 +474,9 @@ export class RoomSessionHub {
                 : total,
             0
           );
-          this.dependencies.telemetry.roomCommand({
-            commandType: message.command.type,
-            outcome: duplicate
-              ? 'duplicate'
-              : commandResult?.accepted
-                ? 'accepted'
-                : 'rejected',
-            ...(commandResult && !commandResult.accepted
-              ? { reason: commandResult.code }
-              : {}),
-            startRevision: before.state.revision,
-            endRevision: result.snapshot.state.revision,
-            requestBytes: encodedBytes(frame),
-            publicationBytes,
-            deliveryCount: result.deliveries.length,
-            durationMs: this.dependencies.monotonicNow() - startedAt,
-          });
+          const publicationSerializationFinishedAt =
+            this.dependencies.monotonicNow();
+          const socketSendStartedAt = this.dependencies.monotonicNow();
           for (const delivery of result.deliveries) {
             const targetConnectionId = this.sessionConnections.get(
               delivery.sessionId
@@ -463,6 +486,49 @@ export class RoomSessionHub {
               : undefined;
             if (target) this.send(target, delivery.message);
           }
+          const socketSendFinishedAt = this.dependencies.monotonicNow();
+          const commandOutcome = duplicate
+            ? ('duplicate' as const)
+            : commandResult?.accepted
+              ? ('accepted' as const)
+              : ('rejected' as const);
+          const phases: RoomCommandPhaseDurations = {
+            ...result.timing,
+            publicationSerializationMs:
+              publicationSerializationFinishedAt -
+              publicationSerializationStartedAt,
+            socketSendMs: socketSendFinishedAt - socketSendStartedAt,
+          };
+          const durationMs = socketSendFinishedAt - startedAt;
+          if (commandOutcome === 'accepted') {
+            this.acceptedCommandPerformance.push({
+              endRevision: result.snapshot.state.revision,
+              totalMs: boundedObservedDuration(durationMs),
+              phases: boundedCommandPhases(phases),
+            });
+            this.acceptedCommandPerformance.splice(
+              0,
+              Math.max(
+                0,
+                this.acceptedCommandPerformance.length -
+                  MAX_RECENT_ACCEPTED_COMMAND_PERFORMANCE
+              )
+            );
+          }
+          this.dependencies.telemetry.roomCommand({
+            commandType: message.command.type,
+            outcome: commandOutcome,
+            ...(commandResult && !commandResult.accepted
+              ? { reason: commandResult.code }
+              : {}),
+            startRevision: before.state.revision,
+            endRevision: result.snapshot.state.revision,
+            requestBytes: encodedBytes(frame),
+            publicationBytes,
+            deliveryCount: result.deliveries.length,
+            phases,
+            durationMs,
+          });
         } catch {
           this.dependencies.telemetry.roomCommand({
             commandType: message.command.type,

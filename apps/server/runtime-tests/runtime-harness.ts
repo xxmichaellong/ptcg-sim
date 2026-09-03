@@ -298,3 +298,10 @@ export const runtimeStorageEvidence = (created: RoomCreationResponse) =>
       categories: Object.fromEntries(categories),
     };
   });
+
+export const runtimeCommandPerformanceEvidence = (
+  created: RoomCreationResponse
+) =>
+  runInDurableObject(roomStub(created), (instance) =>
+    instance.recentAcceptedCommandPerformance()
+  );

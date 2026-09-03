@@ -24,6 +24,7 @@ import {
 import type {
   AuthorityDelivery,
   AuthorityDependencies,
+  AuthorityCommandTiming,
   AuthorityProcessResult,
   AuthorityRejectionCode,
   AuthoritySession,
@@ -42,6 +43,59 @@ import {
 } from './solo-undo-history.js';
 
 type CommandEnvelope = Extract<ClientMessage, { type: 'Command' }>;
+
+interface AuthorityCommandTimer {
+  readonly measureProjection: <Value>(operation: () => Value) => Value;
+  readonly measurePersistence: (
+    operation: () => Promise<void>
+  ) => Promise<void>;
+  readonly finish: () => AuthorityCommandTiming;
+}
+
+const safeMonotonicMark = (monotonicNow?: () => number): number | undefined => {
+  try {
+    const mark = monotonicNow?.();
+    return Number.isFinite(mark) && mark !== undefined ? mark : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const elapsed = (startedAt?: number, finishedAt?: number): number =>
+  startedAt === undefined || finishedAt === undefined || finishedAt < startedAt
+    ? 0
+    : finishedAt - startedAt;
+
+const createAuthorityCommandTimer = (
+  monotonicNow?: () => number
+): AuthorityCommandTimer => {
+  const startedAt = safeMonotonicMark(monotonicNow);
+  let projectionMs = 0;
+  let persistenceMs = 0;
+  return {
+    measureProjection: (operation) => {
+      const phaseStartedAt = safeMonotonicMark(monotonicNow);
+      const value = operation();
+      projectionMs += elapsed(phaseStartedAt, safeMonotonicMark(monotonicNow));
+      return value;
+    },
+    measurePersistence: async (operation) => {
+      const phaseStartedAt = safeMonotonicMark(monotonicNow);
+      await operation();
+      persistenceMs += elapsed(phaseStartedAt, safeMonotonicMark(monotonicNow));
+    },
+    finish: () => ({
+      authorityProcessingMs: Math.max(
+        0,
+        elapsed(startedAt, safeMonotonicMark(monotonicNow)) -
+          projectionMs -
+          persistenceMs
+      ),
+      projectionMs,
+      persistenceMs,
+    }),
+  };
+};
 
 const cloneSession = (session: AuthoritySession): AuthoritySession => ({
   ...session,
@@ -65,7 +119,8 @@ const resultMessage = (outcome: PersistedCommandOutcome): ServerMessage => ({
 const immediateRejection = (
   snapshot: RoomAuthoritySnapshot,
   envelope: CommandEnvelope,
-  code: AuthorityRejectionCode
+  code: AuthorityRejectionCode,
+  timer: AuthorityCommandTimer
 ): AuthorityProcessResult => ({
   snapshot,
   committed: false,
@@ -81,6 +136,7 @@ const immediateRejection = (
       }),
     },
   ],
+  timing: timer.finish(),
 });
 
 const coreRejectionCode = (
@@ -163,6 +219,7 @@ export const processAuthorityCommand = async (
   envelope: CommandEnvelope,
   dependencies: AuthorityDependencies
 ): Promise<AuthorityProcessResult> => {
+  const timer = createAuthorityCommandTimer(dependencies.monotonicNow);
   assertAuthoritySnapshotInvariants(current);
   if (
     !Number.isSafeInteger(dependencies.policy.maximumSoloUndoCheckpoints) ||
@@ -187,7 +244,7 @@ export const processAuthorityCommand = async (
   }
   const session = current.sessions[envelope.sessionId];
   if (!session || !session.active) {
-    return immediateRejection(current, envelope, 'session_superseded');
+    return immediateRejection(current, envelope, 'session_superseded', timer);
   }
 
   const duplicate = session.recentOutcomes.find(
@@ -195,15 +252,17 @@ export const processAuthorityCommand = async (
   );
   if (duplicate) {
     if (duplicate.clientSequence !== envelope.clientSequence) {
-      return immediateRejection(current, envelope, 'invalid_sequence');
+      return immediateRejection(current, envelope, 'invalid_sequence', timer);
     }
     const replayDeliveries: AuthorityDelivery[] = [];
     if (duplicate.accepted) {
-      const projected = projectRecipient(
-        current.state,
-        session.viewer,
-        current.identities,
-        dependencies.opaqueIds
+      const projected = timer.measureProjection(() =>
+        projectRecipient(
+          current.state,
+          session.viewer,
+          current.identities,
+          dependencies.opaqueIds
+        )
       );
       replayDeliveries.push({
         sessionId: session.id,
@@ -226,14 +285,15 @@ export const processAuthorityCommand = async (
           message: resultMessage(duplicate),
         },
       ],
+      timing: timer.finish(),
     };
   }
 
   if (envelope.clientSequence !== session.nextClientSequence) {
-    return immediateRejection(current, envelope, 'invalid_sequence');
+    return immediateRejection(current, envelope, 'invalid_sequence', timer);
   }
   if (envelope.lastSeenRevision > current.state.revision) {
-    return immediateRejection(current, envelope, 'invalid_sequence');
+    return immediateRejection(current, envelope, 'invalid_sequence', timer);
   }
 
   const undoCheckpoint =
@@ -365,11 +425,13 @@ export const processAuthorityCommand = async (
     if (!eventBatch) {
       throw new Error('Accepted command did not produce an event batch');
     }
-    const projected = projectForSessions(
-      candidate,
-      dependencies,
-      envelope.commandId,
-      eventBatch
+    const projected = timer.measureProjection(() =>
+      projectForSessions(
+        candidate,
+        dependencies,
+        envelope.commandId,
+        eventBatch
+      )
     );
     candidate = projected.snapshot;
     publications = projected.deliveries;
@@ -377,14 +439,16 @@ export const processAuthorityCommand = async (
 
   assertAuthoritySnapshotInvariants(candidate);
 
-  await dependencies.persistence.commit({
-    expectedAuthorityVersion: current.authorityVersion,
-    expectedRevision: current.state.revision,
-    snapshot: candidate,
-    sessionId: session.id,
-    outcome,
-    ...(eventBatch ? { eventBatch } : {}),
-  });
+  await timer.measurePersistence(() =>
+    dependencies.persistence.commit({
+      expectedAuthorityVersion: current.authorityVersion,
+      expectedRevision: current.state.revision,
+      snapshot: candidate,
+      sessionId: session.id,
+      outcome,
+      ...(eventBatch ? { eventBatch } : {}),
+    })
+  );
 
   return {
     snapshot: candidate,
@@ -393,5 +457,6 @@ export const processAuthorityCommand = async (
       ...publications,
       { sessionId: session.id, message: resultMessage(outcome) },
     ],
+    timing: timer.finish(),
   };
 };

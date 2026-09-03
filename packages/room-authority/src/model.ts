@@ -210,6 +210,8 @@ export interface AuthorityDependencies {
   readonly opaqueIds: OpaqueIdSource;
   readonly persistence: AuthorityPersistence;
   readonly policy: AuthorityPolicy;
+  /** Optional and observational only; failures must never affect authority. */
+  readonly monotonicNow?: () => number;
 }
 
 export interface AuthorityDelivery {
@@ -221,6 +223,16 @@ export interface AuthorityProcessResult {
   readonly snapshot: RoomAuthoritySnapshot;
   readonly committed: boolean;
   readonly deliveries: readonly AuthorityDelivery[];
+  readonly timing: AuthorityCommandTiming;
+}
+
+export interface AuthorityCommandTiming {
+  /** Validation, resolution, state transition, cloning, and invariants. */
+  readonly authorityProcessingMs: number;
+  /** Recipient projection and protocol view serialization. */
+  readonly projectionMs: number;
+  /** The complete persist-before-publish storage call. */
+  readonly persistenceMs: number;
 }
 
 export const DEFAULT_AUTHORITY_POLICY: AuthorityPolicy = {

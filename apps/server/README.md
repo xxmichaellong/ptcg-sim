@@ -29,4 +29,7 @@ repository-level `check:v2` gate runs this suite after the fast unit tests.
 `pnpm run measure:runtime` is the longer, non-CI timing/plateau observation. It
 fills the command outcome and audit windows, advances beyond them, forces
 hibernating evictions, commits once more after wake, and writes a sanitized
-machine-readable artifact through the repository runner.
+machine-readable artifact through the repository runner. Telemetry v2 and the
+artifact split accepted commands into authority processing, recipient
+projection, durable persistence, publication serialization, and socket-send
+phases.

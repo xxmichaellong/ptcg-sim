@@ -197,6 +197,40 @@ describe('authoritative room command transaction', () => {
     expect(result.deliveries.at(-1)?.sessionId).toBe('session-player-one');
   });
 
+  it('reports isolated authority, projection, and persistence phases without affecting the transaction', async () => {
+    const persistence = createPersistence();
+    const marks = [0, 10, 30, 40, 70, 80];
+    const result = await processAuthorityCommand(createSnapshot(), loadDeck(), {
+      ...createDependencies(persistence),
+      monotonicNow: () => marks.shift()!,
+    });
+
+    expect(result.committed).toBe(true);
+    expect(result.timing).toEqual({
+      authorityProcessingMs: 30,
+      projectionMs: 20,
+      persistenceMs: 30,
+    });
+    expect(marks).toEqual([]);
+
+    const clockFailure = await processAuthorityCommand(
+      createSnapshot(),
+      loadDeck(),
+      {
+        ...createDependencies(createPersistence()),
+        monotonicNow: () => {
+          throw new Error('observation clock failed');
+        },
+      }
+    );
+    expect(clockFailure.committed).toBe(true);
+    expect(clockFailure.timing).toEqual({
+      authorityProcessingMs: 0,
+      projectionMs: 0,
+      persistenceMs: 0,
+    });
+  });
+
   it('does not install or acknowledge a mutation when persistence fails before commit', async () => {
     const current = createSnapshot();
     const dependencies = createDependencies({

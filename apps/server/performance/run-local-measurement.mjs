@@ -47,7 +47,7 @@ const jsonEnd = run.stdout.indexOf('\n', jsonStart);
 const runtimeReport = JSON.parse(
   run.stdout.slice(jsonStart, jsonEnd === -1 ? undefined : jsonEnd)
 );
-if (runtimeReport.schema !== 'ptcgsim-runtime-performance-v1') {
+if (runtimeReport.schema !== 'ptcgsim-runtime-performance-v2') {
   throw new Error('Runtime performance report has an unsupported schema');
 }
 

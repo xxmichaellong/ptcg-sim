@@ -94,10 +94,13 @@ const fixture = async () => {
     }),
   };
   const store = new MemoryAuthorityStore(initial);
+  let monotonicTick = 0;
+  const monotonicNow = () => monotonicTick++;
   const coordinator = new RoomAuthorityCoordinator(initial, store, {
     commandContext: crypto,
     opaqueIds: crypto,
     policy: DEFAULT_AUTHORITY_POLICY,
+    monotonicNow,
   });
   const rateLimits = {
     attempt: vi.fn(async () => ({ allowed: true, remaining: 1 }) as const),
@@ -113,7 +116,7 @@ const fixture = async () => {
     store,
     rateLimits,
     telemetry,
-    monotonicNow: () => 0,
+    monotonicNow,
     admission: {
       crypto,
       opaqueIds: crypto,
@@ -411,8 +414,29 @@ describe('serialized room session hub', () => {
         startRevision: 0,
         endRevision: 1,
         deliveryCount: 2,
+        phases: {
+          authorityProcessingMs: 3,
+          projectionMs: 1,
+          persistenceMs: 1,
+          publicationSerializationMs: 1,
+          socketSendMs: 1,
+        },
+        durationMs: 10,
       })
     );
+    expect(setup.hub.recentAcceptedCommandPerformance()).toEqual([
+      {
+        endRevision: 1,
+        totalMs: 10,
+        phases: {
+          authorityProcessingMs: 3,
+          projectionMs: 1,
+          persistenceMs: 1,
+          publicationSerializationMs: 1,
+          socketSendMs: 1,
+        },
+      },
+    ]);
 
     await setup.hub.handleFrame(client.value, frame);
     expect(setup.store.commandCommits).toHaveLength(1);
@@ -424,6 +448,7 @@ describe('serialized room session hub', () => {
         endRevision: 1,
       })
     );
+    expect(setup.hub.recentAcceptedCommandPerformance()).toHaveLength(1);
   });
 
   it('streams only the requesting session perspective from retained history', async () => {

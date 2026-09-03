@@ -310,8 +310,10 @@ recorded in
 [`SERVER_PERFORMANCE_BASELINE.md`](./SERVER_PERFORMANCE_BASELINE.md). Managed
 preview phase splits, reconnect timing, platform resource/cost distributions,
 and persistence optimization remain release gates. Command/admission audit rows
-now have transactional count/byte retention and a real-runtime storage plateau;
-the same run exposes an unacceptable high-history local command p95, so bounded
+now have transactional count/byte retention and a real-runtime storage plateau.
+Telemetry v2 separates authority processing, projection, persistence,
+publication serialization, and socket send; the named run shows authority and
+persistence dominate an unacceptable high-history local command p95, so bounded
 storage is not being mistaken for adequate performance.
 
 ## Load and soak gates

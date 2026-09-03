@@ -52,7 +52,7 @@ describe('structured server telemetry', () => {
     expect(sink.entries[0]).toMatchObject({
       level: 'warn',
       event: {
-        schema: 'ptcgsim-server-telemetry-v1',
+        schema: 'ptcgsim-server-telemetry-v2',
         timestampMs: 50_000,
         eventId: 'opaque-event-2',
         source: 'room',
@@ -88,6 +88,13 @@ describe('structured server telemetry', () => {
       requestBytes: Number.POSITIVE_INFINITY,
       publicationBytes: 2_000_000_000,
       deliveryCount: Number.NaN,
+      phases: {
+        authorityProcessingMs: 1.23456,
+        projectionMs: -1,
+        persistenceMs: Number.POSITIVE_INFINITY,
+        publicationSerializationMs: 2.34567,
+        socketSendMs: 3.45678,
+      },
       durationMs: -10,
     });
 
@@ -102,6 +109,13 @@ describe('structured server telemetry', () => {
         requestBytes: 0,
         publicationBytes: 1_000_000_000,
         deliveryCount: 0,
+        phases: {
+          authorityProcessingMs: 1.235,
+          projectionMs: 0,
+          persistenceMs: 0,
+          publicationSerializationMs: 2.346,
+          socketSendMs: 3.457,
+        },
         durationMs: 0,
       },
     });
