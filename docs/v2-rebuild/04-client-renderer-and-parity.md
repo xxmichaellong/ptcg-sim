@@ -249,12 +249,16 @@ the 90.5625×126 px pre-transform layout box used by attachment reflow and the
 opponent 270-degree effective rotation, wrapper overflow, z/DOM order, and
 common, Tool-only, base-only, and empty authored-layout hit regions. It also
 pins the same transient two-wrapper cleanup boundary as Energy. Production
-selection is intentionally deferred: shared scene hit and drop helpers still
-treat card bounds as unrotated axis-aligned rectangles, so sideways Tool input
-must become rotation-aware before a strict renderer path can safely claim
-parity. Multiple/mixed attachments, category history, removal/stale margins,
-BREAK or other rotations, bench/layout variants, and input/Pixi behavior remain
-outside this source checkpoint.
+selection is still intentionally deferred, but its shared-input prerequisite is
+now resolved: card bounds remain the pre-transform layout box and shared hit and
+drop containment inverse-rotates points around its center. Unit coverage pins
+all four quarter turns and a real-browser fixture proves painted-only versus
+authored-layout-only click/drop behavior in both candidates; Pixi now relies on
+its native inverse-transformed sprite hit testing instead of scaling a CSS-pixel
+hit rectangle twice. The strict Tool production geometry gate, Tool-specific
+candidate comparison, multiple/mixed attachments, category history,
+removal/stale margins, BREAK or compound rotations, and bench/layout variants
+remain outside this source checkpoint.
 
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during

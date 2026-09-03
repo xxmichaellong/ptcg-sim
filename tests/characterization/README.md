@@ -55,9 +55,9 @@ It records the shared non-Pokémon `clientWidth / 6` offset plus the
 Trainer-specific 90-degree turn and `2%` right wrapper margin, preserving both
 the authored pre-transform layout box and the transformed painted box. The
 stable oracle also covers rotated paint overflow, z/DOM/hit order, attachment
-state, and observer-settled wrapper cleanup. Production parity is deferred
-because shared scene hit/drop helpers are not yet rotation-aware. Energy and
-mixed/multiple attachments, category history, departure and stale margins,
-evolution, bench/flex competition, markers, BREAK/base rotation, alternate
-layouts, input behavior, candidate renderers, Pixi, and network behavior remain
-excluded.
+state, and observer-settled wrapper cleanup. Shared center-rotated hit/drop
+containment is now independently verified in both candidates, but strict Tool
+production geometry and source-to-candidate Tool parity remain deferred. Energy
+and mixed/multiple attachments, category history, departure and stale margins,
+evolution, bench/flex competition, markers, BREAK/compound rotation, alternate
+layouts, and Tool-specific input/Pixi parity remain excluded.

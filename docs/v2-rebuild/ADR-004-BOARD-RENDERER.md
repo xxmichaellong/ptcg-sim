@@ -76,7 +76,10 @@ Both candidates mount the same immutable 61-card fixture, preserve semantic
 click and pointer-captured drag/drop behavior, and survive repeated candidate
 switching in real Chromium. Pixi additionally reconstructs after a real
 `WEBGL_lose_context` event. Native browser coverage characterizes mouse, touch,
-secondary-button filtering, and the exact rapid-click preview boundary.
+secondary-button filtering, and the exact rapid-click preview boundary. A
+center-rotated fixture also proves that native selection and shared drag/drop
+follow the painted footprint in both candidates; this exposed and removed a
+Pixi explicit-hit-area coordinate mismatch.
 
 The controlled automation also installs the same 120-card, 17-zone, 4-marker
 scene into each candidate after five paired warmups, records 25 paired

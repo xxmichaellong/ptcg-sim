@@ -507,12 +507,9 @@ export class PixiBoardRenderer implements BoardRenderer {
     sprite.height = descriptor.bounds.height;
     sprite.rotation = descriptor.rotationQuarterTurns * (Math.PI / 2);
     sprite.zIndex = dragging ? 10_000 : descriptor.zIndex;
-    sprite.hitArea = new Rectangle(
-      -descriptor.bounds.width / 2,
-      -descriptor.bounds.height / 2,
-      descriptor.bounds.width,
-      descriptor.bounds.height
-    );
+    // Sprite hit testing already inverse-transforms through scale and rotation.
+    // A CSS-pixel Rectangle here would be scaled a second time and shrink input.
+    sprite.hitArea = null;
     sprite.eventMode = descriptor.interactive ? 'static' : 'none';
     sprite.cursor = descriptor.interactive
       ? dragging

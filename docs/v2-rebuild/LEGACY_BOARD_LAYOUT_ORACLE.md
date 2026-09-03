@@ -385,15 +385,16 @@ authored Tool layout rectangle containing no painted card. Stable geometry is
 accepted only after the synchronous two-wrapper refresh state settles to one
 wrapper through the legacy MutationObserver.
 
-This is deliberately not a production geometry claim. `CardSceneNode.bounds`
-is currently both a pre-transform paint box and an axis-aligned input box, while
-the shared hit/drop helpers do not account for rotation. A later production
-slice must make shared interaction rotation-aware (or introduce an explicit
-separate hit shape) before rendering a sideways Tool through the narrow parity
-gate. Energy/mixed ordering, multiple attachments, departures and stale
-margins, category history, evolution, bench/flex variants, markers, BREAK/base
-rotation, alternate layouts, input behavior itself, and Pixi parity remain
-excluded.
+This is deliberately not yet a production Tool geometry claim.
+`CardSceneNode.bounds` is the pre-transform layout/paint box; shared hit and
+drop containment now inverse-rotates points around its center for all four
+quarter turns. A synthetic real-browser fixture verifies painted-only and
+authored-layout-only click/drop regions in both candidates and removes Pixi's
+incorrect CSS-pixel explicit sprite hit area. The narrow Tool production gate
+and source-to-candidate Tool comparison remain next. Energy/mixed ordering,
+multiple attachments, departures and stale margins, category history,
+evolution, bench/flex variants, markers, BREAK/compound rotation, alternate
+layouts, and Tool-specific input/Pixi parity remain excluded.
 
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
@@ -402,8 +403,9 @@ oracle fixtures, including asymmetric resize, flipped ownership, midpoint
 shared placement, compact and fullscreen states. The controlled hand/bench/
 attachment-stack fixture remains source-only; the narrower contained-card,
 ordinary-evolution, and single-Energy fixtures feed and compare their strict
-production geometries; Trainer-as-Tool remains source-only until rotated input
-geometry is resolved. Raw normalized/authored inputs, box edges, affordances,
+production geometries; Trainer-as-Tool remains source-only until its narrow
+production geometry and candidate comparison are implemented. Raw
+normalized/authored inputs, box edges, affordances,
 and semantic z evidence remain in the richer characterization snapshot rather
 than being duplicated in
 `BoardScene`. Real-browser measurements for additional layout states,

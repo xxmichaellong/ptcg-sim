@@ -1340,6 +1340,28 @@ describe('renderer-neutral board scene', () => {
     ).toEqual({ kind: 'card', id: knownCardId });
   });
 
+  it('hit-tests a quarter-turned card by its painted footprint', () => {
+    const base = createBoardSceneForViewport(createView(), options);
+    const known = base.cards.find((card) => card.id === knownCardId)!;
+    const scene = {
+      ...base,
+      zones: [],
+      cards: [
+        {
+          ...known,
+          bounds: { x: 100, y: 200, width: 60, height: 100 },
+          rotationQuarterTurns: 1 as const,
+        },
+      ],
+    };
+
+    expect(hitTestBoardScene(scene, 81, 250)).toEqual({
+      kind: 'card',
+      id: knownCardId,
+    });
+    expect(hitTestBoardScene(scene, 130, 219)).toBeNull();
+  });
+
   it('fails closed for invalid viewports and unsafe split ratios', () => {
     expect(() =>
       createBoardSceneForViewport(createView(), {

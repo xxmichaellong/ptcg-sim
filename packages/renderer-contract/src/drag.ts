@@ -1,6 +1,6 @@
 import type { ViewCardId } from '@ptcgsim/game-core';
 
-import { containsPoint } from './geometry.js';
+import { containsPoint, containsPointInRotatedRect } from './geometry.js';
 import type {
   BoardRendererAdapters,
   BoardScene,
@@ -47,7 +47,12 @@ export const resolveBoardDropTarget = (
       (candidate) =>
         candidate.id !== sourceCardId &&
         candidate.interactive &&
-        containsPoint(candidate.bounds, x, y)
+        containsPointInRotatedRect(
+          candidate.bounds,
+          candidate.rotationQuarterTurns,
+          x,
+          y
+        )
     );
   if (card) return card.parentId;
   const zone = [...scene.zones]

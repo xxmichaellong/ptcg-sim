@@ -9,6 +9,7 @@ import {
   CARD_ASPECT_RATIO,
   assertLayoutOptions,
   containsPoint,
+  containsPointInRotatedRect,
   insetRect,
 } from './geometry.js';
 import {
@@ -948,7 +949,9 @@ export const hitTestBoardScene = (
     (left, right) => right.zIndex - left.zIndex
   );
   const card = cards.find(
-    (node) => node.interactive && containsPoint(node.bounds, x, y)
+    (node) =>
+      node.interactive &&
+      containsPointInRotatedRect(node.bounds, node.rotationQuarterTurns, x, y)
   );
   if (card) return { kind: 'card', id: card.id };
   const zones = [...scene.zones].sort(

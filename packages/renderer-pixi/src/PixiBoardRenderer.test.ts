@@ -164,6 +164,7 @@ describe('Pixi board interaction cancellation', () => {
     const internals = renderer as unknown as RendererInternals;
     const card = currentScene.cards[0]!;
     const cardView = internals.cardViews.get(String(card.id))!;
+    expect(cardView.sprite.hitArea).toBeNull();
     cardView.sprite.emit('pointertap', { button: 0, detail: 1 });
     cardView.sprite.emit('pointertap', { button: 0, detail: 2 });
     cardView.sprite.emit('pointertap', { button: 0, detail: 3 });

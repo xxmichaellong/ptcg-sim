@@ -1,4 +1,4 @@
-import type { PlayerId } from '@ptcgsim/game-core';
+import type { PlayerId, QuarterTurns } from '@ptcgsim/game-core';
 import type {
   BoardLayoutOptions,
   BoardSide,
@@ -127,3 +127,43 @@ export const containsPoint = (rect: Rect, x: number, y: number): boolean =>
   x <= rect.x + rect.width &&
   y >= rect.y &&
   y <= rect.y + rect.height;
+
+/**
+ * Tests the same center-origin quarter-turn rectangle painted by the DOM and
+ * Pixi renderers. Scene bounds remain the untransformed layout box; the point
+ * is inverse-rotated into that box so paint and shared input stay aligned.
+ */
+export const containsPointInRotatedRect = (
+  rect: Rect,
+  rotationQuarterTurns: QuarterTurns,
+  x: number,
+  y: number
+): boolean => {
+  const centerX = rect.x + rect.width / 2;
+  const centerY = rect.y + rect.height / 2;
+  const deltaX = x - centerX;
+  const deltaY = y - centerY;
+  let layoutDeltaX: number;
+  let layoutDeltaY: number;
+  switch (rotationQuarterTurns) {
+    case 0:
+      layoutDeltaX = deltaX;
+      layoutDeltaY = deltaY;
+      break;
+    case 1:
+      layoutDeltaX = deltaY;
+      layoutDeltaY = -deltaX;
+      break;
+    case 2:
+      layoutDeltaX = -deltaX;
+      layoutDeltaY = -deltaY;
+      break;
+    case 3:
+      layoutDeltaX = -deltaY;
+      layoutDeltaY = deltaX;
+      break;
+    default:
+      return false;
+  }
+  return containsPoint(rect, centerX + layoutDeltaX, centerY + layoutDeltaY);
+};

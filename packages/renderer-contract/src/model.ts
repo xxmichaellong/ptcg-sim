@@ -86,8 +86,10 @@ export interface CardSceneNode {
   readonly parentId: string;
   readonly side: BoardSide | 'shared';
   readonly role: CardSceneRole;
+  /** Untransformed physical layout box; renderers rotate it around its center. */
   readonly bounds: Rect;
   readonly zIndex: number;
+  /** Effective physical rotation, including any opponent-frame half-turn. */
   readonly rotationQuarterTurns: QuarterTurns;
   readonly imageUrl: string;
   readonly concealed: boolean;

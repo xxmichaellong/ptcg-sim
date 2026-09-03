@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 672 v2 tests across 103 files. A separate suite
-passes 13 Playwright checks across seven Chromium 151 browser files:
+The repository-wide gate passes 680 v2 tests across 104 files. A separate suite
+passes 14 Playwright checks across seven Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -309,12 +309,19 @@ passes 13 Playwright checks across seven Chromium 151 browser files:
 4. Native rapid clicks produce the same selection/preview boundary in DOM and
    Pixi, Pixi ignores secondary zone activation, and a touch-enabled browser
    context selects a card through the actual Pixi event boundary.
-5. Both candidates install an identical synthetic 120-card/17-zone/4-marker
+5. A synthetic quarter-turned card fixture verifies in both candidates that
+   native selection and shared drag/drop use the painted center-rotated
+   footprint: painted-only points select/target the card while points found
+   only in its pre-transform layout box fall through to the underlying zone.
+   Shared containment covers all four quarter turns; Pixi uses native
+   inverse-transformed sprite containment and no longer double-scales a
+   CSS-pixel explicit hit area.
+6. Both candidates install an identical synthetic 120-card/17-zone/4-marker
    scene, settle asset diagnostics, record paired single/full reconciliation
    evidence, and schedule zero additional commits across five idle frames. The
    JSON attachment records environment and p50/p95 observations; it is
    diagnostic rather than a portable physical-device release result.
-6. The checked-in v1 HTML/CSS is served through a deny-by-default, inert-module
+7. The checked-in v1 HTML/CSS is served through a deny-by-default, inert-module
    browser harness. Its default 1600×900 shell, frames, handles, shared anchors,
    opponent rotation, and all 16 region border boxes match the independently
    pinned oracle. The React DOM candidate's 16 visible region border boxes and
@@ -322,7 +329,7 @@ passes 13 Playwright checks across seven Chromium 151 browser files:
    rotation, and non-painting frame/handle/control projection anchors match the
    pinned layout within the 2 CSS px gate. The sidebar content rectangle is
    derived from measured shell/tab edges, not a corresponding content element.
-7. A second source-only fixture pins all relevant text and binary digests, then
+8. A second source-only fixture pins all relevant text and binary digests, then
    measures portrait and nonstandard square cards in both hands and benches
    plus controlled five-card active stacks in both frames. It verifies
    intrinsic-aspect sizing under authored constraints, measured frame rotation,
@@ -330,7 +337,7 @@ passes 13 Playwright checks across seven Chromium 151 browser files:
    expanded-container centering, negative z order,
    `base.after()` DOM reversal, and browser overlap hit order. This does not yet
    claim candidate-renderer card parity or ordinary `evolveCard` reflow parity.
-8. A separate digest-pinned contained-card fixture measures six player cover
+9. A separate digest-pinned contained-card fixture measures six player cover
    images and both owner-readable stadium states from the inert legacy source.
    The live DOM candidate matches both players' deck/discard/lost-zone cards and
    the bottom-owner stadium within 2 px / 1% / 0.1 degrees, exposes only deck
@@ -340,24 +347,24 @@ passes 13 Playwright checks across seven Chromium 151 browser files:
    unit-tested but not browser-compared; cover-open UX, opened zones, undersized
    assets, retained covered nodes, Pixi geometry, and quarter-turn hit regions
    are not claimed.
-9. A fourth digest-pinned fixture isolates ordinary second
-   evolution across local/opponent active and bench slots. It records the
-   transient `evolveCard` result, the synchronous ghost wrapper created by
-   `refreshBoard`, and the stable two-animation-frame result after observer
-   cleanup. It pins top/middle/base logical and hit order, top/base/middle DOM
-   order, integer `clientWidth / 15` offsets despite fractional painted widths,
-   negative lower-layer z order, transient margins, and opponent-direction
-   reversal. A narrowly gated renderer-contract helper now handles only the
-   measured three-card, face-up, marker-free, unrotated, attachment-free,
-   single-stack state at the captured default 1600×900 DPR-1 sidebar layout,
-   even split, and unflipped bottom identity. Chromium directly matches all 12
-   React DOM boxes, rotations, and common/exposed-strip hit order to the source
-   within 2 px / 1% / 0.1 degrees. Attachments, markers, BREAK/rotation,
-   multi-stack flex shrink/overflow, history-dependent restoration, alternate
-   layout states, and input behavior are not claimed and retain the prior scene
-   path. Pixi consumes the qualifying renderer-neutral geometry, but its paint
-   and hit parity remain unverified.
-10. A fifth, source-only digest-pinned fixture isolates one face-up Energy on
+10. A fourth digest-pinned fixture isolates ordinary second
+    evolution across local/opponent active and bench slots. It records the
+    transient `evolveCard` result, the synchronous ghost wrapper created by
+    `refreshBoard`, and the stable two-animation-frame result after observer
+    cleanup. It pins top/middle/base logical and hit order, top/base/middle DOM
+    order, integer `clientWidth / 15` offsets despite fractional painted widths,
+    negative lower-layer z order, transient margins, and opponent-direction
+    reversal. A narrowly gated renderer-contract helper now handles only the
+    measured three-card, face-up, marker-free, unrotated, attachment-free,
+    single-stack state at the captured default 1600×900 DPR-1 sidebar layout,
+    even split, and unflipped bottom identity. Chromium directly matches all 12
+    React DOM boxes, rotations, and common/exposed-strip hit order to the source
+    within 2 px / 1% / 0.1 degrees. Attachments, markers, BREAK/rotation,
+    multi-stack flex shrink/overflow, history-dependent restoration, alternate
+    layout states, and input behavior are not claimed and retain the prior scene
+    path. Pixi consumes the qualifying renderer-neutral geometry, but its paint
+    and hit parity remain unverified.
+11. A fifth, source-only digest-pinned fixture isolates one face-up Energy on
     one unrotated active Pokémon in both physical frames. It separates the
     immediate attach diagnostic from stable post-refresh reconstruction and
     pins `[base, energy]` logical/DOM order, target/relative/energy-layer state,
@@ -371,18 +378,18 @@ passes 13 Playwright checks across seven Chromium 151 browser files:
     evolution combinations, bench/overflow, rotation, markers, alternate
     layouts, candidate wrapper/DOM-order identity, Pixi paint/hit behavior, and
     input are not claimed and retain the prior scene path.
-11. A sixth source-only, digest-pinned card fixture isolates one current-category
+12. A sixth source-only, digest-pinned card fixture isolates one current-category
     Trainer attached as a Tool to one active Pokémon in each legacy frame. It
     pins the shared integer non-Pokémon offset/width path plus Tool-specific
     90-degree rotation and `2%` wrapper margin, and distinguishes each
     pre-transform layout box from its swapped painted bounding box. The oracle
     covers opponent-effective 270-degree rotation, rotated wrapper overflow,
     common/Tool-only/base-only/empty-layout hit regions, attachment state and z
-    order, and transient-to-stable wrapper cleanup. Production DOM/Pixi parity
-    is deferred because shared scene hit/drop tests are not yet rotation-aware;
-    multiple/mixed attachments, category history, removal, BREAK/base rotation,
-    alternate layouts, and input remain excluded.
-12. The selected DOM implementation completes 100 mount → clear/reset → destroy
+    order, and transient-to-stable wrapper cleanup. Shared rotation-aware input
+    is now independently verified, but production DOM/Pixi Tool geometry parity
+    remains deferred; multiple/mixed attachments, category history, removal,
+    BREAK/compound rotation, and alternate layouts remain excluded.
+13. The selected DOM implementation completes 100 mount → clear/reset → destroy
     cycles on one warmed route-owned host with the exact status sequence,
     complete scene IDs at mount, zero rendered scene children/IDs after clear and
     destroy, zero non-DOM diagnostic resources, and post-GC Chromium

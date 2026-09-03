@@ -191,6 +191,25 @@ describe('renderer-neutral drag controller', () => {
     expect(resolveBoardDropTarget(scene(), sourceId, 799, 599)).toBeNull();
   });
 
+  it('targets the painted footprint of a quarter-turned card', () => {
+    const base = scene();
+    const rotated: BoardScene = {
+      ...base,
+      cards: base.cards.map((card) =>
+        card.id === targetCardId
+          ? { ...card, rotationQuarterTurns: 1 as const }
+          : card
+      ),
+    };
+
+    expect(resolveBoardDropTarget(rotated, sourceId, 490, 196)).toBe(
+      'target-stack'
+    );
+    expect(resolveBoardDropTarget(rotated, sourceId, 540, 145)).toBe(
+      'target-zone'
+    );
+  });
+
   it('cancels active and suppressed-click state without emitting updates', () => {
     const emitPresentationUpdate = vi.fn();
     const controller = new BoardDragController({

@@ -536,6 +536,200 @@ test('native pointer boundaries preserve rapid-click, primary-button, and touch 
   }
 });
 
+test('native and shared input follow center-rotated card paint in both candidates', async ({
+  page,
+}) => {
+  const errors = collectRuntimeErrors(page);
+  for (const rendererKind of ['dom', 'pixi'] as const) {
+    await page.goto(`/?renderer=${rendererKind}`);
+    await waitForReady(page);
+    await page.evaluate(async () => {
+      const spike = window.__PTCG_RENDERER_SPIKE__;
+      if (!spike?.createRenderer) {
+        throw new Error('Missing renderer factory for rotation fixture');
+      }
+      const [sourceTemplate, targetTemplate] = spike.scene.cards.filter(
+        (card) => card.interactive
+      );
+      const zoneTemplate = spike.scene.zones.find((zone) => zone.interactive);
+      if (!sourceTemplate || !targetTemplate || !zoneTemplate) {
+        throw new Error('Missing rotation fixture templates');
+      }
+      const host = document.createElement('div');
+      host.dataset.rotationFixtureHost = 'true';
+      host.dataset.intents = '[]';
+      host.dataset.updates = '[]';
+      Object.assign(host.style, {
+        position: 'fixed',
+        left: '0px',
+        top: '0px',
+        width: `${spike.scene.viewport.width}px`,
+        height: `${spike.scene.viewport.height}px`,
+        zIndex: '20000',
+      });
+      document.body.append(host);
+      const append = (key: 'intents' | 'updates', value: unknown) => {
+        const values = JSON.parse(host.dataset[key] ?? '[]') as unknown[];
+        values.push(value);
+        host.dataset[key] = JSON.stringify(values);
+      };
+      const renderer = spike.createRenderer({
+        emitIntent: (intent) => append('intents', intent),
+        emitPresentationUpdate: (update) => append('updates', update),
+        reportError: (error) => {
+          host.dataset.rendererError = String(error);
+        },
+      });
+      await renderer.mount(
+        host,
+        {
+          ...spike.scene,
+          revision: spike.scene.revision + 100,
+          zones: [
+            {
+              ...zoneTemplate,
+              id: 'rotation-target-zone',
+              bounds: { x: 100, y: 50, width: 220, height: 200 },
+              contentBounds: { x: 100, y: 50, width: 220, height: 200 },
+              surface: 'playSlot',
+              count: 1,
+              zIndex: 100,
+            },
+          ],
+          cards: [
+            {
+              ...sourceTemplate,
+              id: 'rotation-source' as typeof sourceTemplate.id,
+              parentId: 'rotation-source-zone',
+              bounds: { x: 20, y: 100, width: 60, height: 100 },
+              zIndex: 200,
+              rotationQuarterTurns: 0,
+            },
+            {
+              ...targetTemplate,
+              id: 'rotation-target' as typeof targetTemplate.id,
+              parentId: 'rotation-target-stack',
+              bounds: { x: 200, y: 100, width: 60, height: 100 },
+              zIndex: 300,
+              rotationQuarterTurns: 3,
+            },
+          ],
+          markers: [],
+        },
+        {
+          selectedCardId: null,
+          hoveredCardId: null,
+          drag: null,
+          openedZoneId: null,
+        }
+      );
+      (
+        window as typeof window & {
+          __PTCG_ROTATION_FIXTURE_RENDERER__?: { destroy(): void };
+        }
+      ).__PTCG_ROTATION_FIXTURE_RENDERER__ = renderer;
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      );
+    });
+
+    const host = page.locator('[data-rotation-fixture-host]');
+    await expect(host).not.toHaveAttribute('data-renderer-error', /.+/u);
+    if (rendererKind === 'dom') {
+      await expect(
+        host.locator('[data-card-id="rotation-target"]')
+      ).toBeVisible();
+    } else {
+      await expect(host.locator('canvas')).toHaveAttribute(
+        'data-card-views',
+        '2'
+      );
+    }
+
+    await page.mouse.click(185, 150);
+    await expect
+      .poll(async () => JSON.parse((await host.getAttribute('data-intents'))!))
+      .toContainEqual({ kind: 'CardSelected', cardId: 'rotation-target' });
+
+    await host.evaluate((element) => {
+      if (!(element instanceof HTMLElement)) return;
+      element.dataset.intents = '[]';
+      element.dataset.updates = '[]';
+    });
+    await page.mouse.click(230, 105);
+    await page.waitForTimeout(50);
+    expect(JSON.parse((await host.getAttribute('data-intents'))!)).toEqual([]);
+
+    await page.mouse.move(50, 150);
+    await page.mouse.down();
+    await page.mouse.move(185, 150, { steps: 4 });
+    await page.mouse.up();
+    expect(JSON.parse((await host.getAttribute('data-updates'))!)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'DragChanged',
+          drag: expect.objectContaining({
+            cardId: 'rotation-source',
+            targetId: 'rotation-target-stack',
+          }),
+        }),
+      ])
+    );
+    expect(
+      JSON.parse((await host.getAttribute('data-intents'))!)
+    ).toContainEqual({
+      kind: 'CardDropRequested',
+      cardId: 'rotation-source',
+      targetId: 'rotation-target-stack',
+    });
+
+    await host.evaluate((element) => {
+      if (!(element instanceof HTMLElement)) return;
+      element.dataset.intents = '[]';
+      element.dataset.updates = '[]';
+    });
+    await page.mouse.move(50, 150);
+    await page.mouse.down();
+    await page.mouse.move(230, 105, { steps: 4 });
+    await page.mouse.up();
+    expect(JSON.parse((await host.getAttribute('data-updates'))!)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'DragChanged',
+          drag: expect.objectContaining({
+            cardId: 'rotation-source',
+            targetId: 'rotation-target-zone',
+          }),
+        }),
+      ])
+    );
+    expect(
+      JSON.parse((await host.getAttribute('data-intents'))!)
+    ).toContainEqual({
+      kind: 'CardDropRequested',
+      cardId: 'rotation-source',
+      targetId: 'rotation-target-zone',
+    });
+
+    const teardownError = await page.evaluate(async () => {
+      const fixtureWindow = window as typeof window & {
+        __PTCG_ROTATION_FIXTURE_RENDERER__?: { destroy(): void };
+      };
+      const fixtureHost = document.querySelector<HTMLElement>(
+        '[data-rotation-fixture-host]'
+      );
+      fixtureWindow.__PTCG_ROTATION_FIXTURE_RENDERER__?.destroy();
+      delete fixtureWindow.__PTCG_ROTATION_FIXTURE_RENDERER__;
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      const error = fixtureHost?.dataset.rendererError ?? null;
+      fixtureHost?.remove();
+      return error;
+    });
+    expect(teardownError).toBeNull();
+  }
+  expect(errors).toEqual([]);
+});
+
 test('records controlled 120-card reconciliation and idle evidence for both candidates', async ({
   page,
 }, testInfo) => {
