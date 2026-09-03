@@ -4,11 +4,13 @@ import {
   BoardDragController,
   DEFAULT_BOARD_PREFERENCES,
   DEFAULT_BOARD_PRESENTATION,
+  assertViewport,
   type BoardPreferences,
   type BoardPresentation,
   type BoardPresentationEvent,
   type BoardRenderer,
   type BoardRendererAdapters,
+  type BoardRendererDiagnostics,
   type BoardScene,
   type BoardSceneInstallMode,
   type BoardViewport,
@@ -25,9 +27,24 @@ import {
   Text,
   Texture,
 } from 'pixi.js';
-import { CardTextureRegistry } from './CardTextureRegistry.js';
+import {
+  CardTextureRegistry,
+  TextureAssetLeaseBroker,
+  type TextureAssetAdapter,
+} from './CardTextureRegistry.js';
 
 const MAX_CONTEXT_RECOVERY_ATTEMPTS = 3;
+
+const PIXI_TEXTURE_ASSETS: TextureAssetAdapter<Texture> = {
+  placeholder: Texture.WHITE,
+  load: (url) => Assets.load<Texture>(url),
+  unload: async (url) => {
+    await Assets.unload(url);
+  },
+};
+
+/** Pixi Assets is global, so active URL leases must also span renderers. */
+const PIXI_TEXTURE_LEASES = new TextureAssetLeaseBroker(PIXI_TEXTURE_ASSETS);
 
 interface CardView {
   readonly sprite: Sprite;
@@ -49,13 +66,7 @@ export class PixiBoardRenderer implements BoardRenderer {
   private readonly adapters: BoardRendererAdapters;
   private readonly createApplication: () => Application;
   private readonly dragController: BoardDragController;
-  private readonly textures = new CardTextureRegistry<Texture>({
-    placeholder: Texture.WHITE,
-    load: (url) => Assets.load<Texture>(url),
-    unload: async (url) => {
-      await Assets.unload(url);
-    },
-  });
+  private readonly textures: CardTextureRegistry<Texture>;
   private readonly cardViews = new Map<string, CardView>();
   private app: Application | null = null;
   private layers: SceneLayers | null = null;
@@ -70,6 +81,8 @@ export class PixiBoardRenderer implements BoardRenderer {
   private recoveryPendingForScene = false;
   private recoveryAttempts = 0;
   private contextLostCanvas: HTMLCanvasElement | null = null;
+  private renderCommits = 0;
+  private renderScheduled = false;
 
   constructor(
     adapters: BoardRendererAdapters,
@@ -77,6 +90,10 @@ export class PixiBoardRenderer implements BoardRenderer {
   ) {
     this.adapters = adapters;
     this.dragController = new BoardDragController(adapters);
+    this.textures = new CardTextureRegistry(
+      PIXI_TEXTURE_LEASES,
+      adapters.reportError
+    );
     this.createApplication =
       options.createApplication ?? (() => new Application());
   }
@@ -89,6 +106,7 @@ export class PixiBoardRenderer implements BoardRenderer {
     if (this.destroyed) throw new Error('Cannot mount a destroyed renderer');
     if (this.mounted || this.app)
       throw new Error('Board renderer is already mounted');
+    assertViewport(scene.viewport);
     this.mounted = true;
     this.host = host;
     this.scene = scene;
@@ -102,6 +120,8 @@ export class PixiBoardRenderer implements BoardRenderer {
       this.adapters.reportStatus?.({ kind: 'ready', generation });
     } catch (error) {
       if (!this.destroyed) {
+        this.mounted = false;
+        this.destroyApplication();
         this.adapters.reportStatus?.({ kind: 'failed', error });
         this.adapters.reportError(error);
       }
@@ -115,6 +135,7 @@ export class PixiBoardRenderer implements BoardRenderer {
     mode: BoardSceneInstallMode = 'advance'
   ): void {
     this.requireMounted();
+    assertViewport(scene.viewport);
     const current = this.scene;
     if (mode !== 'replace' && current && scene.revision < current.revision) {
       throw new Error('Cannot install an older board scene revision');
@@ -172,6 +193,7 @@ export class PixiBoardRenderer implements BoardRenderer {
 
   resize(viewport: BoardViewport): void {
     this.requireMounted();
+    assertViewport(viewport);
     if (!this.app) return;
     this.app.renderer.resolution = viewport.devicePixelRatio;
     this.app.renderer.resize(viewport.width, viewport.height);
@@ -193,6 +215,41 @@ export class PixiBoardRenderer implements BoardRenderer {
       this.app.canvas.dataset.darkMode = String(preferences.darkMode);
       this.renderOnce();
     }
+  }
+
+  getDiagnostics(): BoardRendererDiagnostics {
+    const textureDiagnostics = this.textures.getDiagnostics();
+    const layers = this.layers;
+    return {
+      rendererKind: 'pixi',
+      mounted: !this.destroyed && this.mounted && this.app !== null,
+      destroyed: this.destroyed,
+      generation: this.generation,
+      sceneRevision: this.scene?.revision ?? null,
+      renderCommits: this.renderCommits,
+      renderedCardIds: Array.from(
+        this.cardViews.values(),
+        (view) => view.descriptor.id
+      ).sort(),
+      renderedZoneIds:
+        layers?.playmat.children
+          .map((child) => child.label)
+          .filter((id): id is string => Boolean(id)) ?? [],
+      renderedMarkerIds:
+        layers?.markers.children
+          .map((child) => child.label)
+          .filter((id): id is string => Boolean(id)) ?? [],
+      domNodes: this.host?.querySelectorAll('*').length ?? 0,
+      displayObjects: this.app ? this.countDisplayObjects(this.app.stage) : 0,
+      localTextureBindings: textureDiagnostics.bindings,
+      globalTextureLeaseEntries: textureDiagnostics.entries,
+      globalPendingTextureLoads: textureDiagnostics.pendingEntries,
+      globalUnloadingTextures: textureDiagnostics.unloadingEntries,
+      globalTextureReferences: textureDiagnostics.references,
+      globalTextureLoadFailures: textureDiagnostics.loadFailures,
+      globalTextureUnloadFailures: textureDiagnostics.unloadFailures,
+      contextLossListeners: this.contextLostCanvas ? 1 : 0,
+    };
   }
 
   destroy(): void {
@@ -301,9 +358,14 @@ export class PixiBoardRenderer implements BoardRenderer {
       graphic.cursor = zone.interactive ? 'pointer' : 'default';
       graphic.accessible = zone.interactive;
       graphic.accessibleTitle = `${zone.label}, ${zone.count} cards`;
-      graphic.on('pointertap', () =>
-        this.adapters.emitIntent({ kind: 'ZoneOpened', zoneId: zone.id })
-      );
+      graphic.on('pointertap', (event: FederatedPointerEvent) => {
+        if (
+          this.isPrimaryActivation(event) &&
+          this.completesDoubleActivation(event)
+        ) {
+          this.adapters.emitIntent({ kind: 'ZoneOpened', zoneId: zone.id });
+        }
+      });
       layers.playmat.addChild(graphic);
     }
 
@@ -327,18 +389,18 @@ export class PixiBoardRenderer implements BoardRenderer {
         sprite.eventMode = 'static';
         sprite.cursor = 'grab';
         sprite.accessible = true;
-        sprite.on('click', (event: FederatedPointerEvent) => {
+        sprite.on('pointertap', (event: FederatedPointerEvent) => {
+          if (!this.isPrimaryActivation(event)) return;
           if (this.dragController.consumeSuppressedClick(view!.descriptor.id)) {
             return;
           }
-          if (event.detail >= 2) {
+          this.adapters.emitIntent({
+            kind: 'CardSelected',
+            cardId: view!.descriptor.id,
+          });
+          if (this.completesDoubleActivation(event)) {
             this.adapters.emitIntent({
               kind: 'CardPreviewRequested',
-              cardId: view!.descriptor.id,
-            });
-          } else {
-            this.adapters.emitIntent({
-              kind: 'CardSelected',
               cardId: view!.descriptor.id,
             });
           }
@@ -380,7 +442,7 @@ export class PixiBoardRenderer implements BoardRenderer {
           if (!current || current.descriptor.imageUrl !== expectedUrl) return;
           current.sprite.texture = texture;
           current.sprite.tint = 0xffffff;
-          this.renderOnce();
+          this.scheduleRender();
         },
         (error) => {
           const current = this.cardViews.get(id);
@@ -388,7 +450,7 @@ export class PixiBoardRenderer implements BoardRenderer {
           current.sprite.texture = this.textures.placeholder;
           current.sprite.tint = 0x777777;
           this.adapters.reportError(error);
-          this.renderOnce();
+          this.scheduleRender();
         }
       );
     }
@@ -468,9 +530,27 @@ export class PixiBoardRenderer implements BoardRenderer {
     if (this.destroyed || !this.app) return;
     try {
       this.app.render();
+      this.renderCommits += 1;
     } catch (error) {
       this.adapters.reportError(error);
     }
+  }
+
+  private scheduleRender(): void {
+    if (this.destroyed || this.renderScheduled) return;
+    this.renderScheduled = true;
+    queueMicrotask(() => {
+      this.renderScheduled = false;
+      this.renderOnce();
+    });
+  }
+
+  private isPrimaryActivation(event: FederatedPointerEvent): boolean {
+    return typeof event.button !== 'number' || event.button === 0;
+  }
+
+  private completesDoubleActivation(event: FederatedPointerEvent): boolean {
+    return event.detail === 2;
   }
 
   private pointerInput(event: FederatedPointerEvent) {
@@ -582,6 +662,7 @@ export class PixiBoardRenderer implements BoardRenderer {
         if (this.destroyed) return;
         this.adapters.reportError(error);
         if (attempt === MAX_CONTEXT_RECOVERY_ATTEMPTS) {
+          this.mounted = false;
           this.adapters.reportStatus?.({ kind: 'failed', error });
           return;
         }
@@ -656,6 +737,14 @@ export class PixiBoardRenderer implements BoardRenderer {
       delete this.app.canvas.dataset.dragging;
       delete this.app.canvas.dataset.dragTarget;
     }
+  }
+
+  private countDisplayObjects(root: Container): number {
+    let count = 1;
+    for (const child of root.children) {
+      count += child instanceof Container ? this.countDisplayObjects(child) : 1;
+    }
+    return count;
   }
 
   private assertLiveGeneration(generation: number): void {

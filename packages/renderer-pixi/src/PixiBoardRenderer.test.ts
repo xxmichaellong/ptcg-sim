@@ -117,6 +117,135 @@ const startDrag = (
 describe('Pixi board interaction cancellation', () => {
   afterEach(() => vi.restoreAllMocks());
 
+  it('rejects an invalid initial scene before allocating a Pixi application', async () => {
+    const application = fakeApplication();
+    const renderer = new PixiBoardRenderer(
+      {
+        emitIntent: vi.fn(),
+        emitPresentationUpdate: vi.fn(),
+        reportError: vi.fn(),
+      },
+      { createApplication: () => application }
+    );
+    const invalidScene = {
+      ...scene(),
+      viewport: { width: 0, height: 600, devicePixelRatio: 1 },
+    };
+
+    await expect(
+      renderer.mount(
+        document.createElement('div'),
+        invalidScene,
+        DEFAULT_BOARD_PRESENTATION
+      )
+    ).rejects.toThrow('dimensions and DPR must be positive');
+    expect(application.init).not.toHaveBeenCalled();
+    expect(renderer.getDiagnostics()).toMatchObject({ mounted: false });
+    renderer.destroy();
+  });
+
+  it('matches DOM click/double-click/context/zone intent semantics and reports resources', async () => {
+    vi.spyOn(Assets, 'load').mockResolvedValue(Texture.WHITE);
+    vi.spyOn(Assets, 'unload').mockResolvedValue(undefined);
+    const intents: unknown[] = [];
+    const application = fakeApplication();
+    const renderer = new PixiBoardRenderer(
+      {
+        emitIntent: (intent) => intents.push(intent),
+        emitPresentationUpdate: vi.fn(),
+        reportError: vi.fn(),
+      },
+      { createApplication: () => application }
+    );
+    const host = document.createElement('div');
+    const currentScene = scene();
+    await renderer.mount(host, currentScene, DEFAULT_BOARD_PRESENTATION);
+    await Promise.resolve();
+    const internals = renderer as unknown as RendererInternals;
+    const card = currentScene.cards[0]!;
+    const cardView = internals.cardViews.get(String(card.id))!;
+    cardView.sprite.emit('pointertap', { button: 0, detail: 1 });
+    cardView.sprite.emit('pointertap', { button: 0, detail: 2 });
+    cardView.sprite.emit('pointertap', { button: 0, detail: 3 });
+    cardView.sprite.emit('pointertap', { button: 0, detail: 4 });
+    cardView.sprite.emit('pointertap', { button: 2, detail: 2 });
+    cardView.sprite.emit('pointertap', {});
+    cardView.sprite.emit('rightclick', {});
+    const zone = internals.layers!.playmat.children[0]!;
+    zone.emit('pointertap', { button: 0, detail: 1 });
+    zone.emit('pointertap', { button: 0, detail: 2 });
+    zone.emit('pointertap', { button: 0, detail: 3 });
+    zone.emit('pointertap', { button: 0, detail: 4 });
+    zone.emit('pointertap', { button: 2, detail: 2 });
+
+    expect(intents).toEqual([
+      { kind: 'CardSelected', cardId: card.id },
+      { kind: 'CardSelected', cardId: card.id },
+      { kind: 'CardPreviewRequested', cardId: card.id },
+      { kind: 'CardSelected', cardId: card.id },
+      { kind: 'CardSelected', cardId: card.id },
+      { kind: 'CardSelected', cardId: card.id },
+      { kind: 'CardContextRequested', cardId: card.id },
+      { kind: 'ZoneOpened', zoneId: currentScene.zones[0]!.id },
+    ]);
+    expect(renderer.getDiagnostics()).toMatchObject({
+      rendererKind: 'pixi',
+      mounted: true,
+      destroyed: false,
+      sceneRevision: currentScene.revision,
+      renderedCardIds: currentScene.cards
+        .map((candidate) => candidate.id)
+        .sort(),
+      renderedZoneIds: currentScene.zones.map((candidate) => candidate.id),
+      renderedMarkerIds: currentScene.markers.map((candidate) => candidate.id),
+      contextLossListeners: 1,
+    });
+    expect(renderer.getDiagnostics().displayObjects).toBeGreaterThan(
+      currentScene.cards.length + currentScene.zones.length
+    );
+    expect(renderer.getDiagnostics().localTextureBindings).toBe(
+      currentScene.cards.length
+    );
+
+    expect(() =>
+      renderer.resize({ width: 800, height: 600, devicePixelRatio: 2 })
+    ).not.toThrow();
+    expect(application.renderer.resize).toHaveBeenLastCalledWith(800, 600);
+    expect(application.renderer.resolution).toBe(2);
+    expect(() =>
+      renderer.resize({ width: 0, height: 600, devicePixelRatio: 2 })
+    ).toThrow('dimensions and DPR must be positive');
+    for (const viewport of [
+      { width: -1, height: 600, devicePixelRatio: 1 },
+      { width: Number.NaN, height: 600, devicePixelRatio: 1 },
+      { width: 800, height: Number.POSITIVE_INFINITY, devicePixelRatio: 1 },
+      { width: 800, height: 600, devicePixelRatio: 0 },
+    ]) {
+      expect(() => renderer.resize(viewport)).toThrow(
+        'dimensions and DPR must be positive'
+      );
+    }
+
+    const idleRenderCommits = renderer.getDiagnostics().renderCommits;
+    await Promise.resolve();
+    expect(renderer.getDiagnostics().renderCommits).toBe(idleRenderCommits);
+    renderer.clearScene();
+    expect(renderer.getDiagnostics()).toMatchObject({
+      sceneRevision: null,
+      renderedCardIds: [],
+      renderedZoneIds: [],
+      renderedMarkerIds: [],
+      localTextureBindings: 0,
+    });
+    renderer.destroy();
+    expect(renderer.getDiagnostics()).toMatchObject({
+      mounted: false,
+      destroyed: true,
+      contextLossListeners: 0,
+      displayObjects: 0,
+    });
+  });
+
   it('forwards application cancellation and releases the captured pointer', () => {
     const cancelInteraction = vi.spyOn(
       BoardDragController.prototype,
@@ -244,6 +373,52 @@ describe('Pixi board interaction cancellation', () => {
       }
     }
   );
+
+  it('reports no rendered resources after terminal context recovery failure', async () => {
+    vi.spyOn(Assets, 'load').mockResolvedValue(Texture.WHITE);
+    vi.spyOn(Assets, 'unload').mockResolvedValue(undefined);
+    const initialApplication = fakeApplication();
+    const failedApplications = Array.from({ length: 3 }, () => {
+      const application = fakeApplication();
+      vi.mocked(application.init).mockRejectedValue(
+        new Error('WebGL unavailable')
+      );
+      return application;
+    });
+    const applications = [initialApplication, ...failedApplications];
+    const statuses: BoardRendererStatus[] = [];
+    const renderer = new PixiBoardRenderer(
+      {
+        emitIntent: vi.fn(),
+        emitPresentationUpdate: vi.fn(),
+        reportError: vi.fn(),
+        reportStatus: (status) => statuses.push(status),
+      },
+      { createApplication: () => applications.shift()! }
+    );
+    const host = document.createElement('div');
+    await renderer.mount(host, scene(), DEFAULT_BOARD_PRESENTATION);
+
+    host
+      .querySelector('canvas')!
+      .dispatchEvent(new Event('webglcontextlost', { cancelable: true }));
+    const internals = renderer as unknown as RendererInternals;
+    await internals.recoveryTask;
+
+    expect(statuses.at(-1)).toMatchObject({ kind: 'failed' });
+    expect(renderer.getDiagnostics()).toMatchObject({
+      mounted: false,
+      renderedCardIds: [],
+      renderedZoneIds: [],
+      renderedMarkerIds: [],
+      displayObjects: 0,
+      contextLossListeners: 0,
+    });
+    expect(() =>
+      renderer.installPresentation(DEFAULT_BOARD_PRESENTATION)
+    ).toThrow('not mounted');
+    renderer.destroy();
+  });
 
   it('clears an active drag exactly once before context-loss recovery', async () => {
     const emitPresentationUpdate = vi.fn();

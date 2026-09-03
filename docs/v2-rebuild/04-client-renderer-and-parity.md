@@ -1,6 +1,6 @@
 # Client, renderer, and UI parity
 
-## Boundary between React and PixiJS
+## Production boundary and retained Pixi candidate
 
 React owns the existing application chrome:
 
@@ -11,34 +11,32 @@ React owns the existing application chrome:
 - native-scrolling zone browsers, context menus, full-card preview, counter
   editor, and popup/button chrome anchored to the board;
 - accessible announcements and focus management; and
-- one `BoardCanvasHost` component that creates, resizes, recovers, and destroys
-  the imperative board engine.
+- the stable-keyed board surface behind the imperative `BoardRenderer`
+  lifecycle adapter.
 
-PixiJS owns the play surface:
+The selected React DOM board owns:
 
 - playmat geometry and zone outlines;
-- all card sprites, stacks, attachment/evolution offsets, covers, counters,
+- all card nodes, stacks, attachment/evolution offsets, covers, counters,
   conditions, and target highlights;
 - card dragging/selection visuals and board flip; and
-- only those transient card surfaces that the parity spike proves cannot remain
-  reliable DOM overlays.
+- the same semantic input and presentation contract used by the route.
 
-Keeping these overlays in React preserves native scrolling, form focus, keyboard
-behavior, accessibility, arbitrary non-CORS `<img>` display, and screenshot
-parity. Ownership for every visible element is recorded in the parity matrix so
-two renderers never race to show the same object. A Pixi `zIndex` can never place
-content above a DOM overlay, so the cross-surface layer registry is explicit.
+This preserves native scrolling, form focus, keyboard behavior, accessibility,
+arbitrary `<img>` display, and screenshot parity without a second DOM overlay
+tree. Stable nodes are views of the immutable scene; they never own or repair
+logical state.
 
-Raw Pixi behind a thin React host is the provisional target. Phase 4 implements a
-representative normalized React DOM board as a competing spike. `@pixi/react` is
-a secondary alternative, not the default: a card-heavy declarative React tree may
-introduce reconciliation work and blur lifecycle ownership without helping the
-mostly imperative interactions.
+ADR-004 selects React DOM for the first production renderer. Raw Pixi remains a
+hardened, unwired comparison that proves the contract does not depend on DOM.
+It is reconsidered only after a protected workflow demonstrates a material
+rendering bottleneck on target hardware and Pixi passes the full parity,
+accessibility, image, and recovery matrix. `@pixi/react` is not selected.
 
 ## Renderer public contract
 
-The renderer-neutral board package exposes a deliberately small API; the Pixi
-adapter implements it:
+The renderer-neutral board package exposes a deliberately small API; both
+candidate adapters implement it:
 
 ```text
 createBoardRenderer(adapters, options)
@@ -52,8 +50,8 @@ createBoardRenderer(adapters, options)
   destroy()
 ```
 
-The Pixi adapter additionally owns context recovery behind this interface. The
-renderer emits semantic intents such as `CardSelected`, `CardDropRequested`,
+The retained Pixi adapter additionally owns context recovery behind this
+interface. Every renderer emits semantic intents such as `CardSelected`, `CardDropRequested`,
 `ZoneOpened`, `CardContextRequested`, and `BoardResizeRequested`. It never emits
 legacy function names, zone indices, or network messages.
 
@@ -175,14 +173,15 @@ semantic tests.
 
 The first additive application-boundary implementation lives in
 `apps/web/src/board/BoardSessionController.ts` with its concrete public-source
-adapter in `BoardSessionAdapter.ts`. An exported, opt-in
-`ReactDomBoardSessionRuntime.ts` now proves that boundary against the real React
-DOM renderer and real session/replay coordinators, but no route imports or
-instantiates it. Explicit frame, source, replay-generation, and replay-index cursors keep
-stale aliases, same-revision reconnect replacement, and replay rewind from
-being inferred from revision alone. Renderer and command effects are one-shot
-and never retained. Protocol presentation facts remain exclusively owned by
-the parallel `GamePresentationCoordinator`, not this board controller. See
+adapter in `BoardSessionAdapter.ts`. The exported, opt-in
+`BoardSessionRuntime.ts` proves that boundary against real session/replay
+coordinators; thin React DOM and Pixi wrappers select the renderer without
+duplicating lifecycle logic. No route imports or instantiates them yet. Explicit
+frame, source, replay-generation, and replay-index cursors keep stale aliases,
+same-revision reconnect replacement, and replay rewind from being inferred from
+revision alone. Renderer and command effects are one-shot and never retained.
+Protocol presentation facts remain exclusively owned by the parallel
+`GamePresentationCoordinator`, not this board controller. See
 [`BOARD_SESSION_CONTROLLER.md`](./BOARD_SESSION_CONTROLLER.md) for the reducer,
 adapter, effect-order, cleanup, and deferred-browser-parity contract.
 

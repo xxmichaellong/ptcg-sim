@@ -48,11 +48,13 @@ board adapter. Presentation events are intentionally absent from
 losing the live session's view-then-event split publication and avoids a second
 event cursor.
 
-`apps/web/src/board/ReactDomBoardSessionRuntime.ts` is the first executable,
-uninstantiated composition root. It borrows already-owned live and replay
-sources, constructs only one `BoardSessionAdapter` and one
-`ReactDomBoardRenderer`, and disposes only those objects. It neither accepts nor
-constructs a presentation owner. The route's existing presentation runtime and
+`apps/web/src/board/BoardSessionRuntime.ts` is the executable, renderer-neutral,
+uninstantiated composition root. Thin React DOM and Pixi wrappers select a
+factory; ADR-004 selects the React DOM wrapper for eventual production use and
+keeps the Pixi wrapper experimental. The runtime borrows already-owned live and
+replay sources, constructs only one `BoardSessionAdapter` and one renderer, and
+disposes only those objects. It neither accepts nor constructs a presentation
+owner. The route's existing presentation runtime and
 `GamePresentationCoordinator` subscribe in parallel and retain their own
 lifecycle.
 
@@ -233,3 +235,5 @@ through a real DOM renderer while an externally owned
 `GamePresentationCoordinator` runs in parallel. Mutable-source cases pin exact
 pointer, reset, privacy-failure retry, unsupported-layout, replay suppression,
 factory/mount race, and fatal clear-failure behavior without altering any route.
+The same suite verifies that the thin Pixi wrapper selects its candidate factory
+while preserving the generic runtime's borrowed-source and teardown ownership.

@@ -77,19 +77,19 @@ must remain the same either way.
 
 ## Technology choices
 
-| Concern                    | Primary choice                                              | Reason                                                                                                                                        |
-| -------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Language                   | strict TypeScript                                           | Discriminated commands, explicit state, safe refactors, shared client/server contracts                                                        |
-| Web build                  | Vite                                                        | Fast TypeScript/React development and straightforward static output                                                                           |
-| DOM UI                     | React                                                       | Fits forms, tabs, dialogs, menus, chat, settings, and lifecycle orchestration                                                                 |
-| Board                      | renderer-neutral contract; raw PixiJS provisional           | Pixi promises batching/transforms/resource control, but must beat normalized React DOM on real parity/performance/CORS/accessibility evidence |
-| React/renderer integration | thin custom host                                            | Keeps the renderer transactional and independent of React render frequency                                                                    |
-| Runtime schemas            | Valibot                                                     | Shared validation at every network and persistence boundary with small client cost                                                            |
-| Client state               | small external/vanilla store; Zustand vanilla is acceptable | Separates authoritative view, pending commands, and local presentation without component-owned game state                                     |
-| Unit/integration tests     | Vitest                                                      | TypeScript-friendly, fast package-level tests                                                                                                 |
-| Browser tests              | Playwright                                                  | Multi-page/multi-context workflows, screenshots, input, and network failure tests                                                             |
-| Primary room runtime       | Cloudflare Worker + Durable Object per room                 | Single-threaded room authority, natural room locality, WebSocket hibernation, and MagicCircle pattern reuse                                   |
-| Backend alternative        | Colyseus                                                    | Viable if managed room abstractions and server portability outweigh shared MagicCircle infrastructure                                         |
+| Concern                    | Primary choice                                              | Reason                                                                                                                            |
+| -------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Language                   | strict TypeScript                                           | Discriminated commands, explicit state, safe refactors, shared client/server contracts                                            |
+| Web build                  | Vite                                                        | Fast TypeScript/React development and straightforward static output                                                               |
+| DOM UI                     | React                                                       | Fits forms, tabs, dialogs, menus, chat, settings, and lifecycle orchestration                                                     |
+| Board                      | renderer-neutral contract; normalized keyed React DOM       | ADR-004 preserves native parity and avoids WebGL/CORS/overlay costs while the measured candidate stays within provisional budgets |
+| React/renderer integration | thin imperative lifecycle adapter                           | Keeps the renderer transactional and independent of route-component render frequency                                              |
+| Runtime schemas            | Valibot                                                     | Shared validation at every network and persistence boundary with small client cost                                                |
+| Client state               | small external/vanilla store; Zustand vanilla is acceptable | Separates authoritative view, pending commands, and local presentation without component-owned game state                         |
+| Unit/integration tests     | Vitest                                                      | TypeScript-friendly, fast package-level tests                                                                                     |
+| Browser tests              | Playwright                                                  | Multi-page/multi-context workflows, screenshots, input, and network failure tests                                                 |
+| Primary room runtime       | Cloudflare Worker + Durable Object per room                 | Single-threaded room authority, natural room locality, WebSocket hibernation, and MagicCircle pattern reuse                       |
+| Backend alternative        | Colyseus                                                    | Viable if managed room abstractions and server portability outweigh shared MagicCircle infrastructure                             |
 
 Exact library versions are pinned only when implementation starts. Version
 selection requires a short compatibility check against supported runtimes,

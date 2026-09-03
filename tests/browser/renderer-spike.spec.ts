@@ -218,3 +218,279 @@ test('switching candidates repeatedly leaves exactly one live renderer', async (
   await expect(page.locator('[data-card-id]')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+test('native pointer boundaries preserve rapid-click, primary-button, and touch semantics', async ({
+  browser,
+  page,
+}) => {
+  const errors = collectRuntimeErrors(page);
+  for (const renderer of ['dom', 'pixi'] as const) {
+    await page.goto(`/?renderer=${renderer}`);
+    await waitForReady(page);
+    const card = await page.evaluate(() => {
+      const candidate = window.__PTCG_RENDERER_SPIKE__?.scene.cards.find(
+        (node) => node.side === 'local' && !node.concealed
+      );
+      if (!candidate) throw new Error('Missing visible card');
+      return {
+        x: candidate.bounds.x + candidate.bounds.width / 2,
+        y: candidate.bounds.y + candidate.bounds.height / 2,
+      };
+    });
+
+    await page.mouse.click(card.x, card.y, { clickCount: 3, delay: 20 });
+    await expect(page.locator('output')).toContainText('CardSelected');
+    await expect(page.locator('output')).not.toContainText(
+      'CardPreviewRequested'
+    );
+
+    await page.waitForTimeout(250);
+    await page.mouse.click(card.x, card.y, { clickCount: 2, delay: 20 });
+    await expect(page.locator('output')).toContainText('CardPreviewRequested');
+
+    await page.waitForTimeout(250);
+    await page.mouse.click(card.x, card.y, { clickCount: 4, delay: 20 });
+    await expect(page.locator('output')).toContainText('CardSelected');
+    await expect(page.locator('output')).not.toContainText(
+      'CardPreviewRequested'
+    );
+  }
+
+  await page.goto('/?renderer=pixi');
+  await waitForReady(page);
+  const emptyZonePoint = await page.evaluate(() => {
+    const zone = window.__PTCG_RENDERER_SPIKE__?.scene.zones.find(
+      (candidate) => candidate.interactive && candidate.count === 0
+    );
+    if (!zone) throw new Error('Missing empty interactive zone');
+    return {
+      x: zone.bounds.x + zone.bounds.width / 2,
+      y: zone.bounds.y + zone.bounds.height / 2,
+    };
+  });
+  await page.mouse.click(emptyZonePoint.x, emptyZonePoint.y, {
+    button: 'right',
+    clickCount: 2,
+    delay: 20,
+  });
+  await expect(page.locator('output')).toHaveText('No board interaction yet');
+  expect(errors).toEqual([]);
+
+  const touchContext = await browser.newContext({
+    baseURL: 'http://127.0.0.1:4173',
+    hasTouch: true,
+    viewport: { width: 1280, height: 720 },
+    deviceScaleFactor: 1,
+  });
+  try {
+    const touchPage = await touchContext.newPage();
+    const touchErrors = collectRuntimeErrors(touchPage);
+    await touchPage.goto('/?renderer=pixi');
+    await waitForReady(touchPage);
+    const touchCard = await touchPage.evaluate(() => {
+      const candidate = window.__PTCG_RENDERER_SPIKE__?.scene.cards.find(
+        (node) => node.side === 'local' && !node.concealed
+      );
+      if (!candidate) throw new Error('Missing visible touch card');
+      return {
+        x: candidate.bounds.x + candidate.bounds.width / 2,
+        y: candidate.bounds.y + candidate.bounds.height / 2,
+      };
+    });
+    await touchPage.touchscreen.tap(touchCard.x, touchCard.y);
+    await expect(touchPage.locator('output')).toContainText('CardSelected');
+    expect(touchErrors).toEqual([]);
+  } finally {
+    await touchContext.close();
+  }
+});
+
+test('records controlled 120-card reconciliation and idle evidence for both candidates', async ({
+  page,
+}, testInfo) => {
+  await page.addInitScript(() => {
+    class StableBenchmarkResizeObserver {
+      observe(): void {}
+      unobserve(): void {}
+      disconnect(): void {}
+    }
+    Object.defineProperty(window, 'ResizeObserver', {
+      configurable: true,
+      value: StableBenchmarkResizeObserver,
+    });
+  });
+  const errors = collectRuntimeErrors(page);
+  const evidence: Record<string, unknown> = {};
+  for (const rendererKind of ['dom', 'pixi'] as const) {
+    await page.goto(`/?renderer=${rendererKind}`);
+    await waitForReady(page);
+    evidence[rendererKind] = await page.evaluate(async () => {
+      const spike = window.__PTCG_RENDERER_SPIKE__;
+      if (!spike) throw new Error('Missing renderer spike');
+      const renderer = spike.renderer;
+      const diagnostics = () => {
+        const current = renderer.getDiagnostics?.();
+        if (!current) throw new Error('Missing renderer diagnostics');
+        return current;
+      };
+      const installAndMeasure = async (
+        scene: typeof spike.scene,
+        replace = false
+      ) => {
+        const surface = document.querySelector<HTMLElement>(
+          spike.rendererKind === 'dom' ? '.ptcgsim-board-surface' : 'canvas'
+        );
+        if (!surface) throw new Error('Missing rendered board surface');
+        const previous = diagnostics().renderCommits;
+        let finish!: () => void;
+        const committed = new Promise<void>((resolve) => {
+          finish = resolve;
+        });
+        const observer = new MutationObserver(() => {
+          if (surface.dataset.revision === String(scene.revision)) finish();
+        });
+        observer.observe(surface, {
+          attributes: true,
+          attributeFilter: ['data-revision'],
+        });
+        const timeout = window.setTimeout(() => finish(), 1_000);
+        const started = performance.now();
+        try {
+          renderer.installScene(scene, [], replace ? 'replace' : 'advance');
+        } catch (error) {
+          observer.disconnect();
+          window.clearTimeout(timeout);
+          throw error;
+        }
+        const submissionMs = performance.now() - started;
+        if (
+          diagnostics().renderCommits > previous &&
+          surface.dataset.revision === String(scene.revision)
+        ) {
+          finish();
+        }
+        await committed;
+        observer.disconnect();
+        window.clearTimeout(timeout);
+        if (
+          diagnostics().renderCommits <= previous ||
+          surface.dataset.revision !== String(scene.revision)
+        ) {
+          throw new Error('Renderer did not commit an installed scene');
+        }
+        return {
+          submissionMs,
+          wallToCommitMs: performance.now() - started,
+        };
+      };
+      const percentile = (values: readonly number[], fraction: number) => {
+        const sorted = [...values].sort((left, right) => left - right);
+        return sorted[Math.max(0, Math.ceil(sorted.length * fraction) - 1)]!;
+      };
+      const original = spike.scene;
+      const cards = Array.from({ length: 120 }, (_, index) => {
+        const source = original.cards[index % original.cards.length]!;
+        return {
+          ...source,
+          id: `benchmark-card-${index}` as typeof source.id,
+          interactive: false,
+          bounds: {
+            ...source.bounds,
+            x: source.bounds.x + (index % 3) * 0.01,
+          },
+        };
+      });
+      let revision = Math.max(original.revision + 1, 1_000);
+      let current = { ...original, revision, cards };
+      await installAndMeasure(current, true);
+      for (let attempt = 0; attempt < 250; attempt += 1) {
+        if (diagnostics().globalPendingTextureLoads === 0) break;
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+
+      const sample = async (mode: 'single' | 'full') => {
+        revision += 1;
+        const nextCards = current.cards.map((card, index) =>
+          mode === 'full' || index === 0
+            ? {
+                ...card,
+                bounds: { ...card.bounds, x: card.bounds.x + 0.01 },
+              }
+            : card
+        );
+        current = { ...current, revision, cards: nextCards };
+        return installAndMeasure(current);
+      };
+
+      for (let warmup = 0; warmup < 5; warmup += 1) {
+        await sample('single');
+        await sample('full');
+      }
+      const single = [];
+      const full = [];
+      for (let index = 0; index < 25; index += 1) {
+        single.push(await sample('single'));
+        full.push(await sample('full'));
+      }
+      const settled = diagnostics();
+      const idleCommits = settled.renderCommits;
+      for (let frame = 0; frame < 5; frame += 1) {
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => resolve())
+        );
+      }
+      const afterIdle = diagnostics();
+      const summarize = (
+        values: readonly {
+          readonly submissionMs: number;
+          readonly wallToCommitMs: number;
+        }[]
+      ) => ({
+        submissionP50Ms: percentile(
+          values.map((value) => value.submissionMs),
+          0.5
+        ),
+        submissionP95Ms: percentile(
+          values.map((value) => value.submissionMs),
+          0.95
+        ),
+        wallToCommitP50Ms: percentile(
+          values.map((value) => value.wallToCommitMs),
+          0.5
+        ),
+        wallToCommitP95Ms: percentile(
+          values.map((value) => value.wallToCommitMs),
+          0.95
+        ),
+      });
+      return {
+        userAgent: navigator.userAgent,
+        devicePixelRatio: window.devicePixelRatio,
+        cardCount: settled.renderedCardIds.length,
+        zoneCount: settled.renderedZoneIds.length,
+        markerCount: settled.renderedMarkerIds.length,
+        pendingTextureLoads: settled.globalPendingTextureLoads,
+        textureLoadFailures: settled.globalTextureLoadFailures,
+        textureUnloadFailures: settled.globalTextureUnloadFailures,
+        idleCommitDelta: afterIdle.renderCommits - idleCommits,
+        single: summarize(single),
+        full: summarize(full),
+      };
+    });
+  }
+
+  for (const result of Object.values(evidence)) {
+    expect(result).toMatchObject({
+      cardCount: 120,
+      pendingTextureLoads: 0,
+      textureLoadFailures: 0,
+      textureUnloadFailures: 0,
+      idleCommitDelta: 0,
+    });
+  }
+  expect(errors).toEqual([]);
+  await testInfo.attach('renderer-120-card-evidence.json', {
+    body: Buffer.from(JSON.stringify(evidence, null, 2)),
+    contentType: 'application/json',
+  });
+});

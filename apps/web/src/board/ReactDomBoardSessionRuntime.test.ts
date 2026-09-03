@@ -27,6 +27,11 @@ import { act, createElement, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const pixiRendererFactory = vi.hoisted(() => vi.fn());
+vi.mock('@ptcgsim/renderer-pixi', () => ({
+  createPixiBoardRenderer: pixiRendererFactory,
+}));
+
 import { GamePresentationCoordinator } from '../presentation/GamePresentationCoordinator.js';
 import type { SessionPresentationSource } from '../presentation/SessionPresentationDispatcher.js';
 import type { ReplayPresentationSource } from '../replay/ReplayPresentationDispatcher.js';
@@ -40,6 +45,7 @@ import type {
   BoardSessionReplaySource,
 } from './BoardSessionAdapter.js';
 import { ReactDomBoardSessionRuntime } from './ReactDomBoardSessionRuntime.js';
+import { PixiBoardSessionRuntime } from './PixiBoardSessionRuntime.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -1299,5 +1305,61 @@ describe('opt-in React DOM board session runtime', () => {
         )
       )
     ).toBe(false);
+  });
+});
+
+describe('opt-in Pixi board session runtime', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('uses the shared runtime lifecycle without leaking its borrowed sources', async () => {
+    const initial = readyState(atRevision(1));
+    const live = new MutableLiveSource(initial);
+    const replay = new MutableReplaySource(initial);
+    const canvas = document.createElement('canvas');
+    const destroy = vi.fn(() => canvas.remove());
+    const renderer: BoardRenderer = {
+      mount: vi.fn(async (host, scene) => {
+        canvas.dataset.revision = String(scene.revision);
+        host.append(canvas);
+      }),
+      installScene: vi.fn((scene) => {
+        canvas.dataset.revision = String(scene.revision);
+      }),
+      installPresentation: vi.fn(),
+      cancelInteraction: vi.fn(),
+      clearScene: vi.fn(),
+      resize: vi.fn(),
+      setPreferences: vi.fn(),
+      destroy,
+    };
+    pixiRendererFactory.mockReturnValueOnce(renderer);
+    const runtime = new PixiBoardSessionRuntime({
+      live,
+      replay,
+      layout: layoutState(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+
+    await runtime.mount(host);
+    expect(pixiRendererFactory).toHaveBeenCalledOnce();
+    expect(host.querySelector('canvas')).toBe(canvas);
+    expect(canvas.dataset.revision).toBe('1');
+    expect(live.listenerCount()).toBe(0);
+    expect(replay.listenerCount()).toBe(1);
+
+    const next = readyState(atRevision(2));
+    live.publish(next);
+    replay.syncLive(next);
+    await runtime.whenSettled();
+    expect(runtime.getBoardSnapshot()?.scene?.revision).toBe(2);
+    expect(canvas.dataset.revision).toBe('2');
+
+    runtime.dispose();
+    expect(destroy).toHaveBeenCalledOnce();
+    expect(host.querySelector('canvas')).toBeNull();
+    expect(live.listenerCount()).toBe(0);
+    expect(replay.listenerCount()).toBe(0);
+    expect(() => runtime.dispose()).not.toThrow();
   });
 });

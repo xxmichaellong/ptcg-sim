@@ -155,6 +155,34 @@ export type BoardRendererStatus =
   | { readonly kind: 'failed'; readonly error: unknown }
   | { readonly kind: 'destroyed' };
 
+/**
+ * Recipient-safe lifecycle/resource evidence used by parity and soak gates.
+ * `renderCommits` records successful renderer-specific commits; benchmark
+ * timings are measured externally and must not compare this counter as time.
+ * `globalTexture*` fields describe the shared asset owner, not one renderer.
+ */
+export interface BoardRendererDiagnostics {
+  readonly rendererKind: 'dom' | 'pixi';
+  readonly mounted: boolean;
+  readonly destroyed: boolean;
+  readonly generation: number;
+  readonly sceneRevision: number | null;
+  readonly renderCommits: number;
+  readonly renderedCardIds: readonly ViewCardId[];
+  readonly renderedZoneIds: readonly string[];
+  readonly renderedMarkerIds: readonly string[];
+  readonly domNodes: number;
+  readonly displayObjects: number;
+  readonly localTextureBindings: number;
+  readonly globalTextureLeaseEntries: number;
+  readonly globalPendingTextureLoads: number;
+  readonly globalUnloadingTextures: number;
+  readonly globalTextureReferences: number;
+  readonly globalTextureLoadFailures: number;
+  readonly globalTextureUnloadFailures: number;
+  readonly contextLossListeners: number;
+}
+
 export interface BoardRenderer {
   mount(
     host: HTMLElement,
@@ -176,6 +204,7 @@ export interface BoardRenderer {
   clearScene(): void;
   resize(viewport: BoardViewport): void;
   setPreferences(preferences: BoardPreferences): void;
+  getDiagnostics?(): BoardRendererDiagnostics;
   destroy(): void;
 }
 

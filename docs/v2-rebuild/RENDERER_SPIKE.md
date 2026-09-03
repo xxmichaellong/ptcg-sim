@@ -1,8 +1,9 @@
 # Renderer decision spike
 
-Status: `IN_PROGRESS`  
-Implementation branch: `codex/v2-engine-rebuild`  
-Decision: not yet ratified; ADR-004 remains `SPIKE_REQUIRED`
+- Status: `DECIDED`; production parity gates remain
+- Implementation branch: `codex/v2-engine-rebuild`
+- Decision: ADR-004 selects normalized stable-keyed React DOM for first production
+  use; raw Pixi remains an unwired comparison
 
 ## Research result
 
@@ -97,11 +98,16 @@ HTML mock. It:
 - synchronously clears scene/private presentation children without destroying
   the mounted root, allowing privacy-safe replacement;
 - reuses card elements across scene revisions;
+- memoizes stable card, zone, and marker nodes so a one-card descriptor change
+  does not require rebuilding every unchanged child;
 - uses native buttons and images for board card semantics;
 - rejects older revisions and mismatched presentation events;
 - emits the shared semantic interaction intents;
 - uses Pointer Events and pointer capture while keeping drag position entirely
   in presentation state; and
+- validates every mount/install/resize viewport before mutation;
+- reports actual committed recipient-safe IDs and retains teardown diagnostics
+  until the deferred React unmount physically removes nodes; and
 - has automated repeated mount/destroy coverage under React Strict Mode.
 
 This is the lower-complexity fallback and is expected to have the closest image,
@@ -115,15 +121,21 @@ CORS, browser-menu, and native accessibility behavior to v1.
   one-shot renders;
 - maintains stable sprites keyed by recipient-safe card ID;
 - creates separate playmat/card/marker/interaction layers;
-- deduplicates URL loads while visible and guards every asynchronous completion
-  against card reuse/removal;
+- deduplicates URL loads across renderer instances while visible and guards
+  every asynchronous completion against card reuse/removal;
+- issues opaque, broker-bound, idempotent leases so one renderer cannot release
+  another renderer's reference, including during unload/reload races;
 - releases a no-longer-referenced URL so a private face texture is not retained
   after concealment or a role/room transition;
 - clears scene card views and bindings at recipient/reset boundaries while
   safely reusing only a still-pending zero-reference URL load reacquired before
   completion;
 - renders a safe placeholder on load failure;
-- emits the same card/zone intents as the DOM candidate;
+- counts and reports synchronous/asynchronous unload failures without hiding a
+  failed teardown behind zero resource diagnostics;
+- emits the same card/zone intents as the DOM candidate for mouse, touch, pen,
+  accessibility activation, exact double-click boundaries, and secondary-button
+  filtering;
 - uses one stage-level global move listener plus canvas pointer capture for drag,
   avoiding per-card global work while sharing the DOM candidate's gesture
   semantics;
@@ -132,8 +144,11 @@ CORS, browser-menu, and native accessibility behavior to v1.
 - defers a context-loss rebuild when reset has left no scene, then rebuilds once
   from the next replacement instead of exhausting retries against an
   intentionally empty renderer; and
+- coalesces asynchronous texture completions into one scheduled render turn;
+- distinguishes renderer-local bindings from global asset-cache metrics and
+  reports actual display-tree IDs; and
 - has idempotent teardown of listeners, sprites, layers, application, and asset
-  bindings.
+  bindings, including terminal recovery-failure diagnostics.
 
 The implementation is intentionally smaller than MagicCircle's host. Browser
 testing must decide which additional recovery workarounds are necessary for the
@@ -275,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-At this checkpoint the v2 suite contains 295 passing tests across 57 files. A
-separate Playwright suite also passes three real Chromium 151 scenarios:
+The repository-wide gate passes 636 v2 tests across 98 files. A separate
+Playwright suite passes five real Chromium 151 scenarios:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -291,6 +306,14 @@ separate Playwright suite also passes three real Chromium 151 scenarios:
    post-recovery screenshot, and has no runtime errors.
 3. Three Pixi → DOM → Pixi transitions leave exactly one selected renderer each
    time with no runtime errors or accumulated DOM/canvas views.
+4. Native rapid clicks produce the same selection/preview boundary in DOM and
+   Pixi, Pixi ignores secondary zone activation, and a touch-enabled browser
+   context selects a card through the actual Pixi event boundary.
+5. Both candidates install an identical synthetic 120-card/17-zone/4-marker
+   scene, settle asset diagnostics, record paired single/full reconciliation
+   evidence, and schedule zero additional commits across five idle frames. The
+   JSON attachment records environment and p50/p95 observations; it is
+   diagnostic rather than a portable physical-device release result.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -306,10 +329,18 @@ Chromium 151 package through `PTCGSIM_CHROMIUM_PATH`, because Playwright's
 Debian/Ubuntu dependency installer requires `apt-get` and downloaded generic
 ELF binaries cannot directly resolve Nix store libraries.
 
-## Gates still required before ADR-004 can be accepted
+## Decision and remaining production gates
 
-No renderer winner is claimed yet. The following require a real controlled
-browser/device run:
+ADR-004 records the evidence, consequences, and revisit triggers. React DOM is
+selected because it preserves native UI/image/accessibility behavior, remains
+within the provisional full-scene budget in the controlled 120-card harness,
+and avoids making Pixi's additional asset, overlay, and WebGL failure surface a
+production dependency. Pixi's lower synthetic full-update latency does not
+override the parity-first decision rule without a measured protected-workflow
+bottleneck and the full cross-browser matrix.
+
+The following still require controlled browser/device runs before production
+wiring:
 
 - fixed-viewport overlays against legacy screenshots and structured 2 px / 1%
   geometry thresholds, including the independently recorded layout oracle;
@@ -317,16 +348,14 @@ browser/device run:
   DOM-overlay anchor parity, and drag rejection/reconnect snap-back behavior;
 - actual external card/image hosts, redirects, CORS failures, oversized/corrupt
   images, and the proxy/hybrid policy in ADR-013;
-- WebGL unavailable at startup, repeated/permanent context loss, background
-  resume, 0x0 host, DPR changes, and silent GPU eviction;
+- background resume, 0x0 host, DPR changes, and resize coalescing; WebGL-only
+  recovery/eviction cases remain gates for any future Pixi rollout;
 - 100 mount/destroy and setup/reset cycles with listener, display object,
   decoded-image, CPU-heap, and GPU-texture counters;
 - the p95 reconciliation/input/drag budgets from the verification plan on the
   ratified four-core reference profile;
-- keyboard and screen-reader audit of the dedicated compact accessibility
-  bridge (Pixi's optional overlay alone is not the product contract); and
+- keyboard and screen-reader audit of the selected semantic DOM surface; and
 - Chromium automation plus Firefox and Safari approval.
 
-Pixi wins only if it passes every parity/reliability gate and materially beats
-the normalized DOM candidate on a measured v1 bottleneck. Otherwise React DOM is
-selected without changing the new core, protocol, authority, or scene model.
+The renderer-neutral core, protocol, authority, scene, and runtime remain valid
+if a future measured bottleneck satisfies ADR-004's narrow revisit triggers.

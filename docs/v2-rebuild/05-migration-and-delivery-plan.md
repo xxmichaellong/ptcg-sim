@@ -190,6 +190,12 @@ materially improve consistency/performance enough to justify CORS, texture,
 context-recovery, and canvas-accessibility costs. Record the decision; do not
 choose based on preference alone.
 
+ADR-004 now selects normalized stable-keyed React DOM for the first production
+renderer. The raw Pixi implementation remains an unwired comparison and does
+not block renderer-neutral domain/session work. The remaining visual,
+accessibility, asset, churn, and physical-device evidence gates production
+wiring rather than reopening the technology choice by default.
+
 ### Room-runtime spike
 
 Implement hello/welcome, guest seat capability, one command, durable commit,

@@ -98,26 +98,97 @@ describe('React DOM board renderer', () => {
     expect(after).toBe(before);
     expect(after?.style.left).toBe('40px');
 
-    after?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    after?.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+    after?.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 2 }));
+    after?.dispatchEvent(
+      new MouseEvent('dblclick', { bubbles: true, detail: 2 })
+    );
     after?.dispatchEvent(
       new MouseEvent('contextmenu', { bubbles: true, cancelable: true })
     );
+    const zone = host.querySelector<HTMLElement>('[data-zone-id]')!;
+    zone.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+    zone.dispatchEvent(
+      new MouseEvent('dblclick', { bubbles: true, detail: 2 })
+    );
     expect(intents).toEqual([
       { kind: 'CardSelected', cardId },
+      { kind: 'CardSelected', cardId },
+      { kind: 'CardPreviewRequested', cardId },
       { kind: 'CardContextRequested', cardId },
+      { kind: 'ZoneOpened', zoneId: 'zone:p1:hand' },
     ]);
     expect(statuses).toEqual([
       { kind: 'mounting' },
       { kind: 'ready', generation: 1 },
     ]);
+    expect(renderer.getDiagnostics()).toMatchObject({
+      rendererKind: 'dom',
+      mounted: true,
+      destroyed: false,
+      sceneRevision: 2,
+      renderedCardIds: [cardId],
+      renderedZoneIds: ['zone:p1:hand'],
+      renderedMarkerIds: [],
+      displayObjects: 0,
+      localTextureBindings: 0,
+      contextLossListeners: 0,
+    });
+    expect(renderer.getDiagnostics().domNodes).toBeGreaterThanOrEqual(4);
 
+    expect(() =>
+      renderer.resize({ width: 800, height: 600, devicePixelRatio: 2 })
+    ).not.toThrow();
+    expect(host.style.width).toBe('800px');
+    for (const viewport of [
+      { width: 0, height: 600, devicePixelRatio: 1 },
+      { width: -1, height: 600, devicePixelRatio: 1 },
+      { width: Number.NaN, height: 600, devicePixelRatio: 1 },
+      { width: 800, height: Number.POSITIVE_INFINITY, devicePixelRatio: 1 },
+      { width: 800, height: 600, devicePixelRatio: 0 },
+    ]) {
+      expect(() => renderer.resize(viewport)).toThrow(
+        'dimensions and DPR must be positive'
+      );
+    }
+
+    let retainedNodes = 0;
     await act(async () => {
       renderer.destroy();
+      retainedNodes = renderer.getDiagnostics().domNodes;
       await Promise.resolve();
     });
+    expect(retainedNodes).toBeGreaterThan(0);
     expect(host.childElementCount).toBe(0);
     renderer.destroy();
+    expect(renderer.getDiagnostics()).toMatchObject({
+      mounted: false,
+      destroyed: true,
+      renderedCardIds: [],
+      renderedZoneIds: [],
+      domNodes: 0,
+    });
     expect(statuses.at(-1)).toEqual({ kind: 'destroyed' });
+  });
+
+  it('rejects an invalid initial scene before allocating a React root', async () => {
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    const invalidScene = {
+      ...createScene(),
+      viewport: { width: 0, height: 600, devicePixelRatio: 1 },
+    };
+
+    await expect(
+      renderer.mount(host, invalidScene, DEFAULT_BOARD_PRESENTATION)
+    ).rejects.toThrow('dimensions and DPR must be positive');
+    expect(host.childElementCount).toBe(0);
+    expect(renderer.getDiagnostics()).toMatchObject({ mounted: false });
+    renderer.destroy();
   });
 
   it('rejects stale scenes and presentation events for the wrong revision', async () => {

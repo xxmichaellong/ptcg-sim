@@ -11,6 +11,8 @@ import type {
   ZoneSceneNode,
 } from '@ptcgsim/renderer-contract';
 import {
+  memo,
+  useCallback,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -29,48 +31,51 @@ const absoluteRect = (bounds: Rect, zIndex: number): CSSProperties => ({
   boxSizing: 'border-box',
 });
 
-const ZoneNode = ({
+const ZoneNode = memo(function ZoneNode({
   zone,
   emitIntent,
 }: {
   readonly zone: ZoneSceneNode;
   readonly emitIntent: BoardRendererAdapters['emitIntent'];
-}) => (
-  <div
-    className={`ptcgsim-zone ptcgsim-zone-${zone.kind}`}
-    data-zone-id={zone.id}
-    data-zone-kind={zone.kind}
-    aria-label={`${zone.label}, ${zone.count} cards`}
-    style={{
-      ...absoluteRect(zone.bounds, zone.zIndex),
-      borderRadius: 15,
-      background: 'rgba(255, 255, 255, 0.1)',
-      boxShadow: '2px 2px 5px rgba(0, 0, 0, 0.1)',
-      pointerEvents: zone.interactive ? 'auto' : 'none',
-    }}
-    onDoubleClick={() => emitIntent({ kind: 'ZoneOpened', zoneId: zone.id })}
-  />
-);
+}) {
+  return (
+    <div
+      className={`ptcgsim-zone ptcgsim-zone-${zone.kind}`}
+      data-zone-id={zone.id}
+      data-zone-kind={zone.kind}
+      aria-label={`${zone.label}, ${zone.count} cards`}
+      style={{
+        ...absoluteRect(zone.bounds, zone.zIndex),
+        borderRadius: 15,
+        background: 'rgba(255, 255, 255, 0.1)',
+        boxShadow: '2px 2px 5px rgba(0, 0, 0, 0.1)',
+        pointerEvents: zone.interactive ? 'auto' : 'none',
+      }}
+      onDoubleClick={() => emitIntent({ kind: 'ZoneOpened', zoneId: zone.id })}
+    />
+  );
+});
 
-const CardNode = ({
+const CardNode = memo(function CardNode({
   card,
-  presentation,
+  selected,
+  hovered,
+  drag,
   emitIntent,
   consumeSuppressedClick,
 }: {
   readonly card: CardSceneNode;
-  readonly presentation: BoardPresentation;
+  readonly selected: boolean;
+  readonly hovered: boolean;
+  readonly drag: BoardPresentation['drag'];
   readonly emitIntent: BoardRendererAdapters['emitIntent'];
   readonly consumeSuppressedClick: (cardId: CardSceneNode['id']) => boolean;
-}) => {
-  const selected = presentation.selectedCardId === card.id;
-  const hovered = presentation.hoveredCardId === card.id;
-  const dragging = presentation.drag?.cardId === card.id;
-  const bounds = dragging
+}) {
+  const bounds = drag
     ? {
         ...card.bounds,
-        x: presentation.drag.x - card.bounds.width / 2,
-        y: presentation.drag.y - card.bounds.height / 2,
+        x: drag.x - card.bounds.width / 2,
+        y: drag.y - card.bounds.height / 2,
       }
     : card.bounds;
   const context = (event: ReactMouseEvent) => {
@@ -86,7 +91,7 @@ const CardNode = ({
       aria-label={card.label}
       aria-pressed={selected}
       style={{
-        ...absoluteRect(bounds, dragging ? 10_000 : card.zIndex),
+        ...absoluteRect(bounds, drag ? 10_000 : card.zIndex),
         display: 'block',
         margin: 0,
         padding: 0,
@@ -98,7 +103,7 @@ const CardNode = ({
         borderRadius: '0.375rem',
         background: '#777',
         boxShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
-        cursor: card.interactive ? (dragging ? 'grabbing' : 'grab') : 'default',
+        cursor: card.interactive ? (drag ? 'grabbing' : 'grab') : 'default',
         overflow: 'hidden',
         transform: `rotate(${card.rotationQuarterTurns * 90}deg)`,
         transformOrigin: 'center',
@@ -127,28 +132,34 @@ const CardNode = ({
       />
     </button>
   );
-};
+});
 
-const MarkerNode = ({ marker }: { readonly marker: MarkerSceneNode }) => (
-  <div
-    className={`ptcgsim-marker ptcgsim-marker-${marker.kind}`}
-    data-marker-id={marker.id}
-    aria-hidden="true"
-    style={{
-      ...absoluteRect(marker.bounds, marker.zIndex),
-      display: 'grid',
-      placeItems: 'center',
-      borderRadius: '50%',
-      background: marker.kind === 'damage' ? '#e64242' : '#efefef',
-      color: marker.kind === 'damage' ? '#fff' : '#111',
-      fontSize: Math.max(10, marker.bounds.height * 0.42),
-      fontWeight: 700,
-      pointerEvents: 'none',
-    }}
-  >
-    {marker.value}
-  </div>
-);
+const MarkerNode = memo(function MarkerNode({
+  marker,
+}: {
+  readonly marker: MarkerSceneNode;
+}) {
+  return (
+    <div
+      className={`ptcgsim-marker ptcgsim-marker-${marker.kind}`}
+      data-marker-id={marker.id}
+      aria-hidden="true"
+      style={{
+        ...absoluteRect(marker.bounds, marker.zIndex),
+        display: 'grid',
+        placeItems: 'center',
+        borderRadius: '50%',
+        background: marker.kind === 'damage' ? '#e64242' : '#efefef',
+        color: marker.kind === 'damage' ? '#fff' : '#111',
+        fontSize: Math.max(10, marker.bounds.height * 0.42),
+        fontWeight: 700,
+        pointerEvents: 'none',
+      }}
+    >
+      {marker.value}
+    </div>
+  );
+});
 
 export const BoardSurface = ({
   scene,
@@ -173,6 +184,11 @@ export const BoardSurface = ({
   const dragController = useMemo(
     () => new BoardDragController(adapters),
     [adapters]
+  );
+  const consumeSuppressedClick = useCallback(
+    (cardId: CardSceneNode['id']) =>
+      dragController.consumeSuppressedClick(cardId),
+    [dragController]
   );
   useLayoutEffect(() => {
     onCommit?.();
@@ -314,11 +330,13 @@ export const BoardSurface = ({
         <CardNode
           key={card.id}
           card={card}
-          presentation={presentation}
-          emitIntent={adapters.emitIntent}
-          consumeSuppressedClick={(cardId) =>
-            dragController.consumeSuppressedClick(cardId)
+          selected={presentation.selectedCardId === card.id}
+          hovered={presentation.hoveredCardId === card.id}
+          drag={
+            presentation.drag?.cardId === card.id ? presentation.drag : null
           }
+          emitIntent={adapters.emitIntent}
+          consumeSuppressedClick={consumeSuppressedClick}
         />
       ))}
       {scene.markers.map((marker) => (

@@ -64,7 +64,8 @@ and dependency direction are required.
 | `setup/sizing/resizer.js`, table resizer listeners     | `BoardViewport.tsx`, pure layout, persisted presentation split  | Pointer-safe, frame-coalesced, flip-aware parity behavior.                                      |
 | mutation observers                                     | explicit render/app selectors                                   | Entire mechanism retired.                                                                       |
 
-Implemented competitive renderer-spike files (the winner remains provisional):
+Implemented renderer decision files (React DOM is selected; Pixi remains
+unwired evidence):
 
 ```text
 packages/renderer-contract/src/
@@ -81,11 +82,14 @@ packages/renderer-pixi/src/
   CardTextureRegistry.ts
 apps/web/src/
   RendererSpikeBoard.tsx
+  board/BoardSessionRuntime.ts
+  board/ReactDomBoardSessionRuntime.ts
+  board/PixiBoardSessionRuntime.ts
 ```
 
-If Pixi wins, split the compact spike adapter into the following production
-systems as those responsibilities gain behavior. Do not create empty structure
-before it has real ownership to contain:
+If ADR-004 is reopened and Pixi later wins, split the compact spike adapter into
+the following production systems as those responsibilities gain behavior. Do
+not create empty structure before it has real ownership to contain:
 
 ```text
 packages/renderer-pixi/src/
@@ -106,7 +110,9 @@ apps/web/src/board/
   BoardViewport.tsx
   BoardSessionController.ts # additive headless reducer/store implemented; not production-wired
   BoardSessionAdapter.ts    # additive public live/replay composition; not production-wired
-  ReactDomBoardSessionRuntime.ts # exported opt-in composition; uninstantiated by routes
+  BoardSessionRuntime.ts         # additive renderer-neutral composition; uninstantiated by routes
+  ReactDomBoardSessionRuntime.ts # selected thin wrapper; still uninstantiated by routes
+  PixiBoardSessionRuntime.ts     # experimental thin wrapper; uninstantiated by routes
   model/createBoardRenderModel.ts
   layout/boardGeometry.ts
   input/BoardInputController.ts

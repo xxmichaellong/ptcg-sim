@@ -133,7 +133,7 @@ For each candidate:
 | Candidate capability                        | Expected disposition         | Required proof                                                               |
 | ------------------------------------------- | ---------------------------- | ---------------------------------------------------------------------------- |
 | React imperative host lifecycle             | Adapt                        | 100 mount/destroy cycles, StrictMode, stale init and failure tests           |
-| Pixi context recovery/teardown              | Adapt only if Pixi wins      | Context-loss matrix, resource counters, private-texture purge                |
+| Pixi context recovery/teardown              | Retain in unwired spike      | Context-loss matrix, resource counters, private-texture purge                |
 | Resize/pointer capture helpers              | Extract/adapt                | Flip/split/fullscreen and pointercancel/overlay E2E                          |
 | Welcome/heartbeat/reconnect concepts        | Reimplement to PTCG contract | Runtime message validation, outbox/frontier, supersession and recovery tests |
 | Command sequence/frontier                   | Adapt with durability        | Duplicate/gap/crash/hibernation fault suite                                  |
