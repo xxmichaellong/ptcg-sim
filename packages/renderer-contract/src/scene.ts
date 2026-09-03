@@ -20,6 +20,7 @@ import {
   layoutLegacyOrdinaryEvolutionStack,
   layoutLegacySingleEnergyAttachmentStack,
   layoutLegacySingleTrainerToolAttachmentStack,
+  layoutLegacyTwoEnergyAttachmentStack,
   legacyPileTopIndex,
   type BoardLayoutSnapshot,
   type BoardLayoutState,
@@ -358,16 +359,17 @@ const isCharacterizedDefaultInPlayLayout = (
   );
 };
 
-const isCharacterizedSingleActiveAttachmentStructure = (
+const isCharacterizedActiveAttachmentStructure = (
   stack: MatchViewState['stacks'][string],
   board: MatchViewState['boards'][string],
   playerId: PlayerId,
   side: BoardSide,
   region: BoardLayoutSnapshot['players'][number]['regions'][number],
-  layoutIsCharacterized: boolean
+  layoutIsCharacterized: boolean,
+  attachmentCount: 1 | 2
 ): boolean => {
   const base = stack.evolutionCards[0];
-  const attachment = stack.attachmentCards[0];
+  const attachments = stack.attachmentCards;
   const bounds = region.physicalDeclaredBounds;
   const expectedDeclaredBounds =
     side === 'local'
@@ -415,7 +417,7 @@ const isCharacterizedSingleActiveAttachmentStructure = (
     board.benchStackIds.length === 0 &&
     stack.boardPlayerId === playerId &&
     stack.evolutionCards.length === 1 &&
-    stack.attachmentCards.length === 1 &&
+    attachments.length === attachmentCount &&
     stack.rotationQuarterTurns === 0 &&
     stack.damage === null &&
     stack.specialCondition === null &&
@@ -434,11 +436,14 @@ const isCharacterizedSingleActiveAttachmentStructure = (
     base.face === 'up' &&
     base.orientationQuarterTurns === 0 &&
     base.abilityUsed === false &&
-    attachment?.kind === 'known' &&
-    attachment.ownerId === playerId &&
-    attachment.face === 'up' &&
-    attachment.orientationQuarterTurns === 0 &&
-    attachment.abilityUsed === false
+    attachments.every(
+      (attachment) =>
+        attachment.kind === 'known' &&
+        attachment.ownerId === playerId &&
+        attachment.face === 'up' &&
+        attachment.orientationQuarterTurns === 0 &&
+        attachment.abilityUsed === false
+    )
   );
 };
 
@@ -454,17 +459,47 @@ const isCharacterizedSingleEnergyAttachmentStack = (
   const bounds = region.physicalDeclaredBounds;
   const authoredWidth = (Math.round(bounds.height * CARD_ASPECT_RATIO) * 7) / 6;
   return (
-    isCharacterizedSingleActiveAttachmentStructure(
+    isCharacterizedActiveAttachmentStructure(
       stack,
       board,
       playerId,
       side,
       region,
-      layoutIsCharacterized
+      layoutIsCharacterized,
+      1
     ) &&
     authoredWidth <= bounds.width &&
     energy?.kind === 'known' &&
     energy.category === 'Energy'
+  );
+};
+
+const isCharacterizedTwoEnergyAttachmentStack = (
+  stack: MatchViewState['stacks'][string],
+  board: MatchViewState['boards'][string],
+  playerId: PlayerId,
+  side: BoardSide,
+  region: BoardLayoutSnapshot['players'][number]['regions'][number],
+  layoutIsCharacterized: boolean
+): boolean => {
+  const bounds = region.physicalDeclaredBounds;
+  const baseCssomClientWidth = Math.round(bounds.height * CARD_ASPECT_RATIO);
+  const authoredWidth = baseCssomClientWidth + (2 * baseCssomClientWidth) / 6;
+  return (
+    isCharacterizedActiveAttachmentStructure(
+      stack,
+      board,
+      playerId,
+      side,
+      region,
+      layoutIsCharacterized,
+      2
+    ) &&
+    authoredWidth <= bounds.width &&
+    stack.attachmentCards.every(
+      (attachment) =>
+        attachment.kind === 'known' && attachment.category === 'Energy'
+    )
   );
 };
 
@@ -483,13 +518,14 @@ const isCharacterizedSingleTrainerToolAttachmentStack = (
   const authoredWidth = (Math.round(bounds.height * CARD_ASPECT_RATIO) * 7) / 6;
   const marginRight = bounds.width * 0.02;
   return (
-    isCharacterizedSingleActiveAttachmentStructure(
+    isCharacterizedActiveAttachmentStructure(
       stack,
       board,
       playerId,
       side,
       region,
-      layoutIsCharacterized
+      layoutIsCharacterized,
+      1
     ) &&
     Number.isFinite(marginRight) &&
     marginRight >= 0 &&
@@ -849,6 +885,19 @@ export const createBoardScene = (
               CARD_ASPECT_RATIO
             )
           : null;
+      const twoEnergyAttachmentLayout = isCharacterizedTwoEnergyAttachmentStack(
+        stack,
+        board,
+        playerId,
+        side,
+        slotRegions[stack.slot],
+        defaultInPlayLayoutIsCharacterized
+      )
+        ? layoutLegacyTwoEnergyAttachmentStack(
+            slotRegions[stack.slot],
+            CARD_ASPECT_RATIO
+          )
+        : null;
       const singleTrainerToolAttachmentLayout =
         isCharacterizedSingleTrainerToolAttachmentStack(
           stack,
@@ -881,11 +930,14 @@ export const createBoardScene = (
         const ordinaryCardLayout = ordinaryEvolutionLayout?.cards[index];
         const singleEnergyBaseLayout =
           index === 0 ? singleEnergyAttachmentLayout?.base : undefined;
+        const twoEnergyBaseLayout =
+          index === 0 ? twoEnergyAttachmentLayout?.base : undefined;
         const singleTrainerToolBaseLayout =
           index === 0 ? singleTrainerToolAttachmentLayout?.base : undefined;
         const characterizedCardLayout =
           ordinaryCardLayout ??
           singleEnergyBaseLayout ??
+          twoEnergyBaseLayout ??
           singleTrainerToolBaseLayout;
         const node = makeCardNode(view, card, {
           parentId: stack.id,
@@ -914,10 +966,11 @@ export const createBoardScene = (
       stack.attachmentCards.forEach((card, index) => {
         const singleEnergyLayout =
           index === 0 ? singleEnergyAttachmentLayout?.energy : undefined;
+        const twoEnergyLayout = twoEnergyAttachmentLayout?.energies[index];
         const singleTrainerToolLayout =
           index === 0 ? singleTrainerToolAttachmentLayout?.tool : undefined;
         const characterizedAttachmentLayout =
-          singleEnergyLayout ?? singleTrainerToolLayout;
+          singleEnergyLayout ?? twoEnergyLayout ?? singleTrainerToolLayout;
         registerCard(
           makeCardNode(view, card, {
             parentId: stack.id,

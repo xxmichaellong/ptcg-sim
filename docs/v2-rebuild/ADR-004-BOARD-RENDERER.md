@@ -138,12 +138,14 @@ Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
   the bottom-owner stadium; the source also measures the top-owner stadium but
   that candidate branch is unit-only. Separate strict gates match all 12
   local/opponent active/bench ordinary-evolution boxes and the four-card
-  local/opponent one-Energy and Trainer-as-Tool active fixtures at the default
-  1600×900 DPR-1 sidebar, even-split, unflipped state. Tool coverage separates
-  pre-transform and painted quarter-turn bounds and verifies shared/native hit
-  regions. These paths do not yet claim alternate layout states, mixed/multiple
-  attachments, markers, BREAK/compound rotation, overflow, Tool-specific Pixi
-  paint parity, full paint or interaction parity, cover-open UX, or opened-zone
+  local/opponent one-Energy and Trainer-as-Tool active fixtures plus all six
+  stable local/opponent two-Energy boxes at the default 1600×900 DPR-1 sidebar,
+  even-split, unflipped state. Tool coverage separates pre-transform and painted
+  quarter-turn bounds; the two-Energy path verifies canonical inner/outer z and
+  native hit order. These paths do not yet claim alternate layout states,
+  mixed/three-plus attachments, transition animation or transient departure
+  DOM, markers, BREAK/compound rotation, overflow, Tool-specific Pixi paint
+  parity, full paint or interaction parity, cover-open UX, or opened-zone
   layout, and the sidebar content rectangle is derived from measured shell/tab
   edges);
 - all protected pointer, keyboard, menu, zone-browser, replay, reconnect, and

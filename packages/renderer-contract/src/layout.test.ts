@@ -15,6 +15,7 @@ import {
   layoutLegacyPlayStackHitRegions,
   layoutLegacySingleEnergyAttachmentStack,
   layoutLegacySingleTrainerToolAttachmentStack,
+  layoutLegacyTwoEnergyAttachmentStack,
   legacyPileTopIndex,
   legacyResizeHandlesCollide,
   type BoardLayoutState,
@@ -731,6 +732,118 @@ describe('renderer-neutral legacy board layout', () => {
         )
       ).toThrow('finite and positive');
     }
+  });
+
+  it('pins stable two-Energy active geometry from integer CSSOM width', () => {
+    const layout = createBoardLayoutSnapshot(
+      state({ viewport: { width: 1600, height: 900, devicePixelRatio: 1 } })
+    );
+    const expected = {
+      local: {
+        flexX: 544,
+        baseX: 544,
+        energyXs: [559, 574],
+      },
+      opponent: {
+        flexX: 544,
+        baseX: 573.7954545454545,
+        energyXs: [558.7954545454545, 543.7954545454545],
+      },
+    } as const;
+    for (const side of ['local', 'opponent'] as const) {
+      const active = findBoardLayoutRegion(layout, side, 'active');
+      const result = layoutLegacyTwoEnergyAttachmentStack(
+        active,
+        CARD_ASPECT_RATIO
+      );
+      expect(result.baseCssomClientWidth).toBe(90);
+      expect(result.attachmentOffset).toBe(15);
+      expect(result.authoredWidth).toBe(120);
+      expect(result.stableCssomClientWidth).toBe(120);
+      expectRectClose(result.flexItemBounds, {
+        x: expected[side].flexX,
+        y: side === 'local' ? 481.5 : 292.5,
+        width: 120,
+        height: 126,
+      });
+      expect(result.base.sourceZIndex).toBe(0);
+      expect(result.energies.map((energy) => energy.sourceZIndex)).toEqual([
+        -1, -2,
+      ]);
+      for (const card of [result.base, ...result.energies]) {
+        expect(card.bounds.y).toBeCloseTo(side === 'local' ? 481.5 : 292.5, 10);
+        expect(card.bounds.width).toBeCloseTo(90.20454545454545, 10);
+        expect(card.bounds.height).toBeCloseTo(126, 10);
+      }
+      expect(result.base.bounds.x).toBeCloseTo(expected[side].baseX, 10);
+      expect(result.energies[0].bounds.x).toBeCloseTo(
+        expected[side].energyXs[0],
+        10
+      );
+      expect(result.energies[1].bounds.x).toBeCloseTo(
+        expected[side].energyXs[1],
+        10
+      );
+      expect(
+        result.energies.map((energy) =>
+          Math.abs(energy.bounds.x - result.base.bounds.x)
+        )
+      ).toEqual([result.attachmentOffset, result.attachmentOffset * 2]);
+    }
+  });
+
+  it('fails closed outside two-Energy active geometry inputs', () => {
+    const layout = createBoardLayoutSnapshot(state());
+    const active = findBoardLayoutRegion(layout, 'local', 'active');
+    const bench = findBoardLayoutRegion(layout, 'local', 'bench');
+    const hand = findBoardLayoutRegion(layout, 'local', 'hand');
+    expect(() =>
+      layoutLegacyTwoEnergyAttachmentStack(bench, CARD_ASPECT_RATIO)
+    ).toThrow('active play slot');
+    expect(() =>
+      layoutLegacyTwoEnergyAttachmentStack(hand, CARD_ASPECT_RATIO)
+    ).toThrow('active play slot');
+    expect(() =>
+      layoutLegacyTwoEnergyAttachmentStack(
+        { ...active, surface: 'zone' },
+        CARD_ASPECT_RATIO
+      )
+    ).toThrow('active play slot');
+    for (const aspectRatio of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(() =>
+        layoutLegacyTwoEnergyAttachmentStack(active, aspectRatio)
+      ).toThrow('aspect ratio');
+    }
+    expect(() => layoutLegacyTwoEnergyAttachmentStack(active, 100)).toThrow(
+      'flex shrink'
+    );
+    for (const physicalDeclaredBounds of [
+      { ...active.physicalDeclaredBounds, x: Number.NaN },
+      { ...active.physicalDeclaredBounds, y: Number.NEGATIVE_INFINITY },
+      { ...active.physicalDeclaredBounds, width: 0 },
+      { ...active.physicalDeclaredBounds, width: -1 },
+      { ...active.physicalDeclaredBounds, height: 0 },
+      { ...active.physicalDeclaredBounds, height: -1 },
+    ]) {
+      expect(() =>
+        layoutLegacyTwoEnergyAttachmentStack(
+          { ...active, physicalDeclaredBounds },
+          CARD_ASPECT_RATIO
+        )
+      ).toThrow('finite and positive');
+    }
+    expect(() =>
+      layoutLegacyTwoEnergyAttachmentStack(
+        {
+          ...active,
+          physicalDeclaredBounds: {
+            ...active.physicalDeclaredBounds,
+            height: 0.1,
+          },
+        },
+        0.1
+      )
+    ).toThrow('CSSOM base width');
   });
 
   it('pins stable one-Trainer-as-Tool active geometry and trailing margin', () => {

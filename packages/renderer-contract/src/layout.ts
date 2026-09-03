@@ -291,6 +291,25 @@ export interface LegacySingleEnergyAttachmentStackLayout {
   readonly energy: LegacySingleEnergyAttachmentCardLayout;
 }
 
+export interface LegacyTwoEnergyAttachmentStackLayout {
+  /** Stable post-refresh play-container border box. */
+  readonly flexItemBounds: Rect;
+  /** Integer base-image width read by v1 through CSSOM clientWidth. */
+  readonly baseCssomClientWidth: number;
+  /** Horizontal step authored by attachCard from base clientWidth / 6. */
+  readonly attachmentOffset: number;
+  /** Fractional width authored by adjustCards after refresh. */
+  readonly authoredWidth: number;
+  /** Integer width exposed by the stable wrapper through CSSOM clientWidth. */
+  readonly stableCssomClientWidth: number;
+  readonly base: LegacySingleEnergyAttachmentCardLayout;
+  /** Returned in the same inner-to-outer order supplied by canonical state. */
+  readonly energies: readonly [
+    LegacySingleEnergyAttachmentCardLayout,
+    LegacySingleEnergyAttachmentCardLayout,
+  ];
+}
+
 export interface LegacySingleTrainerToolAttachmentCardLayout {
   readonly bounds: Rect;
   /** The exact image z-index emitted by v1 attachCard. */
@@ -1116,9 +1135,9 @@ export const layoutLegacyOrdinaryEvolutionStack = (
   };
 };
 
-type LegacySingleAttachmentKind = 'energy' | 'trainerTool';
+type LegacyAttachmentKind = 'energy' | 'trainerTool';
 
-interface LegacySingleAttachmentStackGeometry {
+interface LegacyAttachmentStackGeometry {
   readonly flexItemBounds: Rect;
   readonly baseCssomClientWidth: number;
   readonly attachmentOffset: number;
@@ -1126,22 +1145,28 @@ interface LegacySingleAttachmentStackGeometry {
   readonly stableCssomClientWidth: number;
   readonly marginRight: number;
   readonly base: LegacySingleEnergyAttachmentCardLayout;
-  readonly attachment: LegacySingleEnergyAttachmentCardLayout;
+  readonly attachments: readonly LegacySingleEnergyAttachmentCardLayout[];
 }
 
-const layoutLegacySingleAttachmentStack = (
+const layoutLegacyAttachmentStack = (
   region: BoardLayoutRegion,
   cardAspectRatio: number,
-  kind: LegacySingleAttachmentKind
-): LegacySingleAttachmentStackGeometry => {
-  let sourceName: 'Single-Energy' | 'Single-Trainer-as-Tool';
+  kind: LegacyAttachmentKind,
+  attachmentCount: 1 | 2
+): LegacyAttachmentStackGeometry => {
+  let sourceName: 'Single-Energy' | 'Two-Energy' | 'Single-Trainer-as-Tool';
   let marginRightRatio: 0 | 0.02;
   switch (kind) {
     case 'energy':
-      sourceName = 'Single-Energy';
+      sourceName = attachmentCount === 1 ? 'Single-Energy' : 'Two-Energy';
       marginRightRatio = 0;
       break;
     case 'trainerTool':
+      if (attachmentCount !== 1) {
+        throw new Error(
+          'Trainer-as-Tool layout requires exactly one attachment'
+        );
+      }
       sourceName = 'Single-Trainer-as-Tool';
       marginRightRatio = 0.02;
       break;
@@ -1171,7 +1196,8 @@ const layoutLegacySingleAttachmentStack = (
     throw new Error(`${sourceName} CSSOM base width must be positive`);
   }
   const attachmentOffset = baseCssomClientWidth / 6;
-  const authoredWidth = baseCssomClientWidth + attachmentOffset;
+  const authoredWidth =
+    baseCssomClientWidth + attachmentCount * attachmentOffset;
   const marginRight = bounds.width * marginRightRatio;
   const flexOuterWidth = authoredWidth + marginRight;
   if (flexOuterWidth > bounds.width) {
@@ -1186,10 +1212,7 @@ const layoutLegacySingleAttachmentStack = (
     region.side === 'local' ? centeredOuterX : centeredOuterX + marginRight;
   const baseX =
     region.side === 'local' ? flexItemX : flexItemX + authoredWidth - cardWidth;
-  const attachmentX =
-    region.side === 'local'
-      ? baseX + attachmentOffset
-      : baseX - attachmentOffset;
+  const attachmentDirection = region.side === 'local' ? 1 : -1;
   return {
     flexItemBounds: {
       x: flexItemX,
@@ -1206,15 +1229,15 @@ const layoutLegacySingleAttachmentStack = (
       bounds: { x: baseX, y: bounds.y, width: cardWidth, height: cardHeight },
       sourceZIndex: 0,
     },
-    attachment: {
+    attachments: Array.from({ length: attachmentCount }, (_, index) => ({
       bounds: {
-        x: attachmentX,
+        x: baseX + attachmentDirection * attachmentOffset * (index + 1),
         y: bounds.y,
         width: cardWidth,
         height: cardHeight,
       },
-      sourceZIndex: -1,
-    },
+      sourceZIndex: -(index + 1),
+    })),
   };
 };
 
@@ -1229,11 +1252,14 @@ export const layoutLegacySingleEnergyAttachmentStack = (
   region: BoardLayoutRegion,
   cardAspectRatio: number
 ): LegacySingleEnergyAttachmentStackLayout => {
-  const result = layoutLegacySingleAttachmentStack(
+  const result = layoutLegacyAttachmentStack(
     region,
     cardAspectRatio,
-    'energy'
+    'energy',
+    1
   );
+  const energy = result.attachments[0];
+  if (!energy) throw new Error('Single-Energy layout lost its attachment');
   return {
     flexItemBounds: result.flexItemBounds,
     baseCssomClientWidth: result.baseCssomClientWidth,
@@ -1241,7 +1267,39 @@ export const layoutLegacySingleEnergyAttachmentStack = (
     authoredWidth: result.authoredWidth,
     stableCssomClientWidth: result.stableCssomClientWidth,
     base: result.base,
-    energy: result.attachment,
+    energy,
+  };
+};
+
+/**
+ * Stable geometry for the narrow one-base/two-Energy active-stack path. The
+ * public canonical card ratio determines paint size; v1 derives the two
+ * inner-to-outer offsets and refreshed wrapper width from the rounded CSSOM
+ * base width. Every noncanonical state remains a caller-side exclusion.
+ */
+export const layoutLegacyTwoEnergyAttachmentStack = (
+  region: BoardLayoutRegion,
+  cardAspectRatio: number
+): LegacyTwoEnergyAttachmentStackLayout => {
+  const result = layoutLegacyAttachmentStack(
+    region,
+    cardAspectRatio,
+    'energy',
+    2
+  );
+  const firstEnergy = result.attachments[0];
+  const secondEnergy = result.attachments[1];
+  if (!firstEnergy || !secondEnergy) {
+    throw new Error('Two-Energy layout lost an attachment');
+  }
+  return {
+    flexItemBounds: result.flexItemBounds,
+    baseCssomClientWidth: result.baseCssomClientWidth,
+    attachmentOffset: result.attachmentOffset,
+    authoredWidth: result.authoredWidth,
+    stableCssomClientWidth: result.stableCssomClientWidth,
+    base: result.base,
+    energies: [firstEnergy, secondEnergy],
   };
 };
 
@@ -1256,11 +1314,15 @@ export const layoutLegacySingleTrainerToolAttachmentStack = (
   region: BoardLayoutRegion,
   cardAspectRatio: number
 ): LegacySingleTrainerToolAttachmentStackLayout => {
-  const result = layoutLegacySingleAttachmentStack(
+  const result = layoutLegacyAttachmentStack(
     region,
     cardAspectRatio,
-    'trainerTool'
+    'trainerTool',
+    1
   );
+  const tool = result.attachments[0];
+  if (!tool)
+    throw new Error('Single-Trainer-as-Tool layout lost its attachment');
   return {
     flexItemBounds: result.flexItemBounds,
     baseCssomClientWidth: result.baseCssomClientWidth,
@@ -1269,7 +1331,7 @@ export const layoutLegacySingleTrainerToolAttachmentStack = (
     stableCssomClientWidth: result.stableCssomClientWidth,
     marginRight: result.marginRight,
     base: result.base,
-    tool: result.attachment,
+    tool,
   };
 };
 

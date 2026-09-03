@@ -73,8 +73,12 @@ MutationObserver cleanup. The immediate departure and synchronous refresh
 phases are diagnostic; the observer-settled state is the parity oracle. Both
 histories converge to the already characterized one-Energy source geometry, so
 canonical post-departure state can use the existing strict production path.
-This checkpoint does not itself compare a candidate renderer or add a new
-production geometry gate. Mixed/Tool attachments, three or more Energy,
-category history, evolution or base departures, staged restore, bench/flex
-contention, markers, BREAK/rotation, alternate layouts and assets, destination
-UX, candidate input, Pixi, and server/network behavior remain excluded.
+Its browser companion also compares the stable pre-departure two-Energy source
+boxes, rotations, z ranks, and four hit regions with a narrowly gated production
+scene and separately mounted React DOM renderer. This comparison does not apply
+to the diagnostic departure/ghost phases or claim transition animation,
+candidate wrapper/sibling identity, or Pixi paint/hit parity. Mixed/Tool
+attachments, three or more Energy, category history, evolution or base
+departures, staged restore, bench/flex contention, markers, BREAK/rotation,
+alternate layouts and assets, destination UX, candidate click/drag behavior,
+and server/network behavior remain excluded.

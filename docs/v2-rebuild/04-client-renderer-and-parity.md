@@ -279,14 +279,26 @@ synchronous two-wrapper refresh state are diagnostic. After the real legacy
 MutationObserver settles, both histories normalize to the same one-Energy
 source geometry already covered by the strict production gate.
 
-This compaction checkpoint validates source-side convergence only: it does not
-add another renderer-contract layout or independently prove React DOM/Pixi
-post-departure parity. Renderers consume canonical post-command state and do
-not reproduce transient DOM history. Mixed/Tool ordering, three or more
-Energy, category history, evolution/base departure, staged restore,
-bench/flex contention, markers, BREAK/rotation, alternate layouts and assets,
-destination UX, candidate input, Pixi paint/hit, and network behavior remain
-later gates.
+`layoutLegacyTwoEnergyAttachmentStack` now selects only the stable source shape:
+one known same-owner Pokémon base and exactly two known same-owner Energy cards,
+all face-up, unrotated, and marker-free, in the sole active stack at the exact
+captured default layout. It uses only projected fields and the public 63:88
+ratio. The rounded 90 px base width yields 15/30 px attachment offsets, a 120 px
+wrapper, source layers `0/-1/-2` mapped to scene z `300/299/298`, and
+outer-Energy → inner-Energy → base renderer order. Chromium directly matches all
+six production scene/React DOM boxes, rotations, z ranks, and the common,
+attachment-overlap, outermost-Energy, and base-only native hit regions to the
+stable source within 2 px / 1% / 0.1 degrees.
+
+Departure remains a state handoff rather than renderer history. Removing either
+Energy from authoritative state selects the existing one-Energy layout for the
+correct survivor; removing the final Energy returns to generic no-attachment
+geometry. The transient `parseInt` drift and ghost wrapper are source-only
+diagnostics and are never reproduced by a renderer. Mixed/Tool ordering, three
+or more Energy, category-history interactions, evolution/base departure,
+staged restore, bench/flex contention, markers, BREAK/rotation, alternate
+layouts and assets, destination UX, candidate click/drag behavior, Pixi
+paint/hit, and network behavior remain later gates.
 
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during

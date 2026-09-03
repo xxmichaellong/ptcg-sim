@@ -1,4 +1,16 @@
 import { expect, test } from '@playwright/test';
+import {
+  asViewCardId,
+  type MatchViewState,
+  type PlayerId,
+} from '../../packages/game-core/src/index.js';
+import {
+  BOARD_LAYOUT_GEOMETRY_VERSION,
+  createBoardLayoutSnapshot,
+  createBoardScene,
+  createRendererSpikeView,
+  DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+} from '../../packages/renderer-contract/src/index.js';
 
 import oneEnergyOracle from '../legacy-fixtures/renderer/energy-attachment-reflow-v1.json' with { type: 'json' };
 import oracle from '../legacy-fixtures/renderer/two-energy-attachment-compaction-v1.json' with { type: 'json' };
@@ -22,6 +34,88 @@ type Point = { readonly x: number; readonly y: number };
 type Role = 'base' | 'energy1' | 'energy2';
 type HitRegion =
   'allCardOverlap' | 'attachmentOverlap' | 'outermostAttachment' | 'baseOnly';
+
+const createCandidateTwoEnergyScene = () => {
+  const base = createRendererSpikeView();
+  const localPlayerId = base.playerOrder[0];
+  const opponentPlayerId = base.playerOrder[1];
+  const definitions = Object.values(base.definitions);
+  const pokemonDefinition = definitions.find(
+    (definition) => definition.category === 'Pokémon'
+  );
+  const energyDefinition = definitions.find(
+    (definition) => definition.category === 'Energy'
+  );
+  if (
+    !localPlayerId ||
+    !opponentPlayerId ||
+    !pokemonDefinition ||
+    !energyDefinition
+  ) {
+    throw new Error('Renderer spike fixture lacks two-Energy scene inputs');
+  }
+  const makeCard = (
+    id: string,
+    ownerId: PlayerId,
+    category: 'Pokémon' | 'Energy'
+  ) => ({
+    kind: 'known' as const,
+    id: asViewCardId(id),
+    definitionId:
+      category === 'Pokémon' ? pokemonDefinition.id : energyDefinition.id,
+    ownerId,
+    category,
+    face: 'up' as const,
+    orientationQuarterTurns: 0 as const,
+    abilityUsed: false,
+    publiclyRevealed: false,
+  });
+  const makeStack = (side: LegacyFixtureSide, boardPlayerId: PlayerId) => ({
+    id: `${side}-inner-two-energy-stack`,
+    boardPlayerId,
+    slot: 'active' as const,
+    evolutionCards: [makeCard(`${side}-inner-base`, boardPlayerId, 'Pokémon')],
+    attachmentCards: [
+      makeCard(`${side}-inner-energy-1`, boardPlayerId, 'Energy'),
+      makeCard(`${side}-inner-energy-2`, boardPlayerId, 'Energy'),
+    ],
+    rotationQuarterTurns: 0 as const,
+    damage: null,
+    specialCondition: null,
+    abilityUsed: false,
+  });
+  const local = makeStack('local', localPlayerId);
+  const opponent = makeStack('opponent', opponentPlayerId);
+  const view: MatchViewState = {
+    ...base,
+    revision: base.revision + 1,
+    zones: Object.fromEntries(
+      Object.entries(base.zones).map(([id, zone]) => [
+        id,
+        { ...zone, cards: [] },
+      ])
+    ),
+    boards: {
+      [localPlayerId]: { activeStackId: local.id, benchStackIds: [] },
+      [opponentPlayerId]: {
+        activeStackId: opponent.id,
+        benchStackIds: [],
+      },
+    },
+    stacks: { [local.id]: local, [opponent.id]: opponent },
+  };
+  return createBoardScene(
+    view,
+    createBoardLayoutSnapshot({
+      geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
+      viewport: oracle.input.viewport,
+      playerIds: [localPlayerId, opponentPlayerId],
+      bottomPlayerId: localPlayerId,
+      shellMode: 'sidebar',
+      vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+    })
+  );
+};
 
 interface ExpectedPhase {
   readonly cardCount: number;
@@ -577,4 +671,352 @@ test('checked-in legacy sources characterize two-Energy departure compaction', a
   await page.waitForTimeout(0);
   expect(blockedNetworkDiagnostics.length).toBeGreaterThan(0);
   expect(runtimeErrors).toEqual([]);
+});
+
+test('stable two-Energy source geometry matches the React DOM candidate', async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== 'chromium',
+    'This source-to-candidate gate is Chromium-specific.'
+  );
+  const candidateScene = createCandidateTwoEnergyScene();
+  await page.setViewportSize(oracle.input.viewport);
+  const capture = await captureLegacySourceTwoEnergyCompactionFixture(page);
+  const sourceCases = (['local', 'opponent'] as const).map((side) => {
+    const fixtureCase = capture.cases.find(
+      (candidate) => candidate.side === side && candidate.branch === 'inner'
+    );
+    if (!fixtureCase) {
+      throw new Error(`Missing stable two-Energy source case for ${side}`);
+    }
+    return fixtureCase;
+  });
+  const sourceCards = sourceCases.flatMap(
+    (fixtureCase) => fixtureCase.stablePreDeparture.cards
+  );
+  expect(sourceCards).toHaveLength(6);
+  expect(candidateScene.cards).toHaveLength(6);
+  expect(new Set(candidateScene.cards.map((card) => card.id))).toEqual(
+    new Set(sourceCards.map((card) => card.id))
+  );
+  expect(candidateScene.markers).toEqual([]);
+
+  await page.unrouteAll({ behavior: 'wait' });
+  const candidateRuntimeErrors: string[] = [];
+  page.on('pageerror', (error) => {
+    candidateRuntimeErrors.push(`pageerror: ${error.message}`);
+  });
+  page.on('console', (message) => {
+    if (message.type() === 'error') {
+      candidateRuntimeErrors.push(`console: ${message.text()}`);
+    }
+  });
+  await page.goto('/?renderer=dom');
+  await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
+    'data-renderer-status',
+    'ready'
+  );
+  await page.evaluate(async (scene) => {
+    const spike = (
+      window as typeof window & {
+        __PTCG_RENDERER_SPIKE__?: {
+          createRenderer(adapters: {
+            emitIntent(): void;
+            emitPresentationUpdate(): void;
+            reportError(error: unknown): void;
+          }): {
+            mount(
+              host: HTMLElement,
+              candidateScene: typeof scene,
+              presentation: {
+                selectedCardId: null;
+                hoveredCardId: null;
+                drag: null;
+                openedZoneId: null;
+              }
+            ): Promise<void>;
+            destroy(): void;
+          };
+        };
+      }
+    ).__PTCG_RENDERER_SPIKE__;
+    if (!spike?.createRenderer) {
+      throw new Error('Missing renderer spike factory test seam');
+    }
+    const host = document.createElement('div');
+    host.dataset.twoEnergyCandidateHost = 'true';
+    Object.assign(host.style, {
+      position: 'fixed',
+      left: '0px',
+      top: '0px',
+      width: `${scene.viewport.width}px`,
+      height: `${scene.viewport.height}px`,
+      zIndex: '20000',
+    });
+    document.body.append(host);
+    const renderer = spike.createRenderer({
+      emitIntent: () => undefined,
+      emitPresentationUpdate: () => undefined,
+      reportError: (error) => {
+        host.dataset.rendererError = String(error);
+      },
+    });
+    await renderer.mount(host, scene, {
+      selectedCardId: null,
+      hoveredCardId: null,
+      drag: null,
+      openedZoneId: null,
+    });
+    (
+      window as typeof window & {
+        __PTCG_TWO_ENERGY_CANDIDATE_RENDERER__?: { destroy(): void };
+      }
+    ).__PTCG_TWO_ENERGY_CANDIDATE_RENDERER__ = renderer;
+  }, candidateScene);
+  const candidateHost = page.locator('[data-two-energy-candidate-host]');
+  await expect(candidateHost).not.toHaveAttribute('data-renderer-error', /.+/u);
+  await expect(
+    candidateHost.locator('[data-card-id="local-inner-base"]')
+  ).toBeVisible();
+
+  const candidateEvidence: {
+    cards: Array<{
+      id: string;
+      sceneBounds: Rect;
+      renderedBounds: Rect;
+      rotationDegrees: number;
+      zIndex: number;
+    }>;
+    stacks: Array<{
+      id: string;
+      sceneOrder: string[];
+      domOrder: string[];
+      hitOrder: Record<HitRegion, string[]>;
+    }>;
+  } = { cards: [], stacks: [] };
+  for (const sourceCard of sourceCards) {
+    const candidate = candidateScene.cards.find(
+      (card) => card.id === sourceCard.id
+    );
+    if (!candidate) {
+      throw new Error(`Missing candidate card ${sourceCard.id}`);
+    }
+    const expectedZIndex =
+      sourceCard.role === 'base'
+        ? 300
+        : sourceCard.role === 'energy1'
+          ? 299
+          : 298;
+    expect(candidate).toMatchObject({
+      side: sourceCard.side,
+      role: sourceCard.role === 'base' ? 'stackEvolution' : 'stackAttachment',
+      zIndex: expectedZIndex,
+      rotationQuarterTurns: sourceCard.side === 'local' ? 0 : 2,
+      interactive: true,
+    });
+    expectRectWithin(
+      candidate.bounds,
+      sourceCard.physicalBounds,
+      `${sourceCard.id}.scene`
+    );
+    expectSizeWithin(
+      candidate.bounds,
+      sourceCard.physicalBounds,
+      `${sourceCard.id}.scene`
+    );
+    const locator = candidateHost.locator(`[data-card-id="${sourceCard.id}"]`);
+    const renderedBounds = await locator.boundingBox();
+    if (!renderedBounds) {
+      throw new Error(`Candidate card is not visible: ${sourceCard.id}`);
+    }
+    expectRectWithin(
+      renderedBounds,
+      sourceCard.physicalBounds,
+      `${sourceCard.id}.rendered`
+    );
+    expectSizeWithin(
+      renderedBounds,
+      sourceCard.physicalBounds,
+      `${sourceCard.id}.rendered`
+    );
+    const rendered = await locator.evaluate((element) => {
+      const styles = getComputedStyle(element);
+      const matrix = new DOMMatrixReadOnly(styles.transform);
+      return {
+        rotationDegrees:
+          ((Math.atan2(matrix.b, matrix.a) * 180) / Math.PI + 360) % 360,
+        zIndex: Number.parseInt(styles.zIndex, 10),
+      };
+    });
+    expect(
+      modularDegreesBetween(
+        rendered.rotationDegrees,
+        sourceCard.effectiveRotationDegrees
+      )
+    ).toBeLessThanOrEqual(oracle.tolerances.rotationDegrees);
+    expect(rendered.zIndex).toBe(expectedZIndex);
+    candidateEvidence.cards.push({
+      id: sourceCard.id,
+      sceneBounds: candidate.bounds,
+      renderedBounds,
+      ...rendered,
+    });
+  }
+
+  for (const sourceCase of sourceCases) {
+    const prefix = `${sourceCase.side}-inner-`;
+    const sceneOrder = candidateScene.cards
+      .filter(
+        (card) => card.parentId === sourceCase.stablePreDeparture.stack.id
+      )
+      .map((card) => card.id);
+    const result = await page.evaluate(
+      ({ prefix, side }) => {
+        const host = document.querySelector<HTMLElement>(
+          '[data-two-energy-candidate-host]'
+        );
+        if (!host) throw new Error('Missing two-Energy candidate host');
+        const requireCard = (role: 'base' | 'energy-1' | 'energy-2') => {
+          const element = host.querySelector<HTMLElement>(
+            `[data-card-id="${prefix}${role}"]`
+          );
+          if (!element) throw new Error(`Missing candidate ${prefix}${role}`);
+          return element.getBoundingClientRect();
+        };
+        const base = requireCard('base');
+        const energy1 = requireCard('energy-1');
+        const energy2 = requireCard('energy-2');
+        const idsAt = (x: number, y: number) =>
+          document
+            .elementsFromPoint(x, y)
+            .flatMap((element) => {
+              const card = element.closest<HTMLElement>('[data-card-id]');
+              return card && host.contains(card) && card.dataset.cardId
+                ? [card.dataset.cardId]
+                : [];
+            })
+            .filter(
+              (id, index, ids) =>
+                id.startsWith(prefix) && ids.indexOf(id) === index
+            );
+        const center = (bounds: {
+          left: number;
+          top: number;
+          right: number;
+          bottom: number;
+        }) => ({
+          x: (bounds.left + bounds.right) / 2,
+          y: (bounds.top + bounds.bottom) / 2,
+        });
+        const common = center({
+          left: Math.max(base.left, energy1.left, energy2.left),
+          top: Math.max(base.top, energy1.top, energy2.top),
+          right: Math.min(base.right, energy1.right, energy2.right),
+          bottom: Math.min(base.bottom, energy1.bottom, energy2.bottom),
+        });
+        const attachmentOverlap = center(
+          side === 'local'
+            ? {
+                left: base.right + 2,
+                top: Math.max(energy1.top, energy2.top),
+                right: Math.min(energy1.right, energy2.right) - 2,
+                bottom: Math.min(energy1.bottom, energy2.bottom),
+              }
+            : {
+                left: Math.max(energy1.left, energy2.left) + 2,
+                top: Math.max(energy1.top, energy2.top),
+                right: base.left - 2,
+                bottom: Math.min(energy1.bottom, energy2.bottom),
+              }
+        );
+        const outermostAttachment = center(
+          side === 'local'
+            ? {
+                left: energy1.right + 2,
+                top: energy2.top,
+                right: energy2.right - 2,
+                bottom: energy2.bottom,
+              }
+            : {
+                left: energy2.left + 2,
+                top: energy2.top,
+                right: energy1.left - 2,
+                bottom: energy2.bottom,
+              }
+        );
+        const baseOnly = center(
+          side === 'local'
+            ? {
+                left: base.left + 2,
+                top: base.top,
+                right: energy1.left - 2,
+                bottom: base.bottom,
+              }
+            : {
+                left: energy1.right + 2,
+                top: base.top,
+                right: base.right - 2,
+                bottom: base.bottom,
+              }
+        );
+        return {
+          domOrder: [
+            ...host.querySelectorAll<HTMLElement>(
+              `[data-card-id^="${prefix}"]`
+            ),
+          ].flatMap((card) =>
+            card.dataset.cardId ? [card.dataset.cardId] : []
+          ),
+          hitOrder: {
+            allCardOverlap: idsAt(common.x, common.y),
+            attachmentOverlap: idsAt(attachmentOverlap.x, attachmentOverlap.y),
+            outermostAttachment: idsAt(
+              outermostAttachment.x,
+              outermostAttachment.y
+            ),
+            baseOnly: idsAt(baseOnly.x, baseOnly.y),
+          },
+        };
+      },
+      { prefix, side: sourceCase.side }
+    );
+    expect(sceneOrder).toEqual([
+      `${prefix}energy-2`,
+      `${prefix}energy-1`,
+      `${prefix}base`,
+    ]);
+    expect(result.domOrder).toEqual(sceneOrder);
+    expect(result.hitOrder).toEqual(
+      sourceCase.stablePreDeparture.stack.hitOrder
+    );
+    candidateEvidence.stacks.push({
+      id: sourceCase.stablePreDeparture.stack.id,
+      sceneOrder,
+      ...result,
+    });
+  }
+
+  await testInfo.attach('react-dom-two-energy-attachment-parity.json', {
+    body: Buffer.from(JSON.stringify(candidateEvidence, null, 2)),
+    contentType: 'application/json',
+  });
+  await expect(candidateHost).not.toHaveAttribute('data-renderer-error', /.+/u);
+  const teardownError = await page.evaluate(async () => {
+    const fixtureWindow = window as typeof window & {
+      __PTCG_TWO_ENERGY_CANDIDATE_RENDERER__?: { destroy(): void };
+    };
+    const host = document.querySelector<HTMLElement>(
+      '[data-two-energy-candidate-host]'
+    );
+    fixtureWindow.__PTCG_TWO_ENERGY_CANDIDATE_RENDERER__?.destroy();
+    delete fixtureWindow.__PTCG_TWO_ENERGY_CANDIDATE_RENDERER__;
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    const error = host?.dataset.rendererError ?? null;
+    host?.remove();
+    return error;
+  });
+  expect(teardownError).toBeNull();
+  await page.waitForTimeout(0);
+  expect(candidateRuntimeErrors).toEqual([]);
 });

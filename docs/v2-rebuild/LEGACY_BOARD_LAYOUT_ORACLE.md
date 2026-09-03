@@ -407,7 +407,7 @@ excluded from this Tool gate. Every state excluded from all characterized
 strict paths retains generic scene geometry with no implicit Tool turn.
 
 `tests/browser/legacy-two-energy-attachment-compaction-geometry.spec.ts` adds a
-seventh, source-only checkpoint for two ordinary Energy attachments followed by
+seventh source checkpoint for two ordinary Energy attachments followed by
 direct inner/first or outer/second departure in independently constructed local
 and opponent active stacks. The stable source state records logical order
 `[base, E1, E2]`, DOM sibling order `[base, E2, E1]`, z indexes
@@ -426,13 +426,26 @@ connected and is removed by the real MutationObserver. Only the
 observer-settled state is a parity oracle; the earlier phases document legacy
 mutation history.
 
-Both departures therefore converge on the existing one-Energy source state and
-can use its strict production geometry after authoritative state compaction.
-This slice does not add a candidate comparison or production gate. It excludes
-mixed/Tool attachments, three or more Energy, category history, evolution/base
-departure, staged restore, bench/flex contention, markers, BREAK/rotation,
-alternate layouts and assets, destination UX, input, Pixi, and server/network
-behavior.
+The new strict production helper selects only this stable pre-departure shape:
+one known same-owner face-up Pokémon base and exactly two known same-owner
+face-up Energy cards, all unrotated and marker-free, in the sole active stack at
+the captured default layout. It uses the public 63:88 ratio rather than source
+asset dimensions, giving a rounded 90 px base, 15/30 px offsets, a 120 px
+wrapper, and scene z ranks `300/299/298`. State attachment order maps directly
+to inner/outer geometry, while the renderer-neutral scene remains
+back-to-front: E2, E1, base. Chromium matches all six scene and React DOM card
+boxes, rotations, z ranks, and four native hit regions to the stable source
+within 2 px / 1% / 0.1 degrees. Legacy wrapper and sibling identity are not a
+candidate requirement.
+
+Both departures converge on the existing one-Energy source state and select its
+strict production geometry after authoritative state compaction. The immediate
+drift and synchronous ghost wrapper remain source-only diagnostics: no renderer
+caches or recreates that history. Mixed/Tool attachments, three or more Energy,
+category-history interactions, evolution/base departure, staged restore,
+bench/flex contention, markers, BREAK/rotation, alternate layouts and assets,
+destination UX, candidate click/drag behavior, Pixi paint/hit, and
+server/network behavior remain excluded.
 
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
@@ -440,10 +453,10 @@ renderer-neutral scene and has structured scene assertions for all four board
 oracle fixtures, including asymmetric resize, flipped ownership, midpoint
 shared placement, compact and fullscreen states. The controlled hand/bench/
 attachment-stack fixture remains source-only; the narrower contained-card,
-ordinary-evolution, single-Energy, and Trainer-as-Tool fixtures feed and compare
-their strict production geometries. The two-Energy departure fixture remains
-source-only and proves stable convergence to the single-Energy source state.
-Raw normalized/authored inputs, box edges,
+ordinary-evolution, single-Energy, Trainer-as-Tool, and stable two-Energy
+fixtures feed and compare their strict production geometries. The two-Energy
+departure phases remain source-only and prove stable convergence to the
+single-Energy source state. Raw normalized/authored inputs, box edges,
 affordances,
 and semantic z evidence remain in the richer characterization snapshot rather
 than being duplicated in
