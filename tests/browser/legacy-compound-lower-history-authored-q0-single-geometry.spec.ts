@@ -475,6 +475,7 @@ test('checked-in legacy lower Alt-R pins the combined history-authored q0 matrix
   expect(capture.lowerNonzeroGroupRefreshAfterSingleCases).toEqual([]);
   expect(capture.lowerNonzeroSameLowerGroupAfterSingleCases).toEqual([]);
   expect(capture.lowerNonzeroDifferentLowerGroupAfterSingleCases).toEqual([]);
+  expect(capture.lowerNonzeroSameLowerSecondGroupAfterSingleCases).toEqual([]);
   expect(capture.nonzeroGroupSingleCases).toEqual([]);
   expect(capture.breakRefreshCases).toEqual([]);
   expect(

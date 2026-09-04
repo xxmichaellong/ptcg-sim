@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 822 v2 tests across 126 files. A separate suite
-passes 66 Playwright checks across 33 Chromium 151 browser files:
+The repository-wide gate passes 827 v2 tests across 127 files. A separate suite
+passes 70 Playwright checks across 35 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -662,7 +662,23 @@ passes 66 Playwright checks across 33 Chromium 151 browser files:
     no-refresh lifecycle, cleanup, and recursive provenance are pinned in two
     24-case Chromium runs. Repeats, intervening operations, alternate origins,
     attachments, candidate parity, and production/UI changes remain separate.
-32. The selected DOM implementation completes 100 mount → clear/reset → destroy
+32. A twenty-sixth source-only checkpoint pins forty-eight immediate second
+    same-lower whole-group rotations after checkpoint twenty-four. Every
+    pre-state and trace prefix equals its checkpoint-twenty-four post-state.
+    The selected middle/base q1→q2 `single=false` action advances both siblings
+    and preserves every BREAK flag. Active remains `1%`/`0%`; every bench
+    changes `3%`/`2%`→`1%`/`0%`, moving the wrapper and authored cards exactly
+    `+0.015625px` frame-local x. Painted rectangles are independently measured
+    because every card parity flips. Q1/q3 post geometry and ten-probe sets
+    collide internally despite different turns; q2 collides with checkpoint
+    eighteen's pre-divergence geometry, subject to the explicit top-BREAK bench
+    displacement. Exact inheritance, turns/flags, traces/actions, fresh
+    authored/painted rectangles, physical-frame mappings, stable identifiers,
+    three-observer/no-refresh lifecycle, cleanup, and recursive provenance are
+    pinned in two 24-case Chromium runs. Third/later turns, top/different-lower
+    followups, intervening operations, alternate origins, attachments,
+    candidate parity, and production/UI changes remain separate.
+33. The selected DOM implementation completes 100 mount → clear/reset → destroy
     cycles on one warmed route-owned host with the exact status sequence,
     complete scene IDs at mount, zero rendered scene children/IDs after clear and
     destroy, zero non-DOM diagnostic resources, and post-GC Chromium
@@ -744,6 +760,11 @@ card is split between
 `tests/browser/legacy-compound-lower-nonzero-different-lower-group-after-single-ordinary-geometry.spec.ts`
 and
 `tests/browser/legacy-compound-lower-nonzero-different-lower-group-after-single-break-geometry.spec.ts`.
+The immediate second whole-group rotation initiated by that same lower card is
+split between
+`tests/browser/legacy-compound-lower-nonzero-same-lower-second-group-after-single-ordinary-geometry.spec.ts`
+and
+`tests/browser/legacy-compound-lower-nonzero-same-lower-second-group-after-single-break-geometry.spec.ts`.
 The mixed-
 order suite validates a checked-in numeric oracle without mounting a candidate;
 the mixed-stack movement suite mounts React only for its two canonical settled
@@ -753,7 +774,7 @@ q1/q2/q3 and history-specific layout source-only. The bench-marker suite
 likewise keeps its q1/q2/q3 and observer history source-only, while comparing
 the separately composed clean-active-plus-sole-bench q0 production shape. The
 compound, BREAK-refresh, top/lower nonzero-group single-card and same-card
-follow-up plus immediate top-, same-lower-, or different-lower-group rotation or wrapper refresh after divergence, lower-group-
+follow-up plus immediate top-, same-lower-, different-lower-, or repeated-same-lower-group rotation or wrapper refresh after divergence, lower-group-
 initiator, and pristine/returned/history-authored-q0 lower single-card suites
 mount no candidate
 because they prove that projected rotation fields alone cannot recover

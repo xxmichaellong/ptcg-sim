@@ -1148,6 +1148,18 @@ export type LegacyCompoundRotationScenario =
   | 'breakMiddleGroupAfterBaseSingleAtGroupQ1'
   | 'breakMiddleGroupAfterBaseSingleAtGroupQ2'
   | 'breakMiddleGroupAfterBaseSingleAtGroupQ3'
+  | 'ordinaryMiddleSecondGroupAfterMiddleSingleAtGroupQ1'
+  | 'ordinaryMiddleSecondGroupAfterMiddleSingleAtGroupQ2'
+  | 'ordinaryMiddleSecondGroupAfterMiddleSingleAtGroupQ3'
+  | 'ordinaryBaseSecondGroupAfterBaseSingleAtGroupQ1'
+  | 'ordinaryBaseSecondGroupAfterBaseSingleAtGroupQ2'
+  | 'ordinaryBaseSecondGroupAfterBaseSingleAtGroupQ3'
+  | 'breakMiddleSecondGroupAfterMiddleSingleAtGroupQ1'
+  | 'breakMiddleSecondGroupAfterMiddleSingleAtGroupQ2'
+  | 'breakMiddleSecondGroupAfterMiddleSingleAtGroupQ3'
+  | 'breakBaseSecondGroupAfterBaseSingleAtGroupQ1'
+  | 'breakBaseSecondGroupAfterBaseSingleAtGroupQ2'
+  | 'breakBaseSecondGroupAfterBaseSingleAtGroupQ3'
   | 'ordinaryRefreshAfterMiddleSingleAtGroupQ1'
   | 'ordinaryRefreshAfterMiddleSingleAtGroupQ2'
   | 'ordinaryRefreshAfterMiddleSingleAtGroupQ3'
@@ -1189,6 +1201,8 @@ export type LegacyCompoundRotationPhaseName =
   | 'post-single'
   | 'pre-group-rotation'
   | 'post-group-rotation'
+  | 'pre-second-group-rotation'
+  | 'post-second-group-rotation'
   | 'pre-refresh'
   | 'synchronous-post-refresh'
   | 'settled-post-refresh';
@@ -1346,6 +1360,7 @@ export interface LegacySourceCompoundRotationFixture {
   readonly lowerNonzeroGroupRotationAfterSingleCases: readonly LegacyCompoundRotationCase[];
   readonly lowerNonzeroSameLowerGroupAfterSingleCases: readonly LegacyCompoundRotationCase[];
   readonly lowerNonzeroDifferentLowerGroupAfterSingleCases: readonly LegacyCompoundRotationCase[];
+  readonly lowerNonzeroSameLowerSecondGroupAfterSingleCases: readonly LegacyCompoundRotationCase[];
   readonly lowerNonzeroGroupRefreshAfterSingleCases: readonly LegacyCompoundRotationCase[];
   readonly nonzeroGroupSingleCases: readonly LegacyCompoundRotationCase[];
   readonly breakRefreshCases: readonly LegacyCompoundRotationCase[];
@@ -5977,9 +5992,9 @@ type RawCompoundRotationCase = Omit<
  * Replays the digest-pinned, marker-free legacy evolution, whole-stack
  * rotation from top or lower evolutions, BREAK toggle, pristine/returned/
  * history-authored/nonzero-group single-card rotation, its same-card follow-up,
- * a top-, same-lower-, or different-lower-initiated group rotation or
- * immediate wrapper refresh after lower-card divergence, and selected
- * q0/q1/q2/q3 refresh paths.
+ * a top-, same-lower-, different-lower-, or repeated same-lower-initiated
+ * group rotation or immediate wrapper refresh after lower-card divergence,
+ * and selected q0/q1/q2/q3 refresh paths.
  * Every ordinary, BREAK, single-card, and BREAK-refresh history is constructed
  * independently so no oracle inherits inline margins or wrapper identity from
  * another.
@@ -6005,6 +6020,8 @@ export const captureLegacySourceCompoundRotationFixture = async (
     | 'lowerNonzeroSameLowerGroupAfterSingleBreak'
     | 'lowerNonzeroDifferentLowerGroupAfterSingleOrdinary'
     | 'lowerNonzeroDifferentLowerGroupAfterSingleBreak'
+    | 'lowerNonzeroSameLowerSecondGroupAfterSingleOrdinary'
+    | 'lowerNonzeroSameLowerSecondGroupAfterSingleBreak'
     | 'lowerNonzeroGroupRefreshAfterSingleOrdinary'
     | 'lowerNonzeroGroupRefreshAfterSingleBreak'
     | 'nonzeroGroupSingle'
@@ -6236,6 +6253,30 @@ export const captureLegacySourceCompoundRotationFixture = async (
                 'compound-break-group-q2-base-single-middle-group',
               breakMiddleGroupAfterBaseSingleAtGroupQ3:
                 'compound-break-group-q3-base-single-middle-group',
+              ordinaryMiddleSecondGroupAfterMiddleSingleAtGroupQ1:
+                'compound-group-q1-middle-single-middle-group-second-group',
+              ordinaryMiddleSecondGroupAfterMiddleSingleAtGroupQ2:
+                'compound-group-q2-middle-single-middle-group-second-group',
+              ordinaryMiddleSecondGroupAfterMiddleSingleAtGroupQ3:
+                'compound-group-q3-middle-single-middle-group-second-group',
+              ordinaryBaseSecondGroupAfterBaseSingleAtGroupQ1:
+                'compound-group-q1-base-single-base-group-second-group',
+              ordinaryBaseSecondGroupAfterBaseSingleAtGroupQ2:
+                'compound-group-q2-base-single-base-group-second-group',
+              ordinaryBaseSecondGroupAfterBaseSingleAtGroupQ3:
+                'compound-group-q3-base-single-base-group-second-group',
+              breakMiddleSecondGroupAfterMiddleSingleAtGroupQ1:
+                'compound-break-group-q1-middle-single-middle-group-second-group',
+              breakMiddleSecondGroupAfterMiddleSingleAtGroupQ2:
+                'compound-break-group-q2-middle-single-middle-group-second-group',
+              breakMiddleSecondGroupAfterMiddleSingleAtGroupQ3:
+                'compound-break-group-q3-middle-single-middle-group-second-group',
+              breakBaseSecondGroupAfterBaseSingleAtGroupQ1:
+                'compound-break-group-q1-base-single-base-group-second-group',
+              breakBaseSecondGroupAfterBaseSingleAtGroupQ2:
+                'compound-break-group-q2-base-single-base-group-second-group',
+              breakBaseSecondGroupAfterBaseSingleAtGroupQ3:
+                'compound-break-group-q3-base-single-base-group-second-group',
               ordinaryRefreshAfterMiddleSingleAtGroupQ1:
                 'compound-group-q1-middle-single-refresh',
               ordinaryRefreshAfterMiddleSingleAtGroupQ2:
@@ -7517,6 +7558,197 @@ export const captureLegacySourceCompoundRotationFixture = async (
                 snapshot('settled-post-refresh', null, logical, container)
               );
             } else if (
+              scenario ===
+                'ordinaryMiddleSecondGroupAfterMiddleSingleAtGroupQ1' ||
+              scenario ===
+                'ordinaryMiddleSecondGroupAfterMiddleSingleAtGroupQ2' ||
+              scenario ===
+                'ordinaryMiddleSecondGroupAfterMiddleSingleAtGroupQ3' ||
+              scenario === 'ordinaryBaseSecondGroupAfterBaseSingleAtGroupQ1' ||
+              scenario === 'ordinaryBaseSecondGroupAfterBaseSingleAtGroupQ2' ||
+              scenario === 'ordinaryBaseSecondGroupAfterBaseSingleAtGroupQ3' ||
+              scenario === 'breakMiddleSecondGroupAfterMiddleSingleAtGroupQ1' ||
+              scenario === 'breakMiddleSecondGroupAfterMiddleSingleAtGroupQ2' ||
+              scenario === 'breakMiddleSecondGroupAfterMiddleSingleAtGroupQ3' ||
+              scenario === 'breakBaseSecondGroupAfterBaseSingleAtGroupQ1' ||
+              scenario === 'breakBaseSecondGroupAfterBaseSingleAtGroupQ2' ||
+              scenario === 'breakBaseSecondGroupAfterBaseSingleAtGroupQ3'
+            ) {
+              const metadata = {
+                ordinaryMiddleSecondGroupAfterMiddleSingleAtGroupQ1: {
+                  composition: 'ordinary',
+                  priorLowerRole: 'middle',
+                  priorLowerIndex: 1,
+                  priorLowerDomOrdinal: 2,
+                  originalGroupTurns: 1,
+                  setupGroupRotationCount: 1,
+                  measuredGroupRotationOrdinal: 2,
+                  measuredSingle: false,
+                },
+                ordinaryMiddleSecondGroupAfterMiddleSingleAtGroupQ2: {
+                  composition: 'ordinary',
+                  priorLowerRole: 'middle',
+                  priorLowerIndex: 1,
+                  priorLowerDomOrdinal: 2,
+                  originalGroupTurns: 2,
+                  setupGroupRotationCount: 1,
+                  measuredGroupRotationOrdinal: 2,
+                  measuredSingle: false,
+                },
+                ordinaryMiddleSecondGroupAfterMiddleSingleAtGroupQ3: {
+                  composition: 'ordinary',
+                  priorLowerRole: 'middle',
+                  priorLowerIndex: 1,
+                  priorLowerDomOrdinal: 2,
+                  originalGroupTurns: 3,
+                  setupGroupRotationCount: 1,
+                  measuredGroupRotationOrdinal: 2,
+                  measuredSingle: false,
+                },
+                ordinaryBaseSecondGroupAfterBaseSingleAtGroupQ1: {
+                  composition: 'ordinary',
+                  priorLowerRole: 'base',
+                  priorLowerIndex: 2,
+                  priorLowerDomOrdinal: 1,
+                  originalGroupTurns: 1,
+                  setupGroupRotationCount: 1,
+                  measuredGroupRotationOrdinal: 2,
+                  measuredSingle: false,
+                },
+                ordinaryBaseSecondGroupAfterBaseSingleAtGroupQ2: {
+                  composition: 'ordinary',
+                  priorLowerRole: 'base',
+                  priorLowerIndex: 2,
+                  priorLowerDomOrdinal: 1,
+                  originalGroupTurns: 2,
+                  setupGroupRotationCount: 1,
+                  measuredGroupRotationOrdinal: 2,
+                  measuredSingle: false,
+                },
+                ordinaryBaseSecondGroupAfterBaseSingleAtGroupQ3: {
+                  composition: 'ordinary',
+                  priorLowerRole: 'base',
+                  priorLowerIndex: 2,
+                  priorLowerDomOrdinal: 1,
+                  originalGroupTurns: 3,
+                  setupGroupRotationCount: 1,
+                  measuredGroupRotationOrdinal: 2,
+                  measuredSingle: false,
+                },
+                breakMiddleSecondGroupAfterMiddleSingleAtGroupQ1: {
+                  composition: 'break',
+                  priorLowerRole: 'middle',
+                  priorLowerIndex: 1,
+                  priorLowerDomOrdinal: 2,
+                  originalGroupTurns: 1,
+                  setupGroupRotationCount: 1,
+                  measuredGroupRotationOrdinal: 2,
+                  measuredSingle: false,
+                },
+                breakMiddleSecondGroupAfterMiddleSingleAtGroupQ2: {
+                  composition: 'break',
+                  priorLowerRole: 'middle',
+                  priorLowerIndex: 1,
+                  priorLowerDomOrdinal: 2,
+                  originalGroupTurns: 2,
+                  setupGroupRotationCount: 1,
+                  measuredGroupRotationOrdinal: 2,
+                  measuredSingle: false,
+                },
+                breakMiddleSecondGroupAfterMiddleSingleAtGroupQ3: {
+                  composition: 'break',
+                  priorLowerRole: 'middle',
+                  priorLowerIndex: 1,
+                  priorLowerDomOrdinal: 2,
+                  originalGroupTurns: 3,
+                  setupGroupRotationCount: 1,
+                  measuredGroupRotationOrdinal: 2,
+                  measuredSingle: false,
+                },
+                breakBaseSecondGroupAfterBaseSingleAtGroupQ1: {
+                  composition: 'break',
+                  priorLowerRole: 'base',
+                  priorLowerIndex: 2,
+                  priorLowerDomOrdinal: 1,
+                  originalGroupTurns: 1,
+                  setupGroupRotationCount: 1,
+                  measuredGroupRotationOrdinal: 2,
+                  measuredSingle: false,
+                },
+                breakBaseSecondGroupAfterBaseSingleAtGroupQ2: {
+                  composition: 'break',
+                  priorLowerRole: 'base',
+                  priorLowerIndex: 2,
+                  priorLowerDomOrdinal: 1,
+                  originalGroupTurns: 2,
+                  setupGroupRotationCount: 1,
+                  measuredGroupRotationOrdinal: 2,
+                  measuredSingle: false,
+                },
+                breakBaseSecondGroupAfterBaseSingleAtGroupQ3: {
+                  composition: 'break',
+                  priorLowerRole: 'base',
+                  priorLowerIndex: 2,
+                  priorLowerDomOrdinal: 1,
+                  originalGroupTurns: 3,
+                  setupGroupRotationCount: 1,
+                  measuredGroupRotationOrdinal: 2,
+                  measuredSingle: false,
+                },
+              } as const;
+              const scenarioMetadata = metadata[scenario];
+              const priorLower =
+                scenarioMetadata.priorLowerRole === 'middle' ? middle : base;
+              if (scenarioMetadata.composition === 'break') {
+                rotateCard(top, true, logical, container);
+              }
+              for (
+                let count = 0;
+                count < scenarioMetadata.originalGroupTurns;
+                count += 1
+              ) {
+                rotateCard(top, false, logical, container);
+              }
+              rotateCard(priorLower, true, logical, container);
+              for (
+                let count = 0;
+                count < scenarioMetadata.setupGroupRotationCount;
+                count += 1
+              ) {
+                rotateCard(priorLower, false, logical, container);
+              }
+              const domImages = [
+                ...container.querySelectorAll<CompoundImage>(':scope > img'),
+              ];
+              if (
+                logical.indexOf(priorLower) !==
+                  scenarioMetadata.priorLowerIndex ||
+                domImages.indexOf(priorLower.image) !==
+                  scenarioMetadata.priorLowerDomOrdinal
+              ) {
+                throw new Error(
+                  `Legacy compound second-group topology mismatch for ${scenario}`
+                );
+              }
+              phases.push(
+                snapshot('pre-second-group-rotation', null, logical, container)
+              );
+              const transitionTraceStart = callTrace.length;
+              phases.push(
+                snapshot(
+                  'post-second-group-rotation',
+                  rotateCard(
+                    priorLower,
+                    scenarioMetadata.measuredSingle,
+                    logical,
+                    container
+                  ),
+                  logical,
+                  container
+                )
+              );
+              transitionTrace = callTrace.slice(transitionTraceStart);
+            } else if (
               scenario === 'ordinaryTopGroupAfterMiddleSingleAtGroupQ1' ||
               scenario === 'ordinaryTopGroupAfterMiddleSingleAtGroupQ2' ||
               scenario === 'ordinaryTopGroupAfterMiddleSingleAtGroupQ3' ||
@@ -8261,43 +8493,63 @@ export const captureLegacySourceCompoundRotationFixture = async (
                                                 'breakMiddleGroupAfterBaseSingleAtGroupQ3',
                                               ]
                                             : input.mode ===
-                                                'lowerNonzeroGroupRefreshAfterSingleOrdinary'
+                                                'lowerNonzeroSameLowerSecondGroupAfterSingleOrdinary'
                                               ? [
-                                                  'ordinaryRefreshAfterMiddleSingleAtGroupQ1',
-                                                  'ordinaryRefreshAfterMiddleSingleAtGroupQ2',
-                                                  'ordinaryRefreshAfterMiddleSingleAtGroupQ3',
-                                                  'ordinaryRefreshAfterBaseSingleAtGroupQ1',
-                                                  'ordinaryRefreshAfterBaseSingleAtGroupQ2',
-                                                  'ordinaryRefreshAfterBaseSingleAtGroupQ3',
+                                                  'ordinaryMiddleSecondGroupAfterMiddleSingleAtGroupQ1',
+                                                  'ordinaryMiddleSecondGroupAfterMiddleSingleAtGroupQ2',
+                                                  'ordinaryMiddleSecondGroupAfterMiddleSingleAtGroupQ3',
+                                                  'ordinaryBaseSecondGroupAfterBaseSingleAtGroupQ1',
+                                                  'ordinaryBaseSecondGroupAfterBaseSingleAtGroupQ2',
+                                                  'ordinaryBaseSecondGroupAfterBaseSingleAtGroupQ3',
                                                 ]
                                               : input.mode ===
-                                                  'lowerNonzeroGroupRefreshAfterSingleBreak'
+                                                  'lowerNonzeroSameLowerSecondGroupAfterSingleBreak'
                                                 ? [
-                                                    'breakRefreshAfterMiddleSingleAtGroupQ1',
-                                                    'breakRefreshAfterMiddleSingleAtGroupQ2',
-                                                    'breakRefreshAfterMiddleSingleAtGroupQ3',
-                                                    'breakRefreshAfterBaseSingleAtGroupQ1',
-                                                    'breakRefreshAfterBaseSingleAtGroupQ2',
-                                                    'breakRefreshAfterBaseSingleAtGroupQ3',
+                                                    'breakMiddleSecondGroupAfterMiddleSingleAtGroupQ1',
+                                                    'breakMiddleSecondGroupAfterMiddleSingleAtGroupQ2',
+                                                    'breakMiddleSecondGroupAfterMiddleSingleAtGroupQ3',
+                                                    'breakBaseSecondGroupAfterBaseSingleAtGroupQ1',
+                                                    'breakBaseSecondGroupAfterBaseSingleAtGroupQ2',
+                                                    'breakBaseSecondGroupAfterBaseSingleAtGroupQ3',
                                                   ]
                                                 : input.mode ===
-                                                    'nonzeroGroupSingle'
+                                                    'lowerNonzeroGroupRefreshAfterSingleOrdinary'
                                                   ? [
-                                                      'ordinarySingleAtGroupQ1',
-                                                      'ordinarySingleAtGroupQ2',
-                                                      'ordinarySingleAtGroupQ3',
-                                                      'breakSingleAtGroupQ1',
-                                                      'breakSingleAtGroupQ2',
-                                                      'breakSingleAtGroupQ3',
+                                                      'ordinaryRefreshAfterMiddleSingleAtGroupQ1',
+                                                      'ordinaryRefreshAfterMiddleSingleAtGroupQ2',
+                                                      'ordinaryRefreshAfterMiddleSingleAtGroupQ3',
+                                                      'ordinaryRefreshAfterBaseSingleAtGroupQ1',
+                                                      'ordinaryRefreshAfterBaseSingleAtGroupQ2',
+                                                      'ordinaryRefreshAfterBaseSingleAtGroupQ3',
                                                     ]
                                                   : input.mode ===
-                                                      'breakRefreshQ0Q2'
+                                                      'lowerNonzeroGroupRefreshAfterSingleBreak'
                                                     ? [
-                                                        'breakRefreshFreshQ0',
-                                                        'breakRefreshReturnedQ0',
-                                                        'breakRefreshQ2',
+                                                        'breakRefreshAfterMiddleSingleAtGroupQ1',
+                                                        'breakRefreshAfterMiddleSingleAtGroupQ2',
+                                                        'breakRefreshAfterMiddleSingleAtGroupQ3',
+                                                        'breakRefreshAfterBaseSingleAtGroupQ1',
+                                                        'breakRefreshAfterBaseSingleAtGroupQ2',
+                                                        'breakRefreshAfterBaseSingleAtGroupQ3',
                                                       ]
-                                                    : ['breakRefreshQ3'];
+                                                    : input.mode ===
+                                                        'nonzeroGroupSingle'
+                                                      ? [
+                                                          'ordinarySingleAtGroupQ1',
+                                                          'ordinarySingleAtGroupQ2',
+                                                          'ordinarySingleAtGroupQ3',
+                                                          'breakSingleAtGroupQ1',
+                                                          'breakSingleAtGroupQ2',
+                                                          'breakSingleAtGroupQ3',
+                                                        ]
+                                                      : input.mode ===
+                                                          'breakRefreshQ0Q2'
+                                                        ? [
+                                                            'breakRefreshFreshQ0',
+                                                            'breakRefreshReturnedQ0',
+                                                            'breakRefreshQ2',
+                                                          ]
+                                                        : ['breakRefreshQ3'];
           for (const scenario of scenarios) {
             for (const slot of ['active', 'bench'] as const) {
               cases.push(await runScenario(slot, scenario));
@@ -8499,6 +8751,24 @@ export const captureLegacySourceCompoundRotationFixture = async (
         entry.scenario === 'breakMiddleGroupAfterBaseSingleAtGroupQ2' ||
         entry.scenario === 'breakMiddleGroupAfterBaseSingleAtGroupQ3'
     ),
+    lowerNonzeroSameLowerSecondGroupAfterSingleCases: cases.filter(
+      (entry) =>
+        entry.scenario ===
+          'ordinaryMiddleSecondGroupAfterMiddleSingleAtGroupQ1' ||
+        entry.scenario ===
+          'ordinaryMiddleSecondGroupAfterMiddleSingleAtGroupQ2' ||
+        entry.scenario ===
+          'ordinaryMiddleSecondGroupAfterMiddleSingleAtGroupQ3' ||
+        entry.scenario === 'ordinaryBaseSecondGroupAfterBaseSingleAtGroupQ1' ||
+        entry.scenario === 'ordinaryBaseSecondGroupAfterBaseSingleAtGroupQ2' ||
+        entry.scenario === 'ordinaryBaseSecondGroupAfterBaseSingleAtGroupQ3' ||
+        entry.scenario === 'breakMiddleSecondGroupAfterMiddleSingleAtGroupQ1' ||
+        entry.scenario === 'breakMiddleSecondGroupAfterMiddleSingleAtGroupQ2' ||
+        entry.scenario === 'breakMiddleSecondGroupAfterMiddleSingleAtGroupQ3' ||
+        entry.scenario === 'breakBaseSecondGroupAfterBaseSingleAtGroupQ1' ||
+        entry.scenario === 'breakBaseSecondGroupAfterBaseSingleAtGroupQ2' ||
+        entry.scenario === 'breakBaseSecondGroupAfterBaseSingleAtGroupQ3'
+    ),
     lowerNonzeroGroupRefreshAfterSingleCases: cases.filter(
       (entry) =>
         entry.scenario === 'ordinaryRefreshAfterMiddleSingleAtGroupQ1' ||
@@ -8647,6 +8917,20 @@ export const captureLegacySourceCompoundLowerNonzeroDifferentLowerGroupAfterSing
     captureLegacySourceCompoundRotationFixture(
       page,
       'lowerNonzeroDifferentLowerGroupAfterSingleBreak'
+    );
+
+export const captureLegacySourceCompoundLowerNonzeroSameLowerSecondGroupAfterSingleOrdinaryFixture =
+  (page: Page): Promise<LegacySourceCompoundRotationFixture> =>
+    captureLegacySourceCompoundRotationFixture(
+      page,
+      'lowerNonzeroSameLowerSecondGroupAfterSingleOrdinary'
+    );
+
+export const captureLegacySourceCompoundLowerNonzeroSameLowerSecondGroupAfterSingleBreakFixture =
+  (page: Page): Promise<LegacySourceCompoundRotationFixture> =>
+    captureLegacySourceCompoundRotationFixture(
+      page,
+      'lowerNonzeroSameLowerSecondGroupAfterSingleBreak'
     );
 
 export const captureLegacySourceCompoundLowerNonzeroGroupRefreshAfterSingleOrdinaryFixture =

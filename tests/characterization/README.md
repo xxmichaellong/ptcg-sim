@@ -507,3 +507,24 @@ native probes, stable wrapper/card identifiers, cleanup, and no measured-
 transition refresh. Repeats, intervening operations, alternate origins,
 attachments, candidate parity, and production/domain/protocol/schema/UI changes
 remain separate.
+
+`legacy-compound-lower-nonzero-same-lower-second-group-after-single-layout.test.ts`
+then pins a second consecutive plain-R whole-group action on the same lower
+card after checkpoint twenty-four. Forty-eight independent ordinary/top-BREAK
+histories cross middle/base selection, original q1/q2/q3 group state, both
+physical sides, and active/sole-bench placement. Every pre-state and trace
+prefix equals the matching checkpoint-twenty-four post-state exactly. The
+selected lower advances q1→q2, both siblings advance once, and all BREAK flags
+remain unchanged.
+
+Active remains at `1%`/`0%`. Every bench changes `3%`/`2%`→`1%`/`0%`, moving
+the wrapper and authored cards `+0.015625px` frame-local x. Painted rectangles
+and all ten probes are captured fresh because every card changes parity. Q1/q3
+post geometry collides internally despite different raw turns; q2 collides
+with checkpoint eighteen's matching pre-divergence geometry, with the explicit
+top-BREAK bench displacement. The fixture pins exact turns/flags, action and
+trace, authored/painted rectangles, physical-frame mappings, stable wrapper/
+card identifiers, three-observer/no-refresh lifecycle, cleanup, and recursive
+provenance. Third/later repeats, top/different-lower followups, intervening
+operations, alternate origins, attachments, candidate parity, and production/
+domain/protocol/schema/UI/UX changes remain separate.

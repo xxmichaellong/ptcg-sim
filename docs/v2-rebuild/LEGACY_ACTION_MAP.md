@@ -358,6 +358,19 @@ must not encode this initiator history into canonical state. Repeated group
 actions, intervening operations, alternate origins, attachments, and candidate
 parity remain separate.
 
+Repeating plain R immediately on the same lower card is now pinned separately.
+The checkpoint-twenty-four post-state is inherited exactly; the second
+whole-group action advances the selected lower q1→q2 and advances both siblings
+without changing any `PokémonBreak` flag. Active remains `1%`/`0%`. Every
+sole-bench wrapper changes from `3%`/`2%` to `1%`/`0%`, moving the wrapper and
+authored card boxes `+0.015625px` frame-local x. Painted boxes are not a uniform
+translation because all three turn parities flip. Q1/q3 post geometry and probe
+sets collide internally, while q2 collides with the clean pre-divergence
+checkpoint subject to the recorded top-BREAK bench displacement. Third/later
+group turns, top/different-lower followups, intervening inputs, alternate
+origins, attachments, and candidate parity remain separate source-only
+histories rather than new canonical fields.
+
 The immediate refresh branch after the same lower divergence is now captured
 independently. Reconstruction preserves the three image nodes but replaces the
 wrapper, briefly leaving two wrappers until the empty original is removed by
