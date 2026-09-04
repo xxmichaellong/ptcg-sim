@@ -173,6 +173,24 @@ pointer-hit. Eligible returned-q0 current state is canonicalized to the same q0
 geometry because no DOM history is projected. Pixi reuses keyed marker views
 without card asset churn, and a real owner/opponent/spectator test protects
 stable opaque aliases and identical normalized geometry. Rotated and
-source-history-dependent layout, bench margins, BREAK/compound and attachment
-rotation, movement/evolution/refresh transfer, text-entry gestures, alternate
-layouts, and Pixi-native paint/hit parity remain deferred.
+source-history-dependent layout, bench marker production, BREAK/compound and
+attachment rotation, movement/evolution/refresh transfer, text-entry gestures,
+alternate layouts, and Pixi-native paint/hit parity remain deferred.
+
+`legacy-bench-marker-rotation-layout.test.ts` independently pins the narrower
+sole-bench source history. Local and opponent cases contain one ordinary card,
+one damage circle, and one ability-used tab; canonical visible controls,
+keyboard handling, and movement cleanup establish that no special-condition
+marker belongs in this state. The capture records q0→q1→q2→q3→q0, including
+the bench-only `3%` right/`2%` left q1/q3 margins, return to the CSS-equivalent
+q0 geometry with explicit `1%`/`0%` inline history, and ability-over-damage
+equal-z hit order where the rotated markers overlap.
+
+Window resize listeners and the bench initializer's native `ResizeObserver`
+are counted separately. Its initial delivery refreshes both live markers;
+empty-wrapper cleanup delivers again without refreshing removed markers. The
+source observer is still live immediately before the harness performs its sole
+explicit disconnect, so this fixture does not claim a legacy teardown path.
+Additional bench siblings/contention, production candidate parity, rotated
+production layout, BREAK/compound stacks, movement transfer, marker editing,
+and alternate layouts remain deferred.

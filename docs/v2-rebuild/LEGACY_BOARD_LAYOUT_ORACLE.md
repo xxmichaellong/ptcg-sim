@@ -628,9 +628,45 @@ views update and clean up without card asset churn. Real owner, opponent, and
 spectator sessions retain distinct stable aliases and identical normalized
 geometry without serializing canonical card or definition IDs.
 
-Bench q1/q3 margins, BREAK and compound evolution/group rotation,
+Bench marker production, BREAK and compound evolution/group rotation,
 Energy/Trainer rotation, marker transfer/reconstruction, editing gestures,
 alternate layouts, and Pixi-native paint/hit parity remain deferred.
+
+`tests/browser/legacy-bench-marker-rotation-geometry.spec.ts` adds an eleventh,
+separate source oracle backed by
+`tests/legacy-fixtures/renderer/bench-marker-rotation-v1.json`. Each physical
+side receives one ordinary Pokémon in the sole bench wrapper, with a damage
+circle and ability-used tab. Visible control eligibility, keyboard eligibility,
+and movement cleanup sources pin special conditions as active-only; the bench
+fixture records zero special-condition nodes and explicitly excludes direct
+noncanonical low-level creation.
+
+The portrait q0 card paints at 80.859375×112.5 px. Its damage circle is
+26.953125 px and its ability tab is 80.859375×16.171875 px. q1/q3 paint the
+card at 112.5×80.859375 px and recompute a 37.5 px circle plus a
+112.5×22.5 px tab. Both markers are direct bench children at z-index 1. At the
+q1/q3 intersection the later-appended ability tab wins native hit order over
+damage and card, making equal-z ordering an explicit future-renderer contract
+rather than an ID-sort assumption.
+
+Pristine q0 has no inline wrapper margins but computes the bench CSS default of
+`9.53125px` right and `0px` left. q1/q3 write `3%`/`2%`; q2 and returned q0
+write `1%`/`0%`. Unlike the active history, returned bench q0 is physically
+identical to pristine q0 because those authored values reproduce the CSS
+default. Local/opponent geometry otherwise agrees, with the opponent
+q0/q2/q0-return ability tab retaining a measured 0.015625 px frame-local y
+delta.
+
+One window resize invokes exactly the two live marker listeners, and removal
+prevents later invocations. Separately, the source bench `ResizeObserver`
+delivers once after marker setup and refreshes both markers, then delivers on
+empty-wrapper cleanup without refreshing either removed marker. Legacy does
+not expose an observer disconnect path: the capture proves it remains live
+before one harness-only disconnect and makes no source teardown claim. This
+checkpoint remains source-only. Additional bench siblings/flex contention,
+all rotated production paths, BREAK/compound and attachment rotation, marker
+movement/editing, alternate layouts, and candidate/Pixi paint parity are still
+deferred.
 
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
@@ -639,7 +675,8 @@ oracle fixtures, including asymmetric resize, flipped ownership, midpoint
 shared placement, compact and fullscreen states. The controlled hand/bench/
 attachment-stack fixture remains source-only; the narrower contained-card,
 ordinary-evolution, single-Energy, Trainer-as-Tool, and stable two-Energy
-fixtures feed and compare their strict production geometries. The two-Energy
+fixtures feed and compare their strict production geometries. The bench-marker
+rotation fixture is source-only. The two-Energy
 departure phases remain source-only and prove stable convergence to the
 single-Energy source state. The mixed fixtures retain their historical and
 transient phases as source-only diagnostics, while their canonical settled

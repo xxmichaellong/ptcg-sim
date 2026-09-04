@@ -172,6 +172,75 @@ export interface LegacySourceMarkerRotationFixture {
   readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
 }
 
+export type LegacyBenchMarkerKind = 'damage' | 'ability';
+
+export type LegacyBenchMarkerRotationCard = LegacyMarkerRotationCard;
+
+export interface LegacyBenchMarkerRotationMarker extends Omit<
+  LegacyMarkerRotationMarker,
+  'kind'
+> {
+  readonly kind: LegacyBenchMarkerKind;
+}
+
+export interface LegacyBenchMarkerRotationPhase {
+  readonly name: 'marked-q0' | 'q1' | 'q2' | 'q3' | 'q0-return';
+  readonly card: LegacyBenchMarkerRotationCard;
+  readonly wrapper: LegacyMarkerRotationPhase['wrapper'];
+  readonly markers: readonly LegacyBenchMarkerRotationMarker[];
+  readonly specialConditionMarkerCount: number;
+  readonly markerOverlapHitOrder: readonly string[] | null;
+  readonly cardOnlyHitOrder: readonly string[];
+}
+
+export interface LegacyBenchMarkerRotationCase {
+  readonly id: string;
+  readonly side: LegacyFixtureSide;
+  readonly initialCard: LegacyBenchMarkerRotationCard;
+  readonly initialWrapperMargins: {
+    readonly inlineRight: string;
+    readonly inlineLeft: string;
+    readonly computedRightPx: number;
+    readonly computedLeftPx: number;
+  };
+  readonly phases: readonly LegacyBenchMarkerRotationPhase[];
+  readonly callTrace: readonly string[];
+  readonly nativeBenchResizeObserver: {
+    readonly callbacksAfterInitialSettle: number;
+    readonly damageRefreshesAfterInitialSettle: number;
+    readonly abilityRefreshesAfterInitialSettle: number;
+    readonly callbacksBeforeCleanup: number;
+    readonly callbacksAfterCleanup: number;
+    readonly damageRefreshesAfterCleanup: number;
+    readonly abilityRefreshesAfterCleanup: number;
+    readonly sourceObserverStillLiveBeforeHarnessDisconnect: boolean;
+    readonly harnessDisconnectCalls: number;
+  };
+  readonly cleanup: {
+    readonly markerCount: number;
+    readonly specialConditionMarkerCount: number;
+    readonly cardDamageCounterIsNull: boolean;
+    readonly cardAbilityCounterIsNull: boolean;
+    readonly liveResizeCallsBeforeDispatch: number;
+    readonly liveResizeCallsAfterDispatch: number;
+    readonly liveMarkerCountAfterDispatch: number;
+    readonly resizeCallsBeforeCleanupDispatch: number;
+    readonly resizeCallsAfterCleanupDispatch: number;
+    readonly wrapperCountAfterTwoFrames: number;
+    readonly cardCountAfterTwoFrames: number;
+    readonly benchZIndexAfterCleanup: number;
+  };
+}
+
+export interface LegacySourceBenchMarkerRotationFixture {
+  readonly frames: Readonly<Record<LegacyFixtureSide, CapturedRect>>;
+  readonly frameTransforms: Readonly<
+    Record<LegacyFixtureSide, LegacyFrameTransform>
+  >;
+  readonly cases: readonly LegacyBenchMarkerRotationCase[];
+  readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
+}
+
 export type LegacyFixtureSide = LegacySide;
 
 export interface LegacyCardFixtureCard {
@@ -7474,6 +7543,680 @@ export const captureLegacySourceMarkerRotationFixture = async (
       })),
     })),
   }));
+
+  requireServedPaths(loaded, containedCardFixtureAssetPaths);
+  requireNoUnexpectedSameOriginPaths(loaded);
+  return {
+    frames,
+    frameTransforms,
+    cases,
+    sourceFulfillment: sourceFulfillment(loaded),
+  };
+};
+
+type RawBenchMarkerRotationCard = Omit<
+  LegacyBenchMarkerRotationCard,
+  'physicalBounds' | 'effectiveRotationDegrees'
+>;
+
+type RawBenchMarkerRotationMarker = Omit<
+  LegacyBenchMarkerRotationMarker,
+  'physicalBounds' | 'effectiveRotationDegrees'
+>;
+
+type RawBenchMarkerRotationPhase = Omit<
+  LegacyBenchMarkerRotationPhase,
+  'card' | 'wrapper' | 'markers'
+> & {
+  readonly card: RawBenchMarkerRotationCard;
+  readonly wrapper: Omit<
+    LegacyBenchMarkerRotationPhase['wrapper'],
+    'physicalBounds'
+  >;
+  readonly markers: readonly RawBenchMarkerRotationMarker[];
+};
+
+type RawBenchMarkerRotationCase = Omit<
+  LegacyBenchMarkerRotationCase,
+  'side' | 'initialCard' | 'phases'
+> & {
+  readonly initialCard: RawBenchMarkerRotationCard;
+  readonly phases: readonly RawBenchMarkerRotationPhase[];
+};
+
+/**
+ * Replays the source-pinned, sole-bench damage/ability marker and rotation
+ * mutations in inert legacy documents. This is deliberately separate from the
+ * active-marker capture: special conditions are not a canonical bench action,
+ * while the bench wrapper owns an additional native ResizeObserver path.
+ */
+export const captureLegacySourceBenchMarkerRotationFixture = async (
+  page: Page
+): Promise<LegacySourceBenchMarkerRotationFixture> => {
+  const loaded = await loadLegacySourceBoard(page);
+  const rawCases: Array<{
+    readonly side: LegacyFixtureSide;
+    readonly value: RawBenchMarkerRotationCase;
+  }> = [];
+
+  for (const [side, frameSelector] of [
+    ['local', '#selfContainer'],
+    ['opponent', '#oppContainer'],
+  ] as const) {
+    const value = await page
+      .frameLocator(frameSelector)
+      .locator('body')
+      .evaluate(
+        async (body, input): Promise<RawBenchMarkerRotationCase> => {
+          type BenchMarkerElement = HTMLDivElement & {
+            handleInput?: EventListener | null;
+            handleRemoveWrapper?: EventListener | null;
+            handleRemove?: ((fromBlurEvent?: boolean) => void) | null;
+            handleResize?: EventListener | null;
+          };
+          type BenchMarkerImage = HTMLImageElement & {
+            damageCounter: BenchMarkerElement | null;
+            abilityCounter: BenchMarkerElement | null;
+            specialCondition: null;
+            PokémonBreak: boolean;
+          };
+
+          const rect = (bounds: DOMRect): CapturedRect => ({
+            x: bounds.x,
+            y: bounds.y,
+            width: bounds.width,
+            height: bounds.height,
+          });
+          const nullablePx = (value: string): number | null =>
+            value === '' ? null : Number.parseFloat(value);
+          const waitForStableLayout = () =>
+            new Promise<void>((resolve) =>
+              requestAnimationFrame(() =>
+                requestAnimationFrame(() => resolve())
+              )
+            );
+          const bench = body.querySelector('#bench');
+          if (!(bench instanceof HTMLElement)) {
+            throw new Error(
+              'Legacy bench-marker fixture bench zone is missing'
+            );
+          }
+          bench.replaceChildren();
+
+          const id = `${input.side}-bench-marker-card`;
+          const wrapperId = `${input.side}-bench-marker-stack`;
+          const image = document.createElement('img') as BenchMarkerImage;
+          image.dataset.legacyBenchMarkerCardId = id;
+          image.alt = '';
+          image.src = `${location.origin}/src/assets/cardback.png`;
+          image.style.opacity = '1';
+          image.style.position = 'relative';
+          image.style.bottom = '0%';
+          image.style.zIndex = '0';
+          image.style.left = '0px';
+          image.style.transform = 'rotate(0deg)';
+          image.damageCounter = null;
+          image.abilityCounter = null;
+          image.specialCondition = null;
+          image.PokémonBreak = false;
+
+          const wrapper = document.createElement('div');
+          wrapper.className = 'play-container';
+          wrapper.style.zIndex = '0';
+          wrapper.dataset.legacyBenchMarkerStackId = wrapperId;
+          bench.append(wrapper);
+          wrapper.append(image);
+          const logicalBenchCards: BenchMarkerImage[] = [image];
+
+          const wrapperObserver = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+              const removedNode = mutation.removedNodes[0];
+              if (
+                removedNode?.nodeName === 'IMG' &&
+                wrapper.getElementsByTagName('img').length === 0
+              ) {
+                if (wrapper.parentElement) {
+                  wrapper.parentElement.style.zIndex = '0';
+                }
+                wrapper.remove();
+              }
+              for (const candidate of logicalBenchCards) {
+                if (candidate.damageCounter) {
+                  addDamageCounter(false, 'mutationObserver');
+                }
+                if (candidate.abilityCounter) {
+                  addAbilityCounter('mutationObserver');
+                }
+              }
+            }
+          });
+          wrapperObserver.observe(wrapper, { childList: true });
+
+          await image.decode();
+          await waitForStableLayout();
+          const callTrace: string[] = [];
+          let windowResizeCalls = 0;
+          let nativeResizeObserverCallbacks = 0;
+          let nativeResizeObserverDamageRefreshes = 0;
+          let nativeResizeObserverAbilityRefreshes = 0;
+          let nativeResizeObserverDisconnectCalls = 0;
+
+          const captureCard = (): RawBenchMarkerRotationCard => {
+            const bounds = rect(image.getBoundingClientRect());
+            const priorTransform = image.style.transform;
+            image.style.transform = 'none';
+            const untransformedFrameLocalBounds = rect(
+              image.getBoundingClientRect()
+            );
+            image.style.transform = priorTransform;
+            const styles = getComputedStyle(image);
+            const transform =
+              styles.transform === 'none'
+                ? new DOMMatrixReadOnly()
+                : new DOMMatrixReadOnly(styles.transform);
+            return {
+              id,
+              frameLocalBounds: bounds,
+              untransformedFrameLocalBounds,
+              clientWidth: image.clientWidth,
+              clientHeight: image.clientHeight,
+              naturalWidth: image.naturalWidth,
+              naturalHeight: image.naturalHeight,
+              localRotationDegrees:
+                ((Math.atan2(transform.b, transform.a) * 180) / Math.PI + 360) %
+                360,
+              inlineTransform: image.style.transform,
+              zIndex: Number.parseInt(styles.zIndex, 10) || 0,
+              pokemonBreak: image.PokémonBreak === true,
+              domOrdinal: [...wrapper.querySelectorAll(':scope > img')].indexOf(
+                image
+              ),
+              sourcePath: new URL(image.currentSrc).pathname,
+            };
+          };
+
+          const initialCard = captureCard();
+          const initialWrapperStyles = getComputedStyle(wrapper);
+          const initialWrapperMargins = {
+            inlineRight: wrapper.style.marginRight,
+            inlineLeft: wrapper.style.marginLeft,
+            computedRightPx:
+              Number.parseFloat(initialWrapperStyles.marginRight) || 0,
+            computedLeftPx:
+              Number.parseFloat(initialWrapperStyles.marginLeft) || 0,
+          };
+          const markerId = (kind: LegacyBenchMarkerKind) =>
+            `${input.side}-bench-${kind}-marker`;
+          const removeResize = (marker: BenchMarkerElement) => {
+            if (marker.handleResize) {
+              window.removeEventListener('resize', marker.handleResize);
+              marker.handleResize = null;
+            }
+          };
+
+          const updateDamageCounter = (damageAmount: string) => {
+            if (!image.damageCounter) {
+              throw new Error('Bench damage marker is missing');
+            }
+            if (image.damageCounter.textContent !== damageAmount) {
+              image.damageCounter.textContent = damageAmount;
+            }
+            callTrace.push(`updateDamageCounter:${damageAmount}`);
+          };
+          const addDamageCounter = (
+            damageAmount: string | false,
+            reason:
+              | 'direct'
+              | 'rotation'
+              | 'window'
+              | 'resizeObserver'
+              | 'mutationObserver'
+          ) => {
+            const targetRect = image.getBoundingClientRect();
+            const zoneRect = bench.getBoundingClientRect();
+            let marker = image.damageCounter;
+            if (marker) {
+              if (marker.handleInput) {
+                marker.removeEventListener('input', marker.handleInput);
+              }
+              marker.handleInput = null;
+              if (marker.handleRemoveWrapper) {
+                marker.removeEventListener('blur', marker.handleRemoveWrapper);
+              }
+              marker.handleRemove = null;
+              removeResize(marker);
+            } else {
+              marker = document.createElement('div') as BenchMarkerElement;
+              marker.dataset.legacyBenchMarkerId = markerId('damage');
+              marker.dataset.legacyBenchMarkerKind = 'damage';
+              marker.className =
+                input.side === 'local' ? 'self-circle' : 'opp-circle';
+              marker.contentEditable = 'true';
+              marker.textContent = damageAmount ? damageAmount : '10';
+            }
+            marker.style.display = 'inline-block';
+            marker.style.left = `${targetRect.left - zoneRect.left + targetRect.width / 1.5}px`;
+            marker.style.top = `${targetRect.top - zoneRect.top + targetRect.height / 4}px`;
+            bench.append(marker);
+            marker.style.width = `${targetRect.width / 3}px`;
+            marker.style.height = `${targetRect.width / 3}px`;
+            marker.style.lineHeight = `${targetRect.width / 3}px`;
+            marker.style.fontSize = `${targetRect.width / 6}px`;
+            marker.style.zIndex = '1';
+            const handleInput: EventListener = () => undefined;
+            marker.handleInput = handleInput;
+            marker.addEventListener('input', handleInput);
+            const handleResize: EventListener = () => {
+              windowResizeCalls += 1;
+              addDamageCounter(false, 'window');
+            };
+            marker.handleResize = handleResize;
+            window.addEventListener('resize', handleResize);
+            marker.handleRemove = () => removeDamageCounter(false);
+            marker.handleRemoveWrapper = () => marker?.handleRemove?.(true);
+            marker.addEventListener('blur', marker.handleRemoveWrapper);
+            image.damageCounter = marker;
+            if (reason === 'resizeObserver') {
+              nativeResizeObserverDamageRefreshes += 1;
+            }
+            if (reason === 'direct') {
+              callTrace.push(`addDamageCounter:${String(damageAmount)}`);
+            }
+          };
+          const removeDamageCounter = (record = true) => {
+            const marker = image.damageCounter;
+            if (marker) {
+              if (marker.handleInput) {
+                marker.removeEventListener('input', marker.handleInput);
+              }
+              marker.handleInput = null;
+              if (marker.handleRemoveWrapper) {
+                marker.removeEventListener('blur', marker.handleRemoveWrapper);
+              }
+              marker.handleRemove = null;
+              removeResize(marker);
+              marker.remove();
+              image.damageCounter = null;
+            }
+            if (record) callTrace.push('removeDamageCounter');
+          };
+
+          const addAbilityCounter = (
+            reason:
+              | 'direct'
+              | 'rotation'
+              | 'window'
+              | 'resizeObserver'
+              | 'mutationObserver'
+          ) => {
+            const targetRect = image.getBoundingClientRect();
+            const zoneRect = bench.getBoundingClientRect();
+            let marker = image.abilityCounter;
+            if (marker) {
+              marker.handleRemove = null;
+              removeResize(marker);
+            } else {
+              marker = document.createElement('div') as BenchMarkerElement;
+              marker.dataset.legacyBenchMarkerId = markerId('ability');
+              marker.dataset.legacyBenchMarkerKind = 'ability';
+              marker.className =
+                input.side === 'local' ? 'self-tab' : 'opp-tab';
+            }
+            marker.style.display = 'inline-block';
+            marker.style.width = `${targetRect.width}px`;
+            marker.style.height = `${targetRect.width / 5}px`;
+            marker.style.lineHeight = `${targetRect.width / 3}px`;
+            marker.style.zIndex = '1';
+            if (input.side === 'local') {
+              marker.style.right = '';
+              marker.style.bottom = '';
+              marker.style.left = `${targetRect.left - zoneRect.left}px`;
+              marker.style.top = `${targetRect.top - zoneRect.top + targetRect.height / 2}px`;
+            } else {
+              marker.style.left = `${targetRect.left - zoneRect.left}px`;
+              marker.style.top = '';
+              marker.style.right = '';
+              marker.style.bottom = `${targetRect.top - zoneRect.top + targetRect.height / 2 - Number.parseFloat(marker.style.height)}px`;
+            }
+            bench.append(marker);
+            const handleResize: EventListener = () => {
+              windowResizeCalls += 1;
+              addAbilityCounter('window');
+            };
+            marker.handleResize = handleResize;
+            window.addEventListener('resize', handleResize);
+            marker.handleRemove = () => removeAbilityCounter(false);
+            image.abilityCounter = marker;
+            if (reason === 'resizeObserver') {
+              nativeResizeObserverAbilityRefreshes += 1;
+            }
+            if (reason === 'direct') callTrace.push('addAbilityCounter');
+          };
+          const removeAbilityCounter = (record = true) => {
+            const marker = image.abilityCounter;
+            if (marker) {
+              marker.handleRemove = null;
+              removeResize(marker);
+              marker.remove();
+              image.abilityCounter = null;
+            }
+            if (record) callTrace.push('removeAbilityCounter');
+          };
+
+          const benchResizeObserver = new ResizeObserver((entries) => {
+            nativeResizeObserverCallbacks += 1;
+            for (const entry of entries) {
+              if (entry.target.parentElement?.id !== 'bench') continue;
+              for (const candidate of logicalBenchCards) {
+                if (candidate.damageCounter) {
+                  addDamageCounter(false, 'resizeObserver');
+                }
+                if (candidate.abilityCounter) {
+                  addAbilityCounter('resizeObserver');
+                }
+              }
+            }
+          });
+          benchResizeObserver.observe(wrapper);
+
+          const markerElements = () =>
+            [image.damageCounter, image.abilityCounter].filter(
+              (marker): marker is BenchMarkerElement => marker !== null
+            );
+          const fixtureIdsAt = (x: number, y: number): string[] =>
+            document.elementsFromPoint(x, y).flatMap((candidate) => {
+              if (!(candidate instanceof HTMLElement)) return [];
+              const candidateId =
+                candidate.dataset.legacyBenchMarkerId ??
+                candidate.dataset.legacyBenchMarkerCardId;
+              return candidateId ? [candidateId] : [];
+            });
+          const captureMarker = (
+            marker: BenchMarkerElement
+          ): RawBenchMarkerRotationMarker => {
+            const bounds = marker.getBoundingClientRect();
+            const styles = getComputedStyle(marker);
+            const transform =
+              styles.transform === 'none'
+                ? new DOMMatrixReadOnly()
+                : new DOMMatrixReadOnly(styles.transform);
+            return {
+              id: marker.dataset.legacyBenchMarkerId ?? '',
+              kind: marker.dataset
+                .legacyBenchMarkerKind as LegacyBenchMarkerKind,
+              frameLocalBounds: rect(bounds),
+              className: marker.className,
+              parentZoneId: marker.parentElement?.id ?? '',
+              domOrdinal: [...bench.children].indexOf(marker),
+              textContent: marker.textContent ?? '',
+              contentEditable: marker.contentEditable,
+              pointerEvents: styles.pointerEvents,
+              display: styles.display,
+              inlineDisplay: marker.style.display,
+              inlineLeftPx: nullablePx(marker.style.left),
+              inlineTopPx: nullablePx(marker.style.top),
+              inlineRightPx: nullablePx(marker.style.right),
+              inlineBottomPx: nullablePx(marker.style.bottom),
+              inlineWidthPx: Number.parseFloat(marker.style.width),
+              inlineHeightPx: Number.parseFloat(marker.style.height),
+              inlineLineHeightPx: Number.parseFloat(marker.style.lineHeight),
+              inlineFontSizePx: nullablePx(marker.style.fontSize),
+              zIndex: Number.parseInt(styles.zIndex, 10) || 0,
+              backgroundColor: styles.backgroundColor,
+              color: styles.color,
+              borderRadius: styles.borderRadius,
+              localRotationDegrees:
+                ((Math.atan2(transform.b, transform.a) * 180) / Math.PI + 360) %
+                360,
+              hitOrder: fixtureIdsAt(
+                bounds.left + bounds.width / 2,
+                bounds.top + bounds.height / 2
+              ),
+            };
+          };
+          const capturePhase = (
+            name: LegacyBenchMarkerRotationPhase['name']
+          ): RawBenchMarkerRotationPhase => {
+            const card = captureCard();
+            const wrapperBounds = wrapper.getBoundingClientRect();
+            const wrapperStyles = getComputedStyle(wrapper);
+            const cardBounds = image.getBoundingClientRect();
+            const damageBounds = image.damageCounter?.getBoundingClientRect();
+            const abilityBounds = image.abilityCounter?.getBoundingClientRect();
+            const overlapLeft = Math.max(
+              damageBounds?.left ?? 0,
+              abilityBounds?.left ?? 0
+            );
+            const overlapRight = Math.min(
+              damageBounds?.right ?? 0,
+              abilityBounds?.right ?? 0
+            );
+            const overlapTop = Math.max(
+              damageBounds?.top ?? 0,
+              abilityBounds?.top ?? 0
+            );
+            const overlapBottom = Math.min(
+              damageBounds?.bottom ?? 0,
+              abilityBounds?.bottom ?? 0
+            );
+            return {
+              name,
+              card,
+              wrapper: {
+                id: wrapperId,
+                frameLocalBounds: rect(wrapperBounds),
+                clientWidth: wrapper.clientWidth,
+                clientHeight: wrapper.clientHeight,
+                authoredWidthPx: wrapper.style.width
+                  ? Number.parseFloat(wrapper.style.width)
+                  : null,
+                inlineMarginRight: wrapper.style.marginRight,
+                inlineMarginLeft: wrapper.style.marginLeft,
+                computedMarginRightPx:
+                  Number.parseFloat(wrapperStyles.marginRight) || 0,
+                computedMarginLeftPx:
+                  Number.parseFloat(wrapperStyles.marginLeft) || 0,
+                childImageCount:
+                  wrapper.querySelectorAll(':scope > img').length,
+              },
+              markers: markerElements().map(captureMarker),
+              specialConditionMarkerCount: bench.querySelectorAll(
+                '[data-legacy-bench-marker-kind="specialCondition"]'
+              ).length,
+              markerOverlapHitOrder:
+                overlapRight > overlapLeft && overlapBottom > overlapTop
+                  ? fixtureIdsAt(
+                      (overlapLeft + overlapRight) / 2,
+                      (overlapTop + overlapBottom) / 2
+                    )
+                  : null,
+              cardOnlyHitOrder: fixtureIdsAt(
+                cardBounds.left + cardBounds.width / 2,
+                cardBounds.bottom - 3
+              ),
+            };
+          };
+          const rotateCard = () => {
+            const currentRotation =
+              Number.parseInt(
+                image.style.transform.replace(/[^0-9-]/gu, ''),
+                10
+              ) || 0;
+            const nextRotation = (currentRotation + 90) % 360;
+            image.style.transform = `rotate(${nextRotation}deg)`;
+            wrapper.style.marginRight = '3%';
+            wrapper.style.marginLeft = '2%';
+            if ([0, 180].includes(nextRotation)) {
+              wrapper.style.marginRight = '1%';
+              wrapper.style.marginLeft = '0%';
+            }
+            if (image.damageCounter) {
+              addDamageCounter(false, 'rotation');
+            }
+            if (image.abilityCounter) {
+              addAbilityCounter('rotation');
+            }
+            callTrace.push(`rotateCard:${currentRotation}->${nextRotation}`);
+          };
+
+          addDamageCounter('120', 'direct');
+          updateDamageCounter('130');
+          addAbilityCounter('direct');
+          await waitForStableLayout();
+          const callbacksAfterInitialSettle = nativeResizeObserverCallbacks;
+          const damageRefreshesAfterInitialSettle =
+            nativeResizeObserverDamageRefreshes;
+          const abilityRefreshesAfterInitialSettle =
+            nativeResizeObserverAbilityRefreshes;
+          const phases: RawBenchMarkerRotationPhase[] = [
+            capturePhase('marked-q0'),
+          ];
+          for (const name of ['q1', 'q2', 'q3', 'q0-return'] as const) {
+            rotateCard();
+            phases.push(capturePhase(name));
+          }
+
+          const liveResizeCallsBeforeDispatch = windowResizeCalls;
+          window.dispatchEvent(new Event('resize'));
+          await waitForStableLayout();
+          const liveResizeCallsAfterDispatch = windowResizeCalls;
+          const liveMarkerCountAfterDispatch = bench.querySelectorAll(
+            '[data-legacy-bench-marker-id]'
+          ).length;
+          removeDamageCounter();
+          removeAbilityCounter();
+          const resizeCallsBeforeCleanupDispatch = windowResizeCalls;
+          window.dispatchEvent(new Event('resize'));
+          await waitForStableLayout();
+          const resizeCallsAfterCleanupDispatch = windowResizeCalls;
+          const callbacksBeforeCleanup = nativeResizeObserverCallbacks;
+          logicalBenchCards.splice(0, logicalBenchCards.length);
+          image.remove();
+          await waitForStableLayout();
+          const callbacksAfterCleanup = nativeResizeObserverCallbacks;
+          const sourceObserverStillLiveBeforeHarnessDisconnect =
+            nativeResizeObserverDisconnectCalls === 0;
+          const cleanup = {
+            markerCount: bench.querySelectorAll('[data-legacy-bench-marker-id]')
+              .length,
+            specialConditionMarkerCount: bench.querySelectorAll(
+              '[data-legacy-bench-marker-kind="specialCondition"]'
+            ).length,
+            cardDamageCounterIsNull: image.damageCounter === null,
+            cardAbilityCounterIsNull: image.abilityCounter === null,
+            liveResizeCallsBeforeDispatch,
+            liveResizeCallsAfterDispatch,
+            liveMarkerCountAfterDispatch,
+            resizeCallsBeforeCleanupDispatch,
+            resizeCallsAfterCleanupDispatch,
+            wrapperCountAfterTwoFrames: bench.querySelectorAll(
+              '[data-legacy-bench-marker-stack-id]'
+            ).length,
+            cardCountAfterTwoFrames: bench.querySelectorAll(
+              '[data-legacy-bench-marker-card-id]'
+            ).length,
+            benchZIndexAfterCleanup:
+              Number.parseInt(getComputedStyle(bench).zIndex, 10) || 0,
+          };
+          const nativeBenchResizeObserver = {
+            callbacksAfterInitialSettle,
+            damageRefreshesAfterInitialSettle,
+            abilityRefreshesAfterInitialSettle,
+            callbacksBeforeCleanup,
+            callbacksAfterCleanup,
+            damageRefreshesAfterCleanup: nativeResizeObserverDamageRefreshes,
+            abilityRefreshesAfterCleanup: nativeResizeObserverAbilityRefreshes,
+            sourceObserverStillLiveBeforeHarnessDisconnect,
+            harnessDisconnectCalls: 0,
+          };
+          benchResizeObserver.disconnect();
+          nativeResizeObserverDisconnectCalls += 1;
+          nativeBenchResizeObserver.harnessDisconnectCalls =
+            nativeResizeObserverDisconnectCalls;
+          wrapperObserver.disconnect();
+
+          return {
+            id: `${input.side}-bench-marker-rotation`,
+            initialCard,
+            initialWrapperMargins,
+            phases,
+            callTrace,
+            nativeBenchResizeObserver,
+            cleanup,
+          };
+        },
+        { side }
+      );
+    rawCases.push({ side, value });
+  }
+
+  const frames = {
+    local: await requireRect(page.locator('#selfContainer'), '#selfContainer'),
+    opponent: await requireRect(page.locator('#oppContainer'), '#oppContainer'),
+  };
+  const frameTransforms = {
+    local: await captureFrameTransform(page.locator('#selfContainer')),
+    opponent: await captureFrameTransform(page.locator('#oppContainer')),
+  };
+  const physicalRect = (
+    side: LegacyFixtureSide,
+    bounds: CapturedRect
+  ): CapturedRect =>
+    side === 'local'
+      ? {
+          x: frames.local.x + bounds.x,
+          y: frames.local.y + bounds.y,
+          width: bounds.width,
+          height: bounds.height,
+        }
+      : {
+          x:
+            frames.opponent.x + frames.opponent.width - bounds.x - bounds.width,
+          y:
+            frames.opponent.y +
+            frames.opponent.height -
+            bounds.y -
+            bounds.height,
+          width: bounds.width,
+          height: bounds.height,
+        };
+  const cases: LegacyBenchMarkerRotationCase[] = rawCases.map(
+    ({ side, value }) => ({
+      ...value,
+      side,
+      initialCard: {
+        ...value.initialCard,
+        physicalBounds: physicalRect(side, value.initialCard.frameLocalBounds),
+        effectiveRotationDegrees:
+          (value.initialCard.localRotationDegrees +
+            frameTransforms[side].rotationDegrees) %
+          360,
+      },
+      phases: value.phases.map((phase) => ({
+        ...phase,
+        card: {
+          ...phase.card,
+          physicalBounds: physicalRect(side, phase.card.frameLocalBounds),
+          effectiveRotationDegrees:
+            (phase.card.localRotationDegrees +
+              frameTransforms[side].rotationDegrees) %
+            360,
+        },
+        wrapper: {
+          ...phase.wrapper,
+          physicalBounds: physicalRect(side, phase.wrapper.frameLocalBounds),
+        },
+        markers: phase.markers.map((marker) => ({
+          ...marker,
+          physicalBounds: physicalRect(side, marker.frameLocalBounds),
+          effectiveRotationDegrees:
+            (marker.localRotationDegrees +
+              frameTransforms[side].rotationDegrees) %
+            360,
+        })),
+      })),
+    })
+  );
 
   requireServedPaths(loaded, containedCardFixtureAssetPaths);
   requireNoUnexpectedSameOriginPaths(loaded);

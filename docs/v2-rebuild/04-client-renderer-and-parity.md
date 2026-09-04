@@ -408,7 +408,22 @@ churn, but its native paint/hit output is not claimed. A real owner/opponent/
 spectator test proves identical normalized geometry and stable distinct aliases
 without canonical card or definition ID leakage.
 
-Rotated q1/q2/q3 and source history-dependent returned-q0 layout, bench margins,
+An eleventh, source-only checkpoint isolates damage and ability markers on one
+ordinary sole-bench Pokémon in both frames. The 80.859375×112.5 px q0 card uses
+a 26.953125 px damage circle and an 80.859375×16.171875 px ability tab. q1/q3
+paint at 112.5×80.859375 px, write bench-only `3%` right/`2%` left margins, and
+resize the markers to 37.5 px and 112.5×22.5 px. In their overlap, the
+later-appended ability tab wins equal-z native hit order over damage and card.
+q2 and returned q0 write `1%`/`0%`; returned q0 is physically identical to
+pristine q0 because those inline values equal the bench CSS default. Visible
+control, keyboard, and movement sources pin canonical bench state to damage and
+ability only. The fixture counts its two window listeners separately from the
+bench initializer's native `ResizeObserver`, proves that observer remains live,
+and disconnects it only as harness cleanup. It does not compare a candidate or
+widen production.
+
+Production parity/layout for rotated active or bench q1/q2/q3 and
+source-history-dependent active returned-q0, all bench marker production,
 BREAK, compound evolution/group and attachment rotation, movement/evolution/
 refresh marker transfer, marker text-entry UX, alternate layouts, and
 Pixi-native paint/hit parity remain explicitly deferred.

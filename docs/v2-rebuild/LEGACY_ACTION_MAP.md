@@ -170,6 +170,13 @@ still clear special conditions from stacks moved onto the bench. Pixi
 descriptor-consumption and real cross-view projection tests cover stable
 identities without broadening the native-paint claim.
 
+A separate source-only sole-bench marker oracle now independently pins that
+canonical boundary: bench exposes damage and ability controls but not special
+conditions, and movement cleanup removes an existing active condition when the
+destination is bench. It also records the q0→q1→q2→q3→q0 geometry and observer
+lifecycle without changing domain state or enabling a production bench-marker
+layout.
+
 `ResolveInspectionCards` applies the same bounded, authority-resolved semantics
 to the active inspection work area and retires its visibility grant atomically.
 An ordinary inspection close now also retires persisted grants and public
