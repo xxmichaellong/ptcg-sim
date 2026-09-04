@@ -149,3 +149,14 @@ projection tests preserve identities, avoid geometry-only texture churn, and
 protect opaque aliases. Broader bench competition, extra/evolution
 attachments, reverse/unsupported order, alternate layouts,
 nonstandard-intrinsic asset parity, and Pixi paint/hit remain deferred.
+
+`legacy-marker-rotation-layout.test.ts` pins the source-only active-marker
+checkpoint separately from production renderer geometry. Independent local and
+opponent histories record damage and condition circles, the empty ability tab,
+every condition palette branch, painted-width reflow through
+q0→q1→q2→q3→q0, the history-retained active-wrapper margin, live and
+post-removal resize callback counts, hit order, and complete marker/card/
+wrapper cleanup. The opponent circle counter-rotation and ability-tab half-turn
+remain explicit. Bench margins, BREAK/compound and attachment rotation,
+movement/evolution/refresh transfer, text-entry gestures, alternate layouts,
+and every React/Pixi/renderer-contract parity claim remain deferred.

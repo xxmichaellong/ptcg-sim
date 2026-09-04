@@ -60,6 +60,118 @@ export interface LegacySourceGeometry {
   };
 }
 
+export type LegacyMarkerKind = 'damage' | 'specialCondition' | 'ability';
+
+export interface LegacyMarkerRotationCard {
+  readonly id: string;
+  readonly frameLocalBounds: CapturedRect;
+  readonly untransformedFrameLocalBounds: CapturedRect;
+  readonly physicalBounds: CapturedRect;
+  readonly clientWidth: number;
+  readonly clientHeight: number;
+  readonly naturalWidth: number;
+  readonly naturalHeight: number;
+  readonly localRotationDegrees: number;
+  readonly effectiveRotationDegrees: number;
+  readonly inlineTransform: string;
+  readonly zIndex: number;
+  readonly pokemonBreak: boolean;
+  readonly domOrdinal: number;
+  readonly sourcePath: string;
+}
+
+export interface LegacyMarkerRotationMarker {
+  readonly id: string;
+  readonly kind: LegacyMarkerKind;
+  readonly frameLocalBounds: CapturedRect;
+  readonly physicalBounds: CapturedRect;
+  readonly className: string;
+  readonly parentZoneId: string;
+  readonly domOrdinal: number;
+  readonly textContent: string;
+  readonly contentEditable: string;
+  readonly pointerEvents: string;
+  readonly display: string;
+  readonly inlineDisplay: string;
+  readonly inlineLeftPx: number | null;
+  readonly inlineTopPx: number | null;
+  readonly inlineRightPx: number | null;
+  readonly inlineBottomPx: number | null;
+  readonly inlineWidthPx: number;
+  readonly inlineHeightPx: number;
+  readonly inlineLineHeightPx: number;
+  readonly inlineFontSizePx: number | null;
+  readonly zIndex: number;
+  readonly backgroundColor: string;
+  readonly color: string;
+  readonly borderRadius: string;
+  readonly localRotationDegrees: number;
+  readonly effectiveRotationDegrees: number;
+  readonly hitOrder: readonly string[];
+}
+
+export interface LegacyMarkerRotationPhase {
+  readonly name: 'marked-q0' | 'q1' | 'q2' | 'q3' | 'q0-return';
+  readonly card: LegacyMarkerRotationCard;
+  readonly wrapper: {
+    readonly id: string;
+    readonly frameLocalBounds: CapturedRect;
+    readonly physicalBounds: CapturedRect;
+    readonly clientWidth: number;
+    readonly clientHeight: number;
+    readonly authoredWidthPx: number | null;
+    readonly inlineMarginRight: string;
+    readonly inlineMarginLeft: string;
+    readonly computedMarginRightPx: number;
+    readonly computedMarginLeftPx: number;
+    readonly childImageCount: number;
+  };
+  readonly markers: readonly LegacyMarkerRotationMarker[];
+  readonly cardOnlyHitOrder: readonly string[];
+}
+
+export interface LegacyMarkerRotationCase {
+  readonly id: string;
+  readonly side: LegacyFixtureSide;
+  readonly initialCard: LegacyMarkerRotationCard;
+  readonly initialWrapperMargins: {
+    readonly inlineRight: string;
+    readonly inlineLeft: string;
+    readonly computedRightPx: number;
+    readonly computedLeftPx: number;
+  };
+  readonly paletteTrace: readonly {
+    readonly input: string;
+    readonly textContent: string;
+    readonly backgroundColor: string;
+    readonly color: string;
+  }[];
+  readonly phases: readonly LegacyMarkerRotationPhase[];
+  readonly callTrace: readonly string[];
+  readonly cleanup: {
+    readonly markerCount: number;
+    readonly cardDamageCounterIsNull: boolean;
+    readonly cardSpecialConditionIsNull: boolean;
+    readonly cardAbilityCounterIsNull: boolean;
+    readonly liveResizeCallsBeforeDispatch: number;
+    readonly liveResizeCallsAfterDispatch: number;
+    readonly liveMarkerCountAfterDispatch: number;
+    readonly resizeCallsBeforeCleanupDispatch: number;
+    readonly resizeCallsAfterCleanupDispatch: number;
+    readonly wrapperCountAfterTwoFrames: number;
+    readonly cardCountAfterTwoFrames: number;
+  };
+}
+
+export interface LegacySourceMarkerRotationFixture {
+  readonly frames: Readonly<Record<LegacyFixtureSide, CapturedRect>>;
+  readonly frameTransforms: Readonly<
+    Record<LegacyFixtureSide, LegacyFrameTransform>
+  >;
+  readonly cases: readonly LegacyMarkerRotationCase[];
+  readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
+}
+
 export type LegacyFixtureSide = LegacySide;
 
 export interface LegacyCardFixtureCard {
@@ -6678,6 +6790,690 @@ export const captureLegacySourceMixedStackMovementFixture = async (
       })),
     })
   );
+
+  requireServedPaths(loaded, containedCardFixtureAssetPaths);
+  requireNoUnexpectedSameOriginPaths(loaded);
+  return {
+    frames,
+    frameTransforms,
+    cases,
+    sourceFulfillment: sourceFulfillment(loaded),
+  };
+};
+
+type RawMarkerRotationCard = Omit<
+  LegacyMarkerRotationCard,
+  'physicalBounds' | 'effectiveRotationDegrees'
+>;
+
+type RawMarkerRotationMarker = Omit<
+  LegacyMarkerRotationMarker,
+  'physicalBounds' | 'effectiveRotationDegrees'
+>;
+
+type RawMarkerRotationPhase = Omit<
+  LegacyMarkerRotationPhase,
+  'card' | 'wrapper' | 'markers'
+> & {
+  readonly card: RawMarkerRotationCard;
+  readonly wrapper: Omit<
+    LegacyMarkerRotationPhase['wrapper'],
+    'physicalBounds'
+  >;
+  readonly markers: readonly RawMarkerRotationMarker[];
+};
+
+type RawMarkerRotationCase = Omit<
+  LegacyMarkerRotationCase,
+  'side' | 'initialCard' | 'phases'
+> & {
+  readonly initialCard: RawMarkerRotationCard;
+  readonly phases: readonly RawMarkerRotationPhase[];
+};
+
+/**
+ * Replays the source-pinned active-card marker and rotation mutations in inert
+ * legacy documents. Application modules remain stubbed: each DOM mutation is
+ * a narrow transcription of the digest-pinned legacy functions.
+ */
+export const captureLegacySourceMarkerRotationFixture = async (
+  page: Page
+): Promise<LegacySourceMarkerRotationFixture> => {
+  const loaded = await loadLegacySourceBoard(page);
+  const rawCases: { side: LegacyFixtureSide; value: RawMarkerRotationCase }[] =
+    [];
+
+  for (const [side, frameSelector] of [
+    ['local', '#selfContainer'],
+    ['opponent', '#oppContainer'],
+  ] as const) {
+    const value = await page
+      .frameLocator(frameSelector)
+      .locator('body')
+      .evaluate(
+        async (body, input): Promise<RawMarkerRotationCase> => {
+          type MarkerImage = HTMLImageElement & {
+            damageCounter: MarkerElement | null;
+            specialCondition: MarkerElement | null;
+            abilityCounter: MarkerElement | null;
+            PokémonBreak: boolean;
+          };
+          type MarkerElement = HTMLDivElement & {
+            handleInput?: EventListener | null;
+            handleColor?: EventListener | null;
+            handleRemoveWrapper?: EventListener | null;
+            handleRemove?: ((fromBlurEvent?: boolean) => void) | null;
+            handleResize?: EventListener | null;
+          };
+
+          const rect = (bounds: DOMRect): CapturedRect => ({
+            x: bounds.x,
+            y: bounds.y,
+            width: bounds.width,
+            height: bounds.height,
+          });
+          const nullablePx = (value: string): number | null =>
+            value === '' ? null : Number.parseFloat(value);
+          const waitForStableLayout = () =>
+            new Promise<void>((resolve) =>
+              requestAnimationFrame(() =>
+                requestAnimationFrame(() => resolve())
+              )
+            );
+          const active = body.querySelector('#active');
+          if (!(active instanceof HTMLElement)) {
+            throw new Error('Legacy marker fixture active zone is missing');
+          }
+          active.replaceChildren();
+
+          const id = `${input.side}-active-marker-card`;
+          const wrapperId = `${input.side}-active-marker-stack`;
+          const image = document.createElement('img') as MarkerImage;
+          image.dataset.legacyMarkerCardId = id;
+          image.alt = '';
+          image.src = `${location.origin}/src/assets/cardback.png`;
+          image.style.opacity = '1';
+          image.style.position = 'relative';
+          image.style.bottom = '0%';
+          image.style.zIndex = '0';
+          image.style.left = '0px';
+          image.style.transform = 'rotate(0deg)';
+          image.damageCounter = null;
+          image.specialCondition = null;
+          image.abilityCounter = null;
+          image.PokémonBreak = false;
+
+          const wrapper = document.createElement('div');
+          wrapper.className = 'play-container';
+          wrapper.style.zIndex = '0';
+          wrapper.dataset.legacyMarkerStackId = wrapperId;
+          active.append(wrapper);
+          wrapper.append(image);
+          const wrapperObserver = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+              if (
+                mutation.removedNodes.length > 0 &&
+                wrapper.getElementsByTagName('img').length === 0
+              ) {
+                wrapper.remove();
+              }
+            }
+          });
+          wrapperObserver.observe(wrapper, { childList: true });
+
+          await image.decode();
+          await waitForStableLayout();
+          const callTrace: string[] = [];
+          let resizeCalls = 0;
+
+          const captureCard = (): RawMarkerRotationCard => {
+            const bounds = rect(image.getBoundingClientRect());
+            const priorTransform = image.style.transform;
+            image.style.transform = 'none';
+            const untransformedFrameLocalBounds = rect(
+              image.getBoundingClientRect()
+            );
+            image.style.transform = priorTransform;
+            const styles = getComputedStyle(image);
+            const transform =
+              styles.transform === 'none'
+                ? new DOMMatrixReadOnly()
+                : new DOMMatrixReadOnly(styles.transform);
+            return {
+              id,
+              frameLocalBounds: bounds,
+              untransformedFrameLocalBounds,
+              clientWidth: image.clientWidth,
+              clientHeight: image.clientHeight,
+              naturalWidth: image.naturalWidth,
+              naturalHeight: image.naturalHeight,
+              localRotationDegrees:
+                ((Math.atan2(transform.b, transform.a) * 180) / Math.PI + 360) %
+                360,
+              inlineTransform: image.style.transform,
+              zIndex: Number.parseInt(styles.zIndex, 10) || 0,
+              pokemonBreak: image.PokémonBreak === true,
+              domOrdinal: [...wrapper.querySelectorAll(':scope > img')].indexOf(
+                image
+              ),
+              sourcePath: new URL(image.currentSrc).pathname,
+            };
+          };
+
+          const initialCard = captureCard();
+          const initialWrapperStyles = getComputedStyle(wrapper);
+          const initialWrapperMargins = {
+            inlineRight: wrapper.style.marginRight,
+            inlineLeft: wrapper.style.marginLeft,
+            computedRightPx:
+              Number.parseFloat(initialWrapperStyles.marginRight) || 0,
+            computedLeftPx:
+              Number.parseFloat(initialWrapperStyles.marginLeft) || 0,
+          };
+
+          const markerClass = () =>
+            input.side === 'local' ? 'self-circle' : 'opp-circle';
+          const markerId = (kind: LegacyMarkerKind) =>
+            `${input.side}-active-${kind}-marker`;
+          const installResize = (
+            marker: MarkerElement,
+            callback: EventListener
+          ) => {
+            marker.handleResize = callback;
+            window.addEventListener('resize', callback);
+          };
+          const removeResize = (marker: MarkerElement) => {
+            if (marker.handleResize) {
+              window.removeEventListener('resize', marker.handleResize);
+              marker.handleResize = null;
+            }
+          };
+
+          const updateDamageCounter = (damageAmount: string, record = true) => {
+            if (!image.damageCounter)
+              throw new Error('Damage marker is missing');
+            if (image.damageCounter.textContent !== damageAmount) {
+              image.damageCounter.textContent = damageAmount;
+            }
+            if (record) callTrace.push(`updateDamageCounter:${damageAmount}`);
+          };
+          const addDamageCounter = (
+            damageAmount: string | false,
+            record = true
+          ) => {
+            const targetRect = image.getBoundingClientRect();
+            const zoneRect = active.getBoundingClientRect();
+            let marker = image.damageCounter;
+            if (marker) {
+              if (marker.handleInput)
+                marker.removeEventListener('input', marker.handleInput);
+              marker.handleInput = null;
+              if (marker.handleRemoveWrapper) {
+                marker.removeEventListener('blur', marker.handleRemoveWrapper);
+              }
+              marker.handleRemove = null;
+              removeResize(marker);
+            } else {
+              marker = document.createElement('div') as MarkerElement;
+              marker.dataset.legacyMarkerId = markerId('damage');
+              marker.dataset.legacyMarkerKind = 'damage';
+              marker.className = markerClass();
+              marker.contentEditable = 'true';
+              marker.textContent = damageAmount ? damageAmount : '10';
+            }
+            marker.style.display = 'inline-block';
+            marker.style.left = `${targetRect.left - zoneRect.left + targetRect.width / 1.5}px`;
+            marker.style.top = `${targetRect.top - zoneRect.top + targetRect.height / 4}px`;
+            active.append(marker);
+            marker.style.width = `${targetRect.width / 3}px`;
+            marker.style.height = `${targetRect.width / 3}px`;
+            marker.style.lineHeight = `${targetRect.width / 3}px`;
+            marker.style.fontSize = `${targetRect.width / 6}px`;
+            marker.style.zIndex = '1';
+            const handleInput: EventListener = () =>
+              updateDamageCounter(marker?.textContent ?? '', false);
+            marker.handleInput = handleInput;
+            marker.addEventListener('input', handleInput);
+            const handleResize: EventListener = () => {
+              resizeCalls += 1;
+              addDamageCounter(false, false);
+            };
+            installResize(marker, handleResize);
+            marker.handleRemove = () => {
+              if (
+                marker?.textContent.trim() === '' ||
+                Number(marker?.textContent) <= 0
+              ) {
+                removeDamageCounter(false);
+              }
+            };
+            marker.handleRemoveWrapper = () => marker?.handleRemove?.(true);
+            marker.addEventListener('blur', marker.handleRemoveWrapper);
+            image.damageCounter = marker;
+            if (record)
+              callTrace.push(`addDamageCounter:${String(damageAmount)}`);
+          };
+          const removeDamageCounter = (record = true) => {
+            const marker = image.damageCounter;
+            if (marker) {
+              if (marker.handleInput)
+                marker.removeEventListener('input', marker.handleInput);
+              marker.handleInput = null;
+              if (marker.handleRemoveWrapper)
+                marker.removeEventListener('blur', marker.handleRemoveWrapper);
+              marker.handleRemove = null;
+              removeResize(marker);
+              marker.remove();
+              image.damageCounter = null;
+            }
+            if (record) callTrace.push('removeDamageCounter');
+          };
+
+          const updateSpecialCondition = (
+            textContent: string,
+            record = true
+          ) => {
+            const marker = image.specialCondition;
+            if (!marker) throw new Error('Special-condition marker is missing');
+            marker.textContent = textContent;
+            switch (marker.textContent.toUpperCase()) {
+              case 'P':
+                marker.style.backgroundColor = 'green';
+                marker.style.color = 'white';
+                break;
+              case 'B':
+                marker.style.backgroundColor = 'red';
+                marker.style.color = 'white';
+                break;
+              case 'A':
+                marker.style.backgroundColor = 'blue';
+                marker.style.color = 'white';
+                break;
+              case 'PA':
+                marker.style.backgroundColor = 'yellow';
+                marker.style.color = 'black';
+                break;
+              case 'C':
+                marker.style.backgroundColor = 'purple';
+                marker.style.color = 'white';
+                break;
+              default:
+                marker.style.backgroundColor = 'white';
+                marker.style.color = 'black';
+            }
+            if (record) callTrace.push(`updateSpecialCondition:${textContent}`);
+          };
+          const addSpecialCondition = (record = true) => {
+            const targetRect = image.getBoundingClientRect();
+            const zoneRect = active.getBoundingClientRect();
+            let marker = image.specialCondition;
+            if (marker) {
+              if (marker.handleColor)
+                marker.removeEventListener('input', marker.handleColor);
+              marker.handleColor = null;
+              if (marker.handleRemoveWrapper)
+                marker.removeEventListener('blur', marker.handleRemoveWrapper);
+              marker.handleRemove = null;
+              removeResize(marker);
+            } else {
+              marker = document.createElement('div') as MarkerElement;
+              marker.dataset.legacyMarkerId = markerId('specialCondition');
+              marker.dataset.legacyMarkerKind = 'specialCondition';
+              marker.className = markerClass();
+              marker.contentEditable = 'true';
+              marker.textContent = 'P';
+              marker.style.backgroundColor = 'green';
+              marker.style.color = 'white';
+            }
+            marker.style.display = 'inline-block';
+            marker.style.left = `${targetRect.left - zoneRect.left}px`;
+            marker.style.top = `${targetRect.top - zoneRect.top + targetRect.height / 4}px`;
+            active.append(marker);
+            marker.style.width = `${targetRect.width / 3}px`;
+            marker.style.height = `${targetRect.width / 3}px`;
+            marker.style.lineHeight = `${targetRect.width / 3}px`;
+            marker.style.fontSize = `${targetRect.width / 4}px`;
+            marker.style.zIndex = '1';
+            const handleColor: EventListener = () =>
+              updateSpecialCondition(marker?.textContent ?? '', false);
+            marker.handleColor = handleColor;
+            marker.addEventListener('input', handleColor);
+            const handleResize: EventListener = () => {
+              resizeCalls += 1;
+              addSpecialCondition(false);
+            };
+            installResize(marker, handleResize);
+            marker.handleRemove = () => {
+              if (
+                marker?.textContent.trim() === '' ||
+                marker?.textContent === '0'
+              ) {
+                removeSpecialCondition(false);
+              }
+            };
+            marker.handleRemoveWrapper = () => marker?.handleRemove?.(true);
+            marker.addEventListener('blur', marker.handleRemoveWrapper);
+            image.specialCondition = marker;
+            if (record) callTrace.push('addSpecialCondition');
+          };
+          const removeSpecialCondition = (record = true) => {
+            const marker = image.specialCondition;
+            if (marker) {
+              if (marker.handleColor)
+                marker.removeEventListener('input', marker.handleColor);
+              marker.handleColor = null;
+              if (marker.handleRemoveWrapper)
+                marker.removeEventListener('blur', marker.handleRemoveWrapper);
+              marker.handleRemove = null;
+              removeResize(marker);
+              marker.remove();
+              image.specialCondition = null;
+            }
+            if (record) callTrace.push('removeSpecialCondition');
+          };
+
+          const addAbilityCounter = (record = true) => {
+            const targetRect = image.getBoundingClientRect();
+            const zoneRect = active.getBoundingClientRect();
+            let marker = image.abilityCounter;
+            if (marker) {
+              marker.handleRemove = null;
+              removeResize(marker);
+            } else {
+              marker = document.createElement('div') as MarkerElement;
+              marker.dataset.legacyMarkerId = markerId('ability');
+              marker.dataset.legacyMarkerKind = 'ability';
+              marker.className =
+                input.side === 'local' ? 'self-tab' : 'opp-tab';
+            }
+            marker.style.display = 'inline-block';
+            marker.style.width = `${targetRect.width}px`;
+            marker.style.height = `${targetRect.width / 5}px`;
+            marker.style.lineHeight = `${targetRect.width / 3}px`;
+            marker.style.zIndex = '1';
+            if (input.side === 'local') {
+              marker.style.right = '';
+              marker.style.bottom = '';
+              marker.style.left = `${targetRect.left - zoneRect.left}px`;
+              marker.style.top = `${targetRect.top - zoneRect.top + targetRect.height / 2}px`;
+            } else {
+              marker.style.left = `${targetRect.left - zoneRect.left}px`;
+              marker.style.top = '';
+              marker.style.right = '';
+              marker.style.bottom = `${targetRect.top - zoneRect.top + targetRect.height / 2 - Number.parseFloat(marker.style.height)}px`;
+            }
+            active.append(marker);
+            const handleResize: EventListener = () => {
+              resizeCalls += 1;
+              addAbilityCounter(false);
+            };
+            installResize(marker, handleResize);
+            marker.handleRemove = () => removeAbilityCounter(false);
+            image.abilityCounter = marker;
+            if (record) callTrace.push('addAbilityCounter');
+          };
+          const removeAbilityCounter = (record = true) => {
+            const marker = image.abilityCounter;
+            if (marker) {
+              marker.handleRemove = null;
+              removeResize(marker);
+              marker.remove();
+              image.abilityCounter = null;
+            }
+            if (record) callTrace.push('removeAbilityCounter');
+          };
+
+          const markerElements = () =>
+            [
+              image.damageCounter,
+              image.specialCondition,
+              image.abilityCounter,
+            ].filter((marker): marker is MarkerElement => marker !== null);
+          const fixtureIdsAt = (x: number, y: number): string[] =>
+            document.elementsFromPoint(x, y).flatMap((candidate) => {
+              if (!(candidate instanceof HTMLElement)) return [];
+              const candidateId =
+                candidate.dataset.legacyMarkerId ??
+                candidate.dataset.legacyMarkerCardId;
+              return candidateId ? [candidateId] : [];
+            });
+          const captureMarker = (
+            marker: MarkerElement
+          ): RawMarkerRotationMarker => {
+            const bounds = marker.getBoundingClientRect();
+            const styles = getComputedStyle(marker);
+            const transform =
+              styles.transform === 'none'
+                ? new DOMMatrixReadOnly()
+                : new DOMMatrixReadOnly(styles.transform);
+            const kind = marker.dataset.legacyMarkerKind as LegacyMarkerKind;
+            return {
+              id: marker.dataset.legacyMarkerId ?? '',
+              kind,
+              frameLocalBounds: rect(bounds),
+              className: marker.className,
+              parentZoneId: marker.parentElement?.id ?? '',
+              domOrdinal: [...active.children].indexOf(marker),
+              textContent: marker.textContent ?? '',
+              contentEditable: marker.contentEditable,
+              pointerEvents: styles.pointerEvents,
+              display: styles.display,
+              inlineDisplay: marker.style.display,
+              inlineLeftPx: nullablePx(marker.style.left),
+              inlineTopPx: nullablePx(marker.style.top),
+              inlineRightPx: nullablePx(marker.style.right),
+              inlineBottomPx: nullablePx(marker.style.bottom),
+              inlineWidthPx: Number.parseFloat(marker.style.width),
+              inlineHeightPx: Number.parseFloat(marker.style.height),
+              inlineLineHeightPx: Number.parseFloat(marker.style.lineHeight),
+              inlineFontSizePx: nullablePx(marker.style.fontSize),
+              zIndex: Number.parseInt(styles.zIndex, 10) || 0,
+              backgroundColor: styles.backgroundColor,
+              color: styles.color,
+              borderRadius: styles.borderRadius,
+              localRotationDegrees:
+                ((Math.atan2(transform.b, transform.a) * 180) / Math.PI + 360) %
+                360,
+              hitOrder: fixtureIdsAt(
+                bounds.left + bounds.width / 2,
+                bounds.top + bounds.height / 2
+              ),
+            };
+          };
+          const capturePhase = (
+            name: LegacyMarkerRotationPhase['name']
+          ): RawMarkerRotationPhase => {
+            const card = captureCard();
+            const wrapperBounds = wrapper.getBoundingClientRect();
+            const wrapperStyles = getComputedStyle(wrapper);
+            const cardBounds = image.getBoundingClientRect();
+            return {
+              name,
+              card,
+              wrapper: {
+                id: wrapperId,
+                frameLocalBounds: rect(wrapperBounds),
+                clientWidth: wrapper.clientWidth,
+                clientHeight: wrapper.clientHeight,
+                authoredWidthPx: wrapper.style.width
+                  ? Number.parseFloat(wrapper.style.width)
+                  : null,
+                inlineMarginRight: wrapper.style.marginRight,
+                inlineMarginLeft: wrapper.style.marginLeft,
+                computedMarginRightPx:
+                  Number.parseFloat(wrapperStyles.marginRight) || 0,
+                computedMarginLeftPx:
+                  Number.parseFloat(wrapperStyles.marginLeft) || 0,
+                childImageCount:
+                  wrapper.querySelectorAll(':scope > img').length,
+              },
+              markers: markerElements().map(captureMarker),
+              cardOnlyHitOrder: fixtureIdsAt(
+                cardBounds.left + cardBounds.width / 2,
+                cardBounds.bottom - 3
+              ),
+            };
+          };
+
+          const rotateCard = () => {
+            const currentRotation =
+              Number.parseInt(
+                image.style.transform.replace(/[^0-9-]/gu, ''),
+                10
+              ) || 0;
+            const nextRotation = (currentRotation + 90) % 360;
+            image.style.transform = `rotate(${nextRotation}deg)`;
+            if ([0, 180].includes(nextRotation)) {
+              wrapper.style.marginRight = '1%';
+              wrapper.style.marginLeft = '0%';
+            }
+            if (image.damageCounter) addDamageCounter(false, false);
+            if (image.specialCondition) addSpecialCondition(false);
+            if (image.abilityCounter) addAbilityCounter(false);
+            callTrace.push(`rotateCard:${currentRotation}->${nextRotation}`);
+          };
+
+          addDamageCounter('120');
+          updateDamageCounter('130');
+          addSpecialCondition();
+          const paletteTrace = ['P', 'B', 'A', 'Pa', 'C', 'X', 'P'].map(
+            (textContent) => {
+              updateSpecialCondition(textContent);
+              const marker = image.specialCondition;
+              if (!marker)
+                throw new Error('Special-condition palette marker is missing');
+              const styles = getComputedStyle(marker);
+              return {
+                input: textContent,
+                textContent: marker.textContent ?? '',
+                backgroundColor: styles.backgroundColor,
+                color: styles.color,
+              };
+            }
+          );
+          addAbilityCounter();
+          const phases: RawMarkerRotationPhase[] = [capturePhase('marked-q0')];
+          for (const name of ['q1', 'q2', 'q3', 'q0-return'] as const) {
+            rotateCard();
+            phases.push(capturePhase(name));
+          }
+
+          const liveResizeCallsBeforeDispatch = resizeCalls;
+          window.dispatchEvent(new Event('resize'));
+          await waitForStableLayout();
+          const liveResizeCallsAfterDispatch = resizeCalls;
+          const liveMarkerCountAfterDispatch = active.querySelectorAll(
+            '[data-legacy-marker-id]'
+          ).length;
+          removeDamageCounter();
+          removeSpecialCondition();
+          removeAbilityCounter();
+          const resizeCallsBeforeCleanupDispatch = resizeCalls;
+          window.dispatchEvent(new Event('resize'));
+          await waitForStableLayout();
+          const resizeCallsAfterCleanupDispatch = resizeCalls;
+          image.remove();
+          await waitForStableLayout();
+          const cleanup = {
+            markerCount: active.querySelectorAll('[data-legacy-marker-id]')
+              .length,
+            cardDamageCounterIsNull: image.damageCounter === null,
+            cardSpecialConditionIsNull: image.specialCondition === null,
+            cardAbilityCounterIsNull: image.abilityCounter === null,
+            liveResizeCallsBeforeDispatch,
+            liveResizeCallsAfterDispatch,
+            liveMarkerCountAfterDispatch,
+            resizeCallsBeforeCleanupDispatch,
+            resizeCallsAfterCleanupDispatch,
+            wrapperCountAfterTwoFrames: active.querySelectorAll(
+              '[data-legacy-marker-stack-id]'
+            ).length,
+            cardCountAfterTwoFrames: active.querySelectorAll(
+              '[data-legacy-marker-card-id]'
+            ).length,
+          };
+          wrapperObserver.disconnect();
+
+          return {
+            id: `${input.side}-active-marker-rotation`,
+            initialCard,
+            initialWrapperMargins,
+            paletteTrace,
+            phases,
+            callTrace,
+            cleanup,
+          };
+        },
+        { side }
+      );
+    rawCases.push({ side, value });
+  }
+
+  const frames = {
+    local: await requireRect(page.locator('#selfContainer'), '#selfContainer'),
+    opponent: await requireRect(page.locator('#oppContainer'), '#oppContainer'),
+  };
+  const frameTransforms = {
+    local: await captureFrameTransform(page.locator('#selfContainer')),
+    opponent: await captureFrameTransform(page.locator('#oppContainer')),
+  };
+  const physicalRect = (
+    side: LegacyFixtureSide,
+    bounds: CapturedRect
+  ): CapturedRect =>
+    side === 'local'
+      ? {
+          x: frames.local.x + bounds.x,
+          y: frames.local.y + bounds.y,
+          width: bounds.width,
+          height: bounds.height,
+        }
+      : {
+          x:
+            frames.opponent.x + frames.opponent.width - bounds.x - bounds.width,
+          y:
+            frames.opponent.y +
+            frames.opponent.height -
+            bounds.y -
+            bounds.height,
+          width: bounds.width,
+          height: bounds.height,
+        };
+  const cases: LegacyMarkerRotationCase[] = rawCases.map(({ side, value }) => ({
+    ...value,
+    side,
+    initialCard: {
+      ...value.initialCard,
+      physicalBounds: physicalRect(side, value.initialCard.frameLocalBounds),
+      effectiveRotationDegrees:
+        (value.initialCard.localRotationDegrees +
+          frameTransforms[side].rotationDegrees) %
+        360,
+    },
+    phases: value.phases.map((phase) => ({
+      ...phase,
+      card: {
+        ...phase.card,
+        physicalBounds: physicalRect(side, phase.card.frameLocalBounds),
+        effectiveRotationDegrees:
+          (phase.card.localRotationDegrees +
+            frameTransforms[side].rotationDegrees) %
+          360,
+      },
+      wrapper: {
+        ...phase.wrapper,
+        physicalBounds: physicalRect(side, phase.wrapper.frameLocalBounds),
+      },
+      markers: phase.markers.map((marker) => ({
+        ...marker,
+        physicalBounds: physicalRect(side, marker.frameLocalBounds),
+        effectiveRotationDegrees:
+          (marker.localRotationDegrees +
+            frameTransforms[side].rotationDegrees) %
+          360,
+      })),
+    })),
+  }));
 
   requireServedPaths(loaded, containedCardFixtureAssetPaths);
   requireNoUnexpectedSameOriginPaths(loaded);

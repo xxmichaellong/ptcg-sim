@@ -585,6 +585,34 @@ projected category is not Pokémon, alternate layouts, nonstandard-intrinsic
 asset parity, broader gestures, and Pixi paint/hit remain deferred. Unprojected
 original-category history cannot select a renderer path.
 
+`tests/browser/legacy-marker-rotation-geometry.spec.ts` adds a tenth,
+source-only oracle backed by
+`tests/legacy-fixtures/renderer/marker-rotation-v1.json`. Two independent inert
+histories place one ordinary active Pokémon and its damage, special-condition,
+and ability-used markers in the local and opponent source frames. They capture
+the pristine card, marked q0, each synchronous q1/q2/q3/q0-return phase, and
+marker-node/card-pointer cleanup, post-removal resize non-observation, and
+wrapper cleanup. The fixture also executes a damage update and all
+P/B/A/Pa/C/default condition palette branches.
+
+At q0 the card paints at 90.5625×126 px. Damage and condition are editable,
+pointer-hit 30.1875 px circles; the empty ability marker is a pointer-hit
+90.5625×18.109375 px tab. At q1/q3 the rotated card paints at 126×90.5625 px,
+so the source recomputes 42 px circles and a 126×25.1875 px tab from that
+painted width. The three markers are direct active-zone children at z-index 1,
+and marker-center hit tests return marker before card. Opponent circles add an
+inner 180-degree transform to the outer opponent frame's half-turn, while the
+opponent ability tab retains only the enclosing half-turn.
+
+The pristine active wrapper has no inline margins. q1 preserves that state;
+q2 writes `margin-right: 1%` and `margin-left: 0%`, q3 retains it, and the
+returned q0 remains at x 556.78125 rather than pristine x 558.703125. This is a
+source-history diagnostic, not a candidate layout rule. The active q1/q3 marker
+geometry remains source-only, and no candidate parity is claimed. Bench q1/q3
+margins, BREAK and compound evolution/group rotation, Energy/Trainer rotation,
+marker transfer/reconstruction, editing gestures, alternate layouts, and
+React/Pixi/renderer-contract parity remain deferred.
+
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
 renderer-neutral scene and has structured scene assertions for all four board

@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 730 v2 tests across 109 files. A separate suite
-passes 18 Playwright checks across ten Chromium 151 browser files:
+The repository-wide gate passes 733 v2 tests across 110 files. A separate suite
+passes 20 Playwright checks across 11 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -453,7 +453,16 @@ passes 18 Playwright checks across ten Chromium 151 browser files:
     active/sole-bench control shapes; no DOM-history field enters game state.
     Stable-ID scene diffs, Pixi descriptor/sprite reuse without texture churn,
     and owner/opponent/spectator projection privacy cover downstream consumers.
-16. The selected DOM implementation completes 100 mount → clear/reset → destroy
+16. A tenth, source-only Chromium capture isolates one ordinary active Pokémon
+    with damage, special-condition, and ability-used markers in both physical
+    frames. It pins marker paint, palette, editability, hit order, live and
+    post-removal resize callback counts, marker/card-pointer/wrapper cleanup,
+    and the synchronous q0→q1→q2→q3→q0 rotation history.
+    The first q2 writes a `1%` active-wrapper right margin, so returned q0 is
+    about 1.92 px from pristine q0. This is evidence, not a candidate rule:
+    bench/BREAK/compound and attachment rotation, marker transfer/editing UX,
+    and React/Pixi/renderer-contract parity remain deferred.
+17. The selected DOM implementation completes 100 mount → clear/reset → destroy
     cycles on one warmed route-owned host with the exact status sequence,
     complete scene IDs at mount, zero rendered scene children/IDs after clear and
     destroy, zero non-DOM diagnostic resources, and post-GC Chromium
@@ -484,9 +493,12 @@ source-backed stable two-Energy comparison plus departure capture in
 the separate source-only mixed Energy/Trainer order and departure check in
 `tests/browser/legacy-mixed-energy-trainer-tool-attachment-order-geometry.spec.ts`,
 plus the whole-stack/category-history source and React comparison in
-`tests/browser/legacy-mixed-stack-movement-geometry.spec.ts`. The former mixed
-suite validates a checked-in numeric oracle without mounting a candidate; the
-latter mounts React only for its two canonical settled movement phases.
+`tests/browser/legacy-mixed-stack-movement-geometry.spec.ts`, and the
+source-only marker/rotation history in
+`tests/browser/legacy-marker-rotation-geometry.spec.ts`. The mixed-order suite
+validates a checked-in numeric oracle without mounting a candidate; the mixed-
+stack movement suite mounts React only for its two canonical settled movement
+phases; and the marker/rotation suite remains source-only.
 Standard
 Linux CI can install Playwright's pinned Chromium build. This NixOS workspace
 used the Nix Chromium 151 package through `PTCGSIM_CHROMIUM_PATH`, because Playwright's
