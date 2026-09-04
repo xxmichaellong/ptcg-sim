@@ -84,9 +84,9 @@ alternate layouts and assets, destination UX, candidate click/drag behavior,
 and server/network behavior remain excluded.
 
 `legacy-mixed-energy-trainer-tool-attachment-order-geometry.spec.ts` checks the
-source-only
+source
 `tests/legacy-fixtures/renderer/mixed-energy-trainer-tool-attachment-order-v1.json`
-without selecting a production renderer path. Four independent attachment
+fixture. Four independent attachment
 histories cover Energy-then-Trainer and
 Trainer-then-Energy on the local and opponent active stacks; four more histories
 start from the same stable mixed stack and independently remove the Energy or
@@ -118,11 +118,11 @@ observable; restored checkpoints pin one live wrapper, no superseded wrapper,
 and a hidden staging popup before and after two animation frames.
 The v2 exact-position swap is an explicit semantic exception; its versioned
 restore still applies the supported category partition to the resulting list.
-There is no production mixed renderer claim: mixed stacks, unsupported
-attachment membership, base-only restoration, work-area bulk resolution,
-active/bench swaps, broader overflow/flex competition, and Pixi parity remain
-generic or deferred. Reverse arrays remain valid historical state outside the
-v1 normalized transition subset.
+The stable canonical output contributes to the narrow production gate described
+below. Unsupported attachment membership, base-only restoration, broader
+work-area restores, and overflow/flex competition remain generic or deferred.
+Reverse arrays remain valid historical state outside the v1 normalized
+transition subset.
 
 `legacy-mixed-stack-movement-category-cycle-layout.test.ts` pins the separate
 `mixed-stack-movement-category-cycle-v1.json` source checkpoint. Six isolated
@@ -135,6 +135,17 @@ and sole-bench geometry, logical/DOM order, rotations, z/hits, wrapper cleanup,
 and harness-operation/reset traces. It deliberately does not replay `leaveAll`
 or claim its setup trace; that transition is pinned by the preceding fixture.
 The category path records original categories and proves final settled
-equivalence without turning legacy reflow history into game state. This remains
-source-only: broader bench competition, extra/evolution attachments, alternate
-layouts/assets, candidate comparison, and Pixi paint/hit are deferred.
+equivalence without turning legacy reflow history into game state. The browser
+test now also mounts React for only the settled sole-bench and returned-active
+movement phases on both sides. It compares all mixed-card scene/pre-transform
+and painted boxes, q1/q3 Tool rotation, z `300/299/298`, renderer order, and four
+native hit regions within 2 px / 1% / 0.1 degrees.
+
+The strict gate uses only the exact public current shape: one known same-owner
+face-up Pokémon base plus `[Energy, Trainer]`, all unrotated/marker-free, in the
+default layout and the characterized sole-active or one-control active/bench
+placements. Scene-diff, Pixi consumption, and real owner/opponent/spectator
+projection tests preserve identities, avoid geometry-only texture churn, and
+protect opaque aliases. Broader bench competition, extra/evolution
+attachments, reverse/unsupported order, alternate layouts,
+nonstandard-intrinsic asset parity, and Pixi paint/hit remain deferred.

@@ -1,10 +1,14 @@
 // @vitest-environment happy-dom
 
 import {
+  BOARD_LAYOUT_GEOMETRY_VERSION,
   BoardDragController,
+  createBoardLayoutSnapshot,
+  createBoardScene,
   createBoardSceneForViewport,
   createRendererSpikeView,
   DEFAULT_BOARD_PRESENTATION,
+  DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
   type BoardPresentation,
   type BoardRendererStatus,
   type BoardScene,
@@ -25,6 +29,147 @@ const scene = (): BoardScene => {
     splitRatio: 0.5,
     geometryVersion: 1,
   });
+};
+
+type SpikeView = ReturnType<typeof createRendererSpikeView>;
+type KnownSpikeCard = Extract<
+  SpikeView['zones'][string]['cards'][number],
+  { readonly kind: 'known' }
+>;
+
+interface MixedAttachmentScenes {
+  readonly active: BoardScene;
+  readonly bench: BoardScene;
+  readonly returned: BoardScene;
+  readonly stacks: readonly {
+    readonly baseId: KnownSpikeCard['id'];
+    readonly energyId: KnownSpikeCard['id'];
+    readonly toolId: KnownSpikeCard['id'];
+    readonly side: 'local' | 'opponent';
+  }[];
+}
+
+const createMixedAttachmentScenes = (): MixedAttachmentScenes => {
+  const base = createRendererSpikeView();
+  const [localPlayerId, opponentPlayerId] = base.playerOrder;
+  if (!localPlayerId || !opponentPlayerId || base.playerOrder.length !== 2) {
+    throw new Error('Renderer spike fixture lacks two players');
+  }
+  const availableCards = Object.values(base.zones).flatMap(
+    (zone) => zone.cards
+  );
+  const participants = (
+    [
+      [localPlayerId, 'local'],
+      [opponentPlayerId, 'opponent'],
+    ] as const
+  ).map(([playerId, side]) => {
+    const available = availableCards.filter(
+      (card): card is KnownSpikeCard =>
+        card.kind === 'known' && card.ownerId === playerId
+    );
+    const take = (category: KnownSpikeCard['category']): KnownSpikeCard => {
+      const index = available.findIndex((card) => card.category === category);
+      if (index < 0)
+        throw new Error(`Missing ${side} ${category} fixture card`);
+      return available.splice(index, 1)[0]!;
+    };
+    return {
+      playerId,
+      side,
+      mixedId: `stack:pixi-mixed:${side}`,
+      controlId: `stack:pixi-control:${side}`,
+      base: take('Pokémon'),
+      energy: take('Energy'),
+      tool: take('Trainer'),
+      control: take('Pokémon'),
+    };
+  });
+  const definitions = { ...base.definitions };
+  for (const participant of participants) {
+    for (const card of [
+      participant.base,
+      participant.energy,
+      participant.tool,
+      participant.control,
+    ]) {
+      const definition = definitions[card.definitionId];
+      if (!definition)
+        throw new Error(`Missing definition ${card.definitionId}`);
+      definitions[card.definitionId] = {
+        ...definition,
+        imageUrl: `/pixi-mixed/${String(card.id)}.png`,
+      };
+    }
+  }
+  const view = (mixedSlot: 'active' | 'bench', revision: number): SpikeView => {
+    const controlSlot = mixedSlot === 'active' ? 'bench' : 'active';
+    const boards: Record<string, SpikeView['boards'][string]> = {};
+    const stacks: Record<string, SpikeView['stacks'][string]> = {};
+    for (const participant of participants) {
+      boards[participant.playerId] = {
+        activeStackId:
+          mixedSlot === 'active' ? participant.mixedId : participant.controlId,
+        benchStackIds: [
+          mixedSlot === 'active' ? participant.controlId : participant.mixedId,
+        ],
+      };
+      stacks[participant.mixedId] = {
+        id: participant.mixedId,
+        boardPlayerId: participant.playerId,
+        slot: mixedSlot,
+        evolutionCards: [participant.base],
+        attachmentCards: [participant.energy, participant.tool],
+        rotationQuarterTurns: 0,
+        damage: null,
+        specialCondition: null,
+        abilityUsed: false,
+      };
+      stacks[participant.controlId] = {
+        id: participant.controlId,
+        boardPlayerId: participant.playerId,
+        slot: controlSlot,
+        evolutionCards: [participant.control],
+        attachmentCards: [],
+        rotationQuarterTurns: 0,
+        damage: null,
+        specialCondition: null,
+        abilityUsed: false,
+      };
+    }
+    return {
+      ...base,
+      revision,
+      definitions,
+      zones: Object.fromEntries(
+        Object.entries(base.zones).map(([id, zone]) => [
+          id,
+          { ...zone, cards: [] },
+        ])
+      ),
+      boards,
+      stacks,
+    };
+  };
+  const layout = createBoardLayoutSnapshot({
+    geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
+    viewport: { width: 1600, height: 900, devicePixelRatio: 1 },
+    playerIds: [localPlayerId, opponentPlayerId],
+    bottomPlayerId: localPlayerId,
+    shellMode: 'sidebar',
+    vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+  });
+  return {
+    active: createBoardScene(view('active', 101), layout),
+    bench: createBoardScene(view('bench', 102), layout),
+    returned: createBoardScene(view('active', 103), layout),
+    stacks: participants.map(({ base, energy, tool, side }) => ({
+      baseId: base.id,
+      energyId: energy.id,
+      toolId: tool.id,
+      side,
+    })),
+  };
 };
 
 interface RendererInternals {
@@ -245,6 +390,109 @@ describe('Pixi board interaction cancellation', () => {
       contextLossListeners: 0,
       displayObjects: 0,
     });
+  });
+
+  it('consumes stable mixed attachment scene descriptors without recycling Pixi card views or texture leases', async () => {
+    const load = vi.spyOn(Assets, 'load').mockResolvedValue(Texture.WHITE);
+    vi.spyOn(Assets, 'unload').mockResolvedValue(undefined);
+    const application = fakeApplication();
+    const renderer = new PixiBoardRenderer(
+      {
+        emitIntent: vi.fn(),
+        emitPresentationUpdate: vi.fn(),
+        reportError: vi.fn(),
+      },
+      { createApplication: () => application }
+    );
+    const scenes = createMixedAttachmentScenes();
+    expect(scenes.active.cards).toHaveLength(8);
+    expect(scenes.bench.cards.map((card) => card.id)).toEqual(
+      scenes.active.cards.map((card) => card.id)
+    );
+    expect(scenes.returned.cards).toEqual(scenes.active.cards);
+    for (const { baseId, energyId, toolId, side } of scenes.stacks) {
+      for (const candidate of [scenes.active, scenes.bench, scenes.returned]) {
+        expect(
+          candidate.cards.find((card) => card.id === baseId)
+        ).toMatchObject({
+          role: 'stackEvolution',
+          side,
+          zIndex: 300,
+          rotationQuarterTurns: side === 'local' ? 0 : 2,
+        });
+        expect(
+          candidate.cards.find((card) => card.id === energyId)
+        ).toMatchObject({
+          role: 'stackAttachment',
+          side,
+          zIndex: 299,
+          rotationQuarterTurns: side === 'local' ? 0 : 2,
+        });
+        expect(
+          candidate.cards.find((card) => card.id === toolId)
+        ).toMatchObject({
+          role: 'stackAttachment',
+          side,
+          zIndex: 298,
+          rotationQuarterTurns: side === 'local' ? 1 : 3,
+        });
+      }
+      expect(
+        scenes.bench.cards.find((card) => card.id === toolId)?.bounds
+      ).not.toEqual(
+        scenes.active.cards.find((card) => card.id === toolId)?.bounds
+      );
+    }
+
+    await renderer.mount(
+      document.createElement('div'),
+      scenes.active,
+      DEFAULT_BOARD_PRESENTATION
+    );
+    await Promise.resolve();
+    const internals = renderer as unknown as RendererInternals;
+    const initialSprites = new Map(
+      [...internals.cardViews].map(([id, view]) => [id, view.sprite])
+    );
+    const release = vi.spyOn(internals.textures, 'release');
+    const initialLoadCount = load.mock.calls.length;
+    expect(initialLoadCount).toBe(scenes.active.cards.length);
+
+    const expectDescriptorConsumption = (candidate: BoardScene): void => {
+      expect(internals.cardViews.size).toBe(candidate.cards.length);
+      for (const descriptor of candidate.cards) {
+        const view = internals.cardViews.get(String(descriptor.id));
+        if (!view) throw new Error(`Missing Pixi card view ${descriptor.id}`);
+        expect(view.sprite).toBe(initialSprites.get(String(descriptor.id)));
+        expect(view.descriptor).toBe(descriptor);
+        expect(view.sprite.position.x).toBeCloseTo(
+          descriptor.bounds.x + descriptor.bounds.width / 2,
+          10
+        );
+        expect(view.sprite.position.y).toBeCloseTo(
+          descriptor.bounds.y + descriptor.bounds.height / 2,
+          10
+        );
+        expect(view.sprite.width).toBeCloseTo(descriptor.bounds.width, 10);
+        expect(view.sprite.height).toBeCloseTo(descriptor.bounds.height, 10);
+        expect(view.sprite.zIndex).toBe(descriptor.zIndex);
+        expect(view.sprite.rotation).toBeCloseTo(
+          descriptor.rotationQuarterTurns * (Math.PI / 2),
+          10
+        );
+      }
+    };
+
+    expectDescriptorConsumption(scenes.active);
+    renderer.installScene(scenes.bench, []);
+    expectDescriptorConsumption(scenes.bench);
+    renderer.installScene(scenes.returned, []);
+    expectDescriptorConsumption(scenes.returned);
+    expect(load).toHaveBeenCalledTimes(initialLoadCount);
+    expect(release).not.toHaveBeenCalled();
+
+    renderer.destroy();
+    await Promise.resolve();
   });
 
   it('forwards application cancellation and releases the captured pointer', () => {

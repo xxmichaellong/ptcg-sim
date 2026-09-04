@@ -13,6 +13,7 @@ import {
   layoutLegacyOrdinaryEvolutionStack,
   layoutLegacyPlaySlotCards,
   layoutLegacyPlayStackHitRegions,
+  layoutLegacySingleEnergyTrainerToolAttachmentStack,
   layoutLegacySingleEnergyAttachmentStack,
   layoutLegacySingleTrainerToolAttachmentStack,
   layoutLegacyTwoEnergyAttachmentStack,
@@ -946,6 +947,153 @@ describe('renderer-neutral legacy board layout', () => {
     }
     expect(() =>
       layoutLegacySingleTrainerToolAttachmentStack(
+        {
+          ...active,
+          physicalDeclaredBounds: {
+            ...active.physicalDeclaredBounds,
+            height: 0.1,
+          },
+        },
+        0.1
+      )
+    ).toThrow('CSSOM base width');
+  });
+
+  it('pins canonical one-Energy/Trainer-as-Tool active and bench geometry', () => {
+    const layout = createBoardLayoutSnapshot(
+      state({ viewport: { width: 1600, height: 900, devicePixelRatio: 1 } })
+    );
+    const expected = {
+      local: {
+        active: {
+          flexX: 540.1344,
+          baseX: 540.1344,
+          energyX: 555.1344,
+          toolX: 570.1344,
+        },
+        bench: {
+          flexX: 534.4168,
+          baseX: 534.4168,
+          energyX: 547.9168,
+          toolX: 561.4168,
+        },
+      },
+      opponent: {
+        active: {
+          flexX: 547.8656,
+          baseX: 577.6610545454545,
+          energyX: 562.6610545454545,
+          toolX: 547.6610545454545,
+        },
+        bench: {
+          flexX: 565.5832,
+          baseX: 593.0434272727273,
+          energyX: 579.5434272727273,
+          toolX: 566.0434272727273,
+        },
+      },
+    } as const;
+    for (const side of ['local', 'opponent'] as const) {
+      for (const kind of ['active', 'bench'] as const) {
+        const region = findBoardLayoutRegion(layout, side, kind);
+        const result = layoutLegacySingleEnergyTrainerToolAttachmentStack(
+          region,
+          CARD_ASPECT_RATIO
+        );
+        const baseWidth =
+          kind === 'active' ? 90.20454545454545 : 80.53977272727273;
+        const cardHeight = kind === 'active' ? 126 : 112.5;
+        const baseCssomClientWidth = kind === 'active' ? 90 : 81;
+        const attachmentOffset = kind === 'active' ? 15 : 13.5;
+        const authoredWidth = kind === 'active' ? 120 : 108;
+        expect(result.baseCssomClientWidth).toBe(baseCssomClientWidth);
+        expect(result.attachmentOffset).toBe(attachmentOffset);
+        expect(result.authoredWidth).toBe(authoredWidth);
+        expect(result.stableCssomClientWidth).toBe(authoredWidth);
+        expect(result.marginRight).toBeCloseTo(
+          region.physicalDeclaredBounds.width * 0.02,
+          10
+        );
+        expectRectClose(result.flexItemBounds, {
+          x: expected[side][kind].flexX,
+          y: region.physicalDeclaredBounds.y,
+          width: authoredWidth,
+          height: cardHeight,
+        });
+        expect(result.base.sourceZIndex).toBe(0);
+        expect(result.energy.sourceZIndex).toBe(-1);
+        expect(result.tool.sourceZIndex).toBe(-2);
+        for (const card of [result.base, result.energy, result.tool]) {
+          expect(card.bounds.y).toBeCloseTo(
+            region.physicalDeclaredBounds.y,
+            10
+          );
+          expect(card.bounds.width).toBeCloseTo(baseWidth, 10);
+          expect(card.bounds.height).toBeCloseTo(cardHeight, 10);
+        }
+        expect(result.base.bounds.x).toBeCloseTo(
+          expected[side][kind].baseX,
+          10
+        );
+        expect(result.energy.bounds.x).toBeCloseTo(
+          expected[side][kind].energyX,
+          10
+        );
+        expect(result.tool.bounds.x).toBeCloseTo(
+          expected[side][kind].toolX,
+          10
+        );
+        expect(Math.abs(result.energy.bounds.x - result.base.bounds.x)).toBe(
+          result.attachmentOffset
+        );
+        expect(Math.abs(result.tool.bounds.x - result.base.bounds.x)).toBe(
+          result.attachmentOffset * 2
+        );
+      }
+    }
+  });
+
+  it('fails closed outside one-Energy/Trainer-as-Tool layout inputs', () => {
+    const layout = createBoardLayoutSnapshot(state());
+    const active = findBoardLayoutRegion(layout, 'local', 'active');
+    const hand = findBoardLayoutRegion(layout, 'local', 'hand');
+    expect(() =>
+      layoutLegacySingleEnergyTrainerToolAttachmentStack(
+        hand,
+        CARD_ASPECT_RATIO
+      )
+    ).toThrow('active or bench');
+    expect(() =>
+      layoutLegacySingleEnergyTrainerToolAttachmentStack(
+        { ...active, surface: 'zone' },
+        CARD_ASPECT_RATIO
+      )
+    ).toThrow('active or bench');
+    for (const aspectRatio of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(() =>
+        layoutLegacySingleEnergyTrainerToolAttachmentStack(active, aspectRatio)
+      ).toThrow('aspect ratio');
+    }
+    expect(() =>
+      layoutLegacySingleEnergyTrainerToolAttachmentStack(active, 100)
+    ).toThrow('flex shrink');
+    for (const physicalDeclaredBounds of [
+      { ...active.physicalDeclaredBounds, x: Number.NaN },
+      { ...active.physicalDeclaredBounds, y: Number.NEGATIVE_INFINITY },
+      { ...active.physicalDeclaredBounds, width: 0 },
+      { ...active.physicalDeclaredBounds, width: -1 },
+      { ...active.physicalDeclaredBounds, height: 0 },
+      { ...active.physicalDeclaredBounds, height: -1 },
+    ]) {
+      expect(() =>
+        layoutLegacySingleEnergyTrainerToolAttachmentStack(
+          { ...active, physicalDeclaredBounds },
+          CARD_ASPECT_RATIO
+        )
+      ).toThrow('finite and positive');
+    }
+    expect(() =>
+      layoutLegacySingleEnergyTrainerToolAttachmentStack(
         {
           ...active,
           physicalDeclaredBounds: {

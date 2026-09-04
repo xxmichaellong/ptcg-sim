@@ -43,7 +43,13 @@ import {
   type PersistedAuthorityTransaction,
   type RoomAuthoritySnapshot,
 } from '../../packages/room-authority/src/index.js';
-import { createBoardSceneForViewport } from '../../packages/renderer-contract/src/index.js';
+import type { MatchViewState } from '../../packages/game-core/src/index.js';
+import {
+  BOARD_LAYOUT_GEOMETRY_VERSION,
+  createBoardLayoutSnapshot,
+  createBoardScene,
+  createBoardSceneForViewport,
+} from '../../packages/renderer-contract/src/index.js';
 import { describe, expect, it } from 'vitest';
 
 class MemoryRoomStore implements AuthoritySnapshotStore {
@@ -424,6 +430,387 @@ describe('client/server multiplayer contract', () => {
       expect.objectContaining({ id: card.id })
     );
     expect(room.store.commandCommits).toHaveLength(5);
+  });
+
+  it('projects canonical mixed attachments privately and keeps their aliases stable through reflow', async () => {
+    const room = await fixture();
+    const player = await connectClient({
+      hub: room.hub,
+      name: 'Blue',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+    });
+    const opponent = await connectClient({
+      hub: room.hub,
+      name: 'Red',
+      role: 'player',
+      capability: room.credentials.playerTwoSeatCapability,
+    });
+    const spectatorCapability = room.credentials.spectatorCapability;
+    if (!spectatorCapability) throw new Error('Missing spectator capability');
+    const spectator = await connectClient({
+      hub: room.hub,
+      name: 'Observer',
+      role: 'spectator',
+      capability: spectatorCapability,
+    });
+    const playerId = player.session.getSnapshot().playerId;
+    if (!playerId) throw new Error('Missing admitted player identity');
+
+    expect(
+      player.session.submit({
+        type: 'LoadDeck',
+        entries: Array.from({ length: 14 }, (_, index) => ({
+          definition: {
+            id: `mixed-private-definition-${index}`,
+            name: `Mixed public card ${index}`,
+            category: 'Pokémon' as const,
+            imageUrl: `/mixed-public-art-${index}.png`,
+          },
+          count: 1,
+        })),
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+    expect(player.session.submit({ type: 'SetupPlayer' }).queued).toBe(true);
+    await player.factory.flush();
+
+    let actorView = player.session.getSnapshot().view;
+    let hand = Object.values(actorView?.zones ?? {}).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'hand'
+    );
+    const base = hand?.cards[0];
+    if (!actorView || !hand || !base) {
+      throw new Error('Mixed-stack setup did not publish a base card');
+    }
+    expect(
+      player.session.submit({
+        type: 'MoveCardToPlay',
+        cardId: base.id,
+        expectedSourceZoneId: hand.id,
+        boardPlayerId: playerId,
+        slot: 'active',
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+
+    actorView = player.session.getSnapshot().view;
+    hand = Object.values(actorView?.zones ?? {}).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'hand'
+    );
+    const control = hand?.cards[0];
+    if (!actorView || !hand || !control) {
+      throw new Error('Mixed-stack setup did not publish a control card');
+    }
+    expect(
+      player.session.submit({
+        type: 'MoveCardToPlay',
+        cardId: control.id,
+        expectedSourceZoneId: hand.id,
+        boardPlayerId: playerId,
+        slot: 'bench',
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+
+    const attachChangedCard = async (category: 'Energy' | 'Trainer') => {
+      actorView = player.session.getSnapshot().view;
+      hand = Object.values(actorView?.zones ?? {}).find(
+        (zone) => zone.ownerId === playerId && zone.kind === 'hand'
+      );
+      const source = hand?.cards[0];
+      const stackId = actorView?.boards[playerId]?.activeStackId;
+      if (!actorView || !hand || !source || !stackId) {
+        throw new Error(`Missing ${category} attachment setup state`);
+      }
+      expect(
+        player.session.submit({
+          type: 'ChangeCardCategory',
+          cardId: source.id,
+          expectedSourceId: hand.id,
+          category,
+        }).queued
+      ).toBe(true);
+      await player.factory.flush();
+
+      actorView = player.session.getSnapshot().view;
+      const board = Object.values(actorView?.zones ?? {}).find(
+        (zone) => zone.ownerId === playerId && zone.kind === 'board'
+      );
+      const changed = board?.cards.at(-1);
+      if (!actorView || !board || !changed) {
+        throw new Error(`Changed ${category} card was not published`);
+      }
+      expect(changed).toMatchObject({ kind: 'known', category });
+      expect(
+        player.session.submit({
+          type: 'MoveCardToPlay',
+          cardId: changed.id,
+          expectedSourceZoneId: board.id,
+          boardPlayerId: playerId,
+          slot: 'active',
+          targetStackId: stackId,
+        }).queued
+      ).toBe(true);
+      await player.factory.flush();
+    };
+
+    await attachChangedCard('Energy');
+    await attachChangedCard('Trainer');
+
+    const recipientViews = (): readonly [
+      MatchViewState,
+      MatchViewState,
+      MatchViewState,
+    ] => {
+      const views = [
+        player.session.getSnapshot().view,
+        opponent.session.getSnapshot().view,
+        spectator.session.getSnapshot().view,
+      ] as const;
+      if (views.some((view) => !view)) {
+        throw new Error('Missing mixed-stack recipient projection');
+      }
+      return views as readonly [MatchViewState, MatchViewState, MatchViewState];
+    };
+    const mixedStack = (view: MatchViewState, slot: 'active' | 'bench') => {
+      const board = view.boards[playerId];
+      const stackId =
+        slot === 'active' ? board?.activeStackId : board?.benchStackIds[0];
+      const stack = stackId ? view.stacks[stackId] : undefined;
+      if (!stack || stack.slot !== slot) {
+        throw new Error(`Missing ${slot} mixed stack`);
+      }
+      const [baseCard] = stack.evolutionCards;
+      if (
+        !baseCard ||
+        baseCard.kind !== 'known' ||
+        stack.attachmentCards.length !== 2 ||
+        stack.attachmentCards.some((card) => card.kind !== 'known')
+      ) {
+        throw new Error(`Malformed ${slot} mixed stack`);
+      }
+      expect(stack.attachmentCards).toMatchObject([
+        { kind: 'known', category: 'Energy' },
+        { kind: 'known', category: 'Trainer' },
+      ]);
+      return {
+        stack,
+        cards: [
+          baseCard,
+          stack.attachmentCards[0]!,
+          stack.attachmentCards[1]!,
+        ] as const,
+      };
+    };
+    const aliasSignature = (view: MatchViewState, slot: 'active' | 'bench') => {
+      const { cards } = mixedStack(view, slot);
+      return [cards[0].id, cards[1].id, cards[2].id] as const;
+    };
+    const geometrySignature = (
+      view: MatchViewState,
+      slot: 'active' | 'bench'
+    ) => {
+      const { stack, cards } = mixedStack(view, slot);
+      const [bottomPlayerId, topPlayerId] = view.playerOrder;
+      if (
+        !bottomPlayerId ||
+        !topPlayerId ||
+        view.playerOrder.length !== 2 ||
+        bottomPlayerId !== playerId
+      ) {
+        throw new Error('Mixed geometry requires the owner in the lower frame');
+      }
+      const scene = createBoardScene(
+        view,
+        createBoardLayoutSnapshot({
+          geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
+          viewport: { width: 1600, height: 900, devicePixelRatio: 1 },
+          playerIds: [bottomPlayerId, topPlayerId],
+          bottomPlayerId,
+          shellMode: 'sidebar',
+          vertical: {
+            lowerFrame: { bottomRatio: 0, heightRatio: 0.5 },
+            upperFrame: { bottomRatio: 0.5, heightRatio: 0.5 },
+            lowerHandle: { bottomRatio: 0.505, heightRatio: 0.025 },
+            upperHandle: { bottomRatio: 0.53, heightRatio: 0.025 },
+            sharedPlacement: 'cssDefault',
+          },
+        })
+      );
+      return cards.map((card, index) => {
+        const node = scene.cards.find((candidate) => candidate.id === card.id);
+        if (!node || node.parentId !== stack.id) {
+          throw new Error(`Missing mixed scene node ${card.id}`);
+        }
+        return {
+          category: card.kind === 'known' ? card.category : 'concealed',
+          role: node.role,
+          bounds: node.bounds,
+          zIndex: node.zIndex,
+          rotationQuarterTurns: node.rotationQuarterTurns,
+          index,
+        };
+      });
+    };
+
+    const activeViews = recipientViews();
+    const initialAliases = [
+      aliasSignature(activeViews[0], 'active'),
+      aliasSignature(activeViews[1], 'active'),
+      aliasSignature(activeViews[2], 'active'),
+    ] as const;
+    expect(
+      activeViews.map((view) => geometrySignature(view, 'active'))
+    ).toEqual(
+      Array.from({ length: 3 }, () =>
+        geometrySignature(activeViews[0], 'active')
+      )
+    );
+    expect(
+      initialAliases[0].map(
+        (_, cardIndex) =>
+          new Set(initialAliases.map((aliases) => aliases[cardIndex])).size
+      )
+    ).toEqual([3, 3, 3]);
+    expect(geometrySignature(activeViews[0], 'active')).toMatchObject([
+      { category: 'Pokémon', zIndex: 300, rotationQuarterTurns: 0 },
+      { category: 'Energy', zIndex: 299, rotationQuarterTurns: 0 },
+      { category: 'Trainer', zIndex: 298, rotationQuarterTurns: 1 },
+    ]);
+
+    actorView = activeViews[0];
+    const activeStackId = actorView.boards[playerId]?.activeStackId;
+    const [controlStackId] = actorView.boards[playerId]?.benchStackIds ?? [];
+    if (!activeStackId || !controlStackId) {
+      throw new Error('Missing characterized mixed-stack movement layout');
+    }
+    expect(
+      player.session.submit({
+        type: 'MovePlayStack',
+        stackId: activeStackId,
+        expectedSourceSlot: 'active',
+        expectedActiveStackId: activeStackId,
+        expectedBenchStackIds: [controlStackId],
+        destinationSlot: 'bench',
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+
+    const benchViews = recipientViews();
+    expect(benchViews.map((view) => aliasSignature(view, 'bench'))).toEqual(
+      initialAliases
+    );
+    expect(benchViews.map((view) => geometrySignature(view, 'bench'))).toEqual(
+      Array.from({ length: 3 }, () => geometrySignature(benchViews[0], 'bench'))
+    );
+
+    actorView = benchViews[0];
+    const benchMixed = mixedStack(actorView, 'bench');
+    const trainer = benchMixed.stack.attachmentCards[1];
+    if (!trainer || trainer.kind !== 'known') {
+      throw new Error('Missing Trainer attachment for category cycle');
+    }
+    expect(
+      player.session.submit({
+        type: 'ChangeCardCategory',
+        cardId: trainer.id,
+        expectedSourceId: benchMixed.stack.id,
+        category: 'Pokémon',
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+
+    actorView = player.session.getSnapshot().view;
+    let looseBoard = Object.values(actorView?.zones ?? {}).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'board'
+    );
+    let cycledTrainer = looseBoard?.cards.at(-1);
+    if (!actorView || !looseBoard || !cycledTrainer) {
+      throw new Error('Category-cycled attachment did not reach loose board');
+    }
+    expect(cycledTrainer.id).toBe(initialAliases[0][2]);
+    expect(
+      player.session.submit({
+        type: 'ChangeCardCategory',
+        cardId: cycledTrainer.id,
+        expectedSourceId: looseBoard.id,
+        category: 'Trainer',
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+
+    actorView = player.session.getSnapshot().view;
+    looseBoard = Object.values(actorView?.zones ?? {}).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'board'
+    );
+    cycledTrainer = looseBoard?.cards.at(-1);
+    const reattachStackId = actorView?.boards[playerId]?.benchStackIds[0];
+    if (!actorView || !looseBoard || !cycledTrainer || !reattachStackId) {
+      throw new Error('Category-cycled Trainer was not republished');
+    }
+    expect(cycledTrainer.id).toBe(initialAliases[0][2]);
+    expect(
+      player.session.submit({
+        type: 'MoveCardToPlay',
+        cardId: cycledTrainer.id,
+        expectedSourceZoneId: looseBoard.id,
+        boardPlayerId: playerId,
+        slot: 'bench',
+        targetStackId: reattachStackId,
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+
+    const reattachedViews = recipientViews();
+    expect(
+      reattachedViews.map((view) => aliasSignature(view, 'bench'))
+    ).toEqual(initialAliases);
+
+    actorView = reattachedViews[0];
+    const mixedBenchId = actorView.boards[playerId]?.benchStackIds[0];
+    const promotedControlId = actorView.boards[playerId]?.activeStackId;
+    if (!mixedBenchId || !promotedControlId) {
+      throw new Error('Missing reattached stack movement layout');
+    }
+    expect(
+      player.session.submit({
+        type: 'MovePlayStack',
+        stackId: mixedBenchId,
+        expectedSourceSlot: 'bench',
+        expectedActiveStackId: promotedControlId,
+        expectedBenchStackIds: [mixedBenchId],
+        destinationSlot: 'active',
+        targetStackId: promotedControlId,
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+
+    const finalViews = recipientViews();
+    expect(finalViews.map((view) => aliasSignature(view, 'active'))).toEqual(
+      initialAliases
+    );
+    expect(finalViews.map((view) => geometrySignature(view, 'active'))).toEqual(
+      Array.from({ length: 3 }, () =>
+        geometrySignature(finalViews[0], 'active')
+      )
+    );
+
+    const canonicalState = room.store.snapshot?.state;
+    if (!canonicalState) throw new Error('Missing canonical mixed-stack state');
+    const canonicalCardIds = Object.keys(canonicalState.cards);
+    const canonicalDefinitionIds = Object.keys(canonicalState.definitions);
+    for (const view of finalViews) {
+      const serialized = JSON.stringify(view);
+      for (const privateId of [
+        ...canonicalCardIds,
+        ...canonicalDefinitionIds,
+      ]) {
+        expect(serialized).not.toContain(privateId);
+      }
+    }
+    expect(finalViews[0].revision).toBe(13);
+    expect(room.store.commandCommits).toHaveLength(13);
   });
 
   it('persists dependent cards across reconnect and restores them through the renderer contract', async () => {

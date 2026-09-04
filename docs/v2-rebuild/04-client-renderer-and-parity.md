@@ -300,11 +300,11 @@ staged restore, bench/flex contention, markers, BREAK/rotation, alternate
 layouts and assets, destination UX, candidate click/drag behavior, Pixi
 paint/hit, and network behavior remain later gates.
 
-An eighth, source-only Chromium capture now isolates the mixed
-one-Energy/one-current-category-Trainer case without broadening those production
-gates. Four fresh attachment histories cover both ingress orders on both
-physical sides, and four fresh departure histories independently remove either
-attachment on both sides. The Trainer-first path exercises the legacy
+An eighth Chromium source capture isolates the mixed
+one-Energy/one-current-category-Trainer case. Four fresh attachment histories
+cover both ingress orders on both physical sides, and four fresh departure
+histories independently remove either attachment on both sides. The
+Trainer-first path exercises the legacy
 Energy-triggered recursive Tool move; both ingress orders settle to logical
 `[base, Energy, Trainer]`, DOM `[base, Trainer, Energy]`, and source z
 `[0, -1, -2]`. The 91 px source `clientWidth` yields stable offsets
@@ -323,8 +323,8 @@ Energy offset, the corresponding Tool-survivor drift after Energy departure,
 the stale old-wrapper margin immediately after Tool departure, synchronous
 two-wrapper refresh, reset removed-card state, and observer-settled cleanup.
 Stable departure converges to the existing one-Tool or one-Energy source
-fixture. No mixed renderer-contract helper, scene eligibility branch, DOM/Pixi
-candidate comparison, or transition rendering is claimed.
+fixture. Those historical/transient phases remain diagnostics; only the stable
+canonical mixed output contributes to the strict current-state path below.
 
 The same source-only oracle now adds six staged histories: reversed
 Trainer/Energy restore, four-card interleaved restore, and a multi-card staged
@@ -346,15 +346,39 @@ live wrapper with no superseded wrapper, leave the staging popup hidden, and
 retain history-dependent offsets: `14.8333` px for reversed two-card Energy,
 `14.8333/28.8333/44.8333/60.6667` px for interleaved four-card attachments, and
 `13.8333/29.8333/45.5/60.6667` px after the staged swap. Those values reinforce
-that logical normalization does not authorize a mixed production geometry
-path.
+that logical normalization alone cannot authorize a production path or become
+saved renderer state.
 
-These staged phases remain source-only. Mixed production geometry,
-Pokémon/Unknown attachment membership, base-only `leaveAll`, category-history
-geometry, whole-stack swaps, and broader overflow remain generic or deferred.
-Reverse lists remain valid historical state outside the v1 normalized
-transition subset; neither the core nor renderer imposes a global order
-invariant.
+These staged phases remain source-only. Reverse lists remain valid historical
+state outside the v1 normalized transition subset; neither the core nor
+renderer imposes a global order invariant.
+
+The ninth capture closes a narrower production boundary. It compares React DOM
+against only the settled sole-bench and returned-active phases after a seeded
+reverse-history round trip, on both physical sides. The strict predicate admits
+exactly one known same-owner face-up Pokémon base with current-category
+attachments `[Energy, Trainer]`, all unrotated/marker-free, at the default
+1600×900 DPR-1 sidebar layout. The placement is either sole active, active with
+one clean base-only bench control, or sole bench with one clean base-only active
+control. Original definition category/name/URLs, revision, and prior layout
+history do not select geometry.
+
+React matches every mixed card's pre-transform and painted bounds, effective
+Tool q1/q3, z `300/299/298`, back-to-front order, and four native hit regions
+within 2 px / 1% / 0.1 degrees. Scene diffs preserve card identities across
+active/bench movement. Pixi consumes the same descriptors with stable Sprite
+objects and no texture load/release churn, but Pixi-native paint/hit and
+arbitrary-URL behavior remain unclaimed. A real owner/opponent/spectator
+session proves distinct, stable recipient-specific aliases through
+movement/category cycling, identical normalized geometry, and no canonical
+card/definition ID leakage.
+
+Pokémon/Unknown attachments, reverse order, base-only `leaveAll`, multiple
+bench controls, extra/evolution attachments, bases whose current projected
+category is not Pokémon, alternate layouts, broader overflow, and transition
+rendering remain generic or deferred. Original category history is not
+projected and cannot select geometry. Nonstandard-intrinsic asset parity remains
+unclaimed; definitions and URLs do not select geometry.
 
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during

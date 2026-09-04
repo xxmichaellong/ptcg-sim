@@ -49,19 +49,34 @@ category, stack ID, and current slot cannot recover that history after
 checkpoint compaction or reconnect, and an ordering-version enum alone would
 not describe it.
 
-Treat those subpixel, history-dependent offsets as a v1 rendering defect. A
-future strict mixed path must derive one deterministic canonical settled layout
-only from the current recipient-safe view, remain within the existing 2 CSS px
-source-parity envelope for every included history, and preserve logical order,
-Tool rotation, z order, and native hit behavior. It must fail closed to the
-existing generic path for every uncharacterized shape. The narrow source oracle
-now pins native active, movement from the preceding oracle's reverse-restored
-checkpoint through sole bench and back to active, and Energy/Trainer category-
-cycle histories on both physical sides. Bench reordering/competition, extra or
-evolution attachments, category-converted Pokémon, alternate layouts/assets,
-and candidate/Pixi parity remain required before their corresponding paths may
-be enabled. This decision and oracle add no production mixed-layout branch by
-themselves.
+Treat those subpixel, history-dependent offsets as a v1 rendering defect. The
+strict mixed path derives one deterministic canonical settled layout only from
+the current recipient-safe view and remains within the existing 2 CSS px
+source-parity envelope for every included history. It preserves logical order,
+Tool rotation, z order, and native hit behavior, and fails closed to the generic
+path for every uncharacterized shape.
+
+The enabled boundary is exactly one known, same-owner, face-up Pokémon base
+with current-category attachments `[Energy, Trainer]`, all unrotated and
+marker-free, at the default 1600×900 DPR-1 sidebar layout. It admits the sole
+active stack, that active stack with one clean base-only bench control, or the
+sole bench stack with one clean base-only active control. Definition category,
+name, image URL, revision, and prior DOM history do not select the path. Reverse
+attachment order, broader benches, extra/evolution attachments,
+bases whose current projected category is not Pokémon, alternate layouts, and
+transient wrappers remain generic or source-only. Original category history is
+not projected and cannot select geometry. Nonstandard-intrinsic asset parity
+remains unclaimed; asset metadata cannot select geometry.
+
+The source comparison covers the settled sole-bench and returned-active phases
+on both physical sides after a seeded reverse-history round trip. React DOM
+matches pre-transform and painted boxes, Tool quarter turns, z order, and four
+native hit regions within the declared tolerances. Pixi tests prove that the
+same shared scene descriptors update stable sprites without texture churn; they
+do not claim native Pixi paint/hit or arbitrary-URL parity. A real
+owner/opponent/spectator session also proves recipient-specific aliases,
+cross-view normalized geometry, and alias stability through movement and a
+category cycle without exposing canonical card or definition IDs.
 
 ## Evidence
 
@@ -167,15 +182,15 @@ Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
   stable local/opponent two-Energy boxes at the default 1600×900 DPR-1 sidebar,
   even-split, unflipped state. Tool coverage separates pre-transform and painted
   quarter-turn bounds; the two-Energy path verifies canonical inner/outer z and
-  native hit order. A separate source-only mixed Energy/Trainer capture covers
-  both ingress orders and both single-attachment departures on both sides,
-  including stable geometry/order and diagnostic reorder, compaction, stale-
-  margin and ghost-wrapper phases. It also covers reversed and four-card
-  interleaved `leaveAll` plus a staged deck-top swap on both sides, proving the
-  source restore partition while recording v2's deliberate exact-position swap
-  exception. It does not feed a renderer-contract helper or candidate parity
-  gate. These paths do not yet claim alternate layout
-  states, mixed/three-plus production geometry, transition animation or
+  native hit order. Separate mixed Energy/Trainer captures cover both ingress
+  orders, both single-attachment departures, reversed and four-card interleaved
+  `leaveAll`, a staged deck-top swap, current-category cycles, and active ↔ sole
+  bench movement on both sides. Only the exact canonical settled
+  one-Energy/one-Trainer shape and characterized placements feed the strict
+  renderer helper and React candidate comparison; reorder, compaction, stale-
+  margin, ghost-wrapper, broader restore, and departure phases remain
+  source-only. These paths do not yet claim alternate layout states,
+  three-plus or unsupported attachment geometry, transition animation or
   transient departure DOM, markers, BREAK/compound rotation, overflow,
   Tool-specific Pixi paint parity, full paint or interaction parity, cover-open
   UX, or opened-zone layout, and the sidebar content rectangle is derived from

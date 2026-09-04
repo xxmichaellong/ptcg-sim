@@ -1,4 +1,17 @@
 import { expect, test } from '@playwright/test';
+import {
+  asViewCardId,
+  type MatchViewState,
+  type PlayerId,
+} from '../../packages/game-core/src/index.js';
+import {
+  BOARD_LAYOUT_GEOMETRY_VERSION,
+  createBoardLayoutSnapshot,
+  createBoardScene,
+  createRendererSpikeView,
+  DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+  type BoardScene,
+} from '../../packages/renderer-contract/src/index.js';
 
 import oracle from '../legacy-fixtures/renderer/mixed-stack-movement-category-cycle-v1.json' with { type: 'json' };
 
@@ -43,6 +56,134 @@ const roles: readonly LegacyMixedStackMovementRole[] = [
   'trainerTool',
   'controlBase',
 ];
+
+const createCandidateMixedMovementScenes = (): {
+  readonly bench: BoardScene;
+  readonly active: BoardScene;
+  readonly mixedStackIds: Readonly<Record<'local' | 'opponent', string>>;
+} => {
+  const base = createRendererSpikeView();
+  const localPlayerId = base.playerOrder[0];
+  const opponentPlayerId = base.playerOrder[1];
+  const definitions = Object.values(base.definitions);
+  const pokemonDefinition = definitions.find(
+    (definition) => definition.category === 'Pokémon'
+  );
+  const energyDefinition = definitions.find(
+    (definition) => definition.category === 'Energy'
+  );
+  const trainerDefinition = definitions.find(
+    (definition) => definition.category === 'Trainer'
+  );
+  if (
+    !localPlayerId ||
+    !opponentPlayerId ||
+    !pokemonDefinition ||
+    !energyDefinition ||
+    !trainerDefinition
+  ) {
+    throw new Error('Renderer spike fixture lacks mixed-stack scene inputs');
+  }
+  const makeCard = (
+    id: string,
+    ownerId: PlayerId,
+    category: 'Pokémon' | 'Energy' | 'Trainer'
+  ) => ({
+    kind: 'known' as const,
+    id: asViewCardId(id),
+    definitionId:
+      category === 'Pokémon'
+        ? pokemonDefinition.id
+        : category === 'Energy'
+          ? energyDefinition.id
+          : trainerDefinition.id,
+    ownerId,
+    category,
+    face: 'up' as const,
+    orientationQuarterTurns: 0 as const,
+    abilityUsed: false,
+    publiclyRevealed: false,
+  });
+  const mixedStackIds = {
+    local: 'local-reverse-round-trip-mixed-candidate-stack',
+    opponent: 'opponent-reverse-round-trip-mixed-candidate-stack',
+  } as const;
+  const createScene = (
+    mixedZone: 'active' | 'bench',
+    revision: number
+  ): BoardScene => {
+    const stacks: Record<string, MatchViewState['stacks'][string]> = {};
+    const boards: Record<string, MatchViewState['boards'][string]> = {};
+    for (const [side, playerId] of [
+      ['local', localPlayerId],
+      ['opponent', opponentPlayerId],
+    ] as const) {
+      const prefix = `${side}-reverse-round-trip`;
+      const mixedId = mixedStackIds[side];
+      const controlId = `${prefix}-control-candidate-stack`;
+      const controlZone = mixedZone === 'active' ? 'bench' : 'active';
+      stacks[mixedId] = {
+        id: mixedId,
+        boardPlayerId: playerId,
+        slot: mixedZone,
+        evolutionCards: [makeCard(`${prefix}-base`, playerId, 'Pokémon')],
+        attachmentCards: [
+          makeCard(`${prefix}-energy`, playerId, 'Energy'),
+          makeCard(`${prefix}-trainer-tool`, playerId, 'Trainer'),
+        ],
+        rotationQuarterTurns: 0,
+        damage: null,
+        specialCondition: null,
+        abilityUsed: false,
+      };
+      stacks[controlId] = {
+        id: controlId,
+        boardPlayerId: playerId,
+        slot: controlZone,
+        evolutionCards: [
+          makeCard(`${prefix}-control-base`, playerId, 'Pokémon'),
+        ],
+        attachmentCards: [],
+        rotationQuarterTurns: 0,
+        damage: null,
+        specialCondition: null,
+        abilityUsed: false,
+      };
+      boards[playerId] =
+        mixedZone === 'active'
+          ? { activeStackId: mixedId, benchStackIds: [controlId] }
+          : { activeStackId: controlId, benchStackIds: [mixedId] };
+    }
+    const view: MatchViewState = {
+      ...base,
+      revision,
+      zones: Object.fromEntries(
+        Object.entries(base.zones).map(([id, zone]) => [
+          id,
+          { ...zone, cards: [] },
+        ])
+      ),
+      boards,
+      stacks,
+    };
+    return createBoardScene(
+      view,
+      createBoardLayoutSnapshot({
+        geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
+        viewport: { width: 1600, height: 900, devicePixelRatio: 1 },
+        playerIds: [localPlayerId, opponentPlayerId],
+        bottomPlayerId: localPlayerId,
+        shellMode: 'sidebar',
+        vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+      })
+    );
+  };
+  return {
+    bench: createScene('bench', base.revision + 1),
+    active: createScene('active', base.revision + 2),
+    mixedStackIds,
+  };
+};
 
 const roleForId = (id: string): LegacyMixedStackMovementRole => {
   if (id.endsWith('-control-base')) return 'controlBase';
@@ -645,4 +786,492 @@ test('checked-in legacy sources characterize canonical, transferred, and categor
   expect(capture.sourceFulfillment).toEqual(oracle.sourceFulfillment);
   expect(blockedNetworkDiagnostics.length).toBeGreaterThan(0);
   expect(runtimeErrors).toEqual([]);
+
+  const candidateScenes = createCandidateMixedMovementScenes();
+  const sourcePhases = Object.fromEntries(
+    (['bench', 'active'] as const).map((mixedZone) => [
+      mixedZone,
+      (['local', 'opponent'] as const).map((side) => {
+        const roundTrip = capture.cases.find(
+          (fixtureCase) =>
+            fixtureCase.side === side &&
+            fixtureCase.scenario === 'reverseRoundTrip'
+        );
+        const name =
+          mixedZone === 'bench'
+            ? 'settledCanonicalBench'
+            : 'settledCanonicalActiveReturn';
+        const phase = roundTrip?.phases.find(
+          (candidate) => candidate.name === name
+        );
+        if (!phase) throw new Error(`Missing ${side} ${name} source phase`);
+        return phase;
+      }),
+    ])
+  ) as Record<'bench' | 'active', LegacyMixedStackMovementPhase[]>;
+  expect(sourcePhases.bench.map((phase) => phase.name)).toEqual([
+    'settledCanonicalBench',
+    'settledCanonicalBench',
+  ]);
+  expect(sourcePhases.active.map((phase) => phase.name)).toEqual([
+    'settledCanonicalActiveReturn',
+    'settledCanonicalActiveReturn',
+  ]);
+
+  await page.unrouteAll({ behavior: 'wait' });
+  const candidateRuntimeErrors: string[] = [];
+  page.on('pageerror', (error) => {
+    candidateRuntimeErrors.push(`pageerror: ${error.message}`);
+  });
+  page.on('console', (message) => {
+    if (message.type() === 'error') {
+      candidateRuntimeErrors.push(`console: ${message.text()}`);
+    }
+  });
+  await page.goto('/?renderer=dom');
+  await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
+    'data-renderer-status',
+    'ready'
+  );
+  await page.evaluate(async (scene) => {
+    const fixtureWindow = window as typeof window & {
+      __PTCG_RENDERER_SPIKE__?: {
+        createRenderer(adapters: {
+          emitIntent(): void;
+          emitPresentationUpdate(): void;
+          reportError(error: unknown): void;
+        }): {
+          mount(
+            host: HTMLElement,
+            candidateScene: typeof scene,
+            presentation: {
+              selectedCardId: null;
+              hoveredCardId: null;
+              drag: null;
+              openedZoneId: null;
+            }
+          ): Promise<void>;
+          installScene(
+            candidateScene: typeof scene,
+            events: readonly never[],
+            mode: 'replace'
+          ): void;
+          destroy(): void;
+        };
+      };
+      __PTCG_MIXED_MOVEMENT_CANDIDATE_RENDERER__?: {
+        installScene(
+          candidateScene: typeof scene,
+          events: readonly never[],
+          mode: 'replace'
+        ): void;
+        destroy(): void;
+      };
+    };
+    const spike = fixtureWindow.__PTCG_RENDERER_SPIKE__;
+    if (!spike?.createRenderer) {
+      throw new Error('Missing renderer spike factory test seam');
+    }
+    const host = document.createElement('div');
+    host.dataset.mixedMovementCandidateHost = 'true';
+    Object.assign(host.style, {
+      position: 'fixed',
+      left: '0px',
+      top: '0px',
+      width: `${scene.viewport.width}px`,
+      height: `${scene.viewport.height}px`,
+      zIndex: '20000',
+    });
+    document.body.append(host);
+    const renderer = spike.createRenderer({
+      emitIntent: () => undefined,
+      emitPresentationUpdate: () => undefined,
+      reportError: (error) => {
+        host.dataset.rendererError = String(error);
+      },
+    });
+    await renderer.mount(host, scene, {
+      selectedCardId: null,
+      hoveredCardId: null,
+      drag: null,
+      openedZoneId: null,
+    });
+    fixtureWindow.__PTCG_MIXED_MOVEMENT_CANDIDATE_RENDERER__ = renderer;
+  }, candidateScenes.bench);
+  const candidateHost = page.locator('[data-mixed-movement-candidate-host]');
+  await expect(candidateHost).not.toHaveAttribute('data-renderer-error', /.+/u);
+  await expect(
+    candidateHost.locator('[data-card-id="local-reverse-round-trip-base"]')
+  ).toBeVisible();
+
+  const candidateEvidence: Array<{
+    readonly mixedZone: 'active' | 'bench';
+    readonly cards: Array<{
+      readonly id: string;
+      readonly sceneBounds: {
+        readonly x: number;
+        readonly y: number;
+        readonly width: number;
+        readonly height: number;
+      };
+      readonly renderedBounds: {
+        readonly x: number;
+        readonly y: number;
+        readonly width: number;
+        readonly height: number;
+      };
+      readonly rotationDegrees: number;
+      readonly zIndex: number;
+    }>;
+    readonly stacks: Array<{
+      readonly side: 'local' | 'opponent';
+      readonly sceneOrder: string[];
+      readonly domOrder: string[];
+      readonly hitOrder: Record<string, string[]>;
+      readonly hitPoints: Record<string, { x: number; y: number }>;
+    }>;
+  }> = [];
+  const compareCandidatePhase = async (
+    mixedZone: 'active' | 'bench',
+    scene: BoardScene,
+    phases: readonly LegacyMixedStackMovementPhase[]
+  ) => {
+    // The opposite-slot base is a predicate control, not part of the narrowly
+    // characterized mixed-stack production geometry.
+    const sourceCards = phases.flatMap((phase) =>
+      phase.cards.filter((card) => card.role !== 'controlBase')
+    );
+    expect(sourceCards).toHaveLength(6);
+    expect(scene.cards).toHaveLength(8);
+    expect(scene.markers).toEqual([]);
+    expect(
+      new Set(
+        scene.cards
+          .filter((card) =>
+            phases.some(
+              (phase) =>
+                card.parentId ===
+                candidateScenes.mixedStackIds[phase.stack.side]
+            )
+          )
+          .map((card) => card.id)
+      )
+    ).toEqual(new Set(sourceCards.map((card) => card.id)));
+    const evidence: (typeof candidateEvidence)[number] = {
+      mixedZone,
+      cards: [],
+      stacks: [],
+    };
+    for (const sourceCard of sourceCards) {
+      const candidate = scene.cards.find((card) => card.id === sourceCard.id);
+      if (!candidate) throw new Error(`Missing candidate ${sourceCard.id}`);
+      const expectedZ =
+        sourceCard.role === 'trainerTool'
+          ? 298
+          : sourceCard.role === 'energy'
+            ? 299
+            : 300;
+      const localQuarterTurns = sourceCard.role === 'trainerTool' ? 1 : 0;
+      const expectedQuarterTurns =
+        (localQuarterTurns + (sourceCard.side === 'opponent' ? 2 : 0)) % 4;
+      expect(candidate).toMatchObject({
+        side: sourceCard.side,
+        role:
+          sourceCard.role === 'energy' || sourceCard.role === 'trainerTool'
+            ? 'stackAttachment'
+            : 'stackEvolution',
+        zIndex: expectedZ,
+        rotationQuarterTurns: expectedQuarterTurns,
+        interactive: true,
+      });
+      assertRect(
+        candidate.bounds,
+        [
+          sourceCard.untransformedPhysicalBounds.x,
+          sourceCard.untransformedPhysicalBounds.y,
+          sourceCard.untransformedPhysicalBounds.width,
+          sourceCard.untransformedPhysicalBounds.height,
+        ],
+        `${mixedZone}.${sourceCard.id}.scene`
+      );
+      const locator = candidateHost.locator(
+        `[data-card-id="${sourceCard.id}"]`
+      );
+      const renderedBounds = await locator.boundingBox();
+      if (!renderedBounds) {
+        throw new Error(`Candidate card is not visible: ${sourceCard.id}`);
+      }
+      assertRect(
+        renderedBounds,
+        [
+          sourceCard.physicalBounds.x,
+          sourceCard.physicalBounds.y,
+          sourceCard.physicalBounds.width,
+          sourceCard.physicalBounds.height,
+        ],
+        `${mixedZone}.${sourceCard.id}.rendered`
+      );
+      const rendered = await locator.evaluate((element) => {
+        const styles = getComputedStyle(element);
+        const matrix = new DOMMatrixReadOnly(styles.transform);
+        return {
+          rotationDegrees:
+            ((Math.atan2(matrix.b, matrix.a) * 180) / Math.PI + 360) % 360,
+          zIndex: Number.parseInt(styles.zIndex, 10),
+        };
+      });
+      expect(
+        Math.min(
+          Math.abs(
+            rendered.rotationDegrees - sourceCard.effectiveRotationDegrees
+          ) % 360,
+          360 -
+            (Math.abs(
+              rendered.rotationDegrees - sourceCard.effectiveRotationDegrees
+            ) %
+              360)
+        ),
+        `${mixedZone}.${sourceCard.id}.rotation`
+      ).toBeLessThanOrEqual(oracle.tolerances.rotationDegrees);
+      expect(rendered.zIndex).toBe(expectedZ);
+      evidence.cards.push({
+        id: sourceCard.id,
+        sceneBounds: candidate.bounds,
+        renderedBounds,
+        ...rendered,
+      });
+    }
+
+    for (const sourcePhase of phases) {
+      const side = sourcePhase.stack.side;
+      const prefix = `${side}-reverse-round-trip`;
+      const ids = {
+        base: `${prefix}-base`,
+        energy: `${prefix}-energy`,
+        trainerTool: `${prefix}-trainer-tool`,
+      } as const;
+      const stackId = candidateScenes.mixedStackIds[side];
+      const sceneOrder = scene.cards
+        .filter((card) => card.parentId === stackId)
+        .map((card) => card.id);
+      expect(sceneOrder).toEqual([ids.trainerTool, ids.energy, ids.base]);
+      const result = await page.evaluate(
+        ({ ids, side }) => {
+          const host = document.querySelector<HTMLElement>(
+            '[data-mixed-movement-candidate-host]'
+          );
+          if (!host) throw new Error('Missing mixed movement candidate host');
+          const candidates = new Set<string>(Object.values(ids));
+          const requireCard = (id: string) => {
+            const element = host.querySelector<HTMLElement>(
+              `[data-card-id="${id}"]`
+            );
+            if (!element) throw new Error(`Missing mixed candidate ${id}`);
+            return element;
+          };
+          const baseElement = requireCard(ids.base);
+          const energyElement = requireCard(ids.energy);
+          const toolElement = requireCard(ids.trainerTool);
+          const base = baseElement.getBoundingClientRect();
+          const energy = energyElement.getBoundingClientRect();
+          const tool = toolElement.getBoundingClientRect();
+          const toolTransform = toolElement.style.transform;
+          let toolLayout: DOMRect;
+          try {
+            toolElement.style.transform = 'none';
+            toolLayout = toolElement.getBoundingClientRect();
+          } finally {
+            toolElement.style.transform = toolTransform;
+          }
+          const center = (bounds: {
+            left: number;
+            top: number;
+            right: number;
+            bottom: number;
+          }) => ({
+            x: (bounds.left + bounds.right) / 2,
+            y: (bounds.top + bounds.bottom) / 2,
+          });
+          const interiors = {
+            baseOnly:
+              side === 'local'
+                ? {
+                    left: base.left + 2,
+                    right: Math.min(energy.left, tool.left) - 2,
+                    top: base.top + 2,
+                    bottom: tool.top - 2,
+                  }
+                : {
+                    left: Math.max(energy.right, tool.right) + 2,
+                    right: base.right - 2,
+                    top: tool.bottom + 2,
+                    bottom: base.bottom - 2,
+                  },
+            allCardOverlap: {
+              left: Math.max(base.left, energy.left, tool.left),
+              right: Math.min(base.right, energy.right, tool.right),
+              top: Math.max(base.top, energy.top, tool.top),
+              bottom: Math.min(base.bottom, energy.bottom, tool.bottom),
+            },
+            energyToolOverlap:
+              side === 'local'
+                ? {
+                    left: base.right + 2,
+                    right: Math.min(energy.right, tool.right) - 2,
+                    top: Math.max(energy.top, tool.top),
+                    bottom: Math.min(energy.bottom, tool.bottom),
+                  }
+                : {
+                    left: Math.max(energy.left, tool.left) + 2,
+                    right: base.left - 2,
+                    top: Math.max(energy.top, tool.top),
+                    bottom: Math.min(energy.bottom, tool.bottom),
+                  },
+            toolPaintedOnly:
+              side === 'local'
+                ? {
+                    left:
+                      Math.max(base.right, energy.right, toolLayout.right) + 2,
+                    right: tool.right - 2,
+                    top: tool.top,
+                    bottom: tool.bottom,
+                  }
+                : {
+                    left: tool.left + 2,
+                    right:
+                      Math.min(base.left, energy.left, toolLayout.left) - 2,
+                    top: tool.top,
+                    bottom: tool.bottom,
+                  },
+          };
+          for (const [name, bounds] of Object.entries(interiors)) {
+            if (
+              bounds.right - bounds.left <= 0 ||
+              bounds.bottom - bounds.top <= 0
+            ) {
+              throw new Error(`${side} ${name} lacks a safe interior`);
+            }
+          }
+          const hitPoints = Object.fromEntries(
+            Object.entries(interiors).map(([name, bounds]) => [
+              name,
+              center(bounds),
+            ])
+          );
+          const idsAt = (point: { x: number; y: number }) =>
+            document
+              .elementsFromPoint(point.x, point.y)
+              .flatMap((element) => {
+                const card = element.closest<HTMLElement>('[data-card-id]');
+                return card &&
+                  host.contains(card) &&
+                  card.dataset.cardId &&
+                  candidates.has(card.dataset.cardId)
+                  ? [card.dataset.cardId]
+                  : [];
+              })
+              .filter((id, index, values) => values.indexOf(id) === index);
+          return {
+            domOrder: [
+              ...host.querySelectorAll<HTMLElement>('[data-card-id]'),
+            ].flatMap((card) =>
+              card.dataset.cardId && candidates.has(card.dataset.cardId)
+                ? [card.dataset.cardId]
+                : []
+            ),
+            hitOrder: Object.fromEntries(
+              Object.entries(hitPoints).map(([name, point]) => [
+                name,
+                idsAt(point),
+              ])
+            ),
+            hitPoints,
+          };
+        },
+        { ids, side }
+      );
+      expect(result.domOrder).toEqual(sceneOrder);
+      expect(result.hitOrder).toEqual(sourcePhase.stack.hitOrder);
+      evidence.stacks.push({ side, sceneOrder, ...result });
+    }
+    candidateEvidence.push(evidence);
+  };
+
+  await compareCandidatePhase(
+    'bench',
+    candidateScenes.bench,
+    sourcePhases.bench
+  );
+  await page.evaluate(async (scene) => {
+    const renderer = (
+      window as typeof window & {
+        __PTCG_MIXED_MOVEMENT_CANDIDATE_RENDERER__?: {
+          installScene(
+            candidateScene: typeof scene,
+            events: readonly never[],
+            mode: 'replace'
+          ): void;
+        };
+      }
+    ).__PTCG_MIXED_MOVEMENT_CANDIDATE_RENDERER__;
+    if (!renderer) throw new Error('Missing mixed movement candidate renderer');
+    renderer.installScene(scene, [], 'replace');
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+    );
+  }, candidateScenes.active);
+  const activeSentinel = candidateScenes.active.cards.find(
+    (card) => card.id === 'local-reverse-round-trip-base'
+  );
+  if (!activeSentinel) throw new Error('Missing active candidate sentinel');
+  await expect
+    .poll(async () => {
+      const bounds = await candidateHost
+        .locator('[data-card-id="local-reverse-round-trip-base"]')
+        .boundingBox();
+      if (!bounds) return Number.POSITIVE_INFINITY;
+      return Math.max(
+        Math.abs(bounds.x - activeSentinel.bounds.x),
+        Math.abs(bounds.y - activeSentinel.bounds.y),
+        Math.abs(bounds.width - activeSentinel.bounds.width),
+        Math.abs(bounds.height - activeSentinel.bounds.height)
+      );
+    })
+    .toBeLessThanOrEqual(oracle.tolerances.anchorPixels);
+  await compareCandidatePhase(
+    'active',
+    candidateScenes.active,
+    sourcePhases.active
+  );
+
+  await testInfo.attach('react-dom-mixed-stack-movement-parity.json', {
+    body: Buffer.from(JSON.stringify(candidateEvidence, null, 2)),
+    contentType: 'application/json',
+  });
+  await expect(candidateHost).not.toHaveAttribute('data-renderer-error', /.+/u);
+  const teardown = await page.evaluate(async () => {
+    const fixtureWindow = window as typeof window & {
+      __PTCG_MIXED_MOVEMENT_CANDIDATE_RENDERER__?: { destroy(): void };
+    };
+    const host = document.querySelector<HTMLElement>(
+      '[data-mixed-movement-candidate-host]'
+    );
+    const errorBeforeDestroy = host?.dataset.rendererError ?? null;
+    fixtureWindow.__PTCG_MIXED_MOVEMENT_CANDIDATE_RENDERER__?.destroy();
+    delete fixtureWindow.__PTCG_MIXED_MOVEMENT_CANDIDATE_RENDERER__;
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    const result = {
+      errorBeforeDestroy,
+      errorAfterDestroy: host?.dataset.rendererError ?? null,
+      renderedCardCount: host?.querySelectorAll('[data-card-id]').length ?? -1,
+    };
+    host?.remove();
+    return result;
+  });
+  expect(teardown).toEqual({
+    errorBeforeDestroy: null,
+    errorAfterDestroy: null,
+    renderedCardCount: 0,
+  });
+  expect(candidateRuntimeErrors).toEqual([]);
 });

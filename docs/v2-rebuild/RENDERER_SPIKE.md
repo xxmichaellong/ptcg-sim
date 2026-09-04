@@ -290,7 +290,7 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 723 v2 tests across 109 files. A separate suite
+The repository-wide gate passes 730 v2 tests across 109 files. A separate suite
 passes 18 Playwright checks across ten Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
@@ -430,11 +430,11 @@ passes 18 Playwright checks across ten Chromium 151 browser files:
     replaying them through the incoming-Energy rule. The legacy swap removes and
     appends while v2 deliberately keeps exact-position atomic replacement, so
     their later within-Trainer orders are recorded as an explicit exception.
-    This evidence does not add a renderer-contract helper, scene path, candidate
-    comparison, or mixed production claim; unsupported membership, base-only
-    restore, category-history geometry, whole-stack swaps, broader overflow,
-    and Pixi parity remain generic or deferred.
-15. A ninth source-only Chromium capture runs native canonical and current-
+    Historical/transient phases remain source-only. The stable canonical
+    `[Energy, Trainer]` output now supplies evidence for the strict path in item
+    15; unsupported membership, base-only restore, broader multi-card restore,
+    and overflow remain generic or deferred.
+15. A ninth Chromium capture runs native canonical and current-
     category-cycle histories, plus a whole-stack round trip seeded from the
     prior oracle's exact reverse-restored checkpoint, independently in both
     physical frames. It does not replay `leaveAll`. Whole-stack movement
@@ -444,9 +444,15 @@ passes 18 Playwright checks across ten Chromium 151 browser files:
     settle to the canonical active geometry while retaining semantic original
     categories. Exact arrays, DOM/wrapper identity, synchronous ghost and
     observer-settled cleanup, bounds, rotations, z/hits, reset/harness-operation
-    traces, source digests, and denied requests are pinned. This supplies no
-    candidate comparison or production branch and deliberately adds no DOM-
-    history field to game state.
+    traces, source digests, and denied requests are pinned. Its bounded React
+    comparison mounts only the settled sole-bench and returned-active phases on
+    both sides. All mixed-card scene/painted boxes, Tool q1/q3, z
+    `300/299/298`, back-to-front order, and four native hit regions match within
+    2 px / 1% / 0.1 degrees. The strict current-state gate fails closed outside
+    one clean Pokémon base plus `[Energy, Trainer]` and the characterized
+    active/sole-bench control shapes; no DOM-history field enters game state.
+    Stable-ID scene diffs, Pixi descriptor/sprite reuse without texture churn,
+    and owner/opponent/spectator projection privacy cover downstream consumers.
 16. The selected DOM implementation completes 100 mount → clear/reset → destroy
     cycles on one warmed route-owned host with the exact status sequence,
     complete scene IDs at mount, zero rendered scene children/IDs after clear and
@@ -477,9 +483,10 @@ source-backed stable two-Energy comparison plus departure capture in
 `tests/browser/legacy-two-energy-attachment-compaction-geometry.spec.ts`, and
 the separate source-only mixed Energy/Trainer order and departure check in
 `tests/browser/legacy-mixed-energy-trainer-tool-attachment-order-geometry.spec.ts`,
-plus the source-only whole-stack/category-history check in
-`tests/browser/legacy-mixed-stack-movement-geometry.spec.ts`. The latter two
-validate checked-in numeric oracles but mount no candidate renderer.
+plus the whole-stack/category-history source and React comparison in
+`tests/browser/legacy-mixed-stack-movement-geometry.spec.ts`. The former mixed
+suite validates a checked-in numeric oracle without mounting a candidate; the
+latter mounts React only for its two canonical settled movement phases.
 Standard
 Linux CI can install Playwright's pinned Chromium build. This NixOS workspace
 used the Nix Chromium 151 package through `PTCGSIM_CHROMIUM_PATH`, because Playwright's

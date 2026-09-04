@@ -493,8 +493,9 @@ real MutationObserver settles this to one, and fixture cleanup leaves no cards,
 wrappers, or sink.
 
 Those attach/reorder/departure transients are diagnostic and must not become
-renderer state. There is currently no strict production mixed-stack geometry.
-Mixed stacks continue through generic layout.
+renderer state. The stable canonical `[Energy, Trainer]` output now contributes
+source evidence to the narrow strict production path described below; reverse
+order and every transient checkpoint continue through generic layout.
 
 Six additional source-only staged histories cover reversed two-attachment
 `leaveAll`, four-card interleaved `leaveAll`, and multi-card
@@ -531,8 +532,8 @@ overflow/flex behavior, and Pixi parity remain deferred. Reverse arrays remain
 valid historical state outside the v1 normalized transition subset; they are
 not globally invalid state.
 
-`tests/browser/legacy-mixed-stack-movement-geometry.spec.ts` adds a ninth,
-separate source-only oracle backed by
+`tests/browser/legacy-mixed-stack-movement-geometry.spec.ts` adds a ninth source
+oracle and a bounded React DOM candidate comparison backed by
 `tests/legacy-fixtures/renderer/mixed-stack-movement-category-cycle-v1.json`.
 It runs native canonical construction, a reverse-restore whole-stack round
 trip, and a current-category cycle independently in both physical frames. The
@@ -557,13 +558,32 @@ categories, card and wrapper geometry, Tool rotation, z/hit order, parent
 identity, reset and harness-operation traces, cleanup, source digests, and
 deny-by-default request fulfillment are frozen.
 
-This closes only the active/sole-bench round-trip and final current-category-
-equivalence questions needed for a later canonical mixed layout. It does not
-make transient wrappers renderer state and does not justify persisting DOM
+The strict renderer-contract path uses only the semantic current state: one
+known same-owner face-up Pokémon base followed by one known Energy and one known
+current-category Trainer, all unrotated/marker-free, in the exact default
+layout. It admits the sole active placement, active with one clean base-only
+bench control, and sole bench with one clean base-only active control. It uses
+the public 63:88 ratio and canonical rounded offsets of 15/30 px active and
+13.5/27 px bench; no source wrapper or history identity is retained.
+
+The candidate comparison mounts the settled sole-bench scene first and then a
+higher-revision returned-active scene. Across both physical sides it compares
+all mixed cards' scene pre-transform boxes and React painted boxes, effective
+Tool turns, z `300/299/298`, renderer order `[Tool, Energy, base]`, and the four
+base-only/all-overlap/Energy-Tool/Tool-only native hit regions within 2 px / 1%
+/ 0.1 degrees. The unrelated opposite-slot control is an eligibility fixture,
+not a geometry claim. Stable-ID scene diffs and Pixi consumption tests cover
+the same active/bench/active descriptor updates without card or sprite
+replacement and without texture churn. A real multiplayer projection test
+confirms identical normalized geometry and stable, distinct aliases for owner,
+opponent, and spectator through movement and a current-category cycle.
+
+This does not make transient wrappers renderer state or justify persisting DOM
 provenance or pixel offsets. Bench reordering, multiple bench controls, the
-legacy case-3 target branch, extra/evolution attachments, category-converted
-Pokémon, alternate layouts/assets, interaction gestures, candidate comparison,
-and Pixi paint/hit remain deferred.
+legacy case-3 target branch, extra/evolution attachments, bases whose current
+projected category is not Pokémon, alternate layouts, nonstandard-intrinsic
+asset parity, broader gestures, and Pixi paint/hit remain deferred. Unprojected
+original-category history cannot select a renderer path.
 
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
@@ -574,9 +594,10 @@ attachment-stack fixture remains source-only; the narrower contained-card,
 ordinary-evolution, single-Energy, Trainer-as-Tool, and stable two-Energy
 fixtures feed and compare their strict production geometries. The two-Energy
 departure phases remain source-only and prove stable convergence to the
-single-Energy source state. Both mixed Energy/Trainer fixtures remain source-
-only and supply no strict production branch. Raw normalized/authored inputs,
-box edges, affordances,
+single-Energy source state. The mixed fixtures retain their historical and
+transient phases as source-only diagnostics, while their canonical settled
+active/sole-bench shapes feed the narrow strict production branch. Raw
+normalized/authored inputs, box edges, affordances,
 and semantic z evidence remain in the richer characterization snapshot rather
 than being duplicated in
 `BoardScene`. Real-browser measurements for additional layout states,

@@ -145,8 +145,9 @@ deck-rotation, and old-top append sequence. A subsequent current restore runs
 the versioned full-list rule, while the old restore event, whole-stack
 active/bench movement, snapshots, and undo preserve recorded order. Reverse and
 unsupported histories remain valid outside the v1 normalized transition
-subset. This domain normalization does not claim a production mixed
-Energy/Trainer renderer.
+subset. Renderer eligibility remains a separate, fail-closed decision: only the
+exact canonical `[Energy, Trainer]` current-state shape and characterized
+active/sole-bench placements enter the strict mixed geometry path.
 
 Whole-stack active/bench movement uses a separate atomic layout command for
 promotion, demotion, swapping, and bench reordering, including v1's asymmetric
@@ -158,14 +159,16 @@ shuffles the full combined deck for `shuffleAll`, and shuffles only staged cards
 before appending them for `shuffleBottom`. Cross-owner cards retain immutable
 ownership while entering the work-area player's destination zone.
 
-A source-only Chromium oracle confirms that legacy whole-stack movement
-refreshes a reverse-restored mixed Energy/Trainer stack to canonical settled
-bench and active geometry, and that Energy/Trainer current-category cycles
-settle identically after semantic departure and reattachment. This evidence
-does not change the domain contract: movement preserves exact evolution and
-attachment arrays and card categories, and no DOM reflow provenance enters
-state or projection. Its existing placement semantics still clear special
-conditions from stacks moved onto the bench.
+A Chromium source oracle and bounded React comparison confirm that legacy
+whole-stack movement refreshes a reverse-restored mixed Energy/Trainer stack to
+canonical settled bench and active geometry, and that Energy/Trainer
+current-category cycles settle identically after semantic departure and
+reattachment. This evidence does not change the domain contract: movement
+preserves exact evolution and attachment arrays and card categories, and no DOM
+reflow provenance enters state or projection. Its existing placement semantics
+still clear special conditions from stacks moved onto the bench. Pixi
+descriptor-consumption and real cross-view projection tests cover stable
+identities without broadening the native-paint claim.
 
 `ResolveInspectionCards` applies the same bounded, authority-resolved semantics
 to the active inspection work area and retires its visibility grant atomically.

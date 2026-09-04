@@ -164,9 +164,10 @@ and card categories exactly; it does not normalize, attach, or stamp renderer
 history. Its normal board-placement semantics still clear special conditions
 from stacks placed on the bench. Renderer-specific reflow origin and pixel
 offsets are intentionally absent from canonical state and the recipient
-projection. Any strict mixed geometry must be a deterministic function of the
-currently projected semantic shape or remain on the generic fallback; it may
-not infer hidden history from revision, stack identity, or definition category.
+projection. The strict mixed geometry is therefore a deterministic function of
+the exact canonical `[Energy, Trainer]` projected shape and characterized
+placement; every other mixed shape remains on the generic fallback. It does not
+infer hidden history from revision, stack identity, or definition category.
 
 ## Required invariants
 

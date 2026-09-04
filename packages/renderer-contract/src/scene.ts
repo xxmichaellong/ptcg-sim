@@ -18,6 +18,7 @@ import {
   LEGACY_BOARD_RESIZER_V1,
   layoutLegacyContainedCard,
   layoutLegacyOrdinaryEvolutionStack,
+  layoutLegacySingleEnergyTrainerToolAttachmentStack,
   layoutLegacySingleEnergyAttachmentStack,
   layoutLegacySingleTrainerToolAttachmentStack,
   layoutLegacyTwoEnergyAttachmentStack,
@@ -535,6 +536,161 @@ const isCharacterizedSingleTrainerToolAttachmentStack = (
   );
 };
 
+const isCharacterizedMixedStackControl = (
+  stack: MatchViewState['stacks'][string] | undefined,
+  stackId: string,
+  playerId: PlayerId,
+  slot: 'active' | 'bench'
+): boolean => {
+  const base = stack?.evolutionCards[0];
+  return (
+    stack !== undefined &&
+    stack.id === stackId &&
+    stack.boardPlayerId === playerId &&
+    stack.slot === slot &&
+    stack.evolutionCards.length === 1 &&
+    stack.attachmentCards.length === 0 &&
+    stack.rotationQuarterTurns === 0 &&
+    stack.damage === null &&
+    stack.specialCondition === null &&
+    stack.abilityUsed === false &&
+    base?.kind === 'known' &&
+    base.ownerId === playerId &&
+    base.category === 'Pokémon' &&
+    base.face === 'up' &&
+    base.orientationQuarterTurns === 0 &&
+    base.abilityUsed === false
+  );
+};
+
+const isCharacterizedMixedStackRegion = (
+  playerId: PlayerId,
+  side: BoardSide,
+  slot: 'active' | 'bench',
+  region: BoardLayoutSnapshot['players'][number]['regions'][number]
+): boolean => {
+  const normalized =
+    slot === 'active'
+      ? { x: 0.34, y: 0.07, width: 0.32, height: 0.28 }
+      : { x: 0.1, y: 0.4, width: 0.79, height: 0.25 };
+  const bottomRatio = slot === 'active' ? 0.65 : 0.35;
+  const expectedDeclaredBounds =
+    side === 'local'
+      ? {
+          x: normalized.x * 1208,
+          y: 450 + normalized.y * 450,
+          width: normalized.width * 1208,
+          height: normalized.height * 450,
+        }
+      : {
+          x: (1 - normalized.x - normalized.width) * 1208,
+          y: (1 - normalized.y - normalized.height) * 450,
+          width: normalized.width * 1208,
+          height: normalized.height * 450,
+        };
+  const localX = normalized.x * 1208;
+  const localY = 450 - bottomRatio * 450 - normalized.height * 450;
+  const expectedBoxBounds =
+    side === 'local'
+      ? {
+          x: localX,
+          y: 450 + localY,
+          width: normalized.width * 1208,
+          height: normalized.height * 450,
+        }
+      : {
+          x: 1208 - localX - normalized.width * 1208,
+          y: 450 - localY - normalized.height * 450,
+          width: normalized.width * 1208,
+          height: normalized.height * 450,
+        };
+  return (
+    region.side === side &&
+    region.id === `${side}:${slot}` &&
+    region.playerId === playerId &&
+    region.physicalSide === (side === 'local' ? 'lower' : 'upper') &&
+    region.surface === 'playSlot' &&
+    region.kind === slot &&
+    hasExactBounds(region.playerLocalNormalizedBounds, normalized) &&
+    hasExactBounds(region.physicalDeclaredBounds, expectedDeclaredBounds) &&
+    hasExactBounds(region.physicalBorderBoxBounds, expectedBoxBounds) &&
+    hasExactBounds(region.physicalContentBoxBounds, expectedBoxBounds)
+  );
+};
+
+const isCharacterizedSingleEnergyTrainerToolAttachmentStack = (
+  view: MatchViewState,
+  stack: MatchViewState['stacks'][string],
+  board: MatchViewState['boards'][string],
+  playerId: PlayerId,
+  side: BoardSide,
+  region: BoardLayoutSnapshot['players'][number]['regions'][number],
+  layoutIsCharacterized: boolean
+): boolean => {
+  const base = stack.evolutionCards[0];
+  const energy = stack.attachmentCards[0];
+  const tool = stack.attachmentCards[1];
+  const bounds = region.physicalDeclaredBounds;
+  const baseCssomClientWidth = Math.round(bounds.height * CARD_ASPECT_RATIO);
+  const authoredWidth = baseCssomClientWidth * (1 + 2 / 6);
+  const marginRight = bounds.width * 0.02;
+  const placementIsCharacterized =
+    stack.slot === 'active'
+      ? board.activeStackId === stack.id &&
+        (board.benchStackIds.length === 0 ||
+          (board.benchStackIds.length === 1 &&
+            isCharacterizedMixedStackControl(
+              view.stacks[board.benchStackIds[0]!],
+              board.benchStackIds[0]!,
+              playerId,
+              'bench'
+            )))
+      : board.benchStackIds.length === 1 &&
+        board.benchStackIds[0] === stack.id &&
+        board.activeStackId !== null &&
+        isCharacterizedMixedStackControl(
+          view.stacks[board.activeStackId],
+          board.activeStackId,
+          playerId,
+          'active'
+        );
+  return (
+    layoutIsCharacterized &&
+    placementIsCharacterized &&
+    isCharacterizedMixedStackRegion(playerId, side, stack.slot, region) &&
+    stack.boardPlayerId === playerId &&
+    stack.evolutionCards.length === 1 &&
+    stack.attachmentCards.length === 2 &&
+    stack.rotationQuarterTurns === 0 &&
+    stack.damage === null &&
+    stack.specialCondition === null &&
+    stack.abilityUsed === false &&
+    Number.isFinite(authoredWidth) &&
+    authoredWidth > 0 &&
+    Number.isFinite(marginRight) &&
+    marginRight >= 0 &&
+    authoredWidth + marginRight <= bounds.width &&
+    base?.kind === 'known' &&
+    base.ownerId === playerId &&
+    base.category === 'Pokémon' &&
+    base.face === 'up' &&
+    base.orientationQuarterTurns === 0 &&
+    base.abilityUsed === false &&
+    energy?.kind === 'known' &&
+    energy.ownerId === playerId &&
+    energy.category === 'Energy' &&
+    energy.face === 'up' &&
+    energy.orientationQuarterTurns === 0 &&
+    energy.abilityUsed === false &&
+    tool?.kind === 'known' &&
+    tool.ownerId === playerId &&
+    tool.category === 'Trainer' &&
+    tool.face === 'up' &&
+    tool.orientationQuarterTurns === 0 &&
+    tool.abilityUsed === false
+  );
+};
+
 const isCharacterizedOrdinaryEvolutionStack = (
   stack: MatchViewState['stacks'][string],
   board: MatchViewState['boards'][string],
@@ -912,6 +1068,21 @@ export const createBoardScene = (
               CARD_ASPECT_RATIO
             )
           : null;
+      const singleEnergyTrainerToolAttachmentLayout =
+        isCharacterizedSingleEnergyTrainerToolAttachmentStack(
+          view,
+          stack,
+          board,
+          playerId,
+          side,
+          slotRegions[stack.slot],
+          defaultInPlayLayoutIsCharacterized
+        )
+          ? layoutLegacySingleEnergyTrainerToolAttachmentStack(
+              slotRegions[stack.slot],
+              CARD_ASPECT_RATIO
+            )
+          : null;
       const ordinaryEvolutionLayout = isCharacterizedOrdinaryEvolutionStack(
         stack,
         board,
@@ -934,11 +1105,16 @@ export const createBoardScene = (
           index === 0 ? twoEnergyAttachmentLayout?.base : undefined;
         const singleTrainerToolBaseLayout =
           index === 0 ? singleTrainerToolAttachmentLayout?.base : undefined;
+        const singleEnergyTrainerToolBaseLayout =
+          index === 0
+            ? singleEnergyTrainerToolAttachmentLayout?.base
+            : undefined;
         const characterizedCardLayout =
           ordinaryCardLayout ??
           singleEnergyBaseLayout ??
           twoEnergyBaseLayout ??
-          singleTrainerToolBaseLayout;
+          singleTrainerToolBaseLayout ??
+          singleEnergyTrainerToolBaseLayout;
         const node = makeCardNode(view, card, {
           parentId: stack.id,
           side,
@@ -969,8 +1145,17 @@ export const createBoardScene = (
         const twoEnergyLayout = twoEnergyAttachmentLayout?.energies[index];
         const singleTrainerToolLayout =
           index === 0 ? singleTrainerToolAttachmentLayout?.tool : undefined;
+        const singleEnergyTrainerToolLayout =
+          index === 0
+            ? singleEnergyTrainerToolAttachmentLayout?.energy
+            : index === 1
+              ? singleEnergyTrainerToolAttachmentLayout?.tool
+              : undefined;
         const characterizedAttachmentLayout =
-          singleEnergyLayout ?? twoEnergyLayout ?? singleTrainerToolLayout;
+          singleEnergyLayout ??
+          twoEnergyLayout ??
+          singleTrainerToolLayout ??
+          singleEnergyTrainerToolLayout;
         registerCard(
           makeCardNode(view, card, {
             parentId: stack.id,
@@ -987,7 +1172,11 @@ export const createBoardScene = (
             zIndex: characterizedAttachmentLayout
               ? 300 + characterizedAttachmentLayout.sourceZIndex
               : 250 + index,
-            rotationQuarterTurns: singleTrainerToolLayout ? 1 : undefined,
+            rotationQuarterTurns:
+              singleTrainerToolLayout ||
+              (singleEnergyTrainerToolAttachmentLayout !== null && index === 1)
+                ? 1
+                : undefined,
             interactive: true,
           }),
           card

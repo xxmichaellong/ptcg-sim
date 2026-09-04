@@ -333,6 +333,24 @@ export interface LegacySingleTrainerToolAttachmentStackLayout {
   readonly tool: LegacySingleTrainerToolAttachmentCardLayout;
 }
 
+export interface LegacySingleEnergyTrainerToolAttachmentStackLayout {
+  /** Stable post-refresh play-container border box, excluding its flex margin. */
+  readonly flexItemBounds: Rect;
+  /** Integer base-image width read by v1 through CSSOM clientWidth. */
+  readonly baseCssomClientWidth: number;
+  /** Horizontal step authored by attachCard from base clientWidth / 6. */
+  readonly attachmentOffset: number;
+  /** Fractional width authored by adjustCards after refresh. */
+  readonly authoredWidth: number;
+  /** Integer width exposed by the stable wrapper through CSSOM clientWidth. */
+  readonly stableCssomClientWidth: number;
+  /** The Tool wrapper's authored 2% trailing flex margin. */
+  readonly marginRight: number;
+  readonly base: LegacySingleEnergyAttachmentCardLayout;
+  readonly energy: LegacySingleEnergyAttachmentCardLayout;
+  readonly tool: LegacySingleTrainerToolAttachmentCardLayout;
+}
+
 const ZERO_EDGES: BoxEdgesPx = { top: 0, right: 0, bottom: 0, left: 0 };
 const FIVE_PIXEL_PADDING: BoxEdgesPx = {
   top: 5,
@@ -1135,7 +1153,7 @@ export const layoutLegacyOrdinaryEvolutionStack = (
   };
 };
 
-type LegacyAttachmentKind = 'energy' | 'trainerTool';
+type LegacyAttachmentKind = 'energy' | 'trainerTool' | 'energyTrainerTool';
 
 interface LegacyAttachmentStackGeometry {
   readonly flexItemBounds: Rect;
@@ -1154,12 +1172,18 @@ const layoutLegacyAttachmentStack = (
   kind: LegacyAttachmentKind,
   attachmentCount: 1 | 2
 ): LegacyAttachmentStackGeometry => {
-  let sourceName: 'Single-Energy' | 'Two-Energy' | 'Single-Trainer-as-Tool';
+  let sourceName:
+    | 'Single-Energy'
+    | 'Two-Energy'
+    | 'Single-Trainer-as-Tool'
+    | 'Single-Energy/Trainer-as-Tool';
   let marginRightRatio: 0 | 0.02;
+  let allowsBench: boolean;
   switch (kind) {
     case 'energy':
       sourceName = attachmentCount === 1 ? 'Single-Energy' : 'Two-Energy';
       marginRightRatio = 0;
+      allowsBench = false;
       break;
     case 'trainerTool':
       if (attachmentCount !== 1) {
@@ -1169,10 +1193,26 @@ const layoutLegacyAttachmentStack = (
       }
       sourceName = 'Single-Trainer-as-Tool';
       marginRightRatio = 0.02;
+      allowsBench = false;
+      break;
+    case 'energyTrainerTool':
+      if (attachmentCount !== 2) {
+        throw new Error(
+          'Single-Energy/Trainer-as-Tool layout requires exactly two attachments'
+        );
+      }
+      sourceName = 'Single-Energy/Trainer-as-Tool';
+      marginRightRatio = 0.02;
+      allowsBench = true;
       break;
   }
-  if (region.surface !== 'playSlot' || region.kind !== 'active') {
-    throw new Error(`${sourceName} layout requires an active play slot`);
+  if (
+    region.surface !== 'playSlot' ||
+    (region.kind !== 'active' && !(allowsBench && region.kind === 'bench'))
+  ) {
+    throw new Error(
+      `${sourceName} layout requires ${allowsBench ? 'an active or bench' : 'an active'} play slot`
+    );
   }
   if (!Number.isFinite(cardAspectRatio) || cardAspectRatio <= 0) {
     throw new Error(`${sourceName} card aspect ratio must be positive`);
@@ -1331,6 +1371,41 @@ export const layoutLegacySingleTrainerToolAttachmentStack = (
     stableCssomClientWidth: result.stableCssomClientWidth,
     marginRight: result.marginRight,
     base: result.base,
+    tool,
+  };
+};
+
+/**
+ * Canonical stable geometry for one base with one Energy followed by one
+ * current-category Trainer-as-Tool. Source-observed active/sole-bench movement
+ * rebuilds both cards with width/6 offsets, a 2% trailing wrapper margin, and
+ * z indices 0/-1/-2. The Tool's presentation-only quarter-turn remains scene
+ * state; these are the pre-transform card boxes.
+ */
+export const layoutLegacySingleEnergyTrainerToolAttachmentStack = (
+  region: BoardLayoutRegion,
+  cardAspectRatio: number
+): LegacySingleEnergyTrainerToolAttachmentStackLayout => {
+  const result = layoutLegacyAttachmentStack(
+    region,
+    cardAspectRatio,
+    'energyTrainerTool',
+    2
+  );
+  const energy = result.attachments[0];
+  const tool = result.attachments[1];
+  if (!energy || !tool) {
+    throw new Error('Single-Energy/Trainer-as-Tool layout lost an attachment');
+  }
+  return {
+    flexItemBounds: result.flexItemBounds,
+    baseCssomClientWidth: result.baseCssomClientWidth,
+    attachmentOffset: result.attachmentOffset,
+    authoredWidth: result.authoredWidth,
+    stableCssomClientWidth: result.stableCssomClientWidth,
+    marginRight: result.marginRight,
+    base: result.base,
+    energy,
     tool,
   };
 };
