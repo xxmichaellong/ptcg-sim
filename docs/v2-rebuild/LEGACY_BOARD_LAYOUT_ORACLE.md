@@ -1075,6 +1075,31 @@ the measured transition. Different-lower or repeated group actions, any
 intervening operation, alternate q0 origins, attachments, candidate parity,
 and production/domain/protocol/schema/UI paths remain excluded.
 
+The twenty-fifth source checkpoint is split across
+`tests/browser/legacy-compound-lower-nonzero-different-lower-group-after-single-ordinary-geometry.spec.ts`
+and
+`tests/browser/legacy-compound-lower-nonzero-different-lower-group-after-single-break-geometry.spec.ts`,
+backed by
+`tests/legacy-fixtures/renderer/compound-lower-nonzero-different-lower-group-after-single-v1.json`.
+It rebuilds the same forty-eight checkpoint-eighteen divergent histories but
+uses the other lower card as the immediate whole-group initiator. Prior-middle
+histories select base at logical index 2 / DOM ordinal 1; prior-base histories
+select middle at logical index 1 / DOM ordinal 2. The q1/q2/q3 initiator
+advances to q2/q3/q0, advances both siblings, and preserves all BREAK flags.
+
+The other lower's original angle leaves every bench margin unchanged across
+the action: q1/q3 remain `1%`/`0%`, q2 remains `3%`/`2%`. Post turns and flags
+equal both checkpoint twenty-two and twenty-four. Ordinary post geometry is
+exactly checkpoint twenty-two; top-BREAK bench x has signed frame-local deltas
+`+0.015625px`, `-0.015625px`, and `+0.015625px` for q1/q2/q3. Against
+checkpoint twenty-four, q1/q3 bench x is `+0.015625px` and q2 is exact. Every
+active case is exact. The fixture independently pins both collision tables,
+predecessor inheritance, cross-role action metadata, traces, authored/painted
+rectangles, physical-frame mappings, ten native probes, stable wrapper/card
+IDs, three observer pairs, cleanup, and no refresh. Repeats, intervening
+operations, alternate origins, attachments, candidate parity, and production/
+domain/protocol/schema/UI paths remain excluded.
+
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
 renderer-neutral scene and has structured scene assertions for all four board
@@ -1084,8 +1109,9 @@ attachment-stack fixture remains source-only; the narrower contained-card,
 ordinary-evolution, single-Energy, Trainer-as-Tool, and stable two-Energy
 fixtures feed and compare their strict production geometries. The compound
 group/BREAK, BREAK q0/q2/q3 refresh, top- and lower-selected nonzero-group
-Alt-R, its same-card follow-up, and immediate top- or same-lower-group rotation
-after divergence or wrapper refresh after divergence, lower-initiated group, and pristine/returned/history-authored-q0
+Alt-R, its same-card follow-up, and immediate top-, same-lower-, or different-
+lower-group rotation after divergence or wrapper refresh after divergence,
+lower-initiated group, and pristine/returned/history-authored-q0
 lower single histories remain wholly source-only. The
 bench-marker rotation history remains source-only while its strict pristine-q0 phase also
 feeds and compares the production geometry. The two-Energy

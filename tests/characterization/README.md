@@ -485,3 +485,25 @@ physical-frame mappings, ten probes, topology, stable wrapper/card identifiers,
 cleanup, and no measured-transition refresh. Different-lower or repeated group
 actions, intervening operations, alternate q0 origins, attachments, candidate
 parity, and production/domain/protocol/schema/UI changes remain separate.
+
+`legacy-compound-lower-nonzero-different-lower-group-after-single-layout.test.ts`
+then pins plain R on the other lower card after each checkpoint-eighteen
+q1/q2/q3 divergence. Forty-eight independent ordinary/top-BREAK histories
+cross prior middle/base selection, local/opponent frames, and active/sole-bench
+placement. Prior middle makes base logical index 2 / DOM ordinal 1 the measured
+initiator; prior base makes middle logical index 1 / DOM ordinal 2. The selected
+q1/q2/q3 other lower advances to q2/q3/q0 with `single=false`, advances both
+siblings, and preserves every BREAK flag.
+
+Post turns and flags equal both the top- and same-lower-initiated checkpoints.
+The other lower card retains the pre-state bench margin branch: compact
+`1%`/`0%` for q1/q3 and spread `3%`/`2%` for q2. Ordinary geometry therefore
+equals the top-initiated result. Top-BREAK bench x differs from it by signed
+`+0.015625px`, `-0.015625px`, and `+0.015625px`; relative to the same-lower
+result, q1/q3 is `+0.015625px` and q2 is exact. The fixture pins both
+cross-checkpoint tables, exact predecessor inheritance, cross-role action
+metadata, traces, authored/painted rectangles, physical-frame mappings, ten
+native probes, stable wrapper/card identifiers, cleanup, and no measured-
+transition refresh. Repeats, intervening operations, alternate origins,
+attachments, candidate parity, and production/domain/protocol/schema/UI changes
+remain separate.

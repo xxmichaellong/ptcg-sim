@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 817 v2 tests across 125 files. A separate suite
-passes 62 Playwright checks across 31 Chromium 151 browser files:
+The repository-wide gate passes 822 v2 tests across 126 files. A separate suite
+passes 66 Playwright checks across 33 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -647,7 +647,22 @@ passes 62 Playwright checks across 31 Chromium 151 browser files:
     24-case Chromium runs. Different-lower/repeated group actions, intervening
     operations, alternate q0 origins, attachments, candidate parity, and
     production/UI changes remain separate.
-31. The selected DOM implementation completes 100 mount → clear/reset → destroy
+31. A twenty-fifth source-only checkpoint pins forty-eight immediate different-
+    lower-card whole-group rotations after clean q1/q2/q3 divergence. Prior
+    middle selection makes base logical index 2 / DOM ordinal 1 the measured
+    initiator; prior base selection makes middle logical index 1 / DOM ordinal 2. The other lower's q1/q2/q3 turn advances to q2/q3/q0 with `single=false`;
+    both siblings advance and every BREAK flag is preserved. Post turns/flags
+    equal both prior group-action checkpoints. Bench margins remain compact for
+    q1/q3 and spread for q2. Ordinary geometry equals the top-initiated result;
+    top-BREAK bench x differs by signed `+0.015625px`, `-0.015625px`, and
+    `+0.015625px`, while q1/q3 are `+0.015625px` from the same-lower result and
+    q2 is exact. Exact checkpoint-eighteen inheritance, both collision tables,
+    traces, cross-role action payloads, authored/painted rectangles, physical-
+    frame mappings, ten probes, stable wrapper/card identifiers, three-observer/
+    no-refresh lifecycle, cleanup, and recursive provenance are pinned in two
+    24-case Chromium runs. Repeats, intervening operations, alternate origins,
+    attachments, candidate parity, and production/UI changes remain separate.
+32. The selected DOM implementation completes 100 mount → clear/reset → destroy
     cycles on one warmed route-owned host with the exact status sequence,
     complete scene IDs at mount, zero rendered scene children/IDs after clear and
     destroy, zero non-DOM diagnostic resources, and post-GC Chromium
@@ -724,6 +739,11 @@ is split between
 `tests/browser/legacy-compound-lower-nonzero-same-lower-group-after-single-ordinary-geometry.spec.ts`
 and
 `tests/browser/legacy-compound-lower-nonzero-same-lower-group-after-single-break-geometry.spec.ts`.
+The complementary immediate whole-group rotation initiated by the other lower
+card is split between
+`tests/browser/legacy-compound-lower-nonzero-different-lower-group-after-single-ordinary-geometry.spec.ts`
+and
+`tests/browser/legacy-compound-lower-nonzero-different-lower-group-after-single-break-geometry.spec.ts`.
 The mixed-
 order suite validates a checked-in numeric oracle without mounting a candidate;
 the mixed-stack movement suite mounts React only for its two canonical settled
@@ -733,7 +753,7 @@ q1/q2/q3 and history-specific layout source-only. The bench-marker suite
 likewise keeps its q1/q2/q3 and observer history source-only, while comparing
 the separately composed clean-active-plus-sole-bench q0 production shape. The
 compound, BREAK-refresh, top/lower nonzero-group single-card and same-card
-follow-up plus immediate top- or same-lower-group rotation or wrapper refresh after divergence, lower-group-
+follow-up plus immediate top-, same-lower-, or different-lower-group rotation or wrapper refresh after divergence, lower-group-
 initiator, and pristine/returned/history-authored-q0 lower single-card suites
 mount no candidate
 because they prove that projected rotation fields alone cannot recover

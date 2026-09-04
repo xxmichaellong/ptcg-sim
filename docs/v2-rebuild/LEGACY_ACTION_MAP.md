@@ -343,6 +343,21 @@ margin history as source compatibility evidence, not canonical game state.
 Different-lower and repeated group actions, intervening inputs or refresh,
 alternate state origins, attachments, and candidate parity remain separate.
 
+Plain R on the other lower evolution is now pinned independently. After a
+middle Alt-R divergence, base is logical index 2 / DOM ordinal 1; after a base
+divergence, middle is logical index 1 / DOM ordinal 2. The different lower card
+still carries the original q1/q2/q3 group angle, so its whole-group action
+advances all cards and preserves flags but leaves the existing bench margin
+unchanged: compact `1%`/`0%` for q1/q3, spread `3%`/`2%` for q2. Post turns and
+flags collide with both prior group-action checkpoints. Ordinary geometry
+equals the top-initiated branch; top-BREAK bench x differs by
+`+0.015625px`/`-0.015625px`/`+0.015625px` for q1/q2/q3. Against the same-lower
+branch, bench q1/q3 is `+0.015625px` and q2 is exact. These are frame-local
+differentials with separately verified local/opponent physical mappings. V2
+must not encode this initiator history into canonical state. Repeated group
+actions, intervening operations, alternate origins, attachments, and candidate
+parity remain separate.
+
 The immediate refresh branch after the same lower divergence is now captured
 independently. Reconstruction preserves the three image nodes but replaces the
 wrapper, briefly leaving two wrappers until the empty original is removed by

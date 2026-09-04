@@ -686,6 +686,30 @@ or repeated group actions, intervening single/refresh/movement, alternate q0
 origins, attachments, candidate parity, and production normalization remain
 separate; no UI or UX changes.
 
+A twenty-fifth source-only checkpoint measures the complementary immediate
+plain-R branch: after the same checkpoint-eighteen middle/base divergence, the
+other lower evolution initiates the whole-group rotation. The forty-eight-case
+ordinary/top-BREAK, q1/q2/q3, prior-middle/prior-base, active/sole-bench, and
+local/opponent matrix keeps the pre-state and trace prefix identical to
+checkpoint eighteen. Prior middle selection makes base logical index 2 / DOM
+ordinal 1 the measured initiator; prior base selection makes middle logical
+index 1 / DOM ordinal 2 the initiator. `single=false` advances all three raw
+turns once and preserves every BREAK flag.
+
+Post turns and flags equal both the top-initiated and same-lower-initiated
+checkpoints, while the other lower card's original q1/q2/q3 angle retains the
+pre-existing bench margin: compact `1%`/`0%` for q1/q3 and spread `3%`/`2%`
+for q2. Ordinary geometry therefore exactly matches the top-initiated result.
+Top-BREAK bench x differs from it by `+0.015625px`, `-0.015625px`, and
+`+0.015625px` frame-local for q1/q2/q3. Relative to the same-lower result,
+q1/q3 bench x is `+0.015625px` and q2 is exact; every active case is exact.
+The oracle pins both signed collision tables, exact predecessor inheritance,
+cross-role action indices, traces, authored/painted rectangles, physical-frame
+mappings, ten native probes, stable wrapper/card identifiers, and the unchanged
+three-observer/no-refresh lifecycle. Repeats, intervening operations, alternate
+origins, attachments, candidate parity, and production normalization remain
+separate; no UI or UX changes.
+
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during
 characterization is represented explicitly instead of assumed to be duplication.
