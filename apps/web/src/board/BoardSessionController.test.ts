@@ -732,9 +732,8 @@ describe('headless board session controller', () => {
 
   it('serializes reentrant effects and preserves generation on dispose', () => {
     const order: string[] = [];
-    let controller: BoardSessionController;
     let reentered = false;
-    controller = new BoardSessionController({
+    const controller = new BoardSessionController({
       createScene,
       emitEffect: (effect) => {
         order.push(`effect:${effect.kind}`);
@@ -770,8 +769,7 @@ describe('headless board session controller', () => {
 
   it('stops later effects on effect-triggered disposal and reports failures once', () => {
     const attempted: BoardSessionControllerEffect[] = [];
-    let controller: BoardSessionController;
-    controller = new BoardSessionController({
+    const controller = new BoardSessionController({
       createScene,
       emitEffect: (effect) => {
         attempted.push(effect);

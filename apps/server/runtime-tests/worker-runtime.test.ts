@@ -73,6 +73,11 @@ describe('Cloudflare Worker runtime', () => {
       created.credentials.playerTwoSeatCapability
     );
     expect(evidence.snapshot?.state.matchId).toBe(created.roomCode);
+    expect(
+      Object.values(evidence.snapshot?.state.players ?? {}).map(
+        (player) => player.cardBackUrl
+      )
+    ).toEqual(['/v2/assets/cardback.png', '/v2/assets/cardback.png']);
     expect(evidence.authorityStorage).toEqual({
       envelope: {
         format: 'ptcgsim-room-authority-v6',

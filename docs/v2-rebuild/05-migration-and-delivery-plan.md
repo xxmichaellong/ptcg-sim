@@ -114,6 +114,17 @@ findings remain useful.
 
 Goal: create enforced boundaries without replacing user flows.
 
+Current status (2026-09-04): substantially implemented but not exited. The
+workspace, strict production project references, renderer/authority contracts,
+scoped formatter and TypeScript-aware lint gate, generated-output-free cycle
+check, source/bundle boundary checker, and required quality/Chromium CI jobs now
+exist. The boundary checker fails closed on unexpected missing source maps,
+legacy/deep imports, workspace cycles, authority code in the web artifact,
+test-fixture leaks, and drift in the canonical v2 card-back bytes. Remaining
+Phase 2 evidence includes an explicit public-package API/export report,
+browser-spec TypeScript debt removal, production route isolation in a real
+deployment, and the broader ratified browser/viewport matrix.
+
 Work:
 
 - Add TypeScript workspace packages and project references.

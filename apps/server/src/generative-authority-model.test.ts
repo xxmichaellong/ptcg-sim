@@ -1499,7 +1499,7 @@ describe('seeded authority/storage model', () => {
         ['forged', 3],
         ['spectator', 4],
       ] as const;
-      for (const [operation, firstStep] of scheduledOperations.filter(
+      for (const [operation] of scheduledOperations.filter(
         ([, firstStep]) => steps > firstStep
       )) {
         expect(

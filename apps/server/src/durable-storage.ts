@@ -493,11 +493,6 @@ const readStoredSnapshotEnvelope = (
   };
 };
 
-const readStoredSnapshot = (
-  value: unknown
-): RoomAuthoritySnapshot | undefined =>
-  readStoredSnapshotEnvelope(value)?.snapshot;
-
 export class DurableRoomSnapshotStore
   implements AuthoritySnapshotStore, AdmissionPersistence
 {

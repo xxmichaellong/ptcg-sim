@@ -3,16 +3,21 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests/browser',
   fullyParallel: false,
+  forbidOnly: Boolean(process.env['CI']),
+  retries: 0,
   workers: 1,
   timeout: 45_000,
   expect: { timeout: 10_000 },
-  reporter: [['list'], ['html', { open: 'never' }]],
+  reporter: process.env['CI']
+    ? [['github'], ['html', { open: 'never' }]]
+    : [['list'], ['html', { open: 'never' }]],
   use: {
     ...devices['Desktop Chrome'],
     baseURL: 'http://127.0.0.1:4173',
     viewport: { width: 1280, height: 720 },
     deviceScaleFactor: 1,
     trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
   },
   projects: [
     {
@@ -30,7 +35,7 @@ export default defineConfig({
     command:
       'corepack pnpm --filter @ptcgsim/web dev --host 127.0.0.1 --port 4173',
     url: 'http://127.0.0.1:4173',
-    reuseExistingServer: true,
+    reuseExistingServer: !process.env['CI'],
     timeout: 30_000,
     stdout: 'ignore',
     stderr: 'pipe',

@@ -81,7 +81,7 @@ export const appendSoloUndoHistory = (
     revertedRevision: eventBatch.revision,
     events: structuredClone(eventBatch.events),
   };
-  let entries = [...history.entries, entry];
+  const entries = [...history.entries, entry];
   while (entries.length > maximumEntries) {
     const removed = entries.shift();
     if (!removed) break;

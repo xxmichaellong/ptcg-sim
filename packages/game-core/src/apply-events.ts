@@ -1351,7 +1351,7 @@ const applyEventInternal = (
           abilityUsed: card.abilityUsed,
         };
         let activeStackId = board.activeStackId;
-        let benchStackIds = [...board.benchStackIds];
+        const benchStackIds = [...board.benchStackIds];
         if (event.slot === 'active') {
           if (activeStackId && event.previousActiveToBench) {
             const priorStack = requireStack(state, activeStackId);

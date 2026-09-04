@@ -23,6 +23,18 @@ budget because an implementation missed it.
 - Software-rendered browser results may catch regressions but do not substitute
   for physical-GPU release evidence.
 
+The current pull-request lane is a deliberately narrower implemented baseline:
+GitHub-hosted Ubuntu 24.04, Node 24.19.0, pnpm 11.24.0, Playwright 1.62.1, and
+one sequential Playwright-managed Chromium worker. Default renderer cases use
+1280×720/DPR 1, while source-oracle cases use their explicitly pinned
+1600×900/DPR 1 override. The lane runs after the non-browser quality gate with
+retries disabled, CI-only focused-test rejection, fresh Vite ownership, failure
+screenshots, and retained failure traces. It does not yet satisfy the two-target
+viewport matrix above, pin fonts, cover Firefox/Safari, or typecheck
+`tests/browser` as an independent strict TypeScript project. Those remain
+release evidence, not claims made by current CI. See
+[`QUALITY_GATES.md`](./QUALITY_GATES.md).
+
 ### Browser release matrix
 
 Current stable Chromium, Firefox, and Safari on supported desktop operating

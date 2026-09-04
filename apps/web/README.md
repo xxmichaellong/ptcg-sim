@@ -25,6 +25,12 @@ legacy replay controls, and externally owned route teardown. Normal sidebar
 actions, chat, deck/settings navigation, and create/join form wiring remain
 later slices.
 
+The default v2 card back is published at `/v2/assets/cardback.png`. It is an
+exact byte copy of the current v1 PNG, and the build gate verifies its digest,
+dimensions, color format, and emitted bytes. The Worker does not serve web
+assets itself: a deployment must route `/v2/assets/*` to this Vite build (or an
+equivalent static origin) before remote rooms are exposed.
+
 Run the Chromium decision suite with `pnpm run test:renderer:browser` after
 installing Playwright's Chromium browser. On NixOS, set
 `PTCGSIM_CHROMIUM_PATH` to the Nix-provided Chromium executable.

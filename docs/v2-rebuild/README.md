@@ -1,12 +1,13 @@
 # PTCG Sim v2 rebuild blueprint
 
 - Status: **approved implementation in progress on the isolated v2 feature branch**
-- Last updated: 2026-09-03
+- Last updated: 2026-09-04
 - Primary objective: replace the internals while preserving the current UI and UX.
 
-This directory is the implementation contract for the PTCG Sim v2 rebuild. The
-project should not begin production implementation until the blocking decisions
-and Phase 0 exit criteria are accepted.
+This directory is the implementation contract for the PTCG Sim v2 rebuild.
+Isolated implementation and characterization are authorized on the draft feature
+branch. Production routing, user-facing migration, and rollout remain blocked on
+the relevant product decisions and phase exit criteria.
 
 ## Recommended target
 
@@ -107,6 +108,7 @@ a manual tabletop simulator.
 | [RENDERER_SPIKE.md](./RENDERER_SPIKE.md)                                               | Live DOM/Pixi implementation evidence, research, current result, and remaining decision gates                |
 | [ADR-004-BOARD-RENDERER.md](./ADR-004-BOARD-RENDERER.md)                               | Accepted first-production renderer decision, evidence, consequences, and revisit triggers                    |
 | [SERVER_PERFORMANCE_BASELINE.md](./SERVER_PERFORMANCE_BASELINE.md)                     | Reproducible `workerd` payload/resource gate, named local timing observation, and remaining preview evidence |
+| [QUALITY_GATES.md](./QUALITY_GATES.md)                                                 | Canonical local/CI commands, enforced architecture and asset boundaries, and explicit residual gaps          |
 | [AUDIT.md](./AUDIT.md)                                                                 | Multi-agent review process, change protocol, and audit checklists                                            |
 
 ## How to read and approve this blueprint

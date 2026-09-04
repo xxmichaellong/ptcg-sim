@@ -12,13 +12,30 @@ and dependency direction are required.
 
 ## Repository and application shell
 
-| Current files                                        | Target files                                                                 | Treatment                                                                                            |
-| ---------------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| root `package.json`, `pnpm-workspace.yaml`, packages | root workspace/tool configs plus `apps/*`, `packages/*`                      | Expand workspace; preserve v1 scripts until retirement.                                              |
-| `client/index.ejs`                                   | `apps/web/index.html`, `src/main.tsx`, `src/app/App.tsx`, feature components | Recreate the same DOM chrome and styles; remove EJS data injection after compatibility route exists. |
-| `client/self-containers.html`, `opp-containers.html` | selected renderer layout/scene plus React overlays                           | Remove iframe implementation only after visual/interaction parity.                                   |
-| `client/src/css/index.css`, self/opp CSS             | `apps/web/src/styles/*`, `src/board/layout/boardGeometry.ts`                 | Preserve style tokens/geometry; consolidate duplicate transforms after baseline extraction.          |
-| static assets under `client/src/assets`              | `apps/web/public/assets` or imported assets                                  | Preserve visible assets and add deterministic test copies/license inventory.                         |
+| Current files                                        | Target files                                                                 | Treatment                                                                                                                                       |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| root `package.json`, `pnpm-workspace.yaml`, packages | root workspace/tool configs plus `apps/*`, `packages/*`                      | Expand workspace; preserve v1 scripts until retirement.                                                                                         |
+| `client/index.ejs`                                   | `apps/web/index.html`, `src/main.tsx`, `src/app/App.tsx`, feature components | Recreate the same DOM chrome and styles; remove EJS data injection after compatibility route exists.                                            |
+| `client/self-containers.html`, `opp-containers.html` | selected renderer layout/scene plus React overlays                           | Remove iframe implementation only after visual/interaction parity.                                                                              |
+| `client/src/css/index.css`, self/opp CSS             | `apps/web/src/styles/*`, `src/board/layout/boardGeometry.ts`                 | Preserve style tokens/geometry; consolidate duplicate transforms after baseline extraction.                                                     |
+| static assets under `client/src/assets`              | `apps/web/public/v2/assets` or imported assets                               | Preserve visible assets and add deterministic test copies/license inventory. The default card back is copied byte-for-byte and integrity-gated. |
+
+Implemented repository enforcement files:
+
+```text
+.github/workflows/ci.yml
+eslint.config.mjs
+scripts/check-v2-boundaries.mjs
+scripts/check-v2-boundaries.test.mjs
+```
+
+The root `check:ci` command is the non-browser merge gate. It covers the frozen
+legacy unit suite, scoped formatting and linting, source/workspace boundaries,
+cycle detection without generated output, strict production/model/runtime type
+checks, boundary-checker self-tests, v2 unit/runtime tests, both production
+builds, source-map provenance, fixture-leak detection, and canonical card-back
+integrity. `check:browser` owns the sequential Chromium lane. The exact contract
+and residual limitations are in [`QUALITY_GATES.md`](./QUALITY_GATES.md).
 
 ## Client composition and state
 

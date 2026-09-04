@@ -1,4 +1,3 @@
-import type { MatchViewState } from '@ptcgsim/game-core';
 import { createRendererSpikeView } from '@ptcgsim/renderer-contract';
 import { describe, expect, it, vi } from 'vitest';
 

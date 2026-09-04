@@ -358,29 +358,29 @@ test('normalized React DOM releases board resources through 100 lifecycle cycles
       } finally {
         renderer.destroy();
         await new Promise<void>((resolve) => queueMicrotask(resolve));
-        const destroyed = renderer.getDiagnostics?.();
-        if (
-          !destroyed ||
-          destroyed.mounted ||
-          !destroyed.destroyed ||
-          destroyed.renderedCardIds.length !== 0 ||
-          destroyed.renderedZoneIds.length !== 0 ||
-          destroyed.renderedMarkerIds.length !== 0 ||
-          destroyed.domNodes !== 0 ||
-          host.childElementCount !== 0
-        ) {
-          throw new Error(`Cycle ${cycle} retained destroyed resources`);
-        }
-        if (statuses.join(',') !== 'mounting,ready,destroyed') {
-          throw new Error(
-            `Cycle ${cycle} reported an invalid lifecycle: ${statuses.join(',')}`
-          );
-        }
-        readyStatuses += statuses.filter((status) => status === 'ready').length;
-        destroyedStatuses += statuses.filter(
-          (status) => status === 'destroyed'
-        ).length;
       }
+      const destroyed = renderer.getDiagnostics?.();
+      if (
+        !destroyed ||
+        destroyed.mounted ||
+        !destroyed.destroyed ||
+        destroyed.renderedCardIds.length !== 0 ||
+        destroyed.renderedZoneIds.length !== 0 ||
+        destroyed.renderedMarkerIds.length !== 0 ||
+        destroyed.domNodes !== 0 ||
+        host.childElementCount !== 0
+      ) {
+        throw new Error(`Cycle ${cycle} retained destroyed resources`);
+      }
+      if (statuses.join(',') !== 'mounting,ready,destroyed') {
+        throw new Error(
+          `Cycle ${cycle} reported an invalid lifecycle: ${statuses.join(',')}`
+        );
+      }
+      readyStatuses += statuses.filter((status) => status === 'ready').length;
+      destroyedStatuses += statuses.filter(
+        (status) => status === 'destroyed'
+      ).length;
     }
     await new Promise<void>((resolve) =>
       requestAnimationFrame(() => resolve())

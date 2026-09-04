@@ -570,16 +570,14 @@ describe('BoardSessionAdapter with real session coordinators', () => {
   });
 
   it('serializes a reentrant newer replay observation after its older frame', () => {
-    let replayRef: ReplaySessionCoordinator | undefined;
     let reentered = false;
     const test = setup((view) => {
-      if (view.revision === 0 && replayRef && !reentered) {
+      if (view.revision === 0 && !reentered) {
         reentered = true;
-        expect(replayRef.stepNext()).toBe(true);
+        expect(test.replay.stepNext()).toBe(true);
       }
       return createScene(view);
     });
-    replayRef = test.replay;
     test.socket.serverOpen();
     test.socket.serverMessage(welcome(viewAt(4)));
     expect(test.replay.requestReplay()).toBe(true);
@@ -655,13 +653,11 @@ describe('BoardSessionAdapter with real session coordinators', () => {
 
   it('rechecks readiness after an earlier drop effect triggers reconnect', () => {
     let armed = false;
-    let socket: FakeSocket | undefined;
     const test = setup(createScene, (effect) => {
       if (armed && effect.kind === 'InstallPresentation') {
-        socket?.serverClose();
+        test.socket.serverClose();
       }
     });
-    socket = test.socket;
     test.socket.serverOpen();
     test.socket.serverMessage(welcome(viewAt(1)));
     const scene = test.adapter.getSnapshot().scene!;

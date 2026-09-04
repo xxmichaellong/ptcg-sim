@@ -11841,10 +11841,6 @@ export const captureLegacySourceMixedStackMovementFixture = async (
               throw new Error('Mixed movement base is not in play');
             }
             const stack = findBaseStack(state.base);
-            const mixedCards = state.cards.filter(
-              (card) =>
-                card === state.base || card.image.relative === state.base.image
-            );
             const paintedBounds = new Map(
               state.cards.map((card) => [
                 card.id,

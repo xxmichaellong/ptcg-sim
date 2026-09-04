@@ -526,7 +526,6 @@ describe('source-pinned legacy compound lower-card returned-q0 single-card oracl
 
         const [pre, post] = evidence;
         const selectedIndex = roles.indexOf(selectedRole);
-        const otherIndex = roles.indexOf(otherLowerRole);
         const selectedProbeIndex = selectedRole === 'middle' ? 6 : 8;
         const otherProbeIndex = otherLowerRole === 'middle' ? 6 : 8;
         expect(pre[4].slice(6), `${key}.pre-lower-probes`).toEqual([
