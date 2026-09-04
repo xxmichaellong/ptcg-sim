@@ -389,6 +389,7 @@ export const assertLowerNonzeroLiveCapture = async (
   expect(capture.lowerGroupInitiatorCases).toEqual([]);
   expect(capture.lowerQ0SingleCases).toEqual([]);
   expect(capture.lowerReturnedQ0SingleCases).toEqual([]);
+  expect(capture.lowerHistoryAuthoredQ0SingleCases).toEqual([]);
   expect(capture.nonzeroGroupSingleCases).toEqual([]);
   expect(capture.breakRefreshCases).toEqual([]);
   expect(capture.lowerNonzeroGroupSingleCases.map((entry) => entry.id)).toEqual(

@@ -579,6 +579,25 @@ refresh after return or divergence, mixed prior group initiators, imported
 states, attachments, and candidate parity remain distinct. No production,
 domain, protocol, schema, UI, or UX path changes.
 
+A twentieth source-only checkpoint distinguishes repeated lower-card Alt-R
+history from that clean group return. Sixteen histories cross ordinary/top-
+BREAK composition, middle/base selection, active/sole-bench placement, and
+both physical sides. The same selected lower evolution receives two setup
+single-card actions, q0/false→q1/true→q0/false, before a third measured action
+returns it to q1/true. The second action computes q2 and writes `1%`/`0%`
+before the legacy single-card branch snaps the card to q0 and clears BREAK.
+
+Every pre-state therefore has `1%`/`0%` wrapper margins. Active keeps those
+values after the measured action, while bench writes `3%`/`2%`. The resulting
+pre/post geometry is exactly equivalent to the same-role lower-initiated
+returned-q0 oracle, but its trace and lifecycle are not: there is no refresh
+after construction, wrapper/card identity remains stable, and only three
+observer pairs exist. This collision proves again that projected turns and
+BREAK flags cannot select exact legacy layout. Alternating targets, fourth or
+later repeats, interleaved group actions/refresh, imported states, attachments,
+and candidate parity remain separate. Production, domain, protocol, schema,
+UI, and UX paths remain unchanged.
+
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during
 characterization is represented explicitly instead of assumed to be duplication.

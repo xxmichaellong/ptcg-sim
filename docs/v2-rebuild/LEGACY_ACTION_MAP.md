@@ -296,6 +296,17 @@ wrapper/card identity is stable across the measured final action. This remains
 source-only and does not combine refresh-free four-turn cycles, repeated lower
 Alt-R, mixed group initiators, post-return refresh, or divergent states.
 
+The same-card repeated lower Alt-R branch is now distinct as well. Two setup
+single-card actions take the selected middle/base evolution
+q0/false→q1/true→q0/false; the second attempt computes q2, writes
+`1%`/`0%`, then the source fallback snaps to q0 and clears BREAK. A third,
+measured Alt-R advances that same card to q1/true. Active retains `1%`/`0%`;
+bench changes from `1%`/`0%` to `3%`/`2%`. Its visible result matches a
+lower-initiated group-returned history, but the operation trace contains no
+post-construction refresh and owns only three observer pairs. V2 does not
+encode this ambiguous history. Alternating cards, additional repeats, and
+interleaved group/refresh actions remain separate source-only cases.
+
 Ability markers likewise have explicit ownership. The top evolution card maps
 to the stack-level marker; attachment, discard, and stadium cards use
 `SetCardAbilityUsed` and render a marker on that exact card. Attachment markers

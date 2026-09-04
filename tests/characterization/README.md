@@ -381,3 +381,21 @@ stable measured-transition identity, observers, provenance, and cleanup are
 pinned. Refresh-free group cycles, repeated Alt-R, mixed prior initiators,
 other q0 origins, later refresh/divergence, attachments, candidate parity, and
 all production/domain/protocol/schema/UI changes remain excluded.
+
+`legacy-compound-lower-history-authored-q0-single-layout.test.ts` next pins
+same-card repeated Alt-R at history-authored q0. Sixteen independent histories
+cross ordinary/top-BREAK composition, middle/base selection, both physical
+sides, and active/sole-bench placement. Two setup single actions take that lower
+card q0/false→q1/true→q0/false; the measured third action takes it back to
+q1/true. The second action's tentative q2 writes `1%`/`0%` before legacy
+normalization snaps the card to q0.
+
+The dependent oracle proves exact visual equivalence to the same-role lower-
+initiated returned-q0 cases while retaining a different trace and lifecycle.
+Every pre-state is `1%`/`0%`; active stays there and bench changes to
+`3%`/`2%`. Exact turns/flags, logical indices versus DOM ordinals, authored/
+painted/physical rectangles, ten native probes, topology, stable identities,
+three observer pairs, provenance, and cleanup are pinned. There is no refresh
+after construction. Alternating targets, fourth/later repeats, interleaved
+group actions or refresh, imported states, attachments, candidate parity, and
+production/domain/protocol/schema/UI changes remain excluded.
