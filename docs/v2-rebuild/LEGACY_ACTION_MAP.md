@@ -412,6 +412,22 @@ must not infer initiator history from converged layout or encode it as canonical
 game state. A top→other-lower sequence, later/intervening actions, alternate
 origins, attachments, and candidate parity remain separate source histories.
 
+The complementary mixed top→other-lower sequence is pinned independently.
+Checkpoint twenty-two's post-state and trace prefix are inherited exactly, then
+the other lower card acts with `single=false`: prior middle selects base at
+logical index 2 / DOM ordinal 1, while prior base selects middle at logical index
+1 / DOM ordinal 2. That selected card advances q2→q3, q3→q0, or q0→q1; all
+sibling turns advance and no `PokémonBreak` flag changes. Active remains compact.
+Ordinary bench q1/q3 changes compact→spread and q2 spread→compact, with signed
+`-0.015625px`/`+0.015625px` frame-local wrapper/authored displacement;
+top-BREAK bench margins remain unchanged. Its complete post state equals
+checkpoint twenty-seven. Relative to checkpoint twenty-nine, post geometry and
+probes carry only the bounded q1/q3 bench translation; margin selection, action,
+and trace history remain deliberately distinct. These converged states remain
+compatibility evidence, not canonical initiator history. Top/prior-lower actions,
+third/later or intervening actions, alternate origins, attachments, and
+candidate parity remain separate source histories.
+
 The immediate refresh branch after the same lower divergence is now captured
 independently. Reconstruction preserves the three image nodes but replaces the
 wrapper, briefly leaving two wrappers until the empty original is removed by

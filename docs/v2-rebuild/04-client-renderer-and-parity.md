@@ -801,6 +801,26 @@ refresh. Top/other-lower second initiators, later/intervening actions, alternate
 origins, attachments, candidate parity, and production normalization remain
 separate; no UI or UX changes.
 
+A thirtieth source-only checkpoint completes the sibling branch: after the same
+checkpoint-twenty-two top action, the other lower card immediately initiates the
+second whole-group rotation. Prior-middle histories select base at logical index
+2 / DOM ordinal 1; prior-base histories select middle at logical index 1 / DOM
+ordinal 2. The selected non-BREAK lower advances q2→q3, q3→q0, or q0→q1, every
+sibling advances once, and every BREAK flag survives.
+
+Active remains compact. Ordinary benches change compact→spread at q1/q3
+(`-0.015625px` frame-local wrapper/authored x) and spread→compact at q2
+(`+0.015625px`); top-BREAK bench margins do not move. Painted rectangles and all
+ten probes are fresh because every parity flips. Every pre-state and trace prefix
+equals checkpoint twenty-two's post-action state, while every post turn, flag,
+margin, geometry, and probe tuple equals checkpoint twenty-seven. Relative to
+checkpoint twenty-nine, active and q2 are exact and bench q1/q3 is translated
+`-0.015625px`; q1/q3 also collide internally despite 180-degree turn differences.
+The oracle pins cross-role selection, physical mappings, identity, lifecycle,
+cleanup, and recursive provenance. Top/prior-lower second initiators,
+third/later or intervening actions, candidate parity, and production
+normalization remain separate; no UI or UX changes.
+
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during
 characterization is represented explicitly instead of assumed to be duplication.

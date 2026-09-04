@@ -970,6 +970,9 @@ export const assertLowerNonzeroTopThenPriorLowerGroupAfterSingleLiveCapture =
         (entry) => entry.id
       )
     ).toEqual(expectedCaseIds(composition));
+    expect(capture.lowerNonzeroTopThenOtherLowerGroupAfterSingleCases).toEqual(
+      []
+    );
 
     for (const side of ['local', 'opponent'] as const) {
       expectRect(

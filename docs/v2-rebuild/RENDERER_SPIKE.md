@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 842 v2 tests across 130 files. A separate suite
-passes 82 Playwright checks across 41 Chromium 151 browser files:
+The repository-wide gate passes 847 v2 tests across 131 files. A separate suite
+passes 86 Playwright checks across 43 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -728,7 +728,25 @@ passes 82 Playwright checks across 41 Chromium 151 browser files:
     Top/other-lower second initiators, later/intervening actions, alternate
     origins, attachments, candidate parity, and production/UI changes remain
     separate.
-36. The selected DOM implementation completes 100 mount → clear/reset → destroy
+36. A thirtieth source-only checkpoint pins 48 top→other-lower mixed-initiator
+    histories after checkpoint twenty-two. Prior-middle histories measure base
+    at logical index 2 / DOM ordinal 1; prior-base histories measure middle at
+    logical index 1 / DOM ordinal 2. The selected non-BREAK lower advances
+    q2→q3, q3→q0, or q0→q1, advances both siblings, and preserves every BREAK
+    flag. Active stays compact. Ordinary bench q1/q3 changes compact→spread by
+    `-0.015625px` frame-local wrapper/authored x and q2 changes spread→compact by
+    `+0.015625px`; top-BREAK margins remain unchanged. Fresh painted rectangles
+    and ten probes cover every parity flip. Checkpoint thirty's pre-state and
+    trace prefix exactly inherit checkpoint twenty-two's post-action phase, and
+    exact checkpoint-twenty-seven post turn/flag/margin/geometry/probe equality
+    is pinned alongside checkpoint-
+    twenty-nine bounded comparisons and internal q1/q3 collisions. Two 24-case
+    Chromium runs verify cross-role action selection, physical mappings, stable
+    IDs, three-observer/no-refresh lifecycle, cleanup, and recursive provenance.
+    Top/prior-lower second initiators, later/intervening actions, alternate
+    origins, attachments, candidate parity, and production/UI changes remain
+    separate.
+37. The selected DOM implementation completes 100 mount → clear/reset → destroy
     cycles on one warmed route-owned host with the exact status sequence,
     complete scene IDs at mount, zero rendered scene children/IDs after clear and
     destroy, zero non-DOM diagnostic resources, and post-GC Chromium
@@ -830,6 +848,11 @@ divergent lower is split between
 `tests/browser/legacy-compound-lower-nonzero-top-then-prior-lower-group-after-single-ordinary-geometry.spec.ts`
 and
 `tests/browser/legacy-compound-lower-nonzero-top-then-prior-lower-group-after-single-break-geometry.spec.ts`.
+The complementary mixed second whole-group rotation by checkpoint twenty-two's
+other lower sibling is split between
+`tests/browser/legacy-compound-lower-nonzero-top-then-other-lower-group-after-single-ordinary-geometry.spec.ts`
+and
+`tests/browser/legacy-compound-lower-nonzero-top-then-other-lower-group-after-single-break-geometry.spec.ts`.
 The mixed-
 order suite validates a checked-in numeric oracle without mounting a candidate;
 the mixed-stack movement suite mounts React only for its two canonical settled
@@ -840,7 +863,7 @@ likewise keeps its q1/q2/q3 and observer history source-only, while comparing
 the separately composed clean-active-plus-sole-bench q0 production shape. The
 compound, BREAK-refresh, top/lower nonzero-group single-card and same-card
 follow-up plus immediate top-, same-lower-, different-lower-, repeated-same-
-lower-, repeated-same-other-lower-, repeated-top-, or top-then-prior-lower-group
+lower-, repeated-same-other-lower-, repeated-top-, or top-then-prior/other-lower-group
 rotation or wrapper refresh after
 divergence, lower-group-
 initiator, and pristine/returned/history-authored-q0 lower single-card suites

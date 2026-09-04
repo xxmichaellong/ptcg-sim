@@ -594,3 +594,25 @@ indices, physical mappings, stable identifiers, three-observer/no-refresh
 lifecycle, cleanup, and recursive provenance. Top/other-lower second initiators,
 third/later and intervening actions, alternate origins, attachments, candidate
 parity, and production/domain/protocol/schema/UI/UX paths remain excluded.
+
+`legacy-compound-lower-nonzero-top-then-other-lower-group-after-single-layout.test.ts`
+then pins the complementary mixed sequence in which checkpoint twenty-two's top
+initiator acts first and the other lower sibling acts second. Forty-eight
+independent ordinary/top-BREAK histories cross original q1/q2/q3, prior
+middle/base divergence, both physical sides, and active/sole-bench placement.
+Prior-middle histories measure base at logical index 2 / DOM ordinal 1;
+prior-base histories measure middle at logical index 1 / DOM ordinal 2. The
+selected non-BREAK card advances q2→q3, q3→q0, or q0→q1, every sibling advances
+once, and all BREAK flags persist.
+
+Active stays compact. Ordinary bench q1/q3 changes compact→spread by
+`-0.015625px` frame-local wrapper/authored x and q2 changes spread→compact by
+`+0.015625px`; top-BREAK margins stay unchanged. Painted rectangles and all ten
+probes are captured fresh because every parity flips. Every pre-state and trace
+prefix equals checkpoint twenty-two, and every post tuple equals checkpoint
+twenty-seven. The fixture also pins its bounded checkpoint-twenty-nine
+comparison, internal q1/q3 collision, cross-role indices, physical mappings,
+stable identifiers, three-observer/no-refresh lifecycle, cleanup, and recursive
+provenance. Top/prior-lower second initiators, third/later or intervening actions,
+alternate origins, attachments, candidate parity, and production/domain/
+protocol/schema/UI/UX paths remain excluded.

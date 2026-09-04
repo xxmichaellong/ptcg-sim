@@ -1008,6 +1008,9 @@ export const assertLowerNonzeroTopSecondGroupAfterSingleLiveCapture = async (
   expect(capture.lowerNonzeroTopThenPriorLowerGroupAfterSingleCases).toEqual(
     []
   );
+  expect(capture.lowerNonzeroTopThenOtherLowerGroupAfterSingleCases).toEqual(
+    []
+  );
 
   for (const side of ['local', 'opponent'] as const) {
     expectRect(
