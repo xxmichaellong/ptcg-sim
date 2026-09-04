@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 827 v2 tests across 127 files. A separate suite
-passes 70 Playwright checks across 35 Chromium 151 browser files:
+The repository-wide gate passes 832 v2 tests across 128 files. A separate suite
+passes 74 Playwright checks across 37 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -678,7 +678,24 @@ passes 70 Playwright checks across 35 Chromium 151 browser files:
     pinned in two 24-case Chromium runs. Third/later turns, top/different-lower
     followups, intervening operations, alternate origins, attachments,
     candidate parity, and production/UI changes remain separate.
-33. The selected DOM implementation completes 100 mount → clear/reset → destroy
+33. A twenty-seventh source-only checkpoint pins forty-eight immediate second
+    whole-group rotations by checkpoint twenty-five's same other lower
+    initiator. Every pre-state and trace prefix equals checkpoint twenty-five.
+    The selected q2/q3/q0 lower advances to q3/q0/q1; both siblings advance and
+    all BREAK flags remain unchanged. Active stays `1%`/`0%`. Bench q1/q3
+    changes compact→spread with a `-0.015625px` wrapper/authored x displacement;
+    q2 changes spread→compact with `+0.015625px`. Painted rectangles and ten
+    probes are freshly measured across every parity flip. Post turns/flags equal
+    checkpoint twenty-six: active and bench q2 geometry collide exactly, while
+    bench q1/q3 differs by `-0.015625px`. Q1/q3 also collide internally, and q2
+    retains its checkpoint-eighteen reference. Exact predecessor inheritance,
+    cross-role actions, traces, authored/painted rectangles, physical-frame
+    mappings, stable
+    identifiers, three-observer/no-refresh lifecycle, cleanup, and recursive
+    provenance are pinned in two 24-case Chromium runs. Different second
+    initiators, later/intervening actions, alternate origins, attachments,
+    candidate parity, and production/UI changes remain separate.
+34. The selected DOM implementation completes 100 mount → clear/reset → destroy
     cycles on one warmed route-owned host with the exact status sequence,
     complete scene IDs at mount, zero rendered scene children/IDs after clear and
     destroy, zero non-DOM diagnostic resources, and post-GC Chromium
@@ -765,6 +782,11 @@ split between
 `tests/browser/legacy-compound-lower-nonzero-same-lower-second-group-after-single-ordinary-geometry.spec.ts`
 and
 `tests/browser/legacy-compound-lower-nonzero-same-lower-second-group-after-single-break-geometry.spec.ts`.
+The complementary second whole-group rotation by checkpoint twenty-five's same
+other lower initiator is split between
+`tests/browser/legacy-compound-lower-nonzero-different-lower-second-group-after-single-ordinary-geometry.spec.ts`
+and
+`tests/browser/legacy-compound-lower-nonzero-different-lower-second-group-after-single-break-geometry.spec.ts`.
 The mixed-
 order suite validates a checked-in numeric oracle without mounting a candidate;
 the mixed-stack movement suite mounts React only for its two canonical settled
@@ -774,7 +796,9 @@ q1/q2/q3 and history-specific layout source-only. The bench-marker suite
 likewise keeps its q1/q2/q3 and observer history source-only, while comparing
 the separately composed clean-active-plus-sole-bench q0 production shape. The
 compound, BREAK-refresh, top/lower nonzero-group single-card and same-card
-follow-up plus immediate top-, same-lower-, different-lower-, or repeated-same-lower-group rotation or wrapper refresh after divergence, lower-group-
+follow-up plus immediate top-, same-lower-, different-lower-, repeated-same-
+lower-, or repeated-same-other-lower-group rotation or wrapper refresh after
+divergence, lower-group-
 initiator, and pristine/returned/history-authored-q0 lower single-card suites
 mount no candidate
 because they prove that projected rotation fields alone cannot recover

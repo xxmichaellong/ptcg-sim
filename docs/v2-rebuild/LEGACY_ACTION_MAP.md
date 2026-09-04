@@ -371,6 +371,19 @@ group turns, top/different-lower followups, intervening inputs, alternate
 origins, attachments, and candidate parity remain separate source-only
 histories rather than new canonical fields.
 
+Repeating plain R on checkpoint twenty-five's same other lower initiator is now
+pinned independently. Its q2→q3, q3→q0, or q0→q1 `single=false` transition
+advances both siblings and preserves all `PokémonBreak` flags. Active stays at
+`1%`/`0%`. Sole-bench q1/q3 changes compact→spread with a `-0.015625px`
+frame-local x displacement; q2 changes spread→compact with `+0.015625px`.
+Every post turn/flag vector equals the matching repeated-same-lower checkpoint;
+active geometry and bench q2 are exact, while bench q1/q3 differs by
+`-0.015625px`. Painted boxes and probes are independently pinned across the
+parity change. This collision does not make initiator or margin history
+canonical state. A different second initiator, third/later actions,
+intervening inputs, alternate origins, attachments, and candidate parity remain
+separate source-only histories.
+
 The immediate refresh branch after the same lower divergence is now captured
 independently. Reconstruction preserves the three image nodes but replaces the
 wrapper, briefly leaving two wrappers until the empty original is removed by

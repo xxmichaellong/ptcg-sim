@@ -528,3 +528,25 @@ card identifiers, three-observer/no-refresh lifecycle, cleanup, and recursive
 provenance. Third/later repeats, top/different-lower followups, intervening
 operations, alternate origins, attachments, candidate parity, and production/
 domain/protocol/schema/UI/UX changes remain separate.
+
+`legacy-compound-lower-nonzero-different-lower-second-group-after-single-layout.test.ts`
+then pins an immediate second whole-group action by checkpoint twenty-five's
+same other lower initiator. Forty-eight independent ordinary/top-BREAK
+histories cross prior middle/base divergence, original q1/q2/q3, both physical
+sides, and active/sole-bench placement. Every pre-state and trace prefix equals
+checkpoint twenty-five exactly. The selected other lower advances q2→q3,
+q3→q0, or q0→q1, both siblings advance once, and every BREAK flag is preserved.
+
+Active remains `1%`/`0%`. Bench q1/q3 changes compact→spread with a
+`-0.015625px` frame-local wrapper/authored x displacement; q2 changes
+spread→compact with `+0.015625px`. Painted rectangles and all ten probes are
+captured fresh because every card flips parity. All post turn/flag vectors equal
+checkpoint twenty-six: active and bench q2 geometry collide exactly, while
+bench q1/q3 differs by `-0.015625px`. Q1/q3 also collide internally despite
+different raw turns, and q2 retains the bounded checkpoint-eighteen reference.
+The fixture pins cross-role action indices, exact inheritance and collisions,
+traces, authored/painted rectangles, physical-frame mappings, stable wrapper/
+card identifiers, three-observer/no-refresh lifecycle, cleanup, and recursive
+provenance. Different second initiators, third/later actions, intervening
+operations, alternate origins, attachments, candidate parity, and production/
+domain/protocol/schema/UI/UX changes remain separate.
