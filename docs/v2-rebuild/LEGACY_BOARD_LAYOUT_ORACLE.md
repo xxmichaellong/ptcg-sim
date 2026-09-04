@@ -1253,6 +1253,30 @@ provenance are pinned. Fourth/later or lower-initiated measured actions,
 intervening operations, alternate origins, attachments, candidate parity, and
 production/domain/protocol/schema/UI/UX paths remain excluded.
 
+The thirty-second source checkpoint is split across
+`tests/browser/legacy-compound-lower-nonzero-same-lower-third-group-after-single-ordinary-geometry.spec.ts`
+and
+`tests/browser/legacy-compound-lower-nonzero-same-lower-third-group-after-single-break-geometry.spec.ts`,
+backed by
+`tests/legacy-fixtures/renderer/compound-lower-nonzero-same-lower-third-group-after-single-v1.json`.
+It reconstructs checkpoint twenty-six exactly, then measures an immediate third
+whole-group action by the same divergent middle/base card at logical index 1/2
+and DOM ordinal 2/1. The selected lower advances q2→q3, both siblings advance
+once, and every BREAK flag persists.
+
+Active remains compact. Every bench changes compact→spread by `-0.015625px`
+frame-local wrapper/authored x. Painted rectangles and all ten probes are
+captured fresh across the parity flip. Every post margin, geometry, probe tuple,
+and BREAK vector equals checkpoint twenty-four while each raw turn differs by
+two modulo four. Post turns and flags also equal checkpoint thirty-one, but
+ordinary q1/q3 and top-BREAK q2 bench geometry differs, preserving the bounded
+initiator-history distinction. Q1/q3 collide internally despite 180-degree raw-
+turn differences. Exact checkpoint-twenty-six inheritance, lower action/trace
+evidence, physical mappings, stable IDs, three observer pairs, cleanup, no
+refresh, source fulfillment, and recursive provenance are pinned. Fourth/later,
+top/different-lower, intervening, alternate-origin, attachment, candidate-parity,
+and production/domain/protocol/schema/UI/UX paths remain excluded.
+
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
 renderer-neutral scene and has structured scene assertions for all four board

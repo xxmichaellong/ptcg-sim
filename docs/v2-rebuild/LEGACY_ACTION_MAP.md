@@ -443,6 +443,21 @@ discard raw turns or initiator history from legacy import diagnostics. Fourth/
 later top actions, lower-initiated third actions, intervening inputs, alternate
 origins, attachments, and candidate parity remain separate source histories.
 
+An immediate third plain-R action by checkpoint twenty-six's same divergent
+middle/base initiator is now pinned independently. The selected lower at logical
+index 1/2 and DOM ordinal 2/1 advances q2→q3, both siblings advance once, and no
+`PokémonBreak` flag changes. Every pre-state and trace prefix equals checkpoint
+twenty-six. Active stays compact; every sole bench changes compact→spread with a
+`-0.015625px` frame-local wrapper/authored x displacement. Every post margin,
+geometry, probe tuple, and BREAK vector equals checkpoint twenty-four while each
+raw turn is two quarter-turns ahead. Post turns and flags also equal checkpoint
+thirty-one, but ordinary q1/q3 and top-BREAK q2 bench geometry differs, proving
+that equal projected rotation state cannot recover initiator history. Q1/q3
+also collide internally. These relationships remain source compatibility
+evidence rather than canonical game state. Fourth/later, top/different-lower,
+intervening, alternate-origin, attachment, and candidate-parity paths remain
+separate.
+
 The immediate refresh branch after the same lower divergence is now captured
 independently. Reconstruction preserves the three image nodes but replaces the
 wrapper, briefly leaving two wrappers until the empty original is removed by

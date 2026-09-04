@@ -842,6 +842,26 @@ recursive provenance. Fourth/later or lower-initiated actions, intervening
 operations, alternate origins, attachments, candidate parity, and production
 normalization remain separate; no UI or UX changes.
 
+A thirty-second source-only checkpoint extends the repeated-same-lower branch
+through an immediate third whole-group action by the same divergent middle/base
+card at logical index 1/2 and DOM ordinal 2/1. Forty-eight independently rebuilt
+ordinary/top-BREAK histories cross original q1/q2/q3, active/sole-bench
+placement, and both physical sides. Every pre-state and full trace prefix equals
+checkpoint twenty-six exactly. The selected lower advances q2→q3, both siblings
+advance once, and every per-card BREAK flag persists.
+
+Active margins remain compact. Every bench changes compact→spread, moving the
+wrapper and authored card boxes `-0.015625px` frame-local x; painted rectangles
+and all ten probes are fresh across the parity flip. Every post margin, geometry,
+probe tuple, and BREAK vector equals checkpoint twenty-four, while each raw turn
+is two quarter-turns ahead modulo four. Post turns and flags also equal checkpoint
+thirty-one, yet bench geometry differs for ordinary q1/q3 and top-BREAK q2. This
+proves that projected turns and flags cannot recover initiator-sensitive margin
+history. Q1/q3 collide internally as well. The oracle pins lower-card selection,
+exact inheritance and bounded collisions, traces, physical mappings, identity,
+lifecycle, cleanup, source fulfillment, and recursive provenance. Fourth/later,
+top/different-lower, or intervening actions remain separate; no UI or UX changes.
+
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during
 characterization is represented explicitly instead of assumed to be duplication.

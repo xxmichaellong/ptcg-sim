@@ -638,3 +638,24 @@ source fulfillment, three-observer/no-refresh lifecycle, cleanup, and recursive
 provenance. Fourth/later or lower-initiated measured actions, intervening
 operations, alternate origins, attachments, candidate parity, and production/
 domain/protocol/schema/UI/UX paths remain excluded.
+
+`legacy-compound-lower-nonzero-same-lower-third-group-after-single-layout.test.ts`
+then extends checkpoint twenty-six with an immediate third whole-group action by
+the same divergent middle/base card at logical index 1/2 and DOM ordinal 2/1.
+Forty-eight independent ordinary/top-BREAK histories cross original q1/q2/q3,
+both physical sides, and active/sole-bench placement. Every pre-state and trace
+prefix equals checkpoint twenty-six. The selected lower advances q2→q3, both
+siblings advance once, and all BREAK flags persist.
+
+Active stays compact; every bench changes compact→spread with a `-0.015625px`
+frame-local wrapper/authored x displacement. Painted rectangles and all ten
+probes are captured fresh across the parity flip. Every post margin, geometry,
+probe tuple, and BREAK vector equals checkpoint twenty-four while every raw turn
+is two quarter-turns ahead modulo four. Post turns and flags also equal
+checkpoint thirty-one, but ordinary q1/q3 and top-BREAK q2 bench geometry differs.
+Q1/q3 collide internally as well. The fixture pins exact inheritance, lower
+action indices, traces, physical mappings, stable identifiers, source
+fulfillment, three-observer/no-refresh lifecycle, cleanup, and recursive
+provenance. Fourth/later, top/different-lower, intervening, alternate-origin,
+attachment, candidate-parity, and production/domain/protocol/schema/UI/UX paths
+remain excluded.
