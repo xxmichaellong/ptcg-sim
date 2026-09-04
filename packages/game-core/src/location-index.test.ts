@@ -140,6 +140,10 @@ describe('card location index', () => {
     const locations = findCardLocations(state, cardId);
     expect(Object.isFrozen(locations)).toBe(true);
     expect(findCardLocations(state, cardId)).toHaveLength(1);
+
+    const missing = findCardLocations(state, asCardInstanceId('missing-card'));
+    expect(missing).toHaveLength(0);
+    expect(Object.isFrozen(missing)).toBe(true);
   });
 });
 

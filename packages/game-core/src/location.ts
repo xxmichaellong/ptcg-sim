@@ -1,8 +1,6 @@
 import type { CardInstanceId } from './ids.js';
 import type { CardLocation, MatchState } from './model.js';
 
-const EMPTY_LOCATIONS: readonly CardLocation[] = Object.freeze([]);
-
 type LocationIndex = ReadonlyMap<CardInstanceId, readonly CardLocation[]>;
 
 /**
@@ -16,7 +14,8 @@ type LocationIndex = ReadonlyMap<CardInstanceId, readonly CardLocation[]>;
  * unchanged reference implies unchanged contents. Every reducer path in
  * `apply-events.ts` builds a new state object rather than mutating.
  */
-const locationIndexes = new WeakMap<MatchState, LocationIndex>();
+let locationIndexes: WeakMap<MatchState, LocationIndex> | undefined;
+let emptyLocations: readonly CardLocation[] | undefined;
 
 const addLocation = (
   index: Map<CardInstanceId, CardLocation[]>,
@@ -91,10 +90,11 @@ const buildLocationIndex = (state: MatchState): LocationIndex => {
 };
 
 const locationIndexFor = (state: MatchState): LocationIndex => {
-  const cached = locationIndexes.get(state);
+  const indexes = (locationIndexes ??= new WeakMap());
+  const cached = indexes.get(state);
   if (cached) return cached;
   const index = buildLocationIndex(state);
-  locationIndexes.set(state, index);
+  indexes.set(state, index);
   return index;
 };
 
@@ -102,7 +102,8 @@ export const findCardLocations = (
   state: MatchState,
   cardId: CardInstanceId
 ): readonly CardLocation[] =>
-  locationIndexFor(state).get(cardId) ?? EMPTY_LOCATIONS;
+  locationIndexFor(state).get(cardId) ??
+  (emptyLocations ??= Object.freeze([] as CardLocation[]));
 
 export const findCardLocation = (
   state: MatchState,
