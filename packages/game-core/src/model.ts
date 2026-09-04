@@ -11,6 +11,9 @@ import type {
 
 export const MATCH_STATE_SCHEMA_VERSION = 2 as const;
 
+/** Maximum card instances one player may load. Enforced by `decideLoadDeck`. */
+export const MAX_DECK_CARDS = 200;
+
 export type CardCategory = 'Pokémon' | 'Trainer' | 'Energy' | 'Unknown';
 export type CardFace = 'up' | 'down';
 export type QuarterTurns = 0 | 1 | 2 | 3;

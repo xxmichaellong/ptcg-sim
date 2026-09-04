@@ -1,6 +1,7 @@
 import * as v from 'valibot';
 import {
   MAX_CHAT_CODE_UNITS,
+  MAX_DECK_CARDS,
   MAX_DECK_ENTRIES,
   MAX_REPLAY_FRAMES,
   MAX_ROOM_CODE_LENGTH,
@@ -88,7 +89,16 @@ export const WireGameCommandSchema = v.variant('type', [
     targetPlayerId: v.optional(IdentifierSchema),
     entries: v.pipe(
       v.array(WireDeckEntrySchema),
-      v.maxLength(MAX_DECK_ENTRIES)
+      v.maxLength(MAX_DECK_ENTRIES),
+      // Entry count alone does not bound the deck: the reducer rejects more
+      // than MAX_DECK_CARDS instances, so reject it at the wire boundary too
+      // rather than materializing the copies first.
+      v.check(
+        (entries) =>
+          entries.reduce((total, entry) => total + entry.count, 0) <=
+          MAX_DECK_CARDS,
+        'Deck exceeds the maximum card count'
+      )
     ),
   }),
   v.object({

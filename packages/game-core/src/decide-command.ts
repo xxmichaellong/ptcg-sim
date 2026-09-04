@@ -16,6 +16,7 @@ import {
   analyzePlayerReset,
   resetReturnCapacityIsValid,
 } from './lifecycle-reset.js';
+import { MAX_DECK_CARDS } from './model.js';
 import type {
   CardDefinition,
   CardInstance,
@@ -611,10 +612,14 @@ const decideLoadDeck = (
     (sum, entry) => sum + entry.count,
     0
   );
-  if (!Number.isSafeInteger(totalCards) || totalCards < 0 || totalCards > 200) {
+  if (
+    !Number.isSafeInteger(totalCards) ||
+    totalCards < 0 ||
+    totalCards > MAX_DECK_CARDS
+  ) {
     return reject(
       'invalid_command',
-      'Deck must contain between 0 and 200 cards'
+      `Deck must contain between 0 and ${MAX_DECK_CARDS} cards`
     );
   }
 
@@ -1500,6 +1505,10 @@ export const decideCommand = (
           });
         }
       }
+      return reject(
+        'invalid_command',
+        'Card location kind is not a supported deck-swap source'
+      );
     }
     case 'MovePrizesToDeckBottom': {
       const playerError = requirePlayer(state, command.playerId);

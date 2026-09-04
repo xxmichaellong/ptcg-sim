@@ -119,16 +119,27 @@ const registerAuthoritySnapshotValidation = (
   return validation;
 };
 
+/**
+ * Objects this module has already deep-frozen. Authority snapshots share almost
+ * all of their structure with the previous revision, so without this the walk
+ * re-visits the entire match state on every validation. Membership is only
+ * recorded for roots frozen by `freezeRecursively` itself, so an externally
+ * frozen object with unfrozen children is still walked in full.
+ */
+const deeplyFrozen = new WeakSet<object>();
+
 const freezeRecursively = (
   value: unknown,
   seen: WeakSet<object> = new WeakSet()
 ): void => {
   if (typeof value !== 'object' || value === null || seen.has(value)) return;
+  if (deeplyFrozen.has(value)) return;
   seen.add(value);
   for (const key of Reflect.ownKeys(value)) {
     freezeRecursively(Reflect.get(value, key), seen);
   }
   Object.freeze(value);
+  deeplyFrozen.add(value);
 };
 
 export const authoritySnapshotValidationMatches = (
@@ -722,8 +733,11 @@ export const validateAuthoritySnapshot = (
   return registerAuthoritySnapshotValidation(snapshot);
 };
 
+// A rejected command reuses the current snapshot's fields by reference, so the
+// identity check settles the common case without canonically serializing the
+// whole match state twice. Identical references are structurally equal.
 const structurallyEqual = (left: unknown, right: unknown): boolean =>
-  stableSerialize(left) === stableSerialize(right);
+  left === right || stableSerialize(left) === stableSerialize(right);
 
 const authorityRejectionCodes = new Set([
   'invalid_message',
