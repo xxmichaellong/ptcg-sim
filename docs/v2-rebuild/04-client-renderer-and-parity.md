@@ -472,9 +472,20 @@ parity tolerance. The bench histories converge, and q2 settles back to its
 pre-refresh geometry.
 
 Those results confirm that no exact legacy normalization can be derived from
-the current projected tuple alone. Nonzero-group Alt-R, q3 BREAK refresh,
-lower-card initiators, and attachment timing expose further legacy ambiguity.
-A later domain decision must normalize or represent those semantics before a
+the current projected tuple alone.
+
+A fourteenth source-only checkpoint isolates q3 rather than mixing its state-
+changing failure with the geometry-preserving q0/q2 cases. The selected BREAK
+top is effectively q0, so subtracting its BREAK quarter-turn produces
+`numberRotations=-1`. The replay loop executes zero times after same-zone
+re-entry resets and rebuilds the stack: `[top q0, lower q3, q3]` synchronously
+becomes `[top q1, lower q0, q0]` and stays collapsed after settlement. The
+BREAK flag and card nodes survive, but the group orientation does not.
+
+V2 refresh/layout remains state-free; it does not reproduce this legacy defect
+or add DOM-refresh history to canonical state. Nonzero-group Alt-R, lower-card
+initiators, and attachment timing still expose further legacy ambiguity. A
+later domain decision must normalize or represent those semantics before a
 strict React/Pixi layout predicate can be sound.
 
 The current duplicated self/opponent CSS becomes one declarative player-board

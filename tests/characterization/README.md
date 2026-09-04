@@ -261,3 +261,18 @@ geometry. This remains source-only: q3 negative-count collapse, nonzero-group
 Alt-R, lower-card initiators, attachments, movement/evolution/removal, and
 candidate parity remain excluded. No production geometry or domain state
 changes.
+
+`legacy-compound-break-refresh-q3-layout.test.ts` then isolates the negative-
+count case. Four independent local/opponent active/sole-bench stacks enter
+refresh at `[top q0, lower q3, q3]`. The top's BREAK adjustment produces
+`groupTurns=-1`; the replay loop has zero iterations, and same-zone reset plus
+reattachment synchronously collapses the cards to `[q1,q0,q0]`. The settled
+phase keeps that state while preserving the BREAK flag and card nodes.
+
+The browser companion proves the exact operation trace has no replay calls,
+pins the before/after hit-region class and all geometry on both physical sides,
+and checks two-to-one wrapper settlement, native observer delivery, harness-
+only observer cleanup, and recursive source provenance. This is explicitly
+legacy defect evidence. V2 refresh remains a state-free projection; nonzero-
+group Alt-R, lower-card initiators, attachments, movement/evolution/removal,
+and candidate parity remain excluded.

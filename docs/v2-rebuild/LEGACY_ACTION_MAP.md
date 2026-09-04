@@ -231,10 +231,12 @@ card turns but different geometry. The q0/q2 refresh oracle now additionally
 proves zero/two replay turns and three distinct active q0 inline-margin
 histories for the same final card turns. Exact x values form two anchor clusters
 whose largest difference is 1.9375 px, still within the 2 px parity tolerance.
-q3 still derives a negative replay count, and attachment timing creates further
-transform collisions. These are explicit compatibility hazards; no production
-BREAK layout predicate is authorized until command ingress and history are
-normalized or represented.
+The separate q3 oracle confirms that the negative count executes no replay
+iterations and collapses `[q0,q3,q3]` to `[q1,q0,q0]` during refresh. V2 does
+not make viewport/layout refresh mutate canonical state to reproduce that
+defect. Attachment timing creates further transform collisions. These are
+explicit compatibility hazards; no production BREAK layout predicate is
+authorized until command ingress and history are normalized or represented.
 
 Ability markers likewise have explicit ownership. The top evolution card maps
 to the stack-level marker; attachment, discard, and stadium cards use

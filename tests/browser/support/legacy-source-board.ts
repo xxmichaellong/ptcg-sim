@@ -1066,7 +1066,8 @@ export type LegacyCompoundRotationScenario =
   | 'breakGroup'
   | 'breakRefreshFreshQ0'
   | 'breakRefreshReturnedQ0'
-  | 'breakRefreshQ2';
+  | 'breakRefreshQ2'
+  | 'breakRefreshQ3';
 
 export type LegacyCompoundRotationPhaseName =
   | 'pristine-q0'
@@ -5845,15 +5846,15 @@ type RawCompoundRotationCase = Omit<
 
 /**
  * Replays the digest-pinned, marker-free legacy evolution, whole-stack
- * rotation, BREAK toggle, and selected q0/q1/q2 refresh paths. Every ordinary,
- * BREAK, and BREAK-refresh history is constructed independently so no oracle
- * inherits inline margins or wrapper identity from another. Application and
- * network modules stay inert; source DOM mutations are narrowly transcribed
- * below.
+ * rotation, BREAK toggle, and selected q0/q1/q2/q3 refresh paths. Every
+ * ordinary, BREAK, and BREAK-refresh history is constructed independently so
+ * no oracle inherits inline margins or wrapper identity from another.
+ * Application and network modules stay inert; source DOM mutations are
+ * narrowly transcribed below.
  */
 export const captureLegacySourceCompoundRotationFixture = async (
   page: Page,
-  mode: 'canonical' | 'breakRefreshQ0Q2' = 'canonical'
+  mode: 'canonical' | 'breakRefreshQ0Q2' | 'breakRefreshQ3' = 'canonical'
 ): Promise<LegacySourceCompoundRotationFixture> => {
   const loaded = await loadLegacySourceBoard(page);
   const rawCases: {
@@ -5931,6 +5932,7 @@ export const captureLegacySourceCompoundRotationFixture = async (
               breakRefreshFreshQ0: 'compound-break-refresh-fresh-q0',
               breakRefreshReturnedQ0: 'compound-break-refresh-returned-q0',
               breakRefreshQ2: 'compound-break-refresh-q2',
+              breakRefreshQ3: 'compound-break-refresh-q3',
             };
             const prefix = `${input.side}-${slot}-${scenarioSuffix[scenario]}`;
             const mutationObservers: MutationObserver[] = [];
@@ -6610,9 +6612,11 @@ export const captureLegacySourceCompoundRotationFixture = async (
               const setupGroupTurns =
                 scenario === 'breakRefreshQ2'
                   ? 2
-                  : scenario === 'breakRefreshReturnedQ0'
-                    ? 4
-                    : 0;
+                  : scenario === 'breakRefreshQ3'
+                    ? 3
+                    : scenario === 'breakRefreshReturnedQ0'
+                      ? 4
+                      : 0;
               for (let count = 0; count < setupGroupTurns; count += 1) {
                 rotateCard(top, false, logical, container);
               }
@@ -6694,11 +6698,13 @@ export const captureLegacySourceCompoundRotationFixture = async (
           const scenarios: readonly LegacyCompoundRotationScenario[] =
             input.mode === 'canonical'
               ? ['ordinaryGroup', 'breakGroup']
-              : [
-                  'breakRefreshFreshQ0',
-                  'breakRefreshReturnedQ0',
-                  'breakRefreshQ2',
-                ];
+              : input.mode === 'breakRefreshQ0Q2'
+                ? [
+                    'breakRefreshFreshQ0',
+                    'breakRefreshReturnedQ0',
+                    'breakRefreshQ2',
+                  ]
+                : ['breakRefreshQ3'];
           for (const scenario of scenarios) {
             for (const slot of ['active', 'bench'] as const) {
               cases.push(await runScenario(slot, scenario));
@@ -6793,7 +6799,8 @@ export const captureLegacySourceCompoundRotationFixture = async (
       (entry) =>
         entry.scenario === 'breakRefreshFreshQ0' ||
         entry.scenario === 'breakRefreshReturnedQ0' ||
-        entry.scenario === 'breakRefreshQ2'
+        entry.scenario === 'breakRefreshQ2' ||
+        entry.scenario === 'breakRefreshQ3'
     ),
     sourceFulfillment: sourceFulfillment(loaded),
   };
@@ -6803,6 +6810,11 @@ export const captureLegacySourceCompoundBreakRefreshFixture = (
   page: Page
 ): Promise<LegacySourceCompoundRotationFixture> =>
   captureLegacySourceCompoundRotationFixture(page, 'breakRefreshQ0Q2');
+
+export const captureLegacySourceCompoundBreakRefreshQ3Fixture = (
+  page: Page
+): Promise<LegacySourceCompoundRotationFixture> =>
+  captureLegacySourceCompoundRotationFixture(page, 'breakRefreshQ3');
 
 type RawMixedStackMovementCard = Omit<
   LegacyMixedStackMovementCard,

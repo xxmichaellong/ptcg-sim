@@ -742,6 +742,34 @@ Because v2 does not project BREAK identity or DOM/wrapper history, no strict
 production layout is enabled and no legacy pixel provenance is added to game
 state.
 
+`tests/browser/legacy-compound-break-refresh-q3-geometry.spec.ts` adds a
+fourteenth source checkpoint backed by
+`tests/legacy-fixtures/renderer/compound-break-refresh-q3-v1.json`. Four newly
+constructed local/opponent active/sole-bench histories reach BREAK group q3 and
+then capture pre-refresh, synchronous post-refresh, and settled phases. The
+oracle recursively live-verifies the preceding q0/q2 and compound BREAK source
+manifests while directly pinning the rotation and refresh entries specific to
+the failure.
+
+Before refresh the top BREAK card has effective inline q0 and both lower cards
+have q3. `refreshBoard` subtracts the BREAK quarter-turn, derives
+`numberRotations=-1`, and moves the stack through same-zone reconstruction. Its
+`for (i = 0; i < numberRotations; i++)` loop executes no times, so the reset and
+reattachment path synchronously changes `[top q0, middle q3, base q3]` into
+`[top q1, middle q0, base q0]`. The settled phase retains that collapse. Exact
+operation traces contain the negative refresh call and no replay calls; the
+BREAK flag and all card nodes survive while the old wrapper settles from the
+synchronous pair to one.
+
+The fixture also pins the before/after hit-region class, margins, authored and
+painted rectangles, opponent half-turn mapping, topology, native observer
+delivery, and harness-only observer cleanup. This is defect evidence, not a
+parity requirement: v2 layout/resize/refresh stays a pure projection and does
+not mutate canonical orientation or persist browser history. Nonzero-group
+Alt-R, lower-card group/single initiators, attachments, movement/evolution/
+removal, candidate geometry, and any product-level compatibility decision
+remain outside this checkpoint.
+
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
 renderer-neutral scene and has structured scene assertions for all four board
@@ -750,7 +778,7 @@ shared placement, compact and fullscreen states. The controlled hand/bench/
 attachment-stack fixture remains source-only; the narrower contained-card,
 ordinary-evolution, single-Energy, Trainer-as-Tool, and stable two-Energy
 fixtures feed and compare their strict production geometries. The compound
-group/BREAK and BREAK q0/q2 refresh histories remain wholly source-only. The
+group/BREAK and BREAK q0/q2/q3 refresh histories remain wholly source-only. The
 bench-marker rotation history remains source-only while its strict pristine-q0 phase also
 feeds and compares the production geometry. The two-Energy
 departure phases remain source-only and prove stable convergence to the
