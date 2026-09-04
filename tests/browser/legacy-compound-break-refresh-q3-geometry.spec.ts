@@ -278,6 +278,7 @@ test('checked-in legacy BREAK q3 refresh synchronously collapses the group orien
   expect(capture.lowerNonzeroDifferentLowerSecondGroupAfterSingleCases).toEqual(
     []
   );
+  expect(capture.lowerNonzeroTopSecondGroupAfterSingleCases).toEqual([]);
   expect(capture.nonzeroGroupSingleCases).toEqual([]);
   expect(capture.breakRefreshCases.map((entry) => entry.id)).toEqual(
     oracle.input.cases

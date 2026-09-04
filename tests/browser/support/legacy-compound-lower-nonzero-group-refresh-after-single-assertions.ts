@@ -484,6 +484,7 @@ export const assertLowerNonzeroGroupRefreshLiveCapture = async (
     capture.lowerNonzeroDifferentLowerGroupAfterSingleCases,
     capture.lowerNonzeroSameLowerSecondGroupAfterSingleCases,
     capture.lowerNonzeroDifferentLowerSecondGroupAfterSingleCases,
+    capture.lowerNonzeroTopSecondGroupAfterSingleCases,
     capture.nonzeroGroupSingleCases,
     capture.breakRefreshCases,
   ]) {

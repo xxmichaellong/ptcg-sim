@@ -384,6 +384,21 @@ canonical state. A different second initiator, third/later actions,
 intervening inputs, alternate origins, attachments, and candidate parity remain
 separate source-only histories.
 
+Repeating plain R immediately on checkpoint twenty-two's same top/index-zero
+initiator is now pinned independently. The second top whole-group action advances
+every raw turn once and preserves every `PokémonBreak` flag; the top-BREAK trace
+therefore records true→true rather than normalizing the flag. Active remains
+`1%`/`0%`. Ordinary bench q1/q3 changes compact→spread and q2 spread→compact;
+top-BREAK takes the inverse margin branches, producing the corresponding signed
+`0.015625px` wrapper/authored x shifts. Every post turn/flag vector equals the
+matching repeated-other-lower checkpoint. Ordinary geometry is exact; top-BREAK
+active geometry is exact and its bench retains the explicitly bounded signed
+difference. Q1/q3 also collide internally and q2 exactly matches its clean
+checkpoint-eighteen pre-divergence geometry. These initiator-sensitive margin
+histories remain source compatibility evidence, not canonical state. Lower or
+different initiators, third/later actions, intervening inputs, alternate origins,
+attachments, and candidate parity remain separate.
+
 The immediate refresh branch after the same lower divergence is now captured
 independently. Reconstruction preserves the three image nodes but replaces the
 wrapper, briefly leaving two wrappers until the empty original is removed by

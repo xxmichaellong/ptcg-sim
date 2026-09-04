@@ -1153,6 +1153,32 @@ cleanup, and no refresh. Different second initiators, third/later actions,
 intervening operations, alternate origins, attachments, candidate parity, and
 production/domain/protocol/schema/UI/UX paths remain excluded.
 
+The twenty-eighth source checkpoint is split across
+`tests/browser/legacy-compound-lower-nonzero-top-second-group-after-single-ordinary-geometry.spec.ts`
+and
+`tests/browser/legacy-compound-lower-nonzero-top-second-group-after-single-break-geometry.spec.ts`,
+backed by
+`tests/legacy-fixtures/renderer/compound-lower-nonzero-top-second-group-after-single-v1.json`.
+It independently reconstructs every checkpoint-twenty-two post-state, then
+immediately repeats whole-group rotation on the same top logical index 0 / DOM
+ordinal 0 initiator. All three turns advance once and every BREAK flag remains
+unchanged, including top's true→true transition in top-BREAK histories.
+
+Active stays `1%`/`0%`. Ordinary sole-bench q1/q3 changes compact→spread for a
+`-0.015625px` wrapper/authored x displacement and q2 changes spread→compact for
+`+0.015625px`; top-BREAK takes the inverse branches and signed deltas. Painted
+rectangles and all ten probes are fresh because every parity flips. Post turns
+and flags equal checkpoint twenty-seven. Ordinary geometry is exact; top-BREAK
+active geometry is exact, while bench q1/q2/q3 differs by `+0.015625px`,
+`-0.015625px`, and `+0.015625px`. Q1/q3 also collide internally despite raw
+turns differing by 180 degrees, and q2 exactly retains checkpoint eighteen's
+pre-divergence geometry. The fixture pins checkpoint-twenty-two inheritance,
+these bounded collisions, top action selection, traces, authored/painted
+rectangles, physical mappings, stable IDs, three observer pairs, cleanup, and
+no refresh. Lower/different initiators, third/later actions, intervening
+operations, alternate origins, attachments, candidate parity, and production/
+domain/protocol/schema/UI/UX paths remain excluded.
+
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
 renderer-neutral scene and has structured scene assertions for all four board
@@ -1163,7 +1189,8 @@ ordinary-evolution, single-Energy, Trainer-as-Tool, and stable two-Energy
 fixtures feed and compare their strict production geometries. The compound
 group/BREAK, BREAK q0/q2/q3 refresh, top- and lower-selected nonzero-group
 Alt-R, its same-card follow-up, and immediate top-, same-lower-, different-
-lower-, repeated-same-lower-, or repeated-same-other-lower-group rotation after
+lower-, repeated-same-lower-, repeated-same-other-lower-, or repeated-top-group
+rotation after
 divergence or wrapper refresh after divergence,
 lower-initiated group, and pristine/returned/history-authored-q0
 lower single histories remain wholly source-only. The

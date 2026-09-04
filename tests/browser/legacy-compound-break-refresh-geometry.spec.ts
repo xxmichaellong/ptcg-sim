@@ -313,6 +313,7 @@ test('checked-in legacy BREAK q0/q2 refreshes preserve their exact history-depen
   expect(capture.lowerNonzeroDifferentLowerSecondGroupAfterSingleCases).toEqual(
     []
   );
+  expect(capture.lowerNonzeroTopSecondGroupAfterSingleCases).toEqual([]);
   expect(capture.nonzeroGroupSingleCases).toEqual([]);
   const scenarioId = {
     breakRefreshFreshQ0: 'fresh-q0',

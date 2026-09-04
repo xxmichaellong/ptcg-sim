@@ -550,3 +550,27 @@ card identifiers, three-observer/no-refresh lifecycle, cleanup, and recursive
 provenance. Different second initiators, third/later actions, intervening
 operations, alternate origins, attachments, candidate parity, and production/
 domain/protocol/schema/UI/UX changes remain separate.
+
+`legacy-compound-lower-nonzero-top-second-group-after-single-layout.test.ts`
+then pins an immediate second whole-group action by checkpoint twenty-two's same
+top/index-zero initiator. Forty-eight independent ordinary/top-BREAK histories
+cross prior middle/base divergence, original q1/q2/q3, both physical sides, and
+active/sole-bench placement. Every pre-state and trace prefix equals checkpoint
+twenty-two exactly. The selected top and both siblings advance once, while all
+BREAK flags are preserved, including the measured top's true→true top-BREAK
+transition.
+
+Active remains `1%`/`0%`. Ordinary bench q1/q3 changes compact→spread with a
+`-0.015625px` wrapper/authored x displacement and q2 changes spread→compact with
+`+0.015625px`; top-BREAK uses the inverse branches and deltas. Painted rectangles
+and all ten probes are captured fresh because every card flips parity. Every post
+turn/flag vector equals checkpoint twenty-seven: ordinary geometry is exact;
+top-BREAK active geometry is exact and bench carries its explicit signed
+`0.015625px` delta. Q1/q3 collide internally despite different turns, and q2
+collides exactly with checkpoint eighteen's pre-divergence phase. The fixture
+pins top action indices, exact inheritance and bounded collisions, traces,
+authored/painted rectangles, physical mappings, stable identifiers, three-
+observer/no-refresh lifecycle, cleanup, and recursive provenance. Lower/different
+initiators, third/later actions, intervening operations, alternate origins,
+attachments, candidate parity, and production/domain/protocol/schema/UI/UX paths
+remain excluded.

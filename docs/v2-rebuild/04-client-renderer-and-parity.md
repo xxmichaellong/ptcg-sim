@@ -754,6 +754,31 @@ and no refresh. A different second initiator, third/later turns, intervening
 operations, alternate origins, attachments, candidate parity, and production
 normalization remain separate; no UI or UX changes.
 
+A twenty-eighth source-only checkpoint immediately repeats plain R on the same
+top/index-zero initiator used by checkpoint twenty-two. Forty-eight independently
+rebuilt ordinary/top-BREAK histories cross original q1/q2/q3, prior middle/base
+single-card divergence, active/sole-bench placement, and both physical sides.
+Every pre-state and full trace prefix equals checkpoint twenty-two exactly. The
+measured second top `single=false` action advances all three raw turns once and
+preserves every per-card BREAK flag, including top's true→true transition in the
+top-BREAK composition.
+
+Active margins remain `1%`/`0%`. Ordinary benches change compact→spread for
+q1/q3 (`-0.015625px` frame-local wrapper/authored x) and spread→compact for q2
+(`+0.015625px`); top-BREAK benches take the opposite branches and signed
+displacements. Painted rectangles and all ten probes are freshly measured as
+every card changes parity. Every post turn/flag vector equals checkpoint
+twenty-seven. Ordinary geometry is exact; top-BREAK active geometry is exact and
+bench q1/q2/q3 differs by `+0.015625px`, `-0.015625px`, and `+0.015625px`.
+Q1/q3 collide internally despite turns differing by 180 degrees,
+and q2 collides exactly with checkpoint eighteen's matching pre-divergence
+geometry. The oracle pins top logical/DOM selection, exact inheritance and
+bounded collisions, traces, authored/painted rectangles, physical mappings,
+stable identifiers, observer ownership, cleanup, and no refresh. Lower/different
+initiators, third/later turns, intervening operations, alternate origins,
+attachments, candidate parity, and production normalization remain separate;
+no UI or UX changes.
+
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during
 characterization is represented explicitly instead of assumed to be duplication.

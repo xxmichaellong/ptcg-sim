@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 832 v2 tests across 128 files. A separate suite
-passes 74 Playwright checks across 37 Chromium 151 browser files:
+The repository-wide gate passes 837 v2 tests across 129 files. A separate suite
+passes 78 Playwright checks across 39 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -695,7 +695,24 @@ passes 74 Playwright checks across 37 Chromium 151 browser files:
     provenance are pinned in two 24-case Chromium runs. Different second
     initiators, later/intervening actions, alternate origins, attachments,
     candidate parity, and production/UI changes remain separate.
-34. The selected DOM implementation completes 100 mount → clear/reset → destroy
+34. A twenty-eighth source-only checkpoint pins forty-eight immediate second
+    top-initiated whole-group rotations after checkpoint twenty-two. Every
+    pre-state and trace prefix equals checkpoint twenty-two. The same top at
+    logical/DOM index zero advances all three raw turns once and preserves every
+    BREAK flag, including true→true for top-BREAK. Active stays `1%`/`0%`.
+    Ordinary bench q1/q3 changes compact→spread and q2 spread→compact; top-BREAK
+    takes the inverse branches, with signed `0.015625px` wrapper/authored x
+    displacement. Painted rectangles and ten probes are freshly measured across
+    every parity flip. Post turns/flags equal checkpoint twenty-seven: ordinary
+    geometry is exact; top-BREAK active is exact and bench q1/q2/q3 differs by
+    `+0.015625px`, `-0.015625px`, and `+0.015625px`. Q1/q3 also collide
+    internally, while q2 exactly retains checkpoint eighteen's geometry. Exact
+    predecessor inheritance, top actions, traces, authored/painted rectangles,
+    physical mappings, stable identifiers, three-observer/no-refresh lifecycle,
+    cleanup, and recursive provenance are pinned in two 24-case Chromium runs.
+    Lower/different initiators, later/intervening actions, alternate origins,
+    attachments, candidate parity, and production/UI changes remain separate.
+35. The selected DOM implementation completes 100 mount → clear/reset → destroy
     cycles on one warmed route-owned host with the exact status sequence,
     complete scene IDs at mount, zero rendered scene children/IDs after clear and
     destroy, zero non-DOM diagnostic resources, and post-GC Chromium
@@ -787,6 +804,11 @@ other lower initiator is split between
 `tests/browser/legacy-compound-lower-nonzero-different-lower-second-group-after-single-ordinary-geometry.spec.ts`
 and
 `tests/browser/legacy-compound-lower-nonzero-different-lower-second-group-after-single-break-geometry.spec.ts`.
+The immediate second whole-group rotation by checkpoint twenty-two's same top
+initiator is split between
+`tests/browser/legacy-compound-lower-nonzero-top-second-group-after-single-ordinary-geometry.spec.ts`
+and
+`tests/browser/legacy-compound-lower-nonzero-top-second-group-after-single-break-geometry.spec.ts`.
 The mixed-
 order suite validates a checked-in numeric oracle without mounting a candidate;
 the mixed-stack movement suite mounts React only for its two canonical settled
@@ -797,7 +819,8 @@ likewise keeps its q1/q2/q3 and observer history source-only, while comparing
 the separately composed clean-active-plus-sole-bench q0 production shape. The
 compound, BREAK-refresh, top/lower nonzero-group single-card and same-card
 follow-up plus immediate top-, same-lower-, different-lower-, repeated-same-
-lower-, or repeated-same-other-lower-group rotation or wrapper refresh after
+lower-, repeated-same-other-lower-, or repeated-top-group rotation or wrapper
+refresh after
 divergence, lower-group-
 initiator, and pristine/returned/history-authored-q0 lower single-card suites
 mount no candidate
