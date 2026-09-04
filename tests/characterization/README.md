@@ -150,13 +150,29 @@ protect opaque aliases. Broader bench competition, extra/evolution
 attachments, reverse/unsupported order, alternate layouts,
 nonstandard-intrinsic asset parity, and Pixi paint/hit remain deferred.
 
-`legacy-marker-rotation-layout.test.ts` pins the source-only active-marker
-checkpoint separately from production renderer geometry. Independent local and
-opponent histories record damage and condition circles, the empty ability tab,
-every condition palette branch, painted-width reflow through
-q0→q1→q2→q3→q0, the history-retained active-wrapper margin, live and
-post-removal resize callback counts, hit order, and complete marker/card/
-wrapper cleanup. The opponent circle counter-rotation and ability-tab half-turn
-remain explicit. Bench margins, BREAK/compound and attachment rotation,
-movement/evolution/refresh transfer, text-entry gestures, alternate layouts,
-and every React/Pixi/renderer-contract parity claim remain deferred.
+`legacy-marker-rotation-layout.test.ts` pins the full source active-marker
+history. Independent local and opponent cases record damage and condition
+circles, the empty ability tab, every condition palette branch, painted-width
+reflow through q0→q1→q2→q3→q0, the history-retained active-wrapper margin,
+live and post-removal resize callback counts, hit order, and complete marker/
+card/wrapper cleanup. The opponent circle counter-rotation and ability-tab
+half-turn remain explicit.
+
+Production now consumes only the strict canonical active-q0 current-state
+subset: one known
+same-owner face-up Pokémon in the sole unrotated active stack, no bench,
+evolution, or attachments, at the default 1600×900 DPR-1 sidebar/even/unflipped
+layout, with at least one stack marker and no per-card ability marker. The
+renderer contract uses the public 63:88 card ratio, explicit local/opponent
+circle/tab geometry and stable marker diffs. Chromium compares React geometry
+to pristine source q0 within the declared 2 px anchor / 1% size thresholds;
+palette and text are exact, typography remains proportional, and marker z is
+exactly card z plus one. It separately asserts the intentionally
+non-interactive candidate boundary because source markers remain editable and
+pointer-hit. Eligible returned-q0 current state is canonicalized to the same q0
+geometry because no DOM history is projected. Pixi reuses keyed marker views
+without card asset churn, and a real owner/opponent/spectator test protects
+stable opaque aliases and identical normalized geometry. Rotated and
+source-history-dependent layout, bench margins, BREAK/compound and attachment
+rotation, movement/evolution/refresh transfer, text-entry gestures, alternate
+layouts, and Pixi-native paint/hit parity remain deferred.

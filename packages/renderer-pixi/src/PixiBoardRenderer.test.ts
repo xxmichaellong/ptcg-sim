@@ -10,11 +10,20 @@ import {
   DEFAULT_BOARD_PRESENTATION,
   DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
   type BoardPresentation,
+  type MarkerSceneNode,
   type BoardRendererStatus,
   type BoardScene,
 } from '@ptcgsim/renderer-contract';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { Application, Assets, Container, Sprite, Texture } from 'pixi.js';
+import {
+  Application,
+  Assets,
+  Container,
+  Graphics,
+  Sprite,
+  Text,
+  Texture,
+} from 'pixi.js';
 
 import { PixiBoardRenderer } from './PixiBoardRenderer.js';
 
@@ -30,6 +39,24 @@ const scene = (): BoardScene => {
     geometryVersion: 1,
   });
 };
+
+const marker = (overrides: Partial<MarkerSceneNode> = {}): MarkerSceneNode => ({
+  id: 'stack:p1:active:damage',
+  parentCardId: scene().cards[0]!.id,
+  side: 'local',
+  kind: 'damage',
+  presentation: 'generic',
+  value: '40',
+  bounds: { x: 80, y: 120, width: 20, height: 20 },
+  zIndex: 450,
+  label: 'damage: 40',
+  ...overrides,
+});
+
+const createMarkerScene = (
+  revision: number,
+  markers: readonly MarkerSceneNode[]
+): BoardScene => ({ ...scene(), revision, markers });
 
 type SpikeView = ReturnType<typeof createRendererSpikeView>;
 type KnownSpikeCard = Extract<
@@ -185,6 +212,15 @@ interface RendererInternals {
   readonly cardViews: Map<
     string,
     { readonly sprite: Sprite; descriptor: BoardScene['cards'][number] }
+  >;
+  readonly markerViews: Map<
+    string,
+    {
+      readonly root: Container;
+      readonly graphic: Graphics;
+      readonly text: Text;
+      descriptor: BoardScene['markers'][number];
+    }
   >;
   layers: {
     readonly playmat: Container;
@@ -390,6 +426,343 @@ describe('Pixi board interaction cancellation', () => {
       contextLossListeners: 0,
       displayObjects: 0,
     });
+  });
+
+  it('reuses keyed generic and active-q0 marker views through style updates and removal without card asset churn', async () => {
+    const load = vi.spyOn(Assets, 'load').mockResolvedValue(Texture.WHITE);
+    const unload = vi.spyOn(Assets, 'unload').mockResolvedValue(undefined);
+    const application = fakeApplication();
+    const renderer = new PixiBoardRenderer(
+      {
+        emitIntent: vi.fn(),
+        emitPresentationUpdate: vi.fn(),
+        reportError: vi.fn(),
+      },
+      { createApplication: () => application }
+    );
+    const genericDamage = marker();
+    const genericAbility = marker({
+      id: 'visible-card:abilityUsed',
+      kind: 'abilityUsed',
+      value: 'used',
+      bounds: { x: 105, y: 120, width: 18, height: 18 },
+      zIndex: 450,
+      label: 'abilityUsed: used',
+    });
+    const condition = marker({
+      id: 'stack:p1:active:specialCondition',
+      kind: 'specialCondition',
+      presentation: 'legacyActiveQ0',
+      value: 'P',
+      bounds: { x: 40, y: 120, width: 30, height: 30 },
+      zIndex: 451,
+      label: 'specialCondition: P',
+    });
+    const localAbility = marker({
+      id: 'stack:p1:active:abilityUsed',
+      kind: 'abilityUsed',
+      presentation: 'legacyActiveQ0',
+      value: 'used',
+      bounds: { x: 40, y: 150, width: 90, height: 18 },
+      zIndex: 452,
+      label: 'abilityUsed: used',
+    });
+    const opponentAbility = marker({
+      id: 'stack:p2:active:abilityUsed',
+      side: 'opponent',
+      kind: 'abilityUsed',
+      presentation: 'legacyActiveQ0',
+      value: 'used',
+      bounds: { x: 140, y: 150, width: 90, height: 18 },
+      zIndex: 452,
+      label: 'abilityUsed: used',
+    });
+    const initialMarkers = [
+      genericDamage,
+      genericAbility,
+      condition,
+      localAbility,
+      opponentAbility,
+    ];
+    await renderer.mount(
+      document.createElement('div'),
+      createMarkerScene(201, initialMarkers),
+      DEFAULT_BOARD_PRESENTATION
+    );
+    await Promise.resolve();
+
+    const internals = renderer as unknown as RendererInternals;
+    const initialViews = new Map(
+      [...internals.markerViews].map(([id, view]) => [
+        id,
+        { root: view.root, graphic: view.graphic, text: view.text },
+      ])
+    );
+    const release = vi.spyOn(internals.textures, 'release');
+    const initialLoadCount = load.mock.calls.length;
+    const initialUnloadCount = unload.mock.calls.length;
+    const graphicInstruction = (graphic: Graphics) => {
+      const instruction = graphic.context.instructions[0] as unknown as {
+        readonly action: string;
+        readonly data: {
+          readonly style: { readonly color: number; readonly alpha: number };
+          readonly path: {
+            readonly instructions: readonly {
+              readonly action: string;
+              readonly data: readonly number[];
+            }[];
+          };
+        };
+      };
+      return {
+        action: instruction.action,
+        color: instruction.data.style.color,
+        alpha: instruction.data.style.alpha,
+        shape: instruction.data.path.instructions[0]?.action,
+        shapeData: instruction.data.path.instructions[0]?.data,
+      };
+    };
+    const expectView = (
+      descriptor: MarkerSceneNode,
+      expected: {
+        readonly shape: 'circle' | 'roundRect';
+        readonly color: number;
+        readonly alpha: number;
+        readonly text: string;
+        readonly textFill: number;
+        readonly fontSize: number;
+        readonly fontWeight: 'bold' | 'normal';
+        readonly visible: boolean;
+      }
+    ) => {
+      const view = internals.markerViews.get(descriptor.id);
+      if (!view) throw new Error(`Missing Pixi marker view ${descriptor.id}`);
+      const first = initialViews.get(descriptor.id);
+      expect(view.root).toBe(first?.root);
+      expect(view.graphic).toBe(first?.graphic);
+      expect(view.text).toBe(first?.text);
+      expect(view.descriptor).toBe(descriptor);
+      expect(view.root.position.x).toBe(descriptor.bounds.x);
+      expect(view.root.position.y).toBe(descriptor.bounds.y);
+      expect(view.root.zIndex).toBe(descriptor.zIndex);
+      expect(view.root.eventMode).toBe('none');
+      expect(view.root.children).toEqual([view.graphic, view.text]);
+      const instruction = graphicInstruction(view.graphic);
+      expect(instruction).toMatchObject({
+        action: 'fill',
+        shape: expected.shape,
+        color: expected.color,
+        alpha: expected.alpha,
+      });
+      if (expected.shape === 'circle') {
+        expect(instruction.shapeData?.slice(0, 3)).toEqual([
+          descriptor.bounds.width / 2,
+          descriptor.bounds.height / 2,
+          descriptor.bounds.width / 2,
+        ]);
+      } else {
+        expect(instruction.shapeData?.slice(0, 5)).toEqual([
+          0,
+          0,
+          descriptor.bounds.width,
+          descriptor.bounds.height,
+          Math.min(descriptor.bounds.width, descriptor.bounds.height) * 0.1,
+        ]);
+      }
+      expect(view.text.text).toBe(expected.text);
+      expect(view.text.style.fill).toBe(expected.textFill);
+      expect(view.text.style.fontSize).toBe(expected.fontSize);
+      expect(view.text.style.fontWeight).toBe(expected.fontWeight);
+      expect(view.text.visible).toBe(expected.visible);
+      expect(view.text.position.x).toBe(descriptor.bounds.width / 2);
+      expect(view.text.position.y).toBe(descriptor.bounds.height / 2);
+    };
+
+    expect(internals.markerViews.size).toBe(initialMarkers.length);
+    expectView(genericDamage, {
+      shape: 'circle',
+      color: 0xe64242,
+      alpha: 1,
+      text: '40',
+      textFill: 0xffffff,
+      fontSize: 10,
+      fontWeight: 'bold',
+      visible: true,
+    });
+    expectView(genericAbility, {
+      shape: 'circle',
+      color: 0xefefef,
+      alpha: 1,
+      text: 'used',
+      textFill: 0x111111,
+      fontSize: 10,
+      fontWeight: 'bold',
+      visible: true,
+    });
+    expectView(condition, {
+      shape: 'circle',
+      color: 0x008000,
+      alpha: 1,
+      text: 'P',
+      textFill: 0xffffff,
+      fontSize: 22.5,
+      fontWeight: 'normal',
+      visible: true,
+    });
+    expectView(localAbility, {
+      shape: 'roundRect',
+      color: 0x3b8dad,
+      alpha: 0.708,
+      text: '',
+      textFill: 0x111111,
+      fontSize: Math.max(10, localAbility.bounds.height * 0.42),
+      fontWeight: 'normal',
+      visible: false,
+    });
+    expectView(opponentAbility, {
+      shape: 'roundRect',
+      color: 0xff3c00,
+      alpha: 0.392,
+      text: '',
+      textFill: 0x111111,
+      fontSize: Math.max(10, opponentAbility.bounds.height * 0.42),
+      fontWeight: 'normal',
+      visible: false,
+    });
+
+    const legacyDamage: MarkerSceneNode = {
+      ...genericDamage,
+      presentation: 'legacyActiveQ0',
+      value: '50',
+      bounds: { x: 80, y: 120, width: 30, height: 30 },
+      label: 'damage: 50',
+    };
+    renderer.installScene(
+      createMarkerScene(202, [
+        legacyDamage,
+        genericAbility,
+        condition,
+        localAbility,
+        opponentAbility,
+      ]),
+      []
+    );
+    expectView(legacyDamage, {
+      shape: 'circle',
+      color: 0xff6200,
+      alpha: 1,
+      text: '50',
+      textFill: 0xffffff,
+      fontSize: 15,
+      fontWeight: 'normal',
+      visible: true,
+    });
+
+    const reversedMarkers = [
+      opponentAbility,
+      localAbility,
+      condition,
+      genericAbility,
+      legacyDamage,
+    ];
+    renderer.installScene(createMarkerScene(203, reversedMarkers), []);
+    expect(
+      internals.layers?.markers.children.map((child) => child.label)
+    ).toEqual(reversedMarkers.map((descriptor) => descriptor.id));
+    for (const descriptor of reversedMarkers) {
+      const view = internals.markerViews.get(descriptor.id);
+      const first = initialViews.get(descriptor.id);
+      expect(view?.root).toBe(first?.root);
+      expect(view?.graphic).toBe(first?.graphic);
+      expect(view?.text).toBe(first?.text);
+    }
+    expect(load).toHaveBeenCalledTimes(initialLoadCount);
+    expect(unload).toHaveBeenCalledTimes(initialUnloadCount);
+    expect(release).not.toHaveBeenCalled();
+
+    const palettes = [
+      ['B', 0xff0000, 0xffffff],
+      ['A', 0x0000ff, 0xffffff],
+      ['Pa', 0xffff00, 0x000000],
+      ['C', 0x800080, 0xffffff],
+      ['X', 0xffffff, 0x000000],
+    ] as const;
+    let revision = 204;
+    let updatedCondition = condition;
+    for (const [value, color, textFill] of palettes) {
+      updatedCondition = {
+        ...condition,
+        value,
+        bounds: { x: revision, y: 125, width: 32, height: 32 },
+        label: `specialCondition: ${value}`,
+      };
+      const candidate = createMarkerScene(revision, [
+        legacyDamage,
+        genericAbility,
+        updatedCondition,
+        localAbility,
+        opponentAbility,
+      ]);
+      renderer.installScene(candidate, []);
+      expectView(updatedCondition, {
+        shape: 'circle',
+        color,
+        alpha: 1,
+        text: value,
+        textFill,
+        fontSize: 24,
+        fontWeight: 'normal',
+        visible: true,
+      });
+      revision += 1;
+    }
+    expect(load).toHaveBeenCalledTimes(initialLoadCount);
+    expect(unload).toHaveBeenCalledTimes(initialUnloadCount);
+    expect(release).not.toHaveBeenCalled();
+
+    const removed = initialViews.get(opponentAbility.id)!;
+    renderer.installScene(
+      createMarkerScene(revision, [
+        legacyDamage,
+        genericAbility,
+        updatedCondition,
+        localAbility,
+      ]),
+      []
+    );
+    expect(internals.markerViews.has(opponentAbility.id)).toBe(false);
+    expect(removed.root.destroyed).toBe(true);
+    expect(removed.graphic.destroyed).toBe(true);
+    expect(removed.text.destroyed).toBe(true);
+    expect(internals.markerViews.get(localAbility.id)?.root).toBe(
+      initialViews.get(localAbility.id)?.root
+    );
+    expect(load).toHaveBeenCalledTimes(initialLoadCount);
+    expect(unload).toHaveBeenCalledTimes(initialUnloadCount);
+    expect(release).not.toHaveBeenCalled();
+    expect(renderer.getDiagnostics().renderedMarkerIds).toEqual([
+      legacyDamage.id,
+      genericAbility.id,
+      condition.id,
+      localAbility.id,
+    ]);
+
+    const retained = [...internals.markerViews.values()].map((view) => ({
+      root: view.root,
+      graphic: view.graphic,
+      text: view.text,
+    }));
+    renderer.clearScene();
+    expect(internals.markerViews.size).toBe(0);
+    expect(internals.layers?.markers.children).toHaveLength(0);
+    for (const view of retained) {
+      expect(view.root.destroyed).toBe(true);
+      expect(view.graphic.destroyed).toBe(true);
+      expect(view.text.destroyed).toBe(true);
+    }
+    expect(renderer.getDiagnostics().renderedMarkerIds).toEqual([]);
+    renderer.destroy();
+    await Promise.resolve();
   });
 
   it('consumes stable mixed attachment scene descriptors without recycling Pixi card views or texture leases', async () => {

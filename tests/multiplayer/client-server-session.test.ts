@@ -813,6 +813,401 @@ describe('client/server multiplayer contract', () => {
     expect(room.store.commandCommits).toHaveLength(13);
   });
 
+  it('projects public stack markers with private stable aliases and identical recipient geometry', async () => {
+    const room = await fixture();
+    const owner = await connectClient({
+      hub: room.hub,
+      name: 'Blue',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+    });
+    const opponent = await connectClient({
+      hub: room.hub,
+      name: 'Red',
+      role: 'player',
+      capability: room.credentials.playerTwoSeatCapability,
+    });
+    const spectatorCapability = room.credentials.spectatorCapability;
+    if (!spectatorCapability) throw new Error('Missing spectator capability');
+    const spectator = await connectClient({
+      hub: room.hub,
+      name: 'Observer',
+      role: 'spectator',
+      capability: spectatorCapability,
+    });
+    const ownerId = owner.session.getSnapshot().playerId;
+    if (!ownerId) throw new Error('Missing marker owner identity');
+
+    expect(
+      owner.session.submit({
+        type: 'LoadDeck',
+        entries: Array.from({ length: 14 }, (_, index) => ({
+          definition: {
+            id: `marker-private-definition-${index}`,
+            name: `Public marker Pokémon ${index}`,
+            category: 'Pokémon' as const,
+            imageUrl: `/marker-public-art-${index}.png`,
+          },
+          count: 1,
+        })),
+      }).queued
+    ).toBe(true);
+    await owner.factory.flush();
+    expect(owner.session.submit({ type: 'SetupPlayer' }).queued).toBe(true);
+    await owner.factory.flush();
+
+    let ownerView = owner.session.getSnapshot().view;
+    const hand = Object.values(ownerView?.zones ?? {}).find(
+      (zone) => zone.ownerId === ownerId && zone.kind === 'hand'
+    );
+    const base = hand?.cards[0];
+    if (!ownerView || !hand || !base) {
+      throw new Error('Marker setup did not publish a base card');
+    }
+    expect(
+      owner.session.submit({
+        type: 'MoveCardToPlay',
+        cardId: base.id,
+        expectedSourceZoneId: hand.id,
+        boardPlayerId: ownerId,
+        slot: 'active',
+      }).queued
+    ).toBe(true);
+    await owner.factory.flush();
+
+    const recipientViews = (): readonly [
+      MatchViewState,
+      MatchViewState,
+      MatchViewState,
+    ] => {
+      const views = [
+        owner.session.getSnapshot().view,
+        opponent.session.getSnapshot().view,
+        spectator.session.getSnapshot().view,
+      ] as const;
+      if (views.some((view) => !view)) {
+        throw new Error('Missing marker recipient projection');
+      }
+      return views as readonly [MatchViewState, MatchViewState, MatchViewState];
+    };
+    const activeStack = (view: MatchViewState) => {
+      const stackId = view.boards[ownerId]?.activeStackId;
+      const stack = stackId ? view.stacks[stackId] : undefined;
+      const topCard = stack?.evolutionCards.at(-1);
+      if (!stack || stack.slot !== 'active' || !topCard) {
+        throw new Error('Missing public marker active stack');
+      }
+      if (topCard.kind !== 'known' || topCard.category !== 'Pokémon') {
+        throw new Error('Marker parent card must be public Pokémon');
+      }
+      return { stack, topCard };
+    };
+    const sceneFor = (view: MatchViewState) => {
+      const otherPlayerId = view.playerOrder.find(
+        (playerId) => playerId !== ownerId
+      );
+      if (!otherPlayerId || view.playerOrder.length !== 2) {
+        throw new Error('Marker geometry requires exactly two board players');
+      }
+      return createBoardScene(
+        view,
+        createBoardLayoutSnapshot({
+          geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
+          viewport: { width: 1600, height: 900, devicePixelRatio: 1 },
+          playerIds: [ownerId, otherPlayerId],
+          bottomPlayerId: ownerId,
+          shellMode: 'sidebar',
+          vertical: {
+            lowerFrame: { bottomRatio: 0, heightRatio: 0.5 },
+            upperFrame: { bottomRatio: 0.5, heightRatio: 0.5 },
+            lowerHandle: { bottomRatio: 0.505, heightRatio: 0.025 },
+            upperHandle: { bottomRatio: 0.53, heightRatio: 0.025 },
+            sharedPlacement: 'cssDefault',
+          },
+        })
+      );
+    };
+    const markerSnapshot = (view: MatchViewState) => {
+      const { stack, topCard } = activeStack(view);
+      const scene = sceneFor(view);
+      expect(scene.bottomPlayerId).toBe(ownerId);
+      const parentNode = scene.cards.find((card) => card.id === topCard.id);
+      if (!parentNode || parentNode.parentId !== stack.id) {
+        throw new Error('Missing marker parent scene card');
+      }
+      const markers = scene.markers.filter(
+        (marker) => marker.parentCardId === topCard.id
+      );
+      expect(scene.markers.map((marker) => marker.parentCardId)).toEqual(
+        Array.from({ length: markers.length }, () => topCard.id)
+      );
+      return {
+        view,
+        scene,
+        stackAlias: stack.id,
+        parentCardAlias: topCard.id,
+        state: {
+          damage: stack.damage,
+          specialCondition: stack.specialCondition,
+          abilityUsed: stack.abilityUsed,
+        },
+        parent: {
+          bounds: parentNode.bounds,
+          zIndex: parentNode.zIndex,
+          side: parentNode.side,
+          rotationQuarterTurns: parentNode.rotationQuarterTurns,
+        },
+        markers,
+        normalizedMarkers: markers.map((marker) => ({
+          side: marker.side,
+          kind: marker.kind,
+          presentation: marker.presentation,
+          value: marker.value,
+          bounds: marker.bounds,
+          zIndex: marker.zIndex,
+          label: marker.label,
+        })),
+      };
+    };
+    const submitStackActions = async (
+      actions: readonly (
+        | { readonly type: 'setDamage'; readonly damage: number | null }
+        | {
+            readonly type: 'setSpecialCondition';
+            readonly condition: string | null;
+          }
+        | { readonly type: 'setAbilityUsed'; readonly used: boolean }
+      )[]
+    ) => {
+      for (const action of actions) {
+        ownerView = owner.session.getSnapshot().view;
+        if (!ownerView) throw new Error('Missing marker command view');
+        const { topCard } = activeStack(ownerView);
+        let submitted = false;
+        expect(
+          submitStackStateAction(ownerView, topCard.id, action, (command) => {
+            submitted = owner.session.submit(command).queued;
+          })
+        ).toMatchObject({ ok: true });
+        expect(submitted).toBe(true);
+        await owner.factory.flush();
+      }
+    };
+
+    const serializedSnapshots: string[] = [];
+    const capturePhase = () => {
+      const snapshots = recipientViews().map(markerSnapshot);
+      for (const snapshot of snapshots) {
+        serializedSnapshots.push(JSON.stringify(snapshot.view));
+        serializedSnapshots.push(JSON.stringify(snapshot.scene));
+      }
+      return snapshots;
+    };
+    const expectAliases = (
+      snapshots: readonly ReturnType<typeof markerSnapshot>[],
+      expected?: readonly {
+        readonly stackAlias: string;
+        readonly parentCardAlias: string;
+      }[]
+    ) => {
+      const aliases = snapshots.map(({ stackAlias, parentCardAlias }) => ({
+        stackAlias,
+        parentCardAlias,
+      }));
+      expect(new Set(aliases.map((entry) => entry.parentCardAlias)).size).toBe(
+        3
+      );
+      if (expected) expect(aliases).toEqual(expected);
+      return aliases;
+    };
+    const expectSharedGeometry = (
+      snapshots: readonly ReturnType<typeof markerSnapshot>[]
+    ) => {
+      expect(snapshots.map((snapshot) => snapshot.parent)).toEqual(
+        Array.from({ length: 3 }, () => snapshots[0]!.parent)
+      );
+      expect(snapshots.map((snapshot) => snapshot.normalizedMarkers)).toEqual(
+        Array.from({ length: 3 }, () => snapshots[0]!.normalizedMarkers)
+      );
+    };
+
+    await submitStackActions([
+      { type: 'setDamage', damage: 40 },
+      { type: 'setSpecialCondition', condition: 'P' },
+      { type: 'setAbilityUsed', used: true },
+    ]);
+    const marked = capturePhase();
+    const initialAliases = expectAliases(marked);
+    expectSharedGeometry(marked);
+    expect(marked.map((snapshot) => snapshot.view.viewer.kind)).toEqual([
+      'player',
+      'player',
+      'spectator',
+    ]);
+    expect(marked.map((snapshot) => snapshot.state)).toEqual(
+      Array.from({ length: 3 }, () => ({
+        damage: 40,
+        specialCondition: 'P',
+        abilityUsed: true,
+      }))
+    );
+    expect(marked[0]!.parent).toEqual({
+      bounds: {
+        x: 558.8977272727273,
+        y: 481.5,
+        width: 90.20454545454547,
+        height: 126.00000000000001,
+      },
+      zIndex: 300,
+      side: 'local',
+      rotationQuarterTurns: 0,
+    });
+    expect(marked[0]!.normalizedMarkers).toEqual([
+      {
+        side: 'local',
+        kind: 'abilityUsed',
+        presentation: 'legacyActiveQ0',
+        value: 'used',
+        bounds: {
+          x: 558.8977272727273,
+          y: 544.5,
+          width: 90.20454545454547,
+          height: 18.040909090909093,
+        },
+        zIndex: 301,
+        label: 'abilityUsed: used',
+      },
+      {
+        side: 'local',
+        kind: 'damage',
+        presentation: 'legacyActiveQ0',
+        value: '40',
+        bounds: {
+          x: 619.0340909090909,
+          y: 513,
+          width: 30.068181818181824,
+          height: 30.068181818181824,
+        },
+        zIndex: 301,
+        label: 'damage: 40',
+      },
+      {
+        side: 'local',
+        kind: 'specialCondition',
+        presentation: 'legacyActiveQ0',
+        value: 'P',
+        bounds: {
+          x: 558.8977272727273,
+          y: 513,
+          width: 30.068181818181824,
+          height: 30.068181818181824,
+        },
+        zIndex: 301,
+        label: 'specialCondition: P',
+      },
+    ]);
+    const initialMarkerGeometry = marked[0]!.normalizedMarkers.map(
+      ({ side, kind, presentation, bounds, zIndex }) => ({
+        side,
+        kind,
+        presentation,
+        bounds,
+        zIndex,
+      })
+    );
+
+    await submitStackActions([
+      { type: 'setDamage', damage: 70 },
+      { type: 'setSpecialCondition', condition: 'Pa' },
+    ]);
+    const updated = capturePhase();
+    expectAliases(updated, initialAliases);
+    expectSharedGeometry(updated);
+    expect(updated.map((snapshot) => snapshot.state)).toEqual(
+      Array.from({ length: 3 }, () => ({
+        damage: 70,
+        specialCondition: 'Pa',
+        abilityUsed: true,
+      }))
+    );
+    expect(updated[0]!.normalizedMarkers.map((marker) => marker.value)).toEqual(
+      ['used', '70', 'Pa']
+    );
+    expect(
+      updated[0]!.normalizedMarkers.map(
+        ({ side, kind, presentation, bounds, zIndex }) => ({
+          side,
+          kind,
+          presentation,
+          bounds,
+          zIndex,
+        })
+      )
+    ).toEqual(initialMarkerGeometry);
+
+    await submitStackActions([
+      { type: 'setDamage', damage: null },
+      { type: 'setSpecialCondition', condition: null },
+      { type: 'setAbilityUsed', used: false },
+    ]);
+    const removed = capturePhase();
+    expectAliases(removed, initialAliases);
+    expectSharedGeometry(removed);
+    expect(removed.map((snapshot) => snapshot.state)).toEqual(
+      Array.from({ length: 3 }, () => ({
+        damage: null,
+        specialCondition: null,
+        abilityUsed: false,
+      }))
+    );
+    expect(removed.every((snapshot) => snapshot.markers.length === 0)).toBe(
+      true
+    );
+
+    await submitStackActions([
+      { type: 'setDamage', damage: 90 },
+      { type: 'setSpecialCondition', condition: 'C' },
+      { type: 'setAbilityUsed', used: true },
+    ]);
+    const readded = capturePhase();
+    expectAliases(readded, initialAliases);
+    expectSharedGeometry(readded);
+    expect(readded.map((snapshot) => snapshot.state)).toEqual(
+      Array.from({ length: 3 }, () => ({
+        damage: 90,
+        specialCondition: 'C',
+        abilityUsed: true,
+      }))
+    );
+    expect(readded[0]!.normalizedMarkers.map((marker) => marker.value)).toEqual(
+      ['used', '90', 'C']
+    );
+    expect(
+      readded[0]!.normalizedMarkers.map(
+        ({ side, kind, presentation, bounds, zIndex }) => ({
+          side,
+          kind,
+          presentation,
+          bounds,
+          zIndex,
+        })
+      )
+    ).toEqual(initialMarkerGeometry);
+
+    const canonicalState = room.store.snapshot?.state;
+    if (!canonicalState) throw new Error('Missing canonical marker state');
+    const privateIds = [
+      ...Object.keys(canonicalState.cards),
+      ...Object.keys(canonicalState.definitions),
+    ];
+    for (const serialized of serializedSnapshots) {
+      for (const privateId of privateIds) {
+        expect(serialized).not.toContain(privateId);
+      }
+    }
+    expect(room.store.commandCommits).toHaveLength(14);
+  });
+
   it('persists dependent cards across reconnect and restores them through the renderer contract', async () => {
     const room = await fixture();
     const scheduler = new ManualScheduler();

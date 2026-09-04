@@ -15,6 +15,7 @@ import {
   type BoardSceneInstallMode,
   type BoardViewport,
   type CardSceneNode,
+  type MarkerSceneNode,
 } from '@ptcgsim/renderer-contract';
 import {
   Application,
@@ -51,6 +52,13 @@ interface CardView {
   descriptor: CardSceneNode;
 }
 
+interface MarkerView {
+  readonly root: Container;
+  readonly graphic: Graphics;
+  readonly text: Text;
+  descriptor: MarkerSceneNode;
+}
+
 interface SceneLayers {
   readonly playmat: Container;
   readonly cards: Container;
@@ -68,6 +76,7 @@ export class PixiBoardRenderer implements BoardRenderer {
   private readonly dragController: BoardDragController;
   private readonly textures: CardTextureRegistry<Texture>;
   private readonly cardViews = new Map<string, CardView>();
+  private readonly markerViews = new Map<string, MarkerView>();
   private app: Application | null = null;
   private layers: SceneLayers | null = null;
   private host: HTMLElement | null = null;
@@ -455,33 +464,31 @@ export class PixiBoardRenderer implements BoardRenderer {
       );
     }
 
-    for (const child of layers.markers.removeChildren())
-      child.destroy({ children: true });
-    for (const marker of scene.markers) {
-      const root = new Container({ label: marker.id });
-      const circle = new Graphics()
-        .circle(
-          marker.bounds.width / 2,
-          marker.bounds.height / 2,
-          marker.bounds.width / 2
-        )
-        .fill({ color: marker.kind === 'damage' ? 0xe64242 : 0xefefef });
-      const text = new Text({
-        text: marker.value,
-        style: {
-          fill: marker.kind === 'damage' ? 0xffffff : 0x111111,
-          fontSize: Math.max(10, marker.bounds.height * 0.42),
-          fontWeight: 'bold',
-        },
-      });
-      text.anchor.set(0.5);
-      text.position.set(marker.bounds.width / 2, marker.bounds.height / 2);
-      root.position.set(marker.bounds.x, marker.bounds.y);
-      root.zIndex = marker.zIndex;
-      root.eventMode = 'none';
-      root.addChild(circle, text);
-      layers.markers.addChild(root);
+    const nextMarkerIds = new Set(scene.markers.map((marker) => marker.id));
+    for (const [id, view] of this.markerViews) {
+      if (nextMarkerIds.has(id)) continue;
+      this.markerViews.delete(id);
+      view.root.removeFromParent();
+      view.root.destroy({ children: true });
     }
+    scene.markers.forEach((descriptor, index) => {
+      let view = this.markerViews.get(descriptor.id);
+      if (!view) {
+        const root = new Container({ label: descriptor.id });
+        const graphic = new Graphics();
+        const markerText = new Text();
+        markerText.anchor.set(0.5);
+        root.eventMode = 'none';
+        root.addChild(graphic, markerText);
+        view = { root, graphic, text: markerText, descriptor };
+        this.markerViews.set(descriptor.id, view);
+        layers.markers.addChild(root);
+      } else {
+        view.descriptor = descriptor;
+      }
+      this.applyMarkerView(view);
+      layers.markers.setChildIndex(view.root, index);
+    });
     if (this.app) {
       this.app.canvas.dataset.cardViews = String(this.cardViews.size);
       this.app.canvas.dataset.zoneViews = String(scene.zones.length);
@@ -521,6 +528,93 @@ export class PixiBoardRenderer implements BoardRenderer {
     sprite.accessibleHint = 'Select card';
     const selected = this.presentation?.selectedCardId === descriptor.id;
     sprite.alpha = selected ? 0.88 : 1;
+  }
+
+  private applyMarkerView(view: MarkerView): void {
+    const { root, graphic, text, descriptor } = view;
+    const legacy = descriptor.presentation === 'legacyActiveQ0';
+    let fill = descriptor.kind === 'damage' ? 0xe64242 : 0xefefef;
+    let fillAlpha = 1;
+    let textFill = descriptor.kind === 'damage' ? 0xffffff : 0x111111;
+    let fontSize = Math.max(10, descriptor.bounds.height * 0.42);
+    let fontWeight: 'bold' | 'normal' = 'bold';
+    let textValue = descriptor.value;
+    let tab = false;
+
+    if (legacy) {
+      fontWeight = 'normal';
+      if (descriptor.kind === 'damage') {
+        fill = 0xff6200;
+        textFill = 0xffffff;
+        fontSize = descriptor.bounds.width / 2;
+      } else if (descriptor.kind === 'specialCondition') {
+        fontSize = descriptor.bounds.width * 0.75;
+        switch (descriptor.value.toUpperCase()) {
+          case 'P':
+            fill = 0x008000;
+            textFill = 0xffffff;
+            break;
+          case 'B':
+            fill = 0xff0000;
+            textFill = 0xffffff;
+            break;
+          case 'A':
+            fill = 0x0000ff;
+            textFill = 0xffffff;
+            break;
+          case 'PA':
+            fill = 0xffff00;
+            textFill = 0x000000;
+            break;
+          case 'C':
+            fill = 0x800080;
+            textFill = 0xffffff;
+            break;
+          default:
+            fill = 0xffffff;
+            textFill = 0x000000;
+            break;
+        }
+      } else {
+        tab = true;
+        fill = descriptor.side === 'local' ? 0x3b8dad : 0xff3c00;
+        fillAlpha = descriptor.side === 'local' ? 0.708 : 0.392;
+        textValue = '';
+      }
+    }
+
+    graphic.clear();
+    if (tab) {
+      graphic
+        .roundRect(
+          0,
+          0,
+          descriptor.bounds.width,
+          descriptor.bounds.height,
+          Math.min(descriptor.bounds.width, descriptor.bounds.height) * 0.1
+        )
+        .fill({ color: fill, alpha: fillAlpha });
+    } else {
+      graphic
+        .circle(
+          descriptor.bounds.width / 2,
+          descriptor.bounds.height / 2,
+          descriptor.bounds.width / 2
+        )
+        .fill({ color: fill, alpha: fillAlpha });
+    }
+    text.text = textValue;
+    text.style.fill = textFill;
+    text.style.fontSize = fontSize;
+    text.style.fontWeight = fontWeight;
+    text.visible = textValue !== '';
+    text.position.set(
+      descriptor.bounds.width / 2,
+      descriptor.bounds.height / 2
+    );
+    root.position.set(descriptor.bounds.x, descriptor.bounds.y);
+    root.zIndex = descriptor.zIndex;
+    root.eventMode = 'none';
   }
 
   private renderOnce(): void {
@@ -714,6 +808,11 @@ export class PixiBoardRenderer implements BoardRenderer {
       view.sprite.destroy({ texture: false, textureSource: false });
     }
     this.cardViews.clear();
+    for (const view of this.markerViews.values()) {
+      view.root.removeFromParent();
+      view.root.destroy({ children: true });
+    }
+    this.markerViews.clear();
     const layers = this.layers;
     if (layers) {
       for (const layer of [

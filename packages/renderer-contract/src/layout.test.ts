@@ -9,6 +9,7 @@ import {
   findBoardLayoutRegion,
   flipBoardLayoutState,
   LEGACY_BOARD_AFFORDANCES_V1,
+  layoutLegacyActiveQ0Markers,
   layoutLegacyContainedCard,
   layoutLegacyOrdinaryEvolutionStack,
   layoutLegacyPlaySlotCards,
@@ -546,6 +547,123 @@ describe('renderer-neutral legacy board layout', () => {
     expect(() => layoutLegacyPlaySlotCards(bench, [benchEdgeRatio])).toThrow(
       'flex shrink'
     );
+  });
+
+  it('pins pristine-q0 active marker geometry on both physical sides', () => {
+    const layout = createBoardLayoutSnapshot(
+      state({ viewport: { width: 1600, height: 900, devicePixelRatio: 1 } })
+    );
+    const localCard = layoutLegacyPlaySlotCards(
+      findBoardLayoutRegion(layout, 'local', 'active'),
+      [CARD_ASPECT_RATIO]
+    )[0]!;
+    const opponentCard = layoutLegacyPlaySlotCards(
+      findBoardLayoutRegion(layout, 'opponent', 'active'),
+      [CARD_ASPECT_RATIO]
+    )[0]!;
+    expectRectClose(localCard, {
+      x: 558.8977272727273,
+      y: 481.5,
+      width: 90.20454545454545,
+      height: 126,
+    });
+    expectRectClose(opponentCard, {
+      x: 558.8977272727273,
+      y: 292.5,
+      width: 90.20454545454545,
+      height: 126,
+    });
+
+    const local = layoutLegacyActiveQ0Markers(localCard, 'local');
+    expectRectClose(local.damage.bounds, {
+      x: 619.0340909090909,
+      y: 513,
+      width: 30.068181818181817,
+      height: 30.068181818181817,
+    });
+    expectRectClose(local.specialCondition.bounds, {
+      x: 558.8977272727273,
+      y: 513,
+      width: 30.068181818181817,
+      height: 30.068181818181817,
+    });
+    expectRectClose(local.abilityUsed.bounds, {
+      x: 558.8977272727273,
+      y: 544.5,
+      width: 90.20454545454545,
+      height: 18.04090909090909,
+    });
+
+    const opponent = layoutLegacyActiveQ0Markers(opponentCard, 'opponent');
+    expectRectClose(opponent.damage.bounds, {
+      x: 558.8977272727273,
+      y: 356.9318181818182,
+      width: 30.068181818181817,
+      height: 30.068181818181817,
+    });
+    expectRectClose(opponent.specialCondition.bounds, {
+      x: 619.0340909090909,
+      y: 356.9318181818182,
+      width: 30.068181818181817,
+      height: 30.068181818181817,
+    });
+    expectRectClose(opponent.abilityUsed.bounds, {
+      x: 558.8977272727273,
+      y: 337.4590909090909,
+      width: 90.20454545454545,
+      height: 18.04090909090909,
+    });
+    expect(
+      [...Object.values(local), ...Object.values(opponent)].map(
+        (marker) => marker.sourceZIndex
+      )
+    ).toEqual([1, 1, 1, 1, 1, 1]);
+  });
+
+  it('keeps pristine-q0 marker layout pure and rejects invalid inputs', () => {
+    const cardBounds = Object.freeze({
+      x: -20,
+      y: 10,
+      width: 60,
+      height: 90,
+    });
+    const before = { ...cardBounds };
+    expect(layoutLegacyActiveQ0Markers(cardBounds, 'local')).toEqual({
+      damage: {
+        bounds: { x: 20, y: 32.5, width: 20, height: 20 },
+        sourceZIndex: 1,
+      },
+      specialCondition: {
+        bounds: { x: -20, y: 32.5, width: 20, height: 20 },
+        sourceZIndex: 1,
+      },
+      abilityUsed: {
+        bounds: { x: -20, y: 55, width: 60, height: 12 },
+        sourceZIndex: 1,
+      },
+    });
+    expect(cardBounds).toEqual(before);
+
+    for (const bounds of [
+      { ...cardBounds, x: Number.NaN },
+      { ...cardBounds, y: Number.NEGATIVE_INFINITY },
+      { ...cardBounds, width: 0 },
+      { ...cardBounds, width: -1 },
+      { ...cardBounds, width: Number.POSITIVE_INFINITY },
+      { ...cardBounds, height: 0 },
+      { ...cardBounds, height: -1 },
+      { ...cardBounds, height: Number.NaN },
+    ]) {
+      expect(() => layoutLegacyActiveQ0Markers(bounds, 'local')).toThrow(
+        'finite and positive'
+      );
+    }
+    expect(() =>
+      layoutLegacyActiveQ0Markers(
+        cardBounds,
+        'shared' as unknown as 'local' | 'opponent'
+      )
+    ).toThrow('local or opponent');
   });
 
   it('pins stable ordinary-evolution integer reflow on both physical sides', () => {

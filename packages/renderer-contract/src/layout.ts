@@ -351,6 +351,18 @@ export interface LegacySingleEnergyTrainerToolAttachmentStackLayout {
   readonly tool: LegacySingleTrainerToolAttachmentCardLayout;
 }
 
+export interface LegacyActiveQ0MarkerItemLayout {
+  readonly bounds: Rect;
+  /** The exact marker z-index emitted by the legacy counter helpers. */
+  readonly sourceZIndex: number;
+}
+
+export interface LegacyActiveQ0MarkerLayout {
+  readonly damage: LegacyActiveQ0MarkerItemLayout;
+  readonly specialCondition: LegacyActiveQ0MarkerItemLayout;
+  readonly abilityUsed: LegacyActiveQ0MarkerItemLayout;
+}
+
 const ZERO_EDGES: BoxEdgesPx = { top: 0, right: 0, bottom: 0, left: 0 };
 const FIVE_PIXEL_PADDING: BoxEdgesPx = {
   top: 5,
@@ -1060,6 +1072,67 @@ export const layoutLegacyPlaySlotCards = (
     width,
     height: cardHeight,
   }));
+};
+
+/**
+ * Exact physical marker boxes for the narrowly characterized pristine-q0
+ * active card. Legacy derives each marker from the card's painted box. At q0
+ * that box equals the renderer contract's untransformed card box; `side`
+ * resolves the enclosing opponent-frame half-turn into physical coordinates.
+ */
+export const layoutLegacyActiveQ0Markers = (
+  cardBounds: Rect,
+  side: BoardSide
+): LegacyActiveQ0MarkerLayout => {
+  if (
+    !Number.isFinite(cardBounds.x) ||
+    !Number.isFinite(cardBounds.y) ||
+    !Number.isFinite(cardBounds.width) ||
+    !Number.isFinite(cardBounds.height) ||
+    cardBounds.width <= 0 ||
+    cardBounds.height <= 0
+  ) {
+    throw new Error('Active-marker card bounds must be finite and positive');
+  }
+  if (side !== 'local' && side !== 'opponent') {
+    throw new Error('Active-marker side must be local or opponent');
+  }
+
+  const circleSize = cardBounds.width / 3;
+  const abilityHeight = cardBounds.width / 5;
+  const markerY =
+    side === 'local'
+      ? cardBounds.y + cardBounds.height / 4
+      : cardBounds.y + (cardBounds.height * 3) / 4 - circleSize;
+  const damageX =
+    side === 'local' ? cardBounds.x + (cardBounds.width * 2) / 3 : cardBounds.x;
+  const specialConditionX =
+    side === 'local' ? cardBounds.x : cardBounds.x + (cardBounds.width * 2) / 3;
+  const circle = (x: number): LegacyActiveQ0MarkerItemLayout => ({
+    bounds: {
+      x,
+      y: markerY,
+      width: circleSize,
+      height: circleSize,
+    },
+    sourceZIndex: LEGACY_BOARD_Z_ORDER_V1.marker,
+  });
+  return {
+    damage: circle(damageX),
+    specialCondition: circle(specialConditionX),
+    abilityUsed: {
+      bounds: {
+        x: cardBounds.x,
+        y:
+          side === 'local'
+            ? cardBounds.y + cardBounds.height / 2
+            : cardBounds.y + cardBounds.height / 2 - abilityHeight,
+        width: cardBounds.width,
+        height: abilityHeight,
+      },
+      sourceZIndex: LEGACY_BOARD_Z_ORDER_V1.marker,
+    },
+  };
 };
 
 /**

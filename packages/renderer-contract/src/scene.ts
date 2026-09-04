@@ -16,8 +16,10 @@ import {
   createBoardLayoutSnapshot,
   findBoardLayoutRegion,
   LEGACY_BOARD_RESIZER_V1,
+  layoutLegacyActiveQ0Markers,
   layoutLegacyContainedCard,
   layoutLegacyOrdinaryEvolutionStack,
+  layoutLegacyPlaySlotCards,
   layoutLegacySingleEnergyTrainerToolAttachmentStack,
   layoutLegacySingleEnergyAttachmentStack,
   layoutLegacySingleTrainerToolAttachmentStack,
@@ -26,6 +28,7 @@ import {
   type BoardLayoutSnapshot,
   type BoardLayoutState,
   type LegacyContainedCardBlockAlignment,
+  type LegacyActiveQ0MarkerLayout,
   type LegacyPileKind,
 } from './layout.js';
 import type {
@@ -691,6 +694,37 @@ const isCharacterizedSingleEnergyTrainerToolAttachmentStack = (
   );
 };
 
+const isCharacterizedPristineActiveQ0MarkerStack = (
+  stack: MatchViewState['stacks'][string],
+  board: MatchViewState['boards'][string],
+  playerId: PlayerId,
+  side: BoardSide,
+  region: BoardLayoutSnapshot['players'][number]['regions'][number],
+  layoutIsCharacterized: boolean
+): boolean => {
+  const base = stack.evolutionCards[0];
+  return (
+    layoutIsCharacterized &&
+    isCharacterizedMixedStackRegion(playerId, side, 'active', region) &&
+    stack.id === board.activeStackId &&
+    stack.boardPlayerId === playerId &&
+    stack.slot === 'active' &&
+    board.benchStackIds.length === 0 &&
+    stack.evolutionCards.length === 1 &&
+    stack.attachmentCards.length === 0 &&
+    stack.rotationQuarterTurns === 0 &&
+    (stack.damage !== null ||
+      stack.specialCondition !== null ||
+      stack.abilityUsed) &&
+    base?.kind === 'known' &&
+    base.ownerId === playerId &&
+    base.category === 'Pokémon' &&
+    base.face === 'up' &&
+    base.orientationQuarterTurns === 0 &&
+    base.abilityUsed === false
+  );
+};
+
 const isCharacterizedOrdinaryEvolutionStack = (
   stack: MatchViewState['stacks'][string],
   board: MatchViewState['boards'][string],
@@ -762,7 +796,8 @@ const makeCardNode = (
 const addMarkers = (
   markers: MarkerSceneNode[],
   topCard: CardSceneNode,
-  stack: MatchViewState['stacks'][string]
+  stack: MatchViewState['stacks'][string],
+  legacyActiveQ0Layout: LegacyActiveQ0MarkerLayout | null = null
 ): void => {
   const size = Math.max(
     14,
@@ -773,18 +808,25 @@ const addMarkers = (
     value: string,
     offset: number
   ) => {
+    const characterized = legacyActiveQ0Layout?.[kind];
     markers.push({
       id: `${stack.id}:${kind}`,
       parentCardId: topCard.id,
+      side: topCard.side,
       kind,
+      presentation: characterized ? 'legacyActiveQ0' : 'generic',
       value,
-      bounds: {
-        x: topCard.bounds.x + topCard.bounds.width - size,
-        y: topCard.bounds.y + offset * size,
-        width: size,
-        height: size,
-      },
-      zIndex: topCard.zIndex + 100 + offset,
+      bounds: characterized
+        ? copyRect(characterized.bounds)
+        : {
+            x: topCard.bounds.x + topCard.bounds.width - size,
+            y: topCard.bounds.y + offset * size,
+            width: size,
+            height: size,
+          },
+      zIndex: characterized
+        ? topCard.zIndex + characterized.sourceZIndex
+        : topCard.zIndex + 100 + offset,
       label: `${kind}: ${value}`,
     });
   };
@@ -805,7 +847,9 @@ const addCardAbilityMarker = (
   markers.push({
     id: `${node.id}:abilityUsed`,
     parentCardId: node.id,
+    side: node.side,
     kind: 'abilityUsed',
+    presentation: 'generic',
     value: 'used',
     bounds: {
       x: node.bounds.x + node.bounds.width - size,
@@ -1096,6 +1140,23 @@ export const createBoardScene = (
             3
           )
         : null;
+      const usesLegacyActiveQ0Markers =
+        isCharacterizedPristineActiveQ0MarkerStack(
+          stack,
+          board,
+          playerId,
+          side,
+          slotRegions[stack.slot],
+          defaultInPlayLayoutIsCharacterized
+        );
+      const legacyActiveQ0MarkerCardLayout = usesLegacyActiveQ0Markers
+        ? {
+            bounds: layoutLegacyPlaySlotCards(slotRegions.active, [
+              CARD_ASPECT_RATIO,
+            ])[0]!,
+            sourceZIndex: 0,
+          }
+        : null;
       const evolutionNodes: CardSceneNode[] = [];
       stack.evolutionCards.forEach((card, index) => {
         const ordinaryCardLayout = ordinaryEvolutionLayout?.cards[index];
@@ -1114,7 +1175,8 @@ export const createBoardScene = (
           singleEnergyBaseLayout ??
           twoEnergyBaseLayout ??
           singleTrainerToolBaseLayout ??
-          singleEnergyTrainerToolBaseLayout;
+          singleEnergyTrainerToolBaseLayout ??
+          (index === 0 ? legacyActiveQ0MarkerCardLayout : null);
         const node = makeCardNode(view, card, {
           parentId: stack.id,
           side,
@@ -1183,7 +1245,16 @@ export const createBoardScene = (
         );
       });
       const topCard = evolutionNodes.at(-1);
-      if (topCard) addMarkers(markers, topCard, stack);
+      if (topCard) {
+        addMarkers(
+          markers,
+          topCard,
+          stack,
+          usesLegacyActiveQ0Markers
+            ? layoutLegacyActiveQ0Markers(topCard.bounds, side)
+            : null
+        );
+      }
     }
   }
 
@@ -1299,6 +1370,19 @@ const sameCard = (left: CardSceneNode, right: CardSceneNode): boolean =>
   left.bounds.width === right.bounds.width &&
   left.bounds.height === right.bounds.height;
 
+const sameMarker = (left: MarkerSceneNode, right: MarkerSceneNode): boolean =>
+  left.parentCardId === right.parentCardId &&
+  left.side === right.side &&
+  left.kind === right.kind &&
+  left.presentation === right.presentation &&
+  left.value === right.value &&
+  left.zIndex === right.zIndex &&
+  left.label === right.label &&
+  left.bounds.x === right.bounds.x &&
+  left.bounds.y === right.bounds.y &&
+  left.bounds.width === right.bounds.width &&
+  left.bounds.height === right.bounds.height;
+
 export const diffBoardScenes = (
   previous: BoardScene,
   next: BoardScene
@@ -1318,5 +1402,33 @@ export const diffBoardScenes = (
   for (const id of previousById.keys()) {
     if (!nextById.has(id)) removedCardIds.push(id);
   }
-  return { addedCardIds, removedCardIds, updatedCardIds, unchangedCardIds };
+  const previousMarkersById = new Map(
+    previous.markers.map((marker) => [marker.id, marker])
+  );
+  const nextMarkersById = new Map(
+    next.markers.map((marker) => [marker.id, marker])
+  );
+  const addedMarkerIds: string[] = [];
+  const removedMarkerIds: string[] = [];
+  const updatedMarkerIds: string[] = [];
+  const unchangedMarkerIds: string[] = [];
+  for (const [id, marker] of nextMarkersById) {
+    const previousMarker = previousMarkersById.get(id);
+    if (!previousMarker) addedMarkerIds.push(id);
+    else if (sameMarker(previousMarker, marker)) unchangedMarkerIds.push(id);
+    else updatedMarkerIds.push(id);
+  }
+  for (const id of previousMarkersById.keys()) {
+    if (!nextMarkersById.has(id)) removedMarkerIds.push(id);
+  }
+  return {
+    addedCardIds,
+    removedCardIds,
+    updatedCardIds,
+    unchangedCardIds,
+    addedMarkerIds,
+    removedMarkerIds,
+    updatedMarkerIds,
+    unchangedMarkerIds,
+  };
 };

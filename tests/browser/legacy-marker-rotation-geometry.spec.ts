@@ -3,6 +3,18 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 import { expect, test } from '@playwright/test';
+import {
+  asViewCardId,
+  type MatchViewState,
+  type PlayerId,
+} from '../../packages/game-core/src/index.js';
+import {
+  BOARD_LAYOUT_GEOMETRY_VERSION,
+  createBoardLayoutSnapshot,
+  createBoardScene,
+  createRendererSpikeView,
+  DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+} from '../../packages/renderer-contract/src/index.js';
 
 import oracle from '../legacy-fixtures/renderer/marker-rotation-v1.json' with { type: 'json' };
 
@@ -86,6 +98,71 @@ const physicalRect = (
         width: bounds.width,
         height: bounds.height,
       };
+};
+
+const createCandidatePristineActiveMarkerScene = () => {
+  const base = createRendererSpikeView();
+  const localPlayerId = base.playerOrder[0];
+  const opponentPlayerId = base.playerOrder[1];
+  const pokemonDefinition = Object.values(base.definitions).find(
+    (definition) => definition.category === 'Pokémon'
+  );
+  if (!localPlayerId || !opponentPlayerId || !pokemonDefinition) {
+    throw new Error('Renderer spike fixture lacks active-marker scene inputs');
+  }
+  const makeCard = (id: string, ownerId: PlayerId) => ({
+    kind: 'known' as const,
+    id: asViewCardId(id),
+    definitionId: pokemonDefinition.id,
+    ownerId,
+    category: 'Pokémon' as const,
+    face: 'up' as const,
+    orientationQuarterTurns: 0 as const,
+    abilityUsed: false,
+    publiclyRevealed: true,
+  });
+  const makeStack = (side: LegacyFixtureSide, boardPlayerId: PlayerId) => ({
+    id: `${side}-active-marker-stack`,
+    boardPlayerId,
+    slot: 'active' as const,
+    evolutionCards: [makeCard(`${side}-active-marker-card`, boardPlayerId)],
+    attachmentCards: [],
+    rotationQuarterTurns: 0 as const,
+    damage: Number(oracle.input.damageUpdated),
+    specialCondition: 'P',
+    abilityUsed: true,
+  });
+  const local = makeStack('local', localPlayerId);
+  const opponent = makeStack('opponent', opponentPlayerId);
+  const view: MatchViewState = {
+    ...base,
+    revision: base.revision + 1,
+    zones: Object.fromEntries(
+      Object.entries(base.zones).map(([id, zone]) => [
+        id,
+        { ...zone, cards: [] },
+      ])
+    ),
+    boards: {
+      [localPlayerId]: { activeStackId: local.id, benchStackIds: [] },
+      [opponentPlayerId]: {
+        activeStackId: opponent.id,
+        benchStackIds: [],
+      },
+    },
+    stacks: { [local.id]: local, [opponent.id]: opponent },
+  };
+  return createBoardScene(
+    view,
+    createBoardLayoutSnapshot({
+      geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
+      viewport: oracle.input.viewport,
+      playerIds: [localPlayerId, opponentPlayerId],
+      bottomPlayerId: localPlayerId,
+      shellMode: 'sidebar',
+      vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+    })
+  );
 };
 
 test('marker/rotation oracle pins every claimed source and binary asset digest', async () => {
@@ -510,5 +587,287 @@ test('checked-in legacy active markers reflow through q0-q1-q2-q3-q0 and clean u
     });
   }
 
+  expect(runtimeErrors).toEqual([]);
+});
+
+test('pristine source active markers match the strict React DOM candidate', async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== 'chromium',
+    'The source-to-React active-marker checkpoint is Chromium-specific.'
+  );
+  const candidateScene = createCandidatePristineActiveMarkerScene();
+  await page.setViewportSize(oracle.input.viewport);
+  expect(await page.evaluate(() => window.devicePixelRatio)).toBe(
+    oracle.input.viewport.devicePixelRatio
+  );
+  const capture = await captureLegacySourceMarkerRotationFixture(page);
+  await testInfo.attach('legacy-source-to-react-active-marker-geometry.json', {
+    body: Buffer.from(JSON.stringify(capture, null, 2)),
+    contentType: 'application/json',
+  });
+  expect(capture.sourceFulfillment.unexpectedSameOriginPaths).toEqual([]);
+  expect(candidateScene.cards).toHaveLength(2);
+  expect(candidateScene.markers).toHaveLength(6);
+
+  const sourceBySide = Object.fromEntries(
+    capture.cases.map((entry) => {
+      const phase = entry.phases.find(
+        (candidate) => candidate.name === 'marked-q0'
+      );
+      if (!phase) throw new Error(`Missing ${entry.side} marked-q0 phase`);
+      return [entry.side, phase] as const;
+    })
+  ) as Record<
+    LegacyFixtureSide,
+    (typeof capture.cases)[number]['phases'][number]
+  >;
+
+  for (const side of ['local', 'opponent'] as const) {
+    const source = sourceBySide[side];
+    const cardId = asViewCardId(`${side}-active-marker-card`);
+    const card = candidateScene.cards.find((entry) => entry.id === cardId);
+    if (!card) throw new Error(`Missing ${side} candidate active card`);
+    expect(card).toMatchObject({
+      side,
+      role: 'stackEvolution',
+      rotationQuarterTurns: side === 'local' ? 0 : 2,
+      interactive: true,
+    });
+    expectRect(card.bounds, source.card.physicalBounds, `${side}.card.scene`);
+
+    for (const [sourceKind, candidateKind] of [
+      ['damage', 'damage'],
+      ['specialCondition', 'specialCondition'],
+      ['ability', 'abilityUsed'],
+    ] as const) {
+      const sourceMarker = source.markers.find(
+        (marker) => marker.kind === sourceKind
+      );
+      const marker = candidateScene.markers.find(
+        (entry) => entry.parentCardId === cardId && entry.kind === candidateKind
+      );
+      if (!sourceMarker || !marker) {
+        throw new Error(`Missing ${side} ${candidateKind} marker`);
+      }
+      expect(marker).toMatchObject({
+        parentCardId: cardId,
+        kind: candidateKind,
+        value:
+          candidateKind === 'damage'
+            ? oracle.input.damageUpdated
+            : candidateKind === 'specialCondition'
+              ? 'P'
+              : 'used',
+        side,
+        presentation: 'legacyActiveQ0',
+      });
+      expect(marker.zIndex).toBe(card.zIndex + 1);
+      expectRect(
+        marker.bounds,
+        sourceMarker.physicalBounds,
+        `${side}.${candidateKind}.scene`
+      );
+    }
+  }
+
+  await page.unrouteAll({ behavior: 'wait' });
+  const runtimeErrors: string[] = [];
+  page.on('pageerror', (error) =>
+    runtimeErrors.push(`pageerror: ${error.message}`)
+  );
+  page.on('console', (message) => {
+    if (message.type() === 'error') {
+      runtimeErrors.push(`console.error: ${message.text()}`);
+    }
+  });
+  await page.goto('/?renderer=dom');
+  await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
+    'data-renderer-status',
+    'ready'
+  );
+  await page.evaluate(async (scene) => {
+    const spike = (
+      window as typeof window & {
+        __PTCG_RENDERER_SPIKE__?: {
+          createRenderer(adapters: {
+            emitIntent(): void;
+            emitPresentationUpdate(): void;
+            reportError(error: unknown): void;
+          }): {
+            mount(
+              host: HTMLElement,
+              candidateScene: typeof scene,
+              presentation: {
+                selectedCardId: null;
+                hoveredCardId: null;
+                drag: null;
+                openedZoneId: null;
+              }
+            ): Promise<void>;
+            destroy(): void;
+          };
+        };
+      }
+    ).__PTCG_RENDERER_SPIKE__;
+    if (!spike?.createRenderer) {
+      throw new Error('Missing renderer spike factory test seam');
+    }
+    const host = document.createElement('div');
+    host.dataset.activeMarkerCandidateHost = 'true';
+    Object.assign(host.style, {
+      position: 'fixed',
+      left: '0px',
+      top: '0px',
+      width: `${scene.viewport.width}px`,
+      height: `${scene.viewport.height}px`,
+      zIndex: '20000',
+    });
+    document.body.append(host);
+    const renderer = spike.createRenderer({
+      emitIntent: () => undefined,
+      emitPresentationUpdate: () => undefined,
+      reportError: (error) => {
+        host.dataset.rendererError = String(error);
+      },
+    });
+    await renderer.mount(host, scene, {
+      selectedCardId: null,
+      hoveredCardId: null,
+      drag: null,
+      openedZoneId: null,
+    });
+    (
+      window as typeof window & {
+        __PTCG_ACTIVE_MARKER_CANDIDATE_RENDERER__?: { destroy(): void };
+      }
+    ).__PTCG_ACTIVE_MARKER_CANDIDATE_RENDERER__ = renderer;
+  }, candidateScene);
+
+  const candidateHost = page.locator('[data-active-marker-candidate-host]');
+  await expect(candidateHost).not.toHaveAttribute('data-renderer-error', /.+/u);
+  await expect(candidateHost.locator('[data-marker-id]')).toHaveCount(6);
+  for (const side of ['local', 'opponent'] as const) {
+    const source = sourceBySide[side];
+    const cardId = `${side}-active-marker-card`;
+    const renderedCard = await candidateHost
+      .locator(`[data-card-id="${cardId}"]`)
+      .boundingBox();
+    if (!renderedCard) throw new Error(`Missing rendered ${side} active card`);
+    expectRect(renderedCard, source.card.physicalBounds, `${side}.card.dom`);
+
+    for (const [sourceKind, candidateKind] of [
+      ['damage', 'damage'],
+      ['specialCondition', 'specialCondition'],
+      ['ability', 'abilityUsed'],
+    ] as const) {
+      const sourceMarker = source.markers.find(
+        (marker) => marker.kind === sourceKind
+      );
+      const sceneMarker = candidateScene.markers.find(
+        (marker) =>
+          marker.parentCardId === cardId && marker.kind === candidateKind
+      );
+      if (!sourceMarker || !sceneMarker) {
+        throw new Error(`Missing rendered ${side} ${candidateKind} marker`);
+      }
+      const locator = candidateHost.locator(
+        `[data-marker-id="${sceneMarker.id}"]`
+      );
+      const rendered = await locator.boundingBox();
+      if (!rendered) {
+        throw new Error(`Invisible rendered ${side} ${candidateKind} marker`);
+      }
+      expectRect(
+        rendered,
+        sourceMarker.physicalBounds,
+        `${side}.${candidateKind}.dom`
+      );
+      await expect(locator).toHaveAttribute(
+        'data-marker-presentation',
+        'legacyActiveQ0'
+      );
+      await expect(locator).toHaveAttribute('data-marker-side', side);
+      const style = await locator.evaluate((element) => {
+        const computed = getComputedStyle(element);
+        return {
+          backgroundColor: computed.backgroundColor,
+          borderRadius: computed.borderRadius,
+          color: computed.color,
+          display: computed.display,
+          fontSize: Number.parseFloat(computed.fontSize),
+          fontWeight: computed.fontWeight,
+          lineHeight: Number.parseFloat(computed.lineHeight),
+          pointerEvents: computed.pointerEvents,
+          position: computed.position,
+          textAlign: computed.textAlign,
+          textContent: element.textContent ?? '',
+          zIndex: computed.zIndex,
+        };
+      });
+      expect(style).toMatchObject({
+        backgroundColor: sourceMarker.backgroundColor,
+        borderRadius: sourceMarker.borderRadius,
+        color: sourceMarker.color,
+        display: 'block',
+        fontWeight: '400',
+        pointerEvents: 'none',
+        position: 'absolute',
+        textAlign: 'center',
+        textContent: sourceMarker.textContent,
+        zIndex: String(sceneMarker.zIndex),
+      });
+      const expectedCandidateLineHeight =
+        candidateKind === 'abilityUsed'
+          ? sceneMarker.bounds.width / 3
+          : sceneMarker.bounds.width;
+      expectStructured(
+        style.lineHeight,
+        expectedCandidateLineHeight,
+        `${side}.${candidateKind}.candidateLineHeight`
+      );
+      expect(sourceMarker.inlineLineHeightPx).not.toBeNull();
+      expect(
+        Math.abs(
+          style.lineHeight - (sourceMarker.inlineLineHeightPx as number)
+        ) / (sourceMarker.inlineLineHeightPx as number),
+        `${side}.${candidateKind}.sourceLineHeight`
+      ).toBeLessThanOrEqual(oracle.tolerances.cardSizeRelative);
+      if (sourceMarker.inlineFontSizePx !== null) {
+        const expectedCandidateFontSize =
+          candidateKind === 'damage'
+            ? sceneMarker.bounds.width / 2
+            : sceneMarker.bounds.width * 0.75;
+        expectStructured(
+          style.fontSize,
+          expectedCandidateFontSize,
+          `${side}.${candidateKind}.candidateFontSize`
+        );
+        expect(
+          Math.abs(style.fontSize - sourceMarker.inlineFontSizePx) /
+            sourceMarker.inlineFontSizePx,
+          `${side}.${candidateKind}.sourceFontSize`
+        ).toBeLessThanOrEqual(oracle.tolerances.cardSizeRelative);
+      }
+    }
+  }
+
+  await page.evaluate(async () => {
+    const candidateWindow = window as typeof window & {
+      __PTCG_ACTIVE_MARKER_CANDIDATE_RENDERER__?: { destroy(): void };
+    };
+    const host = document.querySelector<HTMLElement>(
+      '[data-active-marker-candidate-host]'
+    );
+    candidateWindow.__PTCG_ACTIVE_MARKER_CANDIDATE_RENDERER__?.destroy();
+    delete candidateWindow.__PTCG_ACTIVE_MARKER_CANDIDATE_RENDERER__;
+    await Promise.resolve();
+    const rendererError = host?.dataset.rendererError;
+    host?.remove();
+    if (rendererError) {
+      throw new Error(`Candidate teardown failed: ${rendererError}`);
+    }
+  });
   expect(runtimeErrors).toEqual([]);
 });

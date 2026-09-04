@@ -207,24 +207,80 @@ const MarkerNode = memo(function MarkerNode({
 }: {
   readonly marker: MarkerSceneNode;
 }) {
+  const legacy = marker.presentation === 'legacyActiveQ0';
+  const legacyConditionPalette = (() => {
+    switch (marker.value.toUpperCase()) {
+      case 'P':
+        return { background: 'rgb(0, 128, 0)', color: 'rgb(255, 255, 255)' };
+      case 'B':
+        return { background: 'rgb(255, 0, 0)', color: 'rgb(255, 255, 255)' };
+      case 'A':
+        return { background: 'rgb(0, 0, 255)', color: 'rgb(255, 255, 255)' };
+      case 'PA':
+        return { background: 'rgb(255, 255, 0)', color: 'rgb(0, 0, 0)' };
+      case 'C':
+        return { background: 'rgb(128, 0, 128)', color: 'rgb(255, 255, 255)' };
+      default:
+        return { background: 'rgb(255, 255, 255)', color: 'rgb(0, 0, 0)' };
+    }
+  })();
+  const legacyBackground =
+    marker.kind === 'damage'
+      ? 'rgb(255, 98, 0)'
+      : marker.kind === 'specialCondition'
+        ? legacyConditionPalette.background
+        : marker.side === 'local'
+          ? 'rgba(59, 141, 173, 0.708)'
+          : 'rgba(255, 60, 0, 0.392)';
+  const legacyColor =
+    marker.kind === 'damage'
+      ? 'rgb(255, 255, 255)'
+      : marker.kind === 'specialCondition'
+        ? legacyConditionPalette.color
+        : 'rgb(0, 0, 0)';
+  const legacyFontSize =
+    marker.kind === 'damage'
+      ? marker.bounds.width / 2
+      : marker.kind === 'specialCondition'
+        ? marker.bounds.width * 0.75
+        : undefined;
   return (
     <div
       className={`ptcgsim-marker ptcgsim-marker-${marker.kind}`}
       data-marker-id={marker.id}
+      data-marker-presentation={marker.presentation}
+      data-marker-side={marker.side}
       aria-hidden="true"
-      style={{
-        ...absoluteRect(marker.bounds, marker.zIndex),
-        display: 'grid',
-        placeItems: 'center',
-        borderRadius: '50%',
-        background: marker.kind === 'damage' ? '#e64242' : '#efefef',
-        color: marker.kind === 'damage' ? '#fff' : '#111',
-        fontSize: Math.max(10, marker.bounds.height * 0.42),
-        fontWeight: 700,
-        pointerEvents: 'none',
-      }}
+      style={
+        legacy
+          ? {
+              ...absoluteRect(marker.bounds, marker.zIndex),
+              display: 'block',
+              borderRadius: marker.kind === 'abilityUsed' ? '10%' : '50%',
+              background: legacyBackground,
+              color: legacyColor,
+              fontSize: legacyFontSize,
+              lineHeight:
+                marker.kind === 'abilityUsed'
+                  ? `${marker.bounds.width / 3}px`
+                  : `${marker.bounds.width}px`,
+              textAlign: 'center',
+              pointerEvents: 'none',
+            }
+          : {
+              ...absoluteRect(marker.bounds, marker.zIndex),
+              display: 'grid',
+              placeItems: 'center',
+              borderRadius: '50%',
+              background: marker.kind === 'damage' ? '#e64242' : '#efefef',
+              color: marker.kind === 'damage' ? '#fff' : '#111',
+              fontSize: Math.max(10, marker.bounds.height * 0.42),
+              fontWeight: 700,
+              pointerEvents: 'none',
+            }
+      }
     >
-      {marker.value}
+      {legacy && marker.kind === 'abilityUsed' ? '' : marker.value}
     </div>
   );
 });

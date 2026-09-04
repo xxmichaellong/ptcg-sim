@@ -87,6 +87,14 @@ apps/web/src/
   board/PixiBoardSessionRuntime.ts
 ```
 
+The implemented marker boundary is intentionally narrower than the eventual
+`MarkerViewSystem`: renderer-contract owns canonical active-q0 current-state geometry,
+side/presentation descriptors, and stable marker diffs; React DOM consumes the
+source-backed circle/tab paint; Pixi reuses keyed marker views without texture
+churn. Real owner/opponent/spectator coverage protects recipient aliases and
+geometry. Rotated/history-dependent, bench, BREAK/compound, attachment/
+transfer, editing, and Pixi-native paint/hit cases remain generic or deferred.
+
 If ADR-004 is reopened and Pixi later wins, split the compact spike adapter into
 the following production systems as those responsibilities gain behavior. Do
 not create empty structure before it has real ownership to contain:

@@ -12,7 +12,9 @@ import {
   BOARD_LAYOUT_GEOMETRY_VERSION,
   createBoardLayoutSnapshot,
   findBoardLayoutRegion,
+  layoutLegacyActiveQ0Markers,
   layoutLegacyOrdinaryEvolutionStack,
+  layoutLegacyPlaySlotCards,
   layoutLegacySingleEnergyTrainerToolAttachmentStack,
   layoutLegacySingleEnergyAttachmentStack,
   layoutLegacySingleTrainerToolAttachmentStack,
@@ -348,6 +350,71 @@ const createSingleEnergyTrainerToolAttachmentView = (): MatchViewState => {
   };
 };
 
+interface ActiveMarkerFixtureState {
+  readonly damage: number | null;
+  readonly specialCondition: string | null;
+  readonly abilityUsed: boolean;
+}
+
+const allActiveMarkers: ActiveMarkerFixtureState = {
+  damage: 130,
+  specialCondition: 'P',
+  abilityUsed: true,
+};
+
+const noActiveMarkers: ActiveMarkerFixtureState = {
+  damage: null,
+  specialCondition: null,
+  abilityUsed: false,
+};
+
+const createPristineActiveMarkerView = (
+  localMarkers: ActiveMarkerFixtureState = allActiveMarkers,
+  opponentMarkers: ActiveMarkerFixtureState = allActiveMarkers
+): MatchViewState => {
+  const view = createView();
+  const card = (id: string, ownerId: typeof p1 | typeof p2) => ({
+    kind: 'known' as const,
+    id: asViewCardId(id),
+    definitionId,
+    ownerId,
+    category: 'Pokémon' as const,
+    face: 'up' as const,
+    orientationQuarterTurns: 0 as const,
+    abilityUsed: false,
+    publiclyRevealed: false,
+  });
+  const stack = (
+    id: string,
+    boardPlayerId: typeof p1 | typeof p2,
+    markers: ActiveMarkerFixtureState
+  ) => ({
+    id,
+    boardPlayerId,
+    slot: 'active' as const,
+    evolutionCards: [card(`${id}:base`, boardPlayerId)],
+    attachmentCards: [],
+    rotationQuarterTurns: 0 as const,
+    ...markers,
+  });
+  const local = stack('stack:p1:active-markers', p1, localMarkers);
+  const opponent = stack('stack:p2:active-markers', p2, opponentMarkers);
+  return {
+    ...view,
+    zones: Object.fromEntries(
+      Object.entries(view.zones).map(([id, zone]) => [
+        id,
+        { ...zone, cards: [] },
+      ])
+    ),
+    boards: {
+      [p1]: { activeStackId: local.id, benchStackIds: [] },
+      [p2]: { activeStackId: opponent.id, benchStackIds: [] },
+    },
+    stacks: { [local.id]: local, [opponent.id]: opponent },
+  };
+};
+
 const options = {
   viewport: DEFAULT_BOARD_VIEWPORT,
   bottomPlayerId: p1,
@@ -473,13 +540,516 @@ describe('renderer-neutral board scene', () => {
         expect.objectContaining({
           id: `${stadiumCard.id}:abilityUsed`,
           parentCardId: stadiumCard.id,
+          side: 'shared',
+          presentation: 'generic',
         }),
         expect.objectContaining({
           id: `${attachment.id}:abilityUsed`,
           parentCardId: attachment.id,
+          side: 'local',
+          presentation: 'generic',
         }),
       ])
     );
+  });
+
+  it('uses exact play-slot card and pristine-q0 marker geometry on both sides', () => {
+    const layout = createBoardLayoutSnapshot(characterizedEvolutionLayoutState);
+    const markerCases = [
+      { damage: 130, specialCondition: null, abilityUsed: false },
+      { damage: null, specialCondition: 'P', abilityUsed: false },
+      { damage: null, specialCondition: null, abilityUsed: true },
+      allActiveMarkers,
+    ] as const satisfies readonly ActiveMarkerFixtureState[];
+
+    for (const markerState of markerCases) {
+      const view = createPristineActiveMarkerView(markerState, markerState);
+      const scene = createBoardScene(view, layout);
+      for (const [playerId, side] of [
+        [p1, 'local'],
+        [p2, 'opponent'],
+      ] as const) {
+        const stackId = `stack:${playerId}:active-markers`;
+        const stack = view.stacks[stackId]!;
+        const cardId = stack.evolutionCards[0]!.id;
+        const expectedCardBounds = layoutLegacyPlaySlotCards(
+          findBoardLayoutRegion(layout, side, 'active'),
+          [63 / 88]
+        )[0]!;
+        const expectedMarkers = layoutLegacyActiveQ0Markers(
+          expectedCardBounds,
+          side
+        );
+        expect(scene.cards.find((card) => card.id === cardId)).toMatchObject({
+          parentId: stackId,
+          side,
+          role: 'stackEvolution',
+          bounds: expectedCardBounds,
+          zIndex: 300,
+          rotationQuarterTurns: side === 'local' ? 0 : 2,
+        });
+
+        const values = {
+          damage:
+            markerState.damage === null ? null : String(markerState.damage),
+          specialCondition: markerState.specialCondition,
+          abilityUsed: markerState.abilityUsed ? 'used' : null,
+        } as const;
+        for (const kind of [
+          'damage',
+          'specialCondition',
+          'abilityUsed',
+        ] as const) {
+          const marker = scene.markers.find(
+            (candidate) => candidate.id === `${stackId}:${kind}`
+          );
+          const value = values[kind];
+          if (value === null) {
+            expect(marker).toBeUndefined();
+          } else {
+            expect(marker).toEqual({
+              id: `${stackId}:${kind}`,
+              parentCardId: cardId,
+              side,
+              kind,
+              presentation: 'legacyActiveQ0',
+              value,
+              bounds: expectedMarkers[kind].bounds,
+              zIndex: 300 + expectedMarkers[kind].sourceZIndex,
+              label: `${kind}: ${value}`,
+            });
+          }
+        }
+      }
+    }
+
+    const recipientSafeView = createPristineActiveMarkerView();
+    const recipientSafeEquivalent: MatchViewState = {
+      ...recipientSafeView,
+      viewer: { kind: 'spectator' },
+      revision: recipientSafeView.revision + 1,
+      definitions: {},
+      stacks: Object.fromEntries(
+        Object.entries(recipientSafeView.stacks).map(([id, stack]) => [
+          id,
+          {
+            ...stack,
+            evolutionCards: stack.evolutionCards.map((card) =>
+              card.kind === 'known'
+                ? { ...card, publiclyRevealed: !card.publiclyRevealed }
+                : card
+            ),
+          },
+        ])
+      ),
+    };
+    const geometry = (view: MatchViewState) => {
+      const scene = createBoardScene(view, layout);
+      return {
+        cards: scene.cards.map(
+          ({ id, bounds, zIndex, rotationQuarterTurns }) => ({
+            id,
+            bounds,
+            zIndex,
+            rotationQuarterTurns,
+          })
+        ),
+        markers: scene.markers,
+      };
+    };
+    expect(geometry(recipientSafeEquivalent)).toEqual(
+      geometry(recipientSafeView)
+    );
+  });
+
+  it('fails pristine-q0 marker presentation closed for every projected shape and layout boundary', () => {
+    const baseView = createPristineActiveMarkerView();
+    const layout = createBoardLayoutSnapshot(characterizedEvolutionLayoutState);
+    const stackKey = 'stack:p1:active-markers';
+    const original = baseView.stacks[stackKey]!;
+    const originalBase = original.evolutionCards[0]!;
+    if (originalBase.kind !== 'known') {
+      throw new Error('Pristine marker fixture base must be known');
+    }
+    const withLocalStack = (
+      stack: MatchViewState['stacks'][string],
+      board: MatchViewState['boards'][string] = baseView.boards[p1]!,
+      extraStacks: MatchViewState['stacks'] = {}
+    ): MatchViewState => ({
+      ...baseView,
+      boards: { ...baseView.boards, [p1]: board },
+      stacks: { ...baseView.stacks, ...extraStacks, [stackKey]: stack },
+    });
+    const genericSlotBounds = (
+      view: MatchViewState,
+      targetLayout: BoardLayoutSnapshot
+    ): Rect => {
+      const stack = view.stacks[stackKey]!;
+      const side = targetLayout.players.find(
+        (player) => player.playerId === p1
+      )?.side;
+      if (!side) throw new Error('Missing p1 marker fallback side');
+      const bounds = findBoardLayoutRegion(
+        targetLayout,
+        side,
+        stack.slot
+      ).physicalContentBoxBounds;
+      const height = bounds.height;
+      const width = Math.min(height * (63 / 88), bounds.width);
+      const count =
+        stack.slot === 'active'
+          ? view.boards[p1]!.activeStackId === null
+            ? 0
+            : 1
+          : view.boards[p1]!.benchStackIds.length;
+      const index =
+        stack.slot === 'active'
+          ? 0
+          : view.boards[p1]!.benchStackIds.indexOf(stackKey);
+      const gap = Math.min(bounds.width * 0.005, 6);
+      const step = Math.min(
+        width + gap,
+        (bounds.width - width) / Math.max(1, count - 1)
+      );
+      const rowWidth = width + step * (count - 1);
+      return {
+        x: bounds.x + Math.max(0, (bounds.width - rowWidth) / 2) + step * index,
+        y: bounds.y + bounds.height - height,
+        width,
+        height,
+      };
+    };
+    const expectFallback = (
+      view: MatchViewState,
+      targetLayout: BoardLayoutSnapshot = layout
+    ) => {
+      const scene = createBoardScene(view, targetLayout);
+      const stack = view.stacks[stackKey]!;
+      const topIndex = stack.evolutionCards.length - 1;
+      const topId = stack.evolutionCards[topIndex]!.id;
+      const topCard = scene.cards.find((card) => card.id === topId)!;
+      const side = targetLayout.players.find(
+        (player) => player.playerId === p1
+      )?.side;
+      if (!side) throw new Error('Missing p1 marker fallback player');
+      expect(topCard).toMatchObject({
+        bounds: genericSlotBounds(view, targetLayout),
+        zIndex: 300 + topIndex,
+      });
+      const size = Math.max(
+        14,
+        Math.min(topCard.bounds.width, topCard.bounds.height) * 0.22
+      );
+      const values = {
+        damage: stack.damage === null ? null : String(stack.damage),
+        specialCondition: stack.specialCondition,
+        abilityUsed: stack.abilityUsed ? 'used' : null,
+      } as const;
+      for (const [kind, offset] of [
+        ['damage', 0],
+        ['specialCondition', 1],
+        ['abilityUsed', 2],
+      ] as const) {
+        const value = values[kind];
+        const marker = scene.markers.find(
+          (candidate) => candidate.id === `${stack.id}:${kind}`
+        );
+        if (value === null) {
+          expect(marker).toBeUndefined();
+        } else {
+          expect(marker).toMatchObject({
+            parentCardId: topId,
+            side,
+            kind,
+            presentation: 'generic',
+            value,
+            bounds: {
+              x: topCard.bounds.x + topCard.bounds.width - size,
+              y: topCard.bounds.y + offset * size,
+              width: size,
+              height: size,
+            },
+            zIndex: topCard.zIndex + 100 + offset,
+          });
+        }
+      }
+    };
+
+    const attachment = {
+      ...originalBase,
+      id: asViewCardId('marker-fallback-energy'),
+      definitionId: energyDefinitionId,
+      category: 'Energy' as const,
+    };
+    const extraEvolution = {
+      ...originalBase,
+      id: asViewCardId('marker-fallback-evolution'),
+    };
+    for (const stack of [
+      { ...original, evolutionCards: [originalBase, extraEvolution] },
+      { ...original, attachmentCards: [attachment] },
+      { ...original, rotationQuarterTurns: 1 as const },
+      {
+        ...original,
+        evolutionCards: [
+          { ...originalBase, orientationQuarterTurns: 1 as const },
+        ],
+      },
+      {
+        ...original,
+        evolutionCards: [{ ...originalBase, abilityUsed: true }],
+      },
+      {
+        ...original,
+        evolutionCards: [{ ...originalBase, category: 'Trainer' as const }],
+      },
+      {
+        ...original,
+        evolutionCards: [{ ...originalBase, category: 'Energy' as const }],
+      },
+      {
+        ...original,
+        evolutionCards: [{ ...originalBase, category: 'Unknown' as const }],
+      },
+      {
+        ...original,
+        evolutionCards: [{ ...originalBase, face: 'down' as const }],
+      },
+      {
+        ...original,
+        evolutionCards: [
+          {
+            kind: 'concealed' as const,
+            id: originalBase.id,
+            ownerId: p1,
+            cardBackUrl: '/blue-back.png',
+            publiclyRevealed: false,
+          },
+        ],
+      },
+      {
+        ...original,
+        evolutionCards: [{ ...originalBase, ownerId: p2 }],
+      },
+      { ...original, boardPlayerId: p2 },
+      { ...original, id: 'marker-fallback-mismatched-stack-id' },
+    ] as const satisfies readonly MatchViewState['stacks'][string][]) {
+      expectFallback(withLocalStack(stack));
+    }
+
+    const benchCard = {
+      ...originalBase,
+      id: asViewCardId('marker-fallback-bench-base'),
+    };
+    const benchStack = {
+      ...original,
+      id: 'stack:p1:marker-fallback-bench',
+      slot: 'bench' as const,
+      evolutionCards: [benchCard],
+      damage: null,
+      specialCondition: null,
+      abilityUsed: false,
+    };
+    expectFallback(
+      withLocalStack(
+        original,
+        {
+          activeStackId: stackKey,
+          benchStackIds: [benchStack.id],
+        },
+        { [benchStack.id]: benchStack }
+      )
+    );
+    expectFallback(
+      withLocalStack(
+        { ...original, slot: 'bench' },
+        { activeStackId: null, benchStackIds: [stackKey] }
+      )
+    );
+
+    const forgeLocalActive = (
+      mutate: (region: BoardLayoutRegion) => BoardLayoutRegion
+    ): BoardLayoutSnapshot => {
+      const mutatePlayer = (player: (typeof layout.players)[number]) =>
+        player.playerId === p1
+          ? {
+              ...player,
+              regions: player.regions.map((region) =>
+                region.kind === 'active' ? mutate(region) : region
+              ),
+            }
+          : player;
+      return {
+        ...layout,
+        players: [
+          mutatePlayer(layout.players[0]),
+          mutatePlayer(layout.players[1]),
+        ],
+      };
+    };
+    const forgedLayouts: readonly BoardLayoutSnapshot[] = [
+      forgeLocalActive((region) => ({ ...region, id: 'local:bench' })),
+      forgeLocalActive((region) => ({ ...region, playerId: p2 })),
+      forgeLocalActive((region) => ({ ...region, side: 'opponent' })),
+      forgeLocalActive((region) => ({ ...region, physicalSide: 'upper' })),
+      forgeLocalActive((region) => ({ ...region, surface: 'zone' })),
+      forgeLocalActive((region) => ({
+        ...region,
+        playerLocalNormalizedBounds: {
+          ...region.playerLocalNormalizedBounds,
+          x: region.playerLocalNormalizedBounds.x + 0.01,
+        },
+      })),
+      forgeLocalActive((region) => ({
+        ...region,
+        physicalDeclaredBounds: {
+          ...region.physicalDeclaredBounds,
+          x: region.physicalDeclaredBounds.x + 1,
+        },
+      })),
+      forgeLocalActive((region) => ({
+        ...region,
+        physicalBorderBoxBounds: {
+          ...region.physicalBorderBoxBounds,
+          x: region.physicalBorderBoxBounds.x + 1,
+        },
+      })),
+      forgeLocalActive((region) => ({
+        ...region,
+        physicalContentBoxBounds: {
+          ...region.physicalContentBoxBounds,
+          x: region.physicalContentBoxBounds.x + 1,
+        },
+      })),
+    ];
+    for (const forgedLayout of forgedLayouts) {
+      expectFallback(baseView, forgedLayout);
+    }
+
+    for (const layoutState of [
+      { ...characterizedEvolutionLayoutState, shellMode: 'fullscreen' },
+      {
+        ...characterizedEvolutionLayoutState,
+        vertical: {
+          ...characterizedEvolutionLayoutState.vertical,
+          lowerFrame: { bottomRatio: 0, heightRatio: 0.6 },
+          upperFrame: { bottomRatio: 0.6, heightRatio: 0.4 },
+        },
+      },
+      {
+        ...characterizedEvolutionLayoutState,
+        vertical: {
+          ...characterizedEvolutionLayoutState.vertical,
+          lowerHandle: { bottomRatio: 0.51, heightRatio: 0.025 },
+        },
+      },
+      {
+        ...characterizedEvolutionLayoutState,
+        vertical: {
+          ...characterizedEvolutionLayoutState.vertical,
+          sharedPlacement: 'handleMidpoint',
+        },
+      },
+      { ...characterizedEvolutionLayoutState, bottomPlayerId: p2 },
+      {
+        ...characterizedEvolutionLayoutState,
+        viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+      },
+      {
+        ...characterizedEvolutionLayoutState,
+        viewport: { width: 1600, height: 900, devicePixelRatio: 2 },
+      },
+    ] as const satisfies readonly BoardLayoutState[]) {
+      expectFallback(baseView, createBoardLayoutSnapshot(layoutState));
+    }
+
+    const markerless = createPristineActiveMarkerView(
+      noActiveMarkers,
+      noActiveMarkers
+    );
+    expect(createBoardScene(markerless, layout).markers).toEqual([]);
+  });
+
+  it('diffs stable marker identities and every renderer-visible marker field', () => {
+    const layout = createBoardLayoutSnapshot(characterizedEvolutionLayoutState);
+    const none = createBoardScene(
+      createPristineActiveMarkerView(noActiveMarkers, noActiveMarkers),
+      layout
+    );
+    const damage = createBoardScene(
+      createPristineActiveMarkerView(
+        { damage: 130, specialCondition: null, abilityUsed: false },
+        noActiveMarkers
+      ),
+      layout
+    );
+    const damageAndCondition = createBoardScene(
+      createPristineActiveMarkerView(
+        { damage: 140, specialCondition: 'P', abilityUsed: false },
+        noActiveMarkers
+      ),
+      layout
+    );
+    const updatedDamage = createBoardScene(
+      createPristineActiveMarkerView(
+        { damage: 140, specialCondition: null, abilityUsed: false },
+        noActiveMarkers
+      ),
+      layout
+    );
+    const damageId = 'stack:p1:active-markers:damage';
+    const conditionId = 'stack:p1:active-markers:specialCondition';
+
+    expect(diffBoardScenes(none, damage)).toMatchObject({
+      addedCardIds: [],
+      removedCardIds: [],
+      updatedCardIds: [],
+      addedMarkerIds: [damageId],
+      removedMarkerIds: [],
+      updatedMarkerIds: [],
+      unchangedMarkerIds: [],
+    });
+    expect(diffBoardScenes(damage, damageAndCondition)).toMatchObject({
+      addedMarkerIds: [conditionId],
+      removedMarkerIds: [],
+      updatedMarkerIds: [damageId],
+      unchangedMarkerIds: [],
+    });
+    expect(diffBoardScenes(damageAndCondition, updatedDamage)).toMatchObject({
+      addedMarkerIds: [],
+      removedMarkerIds: [conditionId],
+      updatedMarkerIds: [],
+      unchangedMarkerIds: [damageId],
+    });
+
+    const baselineMarker = damage.markers[0]!;
+    const alternateParent = damage.cards.find(
+      (card) => card.id !== baselineMarker.parentCardId
+    )!.id;
+    const mutations = [
+      { parentCardId: alternateParent },
+      { side: 'opponent' as const },
+      { kind: 'specialCondition' as const },
+      { presentation: 'generic' as const },
+      { value: '140' },
+      { bounds: { ...baselineMarker.bounds, x: baselineMarker.bounds.x + 1 } },
+      { zIndex: baselineMarker.zIndex + 1 },
+      { label: 'changed marker label' },
+    ] as const;
+    for (const mutation of mutations) {
+      const changed = {
+        ...damage,
+        markers: damage.markers.map((marker) =>
+          marker.id === baselineMarker.id ? { ...marker, ...mutation } : marker
+        ),
+      };
+      expect(diffBoardScenes(damage, changed)).toMatchObject({
+        addedMarkerIds: [],
+        removedMarkerIds: [],
+        updatedMarkerIds: [baselineMarker.id],
+        unchangedMarkerIds: [],
+      });
+    }
   });
 
   it('uses the characterized stable ordinary-evolution layout without definition leakage', () => {

@@ -78,6 +78,28 @@ owner/opponent/spectator session also proves recipient-specific aliases,
 cross-view normalized geometry, and alias stability through movement and a
 category cycle without exposing canonical card or definition IDs.
 
+### Canonical active-q0 marker policy
+
+Do not infer rotated or history-dependent marker placement from pristine
+geometry. The strict marker branch accepts only one known same-owner face-up
+Pokémon in the sole unrotated active stack, no bench/evolution/attachments, at
+the default 1600×900 DPR-1 sidebar/even/unflipped layout, with at least one
+stack marker and no per-card ability marker. It derives the base from the
+public 63:88 ratio and emits explicit local/opponent q0 circle/tab descriptors.
+Every other shape keeps the generic renderer path.
+
+React DOM matches source geometry within 2 px anchors / 1% sizes; palette and
+empty ability text are exact, typography remains proportional, and marker z is
+exactly card z plus one. It remains non-interactive until the shared editor
+lifecycle exists. Marker IDs participate in scene diffs; Pixi
+reuses keyed views without card texture churn but has no native paint/hit claim.
+A real owner/opponent/spectator path proves stable distinct aliases, identical
+normalized marker geometry, and no canonical card/definition leakage. The
+source's q1/q2/q3/q0-return history, wrapper-margin drift, direct editing and
+hit behavior remain evidence rather than production state. Because no DOM
+history is projected, an eligible returned-q0 current state receives the same
+canonical geometry; only the pristine source phase is used for browser parity.
+
 ## Evidence
 
 ### Product and platform fit
@@ -191,7 +213,8 @@ Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
   margin, ghost-wrapper, broader restore, and departure phases remain
   source-only. These paths do not yet claim alternate layout states,
   three-plus or unsupported attachment geometry, transition animation or
-  transient departure DOM, markers, BREAK/compound rotation, overflow,
+  transient departure DOM, rotated/history-dependent markers, marker editing,
+  BREAK/compound rotation, overflow,
   Tool-specific Pixi paint parity, full paint or interaction parity, cover-open
   UX, or opened-zone layout, and the sidebar content rectangle is derived from
   measured shell/tab edges);

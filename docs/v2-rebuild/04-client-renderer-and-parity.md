@@ -380,25 +380,38 @@ rendering remain generic or deferred. Original category history is not
 projected and cannot select geometry. Nonstandard-intrinsic asset parity remains
 unclaimed; definitions and URLs do not select geometry.
 
-A tenth, source-only Chromium checkpoint isolates one ordinary active Pokémon
-with a damage circle, special-condition circle, and ability-used tab in each
-physical frame. It pins damage update, every legacy condition-color branch,
-direct active-zone parentage, editable/pointer-hit semantics, and the
-synchronous q0→q1→q2→q3→q0 rotation reflow. The marker sizes and positions are
-computed from the card's painted box, so q1/q3 expand the circles from one-third
-of 90.5625 px to one-third of 126 px and expand the ability tab from 90.5625 px
-to 126 px. The first q2 writes the active wrapper's `1%` right margin; the
-returned q0 remains shifted about 1.92 px from pristine q0. Opponent circles
-apply their own half-turn inside the already rotated opponent frame, while the
-opponent ability tab does not.
+A tenth Chromium checkpoint isolates one ordinary active Pokémon with a damage
+circle, special-condition circle, and ability-used tab in each physical frame.
+Its source history pins damage update, every legacy condition-color branch,
+direct active-zone parentage, editable/pointer-hit semantics, and synchronous
+q0→q1→q2→q3→q0 reflow. Marker sizes derive from the painted card: q1/q3 expand
+the circles from one-third of 90.5625 px to one-third of 126 px and the ability
+tab from 90.5625 px to 126 px. q2 writes the active wrapper's `1%` right margin;
+returned q0 remains shifted about 1.92 px. Opponent circles add an inner
+half-turn while the opponent ability tab retains only the frame half-turn.
 
-This checkpoint does not compare a production renderer. Bench-only margins,
-BREAK toggles, compound evolution/group rotation, attachment rotation,
-movement/evolution/refresh marker transfer, marker text-entry UX, alternate
-layouts, and DOM/Pixi candidate parity remain explicitly deferred. It therefore
-adds legacy evidence without authorizing a UI/UX change or widening a strict
-renderer predicate; in particular, the active q1/q3 marker geometry remains
-source-only.
+Only canonical active-q0 current-state geometry now enters production. The
+strict predicate requires one known same-owner face-up Pokémon in the sole
+unrotated active stack, no bench, evolution, or attachments, at the default
+1600×900 DPR-1 sidebar/even/unflipped layout, at least one stack marker, and no
+per-card ability marker. The public 63:88 ratio yields a 90.2045×126 px card,
+30.0682 px circles, and a 90.2045×18.0409 px ability tab. React matches the
+pristine source q0 local/opponent geometry within 2 px anchors / 1% sizes;
+palette and empty ability text are exact, typography remains proportional, and
+marker z is exactly card z plus one. Markers remain deliberately non-interactive
+until the editor lifecycle is implemented. Since
+DOM history is absent from the projection, an eligible returned-q0 state is
+canonicalized to the same q0 geometry rather than reproducing wrapper-margin
+drift. Stable marker IDs participate in scene diffs. Pixi reuses keyed
+Container/Graphics/Text views across changes and cleanup without card asset
+churn, but its native paint/hit output is not claimed. A real owner/opponent/
+spectator test proves identical normalized geometry and stable distinct aliases
+without canonical card or definition ID leakage.
+
+Rotated q1/q2/q3 and source history-dependent returned-q0 layout, bench margins,
+BREAK, compound evolution/group and attachment rotation, movement/evolution/
+refresh marker transfer, marker text-entry UX, alternate layouts, and
+Pixi-native paint/hit parity remain explicitly deferred.
 
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during

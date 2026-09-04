@@ -585,8 +585,8 @@ projected category is not Pokémon, alternate layouts, nonstandard-intrinsic
 asset parity, broader gestures, and Pixi paint/hit remain deferred. Unprojected
 original-category history cannot select a renderer path.
 
-`tests/browser/legacy-marker-rotation-geometry.spec.ts` adds a tenth,
-source-only oracle backed by
+`tests/browser/legacy-marker-rotation-geometry.spec.ts` adds a tenth source
+oracle backed by
 `tests/legacy-fixtures/renderer/marker-rotation-v1.json`. Two independent inert
 histories place one ordinary active Pokémon and its damage, special-condition,
 and ability-used markers in the local and opponent source frames. They capture
@@ -608,10 +608,29 @@ The pristine active wrapper has no inline margins. q1 preserves that state;
 q2 writes `margin-right: 1%` and `margin-left: 0%`, q3 retains it, and the
 returned q0 remains at x 556.78125 rather than pristine x 558.703125. This is a
 source-history diagnostic, not a candidate layout rule. The active q1/q3 marker
-geometry remains source-only, and no candidate parity is claimed. Bench q1/q3
-margins, BREAK and compound evolution/group rotation, Energy/Trainer rotation,
-marker transfer/reconstruction, editing gestures, alternate layouts, and
-React/Pixi/renderer-contract parity remain deferred.
+geometry remains source-only.
+
+The same Chromium suite mounts React DOM against only the pristine source q0
+phase. The strict renderer-contract branch admits one known same-owner face-up
+Pokémon in the sole unrotated active stack, no bench/evolution/attachments, at
+the exact default layout, with at least one stack marker and no per-card ability
+marker. It uses the public 63:88 ratio: a 90.2045×126 px card, 30.0682 px
+circles, and a 90.2045×18.0409 px ability tab. Local/opponent physical geometry
+matches the source within 2 px anchors / 1% sizes; palette and empty ability
+text are exact, font and line height remain proportional, and marker z is
+exactly card z plus one. The test separately asserts
+`pointer-events: none`; this intentionally differs from the source's editable,
+pointer-hit markers until the editor lifecycle is implemented. Because DOM
+history is not projected, any eligible returned-q0 current state receives the
+same deterministic q0 geometry rather than the source margin drift. Marker
+scene diffs expose stable add/remove/update/unchanged IDs; keyed Pixi marker
+views update and clean up without card asset churn. Real owner, opponent, and
+spectator sessions retain distinct stable aliases and identical normalized
+geometry without serializing canonical card or definition IDs.
+
+Bench q1/q3 margins, BREAK and compound evolution/group rotation,
+Energy/Trainer rotation, marker transfer/reconstruction, editing gestures,
+alternate layouts, and Pixi-native paint/hit parity remain deferred.
 
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the

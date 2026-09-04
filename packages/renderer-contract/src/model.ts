@@ -100,7 +100,9 @@ export interface CardSceneNode {
 export interface MarkerSceneNode {
   readonly id: string;
   readonly parentCardId: ViewCardId;
+  readonly side: BoardSide | 'shared';
   readonly kind: 'damage' | 'specialCondition' | 'abilityUsed';
+  readonly presentation: 'generic' | 'legacyActiveQ0';
   readonly value: string;
   readonly bounds: Rect;
   readonly zIndex: number;
@@ -263,4 +265,8 @@ export interface BoardSceneDiff {
   readonly removedCardIds: readonly ViewCardId[];
   readonly updatedCardIds: readonly ViewCardId[];
   readonly unchangedCardIds: readonly ViewCardId[];
+  readonly addedMarkerIds: readonly string[];
+  readonly removedMarkerIds: readonly string[];
+  readonly updatedMarkerIds: readonly string[];
+  readonly unchangedMarkerIds: readonly string[];
 }

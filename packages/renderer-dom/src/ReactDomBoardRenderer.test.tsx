@@ -9,6 +9,7 @@ import {
   DEFAULT_BOARD_PREFERENCES,
   DEFAULT_BOARD_PRESENTATION,
   type BoardIntent,
+  type MarkerSceneNode,
   type BoardRendererStatus,
   type BoardScene,
 } from '@ptcgsim/renderer-contract';
@@ -71,6 +72,24 @@ const createScene = (revision = 1, x = 10): BoardScene => ({
   ],
   markers: [],
 });
+
+const marker = (overrides: Partial<MarkerSceneNode> = {}): MarkerSceneNode => ({
+  id: 'stack:p1:active:damage',
+  parentCardId: cardId,
+  side: 'local',
+  kind: 'damage',
+  presentation: 'generic',
+  value: '40',
+  bounds: { x: 80, y: 420, width: 20, height: 20 },
+  zIndex: 200,
+  label: 'damage: 40',
+  ...overrides,
+});
+
+const createMarkerScene = (
+  revision: number,
+  markers: readonly MarkerSceneNode[]
+): BoardScene => ({ ...createScene(revision), markers });
 
 const mountInAct = async (
   renderer: ReactDomBoardRenderer,
@@ -206,6 +225,237 @@ describe('React DOM board renderer', () => {
       domNodes: 0,
     });
     expect(statuses.at(-1)).toEqual({ kind: 'destroyed' });
+  });
+
+  it('preserves generic marker appearance and stable keyed DOM identity', async () => {
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    const damage = marker();
+    const ability = marker({
+      id: 'visible-card:abilityUsed',
+      kind: 'abilityUsed',
+      value: 'used',
+      bounds: { x: 60, y: 440, width: 18, height: 18 },
+      label: 'abilityUsed: used',
+    });
+    await mountInAct(renderer, host, createMarkerScene(1, [damage, ability]));
+
+    const damageNode = host.querySelector<HTMLElement>(
+      '[data-marker-id="stack:p1:active:damage"]'
+    )!;
+    const abilityNode = host.querySelector<HTMLElement>(
+      '[data-marker-id="visible-card:abilityUsed"]'
+    )!;
+    expect(damageNode.dataset).toMatchObject({
+      markerPresentation: 'generic',
+      markerSide: 'local',
+    });
+    expect(damageNode.style).toMatchObject({
+      display: 'grid',
+      placeItems: 'center',
+      borderRadius: '50%',
+      background: '#e64242',
+      color: '#fff',
+      fontSize: '10px',
+      fontWeight: '700',
+      pointerEvents: 'none',
+    });
+    expect(damageNode.textContent).toBe('40');
+    expect(abilityNode.style).toMatchObject({
+      display: 'grid',
+      borderRadius: '50%',
+      background: '#efefef',
+      color: '#111',
+      fontSize: '10px',
+      fontWeight: '700',
+      pointerEvents: 'none',
+    });
+    expect(abilityNode.textContent).toBe('used');
+
+    const moved = marker({
+      value: '50',
+      bounds: { x: 120, y: 425, width: 24, height: 24 },
+      label: 'damage: 50',
+    });
+    act(() =>
+      renderer.installScene(createMarkerScene(2, [moved, ability]), [])
+    );
+    const updatedDamage = host.querySelector<HTMLElement>(
+      '[data-marker-id="stack:p1:active:damage"]'
+    )!;
+    expect(updatedDamage).toBe(damageNode);
+    expect(updatedDamage.textContent).toBe('50');
+    expect(updatedDamage.style.left).toBe('120px');
+    expect(updatedDamage.style.width).toBe('24px');
+    expect(updatedDamage.style.fontSize).toBe('10.08px');
+    expect(renderer.getDiagnostics()).toMatchObject({
+      renderedMarkerIds: ['stack:p1:active:damage', 'visible-card:abilityUsed'],
+      localTextureBindings: 0,
+      globalTextureLeaseEntries: 0,
+      globalTextureReferences: 0,
+    });
+
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
+  });
+
+  it('consumes source-shaped active-q0 marker styles, palettes, updates, and removal', async () => {
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    const legacy = (overrides: Partial<MarkerSceneNode>): MarkerSceneNode =>
+      marker({
+        presentation: 'legacyActiveQ0',
+        bounds: { x: 20, y: 30, width: 30, height: 30 },
+        ...overrides,
+      });
+    const damage = legacy({});
+    const condition = legacy({
+      id: 'stack:p1:active:specialCondition',
+      kind: 'specialCondition',
+      value: 'P',
+      label: 'specialCondition: P',
+    });
+    const localAbility = legacy({
+      id: 'stack:p1:active:abilityUsed',
+      kind: 'abilityUsed',
+      value: 'used',
+      bounds: { x: 20, y: 60, width: 90, height: 18 },
+      label: 'abilityUsed: used',
+    });
+    const opponentAbility = legacy({
+      id: 'stack:p2:active:abilityUsed',
+      side: 'opponent',
+      kind: 'abilityUsed',
+      value: 'used',
+      bounds: { x: 120, y: 60, width: 90, height: 18 },
+      label: 'abilityUsed: used',
+    });
+    await mountInAct(
+      renderer,
+      host,
+      createMarkerScene(1, [damage, condition, localAbility, opponentAbility])
+    );
+
+    const damageNode = host.querySelector<HTMLElement>(
+      '[data-marker-id="stack:p1:active:damage"]'
+    )!;
+    const conditionNode = host.querySelector<HTMLElement>(
+      '[data-marker-id="stack:p1:active:specialCondition"]'
+    )!;
+    const localAbilityNode = host.querySelector<HTMLElement>(
+      '[data-marker-id="stack:p1:active:abilityUsed"]'
+    )!;
+    const opponentAbilityNode = host.querySelector<HTMLElement>(
+      '[data-marker-id="stack:p2:active:abilityUsed"]'
+    )!;
+    expect(damageNode.style).toMatchObject({
+      display: 'block',
+      textAlign: 'center',
+      lineHeight: '30px',
+      borderRadius: '50%',
+      background: 'rgb(255, 98, 0)',
+      color: 'rgb(255, 255, 255)',
+      fontSize: '15px',
+      pointerEvents: 'none',
+    });
+    expect(conditionNode.style).toMatchObject({
+      display: 'block',
+      textAlign: 'center',
+      lineHeight: '30px',
+      borderRadius: '50%',
+      background: 'rgb(0, 128, 0)',
+      color: 'rgb(255, 255, 255)',
+      fontSize: '22.5px',
+      pointerEvents: 'none',
+    });
+    expect(localAbilityNode.style).toMatchObject({
+      display: 'block',
+      borderRadius: '10%',
+      background: 'rgba(59, 141, 173, 0.708)',
+      lineHeight: '30px',
+      pointerEvents: 'none',
+    });
+    expect(localAbilityNode.textContent).toBe('');
+    expect(opponentAbilityNode.dataset.markerSide).toBe('opponent');
+    expect(opponentAbilityNode.style.background).toBe(
+      'rgba(255, 60, 0, 0.392)'
+    );
+    expect(opponentAbilityNode.style.lineHeight).toBe('30px');
+    expect(opponentAbilityNode.textContent).toBe('');
+
+    const palettes = [
+      ['B', 'rgb(255, 0, 0)', 'rgb(255, 255, 255)'],
+      ['A', 'rgb(0, 0, 255)', 'rgb(255, 255, 255)'],
+      ['Pa', 'rgb(255, 255, 0)', 'rgb(0, 0, 0)'],
+      ['C', 'rgb(128, 0, 128)', 'rgb(255, 255, 255)'],
+      ['X', 'rgb(255, 255, 255)', 'rgb(0, 0, 0)'],
+    ] as const;
+    let revision = 2;
+    for (const [value, background, color] of palettes) {
+      const updatedCondition = legacy({
+        ...condition,
+        value,
+        label: `specialCondition: ${value}`,
+      });
+      act(() =>
+        renderer.installScene(
+          createMarkerScene(revision, [
+            damage,
+            updatedCondition,
+            localAbility,
+            opponentAbility,
+          ]),
+          []
+        )
+      );
+      revision += 1;
+      const updatedNode = host.querySelector<HTMLElement>(
+        '[data-marker-id="stack:p1:active:specialCondition"]'
+      )!;
+      expect(updatedNode).toBe(conditionNode);
+      expect(updatedNode.textContent).toBe(value);
+      expect(updatedNode.style.background).toBe(background);
+      expect(updatedNode.style.color).toBe(color);
+    }
+
+    act(() =>
+      renderer.installScene(
+        createMarkerScene(revision, [damage, condition, localAbility]),
+        []
+      )
+    );
+    expect(opponentAbilityNode.isConnected).toBe(false);
+    expect(localAbilityNode.isConnected).toBe(true);
+    expect(renderer.getDiagnostics().renderedMarkerIds).toEqual([
+      'stack:p1:active:damage',
+      'stack:p1:active:specialCondition',
+      'stack:p1:active:abilityUsed',
+    ]);
+
+    act(() => renderer.clearScene());
+    expect(host.querySelectorAll('[data-marker-id]')).toHaveLength(0);
+    expect(renderer.getDiagnostics()).toMatchObject({
+      renderedMarkerIds: [],
+      localTextureBindings: 0,
+      globalTextureLeaseEntries: 0,
+      globalTextureReferences: 0,
+    });
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
   });
 
   it('rejects an invalid initial scene before allocating a React root', async () => {
