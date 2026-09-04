@@ -10,6 +10,7 @@ import lowerGroupOracle from '../../legacy-fixtures/renderer/compound-lower-grou
 import lowerQ0Oracle from '../../legacy-fixtures/renderer/compound-lower-q0-single-v1.json' with { type: 'json' };
 import oracle from '../../legacy-fixtures/renderer/compound-lower-nonzero-group-single-v1.json' with { type: 'json' };
 import nonzeroOracle from '../../legacy-fixtures/renderer/compound-nonzero-group-single-v1.json' with { type: 'json' };
+import { expectLegacyCompoundRotationBucketIsolation } from './legacy-compound-rotation-bucket-assertions.js';
 
 import type {
   CapturedPoint,
@@ -384,36 +385,10 @@ export const assertLowerNonzeroLiveCapture = async (
   );
 
   expect(capture.sourceFulfillment).toEqual(expectedFulfillment);
-  expect(capture.ordinaryGroupCases).toEqual([]);
-  expect(capture.breakGroupCases).toEqual([]);
-  expect(capture.lowerGroupInitiatorCases).toEqual([]);
-  expect(capture.lowerQ0SingleCases).toEqual([]);
-  expect(capture.lowerReturnedQ0SingleCases).toEqual([]);
-  expect(capture.lowerHistoryAuthoredQ0SingleCases).toEqual([]);
-  expect(capture.lowerNonzeroGroupSingleFollowupCases).toEqual([]);
-  expect(capture.lowerNonzeroGroupRotationAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroGroupRefreshAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroSameLowerGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroDifferentLowerGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroSameLowerSecondGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroDifferentLowerSecondGroupAfterSingleCases).toEqual(
-    []
+  expectLegacyCompoundRotationBucketIsolation(
+    capture,
+    'lowerNonzeroGroupSingleCases'
   );
-  expect(capture.lowerNonzeroTopSecondGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroTopThenPriorLowerGroupAfterSingleCases).toEqual(
-    []
-  );
-  expect(capture.lowerNonzeroTopThenOtherLowerGroupAfterSingleCases).toEqual(
-    []
-  );
-  expect(capture.lowerNonzeroTopThirdGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroTopFourthGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroSameLowerThirdGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroDifferentLowerThirdGroupAfterSingleCases).toEqual(
-    []
-  );
-  expect(capture.nonzeroGroupSingleCases).toEqual([]);
-  expect(capture.breakRefreshCases).toEqual([]);
   expect(capture.lowerNonzeroGroupSingleCases.map((entry) => entry.id)).toEqual(
     oracle.input.casesByComposition[composition]
   );

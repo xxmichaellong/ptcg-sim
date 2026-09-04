@@ -1475,7 +1475,7 @@ export interface LegacySourceCompoundRotationFixture {
   readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
 }
 
-type LegacyCompoundRotationCaseBucket = Exclude<
+export type LegacyCompoundRotationCaseBucket = Exclude<
   keyof LegacySourceCompoundRotationFixture,
   'frames' | 'frameTransforms' | 'sourceFulfillment'
 >;
@@ -1799,7 +1799,7 @@ const legacyCompoundRotationModeRoutes = {
 type LegacyCompoundRotationCaptureMode =
   keyof typeof legacyCompoundRotationModeRoutes;
 
-const legacyCompoundRotationCaseBuckets = [
+export const legacyCompoundRotationCaseBuckets = [
   'ordinaryGroupCases',
   'breakGroupCases',
   'lowerGroupInitiatorCases',

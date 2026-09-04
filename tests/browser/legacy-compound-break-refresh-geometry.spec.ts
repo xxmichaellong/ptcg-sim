@@ -6,6 +6,7 @@ import { expect, test } from '@playwright/test';
 
 import breakOracle from '../legacy-fixtures/renderer/compound-break-rotation-v1.json' with { type: 'json' };
 import oracle from '../legacy-fixtures/renderer/compound-break-refresh-q0-q2-v1.json' with { type: 'json' };
+import { expectLegacyCompoundRotationBucketIsolation } from './support/legacy-compound-rotation-bucket-assertions.js';
 
 import {
   captureLegacySourceCompoundBreakRefreshFixture,
@@ -297,36 +298,7 @@ test('checked-in legacy BREAK q0/q2 refreshes preserve their exact history-depen
     ],
     unexpectedSameOriginPaths: [],
   });
-  expect(capture.ordinaryGroupCases).toEqual([]);
-  expect(capture.breakGroupCases).toEqual([]);
-  expect(capture.lowerGroupInitiatorCases).toEqual([]);
-  expect(capture.lowerQ0SingleCases).toEqual([]);
-  expect(capture.lowerReturnedQ0SingleCases).toEqual([]);
-  expect(capture.lowerHistoryAuthoredQ0SingleCases).toEqual([]);
-  expect(capture.lowerNonzeroGroupSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroGroupSingleFollowupCases).toEqual([]);
-  expect(capture.lowerNonzeroGroupRotationAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroGroupRefreshAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroSameLowerGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroDifferentLowerGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroSameLowerSecondGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroDifferentLowerSecondGroupAfterSingleCases).toEqual(
-    []
-  );
-  expect(capture.lowerNonzeroTopSecondGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroTopThenPriorLowerGroupAfterSingleCases).toEqual(
-    []
-  );
-  expect(capture.lowerNonzeroTopThenOtherLowerGroupAfterSingleCases).toEqual(
-    []
-  );
-  expect(capture.lowerNonzeroTopThirdGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroTopFourthGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroSameLowerThirdGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroDifferentLowerThirdGroupAfterSingleCases).toEqual(
-    []
-  );
-  expect(capture.nonzeroGroupSingleCases).toEqual([]);
+  expectLegacyCompoundRotationBucketIsolation(capture, 'breakRefreshCases');
   const scenarioId = {
     breakRefreshFreshQ0: 'fresh-q0',
     breakRefreshReturnedQ0: 'returned-q0',

@@ -7,6 +7,7 @@ import { expect, test } from '@playwright/test';
 import breakOracle from '../legacy-fixtures/renderer/compound-break-rotation-v1.json' with { type: 'json' };
 import groupOracle from '../legacy-fixtures/renderer/compound-group-rotation-v1.json' with { type: 'json' };
 import evolutionOracle from '../legacy-fixtures/renderer/evolution-reflow-v1.json' with { type: 'json' };
+import { expectLegacyCompoundRotationBucketIsolation } from './support/legacy-compound-rotation-bucket-assertions.js';
 
 import {
   captureLegacySourceCompoundRotationFixture,
@@ -250,41 +251,27 @@ test('checked-in legacy compound stacks preserve ordinary and BREAK rotation his
     ],
     unexpectedSameOriginPaths: [],
   });
+  expectLegacyCompoundRotationBucketIsolation(
+    capture,
+    'ordinaryGroupCases',
+    'breakGroupCases'
+  );
   expect(capture.ordinaryGroupCases.map((entry) => entry.id)).toEqual(
     groupOracle.input.cases
   );
   expect(capture.breakGroupCases.map((entry) => entry.id)).toEqual(
     breakOracle.input.cases
   );
-  expect(capture.lowerGroupInitiatorCases).toEqual([]);
-  expect(capture.lowerQ0SingleCases).toEqual([]);
-  expect(capture.lowerReturnedQ0SingleCases).toEqual([]);
-  expect(capture.lowerHistoryAuthoredQ0SingleCases).toEqual([]);
-  expect(capture.lowerNonzeroGroupSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroGroupSingleFollowupCases).toEqual([]);
-  expect(capture.lowerNonzeroGroupRotationAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroGroupRefreshAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroSameLowerGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroDifferentLowerGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroSameLowerSecondGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroDifferentLowerSecondGroupAfterSingleCases).toEqual(
-    []
-  );
-  expect(capture.lowerNonzeroTopSecondGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroTopThenPriorLowerGroupAfterSingleCases).toEqual(
-    []
-  );
-  expect(capture.lowerNonzeroTopThenOtherLowerGroupAfterSingleCases).toEqual(
-    []
-  );
-  expect(capture.lowerNonzeroTopThirdGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroTopFourthGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroSameLowerThirdGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroDifferentLowerThirdGroupAfterSingleCases).toEqual(
-    []
-  );
-  expect(capture.nonzeroGroupSingleCases).toEqual([]);
-  expect(capture.breakRefreshCases).toEqual([]);
+  expect(() =>
+    expectLegacyCompoundRotationBucketIsolation(
+      {
+        ...capture,
+        lowerQ0SingleCases: capture.ordinaryGroupCases,
+      },
+      'ordinaryGroupCases',
+      'breakGroupCases'
+    )
+  ).toThrow(/lowerQ0SingleCases must be empty/);
   for (const side of ['local', 'opponent'] as const) {
     expectRect(
       capture.frames[side],

@@ -8,6 +8,8 @@ import groupOracle from '../legacy-fixtures/renderer/compound-group-rotation-v1.
 import lowerQ0Oracle from '../legacy-fixtures/renderer/compound-lower-q0-single-v1.json' with { type: 'json' };
 import oracle from '../legacy-fixtures/renderer/compound-lower-history-authored-q0-single-v1.json' with { type: 'json' };
 import returnedQ0Oracle from '../legacy-fixtures/renderer/compound-lower-returned-q0-single-v1.json' with { type: 'json' };
+import { expectLegacyCompoundRotationBucketIsolation } from './support/legacy-compound-rotation-bucket-assertions.js';
+
 import {
   captureLegacySourceCompoundLowerHistoryAuthoredQ0SingleFixture,
   type CapturedPoint,
@@ -464,36 +466,10 @@ test('checked-in legacy lower Alt-R pins the combined history-authored q0 matrix
   );
 
   expect(capture.sourceFulfillment).toEqual(expectedFulfillment);
-  expect(capture.ordinaryGroupCases).toEqual([]);
-  expect(capture.breakGroupCases).toEqual([]);
-  expect(capture.lowerGroupInitiatorCases).toEqual([]);
-  expect(capture.lowerQ0SingleCases).toEqual([]);
-  expect(capture.lowerReturnedQ0SingleCases).toEqual([]);
-  expect(capture.lowerNonzeroGroupSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroGroupSingleFollowupCases).toEqual([]);
-  expect(capture.lowerNonzeroGroupRotationAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroGroupRefreshAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroSameLowerGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroDifferentLowerGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroSameLowerSecondGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroDifferentLowerSecondGroupAfterSingleCases).toEqual(
-    []
+  expectLegacyCompoundRotationBucketIsolation(
+    capture,
+    'lowerHistoryAuthoredQ0SingleCases'
   );
-  expect(capture.lowerNonzeroTopSecondGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroTopThenPriorLowerGroupAfterSingleCases).toEqual(
-    []
-  );
-  expect(capture.lowerNonzeroTopThenOtherLowerGroupAfterSingleCases).toEqual(
-    []
-  );
-  expect(capture.lowerNonzeroTopThirdGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroTopFourthGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroSameLowerThirdGroupAfterSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroDifferentLowerThirdGroupAfterSingleCases).toEqual(
-    []
-  );
-  expect(capture.nonzeroGroupSingleCases).toEqual([]);
-  expect(capture.breakRefreshCases).toEqual([]);
   expect(
     capture.lowerHistoryAuthoredQ0SingleCases.map((entry) => entry.id)
   ).toEqual(oracle.input.cases);

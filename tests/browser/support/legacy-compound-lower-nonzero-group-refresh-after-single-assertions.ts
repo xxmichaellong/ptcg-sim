@@ -6,6 +6,7 @@ import { expect, type Page, type TestInfo } from '@playwright/test';
 
 import predecessorOracle from '../../legacy-fixtures/renderer/compound-lower-nonzero-group-single-v1.json' with { type: 'json' };
 import oracle from '../../legacy-fixtures/renderer/compound-lower-nonzero-group-refresh-after-single-v1.json' with { type: 'json' };
+import { expectLegacyCompoundRotationBucketIsolation } from './legacy-compound-rotation-bucket-assertions.js';
 
 import type {
   CapturedPoint,
@@ -470,32 +471,10 @@ export const assertLowerNonzeroGroupRefreshLiveCapture = async (
     }
   );
   expect(capture.sourceFulfillment).toEqual(expectedFulfillment);
-  for (const bucket of [
-    capture.ordinaryGroupCases,
-    capture.breakGroupCases,
-    capture.lowerGroupInitiatorCases,
-    capture.lowerQ0SingleCases,
-    capture.lowerReturnedQ0SingleCases,
-    capture.lowerHistoryAuthoredQ0SingleCases,
-    capture.lowerNonzeroGroupSingleCases,
-    capture.lowerNonzeroGroupSingleFollowupCases,
-    capture.lowerNonzeroGroupRotationAfterSingleCases,
-    capture.lowerNonzeroSameLowerGroupAfterSingleCases,
-    capture.lowerNonzeroDifferentLowerGroupAfterSingleCases,
-    capture.lowerNonzeroSameLowerSecondGroupAfterSingleCases,
-    capture.lowerNonzeroDifferentLowerSecondGroupAfterSingleCases,
-    capture.lowerNonzeroTopSecondGroupAfterSingleCases,
-    capture.lowerNonzeroTopThenPriorLowerGroupAfterSingleCases,
-    capture.lowerNonzeroTopThenOtherLowerGroupAfterSingleCases,
-    capture.lowerNonzeroTopThirdGroupAfterSingleCases,
-    capture.lowerNonzeroTopFourthGroupAfterSingleCases,
-    capture.lowerNonzeroSameLowerThirdGroupAfterSingleCases,
-    capture.lowerNonzeroDifferentLowerThirdGroupAfterSingleCases,
-    capture.nonzeroGroupSingleCases,
-    capture.breakRefreshCases,
-  ]) {
-    expect(bucket).toEqual([]);
-  }
+  expectLegacyCompoundRotationBucketIsolation(
+    capture,
+    'lowerNonzeroGroupRefreshAfterSingleCases'
+  );
   expect(
     capture.lowerNonzeroGroupRefreshAfterSingleCases.map((entry) => entry.id)
   ).toEqual(expectedIds(composition));
