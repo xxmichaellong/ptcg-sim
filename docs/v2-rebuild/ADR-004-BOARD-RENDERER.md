@@ -214,7 +214,8 @@ Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
   source-only. These paths do not yet claim alternate layout states,
   three-plus or unsupported attachment geometry, transition animation or
   transient departure DOM, rotated/history-dependent markers, marker editing,
-  BREAK/compound rotation, overflow,
+  production BREAK/compound rotation (the split source history is pinned but
+  proves projected state insufficient), overflow,
   Tool-specific Pixi paint parity, full paint or interaction parity, cover-open
   UX, or opened-zone layout, and the sidebar content rectangle is derived from
   measured shell/tab edges);

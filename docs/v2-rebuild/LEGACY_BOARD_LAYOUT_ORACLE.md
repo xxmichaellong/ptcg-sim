@@ -681,6 +681,36 @@ Additional bench siblings/flex contention, all rotated production paths,
 BREAK/compound and attachment rotation, marker movement/editing, alternate
 layouts, and Pixi-native paint/hit parity are still deferred.
 
+`tests/browser/legacy-compound-rotation-geometry.spec.ts` adds a twelfth source
+checkpoint while deliberately splitting its evidence between
+`compound-group-rotation-v1.json` and `compound-break-rotation-v1.json`. Four
+fresh cases per oracle cover local/opponent active and sole bench. Each builds
+the stable three-Pokémon `[top, middle, base]` logical chain (DOM order
+`[top, base, middle]`, z `0/-1/-2`) through the digest-pinned evolve/refresh
+transcription and rotates only from the canonical top.
+
+The ordinary oracle records q0→q1, q1 after wrapper reconstruction, then
+q2→q3→q0. The BREAK oracle records the upright top-only q1 toggle, composed
+card turns `[1,0,0]→[2,1,1]`, the same valid q1 after reconstruction, then
+`[3,2,2]→[0,3,3]→[1,0,0]` and the final BREAK-off all-q0 state. Every phase
+pins client/intrinsic dimensions, temporary-transform-none and painted boxes,
+physical frame mapping, margins, topology, relative links, layer offsets,
+wrapper/card identity, golden frame-local phase rectangles and hit coordinates,
+six native hit regions, native observer construction/delivery, and harness-only
+observer-handle cleanup. q1 refresh proves one synchronous ghost wrapper and one
+stable replacement after two animation frames without changing card geometry or
+identity.
+
+This source evidence also closes off an unsafe production shortcut. Fresh and
+returned active BREAK-q0 phases have identical card/stack quarter turns but
+different inline-margin geometry; moving a BREAK stack can create a third
+history. The current recipient projection does not carry legacy BREAK or DOM
+history, and a non-BREAK q1 card can reach an otherwise identical v2 tuple.
+Alt-R while group rotation is nonzero, uncaptured BREAK refresh at group q0/q2,
+q3 BREAK refresh (whose legacy replay count becomes negative), lower-card
+initiators, and attachment timing remain explicitly excluded hazards. No new
+renderer presentation or production gate is claimed by this source-only slice.
+
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
 renderer-neutral scene and has structured scene assertions for all four board
@@ -688,7 +718,8 @@ oracle fixtures, including asymmetric resize, flipped ownership, midpoint
 shared placement, compact and fullscreen states. The controlled hand/bench/
 attachment-stack fixture remains source-only; the narrower contained-card,
 ordinary-evolution, single-Energy, Trainer-as-Tool, and stable two-Energy
-fixtures feed and compare their strict production geometries. The bench-marker
+fixtures feed and compare their strict production geometries. The compound
+group/BREAK histories remain wholly source-only. The bench-marker
 rotation history remains source-only while its strict pristine-q0 phase also
 feeds and compares the production geometry. The two-Energy
 departure phases remain source-only and prove stable convergence to the

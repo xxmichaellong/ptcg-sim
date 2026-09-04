@@ -443,6 +443,25 @@ BREAK, compound evolution/group and attachment rotation, movement/evolution/
 refresh marker transfer, marker text-entry UX, alternate layouts, and
 Pixi-native paint/hit parity remain explicitly deferred.
 
+The next source-only gate now characterizes compound Pokémon rotation without
+weakening that production boundary. Separate ordinary-group and BREAK oracles
+cover fresh three-stage chains in local/opponent active and sole bench, full
+top-selected group cycles, and identity-preserving q1 refresh reconstruction.
+The BREAK history composes the top's q1 offset with stack q0–q3 and toggles it
+off only after returning to group q0. Authored/painted/physical boxes, selected-
+transform margins, topology, z/hit order, ghost-wrapper settlement, native
+observer construction/delivery, and harness-only handle cleanup are measured in
+Chromium.
+
+Production remains intentionally unchanged: the same projected active
+`stack q0 + top q1 + lower q0` tuple has different legacy margins when fresh or
+returned through four group turns, and current state does not identify BREAK
+provenance. q1 reconstruction is captured separately and preserves its pre-
+refresh geometry. Nonzero-group Alt-R, uncaptured BREAK refresh at group q0/q2,
+q3 BREAK refresh, lower-card initiators, and attachment timing expose further
+legacy ambiguity. A later domain decision must normalize or represent those
+semantics before a strict React/Pixi layout predicate can be sound.
+
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during
 characterization is represented explicitly instead of assumed to be duplication.

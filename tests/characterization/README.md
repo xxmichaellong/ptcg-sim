@@ -212,3 +212,32 @@ geometry.
 Additional bench siblings/contention, rotated production q1/q2/q3, source DOM
 history, BREAK/compound stacks, movement transfer, marker editing, alternate
 layouts, and Pixi-native paint/hit parity remain deferred.
+
+`legacy-compound-group-rotation-layout.test.ts` and
+`legacy-compound-break-rotation-layout.test.ts` split the next source-only
+checkpoint into independently auditable ordinary-group and BREAK-composition
+contracts. One browser load constructs fresh three-Pokémon evolution chains in
+local/opponent active and sole-bench slots, then records top-selected
+q0→q1→q2→q3→q0 histories. Both contracts capture q1 before and after source-
+shaped refresh reconstruction, including the synchronous two-wrapper state,
+two-frame cleanup, stable card identity, native observer construction and
+delivery, harness-retained source-shaped handles and cleanup, golden frame-local
+phase rectangles and hit coordinates, margins, topology, and six native hit
+regions.
+
+The BREAK contract additionally pins the canonical upright top-card toggle,
+the `[top, middle, base]` local quarter-turn composition
+`[1,0,0]→[2,1,1]→[3,2,2]→[0,3,3]→[1,0,0]`, and the final toggle back to all
+q0. The first and returned active BREAK-q0 states expose the same projected
+rotation tuple but different wrapper geometry, while the bench states are
+physically equivalent. BREAK refresh at group q0/q2 is uncaptured, while q3 can
+derive negative replay turns; Alt-R at nonzero group rotation and attachment
+rotation are also history-dependent. They are named exclusions, not candidate
+behavior.
+
+No new compound/BREAK-specific gate or presentation enters production in this
+checkpoint. Rotated and BREAK-on states remain generic; qualifying all-q0 states
+retain the existing ordinary-evolution path. Current projection lacks the legacy
+BREAK flag, selected-rotation initiator, inline-margin history, and enough
+ingress provenance to choose exact legacy geometry until those semantics are
+canonicalized or explicitly represented.

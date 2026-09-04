@@ -1061,6 +1061,157 @@ export interface LegacySourceEvolutionReflowFixture {
   readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
 }
 
+export type LegacyCompoundRotationScenario = 'ordinaryGroup' | 'breakGroup';
+
+export type LegacyCompoundRotationPhaseName =
+  | 'pristine-q0'
+  | 'q1'
+  | 'q1-refreshed'
+  | 'q2'
+  | 'q3'
+  | 'q0-return'
+  | 'break-on-q0'
+  | 'break-group-q1'
+  | 'break-group-q1-refreshed'
+  | 'break-group-q2'
+  | 'break-group-q3'
+  | 'break-group-q0-return'
+  | 'break-off-q0';
+
+export interface LegacyCompoundRotationAction {
+  readonly selectedCardId: string;
+  readonly selectedRole: 'top' | 'middle' | 'base';
+  readonly indexBefore: number;
+  readonly single: boolean;
+}
+
+export interface LegacyCompoundRotationCard {
+  readonly id: string;
+  readonly role: 'top' | 'middle' | 'base';
+  readonly frameLocalBounds: CapturedRect;
+  readonly untransformedFrameLocalBounds: CapturedRect;
+  readonly physicalBounds: CapturedRect;
+  readonly naturalWidth: number;
+  readonly naturalHeight: number;
+  readonly clientWidth: number;
+  readonly clientHeight: number;
+  readonly localRotationDegrees: number;
+  readonly effectiveRotationDegrees: number;
+  readonly inlineTransform: string;
+  readonly transformOrigin: string;
+  readonly zIndex: number;
+  readonly layer: number;
+  readonly energyLayer: number;
+  readonly inlineLeftPx: number;
+  readonly inlineBottomPx: number;
+  readonly position: string;
+  readonly attached: boolean;
+  readonly target: string;
+  readonly relativeId: string | null;
+  readonly pokemonBreak: boolean;
+  readonly imageType: string;
+  readonly domOrdinal: number;
+  readonly logicalOrdinal: number;
+  readonly sourcePath: string;
+}
+
+export interface LegacyCompoundRotationStack {
+  readonly id: string;
+  readonly frameLocalBounds: CapturedRect;
+  readonly physicalBounds: CapturedRect;
+  readonly clientWidth: number;
+  readonly clientHeight: number;
+  readonly offsetWidth: number;
+  readonly offsetHeight: number;
+  readonly computedWidthPx: number;
+  readonly computedHeightPx: number;
+  readonly authoredWidthPx: number | null;
+  readonly inlineMarginRight: string;
+  readonly inlineMarginLeft: string;
+  readonly computedMarginRightPx: number;
+  readonly computedMarginLeftPx: number;
+  readonly transform: string;
+  readonly zIndex: number;
+  readonly childDomOrder: readonly string[];
+  readonly logicalOrder: readonly string[];
+  readonly hitOrder: {
+    readonly commonOverlap: readonly string[] | null;
+    readonly topOnly: readonly string[] | null;
+    readonly middleAndBaseOverlap: readonly string[] | null;
+    readonly baseOnly: readonly string[] | null;
+    readonly topPaintedOnly: readonly string[] | null;
+    readonly topAuthoredOnly: readonly string[] | null;
+  };
+  readonly hitPointsFrameLocal: Readonly<
+    Record<
+      | 'commonOverlap'
+      | 'topOnly'
+      | 'middleAndBaseOverlap'
+      | 'baseOnly'
+      | 'topPaintedOnly'
+      | 'topAuthoredOnly',
+      CapturedPoint | null
+    >
+  >;
+  readonly hitPointsPhysical: Readonly<
+    Record<
+      | 'commonOverlap'
+      | 'topOnly'
+      | 'middleAndBaseOverlap'
+      | 'baseOnly'
+      | 'topPaintedOnly'
+      | 'topAuthoredOnly',
+      CapturedPoint | null
+    >
+  >;
+}
+
+export interface LegacyCompoundRotationPhase {
+  readonly name: LegacyCompoundRotationPhaseName;
+  readonly action: LegacyCompoundRotationAction | null;
+  readonly cards: readonly LegacyCompoundRotationCard[];
+  readonly stack: LegacyCompoundRotationStack;
+  readonly wrapperCount: number;
+}
+
+export interface LegacyCompoundRotationCase {
+  readonly id: string;
+  readonly side: LegacyFixtureSide;
+  readonly slot: 'active' | 'bench';
+  readonly scenario: LegacyCompoundRotationScenario;
+  readonly phases: readonly LegacyCompoundRotationPhase[];
+  readonly callTrace: readonly string[];
+  readonly refresh: {
+    readonly synchronousWrapperCount: number;
+    readonly oldWrapperConnectedImmediately: boolean;
+    readonly stableWrapperCount: number;
+    readonly oldWrapperConnectedAfterSettle: boolean;
+    readonly wrapperIdentityChanged: boolean;
+    readonly cardNodeIdentityPreserved: boolean;
+  } | null;
+  readonly observers: {
+    readonly mutationObserversCreated: number;
+    readonly resizeObserversCreated: number;
+    readonly resizeCallbacksBeforeCardRemoval: number;
+    readonly resizeCallbacksAfterCardRemoval: number;
+    readonly transcribedSourceDisconnectCalls: number;
+    readonly harnessRetainedSourceShapedObserverHandlesBeforeCleanup: boolean;
+    readonly harnessMutationDisconnectCalls: number;
+    readonly harnessResizeDisconnectCalls: number;
+  };
+  readonly cleanup: LegacyFixtureCleanup;
+}
+
+export interface LegacySourceCompoundRotationFixture {
+  readonly frames: Readonly<Record<LegacyFixtureSide, CapturedRect>>;
+  readonly frameTransforms: Readonly<
+    Record<LegacyFixtureSide, LegacyFrameTransform>
+  >;
+  readonly ordinaryGroupCases: readonly LegacyCompoundRotationCase[];
+  readonly breakGroupCases: readonly LegacyCompoundRotationCase[];
+  readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
+}
+
 const repositoryRoot = fileURLToPath(new URL('../../../', import.meta.url));
 
 const sourceResponses = {
@@ -5655,6 +5806,919 @@ export const captureLegacySourceEvolutionReflowFixture = async (
     frameTransforms,
     cards,
     stacks,
+    sourceFulfillment: sourceFulfillment(loaded),
+  };
+};
+
+type RawCompoundRotationCard = Omit<
+  LegacyCompoundRotationCard,
+  'physicalBounds' | 'effectiveRotationDegrees'
+>;
+
+type RawCompoundRotationStack = Omit<
+  LegacyCompoundRotationStack,
+  'physicalBounds' | 'hitPointsPhysical'
+>;
+
+type RawCompoundRotationPhase = Omit<
+  LegacyCompoundRotationPhase,
+  'cards' | 'stack'
+> & {
+  readonly cards: readonly RawCompoundRotationCard[];
+  readonly stack: RawCompoundRotationStack;
+};
+
+type RawCompoundRotationCase = Omit<
+  LegacyCompoundRotationCase,
+  'side' | 'phases'
+> & { readonly phases: readonly RawCompoundRotationPhase[] };
+
+/**
+ * Replays the digest-pinned, marker-free legacy evolution, whole-stack
+ * rotation, BREAK toggle, and q1 refresh paths. The ordinary and BREAK
+ * histories are constructed independently so neither oracle inherits inline
+ * margins or wrapper identity from the other. Application/network modules stay
+ * inert; source DOM mutations are narrowly transcribed below.
+ */
+export const captureLegacySourceCompoundRotationFixture = async (
+  page: Page
+): Promise<LegacySourceCompoundRotationFixture> => {
+  const loaded = await loadLegacySourceBoard(page);
+  const rawCases: {
+    readonly side: LegacyFixtureSide;
+    readonly value: RawCompoundRotationCase;
+  }[] = [];
+
+  for (const [side, frameSelector] of [
+    ['local', '#selfContainer'],
+    ['opponent', '#oppContainer'],
+  ] as const) {
+    const captured = await page
+      .frameLocator(frameSelector)
+      .locator('body')
+      .evaluate(
+        async (body, input): Promise<RawCompoundRotationCase[]> => {
+          type CardRole = 'top' | 'middle' | 'base';
+          type CompoundImage = HTMLImageElement & {
+            attached: boolean;
+            target: string;
+            relative: CompoundImage | 0;
+            layer: number;
+            energyLayer: number;
+            PokémonBreak: boolean;
+            type: string;
+            type2?: string;
+          };
+          type CompoundCard = {
+            readonly id: string;
+            readonly role: CardRole;
+            readonly type: 'Pokémon';
+            readonly image: CompoundImage;
+          };
+
+          const rect = (bounds: DOMRect): CapturedRect => ({
+            x: bounds.x,
+            y: bounds.y,
+            width: bounds.width,
+            height: bounds.height,
+          });
+          const waitForStableLayout = () =>
+            new Promise<void>((resolve) =>
+              requestAnimationFrame(() =>
+                requestAnimationFrame(() => resolve())
+              )
+            );
+          const rotation = (image: HTMLImageElement) =>
+            Number.parseInt(
+              image.style.transform.replace(/[^0-9-]/gu, ''),
+              10
+            ) || 0;
+
+          const runScenario = async (
+            slot: 'active' | 'bench',
+            scenario: LegacyCompoundRotationScenario
+          ): Promise<RawCompoundRotationCase> => {
+            const zone = body.querySelector(`#${slot}`);
+            const hand = body.querySelector('#hand');
+            if (
+              !(zone instanceof HTMLElement) ||
+              !(hand instanceof HTMLElement)
+            ) {
+              throw new Error(
+                `Legacy compound fixture ${slot} regions are missing`
+              );
+            }
+            zone.replaceChildren();
+
+            const prefix = `${input.side}-${slot}-${
+              scenario === 'ordinaryGroup' ? 'compound-group' : 'compound-break'
+            }`;
+            const mutationObservers: MutationObserver[] = [];
+            const resizeObservers: ResizeObserver[] = [];
+            let resizeCallbacks = 0;
+            const transcribedSourceDisconnectCalls = 0;
+            const callTrace: string[] = [];
+
+            const resetImageOutput = (
+              image: CompoundImage,
+              destination = ''
+            ) => {
+              image.style.opacity = '1';
+              image.style.position = 'relative';
+              image.style.bottom = '0%';
+              image.style.zIndex = '0';
+              image.energyLayer = 0;
+              image.layer = 0;
+              image.relative = 0;
+              image.style.left = '0px';
+              image.attached = false;
+              image.target = 'off';
+              if (
+                image.PokémonBreak &&
+                (destination === 'active' || destination === 'bench')
+              ) {
+                image.style.transform = 'rotate(90deg)';
+              } else {
+                image.style.transform = 'rotate(0deg)';
+                image.PokémonBreak = false;
+              }
+              image.classList.remove(
+                'default-rotation',
+                'prizes-normal-size',
+                'prizes-small-size'
+              );
+            };
+
+            const makeImage = (role: CardRole): CompoundImage => {
+              const image = document.createElement('img') as CompoundImage;
+              image.dataset.legacyCompoundRotationCardId = `${prefix}-${role}`;
+              image.dataset.legacyCompoundRotationRole = role;
+              image.alt = '';
+              image.src = `${location.origin}/src/assets/cardback.png`;
+              image.type = 'Pokémon';
+              image.type2 = 'Pokémon';
+              image.PokémonBreak = false;
+              resetImageOutput(image);
+              return image;
+            };
+
+            const makePlayContainer = (
+              initialImage: CompoundImage
+            ): HTMLElement => {
+              const container = document.createElement('div');
+              if (
+                initialImage.PokémonBreak &&
+                (slot === 'active' || slot === 'bench')
+              ) {
+                container.style.marginRight = '3%';
+                container.style.marginLeft = '2%';
+              }
+              container.className = 'play-container';
+              container.style.zIndex = '0';
+              container.dataset.legacyCompoundRotationStackId = `${prefix}-stack`;
+              zone.append(container);
+              container.append(initialImage);
+              const mutationObserver = new MutationObserver((mutations) => {
+                for (const mutation of mutations) {
+                  if (
+                    mutation.removedNodes.length > 0 &&
+                    container.getElementsByTagName('img').length === 0
+                  ) {
+                    if (container.parentElement) {
+                      container.parentElement.style.zIndex = '0';
+                    }
+                    container.remove();
+                  }
+                }
+              });
+              mutationObserver.observe(container, { childList: true });
+              mutationObservers.push(mutationObserver);
+              const resizeObserver = new ResizeObserver(() => {
+                resizeCallbacks += 1;
+              });
+              resizeObserver.observe(container);
+              resizeObservers.push(resizeObserver);
+              return container;
+            };
+
+            const attachPokemon = (
+              moving: CompoundCard,
+              target: CompoundCard
+            ) => {
+              resetImageOutput(moving.image);
+              moving.image.attached = true;
+              moving.image.target = 'on';
+              moving.image.relative = target.image;
+              moving.image.style.position = 'absolute';
+              const adjustment = target.image.clientWidth / 15;
+              target.image.layer += 1;
+              const layer = target.image.layer;
+              moving.image.style.bottom = `${layer * adjustment}px`;
+              moving.image.style.zIndex = String(
+                (Number.parseInt(moving.image.style.zIndex, 10) || 0) - layer
+              );
+              target.image.after(moving.image);
+              const rotationOffset = target.image.PokémonBreak ? 1 : 0;
+              moving.image.style.transform = `rotate(${
+                rotation(target.image) - 90 * rotationOffset
+              }deg)`;
+            };
+
+            const moveAttachedWithinZone = (
+              logical: CompoundCard[],
+              index: number,
+              target: CompoundCard
+            ) => {
+              const [moving] = logical.splice(index, 1);
+              if (!moving) throw new Error('Missing compound attached card');
+              logical.push(moving);
+              attachPokemon(moving, target);
+            };
+
+            const evolve = (
+              logical: CompoundCard[],
+              moving: CompoundCard,
+              target: CompoundCard
+            ) => {
+              logical.push(moving);
+              resetImageOutput(moving.image);
+              target.image.after(moving.image);
+              target.image.relative = moving.image;
+              const container = target.image.parentElement;
+              if (!(container instanceof HTMLElement)) {
+                throw new Error('Compound evolution target has no wrapper');
+              }
+              if (rotation(target.image) !== 0) {
+                container
+                  .querySelectorAll<HTMLImageElement>('img')
+                  .forEach((image) => {
+                    image.style.transform = 'rotate(0deg)';
+                  });
+              }
+              container.style.marginRight = '1%';
+              container.style.marginLeft = '0%';
+              container.style.width = `${Number.parseFloat(
+                String(moving.image.clientWidth)
+              )}px`;
+              for (const card of logical) {
+                if (card.image.relative === target.image) {
+                  card.image.relative = moving.image;
+                }
+              }
+              for (let index = 0; index < logical.length; index += 1) {
+                const card = logical[index];
+                if (!card) throw new Error('Missing compound evolution card');
+                if (card === moving) break;
+                if (card.image.relative === moving.image) {
+                  resetImageOutput(card.image);
+                  card.image.attached = true;
+                  moveAttachedWithinZone(logical, index, moving);
+                  index -= 1;
+                }
+              }
+              callTrace.push(`evolve:${target.id}->${moving.id}`);
+              return container;
+            };
+
+            const refresh = (
+              logical: CompoundCard[],
+              currentContainer: HTMLElement
+            ) => {
+              const topIndex = logical.findIndex(
+                (card) => card.image.attached !== true
+              );
+              if (topIndex < 0)
+                throw new Error('Compound stack has no top card');
+              const [top] = logical.splice(topIndex, 1);
+              if (!top) throw new Error('Missing compound top card');
+              logical.push(top);
+              const effectiveRotation = rotation(top.image);
+              const groupRotation = top.image.PokémonBreak
+                ? effectiveRotation - 90
+                : effectiveRotation;
+              const numberRotations = groupRotation / 90;
+              resetImageOutput(top.image, slot);
+              const nextContainer = makePlayContainer(top.image);
+              for (let index = 0; index < logical.length; index += 1) {
+                const card = logical[index];
+                if (!card) throw new Error('Missing compound refresh card');
+                if (card === top) break;
+                if (card.image.relative === top.image) {
+                  resetImageOutput(card.image);
+                  card.image.attached = true;
+                  moveAttachedWithinZone(logical, index, top);
+                  index -= 1;
+                }
+              }
+              nextContainer.style.width = `${Number.parseFloat(
+                String(top.image.clientWidth)
+              )}px`;
+              callTrace.push(
+                `refresh:${top.id}:break=${String(
+                  top.image.PokémonBreak
+                )}:groupTurns=${String(numberRotations)}`
+              );
+              for (let count = 0; count < numberRotations; count += 1) {
+                rotateCard(top, false, logical, nextContainer, true);
+              }
+              return {
+                container: nextContainer,
+                synchronousWrapperCount: zone.querySelectorAll(
+                  ':scope > [data-legacy-compound-rotation-stack-id]'
+                ).length,
+                oldWrapperConnectedImmediately: currentContainer.isConnected,
+              };
+            };
+
+            const rotateCard = (
+              selected: CompoundCard,
+              single: boolean,
+              logical: CompoundCard[],
+              container: HTMLElement,
+              replay = false
+            ): LegacyCompoundRotationAction => {
+              const before = rotation(selected.image);
+              const breakBefore = selected.image.PokémonBreak;
+              const next = (before + 90) % 360;
+              selected.image.style.transform = `rotate(${next}deg)`;
+              if (slot === 'bench') {
+                container.style.marginRight = '3%';
+                container.style.marginLeft = '2%';
+              }
+              if (next === 0 || next === 180) {
+                container.style.marginRight = '1%';
+                container.style.marginLeft = '0%';
+              }
+              if (!single) {
+                container
+                  .querySelectorAll<CompoundImage>('img')
+                  .forEach((image) => {
+                    if (image !== selected.image && image.type === 'Pokémon') {
+                      image.style.transform = `rotate(${
+                        (rotation(image) + 90) % 360
+                      }deg)`;
+                    }
+                  });
+              } else if (next === 90) {
+                selected.image.PokémonBreak = true;
+              } else {
+                selected.image.style.transform = 'rotate(0deg)';
+                selected.image.PokémonBreak = false;
+              }
+              const indexBefore = logical.indexOf(selected);
+              callTrace.push(
+                `${replay ? 'replay-' : ''}rotate:${selected.id}:index=${String(
+                  indexBefore
+                )}:single=${String(single)}:${String(before)}->${String(
+                  rotation(selected.image)
+                )}:break=${String(breakBefore)}->${String(
+                  selected.image.PokémonBreak
+                )}`
+              );
+              return {
+                selectedCardId: selected.id,
+                selectedRole: selected.role,
+                indexBefore,
+                single,
+              };
+            };
+
+            const idsAt = (point: CapturedPoint, ids: ReadonlySet<string>) =>
+              document
+                .elementsFromPoint(point.x, point.y)
+                .flatMap((candidate) =>
+                  candidate instanceof HTMLImageElement &&
+                  candidate.dataset.legacyCompoundRotationCardId &&
+                  ids.has(candidate.dataset.legacyCompoundRotationCardId)
+                    ? [candidate.dataset.legacyCompoundRotationCardId]
+                    : []
+                );
+
+            const snapshot = (
+              name: LegacyCompoundRotationPhaseName,
+              action: LegacyCompoundRotationAction | null,
+              logical: CompoundCard[],
+              container: HTMLElement
+            ): RawCompoundRotationPhase => {
+              const domImages = [
+                ...container.querySelectorAll<CompoundImage>(':scope > img'),
+              ];
+              const cards = logical.map((card): RawCompoundRotationCard => {
+                const paintedBounds = rect(card.image.getBoundingClientRect());
+                const priorTransform = card.image.style.transform;
+                card.image.style.transform = 'none';
+                const untransformedFrameLocalBounds = rect(
+                  card.image.getBoundingClientRect()
+                );
+                card.image.style.transform = priorTransform;
+                const styles = getComputedStyle(card.image);
+                const transform =
+                  styles.transform === 'none'
+                    ? new DOMMatrixReadOnly()
+                    : new DOMMatrixReadOnly(styles.transform);
+                return {
+                  id: card.id,
+                  role: card.role,
+                  frameLocalBounds: paintedBounds,
+                  untransformedFrameLocalBounds,
+                  naturalWidth: card.image.naturalWidth,
+                  naturalHeight: card.image.naturalHeight,
+                  clientWidth: card.image.clientWidth,
+                  clientHeight: card.image.clientHeight,
+                  localRotationDegrees:
+                    ((Math.atan2(transform.b, transform.a) * 180) / Math.PI +
+                      360) %
+                    360,
+                  inlineTransform: card.image.style.transform,
+                  transformOrigin: styles.transformOrigin,
+                  zIndex: Number.parseInt(styles.zIndex, 10) || 0,
+                  layer: card.image.layer,
+                  energyLayer: card.image.energyLayer,
+                  inlineLeftPx: Number.parseFloat(card.image.style.left) || 0,
+                  inlineBottomPx:
+                    Number.parseFloat(card.image.style.bottom) || 0,
+                  position: styles.position,
+                  attached: card.image.attached === true,
+                  target: card.image.target,
+                  relativeId:
+                    card.image.relative instanceof HTMLImageElement
+                      ? (card.image.relative.dataset
+                          .legacyCompoundRotationCardId ?? null)
+                      : null,
+                  pokemonBreak: card.image.PokémonBreak === true,
+                  imageType: card.image.type,
+                  domOrdinal: domImages.indexOf(card.image),
+                  logicalOrdinal: logical.indexOf(card),
+                  sourcePath: new URL(card.image.currentSrc).pathname,
+                };
+              });
+              const byRole = (role: CardRole) => {
+                const card = cards.find((candidate) => candidate.role === role);
+                if (!card) throw new Error(`Missing compound ${role} card`);
+                return card;
+              };
+              const top = byRole('top');
+              const middle = byRole('middle');
+              const base = byRole('base');
+              const fixtureIds = new Set(cards.map((card) => card.id));
+              const pointInside = (
+                point: CapturedPoint,
+                bounds: CapturedRect,
+                inset = 2
+              ) =>
+                point.x >= bounds.x + inset &&
+                point.x <= bounds.x + bounds.width - inset &&
+                point.y >= bounds.y + inset &&
+                point.y <= bounds.y + bounds.height - inset;
+              const pointOutside = (
+                point: CapturedPoint,
+                bounds: CapturedRect,
+                inset = 2
+              ) =>
+                point.x <= bounds.x - inset ||
+                point.x >= bounds.x + bounds.width + inset ||
+                point.y <= bounds.y - inset ||
+                point.y >= bounds.y + bounds.height + inset;
+              const sameIds = (
+                actual: readonly string[],
+                expected: readonly string[]
+              ) =>
+                actual.length === expected.length &&
+                actual.every((id, index) => id === expected[index]);
+              const samples: {
+                readonly point: CapturedPoint;
+                readonly hitIds: readonly string[];
+              }[] = [];
+              const candidateBounds = [
+                ...cards.map((card) => card.frameLocalBounds),
+                top.untransformedFrameLocalBounds,
+              ];
+              const axisCandidates = (
+                axis: 'x' | 'y',
+                size: 'width' | 'height'
+              ) =>
+                [
+                  ...new Set(
+                    candidateBounds.flatMap((bounds) => {
+                      const start = bounds[axis];
+                      const end = start + bounds[size];
+                      return [
+                        start - 2.25,
+                        start + 2.25,
+                        (start + end) / 2,
+                        end - 2.25,
+                        end + 2.25,
+                      ];
+                    })
+                  ),
+                ].sort((left, right) => left - right);
+              for (const y of axisCandidates('y', 'height')) {
+                for (const x of axisCandidates('x', 'width')) {
+                  const point = { x, y };
+                  samples.push({ point, hitIds: idsAt(point, fixtureIds) });
+                }
+              }
+              const findPoint = (
+                predicate: (
+                  ids: readonly string[],
+                  point: CapturedPoint
+                ) => boolean
+              ): CapturedPoint | null =>
+                samples.find(({ hitIds, point }) => predicate(hitIds, point))
+                  ?.point ?? null;
+              const points = {
+                commonOverlap: findPoint(
+                  (ids, point) =>
+                    sameIds(ids, [top.id, middle.id, base.id]) &&
+                    [top, middle, base].every((card) =>
+                      pointInside(point, card.frameLocalBounds)
+                    )
+                ),
+                topOnly: findPoint(
+                  (ids, point) =>
+                    sameIds(ids, [top.id]) &&
+                    pointInside(point, top.frameLocalBounds) &&
+                    pointOutside(point, middle.frameLocalBounds) &&
+                    pointOutside(point, base.frameLocalBounds)
+                ),
+                middleAndBaseOverlap: findPoint(
+                  (ids, point) =>
+                    sameIds(ids, [middle.id, base.id]) &&
+                    pointOutside(point, top.frameLocalBounds) &&
+                    pointInside(point, middle.frameLocalBounds) &&
+                    pointInside(point, base.frameLocalBounds)
+                ),
+                baseOnly: findPoint(
+                  (ids, point) =>
+                    sameIds(ids, [base.id]) &&
+                    pointOutside(point, top.frameLocalBounds) &&
+                    pointOutside(point, middle.frameLocalBounds) &&
+                    pointInside(point, base.frameLocalBounds)
+                ),
+                topPaintedOnly: findPoint(
+                  (ids, point) =>
+                    ids.includes(top.id) &&
+                    pointInside(point, top.frameLocalBounds) &&
+                    pointOutside(point, top.untransformedFrameLocalBounds)
+                ),
+                topAuthoredOnly: findPoint(
+                  (ids, point) =>
+                    ids.length > 0 &&
+                    !ids.includes(top.id) &&
+                    pointInside(point, top.untransformedFrameLocalBounds) &&
+                    pointOutside(point, top.frameLocalBounds)
+                ),
+              };
+              const hitOrder: RawCompoundRotationStack['hitOrder'] = {
+                commonOverlap: points.commonOverlap
+                  ? idsAt(points.commonOverlap, fixtureIds)
+                  : null,
+                topOnly: points.topOnly
+                  ? idsAt(points.topOnly, fixtureIds)
+                  : null,
+                middleAndBaseOverlap: points.middleAndBaseOverlap
+                  ? idsAt(points.middleAndBaseOverlap, fixtureIds)
+                  : null,
+                baseOnly: points.baseOnly
+                  ? idsAt(points.baseOnly, fixtureIds)
+                  : null,
+                topPaintedOnly: points.topPaintedOnly
+                  ? idsAt(points.topPaintedOnly, fixtureIds)
+                  : null,
+                topAuthoredOnly: points.topAuthoredOnly
+                  ? idsAt(points.topAuthoredOnly, fixtureIds)
+                  : null,
+              };
+              const containerBounds = rect(container.getBoundingClientRect());
+              const styles = getComputedStyle(container);
+              return {
+                name,
+                action,
+                cards,
+                stack: {
+                  id: container.dataset.legacyCompoundRotationStackId ?? '',
+                  frameLocalBounds: containerBounds,
+                  clientWidth: container.clientWidth,
+                  clientHeight: container.clientHeight,
+                  offsetWidth: container.offsetWidth,
+                  offsetHeight: container.offsetHeight,
+                  computedWidthPx: Number.parseFloat(styles.width),
+                  computedHeightPx: Number.parseFloat(styles.height),
+                  authoredWidthPx: container.style.width
+                    ? Number.parseFloat(container.style.width)
+                    : null,
+                  inlineMarginRight: container.style.marginRight,
+                  inlineMarginLeft: container.style.marginLeft,
+                  computedMarginRightPx:
+                    Number.parseFloat(styles.marginRight) || 0,
+                  computedMarginLeftPx:
+                    Number.parseFloat(styles.marginLeft) || 0,
+                  transform: styles.transform,
+                  zIndex: Number.parseInt(styles.zIndex, 10) || 0,
+                  childDomOrder: domImages.map(
+                    (image) => image.dataset.legacyCompoundRotationCardId ?? ''
+                  ),
+                  logicalOrder: logical.map((card) => card.id),
+                  hitOrder,
+                  hitPointsFrameLocal: points,
+                },
+                wrapperCount: zone.querySelectorAll(
+                  ':scope > [data-legacy-compound-rotation-stack-id]'
+                ).length,
+              };
+            };
+
+            const base: CompoundCard = {
+              id: `${prefix}-base`,
+              role: 'base',
+              type: 'Pokémon',
+              image: makeImage('base'),
+            };
+            const middle: CompoundCard = {
+              id: `${prefix}-middle`,
+              role: 'middle',
+              type: 'Pokémon',
+              image: makeImage('middle'),
+            };
+            const top: CompoundCard = {
+              id: `${prefix}-top`,
+              role: 'top',
+              type: 'Pokémon',
+              image: makeImage('top'),
+            };
+            let container = makePlayContainer(base.image);
+            hand.append(middle.image, top.image);
+            await Promise.all(
+              [base.image, middle.image, top.image].map((image) =>
+                image.decode()
+              )
+            );
+            const logical = [base];
+            evolve(logical, middle, base);
+            container = refresh(logical, container).container;
+            await waitForStableLayout();
+            evolve(logical, top, middle);
+            container = refresh(logical, container).container;
+            await waitForStableLayout();
+
+            const phases: RawCompoundRotationPhase[] = [
+              snapshot('pristine-q0', null, logical, container),
+            ];
+            let refreshEvidence: LegacyCompoundRotationCase['refresh'] = null;
+
+            if (scenario === 'ordinaryGroup') {
+              const q1Action = rotateCard(top, false, logical, container);
+              phases.push(snapshot('q1', q1Action, logical, container));
+              const oldContainer = container;
+              const cardNodesBeforeRefresh = logical.map((card) => card.image);
+              const refreshed = refresh(logical, oldContainer);
+              container = refreshed.container;
+              await waitForStableLayout();
+              refreshEvidence = {
+                synchronousWrapperCount: refreshed.synchronousWrapperCount,
+                oldWrapperConnectedImmediately:
+                  refreshed.oldWrapperConnectedImmediately,
+                stableWrapperCount: zone.querySelectorAll(
+                  ':scope > [data-legacy-compound-rotation-stack-id]'
+                ).length,
+                oldWrapperConnectedAfterSettle: oldContainer.isConnected,
+                wrapperIdentityChanged: oldContainer !== container,
+                cardNodeIdentityPreserved: cardNodesBeforeRefresh.every(
+                  (node, index) => logical[index]?.image === node
+                ),
+              };
+              phases.push(snapshot('q1-refreshed', null, logical, container));
+              phases.push(
+                snapshot(
+                  'q2',
+                  rotateCard(top, false, logical, container),
+                  logical,
+                  container
+                )
+              );
+              phases.push(
+                snapshot(
+                  'q3',
+                  rotateCard(top, false, logical, container),
+                  logical,
+                  container
+                )
+              );
+              phases.push(
+                snapshot(
+                  'q0-return',
+                  rotateCard(top, false, logical, container),
+                  logical,
+                  container
+                )
+              );
+            } else {
+              phases.push(
+                snapshot(
+                  'break-on-q0',
+                  rotateCard(top, true, logical, container),
+                  logical,
+                  container
+                )
+              );
+              phases.push(
+                snapshot(
+                  'break-group-q1',
+                  rotateCard(top, false, logical, container),
+                  logical,
+                  container
+                )
+              );
+              const oldContainer = container;
+              const cardNodesBeforeRefresh = logical.map((card) => card.image);
+              const refreshed = refresh(logical, oldContainer);
+              container = refreshed.container;
+              await waitForStableLayout();
+              refreshEvidence = {
+                synchronousWrapperCount: refreshed.synchronousWrapperCount,
+                oldWrapperConnectedImmediately:
+                  refreshed.oldWrapperConnectedImmediately,
+                stableWrapperCount: zone.querySelectorAll(
+                  ':scope > [data-legacy-compound-rotation-stack-id]'
+                ).length,
+                oldWrapperConnectedAfterSettle: oldContainer.isConnected,
+                wrapperIdentityChanged: oldContainer !== container,
+                cardNodeIdentityPreserved: cardNodesBeforeRefresh.every(
+                  (node, index) => logical[index]?.image === node
+                ),
+              };
+              phases.push(
+                snapshot('break-group-q1-refreshed', null, logical, container)
+              );
+              phases.push(
+                snapshot(
+                  'break-group-q2',
+                  rotateCard(top, false, logical, container),
+                  logical,
+                  container
+                )
+              );
+              phases.push(
+                snapshot(
+                  'break-group-q3',
+                  rotateCard(top, false, logical, container),
+                  logical,
+                  container
+                )
+              );
+              phases.push(
+                snapshot(
+                  'break-group-q0-return',
+                  rotateCard(top, false, logical, container),
+                  logical,
+                  container
+                )
+              );
+              phases.push(
+                snapshot(
+                  'break-off-q0',
+                  rotateCard(top, true, logical, container),
+                  logical,
+                  container
+                )
+              );
+            }
+
+            const resizeCallbacksBeforeCardRemoval = resizeCallbacks;
+            for (const card of logical) card.image.remove();
+            await waitForStableLayout();
+            const resizeCallbacksAfterCardRemoval = resizeCallbacks;
+            const cleanup: LegacyFixtureCleanup = {
+              observedWrapperCount: body.querySelectorAll(
+                `[data-legacy-compound-rotation-stack-id^="${prefix}"]`
+              ).length,
+              observedCardCount: body.querySelectorAll(
+                `[data-legacy-compound-rotation-card-id^="${prefix}"]`
+              ).length,
+              sinkConnected: false,
+            };
+            const observers = {
+              mutationObserversCreated: mutationObservers.length,
+              resizeObserversCreated: resizeObservers.length,
+              resizeCallbacksBeforeCardRemoval,
+              resizeCallbacksAfterCardRemoval,
+              transcribedSourceDisconnectCalls,
+              harnessRetainedSourceShapedObserverHandlesBeforeCleanup:
+                mutationObservers.length > 0 && resizeObservers.length > 0,
+              harnessMutationDisconnectCalls: 0,
+              harnessResizeDisconnectCalls: 0,
+            };
+            for (const observer of mutationObservers) {
+              observer.disconnect();
+              observers.harnessMutationDisconnectCalls += 1;
+            }
+            for (const observer of resizeObservers) {
+              observer.disconnect();
+              observers.harnessResizeDisconnectCalls += 1;
+            }
+            return {
+              id: prefix,
+              slot,
+              scenario,
+              phases,
+              callTrace,
+              refresh: refreshEvidence,
+              observers,
+              cleanup,
+            };
+          };
+
+          const cases: RawCompoundRotationCase[] = [];
+          for (const scenario of ['ordinaryGroup', 'breakGroup'] as const) {
+            for (const slot of ['active', 'bench'] as const) {
+              cases.push(await runScenario(slot, scenario));
+            }
+          }
+          return cases;
+        },
+        { side }
+      );
+    rawCases.push(...captured.map((value) => ({ side, value })));
+  }
+
+  const frames = {
+    local: await requireRect(page.locator('#selfContainer'), '#selfContainer'),
+    opponent: await requireRect(page.locator('#oppContainer'), '#oppContainer'),
+  };
+  const frameTransforms = {
+    local: await captureFrameTransform(page.locator('#selfContainer')),
+    opponent: await captureFrameTransform(page.locator('#oppContainer')),
+  };
+  const physicalRect = (
+    side: LegacyFixtureSide,
+    bounds: CapturedRect
+  ): CapturedRect =>
+    side === 'local'
+      ? {
+          x: frames.local.x + bounds.x,
+          y: frames.local.y + bounds.y,
+          width: bounds.width,
+          height: bounds.height,
+        }
+      : {
+          x:
+            frames.opponent.x + frames.opponent.width - bounds.x - bounds.width,
+          y:
+            frames.opponent.y +
+            frames.opponent.height -
+            bounds.y -
+            bounds.height,
+          width: bounds.width,
+          height: bounds.height,
+        };
+  const physicalPoint = (
+    side: LegacyFixtureSide,
+    point: CapturedPoint | null
+  ): CapturedPoint | null =>
+    point === null
+      ? null
+      : side === 'local'
+        ? { x: frames.local.x + point.x, y: frames.local.y + point.y }
+        : {
+            x: frames.opponent.x + frames.opponent.width - point.x,
+            y: frames.opponent.y + frames.opponent.height - point.y,
+          };
+  const cases: LegacyCompoundRotationCase[] = rawCases.map(
+    ({ side: caseSide, value }) => ({
+      ...value,
+      side: caseSide,
+      phases: value.phases.map((phase) => ({
+        ...phase,
+        cards: phase.cards.map((card) => ({
+          ...card,
+          physicalBounds: physicalRect(caseSide, card.frameLocalBounds),
+          effectiveRotationDegrees:
+            (card.localRotationDegrees +
+              frameTransforms[caseSide].rotationDegrees) %
+            360,
+        })),
+        stack: {
+          ...phase.stack,
+          physicalBounds: physicalRect(caseSide, phase.stack.frameLocalBounds),
+          hitPointsPhysical: Object.fromEntries(
+            Object.entries(phase.stack.hitPointsFrameLocal).map(
+              ([key, point]) => [key, physicalPoint(caseSide, point)]
+            )
+          ) as LegacyCompoundRotationStack['hitPointsPhysical'],
+        },
+      })),
+    })
+  );
+
+  requireServedPaths(loaded, evolutionFixtureAssetPaths);
+  requireNoUnexpectedSameOriginPaths(loaded);
+  return {
+    frames,
+    frameTransforms,
+    ordinaryGroupCases: cases.filter(
+      (entry) => entry.scenario === 'ordinaryGroup'
+    ),
+    breakGroupCases: cases.filter((entry) => entry.scenario === 'breakGroup'),
     sourceFulfillment: sourceFulfillment(loaded),
   };
 };

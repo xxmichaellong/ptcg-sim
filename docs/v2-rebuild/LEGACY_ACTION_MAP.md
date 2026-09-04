@@ -222,6 +222,17 @@ value commands. `RotateStack` changes the play aggregate, while
 card. The scene projection composes stack and per-card quarter turns, so a BREAK
 rotation remains attached to the exact card without losing group rotation.
 
+The split compound-rotation source oracle now bounds what that model does not
+yet prove. Legacy single rotation reads the selected card's effective inline
+angle, while v2 toggles the projected per-card field independently of stack
+rotation. Legacy wrapper margins also depend on selected-card and refresh
+history: fresh and returned active BREAK-q0 states can expose identical stack/
+card turns but different geometry. BREAK refresh at group q0/q2 is not yet
+captured, q3 derives a negative replay count, and attachment timing creates
+further transform collisions. These are explicit compatibility hazards; no
+production BREAK layout predicate is authorized until command ingress and
+history are normalized or represented.
+
 Ability markers likewise have explicit ownership. The top evolution card maps
 to the stack-level marker; attachment, discard, and stadium cards use
 `SetCardAbilityUsed` and render a marker on that exact card. Attachment markers
