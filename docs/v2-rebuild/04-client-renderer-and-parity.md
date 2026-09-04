@@ -535,9 +535,28 @@ digest-pinned but not executed. Across the measured pre-single→post-single
 transition, there is no refresh or wrapper replacement.
 Because canonical v2 state deliberately does not contain a legacy per-evolution
 BREAK flag, this evidence does not authorize a production predicate or schema
-expansion. Nonzero q1/q2/q3 lower Alt-R, returned/history-authored q0, repeated
-or mixed initiators, refresh after divergence, attachments, and candidate
-parity remain separate work.
+expansion.
+
+An eighteenth source-only checkpoint extends lower-card Alt-R to clean group
+q1/q2/q3 entries. Forty-eight independent histories span middle/base selection,
+ordinary/top-BREAK composition, active/sole-bench placement, both physical
+sides, and all three nonzero group angles. The selected lower evolution alone
+snaps from its absolute q1/q2/q3 angle to q0 and remains
+`PokémonBreak=false`; the other lower card keeps the group angle, and a flagged
+top keeps both its BREAK status and effective orientation. In the top-BREAK q3
+history that means the top is already effectively q0 while both lower cards
+begin at q3.
+
+The source margin write still uses the selected card's tentative angle before
+that snap, preserving the observed active/bench history differences. Exact
+authored and painted bounds distinguish q1/q3 footprints, while the q2→q0
+transition is geometrically rectangular and therefore also requires the pinned
+action trace and turn state. Keyboard/click ingress remains digest-pinned but is
+not executed, and there is no refresh or wrapper replacement across the
+measured transition. Returned/history-authored q0, repeated or mixed actions,
+refresh or group rotation after divergence, attachments, and candidate parity
+remain separate work; production, domain, protocol, and schema paths are still
+unchanged.
 
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during

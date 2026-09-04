@@ -270,6 +270,20 @@ explicit v2 target-value commands or add a per-evolution BREAK flag to canonical
 state. Nonzero and returned-q0 entries, repeated/mixed actions, divergent
 refresh, and attachment timing remain compatibility hazards.
 
+The clean nonzero-group lower-card branch is now pinned as its own forty-eight-
+history matrix. From group q1, q2, or q3, Alt-R on logical middle/base index
+1/2 resets only that selected evolution to absolute q0 and leaves its
+`PokémonBreak` flag false. Its sibling keeps the group angle. In top-BREAK
+composition the top remains flagged and preserves its effective angle, including
+the q3 history where the top is already q0 while both lower cards begin q3.
+The wrapper margin is still written from the selected lower card's attempted
+next angle before the q0 snap, so active/bench history remains observable even
+when q2→q0 has the same rectangular footprint. The action capture records the
+exact `processAction` call payload index; keyboard/click ingress is source-
+pinned but not executed, and opponent coverage proves only physical frame
+mapping. V2 retains explicit target-value orientation and does not add this
+legacy per-evolution flag/history ambiguity to canonical state.
+
 Ability markers likewise have explicit ownership. The top evolution card maps
 to the stack-level marker; attachment, discard, and stadium cards use
 `SetCardAbilityUsed` and render a marker on that exact card. Attachment markers

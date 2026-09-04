@@ -339,3 +339,26 @@ not executed. This is source-only:
 nonzero and returned/history-authored q0 entries, repeated/mixed initiators,
 divergent refresh, attachments, movement/removal, candidate parity, and any
 production/domain/schema change remain excluded.
+
+`legacy-compound-lower-nonzero-group-single-layout.test.ts` extends that branch
+to the clean q1/q2/q3 entries. Forty-eight independently constructed histories
+span middle/base selection, ordinary/top-BREAK composition, both physical
+sides, and active/sole-bench slots. Each records only `pre-single` and
+`post-single`; the two construction refreshes remain in the setup trace, but no
+refresh or wrapper replacement occurs across the measured transition.
+
+The selected lower evolution alone resets from its absolute q1/q2/q3 angle to
+q0 and remains `PokémonBreak=false`. Its lower sibling retains the group angle,
+and a BREAK top retains its flag and effective orientation. Logical indices
+middle=1/base=2 remain distinct from DOM ordinals 2/1. The dependent oracle
+pins exact pre-action inheritance, complete operation and transition traces,
+history-sensitive margins, authored/painted/physical rectangles, and ten native
+hit probes. Lower painted/authored-only wedges exist for q1/q3 and disappear
+for q2 or the selected post-q0 card, making the q2 trace/state assertion
+necessary even though its rectangular footprint is unchanged.
+
+Keyboard/click ingress is digest-pinned but not executed, and the opponent
+cases establish only physical-frame mapping. Returned/history-authored q0,
+q1-refreshed entry, repeated/mixed initiators, group rotation or refresh after
+divergence, already-BREAK lower cards, attachments, movement/removal, candidate
+parity, and production/domain/protocol/schema changes remain excluded.

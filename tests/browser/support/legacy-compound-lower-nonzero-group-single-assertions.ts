@@ -2,22 +2,57 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
-import { expect, test } from '@playwright/test';
+import { expect, type Page, type TestInfo } from '@playwright/test';
 
-import breakOracle from '../legacy-fixtures/renderer/compound-break-rotation-v1.json' with { type: 'json' };
-import groupOracle from '../legacy-fixtures/renderer/compound-group-rotation-v1.json' with { type: 'json' };
-import lowerGroupOracle from '../legacy-fixtures/renderer/compound-lower-group-rotation-v1.json' with { type: 'json' };
-import oracle from '../legacy-fixtures/renderer/compound-lower-q0-single-v1.json' with { type: 'json' };
+import breakOracle from '../../legacy-fixtures/renderer/compound-break-rotation-v1.json' with { type: 'json' };
+import groupOracle from '../../legacy-fixtures/renderer/compound-group-rotation-v1.json' with { type: 'json' };
+import lowerGroupOracle from '../../legacy-fixtures/renderer/compound-lower-group-rotation-v1.json' with { type: 'json' };
+import lowerQ0Oracle from '../../legacy-fixtures/renderer/compound-lower-q0-single-v1.json' with { type: 'json' };
+import oracle from '../../legacy-fixtures/renderer/compound-lower-nonzero-group-single-v1.json' with { type: 'json' };
+import nonzeroOracle from '../../legacy-fixtures/renderer/compound-nonzero-group-single-v1.json' with { type: 'json' };
 
-import {
-  captureLegacySourceCompoundLowerQ0SingleFixture,
-  type CapturedPoint,
-  type CapturedRect,
-  type LegacyCompoundRotationCase,
-  type LegacyFixtureSide,
-} from './support/legacy-source-board.js';
+import type {
+  CapturedPoint,
+  CapturedRect,
+  LegacyCompoundRotationCase,
+  LegacyFixtureSide,
+  LegacySourceCompoundRotationFixture,
+} from './legacy-source-board.js';
 
-const repositoryRoot = fileURLToPath(new URL('../../', import.meta.url));
+export type LowerNonzeroComposition = 'ordinary' | 'break';
+
+type Role = (typeof roles)[number];
+type Scenario = keyof typeof oracle.expected.scenario;
+type Slot = 'active' | 'bench';
+type RectTuple = readonly [number, number, number, number];
+type PointTuple = readonly [number, number] | null;
+type PhaseEvidenceTuple = readonly [
+  name: string,
+  stackRect: RectTuple,
+  paintedCardRects: readonly [RectTuple, RectTuple, RectTuple],
+  authoredCardRects: readonly [RectTuple, RectTuple, RectTuple],
+  hitPoints: readonly PointTuple[],
+];
+type Capture = (page: Page) => Promise<LegacySourceCompoundRotationFixture>;
+
+interface ProvenanceManifest {
+  readonly schemaVersion: number;
+  readonly provenance: readonly {
+    readonly path: string;
+    readonly encoding: string;
+    readonly sha256: string;
+  }[];
+  readonly provenanceClaims: readonly {
+    readonly claim: string;
+    readonly sources: readonly string[];
+  }[];
+  readonly dependencies: readonly {
+    readonly path: string;
+    readonly sha256: string;
+  }[];
+}
+
+const repositoryRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const roles = ['top', 'middle', 'base'] as const;
 const hitRegionNames = [
   'commonOverlap',
@@ -32,31 +67,20 @@ const hitRegionNames = [
   'baseAuthoredOnly',
 ] as const;
 
-type Scenario = (typeof oracle.input.scenarioOrder)[number];
-type Composition = 'ordinary' | 'break';
-type Role = (typeof roles)[number];
-type RectTuple = readonly [number, number, number, number];
-type PointTuple = readonly [number, number] | null;
-type PhaseEvidenceTuple = readonly [
-  name: string,
-  stackRect: RectTuple,
-  cardRects: readonly [RectTuple, RectTuple, RectTuple],
-  hitPoints: readonly PointTuple[],
-];
-
 const scenarioMetadata = oracle.expected.scenario as unknown as Record<
   Scenario,
   {
-    readonly composition: Composition;
+    readonly composition: LowerNonzeroComposition;
     readonly selectedRole: 'middle' | 'base';
     readonly selectedIndex: 1 | 2;
     readonly selectedDomOrdinal: 1 | 2;
+    readonly groupTurns: 1 | 2 | 3;
     readonly selectionHitRegion: 'middleAndBaseOverlap' | 'baseOnly';
   }
 >;
 const phaseEvidence = oracle.expected
   .phaseEvidenceByScenarioAndSlot as unknown as Record<
-  `${Scenario}:${'active' | 'bench'}`,
+  `${Scenario}:${Slot}`,
   readonly PhaseEvidenceTuple[]
 >;
 const quarterTurns = oracle.expected
@@ -68,25 +92,15 @@ const breakFlags = oracle.expected.breakFlagsByScenario as unknown as Record<
   Scenario,
   readonly Record<Role, boolean>[]
 >;
+const margins = oracle.expected
+  .inlineMarginsByScenarioAndSlot as unknown as Record<
+  `${Scenario}:${Slot}`,
+  readonly (readonly [string, string])[]
+>;
 const operationTraces = oracle.expected
   .operationTraceByScenario as unknown as Record<Scenario, readonly string[]>;
 const transitionTraces = oracle.expected
   .transitionTraceByScenario as unknown as Record<Scenario, string>;
-const margins = oracle.expected
-  .inlineMarginsByCompositionAndSlot as unknown as Record<
-  `${Composition}:${'active' | 'bench'}`,
-  readonly (readonly [string, string])[]
->;
-const authoredCardRects = oracle.expected
-  .authoredCardRectsByCompositionAndSlot as unknown as Record<
-  `${Composition}:${'active' | 'bench'}`,
-  readonly (readonly [RectTuple, RectTuple, RectTuple])[]
->;
-
-const modularDegreesBetween = (left: number, right: number): number => {
-  const distance = Math.abs(left - right) % 360;
-  return Math.min(distance, 360 - distance);
-};
 
 const rectFromTuple = ([x, y, width, height]: RectTuple): CapturedRect => ({
   x,
@@ -97,6 +111,22 @@ const rectFromTuple = ([x, y, width, height]: RectTuple): CapturedRect => ({
 
 const pointFromTuple = (point: PointTuple): CapturedPoint | null =>
   point ? { x: point[0], y: point[1] } : null;
+
+const modularDegreesBetween = (left: number, right: number): number => {
+  const distance = Math.abs(left - right) % 360;
+  return Math.min(distance, 360 - distance);
+};
+
+const expectStructured = (
+  actual: number,
+  expected: number,
+  label: string
+): void => {
+  expect(
+    Math.abs(actual - expected),
+    `${label}: expected ${expected}, received ${actual}`
+  ).toBeLessThanOrEqual(oracle.tolerances.structuredPixels);
+};
 
 const expectRect = (
   actual: CapturedRect,
@@ -115,17 +145,6 @@ const expectRect = (
       `${label}.${key}: expected ${expected[key]}, received ${actual[key]}`
     ).toBeLessThanOrEqual(oracle.tolerances.cardSizeRelative);
   }
-};
-
-const expectStructured = (
-  actual: number,
-  expected: number,
-  label: string
-): void => {
-  expect(
-    Math.abs(actual - expected),
-    `${label}: expected ${expected}, received ${actual}`
-  ).toBeLessThanOrEqual(oracle.tolerances.structuredPixels);
 };
 
 const expectPoint = (
@@ -185,6 +204,12 @@ const normalizedTrace = (
 ): readonly string[] =>
   trace.map((call) => call.replaceAll(`${entry.id}-`, ''));
 
+const pointInside = (point: CapturedPoint, bounds: CapturedRect): boolean =>
+  point.x >= bounds.x &&
+  point.x <= bounds.x + bounds.width &&
+  point.y >= bounds.y &&
+  point.y <= bounds.y + bounds.height;
+
 const expectedHitRoles = (
   point: CapturedPoint,
   cardRects: readonly [RectTuple, RectTuple, RectTuple]
@@ -192,20 +217,8 @@ const expectedHitRoles = (
   roles.filter((_, index) => {
     const tuple = cardRects[index];
     if (!tuple) throw new Error(`Missing expected card rectangle ${index}`);
-    const bounds = rectFromTuple(tuple);
-    return (
-      point.x >= bounds.x &&
-      point.x <= bounds.x + bounds.width &&
-      point.y >= bounds.y &&
-      point.y <= bounds.y + bounds.height
-    );
+    return pointInside(point, rectFromTuple(tuple));
   });
-
-const pointInside = (point: CapturedPoint, bounds: CapturedRect): boolean =>
-  point.x >= bounds.x &&
-  point.x <= bounds.x + bounds.width &&
-  point.y >= bounds.y &&
-  point.y <= bounds.y + bounds.height;
 
 const paintedFromAuthored = (
   authored: CapturedRect,
@@ -220,13 +233,38 @@ const paintedFromAuthored = (
         height: authored.width,
       };
 
-test('lower q0 single-card oracle pins ingress, rotation, and compound dependencies', async () => {
-  const manifests = [
-    oracle,
-    groupOracle,
-    breakOracle,
-    lowerGroupOracle,
-  ] as const;
+const manifests = [
+  oracle,
+  nonzeroOracle,
+  lowerQ0Oracle,
+  groupOracle,
+  breakOracle,
+  lowerGroupOracle,
+] as unknown as readonly ProvenanceManifest[];
+
+const expectedFulfillment = {
+  servedPaths: [
+    '/',
+    '/opp-containers.html',
+    '/self-containers.html',
+    '/src/assets/cardback.png',
+    '/src/css/index.css',
+    '/src/css/opp-containers.css',
+    '/src/css/self-containers.css',
+    '/src/front-end.js',
+  ],
+  blockedExternalOrigins: [
+    'https://cdn.socket.io',
+    'https://static.cloudflareinsights.com',
+    'https://upload.wikimedia.org',
+    'https://www.svgrepo.com',
+  ],
+  unexpectedSameOriginPaths: [],
+} as const;
+
+export const assertLowerNonzeroOracleIntegrity = async (
+  composition: LowerNonzeroComposition
+): Promise<void> => {
   for (const manifest of manifests) {
     expect(manifest.schemaVersion).toBe(1);
     const sourcePaths = manifest.provenance.map((entry) => entry.path);
@@ -235,6 +273,12 @@ test('lower q0 single-card oracle pins ingress, rotation, and compound dependenc
       manifest.provenanceClaims.flatMap((claim) => claim.sources)
     );
     expect([...claimedPaths].sort()).toEqual([...sourcePaths].sort());
+    for (const claim of manifest.provenanceClaims) {
+      expect(claim.sources.length, claim.claim).toBeGreaterThan(0);
+      expect(new Set(claim.sources).size, claim.claim).toBe(
+        claim.sources.length
+      );
+    }
     for (const entry of manifest.provenance) {
       const source = await readFile(`${repositoryRoot}${entry.path}`);
       const hashInput =
@@ -256,21 +300,61 @@ test('lower q0 single-card oracle pins ingress, rotation, and compound dependenc
       ).toBe(entry.sha256);
     }
   }
-  expect(oracle.expected.frames).toEqual(groupOracle.expected.frames);
-  expect(oracle.expected.frames).toEqual(breakOracle.expected.frames);
-  expect(oracle.expected.frames).toEqual(lowerGroupOracle.expected.frames);
-  expect(oracle.expected.frameTransforms).toEqual(
-    groupOracle.expected.frameTransforms
-  );
-});
 
-test('checked-in legacy lower q0 Alt-R assigns BREAK to the selected attached evolution', async ({
-  page,
-}, testInfo) => {
-  test.skip(
-    testInfo.project.name !== 'chromium',
-    'The source lower-q0 single-card checkpoint is Chromium-specific.'
+  expect(oracle.dependencies.map((entry) => entry.path)).toEqual([
+    'tests/legacy-fixtures/renderer/compound-nonzero-group-single-v1.json',
+    'tests/legacy-fixtures/renderer/compound-lower-q0-single-v1.json',
+  ]);
+  expect(oracle.expected.frames).toEqual(nonzeroOracle.expected.frames);
+  expect(oracle.expected.frames).toEqual(lowerQ0Oracle.expected.frames);
+  expect(oracle.expected.frameTransforms).toEqual(
+    nonzeroOracle.expected.frameTransforms
   );
+  expect(oracle.expected.frameTransforms).toEqual(
+    lowerQ0Oracle.expected.frameTransforms
+  );
+
+  const ordinaryCases = oracle.input.casesByComposition.ordinary;
+  const breakCases = oracle.input.casesByComposition.break;
+  const allCases = [...ordinaryCases, ...breakCases];
+  expect(ordinaryCases).toHaveLength(24);
+  expect(breakCases).toHaveLength(24);
+  expect(new Set(ordinaryCases).size).toBe(ordinaryCases.length);
+  expect(new Set(breakCases).size).toBe(breakCases.length);
+  expect(ordinaryCases.filter((id) => breakCases.includes(id))).toEqual([]);
+  expect(allCases).toEqual(oracle.input.cases);
+  expect(new Set(allCases).size).toBe(48);
+
+  const scenarios = oracle.input.scenarioOrderByComposition[
+    composition
+  ] as readonly Scenario[];
+  expect(scenarios).toHaveLength(6);
+  expect(new Set(scenarios).size).toBe(scenarios.length);
+  expect(oracle.input.casesByComposition[composition]).toHaveLength(24);
+  for (const scenario of scenarios) {
+    expect(scenarioMetadata[scenario].composition).toBe(composition);
+    for (const slot of ['active', 'bench'] as const) {
+      expect(
+        phaseEvidence[`${scenario}:${slot}`].map((phase) => phase[0])
+      ).toEqual(oracle.input.phaseSequence);
+    }
+  }
+  expect(oracle.expected.hitRegionOrder).toEqual(hitRegionNames);
+  expect(oracle.expected.phaseEvidenceTupleSchema).toEqual([
+    'phase name',
+    'stack frame-local rect [x,y,width,height]',
+    'painted card rects [top,middle,base], each [x,y,width,height]',
+    'authored/untransformed card rects [top,middle,base], each [x,y,width,height]',
+    'hit points in expected.hitRegionOrder, each [x,y] or null',
+  ]);
+};
+
+export const assertLowerNonzeroLiveCapture = async (
+  page: Page,
+  testInfo: TestInfo,
+  composition: LowerNonzeroComposition,
+  captureFixture: Capture
+): Promise<void> => {
   await page.setViewportSize(oracle.input.viewport);
   expect(await page.evaluate(() => window.devicePixelRatio)).toBe(
     oracle.input.viewport.devicePixelRatio
@@ -284,44 +368,30 @@ test('checked-in legacy lower q0 Alt-R assigns BREAK to the selected attached ev
     const text = message.text();
     if (
       text === 'Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector'
-    )
+    ) {
       return;
+    }
     runtimeErrors.push(`console.error: ${text}`);
   });
 
-  const capture = await captureLegacySourceCompoundLowerQ0SingleFixture(page);
-  await testInfo.attach('legacy-source-compound-lower-q0-single.json', {
-    body: Buffer.from(JSON.stringify(capture, null, 2)),
-    contentType: 'application/json',
-  });
+  const capture = await captureFixture(page);
+  await testInfo.attach(
+    `legacy-source-compound-lower-nonzero-${composition}.json`,
+    {
+      body: Buffer.from(JSON.stringify(capture, null, 2)),
+      contentType: 'application/json',
+    }
+  );
 
-  expect(capture.sourceFulfillment).toEqual({
-    servedPaths: [
-      '/',
-      '/opp-containers.html',
-      '/self-containers.html',
-      '/src/assets/cardback.png',
-      '/src/css/index.css',
-      '/src/css/opp-containers.css',
-      '/src/css/self-containers.css',
-      '/src/front-end.js',
-    ],
-    blockedExternalOrigins: [
-      'https://cdn.socket.io',
-      'https://static.cloudflareinsights.com',
-      'https://upload.wikimedia.org',
-      'https://www.svgrepo.com',
-    ],
-    unexpectedSameOriginPaths: [],
-  });
+  expect(capture.sourceFulfillment).toEqual(expectedFulfillment);
   expect(capture.ordinaryGroupCases).toEqual([]);
   expect(capture.breakGroupCases).toEqual([]);
   expect(capture.lowerGroupInitiatorCases).toEqual([]);
-  expect(capture.lowerNonzeroGroupSingleCases).toEqual([]);
+  expect(capture.lowerQ0SingleCases).toEqual([]);
   expect(capture.nonzeroGroupSingleCases).toEqual([]);
   expect(capture.breakRefreshCases).toEqual([]);
-  expect(capture.lowerQ0SingleCases.map((entry) => entry.id)).toEqual(
-    oracle.input.cases
+  expect(capture.lowerNonzeroGroupSingleCases.map((entry) => entry.id)).toEqual(
+    oracle.input.casesByComposition[composition]
   );
 
   for (const side of ['local', 'opponent'] as const) {
@@ -346,15 +416,13 @@ test('checked-in legacy lower q0 Alt-R assigns BREAK to the selected attached ev
     ).toBeLessThanOrEqual(oracle.tolerances.rotationDegrees);
   }
 
-  for (const entry of capture.lowerQ0SingleCases) {
+  for (const entry of capture.lowerNonzeroGroupSingleCases) {
     const scenario = entry.scenario as Scenario;
     const metadata = scenarioMetadata[scenario];
+    expect(metadata.composition).toBe(composition);
     const evidence = phaseEvidence[`${scenario}:${entry.slot}`];
-    const expectedMargins = margins[`${metadata.composition}:${entry.slot}`];
-    const expectedAuthoredPhases =
-      authoredCardRects[`${metadata.composition}:${entry.slot}`];
-    const slotMetrics = groupOracle.expected.slotMetrics[entry.slot];
-    if (!evidence || !expectedMargins || !expectedAuthoredPhases) {
+    const expectedMargins = margins[`${scenario}:${entry.slot}`];
+    if (!evidence || !expectedMargins) {
       throw new Error(`Missing ${entry.id} oracle evidence`);
     }
 
@@ -367,11 +435,22 @@ test('checked-in legacy lower q0 Alt-R assigns BREAK to the selected attached ev
     expect(normalizedTrace(entry, entry.transitionTrace)).toEqual([
       transitionTraces[scenario],
     ]);
-    expect(entry.refresh).toBeNull();
+    expect(entry.refresh).toBe(oracle.expected.lifecycle.refreshEvidence);
     expect(entry.phases.map((phase) => phase.wrapperCount)).toEqual(
       oracle.expected.lifecycle.wrapperCountsByPhase
     );
     expect(new Set(entry.phases.map((phase) => phase.stack.id)).size).toBe(1);
+    for (const role of roles) {
+      expect(
+        new Set(
+          entry.phases.map(
+            (phase) =>
+              phase.cards.find((candidate) => candidate.role === role)?.id
+          )
+        ).size,
+        `${entry.id}.${role}.stable-id`
+      ).toBe(1);
+    }
     expect(entry.observers).toMatchObject({
       mutationObserversCreated: oracle.expected.lifecycle.observerPairsCreated,
       resizeObserversCreated: oracle.expected.lifecycle.observerPairsCreated,
@@ -398,25 +477,29 @@ test('checked-in legacy lower q0 Alt-R assigns BREAK to the selected attached ev
       sinkConnected: false,
     });
 
-    const selectionPhase = entry.phases[0];
-    if (!selectionPhase)
-      throw new Error(`Missing ${entry.id} pre-single phase`);
+    const prePhase = entry.phases[0];
+    if (!prePhase) throw new Error(`Missing ${entry.id}.pre-single`);
     expect(
-      roleOrder(selectionPhase.stack.hitOrder[metadata.selectionHitRegion])
+      roleOrder(prePhase.stack.hitOrder[metadata.selectionHitRegion])
     ).toContain(metadata.selectedRole);
+    const selectedPreCard = prePhase.cards.find(
+      (card) => card.role === metadata.selectedRole
+    );
+    expect(selectedPreCard).toMatchObject({
+      domOrdinal: metadata.selectedDomOrdinal,
+      logicalOrdinal: metadata.selectedIndex,
+    });
 
     for (const [phaseIndex, phase] of entry.phases.entries()) {
       const expectedPhase = evidence[phaseIndex];
       const expectedTurns = quarterTurns[scenario][phaseIndex];
       const expectedBreaks = breakFlags[scenario][phaseIndex];
       const expectedMargin = expectedMargins[phaseIndex];
-      const expectedAuthoredCards = expectedAuthoredPhases[phaseIndex];
       if (
         !expectedPhase ||
         !expectedTurns ||
         !expectedBreaks ||
-        !expectedMargin ||
-        !expectedAuthoredCards
+        !expectedMargin
       ) {
         throw new Error(`Missing ${entry.id}.${phase.name} phase evidence`);
       }
@@ -431,13 +514,18 @@ test('checked-in legacy lower q0 Alt-R assigns BREAK to the selected attached ev
       }
       expectRect(
         phase.stack.physicalBounds,
-        physicalRect(entry.side, capture.frames[entry.side], expectedStack),
+        physicalRect(
+          entry.side,
+          oracle.expected.frames[entry.side],
+          expectedStack
+        ),
         `${entry.id}.${phase.name}.stack.physical`
       );
       expect([
         phase.stack.inlineMarginRight,
         phase.stack.inlineMarginLeft,
       ]).toEqual(expectedMargin);
+      const slotMetrics = groupOracle.expected.slotMetrics[entry.slot];
       expect(phase.stack).toMatchObject({
         clientWidth: slotMetrics.clientWidth,
         clientHeight: slotMetrics.clientHeight,
@@ -467,38 +555,57 @@ test('checked-in legacy lower q0 Alt-R assigns BREAK to the selected attached ev
 
       for (const [cardIndex, role] of roles.entries()) {
         const card = phase.cards.find((candidate) => candidate.role === role);
-        const cardTuple = expectedPhase[2][cardIndex];
-        const authoredTuple = expectedAuthoredCards[cardIndex];
-        if (!card || !cardTuple || !authoredTuple) {
+        const paintedTuple = expectedPhase[2][cardIndex];
+        const authoredTuple = expectedPhase[3][cardIndex];
+        if (!card || !paintedTuple || !authoredTuple) {
           throw new Error(`Missing ${entry.id}.${phase.name}.${role}`);
         }
-        const expectedCard = rectFromTuple(cardTuple);
+        const expectedPainted = rectFromTuple(paintedTuple);
         const expectedAuthored = rectFromTuple(authoredTuple);
         for (const key of ['x', 'y', 'width', 'height'] as const) {
           expectStructured(
             card.frameLocalBounds[key],
-            expectedCard[key],
-            `${entry.id}.${phase.name}.${role}.${key}`
+            expectedPainted[key],
+            `${entry.id}.${phase.name}.${role}.painted.${key}`
           );
-        }
-        expectRect(
-          card.physicalBounds,
-          physicalRect(entry.side, capture.frames[entry.side], expectedCard),
-          `${entry.id}.${phase.name}.${role}.physical`
-        );
-        for (const key of ['x', 'y', 'width', 'height'] as const) {
           expectStructured(
             card.untransformedFrameLocalBounds[key],
             expectedAuthored[key],
             `${entry.id}.${phase.name}.${role}.authored.${key}`
           );
           expectStructured(
-            card.frameLocalBounds[key],
+            expectedPainted[key],
             paintedFromAuthored(expectedAuthored, expectedTurns[role])[key],
             `${entry.id}.${phase.name}.${role}.painted-from-authored.${key}`
           );
         }
+        expectRect(
+          card.physicalBounds,
+          physicalRect(
+            entry.side,
+            oracle.expected.frames[entry.side],
+            expectedPainted
+          ),
+          `${entry.id}.${phase.name}.${role}.physical`
+        );
         expect(card.localRotationDegrees / 90).toBe(expectedTurns[role]);
+        expect(card.inlineTransform).toBe(
+          `rotate(${expectedTurns[role] * 90}deg)`
+        );
+        const transformOrigin = card.transformOrigin
+          .split(' ')
+          .map((value) => Number.parseFloat(value));
+        expect(transformOrigin).toHaveLength(2);
+        for (const [
+          index,
+          expected,
+        ] of slotMetrics.transformOriginPx.entries()) {
+          expectStructured(
+            transformOrigin[index] ?? Number.NaN,
+            expected,
+            `${entry.id}.${phase.name}.${role}.transformOrigin.${index}`
+          );
+        }
         expect(card.pokemonBreak).toBe(expectedBreaks[role]);
         expect(
           modularDegreesBetween(
@@ -512,6 +619,7 @@ test('checked-in legacy lower q0 Alt-R assigns BREAK to the selected attached ev
           naturalWidth: oracle.input.asset.naturalWidth,
           naturalHeight: oracle.input.asset.naturalHeight,
           clientWidth: slotMetrics.clientWidth,
+          clientHeight: slotMetrics.clientHeight,
           sourcePath: oracle.input.asset.path,
           imageType: 'Pokémon',
           energyLayer: oracle.expected.topology.energyLayer,
@@ -521,9 +629,6 @@ test('checked-in legacy lower q0 Alt-R assigns BREAK to the selected attached ev
           logicalOrdinal: oracle.expected.topology.logicalRoles.indexOf(role),
           inlineLeftPx: 0,
         });
-        expect(card.inlineTransform).toBe(
-          `rotate(${expectedTurns[role] * 90}deg)`
-        );
         expectStructured(
           card.inlineBottomPx,
           slotMetrics.middleBottomPx *
@@ -555,7 +660,7 @@ test('checked-in legacy lower q0 Alt-R assigns BREAK to the selected attached ev
 
       for (const [hitIndex, hitName] of hitRegionNames.entries()) {
         const expectedPoint = pointFromTuple(
-          expectedPhase[3][hitIndex] ?? null
+          expectedPhase[4][hitIndex] ?? null
         );
         const actualPoint = phase.stack.hitPointsFrameLocal[hitName];
         if (expectedPoint === null) {
@@ -583,7 +688,11 @@ test('checked-in legacy lower q0 Alt-R assigns BREAK to the selected attached ev
         }
         expectPoint(
           actualPhysical,
-          physicalPoint(entry.side, capture.frames[entry.side], actualPoint),
+          physicalPoint(
+            entry.side,
+            oracle.expected.frames[entry.side],
+            expectedPoint
+          ),
           `${entry.id}.${phase.name}.${hitName}.physical`
         );
         expect(roleOrder(phase.stack.hitOrder[hitName])).toEqual(
@@ -591,32 +700,26 @@ test('checked-in legacy lower q0 Alt-R assigns BREAK to the selected attached ev
         );
       }
 
-      if (phaseIndex === 1) {
-        const selectedPrefix = metadata.selectedRole;
-        const otherPrefix = selectedPrefix === 'middle' ? 'base' : 'middle';
-        for (const suffix of ['PaintedOnly', 'AuthoredOnly'] as const) {
-          const selectedName = `${selectedPrefix}${suffix}` as
-            | 'middlePaintedOnly'
-            | 'middleAuthoredOnly'
-            | 'basePaintedOnly'
-            | 'baseAuthoredOnly';
-          const otherName = `${otherPrefix}${suffix}` as typeof selectedName;
-          expect(phase.stack.hitPointsFrameLocal[selectedName]).not.toBeNull();
-          expect(phase.stack.hitPointsFrameLocal[otherName]).toBeNull();
-        }
-        const selectedCard = phase.cards.find(
-          (card) => card.role === metadata.selectedRole
-        );
-        const selectedPaintedName = `${metadata.selectedRole}PaintedOnly` as
-          'middlePaintedOnly' | 'basePaintedOnly';
-        const selectedAuthoredName = `${metadata.selectedRole}AuthoredOnly` as
-          'middleAuthoredOnly' | 'baseAuthoredOnly';
-        const selectedPaintedPoint =
-          phase.stack.hitPointsFrameLocal[selectedPaintedName];
-        const selectedAuthoredPoint =
-          phase.stack.hitPointsFrameLocal[selectedAuthoredName];
-        if (!selectedCard || !selectedPaintedPoint || !selectedAuthoredPoint) {
-          throw new Error(`Missing ${entry.id} selected lower hit evidence`);
+      const selectedPaintedName = `${metadata.selectedRole}PaintedOnly` as
+        'middlePaintedOnly' | 'basePaintedOnly';
+      const selectedAuthoredName = `${metadata.selectedRole}AuthoredOnly` as
+        'middleAuthoredOnly' | 'baseAuthoredOnly';
+      const selectedCard = phase.cards.find(
+        (card) => card.role === metadata.selectedRole
+      );
+      if (!selectedCard) {
+        throw new Error(`Missing ${entry.id}.${phase.name}.selected-card`);
+      }
+      const selectedPaintedPoint =
+        phase.stack.hitPointsFrameLocal[selectedPaintedName];
+      const selectedAuthoredPoint =
+        phase.stack.hitPointsFrameLocal[selectedAuthoredName];
+
+      if (phaseIndex === 0 && metadata.groupTurns % 2 === 1) {
+        if (!selectedPaintedPoint || !selectedAuthoredPoint) {
+          throw new Error(
+            `Missing ${entry.id}.${phase.name}.selected painted/authored probes`
+          );
         }
         expect(
           pointInside(selectedPaintedPoint, selectedCard.frameLocalBounds)
@@ -642,9 +745,17 @@ test('checked-in legacy lower q0 Alt-R assigns BREAK to the selected attached ev
         expect(
           phase.stack.hitOrder[selectedAuthoredName]?.includes(selectedCard.id)
         ).toBe(false);
+      } else if (
+        (phaseIndex === 0 && metadata.groupTurns === 2) ||
+        phaseIndex === 1
+      ) {
+        expect(selectedPaintedPoint).toBeNull();
+        expect(selectedAuthoredPoint).toBeNull();
+        expect(phase.stack.hitOrder[selectedPaintedName]).toBeNull();
+        expect(phase.stack.hitOrder[selectedAuthoredName]).toBeNull();
       }
     }
   }
 
   expect(runtimeErrors).toEqual([]);
-});
+};

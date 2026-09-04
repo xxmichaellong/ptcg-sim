@@ -852,6 +852,46 @@ lower Alt-R, repeated or mixed initiators, refresh after divergence, an already-
 BREAK lower card, attachments, movement/removal, and candidate parity remain
 excluded.
 
+The eighteenth source checkpoint is split across
+`tests/browser/legacy-compound-lower-nonzero-group-single-ordinary-geometry.spec.ts`
+and
+`tests/browser/legacy-compound-lower-nonzero-group-single-break-geometry.spec.ts`,
+with one shared oracle at
+`tests/legacy-fixtures/renderer/compound-lower-nonzero-group-single-v1.json`.
+Forty-eight fresh histories cover ordinary/top-BREAK composition, middle/base
+selection, group q1/q2/q3, both physical frames, and active/sole-bench slots.
+The two Chromium executions contain twenty-four cases each, but together form
+one source-only checkpoint. Every history is constructed independently and
+records `pre-single` and `post-single` with no measured-transition refresh.
+
+Legacy single-card rotation reads the selected lower card's absolute inline
+angle. The selected middle or base therefore snaps q1/q2/q3→q0 and remains
+`PokémonBreak=false`, while the top and other lower evolution retain their
+turns. A top-BREAK card stays flagged and keeps its effective orientation; at
+group q3 it is already q0 while the two lower cards start q3. Logical action
+indices remain middle=1/base=2 despite DOM ordinals 2/1. Exact traces are
+essential for q2→q0 because both endpoints have the same rectangular painted
+and authored bounds.
+
+The oracle pins authored and painted rectangles plus their physical-frame
+mapping, including lower-role painted-only and authored-only native hit probes
+at q1/q3 and their required absence at q2 and selected post-q0. Margins preserve the
+selected card's tentative-angle write: ordinary q1/q3 bench entries move from
+`3%`/`2%` to `1%`/`0%`, ordinary q2 bench moves the opposite direction, while
+the top-BREAK bench values remain fixed within each group history. Active q1
+begins unwritten only for ordinary composition; all other measured active phases
+are `1%`/`0%`. Card/wrapper identity, topology, links, observers, and cleanup
+remain stable across the action.
+
+The keyboard and clicked-card ingress files are digest-pinned but not executed;
+the harness narrowly transcribes the `single=true` source branch and its
+`processAction` call payload index. Opponent cases prove physical half-turn
+mapping, not local mutation of opponent-owned application state. The checkpoint
+mounts no candidate and changes no production/domain/protocol/schema path.
+Returned/history-authored q0, q1-refreshed entry, repeated actions, group
+rotation or refresh after divergence, mixed initiators, already-BREAK lower
+cards, attachments, movement, and candidate parity remain excluded.
+
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
 renderer-neutral scene and has structured scene assertions for all four board
@@ -860,8 +900,9 @@ shared placement, compact and fullscreen states. The controlled hand/bench/
 attachment-stack fixture remains source-only; the narrower contained-card,
 ordinary-evolution, single-Energy, Trainer-as-Tool, and stable two-Energy
 fixtures feed and compare their strict production geometries. The compound
-group/BREAK, BREAK q0/q2/q3 refresh, nonzero-group Alt-R, lower-initiated group,
-and lower-q0 single histories remain wholly source-only. The
+group/BREAK, BREAK q0/q2/q3 refresh, top- and lower-selected nonzero-group
+Alt-R, lower-initiated group, and lower-q0 single histories remain wholly
+source-only. The
 bench-marker rotation history remains source-only while its strict pristine-q0 phase also
 feeds and compares the production geometry. The two-Energy
 departure phases remain source-only and prove stable convergence to the

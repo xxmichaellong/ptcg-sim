@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 782 v2 tests across 118 files. A separate suite
-passes 36 Playwright checks across 18 Chromium 151 browser files:
+The repository-wide gate passes 787 v2 tests across 119 files. A separate suite
+passes 40 Playwright checks across 20 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -556,7 +556,19 @@ passes 36 Playwright checks across 18 Chromium 151 browser files:
     measured pre-single→post-single transition. Nonzero or history-authored q0
     entries and later divergence remain separate; no production/domain/schema
     path changes.
-24. The selected DOM implementation completes 100 mount → clear/reset → destroy
+24. An eighteenth source-only checkpoint pins forty-eight independently built
+    nonzero-group lower-card Alt-R histories across middle/base, q1/q2/q3,
+    ordinary/top-BREAK, active/sole bench, and both physical sides. The selected
+    lower evolution alone resets from q1/q2/q3 to absolute q0 and remains
+    non-BREAK; its sibling retains the group angle, and a BREAK top retains its
+    flag and effective orientation. Exact logical indices versus DOM ordinals,
+    action traces, history-sensitive margins, authored/painted/physical bounds,
+    ten native hit probes, wrapper identity, observers, and cleanup are pinned
+    in two bounded 24-case Chromium runs. Keyboard/click ingress is digest-
+    pinned but not executed, and no measured-transition refresh occurs.
+    Returned/history-authored q0 and later divergence remain separate; no
+    production/domain/protocol/schema path changes.
+25. The selected DOM implementation completes 100 mount → clear/reset → destroy
     cycles on one warmed route-owned host with the exact status sequence,
     complete scene IDs at mount, zero rendered scene children/IDs after clear and
     destroy, zero non-DOM diagnostic resources, and post-GC Chromium
@@ -603,7 +615,12 @@ nonzero-group Alt-R matrix in
 lower-initiated group rotation in
 `tests/browser/legacy-compound-lower-group-initiator-geometry.spec.ts`, and the
 pristine-q0 lower Alt-R matrix in
-`tests/browser/legacy-compound-lower-q0-single-geometry.spec.ts`. The mixed-
+`tests/browser/legacy-compound-lower-q0-single-geometry.spec.ts`, plus the
+nonzero lower Alt-R matrix split between
+`tests/browser/legacy-compound-lower-nonzero-group-single-ordinary-geometry.spec.ts`
+and
+`tests/browser/legacy-compound-lower-nonzero-group-single-break-geometry.spec.ts`.
+The mixed-
 order suite validates a checked-in numeric oracle without mounting a candidate;
 the mixed-stack movement suite mounts React only for its two canonical settled
 movement phases; and the marker/rotation suite compares React only to pristine
@@ -611,10 +628,11 @@ source q0 while production canonicalizes any eligible current q0 and keeps
 q1/q2/q3 and history-specific layout source-only. The bench-marker suite
 likewise keeps its q1/q2/q3 and observer history source-only, while comparing
 the separately composed clean-active-plus-sole-bench q0 production shape. The
-compound, BREAK-refresh, nonzero-group single-card, lower-group-initiator, and
-lower-q0 single-card suites mount no candidate because they prove that projected
-rotation fields alone cannot recover selected-action, per-evolution BREAK, and
-wrapper-margin history, and that q3 refresh can mutate legacy orientation.
+compound, BREAK-refresh, top/lower nonzero-group single-card,
+lower-group-initiator, and lower-q0 single-card suites mount no candidate
+because they prove that projected rotation fields alone cannot recover
+selected-action, per-evolution BREAK, and wrapper-margin history, and that q3
+refresh can mutate legacy orientation.
 
 Standard
 Linux CI can install Playwright's pinned Chromium build. This NixOS workspace
