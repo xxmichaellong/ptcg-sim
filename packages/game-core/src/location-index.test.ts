@@ -26,7 +26,8 @@ const createContext = (): CommandContext => {
   return {
     nextCardId: () => asCardInstanceId(`location-card-${++card}`),
     nextStackId: () => asStackId(`location-stack-${++stack}`),
-    nextInspectionId: () => asInspectionId(`location-inspection-${++inspection}`),
+    nextInspectionId: () =>
+      asInspectionId(`location-inspection-${++inspection}`),
     nextWorkAreaId: () => asWorkAreaId(`location-work-area-${++workArea}`),
     shuffle: (values) => [...values].reverse(),
     randomInt: () => 0,
