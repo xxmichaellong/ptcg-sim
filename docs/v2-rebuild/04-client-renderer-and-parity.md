@@ -515,8 +515,29 @@ similarly.
 
 This supplies more evidence that exact legacy compound layout cannot be chosen
 from projected turns alone. Production remains generic for these histories.
-Lower-card single/Alt-R, mixed initiators, refresh after divergence, attachment
-timing, and candidate paint/hit parity remain separate decisions.
+Lower-card single/Alt-R beyond pristine group q0, mixed initiators, refresh
+after divergence, attachment timing, and candidate paint/hit parity remain
+separate decisions.
+
+A seventeenth source-only checkpoint isolates the pristine group-q0 lower-card
+Alt-R entry. Sixteen independent histories span middle/base selection,
+ordinary/top-BREAK composition, active/sole-bench placement, and both physical
+sides. A selected attached lower evolution advances from q0 to q1 and receives
+its own legacy `PokémonBreak=true` flag without rotating either sibling. The
+top-BREAK composition therefore ends with two BREAK-flagged evolutions. Logical
+indices middle=1/base=2 remain distinct from DOM ordinals 2/1.
+
+The checkpoint adds lower-specific painted-only and authored-only native hit
+probes, pins exact stack/card/physical geometry and topology, and preserves the
+source margin writes: active remains unwritten, ordinary bench changes to
+`3%`/`2%`, and top-BREAK bench stays `3%`/`2%`. Keyboard/click ingress is
+digest-pinned but not executed. Across the measured pre-single→post-single
+transition, there is no refresh or wrapper replacement.
+Because canonical v2 state deliberately does not contain a legacy per-evolution
+BREAK flag, this evidence does not authorize a production predicate or schema
+expansion. Nonzero q1/q2/q3 lower Alt-R, returned/history-authored q0, repeated
+or mixed initiators, refresh after divergence, attachments, and candidate
+parity remain separate work.
 
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during

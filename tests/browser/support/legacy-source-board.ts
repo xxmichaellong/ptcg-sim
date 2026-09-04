@@ -1068,6 +1068,10 @@ export type LegacyCompoundRotationScenario =
   | 'ordinaryGroupFromBase'
   | 'breakGroupFromMiddle'
   | 'breakGroupFromBase'
+  | 'ordinaryMiddleSingleAtGroupQ0'
+  | 'ordinaryBaseSingleAtGroupQ0'
+  | 'breakMiddleSingleAtGroupQ0'
+  | 'breakBaseSingleAtGroupQ0'
   | 'ordinarySingleAtGroupQ1'
   | 'ordinarySingleAtGroupQ2'
   | 'ordinarySingleAtGroupQ3'
@@ -1162,6 +1166,10 @@ export interface LegacyCompoundRotationStack {
     readonly baseOnly: readonly string[] | null;
     readonly topPaintedOnly: readonly string[] | null;
     readonly topAuthoredOnly: readonly string[] | null;
+    readonly middlePaintedOnly: readonly string[] | null;
+    readonly middleAuthoredOnly: readonly string[] | null;
+    readonly basePaintedOnly: readonly string[] | null;
+    readonly baseAuthoredOnly: readonly string[] | null;
   };
   readonly hitPointsFrameLocal: Readonly<
     Record<
@@ -1170,7 +1178,11 @@ export interface LegacyCompoundRotationStack {
       | 'middleAndBaseOverlap'
       | 'baseOnly'
       | 'topPaintedOnly'
-      | 'topAuthoredOnly',
+      | 'topAuthoredOnly'
+      | 'middlePaintedOnly'
+      | 'middleAuthoredOnly'
+      | 'basePaintedOnly'
+      | 'baseAuthoredOnly',
       CapturedPoint | null
     >
   >;
@@ -1181,7 +1193,11 @@ export interface LegacyCompoundRotationStack {
       | 'middleAndBaseOverlap'
       | 'baseOnly'
       | 'topPaintedOnly'
-      | 'topAuthoredOnly',
+      | 'topAuthoredOnly'
+      | 'middlePaintedOnly'
+      | 'middleAuthoredOnly'
+      | 'basePaintedOnly'
+      | 'baseAuthoredOnly',
       CapturedPoint | null
     >
   >;
@@ -1232,6 +1248,7 @@ export interface LegacySourceCompoundRotationFixture {
   readonly ordinaryGroupCases: readonly LegacyCompoundRotationCase[];
   readonly breakGroupCases: readonly LegacyCompoundRotationCase[];
   readonly lowerGroupInitiatorCases: readonly LegacyCompoundRotationCase[];
+  readonly lowerQ0SingleCases: readonly LegacyCompoundRotationCase[];
   readonly nonzeroGroupSingleCases: readonly LegacyCompoundRotationCase[];
   readonly breakRefreshCases: readonly LegacyCompoundRotationCase[];
   readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
@@ -5872,6 +5889,7 @@ export const captureLegacySourceCompoundRotationFixture = async (
   mode:
     | 'canonical'
     | 'lowerGroupInitiator'
+    | 'lowerQ0Single'
     | 'nonzeroGroupSingle'
     | 'breakRefreshQ0Q2'
     | 'breakRefreshQ3' = 'canonical'
@@ -5953,6 +5971,11 @@ export const captureLegacySourceCompoundRotationFixture = async (
               ordinaryGroupFromBase: 'compound-group-from-base',
               breakGroupFromMiddle: 'compound-break-group-from-middle',
               breakGroupFromBase: 'compound-break-group-from-base',
+              ordinaryMiddleSingleAtGroupQ0: 'compound-group-q0-middle-single',
+              ordinaryBaseSingleAtGroupQ0: 'compound-group-q0-base-single',
+              breakMiddleSingleAtGroupQ0:
+                'compound-break-group-q0-middle-single',
+              breakBaseSingleAtGroupQ0: 'compound-break-group-q0-base-single',
               ordinarySingleAtGroupQ1: 'compound-group-q1-single',
               ordinarySingleAtGroupQ2: 'compound-group-q2-single',
               ordinarySingleAtGroupQ3: 'compound-group-q3-single',
@@ -6348,11 +6371,12 @@ export const captureLegacySourceCompoundRotationFixture = async (
               ];
               const axisCandidates = (
                 axis: 'x' | 'y',
-                size: 'width' | 'height'
+                size: 'width' | 'height',
+                boundsList = candidateBounds
               ) =>
                 [
                   ...new Set(
-                    candidateBounds.flatMap((bounds) => {
+                    boundsList.flatMap((bounds) => {
                       const start = bounds[axis];
                       const end = start + bounds[size];
                       return [
@@ -6371,6 +6395,29 @@ export const captureLegacySourceCompoundRotationFixture = async (
                   samples.push({ point, hitIds: idsAt(point, fixtureIds) });
                 }
               }
+              const lowerSamples = [...samples];
+              const lowerCandidateBounds = [
+                ...candidateBounds,
+                middle.untransformedFrameLocalBounds,
+                base.untransformedFrameLocalBounds,
+              ];
+              for (const y of axisCandidates(
+                'y',
+                'height',
+                lowerCandidateBounds
+              )) {
+                for (const x of axisCandidates(
+                  'x',
+                  'width',
+                  lowerCandidateBounds
+                )) {
+                  const point = { x, y };
+                  lowerSamples.push({
+                    point,
+                    hitIds: idsAt(point, fixtureIds),
+                  });
+                }
+              }
               const findPoint = (
                 predicate: (
                   ids: readonly string[],
@@ -6379,6 +6426,33 @@ export const captureLegacySourceCompoundRotationFixture = async (
               ): CapturedPoint | null =>
                 samples.find(({ hitIds, point }) => predicate(hitIds, point))
                   ?.point ?? null;
+              const findLowerPoint = (
+                predicate: (
+                  ids: readonly string[],
+                  point: CapturedPoint
+                ) => boolean
+              ): CapturedPoint | null =>
+                lowerSamples.find(({ hitIds, point }) =>
+                  predicate(hitIds, point)
+                )?.point ?? null;
+              const lowerPaintedOnly = (
+                card: RawCompoundRotationCard
+              ): CapturedPoint | null =>
+                findLowerPoint(
+                  (ids, point) =>
+                    ids.includes(card.id) &&
+                    pointInside(point, card.frameLocalBounds) &&
+                    pointOutside(point, card.untransformedFrameLocalBounds)
+                );
+              const lowerAuthoredOnly = (
+                card: RawCompoundRotationCard
+              ): CapturedPoint | null =>
+                findLowerPoint(
+                  (ids, point) =>
+                    !ids.includes(card.id) &&
+                    pointInside(point, card.untransformedFrameLocalBounds) &&
+                    pointOutside(point, card.frameLocalBounds)
+                );
               const points = {
                 commonOverlap: findPoint(
                   (ids, point) =>
@@ -6421,6 +6495,10 @@ export const captureLegacySourceCompoundRotationFixture = async (
                     pointInside(point, top.untransformedFrameLocalBounds) &&
                     pointOutside(point, top.frameLocalBounds)
                 ),
+                middlePaintedOnly: lowerPaintedOnly(middle),
+                middleAuthoredOnly: lowerAuthoredOnly(middle),
+                basePaintedOnly: lowerPaintedOnly(base),
+                baseAuthoredOnly: lowerAuthoredOnly(base),
               };
               const hitOrder: RawCompoundRotationStack['hitOrder'] = {
                 commonOverlap: points.commonOverlap
@@ -6440,6 +6518,18 @@ export const captureLegacySourceCompoundRotationFixture = async (
                   : null,
                 topAuthoredOnly: points.topAuthoredOnly
                   ? idsAt(points.topAuthoredOnly, fixtureIds)
+                  : null,
+                middlePaintedOnly: points.middlePaintedOnly
+                  ? idsAt(points.middlePaintedOnly, fixtureIds)
+                  : null,
+                middleAuthoredOnly: points.middleAuthoredOnly
+                  ? idsAt(points.middleAuthoredOnly, fixtureIds)
+                  : null,
+                basePaintedOnly: points.basePaintedOnly
+                  ? idsAt(points.basePaintedOnly, fixtureIds)
+                  : null,
+                baseAuthoredOnly: points.baseAuthoredOnly
+                  ? idsAt(points.baseAuthoredOnly, fixtureIds)
                   : null,
               };
               const containerBounds = rect(container.getBoundingClientRect());
@@ -6661,6 +6751,28 @@ export const captureLegacySourceCompoundRotationFixture = async (
                 )
               );
             } else if (
+              scenario === 'ordinaryMiddleSingleAtGroupQ0' ||
+              scenario === 'ordinaryBaseSingleAtGroupQ0' ||
+              scenario === 'breakMiddleSingleAtGroupQ0' ||
+              scenario === 'breakBaseSingleAtGroupQ0'
+            ) {
+              const setupBreak = scenario.startsWith('break');
+              const selected = scenario.includes('Middle') ? middle : base;
+              if (setupBreak) {
+                rotateCard(top, true, logical, container);
+              }
+              phases.push(snapshot('pre-single', null, logical, container));
+              const transitionTraceStart = callTrace.length;
+              phases.push(
+                snapshot(
+                  'post-single',
+                  rotateCard(selected, true, logical, container),
+                  logical,
+                  container
+                )
+              );
+              transitionTrace = callTrace.slice(transitionTraceStart);
+            } else if (
               scenario === 'ordinarySingleAtGroupQ1' ||
               scenario === 'ordinarySingleAtGroupQ2' ||
               scenario === 'ordinarySingleAtGroupQ3' ||
@@ -6789,22 +6901,29 @@ export const captureLegacySourceCompoundRotationFixture = async (
                     'breakGroupFromMiddle',
                     'breakGroupFromBase',
                   ]
-                : input.mode === 'nonzeroGroupSingle'
+                : input.mode === 'lowerQ0Single'
                   ? [
-                      'ordinarySingleAtGroupQ1',
-                      'ordinarySingleAtGroupQ2',
-                      'ordinarySingleAtGroupQ3',
-                      'breakSingleAtGroupQ1',
-                      'breakSingleAtGroupQ2',
-                      'breakSingleAtGroupQ3',
+                      'ordinaryMiddleSingleAtGroupQ0',
+                      'ordinaryBaseSingleAtGroupQ0',
+                      'breakMiddleSingleAtGroupQ0',
+                      'breakBaseSingleAtGroupQ0',
                     ]
-                  : input.mode === 'breakRefreshQ0Q2'
+                  : input.mode === 'nonzeroGroupSingle'
                     ? [
-                        'breakRefreshFreshQ0',
-                        'breakRefreshReturnedQ0',
-                        'breakRefreshQ2',
+                        'ordinarySingleAtGroupQ1',
+                        'ordinarySingleAtGroupQ2',
+                        'ordinarySingleAtGroupQ3',
+                        'breakSingleAtGroupQ1',
+                        'breakSingleAtGroupQ2',
+                        'breakSingleAtGroupQ3',
                       ]
-                    : ['breakRefreshQ3'];
+                    : input.mode === 'breakRefreshQ0Q2'
+                      ? [
+                          'breakRefreshFreshQ0',
+                          'breakRefreshReturnedQ0',
+                          'breakRefreshQ2',
+                        ]
+                      : ['breakRefreshQ3'];
           for (const scenario of scenarios) {
             for (const slot of ['active', 'bench'] as const) {
               cases.push(await runScenario(slot, scenario));
@@ -6902,6 +7021,13 @@ export const captureLegacySourceCompoundRotationFixture = async (
         entry.scenario === 'breakGroupFromMiddle' ||
         entry.scenario === 'breakGroupFromBase'
     ),
+    lowerQ0SingleCases: cases.filter(
+      (entry) =>
+        entry.scenario === 'ordinaryMiddleSingleAtGroupQ0' ||
+        entry.scenario === 'ordinaryBaseSingleAtGroupQ0' ||
+        entry.scenario === 'breakMiddleSingleAtGroupQ0' ||
+        entry.scenario === 'breakBaseSingleAtGroupQ0'
+    ),
     nonzeroGroupSingleCases: cases.filter(
       (entry) =>
         entry.scenario === 'ordinarySingleAtGroupQ1' ||
@@ -6936,6 +7062,11 @@ export const captureLegacySourceCompoundLowerGroupInitiatorFixture = (
   page: Page
 ): Promise<LegacySourceCompoundRotationFixture> =>
   captureLegacySourceCompoundRotationFixture(page, 'lowerGroupInitiator');
+
+export const captureLegacySourceCompoundLowerQ0SingleFixture = (
+  page: Page
+): Promise<LegacySourceCompoundRotationFixture> =>
+  captureLegacySourceCompoundRotationFixture(page, 'lowerQ0Single');
 
 export const captureLegacySourceCompoundBreakRefreshQ3Fixture = (
   page: Page

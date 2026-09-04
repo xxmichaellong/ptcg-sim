@@ -257,6 +257,7 @@ test('checked-in legacy compound stacks preserve ordinary and BREAK rotation his
     breakOracle.input.cases
   );
   expect(capture.lowerGroupInitiatorCases).toEqual([]);
+  expect(capture.lowerQ0SingleCases).toEqual([]);
   expect(capture.nonzeroGroupSingleCases).toEqual([]);
   expect(capture.breakRefreshCases).toEqual([]);
   for (const side of ['local', 'opponent'] as const) {

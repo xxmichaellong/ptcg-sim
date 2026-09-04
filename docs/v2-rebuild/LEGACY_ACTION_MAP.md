@@ -253,8 +253,22 @@ selection. Wrapper margins still derive from the selected lower card's
 tentative angle, so BREAK q1 begins with empty active and `3%`/`2%` bench
 margins before top-driven refresh normalizes them to `1%`/`0%`. This is another
 source-only reason not to derive exact layout from turns alone. Lower-card
-single/Alt-R and mixed-initiator histories remain explicitly unmodeled legacy
-behavior; the v2 target-value commands and canonical state are unchanged.
+single/Alt-R and mixed-initiator histories remained explicitly unmodeled at
+that checkpoint; the v2 target-value commands and canonical state are
+unchanged.
+
+The clean group-q0 lower-card single branch is now pinned separately. Alt-R on
+logical middle/base index 1/2 sets that attached evolution to q1 and assigns its
+own legacy `PokémonBreak=true` flag while leaving both siblings untouched. A
+top-BREAK composition consequently retains the top flag and adds a second flag
+to the selected lower card. Active margins remain unwritten; ordinary bench
+writes `3%`/`2%`, while top-BREAK bench already has those margins. Lower-specific
+painted/authored native hit regions prove the selected rotated card rather than
+borrowing top-only probes. This source-only evidence exposes behavior that the
+legacy boolean conflates with single-card orientation; it does not change the
+explicit v2 target-value commands or add a per-evolution BREAK flag to canonical
+state. Nonzero and returned-q0 entries, repeated/mixed actions, divergent
+refresh, and attachment timing remain compatibility hazards.
 
 Ability markers likewise have explicit ownership. The top evolution card maps
 to the stack-level marker; attachment, discard, and stadium cards use

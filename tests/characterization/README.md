@@ -318,3 +318,24 @@ anchors, complete traces, dependency-relative geometry/hit evidence, wrapper
 replacement, observers, and cleanup. Lower-card single/Alt-R, mixed initiators,
 other post-divergence refreshes, attachments, and candidate parity remain
 separate source-only work.
+
+`legacy-compound-lower-q0-single-layout.test.ts` next isolates lower-card Alt-R
+at pristine group q0. Sixteen independently built histories cover middle/base,
+ordinary/top-BREAK composition, local/opponent, and active/sole-bench. The
+selected attached lower card alone advances q0→q1 and receives its own legacy
+`PokémonBreak=true`: ordinary composition ends with one flagged lower card,
+while top-BREAK composition keeps the flagged top and adds a second flagged
+evolution. The action proves logical indices middle=1/base=2 despite DOM
+ordinals 2/1.
+
+The dependent oracle pins exact pre-action ordinary/BREAK geometry, then all
+post-action rectangles, margins, topology/links, physical mapping, complete
+traces, lower-specific painted/authored native hit regions, observer ownership,
+and harness cleanup. Active margins stay empty; ordinary bench changes to
+`3%`/`2%`, and top-BREAK bench remains there. No refresh or wrapper replacement
+occurs across the measured pre-single→post-single transition; the setup trace
+still contains two construction refreshes. Keyboard/click ingress is pinned but
+not executed. This is source-only:
+nonzero and returned/history-authored q0 entries, repeated/mixed initiators,
+divergent refresh, attachments, movement/removal, candidate parity, and any
+production/domain/schema change remain excluded.

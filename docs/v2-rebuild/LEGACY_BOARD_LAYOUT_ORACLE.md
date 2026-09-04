@@ -824,6 +824,34 @@ can assign BREAK to an attached evolution), mixed initiators, refresh outside
 the coherent q1 reconstruction, attachments, and later divergence remain
 explicitly excluded.
 
+`tests/browser/legacy-compound-lower-q0-single-geometry.spec.ts` adds a
+seventeenth source checkpoint backed by
+`tests/legacy-fixtures/renderer/compound-lower-q0-single-v1.json`. Sixteen
+fresh histories cover ordinary/top-BREAK composition, middle/base selection,
+local/opponent frames, and active/sole-bench slots at pristine group q0. Alt-R
+and clicked-card selection are digest-pinned but not executed; the inert harness
+transcribes only `single=true` rotation on logical index 1 or 2 after proving
+their reversed DOM ordinals 2 or 1.
+
+The selected attached lower evolution changes q0→q1 and receives its own
+`PokémonBreak=true`; neither sibling changes. Ordinary results contain one
+BREAK-flagged lower card, while top-BREAK composition retains the top q1 flag
+and adds a second flag to the lower card. Active margins remain empty. Ordinary
+bench changes from empty to `3%`/`2%`, and top-BREAK bench remains `3%`/`2%`.
+Lower-role painted-only and authored-only native probes close the top-centric
+hit-evidence gap, alongside exact stack/card/physical rectangles, topology,
+links, traces, observer ownership, and harness cleanup. No refresh or wrapper
+replacement occurs across the measured pre-single→post-single transition; the
+independent setup trace still includes the two construction refreshes.
+
+This remains source-only because projected v2 orientation can paint the current
+turns but canonical state deliberately lacks the legacy per-evolution BREAK
+flag that affects later actions. It mounts no candidate and changes no
+production/domain/schema path. Returned or history-authored q0, group q1/q2/q3
+lower Alt-R, repeated or mixed initiators, refresh after divergence, an already-
+BREAK lower card, attachments, movement/removal, and candidate parity remain
+excluded.
+
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
 renderer-neutral scene and has structured scene assertions for all four board
@@ -832,8 +860,8 @@ shared placement, compact and fullscreen states. The controlled hand/bench/
 attachment-stack fixture remains source-only; the narrower contained-card,
 ordinary-evolution, single-Energy, Trainer-as-Tool, and stable two-Energy
 fixtures feed and compare their strict production geometries. The compound
-group/BREAK, BREAK q0/q2/q3 refresh, nonzero-group Alt-R, and lower-initiated
-group histories remain wholly source-only. The
+group/BREAK, BREAK q0/q2/q3 refresh, nonzero-group Alt-R, lower-initiated group,
+and lower-q0 single histories remain wholly source-only. The
 bench-marker rotation history remains source-only while its strict pristine-q0 phase also
 feeds and compares the production geometry. The two-Energy
 departure phases remain source-only and prove stable convergence to the
