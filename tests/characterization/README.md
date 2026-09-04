@@ -19,9 +19,9 @@ legacy application server.
 deck-first versus discard/lost-zone-last covers, single-card owner-readable
 stadium orientation, closed-cover marker placement, and the exact HTML/CSS/JS/
 asset sources behind those claims. Its browser companion compares contained
-cover/stadium boxes with the React DOM candidate while retaining explicit
-exclusions for cover-open UX, opened-zone layout, top-owner candidate browser
-parity, undersized assets, Pixi geometry, and rotated hit regions.
+cover/stadium boxes, including both owner-readable stadium states, with the
+React DOM candidate while retaining explicit exclusions for cover-open UX,
+opened-zone layout, undersized assets, Pixi geometry, and rotated hit regions.
 
 `legacy-evolution-reflow-layout.test.ts` pins the separate ordinary-evolution
 boundary. Four isolated local/opponent active/bench cases record a second

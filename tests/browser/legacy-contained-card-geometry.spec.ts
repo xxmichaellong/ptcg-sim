@@ -1,4 +1,12 @@
 import { expect, test } from '@playwright/test';
+import type { MatchViewState } from '../../packages/game-core/src/index.js';
+import {
+  BOARD_LAYOUT_GEOMETRY_VERSION,
+  createBoardLayoutSnapshot,
+  createBoardScene,
+  createRendererSpikeView,
+  DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+} from '../../packages/renderer-contract/src/index.js';
 
 import oracle from '../legacy-fixtures/renderer/contained-card-layout-v1.json' with { type: 'json' };
 
@@ -50,6 +58,54 @@ const cardKey = (
     ? `shared-stadium-${card.readableBy}`
     : `${card.side}-${card.kind}`;
 
+const createTopOwnerStadiumCandidateScene = () => {
+  const base = createRendererSpikeView();
+  const bottomPlayerId = base.playerOrder[0];
+  const topPlayerId = base.playerOrder[1];
+  const stadium = base.zones['zone:shared:stadium'];
+  const stadiumCard = stadium?.cards[0];
+  if (
+    !bottomPlayerId ||
+    !topPlayerId ||
+    base.playerOrder.length !== 2 ||
+    !stadium ||
+    !stadiumCard ||
+    stadiumCard.kind !== 'known'
+  ) {
+    throw new Error('Renderer spike fixture lacks top-owner stadium inputs');
+  }
+  const view: MatchViewState = {
+    ...base,
+    revision: base.revision + 1,
+    zones: {
+      ...base.zones,
+      [stadium.id]: {
+        ...stadium,
+        cards: [
+          {
+            ...stadiumCard,
+            ownerId: topPlayerId,
+            face: 'up',
+            orientationQuarterTurns: 0,
+            abilityUsed: false,
+          },
+        ],
+      },
+    },
+  };
+  return createBoardScene(
+    view,
+    createBoardLayoutSnapshot({
+      geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
+      viewport: oracle.input.viewport,
+      playerIds: [bottomPlayerId, topPlayerId],
+      bottomPlayerId,
+      shellMode: 'sidebar',
+      vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+    })
+  );
+};
+
 test('source-backed contained cards match the DOM candidate at legacy pile tops', async ({
   page,
 }, testInfo) => {
@@ -57,6 +113,7 @@ test('source-backed contained cards match the DOM candidate at legacy pile tops'
     testInfo.project.name !== 'chromium',
     'This source-characterization gate is Chromium-specific.'
   );
+  const topOwnerStadiumScene = createTopOwnerStadiumCandidateScene();
   await page.setViewportSize(oracle.input.viewport);
   const source = await captureLegacySourceContainedCardFixture(page);
   await testInfo.attach('legacy-contained-card-geometry.json', {
@@ -140,6 +197,15 @@ test('source-backed contained cards match the DOM candidate at legacy pile tops'
   );
 
   await page.unrouteAll({ behavior: 'wait' });
+  const candidateRuntimeErrors: string[] = [];
+  page.on('pageerror', (error) => {
+    candidateRuntimeErrors.push(`pageerror: ${error.message}`);
+  });
+  page.on('console', (message) => {
+    if (message.type() === 'error') {
+      candidateRuntimeErrors.push(`console: ${message.text()}`);
+    }
+  });
   await page.goto('/?renderer=dom');
   await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
     'data-renderer-status',
@@ -233,4 +299,278 @@ test('source-backed contained cards match the DOM candidate at legacy pile tops'
     ).toBeLessThanOrEqual(rotationToleranceDegrees);
     expect(rendered.topmostCardId).toBe(candidate.cardId);
   }
+
+  const candidateStadiumZone = topOwnerStadiumScene.zones.find(
+    (zone) => zone.kind === 'stadium'
+  );
+  if (!candidateStadiumZone) {
+    throw new Error('Missing candidate stadium zone');
+  }
+  const candidateTopPlayer = topOwnerStadiumScene.layout.players.find(
+    (player) => player.physicalSide === 'upper'
+  );
+  if (!candidateTopPlayer) {
+    throw new Error('Missing candidate top player');
+  }
+  expect(topOwnerStadiumScene.layout).toMatchObject({
+    outerViewport: oracle.input.viewport,
+    shellMode: 'sidebar',
+  });
+  expect(topOwnerStadiumScene.viewport).toEqual({
+    width: topOwnerStadiumScene.layout.playAreaBounds.width,
+    height: topOwnerStadiumScene.layout.playAreaBounds.height,
+    devicePixelRatio: oracle.input.viewport.devicePixelRatio,
+  });
+  expect(topOwnerStadiumScene.bottomPlayerId).not.toBe(
+    candidateTopPlayer.playerId
+  );
+  expect(candidateStadiumZone).toMatchObject({
+    playerId: null,
+    side: 'shared',
+    kind: 'stadium',
+    surface: 'zone',
+    count: 1,
+    interactive: true,
+  });
+  const candidateStadiumCards = topOwnerStadiumScene.cards.filter(
+    (card) => card.parentId === candidateStadiumZone.id
+  );
+  expect(candidateStadiumCards).toHaveLength(1);
+  const candidateStadiumCard = candidateStadiumCards[0]!;
+  const bottomOwnerCandidate = candidates.find(
+    (candidate) => candidate.key === 'shared-stadium-local'
+  );
+  if (!bottomOwnerCandidate) {
+    throw new Error('Missing bottom-owner stadium candidate control');
+  }
+  expect(candidateStadiumCard).toMatchObject({
+    id: bottomOwnerCandidate.cardId,
+    ownerId: candidateTopPlayer.playerId,
+    parentId: candidateStadiumZone.id,
+    side: 'shared',
+    role: 'zone',
+    rotationQuarterTurns: 2,
+    concealed: false,
+    interactive: true,
+  });
+  expect(candidateStadiumCard.zIndex).toBe(100);
+  expect(candidateStadiumCard.zIndex).toBe(
+    Math.max(...candidateStadiumCards.map((card) => card.zIndex))
+  );
+  expect(candidateStadiumZone.contentBounds).toEqual(
+    candidateStadiumZone.bounds
+  );
+  expect(
+    topOwnerStadiumScene.markers.filter(
+      (marker) => marker.parentCardId === candidateStadiumCard.id
+    )
+  ).toEqual([]);
+  expectAnchorWithin(
+    candidateStadiumZone.contentBounds,
+    opponentStadium.containerBounds,
+    'shared-stadium-opponent.scene-container'
+  );
+  expectSizeWithin(
+    candidateStadiumZone.contentBounds,
+    opponentStadium.containerBounds,
+    'shared-stadium-opponent.scene-container'
+  );
+  expectAnchorWithin(
+    candidateStadiumCard.bounds,
+    opponentStadium.physicalBounds,
+    'shared-stadium-opponent.scene-card'
+  );
+  expectSizeWithin(
+    candidateStadiumCard.bounds,
+    opponentStadium.physicalBounds,
+    'shared-stadium-opponent.scene-card'
+  );
+  expect(
+    candidateStadiumCard.bounds.y + candidateStadiumCard.bounds.height
+  ).toBeCloseTo(
+    candidateStadiumZone.contentBounds.y +
+      candidateStadiumZone.contentBounds.height
+  );
+
+  await page.evaluate(async (scene) => {
+    const spike = window.__PTCG_RENDERER_SPIKE__;
+    if (!spike?.createRenderer) {
+      throw new Error('Missing renderer spike factory test seam');
+    }
+    const host = document.createElement('div');
+    host.dataset.topOwnerStadiumCandidateHost = 'true';
+    Object.assign(host.style, {
+      position: 'fixed',
+      left: '0px',
+      top: '0px',
+      width: `${scene.viewport.width}px`,
+      height: `${scene.viewport.height}px`,
+      zIndex: '20000',
+    });
+    document.body.append(host);
+    const renderer = spike.createRenderer({
+      emitIntent: () => undefined,
+      emitPresentationUpdate: () => undefined,
+      reportError: (error) => {
+        host.dataset.rendererError = String(error);
+      },
+    });
+    await renderer.mount(host, scene, {
+      selectedCardId: null,
+      hoveredCardId: null,
+      drag: null,
+      openedZoneId: null,
+    });
+    (
+      window as typeof window & {
+        __PTCG_TOP_OWNER_STADIUM_CANDIDATE_RENDERER__?: { destroy(): void };
+      }
+    ).__PTCG_TOP_OWNER_STADIUM_CANDIDATE_RENDERER__ = renderer;
+  }, topOwnerStadiumScene);
+
+  const topOwnerHost = page.locator('[data-top-owner-stadium-candidate-host]');
+  await expect(topOwnerHost).not.toHaveAttribute('data-renderer-error', /.+/u);
+  const topOwnerLocator = topOwnerHost.locator(
+    `[data-card-id="${candidateStadiumCard.id}"]`
+  );
+  await expect(topOwnerHost.locator('.ptcgsim-board-surface')).toHaveCount(1);
+  await expect(topOwnerLocator).toHaveCount(1);
+  await expect(topOwnerLocator).toHaveAttribute('data-card-role', 'zone');
+  await expect(topOwnerLocator).toBeEnabled();
+  const renderedStadiumBounds = await topOwnerLocator.boundingBox();
+  const renderedStadiumContainerBounds = await topOwnerHost
+    .locator(`[data-zone-content-id="${candidateStadiumZone.id}"]`)
+    .boundingBox();
+  if (!renderedStadiumBounds || !renderedStadiumContainerBounds) {
+    throw new Error('Missing rendered top-owner stadium geometry');
+  }
+  expectAnchorWithin(
+    renderedStadiumContainerBounds,
+    opponentStadium.containerBounds,
+    'shared-stadium-opponent.rendered-container'
+  );
+  expectSizeWithin(
+    renderedStadiumContainerBounds,
+    opponentStadium.containerBounds,
+    'shared-stadium-opponent.rendered-container'
+  );
+  expectAnchorWithin(
+    renderedStadiumBounds,
+    opponentStadium.physicalBounds,
+    'shared-stadium-opponent.rendered-card'
+  );
+  expectSizeWithin(
+    renderedStadiumBounds,
+    opponentStadium.physicalBounds,
+    'shared-stadium-opponent.rendered-card'
+  );
+  expect(
+    Math.abs(
+      renderedStadiumBounds.y +
+        renderedStadiumBounds.height -
+        (renderedStadiumContainerBounds.y +
+          renderedStadiumContainerBounds.height)
+    )
+  ).toBeLessThanOrEqual(anchorTolerancePixels);
+  const renderedTopOwner = await topOwnerLocator.evaluate((element) => {
+    const styles = getComputedStyle(element);
+    const matrix = new DOMMatrixReadOnly(styles.transform);
+    const bounds = element.getBoundingClientRect();
+    const host = element.closest<HTMLElement>(
+      '[data-top-owner-stadium-candidate-host]'
+    );
+    const topmost = document
+      .elementsFromPoint(
+        bounds.x + bounds.width / 2,
+        bounds.y + bounds.height / 2
+      )
+      .find((candidateElement) => {
+        const card = candidateElement.closest<HTMLElement>('[data-card-id]');
+        return card && host?.contains(card);
+      })
+      ?.closest<HTMLElement>('[data-card-id]');
+    return {
+      rotationDegrees:
+        ((Math.atan2(matrix.b, matrix.a) * 180) / Math.PI + 360) % 360,
+      zIndex: Number.parseInt(styles.zIndex, 10),
+      topmostCardId: topmost?.dataset.cardId ?? null,
+    };
+  });
+  expect(
+    modularDegreesBetween(
+      renderedTopOwner.rotationDegrees,
+      opponentStadium.effectiveRotationDegrees
+    )
+  ).toBeLessThanOrEqual(rotationToleranceDegrees);
+  expect(renderedTopOwner.zIndex).toBe(candidateStadiumCard.zIndex);
+  expect(renderedTopOwner.topmostCardId).toBe(candidateStadiumCard.id);
+
+  await testInfo.attach('react-dom-top-owner-stadium-parity.json', {
+    body: Buffer.from(
+      JSON.stringify(
+        {
+          source: opponentStadium,
+          candidate: {
+            cardId: candidateStadiumCard.id,
+            ownerId: candidateStadiumCard.ownerId,
+            rotationQuarterTurns: candidateStadiumCard.rotationQuarterTurns,
+            sceneCardBounds: candidateStadiumCard.bounds,
+            sceneContainerBounds: candidateStadiumZone.contentBounds,
+            renderedCardBounds: renderedStadiumBounds,
+            renderedContainerBounds: renderedStadiumContainerBounds,
+            ...renderedTopOwner,
+          },
+        },
+        null,
+        2
+      )
+    ),
+    contentType: 'application/json',
+  });
+  const teardown = await page.evaluate(async () => {
+    const fixtureWindow = window as typeof window & {
+      __PTCG_TOP_OWNER_STADIUM_CANDIDATE_RENDERER__?: { destroy(): void };
+    };
+    const host = document.querySelector<HTMLElement>(
+      '[data-top-owner-stadium-candidate-host]'
+    );
+    const rendererErrorBeforeDestroy = host?.dataset.rendererError ?? null;
+    fixtureWindow.__PTCG_TOP_OWNER_STADIUM_CANDIDATE_RENDERER__?.destroy();
+    delete fixtureWindow.__PTCG_TOP_OWNER_STADIUM_CANDIDATE_RENDERER__;
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => resolve())
+    );
+    const result = {
+      rendererErrorBeforeDestroy,
+      rendererErrorAfterDestroy: host?.dataset.rendererError ?? null,
+      childElementCount: host?.childElementCount ?? null,
+      renderedCardCount:
+        host?.querySelectorAll('[data-card-id]').length ?? null,
+      renderedZoneCount:
+        host?.querySelectorAll('[data-zone-id]').length ?? null,
+      renderedMarkerCount:
+        host?.querySelectorAll('[data-marker-id]').length ?? null,
+      renderedSurfaceCount:
+        host?.querySelectorAll('.ptcgsim-board-surface').length ?? null,
+      rendererSeamRetained:
+        '__PTCG_TOP_OWNER_STADIUM_CANDIDATE_RENDERER__' in fixtureWindow,
+    };
+    host?.remove();
+    return { ...result, hostConnectedAfterRemoval: host?.isConnected ?? null };
+  });
+  expect(teardown).toEqual({
+    rendererErrorBeforeDestroy: null,
+    rendererErrorAfterDestroy: null,
+    childElementCount: 0,
+    renderedCardCount: 0,
+    renderedZoneCount: 0,
+    renderedMarkerCount: 0,
+    renderedSurfaceCount: 0,
+    rendererSeamRetained: false,
+    hostConnectedAfterRemoval: false,
+  });
+  await expect(topOwnerHost).toHaveCount(0);
+  await page.waitForTimeout(0);
+  expect(candidateRuntimeErrors).toEqual([]);
 });

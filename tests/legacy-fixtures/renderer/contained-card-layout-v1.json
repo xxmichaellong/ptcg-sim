@@ -7,13 +7,13 @@
       "bottom-owner and top-owner stadium image sizing, alignment, and rotation",
       "deck-first versus discard/lost-zone-last pile-top identity",
       "closed-cover suppression of lower-card input and cover-pile ability markers",
-      "stadium maximum cardinality and owner-readable orientation"
+      "stadium maximum cardinality and owner-readable orientation",
+      "browser candidate comparison of both stadium-owner branches"
     ],
     "excluded": [
       "cover click opening a zone",
       "opened-zone card layout and interaction",
       "exact no-upscale behavior for undersized or noncanonical production assets",
-      "browser candidate comparison of the top-owner stadium branch",
       "quarter-turn hit regions for 90-degree and 270-degree cards",
       "replacing retained covered scene nodes with one physical renderer node"
     ]

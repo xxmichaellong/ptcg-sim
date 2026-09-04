@@ -340,13 +340,14 @@ passes 102 Playwright checks across 51 Chromium 151 browser files:
 9. A separate digest-pinned contained-card fixture measures six player cover
    images and both owner-readable stadium states from the inert legacy source.
    The live DOM candidate matches both players' deck/discard/lost-zone cards and
-   the bottom-owner stadium within 2 px / 1% / 0.1 degrees, exposes only deck
+   both stadium-owner states within 2 px / 1% / 0.1 degrees, exposes only deck
    first or discard/lost-zone last to input/top-paint priority, suppresses
    closed-cover markers, and fails closed for foreign stadium owners or more
-   than one stadium card. The source-measured top-owner candidate branch is
-   unit-tested but not browser-compared; cover-open UX, opened zones, undersized
-   assets, retained covered nodes, Pixi geometry, and quarter-turn hit regions
-   are not claimed.
+   than one stadium card. The top-owner candidate is built from fixed projected
+   state, independently of source output, and proves q2 paint, lower-edge
+   alignment, native center hit, and complete teardown. Cover-open UX, opened
+   zones, undersized assets, retained covered nodes, Pixi geometry, and q1/q3
+   hit regions are not claimed.
 10. A fourth digest-pinned fixture isolates ordinary second
     evolution across local/opponent active and bench slots. It records the
     transient `evolveCard` result, the synchronous ghost wrapper created by

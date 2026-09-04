@@ -180,12 +180,14 @@ fail closed. No definition dimensions enter recipient projections.
 
 `contained-card-layout-v1.json` digest-pins the legacy source for those claims.
 Chromium measures both player covers and both owner-readable stadium states,
-then compares all six covers and the bottom-owner stadium against the React DOM
-candidate within 2 px / 1% / 0.1 degrees. The top-owner candidate stadium path
-is unit-tested but not yet browser-compared. Exact cover-click/open-zone UX,
-opened-zone layout, undersized/noncanonical asset no-upscale behavior, removal
-of retained covered renderer nodes, Pixi geometry, and 90/270-degree hit boxes
-remain explicit gates.
+then compares all six covers and both owner-readable stadium states against the
+React DOM candidate within 2 px / 1% / 0.1 degrees. The top-owner check uses a
+fixed projected q0 card with the bottom player held constant, so owner
+readability supplies the expected physical q2 half-turn without consuming
+source geometry as candidate input. Exact cover-click/open-zone UX, opened-zone
+layout, undersized/noncanonical asset no-upscale behavior, removal of retained
+covered renderer nodes, Pixi geometry, and 90/270-degree hit boxes remain
+explicit gates.
 
 A fourth source-backed Chromium checkpoint now isolates ordinary evolution
 reflow from the generic attachment fixture. It replays an attachment-free

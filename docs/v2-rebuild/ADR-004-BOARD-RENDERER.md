@@ -197,8 +197,9 @@ Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
   viewports, split ratios, flip states, themes, and fullscreen mode (the current
   Chromium checkpoint covers all 16 default player-region border/content boxes,
   structural frame/handle/control anchors, all six contained pile covers, and
-  the bottom-owner stadium; the source also measures the top-owner stadium but
-  that candidate branch is unit-only. Separate strict gates match all 12
+  both owner-readable stadium states. The top-owner branch holds the bottom
+  player and explicit card turn fixed while changing only projected stadium
+  ownership. Separate strict gates match all 12
   local/opponent active/bench ordinary-evolution boxes and the four-card
   local/opponent one-Energy and Trainer-as-Tool active fixtures plus all six
   stable local/opponent two-Energy boxes at the default 1600×900 DPR-1 sidebar,

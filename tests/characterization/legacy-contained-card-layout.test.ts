@@ -57,12 +57,17 @@ describe('source-pinned legacy contained-card layout oracle', () => {
       cardSizeRelative: 0.01,
       rotationDegrees: 0.1,
     });
+    expect(oracle.scope.included).toContain(
+      'browser candidate comparison of both stadium-owner branches'
+    );
     expect(oracle.scope.excluded).toEqual(
       expect.arrayContaining([
         expect.stringContaining('cover click'),
-        expect.stringContaining('top-owner stadium'),
         expect.stringContaining('retained covered scene nodes'),
       ])
+    );
+    expect(oracle.scope.excluded).not.toEqual(
+      expect.arrayContaining([expect.stringContaining('top-owner stadium')])
     );
   });
 });

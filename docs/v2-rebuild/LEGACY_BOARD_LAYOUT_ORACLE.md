@@ -276,16 +276,18 @@ source-to-candidate comparison. Its separate
 the HTML/CSS/asset plus cover update, deck order, stadium update/flip, and
 ability-marker sources. The deny-by-default Chromium fixture measures six
 player cover images and both owner-readable stadium states. It then compares
-the six covers and bottom-owner stadium against the live React DOM candidate,
-including physical anchors, dimensions, rotation, one enabled/top-painted
-scene node per pile, and disabled covered nodes.
+all eight states against the live React DOM candidate, including physical
+anchors, dimensions, rotation, one enabled/top-painted scene node per pile,
+disabled covered nodes, and stadium-content alignment. The separately mounted
+top-owner candidate holds the bottom player and explicit card turn fixed while
+changing only projected stadium ownership; its q2 rotation and lower-edge
+alignment are therefore independent of the measured source result.
 
 This does not yet prove the legacy cover-click behavior: v1 opens the zone,
 whereas the current candidate's top card still emits its ordinary card intent.
-The source-measured top-owner stadium branch has structured scene tests but no
-candidate-browser comparison. Opened-zone cards/markers, exact one-node cover
-rendering, Pixi geometry, noncanonical or undersized assets, and rotated hit
-regions remain outside this checkpoint.
+Opened-zone cards/markers, exact one-node cover rendering, Pixi geometry,
+noncanonical or undersized assets, and rotated hit regions remain outside this
+checkpoint.
 
 `tests/browser/legacy-evolution-reflow-geometry.spec.ts` adds a fourth card
 checkpoint with the separately digest-pinned
