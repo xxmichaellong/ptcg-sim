@@ -297,3 +297,24 @@ initiators, refresh after divergent Alt-R, raw/imported per-card q2/q3 states,
 repeated Alt-R or subsequent group rotation, attachments,
 movement/evolution/removal, and candidate parity remain excluded. Keyboard and
 clicked-card ingress are digest-pinned but not executed by this inert harness.
+
+`legacy-compound-lower-group-rotation-layout.test.ts` next isolates whole-stack
+rotation initiated from the middle or base evolution. Sixteen independently
+constructed histories span both lower roles, ordinary/BREAK composition,
+local/opponent frames, and active/sole-bench slots. Each follows a complete
+q0→q1→q2→q3→q0 cycle and retains the same q1 refresh point as the top-selected
+compound baselines. The selected action proves logical middle/base indices 1/2
+despite reversed lower-card DOM ordinals 2/1; native middle/base exposed hit
+regions make both selections reachable, while keyboard/click ingress is pinned
+but not executed.
+
+All card turns, BREAK flags, topology, links, offsets, identity, and painted
+geometry remain coherent with the top-selected dependency phases. Margins do
+not: a lower BREAK initiator is one quarter-turn behind the top, so initial q1
+keeps empty active and `3%`/`2%` bench margins instead of the top-selected
+`1%`/`0%`; top-driven q1 refresh then normalizes both to `1%`/`0%`. Later bench
+q2/q3/q0 writes also shift with the selected lower angle. The oracle pins these
+anchors, complete traces, dependency-relative geometry/hit evidence, wrapper
+replacement, observers, and cleanup. Lower-card single/Alt-R, mixed initiators,
+other post-divergence refreshes, attachments, and candidate parity remain
+separate source-only work.

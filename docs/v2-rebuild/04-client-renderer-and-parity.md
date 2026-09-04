@@ -503,6 +503,21 @@ Alt-R, raw/imported q2/q3 per-card states, and attachment timing still require
 characterization or a compatibility decision before any strict compound
 React/Pixi layout predicate can be sound.
 
+A sixteenth source-only checkpoint then covers middle/base initiation of
+whole-stack rotation. Sixteen fresh ordinary/BREAK histories span both roles,
+slots, and physical sides through q0→q1→q2→q3→q0 and q1 reconstruction. Logical
+indices middle=1/base=2 remain distinct from DOM ordinals 2/1, and the exposed
+native hit regions retain both selection paths. Rotations and BREAK flags match
+the top-selected phases exactly, but margins follow the selected lower card's
+angle. Initial BREAK q1 therefore stays empty in active and `3%`/`2%` on bench
+until top-driven refresh normalizes both to `1%`/`0%`; later bench writes shift
+similarly.
+
+This supplies more evidence that exact legacy compound layout cannot be chosen
+from projected turns alone. Production remains generic for these histories.
+Lower-card single/Alt-R, mixed initiators, refresh after divergence, attachment
+timing, and candidate paint/hit parity remain separate decisions.
+
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during
 characterization is represented explicitly instead of assumed to be duplication.

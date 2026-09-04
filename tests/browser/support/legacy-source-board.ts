@@ -1064,6 +1064,10 @@ export interface LegacySourceEvolutionReflowFixture {
 export type LegacyCompoundRotationScenario =
   | 'ordinaryGroup'
   | 'breakGroup'
+  | 'ordinaryGroupFromMiddle'
+  | 'ordinaryGroupFromBase'
+  | 'breakGroupFromMiddle'
+  | 'breakGroupFromBase'
   | 'ordinarySingleAtGroupQ1'
   | 'ordinarySingleAtGroupQ2'
   | 'ordinarySingleAtGroupQ3'
@@ -1227,6 +1231,7 @@ export interface LegacySourceCompoundRotationFixture {
   >;
   readonly ordinaryGroupCases: readonly LegacyCompoundRotationCase[];
   readonly breakGroupCases: readonly LegacyCompoundRotationCase[];
+  readonly lowerGroupInitiatorCases: readonly LegacyCompoundRotationCase[];
   readonly nonzeroGroupSingleCases: readonly LegacyCompoundRotationCase[];
   readonly breakRefreshCases: readonly LegacyCompoundRotationCase[];
   readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
@@ -5855,10 +5860,10 @@ type RawCompoundRotationCase = Omit<
 
 /**
  * Replays the digest-pinned, marker-free legacy evolution, whole-stack
- * rotation, BREAK toggle, nonzero-group single-card rotation, and selected
- * q0/q1/q2/q3 refresh paths. Every ordinary, BREAK, single-card, and BREAK-
- * refresh history is constructed independently so no oracle inherits inline
- * margins or wrapper identity from another.
+ * rotation from top or lower evolutions, BREAK toggle, nonzero-group single-
+ * card rotation, and selected q0/q1/q2/q3 refresh paths. Every ordinary,
+ * BREAK, single-card, and BREAK-refresh history is constructed independently
+ * so no oracle inherits inline margins or wrapper identity from another.
  * Application and network modules stay inert; source DOM mutations are
  * narrowly transcribed below.
  */
@@ -5866,6 +5871,7 @@ export const captureLegacySourceCompoundRotationFixture = async (
   page: Page,
   mode:
     | 'canonical'
+    | 'lowerGroupInitiator'
     | 'nonzeroGroupSingle'
     | 'breakRefreshQ0Q2'
     | 'breakRefreshQ3' = 'canonical'
@@ -5943,6 +5949,10 @@ export const captureLegacySourceCompoundRotationFixture = async (
             > = {
               ordinaryGroup: 'compound-group',
               breakGroup: 'compound-break',
+              ordinaryGroupFromMiddle: 'compound-group-from-middle',
+              ordinaryGroupFromBase: 'compound-group-from-base',
+              breakGroupFromMiddle: 'compound-break-group-from-middle',
+              breakGroupFromBase: 'compound-break-group-from-base',
               ordinarySingleAtGroupQ1: 'compound-group-q1-single',
               ordinarySingleAtGroupQ2: 'compound-group-q2-single',
               ordinarySingleAtGroupQ3: 'compound-group-q3-single',
@@ -6505,14 +6515,28 @@ export const captureLegacySourceCompoundRotationFixture = async (
             await waitForStableLayout();
 
             const phases: RawCompoundRotationPhase[] = [
-              ...(scenario === 'ordinaryGroup' || scenario === 'breakGroup'
+              ...(scenario === 'ordinaryGroup' ||
+              scenario === 'breakGroup' ||
+              scenario === 'ordinaryGroupFromMiddle' ||
+              scenario === 'ordinaryGroupFromBase' ||
+              scenario === 'breakGroupFromMiddle' ||
+              scenario === 'breakGroupFromBase'
                 ? [snapshot('pristine-q0', null, logical, container)]
                 : []),
             ];
             let refreshEvidence: LegacyCompoundRotationCase['refresh'] = null;
 
-            if (scenario === 'ordinaryGroup') {
-              const q1Action = rotateCard(top, false, logical, container);
+            if (
+              scenario === 'ordinaryGroup' ||
+              scenario === 'ordinaryGroupFromMiddle' ||
+              scenario === 'ordinaryGroupFromBase'
+            ) {
+              const selected = scenario.endsWith('FromMiddle')
+                ? middle
+                : scenario.endsWith('FromBase')
+                  ? base
+                  : top;
+              const q1Action = rotateCard(selected, false, logical, container);
               phases.push(snapshot('q1', q1Action, logical, container));
               const oldContainer = container;
               const cardNodesBeforeRefresh = logical.map((card) => card.image);
@@ -6536,7 +6560,7 @@ export const captureLegacySourceCompoundRotationFixture = async (
               phases.push(
                 snapshot(
                   'q2',
-                  rotateCard(top, false, logical, container),
+                  rotateCard(selected, false, logical, container),
                   logical,
                   container
                 )
@@ -6544,7 +6568,7 @@ export const captureLegacySourceCompoundRotationFixture = async (
               phases.push(
                 snapshot(
                   'q3',
-                  rotateCard(top, false, logical, container),
+                  rotateCard(selected, false, logical, container),
                   logical,
                   container
                 )
@@ -6552,12 +6576,21 @@ export const captureLegacySourceCompoundRotationFixture = async (
               phases.push(
                 snapshot(
                   'q0-return',
-                  rotateCard(top, false, logical, container),
+                  rotateCard(selected, false, logical, container),
                   logical,
                   container
                 )
               );
-            } else if (scenario === 'breakGroup') {
+            } else if (
+              scenario === 'breakGroup' ||
+              scenario === 'breakGroupFromMiddle' ||
+              scenario === 'breakGroupFromBase'
+            ) {
+              const selected = scenario.endsWith('FromMiddle')
+                ? middle
+                : scenario.endsWith('FromBase')
+                  ? base
+                  : top;
               phases.push(
                 snapshot(
                   'break-on-q0',
@@ -6569,7 +6602,7 @@ export const captureLegacySourceCompoundRotationFixture = async (
               phases.push(
                 snapshot(
                   'break-group-q1',
-                  rotateCard(top, false, logical, container),
+                  rotateCard(selected, false, logical, container),
                   logical,
                   container
                 )
@@ -6598,7 +6631,7 @@ export const captureLegacySourceCompoundRotationFixture = async (
               phases.push(
                 snapshot(
                   'break-group-q2',
-                  rotateCard(top, false, logical, container),
+                  rotateCard(selected, false, logical, container),
                   logical,
                   container
                 )
@@ -6606,7 +6639,7 @@ export const captureLegacySourceCompoundRotationFixture = async (
               phases.push(
                 snapshot(
                   'break-group-q3',
-                  rotateCard(top, false, logical, container),
+                  rotateCard(selected, false, logical, container),
                   logical,
                   container
                 )
@@ -6614,7 +6647,7 @@ export const captureLegacySourceCompoundRotationFixture = async (
               phases.push(
                 snapshot(
                   'break-group-q0-return',
-                  rotateCard(top, false, logical, container),
+                  rotateCard(selected, false, logical, container),
                   logical,
                   container
                 )
@@ -6749,22 +6782,29 @@ export const captureLegacySourceCompoundRotationFixture = async (
           const scenarios: readonly LegacyCompoundRotationScenario[] =
             input.mode === 'canonical'
               ? ['ordinaryGroup', 'breakGroup']
-              : input.mode === 'nonzeroGroupSingle'
+              : input.mode === 'lowerGroupInitiator'
                 ? [
-                    'ordinarySingleAtGroupQ1',
-                    'ordinarySingleAtGroupQ2',
-                    'ordinarySingleAtGroupQ3',
-                    'breakSingleAtGroupQ1',
-                    'breakSingleAtGroupQ2',
-                    'breakSingleAtGroupQ3',
+                    'ordinaryGroupFromMiddle',
+                    'ordinaryGroupFromBase',
+                    'breakGroupFromMiddle',
+                    'breakGroupFromBase',
                   ]
-                : input.mode === 'breakRefreshQ0Q2'
+                : input.mode === 'nonzeroGroupSingle'
                   ? [
-                      'breakRefreshFreshQ0',
-                      'breakRefreshReturnedQ0',
-                      'breakRefreshQ2',
+                      'ordinarySingleAtGroupQ1',
+                      'ordinarySingleAtGroupQ2',
+                      'ordinarySingleAtGroupQ3',
+                      'breakSingleAtGroupQ1',
+                      'breakSingleAtGroupQ2',
+                      'breakSingleAtGroupQ3',
                     ]
-                  : ['breakRefreshQ3'];
+                  : input.mode === 'breakRefreshQ0Q2'
+                    ? [
+                        'breakRefreshFreshQ0',
+                        'breakRefreshReturnedQ0',
+                        'breakRefreshQ2',
+                      ]
+                    : ['breakRefreshQ3'];
           for (const scenario of scenarios) {
             for (const slot of ['active', 'bench'] as const) {
               cases.push(await runScenario(slot, scenario));
@@ -6855,6 +6895,13 @@ export const captureLegacySourceCompoundRotationFixture = async (
       (entry) => entry.scenario === 'ordinaryGroup'
     ),
     breakGroupCases: cases.filter((entry) => entry.scenario === 'breakGroup'),
+    lowerGroupInitiatorCases: cases.filter(
+      (entry) =>
+        entry.scenario === 'ordinaryGroupFromMiddle' ||
+        entry.scenario === 'ordinaryGroupFromBase' ||
+        entry.scenario === 'breakGroupFromMiddle' ||
+        entry.scenario === 'breakGroupFromBase'
+    ),
     nonzeroGroupSingleCases: cases.filter(
       (entry) =>
         entry.scenario === 'ordinarySingleAtGroupQ1' ||
@@ -6884,6 +6931,11 @@ export const captureLegacySourceCompoundNonzeroGroupSingleFixture = (
   page: Page
 ): Promise<LegacySourceCompoundRotationFixture> =>
   captureLegacySourceCompoundRotationFixture(page, 'nonzeroGroupSingle');
+
+export const captureLegacySourceCompoundLowerGroupInitiatorFixture = (
+  page: Page
+): Promise<LegacySourceCompoundRotationFixture> =>
+  captureLegacySourceCompoundRotationFixture(page, 'lowerGroupInitiator');
 
 export const captureLegacySourceCompoundBreakRefreshQ3Fixture = (
   page: Page

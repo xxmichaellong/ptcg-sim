@@ -246,6 +246,16 @@ card initiators remain compatibility hazards; no production BREAK layout
 predicate is authorized until command ingress and history are normalized or
 represented.
 
+Lower-evolution whole-stack initiation is now pinned separately. Middle and
+base resolve to logical indices 1 and 2 even though their DOM ordinals are 2
+and 1, then produce the same coherent ordinary/BREAK group turns as top
+selection. Wrapper margins still derive from the selected lower card's
+tentative angle, so BREAK q1 begins with empty active and `3%`/`2%` bench
+margins before top-driven refresh normalizes them to `1%`/`0%`. This is another
+source-only reason not to derive exact layout from turns alone. Lower-card
+single/Alt-R and mixed-initiator histories remain explicitly unmodeled legacy
+behavior; the v2 target-value commands and canonical state are unchanged.
+
 Ability markers likewise have explicit ownership. The top evolution card maps
 to the stack-level marker; attachment, discard, and stadium cards use
 `SetCardAbilityUsed` and render a marker on that exact card. Attachment markers

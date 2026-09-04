@@ -797,6 +797,33 @@ raw/imported per-card q2/q3 inputs, attachments, movement/evolution/removal,
 candidate geometry, and the final product-level compatibility decision remain
 outside this checkpoint.
 
+`tests/browser/legacy-compound-lower-group-initiator-geometry.spec.ts` adds a
+sixteenth source checkpoint backed by
+`tests/legacy-fixtures/renderer/compound-lower-group-rotation-v1.json`.
+Sixteen independent histories cover middle/base-selected whole-stack rotation,
+ordinary/BREAK composition, both physical frames, and active/sole-bench slots.
+Each completes q0→q1→q2→q3→q0 with the established q1 reconstruction point.
+Clicked-image selection and R-key forwarding are digest-pinned but not executed.
+The captured actions instead prove logical indices middle=1/base=2 while DOM
+order remains `[top, base, middle]`; native middle/base exposed regions prove
+both cards are selectable.
+
+Card rotations remain coherent and match the exact top-selected ordinary/BREAK
+dependency phases. The margin history does not. At BREAK q1 a lower initiator's
+tentative angle is q1 rather than the top's q2, leaving active margins empty and
+bench margins `3%`/`2%` instead of `1%`/`0%`. The subsequent top-driven refresh
+replay normalizes both slots to `1%`/`0%`. Lower-selected q2/q3/q0 margin writes
+continue to differ from top selection on bench even though card turns, BREAK
+flags, topology, links, offsets, and painted shapes remain identical.
+
+The dependent oracle pins exact selected indices and traces, per-phase margins
+and anchors, dependency-relative card/hit geometry, physical-side mapping,
+wrapper/card identity, native observer delivery, and harness cleanup. It mounts
+no candidate and changes no production state. Lower-card single/Alt-R (which
+can assign BREAK to an attached evolution), mixed initiators, refresh outside
+the coherent q1 reconstruction, attachments, and later divergence remain
+explicitly excluded.
+
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
 renderer-neutral scene and has structured scene assertions for all four board
@@ -805,8 +832,8 @@ shared placement, compact and fullscreen states. The controlled hand/bench/
 attachment-stack fixture remains source-only; the narrower contained-card,
 ordinary-evolution, single-Energy, Trainer-as-Tool, and stable two-Energy
 fixtures feed and compare their strict production geometries. The compound
-group/BREAK, BREAK q0/q2/q3 refresh, and nonzero-group Alt-R histories remain
-wholly source-only. The
+group/BREAK, BREAK q0/q2/q3 refresh, nonzero-group Alt-R, and lower-initiated
+group histories remain wholly source-only. The
 bench-marker rotation history remains source-only while its strict pristine-q0 phase also
 feeds and compares the production geometry. The two-Energy
 departure phases remain source-only and prove stable convergence to the
