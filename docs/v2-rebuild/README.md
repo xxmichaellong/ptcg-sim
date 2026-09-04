@@ -59,11 +59,13 @@ the relevant product decisions and phase exit criteria.
   attempts. A public no-store health probe and closed versioned telemetry union
   now expose safe HTTP/lifecycle/rate/admission/command/socket facts with random
   non-authority correlations; field-by-field construction excludes payloads,
-  identifiers, credentials, user/card data, URLs, and thrown errors. Visible
-  create/join wiring waits on ADR-020's decision about how the handoff moves
-  between browsers; normal
-  sidebar/chat/navigation and downloadable/export formats remain later parity
-  work.
+  identifiers, credentials, user/card data, URLs, and thrown errors. A
+  development-only creator route now exercises that full stack behind Vite; a
+  20-cycle StrictMode integration gate proves one creation and exact ownership
+  teardown per mount, while production bundle provenance rejects the entire dev
+  module. Visible create/join wiring waits on ADR-020's decision about how the
+  handoff moves between browsers; normal sidebar/chat/navigation and
+  downloadable/export formats remain later parity work.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 

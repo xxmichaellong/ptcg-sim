@@ -120,10 +120,14 @@ scoped formatter and TypeScript-aware lint gate, generated-output-free cycle
 check, source/bundle boundary checker, and required quality/Chromium CI jobs now
 exist. The boundary checker fails closed on unexpected missing source maps,
 legacy/deep imports, workspace cycles, authority code in the web artifact,
-test-fixture leaks, and drift in the canonical v2 card-back bytes. Remaining
-Phase 2 evidence includes an explicit public-package API/export report,
-browser-spec TypeScript debt removal, production route isolation in a real
-deployment, and the broader ratified browser/viewport matrix.
+developer-only route leaks, test-fixture leaks, and drift in the canonical v2
+card-back bytes. A development-only creator route now joins the actual room
+creation, ticket exchange, remote runtime, presentation, and selected renderer;
+its 20-cycle StrictMode integration test proves one creation and exact teardown
+per mount. Remaining Phase 2 evidence includes an explicit public-package
+API/export report, browser-spec TypeScript debt removal, production route
+isolation in a real deployment, and the broader ratified browser/viewport
+matrix.
 
 Work:
 

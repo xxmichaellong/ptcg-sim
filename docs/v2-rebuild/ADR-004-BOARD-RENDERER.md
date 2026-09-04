@@ -225,8 +225,9 @@ Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
 - a hidden/private-image request scan;
 - finish resource evidence beyond the current green 100-cycle warmed-host
   Chromium DOM-node/listener gate and the deterministic same-origin
-  120-distinct-SVG cache/request/decode gate: route-host navigation churn plus
-  real-raster decoded-byte and retained-heap accounting on the ratified profile;
+  120-distinct-SVG cache/request/decode gate and green 20-cycle in-process
+  remote-route ownership gate: deployed browser navigation churn plus real-raster
+  decoded-byte and retained-heap accounting on the ratified profile;
 - the ratified physical-device/browser performance matrix; and
 - Chromium automation plus Firefox and Safari approval.
 

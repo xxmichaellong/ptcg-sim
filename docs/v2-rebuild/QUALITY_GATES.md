@@ -40,9 +40,11 @@ TypeScript compiler API. It rejects:
 `--bundles` requires parseable version-3 source maps and checks their provenance.
 The web artifact may contain the web app, client session, protocol, renderer
 packages, and only the explicitly safe game-core identity/hash helpers. It may
-not contain room-authority, server, or legacy sources. The Worker artifact may
-contain only its server app, game core, protocol, and room-authority sources.
-Every emitted JavaScript file must have a map except a syntax-checked
+not contain room-authority, server, legacy, or `apps/web/src/dev/` sources. The
+last rule makes the creator-only `?dev-room=1` integration seam fail closed if
+its development guard is ever defeated. The Worker artifact may contain only
+its server app, game core, protocol, and room-authority sources. Every emitted
+JavaScript file must have a map except a syntax-checked
 import/export-only facade whose targets are present in the build, or the exact
 digest-pinned source-free Rolldown runtime emitted by the pinned toolchain. The
 checker also rejects the serve-only renderer cache fixture in production output.
@@ -80,4 +82,8 @@ artifact. Browser binaries are not cached.
 - The web build owns `/v2/assets/*`. The Cloudflare Worker has no static-assets
   binding and correctly does not embed the 1 MiB card back, so deployment routing
   must join the Worker and static web origin before a public room route ships.
+- The developer-only creator route exercises the actual route/runtime/renderer
+  ownership stack and a 20-cycle StrictMode churn test proves exact teardown,
+  but its transport is mocked in-process. A deployed browser navigation/churn
+  gate and the ADR-020 second-browser invitation path remain outstanding.
 - An explicit public-package API/export report remains a Phase 2 exit item.

@@ -4,7 +4,11 @@ import {
   createRendererSpikeView,
   type BoardIntent,
 } from '@ptcgsim/renderer-contract';
-import { RendererSpikeBoard, type RendererKind } from './RendererSpikeBoard.js';
+import {
+  readRendererKind,
+  RendererSpikeBoard,
+  type RendererKind,
+} from './RendererSpikeBoard.js';
 import type { RemoteRoomRuntime } from './session/RemoteRoomRuntime.js';
 
 const RemoteRoomRoute = lazy(async () => ({
@@ -12,9 +16,7 @@ const RemoteRoomRoute = lazy(async () => ({
 }));
 
 const initialRenderer = (): RendererKind =>
-  new URLSearchParams(window.location.search).get('renderer') === 'dom'
-    ? 'dom'
-    : 'pixi';
+  readRendererKind(new URLSearchParams(window.location.search).get('renderer'));
 
 const RendererSpikeApp = () => {
   const view = useMemo(createRendererSpikeView, []);

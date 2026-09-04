@@ -1243,9 +1243,13 @@ distinct, versioned, same-origin SVG assets. It proves exact one-request-per-URL
 completion, successful browser-visible decode and intrinsic dimensions, stable
 keyed image nodes while already-cached URLs are reassigned, cache reuse by a
 fresh renderer/host without refetch, and clean teardown. The fixture is synthetic
-and serve-only: real raster decoded-byte/retained-heap limits, external-host and
-failure behavior, route-host navigation churn, and hidden/private face request
-privacy remain separate gates.
+and serve-only. A separate development-route integration gate performs 20 React
+StrictMode mount/unmount cycles through the actual remote route, session,
+presentation, and DOM renderer stack. It coalesces each StrictMode probe into one
+room creation and proves exact runtime/socket/renderer/global-handle teardown;
+the HTTP/WebSocket transport is mocked in-process. Real raster decoded-byte and
+retained-heap limits, external-host and failure behavior, deployed browser
+navigation churn, and hidden/private face request privacy remain separate gates.
 
 ## Accessibility preservation and minimum improvement
 

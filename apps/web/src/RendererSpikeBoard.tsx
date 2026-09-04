@@ -18,6 +18,14 @@ import { useEffect, useRef, useState } from 'react';
 import { submitBoardDrop } from './board/resolveBoardDrop.js';
 
 export type RendererKind = 'dom' | 'pixi';
+
+/**
+ * ADR-004 selects normalized stable-keyed React DOM as the first production
+ * renderer, so it is the default. The Pixi implementation stays reachable with
+ * `?renderer=pixi` as unwired comparison evidence.
+ */
+export const readRendererKind = (requested: string | null): RendererKind =>
+  requested === 'pixi' ? 'pixi' : 'dom';
 type BoardRendererFactory = (adapters: BoardRendererAdapters) => BoardRenderer;
 
 const sceneForHost = (host: HTMLElement, view: MatchViewState) => {

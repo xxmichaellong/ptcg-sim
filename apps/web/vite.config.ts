@@ -130,8 +130,30 @@ const rendererCacheFixture = (): Plugin => {
   };
 };
 
+/**
+ * Where `wrangler dev` is listening. The dev server proxies `/v2` there so the
+ * browser sees one origin: the authority rejects any room-creation, ticket, or
+ * socket request whose `Origin` does not match its own request URL, so the
+ * proxy must forward the original `Host` (`changeOrigin: false`) rather than
+ * rewriting it to the worker's address.
+ */
+const v2ServerTarget =
+  process.env['PTCGSIM_V2_SERVER_ORIGIN'] ?? 'http://127.0.0.1:8787';
+
 export default defineConfig({
   plugins: [rendererCacheFixture(), react()],
+  server: {
+    proxy: {
+      // Scoped to the authority's own routes. A blanket `/v2` rule would also
+      // swallow `/v2/assets/*`, which this app serves from `public/` and which
+      // the worker references, but does not serve, as the default card back.
+      '^/v2/(health|rooms)(/.*)?$': {
+        target: v2ServerTarget,
+        changeOrigin: false,
+        ws: true,
+      },
+    },
+  },
   build: {
     sourcemap: true,
     target: 'es2022',

@@ -8,3 +8,4 @@ test-results/
 artifacts/performance/
 *.tsbuildinfo
 server/database/db.sqlite
+apps/server/.wrangler/

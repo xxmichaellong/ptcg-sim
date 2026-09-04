@@ -260,6 +260,7 @@ const allowedBundleSource = (kind, source) => {
   if (source.startsWith('client/') || source.startsWith('server/'))
     return false;
   if (kind === 'web') {
+    if (source.startsWith('apps/web/src/dev/')) return false;
     return (
       source.startsWith('apps/web/src/') ||
       source.startsWith('packages/client-session/src/') ||

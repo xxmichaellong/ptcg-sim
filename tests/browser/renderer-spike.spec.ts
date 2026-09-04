@@ -16,6 +16,21 @@ const waitForReady = async (page: Page) => {
   );
 };
 
+test('the accepted React DOM renderer is the default candidate', async ({
+  page,
+}) => {
+  const errors = collectRuntimeErrors(page);
+  await page.goto('/');
+  await waitForReady(page);
+  await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(1);
+  await expect(page.locator('[data-card-id]')).toHaveCount(61);
+  await expect(page.locator('canvas')).toHaveCount(0);
+  expect(
+    await page.evaluate(() => window.__PTCG_RENDERER_SPIKE__?.rendererKind)
+  ).toBe('dom');
+  expect(errors).toEqual([]);
+});
+
 const dragLocalHandCardToBench = async (
   page: Page,
   renderer: 'dom' | 'pixi'

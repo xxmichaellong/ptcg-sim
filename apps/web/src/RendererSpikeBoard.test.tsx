@@ -9,7 +9,7 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { RendererSpikeBoard } from './RendererSpikeBoard.js';
+import { readRendererKind, RendererSpikeBoard } from './RendererSpikeBoard.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -132,5 +132,12 @@ describe('RendererSpikeBoard application boundary', () => {
 
     await act(async () => root.unmount());
     expect(rendererHarness.destroy).toHaveBeenCalledTimes(1);
+  });
+
+  it('defaults to the selected DOM renderer and keeps Pixi explicitly opt-in', () => {
+    expect(readRendererKind(null)).toBe('dom');
+    expect(readRendererKind('dom')).toBe('dom');
+    expect(readRendererKind('pixi')).toBe('pixi');
+    expect(readRendererKind('unsupported')).toBe('dom');
   });
 });

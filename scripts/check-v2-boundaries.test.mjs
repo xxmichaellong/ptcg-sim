@@ -126,6 +126,24 @@ test('rejects server-authority provenance in a web source map', async () => {
   );
 });
 
+test('rejects developer-only modules in a production web source map', async () => {
+  const root = await temporaryRepo();
+  const dist = join(root, 'apps/web/dist');
+  await mkdir(dist, { recursive: true });
+  await writeFile(
+    join(dist, 'chunk.js.map'),
+    JSON.stringify({
+      version: 3,
+      sources: ['../../../apps/web/src/dev/DevRoomHost.tsx'],
+      mappings: '',
+    })
+  );
+  await assert.rejects(
+    checkBundleProvenance(root, 'web', dist),
+    /apps\/web\/src\/dev/u
+  );
+});
+
 test('fails closed when a bundle has no source maps', async () => {
   const root = await temporaryRepo();
   const dist = join(root, 'apps/web/dist');

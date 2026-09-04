@@ -291,7 +291,7 @@ repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
 The repository-wide gate passes 867 v2 tests across 135 files. A separate suite
-passes 103 Playwright checks across 52 Chromium 151 browser files:
+passes 104 Playwright checks across 52 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -833,6 +833,15 @@ passes 103 Playwright checks across 52 Chromium 151 browser files:
     native decoder-invocation count, decoded-pixel/heap budget, real-raster load,
     external-host/CORS/failure test, hidden-face request scan, or cross-browser
     result.
+43. The developer-only creator route completes 20 React StrictMode
+    mount/unmount cycles through the actual lazy application branch, remote-room
+    runtime, client session, replay/presentation ownership, and selected DOM
+    renderer. Its deferred irreversible start coalesces each StrictMode probe
+    into one room creation. Every cycle reaches a rendered board and then closes
+    its runtime/socket, disposes its renderer/result exactly once, clears the
+    console handle, and leaves no host children. HTTP and WebSocket transport are
+    mocked in-process; deployed browser navigation, second-browser invitation,
+    and heap/resource accounting remain separate evidence.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
