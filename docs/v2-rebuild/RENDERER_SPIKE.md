@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 797 v2 tests across 121 files. A separate suite
-passes 46 Playwright checks across 23 Chromium 151 browser files:
+The repository-wide gate passes 802 v2 tests across 122 files. A separate suite
+passes 50 Playwright checks across 25 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -592,7 +592,22 @@ passes 46 Playwright checks across 23 Chromium 151 browser files:
     provenance are pinned. Alternating targets, later repeats, interleaved group
     actions/refresh, candidate parity, and production/domain/schema/UI changes
     remain separate.
-27. The selected DOM implementation completes 100 mount → clear/reset → destroy
+27. A twenty-first source-only checkpoint pins forty-eight immediate same-card
+    follow-up Alt-R histories after clean q1/q2/q3 lower-card divergence. Each
+    pre-state exactly inherits the matching prior nonzero-group post-state; the
+    measured action changes only the selected lower card q0/false→q1/true.
+    Ordinary/BREAK, middle/base, active/sole bench, and both physical sides are
+    exhaustive. Active retains `1%`/`0%`; bench q1/q3 moves from `1%`/`0%` to
+    `3%`/`2%`, while q2 remains `3%`/`2%`. Exact traces, turns/flags, cross-
+    fixture geometry, ten probes, stable identity, three-observer/no-refresh
+    lifecycle, cleanup, and recursive provenance are pinned in two 24-case
+    Chromium runs. Q2 active geometry/hits collide with history-authored q0 in
+    both phases and q2 bench converges after the action; BREAK flags coincide,
+    while turns and full setup traces differ. Different targets, later repeats,
+    intervening group/refresh,
+    imported q0, attachments, candidate parity, and production/domain/schema/UI
+    changes remain separate.
+28. The selected DOM implementation completes 100 mount → clear/reset → destroy
     cycles on one warmed route-owned host with the exact status sequence,
     complete scene IDs at mount, zero rendered scene children/IDs after clear and
     destroy, zero non-DOM diagnostic resources, and post-GC Chromium
@@ -650,6 +665,11 @@ and
 `tests/browser/legacy-compound-lower-returned-q0-single-break-geometry.spec.ts`.
 The same-card history-authored-q0 lower Alt-R matrix is in
 `tests/browser/legacy-compound-lower-history-authored-q0-single-geometry.spec.ts`.
+The immediate same-card follow-up after nonzero-group divergence is split
+between
+`tests/browser/legacy-compound-lower-nonzero-group-single-followup-ordinary-geometry.spec.ts`
+and
+`tests/browser/legacy-compound-lower-nonzero-group-single-followup-break-geometry.spec.ts`.
 The mixed-
 order suite validates a checked-in numeric oracle without mounting a candidate;
 the mixed-stack movement suite mounts React only for its two canonical settled
@@ -658,8 +678,8 @@ source q0 while production canonicalizes any eligible current q0 and keeps
 q1/q2/q3 and history-specific layout source-only. The bench-marker suite
 likewise keeps its q1/q2/q3 and observer history source-only, while comparing
 the separately composed clean-active-plus-sole-bench q0 production shape. The
-compound, BREAK-refresh, top/lower nonzero-group single-card,
-lower-group-initiator, and pristine/returned/history-authored-q0 lower
+compound, BREAK-refresh, top/lower nonzero-group single-card and same-card
+follow-up, lower-group-initiator, and pristine/returned/history-authored-q0 lower
 single-card suites mount no candidate
 because they prove that projected rotation fields alone cannot recover
 selected-action, per-evolution BREAK, and wrapper-margin history, and that q3

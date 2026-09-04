@@ -307,6 +307,17 @@ post-construction refresh and owns only three observer pairs. V2 does not
 encode this ambiguous history. Alternating cards, additional repeats, and
 interleaved group/refresh actions remain separate source-only cases.
 
+The immediate follow-up branch after a clean nonzero-group lower Alt-R is also
+pinned independently. Its pre-state is exactly the prior branch's post-state:
+the selected middle/base evolution is q0 and non-BREAK, while the top and other
+lower card retain their group-relative turns. Repeating Alt-R on that same
+selected card advances only it to q1 and assigns `PokémonBreak=true`. Active
+margins remain `1%`/`0%`; sole-bench q1/q3 changes from `1%`/`0%` to
+`3%`/`2%`, while q2 remains `3%`/`2%`. The measured transition performs no
+refresh or wrapper replacement. Different selected targets, later repeats,
+intervening group/refresh actions, and imported state remain separate source-
+only histories rather than new canonical fields.
+
 Ability markers likewise have explicit ownership. The top evolution card maps
 to the stack-level marker; attachment, discard, and stadium cards use
 `SetCardAbilityUsed` and render a marker on that exact card. Attachment markers

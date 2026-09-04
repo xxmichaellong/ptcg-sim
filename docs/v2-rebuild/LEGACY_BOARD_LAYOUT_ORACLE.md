@@ -947,6 +947,41 @@ states, already-BREAK lower inputs, attachments, movement, candidate parity,
 and application/network execution remain excluded. No production/domain/
 protocol/schema/UI path changes.
 
+The twenty-first source checkpoint is split across
+`tests/browser/legacy-compound-lower-nonzero-group-single-followup-ordinary-geometry.spec.ts`
+and
+`tests/browser/legacy-compound-lower-nonzero-group-single-followup-break-geometry.spec.ts`,
+backed by
+`tests/legacy-fixtures/renderer/compound-lower-nonzero-group-single-followup-v1.json`.
+Forty-eight histories cover ordinary/top-BREAK composition, group q1/q2/q3,
+middle/base selection, both physical frames, and active/sole-bench placement.
+Each first reproduces a clean nonzero-group lower Alt-R, then captures that
+divergent q0/false result as `pre-single` before immediately applying Alt-R to
+the same selected card.
+
+Every pre-state is required to equal the matching post-state in
+`compound-lower-nonzero-group-single-v1.json`, including turns, flags, margins,
+stack/card rectangles, and ten hit probes. The measured action changes only the
+selected lower card q0/false→q1/true. Ordinary top remains q1/q2/q3; BREAK top
+remains flagged at q2/q3/q0, and the other lower card retains q1/q2/q3. Active
+margins remain `1%`/`0%`. Bench q1/q3 moves from `1%`/`0%` to `3%`/`2%` with
+the pinned fractional wrapper-anchor shift; bench q2 stays `3%`/`2%` without a
+wrapper-anchor shift.
+
+The complete operation trace retains the earlier nonzero-group snap and appends
+one q0→q1, false→true selected-card action. There is no refresh after
+construction, wrapper/card IDs remain stable, and three source-shaped observer
+pairs persist through the measured transition and harness cleanup. Every q2
+active phase has the same geometry and hit evidence as the corresponding
+history-authored-q0 case, and its BREAK flags also coincide, despite different
+sibling turns and full setup traces. Q2 bench differs only at the pre wrapper
+anchor and converges after the action. q1/q3 remain geometrically distinct.
+Different follow-up targets, third/later singles,
+lower-initiated or refreshed nonzero
+groups, intervening group rotation/refresh/movement, imported q0, attachments,
+candidate parity, and application/network execution remain excluded. No
+production/domain/protocol/schema/UI path is widened.
+
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
 renderer-neutral scene and has structured scene assertions for all four board
@@ -956,8 +991,8 @@ attachment-stack fixture remains source-only; the narrower contained-card,
 ordinary-evolution, single-Energy, Trainer-as-Tool, and stable two-Energy
 fixtures feed and compare their strict production geometries. The compound
 group/BREAK, BREAK q0/q2/q3 refresh, top- and lower-selected nonzero-group
-Alt-R, lower-initiated group, and pristine/returned/history-authored-q0 lower
-single histories remain wholly source-only. The
+Alt-R and its same-card follow-up, lower-initiated group, and pristine/returned/
+history-authored-q0 lower single histories remain wholly source-only. The
 bench-marker rotation history remains source-only while its strict pristine-q0 phase also
 feeds and compares the production geometry. The two-Energy
 departure phases remain source-only and prove stable convergence to the

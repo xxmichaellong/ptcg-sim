@@ -399,3 +399,27 @@ three observer pairs, provenance, and cleanup are pinned. There is no refresh
 after construction. Alternating targets, fourth/later repeats, interleaved
 group actions or refresh, imported states, attachments, candidate parity, and
 production/domain/protocol/schema/UI changes remain excluded.
+
+`legacy-compound-lower-nonzero-group-single-followup-layout.test.ts` then pins
+the immediate same-selected Alt-R after the clean nonzero-group lower-card entry
+has already diverged that card to q0/false. Forty-eight independent histories
+cross ordinary/top-BREAK composition, original group q1/q2/q3, middle/base
+selection, both physical sides, and active/sole-bench placement. Each pre-state
+must equal the matching post-state in
+`compound-lower-nonzero-group-single-v1.json`; the measured follow-up changes
+only the selected card q0/false→q1/true.
+
+The dependent oracle pins exact cross-fixture phase equality, complete traces,
+turns/flags, margins, authored/painted/physical rectangles, ten native probes,
+topology, stable identities, three observer pairs, provenance, and cleanup.
+Active stays `1%`/`0%`. Bench q1/q3 changes from `1%`/`0%` to `3%`/`2%`
+with the recorded fractional wrapper-anchor shift, while the bench q2 wrapper
+remains `3%`/`2%` without an anchor shift. No refresh occurs after construction.
+Every q2 active phase is geometrically and hit-wise identical to the matching
+history-authored-q0 case, and BREAK flags also coincide, despite different
+sibling turns and full setup traces. Q2 bench converges after the action, while
+q1/q3 remain geometrically distinct. Different follow-up targets, third/later
+repeats, intervening group actions/refresh/movement,
+lower-initiated or refreshed nonzero groups, imported q0, attachments,
+candidate parity, and production/domain/protocol/schema/UI changes remain
+excluded.

@@ -598,6 +598,30 @@ later repeats, interleaved group actions/refresh, imported states, attachments,
 and candidate parity remain separate. Production, domain, protocol, schema,
 UI, and UX paths remain unchanged.
 
+A twenty-first source-only checkpoint follows the same selected lower card
+immediately after the clean nonzero-group Alt-R entry above has already snapped
+it to q0/false. Forty-eight independently constructed histories cross ordinary/
+top-BREAK composition, initial group q1/q2/q3, middle/base selection, active/
+sole-bench placement, and both physical sides. The new pre-state must equal the
+matching eighteenth-checkpoint post-state exactly. The measured follow-up then
+changes only that selected card from q0/false to q1/true; its top and lower
+sibling preserve their divergent turns and BREAK flags.
+
+Active wrappers remain at `1%`/`0%`. Bench q1/q3 histories enter at
+`1%`/`0%` and move to `3%`/`2%`, including the small fractional x shift caused
+by inline-margin flex redistribution; the bench q2 wrapper already has
+`3%`/`2%` and its anchor does not move.
+The oracle pins exact cross-fixture pre-state inheritance, full setup plus
+follow-up traces, authored/painted/physical geometry, all ten native hit probes,
+stable identities, and the same three-observer/no-refresh lifecycle. Q2
+histories expose another deliberate collision: active geometry and hit
+evidence match the history-authored-q0 case in both phases, and bench converges
+to it after the action. BREAK flags also coincide, while sibling turns and full
+setup traces differ.
+Different follow-up targets, third or later repeats, intervening group rotation or refresh,
+imported/refreshed q0 origins, attachments, and candidate parity remain separate.
+No production, domain, protocol, schema, UI, or UX path changes.
+
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during
 characterization is represented explicitly instead of assumed to be duplication.
