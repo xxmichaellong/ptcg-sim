@@ -276,3 +276,24 @@ only observer cleanup, and recursive source provenance. This is explicitly
 legacy defect evidence. V2 refresh remains a state-free projection; nonzero-
 group Alt-R, lower-card initiators, attachments, movement/evolution/removal,
 and candidate parity remain excluded.
+
+`legacy-compound-nonzero-group-single-layout.test.ts` closes the clean
+top-selected Alt-R entry matrix next. Twenty-four independently built histories
+span ordinary/BREAK, group q1/q2/q3, local/opponent, and active/sole-bench cases.
+Each records the pre-action state and the synchronous post-action state without
+a refresh. At effective q1/q2/q3, five histories reset only the selected top to
+absolute q0 and clear BREAK while preserving both lower group angles. The
+exception is BREAK at group q3: its selected top begins at effective q0, so
+Alt-R leaves it at q1 with BREAK still true while the lower cards stay q3.
+
+The dependent oracle reuses the exact pre-action stack/card geometry and hit-
+region class from the ordinary/BREAK compound manifests, then pins all new
+post-action geometry, complete operation/transition traces, selected action,
+history-sensitive active/bench margins, topology, opponent physical mapping,
+three observer pairs, and harness-only cleanup. This is again source-only
+compatibility evidence. It does not replace v2's explicit group plus per-card
+orientation model or authorize a strict compound production layout. Lower-card
+initiators, refresh after divergent Alt-R, raw/imported per-card q2/q3 states,
+repeated Alt-R or subsequent group rotation, attachments,
+movement/evolution/removal, and candidate parity remain excluded. Keyboard and
+clicked-card ingress are digest-pinned but not executed by this inert harness.

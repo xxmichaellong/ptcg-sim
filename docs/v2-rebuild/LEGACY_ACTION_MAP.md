@@ -234,9 +234,17 @@ whose largest difference is 1.9375 px, still within the 2 px parity tolerance.
 The separate q3 oracle confirms that the negative count executes no replay
 iterations and collapses `[q0,q3,q3]` to `[q1,q0,q0]` during refresh. V2 does
 not make viewport/layout refresh mutate canonical state to reproduce that
-defect. Attachment timing creates further transform collisions. These are
-explicit compatibility hazards; no production BREAK layout predicate is
-authorized until command ingress and history are normalized or represented.
+defect. The nonzero-group Alt-R oracle now pins the clean top-selected
+ordinary/BREAK q1/q2/q3 entry matrix: five reset only the selected top to
+absolute q0 and clear BREAK, while BREAK q3 advances its effective-q0 top to q1
+and retains BREAK. Both lower cards keep the group angle, and active/bench
+margins follow the intermediate attempted angle. Keyboard and clicked-card
+ingress are source-pinned but not executed. V2 deliberately retains explicit
+group and per-card target values rather than adopting this ambiguity. Repeated
+Alt-R, group rotation or refresh after divergence, attachment timing, and lower-
+card initiators remain compatibility hazards; no production BREAK layout
+predicate is authorized until command ingress and history are normalized or
+represented.
 
 Ability markers likewise have explicit ownership. The top evolution card maps
 to the stack-level marker; attachment, discard, and stadium cards use

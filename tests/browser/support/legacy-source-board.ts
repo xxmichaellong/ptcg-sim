@@ -1064,6 +1064,12 @@ export interface LegacySourceEvolutionReflowFixture {
 export type LegacyCompoundRotationScenario =
   | 'ordinaryGroup'
   | 'breakGroup'
+  | 'ordinarySingleAtGroupQ1'
+  | 'ordinarySingleAtGroupQ2'
+  | 'ordinarySingleAtGroupQ3'
+  | 'breakSingleAtGroupQ1'
+  | 'breakSingleAtGroupQ2'
+  | 'breakSingleAtGroupQ3'
   | 'breakRefreshFreshQ0'
   | 'breakRefreshReturnedQ0'
   | 'breakRefreshQ2'
@@ -1083,6 +1089,8 @@ export type LegacyCompoundRotationPhaseName =
   | 'break-group-q3'
   | 'break-group-q0-return'
   | 'break-off-q0'
+  | 'pre-single'
+  | 'post-single'
   | 'pre-refresh'
   | 'synchronous-post-refresh'
   | 'settled-post-refresh';
@@ -1219,6 +1227,7 @@ export interface LegacySourceCompoundRotationFixture {
   >;
   readonly ordinaryGroupCases: readonly LegacyCompoundRotationCase[];
   readonly breakGroupCases: readonly LegacyCompoundRotationCase[];
+  readonly nonzeroGroupSingleCases: readonly LegacyCompoundRotationCase[];
   readonly breakRefreshCases: readonly LegacyCompoundRotationCase[];
   readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
 }
@@ -5846,15 +5855,20 @@ type RawCompoundRotationCase = Omit<
 
 /**
  * Replays the digest-pinned, marker-free legacy evolution, whole-stack
- * rotation, BREAK toggle, and selected q0/q1/q2/q3 refresh paths. Every
- * ordinary, BREAK, and BREAK-refresh history is constructed independently so
- * no oracle inherits inline margins or wrapper identity from another.
+ * rotation, BREAK toggle, nonzero-group single-card rotation, and selected
+ * q0/q1/q2/q3 refresh paths. Every ordinary, BREAK, single-card, and BREAK-
+ * refresh history is constructed independently so no oracle inherits inline
+ * margins or wrapper identity from another.
  * Application and network modules stay inert; source DOM mutations are
  * narrowly transcribed below.
  */
 export const captureLegacySourceCompoundRotationFixture = async (
   page: Page,
-  mode: 'canonical' | 'breakRefreshQ0Q2' | 'breakRefreshQ3' = 'canonical'
+  mode:
+    | 'canonical'
+    | 'nonzeroGroupSingle'
+    | 'breakRefreshQ0Q2'
+    | 'breakRefreshQ3' = 'canonical'
 ): Promise<LegacySourceCompoundRotationFixture> => {
   const loaded = await loadLegacySourceBoard(page);
   const rawCases: {
@@ -5929,6 +5943,12 @@ export const captureLegacySourceCompoundRotationFixture = async (
             > = {
               ordinaryGroup: 'compound-group',
               breakGroup: 'compound-break',
+              ordinarySingleAtGroupQ1: 'compound-group-q1-single',
+              ordinarySingleAtGroupQ2: 'compound-group-q2-single',
+              ordinarySingleAtGroupQ3: 'compound-group-q3-single',
+              breakSingleAtGroupQ1: 'compound-break-group-q1-single',
+              breakSingleAtGroupQ2: 'compound-break-group-q2-single',
+              breakSingleAtGroupQ3: 'compound-break-group-q3-single',
               breakRefreshFreshQ0: 'compound-break-refresh-fresh-q0',
               breakRefreshReturnedQ0: 'compound-break-refresh-returned-q0',
               breakRefreshQ2: 'compound-break-refresh-q2',
@@ -6607,6 +6627,37 @@ export const captureLegacySourceCompoundRotationFixture = async (
                   container
                 )
               );
+            } else if (
+              scenario === 'ordinarySingleAtGroupQ1' ||
+              scenario === 'ordinarySingleAtGroupQ2' ||
+              scenario === 'ordinarySingleAtGroupQ3' ||
+              scenario === 'breakSingleAtGroupQ1' ||
+              scenario === 'breakSingleAtGroupQ2' ||
+              scenario === 'breakSingleAtGroupQ3'
+            ) {
+              const setupBreak = scenario.startsWith('breakSingle');
+              const setupGroupTurns = scenario.endsWith('Q1')
+                ? 1
+                : scenario.endsWith('Q2')
+                  ? 2
+                  : 3;
+              if (setupBreak) {
+                rotateCard(top, true, logical, container);
+              }
+              for (let count = 0; count < setupGroupTurns; count += 1) {
+                rotateCard(top, false, logical, container);
+              }
+              phases.push(snapshot('pre-single', null, logical, container));
+              const transitionTraceStart = callTrace.length;
+              phases.push(
+                snapshot(
+                  'post-single',
+                  rotateCard(top, true, logical, container),
+                  logical,
+                  container
+                )
+              );
+              transitionTrace = callTrace.slice(transitionTraceStart);
             } else {
               rotateCard(top, true, logical, container);
               const setupGroupTurns =
@@ -6698,13 +6749,22 @@ export const captureLegacySourceCompoundRotationFixture = async (
           const scenarios: readonly LegacyCompoundRotationScenario[] =
             input.mode === 'canonical'
               ? ['ordinaryGroup', 'breakGroup']
-              : input.mode === 'breakRefreshQ0Q2'
+              : input.mode === 'nonzeroGroupSingle'
                 ? [
-                    'breakRefreshFreshQ0',
-                    'breakRefreshReturnedQ0',
-                    'breakRefreshQ2',
+                    'ordinarySingleAtGroupQ1',
+                    'ordinarySingleAtGroupQ2',
+                    'ordinarySingleAtGroupQ3',
+                    'breakSingleAtGroupQ1',
+                    'breakSingleAtGroupQ2',
+                    'breakSingleAtGroupQ3',
                   ]
-                : ['breakRefreshQ3'];
+                : input.mode === 'breakRefreshQ0Q2'
+                  ? [
+                      'breakRefreshFreshQ0',
+                      'breakRefreshReturnedQ0',
+                      'breakRefreshQ2',
+                    ]
+                  : ['breakRefreshQ3'];
           for (const scenario of scenarios) {
             for (const slot of ['active', 'bench'] as const) {
               cases.push(await runScenario(slot, scenario));
@@ -6795,6 +6855,15 @@ export const captureLegacySourceCompoundRotationFixture = async (
       (entry) => entry.scenario === 'ordinaryGroup'
     ),
     breakGroupCases: cases.filter((entry) => entry.scenario === 'breakGroup'),
+    nonzeroGroupSingleCases: cases.filter(
+      (entry) =>
+        entry.scenario === 'ordinarySingleAtGroupQ1' ||
+        entry.scenario === 'ordinarySingleAtGroupQ2' ||
+        entry.scenario === 'ordinarySingleAtGroupQ3' ||
+        entry.scenario === 'breakSingleAtGroupQ1' ||
+        entry.scenario === 'breakSingleAtGroupQ2' ||
+        entry.scenario === 'breakSingleAtGroupQ3'
+    ),
     breakRefreshCases: cases.filter(
       (entry) =>
         entry.scenario === 'breakRefreshFreshQ0' ||
@@ -6810,6 +6879,11 @@ export const captureLegacySourceCompoundBreakRefreshFixture = (
   page: Page
 ): Promise<LegacySourceCompoundRotationFixture> =>
   captureLegacySourceCompoundRotationFixture(page, 'breakRefreshQ0Q2');
+
+export const captureLegacySourceCompoundNonzeroGroupSingleFixture = (
+  page: Page
+): Promise<LegacySourceCompoundRotationFixture> =>
+  captureLegacySourceCompoundRotationFixture(page, 'nonzeroGroupSingle');
 
 export const captureLegacySourceCompoundBreakRefreshQ3Fixture = (
   page: Page

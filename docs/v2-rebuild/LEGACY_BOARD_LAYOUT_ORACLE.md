@@ -765,10 +765,37 @@ The fixture also pins the before/after hit-region class, margins, authored and
 painted rectangles, opponent half-turn mapping, topology, native observer
 delivery, and harness-only observer cleanup. This is defect evidence, not a
 parity requirement: v2 layout/resize/refresh stays a pure projection and does
-not mutate canonical orientation or persist browser history. Nonzero-group
-Alt-R, lower-card group/single initiators, attachments, movement/evolution/
-removal, candidate geometry, and any product-level compatibility decision
-remain outside this checkpoint.
+not mutate canonical orientation or persist browser history.
+
+`tests/browser/legacy-compound-nonzero-group-single-geometry.spec.ts` adds a
+fifteenth source checkpoint backed by
+`tests/legacy-fixtures/renderer/compound-nonzero-group-single-v1.json`.
+Twenty-four fresh clean-group histories cover ordinary/BREAK q1/q2/q3 across
+both physical frames and active/sole-bench slots. Each inherits an exact pre-
+action compound phase, then invokes top-selected single-card rotation once.
+Keyboard and clicked-card ingress are digest-pinned but not executed by the
+inert harness. There is no refresh or wrapper replacement: both phases have one
+wrapper and the three construction observers remain live until harness cleanup.
+
+Legacy Alt-R operates on the selected card's effective inline angle, not on a
+group-relative offset. Ordinary q1/q2/q3 therefore become `[top q0, lower q1]`,
+`[top q0, lower q2]`, and `[top q0, lower q3]`. BREAK q1/q2 similarly clear the
+flag and reset the top to q0 while preserving the lower group turns. BREAK q3
+is the exception: its top is already effective q0, so Alt-R produces
+`[top q1, lower q3]` and retains BREAK. Active and bench wrapper margins follow
+the intermediate attempted angle before the q0 snap, leaving additional
+history-sensitive but visibly near-equivalent layouts.
+
+The oracle pins complete operation/transition traces, action targeting,
+quarter-turns and BREAK flags, margin histories, topology, painted and physical
+geometry, all six native hit regions, observer delivery, cleanup, and the
+recursive ordinary/BREAK dependency chain. This remains compatibility evidence,
+not a mandate to copy the ambiguity: v2 keeps group orientation and per-card
+orientation explicit. Lower-card group/single initiators, refresh after these
+divergent states, repeated Alt-R or group rotation after divergence,
+raw/imported per-card q2/q3 inputs, attachments, movement/evolution/removal,
+candidate geometry, and the final product-level compatibility decision remain
+outside this checkpoint.
 
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
@@ -778,7 +805,8 @@ shared placement, compact and fullscreen states. The controlled hand/bench/
 attachment-stack fixture remains source-only; the narrower contained-card,
 ordinary-evolution, single-Energy, Trainer-as-Tool, and stable two-Energy
 fixtures feed and compare their strict production geometries. The compound
-group/BREAK and BREAK q0/q2/q3 refresh histories remain wholly source-only. The
+group/BREAK, BREAK q0/q2/q3 refresh, and nonzero-group Alt-R histories remain
+wholly source-only. The
 bench-marker rotation history remains source-only while its strict pristine-q0 phase also
 feeds and compares the production geometry. The two-Energy
 departure phases remain source-only and prove stable convergence to the

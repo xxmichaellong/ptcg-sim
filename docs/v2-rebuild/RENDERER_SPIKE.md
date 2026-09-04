@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 767 v2 tests across 115 files. A separate suite
-passes 30 Playwright checks across 15 Chromium 151 browser files:
+The repository-wide gate passes 772 v2 tests across 116 files. A separate suite
+passes 32 Playwright checks across 16 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -513,8 +513,8 @@ passes 30 Playwright checks across 15 Chromium 151 browser files:
     geometry. The same active `[q1,q0,q0]` card turns expose three distinct
     inline-margin histories and two exact anchor clusters, though the largest
     anchor difference is 1.9375 px and remains inside the 2 px parity tolerance.
-    Bench histories converge. q3 negative-count collapse, nonzero-group Alt-R,
-    lower-card initiators, attachments, and candidate parity remain excluded;
+    Bench histories converge. q3 negative-count collapse, lower-card
+    initiators, attachments, and candidate parity remain excluded;
     production and domain state are unchanged.
 20. A fourteenth source-only checkpoint isolates q3 BREAK refresh in four
     independent local/opponent active/sole-bench cases. Subtracting the BREAK
@@ -527,7 +527,17 @@ passes 30 Playwright checks across 15 Chromium 151 browser files:
     recursive source dependency chain are pinned. V2 does not reproduce this
     state-changing refresh defect; no candidate, production, domain, or schema
     path changes.
-21. The selected DOM implementation completes 100 mount → clear/reset → destroy
+21. A fifteenth source-only checkpoint captures twenty-four independent clean
+    nonzero-group Alt-R entry histories: ordinary/BREAK q1/q2/q3 across both
+    physical sides and active/sole bench. Keyboard/click ingress is source-
+    pinned but not executed. Five paths snap only the selected top to absolute
+    q0 and clear BREAK while lower cards retain their group angle; BREAK q3
+    instead advances its effective-q0 top to q1 and retains BREAK. Complete
+    traces, action evidence, margins, geometry, native hit regions, observer
+    ownership, cleanup, and recursive compound dependencies are pinned.
+    Repeated post-divergence actions remain excluded. V2 keeps explicit group/
+    per-card orientation; no production, domain, or schema path changes.
+22. The selected DOM implementation completes 100 mount → clear/reset → destroy
     cycles on one warmed route-owned host with the exact status sequence,
     complete scene IDs at mount, zero rendered scene children/IDs after clear and
     destroy, zero non-DOM diagnostic resources, and post-GC Chromium
@@ -568,7 +578,9 @@ source-only compound group/BREAK histories in
 refresh histories in
 `tests/browser/legacy-compound-break-refresh-geometry.spec.ts`, plus the q3
 collapse in
-`tests/browser/legacy-compound-break-refresh-q3-geometry.spec.ts`. The mixed-
+`tests/browser/legacy-compound-break-refresh-q3-geometry.spec.ts`, and the
+nonzero-group Alt-R matrix in
+`tests/browser/legacy-compound-nonzero-group-single-geometry.spec.ts`. The mixed-
 order suite validates a checked-in numeric oracle without mounting a candidate;
 the mixed-stack movement suite mounts React only for its two canonical settled
 movement phases; and the marker/rotation suite compares React only to pristine
@@ -576,9 +588,10 @@ source q0 while production canonicalizes any eligible current q0 and keeps
 q1/q2/q3 and history-specific layout source-only. The bench-marker suite
 likewise keeps its q1/q2/q3 and observer history source-only, while comparing
 the separately composed clean-active-plus-sole-bench q0 production shape. The
-compound and BREAK-refresh suites mount no candidate because they prove that
-projected rotation fields alone cannot recover selected-action and wrapper-
-margin history, and that q3 refresh can mutate legacy orientation.
+compound, BREAK-refresh, and nonzero-group single-card suites mount no candidate
+because they prove that projected rotation fields alone cannot recover
+selected-action and wrapper-margin history, and that q3 refresh can mutate
+legacy orientation.
 
 Standard
 Linux CI can install Playwright's pinned Chromium build. This NixOS workspace

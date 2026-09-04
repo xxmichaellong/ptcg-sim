@@ -483,10 +483,25 @@ becomes `[top q1, lower q0, q0]` and stays collapsed after settlement. The
 BREAK flag and card nodes survive, but the group orientation does not.
 
 V2 refresh/layout remains state-free; it does not reproduce this legacy defect
-or add DOM-refresh history to canonical state. Nonzero-group Alt-R, lower-card
-initiators, and attachment timing still expose further legacy ambiguity. A
-later domain decision must normalize or represent those semantics before a
-strict React/Pixi layout predicate can be sound.
+or add DOM-refresh history to canonical state.
+
+A fifteenth source-only checkpoint captures the clean nonzero-group Alt-R entry
+matrix independently across ordinary/BREAK, q1/q2/q3, local/opponent, and
+active/sole-bench histories. The keyboard and clicked-card ingress sources are
+digest-pinned but not executed by the inert harness. Legacy reads the selected
+top's absolute effective angle. Five paths snap only that card to q0 and clear
+BREAK, leaving both lower cards at their prior group angle. BREAK at group q3
+instead starts its top at effective q0, so Alt-R advances it to q1, retains
+BREAK, and leaves the lower cards q3. No refresh occurs; the wrapper remains
+stable, but its inline margins still depend on the attempted intermediate angle
+and slot.
+
+V2 keeps its explicit group plus per-card orientation model and does not copy
+this absolute-angle ambiguity into canonical state. Lower-card initiators,
+repeated Alt-R or group rotation after divergence, refresh after divergent
+Alt-R, raw/imported q2/q3 per-card states, and attachment timing still require
+characterization or a compatibility decision before any strict compound
+React/Pixi layout predicate can be sound.
 
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during
