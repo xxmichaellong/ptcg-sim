@@ -643,6 +643,27 @@ operation history. Lower-selected or repeated group rotation, any intervening
 Alt-R/refresh/movement, markers, attachments, candidate parity, and production
 normalization remain separate; no UI or UX changes.
 
+A twenty-third source-only checkpoint takes the alternate immediate branch:
+one wrapper refresh directly after the eighteenth-checkpoint lower-card
+divergence, before any further input or movement. The same forty-eight-case
+matrix is split into ordinary and top-BREAK browser runs. Every pre-state and
+trace prefix equals its checkpoint-eighteen predecessor. The refresh creates a
+new wrapper around the same image nodes, temporarily leaves the empty old
+wrapper connected, reattaches both lower cards, and then replays a whole-group
+turn count derived only from the unattached top.
+
+Ordinary q1/q2/q3 consequently becomes homogeneous q1/q2/q3 and erases which
+lower card diverged. Top-BREAK q1/q2 becomes `{top:q2,lowers:q1}` and
+`{top:q3,lowers:q2}` with only the top BREAK flag. Top-BREAK q3 exposes the
+legacy defect: its top is raw q0 with BREAK=true, so refresh computes
+`(0-90)/90=-1`, replays no turns, and collapses to `{top:q1,lowers:q0}`.
+The oracle pins same-task two-wrapper geometry and settled one-wrapper
+recentering separately, including margins, all ten hit probes, node/wrapper
+identity, observer ownership, cleanup, and canonical collision checks. This is
+compatibility evidence, not a rule allowing viewport refresh to mutate v2 game
+state. Real KeyR image reload/network behavior, later actions, candidate parity,
+and production normalization remain separate; no UI or UX changes.
+
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during
 characterization is represented explicitly instead of assumed to be duplication.

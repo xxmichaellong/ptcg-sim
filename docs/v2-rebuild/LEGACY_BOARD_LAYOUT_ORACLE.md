@@ -1021,6 +1021,35 @@ attachments/non-Pokémon cards, extra bench siblings, alternate layout/assets,
 candidate parity, and application/network execution remain excluded. No
 production/domain/protocol/schema/UI path is widened.
 
+The twenty-third source checkpoint is split across
+`tests/browser/legacy-compound-lower-nonzero-group-refresh-after-single-ordinary-geometry.spec.ts`
+and
+`tests/browser/legacy-compound-lower-nonzero-group-refresh-after-single-break-geometry.spec.ts`,
+backed by
+`tests/legacy-fixtures/renderer/compound-lower-nonzero-group-refresh-after-single-v1.json`.
+Its forty-eight independent histories use the exact checkpoint-eighteen
+post-single payload as `pre-refresh`, call the transcribed wrapper-reconstruction
+path immediately, snapshot the replacement in the same task, and snapshot it
+again after two animation frames.
+
+Ordinary q1/q2/q3 converges to homogeneous q1/q2/q3. Top-BREAK q1/q2 converges
+to top q2/q3 with both lowers q1/q2 and only the top flag retained. Top-BREAK
+q3 instead computes `(raw q0 - 90deg) / 90deg = -1`; no replay iteration runs,
+so both prior middle/base divergences collapse to top q1/BREAK plus lower q0.
+Middle- and base-divergent histories therefore share post state and geometry
+while their pre payloads and complete traces remain distinct.
+
+Synchronous evidence has two wrappers with the empty old wrapper still
+connected. Settled evidence has one wrapper after flex recentering; rotations,
+flags, links, ordering, dimensions, and margins do not otherwise change. The
+new fixture pins all ten probes, physical mirroring, same card-node identity,
+new wrapper identity, four source-shaped observer pairs, cleanup, exact replay
+traces, and digest-closed collision dependencies. The same-task snapshot is a
+diagnostic and is not claimed as a painted user-visible frame. Real KeyR image
+reload/cache/network behavior, later rotation or movement, extra siblings or
+attachments, candidate parity, and production/domain/protocol/schema/UI paths
+remain excluded.
+
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
 renderer-neutral scene and has structured scene assertions for all four board
@@ -1031,7 +1060,7 @@ ordinary-evolution, single-Energy, Trainer-as-Tool, and stable two-Energy
 fixtures feed and compare their strict production geometries. The compound
 group/BREAK, BREAK q0/q2/q3 refresh, top- and lower-selected nonzero-group
 Alt-R, its same-card follow-up, and immediate top-group rotation after
-divergence, lower-initiated group, and pristine/returned/history-authored-q0
+divergence or wrapper refresh after divergence, lower-initiated group, and pristine/returned/history-authored-q0
 lower single histories remain wholly source-only. The
 bench-marker rotation history remains source-only while its strict pristine-q0 phase also
 feeds and compares the production geometry. The two-Energy

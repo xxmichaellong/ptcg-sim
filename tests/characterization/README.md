@@ -448,3 +448,21 @@ Lower-initiated/repeated group actions, another single before R, refresh,
 movement/replay/import, already-BREAK lower cards, markers, attachments,
 non-Pokémon cards, extra bench siblings, alternate layout/assets, candidate
 parity, and production/domain/protocol/schema/UI changes remain excluded.
+
+`legacy-compound-lower-nonzero-group-refresh-after-single-layout.test.ts`
+then pins the immediate source-shaped wrapper refresh from each checkpoint-
+eighteen divergent post-state. Forty-eight independent histories cover
+ordinary/top-BREAK, q1/q2/q3, prior middle/base selection, both sides, and
+active/sole-bench placement. Every pre payload and trace prefix equals its
+predecessor. The measured refresh preserves card nodes, replaces the wrapper,
+and records both the same-task two-wrapper state and the settled recentered
+one-wrapper state.
+
+Ordinary histories normalize to homogeneous q1/q2/q3. Top-BREAK q1/q2 becomes
+top q2/q3 with both lowers q1/q2; q3 computes a negative replay count and
+collapses to top q1/BREAK with both lowers q0. The fixture pins replay traces,
+turns/flags, margins, authored/painted/physical rectangles, ten probes,
+topology, wrapper/card identity, four observer pairs, cleanup, and recursive
+collision dependencies. Real KeyR image reload/cache/network behavior, later
+actions, alternative histories/layouts, candidate parity, and production/
+domain/protocol/schema/UI changes remain excluded.

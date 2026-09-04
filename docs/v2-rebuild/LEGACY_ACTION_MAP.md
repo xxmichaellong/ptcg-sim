@@ -329,6 +329,18 @@ while q2 changes `3%`/`2%`→`1%`/`0%`. Further group turns, a lower-card group
 initiator, refresh, movement, markers, and attachments remain distinct source-
 only histories.
 
+The immediate refresh branch after the same lower divergence is now captured
+independently. Reconstruction preserves the three image nodes but replaces the
+wrapper, briefly leaving two wrappers until the empty original is removed by
+its observer. Ordinary q1/q2/q3 is rebuilt as a homogeneous group, erasing the
+selected lower-card reset. Top-BREAK q1/q2 rebuilds to top q2/q3 with lower
+q1/q2. Top-BREAK q3 is destructive: the raw q0 BREAK top produces a replay
+count of `-1`, the loop executes zero times, and the group collapses to top q1
+plus lower q0. V2 must neither infer action history from the converged layout
+nor reproduce this refresh-driven mutation in canonical state. The source-only
+oracle directly transcribes reconstruction; real KeyR image reload, cache,
+network, and global-zone scanning remain outside its claims.
+
 Ability markers likewise have explicit ownership. The top evolution card maps
 to the stack-level marker; attachment, discard, and stadium cards use
 `SetCardAbilityUsed` and render a marker on that exact card. Attachment markers
