@@ -1238,6 +1238,15 @@ the tiny preview cache, configurable and validated on actual fixtures. If the
 representative maximum board cannot fit, the resolution/cache strategy changes
 before raising the budget.
 
+The selected DOM candidate now has a deterministic Chromium gate for 120
+distinct, versioned, same-origin SVG assets. It proves exact one-request-per-URL
+completion, successful browser-visible decode and intrinsic dimensions, stable
+keyed image nodes while already-cached URLs are reassigned, cache reuse by a
+fresh renderer/host without refetch, and clean teardown. The fixture is synthetic
+and serve-only: real raster decoded-byte/retained-heap limits, external-host and
+failure behavior, route-host navigation churn, and hidden/private face request
+privacy remain separate gates.
+
 ## Accessibility preservation and minimum improvement
 
 A canvas removes implicit DOM semantics, so v2 must not regress keyboard and

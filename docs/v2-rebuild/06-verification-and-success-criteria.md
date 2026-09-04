@@ -39,6 +39,14 @@ versions and support window are ratified in Phase 0.
 - A 60-card opened zone browser.
 - Flipped board, non-50/50 split, sidebar and full-screen variants.
 
+The selected DOM renderer's current deterministic Chromium evidence covers the
+120 distinct URL count with same-origin, versioned synthetic SVGs: exact server
+request completion, browser-visible decode/dimensions, stable keyed-node cache
+reuse, fresh-host cache reuse without refetch, and teardown. It does not replace
+the representative real-raster decoded-byte/retained-heap run, route-host churn,
+private-image request scan, external-host failures, or the release browser
+matrix.
+
 ## Required test layers
 
 | Layer               | Required evidence                                                                                                            |

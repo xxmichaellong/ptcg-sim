@@ -291,7 +291,7 @@ repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
 The repository-wide gate passes 867 v2 tests across 135 files. A separate suite
-passes 102 Playwright checks across 51 Chromium 151 browser files:
+passes 103 Playwright checks across 52 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -820,6 +820,19 @@ passes 102 Playwright checks across 51 Chromium 151 browser files:
     document/node/listener counts no higher than the warmed baseline. The React
     root/host is intentionally retained across clear/reset; heap sizes are
     attached as observations, not asserted as a portable retention budget.
+42. A separate selected-DOM cache gate mounts 120 stable card identities backed
+    by 120 distinct, versioned, same-origin SVG URLs from a deterministic
+    serve-only fixture. Chromium successfully decodes every image at its exact
+    intrinsic dimensions; a keyed update reassigns already-cached URLs without
+    replacing any button or image node; and a fresh renderer/host creates new
+    nodes while issuing no additional or conditional asset requests. Exact
+    server counts prove one completed response per asset with no aborts or
+    unexpected paths; any warm resource-timing entries report zero transferred
+    bytes. Both renderer lifecycles terminate cleanly, and the route-owned
+    renderer remains untouched. This is network-cache and browser-visible decode evidence, not a
+    native decoder-invocation count, decoded-pixel/heap budget, real-raster load,
+    external-host/CORS/failure test, hidden-face request scan, or cross-browser
+    result.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -829,8 +842,9 @@ and queues unmount outside the parent lifecycle. The same tests then passed with
 a clean console. This is retained as evidence for keeping browser tests separate
 from happy-DOM lifecycle tests.
 
-The suites live in `tests/browser/renderer-spike.spec.ts`,
-`tests/browser/legacy-dom-geometry.spec.ts`, and
+The renderer suites live in `tests/browser/renderer-spike.spec.ts` and
+`tests/browser/renderer-dom-cacheable-assets.spec.ts`. The source-parity suites
+start with `tests/browser/legacy-dom-geometry.spec.ts` and
 `tests/browser/legacy-card-stack-geometry.spec.ts`, plus the contained-card
 comparison in `tests/browser/legacy-contained-card-geometry.spec.ts` and the
 source-backed evolution comparison in
@@ -988,10 +1002,11 @@ wiring:
   images, and the proxy/hybrid policy in ADR-013;
 - background resume, 0x0 host, DPR changes, and resize coalescing; WebGL-only
   recovery/eviction cases remain gates for any future Pixi rollout;
-- complete the resource gate beyond the green warmed-host Chromium lifecycle:
-  route-host churn, 120 distinct cacheable network assets, decoded-image/request
-  accounting, and retained heap on the ratified profile; display-object/GPU
-  counters remain required only for a future Pixi rollout;
+- complete resource evidence beyond the green warmed-host lifecycle and
+  controlled same-origin distinct-SVG request/decode gate: route-host navigation
+  churn, real-raster decoded-byte and retained-heap accounting on the ratified
+  profile, and the hidden/private face request scan; display-object/GPU counters
+  remain required only for a future Pixi rollout;
 - the p95 reconciliation/input/drag budgets from the verification plan on the
   ratified four-core reference profile;
 - keyboard and screen-reader audit of the selected semantic DOM surface; and

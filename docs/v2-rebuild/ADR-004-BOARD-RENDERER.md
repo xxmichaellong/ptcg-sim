@@ -222,10 +222,11 @@ Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
   measured shell/tab edges);
 - all protected pointer, keyboard, menu, zone-browser, replay, reconnect, and
   accessibility workflows;
-- a 120-distinct-asset cache/network test and hidden-image request scan;
+- a hidden/private-image request scan;
 - finish resource evidence beyond the current green 100-cycle warmed-host
-  Chromium DOM-node/listener gate: route-host churn, request accounting, and
-  retained heap on the ratified profile;
+  Chromium DOM-node/listener gate and the deterministic same-origin
+  120-distinct-SVG cache/request/decode gate: route-host navigation churn plus
+  real-raster decoded-byte and retained-heap accounting on the ratified profile;
 - the ratified physical-device/browser performance matrix; and
 - Chromium automation plus Firefox and Safari approval.
 
