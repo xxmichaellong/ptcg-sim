@@ -362,3 +362,22 @@ cases establish only physical-frame mapping. Returned/history-authored q0,
 q1-refreshed entry, repeated/mixed initiators, group rotation or refresh after
 divergence, already-BREAK lower cards, attachments, movement/removal, candidate
 parity, and production/domain/protocol/schema changes remain excluded.
+
+`legacy-compound-lower-returned-q0-single-layout.test.ts` then isolates the
+clean returned-q0 branch. Forty-eight independently built histories cross
+ordinary/top-BREAK composition, homogeneous top/middle/base initiation of the
+prior whole-stack cycle, final middle/base selection, both physical sides, and
+active/sole-bench placement. Setup retains the established q1 reconstruction
+inside q0→q1→q2→q3→q0; the measured `pre-single`→`post-single`
+transition contains only the final lower-card Alt-R.
+
+That selected lower evolution alone advances q0→q1 and gains
+`PokémonBreak=true`. The oracle distinguishes top-BREAK bench histories that
+return with `3%`/`2%` after top initiation from lower-initiated histories that
+return with `1%`/`0%`; every bench post-state is `3%`/`2%`, and active remains
+`1%`/`0%`. Exact dependency inheritance, traces, indices/DOM ordinals,
+authored/painted/physical rectangles, ten native probes, q1-refresh replacement,
+stable measured-transition identity, observers, provenance, and cleanup are
+pinned. Refresh-free group cycles, repeated Alt-R, mixed prior initiators,
+other q0 origins, later refresh/divergence, attachments, candidate parity, and
+all production/domain/protocol/schema/UI changes remain excluded.

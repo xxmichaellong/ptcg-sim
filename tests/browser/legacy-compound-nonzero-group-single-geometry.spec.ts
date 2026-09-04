@@ -261,6 +261,7 @@ test('checked-in legacy Alt-R pins the clean nonzero-group entry matrix', async 
   expect(capture.breakGroupCases).toEqual([]);
   expect(capture.lowerGroupInitiatorCases).toEqual([]);
   expect(capture.lowerQ0SingleCases).toEqual([]);
+  expect(capture.lowerReturnedQ0SingleCases).toEqual([]);
   expect(capture.lowerNonzeroGroupSingleCases).toEqual([]);
   expect(capture.breakRefreshCases).toEqual([]);
   expect(capture.nonzeroGroupSingleCases.map((entry) => entry.id)).toEqual(

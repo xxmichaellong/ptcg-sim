@@ -558,6 +558,27 @@ refresh or group rotation after divergence, attachments, and candidate parity
 remain separate work; production, domain, protocol, and schema paths are still
 unchanged.
 
+A nineteenth source-only checkpoint closes the clean returned-q0 lower-card
+Alt-R entry without conflating other q0 histories. Forty-eight independently
+built histories cross ordinary/top-BREAK composition, a homogeneous prior
+whole-stack initiator (top, middle, or base), final middle/base selection,
+active/sole-bench placement, and both physical sides. Each group first follows
+the established q0→q1, q1 reconstruction, q2→q3→q0 cycle; only the final
+`pre-single`→`post-single` transition is measured as refresh-free.
+
+The selected lower evolution then advances q0→q1 and receives its own legacy
+`PokémonBreak=true` flag while its siblings remain unchanged. Prior group
+initiator is semantically relevant: an ordinary return ends at `1%`/`0%`, while
+a top-BREAK bench return retains `3%`/`2%` only when the top drove the cycle;
+middle/base-driven BREAK returns end at `1%`/`0%`. Every bench Alt-R converges
+to `3%`/`2%`, and active wrappers retain `1%`/`0%`. The oracle also pins the
+q1 reconstruction wrapper replacement separately from stable identity across
+the measured action, exact lower hit wedges, traces, geometry, observers, and
+cleanup. Four-turn cycles without reconstruction, repeated lower Alt-R,
+refresh after return or divergence, mixed prior group initiators, imported
+states, attachments, and candidate parity remain distinct. No production,
+domain, protocol, schema, UI, or UX path changes.
+
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during
 characterization is represented explicitly instead of assumed to be duplication.

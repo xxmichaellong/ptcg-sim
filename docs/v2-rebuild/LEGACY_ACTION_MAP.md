@@ -284,6 +284,18 @@ pinned but not executed, and opponent coverage proves only physical frame
 mapping. V2 retains explicit target-value orientation and does not add this
 legacy per-evolution flag/history ambiguity to canonical state.
 
+The clean returned-q0 lower-card branch is pinned independently from pristine
+and nonzero entry. A homogeneous top-, middle-, or base-initiated whole-stack
+cycle uses the established q1 reconstruction before returning to coherent q0;
+Alt-R then advances only logical middle/base index 1/2 to q1 and assigns its
+own `PokémonBreak=true` flag. The chosen prior initiator matters at top-BREAK
+bench: top-driven return retains `3%`/`2%`, whereas middle/base-driven return
+has `1%`/`0%` before the final action; every bench result converges to
+`3%`/`2%`. Wrapper replacement belongs to the earlier q1 reconstruction, while
+wrapper/card identity is stable across the measured final action. This remains
+source-only and does not combine refresh-free four-turn cycles, repeated lower
+Alt-R, mixed group initiators, post-return refresh, or divergent states.
+
 Ability markers likewise have explicit ownership. The top evolution card maps
 to the stack-level marker; attachment, discard, and stadium cards use
 `SetCardAbilityUsed` and render a marker on that exact card. Attachment markers
