@@ -423,3 +423,28 @@ repeats, intervening group actions/refresh/movement,
 lower-initiated or refreshed nonzero groups, imported q0, attachments,
 candidate parity, and production/domain/protocol/schema/UI changes remain
 excluded.
+
+`legacy-compound-lower-nonzero-group-rotation-after-single-layout.test.ts`
+next pins one top-driven whole-group R immediately after the clean lower-card
+q1/q2/q3 divergence. Forty-eight histories cross ordinary/top-BREAK
+composition, prior middle/base single selection, both physical sides, and
+active/sole-bench placement. The `pre-group-rotation` payload must equal the
+matching checkpoint-eighteen post-state exactly; the measured top/index-zero
+`single=false` action advances every Pokémon one quarter-turn without changing
+any BREAK flag.
+
+The selected lower card therefore reaches q1 while remaining non-BREAK. Active
+margins remain `1%`/`0%`; ordinary bench margins remain inherited. Every BREAK
+bench wrapper moves `0.015625px`: q1/q3 changes `1%`/`0%`→`3%`/`2%`, while
+q2 changes `3%`/`2%`→`1%`/`0%`. The dependent oracle pins exact traces,
+turns/flags, authored/painted/physical rectangles, ten probe signatures,
+topology, stable identity, three observer pairs, provenance, cleanup, and no
+measured-transition refresh. The inherited setup trace retains both construction
+refreshes. Cross-fixture collision checks require matching turns
+and geometry while positively distinguishing the selected-card BREAK flag and
+full history.
+
+Lower-initiated/repeated group actions, another single before R, refresh,
+movement/replay/import, already-BREAK lower cards, markers, attachments,
+non-Pokémon cards, extra bench siblings, alternate layout/assets, candidate
+parity, and production/domain/protocol/schema/UI changes remain excluded.

@@ -982,6 +982,45 @@ groups, intervening group rotation/refresh/movement, imported q0, attachments,
 candidate parity, and application/network execution remain excluded. No
 production/domain/protocol/schema/UI path is widened.
 
+The twenty-second source checkpoint is split across
+`tests/browser/legacy-compound-lower-nonzero-group-rotation-after-single-ordinary-geometry.spec.ts`
+and
+`tests/browser/legacy-compound-lower-nonzero-group-rotation-after-single-break-geometry.spec.ts`,
+backed by
+`tests/legacy-fixtures/renderer/compound-lower-nonzero-group-rotation-after-single-v1.json`.
+Forty-eight independent histories reproduce the checkpoint-eighteen lower-card
+q1/q2/q3 divergence, snapshot it as `pre-group-rotation`, then measure exactly
+one top/index-zero `single=false` group action. Ordinary/top-BREAK composition,
+prior middle/base selection, local/opponent frames, and active/sole-bench slots
+are exhaustive.
+
+The action advances every Pokémon one quarter-turn and preserves every BREAK
+flag. Ordinary post turns are `{top,other}=N+1` and `selected=q1`, all false;
+top-BREAK post turns are `top=(N+2) mod 4`, `other=(N+1) mod 4`, `selected=q1`,
+with only top true. Ordinary `{top,other}` is likewise `(N+1) mod 4`. The
+selected lower card's q1/non-BREAK result is the defining defect
+evidence. Active remains `1%`/`0%`. Ordinary bench retains q1=`1%`/`0%`,
+q2=`3%`/`2%`, q3=`1%`/`0%`; BREAK bench rewrites those post values to
+`3%`/`2%`, `1%`/`0%`, and `3%`/`2%`, respectively. Each changed anchor shifts
+exactly `0.015625px` frame-local x and mirrors physically for the opponent.
+
+Every pre payload equals the matching checkpoint-eighteen post payload. New q1
+and q2 post turns match checkpoint twenty-one q2 and q3 respectively; new q3
+post turns match the history-authored-q0 post. Frozen geometry is exact for all
+active cases and the bench cases sharing margins, while translated cases retain
+the same shape. The reference lower card is BREAK=true but this group-rotated
+card is false, and full traces differ, so tests positively assert those state
+distinctions rather than inferring history from rectangles. All ten probes,
+topology, identities, three observer pairs, no measured-transition refresh,
+cleanup, and the three direct recursive fixture dependencies are pinned. The
+two construction refreshes remain in the inherited setup trace.
+
+Lower-initiated or repeated group rotation, another single before R,
+intervening refresh/movement/replay/import, already-BREAK lower cards, markers,
+attachments/non-Pokémon cards, extra bench siblings, alternate layout/assets,
+candidate parity, and application/network execution remain excluded. No
+production/domain/protocol/schema/UI path is widened.
+
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
 renderer-neutral scene and has structured scene assertions for all four board
@@ -991,8 +1030,9 @@ attachment-stack fixture remains source-only; the narrower contained-card,
 ordinary-evolution, single-Energy, Trainer-as-Tool, and stable two-Energy
 fixtures feed and compare their strict production geometries. The compound
 group/BREAK, BREAK q0/q2/q3 refresh, top- and lower-selected nonzero-group
-Alt-R and its same-card follow-up, lower-initiated group, and pristine/returned/
-history-authored-q0 lower single histories remain wholly source-only. The
+Alt-R, its same-card follow-up, and immediate top-group rotation after
+divergence, lower-initiated group, and pristine/returned/history-authored-q0
+lower single histories remain wholly source-only. The
 bench-marker rotation history remains source-only while its strict pristine-q0 phase also
 feeds and compares the production geometry. The two-Energy
 departure phases remain source-only and prove stable convergence to the

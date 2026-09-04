@@ -7,7 +7,8 @@ import { expect, type Page, type TestInfo } from '@playwright/test';
 import groupOracle from '../../legacy-fixtures/renderer/compound-group-rotation-v1.json' with { type: 'json' };
 import historyOracle from '../../legacy-fixtures/renderer/compound-lower-history-authored-q0-single-v1.json' with { type: 'json' };
 import predecessorOracle from '../../legacy-fixtures/renderer/compound-lower-nonzero-group-single-v1.json' with { type: 'json' };
-import oracle from '../../legacy-fixtures/renderer/compound-lower-nonzero-group-single-followup-v1.json' with { type: 'json' };
+import oracle from '../../legacy-fixtures/renderer/compound-lower-nonzero-group-rotation-after-single-v1.json' with { type: 'json' };
+import followupOracle from '../../legacy-fixtures/renderer/compound-lower-nonzero-group-single-followup-v1.json' with { type: 'json' };
 
 import type {
   CapturedPoint,
@@ -17,7 +18,7 @@ import type {
   LegacySourceCompoundRotationFixture,
 } from './legacy-source-board.js';
 
-export type LowerNonzeroFollowupComposition = 'ordinary' | 'break';
+export type LowerNonzeroGroupAfterSingleComposition = 'ordinary' | 'break';
 
 const roles = ['top', 'middle', 'base'] as const;
 const slots = ['active', 'bench'] as const;
@@ -38,6 +39,7 @@ type Role = (typeof roles)[number];
 type Slot = (typeof slots)[number];
 type Scenario = keyof typeof oracle.expected.scenario;
 type PredecessorScenario = keyof typeof predecessorOracle.expected.scenario;
+type FollowupScenario = keyof typeof followupOracle.expected.scenario;
 type HistoryScenario = keyof typeof historyOracle.expected.scenario;
 type RectTuple = readonly [number, number, number, number];
 type PointTuple = readonly [number, number] | null;
@@ -68,177 +70,211 @@ interface ProvenanceManifest {
 }
 
 interface ScenarioDefinition {
-  readonly composition: LowerNonzeroFollowupComposition;
-  readonly selectedRole: 'middle' | 'base';
-  readonly selectedIndex: 1 | 2;
-  readonly selectedDomOrdinal: 1 | 2;
-  readonly groupTurns: 1 | 2 | 3;
-  readonly setupSingleCount: 1;
-  readonly measuredSingleOrdinal: 2;
-  readonly selectionHitRegion: 'middleAndBaseOverlap' | 'baseOnly';
+  readonly composition: LowerNonzeroGroupAfterSingleComposition;
+  readonly priorLowerRole: 'middle' | 'base';
+  readonly priorLowerIndex: 1 | 2;
+  readonly priorLowerDomOrdinal: 1 | 2;
+  readonly originalGroupTurns: 1 | 2 | 3;
+  readonly measuredRole: 'top';
+  readonly measuredIndex: 0;
+  readonly measuredDomOrdinal: 0;
+  readonly measuredSingle: false;
   readonly predecessor: PredecessorScenario;
 }
 
+interface CollisionReference {
+  readonly dependencyPath:
+    | 'tests/legacy-fixtures/renderer/compound-lower-nonzero-group-single-followup-v1.json'
+    | 'tests/legacy-fixtures/renderer/compound-lower-history-authored-q0-single-v1.json';
+  readonly scenario: FollowupScenario | HistoryScenario;
+  readonly activeFrameLocalXDelta: 0;
+  readonly benchFrameLocalXDelta: 0 | 0.015625;
+  readonly selectedBreakFlagInReference: true;
+  readonly selectedBreakFlagAfterMeasuredGroupRotation: false;
+}
+
 const scenarioDefinitions = {
-  ordinaryMiddleFollowupSingleAfterGroupQ1: {
+  ordinaryTopGroupAfterMiddleSingleAtGroupQ1: {
     composition: 'ordinary',
-    selectedRole: 'middle',
-    selectedIndex: 1,
-    selectedDomOrdinal: 2,
-    groupTurns: 1,
-    setupSingleCount: 1,
-    measuredSingleOrdinal: 2,
-    selectionHitRegion: 'middleAndBaseOverlap',
+    priorLowerRole: 'middle',
+    priorLowerIndex: 1,
+    priorLowerDomOrdinal: 2,
+    originalGroupTurns: 1,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
+    measuredSingle: false,
     predecessor: 'ordinaryMiddleSingleAtGroupQ1',
   },
-  ordinaryMiddleFollowupSingleAfterGroupQ2: {
+  ordinaryTopGroupAfterMiddleSingleAtGroupQ2: {
     composition: 'ordinary',
-    selectedRole: 'middle',
-    selectedIndex: 1,
-    selectedDomOrdinal: 2,
-    groupTurns: 2,
-    setupSingleCount: 1,
-    measuredSingleOrdinal: 2,
-    selectionHitRegion: 'middleAndBaseOverlap',
+    priorLowerRole: 'middle',
+    priorLowerIndex: 1,
+    priorLowerDomOrdinal: 2,
+    originalGroupTurns: 2,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
+    measuredSingle: false,
     predecessor: 'ordinaryMiddleSingleAtGroupQ2',
   },
-  ordinaryMiddleFollowupSingleAfterGroupQ3: {
+  ordinaryTopGroupAfterMiddleSingleAtGroupQ3: {
     composition: 'ordinary',
-    selectedRole: 'middle',
-    selectedIndex: 1,
-    selectedDomOrdinal: 2,
-    groupTurns: 3,
-    setupSingleCount: 1,
-    measuredSingleOrdinal: 2,
-    selectionHitRegion: 'middleAndBaseOverlap',
+    priorLowerRole: 'middle',
+    priorLowerIndex: 1,
+    priorLowerDomOrdinal: 2,
+    originalGroupTurns: 3,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
+    measuredSingle: false,
     predecessor: 'ordinaryMiddleSingleAtGroupQ3',
   },
-  ordinaryBaseFollowupSingleAfterGroupQ1: {
+  ordinaryTopGroupAfterBaseSingleAtGroupQ1: {
     composition: 'ordinary',
-    selectedRole: 'base',
-    selectedIndex: 2,
-    selectedDomOrdinal: 1,
-    groupTurns: 1,
-    setupSingleCount: 1,
-    measuredSingleOrdinal: 2,
-    selectionHitRegion: 'baseOnly',
+    priorLowerRole: 'base',
+    priorLowerIndex: 2,
+    priorLowerDomOrdinal: 1,
+    originalGroupTurns: 1,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
+    measuredSingle: false,
     predecessor: 'ordinaryBaseSingleAtGroupQ1',
   },
-  ordinaryBaseFollowupSingleAfterGroupQ2: {
+  ordinaryTopGroupAfterBaseSingleAtGroupQ2: {
     composition: 'ordinary',
-    selectedRole: 'base',
-    selectedIndex: 2,
-    selectedDomOrdinal: 1,
-    groupTurns: 2,
-    setupSingleCount: 1,
-    measuredSingleOrdinal: 2,
-    selectionHitRegion: 'baseOnly',
+    priorLowerRole: 'base',
+    priorLowerIndex: 2,
+    priorLowerDomOrdinal: 1,
+    originalGroupTurns: 2,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
+    measuredSingle: false,
     predecessor: 'ordinaryBaseSingleAtGroupQ2',
   },
-  ordinaryBaseFollowupSingleAfterGroupQ3: {
+  ordinaryTopGroupAfterBaseSingleAtGroupQ3: {
     composition: 'ordinary',
-    selectedRole: 'base',
-    selectedIndex: 2,
-    selectedDomOrdinal: 1,
-    groupTurns: 3,
-    setupSingleCount: 1,
-    measuredSingleOrdinal: 2,
-    selectionHitRegion: 'baseOnly',
+    priorLowerRole: 'base',
+    priorLowerIndex: 2,
+    priorLowerDomOrdinal: 1,
+    originalGroupTurns: 3,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
+    measuredSingle: false,
     predecessor: 'ordinaryBaseSingleAtGroupQ3',
   },
-  breakMiddleFollowupSingleAfterGroupQ1: {
+  breakTopGroupAfterMiddleSingleAtGroupQ1: {
     composition: 'break',
-    selectedRole: 'middle',
-    selectedIndex: 1,
-    selectedDomOrdinal: 2,
-    groupTurns: 1,
-    setupSingleCount: 1,
-    measuredSingleOrdinal: 2,
-    selectionHitRegion: 'middleAndBaseOverlap',
+    priorLowerRole: 'middle',
+    priorLowerIndex: 1,
+    priorLowerDomOrdinal: 2,
+    originalGroupTurns: 1,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
+    measuredSingle: false,
     predecessor: 'breakMiddleSingleAtGroupQ1',
   },
-  breakMiddleFollowupSingleAfterGroupQ2: {
+  breakTopGroupAfterMiddleSingleAtGroupQ2: {
     composition: 'break',
-    selectedRole: 'middle',
-    selectedIndex: 1,
-    selectedDomOrdinal: 2,
-    groupTurns: 2,
-    setupSingleCount: 1,
-    measuredSingleOrdinal: 2,
-    selectionHitRegion: 'middleAndBaseOverlap',
+    priorLowerRole: 'middle',
+    priorLowerIndex: 1,
+    priorLowerDomOrdinal: 2,
+    originalGroupTurns: 2,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
+    measuredSingle: false,
     predecessor: 'breakMiddleSingleAtGroupQ2',
   },
-  breakMiddleFollowupSingleAfterGroupQ3: {
+  breakTopGroupAfterMiddleSingleAtGroupQ3: {
     composition: 'break',
-    selectedRole: 'middle',
-    selectedIndex: 1,
-    selectedDomOrdinal: 2,
-    groupTurns: 3,
-    setupSingleCount: 1,
-    measuredSingleOrdinal: 2,
-    selectionHitRegion: 'middleAndBaseOverlap',
+    priorLowerRole: 'middle',
+    priorLowerIndex: 1,
+    priorLowerDomOrdinal: 2,
+    originalGroupTurns: 3,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
+    measuredSingle: false,
     predecessor: 'breakMiddleSingleAtGroupQ3',
   },
-  breakBaseFollowupSingleAfterGroupQ1: {
+  breakTopGroupAfterBaseSingleAtGroupQ1: {
     composition: 'break',
-    selectedRole: 'base',
-    selectedIndex: 2,
-    selectedDomOrdinal: 1,
-    groupTurns: 1,
-    setupSingleCount: 1,
-    measuredSingleOrdinal: 2,
-    selectionHitRegion: 'baseOnly',
+    priorLowerRole: 'base',
+    priorLowerIndex: 2,
+    priorLowerDomOrdinal: 1,
+    originalGroupTurns: 1,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
+    measuredSingle: false,
     predecessor: 'breakBaseSingleAtGroupQ1',
   },
-  breakBaseFollowupSingleAfterGroupQ2: {
+  breakTopGroupAfterBaseSingleAtGroupQ2: {
     composition: 'break',
-    selectedRole: 'base',
-    selectedIndex: 2,
-    selectedDomOrdinal: 1,
-    groupTurns: 2,
-    setupSingleCount: 1,
-    measuredSingleOrdinal: 2,
-    selectionHitRegion: 'baseOnly',
+    priorLowerRole: 'base',
+    priorLowerIndex: 2,
+    priorLowerDomOrdinal: 1,
+    originalGroupTurns: 2,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
+    measuredSingle: false,
     predecessor: 'breakBaseSingleAtGroupQ2',
   },
-  breakBaseFollowupSingleAfterGroupQ3: {
+  breakTopGroupAfterBaseSingleAtGroupQ3: {
     composition: 'break',
-    selectedRole: 'base',
-    selectedIndex: 2,
-    selectedDomOrdinal: 1,
-    groupTurns: 3,
-    setupSingleCount: 1,
-    measuredSingleOrdinal: 2,
-    selectionHitRegion: 'baseOnly',
+    priorLowerRole: 'base',
+    priorLowerIndex: 2,
+    priorLowerDomOrdinal: 1,
+    originalGroupTurns: 3,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
+    measuredSingle: false,
     predecessor: 'breakBaseSingleAtGroupQ3',
   },
 } as const satisfies Record<Scenario, ScenarioDefinition>;
 
 const scenarioOrderByComposition = {
   ordinary: [
-    'ordinaryMiddleFollowupSingleAfterGroupQ1',
-    'ordinaryMiddleFollowupSingleAfterGroupQ2',
-    'ordinaryMiddleFollowupSingleAfterGroupQ3',
-    'ordinaryBaseFollowupSingleAfterGroupQ1',
-    'ordinaryBaseFollowupSingleAfterGroupQ2',
-    'ordinaryBaseFollowupSingleAfterGroupQ3',
+    'ordinaryTopGroupAfterMiddleSingleAtGroupQ1',
+    'ordinaryTopGroupAfterMiddleSingleAtGroupQ2',
+    'ordinaryTopGroupAfterMiddleSingleAtGroupQ3',
+    'ordinaryTopGroupAfterBaseSingleAtGroupQ1',
+    'ordinaryTopGroupAfterBaseSingleAtGroupQ2',
+    'ordinaryTopGroupAfterBaseSingleAtGroupQ3',
   ],
   break: [
-    'breakMiddleFollowupSingleAfterGroupQ1',
-    'breakMiddleFollowupSingleAfterGroupQ2',
-    'breakMiddleFollowupSingleAfterGroupQ3',
-    'breakBaseFollowupSingleAfterGroupQ1',
-    'breakBaseFollowupSingleAfterGroupQ2',
-    'breakBaseFollowupSingleAfterGroupQ3',
+    'breakTopGroupAfterMiddleSingleAtGroupQ1',
+    'breakTopGroupAfterMiddleSingleAtGroupQ2',
+    'breakTopGroupAfterMiddleSingleAtGroupQ3',
+    'breakTopGroupAfterBaseSingleAtGroupQ1',
+    'breakTopGroupAfterBaseSingleAtGroupQ2',
+    'breakTopGroupAfterBaseSingleAtGroupQ3',
   ],
 } as const satisfies Record<
-  LowerNonzeroFollowupComposition,
+  LowerNonzeroGroupAfterSingleComposition,
   readonly Scenario[]
 >;
 
 const scenarioMetadata = oracle.expected.scenario as unknown as Record<
   Scenario,
   Omit<ScenarioDefinition, 'predecessor'>
+>;
+const predecessorScenarios = oracle.expected
+  .predecessorScenarioByScenario as unknown as Record<
+  Scenario,
+  PredecessorScenario
+>;
+const collisionReferences = oracle.expected
+  .collisionReferenceByScenario as unknown as Record<
+  Scenario,
+  CollisionReference
 >;
 const phaseEvidence = oracle.expected
   .phaseEvidenceByScenarioAndSlot as unknown as Record<
@@ -290,28 +326,42 @@ const predecessorTraces = predecessorOracle.expected
   readonly string[]
 >;
 
-const historyEvidence = historyOracle.expected
-  .phaseEvidenceByScenarioAndSlot as unknown as Record<
-  `${HistoryScenario}:${Slot}`,
-  readonly [PhaseEvidenceTuple, PhaseEvidenceTuple]
->;
-const historyTurns = historyOracle.expected
-  .quarterTurnsByScenario as unknown as Record<
-  HistoryScenario,
-  readonly [Record<Role, number>, Record<Role, number>]
->;
-const historyFlags = historyOracle.expected
-  .breakFlagsByScenario as unknown as Record<
-  HistoryScenario,
-  readonly [Record<Role, boolean>, Record<Role, boolean>]
->;
-const historyOperationTraces = historyOracle.expected
-  .operationTraceByScenario as unknown as Record<
-  HistoryScenario,
-  readonly string[]
->;
-const historyTransitions = historyOracle.expected
-  .transitionTraceByScenario as unknown as Record<HistoryScenario, string>;
+interface ReferenceMaps {
+  readonly evidence: Record<
+    string,
+    readonly [PhaseEvidenceTuple, PhaseEvidenceTuple]
+  >;
+  readonly turns: Record<
+    string,
+    readonly [Record<Role, number>, Record<Role, number>]
+  >;
+  readonly flags: Record<
+    string,
+    readonly [Record<Role, boolean>, Record<Role, boolean>]
+  >;
+  readonly traces: Record<string, readonly string[]>;
+}
+
+const followupMaps: ReferenceMaps = {
+  evidence: followupOracle.expected
+    .phaseEvidenceByScenarioAndSlot as unknown as ReferenceMaps['evidence'],
+  turns: followupOracle.expected
+    .quarterTurnsByScenario as unknown as ReferenceMaps['turns'],
+  flags: followupOracle.expected
+    .breakFlagsByScenario as unknown as ReferenceMaps['flags'],
+  traces: followupOracle.expected
+    .operationTraceByScenario as unknown as ReferenceMaps['traces'],
+};
+const historyMaps: ReferenceMaps = {
+  evidence: historyOracle.expected
+    .phaseEvidenceByScenarioAndSlot as unknown as ReferenceMaps['evidence'],
+  turns: historyOracle.expected
+    .quarterTurnsByScenario as unknown as ReferenceMaps['turns'],
+  flags: historyOracle.expected
+    .breakFlagsByScenario as unknown as ReferenceMaps['flags'],
+  traces: historyOracle.expected
+    .operationTraceByScenario as unknown as ReferenceMaps['traces'],
+};
 
 const repositoryRoot = fileURLToPath(new URL('../../../', import.meta.url));
 
@@ -336,9 +386,8 @@ const expectedFulfillment = {
 } as const;
 
 const required = <Value>(value: Value, label: string): NonNullable<Value> => {
-  if (value === undefined || value === null) {
+  if (value === undefined || value === null)
     throw new Error(`Missing ${label}`);
-  }
   return value;
 };
 
@@ -474,58 +523,158 @@ const paintedFromAuthored = (
 const expectedTurns = (
   definition: ScenarioDefinition
 ): readonly [Record<Role, number>, Record<Role, number>] => {
-  const topTurn =
+  const preTop =
     definition.composition === 'break'
-      ? (definition.groupTurns + 1) % 4
-      : definition.groupTurns;
+      ? (definition.originalGroupTurns + 1) % 4
+      : definition.originalGroupTurns;
   const pre = {
-    top: topTurn,
-    middle: definition.selectedRole === 'middle' ? 0 : definition.groupTurns,
-    base: definition.selectedRole === 'base' ? 0 : definition.groupTurns,
+    top: preTop,
+    middle:
+      definition.priorLowerRole === 'middle'
+        ? 0
+        : definition.originalGroupTurns,
+    base:
+      definition.priorLowerRole === 'base' ? 0 : definition.originalGroupTurns,
   };
-  return [pre, { ...pre, [definition.selectedRole]: 1 }];
+  return [
+    pre,
+    {
+      top: (pre.top + 1) % 4,
+      middle: (pre.middle + 1) % 4,
+      base: (pre.base + 1) % 4,
+    },
+  ];
 };
 
 const expectedFlags = (
   definition: ScenarioDefinition
 ): readonly [Record<Role, boolean>, Record<Role, boolean>] => {
-  const pre = {
+  const flags = {
     top: definition.composition === 'break',
     middle: false,
     base: false,
   };
-  return [pre, { ...pre, [definition.selectedRole]: true }];
+  return [flags, { ...flags }];
 };
 
 const expectedMargins = (
   definition: ScenarioDefinition,
   slot: Slot
-): readonly [readonly [string, string], readonly [string, string]] => [
-  slot === 'bench' && definition.groupTurns === 2 ? ['3%', '2%'] : ['1%', '0%'],
-  slot === 'bench' ? ['3%', '2%'] : ['1%', '0%'],
-];
+): readonly [readonly [string, string], readonly [string, string]] => {
+  const compact = ['1%', '0%'] as const;
+  const spread = ['3%', '2%'] as const;
+  const pre =
+    slot === 'bench' && definition.originalGroupTurns === 2 ? spread : compact;
+  const postTop = expectedTurns(definition)[1].top;
+  const post = slot === 'bench' && postTop % 2 === 1 ? spread : compact;
+  return [pre, post];
+};
 
-const expectedTransition = (definition: ScenarioDefinition): string =>
-  `rotate:${definition.selectedRole}:index=${definition.selectedIndex}:single=true:0->90:break=false->true`;
+const expectedTransition = (definition: ScenarioDefinition): string => {
+  const [pre, post] = expectedTurns(definition);
+  const flag = definition.composition === 'break';
+  return `rotate:top:index=0:single=false:${pre.top * 90}->${post.top * 90}:break=${String(flag)}->${String(flag)}`;
+};
 
 const expectedCaseIds = (
-  composition: LowerNonzeroFollowupComposition
+  composition: LowerNonzeroGroupAfterSingleComposition
 ): readonly string[] => {
   const ids: string[] = [];
   for (const side of ['local', 'opponent'] as const) {
     for (const scenario of scenarioOrderByComposition[composition]) {
       const definition = scenarioDefinitions[scenario];
-      const suffix = `compound${composition === 'break' ? '-break' : ''}-group-q${definition.groupTurns}-${definition.selectedRole}-single-followup`;
+      const suffix = `compound${composition === 'break' ? '-break' : ''}-group-q${definition.originalGroupTurns}-${definition.priorLowerRole}-single-top-group`;
       for (const slot of slots) ids.push(`${side}-${slot}-${suffix}`);
     }
   }
   return ids;
 };
 
-const historyScenario = (definition: ScenarioDefinition): HistoryScenario =>
-  `${definition.composition}${
-    definition.selectedRole === 'middle' ? 'Middle' : 'Base'
-  }ThirdSingleAtHistoryQ0`;
+const expectedReference = (
+  definition: ScenarioDefinition
+): Pick<CollisionReference, 'dependencyPath' | 'scenario'> => {
+  const prefix = definition.composition;
+  const role = definition.priorLowerRole === 'middle' ? 'Middle' : 'Base';
+  if (definition.originalGroupTurns === 3) {
+    return {
+      dependencyPath:
+        'tests/legacy-fixtures/renderer/compound-lower-history-authored-q0-single-v1.json',
+      scenario: `${prefix}${role}ThirdSingleAtHistoryQ0` as HistoryScenario,
+    };
+  }
+  return {
+    dependencyPath:
+      'tests/legacy-fixtures/renderer/compound-lower-nonzero-group-single-followup-v1.json',
+    scenario:
+      `${prefix}${role}FollowupSingleAfterGroupQ${definition.originalGroupTurns + 1}` as FollowupScenario,
+  };
+};
+
+const expectedBenchCollisionDelta = (
+  definition: ScenarioDefinition
+): 0 | 0.015625 =>
+  (definition.composition === 'ordinary' &&
+    definition.originalGroupTurns !== 2) ||
+  (definition.composition === 'break' && definition.originalGroupTurns === 2)
+    ? 0.015625
+    : 0;
+
+const referenceMaps = (reference: CollisionReference): ReferenceMaps =>
+  reference.dependencyPath.endsWith('single-followup-v1.json')
+    ? followupMaps
+    : historyMaps;
+
+const expectCollisionRect = (
+  actual: RectTuple,
+  reference: RectTuple,
+  xDelta: number,
+  label: string
+): void => {
+  expect(Math.abs(actual[0] - reference[0]), `${label}.x-delta`).toBeCloseTo(
+    xDelta,
+    6
+  );
+  expect(actual.slice(1), label).toEqual(reference.slice(1));
+};
+
+const expectCollisionPhase = (
+  actual: PhaseEvidenceTuple,
+  reference: PhaseEvidenceTuple,
+  xDelta: number,
+  label: string
+): void => {
+  expectCollisionRect(actual[1], reference[1], xDelta, `${label}.stack`);
+  for (const [index, role] of roles.entries()) {
+    expectCollisionRect(
+      actual[2][index],
+      reference[2][index],
+      xDelta,
+      `${label}.${role}.painted`
+    );
+    expectCollisionRect(
+      actual[3][index],
+      reference[3][index],
+      xDelta,
+      `${label}.${role}.authored`
+    );
+  }
+  for (const [index, actualPoint] of actual[4].entries()) {
+    const referencePoint = reference[4][index] ?? null;
+    if (actualPoint === null || referencePoint === null) {
+      expect(actualPoint, `${label}.${hitRegionNames[index]}`).toBe(
+        referencePoint
+      );
+      continue;
+    }
+    expect(
+      Math.abs(actualPoint[0] - referencePoint[0]),
+      `${label}.${hitRegionNames[index]}.x-delta`
+    ).toBeCloseTo(xDelta, 6);
+    expect(actualPoint[1], `${label}.${hitRegionNames[index]}.y`).toBe(
+      referencePoint[1]
+    );
+  }
+};
 
 const verifyManifest = async (
   manifest: ProvenanceManifest,
@@ -535,7 +684,6 @@ const verifyManifest = async (
   if (visited.has(manifestPath)) return;
   visited.add(manifestPath);
   expect(manifest.schemaVersion, manifestPath).toBe(1);
-
   const provenance = manifest.provenance ?? [];
   const claims = manifest.provenanceClaims ?? [];
   const sourcePaths = provenance.map((entry) => entry.path);
@@ -577,21 +725,21 @@ const verifyManifest = async (
   }
 };
 
-export const assertLowerNonzeroFollowupOracleIntegrity = async (
-  composition: LowerNonzeroFollowupComposition
+export const assertLowerNonzeroGroupAfterSingleOracleIntegrity = async (
+  composition: LowerNonzeroGroupAfterSingleComposition
 ): Promise<void> => {
   const visited = new Set<string>();
   await verifyManifest(
     oracle as unknown as ProvenanceManifest,
-    'tests/legacy-fixtures/renderer/compound-lower-nonzero-group-single-followup-v1.json',
+    'tests/legacy-fixtures/renderer/compound-lower-nonzero-group-rotation-after-single-v1.json',
     visited
   );
-  expect(visited.size).toBeGreaterThan(5);
+  expect(visited.size).toBeGreaterThan(6);
   expect(oracle.dependencies.map((entry) => entry.path)).toEqual([
     'tests/legacy-fixtures/renderer/compound-lower-nonzero-group-single-v1.json',
+    'tests/legacy-fixtures/renderer/compound-lower-nonzero-group-single-followup-v1.json',
     'tests/legacy-fixtures/renderer/compound-lower-history-authored-q0-single-v1.json',
   ]);
-
   expect(oracle.input).toMatchObject({
     viewport: { width: 1600, height: 900, devicePixelRatio: 1 },
     asset: {
@@ -600,9 +748,7 @@ export const assertLowerNonzeroFollowupOracleIntegrity = async (
       naturalHeight: 1024,
     },
     evolutionOrder: ['base', 'middle', 'top'],
-    setupSingleCount: 1,
-    measuredSingleOrdinal: 2,
-    phaseSequence: ['pre-single', 'post-single'],
+    phaseSequence: ['pre-group-rotation', 'post-group-rotation'],
     scenarioOrderByComposition,
   });
 
@@ -624,6 +770,8 @@ export const assertLowerNonzeroFollowupOracleIntegrity = async (
   const scenarioKeys = [...allScenarios].sort();
   for (const actual of [
     Object.keys(scenarioMetadata),
+    Object.keys(predecessorScenarios),
+    Object.keys(collisionReferences),
     Object.keys(quarterTurns),
     Object.keys(breakFlags),
     Object.keys(operationTraces),
@@ -652,68 +800,95 @@ export const assertLowerNonzeroFollowupOracleIntegrity = async (
   expect(oracle.expected.lifecycle).toEqual(
     predecessorOracle.expected.lifecycle
   );
-  expect(oracle.expected.lifecycle).toEqual(historyOracle.expected.lifecycle);
 
   for (const scenario of allScenarios) {
     const definition = scenarioDefinitions[scenario];
-    const { predecessor } = definition;
     const expectedMetadata: Omit<ScenarioDefinition, 'predecessor'> = {
       composition: definition.composition,
-      selectedRole: definition.selectedRole,
-      selectedIndex: definition.selectedIndex,
-      selectedDomOrdinal: definition.selectedDomOrdinal,
-      groupTurns: definition.groupTurns,
-      setupSingleCount: 1,
-      measuredSingleOrdinal: 2,
-      selectionHitRegion: definition.selectionHitRegion,
+      priorLowerRole: definition.priorLowerRole,
+      priorLowerIndex: definition.priorLowerIndex,
+      priorLowerDomOrdinal: definition.priorLowerDomOrdinal,
+      originalGroupTurns: definition.originalGroupTurns,
+      measuredRole: 'top',
+      measuredIndex: 0,
+      measuredDomOrdinal: 0,
+      measuredSingle: false,
     };
     expect(scenarioMetadata[scenario]).toEqual(expectedMetadata);
-    expect(quarterTurns[scenario]).toEqual(expectedTurns(definition));
-    expect(breakFlags[scenario]).toEqual(expectedFlags(definition));
+    expect(predecessorScenarios[scenario]).toBe(definition.predecessor);
+    const literalTurns = expectedTurns(definition);
+    const literalFlags = expectedFlags(definition);
+    expect(quarterTurns[scenario]).toEqual(literalTurns);
+    expect(breakFlags[scenario]).toEqual(literalFlags);
+    expect(literalFlags[1]).toEqual(literalFlags[0]);
+    expect(literalFlags[1][definition.priorLowerRole]).toBe(false);
     const transition = expectedTransition(definition);
     expect(transitionTraces[scenario]).toBe(transition);
     expect(operationTraces[scenario]).toEqual([
-      ...predecessorTraces[predecessor],
+      ...predecessorTraces[definition.predecessor],
       transition,
     ]);
 
-    const history = historyScenario(definition);
-    expect(transitionTraces[scenario]).toBe(historyTransitions[history]);
+    const expectedReferenceMetadata = expectedReference(definition);
+    const collision = collisionReferences[scenario];
+    expect(collision).toEqual({
+      ...expectedReferenceMetadata,
+      activeFrameLocalXDelta: 0,
+      benchFrameLocalXDelta: expectedBenchCollisionDelta(definition),
+      selectedBreakFlagInReference: true,
+      selectedBreakFlagAfterMeasuredGroupRotation: false,
+    });
+    const reference = referenceMaps(collision);
+    const referenceTurns = required(
+      reference.turns[collision.scenario],
+      `${scenario}.reference-turns`
+    );
+    const referenceFlags = required(
+      reference.flags[collision.scenario],
+      `${scenario}.reference-flags`
+    );
+    const referenceTrace = required(
+      reference.traces[collision.scenario],
+      `${scenario}.reference-trace`
+    );
+    expect(literalTurns[1]).toEqual(referenceTurns[1]);
+    expect(referenceFlags[1][definition.priorLowerRole]).toBe(true);
+    expect(literalFlags[1][definition.priorLowerRole]).toBe(false);
+    expect(operationTraces[scenario]).not.toEqual(referenceTrace);
+
     for (const slot of slots) {
       const key = `${scenario}:${slot}` as const;
-      const predecessorKey = `${predecessor}:${slot}` as const;
+      const predecessorKey = `${definition.predecessor}:${slot}` as const;
       const evidence = phaseEvidence[key];
       expect(evidence.map((phase) => phase[0])).toEqual([
-        'pre-single',
-        'post-single',
+        'pre-group-rotation',
+        'post-group-rotation',
       ]);
       expect(evidence.every((phase) => phase[4].length === 10)).toBe(true);
       expect(evidence[0].slice(1)).toEqual(
         predecessorEvidence[predecessorKey][1].slice(1)
       );
-      expect(quarterTurns[scenario][0]).toEqual(
-        predecessorTurns[predecessor][1]
+      expect(literalTurns[0]).toEqual(
+        predecessorTurns[definition.predecessor][1]
       );
-      expect(breakFlags[scenario][0]).toEqual(predecessorFlags[predecessor][1]);
+      expect(literalFlags[0]).toEqual(
+        predecessorFlags[definition.predecessor][1]
+      );
       expect(margins[key][0]).toEqual(predecessorMargins[predecessorKey][1]);
       expect(margins[key]).toEqual(expectedMargins(definition, slot));
 
-      if (definition.groupTurns === 2) {
-        const historyPhases = historyEvidence[`${history}:${slot}`];
-        expect(quarterTurns[scenario]).not.toEqual(historyTurns[history]);
-        expect(breakFlags[scenario]).toEqual(historyFlags[history]);
-        expect(operationTraces[scenario]).not.toEqual(
-          historyOperationTraces[history]
-        );
-        if (slot === 'active') {
-          expect(evidence).toEqual(historyPhases);
-        } else {
-          expect(evidence[0]).not.toEqual(historyPhases[0]);
-          expect(evidence[0][1][0]).toBe(552.671875);
-          expect(historyPhases[0][1][0]).toBe(552.6875);
-          expect(evidence[1]).toEqual(historyPhases[1]);
-        }
-      }
+      const referenceEvidence = required(
+        reference.evidence[`${collision.scenario}:${slot}`],
+        `${scenario}:${slot}.reference-evidence`
+      );
+      expectCollisionPhase(
+        evidence[1],
+        referenceEvidence[1],
+        slot === 'active'
+          ? collision.activeFrameLocalXDelta
+          : collision.benchFrameLocalXDelta,
+        `${scenario}:${slot}.post-collision`
+      );
     }
   }
 
@@ -727,21 +902,19 @@ export const assertLowerNonzeroFollowupOracleIntegrity = async (
     harnessDisconnectCallsPerObserverKind: 3,
   });
   expect(oracle.scope.included.join(' ')).toContain(
-    'exact pre-state inheritance'
+    'preserving all per-card BREAK flags'
   );
-  expect(oracle.scope.excluded.join(' ')).toContain('third or later');
+  expect(oracle.scope.excluded.join(' ')).toContain('repeated measured group');
   expect(oracle.scope.excluded.join(' ')).toContain('candidate parity');
-
-  expect(scenarioOrderByComposition[composition]).toHaveLength(6);
   expect(oracle.input.casesByComposition[composition]).toEqual(
     expectedCaseIds(composition)
   );
 };
 
-export const assertLowerNonzeroFollowupLiveCapture = async (
+export const assertLowerNonzeroGroupAfterSingleLiveCapture = async (
   page: Page,
   testInfo: TestInfo,
-  composition: LowerNonzeroFollowupComposition,
+  composition: LowerNonzeroGroupAfterSingleComposition,
   captureFixture: Capture
 ): Promise<void> => {
   await page.setViewportSize(oracle.input.viewport);
@@ -765,7 +938,7 @@ export const assertLowerNonzeroFollowupLiveCapture = async (
 
   const capture = await captureFixture(page);
   await testInfo.attach(
-    `legacy-source-compound-lower-nonzero-followup-${composition}.json`,
+    `legacy-source-compound-lower-nonzero-group-after-single-${composition}.json`,
     {
       body: Buffer.from(JSON.stringify(capture, null, 2)),
       contentType: 'application/json',
@@ -780,11 +953,11 @@ export const assertLowerNonzeroFollowupLiveCapture = async (
   expect(capture.lowerReturnedQ0SingleCases).toEqual([]);
   expect(capture.lowerHistoryAuthoredQ0SingleCases).toEqual([]);
   expect(capture.lowerNonzeroGroupSingleCases).toEqual([]);
-  expect(capture.lowerNonzeroGroupRotationAfterSingleCases).toEqual([]);
+  expect(capture.lowerNonzeroGroupSingleFollowupCases).toEqual([]);
   expect(capture.nonzeroGroupSingleCases).toEqual([]);
   expect(capture.breakRefreshCases).toEqual([]);
   expect(
-    capture.lowerNonzeroGroupSingleFollowupCases.map((entry) => entry.id)
+    capture.lowerNonzeroGroupRotationAfterSingleCases.map((entry) => entry.id)
   ).toEqual(expectedCaseIds(composition));
 
   for (const side of ['local', 'opponent'] as const) {
@@ -809,7 +982,7 @@ export const assertLowerNonzeroFollowupLiveCapture = async (
     ).toBeLessThanOrEqual(oracle.tolerances.rotationDegrees);
   }
 
-  for (const entry of capture.lowerNonzeroGroupSingleFollowupCases) {
+  for (const entry of capture.lowerNonzeroGroupRotationAfterSingleCases) {
     const scenario = entry.scenario as Scenario;
     const definition = required(
       scenarioDefinitions[scenario],
@@ -823,12 +996,12 @@ export const assertLowerNonzeroFollowupLiveCapture = async (
     const literalFlags = expectedFlags(definition);
     const literalMargins = expectedMargins(definition, entry.slot);
     const transition = expectedTransition(definition);
+    const actualCallTrace = normalizedTrace(entry, entry.callTrace);
 
     expect(entry.phases.map((phase) => phase.name)).toEqual([
-      'pre-single',
-      'post-single',
+      'pre-group-rotation',
+      'post-group-rotation',
     ]);
-    const actualCallTrace = normalizedTrace(entry, entry.callTrace);
     expect(actualCallTrace.slice(0, -1)).toEqual(
       predecessorTraces[definition.predecessor]
     );
@@ -869,14 +1042,20 @@ export const assertLowerNonzeroFollowupLiveCapture = async (
       sinkConnected: false,
     });
 
-    const prePhase = required(entry.phases[0], `${entry.id}.pre-single`);
-    const postPhase = required(entry.phases[1], `${entry.id}.post-single`);
+    const prePhase = required(
+      entry.phases[0],
+      `${entry.id}.pre-group-rotation`
+    );
+    const postPhase = required(
+      entry.phases[1],
+      `${entry.id}.post-group-rotation`
+    );
     expect(prePhase.action).toBeNull();
     expect(postPhase.action).toEqual({
-      selectedCardId: `${entry.id}-${definition.selectedRole}`,
-      selectedRole: definition.selectedRole,
-      indexBefore: definition.selectedIndex,
-      single: true,
+      selectedCardId: `${entry.id}-top`,
+      selectedRole: 'top',
+      indexBefore: 0,
+      single: false,
     });
 
     for (const role of roles) {
@@ -888,23 +1067,17 @@ export const assertLowerNonzeroFollowupLiveCapture = async (
         postPhase.cards.find((card) => card.role === role),
         `${entry.id}.post.${role}`
       );
-      if (role === definition.selectedRole) {
-        expect([
-          preCard.localRotationDegrees,
-          postCard.localRotationDegrees,
-        ]).toEqual([0, 90]);
-        expect([preCard.pokemonBreak, postCard.pokemonBreak]).toEqual([
-          false,
-          true,
-        ]);
-      } else {
-        expect(postCard.localRotationDegrees).toBe(
-          preCard.localRotationDegrees
-        );
-        expect(postCard.inlineTransform).toBe(preCard.inlineTransform);
-        expect(postCard.pokemonBreak).toBe(preCard.pokemonBreak);
-      }
+      expect(postCard.localRotationDegrees / 90).toBe(
+        (preCard.localRotationDegrees / 90 + 1) % 4
+      );
+      expect(postCard.pokemonBreak).toBe(preCard.pokemonBreak);
     }
+    const divergentPost = required(
+      postPhase.cards.find((card) => card.role === definition.priorLowerRole),
+      `${entry.id}.divergent-post`
+    );
+    expect(divergentPost.localRotationDegrees).toBe(90);
+    expect(divergentPost.pokemonBreak).toBe(false);
 
     for (const [phaseIndex, phase] of entry.phases.entries()) {
       const fixturePhase = required(
@@ -927,9 +1100,7 @@ export const assertLowerNonzeroFollowupLiveCapture = async (
         literalMargins[phaseIndex],
         `${entry.id}.${phase.name}.margin`
       );
-      if (phaseIndex === 0) {
-        expect(fixturePhase.slice(1)).toEqual(predecessorPhase.slice(1));
-      }
+      expect(fixturePhase.slice(1)).toEqual(predecessorPhase.slice(1));
       expect(phase.name).toBe(fixturePhase[0]);
 
       const expectedStack = rectFromTuple(predecessorPhase[1]);
@@ -1121,13 +1292,14 @@ export const assertLowerNonzeroFollowupLiveCapture = async (
         );
       }
 
-      const selectedPaintedName = `${definition.selectedRole}PaintedOnly` as
+      const selectedPaintedName = `${definition.priorLowerRole}PaintedOnly` as
         'middlePaintedOnly' | 'basePaintedOnly';
-      const selectedAuthoredName = `${definition.selectedRole}AuthoredOnly` as
-        'middleAuthoredOnly' | 'baseAuthoredOnly';
+      const selectedAuthoredName =
+        `${definition.priorLowerRole}AuthoredOnly` as
+          'middleAuthoredOnly' | 'baseAuthoredOnly';
       const selectedCard = required(
-        phase.cards.find((card) => card.role === definition.selectedRole),
-        `${entry.id}.${phase.name}.selected-card`
+        phase.cards.find((card) => card.role === definition.priorLowerRole),
+        `${entry.id}.${phase.name}.prior-lower-card`
       );
       const selectedPaintedPoint =
         phase.stack.hitPointsFrameLocal[selectedPaintedName];
@@ -1141,11 +1313,11 @@ export const assertLowerNonzeroFollowupLiveCapture = async (
       } else {
         const paintedPoint = required(
           selectedPaintedPoint,
-          `${entry.id}.${phase.name}.selected-painted-only`
+          `${entry.id}.${phase.name}.prior-lower-painted-only`
         );
         const authoredPoint = required(
           selectedAuthoredPoint,
-          `${entry.id}.${phase.name}.selected-authored-only`
+          `${entry.id}.${phase.name}.prior-lower-authored-only`
         );
         expect(pointInside(paintedPoint, selectedCard.frameLocalBounds)).toBe(
           true
@@ -1166,6 +1338,50 @@ export const assertLowerNonzeroFollowupLiveCapture = async (
           phase.stack.hitOrder[selectedAuthoredName]?.includes(selectedCard.id)
         ).toBe(false);
       }
+    }
+
+    const collision = collisionReferences[scenario];
+    const reference = referenceMaps(collision);
+    const referenceTurns = required(
+      reference.turns[collision.scenario],
+      `${entry.id}.reference-turns`
+    );
+    const referenceFlags = required(
+      reference.flags[collision.scenario],
+      `${entry.id}.reference-flags`
+    );
+    const referenceTrace = required(
+      reference.traces[collision.scenario],
+      `${entry.id}.reference-trace`
+    );
+    expect(literalTurns[1]).toEqual(referenceTurns[1]);
+    expect(divergentPost.pokemonBreak).toBe(false);
+    expect(referenceFlags[1][definition.priorLowerRole]).toBe(true);
+    expect(actualCallTrace).not.toEqual(referenceTrace);
+    const referencePost = required(
+      reference.evidence[`${collision.scenario}:${entry.slot}`]?.[1],
+      `${entry.id}.reference-post`
+    );
+    expectRect(
+      postPhase.stack.frameLocalBounds,
+      rectFromTuple(referencePost[1]),
+      `${entry.id}.post-collision.stack`
+    );
+    for (const [index, role] of roles.entries()) {
+      const card = required(
+        postPhase.cards.find((candidate) => candidate.role === role),
+        `${entry.id}.post-collision.${role}`
+      );
+      expectRect(
+        card.frameLocalBounds,
+        rectFromTuple(referencePost[2][index]),
+        `${entry.id}.post-collision.${role}.painted`
+      );
+      expectRect(
+        card.untransformedFrameLocalBounds,
+        rectFromTuple(referencePost[3][index]),
+        `${entry.id}.post-collision.${role}.authored`
+      );
     }
   }
 

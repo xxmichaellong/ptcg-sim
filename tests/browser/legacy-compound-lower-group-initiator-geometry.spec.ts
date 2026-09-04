@@ -264,6 +264,7 @@ test('checked-in legacy lower evolutions initiate coherent but history-sensitive
   expect(capture.lowerHistoryAuthoredQ0SingleCases).toEqual([]);
   expect(capture.lowerNonzeroGroupSingleCases).toEqual([]);
   expect(capture.lowerNonzeroGroupSingleFollowupCases).toEqual([]);
+  expect(capture.lowerNonzeroGroupRotationAfterSingleCases).toEqual([]);
   expect(capture.nonzeroGroupSingleCases).toEqual([]);
   expect(capture.breakRefreshCases).toEqual([]);
   expect(capture.lowerGroupInitiatorCases.map((entry) => entry.id)).toEqual(

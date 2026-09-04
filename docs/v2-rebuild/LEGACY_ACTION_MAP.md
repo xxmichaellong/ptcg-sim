@@ -318,6 +318,17 @@ refresh or wrapper replacement. Different selected targets, later repeats,
 intervening group/refresh actions, and imported state remain separate source-
 only histories rather than new canonical fields.
 
+The immediate top-initiated whole-group R after that first lower divergence is
+captured separately from the same-card Alt-R follow-up. Plain R sends logical
+top index 0 with `single=false`; the source advances all three Pokémon turns but
+does not change any `PokémonBreak` flag. The divergent lower card therefore
+moves q0→q1 while remaining non-BREAK. Active margins stay `1%`/`0%` and
+ordinary bench margins retain the inherited value. Top-BREAK bench margins are
+rewritten from the top card's new angle: q1/q3 change `1%`/`0%`→`3%`/`2%`,
+while q2 changes `3%`/`2%`→`1%`/`0%`. Further group turns, a lower-card group
+initiator, refresh, movement, markers, and attachments remain distinct source-
+only histories.
+
 Ability markers likewise have explicit ownership. The top evolution card maps
 to the stack-level marker; attachment, discard, and stadium cards use
 `SetCardAbilityUsed` and render a marker on that exact card. Attachment markers

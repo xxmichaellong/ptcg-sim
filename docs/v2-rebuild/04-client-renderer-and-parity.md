@@ -622,6 +622,27 @@ Different follow-up targets, third or later repeats, intervening group rotation 
 imported/refreshed q0 origins, attachments, and candidate parity remain separate.
 No production, domain, protocol, schema, UI, or UX path changes.
 
+A twenty-second source-only checkpoint instead applies one top-initiated whole-
+group R immediately after the eighteenth-checkpoint lower-card divergence.
+Forty-eight histories span ordinary/top-BREAK composition, original group
+q1/q2/q3, prior middle/base single selection, active/sole-bench placement, and
+both physical sides. Every pre-state equals the matching eighteenth-checkpoint
+post-state. The measured top/index-zero `single=false` action advances every
+Pokémon one quarter-turn but changes no per-card BREAK flag, so the previously
+divergent lower card reaches q1 while remaining `PokémonBreak=false`.
+
+Active margins remain `1%`/`0%`, and ordinary bench margins are unchanged.
+Every top-BREAK bench case changes anchor by exactly `0.015625px`: q1/q3 move
+from `1%`/`0%` to `3%`/`2%`, while q2 moves the opposite way. Exact pre-state
+inheritance, complete trace extension, turns/flags, authored/painted/physical
+geometry, ten native probes, stable identity, and the three-observer lifecycle
+with no measured-transition refresh are pinned; the two construction refreshes remain
+in the inherited setup trace. Cross-fixture collisions prove that identical current
+turns and geometry can still retain a different selected-card BREAK flag and
+operation history. Lower-selected or repeated group rotation, any intervening
+Alt-R/refresh/movement, markers, attachments, candidate parity, and production
+normalization remain separate; no UI or UX changes.
+
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during
 characterization is represented explicitly instead of assumed to be duplication.
