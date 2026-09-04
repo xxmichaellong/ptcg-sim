@@ -458,6 +458,310 @@ describe('React DOM board renderer', () => {
     });
   });
 
+  it('consumes source-shaped bench-q0 markers with stable keyed updates and cleanup', async () => {
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    const bench = (overrides: Partial<MarkerSceneNode>): MarkerSceneNode =>
+      marker({
+        presentation: 'legacyBenchQ0',
+        ...overrides,
+      });
+    const benchScene = (
+      revision: number,
+      markers: readonly MarkerSceneNode[]
+    ): BoardScene => ({
+      ...createMarkerScene(revision, markers),
+      viewport: { width: 1208, height: 900, devicePixelRatio: 1 },
+    });
+    const damage = bench({
+      id: 'stack:p1:bench:damage',
+      value: '130',
+      bounds: {
+        x: 606.65625,
+        y: 658.125,
+        width: 26.953125,
+        height: 26.953125,
+      },
+      zIndex: 301,
+      label: 'damage: 130',
+    });
+    const localAbility = bench({
+      id: 'stack:p1:bench:abilityUsed',
+      kind: 'abilityUsed',
+      value: 'used',
+      bounds: {
+        x: 552.75,
+        y: 686.25,
+        width: 80.859375,
+        height: 16.171875,
+      },
+      zIndex: 301,
+      label: 'abilityUsed: used',
+    });
+    const opponentAbility = bench({
+      id: 'stack:p2:bench:abilityUsed',
+      side: 'opponent',
+      kind: 'abilityUsed',
+      value: 'used',
+      bounds: {
+        x: 574.390625,
+        y: 197.5625,
+        width: 80.859375,
+        height: 16.171875,
+      },
+      zIndex: 301,
+      label: 'abilityUsed: used',
+    });
+    await mountInAct(
+      renderer,
+      host,
+      benchScene(20, [damage, localAbility, opponentAbility])
+    );
+
+    const damageNode = host.querySelector<HTMLElement>(
+      '[data-marker-id="stack:p1:bench:damage"]'
+    )!;
+    const localAbilityNode = host.querySelector<HTMLElement>(
+      '[data-marker-id="stack:p1:bench:abilityUsed"]'
+    )!;
+    const opponentAbilityNode = host.querySelector<HTMLElement>(
+      '[data-marker-id="stack:p2:bench:abilityUsed"]'
+    )!;
+    expect(
+      [...host.querySelectorAll<HTMLElement>('[data-marker-id]')].map(
+        (node) => node.dataset.markerId
+      )
+    ).toEqual([damage, localAbility, opponentAbility].map((entry) => entry.id));
+    expect(damageNode.dataset).toMatchObject({
+      markerPresentation: 'legacyBenchQ0',
+      markerSide: 'local',
+    });
+    expect(damageNode.getAttribute('aria-hidden')).toBe('true');
+    expect(damageNode.textContent).toBe('130');
+    expect(damageNode.style.position).toBe('absolute');
+    expect({
+      left: damageNode.style.left,
+      top: damageNode.style.top,
+      width: damageNode.style.width,
+      height: damageNode.style.height,
+      zIndex: damageNode.style.zIndex,
+      display: damageNode.style.display,
+      textAlign: damageNode.style.textAlign,
+      lineHeight: damageNode.style.lineHeight,
+      borderRadius: damageNode.style.borderRadius,
+      background: damageNode.style.background,
+      color: damageNode.style.color,
+      fontSize: damageNode.style.fontSize,
+      pointerEvents: damageNode.style.pointerEvents,
+    }).toEqual({
+      left: '606.65625px',
+      top: '658.125px',
+      width: '26.953125px',
+      height: '26.953125px',
+      zIndex: '301',
+      display: 'block',
+      textAlign: 'center',
+      lineHeight: '26.953125px',
+      borderRadius: '50%',
+      background: 'rgb(255, 98, 0)',
+      color: 'rgb(255, 255, 255)',
+      fontSize: '13.476563px',
+      pointerEvents: 'none',
+    });
+    expect(localAbilityNode.dataset).toMatchObject({
+      markerPresentation: 'legacyBenchQ0',
+      markerSide: 'local',
+    });
+    expect(localAbilityNode.getAttribute('aria-hidden')).toBe('true');
+    expect(localAbilityNode.textContent).toBe('');
+    expect(localAbilityNode.style.position).toBe('absolute');
+    expect({
+      left: localAbilityNode.style.left,
+      top: localAbilityNode.style.top,
+      width: localAbilityNode.style.width,
+      height: localAbilityNode.style.height,
+      zIndex: localAbilityNode.style.zIndex,
+      display: localAbilityNode.style.display,
+      textAlign: localAbilityNode.style.textAlign,
+      lineHeight: localAbilityNode.style.lineHeight,
+      borderRadius: localAbilityNode.style.borderRadius,
+      background: localAbilityNode.style.background,
+      color: localAbilityNode.style.color,
+      fontSize: localAbilityNode.style.fontSize,
+      fontWeight: localAbilityNode.style.fontWeight,
+      pointerEvents: localAbilityNode.style.pointerEvents,
+    }).toEqual({
+      left: '552.75px',
+      top: '686.25px',
+      width: '80.859375px',
+      height: '16.171875px',
+      zIndex: '301',
+      display: 'block',
+      textAlign: 'center',
+      lineHeight: '26.953125px',
+      borderRadius: '10%',
+      background: 'rgba(59, 141, 173, 0.708)',
+      color: 'rgb(0, 0, 0)',
+      fontSize: '',
+      fontWeight: '',
+      pointerEvents: 'none',
+    });
+    expect(opponentAbilityNode.dataset).toMatchObject({
+      markerPresentation: 'legacyBenchQ0',
+      markerSide: 'opponent',
+    });
+    expect(opponentAbilityNode.getAttribute('aria-hidden')).toBe('true');
+    expect(opponentAbilityNode.textContent).toBe('');
+    expect({
+      left: opponentAbilityNode.style.left,
+      top: opponentAbilityNode.style.top,
+      width: opponentAbilityNode.style.width,
+      height: opponentAbilityNode.style.height,
+      zIndex: opponentAbilityNode.style.zIndex,
+      display: opponentAbilityNode.style.display,
+      textAlign: opponentAbilityNode.style.textAlign,
+      lineHeight: opponentAbilityNode.style.lineHeight,
+      borderRadius: opponentAbilityNode.style.borderRadius,
+      background: opponentAbilityNode.style.background,
+      color: opponentAbilityNode.style.color,
+      fontSize: opponentAbilityNode.style.fontSize,
+      fontWeight: opponentAbilityNode.style.fontWeight,
+      pointerEvents: opponentAbilityNode.style.pointerEvents,
+    }).toEqual({
+      left: '574.390625px',
+      top: '197.5625px',
+      width: '80.859375px',
+      height: '16.171875px',
+      zIndex: '301',
+      display: 'block',
+      textAlign: 'center',
+      lineHeight: '26.953125px',
+      borderRadius: '10%',
+      background: 'rgba(255, 60, 0, 0.392)',
+      color: 'rgb(0, 0, 0)',
+      fontSize: '',
+      fontWeight: '',
+      pointerEvents: 'none',
+    });
+    expect(
+      host.querySelector('[data-marker-id$=":specialCondition"]')
+    ).toBeNull();
+
+    const updatedDamage = bench({
+      ...damage,
+      value: '140',
+      bounds: { x: 610, y: 660, width: 30, height: 30 },
+      label: 'damage: 140',
+    });
+    const updatedLocalAbility = bench({
+      ...localAbility,
+      bounds: { x: 550, y: 690, width: 90, height: 18 },
+    });
+    const updatedOpponentAbility = bench({
+      ...opponentAbility,
+      bounds: { x: 570, y: 200, width: 90, height: 18 },
+    });
+    act(() =>
+      renderer.installScene(
+        benchScene(21, [
+          updatedDamage,
+          updatedLocalAbility,
+          updatedOpponentAbility,
+        ]),
+        []
+      )
+    );
+
+    const changedDamageNode = host.querySelector<HTMLElement>(
+      '[data-marker-id="stack:p1:bench:damage"]'
+    )!;
+    const changedLocalAbilityNode = host.querySelector<HTMLElement>(
+      '[data-marker-id="stack:p1:bench:abilityUsed"]'
+    )!;
+    const changedOpponentAbilityNode = host.querySelector<HTMLElement>(
+      '[data-marker-id="stack:p2:bench:abilityUsed"]'
+    )!;
+    expect(changedDamageNode).toBe(damageNode);
+    expect(changedLocalAbilityNode).toBe(localAbilityNode);
+    expect(changedOpponentAbilityNode).toBe(opponentAbilityNode);
+    expect(changedDamageNode.textContent).toBe('140');
+    expect({
+      left: changedDamageNode.style.left,
+      top: changedDamageNode.style.top,
+      width: changedDamageNode.style.width,
+      height: changedDamageNode.style.height,
+      lineHeight: changedDamageNode.style.lineHeight,
+      fontSize: changedDamageNode.style.fontSize,
+    }).toEqual({
+      left: '610px',
+      top: '660px',
+      width: '30px',
+      height: '30px',
+      lineHeight: '30px',
+      fontSize: '15px',
+    });
+    expect({
+      left: changedLocalAbilityNode.style.left,
+      width: changedLocalAbilityNode.style.width,
+      height: changedLocalAbilityNode.style.height,
+      lineHeight: changedLocalAbilityNode.style.lineHeight,
+      background: changedLocalAbilityNode.style.background,
+    }).toEqual({
+      left: '550px',
+      width: '90px',
+      height: '18px',
+      lineHeight: '30px',
+      background: 'rgba(59, 141, 173, 0.708)',
+    });
+    expect({
+      left: changedOpponentAbilityNode.style.left,
+      width: changedOpponentAbilityNode.style.width,
+      height: changedOpponentAbilityNode.style.height,
+      lineHeight: changedOpponentAbilityNode.style.lineHeight,
+      background: changedOpponentAbilityNode.style.background,
+    }).toEqual({
+      left: '570px',
+      width: '90px',
+      height: '18px',
+      lineHeight: '30px',
+      background: 'rgba(255, 60, 0, 0.392)',
+    });
+
+    act(() =>
+      renderer.installScene(
+        benchScene(22, [updatedDamage, updatedOpponentAbility]),
+        []
+      )
+    );
+    expect(localAbilityNode.isConnected).toBe(false);
+    expect(damageNode.isConnected).toBe(true);
+    expect(opponentAbilityNode.isConnected).toBe(true);
+    expect(renderer.getDiagnostics().renderedMarkerIds).toEqual([
+      'stack:p1:bench:damage',
+      'stack:p2:bench:abilityUsed',
+    ]);
+
+    act(() => renderer.clearScene());
+    expect(damageNode.isConnected).toBe(false);
+    expect(opponentAbilityNode.isConnected).toBe(false);
+    expect(host.querySelectorAll('[data-marker-id]')).toHaveLength(0);
+    expect(renderer.getDiagnostics()).toMatchObject({
+      renderedMarkerIds: [],
+      localTextureBindings: 0,
+      globalTextureLeaseEntries: 0,
+      globalTextureReferences: 0,
+    });
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
+  });
+
   it('rejects an invalid initial scene before allocating a React root', async () => {
     const renderer = new ReactDomBoardRenderer({
       emitIntent: vi.fn(),

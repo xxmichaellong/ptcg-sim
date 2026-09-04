@@ -102,7 +102,7 @@ export interface MarkerSceneNode {
   readonly parentCardId: ViewCardId;
   readonly side: BoardSide | 'shared';
   readonly kind: 'damage' | 'specialCondition' | 'abilityUsed';
-  readonly presentation: 'generic' | 'legacyActiveQ0';
+  readonly presentation: 'generic' | 'legacyActiveQ0' | 'legacyBenchQ0';
   readonly value: string;
   readonly bounds: Rect;
   readonly zIndex: number;

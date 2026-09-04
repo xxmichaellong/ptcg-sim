@@ -765,6 +765,249 @@ describe('Pixi board interaction cancellation', () => {
     await Promise.resolve();
   });
 
+  it('consumes legacy bench-q0 markers with stable keyed views and no card asset churn', async () => {
+    const load = vi.spyOn(Assets, 'load').mockResolvedValue(Texture.WHITE);
+    const unload = vi.spyOn(Assets, 'unload').mockResolvedValue(undefined);
+    const application = fakeApplication();
+    const renderer = new PixiBoardRenderer(
+      {
+        emitIntent: vi.fn(),
+        emitPresentationUpdate: vi.fn(),
+        reportError: vi.fn(),
+      },
+      { createApplication: () => application }
+    );
+    const parentCardId = scene().cards[0]!.id;
+    const localDamage = marker({
+      id: 'stack:p1:bench-markers:damage',
+      parentCardId,
+      side: 'local',
+      kind: 'damage',
+      presentation: 'legacyBenchQ0',
+      value: '130',
+      bounds: {
+        x: 606.6116954545455,
+        y: 658.125,
+        width: 26.84659090909091,
+        height: 26.84659090909091,
+      },
+      zIndex: 301,
+      label: 'damage: 130',
+    });
+    const localAbility = marker({
+      id: 'stack:p1:bench-markers:abilityUsed',
+      parentCardId,
+      side: 'local',
+      kind: 'abilityUsed',
+      presentation: 'legacyBenchQ0',
+      value: 'used',
+      bounds: {
+        x: 552.9185136363636,
+        y: 686.25,
+        width: 80.53977272727273,
+        height: 16.107954545454547,
+      },
+      zIndex: 301,
+      label: 'abilityUsed: used',
+    });
+    const opponentDamage = marker({
+      id: 'stack:p2:bench-markers:damage',
+      parentCardId,
+      side: 'opponent',
+      kind: 'damage',
+      presentation: 'legacyBenchQ0',
+      value: '130',
+      bounds: {
+        x: 574.5417136363636,
+        y: 215.0284090909091,
+        width: 26.84659090909091,
+        height: 26.84659090909091,
+      },
+      zIndex: 301,
+      label: 'damage: 130',
+    });
+    const opponentAbility = marker({
+      id: 'stack:p2:bench-markers:abilityUsed',
+      parentCardId,
+      side: 'opponent',
+      kind: 'abilityUsed',
+      presentation: 'legacyBenchQ0',
+      value: 'used',
+      bounds: {
+        x: 574.5417136363636,
+        y: 197.64204545454544,
+        width: 80.53977272727273,
+        height: 16.107954545454547,
+      },
+      zIndex: 301,
+      label: 'abilityUsed: used',
+    });
+    const initialMarkers = [
+      localDamage,
+      localAbility,
+      opponentDamage,
+      opponentAbility,
+    ];
+    await renderer.mount(
+      document.createElement('div'),
+      createMarkerScene(211, initialMarkers),
+      DEFAULT_BOARD_PRESENTATION
+    );
+    await Promise.resolve();
+
+    const internals = renderer as unknown as RendererInternals;
+    const initialViews = new Map(
+      [...internals.markerViews].map(([id, view]) => [
+        id,
+        { root: view.root, graphic: view.graphic, text: view.text },
+      ])
+    );
+    const release = vi.spyOn(internals.textures, 'release');
+    const initialLoadCount = load.mock.calls.length;
+    const initialUnloadCount = unload.mock.calls.length;
+    const graphicInstruction = (graphic: Graphics) => {
+      const instruction = graphic.context.instructions[0] as unknown as {
+        readonly action: string;
+        readonly data: {
+          readonly style: { readonly color: number; readonly alpha: number };
+          readonly path: {
+            readonly instructions: readonly {
+              readonly action: string;
+              readonly data: readonly number[];
+            }[];
+          };
+        };
+      };
+      return {
+        action: instruction.action,
+        color: instruction.data.style.color,
+        alpha: instruction.data.style.alpha,
+        shape: instruction.data.path.instructions[0]?.action,
+        shapeData: instruction.data.path.instructions[0]?.data,
+      };
+    };
+    const expectBenchView = (descriptor: MarkerSceneNode) => {
+      const view = internals.markerViews.get(descriptor.id);
+      if (!view) throw new Error(`Missing Pixi marker view ${descriptor.id}`);
+      const first = initialViews.get(descriptor.id);
+      expect(view.root).toBe(first?.root);
+      expect(view.graphic).toBe(first?.graphic);
+      expect(view.text).toBe(first?.text);
+      expect(view.descriptor).toBe(descriptor);
+      expect(view.root.position.x).toBe(descriptor.bounds.x);
+      expect(view.root.position.y).toBe(descriptor.bounds.y);
+      expect(view.root.zIndex).toBe(301);
+      expect(view.root.eventMode).toBe('none');
+      expect(view.root.children).toEqual([view.graphic, view.text]);
+
+      const instruction = graphicInstruction(view.graphic);
+      if (descriptor.kind === 'damage') {
+        expect(instruction).toMatchObject({
+          action: 'fill',
+          shape: 'circle',
+          color: 0xff6200,
+          alpha: 1,
+        });
+        expect(instruction.shapeData?.slice(0, 3)).toEqual([
+          descriptor.bounds.width / 2,
+          descriptor.bounds.height / 2,
+          descriptor.bounds.width / 2,
+        ]);
+        expect(view.text.text).toBe(descriptor.value);
+        expect(view.text.style.fill).toBe(0xffffff);
+        expect(view.text.style.fontSize).toBe(descriptor.bounds.width / 2);
+        expect(view.text.style.fontWeight).toBe('normal');
+        expect(view.text.visible).toBe(true);
+      } else {
+        expect(descriptor.kind).toBe('abilityUsed');
+        expect(instruction).toMatchObject({
+          action: 'fill',
+          shape: 'roundRect',
+          color: descriptor.side === 'local' ? 0x3b8dad : 0xff3c00,
+          alpha: descriptor.side === 'local' ? 0.708 : 0.392,
+        });
+        expect(instruction.shapeData?.slice(0, 5)).toEqual([
+          0,
+          0,
+          descriptor.bounds.width,
+          descriptor.bounds.height,
+          Math.min(descriptor.bounds.width, descriptor.bounds.height) * 0.1,
+        ]);
+        expect(view.text.text).toBe('');
+        expect(view.text.style.fill).toBe(0x111111);
+        expect(view.text.style.fontSize).toBe(10);
+        expect(view.text.style.fontWeight).toBe('normal');
+        expect(view.text.visible).toBe(false);
+      }
+      expect(view.text.position.x).toBe(descriptor.bounds.width / 2);
+      expect(view.text.position.y).toBe(descriptor.bounds.height / 2);
+    };
+
+    expect(internals.markerViews.size).toBe(4);
+    expect(
+      internals.layers?.markers.children.map((child) => child.label)
+    ).toEqual(initialMarkers.map((descriptor) => descriptor.id));
+    for (const descriptor of initialMarkers) expectBenchView(descriptor);
+
+    const updatedLocalDamage: MarkerSceneNode = {
+      ...localDamage,
+      value: '140',
+      label: 'damage: 140',
+    };
+    const updatedMarkers = [
+      updatedLocalDamage,
+      localAbility,
+      opponentDamage,
+      opponentAbility,
+    ];
+    renderer.installScene(createMarkerScene(212, updatedMarkers), []);
+    for (const descriptor of updatedMarkers) expectBenchView(descriptor);
+    expect(
+      internals.layers?.markers.children.map((child) => child.label)
+    ).toEqual(updatedMarkers.map((descriptor) => descriptor.id));
+    expect(load).toHaveBeenCalledTimes(initialLoadCount);
+    expect(unload).toHaveBeenCalledTimes(initialUnloadCount);
+    expect(release).not.toHaveBeenCalled();
+
+    const removedDamage = initialViews.get(localDamage.id)!;
+    const removedAbility = initialViews.get(opponentAbility.id)!;
+    const survivors = [localAbility, opponentDamage];
+    renderer.installScene(createMarkerScene(213, survivors), []);
+    expect(internals.markerViews.has(localDamage.id)).toBe(false);
+    expect(internals.markerViews.has(opponentAbility.id)).toBe(false);
+    for (const removed of [removedDamage, removedAbility]) {
+      expect(removed.root.destroyed).toBe(true);
+      expect(removed.graphic.destroyed).toBe(true);
+      expect(removed.text.destroyed).toBe(true);
+    }
+    for (const descriptor of survivors) expectBenchView(descriptor);
+    expect(
+      internals.layers?.markers.children.map((child) => child.label)
+    ).toEqual(survivors.map((descriptor) => descriptor.id));
+    expect(load).toHaveBeenCalledTimes(initialLoadCount);
+    expect(unload).toHaveBeenCalledTimes(initialUnloadCount);
+    expect(release).not.toHaveBeenCalled();
+
+    const retained = survivors.map((descriptor) =>
+      initialViews.get(descriptor.id)!
+    );
+    renderer.installScene(createMarkerScene(214, []), []);
+    expect(internals.markerViews.size).toBe(0);
+    expect(internals.layers?.markers.children).toHaveLength(0);
+    for (const view of retained) {
+      expect(view.root.destroyed).toBe(true);
+      expect(view.graphic.destroyed).toBe(true);
+      expect(view.text.destroyed).toBe(true);
+    }
+    expect(renderer.getDiagnostics().renderedMarkerIds).toEqual([]);
+    expect(load).toHaveBeenCalledTimes(initialLoadCount);
+    expect(unload).toHaveBeenCalledTimes(initialUnloadCount);
+    expect(release).not.toHaveBeenCalled();
+
+    renderer.destroy();
+    await Promise.resolve();
+  });
+
   it('consumes stable mixed attachment scene descriptors without recycling Pixi card views or texture leases', async () => {
     const load = vi.spyOn(Assets, 'load').mockResolvedValue(Texture.WHITE);
     vi.spyOn(Assets, 'unload').mockResolvedValue(undefined);

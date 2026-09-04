@@ -10,6 +10,7 @@ import {
   flipBoardLayoutState,
   LEGACY_BOARD_AFFORDANCES_V1,
   layoutLegacyActiveQ0Markers,
+  layoutLegacyBenchQ0Markers,
   layoutLegacyContainedCard,
   layoutLegacyOrdinaryEvolutionStack,
   layoutLegacyPlaySlotCards,
@@ -660,6 +661,111 @@ describe('renderer-neutral legacy board layout', () => {
     }
     expect(() =>
       layoutLegacyActiveQ0Markers(
+        cardBounds,
+        'shared' as unknown as 'local' | 'opponent'
+      )
+    ).toThrow('local or opponent');
+  });
+
+  it('pins sole-bench q0 damage and ability geometry on both physical sides', () => {
+    const layout = createBoardLayoutSnapshot(
+      state({ viewport: { width: 1600, height: 900, devicePixelRatio: 1 } })
+    );
+    const localCard = layoutLegacyPlaySlotCards(
+      findBoardLayoutRegion(layout, 'local', 'bench'),
+      [CARD_ASPECT_RATIO]
+    )[0]!;
+    const opponentCard = layoutLegacyPlaySlotCards(
+      findBoardLayoutRegion(layout, 'opponent', 'bench'),
+      [CARD_ASPECT_RATIO]
+    )[0]!;
+    expectRectClose(localCard, {
+      x: 552.9185136363636,
+      y: 630,
+      width: 80.53977272727273,
+      height: 112.5,
+    });
+    expectRectClose(opponentCard, {
+      x: 574.5417136363636,
+      y: 157.5,
+      width: 80.53977272727273,
+      height: 112.5,
+    });
+
+    const local = layoutLegacyBenchQ0Markers(localCard, 'local');
+    expect(Object.keys(local)).toEqual(['damage', 'abilityUsed']);
+    expect('specialCondition' in local).toBe(false);
+    expectRectClose(local.damage.bounds, {
+      x: 606.6116954545455,
+      y: 658.125,
+      width: 26.84659090909091,
+      height: 26.84659090909091,
+    });
+    expectRectClose(local.abilityUsed.bounds, {
+      x: 552.9185136363636,
+      y: 686.25,
+      width: 80.53977272727273,
+      height: 16.107954545454547,
+    });
+
+    const opponent = layoutLegacyBenchQ0Markers(opponentCard, 'opponent');
+    expect(Object.keys(opponent)).toEqual(['damage', 'abilityUsed']);
+    expect('specialCondition' in opponent).toBe(false);
+    expectRectClose(opponent.damage.bounds, {
+      x: 574.5417136363636,
+      y: 215.0284090909091,
+      width: 26.84659090909091,
+      height: 26.84659090909091,
+    });
+    expectRectClose(opponent.abilityUsed.bounds, {
+      x: 574.5417136363636,
+      y: 197.64204545454544,
+      width: 80.53977272727273,
+      height: 16.107954545454547,
+    });
+    expect(
+      [...Object.values(local), ...Object.values(opponent)].map(
+        (marker) => marker.sourceZIndex
+      )
+    ).toEqual([1, 1, 1, 1]);
+  });
+
+  it('keeps sole-bench q0 marker layout pure and rejects invalid inputs', () => {
+    const cardBounds = Object.freeze({
+      x: -20,
+      y: 10,
+      width: 60,
+      height: 90,
+    });
+    const before = { ...cardBounds };
+    expect(layoutLegacyBenchQ0Markers(cardBounds, 'local')).toEqual({
+      damage: {
+        bounds: { x: 20, y: 32.5, width: 20, height: 20 },
+        sourceZIndex: 1,
+      },
+      abilityUsed: {
+        bounds: { x: -20, y: 55, width: 60, height: 12 },
+        sourceZIndex: 1,
+      },
+    });
+    expect(cardBounds).toEqual(before);
+
+    for (const bounds of [
+      { ...cardBounds, x: Number.NaN },
+      { ...cardBounds, y: Number.NEGATIVE_INFINITY },
+      { ...cardBounds, width: 0 },
+      { ...cardBounds, width: -1 },
+      { ...cardBounds, width: Number.POSITIVE_INFINITY },
+      { ...cardBounds, height: 0 },
+      { ...cardBounds, height: -1 },
+      { ...cardBounds, height: Number.NaN },
+    ]) {
+      expect(() => layoutLegacyBenchQ0Markers(bounds, 'local')).toThrow(
+        'finite and positive'
+      );
+    }
+    expect(() =>
+      layoutLegacyBenchQ0Markers(
         cardBounds,
         'shared' as unknown as 'local' | 'opponent'
       )

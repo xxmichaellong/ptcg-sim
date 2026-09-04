@@ -173,7 +173,7 @@ pointer-hit. Eligible returned-q0 current state is canonicalized to the same q0
 geometry because no DOM history is projected. Pixi reuses keyed marker views
 without card asset churn, and a real owner/opponent/spectator test protects
 stable opaque aliases and identical normalized geometry. Rotated and
-source-history-dependent layout, bench marker production, BREAK/compound and
+source-history-dependent active layout, BREAK/compound and
 attachment rotation, movement/evolution/refresh transfer, text-entry gestures,
 alternate layouts, and Pixi-native paint/hit parity remain deferred.
 
@@ -191,6 +191,24 @@ are counted separately. Its initial delivery refreshes both live markers;
 empty-wrapper cleanup delivers again without refreshing removed markers. The
 source observer is still live immediately before the harness performs its sole
 explicit disconnect, so this fixture does not claim a legacy teardown path.
-Additional bench siblings/contention, production candidate parity, rotated
-production layout, BREAK/compound stacks, movement transfer, marker editing,
-and alternate layouts remain deferred.
+
+Production composes only the strict pristine-q0 current-state subset with the
+already-characterized clean-active control: exactly one known same-owner
+face-up current-category Pokémon in active and exactly one such unrotated base
+card in bench, with no evolution, attachments, per-card ability marker, or
+special condition, at the default 1600×900 DPR-1 sidebar/even/unflipped
+layout. The bench card keeps the public-ratio 80.5398×112.5 px box even while
+markerless, so removing the last marker cannot shift it. Damage and ability use
+an explicit `legacyBenchQ0` presentation, 26.8466 px circle and
+80.5398×16.1080 px side-colored tab; equal-z scene order follows source append
+order (`damage`, then `abilityUsed`). Chromium compares the marked q0 React
+geometry and paint to source within the declared tolerances and proves the
+intentional non-interactive marker/card-hit-through boundary. Keyed DOM/Pixi
+tests cover updates and cleanup without resource churn, while real owner,
+opponent, and spectator projections protect distinct stable opaque card
+aliases, the shared canonical public stack ID, and identical normalized
+geometry.
+
+Additional bench siblings/contention, rotated production q1/q2/q3, source DOM
+history, BREAK/compound stacks, movement transfer, marker editing, alternate
+layouts, and Pixi-native paint/hit parity remain deferred.

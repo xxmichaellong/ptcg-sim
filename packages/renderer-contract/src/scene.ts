@@ -17,6 +17,7 @@ import {
   findBoardLayoutRegion,
   LEGACY_BOARD_RESIZER_V1,
   layoutLegacyActiveQ0Markers,
+  layoutLegacyBenchQ0Markers,
   layoutLegacyContainedCard,
   layoutLegacyOrdinaryEvolutionStack,
   layoutLegacyPlaySlotCards,
@@ -725,6 +726,43 @@ const isCharacterizedPristineActiveQ0MarkerStack = (
   );
 };
 
+const isCharacterizedCanonicalBenchQ0Stack = (
+  view: MatchViewState,
+  stack: MatchViewState['stacks'][string],
+  board: MatchViewState['boards'][string],
+  playerId: PlayerId,
+  side: BoardSide,
+  region: BoardLayoutSnapshot['players'][number]['regions'][number],
+  layoutIsCharacterized: boolean
+): boolean => {
+  const base = stack.evolutionCards[0];
+  return (
+    layoutIsCharacterized &&
+    isCharacterizedMixedStackRegion(playerId, side, 'bench', region) &&
+    board.activeStackId !== null &&
+    isCharacterizedMixedStackControl(
+      view.stacks[board.activeStackId],
+      board.activeStackId,
+      playerId,
+      'active'
+    ) &&
+    board.benchStackIds.length === 1 &&
+    board.benchStackIds[0] === stack.id &&
+    stack.boardPlayerId === playerId &&
+    stack.slot === 'bench' &&
+    stack.evolutionCards.length === 1 &&
+    stack.attachmentCards.length === 0 &&
+    stack.rotationQuarterTurns === 0 &&
+    stack.specialCondition === null &&
+    base?.kind === 'known' &&
+    base.ownerId === playerId &&
+    base.category === 'Pokémon' &&
+    base.face === 'up' &&
+    base.orientationQuarterTurns === 0 &&
+    base.abilityUsed === false
+  );
+};
+
 const isCharacterizedOrdinaryEvolutionStack = (
   stack: MatchViewState['stacks'][string],
   board: MatchViewState['boards'][string],
@@ -797,7 +835,12 @@ const addMarkers = (
   markers: MarkerSceneNode[],
   topCard: CardSceneNode,
   stack: MatchViewState['stacks'][string],
-  legacyActiveQ0Layout: LegacyActiveQ0MarkerLayout | null = null
+  characterizedLayout: {
+    readonly presentation: Exclude<MarkerSceneNode['presentation'], 'generic'>;
+    readonly markers: Partial<
+      Record<MarkerSceneNode['kind'], LegacyActiveQ0MarkerLayout['damage']>
+    >;
+  } | null = null
 ): void => {
   const size = Math.max(
     14,
@@ -808,13 +851,15 @@ const addMarkers = (
     value: string,
     offset: number
   ) => {
-    const characterized = legacyActiveQ0Layout?.[kind];
+    const characterized = characterizedLayout?.markers[kind];
     markers.push({
       id: `${stack.id}:${kind}`,
       parentCardId: topCard.id,
       side: topCard.side,
       kind,
-      presentation: characterized ? 'legacyActiveQ0' : 'generic',
+      presentation: characterized
+        ? characterizedLayout.presentation
+        : 'generic',
       value,
       bounds: characterized
         ? copyRect(characterized.bounds)
@@ -860,6 +905,45 @@ const addCardAbilityMarker = (
     zIndex: node.zIndex + 100,
     label: 'abilityUsed: used',
   });
+};
+
+// Legacy appends equal-z markers in this order; renderers consume scene order
+// back-to-front. Presentation and parent keys make the comparison a global
+// total order before applying that per-parent rank, including for prefix-shaped
+// opaque aliases. Generic markers retain their prior ID order.
+const MARKER_PAINT_ORDER: Readonly<Record<MarkerSceneNode['kind'], number>> = {
+  damage: 0,
+  specialCondition: 1,
+  abilityUsed: 2,
+};
+
+const MARKER_PRESENTATION_ORDER: Readonly<
+  Record<MarkerSceneNode['presentation'], number>
+> = {
+  generic: 0,
+  legacyActiveQ0: 1,
+  legacyBenchQ0: 2,
+};
+
+const compareMarkerPaintOrder = (
+  left: MarkerSceneNode,
+  right: MarkerSceneNode
+): number => {
+  const zOrder = left.zIndex - right.zIndex;
+  if (zOrder !== 0) return zOrder;
+
+  const presentationOrder =
+    MARKER_PRESENTATION_ORDER[left.presentation] -
+    MARKER_PRESENTATION_ORDER[right.presentation];
+  if (presentationOrder !== 0) return presentationOrder;
+  if (left.presentation === 'generic') return left.id.localeCompare(right.id);
+
+  const parentOrder = left.parentCardId.localeCompare(right.parentCardId);
+  if (parentOrder !== 0) return parentOrder;
+  return (
+    MARKER_PAINT_ORDER[left.kind] - MARKER_PAINT_ORDER[right.kind] ||
+    left.id.localeCompare(right.id)
+  );
 };
 
 export const createBoardScene = (
@@ -1149,14 +1233,24 @@ export const createBoardScene = (
           slotRegions[stack.slot],
           defaultInPlayLayoutIsCharacterized
         );
-      const legacyActiveQ0MarkerCardLayout = usesLegacyActiveQ0Markers
-        ? {
-            bounds: layoutLegacyPlaySlotCards(slotRegions.active, [
-              CARD_ASPECT_RATIO,
-            ])[0]!,
-            sourceZIndex: 0,
-          }
-        : null;
+      const usesLegacyBenchQ0Layout = isCharacterizedCanonicalBenchQ0Stack(
+        view,
+        stack,
+        board,
+        playerId,
+        side,
+        slotRegions[stack.slot],
+        defaultInPlayLayoutIsCharacterized
+      );
+      const legacyQ0MarkerCardLayout =
+        usesLegacyActiveQ0Markers || usesLegacyBenchQ0Layout
+          ? {
+              bounds: layoutLegacyPlaySlotCards(slotRegions[stack.slot], [
+                CARD_ASPECT_RATIO,
+              ])[0]!,
+              sourceZIndex: 0,
+            }
+          : null;
       const evolutionNodes: CardSceneNode[] = [];
       stack.evolutionCards.forEach((card, index) => {
         const ordinaryCardLayout = ordinaryEvolutionLayout?.cards[index];
@@ -1176,7 +1270,7 @@ export const createBoardScene = (
           twoEnergyBaseLayout ??
           singleTrainerToolBaseLayout ??
           singleEnergyTrainerToolBaseLayout ??
-          (index === 0 ? legacyActiveQ0MarkerCardLayout : null);
+          (index === 0 ? legacyQ0MarkerCardLayout : null);
         const node = makeCardNode(view, card, {
           parentId: stack.id,
           side,
@@ -1251,8 +1345,16 @@ export const createBoardScene = (
           topCard,
           stack,
           usesLegacyActiveQ0Markers
-            ? layoutLegacyActiveQ0Markers(topCard.bounds, side)
-            : null
+            ? {
+                presentation: 'legacyActiveQ0',
+                markers: layoutLegacyActiveQ0Markers(topCard.bounds, side),
+              }
+            : usesLegacyBenchQ0Layout
+              ? {
+                  presentation: 'legacyBenchQ0',
+                  markers: layoutLegacyBenchQ0Markers(topCard.bounds, side),
+                }
+              : null
         );
       }
     }
@@ -1325,10 +1427,7 @@ export const createBoardScene = (
       (left, right) =>
         left.zIndex - right.zIndex || left.id.localeCompare(right.id)
     ),
-    markers: markers.sort(
-      (left, right) =>
-        left.zIndex - right.zIndex || left.id.localeCompare(right.id)
-    ),
+    markers: markers.sort(compareMarkerPaintOrder),
   };
 };
 

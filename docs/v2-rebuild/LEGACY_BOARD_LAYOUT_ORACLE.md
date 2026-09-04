@@ -628,7 +628,7 @@ views update and clean up without card asset churn. Real owner, opponent, and
 spectator sessions retain distinct stable aliases and identical normalized
 geometry without serializing canonical card or definition IDs.
 
-Bench marker production, BREAK and compound evolution/group rotation,
+Rotated bench markers, BREAK and compound evolution/group rotation,
 Energy/Trainer rotation, marker transfer/reconstruction, editing gestures,
 alternate layouts, and Pixi-native paint/hit parity remain deferred.
 
@@ -662,11 +662,24 @@ prevents later invocations. Separately, the source bench `ResizeObserver`
 delivers once after marker setup and refreshes both markers, then delivers on
 empty-wrapper cleanup without refreshing either removed marker. Legacy does
 not expose an observer disconnect path: the capture proves it remains live
-before one harness-only disconnect and makes no source teardown claim. This
-checkpoint remains source-only. Additional bench siblings/flex contention,
-all rotated production paths, BREAK/compound and attachment rotation, marker
-movement/editing, alternate layouts, and candidate/Pixi paint parity are still
-deferred.
+before one harness-only disconnect and makes no source teardown claim.
+
+The full rotation and observer checkpoint remains source-only. Its pristine q0
+phase now feeds a strict production branch only when one clean active control
+and one clean sole-bench base are present in the exact default layout. The
+production card uses the public 63:88 ratio (80.5398×112.5 px), including while
+markerless, with a 26.8466 px damage circle and 80.5398×16.1080 px ability tab.
+It emits the separate `legacyBenchQ0` presentation and deterministic source
+append order (`damage`, then `abilityUsed`); special conditions fail closed to
+generic layout. Chromium compares the marked q0 React geometry/paint and
+non-interactive hit-through boundary to source within the declared tolerances.
+DOM/Pixi lifecycle and real owner/opponent/spectator projection tests cover
+stable IDs, cleanup, no asset churn, equal normalized geometry, distinct stable
+opaque card aliases, and the shared canonical public stack ID.
+
+Additional bench siblings/flex contention, all rotated production paths,
+BREAK/compound and attachment rotation, marker movement/editing, alternate
+layouts, and Pixi-native paint/hit parity are still deferred.
 
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
@@ -676,7 +689,8 @@ shared placement, compact and fullscreen states. The controlled hand/bench/
 attachment-stack fixture remains source-only; the narrower contained-card,
 ordinary-evolution, single-Energy, Trainer-as-Tool, and stable two-Energy
 fixtures feed and compare their strict production geometries. The bench-marker
-rotation fixture is source-only. The two-Energy
+rotation history remains source-only while its strict pristine-q0 phase also
+feeds and compares the production geometry. The two-Energy
 departure phases remain source-only and prove stable convergence to the
 single-Energy source state. The mixed fixtures retain their historical and
 transient phases as source-only diagnostics, while their canonical settled

@@ -1065,20 +1065,6 @@ describe('client/server multiplayer contract', () => {
     expect(marked[0]!.normalizedMarkers).toEqual([
       {
         side: 'local',
-        kind: 'abilityUsed',
-        presentation: 'legacyActiveQ0',
-        value: 'used',
-        bounds: {
-          x: 558.8977272727273,
-          y: 544.5,
-          width: 90.20454545454547,
-          height: 18.040909090909093,
-        },
-        zIndex: 301,
-        label: 'abilityUsed: used',
-      },
-      {
-        side: 'local',
         kind: 'damage',
         presentation: 'legacyActiveQ0',
         value: '40',
@@ -1104,6 +1090,20 @@ describe('client/server multiplayer contract', () => {
         },
         zIndex: 301,
         label: 'specialCondition: P',
+      },
+      {
+        side: 'local',
+        kind: 'abilityUsed',
+        presentation: 'legacyActiveQ0',
+        value: 'used',
+        bounds: {
+          x: 558.8977272727273,
+          y: 544.5,
+          width: 90.20454545454547,
+          height: 18.040909090909093,
+        },
+        zIndex: 301,
+        label: 'abilityUsed: used',
       },
     ]);
     const initialMarkerGeometry = marked[0]!.normalizedMarkers.map(
@@ -1131,7 +1131,7 @@ describe('client/server multiplayer contract', () => {
       }))
     );
     expect(updated[0]!.normalizedMarkers.map((marker) => marker.value)).toEqual(
-      ['used', '70', 'Pa']
+      ['70', 'Pa', 'used']
     );
     expect(
       updated[0]!.normalizedMarkers.map(
@@ -1180,7 +1180,7 @@ describe('client/server multiplayer contract', () => {
       }))
     );
     expect(readded[0]!.normalizedMarkers.map((marker) => marker.value)).toEqual(
-      ['used', '90', 'C']
+      ['90', 'C', 'used']
     );
     expect(
       readded[0]!.normalizedMarkers.map(
@@ -1206,6 +1206,384 @@ describe('client/server multiplayer contract', () => {
       }
     }
     expect(room.store.commandCommits).toHaveLength(14);
+  });
+
+  it('projects strict sole-bench q0 markers privately with stable recipient geometry', async () => {
+    const room = await fixture();
+    const owner = await connectClient({
+      hub: room.hub,
+      name: 'Blue',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+    });
+    const opponent = await connectClient({
+      hub: room.hub,
+      name: 'Red',
+      role: 'player',
+      capability: room.credentials.playerTwoSeatCapability,
+    });
+    const spectatorCapability = room.credentials.spectatorCapability;
+    if (!spectatorCapability) throw new Error('Missing spectator capability');
+    const spectator = await connectClient({
+      hub: room.hub,
+      name: 'Observer',
+      role: 'spectator',
+      capability: spectatorCapability,
+    });
+    const ownerId = owner.session.getSnapshot().playerId;
+    if (!ownerId) throw new Error('Missing bench marker owner identity');
+
+    expect(
+      owner.session.submit({
+        type: 'LoadDeck',
+        entries: Array.from({ length: 14 }, (_, index) => ({
+          definition: {
+            id: `bench-marker-private-definition-${index}`,
+            name: `Public bench marker Pokémon ${index}`,
+            category: 'Pokémon' as const,
+            imageUrl: `/bench-marker-public-art-${index}.png`,
+          },
+          count: 1,
+        })),
+      }).queued
+    ).toBe(true);
+    await owner.factory.flush();
+    expect(owner.session.submit({ type: 'SetupPlayer' }).queued).toBe(true);
+    await owner.factory.flush();
+
+    let ownerView = owner.session.getSnapshot().view;
+    let hand = Object.values(ownerView?.zones ?? {}).find(
+      (zone) => zone.ownerId === ownerId && zone.kind === 'hand'
+    );
+    const activeBase = hand?.cards[0];
+    if (!ownerView || !hand || !activeBase) {
+      throw new Error('Bench marker setup did not publish an active base');
+    }
+    expect(
+      owner.session.submit({
+        type: 'MoveCardToPlay',
+        cardId: activeBase.id,
+        expectedSourceZoneId: hand.id,
+        boardPlayerId: ownerId,
+        slot: 'active',
+      }).queued
+    ).toBe(true);
+    await owner.factory.flush();
+
+    ownerView = owner.session.getSnapshot().view;
+    hand = Object.values(ownerView?.zones ?? {}).find(
+      (zone) => zone.ownerId === ownerId && zone.kind === 'hand'
+    );
+    const benchBase = hand?.cards[0];
+    if (!ownerView || !hand || !benchBase) {
+      throw new Error('Bench marker setup did not publish a bench base');
+    }
+    expect(
+      owner.session.submit({
+        type: 'MoveCardToPlay',
+        cardId: benchBase.id,
+        expectedSourceZoneId: hand.id,
+        boardPlayerId: ownerId,
+        slot: 'bench',
+      }).queued
+    ).toBe(true);
+    await owner.factory.flush();
+
+    const recipientViews = (): readonly [
+      MatchViewState,
+      MatchViewState,
+      MatchViewState,
+    ] => {
+      const views = [
+        owner.session.getSnapshot().view,
+        opponent.session.getSnapshot().view,
+        spectator.session.getSnapshot().view,
+      ] as const;
+      if (views.some((view) => !view)) {
+        throw new Error('Missing bench marker recipient projection');
+      }
+      return views as readonly [MatchViewState, MatchViewState, MatchViewState];
+    };
+    const benchStack = (view: MatchViewState) => {
+      const board = view.boards[ownerId];
+      const activeStack = board?.activeStackId
+        ? view.stacks[board.activeStackId]
+        : undefined;
+      const activeCard = activeStack?.evolutionCards.at(-1);
+      const stackId = board?.benchStackIds[0];
+      const stack = stackId ? view.stacks[stackId] : undefined;
+      const topCard = stack?.evolutionCards.at(-1);
+      if (
+        !board ||
+        board.benchStackIds.length !== 1 ||
+        !activeStack ||
+        activeStack.slot !== 'active' ||
+        activeStack.evolutionCards.length !== 1 ||
+        activeStack.attachmentCards.length !== 0 ||
+        activeStack.rotationQuarterTurns !== 0 ||
+        activeStack.damage !== null ||
+        activeStack.specialCondition !== null ||
+        activeStack.abilityUsed ||
+        !activeCard ||
+        activeCard.kind !== 'known' ||
+        activeCard.category !== 'Pokémon' ||
+        activeCard.face !== 'up' ||
+        activeCard.orientationQuarterTurns !== 0 ||
+        activeCard.abilityUsed ||
+        !stack ||
+        stack.slot !== 'bench' ||
+        stack.evolutionCards.length !== 1 ||
+        stack.attachmentCards.length !== 0 ||
+        stack.rotationQuarterTurns !== 0 ||
+        stack.specialCondition !== null ||
+        !topCard ||
+        topCard.kind !== 'known' ||
+        topCard.category !== 'Pokémon' ||
+        topCard.face !== 'up' ||
+        topCard.orientationQuarterTurns !== 0 ||
+        topCard.abilityUsed
+      ) {
+        throw new Error('Missing strict canonical sole-bench marker stack');
+      }
+      return { stack, topCard };
+    };
+    const sceneFor = (view: MatchViewState) => {
+      const otherPlayerId = view.playerOrder.find(
+        (playerId) => playerId !== ownerId
+      );
+      if (!otherPlayerId || view.playerOrder.length !== 2) {
+        throw new Error(
+          'Bench marker geometry requires exactly two board players'
+        );
+      }
+      return createBoardScene(
+        view,
+        createBoardLayoutSnapshot({
+          geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
+          viewport: { width: 1600, height: 900, devicePixelRatio: 1 },
+          playerIds: [ownerId, otherPlayerId],
+          bottomPlayerId: ownerId,
+          shellMode: 'sidebar',
+          vertical: {
+            lowerFrame: { bottomRatio: 0, heightRatio: 0.5 },
+            upperFrame: { bottomRatio: 0.5, heightRatio: 0.5 },
+            lowerHandle: { bottomRatio: 0.505, heightRatio: 0.025 },
+            upperHandle: { bottomRatio: 0.53, heightRatio: 0.025 },
+            sharedPlacement: 'cssDefault',
+          },
+        })
+      );
+    };
+    const benchSnapshot = (view: MatchViewState) => {
+      const { stack, topCard } = benchStack(view);
+      const scene = sceneFor(view);
+      expect(scene.bottomPlayerId).toBe(ownerId);
+      const parentNode = scene.cards.find((card) => card.id === topCard.id);
+      if (!parentNode || parentNode.parentId !== stack.id) {
+        throw new Error('Missing bench marker parent scene card');
+      }
+      const markers = scene.markers.filter(
+        (marker) => marker.parentCardId === topCard.id
+      );
+      expect(scene.markers.map((marker) => marker.parentCardId)).toEqual(
+        Array.from({ length: markers.length }, () => topCard.id)
+      );
+      return {
+        view,
+        scene,
+        stackAlias: stack.id,
+        parentCardAlias: topCard.id,
+        state: {
+          damage: stack.damage,
+          specialCondition: stack.specialCondition,
+          abilityUsed: stack.abilityUsed,
+        },
+        parent: {
+          bounds: parentNode.bounds,
+          zIndex: parentNode.zIndex,
+          side: parentNode.side,
+          rotationQuarterTurns: parentNode.rotationQuarterTurns,
+        },
+        markers,
+        normalizedMarkers: markers.map((marker) => ({
+          side: marker.side,
+          kind: marker.kind,
+          presentation: marker.presentation,
+          value: marker.value,
+          bounds: marker.bounds,
+          zIndex: marker.zIndex,
+          label: marker.label,
+        })),
+      };
+    };
+    const submitBenchAction = async (
+      action:
+        | { readonly type: 'setDamage'; readonly damage: number | null }
+        | { readonly type: 'setAbilityUsed'; readonly used: boolean }
+    ) => {
+      ownerView = owner.session.getSnapshot().view;
+      if (!ownerView) throw new Error('Missing bench marker command view');
+      const { topCard } = benchStack(ownerView);
+      let submitted = false;
+      expect(
+        submitStackStateAction(ownerView, topCard.id, action, (command) => {
+          submitted = owner.session.submit(command).queued;
+        })
+      ).toMatchObject({ ok: true });
+      expect(submitted).toBe(true);
+      await owner.factory.flush();
+    };
+
+    const serializedSnapshots: string[] = [];
+    const capturePhase = () => {
+      const snapshots = recipientViews().map(benchSnapshot);
+      for (const snapshot of snapshots) {
+        serializedSnapshots.push(JSON.stringify(snapshot.view));
+        serializedSnapshots.push(JSON.stringify(snapshot.scene));
+      }
+      return snapshots;
+    };
+    const expectedParent = {
+      bounds: {
+        x: 552.9185136363637,
+        y: 630,
+        width: 80.53977272727273,
+        height: 112.5,
+      },
+      zIndex: 300,
+      side: 'local',
+      rotationQuarterTurns: 0,
+    } as const;
+    const expectedMarkers = (damage: number | null, abilityUsed: boolean) => [
+      ...(damage === null
+        ? []
+        : [
+            {
+              side: 'local',
+              kind: 'damage',
+              presentation: 'legacyBenchQ0',
+              value: String(damage),
+              bounds: {
+                x: 606.6116954545456,
+                y: 658.125,
+                width: 26.84659090909091,
+                height: 26.84659090909091,
+              },
+              zIndex: 301,
+              label: `damage: ${damage}`,
+            },
+          ]),
+      ...(abilityUsed
+        ? [
+            {
+              side: 'local',
+              kind: 'abilityUsed',
+              presentation: 'legacyBenchQ0',
+              value: 'used',
+              bounds: {
+                x: 552.9185136363637,
+                y: 686.25,
+                width: 80.53977272727273,
+                height: 16.107954545454547,
+              },
+              zIndex: 301,
+              label: 'abilityUsed: used',
+            },
+          ]
+        : []),
+    ];
+    let stableAliases:
+      | readonly {
+          readonly stackAlias: string;
+          readonly parentCardAlias: string;
+        }[]
+      | undefined;
+    const expectPhase = (
+      snapshots: readonly ReturnType<typeof benchSnapshot>[],
+      expected: {
+        readonly damage: number | null;
+        readonly abilityUsed: boolean;
+      }
+    ) => {
+      const aliases = snapshots.map(({ stackAlias, parentCardAlias }) => ({
+        stackAlias,
+        parentCardAlias,
+      }));
+      expect(new Set(aliases.map(({ stackAlias }) => stackAlias)).size).toBe(1);
+      expect(
+        new Set(aliases.map(({ parentCardAlias }) => parentCardAlias)).size
+      ).toBe(3);
+      if (stableAliases) expect(aliases).toEqual(stableAliases);
+      else stableAliases = aliases;
+      expect(snapshots.map((snapshot) => snapshot.parent)).toEqual(
+        Array.from({ length: 3 }, () => expectedParent)
+      );
+      expect(snapshots.map((snapshot) => snapshot.state)).toEqual(
+        Array.from({ length: 3 }, () => ({
+          damage: expected.damage,
+          specialCondition: null,
+          abilityUsed: expected.abilityUsed,
+        }))
+      );
+      const markers = expectedMarkers(expected.damage, expected.abilityUsed);
+      expect(snapshots.map((snapshot) => snapshot.normalizedMarkers)).toEqual(
+        Array.from({ length: 3 }, () => markers)
+      );
+      expect(
+        snapshots.every((snapshot) =>
+          snapshot.markers.every((marker) => marker.kind !== 'specialCondition')
+        )
+      ).toBe(true);
+    };
+
+    const markerless = capturePhase();
+    expect(markerless.map((snapshot) => snapshot.view.viewer.kind)).toEqual([
+      'player',
+      'player',
+      'spectator',
+    ]);
+    expectPhase(markerless, { damage: null, abilityUsed: false });
+
+    await submitBenchAction({ type: 'setDamage', damage: 40 });
+    expectPhase(capturePhase(), { damage: 40, abilityUsed: false });
+
+    await submitBenchAction({ type: 'setDamage', damage: 70 });
+    await submitBenchAction({ type: 'setAbilityUsed', used: true });
+    expectPhase(capturePhase(), { damage: 70, abilityUsed: true });
+
+    await submitBenchAction({ type: 'setDamage', damage: null });
+    expectPhase(capturePhase(), { damage: null, abilityUsed: true });
+
+    await submitBenchAction({ type: 'setAbilityUsed', used: false });
+    expectPhase(capturePhase(), { damage: null, abilityUsed: false });
+
+    await submitBenchAction({ type: 'setDamage', damage: 90 });
+    await submitBenchAction({ type: 'setAbilityUsed', used: true });
+    expectPhase(capturePhase(), { damage: 90, abilityUsed: true });
+
+    const canonicalState = room.store.snapshot?.state;
+    if (!canonicalState)
+      throw new Error('Missing canonical bench marker state');
+    const canonicalBenchStackId =
+      canonicalState.boards[ownerId]?.benchStackIds[0];
+    if (!canonicalBenchStackId) {
+      throw new Error('Missing canonical sole-bench stack');
+    }
+    expect(stableAliases?.map(({ stackAlias }) => stackAlias)).toEqual(
+      Array.from({ length: 3 }, () => canonicalBenchStackId)
+    );
+    expect(recipientViews().map((view) => view.revision)).toEqual([11, 11, 11]);
+    expect(canonicalState.revision).toBe(11);
+    const privateIds = [
+      ...Object.keys(canonicalState.cards),
+      ...Object.keys(canonicalState.definitions),
+    ];
+    for (const serialized of serializedSnapshots) {
+      for (const privateId of privateIds) {
+        expect(serialized).not.toContain(privateId);
+      }
+    }
+    expect(room.store.commandCommits).toHaveLength(11);
   });
 
   it('persists dependent cards across reconnect and restores them through the renderer contract', async () => {

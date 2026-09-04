@@ -207,7 +207,9 @@ const MarkerNode = memo(function MarkerNode({
 }: {
   readonly marker: MarkerSceneNode;
 }) {
-  const legacy = marker.presentation === 'legacyActiveQ0';
+  const legacy =
+    marker.presentation === 'legacyActiveQ0' ||
+    marker.presentation === 'legacyBenchQ0';
   const legacyConditionPalette = (() => {
     switch (marker.value.toUpperCase()) {
       case 'P':

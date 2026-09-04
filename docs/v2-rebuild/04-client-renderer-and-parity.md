@@ -408,7 +408,7 @@ churn, but its native paint/hit output is not claimed. A real owner/opponent/
 spectator test proves identical normalized geometry and stable distinct aliases
 without canonical card or definition ID leakage.
 
-An eleventh, source-only checkpoint isolates damage and ability markers on one
+An eleventh source-history checkpoint isolates damage and ability markers on one
 ordinary sole-bench Pokémon in both frames. The 80.859375×112.5 px q0 card uses
 a 26.953125 px damage circle and an 80.859375×16.171875 px ability tab. q1/q3
 paint at 112.5×80.859375 px, write bench-only `3%` right/`2%` left margins, and
@@ -419,11 +419,26 @@ pristine q0 because those inline values equal the bench CSS default. Visible
 control, keyboard, and movement sources pin canonical bench state to damage and
 ability only. The fixture counts its two window listeners separately from the
 bench initializer's native `ResizeObserver`, proves that observer remains live,
-and disconnects it only as harness cleanup. It does not compare a candidate or
-widen production.
+and disconnects it only as harness cleanup.
+
+The full rotation/observer history remains diagnostic, but production now
+consumes its strict pristine-q0 current-state subset. Eligibility composes the
+already-characterized clean active control with exactly one clean unrotated
+bench base, allows damage and/or ability-used state but never a special
+condition, and requires the default 1600×900 DPR-1 sidebar/even/unflipped
+layout. The public 63:88 ratio yields an 80.5398×112.5 px card, a 26.8466 px
+damage circle, and an 80.5398×16.1080 px side-colored ability tab. The exact
+card geometry also applies while markerless to avoid a last-marker removal
+shift. `legacyBenchQ0` markers retain source append order (`damage` then
+`abilityUsed`), update by stable IDs, and remain deliberately display-only.
+Chromium compares the marked q0 React output to source within the declared
+tolerances and verifies marker hit-through; DOM/Pixi lifecycle tests and real
+owner/opponent/spectator projection cover stable identities, cleanup, resource
+churn, recipient-equivalent geometry, distinct stable opaque card aliases, and
+the shared canonical public stack ID.
 
 Production parity/layout for rotated active or bench q1/q2/q3 and
-source-history-dependent active returned-q0, all bench marker production,
+source-history-dependent active returned-q0, additional bench siblings,
 BREAK, compound evolution/group and attachment rotation, movement/evolution/
 refresh marker transfer, marker text-entry UX, alternate layouts, and
 Pixi-native paint/hit parity remain explicitly deferred.

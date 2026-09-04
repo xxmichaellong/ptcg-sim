@@ -532,7 +532,9 @@ export class PixiBoardRenderer implements BoardRenderer {
 
   private applyMarkerView(view: MarkerView): void {
     const { root, graphic, text, descriptor } = view;
-    const legacy = descriptor.presentation === 'legacyActiveQ0';
+    const legacy =
+      descriptor.presentation === 'legacyActiveQ0' ||
+      descriptor.presentation === 'legacyBenchQ0';
     let fill = descriptor.kind === 'damage' ? 0xe64242 : 0xefefef;
     let fillAlpha = 1;
     let textFill = descriptor.kind === 'damage' ? 0xffffff : 0x111111;

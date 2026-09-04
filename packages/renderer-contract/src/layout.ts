@@ -363,6 +363,11 @@ export interface LegacyActiveQ0MarkerLayout {
   readonly abilityUsed: LegacyActiveQ0MarkerItemLayout;
 }
 
+export type LegacyBenchQ0MarkerLayout = Pick<
+  LegacyActiveQ0MarkerLayout,
+  'damage' | 'abilityUsed'
+>;
+
 const ZERO_EDGES: BoxEdgesPx = { top: 0, right: 0, bottom: 0, left: 0 };
 const FIVE_PIXEL_PADDING: BoxEdgesPx = {
   top: 5,
@@ -1133,6 +1138,35 @@ export const layoutLegacyActiveQ0Markers = (
       sourceZIndex: LEGACY_BOARD_Z_ORDER_V1.marker,
     },
   };
+};
+
+/**
+ * Exact physical marker boxes for the narrowly characterized sole-bench q0
+ * card. Canonical bench state permits damage and ability-used markers but not
+ * special conditions. Relative q0 placement matches the active helper; the
+ * supplied card box already includes the bench flex margin and physical-side
+ * transform.
+ */
+export const layoutLegacyBenchQ0Markers = (
+  cardBounds: Rect,
+  side: BoardSide
+): LegacyBenchQ0MarkerLayout => {
+  if (
+    !Number.isFinite(cardBounds.x) ||
+    !Number.isFinite(cardBounds.y) ||
+    !Number.isFinite(cardBounds.width) ||
+    !Number.isFinite(cardBounds.height) ||
+    cardBounds.width <= 0 ||
+    cardBounds.height <= 0
+  ) {
+    throw new Error('Bench-marker card bounds must be finite and positive');
+  }
+  if (side !== 'local' && side !== 'opponent') {
+    throw new Error('Bench-marker side must be local or opponent');
+  }
+
+  const { damage, abilityUsed } = layoutLegacyActiveQ0Markers(cardBounds, side);
+  return { damage, abilityUsed };
 };
 
 /**
