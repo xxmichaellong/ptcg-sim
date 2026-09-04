@@ -399,6 +399,19 @@ histories remain source compatibility evidence, not canonical state. Lower or
 different initiators, third/later actions, intervening inputs, alternate origins,
 attachments, and candidate parity remain separate.
 
+A mixed top→prior-lower sequence is now pinned separately. After checkpoint
+twenty-two's first top whole-group action, the lower card that caused the
+single-card divergence is always q1/non-BREAK. Its immediate `single=false`
+action advances q1→q2 at logical index 1/2 and DOM ordinal 2/1, advances both
+siblings, and preserves all `PokémonBreak` flags. Active stays compact. Every
+post bench is compact: ordinary q2 and top-BREAK q1/q3 move `+0.015625px`
+frame-local, while the complementary cases do not move. The complete post
+geometry equals the repeated-same-lower checkpoint twenty-six even though the
+first group initiator and full trace differ. This is further evidence that v2
+must not infer initiator history from converged layout or encode it as canonical
+game state. A top→other-lower sequence, later/intervening actions, alternate
+origins, attachments, and candidate parity remain separate source histories.
+
 The immediate refresh branch after the same lower divergence is now captured
 independently. Reconstruction preserves the three image nodes but replaces the
 wrapper, briefly leaving two wrappers until the empty original is removed by

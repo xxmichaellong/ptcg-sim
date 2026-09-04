@@ -330,6 +330,9 @@ test('checked-in legacy lower q0 Alt-R assigns BREAK to the selected attached ev
     []
   );
   expect(capture.lowerNonzeroTopSecondGroupAfterSingleCases).toEqual([]);
+  expect(capture.lowerNonzeroTopThenPriorLowerGroupAfterSingleCases).toEqual(
+    []
+  );
   expect(capture.nonzeroGroupSingleCases).toEqual([]);
   expect(capture.breakRefreshCases).toEqual([]);
   expect(capture.lowerQ0SingleCases.map((entry) => entry.id)).toEqual(

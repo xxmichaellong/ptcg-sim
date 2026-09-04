@@ -574,3 +574,23 @@ observer/no-refresh lifecycle, cleanup, and recursive provenance. Lower/differen
 initiators, third/later actions, intervening operations, alternate origins,
 attachments, candidate parity, and production/domain/protocol/schema/UI/UX paths
 remain excluded.
+
+`legacy-compound-lower-nonzero-top-then-prior-lower-group-after-single-layout.test.ts`
+then pins the mixed sequence in which checkpoint twenty-two's top initiator acts
+first and the prior divergent lower acts second. Forty-eight independent
+ordinary/top-BREAK histories cross original q1/q2/q3, prior middle/base, both
+physical sides, and active/sole-bench placement. The measured lower is always
+q1/non-BREAK at logical index 1/2 and DOM ordinal 2/1; its `single=false` q1→q2
+action advances every card once without changing any BREAK flag.
+
+Every post wrapper is compact. Ordinary bench q2 and top-BREAK bench q1/q3 move
+`+0.015625px` frame-local wrapper/authored x, while the complementary cases do
+not move. Painted rectangles and all ten probes are captured fresh because all
+parities flip. Every pre-state and trace prefix equals checkpoint twenty-two;
+every post turn, flag, margin, geometry, and probe tuple equals checkpoint
+twenty-six despite the different history. The fixture also pins its bounded
+checkpoint-twenty-eight comparison and internal q1/q3 collision, lower action
+indices, physical mappings, stable identifiers, three-observer/no-refresh
+lifecycle, cleanup, and recursive provenance. Top/other-lower second initiators,
+third/later and intervening actions, alternate origins, attachments, candidate
+parity, and production/domain/protocol/schema/UI/UX paths remain excluded.

@@ -779,6 +779,28 @@ initiators, third/later turns, intervening operations, alternate origins,
 attachments, candidate parity, and production normalization remain separate;
 no UI or UX changes.
 
+A twenty-ninth source-only checkpoint keeps checkpoint twenty-two's first top
+whole-group action, then immediately performs the second whole-group action on
+the prior divergent lower card. Forty-eight independently rebuilt ordinary/top-
+BREAK histories cross original q1/q2/q3, prior middle/base divergence, active/
+sole-bench placement, and both physical sides. The measured middle/base is
+logical index 1/2 and DOM ordinal 2/1, is invariantly q1/non-BREAK, and advances
+q1→q2 with `single=false`; both siblings advance and every BREAK flag survives.
+
+Every active and post-action bench margin is compact `1%`/`0%`. Ordinary bench
+q2 therefore moves spread→compact by `+0.015625px` frame-local wrapper/authored
+x while q1/q3 does not move; top-BREAK q1/q3 moves by `+0.015625px` while q2
+does not. Painted rectangles and all ten probes are fresh across the parity
+change. Every pre-state and trace prefix equals checkpoint twenty-two, while
+every post turn/flag/margin/geometry/probe tuple equals checkpoint twenty-six
+despite the different initiator history. Checkpoint twenty-eight supplies a
+bounded alternate-initiator comparison, and q1/q3 collide internally despite
+raw turns differing by 180 degrees. The oracle pins lower logical/DOM selection,
+traces, physical mappings, identity, observer ownership, cleanup, and no
+refresh. Top/other-lower second initiators, later/intervening actions, alternate
+origins, attachments, candidate parity, and production normalization remain
+separate; no UI or UX changes.
+
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during
 characterization is represented explicitly instead of assumed to be duplication.
