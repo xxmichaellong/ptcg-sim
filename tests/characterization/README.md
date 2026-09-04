@@ -616,3 +616,25 @@ stable identifiers, three-observer/no-refresh lifecycle, cleanup, and recursive
 provenance. Top/prior-lower second initiators, third/later or intervening actions,
 alternate origins, attachments, candidate parity, and production/domain/
 protocol/schema/UI/UX paths remain excluded.
+
+`legacy-compound-lower-nonzero-top-third-group-after-single-layout.test.ts`
+then extends checkpoint twenty-eight with an immediate third whole-group action
+by the same top at logical/DOM index zero. Forty-eight independent ordinary/
+top-BREAK histories cross original q1/q2/q3, prior middle/base divergence, both
+physical sides, and active/sole-bench placement. Every pre-state and trace
+prefix equals checkpoint twenty-eight exactly. The measured top and both
+siblings advance once without changing any BREAK flag, including top's
+true→true top-BREAK transition.
+
+Active stays compact. Ordinary bench q1/q3 changes spread→compact by
+`+0.015625px` frame-local wrapper/authored x and q2 changes compact→spread by
+`-0.015625px`; top-BREAK takes the inverse branches and displacements. Painted
+rectangles and all ten probes are captured fresh across every parity flip. Every
+post margin/geometry/probe tuple and BREAK vector equals checkpoint twenty-two,
+while every raw turn is two quarter-turns ahead modulo four. Q1/q3 also collide
+internally despite raw turns differing by 180 degrees. The fixture pins exact
+inheritance, top action indices, traces, physical mappings, stable identifiers,
+source fulfillment, three-observer/no-refresh lifecycle, cleanup, and recursive
+provenance. Fourth/later or lower-initiated measured actions, intervening
+operations, alternate origins, attachments, candidate parity, and production/
+domain/protocol/schema/UI/UX paths remain excluded.

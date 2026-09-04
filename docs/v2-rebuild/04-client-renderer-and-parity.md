@@ -821,6 +821,27 @@ cleanup, and recursive provenance. Top/prior-lower second initiators,
 third/later or intervening actions, candidate parity, and production
 normalization remain separate; no UI or UX changes.
 
+A thirty-first source-only checkpoint extends the same-top branch through an
+immediate third top/index-zero whole-group action. Forty-eight independently
+rebuilt ordinary/top-BREAK histories cross original q1/q2/q3, prior middle/base
+single-card divergence, active/sole-bench placement, and both physical sides.
+Every pre-state and full trace prefix equals checkpoint twenty-eight exactly.
+The measured action advances all three raw turns once and preserves every
+per-card BREAK flag, including top's true→true transition.
+
+Active margins remain compact. Ordinary benches change spread→compact for q1/q3
+(`+0.015625px` frame-local wrapper/authored x) and compact→spread for q2
+(`-0.015625px`); top-BREAK takes the inverse branches and signed displacements.
+Painted rectangles and all ten probes are freshly measured across every parity
+flip. Every post margin/geometry/probe tuple and BREAK vector equals checkpoint
+twenty-two, while every raw turn is exactly two quarter-turns ahead modulo four.
+Q1/q3 also collide internally despite 180-degree raw-turn differences. The
+oracle pins exact predecessor inheritance, top action selection, traces,
+physical mappings, identity, lifecycle, cleanup, source fulfillment, and
+recursive provenance. Fourth/later or lower-initiated actions, intervening
+operations, alternate origins, attachments, candidate parity, and production
+normalization remain separate; no UI or UX changes.
+
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during
 characterization is represented explicitly instead of assumed to be duplication.

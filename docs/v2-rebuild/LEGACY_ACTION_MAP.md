@@ -428,6 +428,21 @@ compatibility evidence, not canonical initiator history. Top/prior-lower actions
 third/later or intervening actions, alternate origins, attachments, and
 candidate parity remain separate source histories.
 
+An immediate third plain-R action by checkpoint twenty-eight's same top/index-
+zero initiator is now pinned independently. Its `single=false` transition
+advances every raw turn once without changing any `PokémonBreak` flag. Active
+stays compact. Ordinary sole-bench q1/q3 changes spread→compact with a
+`+0.015625px` frame-local wrapper/authored x displacement and q2 changes
+compact→spread with `-0.015625px`; top-BREAK takes the inverse branches and
+signed deltas. Every pre-state and trace prefix equals checkpoint twenty-eight.
+Every post margin, geometry, and ten-probe tuple plus every BREAK vector equals
+checkpoint twenty-two, while each raw turn is two quarter-turns ahead modulo
+four. Q1/q3 post geometry also collides internally despite different raw turns.
+This periodic rendering collision is compatibility evidence, not permission to
+discard raw turns or initiator history from legacy import diagnostics. Fourth/
+later top actions, lower-initiated third actions, intervening inputs, alternate
+origins, attachments, and candidate parity remain separate source histories.
+
 The immediate refresh branch after the same lower divergence is now captured
 independently. Reconstruction preserves the three image nodes but replaces the
 wrapper, briefly leaving two wrappers until the empty original is removed by

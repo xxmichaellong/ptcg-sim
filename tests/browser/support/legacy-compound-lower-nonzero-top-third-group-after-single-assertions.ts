@@ -5,10 +5,9 @@ import { fileURLToPath } from 'node:url';
 import { expect, type Page, type TestInfo } from '@playwright/test';
 
 import groupOracle from '../../legacy-fixtures/renderer/compound-group-rotation-v1.json' with { type: 'json' };
-import lowerGroupOracle from '../../legacy-fixtures/renderer/compound-lower-group-rotation-v1.json' with { type: 'json' };
-import predecessorOracle from '../../legacy-fixtures/renderer/compound-lower-nonzero-group-single-v1.json' with { type: 'json' };
-import oracle from '../../legacy-fixtures/renderer/compound-lower-nonzero-same-lower-group-after-single-v1.json' with { type: 'json' };
-import topReferenceOracle from '../../legacy-fixtures/renderer/compound-lower-nonzero-group-rotation-after-single-v1.json' with { type: 'json' };
+import checkpoint22Oracle from '../../legacy-fixtures/renderer/compound-lower-nonzero-group-rotation-after-single-v1.json' with { type: 'json' };
+import predecessorOracle from '../../legacy-fixtures/renderer/compound-lower-nonzero-top-second-group-after-single-v1.json' with { type: 'json' };
+import oracle from '../../legacy-fixtures/renderer/compound-lower-nonzero-top-third-group-after-single-v1.json' with { type: 'json' };
 
 import type {
   CapturedPoint,
@@ -18,7 +17,7 @@ import type {
   LegacySourceCompoundRotationFixture,
 } from './legacy-source-board.js';
 
-export type LowerNonzeroSameLowerGroupAfterSingleComposition =
+export type LowerNonzeroTopThirdGroupAfterSingleComposition =
   'ordinary' | 'break';
 
 const roles = ['top', 'middle', 'base'] as const;
@@ -40,7 +39,7 @@ type Role = (typeof roles)[number];
 type Slot = (typeof slots)[number];
 type Scenario = keyof typeof oracle.expected.scenario;
 type PredecessorScenario = keyof typeof predecessorOracle.expected.scenario;
-type TopReferenceScenario = keyof typeof topReferenceOracle.expected.scenario;
+type Checkpoint22Scenario = keyof typeof checkpoint22Oracle.expected.scenario;
 type RectTuple = readonly [number, number, number, number];
 type PointTuple = readonly [number, number] | null;
 type CardRects = readonly [RectTuple, RectTuple, RectTuple];
@@ -70,195 +69,184 @@ interface ProvenanceManifest {
 }
 
 interface ScenarioDefinition {
-  readonly composition: LowerNonzeroSameLowerGroupAfterSingleComposition;
+  readonly composition: LowerNonzeroTopThirdGroupAfterSingleComposition;
   readonly priorLowerRole: 'middle' | 'base';
   readonly priorLowerIndex: 1 | 2;
   readonly priorLowerDomOrdinal: 1 | 2;
   readonly originalGroupTurns: 1 | 2 | 3;
-  readonly measuredRole: 'middle' | 'base';
-  readonly measuredIndex: 1 | 2;
-  readonly measuredDomOrdinal: 1 | 2;
+  readonly measuredRole: 'top';
+  readonly measuredIndex: 0;
+  readonly measuredDomOrdinal: 0;
   readonly measuredSingle: false;
   readonly predecessor: PredecessorScenario;
 }
 
-interface TopInitiatedReference {
-  readonly dependencyPath: 'tests/legacy-fixtures/renderer/compound-lower-nonzero-group-rotation-after-single-v1.json';
-  readonly scenario: TopReferenceScenario;
-  readonly activeFrameLocalXDelta: 0;
-  readonly benchFrameLocalXDelta: 0 | -0.015625;
-  readonly measuredRole: 'middle' | 'base';
-  readonly measuredIndex: 1 | 2;
-  readonly referenceMeasuredRole: 'top';
-  readonly referenceMeasuredIndex: 0;
-}
-
 const scenarioDefinitions = {
-  ordinaryMiddleGroupAfterMiddleSingleAtGroupQ1: {
+  ordinaryTopThirdGroupAfterMiddleSingleAtGroupQ1: {
     composition: 'ordinary',
     priorLowerRole: 'middle',
     priorLowerIndex: 1,
     priorLowerDomOrdinal: 2,
     originalGroupTurns: 1,
-    measuredRole: 'middle',
-    measuredIndex: 1,
-    measuredDomOrdinal: 2,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
     measuredSingle: false,
-    predecessor: 'ordinaryMiddleSingleAtGroupQ1',
+    predecessor: 'ordinaryTopSecondGroupAfterMiddleSingleAtGroupQ1',
   },
-  ordinaryMiddleGroupAfterMiddleSingleAtGroupQ2: {
+  ordinaryTopThirdGroupAfterMiddleSingleAtGroupQ2: {
     composition: 'ordinary',
     priorLowerRole: 'middle',
     priorLowerIndex: 1,
     priorLowerDomOrdinal: 2,
     originalGroupTurns: 2,
-    measuredRole: 'middle',
-    measuredIndex: 1,
-    measuredDomOrdinal: 2,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
     measuredSingle: false,
-    predecessor: 'ordinaryMiddleSingleAtGroupQ2',
+    predecessor: 'ordinaryTopSecondGroupAfterMiddleSingleAtGroupQ2',
   },
-  ordinaryMiddleGroupAfterMiddleSingleAtGroupQ3: {
+  ordinaryTopThirdGroupAfterMiddleSingleAtGroupQ3: {
     composition: 'ordinary',
     priorLowerRole: 'middle',
     priorLowerIndex: 1,
     priorLowerDomOrdinal: 2,
     originalGroupTurns: 3,
-    measuredRole: 'middle',
-    measuredIndex: 1,
-    measuredDomOrdinal: 2,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
     measuredSingle: false,
-    predecessor: 'ordinaryMiddleSingleAtGroupQ3',
+    predecessor: 'ordinaryTopSecondGroupAfterMiddleSingleAtGroupQ3',
   },
-  ordinaryBaseGroupAfterBaseSingleAtGroupQ1: {
+  ordinaryTopThirdGroupAfterBaseSingleAtGroupQ1: {
     composition: 'ordinary',
     priorLowerRole: 'base',
     priorLowerIndex: 2,
     priorLowerDomOrdinal: 1,
     originalGroupTurns: 1,
-    measuredRole: 'base',
-    measuredIndex: 2,
-    measuredDomOrdinal: 1,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
     measuredSingle: false,
-    predecessor: 'ordinaryBaseSingleAtGroupQ1',
+    predecessor: 'ordinaryTopSecondGroupAfterBaseSingleAtGroupQ1',
   },
-  ordinaryBaseGroupAfterBaseSingleAtGroupQ2: {
+  ordinaryTopThirdGroupAfterBaseSingleAtGroupQ2: {
     composition: 'ordinary',
     priorLowerRole: 'base',
     priorLowerIndex: 2,
     priorLowerDomOrdinal: 1,
     originalGroupTurns: 2,
-    measuredRole: 'base',
-    measuredIndex: 2,
-    measuredDomOrdinal: 1,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
     measuredSingle: false,
-    predecessor: 'ordinaryBaseSingleAtGroupQ2',
+    predecessor: 'ordinaryTopSecondGroupAfterBaseSingleAtGroupQ2',
   },
-  ordinaryBaseGroupAfterBaseSingleAtGroupQ3: {
+  ordinaryTopThirdGroupAfterBaseSingleAtGroupQ3: {
     composition: 'ordinary',
     priorLowerRole: 'base',
     priorLowerIndex: 2,
     priorLowerDomOrdinal: 1,
     originalGroupTurns: 3,
-    measuredRole: 'base',
-    measuredIndex: 2,
-    measuredDomOrdinal: 1,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
     measuredSingle: false,
-    predecessor: 'ordinaryBaseSingleAtGroupQ3',
+    predecessor: 'ordinaryTopSecondGroupAfterBaseSingleAtGroupQ3',
   },
-  breakMiddleGroupAfterMiddleSingleAtGroupQ1: {
+  breakTopThirdGroupAfterMiddleSingleAtGroupQ1: {
     composition: 'break',
     priorLowerRole: 'middle',
     priorLowerIndex: 1,
     priorLowerDomOrdinal: 2,
     originalGroupTurns: 1,
-    measuredRole: 'middle',
-    measuredIndex: 1,
-    measuredDomOrdinal: 2,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
     measuredSingle: false,
-    predecessor: 'breakMiddleSingleAtGroupQ1',
+    predecessor: 'breakTopSecondGroupAfterMiddleSingleAtGroupQ1',
   },
-  breakMiddleGroupAfterMiddleSingleAtGroupQ2: {
+  breakTopThirdGroupAfterMiddleSingleAtGroupQ2: {
     composition: 'break',
     priorLowerRole: 'middle',
     priorLowerIndex: 1,
     priorLowerDomOrdinal: 2,
     originalGroupTurns: 2,
-    measuredRole: 'middle',
-    measuredIndex: 1,
-    measuredDomOrdinal: 2,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
     measuredSingle: false,
-    predecessor: 'breakMiddleSingleAtGroupQ2',
+    predecessor: 'breakTopSecondGroupAfterMiddleSingleAtGroupQ2',
   },
-  breakMiddleGroupAfterMiddleSingleAtGroupQ3: {
+  breakTopThirdGroupAfterMiddleSingleAtGroupQ3: {
     composition: 'break',
     priorLowerRole: 'middle',
     priorLowerIndex: 1,
     priorLowerDomOrdinal: 2,
     originalGroupTurns: 3,
-    measuredRole: 'middle',
-    measuredIndex: 1,
-    measuredDomOrdinal: 2,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
     measuredSingle: false,
-    predecessor: 'breakMiddleSingleAtGroupQ3',
+    predecessor: 'breakTopSecondGroupAfterMiddleSingleAtGroupQ3',
   },
-  breakBaseGroupAfterBaseSingleAtGroupQ1: {
+  breakTopThirdGroupAfterBaseSingleAtGroupQ1: {
     composition: 'break',
     priorLowerRole: 'base',
     priorLowerIndex: 2,
     priorLowerDomOrdinal: 1,
     originalGroupTurns: 1,
-    measuredRole: 'base',
-    measuredIndex: 2,
-    measuredDomOrdinal: 1,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
     measuredSingle: false,
-    predecessor: 'breakBaseSingleAtGroupQ1',
+    predecessor: 'breakTopSecondGroupAfterBaseSingleAtGroupQ1',
   },
-  breakBaseGroupAfterBaseSingleAtGroupQ2: {
+  breakTopThirdGroupAfterBaseSingleAtGroupQ2: {
     composition: 'break',
     priorLowerRole: 'base',
     priorLowerIndex: 2,
     priorLowerDomOrdinal: 1,
     originalGroupTurns: 2,
-    measuredRole: 'base',
-    measuredIndex: 2,
-    measuredDomOrdinal: 1,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
     measuredSingle: false,
-    predecessor: 'breakBaseSingleAtGroupQ2',
+    predecessor: 'breakTopSecondGroupAfterBaseSingleAtGroupQ2',
   },
-  breakBaseGroupAfterBaseSingleAtGroupQ3: {
+  breakTopThirdGroupAfterBaseSingleAtGroupQ3: {
     composition: 'break',
     priorLowerRole: 'base',
     priorLowerIndex: 2,
     priorLowerDomOrdinal: 1,
     originalGroupTurns: 3,
-    measuredRole: 'base',
-    measuredIndex: 2,
-    measuredDomOrdinal: 1,
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
     measuredSingle: false,
-    predecessor: 'breakBaseSingleAtGroupQ3',
+    predecessor: 'breakTopSecondGroupAfterBaseSingleAtGroupQ3',
   },
 } as const satisfies Record<Scenario, ScenarioDefinition>;
 
 const scenarioOrderByComposition = {
   ordinary: [
-    'ordinaryMiddleGroupAfterMiddleSingleAtGroupQ1',
-    'ordinaryMiddleGroupAfterMiddleSingleAtGroupQ2',
-    'ordinaryMiddleGroupAfterMiddleSingleAtGroupQ3',
-    'ordinaryBaseGroupAfterBaseSingleAtGroupQ1',
-    'ordinaryBaseGroupAfterBaseSingleAtGroupQ2',
-    'ordinaryBaseGroupAfterBaseSingleAtGroupQ3',
+    'ordinaryTopThirdGroupAfterMiddleSingleAtGroupQ1',
+    'ordinaryTopThirdGroupAfterMiddleSingleAtGroupQ2',
+    'ordinaryTopThirdGroupAfterMiddleSingleAtGroupQ3',
+    'ordinaryTopThirdGroupAfterBaseSingleAtGroupQ1',
+    'ordinaryTopThirdGroupAfterBaseSingleAtGroupQ2',
+    'ordinaryTopThirdGroupAfterBaseSingleAtGroupQ3',
   ],
   break: [
-    'breakMiddleGroupAfterMiddleSingleAtGroupQ1',
-    'breakMiddleGroupAfterMiddleSingleAtGroupQ2',
-    'breakMiddleGroupAfterMiddleSingleAtGroupQ3',
-    'breakBaseGroupAfterBaseSingleAtGroupQ1',
-    'breakBaseGroupAfterBaseSingleAtGroupQ2',
-    'breakBaseGroupAfterBaseSingleAtGroupQ3',
+    'breakTopThirdGroupAfterMiddleSingleAtGroupQ1',
+    'breakTopThirdGroupAfterMiddleSingleAtGroupQ2',
+    'breakTopThirdGroupAfterMiddleSingleAtGroupQ3',
+    'breakTopThirdGroupAfterBaseSingleAtGroupQ1',
+    'breakTopThirdGroupAfterBaseSingleAtGroupQ2',
+    'breakTopThirdGroupAfterBaseSingleAtGroupQ3',
   ],
 } as const satisfies Record<
-  LowerNonzeroSameLowerGroupAfterSingleComposition,
+  LowerNonzeroTopThirdGroupAfterSingleComposition,
   readonly Scenario[]
 >;
 
@@ -270,11 +258,6 @@ const predecessorScenarios = oracle.expected
   .predecessorScenarioByScenario as unknown as Record<
   Scenario,
   PredecessorScenario
->;
-const topInitiatedReferences = oracle.expected
-  .topInitiatedReferenceByScenario as unknown as Record<
-  Scenario,
-  TopInitiatedReference
 >;
 const phaseEvidence = oracle.expected
   .phaseEvidenceByScenarioAndSlot as unknown as Record<
@@ -326,32 +309,26 @@ const predecessorTraces = predecessorOracle.expected
   readonly string[]
 >;
 
-interface ReferenceMaps {
-  readonly evidence: Record<
-    string,
-    readonly [PhaseEvidenceTuple, PhaseEvidenceTuple]
-  >;
-  readonly turns: Record<
-    string,
-    readonly [Record<Role, number>, Record<Role, number>]
-  >;
-  readonly flags: Record<
-    string,
-    readonly [Record<Role, boolean>, Record<Role, boolean>]
-  >;
-  readonly traces: Record<string, readonly string[]>;
-}
-
-const topReferenceMaps: ReferenceMaps = {
-  evidence: topReferenceOracle.expected
-    .phaseEvidenceByScenarioAndSlot as unknown as ReferenceMaps['evidence'],
-  turns: topReferenceOracle.expected
-    .quarterTurnsByScenario as unknown as ReferenceMaps['turns'],
-  flags: topReferenceOracle.expected
-    .breakFlagsByScenario as unknown as ReferenceMaps['flags'],
-  traces: topReferenceOracle.expected
-    .operationTraceByScenario as unknown as ReferenceMaps['traces'],
-};
+const checkpoint22Evidence = checkpoint22Oracle.expected
+  .phaseEvidenceByScenarioAndSlot as unknown as Record<
+  `${Checkpoint22Scenario}:${Slot}`,
+  readonly [PhaseEvidenceTuple, PhaseEvidenceTuple]
+>;
+const checkpoint22Turns = checkpoint22Oracle.expected
+  .quarterTurnsByScenario as unknown as Record<
+  Checkpoint22Scenario,
+  readonly [Record<Role, number>, Record<Role, number>]
+>;
+const checkpoint22Flags = checkpoint22Oracle.expected
+  .breakFlagsByScenario as unknown as Record<
+  Checkpoint22Scenario,
+  readonly [Record<Role, boolean>, Record<Role, boolean>]
+>;
+const checkpoint22Margins = checkpoint22Oracle.expected
+  .inlineMarginsByScenarioAndSlot as unknown as Record<
+  `${Checkpoint22Scenario}:${Slot}`,
+  readonly [readonly [string, string], readonly [string, string]]
+>;
 
 const repositoryRoot = fileURLToPath(new URL('../../../', import.meta.url));
 
@@ -515,16 +492,18 @@ const expectedTurns = (
 ): readonly [Record<Role, number>, Record<Role, number>] => {
   const preTop =
     definition.composition === 'break'
-      ? (definition.originalGroupTurns + 1) % 4
-      : definition.originalGroupTurns;
+      ? (definition.originalGroupTurns + 3) % 4
+      : (definition.originalGroupTurns + 2) % 4;
   const pre = {
     top: preTop,
     middle:
       definition.priorLowerRole === 'middle'
-        ? 0
-        : definition.originalGroupTurns,
+        ? 2
+        : (definition.originalGroupTurns + 2) % 4,
     base:
-      definition.priorLowerRole === 'base' ? 0 : definition.originalGroupTurns,
+      definition.priorLowerRole === 'base'
+        ? 2
+        : (definition.originalGroupTurns + 2) % 4,
   };
   return [
     pre,
@@ -553,98 +532,36 @@ const expectedMargins = (
 ): readonly [readonly [string, string], readonly [string, string]] => {
   const compact = ['1%', '0%'] as const;
   const spread = ['3%', '2%'] as const;
-  const pre =
-    slot === 'bench' && definition.originalGroupTurns === 2 ? spread : compact;
-  const post = slot === 'bench' ? spread : compact;
-  return [pre, post];
+  if (slot === 'active') return [compact, compact];
+  if (definition.composition === 'ordinary')
+    return definition.originalGroupTurns === 2
+      ? [compact, spread]
+      : [spread, compact];
+  return definition.originalGroupTurns === 2
+    ? [spread, compact]
+    : [compact, spread];
 };
 
 const expectedTransition = (definition: ScenarioDefinition): string => {
-  return `rotate:${definition.priorLowerRole}:index=${definition.priorLowerIndex}:single=false:0->90:break=false->false`;
+  const compositionOffset = definition.composition === 'break' ? 3 : 2;
+  const from = ((definition.originalGroupTurns + compositionOffset) % 4) * 90;
+  const to = (from + 90) % 360;
+  const breakFlag = definition.composition === 'break';
+  return `rotate:top:index=0:single=false:${from}->${to}:break=${breakFlag}->${breakFlag}`;
 };
 
 const expectedCaseIds = (
-  composition: LowerNonzeroSameLowerGroupAfterSingleComposition
+  composition: LowerNonzeroTopThirdGroupAfterSingleComposition
 ): readonly string[] => {
   const ids: string[] = [];
   for (const side of ['local', 'opponent'] as const) {
     for (const scenario of scenarioOrderByComposition[composition]) {
       const definition = scenarioDefinitions[scenario];
-      const suffix = `compound${composition === 'break' ? '-break' : ''}-group-q${definition.originalGroupTurns}-${definition.priorLowerRole}-single-${definition.priorLowerRole}-group`;
+      const suffix = `compound${composition === 'break' ? '-break' : ''}-group-q${definition.originalGroupTurns}-${definition.priorLowerRole}-single-${definition.measuredRole}-group-second-group-third-group`;
       for (const slot of slots) ids.push(`${side}-${slot}-${suffix}`);
     }
   }
   return ids;
-};
-
-const expectedReference = (
-  definition: ScenarioDefinition
-): Pick<TopInitiatedReference, 'dependencyPath' | 'scenario'> => ({
-  dependencyPath:
-    'tests/legacy-fixtures/renderer/compound-lower-nonzero-group-rotation-after-single-v1.json',
-  scenario:
-    `${definition.composition}TopGroupAfter${definition.priorLowerRole === 'middle' ? 'Middle' : 'Base'}SingleAtGroupQ${definition.originalGroupTurns}` as TopReferenceScenario,
-});
-
-const expectedBenchCollisionDelta = (
-  definition: ScenarioDefinition
-): 0 | -0.015625 =>
-  (definition.composition === 'ordinary' &&
-    definition.originalGroupTurns !== 2) ||
-  (definition.composition === 'break' && definition.originalGroupTurns === 2)
-    ? -0.015625
-    : 0;
-
-const referenceMaps = (_reference: TopInitiatedReference): ReferenceMaps =>
-  topReferenceMaps;
-
-const expectCollisionRect = (
-  actual: RectTuple,
-  reference: RectTuple,
-  xDelta: number,
-  label: string
-): void => {
-  expect(actual[0] - reference[0], `${label}.x-delta`).toBeCloseTo(xDelta, 6);
-  expect(actual.slice(1), label).toEqual(reference.slice(1));
-};
-
-const expectCollisionPhase = (
-  actual: PhaseEvidenceTuple,
-  reference: PhaseEvidenceTuple,
-  xDelta: number,
-  label: string
-): void => {
-  expectCollisionRect(actual[1], reference[1], xDelta, `${label}.stack`);
-  for (const [index, role] of roles.entries()) {
-    expectCollisionRect(
-      actual[2][index],
-      reference[2][index],
-      xDelta,
-      `${label}.${role}.painted`
-    );
-    expectCollisionRect(
-      actual[3][index],
-      reference[3][index],
-      xDelta,
-      `${label}.${role}.authored`
-    );
-  }
-  for (const [index, actualPoint] of actual[4].entries()) {
-    const referencePoint = reference[4][index] ?? null;
-    if (actualPoint === null || referencePoint === null) {
-      expect(actualPoint, `${label}.${hitRegionNames[index]}`).toBe(
-        referencePoint
-      );
-      continue;
-    }
-    expect(
-      actualPoint[0] - referencePoint[0],
-      `${label}.${hitRegionNames[index]}.x-delta`
-    ).toBeCloseTo(xDelta, 6);
-    expect(actualPoint[1], `${label}.${hitRegionNames[index]}.y`).toBe(
-      referencePoint[1]
-    );
-  }
 };
 
 const verifyManifest = async (
@@ -696,221 +613,256 @@ const verifyManifest = async (
   }
 };
 
-export const assertLowerNonzeroSameLowerGroupAfterSingleOracleIntegrity =
-  async (
-    composition: LowerNonzeroSameLowerGroupAfterSingleComposition
-  ): Promise<void> => {
-    const visited = new Set<string>();
-    await verifyManifest(
-      oracle as unknown as ProvenanceManifest,
-      'tests/legacy-fixtures/renderer/compound-lower-nonzero-same-lower-group-after-single-v1.json',
-      visited
-    );
-    expect(visited.size).toBeGreaterThan(6);
-    expect(oracle.dependencies.map((entry) => entry.path)).toEqual([
-      'tests/legacy-fixtures/renderer/compound-lower-nonzero-group-single-v1.json',
-      'tests/legacy-fixtures/renderer/compound-lower-nonzero-group-rotation-after-single-v1.json',
-      'tests/legacy-fixtures/renderer/compound-lower-group-rotation-v1.json',
-    ]);
-    expect(oracle.input).toMatchObject({
-      viewport: { width: 1600, height: 900, devicePixelRatio: 1 },
-      asset: {
-        path: '/src/assets/cardback.png',
-        naturalWidth: 736,
-        naturalHeight: 1024,
-      },
-      evolutionOrder: ['base', 'middle', 'top'],
-      setupLowerSingleCount: 1,
-      measuredGroupRotationOrdinal: 1,
-      measuredRoleRelation: 'same-as-prior-lower',
+export const assertLowerNonzeroTopThirdGroupAfterSingleOracleIntegrity = async (
+  composition: LowerNonzeroTopThirdGroupAfterSingleComposition
+): Promise<void> => {
+  const visited = new Set<string>();
+  await verifyManifest(
+    oracle as unknown as ProvenanceManifest,
+    'tests/legacy-fixtures/renderer/compound-lower-nonzero-top-third-group-after-single-v1.json',
+    visited
+  );
+  expect(visited.size).toBeGreaterThan(7);
+  expect(oracle.dependencies.map((entry) => entry.path)).toEqual([
+    'tests/legacy-fixtures/renderer/compound-lower-nonzero-top-second-group-after-single-v1.json',
+    'tests/legacy-fixtures/renderer/compound-lower-nonzero-group-rotation-after-single-v1.json',
+  ]);
+  expect(oracle.sourceFulfillment).toEqual(expectedFulfillment);
+  expect(oracle.input).toMatchObject({
+    viewport: { width: 1600, height: 900, devicePixelRatio: 1 },
+    asset: {
+      path: '/src/assets/cardback.png',
+      naturalWidth: 736,
+      naturalHeight: 1024,
+    },
+    evolutionOrder: ['base', 'middle', 'top'],
+    setupLowerSingleCount: 1,
+    setupTopGroupRotationCount: 2,
+    measuredGroupRotationOrdinal: 3,
+    measuredRoleRelation: 'same-top-as-first-and-second-group-initiator',
+    measuredRole: 'top',
+    measuredIndex: 0,
+    measuredDomOrdinal: 0,
+    measuredSingle: false,
+    phaseSequence: ['pre-third-group-rotation', 'post-third-group-rotation'],
+    scenarioOrderByComposition,
+  });
+
+  const ordinaryIds = expectedCaseIds('ordinary');
+  const breakIds = expectedCaseIds('break');
+  expect(ordinaryIds).toHaveLength(24);
+  expect(breakIds).toHaveLength(24);
+  expect(new Set(ordinaryIds).size).toBe(24);
+  expect(new Set(breakIds).size).toBe(24);
+  expect(ordinaryIds.filter((id) => breakIds.includes(id))).toEqual([]);
+  expect(oracle.input.casesByComposition.ordinary).toEqual(ordinaryIds);
+  expect(oracle.input.casesByComposition.break).toEqual(breakIds);
+  expect(oracle.input.cases).toEqual([...ordinaryIds, ...breakIds]);
+
+  const allScenarios = [
+    ...scenarioOrderByComposition.ordinary,
+    ...scenarioOrderByComposition.break,
+  ];
+  const scenarioKeys = [...allScenarios].sort();
+  for (const actual of [
+    Object.keys(scenarioMetadata),
+    Object.keys(predecessorScenarios),
+    Object.keys(quarterTurns),
+    Object.keys(breakFlags),
+    Object.keys(operationTraces),
+    Object.keys(transitionTraces),
+    Object.keys(oracle.expected.checkpoint22PostReferenceByScenario),
+  ]) {
+    expect(actual.sort()).toEqual(scenarioKeys);
+  }
+  const phaseKeys = allScenarios
+    .flatMap((scenario) => slots.map((slot) => `${scenario}:${slot}`))
+    .sort();
+  expect(Object.keys(phaseEvidence).sort()).toEqual(phaseKeys);
+  expect(Object.keys(margins).sort()).toEqual(phaseKeys);
+  expect(
+    Object.keys(oracle.expected.q1Q3PostCollisionByScenario).sort()
+  ).toEqual(
+    allScenarios
+      .filter(
+        (scenario) => scenarioDefinitions[scenario].originalGroupTurns !== 2
+      )
+      .sort()
+  );
+  expect(oracle.expected.hitRegionOrder).toEqual(hitRegionNames);
+  expect(oracle.expected.phaseEvidenceTupleSchema).toEqual([
+    'phase name',
+    'stack frame-local rect [x,y,width,height]',
+    'painted card rects [top,middle,base], each [x,y,width,height]',
+    'authored/untransformed card rects [top,middle,base], each [x,y,width,height]',
+    'hit points in expected.hitRegionOrder, each [x,y] or null',
+  ]);
+  expect(oracle.expected.frames).toEqual(predecessorOracle.expected.frames);
+  expect(oracle.expected.frameTransforms).toEqual(
+    predecessorOracle.expected.frameTransforms
+  );
+  expect(oracle.expected.topology).toEqual(predecessorOracle.expected.topology);
+  expect(oracle.expected.lifecycle).toEqual(
+    predecessorOracle.expected.lifecycle
+  );
+
+  for (const scenario of allScenarios) {
+    const definition = scenarioDefinitions[scenario];
+    const expectedMetadata = {
+      composition: definition.composition,
+      priorLowerRole: definition.priorLowerRole,
+      priorLowerIndex: definition.priorLowerIndex,
+      priorLowerDomOrdinal: definition.priorLowerDomOrdinal,
+      originalGroupTurns: definition.originalGroupTurns,
+      measuredRole: definition.measuredRole,
+      measuredIndex: definition.measuredIndex,
+      measuredDomOrdinal: definition.measuredDomOrdinal,
+      setupGroupRotationCount: 2,
+      measuredGroupRotationOrdinal: 3,
       measuredSingle: false,
-      phaseSequence: ['pre-group-rotation', 'post-group-rotation'],
-      scenarioOrderByComposition,
-    });
-
-    const ordinaryIds = expectedCaseIds('ordinary');
-    const breakIds = expectedCaseIds('break');
-    expect(ordinaryIds).toHaveLength(24);
-    expect(breakIds).toHaveLength(24);
-    expect(new Set(ordinaryIds).size).toBe(24);
-    expect(new Set(breakIds).size).toBe(24);
-    expect(ordinaryIds.filter((id) => breakIds.includes(id))).toEqual([]);
-    expect(oracle.input.casesByComposition.ordinary).toEqual(ordinaryIds);
-    expect(oracle.input.casesByComposition.break).toEqual(breakIds);
-    expect(oracle.input.cases).toEqual([...ordinaryIds, ...breakIds]);
-
-    const allScenarios = [
-      ...scenarioOrderByComposition.ordinary,
-      ...scenarioOrderByComposition.break,
-    ];
-    const scenarioKeys = [...allScenarios].sort();
-    for (const actual of [
-      Object.keys(scenarioMetadata),
-      Object.keys(predecessorScenarios),
-      Object.keys(topInitiatedReferences),
-      Object.keys(quarterTurns),
-      Object.keys(breakFlags),
-      Object.keys(operationTraces),
-      Object.keys(transitionTraces),
-    ]) {
-      expect(actual.sort()).toEqual(scenarioKeys);
-    }
-    const phaseKeys = allScenarios
-      .flatMap((scenario) => slots.map((slot) => `${scenario}:${slot}`))
-      .sort();
-    expect(Object.keys(phaseEvidence).sort()).toEqual(phaseKeys);
-    expect(Object.keys(margins).sort()).toEqual(phaseKeys);
-    expect(oracle.expected.hitRegionOrder).toEqual(hitRegionNames);
-    expect(oracle.expected.phaseEvidenceTupleSchema).toEqual([
-      'phase name',
-      'stack frame-local rect [x,y,width,height]',
-      'painted card rects [top,middle,base], each [x,y,width,height]',
-      'authored/untransformed card rects [top,middle,base], each [x,y,width,height]',
-      'hit points in expected.hitRegionOrder, each [x,y] or null',
+    };
+    expect(scenarioMetadata[scenario]).toEqual(expectedMetadata);
+    expect(predecessorScenarios[scenario]).toBe(definition.predecessor);
+    const literalTurns = expectedTurns(definition);
+    const literalFlags = expectedFlags(definition);
+    expect(quarterTurns[scenario]).toEqual(literalTurns);
+    expect(breakFlags[scenario]).toEqual(literalFlags);
+    expect(literalFlags[1]).toEqual(literalFlags[0]);
+    expect(literalFlags[1][definition.priorLowerRole]).toBe(false);
+    const transition = expectedTransition(definition);
+    expect(transitionTraces[scenario]).toBe(transition);
+    expect(operationTraces[scenario]).toEqual([
+      ...predecessorTraces[definition.predecessor],
+      transition,
     ]);
-    expect(oracle.expected.frames).toEqual(predecessorOracle.expected.frames);
-    expect(oracle.expected.frameTransforms).toEqual(
-      predecessorOracle.expected.frameTransforms
-    );
-    expect(oracle.expected.topology).toEqual(
-      predecessorOracle.expected.topology
-    );
-    expect(oracle.expected.topology).toEqual(
-      lowerGroupOracle.expected.topology
-    );
-    expect(oracle.expected.lifecycle).toEqual(
-      predecessorOracle.expected.lifecycle
-    );
+    const priorRoleTitle =
+      definition.priorLowerRole === 'middle' ? 'Middle' : 'Base';
 
-    for (const scenario of allScenarios) {
-      const definition = scenarioDefinitions[scenario];
-      const expectedMetadata: Omit<ScenarioDefinition, 'predecessor'> = {
-        composition: definition.composition,
-        priorLowerRole: definition.priorLowerRole,
-        priorLowerIndex: definition.priorLowerIndex,
-        priorLowerDomOrdinal: definition.priorLowerDomOrdinal,
-        originalGroupTurns: definition.originalGroupTurns,
-        measuredRole: definition.priorLowerRole,
-        measuredIndex: definition.priorLowerIndex,
-        measuredDomOrdinal: definition.priorLowerDomOrdinal,
-        measuredSingle: false,
-      };
-      expect(scenarioMetadata[scenario]).toEqual(expectedMetadata);
-      expect(predecessorScenarios[scenario]).toBe(definition.predecessor);
-      const literalTurns = expectedTurns(definition);
-      const literalFlags = expectedFlags(definition);
-      expect(quarterTurns[scenario]).toEqual(literalTurns);
-      expect(breakFlags[scenario]).toEqual(literalFlags);
-      expect(literalFlags[1]).toEqual(literalFlags[0]);
-      expect(literalFlags[1][definition.priorLowerRole]).toBe(false);
-      const transition = expectedTransition(definition);
-      expect(transitionTraces[scenario]).toBe(transition);
-      expect(operationTraces[scenario]).toEqual([
-        ...predecessorTraces[definition.predecessor],
-        transition,
+    for (const slot of slots) {
+      const key = `${scenario}:${slot}` as const;
+      const predecessorKey = `${definition.predecessor}:${slot}` as const;
+      const evidence = phaseEvidence[key];
+      expect(evidence.map((phase) => phase[0])).toEqual([
+        'pre-third-group-rotation',
+        'post-third-group-rotation',
       ]);
-      const roleTitle =
-        definition.priorLowerRole === 'middle' ? 'Middle' : 'Base';
-      const lowerIngressScenario =
-        `${definition.composition}GroupFrom${roleTitle}` as keyof typeof lowerGroupOracle.expected.scenario;
+      expect(evidence.every((phase) => phase[4].length === 10)).toBe(true);
+      expect(evidence[0].slice(1)).toEqual(
+        predecessorEvidence[predecessorKey][1].slice(1)
+      );
+      expect(literalTurns[0]).toEqual(
+        predecessorTurns[definition.predecessor][1]
+      );
+      expect(literalFlags[0]).toEqual(
+        predecessorFlags[definition.predecessor][1]
+      );
+      expect(margins[key][0]).toEqual(predecessorMargins[predecessorKey][1]);
+      expect(margins[key]).toEqual(expectedMargins(definition, slot));
+    }
+
+    const checkpoint22Scenario =
+      `${definition.composition}TopGroupAfter${priorRoleTitle}SingleAtGroupQ${definition.originalGroupTurns}` as Checkpoint22Scenario;
+    expect(
+      oracle.expected.checkpoint22PostReferenceByScenario[scenario]
+    ).toEqual({
+      dependencyPath:
+        'tests/legacy-fixtures/renderer/compound-lower-nonzero-group-rotation-after-single-v1.json',
+      scenario: checkpoint22Scenario,
+      phase: 'post-group-rotation',
+      activeFrameLocalXDelta: 0,
+      benchFrameLocalXDelta: 0,
+      turnDeltaModulo4: { top: 2, middle: 2, base: 2 },
+      breakFlagsEqual: true,
+      inlineMarginsEqual: true,
+    });
+    expect(breakFlags[scenario][1]).toEqual(
+      checkpoint22Flags[checkpoint22Scenario][1]
+    );
+    for (const slot of slots) {
       expect(
-        lowerGroupOracle.expected.scenario[lowerIngressScenario]
-      ).toMatchObject({
-        selectedRole: definition.priorLowerRole,
-        selectedIndex: definition.priorLowerIndex,
-        selectedDomOrdinal: definition.priorLowerDomOrdinal,
-      });
+        phaseEvidence[`${scenario}:${slot}`][1].slice(1),
+        `${scenario}:${slot}.checkpoint-22-post-collision`
+      ).toEqual(
+        checkpoint22Evidence[`${checkpoint22Scenario}:${slot}`][1].slice(1)
+      );
+      expect(margins[`${scenario}:${slot}`][1]).toEqual(
+        checkpoint22Margins[`${checkpoint22Scenario}:${slot}`][1]
+      );
+    }
+    for (const role of roles) {
+      expect(quarterTurns[scenario][1][role]).toBe(
+        (checkpoint22Turns[checkpoint22Scenario][1][role] + 2) % 4
+      );
+    }
+    expect(quarterTurns[scenario][1]).not.toEqual(
+      checkpoint22Turns[checkpoint22Scenario][1]
+    );
 
-      const expectedReferenceMetadata = expectedReference(definition);
-      const collision = topInitiatedReferences[scenario];
-      expect(collision).toEqual({
-        ...expectedReferenceMetadata,
-        activeFrameLocalXDelta: 0,
-        benchFrameLocalXDelta: expectedBenchCollisionDelta(definition),
-        measuredRole: definition.priorLowerRole,
-        measuredIndex: definition.priorLowerIndex,
-        referenceMeasuredRole: 'top',
-        referenceMeasuredIndex: 0,
-      });
-      const reference = referenceMaps(collision);
-      const referenceTurns = required(
-        reference.turns[collision.scenario],
-        `${scenario}.reference-turns`
-      );
-      const referenceFlags = required(
-        reference.flags[collision.scenario],
-        `${scenario}.reference-flags`
-      );
-      const referenceTrace = required(
-        reference.traces[collision.scenario],
-        `${scenario}.reference-trace`
-      );
-      expect(literalTurns[1]).toEqual(referenceTurns[1]);
-      expect(literalFlags[1]).toEqual(referenceFlags[1]);
-      expect(operationTraces[scenario]).not.toEqual(referenceTrace);
-
+    if (definition.originalGroupTurns !== 2) {
+      const collisionScenario =
+        `${definition.composition}TopThirdGroupAfter${priorRoleTitle}SingleAtGroupQ${definition.originalGroupTurns === 1 ? 3 : 1}` as Scenario;
+      expect(
+        oracle.expected.q1Q3PostCollisionByScenario[
+          scenario as keyof typeof oracle.expected.q1Q3PostCollisionByScenario
+        ]
+      ).toBe(collisionScenario);
+      expect(literalTurns[1]).not.toEqual(quarterTurns[collisionScenario][1]);
       for (const slot of slots) {
-        const key = `${scenario}:${slot}` as const;
-        const predecessorKey = `${definition.predecessor}:${slot}` as const;
-        const evidence = phaseEvidence[key];
-        expect(evidence.map((phase) => phase[0])).toEqual([
-          'pre-group-rotation',
-          'post-group-rotation',
-        ]);
-        expect(evidence.every((phase) => phase[4].length === 10)).toBe(true);
-        expect(evidence[0].slice(1)).toEqual(
-          predecessorEvidence[predecessorKey][1].slice(1)
-        );
-        expect(literalTurns[0]).toEqual(
-          predecessorTurns[definition.predecessor][1]
-        );
-        expect(literalFlags[0]).toEqual(
-          predecessorFlags[definition.predecessor][1]
-        );
-        expect(margins[key][0]).toEqual(predecessorMargins[predecessorKey][1]);
-        expect(margins[key]).toEqual(expectedMargins(definition, slot));
-
-        const referenceEvidence = required(
-          reference.evidence[`${collision.scenario}:${slot}`],
-          `${scenario}:${slot}.reference-evidence`
-        );
-        expectCollisionPhase(
-          evidence[1],
-          referenceEvidence[1],
-          slot === 'active'
-            ? collision.activeFrameLocalXDelta
-            : collision.benchFrameLocalXDelta,
-          `${scenario}:${slot}.post-collision`
+        expect(phaseEvidence[`${scenario}:${slot}`][1].slice(1)).toEqual(
+          phaseEvidence[`${collisionScenario}:${slot}`][1].slice(1)
         );
       }
     }
 
-    expect(oracle.expected.lifecycle).toEqual({
-      wrapperCountsByPhase: [1, 1],
-      refreshEvidence: null,
-      observerPairsCreated: 3,
-      minimumResizeCallbacksBeforeCardRemoval: 4,
-      resizeCallbacksAddedAfterCardRemoval: 1,
-      transcribedSourceDisconnectCalls: 0,
-      harnessDisconnectCallsPerObserverKind: 3,
-    });
-    expect(oracle.scope.included.join(' ')).toContain(
-      'preserving all per-card BREAK flags'
-    );
-    expect(oracle.scope.included.join(' ')).toContain('-0.015625 px');
-    expect(oracle.scope.excluded.join(' ')).toContain(
-      'repeated measured group'
-    );
-    expect(oracle.scope.excluded.join(' ')).toContain('candidate parity');
-    expect(oracle.input.casesByComposition[composition]).toEqual(
-      expectedCaseIds(composition)
-    );
-  };
+    const benchEvidence = phaseEvidence[`${scenario}:bench`];
+    const expectedDelta =
+      definition.composition === 'ordinary'
+        ? definition.originalGroupTurns === 2
+          ? -0.015625
+          : 0.015625
+        : definition.originalGroupTurns === 2
+          ? 0.015625
+          : -0.015625;
+    expect(benchEvidence[1][1][0] - benchEvidence[0][1][0]).toBe(expectedDelta);
+    for (const roleIndex of [0, 1, 2]) {
+      expect(
+        benchEvidence[1][3][roleIndex][0] - benchEvidence[0][3][roleIndex][0]
+      ).toBe(expectedDelta);
+    }
+  }
 
-export const assertLowerNonzeroSameLowerGroupAfterSingleLiveCapture = async (
+  expect(oracle.expected.lifecycle).toEqual({
+    wrapperCountsByPhase: [1, 1],
+    refreshEvidence: null,
+    observerPairsCreated: 3,
+    minimumResizeCallbacksBeforeCardRemoval: 4,
+    resizeCallbacksAddedAfterCardRemoval: 1,
+    transcribedSourceDisconnectCalls: 0,
+    harnessDisconnectCallsPerObserverKind: 3,
+  });
+  expect(oracle.scope.included.join(' ')).toContain(
+    'preserving all per-card BREAK flags'
+  );
+  expect(oracle.scope.included.join(' ')).toContain(
+    'immediate measured third top/index-zero'
+  );
+  expect(oracle.scope.included.join(' ')).toContain('signed 0.015625 px');
+  expect(oracle.scope.excluded.join(' ')).toContain(
+    'lower card performing the measured third'
+  );
+  expect(oracle.scope.excluded.join(' ')).toContain(
+    'fourth or later top group rotation'
+  );
+  expect(oracle.scope.excluded.join(' ')).toContain('candidate parity');
+  expect(oracle.input.casesByComposition[composition]).toEqual(
+    expectedCaseIds(composition)
+  );
+};
+
+export const assertLowerNonzeroTopThirdGroupAfterSingleLiveCapture = async (
   page: Page,
   testInfo: TestInfo,
-  composition: LowerNonzeroSameLowerGroupAfterSingleComposition,
+  composition: LowerNonzeroTopThirdGroupAfterSingleComposition,
   captureFixture: Capture
 ): Promise<void> => {
   await page.setViewportSize(oracle.input.viewport);
@@ -934,7 +886,7 @@ export const assertLowerNonzeroSameLowerGroupAfterSingleLiveCapture = async (
 
   const capture = await captureFixture(page);
   await testInfo.attach(
-    `legacy-source-compound-lower-nonzero-same-lower-group-after-single-${composition}.json`,
+    `legacy-source-compound-lower-nonzero-top-third-group-after-single-${composition}.json`,
     {
       body: Buffer.from(JSON.stringify(capture, null, 2)),
       contentType: 'application/json',
@@ -954,22 +906,22 @@ export const assertLowerNonzeroSameLowerGroupAfterSingleLiveCapture = async (
   expect(capture.nonzeroGroupSingleCases).toEqual([]);
   expect(capture.breakRefreshCases).toEqual([]);
   expect(capture.lowerNonzeroGroupRefreshAfterSingleCases).toEqual([]);
+  expect(capture.lowerNonzeroSameLowerGroupAfterSingleCases).toEqual([]);
   expect(capture.lowerNonzeroDifferentLowerGroupAfterSingleCases).toEqual([]);
   expect(capture.lowerNonzeroSameLowerSecondGroupAfterSingleCases).toEqual([]);
   expect(capture.lowerNonzeroDifferentLowerSecondGroupAfterSingleCases).toEqual(
     []
   );
   expect(capture.lowerNonzeroTopSecondGroupAfterSingleCases).toEqual([]);
+  expect(
+    capture.lowerNonzeroTopThirdGroupAfterSingleCases.map((entry) => entry.id)
+  ).toEqual(expectedCaseIds(composition));
   expect(capture.lowerNonzeroTopThenPriorLowerGroupAfterSingleCases).toEqual(
     []
   );
   expect(capture.lowerNonzeroTopThenOtherLowerGroupAfterSingleCases).toEqual(
     []
   );
-  expect(capture.lowerNonzeroTopThirdGroupAfterSingleCases).toEqual([]);
-  expect(
-    capture.lowerNonzeroSameLowerGroupAfterSingleCases.map((entry) => entry.id)
-  ).toEqual(expectedCaseIds(composition));
 
   for (const side of ['local', 'opponent'] as const) {
     expectRect(
@@ -993,7 +945,7 @@ export const assertLowerNonzeroSameLowerGroupAfterSingleLiveCapture = async (
     ).toBeLessThanOrEqual(oracle.tolerances.rotationDegrees);
   }
 
-  for (const entry of capture.lowerNonzeroSameLowerGroupAfterSingleCases) {
+  for (const entry of capture.lowerNonzeroTopThirdGroupAfterSingleCases) {
     const scenario = entry.scenario as Scenario;
     const definition = required(
       scenarioDefinitions[scenario],
@@ -1010,8 +962,8 @@ export const assertLowerNonzeroSameLowerGroupAfterSingleLiveCapture = async (
     const actualCallTrace = normalizedTrace(entry, entry.callTrace);
 
     expect(entry.phases.map((phase) => phase.name)).toEqual([
-      'pre-group-rotation',
-      'post-group-rotation',
+      'pre-third-group-rotation',
+      'post-third-group-rotation',
     ]);
     expect(actualCallTrace.slice(0, -1)).toEqual(
       predecessorTraces[definition.predecessor]
@@ -1055,17 +1007,17 @@ export const assertLowerNonzeroSameLowerGroupAfterSingleLiveCapture = async (
 
     const prePhase = required(
       entry.phases[0],
-      `${entry.id}.pre-group-rotation`
+      `${entry.id}.pre-third-group-rotation`
     );
     const postPhase = required(
       entry.phases[1],
-      `${entry.id}.post-group-rotation`
+      `${entry.id}.post-third-group-rotation`
     );
     expect(prePhase.action).toBeNull();
     expect(postPhase.action).toEqual({
-      selectedCardId: `${entry.id}-${definition.priorLowerRole}`,
-      selectedRole: definition.priorLowerRole,
-      indexBefore: definition.priorLowerIndex,
+      selectedCardId: `${entry.id}-${definition.measuredRole}`,
+      selectedRole: definition.measuredRole,
+      indexBefore: definition.measuredIndex,
       single: false,
     });
 
@@ -1087,7 +1039,7 @@ export const assertLowerNonzeroSameLowerGroupAfterSingleLiveCapture = async (
       postPhase.cards.find((card) => card.role === definition.priorLowerRole),
       `${entry.id}.divergent-post`
     );
-    expect(divergentPost.localRotationDegrees).toBe(90);
+    expect(divergentPost.localRotationDegrees).toBe(270);
     expect(divergentPost.pokemonBreak).toBe(false);
 
     for (const [phaseIndex, phase] of entry.phases.entries()) {
@@ -1303,20 +1255,17 @@ export const assertLowerNonzeroSameLowerGroupAfterSingleLiveCapture = async (
         );
       }
 
-      const selectedPaintedName = `${definition.priorLowerRole}PaintedOnly` as
-        'middlePaintedOnly' | 'basePaintedOnly';
-      const selectedAuthoredName =
-        `${definition.priorLowerRole}AuthoredOnly` as
-          'middleAuthoredOnly' | 'baseAuthoredOnly';
+      const selectedPaintedName = 'topPaintedOnly';
+      const selectedAuthoredName = 'topAuthoredOnly';
       const selectedCard = required(
-        phase.cards.find((card) => card.role === definition.priorLowerRole),
-        `${entry.id}.${phase.name}.prior-lower-card`
+        phase.cards.find((card) => card.role === definition.measuredRole),
+        `${entry.id}.${phase.name}.measured-top-card`
       );
       const selectedPaintedPoint =
         phase.stack.hitPointsFrameLocal[selectedPaintedName];
       const selectedAuthoredPoint =
         phase.stack.hitPointsFrameLocal[selectedAuthoredName];
-      if (phaseIndex === 0) {
+      if (expectedPhaseTurns[definition.measuredRole] % 2 === 0) {
         expect(selectedPaintedPoint).toBeNull();
         expect(selectedAuthoredPoint).toBeNull();
         expect(phase.stack.hitOrder[selectedPaintedName]).toBeNull();
@@ -1324,11 +1273,11 @@ export const assertLowerNonzeroSameLowerGroupAfterSingleLiveCapture = async (
       } else {
         const paintedPoint = required(
           selectedPaintedPoint,
-          `${entry.id}.${phase.name}.prior-lower-painted-only`
+          `${entry.id}.${phase.name}.measured-top-painted-only`
         );
         const authoredPoint = required(
           selectedAuthoredPoint,
-          `${entry.id}.${phase.name}.prior-lower-authored-only`
+          `${entry.id}.${phase.name}.measured-top-authored-only`
         );
         expect(pointInside(paintedPoint, selectedCard.frameLocalBounds)).toBe(
           true
@@ -1351,72 +1300,37 @@ export const assertLowerNonzeroSameLowerGroupAfterSingleLiveCapture = async (
       }
     }
 
-    const collision = topInitiatedReferences[scenario];
-    const reference = referenceMaps(collision);
-    const referenceTurns = required(
-      reference.turns[collision.scenario],
-      `${entry.id}.reference-turns`
-    );
-    const referenceFlags = required(
-      reference.flags[collision.scenario],
-      `${entry.id}.reference-flags`
-    );
-    const referenceTrace = required(
-      reference.traces[collision.scenario],
-      `${entry.id}.reference-trace`
-    );
-    expect(literalTurns[1]).toEqual(referenceTurns[1]);
     expect(divergentPost.pokemonBreak).toBe(false);
-    expect(literalFlags[1]).toEqual(referenceFlags[1]);
-    expect(actualCallTrace).not.toEqual(referenceTrace);
-    const referencePost = required(
-      reference.evidence[`${collision.scenario}:${entry.slot}`]?.[1],
-      `${entry.id}.reference-post`
-    );
     const expectedDelta =
-      entry.slot === 'active' ? 0 : collision.benchFrameLocalXDelta;
-    const referenceStack = rectFromTuple(referencePost[1]);
+      entry.slot === 'bench'
+        ? definition.composition === 'ordinary'
+          ? definition.originalGroupTurns === 2
+            ? -0.015625
+            : 0.015625
+          : definition.originalGroupTurns === 2
+            ? 0.015625
+            : -0.015625
+        : 0;
     expectStructured(
-      postPhase.stack.frameLocalBounds.x - referenceStack.x,
+      postPhase.stack.frameLocalBounds.x - prePhase.stack.frameLocalBounds.x,
       expectedDelta,
-      `${entry.id}.post-top-reference.stack.x-delta`
+      `${entry.id}.post-pre.stack.x-delta`
     );
-    for (const key of ['y', 'width', 'height'] as const) {
-      expectStructured(
-        postPhase.stack.frameLocalBounds[key],
-        referenceStack[key],
-        `${entry.id}.post-top-reference.stack.${key}`
+    for (const role of roles) {
+      const preCard = required(
+        prePhase.cards.find((candidate) => candidate.role === role),
+        `${entry.id}.pre-delta.${role}`
       );
-    }
-    for (const [index, role] of roles.entries()) {
-      const card = required(
+      const postCard = required(
         postPhase.cards.find((candidate) => candidate.role === role),
-        `${entry.id}.post-collision.${role}`
-      );
-      const referencePainted = rectFromTuple(referencePost[2][index]);
-      const referenceAuthored = rectFromTuple(referencePost[3][index]);
-      expectStructured(
-        card.frameLocalBounds.x - referencePainted.x,
-        expectedDelta,
-        `${entry.id}.post-top-reference.${role}.painted-x-delta`
+        `${entry.id}.post-delta.${role}`
       );
       expectStructured(
-        card.untransformedFrameLocalBounds.x - referenceAuthored.x,
+        postCard.untransformedFrameLocalBounds.x -
+          preCard.untransformedFrameLocalBounds.x,
         expectedDelta,
-        `${entry.id}.post-top-reference.${role}.authored-x-delta`
+        `${entry.id}.post-pre.${role}.authored-x-delta`
       );
-      for (const key of ['y', 'width', 'height'] as const) {
-        expectStructured(
-          card.frameLocalBounds[key],
-          referencePainted[key],
-          `${entry.id}.post-top-reference.${role}.painted.${key}`
-        );
-        expectStructured(
-          card.untransformedFrameLocalBounds[key],
-          referenceAuthored[key],
-          `${entry.id}.post-top-reference.${role}.authored.${key}`
-        );
-      }
     }
   }
 
