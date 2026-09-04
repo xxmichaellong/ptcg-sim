@@ -1061,7 +1061,12 @@ export interface LegacySourceEvolutionReflowFixture {
   readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
 }
 
-export type LegacyCompoundRotationScenario = 'ordinaryGroup' | 'breakGroup';
+export type LegacyCompoundRotationScenario =
+  | 'ordinaryGroup'
+  | 'breakGroup'
+  | 'breakRefreshFreshQ0'
+  | 'breakRefreshReturnedQ0'
+  | 'breakRefreshQ2';
 
 export type LegacyCompoundRotationPhaseName =
   | 'pristine-q0'
@@ -1076,7 +1081,10 @@ export type LegacyCompoundRotationPhaseName =
   | 'break-group-q2'
   | 'break-group-q3'
   | 'break-group-q0-return'
-  | 'break-off-q0';
+  | 'break-off-q0'
+  | 'pre-refresh'
+  | 'synchronous-post-refresh'
+  | 'settled-post-refresh';
 
 export interface LegacyCompoundRotationAction {
   readonly selectedCardId: string;
@@ -1181,6 +1189,7 @@ export interface LegacyCompoundRotationCase {
   readonly scenario: LegacyCompoundRotationScenario;
   readonly phases: readonly LegacyCompoundRotationPhase[];
   readonly callTrace: readonly string[];
+  readonly transitionTrace: readonly string[];
   readonly refresh: {
     readonly synchronousWrapperCount: number;
     readonly oldWrapperConnectedImmediately: boolean;
@@ -1209,6 +1218,7 @@ export interface LegacySourceCompoundRotationFixture {
   >;
   readonly ordinaryGroupCases: readonly LegacyCompoundRotationCase[];
   readonly breakGroupCases: readonly LegacyCompoundRotationCase[];
+  readonly breakRefreshCases: readonly LegacyCompoundRotationCase[];
   readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
 }
 
@@ -5835,13 +5845,15 @@ type RawCompoundRotationCase = Omit<
 
 /**
  * Replays the digest-pinned, marker-free legacy evolution, whole-stack
- * rotation, BREAK toggle, and q1 refresh paths. The ordinary and BREAK
- * histories are constructed independently so neither oracle inherits inline
- * margins or wrapper identity from the other. Application/network modules stay
- * inert; source DOM mutations are narrowly transcribed below.
+ * rotation, BREAK toggle, and selected q0/q1/q2 refresh paths. Every ordinary,
+ * BREAK, and BREAK-refresh history is constructed independently so no oracle
+ * inherits inline margins or wrapper identity from another. Application and
+ * network modules stay inert; source DOM mutations are narrowly transcribed
+ * below.
  */
 export const captureLegacySourceCompoundRotationFixture = async (
-  page: Page
+  page: Page,
+  mode: 'canonical' | 'breakRefreshQ0Q2' = 'canonical'
 ): Promise<LegacySourceCompoundRotationFixture> => {
   const loaded = await loadLegacySourceBoard(page);
   const rawCases: {
@@ -5910,14 +5922,23 @@ export const captureLegacySourceCompoundRotationFixture = async (
             }
             zone.replaceChildren();
 
-            const prefix = `${input.side}-${slot}-${
-              scenario === 'ordinaryGroup' ? 'compound-group' : 'compound-break'
-            }`;
+            const scenarioSuffix: Record<
+              LegacyCompoundRotationScenario,
+              string
+            > = {
+              ordinaryGroup: 'compound-group',
+              breakGroup: 'compound-break',
+              breakRefreshFreshQ0: 'compound-break-refresh-fresh-q0',
+              breakRefreshReturnedQ0: 'compound-break-refresh-returned-q0',
+              breakRefreshQ2: 'compound-break-refresh-q2',
+            };
+            const prefix = `${input.side}-${slot}-${scenarioSuffix[scenario]}`;
             const mutationObservers: MutationObserver[] = [];
             const resizeObservers: ResizeObserver[] = [];
             let resizeCallbacks = 0;
             const transcribedSourceDisconnectCalls = 0;
             const callTrace: string[] = [];
+            let transitionTrace: string[] = [];
 
             const resetImageOutput = (
               image: CompoundImage,
@@ -6462,7 +6483,9 @@ export const captureLegacySourceCompoundRotationFixture = async (
             await waitForStableLayout();
 
             const phases: RawCompoundRotationPhase[] = [
-              snapshot('pristine-q0', null, logical, container),
+              ...(scenario === 'ordinaryGroup' || scenario === 'breakGroup'
+                ? [snapshot('pristine-q0', null, logical, container)]
+                : []),
             ];
             let refreshEvidence: LegacyCompoundRotationCase['refresh'] = null;
 
@@ -6512,7 +6535,7 @@ export const captureLegacySourceCompoundRotationFixture = async (
                   container
                 )
               );
-            } else {
+            } else if (scenario === 'breakGroup') {
               phases.push(
                 snapshot(
                   'break-on-q0',
@@ -6582,6 +6605,44 @@ export const captureLegacySourceCompoundRotationFixture = async (
                   container
                 )
               );
+            } else {
+              rotateCard(top, true, logical, container);
+              const setupGroupTurns =
+                scenario === 'breakRefreshQ2'
+                  ? 2
+                  : scenario === 'breakRefreshReturnedQ0'
+                    ? 4
+                    : 0;
+              for (let count = 0; count < setupGroupTurns; count += 1) {
+                rotateCard(top, false, logical, container);
+              }
+              phases.push(snapshot('pre-refresh', null, logical, container));
+              const transitionTraceStart = callTrace.length;
+              const oldContainer = container;
+              const cardNodesBeforeRefresh = logical.map((card) => card.image);
+              const refreshed = refresh(logical, oldContainer);
+              container = refreshed.container;
+              phases.push(
+                snapshot('synchronous-post-refresh', null, logical, container)
+              );
+              await waitForStableLayout();
+              refreshEvidence = {
+                synchronousWrapperCount: refreshed.synchronousWrapperCount,
+                oldWrapperConnectedImmediately:
+                  refreshed.oldWrapperConnectedImmediately,
+                stableWrapperCount: zone.querySelectorAll(
+                  ':scope > [data-legacy-compound-rotation-stack-id]'
+                ).length,
+                oldWrapperConnectedAfterSettle: oldContainer.isConnected,
+                wrapperIdentityChanged: oldContainer !== container,
+                cardNodeIdentityPreserved: cardNodesBeforeRefresh.every(
+                  (node, index) => logical[index]?.image === node
+                ),
+              };
+              transitionTrace = callTrace.slice(transitionTraceStart);
+              phases.push(
+                snapshot('settled-post-refresh', null, logical, container)
+              );
             }
 
             const resizeCallbacksBeforeCardRemoval = resizeCallbacks;
@@ -6622,6 +6683,7 @@ export const captureLegacySourceCompoundRotationFixture = async (
               scenario,
               phases,
               callTrace,
+              transitionTrace,
               refresh: refreshEvidence,
               observers,
               cleanup,
@@ -6629,14 +6691,22 @@ export const captureLegacySourceCompoundRotationFixture = async (
           };
 
           const cases: RawCompoundRotationCase[] = [];
-          for (const scenario of ['ordinaryGroup', 'breakGroup'] as const) {
+          const scenarios: readonly LegacyCompoundRotationScenario[] =
+            input.mode === 'canonical'
+              ? ['ordinaryGroup', 'breakGroup']
+              : [
+                  'breakRefreshFreshQ0',
+                  'breakRefreshReturnedQ0',
+                  'breakRefreshQ2',
+                ];
+          for (const scenario of scenarios) {
             for (const slot of ['active', 'bench'] as const) {
               cases.push(await runScenario(slot, scenario));
             }
           }
           return cases;
         },
-        { side }
+        { side, mode }
       );
     rawCases.push(...captured.map((value) => ({ side, value })));
   }
@@ -6719,9 +6789,20 @@ export const captureLegacySourceCompoundRotationFixture = async (
       (entry) => entry.scenario === 'ordinaryGroup'
     ),
     breakGroupCases: cases.filter((entry) => entry.scenario === 'breakGroup'),
+    breakRefreshCases: cases.filter(
+      (entry) =>
+        entry.scenario === 'breakRefreshFreshQ0' ||
+        entry.scenario === 'breakRefreshReturnedQ0' ||
+        entry.scenario === 'breakRefreshQ2'
+    ),
     sourceFulfillment: sourceFulfillment(loaded),
   };
 };
+
+export const captureLegacySourceCompoundBreakRefreshFixture = (
+  page: Page
+): Promise<LegacySourceCompoundRotationFixture> =>
+  captureLegacySourceCompoundRotationFixture(page, 'breakRefreshQ0Q2');
 
 type RawMixedStackMovementCard = Omit<
   LegacyMixedStackMovementCard,

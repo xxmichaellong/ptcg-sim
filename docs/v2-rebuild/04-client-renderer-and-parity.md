@@ -457,10 +457,25 @@ Production remains intentionally unchanged: the same projected active
 `stack q0 + top q1 + lower q0` tuple has different legacy margins when fresh or
 returned through four group turns, and current state does not identify BREAK
 provenance. q1 reconstruction is captured separately and preserves its pre-
-refresh geometry. Nonzero-group Alt-R, uncaptured BREAK refresh at group q0/q2,
-q3 BREAK refresh, lower-card initiators, and attachment timing expose further
-legacy ambiguity. A later domain decision must normalize or represent those
-semantics before a strict React/Pixi layout predicate can be sound.
+refresh geometry.
+
+A thirteenth source-only checkpoint now closes the previously uncaptured BREAK
+refresh q0/q2 matrix without widening production eligibility. Twelve fresh
+local/opponent active/sole-bench cases independently refresh fresh q0, returned
+q0 after four group turns, and q2 after two turns. Each records the pre-refresh,
+synchronous two-wrapper, and settled phases. q0 replays zero group turns while
+q2 replays exactly two; wrapper replacement preserves card nodes and the final
+card turns. The active fresh, returned, and reconstructed q0 states retain the
+same `[top q1, lower q0]` turns but three distinct inline-margin histories and
+two exact anchor clusters; every anchor delta remains within the declared 2 px
+parity tolerance. The bench histories converge, and q2 settles back to its
+pre-refresh geometry.
+
+Those results confirm that no exact legacy normalization can be derived from
+the current projected tuple alone. Nonzero-group Alt-R, q3 BREAK refresh,
+lower-card initiators, and attachment timing expose further legacy ambiguity.
+A later domain decision must normalize or represent those semantics before a
+strict React/Pixi layout predicate can be sound.
 
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during

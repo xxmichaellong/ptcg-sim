@@ -227,11 +227,14 @@ yet prove. Legacy single rotation reads the selected card's effective inline
 angle, while v2 toggles the projected per-card field independently of stack
 rotation. Legacy wrapper margins also depend on selected-card and refresh
 history: fresh and returned active BREAK-q0 states can expose identical stack/
-card turns but different geometry. BREAK refresh at group q0/q2 is not yet
-captured, q3 derives a negative replay count, and attachment timing creates
-further transform collisions. These are explicit compatibility hazards; no
-production BREAK layout predicate is authorized until command ingress and
-history are normalized or represented.
+card turns but different geometry. The q0/q2 refresh oracle now additionally
+proves zero/two replay turns and three distinct active q0 inline-margin
+histories for the same final card turns. Exact x values form two anchor clusters
+whose largest difference is 1.9375 px, still within the 2 px parity tolerance.
+q3 still derives a negative replay count, and attachment timing creates further
+transform collisions. These are explicit compatibility hazards; no production
+BREAK layout predicate is authorized until command ingress and history are
+normalized or represented.
 
 Ability markers likewise have explicit ownership. The top evolution card maps
 to the stack-level marker; attachment, discard, and stadium cards use

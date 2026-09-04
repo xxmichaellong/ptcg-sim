@@ -230,10 +230,9 @@ the `[top, middle, base]` local quarter-turn composition
 `[1,0,0]→[2,1,1]→[3,2,2]→[0,3,3]→[1,0,0]`, and the final toggle back to all
 q0. The first and returned active BREAK-q0 states expose the same projected
 rotation tuple but different wrapper geometry, while the bench states are
-physically equivalent. BREAK refresh at group q0/q2 is uncaptured, while q3 can
-derive negative replay turns; Alt-R at nonzero group rotation and attachment
-rotation are also history-dependent. They are named exclusions, not candidate
-behavior.
+physically equivalent. BREAK refresh at group q0/q2 and q3, Alt-R at nonzero
+group rotation, and attachment rotation are excluded from that checkpoint.
+They are named hazards, not candidate behavior.
 
 No new compound/BREAK-specific gate or presentation enters production in this
 checkpoint. Rotated and BREAK-on states remain generic; qualifying all-q0 states
@@ -241,3 +240,24 @@ retain the existing ordinary-evolution path. Current projection lacks the legacy
 BREAK flag, selected-rotation initiator, inline-margin history, and enough
 ingress provenance to choose exact legacy geometry until those semantics are
 canonicalized or explicitly represented.
+
+`legacy-compound-break-refresh-layout.test.ts` closes only the q0/q2 portion of
+that evidence gap. Its dependent oracle inherits and live-verifies the complete
+compound BREAK source manifest, then directly pins the refresh and rotation
+entry sources. Twelve independently constructed local/opponent active/sole-
+bench histories cover fresh BREAK q0, returned q0 after four group turns, and
+q2 after two turns. The browser companion measures pre-refresh, synchronous
+two-wrapper, and settled phases, preserving exact operation/replay traces, card
+node identity, observer delivery and harness-only observer cleanup, margins,
+authored/painted/physical rectangles, topology, and six native hit regions.
+
+Fresh and returned q0 replay zero turns and retain `[q1,q0,q0]`; q2 replays two
+and retains `[q3,q2,q2]`. Active fresh, returned, and reconstructed q0 expose
+three inline-margin histories, although returned and reconstructed anchors are
+only 0.015625 px apart. Fresh-to-returned and fresh-to-reconstructed are
+1.921875/1.9375 px apart respectively, so all anchors remain within the 2 px
+gate. Bench histories converge, and active q2 settles to its pre-refresh
+geometry. This remains source-only: q3 negative-count collapse, nonzero-group
+Alt-R, lower-card initiators, attachments, movement/evolution/removal, and
+candidate parity remain excluded. No production geometry or domain state
+changes.

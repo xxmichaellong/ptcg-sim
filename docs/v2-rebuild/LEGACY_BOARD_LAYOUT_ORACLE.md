@@ -706,10 +706,41 @@ returned active BREAK-q0 phases have identical card/stack quarter turns but
 different inline-margin geometry; moving a BREAK stack can create a third
 history. The current recipient projection does not carry legacy BREAK or DOM
 history, and a non-BREAK q1 card can reach an otherwise identical v2 tuple.
-Alt-R while group rotation is nonzero, uncaptured BREAK refresh at group q0/q2,
-q3 BREAK refresh (whose legacy replay count becomes negative), lower-card
-initiators, and attachment timing remain explicitly excluded hazards. No new
-renderer presentation or production gate is claimed by this source-only slice.
+Alt-R while group rotation is nonzero, BREAK refresh at group q0/q2 or q3,
+lower-card initiators, and attachment timing are explicitly excluded from that
+twelfth checkpoint. No new renderer presentation or production gate is claimed
+by the source-only slice.
+
+`tests/browser/legacy-compound-break-refresh-geometry.spec.ts` adds a
+thirteenth source checkpoint backed by
+`tests/legacy-fixtures/renderer/compound-break-refresh-q0-q2-v1.json`. It
+isolates fresh BREAK q0, returned BREAK q0 after four group turns, and BREAK q2
+after two turns across local/opponent active and sole-bench slots. All twelve
+histories begin from a newly constructed three-Pokémon chain. Their
+pre-refresh, synchronous post-refresh, and two-animation-frame settled phases
+pin the exact operation/replay trace, two-to-one wrapper lifecycle, preserved
+card-node identity, observer delivery and harness cleanup, margins, authored
+and painted rectangles, topology, and six native hit regions.
+
+Fresh and returned q0 both make `refreshBoard` derive zero replay turns and
+retain card turns `[top q1, middle q0, base q0]`; q2 derives and replays exactly
+two turns, retaining `[q3, q2, q2]`. The active slot nevertheless exposes three
+q0 layouts for the same final card turns: fresh q0 starts with empty inline
+margins, returned q0 starts at `1%`/`0%`, and either refresh settles at
+`3%`/`2%`. Their exact x values form a fresh and a returned/reconstructed
+cluster: fresh-to-returned differs by 1.921875 px, fresh-to-reconstructed by
+1.9375 px, and returned-to-reconstructed by 0.015625 px. All are within the 2 px
+parity tolerance. All bench histories already use `3%`/`2%` and converge after
+replacement, while active q2 returns to its pre-refresh `1%`/`0%` geometry. The
+synchronous phase deliberately measures the new wrapper while the old empty
+sibling still participates in flex layout.
+
+This closes q0/q2 evidence only. q3 refresh retains a separate negative-count
+collapse hazard; nonzero-group Alt-R, lower-card group/single initiators,
+attachments, movement/evolution/removal, and candidate parity remain excluded.
+Because v2 does not project BREAK identity or DOM/wrapper history, no strict
+production layout is enabled and no legacy pixel provenance is added to game
+state.
 
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
@@ -719,8 +750,8 @@ shared placement, compact and fullscreen states. The controlled hand/bench/
 attachment-stack fixture remains source-only; the narrower contained-card,
 ordinary-evolution, single-Energy, Trainer-as-Tool, and stable two-Energy
 fixtures feed and compare their strict production geometries. The compound
-group/BREAK histories remain wholly source-only. The bench-marker
-rotation history remains source-only while its strict pristine-q0 phase also
+group/BREAK and BREAK q0/q2 refresh histories remain wholly source-only. The
+bench-marker rotation history remains source-only while its strict pristine-q0 phase also
 feeds and compares the production geometry. The two-Energy
 departure phases remain source-only and prove stable convergence to the
 single-Energy source state. The mixed fixtures retain their historical and

@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 761 v2 tests across 113 files. A separate suite
-passes 26 Playwright checks across 13 Chromium 151 browser files:
+The repository-wide gate passes 764 v2 tests across 114 files. A separate suite
+passes 28 Playwright checks across 14 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -500,10 +500,23 @@ passes 26 Playwright checks across 13 Chromium 151 browser files:
     and harness-only observer-handle cleanup. No candidate mounts: equal
     projected BREAK tuples retain different active margin histories, so the
     generic renderer remains the safe production path. Nonzero-group Alt-R,
-    uncaptured BREAK q0/q2 refresh, q3 BREAK refresh, lower-card initiators, and
-    attachment timing are explicit semantic hazards deferred to a normalization
-    decision.
-19. The selected DOM implementation completes 100 mount → clear/reset → destroy
+    BREAK q0/q2/q3 refresh, lower-card initiators, and attachment timing are
+    explicit semantic hazards excluded from this checkpoint.
+19. A thirteenth source-only checkpoint isolates fresh BREAK q0, returned BREAK
+    q0 after four group turns, and BREAK q2 after two group turns in twelve
+    independent local/opponent active/sole-bench cases. It pins pre-refresh,
+    synchronous two-wrapper, and settled geometry; exact operation and replay
+    traces; retained card-node identity; observer delivery and harness-only
+    observer cleanup; margins; authored, painted, and physical rectangles;
+    topology; and six native hit regions.
+    q0 refresh replays zero turns while q2 replays two and returns to its prior
+    geometry. The same active `[q1,q0,q0]` card turns expose three distinct
+    inline-margin histories and two exact anchor clusters, though the largest
+    anchor difference is 1.9375 px and remains inside the 2 px parity tolerance.
+    Bench histories converge. q3 negative-count collapse, nonzero-group Alt-R,
+    lower-card initiators, attachments, and candidate parity remain excluded;
+    production and domain state are unchanged.
+20. The selected DOM implementation completes 100 mount → clear/reset → destroy
     cycles on one warmed route-owned host with the exact status sequence,
     complete scene IDs at mount, zero rendered scene children/IDs after clear and
     destroy, zero non-DOM diagnostic resources, and post-GC Chromium
@@ -540,17 +553,19 @@ marker/rotation history and pristine-q0 React comparison in
 sole-bench marker history plus strict pristine-q0 React comparison in
 `tests/browser/legacy-bench-marker-rotation-geometry.spec.ts`, plus the split
 source-only compound group/BREAK histories in
-`tests/browser/legacy-compound-rotation-geometry.spec.ts`. The mixed-order suite
-validates a checked-in numeric oracle without mounting a candidate; the mixed-
-stack movement suite mounts React only for its two canonical settled movement
-phases; and the marker/rotation suite compares React only to pristine source q0
-while production canonicalizes any eligible current q0 and keeps q1/q2/q3 and
-history-specific layout source-only. The bench-marker suite likewise keeps its
-q1/q2/q3 and observer history source-only, while comparing the separately
-composed clean-active-plus-sole-bench q0 production shape.
-The compound suite mounts no candidate because it proves that projected
-rotation fields alone cannot recover selected-action and wrapper-margin
-history.
+`tests/browser/legacy-compound-rotation-geometry.spec.ts`, and the q0/q2 BREAK
+refresh histories in
+`tests/browser/legacy-compound-break-refresh-geometry.spec.ts`. The mixed-order
+suite validates a checked-in numeric oracle without mounting a candidate; the
+mixed-stack movement suite mounts React only for its two canonical settled
+movement phases; and the marker/rotation suite compares React only to pristine
+source q0 while production canonicalizes any eligible current q0 and keeps
+q1/q2/q3 and history-specific layout source-only. The bench-marker suite
+likewise keeps its q1/q2/q3 and observer history source-only, while comparing
+the separately composed clean-active-plus-sole-bench q0 production shape. The
+compound and BREAK-refresh suites mount no candidate because they prove that
+projected rotation fields alone cannot recover selected-action and wrapper-
+margin history.
 
 Standard
 Linux CI can install Playwright's pinned Chromium build. This NixOS workspace
