@@ -290,7 +290,7 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 705 v2 tests across 107 files. A separate suite
+The repository-wide gate passes 715 v2 tests across 108 files. A separate suite
 passes 17 Playwright checks across nine Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
@@ -424,11 +424,16 @@ passes 17 Playwright checks across nine Chromium 151 browser files:
     detach/reattach and 14.8333 px Energy drift, survivor compaction, stale
     departure margin, synchronous ghost wrapper, removed-card reset, and real
     observer cleanup. Departure settles to the existing single-Energy or
-    single-Tool source geometry. This evidence does not add a renderer-contract
-    helper, scene path, candidate comparison, or mixed production claim;
-    reverse/unsupported histories, staging/work-area restoration or deck-top
-    swaps, whole-stack swaps, broader overflow, and Pixi parity remain generic,
-    noncanonical, or deferred.
+    single-Tool source geometry. Six additional staged histories cover reversed
+    two-card and interleaved four-card `leaveAll` plus a multi-card staged
+    deck-top swap on both sides. `leaveAll` normalizes the supported lists by
+    replaying them through the incoming-Energy rule. The legacy swap removes and
+    appends while v2 deliberately keeps exact-position atomic replacement, so
+    their later within-Trainer orders are recorded as an explicit exception.
+    This evidence does not add a renderer-contract helper, scene path, candidate
+    comparison, or mixed production claim; unsupported membership, base-only
+    restore, category-history geometry, whole-stack swaps, broader overflow,
+    and Pixi parity remain generic or deferred.
 15. The selected DOM implementation completes 100 mount → clear/reset → destroy
     cycles on one warmed route-owned host with the exact status sequence,
     complete scene IDs at mount, zero rendered scene children/IDs after clear and

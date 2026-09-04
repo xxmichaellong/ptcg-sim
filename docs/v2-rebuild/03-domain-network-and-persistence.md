@@ -124,8 +124,9 @@ Trainer while preserving arrival order within each category. If an incoming
 attachment is not Energy, or any member is missing or has another current
 category, the operation fails closed to append order rather than guessing at
 legacy relationships. The rule reads `currentCategory`; changing the category
-of a card already inside a play stack is therefore rejected at the internal
-command boundary and requires a semantic departure first.
+of a card already inside a play stack or its attachment-resolution work area is
+therefore rejected at the internal command boundary and requires a semantic
+departure first.
 
 Newly decided ordinary attachments persist `CardAttachedToPlayStack` with
 literal `attachmentOrderVersion: 1`, the exact expected source and prior
@@ -137,13 +138,26 @@ retain their append-only reducer behavior. This compatibility can reproduce an
 older reverse `[Trainer, Energy]` list; a later Trainer still appends, while a
 later incoming Energy normalizes the fully supported list under version 1.
 
-Version 1 is intentionally limited to ordinary ingress onto an existing live
-stack. Staged restoration and attachment-resolution work areas preserve their
-recorded order; work-area/deck-top swaps preserve the replaced logical position;
-and whole-stack active/bench moves are not implicit normalization boundaries.
-Reversed historical lists and lists containing Pokémon-, Unknown-, or missing-
-category members remain noncanonical inputs for later explicit conversion
-policy rather than being silently repaired.
+Newly decided `RestoreStagedStack` commands persist the distinct
+`StagedStackRestoredToPlayStack` event. It carries literal
+`attachmentOrderVersion: 1`, the exact staged evolution and attachment inputs,
+and the resolved attachment output. The reducer recomputes the full-list v1
+stable partition from current categories before it creates the live stack and
+rejects a forged version, result, placement, work-area snapshot, or board
+layout. This is the source-backed `leaveAll` boundary: staged Trainer-then-
+Energy re-enters live play as Energy-then-Trainer while preserving arrival order
+within both supported categories.
+
+Previously stored `StagedStackRestored` events keep their literal recorded-order
+reducer behavior, just as old direct-attachment events do. Departure into a work
+area, staged removals, staged deck-top replacement, bulk resolution, whole-stack
+movement, snapshots, and undo preserve their exact arrays and are not implicit
+normalization boundaries. A fully supported list is normalized only when the
+current restore command creates a new live stack; lists containing Pokémon or
+Unknown members retain their input order, while a genuinely missing staged card
+is rejected. Reverse and unsupported lists therefore remain valid historical
+states outside the v1 normalized transition subset rather than violating a
+global invariant.
 
 ## Required invariants
 

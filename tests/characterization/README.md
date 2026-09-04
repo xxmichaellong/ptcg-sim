@@ -108,7 +108,18 @@ single-Tool or single-Energy source state, first with the superseded wrapper
 still connected and then with one wrapper after the real MutationObserver
 settles. Removed cards are reset in an independent sink, and every case records
 zero fixture cards/wrappers after cleanup. These phases are diagnostic only.
-There is no production mixed renderer claim: mixed stacks, reversed or
-unsupported attachment lists, staged restoration, work-area resolution,
-deck-top or active/bench swaps, broader overflow/flex competition, and Pixi
-parity remain generic, noncanonical, or deferred as applicable.
+The same fixture now includes reversed two-card and interleaved four-card
+`leaveAll` restoration plus a multi-card staged deck-top swap on both sides.
+It proves that source restoration replays the flat staged list through the
+incoming-Energy rule, while source swap removes and appends the old deck top.
+Every deck checkpoint pins logical and direct-child DOM order plus reset card
+state, while a phase/card trace makes every source-transcribed reset invocation
+observable; restored checkpoints pin one live wrapper, no superseded wrapper,
+and a hidden staging popup before and after two animation frames.
+The v2 exact-position swap is an explicit semantic exception; its versioned
+restore still applies the supported category partition to the resulting list.
+There is no production mixed renderer claim: mixed stacks, unsupported
+attachment membership, base-only restoration, work-area bulk resolution,
+active/bench swaps, broader overflow/flex competition, and Pixi parity remain
+generic or deferred. Reverse arrays remain valid historical state outside the
+v1 normalized transition subset.

@@ -510,7 +510,8 @@ describe('canonical Energy and Trainer attachment ordering', () => {
     ).toMatchObject({
       accepted: false,
       code: 'precondition_failed',
-      message: 'Play-stack category changes require semantic departure',
+      message:
+        'Play-stack and staged category changes require semantic departure',
     });
   });
 });

@@ -31,12 +31,14 @@ const requiredProvenancePaths = [
   'client/src/setup/sizing/resizer.js',
   'client/src/actions/general/change-type.js',
   'client/src/initialization/document-event-listeners/card-context-menu/active-bench-buttons.js',
+  'client/src/actions/zones/general.js',
+  'client/src/actions/zones/deck-actions.js',
 ] as const;
 
 describe('source-pinned legacy mixed Energy and Trainer-as-Tool oracle', () => {
   it('digest-pins and claims every source in the characterization call graph', () => {
     expect(oracle.schemaVersion).toBe(1);
-    expect(oracle.recordingMethod).toContain('eight isolated');
+    expect(oracle.recordingMethod).toContain('fourteen isolated');
     expect(oracle.recordingMethod).toContain(
       'application/network modules remain inert'
     );
@@ -71,7 +73,7 @@ describe('source-pinned legacy mixed Energy and Trainer-as-Tool oracle', () => {
     }
   });
 
-  it('pins the eight-case boundary and source-only exclusions', () => {
+  it('pins the fourteen-case boundary and source-only exclusions', () => {
     expect(oracle.input).toEqual({
       viewport: { width: 1600, height: 900, devicePixelRatio: 1 },
       asset: {
@@ -93,6 +95,16 @@ describe('source-pinned legacy mixed Energy and Trainer-as-Tool oracle', () => {
         'opponent-remove-energy-departure',
         'opponent-remove-trainer-tool-departure',
       ],
+      restoreCases: [
+        'local-restore-reverse-two-case',
+        'local-restore-interleaved-four-case',
+        'opponent-restore-reverse-two-case',
+        'opponent-restore-interleaved-four-case',
+      ],
+      stagedSwapCases: [
+        'local-staged-multi-swap-case',
+        'opponent-staged-multi-swap-case',
+      ],
     });
     expect(oracle.scope.included).toEqual(
       expect.arrayContaining([
@@ -103,13 +115,16 @@ describe('source-pinned legacy mixed Energy and Trainer-as-Tool oracle', () => {
         expect.stringContaining('independent Energy-departure'),
         expect.stringContaining('recursive Tool reattachment'),
         expect.stringContaining('painted and authored boxes'),
+        expect.stringContaining('leaveAll reconstruction'),
+        expect.stringContaining('staged switchWithDeckTop'),
       ])
     );
     expect(oracle.scope.excluded).toEqual(
       expect.arrayContaining([
         expect.stringContaining('candidate DOM or Pixi parity'),
-        expect.stringContaining('more than two attachments'),
-        expect.stringContaining('base departure'),
+        expect.stringContaining('more than four attachments'),
+        expect.stringContaining('live base or evolution departure'),
+        expect.stringContaining('base-only leaveAll'),
         expect.stringContaining('bench'),
         expect.stringContaining('BREAK'),
         expect.stringContaining('ghost wrapper'),
@@ -213,6 +228,137 @@ describe('source-pinned legacy mixed Energy and Trainer-as-Tool oracle', () => {
       energyToolOverlap: ['energy', 'trainerTool'],
       toolPaintedOnly: ['trainerTool'],
     });
+  });
+
+  it('pins category-driven leaveAll normalization and staged deck-top append order', () => {
+    const staged = oracle.expected.stagedReplay;
+    expect(staged.resetCardState).toEqual({
+      localRotationDegrees: 0,
+      zIndex: 0,
+      inlineLeftPx: 0,
+      inlineBottomPx: 0,
+      attached: false,
+      target: 'off',
+      relativeId: null,
+      energyLayer: 0,
+      layer: 0,
+      sourcePath: '/src/assets/cardback.png',
+    });
+    expect(staged.restoredContainerState).toEqual({
+      observedWrapperCount: 1,
+      supersededWrapperConnected: false,
+      stagingDisplay: 'none',
+    });
+    expect(staged.restoreCaseIds).toEqual(oracle.input.restoreCases);
+    expect(staged.stagedSwapCaseIds).toEqual(oracle.input.stagedSwapCases);
+
+    const reverse = staged.restoreTemplates.reverseTwo;
+    expect(reverse.stagedRoles).toEqual([
+      'base',
+      'trainerToolOne',
+      'energyOne',
+    ]);
+    expect(reverse.stack.logicalRoles).toEqual([
+      'base',
+      'energyOne',
+      'trainerToolOne',
+    ]);
+    expect(reverse.stack.domRoles).toEqual([
+      'base',
+      'trainerToolOne',
+      'energyOne',
+    ]);
+    expect(
+      reverse.cards.map(({ role, left, z, rotation }) => ({
+        role,
+        left,
+        z,
+        rotation,
+      }))
+    ).toEqual([
+      { role: 'base', left: 0, z: 0, rotation: 0 },
+      { role: 'energyOne', left: 14.8333, z: -1, rotation: 0 },
+      { role: 'trainerToolOne', left: 30.3333, z: -2, rotation: 90 },
+    ]);
+    expect(reverse.attachTrace.map((entry) => entry.role)).toEqual([
+      'trainerTool',
+      'energy',
+      'trainerTool',
+    ]);
+
+    const interleaved = staged.restoreTemplates.interleavedFour;
+    expect(interleaved.stagedRoles).toEqual([
+      'base',
+      'trainerToolOne',
+      'energyOne',
+      'trainerToolTwo',
+      'energyTwo',
+    ]);
+    expect(interleaved.stack.logicalRoles).toEqual([
+      'base',
+      'energyOne',
+      'energyTwo',
+      'trainerToolOne',
+      'trainerToolTwo',
+    ]);
+    expect(interleaved.stack).toMatchObject({
+      bounds: { x: 524.546875, y: 31.5, width: 151.15625, height: 126 },
+      baseClientWidth: 91,
+      baseEnergyLayer: 4,
+      clientWidth: 151,
+      authoredWidthPx: 151.167,
+      marginRight: '2%',
+      computedMarginRightPx: 7.71875,
+    });
+    expect(interleaved.cards.map((card) => card.left)).toEqual([
+      0, 14.8333, 28.8333, 44.8333, 60.6667,
+    ]);
+    expect(interleaved.cards.map((card) => card.z)).toEqual([
+      0, -1, -2, -3, -4,
+    ]);
+
+    const swapped = staged.stagedSwap;
+    expect(swapped.deckRolesBeforeSwap).toEqual([
+      'deckTopTrainerTool',
+      'deckRemainderEnergy',
+    ]);
+    expect(swapped.deckRolesAfterSelectedDeparture).toEqual([
+      'deckTopTrainerTool',
+      'deckRemainderEnergy',
+      'energyOne',
+    ]);
+    expect(swapped.deckRolesAfterRotation).toEqual([
+      'energyOne',
+      'deckTopTrainerTool',
+      'deckRemainderEnergy',
+    ]);
+    expect(swapped.stagedAfterSwapRoles).toEqual([
+      'base',
+      'trainerToolOne',
+      'trainerToolTwo',
+      'energyTwo',
+      'deckTopTrainerTool',
+    ]);
+    expect(swapped.deckRolesAfterSwap).toEqual([
+      'energyOne',
+      'deckRemainderEnergy',
+    ]);
+    expect(swapped.resetTrace).toEqual([
+      { phase: 'selectedToDeck', role: 'energyOne' },
+      { phase: 'deckRotation', role: 'deckTopTrainerTool' },
+      { phase: 'deckRotation', role: 'deckRemainderEnergy' },
+      { phase: 'priorTopToStaging', role: 'deckTopTrainerTool' },
+    ]);
+    expect(swapped.stack.logicalRoles).toEqual([
+      'base',
+      'energyTwo',
+      'trainerToolOne',
+      'trainerToolTwo',
+      'deckTopTrainerTool',
+    ]);
+    expect(swapped.cards.map((card) => card.left)).toEqual([
+      0, 13.8333, 29.8333, 45.5, 60.6667,
+    ]);
   });
 
   it('pins reset, transient compaction, ghost-wrapper, and one-card convergence', () => {

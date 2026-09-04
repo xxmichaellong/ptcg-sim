@@ -324,10 +324,37 @@ the stale old-wrapper margin immediately after Tool departure, synchronous
 two-wrapper refresh, reset removed-card state, and observer-settled cleanup.
 Stable departure converges to the existing one-Tool or one-Energy source
 fixture. No mixed renderer-contract helper, scene eligibility branch, DOM/Pixi
-candidate comparison, or transition rendering is claimed. Mixed production
-geometry, reversed/unsupported histories, staged restoration and work-area
-resolution or deck-top swaps, whole-stack swaps, and broader overflow remain
-generic, noncanonical, or deferred.
+candidate comparison, or transition rendering is claimed.
+
+The same source-only oracle now adds six staged histories: reversed
+Trainer/Energy restore, four-card interleaved restore, and a multi-card staged
+deck-top swap on both physical sides. Legacy `leaveAll` resets the flat popup
+cards, locates the staged Pokémon, and replays remaining cards from index zero.
+The ordinary incoming-Energy rule therefore converts `[Trainer, Energy]` to
+`[Energy, Trainer]` and `[Trainer1, Energy1, Trainer2, Energy2]` to
+`[Energy1, Energy2, Trainer1, Trainer2]`. Legacy staged deck-top swap removes the
+selected Energy, rotates the deck, and appends the old top Trainer; subsequent
+restore produces `[Energy2, Trainer1, Trainer2, deckTopTrainer]`. V2 deliberately
+retains its atomic exact-position staged replacement, so the matching history
+restores `[Energy2, Trainer1, deckTopTrainer, Trainer2]`; both restore paths run
+the same category partition, but preserve the different within-Trainer input
+order.
+
+Unlike the earlier explicit refresh observations, `leaveAll` itself does not
+refresh. Immediate and two-animation-frame captures are identical, retain one
+live wrapper with no superseded wrapper, leave the staging popup hidden, and
+retain history-dependent offsets: `14.8333` px for reversed two-card Energy,
+`14.8333/28.8333/44.8333/60.6667` px for interleaved four-card attachments, and
+`13.8333/29.8333/45.5/60.6667` px after the staged swap. Those values reinforce
+that logical normalization does not authorize a mixed production geometry
+path.
+
+These staged phases remain source-only. Mixed production geometry,
+Pokémon/Unknown attachment membership, base-only `leaveAll`, category-history
+geometry, whole-stack swaps, and broader overflow remain generic or deferred.
+Reverse lists remain valid historical state outside the v1 normalized
+transition subset; neither the core nor renderer imposes a global order
+invariant.
 
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during

@@ -216,6 +216,25 @@ export type DomainEvent =
       readonly benchIndex: number;
     }
   | {
+      /**
+       * Versioned live-stack restoration semantics. Historical
+       * StagedStackRestored events continue to replay their recorded order;
+       * newly decided restores carry the exact staged input and v1 result.
+       */
+      readonly type: 'StagedStackRestoredToPlayStack';
+      readonly playerId: PlayerId;
+      readonly expectedWorkAreaId: WorkAreaId;
+      readonly expectedEvolutionCardIds: readonly CardInstanceId[];
+      readonly expectedAttachmentCardIds: readonly CardInstanceId[];
+      readonly attachmentOrderVersion: 1;
+      readonly attachmentCardIds: readonly CardInstanceId[];
+      readonly expectedActiveStackId: StackId | null;
+      readonly expectedBenchStackIds: readonly StackId[];
+      readonly stackId: StackId;
+      readonly destinationSlot: PlaySlot;
+      readonly benchIndex: number;
+    }
+  | {
       readonly type: 'StagedCardsResolved';
       readonly playerId: PlayerId;
       readonly expectedWorkAreaId: WorkAreaId;

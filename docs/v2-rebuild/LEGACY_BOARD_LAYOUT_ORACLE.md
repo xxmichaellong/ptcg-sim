@@ -494,10 +494,42 @@ wrappers, or sink.
 
 Those attach/reorder/departure transients are diagnostic and must not become
 renderer state. There is currently no strict production mixed-stack geometry.
-Mixed stacks continue through generic layout; reverse or unsupported category
-lists are noncanonical; staged restoration, attachment-resolution work areas,
-work-area/deck-top or whole-stack swaps, broader overflow/flex behavior, and
-Pixi parity are deferred.
+Mixed stacks continue through generic layout.
+
+Six additional source-only staged histories cover reversed two-attachment
+`leaveAll`, four-card interleaved `leaveAll`, and multi-card
+`switchWithDeckTop` followed by `leaveAll` in both frames. Because staged cards
+are reset outside a play container, `leaveAll` replays them from popup index
+zero and the incoming-Energy Tool relocation runs. The two restore inputs settle
+to Energy-before-Trainer with within-category order preserved. The staged swap
+itself is remove-then-append in v1, not positional replacement: selecting the
+middle Energy from `[Trainer1, Energy1, Trainer2, Energy2]` and receiving a
+Trainer deck top leaves `[Trainer1, Trainer2, Energy2, deckTopTrainer]`, then
+restores `[Energy2, Trainer1, Trainer2, deckTopTrainer]`.
+
+The swap capture checks logical and direct-child deck order plus complete reset
+card state at every phase. A separate phase/card invocation trace keeps the
+otherwise idempotent selected-departure, deck-rotation, and prior-top-return
+reset calls observable.
+
+`leaveAll` does not call refresh. Its immediate and two-animation-frame phases
+are identical with one live wrapper, no superseded wrapper, and the staging
+popup hidden: reversed two-card restore leaves the Energy at `14.8333` px;
+interleaved four-card restore leaves offsets
+`14.8333/28.8333/44.8333/60.6667` px; and the staged-swap restore leaves its
+sole Energy at `13.8333` px before the three Tools at
+`29.8333/45.5/60.6667` px. These history-dependent integer-compaction values,
+their exact logical/DOM/z/hit order, and the 151.167 px four-attachment wrapper
+are pinned source diagnostics, not stable renderer inputs.
+
+V2 intentionally keeps its already-modeled atomic exact-position staged swap,
+so that matching history retains a different within-Trainer order after the
+same restore partition. The source oracle records this as an explicit semantic
+exception rather than candidate parity. Unsupported attachment categories,
+base-only `leaveAll`, category-history geometry, whole-stack swaps, broader
+overflow/flex behavior, and Pixi parity remain deferred. Reverse arrays remain
+valid historical state outside the v1 normalized transition subset; they are
+not globally invalid state.
 
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the

@@ -145,8 +145,11 @@ Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
   native hit order. A separate source-only mixed Energy/Trainer capture covers
   both ingress orders and both single-attachment departures on both sides,
   including stable geometry/order and diagnostic reorder, compaction, stale-
-  margin and ghost-wrapper phases; it does not feed a renderer-contract helper
-  or candidate parity gate. These paths do not yet claim alternate layout
+  margin and ghost-wrapper phases. It also covers reversed and four-card
+  interleaved `leaveAll` plus a staged deck-top swap on both sides, proving the
+  source restore partition while recording v2's deliberate exact-position swap
+  exception. It does not feed a renderer-contract helper or candidate parity
+  gate. These paths do not yet claim alternate layout
   states, mixed/three-plus production geometry, transition animation or
   transient departure DOM, markers, BREAK/compound rotation, overflow,
   Tool-specific Pixi paint parity, full paint or interaction parity, cover-open

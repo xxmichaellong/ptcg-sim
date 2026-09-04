@@ -1,6 +1,9 @@
 import { playerZoneId } from './create-match.js';
 import { cloneMatchState } from './clone.js';
-import { orderAttachmentCardIdsV1 } from './attachment-order.js';
+import {
+  normalizeAttachmentCardIdsV1,
+  orderAttachmentCardIdsV1,
+} from './attachment-order.js';
 import type { DomainEvent, EventBatch } from './events.js';
 import type { CardInstanceId, PlayerId, StackId, ZoneId } from './ids.js';
 import {
@@ -1899,7 +1902,8 @@ const applyEventInternal = (
         ),
       };
     }
-    case 'StagedStackRestored': {
+    case 'StagedStackRestored':
+    case 'StagedStackRestoredToPlayStack': {
       const areas = state.workAreas[event.playerId];
       const resolution = areas?.attachmentResolution;
       const board = state.boards[event.playerId];
@@ -1934,12 +1938,47 @@ const applyEventInternal = (
       if (state.stacks[event.stackId]) {
         throw new Error(`Restored stack ${event.stackId} already exists`);
       }
+      let attachmentCardIds = resolution.attachmentCardIds;
+      if (event.type === 'StagedStackRestoredToPlayStack') {
+        if (event.attachmentOrderVersion !== 1) {
+          throw new Error('Unsupported staged attachment order version');
+        }
+        const stagedCardIds = [
+          ...resolution.evolutionCardIds,
+          ...resolution.attachmentCardIds,
+        ];
+        if (
+          new Set(stagedCardIds).size !== stagedCardIds.length ||
+          stagedCardIds.some((cardId) => !state.cards[cardId])
+        ) {
+          throw new Error('Staged stack restore references invalid cards');
+        }
+        const expectedAttachmentCardIds = normalizeAttachmentCardIdsV1(
+          state.cards,
+          resolution.attachmentCardIds
+        );
+        if (
+          !sameCardOrder(event.attachmentCardIds, expectedAttachmentCardIds)
+        ) {
+          throw new Error('Staged stack restore has invalid v1 ordering');
+        }
+        if (
+          (event.destinationSlot !== 'active' &&
+            event.destinationSlot !== 'bench') ||
+          !Number.isSafeInteger(event.benchIndex) ||
+          event.benchIndex < 0 ||
+          event.benchIndex > board.benchStackIds.length
+        ) {
+          throw new Error('Staged stack restore has invalid placement');
+        }
+        attachmentCardIds = event.attachmentCardIds;
+      }
       const nextStack: PlayStack = {
         id: event.stackId,
         boardPlayerId: event.playerId,
         slot: event.destinationSlot,
         evolutionCardIds: [...resolution.evolutionCardIds],
-        attachmentCardIds: [...resolution.attachmentCardIds],
+        attachmentCardIds: [...attachmentCardIds],
         rotationQuarterTurns: 0,
         damage: null,
         specialCondition: null,

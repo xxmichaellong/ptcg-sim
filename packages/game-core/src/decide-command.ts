@@ -4,7 +4,10 @@ import type {
   GameCommand,
   WorkAreaCardsDestination,
 } from './commands.js';
-import { orderAttachmentCardIdsV1 } from './attachment-order.js';
+import {
+  normalizeAttachmentCardIdsV1,
+  orderAttachmentCardIdsV1,
+} from './attachment-order.js';
 import { playerZoneId, stadiumZoneId } from './create-match.js';
 import type { DomainEvent } from './events.js';
 import { asWorkAreaId, type CardInstanceId, type PlayerId } from './ids.js';
@@ -1261,11 +1264,16 @@ export const decideCommand = (
         );
       }
       return accept({
-        type: 'StagedStackRestored',
+        type: 'StagedStackRestoredToPlayStack',
         playerId: command.playerId,
         expectedWorkAreaId: resolution.id,
         expectedEvolutionCardIds: [...resolution.evolutionCardIds],
         expectedAttachmentCardIds: [...resolution.attachmentCardIds],
+        attachmentOrderVersion: 1,
+        attachmentCardIds: normalizeAttachmentCardIdsV1(
+          state.cards,
+          resolution.attachmentCardIds
+        ),
         expectedActiveStackId: board.activeStackId,
         expectedBenchStackIds: [...board.benchStackIds],
         stackId,
@@ -2085,11 +2093,12 @@ export const decideCommand = (
       const location = findCardLocation(state, command.cardId);
       if (
         location?.kind === 'stackEvolution' ||
-        location?.kind === 'stackAttachment'
+        location?.kind === 'stackAttachment' ||
+        location?.kind === 'attachmentResolutionWorkArea'
       ) {
         return reject(
           'precondition_failed',
-          'Play-stack category changes require semantic departure'
+          'Play-stack and staged category changes require semantic departure'
         );
       }
       return accept({

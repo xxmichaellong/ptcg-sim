@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "recordingMethod": "Manually reviewed Chromium 151 CSS-pixel capture of eight isolated source-pinned inert DOM replays of the checked-in legacy attachCard, Energy-triggered recursive Trainer-as-Tool move, departure compaction, and refresh reconstruction paths. The legacy HTML, CSS, and cardback are served directly while application/network modules remain inert. Every refresh uses the real empty-wrapper MutationObserver and two animation frames.",
+  "recordingMethod": "Manually reviewed Chromium 151 CSS-pixel capture of fourteen isolated source-pinned inert DOM replays of the checked-in legacy attachCard, Energy-triggered recursive Trainer-as-Tool move, departure compaction, refresh reconstruction, leaveAll, and staged switchWithDeckTop paths. The legacy HTML, CSS, and cardback are served directly while application/network modules remain inert. Every observed wrapper uses the real empty-wrapper MutationObserver and settled phases wait two animation frames.",
   "input": {
     "viewport": { "width": 1600, "height": 900, "devicePixelRatio": 1 },
     "asset": {
@@ -21,6 +21,16 @@
       "local-remove-trainer-tool-departure",
       "opponent-remove-energy-departure",
       "opponent-remove-trainer-tool-departure"
+    ],
+    "restoreCases": [
+      "local-restore-reverse-two-case",
+      "local-restore-interleaved-four-case",
+      "opponent-restore-reverse-two-case",
+      "opponent-restore-interleaved-four-case"
+    ],
+    "stagedSwapCases": [
+      "local-staged-multi-swap-case",
+      "opponent-staged-multi-swap-case"
     ]
   },
   "tolerances": {
@@ -36,12 +46,15 @@
       "legacy Tool action reclassification to the current Trainer category before loose-board attachment",
       "post-first attach, immediate post-second attach, synchronous post-refresh, and observer-settled stable post-refresh phases",
       "independent Energy-departure and Trainer-as-Tool-departure histories from the canonical refreshed Energy-then-Trainer stack",
-      "legacy recursive Tool reattachment, parseInt compaction, Tool quarter-turn and margin, z and logical/DOM order, painted and authored boxes, safe interior hit order, reset state, and real asynchronous cleanup"
+      "legacy recursive Tool reattachment, parseInt compaction, Tool quarter-turn and margin, z and logical/DOM order, painted and authored boxes, safe interior hit order, reset state, and real asynchronous cleanup",
+      "leaveAll reconstruction from reset flat attachedCards inputs in reverse Trainer/Energy and four-card interleaved orders on both physical sides",
+      "staged switchWithDeckTop selected-card removal and reset state, matching logical/direct-child deck rotation and prior-top append order, and subsequent leaveAll reconstruction on both physical sides"
     ],
     "excluded": [
       "candidate DOM or Pixi parity and production renderer correctness",
-      "more than two attachments, duplicate attachment categories, Pokémon-classified attachments, evolution layers, and mixed card dimensions",
-      "base departure, attachment transfer, reattachment to another base, staging, bench, multiple stacks, resize, fullscreen, and explicit board flip",
+      "more than four attachments, Pokémon-classified attachments, evolution layers, and mixed card dimensions",
+      "live base or evolution departure into attachedCards, attachment transfer to another live base, bench, multiple stacks, resize, fullscreen, and explicit board flip",
+      "base-only leaveAll without a staged Pokémon, category-history changes, other staged deck-top categories, and bulk work-area actions",
       "damage, ability, special-condition, BREAK, group rotation, concealed metadata, reveal, hide, previews, pointer gestures, network, and server behavior",
       "the synchronous ghost wrapper as a stable or user-visible rendered result"
     ]
@@ -156,6 +169,16 @@
       "path": "client/src/initialization/document-event-listeners/card-context-menu/active-bench-buttons.js",
       "encoding": "utf8",
       "sha256": "a7d50832cea32727a2bbb1957887d45a52f701c6b6d465e84e32338e42217940"
+    },
+    {
+      "path": "client/src/actions/zones/general.js",
+      "encoding": "utf8",
+      "sha256": "a3705990b5aa3a790bf45e2e0dd327febf1f0d781d8b478faf905d0e67343cfd"
+    },
+    {
+      "path": "client/src/actions/zones/deck-actions.js",
+      "encoding": "utf8",
+      "sha256": "9fce603a8765f0aefbbcc99b4b01e2fca5df80052d1e5bc5b75e4343b6aef071"
     }
   ],
   "provenanceClaims": [
@@ -210,6 +233,14 @@
         "client/src/actions/general/change-type.js",
         "client/src/initialization/document-event-listeners/card-context-menu/active-bench-buttons.js"
       ]
+    },
+    {
+      "claim": "leaveAll scans the reset flat attachedCards list by current category and replays remaining cards from index zero",
+      "sources": ["client/src/actions/zones/general.js"]
+    },
+    {
+      "claim": "switchWithDeckTop removes the selected staged card, rotates it to deck index zero, and appends the prior deck top to attachedCards",
+      "sources": ["client/src/actions/zones/deck-actions.js"]
     }
   ],
   "expected": {
@@ -329,6 +360,665 @@
         "zIndex": -2
       }
     ],
+    "stagedReplay": {
+      "resetCardState": {
+        "localRotationDegrees": 0,
+        "zIndex": 0,
+        "inlineLeftPx": 0,
+        "inlineBottomPx": 0,
+        "attached": false,
+        "target": "off",
+        "relativeId": null,
+        "energyLayer": 0,
+        "layer": 0,
+        "sourcePath": "/src/assets/cardback.png"
+      },
+      "restoredContainerState": {
+        "observedWrapperCount": 1,
+        "supersededWrapperConnected": false,
+        "stagingDisplay": "none"
+      },
+      "restoreCaseIds": [
+        "local-restore-reverse-two-case",
+        "local-restore-interleaved-four-case",
+        "opponent-restore-reverse-two-case",
+        "opponent-restore-interleaved-four-case"
+      ],
+      "stagedSwapCaseIds": [
+        "local-staged-multi-swap-case",
+        "opponent-staged-multi-swap-case"
+      ],
+      "restoreTemplates": {
+        "reverseTwo": {
+          "stagedRoles": ["base", "trainerToolOne", "energyOne"],
+          "cards": [
+            {
+              "role": "base",
+              "bounds": {
+                "x": 539.546875,
+                "y": 31.5,
+                "width": 90.5625,
+                "height": 126
+              },
+              "untransformedBounds": {
+                "x": 539.546875,
+                "y": 31.5,
+                "width": 90.5625,
+                "height": 126
+              },
+              "left": 0,
+              "z": 0,
+              "rotation": 0,
+              "dom": 0,
+              "logical": 0
+            },
+            {
+              "role": "energyOne",
+              "bounds": {
+                "x": 554.375,
+                "y": 31.5,
+                "width": 90.5625,
+                "height": 126
+              },
+              "untransformedBounds": {
+                "x": 554.375,
+                "y": 31.5,
+                "width": 90.5625,
+                "height": 126
+              },
+              "left": 14.8333,
+              "z": -1,
+              "rotation": 0,
+              "dom": 2,
+              "logical": 1
+            },
+            {
+              "role": "trainerToolOne",
+              "bounds": {
+                "x": 552.15625,
+                "y": 49.21875,
+                "width": 126,
+                "height": 90.5625
+              },
+              "untransformedBounds": {
+                "x": 569.875,
+                "y": 31.5,
+                "width": 90.5625,
+                "height": 126
+              },
+              "left": 30.3333,
+              "z": -2,
+              "rotation": 90,
+              "dom": 1,
+              "logical": 2
+            }
+          ],
+          "stack": {
+            "bounds": {
+              "x": 539.546875,
+              "y": 31.5,
+              "width": 121.15625,
+              "height": 126
+            },
+            "baseClientWidth": 91,
+            "baseEnergyLayer": 2,
+            "clientWidth": 121,
+            "authoredWidthPx": 121.167,
+            "marginRight": "2%",
+            "computedMarginRightPx": 7.71875,
+            "domRoles": ["base", "trainerToolOne", "energyOne"],
+            "logicalRoles": ["base", "energyOne", "trainerToolOne"],
+            "hitOrderRoles": {
+              "commonOverlap": ["base", "energyOne", "trainerToolOne"],
+              "center-base": ["base", "energyOne", "trainerToolOne"],
+              "center-energyOne": ["base", "energyOne", "trainerToolOne"],
+              "center-trainerToolOne": ["base", "energyOne", "trainerToolOne"],
+              "rightmostPaint": ["trainerToolOne"]
+            },
+            "hitPoints": {
+              "commonOverlap": { "x": 592.2421875, "y": 94.5 },
+              "center-base": { "x": 584.828125, "y": 94.5 },
+              "center-energyOne": { "x": 599.65625, "y": 94.5 },
+              "center-trainerToolOne": { "x": 615.15625, "y": 94.5 },
+              "rightmostPaint": { "x": 676.15625, "y": 94.5 }
+            }
+          },
+          "attachTrace": [
+            {
+              "role": "trainerTool",
+              "clientWidthBefore": 91,
+              "authoredWidthAfterPx": 106.167,
+              "inlineLeftPx": 15.1667,
+              "zIndex": -1
+            },
+            {
+              "role": "energy",
+              "clientWidthBefore": 106,
+              "authoredWidthAfterPx": 121.167,
+              "inlineLeftPx": 30.3333,
+              "zIndex": -2
+            },
+            {
+              "role": "trainerTool",
+              "clientWidthBefore": 106,
+              "authoredWidthAfterPx": 121.167,
+              "inlineLeftPx": 30.3333,
+              "zIndex": -2
+            }
+          ]
+        },
+        "interleavedFour": {
+          "stagedRoles": [
+            "base",
+            "trainerToolOne",
+            "energyOne",
+            "trainerToolTwo",
+            "energyTwo"
+          ],
+          "cards": [
+            {
+              "role": "base",
+              "bounds": {
+                "x": 524.546875,
+                "y": 31.5,
+                "width": 90.5625,
+                "height": 126
+              },
+              "untransformedBounds": {
+                "x": 524.546875,
+                "y": 31.5,
+                "width": 90.5625,
+                "height": 126
+              },
+              "left": 0,
+              "z": 0,
+              "rotation": 0,
+              "dom": 0,
+              "logical": 0
+            },
+            {
+              "role": "energyOne",
+              "bounds": {
+                "x": 539.375,
+                "y": 31.5,
+                "width": 90.5625,
+                "height": 126
+              },
+              "untransformedBounds": {
+                "x": 539.375,
+                "y": 31.5,
+                "width": 90.5625,
+                "height": 126
+              },
+              "left": 14.8333,
+              "z": -1,
+              "rotation": 0,
+              "dom": 4,
+              "logical": 1
+            },
+            {
+              "role": "energyTwo",
+              "bounds": {
+                "x": 553.375,
+                "y": 31.5,
+                "width": 90.5625,
+                "height": 126
+              },
+              "untransformedBounds": {
+                "x": 553.375,
+                "y": 31.5,
+                "width": 90.5625,
+                "height": 126
+              },
+              "left": 28.8333,
+              "z": -2,
+              "rotation": 0,
+              "dom": 3,
+              "logical": 2
+            },
+            {
+              "role": "trainerToolOne",
+              "bounds": {
+                "x": 551.65625,
+                "y": 49.21875,
+                "width": 126,
+                "height": 90.5625
+              },
+              "untransformedBounds": {
+                "x": 569.375,
+                "y": 31.5,
+                "width": 90.5625,
+                "height": 126
+              },
+              "left": 44.8333,
+              "z": -3,
+              "rotation": 90,
+              "dom": 2,
+              "logical": 3
+            },
+            {
+              "role": "trainerToolTwo",
+              "bounds": {
+                "x": 567.484375,
+                "y": 49.21875,
+                "width": 126,
+                "height": 90.5625
+              },
+              "untransformedBounds": {
+                "x": 585.203125,
+                "y": 31.5,
+                "width": 90.5625,
+                "height": 126
+              },
+              "left": 60.6667,
+              "z": -4,
+              "rotation": 90,
+              "dom": 1,
+              "logical": 4
+            }
+          ],
+          "stack": {
+            "bounds": {
+              "x": 524.546875,
+              "y": 31.5,
+              "width": 151.15625,
+              "height": 126
+            },
+            "baseClientWidth": 91,
+            "baseEnergyLayer": 4,
+            "clientWidth": 151,
+            "authoredWidthPx": 151.167,
+            "marginRight": "2%",
+            "computedMarginRightPx": 7.71875,
+            "domRoles": [
+              "base",
+              "trainerToolTwo",
+              "trainerToolOne",
+              "energyTwo",
+              "energyOne"
+            ],
+            "logicalRoles": [
+              "base",
+              "energyOne",
+              "energyTwo",
+              "trainerToolOne",
+              "trainerToolTwo"
+            ],
+            "hitOrderRoles": {
+              "commonOverlap": [
+                "base",
+                "energyOne",
+                "energyTwo",
+                "trainerToolOne",
+                "trainerToolTwo"
+              ],
+              "center-base": [
+                "base",
+                "energyOne",
+                "energyTwo",
+                "trainerToolOne",
+                "trainerToolTwo"
+              ],
+              "center-energyOne": [
+                "base",
+                "energyOne",
+                "energyTwo",
+                "trainerToolOne",
+                "trainerToolTwo"
+              ],
+              "center-energyTwo": [
+                "base",
+                "energyOne",
+                "energyTwo",
+                "trainerToolOne",
+                "trainerToolTwo"
+              ],
+              "center-trainerToolOne": [
+                "base",
+                "energyOne",
+                "energyTwo",
+                "trainerToolOne",
+                "trainerToolTwo"
+              ],
+              "center-trainerToolTwo": [
+                "energyTwo",
+                "trainerToolOne",
+                "trainerToolTwo"
+              ],
+              "rightmostPaint": ["trainerToolTwo"]
+            },
+            "hitPoints": {
+              "commonOverlap": { "x": 591.296875, "y": 94.5 },
+              "center-base": { "x": 569.828125, "y": 94.5 },
+              "center-energyOne": { "x": 584.65625, "y": 94.5 },
+              "center-energyTwo": { "x": 598.65625, "y": 94.5 },
+              "center-trainerToolOne": { "x": 614.65625, "y": 94.5 },
+              "center-trainerToolTwo": { "x": 630.484375, "y": 94.5 },
+              "rightmostPaint": { "x": 691.484375, "y": 94.5 }
+            }
+          },
+          "attachTrace": [
+            {
+              "role": "trainerTool",
+              "clientWidthBefore": 91,
+              "authoredWidthAfterPx": 106.167,
+              "inlineLeftPx": 15.1667,
+              "zIndex": -1
+            },
+            {
+              "role": "energy",
+              "clientWidthBefore": 106,
+              "authoredWidthAfterPx": 121.167,
+              "inlineLeftPx": 30.3333,
+              "zIndex": -2
+            },
+            {
+              "role": "trainerTool",
+              "clientWidthBefore": 106,
+              "authoredWidthAfterPx": 121.167,
+              "inlineLeftPx": 30.3333,
+              "zIndex": -2
+            },
+            {
+              "role": "trainerTool",
+              "clientWidthBefore": 121,
+              "authoredWidthAfterPx": 136.167,
+              "inlineLeftPx": 45.5,
+              "zIndex": -3
+            },
+            {
+              "role": "energy",
+              "clientWidthBefore": 136,
+              "authoredWidthAfterPx": 151.167,
+              "inlineLeftPx": 60.6667,
+              "zIndex": -4
+            },
+            {
+              "role": "trainerTool",
+              "clientWidthBefore": 136,
+              "authoredWidthAfterPx": 151.167,
+              "inlineLeftPx": 60.6667,
+              "zIndex": -4
+            },
+            {
+              "role": "trainerTool",
+              "clientWidthBefore": 136,
+              "authoredWidthAfterPx": 151.167,
+              "inlineLeftPx": 60.6667,
+              "zIndex": -4
+            }
+          ]
+        }
+      },
+      "stagedSwap": {
+        "stagedRoles": [
+          "base",
+          "trainerToolOne",
+          "energyOne",
+          "trainerToolTwo",
+          "energyTwo"
+        ],
+        "stagedAfterSelectedRoles": [
+          "base",
+          "trainerToolOne",
+          "trainerToolTwo",
+          "energyTwo"
+        ],
+        "stagedAfterSwapRoles": [
+          "base",
+          "trainerToolOne",
+          "trainerToolTwo",
+          "energyTwo",
+          "deckTopTrainerTool"
+        ],
+        "deckRolesBeforeSwap": ["deckTopTrainerTool", "deckRemainderEnergy"],
+        "deckRolesAfterSelectedDeparture": [
+          "deckTopTrainerTool",
+          "deckRemainderEnergy",
+          "energyOne"
+        ],
+        "deckRolesAfterRotation": [
+          "energyOne",
+          "deckTopTrainerTool",
+          "deckRemainderEnergy"
+        ],
+        "deckRolesAfterSwap": ["energyOne", "deckRemainderEnergy"],
+        "resetTrace": [
+          { "phase": "selectedToDeck", "role": "energyOne" },
+          { "phase": "deckRotation", "role": "deckTopTrainerTool" },
+          { "phase": "deckRotation", "role": "deckRemainderEnergy" },
+          {
+            "phase": "priorTopToStaging",
+            "role": "deckTopTrainerTool"
+          }
+        ],
+        "cards": [
+          {
+            "role": "base",
+            "bounds": {
+              "x": 524.546875,
+              "y": 31.5,
+              "width": 90.5625,
+              "height": 126
+            },
+            "untransformedBounds": {
+              "x": 524.546875,
+              "y": 31.5,
+              "width": 90.5625,
+              "height": 126
+            },
+            "left": 0,
+            "z": 0,
+            "rotation": 0,
+            "dom": 0,
+            "logical": 0
+          },
+          {
+            "role": "energyTwo",
+            "bounds": {
+              "x": 538.375,
+              "y": 31.5,
+              "width": 90.5625,
+              "height": 126
+            },
+            "untransformedBounds": {
+              "x": 538.375,
+              "y": 31.5,
+              "width": 90.5625,
+              "height": 126
+            },
+            "left": 13.8333,
+            "z": -1,
+            "rotation": 0,
+            "dom": 4,
+            "logical": 1
+          },
+          {
+            "role": "trainerToolOne",
+            "bounds": {
+              "x": 536.65625,
+              "y": 49.21875,
+              "width": 126,
+              "height": 90.5625
+            },
+            "untransformedBounds": {
+              "x": 554.375,
+              "y": 31.5,
+              "width": 90.5625,
+              "height": 126
+            },
+            "left": 29.8333,
+            "z": -2,
+            "rotation": 90,
+            "dom": 3,
+            "logical": 2
+          },
+          {
+            "role": "trainerToolTwo",
+            "bounds": {
+              "x": 552.328125,
+              "y": 49.21875,
+              "width": 126,
+              "height": 90.5625
+            },
+            "untransformedBounds": {
+              "x": 570.046875,
+              "y": 31.5,
+              "width": 90.5625,
+              "height": 126
+            },
+            "left": 45.5,
+            "z": -3,
+            "rotation": 90,
+            "dom": 2,
+            "logical": 3
+          },
+          {
+            "role": "deckTopTrainerTool",
+            "bounds": {
+              "x": 567.484375,
+              "y": 49.21875,
+              "width": 126,
+              "height": 90.5625
+            },
+            "untransformedBounds": {
+              "x": 585.203125,
+              "y": 31.5,
+              "width": 90.5625,
+              "height": 126
+            },
+            "left": 60.6667,
+            "z": -4,
+            "rotation": 90,
+            "dom": 1,
+            "logical": 4
+          }
+        ],
+        "stack": {
+          "bounds": {
+            "x": 524.546875,
+            "y": 31.5,
+            "width": 151.15625,
+            "height": 126
+          },
+          "baseClientWidth": 91,
+          "baseEnergyLayer": 4,
+          "clientWidth": 151,
+          "authoredWidthPx": 151.167,
+          "marginRight": "2%",
+          "computedMarginRightPx": 7.71875,
+          "domRoles": [
+            "base",
+            "deckTopTrainerTool",
+            "trainerToolTwo",
+            "trainerToolOne",
+            "energyTwo"
+          ],
+          "logicalRoles": [
+            "base",
+            "energyTwo",
+            "trainerToolOne",
+            "trainerToolTwo",
+            "deckTopTrainerTool"
+          ],
+          "hitOrderRoles": {
+            "commonOverlap": [
+              "base",
+              "energyTwo",
+              "trainerToolOne",
+              "trainerToolTwo",
+              "deckTopTrainerTool"
+            ],
+            "center-base": [
+              "base",
+              "energyTwo",
+              "trainerToolOne",
+              "trainerToolTwo",
+              "deckTopTrainerTool"
+            ],
+            "center-energyTwo": [
+              "base",
+              "energyTwo",
+              "trainerToolOne",
+              "trainerToolTwo",
+              "deckTopTrainerTool"
+            ],
+            "center-trainerToolOne": [
+              "base",
+              "energyTwo",
+              "trainerToolOne",
+              "trainerToolTwo",
+              "deckTopTrainerTool"
+            ],
+            "center-trainerToolTwo": [
+              "energyTwo",
+              "trainerToolOne",
+              "trainerToolTwo",
+              "deckTopTrainerTool"
+            ],
+            "center-deckTopTrainerTool": [
+              "trainerToolOne",
+              "trainerToolTwo",
+              "deckTopTrainerTool"
+            ],
+            "rightmostPaint": ["deckTopTrainerTool"]
+          },
+          "hitPoints": {
+            "commonOverlap": { "x": 591.296875, "y": 94.5 },
+            "center-base": { "x": 569.828125, "y": 94.5 },
+            "center-energyTwo": { "x": 583.65625, "y": 94.5 },
+            "center-trainerToolOne": { "x": 599.65625, "y": 94.5 },
+            "center-trainerToolTwo": { "x": 615.328125, "y": 94.5 },
+            "center-deckTopTrainerTool": { "x": 630.484375, "y": 94.5 },
+            "rightmostPaint": { "x": 691.484375, "y": 94.5 }
+          }
+        },
+        "attachTrace": [
+          {
+            "role": "trainerTool",
+            "clientWidthBefore": 91,
+            "authoredWidthAfterPx": 106.167,
+            "inlineLeftPx": 15.1667,
+            "zIndex": -1
+          },
+          {
+            "role": "trainerTool",
+            "clientWidthBefore": 106,
+            "authoredWidthAfterPx": 121.167,
+            "inlineLeftPx": 30.3333,
+            "zIndex": -2
+          },
+          {
+            "role": "energy",
+            "clientWidthBefore": 121,
+            "authoredWidthAfterPx": 136.167,
+            "inlineLeftPx": 45.5,
+            "zIndex": -3
+          },
+          {
+            "role": "trainerTool",
+            "clientWidthBefore": 121,
+            "authoredWidthAfterPx": 136.167,
+            "inlineLeftPx": 45.5,
+            "zIndex": -3
+          },
+          {
+            "role": "trainerTool",
+            "clientWidthBefore": 121,
+            "authoredWidthAfterPx": 136.167,
+            "inlineLeftPx": 45.5,
+            "zIndex": -3
+          },
+          {
+            "role": "trainerTool",
+            "clientWidthBefore": 136,
+            "authoredWidthAfterPx": 151.167,
+            "inlineLeftPx": 60.6667,
+            "zIndex": -4
+          }
+        ]
+      }
+    },
     "phaseTemplates": {
       "singleEnergy": {
         "stack": {

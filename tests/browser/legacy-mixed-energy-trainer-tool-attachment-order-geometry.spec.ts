@@ -10,6 +10,11 @@ import {
   type LegacyMixedAttachmentFixturePhase,
   type LegacyMixedAttachmentOrder,
   type LegacyMixedAttachmentRole,
+  type LegacyMixedDeckPhase,
+  type LegacyMixedRestoredPhase,
+  type LegacyMixedStagedPhase,
+  type LegacyMixedStagedRole,
+  type LegacyMixedSwapResetTraceEntry,
 } from './support/legacy-source-board.js';
 
 type Rect = {
@@ -50,9 +55,80 @@ interface ExpectedPhase {
   readonly hitPoints: Readonly<Record<string, Point>>;
 }
 
+interface ExpectedRestoredTemplate {
+  readonly stagedRoles: readonly LegacyMixedStagedRole[];
+  readonly cards: readonly {
+    readonly role: LegacyMixedStagedRole;
+    readonly bounds: Rect;
+    readonly untransformedBounds: Rect;
+    readonly left: number;
+    readonly z: number;
+    readonly rotation: number;
+    readonly dom: number;
+    readonly logical: number;
+  }[];
+  readonly stack: {
+    readonly bounds: Rect;
+    readonly baseClientWidth: number;
+    readonly baseEnergyLayer: number;
+    readonly clientWidth: number;
+    readonly authoredWidthPx: number;
+    readonly marginRight: string;
+    readonly computedMarginRightPx: number;
+    readonly domRoles: readonly LegacyMixedStagedRole[];
+    readonly logicalRoles: readonly LegacyMixedStagedRole[];
+    readonly hitOrderRoles: Readonly<
+      Record<string, readonly LegacyMixedStagedRole[]>
+    >;
+    readonly hitPoints: Readonly<Record<string, Point>>;
+  };
+  readonly attachTrace: readonly {
+    readonly role: 'energy' | 'trainerTool';
+    readonly clientWidthBefore: number;
+    readonly authoredWidthAfterPx: number;
+    readonly inlineLeftPx: number;
+    readonly zIndex: number;
+  }[];
+}
+
+interface ExpectedStagedReplay {
+  readonly resetCardState: Omit<
+    LegacyMixedStagedPhase['cards'][number],
+    | 'id'
+    | 'role'
+    | 'currentCategory'
+    | 'parentZone'
+    | 'logicalOrdinal'
+    | 'domOrdinal'
+  >;
+  readonly restoredContainerState: Pick<
+    LegacyMixedRestoredPhase,
+    'observedWrapperCount' | 'supersededWrapperConnected' | 'stagingDisplay'
+  >;
+  readonly restoreCaseIds: readonly string[];
+  readonly stagedSwapCaseIds: readonly string[];
+  readonly restoreTemplates: Readonly<
+    Record<'reverseTwo' | 'interleavedFour', ExpectedRestoredTemplate>
+  >;
+  readonly stagedSwap: ExpectedRestoredTemplate & {
+    readonly stagedAfterSelectedRoles: readonly LegacyMixedStagedRole[];
+    readonly stagedAfterSwapRoles: readonly LegacyMixedStagedRole[];
+    readonly deckRolesBeforeSwap: readonly LegacyMixedStagedRole[];
+    readonly deckRolesAfterSelectedDeparture: readonly LegacyMixedStagedRole[];
+    readonly deckRolesAfterRotation: readonly LegacyMixedStagedRole[];
+    readonly deckRolesAfterSwap: readonly LegacyMixedStagedRole[];
+    readonly resetTrace: readonly {
+      readonly phase: LegacyMixedSwapResetTraceEntry['phase'];
+      readonly role: LegacyMixedStagedRole;
+    }[];
+  };
+}
+
 const phaseTemplates = oracle.expected.phaseTemplates as Readonly<
   Record<string, ExpectedPhase>
 >;
+const stagedReplay = oracle.expected
+  .stagedReplay as unknown as ExpectedStagedReplay;
 
 const expectStructuredNumber = (
   actual: number,
@@ -123,6 +199,16 @@ const physicalPointFor = (
 
 const roleId = (prefix: string, role: LegacyMixedAttachmentRole): string =>
   `${prefix}-${role === 'trainerTool' ? 'trainer-tool' : role}`;
+
+const stagedRoleId = (prefix: string, role: LegacyMixedStagedRole): string =>
+  `${prefix}-${role.replace(/([A-Z])/gu, '-$1').toLowerCase()}`;
+
+const stagedRoleCategory = (
+  role: LegacyMixedStagedRole
+): 'Pokémon' | 'Energy' | 'Trainer' => {
+  if (role === 'base') return 'Pokémon';
+  return role.toLowerCase().includes('energy') ? 'Energy' : 'Trainer';
+};
 
 const phaseCardRect = (card: ExpectedCard, painted: boolean): Rect => ({
   x: painted ? card.paintedX : card.untransformedX,
@@ -329,7 +415,224 @@ const expectPhase = (
   }
 };
 
-test('checked-in legacy sources characterize mixed Energy and Trainer-as-Tool attachment order and departure', async ({
+const expectStagedPhase = (
+  actual: LegacyMixedStagedPhase,
+  expectedRoles: readonly LegacyMixedStagedRole[],
+  prefix: string,
+  label: string
+): void => {
+  const expectedIds = expectedRoles.map((role) => stagedRoleId(prefix, role));
+  expect(actual.logicalOrder, `${label}.logicalOrder`).toEqual(expectedIds);
+  expect(actual.domOrder, `${label}.domOrder`).toEqual(expectedIds);
+  expect(actual.display, `${label}.display`).toBe('block');
+  expect(
+    actual.cards.map((card) => card.role),
+    `${label}.roles`
+  ).toEqual(expectedRoles);
+  for (const [index, card] of actual.cards.entries()) {
+    const role = expectedRoles[index];
+    if (!role) throw new Error(`${label} has an unexpected card`);
+    expect(card, `${label}.${role}`).toEqual({
+      id: stagedRoleId(prefix, role),
+      role,
+      currentCategory: stagedRoleCategory(role),
+      parentZone: 'attachedCards',
+      logicalOrdinal: index,
+      domOrdinal: index,
+      ...stagedReplay.resetCardState,
+    });
+  }
+};
+
+const expectDeckPhase = (
+  actual: LegacyMixedDeckPhase,
+  expectedRoles: readonly LegacyMixedStagedRole[],
+  prefix: string,
+  label: string
+): void => {
+  const expectedIds = expectedRoles.map((role) => stagedRoleId(prefix, role));
+  expect(actual.logicalOrder, `${label}.logicalOrder`).toEqual(expectedIds);
+  expect(actual.domOrder, `${label}.domOrder`).toEqual(expectedIds);
+  expect(
+    actual.cards.map((card) => card.role),
+    `${label}.roles`
+  ).toEqual(expectedRoles);
+  for (const [index, card] of actual.cards.entries()) {
+    const role = expectedRoles[index];
+    if (!role) throw new Error(`${label} has an unexpected card`);
+    expect(card, `${label}.${role}`).toEqual({
+      id: stagedRoleId(prefix, role),
+      role,
+      currentCategory: stagedRoleCategory(role),
+      parentZone: 'deck',
+      logicalOrdinal: index,
+      domOrdinal: index,
+      ...stagedReplay.resetCardState,
+    });
+  }
+};
+
+const expectRestoredPhase = (
+  actual: LegacyMixedRestoredPhase,
+  expected: ExpectedRestoredTemplate,
+  side: LegacyFixtureSide,
+  prefix: string,
+  label: string,
+  capturedFrames: Readonly<Record<LegacyFixtureSide, Rect>>
+): void => {
+  const expectedLogicalIds = expected.stack.logicalRoles.map((role) =>
+    stagedRoleId(prefix, role)
+  );
+  const expectedDomIds = expected.stack.domRoles.map((role) =>
+    stagedRoleId(prefix, role)
+  );
+  expect(
+    actual.cards.map((card) => card.role),
+    `${label}.cardRoles`
+  ).toEqual(expected.stack.logicalRoles);
+  expect(actual).toMatchObject(stagedReplay.restoredContainerState);
+  expect(actual.stack).toMatchObject({
+    id: `${prefix}-restored-stack`,
+    side,
+    baseClientWidth: expected.stack.baseClientWidth,
+    baseEnergyLayer: expected.stack.baseEnergyLayer,
+    clientWidth: expected.stack.clientWidth,
+    inlineMarginRight: expected.stack.marginRight,
+    computedMarginRightPx: expected.stack.computedMarginRightPx,
+    childDomOrder: expectedDomIds,
+    logicalOrder: expectedLogicalIds,
+    hitOrder: Object.fromEntries(
+      Object.entries(expected.stack.hitOrderRoles).map(([region, roles]) => [
+        region,
+        roles.map((role) => stagedRoleId(prefix, role)),
+      ])
+    ),
+  });
+  expectStructuredNumber(
+    actual.stack.authoredWidthPx,
+    expected.stack.authoredWidthPx,
+    `${label}.stack.authoredWidthPx`
+  );
+  expectRectWithin(
+    actual.stack.frameLocalBounds,
+    expected.stack.bounds,
+    `${label}.stack.frameLocalBounds`
+  );
+  expectRectWithin(
+    actual.stack.physicalBounds,
+    physicalRectFor(side, expected.stack.bounds, oracle.expected.frames),
+    `${label}.stack.physicalBounds`
+  );
+  const capturedPhysicalStack = physicalRectFor(
+    side,
+    actual.stack.frameLocalBounds,
+    capturedFrames
+  );
+  for (const key of ['x', 'y', 'width', 'height'] as const) {
+    expectStructuredNumber(
+      actual.stack.physicalBounds[key],
+      capturedPhysicalStack[key],
+      `${label}.stack.physicalFromFrame.${key}`
+    );
+  }
+  expect(Object.keys(actual.stack.hitPointsFrameLocal)).toEqual(
+    Object.keys(expected.stack.hitPoints)
+  );
+  for (const [region, expectedPoint] of Object.entries(
+    expected.stack.hitPoints
+  )) {
+    const framePoint = actual.stack.hitPointsFrameLocal[region];
+    const physicalPoint = actual.stack.hitPointsPhysical[region];
+    if (!framePoint || !physicalPoint) {
+      throw new Error(`${label} lacks ${region} hit evidence`);
+    }
+    expectStructuredNumber(
+      framePoint.x,
+      expectedPoint.x,
+      `${label}.${region}.x`
+    );
+    expectStructuredNumber(
+      framePoint.y,
+      expectedPoint.y,
+      `${label}.${region}.y`
+    );
+    const capturedPhysicalPoint = physicalPointFor(
+      side,
+      framePoint,
+      capturedFrames
+    );
+    expectStructuredNumber(
+      physicalPoint.x,
+      capturedPhysicalPoint.x,
+      `${label}.${region}.physicalX`
+    );
+    expectStructuredNumber(
+      physicalPoint.y,
+      capturedPhysicalPoint.y,
+      `${label}.${region}.physicalY`
+    );
+  }
+  for (const expectedCard of expected.cards) {
+    const card = actual.cards.find(
+      (candidate) => candidate.role === expectedCard.role
+    );
+    if (!card) throw new Error(`${label} lacks ${expectedCard.role}`);
+    expect(card).toMatchObject({
+      id: stagedRoleId(prefix, expectedCard.role),
+      role: expectedCard.role,
+      currentCategory: stagedRoleCategory(expectedCard.role),
+      localRotationDegrees: expectedCard.rotation,
+      zIndex: expectedCard.z,
+      attached: expectedCard.role !== 'base',
+      target: expectedCard.role === 'base' ? 'off' : 'on',
+      relativeId:
+        expectedCard.role === 'base' ? null : stagedRoleId(prefix, 'base'),
+      energyLayer:
+        expectedCard.role === 'base' ? expected.stack.baseEnergyLayer : 0,
+      layer: 0,
+      domOrdinal: expectedCard.dom,
+      logicalOrdinal: expectedCard.logical,
+    });
+    expectStructuredNumber(
+      card.inlineLeftPx,
+      expectedCard.left,
+      `${label}.${expectedCard.role}.inlineLeftPx`
+    );
+    expectRectWithin(
+      card.frameLocalBounds,
+      expectedCard.bounds,
+      `${label}.${expectedCard.role}.frameLocalBounds`
+    );
+    expectRectWithin(
+      card.untransformedFrameLocalBounds,
+      expectedCard.untransformedBounds,
+      `${label}.${expectedCard.role}.untransformedFrameLocalBounds`
+    );
+    expectRectWithin(
+      card.physicalBounds,
+      physicalRectFor(side, expectedCard.bounds, oracle.expected.frames),
+      `${label}.${expectedCard.role}.physicalBounds`
+    );
+    expectRectWithin(
+      card.untransformedPhysicalBounds,
+      physicalRectFor(
+        side,
+        expectedCard.untransformedBounds,
+        oracle.expected.frames
+      ),
+      `${label}.${expectedCard.role}.untransformedPhysicalBounds`
+    );
+    expect(
+      modularDegreesBetween(
+        card.effectiveRotationDegrees,
+        (expectedCard.rotation + (side === 'local' ? 0 : 180)) % 360
+      ),
+      `${label}.${expectedCard.role}.effectiveRotationDegrees`
+    ).toBeLessThanOrEqual(oracle.tolerances.rotationDegrees);
+  }
+};
+
+test('checked-in legacy sources characterize mixed Energy and Trainer-as-Tool attachment, departure, restore, and staged swap order', async ({
   page,
 }, testInfo) => {
   test.skip(
@@ -365,19 +668,26 @@ test('checked-in legacy sources characterize mixed Energy and Trainer-as-Tool at
       contentType: 'application/json',
     }
   );
-
   expect(capture.attachmentCases.map((fixtureCase) => fixtureCase.id)).toEqual(
     oracle.input.attachmentCases
   );
   expect(capture.departureCases.map((fixtureCase) => fixtureCase.id)).toEqual(
     oracle.input.departureCases
   );
+  expect(capture.restoreCases.map((fixtureCase) => fixtureCase.id)).toEqual(
+    stagedReplay.restoreCaseIds
+  );
+  expect(capture.stagedSwapCases.map((fixtureCase) => fixtureCase.id)).toEqual(
+    stagedReplay.stagedSwapCaseIds
+  );
   expect(
     new Set([
       ...capture.attachmentCases.map((fixtureCase) => fixtureCase.id),
       ...capture.departureCases.map((fixtureCase) => fixtureCase.id),
+      ...capture.restoreCases.map((fixtureCase) => fixtureCase.id),
+      ...capture.stagedSwapCases.map((fixtureCase) => fixtureCase.id),
     ]).size
-  ).toBe(8);
+  ).toBe(14);
   for (const side of ['local', 'opponent'] as const) {
     expectRectWithin(
       capture.frames[side],
@@ -650,6 +960,116 @@ test('checked-in legacy sources characterize mixed Energy and Trainer-as-Tool at
         );
       }
     }
+  }
+
+  for (const fixtureCase of capture.restoreCases) {
+    const prefix = fixtureCase.id.replace(/-case$/u, '');
+    const template = stagedReplay.restoreTemplates[fixtureCase.scenario];
+    expectStagedPhase(
+      fixtureCase.stagedBeforeRestore,
+      template.stagedRoles,
+      prefix,
+      `${fixtureCase.id}.stagedBeforeRestore`
+    );
+    expectRestoredPhase(
+      fixtureCase.immediatePostRestore,
+      template,
+      fixtureCase.side,
+      prefix,
+      `${fixtureCase.id}.immediatePostRestore`,
+      capture.frames
+    );
+    expectRestoredPhase(
+      fixtureCase.settledPostRestore,
+      template,
+      fixtureCase.side,
+      prefix,
+      `${fixtureCase.id}.settledPostRestore`,
+      capture.frames
+    );
+    expect(fixtureCase.settledPostRestore).toEqual(
+      fixtureCase.immediatePostRestore
+    );
+    expect(fixtureCase.attachTrace).toEqual(template.attachTrace);
+    expect(fixtureCase.cleanup).toEqual(oracle.expected.caseCleanup);
+  }
+
+  for (const fixtureCase of capture.stagedSwapCases) {
+    const prefix = fixtureCase.id.replace(/-case$/u, '');
+    const template = stagedReplay.stagedSwap;
+    expect(fixtureCase.selectedCardId).toBe(stagedRoleId(prefix, 'energyOne'));
+    expect(fixtureCase.priorDeckTopCardId).toBe(
+      stagedRoleId(prefix, 'deckTopTrainerTool')
+    );
+    expectStagedPhase(
+      fixtureCase.stagedBeforeSwap,
+      template.stagedRoles,
+      prefix,
+      `${fixtureCase.id}.stagedBeforeSwap`
+    );
+    expectDeckPhase(
+      fixtureCase.deckBeforeSwap,
+      template.deckRolesBeforeSwap,
+      prefix,
+      `${fixtureCase.id}.deckBeforeSwap`
+    );
+    expectStagedPhase(
+      fixtureCase.stagedAfterSelectedDeparture,
+      template.stagedAfterSelectedRoles,
+      prefix,
+      `${fixtureCase.id}.stagedAfterSelectedDeparture`
+    );
+    expectDeckPhase(
+      fixtureCase.deckAfterSelectedDeparture,
+      template.deckRolesAfterSelectedDeparture,
+      prefix,
+      `${fixtureCase.id}.deckAfterSelectedDeparture`
+    );
+    expectDeckPhase(
+      fixtureCase.deckAfterRotation,
+      template.deckRolesAfterRotation,
+      prefix,
+      `${fixtureCase.id}.deckAfterRotation`
+    );
+    expectStagedPhase(
+      fixtureCase.stagedAfterSwap,
+      template.stagedAfterSwapRoles,
+      prefix,
+      `${fixtureCase.id}.stagedAfterSwap`
+    );
+    expectDeckPhase(
+      fixtureCase.deckAfterSwap,
+      template.deckRolesAfterSwap,
+      prefix,
+      `${fixtureCase.id}.deckAfterSwap`
+    );
+    expect(fixtureCase.resetTrace).toEqual(
+      template.resetTrace.map(({ phase, role }) => ({
+        phase,
+        cardId: stagedRoleId(prefix, role),
+      }))
+    );
+    expectRestoredPhase(
+      fixtureCase.immediatePostRestore,
+      template,
+      fixtureCase.side,
+      prefix,
+      `${fixtureCase.id}.immediatePostRestore`,
+      capture.frames
+    );
+    expectRestoredPhase(
+      fixtureCase.settledPostRestore,
+      template,
+      fixtureCase.side,
+      prefix,
+      `${fixtureCase.id}.settledPostRestore`,
+      capture.frames
+    );
+    expect(fixtureCase.settledPostRestore).toEqual(
+      fixtureCase.immediatePostRestore
+    );
+    expect(fixtureCase.attachTrace).toEqual(template.attachTrace);
+    expect(fixtureCase.cleanup).toEqual(oracle.expected.caseCleanup);
   }
 
   expect(capture.sourceFulfillment.servedPaths).toEqual(

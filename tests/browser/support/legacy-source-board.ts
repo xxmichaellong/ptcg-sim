@@ -422,6 +422,129 @@ export interface LegacyMixedAttachmentDepartureFixtureCase {
   readonly cleanup: LegacyFixtureCleanup;
 }
 
+export type LegacyMixedStagedRole =
+  | 'base'
+  | 'energyOne'
+  | 'energyTwo'
+  | 'trainerToolOne'
+  | 'trainerToolTwo'
+  | 'deckTopTrainerTool'
+  | 'deckRemainderEnergy';
+
+export type LegacyMixedRestoreScenario = 'reverseTwo' | 'interleavedFour';
+
+export interface LegacyMixedSwapResetTraceEntry {
+  readonly phase: 'selectedToDeck' | 'deckRotation' | 'priorTopToStaging';
+  readonly cardId: string;
+}
+
+export interface LegacyMixedStagedCardState {
+  readonly id: string;
+  readonly role: LegacyMixedStagedRole;
+  readonly currentCategory: 'Pokémon' | 'Energy' | 'Trainer';
+  readonly parentZone: 'attachedCards' | 'deck';
+  readonly logicalOrdinal: number;
+  readonly domOrdinal: number;
+  readonly localRotationDegrees: number;
+  readonly zIndex: number;
+  readonly inlineLeftPx: number;
+  readonly inlineBottomPx: number;
+  readonly attached: boolean;
+  readonly target: string;
+  readonly relativeId: null;
+  readonly energyLayer: number;
+  readonly layer: number;
+  readonly sourcePath: string;
+}
+
+export interface LegacyMixedStagedPhase {
+  readonly cards: readonly LegacyMixedStagedCardState[];
+  readonly logicalOrder: readonly string[];
+  readonly domOrder: readonly string[];
+  readonly display: string;
+}
+
+export interface LegacyMixedDeckPhase {
+  readonly cards: readonly LegacyMixedStagedCardState[];
+  readonly logicalOrder: readonly string[];
+  readonly domOrder: readonly string[];
+}
+
+export interface LegacyMixedRestoredCard {
+  readonly id: string;
+  readonly role: LegacyMixedStagedRole;
+  readonly currentCategory: 'Pokémon' | 'Energy' | 'Trainer';
+  readonly physicalBounds: CapturedRect;
+  readonly frameLocalBounds: CapturedRect;
+  readonly untransformedPhysicalBounds: CapturedRect;
+  readonly untransformedFrameLocalBounds: CapturedRect;
+  readonly localRotationDegrees: number;
+  readonly effectiveRotationDegrees: number;
+  readonly zIndex: number;
+  readonly inlineLeftPx: number;
+  readonly attached: boolean;
+  readonly target: string;
+  readonly relativeId: string | null;
+  readonly energyLayer: number;
+  readonly layer: number;
+  readonly domOrdinal: number;
+  readonly logicalOrdinal: number;
+}
+
+export interface LegacyMixedRestoredPhase {
+  readonly cards: readonly LegacyMixedRestoredCard[];
+  readonly observedWrapperCount: number;
+  readonly supersededWrapperConnected: boolean;
+  readonly stagingDisplay: string;
+  readonly stack: {
+    readonly id: string;
+    readonly side: LegacyFixtureSide;
+    readonly physicalBounds: CapturedRect;
+    readonly frameLocalBounds: CapturedRect;
+    readonly baseClientWidth: number;
+    readonly baseEnergyLayer: number;
+    readonly clientWidth: number;
+    readonly authoredWidthPx: number;
+    readonly inlineMarginRight: string;
+    readonly computedMarginRightPx: number;
+    readonly childDomOrder: readonly string[];
+    readonly logicalOrder: readonly string[];
+    readonly hitOrder: Readonly<Record<string, readonly string[]>>;
+    readonly hitPointsFrameLocal: Readonly<Record<string, CapturedPoint>>;
+    readonly hitPointsPhysical: Readonly<Record<string, CapturedPoint>>;
+  };
+}
+
+export interface LegacyMixedRestoreFixtureCase {
+  readonly id: string;
+  readonly side: LegacyFixtureSide;
+  readonly scenario: LegacyMixedRestoreScenario;
+  readonly stagedBeforeRestore: LegacyMixedStagedPhase;
+  readonly immediatePostRestore: LegacyMixedRestoredPhase;
+  readonly settledPostRestore: LegacyMixedRestoredPhase;
+  readonly attachTrace: readonly LegacyMixedAttachmentAttachTraceEntry[];
+  readonly cleanup: LegacyFixtureCleanup;
+}
+
+export interface LegacyMixedStagedSwapFixtureCase {
+  readonly id: string;
+  readonly side: LegacyFixtureSide;
+  readonly selectedCardId: string;
+  readonly priorDeckTopCardId: string;
+  readonly stagedBeforeSwap: LegacyMixedStagedPhase;
+  readonly deckBeforeSwap: LegacyMixedDeckPhase;
+  readonly stagedAfterSelectedDeparture: LegacyMixedStagedPhase;
+  readonly deckAfterSelectedDeparture: LegacyMixedDeckPhase;
+  readonly deckAfterRotation: LegacyMixedDeckPhase;
+  readonly stagedAfterSwap: LegacyMixedStagedPhase;
+  readonly deckAfterSwap: LegacyMixedDeckPhase;
+  readonly resetTrace: readonly LegacyMixedSwapResetTraceEntry[];
+  readonly immediatePostRestore: LegacyMixedRestoredPhase;
+  readonly settledPostRestore: LegacyMixedRestoredPhase;
+  readonly attachTrace: readonly LegacyMixedAttachmentAttachTraceEntry[];
+  readonly cleanup: LegacyFixtureCleanup;
+}
+
 export interface LegacySourceMixedAttachmentOrderFixture {
   readonly frames: Readonly<Record<LegacyFixtureSide, CapturedRect>>;
   readonly frameTransforms: Readonly<
@@ -429,6 +552,8 @@ export interface LegacySourceMixedAttachmentOrderFixture {
   >;
   readonly attachmentCases: readonly LegacyMixedAttachmentOrderFixtureCase[];
   readonly departureCases: readonly LegacyMixedAttachmentDepartureFixtureCase[];
+  readonly restoreCases: readonly LegacyMixedRestoreFixtureCase[];
+  readonly stagedSwapCases: readonly LegacyMixedStagedSwapFixtureCase[];
   readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
 }
 
@@ -2444,6 +2569,50 @@ interface RawMixedAttachmentDepartureCase {
   readonly cleanup: LegacyFixtureCleanup;
 }
 
+type RawMixedRestoredCard = Omit<
+  LegacyMixedRestoredCard,
+  'physicalBounds' | 'untransformedPhysicalBounds' | 'effectiveRotationDegrees'
+>;
+
+interface RawMixedRestoredPhase {
+  readonly cards: readonly RawMixedRestoredCard[];
+  readonly observedWrapperCount: number;
+  readonly supersededWrapperConnected: boolean;
+  readonly stagingDisplay: string;
+  readonly stack: Omit<
+    LegacyMixedRestoredPhase['stack'],
+    'side' | 'physicalBounds' | 'hitPointsPhysical'
+  >;
+}
+
+interface RawMixedRestoreCase {
+  readonly id: string;
+  readonly scenario: LegacyMixedRestoreScenario;
+  readonly stagedBeforeRestore: LegacyMixedStagedPhase;
+  readonly immediatePostRestore: RawMixedRestoredPhase;
+  readonly settledPostRestore: RawMixedRestoredPhase;
+  readonly attachTrace: readonly LegacyMixedAttachmentAttachTraceEntry[];
+  readonly cleanup: LegacyFixtureCleanup;
+}
+
+interface RawMixedStagedSwapCase {
+  readonly id: string;
+  readonly selectedCardId: string;
+  readonly priorDeckTopCardId: string;
+  readonly stagedBeforeSwap: LegacyMixedStagedPhase;
+  readonly deckBeforeSwap: LegacyMixedDeckPhase;
+  readonly stagedAfterSelectedDeparture: LegacyMixedStagedPhase;
+  readonly deckAfterSelectedDeparture: LegacyMixedDeckPhase;
+  readonly deckAfterRotation: LegacyMixedDeckPhase;
+  readonly stagedAfterSwap: LegacyMixedStagedPhase;
+  readonly deckAfterSwap: LegacyMixedDeckPhase;
+  readonly resetTrace: readonly LegacyMixedSwapResetTraceEntry[];
+  readonly immediatePostRestore: RawMixedRestoredPhase;
+  readonly settledPostRestore: RawMixedRestoredPhase;
+  readonly attachTrace: readonly LegacyMixedAttachmentAttachTraceEntry[];
+  readonly cleanup: LegacyFixtureCleanup;
+}
+
 /**
  * Characterizes v1's mixed ordinary-Energy/current-category-Trainer attachment
  * order without executing the application module. In particular, this keeps
@@ -2471,6 +2640,14 @@ export const captureLegacySourceMixedAttachmentOrderFixture = async (
     readonly side: LegacyFixtureSide;
     readonly value: RawMixedAttachmentDepartureCase;
   }> = [];
+  const rawRestoreCases: Array<{
+    readonly side: LegacyFixtureSide;
+    readonly value: RawMixedRestoreCase;
+  }> = [];
+  const rawStagedSwapCases: Array<{
+    readonly side: LegacyFixtureSide;
+    readonly value: RawMixedStagedSwapCase;
+  }> = [];
 
   for (const [side, frameSelector] of [
     ['local', '#selfContainer'],
@@ -2486,6 +2663,8 @@ export const captureLegacySourceMixedAttachmentOrderFixture = async (
         ): Promise<{
           attachmentCases: RawMixedAttachmentOrderCase[];
           departureCases: RawMixedAttachmentDepartureCase[];
+          restoreCases: RawMixedRestoreCase[];
+          stagedSwapCases: RawMixedStagedSwapCase[];
         }> => {
           type FixtureImage = HTMLImageElement & {
             attached: boolean;
@@ -2494,15 +2673,29 @@ export const captureLegacySourceMixedAttachmentOrderFixture = async (
             energyLayer: number;
             layer: number;
           };
-          interface FixtureCard {
-            readonly role: LegacyMixedAttachmentRole;
+          interface FixtureCardBase {
+            readonly role: string;
             readonly currentCategory: 'Pokémon' | 'Energy' | 'Trainer';
             readonly image: FixtureImage;
+          }
+          interface FixtureCard extends FixtureCardBase {
+            readonly role: LegacyMixedAttachmentRole;
+          }
+          interface StagedFixtureCard extends FixtureCardBase {
+            readonly role: LegacyMixedStagedRole;
           }
 
           const active = body.querySelector('#active');
           if (!(active instanceof HTMLElement)) {
             throw new Error('Legacy mixed fixture active region is missing');
+          }
+          const attachedCards = body.querySelector('#attachedCards');
+          const deckElement = body.querySelector('#deck');
+          if (
+            !(attachedCards instanceof HTMLElement) ||
+            !(deckElement instanceof HTMLElement)
+          ) {
+            throw new Error('Legacy mixed fixture staging zones are missing');
           }
           const twoAnimationFrames = () =>
             new Promise<void>((resolve) =>
@@ -2546,8 +2739,8 @@ export const captureLegacySourceMixedAttachmentOrderFixture = async (
             return stack;
           };
           const updateAttachedCardsPosition = (
-            logicalCards: readonly FixtureCard[],
-            movingCard: FixtureCard
+            logicalCards: readonly FixtureCardBase[],
+            movingCard: FixtureCardBase
           ) => {
             for (const card of logicalCards) {
               if (
@@ -2571,7 +2764,7 @@ export const captureLegacySourceMixedAttachmentOrderFixture = async (
               }
             }
           };
-          const decreaseCardLayer = (movingCard: FixtureCard) => {
+          const decreaseCardLayer = (movingCard: FixtureCardBase) => {
             if (!(movingCard.image.relative instanceof HTMLImageElement)) {
               throw new Error('Mixed departure lost its relative base');
             }
@@ -2585,9 +2778,9 @@ export const captureLegacySourceMixedAttachmentOrderFixture = async (
             stack.style.width = `${Number.parseFloat(String(stack.clientWidth)) - adjustment}px`;
           };
           const attachCard = (
-            logicalCards: FixtureCard[],
-            movingCard: FixtureCard,
-            baseCard: FixtureCard,
+            logicalCards: FixtureCardBase[],
+            movingCard: FixtureCardBase,
+            baseCard: FixtureCardBase,
             stack: HTMLElement,
             trace: LegacyMixedAttachmentAttachTraceEntry[],
             allowEnergyToolMove: boolean
@@ -2617,7 +2810,10 @@ export const captureLegacySourceMixedAttachmentOrderFixture = async (
               movingCard.image.style.transform = 'rotate(0deg)';
             }
             trace.push({
-              role: movingCard.role === 'energy' ? 'energy' : 'trainerTool',
+              role:
+                movingCard.currentCategory === 'Energy'
+                  ? 'energy'
+                  : 'trainerTool',
               clientWidthBefore,
               authoredWidthAfterPx: Number.parseFloat(stack.style.width),
               inlineLeftPx: Number.parseFloat(movingCard.image.style.left) || 0,
@@ -3076,6 +3272,370 @@ export const captureLegacySourceMixedAttachmentOrderFixture = async (
             );
             return { base, energy, trainerTool };
           };
+          const stagedCardId = (prefix: string, role: LegacyMixedStagedRole) =>
+            `${prefix}-${role.replace(/([A-Z])/gu, '-$1').toLowerCase()}`;
+          const stagedCategory = (
+            role: LegacyMixedStagedRole
+          ): StagedFixtureCard['currentCategory'] => {
+            if (role === 'base') return 'Pokémon';
+            return role.includes('energy') || role.includes('Energy')
+              ? 'Energy'
+              : 'Trainer';
+          };
+          const buildStagedCards = async (
+            prefix: string,
+            roles: readonly LegacyMixedStagedRole[]
+          ): Promise<StagedFixtureCard[]> => {
+            const cards = roles.map((role) => {
+              const image = document.createElement('img') as FixtureImage;
+              image.dataset.legacyMixedStagedCardId = stagedCardId(
+                prefix,
+                role
+              );
+              image.alt = '';
+              image.src = `${location.origin}/src/assets/cardback.png`;
+              resetImage(image);
+              attachedCards.append(image);
+              return {
+                role,
+                currentCategory: stagedCategory(role),
+                image,
+              } satisfies StagedFixtureCard;
+            });
+            await Promise.all(cards.map((card) => card.image.decode()));
+            attachedCards.style.display = 'block';
+            return cards;
+          };
+          const stagedSnapshot = (
+            logicalCards: readonly StagedFixtureCard[]
+          ): LegacyMixedStagedPhase => {
+            const directImages = [
+              ...attachedCards.querySelectorAll<HTMLImageElement>(
+                ':scope > [data-legacy-mixed-staged-card-id]'
+              ),
+            ];
+            return {
+              cards: logicalCards.map((card, logicalOrdinal) => {
+                const styles = getComputedStyle(card.image);
+                const matrix = new DOMMatrixReadOnly(styles.transform);
+                const parentZone =
+                  card.image.parentElement === attachedCards
+                    ? 'attachedCards'
+                    : card.image.parentElement === deckElement
+                      ? 'deck'
+                      : null;
+                if (!parentZone) {
+                  throw new Error(`Staged ${card.role} has an invalid parent`);
+                }
+                return {
+                  id: card.image.dataset.legacyMixedStagedCardId ?? '',
+                  role: card.role,
+                  currentCategory: card.currentCategory,
+                  parentZone,
+                  logicalOrdinal,
+                  domOrdinal:
+                    parentZone === 'attachedCards'
+                      ? directImages.indexOf(card.image)
+                      : [
+                          ...deckElement.querySelectorAll<HTMLImageElement>(
+                            ':scope > [data-legacy-mixed-staged-card-id]'
+                          ),
+                        ].indexOf(card.image),
+                  localRotationDegrees:
+                    ((Math.atan2(matrix.b, matrix.a) * 180) / Math.PI + 360) %
+                    360,
+                  zIndex: Number.parseInt(styles.zIndex, 10) || 0,
+                  inlineLeftPx: Number.parseFloat(card.image.style.left) || 0,
+                  inlineBottomPx:
+                    Number.parseFloat(card.image.style.bottom) || 0,
+                  attached: card.image.attached,
+                  target: card.image.target,
+                  relativeId: null,
+                  energyLayer: card.image.energyLayer,
+                  layer: card.image.layer,
+                  sourcePath: new URL(card.image.currentSrc).pathname,
+                };
+              }),
+              logicalOrder: logicalCards.map(
+                (card) => card.image.dataset.legacyMixedStagedCardId ?? ''
+              ),
+              domOrder: directImages.map(
+                (image) => image.dataset.legacyMixedStagedCardId ?? ''
+              ),
+              display: getComputedStyle(attachedCards).display,
+            };
+          };
+          const deckSnapshot = (
+            logicalCards: readonly StagedFixtureCard[]
+          ): LegacyMixedDeckPhase => {
+            const directImages = [
+              ...deckElement.querySelectorAll<HTMLImageElement>(
+                ':scope > [data-legacy-mixed-staged-card-id]'
+              ),
+            ];
+            return {
+              cards: logicalCards.map((card, logicalOrdinal) => {
+                if (card.image.parentElement !== deckElement) {
+                  throw new Error(`Deck ${card.role} has an invalid parent`);
+                }
+                const styles = getComputedStyle(card.image);
+                const matrix = new DOMMatrixReadOnly(styles.transform);
+                return {
+                  id: card.image.dataset.legacyMixedStagedCardId ?? '',
+                  role: card.role,
+                  currentCategory: card.currentCategory,
+                  parentZone: 'deck',
+                  logicalOrdinal,
+                  domOrdinal: directImages.indexOf(card.image),
+                  localRotationDegrees:
+                    ((Math.atan2(matrix.b, matrix.a) * 180) / Math.PI + 360) %
+                    360,
+                  zIndex: Number.parseInt(styles.zIndex, 10) || 0,
+                  inlineLeftPx: Number.parseFloat(card.image.style.left) || 0,
+                  inlineBottomPx:
+                    Number.parseFloat(card.image.style.bottom) || 0,
+                  attached: card.image.attached,
+                  target: card.image.target,
+                  relativeId: null,
+                  energyLayer: card.image.energyLayer,
+                  layer: card.image.layer,
+                  sourcePath: new URL(card.image.currentSrc).pathname,
+                };
+              }),
+              logicalOrder: logicalCards.map(
+                (card) => card.image.dataset.legacyMixedStagedCardId ?? ''
+              ),
+              domOrder: directImages.map(
+                (image) => image.dataset.legacyMixedStagedCardId ?? ''
+              ),
+            };
+          };
+          const snapshotRestored = (
+            stack: HTMLElement,
+            logicalCards: readonly StagedFixtureCard[]
+          ): RawMixedRestoredPhase => {
+            const stackCards = logicalCards.filter(
+              (card) => card.image.parentElement === stack
+            );
+            const paintedBounds = new Map(
+              stackCards.map((card) => [
+                card,
+                card.image.getBoundingClientRect(),
+              ])
+            );
+            const untransformedBounds = new Map<StagedFixtureCard, DOMRect>();
+            for (const card of stackCards) {
+              const transform = card.image.style.transform;
+              try {
+                card.image.style.transform = 'none';
+                untransformedBounds.set(
+                  card,
+                  card.image.getBoundingClientRect()
+                );
+              } finally {
+                card.image.style.transform = transform;
+              }
+            }
+            const idsAt = (point: CapturedPoint) =>
+              document
+                .elementsFromPoint(point.x, point.y)
+                .flatMap((candidate) => {
+                  const image = candidate.closest<HTMLImageElement>(
+                    '[data-legacy-mixed-staged-card-id]'
+                  );
+                  return image?.dataset.legacyMixedStagedCardId &&
+                    stackCards.some((card) => card.image === image)
+                    ? [image.dataset.legacyMixedStagedCardId]
+                    : [];
+                })
+                .filter((id, index, ids) => ids.indexOf(id) === index);
+            const hitPointsFrameLocal: Record<string, CapturedPoint> = {};
+            const allBounds = [...paintedBounds.values()];
+            if (allBounds.length === 0) {
+              throw new Error('Restored mixed stack has no cards');
+            }
+            const common = requireInterior(
+              {
+                left: Math.max(...allBounds.map((bounds) => bounds.left)) + 2,
+                right: Math.min(...allBounds.map((bounds) => bounds.right)) - 2,
+                top: Math.max(...allBounds.map((bounds) => bounds.top)) + 2,
+                bottom:
+                  Math.min(...allBounds.map((bounds) => bounds.bottom)) - 2,
+              },
+              'Restored mixed common overlap'
+            );
+            hitPointsFrameLocal['commonOverlap'] = center(common);
+            for (const card of stackCards) {
+              const bounds = paintedBounds.get(card);
+              if (!bounds) throw new Error(`Restored ${card.role} lost bounds`);
+              hitPointsFrameLocal[`center-${card.role}`] = center(bounds);
+            }
+            const rightmost = stackCards.reduce((selected, card) => {
+              const selectedBounds = paintedBounds.get(selected);
+              const cardBounds = paintedBounds.get(card);
+              if (!selectedBounds || !cardBounds) {
+                throw new Error('Restored mixed rightmost bounds are missing');
+              }
+              return cardBounds.right > selectedBounds.right ? card : selected;
+            });
+            const rightmostBounds = paintedBounds.get(rightmost);
+            if (!rightmostBounds) {
+              throw new Error('Restored mixed rightmost card is missing');
+            }
+            hitPointsFrameLocal['rightmostPaint'] = {
+              x: rightmostBounds.right - 2,
+              y: (rightmostBounds.top + rightmostBounds.bottom) / 2,
+            };
+            const stackBounds = stack.getBoundingClientRect();
+            const stackStyles = getComputedStyle(stack);
+            const observedWrappers = [
+              ...active.querySelectorAll<HTMLElement>(
+                '[data-legacy-mixed-staged-stack-id]'
+              ),
+            ];
+            const base = stackCards.find((card) => card.role === 'base');
+            if (!base) throw new Error('Restored mixed stack lacks its base');
+            return {
+              cards: stackCards.map((card) => {
+                const painted = paintedBounds.get(card);
+                const untransformed = untransformedBounds.get(card);
+                if (!painted || !untransformed) {
+                  throw new Error(`Restored ${card.role} bounds are missing`);
+                }
+                const styles = getComputedStyle(card.image);
+                const matrix = new DOMMatrixReadOnly(styles.transform);
+                return {
+                  id: card.image.dataset.legacyMixedStagedCardId ?? '',
+                  role: card.role,
+                  currentCategory: card.currentCategory,
+                  frameLocalBounds: rect(painted),
+                  untransformedFrameLocalBounds: rect(untransformed),
+                  localRotationDegrees:
+                    ((Math.atan2(matrix.b, matrix.a) * 180) / Math.PI + 360) %
+                    360,
+                  zIndex: Number.parseInt(styles.zIndex, 10) || 0,
+                  inlineLeftPx: Number.parseFloat(card.image.style.left) || 0,
+                  attached: card.image.attached,
+                  target: card.image.target,
+                  relativeId:
+                    card.image.relative instanceof HTMLImageElement
+                      ? (card.image.relative.dataset.legacyMixedStagedCardId ??
+                        null)
+                      : null,
+                  energyLayer: card.image.energyLayer,
+                  layer: card.image.layer,
+                  domOrdinal: [
+                    ...stack.querySelectorAll<HTMLImageElement>(
+                      ':scope > [data-legacy-mixed-staged-card-id]'
+                    ),
+                  ].indexOf(card.image),
+                  logicalOrdinal: logicalCards.indexOf(card),
+                };
+              }),
+              observedWrapperCount: observedWrappers.length,
+              supersededWrapperConnected: observedWrappers.some(
+                (candidate) => candidate !== stack
+              ),
+              stagingDisplay: getComputedStyle(attachedCards).display,
+              stack: {
+                id: stack.dataset.legacyMixedStagedStackId ?? '',
+                frameLocalBounds: rect(stackBounds),
+                baseClientWidth: base.image.clientWidth,
+                baseEnergyLayer: base.image.energyLayer,
+                clientWidth: stack.clientWidth,
+                authoredWidthPx:
+                  Number.parseFloat(stack.style.width) || stack.clientWidth,
+                inlineMarginRight: stack.style.marginRight,
+                computedMarginRightPx:
+                  Number.parseFloat(stackStyles.marginRight) || 0,
+                childDomOrder: [
+                  ...stack.querySelectorAll<HTMLImageElement>(
+                    ':scope > [data-legacy-mixed-staged-card-id]'
+                  ),
+                ].map((image) => image.dataset.legacyMixedStagedCardId ?? ''),
+                logicalOrder: stackCards.map(
+                  (card) => card.image.dataset.legacyMixedStagedCardId ?? ''
+                ),
+                hitOrder: Object.fromEntries(
+                  Object.entries(hitPointsFrameLocal).map(([label, point]) => [
+                    label,
+                    idsAt(point),
+                  ])
+                ),
+                hitPointsFrameLocal,
+              },
+            };
+          };
+          const leaveAll = (
+            stagedCards: StagedFixtureCard[],
+            prefix: string
+          ) => {
+            const logicalCards: StagedFixtureCard[] = [];
+            let target: StagedFixtureCard | undefined;
+            let stack: HTMLElement | undefined;
+            let observer: MutationObserver | undefined;
+            const trace: LegacyMixedAttachmentAttachTraceEntry[] = [];
+            for (let index = stagedCards.length - 1; index >= 0; index -= 1) {
+              const card = stagedCards[index];
+              if (card?.currentCategory === 'Pokémon') {
+                target = card;
+                stagedCards.splice(index, 1);
+                logicalCards.push(card);
+                resetImage(card.image);
+                stack = document.createElement('div');
+                stack.className = 'play-container';
+                stack.style.zIndex = '0';
+                stack.dataset.legacyMixedStagedStackId = `${prefix}-restored-stack`;
+                active.append(stack);
+                stack.append(card.image);
+                observer = observeEmptyStack(stack);
+                break;
+              }
+            }
+            for (let index = stagedCards.length - 1; index >= 0; index -= 1) {
+              const card = stagedCards[index];
+              if (card?.currentCategory === 'Pokémon') {
+                throw new Error(
+                  'This bounded mixed leaveAll fixture has multiple Pokémon'
+                );
+              }
+            }
+            if (!target || !stack) {
+              throw new Error('Mixed leaveAll fixture lacks its base Pokémon');
+            }
+            const attachmentCount = stagedCards.length;
+            for (let index = 0; index < attachmentCount; index += 1) {
+              const moving = stagedCards[0];
+              if (!moving) throw new Error('Mixed staged card disappeared');
+              stagedCards.splice(0, 1);
+              logicalCards.push(moving);
+              attachCard(logicalCards, moving, target, stack, trace, true);
+            }
+            attachedCards.style.display = 'none';
+            if (!observer) {
+              throw new Error(
+                'Mixed leaveAll fixture lacks its stack observer'
+              );
+            }
+            return { logicalCards, stack, trace, observer };
+          };
+          const cleanupStagedFixture = (): LegacyFixtureCleanup => {
+            body
+              .querySelectorAll<HTMLElement>(
+                '[data-legacy-mixed-staged-card-id], [data-legacy-mixed-staged-stack-id]'
+              )
+              .forEach((element) => element.remove());
+            attachedCards.style.display = 'none';
+            return {
+              observedWrapperCount: active.querySelectorAll(
+                '[data-legacy-mixed-staged-stack-id]'
+              ).length,
+              observedCardCount: body.querySelectorAll(
+                '[data-legacy-mixed-staged-card-id]'
+              ).length,
+              sinkConnected: false,
+            };
+          };
 
           const attachmentCases: RawMixedAttachmentOrderCase[] = [];
           for (const order of [
@@ -3240,7 +3800,153 @@ export const captureLegacySourceMixedAttachmentOrderFixture = async (
               cleanup: cleanup(sink),
             });
           }
-          return { attachmentCases, departureCases };
+
+          const restoreCases: RawMixedRestoreCase[] = [];
+          for (const scenario of ['reverseTwo', 'interleavedFour'] as const) {
+            active.replaceChildren();
+            cleanupStagedFixture();
+            const prefix = `${input.side}-restore-${
+              scenario === 'reverseTwo' ? 'reverse-two' : 'interleaved-four'
+            }`;
+            const roles: readonly LegacyMixedStagedRole[] =
+              scenario === 'reverseTwo'
+                ? ['base', 'trainerToolOne', 'energyOne']
+                : [
+                    'base',
+                    'trainerToolOne',
+                    'energyOne',
+                    'trainerToolTwo',
+                    'energyTwo',
+                  ];
+            const stagedCards = await buildStagedCards(prefix, roles);
+            const stagedBeforeRestore = stagedSnapshot(stagedCards);
+            const restored = leaveAll(stagedCards, prefix);
+            const immediatePostRestore = snapshotRestored(
+              restored.stack,
+              restored.logicalCards
+            );
+            await twoAnimationFrames();
+            const settledPostRestore = snapshotRestored(
+              restored.stack,
+              restored.logicalCards
+            );
+            restored.observer.disconnect();
+            restoreCases.push({
+              id: `${prefix}-case`,
+              scenario,
+              stagedBeforeRestore,
+              immediatePostRestore,
+              settledPostRestore,
+              attachTrace: restored.trace,
+              cleanup: cleanupStagedFixture(),
+            });
+          }
+
+          active.replaceChildren();
+          cleanupStagedFixture();
+          const swapPrefix = `${input.side}-staged-multi-swap`;
+          const stagedCards = await buildStagedCards(swapPrefix, [
+            'base',
+            'trainerToolOne',
+            'energyOne',
+            'trainerToolTwo',
+            'energyTwo',
+          ]);
+          const deckCards = await buildStagedCards(swapPrefix, [
+            'deckTopTrainerTool',
+            'deckRemainderEnergy',
+          ]);
+          for (const card of deckCards) {
+            deckElement.append(card.image);
+          }
+          const deckCardsLogical = [...deckCards];
+          const resetTrace: LegacyMixedSwapResetTraceEntry[] = [];
+          const resetSwapCard = (
+            card: StagedFixtureCard,
+            phase: LegacyMixedSwapResetTraceEntry['phase']
+          ) => {
+            resetImage(card.image);
+            resetTrace.push({
+              phase,
+              cardId: card.image.dataset.legacyMixedStagedCardId ?? '',
+            });
+          };
+          const stagedBeforeSwap = stagedSnapshot(stagedCards);
+          const deckBeforeSwap = deckSnapshot(deckCardsLogical);
+          const selected = stagedCards.find(
+            (card) => card.role === 'energyOne'
+          );
+          const priorDeckTop = deckCardsLogical[0];
+          if (!selected || !priorDeckTop) {
+            throw new Error(
+              'Mixed staged swap lacks selected or deck-top card'
+            );
+          }
+          const selectedIndex = stagedCards.indexOf(selected);
+          stagedCards.splice(selectedIndex, 1);
+          deckCardsLogical.push(selected);
+          resetSwapCard(selected, 'selectedToDeck');
+          deckElement.append(selected.image);
+          const stagedAfterSelectedDeparture = stagedSnapshot(stagedCards);
+          const deckAfterSelectedDeparture = deckSnapshot(deckCardsLogical);
+          const initialDeckCount = deckCardsLogical.length;
+          for (let index = 0; index < initialDeckCount - 1; index += 1) {
+            const moving = deckCardsLogical.shift();
+            if (!moving) throw new Error('Mixed staged swap deck is empty');
+            deckCardsLogical.push(moving);
+            resetSwapCard(moving, 'deckRotation');
+            deckElement.append(moving.image);
+          }
+          const deckAfterRotation = deckSnapshot(deckCardsLogical);
+          const returned = deckCardsLogical[1];
+          if (returned !== priorDeckTop) {
+            throw new Error('Mixed staged swap did not retain the prior top');
+          }
+          deckCardsLogical.splice(1, 1);
+          stagedCards.push(returned);
+          resetSwapCard(returned, 'priorTopToStaging');
+          attachedCards.append(returned.image);
+          attachedCards.style.display = 'block';
+          const stagedAfterSwap = stagedSnapshot(stagedCards);
+          const deckAfterSwap = deckSnapshot(deckCardsLogical);
+          const restoredSwap = leaveAll(stagedCards, swapPrefix);
+          const immediatePostRestore = snapshotRestored(
+            restoredSwap.stack,
+            restoredSwap.logicalCards
+          );
+          await twoAnimationFrames();
+          const settledPostRestore = snapshotRestored(
+            restoredSwap.stack,
+            restoredSwap.logicalCards
+          );
+          restoredSwap.observer.disconnect();
+          const stagedSwapCases: RawMixedStagedSwapCase[] = [
+            {
+              id: `${swapPrefix}-case`,
+              selectedCardId:
+                selected.image.dataset.legacyMixedStagedCardId ?? '',
+              priorDeckTopCardId:
+                priorDeckTop.image.dataset.legacyMixedStagedCardId ?? '',
+              stagedBeforeSwap,
+              deckBeforeSwap,
+              stagedAfterSelectedDeparture,
+              deckAfterSelectedDeparture,
+              deckAfterRotation,
+              stagedAfterSwap,
+              deckAfterSwap,
+              resetTrace,
+              immediatePostRestore,
+              settledPostRestore,
+              attachTrace: restoredSwap.trace,
+              cleanup: cleanupStagedFixture(),
+            },
+          ];
+          return {
+            attachmentCases,
+            departureCases,
+            restoreCases,
+            stagedSwapCases,
+          };
         },
         { side }
       );
@@ -3249,6 +3955,12 @@ export const captureLegacySourceMixedAttachmentOrderFixture = async (
     );
     rawDepartureCases.push(
       ...captured.departureCases.map((value) => ({ side, value }))
+    );
+    rawRestoreCases.push(
+      ...captured.restoreCases.map((value) => ({ side, value }))
+    );
+    rawStagedSwapCases.push(
+      ...captured.stagedSwapCases.map((value) => ({ side, value }))
     );
   }
 
@@ -3343,6 +4055,55 @@ export const captureLegacySourceMixedAttachmentOrderFixture = async (
       stablePostRefresh: convertPhase(side, value.stablePostRefresh),
     })
   );
+  const convertRestoredPhase = (
+    side: LegacyFixtureSide,
+    phase: RawMixedRestoredPhase
+  ): LegacyMixedRestoredPhase => ({
+    ...phase,
+    cards: phase.cards.map((card) => ({
+      ...card,
+      physicalBounds: physicalRect(side, card.frameLocalBounds),
+      untransformedPhysicalBounds: physicalRect(
+        side,
+        card.untransformedFrameLocalBounds
+      ),
+      effectiveRotationDegrees:
+        (card.localRotationDegrees + frameTransforms[side].rotationDegrees) %
+        360,
+    })),
+    stack: {
+      ...phase.stack,
+      side,
+      physicalBounds: physicalRect(side, phase.stack.frameLocalBounds),
+      hitPointsPhysical: Object.fromEntries(
+        Object.entries(phase.stack.hitPointsFrameLocal).map(
+          ([label, point]) => [label, physicalPoint(side, point)]
+        )
+      ),
+    },
+  });
+  const restoreCases = rawRestoreCases.map(
+    ({ side, value }): LegacyMixedRestoreFixtureCase => ({
+      ...value,
+      side,
+      immediatePostRestore: convertRestoredPhase(
+        side,
+        value.immediatePostRestore
+      ),
+      settledPostRestore: convertRestoredPhase(side, value.settledPostRestore),
+    })
+  );
+  const stagedSwapCases = rawStagedSwapCases.map(
+    ({ side, value }): LegacyMixedStagedSwapFixtureCase => ({
+      ...value,
+      side,
+      immediatePostRestore: convertRestoredPhase(
+        side,
+        value.immediatePostRestore
+      ),
+      settledPostRestore: convertRestoredPhase(side, value.settledPostRestore),
+    })
+  );
 
   requireServedPaths(loaded, containedCardFixtureAssetPaths);
   requireNoUnexpectedSameOriginPaths(loaded);
@@ -3351,6 +4112,8 @@ export const captureLegacySourceMixedAttachmentOrderFixture = async (
     frameTransforms,
     attachmentCases,
     departureCases,
+    restoreCases,
+    stagedSwapCases,
     sourceFulfillment: sourceFulfillment(loaded),
   };
 };

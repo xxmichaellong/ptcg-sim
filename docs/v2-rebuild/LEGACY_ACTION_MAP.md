@@ -117,9 +117,15 @@ without orphaning them.
 `RestoreStagedStack` implements the logical `leaveAll` transition. It consumes
 the exact work-area version, preserves evolution and attachment classification,
 creates a fresh stack in active or bench, and validates the complete prior board
-layout. `MoveStagedCard` resolves staged cards individually when no Pokémon
-remains to restore. An occupied work area rejects another dependent-producing
-departure but does not block an independent single-card stack departure.
+layout. The new `StagedStackRestoredToPlayStack` event additionally freezes the
+full-list attachment ordering version, exact staged input, and computed output.
+For a fully supported Energy/Trainer list it stable-partitions Energy before
+Trainer, matching `leaveAll`'s replay through ordinary attachment behavior;
+unsupported membership remains in recorded order. Historical
+`StagedStackRestored` events retain exact-order replay. `MoveStagedCard` resolves
+staged cards individually when no Pokémon remains to restore. An occupied work
+area rejects another dependent-producing departure but does not block an
+independent single-card stack departure.
 
 Ordinary direct non-Pokémon ingress onto an existing live stack now emits the
 versioned `CardAttachedToPlayStack` event. `attachmentOrderVersion: 1` freezes
@@ -131,13 +137,16 @@ Older `CardMovedToPlay` attachment events remain append-only during replay, so
 historical reverse order is not rewritten merely by loading it.
 
 `SetCardCategory` is prohibited while the target is an evolution or attachment
-member of a live stack. Such a category change must first perform a semantic
-departure. Restoration from staging, attachment-resolution work areas, and
-whole-stack active/bench swaps preserve recorded order and do not run the
-ordinary-ingress rule. Work-area/deck-top swaps preserve the selected logical
-position rather than normalizing the surrounding staged list. Reverse and
-unsupported histories remain noncanonical or deferred. This domain
-normalization does not claim a production mixed Energy/Trainer renderer.
+member of a live stack or its attachment-resolution work area. Such a category
+change must first perform a semantic departure. Work-area/deck-top swaps retain
+the v2 exact-position replacement policy and otherwise preserve the staged
+list; this deliberately differs from the legacy implementation's remove,
+deck-rotation, and old-top append sequence. A subsequent current restore runs
+the versioned full-list rule, while the old restore event, whole-stack
+active/bench movement, snapshots, and undo preserve recorded order. Reverse and
+unsupported histories remain valid outside the v1 normalized transition
+subset. This domain normalization does not claim a production mixed
+Energy/Trainer renderer.
 
 Whole-stack active/bench movement uses a separate atomic layout command for
 promotion, demotion, swapping, and bench reordering, including v1's asymmetric
@@ -199,8 +208,8 @@ survive attachment staging/restoration. A marked discard card promoted to a new
 host transfers the marker to its new stack, while ordinary movement and card
 normalization clear transient per-card markers.
 
-`ChangeCardCategory` replaces the unsafe client sequence of moving and then
-mutating a card. It carries an opaque card handle, exact expected source, and
+`ChangeCardCategory` replaces the unsafe client sequence of mutating and then
+moving a card. It carries an opaque card handle, exact expected source, and
 one of Pokémon/Trainer/Energy. The authority resolves the source and owner, then
 publishes the legal departure to that player's loose board and category change
 as one revision. Lower evolution cards, stale handles, foreign targets, board
