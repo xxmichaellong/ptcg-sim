@@ -1,0 +1,1957 @@
+{
+  "schema": "ptcgsim-public-api-v1",
+  "packages": [
+    {
+      "package": "@ptcgsim/client-session",
+      "root": "packages/client-session",
+      "entrypoints": [
+        {
+          "subpath": ".",
+          "source": "packages/client-session/src/index.ts",
+          "symbols": [
+            {
+              "name": "assertProjectedReplayArtifact",
+              "kind": "value"
+            },
+            {
+              "name": "ClientSessionDependencies",
+              "kind": "type"
+            },
+            {
+              "name": "ClientSessionFailure",
+              "kind": "type"
+            },
+            {
+              "name": "ClientSessionPhase",
+              "kind": "type"
+            },
+            {
+              "name": "ClientSessionPolicy",
+              "kind": "type"
+            },
+            {
+              "name": "ClientSessionScheduler",
+              "kind": "type"
+            },
+            {
+              "name": "ClientSessionState",
+              "kind": "type"
+            },
+            {
+              "name": "collectProjectedReplayProblems",
+              "kind": "value"
+            },
+            {
+              "name": "CommandFailureCode",
+              "kind": "type"
+            },
+            {
+              "name": "CompletedCommandSummary",
+              "kind": "type"
+            },
+            {
+              "name": "ConnectSessionOptions",
+              "kind": "type"
+            },
+            {
+              "name": "createBrowserWebSocketFactory",
+              "kind": "value"
+            },
+            {
+              "name": "DEFAULT_CLIENT_SESSION_POLICY",
+              "kind": "value"
+            },
+            {
+              "name": "EmptyReplayPlaybackState",
+              "kind": "type"
+            },
+            {
+              "name": "InvalidProjectedReplayError",
+              "kind": "type-value"
+            },
+            {
+              "name": "PendingCommandSummary",
+              "kind": "type"
+            },
+            {
+              "name": "ProjectedReplayArtifact",
+              "kind": "type"
+            },
+            {
+              "name": "ProjectedReplayFrame",
+              "kind": "type"
+            },
+            {
+              "name": "ReadyReplayPlaybackState",
+              "kind": "type"
+            },
+            {
+              "name": "RemoteGameSession",
+              "kind": "type-value"
+            },
+            {
+              "name": "ReplayPlaybackAction",
+              "kind": "type"
+            },
+            {
+              "name": "ReplayPlaybackController",
+              "kind": "type-value"
+            },
+            {
+              "name": "ReplayPlaybackState",
+              "kind": "type"
+            },
+            {
+              "name": "SessionSocket",
+              "kind": "type"
+            },
+            {
+              "name": "SessionSocketCloseEvent",
+              "kind": "type"
+            },
+            {
+              "name": "SessionSocketFactory",
+              "kind": "type"
+            },
+            {
+              "name": "SessionSocketHandlers",
+              "kind": "type"
+            },
+            {
+              "name": "SubmitCommandResult",
+              "kind": "type"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "@ptcgsim/game-core",
+      "root": "packages/game-core",
+      "entrypoints": [
+        {
+          "subpath": ".",
+          "source": "packages/game-core/src/index.ts",
+          "symbols": [
+            {
+              "name": "analyzePlayerReset",
+              "kind": "value"
+            },
+            {
+              "name": "applyEvent",
+              "kind": "value"
+            },
+            {
+              "name": "applyEventBatch",
+              "kind": "value"
+            },
+            {
+              "name": "asCardDefinitionId",
+              "kind": "value"
+            },
+            {
+              "name": "asCardInstanceId",
+              "kind": "value"
+            },
+            {
+              "name": "asCommandId",
+              "kind": "value"
+            },
+            {
+              "name": "asEventBatchId",
+              "kind": "value"
+            },
+            {
+              "name": "asInspectionId",
+              "kind": "value"
+            },
+            {
+              "name": "asMatchId",
+              "kind": "value"
+            },
+            {
+              "name": "asPlayerId",
+              "kind": "value"
+            },
+            {
+              "name": "assertMatchInvariants",
+              "kind": "value"
+            },
+            {
+              "name": "asStackId",
+              "kind": "value"
+            },
+            {
+              "name": "asViewCardId",
+              "kind": "value"
+            },
+            {
+              "name": "asViewDefinitionId",
+              "kind": "value"
+            },
+            {
+              "name": "asWorkAreaId",
+              "kind": "value"
+            },
+            {
+              "name": "asZoneId",
+              "kind": "value"
+            },
+            {
+              "name": "AttachmentResolutionWorkArea",
+              "kind": "type"
+            },
+            {
+              "name": "Brand",
+              "kind": "type"
+            },
+            {
+              "name": "CardCategory",
+              "kind": "type"
+            },
+            {
+              "name": "CardDefinition",
+              "kind": "type"
+            },
+            {
+              "name": "CardDefinitionId",
+              "kind": "type"
+            },
+            {
+              "name": "CardFace",
+              "kind": "type"
+            },
+            {
+              "name": "CardInstance",
+              "kind": "type"
+            },
+            {
+              "name": "CardInstanceId",
+              "kind": "type"
+            },
+            {
+              "name": "CardLocation",
+              "kind": "type"
+            },
+            {
+              "name": "cardSourceSnapshot",
+              "kind": "value"
+            },
+            {
+              "name": "CardSourceSnapshot",
+              "kind": "type"
+            },
+            {
+              "name": "CardZone",
+              "kind": "type"
+            },
+            {
+              "name": "cloneMatchState",
+              "kind": "value"
+            },
+            {
+              "name": "collectInvariantProblems",
+              "kind": "value"
+            },
+            {
+              "name": "CommandAccepted",
+              "kind": "type"
+            },
+            {
+              "name": "CommandContext",
+              "kind": "type"
+            },
+            {
+              "name": "CommandDecision",
+              "kind": "type"
+            },
+            {
+              "name": "CommandExecution",
+              "kind": "type"
+            },
+            {
+              "name": "CommandId",
+              "kind": "type"
+            },
+            {
+              "name": "CommandRejection",
+              "kind": "type"
+            },
+            {
+              "name": "CommandRejectionCode",
+              "kind": "type"
+            },
+            {
+              "name": "ConcealedViewCard",
+              "kind": "type"
+            },
+            {
+              "name": "createEmptyMatch",
+              "kind": "value"
+            },
+            {
+              "name": "decideCommand",
+              "kind": "value"
+            },
+            {
+              "name": "DeckEntry",
+              "kind": "type"
+            },
+            {
+              "name": "DomainEvent",
+              "kind": "type"
+            },
+            {
+              "name": "EventBatch",
+              "kind": "type"
+            },
+            {
+              "name": "EventBatchId",
+              "kind": "type"
+            },
+            {
+              "name": "executeCommand",
+              "kind": "value"
+            },
+            {
+              "name": "findCardLocation",
+              "kind": "value"
+            },
+            {
+              "name": "findCardLocations",
+              "kind": "value"
+            },
+            {
+              "name": "GameCommand",
+              "kind": "type"
+            },
+            {
+              "name": "InspectionId",
+              "kind": "type"
+            },
+            {
+              "name": "InspectionWorkArea",
+              "kind": "type"
+            },
+            {
+              "name": "isCardKnownToViewer",
+              "kind": "value"
+            },
+            {
+              "name": "KnownViewCard",
+              "kind": "type"
+            },
+            {
+              "name": "LooseBoardCardsDestination",
+              "kind": "type"
+            },
+            {
+              "name": "MATCH_STATE_SCHEMA_VERSION",
+              "kind": "value"
+            },
+            {
+              "name": "MatchId",
+              "kind": "type"
+            },
+            {
+              "name": "MatchInvariantError",
+              "kind": "type-value"
+            },
+            {
+              "name": "MatchSeatInput",
+              "kind": "type"
+            },
+            {
+              "name": "MatchState",
+              "kind": "type"
+            },
+            {
+              "name": "MatchViewState",
+              "kind": "type"
+            },
+            {
+              "name": "MatchVisibility",
+              "kind": "type"
+            },
+            {
+              "name": "MAX_DECK_CARDS",
+              "kind": "value"
+            },
+            {
+              "name": "OncePerGameMarkers",
+              "kind": "type"
+            },
+            {
+              "name": "PlayerBoard",
+              "kind": "type"
+            },
+            {
+              "name": "PlayerId",
+              "kind": "type"
+            },
+            {
+              "name": "PlayerResetAnalysis",
+              "kind": "type"
+            },
+            {
+              "name": "PlayerState",
+              "kind": "type"
+            },
+            {
+              "name": "PlayerWorkAreas",
+              "kind": "type"
+            },
+            {
+              "name": "playerZoneId",
+              "kind": "value"
+            },
+            {
+              "name": "PlayerZoneKind",
+              "kind": "type"
+            },
+            {
+              "name": "PlaySlot",
+              "kind": "type"
+            },
+            {
+              "name": "PlayStack",
+              "kind": "type"
+            },
+            {
+              "name": "ProjectionIdentityAdapter",
+              "kind": "type"
+            },
+            {
+              "name": "projectMatch",
+              "kind": "value"
+            },
+            {
+              "name": "publicVisibilityFace",
+              "kind": "value"
+            },
+            {
+              "name": "QuarterTurns",
+              "kind": "type"
+            },
+            {
+              "name": "resetReturnCapacityIsValid",
+              "kind": "value"
+            },
+            {
+              "name": "soloUndoCheckpointProblem",
+              "kind": "value"
+            },
+            {
+              "name": "SpecialCondition",
+              "kind": "type"
+            },
+            {
+              "name": "stableHash",
+              "kind": "value"
+            },
+            {
+              "name": "stableSerialize",
+              "kind": "value"
+            },
+            {
+              "name": "StackId",
+              "kind": "type"
+            },
+            {
+              "name": "stadiumZoneId",
+              "kind": "value"
+            },
+            {
+              "name": "StagedCardsDestination",
+              "kind": "type"
+            },
+            {
+              "name": "TurnState",
+              "kind": "type"
+            },
+            {
+              "name": "ViewCard",
+              "kind": "type"
+            },
+            {
+              "name": "ViewCardDefinition",
+              "kind": "type"
+            },
+            {
+              "name": "ViewCardId",
+              "kind": "type"
+            },
+            {
+              "name": "ViewDefinitionId",
+              "kind": "type"
+            },
+            {
+              "name": "ViewerRole",
+              "kind": "type"
+            },
+            {
+              "name": "VisibilityGrant",
+              "kind": "type"
+            },
+            {
+              "name": "WorkAreaCardsDestination",
+              "kind": "type"
+            },
+            {
+              "name": "WorkAreaId",
+              "kind": "type"
+            },
+            {
+              "name": "ZoneId",
+              "kind": "type"
+            },
+            {
+              "name": "ZoneKind",
+              "kind": "type"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "@ptcgsim/protocol",
+      "root": "packages/protocol",
+      "entrypoints": [
+        {
+          "subpath": ".",
+          "source": "packages/protocol/src/index.ts",
+          "symbols": [
+            {
+              "name": "ClientMessage",
+              "kind": "type"
+            },
+            {
+              "name": "ClientMessageSchema",
+              "kind": "value"
+            },
+            {
+              "name": "FrameParseResult",
+              "kind": "type"
+            },
+            {
+              "name": "hydrateMatchViewState",
+              "kind": "value"
+            },
+            {
+              "name": "MatchViewStateSchema",
+              "kind": "value"
+            },
+            {
+              "name": "MAX_CHAT_CODE_UNITS",
+              "kind": "value"
+            },
+            {
+              "name": "MAX_CLIENT_FRAME_CODE_UNITS",
+              "kind": "value"
+            },
+            {
+              "name": "MAX_DECK_CARDS",
+              "kind": "value"
+            },
+            {
+              "name": "MAX_DECK_ENTRIES",
+              "kind": "value"
+            },
+            {
+              "name": "MAX_REPLAY_FRAMES",
+              "kind": "value"
+            },
+            {
+              "name": "MAX_ROOM_CODE_LENGTH",
+              "kind": "value"
+            },
+            {
+              "name": "MAX_SERVER_FRAME_CODE_UNITS",
+              "kind": "value"
+            },
+            {
+              "name": "parseClientFrame",
+              "kind": "value"
+            },
+            {
+              "name": "parseRoomAdmissionTicketRequest",
+              "kind": "value"
+            },
+            {
+              "name": "parseRoomAdmissionTicketResponse",
+              "kind": "value"
+            },
+            {
+              "name": "parseRoomCreationRequest",
+              "kind": "value"
+            },
+            {
+              "name": "parseRoomCreationResponse",
+              "kind": "value"
+            },
+            {
+              "name": "parseRoomInvitationHandoff",
+              "kind": "value"
+            },
+            {
+              "name": "parseRoomInvitationIssueRequest",
+              "kind": "value"
+            },
+            {
+              "name": "parseRoomInvitationIssueResponse",
+              "kind": "value"
+            },
+            {
+              "name": "parseServerFrame",
+              "kind": "value"
+            },
+            {
+              "name": "PresentationEvent",
+              "kind": "type"
+            },
+            {
+              "name": "PresentationEventSchema",
+              "kind": "value"
+            },
+            {
+              "name": "PROTOCOL_VERSION",
+              "kind": "value"
+            },
+            {
+              "name": "RoomAdmissionTicketRequest",
+              "kind": "type"
+            },
+            {
+              "name": "RoomAdmissionTicketRequestSchema",
+              "kind": "value"
+            },
+            {
+              "name": "RoomAdmissionTicketResponse",
+              "kind": "type"
+            },
+            {
+              "name": "RoomAdmissionTicketResponseSchema",
+              "kind": "value"
+            },
+            {
+              "name": "RoomCreationRequest",
+              "kind": "type"
+            },
+            {
+              "name": "RoomCreationRequestSchema",
+              "kind": "value"
+            },
+            {
+              "name": "RoomCreationResponse",
+              "kind": "type"
+            },
+            {
+              "name": "RoomCreationResponseSchema",
+              "kind": "value"
+            },
+            {
+              "name": "RoomInvitationHandoff",
+              "kind": "type"
+            },
+            {
+              "name": "RoomInvitationHandoffSchema",
+              "kind": "value"
+            },
+            {
+              "name": "RoomInvitationIssueRequest",
+              "kind": "type"
+            },
+            {
+              "name": "RoomInvitationIssueRequestSchema",
+              "kind": "value"
+            },
+            {
+              "name": "RoomInvitationIssueResponse",
+              "kind": "type"
+            },
+            {
+              "name": "RoomInvitationIssueResponseSchema",
+              "kind": "value"
+            },
+            {
+              "name": "SchemaParseResult",
+              "kind": "type"
+            },
+            {
+              "name": "SerializedCardDefinitionSchema",
+              "kind": "value"
+            },
+            {
+              "name": "SerializedMatchViewState",
+              "kind": "type"
+            },
+            {
+              "name": "serializeMatchViewState",
+              "kind": "value"
+            },
+            {
+              "name": "ServerMessage",
+              "kind": "type"
+            },
+            {
+              "name": "ServerMessageSchema",
+              "kind": "value"
+            },
+            {
+              "name": "V2_ROOM_CODE_PATTERN",
+              "kind": "value"
+            },
+            {
+              "name": "ViewCardSchema",
+              "kind": "value"
+            },
+            {
+              "name": "ViewerRoleSchema",
+              "kind": "value"
+            },
+            {
+              "name": "WireGameCommand",
+              "kind": "type"
+            },
+            {
+              "name": "WireGameCommandSchema",
+              "kind": "value"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "@ptcgsim/renderer-contract",
+      "root": "packages/renderer-contract",
+      "entrypoints": [
+        {
+          "subpath": ".",
+          "source": "packages/renderer-contract/src/index.ts",
+          "symbols": [
+            {
+              "name": "assertLayoutOptions",
+              "kind": "value"
+            },
+            {
+              "name": "assertViewport",
+              "kind": "value"
+            },
+            {
+              "name": "BOARD_LAYOUT_GEOMETRY_VERSION",
+              "kind": "value"
+            },
+            {
+              "name": "BoardAnchorLayout",
+              "kind": "type"
+            },
+            {
+              "name": "BoardDragController",
+              "kind": "type-value"
+            },
+            {
+              "name": "BoardIntent",
+              "kind": "type"
+            },
+            {
+              "name": "BoardInteractionCancellation",
+              "kind": "type"
+            },
+            {
+              "name": "BoardLayoutAffordance",
+              "kind": "type"
+            },
+            {
+              "name": "BoardLayoutOptions",
+              "kind": "type"
+            },
+            {
+              "name": "BoardLayoutRegion",
+              "kind": "type"
+            },
+            {
+              "name": "BoardLayoutRegionKind",
+              "kind": "type"
+            },
+            {
+              "name": "BoardLayoutRegionSurface",
+              "kind": "type"
+            },
+            {
+              "name": "BoardLayoutSnapshot",
+              "kind": "type"
+            },
+            {
+              "name": "BoardLayoutState",
+              "kind": "type"
+            },
+            {
+              "name": "BoardNormalizedResizeHandle",
+              "kind": "type"
+            },
+            {
+              "name": "BoardNormalizedVerticalFrame",
+              "kind": "type"
+            },
+            {
+              "name": "BoardPhysicalSide",
+              "kind": "type"
+            },
+            {
+              "name": "BoardPlayerLayout",
+              "kind": "type"
+            },
+            {
+              "name": "BoardPlayStackCardHitRegion",
+              "kind": "type"
+            },
+            {
+              "name": "BoardPointerInput",
+              "kind": "type"
+            },
+            {
+              "name": "BoardPreferences",
+              "kind": "type"
+            },
+            {
+              "name": "BoardPresentation",
+              "kind": "type"
+            },
+            {
+              "name": "BoardPresentationEvent",
+              "kind": "type"
+            },
+            {
+              "name": "BoardPresentationUpdate",
+              "kind": "type"
+            },
+            {
+              "name": "BoardRenderer",
+              "kind": "type"
+            },
+            {
+              "name": "BoardRendererAdapters",
+              "kind": "type"
+            },
+            {
+              "name": "BoardRendererDiagnostics",
+              "kind": "type"
+            },
+            {
+              "name": "BoardRendererStatus",
+              "kind": "type"
+            },
+            {
+              "name": "BoardResizeHandleLayout",
+              "kind": "type"
+            },
+            {
+              "name": "BoardScene",
+              "kind": "type"
+            },
+            {
+              "name": "BoardSceneDiff",
+              "kind": "type"
+            },
+            {
+              "name": "BoardSceneInstallMode",
+              "kind": "type"
+            },
+            {
+              "name": "BoardSceneLayout",
+              "kind": "type"
+            },
+            {
+              "name": "BoardScenePlayerFrame",
+              "kind": "type"
+            },
+            {
+              "name": "BoardSceneResizeHandle",
+              "kind": "type"
+            },
+            {
+              "name": "BoardSharedLayout",
+              "kind": "type"
+            },
+            {
+              "name": "BoardSharedPlacement",
+              "kind": "type"
+            },
+            {
+              "name": "BoardShellMode",
+              "kind": "type"
+            },
+            {
+              "name": "BoardSide",
+              "kind": "type"
+            },
+            {
+              "name": "BoardVerticalLayoutState",
+              "kind": "type"
+            },
+            {
+              "name": "BoardViewport",
+              "kind": "type"
+            },
+            {
+              "name": "BoardZoneKind",
+              "kind": "type"
+            },
+            {
+              "name": "BoardZoneSurface",
+              "kind": "type"
+            },
+            {
+              "name": "BoxEdgesPx",
+              "kind": "type"
+            },
+            {
+              "name": "CARD_ASPECT_RATIO",
+              "kind": "value"
+            },
+            {
+              "name": "CardSceneNode",
+              "kind": "type"
+            },
+            {
+              "name": "CardSceneRole",
+              "kind": "type"
+            },
+            {
+              "name": "containsPoint",
+              "kind": "value"
+            },
+            {
+              "name": "containsPointInRotatedRect",
+              "kind": "value"
+            },
+            {
+              "name": "createBoardLayoutSnapshot",
+              "kind": "value"
+            },
+            {
+              "name": "createBoardScene",
+              "kind": "value"
+            },
+            {
+              "name": "createBoardSceneForViewport",
+              "kind": "value"
+            },
+            {
+              "name": "createBoardSceneLayout",
+              "kind": "value"
+            },
+            {
+              "name": "createRendererSpikeView",
+              "kind": "value"
+            },
+            {
+              "name": "DEFAULT_BOARD_PREFERENCES",
+              "kind": "value"
+            },
+            {
+              "name": "DEFAULT_BOARD_PRESENTATION",
+              "kind": "value"
+            },
+            {
+              "name": "DEFAULT_BOARD_VERTICAL_LAYOUT_V1",
+              "kind": "value"
+            },
+            {
+              "name": "DEFAULT_BOARD_VIEWPORT",
+              "kind": "value"
+            },
+            {
+              "name": "diffBoardScenes",
+              "kind": "value"
+            },
+            {
+              "name": "findBoardLayoutRegion",
+              "kind": "value"
+            },
+            {
+              "name": "flipBoardLayoutState",
+              "kind": "value"
+            },
+            {
+              "name": "hitTestBoardScene",
+              "kind": "value"
+            },
+            {
+              "name": "insetRect",
+              "kind": "value"
+            },
+            {
+              "name": "layoutLegacyActiveQ0Markers",
+              "kind": "value"
+            },
+            {
+              "name": "layoutLegacyBenchQ0Markers",
+              "kind": "value"
+            },
+            {
+              "name": "layoutLegacyContainedCard",
+              "kind": "value"
+            },
+            {
+              "name": "layoutLegacyOrdinaryEvolutionStack",
+              "kind": "value"
+            },
+            {
+              "name": "layoutLegacyPlaySlotCards",
+              "kind": "value"
+            },
+            {
+              "name": "layoutLegacyPlayStackHitRegions",
+              "kind": "value"
+            },
+            {
+              "name": "layoutLegacySingleEnergyAttachmentStack",
+              "kind": "value"
+            },
+            {
+              "name": "layoutLegacySingleEnergyTrainerToolAttachmentStack",
+              "kind": "value"
+            },
+            {
+              "name": "layoutLegacySingleTrainerToolAttachmentStack",
+              "kind": "value"
+            },
+            {
+              "name": "layoutLegacyTwoEnergyAttachmentStack",
+              "kind": "value"
+            },
+            {
+              "name": "layoutPlayerZone",
+              "kind": "value"
+            },
+            {
+              "name": "layoutStadium",
+              "kind": "value"
+            },
+            {
+              "name": "LEGACY_BOARD_AFFORDANCES_V1",
+              "kind": "value"
+            },
+            {
+              "name": "LEGACY_BOARD_RESIZER_V1",
+              "kind": "value"
+            },
+            {
+              "name": "LEGACY_BOARD_SHARED_V1",
+              "kind": "value"
+            },
+            {
+              "name": "LEGACY_BOARD_SHELL_V1",
+              "kind": "value"
+            },
+            {
+              "name": "LEGACY_BOARD_Z_ORDER_V1",
+              "kind": "value"
+            },
+            {
+              "name": "LEGACY_PLAY_AREA_WIDTH_RATIO",
+              "kind": "value"
+            },
+            {
+              "name": "LEGACY_SIDEBAR_WIDTH_RATIO",
+              "kind": "value"
+            },
+            {
+              "name": "LegacyActiveQ0MarkerItemLayout",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyActiveQ0MarkerLayout",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyBenchQ0MarkerLayout",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyContainedCardBlockAlignment",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyOrdinaryEvolutionCardLayout",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyOrdinaryEvolutionStackLayout",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyPileKind",
+              "kind": "type"
+            },
+            {
+              "name": "legacyPileTopIndex",
+              "kind": "value"
+            },
+            {
+              "name": "legacyResizeHandlesCollide",
+              "kind": "value"
+            },
+            {
+              "name": "LegacySingleEnergyAttachmentCardLayout",
+              "kind": "type"
+            },
+            {
+              "name": "LegacySingleEnergyAttachmentStackLayout",
+              "kind": "type"
+            },
+            {
+              "name": "LegacySingleEnergyTrainerToolAttachmentStackLayout",
+              "kind": "type"
+            },
+            {
+              "name": "LegacySingleTrainerToolAttachmentCardLayout",
+              "kind": "type"
+            },
+            {
+              "name": "LegacySingleTrainerToolAttachmentStackLayout",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyTwoEnergyAttachmentStackLayout",
+              "kind": "type"
+            },
+            {
+              "name": "MarkerSceneNode",
+              "kind": "type"
+            },
+            {
+              "name": "PlayerZoneGeometryKind",
+              "kind": "type"
+            },
+            {
+              "name": "Rect",
+              "kind": "type"
+            },
+            {
+              "name": "resolveBoardDropTarget",
+              "kind": "value"
+            },
+            {
+              "name": "sideForPlayer",
+              "kind": "value"
+            },
+            {
+              "name": "ZoneSceneNode",
+              "kind": "type"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "@ptcgsim/renderer-dom",
+      "root": "packages/renderer-dom",
+      "entrypoints": [
+        {
+          "subpath": ".",
+          "source": "packages/renderer-dom/src/index.ts",
+          "symbols": [
+            {
+              "name": "BoardSurface",
+              "kind": "value"
+            },
+            {
+              "name": "createReactDomBoardRenderer",
+              "kind": "value"
+            },
+            {
+              "name": "ReactDomBoardRenderer",
+              "kind": "type-value"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "@ptcgsim/renderer-pixi",
+      "root": "packages/renderer-pixi",
+      "entrypoints": [
+        {
+          "subpath": ".",
+          "source": "packages/renderer-pixi/src/index.ts",
+          "symbols": [
+            {
+              "name": "CardTextureRegistry",
+              "kind": "type-value"
+            },
+            {
+              "name": "CardTextureRegistryDiagnostics",
+              "kind": "type"
+            },
+            {
+              "name": "createPixiBoardRenderer",
+              "kind": "value"
+            },
+            {
+              "name": "PixiBoardRenderer",
+              "kind": "type-value"
+            },
+            {
+              "name": "PixiBoardRendererOptions",
+              "kind": "type"
+            },
+            {
+              "name": "TextureAssetAdapter",
+              "kind": "type"
+            },
+            {
+              "name": "TextureAssetLease",
+              "kind": "type"
+            },
+            {
+              "name": "TextureAssetLeaseBroker",
+              "kind": "type-value"
+            },
+            {
+              "name": "TextureAssetLeaseDiagnostics",
+              "kind": "type"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "@ptcgsim/room-authority",
+      "root": "packages/room-authority",
+      "entrypoints": [
+        {
+          "subpath": ".",
+          "source": "packages/room-authority/src/index.ts",
+          "symbols": [
+            {
+              "name": "AdmissionCrypto",
+              "kind": "type"
+            },
+            {
+              "name": "AdmissionDependencies",
+              "kind": "type"
+            },
+            {
+              "name": "AdmissionPersistence",
+              "kind": "type"
+            },
+            {
+              "name": "AdmissionRequest",
+              "kind": "type"
+            },
+            {
+              "name": "AdmissionResult",
+              "kind": "type"
+            },
+            {
+              "name": "AdmissionSeat",
+              "kind": "type"
+            },
+            {
+              "name": "AdmissionTicketCrypto",
+              "kind": "type"
+            },
+            {
+              "name": "AdmissionTicketDependencies",
+              "kind": "type"
+            },
+            {
+              "name": "AdmissionTicketIssueRequest",
+              "kind": "type"
+            },
+            {
+              "name": "AdmissionTicketIssueResult",
+              "kind": "type"
+            },
+            {
+              "name": "AdmissionTicketPolicy",
+              "kind": "type"
+            },
+            {
+              "name": "AdmissionTicketRedemptionRequest",
+              "kind": "type"
+            },
+            {
+              "name": "admitRoomSession",
+              "kind": "value"
+            },
+            {
+              "name": "appendReplayHistory",
+              "kind": "value"
+            },
+            {
+              "name": "appendSoloUndoHistory",
+              "kind": "value"
+            },
+            {
+              "name": "assertAuthoritySnapshotInvariants",
+              "kind": "value"
+            },
+            {
+              "name": "assertAuthorityTransactionTransition",
+              "kind": "value"
+            },
+            {
+              "name": "AUTHORITY_SNAPSHOT_SCHEMA_VERSION",
+              "kind": "value"
+            },
+            {
+              "name": "AuthorityCommandTiming",
+              "kind": "type"
+            },
+            {
+              "name": "AuthorityCommandTimingBreakdown",
+              "kind": "type"
+            },
+            {
+              "name": "AuthorityDelivery",
+              "kind": "type"
+            },
+            {
+              "name": "AuthorityDependencies",
+              "kind": "type"
+            },
+            {
+              "name": "AuthorityMode",
+              "kind": "type"
+            },
+            {
+              "name": "AuthorityPersistence",
+              "kind": "type"
+            },
+            {
+              "name": "AuthorityPersistenceTiming",
+              "kind": "type"
+            },
+            {
+              "name": "AuthorityPolicy",
+              "kind": "type"
+            },
+            {
+              "name": "AuthorityProcessResult",
+              "kind": "type"
+            },
+            {
+              "name": "AuthorityRejectionCode",
+              "kind": "type"
+            },
+            {
+              "name": "AuthoritySession",
+              "kind": "type"
+            },
+            {
+              "name": "authoritySnapshotCommandValidationMatches",
+              "kind": "value"
+            },
+            {
+              "name": "AuthoritySnapshotInvariantError",
+              "kind": "type-value"
+            },
+            {
+              "name": "AuthoritySnapshotStore",
+              "kind": "type"
+            },
+            {
+              "name": "AuthoritySnapshotValidation",
+              "kind": "type"
+            },
+            {
+              "name": "authoritySnapshotValidationFor",
+              "kind": "value"
+            },
+            {
+              "name": "authoritySnapshotValidationMatches",
+              "kind": "value"
+            },
+            {
+              "name": "buildProjectedReplay",
+              "kind": "value"
+            },
+            {
+              "name": "CardAlias",
+              "kind": "type"
+            },
+            {
+              "name": "cloneReplayHistory",
+              "kind": "value"
+            },
+            {
+              "name": "cloneSoloUndoHistory",
+              "kind": "value"
+            },
+            {
+              "name": "collectAuthoritySnapshotProblems",
+              "kind": "value"
+            },
+            {
+              "name": "CommandResolution",
+              "kind": "type"
+            },
+            {
+              "name": "createReplayHistory",
+              "kind": "value"
+            },
+            {
+              "name": "createRoomAdmissionState",
+              "kind": "value"
+            },
+            {
+              "name": "DEFAULT_ADMISSION_TICKET_POLICY",
+              "kind": "value"
+            },
+            {
+              "name": "DEFAULT_AUTHORITY_POLICY",
+              "kind": "value"
+            },
+            {
+              "name": "DEFAULT_ROOM_INVITATION_POLICY",
+              "kind": "value"
+            },
+            {
+              "name": "DefinitionAlias",
+              "kind": "type"
+            },
+            {
+              "name": "emptyProjectionIdentityState",
+              "kind": "value"
+            },
+            {
+              "name": "emptySoloUndoHistory",
+              "kind": "value"
+            },
+            {
+              "name": "issueRoomAdmissionTicket",
+              "kind": "value"
+            },
+            {
+              "name": "issueRoomInvitation",
+              "kind": "value"
+            },
+            {
+              "name": "materializeSoloUndoCheckpoint",
+              "kind": "value"
+            },
+            {
+              "name": "MAX_OUTSTANDING_ADMISSION_TICKETS",
+              "kind": "value"
+            },
+            {
+              "name": "MAX_OUTSTANDING_ROOM_INVITATIONS",
+              "kind": "value"
+            },
+            {
+              "name": "MAX_REPLAY_EVENT_BATCHES",
+              "kind": "value"
+            },
+            {
+              "name": "MAX_REPLAY_EVENT_BYTES",
+              "kind": "value"
+            },
+            {
+              "name": "MAX_SOLO_UNDO_CHECKPOINTS",
+              "kind": "value"
+            },
+            {
+              "name": "OpaqueIdSource",
+              "kind": "type"
+            },
+            {
+              "name": "PersistedAdmissionTransaction",
+              "kind": "type"
+            },
+            {
+              "name": "PersistedAuthorityTransaction",
+              "kind": "type"
+            },
+            {
+              "name": "PersistedCommandOutcome",
+              "kind": "type"
+            },
+            {
+              "name": "popSoloUndoHistory",
+              "kind": "value"
+            },
+            {
+              "name": "prepareValidatedReplayHistoryTransition",
+              "kind": "value"
+            },
+            {
+              "name": "presentationEventsForBatch",
+              "kind": "value"
+            },
+            {
+              "name": "processAuthorityCommand",
+              "kind": "value"
+            },
+            {
+              "name": "ProjectedRecipient",
+              "kind": "type"
+            },
+            {
+              "name": "ProjectedReplay",
+              "kind": "type"
+            },
+            {
+              "name": "ProjectedReplayFrame",
+              "kind": "type"
+            },
+            {
+              "name": "ProjectionIdentityState",
+              "kind": "type"
+            },
+            {
+              "name": "projectRecipient",
+              "kind": "value"
+            },
+            {
+              "name": "redeemRoomAdmissionTicket",
+              "kind": "value"
+            },
+            {
+              "name": "ReplayHistory",
+              "kind": "type"
+            },
+            {
+              "name": "replayHistoryByteFacts",
+              "kind": "value"
+            },
+            {
+              "name": "ReplayHistoryByteFacts",
+              "kind": "type"
+            },
+            {
+              "name": "ReplayHistoryEntry",
+              "kind": "type"
+            },
+            {
+              "name": "replayHistoryEntryBytes",
+              "kind": "value"
+            },
+            {
+              "name": "replayHistoryEventBytes",
+              "kind": "value"
+            },
+            {
+              "name": "replayHistoryStates",
+              "kind": "value"
+            },
+            {
+              "name": "ReplayHistoryTransitionValidation",
+              "kind": "type"
+            },
+            {
+              "name": "replaySoloUndoHistory",
+              "kind": "value"
+            },
+            {
+              "name": "resolveViewCard",
+              "kind": "value"
+            },
+            {
+              "name": "resolveWireCommand",
+              "kind": "value"
+            },
+            {
+              "name": "RoomAdmissionState",
+              "kind": "type"
+            },
+            {
+              "name": "RoomAdmissionTicket",
+              "kind": "type"
+            },
+            {
+              "name": "RoomAuthorityCoordinator",
+              "kind": "type-value"
+            },
+            {
+              "name": "RoomAuthoritySnapshot",
+              "kind": "type"
+            },
+            {
+              "name": "RoomInvitationCrypto",
+              "kind": "type"
+            },
+            {
+              "name": "RoomInvitationDependencies",
+              "kind": "type"
+            },
+            {
+              "name": "RoomInvitationGrant",
+              "kind": "type"
+            },
+            {
+              "name": "RoomInvitationIssueRequest",
+              "kind": "type"
+            },
+            {
+              "name": "RoomInvitationIssueResult",
+              "kind": "type"
+            },
+            {
+              "name": "RoomInvitationPolicy",
+              "kind": "type"
+            },
+            {
+              "name": "sessionPlayerId",
+              "kind": "value"
+            },
+            {
+              "name": "SoloUndoCheckpoint",
+              "kind": "type"
+            },
+            {
+              "name": "SoloUndoHistory",
+              "kind": "type"
+            },
+            {
+              "name": "SoloUndoHistoryEntry",
+              "kind": "type"
+            },
+            {
+              "name": "validateAuthoritySnapshot",
+              "kind": "value"
+            },
+            {
+              "name": "ValidatedReplayHistoryTransition",
+              "kind": "type"
+            },
+            {
+              "name": "validateMultiplayerAuthorityCandidate",
+              "kind": "value"
+            },
+            {
+              "name": "viewerIdentityKey",
+              "kind": "value"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "@ptcgsim/server-v2",
+      "root": "apps/server",
+      "entrypoints": [
+        {
+          "subpath": ".",
+          "source": "apps/server/src/index.ts",
+          "symbols": [
+            {
+              "name": "AcceptedCommandPerformanceObservation",
+              "kind": "type"
+            },
+            {
+              "name": "AdmissionTicketIssuer",
+              "kind": "type"
+            },
+            {
+              "name": "anonymousRequestRateLimitKey",
+              "kind": "value"
+            },
+            {
+              "name": "AUTHORITY_FRONTIER_STORAGE_KEY",
+              "kind": "value"
+            },
+            {
+              "name": "AUTHORITY_SNAPSHOT_STORAGE_KEY",
+              "kind": "value"
+            },
+            {
+              "name": "BoundedAdmissionTicketIssueResult",
+              "kind": "type"
+            },
+            {
+              "name": "BoundedRoomInvitationIssueResult",
+              "kind": "type"
+            },
+            {
+              "name": "ConcurrentRoomWriteError",
+              "kind": "type-value"
+            },
+            {
+              "name": "ConsoleServerTelemetrySink",
+              "kind": "type-value"
+            },
+            {
+              "name": "consumeRoomCreationRateLimit",
+              "kind": "value"
+            },
+            {
+              "name": "DEFAULT_ROOM_RATE_LIMIT_POLICIES",
+              "kind": "value"
+            },
+            {
+              "name": "DEFAULT_UNCLAIMED_ROOM_LIFETIME_MS",
+              "kind": "value"
+            },
+            {
+              "name": "DurableRoomRateLimiter",
+              "kind": "type-value"
+            },
+            {
+              "name": "DurableRoomSnapshotStore",
+              "kind": "type-value"
+            },
+            {
+              "name": "DurableStorageLike",
+              "kind": "type"
+            },
+            {
+              "name": "DurableStorageTransactionLike",
+              "kind": "type"
+            },
+            {
+              "name": "EdgeRateLimitBinding",
+              "kind": "type"
+            },
+            {
+              "name": "establishSession",
+              "kind": "value"
+            },
+            {
+              "name": "handleAdmissionTicketRequest",
+              "kind": "value"
+            },
+            {
+              "name": "handleRoomCreationRequest",
+              "kind": "value"
+            },
+            {
+              "name": "handleRoomInvitationRequest",
+              "kind": "value"
+            },
+            {
+              "name": "handleServerHealthRequest",
+              "kind": "value"
+            },
+            {
+              "name": "HandshakeResult",
+              "kind": "type"
+            },
+            {
+              "name": "initializeNewRoom",
+              "kind": "value"
+            },
+            {
+              "name": "InitialRoomStore",
+              "kind": "type"
+            },
+            {
+              "name": "isSameOriginBrowserRequest",
+              "kind": "value"
+            },
+            {
+              "name": "MAX_ADMISSION_REQUEST_BYTES",
+              "kind": "value"
+            },
+            {
+              "name": "MAX_ROOM_CREATION_REQUEST_BYTES",
+              "kind": "value"
+            },
+            {
+              "name": "MAX_ROOM_INVITATION_REQUEST_BYTES",
+              "kind": "value"
+            },
+            {
+              "name": "NewRoomCredentials",
+              "kind": "type"
+            },
+            {
+              "name": "NewRoomInput",
+              "kind": "type"
+            },
+            {
+              "name": "nextTelemetryId",
+              "kind": "value"
+            },
+            {
+              "name": "NOOP_SERVER_TELEMETRY",
+              "kind": "value"
+            },
+            {
+              "name": "RequestRateLimitDecision",
+              "kind": "type"
+            },
+            {
+              "name": "ROOM_CREATION_RATE_LIMIT_RETRY_SECONDS",
+              "kind": "value"
+            },
+            {
+              "name": "ROOM_LIFECYCLE_STORAGE_KEY",
+              "kind": "value"
+            },
+            {
+              "name": "ROOM_RATE_LIMIT_STORAGE_KEY",
+              "kind": "value"
+            },
+            {
+              "name": "RoomAdmissionOperation",
+              "kind": "type"
+            },
+            {
+              "name": "RoomAdmissionOutcome",
+              "kind": "type"
+            },
+            {
+              "name": "RoomAlreadyInitializedError",
+              "kind": "type-value"
+            },
+            {
+              "name": "RoomCommandOutcome",
+              "kind": "type"
+            },
+            {
+              "name": "RoomCommandPhaseDurations",
+              "kind": "type"
+            },
+            {
+              "name": "RoomCreationCrypto",
+              "kind": "type"
+            },
+            {
+              "name": "RoomCreationRateLimit",
+              "kind": "type"
+            },
+            {
+              "name": "RoomCreator",
+              "kind": "type"
+            },
+            {
+              "name": "RoomExpiredError",
+              "kind": "type-value"
+            },
+            {
+              "name": "RoomInitializationLifecycle",
+              "kind": "type"
+            },
+            {
+              "name": "RoomInvitationIssuer",
+              "kind": "type"
+            },
+            {
+              "name": "RoomLifecycleOutcome",
+              "kind": "type"
+            },
+            {
+              "name": "RoomOperationRateLimitRejection",
+              "kind": "type"
+            },
+            {
+              "name": "RoomRateLimitDecision",
+              "kind": "type"
+            },
+            {
+              "name": "RoomRateLimitedOperation",
+              "kind": "type"
+            },
+            {
+              "name": "RoomRateLimitPolicy",
+              "kind": "type"
+            },
+            {
+              "name": "RoomRateLimitPort",
+              "kind": "type"
+            },
+            {
+              "name": "RoomSessionHub",
+              "kind": "type-value"
+            },
+            {
+              "name": "RoomSocketOutcome",
+              "kind": "type"
+            },
+            {
+              "name": "RuntimeConnection",
+              "kind": "type"
+            },
+            {
+              "name": "safeTelemetryBuildId",
+              "kind": "value"
+            },
+            {
+              "name": "safeTelemetryReason",
+              "kind": "value"
+            },
+            {
+              "name": "SERVER_TELEMETRY_SCHEMA",
+              "kind": "value"
+            },
+            {
+              "name": "ServerFailureSubsystem",
+              "kind": "type"
+            },
+            {
+              "name": "ServerHttpOutcome",
+              "kind": "type"
+            },
+            {
+              "name": "ServerHttpRoute",
+              "kind": "type"
+            },
+            {
+              "name": "ServerTelemetryEvent",
+              "kind": "type"
+            },
+            {
+              "name": "ServerTelemetryLevel",
+              "kind": "type"
+            },
+            {
+              "name": "ServerTelemetryPort",
+              "kind": "type"
+            },
+            {
+              "name": "ServerTelemetrySink",
+              "kind": "type"
+            },
+            {
+              "name": "ServerTelemetrySource",
+              "kind": "type"
+            },
+            {
+              "name": "SessionHandshakeDependencies",
+              "kind": "type"
+            },
+            {
+              "name": "SessionHubDependencies",
+              "kind": "type"
+            },
+            {
+              "name": "StoredAdmissionJournalEntry",
+              "kind": "type"
+            },
+            {
+              "name": "StoredAuthorityFrontier",
+              "kind": "type"
+            },
+            {
+              "name": "StoredAuthorityJournalEntry",
+              "kind": "type"
+            },
+            {
+              "name": "storedRoomLifecycleState",
+              "kind": "value"
+            },
+            {
+              "name": "StructuredServerTelemetry",
+              "kind": "type-value"
+            },
+            {
+              "name": "TelemetryReason",
+              "kind": "type"
+            },
+            {
+              "name": "UnclaimedRoomExpiryResult",
+              "kind": "type"
+            },
+            {
+              "name": "WebCryptoAuthoritySource",
+              "kind": "type-value"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

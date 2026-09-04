@@ -14,6 +14,7 @@ the frozen v1 runtime.
 | `pnpm run format:check:v2`     | Check formatting for v2 apps/packages/tests/docs, tooling, and root configuration.                                           |
 | `pnpm run lint:v2`             | Run non-type-aware `typescript-eslint` rules plus JavaScript ESLint rules with zero warnings.                                |
 | `pnpm run check:boundaries:v2` | Reject legacy/deep/undeclared imports and cycles in the workspace source graph; verify card-back source integrity.           |
+| `pnpm run check:api:v2`        | Reject unreviewed workspace entrypoints and exported symbol additions, removals, renames, or type/value-kind changes.        |
 | `pnpm run check:cycles:v2`     | Check relative TypeScript module cycles while excluding generated `lib`, `dist`, and Worker types.                           |
 | `pnpm run typecheck:v2`        | Strictly build production project references and typecheck the Worker model/runtime harnesses.                               |
 | `pnpm run test:tooling:v2`     | Prove the boundary checker rejects legacy/deep imports, workspace cycles, forbidden web provenance, and missing maps.        |
@@ -48,6 +49,22 @@ JavaScript file must have a map except a syntax-checked
 import/export-only facade whose targets are present in the build, or the exact
 digest-pinned source-free Rolldown runtime emitted by the pinned toolchain. The
 checker also rejects the serve-only renderer cache fixture in production output.
+
+## Reviewed workspace API surface
+
+`scripts/check-v2-public-api.mjs` discovers every export-bearing package under
+`apps/*` and `packages/*`, resolves each explicit package entrypoint with the
+TypeScript compiler, and compares its exported names and type/value kinds with
+[`PUBLIC_API_SURFACE.json`](./PUBLIC_API_SURFACE.json). It fails closed on
+unsupported or divergent conditional exports, targets outside the owning
+package, missing/non-TypeScript targets, entrypoint compiler errors, newly
+exported packages or subpaths, and symbol drift.
+
+The report currently records 8 export-bearing packages, 8 entrypoints, and 464
+symbols. `pnpm run check:api:v2` is part of `check:static:v2`. Regenerate the
+report with `node scripts/check-v2-public-api.mjs --write` only after reviewing
+whether each surface change is deliberately public; the quality job separately
+ensures generators leave tracked files unchanged.
 
 The default `/v2/assets/cardback.png` is copied byte-for-byte from the current v1
 asset. Source and built copies must retain SHA-256
@@ -89,4 +106,3 @@ binaries are not cached.
   transport, while a separate Chromium gate proves the real local Wrangler/Vite
   HTTP and WebSocket path for one complete creator session. Deployed navigation
   churn and the ADR-020 second-browser invitation path remain outstanding.
-- An explicit public-package API/export report remains a Phase 2 exit item.

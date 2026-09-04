@@ -27,15 +27,19 @@ Implemented repository enforcement files:
 eslint.config.mjs
 scripts/check-v2-boundaries.mjs
 scripts/check-v2-boundaries.test.mjs
+scripts/check-v2-public-api.mjs
+scripts/check-v2-public-api.test.mjs
+docs/v2-rebuild/PUBLIC_API_SURFACE.json
 ```
 
 The root `check:ci` command is the non-browser merge gate. It covers the frozen
 legacy unit suite, scoped formatting and linting, source/workspace boundaries,
-cycle detection without generated output, strict production/model/runtime type
-checks, boundary-checker self-tests, v2 unit/runtime tests, both production
-builds, source-map provenance, fixture-leak detection, and canonical card-back
-integrity. `check:browser` owns the sequential Chromium lane. The exact contract
-and residual limitations are in [`QUALITY_GATES.md`](./QUALITY_GATES.md).
+reviewed compiler-resolved public exports, cycle detection without generated
+output, strict production/model/runtime type checks, tooling self-tests, v2
+unit/runtime tests, both production builds, source-map provenance, fixture-leak
+detection, and canonical card-back integrity. `check:browser` owns the
+sequential Chromium lane. The exact contract and residual limitations are in
+[`QUALITY_GATES.md`](./QUALITY_GATES.md).
 
 ## Client composition and state
 
