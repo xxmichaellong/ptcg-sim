@@ -38,6 +38,31 @@ game state remains in the deterministic core/authority, recipient-safe state in
 the session projection, and transient interaction in presentation state. DOM
 nodes never become logical state.
 
+### Mixed attachment history policy
+
+Do not add legacy DOM-reflow provenance or per-card pixel offsets to
+`MatchState`, saved matches, or the wire projection. A refreshed ordinary
+`[Energy, Trainer]` stack and a no-refresh `leaveAll` restoration can expose the
+same recipient-safe cards, order, categories, slot, and markers while retaining
+slightly different v1 integer-compaction offsets. Revision, definition
+category, stack ID, and current slot cannot recover that history after
+checkpoint compaction or reconnect, and an ordering-version enum alone would
+not describe it.
+
+Treat those subpixel, history-dependent offsets as a v1 rendering defect. A
+future strict mixed path must derive one deterministic canonical settled layout
+only from the current recipient-safe view, remain within the existing 2 CSS px
+source-parity envelope for every included history, and preserve logical order,
+Tool rotation, z order, and native hit behavior. It must fail closed to the
+existing generic path for every uncharacterized shape. The narrow source oracle
+now pins native active, movement from the preceding oracle's reverse-restored
+checkpoint through sole bench and back to active, and Energy/Trainer category-
+cycle histories on both physical sides. Bench reordering/competition, extra or
+evolution attachments, category-converted Pokémon, alternate layouts/assets,
+and candidate/Pixi parity remain required before their corresponding paths may
+be enabled. This decision and oracle add no production mixed-layout branch by
+themselves.
+
 ## Evidence
 
 ### Product and platform fit

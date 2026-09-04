@@ -123,3 +123,18 @@ attachment membership, base-only restoration, work-area bulk resolution,
 active/bench swaps, broader overflow/flex competition, and Pixi parity remain
 generic or deferred. Reverse arrays remain valid historical state outside the
 v1 normalized transition subset.
+
+`legacy-mixed-stack-movement-category-cycle-layout.test.ts` pins the separate
+`mixed-stack-movement-category-cycle-v1.json` source checkpoint. Six isolated
+cases cover both physical sides: native canonical active construction,
+whole-stack movement seeded from the preceding oracle's exact reverse-restored
+geometry, and Energy/Trainer current-category cycles through board departure
+and ordinary reattachment. The movement path exercises no-target automatic
+promotion and return to occupied active, then freezes canonical settled active
+and sole-bench geometry, logical/DOM order, rotations, z/hits, wrapper cleanup,
+and harness-operation/reset traces. It deliberately does not replay `leaveAll`
+or claim its setup trace; that transition is pinned by the preceding fixture.
+The category path records original categories and proves final settled
+equivalence without turning legacy reflow history into game state. This remains
+source-only: broader bench competition, extra/evolution attachments, alternate
+layouts/assets, candidate comparison, and Pixi paint/hit are deferred.

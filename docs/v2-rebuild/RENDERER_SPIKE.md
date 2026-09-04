@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 715 v2 tests across 108 files. A separate suite
-passes 17 Playwright checks across nine Chromium 151 browser files:
+The repository-wide gate passes 723 v2 tests across 109 files. A separate suite
+passes 18 Playwright checks across ten Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -434,7 +434,20 @@ passes 17 Playwright checks across nine Chromium 151 browser files:
     comparison, or mixed production claim; unsupported membership, base-only
     restore, category-history geometry, whole-stack swaps, broader overflow,
     and Pixi parity remain generic or deferred.
-15. The selected DOM implementation completes 100 mount → clear/reset → destroy
+15. A ninth source-only Chromium capture runs native canonical and current-
+    category-cycle histories, plus a whole-stack round trip seeded from the
+    prior oracle's exact reverse-restored checkpoint, independently in both
+    physical frames. It does not replay `leaveAll`. Whole-stack movement
+    refreshes the reverse 14.8333 px Energy drift into canonical sole-bench
+    13.5/27 px and returned-active 15.1667/30.3333 px offsets.
+    Energy→Trainer→Energy and Trainer→Energy→Trainer departure/reattachment also
+    settle to the canonical active geometry while retaining semantic original
+    categories. Exact arrays, DOM/wrapper identity, synchronous ghost and
+    observer-settled cleanup, bounds, rotations, z/hits, reset/harness-operation
+    traces, source digests, and denied requests are pinned. This supplies no
+    candidate comparison or production branch and deliberately adds no DOM-
+    history field to game state.
+16. The selected DOM implementation completes 100 mount → clear/reset → destroy
     cycles on one warmed route-owned host with the exact status sequence,
     complete scene IDs at mount, zero rendered scene children/IDs after clear and
     destroy, zero non-DOM diagnostic resources, and post-GC Chromium
@@ -463,9 +476,10 @@ source-backed Trainer-as-Tool comparison in
 source-backed stable two-Energy comparison plus departure capture in
 `tests/browser/legacy-two-energy-attachment-compaction-geometry.spec.ts`, and
 the separate source-only mixed Energy/Trainer order and departure check in
-`tests/browser/legacy-mixed-energy-trainer-tool-attachment-order-geometry.spec.ts`.
-The latter validates its checked-in numeric oracle but mounts no candidate
-renderer.
+`tests/browser/legacy-mixed-energy-trainer-tool-attachment-order-geometry.spec.ts`,
+plus the source-only whole-stack/category-history check in
+`tests/browser/legacy-mixed-stack-movement-geometry.spec.ts`. The latter two
+validate checked-in numeric oracles but mount no candidate renderer.
 Standard
 Linux CI can install Playwright's pinned Chromium build. This NixOS workspace
 used the Nix Chromium 151 package through `PTCGSIM_CHROMIUM_PATH`, because Playwright's

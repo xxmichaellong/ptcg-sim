@@ -159,6 +159,15 @@ is rejected. Reverse and unsupported lists therefore remain valid historical
 states outside the v1 normalized transition subset rather than violating a
 global invariant.
 
+`MovePlayStack`/`PlayStackLayoutSet` preserves evolution and attachment arrays
+and card categories exactly; it does not normalize, attach, or stamp renderer
+history. Its normal board-placement semantics still clear special conditions
+from stacks placed on the bench. Renderer-specific reflow origin and pixel
+offsets are intentionally absent from canonical state and the recipient
+projection. Any strict mixed geometry must be a deterministic function of the
+currently projected semantic shape or remain on the generic fallback; it may
+not infer hidden history from revision, stack identity, or definition category.
+
 ## Required invariants
 
 The invariant checker runs after every reducer in tests and after every accepted

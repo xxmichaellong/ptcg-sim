@@ -531,6 +531,40 @@ overflow/flex behavior, and Pixi parity remain deferred. Reverse arrays remain
 valid historical state outside the v1 normalized transition subset; they are
 not globally invalid state.
 
+`tests/browser/legacy-mixed-stack-movement-geometry.spec.ts` adds a ninth,
+separate source-only oracle backed by
+`tests/legacy-fixtures/renderer/mixed-stack-movement-category-cycle-v1.json`.
+It runs native canonical construction, a reverse-restore whole-stack round
+trip, and a current-category cycle independently in both physical frames. The
+movement history seeds the exact reverse-restored geometry independently pinned
+by the preceding oracle, sends the mixed active stack to an occupied bench
+without a target, observes the legacy automatic promotion, and then returns it
+to the occupied active slot. It does not replay `leaveAll` a second time. The
+category history changes Energy to Trainer and back and Trainer to Energy and
+back through real board departure and ordinary reattachment semantics.
+
+The seeded reverse-restored checkpoint begins with the already observed
+14.8333/30.3333 px active offsets. Because `moveCardBundle` refreshes after each
+whole-stack move, its settled sole-bench state is canonical at 13.5/27 px with
+a 108 px wrapper, and its returned active state is canonical at
+15.1667/30.3333 px with a 121.333 px authored wrapper. The category cycle also
+settles on that active geometry while retaining only the semantic `type2`
+values Energy and Trainer. Synchronous
+movement phases expose three old/new wrappers in each zone, the category cycle
+exposes two, and the real empty-wrapper observer settles every case to one
+active and one bench wrapper. Exact logical and DOM order, current/original
+categories, card and wrapper geometry, Tool rotation, z/hit order, parent
+identity, reset and harness-operation traces, cleanup, source digests, and
+deny-by-default request fulfillment are frozen.
+
+This closes only the active/sole-bench round-trip and final current-category-
+equivalence questions needed for a later canonical mixed layout. It does not
+make transient wrappers renderer state and does not justify persisting DOM
+provenance or pixel offsets. Bench reordering, multiple bench controls, the
+legacy case-3 target branch, extra/evolution attachments, category-converted
+Pokémon, alternate layouts/assets, interaction gestures, candidate comparison,
+and Pixi paint/hit remain deferred.
+
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
 renderer-neutral scene and has structured scene assertions for all four board
@@ -540,9 +574,9 @@ attachment-stack fixture remains source-only; the narrower contained-card,
 ordinary-evolution, single-Energy, Trainer-as-Tool, and stable two-Energy
 fixtures feed and compare their strict production geometries. The two-Energy
 departure phases remain source-only and prove stable convergence to the
-single-Energy source state. The mixed Energy/Trainer fixture remains source-only
-and supplies no strict production branch. Raw normalized/authored inputs, box edges,
-affordances,
+single-Energy source state. Both mixed Energy/Trainer fixtures remain source-
+only and supply no strict production branch. Raw normalized/authored inputs,
+box edges, affordances,
 and semantic z evidence remain in the richer characterization snapshot rather
 than being duplicated in
 `BoardScene`. Real-browser measurements for additional layout states,

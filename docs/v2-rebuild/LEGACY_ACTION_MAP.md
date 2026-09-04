@@ -157,6 +157,16 @@ atomic revision. It preserves flat work-area order for visible/hand moves,
 shuffles the full combined deck for `shuffleAll`, and shuffles only staged cards
 before appending them for `shuffleBottom`. Cross-owner cards retain immutable
 ownership while entering the work-area player's destination zone.
+
+A source-only Chromium oracle confirms that legacy whole-stack movement
+refreshes a reverse-restored mixed Energy/Trainer stack to canonical settled
+bench and active geometry, and that Energy/Trainer current-category cycles
+settle identically after semantic departure and reattachment. This evidence
+does not change the domain contract: movement preserves exact evolution and
+attachment arrays and card categories, and no DOM reflow provenance enters
+state or projection. Its existing placement semantics still clear special
+conditions from stacks moved onto the bench.
+
 `ResolveInspectionCards` applies the same bounded, authority-resolved semantics
 to the active inspection work area and retires its visibility grant atomically.
 An ordinary inspection close now also retires persisted grants and public

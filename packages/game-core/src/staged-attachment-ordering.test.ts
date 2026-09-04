@@ -630,3 +630,157 @@ describe('versioned staged attachment restoration', () => {
     assertMatchInvariants(undone.state);
   });
 });
+
+describe('mixed attachment whole-stack movement', () => {
+  for (const ordering of [
+    'current-normalized',
+    'historical-reverse',
+  ] as const) {
+    it(`preserves ${ordering} order through automatic promotion and a targeted active swap`, () => {
+      const input = fixture();
+      let state = input.state;
+      const expectedAttachmentCardIds =
+        ordering === 'current-normalized'
+          ? [input.energy1Id, input.trainer1Id]
+          : [input.trainer1Id, input.energy1Id];
+
+      if (ordering === 'current-normalized') {
+        for (const cardId of [input.trainer1Id, input.energy1Id]) {
+          state = accepted(
+            state,
+            {
+              type: 'MoveCardToPlay',
+              cardId,
+              expectedSourceZoneId: input.deckId,
+              boardPlayerId: p1,
+              slot: 'active',
+              targetStackId: input.stackId,
+            },
+            input.context
+          ).state;
+        }
+      } else {
+        state = oldAttach(state, input, expectedAttachmentCardIds);
+      }
+
+      const occupiedBench = accepted(
+        state,
+        {
+          type: 'MoveCardToPlay',
+          cardId: input.topId,
+          expectedSourceZoneId: input.deckId,
+          boardPlayerId: p1,
+          slot: 'bench',
+        },
+        input.context
+      );
+      state = occupiedBench.state;
+      const benchStackId = state.boards[p1]!.benchStackIds[0]!;
+
+      const expectMixedStack = (
+        candidate: MatchState,
+        slot: 'active' | 'bench'
+      ): void => {
+        expect(candidate.stacks[input.stackId]).toMatchObject({
+          boardPlayerId: p1,
+          slot,
+          evolutionCardIds: [input.baseId],
+          attachmentCardIds: expectedAttachmentCardIds,
+        });
+        expect(
+          expectedAttachmentCardIds.map((cardId) => ({
+            cardId,
+            category: candidate.cards[cardId]?.currentCategory,
+          }))
+        ).toEqual(
+          expectedAttachmentCardIds.map((cardId) => ({
+            cardId,
+            category:
+              cardId === input.energy1Id
+                ? ('Energy' as const)
+                : ('Trainer' as const),
+          }))
+        );
+      };
+
+      expect(state.boards[p1]).toEqual({
+        activeStackId: input.stackId,
+        benchStackIds: [benchStackId],
+      });
+      expectMixedStack(state, 'active');
+      assertMatchInvariants(state);
+
+      const automaticallyPromoted = accepted(
+        state,
+        {
+          type: 'MovePlayStack',
+          stackId: input.stackId,
+          expectedSourceSlot: 'active',
+          expectedActiveStackId: input.stackId,
+          expectedBenchStackIds: [benchStackId],
+          destinationSlot: 'bench',
+        },
+        input.context
+      );
+      expect(automaticallyPromoted.batch).toEqual({
+        revision: state.revision + 1,
+        events: [
+          {
+            type: 'PlayStackLayoutSet',
+            boardPlayerId: p1,
+            expectedActiveStackId: input.stackId,
+            expectedBenchStackIds: [benchStackId],
+            activeStackId: benchStackId,
+            benchStackIds: [input.stackId],
+          },
+        ],
+      });
+      expect(applyEventBatch(state, automaticallyPromoted.batch)).toEqual(
+        automaticallyPromoted.state
+      );
+      expect(automaticallyPromoted.state.boards[p1]).toEqual({
+        activeStackId: benchStackId,
+        benchStackIds: [input.stackId],
+      });
+      expectMixedStack(automaticallyPromoted.state, 'bench');
+      assertMatchInvariants(automaticallyPromoted.state);
+
+      state = automaticallyPromoted.state;
+      const targetedSwap = accepted(
+        state,
+        {
+          type: 'MovePlayStack',
+          stackId: input.stackId,
+          expectedSourceSlot: 'bench',
+          expectedActiveStackId: benchStackId,
+          expectedBenchStackIds: [input.stackId],
+          destinationSlot: 'active',
+          targetStackId: benchStackId,
+        },
+        input.context
+      );
+      expect(targetedSwap.batch).toEqual({
+        revision: state.revision + 1,
+        events: [
+          {
+            type: 'PlayStackLayoutSet',
+            boardPlayerId: p1,
+            expectedActiveStackId: benchStackId,
+            expectedBenchStackIds: [input.stackId],
+            activeStackId: input.stackId,
+            benchStackIds: [benchStackId],
+          },
+        ],
+      });
+      expect(applyEventBatch(state, targetedSwap.batch)).toEqual(
+        targetedSwap.state
+      );
+      expect(targetedSwap.state.boards[p1]).toEqual({
+        activeStackId: input.stackId,
+        benchStackIds: [benchStackId],
+      });
+      expectMixedStack(targetedSwap.state, 'active');
+      assertMatchInvariants(targetedSwap.state);
+    });
+  }
+});
