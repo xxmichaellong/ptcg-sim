@@ -466,3 +466,22 @@ topology, wrapper/card identity, four observer pairs, cleanup, and recursive
 collision dependencies. Real KeyR image reload/cache/network behavior, later
 actions, alternative histories/layouts, candidate parity, and production/
 domain/protocol/schema/UI changes remain excluded.
+
+`legacy-compound-lower-nonzero-same-lower-group-after-single-layout.test.ts`
+then pins plain R on the same lower card that produced each checkpoint-eighteen
+q1/q2/q3 divergence. Forty-eight independent histories cross ordinary/top-
+BREAK composition, middle/base initiation, both physical sides, and active/
+sole-bench placement. The measured middle/base is logical index 1/2 but DOM
+ordinal 2/1; `single=false` advances it q0→q1 and advances both siblings while
+preserving every BREAK flag.
+
+Post turns and flags equal the matching top-initiated checkpoint-twenty-two
+result. Active geometry is exact as well. The lower initiator writes every
+bench result to `3%`/`2%`, so ordinary q1/q3 and top-BREAK q2 are a signed
+`-0.015625px` frame-local x translation from the top-initiated result, with all
+other cases exact. The fixture pins exact checkpoint-eighteen pre-state and
+trace inheritance, the lower-card action/index, authored/painted rectangles,
+physical-frame mappings, ten probes, topology, stable wrapper/card identifiers,
+cleanup, and no measured-transition refresh. Different-lower or repeated group
+actions, intervening operations, alternate q0 origins, attachments, candidate
+parity, and production/domain/protocol/schema/UI changes remain separate.

@@ -329,6 +329,20 @@ while q2 changes `3%`/`2%`→`1%`/`0%`. Further group turns, a lower-card group
 initiator, refresh, movement, markers, and attachments remain distinct source-
 only histories.
 
+Plain R on that same divergent lower card is now pinned as a separate branch.
+The selected q0 middle/base at logical index 1/2 advances to q1, while every
+other Pokémon also advances one quarter-turn. Because this is the whole-group
+branch, no `PokémonBreak` flag changes: the lower initiator remains false and
+only an existing top BREAK stays true. The resulting turns and flags equal the
+top-initiated branch exactly, but its wrapper margins do not always do so.
+Active stays `1%`/`0%`; every bench case becomes `3%`/`2%` because margin
+selection is based on the lower initiator's q0→q1 transition. Ordinary q1/q3
+and top-BREAK q2 are therefore `-0.015625px` left of their top-initiated
+counterparts; all other placements coincide. V2 must treat initiator-sensitive
+margin history as source compatibility evidence, not canonical game state.
+Different-lower and repeated group actions, intervening inputs or refresh,
+alternate state origins, attachments, and candidate parity remain separate.
+
 The immediate refresh branch after the same lower divergence is now captured
 independently. Reconstruction preserves the three image nodes but replaces the
 wrapper, briefly leaving two wrappers until the empty original is removed by

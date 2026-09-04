@@ -664,6 +664,28 @@ compatibility evidence, not a rule allowing viewport refresh to mutate v2 game
 state. Real KeyR image reload/network behavior, later actions, candidate parity,
 and production normalization remain separate; no UI or UX changes.
 
+A twenty-fourth source-only checkpoint returns to the input branch and measures
+plain R on the same lower evolution that created the checkpoint-eighteen
+divergence. Forty-eight independently rebuilt histories span ordinary/top-
+BREAK composition, original group q1/q2/q3, middle/base initiation, active/
+sole-bench placement, and both physical sides. The measured logical index is
+1 for middle or 2 for base even though their DOM ordinals remain 2 and 1.
+`single=false` advances all three Pokémon one quarter-turn and preserves every
+BREAK flag, so the initiating lower card becomes q1 while remaining non-BREAK.
+
+The resulting turns and flags exactly match the corresponding checkpoint-
+twenty-two top-initiated state, but layout can still differ because the source
+writes margins from the initiator's new angle. Active stays `1%`/`0%`; every
+bench result becomes `3%`/`2%`. Relative to the top-initiated result, ordinary
+q1/q3 and top-BREAK q2 therefore move exactly `-0.015625px` frame-local x;
+the other bench cases and every active case are exact. The oracle pins this
+signed differential, exact checkpoint-eighteen pre-state inheritance, action
+indices, traces, authored/painted rectangles, physical-frame mappings, ten
+native probes, stable wrapper/card identifiers, and the unchanged three-observer/no-refresh lifecycle. Other-lower
+or repeated group actions, intervening single/refresh/movement, alternate q0
+origins, attachments, candidate parity, and production normalization remain
+separate; no UI or UX changes.
+
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during
 characterization is represented explicitly instead of assumed to be duplication.

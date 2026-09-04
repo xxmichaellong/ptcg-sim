@@ -267,6 +267,7 @@ test('checked-in legacy Alt-R pins the clean nonzero-group entry matrix', async 
   expect(capture.lowerNonzeroGroupSingleFollowupCases).toEqual([]);
   expect(capture.lowerNonzeroGroupRotationAfterSingleCases).toEqual([]);
   expect(capture.lowerNonzeroGroupRefreshAfterSingleCases).toEqual([]);
+  expect(capture.lowerNonzeroSameLowerGroupAfterSingleCases).toEqual([]);
   expect(capture.breakRefreshCases).toEqual([]);
   expect(capture.nonzeroGroupSingleCases.map((entry) => entry.id)).toEqual(
     oracle.input.cases
