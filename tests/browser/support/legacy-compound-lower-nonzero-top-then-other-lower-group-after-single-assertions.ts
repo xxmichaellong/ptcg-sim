@@ -993,6 +993,7 @@ export const assertLowerNonzeroTopThenOtherLowerGroupAfterSingleLiveCapture =
       )
     ).toEqual(expectedCaseIds(composition));
     expect(capture.lowerNonzeroTopThirdGroupAfterSingleCases).toEqual([]);
+    expect(capture.lowerNonzeroTopFourthGroupAfterSingleCases).toEqual([]);
     expect(capture.lowerNonzeroSameLowerThirdGroupAfterSingleCases).toEqual([]);
     expect(
       capture.lowerNonzeroDifferentLowerThirdGroupAfterSingleCases

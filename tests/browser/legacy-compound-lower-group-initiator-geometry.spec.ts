@@ -280,6 +280,7 @@ test('checked-in legacy lower evolutions initiate coherent but history-sensitive
     []
   );
   expect(capture.lowerNonzeroTopThirdGroupAfterSingleCases).toEqual([]);
+  expect(capture.lowerNonzeroTopFourthGroupAfterSingleCases).toEqual([]);
   expect(capture.lowerNonzeroSameLowerThirdGroupAfterSingleCases).toEqual([]);
   expect(capture.lowerNonzeroDifferentLowerThirdGroupAfterSingleCases).toEqual(
     []

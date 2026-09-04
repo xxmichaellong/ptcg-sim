@@ -883,6 +883,29 @@ mappings, identity, lifecycle, cleanup, source fulfillment, and recursive
 provenance. Fourth/later, top/prior-lower, intervening, alternate-origin,
 attachment, candidate-parity, and production/UI paths remain separate.
 
+A thirty-fourth source-only checkpoint closes the immediate same-top sequence
+with a fourth top/index-zero whole-group action. Forty-eight independently
+rebuilt ordinary/top-BREAK histories cross original q1/q2/q3, prior middle/base
+single-card divergence, active/sole-bench placement, and both physical sides.
+Every pre-state and full trace prefix equals checkpoint thirty-one exactly. The
+measured action advances all three raw turns once and preserves every per-card
+BREAK flag, including top's true→true transition.
+
+Active margins remain compact. Ordinary benches change compact→spread for q1/q3
+(`-0.015625px` frame-local wrapper/authored x) and spread→compact for q2
+(`+0.015625px`); top-BREAK takes the inverse branches and signed displacements.
+Painted rectangles and all ten probes are freshly measured across every parity
+flip. Every post geometry, margin, and probe tuple equals checkpoint twenty-eight
+while every raw turn is exactly two quarter-turns ahead modulo four. Turns and
+BREAK flags complete a full cycle back to checkpoint eighteen. Top-BREAK bench
+geometry also closes exactly; ordinary bench q1/q3 remains `-0.015625px` and q2
+`+0.015625px` from checkpoint eighteen because its wrapper-margin history
+persists. Q1/q3 collide internally as well. The oracle pins exact predecessor
+inheritance, action/trace evidence, physical mappings, identity, lifecycle,
+cleanup, source fulfillment, and recursive provenance. Later/intervening or
+lower-initiated actions, alternate origins, attachments, candidate parity, and
+production normalization remain separate; no UI or UX changes.
+
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during
 characterization is represented explicitly instead of assumed to be duplication.

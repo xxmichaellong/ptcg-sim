@@ -473,6 +473,21 @@ internally. These relationships remain source compatibility evidence rather
 than canonical game state. Fourth/later, top/prior-lower, intervening,
 alternate-origin, attachment, and candidate-parity paths remain separate.
 
+An immediate fourth plain-R action by checkpoint thirty-one's same top/index-
+zero initiator is now pinned independently. Its `single=false` transition
+advances every raw turn once and preserves all `PokémonBreak` flags. Every
+pre-state and trace prefix equals checkpoint thirty-one. Active remains compact.
+Ordinary sole-bench q1/q3 changes compact→spread with `-0.015625px` frame-local
+wrapper/authored x and q2 changes spread→compact with `+0.015625px`; top-BREAK
+takes the inverse branches. Every post margin, geometry, and ten-probe tuple
+equals checkpoint twenty-eight while the raw turns are two quarter-turns ahead.
+Turns and flags complete a full cycle back to checkpoint eighteen, but ordinary
+bench geometry retains its bounded historical displacement; top-BREAK bench
+geometry closes exactly. Q1/q3 also collide internally. This separates
+canonical orientation from source-only wrapper-margin history. Later or lower-
+initiated actions, intervening inputs, alternate origins, attachments, and
+candidate parity remain separate.
+
 The immediate refresh branch after the same lower divergence is now captured
 independently. Reconstruction preserves the three image nodes but replaces the
 wrapper, briefly leaving two wrappers until the empty original is removed by

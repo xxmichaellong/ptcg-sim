@@ -278,6 +278,7 @@ test('checked-in legacy compound stacks preserve ordinary and BREAK rotation his
     []
   );
   expect(capture.lowerNonzeroTopThirdGroupAfterSingleCases).toEqual([]);
+  expect(capture.lowerNonzeroTopFourthGroupAfterSingleCases).toEqual([]);
   expect(capture.lowerNonzeroSameLowerThirdGroupAfterSingleCases).toEqual([]);
   expect(capture.lowerNonzeroDifferentLowerThirdGroupAfterSingleCases).toEqual(
     []

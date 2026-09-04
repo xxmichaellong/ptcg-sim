@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 862 v2 tests across 134 files. A separate suite
-passes 98 Playwright checks across 49 Chromium 151 browser files:
+The repository-wide gate passes 867 v2 tests across 135 files. A separate suite
+passes 102 Playwright checks across 51 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -794,7 +794,25 @@ passes 98 Playwright checks across 49 Chromium 151 browser files:
     lifecycle, cleanup, and recursive provenance. Fourth/later, top/prior-
     lower, intervening, alternate-origin, attachment, candidate-parity, and
     production/UI paths remain separate.
-40. The selected DOM implementation completes 100 mount → clear/reset → destroy
+40. A thirty-fourth source-only checkpoint pins 48 immediate fourth-top
+    histories after checkpoint thirty-one. The same top at logical/DOM index
+    zero performs the measured `single=false` action; every raw turn advances
+    once and every BREAK flag survives, including top's true→true transition.
+    Active stays compact. Ordinary bench q1/q3 changes compact→spread by
+    `-0.015625px` frame-local wrapper/authored x and q2 spread→compact by
+    `+0.015625px`; top-BREAK takes the inverse branches. Fresh painted
+    rectangles and ten probes cover every parity flip. Exact checkpoint-thirty-
+    one pre-state/trace inheritance is pinned. Every post margin/geometry/probe
+    tuple equals checkpoint twenty-eight while turns are two modulo-four
+    quarter-turns ahead. Turns and flags complete a full cycle to checkpoint
+    eighteen; top-BREAK bench geometry closes exactly, but ordinary bench retains
+    its bounded q1/q3 `-0.015625px` and q2 `+0.015625px` history displacement.
+    Q1/q3 collide internally. Two 24-case Chromium runs verify action selection,
+    physical mappings, stable IDs, source fulfillment, three-observer/no-refresh
+    lifecycle, cleanup, and recursive provenance. Later/lower-initiated,
+    intervening, alternate-origin, attachment, candidate-parity, and production/
+    UI paths remain separate.
+41. The selected DOM implementation completes 100 mount → clear/reset → destroy
     cycles on one warmed route-owned host with the exact status sequence,
     complete scene IDs at mount, zero rendered scene children/IDs after clear and
     destroy, zero non-DOM diagnostic resources, and post-GC Chromium
@@ -906,6 +924,11 @@ initiator is split between
 `tests/browser/legacy-compound-lower-nonzero-top-third-group-after-single-ordinary-geometry.spec.ts`
 and
 `tests/browser/legacy-compound-lower-nonzero-top-third-group-after-single-break-geometry.spec.ts`.
+The immediate fourth whole-group rotation by checkpoint thirty-one's same top
+initiator is split between
+`tests/browser/legacy-compound-lower-nonzero-top-fourth-group-after-single-ordinary-geometry.spec.ts`
+and
+`tests/browser/legacy-compound-lower-nonzero-top-fourth-group-after-single-break-geometry.spec.ts`.
 The immediate third whole-group rotation by checkpoint twenty-six's same
 divergent lower initiator is split between
 `tests/browser/legacy-compound-lower-nonzero-same-lower-third-group-after-single-ordinary-geometry.spec.ts`
@@ -927,7 +950,7 @@ the separately composed clean-active-plus-sole-bench q0 production shape. The
 compound, BREAK-refresh, top/lower nonzero-group single-card and same-card
 follow-up plus immediate top-, same-lower-, different-lower-, repeated-same-
 lower-, repeated-same-other-lower-, repeated-top-, third-top-, third-same-lower-,
-third-other-lower-, or top-then-prior/other-lower-group
+third-other-lower-, fourth-top-, or top-then-prior/other-lower-group
 rotation or wrapper refresh after
 divergence, lower-group-
 initiator, and pristine/returned/history-authored-q0 lower single-card suites

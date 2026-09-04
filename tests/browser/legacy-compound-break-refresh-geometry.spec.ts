@@ -321,6 +321,7 @@ test('checked-in legacy BREAK q0/q2 refreshes preserve their exact history-depen
     []
   );
   expect(capture.lowerNonzeroTopThirdGroupAfterSingleCases).toEqual([]);
+  expect(capture.lowerNonzeroTopFourthGroupAfterSingleCases).toEqual([]);
   expect(capture.lowerNonzeroSameLowerThirdGroupAfterSingleCases).toEqual([]);
   expect(capture.lowerNonzeroDifferentLowerThirdGroupAfterSingleCases).toEqual(
     []

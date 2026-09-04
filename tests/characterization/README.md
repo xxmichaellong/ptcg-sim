@@ -639,6 +639,30 @@ provenance. Fourth/later or lower-initiated measured actions, intervening
 operations, alternate origins, attachments, candidate parity, and production/
 domain/protocol/schema/UI/UX paths remain excluded.
 
+`legacy-compound-lower-nonzero-top-fourth-group-after-single-layout.test.ts`
+then extends checkpoint thirty-one with an immediate fourth whole-group action
+by the same top at logical/DOM index zero. Forty-eight independent ordinary/
+top-BREAK histories cross original q1/q2/q3, prior middle/base divergence, both
+physical sides, and active/sole-bench placement. Every pre-state and trace
+prefix equals checkpoint thirty-one exactly. The measured top and both siblings
+advance once without changing any BREAK flag, including top's true→true
+transition.
+
+Active stays compact. Ordinary bench q1/q3 changes compact→spread by
+`-0.015625px` frame-local wrapper/authored x and q2 changes spread→compact by
+`+0.015625px`; top-BREAK takes the inverse branches and displacements. Painted
+rectangles and all ten probes are captured fresh across every parity flip. Every
+post margin/geometry/probe tuple equals checkpoint twenty-eight while every raw
+turn is two quarter-turns ahead modulo four. Post turns and flags complete a
+full cycle back to checkpoint eighteen. Top-BREAK bench geometry closes too;
+ordinary bench geometry retains the bounded q1/q3 `-0.015625px` and q2
+`+0.015625px` history displacement. Q1/q3 also collide internally. The fixture
+pins exact inheritance, top action indices, traces, physical mappings, stable
+identifiers, source fulfillment, three-observer/no-refresh lifecycle, cleanup,
+and recursive provenance. Later/lower-initiated actions, intervening operations,
+alternate origins, attachments, candidate parity, and production/domain/
+protocol/schema/UI/UX paths remain excluded.
+
 `legacy-compound-lower-nonzero-same-lower-third-group-after-single-layout.test.ts`
 then extends checkpoint twenty-six with an immediate third whole-group action by
 the same divergent middle/base card at logical index 1/2 and DOM ordinal 2/1.
