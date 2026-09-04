@@ -63,9 +63,12 @@ the relevant product decisions and phase exit criteria.
   development-only creator route now exercises that full stack behind Vite; a
   20-cycle StrictMode integration gate proves one creation and exact ownership
   teardown per mount, while production bundle provenance rejects the entire dev
-  module. Visible create/join wiring waits on ADR-020's decision about how the
-  handoff moves between browsers; normal sidebar/chat/navigation and
-  downloadable/export formats remain later parity work.
+  module. A separate Chromium gate starts local Wrangler and Vite and proves the
+  live creation → ticket → WebSocket → projected DOM board path, safe transport
+  URLs, a bidirectional response, and clean closure. Visible create/join wiring
+  waits on ADR-020's decision about how the handoff moves between browsers;
+  normal sidebar/chat/navigation and downloadable/export formats remain later
+  parity work.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 

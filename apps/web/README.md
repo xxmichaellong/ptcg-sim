@@ -44,6 +44,13 @@ not choose an ADR-020 invitation transport or expose the player-two/spectator
 credentials. The production bundle gate rejects any source provenance under
 `apps/web/src/dev/`.
 
+The Chromium suite starts both Wrangler and Vite and drives this route over the
+real same-origin HTTP/WebSocket proxy. It verifies health, room creation,
+admission-ticket exchange, a ready projected session and DOM board, a
+bidirectional server notice, credential-free request URLs, and clean socket
+closure. The separate in-process churn gate retains the stronger 20-cycle
+ownership/teardown proof.
+
 Both screens preserve the v1 75.5% board / 24% side-panel split. The room screen
 mounts the effective live/replay board, multiplayer/replay activity surface,
 legacy replay controls, and externally owned route teardown. Normal sidebar

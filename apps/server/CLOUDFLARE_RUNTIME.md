@@ -63,6 +63,12 @@ rollback evidence remain required before ADR-005 becomes accepted.
   room, retains its serialized connection/session attachment and identical
   durable authority snapshot, answers an application ping, and durably accepts
   the next sequenced command.
+- The Chromium suite starts local Wrangler and Vite together, then creates a
+  room through the same-origin proxy, exchanges the creator ticket, completes a
+  real WebSocket admission, renders the projected DOM board, observes a server
+  notice, verifies credential-free transport URLs, and closes the socket. The
+  live run also proves successful `101` upgrades are informational and terminal
+  socket telemetry reports no phantom active connection.
 - One-shot faults at the production persistence-adapter boundary prove that a
   failed initial admission neither consumes its ticket nor cancels unclaimed
   expiry, and that retrying the same ticket commits exactly once. Concurrent

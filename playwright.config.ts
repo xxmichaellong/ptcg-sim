@@ -31,13 +31,24 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command:
-      'corepack pnpm --filter @ptcgsim/web dev --host 127.0.0.1 --port 4173',
-    url: 'http://127.0.0.1:4173',
-    reuseExistingServer: !process.env['CI'],
-    timeout: 30_000,
-    stdout: 'ignore',
-    stderr: 'pipe',
-  },
+  webServer: [
+    {
+      command:
+        'corepack pnpm --filter @ptcgsim/server-v2 dev --ip 127.0.0.1 --port 8787',
+      url: 'http://127.0.0.1:8787/v2/health',
+      reuseExistingServer: !process.env['CI'],
+      timeout: 60_000,
+      stdout: 'ignore',
+      stderr: 'pipe',
+    },
+    {
+      command:
+        'corepack pnpm --filter @ptcgsim/web dev --host 127.0.0.1 --port 4173',
+      url: 'http://127.0.0.1:4173',
+      reuseExistingServer: !process.env['CI'],
+      timeout: 30_000,
+      stdout: 'ignore',
+      stderr: 'pipe',
+    },
+  ],
 });

@@ -37,6 +37,11 @@ sanitized build/protocol/authority/match-schema versions.
 | `room_socket`     | Upgrade/restore/close/error and current socket count                        |
 | `server_failure`  | Fixed subsystem and retryability; never the thrown error                    |
 
+A successful WebSocket `101` is an accepted HTTP outcome, not a rejected
+request. Terminal socket events exclude the callback socket from
+`activeSockets`, even when the hibernation API retains it in `getWebSockets()`
+until the callback returns.
+
 The emitter rebuilds every event field-by-field, bounds numeric values,
 allowlists reasons, sanitizes labels, freezes the record, and isolates clock,
 identifier, serialization, and sink failures from application behavior.

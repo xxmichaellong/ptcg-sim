@@ -256,7 +256,7 @@ const httpOutcome = (status: number): ServerHttpOutcome => {
   if (status === 404) return 'not_found';
   if (status === 429) return 'rate_limited';
   if (status >= 500) return 'failed';
-  if (status >= 200 && status < 400) return 'accepted';
+  if (status === 101 || (status >= 200 && status < 400)) return 'accepted';
   return 'rejected';
 };
 

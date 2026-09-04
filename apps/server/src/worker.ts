@@ -19,6 +19,7 @@ import { handleRoomCreationRequest } from './room-creation-http.js';
 import { handleRoomInvitationRequest } from './room-invitation-http.js';
 import { DurableRoomRateLimiter } from './room-rate-limit.js';
 import { handleServerHealthRequest } from './server-health.js';
+import { activeSocketCountExcluding } from './socket-telemetry.js';
 import {
   ConsoleServerTelemetrySink,
   StructuredServerTelemetry,
@@ -289,7 +290,10 @@ export class PtcgRoom extends DurableObject<Env> {
     this.telemetry.roomSocket({
       outcome: 'closed',
       closeCode: code,
-      activeSockets: this.ctx.getWebSockets().length,
+      activeSockets: activeSocketCountExcluding(
+        this.ctx.getWebSockets(),
+        socket
+      ),
     });
   }
 
@@ -297,7 +301,10 @@ export class PtcgRoom extends DurableObject<Env> {
     this.disconnectSocket(socket);
     this.telemetry.roomSocket({
       outcome: 'error',
-      activeSockets: this.ctx.getWebSockets().length,
+      activeSockets: activeSocketCountExcluding(
+        this.ctx.getWebSockets(),
+        socket
+      ),
     });
   }
 

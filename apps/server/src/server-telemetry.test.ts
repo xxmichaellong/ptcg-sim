@@ -159,6 +159,29 @@ describe('structured server telemetry', () => {
     ]);
   });
 
+  it('classifies a successful WebSocket upgrade as accepted', () => {
+    const { sink, telemetry } = fixture();
+
+    telemetry.httpRequest({
+      route: 'socket_upgrade',
+      status: 101,
+      durationMs: 1.25,
+    });
+
+    expect(sink.entries).toMatchObject([
+      {
+        level: 'info',
+        event: {
+          kind: 'http_request',
+          route: 'socket_upgrade',
+          outcome: 'accepted',
+          status: 101,
+          durationMs: 1.25,
+        },
+      },
+    ]);
+  });
+
   it('isolates sink, clock, and identifier failures from application behavior', () => {
     const emit = vi.fn(() => {
       throw new Error('telemetry backend failed');

@@ -124,10 +124,12 @@ developer-only route leaks, test-fixture leaks, and drift in the canonical v2
 card-back bytes. A development-only creator route now joins the actual room
 creation, ticket exchange, remote runtime, presentation, and selected renderer;
 its 20-cycle StrictMode integration test proves one creation and exact teardown
-per mount. Remaining Phase 2 evidence includes an explicit public-package
-API/export report, browser-spec TypeScript debt removal, production route
-isolation in a real deployment, and the broader ratified browser/viewport
-matrix.
+per mount. A complementary Chromium gate now traverses the live Vite → Wrangler
+→ Durable Object HTTP/WebSocket path for one creator session and validates safe
+transport URLs and clean closure. Remaining Phase 2 evidence includes an
+explicit public-package API/export report, browser-spec TypeScript debt removal,
+production route isolation in a real deployment, and the broader ratified
+browser/viewport matrix.
 
 Work:
 

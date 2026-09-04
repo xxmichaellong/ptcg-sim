@@ -9,19 +9,19 @@ the frozen v1 runtime.
 
 ## Canonical commands
 
-| Command                        | Contract                                                                                                              |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| `pnpm run format:check:v2`     | Check formatting for v2 apps/packages/tests/docs, tooling, and root configuration.                                    |
-| `pnpm run lint:v2`             | Run non-type-aware `typescript-eslint` rules plus JavaScript ESLint rules with zero warnings.                         |
-| `pnpm run check:boundaries:v2` | Reject legacy/deep/undeclared imports and cycles in the workspace source graph; verify card-back source integrity.    |
-| `pnpm run check:cycles:v2`     | Check relative TypeScript module cycles while excluding generated `lib`, `dist`, and Worker types.                    |
-| `pnpm run typecheck:v2`        | Strictly build production project references and typecheck the Worker model/runtime harnesses.                        |
-| `pnpm run test:tooling:v2`     | Prove the boundary checker rejects legacy/deep imports, workspace cycles, forbidden web provenance, and missing maps. |
-| `pnpm run build:v2`            | Build Worker and web artifacts, then verify bundle provenance, fixture exclusion, and emitted card-back bytes.        |
-| `pnpm run check:v2`            | Run every non-legacy, non-browser check above plus v2 unit and Worker-runtime tests.                                  |
-| `pnpm run check:ci`            | Run the frozen 79-test v1 suite followed by `check:v2`; this is the required non-browser CI job.                      |
-| `pnpm run check:browser`       | Run all browser characterization and renderer tests in one sequential Chromium worker.                                |
-| `pnpm run check:full`          | Run `check:ci` and then `check:browser` locally.                                                                      |
+| Command                        | Contract                                                                                                                     |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm run format:check:v2`     | Check formatting for v2 apps/packages/tests/docs, tooling, and root configuration.                                           |
+| `pnpm run lint:v2`             | Run non-type-aware `typescript-eslint` rules plus JavaScript ESLint rules with zero warnings.                                |
+| `pnpm run check:boundaries:v2` | Reject legacy/deep/undeclared imports and cycles in the workspace source graph; verify card-back source integrity.           |
+| `pnpm run check:cycles:v2`     | Check relative TypeScript module cycles while excluding generated `lib`, `dist`, and Worker types.                           |
+| `pnpm run typecheck:v2`        | Strictly build production project references and typecheck the Worker model/runtime harnesses.                               |
+| `pnpm run test:tooling:v2`     | Prove the boundary checker rejects legacy/deep imports, workspace cycles, forbidden web provenance, and missing maps.        |
+| `pnpm run build:v2`            | Build Worker and web artifacts, then verify bundle provenance, fixture exclusion, and emitted card-back bytes.               |
+| `pnpm run check:v2`            | Run every non-legacy, non-browser check above plus v2 unit and Worker-runtime tests.                                         |
+| `pnpm run check:ci`            | Run the frozen 79-test v1 suite followed by `check:v2`; this is the required non-browser CI job.                             |
+| `pnpm run check:browser`       | Start local Wrangler and Vite, then run all browser, transport, characterization, and renderer tests in one Chromium worker. |
+| `pnpm run check:full`          | Run `check:ci` and then `check:browser` locally.                                                                             |
 
 Use `corepack pnpm` when invoking these commands directly from a new checkout.
 The repository pins pnpm 11.24.0 in `packageManager`.
@@ -63,8 +63,10 @@ runs, pins action revisions, and pins Ubuntu 24.04 plus Node 24.19.0.
 The `quality` job runs `check:ci` and verifies that its generators do not modify
 tracked files. Only after it succeeds does the `chromium` job install
 Playwright's own Chromium with its Linux dependencies and run `check:browser`.
-Browser reports, failure screenshots, and traces are retained as a 14-day
-artifact. Browser binaries are not cached.
+Playwright starts Wrangler on port 8787 and Vite on port 4173, waits on both
+health URLs, and tears both down after the sequential run. Browser reports,
+failure screenshots, and traces are retained as a 14-day artifact. Browser
+binaries are not cached.
 
 ## Explicit residual gaps
 
@@ -83,7 +85,8 @@ artifact. Browser binaries are not cached.
   binding and correctly does not embed the 1 MiB card back, so deployment routing
   must join the Worker and static web origin before a public room route ships.
 - The developer-only creator route exercises the actual route/runtime/renderer
-  ownership stack and a 20-cycle StrictMode churn test proves exact teardown,
-  but its transport is mocked in-process. A deployed browser navigation/churn
-  gate and the ADR-020 second-browser invitation path remain outstanding.
+  ownership stack. A 20-cycle StrictMode test proves exact teardown with mocked
+  transport, while a separate Chromium gate proves the real local Wrangler/Vite
+  HTTP and WebSocket path for one complete creator session. Deployed navigation
+  churn and the ADR-020 second-browser invitation path remain outstanding.
 - An explicit public-package API/export report remains a Phase 2 exit item.

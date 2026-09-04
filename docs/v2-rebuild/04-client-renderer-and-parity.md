@@ -1247,9 +1247,13 @@ and serve-only. A separate development-route integration gate performs 20 React
 StrictMode mount/unmount cycles through the actual remote route, session,
 presentation, and DOM renderer stack. It coalesces each StrictMode probe into one
 room creation and proves exact runtime/socket/renderer/global-handle teardown;
-the HTTP/WebSocket transport is mocked in-process. Real raster decoded-byte and
-retained-heap limits, external-host and failure behavior, deployed browser
-navigation churn, and hidden/private face request privacy remain separate gates.
+the HTTP/WebSocket transport is mocked in-process. A complementary Chromium gate
+starts real local Wrangler and Vite servers, then proves same-origin health,
+creation, ticket exchange, WebSocket admission, projected board readiness,
+bidirectional response, credential-free URLs, and clean close for one creator
+session. Real raster decoded-byte and retained-heap limits, external-host and
+failure behavior, deployed browser navigation churn, and hidden/private face
+request privacy remain separate gates.
 
 ## Accessibility preservation and minimum improvement
 

@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 867 v2 tests across 135 files. A separate suite
-passes 104 Playwright checks across 52 Chromium 151 browser files:
+The repository-wide gate passes 885 v2 tests across 140 files. A separate suite
+passes 105 Playwright checks across 53 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -842,6 +842,16 @@ passes 104 Playwright checks across 52 Chromium 151 browser files:
     console handle, and leaves no host children. HTTP and WebSocket transport are
     mocked in-process; deployed browser navigation, second-browser invitation,
     and heap/resource accounting remain separate evidence.
+44. A complementary Chromium gate starts local Wrangler and Vite, verifies the
+    safe public health response, creates a real Durable Object room through the
+    same-origin proxy, exchanges the creator capability for a one-time ticket,
+    completes WebSocket admission, and reaches a ready projected DOM board. A
+    client message receives the documented `not_implemented` server notice,
+    proving bidirectional transport without claiming chat parity. Every observed
+    HTTP/socket URL is query-, credential-, and fragment-free, disposal closes
+    the real socket exactly once, successful `101` telemetry is accepted, and
+    the terminal socket count reaches zero. Deployed navigation churn and the
+    ADR-020 second-browser journey remain separate gates.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
