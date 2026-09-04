@@ -659,3 +659,25 @@ fulfillment, three-observer/no-refresh lifecycle, cleanup, and recursive
 provenance. Fourth/later, top/different-lower, intervening, alternate-origin,
 attachment, candidate-parity, and production/domain/protocol/schema/UI/UX paths
 remain excluded.
+
+`legacy-compound-lower-nonzero-different-lower-third-group-after-single-layout.test.ts`
+then extends checkpoint twenty-seven with an immediate third whole-group action
+by the same other lower card at logical index 2/1 and DOM ordinal 1/2.
+Forty-eight independent ordinary/top-BREAK histories cross original q1/q2/q3,
+both physical sides, and active/sole-bench placement. Every pre-state and trace
+prefix equals checkpoint twenty-seven. The selected lower advances q3→q0,
+q0→q1, or q1→q2, both siblings advance once, and all BREAK flags persist.
+
+Active stays compact. Bench q1/q3 changes spread→compact with a `+0.015625px`
+frame-local wrapper/authored x displacement; q2 changes compact→spread with
+`-0.015625px`. Painted rectangles and all ten probes are captured fresh across
+each parity flip. Every post margin, geometry, probe tuple, and BREAK vector
+equals checkpoint twenty-five while every raw turn is two quarter-turns ahead
+modulo four. Post turns and flags also equal checkpoint thirty-two; active and
+q2 geometry is exact, while q1/q3 bench geometry differs by `+0.015625px` due
+to initiator history. Q1/q3 collide internally as well. The fixture pins exact
+inheritance, other-lower action indices, traces, physical mappings, stable
+identifiers, source fulfillment, three-observer/no-refresh lifecycle, cleanup,
+and recursive provenance. Fourth/later, top/prior-lower, intervening,
+alternate-origin, attachment, candidate-parity, and production/domain/protocol/
+schema/UI/UX paths remain excluded.

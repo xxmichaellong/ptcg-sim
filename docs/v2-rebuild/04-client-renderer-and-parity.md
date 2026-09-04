@@ -862,6 +862,27 @@ exact inheritance and bounded collisions, traces, physical mappings, identity,
 lifecycle, cleanup, source fulfillment, and recursive provenance. Fourth/later,
 top/different-lower, or intervening actions remain separate; no UI or UX changes.
 
+A thirty-third source-only checkpoint extends the repeated-other-lower branch
+through an immediate third whole-group action by checkpoint twenty-seven's same
+other middle/base card. Forty-eight independently rebuilt ordinary/top-BREAK
+histories cross original q1/q2/q3, active/sole-bench placement, and both
+physical sides. Every pre-state and full trace prefix equals checkpoint
+twenty-seven exactly. The selected lower advances q3→q0, q0→q1, or q1→q2,
+both siblings advance once, and every per-card BREAK flag persists.
+
+Active margins remain compact. Bench q1/q3 changes spread→compact, moving the
+wrapper and authored boxes `+0.015625px` frame-local x; q2 changes
+compact→spread by `-0.015625px`. Painted rectangles and all ten probes are
+fresh across every parity flip. Every post margin/geometry/probe tuple and BREAK
+vector equals checkpoint twenty-five while each raw turn is two quarter-turns
+ahead modulo four. Post turns and flags also equal checkpoint thirty-two; active
+and q2 geometry is exact, while q1/q3 bench geometry is `+0.015625px` to the
+right because the initiator history differs. Q1/q3 collide internally as well.
+The oracle pins exact inheritance, other-lower selection, traces, physical
+mappings, identity, lifecycle, cleanup, source fulfillment, and recursive
+provenance. Fourth/later, top/prior-lower, intervening, alternate-origin,
+attachment, candidate-parity, and production/UI paths remain separate.
+
 The current duplicated self/opponent CSS becomes one declarative player-board
 layout with transforms for top/bottom orientation. Any asymmetry found during
 characterization is represented explicitly instead of assumed to be duplication.

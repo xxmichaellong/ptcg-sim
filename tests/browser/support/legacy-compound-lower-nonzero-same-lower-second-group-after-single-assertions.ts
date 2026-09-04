@@ -942,6 +942,9 @@ export const assertLowerNonzeroSameLowerSecondGroupAfterSingleLiveCapture =
     expect(capture.lowerNonzeroTopThirdGroupAfterSingleCases).toEqual([]);
     expect(capture.lowerNonzeroSameLowerThirdGroupAfterSingleCases).toEqual([]);
     expect(
+      capture.lowerNonzeroDifferentLowerThirdGroupAfterSingleCases
+    ).toEqual([]);
+    expect(
       capture.lowerNonzeroSameLowerSecondGroupAfterSingleCases.map(
         (entry) => entry.id
       )

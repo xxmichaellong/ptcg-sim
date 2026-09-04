@@ -279,6 +279,9 @@ test('checked-in legacy compound stacks preserve ordinary and BREAK rotation his
   );
   expect(capture.lowerNonzeroTopThirdGroupAfterSingleCases).toEqual([]);
   expect(capture.lowerNonzeroSameLowerThirdGroupAfterSingleCases).toEqual([]);
+  expect(capture.lowerNonzeroDifferentLowerThirdGroupAfterSingleCases).toEqual(
+    []
+  );
   expect(capture.nonzeroGroupSingleCases).toEqual([]);
   expect(capture.breakRefreshCases).toEqual([]);
   for (const side of ['local', 'opponent'] as const) {

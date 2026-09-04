@@ -1277,6 +1277,31 @@ refresh, source fulfillment, and recursive provenance are pinned. Fourth/later,
 top/different-lower, intervening, alternate-origin, attachment, candidate-parity,
 and production/domain/protocol/schema/UI/UX paths remain excluded.
 
+The thirty-third source checkpoint is split across
+`tests/browser/legacy-compound-lower-nonzero-different-lower-third-group-after-single-ordinary-geometry.spec.ts`
+and
+`tests/browser/legacy-compound-lower-nonzero-different-lower-third-group-after-single-break-geometry.spec.ts`,
+backed by
+`tests/legacy-fixtures/renderer/compound-lower-nonzero-different-lower-third-group-after-single-v1.json`.
+It reconstructs checkpoint twenty-seven exactly, then measures an immediate
+third whole-group action by the same other lower card at logical index 2/1 and
+DOM ordinal 1/2. The selected lower advances q3→q0, q0→q1, or q1→q2, both
+siblings advance once, and every BREAK flag persists.
+
+Active remains compact. Bench q1/q3 changes spread→compact by `+0.015625px`
+frame-local wrapper/authored x; q2 changes compact→spread by `-0.015625px`.
+Painted rectangles and all ten probes are captured fresh across every parity
+flip. Every post margin, geometry, probe tuple, and BREAK vector equals
+checkpoint twenty-five while each raw turn differs by two modulo four. Post
+turns and flags also equal checkpoint thirty-two; active and q2 geometry is
+exact, while q1/q3 bench geometry carries a `+0.015625px` initiator-history
+difference. Q1/q3 collide internally despite different raw turns. Exact
+checkpoint-twenty-seven inheritance, lower action/trace evidence, physical
+mappings, stable IDs, three observer pairs, cleanup, no refresh, source
+fulfillment, and recursive provenance are pinned. Fourth/later, top/prior-
+lower, intervening, alternate-origin, attachment, candidate-parity, and
+production/domain/protocol/schema/UI/UX paths remain excluded.
+
 These are characterization checkpoints, not a blanket parity pass. The earlier
 region checkpoint feeds every renderer-relevant derived region field into the
 renderer-neutral scene and has structured scene assertions for all four board
@@ -1288,7 +1313,7 @@ fixtures feed and compare their strict production geometries. The compound
 group/BREAK, BREAK q0/q2/q3 refresh, top- and lower-selected nonzero-group
 Alt-R, its same-card follow-up, and immediate top-, same-lower-, different-
 lower-, repeated-same-lower-, repeated-same-other-lower-, repeated-top-, third-
-top-, or top-then-prior/other-lower-group rotation after
+top-, third-same-lower-, third-other-lower-, or top-then-prior/other-lower-group rotation after
 divergence or wrapper refresh after divergence,
 lower-initiated group, and pristine/returned/history-authored-q0
 lower single histories remain wholly source-only. The

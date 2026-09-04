@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 857 v2 tests across 133 files. A separate suite
-passes 94 Playwright checks across 47 Chromium 151 browser files:
+The repository-wide gate passes 862 v2 tests across 134 files. A separate suite
+passes 98 Playwright checks across 49 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -777,7 +777,24 @@ passes 94 Playwright checks across 47 Chromium 151 browser files:
     observer/no-refresh lifecycle, cleanup, and recursive provenance. Fourth/
     later, top/different-lower, intervening, alternate-origin, attachment,
     candidate-parity, and production/UI paths remain separate.
-39. The selected DOM implementation completes 100 mount → clear/reset → destroy
+39. A thirty-third source-only checkpoint pins 48 immediate third-other-lower
+    histories after checkpoint twenty-seven. The same other middle/base card
+    acts at logical index 2/1 and DOM ordinal 1/2, advances q3→q0, q0→q1, or
+    q1→q2, advances both siblings, and preserves every BREAK flag. Active stays
+    compact. Bench q1/q3 changes spread→compact by `+0.015625px` frame-local
+    wrapper/authored x; q2 changes compact→spread by `-0.015625px`. Fresh
+    painted rectangles and ten probes cover each parity flip. Exact checkpoint-
+    twenty-seven pre-state/trace inheritance is pinned. Every post margin,
+    geometry, probe tuple, and BREAK vector equals checkpoint twenty-five while
+    each raw turn is two modulo-four quarter-turns ahead. Post turns and flags
+    also equal checkpoint thirty-two; active and q2 geometry is exact, while
+    q1/q3 has a bounded `+0.015625px` bench history displacement. Q1/q3 collide
+    internally. Two 24-case Chromium runs verify lower selection, physical
+    mappings, stable IDs, source fulfillment, three-observer/no-refresh
+    lifecycle, cleanup, and recursive provenance. Fourth/later, top/prior-
+    lower, intervening, alternate-origin, attachment, candidate-parity, and
+    production/UI paths remain separate.
+40. The selected DOM implementation completes 100 mount → clear/reset → destroy
     cycles on one warmed route-owned host with the exact status sequence,
     complete scene IDs at mount, zero rendered scene children/IDs after clear and
     destroy, zero non-DOM diagnostic resources, and post-GC Chromium
@@ -894,6 +911,11 @@ divergent lower initiator is split between
 `tests/browser/legacy-compound-lower-nonzero-same-lower-third-group-after-single-ordinary-geometry.spec.ts`
 and
 `tests/browser/legacy-compound-lower-nonzero-same-lower-third-group-after-single-break-geometry.spec.ts`.
+The immediate third whole-group rotation by checkpoint twenty-seven's same
+other lower initiator is split between
+`tests/browser/legacy-compound-lower-nonzero-different-lower-third-group-after-single-ordinary-geometry.spec.ts`
+and
+`tests/browser/legacy-compound-lower-nonzero-different-lower-third-group-after-single-break-geometry.spec.ts`.
 The mixed-
 order suite validates a checked-in numeric oracle without mounting a candidate;
 the mixed-stack movement suite mounts React only for its two canonical settled
@@ -905,7 +927,7 @@ the separately composed clean-active-plus-sole-bench q0 production shape. The
 compound, BREAK-refresh, top/lower nonzero-group single-card and same-card
 follow-up plus immediate top-, same-lower-, different-lower-, repeated-same-
 lower-, repeated-same-other-lower-, repeated-top-, third-top-, third-same-lower-,
-or top-then-prior/other-lower-group
+third-other-lower-, or top-then-prior/other-lower-group
 rotation or wrapper refresh after
 divergence, lower-group-
 initiator, and pristine/returned/history-authored-q0 lower single-card suites

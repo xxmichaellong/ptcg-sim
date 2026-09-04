@@ -1039,6 +1039,9 @@ export const assertLowerNonzeroSameLowerThirdGroupAfterSingleLiveCapture =
         (entry) => entry.id
       )
     ).toEqual(expectedCaseIds(composition));
+    expect(
+      capture.lowerNonzeroDifferentLowerThirdGroupAfterSingleCases
+    ).toEqual([]);
 
     for (const side of ['local', 'opponent'] as const) {
       expectRect(
