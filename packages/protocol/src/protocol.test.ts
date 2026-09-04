@@ -1,7 +1,9 @@
+import { MAX_DECK_CARDS as GAME_CORE_MAX_DECK_CARDS } from '@ptcgsim/game-core';
 import { describe, expect, it } from 'vitest';
 import * as v from 'valibot';
 import {
   MAX_CLIENT_FRAME_CODE_UNITS,
+  MAX_DECK_CARDS,
   MAX_REPLAY_FRAMES,
   PROTOCOL_VERSION,
 } from './constants.js';
@@ -17,6 +19,12 @@ import {
   parseServerFrame,
 } from './ingress.js';
 import { PresentationEventSchema } from './schemas.js';
+
+describe('cross-package wire limits', () => {
+  it('keeps the aggregate deck cap aligned with the game reducer', () => {
+    expect(MAX_DECK_CARDS).toBe(GAME_CORE_MAX_DECK_CARDS);
+  });
+});
 
 describe('room admission HTTP schemas', () => {
   it('accepts only bounded exact ticket exchanges', () => {
