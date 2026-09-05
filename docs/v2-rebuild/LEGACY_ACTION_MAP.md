@@ -58,6 +58,35 @@ a hard-to-find behavior. Proposed names are not final APIs.
 | `changeType`             | `ChangeCardCategory`                                | Pokémon/Energy/Trainer shortcuts, atomic loose-board departure, original category restoration    |
 | `VSTARGXFunction`        | `SetOncePerGameMarker`                              | Independent VSTAR/GX state, used styling, policy-gated self/opponent control, reset              |
 
+### Executable marker-control characterization
+
+The real legacy modules now run unchanged in a deny-by-default Chromium
+harness for both context-menu editing and keyboard shortcuts. On one selected
+active Pokémon, the three visible controls create damage `10`, condition `P`,
+and an empty ability-used tab in that order. Damage and condition use the
+original `contenteditable` nodes: every input event logs an update, blur keeps
+the same node for a positive damage value or nonzero condition, and a trimmed
+empty value or `0` logs the update followed by removal. The source accepts
+arbitrary damage text and free-form condition text; this is compatibility
+evidence, not permission to put unbounded strings into authoritative state.
+
+The same direct runtime replay pins the keyboard sequence. Digits add damage in
+tens, Alt-digits subtract it, `0` removes it, `Y` cycles
+`P → B → Pa → C → A → P`, Alt-Y removes the condition, and `W` toggles the
+ability marker. The condition palette remains green/red/blue/yellow/purple for
+`P`/`B`/`A`/`Pa`/`C`, with the source fallback for other text. Action and export
+logs are checked separately because `processAction` swaps a leading
+`self`/`opp` owner only in its replay/export copy.
+
+One source defect is now explicit. When Alt-digit removes the selected card's
+last damage, removal deselects the card inside the selected-card branch; the
+same keydown then enters the unselected Alt-digit branch and emits `viewDeck`
+for zero cards. V2 deliberately maps that gesture to one typed
+`SetDamage(null)` command. The existing application resolver also rejects
+non-finite, non-integer, string, and over-limit damage and bounds condition
+text. This checkpoint characterizes source behavior and the safe command
+boundary; the visible marker editor has not yet been connected to React/Pixi.
+
 ## Loose board batches
 
 | v1 action       | Proposed v2 responsibility                | Critical characterization                                      |

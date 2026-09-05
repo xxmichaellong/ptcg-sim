@@ -462,6 +462,26 @@ marker objects across the `legacyActiveQ0`/`legacyBenchQ0` presentation change.
 Owner, opponent, and spectator session projections retain their distinct stable
 card aliases and identical normalized geometry throughout.
 
+Marker editing now has an executable source checkpoint without widening the
+production interaction surface. Chromium loads the shipped v1 modules, opens
+the real active-card context menu, creates all three marker types, edits the
+actual `contenteditable` damage and condition nodes, blurs them through their
+keep/remove branches, and drives the numeric, Y, Alt-Y, and W shortcuts. It
+asserts stable node identity, exact text and palette transitions, marker
+cleanup, action counters, live action records, replay/export owner rewriting,
+asset requests, and page errors. This is direct execution rather than a
+transcribed simulator.
+
+The checkpoint also makes a legacy double-action defect reproducible:
+Alt-decrementing damage through zero deselects during the selected-card branch,
+then falls through to the unselected deck-view shortcut during the same
+keydown. The v2 `resolveStackStateAction` boundary intentionally emits only one
+`SetDamage(null)` command for that gesture. It preserves the full condition
+cycle and ability target behavior while rejecting invalid/unbounded damage and
+over-limit condition input. React/Pixi markers remain display-only for now, so
+no visible UI or UX has changed; the later editor integration must reuse the
+existing context menu, shortcuts, labels, and anchored text-entry behavior.
+
 The next source-only gate now characterizes compound Pokémon rotation without
 weakening that production boundary. Separate ordinary-group and BREAK oracles
 cover fresh three-stage chains in local/opponent active and sole bench, full

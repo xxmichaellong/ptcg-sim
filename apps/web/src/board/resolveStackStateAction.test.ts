@@ -62,42 +62,33 @@ describe('stack-state application actions', () => {
       ok: true,
       command: { type: 'SetDamage', damage: null },
     });
-    const unmarked: MatchViewState = {
-      ...view,
-      stacks: {
-        ...view.stacks,
-        'stack:blue:active': {
-          ...view.stacks['stack:blue:active']!,
-          specialCondition: null,
+    for (const [condition, target] of [
+      [null, 'P'],
+      ['P', 'B'],
+      ['B', 'Pa'],
+      ['Pa', 'C'],
+      ['C', 'A'],
+      ['A', 'P'],
+    ] as const) {
+      const conditioned: MatchViewState = {
+        ...view,
+        stacks: {
+          ...view.stacks,
+          'stack:blue:active': {
+            ...view.stacks['stack:blue:active']!,
+            specialCondition: condition,
+          },
         },
-      },
-    };
-    expect(
-      resolveStackStateAction(unmarked, card.id, {
-        type: 'cycleSpecialCondition',
-      })
-    ).toMatchObject({
-      ok: true,
-      command: { type: 'SetSpecialCondition', condition: 'P' },
-    });
-    const poisoned: MatchViewState = {
-      ...unmarked,
-      stacks: {
-        ...unmarked.stacks,
-        'stack:blue:active': {
-          ...unmarked.stacks['stack:blue:active']!,
-          specialCondition: 'P',
-        },
-      },
-    };
-    expect(
-      resolveStackStateAction(poisoned, card.id, {
-        type: 'cycleSpecialCondition',
-      })
-    ).toMatchObject({
-      ok: true,
-      command: { type: 'SetSpecialCondition', condition: 'B' },
-    });
+      };
+      expect(
+        resolveStackStateAction(conditioned, card.id, {
+          type: 'cycleSpecialCondition',
+        })
+      ).toMatchObject({
+        ok: true,
+        command: { type: 'SetSpecialCondition', condition: target },
+      });
+    }
   });
 
   it('fails closed for spectators, stale/non-stack cards, invalid values, and no-ops', () => {
@@ -138,6 +129,26 @@ describe('stack-state application actions', () => {
         damage: 10_000,
       })
     ).toEqual({ ok: false, reason: 'invalid_value' });
+    for (const damage of [Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(
+        resolveStackStateAction(view, card.id, {
+          type: 'setDamage',
+          damage,
+        })
+      ).toEqual({ ok: false, reason: 'invalid_value' });
+    }
+    expect(
+      resolveStackStateAction(view, card.id, {
+        type: 'setDamage',
+        damage: 'legacy free-form text',
+      } as unknown as Parameters<typeof resolveStackStateAction>[2])
+    ).toEqual({ ok: false, reason: 'invalid_value' });
+    expect(
+      resolveStackStateAction(view, card.id, {
+        type: 'setSpecialCondition',
+        condition: 'legacy text beyond the bounded editor limit',
+      })
+    ).toEqual({ ok: false, reason: 'invalid_value' });
     expect(
       resolveStackStateAction(view, card.id, {
         type: 'setAbilityUsed',
@@ -164,5 +175,33 @@ describe('stack-state application actions', () => {
       )
     ).toEqual({ ok: false, reason: 'no_op' });
     expect(submit).toHaveBeenCalledOnce();
+  });
+
+  it('turns a damage-removal shortcut into one command without keydown fallthrough', () => {
+    const view = createRendererSpikeView();
+    const card = activeCard(view);
+    const submit = vi.fn();
+
+    expect(
+      submitStackStateAction(
+        view,
+        card.id,
+        { type: 'adjustDamage', delta: -130 },
+        submit
+      )
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'SetDamage',
+        stackId: 'stack:blue:active',
+        damage: null,
+      },
+    });
+    expect(submit).toHaveBeenCalledOnce();
+    expect(submit).toHaveBeenLastCalledWith({
+      type: 'SetDamage',
+      stackId: 'stack:blue:active',
+      damage: null,
+    });
   });
 });

@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 900 v2 tests across 142 files. A separate suite
-passes 119 Playwright checks across 57 Chromium 151 browser files:
+The repository-wide gate passes 901 v2 tests across 142 files. A separate suite
+passes 121 Playwright checks across 58 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -469,8 +469,8 @@ passes 119 Playwright checks across 57 Chromium 151 browser files:
     canonicalized because no DOM history is projected. Marker scene diffs,
     keyed Pixi view lifecycle without asset churn, and owner/opponent/spectator
     alias privacy are covered. q1/q2/q3 and source-history layout,
-    bench/BREAK/compound and attachment rotation, marker transfer/editing UX,
-    and Pixi-native paint/hit remain deferred.
+    bench/BREAK/compound and attachment rotation, marker transfer/editor
+    integration UX, and Pixi-native paint/hit remain deferred.
 17. An eleventh Chromium source capture isolates one ordinary Pokémon in
     the sole bench wrapper on both physical sides, with damage and ability-used
     markers and no canonical special condition. It pins q0→q1→q2→q3→q0,
@@ -488,8 +488,8 @@ passes 119 Playwright checks across 57 Chromium 151 browser files:
     tests cover updates, cleanup, resource stability, recipient-equivalent
     geometry, distinct stable opaque card aliases, and the shared canonical
     public stack ID. q1/q2/q3, observer/history reconstruction,
-    additional bench contention, marker editing, and Pixi-native paint/hit
-    remain deferred.
+    additional bench contention, marker-editor integration, and Pixi-native
+    paint/hit remain deferred.
 18. A twelfth source checkpoint uses one shared Chromium harness but two
     digest-pinned contracts: ordinary compound group rotation and BREAK plus
     group rotation. Four fresh three-Pokémon cases per contract span both
@@ -871,7 +871,21 @@ passes 119 Playwright checks across 57 Chromium 151 browser files:
     A real authority/session test proves the same transition, private stable card
     aliases, public stable stack/marker IDs, and equal normalized geometry for
     owner, opponent, and spectator. Evolution-host transfer, rotated/compound
-    movement, and marker editing remain separate.
+    movement, and marker-editor production integration remain separate.
+46. A real-runtime Chromium checkpoint executes the shipped v1 marker modules
+    rather than a transcription. It opens the actual active-card context menu;
+    creates damage, condition, and ability markers; edits and blurs the live
+    `contenteditable` nodes through retention and zero-removal; and invokes the
+    numeric, Y, Alt-Y, and W shortcuts. Stable marker identity, exact condition
+    cycle/palette, action counts and parameters, export-owner rewriting, asset
+    requests, cleanup, and page errors are asserted. The replay also preserves
+    evidence of a legacy defect: Alt-decrementing damage through zero deselects
+    the card and then emits an unintended zero-card `viewDeck` action from the
+    unselected branch of the same keydown. The typed v2 resolver maps that
+    gesture to exactly one `SetDamage(null)` submission, preserves the complete
+    condition cycle, and rejects invalid/unbounded editor values. No marker
+    interaction is wired into the production renderer in this checkpoint, so
+    layout, context-menu appearance, labels, and shortcuts remain unchanged.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -884,6 +898,9 @@ from happy-DOM lifecycle tests.
 The renderer suites live in `tests/browser/renderer-spike.spec.ts` and
 `tests/browser/renderer-dom-cacheable-assets.spec.ts`. The source-parity suites
 start with `tests/browser/legacy-dom-geometry.spec.ts` and
+the real-runtime marker controls live in
+`tests/browser/legacy-runtime-marker-editing.spec.ts`. The geometry suites
+continue with
 `tests/browser/legacy-card-stack-geometry.spec.ts`, plus the contained-card
 comparison in `tests/browser/legacy-contained-card-geometry.spec.ts` and the
 source-backed evolution comparison in

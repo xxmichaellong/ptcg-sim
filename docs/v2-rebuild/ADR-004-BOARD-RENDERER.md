@@ -214,7 +214,8 @@ Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
   margin, ghost-wrapper, broader restore, and departure phases remain
   source-only. These paths do not yet claim alternate layout states,
   three-plus or unsupported attachment geometry, transition animation or
-  transient departure DOM, rotated/history-dependent markers, marker editing,
+  transient departure DOM, rotated/history-dependent markers, marker-editor
+  integration (source lifecycle and the safe v2 resolver are characterized),
   production BREAK/compound rotation (the split source history is pinned but
   proves projected state insufficient), overflow,
   Tool-specific Pixi paint parity, full paint or interaction parity, cover-open
