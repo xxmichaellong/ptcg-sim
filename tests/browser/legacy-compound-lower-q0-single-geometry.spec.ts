@@ -33,7 +33,7 @@ const hitRegionNames = [
   'baseAuthoredOnly',
 ] as const;
 
-type Scenario = (typeof oracle.input.scenarioOrder)[number];
+type Scenario = keyof typeof oracle.expected.scenario;
 type Composition = 'ordinary' | 'break';
 type Role = (typeof roles)[number];
 type RectTuple = readonly [number, number, number, number];
@@ -44,6 +44,11 @@ type PhaseEvidenceTuple = readonly [
   cardRects: readonly [RectTuple, RectTuple, RectTuple],
   hitPoints: readonly PointTuple[],
 ];
+
+const defined = <Value>(value: Value | undefined, label: string): Value => {
+  if (value === undefined) throw new Error(`Missing ${label}`);
+  return value;
+};
 
 const scenarioMetadata = oracle.expected.scenario as unknown as Record<
   Scenario,
@@ -344,7 +349,10 @@ test('checked-in legacy lower q0 Alt-R assigns BREAK to the selected attached ev
 
   for (const entry of capture.lowerQ0SingleCases) {
     const scenario = entry.scenario as Scenario;
-    const metadata = scenarioMetadata[scenario];
+    const metadata = defined(
+      scenarioMetadata[scenario],
+      `${entry.id}.scenario`
+    );
     const evidence = phaseEvidence[`${scenario}:${entry.slot}`];
     const expectedMargins = margins[`${metadata.composition}:${entry.slot}`];
     const expectedAuthoredPhases =
@@ -403,8 +411,14 @@ test('checked-in legacy lower q0 Alt-R assigns BREAK to the selected attached ev
 
     for (const [phaseIndex, phase] of entry.phases.entries()) {
       const expectedPhase = evidence[phaseIndex];
-      const expectedTurns = quarterTurns[scenario][phaseIndex];
-      const expectedBreaks = breakFlags[scenario][phaseIndex];
+      const expectedTurns = defined(
+        quarterTurns[scenario],
+        `${entry.id}.quarter-turns`
+      )[phaseIndex];
+      const expectedBreaks = defined(
+        breakFlags[scenario],
+        `${entry.id}.break-flags`
+      )[phaseIndex];
       const expectedMargin = expectedMargins[phaseIndex];
       const expectedAuthoredCards = expectedAuthoredPhases[phaseIndex];
       if (

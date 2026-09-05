@@ -9,20 +9,21 @@ the frozen v1 runtime.
 
 ## Canonical commands
 
-| Command                        | Contract                                                                                                                     |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm run format:check:v2`     | Check formatting for v2 apps/packages/tests/docs, tooling, and root configuration.                                           |
-| `pnpm run lint:v2`             | Run non-type-aware `typescript-eslint` rules plus JavaScript ESLint rules with zero warnings.                                |
-| `pnpm run check:boundaries:v2` | Reject legacy/deep/undeclared imports and cycles in the workspace source graph; verify card-back source integrity.           |
-| `pnpm run check:api:v2`        | Reject unreviewed workspace entrypoints and exported symbol additions, removals, renames, or type/value-kind changes.        |
-| `pnpm run check:cycles:v2`     | Check relative TypeScript module cycles while excluding generated `lib`, `dist`, and Worker types.                           |
-| `pnpm run typecheck:v2`        | Strictly build production project references and typecheck the Worker model/runtime harnesses.                               |
-| `pnpm run test:tooling:v2`     | Prove the boundary checker rejects legacy/deep imports, workspace cycles, forbidden web provenance, and missing maps.        |
-| `pnpm run build:v2`            | Build Worker and web artifacts, then verify bundle provenance, fixture exclusion, and emitted card-back bytes.               |
-| `pnpm run check:v2`            | Run every non-legacy, non-browser check above plus v2 unit and Worker-runtime tests.                                         |
-| `pnpm run check:ci`            | Run the frozen 79-test v1 suite followed by `check:v2`; this is the required non-browser CI job.                             |
-| `pnpm run check:browser`       | Start local Wrangler and Vite, then run all browser, transport, characterization, and renderer tests in one Chromium worker. |
-| `pnpm run check:full`          | Run `check:ci` and then `check:browser` locally.                                                                             |
+| Command                         | Contract                                                                                                                     |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm run format:check:v2`      | Check formatting for v2 apps/packages/tests/docs, tooling, and root configuration.                                           |
+| `pnpm run lint:v2`              | Run non-type-aware `typescript-eslint` rules plus JavaScript ESLint rules with zero warnings.                                |
+| `pnpm run check:boundaries:v2`  | Reject legacy/deep/undeclared imports and cycles in the workspace source graph; verify card-back source integrity.           |
+| `pnpm run check:api:v2`         | Reject unreviewed workspace entrypoints and exported symbol additions, removals, renames, or type/value-kind changes.        |
+| `pnpm run check:cycles:v2`      | Check relative TypeScript module cycles while excluding generated `lib`, `dist`, and Worker types.                           |
+| `pnpm run typecheck:browser:v2` | Typecheck Playwright specs/support against the strict production profile, including unchecked-index protection.              |
+| `pnpm run typecheck:v2`         | Strictly build production references and typecheck Worker model/runtime plus browser harnesses.                              |
+| `pnpm run test:tooling:v2`      | Prove the boundary checker rejects legacy/deep imports, workspace cycles, forbidden web provenance, and missing maps.        |
+| `pnpm run build:v2`             | Build Worker and web artifacts, then verify bundle provenance, fixture exclusion, and emitted card-back bytes.               |
+| `pnpm run check:v2`             | Run every non-legacy, non-browser check above plus v2 unit and Worker-runtime tests.                                         |
+| `pnpm run check:ci`             | Run the frozen 79-test v1 suite followed by `check:v2`; this is the required non-browser CI job.                             |
+| `pnpm run check:browser`        | Start local Wrangler and Vite, then run all browser, transport, characterization, and renderer tests in one Chromium worker. |
+| `pnpm run check:full`           | Run `check:ci` and then `check:browser` locally.                                                                             |
 
 Use `corepack pnpm` when invoking these commands directly from a new checkout.
 The repository pins pnpm 11.24.0 in `packageManager`.
@@ -66,6 +67,16 @@ report with `node scripts/check-v2-public-api.mjs --write` only after reviewing
 whether each surface change is deliberately public; the quality job separately
 ensures generators leave tracked files unchanged.
 
+## Strict browser harness
+
+`tsconfig.browser.json` inherits the same strict and
+`noUncheckedIndexedAccess` settings as production. It covers Playwright
+configuration, every browser specification/support module, and the shared typed
+renderer-spike window handle. Legacy oracle traversal uses literal tuple indices
+where cardinality is fixed and explicit fail-fast checks where fixture data is
+looked up dynamically, so malformed evidence cannot be hidden with unchecked
+casts or a weaker test-only compiler profile.
+
 The default `/v2/assets/cardback.png` is copied byte-for-byte from the current v1
 asset. Source and built copies must retain SHA-256
 `44a5ffdcd9df23d3322250da733099c2c29c984362260efc5914a5a8745fa327`,
@@ -87,10 +98,6 @@ binaries are not cached.
 
 ## Explicit residual gaps
 
-- `tests/browser` is transpiled and executed by Playwright but is not yet its own
-  strict TypeScript project. Enabling the production strict/no-unchecked profile
-  currently exposes pre-existing oracle typing debt; that debt must be repaired,
-  not hidden by weakening the profile.
 - Current CI proves default renderer cases at 1280×720/DPR 1 and source-oracle
   cases with explicit 1600×900/DPR 1 overrides. The planned 1366×768 and
   1920×1080/DPR 2, pinned-font, Firefox, Safari, and physical-GPU release matrix

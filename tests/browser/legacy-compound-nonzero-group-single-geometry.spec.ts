@@ -28,7 +28,7 @@ const hitRegionNames = [
   'topAuthoredOnly',
 ] as const;
 
-type Scenario = (typeof oracle.input.scenarioOrder)[number];
+type Scenario = keyof typeof oracle.expected.quarterTurnsByScenario;
 type Slot = 'active' | 'bench';
 type RectTuple = readonly [number, number, number, number];
 type PointTuple = readonly [number, number] | null;
@@ -45,6 +45,11 @@ type PhaseEvidenceTuple = readonly [
     PointTuple,
   ],
 ];
+
+const defined = <Value>(value: Value | undefined, label: string): Value => {
+  if (value === undefined) throw new Error(`Missing ${label}`);
+  return value;
+};
 
 const evidenceByScenarioAndSlot = oracle.expected
   .phaseEvidenceByScenarioAndSlot as unknown as Record<
@@ -287,10 +292,22 @@ test('checked-in legacy Alt-R pins the clean nonzero-group entry matrix', async 
   for (const entry of capture.nonzeroGroupSingleCases) {
     const scenario = entry.scenario as Scenario;
     const key = `${scenario}:${entry.slot}` as const;
-    const evidence = evidenceByScenarioAndSlot[key];
-    const expectedTurns = quarterTurnsByScenario[scenario];
-    const expectedBreak = breakByScenario[scenario];
-    const expectedMargins = marginsByScenarioAndSlot[key];
+    const evidence = defined(
+      evidenceByScenarioAndSlot[key],
+      `${entry.id}.evidence`
+    );
+    const expectedTurns = defined(
+      quarterTurnsByScenario[scenario],
+      `${entry.id}.quarter-turns`
+    );
+    const expectedBreak = defined(
+      breakByScenario[scenario],
+      `${entry.id}.break-flags`
+    );
+    const expectedMargins = defined(
+      marginsByScenarioAndSlot[key],
+      `${entry.id}.margins`
+    );
     expect(entry.phases.map((phase) => phase.name)).toEqual(
       oracle.input.phaseSequence
     );
@@ -375,7 +392,10 @@ test('checked-in legacy Alt-R pins the clean nonzero-group entry matrix', async 
         'base',
       ]);
       expect(roleOrder(phase.stack.hitOrder.baseOnly)).toEqual(['base']);
-      const specialHitRoles = paintedAuthoredHitRolesByScenario[scenario];
+      const specialHitRoles = defined(
+        paintedAuthoredHitRolesByScenario[scenario],
+        `${entry.id}.painted-authored-hit-roles`
+      );
       expect(roleOrder(phase.stack.hitOrder.topPaintedOnly)).toEqual(
         specialHitRoles[phaseIndex * 2]
       );
@@ -384,7 +404,12 @@ test('checked-in legacy Alt-R pins the clean nonzero-group entry matrix', async 
       );
 
       for (const [hitIndex, hitName] of hitRegionNames.entries()) {
-        const expectedPoint = pointFromTuple(phaseEvidence[3][hitIndex]);
+        const expectedPoint = pointFromTuple(
+          defined(
+            phaseEvidence[3][hitIndex],
+            `${entry.id}.${phase.name}.${hitName}.oracle`
+          )
+        );
         const actualPoint = phase.stack.hitPointsFrameLocal[hitName];
         if (expectedPoint === null) {
           expect(
@@ -423,7 +448,12 @@ test('checked-in legacy Alt-R pins the clean nonzero-group entry matrix', async 
         if (!card) throw new Error(`Missing ${entry.id}.${phase.name}.${role}`);
         expectRect(
           card.frameLocalBounds,
-          rectFromTuple(phaseEvidence[2][roleIndex] as RectTuple),
+          rectFromTuple(
+            defined(
+              phaseEvidence[2][roleIndex],
+              `${entry.id}.${phase.name}.${role}.oracle`
+            )
+          ),
           `${entry.id}.${phase.name}.${role}`
         );
         expectRect(
@@ -444,7 +474,12 @@ test('checked-in legacy Alt-R pins the clean nonzero-group entry matrix', async 
           )
         ).toBeLessThanOrEqual(oracle.tolerances.rotationDegrees);
         expect(card.pokemonBreak).toBe(
-          role === 'top' ? expectedBreak[phaseIndex] : false
+          role === 'top'
+            ? defined(
+                expectedBreak[phaseIndex],
+                `${entry.id}.${phase.name}.break-flag`
+              )
+            : false
         );
         expect(card.naturalWidth).toBe(oracle.input.asset.naturalWidth);
         expect(card.naturalHeight).toBe(oracle.input.asset.naturalHeight);

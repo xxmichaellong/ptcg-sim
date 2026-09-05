@@ -55,6 +55,11 @@ interface ProvenanceManifest {
 
 const repositoryRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const roles = ['top', 'middle', 'base'] as const;
+const roleEntries = [
+  [0, 'top'],
+  [1, 'middle'],
+  [2, 'base'],
+] as const;
 const hitRegionNames = [
   'commonOverlap',
   'topOnly',
@@ -552,7 +557,7 @@ export const assertLowerNonzeroLiveCapture = async (
         });
       }
 
-      for (const [cardIndex, role] of roles.entries()) {
+      for (const [cardIndex, role] of roleEntries) {
         const card = phase.cards.find((candidate) => candidate.role === role);
         const paintedTuple = expectedPhase[2][cardIndex];
         const authoredTuple = expectedPhase[3][cardIndex];

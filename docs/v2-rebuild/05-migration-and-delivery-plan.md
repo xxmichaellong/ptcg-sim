@@ -114,12 +114,13 @@ findings remain useful.
 
 Goal: create enforced boundaries without replacing user flows.
 
-Current status (2026-09-04): substantially implemented but not exited. The
+Current status (2026-09-05): substantially implemented but not exited. The
 workspace, strict production project references, renderer/authority contracts,
-scoped formatter and TypeScript-aware lint gate, generated-output-free cycle
-check, compiler-resolved public API baseline, source/bundle boundary checker,
-and required quality/Chromium CI jobs now exist. The boundary and API checkers
-fail closed on unexpected workspace exports, missing source maps,
+strict Playwright project, scoped formatter and TypeScript-aware lint gate,
+generated-output-free cycle check, compiler-resolved public API baseline,
+source/bundle boundary checker, and required quality/Chromium CI jobs now
+exist. The boundary and API checkers fail closed on unexpected workspace
+exports, missing source maps,
 legacy/deep imports, workspace cycles, authority code in the web artifact,
 developer-only route leaks, test-fixture leaks, and drift in the canonical v2
 card-back bytes. A development-only creator route now joins the actual room
@@ -127,9 +128,9 @@ creation, ticket exchange, remote runtime, presentation, and selected renderer;
 its 20-cycle StrictMode integration test proves one creation and exact teardown
 per mount. A complementary Chromium gate now traverses the live Vite → Wrangler
 → Durable Object HTTP/WebSocket path for one creator session and validates safe
-transport URLs and clean closure. Remaining Phase 2 evidence includes
-browser-spec TypeScript debt removal, production route isolation in a real
-deployment, and the broader ratified browser/viewport matrix.
+transport URLs and clean closure. Remaining Phase 2 evidence includes production
+route isolation in a real deployment and the broader ratified browser/viewport
+matrix.
 
 Work:
 

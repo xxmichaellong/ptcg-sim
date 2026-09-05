@@ -23,6 +23,11 @@ export type LowerNonzeroSameLowerGroupAfterSingleComposition =
   'ordinary' | 'break';
 
 const roles = ['top', 'middle', 'base'] as const;
+const roleEntries = [
+  [0, 'top'],
+  [1, 'middle'],
+  [2, 'base'],
+] as const;
 const slots = ['active', 'bench'] as const;
 const hitRegionNames = [
   'commonOverlap',
@@ -494,9 +499,9 @@ const expectedHitRoles = (
   point: CapturedPoint,
   cardRects: CardRects
 ): readonly Role[] =>
-  roles.filter((_, index) =>
-    pointInside(point, rectFromTuple(cardRects[index]))
-  );
+  roleEntries
+    .filter(([index]) => pointInside(point, rectFromTuple(cardRects[index])))
+    .map(([, role]) => role);
 
 const paintedFromAuthored = (
   authored: CapturedRect,
@@ -616,7 +621,7 @@ const expectCollisionPhase = (
   label: string
 ): void => {
   expectCollisionRect(actual[1], reference[1], xDelta, `${label}.stack`);
-  for (const [index, role] of roles.entries()) {
+  for (const [index, role] of roleEntries) {
     expectCollisionRect(
       actual[2][index],
       reference[2][index],
@@ -1136,7 +1141,7 @@ export const assertLowerNonzeroSameLowerGroupAfterSingleLiveCapture = async (
         'middle',
       ]);
 
-      for (const [cardIndex, role] of roles.entries()) {
+      for (const [cardIndex, role] of roleEntries) {
         const card = required(
           phase.cards.find((candidate) => candidate.role === role),
           `${entry.id}.${phase.name}.${role}`
@@ -1368,7 +1373,7 @@ export const assertLowerNonzeroSameLowerGroupAfterSingleLiveCapture = async (
         `${entry.id}.post-top-reference.stack.${key}`
       );
     }
-    for (const [index, role] of roles.entries()) {
+    for (const [index, role] of roleEntries) {
       const card = required(
         postPhase.cards.find((candidate) => candidate.role === role),
         `${entry.id}.post-collision.${role}`

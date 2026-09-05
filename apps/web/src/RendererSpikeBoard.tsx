@@ -10,14 +10,17 @@ import {
   type BoardPresentation,
   type BoardPresentationUpdate,
   type BoardRenderer,
-  type BoardRendererAdapters,
   type BoardRendererStatus,
 } from '@ptcgsim/renderer-contract';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 import { useEffect, useRef, useState } from 'react';
 import { submitBoardDrop } from './board/resolveBoardDrop.js';
+import type {
+  BoardRendererFactory,
+  RendererKind,
+} from './renderer-spike-handle.js';
 
-export type RendererKind = 'dom' | 'pixi';
+export type { RendererKind } from './renderer-spike-handle.js';
 
 /**
  * ADR-004 selects normalized stable-keyed React DOM as the first production
@@ -26,7 +29,6 @@ export type RendererKind = 'dom' | 'pixi';
  */
 export const readRendererKind = (requested: string | null): RendererKind =>
   requested === 'pixi' ? 'pixi' : 'dom';
-type BoardRendererFactory = (adapters: BoardRendererAdapters) => BoardRenderer;
 
 const sceneForHost = (host: HTMLElement, view: MatchViewState) => {
   const outerViewport = {
@@ -60,18 +62,6 @@ const sceneForHost = (host: HTMLElement, view: MatchViewState) => {
     scene,
   };
 };
-
-declare global {
-  interface Window {
-    __PTCG_RENDERER_SPIKE__?: {
-      readonly rendererKind: RendererKind;
-      readonly renderer: BoardRenderer;
-      readonly scene: ReturnType<typeof createBoardScene>;
-      /** Development-only browser-test seam for lifecycle gates. */
-      readonly createRenderer?: BoardRendererFactory;
-    };
-  }
-}
 
 export const RendererSpikeBoard = ({
   view,

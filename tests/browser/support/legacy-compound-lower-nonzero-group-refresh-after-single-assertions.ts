@@ -19,6 +19,11 @@ import type {
 export type LowerNonzeroGroupRefreshComposition = 'ordinary' | 'break';
 
 const roles = ['top', 'middle', 'base'] as const;
+const roleEntries = [
+  [0, 'top'],
+  [1, 'middle'],
+  [2, 'base'],
+] as const;
 const slots = ['active', 'bench'] as const;
 const sides = ['local', 'opponent'] as const;
 const lowerRoles = ['middle', 'base'] as const;
@@ -330,6 +335,19 @@ const assertPhase = (
   frameRotation: number
 ) => {
   const phase = required(entry.phases[phaseIndex], `${entry.id}.phase`);
+  const scenario = entry.scenario as Scenario;
+  const expectedMargins = required(
+    margins[`${scenario}:${entry.slot}`]?.[phaseIndex],
+    `${entry.id}.margins`
+  );
+  const expectedTurns = required(
+    turns[scenario]?.[phaseIndex],
+    `${entry.id}.turns`
+  );
+  const expectedFlags = required(
+    flags[scenario]?.[phaseIndex],
+    `${entry.id}.flags`
+  );
   expect(phase.name).toBe(expected[0]);
   expect(phase.action).toBeNull();
   expect(phase.wrapperCount).toBe(
@@ -349,14 +367,10 @@ const assertPhase = (
   ).toEqual(oracle.expected.topology.logicalRoles);
   expect(phase.stack.transform).toBe(oracle.expected.topology.wrapperTransform);
   expect(phase.stack.zIndex).toBe(oracle.expected.topology.wrapperZIndex);
-  expect(phase.stack.inlineMarginRight).toBe(
-    margins[`${entry.scenario as Scenario}:${entry.slot}`][phaseIndex][0]
-  );
-  expect(phase.stack.inlineMarginLeft).toBe(
-    margins[`${entry.scenario as Scenario}:${entry.slot}`][phaseIndex][1]
-  );
+  expect(phase.stack.inlineMarginRight).toBe(expectedMargins[0]);
+  expect(phase.stack.inlineMarginLeft).toBe(expectedMargins[1]);
 
-  for (const [roleIndex, role] of roles.entries()) {
+  for (const [roleIndex, role] of roleEntries) {
     const card = required(
       phase.cards.find((candidate) => candidate.role === role),
       `${entry.id}.${role}`
@@ -376,7 +390,7 @@ const assertPhase = (
       physicalRect(entry.side, frame, card.frameLocalBounds),
       `${entry.id}.${role}.physical`
     );
-    const expectedTurn = turns[entry.scenario as Scenario][phaseIndex][role];
+    const expectedTurn = expectedTurns[role];
     expectRotation(
       card.localRotationDegrees,
       expectedTurn * 90,
@@ -388,9 +402,7 @@ const assertPhase = (
       `${entry.id}.${role}.effective-turn`
     );
     expect(card.inlineTransform).toBe(`rotate(${expectedTurn * 90}deg)`);
-    expect(card.pokemonBreak).toBe(
-      flags[entry.scenario as Scenario][phaseIndex][role]
-    );
+    expect(card.pokemonBreak).toBe(expectedFlags[role]);
     expect(card.naturalWidth).toBe(oracle.input.asset.naturalWidth);
     expect(card.naturalHeight).toBe(oracle.input.asset.naturalHeight);
     expect(card.sourcePath).toBe(oracle.input.asset.path);
@@ -416,6 +428,9 @@ const assertPhase = (
 
   for (const [regionIndex, region] of hitRegions.entries()) {
     const point = expected[4][regionIndex];
+    if (point === undefined) {
+      throw new Error(`Missing ${entry.id}.${region}.oracle`);
+    }
     const actualPoint = phase.stack.hitPointsFrameLocal[region];
     const actualPhysical = phase.stack.hitPointsPhysical[region];
     if (point === null) {
@@ -424,14 +439,16 @@ const assertPhase = (
       expect(roleOrder(phase.stack.hitOrder[region])).toBeNull();
       continue;
     }
-    expect(actualPoint, `${entry.id}.${region}`).not.toBeNull();
+    if (!actualPoint || !actualPhysical) {
+      throw new Error(`Missing ${entry.id}.${region} captured point`);
+    }
     expectPoint(
-      actualPoint!,
+      actualPoint,
       { x: point[0], y: point[1] },
       `${entry.id}.${region}`
     );
-    const physical = physicalPoint(entry.side, frame, actualPoint!);
-    expectPoint(actualPhysical!, physical, `${entry.id}.${region}.physical`);
+    const physical = physicalPoint(entry.side, frame, actualPoint);
+    expectPoint(actualPhysical, physical, `${entry.id}.${region}.physical`);
     expect(roleOrder(phase.stack.hitOrder[region])).toEqual(
       expectedHitRoles(point, expected[2])
     );
@@ -514,7 +531,10 @@ export const assertLowerNonzeroGroupRefreshLiveCapture = async (
       assertPhase(
         entry,
         phaseIndex,
-        evidence[key][phaseIndex],
+        required(
+          evidence[key]?.[phaseIndex],
+          `${entry.id}.phase.${phaseIndex}`
+        ),
         capture.frames[entry.side],
         capture.frameTransforms[entry.side].rotationDegrees
       );

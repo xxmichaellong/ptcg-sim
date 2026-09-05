@@ -17,6 +17,11 @@ import {
   type LegacyFixtureSide,
 } from './support/legacy-source-board.js';
 
+const defined = <Value>(value: Value | undefined, label: string): Value => {
+  if (value === undefined) throw new Error(`Missing ${label}`);
+  return value;
+};
+
 const repositoryRoot = fileURLToPath(new URL('../../', import.meta.url));
 
 const modularDegreesBetween = (left: number, right: number): number => {
@@ -536,12 +541,18 @@ test('checked-in legacy compound stacks preserve ordinary and BREAK rotation his
         expect(transformOrigin).toHaveLength(2);
         expectOracleStructured(
           transformOrigin[0] ?? Number.NaN,
-          oracle.expected.slotMetrics[entry.slot].transformOriginPx[0],
+          defined(
+            oracle.expected.slotMetrics[entry.slot].transformOriginPx[0],
+            `${card.id}.${phase.name}.transformOriginX.oracle`
+          ),
           `${card.id}.${phase.name}.transformOriginX`
         );
         expectOracleStructured(
           transformOrigin[1] ?? Number.NaN,
-          oracle.expected.slotMetrics[entry.slot].transformOriginPx[1],
+          defined(
+            oracle.expected.slotMetrics[entry.slot].transformOriginPx[1],
+            `${card.id}.${phase.name}.transformOriginY.oracle`
+          ),
           `${card.id}.${phase.name}.transformOriginY`
         );
         expect(card.inlineTransform).toBe(`rotate(${degrees}deg)`);

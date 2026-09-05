@@ -46,6 +46,11 @@ type PhaseEvidenceTuple = readonly [
   ],
 ];
 
+const defined = <Value>(value: Value | undefined, label: string): Value => {
+  if (value === undefined) throw new Error(`Missing ${label}`);
+  return value;
+};
+
 const scenarioMetadata = oracle.expected.scenario as unknown as Record<
   Scenario,
   {
@@ -290,7 +295,10 @@ test('checked-in legacy lower evolutions initiate coherent but history-sensitive
 
   for (const entry of capture.lowerGroupInitiatorCases) {
     const scenario = entry.scenario as Scenario;
-    const metadata = scenarioMetadata[scenario];
+    const metadata = defined(
+      scenarioMetadata[scenario],
+      `${entry.id}.scenario`
+    );
     const dependency =
       metadata.composition === 'ordinary' ? groupOracle : breakOracle;
     const expectedPhaseNames =
@@ -421,7 +429,12 @@ test('checked-in legacy lower evolutions initiate coherent but history-sensitive
       expect(roleOrder(phase.stack.hitOrder.baseOnly)).toEqual(['base']);
 
       for (const [hitIndex, hitName] of hitRegionNames.entries()) {
-        const dependencyPoint = pointFromTuple(evidence[3][hitIndex]);
+        const dependencyPoint = pointFromTuple(
+          defined(
+            evidence[3][hitIndex],
+            `${entry.id}.${phase.name}.${hitName}.oracle`
+          )
+        );
         const actualPoint = phase.stack.hitPointsFrameLocal[hitName];
         if (dependencyPoint === null) {
           expect(

@@ -29,10 +29,11 @@ one sequential Playwright-managed Chromium worker. Default renderer cases use
 1280×720/DPR 1, while source-oracle cases use their explicitly pinned
 1600×900/DPR 1 override. The lane runs after the non-browser quality gate with
 retries disabled, CI-only focused-test rejection, fresh Vite ownership, failure
-screenshots, and retained failure traces. It does not yet satisfy the two-target
-viewport matrix above, pin fonts, cover Firefox/Safari, or typecheck
-`tests/browser` as an independent strict TypeScript project. Those remain
-release evidence, not claims made by current CI. See
+screenshots, and retained failure traces. `tsconfig.browser.json` independently
+typechecks every Playwright spec and support module under the production
+strict/no-unchecked profile. The lane does not yet satisfy the two-target
+viewport matrix above, pin fonts, or cover Firefox/Safari. Those remain release
+evidence, not claims made by current CI. See
 [`QUALITY_GATES.md`](./QUALITY_GATES.md).
 
 ### Browser release matrix

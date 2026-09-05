@@ -1,7 +1,7 @@
 # PTCG Sim v2 rebuild blueprint
 
 - Status: **approved implementation in progress on the isolated v2 feature branch**
-- Last updated: 2026-09-04
+- Last updated: 2026-09-05
 - Primary objective: replace the internals while preserving the current UI and UX.
 
 This directory is the implementation contract for the PTCG Sim v2 rebuild.

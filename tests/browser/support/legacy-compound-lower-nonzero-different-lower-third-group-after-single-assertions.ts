@@ -24,6 +24,11 @@ export type LowerNonzeroDifferentLowerThirdGroupAfterSingleComposition =
   'ordinary' | 'break';
 
 const roles = ['top', 'middle', 'base'] as const;
+const roleEntries = [
+  [0, 'top'],
+  [1, 'middle'],
+  [2, 'base'],
+] as const;
 const slots = ['active', 'bench'] as const;
 const hitRegionNames = [
   'commonOverlap',
@@ -494,9 +499,9 @@ const expectedHitRoles = (
   point: CapturedPoint,
   cardRects: CardRects
 ): readonly Role[] =>
-  roles.filter((_, index) =>
-    pointInside(point, rectFromTuple(cardRects[index]))
-  );
+  roleEntries
+    .filter(([index]) => pointInside(point, rectFromTuple(cardRects[index])))
+    .map(([, role]) => role);
 
 const paintedFromAuthored = (
   authored: CapturedRect,
@@ -599,7 +604,7 @@ const expectCollisionPhase = (
   label: string
 ): void => {
   expectCollisionRect(actual[1], reference[1], xDelta, `${label}.stack`);
-  for (const [index, role] of roles.entries()) {
+  for (const [index, role] of roleEntries) {
     expectCollisionRect(
       actual[2][index],
       reference[2][index],
@@ -948,7 +953,7 @@ export const assertLowerNonzeroDifferentLowerThirdGroupAfterSingleOracleIntegrit
       expect(benchEvidence[1][1][0] - benchEvidence[0][1][0]).toBe(
         expectedDelta
       );
-      for (const roleIndex of [0, 1, 2]) {
+      for (const roleIndex of [0, 1, 2] as const) {
         expect(
           benchEvidence[1][3][roleIndex][0] - benchEvidence[0][3][roleIndex][0]
         ).toBe(expectedDelta);
@@ -1212,7 +1217,7 @@ export const assertLowerNonzeroDifferentLowerThirdGroupAfterSingleLiveCapture =
           'middle',
         ]);
 
-        for (const [cardIndex, role] of roles.entries()) {
+        for (const [cardIndex, role] of roleEntries) {
           const card = required(
             phase.cards.find((candidate) => candidate.role === role),
             `${entry.id}.${phase.name}.${role}`

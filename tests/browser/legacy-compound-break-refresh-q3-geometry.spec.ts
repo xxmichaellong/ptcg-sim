@@ -62,6 +62,11 @@ type PhaseEvidenceTuple = readonly [
   ],
 ];
 
+const defined = <Value>(value: Value | undefined, label: string): Value => {
+  if (value === undefined) throw new Error(`Missing ${label}`);
+  return value;
+};
+
 const roles = ['top', 'middle', 'base'] as const;
 const hitRegionNames = [
   'commonOverlap',
@@ -418,7 +423,10 @@ test('checked-in legacy BREAK q3 refresh synchronously collapses the group orien
       );
 
       for (const [hitIndex, key] of hitRegionNames.entries()) {
-        const expectedPointTuple = evidence[3][hitIndex];
+        const expectedPointTuple = defined(
+          evidence[3][hitIndex],
+          `${entry.id}.${phase.name}.${key}.oracle`
+        );
         const actualLocal = phase.stack.hitPointsFrameLocal[key];
         const actualPhysical = phase.stack.hitPointsPhysical[key];
         if (expectedPointTuple === null) {
@@ -512,7 +520,10 @@ test('checked-in legacy BREAK q3 refresh synchronously collapses the group orien
             `${card.id}.${phase.name}.transformOrigin.${index}`
           );
         }
-        const cardTuple = evidence[2][cardIndex];
+        const cardTuple = defined(
+          evidence[2][cardIndex],
+          `${entry.id}.${phase.name}.${role}.oracle`
+        );
         const expectedPainted = rectFromTuple(
           cardTuple.slice(0, 4) as unknown as RectTuple
         );
