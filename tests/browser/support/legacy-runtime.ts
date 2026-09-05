@@ -124,8 +124,17 @@ export const loadLegacyRuntime = async (
   });
 
   return {
-    servedPaths: [...servedPaths].sort(),
-    blockedOrigins: [...blockedOrigins].sort(),
-    missingPaths: [...missingPaths].sort(),
+    // Keep these live. Tests intentionally perform additional real-runtime
+    // operations after initial module loading and must observe any routes those
+    // operations request rather than a premature snapshot.
+    get servedPaths() {
+      return [...servedPaths].sort();
+    },
+    get blockedOrigins() {
+      return [...blockedOrigins].sort();
+    },
+    get missingPaths() {
+      return [...missingPaths].sort();
+    },
   };
 };

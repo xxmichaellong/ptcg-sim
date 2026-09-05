@@ -74,6 +74,7 @@ test('the real v1 runtime places an active card where the recorded oracle says',
       readonly width: number;
       readonly height: number;
     };
+    readonly complete: boolean;
     readonly zoneChildren: number;
     readonly containerClassName: string;
   };
@@ -122,6 +123,18 @@ test('the real v1 runtime places an active card where the recorded oracle says',
       );
       await card.image.decode();
       initializeActiveBenchCard('self', card, 'active', zone);
+      // The card image is created in the top document and then appended into
+      // the player iframe. Adopting it across documents restarts the image
+      // load, so the decode above no longer applies and intrinsic size is 0
+      // until the refetch lands. Wait for the element itself rather than a
+      // fixed number of frames, which only holds on an idle machine.
+      const deadline = Date.now() + 10_000;
+      while (
+        !(card.image.complete && card.image.naturalWidth > 0) &&
+        Date.now() < deadline
+      ) {
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+      }
       await new Promise((resolve) =>
         requestAnimationFrame(() => requestAnimationFrame(resolve))
       );
@@ -137,6 +150,7 @@ test('the real v1 runtime places an active card where the recorded oracle says',
           width: rect.width,
           height: rect.height,
         },
+        complete: card.image.complete,
         zoneChildren: zone.element.children.length,
         containerClassName: card.image.parentElement?.className ?? '',
       };
@@ -156,12 +170,14 @@ test('the real v1 runtime places an active card where the recorded oracle says',
     new URL('http://ptcgsim-legacy-runtime.test').origin
   );
   expect(loaded.servedPaths).toContain('/src/front-end.js');
+  expect(loaded.servedPaths).toContain('/src/assets/cardback.png');
   // The real module graph ran, not a stub of it.
   expect(
     loaded.servedPaths.filter((path) => path.endsWith('.js')).length
   ).toBeGreaterThan(100);
 
   // The asset the transcription's fixtures record.
+  expect(placement.complete).toBe(true);
   expect(placement.naturalWidth).toBe(portrait.naturalWidth);
   expect(placement.naturalHeight).toBe(portrait.naturalHeight);
   expect(placement.containerClassName).toBe('play-container');
