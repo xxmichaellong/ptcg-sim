@@ -507,6 +507,19 @@ survive attachment staging/restoration. A marked discard card promoted to a new
 host transfers the marker to its new stack, while ordinary movement and card
 normalization clear transient per-card markers.
 
+Ordinary stack-marker movement is now pinned end to end. The legacy source keeps
+the same card plus damage/ability DOM nodes while replacing wrappers across
+active→bench, same-bench refresh, and bench→active; it removes the special
+condition on demotion. Its refresh-time ghost wrapper produces a synchronous
+4.765625 px bench-marker shift, then the old wrapper's `MutationObserver` and
+the native bench `ResizeObserver` restore the prior geometry during settlement.
+V2 deliberately does not serialize that transient DOM history. The authority
+preserves damage and ability on the stable `PlayStack`, clears the condition,
+and publishes current-state geometry under the same marker IDs.
+Owner, opponent, and spectator retain distinct stable card aliases and observe
+the same normalized transition. Evolution-host transfer remains a separately
+bounded path despite sharing the same canonical state rules.
+
 `ChangeCardCategory` replaces the unsafe client sequence of mutating and then
 moving a card. It carries an opaque card handle, exact expected source, and
 one of Pokémon/Trainer/Energy. The authority resolves the source and owner, then

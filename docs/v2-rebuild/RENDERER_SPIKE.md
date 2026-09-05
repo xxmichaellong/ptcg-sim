@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 885 v2 tests across 140 files. A separate suite
-passes 105 Playwright checks across 53 Chromium 151 browser files:
+The repository-wide gate passes 900 v2 tests across 142 files. A separate suite
+passes 119 Playwright checks across 57 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -852,6 +852,26 @@ passes 105 Playwright checks across 53 Chromium 151 browser files:
     the real socket exactly once, successful `101` telemetry is accepted, and
     the terminal socket count reaches zero. Deployed navigation churn and the
     ADR-020 second-browser journey remain separate gates.
+45. A thirty-fifth source checkpoint follows one ordinary marked Pokémon through
+    active→bench movement, same-bench refresh reconstruction, and bench→active
+    movement independently in both physical frames. Chromium proves that the
+    source retains the card plus damage/ability marker nodes, reparents and
+    reflows those markers, replaces every `play-container`, briefly retains two
+    wrappers until `MutationObserver` delivery, and removes the active-only
+    special condition on demotion. Four synchronous reflows measure the
+    replacement bench wrapper before the old wrapper settles, temporarily
+    shifting both surviving markers 4.765625 CSS px right even though the card
+    returns to identical geometry. The old wrapper's `MutationObserver` and the
+    native bench `ResizeObserver` reflow the markers during settlement and
+    restore the prior bench geometry. V2 does not expose that transient source
+    history: canonical state retains damage and ability on the stable stack, clears the condition, and recomputes
+    deterministic current-slot geometry. Scene diffs update the two surviving
+    marker IDs rather than remove/re-add them. DOM and Pixi retain their keyed
+    marker objects across active/bench presentation changes without asset work.
+    A real authority/session test proves the same transition, private stable card
+    aliases, public stable stack/marker IDs, and equal normalized geometry for
+    owner, opponent, and spectator. Evolution-host transfer, rotated/compound
+    movement, and marker editing remain separate.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -881,7 +901,9 @@ plus the whole-stack/category-history source and React comparison in
 marker/rotation history and pristine-q0 React comparison in
 `tests/browser/legacy-marker-rotation-geometry.spec.ts`, and the separate
 sole-bench marker history plus strict pristine-q0 React comparison in
-`tests/browser/legacy-bench-marker-rotation-geometry.spec.ts`, plus the split
+`tests/browser/legacy-bench-marker-rotation-geometry.spec.ts`, plus the
+active/bench marker node-transfer and refresh reconstruction checkpoint in
+`tests/browser/legacy-marker-movement-geometry.spec.ts`, plus the split
 source-only compound group/BREAK histories in
 `tests/browser/legacy-compound-rotation-geometry.spec.ts`, and the q0/q2 BREAK
 refresh histories in

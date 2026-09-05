@@ -718,11 +718,14 @@ Pokémon moves active→bench, undergoes one same-bench refresh reconstruction,
 and moves bench→active in independent local/opponent histories. Chromium pins
 the stable card, damage, and ability nodes; removal of the active-only special
 condition; a new wrapper for every phase; synchronous two-wrapper overlap; and
-observer-settled cleanup. The same-bench refresh records a 4.765625 px
-frame-local rightward drift for both surviving marker nodes because the source
-measures them before the old wrapper disappears. The card does not drift.
+observer-settled cleanup. The same-bench refresh records a transient 4.765625 px
+frame-local rightward shift for both surviving marker nodes because four
+synchronous reflows measure the replacement before the old wrapper disappears.
+The old wrapper's `MutationObserver` and the native bench `ResizeObserver` then
+reflow the markers to their prior bench geometry during settlement. The card
+does not shift in either capture.
 
-V2 does not encode that transient wrapper history. Its stable stack-level
+V2 does not expose or encode that transient wrapper history. Its stable stack-level
 damage/ability IDs instead change between `legacyActiveQ0` and
 `legacyBenchQ0` geometry, while scene diffs keep them in the updated set and
 remove only the condition. DOM and Pixi reuse the keyed surviving marker objects

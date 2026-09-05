@@ -753,6 +753,72 @@ describe('Pixi board interaction cancellation', () => {
       localAbility.id,
     ]);
 
+    const benchDamage: MarkerSceneNode = {
+      ...legacyDamage,
+      presentation: 'legacyBenchQ0',
+      bounds: { x: 90, y: 220, width: 27, height: 27 },
+    };
+    const benchAbility: MarkerSceneNode = {
+      ...localAbility,
+      presentation: 'legacyBenchQ0',
+      bounds: { x: 35, y: 250, width: 81, height: 16.2 },
+    };
+    renderer.installScene(
+      createMarkerScene(revision + 1, [benchDamage, benchAbility]),
+      []
+    );
+    expectView(benchDamage, {
+      shape: 'circle',
+      color: 0xff6200,
+      alpha: 1,
+      text: '50',
+      textFill: 0xffffff,
+      fontSize: 13.5,
+      fontWeight: 'normal',
+      visible: true,
+    });
+    expectView(benchAbility, {
+      shape: 'roundRect',
+      color: 0x3b8dad,
+      alpha: 0.708,
+      text: '',
+      textFill: 0x000000,
+      fontSize: 10,
+      fontWeight: 'normal',
+      visible: false,
+    });
+    expect(internals.markerViews.size).toBe(2);
+    expect(internals.markerViews.has(genericAbility.id)).toBe(false);
+    expect(internals.markerViews.has(condition.id)).toBe(false);
+    expect(load).toHaveBeenCalledTimes(initialLoadCount);
+    expect(unload).toHaveBeenCalledTimes(initialUnloadCount);
+    expect(release).not.toHaveBeenCalled();
+
+    renderer.installScene(
+      createMarkerScene(revision + 2, [legacyDamage, localAbility]),
+      []
+    );
+    expectView(legacyDamage, {
+      shape: 'circle',
+      color: 0xff6200,
+      alpha: 1,
+      text: '50',
+      textFill: 0xffffff,
+      fontSize: 15,
+      fontWeight: 'normal',
+      visible: true,
+    });
+    expectView(localAbility, {
+      shape: 'roundRect',
+      color: 0x3b8dad,
+      alpha: 0.708,
+      text: '',
+      textFill: 0x000000,
+      fontSize: Math.max(10, localAbility.bounds.height * 0.42),
+      fontWeight: 'normal',
+      visible: false,
+    });
+
     const retained = [...internals.markerViews.values()].map((view) => ({
       root: view.root,
       graphic: view.graphic,

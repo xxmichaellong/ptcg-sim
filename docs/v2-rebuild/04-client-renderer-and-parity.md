@@ -441,9 +441,26 @@ the shared canonical public stack ID.
 
 Production parity/layout for rotated active or bench q1/q2/q3 and
 source-history-dependent active returned-q0, additional bench siblings,
-BREAK, compound evolution/group and attachment rotation, movement/evolution/
-refresh marker transfer, marker text-entry UX, alternate layouts, and
-Pixi-native paint/hit parity remain explicitly deferred.
+BREAK, compound evolution/group and attachment rotation, evolution-host marker
+transfer, marker text-entry UX, alternate layouts, and Pixi-native paint/hit
+parity remain explicitly deferred.
+
+Ordinary q0 active/bench marker movement is now a separate supported path. A
+source-backed Chromium replay proves that damage and ability marker DOM nodes
+survive active→bench movement, same-bench refresh reconstruction, and
+bench→active movement while every `play-container` wrapper is replaced. The
+active-only condition is removed on demotion. During source refresh, four
+synchronous reflows measure the replacement bench stack while the old wrapper
+still participates in layout, shifting the surviving markers 4.765625 CSS px to
+the right even though the card returns to the same bounds. The old wrapper's
+`MutationObserver` and the bench initializer's native `ResizeObserver` reflow
+them during settlement and restore the prior bench geometry. V2 does not expose
+that temporary DOM history: it keeps damage/ability on the stable stack ID,
+clears the condition, and derives deterministic geometry from the current slot. Scene
+diffs update the surviving marker IDs; both renderer adapters reuse their keyed
+marker objects across the `legacyActiveQ0`/`legacyBenchQ0` presentation change.
+Owner, opponent, and spectator session projections retain their distinct stable
+card aliases and identical normalized geometry throughout.
 
 The next source-only gate now characterizes compound Pokémon rotation without
 weakening that production boundary. Separate ordinary-group and BREAK oracles

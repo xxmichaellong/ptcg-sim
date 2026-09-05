@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "recordingMethod": "Chromium 151 CSS-pixel capture of two independent inert replays (local and opponent) of the checked-in ordinary Pokemon marker hooks during active-to-bench movement, same-zone refresh reconstruction, and bench-to-active movement. Checked-in HTML/CSS and cardback bytes are served through a deny-by-default route; the networked application module is stubbed and the digest-pinned reset, wrapper, counter-update, move, and refresh DOM mutations are narrowly transcribed. MutationObserver settlement is observed after two animation frames.",
+  "recordingMethod": "Chromium 151 CSS-pixel capture of two independent inert replays (local and opponent) of the checked-in ordinary Pokemon marker hooks during active-to-bench movement, same-zone refresh reconstruction, and bench-to-active movement. Checked-in HTML/CSS and cardback bytes are served through a deny-by-default route; the networked application module is stubbed and the digest-pinned reset, wrapper, counter-update, move, refresh, adjustCards, MutationObserver, and bench ResizeObserver behavior is narrowly transcribed. Immediate geometry is recorded synchronously and settled geometry after two animation frames.",
   "input": {
     "viewport": { "width": 1600, "height": 900, "devicePixelRatio": 1 },
     "asset": {
@@ -24,6 +24,8 @@
       "stable card and surviving marker node identities while every play-container wrapper is replaced",
       "damage and ability marker reparenting/reflow plus active-only special-condition removal on demotion",
       "synchronous two-wrapper overlap and MutationObserver-settled old-wrapper cleanup",
+      "the transient 4.765625 CSS-pixel frame-local marker shift caused by measuring the replacement bench wrapper before the old wrapper settles",
+      "MutationObserver and native bench ResizeObserver delivery that correct the transient marker shift to the settled bench geometry",
       "listener cleanup followed by post-removal resize non-observation"
     ],
     "excluded": [
@@ -31,7 +33,7 @@
       "automatic active/bench swaps involving a second Pokemon",
       "rotated, BREAK, face-down, flex-contention, or additional-bench histories",
       "marker input, blur, keyboard, focus, or click editing gestures",
-      "native bench ResizeObserver delivery, board flip, fullscreen, or viewport/DPR variants",
+      "board flip, fullscreen, or viewport/DPR variants",
       "drag, context-menu, preview, message, network, and server behavior",
       "React DOM, Pixi, renderer-contract, or production candidate parity"
     ]
@@ -111,6 +113,11 @@
       "path": "client/src/setup/sizing/refresh-board.js",
       "encoding": "utf8",
       "sha256": "b786a66c078de9623e46884e640db2e80f6b9ea8f1078573fee96bd71ecade7d"
+    },
+    {
+      "path": "client/src/setup/sizing/resizer.js",
+      "encoding": "utf8",
+      "sha256": "7cc88360ef8798e25f09b89b8eae24b131dd14965f46e9859c380634795e9c91"
     }
   ],
   "provenanceClaims": [
@@ -144,9 +151,11 @@
       ]
     },
     {
-      "claim": "same-zone board refresh reconstructs play-container wrappers through ordinary movement hooks",
+      "claim": "same-zone board refresh reconstructs play-container wrappers through ordinary movement hooks, performs an adjustCards reflow, and settles bench markers through MutationObserver and ResizeObserver callbacks",
       "sources": [
         "client/src/setup/sizing/refresh-board.js",
+        "client/src/setup/sizing/resizer.js",
+        "client/src/actions/move-card-bundle/initialize-active-bench-card.js",
         "client/src/actions/move-card-bundle/move-card.js",
         "client/src/actions/move-card-bundle/update-counters.js"
       ]
@@ -172,6 +181,7 @@
     ],
     "activeWrapperCounts": [1, 0, 0, 1],
     "benchWrapperCounts": [0, 1, 1, 0],
+    "benchRefreshTransientMarkerXDrift": 4.765625,
     "callTrace": [
       "addDamageCounter:active",
       "addSpecialCondition:active",
@@ -179,10 +189,20 @@
       "reflowDamageCounter:bench",
       "reflowAbilityCounter:bench",
       "removeSpecialCondition",
-      "reconstruct:bench",
       "reflowDamageCounter:bench",
       "reflowAbilityCounter:bench",
       "reconstruct:bench",
+      "reflowDamageCounter:bench",
+      "reflowAbilityCounter:bench",
+      "reflowDamageCounter:bench",
+      "reflowAbilityCounter:bench",
+      "reflowDamageCounter:bench",
+      "reflowAbilityCounter:bench",
+      "reflowDamageCounter:bench",
+      "reflowAbilityCounter:bench",
+      "reconstruct:bench",
+      "reflowDamageCounter:active",
+      "reflowAbilityCounter:active",
       "reflowDamageCounter:active",
       "reflowAbilityCounter:active",
       "reconstruct:active",
@@ -197,7 +217,7 @@
       "cardPointersAreNull": true,
       "resizeCallsBeforeDispatch": 0,
       "resizeCallsAfterDispatch": 0,
-      "harnessObserverDisconnectCalls": 4
+      "harnessObserverDisconnectCalls": 8
     }
   }
 }

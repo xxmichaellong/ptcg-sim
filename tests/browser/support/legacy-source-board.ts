@@ -276,6 +276,9 @@ export interface LegacyMarkerMovementPhase {
   readonly priorWrapperConnectedAfterSettle: boolean | null;
   readonly activeWrapperCountAfterSettle: number;
   readonly benchWrapperCountAfterSettle: number;
+  readonly markerFrameLocalBoundsImmediately: Readonly<
+    Partial<Record<LegacyMarkerKind, CapturedRect>>
+  >;
   readonly markers: readonly LegacyMarkerMovementMarker[];
   readonly cardDamageCounterId: string | null;
   readonly cardSpecialConditionId: string | null;
@@ -13779,7 +13782,9 @@ export const captureLegacySourceMarkerMovementFixture = async (
             );
           const zones = { active, bench } as const;
           const callTrace: string[] = [];
-          const observers: MutationObserver[] = [];
+          const mutationObservers: MutationObserver[] = [];
+          const resizeObservers: ResizeObserver[] = [];
+          let reflowBenchMarkers = () => undefined;
           let wrapperSequence = 0;
           let resizeCalls = 0;
 
@@ -13830,10 +13835,22 @@ export const captureLegacySourceMarkerMovementFixture = async (
                 ) {
                   wrapper.remove();
                 }
+                if (mutation.removedNodes.length > 0 && zone === bench) {
+                  reflowBenchMarkers();
+                }
               }
             });
             observer.observe(wrapper, { childList: true });
-            observers.push(observer);
+            mutationObservers.push(observer);
+            const resizeObserver = new ResizeObserver((entries) => {
+              for (const entry of entries) {
+                if (entry.target.parentElement?.id === 'bench') {
+                  reflowBenchMarkers();
+                }
+              }
+            });
+            resizeObserver.observe(wrapper);
+            resizeObservers.push(resizeObserver);
             return wrapper;
           };
 
@@ -13876,7 +13893,11 @@ export const captureLegacySourceMarkerMovementFixture = async (
             image.damageCounter = null;
             callTrace.push('removeDamageCounter');
           };
-          const addDamage = (zoneId: 'active' | 'bench', initial = false) => {
+          const addDamage = (
+            zoneId: 'active' | 'bench',
+            initial = false,
+            record = true
+          ) => {
             const zone = zones[zoneId];
             const targetRect = image.getBoundingClientRect();
             const zoneRect = zone.getBoundingClientRect();
@@ -13914,16 +13935,18 @@ export const captureLegacySourceMarkerMovementFixture = async (
             marker.addEventListener('input', handleInput);
             const handleResize: EventListener = () => {
               resizeCalls += 1;
-              addDamage(zoneId);
+              addDamage(zoneId, false, false);
             };
             installResize(marker, handleResize);
             marker.handleRemove = removeDamage;
             marker.handleRemoveWrapper = removeDamage;
             marker.addEventListener('blur', marker.handleRemoveWrapper);
             image.damageCounter = marker;
-            callTrace.push(
-              `${initial ? 'add' : 'reflow'}DamageCounter:${zoneId}`
-            );
+            if (record) {
+              callTrace.push(
+                `${initial ? 'add' : 'reflow'}DamageCounter:${zoneId}`
+              );
+            }
           };
 
           const removeSpecialCondition = () => {
@@ -13987,7 +14010,11 @@ export const captureLegacySourceMarkerMovementFixture = async (
             image.abilityCounter = null;
             callTrace.push('removeAbilityCounter');
           };
-          const addAbility = (zoneId: 'active' | 'bench', initial = false) => {
+          const addAbility = (
+            zoneId: 'active' | 'bench',
+            initial = false,
+            record = true
+          ) => {
             const zone = zones[zoneId];
             const targetRect = image.getBoundingClientRect();
             const zoneRect = zone.getBoundingClientRect();
@@ -14020,14 +14047,22 @@ export const captureLegacySourceMarkerMovementFixture = async (
             zone.append(marker);
             const handleResize: EventListener = () => {
               resizeCalls += 1;
-              addAbility(zoneId);
+              addAbility(zoneId, false, false);
             };
             installResize(marker, handleResize);
             marker.handleRemove = removeAbility;
             image.abilityCounter = marker;
-            callTrace.push(
-              `${initial ? 'add' : 'reflow'}AbilityCounter:${zoneId}`
-            );
+            if (record) {
+              callTrace.push(
+                `${initial ? 'add' : 'reflow'}AbilityCounter:${zoneId}`
+              );
+            }
+          };
+
+          reflowBenchMarkers = () => {
+            if (image.parentElement?.parentElement !== bench) return;
+            if (image.damageCounter) addDamage('bench', false, false);
+            if (image.abilityCounter) addAbility('bench', false, false);
           };
 
           addDamage('active', true);
@@ -14065,6 +14100,13 @@ export const captureLegacySourceMarkerMovementFixture = async (
                 zIndex: Number.parseInt(styles.zIndex, 10) || 0,
               };
             });
+          const captureMarkerBounds = (zoneId: 'active' | 'bench') =>
+            Object.fromEntries(
+              captureMarkers(zoneId).map((marker) => [
+                marker.kind,
+                marker.frameLocalBounds,
+              ])
+            ) as Readonly<Partial<Record<LegacyMarkerKind, CapturedRect>>>;
 
           const phases: RawMarkerMovementPhase[] = [];
           const capturePhase = (
@@ -14072,7 +14114,10 @@ export const captureLegacySourceMarkerMovementFixture = async (
             zoneId: 'active' | 'bench',
             priorWrapper: HTMLDivElement | null,
             wrapperCountImmediately: number,
-            priorWrapperConnectedImmediately: boolean | null
+            priorWrapperConnectedImmediately: boolean | null,
+            markerFrameLocalBoundsImmediately: Readonly<
+              Partial<Record<LegacyMarkerKind, CapturedRect>>
+            >
           ) => {
             phases.push({
               name,
@@ -14094,6 +14139,7 @@ export const captureLegacySourceMarkerMovementFixture = async (
                 active.querySelectorAll('.play-container').length,
               benchWrapperCountAfterSettle:
                 bench.querySelectorAll('.play-container').length,
+              markerFrameLocalBoundsImmediately,
               markers: captureMarkers(zoneId),
               cardDamageCounterId:
                 image.damageCounter?.dataset.legacyMarkerMovementId ?? null,
@@ -14104,11 +14150,19 @@ export const captureLegacySourceMarkerMovementFixture = async (
             });
           };
 
-          capturePhase('initial-active', 'active', null, 1, null);
+          capturePhase(
+            'initial-active',
+            'active',
+            null,
+            1,
+            null,
+            captureMarkerBounds('active')
+          );
 
           const reconstruct = async (
             name: Exclude<LegacyMarkerMovementPhaseName, 'initial-active'>,
-            zoneId: 'active' | 'bench'
+            zoneId: 'active' | 'bench',
+            reflowPasses: number
           ) => {
             const priorWrapper = wrapper;
             resetImage();
@@ -14119,10 +14173,21 @@ export const captureLegacySourceMarkerMovementFixture = async (
               image.specialCondition.textContent = '0';
               removeSpecialCondition();
             }
+            // updateCounters first reflows the moving card, then reflows every
+            // marker in the origin and destination counter zones. Cross-zone
+            // movement finds the card only in the destination (two passes);
+            // same-zone refresh visits the shared zone twice, then adjustCards
+            // performs one final synchronous reflow (four passes).
+            for (let pass = 1; pass < reflowPasses; pass += 1) {
+              addDamage(zoneId);
+              addAbility(zoneId);
+            }
             const wrapperCountImmediately =
               active.querySelectorAll('.play-container').length +
               bench.querySelectorAll('.play-container').length;
             const priorWrapperConnectedImmediately = priorWrapper.isConnected;
+            const markerFrameLocalBoundsImmediately =
+              captureMarkerBounds(zoneId);
             callTrace.push(`reconstruct:${zoneId}`);
             await waitForStableLayout();
             capturePhase(
@@ -14130,13 +14195,14 @@ export const captureLegacySourceMarkerMovementFixture = async (
               zoneId,
               priorWrapper,
               wrapperCountImmediately,
-              priorWrapperConnectedImmediately
+              priorWrapperConnectedImmediately,
+              markerFrameLocalBoundsImmediately
             );
           };
 
-          await reconstruct('demoted-bench', 'bench');
-          await reconstruct('refreshed-bench', 'bench');
-          await reconstruct('promoted-active', 'active');
+          await reconstruct('demoted-bench', 'bench', 2);
+          await reconstruct('refreshed-bench', 'bench', 4);
+          await reconstruct('promoted-active', 'active', 2);
 
           removeDamage();
           removeAbility();
@@ -14149,7 +14215,7 @@ export const captureLegacySourceMarkerMovementFixture = async (
           const currentWrapper = wrapper;
           currentWrapper.remove();
           let harnessObserverDisconnectCalls = 0;
-          for (const observer of observers) {
+          for (const observer of [...mutationObservers, ...resizeObservers]) {
             observer.disconnect();
             harnessObserverDisconnectCalls += 1;
           }

@@ -444,6 +444,45 @@ describe('React DOM board renderer', () => {
       'stack:p1:active:abilityUsed',
     ]);
 
+    const benchDamage: MarkerSceneNode = {
+      ...damage,
+      presentation: 'legacyBenchQ0',
+      bounds: { x: 80, y: 120, width: 27, height: 27 },
+    };
+    const benchAbility: MarkerSceneNode = {
+      ...localAbility,
+      presentation: 'legacyBenchQ0',
+      bounds: { x: 25, y: 150, width: 81, height: 16.2 },
+    };
+    act(() =>
+      renderer.installScene(
+        createMarkerScene(revision + 1, [benchDamage, benchAbility]),
+        []
+      )
+    );
+    expect(conditionNode.isConnected).toBe(false);
+    expect(
+      host.querySelector('[data-marker-id="stack:p1:active:damage"]')
+    ).toBe(damageNode);
+    expect(
+      host.querySelector('[data-marker-id="stack:p1:active:abilityUsed"]')
+    ).toBe(localAbilityNode);
+    expect(damageNode.dataset.markerPresentation).toBe('legacyBenchQ0');
+    expect(localAbilityNode.dataset.markerPresentation).toBe('legacyBenchQ0');
+    expect(damageNode.style.left).toBe('80px');
+    expect(localAbilityNode.style.width).toBe('81px');
+
+    act(() =>
+      renderer.installScene(
+        createMarkerScene(revision + 2, [damage, localAbility]),
+        []
+      )
+    );
+    expect(damageNode.dataset.markerPresentation).toBe('legacyActiveQ0');
+    expect(localAbilityNode.dataset.markerPresentation).toBe('legacyActiveQ0');
+    expect(damageNode.style.left).toBe('20px');
+    expect(localAbilityNode.style.width).toBe('90px');
+
     act(() => renderer.clearScene());
     expect(host.querySelectorAll('[data-marker-id]')).toHaveLength(0);
     expect(renderer.getDiagnostics()).toMatchObject({
