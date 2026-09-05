@@ -13,7 +13,11 @@ import {
 } from './browser-json-http.js';
 import { WebCryptoAuthoritySource } from './authority-crypto.js';
 import { initializeNewRoom } from './create-room.js';
-import { DurableRoomSnapshotStore } from './durable-storage.js';
+import {
+  DurableRoomSnapshotStore,
+  RoomAlreadyInitializedError,
+} from './durable-storage.js';
+import { isRoomAlreadyInitialized } from './room-initialization.js';
 import { consumeRoomCreationRateLimit } from './request-rate-limit.js';
 import { handleRoomCreationRequest } from './room-creation-http.js';
 import { handleRoomInvitationRequest } from './room-invitation-http.js';
@@ -137,7 +141,7 @@ export class PtcgRoom extends DurableObject<Env> {
 
   async initialize(roomCodeValue: string): Promise<InitializedRoom> {
     const existing = await this.store.load();
-    if (existing) throw new Error('Room already initialized');
+    if (existing) throw new RoomAlreadyInitializedError();
     const startedAt = performance.now();
     let created;
     try {
@@ -465,12 +469,7 @@ const worker: ExportedHandler<Env> = {
               try {
                 return await stub.initialize(code);
               } catch (error) {
-                if (
-                  error instanceof Error &&
-                  error.message.includes('already initialized')
-                ) {
-                  continue;
-                }
+                if (isRoomAlreadyInitialized(error)) continue;
                 throw error;
               }
             }

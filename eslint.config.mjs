@@ -25,6 +25,9 @@ export default [
       'apps/server/worker-configuration.d.ts',
       'artifacts/**',
       'client/**',
+      // Wrangler writes generated bundles here whenever `wrangler dev` runs,
+      // which the browser gate now does. They are git-ignored build output.
+      '**/.wrangler/**',
       'playwright-report/**',
       'server/**',
       'test-results/**',

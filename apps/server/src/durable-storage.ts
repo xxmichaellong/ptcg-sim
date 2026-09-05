@@ -26,6 +26,7 @@ import {
   prepareJournalRetention,
   type JournalRetentionTransaction,
 } from './journal-retention.js';
+import { ROOM_ALREADY_INITIALIZED_MESSAGE } from './room-initialization.js';
 
 export const AUTHORITY_SNAPSHOT_STORAGE_KEY = 'authority:snapshot';
 export const AUTHORITY_FRONTIER_STORAGE_KEY = 'authority:frontier';
@@ -148,7 +149,7 @@ export class ConcurrentRoomWriteError extends Error {
 
 export class RoomAlreadyInitializedError extends Error {
   constructor() {
-    super('Room authority snapshot is already initialized');
+    super(ROOM_ALREADY_INITIALIZED_MESSAGE);
     this.name = 'RoomAlreadyInitializedError';
   }
 }
