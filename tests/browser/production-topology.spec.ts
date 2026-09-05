@@ -1,6 +1,12 @@
 import { createHash } from 'node:crypto';
+import { readdir } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 
 import { expect, test, type Page, type Request } from '@playwright/test';
+
+const PUBLIC_V2_ASSET_DIRECTORY = fileURLToPath(
+  new URL('../../apps/web/public/v2/assets/', import.meta.url)
+);
 
 const CARD_BACK_SHA256 =
   '44a5ffdcd9df23d3322250da733099c2c29c984362260efc5914a5a8745fa327';
@@ -95,6 +101,20 @@ test('built SPA and room authority share one production-like Worker origin', asy
   expect(createHash('sha256').update(cardBackBytes).digest('hex')).toBe(
     CARD_BACK_SHA256
   );
+  // `run_worker_first` sends all of `/v2/*` to Worker code except an explicit
+  // per-file allowlist, so a newly shipped asset under this directory would
+  // 404 in production alone unless wrangler.jsonc is updated with it. Walk the
+  // directory rather than trusting the one file pinned above.
+  const shippedAssets = await readdir(PUBLIC_V2_ASSET_DIRECTORY);
+  expect(shippedAssets.length).toBeGreaterThan(0);
+  for (const asset of shippedAssets) {
+    const shipped = await request.get(`/v2/assets/${asset}`);
+    expect(
+      shipped.status(),
+      `/v2/assets/${asset} must stay reachable; add it to run_worker_first's allowlist in wrangler.jsonc`
+    ).toBe(200);
+  }
+
   const missingAuthorityRoute = await request.get('/v2/not-a-route');
   expect(missingAuthorityRoute.status()).toBe(404);
   expect(await missingAuthorityRoute.text()).toBe('Not Found');
