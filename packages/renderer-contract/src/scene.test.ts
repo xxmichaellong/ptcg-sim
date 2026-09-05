@@ -643,10 +643,10 @@ describe('renderer-neutral board scene', () => {
   it('keeps the characterized path at a fractional device pixel ratio', () => {
     // The model does no devicePixelRatio arithmetic, and
     // tests/browser/legacy-cssom-rounding.spec.ts measures the client-width
-    // rounding against real legacy at scale 1 and 2, so scale must not decide
-    // whether legacy geometry is used.
+    // rounding against real legacy at integer and fractional scales, so scale
+    // must not decide whether legacy geometry is used.
     const view = createPristineActiveMarkerView();
-    const scenes = [1, 2].map((devicePixelRatio) =>
+    const scenes = [1, 1.25, 1.5, 2].map((devicePixelRatio) =>
       createBoardScene(
         view,
         createBoardLayoutSnapshot({
@@ -660,10 +660,12 @@ describe('renderer-neutral board scene', () => {
         scene.markers.some((marker) => marker.presentation === 'legacyActiveQ0')
       ).toBe(true);
     }
-    const [atOne, atTwo] = scenes;
-    expect(atTwo?.cards.map((card) => card.bounds)).toEqual(
-      atOne?.cards.map((card) => card.bounds)
-    );
+    const atOne = scenes[0];
+    for (const scene of scenes.slice(1)) {
+      expect(scene.cards.map((card) => card.bounds)).toEqual(
+        atOne?.cards.map((card) => card.bounds)
+      );
+    }
   });
 
   it('degrades to generic geometry when a play slot would flex-shrink', () => {

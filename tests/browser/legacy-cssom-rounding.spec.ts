@@ -45,6 +45,8 @@ if (!fixture) throw new Error('Missing desktop legacy geometry fixture');
  */
 const scales = [
   { name: 'dpr-1', devicePixelRatio: 1 },
+  { name: 'dpr-1.25', devicePixelRatio: 1.25 },
+  { name: 'dpr-1.5', devicePixelRatio: 1.5 },
   { name: 'dpr-2', devicePixelRatio: 2 },
 ] as const;
 

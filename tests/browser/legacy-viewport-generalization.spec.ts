@@ -43,6 +43,18 @@ const viewports = [
   // devicePixelRatio, but it rounds CSSOM client widths to whole CSS pixels.
   // These cases are what makes relaxing the scene gate's DPR pin evidence-based
   // rather than assumed.
+  {
+    name: 'fractional-1280x720@1.25',
+    width: 1280,
+    height: 720,
+    devicePixelRatio: 1.25,
+  },
+  {
+    name: 'fractional-1600x900@1.5',
+    width: 1600,
+    height: 900,
+    devicePixelRatio: 1.5,
+  },
   { name: 'retina-1280x720@2', width: 1280, height: 720, devicePixelRatio: 2 },
   { name: 'retina-1600x900@2', width: 1600, height: 900, devicePixelRatio: 2 },
 ] as const;

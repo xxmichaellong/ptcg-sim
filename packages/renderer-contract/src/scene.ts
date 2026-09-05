@@ -288,18 +288,38 @@ const hasExactBounds = (actual: Rect, expected: Rect): boolean =>
 /**
  * The canonical default-split layout for a viewport, memoized because the gate
  * below runs on every scene build. Computing it through the same function the
- * caller used makes the comparison exact rather than tolerance-based.
+ * caller used makes the comparison exact rather than tolerance-based. Keep
+ * only the latest value: viewport dimensions can change continuously while a
+ * resize handle is dragged, so an unbounded per-dimension map would leak.
  */
-const canonicalDefaultLayouts = new Map<string, BoardLayoutSnapshot>();
+let canonicalDefaultLayoutCache:
+  | {
+      readonly geometryVersion: BoardLayoutSnapshot['geometryVersion'];
+      readonly viewportWidth: number;
+      readonly viewportHeight: number;
+      readonly devicePixelRatio: number;
+      readonly firstPlayerId: PlayerId;
+      readonly secondPlayerId: PlayerId;
+      readonly snapshot: BoardLayoutSnapshot;
+    }
+  | undefined;
 
 const canonicalDefaultLayoutFor = (
   layout: BoardLayoutSnapshot,
   firstPlayerId: PlayerId,
   secondPlayerId: PlayerId
 ): BoardLayoutSnapshot => {
-  const key = `${layout.viewport.width}x${layout.viewport.height}@${layout.viewport.devicePixelRatio}:${firstPlayerId}:${secondPlayerId}`;
-  const cached = canonicalDefaultLayouts.get(key);
-  if (cached) return cached;
+  const cached = canonicalDefaultLayoutCache;
+  if (
+    cached?.geometryVersion === layout.geometryVersion &&
+    cached.viewportWidth === layout.viewport.width &&
+    cached.viewportHeight === layout.viewport.height &&
+    cached.devicePixelRatio === layout.viewport.devicePixelRatio &&
+    cached.firstPlayerId === firstPlayerId &&
+    cached.secondPlayerId === secondPlayerId
+  ) {
+    return cached.snapshot;
+  }
   const canonical = createBoardLayoutSnapshot({
     geometryVersion: layout.geometryVersion,
     viewport: layout.viewport,
@@ -308,7 +328,15 @@ const canonicalDefaultLayoutFor = (
     shellMode: 'sidebar',
     vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
   });
-  canonicalDefaultLayouts.set(key, canonical);
+  canonicalDefaultLayoutCache = {
+    geometryVersion: layout.geometryVersion,
+    viewportWidth: layout.viewport.width,
+    viewportHeight: layout.viewport.height,
+    devicePixelRatio: layout.viewport.devicePixelRatio,
+    firstPlayerId,
+    secondPlayerId,
+    snapshot: canonical,
+  };
   return canonical;
 };
 
@@ -330,8 +358,9 @@ const canonicalDefaultLayoutFor = (
  * `devicePixelRatio` is no longer pinned. The model performs no
  * devicePixelRatio-dependent arithmetic, and
  * `tests/browser/legacy-cssom-rounding.spec.ts` measures the whole-CSS-pixel
- * client-width rounding against the real legacy stack at scale 1 and 2, which
- * was the one place device-pixel snapping could have changed the result.
+ * client-width rounding against the real legacy stack at integer and fractional
+ * scales, which was the one place device-pixel snapping could have changed the
+ * result.
  */
 const isCharacterizedDefaultInPlayLayout = (
   view: MatchViewState,
