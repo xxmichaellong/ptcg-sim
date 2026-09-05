@@ -1,6 +1,7 @@
 # Legacy board layout and interaction oracle
 
-Status: `SOURCE_PINNED_IDEAL_CSS_PIXELS`
+Status: `SOURCE_PINNED_IDEAL_CSS_PIXELS`, with a real-runtime gate now
+demonstrated (see "Executing the real v1 runtime")
 
 Geometry version: `1`
 
@@ -43,8 +44,35 @@ contract. The test requires:
 The canonical-LF rule prevents `core.autocrlf` from creating a false drift
 failure. A digest failure means the transcription must be reviewed and the
 fixture deliberately re-recorded. A passing digest detects source stability;
-it does not prove that the original manual transcription was correct. That
-independent check is the later real-browser gate.
+it does not prove that the original manual transcription was correct.
+
+## Executing the real v1 runtime
+
+That independent check is now available rather than deferred.
+`tests/browser/support/legacy-runtime.ts` loads the checked-in v1 client and
+lets its own module graph evaluate: all 117 modules under `client/src`,
+`front-end.js` included. `tests/browser/legacy-runtime-oracle.spec.ts` then
+imports the real `Card`, `initializeActiveBenchCard` and `getZone` and measures
+what they actually place.
+
+One accommodation is required, and it does not touch board geometry:
+`global-variables.js` calls `io('https://ptcgsim.online')` at import time, so a
+no-op `io` is installed before any module evaluates. Every non-fixture origin
+stays refused, so an accidental network dependency fails loudly instead of
+silently reaching the internet.
+
+This matters for how the other fixtures should be read. They stub
+`front-end.js` and compare against a TypeScript re-implementation of it, so a
+pass shows the transcription agrees with itself. The runtime gate is the only
+one whose pass is evidence about v1. Its first case confirms the transcription
+for the narrow behaviour it covers: the real runtime places an active card at
+`clientWidth` 91 and `126 x 90.5625` CSS pixels, which is what the recorded
+card oracle already encodes.
+
+Feasibility is therefore settled: expanding this gate, rather than expanding
+the transcription, is the way to raise confidence in the remaining
+characterized behaviours. The transcription is not required to stay the
+oracle.
 
 ## Coordinate spaces
 
@@ -680,8 +708,30 @@ stable IDs, cleanup, no asset churn, equal normalized geometry, distinct stable
 opaque card aliases, and the shared canonical public stack ID.
 
 Additional bench siblings/flex contention, all rotated production paths,
-BREAK/compound and attachment rotation, marker movement/editing, alternate
-layouts, and Pixi-native paint/hit parity are still deferred.
+BREAK/compound and attachment rotation, evolution-host marker transfer, marker
+editing, alternate layouts, and Pixi-native paint/hit parity are still deferred.
+
+`tests/browser/legacy-marker-movement-geometry.spec.ts` adds a separate marker
+movement checkpoint backed by
+`tests/legacy-fixtures/renderer/marker-movement-v1.json`. One ordinary marked
+Pokémon moves active→bench, undergoes one same-bench refresh reconstruction,
+and moves bench→active in independent local/opponent histories. Chromium pins
+the stable card, damage, and ability nodes; removal of the active-only special
+condition; a new wrapper for every phase; synchronous two-wrapper overlap; and
+observer-settled cleanup. The same-bench refresh records a 4.765625 px
+frame-local rightward drift for both surviving marker nodes because the source
+measures them before the old wrapper disappears. The card does not drift.
+
+V2 does not encode that transient wrapper history. Its stable stack-level
+damage/ability IDs instead change between `legacyActiveQ0` and
+`legacyBenchQ0` geometry, while scene diffs keep them in the updated set and
+remove only the condition. DOM and Pixi reuse the keyed surviving marker objects
+without card asset work. A real authority/client-session regression repeats the
+demotion and later promotion for owner, opponent, and spectator projections,
+proving stable private card aliases, one public stack identity, and equal
+recipient-safe geometry. This closes only ordinary unrotated movement and
+refresh reconstruction; the excluded evolution, rotation, editing, and broader
+composition paths remain fail-closed.
 
 `tests/browser/legacy-compound-rotation-geometry.spec.ts` adds a twelfth source
 checkpoint while deliberately splitting its evidence between
