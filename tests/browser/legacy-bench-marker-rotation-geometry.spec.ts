@@ -750,7 +750,7 @@ test('pristine source bench markers match the strict React DOM candidate', async
         throw new Error(`Missing ${side} ${candidateKind} marker`);
       }
       expect(marker).toMatchObject({
-        id: `${stackId}:${candidateKind}`,
+        id: `${cardId}:${candidateKind}`,
         parentCardId: cardId,
         kind: candidateKind,
         value: candidateKind === 'damage' ? oracle.input.damageUpdated : 'used',

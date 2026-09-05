@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 901 v2 tests across 142 files. A separate suite
-passes 121 Playwright checks across 58 Chromium 151 browser files:
+The repository-wide gate passes 902 v2 tests across 142 files. A separate suite
+passes 123 Playwright checks across 59 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -866,12 +866,12 @@ passes 121 Playwright checks across 58 Chromium 151 browser files:
     restore the prior bench geometry. V2 does not expose that transient source
     history: canonical state retains damage and ability on the stable stack, clears the condition, and recomputes
     deterministic current-slot geometry. Scene diffs update the two surviving
-    marker IDs rather than remove/re-add them. DOM and Pixi retain their keyed
+    top-card-derived marker IDs rather than remove/re-add them. DOM and Pixi retain their keyed
     marker objects across active/bench presentation changes without asset work.
-    A real authority/session test proves the same transition, private stable card
-    aliases, public stable stack/marker IDs, and equal normalized geometry for
-    owner, opponent, and spectator. Evolution-host transfer, rotated/compound
-    movement, and marker-editor production integration remain separate.
+    A real authority/session test proves the same transition, a public stable
+    stack ID, private stable marker/parent aliases, and equal normalized geometry
+    for owner, opponent, and spectator. Rotated/compound movement and
+    marker-editor production integration remain separate.
 46. A real-runtime Chromium checkpoint executes the shipped v1 marker modules
     rather than a transcription. It opens the actual active-card context menu;
     creates damage, condition, and ability markers; edits and blurs the live
@@ -886,6 +886,20 @@ passes 121 Playwright checks across 58 Chromium 151 browser files:
     condition cycle, and rejects invalid/unbounded editor values. No marker
     interaction is wired into the production renderer in this checkpoint, so
     layout, context-menu appearance, labels, and shortcuts remain unchanged.
+47. A direct v1 evolution checkpoint executes the shipped card, cover,
+    move-bundle, counter, and refresh modules for marked and unmarked incoming
+    discard Pokémon. It proves that legacy copies host damage into a distinct
+    new node, zeroes and removes old damage/condition nodes, removes host
+    ability, and preserves/reparents the incoming ability node only when it
+    already exists. It also pins array/DOM topology, relative links, one wrapper,
+    the single live/export action with owner rewrite, asset service, and a clean
+    error surface. V2 performs the transition atomically. Stack marker IDs now
+    follow the visible top card's private recipient alias: active/bench movement
+    remains stable, old evolution-host markers depart, incoming damage is added,
+    and a visible incoming ability marker is updated under the same identity.
+    Core, scene-diff, and real owner/opponent/spectator session tests prove the
+    lifecycle, distinct aliases, equal geometry, and no canonical-ID leakage.
+    No UI or UX changes.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -899,7 +913,9 @@ The renderer suites live in `tests/browser/renderer-spike.spec.ts` and
 `tests/browser/renderer-dom-cacheable-assets.spec.ts`. The source-parity suites
 start with `tests/browser/legacy-dom-geometry.spec.ts` and
 the real-runtime marker controls live in
-`tests/browser/legacy-runtime-marker-editing.spec.ts`. The geometry suites
+`tests/browser/legacy-runtime-marker-editing.spec.ts`, and real evolution marker
+transfer lives in
+`tests/browser/legacy-runtime-evolution-marker-transfer.spec.ts`. The geometry suites
 continue with
 `tests/browser/legacy-card-stack-geometry.spec.ts`, plus the contained-card
 comparison in `tests/browser/legacy-contained-card-geometry.spec.ts` and the

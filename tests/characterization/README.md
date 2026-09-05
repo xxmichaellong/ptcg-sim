@@ -206,12 +206,24 @@ geometry and paint to source within the declared tolerances and proves the
 intentional non-interactive marker/card-hit-through boundary. Keyed DOM/Pixi
 tests cover updates and cleanup without resource churn, while real owner,
 opponent, and spectator projections protect distinct stable opaque card
-aliases, the shared canonical public stack ID, and identical normalized
+marker/parent aliases, the stable public stack ID, and identical normalized
 geometry.
 
 Additional bench siblings/contention, rotated production q1/q2/q3, source DOM
-history, BREAK/compound stacks, movement transfer, marker editing, alternate
-layouts, and Pixi-native paint/hit parity remain deferred.
+history, BREAK/compound stacks and rotation, marker editing, alternate layouts,
+and Pixi-native paint/hit parity remain deferred.
+
+`tests/browser/legacy-runtime-evolution-marker-transfer.spec.ts` executes the
+real legacy discard-to-active evolution path with and without an incoming
+ability marker. It pins damage copy-by-value into a distinct node, removal of
+the zeroed host damage/condition and host ability nodes, identity-preserving
+reparenting of an incoming ability node, array/DOM topology, relative links,
+wrapper count, live/export action owner rewriting, asset service, and errors.
+The paired v2 tests key stack markers by each recipient's stable top-card alias,
+so active/bench movement keeps identity while evolution replaces old host
+markers and can retain the incoming ability identity. Owner, opponent, and
+spectator receive distinct aliases with identical normalized geometry and no
+canonical-ID leakage. This adds no UI or UX behavior.
 
 `legacy-compound-group-rotation-layout.test.ts` and
 `legacy-compound-break-rotation-layout.test.ts` split the next source-only

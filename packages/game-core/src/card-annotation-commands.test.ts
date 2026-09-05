@@ -131,14 +131,27 @@ describe('canonical card-annotation commands', () => {
     assertMatchInvariants(state);
   });
 
-  it('transfers a discard ability marker to a new host and retains attachment markers', () => {
+  it('transfers an incoming discard ability marker through evolution and retains attachment markers', () => {
     const input = fixture();
     const deckId = playerZoneId(p1, 'deck');
     const discardId = playerZoneId(p1, 'discard');
     const pokemonId = input.state.zones[deckId]!.cardIds[0]!;
     const trainerId = input.state.zones[deckId]!.cardIds[1]!;
+    const baseId = input.state.zones[deckId]!.cardIds[3]!;
     let state = accepted(
       input.state,
+      {
+        type: 'MoveCardToPlay',
+        cardId: baseId,
+        expectedSourceZoneId: deckId,
+        boardPlayerId: p1,
+        slot: 'active',
+      },
+      input.context
+    );
+    const stackId = state.boards[p1]!.activeStackId!;
+    state = accepted(
+      state,
       {
         type: 'MoveCard',
         cardId: pokemonId,
@@ -160,11 +173,15 @@ describe('canonical card-annotation commands', () => {
         expectedSourceZoneId: discardId,
         boardPlayerId: p1,
         slot: 'active',
+        targetStackId: stackId,
       },
       input.context
     );
-    const stackId = state.boards[p1]!.activeStackId!;
     expect(state.stacks[stackId]?.abilityUsed).toBe(true);
+    expect(state.stacks[stackId]?.evolutionCardIds).toEqual([
+      baseId,
+      pokemonId,
+    ]);
     expect(state.cards[pokemonId]?.abilityUsed).toBe(false);
 
     state = accepted(

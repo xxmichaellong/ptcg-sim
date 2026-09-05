@@ -705,11 +705,11 @@ generic layout. Chromium compares the marked q0 React geometry/paint and
 non-interactive hit-through boundary to source within the declared tolerances.
 DOM/Pixi lifecycle and real owner/opponent/spectator projection tests cover
 stable IDs, cleanup, no asset churn, equal normalized geometry, distinct stable
-opaque card aliases, and the shared canonical public stack ID.
+opaque marker/parent aliases, and the stable public stack ID.
 
 Additional bench siblings/flex contention, all rotated production paths,
-BREAK/compound and attachment rotation, evolution-host marker transfer, marker
-editing, alternate layouts, and Pixi-native paint/hit parity are still deferred.
+BREAK/compound and attachment rotation, marker editing, alternate layouts, and
+Pixi-native paint/hit parity are still deferred.
 
 `tests/browser/legacy-marker-movement-geometry.spec.ts` adds a separate marker
 movement checkpoint backed by
@@ -725,8 +725,8 @@ The old wrapper's `MutationObserver` and the native bench `ResizeObserver` then
 reflow the markers to their prior bench geometry during settlement. The card
 does not shift in either capture.
 
-V2 does not expose or encode that transient wrapper history. Its stable stack-level
-damage/ability IDs instead change between `legacyActiveQ0` and
+V2 does not expose or encode that transient wrapper history. Its stable
+top-card-derived damage/ability IDs instead change between `legacyActiveQ0` and
 `legacyBenchQ0` geometry, while scene diffs keep them in the updated set and
 remove only the condition. DOM and Pixi reuse the keyed surviving marker objects
 without card asset work. A real authority/client-session regression repeats the
@@ -735,6 +735,25 @@ proving stable private card aliases, one public stack identity, and equal
 recipient-safe geometry. This closes only ordinary unrotated movement and
 refresh reconstruction; the excluded evolution, rotation, editing, and broader
 composition paths remain fail-closed.
+
+`tests/browser/legacy-runtime-evolution-marker-transfer.spec.ts` executes the
+shipped move, marker, card, cover, and board-refresh modules for a real
+discard-to-active evolution. It proves that damage is copied by value into a
+new incoming-host node; the old damage and condition nodes are zeroed and
+removed; the old host ability node is removed; and an incoming discard ability
+node is preserved by identity and reparented to active. The complementary case
+proves that an unmarked incoming card does not inherit host ability. Both cases
+pin array/DOM order, attachment links, wrapper count, the single live/export
+action and owner rewrite, asset service, and a clean error surface.
+
+The v2 scene now keys stack markers by the visible top-card alias. That keeps
+ordinary active/bench IDs stable and makes evolution remove old host markers,
+add incoming damage, and retain a visible incoming ability identity. A real
+authority/session integration repeats the transition for owner, opponent, and
+spectator, proving one stable public stack, three stable private top-card
+aliases, equal recipient geometry, and no canonical ID leakage. This closes the
+marker-identity lifecycle only; compound/rotated evolution geometry and marker
+editing remain separate.
 
 `tests/browser/legacy-compound-rotation-geometry.spec.ts` adds a twelfth source
 checkpoint while deliberately splitting its evidence between

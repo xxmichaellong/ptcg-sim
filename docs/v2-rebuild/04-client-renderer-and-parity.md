@@ -404,7 +404,8 @@ marker z is exactly card z plus one. Markers remain deliberately non-interactive
 until the editor lifecycle is implemented. Since
 DOM history is absent from the projection, an eligible returned-q0 state is
 canonicalized to the same q0 geometry rather than reproducing wrapper-margin
-drift. Stable marker IDs participate in scene diffs. Pixi reuses keyed
+drift. Marker IDs derive from the visible top card's stable recipient alias and
+participate in scene diffs. Pixi reuses keyed
 Container/Graphics/Text views across changes and cleanup without card asset
 churn, but its native paint/hit output is not claimed. A real owner/opponent/
 spectator test proves identical normalized geometry and stable distinct aliases
@@ -436,13 +437,13 @@ shift. `legacyBenchQ0` markers retain source append order (`damage` then
 Chromium compares the marked q0 React output to source within the declared
 tolerances and verifies marker hit-through; DOM/Pixi lifecycle tests and real
 owner/opponent/spectator projection cover stable identities, cleanup, resource
-churn, recipient-equivalent geometry, distinct stable opaque card aliases, and
-the shared canonical public stack ID.
+churn, recipient-equivalent geometry, a stable public stack ID, and distinct
+stable private marker/parent aliases.
 
 Production parity/layout for rotated active or bench q1/q2/q3 and
 source-history-dependent active returned-q0, additional bench siblings,
-BREAK, compound evolution/group and attachment rotation, evolution-host marker
-transfer, marker text-entry UX, alternate layouts, and Pixi-native paint/hit
+BREAK, compound evolution/group and attachment rotation, marker text-entry UX,
+alternate layouts, and Pixi-native paint/hit
 parity remain explicitly deferred.
 
 Ordinary q0 active/bench marker movement is now a separate supported path. A
@@ -455,12 +456,25 @@ still participates in layout, shifting the surviving markers 4.765625 CSS px to
 the right even though the card returns to the same bounds. The old wrapper's
 `MutationObserver` and the bench initializer's native `ResizeObserver` reflow
 them during settlement and restore the prior bench geometry. V2 does not expose
-that temporary DOM history: it keeps damage/ability on the stable stack ID,
-clears the condition, and derives deterministic geometry from the current slot. Scene
-diffs update the surviving marker IDs; both renderer adapters reuse their keyed
+that temporary DOM history: it keeps damage/ability on the stable stack, clears
+the condition, and derives deterministic geometry from the current slot. Scene
+diffs update the surviving top-card-derived marker IDs; both renderer adapters reuse their keyed
 marker objects across the `legacyActiveQ0`/`legacyBenchQ0` presentation change.
 Owner, opponent, and spectator session projections retain their distinct stable
 card aliases and identical normalized geometry throughout.
+
+Evolution-host marker transfer is now a supported renderer lifecycle boundary.
+The shipped v1 runtime proves that evolution creates a new damage node carrying
+the old value, removes the host condition and ability nodes, and reparents the
+incoming discard card's existing ability node when present; an unmarked
+incoming card does not inherit host ability. V2 makes that transition atomic in
+authority state. The stable public stack survives, but renderer marker IDs
+follow each recipient's private visible-top-card alias: old host markers are
+removed, incoming damage is added, and an already-visible incoming ability
+marker is updated under the same identity. Evolution cards never render an
+independent card-level ability marker. Core, scene, and real owner/opponent/
+spectator session tests cover the transition without exposing canonical card or
+definition IDs. This changes no marker appearance or interaction.
 
 Marker editing now has an executable source checkpoint without widening the
 production interaction surface. Chromium loads the shipped v1 modules, opens

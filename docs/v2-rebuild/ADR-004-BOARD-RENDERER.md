@@ -91,7 +91,8 @@ Every other shape keeps the generic renderer path.
 React DOM matches source geometry within 2 px anchors / 1% sizes; palette and
 empty ability text are exact, typography remains proportional, and marker z is
 exactly card z plus one. It remains non-interactive until the shared editor
-lifecycle exists. Marker IDs participate in scene diffs; Pixi
+lifecycle exists. Marker IDs derive from the visible top card's stable
+recipient alias and participate in scene diffs; Pixi
 reuses keyed views without card texture churn but has no native paint/hit claim.
 A real owner/opponent/spectator path proves stable distinct aliases, identical
 normalized marker geometry, and no canonical card/definition leakage. The
@@ -99,6 +100,25 @@ source's q1/q2/q3/q0-return history, wrapper-margin drift, direct editing and
 hit behavior remain evidence rather than production state. Because no DOM
 history is projected, an eligible returned-q0 current state receives the same
 canonical geometry; only the pristine source phase is used for browser parity.
+
+### Evolution-host marker identity policy
+
+Keep logical damage, condition, and ability state on the stable `PlayStack`, but
+key rendered stack markers by the visible top card's recipient-safe alias. This
+keeps IDs stable for active/bench movement while matching the source evolution
+lifecycle: old host damage, condition, and ability nodes depart; damage is
+recreated on the incoming top; and an incoming card's existing ability marker
+can retain its identity as it becomes the stack marker. The public stack ID
+remains stable, while card and marker aliases remain distinct per recipient.
+
+Evolution atomically preserves damage, clears the condition and group rotation,
+and sets stack ability state from the incoming card only. It clears the
+incoming card-level field once that card joins the evolution chain. The scene
+builder suppresses independent ability markers on every evolution card so a
+malformed projection cannot create duplicate marker IDs. The direct v1 runtime,
+game-core command, scene-diff, and owner/opponent/spectator session tests cover
+both marked and unmarked incoming cards. This policy changes renderer object
+ownership only; geometry, paint, menus, labels, and shortcuts are unchanged.
 
 ## Evidence
 

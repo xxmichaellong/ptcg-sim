@@ -763,14 +763,14 @@ describe('renderer-neutral board scene', () => {
           'abilityUsed',
         ] as const) {
           const marker = scene.markers.find(
-            (candidate) => candidate.id === `${stackId}:${kind}`
+            (candidate) => candidate.id === `${cardId}:${kind}`
           );
           const value = values[kind];
           if (value === null) {
             expect(marker).toBeUndefined();
           } else {
             expect(marker).toEqual({
-              id: `${stackId}:${kind}`,
+              id: `${cardId}:${kind}`,
               parentCardId: cardId,
               side,
               kind,
@@ -885,14 +885,14 @@ describe('renderer-neutral board scene', () => {
         for (const kind of ['damage', 'abilityUsed'] as const) {
           const value = expectedValues[kind];
           const marker = scene.markers.find(
-            (candidate) => candidate.id === `${stackId}:${kind}`
+            (candidate) => candidate.id === `${cardId}:${kind}`
           );
           if (value === null) {
             expect(marker).toBeUndefined();
             continue;
           }
           expect(marker).toEqual({
-            id: `${stackId}:${kind}`,
+            id: `${cardId}:${kind}`,
             parentCardId: cardId,
             side,
             kind,
@@ -970,8 +970,8 @@ describe('renderer-neutral board scene', () => {
     const ability = scene({ damage: null, abilityUsed: true });
     const returnedNone = scene({ damage: null, abilityUsed: false });
     const cardId = asViewCardId('stack:p1:bench-markers:base');
-    const damageId = 'stack:p1:bench-markers:damage';
-    const abilityId = 'stack:p1:bench-markers:abilityUsed';
+    const damageId = `${cardId}:damage`;
+    const abilityId = `${cardId}:abilityUsed`;
 
     const cardSnapshot = (candidate: ReturnType<typeof scene>) =>
       candidate.cards.find((card) => card.id === cardId);
@@ -1091,9 +1091,9 @@ describe('renderer-neutral board scene', () => {
     const active = createBoardScene(activeView, layout);
     const bench = createBoardScene(benchView, layout);
     const returnedActive = createBoardScene(returnedActiveView, layout);
-    const damageId = `${markedStackId}:damage`;
-    const conditionId = `${markedStackId}:specialCondition`;
-    const abilityId = `${markedStackId}:abilityUsed`;
+    const damageId = `${markedCardId}:damage`;
+    const conditionId = `${markedCardId}:specialCondition`;
+    const abilityId = `${markedCardId}:abilityUsed`;
     const markersFor = (scene: ReturnType<typeof createBoardScene>) =>
       scene.markers.filter((marker) => marker.parentCardId === markedCardId);
 
@@ -1138,6 +1138,124 @@ describe('renderer-neutral board scene', () => {
       updatedMarkerIds: [damageId, abilityId],
       unchangedMarkerIds: [],
     });
+  });
+
+  it('retains the incoming ability marker identity while replacing host markers on evolution', () => {
+    const base = createView();
+    const stackId = 'stack:p1:evolution-marker-transfer';
+    const baseCard = {
+      kind: 'known' as const,
+      id: asViewCardId('view-card:evolution-marker-base'),
+      definitionId,
+      ownerId: p1,
+      category: 'Pokémon' as const,
+      face: 'up' as const,
+      orientationQuarterTurns: 0 as const,
+      abilityUsed: false,
+      publiclyRevealed: false,
+    };
+    const incomingCard = {
+      ...baseCard,
+      id: asViewCardId('view-card:evolution-marker-incoming'),
+      abilityUsed: true,
+    };
+    const stack = {
+      id: stackId,
+      boardPlayerId: p1,
+      slot: 'active' as const,
+      evolutionCards: [baseCard],
+      attachmentCards: [],
+      rotationQuarterTurns: 0 as const,
+      damage: 60,
+      specialCondition: 'Pa',
+      abilityUsed: true,
+    };
+    const beforeView: MatchViewState = {
+      ...base,
+      zones: {
+        ...base.zones,
+        'zone:p1:hand': { ...base.zones['zone:p1:hand']!, cards: [] },
+        'zone:shared:stadium': {
+          ...base.zones['zone:shared:stadium']!,
+          cards: [incomingCard],
+        },
+      },
+      boards: {
+        ...base.boards,
+        [p1]: { activeStackId: stackId, benchStackIds: [] },
+      },
+      stacks: { [stackId]: stack },
+    };
+    const afterView: MatchViewState = {
+      ...beforeView,
+      revision: beforeView.revision + 1,
+      zones: {
+        ...beforeView.zones,
+        'zone:shared:stadium': {
+          ...beforeView.zones['zone:shared:stadium']!,
+          cards: [],
+        },
+      },
+      stacks: {
+        [stackId]: {
+          ...stack,
+          evolutionCards: [baseCard, { ...incomingCard, abilityUsed: false }],
+          specialCondition: null,
+          abilityUsed: true,
+        },
+      },
+    };
+    const before = createBoardSceneForViewport(beforeView, options);
+    const after = createBoardSceneForViewport(afterView, options);
+    const incomingAbilityId = `${incomingCard.id}:abilityUsed`;
+    const oldDamageId = `${baseCard.id}:damage`;
+    const oldConditionId = `${baseCard.id}:specialCondition`;
+    const oldAbilityId = `${baseCard.id}:abilityUsed`;
+    const transferredDamageId = `${incomingCard.id}:damage`;
+
+    expect(
+      before.markers.find((marker) => marker.id === incomingAbilityId)
+    ).toMatchObject({
+      parentCardId: incomingCard.id,
+      kind: 'abilityUsed',
+      presentation: 'generic',
+    });
+    expect(
+      after.markers.find((marker) => marker.id === incomingAbilityId)
+    ).toMatchObject({
+      parentCardId: incomingCard.id,
+      kind: 'abilityUsed',
+      presentation: 'generic',
+    });
+    expect(
+      after.markers.find((marker) => marker.id === transferredDamageId)
+    ).toMatchObject({
+      parentCardId: incomingCard.id,
+      kind: 'damage',
+      value: '60',
+    });
+    expect(diffBoardScenes(before, after)).toMatchObject({
+      addedMarkerIds: [transferredDamageId],
+      removedMarkerIds: [oldDamageId, oldConditionId, oldAbilityId],
+      updatedMarkerIds: [incomingAbilityId],
+      unchangedMarkerIds: [],
+    });
+
+    const malformedAfter = createBoardSceneForViewport(
+      {
+        ...afterView,
+        stacks: {
+          [stackId]: {
+            ...afterView.stacks[stackId]!,
+            evolutionCards: [baseCard, { ...incomingCard, abilityUsed: true }],
+          },
+        },
+      },
+      options
+    );
+    expect(
+      malformedAfter.markers.filter((marker) => marker.id === incomingAbilityId)
+    ).toHaveLength(1);
   });
 
   it('totally orders characterized equal-z markers across prefix-shaped opaque aliases', () => {
@@ -1194,12 +1312,12 @@ describe('renderer-neutral board scene', () => {
       return markers.map((marker) => marker.id);
     };
     const expected = [
-      'b:damage',
-      'b:specialCondition',
-      'b:abilityUsed',
-      'b:c:damage',
-      'b:c:specialCondition',
-      'b:c:abilityUsed',
+      'marker-parent-b:damage',
+      'marker-parent-b:specialCondition',
+      'marker-parent-b:abilityUsed',
+      'marker-parent-b:c:damage',
+      'marker-parent-b:c:specialCondition',
+      'marker-parent-b:c:abilityUsed',
     ];
     expect(markerIds(forward)).toEqual(expected);
     expect(markerIds(reversed)).toEqual(expected);
@@ -1254,9 +1372,6 @@ describe('renderer-neutral board scene', () => {
         expect(scene.cards.some((card) => card.parentId === stack.id)).toBe(
           false
         );
-        expect(
-          scene.markers.some((marker) => marker.id.startsWith(`${stack.id}:`))
-        ).toBe(false);
         return;
       }
       const topCard = scene.cards.find((card) => card.id === topId);
@@ -1660,7 +1775,7 @@ describe('renderer-neutral board scene', () => {
       ] as const) {
         const value = values[kind];
         const marker = scene.markers.find(
-          (candidate) => candidate.id === `${stack.id}:${kind}`
+          (candidate) => candidate.id === `${topId}:${kind}`
         );
         if (value === null) {
           expect(marker).toBeUndefined();
@@ -1897,8 +2012,9 @@ describe('renderer-neutral board scene', () => {
       ),
       layout
     );
-    const damageId = 'stack:p1:active-markers:damage';
-    const conditionId = 'stack:p1:active-markers:specialCondition';
+    const activeCardId = asViewCardId('stack:p1:active-markers:base');
+    const damageId = `${activeCardId}:damage`;
+    const conditionId = `${activeCardId}:specialCondition`;
 
     expect(diffBoardScenes(none, damage)).toMatchObject({
       addedCardIds: [],

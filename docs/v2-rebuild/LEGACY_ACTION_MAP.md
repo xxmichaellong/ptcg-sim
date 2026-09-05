@@ -239,9 +239,11 @@ only be added to the active stack. Duplicate target values fail without creating
 a revision.
 
 These markers survive authoritative publication and reconnect. Evolution keeps
-damage while clearing the old condition, ability marker, and group rotation.
-Any transition from active to bench clears the special condition, including
-direct movement, swaps, active replacement, and staged-stack restoration.
+damage, clears the old condition and group rotation, and replaces the host's
+ability state with the incoming card's pre-existing per-card ability state. An
+unmarked incoming card does not inherit the old host's ability marker. Any
+transition from active to bench clears the special condition, including direct
+movement, swaps, active replacement, and staged-stack restoration.
 
 ### Implemented card-annotation subset
 
@@ -530,10 +532,11 @@ oracle directly transcribes reconstruction; real KeyR image reload, cache,
 network, and global-zone scanning remain outside its claims.
 
 Ability markers likewise have explicit ownership. The top evolution card maps
-to the stack-level marker; attachment, discard, and stadium cards use
-`SetCardAbilityUsed` and render a marker on that exact card. Attachment markers
-survive attachment staging/restoration. A marked discard card promoted to a new
-host transfers the marker to its new stack, while ordinary movement and card
+to stack state rendered under that card's stable recipient alias; attachment,
+discard, and stadium cards use `SetCardAbilityUsed` on the exact card.
+Attachment markers survive attachment staging/restoration. When a marked card
+becomes an evolution host, its per-card ability state becomes the stack ability
+state and the card-level field is cleared. Ordinary movement and card
 normalization clear transient per-card markers.
 
 Ordinary stack-marker movement is now pinned end to end. The legacy source keeps
@@ -544,10 +547,32 @@ condition on demotion. Its refresh-time ghost wrapper produces a synchronous
 the native bench `ResizeObserver` restore the prior geometry during settlement.
 V2 deliberately does not serialize that transient DOM history. The authority
 preserves damage and ability on the stable `PlayStack`, clears the condition,
-and publishes current-state geometry under the same marker IDs.
+and publishes current-state geometry under marker IDs derived from the stable
+top-card alias.
 Owner, opponent, and spectator retain distinct stable card aliases and observe
-the same normalized transition. Evolution-host transfer remains a separately
-bounded path despite sharing the same canonical state rules.
+the same normalized transition.
+
+Evolution-host marker transfer is now pinned separately against the shipped v1
+runtime. A real discard-to-active `moveCardBundle` copies the old host's damage
+value into a newly created marker on the incoming evolution, removes the old
+damage and condition nodes after setting them to `0`, and removes the old host
+ability node. If the incoming discard card already owns an ability node, the
+same node is reparented to active; otherwise the incoming card does not inherit
+the old host's ability state. The source produces one live action with
+`['opp', 'discard', 'active', 0, 0, 'move']` and one export action whose leading
+owner is rewritten to `self`. The oracle mounts the real discard cover required
+by the legacy move path and rejects caught `moveCardBundle` errors.
+
+The v2 command performs the same logical transition atomically: the stable
+`PlayStack` keeps damage, clears the condition, and takes only the incoming
+card's ability state. Projection preserves the incoming card's distinct private
+alias for owner, opponent, and spectator, while the renderer removes the old
+host marker IDs and emits the new damage/ability IDs from that incoming alias.
+A visible stadium-to-stack integration phase additionally proves that an
+incoming ability marker is updated under the same renderer identity rather than
+removed and re-added. Evolution cards cannot emit independent per-card ability
+markers, preventing duplicate scene IDs. No context menu, label, shortcut, or
+layout behavior changes in this slice.
 
 `ChangeCardCategory` replaces the unsafe client sequence of mutating and then
 moving a card. It carries an opaque card handle, exact expected source, and

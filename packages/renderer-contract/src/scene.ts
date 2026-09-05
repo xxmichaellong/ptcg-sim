@@ -925,7 +925,11 @@ const addMarkers = (
   ) => {
     const characterized = characterizedLayout?.markers[kind];
     markers.push({
-      id: `${stack.id}:${kind}`,
+      // Marker identity follows the visible host card. This keeps ordinary
+      // active/bench movement stable and mirrors legacy evolution: host damage
+      // is recreated on the incoming top, while an incoming per-card ability
+      // marker is reparented and retained as the new stack marker.
+      id: `${topCard.id}:${kind}`,
       parentCardId: topCard.id,
       side: topCard.side,
       kind,
@@ -1371,7 +1375,11 @@ export const createBoardScene = (
             4) as 0 | 1 | 2 | 3,
           interactive: true,
         });
-        registerCard(node, card);
+        // Canonical evolution cards cannot carry their own ability marker;
+        // in-play annotations belong to the stack and are rendered once on
+        // its visible top card. Suppressing malformed per-card state here also
+        // prevents duplicate marker identities after an evolution transfer.
+        registerCard(node, card, false);
         evolutionNodes.push(node);
       });
       const attachmentWidth = baseBounds.width * 0.7;

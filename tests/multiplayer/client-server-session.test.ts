@@ -861,9 +861,9 @@ describe('client/server multiplayer contract', () => {
     const hand = Object.values(ownerView?.zones ?? {}).find(
       (zone) => zone.ownerId === ownerId && zone.kind === 'hand'
     );
-    const [base, control] = hand?.cards ?? [];
-    if (!ownerView || !hand || !base || !control) {
-      throw new Error('Marker setup did not publish two base cards');
+    const [base, control, incoming] = hand?.cards ?? [];
+    if (!ownerView || !hand || !base || !control || !incoming) {
+      throw new Error('Marker setup did not publish three base cards');
     }
     expect(
       owner.session.submit({
@@ -1015,6 +1015,7 @@ describe('client/server multiplayer contract', () => {
         stackAlias,
         parentCardAlias,
       }));
+      expect(new Set(aliases.map((entry) => entry.stackAlias)).size).toBe(1);
       expect(new Set(aliases.map((entry) => entry.parentCardAlias)).size).toBe(
         3
       );
@@ -1289,7 +1290,7 @@ describe('client/server multiplayer contract', () => {
       expect(diff).toMatchObject({
         addedMarkerIds: [],
         removedMarkerIds: [
-          `${initialAliases[index]!.stackAlias}:specialCondition`,
+          `${initialAliases[index]!.parentCardAlias}:specialCondition`,
         ],
         updatedMarkerIds: markerIds,
         unchangedMarkerIds: [],
@@ -1378,6 +1379,142 @@ describe('client/server multiplayer contract', () => {
       });
     }
 
+    ownerView = owner.session.getSnapshot().view;
+    if (!ownerView) throw new Error('Missing incoming marker command view');
+    expect(
+      owner.session.submit({
+        type: 'MoveCard',
+        cardId: incoming.id,
+        expectedSourceZoneId: hand.id,
+        destinationZoneId: 'zone:shared:stadium',
+      }).queued
+    ).toBe(true);
+    await owner.factory.flush();
+
+    ownerView = owner.session.getSnapshot().view;
+    let ownerIncoming = ownerView?.zones['zone:shared:stadium']?.cards[0];
+    if (!ownerView || !ownerIncoming) {
+      throw new Error('Incoming evolution card was not published in stadium');
+    }
+    let submitted = false;
+    expect(
+      submitCardAnnotationAction(
+        ownerView,
+        ownerIncoming.id,
+        { type: 'toggleAbilityUsed' },
+        (command) => {
+          submitted = owner.session.submit(command).queued;
+        }
+      )
+    ).toMatchObject({ ok: true });
+    expect(submitted).toBe(true);
+    await owner.factory.flush();
+
+    const incomingBefore = recipientViews().map((view) => {
+      const card = view.zones['zone:shared:stadium']?.cards[0];
+      if (!card || card.kind !== 'known' || !card.abilityUsed) {
+        throw new Error('Incoming ability marker was not publicly projected');
+      }
+      const scene = sceneFor(view);
+      const marker = scene.markers.find(
+        (candidate) => candidate.id === `${card.id}:abilityUsed`
+      );
+      if (!marker || marker.parentCardId !== card.id) {
+        throw new Error('Incoming ability marker was not rendered in stadium');
+      }
+      serializedSnapshots.push(JSON.stringify(view));
+      serializedSnapshots.push(JSON.stringify(scene));
+      return { cardAlias: card.id, scene, marker };
+    });
+    expect(new Set(incomingBefore.map(({ cardAlias }) => cardAlias)).size).toBe(
+      3
+    );
+    expect(
+      incomingBefore.map(({ marker }) => ({
+        side: marker.side,
+        kind: marker.kind,
+        presentation: marker.presentation,
+        value: marker.value,
+        bounds: marker.bounds,
+        zIndex: marker.zIndex,
+      }))
+    ).toEqual(
+      Array.from({ length: 3 }, () => ({
+        side: incomingBefore[0]!.marker.side,
+        kind: incomingBefore[0]!.marker.kind,
+        presentation: incomingBefore[0]!.marker.presentation,
+        value: incomingBefore[0]!.marker.value,
+        bounds: incomingBefore[0]!.marker.bounds,
+        zIndex: incomingBefore[0]!.marker.zIndex,
+      }))
+    );
+
+    ownerView = owner.session.getSnapshot().view;
+    ownerIncoming = ownerView?.zones['zone:shared:stadium']?.cards[0];
+    const ownerStackId = ownerView?.boards[ownerId]?.activeStackId;
+    if (!ownerView || !ownerIncoming || !ownerStackId) {
+      throw new Error('Incoming evolution command targets were not published');
+    }
+    expect(
+      owner.session.submit({
+        type: 'MoveCardToPlay',
+        cardId: ownerIncoming.id,
+        expectedSourceZoneId: 'zone:shared:stadium',
+        boardPlayerId: ownerId,
+        slot: 'active',
+        targetStackId: ownerStackId,
+      }).queued
+    ).toBe(true);
+    await owner.factory.flush();
+
+    const evolved = captureTransferredPhase();
+    expect(
+      evolved.map(({ stackAlias, parentCardAlias }) => ({
+        stackAlias,
+        parentCardAlias,
+      }))
+    ).toEqual(
+      initialAliases.map(({ stackAlias }, index) => ({
+        stackAlias,
+        parentCardAlias: incomingBefore[index]!.cardAlias,
+      }))
+    );
+    expect(evolved.map(({ state }) => state)).toEqual(
+      Array.from({ length: 3 }, () => ({
+        damage: 90,
+        specialCondition: null,
+        abilityUsed: true,
+      }))
+    );
+    for (let index = 0; index < evolved.length; index += 1) {
+      const snapshot = evolved[index]!;
+      const incomingAlias = incomingBefore[index]!.cardAlias;
+      expect(snapshot.view.stacks[snapshot.stackAlias]).toMatchObject({
+        evolutionCards: [
+          expect.objectContaining({
+            id: initialAliases[index]!.parentCardAlias,
+            abilityUsed: false,
+          }),
+          expect.objectContaining({ id: incomingAlias, abilityUsed: false }),
+        ],
+      });
+      expect(snapshot.markers.map(({ id }) => id)).toEqual([
+        `${incomingAlias}:damage`,
+        `${incomingAlias}:abilityUsed`,
+      ]);
+      expect(
+        diffBoardScenes(incomingBefore[index]!.scene, snapshot.scene)
+      ).toMatchObject({
+        addedMarkerIds: [`${incomingAlias}:damage`],
+        removedMarkerIds: [
+          `${initialAliases[index]!.parentCardAlias}:damage`,
+          `${initialAliases[index]!.parentCardAlias}:abilityUsed`,
+        ],
+        updatedMarkerIds: [`${incomingAlias}:abilityUsed`],
+        unchangedMarkerIds: [],
+      });
+    }
+
     const canonicalState = room.store.snapshot?.state;
     if (!canonicalState) throw new Error('Missing canonical marker state');
     const privateIds = [
@@ -1389,8 +1526,8 @@ describe('client/server multiplayer contract', () => {
         expect(serialized).not.toContain(privateId);
       }
     }
-    expect(recipientViews().map((view) => view.revision)).toEqual([17, 17, 17]);
-    expect(room.store.commandCommits).toHaveLength(17);
+    expect(recipientViews().map((view) => view.revision)).toEqual([20, 20, 20]);
+    expect(room.store.commandCommits).toHaveLength(20);
   });
 
   it('projects strict sole-bench q0 markers privately with stable recipient geometry', async () => {
