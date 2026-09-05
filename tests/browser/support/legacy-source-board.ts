@@ -241,6 +241,70 @@ export interface LegacySourceBenchMarkerRotationFixture {
   readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
 }
 
+export type LegacyMarkerMovementPhaseName =
+  'initial-active' | 'demoted-bench' | 'refreshed-bench' | 'promoted-active';
+
+export interface LegacyMarkerMovementMarker {
+  readonly id: string;
+  readonly kind: LegacyMarkerKind;
+  readonly nodeStable: boolean;
+  readonly parentZoneId: 'active' | 'bench';
+  readonly textContent: string;
+  readonly contentEditable: string;
+  readonly frameLocalBounds: CapturedRect;
+  readonly physicalBounds: CapturedRect;
+  readonly className: string;
+  readonly pointerEvents: string;
+  readonly backgroundColor: string;
+  readonly color: string;
+  readonly zIndex: number;
+}
+
+export interface LegacyMarkerMovementPhase {
+  readonly name: LegacyMarkerMovementPhaseName;
+  readonly zoneId: 'active' | 'bench';
+  readonly cardId: string;
+  readonly cardNodeStable: boolean;
+  readonly cardFrameLocalBounds: CapturedRect;
+  readonly cardPhysicalBounds: CapturedRect;
+  readonly wrapperId: string;
+  readonly wrapperNodeStable: boolean;
+  readonly priorWrapperId: string | null;
+  readonly sameWrapperAsPrior: boolean | null;
+  readonly wrapperCountImmediately: number;
+  readonly priorWrapperConnectedImmediately: boolean | null;
+  readonly priorWrapperConnectedAfterSettle: boolean | null;
+  readonly activeWrapperCountAfterSettle: number;
+  readonly benchWrapperCountAfterSettle: number;
+  readonly markers: readonly LegacyMarkerMovementMarker[];
+  readonly cardDamageCounterId: string | null;
+  readonly cardSpecialConditionId: string | null;
+  readonly cardAbilityCounterId: string | null;
+}
+
+export interface LegacyMarkerMovementCase {
+  readonly id: string;
+  readonly side: LegacyFixtureSide;
+  readonly phases: readonly LegacyMarkerMovementPhase[];
+  readonly callTrace: readonly string[];
+  readonly cleanup: {
+    readonly markerCount: number;
+    readonly activeWrapperCount: number;
+    readonly benchWrapperCount: number;
+    readonly cardConnected: boolean;
+    readonly cardPointersAreNull: boolean;
+    readonly resizeCallsBeforeDispatch: number;
+    readonly resizeCallsAfterDispatch: number;
+    readonly harnessObserverDisconnectCalls: number;
+  };
+}
+
+export interface LegacySourceMarkerMovementFixture {
+  readonly frames: Readonly<Record<LegacyFixtureSide, CapturedRect>>;
+  readonly cases: readonly LegacyMarkerMovementCase[];
+  readonly sourceFulfillment: LegacySourceGeometry['sourceFulfillment'];
+}
+
 export type LegacyFixtureSide = LegacySide;
 
 export interface LegacyCardFixtureCard {
@@ -13623,6 +13687,544 @@ export const captureLegacySourceBenchMarkerRotationFixture = async (
   return {
     frames,
     frameTransforms,
+    cases,
+    sourceFulfillment: sourceFulfillment(loaded),
+  };
+};
+
+type RawMarkerMovementMarker = Omit<
+  LegacyMarkerMovementMarker,
+  'physicalBounds'
+>;
+
+type RawMarkerMovementPhase = Omit<
+  LegacyMarkerMovementPhase,
+  'cardPhysicalBounds' | 'markers'
+> & {
+  readonly markers: readonly RawMarkerMovementMarker[];
+};
+
+type RawMarkerMovementCase = Omit<
+  LegacyMarkerMovementCase,
+  'side' | 'phases'
+> & {
+  readonly phases: readonly RawMarkerMovementPhase[];
+};
+
+/**
+ * Replays the source marker hooks around ordinary active/bench movement and
+ * refresh reconstruction. The source functions are transcribed narrowly so
+ * the networked legacy application remains inert while Chromium still owns
+ * layout, MutationObserver delivery, and node identity.
+ */
+export const captureLegacySourceMarkerMovementFixture = async (
+  page: Page
+): Promise<LegacySourceMarkerMovementFixture> => {
+  const loaded = await loadLegacySourceBoard(page);
+  const rawCases: {
+    readonly side: LegacyFixtureSide;
+    readonly value: RawMarkerMovementCase;
+  }[] = [];
+
+  for (const [side, frameSelector] of [
+    ['local', '#selfContainer'],
+    ['opponent', '#oppContainer'],
+  ] as const) {
+    const value = await page
+      .frameLocator(frameSelector)
+      .locator('body')
+      .evaluate(
+        async (body, input): Promise<RawMarkerMovementCase> => {
+          type MovementMarker = HTMLDivElement & {
+            handleInput?: EventListener | null;
+            handleColor?: EventListener | null;
+            handleRemoveWrapper?: EventListener | null;
+            handleRemove?: (() => void) | null;
+            handleResize?: EventListener | null;
+          };
+          type MovementImage = HTMLImageElement & {
+            damageCounter: MovementMarker | null;
+            specialCondition: MovementMarker | null;
+            abilityCounter: MovementMarker | null;
+            PokémonBreak: boolean;
+            attached: boolean;
+            target: string;
+            relative: number;
+            energyLayer: number;
+            layer: number;
+          };
+
+          const active = body.querySelector('#active');
+          const bench = body.querySelector('#bench');
+          if (
+            !(active instanceof HTMLElement) ||
+            !(bench instanceof HTMLElement)
+          ) {
+            throw new Error('Legacy marker movement zones are missing');
+          }
+          active.replaceChildren();
+          bench.replaceChildren();
+
+          const rect = (bounds: DOMRect): CapturedRect => ({
+            x: bounds.x,
+            y: bounds.y,
+            width: bounds.width,
+            height: bounds.height,
+          });
+          const waitForStableLayout = () =>
+            new Promise<void>((resolve) =>
+              requestAnimationFrame(() =>
+                requestAnimationFrame(() => resolve())
+              )
+            );
+          const zones = { active, bench } as const;
+          const callTrace: string[] = [];
+          const observers: MutationObserver[] = [];
+          let wrapperSequence = 0;
+          let resizeCalls = 0;
+
+          const image = document.createElement('img') as MovementImage;
+          const cardId = `${input.side}-marker-movement-card`;
+          image.dataset.legacyMarkerMovementCardId = cardId;
+          image.alt = '';
+          image.src = `${location.origin}/src/assets/cardback.png`;
+          image.damageCounter = null;
+          image.specialCondition = null;
+          image.abilityCounter = null;
+          image.PokémonBreak = false;
+          image.attached = false;
+          image.target = 'off';
+          image.relative = 0;
+          image.energyLayer = 0;
+          image.layer = 0;
+          const initialImage = image;
+
+          const resetImage = () => {
+            image.style.opacity = '1';
+            image.style.position = 'relative';
+            image.style.bottom = '0%';
+            image.style.zIndex = '0';
+            image.style.left = '0px';
+            image.style.transform = 'rotate(0deg)';
+            image.PokémonBreak = false;
+            image.attached = false;
+            image.target = 'off';
+            image.relative = 0;
+            image.energyLayer = 0;
+            image.layer = 0;
+          };
+          resetImage();
+
+          const makeWrapper = (zone: HTMLElement) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'play-container';
+            wrapper.style.zIndex = '0';
+            wrapper.dataset.legacyMarkerMovementWrapperId = `${input.side}-marker-wrapper-${++wrapperSequence}`;
+            zone.append(wrapper);
+            wrapper.append(image);
+            const observer = new MutationObserver((mutations) => {
+              for (const mutation of mutations) {
+                if (
+                  mutation.removedNodes.length > 0 &&
+                  wrapper.getElementsByTagName('img').length === 0
+                ) {
+                  wrapper.remove();
+                }
+              }
+            });
+            observer.observe(wrapper, { childList: true });
+            observers.push(observer);
+            return wrapper;
+          };
+
+          let wrapper = makeWrapper(active);
+          const initialWrapper = wrapper;
+          await image.decode();
+          await waitForStableLayout();
+
+          const markerId = (kind: LegacyMarkerKind) =>
+            `${input.side}-marker-movement-${kind}`;
+          const circleClass = () =>
+            input.side === 'local' ? 'self-circle' : 'opp-circle';
+          const removeResize = (marker: MovementMarker) => {
+            if (!marker.handleResize) return;
+            window.removeEventListener('resize', marker.handleResize);
+            marker.handleResize = null;
+          };
+          const installResize = (
+            marker: MovementMarker,
+            callback: EventListener
+          ) => {
+            marker.handleResize = callback;
+            window.addEventListener('resize', callback);
+          };
+
+          const removeDamage = () => {
+            const marker = image.damageCounter;
+            if (!marker) return;
+            if (marker.handleInput) {
+              marker.removeEventListener('input', marker.handleInput);
+              marker.handleInput = null;
+            }
+            if (marker.handleRemoveWrapper) {
+              marker.removeEventListener('blur', marker.handleRemoveWrapper);
+              marker.handleRemoveWrapper = null;
+            }
+            marker.handleRemove = null;
+            removeResize(marker);
+            marker.remove();
+            image.damageCounter = null;
+            callTrace.push('removeDamageCounter');
+          };
+          const addDamage = (zoneId: 'active' | 'bench', initial = false) => {
+            const zone = zones[zoneId];
+            const targetRect = image.getBoundingClientRect();
+            const zoneRect = zone.getBoundingClientRect();
+            let marker = image.damageCounter;
+            if (marker) {
+              if (marker.handleInput) {
+                marker.removeEventListener('input', marker.handleInput);
+                marker.handleInput = null;
+              }
+              if (marker.handleRemoveWrapper) {
+                marker.removeEventListener('blur', marker.handleRemoveWrapper);
+                marker.handleRemoveWrapper = null;
+              }
+              marker.handleRemove = null;
+              removeResize(marker);
+            } else {
+              marker = document.createElement('div') as MovementMarker;
+              marker.dataset.legacyMarkerMovementId = markerId('damage');
+              marker.dataset.legacyMarkerMovementKind = 'damage';
+              marker.className = circleClass();
+              marker.contentEditable = 'true';
+              marker.textContent = '90';
+            }
+            marker.style.display = 'inline-block';
+            marker.style.left = `${targetRect.left - zoneRect.left + targetRect.width / 1.5}px`;
+            marker.style.top = `${targetRect.top - zoneRect.top + targetRect.height / 4}px`;
+            marker.style.width = `${targetRect.width / 3}px`;
+            marker.style.height = `${targetRect.width / 3}px`;
+            marker.style.lineHeight = `${targetRect.width / 3}px`;
+            marker.style.fontSize = `${targetRect.width / 6}px`;
+            marker.style.zIndex = '1';
+            zone.append(marker);
+            const handleInput: EventListener = () => undefined;
+            marker.handleInput = handleInput;
+            marker.addEventListener('input', handleInput);
+            const handleResize: EventListener = () => {
+              resizeCalls += 1;
+              addDamage(zoneId);
+            };
+            installResize(marker, handleResize);
+            marker.handleRemove = removeDamage;
+            marker.handleRemoveWrapper = removeDamage;
+            marker.addEventListener('blur', marker.handleRemoveWrapper);
+            image.damageCounter = marker;
+            callTrace.push(
+              `${initial ? 'add' : 'reflow'}DamageCounter:${zoneId}`
+            );
+          };
+
+          const removeSpecialCondition = () => {
+            const marker = image.specialCondition;
+            if (!marker) return;
+            if (marker.handleColor) {
+              marker.removeEventListener('input', marker.handleColor);
+              marker.handleColor = null;
+            }
+            if (marker.handleRemoveWrapper) {
+              marker.removeEventListener('blur', marker.handleRemoveWrapper);
+              marker.handleRemoveWrapper = null;
+            }
+            marker.handleRemove = null;
+            removeResize(marker);
+            marker.remove();
+            image.specialCondition = null;
+            callTrace.push('removeSpecialCondition');
+          };
+          const addSpecialCondition = () => {
+            const targetRect = image.getBoundingClientRect();
+            const zoneRect = active.getBoundingClientRect();
+            const marker = document.createElement('div') as MovementMarker;
+            marker.dataset.legacyMarkerMovementId =
+              markerId('specialCondition');
+            marker.dataset.legacyMarkerMovementKind = 'specialCondition';
+            marker.className = circleClass();
+            marker.contentEditable = 'true';
+            marker.textContent = 'C';
+            marker.style.backgroundColor = 'purple';
+            marker.style.color = 'white';
+            marker.style.display = 'inline-block';
+            marker.style.left = `${targetRect.left - zoneRect.left}px`;
+            marker.style.top = `${targetRect.top - zoneRect.top + targetRect.height / 4}px`;
+            marker.style.width = `${targetRect.width / 3}px`;
+            marker.style.height = `${targetRect.width / 3}px`;
+            marker.style.lineHeight = `${targetRect.width / 3}px`;
+            marker.style.fontSize = `${targetRect.width / 4}px`;
+            marker.style.zIndex = '1';
+            active.append(marker);
+            const handleColor: EventListener = () => undefined;
+            marker.handleColor = handleColor;
+            marker.addEventListener('input', handleColor);
+            const handleResize: EventListener = () => {
+              resizeCalls += 1;
+            };
+            installResize(marker, handleResize);
+            marker.handleRemove = removeSpecialCondition;
+            marker.handleRemoveWrapper = removeSpecialCondition;
+            marker.addEventListener('blur', marker.handleRemoveWrapper);
+            image.specialCondition = marker;
+            callTrace.push('addSpecialCondition:active');
+          };
+
+          const removeAbility = () => {
+            const marker = image.abilityCounter;
+            if (!marker) return;
+            marker.handleRemove = null;
+            removeResize(marker);
+            marker.remove();
+            image.abilityCounter = null;
+            callTrace.push('removeAbilityCounter');
+          };
+          const addAbility = (zoneId: 'active' | 'bench', initial = false) => {
+            const zone = zones[zoneId];
+            const targetRect = image.getBoundingClientRect();
+            const zoneRect = zone.getBoundingClientRect();
+            let marker = image.abilityCounter;
+            if (marker) {
+              marker.handleRemove = null;
+              removeResize(marker);
+            } else {
+              marker = document.createElement('div') as MovementMarker;
+              marker.dataset.legacyMarkerMovementId = markerId('ability');
+              marker.dataset.legacyMarkerMovementKind = 'ability';
+              marker.className =
+                input.side === 'local' ? 'self-tab' : 'opp-tab';
+            }
+            marker.style.display = 'inline-block';
+            marker.style.width = `${targetRect.width}px`;
+            marker.style.height = `${targetRect.width / 5}px`;
+            marker.style.lineHeight = `${targetRect.width / 3}px`;
+            marker.style.zIndex = '1';
+            marker.style.right = '';
+            if (input.side === 'local') {
+              marker.style.bottom = '';
+              marker.style.left = `${targetRect.left - zoneRect.left}px`;
+              marker.style.top = `${targetRect.top - zoneRect.top + targetRect.height / 2}px`;
+            } else {
+              marker.style.top = '';
+              marker.style.left = `${targetRect.left - zoneRect.left}px`;
+              marker.style.bottom = `${targetRect.top - zoneRect.top + targetRect.height / 2 - Number.parseFloat(marker.style.height)}px`;
+            }
+            zone.append(marker);
+            const handleResize: EventListener = () => {
+              resizeCalls += 1;
+              addAbility(zoneId);
+            };
+            installResize(marker, handleResize);
+            marker.handleRemove = removeAbility;
+            image.abilityCounter = marker;
+            callTrace.push(
+              `${initial ? 'add' : 'reflow'}AbilityCounter:${zoneId}`
+            );
+          };
+
+          addDamage('active', true);
+          addSpecialCondition();
+          addAbility('active', true);
+          const initialMarkers = {
+            damage: image.damageCounter,
+            specialCondition: image.specialCondition,
+            ability: image.abilityCounter,
+          } as const;
+
+          const captureMarkers = (
+            zoneId: 'active' | 'bench'
+          ): RawMarkerMovementMarker[] =>
+            [
+              ...zones[zoneId].querySelectorAll<MovementMarker>(
+                '[data-legacy-marker-movement-id]'
+              ),
+            ].map((marker) => {
+              const kind = marker.dataset
+                .legacyMarkerMovementKind as LegacyMarkerKind;
+              const styles = getComputedStyle(marker);
+              return {
+                id: marker.dataset.legacyMarkerMovementId ?? '',
+                kind,
+                nodeStable: marker === initialMarkers[kind],
+                parentZoneId: zoneId,
+                textContent: marker.textContent ?? '',
+                contentEditable: marker.contentEditable,
+                frameLocalBounds: rect(marker.getBoundingClientRect()),
+                className: marker.className,
+                pointerEvents: styles.pointerEvents,
+                backgroundColor: styles.backgroundColor,
+                color: styles.color,
+                zIndex: Number.parseInt(styles.zIndex, 10) || 0,
+              };
+            });
+
+          const phases: RawMarkerMovementPhase[] = [];
+          const capturePhase = (
+            name: LegacyMarkerMovementPhaseName,
+            zoneId: 'active' | 'bench',
+            priorWrapper: HTMLDivElement | null,
+            wrapperCountImmediately: number,
+            priorWrapperConnectedImmediately: boolean | null
+          ) => {
+            phases.push({
+              name,
+              zoneId,
+              cardId,
+              cardNodeStable: image === initialImage,
+              cardFrameLocalBounds: rect(image.getBoundingClientRect()),
+              wrapperId: wrapper.dataset.legacyMarkerMovementWrapperId ?? '',
+              wrapperNodeStable: wrapper === initialWrapper,
+              priorWrapperId:
+                priorWrapper?.dataset.legacyMarkerMovementWrapperId ?? null,
+              sameWrapperAsPrior:
+                priorWrapper === null ? null : wrapper === priorWrapper,
+              wrapperCountImmediately,
+              priorWrapperConnectedImmediately,
+              priorWrapperConnectedAfterSettle:
+                priorWrapper === null ? null : priorWrapper.isConnected,
+              activeWrapperCountAfterSettle:
+                active.querySelectorAll('.play-container').length,
+              benchWrapperCountAfterSettle:
+                bench.querySelectorAll('.play-container').length,
+              markers: captureMarkers(zoneId),
+              cardDamageCounterId:
+                image.damageCounter?.dataset.legacyMarkerMovementId ?? null,
+              cardSpecialConditionId:
+                image.specialCondition?.dataset.legacyMarkerMovementId ?? null,
+              cardAbilityCounterId:
+                image.abilityCounter?.dataset.legacyMarkerMovementId ?? null,
+            });
+          };
+
+          capturePhase('initial-active', 'active', null, 1, null);
+
+          const reconstruct = async (
+            name: Exclude<LegacyMarkerMovementPhaseName, 'initial-active'>,
+            zoneId: 'active' | 'bench'
+          ) => {
+            const priorWrapper = wrapper;
+            resetImage();
+            wrapper = makeWrapper(zones[zoneId]);
+            addDamage(zoneId);
+            addAbility(zoneId);
+            if (image.specialCondition && zoneId !== 'active') {
+              image.specialCondition.textContent = '0';
+              removeSpecialCondition();
+            }
+            const wrapperCountImmediately =
+              active.querySelectorAll('.play-container').length +
+              bench.querySelectorAll('.play-container').length;
+            const priorWrapperConnectedImmediately = priorWrapper.isConnected;
+            callTrace.push(`reconstruct:${zoneId}`);
+            await waitForStableLayout();
+            capturePhase(
+              name,
+              zoneId,
+              priorWrapper,
+              wrapperCountImmediately,
+              priorWrapperConnectedImmediately
+            );
+          };
+
+          await reconstruct('demoted-bench', 'bench');
+          await reconstruct('refreshed-bench', 'bench');
+          await reconstruct('promoted-active', 'active');
+
+          removeDamage();
+          removeAbility();
+          const resizeCallsBeforeDispatch = resizeCalls;
+          window.dispatchEvent(new Event('resize'));
+          await waitForStableLayout();
+          const resizeCallsAfterDispatch = resizeCalls;
+          image.remove();
+          await waitForStableLayout();
+          const currentWrapper = wrapper;
+          currentWrapper.remove();
+          let harnessObserverDisconnectCalls = 0;
+          for (const observer of observers) {
+            observer.disconnect();
+            harnessObserverDisconnectCalls += 1;
+          }
+
+          return {
+            id: `${input.side}-marker-movement`,
+            phases,
+            callTrace,
+            cleanup: {
+              markerCount: body.querySelectorAll(
+                '[data-legacy-marker-movement-id]'
+              ).length,
+              activeWrapperCount:
+                active.querySelectorAll('.play-container').length,
+              benchWrapperCount:
+                bench.querySelectorAll('.play-container').length,
+              cardConnected: image.isConnected,
+              cardPointersAreNull:
+                image.damageCounter === null &&
+                image.specialCondition === null &&
+                image.abilityCounter === null,
+              resizeCallsBeforeDispatch,
+              resizeCallsAfterDispatch,
+              harnessObserverDisconnectCalls,
+            },
+          };
+        },
+        { side }
+      );
+    rawCases.push({ side, value });
+  }
+
+  const frames = {
+    local: await requireRect(page.locator('#selfContainer'), '#selfContainer'),
+    opponent: await requireRect(page.locator('#oppContainer'), '#oppContainer'),
+  };
+  const physicalRect = (
+    side: LegacyFixtureSide,
+    bounds: CapturedRect
+  ): CapturedRect =>
+    side === 'local'
+      ? {
+          x: frames.local.x + bounds.x,
+          y: frames.local.y + bounds.y,
+          width: bounds.width,
+          height: bounds.height,
+        }
+      : {
+          x:
+            frames.opponent.x + frames.opponent.width - bounds.x - bounds.width,
+          y:
+            frames.opponent.y +
+            frames.opponent.height -
+            bounds.y -
+            bounds.height,
+          width: bounds.width,
+          height: bounds.height,
+        };
+  const cases: LegacyMarkerMovementCase[] = rawCases.map(({ side, value }) => ({
+    ...value,
+    side,
+    phases: value.phases.map((phase) => ({
+      ...phase,
+      cardPhysicalBounds: physicalRect(side, phase.cardFrameLocalBounds),
+      markers: phase.markers.map((marker) => ({
+        ...marker,
+        physicalBounds: physicalRect(side, marker.frameLocalBounds),
+      })),
+    })),
+  }));
+
+  requireServedPaths(loaded, containedCardFixtureAssetPaths);
+  requireNoUnexpectedSameOriginPaths(loaded);
+  return {
+    frames,
     cases,
     sourceFulfillment: sourceFulfillment(loaded),
   };

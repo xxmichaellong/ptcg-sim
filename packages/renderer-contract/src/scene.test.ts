@@ -640,6 +640,32 @@ describe('renderer-neutral board scene', () => {
     );
   });
 
+  it('keeps the characterized path at a fractional device pixel ratio', () => {
+    // The model does no devicePixelRatio arithmetic, and
+    // tests/browser/legacy-cssom-rounding.spec.ts measures the client-width
+    // rounding against real legacy at scale 1 and 2, so scale must not decide
+    // whether legacy geometry is used.
+    const view = createPristineActiveMarkerView();
+    const scenes = [1, 2].map((devicePixelRatio) =>
+      createBoardScene(
+        view,
+        createBoardLayoutSnapshot({
+          ...characterizedEvolutionLayoutState,
+          viewport: { width: 1600, height: 900, devicePixelRatio },
+        })
+      )
+    );
+    for (const scene of scenes) {
+      expect(
+        scene.markers.some((marker) => marker.presentation === 'legacyActiveQ0')
+      ).toBe(true);
+    }
+    const [atOne, atTwo] = scenes;
+    expect(atTwo?.cards.map((card) => card.bounds)).toEqual(
+      atOne?.cards.map((card) => card.bounds)
+    );
+  });
+
   it('degrades to generic geometry when a play slot would flex-shrink', () => {
     // A tall, narrow window makes the authored active card wider than its
     // region. Legacy would flex-shrink there and the model has no characterized
@@ -989,6 +1015,125 @@ describe('renderer-neutral board scene', () => {
       addedMarkerIds: [],
       removedMarkerIds: [abilityId],
       updatedMarkerIds: [],
+      unchangedMarkerIds: [],
+    });
+  });
+
+  it('keeps surviving marker identities stable across active-bench reconstruction', () => {
+    const layout = createBoardLayoutSnapshot(characterizedEvolutionLayoutState);
+    const activeView = createPristineActiveMarkerView(
+      allActiveMarkers,
+      noActiveMarkers
+    );
+    const markedStackId = 'stack:p1:active-markers';
+    const markedStack = activeView.stacks[markedStackId]!;
+    const markedCardId = markedStack.evolutionCards[0]!.id;
+    const controlStackId = 'stack:p1:marker-transfer-control';
+    const controlCardId = asViewCardId(`${controlStackId}:base`);
+    const controlStack = {
+      id: controlStackId,
+      boardPlayerId: p1,
+      slot: 'active' as const,
+      evolutionCards: [
+        {
+          ...markedStack.evolutionCards[0]!,
+          id: controlCardId,
+        },
+      ],
+      attachmentCards: [],
+      rotationQuarterTurns: 0 as const,
+      damage: null,
+      specialCondition: null,
+      abilityUsed: false,
+    };
+    const benchView: MatchViewState = {
+      ...activeView,
+      revision: activeView.revision + 1,
+      boards: {
+        ...activeView.boards,
+        [p1]: {
+          activeStackId: controlStackId,
+          benchStackIds: [markedStackId],
+        },
+      },
+      stacks: {
+        ...activeView.stacks,
+        [markedStackId]: {
+          ...markedStack,
+          slot: 'bench',
+          specialCondition: null,
+        },
+        [controlStackId]: controlStack,
+      },
+    };
+    const returnedActiveView: MatchViewState = {
+      ...benchView,
+      revision: benchView.revision + 1,
+      boards: {
+        ...benchView.boards,
+        [p1]: { activeStackId: markedStackId, benchStackIds: [] },
+      },
+      stacks: {
+        ...Object.fromEntries(
+          Object.entries(benchView.stacks).filter(
+            ([stackId]) => stackId !== controlStackId
+          )
+        ),
+        [markedStackId]: {
+          ...benchView.stacks[markedStackId]!,
+          slot: 'active',
+        },
+      },
+    };
+
+    const active = createBoardScene(activeView, layout);
+    const bench = createBoardScene(benchView, layout);
+    const returnedActive = createBoardScene(returnedActiveView, layout);
+    const damageId = `${markedStackId}:damage`;
+    const conditionId = `${markedStackId}:specialCondition`;
+    const abilityId = `${markedStackId}:abilityUsed`;
+    const markersFor = (scene: ReturnType<typeof createBoardScene>) =>
+      scene.markers.filter((marker) => marker.parentCardId === markedCardId);
+
+    expect(
+      markersFor(active).map(({ id, presentation }) => [id, presentation])
+    ).toEqual([
+      [damageId, 'legacyActiveQ0'],
+      [conditionId, 'legacyActiveQ0'],
+      [abilityId, 'legacyActiveQ0'],
+    ]);
+    expect(
+      markersFor(bench).map(({ id, presentation }) => [id, presentation])
+    ).toEqual([
+      [damageId, 'legacyBenchQ0'],
+      [abilityId, 'legacyBenchQ0'],
+    ]);
+    expect(
+      markersFor(returnedActive).map(({ id, presentation }) => [
+        id,
+        presentation,
+      ])
+    ).toEqual([
+      [damageId, 'legacyActiveQ0'],
+      [abilityId, 'legacyActiveQ0'],
+    ]);
+
+    expect(diffBoardScenes(active, bench)).toMatchObject({
+      addedCardIds: [controlCardId],
+      removedCardIds: [],
+      updatedCardIds: [markedCardId],
+      addedMarkerIds: [],
+      removedMarkerIds: [conditionId],
+      updatedMarkerIds: [damageId, abilityId],
+      unchangedMarkerIds: [],
+    });
+    expect(diffBoardScenes(bench, returnedActive)).toMatchObject({
+      addedCardIds: [],
+      removedCardIds: [controlCardId],
+      updatedCardIds: [markedCardId],
+      addedMarkerIds: [],
+      removedMarkerIds: [],
+      updatedMarkerIds: [damageId, abilityId],
       unchangedMarkerIds: [],
     });
   });
@@ -1418,10 +1563,6 @@ describe('renderer-neutral board scene', () => {
         },
       },
       { ...characterizedEvolutionLayoutState, bottomPlayerId: p2 },
-      {
-        ...characterizedEvolutionLayoutState,
-        viewport: { width: 1600, height: 900, devicePixelRatio: 2 },
-      },
     ] as const satisfies readonly BoardLayoutState[]) {
       expectFallback(baseView, createBoardLayoutSnapshot(layoutState));
     }
@@ -1716,10 +1857,6 @@ describe('renderer-neutral board scene', () => {
         },
       },
       { ...characterizedEvolutionLayoutState, bottomPlayerId: p2 },
-      {
-        ...characterizedEvolutionLayoutState,
-        viewport: { width: 1600, height: 900, devicePixelRatio: 2 },
-      },
     ] as const satisfies readonly BoardLayoutState[]) {
       expectFallback(baseView, createBoardLayoutSnapshot(layoutState));
     }
@@ -2792,10 +2929,6 @@ describe('renderer-neutral board scene', () => {
         },
       },
       { ...characterizedEvolutionLayoutState, bottomPlayerId: p2 },
-      {
-        ...characterizedEvolutionLayoutState,
-        viewport: { width: 1600, height: 900, devicePixelRatio: 2 },
-      },
     ] as const satisfies readonly BoardLayoutState[]) {
       const targetLayout = createBoardLayoutSnapshot(layoutState);
       expectFallback(baseView, targetLayout);
@@ -3556,10 +3689,6 @@ describe('renderer-neutral board scene', () => {
       { ...characterizedEvolutionLayoutState, bottomPlayerId: p2 },
       {
         ...characterizedEvolutionLayoutState,
-        viewport: { width: 1600, height: 900, devicePixelRatio: 2 },
-      },
-      {
-        ...characterizedEvolutionLayoutState,
         vertical: {
           ...characterizedEvolutionLayoutState.vertical,
           lowerFrame: { bottomRatio: 0, heightRatio: 0.6 },
@@ -4131,10 +4260,6 @@ describe('renderer-neutral board scene', () => {
         },
       },
       { ...characterizedEvolutionLayoutState, bottomPlayerId: p2 },
-      {
-        ...characterizedEvolutionLayoutState,
-        viewport: { width: 1600, height: 900, devicePixelRatio: 2 },
-      },
     ] as const satisfies readonly BoardLayoutState[]) {
       expectFallback(baseView, createBoardLayoutSnapshot(layoutState));
     }
@@ -4453,10 +4578,6 @@ describe('renderer-neutral board scene', () => {
         },
       },
       { ...characterizedEvolutionLayoutState, bottomPlayerId: p2 },
-      {
-        ...characterizedEvolutionLayoutState,
-        viewport: { width: 1600, height: 900, devicePixelRatio: 2 },
-      },
     ] as const satisfies readonly BoardLayoutState[]) {
       const scene = createBoardScene(
         baseView,

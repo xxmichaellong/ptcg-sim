@@ -49,6 +49,7 @@ import {
   createBoardLayoutSnapshot,
   createBoardScene,
   createBoardSceneForViewport,
+  diffBoardScenes,
 } from '../../packages/renderer-contract/src/index.js';
 import { describe, expect, it } from 'vitest';
 
@@ -860,9 +861,9 @@ describe('client/server multiplayer contract', () => {
     const hand = Object.values(ownerView?.zones ?? {}).find(
       (zone) => zone.ownerId === ownerId && zone.kind === 'hand'
     );
-    const base = hand?.cards[0];
-    if (!ownerView || !hand || !base) {
-      throw new Error('Marker setup did not publish a base card');
+    const [base, control] = hand?.cards ?? [];
+    if (!ownerView || !hand || !base || !control) {
+      throw new Error('Marker setup did not publish two base cards');
     }
     expect(
       owner.session.submit({
@@ -1194,6 +1195,189 @@ describe('client/server multiplayer contract', () => {
       )
     ).toEqual(initialMarkerGeometry);
 
+    expect(
+      owner.session.submit({
+        type: 'MoveCardToPlay',
+        cardId: control.id,
+        expectedSourceZoneId: hand.id,
+        boardPlayerId: ownerId,
+        slot: 'active',
+      }).queued
+    ).toBe(true);
+    await owner.factory.flush();
+
+    const captureTransferredPhase = () =>
+      recipientViews().map((view, index) => {
+        const alias = initialAliases[index];
+        if (!alias) throw new Error('Missing transferred marker aliases');
+        const stack = view.stacks[alias.stackAlias];
+        const topCard = stack?.evolutionCards.at(-1);
+        if (!stack || !topCard || topCard.kind !== 'known') {
+          throw new Error('Transferred marker stack was not published');
+        }
+        const scene = sceneFor(view);
+        const parent = scene.cards.find((card) => card.id === topCard.id);
+        if (!parent || parent.parentId !== stack.id) {
+          throw new Error('Transferred marker parent was not rendered');
+        }
+        const markers = scene.markers.filter(
+          (marker) => marker.parentCardId === topCard.id
+        );
+        serializedSnapshots.push(JSON.stringify(view));
+        serializedSnapshots.push(JSON.stringify(scene));
+        return {
+          view,
+          scene,
+          stackAlias: stack.id,
+          parentCardAlias: topCard.id,
+          slot: stack.slot,
+          state: {
+            damage: stack.damage,
+            specialCondition: stack.specialCondition,
+            abilityUsed: stack.abilityUsed,
+          },
+          markers,
+          normalizedMarkers: markers.map(
+            ({ side, kind, presentation, value, bounds, zIndex, label }) => ({
+              side,
+              kind,
+              presentation,
+              value,
+              bounds,
+              zIndex,
+              label,
+            })
+          ),
+        };
+      });
+
+    const demoted = captureTransferredPhase();
+    expectAliases(demoted, initialAliases);
+    expectSharedGeometry(demoted);
+    expect(demoted.map(({ slot }) => slot)).toEqual([
+      'bench',
+      'bench',
+      'bench',
+    ]);
+    expect(demoted.map(({ state }) => state)).toEqual(
+      Array.from({ length: 3 }, () => ({
+        damage: 90,
+        specialCondition: null,
+        abilityUsed: true,
+      }))
+    );
+    expect(
+      demoted[0]!.normalizedMarkers.map(({ kind, presentation, value }) => ({
+        kind,
+        presentation,
+        value,
+      }))
+    ).toEqual([
+      { kind: 'damage', presentation: 'legacyBenchQ0', value: '90' },
+      {
+        kind: 'abilityUsed',
+        presentation: 'legacyBenchQ0',
+        value: 'used',
+      },
+    ]);
+    for (let index = 0; index < demoted.length; index += 1) {
+      const diff = diffBoardScenes(
+        readded[index]!.scene,
+        demoted[index]!.scene
+      );
+      const markerIds = demoted[index]!.markers.map(({ id }) => id);
+      expect(diff).toMatchObject({
+        addedMarkerIds: [],
+        removedMarkerIds: [
+          `${initialAliases[index]!.stackAlias}:specialCondition`,
+        ],
+        updatedMarkerIds: markerIds,
+        unchangedMarkerIds: [],
+      });
+    }
+
+    ownerView = owner.session.getSnapshot().view;
+    const controlStackId = ownerView?.boards[ownerId]?.activeStackId;
+    const controlCard = controlStackId
+      ? ownerView?.stacks[controlStackId]?.evolutionCards.at(-1)
+      : undefined;
+    if (!ownerView || !controlStackId || !controlCard) {
+      throw new Error('Marker transfer control stack was not published');
+    }
+    expect(
+      owner.session.submit({
+        type: 'MoveCardFromStack',
+        cardId: controlCard.id,
+        expectedStackId: controlStackId,
+        destinationZoneId: `zone:${ownerId}:discard`,
+      }).queued
+    ).toBe(true);
+    await owner.factory.flush();
+
+    ownerView = owner.session.getSnapshot().view;
+    const markedBenchStackId = initialAliases[0]!.stackAlias;
+    if (
+      !ownerView ||
+      ownerView.boards[ownerId]?.activeStackId !== null ||
+      ownerView.boards[ownerId]?.benchStackIds.length !== 1
+    ) {
+      throw new Error('Marker control departure did not leave one bench stack');
+    }
+    expect(
+      owner.session.submit({
+        type: 'MovePlayStack',
+        stackId: markedBenchStackId,
+        expectedSourceSlot: 'bench',
+        expectedActiveStackId: null,
+        expectedBenchStackIds: [markedBenchStackId],
+        destinationSlot: 'active',
+      }).queued
+    ).toBe(true);
+    await owner.factory.flush();
+
+    const promoted = captureTransferredPhase();
+    expectAliases(promoted, initialAliases);
+    expectSharedGeometry(promoted);
+    expect(promoted.map(({ slot }) => slot)).toEqual([
+      'active',
+      'active',
+      'active',
+    ]);
+    expect(promoted.map(({ state }) => state)).toEqual(
+      Array.from({ length: 3 }, () => ({
+        damage: 90,
+        specialCondition: null,
+        abilityUsed: true,
+      }))
+    );
+    expect(
+      promoted[0]!.normalizedMarkers.map(({ kind, presentation, value }) => ({
+        kind,
+        presentation,
+        value,
+      }))
+    ).toEqual([
+      { kind: 'damage', presentation: 'legacyActiveQ0', value: '90' },
+      {
+        kind: 'abilityUsed',
+        presentation: 'legacyActiveQ0',
+        value: 'used',
+      },
+    ]);
+    for (let index = 0; index < promoted.length; index += 1) {
+      const diff = diffBoardScenes(
+        demoted[index]!.scene,
+        promoted[index]!.scene
+      );
+      const markerIds = promoted[index]!.markers.map(({ id }) => id);
+      expect(diff).toMatchObject({
+        addedMarkerIds: [],
+        removedMarkerIds: [],
+        updatedMarkerIds: markerIds,
+        unchangedMarkerIds: [],
+      });
+    }
+
     const canonicalState = room.store.snapshot?.state;
     if (!canonicalState) throw new Error('Missing canonical marker state');
     const privateIds = [
@@ -1205,7 +1389,8 @@ describe('client/server multiplayer contract', () => {
         expect(serialized).not.toContain(privateId);
       }
     }
-    expect(room.store.commandCommits).toHaveLength(14);
+    expect(recipientViews().map((view) => view.revision)).toEqual([17, 17, 17]);
+    expect(room.store.commandCommits).toHaveLength(17);
   });
 
   it('projects strict sole-bench q0 markers privately with stable recipient geometry', async () => {

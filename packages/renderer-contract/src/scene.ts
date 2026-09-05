@@ -322,14 +322,16 @@ const canonicalDefaultLayoutFor = (
  * and 1920x1080 and holds the model to them. Re-asserting one viewport's pixels
  * here only restricted parity to a single window size.
  *
- * Two dimensions stay pinned because they are unmeasured, not because they are
- * known to break:
- *   - the vertical split, shared placement, and handle positions, which no
- *     browser gate varies yet (legacy applies them as inline styles from its
- *     resize handler);
- *   - `devicePixelRatio`, because the helpers round CSSOM client widths to whole
- *     CSS pixels and that rounding has not been measured at fractional scale.
- * Extend the browser gate before relaxing either.
+ * The vertical split, shared placement and handle positions stay pinned because
+ * no browser gate varies them yet (legacy applies them as inline styles from
+ * its resize handler), not because they are known to break. Extend the browser
+ * gate before relaxing them.
+ *
+ * `devicePixelRatio` is no longer pinned. The model performs no
+ * devicePixelRatio-dependent arithmetic, and
+ * `tests/browser/legacy-cssom-rounding.spec.ts` measures the whole-CSS-pixel
+ * client-width rounding against the real legacy stack at scale 1 and 2, which
+ * was the one place device-pixel snapping could have changed the result.
  */
 const isCharacterizedDefaultInPlayLayout = (
   view: MatchViewState,
@@ -341,7 +343,8 @@ const isCharacterizedDefaultInPlayLayout = (
   if (
     layout.bottomPlayerId !== firstPlayerId ||
     layout.shellMode !== 'sidebar' ||
-    layout.viewport.devicePixelRatio !== 1 ||
+    !Number.isFinite(layout.viewport.devicePixelRatio) ||
+    layout.viewport.devicePixelRatio <= 0 ||
     layout.viewport.width <= 0 ||
     layout.viewport.height <= 0 ||
     layout.shellGapBounds === null ||

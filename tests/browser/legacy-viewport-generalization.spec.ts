@@ -36,16 +36,26 @@ if (!fixture) throw new Error('Missing desktop legacy geometry fixture');
  * hand-recorded, so adding a viewport costs one row.
  */
 const viewports = [
-  { name: 'laptop-1280x720', width: 1280, height: 720 },
-  { name: 'recorded-1600x900', width: 1600, height: 900 },
-  { name: 'desktop-1920x1080', width: 1920, height: 1080 },
+  { name: 'laptop-1280x720', width: 1280, height: 720, devicePixelRatio: 1 },
+  { name: 'recorded-1600x900', width: 1600, height: 900, devicePixelRatio: 1 },
+  { name: 'desktop-1920x1080', width: 1920, height: 1080, devicePixelRatio: 1 },
+  // The model computes entirely in CSS pixels and never reads
+  // devicePixelRatio, but it rounds CSSOM client widths to whole CSS pixels.
+  // These cases are what makes relaxing the scene gate's DPR pin evidence-based
+  // rather than assumed.
+  { name: 'retina-1280x720@2', width: 1280, height: 720, devicePixelRatio: 2 },
+  { name: 'retina-1600x900@2', width: 1600, height: 900, devicePixelRatio: 2 },
 ] as const;
 
 const tolerance = oracle.tolerances.browserPixels;
 
-const layoutStateFor = (width: number, height: number): BoardLayoutState => ({
+const layoutStateFor = (
+  width: number,
+  height: number,
+  devicePixelRatio: number
+): BoardLayoutState => ({
   geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
-  viewport: { width, height, devicePixelRatio: 1 },
+  viewport: { width, height, devicePixelRatio },
   playerIds: [asPlayerId('blue'), asPlayerId('red')],
   bottomPlayerId: asPlayerId('blue'),
   shellMode: 'sidebar',
@@ -90,17 +100,20 @@ for (const viewport of viewports) {
 
     const legacyPage = await browser.newPage({
       viewport: { width: viewport.width, height: viewport.height },
-      deviceScaleFactor: 1,
+      deviceScaleFactor: viewport.devicePixelRatio,
     });
     let legacy: Awaited<ReturnType<typeof captureLegacySourceGeometry>>;
     try {
       legacy = await captureLegacySourceGeometry(legacyPage);
+      expect(
+        await legacyPage.evaluate(() => window.devicePixelRatio)
+      ).toBeCloseTo(viewport.devicePixelRatio, 5);
     } finally {
       await legacyPage.close();
     }
 
     const snapshot = createBoardLayoutSnapshot(
-      layoutStateFor(viewport.width, viewport.height)
+      layoutStateFor(viewport.width, viewport.height, viewport.devicePixelRatio)
     );
 
     await testInfo.attach(`${viewport.name}-model-vs-legacy.json`, {
