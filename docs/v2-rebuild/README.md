@@ -66,9 +66,14 @@ the relevant product decisions and phase exit criteria.
   module. A separate Chromium gate starts local Wrangler and Vite and proves the
   live creation → ticket → WebSocket → projected DOM board path, safe transport
   URLs, a bidirectional response, and clean closure. Visible create/join wiring
-  waits on ADR-020's decision about how the handoff moves between browsers;
-  normal sidebar/chat/navigation and downloadable/export formats remain later
-  parity work.
+  waits on ADR-020's decision about how the handoff moves between browsers. The
+  canonical Wrangler topology now publishes the built Vite app beside the room
+  Worker, with explicit authority-first and static-asset route namespaces plus
+  SPA fallback. A separate production-build Chromium lane proves that one-origin
+  routing, document replacement, room creation/ticket exchange, card-back bytes,
+  and exclusion of the development module. Managed-preview behavior remains a
+  release gate. Normal sidebar/chat/navigation and downloadable/export formats
+  remain later parity work.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 

@@ -69,6 +69,18 @@ rollback evidence remain required before ADR-005 becomes accepted.
   notice, verifies credential-free transport URLs, and closes the socket. The
   live run also proves successful `101` upgrades are informational and terminal
   socket telemetry reports no phantom active connection.
+- The canonical Wrangler configuration also owns Vite's built static assets,
+  sends `/v2/*` to Worker code first except for the exact reviewed card-back
+  asset, and uses SPA navigation fallback. A separate Chromium lane serves that
+  production-like topology from one local `workerd` origin. It proves built
+  module/card-back delivery, unknown-route isolation, repeated SPA/health
+  document replacement, production exclusion of the developer room seam, and
+  live room creation plus admission-ticket exchange. This is local routing
+  evidence, not a managed preview or CDN-cache result.
+- Web source maps remain available to the local bundle-provenance checker, but
+  Vite emits no public map hints and Wrangler's copied `.assetsignore` omits all
+  map files from the static manifest. A future telemetry integration must use a
+  controlled symbolication upload rather than public asset delivery.
 - One-shot faults at the production persistence-adapter boundary prove that a
   failed initial admission neither consumes its ticket nor cancels unclaimed
   expiry, and that retrying the same ticket commits exactly once. Concurrent
@@ -109,3 +121,6 @@ rollback evidence remain required before ADR-005 becomes accepted.
 - [Workers Vitest test APIs](https://developers.cloudflare.com/workers/testing/vitest-integration/test-apis/)
 - [Rules of Durable Objects](https://developers.cloudflare.com/durable-objects/best-practices/rules-of-durable-objects/)
 - [Wrangler configuration and declarative exports](https://developers.cloudflare.com/workers/wrangler/configuration/)
+- [Workers static assets](https://developers.cloudflare.com/workers/static-assets/)
+- [Static asset binding and Worker-first routing](https://developers.cloudflare.com/workers/static-assets/binding/)
+- [Single-page application routing](https://developers.cloudflare.com/workers/static-assets/routing/single-page-application/)

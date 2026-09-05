@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/browser',
+  testIgnore: 'production-topology.spec.ts',
   fullyParallel: false,
   forbidOnly: Boolean(process.env['CI']),
   retries: 0,
@@ -34,7 +35,7 @@ export default defineConfig({
   webServer: [
     {
       command:
-        'corepack pnpm --filter @ptcgsim/server-v2 dev --ip 127.0.0.1 --port 8787',
+        'corepack pnpm --filter @ptcgsim/web run build && corepack pnpm --filter @ptcgsim/server-v2 dev --ip 127.0.0.1 --port 8787',
       url: 'http://127.0.0.1:8787/v2/health',
       reuseExistingServer: !process.env['CI'],
       timeout: 60_000,

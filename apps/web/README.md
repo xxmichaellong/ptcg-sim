@@ -59,10 +59,21 @@ later slices.
 
 The default v2 card back is published at `/v2/assets/cardback.png`. It is an
 exact byte copy of the current v1 PNG, and the build gate verifies its digest,
-dimensions, color format, and emitted bytes. The Worker does not serve web
-assets itself: a deployment must route `/v2/assets/*` to this Vite build (or an
-equivalent static origin) before remote rooms are exposed.
+dimensions, color format, and emitted bytes. The canonical Wrangler deployment
+now publishes the complete Vite `dist` directory beside the Worker: `/v2/*`
+runs authority code first except for the explicitly reviewed
+`/v2/assets/cardback.png`, while unknown browser navigation receives the SPA
+shell. The separate production-topology Chromium lane verifies those route
+priorities, room creation/ticket exchange, repeated document replacement, exact
+card-back bytes, and exclusion of the development room module. Managed-preview
+and rollout approval remain separate gates.
 
-Run the Chromium decision suite with `pnpm run test:renderer:browser` after
-installing Playwright's Chromium browser. On NixOS, set
+Production builds retain hidden source maps for the local provenance checker,
+but the entry modules do not advertise them and Wrangler excludes them through
+`public/.assetsignore`. Upload maps to a controlled diagnostics destination if
+production symbolication is enabled; do not expose them as static assets.
+
+Run every Chromium lane with `pnpm run check:browser`, or only the combined
+built-app/Worker lane with `pnpm run test:preview:browser`, after installing
+Playwright's Chromium browser. On NixOS, set
 `PTCGSIM_CHROMIUM_PATH` to the Nix-provided Chromium executable.

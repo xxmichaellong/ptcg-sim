@@ -1,0 +1,4 @@
+# Source maps remain in dist for the local provenance gate, but are not public
+# static assets. Upload them to a controlled diagnostics service separately if
+# production stack traces require symbolication.
+**/*.map

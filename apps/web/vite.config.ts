@@ -155,7 +155,10 @@ export default defineConfig({
     },
   },
   build: {
-    sourcemap: true,
+    // Retain maps for the provenance gate without advertising them in shipped
+    // modules. `public/.assetsignore` keeps the files out of Wrangler's static
+    // asset manifest while leaving them available to local/CI verification.
+    sourcemap: 'hidden',
     target: 'es2022',
   },
 });

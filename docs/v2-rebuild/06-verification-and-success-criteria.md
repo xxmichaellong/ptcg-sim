@@ -27,13 +27,18 @@ The current pull-request lane is a deliberately narrower implemented baseline:
 GitHub-hosted Ubuntu 24.04, Node 24.19.0, pnpm 11.24.0, Playwright 1.62.1, and
 one sequential Playwright-managed Chromium worker. Default renderer cases use
 1280×720/DPR 1, while source-oracle cases use their explicitly pinned
-1600×900/DPR 1 override. The lane runs after the non-browser quality gate with
-retries disabled, CI-only focused-test rejection, fresh Vite ownership, failure
-screenshots, and retained failure traces. `tsconfig.browser.json` independently
-typechecks every Playwright spec and support module under the production
-strict/no-unchecked profile. The lane does not yet satisfy the two-target
-viewport matrix above, pin fonts, or cover Firefox/Safari. Those remain release
-evidence, not claims made by current CI. See
+1600×900/DPR 1 override. After the Vite-development/Worker lane, an isolated
+configuration builds the production web output and serves it beside the room
+Worker from one local Wrangler origin. That lane pins static/authority route
+priority, SPA fallback, production exclusion of the developer module, repeated
+document replacement, and room creation/ticket exchange. Both lanes run after
+the non-browser quality gate with retries disabled, CI-only focused-test
+rejection, fresh server ownership, failure screenshots, and retained failure
+traces. `tsconfig.browser.json` independently typechecks both Playwright
+configurations and every spec/support module under the production
+strict/no-unchecked profile. The lanes do not yet satisfy the two-target viewport
+matrix above, pin fonts, cover Firefox/Safari, or substitute for managed-preview
+platform evidence. Those remain release evidence, not claims made by current CI. See
 [`QUALITY_GATES.md`](./QUALITY_GATES.md).
 
 ### Browser release matrix

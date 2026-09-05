@@ -14,6 +14,7 @@
   "include": [
     "apps/web/src/renderer-spike-handle.ts",
     "playwright.config.ts",
+    "playwright.preview.config.ts",
     "tests/browser/**/*.ts"
   ]
 }

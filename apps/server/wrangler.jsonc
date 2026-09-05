@@ -7,6 +7,11 @@
   "vars": {
     "BUILD_ID": "local-development",
   },
+  "assets": {
+    "directory": "../web/dist",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/v2/*", "!/v2/assets/cardback.png"],
+  },
   "durable_objects": {
     "bindings": [
       {
