@@ -1,0 +1,286 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body,
+button,
+select {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.app-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, #f0f0f7, #c9cad4);
+}
+
+.board-column {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 75.5%;
+  height: 100%;
+}
+
+.board-spike-host {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.renderer-surface-host {
+  position: absolute;
+  inset: 0;
+}
+
+.renderer-status {
+  position: absolute;
+  left: 0.5rem;
+  top: 50%;
+  z-index: 20000;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 70%);
+  color: #333;
+  pointer-events: none;
+}
+
+.legacy-sidebar {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 24%;
+  height: 100%;
+  border-left: 2px solid rgb(145 145 145);
+  background: rgb(231 228 228);
+}
+
+.legacy-tabs {
+  display: flex;
+  align-items: end;
+  width: 100%;
+  height: 5vh;
+  background: rgb(145 145 145);
+}
+
+.legacy-tabs button {
+  width: 25%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.legacy-tabs .selected-page {
+  border-radius: 10px 10px 0 0;
+  border: 1px solid rgb(200 200 200);
+  background: linear-gradient(to bottom, rgb(250 250 250), rgb(230 230 230));
+  color: #333;
+}
+
+.spike-controls {
+  margin: 0.5rem;
+  padding: 1rem;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.spike-controls h1 {
+  margin-top: 0;
+  font-size: 1.1rem;
+}
+
+.spike-controls label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.spike-controls select,
+.spike-controls output {
+  width: 100%;
+  padding: 0.45rem;
+}
+
+.spike-controls output {
+  display: block;
+  overflow-wrap: anywhere;
+  border-radius: 4px;
+  background: #ececf1;
+}
+
+.legacy-presentation-surface {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.legacy-room-sidebar {
+  border-left: 0;
+}
+
+.legacy-room-tabs button {
+  width: 30%;
+  padding: 1vh;
+  font-size: 1.75vh;
+}
+
+.legacy-room-sidebox {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  height: 95vh;
+  min-height: 0;
+  padding: 0.5%;
+  border-left: 2px solid rgb(145 145 145);
+  background: rgb(231 228 228);
+}
+
+.legacy-room-sidebox > .legacy-presentation-surface {
+  flex: 1;
+  min-height: 0;
+}
+
+.legacy-room-sidebox #roomHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 2.5vh;
+  margin-bottom: 8px;
+  color: #000;
+}
+
+.legacy-room-sidebox #roomHeaderText {
+  width: 98%;
+  margin-right: 5px;
+  padding-block: 0.1vh;
+  border: 2px solid rgb(97 206 164);
+  border-radius: 10px;
+  background: rgb(157 209 189);
+  font-size: 2vh;
+  text-align: center;
+}
+
+.legacy-activity-feed {
+  width: 100%;
+  height: 85%;
+  padding: 10px;
+  overflow-y: auto;
+  border-radius: 10px 10px 0 0;
+  background: #fff;
+}
+
+.legacy-activity-feed--multiplayer {
+  height: 80%;
+}
+
+.legacy-activity-feed .self-text,
+.legacy-activity-feed .opp-text,
+.legacy-activity-feed .announcement {
+  display: block;
+  margin: 0.5vh 0 0;
+  padding: 0.25vh 1vh;
+  overflow-wrap: break-word;
+  border-radius: 10px;
+  color: #000;
+  font-size: 1.75vh;
+}
+
+.legacy-activity-feed .self-text {
+  width: fit-content;
+  background: rgb(211 219 250 / 86.4%);
+  text-align: left;
+}
+
+.legacy-activity-feed .opp-text {
+  width: fit-content;
+  background: rgb(247 217 223 / 86.4%);
+  text-align: left;
+}
+
+.legacy-activity-feed .announcement {
+  background: rgb(205 203 203);
+  text-align: center;
+  user-select: text;
+}
+
+.presentation-live-region {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.legacy-room-sidebox #optionsContextMenu {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 3.5rem;
+  z-index: 2;
+  padding: 0.35rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+}
+
+.legacy-room-sidebox #optionsContextMenu[hidden] {
+  display: none;
+}
+
+.legacy-room-sidebox #exitReplay {
+  padding: 0.3vh 1vw;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Shared by the mounted room replay shell and later normal sidebox actions. */
+.sidebox-button-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 100%;
+  margin-block: 10px;
+  overflow: hidden;
+}
+
+.sidebox-button-container button {
+  width: 19%;
+  padding: 7px;
+  border: 0;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 1.75vh;
+  cursor: pointer;
+}
+
+.neutral-color {
+  background: linear-gradient(
+    to bottom,
+    rgb(112 112 112 / 86.4%),
+    rgb(82 82 82 / 86.4%)
+  );
+  box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
+}
+
+.spectator-color {
+  background: linear-gradient(to bottom, rgb(205 188 103), rgb(175 158 83));
+  box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
+}

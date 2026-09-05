@@ -1,2 +1,11 @@
 node_modules/
+packages/*/lib/
+apps/*/lib/
+apps/*/dist/
+apps/server/worker-configuration.d.ts
+playwright-report/
+test-results/
+artifacts/performance/
+*.tsbuildinfo
 server/database/db.sqlite
+apps/server/.wrangler/

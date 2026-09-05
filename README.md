@@ -40,3 +40,18 @@ Feel free to reach out on:
 Happy testing!
 
 -XXL
+
+## Isolated v2 rebuild
+
+The React/TypeScript rebuild lives under `apps/` and `packages/` and remains
+isolated from the v1 production client. Its architecture and migration contract
+are documented in [`docs/v2-rebuild`](./docs/v2-rebuild/README.md).
+
+After installing dependencies with `corepack pnpm install`, use:
+
+- `corepack pnpm run check:ci` for the required non-browser quality gate;
+- `corepack pnpm run check:browser` for the sequential Chromium regression lane;
+- `corepack pnpm run check:full` for both gates locally.
+
+The exact checks, CI environment, and known limitations are recorded in
+[`QUALITY_GATES.md`](./docs/v2-rebuild/QUALITY_GATES.md).

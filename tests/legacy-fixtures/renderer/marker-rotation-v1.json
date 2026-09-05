@@ -1,0 +1,314 @@
+{
+  "schemaVersion": 1,
+  "recordingMethod": "Chromium 151 CSS-pixel capture of two independent inert replays (local and opponent) of the checked-in active-card addDamageCounter, updateDamageCounter, addSpecialCondition, updateSpecialCondition, addAbilityCounter, rotateCard, and removal behavior. Checked-in HTML/CSS and cardback bytes are served through a deny-by-default route; the networked application module is stubbed and the digest-pinned DOM mutations are narrowly transcribed. Marker creation and each q0 -> q1 -> q2 -> q3 -> q0 rotation are synchronous; listener and empty-wrapper cleanup is observed after a resize dispatch and two animation frames.",
+  "input": {
+    "viewport": { "width": 1600, "height": 900, "devicePixelRatio": 1 },
+    "asset": {
+      "path": "/src/assets/cardback.png",
+      "naturalWidth": 736,
+      "naturalHeight": 1024
+    },
+    "cases": [
+      "local-active-marker-rotation",
+      "opponent-active-marker-rotation"
+    ],
+    "damageInitial": "120",
+    "damageUpdated": "130",
+    "specialConditionInputs": ["P", "B", "A", "Pa", "C", "X", "P"]
+  },
+  "tolerances": {
+    "anchorPixels": 2,
+    "cardSizeRelative": 0.01,
+    "rotationDegrees": 0.1,
+    "structuredPixels": 0.001
+  },
+  "scope": {
+    "included": [
+      "one ordinary face-up active Pokemon with one damage circle, one special-condition circle, and one ability-used tab",
+      "independent local and opponent active slots at the default 1600x900 DPR-1 sidebar layout",
+      "damage text update and every special-condition palette branch",
+      "the synchronous q0 -> q1 -> q2 -> q3 -> q0 group-rotation cycle for a one-Pokemon stack",
+      "painted and temporarily untransformed card bounds, direct-zone marker bounds, frame transforms, physical bounds, local/effective rotations, wrapper margins, DOM order, z order, and marker/card hit order",
+      "one live resize dispatch invoking all three marker reflow callbacks, marker removal, post-removal resize-listener non-observation, and asynchronous empty-wrapper cleanup"
+    ],
+    "excluded": [
+      "bench-specific q1/q3 3%-right and 2%-left wrapper margins",
+      "single-card BREAK toggles, evolution stack rotation, and compound BREAK plus group rotation",
+      "Energy or Trainer attachment syncRotation behavior",
+      "marker persistence, transfer, or removal across movement, evolution, or refresh reconstruction, and post-resize geometry beyond the captured live callback count",
+      "bench, stadium, discard, attached-card, per-card ability, multiple-card, and overlapping-marker cases",
+      "keyboard editing and blur interaction beyond captured contentEditable state and direct source update/removal calls",
+      "drag, context-menu, preview, message, network, and server behavior",
+      "custom or noncanonical assets, viewport/DPR variants, explicit board flip, fullscreen, and animation",
+      "React DOM, Pixi, renderer-contract, or production candidate parity"
+    ]
+  },
+  "provenance": [
+    {
+      "path": "client/index.ejs",
+      "encoding": "utf8",
+      "sha256": "6d3382c2c531048888aae36ae7fc0472819f4ca0ed32a8180f029710ec90fdeb"
+    },
+    {
+      "path": "client/self-containers.html",
+      "encoding": "utf8",
+      "sha256": "1efb80b3f4e179866db35b15de9826027b8bfa3e57946a07c121ceb893804549"
+    },
+    {
+      "path": "client/opp-containers.html",
+      "encoding": "utf8",
+      "sha256": "48255e88bac184754a675ba26400d2932f8e3f39cb27d704b8f826fec97ebfd4"
+    },
+    {
+      "path": "client/src/css/index.css",
+      "encoding": "utf8",
+      "sha256": "06ebdcb074244bfa34915be1a06f963d89f8e29feaf0634f8398042071640936"
+    },
+    {
+      "path": "client/src/css/self-containers.css",
+      "encoding": "utf8",
+      "sha256": "98b237d94f4618f311bee6e707e2db73a12bf78514f0b74ef5e291d66b1eb917"
+    },
+    {
+      "path": "client/src/css/opp-containers.css",
+      "encoding": "utf8",
+      "sha256": "192b505a25794f1a50a22a9f618e9477fec89b80d8a0416e250cf21bf4e2df07"
+    },
+    {
+      "path": "client/src/assets/cardback.png",
+      "encoding": "binary",
+      "sha256": "44a5ffdcd9df23d3322250da733099c2c29c984362260efc5914a5a8745fa327"
+    },
+    {
+      "path": "client/src/setup/deck-constructor/card.js",
+      "encoding": "utf8",
+      "sha256": "1335c2b7ac9bbb2bef64dfb3632b6c05c1f45554b3c314422a98cd9a4ae85011"
+    },
+    {
+      "path": "client/src/setup/zones/get-zone.js",
+      "encoding": "utf8",
+      "sha256": "8a1a1aaaf0994d8528438b701cb028faf742c3577a8183cd650cbda40b4bc8c3"
+    },
+    {
+      "path": "client/src/initialization/global-variables/global-variables.js",
+      "encoding": "utf8",
+      "sha256": "9d1ec2b64118bef701096fffd4faa46dd375722755da62407b1724ed46bd6668"
+    },
+    {
+      "path": "client/src/setup/image-logic/reset-image.js",
+      "encoding": "utf8",
+      "sha256": "166b5fb2936424c8cb895fdfec26a3499d15995eecbeaf1f2c25040a0e44b613"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/initialize-active-bench-card.js",
+      "encoding": "utf8",
+      "sha256": "808f35ca24ac549dd83305a9ec23d9edeccd414506db04b680a6175c549ec605"
+    },
+    {
+      "path": "client/src/actions/counters/damage-counter.js",
+      "encoding": "utf8",
+      "sha256": "8cdc2c64cfa4f862f4dad4b675eb3f6c48735a959fd9639143bb5154862806c6"
+    },
+    {
+      "path": "client/src/actions/counters/special-condition.js",
+      "encoding": "utf8",
+      "sha256": "ec31a48ed4fab4685c3d8cb2f159d5d2f8a101432eae5809a4b10688841633be"
+    },
+    {
+      "path": "client/src/actions/counters/ability-counter.js",
+      "encoding": "utf8",
+      "sha256": "1d9961ba428ab91de4ac2fdeda78b0bce6214bd42b5b4d64f73cc3f649862016"
+    },
+    {
+      "path": "client/src/actions/general/rotate-card.js",
+      "encoding": "utf8",
+      "sha256": "d0870b070c5fedc7225e81661e3bbbfd31225731cf5ac516972d4fe5ac17f5d1"
+    }
+  ],
+  "provenanceClaims": [
+    {
+      "claim": "outer player frames, opponent half-turn, active region, marker classes, and portrait sizing",
+      "sources": [
+        "client/index.ejs",
+        "client/self-containers.html",
+        "client/opp-containers.html",
+        "client/src/css/index.css",
+        "client/src/css/self-containers.css",
+        "client/src/css/opp-containers.css",
+        "client/src/assets/cardback.png"
+      ]
+    },
+    {
+      "claim": "card defaults, reset state, zone lookup, and active play-container construction and cleanup",
+      "sources": [
+        "client/src/setup/deck-constructor/card.js",
+        "client/src/setup/zones/get-zone.js",
+        "client/src/setup/image-logic/reset-image.js",
+        "client/src/actions/move-card-bundle/initialize-active-bench-card.js"
+      ]
+    },
+    {
+      "claim": "default self-frame initiator mapping used to choose marker circle classes and ability top-versus-bottom placement",
+      "sources": [
+        "client/index.ejs",
+        "client/src/initialization/global-variables/global-variables.js",
+        "client/src/actions/counters/damage-counter.js",
+        "client/src/actions/counters/special-condition.js",
+        "client/src/actions/counters/ability-counter.js"
+      ]
+    },
+    {
+      "claim": "damage circle creation, update, painted-card-relative reflow, editability, resize listener, and removal",
+      "sources": ["client/src/actions/counters/damage-counter.js"]
+    },
+    {
+      "claim": "special-condition circle creation, palette, painted-card-relative reflow, editability, resize listener, and removal",
+      "sources": ["client/src/actions/counters/special-condition.js"]
+    },
+    {
+      "claim": "side-dependent ability tab creation and placement, painted-card-relative reflow, resize listener, and removal",
+      "sources": ["client/src/actions/counters/ability-counter.js"]
+    },
+    {
+      "claim": "quarter-turn cycle, q0/q2 active wrapper margin mutation, and synchronous marker repositioning",
+      "sources": [
+        "client/src/actions/general/rotate-card.js",
+        "client/src/actions/counters/damage-counter.js",
+        "client/src/actions/counters/special-condition.js",
+        "client/src/actions/counters/ability-counter.js"
+      ]
+    }
+  ],
+  "expected": {
+    "frames": {
+      "local": { "x": 0, "y": 450, "width": 1208, "height": 450 },
+      "opponent": { "x": 0, "y": 0, "width": 1208, "height": 450 }
+    },
+    "frameRotationDegrees": { "local": 0, "opponent": 180 },
+    "initialCard": {
+      "frameLocalBounds": {
+        "x": 558.703125,
+        "y": 31.5,
+        "width": 90.5625,
+        "height": 126
+      },
+      "clientWidth": 91,
+      "clientHeight": 126,
+      "initialInlineMargins": { "right": "", "left": "" }
+    },
+    "opponentAbilityFrameLocalYDelta": 0.015625,
+    "paletteTrace": [
+      ["P", "P", "rgb(0, 128, 0)", "rgb(255, 255, 255)"],
+      ["B", "B", "rgb(255, 0, 0)", "rgb(255, 255, 255)"],
+      ["A", "A", "rgb(0, 0, 255)", "rgb(255, 255, 255)"],
+      ["Pa", "Pa", "rgb(255, 255, 0)", "rgb(0, 0, 0)"],
+      ["C", "C", "rgb(128, 0, 128)", "rgb(255, 255, 255)"],
+      ["X", "X", "rgb(255, 255, 255)", "rgb(0, 0, 0)"],
+      ["P", "P", "rgb(0, 128, 0)", "rgb(255, 255, 255)"]
+    ],
+    "callTrace": [
+      "addDamageCounter:120",
+      "updateDamageCounter:130",
+      "addSpecialCondition",
+      "updateSpecialCondition:P",
+      "updateSpecialCondition:B",
+      "updateSpecialCondition:A",
+      "updateSpecialCondition:Pa",
+      "updateSpecialCondition:C",
+      "updateSpecialCondition:X",
+      "updateSpecialCondition:P",
+      "addAbilityCounter",
+      "rotateCard:0->90",
+      "rotateCard:90->180",
+      "rotateCard:180->270",
+      "rotateCard:270->0",
+      "removeDamageCounter",
+      "removeSpecialCondition",
+      "removeAbilityCounter"
+    ],
+    "phases": [
+      {
+        "name": "marked-q0",
+        "rotationDegrees": 0,
+        "card": [558.703125, 31.5, 90.5625, 126],
+        "untransformedCard": [558.703125, 31.5, 90.5625, 126],
+        "wrapper": [558.703125, 31.5, 90.5625, 126],
+        "wrapperMargins": ["", "", 0, 0],
+        "damage": [619.078125, 63, 30.1875, 30.1875, 208.359, 31.5, 15.0938],
+        "specialCondition": [
+          558.703125, 63, 30.1875, 30.1875, 147.984, 31.5, 22.6406
+        ],
+        "ability": [
+          558.703125, 94.5, 90.5625, 18.109375, 147.984, 63, 44.8875, 30.1875
+        ]
+      },
+      {
+        "name": "q1",
+        "rotationDegrees": 90,
+        "card": [540.984375, 49.21875, 126, 90.5625],
+        "untransformedCard": [558.703125, 31.5, 90.5625, 126],
+        "wrapper": [558.703125, 31.5, 90.5625, 126],
+        "wrapperMargins": ["", "", 0, 0],
+        "damage": [624.984375, 71.859375, 42, 42, 214.266, 40.3594, 21],
+        "specialCondition": [
+          540.984375, 71.859375, 42, 42, 130.266, 40.3594, 31.5
+        ],
+        "ability": [540.984375, 94.5, 126, 25.1875, 130.266, 63, 37.8, 42]
+      },
+      {
+        "name": "q2",
+        "rotationDegrees": 180,
+        "card": [556.78125, 31.5, 90.5625, 126],
+        "untransformedCard": [556.78125, 31.5, 90.5625, 126],
+        "wrapper": [556.78125, 31.5, 90.5625, 126],
+        "wrapperMargins": ["1%", "0%", 3.85938, 0],
+        "damage": [617.15625, 63, 30.1875, 30.1875, 206.438, 31.5, 15.0938],
+        "specialCondition": [
+          556.78125, 63, 30.1875, 30.1875, 146.062, 31.5, 22.6406
+        ],
+        "ability": [
+          556.78125, 94.5, 90.5625, 18.109375, 146.062, 63, 44.8875, 30.1875
+        ]
+      },
+      {
+        "name": "q3",
+        "rotationDegrees": 270,
+        "card": [539.0625, 49.21875, 126, 90.5625],
+        "untransformedCard": [556.78125, 31.5, 90.5625, 126],
+        "wrapper": [556.78125, 31.5, 90.5625, 126],
+        "wrapperMargins": ["1%", "0%", 3.85938, 0],
+        "damage": [623.0625, 71.859375, 42, 42, 212.344, 40.3594, 21],
+        "specialCondition": [
+          539.0625, 71.859375, 42, 42, 128.344, 40.3594, 31.5
+        ],
+        "ability": [539.0625, 94.5, 126, 25.1875, 128.344, 63, 37.8, 42]
+      },
+      {
+        "name": "q0-return",
+        "rotationDegrees": 0,
+        "card": [556.78125, 31.5, 90.5625, 126],
+        "untransformedCard": [556.78125, 31.5, 90.5625, 126],
+        "wrapper": [556.78125, 31.5, 90.5625, 126],
+        "wrapperMargins": ["1%", "0%", 3.85938, 0],
+        "damage": [617.15625, 63, 30.1875, 30.1875, 206.438, 31.5, 15.0938],
+        "specialCondition": [
+          556.78125, 63, 30.1875, 30.1875, 146.062, 31.5, 22.6406
+        ],
+        "ability": [
+          556.78125, 94.5, 90.5625, 18.109375, 146.062, 63, 44.8875, 30.1875
+        ]
+      }
+    ],
+    "cleanup": {
+      "markerCount": 0,
+      "cardPointersAreNull": true,
+      "liveResizeCallsBeforeDispatch": 0,
+      "liveResizeCallsAfterDispatch": 3,
+      "liveMarkerCountAfterDispatch": 3,
+      "resizeCallsBeforeCleanupDispatch": 3,
+      "resizeCallsAfterCleanupDispatch": 3,
+      "wrapperCountAfterTwoFrames": 0,
+      "cardCountAfterTwoFrames": 0
+    }
+  }
+}

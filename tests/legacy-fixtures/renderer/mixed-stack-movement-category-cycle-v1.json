@@ -1,0 +1,875 @@
+{
+  "schemaVersion": 1,
+  "recordingMethod": "Chromium 151 CSS-pixel capture of six independent source-pinned inert DOM replays (three scenarios on both physical sides). Checked-in legacy HTML, CSS, and cardback are served deny-by-default while application/network modules remain inert. The reverse case seeds the previously pinned post-leaveAll geometry, then the replay transcribes moveCardBundle, recursive moveCard/relocateAttachedCards, both applicable autoMoveActiveBenchCard branches, refreshBoard reconstruction, changeType departure, and reattachment. Immediate phases are synchronous after refreshBoard; settled phases wait two animation frames for the real empty-wrapper MutationObserver.",
+  "input": {
+    "viewport": { "width": 1600, "height": 900, "devicePixelRatio": 1 },
+    "asset": {
+      "path": "/src/assets/cardback.png",
+      "naturalWidth": 736,
+      "naturalHeight": 1024
+    },
+    "caseIds": [
+      "local-native-canonical",
+      "local-reverse-round-trip",
+      "local-category-cycle",
+      "opponent-native-canonical",
+      "opponent-reverse-round-trip",
+      "opponent-category-cycle"
+    ]
+  },
+  "tolerances": {
+    "anchorPixels": 2,
+    "cardSizeRelative": 0.01,
+    "rotationDegrees": 0.1,
+    "structuredPixels": 0.001
+  },
+  "scope": {
+    "included": [
+      "one unrotated face-up Pokémon base with one ordinary face-up Energy and one current-category face-up Trainer-as-Tool, plus one ordinary base-only active/bench control",
+      "native canonical active construction, previously pinned reverse-restored drift seeded as the movement precondition, active-to-occupied-bench no-target auto-promotion, and targeted return to occupied active on both physical sides",
+      "Energy to Trainer to Energy and Trainer to Energy to Trainer current-category cycles through changeType board departure and ordinary reattachment",
+      "logical/direct DOM identity and order, current/original categories, parent wrapper and zone, wrapper width/client width/margin/layers, painted and pre-transform bounds, local/effective rotations, z, safe hit order, exact harness operation/reset trace, synchronous ghost wrappers, two-frame cleanup, and deny-by-default source fulfillment"
+    ],
+    "excluded": [
+      "production React DOM or Pixi parity and any claim that legacy transient ghost-wrapper placement is a candidate-renderer requirement",
+      "more than one Energy or Trainer-as-Tool, evolution attachments, Pokémon-category conversion defects, face-down cards, damage, condition, ability, counters, BREAK, and heterogeneous card dimensions",
+      "bench-to-bench reordering, more than one bench control, explicit case-3 active/bench target replacement, resize, fullscreen, explicit board flip, pointer gestures, server, messaging, and network behavior",
+      "intermediate loose-board category-cycle geometry; exact changeType/moveCard/reset traces and the immediate plus observer-settled final active stack are pinned instead",
+      "re-execution of leaveAll in this fixture; the seeded reverse-restored starting geometry is independently pinned by mixed-energy-trainer-tool-attachment-order-v1"
+    ]
+  },
+  "provenance": [
+    {
+      "path": "client/index.ejs",
+      "encoding": "utf8",
+      "sha256": "6d3382c2c531048888aae36ae7fc0472819f4ca0ed32a8180f029710ec90fdeb"
+    },
+    {
+      "path": "client/self-containers.html",
+      "encoding": "utf8",
+      "sha256": "1efb80b3f4e179866db35b15de9826027b8bfa3e57946a07c121ceb893804549"
+    },
+    {
+      "path": "client/opp-containers.html",
+      "encoding": "utf8",
+      "sha256": "48255e88bac184754a675ba26400d2932f8e3f39cb27d704b8f826fec97ebfd4"
+    },
+    {
+      "path": "client/src/css/index.css",
+      "encoding": "utf8",
+      "sha256": "06ebdcb074244bfa34915be1a06f963d89f8e29feaf0634f8398042071640936"
+    },
+    {
+      "path": "client/src/css/self-containers.css",
+      "encoding": "utf8",
+      "sha256": "98b237d94f4618f311bee6e707e2db73a12bf78514f0b74ef5e291d66b1eb917"
+    },
+    {
+      "path": "client/src/css/opp-containers.css",
+      "encoding": "utf8",
+      "sha256": "192b505a25794f1a50a22a9f618e9477fec89b80d8a0416e250cf21bf4e2df07"
+    },
+    {
+      "path": "client/src/assets/cardback.png",
+      "encoding": "binary",
+      "sha256": "44a5ffdcd9df23d3322250da733099c2c29c984362260efc5914a5a8745fa327"
+    },
+    {
+      "path": "client/src/setup/deck-constructor/card.js",
+      "encoding": "utf8",
+      "sha256": "1335c2b7ac9bbb2bef64dfb3632b6c05c1f45554b3c314422a98cd9a4ae85011"
+    },
+    {
+      "path": "client/src/setup/zones/get-zone.js",
+      "encoding": "utf8",
+      "sha256": "8a1a1aaaf0994d8528438b701cb028faf742c3577a8183cd650cbda40b4bc8c3"
+    },
+    {
+      "path": "client/src/setup/image-logic/reset-image.js",
+      "encoding": "utf8",
+      "sha256": "166b5fb2936424c8cb895fdfec26a3499d15995eecbeaf1f2c25040a0e44b613"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/move-card-bundle.js",
+      "encoding": "utf8",
+      "sha256": "06ffbe2fd8b39eb78eee817667d059aef4ea56772b12393ffc1d625c4f949ed2"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/move-card.js",
+      "encoding": "utf8",
+      "sha256": "5737c45ff7b45a71dee661b42cbba7b2ee6e1c852ee530ec4369b85493e794e3"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/auto-move-active-bench-card.js",
+      "encoding": "utf8",
+      "sha256": "133f78d3e3a2ef2233d56526ee7db0ea8f63ba11ea8f2bde78567e4149bac750"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/update-attached-cards-position.js",
+      "encoding": "utf8",
+      "sha256": "4e9d65ca703a1949fb6d603b596acf30eb0bf141c5228c3496542ae086ef822c"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/decrease-card-layer.js",
+      "encoding": "utf8",
+      "sha256": "30aec3ad82a6da83d669e660ba4816576724cc2e3b48f7e2bb2f6b7548c552c3"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/attach-card.js",
+      "encoding": "utf8",
+      "sha256": "711302b5dfdf757aa21b3a4ef1c83c582f6a14d60db31aaf8f81afdcd05203b4"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/initialize-active-bench-card.js",
+      "encoding": "utf8",
+      "sha256": "808f35ca24ac549dd83305a9ec23d9edeccd414506db04b680a6175c549ec605"
+    },
+    {
+      "path": "client/src/actions/move-card-bundle/relocate-attached-cards.js",
+      "encoding": "utf8",
+      "sha256": "b682db984c742521ee231d8e273ea0dc28e7561ce47234ef58971f6c8ab1c86e"
+    },
+    {
+      "path": "client/src/actions/general/rotate-card.js",
+      "encoding": "utf8",
+      "sha256": "d0870b070c5fedc7225e81661e3bbbfd31225731cf5ac516972d4fe5ac17f5d1"
+    },
+    {
+      "path": "client/src/setup/sizing/refresh-board.js",
+      "encoding": "utf8",
+      "sha256": "b786a66c078de9623e46884e640db2e80f6b9ea8f1078573fee96bd71ecade7d"
+    },
+    {
+      "path": "client/src/setup/sizing/resizer.js",
+      "encoding": "utf8",
+      "sha256": "7cc88360ef8798e25f09b89b8eae24b131dd14965f46e9859c380634795e9c91"
+    },
+    {
+      "path": "client/src/actions/general/change-type.js",
+      "encoding": "utf8",
+      "sha256": "7a746ae9ccc04a6180817f661b8a885c028c4c88d36c92f85a3ee8c34b54b108"
+    },
+    {
+      "path": "client/src/initialization/document-event-listeners/card-context-menu/active-bench-buttons.js",
+      "encoding": "utf8",
+      "sha256": "a7d50832cea32727a2bbb1957887d45a52f701c6b6d465e84e32338e42217940"
+    }
+  ],
+  "provenanceClaims": [
+    {
+      "claim": "legacy shell, physical-side half-turn, active/bench CSS, portrait sizing, and checked-in cardback",
+      "sources": [
+        "client/index.ejs",
+        "client/self-containers.html",
+        "client/opp-containers.html",
+        "client/src/css/index.css",
+        "client/src/css/self-containers.css",
+        "client/src/css/opp-containers.css",
+        "client/src/assets/cardback.png"
+      ]
+    },
+    {
+      "claim": "card defaults, zone identity, reset state, and play-container construction/cleanup",
+      "sources": [
+        "client/src/setup/deck-constructor/card.js",
+        "client/src/setup/zones/get-zone.js",
+        "client/src/setup/image-logic/reset-image.js",
+        "client/src/actions/move-card-bundle/initialize-active-bench-card.js"
+      ]
+    },
+    {
+      "claim": "whole-stack move entry, active/bench auto-promotion/demotion, recursive attachment relocation, offsets, order, z, Tool rotation, and margin",
+      "sources": [
+        "client/src/actions/move-card-bundle/move-card-bundle.js",
+        "client/src/actions/move-card-bundle/move-card.js",
+        "client/src/actions/move-card-bundle/auto-move-active-bench-card.js",
+        "client/src/actions/move-card-bundle/relocate-attached-cards.js",
+        "client/src/actions/move-card-bundle/attach-card.js",
+        "client/src/actions/general/rotate-card.js"
+      ]
+    },
+    {
+      "claim": "history-dependent integer compaction and base attachment-layer decrement",
+      "sources": [
+        "client/src/actions/move-card-bundle/update-attached-cards-position.js",
+        "client/src/actions/move-card-bundle/decrease-card-layer.js"
+      ]
+    },
+    {
+      "claim": "synchronous refresh reconstruction, stable wrapper width, and resize formulas",
+      "sources": [
+        "client/src/setup/sizing/refresh-board.js",
+        "client/src/setup/sizing/resizer.js"
+      ]
+    },
+    {
+      "claim": "current-category mutation before board departure, original-category retention, and context-menu category mapping",
+      "sources": [
+        "client/src/actions/general/change-type.js",
+        "client/src/initialization/document-event-listeners/card-context-menu/active-bench-buttons.js"
+      ]
+    }
+  ],
+  "expected": {
+    "frames": {
+      "local": {
+        "x": 0,
+        "y": 450,
+        "width": 1208,
+        "height": 450,
+        "rotationDegrees": 0
+      },
+      "opponent": {
+        "x": 0,
+        "y": 0,
+        "width": 1208,
+        "height": 450,
+        "rotationDegrees": 180
+      }
+    },
+    "frameTransforms": {
+      "local": {
+        "a": 1,
+        "b": 0,
+        "c": 0,
+        "d": 1,
+        "rotationDegrees": 0
+      },
+      "opponent": {
+        "a": -1,
+        "b": 0,
+        "c": 0,
+        "d": -1,
+        "rotationDegrees": 180
+      }
+    },
+    "common": {
+      "logicalRoles": ["base", "energy", "trainerTool"],
+      "domRoles": ["base", "trainerTool", "energy"],
+      "hitRoles": {
+        "baseOnly": ["base"],
+        "allCardOverlap": ["base", "energy", "trainerTool"],
+        "energyToolOverlap": ["energy", "trainerTool"],
+        "toolPaintedOnly": ["trainerTool"]
+      },
+      "cardState": [
+        {
+          "role": "base",
+          "currentCategory": "Pokémon",
+          "left": 0,
+          "z": 0,
+          "rotation": 0,
+          "attached": false,
+          "target": "off",
+          "energyLayer": 2,
+          "logical": 0,
+          "dom": 0
+        },
+        {
+          "role": "energy",
+          "currentCategory": "Energy",
+          "left": null,
+          "z": -1,
+          "rotation": 0,
+          "attached": true,
+          "target": "on",
+          "energyLayer": 0,
+          "logical": 1,
+          "dom": 2
+        },
+        {
+          "role": "trainerTool",
+          "currentCategory": "Trainer",
+          "left": null,
+          "z": -2,
+          "rotation": 90,
+          "attached": true,
+          "target": "on",
+          "energyLayer": 0,
+          "logical": 2,
+          "dom": 1
+        },
+        {
+          "role": "controlBase",
+          "currentCategory": "Pokémon",
+          "left": 0,
+          "z": 0,
+          "rotation": 0,
+          "attached": false,
+          "target": "off",
+          "energyLayer": 0,
+          "logical": 0,
+          "dom": 0
+        }
+      ]
+    },
+    "geometryTemplates": {
+      "canonicalActive": {
+        "stack": {
+          "bounds": [539.46875, 31.5, 121.328125, 126],
+          "baseClientWidth": 91,
+          "baseEnergyLayer": 2,
+          "clientWidth": 121,
+          "authoredWidthPx": 121.333,
+          "marginRight": "2%",
+          "computedMarginRightPx": 7.71875
+        },
+        "cards": {
+          "base": {
+            "painted": [539.46875, 31.5, 90.5625, 126],
+            "untransformed": [539.46875, 31.5, 90.5625, 126],
+            "client": [91, 126],
+            "left": 0
+          },
+          "energy": {
+            "painted": [554.625, 31.5, 90.5625, 126],
+            "untransformed": [554.625, 31.5, 90.5625, 126],
+            "client": [91, 126],
+            "left": 15.1667
+          },
+          "trainerTool": {
+            "painted": [552.078125, 49.21875, 126, 90.5625],
+            "untransformed": [569.796875, 31.5, 90.5625, 126],
+            "client": [91, 126],
+            "left": 30.3333
+          },
+          "controlBase": {
+            "painted": [552.6875, 180, 80.859375, 112.5],
+            "untransformed": [552.6875, 180, 80.859375, 112.5],
+            "client": [81, 113],
+            "left": 0
+          }
+        }
+      },
+      "reverseDriftActive": {
+        "stack": {
+          "bounds": [539.546875, 31.5, 121.15625, 126],
+          "baseClientWidth": 91,
+          "baseEnergyLayer": 2,
+          "clientWidth": 121,
+          "authoredWidthPx": 121.167,
+          "marginRight": "2%",
+          "computedMarginRightPx": 7.71875
+        },
+        "cards": {
+          "base": {
+            "painted": [539.546875, 31.5, 90.5625, 126],
+            "untransformed": [539.546875, 31.5, 90.5625, 126],
+            "client": [91, 126],
+            "left": 0
+          },
+          "energy": {
+            "painted": [554.375, 31.5, 90.5625, 126],
+            "untransformed": [554.375, 31.5, 90.5625, 126],
+            "client": [91, 126],
+            "left": 14.8333
+          },
+          "trainerTool": {
+            "painted": [552.15625, 49.21875, 126, 90.5625],
+            "untransformed": [569.875, 31.5, 90.5625, 126],
+            "client": [91, 126],
+            "left": 30.3333
+          },
+          "controlBase": {
+            "painted": [552.75, 180, 80.859375, 112.5],
+            "untransformed": [552.75, 180, 80.859375, 112.5],
+            "client": [81, 113],
+            "left": 0
+          }
+        }
+      },
+      "immediateBench": {
+        "stack": {
+          "bounds": [602.96875, 180, 108, 112.5],
+          "baseClientWidth": 81,
+          "baseEnergyLayer": 2,
+          "clientWidth": 108,
+          "authoredWidthPx": 108,
+          "marginRight": "2%",
+          "computedMarginRightPx": 19.0781
+        },
+        "cards": {
+          "base": {
+            "painted": [602.96875, 180, 80.859375, 112.5],
+            "untransformed": [602.96875, 180, 80.859375, 112.5],
+            "client": [81, 113],
+            "left": 0
+          },
+          "energy": {
+            "painted": [616.46875, 180, 80.859375, 112.5],
+            "untransformed": [616.46875, 180, 80.859375, 112.5],
+            "client": [81, 113],
+            "left": 13.5
+          },
+          "trainerTool": {
+            "painted": [614.1484375, 195.8203125, 112.5, 80.859375],
+            "untransformed": [629.96875, 180, 80.859375, 112.5],
+            "client": [81, 113],
+            "left": 27
+          },
+          "controlBase": {
+            "painted": [622.921875, 31.5, 90.5625, 126],
+            "untransformed": [622.921875, 31.5, 90.5625, 126],
+            "client": [91, 126],
+            "left": 0
+          }
+        }
+      },
+      "canonicalBench": {
+        "stack": {
+          "bounds": [534.40625, 180, 108, 112.5],
+          "baseClientWidth": 81,
+          "baseEnergyLayer": 2,
+          "clientWidth": 108,
+          "authoredWidthPx": 108,
+          "marginRight": "2%",
+          "computedMarginRightPx": 19.0781
+        },
+        "cards": {
+          "base": {
+            "painted": [534.40625, 180, 80.859375, 112.5],
+            "untransformed": [534.40625, 180, 80.859375, 112.5],
+            "client": [81, 113],
+            "left": 0
+          },
+          "energy": {
+            "painted": [547.90625, 180, 80.859375, 112.5],
+            "untransformed": [547.90625, 180, 80.859375, 112.5],
+            "client": [81, 113],
+            "left": 13.5
+          },
+          "trainerTool": {
+            "painted": [545.5859375, 195.8203125, 112.5, 80.859375],
+            "untransformed": [561.40625, 180, 80.859375, 112.5],
+            "client": [81, 113],
+            "left": 27
+          },
+          "controlBase": {
+            "painted": [558.484375, 31.5, 90.5625, 126],
+            "untransformed": [558.484375, 31.5, 90.5625, 126],
+            "client": [91, 126],
+            "left": 0
+          }
+        }
+      },
+      "immediateActiveReturn": {
+        "stack": {
+          "bounds": [649.40625, 31.5, 121.328125, 126],
+          "baseClientWidth": 91,
+          "baseEnergyLayer": 2,
+          "clientWidth": 121,
+          "authoredWidthPx": 121.333,
+          "marginRight": "2%",
+          "computedMarginRightPx": 7.71875
+        },
+        "cards": {
+          "base": {
+            "painted": [649.40625, 31.5, 90.5625, 126],
+            "untransformed": [649.40625, 31.5, 90.5625, 126],
+            "client": [91, 126],
+            "left": 0
+          },
+          "energy": {
+            "painted": [664.5625, 31.5, 90.5625, 126],
+            "untransformed": [664.5625, 31.5, 90.5625, 126],
+            "client": [91, 126],
+            "left": 15.1667
+          },
+          "trainerTool": {
+            "painted": [662.015625, 49.21875, 126, 90.5625],
+            "untransformed": [679.734375, 31.5, 90.5625, 126],
+            "client": [91, 126],
+            "left": 30.3333
+          },
+          "controlBase": {
+            "painted": [620.984375, 180, 80.859375, 112.5],
+            "untransformed": [620.984375, 180, 80.859375, 112.5],
+            "client": [81, 113],
+            "left": 0
+          }
+        }
+      },
+      "immediateCategoryActive": {
+        "stack": {
+          "bounds": [603.90625, 31.5, 121.328125, 126],
+          "baseClientWidth": 91,
+          "baseEnergyLayer": 2,
+          "clientWidth": 121,
+          "authoredWidthPx": 121.333,
+          "marginRight": "2%",
+          "computedMarginRightPx": 7.71875
+        },
+        "cards": {
+          "base": {
+            "painted": [603.90625, 31.5, 90.5625, 126],
+            "untransformed": [603.90625, 31.5, 90.5625, 126],
+            "client": [91, 126],
+            "left": 0
+          },
+          "energy": {
+            "painted": [619.0625, 31.5, 90.5625, 126],
+            "untransformed": [619.0625, 31.5, 90.5625, 126],
+            "client": [91, 126],
+            "left": 15.1667
+          },
+          "trainerTool": {
+            "painted": [616.515625, 49.21875, 126, 90.5625],
+            "untransformed": [634.234375, 31.5, 90.5625, 126],
+            "client": [91, 126],
+            "left": 30.3333
+          },
+          "controlBase": {
+            "painted": [597.953125, 180, 80.859375, 112.5],
+            "untransformed": [597.953125, 180, 80.859375, 112.5],
+            "client": [81, 113],
+            "left": 0
+          }
+        }
+      }
+    },
+    "scenarioPhases": {
+      "nativeCanonical": [
+        {
+          "name": "stableCanonicalActive",
+          "geometry": "canonicalActive",
+          "mixedZone": "active",
+          "wrapperCounts": [1, 1],
+          "originalCategories": ["Pokémon", null, null, "Pokémon"]
+        }
+      ],
+      "reverseRoundTrip": [
+        {
+          "name": "initialReverseRestoredActive",
+          "geometry": "reverseDriftActive",
+          "mixedZone": "active",
+          "wrapperCounts": [1, 1],
+          "originalCategories": ["Pokémon", null, null, "Pokémon"]
+        },
+        {
+          "name": "immediateCanonicalBench",
+          "geometry": "immediateBench",
+          "mixedZone": "bench",
+          "wrapperCounts": [3, 3],
+          "originalCategories": ["Pokémon", null, null, "Pokémon"]
+        },
+        {
+          "name": "settledCanonicalBench",
+          "geometry": "canonicalBench",
+          "mixedZone": "bench",
+          "wrapperCounts": [1, 1],
+          "originalCategories": ["Pokémon", null, null, "Pokémon"]
+        },
+        {
+          "name": "immediateCanonicalActiveReturn",
+          "geometry": "immediateActiveReturn",
+          "mixedZone": "active",
+          "wrapperCounts": [3, 3],
+          "originalCategories": ["Pokémon", null, null, "Pokémon"]
+        },
+        {
+          "name": "settledCanonicalActiveReturn",
+          "geometry": "canonicalActive",
+          "mixedZone": "active",
+          "wrapperCounts": [1, 1],
+          "originalCategories": ["Pokémon", null, null, "Pokémon"]
+        }
+      ],
+      "categoryCycle": [
+        {
+          "name": "initialCanonicalActive",
+          "geometry": "canonicalActive",
+          "mixedZone": "active",
+          "wrapperCounts": [1, 1],
+          "originalCategories": ["Pokémon", null, null, "Pokémon"]
+        },
+        {
+          "name": "immediateCanonicalAfterCategoryCycle",
+          "geometry": "immediateCategoryActive",
+          "mixedZone": "active",
+          "wrapperCounts": [2, 2],
+          "originalCategories": ["Pokémon", "Energy", "Trainer", "Pokémon"]
+        },
+        {
+          "name": "settledCanonicalAfterCategoryCycle",
+          "geometry": "canonicalActive",
+          "mixedZone": "active",
+          "wrapperCounts": [1, 1],
+          "originalCategories": ["Pokémon", "Energy", "Trainer", "Pokémon"]
+        }
+      ]
+    },
+    "callFunctionSequences": {
+      "nativeCanonical": [
+        "attachCard",
+        "attachCard",
+        "refreshBoard",
+        "attachCard",
+        "attachCard"
+      ],
+      "reverseRoundTrip": [
+        "attachCard",
+        "attachCard",
+        "moveCard",
+        "attachCard",
+        "moveCardBundle",
+        "moveCard",
+        "autoMoveActiveBenchCard",
+        "moveCard",
+        "relocateAttachedCards",
+        "relocateAttachedCards",
+        "moveCard",
+        "attachCard",
+        "moveCard",
+        "attachCard",
+        "refreshBoard",
+        "attachCard",
+        "attachCard",
+        "moveCardBundle",
+        "moveCard",
+        "autoMoveActiveBenchCard",
+        "moveCard",
+        "relocateAttachedCards",
+        "relocateAttachedCards",
+        "moveCard",
+        "attachCard",
+        "moveCard",
+        "attachCard",
+        "refreshBoard",
+        "attachCard",
+        "attachCard"
+      ],
+      "categoryCycle": [
+        "attachCard",
+        "attachCard",
+        "refreshBoard",
+        "attachCard",
+        "attachCard",
+        "changeType",
+        "moveCard",
+        "relocateAttachedCards",
+        "changeType",
+        "moveCard",
+        "moveCardBundle",
+        "moveCard",
+        "attachCard",
+        "moveCard",
+        "attachCard",
+        "refreshBoard",
+        "attachCard",
+        "attachCard",
+        "changeType",
+        "moveCard",
+        "relocateAttachedCards",
+        "changeType",
+        "moveCard",
+        "moveCardBundle",
+        "moveCard",
+        "attachCard",
+        "refreshBoard",
+        "attachCard",
+        "attachCard"
+      ]
+    },
+    "callTraceSignatures": {
+      "nativeCanonical": [
+        "attachCard|energy|board|active|base|native setup:Energy",
+        "attachCard|trainerTool|board|active|base|native setup:Trainer",
+        "refreshBoard|null|null|null|null|native setup:canonical-refresh",
+        "attachCard|energy|active|active|base|refresh:native setup:canonical-refresh",
+        "attachCard|trainerTool|active|active|base|refresh:native setup:canonical-refresh"
+      ],
+      "reverseRoundTrip": [
+        "attachCard|trainerTool|board|active|base|reverse restore:Trainer-first",
+        "attachCard|energy|board|active|base|reverse restore:Energy-second",
+        "moveCard|trainerTool|active|active|base|Energy-triggered recursive Tool move",
+        "attachCard|trainerTool|active|active|base|Energy-triggered Tool reattachment",
+        "moveCardBundle|base|active|bench|null|active to occupied bench without target",
+        "moveCard|base|active|bench|null|active to occupied bench without target",
+        "autoMoveActiveBenchCard|controlBase|bench|active|null|case 2 lone bench auto-promotion",
+        "moveCard|controlBase|bench|active|null|auto case 2",
+        "relocateAttachedCards|controlBase|bench|active|null|scan source order for relative images",
+        "relocateAttachedCards|base|active|bench|null|scan source order for relative images",
+        "moveCard|energy|active|bench|base|relocate attached card",
+        "attachCard|energy|active|bench|base|relocate attached card",
+        "moveCard|trainerTool|active|bench|base|relocate attached card",
+        "attachCard|trainerTool|active|bench|base|relocate attached card",
+        "refreshBoard|null|null|null|null|active to occupied bench without target",
+        "attachCard|energy|bench|bench|base|refresh:active to occupied bench without target",
+        "attachCard|trainerTool|bench|bench|base|refresh:active to occupied bench without target",
+        "moveCardBundle|base|bench|active|controlBase|targeted mixed return to occupied active",
+        "moveCard|base|bench|active|controlBase|targeted mixed return to occupied active",
+        "autoMoveActiveBenchCard|controlBase|active|bench|null|case 1 occupied active auto-demotion",
+        "moveCard|controlBase|active|bench|null|auto case 1",
+        "relocateAttachedCards|controlBase|active|bench|null|scan source order for relative images",
+        "relocateAttachedCards|base|bench|active|null|scan source order for relative images",
+        "moveCard|energy|bench|active|base|relocate attached card",
+        "attachCard|energy|bench|active|base|relocate attached card",
+        "moveCard|trainerTool|bench|active|base|relocate attached card",
+        "attachCard|trainerTool|bench|active|base|relocate attached card",
+        "refreshBoard|null|null|null|null|targeted mixed return to occupied active",
+        "attachCard|energy|active|active|base|refresh:targeted mixed return to occupied active",
+        "attachCard|trainerTool|active|active|base|refresh:targeted mixed return to occupied active"
+      ],
+      "categoryCycle": [
+        "attachCard|energy|board|active|base|category setup:Energy",
+        "attachCard|trainerTool|board|active|base|category setup:Trainer",
+        "refreshBoard|null|null|null|null|category setup:canonical-refresh",
+        "attachCard|energy|active|active|base|refresh:category setup:canonical-refresh",
+        "attachCard|trainerTool|active|active|base|refresh:category setup:canonical-refresh",
+        "changeType|energy|active|board|null|Energy-out:Trainer",
+        "moveCard|energy|active|board|null|changeType:Energy-out:Trainer",
+        "relocateAttachedCards|energy|active|board|null|scan source order for relative images",
+        "changeType|energy|board|board|null|Energy-back:Energy",
+        "moveCard|energy|board|board|null|changeType:Energy-back:Energy",
+        "moveCardBundle|energy|board|active|base|reattach cycled Energy",
+        "moveCard|energy|board|active|base|reattach cycled Energy",
+        "attachCard|energy|board|active|base|reattach cycled Energy",
+        "moveCard|trainerTool|active|active|base|Energy-triggered recursive Tool move",
+        "attachCard|trainerTool|active|active|base|Energy-triggered Tool reattachment",
+        "refreshBoard|null|null|null|null|reattach cycled Energy",
+        "attachCard|energy|active|active|base|refresh:reattach cycled Energy",
+        "attachCard|trainerTool|active|active|base|refresh:reattach cycled Energy",
+        "changeType|trainerTool|active|board|null|Trainer-out:Energy",
+        "moveCard|trainerTool|active|board|null|changeType:Trainer-out:Energy",
+        "relocateAttachedCards|trainerTool|active|board|null|scan source order for relative images",
+        "changeType|trainerTool|board|board|null|Trainer-back:Trainer",
+        "moveCard|trainerTool|board|board|null|changeType:Trainer-back:Trainer",
+        "moveCardBundle|trainerTool|board|active|base|reattach cycled Trainer",
+        "moveCard|trainerTool|board|active|base|reattach cycled Trainer",
+        "attachCard|trainerTool|board|active|base|reattach cycled Trainer",
+        "refreshBoard|null|null|null|null|reattach cycled Trainer",
+        "attachCard|energy|active|active|base|refresh:reattach cycled Trainer",
+        "attachCard|trainerTool|active|active|base|refresh:reattach cycled Trainer"
+      ]
+    },
+    "resetTraceCounts": {
+      "nativeCanonical": 14,
+      "reverseRoundTrip": 33,
+      "categoryCycle": 33
+    },
+    "resetTraceSignatures": {
+      "nativeCanonical": [
+        "base|card-construction|null",
+        "energy|card-construction|null",
+        "trainerTool|card-construction|null",
+        "controlBase|card-construction|null",
+        "base|initialize:native setup|board",
+        "energy|attachCard:native setup:Energy|board",
+        "trainerTool|attachCard:native setup:Trainer|board",
+        "controlBase|initialize:native setup:control|board",
+        "base|initialize:refresh-native setup:canonical-refresh-base|active",
+        "energy|refresh-relocate:native setup:canonical-refresh|active",
+        "energy|attachCard:refresh:native setup:canonical-refresh|active",
+        "trainerTool|refresh-relocate:native setup:canonical-refresh|active",
+        "trainerTool|attachCard:refresh:native setup:canonical-refresh|active",
+        "controlBase|initialize:refresh-native setup:canonical-refresh-controlBase|bench"
+      ],
+      "reverseRoundTrip": [
+        "base|card-construction|null",
+        "energy|card-construction|null",
+        "trainerTool|card-construction|null",
+        "controlBase|card-construction|null",
+        "base|initialize:reverse restore|board",
+        "trainerTool|attachCard:reverse restore:Trainer-first|board",
+        "energy|attachCard:reverse restore:Energy-second|board",
+        "trainerTool|attachCard:Energy-triggered Tool reattachment|active",
+        "controlBase|initialize:reverse restore:control|board",
+        "base|moveCard:active to occupied bench without target|active",
+        "controlBase|moveCard:auto case 2|bench",
+        "energy|relocateAttachedCards|active",
+        "energy|attachCard:relocate attached card|active",
+        "trainerTool|relocateAttachedCards|active",
+        "trainerTool|attachCard:relocate attached card|active",
+        "controlBase|initialize:refresh-active to occupied bench without target-controlBase|active",
+        "base|initialize:refresh-active to occupied bench without target-base|bench",
+        "energy|refresh-relocate:active to occupied bench without target|bench",
+        "energy|attachCard:refresh:active to occupied bench without target|bench",
+        "trainerTool|refresh-relocate:active to occupied bench without target|bench",
+        "trainerTool|attachCard:refresh:active to occupied bench without target|bench",
+        "base|moveCard:targeted mixed return to occupied active|bench",
+        "controlBase|moveCard:auto case 1|active",
+        "energy|relocateAttachedCards|bench",
+        "energy|attachCard:relocate attached card|bench",
+        "trainerTool|relocateAttachedCards|bench",
+        "trainerTool|attachCard:relocate attached card|bench",
+        "base|initialize:refresh-targeted mixed return to occupied active-base|active",
+        "energy|refresh-relocate:targeted mixed return to occupied active|active",
+        "energy|attachCard:refresh:targeted mixed return to occupied active|active",
+        "trainerTool|refresh-relocate:targeted mixed return to occupied active|active",
+        "trainerTool|attachCard:refresh:targeted mixed return to occupied active|active",
+        "controlBase|initialize:refresh-targeted mixed return to occupied active-controlBase|bench"
+      ],
+      "categoryCycle": [
+        "base|card-construction|null",
+        "energy|card-construction|null",
+        "trainerTool|card-construction|null",
+        "controlBase|card-construction|null",
+        "base|initialize:category setup|board",
+        "energy|attachCard:category setup:Energy|board",
+        "trainerTool|attachCard:category setup:Trainer|board",
+        "controlBase|initialize:category setup:control|board",
+        "base|initialize:refresh-category setup:canonical-refresh-base|active",
+        "energy|refresh-relocate:category setup:canonical-refresh|active",
+        "energy|attachCard:refresh:category setup:canonical-refresh|active",
+        "trainerTool|refresh-relocate:category setup:canonical-refresh|active",
+        "trainerTool|attachCard:refresh:category setup:canonical-refresh|active",
+        "controlBase|initialize:refresh-category setup:canonical-refresh-controlBase|bench",
+        "energy|moveCard:changeType:Energy-out:Trainer|active",
+        "energy|moveCard:changeType:Energy-back:Energy|board",
+        "energy|attachCard:reattach cycled Energy|board",
+        "trainerTool|attachCard:Energy-triggered Tool reattachment|active",
+        "base|initialize:refresh-reattach cycled Energy-base|active",
+        "energy|refresh-relocate:reattach cycled Energy|active",
+        "energy|attachCard:refresh:reattach cycled Energy|active",
+        "trainerTool|refresh-relocate:reattach cycled Energy|active",
+        "trainerTool|attachCard:refresh:reattach cycled Energy|active",
+        "controlBase|initialize:refresh-reattach cycled Energy-controlBase|bench",
+        "trainerTool|moveCard:changeType:Trainer-out:Energy|active",
+        "trainerTool|moveCard:changeType:Trainer-back:Trainer|board",
+        "trainerTool|attachCard:reattach cycled Trainer|board",
+        "base|initialize:refresh-reattach cycled Trainer-base|active",
+        "energy|refresh-relocate:reattach cycled Trainer|active",
+        "energy|attachCard:refresh:reattach cycled Trainer|active",
+        "trainerTool|refresh-relocate:reattach cycled Trainer|active",
+        "trainerTool|attachCard:refresh:reattach cycled Trainer|active",
+        "controlBase|initialize:refresh-reattach cycled Trainer-controlBase|bench"
+      ]
+    },
+    "requiredTraceDetails": {
+      "reverseRoundTrip": [
+        "Energy-triggered recursive Tool move",
+        "case 2 lone bench auto-promotion",
+        "active to occupied bench without target",
+        "case 1 occupied active auto-demotion",
+        "targeted mixed return to occupied active"
+      ],
+      "categoryCycle": [
+        "Energy-out:Trainer",
+        "Energy-back:Energy",
+        "reattach cycled Energy",
+        "Trainer-out:Energy",
+        "Trainer-back:Trainer",
+        "reattach cycled Trainer"
+      ]
+    }
+  },
+  "sourceFulfillment": {
+    "servedPaths": [
+      "/",
+      "/opp-containers.html",
+      "/self-containers.html",
+      "/src/assets/cardback.png",
+      "/src/css/index.css",
+      "/src/css/opp-containers.css",
+      "/src/css/self-containers.css",
+      "/src/front-end.js"
+    ],
+    "blockedExternalOrigins": [
+      "https://cdn.socket.io",
+      "https://static.cloudflareinsights.com",
+      "https://upload.wikimedia.org",
+      "https://www.svgrepo.com"
+    ],
+    "unexpectedSameOriginPaths": []
+  }
+}

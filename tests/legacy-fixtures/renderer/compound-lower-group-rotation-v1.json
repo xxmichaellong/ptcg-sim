@@ -1,0 +1,297 @@
+{
+  "schemaVersion": 1,
+  "recordingMethod": "Chromium 151 CSS-pixel capture of sixteen independent inert replays (local/opponent x active/sole bench x ordinary/BREAK x middle/base initiator) of a complete group-rotation cycle with q1 refresh reconstruction against the checked-in board surface. Three-Pokemon construction, top-selected visual baselines, layout sources, and controlled cardback bytes are inherited from digest-pinned compound dependencies. Keyboard and clicked-card ingress are digest-pinned but not executed; the application module is stubbed, and lower-selected group rotation, wrapper replacement, and two-animation-frame cleanup are narrowly transcribed from digest-pinned source.",
+  "input": {
+    "viewport": { "width": 1600, "height": 900, "devicePixelRatio": 1 },
+    "asset": {
+      "path": "/src/assets/cardback.png",
+      "naturalWidth": 736,
+      "naturalHeight": 1024
+    },
+    "evolutionOrder": ["base", "middle", "top"],
+    "scenarioOrder": [
+      "ordinaryGroupFromMiddle",
+      "ordinaryGroupFromBase",
+      "breakGroupFromMiddle",
+      "breakGroupFromBase"
+    ],
+    "cases": [
+      "local-active-compound-group-from-middle",
+      "local-bench-compound-group-from-middle",
+      "local-active-compound-group-from-base",
+      "local-bench-compound-group-from-base",
+      "local-active-compound-break-group-from-middle",
+      "local-bench-compound-break-group-from-middle",
+      "local-active-compound-break-group-from-base",
+      "local-bench-compound-break-group-from-base",
+      "opponent-active-compound-group-from-middle",
+      "opponent-bench-compound-group-from-middle",
+      "opponent-active-compound-group-from-base",
+      "opponent-bench-compound-group-from-base",
+      "opponent-active-compound-break-group-from-middle",
+      "opponent-bench-compound-break-group-from-middle",
+      "opponent-active-compound-break-group-from-base",
+      "opponent-bench-compound-break-group-from-base"
+    ],
+    "phaseSequences": {
+      "ordinary": [
+        "pristine-q0",
+        "q1",
+        "q1-refreshed",
+        "q2",
+        "q3",
+        "q0-return"
+      ],
+      "break": [
+        "pristine-q0",
+        "break-on-q0",
+        "break-group-q1",
+        "break-group-q1-refreshed",
+        "break-group-q2",
+        "break-group-q3",
+        "break-group-q0-return",
+        "break-off-q0"
+      ]
+    }
+  },
+  "tolerances": {
+    "anchorPixels": 2,
+    "cardSizeRelative": 0.01,
+    "rotationDegrees": 0.1,
+    "structuredPixels": 0.001
+  },
+  "scope": {
+    "included": [
+      "one marker-free three-Pokemon evolution chain built independently for every scenario through the ordinary evolve and refresh path",
+      "local/opponent active and sole-bench ordinary/BREAK histories with middle logical index 1 or base logical index 2 initiating every group turn",
+      "digest-pinned active/bench R ingress and clicked-image-to-zone/index selection, without executing the application keydown listener",
+      "complete q0-q1-q2-q3-q0 cycles, BREAK composition and final toggle-off, plus top-driven q1 refresh replay after a lower-driven first turn",
+      "selected action/index, exact operation traces, initiator-sensitive margins and anchors, dependency-relative painted geometry, topology, native hit regions, wrapper/card identity, observers, and cleanup"
+    ],
+    "excluded": [
+      "single=true or Alt-R on a lower evolution, including lower-card BREAK flags",
+      "mixed top/lower or middle/base initiators within one cycle, repeated rotation after divergence, and refresh other than coherent q1 reconstruction",
+      "converted categories, non-Pokemon initiators, Energy, Trainer, Tool, markers, attachment timing/syncRotation histories, mixed dimensions, and noncanonical assets",
+      "additional bench siblings, flex shrink, overflow, active/bench movement, promotion, evolution/removal while BREAK, leaveAll, undo, and replay",
+      "resize-driven board layout, explicit flip, fullscreen, alternate viewport/DPR, concealment, application/network execution, candidate parity, and production geometry"
+    ]
+  },
+  "dependencies": [
+    {
+      "path": "tests/legacy-fixtures/renderer/compound-group-rotation-v1.json",
+      "sha256": "7253fbb68b8ac332c2d1385940ec27ea7a5cb8adb688e2fcd15a3f52c69d054c"
+    },
+    {
+      "path": "tests/legacy-fixtures/renderer/compound-break-rotation-v1.json",
+      "sha256": "cc9b03a34a183395812fce9bbfc79ab27c4ae23c243856e94368b80ec539c487"
+    }
+  ],
+  "expected": {
+    "frames": {
+      "local": { "x": 0, "y": 450, "width": 1208, "height": 450 },
+      "opponent": { "x": 0, "y": 0, "width": 1208, "height": 450 }
+    },
+    "frameTransforms": {
+      "local": { "a": 1, "b": 0, "c": 0, "d": 1, "rotationDegrees": 0 },
+      "opponent": {
+        "a": -1,
+        "b": 0,
+        "c": 0,
+        "d": -1,
+        "rotationDegrees": 180
+      }
+    },
+    "scenario": {
+      "ordinaryGroupFromMiddle": {
+        "composition": "ordinary",
+        "selectedRole": "middle",
+        "selectedIndex": 1,
+        "selectedDomOrdinal": 2,
+        "selectionHitRegion": "middleAndBaseOverlap"
+      },
+      "ordinaryGroupFromBase": {
+        "composition": "ordinary",
+        "selectedRole": "base",
+        "selectedIndex": 2,
+        "selectedDomOrdinal": 1,
+        "selectionHitRegion": "baseOnly"
+      },
+      "breakGroupFromMiddle": {
+        "composition": "break",
+        "selectedRole": "middle",
+        "selectedIndex": 1,
+        "selectedDomOrdinal": 2,
+        "selectionHitRegion": "middleAndBaseOverlap"
+      },
+      "breakGroupFromBase": {
+        "composition": "break",
+        "selectedRole": "base",
+        "selectedIndex": 2,
+        "selectedDomOrdinal": 1,
+        "selectionHitRegion": "baseOnly"
+      }
+    },
+    "stackXByCompositionAndSlot": {
+      "ordinary:active": [
+        558.484375, 558.484375, 558.484375, 556.5625, 556.5625, 556.5625
+      ],
+      "ordinary:bench": [
+        552.6875, 552.671875, 552.671875, 552.6875, 552.671875, 552.6875
+      ],
+      "break:active": [
+        558.484375, 558.484375, 558.484375, 556.5625, 556.5625, 556.5625,
+        556.5625, 556.5625
+      ],
+      "break:bench": [
+        552.6875, 552.671875, 552.671875, 552.6875, 552.6875, 552.671875,
+        552.6875, 552.6875
+      ]
+    },
+    "inlineMarginsByCompositionAndSlot": {
+      "ordinary:active": [
+        ["", ""],
+        ["", ""],
+        ["", ""],
+        ["1%", "0%"],
+        ["1%", "0%"],
+        ["1%", "0%"]
+      ],
+      "ordinary:bench": [
+        ["", ""],
+        ["3%", "2%"],
+        ["3%", "2%"],
+        ["1%", "0%"],
+        ["3%", "2%"],
+        ["1%", "0%"]
+      ],
+      "break:active": [
+        ["", ""],
+        ["", ""],
+        ["", ""],
+        ["1%", "0%"],
+        ["1%", "0%"],
+        ["1%", "0%"],
+        ["1%", "0%"],
+        ["1%", "0%"]
+      ],
+      "break:bench": [
+        ["", ""],
+        ["3%", "2%"],
+        ["3%", "2%"],
+        ["1%", "0%"],
+        ["1%", "0%"],
+        ["3%", "2%"],
+        ["1%", "0%"],
+        ["1%", "0%"]
+      ]
+    },
+    "operationTraceByScenario": {
+      "ordinaryGroupFromMiddle": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:middle:index=1:single=false:0->90:break=false->false",
+        "refresh:top:break=false:groupTurns=1",
+        "replay-rotate:top:index=0:single=false:0->90:break=false->false",
+        "rotate:middle:index=1:single=false:90->180:break=false->false",
+        "rotate:middle:index=1:single=false:180->270:break=false->false",
+        "rotate:middle:index=1:single=false:270->0:break=false->false"
+      ],
+      "ordinaryGroupFromBase": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:base:index=2:single=false:0->90:break=false->false",
+        "refresh:top:break=false:groupTurns=1",
+        "replay-rotate:top:index=0:single=false:0->90:break=false->false",
+        "rotate:base:index=2:single=false:90->180:break=false->false",
+        "rotate:base:index=2:single=false:180->270:break=false->false",
+        "rotate:base:index=2:single=false:270->0:break=false->false"
+      ],
+      "breakGroupFromMiddle": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:top:index=0:single=true:0->90:break=false->true",
+        "rotate:middle:index=1:single=false:0->90:break=false->false",
+        "refresh:top:break=true:groupTurns=1",
+        "replay-rotate:top:index=0:single=false:90->180:break=true->true",
+        "rotate:middle:index=1:single=false:90->180:break=false->false",
+        "rotate:middle:index=1:single=false:180->270:break=false->false",
+        "rotate:middle:index=1:single=false:270->0:break=false->false",
+        "rotate:top:index=0:single=true:90->0:break=true->false"
+      ],
+      "breakGroupFromBase": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:top:index=0:single=true:0->90:break=false->true",
+        "rotate:base:index=2:single=false:0->90:break=false->false",
+        "refresh:top:break=true:groupTurns=1",
+        "replay-rotate:top:index=0:single=false:90->180:break=true->true",
+        "rotate:base:index=2:single=false:90->180:break=false->false",
+        "rotate:base:index=2:single=false:180->270:break=false->false",
+        "rotate:base:index=2:single=false:270->0:break=false->false",
+        "rotate:top:index=0:single=true:90->0:break=true->false"
+      ]
+    },
+    "topology": {
+      "logicalRoles": ["top", "middle", "base"],
+      "domRoles": ["top", "base", "middle"],
+      "zByRole": { "top": 0, "middle": -1, "base": -2 },
+      "bottomLayerMultipliers": { "top": 0, "middle": 1, "base": 2 },
+      "topLayer": 2,
+      "energyLayer": 0,
+      "wrapperTransform": "none",
+      "wrapperZIndex": 0
+    },
+    "refresh": {
+      "synchronousWrapperCount": 2,
+      "oldWrapperConnectedImmediately": true,
+      "stableWrapperCount": 1,
+      "oldWrapperConnectedAfterSettle": false,
+      "wrapperIdentityChanged": true,
+      "cardNodeIdentityPreserved": true,
+      "observerPairsCreated": 4,
+      "minimumResizeCallbacksBeforeCardRemoval": 6,
+      "resizeCallbacksAddedAfterCardRemoval": 1,
+      "transcribedSourceDisconnectCalls": 0,
+      "harnessDisconnectCallsPerObserverKind": 4
+    }
+  },
+  "provenance": [
+    {
+      "path": "client/src/actions/keybinds/keybinds.js",
+      "encoding": "utf8",
+      "sha256": "f04ab70230e7ac4df75d3320dc3f0f0df36fa971c08d4e32a0e1368021324b6a"
+    },
+    {
+      "path": "client/src/actions/general/rotate-card.js",
+      "encoding": "utf8",
+      "sha256": "d0870b070c5fedc7225e81661e3bbbfd31225731cf5ac516972d4fe5ac17f5d1"
+    },
+    {
+      "path": "client/src/setup/image-logic/click-events.js",
+      "encoding": "utf8",
+      "sha256": "12c1b0a7285295227195be932bf62b94eef5379e44aa53d839fb8b60944af431"
+    }
+  ],
+  "provenanceClaims": [
+    {
+      "claim": "active/bench R eligibility guards and forwarding of the clicked card index without a fourth argument",
+      "sources": ["client/src/actions/keybinds/keybinds.js"]
+    },
+    {
+      "claim": "selected-card first rotation, wrapper-margin writes, sibling Pokemon rotation, BREAK preservation, and action payload index",
+      "sources": ["client/src/actions/general/rotate-card.js"]
+    },
+    {
+      "claim": "clicked middle/base image selection, active/bench wrapper-zone resolution, and exact zone-array index lookup",
+      "sources": ["client/src/setup/image-logic/click-events.js"]
+    }
+  ]
+}
