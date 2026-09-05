@@ -1034,7 +1034,7 @@ export const legacyPileTopIndex = (
 export const layoutLegacyPlaySlotCards = (
   region: BoardLayoutRegion,
   intrinsicAspectRatios: readonly number[]
-): readonly Rect[] => {
+): readonly Rect[] | null => {
   if (region.surface !== 'playSlot') {
     throw new Error('Play-slot card layout requires an active or bench region');
   }
@@ -1053,9 +1053,11 @@ export const layoutLegacyPlaySlotCards = (
   const rowWidth =
     cardWidths.reduce((total, width) => total + width, 0) +
     marginRight * intrinsicAspectRatios.length;
-  if (rowWidth > region.physicalDeclaredBounds.width) {
-    throw new Error('Play-slot flex shrink requires browser characterization');
-  }
+  // The authored row is wider than its region, so the browser would flex-shrink
+  // and this model has no characterized answer. That is a supported state, not
+  // a programming error: the caller falls back to generic layout. Argument
+  // faults above still throw.
+  if (rowWidth > region.physicalDeclaredBounds.width) return null;
   const startX =
     region.physicalDeclaredBounds.x +
     (region.physicalDeclaredBounds.width - rowWidth) / 2;
@@ -1181,7 +1183,7 @@ export const layoutLegacyOrdinaryEvolutionStack = (
   region: BoardLayoutRegion,
   cardAspectRatio: number,
   evolutionCount: number
-): LegacyOrdinaryEvolutionStackLayout => {
+): LegacyOrdinaryEvolutionStackLayout | null => {
   if (
     region.surface !== 'playSlot' ||
     (region.kind !== 'active' && region.kind !== 'bench')
@@ -1218,11 +1220,8 @@ export const layoutLegacyOrdinaryEvolutionStack = (
   }
   const marginRight = region.kind === 'bench' ? bounds.width * 0.01 : 0;
   const flexOuterWidth = cssomClientWidth + marginRight;
-  if (flexOuterWidth > bounds.width) {
-    throw new Error(
-      'Ordinary evolution flex shrink requires browser characterization'
-    );
-  }
+  // Uncharacterized flex shrink: degrade to the generic path (see above).
+  if (flexOuterWidth > bounds.width) return null;
   const centeredOuterX = bounds.x + (bounds.width - flexOuterWidth) / 2;
   // The authored trailing bench margin becomes a physical leading margin when
   // the enclosing opponent frame rotates. physicalDeclaredBounds is already
@@ -1278,7 +1277,7 @@ const layoutLegacyAttachmentStack = (
   cardAspectRatio: number,
   kind: LegacyAttachmentKind,
   attachmentCount: 1 | 2
-): LegacyAttachmentStackGeometry => {
+): LegacyAttachmentStackGeometry | null => {
   let sourceName:
     | 'Single-Energy'
     | 'Two-Energy'
@@ -1347,11 +1346,8 @@ const layoutLegacyAttachmentStack = (
     baseCssomClientWidth + attachmentCount * attachmentOffset;
   const marginRight = bounds.width * marginRightRatio;
   const flexOuterWidth = authoredWidth + marginRight;
-  if (flexOuterWidth > bounds.width) {
-    throw new Error(
-      `${sourceName} flex shrink requires browser characterization`
-    );
-  }
+  // Uncharacterized flex shrink: degrade to the generic path (see above).
+  if (flexOuterWidth > bounds.width) return null;
   const centeredOuterX = bounds.x + (bounds.width - flexOuterWidth) / 2;
   // A trailing Tool margin becomes a physical leading margin when the enclosing
   // opponent frame rotates. Energy passes a zero margin through the same path.
@@ -1398,13 +1394,14 @@ const layoutLegacyAttachmentStack = (
 export const layoutLegacySingleEnergyAttachmentStack = (
   region: BoardLayoutRegion,
   cardAspectRatio: number
-): LegacySingleEnergyAttachmentStackLayout => {
+): LegacySingleEnergyAttachmentStackLayout | null => {
   const result = layoutLegacyAttachmentStack(
     region,
     cardAspectRatio,
     'energy',
     1
   );
+  if (!result) return null;
   const energy = result.attachments[0];
   if (!energy) throw new Error('Single-Energy layout lost its attachment');
   return {
@@ -1427,13 +1424,14 @@ export const layoutLegacySingleEnergyAttachmentStack = (
 export const layoutLegacyTwoEnergyAttachmentStack = (
   region: BoardLayoutRegion,
   cardAspectRatio: number
-): LegacyTwoEnergyAttachmentStackLayout => {
+): LegacyTwoEnergyAttachmentStackLayout | null => {
   const result = layoutLegacyAttachmentStack(
     region,
     cardAspectRatio,
     'energy',
     2
   );
+  if (!result) return null;
   const firstEnergy = result.attachments[0];
   const secondEnergy = result.attachments[1];
   if (!firstEnergy || !secondEnergy) {
@@ -1460,13 +1458,14 @@ export const layoutLegacyTwoEnergyAttachmentStack = (
 export const layoutLegacySingleTrainerToolAttachmentStack = (
   region: BoardLayoutRegion,
   cardAspectRatio: number
-): LegacySingleTrainerToolAttachmentStackLayout => {
+): LegacySingleTrainerToolAttachmentStackLayout | null => {
   const result = layoutLegacyAttachmentStack(
     region,
     cardAspectRatio,
     'trainerTool',
     1
   );
+  if (!result) return null;
   const tool = result.attachments[0];
   if (!tool)
     throw new Error('Single-Trainer-as-Tool layout lost its attachment');
@@ -1492,13 +1491,14 @@ export const layoutLegacySingleTrainerToolAttachmentStack = (
 export const layoutLegacySingleEnergyTrainerToolAttachmentStack = (
   region: BoardLayoutRegion,
   cardAspectRatio: number
-): LegacySingleEnergyTrainerToolAttachmentStackLayout => {
+): LegacySingleEnergyTrainerToolAttachmentStackLayout | null => {
   const result = layoutLegacyAttachmentStack(
     region,
     cardAspectRatio,
     'energyTrainerTool',
     2
   );
+  if (!result) return null;
   const energy = result.attachments[0];
   const tool = result.attachments[1];
   if (!energy || !tool) {

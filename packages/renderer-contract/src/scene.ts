@@ -14,6 +14,7 @@ import {
 } from './geometry.js';
 import {
   createBoardLayoutSnapshot,
+  DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
   findBoardLayoutRegion,
   LEGACY_BOARD_RESIZER_V1,
   layoutLegacyActiveQ0Markers,
@@ -28,6 +29,7 @@ import {
   legacyPileTopIndex,
   type BoardLayoutSnapshot,
   type BoardLayoutState,
+  type BoxEdgesPx,
   type LegacyContainedCardBlockAlignment,
   type LegacyActiveQ0MarkerLayout,
   type LegacyPileKind,
@@ -261,107 +263,194 @@ const isLegacyPileKind = (
   kind === 'lostZone' ||
   kind === 'stadium';
 
+/**
+ * A play slot is authored with no padding or border, so its declared, border,
+ * and content boxes describe the same rectangle. Asserting that through the
+ * edges is exact; comparing the rectangles is not, because the physical boxes
+ * reach the same value by different floating-point paths on the rotated side.
+ */
+const hasNoBoxEdges = (region: {
+  readonly physicalPaddingPx: BoxEdgesPx;
+  readonly physicalBorderPx: BoxEdgesPx;
+}): boolean =>
+  (['top', 'right', 'bottom', 'left'] as const).every(
+    (edge) =>
+      region.physicalPaddingPx[edge] === 0 &&
+      region.physicalBorderPx[edge] === 0
+  );
+
 const hasExactBounds = (actual: Rect, expected: Rect): boolean =>
   actual.x === expected.x &&
   actual.y === expected.y &&
   actual.width === expected.width &&
   actual.height === expected.height;
 
+/**
+ * The canonical default-split layout for a viewport, memoized because the gate
+ * below runs on every scene build. Computing it through the same function the
+ * caller used makes the comparison exact rather than tolerance-based.
+ */
+const canonicalDefaultLayouts = new Map<string, BoardLayoutSnapshot>();
+
+const canonicalDefaultLayoutFor = (
+  layout: BoardLayoutSnapshot,
+  firstPlayerId: PlayerId,
+  secondPlayerId: PlayerId
+): BoardLayoutSnapshot => {
+  const key = `${layout.viewport.width}x${layout.viewport.height}@${layout.viewport.devicePixelRatio}:${firstPlayerId}:${secondPlayerId}`;
+  const cached = canonicalDefaultLayouts.get(key);
+  if (cached) return cached;
+  const canonical = createBoardLayoutSnapshot({
+    geometryVersion: layout.geometryVersion,
+    viewport: layout.viewport,
+    playerIds: [firstPlayerId, secondPlayerId],
+    bottomPlayerId: firstPlayerId,
+    shellMode: 'sidebar',
+    vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+  });
+  canonicalDefaultLayouts.set(key, canonical);
+  return canonical;
+};
+
+/**
+ * Preconditions the characterized layout helpers assume: two ordered players,
+ * the sidebar shell, and the default vertical split.
+ *
+ * This deliberately does *not* pin a viewport size. Every rectangle is derived
+ * from authored ratios, and `tests/browser/legacy-viewport-generalization.spec.ts`
+ * measures the checked-in legacy stylesheets in Chromium at 1280x720, 1600x900,
+ * and 1920x1080 and holds the model to them. Re-asserting one viewport's pixels
+ * here only restricted parity to a single window size.
+ *
+ * Two dimensions stay pinned because they are unmeasured, not because they are
+ * known to break:
+ *   - the vertical split, shared placement, and handle positions, which no
+ *     browser gate varies yet (legacy applies them as inline styles from its
+ *     resize handler);
+ *   - `devicePixelRatio`, because the helpers round CSSOM client widths to whole
+ *     CSS pixels and that rounding has not been measured at fractional scale.
+ * Extend the browser gate before relaxing either.
+ */
 const isCharacterizedDefaultInPlayLayout = (
   view: MatchViewState,
   layout: BoardLayoutSnapshot
 ): boolean => {
   const firstPlayerId = view.playerOrder[0];
   const secondPlayerId = view.playerOrder[1];
-  const local = layout.players.find((player) => player.side === 'local');
-  const opponent = layout.players.find((player) => player.side === 'opponent');
-  const lowerHandle = layout.resizeHandles.find(
-    (handle) => handle.id === 'lower'
+  if (firstPlayerId === undefined || secondPlayerId === undefined) return false;
+  if (
+    layout.bottomPlayerId !== firstPlayerId ||
+    layout.shellMode !== 'sidebar' ||
+    layout.viewport.devicePixelRatio !== 1 ||
+    layout.viewport.width <= 0 ||
+    layout.viewport.height <= 0 ||
+    layout.shellGapBounds === null ||
+    layout.sidebarBounds === null ||
+    layout.tabsBounds === null
+  ) {
+    return false;
+  }
+
+  const canonical = canonicalDefaultLayoutFor(
+    layout,
+    firstPlayerId,
+    secondPlayerId
   );
-  const upperHandle = layout.resizeHandles.find(
-    (handle) => handle.id === 'upper'
-  );
-  return (
-    firstPlayerId !== undefined &&
-    secondPlayerId !== undefined &&
-    layout.bottomPlayerId === firstPlayerId &&
-    layout.shellMode === 'sidebar' &&
-    layout.viewport.width === 1600 &&
-    layout.viewport.height === 900 &&
-    layout.viewport.devicePixelRatio === 1 &&
-    hasExactBounds(layout.playAreaBounds, {
-      x: 0,
-      y: 0,
-      width: 1208,
-      height: 900,
-    }) &&
-    layout.shellGapBounds !== null &&
-    hasExactBounds(layout.shellGapBounds, {
-      x: 1208,
-      y: 0,
-      width: 8,
-      height: 900,
-    }) &&
-    layout.sidebarBounds !== null &&
-    hasExactBounds(layout.sidebarBounds, {
-      x: 1216,
-      y: 45,
-      width: 384,
-      height: 855,
-    }) &&
-    layout.tabsBounds !== null &&
-    hasExactBounds(layout.tabsBounds, {
-      x: 1216,
-      y: 0,
-      width: 384,
-      height: 45,
-    }) &&
-    local !== undefined &&
-    local.playerId === firstPlayerId &&
-    local.physicalSide === 'lower' &&
-    local.rotationQuarterTurns === 0 &&
-    hasExactBounds(local.frameBounds, {
-      x: 0,
-      y: 450,
-      width: 1208,
-      height: 450,
-    }) &&
-    opponent !== undefined &&
-    opponent.playerId === secondPlayerId &&
-    opponent.physicalSide === 'upper' &&
-    opponent.rotationQuarterTurns === 2 &&
-    hasExactBounds(opponent.frameBounds, {
-      x: 0,
-      y: 0,
-      width: 1208,
-      height: 450,
-    }) &&
-    lowerHandle !== undefined &&
-    lowerHandle.controlsPhysicalSide === 'lower' &&
-    hasExactBounds(lowerHandle.bounds, {
-      x: 1600 * -0.0055,
-      y: 434.25,
-      width: 20.8,
-      height: 22.5,
-    }) &&
-    upperHandle !== undefined &&
-    upperHandle.controlsPhysicalSide === 'upper' &&
-    hasExactBounds(upperHandle.bounds, {
-      x: 1600 * -0.0055,
-      y: 900 * (1 - 0.53 - 0.025 / 2),
-      width: 20.8,
-      height: 22.5,
-    }) &&
-    hasExactBounds(layout.shared.stadium.physicalDeclaredBounds, {
-      x: 176,
-      y: 900 * (1 - 0.42 - 0.16),
-      width: 96,
-      height: 144,
-    }) &&
-    layout.shared.boardControlsAnchor.x === 832 &&
-    layout.shared.boardControlsAnchor.y === 423 &&
-    layout.shared.boardControlsAnchor.height === 54
-  );
+  if (
+    !canonical.shellGapBounds ||
+    !canonical.sidebarBounds ||
+    !canonical.tabsBounds ||
+    !hasExactBounds(layout.playAreaBounds, canonical.playAreaBounds) ||
+    !hasExactBounds(layout.shellGapBounds, canonical.shellGapBounds) ||
+    !hasExactBounds(layout.sidebarBounds, canonical.sidebarBounds) ||
+    !hasExactBounds(layout.tabsBounds, canonical.tabsBounds) ||
+    !hasExactBounds(
+      layout.shared.stadium.physicalDeclaredBounds,
+      canonical.shared.stadium.physicalDeclaredBounds
+    ) ||
+    layout.shared.boardControlsAnchor.x !==
+      canonical.shared.boardControlsAnchor.x ||
+    layout.shared.boardControlsAnchor.y !==
+      canonical.shared.boardControlsAnchor.y ||
+    layout.shared.boardControlsAnchor.height !==
+      canonical.shared.boardControlsAnchor.height
+  ) {
+    return false;
+  }
+
+  for (const side of ['local', 'opponent'] as const) {
+    const player = layout.players.find((candidate) => candidate.side === side);
+    const expected = canonical.players.find(
+      (candidate) => candidate.side === side
+    );
+    if (!player || !expected) return false;
+    if (
+      player.playerId !== (side === 'local' ? firstPlayerId : secondPlayerId) ||
+      player.physicalSide !== (side === 'local' ? 'lower' : 'upper') ||
+      player.rotationQuarterTurns !== (side === 'local' ? 0 : 2) ||
+      !hasExactBounds(player.frameBounds, expected.frameBounds)
+    ) {
+      return false;
+    }
+  }
+
+  for (const handleId of ['lower', 'upper'] as const) {
+    const handle = layout.resizeHandles.find(
+      (candidate) => candidate.id === handleId
+    );
+    const expected = canonical.resizeHandles.find(
+      (candidate) => candidate.id === handleId
+    );
+    if (!handle || !expected) return false;
+    if (
+      handle.controlsPhysicalSide !== handleId ||
+      !hasExactBounds(handle.bounds, expected.bounds)
+    ) {
+      return false;
+    }
+  }
+
+  // Every region must be the one the canonical layout derives, so a supplied
+  // snapshot cannot present a legacy-shaped board with a shifted region. The
+  // per-stack predicates below then only restate which region they need.
+  for (const side of ['local', 'opponent'] as const) {
+    const player = layout.players.find((candidate) => candidate.side === side);
+    const expected = canonical.players.find(
+      (candidate) => candidate.side === side
+    );
+    if (!player || !expected) return false;
+    if (player.regions.length !== expected.regions.length) return false;
+    for (const expectedRegion of expected.regions) {
+      const region = player.regions.find(
+        (candidate) => candidate.kind === expectedRegion.kind
+      );
+      if (!region) return false;
+      if (
+        region.surface !== expectedRegion.surface ||
+        region.physicalSide !== expectedRegion.physicalSide ||
+        !hasExactBounds(
+          region.playerLocalNormalizedBounds,
+          expectedRegion.playerLocalNormalizedBounds
+        ) ||
+        !hasExactBounds(
+          region.physicalDeclaredBounds,
+          expectedRegion.physicalDeclaredBounds
+        ) ||
+        !hasExactBounds(
+          region.physicalBorderBoxBounds,
+          expectedRegion.physicalBorderBoxBounds
+        ) ||
+        !hasExactBounds(
+          region.physicalContentBoxBounds,
+          expectedRegion.physicalContentBoxBounds
+        )
+      ) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 };
 
 const isCharacterizedActiveAttachmentStructure = (
@@ -376,29 +465,6 @@ const isCharacterizedActiveAttachmentStructure = (
   const base = stack.evolutionCards[0];
   const attachments = stack.attachmentCards;
   const bounds = region.physicalDeclaredBounds;
-  const expectedDeclaredBounds =
-    side === 'local'
-      ? {
-          x: 0.34 * 1208,
-          y: 450 + 0.07 * 450,
-          width: 0.32 * 1208,
-          height: 0.28 * 450,
-        }
-      : {
-          x: (1 - 0.34 - 0.32) * 1208,
-          y: (1 - 0.07 - 0.28) * 450,
-          width: 0.32 * 1208,
-          height: 0.28 * 450,
-        };
-  const expectedBoxBounds =
-    side === 'local'
-      ? expectedDeclaredBounds
-      : {
-          x: 1208 - 0.34 * 1208 - 0.32 * 1208,
-          y: 450 - (450 - 0.65 * 450 - 0.28 * 450) - 0.28 * 450,
-          width: 0.32 * 1208,
-          height: 0.28 * 450,
-        };
   const authoredWidth = (Math.round(bounds.height * CARD_ASPECT_RATIO) * 7) / 6;
   return (
     layoutIsCharacterized &&
@@ -408,15 +474,16 @@ const isCharacterizedActiveAttachmentStructure = (
     region.physicalSide === (side === 'local' ? 'lower' : 'upper') &&
     region.surface === 'playSlot' &&
     region.kind === 'active' &&
+    // The authored normalized rectangle identifies the legacy active slot. Its
+    // physical rectangles follow from the ratios, which the browser viewport
+    // gate holds to real legacy CSS at several window sizes.
     hasExactBounds(region.playerLocalNormalizedBounds, {
       x: 0.34,
       y: 0.07,
       width: 0.32,
       height: 0.28,
     }) &&
-    hasExactBounds(bounds, expectedDeclaredBounds) &&
-    hasExactBounds(region.physicalBorderBoxBounds, expectedBoxBounds) &&
-    hasExactBounds(region.physicalContentBoxBounds, expectedBoxBounds) &&
+    hasNoBoxEdges(region) &&
     stack.slot === 'active' &&
     board.activeStackId === stack.id &&
     board.benchStackIds.length === 0 &&
@@ -577,37 +644,7 @@ const isCharacterizedMixedStackRegion = (
     slot === 'active'
       ? { x: 0.34, y: 0.07, width: 0.32, height: 0.28 }
       : { x: 0.1, y: 0.4, width: 0.79, height: 0.25 };
-  const bottomRatio = slot === 'active' ? 0.65 : 0.35;
-  const expectedDeclaredBounds =
-    side === 'local'
-      ? {
-          x: normalized.x * 1208,
-          y: 450 + normalized.y * 450,
-          width: normalized.width * 1208,
-          height: normalized.height * 450,
-        }
-      : {
-          x: (1 - normalized.x - normalized.width) * 1208,
-          y: (1 - normalized.y - normalized.height) * 450,
-          width: normalized.width * 1208,
-          height: normalized.height * 450,
-        };
-  const localX = normalized.x * 1208;
-  const localY = 450 - bottomRatio * 450 - normalized.height * 450;
-  const expectedBoxBounds =
-    side === 'local'
-      ? {
-          x: localX,
-          y: 450 + localY,
-          width: normalized.width * 1208,
-          height: normalized.height * 450,
-        }
-      : {
-          x: 1208 - localX - normalized.width * 1208,
-          y: 450 - localY - normalized.height * 450,
-          width: normalized.width * 1208,
-          height: normalized.height * 450,
-        };
+  const bounds = region.physicalDeclaredBounds;
   return (
     region.side === side &&
     region.id === `${side}:${slot}` &&
@@ -615,10 +652,13 @@ const isCharacterizedMixedStackRegion = (
     region.physicalSide === (side === 'local' ? 'lower' : 'upper') &&
     region.surface === 'playSlot' &&
     region.kind === slot &&
+    // As above: pin the authored ratios, not one viewport's pixels.
     hasExactBounds(region.playerLocalNormalizedBounds, normalized) &&
-    hasExactBounds(region.physicalDeclaredBounds, expectedDeclaredBounds) &&
-    hasExactBounds(region.physicalBorderBoxBounds, expectedBoxBounds) &&
-    hasExactBounds(region.physicalContentBoxBounds, expectedBoxBounds)
+    hasNoBoxEdges(region) &&
+    Number.isFinite(bounds.x) &&
+    Number.isFinite(bounds.y) &&
+    bounds.width > 0 &&
+    bounds.height > 0
   );
 };
 
@@ -1224,7 +1264,7 @@ export const createBoardScene = (
             3
           )
         : null;
-      const usesLegacyActiveQ0Markers =
+      const activeQ0MarkerStackIsCharacterized =
         isCharacterizedPristineActiveQ0MarkerStack(
           stack,
           board,
@@ -1233,7 +1273,7 @@ export const createBoardScene = (
           slotRegions[stack.slot],
           defaultInPlayLayoutIsCharacterized
         );
-      const usesLegacyBenchQ0Layout = isCharacterizedCanonicalBenchQ0Stack(
+      const benchQ0StackIsCharacterized = isCharacterizedCanonicalBenchQ0Stack(
         view,
         stack,
         board,
@@ -1242,15 +1282,23 @@ export const createBoardScene = (
         slotRegions[stack.slot],
         defaultInPlayLayoutIsCharacterized
       );
-      const legacyQ0MarkerCardLayout =
-        usesLegacyActiveQ0Markers || usesLegacyBenchQ0Layout
-          ? {
-              bounds: layoutLegacyPlaySlotCards(slotRegions[stack.slot], [
-                CARD_ASPECT_RATIO,
-              ])[0]!,
-              sourceZIndex: 0,
-            }
+      // The play-slot helper returns null when the authored row would
+      // flex-shrink. Both the card box and its markers then fall back to the
+      // generic path together, so legacy marker formulas are never applied to
+      // generic card bounds.
+      const legacyQ0MarkerCardBounds =
+        activeQ0MarkerStackIsCharacterized || benchQ0StackIsCharacterized
+          ? (layoutLegacyPlaySlotCards(slotRegions[stack.slot], [
+              CARD_ASPECT_RATIO,
+            ])?.[0] ?? null)
           : null;
+      const usesLegacyActiveQ0Markers =
+        activeQ0MarkerStackIsCharacterized && legacyQ0MarkerCardBounds !== null;
+      const usesLegacyBenchQ0Layout =
+        benchQ0StackIsCharacterized && legacyQ0MarkerCardBounds !== null;
+      const legacyQ0MarkerCardLayout = legacyQ0MarkerCardBounds
+        ? { bounds: legacyQ0MarkerCardBounds, sourceZIndex: 0 }
+        : null;
       const evolutionNodes: CardSceneNode[] = [];
       stack.evolutionCards.forEach((card, index) => {
         const ordinaryCardLayout = ordinaryEvolutionLayout?.cards[index];

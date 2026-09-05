@@ -640,6 +640,44 @@ describe('renderer-neutral board scene', () => {
     );
   });
 
+  it('degrades to generic geometry when a play slot would flex-shrink', () => {
+    // A tall, narrow window makes the authored active card wider than its
+    // region. Legacy would flex-shrink there and the model has no characterized
+    // answer, so the scene must fall back rather than fail to build.
+    const portrait = {
+      ...characterizedEvolutionLayoutState,
+      viewport: { width: 600, height: 1600, devicePixelRatio: 1 },
+    } as const satisfies BoardLayoutState;
+    const layout = createBoardLayoutSnapshot(portrait);
+    expect(
+      layoutLegacyPlaySlotCards(
+        findBoardLayoutRegion(layout, 'local', 'active'),
+        [63 / 88]
+      )
+    ).toBeNull();
+
+    const view = createPristineActiveMarkerView();
+    const scene = createBoardScene(view, layout);
+    for (const [playerId, side] of [
+      [p1, 'local'],
+      [p2, 'opponent'],
+    ] as const) {
+      const stack = view.stacks[`stack:${playerId}:active-markers`]!;
+      const node = scene.cards.find(
+        (candidate) => candidate.id === stack.evolutionCards[0]!.id
+      );
+      expect(node, `${side} active card must still render`).toBeDefined();
+      // Generic evolution z-index, i.e. not the characterized source order.
+      expect(node?.zIndex).toBe(300);
+      expect(
+        scene.markers
+          .filter((marker) => marker.parentCardId === node?.id)
+          .every((marker) => marker.presentation === 'generic'),
+        `${side} markers must fall back with their card`
+      ).toBe(true);
+    }
+  });
+
   it('uses exact play-slot card and pristine-q0 marker geometry on both sides', () => {
     const layout = createBoardLayoutSnapshot(characterizedEvolutionLayoutState);
     const markerCases = [
@@ -1382,25 +1420,11 @@ describe('renderer-neutral board scene', () => {
       { ...characterizedEvolutionLayoutState, bottomPlayerId: p2 },
       {
         ...characterizedEvolutionLayoutState,
-        viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
-      },
-      {
-        ...characterizedEvolutionLayoutState,
         viewport: { width: 1600, height: 900, devicePixelRatio: 2 },
       },
     ] as const satisfies readonly BoardLayoutState[]) {
       expectFallback(baseView, createBoardLayoutSnapshot(layoutState));
     }
-    expectFallback(
-      createCanonicalBenchMarkerView(
-        { damage: null, abilityUsed: false },
-        { damage: null, abilityUsed: false }
-      ),
-      createBoardLayoutSnapshot({
-        ...characterizedEvolutionLayoutState,
-        viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
-      })
-    );
   });
 
   it('fails pristine-q0 marker presentation closed for every projected shape and layout boundary', () => {
@@ -1692,10 +1716,6 @@ describe('renderer-neutral board scene', () => {
         },
       },
       { ...characterizedEvolutionLayoutState, bottomPlayerId: p2 },
-      {
-        ...characterizedEvolutionLayoutState,
-        viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
-      },
       {
         ...characterizedEvolutionLayoutState,
         viewport: { width: 1600, height: 900, devicePixelRatio: 2 },
@@ -2774,10 +2794,6 @@ describe('renderer-neutral board scene', () => {
       { ...characterizedEvolutionLayoutState, bottomPlayerId: p2 },
       {
         ...characterizedEvolutionLayoutState,
-        viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
-      },
-      {
-        ...characterizedEvolutionLayoutState,
         viewport: { width: 1600, height: 900, devicePixelRatio: 2 },
       },
     ] as const satisfies readonly BoardLayoutState[]) {
@@ -3536,10 +3552,6 @@ describe('renderer-neutral board scene', () => {
     );
 
     for (const layoutState of [
-      {
-        ...characterizedEvolutionLayoutState,
-        viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
-      },
       { ...characterizedEvolutionLayoutState, shellMode: 'fullscreen' },
       { ...characterizedEvolutionLayoutState, bottomPlayerId: p2 },
       {
@@ -4121,10 +4133,6 @@ describe('renderer-neutral board scene', () => {
       { ...characterizedEvolutionLayoutState, bottomPlayerId: p2 },
       {
         ...characterizedEvolutionLayoutState,
-        viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
-      },
-      {
-        ...characterizedEvolutionLayoutState,
         viewport: { width: 1600, height: 900, devicePixelRatio: 2 },
       },
     ] as const satisfies readonly BoardLayoutState[]) {
@@ -4447,10 +4455,6 @@ describe('renderer-neutral board scene', () => {
       { ...characterizedEvolutionLayoutState, bottomPlayerId: p2 },
       {
         ...characterizedEvolutionLayoutState,
-        viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
-      },
-      {
-        ...characterizedEvolutionLayoutState,
         viewport: { width: 1600, height: 900, devicePixelRatio: 2 },
       },
     ] as const satisfies readonly BoardLayoutState[]) {
@@ -4569,10 +4573,6 @@ describe('renderer-neutral board scene', () => {
     expectFallbackForLayout({
       ...characterizedEvolutionLayoutState,
       bottomPlayerId: p2,
-    });
-    expectFallbackForLayout({
-      ...characterizedEvolutionLayoutState,
-      viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
     });
   });
 

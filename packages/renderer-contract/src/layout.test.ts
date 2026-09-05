@@ -540,14 +540,12 @@ describe('renderer-neutral legacy board layout', () => {
     const activeEdgeRatio =
       active.physicalDeclaredBounds.width /
       active.physicalDeclaredBounds.height;
-    expect(() =>
-      layoutLegacyPlaySlotCards(active, [activeEdgeRatio])
-    ).not.toThrow();
+    expect(layoutLegacyPlaySlotCards(active, [activeEdgeRatio])).not.toBeNull();
     const benchEdgeRatio =
       bench.physicalDeclaredBounds.width / bench.physicalDeclaredBounds.height;
-    expect(() => layoutLegacyPlaySlotCards(bench, [benchEdgeRatio])).toThrow(
-      'flex shrink'
-    );
+    // Uncharacterized flex shrink degrades instead of throwing so the scene
+    // can fall back to generic layout rather than failing to render.
+    expect(layoutLegacyPlaySlotCards(bench, [benchEdgeRatio])).toBeNull();
   });
 
   it('pins pristine-q0 active marker geometry on both physical sides', () => {
@@ -886,9 +884,7 @@ describe('renderer-neutral legacy board layout', () => {
         )
       ).toThrow('exactly three');
     }
-    expect(() => layoutLegacyOrdinaryEvolutionStack(active, 100, 3)).toThrow(
-      'flex shrink'
-    );
+    expect(layoutLegacyOrdinaryEvolutionStack(active, 100, 3)).toBeNull();
   });
 
   it('pins stable one-Energy active geometry from integer CSSOM width', () => {
@@ -943,9 +939,7 @@ describe('renderer-neutral legacy board layout', () => {
         layoutLegacySingleEnergyAttachmentStack(active, aspectRatio)
       ).toThrow('aspect ratio');
     }
-    expect(() => layoutLegacySingleEnergyAttachmentStack(active, 100)).toThrow(
-      'flex shrink'
-    );
+    expect(layoutLegacySingleEnergyAttachmentStack(active, 100)).toBeNull();
     for (const physicalDeclaredBounds of [
       { ...active.physicalDeclaredBounds, x: Number.NaN },
       { ...active.physicalDeclaredBounds, width: 0 },
@@ -1039,9 +1033,7 @@ describe('renderer-neutral legacy board layout', () => {
         layoutLegacyTwoEnergyAttachmentStack(active, aspectRatio)
       ).toThrow('aspect ratio');
     }
-    expect(() => layoutLegacyTwoEnergyAttachmentStack(active, 100)).toThrow(
-      'flex shrink'
-    );
+    expect(layoutLegacyTwoEnergyAttachmentStack(active, 100)).toBeNull();
     for (const physicalDeclaredBounds of [
       { ...active.physicalDeclaredBounds, x: Number.NaN },
       { ...active.physicalDeclaredBounds, y: Number.NEGATIVE_INFINITY },
@@ -1151,9 +1143,9 @@ describe('renderer-neutral legacy board layout', () => {
         layoutLegacySingleTrainerToolAttachmentStack(active, aspectRatio)
       ).toThrow('aspect ratio');
     }
-    expect(() =>
+    expect(
       layoutLegacySingleTrainerToolAttachmentStack(active, 100)
-    ).toThrow('flex shrink');
+    ).toBeNull();
     for (const physicalDeclaredBounds of [
       { ...active.physicalDeclaredBounds, x: Number.NaN },
       { ...active.physicalDeclaredBounds, y: Number.NEGATIVE_INFINITY },
@@ -1298,9 +1290,9 @@ describe('renderer-neutral legacy board layout', () => {
         layoutLegacySingleEnergyTrainerToolAttachmentStack(active, aspectRatio)
       ).toThrow('aspect ratio');
     }
-    expect(() =>
+    expect(
       layoutLegacySingleEnergyTrainerToolAttachmentStack(active, 100)
-    ).toThrow('flex shrink');
+    ).toBeNull();
     for (const physicalDeclaredBounds of [
       { ...active.physicalDeclaredBounds, x: Number.NaN },
       { ...active.physicalDeclaredBounds, y: Number.NEGATIVE_INFINITY },
