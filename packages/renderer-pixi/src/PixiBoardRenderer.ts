@@ -16,6 +16,9 @@ import {
   type BoardViewport,
   type CardSceneNode,
   type MarkerSceneNode,
+  isLegacyMarkerPresentation,
+  legacyMarkerAppearance,
+  legacyMarkerPackedColor,
 } from '@ptcgsim/renderer-contract';
 import {
   Application,
@@ -532,58 +535,25 @@ export class PixiBoardRenderer implements BoardRenderer {
 
   private applyMarkerView(view: MarkerView): void {
     const { root, graphic, text, descriptor } = view;
-    const legacy =
-      descriptor.presentation === 'legacyActiveQ0' ||
-      descriptor.presentation === 'legacyBenchQ0';
-    let fill = descriptor.kind === 'damage' ? 0xe64242 : 0xefefef;
-    let fillAlpha = 1;
-    let textFill = descriptor.kind === 'damage' ? 0xffffff : 0x111111;
-    let fontSize = Math.max(10, descriptor.bounds.height * 0.42);
-    let fontWeight: 'bold' | 'normal' = 'bold';
-    let textValue = descriptor.value;
-    let tab = false;
-
-    if (legacy) {
-      fontWeight = 'normal';
-      if (descriptor.kind === 'damage') {
-        fill = 0xff6200;
-        textFill = 0xffffff;
-        fontSize = descriptor.bounds.width / 2;
-      } else if (descriptor.kind === 'specialCondition') {
-        fontSize = descriptor.bounds.width * 0.75;
-        switch (descriptor.value.toUpperCase()) {
-          case 'P':
-            fill = 0x008000;
-            textFill = 0xffffff;
-            break;
-          case 'B':
-            fill = 0xff0000;
-            textFill = 0xffffff;
-            break;
-          case 'A':
-            fill = 0x0000ff;
-            textFill = 0xffffff;
-            break;
-          case 'PA':
-            fill = 0xffff00;
-            textFill = 0x000000;
-            break;
-          case 'C':
-            fill = 0x800080;
-            textFill = 0xffffff;
-            break;
-          default:
-            fill = 0xffffff;
-            textFill = 0x000000;
-            break;
-        }
-      } else {
-        tab = true;
-        fill = descriptor.side === 'local' ? 0x3b8dad : 0xff3c00;
-        fillAlpha = descriptor.side === 'local' ? 0.708 : 0.392;
-        textValue = '';
-      }
-    }
+    const appearance = isLegacyMarkerPresentation(descriptor.presentation)
+      ? legacyMarkerAppearance(descriptor)
+      : null;
+    const fill = appearance
+      ? legacyMarkerPackedColor(appearance.fill)
+      : descriptor.kind === 'damage'
+        ? 0xe64242
+        : 0xefefef;
+    const fillAlpha = appearance?.fill.alpha ?? 1;
+    const textFill = appearance
+      ? legacyMarkerPackedColor(appearance.text)
+      : descriptor.kind === 'damage'
+        ? 0xffffff
+        : 0x111111;
+    const fontSize =
+      appearance?.fontSizePx ?? Math.max(10, descriptor.bounds.height * 0.42);
+    const fontWeight: 'bold' | 'normal' = appearance ? 'normal' : 'bold';
+    const textValue = appearance ? appearance.label : descriptor.value;
+    const tab = appearance?.shape === 'tab';
 
     graphic.clear();
     if (tab) {

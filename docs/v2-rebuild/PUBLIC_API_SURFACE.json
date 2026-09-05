@@ -982,6 +982,10 @@
               "kind": "value"
             },
             {
+              "name": "isLegacyMarkerPresentation",
+              "kind": "value"
+            },
+            {
               "name": "layoutLegacyActiveQ0Markers",
               "kind": "value"
             },
@@ -1072,6 +1076,26 @@
             {
               "name": "LegacyContainedCardBlockAlignment",
               "kind": "type"
+            },
+            {
+              "name": "legacyMarkerAppearance",
+              "kind": "value"
+            },
+            {
+              "name": "LegacyMarkerAppearance",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyMarkerColor",
+              "kind": "type"
+            },
+            {
+              "name": "legacyMarkerCssColor",
+              "kind": "value"
+            },
+            {
+              "name": "legacyMarkerPackedColor",
+              "kind": "value"
             },
             {
               "name": "LegacyOrdinaryEvolutionCardLayout",

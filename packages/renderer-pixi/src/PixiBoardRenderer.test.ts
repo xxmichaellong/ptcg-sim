@@ -613,8 +613,11 @@ describe('Pixi board interaction cancellation', () => {
       shape: 'roundRect',
       color: 0x3b8dad,
       alpha: 0.708,
+      // Legacy ability tabs draw no glyph, so this fill is never painted. It
+      // now matches the DOM renderer's black instead of Pixi's old 0x111111;
+      // the two had drifted while each kept a private palette.
       text: '',
-      textFill: 0x111111,
+      textFill: 0x000000,
       fontSize: Math.max(10, localAbility.bounds.height * 0.42),
       fontWeight: 'normal',
       visible: false,
@@ -623,8 +626,11 @@ describe('Pixi board interaction cancellation', () => {
       shape: 'roundRect',
       color: 0xff3c00,
       alpha: 0.392,
+      // Legacy ability tabs draw no glyph, so this fill is never painted. It
+      // now matches the DOM renderer's black instead of Pixi's old 0x111111;
+      // the two had drifted while each kept a private palette.
       text: '',
-      textFill: 0x111111,
+      textFill: 0x000000,
       fontSize: Math.max(10, opponentAbility.bounds.height * 0.42),
       fontWeight: 'normal',
       visible: false,
@@ -934,7 +940,8 @@ describe('Pixi board interaction cancellation', () => {
           Math.min(descriptor.bounds.width, descriptor.bounds.height) * 0.1,
         ]);
         expect(view.text.text).toBe('');
-        expect(view.text.style.fill).toBe(0x111111);
+        // Invisible glyph fill; unified with the DOM renderer's black.
+        expect(view.text.style.fill).toBe(0x000000);
         expect(view.text.style.fontSize).toBe(10);
         expect(view.text.style.fontWeight).toBe('normal');
         expect(view.text.visible).toBe(false);

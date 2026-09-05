@@ -1,4 +1,9 @@
-import { BoardDragController } from '@ptcgsim/renderer-contract';
+import {
+  BoardDragController,
+  isLegacyMarkerPresentation,
+  legacyMarkerAppearance,
+  legacyMarkerCssColor,
+} from '@ptcgsim/renderer-contract';
 import type {
   BoardPointerInput,
   BoardPreferences,
@@ -207,45 +212,8 @@ const MarkerNode = memo(function MarkerNode({
 }: {
   readonly marker: MarkerSceneNode;
 }) {
-  const legacy =
-    marker.presentation === 'legacyActiveQ0' ||
-    marker.presentation === 'legacyBenchQ0';
-  const legacyConditionPalette = (() => {
-    switch (marker.value.toUpperCase()) {
-      case 'P':
-        return { background: 'rgb(0, 128, 0)', color: 'rgb(255, 255, 255)' };
-      case 'B':
-        return { background: 'rgb(255, 0, 0)', color: 'rgb(255, 255, 255)' };
-      case 'A':
-        return { background: 'rgb(0, 0, 255)', color: 'rgb(255, 255, 255)' };
-      case 'PA':
-        return { background: 'rgb(255, 255, 0)', color: 'rgb(0, 0, 0)' };
-      case 'C':
-        return { background: 'rgb(128, 0, 128)', color: 'rgb(255, 255, 255)' };
-      default:
-        return { background: 'rgb(255, 255, 255)', color: 'rgb(0, 0, 0)' };
-    }
-  })();
-  const legacyBackground =
-    marker.kind === 'damage'
-      ? 'rgb(255, 98, 0)'
-      : marker.kind === 'specialCondition'
-        ? legacyConditionPalette.background
-        : marker.side === 'local'
-          ? 'rgba(59, 141, 173, 0.708)'
-          : 'rgba(255, 60, 0, 0.392)';
-  const legacyColor =
-    marker.kind === 'damage'
-      ? 'rgb(255, 255, 255)'
-      : marker.kind === 'specialCondition'
-        ? legacyConditionPalette.color
-        : 'rgb(0, 0, 0)';
-  const legacyFontSize =
-    marker.kind === 'damage'
-      ? marker.bounds.width / 2
-      : marker.kind === 'specialCondition'
-        ? marker.bounds.width * 0.75
-        : undefined;
+  const legacy = isLegacyMarkerPresentation(marker.presentation);
+  const appearance = legacy ? legacyMarkerAppearance(marker) : null;
   return (
     <div
       className={`ptcgsim-marker ptcgsim-marker-${marker.kind}`}
@@ -258,10 +226,10 @@ const MarkerNode = memo(function MarkerNode({
           ? {
               ...absoluteRect(marker.bounds, marker.zIndex),
               display: 'block',
-              borderRadius: marker.kind === 'abilityUsed' ? '10%' : '50%',
-              background: legacyBackground,
-              color: legacyColor,
-              fontSize: legacyFontSize,
+              borderRadius: appearance?.shape === 'tab' ? '10%' : '50%',
+              background: legacyMarkerCssColor(appearance!.fill),
+              color: legacyMarkerCssColor(appearance!.text),
+              fontSize: appearance!.fontSizePx,
               lineHeight:
                 marker.kind === 'abilityUsed'
                   ? `${marker.bounds.width / 3}px`
@@ -282,7 +250,7 @@ const MarkerNode = memo(function MarkerNode({
             }
       }
     >
-      {legacy && marker.kind === 'abilityUsed' ? '' : marker.value}
+      {appearance ? appearance.label : marker.value}
     </div>
   );
 });
