@@ -53,6 +53,7 @@ export interface ReactDomProtectedInputFixture {
   readonly opponentPlayerId: string;
   readonly sourceCardId: string;
   readonly sourceZoneId: string;
+  readonly stadiumCardId: string;
   readonly ownBoardZoneId: string;
   readonly ownDeckCardId: string;
   readonly opponentDeckCardId: string;
@@ -389,13 +390,15 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
   const ownPrizeCard = ownPrizeCards?.at(-1);
   const opponentPrizeCard = opponentPrizeCards?.at(-1);
   const opponentHandCard = opponentHandCards?.at(-1);
+  const stadiumCard = view.zones['zone:shared:stadium']?.cards[0];
   if (
     !ownPrizeCards ||
     !opponentPrizeCards ||
     !opponentHandCards ||
     !ownPrizeCard ||
     !opponentPrizeCard ||
-    !opponentHandCard
+    !opponentHandCard ||
+    !stadiumCard
   ) {
     runtime.dispose();
     host.remove();
@@ -406,6 +409,7 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
     opponentPlayerId: secondPlayerId,
     sourceCardId: String(sourceCard.id),
     sourceZoneId,
+    stadiumCardId: String(stadiumCard.id),
     ownBoardZoneId,
     ownDeckCardId: String(ownDeckCard.id),
     opponentDeckCardId: String(opponentDeckCard.id),

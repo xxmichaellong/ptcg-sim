@@ -288,6 +288,54 @@ describe('client protocol ingress', () => {
     expect(missingSource.ok).toBe(false);
   });
 
+  it('requires explicit source and incumbent preconditions for stadium placement', () => {
+    for (const expectedStadiumCardId of [null, 'stadium-card-alias']) {
+      const result = parseClientFrame(
+        JSON.stringify({
+          type: 'Command',
+          protocolVersion: PROTOCOL_VERSION,
+          sessionId: 'session',
+          clientSequence: 1,
+          commandId: 'stadium-command',
+          lastSeenRevision: 0,
+          command: {
+            type: 'MoveCardToStadium',
+            cardId: 'selected-card-alias',
+            expectedSourceId: 'source-zone',
+            expectedStadiumCardId,
+          },
+        })
+      );
+      expect(result.ok).toBe(true);
+    }
+
+    for (const command of [
+      {
+        type: 'MoveCardToStadium',
+        cardId: 'selected-card-alias',
+        expectedStadiumCardId: null,
+      },
+      {
+        type: 'MoveCardToStadium',
+        cardId: 'selected-card-alias',
+        expectedSourceId: 'source-zone',
+      },
+    ]) {
+      const result = parseClientFrame(
+        JSON.stringify({
+          type: 'Command',
+          protocolVersion: PROTOCOL_VERSION,
+          sessionId: 'session',
+          clientSequence: 1,
+          commandId: 'stadium-command',
+          lastSeenRevision: 0,
+          command,
+        })
+      );
+      expect(result.ok).toBe(false);
+    }
+  });
+
   it('accepts bounded stack-state targets and rejects malformed values', () => {
     const parseCommand = (command: unknown) =>
       parseClientFrame(

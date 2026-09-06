@@ -5,6 +5,7 @@ interface ProtectedInputFixture {
   readonly opponentPlayerId: string;
   readonly sourceCardId: string;
   readonly sourceZoneId: string;
+  readonly stadiumCardId: string;
   readonly ownBoardZoneId: string;
   readonly ownDeckCardId: string;
   readonly opponentDeckCardId: string;
@@ -1606,6 +1607,22 @@ test('selected-card marker, category, visibility, deck, zone, and play shortcuts
       },
       retained: false,
     },
+    {
+      key: 'KeyG',
+      card: sourceCard,
+      cardId: fixture.sourceCardId,
+      request: {
+        action: 'moveCardToStadium',
+        cardId: fixture.sourceCardId,
+      },
+      command: {
+        type: 'MoveCardToStadium',
+        cardId: fixture.sourceCardId,
+        expectedSourceId: fixture.sourceZoneId,
+        expectedStadiumCardId: fixture.stadiumCardId,
+      },
+      retained: false,
+    },
   ] as const;
 
   for (const [index, shortcut] of cases.entries()) {
@@ -1646,6 +1663,7 @@ test('selected-card marker, category, visibility, deck, zone, and play shortcuts
   await page.keyboard.press('Digit4');
   await page.keyboard.press('KeyH');
   await page.keyboard.press('KeyA');
+  await page.keyboard.press('KeyG');
   const suppressed = await evidence(page);
   expect(suppressed.submissions).toEqual([]);
   expect(suppressed.shortcutActions).toEqual([]);

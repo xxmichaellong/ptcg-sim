@@ -117,6 +117,12 @@ export const WireGameCommandSchema = v.variant('type', [
     destinationIndex: v.optional(NonNegativeIntegerSchema),
   }),
   v.object({
+    type: v.literal('MoveCardToStadium'),
+    cardId: IdentifierSchema,
+    expectedSourceId: IdentifierSchema,
+    expectedStadiumCardId: v.nullable(IdentifierSchema),
+  }),
+  v.object({
     type: v.literal('MoveCardToPlay'),
     cardId: IdentifierSchema,
     expectedSourceZoneId: IdentifierSchema,

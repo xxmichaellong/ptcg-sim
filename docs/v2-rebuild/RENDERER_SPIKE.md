@@ -1197,9 +1197,29 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     the selected hand card to bench while preserving active, with one outer
     `moveCardBundle` action/export record and selection cleanup. The candidate
     proves both exact commands after the prior twenty continuous shortcuts and
-    editable input stays silent. Stadium and prize keys remain separate. No
-    protocol/domain/authority schema, visible control, route, layout, styling,
-    UI, or UX changes.
+    editable input stays silent. At this checkpoint, stadium and prize keys
+    remain separate. No protocol/domain/authority schema, visible control,
+    route, layout, styling, UI, or UX changes.
+69. Non-Alt `G` now maps selected cards through a dedicated stadium-placement
+    request. A shared recipient-view locator removes the duplicated source scan
+    from the generic-zone and deck-relative resolvers and classifies zone,
+    stack, inspection, and staged sources consistently. The new
+    `MoveCardToStadium` wire command carries the selected opaque handle, exact
+    source, and current stadium occupant's opaque handle or explicit `null`.
+    Authority resolves both aliases, derives board-side ownership, and applies
+    opponent-public policy. One domain revision first sends any incumbent to
+    its immutable owner's discard, then moves the selected zone card, top
+    evolution, attachment, viewer-owned inspected card, or staged card into the
+    singleton stadium. Lower evolutions, foreign work areas, stale source or
+    incumbent state, malformed multi-card stadium views, and same-stadium no-
+    ops fail closed. The generated authority registry now exhaustively covers
+    all 49 wire variants. Three fresh real-v1 Chromium pages prove empty, self-
+    incumbent, and opponent-incumbent replacement with one outer
+    `moveCardBundle`, exact live/export payloads, correct discard ownership,
+    selection cleanup, asset service, and no page errors. Candidate Chromium
+    proves the exact command after the prior twenty-two continuous shortcuts
+    and editable input remains silent. No visible control, label, key reference,
+    route, layout, styling, UI, or UX changes; prize placement remains separate.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

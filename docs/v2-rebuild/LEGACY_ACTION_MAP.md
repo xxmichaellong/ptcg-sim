@@ -21,26 +21,26 @@ a hard-to-find behavior. Proposed names are not final APIs.
 
 ## Card movement, inspection, and zone batches
 
-| v1 action                   | Proposed v2 responsibility                                                                                                 | Critical characterization                                                                                      |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `draw`                      | `DrawCards` using authority-resolved deck top                                                                              | Count validation/clamp, empty/short deck, hidden identities, message grammar                                   |
-| `moveCardBundle`            | Intent resolves to `MoveCard`, `MoveStack`, `AttachCard`, `EvolveCard`, `ReplaceStadium`, or active/bench swap event batch | Every source/destination, target, cover, stack/work-area/counter/face/category effect and message              |
-| `shuffleIntoDeck`           | Atomic `ShuffleCardIntoDeck`                                                                                               | Source removal/stack policy, full authority permutation, concealment generation                                |
-| `moveToDeckTop`             | `MoveCardToDeckTop`                                                                                                        | v1 index-zero top convention, visibility clearing, stack policy                                                |
-| `moveToDeckBottom`          | `MoveCardToDeckBottom`                                                                                                     | v1 last-index bottom convention, visibility clearing, stack policy                                             |
-| `switchWithDeckTop`         | Atomic `SwapCardWithDeckTop`                                                                                               | Empty/one-card deck, original destination, concealment, message                                                |
-| `viewDeck`                  | `ExtractDeckCardsForInspection`                                                                                            | Top/bottom selection, count clamp, target's deck, inspection viewer, ordered holding work area                 |
-| `shuffleAll`                | `ResolveStagedCards(shuffleIntoDeck)` or `ResolveInspectionCards(shuffleIntoDeck)`                                         | Supported sources (deck/discard/view/detached), messages, popup close, no-op                                   |
-| `shuffleBottom`             | `ResolveStagedCards(shuffleToDeckBottom)` or `ResolveInspectionCards(shuffleToDeckBottom)`                                 | Shuffle only selected source cards, bottom order relative to existing deck, visibility generation              |
-| `discardAll`                | `ResolveStagedCards(discard)` or `ResolveInspectionCards(discard)`                                                         | Detached/viewed source semantics, order, card category reset, message                                          |
-| `lostZoneAll`               | `ResolveStagedCards(lostZone)` or `ResolveInspectionCards(lostZone)`                                                       | Same dimensions as discard, label/message differences                                                          |
-| `handAll`                   | `ResolveStagedCards(hand)` or `ResolveInspectionCards(hand)`                                                               | Hidden owner view, opponent projection, order, message                                                         |
-| `leaveAll`                  | `RestoreStagedStack`                                                                                                       | Reconstruct evolution order and attachments into active/bench, selected destination, marker/rotation semantics |
-| `discardAndDraw`            | Atomic `DiscardHandAndDraw`                                                                                                | Zero count, clamps, order, hidden data, message                                                                |
-| `shuffleAndDraw`            | Atomic `ShuffleHandIntoDeckAndDraw`                                                                                        | Authority permutation, requested count, empty/short cases, concealment handles                                 |
-| `shuffleBottomAndDraw`      | Atomic `PutHandOnDeckBottomAndDraw`                                                                                        | Which subset is shuffled, bottom/top convention, draw after placement                                          |
-| `shufflePrizesToDeckBottom` | Atomic `MovePrizesToDeckBottom`                                                                                            | Prize ordering/randomization, concealment, empty prizes                                                        |
-| `shuffleZone`               | `ShuffleZone` resolved permutation event                                                                                   | Every allowed zone, deterministic legacy indices, new handle generation, safe timeline                         |
+| v1 action                   | Proposed v2 responsibility                                                                                                    | Critical characterization                                                                                      |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `draw`                      | `DrawCards` using authority-resolved deck top                                                                                 | Count validation/clamp, empty/short deck, hidden identities, message grammar                                   |
+| `moveCardBundle`            | Intent resolves to `MoveCard`, `MoveStack`, `AttachCard`, `EvolveCard`, `MoveCardToStadium`, or active/bench swap event batch | Every source/destination, target, cover, stack/work-area/counter/face/category effect and message              |
+| `shuffleIntoDeck`           | Atomic `ShuffleCardIntoDeck`                                                                                                  | Source removal/stack policy, full authority permutation, concealment generation                                |
+| `moveToDeckTop`             | `MoveCardToDeckTop`                                                                                                           | v1 index-zero top convention, visibility clearing, stack policy                                                |
+| `moveToDeckBottom`          | `MoveCardToDeckBottom`                                                                                                        | v1 last-index bottom convention, visibility clearing, stack policy                                             |
+| `switchWithDeckTop`         | Atomic `SwapCardWithDeckTop`                                                                                                  | Empty/one-card deck, original destination, concealment, message                                                |
+| `viewDeck`                  | `ExtractDeckCardsForInspection`                                                                                               | Top/bottom selection, count clamp, target's deck, inspection viewer, ordered holding work area                 |
+| `shuffleAll`                | `ResolveStagedCards(shuffleIntoDeck)` or `ResolveInspectionCards(shuffleIntoDeck)`                                            | Supported sources (deck/discard/view/detached), messages, popup close, no-op                                   |
+| `shuffleBottom`             | `ResolveStagedCards(shuffleToDeckBottom)` or `ResolveInspectionCards(shuffleToDeckBottom)`                                    | Shuffle only selected source cards, bottom order relative to existing deck, visibility generation              |
+| `discardAll`                | `ResolveStagedCards(discard)` or `ResolveInspectionCards(discard)`                                                            | Detached/viewed source semantics, order, card category reset, message                                          |
+| `lostZoneAll`               | `ResolveStagedCards(lostZone)` or `ResolveInspectionCards(lostZone)`                                                          | Same dimensions as discard, label/message differences                                                          |
+| `handAll`                   | `ResolveStagedCards(hand)` or `ResolveInspectionCards(hand)`                                                                  | Hidden owner view, opponent projection, order, message                                                         |
+| `leaveAll`                  | `RestoreStagedStack`                                                                                                          | Reconstruct evolution order and attachments into active/bench, selected destination, marker/rotation semantics |
+| `discardAndDraw`            | Atomic `DiscardHandAndDraw`                                                                                                   | Zero count, clamps, order, hidden data, message                                                                |
+| `shuffleAndDraw`            | Atomic `ShuffleHandIntoDeckAndDraw`                                                                                           | Authority permutation, requested count, empty/short cases, concealment handles                                 |
+| `shuffleBottomAndDraw`      | Atomic `PutHandOnDeckBottomAndDraw`                                                                                           | Which subset is shuffled, bottom/top convention, draw after placement                                          |
+| `shufflePrizesToDeckBottom` | Atomic `MovePrizesToDeckBottom`                                                                                               | Prize ordering/randomization, concealment, empty prizes                                                        |
+| `shuffleZone`               | `ShuffleZone` resolved permutation event                                                                                      | Every allowed zone, deterministic legacy indices, new handle generation, safe timeline                         |
 
 ## Markers and card/stack state
 
@@ -863,7 +863,8 @@ Alt-`E`/`T`/`P` changes category, `C` toggles private card inspection,
 `Z`/Alt-`Z` requests public hide/reveal, and
 ArrowUp/ArrowDown/ArrowRight/`S` moves to deck top/bottom, swaps with deck top,
 or shuffles into the deck. `H`/`D`/`L`/Space moves to the current board-side
-hand/discard/lost zone/loose board, and `A`/`B` places on active/bench. The
+hand/discard/lost zone/loose board, `A`/`B` places on active/bench, and `G`
+replaces the shared stadium. The
 source's missing-marker rules remain exact:
 Alt-digit creates the positive damage value and Alt-`Y` creates `P` when no
 corresponding marker exists.
@@ -872,7 +873,8 @@ Raw DOM events never enter controller logic. The key/code/Alt mapper attaches
 the currently selected stable card ID, and the controller rechecks that exact
 identity on a ready live-player projection before reusing the bounded stack,
 annotation, inspection, public-visibility, deck-relative, or per-card
-zone-movement or play-placement resolver. Ability, category, accepted removal, and accepted move
+zone-movement, play-placement, or atomic stadium-placement resolver. Ability,
+category, accepted removal, and accepted move
 gestures clear selection as v1 does; additive damage, condition cycling, and visibility retain it. A `C` close
 is accepted only for a matching single-card grant, so it cannot accidentally close a whole-zone look;
 a normally known card has no grant to close. `Z` and Alt-`Z` carry explicit
@@ -880,7 +882,7 @@ false/true targets and duplicate values are no-ops. Forged, stale, unsupported,
 invalid, replay, and post-dismissal requests cannot submit. The bridge ignores
 unselected, composing, already-consumed, input, textarea, select, table-cell,
 contenteditable, textbox-role, and legacy marker/tab targets. Native Chromium
-proves all twenty-two exact commands and zero traffic from an editable target
+proves all twenty-three exact commands and zero traffic from an editable target
 without adding a visible control or enabling the production route. A separate
 real-v1 Chromium measurement pins the original local `C`/Alt-`C` source swap
 and `Z`/Alt-`Z` face/public flags behind the deny-by-default network boundary.
@@ -893,15 +895,26 @@ A further four-page runtime measurement pins exact `moveCardBundle` hand,
 discard, lost-zone, and board payloads, destination arrays, selection cleanup,
 asset service, and export owner rewriting. V2 shares one source-specific zone
 resolver with the existing context-menu board move, preserves stale/work-area
-preconditions, and leaves active/bench, stadium, and prizes outside this bounded
-group.
+preconditions, and leaves active/bench, stadium, and prizes outside that bounded
+generic-zone group.
 A two-page runtime measurement pins `A` active replacement and `B` bench
 placement from hand, including arrays, the single outer `moveCardBundle`
 payload, selection cleanup, incumbent-active movement, asset service, and
 export owner rewriting. The protected resolver emits `MoveCardToPlay`,
 `MovePlayStack`, or `RestoreStagedStack` with exact source and board-order
 preconditions; attachments, lower evolutions, inspections, invalid staged work,
-and active no-ops fail closed. Stadium and prizes remain separate.
+and active no-ops fail closed.
+Three additional fresh pages pin `G` against an empty stadium, a self-owned
+incumbent, and an opponent-owned incumbent. V1 emits one outer
+`moveCardBundle`, sends the incumbent to its card owner's discard internally,
+installs the selected card, and clears selection. V2 makes that composite
+transition explicit as `MoveCardToStadium`: the wire payload contains exact
+recipient-safe source and incumbent-or-null preconditions, authority resolves
+both opaque aliases and derives source ownership, and one domain revision emits
+the discard event before the selected-card departure. Zone, top evolution,
+attachment, viewer-owned inspection, and staged sources are supported; stale,
+lower-evolution, foreign-work-area, multi-card-stadium, and same-stadium inputs
+fail closed. Prize placement remains separate.
 
 ### Implemented authority-random face-down subset
 

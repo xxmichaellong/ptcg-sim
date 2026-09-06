@@ -184,7 +184,10 @@ type SourceRelativeCardCommand =
       GameCommand,
       {
         readonly type:
-          'ChangeCardCategory' | 'SetPublicReveal' | 'BeginCardInspection';
+          | 'MoveCardToStadium'
+          | 'ChangeCardCategory'
+          | 'SetPublicReveal'
+          | 'BeginCardInspection';
       }
     >;
 
@@ -439,6 +442,68 @@ const decideCardDepartureToZone = (
       });
     }
   }
+};
+
+const decideMoveCardToStadium = (
+  state: MatchState,
+  command: Extract<GameCommand, { readonly type: 'MoveCardToStadium' }>,
+  context: CommandContext
+): CommandDecision => {
+  const source = resolveCardActionSource(state, command);
+  if (!source.accepted) return source;
+  const stadium = state.zones[stadiumZoneId()];
+  if (!stadium || stadium.kind !== 'stadium') {
+    return reject('not_found', 'Shared stadium zone does not exist');
+  }
+  const incumbentCardId = stadium.cardIds[0] ?? null;
+  if (
+    stadium.cardIds.length > 1 ||
+    incumbentCardId !== command.expectedStadiumCardId
+  ) {
+    return reject('stale_reference', 'Stadium occupant changed');
+  }
+  if (
+    source.location.kind === 'zone' &&
+    source.location.zoneId === stadium.id
+  ) {
+    return reject('invalid_command', 'Card is already in the stadium');
+  }
+
+  let displacement: DomainEvent | null = null;
+  if (incumbentCardId) {
+    const incumbent = state.cards[incumbentCardId];
+    if (!incumbent) {
+      return reject('precondition_failed', 'Stadium card is missing');
+    }
+    const discard = state.zones[playerZoneId(incumbent.ownerId, 'discard')];
+    if (!discard || discard.kind !== 'discard') {
+      return reject('not_found', 'Stadium owner discard does not exist');
+    }
+    displacement = {
+      type: 'CardMoved',
+      cardId: incumbent.id,
+      expectedSourceZoneId: stadium.id,
+      destinationZoneId: discard.id,
+      destinationIndex: discard.cardIds.length,
+      concealIdentity: false,
+    };
+  }
+
+  const departure = decideCardDepartureToZone(
+    state,
+    source,
+    stadium,
+    0,
+    context,
+    false
+  );
+  if (!departure.accepted) return departure;
+  if (!displacement) return departure;
+
+  return {
+    accepted: true,
+    events: [displacement, ...departure.events],
+  };
 };
 
 const decideMoveCardToDeckEdge = (
@@ -1356,6 +1421,8 @@ export const decideCommand = (
     case 'MoveCardToDeckTop':
     case 'MoveCardToDeckBottom':
       return decideMoveCardToDeckEdge(state, command, context);
+    case 'MoveCardToStadium':
+      return decideMoveCardToStadium(state, command, context);
     case 'ShuffleCardIntoDeck':
       return decideShuffleCardIntoDeck(state, command, context);
     case 'ChangeCardCategory':

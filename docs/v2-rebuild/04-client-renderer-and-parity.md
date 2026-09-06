@@ -1169,11 +1169,11 @@ schemas.
 The selected-card marker/category/visibility/movement bridge is likewise
 route-owned. It maps digit/Alt-digit/`0`, `Y`/Alt-`Y`, `W`,
 Alt-`E`/`T`/`P`, `C`, `Z`/Alt-`Z`, ArrowUp/ArrowDown/ArrowRight, `S`,
-`H`/`D`/`L`/Space, and `A`/`B` key/code pairs to one typed request carrying the
+`H`/`D`/`L`/Space, `A`/`B`, and `G` key/code pairs to one typed request carrying the
 selected stable card ID. The controller rechecks selection, ready/live-player policy,
 and current recipient-safe membership, then delegates to the existing bounded
 stack, annotation, private-inspection, public-visibility, deck-relative,
-per-card zone-movement, or play-placement resolver. It
+per-card zone-movement, play-placement, or atomic stadium-placement resolver. It
 preserves v1's immediate marker/category selection cleanup and retains
 selection for all three visibility gestures. `C` opens one private inspection
 only for a concealed card or closes one matching single-card grant; it does not
@@ -1193,8 +1193,9 @@ The next four non-Alt moves send the card to its current board-side hand,
 discard, lost zone, or loose board. They share one resolver with the existing
 context-menu `to Board` path, retain stable source/work-area preconditions,
 reject lower evolutions and same-zone requests, and dismiss selection only
-after acceptance. Active/bench, stadium, and prize keys remain separate because
-they require placement, singleton replacement, or concealment policy.
+after acceptance. At this generic-zone boundary, active/bench, stadium, and
+prize keys remain separate because they require placement, singleton
+replacement, or concealment policy.
 `A` and `B` now cross a separate closed active/bench resolver. Zone cards emit
 `MoveCardToPlay`; eligible top cards move a whole stack with exact board-order
 preconditions; a viewer-owned staged top restores atomically. Real v1 active
@@ -1202,6 +1203,19 @@ replacement pushes the incumbent active to bench inside one outer
 `moveCardBundle`; v2's active placement preserves that transition through the
 domain command. Attachments, lower evolutions, inspections, foreign or partial
 staged work, stale boards, and active-to-active no-ops fail closed.
+`G` now crosses its own singleton-replacement boundary. The client locates the
+selected card through the same shared recipient-view source classifier used by
+the generic-zone and deck-relative paths, then sends `MoveCardToStadium` with
+the exact source and the current stadium card's opaque handle or explicit
+`null`. Authority resolves both handles and rechecks policy and source
+ownership. The domain discards an incumbent to its immutable owner's discard
+before installing the selected card in the same event batch and revision. Zone
+cards, top evolution cards, attachments, and viewer-owned inspection or staged
+cards are supported; lower evolutions, foreign work areas, malformed multi-card
+stadium views, stale incumbents, and already-stadium cards fail closed. Three
+fresh v1 pages prove empty, self-owned, and opponent-owned replacement with one
+outer `moveCardBundle` action. Prize placement remains a separate concealment
+slice.
 Zone sort
 now has a deliberately narrower owner: controlled state inside the mounted zone
 browser. It sorts a copy by recipient-safe scene label, keeps equal labels in

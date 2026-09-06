@@ -115,13 +115,19 @@ the existing context-menu board move; accepted requests dismiss selection and
 retain exact source and work-area preconditions. `A`/`B` delegate to a closed
 active/bench placement resolver using existing zone-to-play, whole-stack, or
 staged-restore commands; v1 incumbent-active displacement stays one atomic v2
-transition. Local zone sorting is
+transition. `G` now delegates to an atomic singleton stadium resolver. The wire
+pins both source and recipient-opaque incumbent-or-null state, authority derives
+canonical ownership, and one domain batch discards the incumbent to its
+immutable owner's discard before installing the selected card. The deck,
+generic-zone, and stadium paths share one view-card source locator; stale,
+lower-evolution, foreign-work-area, malformed-stadium, and same-stadium paths
+fail closed. Local zone sorting is
 controlled by the mounted zone browser:
 it derives a stable copy from disclosed labels and never enters the controller
 or mutates its projection; forged requests still fail closed as `local_only`.
 Native Chromium pins exact damage and condition edit/removal plus ability-marker
 commands, all six count prompts/commands, all three category choices, all five
-move choices, all twenty-two selected-card shortcut commands, and reversible
+move choices, all twenty-three selected-card shortcut commands, and reversible
 sorting with zero action/effect/command traffic.
 Replay-local prize/hand disclosure now uses an isolated solo-player-only
 projection. Its opaque catalog never enters the historical view, its three

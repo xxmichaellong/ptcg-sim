@@ -240,6 +240,25 @@ export const MODEL_COMMAND_GENERATORS = {
         }
       : undefined;
   },
+  MoveCardToStadium: (context) => {
+    const source = pickActorZoneCard(context, [
+      'hand',
+      'discard',
+      'board',
+      'lostZone',
+    ]);
+    const stadium = Object.values(context.view.zones).find(
+      (zone) => zone.kind === 'stadium'
+    );
+    return source && source.card.kind === 'known' && stadium
+      ? {
+          type: 'MoveCardToStadium',
+          cardId: source.card.id,
+          expectedSourceId: source.sourceId,
+          expectedStadiumCardId: stadium.cards[0]?.id ?? null,
+        }
+      : undefined;
+  },
   MoveCardToPlay: (context) => {
     const source = pickActorZoneCard(context, [
       'hand',

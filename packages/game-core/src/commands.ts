@@ -48,6 +48,13 @@ export type GameCommand =
       readonly destinationIndex?: number;
     }
   | {
+      readonly type: 'MoveCardToStadium';
+      readonly playerId: PlayerId;
+      readonly cardId: CardInstanceId;
+      readonly expectedSourceId: ZoneId | StackId | WorkAreaId;
+      readonly expectedStadiumCardId: CardInstanceId | null;
+    }
+  | {
       readonly type: 'MoveCardToPlay';
       readonly cardId: CardInstanceId;
       readonly expectedSourceZoneId: ZoneId;

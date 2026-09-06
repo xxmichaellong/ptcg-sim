@@ -436,6 +436,23 @@ the prior twenty continuous shortcuts and focused editable input remains
 silent. No protocol, domain, authority, route, label, layout, styling, UI, or
 UX surface changes.
 
+The protected stadium shortcut checkpoint covers non-Alt `G` without absorbing
+prize concealment policy. Three fresh real-v1 Chromium pages reconstruct a
+selected hand Stadium plus an empty, self-owned, or opponent-owned incumbent
+state. They pin the singleton array, correct owner's discard, selection cleanup,
+stadium orientation, one outer `moveCardBundle` live/export payload, asset
+service, and a clean page-error boundary. V2 adds one explicit
+`MoveCardToStadium` intent with exact source and recipient-opaque incumbent-or-
+null preconditions. Authority resolves both aliases and derives source
+ownership; one domain revision discards the incumbent before moving the
+selected card. The generic-zone, deck-relative, and stadium resolvers now share
+one recipient-view source locator. Zone, top-evolution, attachment, viewer-owned
+inspection, and staged sources are supported; lower evolutions, foreign work
+areas, stale or malformed stadiums, and same-stadium requests fail closed.
+Candidate Chromium proves the command after the prior twenty-two continuous
+shortcuts while focused editable input remains silent. No visible control,
+label, key reference, route, layout, styling, UI, or UX changes.
+
 The solo replay disclosure checkpoint closes the three replay exceptions pinned
 by `client/src/setup/general/replay-block.js`: prize reveal, prize look, and
 opponent-hand look. It preserves their exact source labels and show/cover

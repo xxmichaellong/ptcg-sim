@@ -126,12 +126,17 @@ describe('legacy board shortcut action resolver', () => {
       cardId,
       slot: 'bench',
     });
+    expect(key('G', 'KeyG')).toEqual({
+      action: 'moveCardToStadium',
+      cardId,
+    });
     expect(key('ArrowUp', 'ArrowUp', true)).toBeNull();
     expect(key('s', 'KeyS', true)).toBeNull();
     expect(key('h', 'KeyH', true)).toBeNull();
     expect(key(' ', 'Space', true)).toBeNull();
     expect(key('a', 'KeyA', true)).toBeNull();
     expect(key('b', 'KeyB', true)).toBeNull();
+    expect(key('g', 'KeyG', true)).toBeNull();
     expect(
       resolveLegacyBoardShortcutKey(
         {
@@ -198,6 +203,34 @@ describe('legacy board shortcut action resolver', () => {
         action: 'moveCardToPlay',
         cardId: active.evolutionCards.at(-1)!.id,
         slot: 'active',
+      })
+    ).toEqual({ ok: false, reason: 'no_op' });
+  });
+
+  it('reuses atomic stadium placement and dismisses accepted moves', () => {
+    const view = createRendererSpikeView();
+    const hand = view.zones['zone:spike-blue:hand']!;
+    const card = hand.cards[0]!;
+    const stadium = view.zones['zone:shared:stadium']!;
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'moveCardToStadium',
+        cardId: card.id,
+      })
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'MoveCardToStadium',
+        cardId: card.id,
+        expectedSourceId: hand.id,
+        expectedStadiumCardId: stadium.cards[0]!.id,
+      },
+      dismissSelection: true,
+    });
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'moveCardToStadium',
+        cardId: stadium.cards[0]!.id,
       })
     ).toEqual({ ok: false, reason: 'no_op' });
   });

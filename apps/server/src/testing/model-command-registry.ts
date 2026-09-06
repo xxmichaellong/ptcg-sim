@@ -37,6 +37,7 @@ export const MODEL_COMMAND_REGISTRY = {
   ResetPlayer: { coverage: 'generated', family: 'lifecycle' },
   SetupPlayer: { coverage: 'generated', family: 'lifecycle' },
   MoveCard: { coverage: 'generated', family: 'movement' },
+  MoveCardToStadium: { coverage: 'generated', family: 'movement' },
   MoveCardToPlay: { coverage: 'generated', family: 'movement' },
   MoveCardFromStack: { coverage: 'generated', family: 'stack-work-area' },
   MovePlayStack: { coverage: 'generated', family: 'movement' },

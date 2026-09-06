@@ -16,6 +16,7 @@ import {
   resolveCardZoneMoveAction,
   type CardZoneMoveDestination,
 } from './resolveCardZoneMoveAction.js';
+import { resolveCardStadiumMoveAction } from './resolveCardStadiumMoveAction.js';
 import {
   isDeckRelativeAction,
   resolveDeckRelativeCardAction,
@@ -63,7 +64,8 @@ export type LegacyBoardShortcutActionRequest =
       readonly action: 'moveCardToPlay';
       readonly cardId: ViewCardId;
       readonly slot: CardPlayMoveDestination;
-    };
+    }
+  | { readonly action: 'moveCardToStadium'; readonly cardId: ViewCardId };
 
 export type LegacyBoardShortcutActionRejectionReason =
   | 'not_player'
@@ -94,6 +96,7 @@ type ExistingActionResolution =
   | ReturnType<typeof resolveStackStateAction>
   | ReturnType<typeof resolveCardAnnotationAction>
   | ReturnType<typeof resolveCardPlayMoveAction>
+  | ReturnType<typeof resolveCardStadiumMoveAction>
   | ReturnType<typeof resolveCardZoneMoveAction>
   | ReturnType<typeof resolveDeckRelativeCardAction>
   | ReturnType<typeof resolveCardInspectionAction>
@@ -239,6 +242,11 @@ export const resolveLegacyBoardShortcutAction = (
         resolveCardPlayMoveAction(view, request.cardId, request.slot),
         true
       );
+    case 'moveCardToStadium':
+      return retainResolution(
+        resolveCardStadiumMoveAction(view, request.cardId),
+        true
+      );
   }
 };
 
@@ -345,6 +353,9 @@ export const resolveLegacyBoardShortcutKey = (
   }
   if (!altKey && matches(input, 'b', 'KeyB')) {
     return { action: 'moveCardToPlay', cardId, slot: 'bench' };
+  }
+  if (!altKey && matches(input, 'g', 'KeyG')) {
+    return { action: 'moveCardToStadium', cardId };
   }
   if (!altKey) return null;
   if (matches(input, 'e', 'KeyE')) {

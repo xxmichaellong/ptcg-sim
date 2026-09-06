@@ -8,6 +8,7 @@ import {
   cardSourceSnapshot,
   findCardLocation,
   playerZoneId,
+  stadiumZoneId,
   type GameCommand,
   type MatchState,
   type PlayerId,
@@ -431,6 +432,7 @@ export const resolveWireCommand = (
     case 'MoveCardToDeckTop':
     case 'MoveCardToDeckBottom':
     case 'ShuffleCardIntoDeck':
+    case 'MoveCardToStadium':
     case 'ChangeCardCategory':
     case 'SwapCardWithDeckTop': {
       const card = resolveCard(wire.cardId);
@@ -515,6 +517,33 @@ export const resolveWireCommand = (
             cardId: card.cardId,
             expectedSourceId,
             category: wire.category,
+          },
+        };
+      }
+      if (wire.type === 'MoveCardToStadium') {
+        const stadium = state.zones[stadiumZoneId()];
+        if (!stadium || stadium.kind !== 'stadium') {
+          return rejected('stale_reference');
+        }
+        const expectedStadiumCard = wire.expectedStadiumCardId
+          ? resolveCard(wire.expectedStadiumCardId)
+          : null;
+        if (
+          (wire.expectedStadiumCardId !== null && !expectedStadiumCard) ||
+          (stadium.cardIds[0] ?? null) !==
+            (expectedStadiumCard?.cardId ?? null) ||
+          stadium.cardIds.length > 1
+        ) {
+          return rejected('stale_reference');
+        }
+        return {
+          accepted: true,
+          command: {
+            type: 'MoveCardToStadium',
+            playerId: sourcePlayerId,
+            cardId: card.cardId,
+            expectedSourceId,
+            expectedStadiumCardId: expectedStadiumCard?.cardId ?? null,
           },
         };
       }
