@@ -1092,6 +1092,22 @@ passes 134 Playwright checks across 64 Chromium 151 browser files:
     Chromium pins all three commands at uninterrupted client sequences 12–14.
     The move-card submenu, keyboard marker shortcuts, and production route remain
     separate.
+62. The same route-owned context layer now completes the adjacent five-choice
+    move submenu without changing `Move card...`, its boundary, or its source-
+    ordered `to Board`, deck-top, deck-bottom, deck-switch, and deck-shuffle
+    rows. One closed union is revalidated at the resolver boundary. `to Board`
+    resolves the card owner's loose-board zone and emits the existing zone,
+    top-stack, inspection, or staged movement command; the four deck rows
+    delegate to the existing deck-relative resolver. Missing/forged values,
+    lower evolutions, foreign work areas, already-board cards, stale menu
+    identity, post-dismissal requests, empty decks, and deck edge no-ops submit
+    nothing. Category and move now share one nested hover/click/keyboard
+    implementation, including parent focus return, without changing either
+    menu's labels or paint. The real-v1 gate compares each move row plus submenu
+    dimensions, offsets, padding, separator, shadow, colors, and typography.
+    Native Chromium pins all five exact commands at uninterrupted client
+    sequences 15–19. The keyboard marker shortcuts and production route remain
+    separate.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -1267,8 +1283,8 @@ wiring:
   thresholds (source edge clamp/collision states, the isolated candidate
   resize-pointer path, and normal/flipped fullscreen viewport continuity are now
   covered);
-- complete move-card submenu context actions, replay-local
-  disclosure paint, source raster comparison for transformed stack/zone dialogs,
+- complete replay-local disclosure paint and source raster comparison for
+  transformed stack/zone dialogs,
   the full focus-trap/screen-reader audit, and reconnect snap-back beyond the
   current native Chromium overlay/input gate;
 - actual external card/image hosts, redirects, CORS failures, oversized/corrupt

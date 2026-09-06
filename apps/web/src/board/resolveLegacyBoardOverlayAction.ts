@@ -2,7 +2,11 @@ import type { MatchViewState, ViewCard, ViewCardId } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 
 import { resolveCardAnnotationAction } from './resolveCardAnnotationAction.js';
-import { resolvePrizeDeckBottomAction } from './resolveDeckRelativeAction.js';
+import {
+  resolveDeckRelativeCardAction,
+  resolvePrizeDeckBottomAction,
+  type DeckRelativeAction,
+} from './resolveDeckRelativeAction.js';
 import {
   resolveLegacyBoardCountAction,
   type LegacyBoardCountActionId,
@@ -60,10 +64,36 @@ export const isLegacyBoardCategoryChoice = (
   typeof value === 'string' &&
   (LEGACY_BOARD_CATEGORY_CHOICES as readonly string[]).includes(value);
 
+export const LEGACY_BOARD_MOVE_CHOICES = [
+  'board',
+  'deckTop',
+  'deckBottom',
+  'deckSwitch',
+  'deckShuffle',
+] as const;
+
+export type LegacyBoardMoveChoice = (typeof LEGACY_BOARD_MOVE_CHOICES)[number];
+
+export const isLegacyBoardMoveChoice = (
+  value: unknown
+): value is LegacyBoardMoveChoice =>
+  typeof value === 'string' &&
+  (LEGACY_BOARD_MOVE_CHOICES as readonly string[]).includes(value);
+
+const DECK_ACTION_BY_MOVE_CHOICE = {
+  deckTop: 'moveToTop',
+  deckBottom: 'moveToBottom',
+  deckSwitch: 'swapWithTop',
+  deckShuffle: 'shuffleIntoDeck',
+} as const satisfies Readonly<
+  Record<Exclude<LegacyBoardMoveChoice, 'board'>, DeckRelativeAction>
+>;
+
 type LegacyBoardContextActionWithoutInput = Exclude<
   LegacyBoardContextActionId,
   | 'setDamage'
   | 'setSpecialCondition'
+  | 'moveCard'
   | 'changeCardType'
   | LegacyBoardCountActionId
 >;
@@ -94,6 +124,13 @@ export type LegacyBoardOverlayActionRequest =
       readonly cardId: ViewCardId;
       /** Missing opens the editor; present submits its bounded text draft. */
       readonly value?: string;
+    }
+  | {
+      readonly kind: 'context';
+      readonly action: 'moveCard';
+      readonly cardId: ViewCardId;
+      /** Missing identifies the submenu parent; present submits its choice. */
+      readonly destination?: LegacyBoardMoveChoice;
     }
   | {
       readonly kind: 'context';
@@ -163,12 +200,15 @@ export type LegacyBoardOverlayActionRejectionReason =
   | 'stale_card'
   | 'stale_zone'
   | 'stale_player'
+  | 'unsupported_source'
   | 'unsupported_target'
   | 'unsupported_zone'
   | 'empty_zone'
   | 'empty_board'
   | 'empty_prizes'
   | 'empty_hand'
+  | 'no_deck'
+  | 'empty_deck'
   | 'no_prizes'
   | 'no_op'
   | 'invalid_value'
@@ -212,6 +252,10 @@ interface LocatedCard {
   readonly card: ViewCard;
   readonly zone?: ViewZone;
   readonly stack?: ViewStack;
+  readonly sourceId: string;
+  readonly sourcePlayerId: string;
+  readonly sourceKind: 'zone' | 'stack' | 'inspection' | 'staged';
+  readonly isLowerEvolution: boolean;
 }
 
 const locateCard = (
@@ -220,26 +264,73 @@ const locateCard = (
 ): LocatedCard | null => {
   for (const zone of Object.values(view.zones)) {
     const card = zone.cards.find((candidate) => candidate.id === cardId);
-    if (card) return { card, zone };
+    if (card) {
+      return {
+        card,
+        zone,
+        sourceId: zone.id,
+        sourcePlayerId: zone.ownerId ?? card.ownerId,
+        sourceKind: 'zone',
+        isLowerEvolution: false,
+      };
+    }
   }
   for (const stack of Object.values(view.stacks)) {
-    const card = [...stack.evolutionCards, ...stack.attachmentCards].find(
+    const evolutionIndex = stack.evolutionCards.findIndex(
       (candidate) => candidate.id === cardId
     );
-    if (card) return { card, stack };
+    if (evolutionIndex >= 0) {
+      return {
+        card: stack.evolutionCards[evolutionIndex]!,
+        stack,
+        sourceId: stack.id,
+        sourcePlayerId: stack.boardPlayerId,
+        sourceKind: 'stack',
+        isLowerEvolution: evolutionIndex < stack.evolutionCards.length - 1,
+      };
+    }
+    const attachment = stack.attachmentCards.find(
+      (candidate) => candidate.id === cardId
+    );
+    if (attachment) {
+      return {
+        card: attachment,
+        stack,
+        sourceId: stack.id,
+        sourcePlayerId: stack.boardPlayerId,
+        sourceKind: 'stack',
+        isLowerEvolution: false,
+      };
+    }
   }
-  for (const areas of Object.values(view.workAreas)) {
+  for (const [playerId, areas] of Object.entries(view.workAreas)) {
     const inspected = areas.inspection?.cards.find(
       (candidate) => candidate.id === cardId
     );
-    if (inspected) return { card: inspected };
+    if (inspected && areas.inspection) {
+      return {
+        card: inspected,
+        sourceId: areas.inspection.id,
+        sourcePlayerId: playerId,
+        sourceKind: 'inspection',
+        isLowerEvolution: false,
+      };
+    }
     const staged = areas.attachmentResolution
       ? [
           ...areas.attachmentResolution.evolutionCards,
           ...areas.attachmentResolution.attachmentCards,
         ].find((candidate) => candidate.id === cardId)
       : undefined;
-    if (staged) return { card: staged };
+    if (staged && areas.attachmentResolution) {
+      return {
+        card: staged,
+        sourceId: areas.attachmentResolution.id,
+        sourcePlayerId: playerId,
+        sourceKind: 'staged',
+        isLowerEvolution: false,
+      };
+    }
   }
   return null;
 };
@@ -251,6 +342,56 @@ const rejected = (
 const command = (
   value: WireGameCommand
 ): LegacyBoardOverlayActionResolution => ({ ok: true, command: value });
+
+const resolveMoveCardToBoard = (
+  view: MatchViewState,
+  located: LocatedCard
+): LegacyBoardOverlayActionResolution => {
+  const board = Object.values(view.zones).find(
+    (zone) => zone.kind === 'board' && zone.ownerId === located.sourcePlayerId
+  );
+  if (!board) return rejected('unsupported_target');
+  if (located.isLowerEvolution) return rejected('unsupported_source');
+  if (
+    (located.sourceKind === 'inspection' || located.sourceKind === 'staged') &&
+    (view.viewer.kind !== 'player' ||
+      located.sourcePlayerId !== view.viewer.playerId)
+  ) {
+    return rejected('unsupported_source');
+  }
+  switch (located.sourceKind) {
+    case 'zone':
+      return located.sourceId === board.id
+        ? rejected('no_op')
+        : command({
+            type: 'MoveCard',
+            cardId: located.card.id,
+            expectedSourceZoneId: located.sourceId,
+            destinationZoneId: board.id,
+          });
+    case 'stack':
+      return command({
+        type: 'MoveCardFromStack',
+        cardId: located.card.id,
+        expectedStackId: located.sourceId,
+        destinationZoneId: board.id,
+      });
+    case 'inspection':
+      return command({
+        type: 'MoveInspectedCard',
+        cardId: located.card.id,
+        expectedWorkAreaId: located.sourceId,
+        destinationZoneId: board.id,
+      });
+    case 'staged':
+      return command({
+        type: 'MoveStagedCard',
+        cardId: located.card.id,
+        expectedWorkAreaId: located.sourceId,
+        destinationZoneId: board.id,
+      });
+  }
+};
 
 export const parseLegacyDamageInput = (
   value: string
@@ -449,8 +590,23 @@ const resolveContextAction = (
       return zone?.kind === 'board' && zone.ownerId !== null
         ? resolveLooseBoardAction(view, zone.ownerId, 'lostZone')
         : rejected('unsupported_target');
-    case 'moveCard':
-      return rejected('requires_choice');
+    case 'moveCard': {
+      if (request.destination === undefined) return rejected('requires_choice');
+      if (!isLegacyBoardMoveChoice(request.destination)) {
+        return rejected('invalid_value');
+      }
+      if (request.destination === 'board') {
+        return resolveMoveCardToBoard(view, located);
+      }
+      const resolution = resolveDeckRelativeCardAction(
+        view,
+        request.cardId,
+        DECK_ACTION_BY_MOVE_CHOICE[request.destination]
+      );
+      return resolution.ok
+        ? command(resolution.command)
+        : rejected(resolution.reason);
+    }
     case 'revealCard':
       return resolvePublicCardVisibilityAction(
         view,
@@ -495,8 +651,8 @@ const resolveZoneAction = (
 };
 
 /**
- * Resolves only complete overlay workflows. Prompt-, submenu-, and paint-only
- * actions are typed rejections so no guessed default can become a command.
+ * Resolves complete overlay workflows and returns explicit local input/choice
+ * outcomes when a request is incomplete; no guessed value becomes a command.
  */
 export const resolveLegacyBoardOverlayAction = (
   view: MatchViewState,

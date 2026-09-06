@@ -1157,8 +1157,14 @@ draw/inspection require at least one, cancel submits nothing, and malformed
 Tool`, and `to Pokémon` submenu. Each row supplies one typed category to the
 same open-card identity check and stale-safe annotation resolver; missing or
 forged categories reject without submission, and valid choices emit one
-preconditioned `ChangeCardCategory`. Only the move destination remains an
-observable zero-command `requires_choice` action.
+preconditioned `ChangeCardCategory`. The adjacent `Move card...` parent now
+opens the exact five source rows. `to Board` selects the card owner's loose-board
+zone and emits the existing source-specific zone, stack, inspection, or staged
+move; deck top/bottom/switch/shuffle delegate to the existing deck-relative
+resolver. Missing/forged choices, lower evolutions, stale menu identity,
+already-board cards, and empty-deck swaps fail closed. Both nested menus share
+one hover/click/keyboard implementation and neither changes wire or domain
+schemas.
 Zone sort
 now has a deliberately narrower owner: controlled state inside the mounted zone
 browser. It sorts a copy by recipient-safe scene label, keeps equal labels in
@@ -1170,8 +1176,8 @@ this replaces v1's deck-data rank with a stable disclosed-label order instead
 of recreating its information leak. V1 replay permits three local disclosure
 actions—prize reveal, prize look, and opponent-hand look—but V2 intentionally
 keeps the replay context menu empty and rejects forged requests as `read_only`
-until it has an isolated replay-local disclosure projection. Move-card submenu
-composition, replay-local paint, source-raster parity for transformed
+until it has an isolated replay-local disclosure projection. Replay-local paint,
+source-raster parity for transformed
 stack/zone dialogs, a complete focus-trap and screen-reader audit, reconnect
 snap-back, production routing, and non-Chromium approval remain separate gates.
 

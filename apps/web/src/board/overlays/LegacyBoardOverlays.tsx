@@ -30,10 +30,12 @@ import type {
 import type {
   LegacyBoardCategoryChoice,
   LegacyBoardContextActionId,
+  LegacyBoardMoveChoice,
   LegacyBoardZoneActionId,
 } from '../resolveLegacyBoardOverlayAction.js';
 import {
   LEGACY_BOARD_CATEGORY_CHOICES,
+  LEGACY_BOARD_MOVE_CHOICES,
   parseLegacyDamageInput,
   parseLegacySpecialConditionInput,
 } from '../resolveLegacyBoardOverlayAction.js';
@@ -47,6 +49,7 @@ import './LegacyBoardOverlays.css';
 export type {
   LegacyBoardCategoryChoice,
   LegacyBoardContextActionId,
+  LegacyBoardMoveChoice,
   LegacyBoardZoneActionId,
 } from '../resolveLegacyBoardOverlayAction.js';
 
@@ -74,6 +77,10 @@ export interface LegacyBoardOverlayActions {
   readonly submitCategoryChoice: (
     cardId: ViewCardId,
     category: LegacyBoardCategoryChoice
+  ) => void;
+  readonly submitMoveChoice: (
+    cardId: ViewCardId,
+    destination: LegacyBoardMoveChoice
   ) => void;
 }
 
@@ -280,6 +287,134 @@ const moveMenuFocus = (
   event.preventDefault();
 };
 
+interface ContextSubmenuChoice<Value extends string> {
+  readonly value: Value;
+  readonly label: string;
+}
+
+const CATEGORY_SUBMENU_CHOICES: readonly ContextSubmenuChoice<LegacyBoardCategoryChoice>[] =
+  LEGACY_BOARD_CATEGORY_CHOICES.map((category) => ({
+    value: category,
+    label: category === 'Trainer' ? 'to Tool' : `to ${category}`,
+  }));
+
+const MOVE_CHOICE_LABELS = {
+  board: 'to Board',
+  deckTop: 'to Deck (top)',
+  deckBottom: 'to Deck (bottom)',
+  deckSwitch: 'to Deck (switch)',
+  deckShuffle: 'to Deck (shuffle)',
+} as const satisfies Readonly<Record<LegacyBoardMoveChoice, string>>;
+
+const MOVE_SUBMENU_CHOICES: readonly ContextSubmenuChoice<LegacyBoardMoveChoice>[] =
+  LEGACY_BOARD_MOVE_CHOICES.map((destination) => ({
+    value: destination,
+    label: MOVE_CHOICE_LABELS[destination],
+  }));
+
+const ContextSubmenu = <Value extends string>({
+  entry,
+  open,
+  ariaLabel,
+  choiceKind,
+  choices,
+  onOpenChange,
+  onSelect,
+}: {
+  readonly entry: Extract<ContextEntry, { readonly kind: 'action' }>;
+  readonly open: boolean;
+  readonly ariaLabel: string;
+  readonly choiceKind: 'category' | 'move';
+  readonly choices: readonly ContextSubmenuChoice<Value>[];
+  readonly onOpenChange: (open: boolean) => void;
+  readonly onSelect: (value: Value) => void;
+}) => {
+  const trigger = useRef<HTMLButtonElement>(null);
+  const submenu = useRef<HTMLUListElement>(null);
+  return (
+    <li
+      className={`has-submenu${entry.boundary ? ' is-boundary' : ''}`}
+      data-submenu-open={open ? 'true' : undefined}
+      role="none"
+      onMouseEnter={() => onOpenChange(true)}
+      onMouseLeave={() => onOpenChange(false)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          onOpenChange(false);
+        }
+      }}
+    >
+      <button
+        ref={trigger}
+        type="button"
+        role="menuitem"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        data-context-action={entry.action}
+        onClick={() => onOpenChange(true)}
+        onKeyDown={(event) => {
+          if (event.key !== 'ArrowRight') return;
+          event.preventDefault();
+          event.stopPropagation();
+          onOpenChange(true);
+          queueMicrotask(() => {
+            submenu.current
+              ?.querySelector<HTMLElement>('[role="menuitem"]')
+              ?.focus();
+          });
+        }}
+      >
+        {entry.label}
+      </button>
+      <ul
+        ref={submenu}
+        className="ptcgsim-legacy-card-sub-menu"
+        data-context-submenu={entry.action}
+        role="menu"
+        aria-label={ariaLabel}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape' || event.key === 'ArrowLeft') {
+            event.preventDefault();
+            event.stopPropagation();
+            onOpenChange(false);
+            trigger.current?.focus();
+          } else if (event.key === 'ArrowDown') {
+            event.stopPropagation();
+            moveMenuFocus(event, 'next', ':scope > li > [role="menuitem"]');
+          } else if (event.key === 'ArrowUp') {
+            event.stopPropagation();
+            moveMenuFocus(event, 'previous', ':scope > li > [role="menuitem"]');
+          } else if (event.key === 'Home') {
+            event.stopPropagation();
+            moveMenuFocus(event, 'first', ':scope > li > [role="menuitem"]');
+          } else if (event.key === 'End') {
+            event.stopPropagation();
+            moveMenuFocus(event, 'last', ':scope > li > [role="menuitem"]');
+          }
+        }}
+      >
+        {choices.map((choice) => (
+          <li key={choice.value} role="none">
+            <button
+              type="button"
+              role="menuitem"
+              data-category-choice={
+                choiceKind === 'category' ? choice.value : undefined
+              }
+              data-move-choice={
+                choiceKind === 'move' ? choice.value : undefined
+              }
+              onClick={() => onSelect(choice.value)}
+            >
+              {choice.label}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </li>
+  );
+};
+
 const visualCardBounds = (card: CardSceneNode) => {
   if (card.rotationQuarterTurns % 2 === 0) return card.bounds;
   const centerX = card.bounds.x + card.bounds.width / 2;
@@ -306,8 +441,9 @@ const ContextMenu = ({
   readonly actions: LegacyBoardOverlayActions;
 }) => {
   const container = useRef<HTMLDivElement>(null);
-  const categoryTrigger = useRef<HTMLButtonElement>(null);
-  const [categorySubmenuOpen, setCategorySubmenuOpen] = useState(false);
+  const [openSubmenu, setOpenSubmenu] = useState<
+    'changeCardType' | 'moveCard' | null
+  >(null);
   const dismiss = useCallback(() => actions.dismiss('context'), [actions]);
   const entries = useMemo(
     () => selectLegacyContextEntries(state, card),
@@ -315,7 +451,7 @@ const ContextMenu = ({
   );
   useFocusBoundary(container, '[role="menuitem"]', String(card.id));
   useOutsideDismiss(container, dismiss);
-  useEffect(() => setCategorySubmenuOpen(false), [card.id]);
+  useEffect(() => setOpenSubmenu(null), [card.id]);
   const bounds = anchorBounds ?? visualCardBounds(card);
   const width = 180;
   const preferredLeft = Math.max(
@@ -383,102 +519,38 @@ const ContextMenu = ({
               >
                 {entry.label}
               </li>
-            ) : entry.action === 'changeCardType' ? (
-              <li
+            ) : entry.action === 'moveCard' ? (
+              <ContextSubmenu
                 key={entry.id}
-                className="has-submenu"
-                data-submenu-open={categorySubmenuOpen ? 'true' : undefined}
-                role="none"
-                onMouseEnter={() => setCategorySubmenuOpen(true)}
-                onMouseLeave={() => setCategorySubmenuOpen(false)}
-                onBlur={(event) => {
-                  if (!event.currentTarget.contains(event.relatedTarget)) {
-                    setCategorySubmenuOpen(false);
-                  }
+                entry={entry}
+                open={openSubmenu === 'moveCard'}
+                ariaLabel="Move card"
+                choiceKind="move"
+                choices={MOVE_SUBMENU_CHOICES}
+                onOpenChange={(open) =>
+                  setOpenSubmenu(open ? 'moveCard' : null)
+                }
+                onSelect={(destination) => {
+                  actions.submitMoveChoice(card.id, destination);
+                  dismiss();
                 }}
-              >
-                <button
-                  ref={categoryTrigger}
-                  type="button"
-                  role="menuitem"
-                  aria-haspopup="menu"
-                  aria-expanded={categorySubmenuOpen}
-                  data-context-action={entry.action}
-                  onClick={() => setCategorySubmenuOpen(true)}
-                  onKeyDown={(event) => {
-                    if (event.key !== 'ArrowRight') return;
-                    event.preventDefault();
-                    event.stopPropagation();
-                    setCategorySubmenuOpen(true);
-                    queueMicrotask(() => {
-                      container.current
-                        ?.querySelector<HTMLElement>(
-                          '[data-category-choice="Energy"]'
-                        )
-                        ?.focus();
-                    });
-                  }}
-                >
-                  {entry.label}
-                </button>
-                <ul
-                  className="ptcgsim-legacy-card-sub-menu"
-                  role="menu"
-                  aria-label="Change card type"
-                  onKeyDown={(event) => {
-                    if (event.key === 'Escape' || event.key === 'ArrowLeft') {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      setCategorySubmenuOpen(false);
-                      categoryTrigger.current?.focus();
-                    } else if (event.key === 'ArrowDown') {
-                      event.stopPropagation();
-                      moveMenuFocus(
-                        event,
-                        'next',
-                        ':scope > li > [role="menuitem"]'
-                      );
-                    } else if (event.key === 'ArrowUp') {
-                      event.stopPropagation();
-                      moveMenuFocus(
-                        event,
-                        'previous',
-                        ':scope > li > [role="menuitem"]'
-                      );
-                    } else if (event.key === 'Home') {
-                      event.stopPropagation();
-                      moveMenuFocus(
-                        event,
-                        'first',
-                        ':scope > li > [role="menuitem"]'
-                      );
-                    } else if (event.key === 'End') {
-                      event.stopPropagation();
-                      moveMenuFocus(
-                        event,
-                        'last',
-                        ':scope > li > [role="menuitem"]'
-                      );
-                    }
-                  }}
-                >
-                  {LEGACY_BOARD_CATEGORY_CHOICES.map((category) => (
-                    <li key={category} role="none">
-                      <button
-                        type="button"
-                        role="menuitem"
-                        data-category-choice={category}
-                        onClick={() => {
-                          actions.submitCategoryChoice(card.id, category);
-                          dismiss();
-                        }}
-                      >
-                        {category === 'Trainer' ? 'to Tool' : `to ${category}`}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </li>
+              />
+            ) : entry.action === 'changeCardType' ? (
+              <ContextSubmenu
+                key={entry.id}
+                entry={entry}
+                open={openSubmenu === 'changeCardType'}
+                ariaLabel="Change card type"
+                choiceKind="category"
+                choices={CATEGORY_SUBMENU_CHOICES}
+                onOpenChange={(open) =>
+                  setOpenSubmenu(open ? 'changeCardType' : null)
+                }
+                onSelect={(category) => {
+                  actions.submitCategoryChoice(card.id, category);
+                  dismiss();
+                }}
+              />
             ) : (
               <li
                 key={entry.id}

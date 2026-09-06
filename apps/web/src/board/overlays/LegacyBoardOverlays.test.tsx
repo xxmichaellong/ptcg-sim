@@ -61,6 +61,7 @@ const actions = (): LegacyBoardOverlayActions => ({
   submitSpecialConditionInput: vi.fn(),
   submitCountInput: vi.fn(),
   submitCategoryChoice: vi.fn(),
+  submitMoveChoice: vi.fn(),
 });
 
 describe('legacy board overlays', () => {
@@ -228,7 +229,7 @@ describe('legacy board overlays', () => {
       '[data-context-action="changeCardType"]'
     )!;
     const submenu = host.querySelector<HTMLElement>(
-      '.ptcgsim-legacy-card-sub-menu'
+      '[data-context-submenu="changeCardType"]'
     )!;
     const choices = [
       ...submenu.querySelectorAll<HTMLButtonElement>('[data-category-choice]'),
@@ -297,6 +298,97 @@ describe('legacy board overlays', () => {
     expect(callbacks.submitCategoryChoice).toHaveBeenCalledExactlyOnceWith(
       card.id,
       'Trainer'
+    );
+    expect(callbacks.invokeContextAction).not.toHaveBeenCalled();
+    expect(callbacks.dismiss).toHaveBeenCalledExactlyOnceWith('context');
+  });
+
+  it('recreates the ordered move submenu and delegates one typed choice', async () => {
+    const card = cardIn(`:${firstPlayer}:hand`);
+    const callbacks = actions();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            overlays: {
+              contextMenuCardId: card.id,
+              preview: null,
+              input: null,
+            },
+          }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+
+    const trigger = host.querySelector<HTMLButtonElement>(
+      '[data-context-action="moveCard"]'
+    )!;
+    const submenu = host.querySelector<HTMLElement>(
+      '[data-context-submenu="moveCard"]'
+    )!;
+    const choices = [
+      ...submenu.querySelectorAll<HTMLButtonElement>('[data-move-choice]'),
+    ];
+    expect(trigger.parentElement?.classList.contains('is-boundary')).toBe(true);
+    expect(trigger.getAttribute('aria-haspopup')).toBe('menu');
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(choices.map((choice) => choice.textContent)).toEqual([
+      'to Board',
+      'to Deck (top)',
+      'to Deck (bottom)',
+      'to Deck (switch)',
+      'to Deck (shuffle)',
+    ]);
+    expect(choices.map((choice) => choice.dataset.moveChoice)).toEqual([
+      'board',
+      'deckTop',
+      'deckBottom',
+      'deckSwitch',
+      'deckShuffle',
+    ]);
+
+    await act(async () => {
+      trigger.focus();
+      trigger.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'ArrowRight',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+      await Promise.resolve();
+    });
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(document.activeElement).toBe(choices[0]);
+    await act(async () => {
+      choices[0]!.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'End',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(document.activeElement).toBe(choices[4]);
+    await act(async () => {
+      choices[4]!.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Escape',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(document.activeElement).toBe(trigger);
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+
+    await act(async () => trigger.click());
+    await act(async () => choices[3]!.click());
+    expect(callbacks.submitMoveChoice).toHaveBeenCalledExactlyOnceWith(
+      card.id,
+      'deckSwitch'
     );
     expect(callbacks.invokeContextAction).not.toHaveBeenCalled();
     expect(callbacks.dismiss).toHaveBeenCalledExactlyOnceWith('context');

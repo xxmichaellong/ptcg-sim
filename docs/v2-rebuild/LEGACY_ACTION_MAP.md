@@ -816,17 +816,21 @@ effect as a renderer drop, and `BoardSessionAdapter` repeats the live mode,
 request phase, session readiness, and player-role checks immediately before the
 real submitter.
 
-The unchanged menu still contains incomplete compound interactions. Damage,
+The unchanged menu's protected compound interactions are now complete. Damage,
 special-condition editing, all three hand-and-draw counts, direct draw, and
-top/bottom inspection are complete. Count actions install one descriptor bound
-to the exact menu action, card, and source zone, then invoke v1's native prompt
-text/default once. Complete integers clamp against current safe capacity and the
-200-card wire ceiling; hand actions permit zero, draw/inspection require one,
-own inspection is private, and accepted opponent inspection is public. Cancel
-submits nothing. Malformed prefixes such as v1's permissive `2cards`/`2.5`
-`parseInt` cases now show the source alert and remain local. Move-card and
-category controls still return `requires_choice` without a command, so the
-migration cannot invent a submenu selection. Zone sorting is now paint-only
+top/bottom inspection bind their input to the exact menu action, card, and
+source zone. Count inputs retain v1's native prompt text/default while complete
+integers clamp against current safe capacity and the 200-card wire ceiling;
+hand actions permit zero, draw/inspection require one, own inspection is
+private, and accepted opponent inspection is public. Cancel submits nothing.
+Malformed prefixes such as v1's permissive `2cards`/`2.5` `parseInt` cases show
+the source alert and remain local. Category and move parents still return
+`requires_choice` without a command, while their closed, source-ordered rows
+submit one typed value. Category reuses the stale-safe annotation resolver;
+move-to-board selects the card owner's loose-board zone and emits the existing
+source-specific command, while deck top/bottom/switch/shuffle reuse the deck-
+relative resolver. Forged values, stale targets, lower evolutions, no-op board
+moves, and invalid deck operations fail closed. Zone sorting is paint-only
 controlled state in the mounted browser: it sorts a copy by disclosed label,
 uses canonical scene order for equal labels, reverses immediately when
 unchecked, and never invokes the controller. A forged `sortZone` request still

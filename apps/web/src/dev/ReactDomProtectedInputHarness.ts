@@ -24,6 +24,7 @@ import {
   LegacyBoardOverlays,
   type LegacyBoardCategoryChoice,
   type LegacyBoardContextActionId,
+  type LegacyBoardMoveChoice,
   type LegacyBoardOverlayActions,
   type LegacyBoardZoneActionId,
 } from '../board/overlays/LegacyBoardOverlays.js';
@@ -45,6 +46,7 @@ export interface ReactDomProtectedInputFixture {
   readonly opponentPlayerId: string;
   readonly sourceCardId: string;
   readonly sourceZoneId: string;
+  readonly ownBoardZoneId: string;
   readonly ownDeckCardId: string;
   readonly opponentDeckCardId: string;
   readonly ownDeckCount: number;
@@ -78,6 +80,7 @@ export type ReactDomProtectedOverlayAction =
       readonly cardId: string;
       readonly value?: string;
       readonly category?: LegacyBoardCategoryChoice;
+      readonly destination?: LegacyBoardMoveChoice;
     }
   | {
       readonly kind: 'zone';
@@ -252,6 +255,7 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
     throw new Error('Protected-input harness did not install a board scene');
   }
   const sourceZoneId = `zone:${firstPlayerId}:hand`;
+  const ownBoardZoneId = `zone:${firstPlayerId}:board`;
   const sourceCard = scene.cards
     .filter((card) => card.parentId === sourceZoneId && card.interactive)
     .sort((left, right) => right.zIndex - left.zIndex)[0];
@@ -299,6 +303,7 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
     opponentPlayerId: secondPlayerId,
     sourceCardId: String(sourceCard.id),
     sourceZoneId,
+    ownBoardZoneId,
     ownDeckCardId: String(ownDeckCard.id),
     opponentDeckCardId: String(opponentDeckCard.id),
     ownDeckCount: view.zones[ownDeckZoneId]!.cards.length,
@@ -394,6 +399,20 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
         action: 'changeCardType',
         cardId,
         category,
+      });
+    },
+    submitMoveChoice: (cardId, destination) => {
+      overlayActions.push({
+        kind: 'context',
+        action: 'moveCard',
+        cardId: String(cardId),
+        destination,
+      });
+      runtime.emitLegacyOverlayAction({
+        kind: 'context',
+        action: 'moveCard',
+        cardId,
+        destination,
       });
     },
   };

@@ -721,6 +721,131 @@ describe('headless board session controller', () => {
     });
   });
 
+  it('binds each move submenu choice to the exact open card', () => {
+    let state = install();
+    const playerId =
+      state.view!.viewer.kind === 'player'
+        ? state.view!.viewer.playerId
+        : state.view!.playerOrder[0]!;
+    const hand = Object.values(state.view!.zones).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'hand'
+    )!;
+    const board = Object.values(state.view!.zones).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'board'
+    )!;
+    const cardId = hand.cards[0]!.id;
+    const wrongCardId = hand.cards[1]!.id;
+    state = apply(state, {
+      kind: 'RendererIntent',
+      intent: { kind: 'CardContextRequested', cardId },
+    }).state;
+
+    const missingChoice = apply(state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: { kind: 'context', action: 'moveCard', cardId },
+    });
+    expect(missingChoice.state).toBe(state);
+    expect(missingChoice.effects).toEqual([
+      {
+        kind: 'OverlayActionRejected',
+        request: { kind: 'context', action: 'moveCard', cardId },
+        reason: 'requires_choice',
+      },
+    ]);
+
+    const wrongCard = apply(state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: {
+        kind: 'context',
+        action: 'moveCard',
+        cardId: wrongCardId,
+        destination: 'board',
+      },
+    });
+    expect(wrongCard.state).toBe(state);
+    expect(wrongCard.effects).toEqual([
+      {
+        kind: 'OverlayActionRejected',
+        request: {
+          kind: 'context',
+          action: 'moveCard',
+          cardId: wrongCardId,
+          destination: 'board',
+        },
+        reason: 'stale_card',
+      },
+    ]);
+
+    const expected = {
+      board: {
+        type: 'MoveCard',
+        cardId,
+        expectedSourceZoneId: hand.id,
+        destinationZoneId: board.id,
+      },
+      deckTop: {
+        type: 'MoveCardToDeckTop',
+        cardId,
+        expectedSourceId: hand.id,
+      },
+      deckBottom: {
+        type: 'MoveCardToDeckBottom',
+        cardId,
+        expectedSourceId: hand.id,
+      },
+      deckSwitch: {
+        type: 'SwapCardWithDeckTop',
+        cardId,
+        expectedSourceId: hand.id,
+      },
+      deckShuffle: {
+        type: 'ShuffleCardIntoDeck',
+        cardId,
+        expectedSourceId: hand.id,
+      },
+    } as const;
+    for (const destination of [
+      'board',
+      'deckTop',
+      'deckBottom',
+      'deckSwitch',
+      'deckShuffle',
+    ] as const) {
+      const selected = apply(state, {
+        kind: 'LegacyOverlayActionRequested',
+        request: {
+          kind: 'context',
+          action: 'moveCard',
+          cardId,
+          destination,
+        },
+      });
+      expect(selected.state).toBe(state);
+      expect(selected.effects).toEqual([
+        { kind: 'SubmitCommand', command: expected[destination] },
+      ]);
+    }
+
+    const dismissed = apply(state, {
+      kind: 'DismissLocalPresentation',
+      scope: 'context',
+    }).state;
+    const afterDismissal = apply(dismissed, {
+      kind: 'LegacyOverlayActionRequested',
+      request: {
+        kind: 'context',
+        action: 'moveCard',
+        cardId,
+        destination: 'board',
+      },
+    });
+    expect(afterDismissal.state).toBe(dismissed);
+    expect(afterDismissal.effects[0]).toMatchObject({
+      kind: 'OverlayActionRejected',
+      reason: 'stale_card',
+    });
+  });
+
   it('owns count-prompt action/card identity through clamp and zone departure', () => {
     let state = install();
     const playerId =

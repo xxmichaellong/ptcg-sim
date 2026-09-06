@@ -4,8 +4,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
   isLegacyBoardCategoryChoice,
+  isLegacyBoardMoveChoice,
   LEGACY_BOARD_CATEGORY_CHOICES,
   LEGACY_BOARD_CONTEXT_ACTION_REQUIREMENTS,
+  LEGACY_BOARD_MOVE_CHOICES,
   LEGACY_BOARD_ZONE_ACTION_REQUIREMENTS,
   LEGACY_REPLAY_DISCLOSURE_CONTEXT_ACTIONS,
   resolveLegacyBoardOverlayAction,
@@ -341,6 +343,195 @@ describe('legacy board overlay action resolver', () => {
     ).toEqual({ ok: false, reason: 'unsupported_target' });
   });
 
+  it('maps the exact move submenu choices through existing stale-safe movement resolvers', () => {
+    const view = createRendererSpikeView();
+    const playerId = view.viewer.kind === 'player' ? view.viewer.playerId : '';
+    const hand = zoneIn(view, playerId, 'hand');
+    const board = zoneIn(view, playerId, 'board');
+    const deck = zoneIn(view, playerId, 'deck');
+    const cardId = hand.cards[0]!.id;
+    expect(LEGACY_BOARD_MOVE_CHOICES).toEqual([
+      'board',
+      'deckTop',
+      'deckBottom',
+      'deckSwitch',
+      'deckShuffle',
+    ]);
+    for (const choice of LEGACY_BOARD_MOVE_CHOICES) {
+      expect(isLegacyBoardMoveChoice(choice)).toBe(true);
+    }
+    expect(isLegacyBoardMoveChoice('deck')).toBe(false);
+
+    const expected = {
+      board: {
+        type: 'MoveCard',
+        cardId,
+        expectedSourceZoneId: hand.id,
+        destinationZoneId: board.id,
+      },
+      deckTop: {
+        type: 'MoveCardToDeckTop',
+        cardId,
+        expectedSourceId: hand.id,
+      },
+      deckBottom: {
+        type: 'MoveCardToDeckBottom',
+        cardId,
+        expectedSourceId: hand.id,
+      },
+      deckSwitch: {
+        type: 'SwapCardWithDeckTop',
+        cardId,
+        expectedSourceId: hand.id,
+      },
+      deckShuffle: {
+        type: 'ShuffleCardIntoDeck',
+        cardId,
+        expectedSourceId: hand.id,
+      },
+    } as const;
+    for (const destination of LEGACY_BOARD_MOVE_CHOICES) {
+      expect(
+        resolveLegacyBoardOverlayAction(view, {
+          kind: 'context',
+          action: 'moveCard',
+          cardId,
+          destination,
+        })
+      ).toEqual({ ok: true, command: expected[destination] });
+    }
+
+    const active = view.stacks[view.boards[playerId]!.activeStackId!]!;
+    const top = active.evolutionCards.at(-1)!;
+    expect(
+      resolveLegacyBoardOverlayAction(view, {
+        kind: 'context',
+        action: 'moveCard',
+        cardId: top.id,
+        destination: 'board',
+      })
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'MoveCardFromStack',
+        cardId: top.id,
+        expectedStackId: active.id,
+        destinationZoneId: board.id,
+      },
+    });
+
+    const withoutHandCard = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [hand.id]: { ...hand, cards: hand.cards.slice(1) },
+      },
+    };
+    const inspectedView: MatchViewState = {
+      ...withoutHandCard,
+      workAreas: {
+        ...view.workAreas,
+        [playerId]: {
+          ...view.workAreas[playerId]!,
+          inspection: {
+            id: 'move-submenu-inspection',
+            sourceZoneId: hand.id,
+            cards: [hand.cards[0]!],
+          },
+        },
+      },
+    };
+    expect(
+      resolveLegacyBoardOverlayAction(inspectedView, {
+        kind: 'context',
+        action: 'moveCard',
+        cardId,
+        destination: 'board',
+      })
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'MoveInspectedCard',
+        cardId,
+        expectedWorkAreaId: 'move-submenu-inspection',
+        destinationZoneId: board.id,
+      },
+    });
+    const stagedView: MatchViewState = {
+      ...withoutHandCard,
+      workAreas: {
+        ...view.workAreas,
+        [playerId]: {
+          ...view.workAreas[playerId]!,
+          attachmentResolution: {
+            id: 'move-submenu-staged',
+            sourceStackId: active.id,
+            evolutionCards: [],
+            attachmentCards: [hand.cards[0]!],
+            suggestedSlot: 'active',
+          },
+        },
+      },
+    };
+    expect(
+      resolveLegacyBoardOverlayAction(stagedView, {
+        kind: 'context',
+        action: 'moveCard',
+        cardId,
+        destination: 'board',
+      })
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'MoveStagedCard',
+        cardId,
+        expectedWorkAreaId: 'move-submenu-staged',
+        destinationZoneId: board.id,
+      },
+    });
+    expect(
+      resolveLegacyBoardOverlayAction(view, context('moveCard', cardId))
+    ).toEqual({ ok: false, reason: 'requires_choice' });
+    expect(
+      resolveLegacyBoardOverlayAction(view, {
+        kind: 'context',
+        action: 'moveCard',
+        cardId,
+        destination: 'deck',
+      } as unknown as LegacyBoardOverlayActionRequest)
+    ).toEqual({ ok: false, reason: 'invalid_value' });
+    expect(
+      resolveLegacyBoardOverlayAction(view, {
+        kind: 'context',
+        action: 'moveCard',
+        cardId: active.evolutionCards[0]!.id,
+        destination: 'board',
+      })
+    ).toEqual({ ok: false, reason: 'unsupported_source' });
+    expect(
+      resolveLegacyBoardOverlayAction(view, {
+        kind: 'context',
+        action: 'moveCard',
+        cardId: board.cards[0]!.id,
+        destination: 'board',
+      })
+    ).toEqual({ ok: false, reason: 'no_op' });
+    expect(
+      resolveLegacyBoardOverlayAction(
+        {
+          ...view,
+          zones: { ...view.zones, [deck.id]: { ...deck, cards: [] } },
+        },
+        {
+          kind: 'context',
+          action: 'moveCard',
+          cardId,
+          destination: 'deckSwitch',
+        }
+      )
+    ).toEqual({ ok: false, reason: 'empty_deck' });
+  });
+
   it('opens and resolves the active special-condition editor with legacy defaults', () => {
     const view = createRendererSpikeView();
     const playerId = view.viewer.kind === 'player' ? view.viewer.playerId : '';
@@ -430,7 +621,7 @@ describe('legacy board overlay action resolver', () => {
     ).toEqual({ ok: false, reason: 'unsupported_target' });
   });
 
-  it('delegates protected counts and never invents the remaining move choice or local values', () => {
+  it('delegates protected counts and never invents local values', () => {
     const view = createRendererSpikeView();
     const playerId = view.viewer.kind === 'player' ? view.viewer.playerId : '';
     const hand = zoneIn(view, playerId, 'hand');
@@ -462,12 +653,6 @@ describe('legacy board overlay action resolver', () => {
         value: '2',
       })
     ).toEqual({ ok: true, command: { type: 'DrawCards', count: 2 } });
-    expect(
-      resolveLegacyBoardOverlayAction(
-        view,
-        context('moveCard', hand.cards[0]!.id)
-      )
-    ).toEqual({ ok: false, reason: 'requires_choice' });
     expect(
       resolveLegacyBoardOverlayAction(view, {
         kind: 'zone',

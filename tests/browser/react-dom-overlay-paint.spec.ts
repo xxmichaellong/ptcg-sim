@@ -257,6 +257,48 @@ const submenuMetrics = (submenu: Locator): Promise<SubmenuMetrics> =>
     };
   });
 
+const expectSubmenuMetricsToMatch = (
+  candidate: SubmenuMetrics,
+  source: SubmenuMetrics
+): void => {
+  expect(candidate.rows.map((row) => row.label)).toEqual(
+    source.rows.map((row) => row.label)
+  );
+  expect(candidate).toMatchObject({
+    backgroundColor: source.backgroundColor,
+    borderColor: source.borderColor,
+    borderStyle: source.borderStyle,
+    borderWidth: source.borderWidth,
+    boxShadow: source.boxShadow,
+    boxSizing: source.boxSizing,
+    padding: source.padding,
+    position: source.position,
+  });
+  expect(
+    Math.abs(candidate.bounds.width - source.bounds.width)
+  ).toBeLessThanOrEqual(1);
+  expect(
+    Math.abs(candidate.bounds.height - source.bounds.height)
+  ).toBeLessThanOrEqual(1);
+  expect(
+    Math.abs(candidate.offsetFromParent.x - source.offsetFromParent.x)
+  ).toBeLessThanOrEqual(1);
+  expect(
+    Math.abs(candidate.offsetFromParent.y - source.offsetFromParent.y)
+  ).toBeLessThanOrEqual(1);
+  for (const [index, sourceRow] of source.rows.entries()) {
+    expect(candidate.rows[index]).toMatchObject({
+      padding: sourceRow.padding,
+      backgroundColor: sourceRow.backgroundColor,
+      color: sourceRow.color,
+      cursor: sourceRow.cursor,
+      fontFamily: sourceRow.fontFamily,
+      fontSize: sourceRow.fontSize,
+      fontWeight: sourceRow.fontWeight,
+    });
+  }
+};
+
 const previewMetrics = (preview: Locator): Promise<PreviewMetrics> =>
   preview.evaluate((element) => {
     const rect = element.getBoundingClientRect();
@@ -348,6 +390,14 @@ const captureLegacy = async (browser: Browser) => {
       element.style.left = '100px';
       element.style.top = '100px';
     });
+    await menu.locator('#moveButton').hover();
+    const moveSubmenu = menu.locator('#moveButton > .card-sub-menu');
+    await expect(moveSubmenu).toBeVisible();
+    await settlePaint(page);
+    const capturedMoveSubmenu = await moveSubmenu.screenshot({
+      animations: 'disabled',
+    });
+    const capturedMoveSubmenuMetrics = await submenuMetrics(moveSubmenu);
     await menu.locator('#changeButton').hover();
     const submenu = menu.locator('#changeButton > .card-sub-menu');
     await expect(submenu).toBeVisible();
@@ -373,6 +423,8 @@ const captureLegacy = async (browser: Browser) => {
     return {
       menu: capturedMenu,
       menuMetrics: capturedMenuMetrics,
+      moveSubmenu: capturedMoveSubmenu,
+      moveSubmenuMetrics: capturedMoveSubmenuMetrics,
       submenu: capturedSubmenu,
       submenuMetrics: capturedSubmenuMetrics,
       preview: capturedPreview,
@@ -439,61 +491,33 @@ test('route-owned context and card-preview paint retain real-v1 structure', asyn
   );
   await categoryCard.click({ button: 'right' });
   await expect(menu).toBeVisible();
+  await menu.locator('[data-context-action="moveCard"]').hover();
+  const candidateMoveSubmenuLocator = menu.locator(
+    '[data-context-submenu="moveCard"]'
+  );
+  await expect(candidateMoveSubmenuLocator).toBeVisible();
+  await settlePaint(page);
+  const candidateMoveSubmenu = await candidateMoveSubmenuLocator.screenshot({
+    animations: 'disabled',
+  });
+  const candidateMoveSubmenuMetrics = await submenuMetrics(
+    candidateMoveSubmenuLocator
+  );
+  expectSubmenuMetricsToMatch(
+    candidateMoveSubmenuMetrics,
+    source.moveSubmenuMetrics
+  );
   await menu.locator('[data-context-action="changeCardType"]').hover();
-  const candidateSubmenuLocator = menu.locator('.ptcgsim-legacy-card-sub-menu');
+  const candidateSubmenuLocator = menu.locator(
+    '[data-context-submenu="changeCardType"]'
+  );
   await expect(candidateSubmenuLocator).toBeVisible();
   await settlePaint(page);
   const candidateSubmenu = await candidateSubmenuLocator.screenshot({
     animations: 'disabled',
   });
   const candidateSubmenuMetrics = await submenuMetrics(candidateSubmenuLocator);
-  expect(candidateSubmenuMetrics.rows.map((row) => row.label)).toEqual(
-    source.submenuMetrics.rows.map((row) => row.label)
-  );
-  expect(candidateSubmenuMetrics).toMatchObject({
-    backgroundColor: source.submenuMetrics.backgroundColor,
-    borderColor: source.submenuMetrics.borderColor,
-    borderStyle: source.submenuMetrics.borderStyle,
-    borderWidth: source.submenuMetrics.borderWidth,
-    boxShadow: source.submenuMetrics.boxShadow,
-    boxSizing: source.submenuMetrics.boxSizing,
-    padding: source.submenuMetrics.padding,
-    position: source.submenuMetrics.position,
-  });
-  expect(
-    Math.abs(
-      candidateSubmenuMetrics.bounds.width - source.submenuMetrics.bounds.width
-    )
-  ).toBeLessThanOrEqual(1);
-  expect(
-    Math.abs(
-      candidateSubmenuMetrics.bounds.height -
-        source.submenuMetrics.bounds.height
-    )
-  ).toBeLessThanOrEqual(1);
-  expect(
-    Math.abs(
-      candidateSubmenuMetrics.offsetFromParent.x -
-        source.submenuMetrics.offsetFromParent.x
-    )
-  ).toBeLessThanOrEqual(1);
-  expect(
-    Math.abs(
-      candidateSubmenuMetrics.offsetFromParent.y -
-        source.submenuMetrics.offsetFromParent.y
-    )
-  ).toBeLessThanOrEqual(1);
-  for (const [index, sourceRow] of source.submenuMetrics.rows.entries()) {
-    expect(candidateSubmenuMetrics.rows[index]).toMatchObject({
-      padding: sourceRow.padding,
-      backgroundColor: sourceRow.backgroundColor,
-      color: sourceRow.color,
-      cursor: sourceRow.cursor,
-      fontFamily: sourceRow.fontFamily,
-      fontSize: sourceRow.fontSize,
-      fontWeight: sourceRow.fontWeight,
-    });
-  }
+  expectSubmenuMetricsToMatch(candidateSubmenuMetrics, source.submenuMetrics);
 
   await page.keyboard.press('Escape');
   await card.dblclick();
@@ -523,6 +547,14 @@ test('route-owned context and card-preview paint retain real-v1 structure', asyn
       body: source.submenu,
       contentType: 'image/png',
     }),
+    testInfo.attach('legacy-move-submenu-source.png', {
+      body: source.moveSubmenu,
+      contentType: 'image/png',
+    }),
+    testInfo.attach('legacy-move-submenu-candidate.png', {
+      body: candidateMoveSubmenu,
+      contentType: 'image/png',
+    }),
     testInfo.attach('legacy-category-submenu-candidate.png', {
       body: candidateSubmenu,
       contentType: 'image/png',
@@ -540,9 +572,11 @@ test('route-owned context and card-preview paint retain real-v1 structure', asyn
         JSON.stringify(
           {
             sourceMenuMetrics: source.menuMetrics,
+            sourceMoveSubmenuMetrics: source.moveSubmenuMetrics,
             sourceSubmenuMetrics: source.submenuMetrics,
             sourcePreviewMetrics: source.previewMetrics,
             candidateMenuMetrics,
+            candidateMoveSubmenuMetrics,
             candidateSubmenuMetrics,
             candidatePreviewMetrics,
           },

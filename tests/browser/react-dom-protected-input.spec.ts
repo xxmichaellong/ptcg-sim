@@ -5,6 +5,7 @@ interface ProtectedInputFixture {
   readonly opponentPlayerId: string;
   readonly sourceCardId: string;
   readonly sourceZoneId: string;
+  readonly ownBoardZoneId: string;
   readonly ownDeckCardId: string;
   readonly opponentDeckCardId: string;
   readonly ownDeckCount: number;
@@ -416,7 +417,9 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   await expect(
     menu.locator('[data-context-action="discardHand"]')
   ).toBeFocused();
-  expect(await menu.locator('[role="menuitem"]').allTextContents()).toEqual([
+  expect(
+    await menu.locator(':scope > ul > li > [role="menuitem"]').allTextContents()
+  ).toEqual([
     'Discard hand',
     'Shuffle hand to deck',
     'Shuffle hand to bottom',
@@ -1077,6 +1080,118 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
     ]);
     expect(categoryEvidence.overlayRejections).toEqual([]);
     expect(categoryEvidence.reportedErrors).toEqual([]);
+  }
+
+  const moveCases = [
+    [
+      'board',
+      'to Board',
+      {
+        type: 'MoveCard',
+        cardId: fixture.sourceCardId,
+        expectedSourceZoneId: fixture.sourceZoneId,
+        destinationZoneId: fixture.ownBoardZoneId,
+      },
+    ],
+    [
+      'deckTop',
+      'to Deck (top)',
+      {
+        type: 'MoveCardToDeckTop',
+        cardId: fixture.sourceCardId,
+        expectedSourceId: fixture.sourceZoneId,
+      },
+    ],
+    [
+      'deckBottom',
+      'to Deck (bottom)',
+      {
+        type: 'MoveCardToDeckBottom',
+        cardId: fixture.sourceCardId,
+        expectedSourceId: fixture.sourceZoneId,
+      },
+    ],
+    [
+      'deckSwitch',
+      'to Deck (switch)',
+      {
+        type: 'SwapCardWithDeckTop',
+        cardId: fixture.sourceCardId,
+        expectedSourceId: fixture.sourceZoneId,
+      },
+    ],
+    [
+      'deckShuffle',
+      'to Deck (shuffle)',
+      {
+        type: 'ShuffleCardIntoDeck',
+        cardId: fixture.sourceCardId,
+        expectedSourceId: fixture.sourceZoneId,
+      },
+    ],
+  ] as const;
+  for (const [index, [destination, label, command]] of moveCases.entries()) {
+    await clearEvidence(page);
+    await page.mouse.click(sourcePoint.x, sourcePoint.y, { button: 'right' });
+    await expect(menu).toBeVisible();
+    const trigger = menu.locator('[data-context-action="moveCard"]');
+    const submenu = menu.locator('[role="menu"][aria-label="Move card"]');
+    if (index === 0) {
+      await trigger.focus();
+      await trigger.press('ArrowRight');
+      await expect(submenu).toBeVisible();
+      await expect(submenu.locator('[data-move-choice="board"]')).toBeFocused();
+      await submenu.locator('[data-move-choice="board"]').press('End');
+      await expect(
+        submenu.locator('[data-move-choice="deckShuffle"]')
+      ).toBeFocused();
+      await submenu.locator('[data-move-choice="deckShuffle"]').press('Escape');
+      await expect(trigger).toBeFocused();
+      await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    }
+    await trigger.hover();
+    await expect(submenu).toBeVisible();
+    expect(
+      await submenu.locator('[data-move-choice]').allTextContents()
+    ).toEqual([
+      'to Board',
+      'to Deck (top)',
+      'to Deck (bottom)',
+      'to Deck (switch)',
+      'to Deck (shuffle)',
+    ]);
+    const choice = submenu.locator(`[data-move-choice="${destination}"]`);
+    await expect(choice).toHaveText(label);
+    if (destination === 'deckShuffle') {
+      // The source-faithful fifth row extends below this 720px fixture; exercise
+      // its supported keyboard path without changing or scrolling menu paint.
+      await choice.press('Enter');
+    } else {
+      await choice.click();
+    }
+    await expect(menu).toHaveCount(0);
+    await expect
+      .poll(async () => (await evidence(page)).submissions)
+      .toEqual([command]);
+    const moveEvidence = await evidence(page);
+    const clientSequence = index + 15;
+    expect(moveEvidence.submissionResults).toEqual([
+      {
+        queued: true,
+        commandId: `protected-input-command-${clientSequence}`,
+        clientSequence,
+      },
+    ]);
+    expect(moveEvidence.overlayActions).toEqual([
+      {
+        kind: 'context',
+        action: 'moveCard',
+        cardId: fixture.sourceCardId,
+        destination,
+      },
+    ]);
+    expect(moveEvidence.overlayRejections).toEqual([]);
+    expect(moveEvidence.reportedErrors).toEqual([]);
   }
 
   await page.evaluate(() => {

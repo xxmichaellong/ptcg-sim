@@ -347,7 +347,21 @@ values, lower evolutions, loose cards, stale context cards, and post-dismissal
 requests submit nothing. The real-v1 paint companion now compares nested-menu
 dimensions, offsets, padding, border, shadow, colors, typography, and labels.
 Native Chromium proves Energy, Trainer/Tool, and Pokémon commands at client
-sequences 12 through 14 without gaps. The move-card submenu and keyboard
+sequences 12 through 14 without gaps.
+
+The protected move-submenu checkpoint completes the adjacent five-choice
+context action. It preserves `Move card...` and exact source-ordered `to Board`,
+deck-top, deck-bottom, deck-switch, and deck-shuffle rows. A closed typed choice
+must still match the exact open card. Board movement selects the card owner's
+loose-board zone and emits the existing source-specific zone, top-stack,
+inspection, or staged command; the four deck choices reuse the existing deck-
+relative resolver. Missing/forged values, stale cards, lower evolutions,
+already-board targets, empty decks, and post-dismissal requests submit nothing.
+The shared nested-menu component preserves hover/click behavior and keyboard
+entry, traversal, return, and dismissal for both compound menus. The real-v1
+paint companion compares labels, dimensions, offsets, padding, separator,
+shadow, colors, and typography. Native Chromium proves all five exact move
+commands at client sequences 15 through 19 without gaps. Keyboard marker and
 category shortcuts remain separate.
 
 `legacy-compound-group-rotation-layout.test.ts` and
