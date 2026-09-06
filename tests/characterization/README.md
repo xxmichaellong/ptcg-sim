@@ -235,8 +235,17 @@ pure `resizeBoardLayoutState` transition includes the source's independent
 frame math, collision predicate, clamps, edge growth, and initial `49%`/`51%`
 inline handle fallbacks; the opt-in runtime projects it without route or visual
 changes. Compact 1024×768 CSS is now directly measured in the viewport matrix.
-Candidate pointer wiring, edge collision browser cases, screenshots, and
-non-Chromium approval remain separate.
+The same real-runtime gate now pins adjacent-pixel collision changes in all four
+branches, strict 5%/95% growth thresholds, normal overscan and flipped
+one-pixel clamps, plus a second-event collision that depends on the prior 10%
+handle height. Near/far source clamps retain identical complete captures. The
+flipped one-pixel endpoint exposes a bounded nested-iframe child-layout delta,
+so the normalized model comparison there is intentionally outer-only while the
+source equality check still includes all regions. The React DOM runtime's
+disabled-by-default pointer bridge has focused scaled-coordinate, overlap,
+flip, wrong-pointer, release, cancel, blur, resize, and disposal coverage. Browser-level
+candidate gestures, screenshots, painted controls, viewport-resize continuity,
+and non-Chromium approval remain separate.
 
 `legacy-compound-group-rotation-layout.test.ts` and
 `legacy-compound-break-rotation-layout.test.ts` split the next source-only

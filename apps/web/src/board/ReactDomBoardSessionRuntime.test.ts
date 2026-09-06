@@ -371,18 +371,28 @@ const layoutState = (): BoardLayoutState => ({
   },
 });
 
-const installSurfaceBounds = (host: HTMLElement) => {
+const installSurfaceBounds = (
+  host: HTMLElement,
+  options: {
+    readonly scale?: number;
+    readonly left?: number;
+    readonly top?: number;
+  } = {}
+) => {
   const surface = host.querySelector<HTMLElement>('.ptcgsim-board-surface')!;
   surface.getBoundingClientRect = () => {
-    const width = Number.parseFloat(surface.style.width);
-    const height = Number.parseFloat(surface.style.height);
+    const scale = options.scale ?? 1;
+    const left = options.left ?? 0;
+    const top = options.top ?? 0;
+    const width = Number.parseFloat(surface.style.width) * scale;
+    const height = Number.parseFloat(surface.style.height) * scale;
     return {
-      x: 0,
-      y: 0,
-      left: 0,
-      top: 0,
-      right: width,
-      bottom: height,
+      x: left,
+      y: top,
+      left,
+      top,
+      right: left + width,
+      bottom: top + height,
       width,
       height,
       toJSON: () => ({}),
@@ -901,6 +911,231 @@ describe('opt-in React DOM board session runtime', () => {
     expect(runtime.getLayoutState()).toEqual(currentLayout);
     expect(runtime.getBoardSnapshot()?.scene).toBe(previousScene);
 
+    await act(async () => {
+      runtime.dispose();
+      await Promise.resolve();
+    });
+  });
+
+  it('owns an opt-in scaled pointer lifecycle with source handle priority and flipped physical identity', async () => {
+    const initial = readyState(atRevision(1));
+    const live = new MutableLiveSource(initial);
+    const replay = new MutableReplaySource(initial);
+    const runtime = new ReactDomBoardSessionRuntime({
+      live,
+      replay,
+      layout: layoutState(),
+      enableLegacyResizeInteraction: true,
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    await mountRuntime(runtime, host);
+
+    const scale = 0.5;
+    const left = 20;
+    const top = 30;
+    const surface = installSurfaceBounds(host, { scale, left, top });
+    const toClient = (x: number, y: number) => ({
+      clientX: left + x * scale,
+      clientY: top + y * scale,
+    });
+    const pointer = (
+      type: 'pointerdown' | 'pointermove' | 'pointerup' | 'pointercancel',
+      pointerId: number,
+      x: number,
+      y: number
+    ) =>
+      new PointerEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        pointerId,
+        button: 0,
+        ...toClient(x, y),
+      });
+    const handleCenter = (id: 'lower' | 'upper') => {
+      const handle = runtime
+        .getCharacterizedLayoutSnapshot()
+        .resizeHandles.find((candidate) => candidate.id === id)!;
+      return {
+        x: handle.bounds.x + handle.bounds.width / 2,
+        y: handle.bounds.y + handle.bounds.height / 2,
+      };
+    };
+
+    expect(
+      host.querySelector<HTMLElement>('[data-resize-handle-id="lower"]')?.style
+        .pointerEvents
+    ).toBe('none');
+    const lower = handleCenter('lower');
+    const before = runtime.getLayoutState();
+    const down = pointer('pointerdown', 41, lower.x, lower.y);
+    act(() => {
+      expect(surface.dispatchEvent(down)).toBe(false);
+    });
+    expect(down.defaultPrevented).toBe(true);
+    expect(runtime.getLayoutState()).toEqual(before);
+    act(() => {
+      window.dispatchEvent(pointer('pointermove', 42, lower.x, 480));
+    });
+    expect(runtime.getLayoutState()).toEqual(before);
+    act(() => {
+      window.dispatchEvent(pointer('pointermove', 41, lower.x, 480));
+    });
+    expect(runtime.getLayoutState().vertical).toMatchObject({
+      lowerFrame: { bottomRatio: 0, heightRatio: 0.41000000000000003 },
+      lowerHandle: { bottomRatio: 0.4, heightRatio: 0.025 },
+      sharedPlacement: 'handleMidpoint',
+    });
+    act(() => {
+      window.dispatchEvent(pointer('pointerup', 41, lower.x, 480));
+    });
+    const afterRelease = runtime.getLayoutState();
+    act(() => {
+      window.dispatchEvent(pointer('pointermove', 41, lower.x, 300));
+    });
+    expect(runtime.getLayoutState()).toEqual(afterRelease);
+
+    for (const [pointerId, cancellation] of [
+      [46, 'pointercancel'],
+      [47, 'blur'],
+      [48, 'resize'],
+    ] as const) {
+      const currentLower = handleCenter('lower');
+      act(() => {
+        surface.dispatchEvent(
+          pointer('pointerdown', pointerId, currentLower.x, currentLower.y)
+        );
+        if (cancellation === 'pointercancel') {
+          window.dispatchEvent(
+            pointer(cancellation, pointerId, currentLower.x, currentLower.y)
+          );
+        } else {
+          window.dispatchEvent(new Event(cancellation));
+        }
+        window.dispatchEvent(
+          pointer('pointermove', pointerId, currentLower.x, 300)
+        );
+      });
+      expect(runtime.getLayoutState(), cancellation).toEqual(afterRelease);
+    }
+
+    const overlapBase = layoutState();
+    const overlapping: BoardLayoutState = {
+      ...overlapBase,
+      vertical: {
+        ...overlapBase.vertical,
+        lowerHandle: { bottomRatio: 0.5, heightRatio: 0.1 },
+        upperHandle: { bottomRatio: 0.53, heightRatio: 0.1 },
+        sharedPlacement: 'handleMidpoint',
+      },
+    };
+    act(() => {
+      runtime.replaceLayoutState(overlapping);
+    });
+    const overlapLayout = runtime.getCharacterizedLayoutSnapshot();
+    const lowerOverlap = overlapLayout.resizeHandles.find(
+      (candidate) => candidate.id === 'lower'
+    )!;
+    const upperOverlap = overlapLayout.resizeHandles.find(
+      (candidate) => candidate.id === 'upper'
+    )!;
+    const overlapY =
+      (Math.max(lowerOverlap.bounds.y, upperOverlap.bounds.y) +
+        Math.min(
+          lowerOverlap.bounds.y + lowerOverlap.bounds.height,
+          upperOverlap.bounds.y + upperOverlap.bounds.height
+        )) /
+      2;
+    const overlapX = Math.max(
+      0,
+      Math.max(lowerOverlap.bounds.x, upperOverlap.bounds.x)
+    );
+    act(() => {
+      surface.dispatchEvent(pointer('pointerdown', 43, overlapX, overlapY));
+      window.dispatchEvent(pointer('pointermove', 43, overlapX, 200));
+      window.dispatchEvent(pointer('pointerup', 43, overlapX, 200));
+    });
+    expect(runtime.getLayoutState().vertical).toMatchObject({
+      lowerHandle: { bottomRatio: 0.5 },
+      upperHandle: { bottomRatio: 0.75 },
+    });
+
+    act(() => {
+      runtime.replaceLayoutState(layoutState());
+      runtime.flipBoard();
+    });
+    const flippedLower = handleCenter('lower');
+    act(() => {
+      surface.dispatchEvent(
+        pointer('pointerdown', 44, flippedLower.x, flippedLower.y)
+      );
+      window.dispatchEvent(pointer('pointermove', 44, flippedLower.x, 480));
+      window.dispatchEvent(pointer('pointerup', 44, flippedLower.x, 480));
+    });
+    expect(runtime.getLayoutState()).toMatchObject({
+      bottomPlayerId: baseView.playerOrder[1],
+      vertical: {
+        lowerFrame: { bottomRatio: 0, heightRatio: 0.4 },
+        lowerHandle: { bottomRatio: 0.39, heightRatio: 0.025 },
+      },
+    });
+
+    const beforeDispose = runtime.getLayoutState();
+    const activeLower = handleCenter('lower');
+    act(() => {
+      surface.dispatchEvent(
+        pointer('pointerdown', 45, activeLower.x, activeLower.y)
+      );
+      runtime.dispose();
+      window.dispatchEvent(pointer('pointermove', 45, activeLower.x, 300));
+    });
+    expect(runtime.getLayoutState()).toEqual(beforeDispose);
+    await act(async () => Promise.resolve());
+    expect(host.childElementCount).toBe(0);
+  });
+
+  it('keeps native resize ownership disabled unless the route opts in', async () => {
+    const initial = readyState(atRevision(1));
+    const live = new MutableLiveSource(initial);
+    const replay = new MutableReplaySource(initial);
+    const runtime = new ReactDomBoardSessionRuntime({
+      live,
+      replay,
+      layout: layoutState(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    await mountRuntime(runtime, host);
+    const surface = installSurfaceBounds(host);
+    const lower = runtime
+      .getCharacterizedLayoutSnapshot()
+      .resizeHandles.find((candidate) => candidate.id === 'lower')!;
+    const x = lower.bounds.x + lower.bounds.width / 2;
+    const y = lower.bounds.y + lower.bounds.height / 2;
+    const before = runtime.getLayoutState();
+    const down = new PointerEvent('pointerdown', {
+      bubbles: true,
+      cancelable: true,
+      pointerId: 51,
+      button: 0,
+      clientX: x,
+      clientY: y,
+    });
+    act(() => {
+      expect(surface.dispatchEvent(down)).toBe(true);
+      window.dispatchEvent(
+        new PointerEvent('pointermove', {
+          bubbles: true,
+          cancelable: true,
+          pointerId: 51,
+          button: 0,
+          clientX: x,
+          clientY: 480,
+        })
+      );
+    });
+    expect(down.defaultPrevented).toBe(false);
+    expect(runtime.getLayoutState()).toEqual(before);
     await act(async () => {
       runtime.dispose();
       await Promise.resolve();

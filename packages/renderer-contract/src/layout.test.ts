@@ -499,6 +499,61 @@ describe('renderer-neutral legacy board layout', () => {
     ).toThrow('Unsupported board resize handle');
   });
 
+  it('pins the adjacent-pixel collision boundaries and prior expanded-handle history', () => {
+    const initial = state();
+    expect(
+      resizeBoardLayoutState(initial, 'lower', 357).vertical.upperFrame
+    ).toEqual(initial.vertical.upperFrame);
+    expect(
+      resizeBoardLayoutState(initial, 'lower', 356).vertical.upperFrame
+    ).not.toEqual(initial.vertical.upperFrame);
+    expect(
+      resizeBoardLayoutState(initial, 'upper', 339).vertical.lowerFrame
+    ).toEqual(initial.vertical.lowerFrame);
+    expect(
+      resizeBoardLayoutState(initial, 'upper', 340).vertical.lowerFrame
+    ).not.toEqual(initial.vertical.lowerFrame);
+
+    const flipped = flipBoardLayoutState(initial);
+    expect(
+      resizeBoardLayoutState(flipped, 'lower', 349).vertical.upperFrame
+    ).toEqual(flipped.vertical.upperFrame);
+    expect(
+      resizeBoardLayoutState(flipped, 'lower', 348).vertical.upperFrame
+    ).not.toEqual(flipped.vertical.upperFrame);
+    expect(
+      resizeBoardLayoutState(flipped, 'upper', 346).vertical.lowerFrame
+    ).toEqual(flipped.vertical.lowerFrame);
+    expect(
+      resizeBoardLayoutState(flipped, 'upper', 347).vertical.lowerFrame
+    ).not.toEqual(flipped.vertical.lowerFrame);
+
+    const pristineAt424 = resizeBoardLayoutState(initial, 'lower', 424);
+    expect(pristineAt424.vertical.upperFrame).toEqual(
+      initial.vertical.upperFrame
+    );
+    const expanded = resizeBoardLayoutState(initial, 'lower', 685);
+    expect(expanded.vertical.lowerHandle.heightRatio).toBe(0.1);
+    const expandedAt424 = resizeBoardLayoutState(expanded, 'lower', 424);
+    expect(expandedAt424.vertical.upperFrame).not.toEqual(
+      initial.vertical.upperFrame
+    );
+    expect(expandedAt424.vertical.lowerHandle.heightRatio).toBe(0.025);
+
+    expect(resizeBoardLayoutState(initial, 'lower', 728)).toEqual(
+      resizeBoardLayoutState(initial, 'lower', 10_000)
+    );
+    expect(resizeBoardLayoutState(initial, 'upper', -8)).toEqual(
+      resizeBoardLayoutState(initial, 'upper', -10_000)
+    );
+    expect(resizeBoardLayoutState(flipped, 'lower', 720)).toEqual(
+      resizeBoardLayoutState(flipped, 'lower', 10_000)
+    );
+    expect(resizeBoardLayoutState(flipped, 'upper', 0)).toEqual(
+      resizeBoardLayoutState(flipped, 'upper', -10_000)
+    );
+  });
+
   it('models source clamps, extreme handle growth and capped shared placement', () => {
     const vertical = {
       lowerFrame: { bottomRatio: 0, heightRatio: 1.01 },

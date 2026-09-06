@@ -164,9 +164,21 @@ first-event fallbacks; the adjacent source CSS matrix directly covers compact
 1024×768 geometry. `resizeBoardLayoutState` reproduces
 the four source branches as a pure physical-layout transition, and the opt-in
 `BoardSessionRuntime.resizeBoard` projects that result into the selected
-renderer without changing a route or visible UI. Edge clamps/collisions,
-painted controls, candidate-native pointer wiring, and non-Chromium approval
-remain later gates. A second source-only Chromium fixture now pins
+renderer without changing a route or visible UI. The runtime source gate now
+also pins adjacent-pixel collision boundaries in all four branches, strict
+5%/95% handle expansion, normal overscan and flipped one-pixel clamps, and the
+history-sensitive collision produced by a previously expanded handle. At the
+flipped one-pixel endpoint, Chromium's nested iframe lays out inner regions
+about 2.7 px away from the normalized projection; near/far source clamps remain
+identical, while only outer frame/handle/shared geometry is claimed against the
+model there. `ReactDomBoardSessionRuntime` now has a deny-by-default
+`enableLegacyResizeInteraction` bridge. It capture-hit-tests the non-painting
+handle geometry, preserves upper-handle overlap priority and flipped physical
+identity, scales host coordinates, and cleans up move/up/cancel/blur ownership.
+Viewport resize cancels an active gesture before its coordinate space changes.
+Focused DOM-runtime tests cover that lifecycle; browser-level candidate input,
+painted controls, viewport-resize continuity, and non-Chromium approval remain
+later gates. A second source-only Chromium fixture now pins
 portrait/nonstandard intrinsic-aspect
 sizing under authored constraints in both hands and benches and a controlled
 active attachment stack, including

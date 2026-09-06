@@ -127,7 +127,10 @@ before submit, so a reentrant or stale readiness change fails closed.
 
 Renderer-originated `BoardResizeRequested` remains unsupported here. The opt-in
 runtime exposes the complete renderer-neutral layout bridge plus an explicit
-`resizeBoard(handleId, clientY)` entry point for a future trusted wrapper.
+`resizeBoard(handleId, clientY)` entry point. `ReactDomBoardSessionRuntime` can
+now enable a trusted route-owned pointer bridge with
+`enableLegacyResizeInteraction`; it is disabled by default and no current route
+enables it.
 Sidebar/fullscreen width,
 bottom-player perspective, independent upper/lower frame positions and heights,
 both resize handles, shared placement, stadium/control anchors, region border
@@ -152,6 +155,15 @@ normal/flipped legacy branches, independent handles/frames, source clamps,
 collision and edge-growth rules, and midpoint shared placement. The runtime
 then follows the same `RefreshScene` path as any other local layout change; no
 game command, revision, replay cursor, or presentation fact is created.
+
+The optional DOM bridge leaves renderer handle sentinels non-painting and
+pointer-transparent. A capture listener on the mounted host hit-tests their
+renderer-neutral bounds before card/zone bubbling, gives the later upper handle
+source-equivalent priority when expanded rectangles overlap, and retains the
+physical handle ID after flip. Window-level move/up/cancel plus blur, viewport
+resize, and runtime disposal own cleanup; host scaling is converted back to the characterized
+play-area coordinate system before `resizeBoard` runs. This is focused runtime
+evidence, not yet a real-browser candidate parity claim.
 
 ## Effects and renderer cancellation
 

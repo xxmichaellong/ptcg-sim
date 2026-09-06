@@ -46,9 +46,16 @@ reversal prove cleanup and ownership restoration. The renderer contract owns
 the corresponding pure four-branch resize transition, including v1 clamps,
 collision arithmetic, edge-handle expansion, and first-event inline fallbacks.
 The opt-in board runtime can apply it to either renderer; production routes and
-the existing UI remain unchanged. Candidate-native pointer wiring, painted
-control parity, edge collisions, and the broader browser matrix are still exit
-gates.
+the existing UI remain unchanged. A full-runtime Chromium boundary matrix now
+pins the adjacent collision pixels, strict handle-growth edges, normal/flipped
+clamps, and expanded-handle history. The React DOM runtime additionally offers
+deny-by-default capture-phase pointer ownership over the existing non-painting
+handle geometry, with scaled coordinates, upper-handle overlap priority,
+flipped physical identity, and deterministic teardown. Browser-level candidate
+pointer evidence, painted control parity, viewport-resize continuity, and the
+broader browser matrix are still exit gates. The flipped one-pixel source clamp
+also retains an explicit caveat: Chromium's nested iframe child layout diverges
+from normalized inner-region geometry while the outer resize geometry matches.
 
 ### Mixed attachment history policy
 

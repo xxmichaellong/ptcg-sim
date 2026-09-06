@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 905 v2 tests across 142 files. A separate suite
-passes 127 Playwright checks across 60 Chromium 151 browser files:
+The repository-wide gate passes 908 v2 tests across 142 files. A separate suite
+passes 128 Playwright checks across 60 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -910,8 +910,24 @@ passes 127 Playwright checks across 60 Chromium 151 browser files:
     renderer contract's pure `resizeBoardLayoutState` matches these source
     events, including the first-event `49%`/`51%` handle fallbacks, and the
     opt-in session runtime projects it without game commands, route wiring, or
-    UI/UX changes. Edge collision/clamp browser cases, painted controls,
-    candidate-native gestures, and non-Chromium approval remain separate.
+    UI/UX changes. The next checkpoint closes source edge collision/clamp
+    evidence and focused candidate pointer ownership; painted controls,
+    browser-level candidate gestures, and non-Chromium approval remain
+    separate.
+49. The real-runtime layout gate now pins the exact adjacent 1280×720 collision
+    pixels in all four normal/flipped branches, both strict edge-growth
+    thresholds, normal overscan clamps, flipped one-pixel clamps, and the
+    history-sensitive collision caused by a previously expanded 10% handle.
+    Near/far clamped source captures are identical. All nondegenerate shell,
+    frame, handle, shared, and 16-region geometry matches the pure transition;
+    at the flipped one-pixel endpoint, Chromium's nested iframe shifts inner
+    regions by about 2.7 px, so only outer model parity is claimed while exact
+    source-to-source clamp identity remains enforced. The opt-in React DOM
+    runtime adds deny-by-default capture ownership with scaled coordinates,
+    upper-handle overlap priority, flip-stable physical identity, wrong-pointer
+    rejection, and complete release/cancel/blur/resize/disposal cleanup. Its handle
+    nodes remain non-painting and pointer-transparent, no route opts in, and no
+    production UI/UX changes.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -1082,9 +1098,10 @@ The following still require controlled browser/device runs before production
 wiring:
 
 - expand the source-driven geometry checkpoint to painted/interactable frames,
-  handles and controls, cards/stacks, screenshots, edge clamp/collision states,
-  candidate-native split/flip/fullscreen gestures, and the remaining structured
-  2 px / 1% thresholds;
+  handles and controls, cards/stacks, screenshots, browser-level candidate
+  split/flip/fullscreen gestures, viewport-resize continuity, and the remaining
+  structured 2 px / 1% thresholds (source edge clamp/collision states and
+  focused candidate pointer ownership are now covered);
 - full double-click, right-click, flip, split resize, zone browser, keyboard,
   DOM-overlay anchor parity, and drag rejection/reconnect snap-back behavior;
 - actual external card/image hosts, redirects, CORS failures, oversized/corrupt

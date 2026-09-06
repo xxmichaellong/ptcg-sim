@@ -180,6 +180,12 @@ the source's asymmetric clamps/collision math, installs the first-event
 `49%`/`51%` inline fallbacks, expands either edge handle to `10%`, and switches
 shared placement to the handle midpoint. `BoardSessionRuntime` exposes that
 transition without putting layout state in game authority or wiring new UI.
+`ReactDomBoardSessionRuntime` has a separately gated, disabled-by-default
+pointer bridge that hit-tests the physical handles in capture phase and feeds
+scaled play-area `clientY` values to this transition. It retains source DOM
+overlap priority (upper after lower), flip-stable physical IDs, wrong-pointer
+rejection, and move/up/cancel/blur/resize/disposal cleanup while the structural
+handle nodes remain non-painting and pointer-transparent.
 
 ## Cards, stacks, z order, and input
 
@@ -275,6 +281,27 @@ sidebar geometry on its second activation. The same source events match the
 pure transition and renderer-neutral snapshot within 2 CSS px. This is layout
 and event-wiring evidence; it does not claim final painted controls or candidate
 renderer pointer UX.
+
+The same full-runtime file now runs a 1280×720 boundary matrix. On pristine
+source geometry, normal lower resize changes collision between clientY 357 and
+356, normal upper between 339 and 340, flipped lower between 349 and 348, and
+flipped upper between 346 and 347. The normal 5% lower boundary stays at 2.5%
+height for clientY 684 and expands at 685; the 95% upper boundary stays at 2.5%
+for 36 and expands at 35. Equivalent adjacent flipped inputs are also pinned.
+Far-out pointer positions produce the exact same complete capture as the first
+input beyond each normal overscan or flipped one-pixel clamp. A lower handle
+first expanded at 685 then moved to 424 collides using its old 10% offsetHeight,
+where a pristine 2.5% handle at 424 does not; both settle back to a 2.5% handle.
+
+Every nondegenerate case compares shell, independent frames, handles, shared
+anchors, and all 16 regions to the pure model. At a flipped one-pixel frame,
+Chromium's nested iframe document shifts inner region layout by about 2.7 px;
+the near/far source captures must still match exactly, and the outer
+frame/handle/shared model comparison remains enforced. This is retained as an
+explicit degenerate-browser caveat rather than widening the repository's 2 px
+acceptance tolerance. Focused DOM-runtime tests cover candidate pointer
+lifecycle semantics, but a real-browser candidate gesture comparison remains a
+release gate.
 
 `tests/browser/legacy-card-stack-geometry.spec.ts` adds a separate source-only
 card checkpoint at that viewport. Its independently reviewed numeric fixture is
@@ -1472,10 +1499,11 @@ bounds.
 
 That browser suite must cover at least:
 
-- edge clamps, expanded handles, collision thresholds, viewport-resize
-  continuity, and the same interactions in candidate renderers (normal,
-  fullscreen, flipped, double-flipped, asymmetric resize, and both handle
-  directions now have direct v1 runtime evidence);
+- viewport-resize continuity and the same interactions in candidate browsers
+  (normal, fullscreen, flipped, double-flipped, asymmetric resize, both handle
+  directions, edge clamps, expanded handles, and collision thresholds now have
+  direct v1 runtime evidence; candidate pointer lifecycle currently has focused
+  DOM-runtime coverage only);
 - source-intrinsic and nonstandard card aspect ratios, active/bench overflow,
   flex shrink, BREAK/Rotation margins, attachment-expanded stacks, prizes, and
   scroll clipping;

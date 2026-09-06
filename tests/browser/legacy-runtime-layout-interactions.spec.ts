@@ -1,10 +1,17 @@
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import {
+  expect,
+  test,
+  type Browser,
+  type Locator,
+  type Page,
+} from '@playwright/test';
 
 import { asPlayerId } from '../../packages/game-core/src/ids.js';
 import {
   BOARD_LAYOUT_GEOMETRY_VERSION,
   createBoardLayoutSnapshot,
   DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+  flipBoardLayoutState,
   resizeBoardLayoutState,
   type BoardLayoutSnapshot,
   type BoardLayoutState,
@@ -133,7 +140,19 @@ const captureRuntimeLayout = async (
     captureRegions('local'),
     captureRegions('opponent'),
   ]);
-  const playAreaBounds = unionRects(localFrameBounds, opponentFrameBounds);
+  const frameUnion = unionRects(localFrameBounds, opponentFrameBounds);
+  const viewport = page.viewportSize();
+  if (!viewport) throw new Error('Legacy runtime page has no viewport');
+  // The shipped page has no explicit play-area wrapper. Its physical play
+  // area is viewport-height even when a collision branch deliberately lets an
+  // iframe overscan the top edge by 0.5%; retain that overscan on the measured
+  // frame rather than incorrectly growing the conceptual shell.
+  const playAreaBounds = {
+    x: frameUnion.x,
+    y: 0,
+    width: frameUnion.width,
+    height: viewport.height,
+  };
   const [sidebarBounds, tabsBounds] = await Promise.all([
     page.locator('#p1Box').boundingBox(),
     page.locator('#topButtonContainer').boundingBox(),
@@ -316,7 +335,8 @@ const expectCaptureMatchesFixture = (
 
 const expectCaptureMatchesModel = (
   capture: RuntimeLayoutCapture,
-  model: BoardLayoutSnapshot
+  model: BoardLayoutSnapshot,
+  options: { readonly compareRegions?: boolean } = {}
 ): void => {
   expectRectWithin(capture.playAreaBounds, model.playAreaBounds, 'playArea');
   for (const [actual, expected, label] of [
@@ -348,12 +368,14 @@ const expectCaptureMatchesModel = (
     const player = model.players.find((candidate) => candidate.side === side);
     if (!player) throw new Error(`Missing model ${side} player`);
     expectRectWithin(capture.frames[side], player.frameBounds, `${side}.frame`);
-    for (const region of player.regions) {
-      expectRectWithin(
-        capture.regions[side][region.kind],
-        region.physicalBorderBoxBounds,
-        `${side}.${region.kind}`
-      );
+    if (options.compareRegions !== false) {
+      for (const region of player.regions) {
+        expectRectWithin(
+          capture.regions[side][region.kind],
+          region.physicalBorderBoxBounds,
+          `${side}.${region.kind}`
+        );
+      }
     }
   }
   for (const handleId of ['lower', 'upper'] as const) {
@@ -439,6 +461,72 @@ const dragRuntimeHandle = async (
     },
     { id: handleId, y: clientY }
   );
+
+const resetRuntimeResizeGeometry = (page: Page): Promise<void> =>
+  page.evaluate(() => {
+    for (const id of [
+      'selfContainer',
+      'oppContainer',
+      'selfResizer',
+      'oppResizer',
+      'stadium',
+      'boardButtonContainer',
+    ]) {
+      const element = document.getElementById(id);
+      if (!(element instanceof HTMLElement)) {
+        throw new Error(`Missing runtime resize element: ${id}`);
+      }
+      element.style.removeProperty('height');
+      element.style.removeProperty('bottom');
+    }
+  });
+
+const initialLayoutState = (
+  viewport: BoardLayoutState['viewport'],
+  flipped = false
+): BoardLayoutState => {
+  const initial: BoardLayoutState = {
+    geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
+    viewport,
+    playerIds: [asPlayerId('blue'), asPlayerId('red')],
+    bottomPlayerId: asPlayerId('blue'),
+    shellMode: 'sidebar',
+    vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+  };
+  return flipped ? flipBoardLayoutState(initial) : initial;
+};
+
+interface RuntimeResizeBoundaryEvidence {
+  readonly label: string;
+  readonly clientY: number;
+  readonly vertical: BoardLayoutState['vertical'];
+  readonly inline: RuntimeLayoutCapture['inline'];
+  readonly frames: RuntimeLayoutCapture['frames'];
+  readonly resizeHandles: RuntimeLayoutCapture['resizeHandles'];
+}
+
+const openRuntimeResizePage = async (
+  browser: Browser,
+  viewport: BoardLayoutState['viewport'],
+  flipped: boolean
+): Promise<{
+  readonly page: Page;
+  readonly missingPaths: readonly string[];
+  readonly pageErrors: string[];
+}> => {
+  const page = await browser.newPage({
+    viewport: { width: viewport.width, height: viewport.height },
+    deviceScaleFactor: viewport.devicePixelRatio,
+  });
+  const pageErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+  const loaded = await loadLegacyRuntime(page);
+  if (flipped) {
+    await page.locator('#flipBoardButton').dispatchEvent('click');
+    await settleLayout(page);
+  }
+  return { page, missingPaths: loaded.missingPaths, pageErrors };
+};
 
 test('real v1 normal handle events agree with the pure resize transition', async ({
   browser,
@@ -743,4 +831,375 @@ test('real v1 fullscreen control matches the recorded shell transition and rever
   } finally {
     await page.close();
   }
+});
+
+test('real v1 resize thresholds pin collision, handle growth and source clamps', async ({
+  browser,
+}, testInfo) => {
+  test.setTimeout(90_000);
+  test.skip(
+    testInfo.project.name !== 'chromium',
+    'The real-runtime resize-boundary checkpoint is Chromium-specific.'
+  );
+  const viewport = { width: 1280, height: 720, devicePixelRatio: 1 } as const;
+  const evidence: RuntimeResizeBoundaryEvidence[] = [];
+
+  const runMove = async (
+    page: Page,
+    state: BoardLayoutState,
+    label: string,
+    handleId: 'lower' | 'upper',
+    clientY: number,
+    reset: boolean,
+    compareRegions = true
+  ): Promise<{
+    readonly capture: RuntimeLayoutCapture;
+    readonly state: BoardLayoutState;
+  }> => {
+    if (reset) {
+      await resetRuntimeResizeGeometry(page);
+      await settleLayout(page);
+    }
+    const drag = await dragRuntimeHandle(
+      page,
+      handleId === 'lower' ? 'selfResizer' : 'oppResizer',
+      clientY
+    );
+    await settleLayout(page);
+    const next = resizeBoardLayoutState(state, handleId, clientY);
+    const capture = await captureRuntimeLayout(page);
+    expect(drag, label).toEqual({
+      attachedDuringDrag: true,
+      removedAfter: true,
+    });
+    expectCaptureMatchesModel(capture, createBoardLayoutSnapshot(next), {
+      compareRegions,
+    });
+    evidence.push({
+      label,
+      clientY,
+      vertical: next.vertical,
+      inline: capture.inline,
+      frames: capture.frames,
+      resizeHandles: capture.resizeHandles,
+    });
+    return { capture, state: next };
+  };
+
+  const normal = await openRuntimeResizePage(browser, viewport, false);
+  try {
+    const initial = initialLayoutState(viewport);
+    for (const boundary of [
+      {
+        label: 'normal-lower-last-noncollision-pixel',
+        handleId: 'lower',
+        clientY: 357,
+        dependentFrame: 'opponentFrameHeight',
+        collides: false,
+      },
+      {
+        label: 'normal-lower-first-collision-pixel',
+        handleId: 'lower',
+        clientY: 356,
+        dependentFrame: 'opponentFrameHeight',
+        collides: true,
+      },
+      {
+        label: 'normal-upper-last-noncollision-pixel',
+        handleId: 'upper',
+        clientY: 339,
+        dependentFrame: 'selfFrameHeight',
+        collides: false,
+      },
+      {
+        label: 'normal-upper-first-collision-pixel',
+        handleId: 'upper',
+        clientY: 340,
+        dependentFrame: 'selfFrameHeight',
+        collides: true,
+      },
+    ] as const) {
+      const result = await runMove(
+        normal.page,
+        initial,
+        boundary.label,
+        boundary.handleId,
+        boundary.clientY,
+        true
+      );
+      expect(
+        result.capture.inline[boundary.dependentFrame] !== '',
+        boundary.label
+      ).toBe(boundary.collides);
+    }
+
+    for (const growth of [
+      {
+        label: 'normal-lower-at-five-percent',
+        handleId: 'lower',
+        clientY: 684,
+        heightKey: 'lowerHandleHeight',
+        expectedHeight: '2.5%',
+      },
+      {
+        label: 'normal-lower-below-five-percent',
+        handleId: 'lower',
+        clientY: 685,
+        heightKey: 'lowerHandleHeight',
+        expectedHeight: '10%',
+      },
+      {
+        label: 'normal-upper-at-ninety-five-percent',
+        handleId: 'upper',
+        clientY: 36,
+        heightKey: 'upperHandleHeight',
+        expectedHeight: '2.5%',
+      },
+      {
+        label: 'normal-upper-above-ninety-five-percent',
+        handleId: 'upper',
+        clientY: 35,
+        heightKey: 'upperHandleHeight',
+        expectedHeight: '10%',
+      },
+    ] as const) {
+      const result = await runMove(
+        normal.page,
+        initial,
+        growth.label,
+        growth.handleId,
+        growth.clientY,
+        true
+      );
+      expect(result.capture.inline[growth.heightKey], growth.label).toBe(
+        growth.expectedHeight
+      );
+    }
+
+    const lowerClampNear = await runMove(
+      normal.page,
+      initial,
+      'normal-lower-clamp-near',
+      'lower',
+      728,
+      true
+    );
+    const lowerClampFar = await runMove(
+      normal.page,
+      initial,
+      'normal-lower-clamp-far',
+      'lower',
+      10_000,
+      true
+    );
+    expect(lowerClampFar.capture).toEqual(lowerClampNear.capture);
+    expect(lowerClampFar.capture.inline).toMatchObject({
+      selfFrameHeight: '1%',
+      lowerHandleBottom: '-1%',
+      lowerHandleHeight: '10%',
+    });
+
+    const upperClampNear = await runMove(
+      normal.page,
+      initial,
+      'normal-upper-clamp-near',
+      'upper',
+      -8,
+      true
+    );
+    const upperClampFar = await runMove(
+      normal.page,
+      initial,
+      'normal-upper-clamp-far',
+      'upper',
+      -10_000,
+      true
+    );
+    expect(upperClampFar.capture).toEqual(upperClampNear.capture);
+    expect(upperClampFar.capture.inline).toMatchObject({
+      opponentFrameHeight: '1%',
+      opponentFrameBottom: '100%',
+      upperHandleBottom: '101%',
+      upperHandleHeight: '10%',
+    });
+
+    const pristineAtExpandedCollisionY = await runMove(
+      normal.page,
+      initial,
+      'normal-pristine-base-handle-noncollision',
+      'lower',
+      424,
+      true
+    );
+    expect(
+      pristineAtExpandedCollisionY.capture.inline.opponentFrameHeight
+    ).toBe('');
+    const expanded = await runMove(
+      normal.page,
+      initial,
+      'normal-lower-expanded-before-collision',
+      'lower',
+      685,
+      true
+    );
+    expect(expanded.capture.inline.lowerHandleHeight).toBe('10%');
+    const expandedCollision = await runMove(
+      normal.page,
+      expanded.state,
+      'normal-expanded-handle-collision',
+      'lower',
+      424,
+      false
+    );
+    expect(
+      Number.parseFloat(expandedCollision.capture.inline.opponentFrameHeight)
+    ).toBeCloseTo(57.888_888_888_888_886, 4);
+    expect(expandedCollision.capture.inline.lowerHandleHeight).toBe('2.5%');
+    expect(normal.missingPaths).toEqual([]);
+    expect(normal.pageErrors).toEqual([]);
+  } finally {
+    await normal.page.close();
+  }
+
+  const flipped = await openRuntimeResizePage(browser, viewport, true);
+  try {
+    const initial = initialLayoutState(viewport, true);
+    for (const boundary of [
+      {
+        label: 'flipped-lower-last-noncollision-pixel',
+        handleId: 'lower',
+        clientY: 349,
+        dependentFrame: 'selfFrameHeight',
+        collides: false,
+      },
+      {
+        label: 'flipped-lower-first-collision-pixel',
+        handleId: 'lower',
+        clientY: 348,
+        dependentFrame: 'selfFrameHeight',
+        collides: true,
+      },
+      {
+        label: 'flipped-upper-last-noncollision-pixel',
+        handleId: 'upper',
+        clientY: 346,
+        dependentFrame: 'opponentFrameHeight',
+        collides: false,
+      },
+      {
+        label: 'flipped-upper-first-collision-pixel',
+        handleId: 'upper',
+        clientY: 347,
+        dependentFrame: 'opponentFrameHeight',
+        collides: true,
+      },
+    ] as const) {
+      const result = await runMove(
+        flipped.page,
+        initial,
+        boundary.label,
+        boundary.handleId,
+        boundary.clientY,
+        true
+      );
+      expect(
+        result.capture.inline[boundary.dependentFrame] !== '',
+        boundary.label
+      ).toBe(boundary.collides);
+    }
+
+    for (const growth of [
+      {
+        label: 'flipped-lower-at-or-above-five-percent',
+        handleId: 'lower',
+        clientY: 676,
+        heightKey: 'lowerHandleHeight',
+        expectedHeight: '2.5%',
+      },
+      {
+        label: 'flipped-lower-below-five-percent',
+        handleId: 'lower',
+        clientY: 677,
+        heightKey: 'lowerHandleHeight',
+        expectedHeight: '10%',
+      },
+      {
+        label: 'flipped-upper-at-or-below-ninety-five-percent',
+        handleId: 'upper',
+        clientY: 44,
+        heightKey: 'upperHandleHeight',
+        expectedHeight: '2.5%',
+      },
+      {
+        label: 'flipped-upper-above-ninety-five-percent',
+        handleId: 'upper',
+        clientY: 43,
+        heightKey: 'upperHandleHeight',
+        expectedHeight: '10%',
+      },
+    ] as const) {
+      const result = await runMove(
+        flipped.page,
+        initial,
+        growth.label,
+        growth.handleId,
+        growth.clientY,
+        true
+      );
+      expect(result.capture.inline[growth.heightKey], growth.label).toBe(
+        growth.expectedHeight
+      );
+    }
+
+    const lowerClampNear = await runMove(
+      flipped.page,
+      initial,
+      'flipped-lower-clamp-near',
+      'lower',
+      720,
+      true,
+      false
+    );
+    const lowerClampFar = await runMove(
+      flipped.page,
+      initial,
+      'flipped-lower-clamp-far',
+      'lower',
+      10_000,
+      true,
+      false
+    );
+    expect(lowerClampFar.capture).toEqual(lowerClampNear.capture);
+    expect(lowerClampFar.capture.inline.lowerHandleHeight).toBe('10%');
+
+    const upperClampNear = await runMove(
+      flipped.page,
+      initial,
+      'flipped-upper-clamp-near',
+      'upper',
+      0,
+      true,
+      false
+    );
+    const upperClampFar = await runMove(
+      flipped.page,
+      initial,
+      'flipped-upper-clamp-far',
+      'upper',
+      -10_000,
+      true,
+      false
+    );
+    expect(upperClampFar.capture).toEqual(upperClampNear.capture);
+    expect(upperClampFar.capture.inline.upperHandleHeight).toBe('10%');
+    expect(flipped.missingPaths).toEqual([]);
+    expect(flipped.pageErrors).toEqual([]);
+  } finally {
+    await flipped.page.close();
+  }
+
+  await testInfo.attach('legacy-runtime-resize-boundaries.json', {
+    body: Buffer.from(JSON.stringify(evidence, null, 2)),
+    contentType: 'application/json',
+  });
 });
