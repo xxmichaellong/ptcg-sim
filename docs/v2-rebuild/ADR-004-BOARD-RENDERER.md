@@ -65,8 +65,9 @@ and paints the unchanged source handles, five controls, hover state, and
 tooltips without entering the renderer contract. An isolated Chromium gate
 compares real-v1 and candidate screenshots at 1280×720 for light, light-hover,
 dark, dark-hover, sequential resize, flipped asymmetric resize, and fullscreen.
-It allows at most 640 of 921,600 pixels in the compositor fringe and an 8/255 channel
-delta, attaches both images plus metrics, and proves each non-layout callback is
+It allows at most 1,536 of 921,600 pixels in the compositor fringe, with
+separate 512-pixel handle and 1,280-pixel control caps plus a 96/255 channel
+delta across Chromium builds. It attaches both images plus metrics and proves each non-layout callback is
 delegated once. Neither the component nor harness is wired into a production
 route; complete control workflows and the broader browser matrix are still exit
 gates. The flipped one-pixel source clamp

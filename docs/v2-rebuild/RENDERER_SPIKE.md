@@ -966,8 +966,10 @@ passes 131 Playwright checks across 62 Chromium 151 browser files:
     A development-only composition drives real candidate handles and visible
     flip/fullscreen callbacks, then compares 1280×720 real-v1 and candidate
     screenshots for light, light-hover, dark, dark-hover, sequential resize,
-    flipped asymmetric resize, and fullscreen. At most 640/921,600
-    compositor-fringe pixels and an 8/255 channel delta are accepted; all source/candidate images and metrics are
+    flipped asymmetric resize, and fullscreen. At most 1,536/921,600
+    compositor-fringe pixels are accepted, with separate 512-pixel handle and
+    1,280-pixel control caps plus a 96/255 channel delta across Chromium builds;
+    all source/candidate images and metrics are
     attached, and the other three callbacks delegate once. Production routes,
     current UI/UX, and v1 sources remain unchanged; full action workflows and
     non-Chromium approval remain separate.

@@ -256,9 +256,10 @@ flipped ownership plus a fresh flipped gesture survive the return to 1280×720.
 `react-dom-board-chrome.spec.ts` now adds the painted source-to-candidate layer:
 fresh real-v1 pages and the development-only candidate are compared at
 1280×720 for light, light-hover, dark, dark-hover, sequential resize, flipped
-asymmetric resize, and fullscreen. Each RGBA screenshot pair is capped at 640
-of 921,600 antialiased fringe pixels and an 8/255 maximum channel delta, with
-both images and the per-state metrics attached. Native candidate handles and
+asymmetric resize, and fullscreen. Each RGBA screenshot pair is capped at 1,536
+of 921,600 antialiased fringe pixels, with separate 512-pixel handle and
+1,280-pixel control caps plus a 96/255 maximum channel delta across Chromium
+builds. Both images and the per-state metrics are attached. Native candidate handles and
 visible flip/fullscreen callbacks establish the states, and the remaining three
 callbacks delegate exactly once. Production wiring, complete action workflows,
 and non-Chromium approval remain separate.

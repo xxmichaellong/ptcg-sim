@@ -317,8 +317,9 @@ It runs fresh real-v1 pages and a development-only candidate composition at
 1280×720, isolates only the shared chrome on white, and attaches both screenshots
 for light, light-hover, dark, dark-hover, sequential normal resize, flipped
 asymmetric resize, and fullscreen states. A browser-side RGBA comparison accepts
-no more than 640 of 921,600 compositor-fringe pixels and no channel delta above
-8/255. The candidate reaches those states through native handles and visible
+no more than 1,536 of 921,600 compositor-fringe pixels, with separate 512-pixel
+handle and 1,280-pixel control caps and no channel delta above 96/255 across
+Chromium builds. The candidate reaches those states through native handles and visible
 flip/fullscreen controls, while the remaining control seams delegate exactly
 once. This does not wire the chrome into production, prove complete action
 workflows, or approve the non-Chromium matrix.

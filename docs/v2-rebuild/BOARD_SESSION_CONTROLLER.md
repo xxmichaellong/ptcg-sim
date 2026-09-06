@@ -184,7 +184,9 @@ to route callbacks. Its development-only composition paints over an invisible
 real DOM candidate so native resize ownership still traverses the actual
 runtime. Chromium compares real-v1 and candidate light, light-hover, dark,
 dark-hover, sequential-resize, flipped-resize, and fullscreen screenshots with
-an absolute 640-pixel fringe cap over 921,600 pixels and a maximum 8/255 channel delta. Source and
+an absolute 1,536-pixel fringe cap over 921,600 pixels, separate 512-pixel
+handle and 1,280-pixel control caps, and a maximum 96/255 channel delta across
+Chromium builds. Source and
 candidate images plus per-state metrics are attached. No production route
 imports this component yet; the callbacks do not claim complete game workflow
 parity.
