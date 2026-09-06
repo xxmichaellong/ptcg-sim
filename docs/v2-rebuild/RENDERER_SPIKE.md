@@ -291,7 +291,7 @@ repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
 The repository-wide gate passes 908 v2 tests across 142 files. A separate suite
-passes 129 Playwright checks across 61 Chromium 151 browser files:
+passes 130 Playwright checks across 61 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -838,10 +838,14 @@ passes 129 Playwright checks across 61 Chromium 151 browser files:
 43. The developer-only creator route completes 20 React StrictMode
     mount/unmount cycles through the actual lazy application branch, remote-room
     runtime, client session, replay/presentation ownership, and selected DOM
-    renderer. Its deferred irreversible start coalesces each StrictMode probe
-    into one room creation. Every cycle reaches a rendered board and then closes
-    its runtime/socket, disposes its renderer/result exactly once, clears the
-    console handle, and leaves no host children. HTTP and WebSocket transport are
+    renderer. The full parallel gate can take just over Vitest's 5-second
+    default while the isolated gate completes near 4 seconds, so this deliberate
+    20-cycle stress test has an explicit 10-second budget without removing any
+    lifecycle assertion. Its deferred irreversible start coalesces each
+    StrictMode probe into one room creation. Every cycle reaches a rendered board
+    and then closes its runtime/socket, disposes its renderer/result exactly
+    once, clears the console handle, and leaves no host children. HTTP and
+    WebSocket transport are
     mocked in-process; deployed browser navigation, second-browser invitation,
     and heap/resource accounting remain separate evidence.
 44. A complementary Chromium gate starts local Wrangler and Vite, verifies the
@@ -942,6 +946,18 @@ passes 129 Playwright checks across 61 Chromium 151 browser files:
     approval remain separate gates. Running this warmed path immediately before
     the cacheable-asset gate exposed its two-frame startup-idle race; that gate
     now requires five stable paint frames before freezing strict route identity.
+51. The same isolated harness now performs route-owned viewport synchronization
+    after the bridge's earlier window-resize cancellation listener. Chromium
+    holds a native pointer across 1280×720→1440×810, proves the stale move cannot
+    mutate the split, verifies the renderer-neutral viewport and scaled DOM
+    dimensions, applies a fresh correctly scaled normal gesture, preserves that
+    layout at 1024×768, and then preserves flipped ownership through a return to
+    1280×720 before applying a fresh flipped physical-lower gesture. Disposal
+    removes both viewport and pointer ownership. No production route or visible
+    UI/UX changes. The full quality run also exposed the existing 20-cycle route
+    churn gate at 5.048 seconds under parallel load versus its 5-second default;
+    that stress proof now has an explicit 10-second timeout while retaining every
+    teardown assertion.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -1113,9 +1129,10 @@ wiring:
 
 - expand the source-driven geometry checkpoint to painted/interactable frames,
   handles and controls, cards/stacks, screenshots, browser-level candidate
-  split/flip/fullscreen gestures, viewport-resize continuity, and the remaining
-  structured 2 px / 1% thresholds (source edge clamp/collision states and the
-  isolated candidate resize-pointer path are now covered);
+  split/flip/fullscreen controls, and the remaining structured 2 px / 1%
+  thresholds (source edge clamp/collision states, the isolated candidate
+  resize-pointer path, and normal/flipped fullscreen viewport continuity are now
+  covered);
 - full double-click, right-click, flip, split resize, zone browser, keyboard,
   DOM-overlay anchor parity, and drag rejection/reconnect snap-back behavior;
 - actual external card/image hosts, redirects, CORS failures, oversized/corrupt

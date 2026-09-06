@@ -51,11 +51,20 @@ const readLayout = async (page: Page): Promise<BoardLayoutState> =>
     return harness.getLayout();
   });
 
+const waitForReactPaint = async (page: Page): Promise<void> => {
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      })
+  );
+};
+
 const callHarness = async (
   page: Page,
   action: 'reset' | 'flipReset' | 'overlap' | 'dispose'
 ): Promise<void> => {
-  await page.evaluate(async (requestedAction) => {
+  await page.evaluate((requestedAction) => {
     const harness = (window as ResizeHarnessWindow)
       .__PTCG_REACT_DOM_RESIZE_HARNESS__;
     if (!harness) throw new Error('Missing React DOM resize harness');
@@ -63,15 +72,11 @@ const callHarness = async (
     else if (requestedAction === 'flipReset') harness.reset(true);
     else if (requestedAction === 'overlap') harness.installOverlappingHandles();
     else harness.dispose();
-    if (requestedAction !== 'dispose') {
-      // Runtime state is synchronous, while the React root may batch its DOM
-      // commit. Derive browser pointer coordinates only after that commit can
-      // reach the next paint.
-      await new Promise<void>((resolve) => {
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-      });
-    }
   }, action);
+  // Runtime state is synchronous, while the React root may batch its DOM
+  // commit. Derive browser pointer coordinates only after that commit can
+  // reach the next paint.
+  if (action !== 'dispose') await waitForReactPaint(page);
 };
 
 const requireBounds = async (locator: Locator, label: string) => {
@@ -94,12 +99,7 @@ const dragHandle = async (
   await page.mouse.down();
   await page.mouse.move(clientX, clientY);
   await page.mouse.up();
-  await page.evaluate(
-    () =>
-      new Promise<void>((resolve) => {
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-      })
-  );
+  await waitForReactPaint(page);
 };
 
 const expectClose = (actual: number, expected: number): void => {
@@ -248,5 +248,107 @@ test('opt-in React DOM resize owns real scaled pointer gestures and source bound
   await page.mouse.up();
   await expect(routeSurface).toHaveCount(1);
   await expect(routeSurface.locator('[data-card-id]')).toHaveCount(61);
+  expect(errors).toEqual([]);
+});
+
+test('browser viewport changes cancel stale resize coordinates and preserve fresh gestures', async ({
+  page,
+}) => {
+  const errors = collectRuntimeErrors(page);
+  await mountHarness(page);
+  const host = page.locator(harnessSelector);
+  const surface = host.locator('.ptcgsim-board-surface');
+  const initial = await readLayout(page);
+  expect(initial.viewport).toEqual({
+    width: 1280,
+    height: 720,
+    devicePixelRatio: 1,
+  });
+
+  const initialLower = await requireBounds(
+    handle(page, 'lower'),
+    'initial lower handle'
+  );
+  const activeX = initialLower.x + initialLower.width / 2;
+  await page.mouse.move(activeX, initialLower.y + initialLower.height / 2);
+  await page.mouse.down();
+
+  await page.setViewportSize({ width: 1440, height: 810 });
+  await waitForReactPaint(page);
+  let layout = await readLayout(page);
+  expect(layout.viewport).toEqual({
+    width: 1440,
+    height: 810,
+    devicePixelRatio: 1,
+  });
+  expect(layout.vertical).toEqual(initial.vertical);
+
+  const resizedSurface = await requireBounds(surface, 'resized board surface');
+  expectPixelClose(resizedSurface.x, 20);
+  expectPixelClose(resizedSurface.y, 60);
+  expectPixelClose(resizedSurface.width, 1440 * 0.75);
+  expectPixelClose(resizedSurface.height, 810 * 0.75);
+
+  // If the viewport event had not canceled ownership, this held-pointer move
+  // would apply the old 1280x720 coordinate space to the resized surface.
+  await page.mouse.move(activeX, 500);
+  await page.mouse.up();
+  layout = await readLayout(page);
+  expect(layout.vertical).toEqual(initial.vertical);
+
+  const boardY = 486;
+  await dragHandle(
+    page,
+    'lower',
+    resizedSurface.y + (boardY * resizedSurface.height) / 810
+  );
+  layout = await readLayout(page);
+  expectClose(layout.vertical.lowerFrame.heightRatio, 0.41);
+  expectClose(layout.vertical.lowerHandle.bottomRatio, 0.4);
+
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await waitForReactPaint(page);
+  const compactLayout = await readLayout(page);
+  expect(compactLayout.viewport).toEqual({
+    width: 1024,
+    height: 768,
+    devicePixelRatio: 1,
+  });
+  expect(compactLayout.vertical).toEqual(layout.vertical);
+  const compactSurface = await requireBounds(surface, 'compact board surface');
+  expectPixelClose(compactSurface.width, 1024 * 0.75);
+  expectPixelClose(compactSurface.height, 768 * 0.75);
+
+  await callHarness(page, 'flipReset');
+  const compactFlipped = await readLayout(page);
+  expect(compactFlipped.bottomPlayerId).toBe(compactFlipped.playerIds[1]);
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await waitForReactPaint(page);
+  const restoredSurface = await requireBounds(
+    surface,
+    'restored flipped board surface'
+  );
+  layout = await readLayout(page);
+  expect(layout.viewport).toEqual({
+    width: 1280,
+    height: 720,
+    devicePixelRatio: 1,
+  });
+  expect(layout.bottomPlayerId).toBe(compactFlipped.bottomPlayerId);
+  expect(layout.vertical).toEqual(compactFlipped.vertical);
+  await dragHandle(
+    page,
+    'lower',
+    restoredSurface.y + (432 * restoredSurface.height) / 720
+  );
+  layout = await readLayout(page);
+  expect(layout.bottomPlayerId).toBe(layout.playerIds[1]);
+  expectClose(layout.vertical.lowerFrame.heightRatio, 0.4);
+  expectClose(layout.vertical.lowerHandle.bottomRatio, 0.39);
+
+  await callHarness(page, 'dispose');
+  await expect(page.locator(harnessSelector)).toHaveCount(0);
+  await page.setViewportSize({ width: 1200, height: 700 });
+  await waitForReactPaint(page);
   expect(errors).toEqual([]);
 });

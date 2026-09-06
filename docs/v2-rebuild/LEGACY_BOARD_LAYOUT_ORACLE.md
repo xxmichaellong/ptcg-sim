@@ -189,7 +189,11 @@ handle nodes remain non-painting and pointer-transparent. The isolated
 development harness now confirms the bridge with native Chromium pointer input
 on a translated 75%-scale candidate surface, including normal/flipped physical
 branches, overlapping handles, four clamp extremes, live DOM geometry, capture
-isolation, and active disposal. It is not imported by an application route.
+isolation, and active disposal. Route-owned viewport synchronization then proves
+cancel-before-resize ordering, ignored stale held movement, preserved
+normal/flipped layout, updated DOM dimensions, and correctly scaled fresh
+gestures across 1280×720, 1440×810, and 1024×768. It is not imported by an
+application route.
 
 ## Cards, stacks, z order, and input
 
@@ -306,8 +310,9 @@ explicit degenerate-browser caveat rather than widening the repository's 2 px
 acceptance tolerance. Focused DOM-runtime tests cover candidate pointer
 lifecycle semantics, and a development-only Chromium gate now covers real
 candidate gestures, overlap priority, clamp endpoints, DOM refresh, and
-teardown. It does not yet claim painted handle/control parity, browser-driven
-viewport-resize continuity, or the non-Chromium matrix.
+teardown. A second candidate case drives real Chromium viewport transitions
+during and after gestures, including normal/flipped ownership and fresh scaling.
+It does not yet claim painted handle/control parity or the non-Chromium matrix.
 
 `tests/browser/legacy-card-stack-geometry.spec.ts` adds a separate source-only
 card checkpoint at that viewport. Its independently reviewed numeric fixture is

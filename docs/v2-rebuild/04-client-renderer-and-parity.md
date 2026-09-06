@@ -182,11 +182,14 @@ drives native mouse-generated pointer events through normal/flipped lower
 branches, upper-over-lower overlap, all four edge clamps, DOM geometry refresh,
 capture isolation, and active-gesture disposal. It is dynamically imported only
 by the browser test; no route opts in and no production bundle or UI changes.
-Painted controls, real-browser viewport-resize continuity, and non-Chromium
-approval remain later gates. A second source-only Chromium fixture now pins
-portrait/nonstandard intrinsic-aspect
-sizing under authored constraints in both hands and benches and a controlled
-active attachment stack, including
+The same harness now gives its route-owned composition a real window-resize
+listener: the interaction bridge cancels an in-flight gesture before the route
+updates the renderer-neutral viewport, subsequent held-pointer movement is
+ignored, normal and flipped state survives later viewport changes, and fresh
+scaled gestures update the resized DOM surface correctly. Painted controls and
+non-Chromium approval remain later gates. A second source-only Chromium fixture
+now pins portrait/nonstandard intrinsic-aspect sizing under authored constraints
+in both hands and benches and a controlled active attachment stack, including
 integer offset rounding, expanded-container centering, z/DOM order, and overlap
 hit order. It deliberately stops before candidate-renderer card comparison and
 ordinary evolution reflow. Other card modes, browser-measured viewports, and

@@ -248,9 +248,13 @@ flip, wrong-pointer, release, cancel, blur, resize, and disposal coverage.
 opt-in runtime on a translated 75%-scale surface and drives real Chromium
 pointer gestures through normal/flipped movement, upper-handle overlap
 priority, all four clamps, DOM geometry refresh, capture isolation, and active
-disposal. No application route imports the harness. Screenshots, painted
-controls, browser-driven viewport-resize continuity, and non-Chromium approval
-remain separate.
+disposal. No application route imports the harness. A follow-up case supplies
+the candidate viewport portion: an active native gesture is canceled before
+route-owned 1280×720→1440×810 synchronization, its held movement is ignored, the
+resized DOM accepts a fresh normal gesture, the split survives 1024×768, and
+flipped ownership plus a fresh flipped gesture survive the return to 1280×720.
+Painted controls, source-to-candidate resize screenshots, and non-Chromium
+approval remain separate.
 
 `legacy-compound-group-rotation-layout.test.ts` and
 `legacy-compound-break-rotation-layout.test.ts` split the next source-only

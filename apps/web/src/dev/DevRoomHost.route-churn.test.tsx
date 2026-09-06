@@ -208,5 +208,5 @@ describe('development room route churn', () => {
       created.every((entry) => entry.socket.close.mock.calls.length === 1)
     ).toBe(true);
     expect(document.body.childElementCount).toBe(0);
-  });
+  }, 10_000);
 });

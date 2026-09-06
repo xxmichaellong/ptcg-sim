@@ -56,11 +56,13 @@ harness now drives that exact opt-in path with native mouse-generated pointer
 events on a scaled surface, covering normal/flipped movement, overlapping-hit
 priority, all four clamps, measured DOM refresh, capture isolation, and disposal
 during an active gesture. The harness is development-only and no production
-route opts in. Painted control parity, real-browser viewport-resize continuity,
-and the broader browser matrix are still exit gates. The flipped one-pixel
-source clamp also retains an explicit caveat: Chromium's nested iframe child
-layout diverges from normalized inner-region geometry while the outer resize
-geometry matches.
+route opts in. A follow-up Chromium case now drives actual viewport changes
+during and after gestures: stale ownership cancels before route-owned viewport
+synchronization, current split/flip state survives, DOM dimensions refresh, and
+fresh normal/flipped gestures use the new scale. Painted control parity and the
+broader browser matrix are still exit gates. The flipped one-pixel source clamp
+also retains an explicit caveat: Chromium's nested iframe child layout diverges
+from normalized inner-region geometry while the outer resize geometry matches.
 
 ### Mixed attachment history policy
 

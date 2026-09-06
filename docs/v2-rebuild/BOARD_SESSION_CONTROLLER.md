@@ -167,7 +167,11 @@ to focused runtime tests, a development-only Chromium harness drives real
 pointer events through translated/scaled coordinates, normal and flipped
 physical ownership, overlapping-handle priority, every edge clamp, DOM refresh,
 capture isolation, and disposal during an active gesture. No application route
-enables the option.
+enables the option. The harness's route-owned resize listener also proves the
+composition order in Chromium: the bridge cancels active ownership first, the
+runtime adopts the new outer viewport, held movement cannot reuse stale
+coordinates, normal/flipped state and DOM dimensions survive later changes, and
+fresh gestures scale against the new surface.
 
 ## Effects and renderer cancellation
 

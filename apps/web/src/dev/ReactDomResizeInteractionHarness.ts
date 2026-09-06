@@ -39,9 +39,17 @@ if (!firstPlayerId || !secondPlayerId) {
   throw new Error('React DOM resize harness requires exactly two players');
 }
 
-const createLayout = (): BoardLayoutState => ({
+const currentViewport = (): BoardLayoutState['viewport'] => ({
+  width: Math.max(1, window.innerWidth),
+  height: Math.max(1, window.innerHeight),
+  devicePixelRatio: Math.max(1, window.devicePixelRatio),
+});
+
+const createLayout = (
+  viewport: BoardLayoutState['viewport']
+): BoardLayoutState => ({
   geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
-  viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+  viewport,
   playerIds: [firstPlayerId, secondPlayerId],
   bottomPlayerId: firstPlayerId,
   shellMode: 'fullscreen',
@@ -116,7 +124,7 @@ export const mountReactDomResizeInteractionHarness =
     const runtime = new ReactDomBoardSessionRuntime({
       live,
       replay,
-      layout: createLayout(),
+      layout: createLayout(currentViewport()),
       enableLegacyResizeInteraction: true,
     });
     try {
@@ -128,16 +136,20 @@ export const mountReactDomResizeInteractionHarness =
     }
 
     let disposed = false;
+    const synchronizeViewport = (): void => {
+      runtime.setViewport(currentViewport());
+    };
+    window.addEventListener('resize', synchronizeViewport);
     const reset = (flipped = false): void => {
       if (disposed) throw new Error('Resize interaction harness is disposed');
-      runtime.replaceLayoutState(createLayout());
+      runtime.replaceLayoutState(createLayout(currentViewport()));
       if (flipped) runtime.flipBoard();
     };
     const harness: ReactDomResizeInteractionHarness = {
       getLayout: () => runtime.getLayoutState(),
       reset,
       installOverlappingHandles: () => {
-        const layout = createLayout();
+        const layout = createLayout(currentViewport());
         runtime.replaceLayoutState({
           ...layout,
           vertical: {
@@ -151,6 +163,7 @@ export const mountReactDomResizeInteractionHarness =
       dispose: () => {
         if (disposed) return;
         disposed = true;
+        window.removeEventListener('resize', synchronizeViewport);
         runtime.dispose();
         host.remove();
         if (window[HANDLE_NAME] === harness) delete window[HANDLE_NAME];
