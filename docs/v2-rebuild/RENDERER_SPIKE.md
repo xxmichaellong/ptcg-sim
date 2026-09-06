@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 902 v2 tests across 142 files. A separate suite
-passes 123 Playwright checks across 59 Chromium 151 browser files:
+The repository-wide gate passes 905 v2 tests across 142 files. A separate suite
+passes 127 Playwright checks across 60 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -900,6 +900,18 @@ passes 123 Playwright checks across 59 Chromium 151 browser files:
     Core, scene-diff, and real owner/opponent/spectator session tests prove the
     lifecycle, distinct aliases, equal geometry, and no canonical-ID leakage.
     No UI or UX changes.
+48. A full-runtime v1 layout checkpoint drives the actual resize handles with
+    DOM mouse events, proving overlay ownership and both normal branches. It
+    activates the real flip control, proves both flipped handler bindings,
+    reproduces the recorded 1920×1080 DPR-2 40%/35% asymmetric fixture, and
+    double-flips without moving physical geometry. The real fullscreen control
+    matches its recorded 1280×720 shell and restores it on second activation;
+    the direct CSS viewport matrix now also includes compact 1024×768. The
+    renderer contract's pure `resizeBoardLayoutState` matches these source
+    events, including the first-event `49%`/`51%` handle fallbacks, and the
+    opt-in session runtime projects it without game commands, route wiring, or
+    UI/UX changes. Edge collision/clamp browser cases, painted controls,
+    candidate-native gestures, and non-Chromium approval remain separate.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -915,7 +927,9 @@ start with `tests/browser/legacy-dom-geometry.spec.ts` and
 the real-runtime marker controls live in
 `tests/browser/legacy-runtime-marker-editing.spec.ts`, and real evolution marker
 transfer lives in
-`tests/browser/legacy-runtime-evolution-marker-transfer.spec.ts`. The geometry suites
+`tests/browser/legacy-runtime-evolution-marker-transfer.spec.ts`. Real
+flip/resize/fullscreen behavior lives in
+`tests/browser/legacy-runtime-layout-interactions.spec.ts`. The geometry suites
 continue with
 `tests/browser/legacy-card-stack-geometry.spec.ts`, plus the contained-card
 comparison in `tests/browser/legacy-contained-card-geometry.spec.ts` and the
@@ -1067,9 +1081,10 @@ bottleneck and the full cross-browser matrix.
 The following still require controlled browser/device runs before production
 wiring:
 
-- expand the source-driven default geometry checkpoint to painted/interactable
-  frames, handles and controls, cards/stacks, screenshots, every declared
-  viewport, split/flip state, and the structured 2 px / 1% thresholds;
+- expand the source-driven geometry checkpoint to painted/interactable frames,
+  handles and controls, cards/stacks, screenshots, edge clamp/collision states,
+  candidate-native split/flip/fullscreen gestures, and the remaining structured
+  2 px / 1% thresholds;
 - full double-click, right-click, flip, split resize, zone browser, keyboard,
   DOM-overlay anchor parity, and drag rejection/reconnect snap-back behavior;
 - actual external card/image hosts, redirects, CORS failures, oversized/corrupt

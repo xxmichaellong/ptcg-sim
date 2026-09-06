@@ -155,8 +155,19 @@ consumes that snapshot and the same browser harness confirms all 16 visible
 player-region border boxes plus their structural content boxes, the visible
 stadium, and non-painting frame/handle/control projection anchors. The sidebar
 content rectangle is reconstructed from its measured shell and tabs; these
-anchors do not claim visible control or resize interaction parity. A second
-source-only Chromium fixture now pins portrait/nonstandard intrinsic-aspect
+anchors do not claim visible control or resize interaction parity. A separate
+complete-v1-runtime Chromium gate now invokes the real fullscreen/flip buttons
+and both physical resizers through DOM events. It covers both normal branches,
+flipped rebinding, double-flip ownership, the recorded asymmetric DPR-2 state,
+fullscreen reversal, resize-overlay cleanup, and the source's `49%`/`51%`
+first-event fallbacks; the adjacent source CSS matrix directly covers compact
+1024×768 geometry. `resizeBoardLayoutState` reproduces
+the four source branches as a pure physical-layout transition, and the opt-in
+`BoardSessionRuntime.resizeBoard` projects that result into the selected
+renderer without changing a route or visible UI. Edge clamps/collisions,
+painted controls, candidate-native pointer wiring, and non-Chromium approval
+remain later gates. A second source-only Chromium fixture now pins
+portrait/nonstandard intrinsic-aspect
 sizing under authored constraints in both hands and benches and a controlled
 active attachment stack, including
 integer offset rounding, expanded-container centering, z/DOM order, and overlap

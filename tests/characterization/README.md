@@ -225,6 +225,19 @@ markers and can retain the incoming ability identity. Owner, opponent, and
 spectator receive distinct aliases with identical normalized geometry and no
 canonical-ID leakage. This adds no UI or UX behavior.
 
+`tests/browser/legacy-runtime-layout-interactions.spec.ts` executes the complete
+v1 layout interaction path rather than an inert CSS transcription. Real DOM
+events cover both normal resize handles, flip-time handler rebinding and both
+flipped branches, resize-overlay attach/remove, double-flip ownership, and the
+fullscreen control's reversible shell change. Those events reproduce the
+recorded asymmetric DPR-2 and fullscreen fixtures within 2 CSS px. The paired
+pure `resizeBoardLayoutState` transition includes the source's independent
+frame math, collision predicate, clamps, edge growth, and initial `49%`/`51%`
+inline handle fallbacks; the opt-in runtime projects it without route or visual
+changes. Compact 1024×768 CSS is now directly measured in the viewport matrix.
+Candidate pointer wiring, edge collision browser cases, screenshots, and
+non-Chromium approval remain separate.
+
 `legacy-compound-group-rotation-layout.test.ts` and
 `legacy-compound-break-rotation-layout.test.ts` split the next source-only
 checkpoint into independently auditable ordinary-group and BREAK-composition

@@ -169,8 +169,17 @@ physical frame geometries. The lower player is unrotated and receives the 24%
 free board; the upper player is frame-rotated and receives the authored 22%
 free board. Applying flip twice restores the original state. Hand concealment,
 stadium card readability, chrome colors, text/image counter-rotation, and
-handler rebinding are real flip behaviors but are intentionally outside this
-geometry state.
+handler rebinding are real flip behaviors outside this geometry state. The
+rebinding and physical resize consequences now have the real-runtime browser
+evidence described below; the remaining visual behaviors do not.
+
+`resizeBoardLayoutState` is the pure renderer-neutral form of the four shipped
+mousemove branches. It accepts a physical lower/upper handle and outer-viewport
+`clientY`, infers normal versus flipped binding from bottom ownership, preserves
+the source's asymmetric clamps/collision math, installs the first-event
+`49%`/`51%` inline fallbacks, expands either edge handle to `10%`, and switches
+shared placement to the handle midpoint. `BoardSessionRuntime` exposes that
+transition without putting layout state in game authority or wiring new UI.
 
 ## Cards, stacks, z order, and input
 
@@ -247,6 +256,25 @@ board-control projection anchors and the projected opponent rotation. The
 sidebar content rectangle is reconstructed from the measured shell/tab edges.
 The enforced acceptance remains the declared 2 CSS px browser tolerance; these
 sentinels do not claim visible controls or resize interaction parity.
+
+`tests/browser/legacy-viewport-generalization.spec.ts` now directly measures
+the structured oracle's compact 1024×768 case in addition to the laptop,
+desktop, fractional-DPR, and DPR-2 matrix. The model agrees with real legacy
+CSS for every shell, frame, handle, shared surface, and all 16 regions.
+
+`tests/browser/legacy-runtime-layout-interactions.spec.ts` loads the complete
+checked-in v1 module graph behind the deny-by-default network harness. Native
+mousedown/mousemove/mouseup dispatch proves overlay attach/remove ownership and
+both normal handle branches. The actual flip button then proves handler
+rebinding: physical moves at 60% and 35% reproduce the recorded 1920×1080 DPR-2
+40% lower/35% upper asymmetric fixture, including `39%`/`66%` handles and
+midpoint stadium/control placement. A second flip restores iframe ownership
+without moving physical geometry. The actual fullscreen control matches the
+recorded 1280×720 shell, keeps shared/handle geometry stable, and restores the
+sidebar geometry on its second activation. The same source events match the
+pure transition and renderer-neutral snapshot within 2 CSS px. This is layout
+and event-wiring evidence; it does not claim final painted controls or candidate
+renderer pointer UX.
 
 `tests/browser/legacy-card-stack-geometry.spec.ts` adds a separate source-only
 card checkpoint at that viewport. Its independently reviewed numeric fixture is
@@ -1426,7 +1454,7 @@ active/sole-bench shapes feed the narrow strict production branch. Raw
 normalized/authored inputs, box edges, affordances,
 and semantic z evidence remain in the richer characterization snapshot rather
 than being duplicated in
-`BoardScene`. Real-browser measurements for additional layout states,
+`BoardScene`. Real-browser measurements for remaining layout edge states,
 candidate-renderer card/stack parity, remaining card modes, screenshots, and
 interaction surfaces remain in the gate below.
 
@@ -1444,8 +1472,10 @@ bounds.
 
 That browser suite must cover at least:
 
-- normal, fullscreen, flipped, double-flipped, asymmetric resize, both handler
-  directions, edge clamps, expanded handles, and collision thresholds;
+- edge clamps, expanded handles, collision thresholds, viewport-resize
+  continuity, and the same interactions in candidate renderers (normal,
+  fullscreen, flipped, double-flipped, asymmetric resize, and both handle
+  directions now have direct v1 runtime evidence);
 - source-intrinsic and nonstandard card aspect ratios, active/bench overflow,
   flex shrink, BREAK/Rotation margins, attachment-expanded stacks, prizes, and
   scroll clipping;

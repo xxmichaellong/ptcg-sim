@@ -4,12 +4,14 @@ import {
   createBoardScene,
   DEFAULT_BOARD_PRESENTATION,
   flipBoardLayoutState,
+  resizeBoardLayoutState,
   type BoardLayoutSnapshot,
   type BoardLayoutState,
   type BoardPresentation,
   type BoardRenderer,
   type BoardRendererAdapters,
   type BoardRendererStatus,
+  type BoardResizeHandleId,
   type BoardScene,
   type BoardShellMode,
   type BoardViewport,
@@ -210,6 +212,12 @@ export class BoardSessionRuntime {
 
   flipBoard(): void {
     this.replaceLayoutState(flipBoardLayoutState(this.layoutState));
+  }
+
+  resizeBoard(handleId: BoardResizeHandleId, clientY: number): void {
+    this.replaceLayoutState(
+      resizeBoardLayoutState(this.layoutState, handleId, clientY)
+    );
   }
 
   dispose(): void {

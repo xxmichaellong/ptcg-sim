@@ -36,6 +36,9 @@ if (!fixture) throw new Error('Missing desktop legacy geometry fixture');
  * hand-recorded, so adding a viewport costs one row.
  */
 const viewports = [
+  // The checked-in structured oracle records this four-three viewport, but
+  // this row is the first direct Chromium measurement of the compact case.
+  { name: 'compact-1024x768', width: 1024, height: 768, devicePixelRatio: 1 },
   { name: 'laptop-1280x720', width: 1280, height: 720, devicePixelRatio: 1 },
   { name: 'recorded-1600x900', width: 1600, height: 900, devicePixelRatio: 1 },
   { name: 'desktop-1920x1080', width: 1920, height: 1080, devicePixelRatio: 1 },

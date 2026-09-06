@@ -103,6 +103,7 @@ export const LEGACY_BOARD_AFFORDANCES_V1 = {
 export type BoardShellMode = 'sidebar' | 'fullscreen';
 export type BoardPhysicalSide = 'lower' | 'upper';
 export type BoardSharedPlacement = 'cssDefault' | 'handleMidpoint';
+export type BoardResizeHandleId = BoardPhysicalSide;
 
 export interface BoardNormalizedVerticalFrame {
   /** Distance from the outer viewport's bottom edge, divided by its height. */
@@ -782,9 +783,7 @@ const otherPlayer = (
   throw new Error('Bottom player must be one of the two layout players');
 };
 
-export const createBoardLayoutSnapshot = (
-  state: BoardLayoutState
-): BoardLayoutSnapshot => {
+const assertBoardLayoutState = (state: BoardLayoutState): PlayerId => {
   assertViewport(state.viewport);
   if (state.geometryVersion !== BOARD_LAYOUT_GEOMETRY_VERSION) {
     throw new Error('Unsupported board layout geometry version');
@@ -800,6 +799,13 @@ export const createBoardLayoutSnapshot = (
   }
   const topPlayerId = otherPlayer(state.playerIds, state.bottomPlayerId);
   assertVerticalState(state.vertical);
+  return topPlayerId;
+};
+
+export const createBoardLayoutSnapshot = (
+  state: BoardLayoutState
+): BoardLayoutSnapshot => {
+  const topPlayerId = assertBoardLayoutState(state);
 
   const fullScreen = state.shellMode === 'fullscreen';
   const playAreaWidth =
@@ -934,6 +940,161 @@ export const flipBoardLayoutState = (
   ...state,
   bottomPlayerId: otherPlayer(state.playerIds, state.bottomPlayerId),
 });
+
+const clamp = (value: number, minimum: number, maximum: number): number =>
+  Math.max(minimum, Math.min(value, maximum));
+
+const legacyResizeHandleHeight = (
+  id: BoardResizeHandleId,
+  bottomRatio: number
+): BoardNormalizedResizeHandle['heightRatio'] =>
+  (id === 'upper' &&
+    bottomRatio > LEGACY_BOARD_RESIZER_V1.upperExpandAboveRatio) ||
+  (id === 'lower' &&
+    bottomRatio < LEGACY_BOARD_RESIZER_V1.lowerExpandBelowRatio)
+    ? LEGACY_BOARD_RESIZER_V1.expandedHeightRatio
+    : LEGACY_BOARD_RESIZER_V1.baseHeightRatio;
+
+/**
+ * Pure form of the four v1 split-resizer mousemove branches. The handle ID is
+ * physical: `lower` is the shipped `selfResizer` element and `upper` is the
+ * shipped `oppResizer` element. Flip changes which branch those elements use,
+ * while the resulting state remains expressed in physical coordinates.
+ */
+export const resizeBoardLayoutState = (
+  state: BoardLayoutState,
+  handleId: BoardResizeHandleId,
+  clientY: number
+): BoardLayoutState => {
+  // Validate the retained input before using it as the untouched half of a
+  // transition. This also verifies player identity and the current bottom ID.
+  assertBoardLayoutState(state);
+  finite(clientY, 'Board resize pointer clientY');
+  if (handleId !== 'lower' && handleId !== 'upper') {
+    throw new Error('Unsupported board resize handle');
+  }
+
+  const viewportHeight = state.viewport.height;
+  const flipped = state.bottomPlayerId !== state.playerIds[0];
+  const minimumY = flipped
+    ? 1 / viewportHeight
+    : handleId === 'upper'
+      ? -0.01
+      : 0;
+  const maximumY = flipped
+    ? 1 - 1 / viewportHeight
+    : handleId === 'lower'
+      ? 1.01
+      : 1;
+  const yRatio = clamp(clientY / viewportHeight, minimumY, maximumY);
+  let lowerFrame = { ...state.vertical.lowerFrame };
+  let upperFrame = { ...state.vertical.upperFrame };
+  let lowerHandle = { ...state.vertical.lowerHandle };
+  let upperHandle = { ...state.vertical.upperHandle };
+
+  if (!flipped && handleId === 'lower') {
+    lowerFrame = {
+      ...lowerFrame,
+      heightRatio: Math.max(0.01, 1 - yRatio + 0.01),
+    };
+    lowerHandle = { ...lowerHandle, bottomRatio: 1 - yRatio };
+    const collides = legacyResizeHandlesCollide(
+      { lowerHandle, upperHandle },
+      viewportHeight
+    );
+    if (state.vertical.sharedPlacement === 'cssDefault') {
+      // Collision sees computed 53%; v1 then installs a distinct 51% inline
+      // fallback before calculating the shared midpoint.
+      upperHandle = { ...upperHandle, bottomRatio: 0.51 };
+    }
+    if (collides) {
+      upperHandle = { ...upperHandle, bottomRatio: 1.025 - yRatio };
+      upperFrame = {
+        bottomRatio: 1.015 - yRatio,
+        heightRatio: Math.max(0.01, yRatio - 0.01),
+      };
+    }
+  } else if (!flipped && handleId === 'upper') {
+    upperHandle = { ...upperHandle, bottomRatio: 1 - yRatio };
+    upperFrame = {
+      bottomRatio: 0.99 - yRatio,
+      heightRatio: Math.max(0.01, yRatio + 0.01),
+    };
+    const collides = legacyResizeHandlesCollide(
+      { lowerHandle, upperHandle },
+      viewportHeight
+    );
+    if (state.vertical.sharedPlacement === 'cssDefault') {
+      // Collision sees computed 50.5%; midpoint placement uses v1's 49%
+      // inline fallback after the first upper-handle event.
+      lowerHandle = { ...lowerHandle, bottomRatio: 0.49 };
+    }
+    if (collides) {
+      lowerFrame = {
+        ...lowerFrame,
+        heightRatio: Math.max(0.01, 1 - yRatio - 0.01),
+      };
+      lowerHandle = { ...lowerHandle, bottomRatio: 0.975 - yRatio };
+    }
+  } else if (handleId === 'lower') {
+    lowerFrame = { ...lowerFrame, heightRatio: 1 - yRatio };
+    lowerHandle = { ...lowerHandle, bottomRatio: 0.99 - yRatio };
+    const collides = legacyResizeHandlesCollide(
+      { lowerHandle, upperHandle },
+      viewportHeight
+    );
+    if (state.vertical.sharedPlacement === 'cssDefault') {
+      upperHandle = { ...upperHandle, bottomRatio: 0.51 };
+    }
+    if (collides) {
+      upperHandle = { ...upperHandle, bottomRatio: 1.015 - yRatio };
+      upperFrame = {
+        bottomRatio: 1 - yRatio,
+        heightRatio: yRatio,
+      };
+    }
+  } else {
+    upperHandle = { ...upperHandle, bottomRatio: 1.01 - yRatio };
+    upperFrame = {
+      bottomRatio: 1 - yRatio,
+      heightRatio: yRatio,
+    };
+    const collides = legacyResizeHandlesCollide(
+      { lowerHandle, upperHandle },
+      viewportHeight
+    );
+    if (state.vertical.sharedPlacement === 'cssDefault') {
+      lowerHandle = { ...lowerHandle, bottomRatio: 0.49 };
+    }
+    if (collides) {
+      lowerFrame = { ...lowerFrame, heightRatio: 1 - yRatio };
+      lowerHandle = { ...lowerHandle, bottomRatio: 0.985 - yRatio };
+    }
+  }
+
+  lowerHandle = {
+    ...lowerHandle,
+    heightRatio: legacyResizeHandleHeight('lower', lowerHandle.bottomRatio),
+  };
+  upperHandle = {
+    ...upperHandle,
+    heightRatio: legacyResizeHandleHeight('upper', upperHandle.bottomRatio),
+  };
+  const next: BoardLayoutState = {
+    ...state,
+    vertical: {
+      lowerFrame,
+      upperFrame,
+      lowerHandle,
+      upperHandle,
+      sharedPlacement: 'handleMidpoint',
+    },
+  };
+  // Fail closed if a future arithmetic change produces a state outside the
+  // source-observed overscan envelope.
+  assertBoardLayoutState(next);
+  return next;
+};
 
 export const findBoardLayoutRegion = (
   snapshot: BoardLayoutSnapshot,

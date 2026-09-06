@@ -125,8 +125,10 @@ controller captures one installed `{view, scene}` pair before resolving a drop.
 The concrete adapter performs the mode/phase/role checks again immediately
 before submit, so a reentrant or stale readiness change fails closed.
 
-`BoardResizeRequested` remains unsupported here. The opt-in DOM runtime exposes
-the complete renderer-neutral layout bridge. Sidebar/fullscreen width,
+Renderer-originated `BoardResizeRequested` remains unsupported here. The opt-in
+runtime exposes the complete renderer-neutral layout bridge plus an explicit
+`resizeBoard(handleId, clientY)` entry point for a future trusted wrapper.
+Sidebar/fullscreen width,
 bottom-player perspective, independent upper/lower frame positions and heights,
 both resize handles, shared placement, stadium/control anchors, region border
 boxes, and region content boxes all flow from the source-characterized snapshot
@@ -143,6 +145,13 @@ result, and replaces it without advancing source/playback cursors. The adapter
 then synchronizes once so a previously rejected upstream generation can retry.
 Repeating an equivalent complete layout is a no-op and does not duplicate
 effects or presentation work.
+
+Physical resize calls run through the renderer contract's pure
+`resizeBoardLayoutState` implementation. It retains the four distinct
+normal/flipped legacy branches, independent handles/frames, source clamps,
+collision and edge-growth rules, and midpoint shared placement. The runtime
+then follows the same `RefreshScene` path as any other local layout change; no
+game command, revision, replay cursor, or presentation fact is created.
 
 ## Effects and renderer cancellation
 

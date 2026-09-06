@@ -717,6 +717,17 @@ describe('opt-in React DOM board session runtime', () => {
     );
     expect(runtime.getBoardSnapshot()?.scene?.viewport.width).toBe(1200);
     expect(host.style.width).toBe('1200px');
+    await act(async () => {
+      runtime.resizeBoard('lower', 480);
+    });
+    expect(runtime.getLayoutState().vertical).toMatchObject({
+      lowerFrame: { bottomRatio: 0, heightRatio: 0.4 },
+      lowerHandle: { bottomRatio: 0.39, heightRatio: 0.025 },
+      sharedPlacement: 'handleMidpoint',
+    });
+    expect(
+      runtime.getBoardSnapshot()?.scene?.layout.players[0]?.bounds.height
+    ).toBe(320);
 
     const replayView = atRevision(0, 'replacement-match');
     await act(async () => replay.enterReplay(replayView));

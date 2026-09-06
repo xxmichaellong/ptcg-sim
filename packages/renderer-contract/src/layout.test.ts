@@ -21,6 +21,7 @@ import {
   layoutLegacyTwoEnergyAttachmentStack,
   legacyPileTopIndex,
   legacyResizeHandlesCollide,
+  resizeBoardLayoutState,
   type BoardLayoutState,
 } from './layout.js';
 import type { Rect } from './model.js';
@@ -406,6 +407,96 @@ describe('renderer-neutral legacy board layout', () => {
     });
     expect(layout.shared.stadium.physicalDeclaredBounds.y).toBeCloseTo(355.5);
     expect(layout.shared.boardControlsAnchor.y).toBeCloseTo(400.5);
+  });
+
+  it('derives the recorded flipped asymmetric state from physical pointer moves', () => {
+    const initial = state({
+      viewport: { width: 1920, height: 1080, devicePixelRatio: 2 },
+    });
+    const flipped = flipBoardLayoutState(initial);
+    const lowerResized = resizeBoardLayoutState(flipped, 'lower', 648);
+    const resized = resizeBoardLayoutState(lowerResized, 'upper', 378);
+
+    expect(resized.bottomPlayerId).toBe(red);
+    expect(resized.vertical).toEqual({
+      lowerFrame: { bottomRatio: 0, heightRatio: 0.4 },
+      upperFrame: { bottomRatio: 0.65, heightRatio: 0.35 },
+      lowerHandle: { bottomRatio: 0.39, heightRatio: 0.025 },
+      upperHandle: { bottomRatio: 0.66, heightRatio: 0.025 },
+      sharedPlacement: 'handleMidpoint',
+    });
+  });
+
+  it('keeps all four legacy resize branches explicit', () => {
+    const normalLower = resizeBoardLayoutState(state(), 'lower', 432);
+    expect(normalLower.vertical).toMatchObject({
+      lowerFrame: { bottomRatio: 0, heightRatio: 0.41000000000000003 },
+      upperFrame: { bottomRatio: 0.5, heightRatio: 0.5 },
+      lowerHandle: { bottomRatio: 0.4, heightRatio: 0.025 },
+      upperHandle: { bottomRatio: 0.51, heightRatio: 0.025 },
+      sharedPlacement: 'handleMidpoint',
+    });
+
+    const normalUpper = resizeBoardLayoutState(state(), 'upper', 252);
+    expect(normalUpper.vertical).toMatchObject({
+      lowerFrame: { bottomRatio: 0, heightRatio: 0.5 },
+      upperFrame: { bottomRatio: 0.64, heightRatio: 0.36 },
+      lowerHandle: { bottomRatio: 0.49, heightRatio: 0.025 },
+      upperHandle: { bottomRatio: 0.65, heightRatio: 0.025 },
+      sharedPlacement: 'handleMidpoint',
+    });
+
+    const flipped = flipBoardLayoutState(state());
+    expect(
+      resizeBoardLayoutState(flipped, 'lower', 432).vertical
+    ).toMatchObject({
+      lowerFrame: { bottomRatio: 0, heightRatio: 0.4 },
+      lowerHandle: { bottomRatio: 0.39, heightRatio: 0.025 },
+    });
+    expect(
+      resizeBoardLayoutState(flipped, 'upper', 252).vertical
+    ).toMatchObject({
+      upperFrame: { bottomRatio: 0.65, heightRatio: 0.35 },
+      upperHandle: { bottomRatio: 0.66, heightRatio: 0.025 },
+    });
+  });
+
+  it('models resize collision, clamps, handle growth and invalid input', () => {
+    const collision = resizeBoardLayoutState(state(), 'lower', 345.6);
+    expect(collision.vertical).toMatchObject({
+      lowerFrame: { bottomRatio: 0, heightRatio: 0.53 },
+      upperFrame: {
+        bottomRatio: 0.5349999999999999,
+        heightRatio: 0.47000000000000003,
+      },
+      lowerHandle: { bottomRatio: 0.52, heightRatio: 0.025 },
+      upperHandle: { bottomRatio: 0.5449999999999999, heightRatio: 0.025 },
+    });
+
+    const lowerExtreme = resizeBoardLayoutState(
+      state(),
+      'lower',
+      Number.MAX_SAFE_INTEGER
+    );
+    expect(lowerExtreme.vertical).toMatchObject({
+      lowerFrame: { heightRatio: 0.01 },
+      lowerHandle: { bottomRatio: -0.010000000000000009, heightRatio: 0.1 },
+    });
+    const upperExtreme = resizeBoardLayoutState(
+      state(),
+      'upper',
+      Number.MIN_SAFE_INTEGER
+    );
+    expect(upperExtreme.vertical).toMatchObject({
+      upperFrame: { bottomRatio: 1, heightRatio: 0.01 },
+      upperHandle: { bottomRatio: 1.01, heightRatio: 0.1 },
+    });
+    expect(() => resizeBoardLayoutState(state(), 'lower', Number.NaN)).toThrow(
+      'clientY'
+    );
+    expect(() =>
+      resizeBoardLayoutState(state(), 'middle' as 'lower', 360)
+    ).toThrow('Unsupported board resize handle');
   });
 
   it('models source clamps, extreme handle growth and capped shared placement', () => {

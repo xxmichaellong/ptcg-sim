@@ -842,6 +842,10 @@
               "kind": "type"
             },
             {
+              "name": "BoardResizeHandleId",
+              "kind": "type"
+            },
+            {
               "name": "BoardResizeHandleLayout",
               "kind": "type"
             },
@@ -1152,6 +1156,10 @@
             {
               "name": "Rect",
               "kind": "type"
+            },
+            {
+              "name": "resizeBoardLayoutState",
+              "kind": "value"
             },
             {
               "name": "resolveBoardDropTarget",

@@ -38,6 +38,18 @@ game state remains in the deterministic core/authority, recipient-safe state in
 the session projection, and transient interaction in presentation state. DOM
 nodes never become logical state.
 
+The source layout evidence now executes the full v1 runtime for fullscreen and
+flipped/asymmetric checkpoints, while the direct CSS matrix includes the
+compact viewport. Real DOM handle events cover both normal directions,
+flip-time rebinding covers both flipped directions, and double flip/fullscreen
+reversal prove cleanup and ownership restoration. The renderer contract owns
+the corresponding pure four-branch resize transition, including v1 clamps,
+collision arithmetic, edge-handle expansion, and first-event inline fallbacks.
+The opt-in board runtime can apply it to either renderer; production routes and
+the existing UI remain unchanged. Candidate-native pointer wiring, painted
+control parity, edge collisions, and the broader browser matrix are still exit
+gates.
+
 ### Mixed attachment history policy
 
 Do not add legacy DOM-reflow provenance or per-card pixel offsets to
