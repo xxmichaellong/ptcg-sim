@@ -1186,6 +1186,20 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     their placement, singleton replacement, and concealment rules need dedicated
     characterization. No protocol/domain/authority schema, visible control,
     route, layout, styling, UI, or UX changes.
+68. Non-Alt `A` and `B` now map selected cards to active and bench through a
+    separate runtime-validated play-placement union. Zone cards reuse
+    `MoveCardToPlay`; eligible top play cards use `MovePlayStack` with exact
+    active/bench order preconditions; a viewer-owned staged top uses
+    `RestoreStagedStack`. Attachments, lower evolutions, inspected cards,
+    foreign or partial staged work, stale boards, invalid values, and
+    active-to-active requests fail closed. Two fresh real-v1 Chromium pages
+    prove `A` replaces an incumbent active by moving it to bench and `B` appends
+    the selected hand card to bench while preserving active, with one outer
+    `moveCardBundle` action/export record and selection cleanup. The candidate
+    proves both exact commands after the prior twenty continuous shortcuts and
+    editable input stays silent. Stadium and prize keys remain separate. No
+    protocol/domain/authority schema, visible control, route, layout, styling,
+    UI, or UX changes.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

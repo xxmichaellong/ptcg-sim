@@ -112,13 +112,16 @@ falls through into a redundant second whole-deck shuffle after deselection;
 the protected path deliberately emits one atomic shuffle. `H`, `D`, `L`, and
 Space reuse one per-card hand/discard/lost-zone/loose-board resolver shared with
 the existing context-menu board move; accepted requests dismiss selection and
-retain exact source and work-area preconditions. Local zone sorting is
+retain exact source and work-area preconditions. `A`/`B` delegate to a closed
+active/bench placement resolver using existing zone-to-play, whole-stack, or
+staged-restore commands; v1 incumbent-active displacement stays one atomic v2
+transition. Local zone sorting is
 controlled by the mounted zone browser:
 it derives a stable copy from disclosed labels and never enters the controller
 or mutates its projection; forged requests still fail closed as `local_only`.
 Native Chromium pins exact damage and condition edit/removal plus ability-marker
 commands, all six count prompts/commands, all three category choices, all five
-move choices, all twenty selected-card shortcut commands, and reversible
+move choices, all twenty-two selected-card shortcut commands, and reversible
 sorting with zero action/effect/command traffic.
 Replay-local prize/hand disclosure now uses an isolated solo-player-only
 projection. Its opaque catalog never enters the historical view, its three

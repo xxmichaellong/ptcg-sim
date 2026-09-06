@@ -421,6 +421,21 @@ Candidate Chromium proves the four commands after the prior sixteen continuous
 shortcuts and focused editable input remains silent. No protocol, domain,
 authority, route, label, layout, styling, UI, or UX surface changes.
 
+The protected active/bench shortcut checkpoint covers non-Alt `A` and `B`
+without absorbing stadium or prize rules. Two fresh real-v1 Chromium pages
+place a selected hand Pokémon beside one incumbent active, then pin active and
+bench arrays, selection cleanup, exact live/export `moveCardBundle` payloads,
+asset service, and a clean page-error boundary. `A` moves the incumbent active
+to bench within the same outer action; `B` preserves it and adds the selected
+card to bench. A closed runtime-validated play union emits existing
+`MoveCardToPlay`, fully board-order-preconditioned `MovePlayStack`, or
+`RestoreStagedStack` commands. Attachments, lower evolutions, inspections,
+foreign or partial staged work, stale cards/boards, active no-ops, replay, and
+submit-time races fail closed. Candidate Chromium proves both commands after
+the prior twenty continuous shortcuts and focused editable input remains
+silent. No protocol, domain, authority, route, label, layout, styling, UI, or
+UX surface changes.
+
 The solo replay disclosure checkpoint closes the three replay exceptions pinned
 by `client/src/setup/general/replay-block.js`: prize reveal, prize look, and
 opponent-hand look. It preserves their exact source labels and show/cover

@@ -1222,7 +1222,7 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   expect(errors).toEqual([]);
 });
 
-test('selected-card marker, category, visibility, deck, and zone shortcuts stay protected and suppress editable targets', async ({
+test('selected-card marker, category, visibility, deck, zone, and play shortcuts stay protected and suppress editable targets', async ({
   page,
 }) => {
   const errors = collectRuntimeErrors(page);
@@ -1570,6 +1570,42 @@ test('selected-card marker, category, visibility, deck, and zone shortcuts stay 
       },
       retained: false,
     },
+    {
+      key: 'KeyA',
+      card: sourceCard,
+      cardId: fixture.sourceCardId,
+      request: {
+        action: 'moveCardToPlay',
+        cardId: fixture.sourceCardId,
+        slot: 'active',
+      },
+      command: {
+        type: 'MoveCardToPlay',
+        cardId: fixture.sourceCardId,
+        expectedSourceZoneId: fixture.sourceZoneId,
+        boardPlayerId: fixture.ownPlayerId,
+        slot: 'active',
+      },
+      retained: false,
+    },
+    {
+      key: 'KeyB',
+      card: sourceCard,
+      cardId: fixture.sourceCardId,
+      request: {
+        action: 'moveCardToPlay',
+        cardId: fixture.sourceCardId,
+        slot: 'bench',
+      },
+      command: {
+        type: 'MoveCardToPlay',
+        cardId: fixture.sourceCardId,
+        expectedSourceZoneId: fixture.sourceZoneId,
+        boardPlayerId: fixture.ownPlayerId,
+        slot: 'bench',
+      },
+      retained: false,
+    },
   ] as const;
 
   for (const [index, shortcut] of cases.entries()) {
@@ -1609,6 +1645,7 @@ test('selected-card marker, category, visibility, deck, and zone shortcuts stay 
   });
   await page.keyboard.press('Digit4');
   await page.keyboard.press('KeyH');
+  await page.keyboard.press('KeyA');
   const suppressed = await evidence(page);
   expect(suppressed.submissions).toEqual([]);
   expect(suppressed.shortcutActions).toEqual([]);

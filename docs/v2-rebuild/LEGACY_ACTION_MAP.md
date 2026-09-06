@@ -863,7 +863,8 @@ Alt-`E`/`T`/`P` changes category, `C` toggles private card inspection,
 `Z`/Alt-`Z` requests public hide/reveal, and
 ArrowUp/ArrowDown/ArrowRight/`S` moves to deck top/bottom, swaps with deck top,
 or shuffles into the deck. `H`/`D`/`L`/Space moves to the current board-side
-hand/discard/lost zone/loose board. The source's missing-marker rules remain exact:
+hand/discard/lost zone/loose board, and `A`/`B` places on active/bench. The
+source's missing-marker rules remain exact:
 Alt-digit creates the positive damage value and Alt-`Y` creates `P` when no
 corresponding marker exists.
 
@@ -871,7 +872,7 @@ Raw DOM events never enter controller logic. The key/code/Alt mapper attaches
 the currently selected stable card ID, and the controller rechecks that exact
 identity on a ready live-player projection before reusing the bounded stack,
 annotation, inspection, public-visibility, deck-relative, or per-card
-zone-movement resolver. Ability, category, accepted removal, and accepted move
+zone-movement or play-placement resolver. Ability, category, accepted removal, and accepted move
 gestures clear selection as v1 does; additive damage, condition cycling, and visibility retain it. A `C` close
 is accepted only for a matching single-card grant, so it cannot accidentally close a whole-zone look;
 a normally known card has no grant to close. `Z` and Alt-`Z` carry explicit
@@ -879,7 +880,7 @@ false/true targets and duplicate values are no-ops. Forged, stale, unsupported,
 invalid, replay, and post-dismissal requests cannot submit. The bridge ignores
 unselected, composing, already-consumed, input, textarea, select, table-cell,
 contenteditable, textbox-role, and legacy marker/tab targets. Native Chromium
-proves all twenty exact commands and zero traffic from an editable target
+proves all twenty-two exact commands and zero traffic from an editable target
 without adding a visible control or enabling the production route. A separate
 real-v1 Chromium measurement pins the original local `C`/Alt-`C` source swap
 and `Z`/Alt-`Z` face/public flags behind the deny-by-default network boundary.
@@ -894,6 +895,13 @@ asset service, and export owner rewriting. V2 shares one source-specific zone
 resolver with the existing context-menu board move, preserves stale/work-area
 preconditions, and leaves active/bench, stadium, and prizes outside this bounded
 group.
+A two-page runtime measurement pins `A` active replacement and `B` bench
+placement from hand, including arrays, the single outer `moveCardBundle`
+payload, selection cleanup, incumbent-active movement, asset service, and
+export owner rewriting. The protected resolver emits `MoveCardToPlay`,
+`MovePlayStack`, or `RestoreStagedStack` with exact source and board-order
+preconditions; attachments, lower evolutions, inspections, invalid staged work,
+and active no-ops fail closed. Stadium and prizes remain separate.
 
 ### Implemented authority-random face-down subset
 

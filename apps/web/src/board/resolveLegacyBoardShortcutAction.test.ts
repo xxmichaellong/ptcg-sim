@@ -116,10 +116,22 @@ describe('legacy board shortcut action resolver', () => {
       cardId,
       destination: 'board',
     });
+    expect(key('A', 'KeyA')).toEqual({
+      action: 'moveCardToPlay',
+      cardId,
+      slot: 'active',
+    });
+    expect(key('Unidentified', 'KeyB')).toEqual({
+      action: 'moveCardToPlay',
+      cardId,
+      slot: 'bench',
+    });
     expect(key('ArrowUp', 'ArrowUp', true)).toBeNull();
     expect(key('s', 'KeyS', true)).toBeNull();
     expect(key('h', 'KeyH', true)).toBeNull();
     expect(key(' ', 'Space', true)).toBeNull();
+    expect(key('a', 'KeyA', true)).toBeNull();
+    expect(key('b', 'KeyB', true)).toBeNull();
     expect(
       resolveLegacyBoardShortcutKey(
         {
@@ -148,6 +160,46 @@ describe('legacy board shortcut action resolver', () => {
     });
     expect(key('e', 'KeyE')).toBeNull();
     expect(key('x', 'KeyX', true)).toBeNull();
+  });
+
+  it('reuses active/bench placement and dismisses accepted moves', () => {
+    const view = createRendererSpikeView();
+    const hand = view.zones['zone:spike-blue:hand']!;
+    const card = hand.cards[0]!;
+    for (const slot of ['active', 'bench'] as const) {
+      expect(
+        resolveLegacyBoardShortcutAction(view, {
+          action: 'moveCardToPlay',
+          cardId: card.id,
+          slot,
+        })
+      ).toEqual({
+        ok: true,
+        command: {
+          type: 'MoveCardToPlay',
+          cardId: card.id,
+          expectedSourceZoneId: hand.id,
+          boardPlayerId: 'spike-blue',
+          slot,
+        },
+        dismissSelection: true,
+      });
+    }
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'moveCardToPlay',
+        cardId: card.id,
+        slot: 'invalid',
+      } as unknown as LegacyBoardShortcutActionRequest)
+    ).toEqual({ ok: false, reason: 'invalid_value' });
+    const active = view.stacks['stack:blue:active']!;
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'moveCardToPlay',
+        cardId: active.evolutionCards.at(-1)!.id,
+        slot: 'active',
+      })
+    ).toEqual({ ok: false, reason: 'no_op' });
   });
 
   it('reuses generic per-card zone movement and dismisses accepted moves', () => {

@@ -7,6 +7,11 @@ import {
 } from './resolveLegacyBoardOverlayAction.js';
 import { resolveCardAnnotationAction } from './resolveCardAnnotationAction.js';
 import {
+  isCardPlayMoveDestination,
+  resolveCardPlayMoveAction,
+  type CardPlayMoveDestination,
+} from './resolveCardPlayMoveAction.js';
+import {
   isCardZoneMoveDestination,
   resolveCardZoneMoveAction,
   type CardZoneMoveDestination,
@@ -53,6 +58,11 @@ export type LegacyBoardShortcutActionRequest =
       readonly action: 'moveCardToZone';
       readonly cardId: ViewCardId;
       readonly destination: CardZoneMoveDestination;
+    }
+  | {
+      readonly action: 'moveCardToPlay';
+      readonly cardId: ViewCardId;
+      readonly slot: CardPlayMoveDestination;
     };
 
 export type LegacyBoardShortcutActionRejectionReason =
@@ -83,6 +93,7 @@ export type LegacyBoardShortcutActionResolution =
 type ExistingActionResolution =
   | ReturnType<typeof resolveStackStateAction>
   | ReturnType<typeof resolveCardAnnotationAction>
+  | ReturnType<typeof resolveCardPlayMoveAction>
   | ReturnType<typeof resolveCardZoneMoveAction>
   | ReturnType<typeof resolveDeckRelativeCardAction>
   | ReturnType<typeof resolveCardInspectionAction>
@@ -220,6 +231,14 @@ export const resolveLegacyBoardShortcutAction = (
         resolveCardZoneMoveAction(view, request.cardId, request.destination),
         true
       );
+    case 'moveCardToPlay':
+      if (!isCardPlayMoveDestination(request.slot)) {
+        return { ok: false, reason: 'invalid_value' };
+      }
+      return retainResolution(
+        resolveCardPlayMoveAction(view, request.cardId, request.slot),
+        true
+      );
   }
 };
 
@@ -320,6 +339,12 @@ export const resolveLegacyBoardShortcutKey = (
   }
   if (!altKey && matches(input, ' ', 'KeySpace')) {
     return { action: 'moveCardToZone', cardId, destination: 'board' };
+  }
+  if (!altKey && matches(input, 'a', 'KeyA')) {
+    return { action: 'moveCardToPlay', cardId, slot: 'active' };
+  }
+  if (!altKey && matches(input, 'b', 'KeyB')) {
+    return { action: 'moveCardToPlay', cardId, slot: 'bench' };
   }
   if (!altKey) return null;
   if (matches(input, 'e', 'KeyE')) {

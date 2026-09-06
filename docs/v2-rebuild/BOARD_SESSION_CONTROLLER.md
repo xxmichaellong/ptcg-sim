@@ -280,9 +280,10 @@ a separate typed controller action rather than pretending a context menu is open
 keymap emits only digit/Alt-digit/`0`, `Y`/Alt-`Y`, `W`, Alt-`E`/`T`/`P`, `C`,
 `Z`/Alt-`Z`, ArrowUp/ArrowDown/ArrowRight, and `S` requests with the current
 stable card ID, plus `H`/`D`/`L`/Space requests for generic zone movement. The controller
+also accepts non-Alt `A`/`B` requests for active/bench placement. It
 requires that ID to be the installed selection on a ready live-player
 projection, then reuses the bounded stack, annotation, private-inspection,
-public-visibility, deck-relative, or per-card zone-movement resolver. Accepted
+public-visibility, deck-relative, per-card zone-movement, or play-placement resolver. Accepted
 ability/category/removal/movement gestures clear selection in the same reduction;
 additive damage, condition cycling, and all visibility gestures retain it.
 Missing-marker Alt-digit and Alt-`Y` keep the
@@ -300,6 +301,13 @@ context-menu board destination and emits source-specific `MoveCard`,
 `MoveCardFromStack`, `MoveInspectedCard`, or `MoveStagedCard` commands. Lower
 evolutions, foreign work areas, missing destinations, and same-zone moves fail
 closed. Active/bench, stadium, and prizes remain separate shortcut slices.
+`A`/`B` now use the dedicated play-placement slice. A zone card emits
+`MoveCardToPlay`, an eligible top play card emits a fully preconditioned
+`MovePlayStack`, and a viewer-owned staged top emits `RestoreStagedStack`.
+Attachments, lower evolutions, inspections, foreign/partial staged work,
+missing boards, and active-to-active no-ops fail before submission. V1's
+incumbent active moves to bench inside the same `A` operation; the domain's
+active placement event retains that atomic displacement.
 The checkbox dispatches no controller request, effect, or command. The resolver
 retains a `local_only` rejection for forged `sortZone` requests as a fail-closed
 boundary. Replay remains strictly non-submitting. V1's replay-only local
@@ -315,7 +323,7 @@ expose no replay mutation rows; a forged request is rejected as `read_only`
 before the resolver runs. Native Chromium
 now proves exact accepted `SetDamage`, `SetSpecialCondition`, both removals,
 `SetAbilityUsed`, all six count submissions, all three category choices, all
-five move choices, and all twenty selected-card shortcut commands; native prompt
+five move choices, and all twenty-two selected-card shortcut commands; native prompt
 text/defaults, capacity clamps, zero hand draws, and
 private/public inspection policy; local rejection of malformed marker/count
 drafts; typed zero-command missing/forged choice rejection; and reversible
