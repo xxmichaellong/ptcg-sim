@@ -1061,6 +1061,21 @@ passes 134 Playwright checks across 64 Chromium 151 browser files:
     overlength/non-string rejection, cross-kind forgery, exact bounds/paint,
     yellow/black `Pa`, removal, immutable markers, and exact client sequences
     through the following ability action. The route remains development-only.
+60. A dedicated count-input resolver now completes the six native prompt
+    actions without replacing their visible browser UI. Hand discard/shuffle
+    variants retain `Draw how many cards?` default `0`; direct draw retains the
+    same prompt default `1`; top/bottom inspection retains its exact question
+    and default `1`. One typed descriptor binds action/card/source-zone and a
+    WeakSet identity gate prevents duplicate StrictMode prompting. Accepted
+    complete integers are revalidated and clamped to current deck or combined
+    hand/deck capacity plus the 200-card protocol ceiling. Hand actions allow
+    zero; draw/inspection require one. Own inspection is private and opponent
+    inspection public under the existing authority policy. Cancel is quiet;
+    malformed values show the source alert rather than inheriting permissive v1
+    `parseInt` prefixes. Unit and native Chromium coverage pins all six exact
+    commands, prompt/default pairs, clamp/zero behavior, cross-action forgery,
+    zone-departure cleanup, and continuous client sequences through eleven.
+    The route remains development-only.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -1236,7 +1251,7 @@ wiring:
   thresholds (source edge clamp/collision states, the isolated candidate
   resize-pointer path, and normal/flipped fullscreen viewport continuity are now
   covered);
-- complete prompt/submenu context actions, replay-local
+- complete move/category submenu context actions, replay-local
   disclosure paint, source raster comparison for transformed stack/zone dialogs,
   the full focus-trap/screen-reader audit, and reconnect snap-back beyond the
   current native Chromium overlay/input gate;

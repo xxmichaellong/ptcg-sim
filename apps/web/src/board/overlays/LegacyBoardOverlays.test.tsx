@@ -5,7 +5,7 @@ import {
   createRendererSpikeView,
   type CardSceneNode,
 } from '@ptcgsim/renderer-contract';
-import { act, createElement } from 'react';
+import { act, createElement, StrictMode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -59,6 +59,7 @@ const actions = (): LegacyBoardOverlayActions => ({
   invokeZoneAction: vi.fn(),
   submitDamageInput: vi.fn(),
   submitSpecialConditionInput: vi.fn(),
+  submitCountInput: vi.fn(),
 });
 
 describe('legacy board overlays', () => {
@@ -74,6 +75,7 @@ describe('legacy board overlays', () => {
   afterEach(async () => {
     await act(async () => root.unmount());
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it('selects the source-ordered player menu without granting authority', () => {
@@ -198,6 +200,90 @@ describe('legacy board overlays', () => {
       card.id
     );
     expect(callbacks.dismiss).toHaveBeenCalledExactlyOnceWith('context');
+  });
+
+  it('runs each controller count descriptor through one strict-safe native prompt', async () => {
+    const callbacks = actions();
+    const card = cardIn(`:${firstPlayer}:deck`);
+    const prompt = vi
+      .fn()
+      .mockReturnValueOnce(' 3 ')
+      .mockReturnValueOnce('2.5')
+      .mockReturnValueOnce(null);
+    const alert = vi.fn();
+    vi.stubGlobal('prompt', prompt);
+    vi.stubGlobal('alert', alert);
+    const renderInput = async (
+      input: NonNullable<BoardSessionControllerState['overlays']['input']>
+    ) => {
+      await act(async () => {
+        root.render(
+          createElement(
+            StrictMode,
+            null,
+            createElement(LegacyBoardOverlays, {
+              state: state({
+                overlays: {
+                  contextMenuCardId: null,
+                  preview: null,
+                  input,
+                },
+              }),
+              darkMode: false,
+              actions: callbacks,
+            })
+          )
+        );
+      });
+    };
+
+    await renderInput({
+      kind: 'count',
+      action: 'drawCards',
+      cardId: card.id,
+      zoneId: card.parentId,
+      message: 'Draw how many cards?',
+      initialValue: '1',
+      minimum: 1,
+      invalidMessage: 'Please enter a valid number for the draw amount.',
+    });
+    expect(prompt).toHaveBeenCalledExactlyOnceWith('Draw how many cards?', '1');
+    expect(callbacks.submitCountInput).toHaveBeenCalledExactlyOnceWith(
+      'drawCards',
+      card.id,
+      ' 3 '
+    );
+
+    await renderInput({
+      kind: 'count',
+      action: 'viewDeckTop',
+      cardId: card.id,
+      zoneId: card.parentId,
+      message: 'How many cards do you want to look at?',
+      initialValue: '1',
+      minimum: 1,
+      invalidMessage: 'Please enter a valid number for the view amount.',
+    });
+    expect(alert).toHaveBeenCalledExactlyOnceWith(
+      'Please enter a valid number for the view amount.'
+    );
+    expect(callbacks.dismiss).toHaveBeenCalledExactlyOnceWith('input');
+    expect(callbacks.submitCountInput).toHaveBeenCalledTimes(1);
+
+    await renderInput({
+      kind: 'count',
+      action: 'viewDeckBottom',
+      cardId: card.id,
+      zoneId: card.parentId,
+      message: 'How many cards do you want to look at?',
+      initialValue: '1',
+      minimum: 1,
+      invalidMessage: 'Please enter a valid number for the view amount.',
+    });
+    expect(prompt).toHaveBeenCalledTimes(3);
+    expect(alert).toHaveBeenCalledTimes(1);
+    expect(callbacks.dismiss).toHaveBeenCalledTimes(2);
+    expect(callbacks.submitCountInput).toHaveBeenCalledTimes(1);
   });
 
   it('projects recipient-safe card, stack, and zone images into source-shaped dialogs', async () => {

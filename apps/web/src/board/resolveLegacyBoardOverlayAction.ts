@@ -3,6 +3,11 @@ import type { WireGameCommand } from '@ptcgsim/protocol';
 
 import { resolveCardAnnotationAction } from './resolveCardAnnotationAction.js';
 import { resolvePrizeDeckBottomAction } from './resolveDeckRelativeAction.js';
+import {
+  resolveLegacyBoardCountAction,
+  type LegacyBoardCountActionId,
+  type LegacyBoardCountPrompt,
+} from './resolveLegacyBoardCountAction.js';
 import { resolveLooseBoardAction } from './resolveLooseBoardAction.js';
 import { resolveZoneInspectionAction } from './resolvePrivateInspectionAction.js';
 import {
@@ -40,15 +45,15 @@ export type LegacyBoardContextActionId =
 export type LegacyBoardZoneActionId =
   'shuffleDeck' | 'shuffleDiscardToDeck' | 'sortZone';
 
-type LegacyBoardContextActionWithoutMarkerInput = Exclude<
+type LegacyBoardContextActionWithoutInput = Exclude<
   LegacyBoardContextActionId,
-  'setDamage' | 'setSpecialCondition'
+  'setDamage' | 'setSpecialCondition' | LegacyBoardCountActionId
 >;
 
 export type LegacyBoardOverlayActionRequest =
   | {
       readonly kind: 'context';
-      readonly action: LegacyBoardContextActionWithoutMarkerInput;
+      readonly action: LegacyBoardContextActionWithoutInput;
       readonly cardId: ViewCardId;
     }
   | {
@@ -56,6 +61,13 @@ export type LegacyBoardOverlayActionRequest =
       readonly action: 'setDamage';
       readonly cardId: ViewCardId;
       /** Missing opens the editor; present submits its bounded text draft. */
+      readonly value?: string;
+    }
+  | {
+      readonly kind: 'context';
+      readonly action: LegacyBoardCountActionId;
+      readonly cardId: ViewCardId;
+      /** Missing opens the native prompt; present submits its integer draft. */
       readonly value?: string;
     }
   | {
@@ -135,7 +147,6 @@ export type LegacyBoardOverlayActionRejectionReason =
   | 'no_prizes'
   | 'no_op'
   | 'invalid_value'
-  | 'requires_input'
   | 'requires_choice'
   | 'local_only';
 
@@ -154,11 +165,14 @@ export interface LegacyBoardSpecialConditionEditor {
 export type LegacyBoardMarkerEditor =
   LegacyBoardDamageEditor | LegacyBoardSpecialConditionEditor;
 
+export type LegacyBoardOverlayInput =
+  LegacyBoardMarkerEditor | LegacyBoardCountPrompt;
+
 export type LegacyBoardOverlayActionResolution =
   | { readonly ok: true; readonly command: WireGameCommand }
   | {
       readonly ok: true;
-      readonly input: LegacyBoardMarkerEditor;
+      readonly input: LegacyBoardOverlayInput;
       readonly command?: WireGameCommand;
     }
   | {
@@ -356,9 +370,12 @@ const resolveContextAction = (
     case 'discardHand':
     case 'shuffleHandToDeck':
     case 'shuffleHandToDeckBottom':
-      return zone?.kind === 'hand' && zone.ownerId === viewerId
-        ? rejected('requires_input')
-        : rejected('unsupported_target');
+      return resolveLegacyBoardCountAction(
+        view,
+        request.action,
+        request.cardId,
+        request.value
+      );
     case 'toggleOpponentHand': {
       if (
         zone?.kind !== 'hand' ||
@@ -383,14 +400,14 @@ const resolveContextAction = (
         ? commandForShuffle(view, zone, 'deck')
         : rejected('unsupported_target');
     case 'drawCards':
-      return zone?.kind === 'deck' && zone.ownerId === viewerId
-        ? rejected('requires_input')
-        : rejected('unsupported_target');
     case 'viewDeckTop':
     case 'viewDeckBottom':
-      return zone?.kind === 'deck'
-        ? rejected('requires_input')
-        : rejected('unsupported_target');
+      return resolveLegacyBoardCountAction(
+        view,
+        request.action,
+        request.cardId,
+        request.value
+      );
     case 'discardBoard':
       return zone?.kind === 'board' && zone.ownerId !== null
         ? resolveLooseBoardAction(view, zone.ownerId, 'discard')

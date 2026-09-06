@@ -16,10 +16,11 @@ import {
 } from './resolveBoardDrop.js';
 import {
   resolveLegacyBoardOverlayAction,
-  type LegacyBoardMarkerEditor,
+  type LegacyBoardOverlayInput,
   type LegacyBoardOverlayActionRejectionReason,
   type LegacyBoardOverlayActionRequest,
 } from './resolveLegacyBoardOverlayAction.js';
+import { isLegacyBoardCountActionId } from './resolveLegacyBoardCountAction.js';
 
 export type BoardProjectionSource =
   | { readonly kind: 'live' }
@@ -60,7 +61,7 @@ export type BoardPreviewState =
 export interface BoardOverlayState {
   readonly contextMenuCardId: ViewCardId | null;
   readonly preview: BoardPreviewState | null;
-  readonly input: LegacyBoardMarkerEditor | null;
+  readonly input: LegacyBoardOverlayInput | null;
 }
 
 export type BoardPresentationDismissScope =
@@ -420,10 +421,14 @@ const reconcilePresentation = (
     ? scene.cards.find((card) => card.id === input.cardId)
     : undefined;
   const inputStack = inputCard ? view.stacks[inputCard.parentId] : undefined;
+  const inputZone =
+    input?.kind === 'count' ? view.zones[input.zoneId] : undefined;
   const reconciledInput =
     input &&
-    inputStack &&
-    (input.kind === 'damage' || inputStack.slot === 'active')
+    inputCard &&
+    (input.kind === 'count'
+      ? inputZone?.cards.some((card) => card.id === input.cardId)
+      : inputStack && (input.kind === 'damage' || inputStack.slot === 'active'))
       ? input
       : null;
   return {
@@ -1017,20 +1022,30 @@ const handleOverlayAction = (
   if (!state.canSubmitCommands) {
     return rejectOverlayAction(state, request, 'read_only');
   }
-  const submittedInputKind =
+  const submittedInputIdentity =
     request.kind === 'context' &&
-    (request.action === 'setDamage' ||
-      request.action === 'setSpecialCondition') &&
+    'value' in request &&
     request.value !== undefined
       ? request.action === 'setDamage'
-        ? 'damage'
-        : 'specialCondition'
+        ? ({ kind: 'damage' } as const)
+        : request.action === 'setSpecialCondition'
+          ? ({ kind: 'specialCondition' } as const)
+          : isLegacyBoardCountActionId(request.action)
+            ? ({ kind: 'count', action: request.action } as const)
+            : null
       : null;
+  const submittedInputMatches =
+    request.kind === 'context' &&
+    submittedInputIdentity !== null &&
+    state.overlays.input?.kind === submittedInputIdentity.kind &&
+    state.overlays.input.cardId === request.cardId &&
+    (submittedInputIdentity.kind !== 'count' ||
+      (state.overlays.input.kind === 'count' &&
+        state.overlays.input.action === submittedInputIdentity.action));
   if (
     request.kind === 'context' &&
-    ((submittedInputKind
-      ? state.overlays.input?.kind !== submittedInputKind ||
-        state.overlays.input.cardId !== request.cardId
+    ((submittedInputIdentity
+      ? !submittedInputMatches
       : state.overlays.contextMenuCardId !== request.cardId) ||
       !scene.cards.some((card) => card.id === request.cardId))
   ) {
@@ -1064,7 +1079,7 @@ const handleOverlayAction = (
         : []
     );
   }
-  const next = submittedInputKind
+  const next = submittedInputIdentity
     ? nextState(state, {
         overlays: { ...state.overlays, input: null },
       })

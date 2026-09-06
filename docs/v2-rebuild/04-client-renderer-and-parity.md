@@ -1146,9 +1146,13 @@ The damage and condition controls now open one controller-bound temporary React
 editor over the safe scene marker. They reproduce defaults `10`/`P`, bounded
 edits, live condition palette, and zero/empty removal with exactly one command
 per accepted value; malformed drafts stay local, and forged, stale, or cross-
-kind submissions fail closed. Controls that still need a draw/inspection count,
-a move destination, or a category do not guess a default. They emit observable
-`requires_input` or `requires_choice` rejections and submit nothing.
+kind submissions fail closed. The six numeric controls now retain their exact
+native v1 prompt text and `0`/`1` defaults while
+binding a typed descriptor to the controller's action, card, and source zone.
+Complete nonnegative integers clamp to current safe capacity and the wire limit;
+draw/inspection require at least one, cancel submits nothing, and malformed
+`parseInt` prefixes now fail locally with the source alert. Move and category
+still emit observable `requires_choice` rejections and submit nothing.
 Zone sort
 now has a deliberately narrower owner: controlled state inside the mounted zone
 browser. It sorts a copy by recipient-safe scene label, keeps equal labels in
@@ -1160,8 +1164,8 @@ this replaces v1's deck-data rank with a stable disclosed-label order instead
 of recreating its information leak. V1 replay permits three local disclosure
 actions—prize reveal, prize look, and opponent-hand look—but V2 intentionally
 keeps the replay context menu empty and rejects forged requests as `read_only`
-until it has an isolated replay-local disclosure projection. Prompt/submenu
-composition, replay-local paint, source-raster parity for transformed
+until it has an isolated replay-local disclosure projection. Move/category
+submenu composition, replay-local paint, source-raster parity for transformed
 stack/zone dialogs, a complete focus-trap and screen-reader audit, reconnect
 snap-back, production routing, and non-Chromium approval remain separate gates.
 

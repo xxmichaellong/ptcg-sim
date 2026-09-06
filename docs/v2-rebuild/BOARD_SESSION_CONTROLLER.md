@@ -231,8 +231,7 @@ The resolver exhaustively classifies the unchanged controls:
 | Ownership          | Actions                                                                                                                                                                                           |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | complete command   | ability toggle; own prize/deck shuffle; prize reveal/look/bottom; opponent-hand look/random; four loose-board destinations; per-card reveal; own opened-deck shuffle; own discard-to-deck shuffle |
-| complete input     | damage and special-condition create/edit/remove                                                                                                                                                   |
-| missing input      | three hand-and-draw variants, draw count, top/bottom inspection count                                                                                                                             |
+| complete input     | damage/condition create-edit-remove; three hand-and-draw counts; direct draw count; top/bottom inspection counts                                                                                  |
 | missing choice     | move destination/submenu and card category                                                                                                                                                        |
 | local presentation | zone sort                                                                                                                                                                                         |
 
@@ -250,9 +249,21 @@ dismiss locally. Reconnect, resync, timeline/recipient replacement, card
 departure, active-slot departure, and terminal state purge or reconcile input
 with the rest of the local overlay state.
 
+The six count actions install a separate descriptor bound to the exact menu
+action, card, and source zone. React invokes the same native prompt text and
+`0`/`1` default as v1 exactly once—even through a StrictMode effect probe—then
+submits only a complete nonnegative integer. Hand operations permit zero;
+direct draw and inspection require one. The resolver rechecks ownership/source,
+clamps against the current deck or combined hand/deck capacity and the 200-card
+wire ceiling, and maps own inspection to private visibility and opponent
+inspection to public interaction. Cancel and malformed values submit nothing;
+the latter retains the source alert instead of v1's permissive `parseInt`
+prefix coercion. Cross-action/card submission and source-zone departure fail
+closed or clear the descriptor.
+
 An incomplete command-backed action emits `OverlayActionRejected` with
-`requires_input` or `requires_choice`; it never supplies a legacy default or
-reaches the submitter. Zone sort now remains entirely inside the mounted zone
+`requires_choice`; it never invents a move/category selection or reaches the
+submitter. Zone sort now remains entirely inside the mounted zone
 browser: checking it creates a stable sorted copy from disclosed scene labels,
 equal labels keep authoritative scene order, and unchecking restores that order.
 The checkbox dispatches no controller request, effect, or command. The resolver
@@ -262,14 +273,15 @@ disclosure exceptions are explicitly pinned to prize reveal, prize look, and
 opponent-hand look, but V2 continues to expose an empty replay mutation menu
 until it owns a separate local disclosure projection. Even a forged replay
 request is rejected as `read_only` before the resolver runs. Native Chromium
-now proves exact accepted `SetDamage`, `SetSpecialCondition`, both removals, and
-`SetAbilityUsed` submissions; local rejection of malformed marker drafts; the
-typed zero-command hand rejection; and reversible sorting with zero routed
-actions or effects.
+now proves exact accepted `SetDamage`, `SetSpecialCondition`, both removals,
+`SetAbilityUsed`, and all six count submissions; native prompt text/defaults,
+capacity clamps, zero hand draws, and private/public inspection policy; local
+rejection of malformed marker/count drafts; the typed zero-command choice
+rejection; and reversible sorting with zero routed actions or effects.
 
 Deck-list ordering is not present in recipient projections: unlike v1, the
 safe fallback orders disclosed labels and never obtains the opponent's hidden
-deck list. Prompt/submenu composition, replay-local disclosure paint, source
+deck list. Move/category submenu composition, replay-local disclosure paint, source
 stack/zone raster parity, complete accessibility focus trapping, reconnect
 snap-back, production wiring, and non-Chromium approval remain separate.
 
@@ -329,8 +341,8 @@ Current browser evidence covers source menu rows/computed paint, card-preview
 intrinsic sizing, native menu traversal, Escape/outside dismissal, focus return,
 command-backed ability/damage/condition actions, both marker edit/removal flows,
 and typed zero-command incomplete/local actions.
-It does not claim complete focus trapping/screen-reader behavior, prompt and
-submenu workflows, replay-local disclosure behavior, source stack/zone raster
+It does not claim complete focus trapping/screen-reader behavior,
+move/category submenu workflows, replay-local disclosure behavior, source stack/zone raster
 parity, keyboard suppression in every editable context,
 coaching flip, reconnect reconciliation, or the non-Chromium matrix. These
 remain Playwright/manual parity gates before any production switch.

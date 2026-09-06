@@ -631,6 +631,122 @@ describe('headless board session controller', () => {
     ]);
   });
 
+  it('owns count-prompt action/card identity through clamp and zone departure', () => {
+    let state = install();
+    const playerId =
+      state.view!.viewer.kind === 'player'
+        ? state.view!.viewer.playerId
+        : state.view!.playerOrder[0]!;
+    const hand = Object.values(state.view!.zones).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'hand'
+    )!;
+    const deck = Object.values(state.view!.zones).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'deck'
+    )!;
+    const discard = Object.values(state.view!.zones).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'discard'
+    )!;
+    const cardId = hand.cards[0]!.id;
+    state = apply(state, {
+      kind: 'RendererIntent',
+      intent: { kind: 'CardContextRequested', cardId },
+    }).state;
+    const opened = apply(state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: { kind: 'context', action: 'discardHand', cardId },
+    });
+    expect(opened.effects).toEqual([]);
+    expect(opened.state.overlays.input).toEqual({
+      kind: 'count',
+      action: 'discardHand',
+      cardId,
+      zoneId: hand.id,
+      message: 'Draw how many cards?',
+      initialValue: '0',
+      minimum: 0,
+      invalidMessage: 'Please enter a valid number for the draw amount.',
+    });
+
+    const wrongAction = apply(opened.state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: {
+        kind: 'context',
+        action: 'shuffleHandToDeck',
+        cardId,
+        value: '2',
+      },
+    });
+    expect(wrongAction.state).toBe(opened.state);
+    expect(wrongAction.effects).toEqual([
+      {
+        kind: 'OverlayActionRejected',
+        request: {
+          kind: 'context',
+          action: 'shuffleHandToDeck',
+          cardId,
+          value: '2',
+        },
+        reason: 'stale_card',
+      },
+    ]);
+
+    const invalid = apply(opened.state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: {
+        kind: 'context',
+        action: 'discardHand',
+        cardId,
+        value: '2.5',
+      },
+    });
+    expect(invalid.state).toBe(opened.state);
+    expect(invalid.effects[0]).toMatchObject({
+      kind: 'OverlayActionRejected',
+      reason: 'invalid_value',
+    });
+
+    const submitted = apply(opened.state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: {
+        kind: 'context',
+        action: 'discardHand',
+        cardId,
+        value: '999',
+      },
+    });
+    expect(submitted.state.overlays.input).toBeNull();
+    expect(submitted.effects).toEqual([
+      {
+        kind: 'SubmitCommand',
+        command: { type: 'DiscardHandAndDraw', count: deck.cards.length },
+      },
+    ]);
+
+    const card = hand.cards.find((candidate) => candidate.id === cardId)!;
+    const movedView = withRevision(
+      {
+        ...opened.state.view!,
+        zones: {
+          ...opened.state.view!.zones,
+          [hand.id]: {
+            ...hand,
+            cards: hand.cards.filter((candidate) => candidate.id !== cardId),
+          },
+          [discard.id]: {
+            ...discard,
+            cards: [...discard.cards, card],
+          },
+        },
+      },
+      opened.state.view!.revision + 1
+    );
+    const reconciled = apply(opened.state, {
+      kind: 'FrameReceived',
+      frame: liveFrame(2, movedView),
+    });
+    expect(reconciled.state.overlays.input).toBeNull();
+  });
+
   it('rejects stale, incomplete, and replay overlay actions without resolving commands', () => {
     const player = createRendererSpikeView();
     const resolveOverlayAction = vi.fn(() => {
@@ -690,21 +806,21 @@ describe('headless board session controller', () => {
       kind: 'RendererIntent',
       intent: { kind: 'CardContextRequested', cardId: handCard },
     }).state;
-    const inputRequest = {
+    const choiceRequest = {
       kind: 'context' as const,
-      action: 'discardHand' as const,
+      action: 'moveCard' as const,
       cardId: handCard,
     };
     expect(
       apply(live, {
         kind: 'LegacyOverlayActionRequested',
-        request: inputRequest,
+        request: choiceRequest,
       }).effects
     ).toEqual([
       {
         kind: 'OverlayActionRejected',
-        request: inputRequest,
-        reason: 'requires_input',
+        request: choiceRequest,
+        reason: 'requires_choice',
       },
     ]);
 

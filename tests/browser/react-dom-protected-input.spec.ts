@@ -1,8 +1,15 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 interface ProtectedInputFixture {
+  readonly ownPlayerId: string;
+  readonly opponentPlayerId: string;
   readonly sourceCardId: string;
   readonly sourceZoneId: string;
+  readonly ownDeckCardId: string;
+  readonly opponentDeckCardId: string;
+  readonly ownDeckCount: number;
+  readonly opponentDeckCount: number;
+  readonly ownHandCount: number;
   readonly unsupportedCardId: string;
   readonly unsupportedStackCardIds: readonly string[];
   readonly activeTopCardId: string;
@@ -29,11 +36,23 @@ interface ProtectedInputEvidence {
   };
   readonly overlays: {
     readonly contextMenuCardId: string | null;
-    readonly input: {
-      readonly kind: 'damage' | 'specialCondition';
-      readonly cardId: string;
-      readonly initialValue: string;
-    } | null;
+    readonly input:
+      | {
+          readonly kind: 'damage' | 'specialCondition';
+          readonly cardId: string;
+          readonly initialValue: string;
+        }
+      | {
+          readonly kind: 'count';
+          readonly action: string;
+          readonly cardId: string;
+          readonly zoneId: string;
+          readonly message: string;
+          readonly initialValue: '0' | '1';
+          readonly minimum: 0 | 1;
+          readonly invalidMessage: string;
+        }
+      | null;
     readonly preview:
       | { readonly kind: 'card'; readonly cardId: string }
       | {
@@ -113,6 +132,31 @@ const clearEvidence = (page: Page): Promise<void> =>
       .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
     if (!harness) throw new Error('Missing protected-input harness');
     harness.clearEvidence();
+  });
+
+const answerNextPrompt = (
+  page: Page,
+  value: string | null
+): Promise<{
+  readonly type: string;
+  readonly message: string;
+  readonly defaultValue: string;
+}> =>
+  new Promise((resolve, reject) => {
+    page.once('dialog', async (dialog) => {
+      const result = {
+        type: dialog.type(),
+        message: dialog.message(),
+        defaultValue: dialog.defaultValue(),
+      };
+      try {
+        if (value === null) await dialog.dismiss();
+        else await dialog.accept(value);
+        resolve(result);
+      } catch (error) {
+        reject(error);
+      }
+    });
   });
 
 const exposedCardPoint = (card: Locator): Promise<Point> =>
@@ -407,7 +451,13 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   const sourcePoint = await exposedCardPoint(sourceCard);
   await page.mouse.click(sourcePoint.x, sourcePoint.y, { button: 'right' });
   await expect(menu).toBeVisible();
+  const cancelledPrompt = answerNextPrompt(page, null);
   await menu.locator('[data-context-action="discardHand"]').click();
+  expect(await cancelledPrompt).toEqual({
+    type: 'prompt',
+    message: 'Draw how many cards?',
+    defaultValue: '0',
+  });
   await expect(menu).toHaveCount(0);
   await expect
     .poll(async () => (await evidence(page)).overlayActions)
@@ -422,17 +472,8 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   expect(contextEvidence.submissions).toEqual([]);
   expect(contextEvidence.submissionResults).toEqual([]);
   expect(contextEvidence.rejections).toEqual([]);
-  expect(contextEvidence.overlayRejections).toEqual([
-    {
-      kind: 'OverlayActionRejected',
-      request: {
-        kind: 'context',
-        action: 'discardHand',
-        cardId: fixture.sourceCardId,
-      },
-      reason: 'requires_input',
-    },
-  ]);
+  expect(contextEvidence.overlayRejections).toEqual([]);
+  expect(contextEvidence.overlays.input).toBeNull();
   expect(contextEvidence.reportedErrors).toEqual([]);
 
   await clearEvidence(page);
@@ -852,6 +893,121 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   ]);
   expect(commandEvidence.overlayRejections).toEqual([]);
   expect(commandEvidence.reportedErrors).toEqual([]);
+
+  const countCases = [
+    {
+      cardId: fixture.sourceCardId,
+      action: 'discardHand',
+      value: '999',
+      message: 'Draw how many cards?',
+      defaultValue: '0',
+      command: {
+        type: 'DiscardHandAndDraw',
+        count: fixture.ownDeckCount,
+      },
+    },
+    {
+      cardId: fixture.sourceCardId,
+      action: 'shuffleHandToDeck',
+      value: '999',
+      message: 'Draw how many cards?',
+      defaultValue: '0',
+      command: {
+        type: 'ShuffleHandIntoDeckAndDraw',
+        count: fixture.ownDeckCount + fixture.ownHandCount,
+      },
+    },
+    {
+      cardId: fixture.sourceCardId,
+      action: 'shuffleHandToDeckBottom',
+      value: '0',
+      message: 'Draw how many cards?',
+      defaultValue: '0',
+      command: {
+        type: 'ShuffleHandToDeckBottomAndDraw',
+        count: 0,
+      },
+    },
+    {
+      cardId: fixture.ownDeckCardId,
+      action: 'drawCards',
+      value: '999',
+      message: 'Draw how many cards?',
+      defaultValue: '1',
+      command: { type: 'DrawCards', count: fixture.ownDeckCount },
+    },
+    {
+      cardId: fixture.ownDeckCardId,
+      action: 'viewDeckTop',
+      value: '2',
+      message: 'How many cards do you want to look at?',
+      defaultValue: '1',
+      command: {
+        type: 'ExtractDeckCardsForInspection',
+        ownerPlayerId: fixture.ownPlayerId,
+        count: 2,
+        edge: 'top',
+        visibility: 'private',
+      },
+    },
+    {
+      cardId: fixture.opponentDeckCardId,
+      action: 'viewDeckBottom',
+      value: '999',
+      message: 'How many cards do you want to look at?',
+      defaultValue: '1',
+      command: {
+        type: 'ExtractDeckCardsForInspection',
+        ownerPlayerId: fixture.opponentPlayerId,
+        count: fixture.opponentDeckCount,
+        edge: 'bottom',
+        visibility: 'public',
+      },
+    },
+  ] as const;
+
+  for (const [index, countCase] of countCases.entries()) {
+    await clearEvidence(page);
+    const card = host.locator(`[data-card-id="${countCase.cardId}"]`);
+    const point = await exposedCardPoint(card);
+    await page.mouse.click(point.x, point.y, { button: 'right' });
+    await expect(menu).toBeVisible();
+    const prompt = answerNextPrompt(page, countCase.value);
+    await menu.locator(`[data-context-action="${countCase.action}"]`).click();
+    expect(await prompt).toEqual({
+      type: 'prompt',
+      message: countCase.message,
+      defaultValue: countCase.defaultValue,
+    });
+    await expect
+      .poll(async () => (await evidence(page)).submissions)
+      .toEqual([countCase.command]);
+    const countEvidence = await evidence(page);
+    const clientSequence = index + 6;
+    expect(countEvidence.submissionResults).toEqual([
+      {
+        queued: true,
+        commandId: `protected-input-command-${clientSequence}`,
+        clientSequence,
+      },
+    ]);
+    expect(countEvidence.overlayActions).toEqual([
+      {
+        kind: 'context',
+        action: countCase.action,
+        cardId: countCase.cardId,
+      },
+      {
+        kind: 'context',
+        action: countCase.action,
+        cardId: countCase.cardId,
+        value: countCase.value,
+      },
+    ]);
+    expect(countEvidence.overlayRejections).toEqual([]);
+    expect(countEvidence.overlays.input).toBeNull();
+    expect(countEvidence.reportedErrors).toEqual([]);
+  }
 
   await page.evaluate(() => {
     const harness = (window as ProtectedInputHarnessWindow)

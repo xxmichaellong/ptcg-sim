@@ -805,12 +805,17 @@ effect as a renderer drop, and `BoardSessionAdapter` repeats the live mode,
 request phase, session readiness, and player-role checks immediately before the
 real submitter.
 
-The unchanged menu still contains incomplete compound interactions. Damage and
-special-condition editing are complete; all draw-count flows and top/bottom
-inspection still need input, while move-card and category controls need a
-submenu choice. The incomplete controls return
-`requires_input` or `requires_choice` without a command, so the migration cannot
-silently substitute legacy prompt defaults. Zone sorting is now paint-only
+The unchanged menu still contains incomplete compound interactions. Damage,
+special-condition editing, all three hand-and-draw counts, direct draw, and
+top/bottom inspection are complete. Count actions install one descriptor bound
+to the exact menu action, card, and source zone, then invoke v1's native prompt
+text/default once. Complete integers clamp against current safe capacity and the
+200-card wire ceiling; hand actions permit zero, draw/inspection require one,
+own inspection is private, and accepted opponent inspection is public. Cancel
+submits nothing. Malformed prefixes such as v1's permissive `2cards`/`2.5`
+`parseInt` cases now show the source alert and remain local. Move-card and
+category controls still return `requires_choice` without a command, so the
+migration cannot invent a submenu selection. Zone sorting is now paint-only
 controlled state in the mounted browser: it sorts a copy by disclosed label,
 uses canonical scene order for equal labels, reverses immediately when
 unchecked, and never invokes the controller. A forged `sortZone` request still

@@ -35,6 +35,11 @@ import {
   parseLegacyDamageInput,
   parseLegacySpecialConditionInput,
 } from '../resolveLegacyBoardOverlayAction.js';
+import {
+  parseLegacyCountInput,
+  type LegacyBoardCountActionId,
+  type LegacyBoardCountPrompt,
+} from '../resolveLegacyBoardCountAction.js';
 import './LegacyBoardOverlays.css';
 
 export type {
@@ -55,6 +60,11 @@ export interface LegacyBoardOverlayActions {
   ) => void;
   readonly submitDamageInput: (cardId: ViewCardId, value: string) => void;
   readonly submitSpecialConditionInput: (
+    cardId: ViewCardId,
+    value: string
+  ) => void;
+  readonly submitCountInput: (
+    action: LegacyBoardCountActionId,
     cardId: ViewCardId,
     value: string
   ) => void;
@@ -608,7 +618,7 @@ const markerEditorMarker = (
   const input = state.overlays.input;
   const scene = state.scene;
   const view = state.view;
-  if (!input || !scene || !view) return null;
+  if (!input || input.kind === 'count' || !scene || !view) return null;
   const selected = scene.cards.find((card) => card.id === input.cardId);
   const stack = selected ? view.stacks[selected.parentId] : undefined;
   const topCardId = stack?.evolutionCards.at(-1)?.id;
@@ -675,11 +685,11 @@ const MarkerEditor = ({
   const [draft, setDraft] = useState(input?.initialValue ?? '');
   const [edited, setEdited] = useState(false);
   useLayoutEffect(() => {
-    if (editor.current && input) {
+    if (editor.current && input && input.kind !== 'count') {
       editor.current.textContent = input.initialValue;
     }
   }, [input]);
-  if (!input || !marker) return null;
+  if (!input || input.kind === 'count' || !marker) return null;
   const legacy = isLegacyMarkerPresentation(marker.presentation);
   const markerWasPresent = state.scene?.markers.some(
     (candidate) =>
@@ -779,6 +789,35 @@ const MarkerEditor = ({
   );
 };
 
+// The object identity survives React's development StrictMode effect probe, so
+// one controller prompt can never produce two native modal dialogs.
+const promptedCountInputs = new WeakSet<LegacyBoardCountPrompt>();
+
+const CountPrompt = ({
+  input,
+  actions,
+}: {
+  readonly input: LegacyBoardCountPrompt;
+  readonly actions: LegacyBoardOverlayActions;
+}) => {
+  useEffect(() => {
+    if (promptedCountInputs.has(input)) return;
+    promptedCountInputs.add(input);
+    const value = window.prompt(input.message, input.initialValue);
+    if (value === null) {
+      actions.dismiss('input');
+      return;
+    }
+    if (parseLegacyCountInput(value, input.minimum) === undefined) {
+      window.alert(input.invalidMessage);
+      actions.dismiss('input');
+      return;
+    }
+    actions.submitCountInput(input.action, input.cardId, value);
+  }, [actions, input]);
+  return null;
+};
+
 /**
  * Renderer-external legacy popup paint. It consumes only recipient-safe scene
  * data and semantic controller callbacks; it never owns canonical game state.
@@ -839,7 +878,13 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
           actions={actions}
         />
       ) : null}
-      {state.overlays.input ? (
+      {state.overlays.input?.kind === 'count' ? (
+        <CountPrompt
+          key={`${state.overlays.input.action}:${state.overlays.input.cardId}:${state.overlays.input.zoneId}`}
+          input={state.overlays.input}
+          actions={actions}
+        />
+      ) : state.overlays.input ? (
         <MarkerEditor
           key={`${state.overlays.input.kind}:${state.overlays.input.cardId}`}
           state={state}

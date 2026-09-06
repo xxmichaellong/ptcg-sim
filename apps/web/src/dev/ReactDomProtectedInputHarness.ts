@@ -40,8 +40,15 @@ type OverlayRejectionEffect = Extract<
 >;
 
 export interface ReactDomProtectedInputFixture {
+  readonly ownPlayerId: string;
+  readonly opponentPlayerId: string;
   readonly sourceCardId: string;
   readonly sourceZoneId: string;
+  readonly ownDeckCardId: string;
+  readonly opponentDeckCardId: string;
+  readonly ownDeckCount: number;
+  readonly opponentDeckCount: number;
+  readonly ownHandCount: number;
   readonly unsupportedCardId: string;
   readonly unsupportedStackCardIds: readonly string[];
   readonly activeTopCardId: string;
@@ -246,6 +253,14 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
   const sourceCard = scene.cards
     .filter((card) => card.parentId === sourceZoneId && card.interactive)
     .sort((left, right) => right.zIndex - left.zIndex)[0];
+  const ownDeckZoneId = `zone:${firstPlayerId}:deck`;
+  const opponentDeckZoneId = `zone:${secondPlayerId}:deck`;
+  const ownDeckCard = scene.cards
+    .filter((card) => card.parentId === ownDeckZoneId && card.interactive)
+    .sort((left, right) => right.zIndex - left.zIndex)[0];
+  const opponentDeckCard = scene.cards
+    .filter((card) => card.parentId === opponentDeckZoneId && card.interactive)
+    .sort((left, right) => right.zIndex - left.zIndex)[0];
   const localActiveStackId = view.boards[firstPlayerId]?.activeStackId;
   const localActiveStack = localActiveStackId
     ? view.stacks[localActiveStackId]
@@ -254,6 +269,8 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
   const activeTopCardId = localActiveStack?.evolutionCards.at(-1)?.id;
   if (
     !sourceCard ||
+    !ownDeckCard ||
+    !opponentDeckCard ||
     !unsupportedCardId ||
     !activeTopCardId ||
     !localActiveStackId ||
@@ -276,8 +293,15 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
     (card) => card.parentId === destinationZoneId
   );
   const fixture: ReactDomProtectedInputFixture = {
+    ownPlayerId: firstPlayerId,
+    opponentPlayerId: secondPlayerId,
     sourceCardId: String(sourceCard.id),
     sourceZoneId,
+    ownDeckCardId: String(ownDeckCard.id),
+    opponentDeckCardId: String(opponentDeckCard.id),
+    ownDeckCount: view.zones[ownDeckZoneId]!.cards.length,
+    opponentDeckCount: view.zones[opponentDeckZoneId]!.cards.length,
+    ownHandCount: view.zones[sourceZoneId]!.cards.length,
     unsupportedCardId: String(unsupportedCardId),
     unsupportedStackCardIds: scene.cards
       .filter((card) => card.parentId === localActiveStackId)
@@ -338,6 +362,20 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
       runtime.emitLegacyOverlayAction({
         kind: 'context',
         action: 'setSpecialCondition',
+        cardId,
+        value,
+      });
+    },
+    submitCountInput: (action, cardId, value) => {
+      overlayActions.push({
+        kind: 'context',
+        action,
+        cardId: String(cardId),
+        value,
+      });
+      runtime.emitLegacyOverlayAction({
+        kind: 'context',
+        action,
         cardId,
         value,
       });

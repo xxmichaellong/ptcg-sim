@@ -294,8 +294,8 @@ to `LegacyOverlayActionRequested`. The controller rejects any card other than
 the currently open menu target and any zone other than the currently open
 browser, then requires a ready live-player projection before the pure action
 resolver is callable. Complete actions reuse the existing semantic resolvers
-and the adapter's guarded submission path. The native test now proves an active
-card ability toggle queues exactly one `SetAbilityUsed`; the existing hand
+and the adapter's guarded submission path. At that checkpoint, the native test
+proved an active card ability toggle queues exactly one `SetAbilityUsed`; the hand
 action instead records `requires_input` with zero commands/results. The
 exhaustive requirements table pins all 23 context actions and three zone actions
 as command, input, choice, or local. The next local-sort checkpoint keeps the
@@ -321,6 +321,20 @@ cross-kind submission, reconnect cleanup, exact overlay geometry, and immutable
 scenes. The native route proves invalid `70.5`, accepted `70`, damage removal,
 overlong condition retention, `Pa`, condition removal, then an ability toggle at
 client sequences 1/2/3/4/5 exactly once. Keyboard marker shortcuts remain open.
+
+The protected count-input checkpoint completes all six context-menu numeric
+prompts while retaining the browser-native v1 UI. A typed controller descriptor
+binds the exact action, card, and source zone; StrictMode can invoke its effect
+only once. Hand discard/shuffle variants use `Draw how many cards?` default `0`,
+direct draw uses default `1`, and top/bottom inspection uses its source question
+with default `1`. Complete integers clamp to current safe capacity and the
+200-card protocol bound. Hand actions accept zero; draw/inspection require one;
+own inspection is private and opponent inspection public. Quiet cancellation
+and complete-integer parsing replace v1's alert-on-cancel and permissive
+`parseInt` prefix bugs. Unit coverage pins all mappings, malformed/runtime
+values, cross-action identity, and source departure. Native Chromium proves all
+six prompt/default and command pairs with capacity clamps and client sequences
+6 through 11, following the existing marker/ability sequence without gaps.
 
 `legacy-compound-group-rotation-layout.test.ts` and
 `legacy-compound-break-rotation-layout.test.ts` split the next source-only

@@ -363,7 +363,7 @@ describe('legacy board overlay action resolver', () => {
     ).toEqual({ ok: false, reason: 'unsupported_target' });
   });
 
-  it('never invents remaining prompt, submenu, or local-sort values', () => {
+  it('delegates protected counts and never invents remaining choices or local values', () => {
     const view = createRendererSpikeView();
     const playerId = view.viewer.kind === 'player' ? view.viewer.playerId : '';
     const hand = zoneIn(view, playerId, 'hand');
@@ -374,7 +374,27 @@ describe('legacy board overlay action resolver', () => {
         view,
         context('discardHand', hand.cards[0]!.id)
       )
-    ).toEqual({ ok: false, reason: 'requires_input' });
+    ).toEqual({
+      ok: true,
+      input: {
+        kind: 'count',
+        action: 'discardHand',
+        cardId: hand.cards[0]!.id,
+        zoneId: hand.id,
+        message: 'Draw how many cards?',
+        initialValue: '0',
+        minimum: 0,
+        invalidMessage: 'Please enter a valid number for the draw amount.',
+      },
+    });
+    expect(
+      resolveLegacyBoardOverlayAction(view, {
+        kind: 'context',
+        action: 'drawCards',
+        cardId: deck.cards[0]!.id,
+        value: '2',
+      })
+    ).toEqual({ ok: true, command: { type: 'DrawCards', count: 2 } });
     expect(
       resolveLegacyBoardOverlayAction(
         view,
