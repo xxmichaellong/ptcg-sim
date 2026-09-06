@@ -488,6 +488,149 @@ describe('headless board session controller', () => {
     ]);
   });
 
+  it('owns special-condition editor identity and its default active marker', () => {
+    let state = install();
+    const activeStack = state.view!.stacks['stack:blue:active']!;
+    const cardId = activeStack.evolutionCards.at(-1)!.id;
+    state = apply(state, {
+      kind: 'RendererIntent',
+      intent: { kind: 'CardContextRequested', cardId },
+    }).state;
+
+    const opened = apply(state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: { kind: 'context', action: 'setSpecialCondition', cardId },
+    });
+    expect(opened.effects).toEqual([]);
+    expect(opened.state.overlays.input).toEqual({
+      kind: 'specialCondition',
+      cardId,
+      initialValue: 'Poisoned',
+    });
+
+    const wrongEditor = apply(opened.state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: {
+        kind: 'context',
+        action: 'setDamage',
+        cardId,
+        value: '70',
+      },
+    });
+    expect(wrongEditor.state).toBe(opened.state);
+    expect(wrongEditor.effects).toEqual([
+      {
+        kind: 'OverlayActionRejected',
+        request: {
+          kind: 'context',
+          action: 'setDamage',
+          cardId,
+          value: '70',
+        },
+        reason: 'stale_card',
+      },
+    ]);
+
+    const invalid = apply(opened.state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: {
+        kind: 'context',
+        action: 'setSpecialCondition',
+        cardId,
+        value: 'condition text too long',
+      },
+    });
+    expect(invalid.state).toBe(opened.state);
+    expect(invalid.effects).toHaveLength(1);
+    expect(invalid.effects[0]).toMatchObject({
+      kind: 'OverlayActionRejected',
+      reason: 'invalid_value',
+    });
+
+    const movedView = withRevision(
+      opened.state.view!,
+      opened.state.view!.revision + 1
+    );
+    const playerId = movedView.playerOrder.find(
+      (candidate) =>
+        movedView.boards[candidate]?.activeStackId === activeStack.id
+    )!;
+    const playerBoard = movedView.boards[playerId]!;
+    const noLongerActive: MatchViewState = {
+      ...movedView,
+      boards: {
+        ...movedView.boards,
+        [playerId]: {
+          ...playerBoard,
+          activeStackId: null,
+          benchStackIds: [...playerBoard.benchStackIds, activeStack.id],
+        },
+      },
+      stacks: {
+        ...movedView.stacks,
+        [activeStack.id]: { ...activeStack, slot: 'bench' },
+      },
+    };
+    const reconciled = apply(opened.state, {
+      kind: 'FrameReceived',
+      frame: liveFrame(2, noLongerActive),
+    });
+    expect(reconciled.state.overlays.input).toBeNull();
+
+    const submitted = apply(opened.state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: {
+        kind: 'context',
+        action: 'setSpecialCondition',
+        cardId,
+        value: ' Pa ',
+      },
+    });
+    expect(submitted.state.overlays.input).toBeNull();
+    expect(submitted.effects).toEqual([
+      {
+        kind: 'SubmitCommand',
+        command: {
+          type: 'SetSpecialCondition',
+          stackId: activeStack.id,
+          condition: 'Pa',
+        },
+      },
+    ]);
+
+    const withoutCondition: MatchViewState = {
+      ...opened.state.view!,
+      stacks: {
+        ...opened.state.view!.stacks,
+        [activeStack.id]: { ...activeStack, specialCondition: null },
+      },
+    };
+    let missing = install(initialFrame(withoutCondition));
+    missing = apply(missing, {
+      kind: 'RendererIntent',
+      intent: { kind: 'CardContextRequested', cardId },
+    }).state;
+    const created = apply(missing, {
+      kind: 'LegacyOverlayActionRequested',
+      request: { kind: 'context', action: 'setSpecialCondition', cardId },
+    });
+    expect(created.state.overlays.input).toEqual({
+      kind: 'specialCondition',
+      cardId,
+      initialValue: 'P',
+    });
+    expect(created.effects).toEqual([
+      {
+        kind: 'SubmitCommand',
+        command: {
+          type: 'SetSpecialCondition',
+          stackId: activeStack.id,
+          condition: 'P',
+        },
+      },
+    ]);
+  });
+
   it('rejects stale, incomplete, and replay overlay actions without resolving commands', () => {
     const player = createRendererSpikeView();
     const resolveOverlayAction = vi.fn(() => {

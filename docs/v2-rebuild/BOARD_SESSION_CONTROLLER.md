@@ -231,22 +231,24 @@ The resolver exhaustively classifies the unchanged controls:
 | Ownership          | Actions                                                                                                                                                                                           |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | complete command   | ability toggle; own prize/deck shuffle; prize reveal/look/bottom; opponent-hand look/random; four loose-board destinations; per-card reveal; own opened-deck shuffle; own discard-to-deck shuffle |
-| complete input     | damage create/edit/remove                                                                                                                                                                         |
-| missing input      | special condition, three hand-and-draw variants, draw count, top/bottom inspection count                                                                                                          |
+| complete input     | damage and special-condition create/edit/remove                                                                                                                                                   |
+| missing input      | three hand-and-draw variants, draw count, top/bottom inspection count                                                                                                                             |
 | missing choice     | move destination/submenu and card category                                                                                                                                                        |
 | local presentation | zone sort                                                                                                                                                                                         |
 
-The damage request is the first complete input workflow. Its value-less form is
-admitted only for the exact open context card and installs a typed editor in
-`BoardOverlayState`; it also emits the characterized default `SetDamage(10)`
-only when the stack currently has no damage. Submission is admitted only for
-that same open editor identity, reuses `resolveStackStateAction`, and clears the
-editor before emitting one `SubmitCommand`. Invalid drafts cannot leave the UI,
-while runtime-forged invalid values produce `invalid_value`; a forged submit
-without the matching editor produces `stale_card`. No-op and Escape drafts
+Damage and special condition share one complete marker-input workflow. Their
+value-less forms are admitted only for the exact open context card and install a
+typed, kind-discriminated editor in `BoardOverlayState`; they emit the
+characterized defaults `SetDamage(10)` or `SetSpecialCondition(P)` only when the
+corresponding marker is absent. Submission must match both the open editor kind
+and card, reuses `resolveStackStateAction`, and clears the editor before emitting
+one `SubmitCommand`. Condition input is additionally active-stack-only and its
+legacy palette follows the local draft. Invalid drafts cannot leave the UI,
+while runtime-forged invalid values produce `invalid_value`; missing, wrong-card,
+and cross-kind editor submissions produce `stale_card`. No-op and Escape drafts
 dismiss locally. Reconnect, resync, timeline/recipient replacement, card
-departure, and terminal state purge or reconcile the editor with the rest of
-the local overlay state.
+departure, active-slot departure, and terminal state purge or reconcile input
+with the rest of the local overlay state.
 
 An incomplete command-backed action emits `OverlayActionRejected` with
 `requires_input` or `requires_choice`; it never supplies a legacy default or
@@ -260,9 +262,10 @@ disclosure exceptions are explicitly pinned to prize reveal, prize look, and
 opponent-hand look, but V2 continues to expose an empty replay mutation menu
 until it owns a separate local disclosure projection. Even a forged replay
 request is rejected as `read_only` before the resolver runs. Native Chromium
-now proves exact accepted `SetDamage`, damage removal, and `SetAbilityUsed`
-submissions, local rejection of malformed damage, the typed zero-command hand
-rejection, and reversible sorting with zero routed actions or effects.
+now proves exact accepted `SetDamage`, `SetSpecialCondition`, both removals, and
+`SetAbilityUsed` submissions; local rejection of malformed marker drafts; the
+typed zero-command hand rejection; and reversible sorting with zero routed
+actions or effects.
 
 Deck-list ordering is not present in recipient projections: unlike v1, the
 safe fallback orders disclosed labels and never obtains the opponent's hidden
@@ -324,11 +327,11 @@ Legacy behavioral evidence includes:
 
 Current browser evidence covers source menu rows/computed paint, card-preview
 intrinsic sizing, native menu traversal, Escape/outside dismissal, focus return,
-command-backed ability and damage actions, damage editing/removal, and typed
-zero-command incomplete/local actions.
+command-backed ability/damage/condition actions, both marker edit/removal flows,
+and typed zero-command incomplete/local actions.
 It does not claim complete focus trapping/screen-reader behavior, prompt and
 submenu workflows, replay-local disclosure behavior, source stack/zone raster
-parity, special-condition editing, keyboard suppression in every editable context,
+parity, keyboard suppression in every editable context,
 coaching flip, reconnect reconciliation, or the non-Chromium matrix. These
 remain Playwright/manual parity gates before any production switch.
 

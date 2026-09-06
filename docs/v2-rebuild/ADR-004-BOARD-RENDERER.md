@@ -90,16 +90,16 @@ only cards belonging to the currently opened safe zone. The module remains
 absent from production bundles. Its typed callbacks now traverse the
 controller's currently-open target check, ready/live-player policy, pure overlay
 resolver, serialized `SubmitCommand` effect, and adapter submit-time recheck.
-Complete actions reuse existing safe semantic resolvers. The first controller-
-bound input workflow overlays one temporary React damage editor on immutable
-marker scene output, submits default `10` only when absent, accepts bounded
-integer edit/removal, retains malformed drafts locally, and purges on reconnect.
-Missing condition/draw/inspection input and move/category choices produce typed
-zero-command rejections. Local zone sorting is controlled by the mounted zone browser:
+Complete actions reuse existing safe semantic resolvers. Controller-bound
+marker input overlays one temporary React editor on immutable scene output.
+Damage and condition submit defaults `10`/`P` only when absent, accept bounded
+edit/removal, preserve the live condition palette, retain malformed drafts
+locally, and purge on reconnect. Missing draw/inspection input and move/category
+choices produce typed zero-command rejections. Local zone sorting is controlled by the mounted zone browser:
 it derives a stable copy from disclosed labels and never enters the controller
 or mutates its projection; forged requests still fail closed as `local_only`.
-Native Chromium pins exact damage edit/removal and ability-marker commands, the
-incomplete negative case, and reversible sorting with zero
+Native Chromium pins exact damage and condition edit/removal plus ability-marker
+commands, the incomplete negative case, and reversible sorting with zero
 action/effect/command traffic. Replay-
 local prize/hand disclosure is characterized but deliberately unavailable until
 it has an isolated local projection; replay can never reach the resolver or

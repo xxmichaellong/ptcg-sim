@@ -40,20 +40,27 @@ export type LegacyBoardContextActionId =
 export type LegacyBoardZoneActionId =
   'shuffleDeck' | 'shuffleDiscardToDeck' | 'sortZone';
 
-type LegacyBoardContextActionWithoutDamage = Exclude<
+type LegacyBoardContextActionWithoutMarkerInput = Exclude<
   LegacyBoardContextActionId,
-  'setDamage'
+  'setDamage' | 'setSpecialCondition'
 >;
 
 export type LegacyBoardOverlayActionRequest =
   | {
       readonly kind: 'context';
-      readonly action: LegacyBoardContextActionWithoutDamage;
+      readonly action: LegacyBoardContextActionWithoutMarkerInput;
       readonly cardId: ViewCardId;
     }
   | {
       readonly kind: 'context';
       readonly action: 'setDamage';
+      readonly cardId: ViewCardId;
+      /** Missing opens the editor; present submits its bounded text draft. */
+      readonly value?: string;
+    }
+  | {
+      readonly kind: 'context';
+      readonly action: 'setSpecialCondition';
       readonly cardId: ViewCardId;
       /** Missing opens the editor; present submits its bounded text draft. */
       readonly value?: string;
@@ -138,11 +145,20 @@ export interface LegacyBoardDamageEditor {
   readonly initialValue: string;
 }
 
+export interface LegacyBoardSpecialConditionEditor {
+  readonly kind: 'specialCondition';
+  readonly cardId: ViewCardId;
+  readonly initialValue: string;
+}
+
+export type LegacyBoardMarkerEditor =
+  LegacyBoardDamageEditor | LegacyBoardSpecialConditionEditor;
+
 export type LegacyBoardOverlayActionResolution =
   | { readonly ok: true; readonly command: WireGameCommand }
   | {
       readonly ok: true;
-      readonly input: LegacyBoardDamageEditor;
+      readonly input: LegacyBoardMarkerEditor;
       readonly command?: WireGameCommand;
     }
   | {
@@ -209,6 +225,15 @@ export const parseLegacyDamageInput = (
   return numeric <= 0 ? null : numeric;
 };
 
+export const parseLegacySpecialConditionInput = (
+  value: string
+): string | null | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  if (normalized === '' || normalized === '0') return null;
+  return normalized.length <= 16 ? normalized : undefined;
+};
+
 const commandForShuffle = (
   view: MatchViewState,
   zone: ViewZone,
@@ -271,9 +296,38 @@ const resolveContextAction = (
           : rejected(resolution.reason);
       }
     case 'setSpecialCondition':
-      return located.stack?.slot === 'active'
-        ? rejected('requires_input')
-        : rejected('unsupported_target');
+      if (located.stack?.slot !== 'active') {
+        return rejected('unsupported_target');
+      }
+      if (request.value === undefined) {
+        const editor: LegacyBoardSpecialConditionEditor = {
+          kind: 'specialCondition',
+          cardId: request.cardId,
+          initialValue: located.stack.specialCondition ?? 'P',
+        };
+        return located.stack.specialCondition === null
+          ? {
+              ok: true,
+              input: editor,
+              command: {
+                type: 'SetSpecialCondition',
+                stackId: located.stack.id,
+                condition: 'P',
+              },
+            }
+          : { ok: true, input: editor };
+      }
+      {
+        const condition = parseLegacySpecialConditionInput(request.value);
+        if (condition === undefined) return rejected('invalid_value');
+        const resolution = resolveStackStateAction(view, request.cardId, {
+          type: 'setSpecialCondition',
+          condition,
+        });
+        return resolution.ok
+          ? command(resolution.command)
+          : rejected(resolution.reason);
+      }
     case 'shufflePrizes':
       return zone?.ownerId === viewerId
         ? commandForShuffle(view, zone, 'prizes')

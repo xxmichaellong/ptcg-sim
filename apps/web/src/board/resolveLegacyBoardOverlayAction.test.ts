@@ -274,6 +274,95 @@ describe('legacy board overlay action resolver', () => {
     ).toEqual({ ok: false, reason: 'invalid_value' });
   });
 
+  it('opens and resolves the active special-condition editor with legacy defaults', () => {
+    const view = createRendererSpikeView();
+    const playerId = view.viewer.kind === 'player' ? view.viewer.playerId : '';
+    const active = view.stacks[view.boards[playerId]!.activeStackId!]!;
+    const cardId = active.evolutionCards.at(-1)!.id;
+
+    expect(
+      resolveLegacyBoardOverlayAction(
+        view,
+        context('setSpecialCondition', cardId)
+      )
+    ).toEqual({
+      ok: true,
+      input: {
+        kind: 'specialCondition',
+        cardId,
+        initialValue: 'Poisoned',
+      },
+    });
+
+    const withoutCondition: MatchViewState = {
+      ...view,
+      stacks: {
+        ...view.stacks,
+        [active.id]: { ...active, specialCondition: null },
+      },
+    };
+    expect(
+      resolveLegacyBoardOverlayAction(
+        withoutCondition,
+        context('setSpecialCondition', cardId)
+      )
+    ).toEqual({
+      ok: true,
+      input: { kind: 'specialCondition', cardId, initialValue: 'P' },
+      command: {
+        type: 'SetSpecialCondition',
+        stackId: active.id,
+        condition: 'P',
+      },
+    });
+
+    for (const [value, condition] of [
+      [' Pa ', 'Pa'],
+      ['0', null],
+      ['   ', null],
+    ] as const) {
+      expect(
+        resolveLegacyBoardOverlayAction(view, {
+          kind: 'context',
+          action: 'setSpecialCondition',
+          cardId,
+          value,
+        })
+      ).toEqual({
+        ok: true,
+        command: {
+          type: 'SetSpecialCondition',
+          stackId: active.id,
+          condition,
+        },
+      });
+    }
+    expect(
+      resolveLegacyBoardOverlayAction(view, {
+        kind: 'context',
+        action: 'setSpecialCondition',
+        cardId,
+        value: 'condition text too long',
+      })
+    ).toEqual({ ok: false, reason: 'invalid_value' });
+    expect(
+      resolveLegacyBoardOverlayAction(view, {
+        kind: 'context',
+        action: 'setSpecialCondition',
+        cardId,
+        value: 1,
+      } as unknown as LegacyBoardOverlayActionRequest)
+    ).toEqual({ ok: false, reason: 'invalid_value' });
+
+    const hand = zoneIn(view, playerId, 'hand');
+    expect(
+      resolveLegacyBoardOverlayAction(
+        view,
+        context('setSpecialCondition', hand.cards[0]!.id)
+      )
+    ).toEqual({ ok: false, reason: 'unsupported_target' });
+  });
+
   it('never invents remaining prompt, submenu, or local-sort values', () => {
     const view = createRendererSpikeView();
     const playerId = view.viewer.kind === 'player' ? view.viewer.playerId : '';

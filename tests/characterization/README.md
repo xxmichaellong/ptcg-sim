@@ -308,18 +308,19 @@ disclosure actions; the V2 replay menu remains empty and the controller returns
 `read_only` before resolver/submit until a separate local disclosure projection
 is implemented.
 
-The next protected-input checkpoint completes damage editing without mutating
-renderer-owned marker nodes. The unchanged context item installs one typed
-controller editor over the recipient-safe marker bounds. Missing damage emits
-the characterized default `10`; existing damage opens with no command. The
-temporary `contenteditable` accepts bounded integer changes and zero/empty
-removal, rejects malformed drafts locally, and routes valid text only through
-the matching open-editor identity. Unit coverage pins default creation,
-non-string/decimal/over-limit rejection, no-op and Escape cancellation, forged
-submission, reconnect cleanup, exact overlay geometry, and immutable scenes.
-The native route proves invalid `70.5`, accepted `70`, removal with `0`, then an
-ability toggle use client sequences 1/2/3 exactly once. Special-condition and
-keyboard editing remain open.
+The protected marker-input checkpoints complete damage and special-condition
+editing without mutating renderer-owned nodes. The unchanged context items
+install one typed controller editor over the recipient-safe marker bounds.
+Missing markers emit characterized defaults `10`/`P`; existing markers open
+with no command. The temporary `contenteditable` accepts bounded integer damage
+or 16-character condition text, applies the live condition palette, maps
+zero/empty text to removal, rejects malformed drafts locally, and routes valid
+text only through the matching kind/card identity. Unit coverage pins default
+creation, malformed/runtime-forged values, no-op and Escape cancellation,
+cross-kind submission, reconnect cleanup, exact overlay geometry, and immutable
+scenes. The native route proves invalid `70.5`, accepted `70`, damage removal,
+overlong condition retention, `Pa`, condition removal, then an ability toggle at
+client sequences 1/2/3/4/5 exactly once. Keyboard marker shortcuts remain open.
 
 `legacy-compound-group-rotation-layout.test.ts` and
 `legacy-compound-break-rotation-layout.test.ts` split the next source-only

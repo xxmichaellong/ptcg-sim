@@ -58,6 +58,7 @@ const actions = (): LegacyBoardOverlayActions => ({
   invokeContextAction: vi.fn(),
   invokeZoneAction: vi.fn(),
   submitDamageInput: vi.fn(),
+  submitSpecialConditionInput: vi.fn(),
 });
 
 describe('legacy board overlays', () => {
@@ -491,5 +492,84 @@ describe('legacy board overlays', () => {
     });
     expect(callbacks.dismiss).toHaveBeenCalledWith('input');
     expect(callbacks.submitDamageInput).not.toHaveBeenCalled();
+  });
+
+  it('anchors the active condition editor and follows the legacy draft palette', async () => {
+    const callbacks = actions();
+    const legacyScene = createBoardSceneForViewport(view, {
+      geometryVersion: 1,
+      viewport: { width: 1600, height: 900, devicePixelRatio: 1 },
+      bottomPlayerId: firstPlayer,
+      splitRatio: 0.5,
+    });
+    const active = view.stacks[view.boards[firstPlayer]!.activeStackId!]!;
+    const cardId = active.evolutionCards.at(-1)!.id;
+    const marker = legacyScene.markers.find(
+      (candidate) =>
+        candidate.parentCardId === cardId &&
+        candidate.kind === 'specialCondition'
+    )!;
+    const markerSnapshot = JSON.stringify(legacyScene.markers);
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            scene: legacyScene,
+            overlays: {
+              contextMenuCardId: null,
+              preview: null,
+              input: {
+                kind: 'specialCondition',
+                cardId,
+                initialValue: 'Poisoned',
+              },
+            },
+          }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+
+    const editor = host.querySelector<HTMLDivElement>(
+      '[data-legacy-marker-editor="specialCondition"]'
+    )!;
+    expect(editor.textContent).toBe('Poisoned');
+    expect(editor.getAttribute('aria-label')).toBe('Special condition');
+    expect(Number.parseFloat(editor.style.left)).toBeCloseTo(
+      marker.bounds.x,
+      5
+    );
+    expect(Number.parseFloat(editor.style.top)).toBeCloseTo(marker.bounds.y, 5);
+    expect(editor.style.background).toBe('#efefef');
+    expect(editor.style.color).toBe('#111');
+
+    await act(async () => {
+      editor.focus();
+      editor.textContent = 'Pa';
+      editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
+    });
+    expect(editor.style.background).toBe('rgb(255, 255, 0)');
+    expect(editor.style.color).toBe('rgb(0, 0, 0)');
+
+    await act(async () => {
+      editor.textContent = 'condition text too long';
+      editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
+      editor.blur();
+    });
+    expect(editor.getAttribute('aria-invalid')).toBe('true');
+    expect(document.activeElement).toBe(editor);
+    expect(callbacks.submitSpecialConditionInput).not.toHaveBeenCalled();
+
+    await act(async () => {
+      editor.textContent = ' B ';
+      editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
+      editor.blur();
+    });
+    expect(
+      callbacks.submitSpecialConditionInput
+    ).toHaveBeenCalledExactlyOnceWith(cardId, ' B ');
+    expect(callbacks.submitDamageInput).not.toHaveBeenCalled();
+    expect(JSON.stringify(legacyScene.markers)).toBe(markerSnapshot);
   });
 });

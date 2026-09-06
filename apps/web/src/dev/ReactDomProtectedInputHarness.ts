@@ -328,6 +328,20 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
         value,
       });
     },
+    submitSpecialConditionInput: (cardId, value) => {
+      overlayActions.push({
+        kind: 'context',
+        action: 'setSpecialCondition',
+        cardId: String(cardId),
+        value,
+      });
+      runtime.emitLegacyOverlayAction({
+        kind: 'context',
+        action: 'setSpecialCondition',
+        cardId,
+        value,
+      });
+    },
   };
   let darkMode = false;
   const renderOverlays = (): void => {

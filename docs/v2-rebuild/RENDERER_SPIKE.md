@@ -1050,6 +1050,17 @@ passes 134 Playwright checks across 64 Chromium 151 browser files:
     generated code and grow from 252 reviewed source files to 498 mixed files.
     The corrected scan is stable at 252 files and still reports no circular
     dependencies; no generated directories are deleted as part of the gate.
+59. The protected marker-input union now also completes special-condition
+    editing. A missing active marker submits only the source default
+    `SetSpecialCondition(P)` while opening; an existing marker opens with no
+    command. The shared editor retains exact initial scene paint, applies the
+    legacy `P/B/A/Pa/C` palette to local drafts, trims accepted text to at most
+    16 characters, and maps zero/empty text to removal. Controller submission
+    must match both card and editor kind; condition input also reconciles away
+    when the stack leaves active. Unit and native Chromium coverage pin default,
+    overlength/non-string rejection, cross-kind forgery, exact bounds/paint,
+    yellow/black `Pa`, removal, immutable markers, and exact client sequences
+    through the following ability action. The route remains development-only.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

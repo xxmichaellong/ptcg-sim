@@ -16,7 +16,7 @@ import {
 } from './resolveBoardDrop.js';
 import {
   resolveLegacyBoardOverlayAction,
-  type LegacyBoardDamageEditor,
+  type LegacyBoardMarkerEditor,
   type LegacyBoardOverlayActionRejectionReason,
   type LegacyBoardOverlayActionRequest,
 } from './resolveLegacyBoardOverlayAction.js';
@@ -60,7 +60,7 @@ export type BoardPreviewState =
 export interface BoardOverlayState {
   readonly contextMenuCardId: ViewCardId | null;
   readonly preview: BoardPreviewState | null;
-  readonly input: LegacyBoardDamageEditor | null;
+  readonly input: LegacyBoardMarkerEditor | null;
 }
 
 export type BoardPresentationDismissScope =
@@ -416,11 +416,14 @@ const reconcilePresentation = (
           : null
         : null;
   const input = state.overlays.input;
+  const inputCard = input
+    ? scene.cards.find((card) => card.id === input.cardId)
+    : undefined;
+  const inputStack = inputCard ? view.stacks[inputCard.parentId] : undefined;
   const reconciledInput =
     input &&
-    scene.cards.some(
-      (card) => card.id === input.cardId && view.stacks[card.parentId]
-    )
+    inputStack &&
+    (input.kind === 'damage' || inputStack.slot === 'active')
       ? input
       : null;
   return {
@@ -1014,14 +1017,19 @@ const handleOverlayAction = (
   if (!state.canSubmitCommands) {
     return rejectOverlayAction(state, request, 'read_only');
   }
-  const submitsDamageInput =
+  const submittedInputKind =
     request.kind === 'context' &&
-    request.action === 'setDamage' &&
-    request.value !== undefined;
+    (request.action === 'setDamage' ||
+      request.action === 'setSpecialCondition') &&
+    request.value !== undefined
+      ? request.action === 'setDamage'
+        ? 'damage'
+        : 'specialCondition'
+      : null;
   if (
     request.kind === 'context' &&
-    ((submitsDamageInput
-      ? state.overlays.input?.kind !== 'damage' ||
+    ((submittedInputKind
+      ? state.overlays.input?.kind !== submittedInputKind ||
         state.overlays.input.cardId !== request.cardId
       : state.overlays.contextMenuCardId !== request.cardId) ||
       !scene.cards.some((card) => card.id === request.cardId))
@@ -1056,7 +1064,7 @@ const handleOverlayAction = (
         : []
     );
   }
-  const next = submitsDamageInput
+  const next = submittedInputKind
     ? nextState(state, {
         overlays: { ...state.overlays, input: null },
       })

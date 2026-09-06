@@ -31,7 +31,10 @@ import type {
   LegacyBoardContextActionId,
   LegacyBoardZoneActionId,
 } from '../resolveLegacyBoardOverlayAction.js';
-import { parseLegacyDamageInput } from '../resolveLegacyBoardOverlayAction.js';
+import {
+  parseLegacyDamageInput,
+  parseLegacySpecialConditionInput,
+} from '../resolveLegacyBoardOverlayAction.js';
 import './LegacyBoardOverlays.css';
 
 export type {
@@ -51,6 +54,10 @@ export interface LegacyBoardOverlayActions {
     zoneId: string
   ) => void;
   readonly submitDamageInput: (cardId: ViewCardId, value: string) => void;
+  readonly submitSpecialConditionInput: (
+    cardId: ViewCardId,
+    value: string
+  ) => void;
 }
 
 type ContextEntry =
@@ -595,13 +602,13 @@ const ZoneBrowser = ({
   );
 };
 
-const damageEditorMarker = (
+const markerEditorMarker = (
   state: BoardSessionControllerState
 ): MarkerSceneNode | null => {
   const input = state.overlays.input;
   const scene = state.scene;
   const view = state.view;
-  if (!input || input.kind !== 'damage' || !scene || !view) return null;
+  if (!input || !scene || !view) return null;
   const selected = scene.cards.find((card) => card.id === input.cardId);
   const stack = selected ? view.stacks[selected.parentId] : undefined;
   const topCardId = stack?.evolutionCards.at(-1)?.id;
@@ -610,7 +617,7 @@ const damageEditorMarker = (
     : undefined;
   if (!stack || !topCard || topCard.side === 'shared') return null;
   const existing = scene.markers.find(
-    (marker) => marker.parentCardId === topCard.id && marker.kind === 'damage'
+    (marker) => marker.parentCardId === topCard.id && marker.kind === input.kind
   );
   if (existing) return existing;
   const sibling = scene.markers.find(
@@ -621,8 +628,9 @@ const damageEditorMarker = (
   const presentation = sibling?.presentation ?? 'generic';
   const characterizedBounds =
     presentation === 'legacyActiveQ0'
-      ? layoutLegacyActiveQ0Markers(topCard.bounds, topCard.side).damage.bounds
-      : presentation === 'legacyBenchQ0'
+      ? layoutLegacyActiveQ0Markers(topCard.bounds, topCard.side)[input.kind]
+          .bounds
+      : presentation === 'legacyBenchQ0' && input.kind === 'damage'
         ? layoutLegacyBenchQ0Markers(topCard.bounds, topCard.side).damage.bounds
         : null;
   const size = Math.max(
@@ -630,14 +638,17 @@ const damageEditorMarker = (
     Math.min(topCard.bounds.width, topCard.bounds.height) * 0.22
   );
   return {
-    id: `${topCard.id}:damage-editor`,
+    id: `${topCard.id}:${input.kind}-editor`,
     parentCardId: topCard.id,
     side: topCard.side,
-    kind: 'damage',
+    kind: input.kind,
     presentation,
     value: input.initialValue,
     bounds: characterizedBounds ?? {
-      x: topCard.bounds.x + topCard.bounds.width - size,
+      x:
+        input.kind === 'specialCondition'
+          ? topCard.bounds.x
+          : topCard.bounds.x + topCard.bounds.width - size,
       y: topCard.bounds.y,
       width: size,
       height: size,
@@ -645,11 +656,11 @@ const damageEditorMarker = (
     zIndex:
       sibling?.zIndex ??
       topCard.zIndex + (characterizedBounds === null ? 100 : 1),
-    label: `damage: ${input.initialValue}`,
+    label: `${input.kind}: ${input.initialValue}`,
   };
 };
 
-const DamageEditor = ({
+const MarkerEditor = ({
   state,
   actions,
 }: {
@@ -657,18 +668,29 @@ const DamageEditor = ({
   readonly actions: LegacyBoardOverlayActions;
 }) => {
   const input = state.overlays.input;
-  const marker = damageEditorMarker(state);
+  const marker = markerEditorMarker(state);
   const editor = useRef<HTMLDivElement>(null);
   const cancelled = useRef(false);
   const [invalid, setInvalid] = useState(false);
+  const [draft, setDraft] = useState(input?.initialValue ?? '');
+  const [edited, setEdited] = useState(false);
   useLayoutEffect(() => {
-    if (editor.current && input?.kind === 'damage') {
+    if (editor.current && input) {
       editor.current.textContent = input.initialValue;
     }
   }, [input]);
-  if (!input || input.kind !== 'damage' || !marker) return null;
+  if (!input || !marker) return null;
   const legacy = isLegacyMarkerPresentation(marker.presentation);
-  const appearance = legacy ? legacyMarkerAppearance(marker) : null;
+  const markerWasPresent = state.scene?.markers.some(
+    (candidate) =>
+      candidate.parentCardId === marker.parentCardId &&
+      candidate.kind === input.kind
+  );
+  const appearance =
+    legacy ||
+    (input.kind === 'specialCondition' && (edited || !markerWasPresent))
+      ? legacyMarkerAppearance({ ...marker, value: draft })
+      : null;
   const submit = (element: HTMLDivElement): void => {
     if (cancelled.current) return;
     const value = element.textContent ?? '';
@@ -676,28 +698,42 @@ const DamageEditor = ({
       actions.dismiss('input');
       return;
     }
-    if (parseLegacyDamageInput(value) === undefined) {
+    const parsed =
+      input.kind === 'damage'
+        ? parseLegacyDamageInput(value)
+        : parseLegacySpecialConditionInput(value);
+    if (parsed === undefined) {
       setInvalid(true);
       element.focus();
       return;
     }
-    actions.submitDamageInput(input.cardId, value);
+    if (input.kind === 'damage') {
+      actions.submitDamageInput(input.cardId, value);
+    } else {
+      actions.submitSpecialConditionInput(input.cardId, value);
+    }
   };
 
   return (
     <div
       ref={editor}
       className="ptcgsim-legacy-marker-editor"
-      data-legacy-marker-editor="damage"
+      data-legacy-marker-editor={input.kind}
       data-marker-card-id={input.cardId}
       role="textbox"
-      aria-label="Damage counter"
+      aria-label={
+        input.kind === 'damage' ? 'Damage counter' : 'Special condition'
+      }
       aria-invalid={invalid}
       contentEditable
       suppressContentEditableWarning
       spellCheck={false}
-      inputMode="numeric"
-      onInput={() => setInvalid(false)}
+      inputMode={input.kind === 'damage' ? 'numeric' : 'text'}
+      onInput={(event) => {
+        setDraft(event.currentTarget.textContent ?? '');
+        setEdited(true);
+        setInvalid(false);
+      }}
       onBlur={(event) => submit(event.currentTarget)}
       onKeyDown={(event) => {
         event.stopPropagation();
@@ -723,8 +759,14 @@ const DamageEditor = ({
         borderRadius: appearance?.shape === 'tab' ? '10%' : '50%',
         background: appearance
           ? legacyMarkerCssColor(appearance.fill)
-          : '#e64242',
-        color: appearance ? legacyMarkerCssColor(appearance.text) : '#fff',
+          : input.kind === 'damage'
+            ? '#e64242'
+            : '#efefef',
+        color: appearance
+          ? legacyMarkerCssColor(appearance.text)
+          : input.kind === 'damage'
+            ? '#fff'
+            : '#111',
         fontSize:
           appearance?.fontSizePx ?? Math.max(10, marker.bounds.height * 0.42),
         fontWeight: legacy ? undefined : 700,
@@ -798,7 +840,7 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
         />
       ) : null}
       {state.overlays.input ? (
-        <DamageEditor
+        <MarkerEditor
           key={`${state.overlays.input.kind}:${state.overlays.input.cardId}`}
           state={state}
           actions={actions}

@@ -85,16 +85,17 @@ for zero cards. V2 deliberately maps that gesture to one typed
 `SetDamage(null)` command. The existing application resolver also rejects
 non-finite, non-integer, string, and over-limit damage and bounds condition
 text. This checkpoint characterizes source behavior and the safe command
-boundary. The route-owned React overlay now completes the damage half of that
-boundary. Choosing the unchanged menu item binds one temporary editor to the
-exact safe stack card. A missing marker submits the characterized default `10`;
-an existing marker opens without a command. Unchanged/Escape drafts cancel,
-positive integers through `9990` submit one `SetDamage`, and zero, negative, or
-empty text submits `SetDamage(null)`. Decimal, nonnumeric, over-limit,
-non-string, and overlong input remains local and visibly invalid. The controller
-owns the editor identity, clears it on reconnect/recipient replacement, and
-rejects a forged submit when that editor is not open. Special-condition editing
-and the keyboard shortcut bridge remain separate.
+boundary. The route-owned React overlay completes both marker text workflows.
+Choosing either unchanged menu item binds one kind-discriminated temporary
+editor to the exact safe stack card. A missing marker submits the characterized
+default `10` or `P`; an existing marker opens without a command. Unchanged or
+Escape drafts cancel. Damage accepts positive integers through `9990`; condition
+text is trimmed and capped at 16 characters with its source palette updated
+locally while typing. Zero/empty text removes either marker. Malformed input
+remains local and visibly invalid, while forged non-string input is rejected by
+the resolver. The controller clears editors on reconnect/recipient replacement,
+restricts conditions to active, and rejects missing, wrong-card, or cross-kind
+submissions. The keyboard shortcut bridge remains separate.
 
 ## Loose board batches
 
@@ -804,10 +805,10 @@ effect as a renderer drop, and `BoardSessionAdapter` repeats the live mode,
 request phase, session readiness, and player-role checks immediately before the
 real submitter.
 
-The unchanged menu still contains incomplete compound interactions. The damage
-editor is complete; special-condition editing, all draw-count flows, and
-top/bottom inspection still need input, while move-card and category controls
-need a submenu choice. The incomplete controls return
+The unchanged menu still contains incomplete compound interactions. Damage and
+special-condition editing are complete; all draw-count flows and top/bottom
+inspection still need input, while move-card and category controls need a
+submenu choice. The incomplete controls return
 `requires_input` or `requires_choice` without a command, so the migration cannot
 silently substitute legacy prompt defaults. Zone sorting is now paint-only
 controlled state in the mounted browser: it sorts a copy by disclosed label,

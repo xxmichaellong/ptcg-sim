@@ -30,7 +30,7 @@ interface ProtectedInputEvidence {
   readonly overlays: {
     readonly contextMenuCardId: string | null;
     readonly input: {
-      readonly kind: 'damage';
+      readonly kind: 'damage' | 'specialCondition';
       readonly cardId: string;
       readonly initialValue: string;
     } | null;
@@ -716,6 +716,115 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   await clearEvidence(page);
   await page.mouse.click(activePoint.x, activePoint.y, { button: 'right' });
   await expect(menu).toBeVisible();
+  await menu.locator('[data-context-action="setSpecialCondition"]').click();
+  const conditionEditor = host.locator(
+    '[data-legacy-marker-editor="specialCondition"]'
+  );
+  await expect(conditionEditor).toBeVisible();
+  await expect(conditionEditor).toHaveText('Poisoned');
+  const renderedCondition = host.locator(
+    `[data-marker-id="${fixture.activeTopCardId}:specialCondition"]`
+  );
+  await expect(renderedCondition).toBeVisible();
+  expect(await conditionEditor.boundingBox()).toEqual(
+    await renderedCondition.boundingBox()
+  );
+  expect(
+    await conditionEditor.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        backgroundColor: style.backgroundColor,
+        color: style.color,
+        borderRadius: style.borderRadius,
+        fontSize: style.fontSize,
+        lineHeight: style.lineHeight,
+      };
+    })
+  ).toEqual(
+    await renderedCondition.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        backgroundColor: style.backgroundColor,
+        color: style.color,
+        borderRadius: style.borderRadius,
+        fontSize: style.fontSize,
+        lineHeight: style.lineHeight,
+      };
+    })
+  );
+  await conditionEditor.fill('condition text too long');
+  await conditionEditor.press('Enter');
+  await expect(conditionEditor).toHaveAttribute('aria-invalid', 'true');
+  await expect(conditionEditor).toBeFocused();
+  expect((await evidence(page)).submissions).toEqual([]);
+  expect((await evidence(page)).overlayActions).toHaveLength(1);
+
+  await conditionEditor.fill('Pa');
+  await expect(conditionEditor).toHaveCSS(
+    'background-color',
+    'rgb(255, 255, 0)'
+  );
+  await expect(conditionEditor).toHaveCSS('color', 'rgb(0, 0, 0)');
+  await conditionEditor.press('Enter');
+  await expect(conditionEditor).toHaveCount(0);
+  await expect
+    .poll(async () => (await evidence(page)).submissions)
+    .toEqual([
+      {
+        type: 'SetSpecialCondition',
+        stackId: fixture.activeStackId,
+        condition: 'Pa',
+      },
+    ]);
+  const conditionEvidence = await evidence(page);
+  expect(conditionEvidence.submissionResults).toEqual([
+    {
+      queued: true,
+      commandId: 'protected-input-command-3',
+      clientSequence: 3,
+    },
+  ]);
+  expect(conditionEvidence.overlayActions).toEqual([
+    {
+      kind: 'context',
+      action: 'setSpecialCondition',
+      cardId: fixture.activeTopCardId,
+    },
+    {
+      kind: 'context',
+      action: 'setSpecialCondition',
+      cardId: fixture.activeTopCardId,
+      value: 'Pa',
+    },
+  ]);
+  expect(conditionEvidence.overlayRejections).toEqual([]);
+  expect(conditionEvidence.reportedErrors).toEqual([]);
+
+  await clearEvidence(page);
+  await page.mouse.click(activePoint.x, activePoint.y, { button: 'right' });
+  await menu.locator('[data-context-action="setSpecialCondition"]').click();
+  await conditionEditor.fill('0');
+  await conditionEditor.press('Enter');
+  await expect
+    .poll(async () => (await evidence(page)).submissions)
+    .toEqual([
+      {
+        type: 'SetSpecialCondition',
+        stackId: fixture.activeStackId,
+        condition: null,
+      },
+    ]);
+  expect((await evidence(page)).submissionResults).toEqual([
+    {
+      queued: true,
+      commandId: 'protected-input-command-4',
+      clientSequence: 4,
+    },
+  ]);
+
+  await clearEvidence(page);
+  await page.mouse.click(activePoint.x, activePoint.y, { button: 'right' });
+  await expect(menu).toBeVisible();
   await menu.locator('[data-context-action="toggleAbility"]').click();
   await expect
     .poll(async () => (await evidence(page)).submissions)
@@ -730,8 +839,8 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   expect(commandEvidence.submissionResults).toEqual([
     {
       queued: true,
-      commandId: 'protected-input-command-3',
-      clientSequence: 3,
+      commandId: 'protected-input-command-5',
+      clientSequence: 5,
     },
   ]);
   expect(commandEvidence.overlayActions).toEqual([
