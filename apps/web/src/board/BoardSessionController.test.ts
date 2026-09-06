@@ -324,6 +324,141 @@ describe('headless board session controller', () => {
     ]);
   });
 
+  it('resolves one route-owned overlay action from the installed safe view', () => {
+    let state = install();
+    const activeStack = state.view!.stacks['stack:blue:active']!;
+    const cardId = activeStack.evolutionCards.at(-1)!.id;
+    state = apply(state, {
+      kind: 'RendererIntent',
+      intent: { kind: 'CardContextRequested', cardId },
+    }).state;
+    const request = {
+      kind: 'context' as const,
+      action: 'toggleAbility' as const,
+      cardId,
+    };
+    const result = apply(state, {
+      kind: 'LegacyOverlayActionRequested',
+      request,
+    });
+
+    expect(result.effects).toEqual([
+      {
+        kind: 'SubmitCommand',
+        command: expect.objectContaining({ type: 'SetAbilityUsed' }),
+      },
+    ]);
+    expect(result.effects[0]).toMatchObject({
+      command: { stackId: activeStack.id },
+    });
+  });
+
+  it('rejects stale, incomplete, and replay overlay actions without resolving commands', () => {
+    const player = createRendererSpikeView();
+    const resolveOverlayAction = vi.fn(() => {
+      throw new Error('blocked overlay request reached resolver');
+    });
+    const deps = { createScene, resolveOverlayAction };
+    let replay = install(replayFrame(1, 1, player, 'resync'), deps);
+    const replayCard = cardIn(replay.scene!, ':prizes');
+    replay = apply(
+      replay,
+      {
+        kind: 'RendererIntent',
+        intent: { kind: 'CardContextRequested', cardId: replayCard },
+      },
+      deps
+    ).state;
+    const replayRequest = {
+      kind: 'context' as const,
+      action: 'revealPrizes' as const,
+      cardId: replayCard,
+    };
+    expect(
+      apply(
+        replay,
+        { kind: 'LegacyOverlayActionRequested', request: replayRequest },
+        deps
+      ).effects
+    ).toEqual([
+      {
+        kind: 'OverlayActionRejected',
+        request: replayRequest,
+        reason: 'read_only',
+      },
+    ]);
+    expect(resolveOverlayAction).not.toHaveBeenCalled();
+
+    let live = install();
+    const handCard = cardIn(live.scene!, ':hand');
+    const staleRequest = {
+      kind: 'context' as const,
+      action: 'revealCard' as const,
+      cardId: handCard,
+    };
+    expect(
+      apply(live, {
+        kind: 'LegacyOverlayActionRequested',
+        request: staleRequest,
+      }).effects
+    ).toEqual([
+      {
+        kind: 'OverlayActionRejected',
+        request: staleRequest,
+        reason: 'stale_card',
+      },
+    ]);
+    live = apply(live, {
+      kind: 'RendererIntent',
+      intent: { kind: 'CardContextRequested', cardId: handCard },
+    }).state;
+    const inputRequest = {
+      kind: 'context' as const,
+      action: 'discardHand' as const,
+      cardId: handCard,
+    };
+    expect(
+      apply(live, {
+        kind: 'LegacyOverlayActionRequested',
+        request: inputRequest,
+      }).effects
+    ).toEqual([
+      {
+        kind: 'OverlayActionRejected',
+        request: inputRequest,
+        reason: 'requires_input',
+      },
+    ]);
+
+    const openedZone = live.scene!.zones.find((zone) =>
+      zone.id.endsWith(':discard')
+    )!;
+    const otherZone = live.scene!.zones.find((zone) =>
+      zone.id.endsWith(':deck')
+    )!;
+    live = apply(live, {
+      kind: 'RendererIntent',
+      intent: { kind: 'ZoneOpened', zoneId: openedZone.id },
+    }).state;
+    const forgedZoneRequest = {
+      kind: 'zone' as const,
+      action: 'shuffleDeck' as const,
+      zoneId: otherZone.id,
+    };
+    expect(
+      apply(live, {
+        kind: 'LegacyOverlayActionRequested',
+        request: forgedZoneRequest,
+      }).effects
+    ).toEqual([
+      {
+        kind: 'OverlayActionRejected',
+        request: forgedZoneRequest,
+        reason: 'stale_zone',
+      },
+    ]);
+  });
+
   it('requires newer replay generation plus seek to rewind', () => {
     const base = createRendererSpikeView();
     const state = install(replayFrame(1, 1, withRevision(base, 5), 'resync'));

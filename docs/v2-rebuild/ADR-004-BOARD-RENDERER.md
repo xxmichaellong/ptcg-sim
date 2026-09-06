@@ -87,10 +87,18 @@ also matches source-ordered context rows and computed paint plus the full-card
 preview shell/image metrics, attaching source/candidate evidence. The renderer
 still rejects hidden surface-card input; a distinct controller action admits
 only cards belonging to the currently opened safe zone. The module remains
-absent from production bundles. Mutation-backed menu/zone workflows,
-replay-specific availability, source raster parity for transformed stack/zone
-dialogs, full accessibility audit, reconnect snap-back, and non-Chromium
-approval remain unresolved.
+absent from production bundles. Its typed callbacks now traverse the
+controller's currently-open target check, ready/live-player policy, pure overlay
+resolver, serialized `SubmitCommand` effect, and adapter submit-time recheck.
+Complete actions reuse existing safe semantic resolvers; missing marker/draw/
+inspection input, move/category choices, and local sorting produce typed
+zero-command rejections. Native Chromium pins an exact ability-marker command
+and the incomplete/local negative cases. Replay-local prize/hand disclosure is
+characterized but deliberately unavailable until it has an isolated local
+projection; replay can never reach the resolver or submitter. Prompt/submenu
+composition, replay-local paint, source raster parity for transformed
+stack/zone dialogs, full accessibility audit, reconnect snap-back, and
+non-Chromium approval remain unresolved.
 
 ### Mixed attachment history policy
 
@@ -295,9 +303,10 @@ Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
   Tool-specific Pixi paint parity, full paint or interaction parity, cover-open
   UX, or opened-zone layout, and the sidebar content rectangle is derived from
   measured shell/tab edges);
-- complete mutation-backed menu/zone workflows, replay/reconnect behavior, and
-  the screen-reader/focus-trap audit beyond the current native Chromium
-  keyboard, focus-return, dismissal, and zero-command overlay gate;
+- complete prompt/submenu menu workflows, local sorting, replay-local
+  disclosure paint, reconnect behavior, and the screen-reader/focus-trap audit
+  beyond the current native Chromium keyboard, focus-return, dismissal, and
+  protected overlay-command gate;
 - a hidden/private-image request scan;
 - finish resource evidence beyond the current green 100-cycle warmed-host
   Chromium DOM-node/listener gate and the deterministic same-origin

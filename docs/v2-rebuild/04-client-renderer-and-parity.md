@@ -1126,11 +1126,26 @@ real source menu's ordered rows and computed paint plus the full-preview shell
 and image metrics; masked/source/candidate screenshots and JSON metrics are
 attached. Disposal remains idempotent and removes the full harness.
 
-This is still development-only. Context and zone action callbacks are typed and
-recorded, not connected to mutation workflows. Replay-specific availability,
-source-raster parity for transformed stack/zone dialogs, a complete focus-trap
-and screen-reader audit, reconnect snap-back, production routing, and
-non-Chromium approval remain separate gates.
+This is still development-only. Context and zone action callbacks now enter a
+single typed resolver through the controller. A request must still own the open
+menu card or zone, the installed projection must be a ready live player, and
+the adapter rechecks live/replay/session/role before submission. Fully specified
+actions reuse the existing stale-safe annotation, public visibility, private
+inspection, random face-down, prize-bottom, and loose-board resolvers; own-zone
+shuffles use their narrow authoritative commands. One native Chromium action
+therefore produces exactly one `SetAbilityUsed` command.
+
+Controls that still need content-editable marker text, a draw/inspection count,
+a move destination, or a category do not guess a default. They emit observable
+`requires_input` or `requires_choice` rejections and submit nothing. Zone sort is
+classified as local presentation and likewise emits `local_only` until that
+state has an owner. V1 replay permits three local disclosure actions—prize
+reveal, prize look, and opponent-hand look—but V2 intentionally keeps the
+replay context menu empty and rejects forged requests as `read_only` until it
+has an isolated replay-local disclosure projection. Prompt/submenu composition,
+replay-local paint, source-raster parity for transformed stack/zone dialogs, a
+complete focus-trap and screen-reader audit, reconnect snap-back, production
+routing, and non-Chromium approval remain separate gates.
 
 ## React application state
 

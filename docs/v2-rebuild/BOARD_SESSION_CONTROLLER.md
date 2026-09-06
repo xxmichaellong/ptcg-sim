@@ -210,14 +210,44 @@ return through runtime methods. The renderer channel continues to require
 requires the submitted card to belong to `presentation.openedZoneId`. Unit and
 browser tests prove closed-zone and cross-zone forgery rejection, safe hidden
 zone-card context, exact duplicated IDs, keyboard traversal/Escape/outside
-dismissal, focus restoration, zone-card anchoring, dark paint, and no submitted
-commands. A real-v1 browser comparison pins ordered context rows/computed paint
-and full-card preview metrics with screenshot/JSON attachments.
+dismissal, focus restoration, zone-card anchoring, and dark paint. A real-v1
+browser comparison pins ordered context rows/computed paint and full-card
+preview metrics with screenshot/JSON attachments.
 
-Typed context/zone action callbacks deliberately stop before command
-construction. Replay availability, source stack/zone raster parity, complete
-accessibility focus trapping, reconnect snap-back, production wiring, and
-non-Chromium approval remain separate.
+The typed context/zone callbacks now return through
+`LegacyOverlayActionRequested`. The controller first requires the exact card to
+own the currently open context menu, or the exact zone to own the currently open
+zone browser; it then requires an installed ready live-player projection. Only
+after those checks does `resolveLegacyBoardOverlayAction` read that same view.
+Accepted actions reuse the existing card-annotation, public-visibility,
+private-inspection, random-face-down, prize-bottom, and loose-board resolvers or
+construct the already authoritative owner-zone shuffle intents. The resulting
+command uses the existing serialized `SubmitCommand` effect and the adapter
+rechecks live/replay/session/role immediately before calling
+`RemoteGameSession.submit`.
+
+The resolver exhaustively classifies the unchanged controls:
+
+| Ownership          | Actions                                                                                                                                                                                           |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| complete command   | ability toggle; own prize/deck shuffle; prize reveal/look/bottom; opponent-hand look/random; four loose-board destinations; per-card reveal; own opened-deck shuffle; own discard-to-deck shuffle |
+| missing input      | damage, special condition, three hand-and-draw variants, draw count, top/bottom inspection count                                                                                                  |
+| missing choice     | move destination/submenu and card category                                                                                                                                                        |
+| local presentation | zone sort                                                                                                                                                                                         |
+
+An incomplete action emits `OverlayActionRejected` with `requires_input`,
+`requires_choice`, or `local_only`; it never supplies a legacy default or
+reaches the submitter. Replay remains strictly non-submitting. V1's replay-only
+local disclosure exceptions are explicitly pinned to prize reveal, prize look,
+and opponent-hand look, but V2 continues to expose an empty replay mutation menu
+until it owns a separate local disclosure projection. Even a forged replay
+request is rejected as `read_only` before the resolver runs. Native Chromium
+now proves both an exact accepted `SetAbilityUsed` submission and the typed
+zero-command hand/sort rejections.
+
+Prompt/submenu composition, replay-local disclosure paint, source stack/zone
+raster parity, complete accessibility focus trapping, reconnect snap-back,
+production wiring, and non-Chromium approval remain separate.
 
 ## Effects and renderer cancellation
 
@@ -272,10 +302,11 @@ Legacy behavioral evidence includes:
   semantic renderer boundary.
 
 Current browser evidence covers source menu rows/computed paint, card-preview
-intrinsic sizing, native menu traversal, Escape/outside dismissal, and focus
-return. It does not claim complete focus trapping/screen-reader behavior,
-mutation-backed menu actions, replay-specific availability, source stack/zone
-raster parity, marker editors, keyboard suppression in every editable context,
+intrinsic sizing, native menu traversal, Escape/outside dismissal, focus return,
+one command-backed menu action, and typed zero-command incomplete/local actions.
+It does not claim complete focus trapping/screen-reader behavior, prompt and
+submenu workflows, replay-local disclosure behavior, source stack/zone raster
+parity, marker editors, keyboard suppression in every editable context,
 coaching flip, reconnect reconciliation, or the non-Chromium matrix. These
 remain Playwright/manual parity gates before any production switch.
 

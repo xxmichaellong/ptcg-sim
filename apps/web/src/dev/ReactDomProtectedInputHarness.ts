@@ -34,12 +34,19 @@ type RejectionEffect = Extract<
   BoardSessionRendererEffect,
   { readonly kind: 'IntentRejected' }
 >;
+type OverlayRejectionEffect = Extract<
+  BoardSessionRendererEffect,
+  { readonly kind: 'OverlayActionRejected' }
+>;
 
 export interface ReactDomProtectedInputFixture {
   readonly sourceCardId: string;
   readonly sourceZoneId: string;
   readonly unsupportedCardId: string;
   readonly unsupportedStackCardIds: readonly string[];
+  readonly activeTopCardId: string;
+  readonly activeStackId: string;
+  readonly activeAbilityUsed: boolean;
   readonly destinationZoneId: string;
   readonly destinationCardIds: readonly string[];
 }
@@ -48,6 +55,7 @@ export interface ReactDomProtectedInputEvidence {
   readonly submissions: readonly WireGameCommand[];
   readonly submissionResults: readonly SubmitCommandResult[];
   readonly rejections: readonly RejectionEffect[];
+  readonly overlayRejections: readonly OverlayRejectionEffect[];
   readonly overlayActions: readonly ReactDomProtectedOverlayAction[];
   readonly presentation: BoardPresentation;
   readonly overlays: BoardOverlayState;
@@ -140,6 +148,7 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
   const submissions: WireGameCommand[] = [];
   const submissionResults: SubmitCommandResult[] = [];
   const rejections: RejectionEffect[] = [];
+  const overlayRejections: OverlayRejectionEffect[] = [];
   const overlayActions: ReactDomProtectedOverlayAction[] = [];
   const reportedErrors: string[] = [];
   let clientSequence = 0;
@@ -193,6 +202,8 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
     layout,
     onBoardEffect: (effect) => {
       if (effect.kind === 'IntentRejected') rejections.push(effect);
+      if (effect.kind === 'OverlayActionRejected')
+        overlayRejections.push(effect);
     },
     onSubmission: (_command, result) => submissionResults.push(result),
     reportError: (error) => reportedErrors.push(String(error)),
@@ -222,11 +233,18 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
     ? view.stacks[localActiveStackId]
     : undefined;
   const unsupportedCardId = localActiveStack?.evolutionCards[0]?.id;
+  const activeTopCardId = localActiveStack?.evolutionCards.at(-1)?.id;
   if (
     !sourceCard ||
     !unsupportedCardId ||
+    !activeTopCardId ||
+    !localActiveStackId ||
+    !localActiveStack ||
     !scene.cards.some(
       (card) => card.id === unsupportedCardId && card.interactive
+    ) ||
+    !scene.cards.some(
+      (card) => card.id === activeTopCardId && card.interactive
     ) ||
     !scene.zones.some(
       (zone) => zone.id === destinationZoneId && zone.interactive
@@ -244,6 +262,9 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
       .filter((card) => card.parentId === localActiveStackId)
       .sort((left, right) => left.zIndex - right.zIndex)
       .map((card) => String(card.id)),
+    activeTopCardId: String(activeTopCardId),
+    activeStackId: localActiveStackId,
+    activeAbilityUsed: localActiveStack.abilityUsed,
     destinationZoneId,
     destinationCardIds: scene.cards
       .filter((card) => card.parentId === destinationZoneId)
@@ -260,9 +281,11 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
     },
     invokeContextAction: (action, cardId) => {
       overlayActions.push({ kind: 'context', action, cardId: String(cardId) });
+      runtime.emitLegacyOverlayAction({ kind: 'context', action, cardId });
     },
     invokeZoneAction: (action, zoneId) => {
       overlayActions.push({ kind: 'zone', action, zoneId });
+      runtime.emitLegacyOverlayAction({ kind: 'zone', action, zoneId });
     },
   };
   let darkMode = false;
@@ -296,6 +319,7 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
         submissions: [...submissions],
         submissionResults: [...submissionResults],
         rejections: [...rejections],
+        overlayRejections: [...overlayRejections],
         overlayActions: [...overlayActions],
         presentation: current.presentation,
         overlays: current.overlays,
@@ -307,6 +331,7 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
       submissions.length = 0;
       submissionResults.length = 0;
       rejections.length = 0;
+      overlayRejections.length = 0;
       overlayActions.length = 0;
       reportedErrors.length = 0;
     },

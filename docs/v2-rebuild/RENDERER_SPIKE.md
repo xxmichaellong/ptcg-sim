@@ -1000,6 +1000,21 @@ passes 132 Playwright checks across 63 Chromium 151 browser files:
     workflows; replay availability, source stack/zone raster parity, complete
     accessibility audit, reconnect behavior, production wiring, and
     non-Chromium approval remain separate.
+55. Those typed callbacks now enter the same protected controller/effect/session
+    path as renderer drops. `resolveLegacyBoardOverlayAction` exhaustively
+    classifies every current menu/zone control and reuses the existing
+    stale-safe annotation, visibility, inspection, random, prize-bottom, and
+    loose-board resolvers for complete actions. The controller binds a request
+    to the currently open menu card or zone, requires a ready live-player
+    projection, and the adapter rechecks live/replay/session/role immediately
+    before submit. Prompt, submenu, and local-sort controls emit typed
+    `requires_input`, `requires_choice`, or `local_only` rejection effects and
+    cannot invent defaults. Native Chromium proves one exact `SetAbilityUsed`
+    command plus zero-command hand-input and zone-sort rejections. The three v1
+    replay-local disclosure exceptions are pinned, while V2 deliberately keeps
+    replay actions non-submitting and unavailable until a separate local
+    disclosure projection exists. Prompt/submenu composition, replay-local
+    paint, production wiring, and the prior parity gaps remain separate.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -1175,8 +1190,8 @@ wiring:
   thresholds (source edge clamp/collision states, the isolated candidate
   resize-pointer path, and normal/flipped fullscreen viewport continuity are now
   covered);
-- complete mutation-backed context/zone actions, replay-specific menu
-  availability, source raster comparison for transformed stack/zone dialogs,
+- complete prompt/submenu context actions, local zone sorting, replay-local
+  disclosure paint, source raster comparison for transformed stack/zone dialogs,
   the full focus-trap/screen-reader audit, and reconnect snap-back beyond the
   current native Chromium overlay/input gate;
 - actual external card/image hosts, redirects, CORS failures, oversized/corrupt

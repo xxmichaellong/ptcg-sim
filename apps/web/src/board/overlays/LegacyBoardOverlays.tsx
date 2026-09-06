@@ -21,35 +21,16 @@ import type {
   BoardSessionControllerState,
   OpenedZoneCardIntent,
 } from '../BoardSessionController.js';
+import type {
+  LegacyBoardContextActionId,
+  LegacyBoardZoneActionId,
+} from '../resolveLegacyBoardOverlayAction.js';
 import './LegacyBoardOverlays.css';
 
-export type LegacyBoardContextActionId =
-  | 'toggleAbility'
-  | 'setDamage'
-  | 'setSpecialCondition'
-  | 'shufflePrizes'
-  | 'togglePrizes'
-  | 'revealPrizes'
-  | 'shufflePrizesToDeckBottom'
-  | 'discardHand'
-  | 'shuffleHandToDeck'
-  | 'shuffleHandToDeckBottom'
-  | 'toggleOpponentHand'
-  | 'randomOpponentHandCard'
-  | 'shuffleDeck'
-  | 'drawCards'
-  | 'viewDeckTop'
-  | 'viewDeckBottom'
-  | 'discardBoard'
-  | 'moveBoardToHand'
-  | 'shuffleBoardToDeck'
-  | 'moveBoardToLostZone'
-  | 'moveCard'
-  | 'revealCard'
-  | 'changeCardType';
-
-export type LegacyBoardZoneActionId =
-  'shuffleDeck' | 'shuffleDiscardToDeck' | 'sortZone';
+export type {
+  LegacyBoardContextActionId,
+  LegacyBoardZoneActionId,
+} from '../resolveLegacyBoardOverlayAction.js';
 
 export interface LegacyBoardOverlayActions {
   readonly emitOpenedZoneCardIntent: (intent: OpenedZoneCardIntent) => void;

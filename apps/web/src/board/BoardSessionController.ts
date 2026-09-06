@@ -14,6 +14,11 @@ import {
   resolveBoardDrop,
   type BoardDropResolution,
 } from './resolveBoardDrop.js';
+import {
+  resolveLegacyBoardOverlayAction,
+  type LegacyBoardOverlayActionRejectionReason,
+  type LegacyBoardOverlayActionRequest,
+} from './resolveLegacyBoardOverlayAction.js';
 
 export type BoardProjectionSource =
   | { readonly kind: 'live' }
@@ -94,6 +99,10 @@ export type BoardSessionControllerAction =
       readonly intent: OpenedZoneCardIntent;
     }
   | {
+      readonly kind: 'LegacyOverlayActionRequested';
+      readonly request: LegacyBoardOverlayActionRequest;
+    }
+  | {
       readonly kind: 'RendererPresentationUpdated';
       readonly update: BoardPresentationUpdate;
     }
@@ -112,6 +121,12 @@ export type BoardIntentRejectionReason =
   | 'stale_zone'
   | 'unsupported_intent'
   | Exclude<BoardDropResolution, { readonly ok: true }>['reason'];
+
+export type BoardOverlayActionRejectionReason =
+  | 'no_installed_view'
+  | 'not_ready'
+  | 'read_only'
+  | LegacyBoardOverlayActionRejectionReason;
 
 export type BoardSessionControllerEffect =
   | {
@@ -133,6 +148,11 @@ export type BoardSessionControllerEffect =
     }
   | { readonly kind: 'SubmitCommand'; readonly command: WireGameCommand }
   | {
+      readonly kind: 'OverlayActionRejected';
+      readonly request: LegacyBoardOverlayActionRequest;
+      readonly reason: BoardOverlayActionRejectionReason;
+    }
+  | {
       readonly kind: 'IntentRejected';
       readonly intent: BoardIntent;
       readonly reason: BoardIntentRejectionReason;
@@ -149,6 +169,7 @@ export interface BoardSessionControllerDependencies {
   /** Must derive a scene exclusively from the supplied recipient-safe view. */
   readonly createScene: (view: MatchViewState) => BoardScene;
   readonly resolveDrop?: typeof resolveBoardDrop;
+  readonly resolveOverlayAction?: typeof resolveLegacyBoardOverlayAction;
 }
 
 export interface BoardSessionControllerOptions {
@@ -947,6 +968,54 @@ const handlePresentationUpdate = (
   return ignored(state);
 };
 
+const rejectOverlayAction = (
+  state: BoardSessionControllerState,
+  request: LegacyBoardOverlayActionRequest,
+  reason: BoardOverlayActionRejectionReason
+): BoardSessionControllerReduction =>
+  accepted(state, [{ kind: 'OverlayActionRejected', request, reason }]);
+
+const handleOverlayAction = (
+  state: BoardSessionControllerState,
+  request: LegacyBoardOverlayActionRequest,
+  dependencies: BoardSessionControllerDependencies
+): BoardSessionControllerReduction => {
+  const view = state.view;
+  const scene = state.scene;
+  if (!view || !scene) {
+    return rejectOverlayAction(state, request, 'no_installed_view');
+  }
+  if (state.sessionPhase !== 'ready') {
+    return rejectOverlayAction(state, request, 'not_ready');
+  }
+  if (!state.canSubmitCommands) {
+    return rejectOverlayAction(state, request, 'read_only');
+  }
+  if (
+    request.kind === 'context' &&
+    (state.overlays.contextMenuCardId !== request.cardId ||
+      !scene.cards.some((card) => card.id === request.cardId))
+  ) {
+    return rejectOverlayAction(state, request, 'stale_card');
+  }
+  if (
+    request.kind === 'zone' &&
+    (state.presentation.openedZoneId !== request.zoneId ||
+      !scene.zones.some((zone) => zone.id === request.zoneId))
+  ) {
+    return rejectOverlayAction(state, request, 'stale_zone');
+  }
+  const resolution = (
+    dependencies.resolveOverlayAction ?? resolveLegacyBoardOverlayAction
+  )(view, request);
+  if (!resolution.ok) {
+    return rejectOverlayAction(state, request, resolution.reason);
+  }
+  return accepted(state, [
+    { kind: 'SubmitCommand', command: resolution.command },
+  ]);
+};
+
 const refreshScene = (
   state: BoardSessionControllerState,
   dependencies: BoardSessionControllerDependencies
@@ -1025,6 +1094,8 @@ export const reduceBoardSessionController = (
       return handleIntent(state, action.intent, dependencies);
     case 'OpenedZoneCardIntent':
       return handleIntent(state, action.intent, dependencies, true);
+    case 'LegacyOverlayActionRequested':
+      return handleOverlayAction(state, action.request, dependencies);
     case 'RendererPresentationUpdated':
       return handlePresentationUpdate(state, action.update);
     case 'HoverChanged': {

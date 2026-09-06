@@ -285,10 +285,23 @@ Shift+F10, Enter/Space, menu arrows/Home/End, Escape/outside dismissal, focus
 return, exact card IDs, duplicate-card anchoring, light/dark paint, and zero
 command leakage. `react-dom-overlay-paint.spec.ts` mounts the real v1 `Card` and
 compares source-ordered menu rows/computed paint plus full-preview shell/image
-metrics, attaching source/candidate screenshots and JSON. Mutation-backed
-actions, replay availability, exact source stack/zone raster parity, the full
-accessibility audit, reconnect behavior, production wiring, and non-Chromium
-approval remain separate.
+metrics, attaching source/candidate screenshots and JSON. At that checkpoint,
+mutation-backed actions and replay availability still remained separate from
+the paint/input proof.
+
+The following protected-input checkpoint connects those typed action callbacks
+to `LegacyOverlayActionRequested`. The controller rejects any card other than
+the currently open menu target and any zone other than the currently open
+browser, then requires a ready live-player projection before the pure action
+resolver is callable. Complete actions reuse the existing semantic resolvers
+and the adapter's guarded submission path. The native test now proves an active
+card ability toggle queues exactly one `SetAbilityUsed`; the existing hand
+action instead records `requires_input`, and zone sort records `local_only`,
+with zero commands/results for both. The exhaustive requirements table pins all
+23 context actions and three zone actions as command, input, choice, or local.
+It also pins the three v1 replay-local disclosure actions; the V2 replay menu
+remains empty and the controller returns `read_only` before resolver/submit
+until a separate local disclosure projection is implemented.
 
 `legacy-compound-group-rotation-layout.test.ts` and
 `legacy-compound-break-rotation-layout.test.ts` split the next source-only

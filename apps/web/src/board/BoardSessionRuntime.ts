@@ -30,6 +30,7 @@ import type {
   BoardSessionControllerState,
   OpenedZoneCardIntent,
 } from './BoardSessionController.js';
+import type { LegacyBoardOverlayActionRequest } from './resolveLegacyBoardOverlayAction.js';
 
 export interface BoardSessionRuntimeOptions {
   readonly live: BoardSessionLiveSource;
@@ -195,6 +196,14 @@ export class BoardSessionRuntime {
     const adapter = this.adapter;
     if (!adapter) throw new Error('Board session adapter is unavailable');
     return adapter.emitOpenedZoneCardIntent(intent);
+  }
+
+  /** Resolves route-owned overlay controls through the installed safe view. */
+  emitLegacyOverlayAction(request: LegacyBoardOverlayActionRequest): boolean {
+    this.assertUsable();
+    const adapter = this.adapter;
+    if (!adapter) throw new Error('Board session adapter is unavailable');
+    return adapter.emitLegacyOverlayAction(request);
   }
 
   dismissLocalPresentation(
@@ -375,6 +384,7 @@ export class BoardSessionRuntime {
           renderer.installPresentation(effect.presentation);
         break;
       case 'IntentRejected':
+      case 'OverlayActionRejected':
         break;
     }
     this.options.onBoardEffect?.(effect);

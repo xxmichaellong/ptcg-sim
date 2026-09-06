@@ -782,6 +782,30 @@ to a fresh concealed handle. The web layer now provides UI-neutral toggle
 resolvers for the existing menu/shortcut behavior; no control, label, layout,
 or styling was changed.
 
+### Implemented route-owned overlay dispatch subset
+
+`LegacyBoardOverlays` now sends one typed context-card or opened-zone request
+back through `BoardSessionController`. The controller admits only the exact
+currently open target on a ready live-player projection. The pure overlay
+resolver then composes the already implemented annotation, public reveal,
+private inspection, random face-down, prize-bottom, and loose-board resolvers;
+own prize/deck and discard-to-deck shuffles use their existing narrow wire
+commands. An accepted request becomes the same serialized `SubmitCommand`
+effect as a renderer drop, and `BoardSessionAdapter` repeats the live mode,
+request phase, session readiness, and player-role checks immediately before the
+real submitter.
+
+The unchanged menu still contains incomplete compound interactions. Damage and
+special-condition editors, all draw-count flows, and top/bottom inspection need
+input; move-card and category controls need a submenu choice; zone sorting is
+local paint. These return `requires_input`, `requires_choice`, or `local_only`
+without a command, so the migration cannot silently substitute legacy prompt
+defaults. V1 replay's prize reveal/look and opponent-hand look are pinned as
+local-disclosure exceptions. They remain unavailable in the V2 replay menu—and
+forged requests fail `read_only`—until replay owns an isolated disclosure
+projection rather than mutating a historical view. This slice changes no label,
+order, placement, styling, or production route.
+
 ### Implemented authority-random face-down subset
 
 `playRandomCardFaceDown` now submits only the explicit target player; authority

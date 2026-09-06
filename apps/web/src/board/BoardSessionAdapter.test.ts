@@ -444,6 +444,89 @@ describe('BoardSessionAdapter with real session coordinators', () => {
     test.live.disconnect();
   });
 
+  it('routes an open overlay target through the real guarded submitter', () => {
+    const test = setup();
+    test.socket.serverOpen();
+    test.socket.serverMessage(welcome(viewAt(1)));
+    const snapshot = test.adapter.getSnapshot();
+    const active = snapshot.view!.stacks['stack:blue:active']!;
+    const cardId = active.evolutionCards.at(-1)!.id;
+    expect(
+      test.adapter.emitIntent({ kind: 'CardContextRequested', cardId })
+    ).toBe(true);
+
+    expect(
+      test.adapter.emitLegacyOverlayAction({
+        kind: 'context',
+        action: 'toggleAbility',
+        cardId,
+      })
+    ).toBe(true);
+    expect(test.submissions).toEqual([
+      {
+        command: {
+          type: 'SetAbilityUsed',
+          stackId: active.id,
+          used: !active.abilityUsed,
+        },
+        result: {
+          queued: true,
+          commandId: 'board-command-1',
+          clientSequence: 1,
+        },
+      },
+    ]);
+    expect(
+      test.socket.sent.filter(
+        (frame) => (JSON.parse(frame) as ClientMessage).type === 'Command'
+      )
+    ).toHaveLength(1);
+    test.adapter.dispose();
+    test.replay.dispose();
+    test.live.disconnect();
+  });
+
+  it('keeps replay overlay requests outside the resolver and submitter', () => {
+    const test = setup();
+    test.socket.serverOpen();
+    test.socket.serverMessage(welcome(viewAt(4)));
+    expect(test.replay.requestReplay()).toBe(true);
+    replayTransfer(test.socket);
+    const snapshot = test.adapter.getSnapshot();
+    const prizes = Object.values(snapshot.view!.zones).find(
+      (zone) => zone.kind === 'prizes' && zone.ownerId === 'spike-blue'
+    )!;
+    const cardId = prizes.cards[0]!.id;
+    test.adapter.emitIntent({ kind: 'CardContextRequested', cardId });
+    test.rendererEffects.length = 0;
+
+    test.adapter.emitLegacyOverlayAction({
+      kind: 'context',
+      action: 'revealPrizes',
+      cardId,
+    });
+    expect(test.rendererEffects).toEqual([
+      {
+        kind: 'OverlayActionRejected',
+        request: {
+          kind: 'context',
+          action: 'revealPrizes',
+          cardId,
+        },
+        reason: 'read_only',
+      },
+    ]);
+    expect(test.submissions).toEqual([]);
+    expect(
+      test.socket.sent.filter(
+        (frame) => (JSON.parse(frame) as ClientMessage).type === 'Command'
+      )
+    ).toHaveLength(0);
+    test.adapter.dispose();
+    test.replay.dispose();
+    test.live.disconnect();
+  });
+
   it('unsubscribes so later publications cannot install a scene', () => {
     const test = setup();
     test.socket.serverOpen();

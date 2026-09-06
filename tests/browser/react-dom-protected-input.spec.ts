@@ -5,6 +5,9 @@ interface ProtectedInputFixture {
   readonly sourceZoneId: string;
   readonly unsupportedCardId: string;
   readonly unsupportedStackCardIds: readonly string[];
+  readonly activeTopCardId: string;
+  readonly activeStackId: string;
+  readonly activeAbilityUsed: boolean;
   readonly destinationZoneId: string;
   readonly destinationCardIds: readonly string[];
 }
@@ -13,6 +16,7 @@ interface ProtectedInputEvidence {
   readonly submissions: readonly unknown[];
   readonly submissionResults: readonly unknown[];
   readonly rejections: readonly unknown[];
+  readonly overlayRejections: readonly unknown[];
   readonly overlayActions: readonly unknown[];
   readonly presentation: {
     readonly selectedCardId: string | null;
@@ -412,6 +416,17 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   expect(contextEvidence.submissions).toEqual([]);
   expect(contextEvidence.submissionResults).toEqual([]);
   expect(contextEvidence.rejections).toEqual([]);
+  expect(contextEvidence.overlayRejections).toEqual([
+    {
+      kind: 'OverlayActionRejected',
+      request: {
+        kind: 'context',
+        action: 'discardHand',
+        cardId: fixture.sourceCardId,
+      },
+      reason: 'requires_input',
+    },
+  ]);
   expect(contextEvidence.reportedErrors).toEqual([]);
 
   await clearEvidence(page);
@@ -549,7 +564,53 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   expect(zoneEvidence.submissions).toEqual([]);
   expect(zoneEvidence.submissionResults).toEqual([]);
   expect(zoneEvidence.rejections).toEqual([]);
+  expect(zoneEvidence.overlayRejections).toEqual([
+    {
+      kind: 'OverlayActionRejected',
+      request: {
+        kind: 'zone',
+        action: 'sortZone',
+        zoneId: fixture.destinationZoneId,
+      },
+      reason: 'local_only',
+    },
+  ]);
   expect(zoneEvidence.reportedErrors).toEqual([]);
+
+  await clearEvidence(page);
+  const activeTopCard = host.locator(
+    `[data-card-id="${fixture.activeTopCardId}"]`
+  );
+  const activePoint = await exposedCardPoint(activeTopCard);
+  await page.mouse.click(activePoint.x, activePoint.y, { button: 'right' });
+  await expect(menu).toBeVisible();
+  await menu.locator('[data-context-action="toggleAbility"]').click();
+  await expect
+    .poll(async () => (await evidence(page)).submissions)
+    .toEqual([
+      {
+        type: 'SetAbilityUsed',
+        stackId: fixture.activeStackId,
+        used: !fixture.activeAbilityUsed,
+      },
+    ]);
+  const commandEvidence = await evidence(page);
+  expect(commandEvidence.submissionResults).toEqual([
+    {
+      queued: true,
+      commandId: 'protected-input-command-1',
+      clientSequence: 1,
+    },
+  ]);
+  expect(commandEvidence.overlayActions).toEqual([
+    {
+      kind: 'context',
+      action: 'toggleAbility',
+      cardId: fixture.activeTopCardId,
+    },
+  ]);
+  expect(commandEvidence.overlayRejections).toEqual([]);
+  expect(commandEvidence.reportedErrors).toEqual([]);
 
   await page.evaluate(() => {
     const harness = (window as ProtectedInputHarnessWindow)

@@ -25,6 +25,7 @@ import {
   type BoardSessionControllerEffect,
   type BoardSessionControllerState,
 } from './BoardSessionController.js';
+import type { LegacyBoardOverlayActionRequest } from './resolveLegacyBoardOverlayAction.js';
 
 export type BoardSessionLiveSource = Pick<
   RemoteGameSession,
@@ -139,6 +140,13 @@ export class BoardSessionAdapter {
   /** Accepts only cards that belong to the recipient-safe, currently open zone. */
   emitOpenedZoneCardIntent(intent: OpenedZoneCardIntent): boolean {
     return this.controller.dispatch({ kind: 'OpenedZoneCardIntent', intent });
+  }
+
+  emitLegacyOverlayAction(request: LegacyBoardOverlayActionRequest): boolean {
+    return this.controller.dispatch({
+      kind: 'LegacyOverlayActionRequested',
+      request,
+    });
   }
 
   refreshScene(): boolean {
