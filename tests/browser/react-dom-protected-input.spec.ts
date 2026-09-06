@@ -1009,6 +1009,76 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
     expect(countEvidence.reportedErrors).toEqual([]);
   }
 
+  const categoryCases = [
+    ['Energy', 'to Energy'],
+    ['Trainer', 'to Tool'],
+    ['Pokémon', 'to Pokémon'],
+  ] as const;
+  for (const [index, [category, label]] of categoryCases.entries()) {
+    await clearEvidence(page);
+    await page.mouse.click(activePoint.x, activePoint.y, { button: 'right' });
+    await expect(menu).toBeVisible();
+    const trigger = menu.locator('[data-context-action="changeCardType"]');
+    const submenu = menu.locator(
+      '[role="menu"][aria-label="Change card type"]'
+    );
+    if (index === 0) {
+      await trigger.focus();
+      await trigger.press('ArrowRight');
+      await expect(submenu).toBeVisible();
+      await expect(
+        submenu.locator('[data-category-choice="Energy"]')
+      ).toBeFocused();
+      await submenu.locator('[data-category-choice="Energy"]').press('End');
+      await expect(
+        submenu.locator('[data-category-choice="Pokémon"]')
+      ).toBeFocused();
+      await submenu
+        .locator('[data-category-choice="Pokémon"]')
+        .press('ArrowLeft');
+      await expect(trigger).toBeFocused();
+      await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    }
+    await trigger.hover();
+    await expect(submenu).toBeVisible();
+    expect(
+      await submenu.locator('[data-category-choice]').allTextContents()
+    ).toEqual(['to Energy', 'to Tool', 'to Pokémon']);
+    const choice = submenu.locator(`[data-category-choice="${category}"]`);
+    await expect(choice).toHaveText(label);
+    await choice.click();
+    await expect(menu).toHaveCount(0);
+    await expect
+      .poll(async () => (await evidence(page)).submissions)
+      .toEqual([
+        {
+          type: 'ChangeCardCategory',
+          cardId: fixture.activeTopCardId,
+          expectedSourceId: fixture.activeStackId,
+          category,
+        },
+      ]);
+    const categoryEvidence = await evidence(page);
+    const clientSequence = index + 12;
+    expect(categoryEvidence.submissionResults).toEqual([
+      {
+        queued: true,
+        commandId: `protected-input-command-${clientSequence}`,
+        clientSequence,
+      },
+    ]);
+    expect(categoryEvidence.overlayActions).toEqual([
+      {
+        kind: 'context',
+        action: 'changeCardType',
+        cardId: fixture.activeTopCardId,
+        category,
+      },
+    ]);
+    expect(categoryEvidence.overlayRejections).toEqual([]);
+    expect(categoryEvidence.reportedErrors).toEqual([]);
+  }
+
   await page.evaluate(() => {
     const harness = (window as ProtectedInputHarnessWindow)
       .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;

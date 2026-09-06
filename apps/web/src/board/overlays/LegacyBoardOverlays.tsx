@@ -28,10 +28,12 @@ import type {
   OpenedZoneCardIntent,
 } from '../BoardSessionController.js';
 import type {
+  LegacyBoardCategoryChoice,
   LegacyBoardContextActionId,
   LegacyBoardZoneActionId,
 } from '../resolveLegacyBoardOverlayAction.js';
 import {
+  LEGACY_BOARD_CATEGORY_CHOICES,
   parseLegacyDamageInput,
   parseLegacySpecialConditionInput,
 } from '../resolveLegacyBoardOverlayAction.js';
@@ -43,6 +45,7 @@ import {
 import './LegacyBoardOverlays.css';
 
 export type {
+  LegacyBoardCategoryChoice,
   LegacyBoardContextActionId,
   LegacyBoardZoneActionId,
 } from '../resolveLegacyBoardOverlayAction.js';
@@ -67,6 +70,10 @@ export interface LegacyBoardOverlayActions {
     action: LegacyBoardCountActionId,
     cardId: ViewCardId,
     value: string
+  ) => void;
+  readonly submitCategoryChoice: (
+    cardId: ViewCardId,
+    category: LegacyBoardCategoryChoice
   ) => void;
 }
 
@@ -252,10 +259,11 @@ const useOutsideDismiss = (
 
 const moveMenuFocus = (
   event: ReactKeyboardEvent<HTMLElement>,
-  direction: 'first' | 'last' | 'next' | 'previous'
+  direction: 'first' | 'last' | 'next' | 'previous',
+  selector = ':scope > ul > li > [role="menuitem"]'
 ): void => {
   const menu = event.currentTarget;
-  const items = [...menu.querySelectorAll<HTMLElement>('[role="menuitem"]')];
+  const items = [...menu.querySelectorAll<HTMLElement>(selector)];
   if (items.length === 0) return;
   const current = items.indexOf(
     menu.ownerDocument.activeElement as HTMLElement
@@ -298,6 +306,8 @@ const ContextMenu = ({
   readonly actions: LegacyBoardOverlayActions;
 }) => {
   const container = useRef<HTMLDivElement>(null);
+  const categoryTrigger = useRef<HTMLButtonElement>(null);
+  const [categorySubmenuOpen, setCategorySubmenuOpen] = useState(false);
   const dismiss = useCallback(() => actions.dismiss('context'), [actions]);
   const entries = useMemo(
     () => selectLegacyContextEntries(state, card),
@@ -305,6 +315,7 @@ const ContextMenu = ({
   );
   useFocusBoundary(container, '[role="menuitem"]', String(card.id));
   useOutsideDismiss(container, dismiss);
+  useEffect(() => setCategorySubmenuOpen(false), [card.id]);
   const bounds = anchorBounds ?? visualCardBounds(card);
   const width = 180;
   const preferredLeft = Math.max(
@@ -371,6 +382,102 @@ const ContextMenu = ({
                 role="presentation"
               >
                 {entry.label}
+              </li>
+            ) : entry.action === 'changeCardType' ? (
+              <li
+                key={entry.id}
+                className="has-submenu"
+                data-submenu-open={categorySubmenuOpen ? 'true' : undefined}
+                role="none"
+                onMouseEnter={() => setCategorySubmenuOpen(true)}
+                onMouseLeave={() => setCategorySubmenuOpen(false)}
+                onBlur={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget)) {
+                    setCategorySubmenuOpen(false);
+                  }
+                }}
+              >
+                <button
+                  ref={categoryTrigger}
+                  type="button"
+                  role="menuitem"
+                  aria-haspopup="menu"
+                  aria-expanded={categorySubmenuOpen}
+                  data-context-action={entry.action}
+                  onClick={() => setCategorySubmenuOpen(true)}
+                  onKeyDown={(event) => {
+                    if (event.key !== 'ArrowRight') return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setCategorySubmenuOpen(true);
+                    queueMicrotask(() => {
+                      container.current
+                        ?.querySelector<HTMLElement>(
+                          '[data-category-choice="Energy"]'
+                        )
+                        ?.focus();
+                    });
+                  }}
+                >
+                  {entry.label}
+                </button>
+                <ul
+                  className="ptcgsim-legacy-card-sub-menu"
+                  role="menu"
+                  aria-label="Change card type"
+                  onKeyDown={(event) => {
+                    if (event.key === 'Escape' || event.key === 'ArrowLeft') {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      setCategorySubmenuOpen(false);
+                      categoryTrigger.current?.focus();
+                    } else if (event.key === 'ArrowDown') {
+                      event.stopPropagation();
+                      moveMenuFocus(
+                        event,
+                        'next',
+                        ':scope > li > [role="menuitem"]'
+                      );
+                    } else if (event.key === 'ArrowUp') {
+                      event.stopPropagation();
+                      moveMenuFocus(
+                        event,
+                        'previous',
+                        ':scope > li > [role="menuitem"]'
+                      );
+                    } else if (event.key === 'Home') {
+                      event.stopPropagation();
+                      moveMenuFocus(
+                        event,
+                        'first',
+                        ':scope > li > [role="menuitem"]'
+                      );
+                    } else if (event.key === 'End') {
+                      event.stopPropagation();
+                      moveMenuFocus(
+                        event,
+                        'last',
+                        ':scope > li > [role="menuitem"]'
+                      );
+                    }
+                  }}
+                >
+                  {LEGACY_BOARD_CATEGORY_CHOICES.map((category) => (
+                    <li key={category} role="none">
+                      <button
+                        type="button"
+                        role="menuitem"
+                        data-category-choice={category}
+                        onClick={() => {
+                          actions.submitCategoryChoice(card.id, category);
+                          dismiss();
+                        }}
+                      >
+                        {category === 'Trainer' ? 'to Tool' : `to ${category}`}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               </li>
             ) : (
               <li

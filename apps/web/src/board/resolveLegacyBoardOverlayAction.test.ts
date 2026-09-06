@@ -3,6 +3,8 @@ import { createRendererSpikeView } from '@ptcgsim/renderer-contract';
 import { describe, expect, it } from 'vitest';
 
 import {
+  isLegacyBoardCategoryChoice,
+  LEGACY_BOARD_CATEGORY_CHOICES,
   LEGACY_BOARD_CONTEXT_ACTION_REQUIREMENTS,
   LEGACY_BOARD_ZONE_ACTION_REQUIREMENTS,
   LEGACY_REPLAY_DISCLOSURE_CONTEXT_ACTIONS,
@@ -225,6 +227,7 @@ describe('legacy board overlay action resolver', () => {
         [active.id]: { ...active, damage: null },
       },
     };
+
     expect(
       resolveLegacyBoardOverlayAction(
         withoutDamage,
@@ -272,6 +275,70 @@ describe('legacy board overlay action resolver', () => {
         value: 70,
       } as unknown as LegacyBoardOverlayActionRequest)
     ).toEqual({ ok: false, reason: 'invalid_value' });
+  });
+
+  it('maps the exact category submenu choices through the stale-safe annotation resolver', () => {
+    const view = createRendererSpikeView();
+    const playerId = view.viewer.kind === 'player' ? view.viewer.playerId : '';
+    const active = view.stacks[view.boards[playerId]!.activeStackId!]!;
+    const top = active.evolutionCards.at(-1)!;
+    expect(LEGACY_BOARD_CATEGORY_CHOICES).toEqual([
+      'Energy',
+      'Trainer',
+      'Pokémon',
+    ]);
+    expect(isLegacyBoardCategoryChoice('Energy')).toBe(true);
+    expect(isLegacyBoardCategoryChoice('Trainer')).toBe(true);
+    expect(isLegacyBoardCategoryChoice('Pokémon')).toBe(true);
+    expect(isLegacyBoardCategoryChoice('Tool')).toBe(false);
+
+    for (const category of LEGACY_BOARD_CATEGORY_CHOICES) {
+      expect(
+        resolveLegacyBoardOverlayAction(view, {
+          kind: 'context',
+          action: 'changeCardType',
+          cardId: top.id,
+          category,
+        })
+      ).toEqual({
+        ok: true,
+        command: {
+          type: 'ChangeCardCategory',
+          cardId: top.id,
+          expectedSourceId: active.id,
+          category,
+        },
+      });
+    }
+    expect(
+      resolveLegacyBoardOverlayAction(view, context('changeCardType', top.id))
+    ).toEqual({ ok: false, reason: 'requires_choice' });
+    expect(
+      resolveLegacyBoardOverlayAction(view, {
+        kind: 'context',
+        action: 'changeCardType',
+        cardId: top.id,
+        category: 'Tool',
+      } as unknown as LegacyBoardOverlayActionRequest)
+    ).toEqual({ ok: false, reason: 'invalid_value' });
+    expect(
+      resolveLegacyBoardOverlayAction(view, {
+        kind: 'context',
+        action: 'changeCardType',
+        cardId: active.evolutionCards[0]!.id,
+        category: 'Energy',
+      })
+    ).toEqual({ ok: false, reason: 'unsupported_target' });
+
+    const hand = zoneIn(view, playerId, 'hand');
+    expect(
+      resolveLegacyBoardOverlayAction(view, {
+        kind: 'context',
+        action: 'changeCardType',
+        cardId: hand.cards[0]!.id,
+        category: 'Energy',
+      })
+    ).toEqual({ ok: false, reason: 'unsupported_target' });
   });
 
   it('opens and resolves the active special-condition editor with legacy defaults', () => {
@@ -363,7 +430,7 @@ describe('legacy board overlay action resolver', () => {
     ).toEqual({ ok: false, reason: 'unsupported_target' });
   });
 
-  it('delegates protected counts and never invents remaining choices or local values', () => {
+  it('delegates protected counts and never invents the remaining move choice or local values', () => {
     const view = createRendererSpikeView();
     const playerId = view.viewer.kind === 'player' ? view.viewer.playerId : '';
     const hand = zoneIn(view, playerId, 'hand');

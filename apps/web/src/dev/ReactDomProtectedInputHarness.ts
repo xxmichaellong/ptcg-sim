@@ -22,6 +22,7 @@ import type { BoardOverlayState } from '../board/BoardSessionController.js';
 import { ReactDomBoardSessionRuntime } from '../board/ReactDomBoardSessionRuntime.js';
 import {
   LegacyBoardOverlays,
+  type LegacyBoardCategoryChoice,
   type LegacyBoardContextActionId,
   type LegacyBoardOverlayActions,
   type LegacyBoardZoneActionId,
@@ -76,6 +77,7 @@ export type ReactDomProtectedOverlayAction =
       readonly action: LegacyBoardContextActionId;
       readonly cardId: string;
       readonly value?: string;
+      readonly category?: LegacyBoardCategoryChoice;
     }
   | {
       readonly kind: 'zone';
@@ -378,6 +380,20 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
         action,
         cardId,
         value,
+      });
+    },
+    submitCategoryChoice: (cardId, category) => {
+      overlayActions.push({
+        kind: 'context',
+        action: 'changeCardType',
+        cardId: String(cardId),
+        category,
+      });
+      runtime.emitLegacyOverlayAction({
+        kind: 'context',
+        action: 'changeCardType',
+        cardId,
+        category,
       });
     },
   };

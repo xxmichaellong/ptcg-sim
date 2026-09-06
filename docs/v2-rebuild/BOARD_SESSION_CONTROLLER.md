@@ -232,7 +232,8 @@ The resolver exhaustively classifies the unchanged controls:
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | complete command   | ability toggle; own prize/deck shuffle; prize reveal/look/bottom; opponent-hand look/random; four loose-board destinations; per-card reveal; own opened-deck shuffle; own discard-to-deck shuffle |
 | complete input     | damage/condition create-edit-remove; three hand-and-draw counts; direct draw count; top/bottom inspection counts                                                                                  |
-| missing choice     | move destination/submenu and card category                                                                                                                                                        |
+| complete choice    | card category (`Energy`, `Trainer`/visible `Tool`, or `Pokémon`)                                                                                                                                  |
+| missing choice     | move destination/submenu                                                                                                                                                                          |
 | local presentation | zone sort                                                                                                                                                                                         |
 
 Damage and special condition share one complete marker-input workflow. Their
@@ -261,9 +262,13 @@ the latter retains the source alert instead of v1's permissive `parseInt`
 prefix coercion. Cross-action/card submission and source-zone departure fail
 closed or clear the descriptor.
 
-An incomplete command-backed action emits `OverlayActionRejected` with
-`requires_choice`; it never invents a move/category selection or reaches the
-submitter. Zone sort now remains entirely inside the mounted zone
+The category parent without a selection still emits `requires_choice`. Its
+three source-ordered submenu rows supply one closed-union value, and the
+resolver revalidates that value before delegating to the stale-safe card
+annotation resolver. A valid row emits one `ChangeCardCategory` with the open
+card's expected stack source; a forged value, lower evolution, loose card, or
+closed/wrong context cannot reach the submitter. The remaining incomplete move
+action never invents a destination. Zone sort remains entirely inside the mounted zone
 browser: checking it creates a stable sorted copy from disclosed scene labels,
 equal labels keep authoritative scene order, and unchecking restores that order.
 The checkbox dispatches no controller request, effect, or command. The resolver
@@ -274,14 +279,15 @@ opponent-hand look, but V2 continues to expose an empty replay mutation menu
 until it owns a separate local disclosure projection. Even a forged replay
 request is rejected as `read_only` before the resolver runs. Native Chromium
 now proves exact accepted `SetDamage`, `SetSpecialCondition`, both removals,
-`SetAbilityUsed`, and all six count submissions; native prompt text/defaults,
-capacity clamps, zero hand draws, and private/public inspection policy; local
-rejection of malformed marker/count drafts; the typed zero-command choice
-rejection; and reversible sorting with zero routed actions or effects.
+`SetAbilityUsed`, all six count submissions, and all three category choices;
+native prompt text/defaults, capacity clamps, zero hand draws, and
+private/public inspection policy; local rejection of malformed marker/count
+drafts; the typed zero-command move-choice rejection; and reversible sorting
+with zero routed actions or effects.
 
 Deck-list ordering is not present in recipient projections: unlike v1, the
 safe fallback orders disclosed labels and never obtains the opponent's hidden
-deck list. Move/category submenu composition, replay-local disclosure paint, source
+deck list. Move-card submenu composition, replay-local disclosure paint, source
 stack/zone raster parity, complete accessibility focus trapping, reconnect
 snap-back, production wiring, and non-Chromium approval remain separate.
 
@@ -337,12 +343,13 @@ Legacy behavioral evidence includes:
 - renderer-contract `model.ts`, `drag.ts`, and `scene.ts` for the current
   semantic renderer boundary.
 
-Current browser evidence covers source menu rows/computed paint, card-preview
-intrinsic sizing, native menu traversal, Escape/outside dismissal, focus return,
-command-backed ability/damage/condition actions, both marker edit/removal flows,
-and typed zero-command incomplete/local actions.
+Current browser evidence covers source menu/category-submenu rows and computed
+paint, card-preview intrinsic sizing, native menu traversal, Escape/outside
+dismissal, focus return, command-backed ability/damage/condition/category
+actions, both marker edit/removal flows, and typed zero-command incomplete/local
+actions.
 It does not claim complete focus trapping/screen-reader behavior,
-move/category submenu workflows, replay-local disclosure behavior, source stack/zone raster
+move-card submenu workflows, replay-local disclosure behavior, source stack/zone raster
 parity, keyboard suppression in every editable context,
 coaching flip, reconnect reconciliation, or the non-Chromium matrix. These
 remain Playwright/manual parity gates before any production switch.

@@ -60,6 +60,7 @@ const actions = (): LegacyBoardOverlayActions => ({
   submitDamageInput: vi.fn(),
   submitSpecialConditionInput: vi.fn(),
   submitCountInput: vi.fn(),
+  submitCategoryChoice: vi.fn(),
 });
 
 describe('legacy board overlays', () => {
@@ -199,6 +200,105 @@ describe('legacy board overlays', () => {
       'discardHand',
       card.id
     );
+    expect(callbacks.dismiss).toHaveBeenCalledExactlyOnceWith('context');
+  });
+
+  it('recreates the ordered category submenu and delegates one typed choice', async () => {
+    const activeStack = view.stacks[view.boards[firstPlayer]!.activeStackId!]!;
+    const cardId = activeStack.evolutionCards.at(-1)!.id;
+    const card = scene.cards.find((candidate) => candidate.id === cardId)!;
+    const callbacks = actions();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            overlays: {
+              contextMenuCardId: card.id,
+              preview: null,
+              input: null,
+            },
+          }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+
+    const trigger = host.querySelector<HTMLButtonElement>(
+      '[data-context-action="changeCardType"]'
+    )!;
+    const submenu = host.querySelector<HTMLElement>(
+      '.ptcgsim-legacy-card-sub-menu'
+    )!;
+    const choices = [
+      ...submenu.querySelectorAll<HTMLButtonElement>('[data-category-choice]'),
+    ];
+    expect(trigger.getAttribute('aria-haspopup')).toBe('menu');
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(choices.map((choice) => choice.textContent)).toEqual([
+      'to Energy',
+      'to Tool',
+      'to Pokémon',
+    ]);
+    expect(choices.map((choice) => choice.dataset.categoryChoice)).toEqual([
+      'Energy',
+      'Trainer',
+      'Pokémon',
+    ]);
+
+    await act(async () => {
+      trigger.focus();
+      trigger.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'ArrowRight',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+      await Promise.resolve();
+    });
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(document.activeElement).toBe(choices[0]);
+
+    await act(async () => {
+      choices[0]!.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'ArrowDown',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(document.activeElement).toBe(choices[1]);
+    await act(async () => {
+      choices[1]!.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'End',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(document.activeElement).toBe(choices[2]);
+    await act(async () => {
+      choices[2]!.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'ArrowLeft',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(document.activeElement).toBe(trigger);
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+
+    await act(async () => trigger.click());
+    await act(async () => choices[1]!.click());
+    expect(callbacks.submitCategoryChoice).toHaveBeenCalledExactlyOnceWith(
+      card.id,
+      'Trainer'
+    );
+    expect(callbacks.invokeContextAction).not.toHaveBeenCalled();
     expect(callbacks.dismiss).toHaveBeenCalledExactlyOnceWith('context');
   });
 

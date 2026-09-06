@@ -1129,9 +1129,10 @@ cards can select, preview, or request context without weakening renderer input.
 Native keyboard activation, menu traversal/Escape, outside dismissal, focus
 return, zone-card anchoring, light/dark paint, and zero command leakage are
 pinned in Chromium. A second gate mounts the actual v1 `Card`, then compares the
-real source menu's ordered rows and computed paint plus the full-preview shell
-and image metrics; masked/source/candidate screenshots and JSON metrics are
-attached. Disposal remains idempotent and removes the full harness.
+real source menu's ordered rows and computed paint, the category submenu's exact
+rows and computed box/row metrics, plus the full-preview shell and image
+metrics; masked/source/candidate screenshots and JSON metrics are attached.
+Disposal remains idempotent and removes the full harness.
 
 This is still development-only. Context and zone action callbacks now enter a
 single typed resolver through the controller. A request must still own the open
@@ -1151,8 +1152,13 @@ native v1 prompt text and `0`/`1` defaults while
 binding a typed descriptor to the controller's action, card, and source zone.
 Complete nonnegative integers clamp to current safe capacity and the wire limit;
 draw/inspection require at least one, cancel submits nothing, and malformed
-`parseInt` prefixes now fail locally with the source alert. Move and category
-still emit observable `requires_choice` rejections and submit nothing.
+`parseInt` prefixes now fail locally with the source alert. The unchanged
+`Change type...` parent now opens the exact source-ordered `to Energy`, `to
+Tool`, and `to Pokémon` submenu. Each row supplies one typed category to the
+same open-card identity check and stale-safe annotation resolver; missing or
+forged categories reject without submission, and valid choices emit one
+preconditioned `ChangeCardCategory`. Only the move destination remains an
+observable zero-command `requires_choice` action.
 Zone sort
 now has a deliberately narrower owner: controlled state inside the mounted zone
 browser. It sorts a copy by recipient-safe scene label, keeps equal labels in
@@ -1164,8 +1170,8 @@ this replaces v1's deck-data rank with a stable disclosed-label order instead
 of recreating its information leak. V1 replay permits three local disclosure
 actions—prize reveal, prize look, and opponent-hand look—but V2 intentionally
 keeps the replay context menu empty and rejects forged requests as `read_only`
-until it has an isolated replay-local disclosure projection. Move/category
-submenu composition, replay-local paint, source-raster parity for transformed
+until it has an isolated replay-local disclosure projection. Move-card submenu
+composition, replay-local paint, source-raster parity for transformed
 stack/zone dialogs, a complete focus-trap and screen-reader audit, reconnect
 snap-back, production routing, and non-Chromium approval remain separate gates.
 

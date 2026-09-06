@@ -97,6 +97,17 @@ the resolver. The controller clears editors on reconnect/recipient replacement,
 restricts conditions to active, and rejects missing, wrong-card, or cross-kind
 submissions. The keyboard shortcut bridge remains separate.
 
+The same protected overlay now completes the category submenu around
+`changeType`. It preserves the exact parent and ordered labels `Change type...`,
+`to Energy`, `to Tool`, and `to Pokémon`; the Tool label intentionally carries
+the legacy `Trainer` state value. Each choice is bound to the exact currently
+open top stack card, then reuses the stale-safe `ChangeCardCategory` resolver
+with its expected source stack. Missing and forged categories, lower
+evolutions, loose cards, stale targets, and requests after dismissal cannot
+submit. Native Chromium proves all three choices and continuous client
+sequences 12–14; source-versus-candidate paint metrics pin the unchanged nested
+menu. Move-card destinations and keyboard category shortcuts remain separate.
+
 ## Loose board batches
 
 | v1 action       | Proposed v2 responsibility                | Critical characterization                                      |

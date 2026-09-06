@@ -45,9 +45,27 @@ export type LegacyBoardContextActionId =
 export type LegacyBoardZoneActionId =
   'shuffleDeck' | 'shuffleDiscardToDeck' | 'sortZone';
 
+export const LEGACY_BOARD_CATEGORY_CHOICES = [
+  'Energy',
+  'Trainer',
+  'Pokémon',
+] as const;
+
+export type LegacyBoardCategoryChoice =
+  (typeof LEGACY_BOARD_CATEGORY_CHOICES)[number];
+
+export const isLegacyBoardCategoryChoice = (
+  value: unknown
+): value is LegacyBoardCategoryChoice =>
+  typeof value === 'string' &&
+  (LEGACY_BOARD_CATEGORY_CHOICES as readonly string[]).includes(value);
+
 type LegacyBoardContextActionWithoutInput = Exclude<
   LegacyBoardContextActionId,
-  'setDamage' | 'setSpecialCondition' | LegacyBoardCountActionId
+  | 'setDamage'
+  | 'setSpecialCondition'
+  | 'changeCardType'
+  | LegacyBoardCountActionId
 >;
 
 export type LegacyBoardOverlayActionRequest =
@@ -76,6 +94,13 @@ export type LegacyBoardOverlayActionRequest =
       readonly cardId: ViewCardId;
       /** Missing opens the editor; present submits its bounded text draft. */
       readonly value?: string;
+    }
+  | {
+      readonly kind: 'context';
+      readonly action: 'changeCardType';
+      readonly cardId: ViewCardId;
+      /** Missing identifies the submenu parent; present submits its choice. */
+      readonly category?: LegacyBoardCategoryChoice;
     }
   | {
       readonly kind: 'zone';
@@ -433,9 +458,15 @@ const resolveContextAction = (
         !located.card.publiclyRevealed
       );
     case 'changeCardType':
-      return located.stack
-        ? rejected('requires_choice')
-        : rejected('unsupported_target');
+      if (!located.stack) return rejected('unsupported_target');
+      if (request.category === undefined) return rejected('requires_choice');
+      if (!isLegacyBoardCategoryChoice(request.category)) {
+        return rejected('invalid_value');
+      }
+      return resolveCardAnnotationAction(view, request.cardId, {
+        type: 'changeCategory',
+        category: request.category,
+      });
   }
 };
 

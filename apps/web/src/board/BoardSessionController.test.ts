@@ -631,6 +631,96 @@ describe('headless board session controller', () => {
     ]);
   });
 
+  it('binds each category submenu choice to the exact open stack card', () => {
+    let state = install();
+    const activeStack = state.view!.stacks['stack:blue:active']!;
+    const cardId = activeStack.evolutionCards.at(-1)!.id;
+    const otherCardId = activeStack.evolutionCards[0]!.id;
+    state = apply(state, {
+      kind: 'RendererIntent',
+      intent: { kind: 'CardContextRequested', cardId },
+    }).state;
+
+    const missingChoice = apply(state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: { kind: 'context', action: 'changeCardType', cardId },
+    });
+    expect(missingChoice.state).toBe(state);
+    expect(missingChoice.effects).toEqual([
+      {
+        kind: 'OverlayActionRejected',
+        request: { kind: 'context', action: 'changeCardType', cardId },
+        reason: 'requires_choice',
+      },
+    ]);
+
+    const wrongCard = apply(state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: {
+        kind: 'context',
+        action: 'changeCardType',
+        cardId: otherCardId,
+        category: 'Energy',
+      },
+    });
+    expect(wrongCard.state).toBe(state);
+    expect(wrongCard.effects).toEqual([
+      {
+        kind: 'OverlayActionRejected',
+        request: {
+          kind: 'context',
+          action: 'changeCardType',
+          cardId: otherCardId,
+          category: 'Energy',
+        },
+        reason: 'stale_card',
+      },
+    ]);
+
+    for (const category of ['Energy', 'Trainer', 'Pokémon'] as const) {
+      const selected = apply(state, {
+        kind: 'LegacyOverlayActionRequested',
+        request: {
+          kind: 'context',
+          action: 'changeCardType',
+          cardId,
+          category,
+        },
+      });
+      expect(selected.state).toBe(state);
+      expect(selected.effects).toEqual([
+        {
+          kind: 'SubmitCommand',
+          command: {
+            type: 'ChangeCardCategory',
+            cardId,
+            expectedSourceId: activeStack.id,
+            category,
+          },
+        },
+      ]);
+    }
+
+    const dismissed = apply(state, {
+      kind: 'DismissLocalPresentation',
+      scope: 'context',
+    }).state;
+    const afterDismissal = apply(dismissed, {
+      kind: 'LegacyOverlayActionRequested',
+      request: {
+        kind: 'context',
+        action: 'changeCardType',
+        cardId,
+        category: 'Energy',
+      },
+    });
+    expect(afterDismissal.state).toBe(dismissed);
+    expect(afterDismissal.effects[0]).toMatchObject({
+      kind: 'OverlayActionRejected',
+      reason: 'stale_card',
+    });
+  });
+
   it('owns count-prompt action/card identity through clamp and zone departure', () => {
     let state = install();
     const playerId =

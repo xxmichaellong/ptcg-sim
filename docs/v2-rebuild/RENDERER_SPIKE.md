@@ -1076,6 +1076,22 @@ passes 134 Playwright checks across 64 Chromium 151 browser files:
     commands, prompt/default pairs, clamp/zero behavior, cross-action forgery,
     zone-departure cleanup, and continuous client sequences through eleven.
     The route remains development-only.
+61. The route-owned context layer now completes the legacy category submenu
+    without changing its visible parent or three rows. `Change type...` exposes
+    `to Energy`, `to Tool`, and `to Pokémon` in source order; the visible Tool
+    choice maps to the authoritative `Trainer` category. A closed typed union is
+    revalidated at the resolver boundary, and every submitted choice must still
+    match the exact currently open top stack card before the existing annotation
+    resolver emits one preconditioned `ChangeCardCategory`. Missing values retain
+    `requires_choice`; forged values, lower evolutions, loose cards, stale menu
+    targets, and post-dismissal requests fail without reaching the submitter.
+    Hover and click remain intact, while ArrowRight enters the submenu,
+    Up/Down/Home/End traverse it, and ArrowLeft/Escape returns focus to the
+    parent. A real-v1 paint gate additionally compares exact row order, box
+    dimensions/offsets, padding, border, shadow, colors, and typography. Native
+    Chromium pins all three commands at uninterrupted client sequences 12–14.
+    The move-card submenu, keyboard marker shortcuts, and production route remain
+    separate.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -1251,7 +1267,7 @@ wiring:
   thresholds (source edge clamp/collision states, the isolated candidate
   resize-pointer path, and normal/flipped fullscreen viewport continuity are now
   covered);
-- complete move/category submenu context actions, replay-local
+- complete move-card submenu context actions, replay-local
   disclosure paint, source raster comparison for transformed stack/zone dialogs,
   the full focus-trap/screen-reader audit, and reconnect snap-back beyond the
   current native Chromium overlay/input gate;

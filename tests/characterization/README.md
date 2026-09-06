@@ -336,6 +336,20 @@ values, cross-action identity, and source departure. Native Chromium proves all
 six prompt/default and command pairs with capacity clamps and client sequences
 6 through 11, following the existing marker/ability sequence without gaps.
 
+The protected category-submenu checkpoint completes the separate three-choice
+context action. The route-owned overlay preserves `Change type...` with exact
+source-ordered `to Energy`, `to Tool`, and `to Pokémon` rows; Tool maps to the
+authoritative `Trainer` value. Pointer hover/click and nested-menu keyboard
+entry, traversal, return, and dismissal stay local until one row supplies its
+typed value. The resolver then rechecks the open top-stack-card identity and
+delegates to the existing stale-safe category command path. Missing/forged
+values, lower evolutions, loose cards, stale context cards, and post-dismissal
+requests submit nothing. The real-v1 paint companion now compares nested-menu
+dimensions, offsets, padding, border, shadow, colors, typography, and labels.
+Native Chromium proves Energy, Trainer/Tool, and Pokémon commands at client
+sequences 12 through 14 without gaps. The move-card submenu and keyboard
+category shortcuts remain separate.
+
 `legacy-compound-group-rotation-layout.test.ts` and
 `legacy-compound-break-rotation-layout.test.ts` split the next source-only
 checkpoint into independently auditable ordinary-group and BREAK-composition

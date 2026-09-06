@@ -10,8 +10,6 @@
 .ptcgsim-legacy-card-context-menu {
   position: absolute;
   width: 180px;
-  max-height: 100%;
-  overflow-y: auto;
   border: 1px solid #ccc;
   background: #fff;
   box-shadow: 2px 2px 5px rgb(0 0 0 / 20%);
@@ -35,6 +33,10 @@
   margin: 0;
   padding: 0;
   font-size: 1.6vh;
+}
+
+.ptcgsim-legacy-card-context-menu > ul > li {
+  position: relative;
 }
 
 .ptcgsim-legacy-card-context-menu .ptcgsim-legacy-context-header,
@@ -76,6 +78,39 @@
 .ptcgsim-legacy-card-context-menu.is-dark button:hover,
 .ptcgsim-legacy-card-context-menu.is-dark button:focus-visible {
   background: #4f4f4f;
+}
+
+.ptcgsim-legacy-card-context-menu .ptcgsim-legacy-card-sub-menu {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  z-index: 100000;
+  display: none;
+  box-sizing: content-box;
+  width: 160px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  background: #fff;
+  box-shadow: 2px 2px 5px rgb(0 0 0 / 20%);
+  color: #000;
+}
+
+.ptcgsim-legacy-card-context-menu.is-dark .ptcgsim-legacy-card-sub-menu {
+  background: #000;
+  color: #fff;
+}
+
+.ptcgsim-legacy-card-context-menu
+  li.has-submenu:hover
+  > .ptcgsim-legacy-card-sub-menu,
+.ptcgsim-legacy-card-context-menu
+  li.has-submenu[data-submenu-open='true']
+  > .ptcgsim-legacy-card-sub-menu {
+  display: block;
+}
+
+.ptcgsim-legacy-card-context-menu .ptcgsim-legacy-card-sub-menu button {
+  padding: 0 16px;
 }
 
 .ptcgsim-legacy-card-preview {

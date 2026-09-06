@@ -97,15 +97,18 @@ edit/removal, preserve the live condition palette, retain malformed drafts
 locally, and purge on reconnect. Hand replacement/draw and deck draw/inspection
 retain the native source prompts behind typed action/card/zone descriptors,
 strict complete-integer validation, safe capacity clamping, and quiet
-cancellation; only move/category choices remain incomplete. Local zone sorting is controlled by the mounted zone browser:
+cancellation. The unchanged three-row category submenu now submits a typed,
+stale-safe `ChangeCardCategory`; only the move destination choice remains
+incomplete. Local zone sorting is controlled by the mounted zone browser:
 it derives a stable copy from disclosed labels and never enters the controller
 or mutates its projection; forged requests still fail closed as `local_only`.
 Native Chromium pins exact damage and condition edit/removal plus ability-marker
-commands, all six count prompts/commands, the incomplete choice case, and reversible sorting with zero
+commands, all six count prompts/commands, all three category choices, the
+incomplete move choice, and reversible sorting with zero
 action/effect/command traffic. Replay-
 local prize/hand disclosure is characterized but deliberately unavailable until
 it has an isolated local projection; replay can never reach the resolver or
-submitter. Move/category submenu composition, replay-local paint, source raster parity
+submitter. Move-card submenu composition, replay-local paint, source raster parity
 for transformed stack/zone dialogs, full accessibility audit, reconnect snap-
 back, and non-Chromium approval remain unresolved.
 
@@ -312,7 +315,7 @@ Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
   Tool-specific Pixi paint parity, full paint or interaction parity, cover-open
   UX, or opened-zone layout, and the sidebar content rectangle is derived from
   measured shell/tab edges);
-- complete move/category submenu workflows, replay-local
+- complete move-card submenu workflows, replay-local
   disclosure paint, reconnect behavior, and the screen-reader/focus-trap audit
   beyond the current native Chromium keyboard, focus-return, dismissal, and
   protected overlay-command gate;
