@@ -1169,10 +1169,11 @@ schemas.
 The selected-card marker/category/visibility/movement bridge is likewise
 route-owned. It maps digit/Alt-digit/`0`, `Y`/Alt-`Y`, `W`,
 Alt-`E`/`T`/`P`, `C`, `Z`/Alt-`Z`, ArrowUp/ArrowDown/ArrowRight, and `S`
-key/code pairs to one typed request carrying the selected stable card ID. The
-controller rechecks selection, ready/live-player policy, and current
-recipient-safe membership, then delegates to the existing bounded stack,
-annotation, private-inspection, public-visibility, or deck-relative resolver. It
+plus `H`/`D`/`L`/Space key/code pairs to one typed request carrying the selected
+stable card ID. The controller rechecks selection, ready/live-player policy,
+and current recipient-safe membership, then delegates to the existing bounded
+stack, annotation, private-inspection, public-visibility, deck-relative, or
+per-card zone-movement resolver. It
 preserves v1's immediate marker/category selection cleanup and retains
 selection for all three visibility gestures. `C` opens one private inspection
 only for a concealed card or closes one matching single-card grant; it does not
@@ -1188,6 +1189,12 @@ acceptance. Real v1's `S` handler performs the intended shuffle, deselects, and
 then accidentally falls through to a second global deck shuffle in the same
 keydown. V2 deliberately keeps one atomic command: the second shuffle changes
 no probability distribution but adds redundant mutation/log traffic.
+The next four non-Alt moves send the card to its current board-side hand,
+discard, lost zone, or loose board. They share one resolver with the existing
+context-menu `to Board` path, retain stable source/work-area preconditions,
+reject lower evolutions and same-zone requests, and dismiss selection only
+after acceptance. Active/bench, stadium, and prize keys remain separate because
+they require placement, singleton replacement, or concealment policy.
 Zone sort
 now has a deliberately narrower owner: controlled state inside the mounted zone
 browser. It sorts a copy by recipient-safe scene label, keeps equal labels in

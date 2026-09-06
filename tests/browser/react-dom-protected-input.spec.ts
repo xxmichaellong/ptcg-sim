@@ -1222,7 +1222,7 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   expect(errors).toEqual([]);
 });
 
-test('selected-card marker, category, visibility, and deck shortcuts stay protected and suppress editable targets', async ({
+test('selected-card marker, category, visibility, deck, and zone shortcuts stay protected and suppress editable targets', async ({
   page,
 }) => {
   const errors = collectRuntimeErrors(page);
@@ -1502,6 +1502,74 @@ test('selected-card marker, category, visibility, and deck shortcuts stay protec
       },
       retained: false,
     },
+    {
+      key: 'KeyH',
+      card: ownCard,
+      cardId: fixture.activeTopCardId,
+      request: {
+        action: 'moveCardToZone',
+        cardId: fixture.activeTopCardId,
+        destination: 'hand',
+      },
+      command: {
+        type: 'MoveCardFromStack',
+        cardId: fixture.activeTopCardId,
+        expectedStackId: fixture.activeStackId,
+        destinationZoneId: `zone:${fixture.ownPlayerId}:hand`,
+      },
+      retained: false,
+    },
+    {
+      key: 'KeyD',
+      card: ownCard,
+      cardId: fixture.activeTopCardId,
+      request: {
+        action: 'moveCardToZone',
+        cardId: fixture.activeTopCardId,
+        destination: 'discard',
+      },
+      command: {
+        type: 'MoveCardFromStack',
+        cardId: fixture.activeTopCardId,
+        expectedStackId: fixture.activeStackId,
+        destinationZoneId: fixture.destinationZoneId,
+      },
+      retained: false,
+    },
+    {
+      key: 'KeyL',
+      card: ownCard,
+      cardId: fixture.activeTopCardId,
+      request: {
+        action: 'moveCardToZone',
+        cardId: fixture.activeTopCardId,
+        destination: 'lostZone',
+      },
+      command: {
+        type: 'MoveCardFromStack',
+        cardId: fixture.activeTopCardId,
+        expectedStackId: fixture.activeStackId,
+        destinationZoneId: `zone:${fixture.ownPlayerId}:lostZone`,
+      },
+      retained: false,
+    },
+    {
+      key: 'Space',
+      card: ownCard,
+      cardId: fixture.activeTopCardId,
+      request: {
+        action: 'moveCardToZone',
+        cardId: fixture.activeTopCardId,
+        destination: 'board',
+      },
+      command: {
+        type: 'MoveCardFromStack',
+        cardId: fixture.activeTopCardId,
+        expectedStackId: fixture.activeStackId,
+        destinationZoneId: fixture.ownBoardZoneId,
+      },
+      retained: false,
+    },
   ] as const;
 
   for (const [index, shortcut] of cases.entries()) {
@@ -1540,6 +1608,7 @@ test('selected-card marker, category, visibility, and deck shortcuts stay protec
     input.focus();
   });
   await page.keyboard.press('Digit4');
+  await page.keyboard.press('KeyH');
   const suppressed = await evidence(page);
   expect(suppressed.submissions).toEqual([]);
   expect(suppressed.shortcutActions).toEqual([]);

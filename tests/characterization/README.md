@@ -407,6 +407,20 @@ dismisses accepted selection, suppresses Alt/editable variants, and never
 reproduces the redundant second shuffle. No protocol, domain, authority, route,
 label, layout, styling, UI, or UX surface changes.
 
+The protected generic-zone shortcut checkpoint covers `H`, `D`, `L`, and Space
+without absorbing active/bench, stadium, or prize placement policy. Four clean
+real-v1 Chromium pages reconstruct one selected active card and pin exact hand,
+discard, lost-zone, and loose-board arrays, selection cleanup, live/export
+`moveCardBundle` payloads, asset service, and a clean page-error boundary. One
+closed runtime-validated destination tuple now drives a per-card resolver shared
+with the existing context-menu `to Board` path. It selects `MoveCard`,
+`MoveCardFromStack`, `MoveInspectedCard`, or `MoveStagedCard` from the current
+recipient-safe source and preserves same-zone, lower-evolution, foreign-work-
+area, stale-card, missing-target, replay, controller, and submit-time rejection.
+Candidate Chromium proves the four commands after the prior sixteen continuous
+shortcuts and focused editable input remains silent. No protocol, domain,
+authority, route, label, layout, styling, UI, or UX surface changes.
+
 The solo replay disclosure checkpoint closes the three replay exceptions pinned
 by `client/src/setup/general/replay-block.js`: prize reveal, prize look, and
 opponent-hand look. It preserves their exact source labels and show/cover

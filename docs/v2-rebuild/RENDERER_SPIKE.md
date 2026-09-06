@@ -1170,6 +1170,22 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     proves all four exact commands after the prior twelve continuous shortcuts;
     Alt variants and editable targets remain suppressed. No wire/domain schema,
     visible control, key reference, route, layout, styling, UI, or UX changes.
+67. Four generic selected-card zone gestures now cross that boundary: `H`
+    moves to hand, `D` to discard, `L` to lost zone, and Space to the loose
+    board on the card's current board side. A new closed, runtime-validated
+    resolver is shared with the existing context-menu `to Board` operation and
+    emits the appropriate stale-safe `MoveCard`, `MoveCardFromStack`,
+    `MoveInspectedCard`, or `MoveStagedCard` command. It rejects same-zone
+    requests, lower evolutions, foreign work areas, stale cards, and missing
+    destinations; controller/adapter live, selection, replay, and submit-time
+    gates remain unchanged. Four clean real-v1 Chromium pages pin exact
+    destination arrays, `moveCardBundle` live/export payloads, selection
+    cleanup, asset service, and errors. Candidate Chromium proves the four
+    commands after the prior sixteen continuous shortcuts and editable targets
+    remain silent. Active/bench, stadium, and prize keys remain separate because
+    their placement, singleton replacement, and concealment rules need dedicated
+    characterization. No protocol/domain/authority schema, visible control,
+    route, layout, styling, UI, or UX changes.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

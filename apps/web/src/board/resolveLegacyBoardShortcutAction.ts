@@ -7,6 +7,11 @@ import {
 } from './resolveLegacyBoardOverlayAction.js';
 import { resolveCardAnnotationAction } from './resolveCardAnnotationAction.js';
 import {
+  isCardZoneMoveDestination,
+  resolveCardZoneMoveAction,
+  type CardZoneMoveDestination,
+} from './resolveCardZoneMoveAction.js';
+import {
   isDeckRelativeAction,
   resolveDeckRelativeCardAction,
   type DeckRelativeAction,
@@ -43,6 +48,11 @@ export type LegacyBoardShortcutActionRequest =
       readonly action: 'moveCardRelativeToDeck';
       readonly cardId: ViewCardId;
       readonly deckAction: DeckRelativeAction;
+    }
+  | {
+      readonly action: 'moveCardToZone';
+      readonly cardId: ViewCardId;
+      readonly destination: CardZoneMoveDestination;
     };
 
 export type LegacyBoardShortcutActionRejectionReason =
@@ -73,6 +83,7 @@ export type LegacyBoardShortcutActionResolution =
 type ExistingActionResolution =
   | ReturnType<typeof resolveStackStateAction>
   | ReturnType<typeof resolveCardAnnotationAction>
+  | ReturnType<typeof resolveCardZoneMoveAction>
   | ReturnType<typeof resolveDeckRelativeCardAction>
   | ReturnType<typeof resolveCardInspectionAction>
   | ReturnType<typeof resolvePublicCardVisibilityAction>;
@@ -201,6 +212,14 @@ export const resolveLegacyBoardShortcutAction = (
         resolveDeckRelativeCardAction(view, request.cardId, request.deckAction),
         true
       );
+    case 'moveCardToZone':
+      if (!isCardZoneMoveDestination(request.destination)) {
+        return { ok: false, reason: 'invalid_value' };
+      }
+      return retainResolution(
+        resolveCardZoneMoveAction(view, request.cardId, request.destination),
+        true
+      );
   }
 };
 
@@ -289,6 +308,18 @@ export const resolveLegacyBoardShortcutKey = (
       cardId,
       deckAction: 'shuffleIntoDeck',
     };
+  }
+  if (!altKey && matches(input, 'h', 'KeyH')) {
+    return { action: 'moveCardToZone', cardId, destination: 'hand' };
+  }
+  if (!altKey && matches(input, 'd', 'KeyD')) {
+    return { action: 'moveCardToZone', cardId, destination: 'discard' };
+  }
+  if (!altKey && matches(input, 'l', 'KeyL')) {
+    return { action: 'moveCardToZone', cardId, destination: 'lostZone' };
+  }
+  if (!altKey && matches(input, ' ', 'KeySpace')) {
+    return { action: 'moveCardToZone', cardId, destination: 'board' };
   }
   if (!altKey) return null;
   if (matches(input, 'e', 'KeyE')) {

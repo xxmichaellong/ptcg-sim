@@ -275,15 +275,15 @@ empty-deck, already-at-edge, and stale-source rejection. Zone sort remains
 entirely inside the mounted zone browser: checking it creates a stable sorted
 copy from disclosed scene labels, equal labels keep authoritative scene order,
 and unchecking restores that order.
-Selected-card marker/category/visibility/deck-movement shortcuts enter through
+Selected-card marker/category/visibility/movement shortcuts enter through
 a separate typed controller action rather than pretending a context menu is open. The DOM
 keymap emits only digit/Alt-digit/`0`, `Y`/Alt-`Y`, `W`, Alt-`E`/`T`/`P`, `C`,
 `Z`/Alt-`Z`, ArrowUp/ArrowDown/ArrowRight, and `S` requests with the current
-stable card ID. The controller
+stable card ID, plus `H`/`D`/`L`/Space requests for generic zone movement. The controller
 requires that ID to be the installed selection on a ready live-player
 projection, then reuses the bounded stack, annotation, private-inspection,
-public-visibility, or deck-relative resolver. Accepted
-ability/category/removal/deck gestures clear selection in the same reduction;
+public-visibility, deck-relative, or per-card zone-movement resolver. Accepted
+ability/category/removal/movement gestures clear selection in the same reduction;
 additive damage, condition cycling, and all visibility gestures retain it.
 Missing-marker Alt-digit and Alt-`Y` keep the
 source's positive/default creation behavior. A per-card `C` can close only a
@@ -294,6 +294,12 @@ The four non-Alt deck gestures resolve to top, bottom, top-swap, and
 shuffle-into-deck commands. Source-characterized `S` performs a second global
 shuffle after deselection; v2 deliberately submits only the intended atomic
 move-and-shuffle command, avoiding redundant action-log and authority traffic.
+`H`, `D`, `L`, and Space resolve to the card's current board-side hand,
+discard, lost zone, or loose board. The resolver is shared with the existing
+context-menu board destination and emits source-specific `MoveCard`,
+`MoveCardFromStack`, `MoveInspectedCard`, or `MoveStagedCard` commands. Lower
+evolutions, foreign work areas, missing destinations, and same-zone moves fail
+closed. Active/bench, stadium, and prizes remain separate shortcut slices.
 The checkbox dispatches no controller request, effect, or command. The resolver
 retains a `local_only` rejection for forged `sortZone` requests as a fail-closed
 boundary. Replay remains strictly non-submitting. V1's replay-only local
@@ -309,7 +315,7 @@ expose no replay mutation rows; a forged request is rejected as `read_only`
 before the resolver runs. Native Chromium
 now proves exact accepted `SetDamage`, `SetSpecialCondition`, both removals,
 `SetAbilityUsed`, all six count submissions, all three category choices, all
-five move choices, and all sixteen selected-card shortcut commands; native prompt
+five move choices, and all twenty selected-card shortcut commands; native prompt
 text/defaults, capacity clamps, zero hand draws, and
 private/public inspection policy; local rejection of malformed marker/count
 drafts; typed zero-command missing/forged choice rejection; and reversible

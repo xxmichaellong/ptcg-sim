@@ -91,8 +91,35 @@ describe('legacy board shortcut action resolver', () => {
       cardId,
       deckAction: 'shuffleIntoDeck',
     });
+    expect(key('H', 'KeyH')).toEqual({
+      action: 'moveCardToZone',
+      cardId,
+      destination: 'hand',
+    });
+    expect(key('Unidentified', 'KeyD')).toEqual({
+      action: 'moveCardToZone',
+      cardId,
+      destination: 'discard',
+    });
+    expect(key('l', 'KeyL')).toEqual({
+      action: 'moveCardToZone',
+      cardId,
+      destination: 'lostZone',
+    });
+    expect(key(' ', 'Space')).toEqual({
+      action: 'moveCardToZone',
+      cardId,
+      destination: 'board',
+    });
+    expect(key('Unidentified', 'KeySpace')).toEqual({
+      action: 'moveCardToZone',
+      cardId,
+      destination: 'board',
+    });
     expect(key('ArrowUp', 'ArrowUp', true)).toBeNull();
     expect(key('s', 'KeyS', true)).toBeNull();
+    expect(key('h', 'KeyH', true)).toBeNull();
+    expect(key(' ', 'Space', true)).toBeNull();
     expect(
       resolveLegacyBoardShortcutKey(
         {
@@ -121,6 +148,44 @@ describe('legacy board shortcut action resolver', () => {
     });
     expect(key('e', 'KeyE')).toBeNull();
     expect(key('x', 'KeyX', true)).toBeNull();
+  });
+
+  it('reuses generic per-card zone movement and dismisses accepted moves', () => {
+    const view = createRendererSpikeView();
+    const hand = view.zones['zone:spike-blue:hand']!;
+    const card = hand.cards[0]!;
+    for (const destination of ['discard', 'lostZone', 'board'] as const) {
+      expect(
+        resolveLegacyBoardShortcutAction(view, {
+          action: 'moveCardToZone',
+          cardId: card.id,
+          destination,
+        })
+      ).toEqual({
+        ok: true,
+        command: {
+          type: 'MoveCard',
+          cardId: card.id,
+          expectedSourceZoneId: hand.id,
+          destinationZoneId: `zone:spike-blue:${destination}`,
+        },
+        dismissSelection: true,
+      });
+    }
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'moveCardToZone',
+        cardId: card.id,
+        destination: 'invalid',
+      } as unknown as LegacyBoardShortcutActionRequest)
+    ).toEqual({ ok: false, reason: 'invalid_value' });
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'moveCardToZone',
+        cardId: card.id,
+        destination: 'hand',
+      })
+    ).toEqual({ ok: false, reason: 'no_op' });
   });
 
   it('reuses all four deck-relative resolvers and dismisses accepted moves', () => {

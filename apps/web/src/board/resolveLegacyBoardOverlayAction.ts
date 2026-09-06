@@ -2,6 +2,7 @@ import type { MatchViewState, ViewCard, ViewCardId } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 
 import { resolveCardAnnotationAction } from './resolveCardAnnotationAction.js';
+import { resolveCardZoneMoveAction } from './resolveCardZoneMoveAction.js';
 import {
   resolveDeckRelativeCardAction,
   resolvePrizeDeckBottomAction,
@@ -252,10 +253,6 @@ interface LocatedCard {
   readonly card: ViewCard;
   readonly zone?: ViewZone;
   readonly stack?: ViewStack;
-  readonly sourceId: string;
-  readonly sourcePlayerId: string;
-  readonly sourceKind: 'zone' | 'stack' | 'inspection' | 'staged';
-  readonly isLowerEvolution: boolean;
 }
 
 const locateCard = (
@@ -268,10 +265,6 @@ const locateCard = (
       return {
         card,
         zone,
-        sourceId: zone.id,
-        sourcePlayerId: zone.ownerId ?? card.ownerId,
-        sourceKind: 'zone',
-        isLowerEvolution: false,
       };
     }
   }
@@ -283,10 +276,6 @@ const locateCard = (
       return {
         card: stack.evolutionCards[evolutionIndex]!,
         stack,
-        sourceId: stack.id,
-        sourcePlayerId: stack.boardPlayerId,
-        sourceKind: 'stack',
-        isLowerEvolution: evolutionIndex < stack.evolutionCards.length - 1,
       };
     }
     const attachment = stack.attachmentCards.find(
@@ -296,24 +285,16 @@ const locateCard = (
       return {
         card: attachment,
         stack,
-        sourceId: stack.id,
-        sourcePlayerId: stack.boardPlayerId,
-        sourceKind: 'stack',
-        isLowerEvolution: false,
       };
     }
   }
-  for (const [playerId, areas] of Object.entries(view.workAreas)) {
+  for (const areas of Object.values(view.workAreas)) {
     const inspected = areas.inspection?.cards.find(
       (candidate) => candidate.id === cardId
     );
     if (inspected && areas.inspection) {
       return {
         card: inspected,
-        sourceId: areas.inspection.id,
-        sourcePlayerId: playerId,
-        sourceKind: 'inspection',
-        isLowerEvolution: false,
       };
     }
     const staged = areas.attachmentResolution
@@ -325,10 +306,6 @@ const locateCard = (
     if (staged && areas.attachmentResolution) {
       return {
         card: staged,
-        sourceId: areas.attachmentResolution.id,
-        sourcePlayerId: playerId,
-        sourceKind: 'staged',
-        isLowerEvolution: false,
       };
     }
   }
@@ -342,56 +319,6 @@ const rejected = (
 const command = (
   value: WireGameCommand
 ): LegacyBoardOverlayActionResolution => ({ ok: true, command: value });
-
-const resolveMoveCardToBoard = (
-  view: MatchViewState,
-  located: LocatedCard
-): LegacyBoardOverlayActionResolution => {
-  const board = Object.values(view.zones).find(
-    (zone) => zone.kind === 'board' && zone.ownerId === located.sourcePlayerId
-  );
-  if (!board) return rejected('unsupported_target');
-  if (located.isLowerEvolution) return rejected('unsupported_source');
-  if (
-    (located.sourceKind === 'inspection' || located.sourceKind === 'staged') &&
-    (view.viewer.kind !== 'player' ||
-      located.sourcePlayerId !== view.viewer.playerId)
-  ) {
-    return rejected('unsupported_source');
-  }
-  switch (located.sourceKind) {
-    case 'zone':
-      return located.sourceId === board.id
-        ? rejected('no_op')
-        : command({
-            type: 'MoveCard',
-            cardId: located.card.id,
-            expectedSourceZoneId: located.sourceId,
-            destinationZoneId: board.id,
-          });
-    case 'stack':
-      return command({
-        type: 'MoveCardFromStack',
-        cardId: located.card.id,
-        expectedStackId: located.sourceId,
-        destinationZoneId: board.id,
-      });
-    case 'inspection':
-      return command({
-        type: 'MoveInspectedCard',
-        cardId: located.card.id,
-        expectedWorkAreaId: located.sourceId,
-        destinationZoneId: board.id,
-      });
-    case 'staged':
-      return command({
-        type: 'MoveStagedCard',
-        cardId: located.card.id,
-        expectedWorkAreaId: located.sourceId,
-        destinationZoneId: board.id,
-      });
-  }
-};
 
 export const parseLegacyDamageInput = (
   value: string
@@ -596,7 +523,7 @@ const resolveContextAction = (
         return rejected('invalid_value');
       }
       if (request.destination === 'board') {
-        return resolveMoveCardToBoard(view, located);
+        return resolveCardZoneMoveAction(view, request.cardId, 'board');
       }
       const resolution = resolveDeckRelativeCardAction(
         view,
