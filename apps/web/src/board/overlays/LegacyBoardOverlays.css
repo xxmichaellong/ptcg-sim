@@ -1,0 +1,207 @@
+.ptcgsim-legacy-board-overlays {
+  position: absolute;
+  inset: 0;
+  z-index: 100000;
+  overflow: hidden;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  pointer-events: none;
+}
+
+.ptcgsim-legacy-card-context-menu {
+  position: absolute;
+  width: 180px;
+  max-height: 100%;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  background: #fff;
+  box-shadow: 2px 2px 5px rgb(0 0 0 / 20%);
+  color: #000;
+  pointer-events: auto;
+}
+
+.ptcgsim-legacy-card-context-menu.is-dark {
+  border-color: #555;
+  background: #000;
+  color: #fff;
+}
+
+.ptcgsim-legacy-card-context-menu ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ptcgsim-legacy-card-context-menu li {
+  margin: 0;
+  padding: 0;
+  font-size: 1.6vh;
+}
+
+.ptcgsim-legacy-card-context-menu .ptcgsim-legacy-context-header,
+.ptcgsim-legacy-card-context-menu .ptcgsim-legacy-context-empty {
+  padding: 4px;
+  background: #f0f0f0;
+  font-weight: 700;
+  cursor: default;
+}
+
+.ptcgsim-legacy-card-context-menu.is-dark .ptcgsim-legacy-context-header,
+.ptcgsim-legacy-card-context-menu.is-dark .ptcgsim-legacy-context-empty {
+  background: #141414;
+}
+
+.ptcgsim-legacy-card-context-menu li.is-boundary {
+  border-top: 2px solid #525252;
+}
+
+.ptcgsim-legacy-card-context-menu button {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 8px 16px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ptcgsim-legacy-card-context-menu button:hover,
+.ptcgsim-legacy-card-context-menu button:focus-visible {
+  outline: 0;
+  background: #f0f0f0;
+}
+
+.ptcgsim-legacy-card-context-menu.is-dark button:hover,
+.ptcgsim-legacy-card-context-menu.is-dark button:focus-visible {
+  background: #4f4f4f;
+}
+
+.ptcgsim-legacy-card-preview {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 50%);
+  pointer-events: auto;
+}
+
+.ptcgsim-legacy-card-preview img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  max-width: 90%;
+  max-height: 90%;
+  transform: translate(-50%, -50%);
+  border-radius: 1rem;
+}
+
+.ptcgsim-legacy-stack-preview {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 69%;
+  height: 70%;
+  padding: 20px;
+  overflow: auto;
+  transform: translate(-50%, -50%);
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background: rgb(169 169 169 / 50%);
+  box-shadow: 0 0 10px rgb(0 0 0 / 30%);
+  pointer-events: auto;
+}
+
+.ptcgsim-legacy-board-overlays.is-dark .ptcgsim-legacy-stack-preview {
+  background: rgb(59 59 59 / 87%);
+}
+
+.ptcgsim-legacy-stack-preview img {
+  height: 24%;
+  margin: 0.5%;
+  border-radius: 0.3rem;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 30%);
+}
+
+.ptcgsim-legacy-zone-browser {
+  position: fixed;
+  top: 12.5%;
+  left: 7.5%;
+  width: 85%;
+  height: 75%;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 15px;
+  background: rgb(169 169 169 / 86.7%);
+  box-shadow: 0 0 10px rgb(0 0 0 / 30%);
+  pointer-events: auto;
+}
+
+.ptcgsim-legacy-board-overlays.is-dark .ptcgsim-legacy-zone-browser {
+  background: rgb(21 21 21 / 87%);
+  color: #fff;
+}
+
+.ptcgsim-legacy-zone-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  width: 100%;
+  padding: 5px;
+  border-radius: 0 0 15px 15px;
+  background: #dadada;
+  box-shadow: 2px 2px 5px rgb(0 0 0 / 30%);
+  color: #111;
+  text-align: center;
+}
+
+.ptcgsim-legacy-zone-button {
+  width: 20%;
+  margin: 0 5px;
+  padding: 5px;
+  border: 0;
+  border-radius: 5px;
+  background: linear-gradient(to bottom, #6e6f71, #4c4d4f);
+  box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
+  color: #fff;
+  cursor: pointer;
+}
+
+.ptcgsim-legacy-zone-button:hover,
+.ptcgsim-legacy-zone-button:focus-visible {
+  background: linear-gradient(to bottom, #898989, #7b7c7d);
+}
+
+.ptcgsim-legacy-zone-cards {
+  padding: 1% 20px 20px;
+}
+
+.ptcgsim-legacy-zone-cards button {
+  display: inline-block;
+  width: 10%;
+  margin: 1px;
+  padding: 0;
+  border: 0;
+  border-radius: 0.3rem;
+  background: transparent;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 30%);
+  cursor: pointer;
+}
+
+.ptcgsim-legacy-zone-cards button:focus-visible {
+  outline: 4px solid rgb(143 215 153 / 86.4%);
+  outline-offset: 1px;
+}
+
+.ptcgsim-legacy-zone-cards button[aria-pressed='true'] {
+  outline: 4px solid rgb(143 215 153 / 86.4%);
+  outline-offset: 1px;
+}
+
+.ptcgsim-legacy-zone-cards img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: inherit;
+}

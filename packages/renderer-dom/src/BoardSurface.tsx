@@ -104,6 +104,9 @@ const ZoneNode = memo(function ZoneNode({
       data-zone-kind={zone.kind}
       data-zone-surface={zone.surface}
       aria-label={`${zone.label}, ${zone.count} cards`}
+      aria-haspopup={zone.interactive ? 'dialog' : undefined}
+      role={zone.interactive ? 'button' : undefined}
+      tabIndex={zone.interactive ? 0 : undefined}
       style={{
         ...absoluteRect(zone.bounds, zone.zIndex),
         borderRadius: 15,
@@ -111,7 +114,21 @@ const ZoneNode = memo(function ZoneNode({
         boxShadow: '2px 2px 5px rgba(0, 0, 0, 0.1)',
         pointerEvents: zone.interactive ? 'auto' : 'none',
       }}
-      onDoubleClick={() => emitIntent({ kind: 'ZoneOpened', zoneId: zone.id })}
+      onDoubleClick={() => {
+        if (zone.interactive) {
+          emitIntent({ kind: 'ZoneOpened', zoneId: zone.id });
+        }
+      }}
+      onKeyDown={(event) => {
+        if (
+          zone.interactive &&
+          event.target === event.currentTarget &&
+          (event.key === 'Enter' || event.key === ' ')
+        ) {
+          event.preventDefault();
+          emitIntent({ kind: 'ZoneOpened', zoneId: zone.id });
+        }
+      }}
     >
       <div
         data-zone-content-id={zone.id}

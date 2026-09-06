@@ -1110,10 +1110,27 @@ synthetic click, emit exact `no_op`/`unsupported_source` rejections, and submit
 nothing. A legal hand-to-discard drag emits one preconditioned `MoveCard` and
 one queued result. Native click, double-click, zone double-click, and right-click
 then reach controller-owned selection, card preview, opened-zone, and context
-state without another submission. Disposal is idempotent and removes the full
-harness. This proves the protected under-the-hood path, not visible overlay
-paint, focus/keyboard behavior, source parity, reconnect snap-back, or a
-production route.
+state without another submission.
+
+The next route-owned slice subscribes to immutable controller snapshots and
+renders `LegacyBoardOverlays` outside the renderer. Context menu, full-card
+preview, expanded stack, and zone browser consume only recipient-safe scene
+cards and emit semantic callbacks. Surface input remains strict: a hidden card
+is still rejected as `stale_card`. A separate opened-zone bridge accepts only a
+card whose parent is the currently open recipient-safe zone, so duplicated zone
+cards can select, preview, or request context without weakening renderer input.
+Native keyboard activation, menu traversal/Escape, outside dismissal, focus
+return, zone-card anchoring, light/dark paint, and zero command leakage are
+pinned in Chromium. A second gate mounts the actual v1 `Card`, then compares the
+real source menu's ordered rows and computed paint plus the full-preview shell
+and image metrics; masked/source/candidate screenshots and JSON metrics are
+attached. Disposal remains idempotent and removes the full harness.
+
+This is still development-only. Context and zone action callbacks are typed and
+recorded, not connected to mutation workflows. Replay-specific availability,
+source-raster parity for transformed stack/zone dialogs, a complete focus-trap
+and screen-reader audit, reconnect snap-back, production routing, and
+non-Chromium approval remain separate gates.
 
 ## React application state
 

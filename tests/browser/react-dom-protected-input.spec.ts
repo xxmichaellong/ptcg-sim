@@ -4,13 +4,16 @@ interface ProtectedInputFixture {
   readonly sourceCardId: string;
   readonly sourceZoneId: string;
   readonly unsupportedCardId: string;
+  readonly unsupportedStackCardIds: readonly string[];
   readonly destinationZoneId: string;
+  readonly destinationCardIds: readonly string[];
 }
 
 interface ProtectedInputEvidence {
   readonly submissions: readonly unknown[];
   readonly submissionResults: readonly unknown[];
   readonly rejections: readonly unknown[];
+  readonly overlayActions: readonly unknown[];
   readonly presentation: {
     readonly selectedCardId: string | null;
     readonly drag: {
@@ -38,6 +41,7 @@ interface ProtectedInputHarnessWindow extends Window {
     readonly getFixture: () => ProtectedInputFixture;
     readonly getEvidence: () => ProtectedInputEvidence;
     readonly clearEvidence: () => void;
+    readonly setDarkMode: (enabled: boolean) => void;
     readonly dispose: () => void;
   };
 }
@@ -310,7 +314,7 @@ test('native DOM input reaches protected controller state, semantic drop rejecti
       presentation: {
         selectedCardId: null,
         drag: null,
-        openedZoneId: fixture.destinationZoneId,
+        openedZoneId: null,
       },
       overlays: {
         contextMenuCardId: fixture.sourceCardId,
@@ -318,6 +322,234 @@ test('native DOM input reaches protected controller state, semantic drop rejecti
       },
       reportedErrors: [],
     });
+
+  await page.evaluate(() => {
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.dispose();
+    harness.dispose();
+  });
+  await expect(host).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('route-owned legacy overlays preserve native menu, preview, zone, keyboard, and focus boundaries', async ({
+  page,
+}) => {
+  const errors = collectRuntimeErrors(page);
+  const fixture = await mountHarness(page);
+  const host = page.locator('[data-react-dom-protected-input-harness]');
+  const sourceCard = host.locator(`[data-card-id="${fixture.sourceCardId}"]`);
+  const unsupportedCard = host.locator(
+    `[data-card-id="${fixture.unsupportedCardId}"]`
+  );
+  const destinationZone = host.locator(
+    `[data-zone-id="${fixture.destinationZoneId}"]`
+  );
+  await expect(
+    host.locator('[data-react-dom-protected-input-overlays="true"]')
+  ).toHaveCount(1);
+
+  await sourceCard.focus();
+  await sourceCard.press('Shift+F10');
+  const menu = host.locator('[data-legacy-card-context-menu]');
+  await expect(menu).toBeVisible();
+  await expect(menu).toHaveAttribute(
+    'data-context-card-id',
+    fixture.sourceCardId
+  );
+  await expect(
+    menu.locator('[data-context-action="discardHand"]')
+  ).toBeFocused();
+  expect(await menu.locator('[role="menuitem"]').allTextContents()).toEqual([
+    'Discard hand',
+    'Shuffle hand to deck',
+    'Shuffle hand to bottom',
+    'Move card...',
+    'Reveal/hide card',
+  ]);
+  const menuBounds = await menu.boundingBox();
+  if (!menuBounds) throw new Error('Context menu has no rendered bounds');
+  expect(menuBounds.x).toBeGreaterThanOrEqual(0);
+  expect(menuBounds.y).toBeGreaterThanOrEqual(0);
+  expect(menuBounds.x + menuBounds.width).toBeLessThanOrEqual(1280);
+  expect(menuBounds.y + menuBounds.height).toBeLessThanOrEqual(720);
+  await page.keyboard.press('ArrowDown');
+  await expect(
+    menu.locator('[data-context-action="shuffleHandToDeck"]')
+  ).toBeFocused();
+  await page.keyboard.press('End');
+  await expect(
+    menu.locator('[data-context-action="revealCard"]')
+  ).toBeFocused();
+  await page.keyboard.press('Home');
+  await expect(
+    menu.locator('[data-context-action="discardHand"]')
+  ).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(menu).toHaveCount(0);
+  await expect(sourceCard).toBeFocused();
+  await expect
+    .poll(async () => (await evidence(page)).overlays.contextMenuCardId)
+    .toBeNull();
+
+  const sourcePoint = await exposedCardPoint(sourceCard);
+  await page.mouse.click(sourcePoint.x, sourcePoint.y, { button: 'right' });
+  await expect(menu).toBeVisible();
+  await menu.locator('[data-context-action="discardHand"]').click();
+  await expect(menu).toHaveCount(0);
+  await expect
+    .poll(async () => (await evidence(page)).overlayActions)
+    .toEqual([
+      {
+        kind: 'context',
+        action: 'discardHand',
+        cardId: fixture.sourceCardId,
+      },
+    ]);
+  const contextEvidence = await evidence(page);
+  expect(contextEvidence.submissions).toEqual([]);
+  expect(contextEvidence.submissionResults).toEqual([]);
+  expect(contextEvidence.rejections).toEqual([]);
+  expect(contextEvidence.reportedErrors).toEqual([]);
+
+  await clearEvidence(page);
+  await page.mouse.dblclick(sourcePoint.x, sourcePoint.y);
+  const preview = host.locator(
+    '[data-legacy-card-preview][data-preview-kind="card"]'
+  );
+  await expect(preview).toBeVisible();
+  await expect(preview).toBeFocused();
+  const sourceImage = await sourceCard.locator('img').getAttribute('src');
+  if (!sourceImage) throw new Error('Source card has no rendered image');
+  await expect(preview.locator('img')).toHaveAttribute('src', sourceImage);
+  const previewBounds = await preview.boundingBox();
+  expect(previewBounds).toEqual({ x: 0, y: 0, width: 1280, height: 720 });
+  expect(
+    await preview.evaluate(
+      (element) => getComputedStyle(element).backgroundColor
+    )
+  ).toBe('rgba(0, 0, 0, 0.5)');
+  await page.keyboard.press('v');
+  await expect(preview).toHaveCount(0);
+  await expect(sourceCard).toBeFocused();
+
+  await page.mouse.dblclick(sourcePoint.x, sourcePoint.y);
+  await expect(preview).toBeVisible();
+  await preview.locator('img').click();
+  await expect(preview).toHaveCount(0);
+  await expect(sourceCard).toBeFocused();
+
+  const unsupportedPoint = await exposedCardPoint(unsupportedCard);
+  await page.mouse.dblclick(unsupportedPoint.x, unsupportedPoint.y);
+  const stackPreview = host.locator(
+    '[data-legacy-card-preview][data-preview-kind="stack"]'
+  );
+  await expect(stackPreview).toBeVisible();
+  await expect(stackPreview).toBeFocused();
+  expect(
+    await stackPreview
+      .locator('[data-overlay-card-id]')
+      .evaluateAll((nodes) =>
+        nodes.map((node) => node.getAttribute('data-overlay-card-id'))
+      )
+  ).toEqual(fixture.unsupportedStackCardIds);
+  await page.keyboard.press('Escape');
+  await expect(stackPreview).toHaveCount(0);
+  await expect(unsupportedCard).toBeFocused();
+
+  await destinationZone.focus();
+  await destinationZone.press('Enter');
+  const zoneBrowser = host.locator('[data-legacy-zone-browser]');
+  await expect(zoneBrowser).toBeVisible();
+  await expect(zoneBrowser).toHaveAttribute(
+    'data-zone-browser-id',
+    fixture.destinationZoneId
+  );
+  await expect(zoneBrowser.locator('[data-zone-close]')).toBeFocused();
+  expect(
+    await zoneBrowser
+      .locator('[data-overlay-card-id]')
+      .evaluateAll((nodes) =>
+        nodes.map((node) => node.getAttribute('data-overlay-card-id'))
+      )
+  ).toEqual(fixture.destinationCardIds);
+  await page.keyboard.press('Escape');
+  await expect(zoneBrowser).toHaveCount(0);
+  await expect(destinationZone).toBeFocused();
+
+  await destinationZone.press('Space');
+  await expect(zoneBrowser).toBeVisible();
+  await page.evaluate(() => {
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.setDarkMode(true);
+  });
+  await expect
+    .poll(() =>
+      zoneBrowser.evaluate(
+        (element) => getComputedStyle(element).backgroundColor
+      )
+    )
+    .toBe('rgba(21, 21, 21, 0.87)');
+  const zoneCard = zoneBrowser.locator('[data-overlay-card-id]').first();
+  const zoneCardBounds = await zoneCard.boundingBox();
+  if (!zoneCardBounds) throw new Error('Opened-zone card has no bounds');
+  await zoneCard.dblclick();
+  const zoneCardPreview = host.locator(
+    '[data-legacy-card-preview][data-preview-kind="card"]'
+  );
+  await expect(zoneCardPreview).toBeVisible();
+  await expect(zoneCardPreview).toBeFocused();
+  await expect(zoneCardPreview.locator('img')).toHaveAttribute(
+    'data-overlay-card-id',
+    fixture.destinationCardIds[0]!
+  );
+  await zoneCardPreview.click();
+  await expect(zoneCardPreview).toHaveCount(0);
+  await expect(zoneBrowser).toBeVisible();
+  await expect(zoneCard).toBeFocused();
+  await zoneCard.click({ button: 'right' });
+  await expect
+    .poll(async () => (await evidence(page)).overlays.contextMenuCardId)
+    .toBe(fixture.destinationCardIds[0]);
+  await expect(menu).toBeVisible();
+  expect(
+    await menu.evaluate((element) => getComputedStyle(element).backgroundColor)
+  ).toBe('rgb(0, 0, 0)');
+  const zoneMenuBounds = await menu.boundingBox();
+  if (!zoneMenuBounds) throw new Error('Opened-zone menu has no bounds');
+  expect(zoneMenuBounds.x).toBeCloseTo(
+    Math.min(zoneCardBounds.x + zoneCardBounds.width, 1280 - 180),
+    0
+  );
+  await page.keyboard.press('Escape');
+  await expect(menu).toHaveCount(0);
+  await expect(zoneBrowser).toBeVisible();
+  await expect(zoneCard).toBeFocused();
+  expect((await evidence(page)).presentation.openedZoneId).toBe(
+    fixture.destinationZoneId
+  );
+  await zoneBrowser.locator('[data-zone-action="sortZone"]').check();
+  await expect
+    .poll(async () => (await evidence(page)).overlayActions)
+    .toEqual([
+      {
+        kind: 'zone',
+        action: 'sortZone',
+        zoneId: fixture.destinationZoneId,
+      },
+    ]);
+  await zoneBrowser.locator('[data-zone-close]').click();
+  await expect(zoneBrowser).toHaveCount(0);
+  await expect(destinationZone).toBeFocused();
+  const zoneEvidence = await evidence(page);
+  expect(zoneEvidence.submissions).toEqual([]);
+  expect(zoneEvidence.submissionResults).toEqual([]);
+  expect(zoneEvidence.rejections).toEqual([]);
+  expect(zoneEvidence.reportedErrors).toEqual([]);
 
   await page.evaluate(() => {
     const harness = (window as ProtectedInputHarnessWindow)

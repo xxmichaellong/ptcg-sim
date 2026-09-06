@@ -200,8 +200,24 @@ effects, and submit nothing. A legal hand-to-discard drop emits exactly one
 preconditioned `MoveCard` plus one queued result. Native click, card
 double-click, zone double-click, and right-click install selection, preview,
 opened-zone, and context state without a mutation. The development-only harness
-is removed idempotently. Visible overlay composition, keyboard/focus, source
-interaction parity, reconnect snap-back, and production wiring remain separate.
+is removed idempotently.
+
+`BoardSessionRuntime.subscribeBoard()` is the failure-isolated route-composition
+seam for DOM outside the renderer. `LegacyBoardOverlays` uses it for context,
+card/stack preview, and zone-browser paint, while dismissal and semantic input
+return through runtime methods. The renderer channel continues to require
+`card.interactive`; the separate `OpenedZoneCardIntent` channel additionally
+requires the submitted card to belong to `presentation.openedZoneId`. Unit and
+browser tests prove closed-zone and cross-zone forgery rejection, safe hidden
+zone-card context, exact duplicated IDs, keyboard traversal/Escape/outside
+dismissal, focus restoration, zone-card anchoring, dark paint, and no submitted
+commands. A real-v1 browser comparison pins ordered context rows/computed paint
+and full-card preview metrics with screenshot/JSON attachments.
+
+Typed context/zone action callbacks deliberately stop before command
+construction. Replay availability, source stack/zone raster parity, complete
+accessibility focus trapping, reconnect snap-back, production wiring, and
+non-Chromium approval remain separate.
 
 ## Effects and renderer cancellation
 
@@ -255,12 +271,13 @@ Legacy behavioral evidence includes:
 - renderer-contract `model.ts`, `drag.ts`, and `scene.ts` for the current
   semantic renderer boundary.
 
-This headless slice does not claim browser parity for menu geometry/items,
-click/double-click timing, focus trapping, marker editors, keyboard suppression,
-expanded-stack transforms, preview intrinsic sizing, coaching flip, stadium
-readability, hand concealment, fullscreen chrome, resize handles, accessibility
-focus order, or equal-z browser hit order. These remain Playwright/manual parity
-gates before any production switch.
+Current browser evidence covers source menu rows/computed paint, card-preview
+intrinsic sizing, native menu traversal, Escape/outside dismissal, and focus
+return. It does not claim complete focus trapping/screen-reader behavior,
+mutation-backed menu actions, replay-specific availability, source stack/zone
+raster parity, marker editors, keyboard suppression in every editable context,
+coaching flip, reconnect reconciliation, or the non-Chromium matrix. These
+remain Playwright/manual parity gates before any production switch.
 
 ## Acceptance gates
 

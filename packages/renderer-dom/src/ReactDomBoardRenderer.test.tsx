@@ -167,13 +167,60 @@ describe('React DOM board renderer', () => {
     zone.dispatchEvent(
       new MouseEvent('dblclick', { bubbles: true, detail: 2 })
     );
+    expect(zone.getAttribute('role')).toBe('button');
+    expect(zone.getAttribute('aria-haspopup')).toBe('dialog');
+    expect(zone.tabIndex).toBe(0);
+    zone.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        bubbles: true,
+        cancelable: true,
+        key: 'Enter',
+      })
+    );
+    zone.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        bubbles: true,
+        cancelable: true,
+        key: ' ',
+      })
+    );
     expect(intents).toEqual([
       { kind: 'CardSelected', cardId },
       { kind: 'CardSelected', cardId },
       { kind: 'CardPreviewRequested', cardId },
       { kind: 'CardContextRequested', cardId },
       { kind: 'ZoneOpened', zoneId: 'zone:p1:hand' },
+      { kind: 'ZoneOpened', zoneId: 'zone:p1:hand' },
+      { kind: 'ZoneOpened', zoneId: 'zone:p1:hand' },
     ]);
+
+    const inertScene = createScene(3, 40);
+    act(() =>
+      renderer.installScene(
+        {
+          ...inertScene,
+          zones: inertScene.zones.map((candidate) => ({
+            ...candidate,
+            interactive: false,
+          })),
+        },
+        []
+      )
+    );
+    const inertZone = host.querySelector<HTMLElement>('[data-zone-id]')!;
+    expect(inertZone.getAttribute('role')).toBeNull();
+    expect(inertZone.getAttribute('aria-haspopup')).toBeNull();
+    inertZone.dispatchEvent(
+      new MouseEvent('dblclick', { bubbles: true, detail: 2 })
+    );
+    inertZone.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        bubbles: true,
+        cancelable: true,
+        key: 'Enter',
+      })
+    );
+    expect(intents).toHaveLength(7);
     expect(statuses).toEqual([
       { kind: 'mounting' },
       { kind: 'ready', generation: 1 },
@@ -182,7 +229,7 @@ describe('React DOM board renderer', () => {
       rendererKind: 'dom',
       mounted: true,
       destroyed: false,
-      sceneRevision: 2,
+      sceneRevision: 3,
       renderedCardIds: [cardId],
       renderedZoneIds: ['zone:p1:hand'],
       renderedMarkerIds: [],

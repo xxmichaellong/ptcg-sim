@@ -949,6 +949,120 @@ describe('opt-in React DOM board session runtime', () => {
     );
   });
 
+  it('exposes an isolated route-owned overlay subscription and semantic presentation bridge', async () => {
+    const initial = readyState(atRevision(1));
+    const live = new MutableLiveSource(initial);
+    const replay = new MutableReplaySource(initial);
+    const reportedErrors: unknown[] = [];
+    const runtime = new ReactDomBoardSessionRuntime({
+      live,
+      replay,
+      layout: layoutState(),
+      reportError: (error) => reportedErrors.push(error),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    await mountRuntime(runtime, host);
+    const scene = runtime.getBoardSnapshot()!.scene!;
+    const card = scene.cards.find((candidate) =>
+      candidate.parentId.endsWith(':hand')
+    )!;
+    const zone = scene.zones.find((candidate) =>
+      candidate.id.endsWith(':discard')
+    )!;
+    const generations: number[] = [];
+    const unsubscribeThrowing = runtime.subscribeBoard(() => {
+      throw new Error('isolated board subscriber failure');
+    });
+    const unsubscribeObserved = runtime.subscribeBoard(() => {
+      generations.push(runtime.getBoardSnapshot()!.generation);
+    });
+
+    await act(async () => {
+      expect(
+        runtime.emitBoardIntent({
+          kind: 'CardContextRequested',
+          cardId: card.id,
+        })
+      ).toBe(true);
+    });
+    expect(runtime.getBoardSnapshot()?.overlays.contextMenuCardId).toBe(
+      card.id
+    );
+    expect(generations).toHaveLength(1);
+    expect(reportedErrors).toEqual([
+      expect.objectContaining({
+        message: 'isolated board subscriber failure',
+      }),
+    ]);
+
+    await act(async () => {
+      expect(runtime.dismissLocalPresentation('context')).toBe(true);
+      expect(
+        runtime.emitBoardIntent({ kind: 'ZoneOpened', zoneId: zone.id })
+      ).toBe(true);
+    });
+    expect(runtime.getBoardSnapshot()).toMatchObject({
+      presentation: { openedZoneId: zone.id },
+      overlays: { contextMenuCardId: null },
+    });
+    expect(generations).toHaveLength(3);
+    expect(reportedErrors).toHaveLength(3);
+
+    const hiddenZoneCard = scene.cards.find(
+      (candidate) => candidate.parentId === zone.id && !candidate.interactive
+    )!;
+    await act(async () => {
+      expect(
+        runtime.emitOpenedZoneCardIntent({
+          kind: 'CardContextRequested',
+          cardId: hiddenZoneCard.id,
+        })
+      ).toBe(true);
+    });
+    expect(runtime.getBoardSnapshot()).toMatchObject({
+      presentation: { openedZoneId: zone.id },
+      overlays: { contextMenuCardId: hiddenZoneCard.id },
+    });
+    expect(generations).toHaveLength(4);
+    expect(reportedErrors).toHaveLength(4);
+
+    await act(async () => {
+      runtime.dismissLocalPresentation('context');
+    });
+    expect(generations).toHaveLength(5);
+    expect(reportedErrors).toHaveLength(5);
+
+    unsubscribeThrowing();
+    unsubscribeObserved();
+    unsubscribeThrowing();
+    unsubscribeObserved();
+    await act(async () => {
+      runtime.dismissLocalPresentation('zone');
+    });
+    expect(generations).toHaveLength(5);
+
+    await act(async () => {
+      runtime.dispose();
+      await Promise.resolve();
+    });
+    expect(() => runtime.subscribeBoard(() => undefined)).toThrow(
+      'Board runtime is disposed'
+    );
+    expect(() =>
+      runtime.emitBoardIntent({ kind: 'ZoneOpened', zoneId: zone.id })
+    ).toThrow('Board runtime is disposed');
+    expect(() =>
+      runtime.emitOpenedZoneCardIntent({
+        kind: 'CardSelected',
+        cardId: hiddenZoneCard.id,
+      })
+    ).toThrow('Board runtime is disposed');
+    expect(() => runtime.dismissLocalPresentation()).toThrow(
+      'Board runtime is disposed'
+    );
+  });
+
   it('owns an opt-in scaled pointer lifecycle with source handle priority and flipped physical identity', async () => {
     const initial = readyState(atRevision(1));
     const live = new MutableLiveSource(initial);

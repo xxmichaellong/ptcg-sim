@@ -20,6 +20,8 @@ import {
   type BoardProjectionBoundary,
   type BoardProjectionFrame,
   type BoardProjectionSource,
+  type BoardPresentationDismissScope,
+  type OpenedZoneCardIntent,
   type BoardSessionControllerEffect,
   type BoardSessionControllerState,
 } from './BoardSessionController.js';
@@ -134,6 +136,11 @@ export class BoardSessionAdapter {
     return this.controller.dispatch({ kind: 'RendererIntent', intent });
   }
 
+  /** Accepts only cards that belong to the recipient-safe, currently open zone. */
+  emitOpenedZoneCardIntent(intent: OpenedZoneCardIntent): boolean {
+    return this.controller.dispatch({ kind: 'OpenedZoneCardIntent', intent });
+  }
+
   refreshScene(): boolean {
     return this.controller.dispatch({ kind: 'RefreshScene' });
   }
@@ -150,7 +157,7 @@ export class BoardSessionAdapter {
   }
 
   dismissLocalPresentation(
-    scope: 'all' | 'selection' | 'context' | 'preview' | 'zone' = 'all'
+    scope: BoardPresentationDismissScope = 'all'
   ): boolean {
     return this.controller.dispatch({
       kind: 'DismissLocalPresentation',

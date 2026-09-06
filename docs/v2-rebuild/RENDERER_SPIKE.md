@@ -985,6 +985,21 @@ passes 132 Playwright checks across 63 Chromium 151 browser files:
     current UI/UX remain unchanged. Visible overlay paint, keyboard/focus,
     source interaction parity, reconnect snap-back, and non-Chromium approval
     remain separate.
+54. The same unwired route composition now owns `LegacyBoardOverlays`: context
+    menu, full-card preview, stack preview, and zone browser render only
+    recipient-safe scene images and return semantic input through the runtime.
+    A dedicated opened-zone action accepts hidden cards only when their parent
+    is the currently open safe zone; renderer-surface, closed-zone, and
+    cross-zone forgery checks remain strict. Native Chromium covers Shift+F10,
+    Enter/Space, menu arrows/Home/End, Escape/outside dismissal, focus return,
+    exact card IDs, duplicate-card context anchoring, light/dark paint, and zero
+    command leakage. `react-dom-overlay-paint.spec.ts` independently mounts the
+    real v1 `Card` and pins source-ordered menu rows/computed paint plus the
+    full-preview shell/image metrics, attaching both sides and JSON evidence.
+    Action callbacks remain typed recording seams, not completed mutation
+    workflows; replay availability, source stack/zone raster parity, complete
+    accessibility audit, reconnect behavior, production wiring, and
+    non-Chromium approval remain separate.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -1160,8 +1175,10 @@ wiring:
   thresholds (source edge clamp/collision states, the isolated candidate
   resize-pointer path, and normal/flipped fullscreen viewport continuity are now
   covered);
-- full double-click, right-click, flip, split resize, zone browser, keyboard,
-  DOM-overlay anchor parity, and drag rejection/reconnect snap-back behavior;
+- complete mutation-backed context/zone actions, replay-specific menu
+  availability, source raster comparison for transformed stack/zone dialogs,
+  the full focus-trap/screen-reader audit, and reconnect snap-back beyond the
+  current native Chromium overlay/input gate;
 - actual external card/image hosts, redirects, CORS failures, oversized/corrupt
   images, and the proxy/hybrid policy in ADR-013;
 - background resume, 0x0 host, DPR changes, and resize coalescing; WebGL-only

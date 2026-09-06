@@ -79,9 +79,18 @@ the complete runtime/controller/adapter path. Native drags prove exact `no_op`
 and `unsupported_source` semantic rejection with zero submissions and cleared
 presentation, followed by one legal hand-to-discard `MoveCard` submission.
 Native selection, preview, zone-open, and context gestures reach protected
-controller state, and teardown removes the harness. The module remains absent
-from production bundles; visible overlays, keyboard/focus, source interaction
-parity, reconnect snap-back, and non-Chromium approval remain unresolved.
+controller state. Route-owned `LegacyBoardOverlays` now projects context,
+card/stack preview, and zone-browser DOM from that same safe state. Chromium
+pins native keyboard/focus/dismissal, duplicate-card anchoring, light/dark
+paint, exact recipient-safe card IDs, and zero command leakage. A real-v1 gate
+also matches source-ordered context rows and computed paint plus the full-card
+preview shell/image metrics, attaching source/candidate evidence. The renderer
+still rejects hidden surface-card input; a distinct controller action admits
+only cards belonging to the currently opened safe zone. The module remains
+absent from production bundles. Mutation-backed menu/zone workflows,
+replay-specific availability, source raster parity for transformed stack/zone
+dialogs, full accessibility audit, reconnect snap-back, and non-Chromium
+approval remain unresolved.
 
 ### Mixed attachment history policy
 
@@ -286,8 +295,9 @@ Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
   Tool-specific Pixi paint parity, full paint or interaction parity, cover-open
   UX, or opened-zone layout, and the sidebar content rectangle is derived from
   measured shell/tab edges);
-- all protected pointer, keyboard, menu, zone-browser, replay, reconnect, and
-  accessibility workflows;
+- complete mutation-backed menu/zone workflows, replay/reconnect behavior, and
+  the screen-reader/focus-trap audit beyond the current native Chromium
+  keyboard, focus-return, dismissal, and zero-command overlay gate;
 - a hidden/private-image request scan;
 - finish resource evidence beyond the current green 100-cycle warmed-host
   Chromium DOM-node/listener gate and the deterministic same-origin

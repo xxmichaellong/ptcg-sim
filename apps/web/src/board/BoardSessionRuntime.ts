@@ -7,6 +7,7 @@ import {
   resizeBoardLayoutState,
   type BoardLayoutSnapshot,
   type BoardLayoutState,
+  type BoardIntent,
   type BoardPresentation,
   type BoardRenderer,
   type BoardRendererAdapters,
@@ -24,7 +25,11 @@ import {
   type BoardSessionRendererEffect,
   type BoardSessionReplaySource,
 } from './BoardSessionAdapter.js';
-import type { BoardSessionControllerState } from './BoardSessionController.js';
+import type {
+  BoardPresentationDismissScope,
+  BoardSessionControllerState,
+  OpenedZoneCardIntent,
+} from './BoardSessionController.js';
 
 export interface BoardSessionRuntimeOptions {
   readonly live: BoardSessionLiveSource;
@@ -160,6 +165,45 @@ export class BoardSessionRuntime {
 
   getBoardSnapshot(): BoardSessionControllerState | undefined {
     return this.adapter?.getSnapshot();
+  }
+
+  /** Route-composition seam for renderer-external menus, dialogs, and status. */
+  subscribeBoard(listener: () => void): () => void {
+    this.assertUsable();
+    const adapter = this.adapter;
+    if (!adapter) throw new Error('Board session adapter is unavailable');
+    return adapter.subscribe(() => {
+      try {
+        listener();
+      } catch (error) {
+        this.reportError(error);
+      }
+    });
+  }
+
+  /** Routes DOM-overlay input through the same controller policy as renderer input. */
+  emitBoardIntent(intent: BoardIntent): boolean {
+    this.assertUsable();
+    const adapter = this.adapter;
+    if (!adapter) throw new Error('Board session adapter is unavailable');
+    return adapter.emitIntent(intent);
+  }
+
+  /** Validates duplicated card input against the currently open safe zone. */
+  emitOpenedZoneCardIntent(intent: OpenedZoneCardIntent): boolean {
+    this.assertUsable();
+    const adapter = this.adapter;
+    if (!adapter) throw new Error('Board session adapter is unavailable');
+    return adapter.emitOpenedZoneCardIntent(intent);
+  }
+
+  dismissLocalPresentation(
+    scope: BoardPresentationDismissScope = 'all'
+  ): boolean {
+    this.assertUsable();
+    const adapter = this.adapter;
+    if (!adapter) throw new Error('Board session adapter is unavailable');
+    return adapter.dismissLocalPresentation(scope);
   }
 
   getLayoutState(): BoardLayoutState {

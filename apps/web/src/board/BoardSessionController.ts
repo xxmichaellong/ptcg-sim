@@ -56,6 +56,14 @@ export interface BoardOverlayState {
   readonly preview: BoardPreviewState | null;
 }
 
+export type BoardPresentationDismissScope =
+  'all' | 'selection' | 'context' | 'preview' | 'zone';
+
+export type OpenedZoneCardIntent =
+  | Extract<BoardIntent, { readonly kind: 'CardSelected' }>
+  | Extract<BoardIntent, { readonly kind: 'CardContextRequested' }>
+  | Extract<BoardIntent, { readonly kind: 'CardPreviewRequested' }>;
+
 export interface BoardFrameCursor {
   readonly frameToken: number;
   readonly source: BoardProjectionSource;
@@ -82,13 +90,17 @@ export type BoardSessionControllerAction =
   | { readonly kind: 'RefreshScene' }
   | { readonly kind: 'RendererIntent'; readonly intent: BoardIntent }
   | {
+      readonly kind: 'OpenedZoneCardIntent';
+      readonly intent: OpenedZoneCardIntent;
+    }
+  | {
       readonly kind: 'RendererPresentationUpdated';
       readonly update: BoardPresentationUpdate;
     }
   | { readonly kind: 'HoverChanged'; readonly cardId: ViewCardId | null }
   | {
       readonly kind: 'DismissLocalPresentation';
-      readonly scope?: 'all' | 'selection' | 'context' | 'preview' | 'zone';
+      readonly scope?: BoardPresentationDismissScope;
     }
   | { readonly kind: 'SubmissionRejected' };
 
@@ -299,6 +311,17 @@ const purgeRejectedRecipientProjection = (
 
 const hasCard = (scene: BoardScene, cardId: ViewCardId): boolean =>
   scene.cards.some((card) => card.id === cardId && card.interactive);
+
+const hasOpenedZoneCard = (
+  state: BoardSessionControllerState,
+  scene: BoardScene,
+  cardId: ViewCardId
+): boolean =>
+  state.presentation.openedZoneId !== null &&
+  scene.cards.some(
+    (card) =>
+      card.id === cardId && card.parentId === state.presentation.openedZoneId
+  );
 
 const hasDropTarget = (view: MatchViewState, scene: BoardScene, id: string) =>
   Boolean(
@@ -772,16 +795,22 @@ const installPresentation = (
 const handleIntent = (
   state: BoardSessionControllerState,
   intent: BoardIntent,
-  dependencies: BoardSessionControllerDependencies
+  dependencies: BoardSessionControllerDependencies,
+  allowOpenedZoneCard = false
 ): BoardSessionControllerReduction => {
   const view = state.view;
   const scene = state.scene;
   if (!view || !scene) return rejectIntent(state, intent, 'no_installed_view');
+  const hasPresentableCard = (cardId: ViewCardId): boolean =>
+    allowOpenedZoneCard
+      ? hasOpenedZoneCard(state, scene, cardId)
+      : hasCard(scene, cardId);
 
   switch (intent.kind) {
     case 'CardSelected': {
       const card = scene.cards.find(
-        (candidate) => candidate.id === intent.cardId && candidate.interactive
+        (candidate) =>
+          candidate.id === intent.cardId && hasPresentableCard(candidate.id)
       );
       if (!card) return rejectIntent(state, intent, 'stale_card');
       const retainOpenedZone =
@@ -800,7 +829,7 @@ const handleIntent = (
       );
     }
     case 'CardContextRequested': {
-      if (!hasCard(scene, intent.cardId))
+      if (!hasPresentableCard(intent.cardId))
         return rejectIntent(state, intent, 'stale_card');
       if (view.viewer.kind === 'spectator')
         return rejectIntent(state, intent, 'read_only');
@@ -821,7 +850,8 @@ const handleIntent = (
     }
     case 'CardPreviewRequested': {
       const card = scene.cards.find(
-        (candidate) => candidate.id === intent.cardId && candidate.interactive
+        (candidate) =>
+          candidate.id === intent.cardId && hasPresentableCard(candidate.id)
       );
       if (!card) return rejectIntent(state, intent, 'stale_card');
       const preview: BoardPreviewState = view.stacks[card.parentId]
@@ -993,6 +1023,8 @@ export const reduceBoardSessionController = (
       return refreshScene(state, dependencies);
     case 'RendererIntent':
       return handleIntent(state, action.intent, dependencies);
+    case 'OpenedZoneCardIntent':
+      return handleIntent(state, action.intent, dependencies, true);
     case 'RendererPresentationUpdated':
       return handlePresentationUpdate(state, action.update);
     case 'HoverChanged': {

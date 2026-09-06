@@ -511,6 +511,51 @@ describe('headless board session controller', () => {
     ]);
   });
 
+  it('admits hidden cards only through their currently opened recipient-safe zone', () => {
+    let state = install();
+    const zone = state.scene!.zones.find(
+      (candidate) => candidate.id.endsWith(':discard') && candidate.interactive
+    )!;
+    const hiddenCard = state.scene!.cards.find(
+      (candidate) => candidate.parentId === zone.id && !candidate.interactive
+    )!;
+    const outsideCard = state.scene!.cards.find(
+      (candidate) => candidate.parentId !== zone.id && candidate.interactive
+    )!;
+    const intent: BoardIntent = {
+      kind: 'CardContextRequested',
+      cardId: hiddenCard.id,
+    };
+
+    expect(apply(state, { kind: 'RendererIntent', intent }).effects).toEqual([
+      { kind: 'IntentRejected', intent, reason: 'stale_card' },
+    ]);
+    expect(
+      apply(state, { kind: 'OpenedZoneCardIntent', intent }).effects
+    ).toEqual([{ kind: 'IntentRejected', intent, reason: 'stale_card' }]);
+
+    state = apply(state, {
+      kind: 'RendererIntent',
+      intent: { kind: 'ZoneOpened', zoneId: zone.id },
+    }).state;
+    const accepted = apply(state, { kind: 'OpenedZoneCardIntent', intent });
+    expect(accepted.state.presentation.openedZoneId).toBe(zone.id);
+    expect(accepted.state.overlays.contextMenuCardId).toBe(hiddenCard.id);
+
+    const forged: BoardIntent = {
+      kind: 'CardPreviewRequested',
+      cardId: outsideCard.id,
+    };
+    expect(
+      apply(accepted.state, {
+        kind: 'OpenedZoneCardIntent',
+        intent: forged,
+      }).effects
+    ).toEqual([
+      { kind: 'IntentRejected', intent: forged, reason: 'stale_card' },
+    ]);
+  });
+
   it('purges changed recipients and makes terminal routes absorbing', () => {
     const base = createRendererSpikeView();
     let state = install(initialFrame(base));

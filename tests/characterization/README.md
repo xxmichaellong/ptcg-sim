@@ -276,6 +276,20 @@ idempotent teardown. It does not claim legacy-source interaction parity, visible
 overlay paint, keyboard/focus, reconnect snap-back, production wiring, or
 non-Chromium approval.
 
+The overlay follow-up mounts `LegacyBoardOverlays` through that same unwired
+runtime. Context menu, full-card preview, stack preview, and zone browser render
+only recipient-safe scene images. A separate opened-zone action accepts a
+hidden card only beneath the currently open safe zone, while renderer-surface,
+closed-zone, and cross-zone forgeries remain rejected. Native Chromium covers
+Shift+F10, Enter/Space, menu arrows/Home/End, Escape/outside dismissal, focus
+return, exact card IDs, duplicate-card anchoring, light/dark paint, and zero
+command leakage. `react-dom-overlay-paint.spec.ts` mounts the real v1 `Card` and
+compares source-ordered menu rows/computed paint plus full-preview shell/image
+metrics, attaching source/candidate screenshots and JSON. Mutation-backed
+actions, replay availability, exact source stack/zone raster parity, the full
+accessibility audit, reconnect behavior, production wiring, and non-Chromium
+approval remain separate.
+
 `legacy-compound-group-rotation-layout.test.ts` and
 `legacy-compound-break-rotation-layout.test.ts` split the next source-only
 checkpoint into independently auditable ordinary-group and BREAK-composition
