@@ -291,7 +291,7 @@ repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
 The repository-wide gate passes 909 v2 tests across 143 files. A separate suite
-passes 131 Playwright checks across 62 Chromium 151 browser files:
+passes 132 Playwright checks across 63 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -973,6 +973,18 @@ passes 131 Playwright checks across 62 Chromium 151 browser files:
     attached, and the other three callbacks delegate once. Production routes,
     current UI/UX, and v1 sources remain unchanged; full action workflows and
     non-Chromium approval remain separate.
+53. A separate development-only harness composes the real React DOM renderer,
+    session runtime, controller, adapter, and recording live submission seam.
+    Native Chromium drags reject a hand-to-same-zone no-op and a lower attached
+    evolution-to-discard move with exact reasons, zero commands, cleared drag
+    presentation, and suppressed clicks. A legal hand-to-discard drag emits one
+    preconditioned `MoveCard` and one queued result. Native click, card
+    double-click, zone double-click, and right-click then install protected
+    selection, preview, opened-zone, and context state without another command;
+    idempotent disposal removes the full harness. Production bundles/routes and
+    current UI/UX remain unchanged. Visible overlay paint, keyboard/focus,
+    source interaction parity, reconnect snap-back, and non-Chromium approval
+    remain separate.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

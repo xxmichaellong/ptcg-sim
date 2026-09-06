@@ -74,6 +74,15 @@ gates. The flipped one-pixel source clamp
 also retains an explicit caveat: Chromium's nested iframe child layout diverges
 from normalized inner-region geometry while the outer resize geometry matches.
 
+The next development-only Chromium gate composes the selected DOM renderer with
+the complete runtime/controller/adapter path. Native drags prove exact `no_op`
+and `unsupported_source` semantic rejection with zero submissions and cleared
+presentation, followed by one legal hand-to-discard `MoveCard` submission.
+Native selection, preview, zone-open, and context gestures reach protected
+controller state, and teardown removes the harness. The module remains absent
+from production bundles; visible overlays, keyboard/focus, source interaction
+parity, reconnect snap-back, and non-Chromium approval remain unresolved.
+
 ### Mixed attachment history policy
 
 Do not add legacy DOM-reflow provenance or per-card pixel offsets to

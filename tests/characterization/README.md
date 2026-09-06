@@ -264,6 +264,18 @@ visible flip/fullscreen callbacks establish the states, and the remaining three
 callbacks delegate exactly once. Production wiring, complete action workflows,
 and non-Chromium approval remain separate.
 
+`react-dom-protected-input.spec.ts` adds the next candidate-only interaction
+boundary. Its development-only harness mounts the actual React DOM session
+runtime and records controller effects plus live submissions. Native same-zone
+and lower-evolution-to-discard drags produce exact `no_op` and
+`unsupported_source` rejections, clear drag state, suppress click selection, and
+submit nothing; a legal hand-to-discard drag queues exactly one preconditioned
+`MoveCard`. Native click, card/zone double-click, and right-click then prove
+controller-owned selection, preview, opened-zone, and context state before
+idempotent teardown. It does not claim legacy-source interaction parity, visible
+overlay paint, keyboard/focus, reconnect snap-back, production wiring, or
+non-Chromium approval.
+
 `legacy-compound-group-rotation-layout.test.ts` and
 `legacy-compound-break-rotation-layout.test.ts` split the next source-only
 checkpoint into independently auditable ordinary-group and BREAK-composition

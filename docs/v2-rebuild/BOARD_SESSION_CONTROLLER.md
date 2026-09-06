@@ -191,6 +191,18 @@ candidate images plus per-state metrics are attached. No production route
 imports this component yet; the callbacks do not claim complete game workflow
 parity.
 
+`tests/browser/react-dom-protected-input.spec.ts` now crosses the complete
+native DOM → renderer intent → controller policy → adapter submission boundary.
+A same-zone hand drop and a lower attached evolution dropped on discard both
+animate through real drag presentation, then return to authoritative geometry,
+suppress the follow-up click, emit exact `no_op` and `unsupported_source`
+effects, and submit nothing. A legal hand-to-discard drop emits exactly one
+preconditioned `MoveCard` plus one queued result. Native click, card
+double-click, zone double-click, and right-click install selection, preview,
+opened-zone, and context state without a mutation. The development-only harness
+is removed idempotently. Visible overlay composition, keyboard/focus, source
+interaction parity, reconnect snap-back, and production wiring remain separate.
+
 ## Effects and renderer cancellation
 
 The pure reducer returns effects for one reduction and never stores them.

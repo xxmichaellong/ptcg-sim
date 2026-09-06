@@ -1102,6 +1102,19 @@ card at its proposed location while a move is pending, but canonical view state
 is never mutated. Randomized actions, hidden-information actions, undo, and
 multi-card transactions are not predicted unless a later ADR proves them safe.
 
+A development-only protected-input harness now composes the real React DOM
+renderer, `BoardSessionRuntime`, controller, adapter, and a recording live
+submission seam. Native Chromium gestures prove that a same-zone hand drop and
+a lower-evolution-to-discard drop clear drag presentation, suppress the
+synthetic click, emit exact `no_op`/`unsupported_source` rejections, and submit
+nothing. A legal hand-to-discard drag emits one preconditioned `MoveCard` and
+one queued result. Native click, double-click, zone double-click, and right-click
+then reach controller-owned selection, card preview, opened-zone, and context
+state without another submission. Disposal is idempotent and removes the full
+harness. This proves the protected under-the-hood path, not visible overlay
+paint, focus/keyboard behavior, source parity, reconnect snap-back, or a
+production route.
+
 ## React application state
 
 Use one small client controller/store outside React that exposes selectors for:
