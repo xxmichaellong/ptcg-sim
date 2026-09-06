@@ -10,7 +10,7 @@ import {
   type BoardLayoutState,
   type BoardPresentation,
 } from '@ptcgsim/renderer-contract';
-import { createElement } from 'react';
+import { createElement, Fragment } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import type {
@@ -19,7 +19,9 @@ import type {
   BoardSessionReplaySource,
 } from '../board/BoardSessionAdapter.js';
 import type { BoardOverlayState } from '../board/BoardSessionController.js';
+import { LegacyBoardKeyboardShortcuts } from '../board/LegacyBoardKeyboardShortcuts.js';
 import { ReactDomBoardSessionRuntime } from '../board/ReactDomBoardSessionRuntime.js';
+import type { LegacyBoardShortcutActionRequest } from '../board/resolveLegacyBoardShortcutAction.js';
 import {
   LegacyBoardOverlays,
   type LegacyBoardCategoryChoice,
@@ -40,6 +42,10 @@ type OverlayRejectionEffect = Extract<
   BoardSessionRendererEffect,
   { readonly kind: 'OverlayActionRejected' }
 >;
+type ShortcutRejectionEffect = Extract<
+  BoardSessionRendererEffect,
+  { readonly kind: 'ShortcutActionRejected' }
+>;
 
 export interface ReactDomProtectedInputFixture {
   readonly ownPlayerId: string;
@@ -57,6 +63,8 @@ export interface ReactDomProtectedInputFixture {
   readonly activeTopCardId: string;
   readonly activeStackId: string;
   readonly activeAbilityUsed: boolean;
+  readonly conditionlessActiveTopCardId: string;
+  readonly conditionlessActiveStackId: string;
   readonly destinationZoneId: string;
   readonly destinationCardIds: readonly string[];
   readonly destinationSortedCardIds: readonly string[];
@@ -68,6 +76,8 @@ export interface ReactDomProtectedInputEvidence {
   readonly rejections: readonly RejectionEffect[];
   readonly overlayRejections: readonly OverlayRejectionEffect[];
   readonly overlayActions: readonly ReactDomProtectedOverlayAction[];
+  readonly shortcutRejections: readonly ShortcutRejectionEffect[];
+  readonly shortcutActions: readonly LegacyBoardShortcutActionRequest[];
   readonly presentation: BoardPresentation;
   readonly overlays: BoardOverlayState;
   readonly reportedErrors: readonly string[];
@@ -181,6 +191,8 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
   const rejections: RejectionEffect[] = [];
   const overlayRejections: OverlayRejectionEffect[] = [];
   const overlayActions: ReactDomProtectedOverlayAction[] = [];
+  const shortcutRejections: ShortcutRejectionEffect[] = [];
+  const shortcutActions: LegacyBoardShortcutActionRequest[] = [];
   const reportedErrors: string[] = [];
   let clientSequence = 0;
   const live: BoardSessionLiveSource = {
@@ -235,6 +247,8 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
       if (effect.kind === 'IntentRejected') rejections.push(effect);
       if (effect.kind === 'OverlayActionRejected')
         overlayRejections.push(effect);
+      if (effect.kind === 'ShortcutActionRejected')
+        shortcutRejections.push(effect);
     },
     onSubmission: (_command, result) => submissionResults.push(result),
     reportError: (error) => reportedErrors.push(String(error)),
@@ -273,12 +287,21 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
     : undefined;
   const unsupportedCardId = localActiveStack?.evolutionCards[0]?.id;
   const activeTopCardId = localActiveStack?.evolutionCards.at(-1)?.id;
+  const conditionlessActiveStackId = view.boards[secondPlayerId]?.activeStackId;
+  const conditionlessActiveStack = conditionlessActiveStackId
+    ? view.stacks[conditionlessActiveStackId]
+    : undefined;
+  const conditionlessActiveTopCardId =
+    conditionlessActiveStack?.evolutionCards.at(-1)?.id;
   if (
     !sourceCard ||
     !ownDeckCard ||
     !opponentDeckCard ||
     !unsupportedCardId ||
     !activeTopCardId ||
+    !conditionlessActiveTopCardId ||
+    !conditionlessActiveStackId ||
+    conditionlessActiveStack?.specialCondition !== null ||
     !localActiveStackId ||
     !localActiveStack ||
     !scene.cards.some(
@@ -317,6 +340,8 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
     activeTopCardId: String(activeTopCardId),
     activeStackId: localActiveStackId,
     activeAbilityUsed: localActiveStack.abilityUsed,
+    conditionlessActiveTopCardId: String(conditionlessActiveTopCardId),
+    conditionlessActiveStackId,
     destinationZoneId,
     destinationCardIds: destinationCards.map((card) => String(card.id)),
     destinationSortedCardIds: destinationCards
@@ -421,11 +446,22 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
     const current = runtime.getBoardSnapshot();
     overlayRoot.render(
       current
-        ? createElement(LegacyBoardOverlays, {
-            state: current,
-            darkMode,
-            actions: overlayCallbacks,
-          })
+        ? createElement(
+            Fragment,
+            null,
+            createElement(LegacyBoardOverlays, {
+              state: current,
+              darkMode,
+              actions: overlayCallbacks,
+            }),
+            createElement(LegacyBoardKeyboardShortcuts, {
+              state: current,
+              onRequest: (request) => {
+                shortcutActions.push(request);
+                runtime.emitLegacyShortcutAction(request);
+              },
+            })
+          )
         : null
     );
   };
@@ -449,6 +485,8 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
         rejections: [...rejections],
         overlayRejections: [...overlayRejections],
         overlayActions: [...overlayActions],
+        shortcutRejections: [...shortcutRejections],
+        shortcutActions: [...shortcutActions],
         presentation: current.presentation,
         overlays: current.overlays,
         reportedErrors: [...reportedErrors],
@@ -461,6 +499,8 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
       rejections.length = 0;
       overlayRejections.length = 0;
       overlayActions.length = 0;
+      shortcutRejections.length = 0;
+      shortcutActions.length = 0;
       reportedErrors.length = 0;
     },
     setDarkMode: (enabled) => {

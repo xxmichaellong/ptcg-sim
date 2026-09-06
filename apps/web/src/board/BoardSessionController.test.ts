@@ -353,6 +353,101 @@ describe('headless board session controller', () => {
     });
   });
 
+  it('binds shortcut requests to the selected card and applies source dismissal', () => {
+    let state = install();
+    const activeStack = state.view!.stacks['stack:blue:active']!;
+    const cardId = activeStack.evolutionCards.at(-1)!.id;
+    const wrongCardId = cardIn(state.scene!, ':hand');
+    state = select(state, cardId);
+
+    const wrongCard = apply(state, {
+      kind: 'LegacyShortcutActionRequested',
+      request: { action: 'adjustDamage', cardId: wrongCardId, delta: 30 },
+    });
+    expect(wrongCard.state).toBe(state);
+    expect(wrongCard.effects).toEqual([
+      {
+        kind: 'ShortcutActionRejected',
+        request: {
+          action: 'adjustDamage',
+          cardId: wrongCardId,
+          delta: 30,
+        },
+        reason: 'stale_card',
+      },
+    ]);
+
+    const retained = apply(state, {
+      kind: 'LegacyShortcutActionRequested',
+      request: { action: 'adjustDamage', cardId, delta: 30 },
+    });
+    expect(retained.state).toBe(state);
+    expect(retained.effects).toEqual([
+      {
+        kind: 'SubmitCommand',
+        command: {
+          type: 'SetDamage',
+          stackId: activeStack.id,
+          damage: 150,
+        },
+      },
+    ]);
+
+    const dismissed = apply(state, {
+      kind: 'LegacyShortcutActionRequested',
+      request: { action: 'toggleAbility', cardId },
+    });
+    expect(dismissed.state.presentation.selectedCardId).toBeNull();
+    expect(dismissed.effects).toEqual([
+      {
+        kind: 'InstallPresentation',
+        presentation: dismissed.state.presentation,
+      },
+      {
+        kind: 'SubmitCommand',
+        command: {
+          type: 'SetAbilityUsed',
+          stackId: activeStack.id,
+          used: !activeStack.abilityUsed,
+        },
+      },
+    ]);
+    const afterDismissal = apply(dismissed.state, {
+      kind: 'LegacyShortcutActionRequested',
+      request: { action: 'toggleAbility', cardId },
+    });
+    expect(afterDismissal.effects).toEqual([
+      {
+        kind: 'ShortcutActionRejected',
+        request: { action: 'toggleAbility', cardId },
+        reason: 'stale_card',
+      },
+    ]);
+  });
+
+  it('keeps replay shortcut requests outside the resolver and submitter', () => {
+    const view = createRendererSpikeView();
+    const resolveShortcutAction = vi.fn(() => {
+      throw new Error('blocked shortcut request reached resolver');
+    });
+    const deps = { createScene, resolveShortcutAction };
+    let state = install(replayFrame(1, 1, view, 'resync'), deps);
+    const cardId =
+      state.view!.stacks['stack:blue:active']!.evolutionCards.at(-1)!.id;
+    state = select(state, cardId);
+    const request = { action: 'toggleAbility' as const, cardId };
+    const result = apply(
+      state,
+      { kind: 'LegacyShortcutActionRequested', request },
+      deps
+    );
+    expect(result.state).toBe(state);
+    expect(result.effects).toEqual([
+      { kind: 'ShortcutActionRejected', request, reason: 'read_only' },
+    ]);
+    expect(resolveShortcutAction).not.toHaveBeenCalled();
+  });
+
   it('owns damage-editor identity from context open through bounded submit', () => {
     let state = install();
     const activeStack = state.view!.stacks['stack:blue:active']!;

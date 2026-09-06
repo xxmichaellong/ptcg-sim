@@ -26,6 +26,7 @@ import {
   type BoardSessionControllerState,
 } from './BoardSessionController.js';
 import type { LegacyBoardOverlayActionRequest } from './resolveLegacyBoardOverlayAction.js';
+import type { LegacyBoardShortcutActionRequest } from './resolveLegacyBoardShortcutAction.js';
 
 export type BoardSessionLiveSource = Pick<
   RemoteGameSession,
@@ -145,6 +146,13 @@ export class BoardSessionAdapter {
   emitLegacyOverlayAction(request: LegacyBoardOverlayActionRequest): boolean {
     return this.controller.dispatch({
       kind: 'LegacyOverlayActionRequested',
+      request,
+    });
+  }
+
+  emitLegacyShortcutAction(request: LegacyBoardShortcutActionRequest): boolean {
+    return this.controller.dispatch({
+      kind: 'LegacyShortcutActionRequested',
       request,
     });
   }

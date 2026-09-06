@@ -291,7 +291,7 @@ repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
 The repository-wide gate passes 909 v2 tests across 143 files. A separate suite
-passes 134 Playwright checks across 64 Chromium 151 browser files:
+passes 135 Playwright checks across 64 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -1108,6 +1108,19 @@ passes 134 Playwright checks across 64 Chromium 151 browser files:
     Native Chromium pins all five exact commands at uninterrupted client
     sequences 15–19. The keyboard marker shortcuts and production route remain
     separate.
+63. A route-owned document bridge now completes the selected-card marker and
+    category shortcuts without adding a visible control. Digits/Alt-digits/`0`,
+    `Y`/Alt-`Y`, `W`, and Alt-`E`/`T`/`P` map from exact key/code pairs to one
+    closed request carrying the selected stable card ID. The controller requires
+    that exact installed selection on a ready live-player projection and then
+    reuses the bounded stack or annotation resolver. Immediate selection cleanup
+    matches v1 for ability, category, and accepted removal actions; additive
+    damage and condition cycling retain selection. Alt-digit and Alt-`Y` also
+    preserve the source's positive/default creation when a marker is absent.
+    Unselected, editable, composing, already-consumed, forged, stale,
+    unsupported, invalid, replay, and post-dismissal input cannot submit. Native
+    Chromium pins nine exact commands and zero editable-target traffic. The
+    production route remains separate.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

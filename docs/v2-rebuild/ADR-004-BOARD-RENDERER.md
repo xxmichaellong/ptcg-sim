@@ -100,12 +100,16 @@ strict complete-integer validation, safe capacity clamping, and quiet
 cancellation. Both unchanged nested menus now submit typed choices: category
 reuses stale-safe `ChangeCardCategory`, while all five move rows reuse the
 existing loose-board or deck-relative movement commands. Local zone sorting is
-controlled by the mounted zone browser:
+The route-owned keymap now binds characterized marker/category key/code and Alt
+combinations to the selected stable card, rechecks that selection in the
+controller, and reuses the same bounded semantic resolvers while suppressing
+editable targets. Local zone sorting is controlled by the mounted zone browser:
 it derives a stable copy from disclosed labels and never enters the controller
 or mutates its projection; forged requests still fail closed as `local_only`.
 Native Chromium pins exact damage and condition edit/removal plus ability-marker
 commands, all six count prompts/commands, all three category choices, all five
-move choices, and reversible sorting with zero action/effect/command traffic.
+move choices, all nine selected-card shortcut families, and reversible sorting
+with zero action/effect/command traffic.
 Replay-
 local prize/hand disclosure is characterized but deliberately unavailable until
 it has an isolated local projection; replay can never reach the resolver or

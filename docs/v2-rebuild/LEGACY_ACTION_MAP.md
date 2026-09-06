@@ -95,7 +95,8 @@ locally while typing. Zero/empty text removes either marker. Malformed input
 remains local and visibly invalid, while forged non-string input is rejected by
 the resolver. The controller clears editors on reconnect/recipient replacement,
 restricts conditions to active, and rejects missing, wrong-card, or cross-kind
-submissions. The keyboard shortcut bridge remains separate.
+submissions. The selected-card shortcut bridge is completed by the later
+protected keyboard checkpoint.
 
 The same protected overlay now completes the category submenu around
 `changeType`. It preserves the exact parent and ordered labels `Change type...`,
@@ -106,7 +107,8 @@ with its expected source stack. Missing and forged categories, lower
 evolutions, loose cards, stale targets, and requests after dismissal cannot
 submit. Native Chromium proves all three choices and continuous client
 sequences 12–14; source-versus-candidate paint metrics pin the unchanged nested
-menu. Move-card destinations and keyboard category shortcuts remain separate.
+menu. The adjacent move destinations and selected-card shortcut path are
+completed by the following protected checkpoints.
 
 ## Loose board batches
 
@@ -842,6 +844,27 @@ exceptions. They remain unavailable in the V2 replay menu—and forged requests
 fail `read_only`—until replay owns an isolated disclosure projection rather than
 mutating a historical view. This slice changes no label, placement, styling, or
 production route.
+
+### Implemented selected-card keyboard subset
+
+The route-owned document bridge now converts only the characterized selected-
+card marker/category keys into a closed request: digits and Alt-digits adjust
+damage in tens, `0` removes damage, `Y` cycles or creates a condition, Alt-`Y`
+removes it, `W` toggles ability, and Alt-`E`/`T`/`P` changes category. The
+source's missing-marker rules remain exact: Alt-digit creates the positive
+damage value and Alt-`Y` creates `P` when no corresponding marker exists.
+
+Raw DOM events never enter controller logic. The key/code/Alt mapper attaches
+the currently selected stable card ID, and the controller rechecks that exact
+identity on a ready live-player projection before reusing the bounded stack or
+annotation resolver. Ability, category, and accepted removal gestures clear
+selection as v1 does; additive damage and condition cycling retain it. Forged,
+stale, unsupported, invalid, replay, and post-dismissal requests cannot submit.
+The bridge ignores unselected, composing, already-consumed, input, textarea,
+select, table-cell, contenteditable, textbox-role, and legacy marker/tab
+targets. Native Chromium proves all nine command families and zero traffic from
+an editable target without adding a visible control or enabling the production
+route.
 
 ### Implemented authority-random face-down subset
 

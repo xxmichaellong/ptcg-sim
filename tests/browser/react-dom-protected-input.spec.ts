@@ -16,6 +16,8 @@ interface ProtectedInputFixture {
   readonly activeTopCardId: string;
   readonly activeStackId: string;
   readonly activeAbilityUsed: boolean;
+  readonly conditionlessActiveTopCardId: string;
+  readonly conditionlessActiveStackId: string;
   readonly destinationZoneId: string;
   readonly destinationCardIds: readonly string[];
   readonly destinationSortedCardIds: readonly string[];
@@ -27,6 +29,8 @@ interface ProtectedInputEvidence {
   readonly rejections: readonly unknown[];
   readonly overlayRejections: readonly unknown[];
   readonly overlayActions: readonly unknown[];
+  readonly shortcutRejections: readonly unknown[];
+  readonly shortcutActions: readonly unknown[];
   readonly presentation: {
     readonly selectedCardId: string | null;
     readonly drag: {
@@ -1193,6 +1197,227 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
     expect(moveEvidence.overlayRejections).toEqual([]);
     expect(moveEvidence.reportedErrors).toEqual([]);
   }
+
+  await page.evaluate(() => {
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.dispose();
+    harness.dispose();
+  });
+  await expect(host).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('selected-card marker and category shortcuts stay protected and suppress editable targets', async ({
+  page,
+}) => {
+  const errors = collectRuntimeErrors(page);
+  const fixture = await mountHarness(page);
+  const host = page.locator('[data-react-dom-protected-input-harness]');
+  const ownCard = host.locator(`[data-card-id="${fixture.activeTopCardId}"]`);
+  const conditionlessCard = host.locator(
+    `[data-card-id="${fixture.conditionlessActiveTopCardId}"]`
+  );
+  const selectCard = async (card: Locator, cardId: string): Promise<void> => {
+    const point = await exposedCardPoint(card);
+    await page.mouse.click(point.x, point.y);
+    await expect
+      .poll(async () => (await evidence(page)).presentation.selectedCardId)
+      .toBe(cardId);
+  };
+  const cases = [
+    {
+      key: 'Digit3',
+      card: ownCard,
+      cardId: fixture.activeTopCardId,
+      request: {
+        action: 'adjustDamage',
+        cardId: fixture.activeTopCardId,
+        delta: 30,
+      },
+      command: {
+        type: 'SetDamage',
+        stackId: fixture.activeStackId,
+        damage: 150,
+      },
+      retained: true,
+    },
+    {
+      key: 'Alt+Digit9',
+      card: ownCard,
+      cardId: fixture.activeTopCardId,
+      request: {
+        action: 'adjustDamage',
+        cardId: fixture.activeTopCardId,
+        delta: -90,
+      },
+      command: {
+        type: 'SetDamage',
+        stackId: fixture.activeStackId,
+        damage: 30,
+      },
+      retained: true,
+    },
+    {
+      key: 'Digit0',
+      card: ownCard,
+      cardId: fixture.activeTopCardId,
+      request: {
+        action: 'removeDamage',
+        cardId: fixture.activeTopCardId,
+      },
+      command: {
+        type: 'SetDamage',
+        stackId: fixture.activeStackId,
+        damage: null,
+      },
+      retained: false,
+    },
+    {
+      key: 'KeyW',
+      card: ownCard,
+      cardId: fixture.activeTopCardId,
+      request: {
+        action: 'toggleAbility',
+        cardId: fixture.activeTopCardId,
+      },
+      command: {
+        type: 'SetAbilityUsed',
+        stackId: fixture.activeStackId,
+        used: !fixture.activeAbilityUsed,
+      },
+      retained: false,
+    },
+    {
+      key: 'Alt+KeyY',
+      card: ownCard,
+      cardId: fixture.activeTopCardId,
+      request: {
+        action: 'cycleSpecialCondition',
+        cardId: fixture.activeTopCardId,
+        remove: true,
+      },
+      command: {
+        type: 'SetSpecialCondition',
+        stackId: fixture.activeStackId,
+        condition: null,
+      },
+      retained: false,
+    },
+    {
+      key: 'Alt+KeyE',
+      card: ownCard,
+      cardId: fixture.activeTopCardId,
+      request: {
+        action: 'changeCardType',
+        cardId: fixture.activeTopCardId,
+        category: 'Energy',
+      },
+      command: {
+        type: 'ChangeCardCategory',
+        cardId: fixture.activeTopCardId,
+        expectedSourceId: fixture.activeStackId,
+        category: 'Energy',
+      },
+      retained: false,
+    },
+    {
+      key: 'Alt+KeyT',
+      card: ownCard,
+      cardId: fixture.activeTopCardId,
+      request: {
+        action: 'changeCardType',
+        cardId: fixture.activeTopCardId,
+        category: 'Trainer',
+      },
+      command: {
+        type: 'ChangeCardCategory',
+        cardId: fixture.activeTopCardId,
+        expectedSourceId: fixture.activeStackId,
+        category: 'Trainer',
+      },
+      retained: false,
+    },
+    {
+      key: 'Alt+KeyP',
+      card: ownCard,
+      cardId: fixture.activeTopCardId,
+      request: {
+        action: 'changeCardType',
+        cardId: fixture.activeTopCardId,
+        category: 'Pokémon',
+      },
+      command: {
+        type: 'ChangeCardCategory',
+        cardId: fixture.activeTopCardId,
+        expectedSourceId: fixture.activeStackId,
+        category: 'Pokémon',
+      },
+      retained: false,
+    },
+    {
+      key: 'KeyY',
+      card: conditionlessCard,
+      cardId: fixture.conditionlessActiveTopCardId,
+      request: {
+        action: 'cycleSpecialCondition',
+        cardId: fixture.conditionlessActiveTopCardId,
+        remove: false,
+      },
+      command: {
+        type: 'SetSpecialCondition',
+        stackId: fixture.conditionlessActiveStackId,
+        condition: 'P',
+      },
+      retained: true,
+    },
+  ] as const;
+
+  for (const [index, shortcut] of cases.entries()) {
+    await clearEvidence(page);
+    await selectCard(shortcut.card, shortcut.cardId);
+    await page.keyboard.press(shortcut.key);
+    await expect
+      .poll(async () => (await evidence(page)).submissions)
+      .toEqual([shortcut.command]);
+    const shortcutEvidence = await evidence(page);
+    const clientSequence = index + 1;
+    expect(shortcutEvidence.submissionResults).toEqual([
+      {
+        queued: true,
+        commandId: `protected-input-command-${clientSequence}`,
+        clientSequence,
+      },
+    ]);
+    expect(shortcutEvidence.shortcutActions).toEqual([shortcut.request]);
+    expect(shortcutEvidence.shortcutRejections).toEqual([]);
+    expect(shortcutEvidence.overlayActions).toEqual([]);
+    expect(shortcutEvidence.reportedErrors).toEqual([]);
+    expect(shortcutEvidence.presentation.selectedCardId).toBe(
+      shortcut.retained ? shortcut.cardId : null
+    );
+  }
+
+  await clearEvidence(page);
+  await selectCard(ownCard, fixture.activeTopCardId);
+  await page.evaluate(() => {
+    const input = document.createElement('input');
+    input.dataset.shortcutEditableProbe = 'true';
+    document
+      .querySelector('[data-react-dom-protected-input-harness]')
+      ?.append(input);
+    input.focus();
+  });
+  await page.keyboard.press('Digit4');
+  const suppressed = await evidence(page);
+  expect(suppressed.submissions).toEqual([]);
+  expect(suppressed.shortcutActions).toEqual([]);
+  expect(suppressed.shortcutRejections).toEqual([]);
+  expect(suppressed.presentation.selectedCardId).toBe(fixture.activeTopCardId);
+  await page
+    .locator('[data-shortcut-editable-probe]')
+    .evaluate((element) => element.remove());
 
   await page.evaluate(() => {
     const harness = (window as ProtectedInputHarnessWindow)

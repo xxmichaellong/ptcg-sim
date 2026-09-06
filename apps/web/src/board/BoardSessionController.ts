@@ -21,6 +21,11 @@ import {
   type LegacyBoardOverlayActionRequest,
 } from './resolveLegacyBoardOverlayAction.js';
 import { isLegacyBoardCountActionId } from './resolveLegacyBoardCountAction.js';
+import {
+  resolveLegacyBoardShortcutAction,
+  type LegacyBoardShortcutActionRejectionReason,
+  type LegacyBoardShortcutActionRequest,
+} from './resolveLegacyBoardShortcutAction.js';
 
 export type BoardProjectionSource =
   | { readonly kind: 'live' }
@@ -106,6 +111,10 @@ export type BoardSessionControllerAction =
       readonly request: LegacyBoardOverlayActionRequest;
     }
   | {
+      readonly kind: 'LegacyShortcutActionRequested';
+      readonly request: LegacyBoardShortcutActionRequest;
+    }
+  | {
       readonly kind: 'RendererPresentationUpdated';
       readonly update: BoardPresentationUpdate;
     }
@@ -130,6 +139,13 @@ export type BoardOverlayActionRejectionReason =
   | 'not_ready'
   | 'read_only'
   | LegacyBoardOverlayActionRejectionReason;
+
+export type BoardShortcutActionRejectionReason =
+  | 'no_installed_view'
+  | 'not_ready'
+  | 'read_only'
+  | 'stale_card'
+  | LegacyBoardShortcutActionRejectionReason;
 
 export type BoardSessionControllerEffect =
   | {
@@ -156,6 +172,11 @@ export type BoardSessionControllerEffect =
       readonly reason: BoardOverlayActionRejectionReason;
     }
   | {
+      readonly kind: 'ShortcutActionRejected';
+      readonly request: LegacyBoardShortcutActionRequest;
+      readonly reason: BoardShortcutActionRejectionReason;
+    }
+  | {
       readonly kind: 'IntentRejected';
       readonly intent: BoardIntent;
       readonly reason: BoardIntentRejectionReason;
@@ -173,6 +194,7 @@ export interface BoardSessionControllerDependencies {
   readonly createScene: (view: MatchViewState) => BoardScene;
   readonly resolveDrop?: typeof resolveBoardDrop;
   readonly resolveOverlayAction?: typeof resolveLegacyBoardOverlayAction;
+  readonly resolveShortcutAction?: typeof resolveLegacyBoardShortcutAction;
 }
 
 export interface BoardSessionControllerOptions {
@@ -1089,6 +1111,57 @@ const handleOverlayAction = (
   ]);
 };
 
+const rejectShortcutAction = (
+  state: BoardSessionControllerState,
+  request: LegacyBoardShortcutActionRequest,
+  reason: BoardShortcutActionRejectionReason
+): BoardSessionControllerReduction =>
+  accepted(state, [{ kind: 'ShortcutActionRejected', request, reason }]);
+
+const handleShortcutAction = (
+  state: BoardSessionControllerState,
+  request: LegacyBoardShortcutActionRequest,
+  dependencies: BoardSessionControllerDependencies
+): BoardSessionControllerReduction => {
+  const view = state.view;
+  const scene = state.scene;
+  if (!view || !scene) {
+    return rejectShortcutAction(state, request, 'no_installed_view');
+  }
+  if (state.sessionPhase !== 'ready') {
+    return rejectShortcutAction(state, request, 'not_ready');
+  }
+  if (!state.canSubmitCommands) {
+    return rejectShortcutAction(state, request, 'read_only');
+  }
+  if (
+    state.presentation.selectedCardId !== request.cardId ||
+    !hasCard(scene, request.cardId)
+  ) {
+    return rejectShortcutAction(state, request, 'stale_card');
+  }
+  const resolution = (
+    dependencies.resolveShortcutAction ?? resolveLegacyBoardShortcutAction
+  )(view, request);
+  if (!resolution.ok) {
+    return rejectShortcutAction(state, request, resolution.reason);
+  }
+  if (!resolution.dismissSelection) {
+    return accepted(state, [
+      { kind: 'SubmitCommand', command: resolution.command },
+    ]);
+  }
+  const presentation: BoardPresentation = {
+    ...state.presentation,
+    selectedCardId: null,
+  };
+  const next = nextState(state, { presentation });
+  return accepted(next, [
+    { kind: 'InstallPresentation', presentation },
+    { kind: 'SubmitCommand', command: resolution.command },
+  ]);
+};
+
 const refreshScene = (
   state: BoardSessionControllerState,
   dependencies: BoardSessionControllerDependencies
@@ -1170,6 +1243,8 @@ export const reduceBoardSessionController = (
       return handleIntent(state, action.intent, dependencies, true);
     case 'LegacyOverlayActionRequested':
       return handleOverlayAction(state, action.request, dependencies);
+    case 'LegacyShortcutActionRequested':
+      return handleShortcutAction(state, action.request, dependencies);
     case 'RendererPresentationUpdated':
       return handlePresentationUpdate(state, action.update);
     case 'HoverChanged': {

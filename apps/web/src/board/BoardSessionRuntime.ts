@@ -31,6 +31,7 @@ import type {
   OpenedZoneCardIntent,
 } from './BoardSessionController.js';
 import type { LegacyBoardOverlayActionRequest } from './resolveLegacyBoardOverlayAction.js';
+import type { LegacyBoardShortcutActionRequest } from './resolveLegacyBoardShortcutAction.js';
 
 export interface BoardSessionRuntimeOptions {
   readonly live: BoardSessionLiveSource;
@@ -204,6 +205,14 @@ export class BoardSessionRuntime {
     const adapter = this.adapter;
     if (!adapter) throw new Error('Board session adapter is unavailable');
     return adapter.emitLegacyOverlayAction(request);
+  }
+
+  /** Resolves selected-card shortcuts through the same protected controller. */
+  emitLegacyShortcutAction(request: LegacyBoardShortcutActionRequest): boolean {
+    this.assertUsable();
+    const adapter = this.adapter;
+    if (!adapter) throw new Error('Board session adapter is unavailable');
+    return adapter.emitLegacyShortcutAction(request);
   }
 
   dismissLocalPresentation(
@@ -385,6 +394,7 @@ export class BoardSessionRuntime {
         break;
       case 'IntentRejected':
       case 'OverlayActionRejected':
+      case 'ShortcutActionRejected':
         break;
     }
     this.options.onBoardEffect?.(effect);

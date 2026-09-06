@@ -320,7 +320,8 @@ creation, malformed/runtime-forged values, no-op and Escape cancellation,
 cross-kind submission, reconnect cleanup, exact overlay geometry, and immutable
 scenes. The native route proves invalid `70.5`, accepted `70`, damage removal,
 overlong condition retention, `Pa`, condition removal, then an ability toggle at
-client sequences 1/2/3/4/5 exactly once. Keyboard marker shortcuts remain open.
+client sequences 1/2/3/4/5 exactly once. The later selected-card checkpoint
+completes the keyboard path.
 
 The protected count-input checkpoint completes all six context-menu numeric
 prompts while retaining the browser-native v1 UI. A typed controller descriptor
@@ -361,8 +362,19 @@ The shared nested-menu component preserves hover/click behavior and keyboard
 entry, traversal, return, and dismissal for both compound menus. The real-v1
 paint companion compares labels, dimensions, offsets, padding, separator,
 shadow, colors, and typography. Native Chromium proves all five exact move
-commands at client sequences 15 through 19 without gaps. Keyboard marker and
-category shortcuts remain separate.
+commands at client sequences 15 through 19 without gaps.
+
+The protected selected-card shortcut checkpoint completes the numeric/Alt-
+numeric/`0` damage gestures, `Y`/Alt-`Y` condition gestures, `W` ability toggle,
+and Alt-`E`/`T`/`P` category changes. A route-owned key/code mapper emits one
+closed request containing the selected stable card ID; the controller rechecks
+that exact selection and live-player policy before delegating to the existing
+bounded stack or annotation resolver. The source's immediate deselection rules
+and missing-marker Alt behavior are explicit. Editable, composing, consumed,
+unselected, forged, stale, unsupported, invalid, and replay requests emit no
+command. Native Chromium proves nine exact submissions plus zero traffic while
+an input is focused. No visible key reference, layout, or production route is
+changed.
 
 `legacy-compound-group-rotation-layout.test.ts` and
 `legacy-compound-break-rotation-layout.test.ts` split the next source-only

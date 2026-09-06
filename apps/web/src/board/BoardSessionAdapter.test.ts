@@ -486,6 +486,48 @@ describe('BoardSessionAdapter with real session coordinators', () => {
     test.live.disconnect();
   });
 
+  it('routes a selected-card shortcut through the real guarded submitter', () => {
+    const test = setup();
+    test.socket.serverOpen();
+    test.socket.serverMessage(welcome(viewAt(1)));
+    const snapshot = test.adapter.getSnapshot();
+    const active = snapshot.view!.stacks['stack:blue:active']!;
+    const cardId = active.evolutionCards.at(-1)!.id;
+    expect(test.adapter.emitIntent({ kind: 'CardSelected', cardId })).toBe(
+      true
+    );
+
+    expect(
+      test.adapter.emitLegacyShortcutAction({
+        action: 'adjustDamage',
+        cardId,
+        delta: 30,
+      })
+    ).toBe(true);
+    expect(test.submissions).toEqual([
+      {
+        command: {
+          type: 'SetDamage',
+          stackId: active.id,
+          damage: 150,
+        },
+        result: {
+          queued: true,
+          commandId: 'board-command-1',
+          clientSequence: 1,
+        },
+      },
+    ]);
+    expect(
+      test.socket.sent.filter(
+        (frame) => (JSON.parse(frame) as ClientMessage).type === 'Command'
+      )
+    ).toHaveLength(1);
+    test.adapter.dispose();
+    test.replay.dispose();
+    test.live.disconnect();
+  });
+
   it('keeps replay overlay requests outside the resolver and submitter', () => {
     const test = setup();
     test.socket.serverOpen();

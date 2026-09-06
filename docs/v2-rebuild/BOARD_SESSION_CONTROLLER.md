@@ -275,6 +275,16 @@ empty-deck, already-at-edge, and stale-source rejection. Zone sort remains
 entirely inside the mounted zone browser: checking it creates a stable sorted
 copy from disclosed scene labels, equal labels keep authoritative scene order,
 and unchecking restores that order.
+Selected-card marker/category shortcuts enter through a separate typed
+controller action rather than pretending a context menu is open. The DOM
+keymap emits only digit/Alt-digit/`0`, `Y`/Alt-`Y`, `W`, and Alt-`E`/`T`/`P`
+requests with the current stable card ID. The controller requires that ID to be
+the installed selection on a ready live-player projection, then reuses the
+bounded stack or annotation resolver. Accepted ability/category/removal
+gestures clear selection in the same reduction; additive damage and condition
+cycling retain it. Missing-marker Alt-digit and Alt-`Y` keep the source's
+positive/default creation behavior. Editable, composing, consumed, unselected,
+stale, forged, unsupported, invalid, and replay input cannot submit.
 The checkbox dispatches no controller request, effect, or command. The resolver
 retains a `local_only` rejection for forged `sortZone` requests as a fail-closed
 boundary. Replay remains strictly non-submitting. V1's replay-only local
@@ -283,8 +293,9 @@ opponent-hand look, but V2 continues to expose an empty replay mutation menu
 until it owns a separate local disclosure projection. Even a forged replay
 request is rejected as `read_only` before the resolver runs. Native Chromium
 now proves exact accepted `SetDamage`, `SetSpecialCondition`, both removals,
-`SetAbilityUsed`, all six count submissions, all three category choices, and all
-five move choices; native prompt text/defaults, capacity clamps, zero hand draws, and
+`SetAbilityUsed`, all six count submissions, all three category choices, all
+five move choices, and all nine selected-card shortcut families; native prompt
+text/defaults, capacity clamps, zero hand draws, and
 private/public inspection policy; local rejection of malformed marker/count
 drafts; typed zero-command missing/forged choice rejection; and reversible
 sorting with zero routed actions or effects.
