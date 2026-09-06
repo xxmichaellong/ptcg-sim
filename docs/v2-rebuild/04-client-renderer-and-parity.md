@@ -198,7 +198,7 @@ that chrome, uses native handles plus the visible flip/fullscreen controls, and
 compares 1280×720 source/candidate screenshots for light, light-hover, dark,
 dark-hover, sequential resize, flipped asymmetric resize, and fullscreen states.
 Every 921,600-pixel pair permits at most 1,536 antialiased fringe pixels, with
-separate 512-pixel handle and 1,280-pixel control caps plus a 96/255 maximum
+separate 512-pixel handle and 1,280-pixel control caps plus a 128/255 maximum
 channel delta across Chromium builds. Both images and per-state metrics are
 attached. The three remaining
 control callbacks are also proven to delegate exactly once. No production route

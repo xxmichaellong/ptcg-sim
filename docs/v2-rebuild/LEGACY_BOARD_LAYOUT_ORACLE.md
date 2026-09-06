@@ -318,7 +318,7 @@ It runs fresh real-v1 pages and a development-only candidate composition at
 for light, light-hover, dark, dark-hover, sequential normal resize, flipped
 asymmetric resize, and fullscreen states. A browser-side RGBA comparison accepts
 no more than 1,536 of 921,600 compositor-fringe pixels, with separate 512-pixel
-handle and 1,280-pixel control caps and no channel delta above 96/255 across
+handle and 1,280-pixel control caps and no channel delta above 128/255 across
 Chromium builds. The candidate reaches those states through native handles and visible
 flip/fullscreen controls, while the remaining control seams delegate exactly
 once. This does not wire the chrome into production, prove complete action

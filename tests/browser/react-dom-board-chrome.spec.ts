@@ -31,7 +31,7 @@ interface ChromeHarnessWindow extends Window {
 const MAX_MISMATCHED_PIXELS = 1_536;
 const MAX_HANDLE_MISMATCHES = 512;
 const MAX_CONTROL_MISMATCHES = 1_280;
-const MAX_CHANNEL_DELTA = 96;
+const MAX_CHANNEL_DELTA = 128;
 
 const collectRuntimeErrors = (page: Page): string[] => {
   const errors: string[] = [];

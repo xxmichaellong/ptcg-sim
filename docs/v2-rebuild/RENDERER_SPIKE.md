@@ -968,7 +968,7 @@ passes 131 Playwright checks across 62 Chromium 151 browser files:
     screenshots for light, light-hover, dark, dark-hover, sequential resize,
     flipped asymmetric resize, and fullscreen. At most 1,536/921,600
     compositor-fringe pixels are accepted, with separate 512-pixel handle and
-    1,280-pixel control caps plus a 96/255 channel delta across Chromium builds;
+    1,280-pixel control caps plus a 128/255 channel delta across Chromium builds;
     all source/candidate images and metrics are
     attached, and the other three callbacks delegate once. Production routes,
     current UI/UX, and v1 sources remain unchanged; full action workflows and
