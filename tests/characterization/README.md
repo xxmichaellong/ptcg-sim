@@ -391,6 +391,22 @@ exact `BeginCardInspection`, `SetPublicReveal(false)`, and
 `SetPublicReveal(true)` submissions after the prior nine commands, with no new
 protocol, domain, route, label, layout, or styling behavior.
 
+The protected deck-shortcut checkpoint covers the next four non-Alt selected-
+card gestures without absorbing broader loose-zone movement. A real-v1
+Chromium oracle rebuilds a selected active card and two-card deck on four clean
+pages, then pins ArrowUp/ArrowDown/ArrowRight/`S` array order, selection cleanup,
+exact live/export action payloads, and deterministic shuffle permutations.
+That measurement records another source fallthrough defect: selected `S`
+performs `shuffleIntoDeck`, deselects, and then the unselected branch performs
+and logs `shuffleAll` during the same keydown. The protected mapper emits one
+runtime-validated deck-relative request and the existing resolver produces one
+stale-safe `MoveCardToDeckTop`, `MoveCardToDeckBottom`,
+`SwapCardWithDeckTop`, or `ShuffleCardIntoDeck` command. Candidate Chromium
+proves those four commands after the preceding twelve continuous shortcuts,
+dismisses accepted selection, suppresses Alt/editable variants, and never
+reproduces the redundant second shuffle. No protocol, domain, authority, route,
+label, layout, styling, UI, or UX surface changes.
+
 The solo replay disclosure checkpoint closes the three replay exceptions pinned
 by `client/src/setup/general/replay-block.js`: prize reveal, prize look, and
 opponent-hand look. It preserves their exact source labels and show/cover

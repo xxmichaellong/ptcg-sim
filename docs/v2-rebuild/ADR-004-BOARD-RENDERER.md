@@ -105,13 +105,17 @@ to the selected stable card, rechecks that selection in the controller, and
 reuses the same bounded semantic resolvers while suppressing editable targets.
 `C` toggles one card inspection without collapsing a multi-card zone grant;
 `Z` and Alt-`Z` carry explicit public hide/reveal targets. These gestures retain
-selection, and known-without-grant or duplicate states remain no-ops. Local zone
-sorting is controlled by the mounted zone browser:
+selection, and known-without-grant or duplicate states remain no-ops. Four
+non-Alt deck-relative keys reuse the already-approved top, bottom, top-swap,
+and shuffle commands and dismiss accepted selection. The source's `S` key
+falls through into a redundant second whole-deck shuffle after deselection;
+the protected path deliberately emits one atomic shuffle. Local zone sorting
+is controlled by the mounted zone browser:
 it derives a stable copy from disclosed labels and never enters the controller
 or mutates its projection; forged requests still fail closed as `local_only`.
 Native Chromium pins exact damage and condition edit/removal plus ability-marker
 commands, all six count prompts/commands, all three category choices, all five
-move choices, all twelve selected-card shortcut commands, and reversible
+move choices, all sixteen selected-card shortcut commands, and reversible
 sorting with zero action/effect/command traffic.
 Replay-local prize/hand disclosure now uses an isolated solo-player-only
 projection. Its opaque catalog never enters the historical view, its three

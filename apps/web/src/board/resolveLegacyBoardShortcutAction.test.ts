@@ -71,6 +71,39 @@ describe('legacy board shortcut action resolver', () => {
       cardId,
       revealed: true,
     });
+    expect(key('ArrowUp', 'ArrowUp')).toEqual({
+      action: 'moveCardRelativeToDeck',
+      cardId,
+      deckAction: 'moveToTop',
+    });
+    expect(key('Unidentified', 'ArrowDown')).toEqual({
+      action: 'moveCardRelativeToDeck',
+      cardId,
+      deckAction: 'moveToBottom',
+    });
+    expect(key('ArrowRight', 'ArrowRight')).toEqual({
+      action: 'moveCardRelativeToDeck',
+      cardId,
+      deckAction: 'swapWithTop',
+    });
+    expect(key('s', 'KeyS')).toEqual({
+      action: 'moveCardRelativeToDeck',
+      cardId,
+      deckAction: 'shuffleIntoDeck',
+    });
+    expect(key('ArrowUp', 'ArrowUp', true)).toBeNull();
+    expect(key('s', 'KeyS', true)).toBeNull();
+    expect(
+      resolveLegacyBoardShortcutKey(
+        {
+          key: 'ArrowDown',
+          code: 'ArrowDown',
+          altKey: false,
+          getModifierState: (modifier) => modifier === 'Alt',
+        },
+        cardId
+      )
+    ).toBeNull();
     expect(key('e', 'KeyE', true)).toEqual({
       action: 'changeCardType',
       cardId,
@@ -88,6 +121,57 @@ describe('legacy board shortcut action resolver', () => {
     });
     expect(key('e', 'KeyE')).toBeNull();
     expect(key('x', 'KeyX', true)).toBeNull();
+  });
+
+  it('reuses all four deck-relative resolvers and dismisses accepted moves', () => {
+    const view = createRendererSpikeView();
+    const hand = view.zones['zone:spike-blue:hand']!;
+    const card = hand.cards[0]!;
+    for (const [deckAction, type] of [
+      ['moveToTop', 'MoveCardToDeckTop'],
+      ['moveToBottom', 'MoveCardToDeckBottom'],
+      ['swapWithTop', 'SwapCardWithDeckTop'],
+      ['shuffleIntoDeck', 'ShuffleCardIntoDeck'],
+    ] as const) {
+      expect(
+        resolveLegacyBoardShortcutAction(view, {
+          action: 'moveCardRelativeToDeck',
+          cardId: card.id,
+          deckAction,
+        })
+      ).toEqual({
+        ok: true,
+        command: {
+          type,
+          cardId: card.id,
+          expectedSourceId: hand.id,
+        },
+        dismissSelection: true,
+      });
+    }
+
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'moveCardRelativeToDeck',
+        cardId: card.id,
+        deckAction: 'invalid',
+      } as unknown as LegacyBoardShortcutActionRequest)
+    ).toEqual({ ok: false, reason: 'invalid_value' });
+    const deck = view.zones['zone:spike-blue:deck']!;
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'moveCardRelativeToDeck',
+        cardId: deck.cards[0]!.id,
+        deckAction: 'moveToTop',
+      })
+    ).toEqual({ ok: false, reason: 'no_op' });
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'moveCardRelativeToDeck',
+        cardId: view.stacks['stack:blue:active']!.evolutionCards[0]!.id,
+        deckAction: 'moveToTop',
+      })
+    ).toEqual({ ok: false, reason: 'unsupported_source' });
   });
 
   it('reuses private-inspection and public-reveal resolvers without dismissing selection', () => {

@@ -856,30 +856,37 @@ This slice changes no label, placement, styling, or production route.
 ### Implemented selected-card keyboard subset
 
 The route-owned document bridge now converts only the characterized selected-
-card marker/category/visibility keys into a closed request: digits and
-Alt-digits adjust damage in tens, `0` removes damage, `Y` cycles or creates a
-condition, Alt-`Y` removes it, `W` toggles ability, Alt-`E`/`T`/`P` changes
-category, `C` toggles private card inspection, and `Z`/Alt-`Z` requests public
-hide/reveal. The source's missing-marker rules remain exact: Alt-digit creates
-the positive damage value and Alt-`Y` creates `P` when no corresponding marker
-exists.
+card marker/category/visibility/deck-movement keys into a closed request:
+digits and Alt-digits adjust damage in tens, `0` removes damage, `Y` cycles or
+creates a condition, Alt-`Y` removes it, `W` toggles ability,
+Alt-`E`/`T`/`P` changes category, `C` toggles private card inspection,
+`Z`/Alt-`Z` requests public hide/reveal, and
+ArrowUp/ArrowDown/ArrowRight/`S` moves to deck top/bottom, swaps with deck top,
+or shuffles into the deck. The source's missing-marker rules remain exact:
+Alt-digit creates the positive damage value and Alt-`Y` creates `P` when no
+corresponding marker exists.
 
 Raw DOM events never enter controller logic. The key/code/Alt mapper attaches
 the currently selected stable card ID, and the controller rechecks that exact
 identity on a ready live-player projection before reusing the bounded stack,
-annotation, inspection, or public-visibility resolver. Ability, category, and
-accepted removal gestures clear selection as v1 does; additive damage,
-condition cycling, and visibility retain it. A `C` close is accepted only for a
-matching single-card grant, so it cannot accidentally close a whole-zone look;
+annotation, inspection, public-visibility, or deck-relative resolver. Ability,
+category, accepted removal, and accepted deck gestures clear selection as v1
+does; additive damage, condition cycling, and visibility retain it. A `C` close
+is accepted only for a matching single-card grant, so it cannot accidentally close a whole-zone look;
 a normally known card has no grant to close. `Z` and Alt-`Z` carry explicit
 false/true targets and duplicate values are no-ops. Forged, stale, unsupported,
 invalid, replay, and post-dismissal requests cannot submit. The bridge ignores
 unselected, composing, already-consumed, input, textarea, select, table-cell,
 contenteditable, textbox-role, and legacy marker/tab targets. Native Chromium
-proves all twelve exact commands and zero traffic from an editable target
+proves all sixteen exact commands and zero traffic from an editable target
 without adding a visible control or enabling the production route. A separate
 real-v1 Chromium measurement pins the original local `C`/Alt-`C` source swap
 and `Z`/Alt-`Z` face/public flags behind the deny-by-default network boundary.
+Another four-scenario runtime measurement pins exact top/bottom/swap ordering,
+action payloads, selection cleanup, and deterministic shuffle permutations. It
+also records the source `S` fallthrough defect: `shuffleIntoDeck` deselects and
+the same keydown immediately invokes global `shuffleAll`. V2 intentionally
+keeps the intended operation atomic and submits no redundant second shuffle.
 
 ### Implemented authority-random face-down subset
 

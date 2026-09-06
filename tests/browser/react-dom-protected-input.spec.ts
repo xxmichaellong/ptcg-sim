@@ -1222,7 +1222,7 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   expect(errors).toEqual([]);
 });
 
-test('selected-card marker, category, and visibility shortcuts stay protected and suppress editable targets', async ({
+test('selected-card marker, category, visibility, and deck shortcuts stay protected and suppress editable targets', async ({
   page,
 }) => {
   const errors = collectRuntimeErrors(page);
@@ -1235,6 +1235,7 @@ test('selected-card marker, category, and visibility shortcuts stay protected an
   const ownPrizeCard = host.locator(
     `[data-card-id="${fixture.ownPrizeCardId}"]`
   );
+  const sourceCard = host.locator(`[data-card-id="${fixture.sourceCardId}"]`);
   const selectCard = async (card: Locator, cardId: string): Promise<void> => {
     const point = await exposedCardPoint(card);
     await page.mouse.click(point.x, point.y);
@@ -1436,6 +1437,70 @@ test('selected-card marker, category, and visibility shortcuts stay protected an
         revealed: true,
       },
       retained: true,
+    },
+    {
+      key: 'ArrowUp',
+      card: sourceCard,
+      cardId: fixture.sourceCardId,
+      request: {
+        action: 'moveCardRelativeToDeck',
+        cardId: fixture.sourceCardId,
+        deckAction: 'moveToTop',
+      },
+      command: {
+        type: 'MoveCardToDeckTop',
+        cardId: fixture.sourceCardId,
+        expectedSourceId: fixture.sourceZoneId,
+      },
+      retained: false,
+    },
+    {
+      key: 'ArrowDown',
+      card: sourceCard,
+      cardId: fixture.sourceCardId,
+      request: {
+        action: 'moveCardRelativeToDeck',
+        cardId: fixture.sourceCardId,
+        deckAction: 'moveToBottom',
+      },
+      command: {
+        type: 'MoveCardToDeckBottom',
+        cardId: fixture.sourceCardId,
+        expectedSourceId: fixture.sourceZoneId,
+      },
+      retained: false,
+    },
+    {
+      key: 'ArrowRight',
+      card: sourceCard,
+      cardId: fixture.sourceCardId,
+      request: {
+        action: 'moveCardRelativeToDeck',
+        cardId: fixture.sourceCardId,
+        deckAction: 'swapWithTop',
+      },
+      command: {
+        type: 'SwapCardWithDeckTop',
+        cardId: fixture.sourceCardId,
+        expectedSourceId: fixture.sourceZoneId,
+      },
+      retained: false,
+    },
+    {
+      key: 'KeyS',
+      card: sourceCard,
+      cardId: fixture.sourceCardId,
+      request: {
+        action: 'moveCardRelativeToDeck',
+        cardId: fixture.sourceCardId,
+        deckAction: 'shuffleIntoDeck',
+      },
+      command: {
+        type: 'ShuffleCardIntoDeck',
+        cardId: fixture.sourceCardId,
+        expectedSourceId: fixture.sourceZoneId,
+      },
+      retained: false,
     },
   ] as const;
 

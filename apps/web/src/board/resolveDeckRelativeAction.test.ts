@@ -3,6 +3,8 @@ import { createRendererSpikeView } from '@ptcgsim/renderer-contract';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  DECK_RELATIVE_ACTIONS,
+  isDeckRelativeAction,
   resolveDeckRelativeCardAction,
   resolvePrizeDeckBottomAction,
   submitDeckRelativeCardAction,
@@ -11,6 +13,15 @@ import {
 
 describe('deck-relative application actions', () => {
   it('maps all four per-card deck actions to semantic stale-safe commands', () => {
+    expect(DECK_RELATIVE_ACTIONS).toEqual([
+      'moveToTop',
+      'moveToBottom',
+      'shuffleIntoDeck',
+      'swapWithTop',
+    ]);
+    expect(DECK_RELATIVE_ACTIONS.every(isDeckRelativeAction)).toBe(true);
+    expect(isDeckRelativeAction('invalid')).toBe(false);
+    expect(isDeckRelativeAction(null)).toBe(false);
     const view = createRendererSpikeView();
     const playerId = view.playerOrder[0]!;
     const hand = view.zones[`zone:${playerId}:hand`]!;

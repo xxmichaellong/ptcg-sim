@@ -1154,6 +1154,22 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     continuous protected-input lane and editable-target suppression remains
     unchanged. No wire/domain schema, visible control, key reference, route,
     layout, or styling changes.
+66. Four non-Alt selected-card deck gestures now cross the same protected
+    key/code boundary: ArrowUp moves to deck top, ArrowDown moves to deck
+    bottom, ArrowRight swaps with deck top, and `S` shuffles into the deck. One
+    closed runtime-validated deck action delegates to the existing stale-safe
+    deck-relative resolver; controller and adapter retain exact-selection,
+    ready live-player, current-scene, replay, source, empty-deck, no-op, and
+    submit-time guards. Accepted moves dismiss selection in the same reduction
+    and emit exactly one existing semantic command. A four-page real-v1
+    Chromium oracle pins exact array ordering, source action/export payloads,
+    selection cleanup, and deterministic shuffle permutations. It also exposes
+    a source defect: `S` deselects during `shuffleIntoDeck`, then falls through
+    to the unselected `shuffleAll` branch and shuffles/logs a second time. V2
+    deliberately keeps one atomic move-and-shuffle command. Candidate Chromium
+    proves all four exact commands after the prior twelve continuous shortcuts;
+    Alt variants and editable targets remain suppressed. No wire/domain schema,
+    visible control, key reference, route, layout, styling, UI, or UX changes.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

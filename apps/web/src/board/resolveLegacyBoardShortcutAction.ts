@@ -6,6 +6,11 @@ import {
   type LegacyBoardCategoryChoice,
 } from './resolveLegacyBoardOverlayAction.js';
 import { resolveCardAnnotationAction } from './resolveCardAnnotationAction.js';
+import {
+  isDeckRelativeAction,
+  resolveDeckRelativeCardAction,
+  type DeckRelativeAction,
+} from './resolveDeckRelativeAction.js';
 import { resolveCardInspectionAction } from './resolvePrivateInspectionAction.js';
 import { resolvePublicCardVisibilityAction } from './resolvePublicVisibilityAction.js';
 import { resolveStackStateAction } from './resolveStackStateAction.js';
@@ -33,6 +38,11 @@ export type LegacyBoardShortcutActionRequest =
       readonly action: 'setPublicReveal';
       readonly cardId: ViewCardId;
       readonly revealed: boolean;
+    }
+  | {
+      readonly action: 'moveCardRelativeToDeck';
+      readonly cardId: ViewCardId;
+      readonly deckAction: DeckRelativeAction;
     };
 
 export type LegacyBoardShortcutActionRejectionReason =
@@ -40,7 +50,10 @@ export type LegacyBoardShortcutActionRejectionReason =
   | 'stale_card'
   | 'stale_player'
   | 'unsupported_target'
+  | 'unsupported_source'
   | 'unsupported_zone'
+  | 'no_deck'
+  | 'empty_deck'
   | 'empty_zone'
   | 'invalid_value'
   | 'no_op';
@@ -60,6 +73,7 @@ export type LegacyBoardShortcutActionResolution =
 type ExistingActionResolution =
   | ReturnType<typeof resolveStackStateAction>
   | ReturnType<typeof resolveCardAnnotationAction>
+  | ReturnType<typeof resolveDeckRelativeCardAction>
   | ReturnType<typeof resolveCardInspectionAction>
   | ReturnType<typeof resolvePublicCardVisibilityAction>;
 
@@ -179,6 +193,14 @@ export const resolveLegacyBoardShortcutAction = (
         ),
         false
       );
+    case 'moveCardRelativeToDeck':
+      if (!isDeckRelativeAction(request.deckAction)) {
+        return { ok: false, reason: 'invalid_value' };
+      }
+      return retainResolution(
+        resolveDeckRelativeCardAction(view, request.cardId, request.deckAction),
+        true
+      );
   }
 };
 
@@ -207,7 +229,7 @@ const matches = (
   code: string
 ): boolean => input.key === key || input.code === code;
 
-/** Converts only the protected marker/category/visibility keys into a request. */
+/** Converts the protected selected-card keys into a closed request. */
 export const resolveLegacyBoardShortcutKey = (
   input: LegacyBoardShortcutKey,
   cardId: ViewCardId
@@ -239,6 +261,34 @@ export const resolveLegacyBoardShortcutKey = (
   }
   if (matches(input, 'z', 'KeyZ')) {
     return { action: 'setPublicReveal', cardId, revealed: altKey };
+  }
+  if (!altKey && matches(input, 'ArrowUp', 'ArrowUp')) {
+    return {
+      action: 'moveCardRelativeToDeck',
+      cardId,
+      deckAction: 'moveToTop',
+    };
+  }
+  if (!altKey && matches(input, 'ArrowDown', 'ArrowDown')) {
+    return {
+      action: 'moveCardRelativeToDeck',
+      cardId,
+      deckAction: 'moveToBottom',
+    };
+  }
+  if (!altKey && matches(input, 'ArrowRight', 'ArrowRight')) {
+    return {
+      action: 'moveCardRelativeToDeck',
+      cardId,
+      deckAction: 'swapWithTop',
+    };
+  }
+  if (!altKey && matches(input, 's', 'KeyS')) {
+    return {
+      action: 'moveCardRelativeToDeck',
+      cardId,
+      deckAction: 'shuffleIntoDeck',
+    };
   }
   if (!altKey) return null;
   if (matches(input, 'e', 'KeyE')) {

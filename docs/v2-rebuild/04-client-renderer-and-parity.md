@@ -1166,12 +1166,13 @@ resolver. Missing/forged choices, lower evolutions, stale menu identity,
 already-board cards, and empty-deck swaps fail closed. Both nested menus share
 one hover/click/keyboard implementation and neither changes wire or domain
 schemas.
-The selected-card marker/category/visibility bridge is likewise route-owned. It
-maps digit/Alt-digit/`0`, `Y`/Alt-`Y`, `W`, Alt-`E`/`T`/`P`, `C`, and
-`Z`/Alt-`Z` key/code pairs to one typed request carrying the selected stable
-card ID. The controller rechecks selection, ready/live-player policy, and
-current recipient-safe membership, then delegates to the existing bounded
-stack, annotation, private-inspection, or public-visibility resolver. It
+The selected-card marker/category/visibility/movement bridge is likewise
+route-owned. It maps digit/Alt-digit/`0`, `Y`/Alt-`Y`, `W`,
+Alt-`E`/`T`/`P`, `C`, `Z`/Alt-`Z`, ArrowUp/ArrowDown/ArrowRight, and `S`
+key/code pairs to one typed request carrying the selected stable card ID. The
+controller rechecks selection, ready/live-player policy, and current
+recipient-safe membership, then delegates to the existing bounded stack,
+annotation, private-inspection, public-visibility, or deck-relative resolver. It
 preserves v1's immediate marker/category selection cleanup and retains
 selection for all three visibility gestures. `C` opens one private inspection
 only for a concealed card or closes one matching single-card grant; it does not
@@ -1181,7 +1182,12 @@ targets, so duplicate values fail as no-ops. Forged, stale, unsupported,
 replay, and invalid requests still fail before submission. Inputs, textareas,
 selects, table cells, contenteditable/textbox targets, composition, and
 already-consumed events produce no request. No visible key reference, layout,
-or UI behavior changes.
+or UI behavior changes. The four non-Alt deck gestures emit one stale-safe
+top, bottom, top-swap, or shuffle-into-deck command and dismiss selection after
+acceptance. Real v1's `S` handler performs the intended shuffle, deselects, and
+then accidentally falls through to a second global deck shuffle in the same
+keydown. V2 deliberately keeps one atomic command: the second shuffle changes
+no probability distribution but adds redundant mutation/log traffic.
 Zone sort
 now has a deliberately narrower owner: controlled state inside the mounted zone
 browser. It sorts a copy by recipient-safe scene label, keeps equal labels in

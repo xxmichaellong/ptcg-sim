@@ -1,8 +1,20 @@
 import type { MatchViewState, ViewCard } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 
-export type DeckRelativeAction =
-  'moveToTop' | 'moveToBottom' | 'shuffleIntoDeck' | 'swapWithTop';
+export const DECK_RELATIVE_ACTIONS = [
+  'moveToTop',
+  'moveToBottom',
+  'shuffleIntoDeck',
+  'swapWithTop',
+] as const;
+
+export type DeckRelativeAction = (typeof DECK_RELATIVE_ACTIONS)[number];
+
+export const isDeckRelativeAction = (
+  value: unknown
+): value is DeckRelativeAction =>
+  typeof value === 'string' &&
+  (DECK_RELATIVE_ACTIONS as readonly string[]).includes(value);
 
 const commandTypeByAction = {
   moveToTop: 'MoveCardToDeckTop',
