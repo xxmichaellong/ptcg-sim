@@ -138,9 +138,13 @@ boxes, and region content boxes all flow from the source-characterized snapshot
 into `BoardScene`. Valid characterized gaps, overscan, asymmetric frames, and
 handle-midpoint placement are retained; invalid oracle state and a layout player
 tuple that differs from the projected view still fail closed.
-The runtime clones and recursively freezes retained layout input and returns a
-fresh frozen characterization snapshot, so untyped caller mutation cannot
-change later scene generation.
+The runtime clones and recursively freezes retained layout input and exposes the
+same stable frozen characterization snapshot until layout changes, so untyped
+caller mutation cannot change later scene generation. `subscribeLayout` is the
+route-composition boundary for visible chrome: equivalent replacement is
+silent, a changed snapshot is installed before notification, one throwing
+subscriber is reported without blocking the rest, unsubscribe is idempotent,
+and disposal clears the listener set.
 
 Changing local layout calls `RefreshScene`: it cancels interaction,
 re-runs the scene factory on the exact installed safe view, validates the
@@ -172,6 +176,18 @@ composition order in Chromium: the bridge cancels active ownership first, the
 runtime adopts the new outer viewport, held movement cannot reuse stale
 coordinates, normal/flipped state and DOM dimensions survive later changes, and
 fresh gestures scale against the new surface.
+
+`LegacyBoardChrome` is the first consumer of that subscription. It remains
+outside `BoardRenderer`, takes the local player ID for flip-stable source colors,
+and delegates the unchanged turn, coin, flip, refresh, and fullscreen controls
+to route callbacks. Its development-only composition paints over an invisible
+real DOM candidate so native resize ownership still traverses the actual
+runtime. Chromium compares real-v1 and candidate light, light-hover, dark,
+dark-hover, sequential-resize, flipped-resize, and fullscreen screenshots with
+an absolute 640-pixel fringe cap over 921,600 pixels and a maximum 8/255 channel delta. Source and
+candidate images plus per-state metrics are attached. No production route
+imports this component yet; the callbacks do not claim complete game workflow
+parity.
 
 ## Effects and renderer cancellation
 

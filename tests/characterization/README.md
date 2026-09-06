@@ -253,8 +253,15 @@ the candidate viewport portion: an active native gesture is canceled before
 route-owned 1280×720→1440×810 synchronization, its held movement is ignored, the
 resized DOM accepts a fresh normal gesture, the split survives 1024×768, and
 flipped ownership plus a fresh flipped gesture survive the return to 1280×720.
-Painted controls, source-to-candidate resize screenshots, and non-Chromium
-approval remain separate.
+`react-dom-board-chrome.spec.ts` now adds the painted source-to-candidate layer:
+fresh real-v1 pages and the development-only candidate are compared at
+1280×720 for light, light-hover, dark, dark-hover, sequential resize, flipped
+asymmetric resize, and fullscreen. Each RGBA screenshot pair is capped at 640
+of 921,600 antialiased fringe pixels and an 8/255 maximum channel delta, with
+both images and the per-state metrics attached. Native candidate handles and
+visible flip/fullscreen callbacks establish the states, and the remaining three
+callbacks delegate exactly once. Production wiring, complete action workflows,
+and non-Chromium approval remain separate.
 
 `legacy-compound-group-rotation-layout.test.ts` and
 `legacy-compound-break-rotation-layout.test.ts` split the next source-only

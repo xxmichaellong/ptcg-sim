@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 908 v2 tests across 142 files. A separate suite
-passes 130 Playwright checks across 61 Chromium 151 browser files:
+The repository-wide gate passes 909 v2 tests across 143 files. A separate suite
+passes 131 Playwright checks across 62 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -958,6 +958,19 @@ passes 130 Playwright checks across 61 Chromium 151 browser files:
     churn gate at 5.048 seconds under parallel load versus its 5-second default;
     that stress proof now has an explicit 10-second timeout while retaining every
     teardown assertion.
+52. `BoardSessionRuntime` now exposes its stable frozen layout snapshot through
+    a failure-isolated, idempotently removable route subscription; no-op layout
+    replacement stays silent and disposal clears all listeners. The unwired
+    `LegacyBoardChrome` consumes that boundary and copies the source handles,
+    five controls, hover paint, and tooltips without entering `BoardRenderer`.
+    A development-only composition drives real candidate handles and visible
+    flip/fullscreen callbacks, then compares 1280×720 real-v1 and candidate
+    screenshots for light, light-hover, dark, dark-hover, sequential resize,
+    flipped asymmetric resize, and fullscreen. At most 640/921,600
+    compositor-fringe pixels and an 8/255 channel delta are accepted; all source/candidate images and metrics are
+    attached, and the other three callbacks delegate once. Production routes,
+    current UI/UX, and v1 sources remain unchanged; full action workflows and
+    non-Chromium approval remain separate.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

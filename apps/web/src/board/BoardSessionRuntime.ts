@@ -118,6 +118,7 @@ export class BoardSessionRuntime {
   private rendererFailure: Error | null = null;
   private attached = false;
   private disposed = false;
+  private readonly layoutListeners = new Set<() => void>();
   private readonly abortedMountError = new Error(
     'Board runtime mount was aborted by disposal'
   );
@@ -167,7 +168,22 @@ export class BoardSessionRuntime {
 
   /** Full source characterization used to derive renderer scene geometry. */
   getCharacterizedLayoutSnapshot(): BoardLayoutSnapshot {
-    return retainLayoutSnapshot(this.layoutState);
+    return this.layoutSnapshot;
+  }
+
+  /**
+   * Route-composition seam for chrome that follows the renderer-neutral board
+   * layout without reaching into either concrete renderer.
+   */
+  subscribeLayout(listener: () => void): () => void {
+    this.assertUsable();
+    this.layoutListeners.add(listener);
+    let subscribed = true;
+    return () => {
+      if (!subscribed) return;
+      subscribed = false;
+      this.layoutListeners.delete(listener);
+    };
   }
 
   /** Waits only for a currently pending lazy renderer mount/recovery handoff. */
@@ -186,11 +202,12 @@ export class BoardSessionRuntime {
     const view = this.adapter?.getSnapshot().view;
     if (view) this.createScene(view, nextState, nextSnapshot);
     const changesScene = !sameLayoutState(this.layoutState, nextState);
+    if (!changesScene) return false;
     this.layoutState = nextState;
     this.layoutSnapshot = nextSnapshot;
-    if (!changesScene) return false;
     this.adapter?.refreshScene();
     this.adapter?.synchronize();
+    this.notifyLayoutListeners();
     return true;
   }
 
@@ -232,6 +249,7 @@ export class BoardSessionRuntime {
     this.desiredScene = null;
     this.desiredPresentation = DEFAULT_BOARD_PRESENTATION;
     this.rendererReady = false;
+    this.layoutListeners.clear();
     try {
       adapter?.dispose();
     } catch (error) {
@@ -360,6 +378,17 @@ export class BoardSessionRuntime {
       // Diagnostics cannot interrupt renderer/session cleanup.
     }
   };
+
+  private notifyLayoutListeners(): void {
+    for (const listener of [...this.layoutListeners]) {
+      if (!this.layoutListeners.has(listener)) continue;
+      try {
+        listener();
+      } catch (error) {
+        this.reportError(error);
+      }
+    }
+  }
 
   private failRenderer(cause: unknown, message: string): Error {
     if (this.rendererFailure) return this.rendererFailure;

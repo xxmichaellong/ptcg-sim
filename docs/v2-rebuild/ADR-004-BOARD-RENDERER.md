@@ -59,8 +59,17 @@ during an active gesture. The harness is development-only and no production
 route opts in. A follow-up Chromium case now drives actual viewport changes
 during and after gestures: stale ownership cancels before route-owned viewport
 synchronization, current split/flip state survives, DOM dimensions refresh, and
-fresh normal/flipped gestures use the new scale. Painted control parity and the
-broader browser matrix are still exit gates. The flipped one-pixel source clamp
+fresh normal/flipped gestures use the new scale. A route-owned
+`LegacyBoardChrome` now follows a failure-isolated immutable-layout subscription
+and paints the unchanged source handles, five controls, hover state, and
+tooltips without entering the renderer contract. An isolated Chromium gate
+compares real-v1 and candidate screenshots at 1280×720 for light, light-hover,
+dark, dark-hover, sequential resize, flipped asymmetric resize, and fullscreen.
+It allows at most 640 of 921,600 pixels in the compositor fringe and an 8/255 channel
+delta, attaches both images plus metrics, and proves each non-layout callback is
+delegated once. Neither the component nor harness is wired into a production
+route; complete control workflows and the broader browser matrix are still exit
+gates. The flipped one-pixel source clamp
 also retains an explicit caveat: Chromium's nested iframe child layout diverges
 from normalized inner-region geometry while the outer resize geometry matches.
 

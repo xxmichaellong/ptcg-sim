@@ -1,0 +1,90 @@
+.ptcgsim-legacy-board-chrome {
+  user-select: none;
+}
+
+.ptcgsim-legacy-board-chrome .legacy-board-resizer {
+  position: absolute;
+  display: flex;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
+  cursor: row-resize;
+  pointer-events: none;
+  transform: translateY(50%) scaleX(-1);
+}
+
+.ptcgsim-legacy-board-chrome .legacy-board-controls {
+  position: absolute;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  pointer-events: auto;
+}
+
+.ptcgsim-legacy-board-chrome .tooltip {
+  position: relative;
+}
+
+.ptcgsim-legacy-board-chrome .tooltiptext {
+  visibility: hidden;
+  position: absolute;
+  z-index: 1;
+  bottom: 120%;
+  left: 50%;
+  padding: 5px;
+  border-radius: 6px;
+  background-color: #555;
+  color: #fff;
+  font-size: 1.75vh;
+  opacity: 0;
+  text-align: center;
+  transform: translateX(-50%);
+  transition: opacity 0.3s;
+}
+
+.ptcgsim-legacy-board-chrome .tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+.ptcgsim-legacy-board-chrome .legacy-board-control-button {
+  margin: 0.1vw;
+  border: 1px solid rgb(200 200 200);
+  border-radius: 10px;
+  background: linear-gradient(to bottom, rgb(250 250 250), rgb(230 230 230));
+  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+  color: rgb(60 60 60);
+  cursor: pointer;
+  font-size: 2vh;
+  transition: all 0.3s ease;
+}
+
+.ptcgsim-legacy-board-chrome .legacy-board-control-button:hover {
+  background: linear-gradient(to bottom, rgb(220 220 220), rgb(200 200 200));
+  box-shadow: 0 4px 8px rgb(0 0 0 / 20%);
+  color: rgb(40 40 40);
+}
+
+.ptcgsim-legacy-board-chrome .legacy-board-control-button.dark-mode-2 {
+  background: none !important;
+  background-color: #000 !important;
+  border-color: rgb(100 100 100);
+  box-shadow: 0 2px 4px rgb(255 255 255 / 10%);
+  color: rgb(250 250 250);
+}
+
+.ptcgsim-legacy-board-chrome .legacy-board-control-button.dark-mode-2:hover {
+  background: linear-gradient(to bottom, rgb(80 80 80), rgb(60 60 60));
+  box-shadow: 0 4px 8px rgb(255 255 255 / 20%);
+  color: rgb(220 220 220);
+}
+
+.ptcgsim-legacy-board-chrome #loadingCircle {
+  display: none;
+  width: 1vh;
+  height: 1vh;
+  margin: 0.5vh 0;
+  border: 0.4vh solid #f3f3f3;
+  border-top: 0.4vh solid #3498db;
+  border-radius: 50%;
+}

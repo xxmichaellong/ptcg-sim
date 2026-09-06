@@ -793,12 +793,14 @@ describe('opt-in React DOM board session runtime', () => {
     const live = new MutableLiveSource(initial);
     const replay = new MutableReplaySource(initial);
     const effects: BoardSessionRendererEffect[] = [];
+    const reportedErrors: unknown[] = [];
     const suppliedLayout = layoutState();
     const runtime = new ReactDomBoardSessionRuntime({
       live,
       replay,
       layout: suppliedLayout,
       onBoardEffect: (effect) => effects.push(effect),
+      reportError: (error) => reportedErrors.push(error),
     });
     (suppliedLayout.viewport as { width: number }).width = 320;
     (
@@ -814,6 +816,7 @@ describe('opt-in React DOM board session runtime', () => {
     const exposed = runtime.getCharacterizedLayoutSnapshot();
     expect(Object.isFrozen(exposed)).toBe(true);
     expect(Object.isFrozen(exposed.playAreaBounds)).toBe(true);
+    expect(runtime.getCharacterizedLayoutSnapshot()).toBe(exposed);
     expect(() => {
       (exposed.playAreaBounds as { width: number }).width = 1;
     }).toThrow(TypeError);
@@ -827,6 +830,15 @@ describe('opt-in React DOM board session runtime', () => {
     });
     expect(runtime.getBoardSnapshot()?.scene?.viewport.width).toBe(906);
     const beforeLayout = runtime.getLayoutState();
+    const observedLayouts: BoardLayoutState['vertical'][] = [];
+    const unsubscribeThrowing = runtime.subscribeLayout(() => {
+      throw new Error('isolated layout subscriber failure');
+    });
+    const unsubscribeObserved = runtime.subscribeLayout(() => {
+      observedLayouts.push(
+        runtime.getLayoutState().vertical as BoardLayoutState['vertical']
+      );
+    });
     let previousScene = runtime.getBoardSnapshot()?.scene;
     const characterized: BoardLayoutState[] = [
       {
@@ -891,9 +903,20 @@ describe('opt-in React DOM board session runtime', () => {
       previousScene = scene;
     }
     const currentLayout = runtime.getLayoutState();
+    const currentSnapshot = runtime.getCharacterizedLayoutSnapshot();
     const effectCount = effects.length;
     expect(runtime.replaceLayoutState(currentLayout)).toBe(false);
+    expect(runtime.getCharacterizedLayoutSnapshot()).toBe(currentSnapshot);
     expect(effects).toHaveLength(effectCount);
+    expect(observedLayouts).toHaveLength(characterized.length);
+    expect(reportedErrors).toHaveLength(characterized.length);
+    expect(
+      reportedErrors.every(
+        (error) =>
+          error instanceof Error &&
+          error.message === 'isolated layout subscriber failure'
+      )
+    ).toBe(true);
 
     const invalid: BoardLayoutState = {
       ...currentLayout,
@@ -910,11 +933,20 @@ describe('opt-in React DOM board session runtime', () => {
     );
     expect(runtime.getLayoutState()).toEqual(currentLayout);
     expect(runtime.getBoardSnapshot()?.scene).toBe(previousScene);
+    expect(observedLayouts).toHaveLength(characterized.length);
+
+    unsubscribeThrowing();
+    unsubscribeObserved();
+    unsubscribeThrowing();
+    unsubscribeObserved();
 
     await act(async () => {
       runtime.dispose();
       await Promise.resolve();
     });
+    expect(() => runtime.subscribeLayout(() => undefined)).toThrow(
+      'Board runtime is disposed'
+    );
   });
 
   it('owns an opt-in scaled pointer lifecycle with source handle priority and flipped physical identity', async () => {

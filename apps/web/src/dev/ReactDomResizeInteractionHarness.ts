@@ -8,16 +8,21 @@ import {
   createRendererSpikeView,
   DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
   type BoardLayoutState,
+  type BoardShellMode,
 } from '@ptcgsim/renderer-contract';
+import { createElement } from 'react';
+import { createRoot } from 'react-dom/client';
 
 import type {
   BoardSessionLiveSource,
   BoardSessionReplaySource,
 } from '../board/BoardSessionAdapter.js';
 import { ReactDomBoardSessionRuntime } from '../board/ReactDomBoardSessionRuntime.js';
+import { LegacyBoardChrome } from '../board/LegacyBoardChrome.js';
 import type { ReplaySessionCoordinatorState } from '../replay/ReplaySessionCoordinator.js';
 
 const HANDLE_NAME = '__PTCG_REACT_DOM_RESIZE_HARNESS__';
+const CHROME_HANDLE_NAME = '__PTCG_REACT_DOM_BOARD_CHROME_HARNESS__';
 
 export interface ReactDomResizeInteractionHarness {
   readonly getLayout: () => BoardLayoutState;
@@ -26,9 +31,18 @@ export interface ReactDomResizeInteractionHarness {
   readonly dispose: () => void;
 }
 
+export interface ReactDomBoardChromeHarness {
+  readonly getLayout: () => BoardLayoutState;
+  readonly reset: (flipped?: boolean) => void;
+  readonly setDarkMode: (enabled: boolean) => void;
+  readonly getActionCounts: () => Readonly<Record<string, number>>;
+  readonly dispose: () => void;
+}
+
 declare global {
   interface Window {
     __PTCG_REACT_DOM_RESIZE_HARNESS__?: ReactDomResizeInteractionHarness;
+    __PTCG_REACT_DOM_BOARD_CHROME_HARNESS__?: ReactDomBoardChromeHarness;
   }
 }
 
@@ -46,13 +60,14 @@ const currentViewport = (): BoardLayoutState['viewport'] => ({
 });
 
 const createLayout = (
-  viewport: BoardLayoutState['viewport']
+  viewport: BoardLayoutState['viewport'],
+  shellMode: BoardShellMode = 'fullscreen'
 ): BoardLayoutState => ({
   geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
   viewport,
   playerIds: [firstPlayerId, secondPlayerId],
   bottomPlayerId: firstPlayerId,
-  shellMode: 'fullscreen',
+  shellMode,
   vertical: {
     lowerFrame: { ...DEFAULT_BOARD_VERTICAL_LAYOUT_V1.lowerFrame },
     upperFrame: { ...DEFAULT_BOARD_VERTICAL_LAYOUT_V1.upperFrame },
@@ -171,3 +186,119 @@ export const mountReactDomResizeInteractionHarness =
     };
     window[HANDLE_NAME] = harness;
   };
+
+/** Development-only painted-chrome seam; it is unreachable from production. */
+export const mountReactDomBoardChromeHarness = async (): Promise<void> => {
+  window[CHROME_HANDLE_NAME]?.dispose();
+  const host = document.createElement('div');
+  host.dataset.reactDomBoardChromeHarness = 'true';
+  Object.assign(host.style, {
+    position: 'fixed',
+    inset: '0',
+    zIndex: '2147483647',
+    overflow: 'hidden',
+    background: '#fff',
+    isolation: 'isolate',
+  });
+  const boardHost = document.createElement('div');
+  boardHost.dataset.reactDomBoardChromeBoard = 'true';
+  Object.assign(boardHost.style, {
+    position: 'absolute',
+    left: '0',
+    top: '0',
+    opacity: '0',
+  });
+  const chromeHost = document.createElement('div');
+  chromeHost.dataset.reactDomBoardChromePaint = 'true';
+  Object.assign(chromeHost.style, {
+    position: 'absolute',
+    inset: '0',
+    pointerEvents: 'none',
+  });
+  host.append(boardHost, chromeHost);
+  document.body.append(host);
+
+  const runtime = new ReactDomBoardSessionRuntime({
+    live,
+    replay,
+    layout: createLayout(currentViewport(), 'sidebar'),
+    enableLegacyResizeInteraction: true,
+  });
+  try {
+    await runtime.mount(boardHost);
+  } catch (error) {
+    runtime.dispose();
+    host.remove();
+    throw error;
+  }
+
+  type CountedChromeAction = 'takeTurn' | 'flipCoin' | 'refreshImages';
+  const actionCounts: Record<CountedChromeAction, number> = {
+    takeTurn: 0,
+    flipCoin: 0,
+    refreshImages: 0,
+  };
+  const count = (action: CountedChromeAction): void => {
+    actionCounts[action] += 1;
+  };
+  const chromeRoot = createRoot(chromeHost);
+  let darkMode = false;
+  const renderChrome = (): void => {
+    chromeRoot.render(
+      createElement(LegacyBoardChrome, {
+        layout: runtime.getCharacterizedLayoutSnapshot(),
+        localPlayerId: firstPlayerId,
+        darkMode,
+        actions: {
+          takeTurn: () => count('takeTurn'),
+          flipCoin: () => count('flipCoin'),
+          flipBoard: () => runtime.flipBoard(),
+          refreshImages: () => count('refreshImages'),
+          toggleFullscreen: () =>
+            runtime.setShellMode(
+              runtime.getLayoutState().shellMode === 'sidebar'
+                ? 'fullscreen'
+                : 'sidebar'
+            ),
+        },
+      })
+    );
+  };
+  const unsubscribeLayout = runtime.subscribeLayout(renderChrome);
+  renderChrome();
+
+  let disposed = false;
+  const synchronizeViewport = (): void => {
+    runtime.setViewport(currentViewport());
+  };
+  window.addEventListener('resize', synchronizeViewport);
+  const harness: ReactDomBoardChromeHarness = {
+    getLayout: () => runtime.getLayoutState(),
+    reset: (flipped = false) => {
+      if (disposed) throw new Error('Board chrome harness is disposed');
+      runtime.replaceLayoutState(createLayout(currentViewport(), 'sidebar'));
+      darkMode = false;
+      renderChrome();
+      if (flipped) runtime.flipBoard();
+    },
+    setDarkMode: (enabled) => {
+      if (disposed) throw new Error('Board chrome harness is disposed');
+      darkMode = enabled;
+      renderChrome();
+    },
+    getActionCounts: () => ({ ...actionCounts }),
+    dispose: () => {
+      if (disposed) return;
+      disposed = true;
+      window.removeEventListener('resize', synchronizeViewport);
+      unsubscribeLayout();
+      chromeRoot.unmount();
+      runtime.dispose();
+      host.remove();
+      if (window[CHROME_HANDLE_NAME] === harness) {
+        delete window[CHROME_HANDLE_NAME];
+      }
+    },
+  };
+  window[CHROME_HANDLE_NAME] = harness;
+};
