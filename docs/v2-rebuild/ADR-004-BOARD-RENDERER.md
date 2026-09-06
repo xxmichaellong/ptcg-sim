@@ -51,11 +51,16 @@ pins the adjacent collision pixels, strict handle-growth edges, normal/flipped
 clamps, and expanded-handle history. The React DOM runtime additionally offers
 deny-by-default capture-phase pointer ownership over the existing non-painting
 handle geometry, with scaled coordinates, upper-handle overlap priority,
-flipped physical identity, and deterministic teardown. Browser-level candidate
-pointer evidence, painted control parity, viewport-resize continuity, and the
-broader browser matrix are still exit gates. The flipped one-pixel source clamp
-also retains an explicit caveat: Chromium's nested iframe child layout diverges
-from normalized inner-region geometry while the outer resize geometry matches.
+flipped physical identity, and deterministic teardown. An isolated Chromium
+harness now drives that exact opt-in path with native mouse-generated pointer
+events on a scaled surface, covering normal/flipped movement, overlapping-hit
+priority, all four clamps, measured DOM refresh, capture isolation, and disposal
+during an active gesture. The harness is development-only and no production
+route opts in. Painted control parity, real-browser viewport-resize continuity,
+and the broader browser matrix are still exit gates. The flipped one-pixel
+source clamp also retains an explicit caveat: Chromium's nested iframe child
+layout diverges from normalized inner-region geometry while the outer resize
+geometry matches.
 
 ### Mixed attachment history policy
 

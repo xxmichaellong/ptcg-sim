@@ -185,7 +185,11 @@ pointer bridge that hit-tests the physical handles in capture phase and feeds
 scaled play-area `clientY` values to this transition. It retains source DOM
 overlap priority (upper after lower), flip-stable physical IDs, wrong-pointer
 rejection, and move/up/cancel/blur/resize/disposal cleanup while the structural
-handle nodes remain non-painting and pointer-transparent.
+handle nodes remain non-painting and pointer-transparent. The isolated
+development harness now confirms the bridge with native Chromium pointer input
+on a translated 75%-scale candidate surface, including normal/flipped physical
+branches, overlapping handles, four clamp extremes, live DOM geometry, capture
+isolation, and active disposal. It is not imported by an application route.
 
 ## Cards, stacks, z order, and input
 
@@ -300,8 +304,10 @@ the near/far source captures must still match exactly, and the outer
 frame/handle/shared model comparison remains enforced. This is retained as an
 explicit degenerate-browser caveat rather than widening the repository's 2 px
 acceptance tolerance. Focused DOM-runtime tests cover candidate pointer
-lifecycle semantics, but a real-browser candidate gesture comparison remains a
-release gate.
+lifecycle semantics, and a development-only Chromium gate now covers real
+candidate gestures, overlap priority, clamp endpoints, DOM refresh, and
+teardown. It does not yet claim painted handle/control parity, browser-driven
+viewport-resize continuity, or the non-Chromium matrix.
 
 `tests/browser/legacy-card-stack-geometry.spec.ts` adds a separate source-only
 card checkpoint at that viewport. Its independently reviewed numeric fixture is

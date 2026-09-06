@@ -191,7 +191,8 @@ test('normalized React DOM reuses 120 distinct cacheable assets across fresh ren
         const routeRenderer = spike.renderer;
         const waitForRouteIdle = async () => {
           let previousSnapshot: string | null = null;
-          for (let frame = 0; frame < 10; frame += 1) {
+          let stableFrames = 0;
+          for (let frame = 0; frame < 20; frame += 1) {
             await new Promise<void>((resolve) =>
               requestAnimationFrame(() => resolve())
             );
@@ -201,7 +202,12 @@ test('normalized React DOM reuses 120 distinct cacheable assets across fresh ren
               'Missing route-owned renderer diagnostics'
             );
             const snapshot = JSON.stringify(diagnostics);
-            if (snapshot === previousSnapshot) return snapshot;
+            if (snapshot === previousSnapshot) {
+              stableFrames += 1;
+              if (stableFrames === 5) return snapshot;
+            } else {
+              stableFrames = 0;
+            }
             previousSnapshot = snapshot;
           }
           throw new Error(

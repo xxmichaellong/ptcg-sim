@@ -243,9 +243,14 @@ flipped one-pixel endpoint exposes a bounded nested-iframe child-layout delta,
 so the normalized model comparison there is intentionally outer-only while the
 source equality check still includes all regions. The React DOM runtime's
 disabled-by-default pointer bridge has focused scaled-coordinate, overlap,
-flip, wrong-pointer, release, cancel, blur, resize, and disposal coverage. Browser-level
-candidate gestures, screenshots, painted controls, viewport-resize continuity,
-and non-Chromium approval remain separate.
+flip, wrong-pointer, release, cancel, blur, resize, and disposal coverage.
+`react-dom-resize-interaction.spec.ts` dynamically mounts a development-only
+opt-in runtime on a translated 75%-scale surface and drives real Chromium
+pointer gestures through normal/flipped movement, upper-handle overlap
+priority, all four clamps, DOM geometry refresh, capture isolation, and active
+disposal. No application route imports the harness. Screenshots, painted
+controls, browser-driven viewport-resize continuity, and non-Chromium approval
+remain separate.
 
 `legacy-compound-group-rotation-layout.test.ts` and
 `legacy-compound-break-rotation-layout.test.ts` split the next source-only

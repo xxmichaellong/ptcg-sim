@@ -291,7 +291,7 @@ repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
 The repository-wide gate passes 908 v2 tests across 142 files. A separate suite
-passes 128 Playwright checks across 60 Chromium 151 browser files:
+passes 129 Playwright checks across 61 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -829,10 +829,12 @@ passes 128 Playwright checks across 60 Chromium 151 browser files:
     server counts prove one completed response per asset with no aborts or
     unexpected paths; any warm resource-timing entries report zero transferred
     bytes. Both renderer lifecycles terminate cleanly, and the route-owned
-    renderer remains untouched. This is network-cache and browser-visible decode evidence, not a
-    native decoder-invocation count, decoded-pixel/heap budget, real-raster load,
-    external-host/CORS/failure test, hidden-face request scan, or cross-browser
-    result.
+    renderer remains untouched. Its baseline now requires five consecutive
+    stable paint frames so a warmed module path cannot mistake a delayed initial
+    `ResizeObserver` commit for asset-gate interference. This is network-cache
+    and browser-visible decode evidence, not a native decoder-invocation count,
+    decoded-pixel/heap budget, real-raster load, external-host/CORS/failure test,
+    hidden-face request scan, or cross-browser result.
 43. The developer-only creator route completes 20 React StrictMode
     mount/unmount cycles through the actual lazy application branch, remote-room
     runtime, client session, replay/presentation ownership, and selected DOM
@@ -928,6 +930,18 @@ passes 128 Playwright checks across 60 Chromium 151 browser files:
     rejection, and complete release/cancel/blur/resize/disposal cleanup. Its handle
     nodes remain non-painting and pointer-transparent, no route opts in, and no
     production UI/UX changes.
+50. A development-only React DOM harness mounts that opt-in pointer bridge on a
+    translated 75%-scale 1280×720 surface. Real Chromium mouse input now proves
+    candidate normal and flipped physical-handle movement, upper-handle overlap
+    priority, the normal overscan and flipped one-pixel clamp endpoints, live
+    frame/handle DOM geometry refresh, capture isolation from board bubbling,
+    and listener cleanup when disposal interrupts an active gesture. The module
+    is dynamically imported only by its browser spec; no production route opts
+    in, the sentinels remain non-painting/pointer-transparent, and painted
+    controls, browser-driven viewport-resize continuity, and non-Chromium
+    approval remain separate gates. Running this warmed path immediately before
+    the cacheable-asset gate exposed its two-frame startup-idle race; that gate
+    now requires five stable paint frames before freezing strict route identity.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -1100,8 +1114,8 @@ wiring:
 - expand the source-driven geometry checkpoint to painted/interactable frames,
   handles and controls, cards/stacks, screenshots, browser-level candidate
   split/flip/fullscreen gestures, viewport-resize continuity, and the remaining
-  structured 2 px / 1% thresholds (source edge clamp/collision states and
-  focused candidate pointer ownership are now covered);
+  structured 2 px / 1% thresholds (source edge clamp/collision states and the
+  isolated candidate resize-pointer path are now covered);
 - full double-click, right-click, flip, split resize, zone browser, keyboard,
   DOM-overlay anchor parity, and drag rejection/reconnect snap-back behavior;
 - actual external card/image hosts, redirects, CORS failures, oversized/corrupt

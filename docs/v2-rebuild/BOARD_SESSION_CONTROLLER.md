@@ -161,9 +161,13 @@ pointer-transparent. A capture listener on the mounted host hit-tests their
 renderer-neutral bounds before card/zone bubbling, gives the later upper handle
 source-equivalent priority when expanded rectangles overlap, and retains the
 physical handle ID after flip. Window-level move/up/cancel plus blur, viewport
-resize, and runtime disposal own cleanup; host scaling is converted back to the characterized
-play-area coordinate system before `resizeBoard` runs. This is focused runtime
-evidence, not yet a real-browser candidate parity claim.
+resize, and runtime disposal own cleanup; host scaling is converted back to the
+characterized play-area coordinate system before `resizeBoard` runs. In addition
+to focused runtime tests, a development-only Chromium harness drives real
+pointer events through translated/scaled coordinates, normal and flipped
+physical ownership, overlapping-handle priority, every edge clamp, DOM refresh,
+capture isolation, and disposal during an active gesture. No application route
+enables the option.
 
 ## Effects and renderer cancellation
 
