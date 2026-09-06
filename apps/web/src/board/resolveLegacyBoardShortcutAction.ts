@@ -6,6 +6,8 @@ import {
   type LegacyBoardCategoryChoice,
 } from './resolveLegacyBoardOverlayAction.js';
 import { resolveCardAnnotationAction } from './resolveCardAnnotationAction.js';
+import { resolveCardInspectionAction } from './resolvePrivateInspectionAction.js';
+import { resolvePublicCardVisibilityAction } from './resolvePublicVisibilityAction.js';
 import { resolveStackStateAction } from './resolveStackStateAction.js';
 
 export type LegacyBoardShortcutActionRequest =
@@ -25,12 +27,21 @@ export type LegacyBoardShortcutActionRequest =
       readonly action: 'changeCardType';
       readonly cardId: ViewCardId;
       readonly category: LegacyBoardCategoryChoice;
+    }
+  | { readonly action: 'togglePrivateInspection'; readonly cardId: ViewCardId }
+  | {
+      readonly action: 'setPublicReveal';
+      readonly cardId: ViewCardId;
+      readonly revealed: boolean;
     };
 
 export type LegacyBoardShortcutActionRejectionReason =
   | 'not_player'
   | 'stale_card'
+  | 'stale_player'
   | 'unsupported_target'
+  | 'unsupported_zone'
+  | 'empty_zone'
   | 'invalid_value'
   | 'no_op';
 
@@ -48,7 +59,9 @@ export type LegacyBoardShortcutActionResolution =
 
 type ExistingActionResolution =
   | ReturnType<typeof resolveStackStateAction>
-  | ReturnType<typeof resolveCardAnnotationAction>;
+  | ReturnType<typeof resolveCardAnnotationAction>
+  | ReturnType<typeof resolveCardInspectionAction>
+  | ReturnType<typeof resolvePublicCardVisibilityAction>;
 
 const retainResolution = (
   resolution: ExistingActionResolution,
@@ -139,6 +152,33 @@ export const resolveLegacyBoardShortcutAction = (
         }),
         true
       );
+    case 'togglePrivateInspection': {
+      const active = view.privateInspections.find((inspection) =>
+        inspection.cardIds.includes(request.cardId)
+      );
+      // A per-card key must never close an unrelated multi-card zone grant.
+      // Projection does not expose grant scope, but a multi-card grant is
+      // unambiguously not safe to collapse through this shortcut.
+      if (active && active.cardIds.length !== 1) {
+        return { ok: false, reason: 'unsupported_target' };
+      }
+      return retainResolution(
+        resolveCardInspectionAction(view, request.cardId, !active),
+        false
+      );
+    }
+    case 'setPublicReveal':
+      if (typeof request.revealed !== 'boolean') {
+        return { ok: false, reason: 'invalid_value' };
+      }
+      return retainResolution(
+        resolvePublicCardVisibilityAction(
+          view,
+          request.cardId,
+          request.revealed
+        ),
+        false
+      );
   }
 };
 
@@ -167,7 +207,7 @@ const matches = (
   code: string
 ): boolean => input.key === key || input.code === code;
 
-/** Converts only the protected marker/category keys into a closed request. */
+/** Converts only the protected marker/category/visibility keys into a request. */
 export const resolveLegacyBoardShortcutKey = (
   input: LegacyBoardShortcutKey,
   cardId: ViewCardId
@@ -193,6 +233,12 @@ export const resolveLegacyBoardShortcutKey = (
   }
   if (matches(input, 'w', 'KeyW')) {
     return { action: 'toggleAbility', cardId };
+  }
+  if (matches(input, 'c', 'KeyC')) {
+    return { action: 'togglePrivateInspection', cardId };
+  }
+  if (matches(input, 'z', 'KeyZ')) {
+    return { action: 'setPublicReveal', cardId, revealed: altKey };
   }
   if (!altKey) return null;
   if (matches(input, 'e', 'KeyE')) {

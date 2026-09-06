@@ -1222,7 +1222,7 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   expect(errors).toEqual([]);
 });
 
-test('selected-card marker and category shortcuts stay protected and suppress editable targets', async ({
+test('selected-card marker, category, and visibility shortcuts stay protected and suppress editable targets', async ({
   page,
 }) => {
   const errors = collectRuntimeErrors(page);
@@ -1231,6 +1231,9 @@ test('selected-card marker and category shortcuts stay protected and suppress ed
   const ownCard = host.locator(`[data-card-id="${fixture.activeTopCardId}"]`);
   const conditionlessCard = host.locator(
     `[data-card-id="${fixture.conditionlessActiveTopCardId}"]`
+  );
+  const ownPrizeCard = host.locator(
+    `[data-card-id="${fixture.ownPrizeCardId}"]`
   );
   const selectCard = async (card: Locator, cardId: string): Promise<void> => {
     const point = await exposedCardPoint(card);
@@ -1382,6 +1385,55 @@ test('selected-card marker and category shortcuts stay protected and suppress ed
         type: 'SetSpecialCondition',
         stackId: fixture.conditionlessActiveStackId,
         condition: 'P',
+      },
+      retained: true,
+    },
+    {
+      key: 'KeyC',
+      card: ownPrizeCard,
+      cardId: fixture.ownPrizeCardId,
+      request: {
+        action: 'togglePrivateInspection',
+        cardId: fixture.ownPrizeCardId,
+      },
+      command: {
+        type: 'BeginCardInspection',
+        cardId: fixture.ownPrizeCardId,
+        expectedSourceId: `zone:${fixture.ownPlayerId}:prizes`,
+      },
+      retained: true,
+    },
+    {
+      key: 'KeyZ',
+      card: ownCard,
+      cardId: fixture.activeTopCardId,
+      request: {
+        action: 'setPublicReveal',
+        cardId: fixture.activeTopCardId,
+        revealed: false,
+      },
+      command: {
+        type: 'SetPublicReveal',
+        cardId: fixture.activeTopCardId,
+        expectedSourceId: fixture.activeStackId,
+        revealed: false,
+      },
+      retained: true,
+    },
+    {
+      key: 'Alt+KeyZ',
+      card: ownPrizeCard,
+      cardId: fixture.ownPrizeCardId,
+      request: {
+        action: 'setPublicReveal',
+        cardId: fixture.ownPrizeCardId,
+        revealed: true,
+      },
+      command: {
+        type: 'SetPublicReveal',
+        cardId: fixture.ownPrizeCardId,
+        expectedSourceId: `zone:${fixture.ownPlayerId}:prizes`,
+        revealed: true,
       },
       retained: true,
     },

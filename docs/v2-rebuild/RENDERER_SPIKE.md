@@ -1139,6 +1139,21 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     forward/seek/exit behavior, and an empty submission/rejection/error trail.
     No production route, label, layout, styling, live command, or canonical
     schema changes.
+65. The protected selected-card keymap now includes the remaining visibility
+    family: `C` toggles one private card inspection, `Z` requests public hide,
+    and Alt-`Z` requests public reveal. The key/code/Alt boundary still emits a
+    closed request carrying the selected opaque card alias; controller and
+    adapter retain the ready live-player, exact-selection, current-scene, and
+    submit-time checks. The resolver reuses the existing inspection and public
+    visibility commands and retains selection for all three gestures. A
+    per-card close fails closed instead of collapsing a multi-card zone grant;
+    known cards without a matching private grant and already hidden/revealed
+    values remain no-ops. A real-v1 Chromium run pins `C`/Alt-`C` local card-back
+    swaps plus `Z`/Alt-`Z` face/public flags behind the deny-by-default network
+    harness. Candidate Chromium proves the three exact semantic commands in the
+    continuous protected-input lane and editable-target suppression remains
+    unchanged. No wire/domain schema, visible control, key reference, route,
+    layout, or styling changes.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

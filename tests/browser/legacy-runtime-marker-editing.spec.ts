@@ -31,6 +31,16 @@ interface LegacyMarkerEditingState {
   readonly exports: readonly LegacyActionRecord[];
 }
 
+interface LegacyVisibilityShortcutState {
+  readonly imagePath: string;
+  readonly savedImagePath: string | null;
+  readonly alt: string;
+  readonly savedAlt: string | null;
+  readonly faceDown: boolean | null;
+  readonly publiclyRevealed: boolean | null;
+  readonly selectingCard: boolean;
+}
+
 const mountRealLegacyActiveCard = async (page: Page): Promise<void> => {
   await page.evaluate(async () => {
     type RuntimeMarker = HTMLDivElement;
@@ -237,6 +247,50 @@ const captureRealLegacyMarkerState = async (
       selfCounter: frontEnd.systemState.selfCounter,
       actions: structuredClone(frontEnd.systemState.selfActionData),
       exports: structuredClone(frontEnd.systemState.exportActionData),
+    };
+  });
+
+const configureRealLegacyCardBack = async (page: Page): Promise<void> => {
+  await page.evaluate(async () => {
+    const specifier = '/src/front-end.js';
+    const frontEnd = (await import(/* @vite-ignore */ specifier)) as {
+      readonly systemState: { cardBackSrc: string };
+    };
+    frontEnd.systemState.cardBackSrc = `${location.origin}/src/assets/blank-logo.png`;
+  });
+};
+
+const captureRealLegacyVisibilityShortcutState = async (
+  page: Page
+): Promise<LegacyVisibilityShortcutState> =>
+  page.evaluate(async () => {
+    interface RuntimeImage extends HTMLImageElement {
+      src2?: string;
+      alt2?: string;
+      faceDown?: boolean;
+      public?: boolean;
+    }
+    interface RuntimeCard {
+      readonly image: RuntimeImage;
+    }
+    const specifier = '/src/front-end.js';
+    const frontEnd = (await import(/* @vite-ignore */ specifier)) as {
+      readonly mouseClick: { readonly selectingCard: boolean };
+    };
+    const fixture = globalThis as Record<string, unknown>;
+    const card = fixture['__ptcgsimLegacyRuntimeMarkerCard'] as RuntimeCard;
+    const path = (value: string | undefined): string | null =>
+      value === undefined ? null : new URL(value, location.origin).pathname;
+    return {
+      imagePath: new URL(card.image.src).pathname,
+      savedImagePath: path(card.image.src2),
+      alt: card.image.alt,
+      savedAlt: card.image.alt2 ?? null,
+      faceDown:
+        typeof card.image.faceDown === 'boolean' ? card.image.faceDown : null,
+      publiclyRevealed:
+        typeof card.image.public === 'boolean' ? card.image.public : null,
+      selectingCard: frontEnd.mouseClick.selectingCard,
     };
   });
 
@@ -500,6 +554,81 @@ test('real v1 numeric, condition, and ability shortcuts emit their exact marker 
     ).toEqual(['B', 'Pa', 'C', 'A', 'P']);
     expect(final.exports).toEqual(expectedLegacyExports(final.actions));
     expect(loaded.missingPaths).toEqual([]);
+    expect(pageErrors).toEqual([]);
+  } finally {
+    await page.close();
+  }
+});
+
+test('real v1 selected-card visibility shortcuts toggle local look and public face state', async ({
+  browser,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== 'chromium',
+    'The real-runtime visibility shortcut checkpoint is Chromium-specific.'
+  );
+  const page = await browser.newPage({ viewport, deviceScaleFactor: 1 });
+  const pageErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+  try {
+    const loaded = await loadLegacyRuntime(page);
+    await mountRealLegacyActiveCard(page);
+    await configureRealLegacyCardBack(page);
+
+    const initial = await captureRealLegacyVisibilityShortcutState(page);
+    expect(initial).toMatchObject({
+      imagePath: '/src/assets/cardback.png',
+      alt: 'Runtime marker card',
+      selectingCard: true,
+    });
+
+    await page.keyboard.press('KeyC');
+    const stoppedLooking = await captureRealLegacyVisibilityShortcutState(page);
+    expect(stoppedLooking).toEqual({
+      imagePath: '/src/assets/blank-logo.png',
+      savedImagePath: '/src/assets/cardback.png',
+      alt: 'Card back',
+      savedAlt: 'Runtime marker card',
+      faceDown: null,
+      publiclyRevealed: null,
+      selectingCard: true,
+    });
+
+    await page.keyboard.press('Alt+KeyC');
+    const looking = await captureRealLegacyVisibilityShortcutState(page);
+    expect(looking).toEqual({
+      imagePath: '/src/assets/cardback.png',
+      savedImagePath: '/src/assets/cardback.png',
+      alt: 'Runtime marker card',
+      savedAlt: 'Runtime marker card',
+      faceDown: null,
+      publiclyRevealed: null,
+      selectingCard: true,
+    });
+
+    await page.keyboard.press('KeyZ');
+    const hidden = await captureRealLegacyVisibilityShortcutState(page);
+    expect(hidden).toMatchObject({
+      imagePath: '/src/assets/blank-logo.png',
+      alt: 'Card back',
+      faceDown: true,
+      publiclyRevealed: false,
+      selectingCard: true,
+    });
+
+    await page.keyboard.press('Alt+KeyZ');
+    const revealed = await captureRealLegacyVisibilityShortcutState(page);
+    expect(revealed).toMatchObject({
+      imagePath: '/src/assets/cardback.png',
+      alt: 'Runtime marker card',
+      faceDown: false,
+      publiclyRevealed: true,
+      selectingCard: true,
+    });
+
+    expect(loaded.servedPaths).toContain('/src/assets/blank-logo.png');
+    expect(loaded.missingPaths).toEqual([]);
+    expect(loaded.blockedOrigins).toContain('https://ptcgsim.online');
     expect(pageErrors).toEqual([]);
   } finally {
     await page.close();

@@ -1166,16 +1166,22 @@ resolver. Missing/forged choices, lower evolutions, stale menu identity,
 already-board cards, and empty-deck swaps fail closed. Both nested menus share
 one hover/click/keyboard implementation and neither changes wire or domain
 schemas.
-The selected-card marker/category bridge is likewise route-owned. It maps
-digit/Alt-digit/`0`, `Y`/Alt-`Y`, `W`, and Alt-`E`/`T`/`P` key/code pairs to one
-typed request carrying the selected stable card ID. The controller rechecks
-selection, ready/live-player policy, and current recipient-safe membership,
-then delegates to the existing bounded stack/annotation resolver. It preserves
-v1's immediate selection cleanup and missing-marker modifier behavior while
-rejecting forged, stale, unsupported, replay, and invalid requests. Inputs,
-textareas, selects, table cells, contenteditable/textbox targets, composition,
-and already-consumed events produce no request. No visible key reference,
-layout, or UI behavior changes.
+The selected-card marker/category/visibility bridge is likewise route-owned. It
+maps digit/Alt-digit/`0`, `Y`/Alt-`Y`, `W`, Alt-`E`/`T`/`P`, `C`, and
+`Z`/Alt-`Z` key/code pairs to one typed request carrying the selected stable
+card ID. The controller rechecks selection, ready/live-player policy, and
+current recipient-safe membership, then delegates to the existing bounded
+stack, annotation, private-inspection, or public-visibility resolver. It
+preserves v1's immediate marker/category selection cleanup and retains
+selection for all three visibility gestures. `C` opens one private inspection
+only for a concealed card or closes one matching single-card grant; it does not
+collapse a multi-card zone grant, and a normally known card has no private
+grant to close. `Z` and Alt-`Z` resolve to explicit false/true public-reveal
+targets, so duplicate values fail as no-ops. Forged, stale, unsupported,
+replay, and invalid requests still fail before submission. Inputs, textareas,
+selects, table cells, contenteditable/textbox targets, composition, and
+already-consumed events produce no request. No visible key reference, layout,
+or UI behavior changes.
 Zone sort
 now has a deliberately narrower owner: controlled state inside the mounted zone
 browser. It sorts a copy by recipient-safe scene label, keeps equal labels in

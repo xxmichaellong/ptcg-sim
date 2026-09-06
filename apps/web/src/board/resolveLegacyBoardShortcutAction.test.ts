@@ -57,6 +57,20 @@ describe('legacy board shortcut action resolver', () => {
       action: 'toggleAbility',
       cardId,
     });
+    expect(key('C', 'KeyC', true)).toEqual({
+      action: 'togglePrivateInspection',
+      cardId,
+    });
+    expect(key('z', 'KeyZ')).toEqual({
+      action: 'setPublicReveal',
+      cardId,
+      revealed: false,
+    });
+    expect(key('Unidentified', 'KeyZ', true)).toEqual({
+      action: 'setPublicReveal',
+      cardId,
+      revealed: true,
+    });
     expect(key('e', 'KeyE', true)).toEqual({
       action: 'changeCardType',
       cardId,
@@ -74,6 +88,106 @@ describe('legacy board shortcut action resolver', () => {
     });
     expect(key('e', 'KeyE')).toBeNull();
     expect(key('x', 'KeyX', true)).toBeNull();
+  });
+
+  it('reuses private-inspection and public-reveal resolvers without dismissing selection', () => {
+    const view = createRendererSpikeView();
+    const prizes = Object.values(view.zones).find(
+      (zone) => zone.ownerId === 'spike-red' && zone.kind === 'prizes'
+    )!;
+    const prizeCard = prizes.cards[0]!;
+    const stack = view.stacks['stack:blue:active']!;
+    const stackCard = stack.evolutionCards.at(-1)!;
+
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'togglePrivateInspection',
+        cardId: prizeCard.id,
+      })
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'BeginCardInspection',
+        cardId: prizeCard.id,
+        expectedSourceId: prizes.id,
+      },
+      dismissSelection: false,
+    });
+    const activeInspectionView = {
+      ...view,
+      privateInspections: [
+        {
+          id: 'shortcut-private-inspection',
+          sourcePlayerId: 'spike-red',
+          sourceId: prizes.id,
+          cardIds: [prizeCard.id],
+        },
+      ],
+    } as typeof view;
+    expect(
+      resolveLegacyBoardShortcutAction(activeInspectionView, {
+        action: 'togglePrivateInspection',
+        cardId: prizeCard.id,
+      })
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'EndPrivateInspection',
+        inspectionId: 'shortcut-private-inspection',
+      },
+      dismissSelection: false,
+    });
+    expect(
+      resolveLegacyBoardShortcutAction(
+        {
+          ...view,
+          privateInspections: [
+            {
+              id: 'shortcut-zone-inspection',
+              sourcePlayerId: 'spike-red',
+              sourceId: prizes.id,
+              cardIds: [prizeCard.id, prizes.cards[1]!.id],
+            },
+          ],
+        } as typeof view,
+        {
+          action: 'togglePrivateInspection',
+          cardId: prizeCard.id,
+        }
+      )
+    ).toEqual({ ok: false, reason: 'unsupported_target' });
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'setPublicReveal',
+        cardId: prizeCard.id,
+        revealed: true,
+      })
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'SetPublicReveal',
+        cardId: prizeCard.id,
+        expectedSourceId: prizes.id,
+        revealed: true,
+      },
+      dismissSelection: false,
+    });
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'setPublicReveal',
+        cardId: stackCard.id,
+        revealed: false,
+      })
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'SetPublicReveal',
+        cardId: stackCard.id,
+        expectedSourceId: stack.id,
+        revealed: false,
+      },
+      dismissSelection: false,
+    });
   });
 
   it('reuses bounded stack and annotation resolvers with source selection cleanup', () => {
@@ -235,6 +349,13 @@ describe('legacy board shortcut action resolver', () => {
     ).toEqual({ ok: false, reason: 'invalid_value' });
     expect(
       resolveLegacyBoardShortcutAction(view, {
+        action: 'setPublicReveal',
+        cardId,
+        revealed: 'true',
+      } as unknown as LegacyBoardShortcutActionRequest)
+    ).toEqual({ ok: false, reason: 'invalid_value' });
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
         action: 'changeCardType',
         cardId,
         category: 'Item',
@@ -247,6 +368,21 @@ describe('legacy board shortcut action resolver', () => {
         category: 'Energy',
       })
     ).toEqual({ ok: false, reason: 'unsupported_target' });
+    const knownHandCard = view.zones['zone:spike-blue:hand']!.cards[0]!;
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'togglePrivateInspection',
+        cardId: knownHandCard.id,
+      })
+    ).toEqual({ ok: false, reason: 'no_op' });
+    const concealedPrizeCard = view.zones['zone:spike-red:prizes']!.cards[0]!;
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'setPublicReveal',
+        cardId: concealedPrizeCard.id,
+        revealed: false,
+      })
+    ).toEqual({ ok: false, reason: 'no_op' });
     expect(
       resolveLegacyBoardShortcutAction(
         { ...view, viewer: { kind: 'spectator' } },

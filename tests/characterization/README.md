@@ -376,6 +376,21 @@ command. Native Chromium proves nine exact submissions plus zero traffic while
 an input is focused. No visible key reference, layout, or production route is
 changed.
 
+The protected visibility-shortcut checkpoint extends that same route-owned
+boundary with the remaining `C`, `Z`, and Alt-`Z` selected-card gestures. A
+real-v1 Chromium run executes the checked-in keybind and reveal/hide modules:
+`C` and Alt-`C` toggle only the local front/back image and saved alt/source
+pair, while `Z` marks the selected active card face-down and nonpublic and
+Alt-`Z` restores its face and public flag. Selection remains active throughout,
+and all external legacy requests remain blocked by the runtime harness. The v2
+mapper emits one opaque-card request and reuses the existing private-inspection
+or public-reveal resolver. It refuses to close a multi-card grant, treats known
+cards without a grant and duplicate target values as no-ops, preserves all
+editable-target suppression, and retains selection. Candidate Chromium proves
+exact `BeginCardInspection`, `SetPublicReveal(false)`, and
+`SetPublicReveal(true)` submissions after the prior nine commands, with no new
+protocol, domain, route, label, layout, or styling behavior.
+
 The solo replay disclosure checkpoint closes the three replay exceptions pinned
 by `client/src/setup/general/replay-block.js`: prize reveal, prize look, and
 opponent-hand look. It preserves their exact source labels and show/cover
