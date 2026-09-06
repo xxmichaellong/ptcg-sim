@@ -454,6 +454,23 @@ const zoneAction = (
       ? { id: 'shuffleDiscardToDeck', label: 'Shuffle all to Deck' }
       : null;
 
+/**
+ * Produces a paint-only ordering from data already disclosed in the scene.
+ * Equal labels retain authoritative scene order, which keeps concealed and
+ * duplicate cards stable without consulting opaque IDs or hidden definitions.
+ */
+export const sortRecipientSafeZoneCards = (
+  cards: readonly CardSceneNode[]
+): readonly CardSceneNode[] =>
+  cards
+    .map((card, index) => ({ card, index }))
+    .sort((left, right) => {
+      if (left.card.label < right.card.label) return -1;
+      if (left.card.label > right.card.label) return 1;
+      return left.index - right.index;
+    })
+    .map(({ card }) => card);
+
 const ZoneBrowser = ({
   state,
   zone,
@@ -472,10 +489,15 @@ const ZoneBrowser = ({
   readonly actions: LegacyBoardOverlayActions;
 }) => {
   const container = useRef<HTMLElement>(null);
+  const [sortEnabled, setSortEnabled] = useState(false);
   const dismiss = useCallback(() => actions.dismiss('zone'), [actions]);
   useFocusBoundary(container, '[data-zone-close]', zone.id);
   useOutsideDismiss(container, dismiss, '[data-legacy-card-preview]');
   const primary = zoneAction(zone);
+  const renderedCards = useMemo(
+    () => (sortEnabled ? sortRecipientSafeZoneCards(cards) : cards),
+    [cards, sortEnabled]
+  );
 
   return (
     <section
@@ -516,13 +538,14 @@ const ZoneBrowser = ({
           <input
             type="checkbox"
             data-zone-action="sortZone"
-            onChange={() => actions.invokeZoneAction('sortZone', zone.id)}
+            checked={sortEnabled}
+            onChange={(event) => setSortEnabled(event.currentTarget.checked)}
           />{' '}
           Sort
         </label>
       </div>
       <div className="ptcgsim-legacy-zone-cards">
-        {cards.map((card) => (
+        {renderedCards.map((card) => (
           <button
             type="button"
             key={card.id}
@@ -614,6 +637,7 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
     >
       {openedZone ? (
         <ZoneBrowser
+          key={openedZone.id}
           state={state}
           zone={openedZone}
           cards={openedZoneCards}

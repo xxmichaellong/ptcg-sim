@@ -235,19 +235,26 @@ The resolver exhaustively classifies the unchanged controls:
 | missing choice     | move destination/submenu and card category                                                                                                                                                        |
 | local presentation | zone sort                                                                                                                                                                                         |
 
-An incomplete action emits `OverlayActionRejected` with `requires_input`,
-`requires_choice`, or `local_only`; it never supplies a legacy default or
-reaches the submitter. Replay remains strictly non-submitting. V1's replay-only
-local disclosure exceptions are explicitly pinned to prize reveal, prize look,
-and opponent-hand look, but V2 continues to expose an empty replay mutation menu
+An incomplete command-backed action emits `OverlayActionRejected` with
+`requires_input` or `requires_choice`; it never supplies a legacy default or
+reaches the submitter. Zone sort now remains entirely inside the mounted zone
+browser: checking it creates a stable sorted copy from disclosed scene labels,
+equal labels keep authoritative scene order, and unchecking restores that order.
+The checkbox dispatches no controller request, effect, or command. The resolver
+retains a `local_only` rejection for forged `sortZone` requests as a fail-closed
+boundary. Replay remains strictly non-submitting. V1's replay-only local
+disclosure exceptions are explicitly pinned to prize reveal, prize look, and
+opponent-hand look, but V2 continues to expose an empty replay mutation menu
 until it owns a separate local disclosure projection. Even a forged replay
 request is rejected as `read_only` before the resolver runs. Native Chromium
-now proves both an exact accepted `SetAbilityUsed` submission and the typed
-zero-command hand/sort rejections.
+now proves an exact accepted `SetAbilityUsed` submission, the typed zero-command
+hand rejection, and reversible sorting with zero routed actions or effects.
 
-Prompt/submenu composition, replay-local disclosure paint, source stack/zone
-raster parity, complete accessibility focus trapping, reconnect snap-back,
-production wiring, and non-Chromium approval remain separate.
+Deck-list ordering is not present in recipient projections: unlike v1, the
+safe fallback orders disclosed labels and never obtains the opponent's hidden
+deck list. Prompt/submenu composition, replay-local disclosure paint, source
+stack/zone raster parity, complete accessibility focus trapping, reconnect
+snap-back, production wiring, and non-Chromium approval remain separate.
 
 ## Effects and renderer cancellation
 

@@ -797,14 +797,20 @@ real submitter.
 
 The unchanged menu still contains incomplete compound interactions. Damage and
 special-condition editors, all draw-count flows, and top/bottom inspection need
-input; move-card and category controls need a submenu choice; zone sorting is
-local paint. These return `requires_input`, `requires_choice`, or `local_only`
-without a command, so the migration cannot silently substitute legacy prompt
-defaults. V1 replay's prize reveal/look and opponent-hand look are pinned as
-local-disclosure exceptions. They remain unavailable in the V2 replay menu—and
-forged requests fail `read_only`—until replay owns an isolated disclosure
-projection rather than mutating a historical view. This slice changes no label,
-order, placement, styling, or production route.
+input; move-card and category controls need a submenu choice. These return
+`requires_input` or `requires_choice` without a command, so the migration cannot
+silently substitute legacy prompt defaults. Zone sorting is now paint-only
+controlled state in the mounted browser: it sorts a copy by disclosed label,
+uses canonical scene order for equal labels, reverses immediately when
+unchecked, and never invokes the controller. A forged `sortZone` request still
+returns `local_only`. V1 used the exchanged full deck list as its sort rank;
+because that data is intentionally absent from protected opponent projections,
+V2 uses the disclosed-label order without leaking hidden definitions. V1
+replay's prize reveal/look and opponent-hand look are pinned as local-disclosure
+exceptions. They remain unavailable in the V2 replay menu—and forged requests
+fail `read_only`—until replay owns an isolated disclosure projection rather than
+mutating a historical view. This slice changes no label, placement, styling, or
+production route.
 
 ### Implemented authority-random face-down subset
 

@@ -291,7 +291,7 @@ repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
 The repository-wide gate passes 909 v2 tests across 143 files. A separate suite
-passes 132 Playwright checks across 63 Chromium 151 browser files:
+passes 134 Playwright checks across 64 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -1007,14 +1007,26 @@ passes 132 Playwright checks across 63 Chromium 151 browser files:
     loose-board resolvers for complete actions. The controller binds a request
     to the currently open menu card or zone, requires a ready live-player
     projection, and the adapter rechecks live/replay/session/role immediately
-    before submit. Prompt, submenu, and local-sort controls emit typed
-    `requires_input`, `requires_choice`, or `local_only` rejection effects and
-    cannot invent defaults. Native Chromium proves one exact `SetAbilityUsed`
-    command plus zero-command hand-input and zone-sort rejections. The three v1
+    before submit. Prompt and submenu controls emit typed `requires_input` or
+    `requires_choice` rejection effects and cannot invent defaults. A forged
+    zone-sort request remains a typed `local_only` rejection. Native Chromium
+    proves one exact `SetAbilityUsed` command plus a zero-command hand-input
+    rejection. The three v1
     replay-local disclosure exceptions are pinned, while V2 deliberately keeps
     replay actions non-submitting and unavailable until a separate local
     disclosure projection exists. Prompt/submenu composition, replay-local
     paint, production wiring, and the prior parity gaps remain separate.
+56. Zone sorting now terminates inside `LegacyBoardOverlays`. The controlled
+    checkbox renders a newly sorted card-array copy using only recipient-safe
+    scene labels, explicitly retains canonical order for duplicate/concealed
+    labels, restores canonical order when unchecked, and resets on overlay or
+    zone replacement. It does not route an action, emit an effect, submit a
+    command, or mutate the scene/view. The native fixture begins in a deliberate
+    non-sorted order and proves both directions plus zero action/effect/command
+    traffic. V1's rank came from exchanged deck data; protected opponent views
+    do not contain that hidden information, so the documented security-preserving
+    parity exception is stable disclosed-label order. The control, text, dialog
+    layout, paint, and production-route boundary are unchanged.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -1190,7 +1202,7 @@ wiring:
   thresholds (source edge clamp/collision states, the isolated candidate
   resize-pointer path, and normal/flipped fullscreen viewport continuity are now
   covered);
-- complete prompt/submenu context actions, local zone sorting, replay-local
+- complete prompt/submenu context actions, replay-local
   disclosure paint, source raster comparison for transformed stack/zone dialogs,
   the full focus-trap/screen-reader audit, and reconnect snap-back beyond the
   current native Chromium overlay/input gate;

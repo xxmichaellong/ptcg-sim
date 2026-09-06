@@ -1137,15 +1137,21 @@ therefore produces exactly one `SetAbilityUsed` command.
 
 Controls that still need content-editable marker text, a draw/inspection count,
 a move destination, or a category do not guess a default. They emit observable
-`requires_input` or `requires_choice` rejections and submit nothing. Zone sort is
-classified as local presentation and likewise emits `local_only` until that
-state has an owner. V1 replay permits three local disclosure actions—prize
-reveal, prize look, and opponent-hand look—but V2 intentionally keeps the
-replay context menu empty and rejects forged requests as `read_only` until it
-has an isolated replay-local disclosure projection. Prompt/submenu composition,
-replay-local paint, source-raster parity for transformed stack/zone dialogs, a
-complete focus-trap and screen-reader audit, reconnect snap-back, production
-routing, and non-Chromium approval remain separate gates.
+`requires_input` or `requires_choice` rejections and submit nothing. Zone sort
+now has a deliberately narrower owner: controlled state inside the mounted zone
+browser. It sorts a copy by recipient-safe scene label, keeps equal labels in
+authoritative scene order, restores that order when unchecked, and resets when
+the browser closes or changes zones. It never mutates the view or invokes the
+controller; a forged external `sortZone` request still fails `local_only`.
+Because the protected projection does not disclose an opponent's deck list,
+this replaces v1's deck-data rank with a stable disclosed-label order instead
+of recreating its information leak. V1 replay permits three local disclosure
+actions—prize reveal, prize look, and opponent-hand look—but V2 intentionally
+keeps the replay context menu empty and rejects forged requests as `read_only`
+until it has an isolated replay-local disclosure projection. Prompt/submenu
+composition, replay-local paint, source-raster parity for transformed
+stack/zone dialogs, a complete focus-trap and screen-reader audit, reconnect
+snap-back, production routing, and non-Chromium approval remain separate gates.
 
 ## React application state
 

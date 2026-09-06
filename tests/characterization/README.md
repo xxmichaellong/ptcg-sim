@@ -296,12 +296,17 @@ browser, then requires a ready live-player projection before the pure action
 resolver is callable. Complete actions reuse the existing semantic resolvers
 and the adapter's guarded submission path. The native test now proves an active
 card ability toggle queues exactly one `SetAbilityUsed`; the existing hand
-action instead records `requires_input`, and zone sort records `local_only`,
-with zero commands/results for both. The exhaustive requirements table pins all
-23 context actions and three zone actions as command, input, choice, or local.
-It also pins the three v1 replay-local disclosure actions; the V2 replay menu
-remains empty and the controller returns `read_only` before resolver/submit
-until a separate local disclosure projection is implemented.
+action instead records `requires_input` with zero commands/results. The
+exhaustive requirements table pins all 23 context actions and three zone actions
+as command, input, choice, or local. The next local-sort checkpoint keeps the
+real checkbox wholly inside the mounted overlay: a deliberately reversed
+fixture proves checking renders stable disclosed-label order, unchecking
+restores canonical scene order, and neither direction records an overlay
+action, controller effect, or submission. Forged sort requests retain the
+`local_only` resolver rejection. It also pins the three v1 replay-local
+disclosure actions; the V2 replay menu remains empty and the controller returns
+`read_only` before resolver/submit until a separate local disclosure projection
+is implemented.
 
 `legacy-compound-group-rotation-layout.test.ts` and
 `legacy-compound-break-rotation-layout.test.ts` split the next source-only

@@ -16,6 +16,7 @@ import {
 import {
   LegacyBoardOverlays,
   selectLegacyContextEntries,
+  sortRecipientSafeZoneCards,
   type LegacyBoardOverlayActions,
 } from './LegacyBoardOverlays.js';
 
@@ -297,5 +298,102 @@ describe('legacy board overlays', () => {
       kind: 'CardContextRequested',
       cardId: discardCards[0]!.id,
     });
+  });
+
+  it('sorts only disclosed labels locally and restores authoritative scene order', async () => {
+    const callbacks = actions();
+    const discard = scene.zones.find(
+      (candidate) => candidate.id === `zone:${firstPlayer}:discard`
+    )!;
+    const canonicalCards = scene.cards.filter(
+      (candidate) => candidate.parentId === discard.id
+    );
+    const labels = ['Zulu', 'Alpha', 'Alpha'];
+    const relabeledCards = scene.cards.map((card) => {
+      const index = canonicalCards.findIndex(
+        (candidate) => candidate.id === card.id
+      );
+      return index === -1 ? card : { ...card, label: labels[index]! };
+    });
+    const overlayState = state({
+      scene: { ...scene, cards: relabeledCards },
+      presentation: {
+        selectedCardId: null,
+        hoveredCardId: null,
+        drag: null,
+        openedZoneId: discard.id,
+      },
+    });
+    const cardIds = () =>
+      [...host.querySelectorAll('[data-overlay-card-id]')].map((node) =>
+        node.getAttribute('data-overlay-card-id')
+      );
+
+    const concealedCards = [
+      { ...canonicalCards[1]!, label: 'Face-down card' },
+      { ...canonicalCards[0]!, label: 'Face-down card' },
+    ];
+    expect(
+      sortRecipientSafeZoneCards(concealedCards).map((card) => card.id)
+    ).toEqual([canonicalCards[1]!.id, canonicalCards[0]!.id]);
+    expect(concealedCards.map((card) => card.id)).toEqual([
+      canonicalCards[1]!.id,
+      canonicalCards[0]!.id,
+    ]);
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: overlayState,
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    expect(cardIds()).toEqual(canonicalCards.map((card) => card.id));
+
+    const sort = host.querySelector<HTMLInputElement>(
+      '[data-zone-action="sortZone"]'
+    )!;
+    await act(async () => sort.click());
+    expect(sort.checked).toBe(true);
+    expect(cardIds()).toEqual([
+      canonicalCards[1]!.id,
+      canonicalCards[2]!.id,
+      canonicalCards[0]!.id,
+    ]);
+    expect(callbacks.invokeZoneAction).not.toHaveBeenCalled();
+
+    await act(async () => sort.click());
+    expect(sort.checked).toBe(false);
+    expect(cardIds()).toEqual(canonicalCards.map((card) => card.id));
+    expect(callbacks.invokeZoneAction).not.toHaveBeenCalled();
+
+    await act(async () => sort.click());
+    expect(sort.checked).toBe(true);
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state(),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: overlayState,
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    expect(
+      host.querySelector<HTMLInputElement>('[data-zone-action="sortZone"]')
+        ?.checked
+    ).toBe(false);
+    expect(cardIds()).toEqual(canonicalCards.map((card) => card.id));
+    expect(callbacks.invokeZoneAction).not.toHaveBeenCalled();
   });
 });

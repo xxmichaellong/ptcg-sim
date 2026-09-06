@@ -10,6 +10,7 @@ interface ProtectedInputFixture {
   readonly activeAbilityUsed: boolean;
   readonly destinationZoneId: string;
   readonly destinationCardIds: readonly string[];
+  readonly destinationSortedCardIds: readonly string[];
 }
 
 interface ProtectedInputEvidence {
@@ -549,14 +550,27 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   );
   await zoneBrowser.locator('[data-zone-action="sortZone"]').check();
   await expect
+    .poll(() =>
+      zoneBrowser
+        .locator('[data-overlay-card-id]')
+        .evaluateAll((nodes) =>
+          nodes.map((node) => node.getAttribute('data-overlay-card-id'))
+        )
+    )
+    .toEqual(fixture.destinationSortedCardIds);
+  await expect
     .poll(async () => (await evidence(page)).overlayActions)
-    .toEqual([
-      {
-        kind: 'zone',
-        action: 'sortZone',
-        zoneId: fixture.destinationZoneId,
-      },
-    ]);
+    .toEqual([]);
+  await zoneBrowser.locator('[data-zone-action="sortZone"]').uncheck();
+  await expect
+    .poll(() =>
+      zoneBrowser
+        .locator('[data-overlay-card-id]')
+        .evaluateAll((nodes) =>
+          nodes.map((node) => node.getAttribute('data-overlay-card-id'))
+        )
+    )
+    .toEqual(fixture.destinationCardIds);
   await zoneBrowser.locator('[data-zone-close]').click();
   await expect(zoneBrowser).toHaveCount(0);
   await expect(destinationZone).toBeFocused();
@@ -564,17 +578,7 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   expect(zoneEvidence.submissions).toEqual([]);
   expect(zoneEvidence.submissionResults).toEqual([]);
   expect(zoneEvidence.rejections).toEqual([]);
-  expect(zoneEvidence.overlayRejections).toEqual([
-    {
-      kind: 'OverlayActionRejected',
-      request: {
-        kind: 'zone',
-        action: 'sortZone',
-        zoneId: fixture.destinationZoneId,
-      },
-      reason: 'local_only',
-    },
-  ]);
+  expect(zoneEvidence.overlayRejections).toEqual([]);
   expect(zoneEvidence.reportedErrors).toEqual([]);
 
   await clearEvidence(page);

@@ -49,6 +49,7 @@ export interface ReactDomProtectedInputFixture {
   readonly activeAbilityUsed: boolean;
   readonly destinationZoneId: string;
   readonly destinationCardIds: readonly string[];
+  readonly destinationSortedCardIds: readonly string[];
 }
 
 export interface ReactDomProtectedInputEvidence {
@@ -97,12 +98,29 @@ const currentViewport = (): BoardLayoutState['viewport'] => ({
 /** Development-only native-input seam; it is unreachable from production. */
 export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
   window[HANDLE_NAME]?.dispose();
-  const view = createRendererSpikeView();
-  const firstPlayerId = view.playerOrder[0];
-  const secondPlayerId = view.playerOrder[1];
+  const baseView = createRendererSpikeView();
+  const firstPlayerId = baseView.playerOrder[0];
+  const secondPlayerId = baseView.playerOrder[1];
   if (!firstPlayerId || !secondPlayerId) {
     throw new Error('Protected-input harness requires exactly two players');
   }
+  const destinationZoneId = `zone:${firstPlayerId}:discard`;
+  const destinationZone = baseView.zones[destinationZoneId];
+  if (!destinationZone) {
+    throw new Error('Protected-input destination zone is missing');
+  }
+  // A non-sorted canonical order makes the browser proof sensitive to both
+  // enabling and disabling the paint-only Sort control.
+  const view = {
+    ...baseView,
+    zones: {
+      ...baseView.zones,
+      [destinationZoneId]: {
+        ...destinationZone,
+        cards: [...destinationZone.cards].reverse(),
+      },
+    },
+  };
 
   const layout: BoardLayoutState = {
     geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
@@ -224,7 +242,6 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
     throw new Error('Protected-input harness did not install a board scene');
   }
   const sourceZoneId = `zone:${firstPlayerId}:hand`;
-  const destinationZoneId = `zone:${firstPlayerId}:discard`;
   const sourceCard = scene.cards
     .filter((card) => card.parentId === sourceZoneId && card.interactive)
     .sort((left, right) => right.zIndex - left.zIndex)[0];
@@ -254,6 +271,9 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
     host.remove();
     throw new Error('Protected-input fixture is incomplete');
   }
+  const destinationCards = scene.cards.filter(
+    (card) => card.parentId === destinationZoneId
+  );
   const fixture: ReactDomProtectedInputFixture = {
     sourceCardId: String(sourceCard.id),
     sourceZoneId,
@@ -266,9 +286,15 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
     activeStackId: localActiveStackId,
     activeAbilityUsed: localActiveStack.abilityUsed,
     destinationZoneId,
-    destinationCardIds: scene.cards
-      .filter((card) => card.parentId === destinationZoneId)
-      .map((card) => String(card.id)),
+    destinationCardIds: destinationCards.map((card) => String(card.id)),
+    destinationSortedCardIds: destinationCards
+      .map((card, index) => ({ card, index }))
+      .sort((left, right) => {
+        if (left.card.label < right.card.label) return -1;
+        if (left.card.label > right.card.label) return 1;
+        return left.index - right.index;
+      })
+      .map(({ card }) => String(card.id)),
   };
 
   const overlayRoot = createRoot(overlayHost);
