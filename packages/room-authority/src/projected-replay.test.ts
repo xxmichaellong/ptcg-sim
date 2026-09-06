@@ -105,7 +105,8 @@ describe('role-projected replay', () => {
     const spectator = buildProjectedReplay(
       history,
       { kind: 'spectator' },
-      opaqueSource()
+      opaqueSource(),
+      'multiplayer'
     );
     const serialized = JSON.stringify(spectator);
     expect(serialized).not.toContain('canonical-secret-card');
@@ -128,17 +129,183 @@ describe('role-projected replay', () => {
     const firstArtifact = buildProjectedReplay(
       history,
       { kind: 'spectator' },
-      source
+      source,
+      'multiplayer'
     );
     const secondArtifact = buildProjectedReplay(
       history,
       { kind: 'spectator' },
-      source
+      source,
+      'multiplayer'
     );
     const deckId = playerZoneId(p1, 'deck');
     expect(
       firstArtifact.frames[2]!.snapshot.zones[deckId]!.cards[0]!.id
     ).not.toBe(secondArtifact.frames[2]!.snapshot.zones[deckId]!.cards[0]!.id);
+  });
+
+  it('adds an alias-keyed local disclosure catalog only to solo player replay', () => {
+    const adapter = context();
+    let state = initialState();
+    let history = createReplayHistory(state);
+    [state, history] = executeAndAppend(
+      state,
+      history,
+      {
+        type: 'LoadDeck',
+        playerId: p1,
+        entries: [
+          {
+            definition: {
+              id: asCardDefinitionId('canonical-solo-replay-definition'),
+              name: 'Solo Replay Prize',
+              category: 'Pokémon',
+              imageUrl: 'https://cards.invalid/solo-replay-prize.png',
+            },
+            count: 14,
+          },
+        ],
+      },
+      adapter
+    );
+    [state, history] = executeAndAppend(
+      state,
+      history,
+      { type: 'SetupPlayer', playerId: p1 },
+      adapter
+    );
+
+    const solo = buildProjectedReplay(
+      history,
+      { kind: 'player', playerId: p1 },
+      opaqueSource(),
+      'solo'
+    );
+    const final = solo.frames[2]!;
+    const prizeId = playerZoneId(p1, 'prizes');
+    const opponentHandId = playerZoneId(p2, 'hand');
+    const opponentPrizeId = playerZoneId(p2, 'prizes');
+    const concealedPrizeIds = final.snapshot.zones[prizeId]!.cards.map(
+      (card) => card.id
+    );
+    expect(solo.localDisclosureDefinitions).toEqual([
+      expect.objectContaining({
+        name: 'Solo Replay Prize',
+        imageUrl: 'https://cards.invalid/solo-replay-prize.png',
+      }),
+    ]);
+    expect(final.localDisclosure?.zoneIds).toEqual(
+      expect.arrayContaining([prizeId, opponentHandId, opponentPrizeId])
+    );
+    expect(final.localDisclosure?.zoneIds).toHaveLength(3);
+    expect(final.localDisclosure?.cards.map((card) => card.id)).toEqual(
+      concealedPrizeIds
+    );
+    expect(
+      final.localDisclosure?.cards.every(
+        (card) =>
+          card.kind === 'known' &&
+          card.face === 'up' &&
+          !card.publiclyRevealed &&
+          card.definitionId === solo.localDisclosureDefinitions?.[0]?.id
+      )
+    ).toBe(true);
+    const serialized = JSON.stringify(solo);
+    expect(serialized).not.toContain('canonical-secret-card');
+    expect(serialized).not.toContain('canonical-solo-replay-definition');
+    for (const canonicalCardId of state.zones[prizeId]!.cardIds) {
+      expect(serialized).not.toContain(canonicalCardId);
+    }
+    const projectedAliases = new Set(
+      solo.frames.flatMap((frame) =>
+        Object.values(frame.snapshot.zones).flatMap((zone) =>
+          zone.cards.map((card) => card.id)
+        )
+      )
+    );
+    expect(
+      solo.localDisclosureDefinitions?.every(
+        (definition) => !projectedAliases.has(definition.id)
+      )
+    ).toBe(true);
+
+    const multiplayer = buildProjectedReplay(
+      history,
+      { kind: 'player', playerId: p1 },
+      opaqueSource(),
+      'multiplayer'
+    );
+    expect(multiplayer.localDisclosureDefinitions).toBeUndefined();
+    expect(
+      multiplayer.frames.every((frame) => frame.localDisclosure === undefined)
+    ).toBe(true);
+
+    const spectator = buildProjectedReplay(
+      history,
+      { kind: 'spectator' },
+      opaqueSource(),
+      'solo'
+    );
+    expect(spectator.localDisclosureDefinitions).toBeUndefined();
+    expect(
+      spectator.frames.every((frame) => frame.localDisclosure === undefined)
+    ).toBe(true);
+  });
+
+  it('keeps ordinary solo replay when the optional disclosure catalog exceeds its frame budget', () => {
+    const base = initialState();
+    const handId = playerZoneId(p2, 'hand');
+    const definitions: Record<string, MatchState['definitions'][string]> = {};
+    const cards: Record<string, MatchState['cards'][string]> = {};
+    const cardIds = Array.from({ length: 200 }, (_, index) => {
+      const definitionId = asCardDefinitionId(
+        `oversized-local-definition-${index}`
+      );
+      const cardId = asCardInstanceId(`oversized-local-card-${index}`);
+      definitions[definitionId] = {
+        id: definitionId,
+        name: `Oversized local definition ${index}`,
+        category: 'Pokémon',
+        imageUrl: `https://cards.invalid/${index}/${'x'.repeat(4_000)}`,
+      };
+      cards[cardId] = {
+        id: cardId,
+        definitionId,
+        ownerId: p2,
+        originalCategory: 'Pokémon',
+        currentCategory: 'Pokémon',
+        face: 'down',
+        orientationQuarterTurns: 0,
+        abilityUsed: false,
+        visibilityGeneration: 0,
+      };
+      return cardId;
+    });
+    const state: MatchState = {
+      ...base,
+      definitions,
+      cards,
+      zones: {
+        ...base.zones,
+        [handId]: { ...base.zones[handId]!, cardIds },
+      },
+    };
+
+    const replay = buildProjectedReplay(
+      createReplayHistory(state),
+      { kind: 'player', playerId: p1 },
+      opaqueSource(),
+      'solo'
+    );
+    expect(replay.localDisclosureDefinitions).toBeUndefined();
+    expect(replay.frames[0]!.localDisclosure).toBeUndefined();
+    expect(replay.frames[0]!.snapshot.zones[handId]!.cards).toHaveLength(200);
+    expect(
+      replay.frames[0]!.snapshot.zones[handId]!.cards.every(
+        (card) => card.kind === 'concealed'
+      )
+    ).toBe(true);
+    expect(JSON.stringify(replay)).not.toContain('Oversized local definition');
   });
 
   it('preserves aliases across unchanged frames and rotates them after undo', () => {
@@ -195,7 +362,8 @@ describe('role-projected replay', () => {
     const replay = buildProjectedReplay(
       history,
       { kind: 'player', playerId: p1 },
-      opaqueSource()
+      opaqueSource(),
+      'multiplayer'
     );
     const handId = playerZoneId(p1, 'hand');
     const setupIds = replay.frames[2]!.snapshot.zones[handId]!.cards.map(
@@ -282,7 +450,8 @@ describe('role-projected replay', () => {
     const replay = buildProjectedReplay(
       history,
       { kind: 'spectator' },
-      opaqueSource()
+      opaqueSource(),
+      'multiplayer'
     );
     expect(replay.frames[3]!.presentationEvents).toEqual([
       {
@@ -329,7 +498,8 @@ describe('role-projected replay', () => {
     const replay = buildProjectedReplay(
       history,
       { kind: 'spectator' },
-      opaqueSource()
+      opaqueSource(),
+      'multiplayer'
     );
     expect(replay).toMatchObject({
       startRevision: 1,

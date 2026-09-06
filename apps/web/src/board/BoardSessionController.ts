@@ -1,5 +1,9 @@
 import type { MatchViewState, ViewCardId } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
+import type {
+  ClientSessionPhase,
+  ReadyReplayPlaybackState,
+} from '@ptcgsim/client-session';
 import {
   DEFAULT_BOARD_PRESENTATION,
   type BoardIntent,
@@ -8,12 +12,17 @@ import {
   type BoardScene,
   type BoardSceneInstallMode,
 } from '@ptcgsim/renderer-contract';
-import type { ClientSessionPhase } from '@ptcgsim/client-session';
-
 import {
   resolveBoardDrop,
   type BoardDropResolution,
 } from './resolveBoardDrop.js';
+import {
+  applyReplayLocalDisclosure,
+  isReplayLocalDisclosureAction,
+  reconcileReplayLocalDisplayState,
+  toggleReplayLocalDisclosure,
+  type ReplayLocalDisplayState,
+} from './replayLocalDisclosure.js';
 import {
   resolveLegacyBoardOverlayAction,
   type LegacyBoardOverlayInput,
@@ -26,6 +35,10 @@ import {
   type LegacyBoardShortcutActionRejectionReason,
   type LegacyBoardShortcutActionRequest,
 } from './resolveLegacyBoardShortcutAction.js';
+
+type ReplayLocalDisclosureState = NonNullable<
+  ReadyReplayPlaybackState['localDisclosure']
+>;
 
 export type BoardProjectionSource =
   | { readonly kind: 'live' }
@@ -51,6 +64,7 @@ export interface BoardProjectionFrame {
   readonly boundary: BoardProjectionBoundary;
   readonly sessionPhase: ClientSessionPhase;
   readonly view?: MatchViewState;
+  readonly replayLocalDisclosure?: ReplayLocalDisclosureState;
   /** Covers replay loading/discarding and any application-level submit gate. */
   readonly submissionsBlocked: boolean;
 }
@@ -91,6 +105,7 @@ export interface BoardSessionControllerState {
   readonly source: BoardProjectionSource | null;
   readonly cursor: BoardFrameCursor | null;
   readonly view?: MatchViewState;
+  readonly replayLocalDisplay?: ReplayLocalDisplayState;
   readonly scene?: BoardScene;
   readonly sceneInstallMode: BoardSceneInstallMode;
   readonly presentation: BoardPresentation;
@@ -283,14 +298,17 @@ const validFrameHeader = (frame: BoardProjectionFrame): boolean => {
   ) {
     return false;
   }
-  if (frame.source.kind === 'live') return frame.boundary !== 'seek';
+  if (frame.source.kind === 'live') {
+    return frame.boundary !== 'seek' && !frame.replayLocalDisclosure;
+  }
   if (frame.source.kind !== 'replay') return false;
   return (
     typeof frame.source.replayId === 'string' &&
     frame.source.replayId.length > 0 &&
     frame.source.replayId.length <= 128 &&
     validCounter(frame.source.playbackGeneration) &&
-    validCounter(frame.source.frameIndex)
+    validCounter(frame.source.frameIndex) &&
+    (!frame.replayLocalDisclosure || Boolean(frame.view))
   );
 };
 
@@ -358,6 +376,7 @@ const purgeRejectedRecipientProjection = (
     nextState(state, {
       sessionPhase,
       view: undefined,
+      replayLocalDisplay: undefined,
       scene: undefined,
       sceneInstallMode: 'replace',
       ...clearLocalPresentation(state),
@@ -582,6 +601,7 @@ const installFrame = (
         ...previousCursorIdentity,
       },
       view: undefined,
+      replayLocalDisplay: undefined,
       scene: undefined,
       sceneInstallMode: 'replace',
       ...clearLocalPresentation(state),
@@ -602,6 +622,17 @@ const installFrame = (
       return rejected(state);
     }
     if (keepsLastSafeView(frame.sessionPhase) && previousView && state.scene) {
+      let retainedScene = state.scene;
+      if (state.replayLocalDisplay) {
+        try {
+          retainedScene = dependencies.createScene(previousView);
+        } catch {
+          return purgeRejectedRecipientProjection(state, frame.sessionPhase);
+        }
+        if (!sceneMatchesProjection(previousView, retainedScene)) {
+          return purgeRejectedRecipientProjection(state, frame.sessionPhase);
+        }
+      }
       const local = clearLocalPresentation(state);
       const presentationChanged = !samePresentation(
         state.presentation,
@@ -615,6 +646,10 @@ const installFrame = (
           frameToken: frame.frameToken,
           recipientKey: cursor?.recipientKey ?? recipientKey(previousView),
         },
+        replayLocalDisplay: state.replayLocalDisplay
+          ? { ...state.replayLocalDisplay, zoneModes: {} }
+          : undefined,
+        scene: retainedScene,
         ...local,
         sceneInstallMode: 'replace',
         canSubmitCommands: false,
@@ -625,6 +660,13 @@ const installFrame = (
           reason: 'session_not_ready',
         },
       ];
+      if (retainedScene !== state.scene) {
+        effects.push({
+          kind: 'InstallScene',
+          scene: retainedScene,
+          mode: 'replace',
+        });
+      }
       if (presentationChanged) {
         effects.push({
           kind: 'InstallPresentation',
@@ -645,6 +687,7 @@ const installFrame = (
           : {}),
       },
       view: undefined,
+      replayLocalDisplay: undefined,
       scene: undefined,
       sceneInstallMode: 'replace',
       ...clearLocalPresentation(state),
@@ -690,7 +733,63 @@ const installFrame = (
   if ((recipientChanged || timelineChanged) && frame.boundary !== 'resync') {
     return rejected(state);
   }
-  if (phaseOnlyPublication && frame.sessionPhase !== state.sessionPhase) {
+  if (
+    sameTimeline &&
+    frame.source.kind === 'replay' &&
+    Boolean(state.replayLocalDisplay) !== Boolean(frame.replayLocalDisclosure)
+  ) {
+    return rejected(state);
+  }
+  if (
+    phaseOnlyPublication &&
+    frame.sessionPhase !== state.sessionPhase &&
+    state.replayLocalDisplay &&
+    frame.replayLocalDisclosure
+  ) {
+    const replayLocalDisplay = reconcileReplayLocalDisplayState(
+      frame.view,
+      frame.replayLocalDisclosure
+    );
+    if (!replayLocalDisplay) return rejected(state);
+    let scene: BoardScene;
+    try {
+      scene = dependencies.createScene(frame.view);
+    } catch {
+      return rejected(state);
+    }
+    if (!sceneMatchesProjection(frame.view, scene)) return rejected(state);
+    const local = clearLocalPresentation(state);
+    const next = nextState(state, {
+      sessionPhase: frame.sessionPhase,
+      source: frame.source,
+      cursor: cursorFor(frame, frame.view),
+      replayLocalDisplay,
+      scene,
+      sceneInstallMode: 'replace',
+      ...local,
+      canSubmitCommands: false,
+    });
+    const effects: BoardSessionControllerEffect[] = [];
+    if (state.sessionPhase === 'ready' && frame.sessionPhase !== 'ready') {
+      effects.push({
+        kind: 'CancelRendererInteraction',
+        reason: 'session_not_ready',
+      });
+    }
+    effects.push({ kind: 'InstallScene', scene, mode: 'replace' });
+    if (!samePresentation(state.presentation, next.presentation)) {
+      effects.push({
+        kind: 'InstallPresentation',
+        presentation: next.presentation,
+      });
+    }
+    return accepted(next, effects);
+  }
+  if (
+    phaseOnlyPublication &&
+    frame.sessionPhase !== state.sessionPhase &&
+    !state.replayLocalDisplay
+  ) {
     const local =
       frame.sessionPhase === 'ready'
         ? {
@@ -786,9 +885,32 @@ const installFrame = (
     cursor !== null &&
     (recipientChanged || timelineChanged || replacementBoundary);
 
+  const preserveReplayLocalModes =
+    sameTimeline &&
+    !replacementBoundary &&
+    frame.boundary === 'advance' &&
+    frame.sessionPhase === 'ready';
+  const replayLocalDisplayCandidate = frame.replayLocalDisclosure
+    ? reconcileReplayLocalDisplayState(
+        frame.view,
+        frame.replayLocalDisclosure,
+        preserveReplayLocalModes ? state.replayLocalDisplay : undefined
+      )
+    : undefined;
+  if (frame.replayLocalDisclosure && !replayLocalDisplayCandidate) {
+    if (recipientChanged) {
+      return purgeRejectedRecipientProjection(state, frame.sessionPhase);
+    }
+    return rejected(state);
+  }
+  const replayLocalDisplay = replayLocalDisplayCandidate ?? undefined;
+  const displayView = applyReplayLocalDisclosure(
+    frame.view,
+    replayLocalDisplay
+  );
   let scene: BoardScene;
   try {
-    scene = dependencies.createScene(frame.view);
+    scene = dependencies.createScene(displayView);
   } catch {
     if (recipientChanged) {
       return purgeRejectedRecipientProjection(state, frame.sessionPhase);
@@ -822,6 +944,7 @@ const installFrame = (
     source: frame.source,
     cursor: cursorFor(frame, frame.view),
     view: frame.view,
+    replayLocalDisplay,
     scene,
     sceneInstallMode: installMode,
     ...local,
@@ -1041,9 +1164,6 @@ const handleOverlayAction = (
   if (state.sessionPhase !== 'ready') {
     return rejectOverlayAction(state, request, 'not_ready');
   }
-  if (!state.canSubmitCommands) {
-    return rejectOverlayAction(state, request, 'read_only');
-  }
   const submittedInputIdentity =
     request.kind === 'context' &&
     'value' in request &&
@@ -1079,6 +1199,42 @@ const handleOverlayAction = (
       !scene.zones.some((zone) => zone.id === request.zoneId))
   ) {
     return rejectOverlayAction(state, request, 'stale_zone');
+  }
+  if (
+    request.kind === 'context' &&
+    isReplayLocalDisclosureAction(request.action) &&
+    state.source?.kind === 'replay' &&
+    state.replayLocalDisplay
+  ) {
+    const replayLocalDisplay = toggleReplayLocalDisclosure(
+      view,
+      state.replayLocalDisplay,
+      request.action,
+      request.cardId
+    );
+    if (!replayLocalDisplay) {
+      return rejectOverlayAction(state, request, 'unsupported_target');
+    }
+    let localScene: BoardScene;
+    try {
+      localScene = dependencies.createScene(
+        applyReplayLocalDisclosure(view, replayLocalDisplay)
+      );
+    } catch {
+      return rejected(state);
+    }
+    if (!sceneMatchesProjection(view, localScene)) return rejected(state);
+    const next = nextState(state, {
+      replayLocalDisplay,
+      scene: localScene,
+      sceneInstallMode: 'replace',
+    });
+    return accepted(next, [
+      { kind: 'InstallScene', scene: localScene, mode: 'replace' },
+    ]);
+  }
+  if (!state.canSubmitCommands) {
+    return rejectOverlayAction(state, request, 'read_only');
   }
   const resolution = (
     dependencies.resolveOverlayAction ?? resolveLegacyBoardOverlayAction
@@ -1170,7 +1326,9 @@ const refreshScene = (
   if (!view) return rejected(state);
   let scene: BoardScene;
   try {
-    scene = dependencies.createScene(view);
+    scene = dependencies.createScene(
+      applyReplayLocalDisclosure(view, state.replayLocalDisplay)
+    );
   } catch {
     return rejected(state);
   }

@@ -1,5 +1,13 @@
-import type { MatchViewState } from '@ptcgsim/game-core';
-import { MAX_REPLAY_FRAMES, type PresentationEvent } from '@ptcgsim/protocol';
+import type {
+  KnownViewCard,
+  MatchViewState,
+  ViewCardDefinition,
+} from '@ptcgsim/game-core';
+import {
+  MAX_DECK_CARDS,
+  MAX_REPLAY_FRAMES,
+  type PresentationEvent,
+} from '@ptcgsim/protocol';
 
 import type { ProjectedReplayArtifact } from './model.js';
 
@@ -9,6 +17,12 @@ export type ReplayPlaybackAction =
 export interface EmptyReplayPlaybackState {
   readonly phase: 'empty';
   readonly generation: number;
+}
+
+interface ReplayLocalDisclosureState {
+  readonly definitions: readonly ViewCardDefinition[];
+  readonly zoneIds: readonly string[];
+  readonly cards: readonly KnownViewCard[];
 }
 
 export interface ReadyReplayPlaybackState {
@@ -27,6 +41,8 @@ export interface ReadyReplayPlaybackState {
   readonly timelinePresentationEvents: readonly PresentationEvent[];
   /** Events crossed by this forward generation; effects dedupe by generation. */
   readonly enteredPresentationEvents: readonly PresentationEvent[];
+  /** Solo-only display data. It is never merged into the authoritative view. */
+  readonly localDisclosure?: ReplayLocalDisclosureState;
 }
 
 export type ReplayPlaybackState =
@@ -56,6 +72,41 @@ const samePlayerOrder = (
 ): boolean =>
   left.length === right.length &&
   left.every((playerId, index) => playerId === right[index]);
+
+const hasUniqueStrings = (values: readonly string[]): boolean =>
+  new Set(values).size === values.length;
+
+const sameStringSet = (
+  left: readonly string[],
+  right: readonly string[]
+): boolean =>
+  left.length === right.length &&
+  hasUniqueStrings(left) &&
+  hasUniqueStrings(right) &&
+  left.every((value) => right.includes(value));
+
+const projectedCardIds = (view: MatchViewState): ReadonlySet<string> => {
+  const ids = new Set<string>();
+  for (const zone of Object.values(view.zones)) {
+    for (const card of zone.cards) ids.add(card.id);
+  }
+  for (const stack of Object.values(view.stacks)) {
+    for (const card of stack.evolutionCards) ids.add(card.id);
+    for (const card of stack.attachmentCards) ids.add(card.id);
+  }
+  for (const workArea of Object.values(view.workAreas)) {
+    if (workArea.inspection) {
+      for (const card of workArea.inspection.cards) ids.add(card.id);
+    }
+    if (workArea.attachmentResolution) {
+      for (const card of workArea.attachmentResolution.evolutionCards)
+        ids.add(card.id);
+      for (const card of workArea.attachmentResolution.attachmentCards)
+        ids.add(card.id);
+    }
+  }
+  return ids;
+};
 
 export const collectProjectedReplayProblems = (
   artifact: ProjectedReplayArtifact
@@ -88,6 +139,28 @@ export const collectProjectedReplayProblems = (
     problems.push('replay truncation marker does not match its start revision');
   }
 
+  const carriesLocalDisclosure =
+    artifact.localDisclosureDefinitions !== undefined;
+  const localDefinitionIds = new Set<string>();
+  const referencedLocalDefinitionIds = new Set<string>();
+  if (carriesLocalDisclosure) {
+    if (artifact.viewer.kind !== 'player') {
+      problems.push('replay local disclosure requires a player perspective');
+    }
+    if (
+      (artifact.localDisclosureDefinitions?.length ?? 0) >
+      MAX_DECK_CARDS * 2
+    ) {
+      problems.push('replay local disclosure catalog exceeds its bound');
+    }
+    for (const definition of artifact.localDisclosureDefinitions ?? []) {
+      if (localDefinitionIds.has(definition.id)) {
+        problems.push('replay local disclosure definition IDs must be unique');
+      }
+      localDefinitionIds.add(definition.id);
+    }
+  }
+
   const first = artifact.frames[0];
   const matchId = first?.snapshot.matchId;
   const playerOrder = first?.snapshot.playerOrder;
@@ -116,6 +189,93 @@ export const collectProjectedReplayProblems = (
     }
     if (index === 0 && frame.presentationEvents.length > 0) {
       problems.push('replay base frame cannot contain presentation events');
+    }
+
+    if (!carriesLocalDisclosure && frame.localDisclosure) {
+      problems.push(
+        `replay frame ${index} has local disclosure without a catalog`
+      );
+    }
+    if (carriesLocalDisclosure && !frame.localDisclosure) {
+      problems.push(`replay frame ${index} is missing local disclosure`);
+    }
+    if (!frame.localDisclosure || artifact.viewer.kind !== 'player') continue;
+    const viewerPlayerId = artifact.viewer.playerId;
+    if (
+      frame.localDisclosure.zoneIds.length > 3 ||
+      frame.localDisclosure.cards.length > MAX_DECK_CARDS * 2
+    ) {
+      problems.push(`replay frame ${index} local disclosure exceeds its bound`);
+    }
+
+    const eligibleZones = Object.values(frame.snapshot.zones).filter(
+      (zone) =>
+        zone.ownerId !== null &&
+        (zone.kind === 'prizes' ||
+          (zone.kind === 'hand' && zone.ownerId !== viewerPlayerId))
+    );
+    const eligibleZoneIds = eligibleZones.map((zone) => zone.id);
+    if (!sameStringSet(frame.localDisclosure.zoneIds, eligibleZoneIds)) {
+      problems.push(
+        `replay frame ${index} local disclosure zones are not the exact eligible zones`
+      );
+    }
+
+    const concealedCards = new Map(
+      eligibleZones.flatMap((zone) =>
+        zone.cards
+          .filter((card) => card.kind === 'concealed')
+          .map((card) => [card.id, card] as const)
+      )
+    );
+    const disclosureCardIds = frame.localDisclosure.cards.map(
+      (card) => card.id
+    );
+    if (!sameStringSet(disclosureCardIds, [...concealedCards.keys()])) {
+      problems.push(
+        `replay frame ${index} local disclosure cards do not exactly cover concealed eligible cards`
+      );
+    }
+    for (const card of frame.localDisclosure.cards) {
+      if (
+        card.kind !== 'known' ||
+        card.face !== 'up' ||
+        card.publiclyRevealed
+      ) {
+        problems.push(
+          `replay frame ${index} local disclosure card visibility is invalid`
+        );
+      }
+      const concealed = concealedCards.get(card.id);
+      if (!concealed || concealed.ownerId !== card.ownerId) {
+        problems.push(
+          `replay frame ${index} local disclosure card ownership is inconsistent`
+        );
+      }
+      if (!localDefinitionIds.has(card.definitionId)) {
+        problems.push(
+          `replay frame ${index} local disclosure references an unknown definition`
+        );
+      }
+      referencedLocalDefinitionIds.add(card.definitionId);
+    }
+    const frameCardIds = projectedCardIds(frame.snapshot);
+    for (const definitionId of localDefinitionIds) {
+      if (
+        frame.snapshot.definitions[definitionId] ||
+        frameCardIds.has(definitionId)
+      ) {
+        problems.push(
+          `replay frame ${index} local disclosure collides with a projected identifier`
+        );
+      }
+    }
+  }
+  for (const definitionId of localDefinitionIds) {
+    if (!referencedLocalDefinitionIds.has(definitionId)) {
+      problems.push(
+        'replay local disclosure contains an unreferenced definition'
+      );
     }
   }
   return problems;
@@ -257,6 +417,15 @@ export class ReplayPlaybackController {
         .slice(0, frameIndex + 1)
         .flatMap((candidate) => candidate.presentationEvents),
       enteredPresentationEvents,
+      ...(artifact.localDisclosureDefinitions && frame.localDisclosure
+        ? {
+            localDisclosure: {
+              definitions: artifact.localDisclosureDefinitions,
+              zoneIds: frame.localDisclosure.zoneIds,
+              cards: frame.localDisclosure.cards,
+            },
+          }
+        : {}),
     };
     this.emit();
   }

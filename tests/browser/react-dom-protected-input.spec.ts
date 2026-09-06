@@ -21,6 +21,13 @@ interface ProtectedInputFixture {
   readonly destinationZoneId: string;
   readonly destinationCardIds: readonly string[];
   readonly destinationSortedCardIds: readonly string[];
+  readonly ownPrizeCardId: string;
+  readonly ownPrizeCardIds: readonly string[];
+  readonly opponentPrizeCardId: string;
+  readonly opponentPrizeCardIds: readonly string[];
+  readonly opponentHandCardId: string;
+  readonly opponentHandCardIds: readonly string[];
+  readonly replayLocalCardLabel: string;
 }
 
 interface ProtectedInputEvidence {
@@ -67,6 +74,8 @@ interface ProtectedInputEvidence {
         }
       | null;
   };
+  readonly sourceKind: 'live' | 'replay' | null;
+  readonly replayLocalZoneModes: Readonly<Partial<Record<string, string>>>;
   readonly reportedErrors: readonly string[];
 }
 
@@ -76,6 +85,10 @@ interface ProtectedInputHarnessWindow extends Window {
     readonly getEvidence: () => ProtectedInputEvidence;
     readonly clearEvidence: () => void;
     readonly setDarkMode: (enabled: boolean) => void;
+    readonly enterSoloReplay: () => void;
+    readonly advanceSoloReplay: () => void;
+    readonly seekSoloReplayStart: () => void;
+    readonly exitSoloReplay: () => void;
     readonly dispose: () => void;
   };
 }
@@ -1424,6 +1437,139 @@ test('selected-card marker and category shortcuts stay protected and suppress ed
       .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
     if (!harness) throw new Error('Missing protected-input harness');
     harness.dispose();
+    harness.dispose();
+  });
+  await expect(host).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('solo replay disclosure changes only local DOM card faces and never submits', async ({
+  page,
+}) => {
+  const errors = collectRuntimeErrors(page);
+  const fixture = await mountHarness(page);
+  const host = page.locator('[data-react-dom-protected-input-harness]');
+  const menu = host.locator('[data-legacy-card-context-menu]');
+  const labelsFor = (cardIds: readonly string[]) =>
+    Promise.all(
+      cardIds.map((cardId) =>
+        host.locator(`[data-card-id="${cardId}"]`).getAttribute('aria-label')
+      )
+    );
+  const callHarness = (
+    method:
+      | 'enterSoloReplay'
+      | 'advanceSoloReplay'
+      | 'seekSoloReplayStart'
+      | 'exitSoloReplay'
+  ) =>
+    page.evaluate((name) => {
+      const harness = (window as ProtectedInputHarnessWindow)
+        .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+      if (!harness) throw new Error('Missing protected-input harness');
+      harness[name]();
+    }, method);
+  const openMenu = async (cardId: string): Promise<void> => {
+    const card = host.locator(`[data-card-id="${cardId}"]`);
+    await card.focus();
+    await card.press('Shift+F10');
+    await expect(menu).toBeVisible();
+    await expect(menu).toHaveAttribute('data-context-card-id', cardId);
+  };
+
+  await callHarness('enterSoloReplay');
+  await expect
+    .poll(async () => (await evidence(page)).sourceKind)
+    .toBe('replay');
+  expect(await labelsFor(fixture.ownPrizeCardIds)).toEqual(
+    fixture.ownPrizeCardIds.map(() => 'Face-down card')
+  );
+
+  await openMenu(fixture.ownPrizeCardId);
+  expect(
+    await menu.locator(':scope > ul > li > [role="menuitem"]').allTextContents()
+  ).toEqual(['Reveal/hide prizes', 'Look/cover prizes']);
+  await menu.locator('[data-context-action="togglePrizes"]').click();
+  await expect(menu).toHaveCount(0);
+  await expect
+    .poll(() => labelsFor(fixture.ownPrizeCardIds))
+    .toEqual(fixture.ownPrizeCardIds.map(() => fixture.replayLocalCardLabel));
+
+  await openMenu(fixture.ownPrizeCardId);
+  await menu.locator('[data-context-action="revealPrizes"]').click();
+  await expect
+    .poll(() => labelsFor(fixture.ownPrizeCardIds))
+    .toEqual(fixture.ownPrizeCardIds.map(() => 'Face-down card'));
+
+  await openMenu(fixture.opponentHandCardId);
+  expect(
+    await menu.locator(':scope > ul > li > [role="menuitem"]').allTextContents()
+  ).toEqual(['Look/cover hand']);
+  await menu.locator('[data-context-action="toggleOpponentHand"]').click();
+  await expect
+    .poll(() => labelsFor(fixture.opponentHandCardIds))
+    .toEqual(
+      fixture.opponentHandCardIds.map(() => fixture.replayLocalCardLabel)
+    );
+
+  await openMenu(fixture.ownPrizeCardId);
+  await menu.locator('[data-context-action="togglePrizes"]').click();
+  await expect
+    .poll(() => labelsFor(fixture.ownPrizeCardIds))
+    .toEqual(fixture.ownPrizeCardIds.map(() => fixture.replayLocalCardLabel));
+  await callHarness('advanceSoloReplay');
+  await expect
+    .poll(() => labelsFor(fixture.ownPrizeCardIds))
+    .toEqual(fixture.ownPrizeCardIds.map(() => fixture.replayLocalCardLabel));
+  await callHarness('seekSoloReplayStart');
+  await expect
+    .poll(() => labelsFor(fixture.ownPrizeCardIds))
+    .toEqual(fixture.ownPrizeCardIds.map(() => 'Face-down card'));
+  await expect
+    .poll(() => labelsFor(fixture.opponentHandCardIds))
+    .toEqual(fixture.opponentHandCardIds.map(() => 'Face-down card'));
+
+  const replayEvidence = await evidence(page);
+  expect(replayEvidence.submissions).toEqual([]);
+  expect(replayEvidence.submissionResults).toEqual([]);
+  expect(replayEvidence.rejections).toEqual([]);
+  expect(replayEvidence.overlayRejections).toEqual([]);
+  expect(replayEvidence.overlayActions).toEqual([
+    {
+      kind: 'context',
+      action: 'togglePrizes',
+      cardId: fixture.ownPrizeCardId,
+    },
+    {
+      kind: 'context',
+      action: 'revealPrizes',
+      cardId: fixture.ownPrizeCardId,
+    },
+    {
+      kind: 'context',
+      action: 'toggleOpponentHand',
+      cardId: fixture.opponentHandCardId,
+    },
+    {
+      kind: 'context',
+      action: 'togglePrizes',
+      cardId: fixture.ownPrizeCardId,
+    },
+  ]);
+  expect(replayEvidence.shortcutActions).toEqual([]);
+  expect(replayEvidence.shortcutRejections).toEqual([]);
+  expect(replayEvidence.replayLocalZoneModes).toEqual({});
+  expect(replayEvidence.reportedErrors).toEqual([]);
+
+  await callHarness('exitSoloReplay');
+  await expect.poll(async () => (await evidence(page)).sourceKind).toBe('live');
+  expect(await labelsFor(fixture.ownPrizeCardIds)).toEqual(
+    fixture.ownPrizeCardIds.map(() => 'Face-down card')
+  );
+  await page.evaluate(() => {
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
     harness.dispose();
   });
   await expect(host).toHaveCount(0);

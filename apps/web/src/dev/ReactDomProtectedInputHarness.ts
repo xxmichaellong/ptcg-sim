@@ -2,6 +2,7 @@ import type {
   ClientSessionState,
   SubmitCommandResult,
 } from '@ptcgsim/client-session';
+import { asViewDefinitionId } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 import {
   BOARD_LAYOUT_GEOMETRY_VERSION,
@@ -68,6 +69,13 @@ export interface ReactDomProtectedInputFixture {
   readonly destinationZoneId: string;
   readonly destinationCardIds: readonly string[];
   readonly destinationSortedCardIds: readonly string[];
+  readonly ownPrizeCardId: string;
+  readonly ownPrizeCardIds: readonly string[];
+  readonly opponentPrizeCardId: string;
+  readonly opponentPrizeCardIds: readonly string[];
+  readonly opponentHandCardId: string;
+  readonly opponentHandCardIds: readonly string[];
+  readonly replayLocalCardLabel: string;
 }
 
 export interface ReactDomProtectedInputEvidence {
@@ -80,6 +88,8 @@ export interface ReactDomProtectedInputEvidence {
   readonly shortcutActions: readonly LegacyBoardShortcutActionRequest[];
   readonly presentation: BoardPresentation;
   readonly overlays: BoardOverlayState;
+  readonly sourceKind: 'live' | 'replay' | null;
+  readonly replayLocalZoneModes: Readonly<Partial<Record<string, string>>>;
   readonly reportedErrors: readonly string[];
 }
 
@@ -103,6 +113,10 @@ export interface ReactDomProtectedInputHarness {
   readonly getEvidence: () => ReactDomProtectedInputEvidence;
   readonly clearEvidence: () => void;
   readonly setDarkMode: (enabled: boolean) => void;
+  readonly enterSoloReplay: () => void;
+  readonly advanceSoloReplay: () => void;
+  readonly seekSoloReplayStart: () => void;
+  readonly exitSoloReplay: () => void;
   readonly dispose: () => void;
 }
 
@@ -174,7 +188,47 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
     replayLoading: false,
     reconnectAttempt: 0,
   };
-  const replayState: ReplaySessionCoordinatorState = {
+  const eligibleReplayZones = Object.values(view.zones).filter(
+    (zone) =>
+      zone.kind === 'prizes' ||
+      (zone.kind === 'hand' && zone.ownerId !== firstPlayerId)
+  );
+  const replayDefinitionId = asViewDefinitionId(
+    'protected-replay-local-definition'
+  );
+  const visibleFixtureDefinition = Object.values(view.definitions)[0];
+  if (!visibleFixtureDefinition) {
+    throw new Error('Protected-input harness requires a visible definition');
+  }
+  const replayLocalCardLabel = 'Replay-local disclosed card';
+  const replayLocalDisclosure = {
+    definitions: [
+      {
+        id: replayDefinitionId,
+        name: replayLocalCardLabel,
+        category: 'Pokémon' as const,
+        imageUrl: visibleFixtureDefinition.imageUrl,
+      },
+    ],
+    zoneIds: eligibleReplayZones.map((zone) => zone.id),
+    cards: eligibleReplayZones.flatMap((zone) =>
+      zone.cards
+        .filter((card) => card.kind === 'concealed')
+        .map((card) => ({
+          kind: 'known' as const,
+          id: card.id,
+          definitionId: replayDefinitionId,
+          ownerId: card.ownerId,
+          category: 'Pokémon' as const,
+          face: 'up' as const,
+          orientationQuarterTurns: 0 as const,
+          abilityUsed: false,
+          publiclyRevealed: false as const,
+        }))
+    ),
+  };
+  let playbackGeneration = 0;
+  let replayState: ReplaySessionCoordinatorState = {
     generation: 0,
     mode: 'live',
     requestPhase: 'idle',
@@ -208,9 +262,17 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
       };
     },
   };
+  const replayListeners = new Set<() => void>();
   const replay: BoardSessionReplaySource = {
     getSnapshot: () => replayState,
-    subscribe: () => () => undefined,
+    subscribe: (listener) => {
+      replayListeners.add(listener);
+      return () => replayListeners.delete(listener);
+    },
+  };
+  const publishReplay = (next: ReplaySessionCoordinatorState): void => {
+    replayState = next;
+    for (const listener of [...replayListeners]) listener();
   };
 
   const host = document.createElement('div');
@@ -321,6 +383,24 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
   const destinationCards = scene.cards.filter(
     (card) => card.parentId === destinationZoneId
   );
+  const ownPrizeCards = view.zones[`zone:${firstPlayerId}:prizes`]?.cards;
+  const opponentPrizeCards = view.zones[`zone:${secondPlayerId}:prizes`]?.cards;
+  const opponentHandCards = view.zones[`zone:${secondPlayerId}:hand`]?.cards;
+  const ownPrizeCard = ownPrizeCards?.at(-1);
+  const opponentPrizeCard = opponentPrizeCards?.at(-1);
+  const opponentHandCard = opponentHandCards?.at(-1);
+  if (
+    !ownPrizeCards ||
+    !opponentPrizeCards ||
+    !opponentHandCards ||
+    !ownPrizeCard ||
+    !opponentPrizeCard ||
+    !opponentHandCard
+  ) {
+    runtime.dispose();
+    host.remove();
+    throw new Error('Protected-input replay fixture is incomplete');
+  }
   const fixture: ReactDomProtectedInputFixture = {
     ownPlayerId: firstPlayerId,
     opponentPlayerId: secondPlayerId,
@@ -352,6 +432,13 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
         return left.index - right.index;
       })
       .map(({ card }) => String(card.id)),
+    ownPrizeCardId: String(ownPrizeCard.id),
+    ownPrizeCardIds: ownPrizeCards.map((card) => String(card.id)),
+    opponentPrizeCardId: String(opponentPrizeCard.id),
+    opponentPrizeCardIds: opponentPrizeCards.map((card) => String(card.id)),
+    opponentHandCardId: String(opponentHandCard.id),
+    opponentHandCardIds: opponentHandCards.map((card) => String(card.id)),
+    replayLocalCardLabel,
   };
 
   const overlayRoot = createRoot(overlayHost);
@@ -489,6 +576,10 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
         shortcutActions: [...shortcutActions],
         presentation: current.presentation,
         overlays: current.overlays,
+        sourceKind: current.source?.kind ?? null,
+        replayLocalZoneModes: {
+          ...(current.replayLocalDisplay?.zoneModes ?? {}),
+        },
         reportedErrors: [...reportedErrors],
       };
     },
@@ -508,12 +599,128 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
       darkMode = enabled;
       renderOverlays();
     },
+    enterSoloReplay: () => {
+      requireSnapshot();
+      if (replayState.mode === 'replay') return;
+      playbackGeneration += 1;
+      publishReplay({
+        generation: replayState.generation + 1,
+        mode: 'replay',
+        requestPhase: 'idle',
+        sessionPhase: 'ready',
+        canRequest: false,
+        canExit: true,
+        liveRevision: view.revision,
+        view,
+        playback: {
+          phase: 'ready',
+          generation: playbackGeneration,
+          replayId: 'protected-solo-replay',
+          frameIndex: 0,
+          frameCount: 2,
+          startRevision: view.revision,
+          endRevision: view.revision + 1,
+          truncated: view.revision > 0,
+          view,
+          atStart: true,
+          atEnd: false,
+          timelinePresentationEvents: [],
+          enteredPresentationEvents: [],
+          localDisclosure: replayLocalDisclosure,
+        },
+      });
+    },
+    advanceSoloReplay: () => {
+      requireSnapshot();
+      if (
+        replayState.mode !== 'replay' ||
+        replayState.playback.phase !== 'ready' ||
+        replayState.playback.frameIndex !== 0
+      ) {
+        return;
+      }
+      playbackGeneration += 1;
+      const nextView = { ...view, revision: view.revision + 1 };
+      publishReplay({
+        ...replayState,
+        generation: replayState.generation + 1,
+        view: nextView,
+        playback: {
+          phase: 'ready',
+          generation: playbackGeneration,
+          replayId: 'protected-solo-replay',
+          frameIndex: 1,
+          frameCount: 2,
+          startRevision: view.revision,
+          endRevision: view.revision + 1,
+          truncated: view.revision > 0,
+          view: nextView,
+          atStart: false,
+          atEnd: true,
+          timelinePresentationEvents: [],
+          enteredPresentationEvents: [],
+          localDisclosure: replayLocalDisclosure,
+        },
+      });
+    },
+    seekSoloReplayStart: () => {
+      requireSnapshot();
+      if (
+        replayState.mode !== 'replay' ||
+        replayState.playback.phase !== 'ready' ||
+        replayState.playback.frameIndex !== 1
+      ) {
+        return;
+      }
+      playbackGeneration += 1;
+      publishReplay({
+        ...replayState,
+        generation: replayState.generation + 1,
+        view,
+        playback: {
+          phase: 'ready',
+          generation: playbackGeneration,
+          replayId: 'protected-solo-replay',
+          frameIndex: 0,
+          frameCount: 2,
+          startRevision: view.revision,
+          endRevision: view.revision + 1,
+          truncated: view.revision > 0,
+          view,
+          atStart: true,
+          atEnd: false,
+          timelinePresentationEvents: [],
+          enteredPresentationEvents: [],
+          localDisclosure: replayLocalDisclosure,
+        },
+      });
+    },
+    exitSoloReplay: () => {
+      requireSnapshot();
+      if (replayState.mode !== 'replay') return;
+      playbackGeneration += 1;
+      publishReplay({
+        generation: replayState.generation + 1,
+        mode: 'live',
+        requestPhase: 'idle',
+        sessionPhase: 'ready',
+        canRequest: true,
+        canExit: false,
+        liveRevision: view.revision,
+        view,
+        playback: {
+          phase: 'empty',
+          generation: playbackGeneration,
+        },
+      });
+    },
     dispose: () => {
       if (disposed) return;
       disposed = true;
       unsubscribeBoard();
       overlayRoot.unmount();
       runtime.dispose();
+      replayListeners.clear();
       host.remove();
       if (window[HANDLE_NAME] === harness) delete window[HANDLE_NAME];
     },

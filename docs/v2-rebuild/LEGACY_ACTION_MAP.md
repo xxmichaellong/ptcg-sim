@@ -839,11 +839,19 @@ unchecked, and never invokes the controller. A forged `sortZone` request still
 returns `local_only`. V1 used the exchanged full deck list as its sort rank;
 because that data is intentionally absent from protected opponent projections,
 V2 uses the disclosed-label order without leaking hidden definitions. V1
-replay's prize reveal/look and opponent-hand look are pinned as local-disclosure
-exceptions. They remain unavailable in the V2 replay menu—and forged requests
-fail `read_only`—until replay owns an isolated disclosure projection rather than
-mutating a historical view. This slice changes no label, placement, styling, or
-production route.
+replay's prize reveal/look and opponent-hand look are the only local-disclosure
+exceptions. They now appear only for a solo player's validated projected
+replay. Authority emits a separately bounded catalog whose card keys are the
+current concealed frame aliases and whose definition keys are fresh opaque
+replay aliases; multiplayer and spectator artifacts omit it. Playback validates
+the exact two prize zones plus opponent hand, exact concealed-card coverage,
+ownership, uniqueness, definition references, and collision/bounds rules before
+publishing. The controller keeps the historical view immutable, derives a
+transient display view, and translates those three rows only into a local
+`InstallScene`; it never creates a command. Visibility persists by zone only on
+forward replay, then resets on seek, resync, reconnect, exit, identity change,
+or terminal state. A missing/forged catalog keeps the prior `read_only` result.
+This slice changes no label, placement, styling, or production route.
 
 ### Implemented selected-card keyboard subset
 

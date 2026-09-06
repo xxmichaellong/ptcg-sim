@@ -761,6 +761,29 @@ const ReplayStartedSchema = v.strictObject({
   endRevision: RevisionSchema,
   truncated: v.boolean(),
   frameCount: v.pipe(PositiveIntegerSchema, v.maxValue(MAX_REPLAY_FRAMES)),
+  localDisclosureDefinitions: v.optional(
+    v.pipe(v.array(ViewDefinitionSchema), v.maxLength(MAX_DECK_CARDS * 2))
+  ),
+});
+
+const ReplayLocalDisclosureCardSchema = v.strictObject({
+  kind: v.literal('known'),
+  id: IdentifierSchema,
+  definitionId: IdentifierSchema,
+  ownerId: IdentifierSchema,
+  category: CardCategorySchema,
+  face: v.literal('up'),
+  orientationQuarterTurns: QuarterTurnsSchema,
+  abilityUsed: v.boolean(),
+  publiclyRevealed: v.literal(false),
+});
+
+const ReplayLocalDisclosureSchema = v.strictObject({
+  zoneIds: v.pipe(v.array(IdentifierSchema), v.maxLength(3)),
+  cards: v.pipe(
+    v.array(ReplayLocalDisclosureCardSchema),
+    v.maxLength(MAX_DECK_CARDS * 2)
+  ),
 });
 
 const ReplayFrameSchema = v.strictObject({
@@ -769,6 +792,7 @@ const ReplayFrameSchema = v.strictObject({
   replayId: IdentifierSchema,
   index: v.pipe(NonNegativeIntegerSchema, v.maxValue(MAX_REPLAY_FRAMES - 1)),
   snapshot: MatchViewStateSchema,
+  localDisclosure: v.optional(ReplayLocalDisclosureSchema),
   presentationEvents: v.optional(
     v.pipe(v.array(PresentationEventSchema), v.maxLength(100))
   ),

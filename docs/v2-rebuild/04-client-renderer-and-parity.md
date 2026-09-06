@@ -1185,12 +1185,20 @@ controller; a forged external `sortZone` request still fails `local_only`.
 Because the protected projection does not disclose an opponent's deck list,
 this replaces v1's deck-data rank with a stable disclosed-label order instead
 of recreating its information leak. V1 replay permits three local disclosure
-actions—prize reveal, prize look, and opponent-hand look—but V2 intentionally
-keeps the replay context menu empty and rejects forged requests as `read_only`
-until it has an isolated replay-local disclosure projection. Replay-local paint,
-source-raster parity for transformed
-stack/zone dialogs, a complete focus-trap and screen-reader audit, reconnect
-snap-back, production routing, and non-Chromium approval remain separate gates.
+actions—prize reveal, prize look, and opponent-hand look. V2 now exposes exactly
+those unchanged rows only when a solo player replay supplies its separately
+validated, opaque local-disclosure projection. The historical safe view remains
+the controller's authoritative view; a transient display projection replaces
+only eligible zone card faces and definitions. Both prize actions and opponent-
+hand look update one per-zone `shown`/`hidden` override and emit only a
+replacement scene—never a command or resolver call. Overrides reconcile
+forward by zone and reset on seek, resync, reconnect, exit, identity change, and
+terminal state. Multiplayer, spectator, missing, malformed, and forged paths
+retain an empty mutation menu or `read_only`. Native Chromium proves the exact
+menu subset, all-card show/cover, forward persistence, seek/exit reset, and zero
+submission. Source-raster parity for transformed stack/zone dialogs, a complete
+focus-trap and screen-reader audit, production routing, and non-Chromium
+approval remain separate gates.
 
 ## React application state
 

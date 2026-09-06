@@ -1,4 +1,9 @@
-import { stableSerialize } from '@ptcgsim/game-core';
+import {
+  asPlayerId,
+  asViewCardId,
+  asViewDefinitionId,
+  stableSerialize,
+} from '@ptcgsim/game-core';
 import {
   hydrateMatchViewState,
   PROTOCOL_VERSION,
@@ -42,6 +47,7 @@ interface ReplayTransfer {
   readonly endRevision: number;
   readonly truncated: boolean;
   readonly frameCount: number;
+  readonly localDisclosureDefinitions?: ProjectedReplayArtifact['localDisclosureDefinitions'];
   readonly frames: ProjectedReplayArtifact['frames'][number][];
 }
 
@@ -440,6 +446,16 @@ export class RemoteGameSession {
       endRevision: message.endRevision,
       truncated: message.truncated,
       frameCount: message.frameCount,
+      ...(message.localDisclosureDefinitions
+        ? {
+            localDisclosureDefinitions: message.localDisclosureDefinitions.map(
+              (definition) => ({
+                ...definition,
+                id: asViewDefinitionId(definition.id),
+              })
+            ),
+          }
+        : {}),
       frames: [],
     };
   }
@@ -472,6 +488,19 @@ export class RemoteGameSession {
     }
     transfer.frames.push({
       snapshot: hydrateMatchViewState(message.snapshot),
+      ...(message.localDisclosure
+        ? {
+            localDisclosure: {
+              zoneIds: [...message.localDisclosure.zoneIds],
+              cards: message.localDisclosure.cards.map((card) => ({
+                ...card,
+                id: asViewCardId(card.id),
+                definitionId: asViewDefinitionId(card.definitionId),
+                ownerId: asPlayerId(card.ownerId),
+              })),
+            },
+          }
+        : {}),
       presentationEvents: message.presentationEvents ?? [],
     });
   }
@@ -496,6 +525,13 @@ export class RemoteGameSession {
       startRevision: transfer.startRevision,
       endRevision: transfer.endRevision,
       truncated: transfer.truncated,
+      ...(transfer.localDisclosureDefinitions
+        ? {
+            localDisclosureDefinitions: [
+              ...transfer.localDisclosureDefinitions,
+            ],
+          }
+        : {}),
       frames: transfer.frames,
     };
     this.replayTransfer = undefined;

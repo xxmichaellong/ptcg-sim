@@ -1,4 +1,8 @@
-import type { MatchViewState } from '@ptcgsim/game-core';
+import type {
+  KnownViewCard,
+  MatchViewState,
+  ViewCardDefinition,
+} from '@ptcgsim/game-core';
 import type { ServerMessage } from '@ptcgsim/protocol';
 
 export type ClientSessionPhase =
@@ -44,6 +48,10 @@ export interface ClientSessionFailure {
 
 export interface ProjectedReplayFrame {
   readonly snapshot: MatchViewState;
+  readonly localDisclosure?: {
+    readonly zoneIds: readonly string[];
+    readonly cards: readonly KnownViewCard[];
+  };
   readonly presentationEvents: readonly NonNullable<
     Extract<ServerMessage, { type: 'ReplayFrame' }>['presentationEvents']
   >[number][];
@@ -55,6 +63,7 @@ export interface ProjectedReplayArtifact {
   readonly startRevision: number;
   readonly endRevision: number;
   readonly truncated: boolean;
+  readonly localDisclosureDefinitions?: readonly ViewCardDefinition[];
   readonly frames: readonly ProjectedReplayFrame[];
 }
 

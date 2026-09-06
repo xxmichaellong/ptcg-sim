@@ -1,4 +1,9 @@
 import {
+  asViewCardId,
+  asViewDefinitionId,
+  type MatchViewState,
+} from '@ptcgsim/game-core';
+import {
   hydrateMatchViewState,
   type PresentationEvent,
   type SerializedMatchViewState,
@@ -103,6 +108,83 @@ const replaceFrame = (
     frameIndex === index ? replacement : frame
   ),
 });
+
+const localDisclosureView = (revision = 4): MatchViewState => {
+  const base = hydrateMatchViewState(view(revision));
+  const concealed = (id: string, ownerId: 'blue' | 'red') => ({
+    kind: 'concealed' as const,
+    id: asViewCardId(id),
+    ownerId: base.players[ownerId]!.id,
+    cardBackUrl: base.players[ownerId]!.cardBackUrl,
+    publiclyRevealed: false as const,
+  });
+  return {
+    ...base,
+    zones: {
+      'blue-prizes': {
+        id: 'blue-prizes',
+        kind: 'prizes',
+        ownerId: base.players.blue!.id,
+        cards: [concealed('local-card-blue-prize-0001', 'blue')],
+      },
+      'red-prizes': {
+        id: 'red-prizes',
+        kind: 'prizes',
+        ownerId: base.players.red!.id,
+        cards: [concealed('local-card-red-prize-00001', 'red')],
+      },
+      'red-hand': {
+        id: 'red-hand',
+        kind: 'hand',
+        ownerId: base.players.red!.id,
+        cards: [concealed('local-card-red-hand-000001', 'red')],
+      },
+    },
+  };
+};
+
+const localDisclosureArtifact = (): ProjectedReplayArtifact => {
+  const snapshot = localDisclosureView();
+  const definitionId = asViewDefinitionId('local-definition-000000001');
+  const cards = Object.values(snapshot.zones).flatMap((zone) =>
+    zone.cards.map((card) => ({
+      kind: 'known' as const,
+      id: card.id,
+      definitionId,
+      ownerId: card.ownerId,
+      category: 'Pokémon' as const,
+      face: 'up' as const,
+      orientationQuarterTurns: 0 as const,
+      abilityUsed: false,
+      publiclyRevealed: false as const,
+    }))
+  );
+  return {
+    replayId: 'solo-local-disclosure',
+    viewer: snapshot.viewer,
+    startRevision: 4,
+    endRevision: 4,
+    truncated: true,
+    localDisclosureDefinitions: [
+      {
+        id: definitionId,
+        name: 'Replay-only identity',
+        category: 'Pokémon',
+        imageUrl: '/replay-only.png',
+      },
+    ],
+    frames: [
+      {
+        snapshot,
+        localDisclosure: {
+          zoneIds: ['blue-prizes', 'red-prizes', 'red-hand'],
+          cards,
+        },
+        presentationEvents: [],
+      },
+    ],
+  };
+};
 
 describe('ReplayPlaybackController', () => {
   it('matches restart, previous, next, and fast-forward semantics', () => {
@@ -337,5 +419,131 @@ describe('ReplayPlaybackController', () => {
     expect('submit' in playback).toBe(false);
     expect('connect' in playback).toBe(false);
     expect('send' in playback).toBe(false);
+  });
+
+  it('installs validated solo disclosure beside an unchanged safe view', () => {
+    const artifact = localDisclosureArtifact();
+    const playback = new ReplayPlaybackController(artifact);
+    const state = playback.getSnapshot();
+    expect(state).toMatchObject({
+      phase: 'ready',
+      localDisclosure: {
+        definitions: [{ name: 'Replay-only identity' }],
+        zoneIds: ['blue-prizes', 'red-prizes', 'red-hand'],
+      },
+    });
+    if (state.phase !== 'ready') throw new Error('missing playback');
+    expect(state.view).toBe(artifact.frames[0]!.snapshot);
+    expect(state.view.definitions).not.toHaveProperty(
+      'local-definition-000000001'
+    );
+    expect(
+      Object.values(state.view.zones)
+        .flatMap((zone) => zone.cards)
+        .every((card) => card.kind === 'concealed')
+    ).toBe(true);
+  });
+
+  it.each([
+    {
+      name: 'spectator perspective',
+      make: (value: ProjectedReplayArtifact): ProjectedReplayArtifact => ({
+        ...value,
+        viewer: { kind: 'spectator' },
+        frames: value.frames.map((frame) => ({
+          ...frame,
+          snapshot: { ...frame.snapshot, viewer: { kind: 'spectator' } },
+        })),
+      }),
+    },
+    {
+      name: 'missing catalog',
+      make: (value: ProjectedReplayArtifact): ProjectedReplayArtifact => {
+        const { localDisclosureDefinitions: _removed, ...rest } = value;
+        return rest;
+      },
+    },
+    {
+      name: 'missing frame disclosure',
+      make: (value: ProjectedReplayArtifact): ProjectedReplayArtifact => ({
+        ...value,
+        frames: value.frames.map((frame) => {
+          const { localDisclosure: _removed, ...rest } = frame;
+          return rest;
+        }),
+      }),
+    },
+    {
+      name: 'ineligible zone',
+      make: (value: ProjectedReplayArtifact): ProjectedReplayArtifact =>
+        replaceFrame(value, 0, {
+          ...value.frames[0]!,
+          localDisclosure: {
+            ...value.frames[0]!.localDisclosure!,
+            zoneIds: ['blue-prizes', 'red-prizes'],
+          },
+        }),
+    },
+    {
+      name: 'missing concealed alias',
+      make: (value: ProjectedReplayArtifact): ProjectedReplayArtifact =>
+        replaceFrame(value, 0, {
+          ...value.frames[0]!,
+          localDisclosure: {
+            ...value.frames[0]!.localDisclosure!,
+            cards: value.frames[0]!.localDisclosure!.cards.slice(1),
+          },
+        }),
+    },
+    {
+      name: 'unknown definition alias',
+      make: (value: ProjectedReplayArtifact): ProjectedReplayArtifact =>
+        replaceFrame(value, 0, {
+          ...value.frames[0]!,
+          localDisclosure: {
+            ...value.frames[0]!.localDisclosure!,
+            cards: value.frames[0]!.localDisclosure!.cards.map((card, index) =>
+              index === 0
+                ? {
+                    ...card,
+                    definitionId: asViewDefinitionId(
+                      'unknown-local-definition-01'
+                    ),
+                  }
+                : card
+            ),
+          },
+        }),
+    },
+    {
+      name: 'non-display visibility',
+      make: (value: ProjectedReplayArtifact): ProjectedReplayArtifact =>
+        replaceFrame(value, 0, {
+          ...value.frames[0]!,
+          localDisclosure: {
+            ...value.frames[0]!.localDisclosure!,
+            cards: value.frames[0]!.localDisclosure!.cards.map((card, index) =>
+              index === 0 ? ({ ...card, face: 'down' } as typeof card) : card
+            ),
+          },
+        }),
+    },
+    {
+      name: 'projected definition collision',
+      make: (value: ProjectedReplayArtifact): ProjectedReplayArtifact => {
+        const definition = value.localDisclosureDefinitions![0]!;
+        return replaceFrame(value, 0, {
+          ...value.frames[0]!,
+          snapshot: {
+            ...value.frames[0]!.snapshot,
+            definitions: { [definition.id]: definition },
+          },
+        });
+      },
+    },
+  ])('rejects local disclosure with $name', ({ make }) => {
+    expect(
+      () => new ReplayPlaybackController(make(localDisclosureArtifact()))
+    ).toThrow(InvalidProjectedReplayError);
   });
 });

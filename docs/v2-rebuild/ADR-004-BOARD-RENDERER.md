@@ -110,12 +110,14 @@ Native Chromium pins exact damage and condition edit/removal plus ability-marker
 commands, all six count prompts/commands, all three category choices, all five
 move choices, all nine selected-card shortcut families, and reversible sorting
 with zero action/effect/command traffic.
-Replay-
-local prize/hand disclosure is characterized but deliberately unavailable until
-it has an isolated local projection; replay can never reach the resolver or
-submitter. Replay-local paint, source raster parity
-for transformed stack/zone dialogs, full accessibility audit, reconnect snap-
-back, and non-Chromium approval remain unresolved.
+Replay-local prize/hand disclosure now uses an isolated solo-player-only
+projection. Its opaque catalog never enters the historical view, its three
+unchanged menu rows emit replacement scenes without commands, forward
+visibility reconciles by zone, and seek/resync/reconnect/exit/terminal
+boundaries restore card backs. Native Chromium covers structural paint and zero
+submission. Source raster parity for transformed stack/zone dialogs, full
+accessibility audit, production routing, and non-Chromium approval remain
+unresolved.
 
 ### Mixed attachment history policy
 
@@ -320,10 +322,10 @@ Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
   Tool-specific Pixi paint parity, full paint or interaction parity, cover-open
   UX, or opened-zone layout, and the sidebar content rectangle is derived from
   measured shell/tab edges);
-- complete replay-local disclosure paint, reconnect behavior, and the
-  screen-reader/focus-trap audit
-  beyond the current native Chromium keyboard, focus-return, dismissal, and
-  protected overlay-command gate;
+- complete source raster comparison for replay-local card faces and transformed
+  stack/zone dialogs, plus the screen-reader/focus-trap audit beyond the current
+  native Chromium structural paint, lifecycle, keyboard, focus-return,
+  dismissal, and protected command gate;
 - a hidden/private-image request scan;
 - finish resource evidence beyond the current green 100-cycle warmed-host
   Chromium DOM-node/listener gate and the deterministic same-origin

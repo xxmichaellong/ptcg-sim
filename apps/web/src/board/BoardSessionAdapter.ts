@@ -204,6 +204,11 @@ export class BoardSessionAdapter {
       boundary,
       sessionPhase: liveState.phase,
       ...(view ? { view } : {}),
+      ...(replayReady(replayState) && replayState.playback.localDisclosure
+        ? {
+            replayLocalDisclosure: replayState.playback.localDisclosure,
+          }
+        : {}),
       submissionsBlocked:
         source.kind === 'replay' ||
         replayState.requestPhase !== 'idle' ||

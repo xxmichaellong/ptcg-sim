@@ -186,8 +186,8 @@ export const LEGACY_BOARD_ZONE_ACTION_REQUIREMENTS = {
 
 /**
  * V1 replay permits these disclosure-only context operations. V2 deliberately
- * leaves them unbound until replay has a separate local disclosure projection;
- * they must never be translated into live commands.
+ * handles them only through its separate solo-replay display projection; they
+ * must never be translated into replay commands.
  */
 export const LEGACY_REPLAY_DISCLOSURE_CONTEXT_ACTIONS = [
   'revealPrizes',

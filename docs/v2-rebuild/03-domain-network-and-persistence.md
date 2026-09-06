@@ -499,6 +499,21 @@ as a live full projection and lets the client publish only a complete,
 contiguous artifact. A malformed, incomplete, wrong-perspective, or out-of-order
 stream is discarded; an interrupted transfer is not resumed across reconnect.
 
+Solo player replay may additionally carry an optional replay-local disclosure
+catalog on `ReplayStarted` and an alias-keyed disclosure record on every
+`ReplayFrame`. This is not canonical state and is never merged into the
+recipient projection. The catalog is deduplicated across the retained artifact,
+uses fresh opaque definition aliases, and is disabled if its definition-count
+or estimated frame-size budget would be exceeded. Each frame names exactly both
+prize zones and the opponent hand and maps only their currently concealed
+opaque card aliases to forced-face-up, non-public display records. Multiplayer
+players and all spectators receive neither field. Clients reject asymmetric,
+extra, colliding, unbounded, wrong-owner, wrong-zone, or unknown-definition
+records before playback becomes visible. Because these optional strict-schema
+fields are deployed inside the unreleased v2 build cohort, server and client
+builds still move atomically; no compatibility claim is made for a mixed v2
+cohort.
+
 ### Ordering and delivery
 
 - The authority serializes accepted game commands.

@@ -1,4 +1,8 @@
-import type { MatchViewState, ViewCardId } from '@ptcgsim/game-core';
+import {
+  asViewDefinitionId,
+  type MatchViewState,
+  type ViewCardId,
+} from '@ptcgsim/game-core';
 import {
   createBoardSceneForViewport,
   createRendererSpikeView,
@@ -71,6 +75,42 @@ const replayFrame = (
   view,
   submissionsBlocked: true,
 });
+const replayLocalDisclosure = (view: MatchViewState) => {
+  if (view.viewer.kind !== 'player') throw new Error('player view required');
+  const viewerId = view.viewer.playerId;
+  const zones = Object.values(view.zones).filter(
+    (zone) =>
+      zone.kind === 'prizes' ||
+      (zone.kind === 'hand' && zone.ownerId !== viewerId)
+  );
+  const definitionId = asViewDefinitionId('controller-replay-local-definition');
+  return {
+    definitions: [
+      {
+        id: definitionId,
+        name: 'Controller replay-local card',
+        category: 'Pokémon' as const,
+        imageUrl: '/controller-replay-local.png',
+      },
+    ],
+    zoneIds: zones.map((zone) => zone.id),
+    cards: zones.flatMap((zone) =>
+      zone.cards
+        .filter((card) => card.kind === 'concealed')
+        .map((card) => ({
+          kind: 'known' as const,
+          id: card.id,
+          definitionId,
+          ownerId: card.ownerId,
+          category: 'Pokémon' as const,
+          face: 'up' as const,
+          orientationQuarterTurns: 0 as const,
+          abilityUsed: false,
+          publiclyRevealed: false as const,
+        }))
+    ),
+  };
+};
 const initialFrame = (view = createRendererSpikeView()): BoardProjectionFrame =>
   liveFrame(1, view, { boundary: 'resync' });
 const apply = (
@@ -1161,6 +1201,173 @@ describe('headless board session controller', () => {
         reason: 'stale_zone',
       },
     ]);
+  });
+
+  it('keeps solo replay disclosure local, persistent on advance, and reset on seek', () => {
+    const view = createRendererSpikeView();
+    const disclosure = replayLocalDisclosure(view);
+    const resolveOverlayAction = vi.fn(() => {
+      throw new Error('local replay action reached the command resolver');
+    });
+    const deps = { createScene, resolveOverlayAction };
+    const initialView = view;
+    let state = install(
+      {
+        ...replayFrame(1, 1, view, 'resync', 1),
+        replayLocalDisclosure: disclosure,
+      },
+      deps
+    );
+    const prizeCard = cardIn(state.scene!, ':prizes');
+    state = apply(
+      state,
+      {
+        kind: 'RendererIntent',
+        intent: { kind: 'CardContextRequested', cardId: prizeCard },
+      },
+      deps
+    ).state;
+    const request = {
+      kind: 'context' as const,
+      action: 'togglePrizes' as const,
+      cardId: prizeCard,
+    };
+    const shown = apply(
+      state,
+      { kind: 'LegacyOverlayActionRequested', request },
+      deps
+    );
+    expect(shown.effects).toEqual([
+      { kind: 'InstallScene', scene: shown.state.scene, mode: 'replace' },
+    ]);
+    expect(shown.state.view).toBe(initialView);
+    expect(shown.state.view!.definitions).not.toHaveProperty(
+      'controller-replay-local-definition'
+    );
+    expect(
+      shown.state.scene!.cards.find((card) => card.id === prizeCard)
+    ).toMatchObject({
+      label: 'Controller replay-local card',
+      imageUrl: '/controller-replay-local.png',
+      concealed: false,
+    });
+    expect(resolveOverlayAction).not.toHaveBeenCalled();
+    expect(
+      shown.effects.some((effect) => effect.kind === 'SubmitCommand')
+    ).toBe(false);
+
+    const advancedView = withRevision(view, 2);
+    const advanced = apply(
+      shown.state,
+      {
+        kind: 'FrameReceived',
+        frame: {
+          ...replayFrame(2, 2, advancedView, 'advance', 2),
+          replayLocalDisclosure: disclosure,
+        },
+      },
+      deps
+    );
+    expect(advanced.state.replayLocalDisplay?.zoneModes).toMatchObject({
+      [shown.state.scene!.cards.find((card) => card.id === prizeCard)!
+        .parentId]: 'shown',
+    });
+    expect(
+      advanced.state.scene!.cards.find((card) => card.id === prizeCard)?.label
+    ).toBe('Controller replay-local card');
+
+    const sought = apply(
+      advanced.state,
+      {
+        kind: 'FrameReceived',
+        frame: {
+          ...replayFrame(3, 3, withRevision(view, 0), 'seek', 0),
+          replayLocalDisclosure: disclosure,
+        },
+      },
+      deps
+    );
+    expect(sought.state.replayLocalDisplay?.zoneModes).toEqual({});
+    expect(
+      sought.state.scene!.cards.find((card) => card.id === prizeCard)
+    ).toMatchObject({ label: 'Face-down card', concealed: true });
+
+    let reopened = apply(
+      sought.state,
+      {
+        kind: 'RendererIntent',
+        intent: { kind: 'CardContextRequested', cardId: prizeCard },
+      },
+      deps
+    ).state;
+    reopened = apply(
+      reopened,
+      { kind: 'LegacyOverlayActionRequested', request },
+      deps
+    ).state;
+    const reconnecting = apply(
+      reopened,
+      {
+        kind: 'FrameReceived',
+        frame: {
+          ...replayFrame(4, 3, reopened.view!, 'advance', 0),
+          sessionPhase: 'reconnecting',
+          replayLocalDisclosure: disclosure,
+        },
+      },
+      deps
+    );
+    expect(reconnecting.outcome).toBe('accepted');
+    expect(reconnecting.state.replayLocalDisplay?.zoneModes).toEqual({});
+    expect(
+      reconnecting.state.scene!.cards.find((card) => card.id === prizeCard)
+    ).toMatchObject({ label: 'Face-down card', concealed: true });
+    expect(reconnecting.effects.map((effect) => effect.kind)).toEqual([
+      'CancelRendererInteraction',
+      'InstallScene',
+    ]);
+
+    const terminal = apply(
+      reconnecting.state,
+      {
+        kind: 'FrameReceived',
+        frame: {
+          ...replayFrame(5, 3, reopened.view!, 'advance', 0),
+          sessionPhase: 'closed',
+          replayLocalDisclosure: disclosure,
+        },
+      },
+      deps
+    );
+    expect(terminal.state.replayLocalDisplay).toBeUndefined();
+    expect(terminal.state.scene).toBeUndefined();
+  });
+
+  it('rejects forged local disclosure on live or incomplete replay frames', () => {
+    const view = createRendererSpikeView();
+    const disclosure = replayLocalDisclosure(view);
+    const initial = createInitialBoardSessionControllerState();
+    expect(
+      apply(initial, {
+        kind: 'FrameReceived',
+        frame: {
+          ...initialFrame(view),
+          replayLocalDisclosure: disclosure,
+        },
+      }).outcome
+    ).toBe('rejected');
+    expect(
+      apply(initial, {
+        kind: 'FrameReceived',
+        frame: {
+          ...replayFrame(1, 1, view, 'resync'),
+          replayLocalDisclosure: {
+            ...disclosure,
+            zoneIds: disclosure.zoneIds.slice(1),
+          },
+        },
+      }).outcome
+    ).toBe('rejected');
   });
 
   it('requires newer replay generation plus seek to rewind', () => {

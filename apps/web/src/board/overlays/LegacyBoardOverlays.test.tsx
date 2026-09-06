@@ -167,6 +167,49 @@ describe('legacy board overlays', () => {
         localHand
       )
     ).toEqual([]);
+
+    const replayState = state({
+      source: {
+        kind: 'replay',
+        replayId: 'solo-replay',
+        playbackGeneration: 1,
+        frameIndex: 0,
+      },
+      canSubmitCommands: false,
+      replayLocalDisplay: {
+        disclosure: {
+          definitions: [],
+          zoneIds: [
+            `zone:${firstPlayer}:prizes`,
+            `zone:${opponent}:prizes`,
+            `zone:${opponent}:hand`,
+          ],
+          cards: [],
+        },
+        zoneModes: {},
+      },
+    });
+    expect(
+      selectLegacyContextEntries(
+        replayState,
+        cardIn(`:${firstPlayer}:prizes`)
+      ).map((entry) => [entry.kind, entry.id])
+    ).toEqual([
+      ['header', 'prizes'],
+      ['action', 'revealPrizes'],
+      ['action', 'togglePrizes'],
+    ]);
+    expect(
+      selectLegacyContextEntries(replayState, cardIn(`:${opponent}:hand`)).map(
+        (entry) => [entry.kind, entry.id]
+      )
+    ).toEqual([
+      ['header', 'hand'],
+      ['action', 'toggleOpponentHand'],
+    ]);
+    expect(
+      selectLegacyContextEntries(replayState, cardIn(`:${firstPlayer}:deck`))
+    ).toEqual([]);
   });
 
   it('renders a focused context menu and delegates one semantic action', async () => {

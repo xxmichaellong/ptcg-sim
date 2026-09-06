@@ -129,7 +129,48 @@ const welcome = (snapshot: MatchViewState, sessionId = 'board-session-one') =>
     snapshot,
   }) satisfies ServerMessage;
 
-const replayTransfer = (socket: FakeSocket, replayId = 'board-replay') => {
+const localDisclosureFor = (view: MatchViewState) => {
+  if (view.viewer.kind !== 'player') throw new Error('player view required');
+  const viewerId = view.viewer.playerId;
+  const zones = Object.values(view.zones).filter(
+    (zone) =>
+      zone.kind === 'prizes' ||
+      (zone.kind === 'hand' && zone.ownerId !== viewerId)
+  );
+  return {
+    definitions: [
+      {
+        id: 'adapter-local-definition-0001',
+        name: 'Adapter replay-local card',
+        category: 'Pokémon' as const,
+        imageUrl: '/adapter-local.png',
+      },
+    ],
+    zoneIds: zones.map((zone) => zone.id),
+    cards: zones.flatMap((zone) =>
+      zone.cards
+        .filter((card) => card.kind === 'concealed')
+        .map((card) => ({
+          kind: 'known' as const,
+          id: card.id,
+          definitionId: 'adapter-local-definition-0001',
+          ownerId: card.ownerId,
+          category: 'Pokémon' as const,
+          face: 'up' as const,
+          orientationQuarterTurns: 0 as const,
+          abilityUsed: false,
+          publiclyRevealed: false as const,
+        }))
+    ),
+  };
+};
+
+const replayTransfer = (
+  socket: FakeSocket,
+  replayId = 'board-replay',
+  withLocalDisclosure = false
+) => {
+  const local = withLocalDisclosure ? localDisclosureFor(viewAt(0)) : undefined;
   socket.serverMessage({
     type: 'ReplayStarted',
     protocolVersion: PROTOCOL_VERSION,
@@ -139,6 +180,7 @@ const replayTransfer = (socket: FakeSocket, replayId = 'board-replay') => {
     endRevision: 3,
     truncated: false,
     frameCount: 4,
+    ...(local ? { localDisclosureDefinitions: local.definitions } : {}),
   });
   for (let index = 0; index < 4; index += 1) {
     socket.serverMessage({
@@ -147,6 +189,14 @@ const replayTransfer = (socket: FakeSocket, replayId = 'board-replay') => {
       replayId,
       index,
       snapshot: viewAt(index),
+      ...(local
+        ? {
+            localDisclosure: {
+              zoneIds: local.zoneIds,
+              cards: local.cards,
+            },
+          }
+        : {}),
       ...(index > 0 ? { presentationEvents: [coin(index)] } : {}),
     });
   }
@@ -556,6 +606,52 @@ describe('BoardSessionAdapter with real session coordinators', () => {
           cardId,
         },
         reason: 'read_only',
+      },
+    ]);
+    expect(test.submissions).toEqual([]);
+    expect(
+      test.socket.sent.filter(
+        (frame) => (JSON.parse(frame) as ClientMessage).type === 'Command'
+      )
+    ).toHaveLength(0);
+    test.adapter.dispose();
+    test.replay.dispose();
+    test.live.disconnect();
+  });
+
+  it('renders solo replay disclosure without reaching the live submitter', () => {
+    const test = setup();
+    test.socket.serverOpen();
+    test.socket.serverMessage(welcome(viewAt(4)));
+    expect(test.replay.requestReplay()).toBe(true);
+    replayTransfer(test.socket, 'solo-board-replay', true);
+    const snapshot = test.adapter.getSnapshot();
+    const prizes = Object.values(snapshot.view!.zones).find(
+      (zone) => zone.kind === 'prizes' && zone.ownerId === 'spike-blue'
+    )!;
+    const cardId = prizes.cards[0]!.id;
+    expect(snapshot.replayLocalDisplay).toBeDefined();
+    test.adapter.emitIntent({ kind: 'CardContextRequested', cardId });
+    test.rendererEffects.length = 0;
+
+    test.adapter.emitLegacyOverlayAction({
+      kind: 'context',
+      action: 'togglePrizes',
+      cardId,
+    });
+    expect(test.adapter.getSnapshot().view).toBe(snapshot.view);
+    expect(
+      test.adapter.getSnapshot().scene!.cards.find((card) => card.id === cardId)
+    ).toMatchObject({
+      label: 'Adapter replay-local card',
+      imageUrl: '/adapter-local.png',
+      concealed: false,
+    });
+    expect(test.rendererEffects).toEqual([
+      {
+        kind: 'InstallScene',
+        scene: test.adapter.getSnapshot().scene,
+        mode: 'replace',
       },
     ]);
     expect(test.submissions).toEqual([]);

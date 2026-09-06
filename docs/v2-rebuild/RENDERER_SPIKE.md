@@ -1121,6 +1121,24 @@ passes 135 Playwright checks across 64 Chromium 151 browser files:
     unsupported, invalid, replay, and post-dismissal input cannot submit. Native
     Chromium pins nine exact commands and zero editable-target traffic. The
     production route remains separate.
+64. Solo player replay now completes the three characterized local-disclosure
+    exceptions without weakening replay's read-only command boundary. Authority
+    deduplicates a separately bounded definition catalog across retained
+    history, gives it fresh opaque replay aliases, and keys each frame's exact
+    prize/opponent-hand records by that frame's concealed aliases. The optional
+    catalog fails closed under definition or estimated server-frame churn;
+    multiplayer and spectator projections remain unchanged. Client playback
+    rejects asymmetric fields, wrong perspective/zones/owners, missing or extra
+    cards, duplicate/colliding aliases, unknown definitions, and size overflow.
+    The board keeps the historical view object unchanged, derives a transient
+    display projection, and offers only `Reveal/hide prizes`, `Look/cover
+prizes`, and `Look/cover hand`. Each action emits one replacement scene and
+    zero commands; forward frames preserve zone mode, while seek, resync,
+    reconnect, exit, identity change, and terminal state reset it. Native
+    Chromium proves exact menu rows, every card face in the chosen zone,
+    forward/seek/exit behavior, and an empty submission/rejection/error trail.
+    No production route, label, layout, styling, live command, or canonical
+    schema changes.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -1296,10 +1314,9 @@ wiring:
   thresholds (source edge clamp/collision states, the isolated candidate
   resize-pointer path, and normal/flipped fullscreen viewport continuity are now
   covered);
-- complete replay-local disclosure paint and source raster comparison for
-  transformed stack/zone dialogs,
-  the full focus-trap/screen-reader audit, and reconnect snap-back beyond the
-  current native Chromium overlay/input gate;
+- complete source raster comparison for replay-local card faces and transformed
+  stack/zone dialogs, plus the full focus-trap/screen-reader audit beyond the
+  current native Chromium structural paint and lifecycle gate;
 - actual external card/image hosts, redirects, CORS failures, oversized/corrupt
   images, and the proxy/hybrid policy in ADR-013;
 - background resume, 0x0 host, DPR changes, and resize coalescing; WebGL-only

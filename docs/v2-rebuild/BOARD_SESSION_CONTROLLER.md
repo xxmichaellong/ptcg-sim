@@ -289,9 +289,15 @@ The checkbox dispatches no controller request, effect, or command. The resolver
 retains a `local_only` rejection for forged `sortZone` requests as a fail-closed
 boundary. Replay remains strictly non-submitting. V1's replay-only local
 disclosure exceptions are explicitly pinned to prize reveal, prize look, and
-opponent-hand look, but V2 continues to expose an empty replay mutation menu
-until it owns a separate local disclosure projection. Even a forged replay
-request is rejected as `read_only` before the resolver runs. Native Chromium
+opponent-hand look. A solo player artifact may now install a separate validated
+opaque disclosure record beside—but never inside—the historical safe view. The
+controller derives its scene from a transient view, offers only those three
+rows, binds them to the open card and eligible zone, and updates a local per-
+zone show/cover mode without invoking a resolver or submitter. Modes persist
+only across forward playback and clear on seek/resync/reconnect/exit/identity or
+terminal replacement. Multiplayer, spectator, absent, and malformed data still
+expose no replay mutation rows; a forged request is rejected as `read_only`
+before the resolver runs. Native Chromium
 now proves exact accepted `SetDamage`, `SetSpecialCondition`, both removals,
 `SetAbilityUsed`, all six count submissions, all three category choices, all
 five move choices, and all nine selected-card shortcut families; native prompt
@@ -302,9 +308,9 @@ sorting with zero routed actions or effects.
 
 Deck-list ordering is not present in recipient projections: unlike v1, the
 safe fallback orders disclosed labels and never obtains the opponent's hidden
-deck list. Replay-local disclosure paint, source
-stack/zone raster parity, complete accessibility focus trapping, reconnect
-snap-back, production wiring, and non-Chromium approval remain separate.
+deck list. Replay-local structural paint and lifecycle reset are covered;
+source stack/zone raster parity, complete accessibility focus trapping,
+production wiring, and non-Chromium approval remain separate.
 
 ## Effects and renderer cancellation
 

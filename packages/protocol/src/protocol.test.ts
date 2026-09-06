@@ -880,4 +880,132 @@ describe('client protocol ingress', () => {
       ).ok
     ).toBe(false);
   });
+
+  it('accepts only bounded strict replay-local disclosure wire records', () => {
+    const definition = {
+      id: 'opaque-local-definition-0001',
+      name: 'Locally disclosed card',
+      category: 'Pokémon',
+      imageUrl: '/local-card.png',
+    };
+    const started = {
+      type: 'ReplayStarted',
+      protocolVersion: PROTOCOL_VERSION,
+      replayId: 'replay-local',
+      viewer: { kind: 'player', playerId: 'blue' },
+      startRevision: 0,
+      endRevision: 0,
+      truncated: false,
+      frameCount: 1,
+      localDisclosureDefinitions: [definition],
+    };
+    expect(parseServerFrame(JSON.stringify(started)).ok).toBe(true);
+    expect(
+      parseServerFrame(
+        JSON.stringify({
+          ...started,
+          localDisclosureDefinitions: Array.from(
+            { length: MAX_DECK_CARDS * 2 + 1 },
+            (_, index) => ({ ...definition, id: `opaque-definition-${index}` })
+          ),
+        })
+      ).ok
+    ).toBe(false);
+
+    const snapshot = {
+      matchId: 'local-disclosure-match',
+      revision: 0,
+      lifecycle: 'playing',
+      viewer: { kind: 'player', playerId: 'blue' },
+      playerOrder: ['blue', 'red'],
+      players: {
+        blue: {
+          id: 'blue',
+          displayName: 'Blue',
+          cardBackUrl: '/blue.png',
+          coachingConsent: false,
+          oncePerGame: { gxUsed: false, vstarUsed: false },
+        },
+        red: {
+          id: 'red',
+          displayName: 'Red',
+          cardBackUrl: '/red.png',
+          coachingConsent: false,
+          oncePerGame: { gxUsed: false, vstarUsed: false },
+        },
+      },
+      definitions: {},
+      zones: {},
+      boards: {
+        blue: { activeStackId: null, benchStackIds: [] },
+        red: { activeStackId: null, benchStackIds: [] },
+      },
+      stacks: {},
+      workAreas: {
+        blue: { inspection: null, attachmentResolution: null },
+        red: { inspection: null, attachmentResolution: null },
+      },
+      privateInspections: [],
+      turn: { number: 0, currentPlayerId: 'blue' },
+    };
+    const card = {
+      kind: 'known',
+      id: 'opaque-local-card-0000001',
+      definitionId: definition.id,
+      ownerId: 'blue',
+      category: 'Pokémon',
+      face: 'up',
+      orientationQuarterTurns: 0,
+      abilityUsed: false,
+      publiclyRevealed: false,
+    };
+    const frame = {
+      type: 'ReplayFrame',
+      protocolVersion: PROTOCOL_VERSION,
+      replayId: 'replay-local',
+      index: 0,
+      snapshot,
+      localDisclosure: { zoneIds: ['blue-prizes'], cards: [card] },
+    };
+    expect(parseServerFrame(JSON.stringify(frame)).ok).toBe(true);
+    for (const malformed of [
+      { ...card, face: 'down' },
+      { ...card, publiclyRevealed: true },
+      { ...card, canonicalCardId: 'secret' },
+    ]) {
+      expect(
+        parseServerFrame(
+          JSON.stringify({
+            ...frame,
+            localDisclosure: { zoneIds: ['blue-prizes'], cards: [malformed] },
+          })
+        ).ok
+      ).toBe(false);
+    }
+    expect(
+      parseServerFrame(
+        JSON.stringify({
+          ...frame,
+          localDisclosure: {
+            zoneIds: ['one', 'two', 'three', 'four'],
+            cards: [],
+          },
+        })
+      ).ok
+    ).toBe(false);
+    expect(
+      parseServerFrame(
+        JSON.stringify({
+          ...frame,
+          localDisclosure: {
+            zoneIds: [],
+            cards: Array.from(
+              { length: MAX_DECK_CARDS * 2 + 1 },
+              (_, index) => ({ ...card, id: `opaque-card-${index}` })
+            ),
+          },
+        })
+      ).ok
+    ).toBe(false);
+  });
 });

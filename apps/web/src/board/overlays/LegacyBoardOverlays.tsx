@@ -120,13 +120,22 @@ const zoneForCard = (
   state: BoardSessionControllerState,
   card: CardSceneNode
 ): {
+  readonly id: string;
   readonly kind: ZoneSceneNode['kind'];
   readonly playerId: ZoneSceneNode['playerId'];
 } | null => {
   const direct = state.scene?.zones.find((zone) => zone.id === card.parentId);
-  if (direct) return { kind: direct.kind, playerId: direct.playerId };
+  if (direct) {
+    return { id: direct.id, kind: direct.kind, playerId: direct.playerId };
+  }
   const stack = state.view?.stacks[card.parentId];
-  return stack ? { kind: stack.slot, playerId: stack.boardPlayerId } : null;
+  return stack
+    ? {
+        id: stack.id,
+        kind: stack.slot,
+        playerId: stack.boardPlayerId,
+      }
+    : null;
 };
 
 /** Mirrors the legacy menu's source order without authorizing any mutation. */
@@ -134,13 +143,34 @@ export const selectLegacyContextEntries = (
   state: BoardSessionControllerState,
   card: CardSceneNode
 ): readonly ContextEntry[] => {
-  if (!state.canSubmitCommands || state.view?.viewer.kind !== 'player') {
+  if (state.view?.viewer.kind !== 'player') {
     return [];
   }
   const location = zoneForCard(state, card);
   if (!location) return [];
   const own = location.playerId === state.view.viewer.playerId;
   const opponent = location.playerId !== null && !own;
+  if (!state.canSubmitCommands) {
+    const permitsReplayDisclosure =
+      state.sessionPhase === 'ready' &&
+      state.source?.kind === 'replay' &&
+      state.replayLocalDisplay?.disclosure.zoneIds.includes(location.id);
+    if (!permitsReplayDisclosure) return [];
+    if (location.kind === 'prizes') {
+      return [
+        header('prizes', 'Prizes'),
+        action('revealPrizes', 'Reveal/hide prizes'),
+        action('togglePrizes', 'Look/cover prizes'),
+      ];
+    }
+    if (location.kind === 'hand' && opponent) {
+      return [
+        header('hand', 'Hand'),
+        action('toggleOpponentHand', 'Look/cover hand'),
+      ];
+    }
+    return [];
+  }
   const entries: ContextEntry[] = [];
 
   if (

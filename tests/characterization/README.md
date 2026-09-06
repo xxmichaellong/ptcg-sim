@@ -376,6 +376,22 @@ command. Native Chromium proves nine exact submissions plus zero traffic while
 an input is focused. No visible key reference, layout, or production route is
 changed.
 
+The solo replay disclosure checkpoint closes the three replay exceptions pinned
+by `client/src/setup/general/replay-block.js`: prize reveal, prize look, and
+opponent-hand look. It preserves their exact source labels and show/cover
+behavior but replaces v1's canonical browser state with a separately bounded,
+opaque, frame-alias-keyed catalog that authority emits only to a solo player.
+The historical view is never mutated, multiplayer and spectators receive no
+catalog, and local actions emit no command. Forward playback retains per-zone
+visibility; seek, resync, reconnect, exit, identity replacement, and terminal
+state cover it again. Protocol/authority/playback/controller tests pin strict
+shape, scope, ownership, collision, payload, and lifecycle failure cases. Native
+Chromium proves all cards in the selected prize/opponent-hand zone change face,
+the context menu contains only the characterized rows, advance/seek/exit behave
+deterministically, and submission remains empty. Source pixel comparison,
+production routing, non-Chromium approval, and the broader accessibility audit
+remain separate.
+
 `legacy-compound-group-rotation-layout.test.ts` and
 `legacy-compound-break-rotation-layout.test.ts` split the next source-only
 checkpoint into independently auditable ordinary-group and BREAK-composition

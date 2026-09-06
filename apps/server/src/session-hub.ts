@@ -610,7 +610,8 @@ export class RoomSessionHub {
           const replay = buildProjectedReplay(
             snapshot.replayHistory,
             session.viewer,
-            this.dependencies.admission.opaqueIds
+            this.dependencies.admission.opaqueIds,
+            snapshot.mode
           );
           const replayId = `replay-${this.nextReplayId++}`;
           this.send(connection, {
@@ -622,6 +623,13 @@ export class RoomSessionHub {
             endRevision: replay.endRevision,
             truncated: replay.truncated,
             frameCount: replay.frames.length,
+            ...(replay.localDisclosureDefinitions
+              ? {
+                  localDisclosureDefinitions: [
+                    ...replay.localDisclosureDefinitions,
+                  ],
+                }
+              : {}),
           });
           replay.frames.forEach((frame, index) => {
             this.send(connection, {
@@ -630,6 +638,14 @@ export class RoomSessionHub {
               replayId,
               index,
               snapshot: serializeMatchViewState(frame.snapshot),
+              ...(frame.localDisclosure
+                ? {
+                    localDisclosure: {
+                      zoneIds: [...frame.localDisclosure.zoneIds],
+                      cards: [...frame.localDisclosure.cards],
+                    },
+                  }
+                : {}),
               ...(frame.presentationEvents.length > 0
                 ? { presentationEvents: [...frame.presentationEvents] }
                 : {}),

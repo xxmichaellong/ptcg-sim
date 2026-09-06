@@ -68,7 +68,7 @@ const connection = (id: string) => {
   return { value, messages, close };
 };
 
-const fixture = async () => {
+const fixture = async (mode: 'multiplayer' | 'solo' = 'multiplayer') => {
   const crypto = new WebCryptoAuthoritySource();
   const seatToken = crypto.nextSeatCapability();
   const otherSeatToken = crypto.nextSeatCapability();
@@ -79,7 +79,7 @@ const fixture = async () => {
   const initial: RoomAuthoritySnapshot = {
     schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
     authorityVersion: 0,
-    mode: 'multiplayer',
+    mode,
     state,
     soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
     replayHistory: createReplayHistory(state),
@@ -505,6 +505,7 @@ describe('serialized room session hub', () => {
       truncated: false,
       frameCount: 2,
     });
+    expect(replayMessages[0]).not.toHaveProperty('localDisclosureDefinitions');
     expect(replayMessages[2]).toMatchObject({
       type: 'ReplayFrame',
       index: 1,
@@ -513,6 +514,42 @@ describe('serialized room session hub', () => {
         viewer: { kind: 'player', playerId: p1 },
       },
       presentationEvents: [{ type: 'CoinFlipped', revision: 1, playerId: p1 }],
+    });
+    expect(replayMessages[2]).not.toHaveProperty('localDisclosure');
+  });
+
+  it('streams a separate local disclosure projection only for a solo player', async () => {
+    const setup = await fixture('solo');
+    const client = connection('solo-replay-connection');
+    await setup.hub.handleFrame(
+      client.value,
+      helloFrame({ admissionTicket: setup.admissionTicket })
+    );
+    await setup.hub.handleFrame(
+      client.value,
+      JSON.stringify({
+        type: 'RequestReplay',
+        protocolVersion: PROTOCOL_VERSION,
+      })
+    );
+
+    const started = client.messages.find(
+      (message) => message.type === 'ReplayStarted'
+    );
+    const frame = client.messages.find(
+      (message) => message.type === 'ReplayFrame'
+    );
+    expect(started).toMatchObject({
+      type: 'ReplayStarted',
+      viewer: { kind: 'player', playerId: p1 },
+      localDisclosureDefinitions: [],
+    });
+    expect(frame).toMatchObject({
+      type: 'ReplayFrame',
+      localDisclosure: {
+        zoneIds: [`zone:${p1}:prizes`, `zone:${p2}:hand`, `zone:${p2}:prizes`],
+        cards: [],
+      },
     });
   });
 
