@@ -8,6 +8,7 @@ import {
   LEGACY_REPLAY_DISCLOSURE_CONTEXT_ACTIONS,
   resolveLegacyBoardOverlayAction,
   type LegacyBoardContextActionId,
+  type LegacyBoardOverlayActionRequest,
 } from './resolveLegacyBoardOverlayAction.js';
 
 const zoneIn = (
@@ -19,11 +20,14 @@ const zoneIn = (
     (zone) => zone.ownerId === playerId && zone.kind === kind
   )!;
 
-const context = (action: LegacyBoardContextActionId, cardId: ViewCardId) => ({
-  kind: 'context' as const,
-  action,
-  cardId,
-});
+const context = (
+  action: LegacyBoardContextActionId,
+  cardId: ViewCardId
+): Extract<LegacyBoardOverlayActionRequest, { readonly kind: 'context' }> =>
+  ({ kind: 'context', action, cardId }) as Extract<
+    LegacyBoardOverlayActionRequest,
+    { readonly kind: 'context' }
+  >;
 
 describe('legacy board overlay action resolver', () => {
   it('pins every legacy control to command, input, choice, or local ownership', () => {
@@ -201,19 +205,81 @@ describe('legacy board overlay action resolver', () => {
     }
   });
 
-  it('never invents missing prompt, submenu, or local-sort values', () => {
+  it('opens and resolves the bounded damage editor without guessing edits', () => {
     const view = createRendererSpikeView();
     const playerId = view.viewer.kind === 'player' ? view.viewer.playerId : '';
     const active = view.stacks[view.boards[playerId]!.activeStackId!]!;
+    const cardId = active.evolutionCards.at(-1)!.id;
+
+    expect(
+      resolveLegacyBoardOverlayAction(view, context('setDamage', cardId))
+    ).toEqual({
+      ok: true,
+      input: { kind: 'damage', cardId, initialValue: '120' },
+    });
+
+    const withoutDamage: MatchViewState = {
+      ...view,
+      stacks: {
+        ...view.stacks,
+        [active.id]: { ...active, damage: null },
+      },
+    };
+    expect(
+      resolveLegacyBoardOverlayAction(
+        withoutDamage,
+        context('setDamage', cardId)
+      )
+    ).toEqual({
+      ok: true,
+      input: { kind: 'damage', cardId, initialValue: '10' },
+      command: { type: 'SetDamage', stackId: active.id, damage: 10 },
+    });
+
+    for (const [value, damage] of [
+      ['70', 70],
+      ['0', null],
+      ['-10', null],
+      ['   ', null],
+    ] as const) {
+      expect(
+        resolveLegacyBoardOverlayAction(view, {
+          kind: 'context',
+          action: 'setDamage',
+          cardId,
+          value,
+        })
+      ).toEqual({
+        ok: true,
+        command: { type: 'SetDamage', stackId: active.id, damage },
+      });
+    }
+    for (const value of ['damage', '10.5', '9991', '1e100000000000000']) {
+      expect(
+        resolveLegacyBoardOverlayAction(view, {
+          kind: 'context',
+          action: 'setDamage',
+          cardId,
+          value,
+        })
+      ).toEqual({ ok: false, reason: 'invalid_value' });
+    }
+    expect(
+      resolveLegacyBoardOverlayAction(view, {
+        kind: 'context',
+        action: 'setDamage',
+        cardId,
+        value: 70,
+      } as unknown as LegacyBoardOverlayActionRequest)
+    ).toEqual({ ok: false, reason: 'invalid_value' });
+  });
+
+  it('never invents remaining prompt, submenu, or local-sort values', () => {
+    const view = createRendererSpikeView();
+    const playerId = view.viewer.kind === 'player' ? view.viewer.playerId : '';
     const hand = zoneIn(view, playerId, 'hand');
     const deck = zoneIn(view, playerId, 'deck');
 
-    expect(
-      resolveLegacyBoardOverlayAction(
-        view,
-        context('setDamage', active.evolutionCards.at(-1)!.id)
-      )
-    ).toEqual({ ok: false, reason: 'requires_input' });
     expect(
       resolveLegacyBoardOverlayAction(
         view,

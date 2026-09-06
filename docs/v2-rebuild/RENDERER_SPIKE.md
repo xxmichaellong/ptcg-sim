@@ -1027,6 +1027,29 @@ passes 134 Playwright checks across 64 Chromium 151 browser files:
     do not contain that hidden information, so the documented security-preserving
     parity exception is stable disclosed-label order. The control, text, dialog
     layout, paint, and production-route boundary are unchanged.
+57. The same route-owned layer now completes damage editing without making
+    renderer markers mutable. A value-less `setDamage` request is bound to the
+    exact open context card and installs one typed controller editor; if damage
+    is absent it simultaneously emits only the source-characterized default
+    `SetDamage(10)`. The temporary React `contenteditable` overlays the current
+    recipient-safe marker geometry and shared appearance. Unchanged or Escape
+    drafts cancel, integers `1..9990` submit exactly once, zero/negative/empty
+    input removes damage, and decimal/nonnumeric/over-limit/overlong drafts stay
+    local with `aria-invalid`. A typed submitted value must match the open
+    editor before the pure resolver can reuse `resolveStackStateAction`.
+    Reconnect, replacement, terminal state, and target departure clear it.
+    Unit tests cover default creation, safe parsing, no-op/cancel, target
+    forgery, reconnect, exact bounds, and immutable scene markers. Native
+    Chromium proves invalid → `70` → removal → ability sequencing with three
+    exact commands and no duplicate submission. Special-condition editing,
+    keyboard shortcuts, other count prompts, submenus, and production wiring
+    remain separate.
+58. The cycle gate now excludes Wrangler's generated `.wrangler` staging tree
+    alongside `dist` and `lib`. Repeated local Worker builds had left ignored
+    bundle copies beneath `apps/server/.wrangler/tmp`, causing Madge to traverse
+    generated code and grow from 252 reviewed source files to 498 mixed files.
+    The corrected scan is stable at 252 files and still reports no circular
+    dependencies; no generated directories are deleted as part of the gate.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

@@ -29,6 +29,11 @@ interface ProtectedInputEvidence {
   };
   readonly overlays: {
     readonly contextMenuCardId: string | null;
+    readonly input: {
+      readonly kind: 'damage';
+      readonly cardId: string;
+      readonly initialValue: string;
+    } | null;
     readonly preview:
       | { readonly kind: 'card'; readonly cardId: string }
       | {
@@ -588,6 +593,129 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   const activePoint = await exposedCardPoint(activeTopCard);
   await page.mouse.click(activePoint.x, activePoint.y, { button: 'right' });
   await expect(menu).toBeVisible();
+  await menu.locator('[data-context-action="setDamage"]').click();
+  const damageEditor = host.locator('[data-legacy-marker-editor="damage"]');
+  await expect(damageEditor).toBeVisible();
+  await expect(damageEditor).toHaveText('120');
+  const renderedDamage = host.locator(
+    `[data-marker-id="${fixture.activeTopCardId}:damage"]`
+  );
+  await expect(renderedDamage).toBeVisible();
+  expect(await damageEditor.boundingBox()).toEqual(
+    await renderedDamage.boundingBox()
+  );
+  expect(
+    await damageEditor.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        backgroundColor: style.backgroundColor,
+        color: style.color,
+        borderRadius: style.borderRadius,
+        fontSize: style.fontSize,
+        lineHeight: style.lineHeight,
+      };
+    })
+  ).toEqual(
+    await renderedDamage.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        backgroundColor: style.backgroundColor,
+        color: style.color,
+        borderRadius: style.borderRadius,
+        fontSize: style.fontSize,
+        lineHeight: style.lineHeight,
+      };
+    })
+  );
+  await expect
+    .poll(() => evidence(page))
+    .toMatchObject({
+      submissions: [],
+      overlayRejections: [],
+      overlayActions: [
+        {
+          kind: 'context',
+          action: 'setDamage',
+          cardId: fixture.activeTopCardId,
+        },
+      ],
+      overlays: {
+        contextMenuCardId: null,
+        input: {
+          kind: 'damage',
+          cardId: fixture.activeTopCardId,
+          initialValue: '120',
+        },
+      },
+    });
+  await damageEditor.fill('70.5');
+  await damageEditor.press('Enter');
+  await expect(damageEditor).toHaveAttribute('aria-invalid', 'true');
+  await expect(damageEditor).toBeFocused();
+  expect((await evidence(page)).submissions).toEqual([]);
+  expect((await evidence(page)).overlayActions).toHaveLength(1);
+
+  await damageEditor.fill('70');
+  await damageEditor.press('Enter');
+  await expect(damageEditor).toHaveCount(0);
+  await expect
+    .poll(async () => (await evidence(page)).submissions)
+    .toEqual([
+      {
+        type: 'SetDamage',
+        stackId: fixture.activeStackId,
+        damage: 70,
+      },
+    ]);
+  const damageEvidence = await evidence(page);
+  expect(damageEvidence.submissionResults).toEqual([
+    {
+      queued: true,
+      commandId: 'protected-input-command-1',
+      clientSequence: 1,
+    },
+  ]);
+  expect(damageEvidence.overlayActions).toEqual([
+    {
+      kind: 'context',
+      action: 'setDamage',
+      cardId: fixture.activeTopCardId,
+    },
+    {
+      kind: 'context',
+      action: 'setDamage',
+      cardId: fixture.activeTopCardId,
+      value: '70',
+    },
+  ]);
+  expect(damageEvidence.overlayRejections).toEqual([]);
+  expect(damageEvidence.reportedErrors).toEqual([]);
+
+  await clearEvidence(page);
+  await page.mouse.click(activePoint.x, activePoint.y, { button: 'right' });
+  await menu.locator('[data-context-action="setDamage"]').click();
+  await damageEditor.fill('0');
+  await damageEditor.press('Enter');
+  await expect
+    .poll(async () => (await evidence(page)).submissions)
+    .toEqual([
+      {
+        type: 'SetDamage',
+        stackId: fixture.activeStackId,
+        damage: null,
+      },
+    ]);
+  expect((await evidence(page)).submissionResults).toEqual([
+    {
+      queued: true,
+      commandId: 'protected-input-command-2',
+      clientSequence: 2,
+    },
+  ]);
+
+  await clearEvidence(page);
+  await page.mouse.click(activePoint.x, activePoint.y, { button: 'right' });
+  await expect(menu).toBeVisible();
   await menu.locator('[data-context-action="toggleAbility"]').click();
   await expect
     .poll(async () => (await evidence(page)).submissions)
@@ -602,8 +730,8 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   expect(commandEvidence.submissionResults).toEqual([
     {
       queued: true,
-      commandId: 'protected-input-command-1',
-      clientSequence: 1,
+      commandId: 'protected-input-command-3',
+      clientSequence: 3,
     },
   ]);
   expect(commandEvidence.overlayActions).toEqual([

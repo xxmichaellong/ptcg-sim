@@ -308,6 +308,19 @@ disclosure actions; the V2 replay menu remains empty and the controller returns
 `read_only` before resolver/submit until a separate local disclosure projection
 is implemented.
 
+The next protected-input checkpoint completes damage editing without mutating
+renderer-owned marker nodes. The unchanged context item installs one typed
+controller editor over the recipient-safe marker bounds. Missing damage emits
+the characterized default `10`; existing damage opens with no command. The
+temporary `contenteditable` accepts bounded integer changes and zero/empty
+removal, rejects malformed drafts locally, and routes valid text only through
+the matching open-editor identity. Unit coverage pins default creation,
+non-string/decimal/over-limit rejection, no-op and Escape cancellation, forged
+submission, reconnect cleanup, exact overlay geometry, and immutable scenes.
+The native route proves invalid `70.5`, accepted `70`, removal with `0`, then an
+ability toggle use client sequences 1/2/3 exactly once. Special-condition and
+keyboard editing remain open.
+
 `legacy-compound-group-rotation-layout.test.ts` and
 `legacy-compound-break-rotation-layout.test.ts` split the next source-only
 checkpoint into independently auditable ordinary-group and BREAK-composition

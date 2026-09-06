@@ -539,9 +539,14 @@ then falls through to the unselected deck-view shortcut during the same
 keydown. The v2 `resolveStackStateAction` boundary intentionally emits only one
 `SetDamage(null)` command for that gesture. It preserves the full condition
 cycle and ability target behavior while rejecting invalid/unbounded damage and
-over-limit condition input. React/Pixi markers remain display-only for now, so
-no visible UI or UX has changed; the later editor integration must reuse the
-existing context menu, shortcuts, labels, and anchored text-entry behavior.
+over-limit condition input. Renderer markers remain immutable scene output.
+The route-owned React overlay now supplies the damage editor as a temporary
+`contenteditable` node over the exact marker bounds, using the shared marker
+appearance. The controller binds it to the context-menu card, submits default
+`10` only for a missing marker, accepts bounded integer edits and zero-removal,
+retains malformed drafts locally, and purges the editor across reconnect or
+recipient replacement. Special-condition editing and shortcut routing remain
+separate; no production route is enabled.
 
 The next source-only gate now characterizes compound Pokémon rotation without
 weakening that production boundary. Separate ordinary-group and BREAK oracles
@@ -1080,7 +1085,7 @@ Layout derives a visible ordering without changing state.
 - Double-click on active/bench preserves the expanded whole-stack view and marker
   behavior; double-click elsewhere preserves full-resolution preview behavior.
 - Direct marker/counter editing uses one temporary React input anchored to the
-  Pixi marker rather than a listener-bearing input per display object.
+  renderer marker rather than a listener-bearing input per display object.
 
 ### Keyboard input
 
@@ -1135,9 +1140,14 @@ inspection, random face-down, prize-bottom, and loose-board resolvers; own-zone
 shuffles use their narrow authoritative commands. One native Chromium action
 therefore produces exactly one `SetAbilityUsed` command.
 
-Controls that still need content-editable marker text, a draw/inspection count,
-a move destination, or a category do not guess a default. They emit observable
-`requires_input` or `requires_choice` rejections and submit nothing. Zone sort
+The damage control now opens a controller-bound temporary React editor over the
+safe scene marker. It reproduces default `10`, positive edits, and zero/empty
+removal with bounded integer validation and exactly one command per accepted
+value; malformed drafts stay local, and forged or stale submissions fail
+closed. Controls that still need special-condition text, a draw/inspection
+count, a move destination, or a category do not guess a default. They emit
+observable `requires_input` or `requires_choice` rejections and submit nothing.
+Zone sort
 now has a deliberately narrower owner: controlled state inside the mounted zone
 browser. It sorts a copy by recipient-safe scene label, keeps equal labels in
 authoritative scene order, restores that order when unchecked, and resets when

@@ -68,6 +68,7 @@ export type ReactDomProtectedOverlayAction =
       readonly kind: 'context';
       readonly action: LegacyBoardContextActionId;
       readonly cardId: string;
+      readonly value?: string;
     }
   | {
       readonly kind: 'zone';
@@ -312,6 +313,20 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
     invokeZoneAction: (action, zoneId) => {
       overlayActions.push({ kind: 'zone', action, zoneId });
       runtime.emitLegacyOverlayAction({ kind: 'zone', action, zoneId });
+    },
+    submitDamageInput: (cardId, value) => {
+      overlayActions.push({
+        kind: 'context',
+        action: 'setDamage',
+        cardId: String(cardId),
+        value,
+      });
+      runtime.emitLegacyOverlayAction({
+        kind: 'context',
+        action: 'setDamage',
+        cardId,
+        value,
+      });
     },
   };
   let darkMode = false;

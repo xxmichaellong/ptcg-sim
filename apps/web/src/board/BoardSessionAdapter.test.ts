@@ -863,6 +863,7 @@ describe('BoardSessionAdapter with real session coordinators', () => {
     expect(test.adapter.getSnapshot().overlays).toEqual({
       contextMenuCardId: null,
       preview: null,
+      input: null,
     });
     test.adapter.dispose();
     test.replay.dispose();

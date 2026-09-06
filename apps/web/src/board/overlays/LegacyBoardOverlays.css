@@ -117,6 +117,15 @@
   background: rgb(59 59 59 / 87%);
 }
 
+.ptcgsim-legacy-marker-editor {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  cursor: text;
+  user-select: text;
+  white-space: nowrap;
+}
+
 .ptcgsim-legacy-stack-preview img {
   height: 24%;
   margin: 0.5%;

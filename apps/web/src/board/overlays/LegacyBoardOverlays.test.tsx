@@ -57,6 +57,7 @@ const actions = (): LegacyBoardOverlayActions => ({
   dismiss: vi.fn(),
   invokeContextAction: vi.fn(),
   invokeZoneAction: vi.fn(),
+  submitDamageInput: vi.fn(),
 });
 
 describe('legacy board overlays', () => {
@@ -170,7 +171,11 @@ describe('legacy board overlays', () => {
       root.render(
         createElement(LegacyBoardOverlays, {
           state: state({
-            overlays: { contextMenuCardId: card.id, preview: null },
+            overlays: {
+              contextMenuCardId: card.id,
+              preview: null,
+              input: null,
+            },
           }),
           darkMode: false,
           actions: callbacks,
@@ -204,6 +209,7 @@ describe('legacy board overlays', () => {
             overlays: {
               contextMenuCardId: null,
               preview: { kind: 'card', cardId: card.id },
+              input: null,
             },
           }),
           darkMode: false,
@@ -237,6 +243,7 @@ describe('legacy board overlays', () => {
                 stackId,
                 focusCardId: stackCards[0]!.id,
               },
+              input: null,
             },
           }),
           darkMode: true,
@@ -266,7 +273,7 @@ describe('legacy board overlays', () => {
               drag: null,
               openedZoneId: discard.id,
             },
-            overlays: { contextMenuCardId: null, preview: null },
+            overlays: { contextMenuCardId: null, preview: null, input: null },
           }),
           darkMode: false,
           actions: callbacks,
@@ -395,5 +402,94 @@ describe('legacy board overlays', () => {
     ).toBe(false);
     expect(cardIds()).toEqual(canonicalCards.map((card) => card.id));
     expect(callbacks.invokeZoneAction).not.toHaveBeenCalled();
+  });
+
+  it('anchors a bounded temporary damage editor without mutating scene markers', async () => {
+    const callbacks = actions();
+    const active = view.stacks[view.boards[firstPlayer]!.activeStackId!]!;
+    const cardId = active.evolutionCards.at(-1)!.id;
+    const marker = scene.markers.find(
+      (candidate) =>
+        candidate.parentCardId === cardId && candidate.kind === 'damage'
+    )!;
+    const markerSnapshot = JSON.stringify(scene.markers);
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            overlays: {
+              contextMenuCardId: null,
+              preview: null,
+              input: { kind: 'damage', cardId, initialValue: '120' },
+            },
+          }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+
+    const editor = host.querySelector<HTMLDivElement>(
+      '[data-legacy-marker-editor="damage"]'
+    )!;
+    expect(editor.textContent).toBe('120');
+    expect(editor.getAttribute('role')).toBe('textbox');
+    expect(editor.getAttribute('aria-label')).toBe('Damage counter');
+    expect(Number.parseFloat(editor.style.left)).toBeCloseTo(
+      marker.bounds.x,
+      5
+    );
+    expect(Number.parseFloat(editor.style.top)).toBeCloseTo(marker.bounds.y, 5);
+    expect(Number.parseFloat(editor.style.width)).toBeCloseTo(
+      marker.bounds.width,
+      5
+    );
+    expect(Number.parseFloat(editor.style.height)).toBeCloseTo(
+      marker.bounds.height,
+      5
+    );
+
+    await act(async () => {
+      editor.focus();
+      editor.blur();
+    });
+    expect(callbacks.dismiss).toHaveBeenCalledExactlyOnceWith('input');
+    expect(callbacks.submitDamageInput).not.toHaveBeenCalled();
+    vi.mocked(callbacks.dismiss).mockClear();
+
+    await act(async () => {
+      editor.focus();
+      editor.textContent = '70.5';
+      editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
+      editor.blur();
+    });
+    expect(editor.getAttribute('aria-invalid')).toBe('true');
+    expect(document.activeElement).toBe(editor);
+    expect(callbacks.submitDamageInput).not.toHaveBeenCalled();
+
+    await act(async () => {
+      editor.textContent = '70';
+      editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
+      editor.blur();
+    });
+    expect(callbacks.submitDamageInput).toHaveBeenCalledExactlyOnceWith(
+      cardId,
+      '70'
+    );
+    expect(callbacks.invokeContextAction).not.toHaveBeenCalled();
+    expect(JSON.stringify(scene.markers)).toBe(markerSnapshot);
+
+    vi.mocked(callbacks.submitDamageInput).mockClear();
+    await act(async () => {
+      editor.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Escape',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(callbacks.dismiss).toHaveBeenCalledWith('input');
+    expect(callbacks.submitDamageInput).not.toHaveBeenCalled();
   });
 });

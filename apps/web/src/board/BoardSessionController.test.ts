@@ -353,6 +353,141 @@ describe('headless board session controller', () => {
     });
   });
 
+  it('owns damage-editor identity from context open through bounded submit', () => {
+    let state = install();
+    const activeStack = state.view!.stacks['stack:blue:active']!;
+    const cardId = activeStack.evolutionCards.at(-1)!.id;
+    state = apply(state, {
+      kind: 'RendererIntent',
+      intent: { kind: 'CardContextRequested', cardId },
+    }).state;
+
+    const opened = apply(state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: { kind: 'context', action: 'setDamage', cardId },
+    });
+    expect(opened.effects).toEqual([]);
+    expect(opened.state.overlays).toEqual({
+      contextMenuCardId: null,
+      preview: null,
+      input: { kind: 'damage', cardId, initialValue: '120' },
+    });
+
+    const contextDismissed = apply(opened.state, {
+      kind: 'DismissLocalPresentation',
+      scope: 'context',
+    });
+    expect(contextDismissed.outcome).toBe('ignored');
+    expect(contextDismissed.state.overlays.input).toEqual(
+      opened.state.overlays.input
+    );
+
+    const invalidRequest = {
+      kind: 'context' as const,
+      action: 'setDamage' as const,
+      cardId,
+      value: '70.5',
+    };
+    const invalid = apply(opened.state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: invalidRequest,
+    });
+    expect(invalid.state).toBe(opened.state);
+    expect(invalid.effects).toEqual([
+      {
+        kind: 'OverlayActionRejected',
+        request: invalidRequest,
+        reason: 'invalid_value',
+      },
+    ]);
+
+    const submitted = apply(opened.state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: {
+        kind: 'context',
+        action: 'setDamage',
+        cardId,
+        value: '70',
+      },
+    });
+    expect(submitted.state.overlays.input).toBeNull();
+    expect(submitted.effects).toEqual([
+      {
+        kind: 'SubmitCommand',
+        command: { type: 'SetDamage', stackId: activeStack.id, damage: 70 },
+      },
+    ]);
+
+    const forged = apply(submitted.state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: {
+        kind: 'context',
+        action: 'setDamage',
+        cardId,
+        value: '80',
+      },
+    });
+    expect(forged.effects).toEqual([
+      {
+        kind: 'OverlayActionRejected',
+        request: {
+          kind: 'context',
+          action: 'setDamage',
+          cardId,
+          value: '80',
+        },
+        reason: 'stale_card',
+      },
+    ]);
+
+    const reconnect = apply(opened.state, {
+      kind: 'FrameReceived',
+      frame: liveFrame(2, opened.state.view, {
+        sessionPhase: 'reconnecting',
+      }),
+    });
+    expect(reconnect.state.overlays.input).toBeNull();
+    expect(reconnect.state.canSubmitCommands).toBe(false);
+    expect(reconnect.effects).toContainEqual({
+      kind: 'CancelRendererInteraction',
+      reason: 'session_not_ready',
+    });
+  });
+
+  it('submits the characterized default only when opening a missing damage marker', () => {
+    const view = createRendererSpikeView();
+    const activeStack = view.stacks['stack:blue:active']!;
+    const withoutDamage: MatchViewState = {
+      ...view,
+      stacks: {
+        ...view.stacks,
+        [activeStack.id]: { ...activeStack, damage: null },
+      },
+    };
+    let state = install(initialFrame(withoutDamage));
+    const cardId = activeStack.evolutionCards.at(-1)!.id;
+    state = apply(state, {
+      kind: 'RendererIntent',
+      intent: { kind: 'CardContextRequested', cardId },
+    }).state;
+    const result = apply(state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: { kind: 'context', action: 'setDamage', cardId },
+    });
+
+    expect(result.state.overlays.input).toEqual({
+      kind: 'damage',
+      cardId,
+      initialValue: '10',
+    });
+    expect(result.effects).toEqual([
+      {
+        kind: 'SubmitCommand',
+        command: { type: 'SetDamage', stackId: activeStack.id, damage: 10 },
+      },
+    ]);
+  });
+
   it('rejects stale, incomplete, and replay overlay actions without resolving commands', () => {
     const player = createRendererSpikeView();
     const resolveOverlayAction = vi.fn(() => {

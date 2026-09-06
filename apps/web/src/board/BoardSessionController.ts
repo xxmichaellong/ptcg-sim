@@ -16,6 +16,7 @@ import {
 } from './resolveBoardDrop.js';
 import {
   resolveLegacyBoardOverlayAction,
+  type LegacyBoardDamageEditor,
   type LegacyBoardOverlayActionRejectionReason,
   type LegacyBoardOverlayActionRequest,
 } from './resolveLegacyBoardOverlayAction.js';
@@ -59,10 +60,11 @@ export type BoardPreviewState =
 export interface BoardOverlayState {
   readonly contextMenuCardId: ViewCardId | null;
   readonly preview: BoardPreviewState | null;
+  readonly input: LegacyBoardDamageEditor | null;
 }
 
 export type BoardPresentationDismissScope =
-  'all' | 'selection' | 'context' | 'preview' | 'zone';
+  'all' | 'selection' | 'context' | 'preview' | 'zone' | 'input';
 
 export type OpenedZoneCardIntent =
   | Extract<BoardIntent, { readonly kind: 'CardSelected' }>
@@ -186,6 +188,7 @@ export interface BoardSessionControllerOptions {
 const EMPTY_OVERLAYS: BoardOverlayState = {
   contextMenuCardId: null,
   preview: null,
+  input: null,
 };
 
 export const createInitialBoardSessionControllerState =
@@ -303,7 +306,17 @@ const presentationIsEmpty = (presentation: BoardPresentation): boolean =>
   presentation.openedZoneId === null;
 
 const overlaysAreEmpty = (overlays: BoardOverlayState): boolean =>
-  overlays.contextMenuCardId === null && overlays.preview === null;
+  overlays.contextMenuCardId === null &&
+  overlays.preview === null &&
+  overlays.input === null;
+
+const sameOverlays = (
+  left: BoardOverlayState,
+  right: BoardOverlayState
+): boolean =>
+  left.contextMenuCardId === right.contextMenuCardId &&
+  left.preview === right.preview &&
+  left.input === right.input;
 
 const clearLocalPresentation = (
   state: BoardSessionControllerState
@@ -402,6 +415,14 @@ const reconcilePresentation = (
           ? preview
           : null
         : null;
+  const input = state.overlays.input;
+  const reconciledInput =
+    input &&
+    scene.cards.some(
+      (card) => card.id === input.cardId && view.stacks[card.parentId]
+    )
+      ? input
+      : null;
   return {
     presentation: {
       selectedCardId,
@@ -412,6 +433,7 @@ const reconcilePresentation = (
     overlays: {
       contextMenuCardId,
       preview: reconciledPreview,
+      input: reconciledInput,
     },
   };
 };
@@ -803,7 +825,7 @@ const installPresentation = (
 ): BoardSessionControllerReduction => {
   if (
     samePresentation(state.presentation, presentation) &&
-    overlays === state.overlays
+    sameOverlays(overlays, state.overlays)
   ) {
     return ignored(state);
   }
@@ -863,6 +885,7 @@ const handleIntent = (
         overlays: {
           contextMenuCardId: intent.cardId,
           preview: null,
+          input: null,
         },
       });
       return accepted(next, [
@@ -888,7 +911,7 @@ const handleIntent = (
           selectedCardId: null,
           drag: null,
         },
-        overlays: { contextMenuCardId: null, preview },
+        overlays: { contextMenuCardId: null, preview, input: null },
       });
       return accepted(next, [
         { kind: 'InstallPresentation', presentation: next.presentation },
@@ -991,9 +1014,16 @@ const handleOverlayAction = (
   if (!state.canSubmitCommands) {
     return rejectOverlayAction(state, request, 'read_only');
   }
+  const submitsDamageInput =
+    request.kind === 'context' &&
+    request.action === 'setDamage' &&
+    request.value !== undefined;
   if (
     request.kind === 'context' &&
-    (state.overlays.contextMenuCardId !== request.cardId ||
+    ((submitsDamageInput
+      ? state.overlays.input?.kind !== 'damage' ||
+        state.overlays.input.cardId !== request.cardId
+      : state.overlays.contextMenuCardId !== request.cardId) ||
       !scene.cards.some((card) => card.id === request.cardId))
   ) {
     return rejectOverlayAction(state, request, 'stale_card');
@@ -1011,7 +1041,27 @@ const handleOverlayAction = (
   if (!resolution.ok) {
     return rejectOverlayAction(state, request, resolution.reason);
   }
-  return accepted(state, [
+  if ('input' in resolution) {
+    const next = nextState(state, {
+      overlays: {
+        contextMenuCardId: null,
+        preview: null,
+        input: resolution.input,
+      },
+    });
+    return accepted(
+      next,
+      resolution.command
+        ? [{ kind: 'SubmitCommand', command: resolution.command }]
+        : []
+    );
+  }
+  const next = submitsDamageInput
+    ? nextState(state, {
+        overlays: { ...state.overlays, input: null },
+      })
+    : state;
+  return accepted(next, [
     { kind: 'SubmitCommand', command: resolution.command },
   ]);
 };
@@ -1076,6 +1126,7 @@ const dismissPresentation = (
         : state.overlays.contextMenuCardId,
     preview:
       scope === 'all' || scope === 'preview' ? null : state.overlays.preview,
+    input: scope === 'all' || scope === 'input' ? null : state.overlays.input,
   };
   return installPresentation(state, presentation, overlays);
 };

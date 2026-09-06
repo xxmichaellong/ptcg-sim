@@ -1,8 +1,14 @@
 import type { ViewCardId } from '@ptcgsim/game-core';
-import type {
-  CardSceneNode,
-  Rect,
-  ZoneSceneNode,
+import {
+  isLegacyMarkerPresentation,
+  layoutLegacyActiveQ0Markers,
+  layoutLegacyBenchQ0Markers,
+  legacyMarkerAppearance,
+  legacyMarkerCssColor,
+  type CardSceneNode,
+  type MarkerSceneNode,
+  type Rect,
+  type ZoneSceneNode,
 } from '@ptcgsim/renderer-contract';
 import {
   memo,
@@ -25,6 +31,7 @@ import type {
   LegacyBoardContextActionId,
   LegacyBoardZoneActionId,
 } from '../resolveLegacyBoardOverlayAction.js';
+import { parseLegacyDamageInput } from '../resolveLegacyBoardOverlayAction.js';
 import './LegacyBoardOverlays.css';
 
 export type {
@@ -43,6 +50,7 @@ export interface LegacyBoardOverlayActions {
     action: LegacyBoardZoneActionId,
     zoneId: string
   ) => void;
+  readonly submitDamageInput: (cardId: ViewCardId, value: string) => void;
 }
 
 type ContextEntry =
@@ -587,6 +595,148 @@ const ZoneBrowser = ({
   );
 };
 
+const damageEditorMarker = (
+  state: BoardSessionControllerState
+): MarkerSceneNode | null => {
+  const input = state.overlays.input;
+  const scene = state.scene;
+  const view = state.view;
+  if (!input || input.kind !== 'damage' || !scene || !view) return null;
+  const selected = scene.cards.find((card) => card.id === input.cardId);
+  const stack = selected ? view.stacks[selected.parentId] : undefined;
+  const topCardId = stack?.evolutionCards.at(-1)?.id;
+  const topCard = topCardId
+    ? scene.cards.find((card) => card.id === topCardId)
+    : undefined;
+  if (!stack || !topCard || topCard.side === 'shared') return null;
+  const existing = scene.markers.find(
+    (marker) => marker.parentCardId === topCard.id && marker.kind === 'damage'
+  );
+  if (existing) return existing;
+  const sibling = scene.markers.find(
+    (marker) =>
+      marker.parentCardId === topCard.id &&
+      isLegacyMarkerPresentation(marker.presentation)
+  );
+  const presentation = sibling?.presentation ?? 'generic';
+  const characterizedBounds =
+    presentation === 'legacyActiveQ0'
+      ? layoutLegacyActiveQ0Markers(topCard.bounds, topCard.side).damage.bounds
+      : presentation === 'legacyBenchQ0'
+        ? layoutLegacyBenchQ0Markers(topCard.bounds, topCard.side).damage.bounds
+        : null;
+  const size = Math.max(
+    14,
+    Math.min(topCard.bounds.width, topCard.bounds.height) * 0.22
+  );
+  return {
+    id: `${topCard.id}:damage-editor`,
+    parentCardId: topCard.id,
+    side: topCard.side,
+    kind: 'damage',
+    presentation,
+    value: input.initialValue,
+    bounds: characterizedBounds ?? {
+      x: topCard.bounds.x + topCard.bounds.width - size,
+      y: topCard.bounds.y,
+      width: size,
+      height: size,
+    },
+    zIndex:
+      sibling?.zIndex ??
+      topCard.zIndex + (characterizedBounds === null ? 100 : 1),
+    label: `damage: ${input.initialValue}`,
+  };
+};
+
+const DamageEditor = ({
+  state,
+  actions,
+}: {
+  readonly state: BoardSessionControllerState;
+  readonly actions: LegacyBoardOverlayActions;
+}) => {
+  const input = state.overlays.input;
+  const marker = damageEditorMarker(state);
+  const editor = useRef<HTMLDivElement>(null);
+  const cancelled = useRef(false);
+  const [invalid, setInvalid] = useState(false);
+  useLayoutEffect(() => {
+    if (editor.current && input?.kind === 'damage') {
+      editor.current.textContent = input.initialValue;
+    }
+  }, [input]);
+  if (!input || input.kind !== 'damage' || !marker) return null;
+  const legacy = isLegacyMarkerPresentation(marker.presentation);
+  const appearance = legacy ? legacyMarkerAppearance(marker) : null;
+  const submit = (element: HTMLDivElement): void => {
+    if (cancelled.current) return;
+    const value = element.textContent ?? '';
+    if (value === input.initialValue) {
+      actions.dismiss('input');
+      return;
+    }
+    if (parseLegacyDamageInput(value) === undefined) {
+      setInvalid(true);
+      element.focus();
+      return;
+    }
+    actions.submitDamageInput(input.cardId, value);
+  };
+
+  return (
+    <div
+      ref={editor}
+      className="ptcgsim-legacy-marker-editor"
+      data-legacy-marker-editor="damage"
+      data-marker-card-id={input.cardId}
+      role="textbox"
+      aria-label="Damage counter"
+      aria-invalid={invalid}
+      contentEditable
+      suppressContentEditableWarning
+      spellCheck={false}
+      inputMode="numeric"
+      onInput={() => setInvalid(false)}
+      onBlur={(event) => submit(event.currentTarget)}
+      onKeyDown={(event) => {
+        event.stopPropagation();
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          event.currentTarget.blur();
+        } else if (event.key === 'Escape') {
+          event.preventDefault();
+          cancelled.current = true;
+          actions.dismiss('input');
+        }
+      }}
+      style={{
+        position: 'absolute',
+        left: marker.bounds.x,
+        top: marker.bounds.y,
+        width: marker.bounds.width,
+        height: marker.bounds.height,
+        zIndex: marker.zIndex,
+        display: legacy ? 'block' : 'grid',
+        placeItems: legacy ? undefined : 'center',
+        overflow: 'hidden',
+        borderRadius: appearance?.shape === 'tab' ? '10%' : '50%',
+        background: appearance
+          ? legacyMarkerCssColor(appearance.fill)
+          : '#e64242',
+        color: appearance ? legacyMarkerCssColor(appearance.text) : '#fff',
+        fontSize:
+          appearance?.fontSizePx ?? Math.max(10, marker.bounds.height * 0.42),
+        fontWeight: legacy ? undefined : 700,
+        lineHeight: legacy ? `${marker.bounds.width}px` : undefined,
+        textAlign: 'center',
+        pointerEvents: 'auto',
+        outline: invalid ? '2px solid #fff' : 'none',
+      }}
+    />
+  );
+};
+
 /**
  * Renderer-external legacy popup paint. It consumes only recipient-safe scene
  * data and semantic controller callbacks; it never owns canonical game state.
@@ -644,6 +794,13 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
           captureContextAnchor={(cardId, zoneId, bounds) =>
             setContextAnchor({ cardId, zoneId, bounds })
           }
+          actions={actions}
+        />
+      ) : null}
+      {state.overlays.input ? (
+        <DamageEditor
+          key={`${state.overlays.input.kind}:${state.overlays.input.cardId}`}
+          state={state}
           actions={actions}
         />
       ) : null}

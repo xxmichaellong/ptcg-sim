@@ -10,6 +10,7 @@ import {
   resolvePublicCardVisibilityAction,
 } from './resolvePublicVisibilityAction.js';
 import { resolveRandomFaceDownAction } from './resolveRandomFaceDownAction.js';
+import { resolveStackStateAction } from './resolveStackStateAction.js';
 
 export type LegacyBoardContextActionId =
   | 'toggleAbility'
@@ -39,11 +40,23 @@ export type LegacyBoardContextActionId =
 export type LegacyBoardZoneActionId =
   'shuffleDeck' | 'shuffleDiscardToDeck' | 'sortZone';
 
+type LegacyBoardContextActionWithoutDamage = Exclude<
+  LegacyBoardContextActionId,
+  'setDamage'
+>;
+
 export type LegacyBoardOverlayActionRequest =
   | {
       readonly kind: 'context';
-      readonly action: LegacyBoardContextActionId;
+      readonly action: LegacyBoardContextActionWithoutDamage;
       readonly cardId: ViewCardId;
+    }
+  | {
+      readonly kind: 'context';
+      readonly action: 'setDamage';
+      readonly cardId: ViewCardId;
+      /** Missing opens the editor; present submits its bounded text draft. */
+      readonly value?: string;
     }
   | {
       readonly kind: 'zone';
@@ -114,12 +127,24 @@ export type LegacyBoardOverlayActionRejectionReason =
   | 'empty_hand'
   | 'no_prizes'
   | 'no_op'
+  | 'invalid_value'
   | 'requires_input'
   | 'requires_choice'
   | 'local_only';
 
+export interface LegacyBoardDamageEditor {
+  readonly kind: 'damage';
+  readonly cardId: ViewCardId;
+  readonly initialValue: string;
+}
+
 export type LegacyBoardOverlayActionResolution =
   | { readonly ok: true; readonly command: WireGameCommand }
+  | {
+      readonly ok: true;
+      readonly input: LegacyBoardDamageEditor;
+      readonly command?: WireGameCommand;
+    }
   | {
       readonly ok: false;
       readonly reason: LegacyBoardOverlayActionRejectionReason;
@@ -172,6 +197,18 @@ const command = (
   value: WireGameCommand
 ): LegacyBoardOverlayActionResolution => ({ ok: true, command: value });
 
+export const parseLegacyDamageInput = (
+  value: string
+): number | null | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  if (normalized === '') return null;
+  if (normalized.length > 16 || !/^-?\d+$/.test(normalized)) return undefined;
+  const numeric = Number(normalized);
+  if (!Number.isSafeInteger(numeric) || numeric > 9_990) return undefined;
+  return numeric <= 0 ? null : numeric;
+};
+
 const commandForShuffle = (
   view: MatchViewState,
   zone: ViewZone,
@@ -203,9 +240,36 @@ const resolveContextAction = (
         type: 'toggleAbilityUsed',
       });
     case 'setDamage':
-      return located.stack
-        ? rejected('requires_input')
-        : rejected('unsupported_target');
+      if (!located.stack) return rejected('unsupported_target');
+      if (request.value === undefined) {
+        const editor: LegacyBoardDamageEditor = {
+          kind: 'damage',
+          cardId: request.cardId,
+          initialValue: String(located.stack.damage ?? 10),
+        };
+        return located.stack.damage === null
+          ? {
+              ok: true,
+              input: editor,
+              command: {
+                type: 'SetDamage',
+                stackId: located.stack.id,
+                damage: 10,
+              },
+            }
+          : { ok: true, input: editor };
+      }
+      {
+        const damage = parseLegacyDamageInput(request.value);
+        if (damage === undefined) return rejected('invalid_value');
+        const resolution = resolveStackStateAction(view, request.cardId, {
+          type: 'setDamage',
+          damage,
+        });
+        return resolution.ok
+          ? command(resolution.command)
+          : rejected(resolution.reason);
+      }
     case 'setSpecialCondition':
       return located.stack?.slot === 'active'
         ? rejected('requires_input')
