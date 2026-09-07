@@ -210,7 +210,10 @@ Release requires all of the following:
     initiated transport close invalidates its generation before even a
     synchronous close callback can run. Retryable notices can affect only the
     receipt-time command head and cannot spend the retry budget of a command
-    created by a synchronous notice observer.
+    created by a synchronous notice observer. A transport that synchronously
+    closes during any write cannot report stale chat/ping/replay success or
+    restore replay loading, while Hello and command sends retain exactly one
+    reconnect attempt.
 15. The remote board renders the effective live/replay projection, blocks every
     command during loading/active/discarding replay phases, and rewinds through
     explicit renderer replacement without weakening monotonic live installs. A

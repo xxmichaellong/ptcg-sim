@@ -290,7 +290,7 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 1010 v2 tests across 154 files. A separate suite
+The repository-wide gate passes 1014 v2 tests across 154 files. A separate suite
 passes 146 Playwright checks across 71 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
@@ -1366,6 +1366,19 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     Handshake retry/rejection also requires the receipt-time generation and
     phase to remain current. No protocol, authority, renderer, visible UI, or UX
     changed.
+79. Socket-write success is now generation-aware. The transport-neutral client
+    previously treated any non-throwing `send()` as success even if the socket
+    delivered `close` synchronously during the call. Replay request then
+    re-enabled loading on the already-reconnecting state, while chat and ping
+    reported stale success. The client now requires the exact socket generation
+    to remain installed after `send()` returns. Hello, command, and command-retry
+    failure continuations additionally revalidate their original phase,
+    generation, session, and head before scheduling recovery, leaving a
+    synchronous close handler as the sole reconnect owner. Four focused tests
+    cover close during Hello, command, replay, and chat/ping writes, pin false
+    non-command results, cleared replay loading, retained in-flight command,
+    and exactly one attempt/timer. No protocol, authority, renderer, visible
+    UI, or UX changed.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

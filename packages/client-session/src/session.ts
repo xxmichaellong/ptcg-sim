@@ -325,7 +325,11 @@ export class RemoteGameSession {
               ? { resumeToken: capability }
               : { admissionTicket: capability }),
           });
-          if (!sent) {
+          if (
+            !sent &&
+            this.isCurrent(generation) &&
+            this.state.phase === 'handshaking'
+          ) {
             this.reconnectTransport('Admission handshake write failed');
           }
         },
@@ -790,7 +794,14 @@ export class RemoteGameSession {
     ) {
       return;
     }
-    if (!this.sendEnvelope(head.envelope)) {
+    if (
+      !this.sendEnvelope(head.envelope) &&
+      this.isCurrent(generation) &&
+      this.state.phase === 'ready' &&
+      this.sessionId === sessionId &&
+      this.pending[0] === head &&
+      head.status === 'in_flight'
+    ) {
       this.reconnectTransport('Command write failed');
     }
   }
@@ -805,8 +816,16 @@ export class RemoteGameSession {
       });
       return;
     }
+    const generation = this.socketGeneration;
+    const sessionId = this.sessionId;
     head.retries += 1;
-    if (!this.sendEnvelope(head.envelope)) {
+    if (
+      !this.sendEnvelope(head.envelope) &&
+      this.isCurrent(generation) &&
+      this.state.phase === 'ready' &&
+      this.sessionId === sessionId &&
+      this.pending[0] === head
+    ) {
       this.reconnectTransport('Command retry write failed');
     }
   }
@@ -816,10 +835,12 @@ export class RemoteGameSession {
   }
 
   private sendEnvelope(message: ClientMessage): boolean {
+    const socket = this.socket;
+    const generation = this.socketGeneration;
     try {
-      if (!this.socket) return false;
-      this.socket.send(JSON.stringify(message));
-      return true;
+      if (!socket) return false;
+      socket.send(JSON.stringify(message));
+      return this.isCurrent(generation) && this.socket === socket;
     } catch {
       return false;
     }

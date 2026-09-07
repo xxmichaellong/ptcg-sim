@@ -530,6 +530,17 @@ Handshake retry or rejection likewise applies only while the receipt-time
 generation remains current and handshaking. This prevents observer code from
 retargeting a server decision across a public notification boundary.
 
+The transport abstraction does not assume browser-style asynchronous close
+delivery. A write counts as successful only if `send()` returns without
+throwing and the exact socket generation remains installed afterward. Thus a
+custom transport that delivers `close` synchronously during Hello, command,
+chat, ping, or replay-request write cannot report a stale success. Replay
+loading is never re-enabled after the close transition; chat returns false and
+ping removes its timing probe. Hello and command/retry failed-write recovery
+also revalidate the sending generation, phase, session, and command head before
+scheduling reconnect, so the close handler remains the sole owner of that
+recovery attempt.
+
 Solo player replay may additionally carry an optional replay-local disclosure
 catalog on `ReplayStarted` and an alias-keyed disclosure record on every
 `ReplayFrame`. This is not canonical state and is never merged into the

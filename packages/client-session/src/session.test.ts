@@ -88,12 +88,22 @@ class FakeSocket implements SessionSocket {
   throwOnSend = false;
   clientCloseEvent?: Partial<SessionSocketCloseEvent> &
     Pick<SessionSocketCloseEvent, 'wasClean'>;
+  sendCloseEvent?: Partial<SessionSocketCloseEvent> &
+    Pick<SessionSocketCloseEvent, 'wasClean'>;
 
   constructor(readonly handlers: SessionSocketHandlers) {}
 
   send = (frame: string): void => {
     if (this.throwOnSend) throw new Error('send failed');
     this.sent.push(frame);
+    const event = this.sendCloseEvent;
+    if (!event) return;
+    this.sendCloseEvent = undefined;
+    this.handlers.close({
+      code: event.code ?? 1006,
+      reason: event.reason ?? 'closed during send',
+      wasClean: event.wasClean,
+    });
   };
 
   serverOpen(): void {
@@ -282,6 +292,32 @@ describe('RemoteGameSession', () => {
     expect(test.scheduler.tasks.size).toBe(0);
   });
 
+  it('spends one reconnect attempt when close is delivered synchronously during Hello', () => {
+    const test = setup();
+    test.session.connect({
+      url: 'wss://example.test/room',
+      buildId: 'client-build',
+      roomCode: 'ROOM',
+      displayName: 'Blue',
+      requestedRole: 'player',
+      admissionTicket: capability,
+    });
+    const socket = test.factory.sockets[0]!;
+    socket.sendCloseEvent = { wasClean: false };
+
+    socket.serverOpen();
+
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'reconnecting',
+      reconnectAttempt: 1,
+      replayLoading: false,
+    });
+    expect(socket.sent.map((frame) => JSON.parse(frame).type)).toEqual([
+      'Hello',
+    ]);
+    expect(test.scheduler.tasks.size).toBe(1);
+  });
+
   it('publishes Welcome as one ready snapshot before honoring a reentrant close', () => {
     const test = setup();
     const socket = test.connect();
@@ -395,6 +431,28 @@ describe('RemoteGameSession', () => {
       'Leave',
     ]);
     expect(test.scheduler.tasks.size).toBe(0);
+  });
+
+  it('spends one reconnect attempt when close is delivered synchronously during a command write', () => {
+    const test = setup();
+    const socket = test.admit();
+    socket.sendCloseEvent = { wasClean: false };
+
+    expect(test.session.submit({ type: 'FlipCoin' })).toMatchObject({
+      queued: true,
+      clientSequence: 1,
+    });
+
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'reconnecting',
+      reconnectAttempt: 1,
+      pendingCommands: [{ state: 'in_flight' }],
+    });
+    expect(socket.sent.map((frame) => JSON.parse(frame).type)).toEqual([
+      'Hello',
+      'Command',
+    ]);
+    expect(test.scheduler.tasks.size).toBe(1);
   });
 
   it('also reconciles publication-before-result and rejection-without-publication', () => {
@@ -694,6 +752,25 @@ describe('RemoteGameSession', () => {
       replayLoading: false,
     });
     expect(test.session.getSnapshot().replayArtifact).toBeUndefined();
+  });
+
+  it('does not re-enable replay loading when close is delivered synchronously during the request write', () => {
+    const test = setup();
+    const socket = test.admit();
+    socket.sendCloseEvent = { wasClean: false };
+
+    expect(test.session.requestReplay()).toBe(false);
+
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'reconnecting',
+      reconnectAttempt: 1,
+      replayLoading: false,
+    });
+    expect(socket.sent.map((frame) => JSON.parse(frame).type)).toEqual([
+      'Hello',
+      'RequestReplay',
+    ]);
+    expect(test.scheduler.tasks.size).toBe(1);
   });
 
   it('publishes replay-interrupted transport loss atomically before reentrant observers can submit', () => {
@@ -1086,6 +1163,28 @@ describe('RemoteGameSession', () => {
     expect(JSON.stringify(rejected.session.getSnapshot())).not.toContain(
       capability
     );
+  });
+
+  it('reports synchronous transport loss during non-command writes', () => {
+    const chat = setup();
+    const chatSocket = chat.admit();
+    chatSocket.sendCloseEvent = { wasClean: false };
+    expect(chat.session.sendChat('close-during-chat')).toBe(false);
+    expect(chat.session.getSnapshot()).toMatchObject({
+      phase: 'reconnecting',
+      reconnectAttempt: 1,
+    });
+    expect(chat.scheduler.tasks.size).toBe(1);
+
+    const ping = setup();
+    const pingSocket = ping.admit();
+    pingSocket.sendCloseEvent = { wasClean: false };
+    expect(ping.session.ping()).toBeUndefined();
+    expect(ping.session.getSnapshot()).toMatchObject({
+      phase: 'reconnecting',
+      reconnectAttempt: 1,
+    });
+    expect(ping.scheduler.tasks.size).toBe(1);
   });
 
   it('retries a transient handshake on a new socket with the same capability', () => {
