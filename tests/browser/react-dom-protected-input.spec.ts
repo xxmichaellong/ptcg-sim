@@ -1868,6 +1868,95 @@ test('unselected deck shortcuts stay viewer-owned and reject the ambiguous dual-
   expect(errors).toEqual([]);
 });
 
+test('global coin shortcut stays authority-owned across selection and read-only boundaries', async ({
+  page,
+}) => {
+  const errors = collectRuntimeErrors(page);
+  const fixture = await mountHarness(page);
+  const host = page.locator('[data-react-dom-protected-input-harness]');
+  const selectedCard = host.locator(
+    `[data-card-id="${fixture.activeTopCardId}"]`
+  );
+  const point = await exposedCardPoint(selectedCard);
+  await page.mouse.click(point.x, point.y);
+  await expect
+    .poll(async () => (await evidence(page)).presentation.selectedCardId)
+    .toBe(fixture.activeTopCardId);
+
+  await clearEvidence(page);
+  await page.keyboard.press('KeyF');
+  await expect
+    .poll(async () => (await evidence(page)).submissions)
+    .toEqual([{ type: 'FlipCoin' }]);
+  let current = await evidence(page);
+  expect(current.submissionResults).toEqual([
+    {
+      queued: true,
+      commandId: 'protected-input-command-1',
+      clientSequence: 1,
+    },
+  ]);
+  expect(current.shortcutActions).toEqual([{ action: 'flipCoin' }]);
+  expect(current.shortcutRejections).toEqual([]);
+  expect(current.presentation.selectedCardId).toBe(fixture.activeTopCardId);
+
+  await clearEvidence(page);
+  await page.keyboard.press('Alt+KeyF');
+  current = await evidence(page);
+  expect(current.submissions).toEqual([]);
+  expect(current.shortcutActions).toEqual([]);
+  expect(current.shortcutRejections).toEqual([]);
+  expect(current.presentation.selectedCardId).toBe(fixture.activeTopCardId);
+
+  await page.evaluate(() => {
+    const input = document.createElement('input');
+    input.dataset.globalCoinShortcutEditor = 'true';
+    document.body.append(input);
+    input.focus();
+  });
+  await page.keyboard.press('KeyF');
+  current = await evidence(page);
+  expect(current.submissions).toEqual([]);
+  expect(current.shortcutActions).toEqual([]);
+  expect(current.shortcutRejections).toEqual([]);
+
+  await page.evaluate(() => {
+    document.querySelector('[data-global-coin-shortcut-editor]')?.remove();
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.enterSoloReplay();
+  });
+  await expect
+    .poll(async () => (await evidence(page)).sourceKind)
+    .toBe('replay');
+  await clearEvidence(page);
+  await page.keyboard.press('KeyF');
+  await expect
+    .poll(async () => (await evidence(page)).shortcutRejections)
+    .toEqual([
+      {
+        kind: 'ShortcutActionRejected',
+        request: { action: 'flipCoin' },
+        reason: 'read_only',
+      },
+    ]);
+  current = await evidence(page);
+  expect(current.submissions).toEqual([]);
+  expect(current.shortcutActions).toEqual([{ action: 'flipCoin' }]);
+  expect(current.presentation.selectedCardId).toBeNull();
+  expect(current.reportedErrors).toEqual([]);
+
+  await page.evaluate(() => {
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.dispose();
+  });
+  await expect(host).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
 test('solo replay disclosure changes only local DOM card faces and never submits', async ({
   page,
 }) => {

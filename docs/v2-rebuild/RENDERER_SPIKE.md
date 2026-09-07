@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 1025 v2 tests across 154 files. A separate suite
-passes 151 Playwright checks across 73 Chromium 151 browser files:
+The repository-wide gate passes 1028 v2 tests across 154 files. A separate suite
+passes 153 Playwright checks across 74 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -1428,6 +1428,18 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     Chromium pins one command for each intended chord, zero traffic for the
     dual-modifier chord and editable input, and no visible UI/UX or protocol,
     domain, or authority-schema change.
+83. Non-Alt `F` now crosses the route-owned global bridge with or without a
+    selected card. The payload-free request verifies only that the installed
+    recipient view belongs to a current player, preserves selection, and emits
+    the existing parameterless `FlipCoin` intent; authority continues to own
+    actor identity, randomness, persistence, and presentation. A five-page
+    deny-by-default Chromium oracle pins deterministic heads/tails messages,
+    exactly one v1 client-random call, selected-card fallthrough, unchanged
+    action counters and empty live/export logs, replay/spectator silence, and
+    Alt-`F` separation. Candidate Chromium pins one exact command, retained
+    selection, editable/Alt silence, and typed replay rejection before
+    submission. No protocol/domain/authority schema, visible control, key
+    reference, layout, styling, UI, or UX changed.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

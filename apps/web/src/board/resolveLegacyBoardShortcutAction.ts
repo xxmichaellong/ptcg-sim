@@ -49,6 +49,7 @@ export type LegacyBoardShortcutActionRequest =
       readonly edge: LegacyOwnDeckInspectionEdge;
     }
   | { readonly action: 'shuffleOwnDeck' }
+  | { readonly action: 'flipCoin' }
   | {
       readonly action: 'adjustDamage';
       readonly cardId: ViewCardId;
@@ -134,7 +135,7 @@ const retainResolution = (
     ? { ok: true, command: resolution.command, dismissSelection }
     : resolution;
 
-/** Maps the selected-card shortcut subset onto existing stale-safe resolvers. */
+/** Maps characterized shortcut requests onto existing stale-safe resolvers. */
 export const resolveLegacyBoardShortcutAction = (
   view: MatchViewState,
   request: LegacyBoardShortcutActionRequest
@@ -212,6 +213,19 @@ export const resolveLegacyBoardShortcutAction = (
           edge: request.edge,
           visibility: 'private',
         },
+        dismissSelection: false,
+      };
+    }
+    case 'flipCoin': {
+      if (view.viewer.kind !== 'player') {
+        return { ok: false, reason: 'not_player' };
+      }
+      if (!view.players[view.viewer.playerId]) {
+        return { ok: false, reason: 'stale_player' };
+      }
+      return {
+        ok: true,
+        command: { type: 'FlipCoin' },
         dismissSelection: false,
       };
     }
@@ -495,6 +509,9 @@ export const resolveLegacyBoardGlobalShortcutKey = (
   }
   if (!altKey && matches(input, 's', 'KeyS')) {
     return { action: 'shuffleOwnDeck' };
+  }
+  if (!altKey && matches(input, 'f', 'KeyF')) {
+    return { action: 'flipCoin' };
   }
   if (matches(input, 'Enter', 'Enter')) {
     return {

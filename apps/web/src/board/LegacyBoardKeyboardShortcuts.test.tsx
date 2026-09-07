@@ -140,6 +140,59 @@ describe('legacy board keyboard shortcut bridge', () => {
     ]);
   });
 
+  it('emits a global coin flip with or without a selected card', async () => {
+    const onRequest = vi.fn();
+    const state = createInitialBoardSessionControllerState();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, { state, onRequest })
+      );
+    });
+
+    const unselected = new KeyboardEvent('keydown', {
+      key: 'f',
+      code: 'KeyF',
+      bubbles: true,
+      cancelable: true,
+    });
+    expect(document.dispatchEvent(unselected)).toBe(true);
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state: {
+            ...state,
+            presentation: {
+              ...state.presentation,
+              selectedCardId: 'selected-card',
+            },
+          },
+          onRequest,
+        })
+      );
+    });
+    const selected = new KeyboardEvent('keydown', {
+      key: 'f',
+      code: 'KeyF',
+      bubbles: true,
+      cancelable: true,
+    });
+    expect(document.dispatchEvent(selected)).toBe(false);
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'f',
+        code: 'KeyF',
+        altKey: true,
+        bubbles: true,
+      })
+    );
+
+    expect(onRequest.mock.calls.map(([request]) => request)).toEqual([
+      { action: 'flipCoin' },
+      { action: 'flipCoin' },
+    ]);
+  });
+
   it('does not let global shortcuts collide with overlays or native card and zone activation', async () => {
     const onRequest = vi.fn();
     const state = createInitialBoardSessionControllerState();
@@ -286,6 +339,14 @@ describe('legacy board keyboard shortcut bridge', () => {
         new KeyboardEvent('keydown', {
           key: 's',
           code: 'KeyS',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+      target.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'f',
+          code: 'KeyF',
           bubbles: true,
           cancelable: true,
         })

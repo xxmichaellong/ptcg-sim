@@ -323,6 +323,13 @@ this family. Missing/empty decks and forged counts or edges fail closed. The
 ambiguous Alt-Control-digit chord is deliberately silent because v1 executes
 two non-atomic inspection branches, performs an unlogged second mutation, and
 throws from DOM removal.
+Non-Alt `F` is the adjacent payload-free global action. It remains valid with a
+selected card and retains that selection, while Alt-`F` stays outside the
+command path for the separate local board-flip workstream. The resolver checks
+the installed player perspective and emits only `{ type: 'FlipCoin' }`; actor
+identity, randomness, persistence, and presentation remain authority-owned.
+Spectator, stale-player, replay/read-only, editable, composing, consumed, and
+overlay input cannot submit.
 `A`/`B` now use the dedicated play-placement slice. A zone card emits
 `MoveCardToPlay`, an eligible top play card emits a fully preconditioned
 `MovePlayStack`, and a viewer-owned staged top emits `RestoreStagedStack`.

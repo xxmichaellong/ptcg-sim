@@ -971,6 +971,27 @@ Candidate Chromium proves one semantic command for each intended path and zero
 traffic for the rejected chord or a focused input. No new wire or domain
 command is introduced.
 
+### Implemented global coin-flip keyboard subset
+
+Non-Alt `F` now crosses the route-owned keyboard bridge with or without a
+selected card. The request is payload-free: it cannot name an actor or supply a
+random result. The resolver verifies that the installed recipient view belongs
+to a current player and emits the existing parameterless `FlipCoin` wire
+intent. Authority derives the authenticated actor, selects the result with its
+randomness adapter, persists `CoinFlipped`, and publishes the existing activity
+and presentation fact. A current card selection remains intact.
+
+A five-page deny-by-default Chromium oracle executes the unchanged v1 modules
+and pins both deterministic heads/tails messages, exactly one client-side
+random call, selected-card fallthrough, replay and spectator silence, and the
+Alt-`F` board-flip boundary. It also records that v1 changes neither action
+counter nor live/export action log for a coin flip. Candidate Chromium proves
+one parameterless command with selection retained, no traffic for Alt-`F` or
+editable input, and a typed read-only rejection in replay. V2 intentionally
+moves randomness and replayability behind authority without changing the
+visible message or shortcut. No new protocol, domain, or UI/UX surface is
+introduced.
+
 ### Implemented authority-random face-down subset
 
 `playRandomCardFaceDown` now submits only the explicit target player; authority

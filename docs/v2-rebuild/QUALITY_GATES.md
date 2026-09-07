@@ -177,3 +177,9 @@ traces are retained as a 14-day artifact. Browser binaries are not cached.
   clamps, editable silence, and the exact v1 Alt-Control-digit partial mutation
   plus DOM exception. The candidate must reject that ambiguous chord with zero
   traffic.
+- The global coin-key lane pairs five fresh deny-by-default v1 pages with one
+  candidate DOM case. It pins deterministic heads/tails text and random-call
+  count, selected-card fallthrough, empty legacy action logs, replay/spectator
+  silence, and the Alt-`F` board-flip boundary. The candidate must submit only
+  parameterless `FlipCoin`, retain selection, suppress editable/Alt input, and
+  reject replay before submission.

@@ -128,6 +128,15 @@ decision: v1 performs a second unlogged deck mutation and throws a DOM removal
 error, while v2 emits no command. Editable/replay/spectator/empty/stale/forged
 paths remain fail-closed obligations.
 
+Global coin-key parity has paired Chromium evidence across five fresh v1 pages
+and one candidate route. Non-Alt `F` is proven for deterministic heads and
+tails, selected-card fallthrough, exact chat paint data, one legacy random
+call, unchanged selection, empty action logs, replay/spectator silence, and
+Alt-`F` separation. The candidate emits only the parameterless `FlipCoin`
+intent, retains selection, suppresses editable/Alt input, and rejects replay
+before submission. Actor identity, randomness, persistence, and presentation
+remain authority-owned.
+
 ### Implemented seeded authority/storage model
 
 The server model suite at

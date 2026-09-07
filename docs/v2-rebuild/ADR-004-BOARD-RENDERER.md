@@ -136,6 +136,12 @@ uses the existing draw, private inspection, and shuffle commands. Counts remain
 bounded to one digit and clamp to the current projection. Selected-card routing
 retains precedence, while Alt-Control-digit is intentionally silent instead of
 reproducing v1's dual-branch, unlogged second mutation and DOM exception.
+Non-Alt `F` also crosses the global bridge as a payload-free `FlipCoin`
+request, independent of card selection. The selected card stays selected;
+Alt-`F` stays reserved for the separate renderer-local board-flip path.
+Authority derives the actor and random result, while replay, spectator,
+stale-viewer, overlay, and editable boundaries remain silent or fail closed
+before submission.
 Local zone sorting is
 controlled by the mounted zone browser:
 it derives a stable copy from disclosed labels and never enters the controller
@@ -143,8 +149,8 @@ or mutates its projection; forged requests still fail closed as `local_only`.
 Native Chromium pins exact damage and condition edit/removal plus ability-marker
 commands, all six count prompts/commands, all three category choices, all five
 move choices, all twenty-four selected-card shortcut commands, all three global
-loose-board commands, all four intended unselected deck commands, and
-reversible sorting with zero action/effect/command traffic.
+loose-board commands, all four intended unselected deck commands, the global
+coin command, and reversible sorting with zero action/effect/command traffic.
 Replay-local prize/hand disclosure now uses an isolated solo-player-only
 projection. Its opaque catalog never enters the historical view. Prize menus
 offer their two source zone rows plus `Reveal/hide card`; opponent-hand menus

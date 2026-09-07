@@ -1217,6 +1217,15 @@ without logging the second operation, and throws a DOM removal exception; the
 candidate rejects that ambiguous chord and produces no traffic. Intended chords
 and editable-input silence have paired source/candidate evidence without a
 visible-surface change.
+Non-Alt `F` is now a payload-free global request with or without selection;
+Alt-`F` remains reserved for the separate local board-flip path. The recipient
+view proves only that the caller is a current player, and the existing
+parameterless `FlipCoin` intent leaves actor selection and randomness to
+authority. Source Chromium pins heads/tails chat text, one client-side random
+call, unchanged selection, empty legacy action logs, and replay/spectator
+silence. Candidate Chromium pins one command, retained selection, editable/Alt
+silence, and replay rejection before submission. The visible result stays on
+the existing presentation surface.
 `A` and `B` now cross a separate closed active/bench resolver. Zone cards emit
 `MoveCardToPlay`; eligible top cards move a whole stack with exact board-order
 preconditions; a viewer-owned staged top restores atomically. Real v1 active

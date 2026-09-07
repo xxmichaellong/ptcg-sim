@@ -553,6 +553,24 @@ describe('headless board session controller', () => {
     }
   });
 
+  it('submits a parameterless authority-owned coin flip without clearing selection', () => {
+    let state = install();
+    const selectedCardId = state.scene?.cards[0]?.id;
+    if (!selectedCardId)
+      throw new Error('Controller shortcut fixture has no card');
+    state = select(state, selectedCardId);
+
+    const result = apply(state, {
+      kind: 'LegacyShortcutActionRequested',
+      request: { action: 'flipCoin' },
+    });
+    expect(result.state).toBe(state);
+    expect(result.state.presentation.selectedCardId).toBe(selectedCardId);
+    expect(result.effects).toEqual([
+      { kind: 'SubmitCommand', command: { type: 'FlipCoin' } },
+    ]);
+  });
+
   it('keeps replay shortcut requests outside the resolver and submitter', () => {
     const view = createRendererSpikeView();
     const resolveShortcutAction = vi.fn(() => {

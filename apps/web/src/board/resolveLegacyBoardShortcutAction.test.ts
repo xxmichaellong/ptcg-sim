@@ -96,7 +96,7 @@ describe('legacy board shortcut action resolver', () => {
     ).toEqual({ ok: false, reason: 'not_player' });
   });
 
-  it('maps unselected deck keys with one explicit modifier precedence', () => {
+  it('maps unselected deck and coin keys with explicit modifier precedence', () => {
     expect(
       resolveLegacyBoardGlobalShortcutKey({
         key: '4',
@@ -135,6 +135,20 @@ describe('legacy board shortcut action resolver', () => {
         ctrlKey: true,
       })
     ).toEqual({ action: 'shuffleOwnDeck' });
+    expect(
+      resolveLegacyBoardGlobalShortcutKey({
+        key: 'f',
+        code: 'KeyF',
+        altKey: false,
+      })
+    ).toEqual({ action: 'flipCoin' });
+    expect(
+      resolveLegacyBoardGlobalShortcutKey({
+        key: 'f',
+        code: 'KeyF',
+        altKey: true,
+      })
+    ).toBeNull();
     expect(
       resolveLegacyBoardGlobalShortcutKey({
         key: 's',
@@ -255,6 +269,41 @@ describe('legacy board shortcut action resolver', () => {
       resolveLegacyBoardShortcutAction(
         { ...view, viewer: { kind: 'spectator' } },
         { action: 'shuffleOwnDeck' }
+      )
+    ).toEqual({ ok: false, reason: 'not_player' });
+  });
+
+  it('resolves coin flips without trusting a player or random result payload', () => {
+    const view = createRendererSpikeView();
+    if (view.viewer.kind !== 'player') {
+      throw new Error('Shortcut fixture must use a player viewer');
+    }
+    const viewerId = view.viewer.playerId;
+
+    expect(
+      resolveLegacyBoardShortcutAction(view, { action: 'flipCoin' })
+    ).toEqual({
+      ok: true,
+      command: { type: 'FlipCoin' },
+      dismissSelection: false,
+    });
+    expect(
+      resolveLegacyBoardShortcutAction(
+        {
+          ...view,
+          players: Object.fromEntries(
+            Object.entries(view.players).filter(
+              ([playerId]) => playerId !== viewerId
+            )
+          ),
+        },
+        { action: 'flipCoin' }
+      )
+    ).toEqual({ ok: false, reason: 'stale_player' });
+    expect(
+      resolveLegacyBoardShortcutAction(
+        { ...view, viewer: { kind: 'spectator' } },
+        { action: 'flipCoin' }
       )
     ).toEqual({ ok: false, reason: 'not_player' });
   });
