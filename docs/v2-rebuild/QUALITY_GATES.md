@@ -159,5 +159,9 @@ traces are retained as a 14-day artifact. Browser binaries are not cached.
   command, and exact two-socket teardown. The browser supplies the reserved
   unclean-close event that ordinary JavaScript cannot generate from the network;
   the resumed socket, Durable Object handshake, prior-socket supersession, and
-  command are real. Deployed document-navigation churn and the ADR-020
-  second-browser invitation path remain outstanding.
+  command are real. A second Chromium case performs three full document
+  navigation cycles through that stack and proves each non-persisted
+  `pagehide` closes the session, starts its native socket close, and removes the
+  owner before the neutral document mounts; persisted pagehide preservation is
+  pinned in the unit layer. Deployed navigation, physical BFCache restoration,
+  and the ADR-020 second-browser invitation path remain outstanding.

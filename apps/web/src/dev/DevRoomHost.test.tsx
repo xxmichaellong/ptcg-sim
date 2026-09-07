@@ -113,6 +113,52 @@ describe('DevRoomHost ownership', () => {
     expect(active.dispose).toHaveBeenCalledOnce();
   });
 
+  it('releases the active room before a document navigation discards its realm', async () => {
+    const created = result('navigation');
+    harness.createRemoteRoom.mockResolvedValueOnce(created.value);
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+
+    await act(async () => {
+      root.render(<DevRoomHost displayName="Blue" rendererKind="dom" />);
+      await flushEffects();
+    });
+
+    globalThis.dispatchEvent(new PageTransitionEvent('pagehide'));
+    expect(created.dispose).toHaveBeenCalledOnce();
+    expect(
+      (globalThis as Record<string, unknown>)['__ptcgsimDevRoom']
+    ).toBeUndefined();
+
+    await act(async () => root.unmount());
+    expect(created.dispose).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the room owner live when the document enters the back-forward cache', async () => {
+    const created = result('persisted-navigation');
+    harness.createRemoteRoom.mockResolvedValueOnce(created.value);
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+
+    await act(async () => {
+      root.render(<DevRoomHost displayName="Blue" rendererKind="dom" />);
+      await flushEffects();
+    });
+
+    const pageHide = new PageTransitionEvent('pagehide');
+    Object.defineProperty(pageHide, 'persisted', { value: true });
+    globalThis.dispatchEvent(pageHide);
+    expect(created.dispose).not.toHaveBeenCalled();
+    expect((globalThis as Record<string, unknown>)['__ptcgsimDevRoom']).toBe(
+      created.value
+    );
+
+    await act(async () => root.unmount());
+    expect(created.dispose).toHaveBeenCalledOnce();
+  });
+
   it('does not let an older owner delete a newer global room handle', async () => {
     const first = result('first');
     const second = result('second');

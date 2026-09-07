@@ -41,7 +41,28 @@ export const DevRoomHost = ({
     const abort = new AbortController();
     let created: RemoteRoomCreationResult | undefined;
     let cancelled = false;
+    let disposed = false;
     let timeout: ReturnType<typeof setTimeout> | undefined;
+
+    const dispose = (): void => {
+      if (disposed) return;
+      disposed = true;
+      cancelled = true;
+      if (timeout !== undefined) clearTimeout(timeout);
+      abort.abort();
+      const globals = globalThis as Record<string, unknown>;
+      if (globals[DEV_ROOM_HANDLE] === created) {
+        delete globals[DEV_ROOM_HANDLE];
+      }
+      created?.dispose();
+    };
+    const handlePageHide = (event: PageTransitionEvent): void => {
+      // A persisted document may be resumed from the back-forward cache with
+      // this mounted owner intact. Non-persisted navigation destroys the
+      // realm, so close its room transport before the browser discards it.
+      if (!event.persisted) dispose();
+    };
+    globalThis.addEventListener('pagehide', handlePageHide);
 
     // React development StrictMode performs an immediate setup/cleanup/setup
     // cycle. Defer the irreversible POST by one microtask so the abandoned
@@ -80,14 +101,8 @@ export const DevRoomHost = ({
     });
 
     return () => {
-      cancelled = true;
-      if (timeout !== undefined) clearTimeout(timeout);
-      abort.abort();
-      const globals = globalThis as Record<string, unknown>;
-      if (globals[DEV_ROOM_HANDLE] === created) {
-        delete globals[DEV_ROOM_HANDLE];
-      }
-      created?.dispose();
+      globalThis.removeEventListener('pagehide', handlePageHide);
+      dispose();
     };
   }, [displayName, rendererKind]);
 

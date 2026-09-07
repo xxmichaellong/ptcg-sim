@@ -1521,8 +1521,12 @@ commits a post-resume command, and closes both native sockets. The remote board
 receives readiness directly: a ready→non-ready boundary cancels captured input,
 clears transient presentation, and blocks drops while the last safe projection
 stays painted. Empty pending queues no longer publish a redundant ready snapshot.
-Real raster decoded-byte and retained-heap limits, external-host and failure
-behavior, and deployed browser document-navigation churn remain separate gates.
+Three additional Chromium cycles now replace the whole creator-route document,
+proving a non-persisted `pagehide` closes the live session and starts native
+socket teardown before a neutral document mounts without a room owner or room
+socket. Persisted pagehide retains its owner by design. Real raster decoded-byte
+and retained-heap limits, external-host and failure behavior, deployed browser
+navigation, and physical BFCache restoration remain separate gates.
 
 A separate selected-DOM privacy oracle now starts from canonical match state and
 uses the production recipient projection plus scene builder before mounting the

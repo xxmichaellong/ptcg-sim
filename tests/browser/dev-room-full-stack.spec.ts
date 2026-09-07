@@ -395,3 +395,176 @@ test('development route reaches and resumes a real durable room through the same
   await expect.poll(() => closedSockets).toBe(2);
   expect(errors).toEqual([]);
 });
+
+test('document navigation churn releases each creator room before the next mount', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  const errors = collectRuntimeErrors(page);
+  const authorityPosts: Array<{
+    readonly path: string;
+    readonly status: number;
+  }> = [];
+  const socketUrls: string[] = [];
+
+  page.on('websocket', (socket) => {
+    if (new URL(socket.url()).pathname.startsWith('/v2/rooms/')) {
+      socketUrls.push(socket.url());
+    }
+  });
+
+  await page.addInitScript(() => {
+    const NativeWebSocket = globalThis.WebSocket;
+    const sockets: WebSocket[] = [];
+    const TrackedWebSocket = new Proxy(NativeWebSocket, {
+      construct(target, args) {
+        const socket = Reflect.construct(target, args) as WebSocket;
+        if (new URL(socket.url).pathname.startsWith('/v2/rooms/')) {
+          sockets.push(socket);
+        }
+        return socket;
+      },
+    });
+    Object.defineProperty(globalThis, 'WebSocket', {
+      configurable: true,
+      writable: true,
+      value: TrackedWebSocket,
+    });
+    Object.defineProperty(globalThis, '__ptcgsimSocketProbe', {
+      configurable: true,
+      value: { sockets, phases: [] },
+    });
+  });
+
+  page.on('response', (response) => {
+    if (
+      response.request().method() === 'POST' &&
+      authorityUrl(response.request())
+    ) {
+      authorityPosts.push({
+        path: new URL(response.url()).pathname,
+        status: response.status(),
+      });
+    }
+  });
+  const roomCodes: string[] = [];
+  for (let cycle = 0; cycle < 3; cycle += 1) {
+    await page.goto(
+      `/?dev-room=1&renderer=dom&name=Navigation%20Cycle%20${cycle + 1}`
+    );
+    await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible();
+    await expect(page.locator('[data-session-phase="ready"]')).toBeVisible();
+    await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(1);
+    await expect(page.locator('canvas')).toHaveCount(0);
+
+    const mounted = await page.evaluate(() => {
+      const globals = globalThis as BrowserDevRoomGlobals;
+      const handle = globals.__ptcgsimDevRoom;
+      const probe = globals.__ptcgsimSocketProbe;
+      const renderer = window.__PTCG_RENDERER_SPIKE__?.renderer;
+      if (!handle || !probe || !renderer) {
+        throw new Error('Missing mounted navigation-churn probe');
+      }
+      return {
+        roomCode: handle.runtime.roomCode,
+        phase: handle.runtime.session.getSnapshot().phase,
+        nativeSocketStates: probe.sockets.map((socket) => socket.readyState),
+        rendererKind: window.__PTCG_RENDERER_SPIKE__?.rendererKind,
+        diagnostics: renderer.getDiagnostics?.(),
+      };
+    });
+    expect(mounted).toMatchObject({
+      phase: 'ready',
+      nativeSocketStates: [1],
+      rendererKind: 'dom',
+      diagnostics: {
+        rendererKind: 'dom',
+        mounted: true,
+        destroyed: false,
+        generation: 1,
+        sceneRevision: 0,
+      },
+    });
+    expect(mounted.roomCode).toMatch(/^[A-HJ-NP-Z2-9]{12}$/u);
+    roomCodes.push(mounted.roomCode);
+
+    await page.evaluate((navigationCycle) => {
+      const globals = globalThis as BrowserDevRoomGlobals;
+      const handle = globals.__ptcgsimDevRoom;
+      const probe = globals.__ptcgsimSocketProbe;
+      if (!handle || !probe) {
+        throw new Error('Missing pagehide lifecycle probe target');
+      }
+      globalThis.addEventListener(
+        'pagehide',
+        (event) => {
+          localStorage.setItem(
+            `ptcgsim-pagehide-${navigationCycle}`,
+            JSON.stringify({
+              persisted: event.persisted,
+              phase: handle.runtime.session.getSnapshot().phase,
+              nativeSocketStates: probe.sockets.map(
+                (socket) => socket.readyState
+              ),
+              hasDevRoomHandle: '__ptcgsimDevRoom' in globalThis,
+            })
+          );
+        },
+        { once: true }
+      );
+    }, cycle);
+
+    await page.goto(`/navigation-away-${cycle}?renderer=dom`);
+    await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(1);
+    await expect(page.locator('canvas')).toHaveCount(0);
+    expect(
+      await page.evaluate(() => {
+        const globals = globalThis as BrowserDevRoomGlobals;
+        return {
+          hasDevRoomHandle: '__ptcgsimDevRoom' in globalThis,
+          nativeRoomSocketCount:
+            globals.__ptcgsimSocketProbe?.sockets.length ?? -1,
+          rendererKind: window.__PTCG_RENDERER_SPIKE__?.rendererKind,
+          rendererMounted:
+            window.__PTCG_RENDERER_SPIKE__?.renderer.getDiagnostics?.().mounted,
+        };
+      })
+    ).toEqual({
+      hasDevRoomHandle: false,
+      nativeRoomSocketCount: 0,
+      rendererKind: 'dom',
+      rendererMounted: true,
+    });
+    expect(
+      await page.evaluate((navigationCycle) => {
+        const value = localStorage.getItem(
+          `ptcgsim-pagehide-${navigationCycle}`
+        );
+        return value ? JSON.parse(value) : undefined;
+      }, cycle)
+    ).toEqual({
+      persisted: false,
+      phase: 'closed',
+      nativeSocketStates: [2],
+      hasDevRoomHandle: false,
+    });
+  }
+
+  expect(new Set(roomCodes).size).toBe(3);
+  expect(socketUrls).toHaveLength(3);
+  for (let index = 0; index < socketUrls.length; index += 1) {
+    const socketUrl = new URL(socketUrls[index]!);
+    expect(socketUrl.pathname).toBe(`/v2/rooms/${roomCodes[index]}/connect`);
+    expect(socketUrl.search).toBe('');
+    expect(socketUrl.hash).toBe('');
+    expect(socketUrl.username).toBe('');
+    expect(socketUrl.password).toBe('');
+  }
+  expect(authorityPosts).toEqual(
+    roomCodes.flatMap((roomCode) => [
+      { path: '/v2/rooms', status: 201 },
+      { path: `/v2/rooms/${roomCode}/admission-tickets`, status: 201 },
+    ])
+  );
+  expect(errors).toEqual([]);
+});

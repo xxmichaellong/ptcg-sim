@@ -102,6 +102,15 @@ emitting the browser's resolution-media event, so the test injects only that
 missing event. Physical background freezing/BFCache and non-Chromium monitor
 transitions remain required release evidence.
 
+The developer creator route also has a three-cycle Chromium document-navigation
+gate against real local Vite and Wrangler processes. It pins one distinct room,
+one ticket exchange, one credential-free native socket, one ready DOM renderer,
+and one non-persisted pagehide teardown per cycle. The old session reaches
+`closed` and its native socket reaches `CLOSING` before the next neutral
+document is observed. Unit coverage separately preserves a live owner for a
+persisted pagehide. Deployed routing and physical BFCache restore remain release
+evidence.
+
 ### Implemented seeded authority/storage model
 
 The server model suite at

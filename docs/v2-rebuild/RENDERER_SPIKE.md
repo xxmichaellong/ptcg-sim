@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 1014 v2 tests across 154 files. A separate suite
-passes 146 Playwright checks across 71 Chromium 151 browser files:
+The repository-wide gate passes 1016 v2 tests across 154 files. A separate suite
+passes 147 Playwright checks across 71 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -1325,7 +1325,8 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     abnormal close event is injected because JavaScript cannot ask Chromium to
     emit reserved network-loss code 1006; both resumed transport and server-side
     supersession are real. No visible UI/UX, protocol, or authority semantics
-    changed; deployed document-navigation churn remains a separate gate.
+    changed. Local real-document navigation churn is covered by checkpoint 80;
+    deployed navigation remains a separate gate.
 76. Replay-transfer interruption and transport loss are now one atomic client
     publication. Previously `handleClose()` cleared `replayLoading` while the
     public phase was still `ready`; a reentrant external-store subscriber could
@@ -1379,6 +1380,21 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     non-command results, cleared replay loading, retained in-flight command,
     and exactly one attempt/timer. No protocol, authority, renderer, visible
     UI, or UX changed.
+80. The developer creator-room owner now closes its complete runtime on a
+    non-persisted `pagehide`, before a full document navigation discards the
+    JavaScript realm. Disposal is idempotent across the page lifecycle and the
+    later React cleanup; a persisted `pagehide` deliberately retains the owner
+    for a possible back-forward-cache resume. A new Chromium gate performs
+    three real Vite/Wrangler document-navigation cycles. Each cycle creates a
+    distinct durable room, exchanges exactly one admission ticket, reaches a
+    ready DOM-rendered board through one credential-free native socket, then
+    proves the old session is `closed`, its socket is synchronously `CLOSING`,
+    and its global handle is gone before the neutral document mounts with no
+    room socket. Unit coverage pins both non-persisted teardown and persisted
+    preservation, including exact-once cleanup. This closes local creator-route
+    document churn; deployed routing and physical BFCache restoration remain
+    release gates. No visible UI/UX, protocol, authority, or renderer contract
+    changed.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -1565,11 +1581,11 @@ wiring:
 - physical background freeze/resume and BFCache behavior plus non-Chromium
   monitor-DPR transitions; WebGL-only recovery/eviction cases remain gates for
   any future Pixi rollout;
-- complete resource evidence beyond the green warmed-host lifecycle and
-  controlled same-origin distinct-SVG request/decode gate: route-host navigation
-  churn, real-raster decoded-byte and retained-heap accounting on the ratified
-  profile; display-object/GPU counters remain required only for a future Pixi
-  rollout;
+- complete resource evidence beyond the green warmed-host lifecycle,
+  controlled same-origin distinct-SVG request/decode gate, and local
+  creator-route document churn: deployed route-host navigation, real-raster
+  decoded-byte and retained-heap accounting on the ratified profile;
+  display-object/GPU counters remain required only for a future Pixi rollout;
 - the p95 reconciliation/input/drag budgets from the verification plan on the
   ratified four-core reference profile;
 - keyboard and screen-reader audit of the selected semantic DOM surface; and
