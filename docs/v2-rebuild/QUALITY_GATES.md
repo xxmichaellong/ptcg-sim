@@ -165,3 +165,9 @@ traces are retained as a 14-day artifact. Browser binaries are not cached.
   owner before the neutral document mounts; persisted pagehide preservation is
   pinned in the unit layer. Deployed navigation, physical BFCache restoration,
   and the ADR-020 second-browser invitation path remain outstanding.
+- The keyboard parity lane includes a deny-by-default real-v1 oracle for Enter,
+  Alt-Enter, and Slash loose-board actions plus a selected-DOM candidate case.
+  The source pages pin destination and shuffled-deck arrays, outer action and
+  export records, while the candidate pins viewer-derived ordered preconditions
+  and editable-target silence. The existing overlay lane also proves native
+  Enter menu activation cannot leak into the global board shortcut bridge.

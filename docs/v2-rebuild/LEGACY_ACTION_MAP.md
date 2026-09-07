@@ -931,6 +931,23 @@ generation, and yields distinct fresh concealed aliases to owner and opponent
 projections. Same-prize, stale, lower-evolution, and foreign-work-area inputs
 retain the generic fail-closed gates.
 
+### Implemented global loose-board keyboard subset
+
+Enter, Alt-Enter, and Slash now cross the route-owned keyboard bridge without a
+selected card. They carry only the closed destination `discard`, `hand`, or
+`shuffleIntoDeck`; the resolver derives the viewer's player ID and exact ordered
+loose-board aliases from the installed recipient projection, then reuses
+`ResolveLooseBoardCards`. Ready/live-player and submit-time policy remain
+controller/adapter-owned. A selected card is retained because these are
+board-wide actions; editable, composing, consumed, replay, spectator, empty,
+stale, and forged input cannot submit. The unselected branch retains v1's lack
+of default suppression, while a selected-card keydown retains v1's suppression.
+A deny-by-default three-page Chromium oracle runs the unchanged source modules
+and pins discard/hand arrays, deterministic combined-deck shuffle and indices,
+one outer action, export owner rewriting, local assets, and a clean error
+boundary. Candidate Chromium proves the three exact semantic commands and
+focused-input silence. No new protocol or domain command is introduced.
+
 ### Implemented authority-random face-down subset
 
 `playRandomCardFaceDown` now submits only the explicit target player; authority

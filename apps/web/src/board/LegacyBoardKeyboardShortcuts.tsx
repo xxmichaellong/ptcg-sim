@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 
 import type { BoardSessionControllerState } from './BoardSessionController.js';
 import {
+  resolveLegacyBoardGlobalShortcutKey,
   resolveLegacyBoardShortcutKey,
   type LegacyBoardShortcutActionRequest,
 } from './resolveLegacyBoardShortcutAction.js';
@@ -20,25 +21,44 @@ export const isLegacyBoardShortcutEditableTarget = (
   target instanceof Element &&
   target.closest(EDITABLE_SHORTCUT_TARGET) !== null;
 
-/** Route-owned document bridge for the characterized selected-card shortcuts. */
+const isLegacyBoardOverlayTarget = (target: EventTarget | null): boolean =>
+  target instanceof Element &&
+  target.closest('[data-legacy-board-overlays]') !== null;
+
+const isNativeEnterActivationTarget = (event: KeyboardEvent): boolean =>
+  (event.key === 'Enter' || event.code === 'Enter') &&
+  event.target instanceof Element &&
+  event.target.closest('[data-card-id], [data-zone-id]') !== null;
+
+/** Route-owned document bridge for the characterized board shortcuts. */
 export const LegacyBoardKeyboardShortcuts = ({
   state,
   onRequest,
 }: LegacyBoardKeyboardShortcutsProps) => {
   const selectedCardId = state.presentation.selectedCardId;
   useEffect(() => {
-    if (selectedCardId === null) return;
     const handleKeyDown = (event: KeyboardEvent): void => {
       if (
         event.defaultPrevented ||
         event.isComposing ||
-        isLegacyBoardShortcutEditableTarget(event.target)
+        isLegacyBoardShortcutEditableTarget(event.target) ||
+        isLegacyBoardOverlayTarget(event.target)
       ) {
         return;
       }
-      const request = resolveLegacyBoardShortcutKey(event, selectedCardId);
+      const selectedRequest =
+        selectedCardId === null
+          ? null
+          : resolveLegacyBoardShortcutKey(event, selectedCardId);
+      const request =
+        selectedRequest ??
+        (isNativeEnterActivationTarget(event)
+          ? null
+          : resolveLegacyBoardGlobalShortcutKey(event));
       if (!request) return;
-      if (event.cancelable) event.preventDefault();
+      // V1 prevents defaults inside its selected-card branch, but leaves the
+      // unselected loose-board keys to the document after dispatch.
+      if (selectedCardId !== null && event.cancelable) event.preventDefault();
       onRequest(request);
     };
     document.addEventListener('keydown', handleKeyDown);

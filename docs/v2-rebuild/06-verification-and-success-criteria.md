@@ -111,6 +111,14 @@ document is observed. Unit coverage separately preserves a live owner for a
 persisted pagehide. Deployed routing and physical BFCache restore remain release
 evidence.
 
+Global loose-board keyboard parity has paired Chromium evidence. Three fresh
+deny-by-default v1 pages execute Enter, Alt-Enter, and Slash through the shipped
+module graph and pin arrays, deterministic shuffle indices, the single outer
+action/export record, and local asset/error boundaries. The selected DOM route
+emits one viewer-owned, ordered-preconditioned `ResolveLooseBoardCards` command
+per key and none from an editable target. Replay/spectator/empty/stale/forged
+cases remain fail-closed unit obligations.
+
 ### Implemented seeded authority/storage model
 
 The server model suite at

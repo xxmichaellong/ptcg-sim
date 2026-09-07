@@ -1199,6 +1199,14 @@ source resolver because the domain already treats prizes as concealed: the move
 forces a concealed identity-generation rotation, and owner and opponent
 projections receive distinct fresh opaque aliases rather than the prior public
 card identity.
+A separate board-wide key family now works without a selected card. Enter,
+Alt-Enter, and Slash map to viewer-owned discard, hand, and shuffle-into-deck
+requests. The controller retains its ready/live-player gate; the resolver
+supplies the viewer ID and exact ordered board-card aliases to the existing
+`ResolveLooseBoardCards` command. The source oracle pins all three unchanged v1
+array/action/export paths, including deterministic shuffle indices, while
+candidate Chromium pins exactly one command per key and no editable-input
+traffic. No renderer state or visible surface owns the operation.
 `A` and `B` now cross a separate closed active/bench resolver. Zone cards emit
 `MoveCardToPlay`; eligible top cards move a whole stack with exact board-order
 preconditions; a viewer-owned staged top restores atomically. Real v1 active

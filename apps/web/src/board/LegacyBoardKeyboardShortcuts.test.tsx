@@ -61,6 +61,101 @@ describe('legacy board keyboard shortcut bridge', () => {
     target.remove();
   });
 
+  it('emits global loose-board requests without requiring a selection', async () => {
+    const onRequest = vi.fn();
+    const state = createInitialBoardSessionControllerState();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, { state, onRequest })
+      );
+    });
+
+    const discard = new KeyboardEvent('keydown', {
+      key: 'Enter',
+      code: 'Enter',
+      bubbles: true,
+      cancelable: true,
+    });
+    expect(document.dispatchEvent(discard)).toBe(true);
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'Enter',
+        code: 'Enter',
+        altKey: true,
+        bubbles: true,
+      })
+    );
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: '/',
+        code: 'Slash',
+        bubbles: true,
+      })
+    );
+    expect(onRequest.mock.calls.map(([request]) => request)).toEqual([
+      { action: 'resolveOwnLooseBoard', destination: 'discard' },
+      { action: 'resolveOwnLooseBoard', destination: 'hand' },
+      { action: 'resolveOwnLooseBoard', destination: 'shuffleIntoDeck' },
+    ]);
+  });
+
+  it('does not let global shortcuts collide with overlays or native card and zone activation', async () => {
+    const onRequest = vi.fn();
+    const state = createInitialBoardSessionControllerState();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, { state, onRequest })
+      );
+    });
+
+    const overlay = document.createElement('div');
+    overlay.dataset.legacyBoardOverlays = 'true';
+    const menuItem = document.createElement('button');
+    menuItem.setAttribute('role', 'menuitem');
+    overlay.append(menuItem);
+    const card = document.createElement('button');
+    card.dataset.cardId = 'card-1';
+    const zone = document.createElement('button');
+    zone.dataset.zoneId = 'zone-1';
+    document.body.append(overlay, card, zone);
+
+    for (const target of [menuItem, card, zone]) {
+      target.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Enter',
+          code: 'Enter',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    }
+    menuItem.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: '/',
+        code: 'Slash',
+        bubbles: true,
+      })
+    );
+
+    expect(onRequest).not.toHaveBeenCalled();
+
+    card.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: '/',
+        code: 'Slash',
+        bubbles: true,
+      })
+    );
+    expect(onRequest).toHaveBeenCalledExactlyOnceWith({
+      action: 'resolveOwnLooseBoard',
+      destination: 'shuffleIntoDeck',
+    });
+
+    overlay.remove();
+    card.remove();
+    zone.remove();
+  });
+
   it('ignores unselected, composing, already-consumed, and editable-target keys', async () => {
     const onRequest = vi.fn();
     const state = createInitialBoardSessionControllerState();
@@ -127,6 +222,14 @@ describe('legacy board keyboard shortcut bridge', () => {
         new KeyboardEvent('keydown', {
           key: '3',
           code: 'Digit3',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+      target.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Enter',
+          code: 'Enter',
           bubbles: true,
           cancelable: true,
         })

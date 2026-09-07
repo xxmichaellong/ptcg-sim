@@ -4,11 +4,98 @@ import { createRendererSpikeView } from '@ptcgsim/renderer-contract';
 import { describe, expect, it } from 'vitest';
 
 import {
+  resolveLegacyBoardGlobalShortcutKey,
   resolveLegacyBoardShortcutAction,
   resolveLegacyBoardShortcutKey,
 } from './resolveLegacyBoardShortcutAction.js';
 
 describe('legacy board shortcut action resolver', () => {
+  it('maps the exact global loose-board key and Alt combinations', () => {
+    expect(
+      resolveLegacyBoardGlobalShortcutKey({
+        key: 'Enter',
+        code: 'Enter',
+        altKey: false,
+      })
+    ).toEqual({
+      action: 'resolveOwnLooseBoard',
+      destination: 'discard',
+    });
+    expect(
+      resolveLegacyBoardGlobalShortcutKey({
+        key: 'Unidentified',
+        code: 'Enter',
+        altKey: true,
+      })
+    ).toEqual({ action: 'resolveOwnLooseBoard', destination: 'hand' });
+    expect(
+      resolveLegacyBoardGlobalShortcutKey({
+        key: 'Enter',
+        code: 'Enter',
+        altKey: false,
+        getModifierState: (modifier) => modifier === 'Alt',
+      })
+    ).toEqual({ action: 'resolveOwnLooseBoard', destination: 'hand' });
+    expect(
+      resolveLegacyBoardGlobalShortcutKey({
+        key: '/',
+        code: 'Slash',
+        altKey: true,
+      })
+    ).toEqual({
+      action: 'resolveOwnLooseBoard',
+      destination: 'shuffleIntoDeck',
+    });
+    expect(
+      resolveLegacyBoardGlobalShortcutKey({
+        key: 'x',
+        code: 'KeyX',
+        altKey: false,
+      })
+    ).toBeNull();
+  });
+
+  it('resolves global loose-board requests only against the viewer board', () => {
+    const view = createRendererSpikeView();
+    if (view.viewer.kind !== 'player') {
+      throw new Error('Shortcut fixture must use a player viewer');
+    }
+    const board = Object.values(view.zones).find(
+      (zone) => zone.ownerId === view.viewer.playerId && zone.kind === 'board'
+    );
+    if (!board) throw new Error('Shortcut fixture is missing its loose board');
+
+    for (const destination of ['discard', 'hand', 'shuffleIntoDeck'] as const) {
+      expect(
+        resolveLegacyBoardShortcutAction(view, {
+          action: 'resolveOwnLooseBoard',
+          destination,
+        })
+      ).toEqual({
+        ok: true,
+        command: {
+          type: 'ResolveLooseBoardCards',
+          targetPlayerId: view.viewer.playerId,
+          expectedBoardCardIds: board.cards.map((card) => card.id),
+          destination,
+        },
+        dismissSelection: false,
+      });
+    }
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'resolveOwnLooseBoard',
+        destination: 'lostZone',
+      } as unknown as LegacyBoardShortcutActionRequest)
+    ).toEqual({ ok: false, reason: 'invalid_value' });
+    expect(
+      resolveLegacyBoardShortcutAction(
+        { ...view, viewer: { kind: 'spectator' } },
+        { action: 'resolveOwnLooseBoard', destination: 'discard' }
+      )
+    ).toEqual({ ok: false, reason: 'not_player' });
+  });
+
   it('maps exact key/code and Alt combinations to closed selected-card requests', () => {
     const cardId = 'selected-card';
     const key = (keyValue: string, code: string, altKey = false) =>

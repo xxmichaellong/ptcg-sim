@@ -125,14 +125,21 @@ canonical ownership, and one domain batch discards the incumbent to its
 immutable owner's discard before installing the selected card. The deck,
 generic-zone, and stadium paths share one view-card source locator; stale,
 lower-evolution, foreign-work-area, malformed-stadium, and same-stadium paths
-fail closed. Local zone sorting is
+fail closed.
+The board-wide Enter/Alt-Enter/Slash family now also crosses the same protected
+document bridge without a selected card. It derives the viewer-owned board and
+ordered aliases from the installed projection, then reuses the existing
+`ResolveLooseBoardCards` discard, hand, or shuffle destination. Editable and
+read-only input remains silent and the request cannot nominate another player.
+Local zone sorting is
 controlled by the mounted zone browser:
 it derives a stable copy from disclosed labels and never enters the controller
 or mutates its projection; forged requests still fail closed as `local_only`.
 Native Chromium pins exact damage and condition edit/removal plus ability-marker
 commands, all six count prompts/commands, all three category choices, all five
-move choices, all twenty-four selected-card shortcut commands, and reversible
-sorting with zero action/effect/command traffic.
+move choices, all twenty-four selected-card shortcut commands, all three global
+loose-board commands, and reversible sorting with zero action/effect/command
+traffic.
 Replay-local prize/hand disclosure now uses an isolated solo-player-only
 projection. Its opaque catalog never enters the historical view. Prize menus
 offer their two source zone rows plus `Reveal/hide card`; opponent-hand menus

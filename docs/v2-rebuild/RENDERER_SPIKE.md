@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 1016 v2 tests across 154 files. A separate suite
-passes 147 Playwright checks across 71 Chromium 151 browser files:
+The repository-wide gate passes 1021 v2 tests across 154 files. A separate suite
+passes 149 Playwright checks across 72 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -1395,6 +1395,23 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     document churn; deployed routing and physical BFCache restoration remain
     release gates. No visible UI/UX, protocol, authority, or renderer contract
     changed.
+81. The global loose-board keyboard family now crosses the protected controller
+    without requiring a selected card. Enter resolves the viewer's loose board
+    to discard, Alt-Enter resolves it to hand, and Slash resolves it through the
+    existing authority-owned deck shuffle. The request carries only a closed
+    destination; controller policy requires a ready writable projection, and
+    the resolver derives the target player plus exact ordered card precondition
+    from the installed recipient view. A forged fourth destination, spectator,
+    stale/empty board, replay, editable target, open overlay, and native
+    card/zone Enter activation fail before submission. The selected-card branch
+    keeps its legacy default suppression while unselected keys retain the source
+    document default. A new deny-by-default Chromium
+    oracle executes the unchanged v1 modules across three fresh pages and pins
+    destination/deck arrays, deterministic shuffle indices, one outer action,
+    export owner rewriting, and asset/error boundaries. Candidate Chromium
+    emits one exact `ResolveLooseBoardCards` command for each key and no traffic
+    from a focused input. No wire/domain/authority schema, visible control,
+    key reference, layout, styling, UI, or UX changed.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

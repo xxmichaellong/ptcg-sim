@@ -291,8 +291,9 @@ additive damage, condition cycling, and all visibility gestures retain it.
 Missing-marker Alt-digit and Alt-`Y` keep the
 source's positive/default creation behavior. A per-card `C` can close only a
 matching single-card grant, while normally known cards and duplicate public
-visibility targets are no-ops. Editable, composing, consumed, unselected,
-stale, forged, unsupported, invalid, and replay input cannot submit.
+visibility targets are no-ops. Editable, composing, consumed, unselected
+card-scoped, stale, forged, unsupported, invalid, and replay input cannot
+submit.
 The four non-Alt deck gestures resolve to top, bottom, top-swap, and
 shuffle-into-deck commands. Source-characterized `S` performs a second global
 shuffle after deselection; v2 deliberately submits only the intended atomic
@@ -306,6 +307,13 @@ closed. Active/bench and stadium retain their separate placement policies.
 Prize entry reuses the existing domain concealment boundary, rotates the card's
 visibility generation, and gives owner and opponent projections separate fresh
 concealed aliases. Alt-`P` remains the Pokémon category gesture.
+The same keyboard bridge accepts three board-wide requests without a selected
+card: Enter maps the viewer's loose board to discard, Alt-Enter maps it to hand,
+and Slash maps it to an authority shuffle into deck. The controller still
+requires ready writable live state, while the resolver derives the viewer and
+exact ordered board-card precondition instead of trusting DOM identity. These
+requests retain any current selection and reject spectator, empty, stale, or
+forged input before submission.
 `A`/`B` now use the dedicated play-placement slice. A zone card emits
 `MoveCardToPlay`, an eligible top play card emits a fully preconditioned
 `MovePlayStack`, and a viewer-owned staged top emits `RestoreStagedStack`.

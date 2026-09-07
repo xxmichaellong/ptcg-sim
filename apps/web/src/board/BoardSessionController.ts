@@ -1290,11 +1290,13 @@ const handleShortcutAction = (
   if (!state.canSubmitCommands) {
     return rejectShortcutAction(state, request, 'read_only');
   }
-  if (
-    state.presentation.selectedCardId !== request.cardId ||
-    !hasCard(scene, request.cardId)
-  ) {
-    return rejectShortcutAction(state, request, 'stale_card');
+  if ('cardId' in request) {
+    if (
+      state.presentation.selectedCardId !== request.cardId ||
+      !hasCard(scene, request.cardId)
+    ) {
+      return rejectShortcutAction(state, request, 'stale_card');
+    }
   }
   const resolution = (
     dependencies.resolveShortcutAction ?? resolveLegacyBoardShortcutAction

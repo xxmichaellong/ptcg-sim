@@ -24,9 +24,22 @@ import {
 } from './resolveDeckRelativeAction.js';
 import { resolveCardInspectionAction } from './resolvePrivateInspectionAction.js';
 import { resolvePublicCardVisibilityAction } from './resolvePublicVisibilityAction.js';
+import { resolveLooseBoardAction } from './resolveLooseBoardAction.js';
 import { resolveStackStateAction } from './resolveStackStateAction.js';
 
+export type LegacyLooseBoardShortcutDestination =
+  'discard' | 'hand' | 'shuffleIntoDeck';
+
+const isLegacyLooseBoardShortcutDestination = (
+  value: unknown
+): value is LegacyLooseBoardShortcutDestination =>
+  value === 'discard' || value === 'hand' || value === 'shuffleIntoDeck';
+
 export type LegacyBoardShortcutActionRequest =
+  | {
+      readonly action: 'resolveOwnLooseBoard';
+      readonly destination: LegacyLooseBoardShortcutDestination;
+    }
   | {
       readonly action: 'adjustDamage';
       readonly cardId: ViewCardId;
@@ -76,6 +89,7 @@ export type LegacyBoardShortcutActionRejectionReason =
   | 'unsupported_zone'
   | 'no_deck'
   | 'empty_deck'
+  | 'empty_board'
   | 'empty_zone'
   | 'invalid_value'
   | 'no_op';
@@ -100,7 +114,8 @@ type ExistingActionResolution =
   | ReturnType<typeof resolveCardZoneMoveAction>
   | ReturnType<typeof resolveDeckRelativeCardAction>
   | ReturnType<typeof resolveCardInspectionAction>
-  | ReturnType<typeof resolvePublicCardVisibilityAction>;
+  | ReturnType<typeof resolvePublicCardVisibilityAction>
+  | ReturnType<typeof resolveLooseBoardAction>;
 
 const retainResolution = (
   resolution: ExistingActionResolution,
@@ -116,6 +131,22 @@ export const resolveLegacyBoardShortcutAction = (
   request: LegacyBoardShortcutActionRequest
 ): LegacyBoardShortcutActionResolution => {
   switch (request.action) {
+    case 'resolveOwnLooseBoard': {
+      if (!isLegacyLooseBoardShortcutDestination(request.destination)) {
+        return { ok: false, reason: 'invalid_value' };
+      }
+      if (view.viewer.kind !== 'player') {
+        return { ok: false, reason: 'not_player' };
+      }
+      return retainResolution(
+        resolveLooseBoardAction(
+          view,
+          view.viewer.playerId,
+          request.destination
+        ),
+        false
+      );
+    }
     case 'adjustDamage': {
       const resolution = resolveStackStateAction(view, request.cardId, {
         type: 'adjustDamage',
@@ -369,6 +400,25 @@ export const resolveLegacyBoardShortcutKey = (
   }
   if (matches(input, 'p', 'KeyP')) {
     return { action: 'changeCardType', cardId, category: 'Pokémon' };
+  }
+  return null;
+};
+
+/** Converts the characterized loose-board keys into viewer-owned requests. */
+export const resolveLegacyBoardGlobalShortcutKey = (
+  input: LegacyBoardShortcutKey
+): LegacyBoardShortcutActionRequest | null => {
+  if (matches(input, 'Enter', 'Enter')) {
+    return {
+      action: 'resolveOwnLooseBoard',
+      destination: hasAltModifier(input) ? 'hand' : 'discard',
+    };
+  }
+  if (matches(input, '/', 'Slash')) {
+    return {
+      action: 'resolveOwnLooseBoard',
+      destination: 'shuffleIntoDeck',
+    };
   }
   return null;
 };

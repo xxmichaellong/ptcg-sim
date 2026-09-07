@@ -7,6 +7,7 @@ interface ProtectedInputFixture {
   readonly sourceZoneId: string;
   readonly stadiumCardId: string;
   readonly ownBoardZoneId: string;
+  readonly ownBoardCardIds: readonly string[];
   readonly ownDeckCardId: string;
   readonly opponentDeckCardId: string;
   readonly ownDeckCount: number;
@@ -1704,6 +1705,73 @@ test('selected-card marker, category, visibility, deck, zone, and play shortcuts
     harness.dispose();
   });
   await expect(host).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('global loose-board shortcuts stay viewer-owned and suppress editable targets', async ({
+  page,
+}) => {
+  const errors = collectRuntimeErrors(page);
+  const fixture = await mountHarness(page);
+  const cases = [
+    { key: 'Enter', destination: 'discard' },
+    { key: 'Alt+Enter', destination: 'hand' },
+    { key: 'Slash', destination: 'shuffleIntoDeck' },
+  ] as const;
+
+  for (const [index, scenario] of cases.entries()) {
+    await clearEvidence(page);
+    await page.keyboard.press(scenario.key);
+    const command = {
+      type: 'ResolveLooseBoardCards',
+      targetPlayerId: fixture.ownPlayerId,
+      expectedBoardCardIds: fixture.ownBoardCardIds,
+      destination: scenario.destination,
+    };
+    await expect
+      .poll(async () => (await evidence(page)).submissions)
+      .toEqual([command]);
+    const current = await evidence(page);
+    expect(current.submissionResults).toEqual([
+      {
+        queued: true,
+        commandId: `protected-input-command-${index + 1}`,
+        clientSequence: index + 1,
+      },
+    ]);
+    expect(current.shortcutActions).toEqual([
+      {
+        action: 'resolveOwnLooseBoard',
+        destination: scenario.destination,
+      },
+    ]);
+    expect(current.shortcutRejections).toEqual([]);
+    expect(current.presentation.selectedCardId).toBeNull();
+    expect(current.reportedErrors).toEqual([]);
+  }
+
+  await clearEvidence(page);
+  await page.evaluate(() => {
+    const input = document.createElement('input');
+    input.dataset.globalShortcutEditor = 'true';
+    document.body.append(input);
+    input.focus();
+  });
+  for (const scenario of cases) await page.keyboard.press(scenario.key);
+  const editableEvidence = await evidence(page);
+  expect(editableEvidence.submissions).toEqual([]);
+  expect(editableEvidence.shortcutActions).toEqual([]);
+  expect(editableEvidence.shortcutRejections).toEqual([]);
+  await page.evaluate(() => {
+    document.querySelector('[data-global-shortcut-editor]')?.remove();
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.dispose();
+  });
+  await expect(
+    page.locator('[data-react-dom-protected-input-harness]')
+  ).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 

@@ -465,6 +465,57 @@ describe('headless board session controller', () => {
     ]);
   });
 
+  it('submits viewer-owned loose-board shortcuts without a selected card', () => {
+    let state = install();
+    if (state.view?.viewer.kind !== 'player') {
+      throw new Error('Controller shortcut fixture must use a player viewer');
+    }
+    const board = Object.values(state.view.zones).find(
+      (zone) =>
+        zone.ownerId === state.view!.viewer.playerId && zone.kind === 'board'
+    );
+    if (!board) throw new Error('Controller shortcut fixture has no board');
+    const request = {
+      action: 'resolveOwnLooseBoard' as const,
+      destination: 'discard' as const,
+    };
+
+    const unselected = apply(state, {
+      kind: 'LegacyShortcutActionRequested',
+      request,
+    });
+    expect(unselected.state).toBe(state);
+    expect(unselected.effects).toEqual([
+      {
+        kind: 'SubmitCommand',
+        command: {
+          type: 'ResolveLooseBoardCards',
+          targetPlayerId: state.view.viewer.playerId,
+          expectedBoardCardIds: board.cards.map((card) => card.id),
+          destination: 'discard',
+        },
+      },
+    ]);
+
+    const selectedCardId = cardIn(state.scene!, ':hand');
+    state = select(state, selectedCardId);
+    const selected = apply(state, {
+      kind: 'LegacyShortcutActionRequested',
+      request: { ...request, destination: 'hand' },
+    });
+    expect(selected.state).toBe(state);
+    expect(selected.state.presentation.selectedCardId).toBe(selectedCardId);
+    expect(selected.effects).toEqual([
+      {
+        kind: 'SubmitCommand',
+        command: expect.objectContaining({
+          type: 'ResolveLooseBoardCards',
+          destination: 'hand',
+        }),
+      },
+    ]);
+  });
+
   it('keeps replay shortcut requests outside the resolver and submitter', () => {
     const view = createRendererSpikeView();
     const resolveShortcutAction = vi.fn(() => {
