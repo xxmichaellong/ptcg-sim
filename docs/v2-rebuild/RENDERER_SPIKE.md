@@ -291,7 +291,7 @@ repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
 The repository-wide gate passes 996 v2 tests across 154 files. A separate suite
-passes 144 Playwright checks across 70 Chromium 151 browser files:
+passes 145 Playwright checks across 71 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -834,7 +834,7 @@ passes 144 Playwright checks across 70 Chromium 151 browser files:
     `ResizeObserver` commit for asset-gate interference. This is network-cache
     and browser-visible decode evidence, not a native decoder-invocation count,
     decoded-pixel/heap budget, real-raster load, external-host/CORS/failure test,
-    hidden-face request scan, or cross-browser result.
+    hidden-face request behavior or cross-browser result.
 43. The developer-only creator route completes 20 React StrictMode
     mount/unmount cycles through the actual lazy application branch, remote-room
     runtime, client session, replay/presentation ownership, and selected DOM
@@ -1271,6 +1271,22 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     return, and zero submissions/rejections/errors. The pure frame projection
     has an independent 1280×720 unit oracle. No protocol, authority, canonical
     view, route, visible control, label, UI, or UX changes.
+73. A recipient-privacy Chromium oracle now carries canonical state through the
+    real `projectMatch()` and `createBoardSceneForViewport()` boundaries into a
+    mounted selected-DOM renderer while intercepting every matching image
+    request. Its 14-card fixture proves initial concealment, a six-prize public
+    reveal and cover, a one-card private deck inspection visible only to its
+    granted player and then closed, a fresh hidden renderer generation, and a
+    face load that settles after the card has already been covered. Every hidden
+    projection and scene is recursively scanned for canonical card IDs,
+    definition IDs, names, and both image tiers; hidden DOM exposes only the
+    neutral label, empty image alternative text, and decoded card back. Request
+    evidence contains exactly the temporarily authorized board-tier faces,
+    never any unauthorized or full-preview face URL, and a late completion
+    cannot restore hidden paint. Two renderer generations destroy cleanly with
+    no retained test host, renderer error, or page error. The deterministic SVG
+    route isolates authorization and lifecycle behavior; real-raster memory,
+    external hosts/failures, and non-Chromium approval remain separate gates.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -1280,8 +1296,9 @@ and queues unmount outside the parent lifecycle. The same tests then passed with
 a clean console. This is retained as evidence for keeping browser tests separate
 from happy-DOM lifecycle tests.
 
-The renderer suites live in `tests/browser/renderer-spike.spec.ts` and
-`tests/browser/renderer-dom-cacheable-assets.spec.ts`. The source-parity suites
+The renderer suites live in `tests/browser/renderer-spike.spec.ts`,
+`tests/browser/renderer-dom-cacheable-assets.spec.ts`, and
+`tests/browser/renderer-private-asset-privacy.spec.ts`. The source-parity suites
 start with `tests/browser/legacy-dom-geometry.spec.ts` and
 the transformed overlay comparison lives in
 `tests/browser/react-dom-transformed-overlay-paint.spec.ts`,
@@ -1458,8 +1475,8 @@ wiring:
 - complete resource evidence beyond the green warmed-host lifecycle and
   controlled same-origin distinct-SVG request/decode gate: route-host navigation
   churn, real-raster decoded-byte and retained-heap accounting on the ratified
-  profile, and the hidden/private face request scan; display-object/GPU counters
-  remain required only for a future Pixi rollout;
+  profile; display-object/GPU counters remain required only for a future Pixi
+  rollout;
 - the p95 reconciliation/input/drag budgets from the verification plan on the
   ratified four-core reference profile;
 - keyboard and screen-reader audit of the selected semantic DOM surface; and

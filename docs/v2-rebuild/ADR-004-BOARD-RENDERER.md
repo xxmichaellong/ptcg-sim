@@ -356,7 +356,6 @@ Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
   stack/zone-dialog semantic roles, names, keyboard traversal/wrap, focus
   paint/return, face-swap paint, lifecycle, dismissal, and protected command
   gate;
-- a hidden/private-image request scan;
 - finish resource evidence beyond the current green 100-cycle warmed-host
   Chromium DOM-node/listener gate and the deterministic same-origin
   120-distinct-SVG cache/request/decode gate and green 20-cycle in-process
@@ -368,6 +367,15 @@ Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
 
 Pixi-only WebGL recovery and GPU-texture gates are no longer blockers for the
 first production renderer, but remain required before any future Pixi rollout.
+
+The selected DOM path now also has a canonical-state-to-browser privacy gate.
+It scans concealed recipient projections and scenes for canonical identifiers,
+names, and face URLs, then intercepts image requests across public reveal/cover,
+private inspection/close, renderer recreation, and a deliberately late face
+response. Only currently authorized board-tier faces are requested; hidden DOM
+returns to the card back before the stale response settles. The fixture is
+deterministic same-origin SVG evidence, not external-host, real-raster memory,
+manual assistive-technology, or cross-browser approval.
 
 ## Revisit triggers
 

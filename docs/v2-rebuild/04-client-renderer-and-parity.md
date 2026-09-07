@@ -1503,8 +1503,18 @@ starts real local Wrangler and Vite servers, then proves same-origin health,
 creation, ticket exchange, WebSocket admission, projected board readiness,
 bidirectional response, credential-free URLs, and clean close for one creator
 session. Real raster decoded-byte and retained-heap limits, external-host and
-failure behavior, deployed browser navigation churn, and hidden/private face
-request privacy remain separate gates.
+failure behavior, and deployed browser navigation churn remain separate gates.
+
+A separate selected-DOM privacy oracle now starts from canonical match state and
+uses the production recipient projection plus scene builder before mounting the
+browser renderer. It recursively excludes canonical IDs, definition IDs, names,
+and face URLs from hidden projections/scenes, checks the hidden accessibility
+surface, and intercepts exact image requests across public reveal/cover, a
+viewer-only private inspection/close, renderer recreation, and a delayed stale
+face response. The browser requests only authorized board-tier faces and cannot
+restore one after concealment. This closes the deterministic hidden/private
+request gate; real-raster resource accounting, arbitrary external hosts and
+failures, and the release browser matrix remain open.
 
 ## Accessibility preservation and minimum improvement
 

@@ -414,6 +414,12 @@ actions, both marker edit/removal flows, and typed zero-command invalid/local
 actions. It also covers real-v1/candidate stack and opened-zone physical paint,
 card order, both player orientations, modal semantics, keyboard containment,
 and zero command leakage.
+The selected-DOM privacy oracle additionally takes canonical state through the
+real projection and scene boundaries, scans every hidden artifact, and
+intercepts image requests across public and private visibility churn, renderer
+recreation, and a late face response. Hidden DOM exposes only its neutral label,
+empty image alternative text, and card back; only explicitly authorized
+board-tier faces are ever requested.
 It does not claim a manual screen-reader audit, keyboard suppression in every editable context,
 coaching flip, reconnect reconciliation, or the non-Chromium matrix. These
 remain Playwright/manual parity gates before any production switch.
