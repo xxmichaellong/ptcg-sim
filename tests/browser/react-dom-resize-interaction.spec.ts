@@ -13,6 +13,10 @@ interface ResizeHarnessWindow extends Window {
   };
 }
 
+interface ViewportLifecycleWindow extends Window {
+  __PTCG_EMIT_RESOLUTION_CHANGE__?: () => number;
+}
+
 const collectRuntimeErrors = (page: Page): string[] => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(`pageerror: ${error.message}`));
@@ -109,6 +113,33 @@ const expectClose = (actual: number, expected: number): void => {
 const expectPixelClose = (actual: number, expected: number): void => {
   expect(Math.abs(actual - expected)).toBeLessThanOrEqual(0.02);
 };
+
+const readRouteViewport = (page: Page) =>
+  page.evaluate(() => {
+    const spike = window.__PTCG_RENDERER_SPIKE__;
+    if (!spike) throw new Error('Missing route-owned renderer');
+    const diagnostics = spike.renderer.getDiagnostics?.();
+    if (!diagnostics) throw new Error('Missing renderer diagnostics');
+    const host = document.querySelector<HTMLElement>('.renderer-surface-host');
+    const surface = host?.querySelector<HTMLElement>('.ptcgsim-board-surface');
+    if (!host || !surface) throw new Error('Missing route-owned DOM surface');
+    return {
+      windowDpr: window.devicePixelRatio,
+      outerDpr: spike.scene.layout.outerViewport.devicePixelRatio,
+      sceneDpr: spike.scene.viewport.devicePixelRatio,
+      outerWidth: spike.scene.layout.outerViewport.width,
+      outerHeight: spike.scene.layout.outerViewport.height,
+      sceneWidth: spike.scene.viewport.width,
+      sceneHeight: spike.scene.viewport.height,
+      generation: diagnostics.generation,
+      renderCommits: diagnostics.renderCommits,
+      cardCount: diagnostics.renderedCardIds.length,
+      hostCount: document.querySelectorAll('.renderer-surface-host').length,
+      surfaceCount: document.querySelectorAll('.ptcgsim-board-surface').length,
+      hostBounds: host.getBoundingClientRect().toJSON(),
+      surfaceBounds: surface.getBoundingClientRect().toJSON(),
+    };
+  });
 
 test('opt-in React DOM resize owns real scaled pointer gestures and source boundaries', async ({
   page,
@@ -350,5 +381,256 @@ test('browser viewport changes cancel stale resize coordinates and preserve fres
   await expect(page.locator(harnessSelector)).toHaveCount(0);
   await page.setViewportSize({ width: 1200, height: 700 });
   await waitForReactPaint(page);
+  expect(errors).toEqual([]);
+});
+
+test('route coalesces viewport signals and reconciles DPR, zero-size, and foreground resume', async ({
+  page,
+}) => {
+  const errors = collectRuntimeErrors(page);
+  // CDP updates resolution queries and window.devicePixelRatio but does not
+  // dispatch MediaQueryList's native change event. Preserve the real query
+  // object while exposing only that missing signal for this browser gate.
+  await page.addInitScript(() => {
+    const nativeMatchMedia = window.matchMedia.bind(window);
+    const resolutionListeners = new Set<EventListenerOrEventListenerObject>();
+    window.matchMedia = ((query: string): MediaQueryList => {
+      const target = nativeMatchMedia(query);
+      if (!query.startsWith('(resolution:')) return target;
+      return new Proxy(target, {
+        get(mediaQuery, property) {
+          if (property === 'addEventListener') {
+            return (
+              type: string,
+              listener: EventListenerOrEventListenerObject,
+              options?: boolean | AddEventListenerOptions
+            ) => {
+              if (type === 'change') resolutionListeners.add(listener);
+              mediaQuery.addEventListener(type, listener, options);
+            };
+          }
+          if (property === 'removeEventListener') {
+            return (
+              type: string,
+              listener: EventListenerOrEventListenerObject,
+              options?: boolean | EventListenerOptions
+            ) => {
+              if (type === 'change') resolutionListeners.delete(listener);
+              mediaQuery.removeEventListener(type, listener, options);
+            };
+          }
+          const value = Reflect.get(mediaQuery, property, mediaQuery);
+          return typeof value === 'function' ? value.bind(mediaQuery) : value;
+        },
+      });
+    }) as typeof window.matchMedia;
+    (window as ViewportLifecycleWindow).__PTCG_EMIT_RESOLUTION_CHANGE__ =
+      () => {
+        const event = new Event('change');
+        for (const listener of [...resolutionListeners]) {
+          if (typeof listener === 'function') listener.call(window, event);
+          else listener.handleEvent(event);
+        }
+        return resolutionListeners.size;
+      };
+  });
+  await page.goto('/?renderer=dom');
+  await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
+    'data-renderer-status',
+    'ready'
+  );
+  await waitForReactPaint(page);
+
+  const initial = await readRouteViewport(page);
+  expect(initial).toMatchObject({
+    windowDpr: 1,
+    outerDpr: 1,
+    sceneDpr: 1,
+    outerWidth: 1280,
+    outerHeight: 720,
+    sceneWidth: 966.4,
+    sceneHeight: 720,
+    generation: 1,
+    cardCount: 61,
+    hostCount: 1,
+    surfaceCount: 1,
+  });
+
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Emulation.setDeviceMetricsOverride', {
+    width: 1280,
+    height: 720,
+    deviceScaleFactor: 2,
+    mobile: false,
+    screenWidth: 1280,
+    screenHeight: 720,
+  });
+  expect(
+    await page.evaluate(() => matchMedia('(resolution: 2dppx)').matches)
+  ).toBe(true);
+  expect(await readRouteViewport(page)).toMatchObject({
+    windowDpr: 2,
+    outerDpr: 1,
+    sceneDpr: 1,
+  });
+  expect(
+    await page.evaluate(() => {
+      const emit = (window as ViewportLifecycleWindow)
+        .__PTCG_EMIT_RESOLUTION_CHANGE__;
+      if (!emit) throw new Error('Missing resolution-change test signal');
+      return emit();
+    })
+  ).toBe(1);
+  await expect
+    .poll(() => readRouteViewport(page))
+    .toMatchObject({ windowDpr: 2, outerDpr: 2, sceneDpr: 2 });
+  await waitForReactPaint(page);
+
+  const beforeBurst = await readRouteViewport(page);
+  await page.evaluate(() => {
+    for (let index = 0; index < 25; index += 1) {
+      window.dispatchEvent(new Event('resize'));
+    }
+  });
+  await waitForReactPaint(page);
+  const afterBurst = await readRouteViewport(page);
+  expect(afterBurst.renderCommits).toBe(beforeBurst.renderCommits + 1);
+  expect(afterBurst).toMatchObject({
+    outerDpr: 2,
+    sceneDpr: 2,
+    generation: initial.generation,
+    cardCount: 61,
+    hostCount: 1,
+    surfaceCount: 1,
+  });
+
+  await page.locator('.board-spike-host').evaluate((host) => {
+    host.style.display = 'none';
+    for (let index = 0; index < 10; index += 1) {
+      window.dispatchEvent(new Event('resize'));
+    }
+  });
+  await waitForReactPaint(page);
+  const zeroSize = await readRouteViewport(page);
+  expect(zeroSize.hostBounds).toMatchObject({ width: 0, height: 0 });
+  expect(zeroSize.surfaceBounds).toMatchObject({ width: 0, height: 0 });
+  expect(zeroSize).toMatchObject({
+    outerDpr: 2,
+    sceneDpr: 2,
+    generation: initial.generation,
+    cardCount: 61,
+    hostCount: 1,
+    surfaceCount: 1,
+  });
+
+  await page.locator('.board-spike-host').evaluate((host) => {
+    host.style.display = '';
+    window.dispatchEvent(new Event('resize'));
+  });
+  await waitForReactPaint(page);
+  const restoredHost = await readRouteViewport(page);
+  expect(restoredHost.hostBounds.width).toBeGreaterThan(0);
+  expect(restoredHost.surfaceBounds.width).toBeGreaterThan(0);
+  expect(restoredHost).toMatchObject({
+    outerDpr: 2,
+    sceneDpr: 2,
+    generation: initial.generation,
+    cardCount: 61,
+    hostCount: 1,
+    surfaceCount: 1,
+  });
+
+  const resume = await page.evaluate(async () => {
+    const waitForPaint = () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      );
+    const snapshot = () => {
+      const spike = window.__PTCG_RENDERER_SPIKE__;
+      const diagnostics = spike?.renderer.getDiagnostics?.();
+      if (!spike || !diagnostics) {
+        throw new Error('Missing route-owned renderer diagnostics');
+      }
+      return {
+        windowDpr: window.devicePixelRatio,
+        outerDpr: spike.scene.layout.outerViewport.devicePixelRatio,
+        sceneDpr: spike.scene.viewport.devicePixelRatio,
+        renderCommits: diagnostics.renderCommits,
+      };
+    };
+    const dprDescriptor = Object.getOwnPropertyDescriptor(
+      window,
+      'devicePixelRatio'
+    );
+    const visibilityDescriptor = Object.getOwnPropertyDescriptor(
+      document,
+      'visibilityState'
+    );
+    const hiddenDescriptor = Object.getOwnPropertyDescriptor(
+      document,
+      'hidden'
+    );
+    let visibility: DocumentVisibilityState = 'hidden';
+    Object.defineProperty(window, 'devicePixelRatio', {
+      configurable: true,
+      value: 1.5,
+    });
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      get: () => visibility,
+    });
+    Object.defineProperty(document, 'hidden', {
+      configurable: true,
+      get: () => visibility !== 'visible',
+    });
+    const before = snapshot();
+    document.dispatchEvent(new Event('visibilitychange'));
+    await waitForPaint();
+    const hidden = snapshot();
+    visibility = 'visible';
+    document.dispatchEvent(new Event('visibilitychange'));
+    await waitForPaint();
+    const visible = snapshot();
+
+    if (dprDescriptor) {
+      Object.defineProperty(window, 'devicePixelRatio', dprDescriptor);
+    } else {
+      Reflect.deleteProperty(window, 'devicePixelRatio');
+    }
+    if (visibilityDescriptor) {
+      Object.defineProperty(document, 'visibilityState', visibilityDescriptor);
+    } else {
+      Reflect.deleteProperty(document, 'visibilityState');
+    }
+    if (hiddenDescriptor) {
+      Object.defineProperty(document, 'hidden', hiddenDescriptor);
+    } else {
+      Reflect.deleteProperty(document, 'hidden');
+    }
+    window.dispatchEvent(new Event('resize'));
+    await waitForPaint();
+    return { before, hidden, visible, restored: snapshot() };
+  });
+  expect(resume.hidden).toEqual(resume.before);
+  expect(resume.visible).toEqual({
+    windowDpr: 1.5,
+    outerDpr: 1.5,
+    sceneDpr: 1.5,
+    renderCommits: resume.before.renderCommits + 1,
+  });
+  expect(resume.restored).toEqual({
+    windowDpr: 2,
+    outerDpr: 2,
+    sceneDpr: 2,
+    renderCommits: resume.visible.renderCommits + 1,
+  });
+
+  const final = await readRouteViewport(page);
+  expect(final).toMatchObject({
+    generation: initial.generation,
+    cardCount: 61,
+    hostCount: 1,
+    surfaceCount: 1,
+  });
   expect(errors).toEqual([]);
 });

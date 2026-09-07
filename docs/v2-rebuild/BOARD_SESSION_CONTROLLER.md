@@ -420,6 +420,11 @@ intercepts image requests across public and private visibility churn, renderer
 recreation, and a late face response. Hidden DOM exposes only its neutral label,
 empty image alternative text, and card back; only explicitly authorized
 board-tier faces are ever requested.
+Route viewport ownership now uses one request-animation-frame scheduler for host
+and window resize, DPR media changes, and foreground resume. Browser coverage
+proves same-size DPR reconciliation, one commit for a 25-signal burst, safe
+zero-size hide/restore, stable renderer/card ownership, and foreground reread;
+unit coverage proves exact observer/listener teardown and post-unmount inertness.
 It does not claim a manual screen-reader audit, keyboard suppression in every editable context,
 coaching flip, reconnect reconciliation, or the non-Chromium matrix. These
 remain Playwright/manual parity gates before any production switch.

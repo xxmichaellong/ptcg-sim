@@ -140,4 +140,95 @@ describe('RendererSpikeBoard application boundary', () => {
     expect(readRendererKind('pixi')).toBe('pixi');
     expect(readRendererKind('unsupported')).toBe('dom');
   });
+
+  it('coalesces viewport lifecycle signals and releases every listener', async () => {
+    const listeners = new Set<EventListenerOrEventListenerObject>();
+    const addResolutionListener = vi.fn(
+      (type: string, listener: EventListenerOrEventListenerObject) => {
+        if (type === 'change') listeners.add(listener);
+      }
+    );
+    const removeResolutionListener = vi.fn(
+      (type: string, listener: EventListenerOrEventListenerObject) => {
+        if (type === 'change') listeners.delete(listener);
+      }
+    );
+    const mediaQuery = {
+      matches: true,
+      media: '(resolution: 1dppx)',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: addResolutionListener,
+      removeEventListener: removeResolutionListener,
+      dispatchEvent: (event: Event) => {
+        for (const listener of [...listeners]) {
+          if (typeof listener === 'function') listener.call(mediaQuery, event);
+          else listener.handleEvent(event);
+        }
+        return true;
+      },
+    } as unknown as MediaQueryList;
+    const nativeMatchMedia = globalThis.matchMedia;
+    globalThis.matchMedia = vi.fn(() => mediaQuery);
+    const removeWindowListener = vi.spyOn(window, 'removeEventListener');
+    const removeDocumentListener = vi.spyOn(document, 'removeEventListener');
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    try {
+      await act(async () => {
+        root.render(
+          <RendererSpikeBoard
+            view={createRendererSpikeView()}
+            rendererKind="dom"
+            onIntent={vi.fn()}
+            submitCommand={vi.fn()}
+          />
+        );
+        await Promise.resolve();
+      });
+      expect(addResolutionListener).toHaveBeenCalledTimes(1);
+      rendererHarness.resize.mockClear();
+      rendererHarness.installScene.mockClear();
+
+      await act(async () => {
+        for (let index = 0; index < 20; index += 1) {
+          window.dispatchEvent(new Event('resize'));
+          mediaQuery.dispatchEvent(new Event('change'));
+          document.dispatchEvent(new Event('visibilitychange'));
+        }
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => resolve())
+        );
+      });
+      expect(rendererHarness.resize).toHaveBeenCalledTimes(1);
+      expect(rendererHarness.installScene).toHaveBeenCalledTimes(1);
+
+      await act(async () => root.unmount());
+      expect(removeWindowListener).toHaveBeenCalledWith(
+        'resize',
+        expect.any(Function)
+      );
+      expect(removeDocumentListener).toHaveBeenCalledWith(
+        'visibilitychange',
+        expect.any(Function)
+      );
+      expect(removeResolutionListener).toHaveBeenCalledTimes(1);
+      expect(listeners.size).toBe(0);
+
+      rendererHarness.resize.mockClear();
+      window.dispatchEvent(new Event('resize'));
+      mediaQuery.dispatchEvent(new Event('change'));
+      document.dispatchEvent(new Event('visibilitychange'));
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => resolve())
+      );
+      expect(rendererHarness.resize).not.toHaveBeenCalled();
+    } finally {
+      removeWindowListener.mockRestore();
+      removeDocumentListener.mockRestore();
+      globalThis.matchMedia = nativeMatchMedia;
+    }
+  });
 });

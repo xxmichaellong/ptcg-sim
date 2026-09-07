@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 996 v2 tests across 154 files. A separate suite
-passes 145 Playwright checks across 71 Chromium 151 browser files:
+The repository-wide gate passes 997 v2 tests across 154 files. A separate suite
+passes 146 Playwright checks across 71 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -1287,6 +1287,22 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     no retained test host, renderer error, or page error. The deterministic SVG
     route isolates authorization and lifecycle behavior; real-raster memory,
     external hosts/failures, and non-Chromium approval remain separate gates.
+74. The route-owned renderer viewport lifecycle now funnels host resize, window
+    resize, resolution-media changes, and visible-document resume through one
+    request-animation-frame scheduler. A synchronous signal burst cannot queue
+    duplicate work; each committed reconciliation rereads window dimensions and
+    DPR, then rearms the resolution query for the next monitor. Teardown cancels
+    the frame and removes the observer plus all window, document, and media
+    listeners. A browser gate reproduces the former same-CSS-size DPR 1→2 stale
+    scene, verifies the corrected outer/scene DPR without replacing the renderer
+    or its 61 cards, pins one commit for 25 simultaneous signals, collapses and
+    restores a zero-paint-size host safely, and exercises hidden→visible DPR
+    resynchronization. Chromium CDP changes query matches without emitting its
+    normal media event, so the test injects only that missing event while
+    retaining the real query and device-metrics transition. Unit coverage pins
+    coalescing and exact post-unmount inertness. Physical background freezing,
+    monitor movement in other browsers, and BFCache remain release-matrix gates;
+    no visible UI/UX or scene contract changed.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -1470,8 +1486,9 @@ wiring:
   focus-visible paint/return, exact face assets, and stable geometry;
 - actual external card/image hosts, redirects, CORS failures, oversized/corrupt
   images, and the proxy/hybrid policy in ADR-013;
-- background resume, 0x0 host, DPR changes, and resize coalescing; WebGL-only
-  recovery/eviction cases remain gates for any future Pixi rollout;
+- physical background freeze/resume and BFCache behavior plus non-Chromium
+  monitor-DPR transitions; WebGL-only recovery/eviction cases remain gates for
+  any future Pixi rollout;
 - complete resource evidence beyond the green warmed-host lifecycle and
   controlled same-origin distinct-SVG request/decode gate: route-host navigation
   churn, real-raster decoded-byte and retained-heap accounting on the ratified

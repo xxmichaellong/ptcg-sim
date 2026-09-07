@@ -1444,6 +1444,18 @@ PTCG Sim is a discrete tabletop, so a permanent 60 Hz game loop is wasteful.
 - Hidden tab: stop animation work and resume from state, never simulated elapsed
   frames.
 
+The selected route now owns one coalesced viewport scheduler. Host and window
+resize, a current-resolution media query, and visible-document resume all feed
+the same next-frame reconciliation; after every commit the resolution query is
+rearmed at the newly observed DPR. Disposal cancels that frame and removes every
+observer/listener. Chromium coverage changes DPR without changing CSS size,
+bursts 25 signals into one commit, hides/restores a zero-paint-size host, and
+drives a synthetic hidden→visible resync without replacing the renderer or its
+61 keyed cards. CDP does not emit the resolution-query event when overriding
+device metrics, so the gate supplies only that event around the real metric and
+query change. Physical tab freezing/BFCache and other browsers remain release
+evidence.
+
 Performance tests record frame time, long tasks, texture bytes, display-object
 count, fetch count, heap trend, and update time. Budgets and hardware profiles are
 defined in the verification document.

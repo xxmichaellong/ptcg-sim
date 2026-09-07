@@ -108,6 +108,28 @@ export const RendererSpikeBoard = ({
     let renderer: BoardRenderer | null = null;
     let resizeObserver: ResizeObserver | null = null;
     let resizeFrame: number | null = null;
+    let resolutionQuery: MediaQueryList | null = null;
+    let resolutionMedia: string | null = null;
+    let installSize: (() => void) | null = null;
+    const scheduleInstallSize = () => {
+      if (disposed || resizeFrame !== null) return;
+      resizeFrame = requestAnimationFrame(() => {
+        resizeFrame = null;
+        installSize?.();
+      });
+    };
+    const handleResolutionChange = () => scheduleInstallSize();
+    const observeCurrentResolution = () => {
+      const media = `(resolution: ${Math.max(1, window.devicePixelRatio)}dppx)`;
+      if (resolutionMedia === media) return;
+      resolutionQuery?.removeEventListener('change', handleResolutionChange);
+      resolutionQuery = window.matchMedia(media);
+      resolutionMedia = media;
+      resolutionQuery.addEventListener('change', handleResolutionChange);
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') scheduleInstallSize();
+    };
     setStatus({ kind: 'mounting' });
     const mount = async () => {
       const initial = sceneForHost(host, viewRef.current);
@@ -158,7 +180,7 @@ export const RendererSpikeBoard = ({
         await renderer.mount(host, initial.scene, presentationRef.current);
         if (disposed) return;
         rendererRef.current = renderer;
-        const installSize = () => {
+        installSize = () => {
           if (!renderer || disposed) return;
           const latestView = viewRef.current;
           const next = sceneForHost(host, latestView);
@@ -178,16 +200,13 @@ export const RendererSpikeBoard = ({
             scene: next.scene,
             ...(import.meta.env.DEV ? { createRenderer } : {}),
           };
+          observeCurrentResolution();
         };
         installSize();
-        resizeObserver = new ResizeObserver(() => {
-          if (resizeFrame !== null) cancelAnimationFrame(resizeFrame);
-          resizeFrame = requestAnimationFrame(() => {
-            resizeFrame = null;
-            installSize();
-          });
-        });
+        resizeObserver = new ResizeObserver(scheduleInstallSize);
         resizeObserver.observe(host);
+        window.addEventListener('resize', scheduleInstallSize);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
       } catch (error) {
         if (!disposed) console.error('[renderer-spike] mount failed', error);
       }
@@ -197,6 +216,12 @@ export const RendererSpikeBoard = ({
       disposed = true;
       resizeObserver?.disconnect();
       if (resizeFrame !== null) cancelAnimationFrame(resizeFrame);
+      window.removeEventListener('resize', scheduleInstallSize);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      resolutionQuery?.removeEventListener('change', handleResolutionChange);
+      resolutionQuery = null;
+      resolutionMedia = null;
+      installSize = null;
       renderer?.destroy();
       if (window.__PTCG_RENDERER_SPIKE__?.renderer === renderer) {
         delete window.__PTCG_RENDERER_SPIKE__;

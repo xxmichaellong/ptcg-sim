@@ -89,6 +89,15 @@ restore a covered card.
 | Performance         | Cold/warm load, setup, one-card action, drag, resize, opened zones, reset churn, reconnect, server persistence               |
 | Soak/fault          | Long randomized room sessions with drops, reconnect, restarts, hibernation, image errors, and context loss                   |
 
+The selected DOM route now has deterministic Chromium evidence for the
+zero-paint-size host, DPR, resize-coalescing, and visible-document-resume parts
+of the Browser/WebGL row. It retains one renderer and all 61 keyed cards, folds
+25 synchronous signals into one reconciliation, and releases every observer and
+listener on unmount. Chromium CDP changes the real DPR/query match without
+emitting the browser's resolution-media event, so the test injects only that
+missing event. Physical background freezing/BFCache and non-Chromium monitor
+transitions remain required release evidence.
+
 ### Implemented seeded authority/storage model
 
 The server model suite at
