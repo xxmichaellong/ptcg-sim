@@ -1238,6 +1238,16 @@ describe('RemoteGameSession', () => {
     });
     expect(mulligan.scheduler.tasks.size).toBe(1);
 
+    const deckView = setup();
+    const deckViewSocket = deckView.admit();
+    deckViewSocket.sendCloseEvent = { wasClean: false };
+    expect(deckView.session.declareDeckView()).toBe(false);
+    expect(deckView.session.getSnapshot()).toMatchObject({
+      phase: 'reconnecting',
+      reconnectAttempt: 1,
+    });
+    expect(deckView.scheduler.tasks.size).toBe(1);
+
     const ping = setup();
     const pingSocket = ping.admit();
     pingSocket.sendCloseEvent = { wasClean: false };
@@ -1299,6 +1309,66 @@ describe('RemoteGameSession', () => {
       const socket = test.admit();
       socket.serverMessage({
         type: 'MulliganAnnouncement',
+        protocolVersion: PROTOCOL_VERSION,
+        event,
+      });
+      expect(test.session.getSnapshot()).toMatchObject({
+        phase: 'failed',
+        failure: { code: 'inconsistent_publication' },
+      });
+    }
+  });
+
+  it('sends a parameterless deck-view declaration and retains its typed room announcement', () => {
+    const test = setup({ maximumPresentationEvents: 2 });
+    expect(test.session.declareDeckView()).toBe(false);
+    const socket = test.admit();
+
+    expect(test.session.declareDeckView()).toBe(true);
+    expect(clientFrame(socket, 1)).toEqual({
+      type: 'DeclareDeckView',
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    for (const playerId of ['blue', 'red', 'blue'] as const) {
+      socket.serverMessage({
+        type: 'DeckViewAnnouncement',
+        protocolVersion: PROTOCOL_VERSION,
+        event: { type: 'DeckViewDeclared', revision: 0, playerId },
+      });
+    }
+    expect(test.session.getSnapshot().presentationEvents).toEqual([
+      { type: 'DeckViewDeclared', revision: 0, playerId: 'red' },
+      { type: 'DeckViewDeclared', revision: 0, playerId: 'blue' },
+    ]);
+
+    const spectator = setup();
+    const spectatorSocket = spectator.connect();
+    spectatorSocket.serverMessage({
+      type: 'Welcome',
+      protocolVersion: PROTOCOL_VERSION,
+      buildId: 'server-build',
+      role: 'spectator',
+      sessionId: 'spectator-session',
+      resumeToken: resumeCapability,
+      nextClientSequence: 1,
+      snapshot: {
+        ...view(0),
+        viewer: { kind: 'spectator' },
+      },
+    });
+    expect(spectator.session.declareDeckView()).toBe(false);
+    expect(spectatorSocket.sent).toHaveLength(1);
+  });
+
+  it('fails closed on a deck-view announcement for another revision or room player', () => {
+    for (const event of [
+      { type: 'DeckViewDeclared', revision: 1, playerId: 'blue' },
+      { type: 'DeckViewDeclared', revision: 0, playerId: 'intruder' },
+    ] as const) {
+      const test = setup();
+      const socket = test.admit();
+      socket.serverMessage({
+        type: 'DeckViewAnnouncement',
         protocolVersion: PROTOCOL_VERSION,
         event,
       });

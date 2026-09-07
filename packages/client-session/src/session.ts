@@ -265,6 +265,17 @@ export class RemoteGameSession {
     });
   }
 
+  /** Sends no player or zone identity; the bound room session owns attribution. */
+  declareDeckView(): boolean {
+    if (this.state.phase !== 'ready' || this.state.role !== 'player') {
+      return false;
+    }
+    return this.send({
+      type: 'DeclareDeckView',
+      protocolVersion: PROTOCOL_VERSION,
+    });
+  }
+
   requestReplay(): boolean {
     if (
       this.state.phase !== 'ready' ||
@@ -414,7 +425,8 @@ export class RemoteGameSession {
           ),
         });
         return;
-      case 'MulliganAnnouncement': {
+      case 'MulliganAnnouncement':
+      case 'DeckViewAnnouncement': {
         const current = this.state.view;
         if (
           this.state.phase !== 'ready' ||
@@ -424,7 +436,7 @@ export class RemoteGameSession {
         ) {
           this.fail({
             code: 'inconsistent_publication',
-            message: 'Mulligan announcement does not match the current room',
+            message: 'Player announcement does not match the current room',
           });
           return;
         }

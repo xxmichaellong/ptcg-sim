@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import type { BoardIntent } from '@ptcgsim/renderer-contract';
 
 import type { BoardSessionControllerState } from './BoardSessionController.js';
 import {
@@ -11,10 +12,19 @@ import {
 export interface LegacyBoardKeyboardShortcutsProps {
   readonly state: BoardSessionControllerState;
   readonly onRequest: (request: LegacyBoardShortcutActionRequest) => void;
+  /** Local presentation intent; it never enters the command reducer. */
+  readonly onLocalIntent?: (
+    intent: Extract<
+      BoardIntent,
+      { readonly kind: 'CardPreviewRequested' | 'ZoneOpened' }
+    >
+  ) => void;
   /** Local renderer reconstruction; it never enters the command reducer. */
   readonly onRefreshScene?: () => void;
   /** Non-authoritative room announcement; omitted until a route wires it. */
   readonly onDeclareMulligan?: () => void;
+  /** Non-authoritative deck-view announcement; omitted until a route wires it. */
+  readonly onDeclareDeckView?: () => void;
   /** Supplied only by a route that knows it represents a solo room. */
   readonly soloUndoEnabled?: boolean;
 }
@@ -41,11 +51,24 @@ const isNativeEnterActivationTarget = (event: KeyboardEvent): boolean =>
 export const LegacyBoardKeyboardShortcuts = ({
   state,
   onRequest,
+  onLocalIntent,
   onRefreshScene,
   onDeclareMulligan,
+  onDeclareDeckView,
   soloUndoEnabled = false,
 }: LegacyBoardKeyboardShortcutsProps) => {
   const selectedCardId = state.presentation.selectedCardId;
+  const isSpectator = state.view?.viewer.kind === 'spectator';
+  const deckViewPlayerId =
+    state.view?.viewer.kind === 'player'
+      ? state.view.viewer.playerId
+      : state.scene?.bottomPlayerId;
+  const deckViewZoneId = state.scene?.zones.find(
+    (zone) =>
+      zone.kind === 'deck' &&
+      zone.playerId === deckViewPlayerId &&
+      zone.interactive
+  )?.id;
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
       if (
@@ -58,16 +81,36 @@ export const LegacyBoardKeyboardShortcuts = ({
       }
       const refreshesScene =
         event.key.toLowerCase() === 'r' || event.code === 'KeyR';
-      // V1 leaves selected spectator shortcuts entirely native. The controller
-      // still rejects forged requests, but the document bridge should not emit
-      // or consume them in the first place.
-      if (selectedCardId !== null && state.view?.viewer.kind === 'spectator') {
+      const viewsDeckOrCard =
+        event.key.toLowerCase() === 'v' || event.code === 'KeyV';
+      // V1 keeps selectingCard true for a full view and consumes subsequent
+      // player keys without reopening the deck or mutating the selected card.
+      if (
+        (refreshesScene || viewsDeckOrCard) &&
+        state.overlays.preview !== null
+      ) {
+        if (!isSpectator && event.cancelable) event.preventDefault();
         return;
       }
-      // V1 keeps selectingCard true for its full-view image, prevents the key,
-      // and suppresses both the unselected refresh/reset and selected rotation.
-      if (refreshesScene && state.overlays.preview !== null) {
-        if (event.cancelable) event.preventDefault();
+      if (viewsDeckOrCard && selectedCardId !== null) {
+        if (!isSpectator && event.cancelable) event.preventDefault();
+        onLocalIntent?.({
+          kind: 'CardPreviewRequested',
+          cardId: selectedCardId,
+        });
+        return;
+      }
+      // V1 leaves selected spectator mutation shortcuts entirely native. The
+      // controller still rejects forged requests, but the document bridge
+      // should not emit or consume them in the first place.
+      if (selectedCardId !== null && isSpectator) {
+        return;
+      }
+      if (viewsDeckOrCard) {
+        if (deckViewZoneId !== undefined) {
+          onLocalIntent?.({ kind: 'ZoneOpened', zoneId: deckViewZoneId });
+          if (state.view?.viewer.kind === 'player') onDeclareDeckView?.();
+        }
         return;
       }
       const selectedRequest =
@@ -118,11 +161,16 @@ export const LegacyBoardKeyboardShortcuts = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [
     onDeclareMulligan,
+    onDeclareDeckView,
+    onLocalIntent,
     onRefreshScene,
     onRequest,
+    deckViewZoneId,
+    isSpectator,
     selectedCardId,
     soloUndoEnabled,
     state.overlays.preview,
+    state.view?.viewer.kind,
   ]);
   return null;
 };

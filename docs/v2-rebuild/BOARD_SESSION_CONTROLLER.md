@@ -361,6 +361,15 @@ the bound server session and returns as a typed bounded presentation fact. It
 does not allocate a command ID/sequence, enter undo or replay history, or mutate
 the controller's scene. Selected input retains v1 default prevention, editable
 targets remain native, and replay fails silently at the adapter boundary.
+Modifier-agnostic `V` shares that non-command discipline but first emits a local
+presentation intent. Unselected player input resolves the interactive deck from
+the installed recipient scene, emits `ZoneOpened`, then invokes the ready-live-
+player declaration seam; unselected spectators open the bottom scene deck but
+cannot declare it. Selected input emits `CardPreviewRequested` for the current
+stable card ID instead, allowing the controller to choose stack versus single
+preview and clearing visible selection without a command. Replay keeps the
+local deck/preview path, while the adapter prevents `DeclareDeckView` from
+reaching transport or the presentation feed.
 `A`/`B` now use the dedicated play-placement slice. A zone card emits
 `MoveCardToPlay`, an eligible top play card emits a fully preconditioned
 `MovePlayStack`, and a viewer-owned staged top emits `RestoreStagedStack`.

@@ -408,6 +408,12 @@ const DeclareMulliganSchema = v.object({
   protocolVersion: v.literal(PROTOCOL_VERSION),
 });
 
+/** Parameterless intent: the room authority derives the player viewing a deck. */
+const DeclareDeckViewSchema = v.object({
+  type: v.literal('DeclareDeckView'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+});
+
 const PingSchema = v.object({
   type: v.literal('Ping'),
   protocolVersion: v.literal(PROTOCOL_VERSION),
@@ -429,6 +435,7 @@ export const ClientMessageSchema = v.variant('type', [
   CommandSchema,
   SendChatSchema,
   DeclareMulliganSchema,
+  DeclareDeckViewSchema,
   PingSchema,
   RequestReplaySchema,
   LeaveSchema,
@@ -594,6 +601,12 @@ const MulliganDeclaredPresentationEventSchema = v.object({
   playerId: IdentifierSchema,
 });
 
+const DeckViewDeclaredPresentationEventSchema = v.object({
+  type: v.literal('DeckViewDeclared'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+});
+
 export const PresentationEventSchema = v.variant('type', [
   v.object({
     type: v.literal('CoinFlipped'),
@@ -694,6 +707,7 @@ export const PresentationEventSchema = v.variant('type', [
     revertedRevision: RevisionSchema,
   }),
   MulliganDeclaredPresentationEventSchema,
+  DeckViewDeclaredPresentationEventSchema,
 ]);
 
 const StatePublicationSchema = v.object({
@@ -745,6 +759,13 @@ const MulliganAnnouncementSchema = v.object({
   type: v.literal('MulliganAnnouncement'),
   protocolVersion: v.literal(PROTOCOL_VERSION),
   event: MulliganDeclaredPresentationEventSchema,
+});
+
+/** Ephemeral room delivery. It is intentionally absent from replay history. */
+const DeckViewAnnouncementSchema = v.object({
+  type: v.literal('DeckViewAnnouncement'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  event: DeckViewDeclaredPresentationEventSchema,
 });
 
 const PresenceSchema = v.object({
@@ -838,6 +859,7 @@ export const ServerMessageSchema = v.variant('type', [
   CommandResultSchema,
   ChatMessageSchema,
   MulliganAnnouncementSchema,
+  DeckViewAnnouncementSchema,
   PresenceSchema,
   PongSchema,
   ServerNoticeSchema,

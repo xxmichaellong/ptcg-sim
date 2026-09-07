@@ -466,7 +466,7 @@ describe('serialized room session hub', () => {
     expect(setup.hub.recentAcceptedCommandPerformance()).toHaveLength(1);
   });
 
-  it('broadcasts an ephemeral server-attributed mulligan announcement without authority mutation', async () => {
+  it('broadcasts ephemeral server-attributed player announcements without authority mutation', async () => {
     const setup = await fixture();
     const redTicket = await setup.hub.issueAdmissionTicket({
       capability: setup.otherSeatCapability,
@@ -530,12 +530,50 @@ describe('serialized room session hub', () => {
     expect(setup.store.durable.authorityVersion).toBe(authorityVersion);
     expect(setup.store.commandCommits).toHaveLength(commandCommitCount);
 
+    await setup.hub.handleFrame(
+      blue.value,
+      JSON.stringify({
+        type: 'DeclareDeckView',
+        protocolVersion: PROTOCOL_VERSION,
+        playerId: p2,
+        zoneId: 'forged-deck',
+      })
+    );
+    const deckAnnouncement = {
+      type: 'DeckViewAnnouncement',
+      protocolVersion: PROTOCOL_VERSION,
+      event: {
+        type: 'DeckViewDeclared',
+        revision: 0,
+        playerId: p1,
+      },
+    };
+    expect(blue.messages.at(-1)).toEqual(deckAnnouncement);
+    expect(red.messages.at(-1)).toEqual(deckAnnouncement);
+    expect(spectator.messages.at(-1)).toEqual(deckAnnouncement);
+    expect(setup.store.durable.authorityVersion).toBe(authorityVersion);
+    expect(setup.store.commandCommits).toHaveLength(commandCommitCount);
+
     const blueMessageCount = blue.messages.length;
     const redMessageCount = red.messages.length;
     await setup.hub.handleFrame(
       spectator.value,
       JSON.stringify({
         type: 'DeclareMulligan',
+        protocolVersion: PROTOCOL_VERSION,
+      })
+    );
+    expect(spectator.messages.at(-1)).toMatchObject({
+      type: 'ServerNotice',
+      code: 'unauthorized',
+    });
+    expect(blue.messages).toHaveLength(blueMessageCount);
+    expect(red.messages).toHaveLength(redMessageCount);
+
+    await setup.hub.handleFrame(
+      spectator.value,
+      JSON.stringify({
+        type: 'DeclareDeckView',
         protocolVersion: PROTOCOL_VERSION,
       })
     );

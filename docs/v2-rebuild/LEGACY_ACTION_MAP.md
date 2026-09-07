@@ -1100,6 +1100,28 @@ v1's hidden inline-angle, margin, or per-evolution `PokémonBreak` history.
 Clicked-card rotation ingress and production BREAK-layout authorization remain
 separate work. No visible control, label, layout, styling, UI, or UX changed.
 
+### Implemented deck and selected-card V-key subset
+
+Unselected plain or modified `V` now opens the viewer's interactive deck through
+the renderer-neutral `ZoneOpened` intent. That local operation happens before a
+separate player-only declaration seam sends parameterless `DeclareDeckView`.
+The server derives the actor from the active bound session and broadcasts a
+typed, current-revision `DeckViewDeclared` fact without allocating a command,
+changing authority/revision state, or entering persistence, undo, or replay
+history. Spectators may retain the legacy local bottom-deck view but cannot send
+or forge an announcement.
+
+Selected `V` instead emits `CardPreviewRequested`, which resolves to the existing
+whole-stack preview for active/bench cards and single-card preview elsewhere.
+It never opens the deck or emits the declaration. Eleven fresh deny-by-default
+v1 pages execute the shipped keyboard, card, zone, and chat modules and pin the
+exact solo/multiplayer row, class, host and relay envelope; modifier behavior;
+selected stack/single previews; spectator/default behavior; focused input; empty
+action/export state; and the v1 replay announcement leak. Candidate Chromium
+keeps safe local replay inspection but the live-player adapter blocks its
+announcement. The real local Worker/browser path proves the server-derived row
+end to end. No label, geometry, style, visible UI, or UX changed.
+
 ### Implemented authority-random face-down subset
 
 `playRandomCardFaceDown` now submits only the explicit target player; authority

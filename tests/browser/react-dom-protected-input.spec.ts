@@ -48,6 +48,7 @@ interface ProtectedInputEvidence {
   readonly shortcutRejections: readonly unknown[];
   readonly shortcutActions: readonly unknown[];
   readonly mulliganDeclarations: number;
+  readonly deckViewDeclarations: number;
   readonly sceneRefreshes: number;
   readonly presentation: {
     readonly selectedCardId: string | null;
@@ -2651,6 +2652,102 @@ test('R separates local scene refresh from protected group and single-card rotat
     },
   ]);
   expect(current.reportedErrors).toEqual([]);
+
+  await page.evaluate(() => {
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.dispose();
+  });
+  await expect(host).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('V opens the local deck or selected-card preview without replay mutation', async ({
+  page,
+}) => {
+  const errors = collectRuntimeErrors(page);
+  const fixture = await mountHarness(page);
+  const host = page.locator('[data-react-dom-protected-input-harness]');
+
+  await clearEvidence(page);
+  await page.keyboard.press('KeyV');
+  await expect
+    .poll(() => evidence(page))
+    .toMatchObject({
+      deckViewDeclarations: 1,
+      submissions: [],
+      shortcutActions: [],
+      presentation: {
+        selectedCardId: null,
+        openedZoneId: fixture.ownDeckZoneId,
+      },
+    });
+  const zoneBrowser = host.locator('[data-legacy-zone-browser]');
+  await expect(zoneBrowser).toBeVisible();
+  await expect(zoneBrowser).toHaveAttribute(
+    'data-zone-browser-id',
+    fixture.ownDeckZoneId
+  );
+  await page.keyboard.press('Escape');
+  await expect(zoneBrowser).toHaveCount(0);
+
+  const selectedCard = host.locator(
+    `[data-card-id="${fixture.activeTopCardId}"]`
+  );
+  const point = await exposedCardPoint(selectedCard);
+  await page.mouse.click(point.x, point.y);
+  await clearEvidence(page);
+  await page.keyboard.press('Alt+KeyV');
+  await expect
+    .poll(() => evidence(page))
+    .toMatchObject({
+      deckViewDeclarations: 0,
+      submissions: [],
+      shortcutActions: [],
+      presentation: { selectedCardId: null, openedZoneId: null },
+      overlays: {
+        preview: {
+          kind: 'stack',
+          stackId: fixture.activeStackId,
+          focusCardId: fixture.activeTopCardId,
+        },
+      },
+    });
+  await page.keyboard.press('KeyV');
+  await expect(host.locator('[data-legacy-card-preview]')).toHaveCount(0);
+  expect((await evidence(page)).deckViewDeclarations).toBe(0);
+
+  await page.evaluate(() => {
+    const input = document.createElement('input');
+    input.dataset.viewShortcutEditor = 'true';
+    document.body.append(input);
+    input.focus();
+  });
+  await page.keyboard.press('KeyV');
+  await expect(page.locator('[data-view-shortcut-editor]')).toHaveValue('v');
+  expect((await evidence(page)).deckViewDeclarations).toBe(0);
+
+  await page.evaluate(() => {
+    document.querySelector('[data-view-shortcut-editor]')?.remove();
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.enterSoloReplay();
+  });
+  await expect
+    .poll(async () => (await evidence(page)).sourceKind)
+    .toBe('replay');
+  await clearEvidence(page);
+  await page.keyboard.press('KeyV');
+  await expect
+    .poll(async () => (await evidence(page)).presentation.openedZoneId)
+    .toBe(fixture.ownDeckZoneId);
+  const replayEvidence = await evidence(page);
+  expect(replayEvidence.deckViewDeclarations).toBe(0);
+  expect(replayEvidence.submissions).toEqual([]);
+  expect(replayEvidence.shortcutActions).toEqual([]);
+  expect(replayEvidence.reportedErrors).toEqual([]);
 
   await page.evaluate(() => {
     const harness = (window as ProtectedInputHarnessWindow)

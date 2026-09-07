@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 1049 v2 tests across 154 files. A separate suite
-passes 178 Playwright checks across 79 Chromium 151 browser files:
+The repository-wide gate passes 1054 v2 tests across 154 files. A separate suite
+passes 190 Playwright checks across 80 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -1503,6 +1503,19 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     Canonical v2 state deliberately does not absorb the source's hidden inline
     angles, wrapper margins, or per-evolution BREAK history. No wire, domain,
     authority schema, visible control, label, layout, styling, UI, or UX changed.
+89. The modifier-agnostic `V` family now separates local inspection from its
+    player-facing announcement. Unselected input opens the viewer's disclosed,
+    interactive deck through `ZoneOpened` before the client sends parameterless
+    `DeclareDeckView`; the server derives the active player, rejects spectators,
+    and broadcasts a typed current-revision fact without authority, command,
+    persistence, undo, or replay-history mutation. Selected input instead uses
+    the existing stable-ID card/stack preview intent and never touches the deck
+    or declaration path. Eleven fresh deny-by-default v1 pages pin exact deck,
+    text/class/host/relay, modifier, stack/single preview, spectator/default,
+    editor, empty-history, and replay-leak behavior. Candidate Chromium proves
+    recipient-safe local opening/preview and blocks the declaration during
+    replay; the real Wrangler/Vite room renders the unchanged player row end to
+    end. No visible control, label, layout, styling, UI, or UX changed.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

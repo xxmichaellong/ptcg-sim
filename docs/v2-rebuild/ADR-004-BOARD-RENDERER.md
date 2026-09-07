@@ -175,6 +175,14 @@ resolve stable card identity to existing stack/per-card target-value commands.
 Replay, full-card preview, spectator, and editable-input boundaries fail closed.
 The canonical model does not acquire legacy inline-angle, margin, or
 per-evolution BREAK history merely to reproduce refresh-dependent defects.
+`V` also stays context-sensitive and renderer-neutral. Unselected input opens
+the recipient-safe viewer deck through a local `ZoneOpened` intent, then a
+ready live player may send a separate parameterless declaration that the server
+attributes and broadcasts as an ephemeral presentation fact. Spectators retain
+local bottom-deck inspection but cannot declare it. Selected input uses the
+existing stable-ID card/stack preview intent and never touches the deck. Replay
+keeps safe historical inspection while the adapter blocks declaration, fixing
+the source's announcement leak without introducing renderer-owned state.
 Local zone sorting is
 controlled by the mounted zone browser:
 it derives a stable copy from disclosed labels and never enters the controller

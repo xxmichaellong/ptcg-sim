@@ -16,8 +16,9 @@ scope, and a closed semantic-source enum. Only public single-card reveal facts
 may contain a bounded card display name; hide and private-inspection facts have
 no card-identity field.
 
-The parameterless `DeclareMulligan` message is a typed non-command room intent.
-Its server delivery carries only a current-revision `MulliganDeclared` event
-with server-derived player attribution; it contains no free-form text and is
-not a replay-history record. General `SendChat`/`ChatMessage` remains a separate
-protocol surface.
+The parameterless `DeclareMulligan` and `DeclareDeckView` messages are typed
+non-command room intents. Their server deliveries carry only current-revision
+`MulliganDeclared` or `DeckViewDeclared` events with server-derived player
+attribution; they contain no free-form text, client-supplied player/zone
+identity, or replay-history record. General `SendChat`/`ChatMessage` remains a
+separate protocol surface.

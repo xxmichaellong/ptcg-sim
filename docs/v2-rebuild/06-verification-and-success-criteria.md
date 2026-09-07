@@ -189,6 +189,18 @@ during full-card preview. The gate does not authorize reconstructing v1's
 history-dependent inline-angle, wrapper-margin, or per-evolution BREAK state in
 the canonical model.
 
+Deck/preview-key parity has paired Chromium evidence across eleven fresh v1
+pages, the protected candidate, and the real local Worker/browser route.
+Unselected plain/modified `V` pins exact deck opening, solo/multiplayer activity
+text/class/host and relay shape, spectator silence, editable suppression, empty
+action/export state, and the source replay leak. Selected `V` pins active-stack
+versus single-card preview and player/spectator default behavior without a deck
+announcement. V2 must open only a recipient-safe interactive deck, send no
+client identity or text, derive the player from the active server binding,
+reject spectator forgery, validate the current revision/player at receipt, and
+mutate no command/authority/persistence/replay state. Historical replay may open
+the local safe deck, but its declaration must fail before transport.
+
 ### Implemented seeded authority/storage model
 
 The server model suite at

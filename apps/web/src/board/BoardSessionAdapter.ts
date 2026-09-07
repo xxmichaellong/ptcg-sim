@@ -32,7 +32,7 @@ export type BoardSessionLiveSource = Pick<
   RemoteGameSession,
   'getSnapshot' | 'subscribe' | 'submit'
 > &
-  Partial<Pick<RemoteGameSession, 'declareMulligan'>>;
+  Partial<Pick<RemoteGameSession, 'declareMulligan' | 'declareDeckView'>>;
 
 export type BoardSessionReplaySource = Pick<
   ReplaySessionCoordinator,
@@ -160,6 +160,17 @@ export class BoardSessionAdapter {
 
   /** Sends an ephemeral room declaration only from a writable live player view. */
   declareMulligan(): boolean {
+    return this.declareFromLivePlayer('declareMulligan');
+  }
+
+  /** Sends an ephemeral room declaration only from a writable live player view. */
+  declareDeckView(): boolean {
+    return this.declareFromLivePlayer('declareDeckView');
+  }
+
+  private declareFromLivePlayer(
+    declaration: 'declareMulligan' | 'declareDeckView'
+  ): boolean {
     if (this.disposed) return false;
     const replay = this.options.replay.getSnapshot();
     const live = this.options.live.getSnapshot();
@@ -171,7 +182,7 @@ export class BoardSessionAdapter {
     ) {
       return false;
     }
-    return this.options.live.declareMulligan?.() ?? false;
+    return this.options.live[declaration]?.() ?? false;
   }
 
   refreshScene(): boolean {

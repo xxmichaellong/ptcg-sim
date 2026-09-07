@@ -225,3 +225,12 @@ traces are retained as a 14-day artifact. Browser binaries are not cached.
   current stable card ID, retain selection, and reject replay. Legacy
   inline-angle, margin, and per-evolution BREAK history remains diagnostic and
   must not be inferred from canonical quarter turns.
+- The V-key lane pairs eleven fresh deny-by-default v1 pages with the protected
+  candidate and real local Worker/browser route. It pins modifier-agnostic
+  bottom-deck opening, exact solo/multiplayer row and relay shape, selected
+  stack/card preview, spectator/default behavior, editable silence, empty action
+  history, and v1 replay leakage. V2 must route deck/preview presentation by
+  stable recipient-safe IDs, send a parameterless player declaration only after
+  local opening, derive its actor at the server, reject spectators and malformed
+  revision/player delivery, create no authority/command/replay mutation, and
+  allow local replay inspection without sending or presenting a live declaration.

@@ -1278,6 +1278,20 @@ Chromium proves the local-only refresh and stable-ID command paths. Canonical
 v2 quarter-turn values deliberately exclude the source's history-dependent
 inline angles, wrapper margins, and per-evolution BREAK booleans; those source
 histories stay compatibility evidence rather than renderer-owned state.
+`V` completes the neighboring local-view collision without turning view state
+into game state. With no selection, every modifier form opens the viewer's
+recipient-safe deck through the existing `ZoneOpened` presentation intent;
+players then send a separate parameterless `DeclareDeckView` message, while
+spectators open the bottom deck locally and announce nothing. The server derives
+the player from the bound session and broadcasts one current-revision ephemeral
+fact with no command, revision, persistence, undo, or replay-history mutation.
+With a selection, `V` uses the existing card/stack preview intent and never
+opens or announces the deck. Eleven real-v1 pages pin exact solo/multiplayer
+text/class/host/relay behavior, modifier handling, selected stack/card previews,
+spectator/default behavior, editor suppression, and the source replay leak.
+Candidate replay deliberately retains safe local historical inspection but the
+adapter rejects its declaration, so the legacy network/presentation leak is not
+reproduced. No visible surface or workflow changed.
 `A` and `B` now cross a separate closed active/bench resolver. Zone cards emit
 `MoveCardToPlay`; eligible top cards move a whole stack with exact board-order
 preconditions; a viewer-owned staged top restores atomically. Real v1 active

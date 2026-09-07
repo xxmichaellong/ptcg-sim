@@ -822,6 +822,24 @@ describe('client protocol ingress', () => {
     });
   });
 
+  it('accepts only the parameterless deck-view declaration intent', () => {
+    const parsed = parseClientFrame(
+      JSON.stringify({
+        type: 'DeclareDeckView',
+        protocolVersion: PROTOCOL_VERSION,
+        playerId: 'forged-player',
+        zoneId: 'forged-zone',
+      })
+    );
+    expect(parsed).toEqual({
+      ok: true,
+      value: {
+        type: 'DeclareDeckView',
+        protocolVersion: PROTOCOL_VERSION,
+      },
+    });
+  });
+
   it('validates bounded recipient-safe activity detail', () => {
     const events = [
       {
@@ -864,6 +882,11 @@ describe('client protocol ingress', () => {
       {
         type: 'MulliganDeclared',
         revision: 8,
+        playerId: 'actor',
+      },
+      {
+        type: 'DeckViewDeclared',
+        revision: 9,
         playerId: 'actor',
       },
     ] as const;
@@ -955,6 +978,46 @@ describe('client protocol ingress', () => {
             revision: 12,
             playerId: 'blue',
             result: 'heads',
+          },
+        })
+      ).ok
+    ).toBe(false);
+  });
+
+  it('accepts only a typed deck-view announcement from the server', () => {
+    expect(
+      parseServerFrame(
+        JSON.stringify({
+          type: 'DeckViewAnnouncement',
+          protocolVersion: PROTOCOL_VERSION,
+          event: {
+            type: 'DeckViewDeclared',
+            revision: 12,
+            playerId: 'blue',
+          },
+        })
+      )
+    ).toEqual({
+      ok: true,
+      value: {
+        type: 'DeckViewAnnouncement',
+        protocolVersion: PROTOCOL_VERSION,
+        event: {
+          type: 'DeckViewDeclared',
+          revision: 12,
+          playerId: 'blue',
+        },
+      },
+    });
+    expect(
+      parseServerFrame(
+        JSON.stringify({
+          type: 'DeckViewAnnouncement',
+          protocolVersion: PROTOCOL_VERSION,
+          event: {
+            type: 'MulliganDeclared',
+            revision: 12,
+            playerId: 'blue',
           },
         })
       ).ok

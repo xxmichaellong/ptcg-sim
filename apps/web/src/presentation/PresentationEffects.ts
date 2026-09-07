@@ -282,6 +282,14 @@ export const presentationEffectsForEvent = (
         accessibility(event, message),
       ];
     }
+    case 'DeckViewDeclared': {
+      const name = playerName(view, event.playerId);
+      const message = `${name} is looking through ${name}'s deck`;
+      return [
+        activity(event, 'player', message, event.playerId),
+        accessibility(event, message),
+      ];
+    }
   }
   const unhandled: never = event;
   return unhandled;

@@ -636,6 +636,34 @@ export class RoomSessionHub {
         });
         return;
       }
+      case 'DeclareDeckView': {
+        const snapshot = this.coordinator.currentSnapshot();
+        const session = snapshot.sessions[boundSessionId];
+        if (!session?.active) {
+          this.send(
+            connection,
+            notice('session_superseded', 'Session is no longer active')
+          );
+          return;
+        }
+        if (session.viewer.kind !== 'player') {
+          this.send(
+            connection,
+            notice('unauthorized', 'Only a player can declare a deck view')
+          );
+          return;
+        }
+        this.broadcastToActiveSessions(snapshot, {
+          type: 'DeckViewAnnouncement',
+          protocolVersion: PROTOCOL_VERSION,
+          event: {
+            type: 'DeckViewDeclared',
+            revision: snapshot.state.revision,
+            playerId: session.viewer.playerId,
+          },
+        });
+        return;
+      }
       case 'RequestReplay': {
         const snapshot = this.coordinator.currentSnapshot();
         const session = snapshot.sessions[boundSessionId];

@@ -11,10 +11,11 @@ identity, explicit message tracking, admission freeze, and lifecycle race tests.
 PTCG Sim does not reuse MagicCircle's debounced per-user persistence because an
 accepted game command requires an atomic per-room journal commit.
 
-Mulligan declarations are the explicit non-command exception: the hub derives
-the actor from the bound active player session and relays one typed ephemeral
-presentation fact to active room sockets. It accepts no client identity or
-message text and performs no authority, journal, undo, or replay mutation.
+Mulligan and deck-view declarations are explicit non-command exceptions: the
+hub derives the actor from the bound active player session and relays one typed
+ephemeral presentation fact to active room sockets. It accepts no client
+identity, zone identity, or message text and performs no authority, journal,
+undo, or replay mutation. Spectators cannot originate either declaration.
 
 Recent audit rows are transactionally bounded independently from the authority
 snapshot: 128 command rows/512 KiB and 64 admission rows/128 KiB. The snapshot,

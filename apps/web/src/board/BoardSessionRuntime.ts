@@ -223,6 +223,14 @@ export class BoardSessionRuntime {
     return adapter.declareMulligan();
   }
 
+  /** Route-owned keyboard seam for an ephemeral deck-view declaration. */
+  declareDeckView(): boolean {
+    this.assertUsable();
+    const adapter = this.adapter;
+    if (!adapter) throw new Error('Board session adapter is unavailable');
+    return adapter.declareDeckView();
+  }
+
   /** Reconstructs the current recipient-safe scene without changing game state. */
   refreshScene(): boolean {
     this.assertUsable();

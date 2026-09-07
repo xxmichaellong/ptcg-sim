@@ -3,7 +3,10 @@
 import { createElement } from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { createRendererSpikeView } from '@ptcgsim/renderer-contract';
+import {
+  createBoardSceneForViewport,
+  createRendererSpikeView,
+} from '@ptcgsim/renderer-contract';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createInitialBoardSessionControllerState } from './BoardSessionController.js';
@@ -536,6 +539,156 @@ describe('legacy board keyboard shortcut bridge', () => {
     expect(dispatch()).toBe(true);
     expect(onRequest).not.toHaveBeenCalled();
     expect(onRefreshScene).not.toHaveBeenCalled();
+  });
+
+  it('routes V to local deck/card presentation before its player announcement', async () => {
+    const onRequest = vi.fn();
+    const onLocalIntent = vi.fn();
+    const onDeclareDeckView = vi.fn();
+    const initial = createInitialBoardSessionControllerState();
+    const view = createRendererSpikeView();
+    if (view.viewer.kind !== 'player') throw new Error('player view required');
+    const scene = createBoardSceneForViewport(view, {
+      viewport: { width: 1208, height: 900, devicePixelRatio: 1 },
+      bottomPlayerId: view.viewer.playerId,
+      splitRatio: 0.5,
+      geometryVersion: 1,
+    });
+    const deck = scene.zones.find(
+      (zone) => zone.kind === 'deck' && zone.playerId === view.viewer.playerId
+    )!;
+    const selectedCard = scene.cards.find((card) =>
+      card.parentId.includes(':active')
+    )!;
+    const state = { ...initial, view, scene };
+    const dispatch = (init: KeyboardEventInit = {}) =>
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'v',
+          code: 'KeyV',
+          bubbles: true,
+          cancelable: true,
+          ...init,
+        })
+      );
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state,
+          onRequest,
+          onLocalIntent,
+          onDeclareDeckView,
+        })
+      );
+    });
+    expect(dispatch()).toBe(true);
+    expect(dispatch({ ctrlKey: true })).toBe(true);
+    expect(dispatch({ key: 'V', shiftKey: true })).toBe(true);
+    expect(dispatch({ altKey: true })).toBe(true);
+    expect(onLocalIntent.mock.calls.map(([intent]) => intent)).toEqual(
+      Array.from({ length: 4 }, () => ({
+        kind: 'ZoneOpened',
+        zoneId: deck.id,
+      }))
+    );
+    expect(onDeclareDeckView).toHaveBeenCalledTimes(4);
+    for (let index = 0; index < 4; index += 1) {
+      expect(onLocalIntent.mock.invocationCallOrder[index]).toBeLessThan(
+        onDeclareDeckView.mock.invocationCallOrder[index]!
+      );
+    }
+    expect(onRequest).not.toHaveBeenCalled();
+
+    onLocalIntent.mockClear();
+    onDeclareDeckView.mockClear();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state: {
+            ...state,
+            presentation: {
+              ...state.presentation,
+              selectedCardId: selectedCard.id,
+            },
+          },
+          onRequest,
+          onLocalIntent,
+          onDeclareDeckView,
+        })
+      );
+    });
+    expect(dispatch()).toBe(false);
+    expect(dispatch({ altKey: true })).toBe(false);
+    expect(onLocalIntent.mock.calls.map(([intent]) => intent)).toEqual([
+      { kind: 'CardPreviewRequested', cardId: selectedCard.id },
+      { kind: 'CardPreviewRequested', cardId: selectedCard.id },
+    ]);
+    expect(onDeclareDeckView).not.toHaveBeenCalled();
+
+    onLocalIntent.mockClear();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state: {
+            ...state,
+            overlays: {
+              ...state.overlays,
+              preview: { kind: 'card', cardId: selectedCard.id },
+            },
+          },
+          onRequest,
+          onLocalIntent,
+          onDeclareDeckView,
+        })
+      );
+    });
+    expect(dispatch()).toBe(false);
+    expect(onLocalIntent).not.toHaveBeenCalled();
+
+    const spectatorView = { ...view, viewer: { kind: 'spectator' } as const };
+    onLocalIntent.mockClear();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state: {
+            ...state,
+            view: spectatorView,
+            presentation: {
+              ...state.presentation,
+              selectedCardId: selectedCard.id,
+            },
+          },
+          onRequest,
+          onLocalIntent,
+          onDeclareDeckView,
+        })
+      );
+    });
+    expect(dispatch()).toBe(true);
+    expect(onLocalIntent).toHaveBeenCalledExactlyOnceWith({
+      kind: 'CardPreviewRequested',
+      cardId: selectedCard.id,
+    });
+    expect(onDeclareDeckView).not.toHaveBeenCalled();
+
+    onLocalIntent.mockClear();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state: { ...state, view: spectatorView },
+          onRequest,
+          onLocalIntent,
+          onDeclareDeckView,
+        })
+      );
+    });
+    expect(dispatch()).toBe(true);
+    expect(onLocalIntent).toHaveBeenCalledExactlyOnceWith({
+      kind: 'ZoneOpened',
+      zoneId: deck.id,
+    });
+    expect(onDeclareDeckView).not.toHaveBeenCalled();
   });
 
   it('does not let global shortcuts collide with overlays or native card and zone activation', async () => {

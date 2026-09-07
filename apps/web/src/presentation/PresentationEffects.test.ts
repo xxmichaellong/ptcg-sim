@@ -109,6 +109,11 @@ const events: readonly PresentationEvent[] = [
     revision: 14,
     playerId: 'spike-red',
   },
+  {
+    type: 'DeckViewDeclared',
+    revision: 14,
+    playerId: 'spike-blue',
+  },
 ];
 
 const messages = (effects: readonly PresentationEffect[]) =>
@@ -166,6 +171,10 @@ describe('presentationEffectsForEvent', () => {
         'accessibility:Blue took back their last move!',
       ],
       ['announcement:Red mulligans', 'accessibility:Red mulligans'],
+      [
+        "player:Blue is looking through Blue's deck",
+        "accessibility:Blue is looking through Blue's deck",
+      ],
     ]);
 
     expect(presentationEffectsForEvent(events[0]!, view)).toContainEqual({
