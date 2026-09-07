@@ -300,6 +300,66 @@ describe('legacy board keyboard shortcut bridge', () => {
     ]);
   });
 
+  it('routes U only for a solo-capable unselected surface', async () => {
+    const onRequest = vi.fn();
+    const state = createInitialBoardSessionControllerState();
+    const dispatch = (target: EventTarget = document) =>
+      target.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'u',
+          code: 'KeyU',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, { state, onRequest })
+      );
+    });
+    expect(dispatch()).toBe(true);
+    expect(onRequest).not.toHaveBeenCalled();
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state,
+          onRequest,
+          soloUndoEnabled: true,
+        })
+      );
+    });
+    expect(dispatch()).toBe(true);
+    expect(onRequest).toHaveBeenCalledExactlyOnceWith({
+      action: 'undoOwnLastMove',
+    });
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state: {
+            ...state,
+            presentation: {
+              ...state.presentation,
+              selectedCardId: 'selected-card',
+            },
+          },
+          onRequest,
+          soloUndoEnabled: true,
+        })
+      );
+    });
+    expect(dispatch()).toBe(false);
+
+    const input = document.createElement('input');
+    document.body.append(input);
+    input.focus();
+    expect(dispatch(input)).toBe(true);
+    input.remove();
+    expect(onRequest).toHaveBeenCalledTimes(1);
+  });
+
   it('does not let global shortcuts collide with overlays or native card and zone activation', async () => {
     const onRequest = vi.fn();
     const state = createInitialBoardSessionControllerState();

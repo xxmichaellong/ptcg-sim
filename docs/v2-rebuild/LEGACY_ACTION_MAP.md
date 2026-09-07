@@ -1037,6 +1037,25 @@ one typed replay rejection per key before any prompt opens; focused controller
 coverage rejects a forged second stage. No new wire/domain/authority schema or
 visible UI/UX is introduced.
 
+### Implemented solo-undo keyboard subset
+
+Plain `U` now maps to the existing `ApplySoloUndo` path only when route
+composition explicitly marks the surface solo-capable. The closed shortcut
+request carries no player, revision, checkpoint, event list, or random result;
+the resolver derives the current viewer. Replay fails before resolution, and
+authority mode plus its private bounded history remain definitive.
+
+A six-page deny-by-default Chromium oracle executes the unchanged v1 modules
+and pins successful reset-boundary reconstruction, exact announcement and
+action/export records, `Loading...`→`Undo` state, synchronous double-key
+suppression, selected-card default prevention, multiplayer/spectator/editable
+silence, and v1's replay mutation leak. Candidate Chromium queues only one
+viewer-derived command for a synchronous double press and proves selected,
+editable, and pre-resolution replay boundaries. The real client session rejects
+a second pending `ApplySoloUndo` as `command_pending` without consuming a
+sequence or socket frame, then permits retry after a settled authority result.
+No wire/domain/authority schema or visible UI/UX is introduced.
+
 ### Implemented authority-random face-down subset
 
 `playRandomCardFaceDown` now submits only the explicit target player; authority

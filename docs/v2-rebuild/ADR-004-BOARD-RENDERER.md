@@ -153,6 +153,12 @@ The prompt keeps v1 text, default, invalid/cancel alert, and Alt-`D` default
 suppression; its second stage is action-bound, reparsed, and clamped from the
 current viewer projection. Replay fails before prompting and authority owns
 shuffle randomness.
+Plain `U` is the solo-only unselected continuation. A route must explicitly
+enable the key, its payload-free request derives the viewer through the existing
+solo-undo resolver, and replay still fails before resolution. Remote session
+submission suppresses a second pending `ApplySoloUndo` without allocating a
+sequence or transport write, matching the source async in-progress boundary;
+authority mode/history remains definitive.
 Local zone sorting is
 controlled by the mounted zone browser:
 it derives a stable copy from disclosed labels and never enters the controller
@@ -161,8 +167,8 @@ Native Chromium pins exact damage and condition edit/removal plus ability-marker
 commands, all six count prompts/commands, all three category choices, all five
 move choices, all twenty-four selected-card shortcut commands, all three global
 loose-board commands, all four intended unselected deck commands, the global
-coin command, all three lifecycle commands, all three staged hand commands, and
-reversible sorting with zero action/effect/command traffic.
+coin command, all three lifecycle commands, all three staged hand commands, the
+solo undo key, and reversible sorting with zero action/effect/command traffic.
 Replay-local prize/hand disclosure now uses an isolated solo-player-only
 projection. Its opaque catalog never enters the historical view. Prize menus
 offer their two source zone rows plus `Reveal/hide card`; opponent-hand menus

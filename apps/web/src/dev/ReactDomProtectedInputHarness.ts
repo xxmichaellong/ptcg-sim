@@ -253,11 +253,16 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
   const shortcutActions: LegacyBoardShortcutActionRequest[] = [];
   const reportedErrors: string[] = [];
   let clientSequence = 0;
+  let soloUndoPending = false;
   const live: BoardSessionLiveSource = {
     getSnapshot: () => liveState,
     subscribe: () => () => undefined,
     submit: (command) => {
+      if (command.type === 'ApplySoloUndo' && soloUndoPending) {
+        return { queued: false, reason: 'command_pending' };
+      }
       submissions.push(command);
+      if (command.type === 'ApplySoloUndo') soloUndoPending = true;
       clientSequence += 1;
       return {
         queued: true,
@@ -559,6 +564,7 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
             }),
             createElement(LegacyBoardKeyboardShortcuts, {
               state: current,
+              soloUndoEnabled: true,
               onRequest: (request) => {
                 shortcutActions.push(request);
                 runtime.emitLegacyShortcutAction(request);

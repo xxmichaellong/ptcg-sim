@@ -222,6 +222,23 @@ describe('legacy board shortcut action resolver', () => {
     }
   });
 
+  it('maps only plain U to the unselected solo-undo request', () => {
+    expect(
+      resolveLegacyBoardUnselectedShortcutKey({
+        key: 'u',
+        code: 'KeyU',
+        altKey: false,
+      })
+    ).toEqual({ action: 'undoOwnLastMove' });
+    expect(
+      resolveLegacyBoardUnselectedShortcutKey({
+        key: 'u',
+        code: 'KeyU',
+        altKey: true,
+      })
+    ).toBeNull();
+  });
+
   it('resolves unselected deck requests only against the viewer deck', () => {
     const view = createRendererSpikeView();
     if (view.viewer.kind !== 'player') {
@@ -365,7 +382,7 @@ describe('legacy board shortcut action resolver', () => {
     ).toEqual({ ok: false, reason: 'not_player' });
   });
 
-  it('derives lifecycle and turn targets from the viewer perspective', () => {
+  it('derives lifecycle, turn, and solo-undo targets from the viewer perspective', () => {
     const view = createRendererSpikeView();
     if (view.viewer.kind !== 'player') {
       throw new Error('Shortcut fixture must use a player viewer');
@@ -384,6 +401,10 @@ describe('legacy board shortcut action resolver', () => {
       [
         { action: 'startOwnTurn' },
         { type: 'StartTurn', targetPlayerId: viewerId },
+      ],
+      [
+        { action: 'undoOwnLastMove' },
+        { type: 'ApplySoloUndo', targetPlayerId: viewerId },
       ],
     ] as const) {
       expect(resolveLegacyBoardShortcutAction(view, request)).toEqual({

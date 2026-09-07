@@ -156,6 +156,16 @@ existing atomic hand command, invalid/canceled input emits none, forged staged
 input fails closed, authority owns randomness, and replay is rejected before a
 prompt opens.
 
+Solo-undo keyboard parity has paired Chromium evidence across six fresh v1
+pages and one explicitly solo-capable candidate route. Plain `U` pins successful
+zone reconstruction, exact announcement/action/export state, loading-button
+transitions, synchronous repeat suppression, selected default prevention,
+multiplayer/spectator/editable silence, and v1 replay leakage. Candidate input
+contains no target or history data, derives the viewer for `ApplySoloUndo`,
+rejects replay before resolution, and queues only one command under rapid
+repeat. The client-session gate proves `command_pending` consumes no sequence
+or socket write and clears only when the pending authority result settles.
+
 ### Implemented seeded authority/storage model
 
 The server model suite at

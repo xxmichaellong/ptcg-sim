@@ -392,6 +392,58 @@ describe('RemoteGameSession', () => {
     });
   });
 
+  it('suppresses a duplicate solo undo until the pending authority result settles', () => {
+    const test = setup();
+    const socket = test.admit();
+    const command = {
+      type: 'ApplySoloUndo' as const,
+      targetPlayerId: 'blue',
+    };
+
+    expect(test.session.submit(command)).toEqual({
+      queued: true,
+      commandId: 'command-1',
+      clientSequence: 1,
+    });
+    expect(test.session.submit(command)).toEqual({
+      queued: false,
+      reason: 'command_pending',
+    });
+    expect(test.session.getSnapshot()).toMatchObject({
+      nextClientSequence: 2,
+      pendingCommands: [
+        {
+          commandId: 'command-1',
+          clientSequence: 1,
+          commandType: 'ApplySoloUndo',
+          state: 'in_flight',
+        },
+      ],
+    });
+    expect(socket.sent).toHaveLength(2);
+
+    socket.serverMessage({
+      type: 'CommandResult',
+      protocolVersion: PROTOCOL_VERSION,
+      commandId: 'command-1',
+      clientSequence: 1,
+      accepted: false,
+      revision: 0,
+      code: 'precondition_failed',
+    });
+    expect(test.session.submit(command)).toEqual({
+      queued: true,
+      commandId: 'command-2',
+      clientSequence: 2,
+    });
+    expect(clientFrame(socket, 2)).toMatchObject({
+      type: 'Command',
+      commandId: 'command-2',
+      clientSequence: 2,
+      command,
+    });
+  });
+
   it('does not reconnect or write after an in-flight observer closes the session', () => {
     const test = setup();
     const socket = test.admit();

@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 
 import type { BoardSessionControllerState } from './BoardSessionController.js';
 import {
-  isLegacyOwnHandShortcutAction,
   resolveLegacyBoardGlobalShortcutKey,
   resolveLegacyBoardShortcutKey,
   resolveLegacyBoardUnselectedShortcutKey,
@@ -12,6 +11,8 @@ import {
 export interface LegacyBoardKeyboardShortcutsProps {
   readonly state: BoardSessionControllerState;
   readonly onRequest: (request: LegacyBoardShortcutActionRequest) => void;
+  /** Supplied only by a route that knows it represents a solo room. */
+  readonly soloUndoEnabled?: boolean;
 }
 
 const EDITABLE_SHORTCUT_TARGET =
@@ -36,6 +37,7 @@ const isNativeEnterActivationTarget = (event: KeyboardEvent): boolean =>
 export const LegacyBoardKeyboardShortcuts = ({
   state,
   onRequest,
+  soloUndoEnabled = false,
 }: LegacyBoardKeyboardShortcutsProps) => {
   const selectedCardId = state.presentation.selectedCardId;
   useEffect(() => {
@@ -53,19 +55,18 @@ export const LegacyBoardKeyboardShortcuts = ({
           ? null
           : resolveLegacyBoardShortcutKey(event, selectedCardId);
       const unselectedRequest = resolveLegacyBoardUnselectedShortcutKey(event);
+      const enabledUnselectedRequest =
+        unselectedRequest?.action === 'undoOwnLastMove' && !soloUndoEnabled
+          ? null
+          : unselectedRequest;
       const request =
         selectedRequest ??
         (isNativeEnterActivationTarget(event)
           ? null
           : resolveLegacyBoardGlobalShortcutKey(event)) ??
-        (selectedCardId === null ? unselectedRequest : null);
+        (selectedCardId === null ? enabledUnselectedRequest : null);
       if (!request) {
-        if (
-          selectedCardId !== null &&
-          unselectedRequest &&
-          isLegacyOwnHandShortcutAction(unselectedRequest.action) &&
-          event.cancelable
-        ) {
+        if (selectedCardId !== null && unselectedRequest && event.cancelable) {
           event.preventDefault();
         }
         return;
@@ -83,6 +84,6 @@ export const LegacyBoardKeyboardShortcuts = ({
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onRequest, selectedCardId]);
+  }, [onRequest, selectedCardId, soloUndoEnabled]);
   return null;
 };

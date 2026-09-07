@@ -1245,6 +1245,15 @@ pin exact prompt/alert/default-prevention behavior, zone order, messages,
 random-call counts, action/export records, replay leakage, and selected/spectator
 silence. Candidate Chromium rejects replay before opening a prompt; a forged
 second-stage value is rejected by the controller before submission.
+Plain `U` is enabled only by a composition that knows it owns a solo room and
+submits the existing viewer-derived `ApplySoloUndo` intent. Six fresh source
+pages pin successful reconstruction, announcement/action records, async button
+state, synchronous repeat suppression, selected default prevention,
+multiplayer/spectator/editable silence, and the same replay-guard defect.
+Candidate replay fails before resolution. The client session also permits only
+one pending undo command, returning local `command_pending` without allocating
+a sequence or socket frame until the authority result settles; authority mode
+and retained history remain the final permission/precondition boundary.
 `A` and `B` now cross a separate closed active/bench resolver. Zone cards emit
 `MoveCardToPlay`; eligible top cards move a whole stack with exact board-order
 preconditions; a viewer-owned staged top restores atomically. Real v1 active

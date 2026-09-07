@@ -198,3 +198,12 @@ traces are retained as a 14-day artifact. Browser binaries are not cached.
   submit exactly one existing atomic command for valid input, leave randomness
   to authority, suppress selected/editable input, and reject replay before a
   prompt appears.
+- The solo-undo key lane pairs six fresh deny-by-default v1 pages with one
+  explicitly solo-capable candidate DOM case. It pins successful source
+  reconstruction, announcement/action/export records, loading-button state,
+  rapid-repeat suppression, selected default prevention,
+  multiplayer/spectator/editable silence, and replay leakage. The candidate
+  must derive the viewer, emit only `ApplySoloUndo`, reject replay before
+  resolution, and queue at most one command for a rapid repeat. A real session
+  unit gate must prove `command_pending` allocates no sequence and writes no
+  frame until the first authority result settles.

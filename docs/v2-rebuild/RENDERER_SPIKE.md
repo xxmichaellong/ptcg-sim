@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 1036 v2 tests across 154 files. A separate suite
-passes 157 Playwright checks across 76 Chromium 151 browser files:
+The repository-wide gate passes 1040 v2 tests across 154 files. A separate suite
+passes 159 Playwright checks across 77 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -1465,6 +1465,18 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     canceled, selected/editable, and pre-prompt read-only paths; focused
     controller coverage rejects a forged second stage. No wire/domain/authority
     schema, visible control, label, layout, styling, UI, or UX changed.
+86. Plain `U` now enters the existing solo-undo authority path only from an
+    explicitly solo-capable unselected composition. Its payload-free request
+    derives the viewer and contains no client history input. Six fresh source
+    pages pin successful reconstruction, announcement/action/export and async
+    button state, double-press suppression, selected default prevention,
+    multiplayer/spectator/editable silence, and replay leakage. Candidate
+    Chromium proves one viewer-derived command under synchronous repeat plus
+    selected/editable/pre-resolution replay boundaries. The real client session
+    returns `command_pending` without consuming sequence/transport capacity
+    until the prior undo result settles; authority mode/history remains final.
+    No wire/domain/authority schema, visible control, label, layout, styling,
+    UI, or UX changed.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

@@ -2316,6 +2316,120 @@ test('unselected hand shortcuts stage native counts before atomic authority comm
   expect(errors).toEqual([]);
 });
 
+test('solo U submits one viewer-derived undo while repeat, selection, and replay stay bounded', async ({
+  page,
+}) => {
+  const errors = collectRuntimeErrors(page);
+  const fixture = await mountHarness(page);
+  const host = page.locator('[data-react-dom-protected-input-harness]');
+
+  await page.evaluate(() => {
+    const input = {
+      key: 'u',
+      code: 'KeyU',
+      bubbles: true,
+      cancelable: true,
+    };
+    document.body.dispatchEvent(new KeyboardEvent('keydown', input));
+    document.body.dispatchEvent(new KeyboardEvent('keydown', input));
+  });
+  await expect
+    .poll(async () => (await evidence(page)).submissionResults)
+    .toEqual([
+      {
+        queued: true,
+        commandId: 'protected-input-command-1',
+        clientSequence: 1,
+      },
+      { queued: false, reason: 'command_pending' },
+    ]);
+  let current = await evidence(page);
+  expect(current.submissions).toEqual([
+    {
+      type: 'ApplySoloUndo',
+      targetPlayerId: fixture.ownPlayerId,
+    },
+  ]);
+  expect(current.shortcutActions).toEqual([
+    { action: 'undoOwnLastMove' },
+    { action: 'undoOwnLastMove' },
+  ]);
+  expect(current.shortcutRejections).toEqual([]);
+  expect(current.presentation.selectedCardId).toBeNull();
+  expect(current.reportedErrors).toEqual([]);
+
+  const selectedCard = host.locator(
+    `[data-card-id="${fixture.activeTopCardId}"]`
+  );
+  const point = await exposedCardPoint(selectedCard);
+  await page.mouse.click(point.x, point.y);
+  await expect
+    .poll(async () => (await evidence(page)).presentation.selectedCardId)
+    .toBe(fixture.activeTopCardId);
+  await clearEvidence(page);
+  await page.keyboard.press('KeyU');
+  current = await evidence(page);
+  expect(current.submissions).toEqual([]);
+  expect(current.submissionResults).toEqual([]);
+  expect(current.shortcutActions).toEqual([]);
+  expect(current.presentation.selectedCardId).toBe(fixture.activeTopCardId);
+
+  await page.evaluate(() => {
+    const input = document.createElement('input');
+    input.dataset.undoShortcutEditor = 'true';
+    document.body.append(input);
+    input.focus();
+  });
+  await page.keyboard.press('KeyU');
+  current = await evidence(page);
+  expect(current.submissions).toEqual([]);
+  expect(current.submissionResults).toEqual([]);
+  expect(current.shortcutActions).toEqual([]);
+
+  await page.evaluate(() => {
+    document.querySelector('[data-undo-shortcut-editor]')?.remove();
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.enterSoloReplay();
+  });
+  await expect
+    .poll(async () => (await evidence(page)).sourceKind)
+    .toBe('replay');
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      )
+  );
+  await clearEvidence(page);
+  await page.keyboard.press('KeyU');
+  await expect
+    .poll(async () => (await evidence(page)).shortcutRejections)
+    .toEqual([
+      {
+        kind: 'ShortcutActionRejected',
+        request: { action: 'undoOwnLastMove' },
+        reason: 'read_only',
+      },
+    ]);
+  current = await evidence(page);
+  expect(current.submissions).toEqual([]);
+  expect(current.submissionResults).toEqual([]);
+  expect(current.shortcutActions).toEqual([{ action: 'undoOwnLastMove' }]);
+  expect(current.overlays.input).toBeNull();
+  expect(current.reportedErrors).toEqual([]);
+
+  await page.evaluate(() => {
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.dispose();
+  });
+  await expect(host).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
 test('solo replay disclosure changes only local DOM card faces and never submits', async ({
   page,
 }) => {

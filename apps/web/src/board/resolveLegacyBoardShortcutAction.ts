@@ -27,6 +27,7 @@ import { resolvePublicCardVisibilityAction } from './resolvePublicVisibilityActi
 import { resolveLooseBoardAction } from './resolveLooseBoardAction.js';
 import { resolveLifecycleAction } from './resolveLifecycleAction.js';
 import { parseLegacyCountInput } from './resolveLegacyBoardCountAction.js';
+import { resolveSoloUndoAction } from './resolveSoloUndoAction.js';
 import { resolveStackStateAction } from './resolveStackStateAction.js';
 import { resolveTableAction } from './resolveTableAction.js';
 
@@ -79,6 +80,7 @@ export type LegacyBoardShortcutActionRequest =
   | { readonly action: 'setupOwnPlayer' }
   | { readonly action: 'resetOwnPlayer' }
   | { readonly action: 'startOwnTurn' }
+  | { readonly action: 'undoOwnLastMove' }
   | {
       readonly action: LegacyOwnHandShortcutAction;
       /** Missing opens the source-compatible prompt; present submits it. */
@@ -166,6 +168,7 @@ type ExistingActionResolution =
   | ReturnType<typeof resolvePublicCardVisibilityAction>
   | ReturnType<typeof resolveLooseBoardAction>
   | ReturnType<typeof resolveLifecycleAction>
+  | ReturnType<typeof resolveSoloUndoAction>
   | ReturnType<typeof resolveTableAction>;
 
 const retainResolution = (
@@ -290,6 +293,15 @@ export const resolveLegacyBoardShortcutAction = (
       }
       return retainResolution(
         resolveTableAction(view, view.viewer.playerId, 'startTurn'),
+        false
+      );
+    }
+    case 'undoOwnLastMove': {
+      if (view.viewer.kind !== 'player') {
+        return { ok: false, reason: 'not_player' };
+      }
+      return retainResolution(
+        resolveSoloUndoAction(view, view.viewer.playerId),
         false
       );
     }
@@ -671,6 +683,9 @@ export const resolveLegacyBoardUnselectedShortcutKey = (
   }
   if (altKey && matches(input, 'ArrowDown', 'ArrowDown')) {
     return { action: 'shuffleOwnHandToDeckBottomAndDraw' };
+  }
+  if (!altKey && matches(input, 'u', 'KeyU')) {
+    return { action: 'undoOwnLastMove' };
   }
   return null;
 };

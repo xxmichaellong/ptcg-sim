@@ -346,6 +346,13 @@ projection before `DiscardHandAndDraw`, `ShuffleHandIntoDeckAndDraw`, or
 `ShuffleHandToDeckBottomAndDraw` is submitted. Cancellation/invalid input clears
 the prompt, a forged second stage returns `stale_input`, and replay is rejected
 before any modal opens. The authority remains the sole shuffle owner.
+Plain `U` carries no target, revision, checkpoint, event, or random result. An
+explicitly solo-capable keyboard composition submits `undoOwnLastMove`; the
+resolver derives the installed viewer and reuses `ApplySoloUndo`, while replay
+is rejected before the resolver. The remote client accepts at most one pending
+undo and returns `command_pending` for a rapid repeat without consuming a
+sequence or transport write. A settled rejection permits retry; authority mode
+and the private retained-history checkpoint remain the final decision.
 `A`/`B` now use the dedicated play-placement slice. A zone card emits
 `MoveCardToPlay`, an eligible top play card emits a fully preconditioned
 `MovePlayStack`, and a viewer-owned staged top emits `RestoreStagedStack`.

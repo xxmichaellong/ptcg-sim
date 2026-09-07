@@ -73,7 +73,8 @@ export type SubmitCommandResult =
     }
   | {
       readonly queued: false;
-      readonly reason: 'not_ready' | 'spectator' | 'queue_full';
+      readonly reason:
+        'not_ready' | 'spectator' | 'queue_full' | 'command_pending';
     };
 
 const initialState = (): ClientSessionState => ({
@@ -210,6 +211,16 @@ export class RemoteGameSession {
     }
     if (this.state.role !== 'player') {
       return { queued: false, reason: 'spectator' };
+    }
+    // Undo pops whole-match authority history. Match v1's in-progress guard so
+    // key repeat cannot turn one intended undo into multiple queued pops.
+    if (
+      command.type === 'ApplySoloUndo' &&
+      this.pending.some(
+        (pending) => pending.envelope.command.type === 'ApplySoloUndo'
+      )
+    ) {
+      return { queued: false, reason: 'command_pending' };
     }
     if (this.pending.length >= this.policy.maximumPendingCommands) {
       return { queued: false, reason: 'queue_full' };

@@ -672,6 +672,38 @@ describe('headless board session controller', () => {
     });
   });
 
+  it('submits the viewer-derived solo undo intent without local history input', () => {
+    const state = install();
+    if (state.view?.viewer.kind !== 'player') {
+      throw new Error('Controller shortcut fixture must use a player viewer');
+    }
+    const request = { action: 'undoOwnLastMove' as const };
+    const result = apply(state, {
+      kind: 'LegacyShortcutActionRequested',
+      request,
+    });
+    expect(result.state).toBe(state);
+    expect(result.effects).toEqual([
+      {
+        kind: 'SubmitCommand',
+        command: {
+          type: 'ApplySoloUndo',
+          targetPlayerId: state.view.viewer.playerId,
+        },
+      },
+    ]);
+
+    const replay = install(replayFrame(1, 1, state.view, 'resync'));
+    const blocked = apply(replay, {
+      kind: 'LegacyShortcutActionRequested',
+      request,
+    });
+    expect(blocked.state).toBe(replay);
+    expect(blocked.effects).toEqual([
+      { kind: 'ShortcutActionRejected', request, reason: 'read_only' },
+    ]);
+  });
+
   it('keeps replay shortcut requests outside the resolver and submitter', () => {
     const view = createRendererSpikeView();
     const resolveShortcutAction = vi.fn(() => {
