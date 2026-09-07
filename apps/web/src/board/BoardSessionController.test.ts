@@ -516,6 +516,43 @@ describe('headless board session controller', () => {
     ]);
   });
 
+  it('submits unselected viewer-deck shortcuts without trusting a DOM zone', () => {
+    const state = install();
+    if (state.view?.viewer.kind !== 'player') {
+      throw new Error('Controller shortcut fixture must use a player viewer');
+    }
+    const viewerId = state.view.viewer.playerId;
+    const deck = Object.values(state.view.zones).find(
+      (zone) => zone.ownerId === viewerId && zone.kind === 'deck'
+    );
+    if (!deck) throw new Error('Controller shortcut fixture has no deck');
+
+    for (const [request, command] of [
+      [
+        { action: 'drawOwnDeck', count: 9 },
+        { type: 'DrawCards', count: deck.cards.length },
+      ],
+      [
+        { action: 'inspectOwnDeck', count: 2, edge: 'top' },
+        {
+          type: 'ExtractDeckCardsForInspection',
+          ownerPlayerId: viewerId,
+          count: 2,
+          edge: 'top',
+          visibility: 'private',
+        },
+      ],
+      [{ action: 'shuffleOwnDeck' }, { type: 'ShuffleZone', zoneId: deck.id }],
+    ] as const) {
+      const result = apply(state, {
+        kind: 'LegacyShortcutActionRequested',
+        request,
+      });
+      expect(result.state).toBe(state);
+      expect(result.effects).toEqual([{ kind: 'SubmitCommand', command }]);
+    }
+  });
+
   it('keeps replay shortcut requests outside the resolver and submitter', () => {
     const view = createRendererSpikeView();
     const resolveShortcutAction = vi.fn(() => {

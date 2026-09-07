@@ -99,6 +99,47 @@ describe('legacy board keyboard shortcut bridge', () => {
     ]);
   });
 
+  it('emits one closed unselected deck request for each supported chord', async () => {
+    const onRequest = vi.fn();
+    const state = createInitialBoardSessionControllerState();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, { state, onRequest })
+      );
+    });
+
+    for (const init of [
+      { key: '3', code: 'Digit3' },
+      { key: '3', code: 'Digit3', altKey: true },
+      { key: '3', code: 'Digit3', ctrlKey: true },
+      { key: 's', code: 'KeyS' },
+    ]) {
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          ...init,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    }
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: '3',
+        code: 'Digit3',
+        altKey: true,
+        ctrlKey: true,
+        bubbles: true,
+      })
+    );
+
+    expect(onRequest.mock.calls.map(([request]) => request)).toEqual([
+      { action: 'drawOwnDeck', count: 3 },
+      { action: 'inspectOwnDeck', count: 3, edge: 'top' },
+      { action: 'inspectOwnDeck', count: 3, edge: 'bottom' },
+      { action: 'shuffleOwnDeck' },
+    ]);
+  });
+
   it('does not let global shortcuts collide with overlays or native card and zone activation', async () => {
     const onRequest = vi.fn();
     const state = createInitialBoardSessionControllerState();
@@ -129,6 +170,13 @@ describe('legacy board keyboard shortcut bridge', () => {
         })
       );
     }
+    menuItem.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 's',
+        code: 'KeyS',
+        bubbles: true,
+      })
+    );
     menuItem.dispatchEvent(
       new KeyboardEvent('keydown', {
         key: '/',
@@ -166,8 +214,8 @@ describe('legacy board keyboard shortcut bridge', () => {
     });
     document.dispatchEvent(
       new KeyboardEvent('keydown', {
-        key: '3',
-        code: 'Digit3',
+        key: 'x',
+        code: 'KeyX',
         bubbles: true,
         cancelable: true,
       })
@@ -230,6 +278,14 @@ describe('legacy board keyboard shortcut bridge', () => {
         new KeyboardEvent('keydown', {
           key: 'Enter',
           code: 'Enter',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+      target.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 's',
+          code: 'KeyS',
           bubbles: true,
           cancelable: true,
         })

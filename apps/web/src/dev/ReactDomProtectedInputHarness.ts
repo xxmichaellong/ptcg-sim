@@ -56,6 +56,7 @@ export interface ReactDomProtectedInputFixture {
   readonly stadiumCardId: string;
   readonly ownBoardZoneId: string;
   readonly ownBoardCardIds: readonly string[];
+  readonly ownDeckZoneId: string;
   readonly ownDeckCardId: string;
   readonly opponentDeckCardId: string;
   readonly ownDeckCount: number;
@@ -416,6 +417,7 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
     ownBoardCardIds: view.zones[ownBoardZoneId]!.cards.map((card) =>
       String(card.id)
     ),
+    ownDeckZoneId,
     ownDeckCardId: String(ownDeckCard.id),
     opponentDeckCardId: String(opponentDeckCard.id),
     ownDeckCount: view.zones[ownDeckZoneId]!.cards.length,

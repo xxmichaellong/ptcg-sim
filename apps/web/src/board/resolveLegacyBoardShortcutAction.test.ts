@@ -96,6 +96,169 @@ describe('legacy board shortcut action resolver', () => {
     ).toEqual({ ok: false, reason: 'not_player' });
   });
 
+  it('maps unselected deck keys with one explicit modifier precedence', () => {
+    expect(
+      resolveLegacyBoardGlobalShortcutKey({
+        key: '4',
+        code: 'Digit4',
+        altKey: false,
+      })
+    ).toEqual({ action: 'drawOwnDeck', count: 4 });
+    expect(
+      resolveLegacyBoardGlobalShortcutKey({
+        key: 'Unidentified',
+        code: 'Digit8',
+        altKey: true,
+      })
+    ).toEqual({ action: 'inspectOwnDeck', count: 8, edge: 'top' });
+    expect(
+      resolveLegacyBoardGlobalShortcutKey({
+        key: '7',
+        code: 'Digit7',
+        altKey: false,
+        ctrlKey: true,
+      })
+    ).toEqual({ action: 'inspectOwnDeck', count: 7, edge: 'bottom' });
+    expect(
+      resolveLegacyBoardGlobalShortcutKey({
+        key: '2',
+        code: 'Digit2',
+        altKey: true,
+        ctrlKey: true,
+      })
+    ).toBeNull();
+    expect(
+      resolveLegacyBoardGlobalShortcutKey({
+        key: 'S',
+        code: 'KeyS',
+        altKey: false,
+        ctrlKey: true,
+      })
+    ).toEqual({ action: 'shuffleOwnDeck' });
+    expect(
+      resolveLegacyBoardGlobalShortcutKey({
+        key: 's',
+        code: 'KeyS',
+        altKey: true,
+      })
+    ).toBeNull();
+    expect(
+      resolveLegacyBoardGlobalShortcutKey({
+        key: '0',
+        code: 'Digit0',
+        altKey: false,
+      })
+    ).toBeNull();
+  });
+
+  it('resolves unselected deck requests only against the viewer deck', () => {
+    const view = createRendererSpikeView();
+    if (view.viewer.kind !== 'player') {
+      throw new Error('Shortcut fixture must use a player viewer');
+    }
+    const viewerId = view.viewer.playerId;
+    const deckEntry = Object.entries(view.zones).find(
+      ([, zone]) => zone.ownerId === viewerId && zone.kind === 'deck'
+    );
+    if (!deckEntry) throw new Error('Shortcut fixture is missing its deck');
+    const [deckId, deck] = deckEntry;
+
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'drawOwnDeck',
+        count: 9,
+      })
+    ).toEqual({
+      ok: true,
+      command: { type: 'DrawCards', count: deck.cards.length },
+      dismissSelection: false,
+    });
+    for (const edge of ['top', 'bottom'] as const) {
+      expect(
+        resolveLegacyBoardShortcutAction(view, {
+          action: 'inspectOwnDeck',
+          count: 9,
+          edge,
+        })
+      ).toEqual({
+        ok: true,
+        command: {
+          type: 'ExtractDeckCardsForInspection',
+          ownerPlayerId: viewerId,
+          count: deck.cards.length,
+          edge,
+          visibility: 'private',
+        },
+        dismissSelection: false,
+      });
+    }
+    expect(
+      resolveLegacyBoardShortcutAction(view, { action: 'shuffleOwnDeck' })
+    ).toEqual({
+      ok: true,
+      command: { type: 'ShuffleZone', zoneId: deck.id },
+      dismissSelection: false,
+    });
+
+    for (const count of [0, 10, Number.NaN]) {
+      expect(
+        resolveLegacyBoardShortcutAction(view, {
+          action: 'drawOwnDeck',
+          count,
+        })
+      ).toEqual({ ok: false, reason: 'invalid_value' });
+    }
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'inspectOwnDeck',
+        count: 1,
+        edge: 'middle',
+      } as unknown as LegacyBoardShortcutActionRequest)
+    ).toEqual({ ok: false, reason: 'invalid_value' });
+    expect(
+      resolveLegacyBoardShortcutAction(
+        {
+          ...view,
+          zones: {
+            ...view.zones,
+            [deckId]: { ...deck, cards: [] },
+          },
+        },
+        { action: 'shuffleOwnDeck' }
+      )
+    ).toEqual({ ok: false, reason: 'empty_deck' });
+    expect(
+      resolveLegacyBoardShortcutAction(
+        {
+          ...view,
+          zones: Object.fromEntries(
+            Object.entries(view.zones).filter(([zoneId]) => zoneId !== deckId)
+          ),
+        },
+        { action: 'drawOwnDeck', count: 1 }
+      )
+    ).toEqual({ ok: false, reason: 'no_deck' });
+    expect(
+      resolveLegacyBoardShortcutAction(
+        {
+          ...view,
+          players: Object.fromEntries(
+            Object.entries(view.players).filter(
+              ([playerId]) => playerId !== viewerId
+            )
+          ),
+        },
+        { action: 'shuffleOwnDeck' }
+      )
+    ).toEqual({ ok: false, reason: 'stale_player' });
+    expect(
+      resolveLegacyBoardShortcutAction(
+        { ...view, viewer: { kind: 'spectator' } },
+        { action: 'shuffleOwnDeck' }
+      )
+    ).toEqual({ ok: false, reason: 'not_player' });
+  });
+
   it('maps exact key/code and Alt combinations to closed selected-card requests', () => {
     const cardId = 'selected-card';
     const key = (keyValue: string, code: string, altKey = false) =>

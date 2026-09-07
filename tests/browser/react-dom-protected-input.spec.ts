@@ -8,6 +8,7 @@ interface ProtectedInputFixture {
   readonly stadiumCardId: string;
   readonly ownBoardZoneId: string;
   readonly ownBoardCardIds: readonly string[];
+  readonly ownDeckZoneId: string;
   readonly ownDeckCardId: string;
   readonly opponentDeckCardId: string;
   readonly ownDeckCount: number;
@@ -1764,6 +1765,98 @@ test('global loose-board shortcuts stay viewer-owned and suppress editable targe
   expect(editableEvidence.shortcutRejections).toEqual([]);
   await page.evaluate(() => {
     document.querySelector('[data-global-shortcut-editor]')?.remove();
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.dispose();
+  });
+  await expect(
+    page.locator('[data-react-dom-protected-input-harness]')
+  ).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('unselected deck shortcuts stay viewer-owned and reject the ambiguous dual-inspection chord', async ({
+  page,
+}) => {
+  const errors = collectRuntimeErrors(page);
+  const fixture = await mountHarness(page);
+  const cases = [
+    {
+      key: 'Digit9',
+      action: { action: 'drawOwnDeck', count: 9 },
+      command: { type: 'DrawCards', count: fixture.ownDeckCount },
+    },
+    {
+      key: 'Alt+Digit9',
+      action: { action: 'inspectOwnDeck', count: 9, edge: 'top' },
+      command: {
+        type: 'ExtractDeckCardsForInspection',
+        ownerPlayerId: fixture.ownPlayerId,
+        count: fixture.ownDeckCount,
+        edge: 'top',
+        visibility: 'private',
+      },
+    },
+    {
+      key: 'Control+Digit9',
+      action: { action: 'inspectOwnDeck', count: 9, edge: 'bottom' },
+      command: {
+        type: 'ExtractDeckCardsForInspection',
+        ownerPlayerId: fixture.ownPlayerId,
+        count: fixture.ownDeckCount,
+        edge: 'bottom',
+        visibility: 'private',
+      },
+    },
+    {
+      key: 'KeyS',
+      action: { action: 'shuffleOwnDeck' },
+      command: { type: 'ShuffleZone', zoneId: fixture.ownDeckZoneId },
+    },
+  ] as const;
+
+  for (const [index, scenario] of cases.entries()) {
+    await clearEvidence(page);
+    await page.keyboard.press(scenario.key);
+    await expect
+      .poll(async () => (await evidence(page)).submissions)
+      .toEqual([scenario.command]);
+    const current = await evidence(page);
+    expect(current.submissionResults).toEqual([
+      {
+        queued: true,
+        commandId: `protected-input-command-${index + 1}`,
+        clientSequence: index + 1,
+      },
+    ]);
+    expect(current.shortcutActions).toEqual([scenario.action]);
+    expect(current.shortcutRejections).toEqual([]);
+    expect(current.presentation.selectedCardId).toBeNull();
+    expect(current.reportedErrors).toEqual([]);
+  }
+
+  await clearEvidence(page);
+  await page.keyboard.press('Alt+Control+Digit2');
+  let suppressed = await evidence(page);
+  expect(suppressed.submissions).toEqual([]);
+  expect(suppressed.shortcutActions).toEqual([]);
+  expect(suppressed.shortcutRejections).toEqual([]);
+
+  await page.evaluate(() => {
+    const input = document.createElement('input');
+    input.dataset.globalDeckShortcutEditor = 'true';
+    document.body.append(input);
+    input.focus();
+  });
+  for (const scenario of cases) await page.keyboard.press(scenario.key);
+  suppressed = await evidence(page);
+  expect(suppressed.submissions).toEqual([]);
+  expect(suppressed.shortcutActions).toEqual([]);
+  expect(suppressed.shortcutRejections).toEqual([]);
+
+  await page.evaluate(() => {
+    document.querySelector('[data-global-deck-shortcut-editor]')?.remove();
     const harness = (window as ProtectedInputHarnessWindow)
       .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
     if (!harness) throw new Error('Missing protected-input harness');

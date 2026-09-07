@@ -30,6 +30,8 @@ import { resolveStackStateAction } from './resolveStackStateAction.js';
 export type LegacyLooseBoardShortcutDestination =
   'discard' | 'hand' | 'shuffleIntoDeck';
 
+export type LegacyOwnDeckInspectionEdge = 'top' | 'bottom';
+
 const isLegacyLooseBoardShortcutDestination = (
   value: unknown
 ): value is LegacyLooseBoardShortcutDestination =>
@@ -40,6 +42,13 @@ export type LegacyBoardShortcutActionRequest =
       readonly action: 'resolveOwnLooseBoard';
       readonly destination: LegacyLooseBoardShortcutDestination;
     }
+  | { readonly action: 'drawOwnDeck'; readonly count: number }
+  | {
+      readonly action: 'inspectOwnDeck';
+      readonly count: number;
+      readonly edge: LegacyOwnDeckInspectionEdge;
+    }
+  | { readonly action: 'shuffleOwnDeck' }
   | {
       readonly action: 'adjustDamage';
       readonly cardId: ViewCardId;
@@ -146,6 +155,65 @@ export const resolveLegacyBoardShortcutAction = (
         ),
         false
       );
+    }
+    case 'drawOwnDeck':
+    case 'inspectOwnDeck':
+    case 'shuffleOwnDeck': {
+      if (
+        request.action !== 'shuffleOwnDeck' &&
+        (!Number.isSafeInteger(request.count) ||
+          request.count < 1 ||
+          request.count > 9)
+      ) {
+        return { ok: false, reason: 'invalid_value' };
+      }
+      if (
+        request.action === 'inspectOwnDeck' &&
+        request.edge !== 'top' &&
+        request.edge !== 'bottom'
+      ) {
+        return { ok: false, reason: 'invalid_value' };
+      }
+      if (view.viewer.kind !== 'player') {
+        return { ok: false, reason: 'not_player' };
+      }
+      const viewerId = view.viewer.playerId;
+      if (!view.players[viewerId]) {
+        return { ok: false, reason: 'stale_player' };
+      }
+      const deck = Object.values(view.zones).find(
+        (zone) => zone.ownerId === viewerId && zone.kind === 'deck'
+      );
+      if (!deck) return { ok: false, reason: 'no_deck' };
+      if (deck.cards.length === 0) {
+        return { ok: false, reason: 'empty_deck' };
+      }
+      if (request.action === 'shuffleOwnDeck') {
+        return {
+          ok: true,
+          command: { type: 'ShuffleZone', zoneId: deck.id },
+          dismissSelection: false,
+        };
+      }
+      const count = Math.min(request.count, deck.cards.length);
+      if (request.action === 'drawOwnDeck') {
+        return {
+          ok: true,
+          command: { type: 'DrawCards', count },
+          dismissSelection: false,
+        };
+      }
+      return {
+        ok: true,
+        command: {
+          type: 'ExtractDeckCardsForInspection',
+          ownerPlayerId: viewerId,
+          count,
+          edge: request.edge,
+          visibility: 'private',
+        },
+        dismissSelection: false,
+      };
     }
     case 'adjustDamage': {
       const resolution = resolveStackStateAction(view, request.cardId, {
@@ -285,6 +353,7 @@ export interface LegacyBoardShortcutKey {
   readonly key: string;
   readonly code: string;
   readonly altKey: boolean;
+  readonly ctrlKey?: boolean;
   readonly getModifierState?: (keyArg: string) => boolean;
 }
 
@@ -404,14 +473,33 @@ export const resolveLegacyBoardShortcutKey = (
   return null;
 };
 
-/** Converts the characterized loose-board keys into viewer-owned requests. */
+/** Converts the characterized unselected/global keys into viewer-owned requests. */
 export const resolveLegacyBoardGlobalShortcutKey = (
   input: LegacyBoardShortcutKey
 ): LegacyBoardShortcutActionRequest | null => {
+  const altKey = hasAltModifier(input);
+  const digit = digitFor(input);
+  if (digit !== null) {
+    // V1 executes both inspection branches for Alt+Control+digit. The second
+    // mutation observes a deck already changed by the first and throws before
+    // logging itself, so v2 rejects the ambiguous chord instead of reproducing
+    // a non-atomic partial action.
+    if (altKey && input.ctrlKey === true) return null;
+    if (altKey) {
+      return { action: 'inspectOwnDeck', count: digit, edge: 'top' };
+    }
+    if (input.ctrlKey === true) {
+      return { action: 'inspectOwnDeck', count: digit, edge: 'bottom' };
+    }
+    return { action: 'drawOwnDeck', count: digit };
+  }
+  if (!altKey && matches(input, 's', 'KeyS')) {
+    return { action: 'shuffleOwnDeck' };
+  }
   if (matches(input, 'Enter', 'Enter')) {
     return {
       action: 'resolveOwnLooseBoard',
-      destination: hasAltModifier(input) ? 'hand' : 'discard',
+      destination: altKey ? 'hand' : 'discard',
     };
   }
   if (matches(input, '/', 'Slash')) {

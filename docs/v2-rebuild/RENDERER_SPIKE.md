@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 1021 v2 tests across 154 files. A separate suite
-passes 149 Playwright checks across 72 Chromium 151 browser files:
+The repository-wide gate passes 1025 v2 tests across 154 files. A separate suite
+passes 151 Playwright checks across 73 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -1412,6 +1412,22 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     emits one exact `ResolveLooseBoardCards` command for each key and no traffic
     from a focused input. No wire/domain/authority schema, visible control,
     key reference, layout, styling, UI, or UX changed.
+82. The unselected deck-key family now follows the same viewer-owned boundary.
+    Digits 1–9 draw, Alt-digits inspect from the top, Control-digits inspect
+    from the bottom, and non-Alt `S` shuffles the deck. Requests carry only a
+    bounded count/edge or shuffle intent; the resolver derives the viewer and
+    current deck from the installed projection, clamps counts to its safe card
+    count, and emits existing `DrawCards`, `ExtractDeckCardsForInspection`, or
+    `ShuffleZone` commands. A five-page deny-by-default Chromium oracle pins
+    source arrays, top/bottom order, deterministic shuffle indices, outer and
+    export records, selection state, assets, and errors. It also exposes an
+    Alt-Control-digit defect: v1 runs both inspection branches, moves the
+    remaining deck during the second branch, logs only the first action, and
+    throws a DOM `removeChild` error. V2 deliberately rejects that ambiguous
+    chord rather than reproduce a non-atomic unlogged mutation. Candidate
+    Chromium pins one command for each intended chord, zero traffic for the
+    dual-modifier chord and editable input, and no visible UI/UX or protocol,
+    domain, or authority-schema change.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

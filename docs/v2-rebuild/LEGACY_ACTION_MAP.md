@@ -948,6 +948,29 @@ one outer action, export owner rewriting, local assets, and a clean error
 boundary. Candidate Chromium proves the three exact semantic commands and
 focused-input silence. No new protocol or domain command is introduced.
 
+### Implemented unselected deck keyboard subset
+
+Digits 1–9 now map to viewer-owned draws, Alt-digits to private top-deck
+inspection, Control-digits to private bottom-deck inspection, and non-Alt `S`
+to deck shuffle. The requests contain only a bounded digit and closed edge (or
+no payload for shuffle); the resolver finds the viewer's current deck, clamps
+the count to its disclosed size, and reuses `DrawCards`,
+`ExtractDeckCardsForInspection`, and `ShuffleZone`. Missing/empty deck,
+spectator, stale viewer, forged counts/edges, replay, editable, composing, and
+consumed input fails before submission. Selected-card requests retain
+precedence, preserving the existing damage and card-to-deck gestures.
+
+A deny-by-default five-page Chromium oracle executes the unchanged source
+modules and pins draw/hand/view/deck order, private top/bottom selection,
+deterministic shuffle indices, outer/export records, local assets, and the exact
+dual-modifier failure. V1's independent Alt and Control branches both execute
+for Alt-Control-digit: the second branch mutates the already-shortened deck,
+only the first branch reaches the action log, and the second throws a DOM
+`removeChild` error. V2 intentionally emits nothing for this ambiguous chord.
+Candidate Chromium proves one semantic command for each intended path and zero
+traffic for the rejected chord or a focused input. No new wire or domain
+command is introduced.
+
 ### Implemented authority-random face-down subset
 
 `playRandomCardFaceDown` now submits only the explicit target player; authority

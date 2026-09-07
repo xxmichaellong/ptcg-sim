@@ -119,6 +119,15 @@ emits one viewer-owned, ordered-preconditioned `ResolveLooseBoardCards` command
 per key and none from an editable target. Replay/spectator/empty/stale/forged
 cases remain fail-closed unit obligations.
 
+Unselected deck-key parity has paired Chromium evidence across five fresh v1
+pages and one candidate route. Digits draw, Alt-digits inspect the top,
+Control-digits inspect the bottom, and `S` shuffles with exact array/action/
+export/randomness assertions. Candidate commands are viewer-derived and counts
+clamp to the current projection. Alt-Control-digit is a pinned preserve/fix
+decision: v1 performs a second unlogged deck mutation and throws a DOM removal
+error, while v2 emits no command. Editable/replay/spectator/empty/stale/forged
+paths remain fail-closed obligations.
+
 ### Implemented seeded authority/storage model
 
 The server model suite at

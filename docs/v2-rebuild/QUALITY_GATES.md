@@ -171,3 +171,9 @@ traces are retained as a 14-day artifact. Browser binaries are not cached.
   export records, while the candidate pins viewer-derived ordered preconditions
   and editable-target silence. The existing overlay lane also proves native
   Enter menu activation cannot leak into the global board shortcut bridge.
+- The unselected deck-key lane pairs five fresh deny-by-default v1 pages with a
+  candidate DOM case. It pins draw/top-view/bottom-view/shuffle arrays, outer
+  and export actions, deterministic indices, viewer-derived commands, count
+  clamps, editable silence, and the exact v1 Alt-Control-digit partial mutation
+  plus DOM exception. The candidate must reject that ambiguous chord with zero
+  traffic.

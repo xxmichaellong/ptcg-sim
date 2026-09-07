@@ -314,6 +314,15 @@ requires ready writable live state, while the resolver derives the viewer and
 exact ordered board-card precondition instead of trusting DOM identity. These
 requests retain any current selection and reject spectator, empty, stale, or
 forged input before submission.
+When no card is selected, digits 1–9 also request a viewer-owned draw,
+Alt-digits request private top-deck inspection, Control-digits request private
+bottom-deck inspection, and non-Alt `S` requests a deck shuffle. The resolver
+derives the deck ID/owner from the installed view, clamps counts to its current
+safe size, and emits only existing commands. Selected-card routing wins before
+this family. Missing/empty decks and forged counts or edges fail closed. The
+ambiguous Alt-Control-digit chord is deliberately silent because v1 executes
+two non-atomic inspection branches, performs an unlogged second mutation, and
+throws from DOM removal.
 `A`/`B` now use the dedicated play-placement slice. A zone card emits
 `MoveCardToPlay`, an eligible top play card emits a fully preconditioned
 `MovePlayStack`, and a viewer-owned staged top emits `RestoreStagedStack`.

@@ -1207,6 +1207,16 @@ supplies the viewer ID and exact ordered board-card aliases to the existing
 array/action/export paths, including deterministic shuffle indices, while
 candidate Chromium pins exactly one command per key and no editable-input
 traffic. No renderer state or visible surface owns the operation.
+The adjacent unselected deck family maps digits 1–9 to draw, Alt-digits to
+private top inspection, Control-digits to private bottom inspection, and
+non-Alt `S` to shuffle. The recipient projection supplies the viewer-owned deck
+and clamped count; existing authority commands own mutation and randomness.
+Selected-card routing retains priority. Source Chromium proves that
+Alt-Control-digit instead executes both v1 branches, mutates the shortened deck
+without logging the second operation, and throws a DOM removal exception; the
+candidate rejects that ambiguous chord and produces no traffic. Intended chords
+and editable-input silence have paired source/candidate evidence without a
+visible-surface change.
 `A` and `B` now cross a separate closed active/bench resolver. Zone cards emit
 `MoveCardToPlay`; eligible top cards move a whole stack with exact board-order
 preconditions; a viewer-owned staged top restores atomically. Real v1 active

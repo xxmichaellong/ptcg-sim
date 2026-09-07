@@ -57,7 +57,7 @@ export const LegacyBoardKeyboardShortcuts = ({
           : resolveLegacyBoardGlobalShortcutKey(event));
       if (!request) return;
       // V1 prevents defaults inside its selected-card branch, but leaves the
-      // unselected loose-board keys to the document after dispatch.
+      // unselected global keys to the document after dispatch.
       if (selectedCardId !== null && event.cancelable) event.preventDefault();
       onRequest(request);
     };
