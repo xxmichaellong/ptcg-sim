@@ -324,12 +324,20 @@ ambiguous Alt-Control-digit chord is deliberately silent because v1 executes
 two non-atomic inspection branches, performs an unlogged second mutation, and
 throws from DOM removal.
 Non-Alt `F` is the adjacent payload-free global action. It remains valid with a
-selected card and retains that selection, while Alt-`F` stays outside the
-command path for the separate local board-flip workstream. The resolver checks
+selected card and retains that selection. The resolver checks
 the installed player perspective and emits only `{ type: 'FlipCoin' }`; actor
 identity, randomness, persistence, and presentation remain authority-owned.
 Spectator, stale-player, replay/read-only, editable, composing, consumed, and
 overlay input cannot submit.
+Alt-`F` stays entirely outside that resolver. The document bridge consumes the
+chord before selection routing and invokes `BoardSessionRuntime.flipBoard()`
+only for spectators or when its owning composition explicitly marks a
+solo/coaching player eligible. It retains selection and remains available in
+replay because it changes only local layout state. An ordinary multiplayer
+player gets the same consumed no-op as v1. The rebuilt path does not copy v1's
+coaching/spectator look/stop-looking socket emissions: recipient projections
+already enforce hand visibility, and presentation orientation cannot mutate
+authority or disclosure.
 Alt-`N`, Alt-`R`, and Alt-`T` are handled by a separate unselected-only mapper.
 They carry no player ID; the resolver derives the viewer and composes the
 existing setup/reset and start-turn resolvers. Selected Alt-`N`/Alt-`R` remain

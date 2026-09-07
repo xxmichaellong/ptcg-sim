@@ -133,9 +133,19 @@ and one candidate route. Non-Alt `F` is proven for deterministic heads and
 tails, selected-card fallthrough, exact chat paint data, one legacy random
 call, unchanged selection, empty action logs, replay/spectator silence, and
 Alt-`F` separation. The candidate emits only the parameterless `FlipCoin`
-intent, retains selection, suppresses editable/Alt input, and rejects replay
+intent, retains selection, suppresses editable input, and rejects replay
 before submission. Actor identity, randomness, persistence, and presentation
 remain authority-owned.
+
+Alt-`F` board-perspective parity has paired Chromium evidence across seven
+fresh v1 pages and the protected candidate. The source oracle pins reversible
+orientation, Control/Shift variants, retained selection, ordinary multiplayer's
+consumed no-op, coaching/spectator eligibility, replay-local behavior, editor
+silence, and empty action/export history. It also records the source's two
+coaching/spectator hand-visibility relays. V2 preserves the visible flip through
+the existing renderer runtime but emits no command or socket message: the
+recipient-safe projection remains the only disclosure authority. Candidate
+Chromium proves physical-side reversal/restoration and zero game traffic.
 
 Unselected lifecycle-key parity has paired Chromium evidence across nine fresh
 v1 pages and one candidate route. Alt-`N` setup, Alt-`R` reset, and Alt-`T`

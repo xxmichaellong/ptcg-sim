@@ -21,12 +21,16 @@ export interface LegacyBoardKeyboardShortcutsProps {
   ) => void;
   /** Local renderer reconstruction; it never enters the command reducer. */
   readonly onRefreshScene?: () => void;
+  /** Local board-perspective swap; it never enters the command reducer. */
+  readonly onFlipBoard?: () => void;
   /** Non-authoritative room announcement; omitted until a route wires it. */
   readonly onDeclareMulligan?: () => void;
   /** Non-authoritative deck-view announcement; omitted until a route wires it. */
   readonly onDeclareDeckView?: () => void;
   /** Supplied only by a route that knows it represents a solo room. */
   readonly soloUndoEnabled?: boolean;
+  /** Supplied for a solo player or an explicitly authorized coaching view. */
+  readonly boardFlipEnabled?: boolean;
 }
 
 const EDITABLE_SHORTCUT_TARGET =
@@ -53,9 +57,11 @@ export const LegacyBoardKeyboardShortcuts = ({
   onRequest,
   onLocalIntent,
   onRefreshScene,
+  onFlipBoard,
   onDeclareMulligan,
   onDeclareDeckView,
   soloUndoEnabled = false,
+  boardFlipEnabled = false,
 }: LegacyBoardKeyboardShortcutsProps) => {
   const selectedCardId = state.presentation.selectedCardId;
   const isSpectator = state.view?.viewer.kind === 'spectator';
@@ -77,6 +83,14 @@ export const LegacyBoardKeyboardShortcuts = ({
         isLegacyBoardShortcutEditableTarget(event.target) ||
         isLegacyBoardOverlayTarget(event.target)
       ) {
+        return;
+      }
+      const flipsBoard =
+        (event.key.toLowerCase() === 'f' || event.code === 'KeyF') &&
+        (event.altKey || event.getModifierState('Alt'));
+      if (flipsBoard) {
+        if (event.cancelable) event.preventDefault();
+        if (boardFlipEnabled || isSpectator) onFlipBoard?.();
         return;
       }
       const refreshesScene =
@@ -163,11 +177,13 @@ export const LegacyBoardKeyboardShortcuts = ({
     onDeclareMulligan,
     onDeclareDeckView,
     onLocalIntent,
+    onFlipBoard,
     onRefreshScene,
     onRequest,
     deckViewZoneId,
     isSpectator,
     selectedCardId,
+    boardFlipEnabled,
     soloUndoEnabled,
     state.overlays.preview,
     state.view?.viewer.kind,

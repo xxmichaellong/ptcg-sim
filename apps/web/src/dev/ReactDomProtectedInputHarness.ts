@@ -91,6 +91,7 @@ export interface ReactDomProtectedInputEvidence {
   readonly shortcutActions: readonly LegacyBoardShortcutActionRequest[];
   readonly mulliganDeclarations: number;
   readonly deckViewDeclarations: number;
+  readonly boardFlips: number;
   readonly sceneRefreshes: number;
   readonly presentation: BoardPresentation;
   readonly overlays: BoardOverlayState;
@@ -256,6 +257,7 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
   const shortcutActions: LegacyBoardShortcutActionRequest[] = [];
   let mulliganDeclarations = 0;
   let deckViewDeclarations = 0;
+  let boardFlips = 0;
   let sceneRefreshes = 0;
   const reportedErrors: string[] = [];
   let clientSequence = 0;
@@ -592,6 +594,11 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
               onDeclareDeckView: () => {
                 runtime.declareDeckView();
               },
+              boardFlipEnabled: true,
+              onFlipBoard: () => {
+                boardFlips += 1;
+                runtime.flipBoard();
+              },
               onRefreshScene: () => {
                 sceneRefreshes += 1;
                 runtime.refreshScene();
@@ -625,6 +632,7 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
         shortcutActions: [...shortcutActions],
         mulliganDeclarations,
         deckViewDeclarations,
+        boardFlips,
         sceneRefreshes,
         presentation: current.presentation,
         overlays: current.overlays,
@@ -649,6 +657,7 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
       shortcutActions.length = 0;
       mulliganDeclarations = 0;
       deckViewDeclarations = 0;
+      boardFlips = 0;
       sceneRefreshes = 0;
       reportedErrors.length = 0;
     },

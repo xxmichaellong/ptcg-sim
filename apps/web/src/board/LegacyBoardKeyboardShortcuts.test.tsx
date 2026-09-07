@@ -541,6 +541,104 @@ describe('legacy board keyboard shortcut bridge', () => {
     expect(onRefreshScene).not.toHaveBeenCalled();
   });
 
+  it('routes Alt-F only through an eligible local board-flip seam', async () => {
+    const onRequest = vi.fn();
+    const onFlipBoard = vi.fn();
+    const state = createInitialBoardSessionControllerState();
+    const dispatch = (
+      target: EventTarget = document,
+      init: KeyboardEventInit = {}
+    ) =>
+      target.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'f',
+          code: 'KeyF',
+          altKey: true,
+          bubbles: true,
+          cancelable: true,
+          ...init,
+        })
+      );
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state,
+          onRequest,
+          onFlipBoard,
+        })
+      );
+    });
+    expect(dispatch()).toBe(false);
+    expect(onFlipBoard).not.toHaveBeenCalled();
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state,
+          onRequest,
+          onFlipBoard,
+          boardFlipEnabled: true,
+        })
+      );
+    });
+    expect(dispatch()).toBe(false);
+    expect(dispatch(document, { ctrlKey: true })).toBe(false);
+    expect(dispatch(document, { key: 'F', shiftKey: true })).toBe(false);
+    expect(onFlipBoard).toHaveBeenCalledTimes(3);
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state: {
+            ...state,
+            presentation: {
+              ...state.presentation,
+              selectedCardId: 'selected-card',
+            },
+          },
+          onRequest,
+          onFlipBoard,
+          boardFlipEnabled: true,
+        })
+      );
+    });
+    expect(dispatch()).toBe(false);
+    expect(onFlipBoard).toHaveBeenCalledTimes(4);
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state: {
+            ...state,
+            view: {
+              ...createRendererSpikeView(),
+              viewer: { kind: 'spectator' },
+            },
+          },
+          onRequest,
+          onFlipBoard,
+        })
+      );
+    });
+    expect(dispatch()).toBe(false);
+    expect(onFlipBoard).toHaveBeenCalledTimes(5);
+
+    const input = document.createElement('input');
+    document.body.append(input);
+    expect(dispatch(input)).toBe(true);
+    input.remove();
+    const overlay = document.createElement('div');
+    overlay.dataset.legacyBoardOverlays = 'true';
+    const overlayButton = document.createElement('button');
+    overlay.append(overlayButton);
+    document.body.append(overlay);
+    expect(dispatch(overlayButton)).toBe(true);
+    overlay.remove();
+    expect(onFlipBoard).toHaveBeenCalledTimes(5);
+    expect(onRequest).not.toHaveBeenCalled();
+  });
+
   it('routes V to local deck/card presentation before its player announcement', async () => {
     const onRequest = vi.fn();
     const onLocalIntent = vi.fn();

@@ -1217,15 +1217,26 @@ without logging the second operation, and throws a DOM removal exception; the
 candidate rejects that ambiguous chord and produces no traffic. Intended chords
 and editable-input silence have paired source/candidate evidence without a
 visible-surface change.
-Non-Alt `F` is now a payload-free global request with or without selection;
-Alt-`F` remains reserved for the separate local board-flip path. The recipient
-view proves only that the caller is a current player, and the existing
+Non-Alt `F` is now a payload-free global request with or without selection. The
+recipient view proves only that the caller is a current player, and the existing
 parameterless `FlipCoin` intent leaves actor selection and randomness to
 authority. Source Chromium pins heads/tails chat text, one client-side random
 call, unchanged selection, empty legacy action logs, and replay/spectator
-silence. Candidate Chromium pins one command, retained selection, editable/Alt
+silence. Candidate Chromium pins one command, retained selection, editable
 silence, and replay rejection before submission. The visible result stays on
 the existing presentation surface.
+Alt-`F` now closes the separate board-perspective branch before selected-card
+routing. The document bridge always consumes the chord outside protected input,
+then calls the existing renderer-neutral `flipBoard()` runtime seam for a
+spectator or when route composition explicitly enables a solo/coaching player.
+Ordinary multiplayer players retain v1's consumed no-op. Control/Shift variants,
+selection retention, and replay-local perspective changes remain intact. Seven
+fresh real-v1 pages pin those eligibility/default boundaries and record the
+source's two coaching/spectator hand-visibility socket emissions. V2 deliberately
+does not reproduce those emissions: its recipient-safe projection, rather than a
+client board orientation, owns hidden-information disclosure. Candidate Chromium
+proves physical-side reversal and restoration with zero command, action, or
+socket traffic. No visible control, geometry, styling, UI, or UX changed.
 The key bridge now separates always-global Enter/Slash/`F` from unselected-only
 deck and lifecycle input. Alt-`N`, Alt-`R`, and Alt-`T` derive the viewer and
 reuse existing `SetupPlayer`, `ResetPlayer`, and `StartTurn` commands; selected

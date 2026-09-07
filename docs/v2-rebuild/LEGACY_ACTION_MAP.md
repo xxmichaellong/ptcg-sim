@@ -987,11 +987,31 @@ and pins both deterministic heads/tails messages, exactly one client-side
 random call, selected-card fallthrough, replay and spectator silence, and the
 Alt-`F` board-flip boundary. It also records that v1 changes neither action
 counter nor live/export action log for a coin flip. Candidate Chromium proves
-one parameterless command with selection retained, no traffic for Alt-`F` or
-editable input, and a typed read-only rejection in replay. V2 intentionally
+one parameterless command with selection retained, editable-input silence, and
+a typed read-only rejection in replay. V2 intentionally
 moves randomness and replayability behind authority without changing the
 visible message or shortcut. No new protocol, domain, or UI/UX surface is
 introduced.
+
+### Implemented local Alt-F board-flip subset
+
+Alt-`F` now invokes the existing renderer-neutral board-perspective swap before
+selected-card routing. The keyboard bridge consumes the chord outside editable
+or overlay content, including Control/Shift variants and ordinary multiplayer,
+but calls the runtime only for a spectator or an explicitly enabled solo/
+coaching player. A selected card stays selected, and replay may still change
+the local perspective because no historical or authoritative state changes.
+
+Seven fresh deny-by-default v1 pages pin reversible container/view orientation,
+modifier handling, selection retention, the ordinary-multiplayer consumed
+no-op, coaching/spectator eligibility, replay, and editor behavior with empty
+action/export history. They also expose two legacy hand-visibility relay calls
+when an eligible two-player surface flips. Candidate Chromium deliberately
+creates no equivalent traffic: recipient-safe projection owns disclosure, not
+which player frame is physically lower. It proves the same visible side swap
+and restoration through `BoardSessionRuntime`, retained selection, replay-local
+behavior, and zero submission/action/rejection traffic. No wire, domain,
+authority, control, geometry, style, visible UI, or UX changed.
 
 ### Implemented unselected lifecycle keyboard subset
 

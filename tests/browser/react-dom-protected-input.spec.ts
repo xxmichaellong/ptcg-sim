@@ -49,6 +49,7 @@ interface ProtectedInputEvidence {
   readonly shortcutActions: readonly unknown[];
   readonly mulliganDeclarations: number;
   readonly deckViewDeclarations: number;
+  readonly boardFlips: number;
   readonly sceneRefreshes: number;
   readonly presentation: {
     readonly selectedCardId: string | null;
@@ -2651,6 +2652,94 @@ test('R separates local scene refresh from protected group and single-card rotat
       reason: 'read_only',
     },
   ]);
+  expect(current.reportedErrors).toEqual([]);
+
+  await page.evaluate(() => {
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.dispose();
+  });
+  await expect(host).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('Alt-F flips only the local board perspective across selection and replay', async ({
+  page,
+}) => {
+  const errors = collectRuntimeErrors(page);
+  const fixture = await mountHarness(page);
+  const host = page.locator('[data-react-dom-protected-input-harness]');
+  const ownFrame = host.locator(
+    `[data-player-frame-id="${fixture.ownPlayerId}"]`
+  );
+  await expect(ownFrame).toHaveAttribute('data-player-physical-side', 'lower');
+
+  await clearEvidence(page);
+  await page.keyboard.press('Alt+KeyF');
+  await expect.poll(async () => (await evidence(page)).boardFlips).toBe(1);
+  await expect(ownFrame).toHaveAttribute('data-player-physical-side', 'upper');
+  let current = await evidence(page);
+  expect(current.submissions).toEqual([]);
+  expect(current.shortcutActions).toEqual([]);
+  expect(current.shortcutRejections).toEqual([]);
+
+  await page.keyboard.press('Control+Alt+KeyF');
+  await expect.poll(async () => (await evidence(page)).boardFlips).toBe(2);
+  await expect(ownFrame).toHaveAttribute('data-player-physical-side', 'lower');
+
+  const selectedCard = host.locator(
+    `[data-card-id="${fixture.activeTopCardId}"]`
+  );
+  const point = await exposedCardPoint(selectedCard);
+  await page.mouse.click(point.x, point.y);
+  await expect
+    .poll(async () => (await evidence(page)).presentation.selectedCardId)
+    .toBe(fixture.activeTopCardId);
+  await clearEvidence(page);
+  await page.keyboard.press('Shift+Alt+KeyF');
+  await expect.poll(async () => (await evidence(page)).boardFlips).toBe(1);
+  await expect(ownFrame).toHaveAttribute('data-player-physical-side', 'upper');
+  current = await evidence(page);
+  expect(current.presentation.selectedCardId).toBe(fixture.activeTopCardId);
+  expect(current.submissions).toEqual([]);
+  expect(current.shortcutActions).toEqual([]);
+
+  expect(
+    await page.evaluate(() => {
+      const input = document.createElement('input');
+      input.dataset.flipShortcutEditor = 'true';
+      document.body.append(input);
+      return input.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'f',
+          code: 'KeyF',
+          altKey: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    })
+  ).toBe(true);
+  expect((await evidence(page)).boardFlips).toBe(1);
+
+  await page.evaluate(() => {
+    document.querySelector('[data-flip-shortcut-editor]')?.remove();
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.enterSoloReplay();
+  });
+  await expect
+    .poll(async () => (await evidence(page)).sourceKind)
+    .toBe('replay');
+  await clearEvidence(page);
+  await page.keyboard.press('Alt+KeyF');
+  await expect.poll(async () => (await evidence(page)).boardFlips).toBe(1);
+  await expect(ownFrame).toHaveAttribute('data-player-physical-side', 'lower');
+  current = await evidence(page);
+  expect(current.submissions).toEqual([]);
+  expect(current.shortcutActions).toEqual([]);
   expect(current.reportedErrors).toEqual([]);
 
   await page.evaluate(() => {

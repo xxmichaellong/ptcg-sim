@@ -181,8 +181,16 @@ traces are retained as a 14-day artifact. Browser binaries are not cached.
   candidate DOM case. It pins deterministic heads/tails text and random-call
   count, selected-card fallthrough, empty legacy action logs, replay/spectator
   silence, and the Alt-`F` board-flip boundary. The candidate must submit only
-  parameterless `FlipCoin`, retain selection, suppress editable/Alt input, and
+  parameterless `FlipCoin`, retain selection, suppress editable input, and
   reject replay before submission.
+- The Alt-`F` lane pairs seven fresh deny-by-default v1 pages with the protected
+  candidate. It pins reversible orientation, modifier variants, retained
+  selection, ordinary multiplayer's consumed no-op, coaching/spectator
+  eligibility and two legacy visibility relays, replay-local behavior, editor
+  silence, and empty action/export history. The candidate must call only the
+  renderer-local perspective seam for an explicitly eligible player or a
+  spectator, retain replay/selection state, and create no authority, command,
+  action, rejection, or socket traffic; disclosure remains projection-owned.
 - The unselected lifecycle-key lane pairs nine fresh deny-by-default v1 pages
   with one candidate DOM case. It pins exact setup/reset/turn messages and
   action/export records, owner rewriting, selection boundaries, spectator

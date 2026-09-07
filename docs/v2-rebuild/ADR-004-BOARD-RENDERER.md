@@ -138,10 +138,17 @@ retains precedence, while Alt-Control-digit is intentionally silent instead of
 reproducing v1's dual-branch, unlogged second mutation and DOM exception.
 Non-Alt `F` also crosses the global bridge as a payload-free `FlipCoin`
 request, independent of card selection. The selected card stays selected;
-Alt-`F` stays reserved for the separate renderer-local board-flip path.
 Authority derives the actor and random result, while replay, spectator,
 stale-viewer, overlay, and editable boundaries remain silent or fail closed
 before submission.
+Alt-`F` takes that separate renderer-local path before selected-card routing.
+The bridge consumes it in every non-editor board state, but calls the existing
+runtime perspective swap only for spectators or an explicitly enabled
+solo/coaching player; ordinary multiplayer players keep the source no-op.
+Selection and replay inspection survive the flip. Legacy coaching/spectator
+flips also emitted look/stop-looking hand messages, but v2 intentionally emits
+nothing: recipient projection is the sole hidden-information boundary, so
+physical orientation cannot grant or revoke disclosure.
 The bridge now distinguishes those always-global actions from unselected-only
 deck/lifecycle actions. Alt-`N`, Alt-`R`, and Alt-`T` carry no seat identity and
 reuse the existing viewer-derived setup/reset/start-turn resolvers. Selected
