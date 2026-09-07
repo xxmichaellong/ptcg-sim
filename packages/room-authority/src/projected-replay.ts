@@ -83,6 +83,21 @@ export const buildProjectedReplay = (
     throw new Error('Replay viewer is not a player in this match');
   }
   const states = replayHistoryStates(history);
+  // Solo disclosure hands this player every prize and the *opposing* hand,
+  // which is correct only while a solo room has one human driving both sides.
+  //
+  // Nothing enforces that today, and it is inert only because no code path
+  // creates a solo room: apps/server/src/create-room.ts fixes every room to
+  // 'multiplayer', and assertAuthorityTransactionTransition forbids changing
+  // mode afterwards. Admission is mode-agnostic and seats two players, and the
+  // solo snapshots in process-command.test.ts carry two distinct player
+  // sessions, so the single-occupant assumption is neither stated nor true of
+  // existing fixtures.
+  //
+  // Whoever adds solo room creation must make single occupancy a persisted
+  // admission property. It cannot be derived here from how many sessions are
+  // currently connected: docs/v2-rebuild/03-domain-network-and-persistence.md
+  // requires that live connection count never infer permission.
   const localDisclosurePlayerId =
     mode === 'solo' && viewer.kind === 'player' ? viewer.playerId : undefined;
   const candidateLocalDefinitions = new Map<
