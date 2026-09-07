@@ -149,6 +149,14 @@ Selection and replay inspection survive the flip. Legacy coaching/spectator
 flips also emitted look/stop-looking hand messages, but v2 intentionally emits
 nothing: recipient projection is the sole hidden-information boundary, so
 physical orientation cannot grant or revoke disclosure.
+Global `Escape` is likewise renderer-local and precedes action resolution.
+Outside editable or overlay-owned content it invokes the runtime's existing
+all-scope presentation dismissal without preventing the browser default. The
+controller clears selection, hover/drag, open zone, context, preview, and input;
+no command or authority state exists for this gesture. Focused semantic overlays
+keep their narrower Escape behavior and focus return. Six source pages plus the
+candidate pin modifiers, replay/spectator use, full-stack closure, protected
+input, and zero game traffic without introducing a visible UI change.
 The bridge now distinguishes those always-global actions from unselected-only
 deck/lifecycle actions. Alt-`N`, Alt-`R`, and Alt-`T` carry no seat identity and
 reuse the existing viewer-derived setup/reset/start-turn resolvers. Selected

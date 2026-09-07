@@ -51,6 +51,7 @@ interface ProtectedInputEvidence {
   readonly deckViewDeclarations: number;
   readonly boardFlips: number;
   readonly sceneRefreshes: number;
+  readonly presentationDismissals: number;
   readonly presentation: {
     readonly selectedCardId: string | null;
     readonly drag: {
@@ -2741,6 +2742,154 @@ test('Alt-F flips only the local board perspective across selection and replay',
   expect(current.submissions).toEqual([]);
   expect(current.shortcutActions).toEqual([]);
   expect(current.reportedErrors).toEqual([]);
+
+  await page.evaluate(() => {
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.dispose();
+  });
+  await expect(host).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('Escape globally dismisses local board presentation without command traffic', async ({
+  page,
+}) => {
+  const errors = collectRuntimeErrors(page);
+  const fixture = await mountHarness(page);
+  const host = page.locator('[data-react-dom-protected-input-harness]');
+  const selectedCard = host.locator(
+    `[data-card-id="${fixture.activeTopCardId}"]`
+  );
+  const selectedPoint = await exposedCardPoint(selectedCard);
+  const dispatchBodyEscape = (
+    modifiers: {
+      readonly altKey?: boolean;
+      readonly ctrlKey?: boolean;
+      readonly shiftKey?: boolean;
+    } = {}
+  ): Promise<boolean> =>
+    page.evaluate(
+      (init) =>
+        document.body.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: 'Escape',
+            code: 'Escape',
+            bubbles: true,
+            cancelable: true,
+            ...init,
+          })
+        ),
+      modifiers
+    );
+  const expectOnlyLocalDismissal = async (): Promise<void> => {
+    await expect
+      .poll(async () => (await evidence(page)).presentationDismissals)
+      .toBe(1);
+    const current = await evidence(page);
+    expect(current).toMatchObject({
+      submissions: [],
+      submissionResults: [],
+      rejections: [],
+      overlayRejections: [],
+      overlayActions: [],
+      shortcutRejections: [],
+      shortcutActions: [],
+      presentation: { selectedCardId: null, openedZoneId: null },
+      overlays: { contextMenuCardId: null, input: null, preview: null },
+      reportedErrors: [],
+    });
+  };
+
+  await page.mouse.click(selectedPoint.x, selectedPoint.y);
+  await expect
+    .poll(async () => (await evidence(page)).presentation.selectedCardId)
+    .toBe(fixture.activeTopCardId);
+  await clearEvidence(page);
+  expect(await dispatchBodyEscape()).toBe(true);
+  await expectOnlyLocalDismissal();
+
+  await page.mouse.click(selectedPoint.x, selectedPoint.y, { button: 'right' });
+  await expect
+    .poll(async () => (await evidence(page)).overlays.contextMenuCardId)
+    .toBe(fixture.activeTopCardId);
+  await clearEvidence(page);
+  expect(await dispatchBodyEscape({ ctrlKey: true })).toBe(true);
+  await expectOnlyLocalDismissal();
+  await expect(host.locator('[data-legacy-card-context-menu]')).toHaveCount(0);
+
+  await page.keyboard.press('KeyV');
+  await expect
+    .poll(async () => (await evidence(page)).presentation.openedZoneId)
+    .toBe(fixture.ownDeckZoneId);
+  await clearEvidence(page);
+  expect(await dispatchBodyEscape({ altKey: true })).toBe(true);
+  await expectOnlyLocalDismissal();
+  await expect(host.locator('[data-legacy-zone-browser]')).toHaveCount(0);
+
+  await page.mouse.click(selectedPoint.x, selectedPoint.y);
+  await page.keyboard.press('KeyV');
+  await expect
+    .poll(async () => (await evidence(page)).overlays.preview)
+    .toMatchObject({
+      kind: 'stack',
+      stackId: fixture.activeStackId,
+      focusCardId: fixture.activeTopCardId,
+    });
+  await clearEvidence(page);
+  expect(await dispatchBodyEscape({ shiftKey: true })).toBe(true);
+  await expectOnlyLocalDismissal();
+  await expect(host.locator('[data-legacy-card-preview]')).toHaveCount(0);
+
+  await page.mouse.click(selectedPoint.x, selectedPoint.y, { button: 'right' });
+  await expect
+    .poll(async () => (await evidence(page)).overlays.contextMenuCardId)
+    .toBe(fixture.activeTopCardId);
+  await clearEvidence(page);
+  expect(
+    await page.evaluate(() => {
+      const input = document.createElement('input');
+      input.dataset.escapeShortcutEditor = 'true';
+      document.body.append(input);
+      return input.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Escape',
+          code: 'Escape',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    })
+  ).toBe(true);
+  expect((await evidence(page)).presentationDismissals).toBe(0);
+  expect((await evidence(page)).overlays.contextMenuCardId).toBe(
+    fixture.activeTopCardId
+  );
+  expect(await dispatchBodyEscape()).toBe(true);
+  await expectOnlyLocalDismissal();
+  await page
+    .locator('[data-escape-shortcut-editor]')
+    .evaluate((element) => element.remove());
+
+  await page.evaluate(() => {
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.enterSoloReplay();
+  });
+  await expect
+    .poll(async () => (await evidence(page)).sourceKind)
+    .toBe('replay');
+  await page.mouse.click(selectedPoint.x, selectedPoint.y);
+  await expect
+    .poll(async () => (await evidence(page)).presentation.selectedCardId)
+    .toBe(fixture.activeTopCardId);
+  await clearEvidence(page);
+  expect(await dispatchBodyEscape({ ctrlKey: true, shiftKey: true })).toBe(
+    true
+  );
+  await expectOnlyLocalDismissal();
 
   await page.evaluate(() => {
     const harness = (window as ProtectedInputHarnessWindow)

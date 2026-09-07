@@ -1013,6 +1013,24 @@ and restoration through `BoardSessionRuntime`, retained selection, replay-local
 behavior, and zero submission/action/rejection traffic. No wire, domain,
 authority, control, geometry, style, visible UI, or UX changed.
 
+### Implemented global Escape presentation subset
+
+`Escape` now invokes the existing renderer-local all-scope presentation
+dismissal before selected-card or global action routing. Outside editable and
+overlay-owned content, it clears selection, hover/drag, open zone, context menu,
+preview, and input while deliberately retaining v1's non-consumed browser
+default. Focused semantic overlays still own scoped Escape and focus return.
+The path remains available to players, spectators, and replay because it cannot
+mutate authoritative or historical state.
+
+Six fresh deny-by-default v1 pages pin simultaneous zone/context/key-reference/
+selection/target-highlight cleanup, full-stack closure, modifier handling,
+replay and spectator behavior, editor silence, and empty action/export/socket
+history. Candidate Chromium proves all-scope cleanup for selection, context,
+zone, preview, and replay, plus protected-editor silence and zero command,
+action, or rejection traffic. No wire, domain, authority, renderer contract,
+visible control, key reference, geometry, style, UI, or UX changed.
+
 ### Implemented unselected lifecycle keyboard subset
 
 Alt-`N`, Alt-`R`, and Alt-`T` now produce payload-free setup, reset, and

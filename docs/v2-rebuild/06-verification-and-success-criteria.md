@@ -147,6 +147,15 @@ the existing renderer runtime but emits no command or socket message: the
 recipient-safe projection remains the only disclosure authority. Candidate
 Chromium proves physical-side reversal/restoration and zero game traffic.
 
+Global Escape parity has paired Chromium evidence across six fresh v1 pages and
+the protected candidate. The source oracle pins simultaneous popup, zone,
+selection, and target-highlight cleanup; selected full-stack closure;
+Control/Alt/Shift variants; replay/spectator locality; focused-input silence;
+native default behavior; and empty action/export/socket history. The candidate
+must dispatch only the existing all-scope local presentation dismissal, clear
+selection/context/zone/preview state, preserve overlay-owned scoped Escape and
+editable input, remain available in replay, and emit no command or rejection.
+
 Unselected lifecycle-key parity has paired Chromium evidence across nine fresh
 v1 pages and one candidate route. Alt-`N` setup, Alt-`R` reset, and Alt-`T`
 start-turn pin exact empty-deck messages, live/export records, owner rewriting,

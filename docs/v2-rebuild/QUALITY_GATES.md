@@ -191,6 +191,13 @@ traces are retained as a 14-day artifact. Browser binaries are not cached.
   renderer-local perspective seam for an explicitly eligible player or a
   spectator, retain replay/selection state, and create no authority, command,
   action, rejection, or socket traffic; disclosure remains projection-owned.
+- The global Escape lane pairs six fresh deny-by-default v1 pages with the
+  protected candidate. It pins simultaneous popup/zone/selection/target cleanup,
+  selected full-stack closure, Control/Alt/Shift variants, replay/spectator
+  locality, focused-input silence, non-consumed defaults, and empty action,
+  export, and socket history. The candidate must call only the existing
+  all-scope local presentation dismissal, clear selection/context/zone/preview,
+  preserve overlay-owned scoped Escape, and emit no command or rejection.
 - The unselected lifecycle-key lane pairs nine fresh deny-by-default v1 pages
   with one candidate DOM case. It pins exact setup/reset/turn messages and
   action/export records, owner rewriting, selection boundaries, spectator

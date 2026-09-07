@@ -93,6 +93,7 @@ export interface ReactDomProtectedInputEvidence {
   readonly deckViewDeclarations: number;
   readonly boardFlips: number;
   readonly sceneRefreshes: number;
+  readonly presentationDismissals: number;
   readonly presentation: BoardPresentation;
   readonly overlays: BoardOverlayState;
   readonly sourceKind: 'live' | 'replay' | null;
@@ -259,6 +260,7 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
   let deckViewDeclarations = 0;
   let boardFlips = 0;
   let sceneRefreshes = 0;
+  let presentationDismissals = 0;
   const reportedErrors: string[] = [];
   let clientSequence = 0;
   let soloUndoPending = false;
@@ -599,6 +601,10 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
                 boardFlips += 1;
                 runtime.flipBoard();
               },
+              onDismissPresentation: () => {
+                presentationDismissals += 1;
+                runtime.dismissLocalPresentation();
+              },
               onRefreshScene: () => {
                 sceneRefreshes += 1;
                 runtime.refreshScene();
@@ -634,6 +640,7 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
         deckViewDeclarations,
         boardFlips,
         sceneRefreshes,
+        presentationDismissals,
         presentation: current.presentation,
         overlays: current.overlays,
         sourceKind: current.source?.kind ?? null,
@@ -659,6 +666,7 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
       deckViewDeclarations = 0;
       boardFlips = 0;
       sceneRefreshes = 0;
+      presentationDismissals = 0;
       reportedErrors.length = 0;
     },
     setDarkMode: (enabled) => {

@@ -1237,6 +1237,19 @@ does not reproduce those emissions: its recipient-safe projection, rather than a
 client board orientation, owns hidden-information disclosure. Candidate Chromium
 proves physical-side reversal and restoration with zero command, action, or
 socket traffic. No visible control, geometry, styling, UI, or UX changed.
+`Escape` now takes the adjacent renderer-local presentation path before any
+selected or global action routing. Outside editable and overlay-owned content,
+the document bridge asks `BoardSessionRuntime` to dismiss all transient board
+presentation while leaving the browser default untouched. That clears the
+current selection, hover/drag, zone browser, context menu, preview, and input
+through the existing controller action; it cannot submit a command. Six real-v1
+pages pin popup/selection/target-highlight cleanup, full-stack closure,
+Control/Alt/Shift variants, replay/spectator behavior, editable silence, empty
+action/export/socket history, and the non-consumed key. Candidate Chromium
+proves the same global local-only cleanup across selection, context, zone,
+preview, editor, and replay states. Focused v2 overlays retain their existing
+scoped Escape/focus-return handlers. No visible surface, key reference, layout,
+styling, UI, or UX changed.
 The key bridge now separates always-global Enter/Slash/`F` from unselected-only
 deck and lifecycle input. Alt-`N`, Alt-`R`, and Alt-`T` derive the viewer and
 reuse existing `SetupPlayer`, `ResetPlayer`, and `StartTurn` commands; selected

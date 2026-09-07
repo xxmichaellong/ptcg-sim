@@ -23,6 +23,8 @@ export interface LegacyBoardKeyboardShortcutsProps {
   readonly onRefreshScene?: () => void;
   /** Local board-perspective swap; it never enters the command reducer. */
   readonly onFlipBoard?: () => void;
+  /** Local presentation dismissal; it never enters the command reducer. */
+  readonly onDismissPresentation?: () => void;
   /** Non-authoritative room announcement; omitted until a route wires it. */
   readonly onDeclareMulligan?: () => void;
   /** Non-authoritative deck-view announcement; omitted until a route wires it. */
@@ -58,6 +60,7 @@ export const LegacyBoardKeyboardShortcuts = ({
   onLocalIntent,
   onRefreshScene,
   onFlipBoard,
+  onDismissPresentation,
   onDeclareMulligan,
   onDeclareDeckView,
   soloUndoEnabled = false,
@@ -83,6 +86,12 @@ export const LegacyBoardKeyboardShortcuts = ({
         isLegacyBoardShortcutEditableTarget(event.target) ||
         isLegacyBoardOverlayTarget(event.target)
       ) {
+        return;
+      }
+      if (event.key === 'Escape' || event.code === 'Escape') {
+        // V1 closes every transient board surface without consuming Escape.
+        // Overlay-focused Escape remains owned by the scoped overlay handlers.
+        onDismissPresentation?.();
         return;
       }
       const flipsBoard =
@@ -176,6 +185,7 @@ export const LegacyBoardKeyboardShortcuts = ({
   }, [
     onDeclareMulligan,
     onDeclareDeckView,
+    onDismissPresentation,
     onLocalIntent,
     onFlipBoard,
     onRefreshScene,

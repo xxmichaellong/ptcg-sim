@@ -853,6 +853,88 @@ describe('legacy board keyboard shortcut bridge', () => {
     zone.remove();
   });
 
+  it('dismisses local presentation with native Escape semantics outside protected targets', async () => {
+    const onRequest = vi.fn();
+    const onDismissPresentation = vi.fn();
+    const state = createInitialBoardSessionControllerState();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state: {
+            ...state,
+            presentation: {
+              ...state.presentation,
+              selectedCardId: 'selected-card',
+            },
+          },
+          onRequest,
+          onDismissPresentation,
+        })
+      );
+    });
+
+    const target = document.createElement('button');
+    const input = document.createElement('input');
+    const overlay = document.createElement('div');
+    const overlayButton = document.createElement('button');
+    overlay.dataset.legacyBoardOverlays = 'true';
+    overlay.append(overlayButton);
+    document.body.append(target, input, overlay);
+
+    for (const init of [
+      { key: 'Escape', code: 'Escape' },
+      { key: 'Escape', code: 'Escape', ctrlKey: true },
+      { key: 'Unidentified', code: 'Escape', altKey: true, shiftKey: true },
+    ]) {
+      expect(
+        target.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            ...init,
+            bubbles: true,
+            cancelable: true,
+          })
+        )
+      ).toBe(true);
+    }
+    expect(onDismissPresentation).toHaveBeenCalledTimes(3);
+    expect(onRequest).not.toHaveBeenCalled();
+
+    for (const protectedTarget of [input, overlayButton]) {
+      expect(
+        protectedTarget.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: 'Escape',
+            code: 'Escape',
+            bubbles: true,
+            cancelable: true,
+          })
+        )
+      ).toBe(true);
+    }
+    const composing = new KeyboardEvent('keydown', {
+      key: 'Escape',
+      code: 'Escape',
+      bubbles: true,
+      cancelable: true,
+      isComposing: true,
+    });
+    target.dispatchEvent(composing);
+    const consumed = new KeyboardEvent('keydown', {
+      key: 'Escape',
+      code: 'Escape',
+      bubbles: true,
+      cancelable: true,
+    });
+    consumed.preventDefault();
+    target.dispatchEvent(consumed);
+
+    expect(onDismissPresentation).toHaveBeenCalledTimes(3);
+    expect(onRequest).not.toHaveBeenCalled();
+    target.remove();
+    input.remove();
+    overlay.remove();
+  });
+
   it('ignores unselected, composing, already-consumed, and editable-target keys', async () => {
     const onRequest = vi.fn();
     const state = createInitialBoardSessionControllerState();

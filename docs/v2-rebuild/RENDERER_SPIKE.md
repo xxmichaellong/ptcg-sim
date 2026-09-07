@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 1055 v2 tests across 154 files. A separate suite
-passes 198 Playwright checks across 81 Chromium 151 browser files:
+The repository-wide gate passes 1056 v2 tests across 154 files. A separate suite
+passes 205 Playwright checks across 82 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -1529,6 +1529,20 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     intentionally leaves hand disclosure to recipient-safe projections instead
     of reproducing orientation-driven relay side effects. No wire, domain,
     authority schema, visible control, label, geometry, styling, UI, or UX
+    changed.
+91. Global `Escape` now closes the adjacent renderer-local presentation gap.
+    Outside editable and overlay-owned content, the document bridge invokes the
+    existing `BoardSessionRuntime.dismissLocalPresentation()` all-scope seam
+    before shortcut resolution and leaves the browser default untouched. The
+    controller clears selection, hover/drag, open zone, context, preview, and
+    input without a command; focused semantic overlays retain their scoped
+    Escape and focus-return behavior. Six fresh deny-by-default v1 pages pin
+    simultaneous surface/selection/target cleanup, selected full-stack closure,
+    Control/Alt/Shift variants, replay/spectator locality, editor silence, and
+    empty action/export/socket history. Candidate Chromium proves selection,
+    context, zone, preview, editor, and replay boundaries with no command,
+    action, or rejection traffic. No protocol, domain, authority, renderer
+    contract, visible control, key reference, geometry, styling, UI, or UX
     changed.
 
 The first browser run exposed a React integration defect that DOM emulation did

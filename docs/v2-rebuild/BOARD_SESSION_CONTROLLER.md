@@ -338,6 +338,14 @@ player gets the same consumed no-op as v1. The rebuilt path does not copy v1's
 coaching/spectator look/stop-looking socket emissions: recipient projections
 already enforce hand visibility, and presentation orientation cannot mutate
 authority or disclosure.
+`Escape` uses the existing `DismissLocalPresentation` controller action with
+the `all` scope before any shortcut resolver runs. The document bridge does not
+prevent its default and ignores editable, composing, consumed, and overlay-owned
+events. The runtime call clears selection, hover/drag, opened zone, context,
+preview, and input in one local presentation transition and remains valid in
+replay or spectator views. Focused overlays continue to handle their own scoped
+Escape and focus return; no renderer intent, game command, authority update, or
+protocol message is created.
 Alt-`N`, Alt-`R`, and Alt-`T` are handled by a separate unselected-only mapper.
 They carry no player ID; the resolver derives the viewer and composes the
 existing setup/reset and start-turn resolvers. Selected Alt-`N`/Alt-`R` remain
