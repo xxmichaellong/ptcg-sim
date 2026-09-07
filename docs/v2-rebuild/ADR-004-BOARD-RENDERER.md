@@ -142,8 +142,12 @@ clear at seek/resync/reconnect/exit/identity/terminal boundaries. Native
 Chromium covers real-v1 menu/card paint, exact face assets, stable face-swap
 geometry, semantic roles/names, keyboard traversal and wrap, focus-visible
 paint, focus return, selected-card-only disclosure, and zero submission. Source
-raster parity for transformed stack/zone dialogs, a manual screen-reader audit,
-production routing, and non-Chromium approval remain unresolved.
+raster parity for transformed stack/zone dialogs now uses the immutable player
+frames to reproduce the source iframe containing blocks. A real-v1/candidate
+gate pins both player orientations, physical surface/card geometry, paint,
+assets/order, modal semantics, Tab containment, focus return, and zero command
+traffic. A manual screen-reader audit, production routing, and non-Chromium
+approval remain unresolved.
 
 ### Mixed attachment history policy
 
@@ -348,10 +352,10 @@ Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
   Tool-specific Pixi paint parity, full paint or interaction parity, cover-open
   UX, or opened-zone layout, and the sidebar content rectangle is derived from
   measured shell/tab edges);
-- complete source raster comparison for transformed stack/zone dialogs, plus a
-  manual screen-reader audit beyond the automated replay-local semantic roles,
-  names, keyboard traversal/wrap, focus paint/return, face-swap paint, lifecycle,
-  dismissal, and protected command gate;
+- a manual screen-reader audit beyond the automated replay-local and transformed
+  stack/zone-dialog semantic roles, names, keyboard traversal/wrap, focus
+  paint/return, face-swap paint, lifecycle, dismissal, and protected command
+  gate;
 - a hidden/private-image request scan;
 - finish resource evidence beyond the current green 100-cycle warmed-host
   Chromium DOM-node/listener gate and the deterministic same-origin

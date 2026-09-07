@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 995 v2 tests across 154 files. A separate suite
-passes 143 Playwright checks across 69 Chromium 151 browser files:
+The repository-wide gate passes 996 v2 tests across 154 files. A separate suite
+passes 144 Playwright checks across 70 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -997,9 +997,8 @@ passes 143 Playwright checks across 69 Chromium 151 browser files:
     real v1 `Card` and pins source-ordered menu rows/computed paint plus the
     full-preview shell/image metrics, attaching both sides and JSON evidence.
     Action callbacks remain typed recording seams, not completed mutation
-    workflows; replay availability, source stack/zone raster parity, complete
-    accessibility audit, reconnect behavior, production wiring, and
-    non-Chromium approval remain separate.
+    workflows; replay availability, complete accessibility audit, reconnect
+    behavior, production wiring, and non-Chromium approval remain separate.
 55. Those typed callbacks now enter the same protected controller/effect/session
     path as renderer drops. `resolveLegacyBoardOverlayAction` exhaustively
     classifies every current menu/zone control and reuses the existing
@@ -1257,6 +1256,21 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     recorded but remains in the broader geometry workstream. No protocol,
     authority, canonical view/history, visible label, layout, production route,
     or live-game behavior changes.
+72. Stack previews and opened-zone dialogs now project the legacy iframe-local
+    percentages through the immutable owning-player frame instead of sizing
+    against the whole renderer viewport. This restores the source's half-height
+    containing block, local/opponent vertical placement, opponent stack
+    rotation, content-box padding, overflow, toolbar spacing, card radii,
+    shadows, and physical ordering without changing a control or game state.
+    The dialogs now declare modal semantics and contain Tab/Shift+Tab while the
+    existing focus boundary still returns to the invoking card or zone. A new
+    real-v1/candidate Chromium oracle mounts the exact recipient-safe candidate
+    assets into shipped v1 `Card`, stack, and discard surfaces, then pins both
+    player orientations for surface/card bounds, computed paint, asset and
+    accessible-label order, screenshots/JSON evidence, focus containment and
+    return, and zero submissions/rejections/errors. The pure frame projection
+    has an independent 1280×720 unit oracle. No protocol, authority, canonical
+    view, route, visible control, label, UI, or UX changes.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -1269,6 +1283,8 @@ from happy-DOM lifecycle tests.
 The renderer suites live in `tests/browser/renderer-spike.spec.ts` and
 `tests/browser/renderer-dom-cacheable-assets.spec.ts`. The source-parity suites
 start with `tests/browser/legacy-dom-geometry.spec.ts` and
+the transformed overlay comparison lives in
+`tests/browser/react-dom-transformed-overlay-paint.spec.ts`,
 the real-runtime marker controls live in
 `tests/browser/legacy-runtime-marker-editing.spec.ts`, and real evolution marker
 transfer lives in
@@ -1432,10 +1448,9 @@ wiring:
   thresholds (source edge clamp/collision states, the isolated candidate
   resize-pointer path, and normal/flipped fullscreen viewport continuity are now
   covered);
-- complete source raster comparison for transformed stack/zone dialogs, plus a
-  manual screen-reader audit beyond the automated replay-local semantic names,
-  roles, keyboard traversal/wrap, focus-visible paint/return, exact face assets,
-  and stable face-swap geometry;
+- a manual screen-reader audit beyond the automated replay-local and transformed
+  stack/zone-dialog semantic names, roles, keyboard traversal/wrap,
+  focus-visible paint/return, exact face assets, and stable geometry;
 - actual external card/image hosts, redirects, CORS failures, oversized/corrupt
   images, and the proxy/hybrid policy in ADR-013;
 - background resume, 0x0 host, DPR changes, and resize coalescing; WebGL-only

@@ -378,6 +378,10 @@ test('native DOM input reaches protected controller state, semantic drop rejecti
   await expect
     .poll(async () => (await evidence(page)).presentation.openedZoneId)
     .toBe(fixture.destinationZoneId);
+  await page.keyboard.press('Escape');
+  await expect
+    .poll(async () => (await evidence(page)).presentation.openedZoneId)
+    .toBeNull();
 
   await page.mouse.click(sourcePoint.x, sourcePoint.y, { button: 'right' });
   await expect

@@ -146,7 +146,8 @@
   width: 69%;
   height: 70%;
   padding: 20px;
-  overflow: auto;
+  overflow: visible;
+  box-sizing: content-box;
   transform: translate(-50%, -50%);
   border: 1px solid #ccc;
   border-radius: 5px;
@@ -171,8 +172,12 @@
 .ptcgsim-legacy-stack-preview img {
   height: 24%;
   margin: 0.5%;
-  border-radius: 0.3rem;
+  border-radius: 0.275rem;
   box-shadow: 0 2px 4px rgb(0 0 0 / 30%);
+}
+
+.ptcgsim-legacy-stack-preview[data-overlay-side='opponent'] img {
+  border-radius: 0.3rem;
 }
 
 .ptcgsim-legacy-zone-browser {
@@ -181,6 +186,8 @@
   left: 7.5%;
   width: 85%;
   height: 75%;
+  box-sizing: content-box;
+  padding: 0 20px 20px;
   overflow-y: auto;
   border: 1px solid #ccc;
   border-radius: 15px;
@@ -198,13 +205,20 @@
   position: sticky;
   top: 0;
   z-index: 1;
+  box-sizing: border-box;
   width: 100%;
+  margin-bottom: 1%;
   padding: 5px;
   border-radius: 0 0 15px 15px;
   background: #dadada;
   box-shadow: 2px 2px 5px rgb(0 0 0 / 30%);
   color: #111;
   text-align: center;
+}
+
+.ptcgsim-legacy-zone-toolbar label {
+  position: relative;
+  cursor: pointer;
 }
 
 .ptcgsim-legacy-zone-button {
@@ -224,19 +238,15 @@
   background: linear-gradient(to bottom, #898989, #7b7c7d);
 }
 
-.ptcgsim-legacy-zone-cards {
-  padding: 1% 20px 20px;
-}
-
 .ptcgsim-legacy-zone-cards button {
   display: inline-block;
   width: 10%;
   margin: 1px;
   padding: 0;
   border: 0;
-  border-radius: 0.3rem;
+  border-radius: 0;
   background: transparent;
-  box-shadow: 0 2px 4px rgb(0 0 0 / 30%);
+  box-shadow: none;
   cursor: pointer;
 }
 
@@ -254,5 +264,13 @@
   display: block;
   width: 100%;
   height: auto;
-  border-radius: inherit;
+  border-radius: 0.275rem;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 30%);
+  cursor: pointer;
+}
+
+.ptcgsim-legacy-zone-browser[data-overlay-side='opponent']
+  .ptcgsim-legacy-zone-cards
+  img {
+  border-radius: 0.3rem;
 }

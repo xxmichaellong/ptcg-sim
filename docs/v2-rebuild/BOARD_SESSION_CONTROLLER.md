@@ -349,8 +349,11 @@ Deck-list ordering is not present in recipient projections: unlike v1, the
 safe fallback orders disclosed labels and never obtains the opponent's hidden
 deck list. Replay-local source menu/card paint, exact face assets, per-card and
 zone lifecycle, semantic roles/names, keyboard traversal/wrap, and focus return
-are covered. Source stack/zone raster parity, a manual screen-reader audit,
-production wiring, and non-Chromium approval remain separate.
+are covered. Transformed stack/zone dialogs now derive their physical placement
+from the immutable owning-player frame and match real v1 on both sides for
+surface/card geometry, order, assets, computed paint, modal semantics, Tab
+containment, and focus return. A manual screen-reader audit, production wiring,
+and non-Chromium approval remain separate.
 
 ## Effects and renderer cancellation
 
@@ -408,9 +411,10 @@ Current browser evidence covers source menu/category-submenu rows and computed
 paint, card-preview intrinsic sizing, native menu traversal, Escape/outside
 dismissal, focus return, command-backed ability/damage/condition/category/move
 actions, both marker edit/removal flows, and typed zero-command invalid/local
-actions.
-It does not claim a manual screen-reader audit, source stack/zone raster parity,
-keyboard suppression in every editable context,
+actions. It also covers real-v1/candidate stack and opened-zone physical paint,
+card order, both player orientations, modal semantics, keyboard containment,
+and zero command leakage.
+It does not claim a manual screen-reader audit, keyboard suppression in every editable context,
 coaching flip, reconnect reconciliation, or the non-Chromium matrix. These
 remain Playwright/manual parity gates before any production switch.
 

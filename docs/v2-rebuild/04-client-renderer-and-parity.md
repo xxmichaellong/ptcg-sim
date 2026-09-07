@@ -1248,8 +1248,12 @@ stable boxes and aspect ratio, forward persistence, seek/exit reset, semantic
 menu roles and card names, arrow/Home/End traversal and wrap, focus-visible
 paint, focus return, empty child-image alt text, and zero submission. Arbitrary
 cross-renderer card dimensions are recorded rather than treated as disclosure
-parity; transformed stack/zone-dialog raster parity, a manual screen-reader
-audit, production routing, and non-Chromium approval remain separate gates.
+parity. Transformed stack/zone dialogs now use immutable owning-player frames
+to reproduce the legacy iframe coordinate systems. A source/candidate Chromium
+gate pins local and opponent physical geometry, card order/assets/paint, modal
+semantics, Tab containment, focus return, screenshots/metrics, and zero command
+traffic. A manual screen-reader audit, production routing, and non-Chromium
+approval remain separate gates.
 
 ## React application state
 

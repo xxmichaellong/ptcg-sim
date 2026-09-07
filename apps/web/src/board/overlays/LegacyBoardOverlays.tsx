@@ -5,6 +5,7 @@ import {
   layoutLegacyBenchQ0Markers,
   legacyMarkerAppearance,
   legacyMarkerCssColor,
+  type BoardScenePlayerFrame,
   type CardSceneNode,
   type MarkerSceneNode,
   type Rect,
@@ -19,6 +20,7 @@ import {
   useRef,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
+  type CSSProperties,
   type RefObject,
 } from 'react';
 
@@ -294,6 +296,28 @@ const useOutsideDismiss = (
     return () =>
       document.removeEventListener('pointerdown', onPointerDown, true);
   }, [container, dismiss, ignoreClosest]);
+};
+
+const trapModalTab = (
+  event: ReactKeyboardEvent<HTMLElement>,
+  container: HTMLElement,
+  selector: string
+): void => {
+  if (event.key !== 'Tab') return;
+  const items = [...container.querySelectorAll<HTMLElement>(selector)];
+  if (items.length === 0) {
+    event.preventDefault();
+    container.focus();
+    return;
+  }
+  const active = container.ownerDocument.activeElement;
+  if (event.shiftKey && (active === items[0] || active === container)) {
+    event.preventDefault();
+    items.at(-1)?.focus();
+  } else if (!event.shiftKey && active === items.at(-1)) {
+    event.preventDefault();
+    items[0]?.focus();
+  }
 };
 
 const moveMenuFocus = (
@@ -609,13 +633,53 @@ const ContextMenu = ({
   );
 };
 
+const STACK_PREVIEW_WIDTH_RATIO = 0.69;
+const STACK_PREVIEW_HEIGHT_RATIO = 0.7;
+const ZONE_BROWSER_WIDTH_RATIO = 0.85;
+const ZONE_BROWSER_HEIGHT_RATIO = 0.75;
+const ZONE_BROWSER_VERTICAL_PADDING_AND_BORDER_PX = 22;
+
+export const legacyStackPreviewFrameStyle = (
+  frame: BoardScenePlayerFrame,
+  side: CardSceneNode['side']
+): CSSProperties => ({
+  left: frame.bounds.x + frame.bounds.width / 2,
+  top: frame.bounds.y + frame.bounds.height / 2,
+  width: frame.bounds.width * STACK_PREVIEW_WIDTH_RATIO,
+  height: frame.bounds.height * STACK_PREVIEW_HEIGHT_RATIO,
+  transform: `translate(-50%, -50%)${side === 'opponent' ? ' rotate(180deg)' : ''}`,
+});
+
+export const legacyZoneBrowserFrameStyle = (
+  frame: BoardScenePlayerFrame,
+  side: ZoneSceneNode['side']
+): CSSProperties => {
+  const contentHeight = frame.bounds.height * ZONE_BROWSER_HEIGHT_RATIO;
+  return {
+    left: frame.bounds.x + frame.bounds.width / 2,
+    top:
+      side === 'opponent'
+        ? frame.bounds.y +
+          frame.bounds.height -
+          contentHeight -
+          ZONE_BROWSER_VERTICAL_PADDING_AND_BORDER_PX
+        : frame.bounds.y + frame.bounds.height / 2,
+    width: frame.bounds.width * ZONE_BROWSER_WIDTH_RATIO,
+    height: contentHeight,
+    transform:
+      side === 'opponent' ? 'translateX(-50%)' : 'translate(-50%, -50%)',
+  };
+};
+
 const Preview = ({
   cards,
   kind,
+  frame,
   actions,
 }: {
   readonly cards: readonly CardSceneNode[];
   readonly kind: 'card' | 'stack';
+  readonly frame?: BoardScenePlayerFrame;
   readonly actions: LegacyBoardOverlayActions;
 }) => {
   const container = useRef<HTMLDivElement>(null);
@@ -624,6 +688,9 @@ const Preview = ({
   useFocusBoundary(container, '[data-preview-focus]', identity);
   useOutsideDismiss(container, dismiss);
   const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>): void => {
+    if (kind === 'stack' && container.current) {
+      trapModalTab(event, container.current, '[data-preview-tabbable]');
+    }
     if (
       event.key === 'Escape' ||
       (!event.altKey && !event.ctrlKey && !event.metaKey && event.key === 'v')
@@ -663,9 +730,16 @@ const Preview = ({
       data-legacy-card-preview="true"
       data-preview-kind="stack"
       role="dialog"
+      aria-modal="true"
       aria-label="Card stack preview"
+      data-overlay-side={cards[0]?.side}
       tabIndex={-1}
       data-preview-focus="true"
+      style={
+        frame && cards[0]
+          ? legacyStackPreviewFrameStyle(frame, cards[0].side)
+          : undefined
+      }
       onKeyDown={onKeyDown}
     >
       {cards.map((card) => (
@@ -711,12 +785,14 @@ const ZoneBrowser = ({
   state,
   zone,
   cards,
+  frame,
   captureContextAnchor,
   actions,
 }: {
   readonly state: BoardSessionControllerState;
   readonly zone: ZoneSceneNode;
   readonly cards: readonly CardSceneNode[];
+  readonly frame?: BoardScenePlayerFrame;
   readonly captureContextAnchor: (
     cardId: ViewCardId,
     zoneId: string,
@@ -742,9 +818,19 @@ const ZoneBrowser = ({
       data-legacy-zone-browser="true"
       data-zone-browser-id={zone.id}
       role="dialog"
+      aria-modal="true"
       aria-label={`${zone.label}, ${zone.count} cards`}
+      data-overlay-side={zone.side}
       tabIndex={-1}
+      style={frame ? legacyZoneBrowserFrameStyle(frame, zone.side) : undefined}
       onKeyDown={(event) => {
+        if (container.current) {
+          trapModalTab(
+            event,
+            container.current,
+            'button:not(:disabled), input:not(:disabled), [href], [tabindex]:not([tabindex="-1"])'
+          );
+        }
         if (event.key === 'Escape') {
           event.preventDefault();
           dismiss();
@@ -1070,6 +1156,19 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
   const openedZoneCards = openedZone
     ? scene.cards.filter((card) => card.parentId === openedZone.id)
     : [];
+  const openedZoneFrame = openedZone?.playerId
+    ? scene.layout.players.find(
+        (player) => player.playerId === openedZone.playerId
+      )
+    : undefined;
+  const previewFrame =
+    preview?.kind === 'stack'
+      ? scene.layout.players.find(
+          (player) =>
+            player.playerId ===
+            state.view?.stacks[preview.stackId]?.boardPlayerId
+        )
+      : undefined;
 
   return (
     <div
@@ -1083,6 +1182,7 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
           state={state}
           zone={openedZone}
           cards={openedZoneCards}
+          frame={openedZoneFrame}
           captureContextAnchor={(cardId, zoneId, bounds) =>
             setContextAnchor({ cardId, zoneId, bounds })
           }
@@ -1117,7 +1217,12 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
         />
       ) : null}
       {preview ? (
-        <Preview cards={previewCards} kind={preview.kind} actions={actions} />
+        <Preview
+          cards={previewCards}
+          kind={preview.kind}
+          frame={previewFrame}
+          actions={actions}
+        />
       ) : null}
     </div>
   );

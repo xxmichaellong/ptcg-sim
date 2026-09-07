@@ -15,6 +15,8 @@ import {
 } from '../BoardSessionController.js';
 import {
   LegacyBoardOverlays,
+  legacyStackPreviewFrameStyle,
+  legacyZoneBrowserFrameStyle,
   selectLegacyContextEntries,
   sortRecipientSafeZoneCards,
   type LegacyBoardOverlayActions,
@@ -78,6 +80,55 @@ describe('legacy board overlays', () => {
     await act(async () => root.unmount());
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+  });
+
+  it('projects source iframe-relative overlays into physical player frames', () => {
+    const local = scene.layout.players.find((frame) => frame.side === 'local')!;
+    const opponent = scene.layout.players.find(
+      (frame) => frame.side === 'opponent'
+    )!;
+    expect(local.bounds).toEqual({
+      x: 0,
+      y: 360,
+      width: 1280,
+      height: 360,
+    });
+    expect(opponent.bounds).toEqual({
+      x: 0,
+      y: 0,
+      width: 1280,
+      height: 360,
+    });
+    const localStack = legacyStackPreviewFrameStyle(local, 'local');
+    expect(localStack).toMatchObject({
+      left: 640,
+      top: 540,
+      transform: 'translate(-50%, -50%)',
+    });
+    expect(localStack.width).toBeCloseTo(883.2, 10);
+    expect(localStack.height).toBeCloseTo(252, 10);
+    const opponentStack = legacyStackPreviewFrameStyle(opponent, 'opponent');
+    expect(opponentStack).toMatchObject({
+      left: 640,
+      top: 180,
+      transform: 'translate(-50%, -50%) rotate(180deg)',
+    });
+    expect(opponentStack.width).toBeCloseTo(883.2, 10);
+    expect(opponentStack.height).toBeCloseTo(252, 10);
+    expect(legacyZoneBrowserFrameStyle(local, 'local')).toEqual({
+      left: 640,
+      top: 540,
+      width: 1088,
+      height: 270,
+      transform: 'translate(-50%, -50%)',
+    });
+    expect(legacyZoneBrowserFrameStyle(opponent, 'opponent')).toEqual({
+      left: 640,
+      top: 68,
+      width: 1088,
+      height: 270,
+      transform: 'translateX(-50%)',
+    });
   });
 
   it('selects the source-ordered player menu without granting authority', () => {
