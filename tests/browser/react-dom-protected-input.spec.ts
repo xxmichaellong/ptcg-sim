@@ -48,6 +48,7 @@ interface ProtectedInputEvidence {
   readonly shortcutRejections: readonly unknown[];
   readonly shortcutActions: readonly unknown[];
   readonly mulliganDeclarations: number;
+  readonly sceneRefreshes: number;
   readonly presentation: {
     readonly selectedCardId: string | null;
     readonly drag: {
@@ -2023,6 +2024,9 @@ test('unselected lifecycle shortcuts derive the viewer and reject replay atomica
     ]);
     expect(current.shortcutActions).toEqual([scenario.action]);
     expect(current.shortcutRejections).toEqual([]);
+    expect(current.sceneRefreshes).toBe(
+      scenario.action.action === 'resetOwnPlayer' ? 1 : 0
+    );
     expect(current.presentation.selectedCardId).toBeNull();
     expect(current.reportedErrors).toEqual([]);
   }
@@ -2037,7 +2041,6 @@ test('unselected lifecycle shortcuts derive the viewer and reject replay atomica
     .toBe(fixture.activeTopCardId);
   await clearEvidence(page);
   await page.keyboard.press('Alt+KeyN');
-  await page.keyboard.press('Alt+KeyR');
   let current = await evidence(page);
   expect(current.submissions).toEqual([]);
   expect(current.shortcutActions).toEqual([]);
@@ -2087,6 +2090,9 @@ test('unselected lifecycle shortcuts derive the viewer and reject replay atomica
     current = await evidence(page);
     expect(current.submissions).toEqual([]);
     expect(current.shortcutActions).toEqual([scenario.action]);
+    expect(current.sceneRefreshes).toBe(
+      scenario.action.action === 'resetOwnPlayer' ? 1 : 0
+    );
     expect(current.presentation.selectedCardId).toBeNull();
     expect(current.reportedErrors).toEqual([]);
   }
@@ -2499,6 +2505,151 @@ test('M emits only ephemeral live-player mulligan declarations and preserves pro
   expect(current.mulliganDeclarations).toBe(0);
   expect(current.submissions).toEqual([]);
   expect(current.shortcutActions).toEqual([]);
+  expect(current.reportedErrors).toEqual([]);
+
+  await page.evaluate(() => {
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.dispose();
+  });
+  await expect(host).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('R separates local scene refresh from protected group and single-card rotation', async ({
+  page,
+}) => {
+  const errors = collectRuntimeErrors(page);
+  const fixture = await mountHarness(page);
+  const host = page.locator('[data-react-dom-protected-input-harness]');
+
+  await page.evaluate(() => {
+    const init = {
+      key: 'r',
+      code: 'KeyR',
+      bubbles: true,
+      cancelable: true,
+    };
+    document.body.dispatchEvent(new KeyboardEvent('keydown', init));
+    document.body.dispatchEvent(
+      new KeyboardEvent('keydown', { ...init, ctrlKey: true })
+    );
+    document.body.dispatchEvent(
+      new KeyboardEvent('keydown', { ...init, key: 'R', shiftKey: true })
+    );
+  });
+  await expect.poll(async () => (await evidence(page)).sceneRefreshes).toBe(3);
+  let current = await evidence(page);
+  expect(current.submissions).toEqual([]);
+  expect(current.shortcutActions).toEqual([]);
+  expect(current.shortcutRejections).toEqual([]);
+
+  const selectedCard = host.locator(
+    `[data-card-id="${fixture.activeTopCardId}"]`
+  );
+  const point = await exposedCardPoint(selectedCard);
+  await page.mouse.click(point.x, point.y);
+  await expect
+    .poll(async () => (await evidence(page)).presentation.selectedCardId)
+    .toBe(fixture.activeTopCardId);
+  await clearEvidence(page);
+  await page.keyboard.press('KeyR');
+  await page.keyboard.press('Alt+KeyR');
+  current = await evidence(page);
+  expect(current.sceneRefreshes).toBe(0);
+  expect(current.shortcutActions).toEqual([
+    {
+      action: 'rotateSelectedCard',
+      cardId: fixture.activeTopCardId,
+      single: false,
+    },
+    {
+      action: 'rotateSelectedCard',
+      cardId: fixture.activeTopCardId,
+      single: true,
+    },
+  ]);
+  expect(current.submissions).toEqual([
+    {
+      type: 'RotateStack',
+      stackId: fixture.activeStackId,
+      rotationQuarterTurns: 1,
+    },
+    {
+      type: 'SetCardOrientation',
+      cardId: fixture.activeTopCardId,
+      orientationQuarterTurns: 1,
+    },
+  ]);
+  expect(current.shortcutRejections).toEqual([]);
+  expect(current.presentation.selectedCardId).toBe(fixture.activeTopCardId);
+
+  await page.mouse.dblclick(point.x, point.y);
+  await expect
+    .poll(async () => (await evidence(page)).overlays.preview)
+    .not.toBeNull();
+  await clearEvidence(page);
+  await page.keyboard.press('KeyR');
+  await page.keyboard.press('Alt+KeyR');
+  current = await evidence(page);
+  expect(current.sceneRefreshes).toBe(0);
+  expect(current.shortcutActions).toEqual([]);
+  expect(current.submissions).toEqual([]);
+
+  await page.keyboard.press('Escape');
+  await page.evaluate(() => {
+    const input = document.createElement('input');
+    input.dataset.rotationShortcutEditor = 'true';
+    document.body.append(input);
+    input.focus();
+  });
+  await page.keyboard.press('KeyR');
+  current = await evidence(page);
+  expect(current.sceneRefreshes).toBe(0);
+  expect(current.shortcutActions).toEqual([]);
+  await expect(page.locator('[data-rotation-shortcut-editor]')).toHaveValue(
+    'r'
+  );
+
+  await page.evaluate(() => {
+    document.querySelector('[data-rotation-shortcut-editor]')?.remove();
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.enterSoloReplay();
+  });
+  await expect
+    .poll(async () => (await evidence(page)).sourceKind)
+    .toBe('replay');
+  const replayCard = host.locator(
+    `[data-card-id="${fixture.activeTopCardId}"]`
+  );
+  const replayPoint = await exposedCardPoint(replayCard);
+  await page.mouse.click(replayPoint.x, replayPoint.y);
+  await clearEvidence(page);
+  await page.keyboard.press('KeyR');
+  current = await evidence(page);
+  expect(current.sceneRefreshes).toBe(0);
+  expect(current.submissions).toEqual([]);
+  expect(current.shortcutActions).toEqual([
+    {
+      action: 'rotateSelectedCard',
+      cardId: fixture.activeTopCardId,
+      single: false,
+    },
+  ]);
+  expect(current.shortcutRejections).toEqual([
+    {
+      kind: 'ShortcutActionRejected',
+      request: {
+        action: 'rotateSelectedCard',
+        cardId: fixture.activeTopCardId,
+        single: false,
+      },
+      reason: 'read_only',
+    },
+  ]);
   expect(current.reportedErrors).toEqual([]);
 
   await page.evaluate(() => {

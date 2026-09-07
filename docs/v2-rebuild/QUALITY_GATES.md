@@ -216,3 +216,12 @@ traces are retained as a 14-day artifact. Browser binaries are not cached.
   authority/sequence/history mutation, reject spectator forgery, validate the
   current revision/player on receipt, and consume live delivery silently during
   replay. General chat is not accepted as a substitute.
+- The R-key lane pairs ten fresh deny-by-default v1 pages with the protected
+  candidate. It pins local refresh and refresh-before-reset ordering, top/lower
+  stack rotation, single-card BREAK rotation, stadium constraints, action
+  indices, selection/default behavior, replay/full-view/spectator/editor
+  boundaries, and exact candidate target-value commands. Unselected refresh
+  must create no command or state change; selected commands must resolve a
+  current stable card ID, retain selection, and reject replay. Legacy
+  inline-angle, margin, and per-evolution BREAK history remains diagnostic and
+  must not be inferred from canonical quarter turns.

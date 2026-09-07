@@ -90,6 +90,7 @@ export interface ReactDomProtectedInputEvidence {
   readonly shortcutRejections: readonly ShortcutRejectionEffect[];
   readonly shortcutActions: readonly LegacyBoardShortcutActionRequest[];
   readonly mulliganDeclarations: number;
+  readonly sceneRefreshes: number;
   readonly presentation: BoardPresentation;
   readonly overlays: BoardOverlayState;
   readonly sourceKind: 'live' | 'replay' | null;
@@ -253,6 +254,7 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
   const shortcutRejections: ShortcutRejectionEffect[] = [];
   const shortcutActions: LegacyBoardShortcutActionRequest[] = [];
   let mulliganDeclarations = 0;
+  let sceneRefreshes = 0;
   const reportedErrors: string[] = [];
   let clientSequence = 0;
   let soloUndoPending = false;
@@ -578,6 +580,10 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
               onDeclareMulligan: () => {
                 runtime.declareMulligan();
               },
+              onRefreshScene: () => {
+                sceneRefreshes += 1;
+                runtime.refreshScene();
+              },
             })
           )
         : null
@@ -606,6 +612,7 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
         shortcutRejections: [...shortcutRejections],
         shortcutActions: [...shortcutActions],
         mulliganDeclarations,
+        sceneRefreshes,
         presentation: current.presentation,
         overlays: current.overlays,
         sourceKind: current.source?.kind ?? null,
@@ -628,6 +635,7 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
       shortcutRejections.length = 0;
       shortcutActions.length = 0;
       mulliganDeclarations = 0;
+      sceneRefreshes = 0;
       reportedErrors.length = 0;
     },
     setDarkMode: (enabled) => {

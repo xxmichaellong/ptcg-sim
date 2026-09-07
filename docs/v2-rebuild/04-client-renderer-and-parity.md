@@ -1266,6 +1266,18 @@ pipeline as the unchanged neutral “Blue mulligans” row. Live facts received
 while replay is active are consumed silently, fixing v1's replay-feed leak
 without a key-specific presentation store. General chat remains a separate,
 still-unimplemented migration.
+`R` now closes the adjacent refresh/rotation keyboard collision. Without a
+selection, plain/Control/Shift `R` calls the runtime's local scene reconstruction
+and Alt-`R` reconstructs before continuing to the existing reset request. With
+a selected stack card, `R` resolves the existing whole-stack target command and
+Alt-`R` resolves the existing per-card target command; stadium accepts only the
+group form. A ten-page real-v1 oracle pins refresh/loading order, action indices,
+top/lower group behavior, BREAK single-card behavior, stadium, replay,
+full-view, spectator, editor, and default-prevention boundaries. Candidate
+Chromium proves the local-only refresh and stable-ID command paths. Canonical
+v2 quarter-turn values deliberately exclude the source's history-dependent
+inline angles, wrapper margins, and per-evolution BREAK booleans; those source
+histories stay compatibility evidence rather than renderer-owned state.
 `A` and `B` now cross a separate closed active/bench resolver. Zone cards emit
 `MoveCardToPlay`; eligible top cards move a whole stack with exact board-order
 preconditions; a viewer-owned staged top restores atomically. Real v1 active

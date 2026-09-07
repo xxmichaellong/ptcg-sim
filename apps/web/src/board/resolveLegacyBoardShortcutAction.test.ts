@@ -608,6 +608,16 @@ describe('legacy board shortcut action resolver', () => {
       cardId,
       revealed: true,
     });
+    expect(key('R', 'KeyR')).toEqual({
+      action: 'rotateSelectedCard',
+      cardId,
+      single: false,
+    });
+    expect(key('Unidentified', 'KeyR', true)).toEqual({
+      action: 'rotateSelectedCard',
+      cardId,
+      single: true,
+    });
     expect(key('ArrowUp', 'ArrowUp')).toEqual({
       action: 'moveCardRelativeToDeck',
       cardId,
@@ -707,6 +717,72 @@ describe('legacy board shortcut action resolver', () => {
     });
     expect(key('e', 'KeyE')).toBeNull();
     expect(key('x', 'KeyX', true)).toBeNull();
+  });
+
+  it('reuses explicit group, single-card, and stadium rotation targets without dismissing selection', () => {
+    const view = createRendererSpikeView();
+    const stack = view.stacks['stack:blue:active']!;
+    const top = stack.evolutionCards.at(-1)!;
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'rotateSelectedCard',
+        cardId: top.id,
+        single: false,
+      })
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'RotateStack',
+        stackId: stack.id,
+        rotationQuarterTurns: 1,
+      },
+      dismissSelection: false,
+    });
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'rotateSelectedCard',
+        cardId: top.id,
+        single: true,
+      })
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'SetCardOrientation',
+        cardId: top.id,
+        orientationQuarterTurns: 1,
+      },
+      dismissSelection: false,
+    });
+    const stadium = view.zones['zone:shared:stadium']!.cards[0]!;
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'rotateSelectedCard',
+        cardId: stadium.id,
+        single: false,
+      })
+    ).toMatchObject({
+      ok: true,
+      command: {
+        type: 'SetCardOrientation',
+        cardId: stadium.id,
+        orientationQuarterTurns: 1,
+      },
+      dismissSelection: false,
+    });
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'rotateSelectedCard',
+        cardId: stadium.id,
+        single: true,
+      })
+    ).toEqual({ ok: false, reason: 'unsupported_target' });
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'rotateSelectedCard',
+        cardId: top.id,
+        single: 'yes',
+      } as unknown as LegacyBoardShortcutActionRequest)
+    ).toEqual({ ok: false, reason: 'invalid_value' });
   });
 
   it('reuses active/bench placement and dismisses accepted moves', () => {

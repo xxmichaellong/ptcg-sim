@@ -167,13 +167,21 @@ the same neutral activity/accessibility presentation path as other safe events,
 without changing authority state, command sequence, or replay history. Replay
 consumes the live fact without delivery. This preserves the existing row and
 avoids coupling the shortcut to the still-stubbed general-chat migration.
+`R` retains its context-sensitive source contract without putting refresh state
+in either renderer. Unselected plain/Control/Shift `R` asks the runtime to
+reinstall a scene from its current recipient-safe view; unselected Alt-`R` does
+that first and then takes the existing reset path. Selected `R`/Alt-`R` instead
+resolve stable card identity to existing stack/per-card target-value commands.
+Replay, full-card preview, spectator, and editable-input boundaries fail closed.
+The canonical model does not acquire legacy inline-angle, margin, or
+per-evolution BREAK history merely to reproduce refresh-dependent defects.
 Local zone sorting is
 controlled by the mounted zone browser:
 it derives a stable copy from disclosed labels and never enters the controller
 or mutates its projection; forged requests still fail closed as `local_only`.
 Native Chromium pins exact damage and condition edit/removal plus ability-marker
 commands, all six count prompts/commands, all three category choices, all five
-move choices, all twenty-four selected-card shortcut commands, all three global
+move choices, all twenty-six selected-card shortcut commands, all three global
 loose-board commands, all four intended unselected deck commands, the global
 coin command, all three lifecycle commands, all three staged hand commands, the
 solo undo key, and reversible sorting with zero action/effect/command traffic.

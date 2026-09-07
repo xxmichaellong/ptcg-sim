@@ -223,6 +223,14 @@ export class BoardSessionRuntime {
     return adapter.declareMulligan();
   }
 
+  /** Reconstructs the current recipient-safe scene without changing game state. */
+  refreshScene(): boolean {
+    this.assertUsable();
+    const adapter = this.adapter;
+    if (!adapter) throw new Error('Board session adapter is unavailable');
+    return adapter.refreshScene();
+  }
+
   dismissLocalPresentation(
     scope: BoardPresentationDismissScope = 'all'
   ): boolean {

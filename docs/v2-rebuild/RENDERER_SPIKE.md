@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 1047 v2 tests across 154 files. A separate suite
-passes 167 Playwright checks across 78 Chromium 151 browser files:
+The repository-wide gate passes 1049 v2 tests across 154 files. A separate suite
+passes 178 Playwright checks across 79 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -1488,6 +1488,21 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     bounded and suppress it during replay. Candidate Chromium proves protected
     input, and the real Wrangler/Vite room renders the unchanged row end to end.
     No visible control, label, layout, styling, UI, or UX changed.
+88. The context-sensitive `R` family now crosses two deliberately separate
+    boundaries. Unselected plain/Control/Shift `R` rebuilds the renderer scene
+    from the installed recipient-safe view without a command; unselected
+    Alt-`R` preserves the v1 refresh-before-reset order and then uses the
+    existing viewer-derived reset request. Selected `R` resolves to the
+    existing whole-stack/stadium target-value command, while selected Alt-`R`
+    resolves to the exact card's existing orientation target and retains
+    selection. Ten fresh deny-by-default v1 pages pin refresh/loading order,
+    top/lower evolution group behavior, BREAK single-card behavior, stadium,
+    action indices, replay/full-view/spectator/editor/default boundaries.
+    Candidate Chromium proves local refresh counts, stable-ID commands,
+    preview suppression, focused-input behavior, and typed replay rejection.
+    Canonical v2 state deliberately does not absorb the source's hidden inline
+    angles, wrapper margins, or per-evolution BREAK history. No wire, domain,
+    authority schema, visible control, label, layout, styling, UI, or UX changed.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

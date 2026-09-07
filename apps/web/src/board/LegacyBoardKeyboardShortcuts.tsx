@@ -11,6 +11,8 @@ import {
 export interface LegacyBoardKeyboardShortcutsProps {
   readonly state: BoardSessionControllerState;
   readonly onRequest: (request: LegacyBoardShortcutActionRequest) => void;
+  /** Local renderer reconstruction; it never enters the command reducer. */
+  readonly onRefreshScene?: () => void;
   /** Non-authoritative room announcement; omitted until a route wires it. */
   readonly onDeclareMulligan?: () => void;
   /** Supplied only by a route that knows it represents a solo room. */
@@ -39,6 +41,7 @@ const isNativeEnterActivationTarget = (event: KeyboardEvent): boolean =>
 export const LegacyBoardKeyboardShortcuts = ({
   state,
   onRequest,
+  onRefreshScene,
   onDeclareMulligan,
   soloUndoEnabled = false,
 }: LegacyBoardKeyboardShortcutsProps) => {
@@ -51,6 +54,20 @@ export const LegacyBoardKeyboardShortcuts = ({
         isLegacyBoardShortcutEditableTarget(event.target) ||
         isLegacyBoardOverlayTarget(event.target)
       ) {
+        return;
+      }
+      const refreshesScene =
+        event.key.toLowerCase() === 'r' || event.code === 'KeyR';
+      // V1 leaves selected spectator shortcuts entirely native. The controller
+      // still rejects forged requests, but the document bridge should not emit
+      // or consume them in the first place.
+      if (selectedCardId !== null && state.view?.viewer.kind === 'spectator') {
+        return;
+      }
+      // V1 keeps selectingCard true for its full-view image, prevents the key,
+      // and suppresses both the unselected refresh/reset and selected rotation.
+      if (refreshesScene && state.overlays.preview !== null) {
+        if (event.cancelable) event.preventDefault();
         return;
       }
       const selectedRequest =
@@ -70,6 +87,9 @@ export const LegacyBoardKeyboardShortcuts = ({
           ? null
           : resolveLegacyBoardGlobalShortcutKey(event)) ??
         (selectedCardId === null ? enabledUnselectedRequest : null);
+      if (selectedCardId === null && refreshesScene) {
+        onRefreshScene?.();
+      }
       if (!request) {
         if (
           selectedCardId !== null &&
@@ -96,6 +116,13 @@ export const LegacyBoardKeyboardShortcuts = ({
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onDeclareMulligan, onRequest, selectedCardId, soloUndoEnabled]);
+  }, [
+    onDeclareMulligan,
+    onRefreshScene,
+    onRequest,
+    selectedCardId,
+    soloUndoEnabled,
+    state.overlays.preview,
+  ]);
   return null;
 };

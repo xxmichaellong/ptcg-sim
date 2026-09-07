@@ -3,6 +3,7 @@
 import { createElement } from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { createRendererSpikeView } from '@ptcgsim/renderer-contract';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createInitialBoardSessionControllerState } from './BoardSessionController.js';
@@ -245,6 +246,11 @@ describe('legacy board keyboard shortcut bridge', () => {
       { action: 'resetOwnPlayer' },
       { action: 'startOwnTurn' },
       {
+        action: 'rotateSelectedCard',
+        cardId: 'selected-card',
+        single: true,
+      },
+      {
         action: 'changeCardType',
         cardId: 'selected-card',
         category: 'Trainer',
@@ -416,6 +422,120 @@ describe('legacy board keyboard shortcut bridge', () => {
     input.remove();
     expect(onDeclareMulligan).toHaveBeenCalledTimes(3);
     expect(onRequest).not.toHaveBeenCalled();
+  });
+
+  it('separates unselected R refresh from selected group/single rotation and suppresses full preview', async () => {
+    const onRequest = vi.fn();
+    const onRefreshScene = vi.fn();
+    const state = createInitialBoardSessionControllerState();
+    const dispatch = (init: KeyboardEventInit = {}) =>
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'r',
+          code: 'KeyR',
+          bubbles: true,
+          cancelable: true,
+          ...init,
+        })
+      );
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state,
+          onRequest,
+          onRefreshScene,
+        })
+      );
+    });
+    expect(dispatch()).toBe(true);
+    expect(dispatch({ ctrlKey: true })).toBe(true);
+    expect(dispatch({ key: 'R', shiftKey: true })).toBe(true);
+    expect(dispatch({ altKey: true })).toBe(true);
+    expect(onRefreshScene).toHaveBeenCalledTimes(4);
+    expect(onRequest).toHaveBeenCalledExactlyOnceWith({
+      action: 'resetOwnPlayer',
+    });
+    expect(onRefreshScene.mock.invocationCallOrder[3]).toBeLessThan(
+      onRequest.mock.invocationCallOrder[0]!
+    );
+
+    onRequest.mockClear();
+    onRefreshScene.mockClear();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state: {
+            ...state,
+            presentation: {
+              ...state.presentation,
+              selectedCardId: 'selected-card',
+            },
+          },
+          onRequest,
+          onRefreshScene,
+        })
+      );
+    });
+    expect(dispatch()).toBe(false);
+    expect(dispatch({ altKey: true })).toBe(false);
+    expect(onRequest.mock.calls.map(([request]) => request)).toEqual([
+      {
+        action: 'rotateSelectedCard',
+        cardId: 'selected-card',
+        single: false,
+      },
+      {
+        action: 'rotateSelectedCard',
+        cardId: 'selected-card',
+        single: true,
+      },
+    ]);
+    expect(onRefreshScene).not.toHaveBeenCalled();
+
+    onRequest.mockClear();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state: {
+            ...state,
+            overlays: {
+              ...state.overlays,
+              preview: { kind: 'card', cardId: 'preview-card' },
+            },
+          },
+          onRequest,
+          onRefreshScene,
+        })
+      );
+    });
+    expect(dispatch()).toBe(false);
+    expect(dispatch({ altKey: true })).toBe(false);
+    expect(onRequest).not.toHaveBeenCalled();
+    expect(onRefreshScene).not.toHaveBeenCalled();
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state: {
+            ...state,
+            view: {
+              ...createRendererSpikeView(),
+              viewer: { kind: 'spectator' },
+            },
+            presentation: {
+              ...state.presentation,
+              selectedCardId: 'selected-card',
+            },
+          },
+          onRequest,
+          onRefreshScene,
+        })
+      );
+    });
+    expect(dispatch()).toBe(true);
+    expect(onRequest).not.toHaveBeenCalled();
+    expect(onRefreshScene).not.toHaveBeenCalled();
   });
 
   it('does not let global shortcuts collide with overlays or native card and zone activation', async () => {

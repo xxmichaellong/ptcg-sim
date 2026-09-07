@@ -177,6 +177,18 @@ the incoming revision/player against the installed view, and suppresses live
 delivery during replay. The end-to-end route renders the unchanged announcement
 class and text through the existing presentation surface.
 
+Refresh/rotation-key parity has paired Chromium evidence across ten fresh v1
+pages and the protected candidate. The source oracle pins unselected R refresh,
+Alt-R refresh-before-reset ordering, selected top/lower group rotation,
+single-card BREAK toggling, stadium behavior, exact action indices,
+replay/full-view suppression, spectator default behavior, and editable input.
+The candidate must reconstruct locally without a command when unselected,
+retain selection and emit the existing explicit stack/per-card target command
+when selected, reject replay before submission, and suppress both branches
+during full-card preview. The gate does not authorize reconstructing v1's
+history-dependent inline-angle, wrapper-margin, or per-evolution BREAK state in
+the canonical model.
+
 ### Implemented seeded authority/storage model
 
 The server model suite at

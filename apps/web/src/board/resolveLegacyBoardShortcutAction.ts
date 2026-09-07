@@ -82,6 +82,12 @@ export type LegacyBoardShortcutActionRequest =
   | { readonly action: 'startOwnTurn' }
   | { readonly action: 'undoOwnLastMove' }
   | {
+      readonly action: 'rotateSelectedCard';
+      readonly cardId: ViewCardId;
+      /** Alt-R rotates only the selected card; R rotates its whole stack. */
+      readonly single: boolean;
+    }
+  | {
       readonly action: LegacyOwnHandShortcutAction;
       /** Missing opens the source-compatible prompt; present submits it. */
       readonly value?: string;
@@ -185,6 +191,18 @@ export const resolveLegacyBoardShortcutAction = (
   request: LegacyBoardShortcutActionRequest
 ): LegacyBoardShortcutActionResolution => {
   switch (request.action) {
+    case 'rotateSelectedCard': {
+      if (typeof request.single !== 'boolean') {
+        return { ok: false, reason: 'invalid_value' };
+      }
+      return retainResolution(
+        resolveCardAnnotationAction(view, request.cardId, {
+          type: 'rotate',
+          single: request.single,
+        }),
+        false
+      );
+    }
     case 'resolveOwnLooseBoard': {
       if (!isLegacyLooseBoardShortcutDestination(request.destination)) {
         return { ok: false, reason: 'invalid_value' };
@@ -554,6 +572,9 @@ export const resolveLegacyBoardShortcutKey = (
   }
   if (matches(input, 'z', 'KeyZ')) {
     return { action: 'setPublicReveal', cardId, revealed: altKey };
+  }
+  if (matches(input, 'r', 'KeyR')) {
+    return { action: 'rotateSelectedCard', cardId, single: altKey };
   }
   if (!altKey && matches(input, 'ArrowUp', 'ArrowUp')) {
     return {

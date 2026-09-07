@@ -393,7 +393,7 @@ still expose no replay mutation rows; a forged request is rejected as
 `read_only` before the resolver runs. Native Chromium
 now proves exact accepted `SetDamage`, `SetSpecialCondition`, both removals,
 `SetAbilityUsed`, all six count submissions, all three category choices, all
-five move choices, and all twenty-four selected-card shortcut commands; native
+five move choices, and all twenty-six selected-card shortcut commands; native
 prompt
 text/defaults, capacity clamps, zero hand draws, and
 private/public inspection policy; local rejection of malformed marker/count

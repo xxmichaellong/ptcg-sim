@@ -292,13 +292,13 @@ defect. The nonzero-group Alt-R oracle now pins the clean top-selected
 ordinary/BREAK q1/q2/q3 entry matrix: five reset only the selected top to
 absolute q0 and clear BREAK, while BREAK q3 advances its effective-q0 top to q1
 and retains BREAK. Both lower cards keep the group angle, and active/bench
-margins follow the intermediate attempted angle. Keyboard and clicked-card
-ingress are source-pinned but not executed. V2 deliberately retains explicit
-group and per-card target values rather than adopting this ambiguity. Repeated
-Alt-R, group rotation or refresh after divergence, attachment timing, and lower-
-card initiators remain compatibility hazards; no production BREAK layout
-predicate is authorized until command ingress and history are normalized or
-represented.
+margins follow the intermediate attempted angle. Clicked-card ingress remains
+source-pinned but not executed. The keyboard path is now executed separately;
+v2 deliberately retains explicit group and per-card target values rather than
+adopting this ambiguity. Repeated Alt-R, group rotation or refresh after
+divergence, attachment timing, and lower-card initiators remain compatibility
+hazards; no production BREAK layout predicate is authorized until command
+ingress and history are normalized or represented.
 
 Lower-evolution whole-stack initiation is now pinned separately. Middle and
 base resolve to logical indices 1 and 2 even though their DOM ordinals are 2
@@ -864,7 +864,8 @@ card marker/category/visibility/deck-movement keys into a closed request:
 digits and Alt-digits adjust damage in tens, `0` removes damage, `Y` cycles or
 creates a condition, Alt-`Y` removes it, `W` toggles ability,
 Alt-`E`/`T`/`P` changes category, `C` toggles private card inspection,
-`Z`/Alt-`Z` requests public hide/reveal, and
+`Z`/Alt-`Z` requests public hide/reveal, `R` rotates the selected stack/stadium,
+Alt-`R` rotates only the selected stack card, and
 ArrowUp/ArrowDown/ArrowRight/`S` moves to deck top/bottom, swaps with deck top,
 or shuffles into the deck. `H`/`D`/`L`/Space moves to the current board-side
 hand/discard/lost zone/loose board, `A`/`B` places on active/bench, `G`
@@ -887,7 +888,7 @@ false/true targets and duplicate values are no-ops. Forged, stale, unsupported,
 invalid, replay, and post-dismissal requests cannot submit. The bridge ignores
 unselected, composing, already-consumed, input, textarea, select, table-cell,
 contenteditable, textbox-role, and legacy marker/tab targets. Native Chromium
-proves all twenty-four exact commands and zero traffic from an editable target
+proves all twenty-six exact commands and zero traffic from an editable target
 without adding a visible control or enabling the production route. A separate
 real-v1 Chromium measurement pins the original local `C`/Alt-`C` source swap
 and `Z`/Alt-`Z` face/public flags behind the deny-by-default network boundary.
@@ -1074,6 +1075,30 @@ announcement revision and player to match its installed view before appending
 the event to the bounded presentation stream. Candidate Chromium proves repeat,
 selection, editable, and replay boundaries; a real local Worker/browser path
 proves the resulting unchanged announcement row. General chat remains separate.
+
+### Implemented refresh and rotation R-key subset
+
+Unselected plain, Control-, or Shift-`R` now rebuilds the current renderer scene
+from the already-installed recipient-safe view through `BoardSessionRuntime`.
+It creates no command, revision, socket frame, or canonical-state change.
+Unselected Alt-`R` preserves the source collision and performs that local
+refresh before continuing through the existing viewer-derived `ResetPlayer`
+request. With a selected card, `R` instead emits the existing `RotateStack`
+target-value command (or `SetCardOrientation` for stadium), while Alt-`R` emits
+`SetCardOrientation` for that exact stack card. Both retain selection.
+
+Ten fresh deny-by-default v1 pages execute the shipped keyboard and rotation
+modules. They pin refresh-icon/loading order, refresh-before-reset ordering,
+top/lower evolution group rotation, single-card BREAK toggling, stadium rules,
+exact source action indices, replay/full-view suppression, spectator default
+behavior, and focused-editor input. Candidate Chromium proves the corresponding
+local refresh counts and exact semantic commands. The controller revalidates
+the selected stable ID against the current projection; replay rejects rotation
+as read-only, and a full-card preview consumes both R forms without action.
+V2 intentionally stores explicit quarter-turn targets and does not reproduce
+v1's hidden inline-angle, margin, or per-evolution `PokémonBreak` history.
+Clicked-card rotation ingress and production BREAK-layout authorization remain
+separate work. No visible control, label, layout, styling, UI, or UX changed.
 
 ### Implemented authority-random face-down subset
 
