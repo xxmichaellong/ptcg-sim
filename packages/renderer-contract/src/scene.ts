@@ -1022,6 +1022,229 @@ const compareMarkerPaintOrder = (
   );
 };
 
+/**
+ * One normalized result for every characterized stack shape.
+ *
+ * Each variant used to be selected, stored and consumed separately, so the
+ * scene builder held three parallel `??` chains and variant-specific knowledge
+ * such as "a Trainer-as-Tool attachment paints rotated". Adding a characterized
+ * behaviour meant editing all three. Producers now normalize into card boxes
+ * indexed the same way the stack indexes its cards, so the builder consumes one
+ * shape and a new behaviour is a new entry below.
+ */
+interface CharacterizedCardBox {
+  readonly bounds: Rect;
+  readonly sourceZIndex: number;
+  readonly rotationQuarterTurns?: QuarterTurns;
+}
+
+interface CharacterizedStackLayout {
+  /** Indexed by position in `stack.evolutionCards`. */
+  readonly evolutionCards: readonly (CharacterizedCardBox | undefined)[];
+  /** Indexed by position in `stack.attachmentCards`. */
+  readonly attachmentCards: readonly (CharacterizedCardBox | undefined)[];
+  /** Present only for shapes whose markers are also characterized. */
+  readonly markerPresentation?: Exclude<
+    MarkerSceneNode['presentation'],
+    'generic'
+  >;
+}
+
+interface CharacterizedStackContext {
+  readonly view: MatchViewState;
+  readonly stack: MatchViewState['stacks'][string];
+  readonly board: MatchViewState['boards'][string];
+  readonly playerId: PlayerId;
+  readonly side: BoardSide;
+  readonly region: BoardLayoutSnapshot['players'][number]['regions'][number];
+  readonly layoutIsCharacterized: boolean;
+}
+
+const box = (
+  layout: { readonly bounds: Rect; readonly sourceZIndex: number },
+  rotationQuarterTurns?: QuarterTurns
+): CharacterizedCardBox => ({
+  bounds: layout.bounds,
+  sourceZIndex: layout.sourceZIndex,
+  ...(rotationQuarterTurns === undefined ? {} : { rotationQuarterTurns }),
+});
+
+/**
+ * Ordered exactly as the previous `??` chains resolved. The predicates are
+ * mutually exclusive on attachment shape, but order is preserved so this
+ * refactor cannot change which variant wins.
+ */
+const CHARACTERIZED_STACK_LAYOUTS: readonly ((
+  context: CharacterizedStackContext
+) => CharacterizedStackLayout | null)[] = [
+  ({ stack, board, playerId, region, layoutIsCharacterized }) => {
+    if (
+      !isCharacterizedOrdinaryEvolutionStack(
+        stack,
+        board,
+        playerId,
+        region,
+        layoutIsCharacterized
+      )
+    )
+      return null;
+    const layout = layoutLegacyOrdinaryEvolutionStack(
+      region,
+      CARD_ASPECT_RATIO,
+      3
+    );
+    return layout
+      ? {
+          evolutionCards: layout.cards.map((card) => box(card)),
+          attachmentCards: [],
+        }
+      : null;
+  },
+  ({ stack, board, playerId, side, region, layoutIsCharacterized }) => {
+    if (
+      !isCharacterizedSingleEnergyAttachmentStack(
+        stack,
+        board,
+        playerId,
+        side,
+        region,
+        layoutIsCharacterized
+      )
+    )
+      return null;
+    const layout = layoutLegacySingleEnergyAttachmentStack(
+      region,
+      CARD_ASPECT_RATIO
+    );
+    return layout
+      ? {
+          evolutionCards: [box(layout.base)],
+          attachmentCards: [box(layout.energy)],
+        }
+      : null;
+  },
+  ({ stack, board, playerId, side, region, layoutIsCharacterized }) => {
+    if (
+      !isCharacterizedTwoEnergyAttachmentStack(
+        stack,
+        board,
+        playerId,
+        side,
+        region,
+        layoutIsCharacterized
+      )
+    )
+      return null;
+    const layout = layoutLegacyTwoEnergyAttachmentStack(
+      region,
+      CARD_ASPECT_RATIO
+    );
+    return layout
+      ? {
+          evolutionCards: [box(layout.base)],
+          attachmentCards: layout.energies.map((energy) => box(energy)),
+        }
+      : null;
+  },
+  ({ stack, board, playerId, side, region, layoutIsCharacterized }) => {
+    if (
+      !isCharacterizedSingleTrainerToolAttachmentStack(
+        stack,
+        board,
+        playerId,
+        side,
+        region,
+        layoutIsCharacterized
+      )
+    )
+      return null;
+    const layout = layoutLegacySingleTrainerToolAttachmentStack(
+      region,
+      CARD_ASPECT_RATIO
+    );
+    // A Trainer-as-Tool attachment paints rotated a quarter turn. That belongs
+    // to this shape, not to the generic card loop.
+    return layout
+      ? {
+          evolutionCards: [box(layout.base)],
+          attachmentCards: [box(layout.tool, 1)],
+        }
+      : null;
+  },
+  ({ view, stack, board, playerId, side, region, layoutIsCharacterized }) => {
+    if (
+      !isCharacterizedSingleEnergyTrainerToolAttachmentStack(
+        view,
+        stack,
+        board,
+        playerId,
+        side,
+        region,
+        layoutIsCharacterized
+      )
+    )
+      return null;
+    const layout = layoutLegacySingleEnergyTrainerToolAttachmentStack(
+      region,
+      CARD_ASPECT_RATIO
+    );
+    return layout
+      ? {
+          evolutionCards: [box(layout.base)],
+          attachmentCards: [box(layout.energy), box(layout.tool, 1)],
+        }
+      : null;
+  },
+  (context) => {
+    const {
+      view,
+      stack,
+      board,
+      playerId,
+      side,
+      region,
+      layoutIsCharacterized,
+    } = context;
+    const active = isCharacterizedPristineActiveQ0MarkerStack(
+      stack,
+      board,
+      playerId,
+      side,
+      region,
+      layoutIsCharacterized
+    );
+    const bench = isCharacterizedCanonicalBenchQ0Stack(
+      view,
+      stack,
+      board,
+      playerId,
+      side,
+      region,
+      layoutIsCharacterized
+    );
+    if (!active && !bench) return null;
+    // The play-slot helper declines an authored row that would flex-shrink, so
+    // the card box and its markers fall back to the generic path together.
+    const bounds = layoutLegacyPlaySlotCards(region, [CARD_ASPECT_RATIO])?.[0];
+    if (!bounds) return null;
+    return {
+      evolutionCards: [{ bounds, sourceZIndex: 0 }],
+      attachmentCards: [],
+      markerPresentation: active ? 'legacyActiveQ0' : 'legacyBenchQ0',
+    };
+  },
+];
+
+const resolveCharacterizedStackLayout = (
+  context: CharacterizedStackContext
+): CharacterizedStackLayout | null => {
+  for (const produce of CHARACTERIZED_STACK_LAYOUTS) {
+    const layout = produce(context);
+    if (layout) return layout;
+  }
+  return null;
+};
+
 export const createBoardScene = (
   view: MatchViewState,
   layout: BoardLayoutSnapshot
@@ -1231,130 +1454,21 @@ export const createBoardScene = (
         stack.slot === 'active' ? activeRects[0] : benchRects[slotIndex];
       if (!baseBounds) throw new Error(`No layout slot for stack ${stackId}`);
       const evolutionOffset = Math.min(10, baseBounds.height * 0.035);
-      const singleEnergyAttachmentLayout =
-        isCharacterizedSingleEnergyAttachmentStack(
-          stack,
-          board,
-          playerId,
-          side,
-          slotRegions[stack.slot],
-          defaultInPlayLayoutIsCharacterized
-        )
-          ? layoutLegacySingleEnergyAttachmentStack(
-              slotRegions[stack.slot],
-              CARD_ASPECT_RATIO
-            )
-          : null;
-      const twoEnergyAttachmentLayout = isCharacterizedTwoEnergyAttachmentStack(
-        stack,
-        board,
-        playerId,
-        side,
-        slotRegions[stack.slot],
-        defaultInPlayLayoutIsCharacterized
-      )
-        ? layoutLegacyTwoEnergyAttachmentStack(
-            slotRegions[stack.slot],
-            CARD_ASPECT_RATIO
-          )
-        : null;
-      const singleTrainerToolAttachmentLayout =
-        isCharacterizedSingleTrainerToolAttachmentStack(
-          stack,
-          board,
-          playerId,
-          side,
-          slotRegions[stack.slot],
-          defaultInPlayLayoutIsCharacterized
-        )
-          ? layoutLegacySingleTrainerToolAttachmentStack(
-              slotRegions[stack.slot],
-              CARD_ASPECT_RATIO
-            )
-          : null;
-      const singleEnergyTrainerToolAttachmentLayout =
-        isCharacterizedSingleEnergyTrainerToolAttachmentStack(
-          view,
-          stack,
-          board,
-          playerId,
-          side,
-          slotRegions[stack.slot],
-          defaultInPlayLayoutIsCharacterized
-        )
-          ? layoutLegacySingleEnergyTrainerToolAttachmentStack(
-              slotRegions[stack.slot],
-              CARD_ASPECT_RATIO
-            )
-          : null;
-      const ordinaryEvolutionLayout = isCharacterizedOrdinaryEvolutionStack(
-        stack,
-        board,
-        playerId,
-        slotRegions[stack.slot],
-        defaultInPlayLayoutIsCharacterized
-      )
-        ? layoutLegacyOrdinaryEvolutionStack(
-            slotRegions[stack.slot],
-            CARD_ASPECT_RATIO,
-            3
-          )
-        : null;
-      const activeQ0MarkerStackIsCharacterized =
-        isCharacterizedPristineActiveQ0MarkerStack(
-          stack,
-          board,
-          playerId,
-          side,
-          slotRegions[stack.slot],
-          defaultInPlayLayoutIsCharacterized
-        );
-      const benchQ0StackIsCharacterized = isCharacterizedCanonicalBenchQ0Stack(
+      const characterizedStackLayout = resolveCharacterizedStackLayout({
         view,
         stack,
         board,
         playerId,
         side,
-        slotRegions[stack.slot],
-        defaultInPlayLayoutIsCharacterized
-      );
-      // The play-slot helper returns null when the authored row would
-      // flex-shrink. Both the card box and its markers then fall back to the
-      // generic path together, so legacy marker formulas are never applied to
-      // generic card bounds.
-      const legacyQ0MarkerCardBounds =
-        activeQ0MarkerStackIsCharacterized || benchQ0StackIsCharacterized
-          ? (layoutLegacyPlaySlotCards(slotRegions[stack.slot], [
-              CARD_ASPECT_RATIO,
-            ])?.[0] ?? null)
-          : null;
-      const usesLegacyActiveQ0Markers =
-        activeQ0MarkerStackIsCharacterized && legacyQ0MarkerCardBounds !== null;
-      const usesLegacyBenchQ0Layout =
-        benchQ0StackIsCharacterized && legacyQ0MarkerCardBounds !== null;
-      const legacyQ0MarkerCardLayout = legacyQ0MarkerCardBounds
-        ? { bounds: legacyQ0MarkerCardBounds, sourceZIndex: 0 }
-        : null;
+        region: slotRegions[stack.slot],
+        layoutIsCharacterized: defaultInPlayLayoutIsCharacterized,
+      });
+      const markerPresentation =
+        characterizedStackLayout?.markerPresentation ?? null;
       const evolutionNodes: CardSceneNode[] = [];
       stack.evolutionCards.forEach((card, index) => {
-        const ordinaryCardLayout = ordinaryEvolutionLayout?.cards[index];
-        const singleEnergyBaseLayout =
-          index === 0 ? singleEnergyAttachmentLayout?.base : undefined;
-        const twoEnergyBaseLayout =
-          index === 0 ? twoEnergyAttachmentLayout?.base : undefined;
-        const singleTrainerToolBaseLayout =
-          index === 0 ? singleTrainerToolAttachmentLayout?.base : undefined;
-        const singleEnergyTrainerToolBaseLayout =
-          index === 0
-            ? singleEnergyTrainerToolAttachmentLayout?.base
-            : undefined;
         const characterizedCardLayout =
-          ordinaryCardLayout ??
-          singleEnergyBaseLayout ??
-          twoEnergyBaseLayout ??
-          singleTrainerToolBaseLayout ??
-          singleEnergyTrainerToolBaseLayout ??
-          (index === 0 ? legacyQ0MarkerCardLayout : null);
+          characterizedStackLayout?.evolutionCards[index] ?? null;
         const node = makeCardNode(view, card, {
           parentId: stack.id,
           side,
@@ -1384,22 +1498,8 @@ export const createBoardScene = (
       });
       const attachmentWidth = baseBounds.width * 0.7;
       stack.attachmentCards.forEach((card, index) => {
-        const singleEnergyLayout =
-          index === 0 ? singleEnergyAttachmentLayout?.energy : undefined;
-        const twoEnergyLayout = twoEnergyAttachmentLayout?.energies[index];
-        const singleTrainerToolLayout =
-          index === 0 ? singleTrainerToolAttachmentLayout?.tool : undefined;
-        const singleEnergyTrainerToolLayout =
-          index === 0
-            ? singleEnergyTrainerToolAttachmentLayout?.energy
-            : index === 1
-              ? singleEnergyTrainerToolAttachmentLayout?.tool
-              : undefined;
         const characterizedAttachmentLayout =
-          singleEnergyLayout ??
-          twoEnergyLayout ??
-          singleTrainerToolLayout ??
-          singleEnergyTrainerToolLayout;
+          characterizedStackLayout?.attachmentCards[index];
         registerCard(
           makeCardNode(view, card, {
             parentId: stack.id,
@@ -1417,10 +1517,7 @@ export const createBoardScene = (
               ? 300 + characterizedAttachmentLayout.sourceZIndex
               : 250 + index,
             rotationQuarterTurns:
-              singleTrainerToolLayout ||
-              (singleEnergyTrainerToolAttachmentLayout !== null && index === 1)
-                ? 1
-                : undefined,
+              characterizedAttachmentLayout?.rotationQuarterTurns,
             interactive: true,
           }),
           card
@@ -1432,12 +1529,12 @@ export const createBoardScene = (
           markers,
           topCard,
           stack,
-          usesLegacyActiveQ0Markers
+          markerPresentation === 'legacyActiveQ0'
             ? {
                 presentation: 'legacyActiveQ0',
                 markers: layoutLegacyActiveQ0Markers(topCard.bounds, side),
               }
-            : usesLegacyBenchQ0Layout
+            : markerPresentation === 'legacyBenchQ0'
               ? {
                   presentation: 'legacyBenchQ0',
                   markers: layoutLegacyBenchQ0Markers(topCard.bounds, side),
