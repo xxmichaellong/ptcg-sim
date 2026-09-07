@@ -539,6 +539,49 @@ describe('RemoteGameSession', () => {
     expect(test.session.getSnapshot().replayArtifact).toBeUndefined();
   });
 
+  it('publishes replay-interrupted transport loss atomically before reentrant observers can submit', () => {
+    const test = setup();
+    const socket = test.admit();
+    expect(test.session.requestReplay()).toBe(true);
+    const publications: Array<{
+      readonly phase: string;
+      readonly replayLoading: boolean;
+      readonly reconnectAttempt: number;
+    }> = [];
+    let reentrantSubmission: ReturnType<typeof test.session.submit> | undefined;
+    const unsubscribe = test.session.subscribe(() => {
+      const snapshot = test.session.getSnapshot();
+      publications.push({
+        phase: snapshot.phase,
+        replayLoading: snapshot.replayLoading,
+        reconnectAttempt: snapshot.reconnectAttempt,
+      });
+      if (!snapshot.replayLoading && !reentrantSubmission) {
+        reentrantSubmission = test.session.submit({ type: 'FlipCoin' });
+      }
+    });
+
+    socket.serverClose();
+
+    expect(reentrantSubmission).toEqual({ queued: false, reason: 'not_ready' });
+    expect(publications).toEqual([
+      {
+        phase: 'reconnecting',
+        replayLoading: false,
+        reconnectAttempt: 1,
+      },
+    ]);
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'reconnecting',
+      nextClientSequence: 1,
+      pendingCommands: [],
+      reconnectAttempt: 1,
+      replayLoading: false,
+    });
+    expect(test.scheduler.tasks.size).toBe(1);
+    unsubscribe();
+  });
+
   it('reconnects with the resume capability and retries the exact envelope', () => {
     const test = setup();
     const firstSocket = test.admit();
@@ -635,13 +678,17 @@ describe('RemoteGameSession', () => {
   it('makes supersession terminal and never schedules a reconnect', () => {
     const test = setup();
     const socket = test.admit();
+    expect(test.session.requestReplay()).toBe(true);
     socket.serverMessage({
       type: 'SessionSuperseded',
       protocolVersion: PROTOCOL_VERSION,
     });
     socket.serverClose();
 
-    expect(test.session.getSnapshot().phase).toBe('superseded');
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'superseded',
+      replayLoading: false,
+    });
     expect(test.scheduler.tasks.size).toBe(0);
     expect(socket.close).toHaveBeenCalledWith(4409, 'Session superseded');
   });

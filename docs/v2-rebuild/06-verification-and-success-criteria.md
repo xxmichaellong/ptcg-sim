@@ -199,7 +199,10 @@ Release requires all of the following:
 14. Replay application mode never mutates the live session: only a fresh
     request-correlated artifact is entered, exit discards late completion,
     reconnect/new-room boundaries retain or clear playback as specified, and
-    malformed refresh leaves the current replay intact.
+    malformed refresh leaves the current replay intact. Interrupted replay
+    loading becomes non-ready in one external-store publication; even a
+    reentrant observer cannot enqueue against the lost socket or advance the
+    reconnect counter twice, and every terminal phase clears loading.
 15. The remote board renders the effective live/replay projection, blocks every
     command during loading/active/discarding replay phases, and rewinds through
     explicit renderer replacement without weakening monotonic live installs. A

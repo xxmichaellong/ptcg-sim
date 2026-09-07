@@ -498,6 +498,12 @@ streams one bounded projected snapshot per message between `ReplayStarted` and
 as a live full projection and lets the client publish only a complete,
 contiguous artifact. A malformed, incomplete, wrong-perspective, or out-of-order
 stream is discarded; an interrupted transfer is not resumed across reconnect.
+The client publishes that interruption atomically with its first non-ready
+transport phase. It never exposes `replayLoading: false` while still reporting
+`ready` after the socket is gone, so a reentrant external-store observer cannot
+enqueue a command into a dead generation or consume a second reconnect attempt.
+Clean close, terminal failure, and supersession likewise clear the public replay
+loading flag with their terminal phase.
 
 Solo player replay may additionally carry an optional replay-local disclosure
 catalog on `ReplayStarted` and an alias-keyed disclosure record on every

@@ -290,7 +290,7 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 999 v2 tests across 154 files. A separate suite
+The repository-wide gate passes 1000 v2 tests across 154 files. A separate suite
 passes 146 Playwright checks across 71 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
@@ -1326,6 +1326,18 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     emit reserved network-loss code 1006; both resumed transport and server-side
     supersession are real. No visible UI/UX, protocol, or authority semantics
     changed; deployed document-navigation churn remains a separate gate.
+76. Replay-transfer interruption and transport loss are now one atomic client
+    publication. Previously `handleClose()` cleared `replayLoading` while the
+    public phase was still `ready`; a reentrant external-store subscriber could
+    submit into the already-cleared socket, trigger its own reconnect, and then
+    let the outer close handler consume a second retry. The session now clears
+    replay loading inside the same reconnecting, clean-closed, failed, or
+    superseded state update. An adversarial listener immediately attempts a
+    command on the first cleared-loading publication and proves `not_ready`, an
+    untouched sequence/queue, exactly one reconnect attempt/timer, and one
+    reconnecting notification. Supersession coverage also begins during replay
+    loading and proves terminal cleanup. No protocol, authority, renderer,
+    visible UI, or UX changed.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

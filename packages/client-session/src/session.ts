@@ -417,7 +417,11 @@ export class RemoteGameSession {
         this.closeSocket(4409, 'Session superseded');
         this.socketGeneration += 1;
         this.clearCapabilities();
-        this.updateState({ phase: 'superseded', reconnectAttempt: 0 });
+        this.updateState({
+          phase: 'superseded',
+          reconnectAttempt: 0,
+          replayLoading: false,
+        });
         return;
     }
   }
@@ -772,7 +776,6 @@ export class RemoteGameSession {
   private handleClose(event: SessionSocketCloseEvent): void {
     this.socket = undefined;
     this.replayTransfer = undefined;
-    if (this.state.replayLoading) this.updateState({ replayLoading: false });
     this.socketGeneration += 1;
     if (
       this.manualClose ||
@@ -784,7 +787,11 @@ export class RemoteGameSession {
     }
     if (event.code === 1000 && event.wasClean) {
       this.clearCapabilities();
-      this.updateState({ phase: 'closed', reconnectAttempt: 0 });
+      this.updateState({
+        phase: 'closed',
+        reconnectAttempt: 0,
+        replayLoading: false,
+      });
       return;
     }
     this.scheduleReconnect();
@@ -810,6 +817,7 @@ export class RemoteGameSession {
     this.updateState({
       phase: 'reconnecting',
       reconnectAttempt: this.reconnectAttempts,
+      replayLoading: false,
     });
     this.reconnectTimer = this.scheduler.schedule(() => {
       this.reconnectTimer = undefined;
@@ -837,7 +845,7 @@ export class RemoteGameSession {
     this.closeSocket(4400, failure.code);
     this.socketGeneration += 1;
     this.clearCapabilities();
-    this.updateState({ phase: 'failed', failure });
+    this.updateState({ phase: 'failed', replayLoading: false, failure });
   }
 
   private clearCapabilities(): void {

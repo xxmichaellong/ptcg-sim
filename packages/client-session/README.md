@@ -12,8 +12,9 @@ DOM renderer, and the Pixi renderer can consume without owning networking.
 - accepted commands complete only after both their result and covering publication
 - stale publications are ignored and divergent equal-revision views fail closed
 - reconnects use the in-memory resume capability and reconcile against the Welcome sequence
+- transport loss clears replay transfer state in the same non-ready publication, so reentrant observers cannot submit against a socket that is already gone
 - admission and resume capabilities never enter the public store, command history, or notices
-- superseded sessions become terminal read-only sessions and never reconnect
+- failed, cleanly closed, and superseded sessions clear replay loading; superseded sessions become terminal read-only sessions and never reconnect
 
 Capabilities are deliberately memory-only in this slice. Durable credential storage must
 be introduced later behind an explicit secret-storage policy; ordinary application state
