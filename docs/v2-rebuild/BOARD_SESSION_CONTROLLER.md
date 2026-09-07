@@ -324,16 +324,18 @@ same-stadium no-ops reject before submission.
 The checkbox dispatches no controller request, effect, or command. The resolver
 retains a `local_only` rejection for forged `sortZone` requests as a fail-closed
 boundary. Replay remains strictly non-submitting. V1's replay-only local
-disclosure exceptions are explicitly pinned to prize reveal, prize look, and
-opponent-hand look. A solo player artifact may now install a separate validated
-opaque disclosure record beside—but never inside—the historical safe view. The
-controller derives its scene from a transient view, offers only those three
-rows, binds them to the open card and eligible zone, and updates a local per-
-zone show/cover mode without invoking a resolver or submitter. Modes persist
-only across forward playback and clear on seek/resync/reconnect/exit/identity or
-terminal replacement. Multiplayer, spectator, absent, and malformed data still
-expose no replay mutation rows; a forged request is rejected as `read_only`
-before the resolver runs. Native Chromium
+disclosure exceptions include prize reveal, prize look, opponent-hand look, and
+the context menu's per-card reveal/hide operation. A solo player artifact may
+install a separate validated opaque disclosure record beside—but never inside—
+the historical safe view. The controller derives its scene from a transient
+view and binds every row to the open card and an eligible catalog zone. Zone
+operations update a local per-zone show/cover mode and clear that zone's card
+overrides; `Reveal/hide card` updates only its catalog-backed opaque alias.
+Neither path invokes a resolver or submitter. Modes persist only across forward
+playback and clear on seek/resync/reconnect/exit/identity or terminal
+replacement. Multiplayer, spectator, non-catalog, absent, and malformed data
+still expose no replay mutation rows; a forged request is rejected as
+`read_only` before the resolver runs. Native Chromium
 now proves exact accepted `SetDamage`, `SetSpecialCondition`, both removals,
 `SetAbilityUsed`, all six count submissions, all three category choices, all
 five move choices, and all twenty-four selected-card shortcut commands; native
@@ -345,8 +347,9 @@ sorting with zero routed actions or effects.
 
 Deck-list ordering is not present in recipient projections: unlike v1, the
 safe fallback orders disclosed labels and never obtains the opponent's hidden
-deck list. Replay-local structural paint and lifecycle reset are covered;
-source stack/zone raster parity, complete accessibility focus trapping,
+deck list. Replay-local source menu/card paint, exact face assets, per-card and
+zone lifecycle, semantic roles/names, keyboard traversal/wrap, and focus return
+are covered. Source stack/zone raster parity, a manual screen-reader audit,
 production wiring, and non-Chromium approval remain separate.
 
 ## Effects and renderer cancellation
@@ -406,9 +409,8 @@ paint, card-preview intrinsic sizing, native menu traversal, Escape/outside
 dismissal, focus return, command-backed ability/damage/condition/category/move
 actions, both marker edit/removal flows, and typed zero-command invalid/local
 actions.
-It does not claim complete focus trapping/screen-reader behavior,
-replay-local disclosure behavior, source stack/zone raster
-parity, keyboard suppression in every editable context,
+It does not claim a manual screen-reader audit, source stack/zone raster parity,
+keyboard suppression in every editable context,
 coaching flip, reconnect reconciliation, or the non-Chromium matrix. These
 remain Playwright/manual parity gates before any production switch.
 

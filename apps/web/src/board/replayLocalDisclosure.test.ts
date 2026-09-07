@@ -94,7 +94,7 @@ describe('solo replay local disclosure projection', () => {
     expect(JSON.stringify(view)).toBe(safeBefore);
   });
 
-  it('permits only prize and opponent-hand action pairings', () => {
+  it('permits only catalog-backed prize and opponent-hand action pairings', () => {
     const { view, disclosure, zones } = fixture();
     const initial = reconcileReplayLocalDisplayState(view, disclosure)!;
     const opponentHand = zones.find((zone) => zone.kind === 'hand')!;
@@ -123,6 +123,68 @@ describe('solo replay local disclosure projection', () => {
         opponentHand.cards[0]!.id
       )
     ).toBeNull();
+    expect(
+      toggleReplayLocalDisclosure(
+        view,
+        initial,
+        'revealCard',
+        prize.cards[0]!.id
+      )
+    ).not.toBeNull();
+  });
+
+  it('toggles one catalog-backed card without disclosing its siblings', () => {
+    const { view, disclosure, zones } = fixture();
+    const prize = zones.find((zone) => zone.kind === 'prizes')!;
+    const selected = prize.cards[0]!;
+    const sibling = prize.cards[1]!;
+    const initial = reconcileReplayLocalDisplayState(view, disclosure)!;
+    const shown = toggleReplayLocalDisclosure(
+      view,
+      initial,
+      'revealCard',
+      selected.id
+    )!;
+    const displayed = applyReplayLocalDisclosure(view, shown);
+    expect(displayed.zones[prize.id]!.cards[0]).toMatchObject({
+      kind: 'known',
+      face: 'up',
+    });
+    expect(displayed.zones[prize.id]!.cards[1]).toBe(sibling);
+    expect(shown.zoneModes).toEqual({});
+    expect(shown.cardModes).toEqual({ [selected.id]: 'shown' });
+
+    const hidden = toggleReplayLocalDisclosure(
+      view,
+      shown,
+      'revealCard',
+      selected.id
+    )!;
+    expect(
+      applyReplayLocalDisclosure(view, hidden).zones[prize.id]!.cards[0]
+    ).toMatchObject({ kind: 'concealed' });
+    expect(hidden.cardModes).toEqual({ [selected.id]: 'hidden' });
+
+    const zoneShown = toggleReplayLocalDisclosure(
+      view,
+      shown,
+      'togglePrizes',
+      sibling.id
+    )!;
+    expect(zoneShown.zoneModes).toEqual({ [prize.id]: 'shown' });
+    expect(zoneShown.cardModes).toEqual({});
+    const selectedCovered = toggleReplayLocalDisclosure(
+      view,
+      zoneShown,
+      'revealCard',
+      selected.id
+    )!;
+    const mixed = applyReplayLocalDisclosure(view, selectedCovered).zones[
+      prize.id
+    ]!;
+    expect(mixed.cards[0]).toMatchObject({ kind: 'concealed' });
+    expect(mixed.cards[1]).toMatchObject({ kind: 'known', face: 'up' });
+    expect(selectedCovered.cardModes).toEqual({ [selected.id]: 'hidden' });
   });
 
   it('fails closed on extra zones, aliases, collisions, and spectators', () => {
@@ -159,7 +221,7 @@ describe('solo replay local disclosure projection', () => {
     ).toBe(false);
   });
 
-  it('carries zone modes across advance reconciliation but not resync', () => {
+  it('carries zone and card modes across advance reconciliation but not resync', () => {
     const { view, disclosure, zones } = fixture();
     const prize = zones.find((zone) => zone.kind === 'prizes')!;
     const shown = toggleReplayLocalDisclosure(
@@ -177,6 +239,22 @@ describe('solo replay local disclosure projection', () => {
     ).toBe('shown');
     expect(
       reconcileReplayLocalDisplayState(view, disclosure)?.zoneModes
+    ).toEqual({});
+    const cardShown = toggleReplayLocalDisclosure(
+      view,
+      reconcileReplayLocalDisplayState(view, disclosure)!,
+      'revealCard',
+      prize.cards[0]!.id
+    )!;
+    expect(
+      reconcileReplayLocalDisplayState(
+        { ...view, revision: view.revision + 1 },
+        disclosure,
+        cardShown
+      )?.cardModes
+    ).toEqual({ [prize.cards[0]!.id]: 'shown' });
+    expect(
+      reconcileReplayLocalDisplayState(view, disclosure)?.cardModes
     ).toEqual({});
   });
 });

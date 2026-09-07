@@ -839,19 +839,23 @@ unchecked, and never invokes the controller. A forged `sortZone` request still
 returns `local_only`. V1 used the exchanged full deck list as its sort rank;
 because that data is intentionally absent from protected opponent projections,
 V2 uses the disclosed-label order without leaking hidden definitions. V1
-replay's prize reveal/look and opponent-hand look are the only local-disclosure
-exceptions. They now appear only for a solo player's validated projected
-replay. Authority emits a separately bounded catalog whose card keys are the
-current concealed frame aliases and whose definition keys are fresh opaque
-replay aliases; multiplayer and spectator artifacts omit it. Playback validates
-the exact two prize zones plus opponent hand, exact concealed-card coverage,
+replay's prize reveal/look and opponent-hand look are the scoped zone-level
+local-disclosure exceptions; its context menu also exposes local `Reveal/hide
+card`. They now appear only for a solo player's validated projected replay.
+Authority emits a separately bounded catalog whose card keys are the current
+concealed frame aliases and whose definition keys are fresh opaque replay
+aliases; multiplayer and spectator artifacts omit it. Playback validates the
+exact two prize zones plus opponent hand, exact concealed-card coverage,
 ownership, uniqueness, definition references, and collision/bounds rules before
-publishing. The controller keeps the historical view immutable, derives a
-transient display view, and translates those three rows only into a local
-`InstallScene`; it never creates a command. Visibility persists by zone only on
-forward replay, then resets on seek, resync, reconnect, exit, identity change,
-or terminal state. A missing/forged catalog keeps the prior `read_only` result.
-This slice changes no label, placement, styling, or production route.
+publishing. The controller keeps the historical view immutable and derives a
+transient display view. Prize menus expose reveal/look plus per-card reveal;
+opponent-hand menus expose look plus per-card reveal. Zone operations set one
+zone override and clear its per-card overrides; card reveal sets one catalog-
+backed alias override. Both translate only into local `InstallScene` and never
+create a command. Visibility persists only on forward replay, then resets on
+seek, resync, reconnect, exit, identity change, or terminal state. A non-catalog
+card/zone or missing/forged catalog keeps the prior `read_only` result. This
+slice changes no source label, placement, styling, or production route.
 
 ### Implemented selected-card keyboard subset
 

@@ -69,6 +69,7 @@ describe('legacy board overlay action resolver', () => {
       'revealPrizes',
       'togglePrizes',
       'toggleOpponentHand',
+      'revealCard',
     ]);
   });
 

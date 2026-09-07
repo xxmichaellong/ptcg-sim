@@ -194,6 +194,7 @@ export const LEGACY_REPLAY_DISCLOSURE_CONTEXT_ACTIONS = [
   'revealPrizes',
   'togglePrizes',
   'toggleOpponentHand',
+  'revealCard',
 ] as const satisfies readonly LegacyBoardContextActionId[];
 
 export type LegacyBoardOverlayActionRejectionReason =

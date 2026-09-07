@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 909 v2 tests across 143 files. A separate suite
-passes 135 Playwright checks across 64 Chromium 151 browser files:
+The repository-wide gate passes 995 v2 tests across 154 files. A separate suite
+passes 143 Playwright checks across 69 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -1121,8 +1121,9 @@ passes 135 Playwright checks across 64 Chromium 151 browser files:
     unsupported, invalid, replay, and post-dismissal input cannot submit. Native
     Chromium pins nine exact commands and zero editable-target traffic. The
     production route remains separate.
-64. Solo player replay now completes the three characterized local-disclosure
-    exceptions without weakening replay's read-only command boundary. Authority
+64. Solo player replay now completes the three initially characterized
+    zone-level local-disclosure exceptions without weakening replay's read-only
+    command boundary. Authority
     deduplicates a separately bounded definition catalog across retained
     history, gives it fresh opaque replay aliases, and keys each frame's exact
     prize/opponent-hand records by that frame's concealed aliases. The optional
@@ -1238,6 +1239,24 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     shortcuts and editable input remains silent. No wire, domain, authority,
     visible control, label, key reference, route, layout, styling, UI, or UX
     changes.
+71. Replay-local disclosure now includes the real v1 menu's `Reveal/hide card`
+    row without broadening authority or replay submission. The operation is
+    admitted only for an opaque card alias in the existing solo-player prize/
+    opponent-hand catalog and updates a transient per-card display override;
+    siblings stay covered. Prize menus therefore retain their source header,
+    two zone actions, and card action, while opponent-hand menus retain their
+    source header, hand-look action, and card action. Zone actions clear card
+    overrides within that zone. Zone/card state carries only across a forward
+    frame and clears on seek/resync/reconnect/exit/identity/terminal boundaries.
+    A fresh real-v1 browser oracle and the React candidate pin exact row order,
+    computed menu and focused-action paint, front/back asset replacement, stable
+    card boxes and aspect ratio, selected-card-only disclosure, semantic menu/
+    card names, empty child-image alt text, arrow/Home/End traversal and wrap,
+    keyboard activation, focus return, screenshots/JSON evidence, and zero
+    commands, rejections, or page errors. Arbitrary cross-renderer card size is
+    recorded but remains in the broader geometry workstream. No protocol,
+    authority, canonical view/history, visible label, layout, production route,
+    or live-game behavior changes.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -1413,9 +1432,10 @@ wiring:
   thresholds (source edge clamp/collision states, the isolated candidate
   resize-pointer path, and normal/flipped fullscreen viewport continuity are now
   covered);
-- complete source raster comparison for replay-local card faces and transformed
-  stack/zone dialogs, plus the full focus-trap/screen-reader audit beyond the
-  current native Chromium structural paint and lifecycle gate;
+- complete source raster comparison for transformed stack/zone dialogs, plus a
+  manual screen-reader audit beyond the automated replay-local semantic names,
+  roles, keyboard traversal/wrap, focus-visible paint/return, exact face assets,
+  and stable face-swap geometry;
 - actual external card/image hosts, redirects, CORS failures, oversized/corrupt
   images, and the proxy/hybrid policy in ADR-013;
 - background resume, 0x0 host, DPR changes, and resize coalescing; WebGL-only

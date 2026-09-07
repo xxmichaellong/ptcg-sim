@@ -161,12 +161,14 @@ export const selectLegacyContextEntries = (
         header('prizes', 'Prizes'),
         action('revealPrizes', 'Reveal/hide prizes'),
         action('togglePrizes', 'Look/cover prizes'),
+        action('revealCard', 'Reveal/hide card'),
       ];
     }
     if (location.kind === 'hand' && opponent) {
       return [
         header('hand', 'Hand'),
         action('toggleOpponentHand', 'Look/cover hand'),
+        action('revealCard', 'Reveal/hide card'),
       ];
     }
     return [];

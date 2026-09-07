@@ -91,6 +91,7 @@ export interface ReactDomProtectedInputEvidence {
   readonly overlays: BoardOverlayState;
   readonly sourceKind: 'live' | 'replay' | null;
   readonly replayLocalZoneModes: Readonly<Partial<Record<string, string>>>;
+  readonly replayLocalCardModes: Readonly<Partial<Record<string, string>>>;
   readonly reportedErrors: readonly string[];
 }
 
@@ -583,6 +584,9 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
         sourceKind: current.source?.kind ?? null,
         replayLocalZoneModes: {
           ...(current.replayLocalDisplay?.zoneModes ?? {}),
+        },
+        replayLocalCardModes: {
+          ...(current.replayLocalDisplay?.cardModes ?? {}),
         },
         reportedErrors: [...reportedErrors],
       };

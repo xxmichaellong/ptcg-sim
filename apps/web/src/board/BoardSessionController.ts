@@ -647,7 +647,7 @@ const installFrame = (
           recipientKey: cursor?.recipientKey ?? recipientKey(previousView),
         },
         replayLocalDisplay: state.replayLocalDisplay
-          ? { ...state.replayLocalDisplay, zoneModes: {} }
+          ? { ...state.replayLocalDisplay, zoneModes: {}, cardModes: {} }
           : undefined,
         scene: retainedScene,
         ...local,

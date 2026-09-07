@@ -19,14 +19,19 @@ export interface ReplayLocalDisplayState {
   readonly zoneModes: Readonly<
     Partial<Record<string, ReplayLocalDisclosureMode>>
   >;
+  readonly cardModes: Readonly<
+    Partial<Record<string, ReplayLocalDisclosureMode>>
+  >;
 }
 
 export const isReplayLocalDisclosureAction = (
   action: LegacyBoardContextActionId
-): action is 'revealPrizes' | 'togglePrizes' | 'toggleOpponentHand' =>
+): action is
+  'revealPrizes' | 'togglePrizes' | 'toggleOpponentHand' | 'revealCard' =>
   action === 'revealPrizes' ||
   action === 'togglePrizes' ||
-  action === 'toggleOpponentHand';
+  action === 'toggleOpponentHand' ||
+  action === 'revealCard';
 
 const unique = (values: readonly string[]): boolean =>
   new Set(values).size === values.length;
@@ -108,7 +113,16 @@ export const reconcileReplayLocalDisplayState = (
       if (mode) zoneModes[zoneId] = mode;
     }
   }
-  return { disclosure, zoneModes };
+  const cardModes: Partial<Record<string, ReplayLocalDisclosureMode>> = {};
+  if (previous) {
+    const disclosedCardIds = new Set(disclosure.cards.map((card) => card.id));
+    for (const [cardId, mode] of Object.entries(previous.cardModes)) {
+      if (mode && disclosedCardIds.has(cardId as ViewCardId)) {
+        cardModes[cardId] = mode;
+      }
+    }
+  }
+  return { disclosure, zoneModes, cardModes };
 };
 
 const concealedCard = (
@@ -137,10 +151,13 @@ export const applyReplayLocalDisclosure = (
   let changed = false;
   const zones = Object.fromEntries(
     Object.entries(view.zones).map(([zoneId, zone]) => {
-      const mode = state.zoneModes[zoneId];
-      if (!mode) return [zoneId, zone];
+      const zoneMode = state.zoneModes[zoneId];
+      const hasCardMode = zone.cards.some((card) => state.cardModes[card.id]);
+      if (!zoneMode && !hasCardMode) return [zoneId, zone];
       changed = true;
       const cards = zone.cards.map((card): ViewCard => {
+        const mode = state.cardModes[card.id] ?? zoneMode;
+        if (!mode) return card;
         if (mode === 'hidden') return concealedCard(view, card);
         if (card.kind === 'known') {
           return card.face === 'up' ? card : { ...card, face: 'up' };
@@ -183,7 +200,9 @@ export const toggleReplayLocalDisclosure = (
         zone.ownerId !== null &&
         view.viewer.kind === 'player' &&
         zone.ownerId !== view.viewer.playerId
-      : zone.kind === 'prizes';
+      : action === 'revealCard'
+        ? state.disclosure.cards.some((card) => card.id === cardId)
+        : zone.kind === 'prizes';
   if (!validTarget) return null;
 
   const displayed = applyReplayLocalDisclosure(view, state).zones[
@@ -192,8 +211,20 @@ export const toggleReplayLocalDisclosure = (
   if (!displayed) return null;
   const mode: ReplayLocalDisclosureMode =
     displayed.kind === 'known' && displayed.face === 'up' ? 'hidden' : 'shown';
+  if (action === 'revealCard') {
+    return {
+      ...state,
+      cardModes: { ...state.cardModes, [cardId]: mode },
+    };
+  }
+  const zoneCardIds = new Set(zone.cards.map((card) => card.id));
   return {
     ...state,
     zoneModes: { ...state.zoneModes, [zone.id]: mode },
+    cardModes: Object.fromEntries(
+      Object.entries(state.cardModes).filter(
+        ([candidate]) => !zoneCardIds.has(candidate as ViewCardId)
+      )
+    ),
   };
 };

@@ -134,13 +134,16 @@ commands, all six count prompts/commands, all three category choices, all five
 move choices, all twenty-four selected-card shortcut commands, and reversible
 sorting with zero action/effect/command traffic.
 Replay-local prize/hand disclosure now uses an isolated solo-player-only
-projection. Its opaque catalog never enters the historical view, its three
-unchanged menu rows emit replacement scenes without commands, forward
-visibility reconciles by zone, and seek/resync/reconnect/exit/terminal
-boundaries restore card backs. Native Chromium covers structural paint and zero
-submission. Source raster parity for transformed stack/zone dialogs, full
-accessibility audit, production routing, and non-Chromium approval remain
-unresolved.
+projection. Its opaque catalog never enters the historical view. Prize menus
+offer their two source zone rows plus `Reveal/hide card`; opponent-hand menus
+offer hand look plus the same card row. Zone and per-card overrides emit
+replacement scenes without commands, reconcile only on forward playback, and
+clear at seek/resync/reconnect/exit/identity/terminal boundaries. Native
+Chromium covers real-v1 menu/card paint, exact face assets, stable face-swap
+geometry, semantic roles/names, keyboard traversal and wrap, focus-visible
+paint, focus return, selected-card-only disclosure, and zero submission. Source
+raster parity for transformed stack/zone dialogs, a manual screen-reader audit,
+production routing, and non-Chromium approval remain unresolved.
 
 ### Mixed attachment history policy
 
@@ -345,9 +348,9 @@ Acceptance of this ADR does not enable the v2 route. React DOM must still pass:
   Tool-specific Pixi paint parity, full paint or interaction parity, cover-open
   UX, or opened-zone layout, and the sidebar content rectangle is derived from
   measured shell/tab edges);
-- complete source raster comparison for replay-local card faces and transformed
-  stack/zone dialogs, plus the screen-reader/focus-trap audit beyond the current
-  native Chromium structural paint, lifecycle, keyboard, focus-return,
+- complete source raster comparison for transformed stack/zone dialogs, plus a
+  manual screen-reader audit beyond the automated replay-local semantic roles,
+  names, keyboard traversal/wrap, focus paint/return, face-swap paint, lifecycle,
   dismissal, and protected command gate;
 - a hidden/private-image request scan;
 - finish resource evidence beyond the current green 100-cycle warmed-host

@@ -1226,21 +1226,30 @@ the browser closes or changes zones. It never mutates the view or invokes the
 controller; a forged external `sortZone` request still fails `local_only`.
 Because the protected projection does not disclose an opponent's deck list,
 this replaces v1's deck-data rank with a stable disclosed-label order instead
-of recreating its information leak. V1 replay permits three local disclosure
-actions—prize reveal, prize look, and opponent-hand look. V2 now exposes exactly
-those unchanged rows only when a solo player replay supplies its separately
-validated, opaque local-disclosure projection. The historical safe view remains
-the controller's authoritative view; a transient display projection replaces
-only eligible zone card faces and definitions. Both prize actions and opponent-
-hand look update one per-zone `shown`/`hidden` override and emit only a
-replacement scene—never a command or resolver call. Overrides reconcile
-forward by zone and reset on seek, resync, reconnect, exit, identity change, and
-terminal state. Multiplayer, spectator, missing, malformed, and forged paths
-retain an empty mutation menu or `read_only`. Native Chromium proves the exact
-menu subset, all-card show/cover, forward persistence, seek/exit reset, and zero
-submission. Source-raster parity for transformed stack/zone dialogs, a complete
-focus-trap and screen-reader audit, production routing, and non-Chromium
-approval remain separate gates.
+of recreating its information leak. V1 replay permits three zone-level local
+disclosure actions—prize reveal, prize look, and opponent-hand look—and also
+leaves its local `Reveal/hide card` row available. V2 exposes those unchanged
+rows only when a solo player replay supplies its separately validated, opaque
+local-disclosure projection. Prize menus contain the two zone operations plus
+the card operation; opponent-hand menus contain hand look plus the card
+operation. The historical safe view remains the controller's authoritative
+view; a transient display projection replaces only eligible zone card faces and
+definitions. Zone operations update one per-zone `shown`/`hidden` override and
+clear card overrides within that zone. The card operation updates only its
+catalog-backed opaque alias. Both paths emit only a replacement scene—never a
+command or resolver call. Overrides reconcile only across forward playback and
+reset on seek, resync, reconnect, exit, identity change, and terminal state.
+Multiplayer, spectator, non-catalog zones, missing, malformed, and forged paths
+retain an empty mutation menu or `read_only`.
+
+Native Chromium proves exact source row order and computed menu paint, all-card
+zone show/cover, selected-card-only reveal, exact front/back asset replacement,
+stable boxes and aspect ratio, forward persistence, seek/exit reset, semantic
+menu roles and card names, arrow/Home/End traversal and wrap, focus-visible
+paint, focus return, empty child-image alt text, and zero submission. Arbitrary
+cross-renderer card dimensions are recorded rather than treated as disclosure
+parity; transformed stack/zone-dialog raster parity, a manual screen-reader
+audit, production routing, and non-Chromium approval remain separate gates.
 
 ## React application state
 

@@ -187,6 +187,7 @@ describe('legacy board overlays', () => {
           cards: [],
         },
         zoneModes: {},
+        cardModes: {},
       },
     });
     expect(
@@ -198,6 +199,7 @@ describe('legacy board overlays', () => {
       ['header', 'prizes'],
       ['action', 'revealPrizes'],
       ['action', 'togglePrizes'],
+      ['action', 'revealCard'],
     ]);
     expect(
       selectLegacyContextEntries(replayState, cardIn(`:${opponent}:hand`)).map(
@@ -206,6 +208,7 @@ describe('legacy board overlays', () => {
     ).toEqual([
       ['header', 'hand'],
       ['action', 'toggleOpponentHand'],
+      ['action', 'revealCard'],
     ]);
     expect(
       selectLegacyContextEntries(replayState, cardIn(`:${firstPlayer}:deck`))

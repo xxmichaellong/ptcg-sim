@@ -77,6 +77,7 @@ interface ProtectedInputEvidence {
   };
   readonly sourceKind: 'live' | 'replay' | null;
   readonly replayLocalZoneModes: Readonly<Partial<Record<string, string>>>;
+  readonly replayLocalCardModes: Readonly<Partial<Record<string, string>>>;
   readonly reportedErrors: readonly string[];
 }
 
@@ -1747,7 +1748,7 @@ test('solo replay disclosure changes only local DOM card faces and never submits
   await openMenu(fixture.ownPrizeCardId);
   expect(
     await menu.locator(':scope > ul > li > [role="menuitem"]').allTextContents()
-  ).toEqual(['Reveal/hide prizes', 'Look/cover prizes']);
+  ).toEqual(['Reveal/hide prizes', 'Look/cover prizes', 'Reveal/hide card']);
   await menu.locator('[data-context-action="togglePrizes"]').click();
   await expect(menu).toHaveCount(0);
   await expect
@@ -1763,7 +1764,7 @@ test('solo replay disclosure changes only local DOM card faces and never submits
   await openMenu(fixture.opponentHandCardId);
   expect(
     await menu.locator(':scope > ul > li > [role="menuitem"]').allTextContents()
-  ).toEqual(['Look/cover hand']);
+  ).toEqual(['Look/cover hand', 'Reveal/hide card']);
   await menu.locator('[data-context-action="toggleOpponentHand"]').click();
   await expect
     .poll(() => labelsFor(fixture.opponentHandCardIds))
@@ -1818,6 +1819,7 @@ test('solo replay disclosure changes only local DOM card faces and never submits
   expect(replayEvidence.shortcutActions).toEqual([]);
   expect(replayEvidence.shortcutRejections).toEqual([]);
   expect(replayEvidence.replayLocalZoneModes).toEqual({});
+  expect(replayEvidence.replayLocalCardModes).toEqual({});
   expect(replayEvidence.reportedErrors).toEqual([]);
 
   await callHarness('exitSoloReplay');

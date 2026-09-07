@@ -514,6 +514,14 @@ fields are deployed inside the unreleased v2 build cohort, server and client
 builds still move atomically; no compatibility claim is made for a mixed v2
 cohort.
 
+The client may derive both per-zone and per-card display overrides from this
+same catalog. Per-card state is keyed only by a currently catalog-backed opaque
+card alias, remains outside the historical view and protocol artifact, and is
+reconciled only across forward frames that retain that alias. Zone operations
+clear card overrides within the zone; seek, resync, reconnect, replay exit,
+identity replacement, and terminal state clear both kinds. This adds no wire,
+authority, canonical-event, or persistence state.
+
 ### Ordering and delivery
 
 - The authority serializes accepted game commands.

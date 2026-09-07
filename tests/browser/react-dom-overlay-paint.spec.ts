@@ -9,13 +9,27 @@ import {
 
 import { loadLegacyRuntime } from './support/legacy-runtime.js';
 
+interface OverlayFixture {
+  readonly sourceCardId: string;
+  readonly activeTopCardId: string;
+  readonly ownPrizeCardId: string;
+  readonly ownPrizeCardIds: readonly string[];
+  readonly opponentHandCardId: string;
+  readonly opponentHandCardIds: readonly string[];
+  readonly replayLocalCardLabel: string;
+}
+
 interface OverlayHarnessWindow extends Window {
   __PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__?: {
-    readonly getFixture: () => {
-      readonly sourceCardId: string;
-      readonly activeTopCardId: string;
+    readonly getFixture: () => OverlayFixture;
+    readonly getEvidence: () => {
+      readonly submissions: readonly unknown[];
+      readonly submissionResults: readonly unknown[];
+      readonly overlayRejections: readonly unknown[];
+      readonly reportedErrors: readonly string[];
     };
     readonly setDarkMode: (enabled: boolean) => void;
+    readonly enterSoloReplay: () => void;
     readonly dispose: () => void;
   };
 }
@@ -69,6 +83,22 @@ interface PreviewMetrics {
     readonly maxHeight: string;
     readonly borderRadius: string;
   };
+}
+
+interface ReplayCardPaintMetrics {
+  readonly bounds: { x: number; y: number; width: number; height: number };
+  readonly imageBounds: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+  readonly imageSrc: string;
+  readonly imageAlt: string;
+  readonly accessibleLabel: string;
+  readonly borderRadius: string;
+  readonly boxShadow: string;
+  readonly cursor: string;
 }
 
 const collectRuntimeErrors = (page: Page): string[] => {
@@ -326,12 +356,45 @@ const previewMetrics = (preview: Locator): Promise<PreviewMetrics> =>
     };
   });
 
-const mountCandidate = async (
-  page: Page
-): Promise<{
-  readonly sourceCardId: string;
-  readonly activeTopCardId: string;
-}> => {
+const replayCardPaintMetrics = (
+  element: Locator,
+  kind: 'source' | 'candidate'
+): Promise<ReplayCardPaintMetrics> =>
+  element.evaluate((node, sourceKind) => {
+    const image =
+      sourceKind === 'source'
+        ? (node as HTMLImageElement)
+        : node.querySelector<HTMLImageElement>('img');
+    if (!image) throw new Error('Replay disclosure card has no image');
+    const bounds = node.getBoundingClientRect();
+    const imageBounds = image.getBoundingClientRect();
+    const style = getComputedStyle(node);
+    return {
+      bounds: {
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.width,
+        height: bounds.height,
+      },
+      imageBounds: {
+        x: imageBounds.x,
+        y: imageBounds.y,
+        width: imageBounds.width,
+        height: imageBounds.height,
+      },
+      imageSrc: image.getAttribute('src') ?? '',
+      imageAlt: image.alt,
+      accessibleLabel:
+        sourceKind === 'source'
+          ? image.alt
+          : (node.getAttribute('aria-label') ?? ''),
+      borderRadius: style.borderRadius,
+      boxShadow: style.boxShadow,
+      cursor: style.cursor,
+    };
+  }, kind);
+
+const mountCandidate = async (page: Page): Promise<OverlayFixture> => {
   await page.goto('/?renderer=dom');
   await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
     'data-renderer-status',
@@ -429,6 +492,194 @@ const captureLegacy = async (browser: Browser) => {
       submenuMetrics: capturedSubmenuMetrics,
       preview: capturedPreview,
       previewMetrics: capturedPreviewMetrics,
+    };
+  } finally {
+    await page.close();
+  }
+};
+
+const captureLegacyReplayDisclosure = async (
+  browser: Browser,
+  assets: {
+    readonly front: string;
+    readonly ownBack: string;
+    readonly opponentBack: string;
+  }
+) => {
+  const page = await browser.newPage({
+    viewport: { width: 1280, height: 720 },
+    deviceScaleFactor: 1,
+  });
+  const errors = collectRuntimeErrors(page);
+  try {
+    const loaded = await loadLegacyRuntime(page);
+    await page.evaluate(async ({ front, ownBack, opponentBack }) => {
+      interface RuntimeImage extends HTMLImageElement {
+        readonly user: string;
+      }
+      interface RuntimeCard {
+        readonly image: RuntimeImage;
+      }
+      interface RuntimeZone {
+        readonly array: RuntimeCard[];
+        readonly element: HTMLElement;
+      }
+      const load = (specifier: string): Promise<Record<string, unknown>> =>
+        import(/* @vite-ignore */ specifier);
+      const [cardModule, zoneModule, frontEnd, visibility] = await Promise.all([
+        load('/src/setup/deck-constructor/card.js'),
+        load('/src/setup/zones/get-zone.js'),
+        load('/src/front-end.js'),
+        load('/src/actions/general/reveal-and-hide.js'),
+      ]);
+      const Card = cardModule['Card'] as new (
+        user: string,
+        name: string,
+        type: string,
+        imageUrl: string
+      ) => RuntimeCard;
+      const getZone = zoneModule['getZone'] as (
+        user: string,
+        zoneId: string
+      ) => RuntimeZone;
+      const hideCard = visibility['hideCard'] as (
+        user: string,
+        card: RuntimeCard
+      ) => void;
+      const systemState = frontEnd['systemState'] as {
+        isReplay: boolean;
+        isTwoPlayer: boolean;
+        initiator: string;
+        cardBackSrc: string;
+        p1OppCardBackSrc: string;
+        p2OppCardBackSrc: string;
+      };
+      systemState.isReplay = true;
+      systemState.isTwoPlayer = false;
+      systemState.initiator = 'self';
+      systemState.cardBackSrc = ownBack;
+      systemState.p1OppCardBackSrc = opponentBack;
+      systemState.p2OppCardBackSrc = opponentBack;
+
+      const mount = async (
+        user: 'self' | 'opp',
+        zoneId: 'prizes' | 'hand',
+        count: number,
+        marker: string
+      ): Promise<void> => {
+        const zone = getZone(user, zoneId);
+        zone.array.splice(0);
+        zone.element.replaceChildren();
+        for (let index = 0; index < count; index += 1) {
+          const card = new Card(
+            user,
+            'Replay-local disclosed card',
+            'Pokémon',
+            front
+          );
+          await card.image.decode();
+          hideCard(user, card);
+          await card.image.decode();
+          if (index === count - 1) card.image.dataset[marker] = 'true';
+          zone.array.push(card);
+          zone.element.append(card.image);
+        }
+      };
+      await mount('self', 'prizes', 6, 'legacyReplayPrizeCard');
+      await mount('opp', 'hand', 7, 'legacyReplayHandCard');
+    }, assets);
+    await settlePaint(page);
+
+    const menu = page.locator('#cardContextMenu');
+    const prizeZone = page.frameLocator('#selfContainer').locator('#prizes');
+    const handZone = page.frameLocator('#oppContainer').locator('#hand');
+    const prize = prizeZone.locator('[data-legacy-replay-prize-card]');
+    const opponentHand = handZone.locator('[data-legacy-replay-hand-card]');
+    const prizeHidden = await replayCardPaintMetrics(prize, 'source');
+    const prizeHiddenImage = await prize.screenshot({ animations: 'disabled' });
+    await prize.click({ button: 'right', position: { x: 2, y: 2 } });
+    await expect(menu).toBeVisible();
+    await menu.locator('#revealHidePrizesButton').hover();
+    await settlePaint(page);
+    const prizeMenu = await menu.screenshot({ animations: 'disabled' });
+    const prizeMenuMetrics = await menuMetrics(menu);
+    await menu.locator('#revealHideButton').click();
+    await expect(prize).toHaveAttribute('alt', 'Replay-local disclosed card');
+    expect(
+      await prizeZone
+        .locator('img')
+        .evaluateAll((images) =>
+          images.map((image) => image.getAttribute('alt'))
+        )
+    ).toEqual([
+      'Card back',
+      'Card back',
+      'Card back',
+      'Card back',
+      'Card back',
+      'Replay-local disclosed card',
+    ]);
+    await settlePaint(page);
+    const prizeShown = await replayCardPaintMetrics(prize, 'source');
+    const prizeShownImage = await prize.screenshot({ animations: 'disabled' });
+
+    await opponentHand.dispatchEvent('contextmenu', {
+      button: 2,
+      bubbles: true,
+      cancelable: true,
+      clientX: 2,
+      clientY: 2,
+    });
+    await expect(menu).toBeVisible();
+    await menu.locator('#lookHandButton').hover();
+    await settlePaint(page);
+    const handMenu = await menu.screenshot({ animations: 'disabled' });
+    const handMenuMetrics = await menuMetrics(menu);
+    const handHidden = await replayCardPaintMetrics(opponentHand, 'source');
+    const handHiddenImage = await opponentHand.screenshot({
+      animations: 'disabled',
+    });
+    await menu.locator('#revealHideButton').click();
+    await expect(opponentHand).toHaveAttribute(
+      'alt',
+      'Replay-local disclosed card'
+    );
+    expect(
+      await handZone
+        .locator('img')
+        .evaluateAll((images) =>
+          images.map((image) => image.getAttribute('alt'))
+        )
+    ).toEqual([
+      'Card back',
+      'Card back',
+      'Card back',
+      'Card back',
+      'Card back',
+      'Card back',
+      'Replay-local disclosed card',
+    ]);
+    await settlePaint(page);
+    const handShown = await replayCardPaintMetrics(opponentHand, 'source');
+    const handShownImage = await opponentHand.screenshot({
+      animations: 'disabled',
+    });
+
+    expect(loaded.missingPaths).toEqual([]);
+    expect(errors).toEqual([]);
+    return {
+      prizeMenu,
+      prizeMenuMetrics,
+      handMenu,
+      handMenuMetrics,
+      prizeHidden,
+      prizeHiddenImage,
+      prizeShown,
+      prizeShownImage,
+      handHidden,
+      handHiddenImage,
+      handShown,
+      handShownImage,
     };
   } finally {
     await page.close();
@@ -596,4 +847,299 @@ test('route-owned context and card-preview paint retain real-v1 structure', asyn
   });
   await expect(host).toHaveCount(0);
   expect(errors).toEqual([]);
+});
+
+test('solo replay disclosure retains source paint and a complete keyboard boundary', async ({
+  browser,
+  page,
+}, testInfo: TestInfo) => {
+  test.setTimeout(90_000);
+  const errors = collectRuntimeErrors(page);
+  const fixture = await mountCandidate(page);
+  const host = page.locator('[data-react-dom-protected-input-harness]');
+  await page.evaluate(() => {
+    const harness = (window as OverlayHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing candidate overlay harness');
+    harness.enterSoloReplay();
+  });
+
+  const menu = host.locator('[data-legacy-card-context-menu]');
+  const prize = host.locator(`[data-card-id="${fixture.ownPrizeCardId}"]`);
+  const opponentHand = host.locator(
+    `[data-card-id="${fixture.opponentHandCardId}"]`
+  );
+  await expect(prize).toHaveAccessibleName('Face-down card');
+  await expect(prize.locator('img')).toHaveAttribute('alt', '');
+  const candidatePrizeHidden = await replayCardPaintMetrics(prize, 'candidate');
+  const candidatePrizeHiddenImage = await prize.screenshot({
+    animations: 'disabled',
+  });
+
+  await prize.focus();
+  await prize.press('Shift+F10');
+  await expect(menu).toBeVisible();
+  await expect(menu).toHaveAttribute(
+    'aria-label',
+    'Actions for Face-down card'
+  );
+  await expect(menu.getByText('Prizes', { exact: true })).toHaveAttribute(
+    'role',
+    'presentation'
+  );
+  const prizeItems = menu.getByRole('menuitem');
+  await expect(prizeItems).toHaveCount(3);
+  await expect(prizeItems.nth(0)).toHaveText('Reveal/hide prizes');
+  await expect(prizeItems.nth(1)).toHaveText('Look/cover prizes');
+  await expect(prizeItems.nth(2)).toHaveText('Reveal/hide card');
+  await expect(prizeItems.nth(0)).toBeFocused();
+  await settlePaint(page);
+  const candidatePrizeMenu = await menu.screenshot({
+    animations: 'disabled',
+  });
+  const candidatePrizeMenuMetrics = await menuMetrics(menu);
+  await page.keyboard.press('ArrowDown');
+  await expect(prizeItems.nth(1)).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  await expect(prizeItems.nth(2)).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  await expect(prizeItems.nth(0)).toBeFocused();
+  await page.keyboard.press('ArrowUp');
+  await expect(prizeItems.nth(2)).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(menu).toHaveCount(0);
+  await expect(prize).toBeFocused();
+  await expect(prize).toHaveAccessibleName(fixture.replayLocalCardLabel);
+  await expect(prize.locator('img')).toHaveAttribute('alt', '');
+  const candidatePrizeShown = await replayCardPaintMetrics(prize, 'candidate');
+  const candidatePrizeShownImage = await prize.screenshot({
+    animations: 'disabled',
+  });
+  for (const cardId of fixture.ownPrizeCardIds) {
+    await expect(
+      host.locator(`[data-card-id="${cardId}"]`)
+    ).toHaveAccessibleName(
+      cardId === fixture.ownPrizeCardId
+        ? fixture.replayLocalCardLabel
+        : 'Face-down card'
+    );
+  }
+
+  await opponentHand.focus();
+  await opponentHand.press('Shift+F10');
+  await expect(menu).toBeVisible();
+  await expect(menu).toHaveAttribute(
+    'aria-label',
+    'Actions for Face-down card'
+  );
+  await expect(menu.getByText('Hand', { exact: true })).toHaveAttribute(
+    'role',
+    'presentation'
+  );
+  const handItems = menu.getByRole('menuitem');
+  await expect(handItems).toHaveCount(2);
+  await expect(handItems.nth(0)).toHaveText('Look/cover hand');
+  await expect(handItems.nth(1)).toHaveText('Reveal/hide card');
+  await expect(handItems.nth(0)).toBeFocused();
+  await settlePaint(page);
+  const candidateHandMenu = await menu.screenshot({
+    animations: 'disabled',
+  });
+  const candidateHandMenuMetrics = await menuMetrics(menu);
+  await page.keyboard.press('End');
+  await expect(handItems.nth(1)).toBeFocused();
+  const candidateHandHidden = await replayCardPaintMetrics(
+    opponentHand,
+    'candidate'
+  );
+  const candidateHandHiddenImage = await opponentHand.screenshot({
+    animations: 'disabled',
+  });
+  await page.keyboard.press('Enter');
+  await expect(menu).toHaveCount(0);
+  await expect(opponentHand).toBeFocused();
+  await expect(opponentHand).toHaveAccessibleName(fixture.replayLocalCardLabel);
+  await expect(opponentHand.locator('img')).toHaveAttribute('alt', '');
+  const candidateHandShown = await replayCardPaintMetrics(
+    opponentHand,
+    'candidate'
+  );
+  const candidateHandShownImage = await opponentHand.screenshot({
+    animations: 'disabled',
+  });
+  for (const cardId of fixture.opponentHandCardIds) {
+    await expect(
+      host.locator(`[data-card-id="${cardId}"]`)
+    ).toHaveAccessibleName(
+      cardId === fixture.opponentHandCardId
+        ? fixture.replayLocalCardLabel
+        : 'Face-down card'
+    );
+  }
+
+  const source = await captureLegacyReplayDisclosure(browser, {
+    front: candidatePrizeShown.imageSrc,
+    ownBack: candidatePrizeHidden.imageSrc,
+    opponentBack: candidateHandHidden.imageSrc,
+  });
+  const expectMenuPaint = (
+    candidate: MenuMetrics,
+    legacy: MenuMetrics
+  ): void => {
+    expect(candidate.rows.map((row) => [row.kind, row.label])).toEqual(
+      legacy.rows.map((row) => [row.kind, row.label])
+    );
+    expect(candidate).toMatchObject({
+      backgroundColor: legacy.backgroundColor,
+      borderColor: legacy.borderColor,
+      borderStyle: legacy.borderStyle,
+      borderWidth: legacy.borderWidth,
+      boxShadow: legacy.boxShadow,
+      position: legacy.position,
+    });
+    expect(
+      Math.abs(candidate.bounds.width - legacy.bounds.width)
+    ).toBeLessThanOrEqual(2);
+    expect(
+      Math.abs(candidate.bounds.height - legacy.bounds.height)
+    ).toBeLessThanOrEqual(2);
+    for (const [index, legacyRow] of legacy.rows.entries()) {
+      expect(candidate.rows[index]).toMatchObject({
+        padding: legacyRow.padding,
+        backgroundColor: legacyRow.backgroundColor,
+        color: legacyRow.color,
+        cursor: legacyRow.cursor,
+        fontFamily: legacyRow.fontFamily,
+        fontSize: legacyRow.fontSize,
+        fontWeight: legacyRow.fontWeight,
+      });
+    }
+  };
+  expectMenuPaint(candidatePrizeMenuMetrics, source.prizeMenuMetrics);
+  expectMenuPaint(candidateHandMenuMetrics, source.handMenuMetrics);
+
+  const expectStableFaceSwap = (
+    hidden: ReplayCardPaintMetrics,
+    shown: ReplayCardPaintMetrics
+  ): void => {
+    expect(shown.bounds).toEqual(hidden.bounds);
+    expect(shown.imageBounds).toEqual(hidden.imageBounds);
+    expect(shown.borderRadius).toBe(hidden.borderRadius);
+    expect(shown.boxShadow).toBe(hidden.boxShadow);
+    expect(shown.cursor).toBe(hidden.cursor);
+  };
+  expectStableFaceSwap(candidatePrizeHidden, candidatePrizeShown);
+  expectStableFaceSwap(candidateHandHidden, candidateHandShown);
+  expectStableFaceSwap(source.prizeHidden, source.prizeShown);
+  expectStableFaceSwap(source.handHidden, source.handShown);
+  expect(candidatePrizeHidden.imageSrc).toBe(source.prizeHidden.imageSrc);
+  expect(candidatePrizeShown.imageSrc).toBe(source.prizeShown.imageSrc);
+  expect(candidateHandHidden.imageSrc).toBe(source.handHidden.imageSrc);
+  expect(candidateHandShown.imageSrc).toBe(source.handShown.imageSrc);
+  expect(candidatePrizeShown.accessibleLabel).toBe(
+    source.prizeShown.accessibleLabel
+  );
+  expect(candidateHandShown.accessibleLabel).toBe(
+    source.handShown.accessibleLabel
+  );
+  expect(source.prizeHidden.accessibleLabel).toBe('Card back');
+  expect(source.handHidden.accessibleLabel).toBe('Card back');
+  expect(candidatePrizeHidden.accessibleLabel).toBe('Face-down card');
+  expect(candidateHandHidden.accessibleLabel).toBe('Face-down card');
+  for (const [candidate, legacy] of [
+    [candidatePrizeHidden, source.prizeHidden],
+    [candidatePrizeShown, source.prizeShown],
+    [candidateHandHidden, source.handHidden],
+    [candidateHandShown, source.handShown],
+  ] as const) {
+    expect(
+      Math.abs(
+        candidate.imageBounds.width / candidate.imageBounds.height -
+          legacy.imageBounds.width / legacy.imageBounds.height
+      )
+    ).toBeLessThanOrEqual(0.001);
+    expect(candidate.imageBounds.width).toBe(candidate.bounds.width);
+    expect(candidate.imageBounds.height).toBe(candidate.bounds.height);
+  }
+
+  const evidence = await page.evaluate(() => {
+    const harness = (window as OverlayHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing candidate overlay harness');
+    return harness.getEvidence();
+  });
+  expect(evidence.submissions).toEqual([]);
+  expect(evidence.submissionResults).toEqual([]);
+  expect(evidence.overlayRejections).toEqual([]);
+  expect(evidence.reportedErrors).toEqual([]);
+  expect(errors).toEqual([]);
+
+  await Promise.all([
+    testInfo.attach('legacy-replay-prize-menu-source.png', {
+      body: source.prizeMenu,
+      contentType: 'image/png',
+    }),
+    testInfo.attach('legacy-replay-prize-menu-candidate.png', {
+      body: candidatePrizeMenu,
+      contentType: 'image/png',
+    }),
+    testInfo.attach('legacy-replay-hand-menu-source.png', {
+      body: source.handMenu,
+      contentType: 'image/png',
+    }),
+    testInfo.attach('legacy-replay-hand-menu-candidate.png', {
+      body: candidateHandMenu,
+      contentType: 'image/png',
+    }),
+    ...[
+      ['legacy-replay-prize-hidden-source.png', source.prizeHiddenImage],
+      ['legacy-replay-prize-shown-source.png', source.prizeShownImage],
+      ['legacy-replay-hand-hidden-source.png', source.handHiddenImage],
+      ['legacy-replay-hand-shown-source.png', source.handShownImage],
+      ['legacy-replay-prize-hidden-candidate.png', candidatePrizeHiddenImage],
+      ['legacy-replay-prize-shown-candidate.png', candidatePrizeShownImage],
+      ['legacy-replay-hand-hidden-candidate.png', candidateHandHiddenImage],
+      ['legacy-replay-hand-shown-candidate.png', candidateHandShownImage],
+    ].map(([name, body]) =>
+      testInfo.attach(name as string, {
+        body: body as Buffer,
+        contentType: 'image/png',
+      })
+    ),
+    testInfo.attach('legacy-replay-disclosure-paint-metrics.json', {
+      body: Buffer.from(
+        JSON.stringify(
+          {
+            source: {
+              prizeMenu: source.prizeMenuMetrics,
+              handMenu: source.handMenuMetrics,
+              prizeHidden: source.prizeHidden,
+              prizeShown: source.prizeShown,
+              handHidden: source.handHidden,
+              handShown: source.handShown,
+            },
+            candidate: {
+              prizeMenu: candidatePrizeMenuMetrics,
+              handMenu: candidateHandMenuMetrics,
+              prizeHidden: candidatePrizeHidden,
+              prizeShown: candidatePrizeShown,
+              handHidden: candidateHandHidden,
+              handShown: candidateHandShown,
+            },
+          },
+          null,
+          2
+        )
+      ),
+      contentType: 'application/json',
+    }),
+  ]);
+
+  await page.evaluate(() => {
+    const harness = (window as OverlayHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing candidate overlay harness');
+    harness.dispose();
+  });
+  await expect(host).toHaveCount(0);
 });

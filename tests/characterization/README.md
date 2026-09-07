@@ -303,10 +303,10 @@ real checkbox wholly inside the mounted overlay: a deliberately reversed
 fixture proves checking renders stable disclosed-label order, unchecking
 restores canonical scene order, and neither direction records an overlay
 action, controller effect, or submission. Forged sort requests retain the
-`local_only` resolver rejection. It also pins the three v1 replay-local
-disclosure actions; the V2 replay menu remains empty and the controller returns
-`read_only` before resolver/submit until a separate local disclosure projection
-is implemented.
+`local_only` resolver rejection. It also pins the three initially scoped v1
+replay-local zone-disclosure actions; at that checkpoint the V2 replay menu
+remained empty and the controller returned `read_only` before resolver/submit
+until a separate local disclosure projection was implemented.
 
 The protected marker-input checkpoints complete damage and special-condition
 editing without mutating renderer-owned nodes. The unchanged context items
@@ -469,21 +469,28 @@ after the prior twenty-three continuous shortcuts and focused editable input
 remains silent. No protocol, domain, authority, route, label, layout, styling,
 UI, or UX surface changes.
 
-The solo replay disclosure checkpoint closes the three replay exceptions pinned
-by `client/src/setup/general/replay-block.js`: prize reveal, prize look, and
-opponent-hand look. It preserves their exact source labels and show/cover
-behavior but replaces v1's canonical browser state with a separately bounded,
-opaque, frame-alias-keyed catalog that authority emits only to a solo player.
+The solo replay disclosure checkpoints close the three zone-level replay
+exceptions pinned by `client/src/setup/general/replay-block.js`—prize reveal,
+prize look, and opponent-hand look—and the source menu's local per-card
+`Reveal/hide card` operation. They preserve the exact source labels and
+show/cover behavior but replace v1's canonical browser state with a separately
+bounded, opaque, frame-alias-keyed catalog that authority emits only to a solo
+player.
 The historical view is never mutated, multiplayer and spectators receive no
 catalog, and local actions emit no command. Forward playback retains per-zone
 visibility; seek, resync, reconnect, exit, identity replacement, and terminal
-state cover it again. Protocol/authority/playback/controller tests pin strict
-shape, scope, ownership, collision, payload, and lifecycle failure cases. Native
-Chromium proves all cards in the selected prize/opponent-hand zone change face,
-the context menu contains only the characterized rows, advance/seek/exit behave
-deterministically, and submission remains empty. Source pixel comparison,
-production routing, non-Chromium approval, and the broader accessibility audit
-remain separate.
+state cover it again. A card override survives only the same opaque alias on a
+forward frame; a zone operation clears card overrides in that zone. Protocol/
+authority/playback/controller tests pin strict shape, scope, ownership,
+collision, payload, and lifecycle failure cases. Native Chromium proves all
+cards in a selected prize/opponent-hand zone change face, per-card reveal leaves
+siblings covered, the prize and opponent-hand menus contain their exact source
+rows, advance/seek/exit behave deterministically, and submission remains empty.
+The real-v1 paint oracle additionally pins source menu order and computed paint,
+exact front/back asset swaps, stable card boxes/aspect ratio, keyboard traversal
+and wrap, focus-visible action paint, focus return, semantic roles/names, and
+empty child-image alt text. Production routing, non-Chromium approval, and a
+manual screen-reader audit remain separate.
 
 `legacy-compound-group-rotation-layout.test.ts` and
 `legacy-compound-break-rotation-layout.test.ts` split the next source-only
