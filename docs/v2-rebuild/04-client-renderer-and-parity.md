@@ -1235,6 +1235,16 @@ rewriting, selection, spectator silence, and the v1 replay-guard bug that lets
 all three mutate during replay. Candidate Chromium retains live behavior but
 rejects every replay request before resolution/submission. No visible renderer
 state owns these operations.
+The adjacent Alt-`D`, Alt-`S`, and Alt-ArrowDown hand actions retain the native
+`Draw how many cards?` prompt and its zero default without trusting that input.
+The first protected request installs an identity-bound controller prompt; only
+a matching second request is parsed, clamped against the current recipient-safe
+deck/hand capacity, and translated to the existing atomic discard/shuffle-and-
+draw command. Authority supplies both shuffle permutations. Ten source pages
+pin exact prompt/alert/default-prevention behavior, zone order, messages,
+random-call counts, action/export records, replay leakage, and selected/spectator
+silence. Candidate Chromium rejects replay before opening a prompt; a forged
+second-stage value is rejected by the controller before submission.
 `A` and `B` now cross a separate closed active/bench resolver. Zone cards emit
 `MoveCardToPlay`; eligible top cards move a whole stack with exact board-order
 preconditions; a viewer-owned staged top restores atomically. Real v1 active

@@ -62,6 +62,7 @@ const actions = (): LegacyBoardOverlayActions => ({
   submitDamageInput: vi.fn(),
   submitSpecialConditionInput: vi.fn(),
   submitCountInput: vi.fn(),
+  submitShortcutCountInput: vi.fn(),
   submitCategoryChoice: vi.fn(),
   submitMoveChoice: vi.fn(),
 });
@@ -498,7 +499,8 @@ describe('legacy board overlays', () => {
       .fn()
       .mockReturnValueOnce(' 3 ')
       .mockReturnValueOnce('2.5')
-      .mockReturnValueOnce(null);
+      .mockReturnValueOnce(null)
+      .mockReturnValueOnce('2');
     const alert = vi.fn();
     vi.stubGlobal('prompt', prompt);
     vi.stubGlobal('alert', alert);
@@ -573,6 +575,22 @@ describe('legacy board overlays', () => {
     expect(alert).toHaveBeenCalledTimes(1);
     expect(callbacks.dismiss).toHaveBeenCalledTimes(2);
     expect(callbacks.submitCountInput).toHaveBeenCalledTimes(1);
+
+    await renderInput({
+      kind: 'shortcutCount',
+      action: 'shuffleOwnHandAndDraw',
+      playerId: firstPlayer,
+      zoneId: `zone:${firstPlayer}:hand`,
+      message: 'Draw how many cards?',
+      initialValue: '0',
+      minimum: 0,
+      invalidMessage: 'Please enter a valid number for the draw amount.',
+    });
+    expect(prompt).toHaveBeenCalledTimes(4);
+    expect(callbacks.submitShortcutCountInput).toHaveBeenCalledExactlyOnceWith(
+      'shuffleOwnHandAndDraw',
+      '2'
+    );
   });
 
   it('projects recipient-safe card, stack, and zone images into source-shaped dialogs', async () => {

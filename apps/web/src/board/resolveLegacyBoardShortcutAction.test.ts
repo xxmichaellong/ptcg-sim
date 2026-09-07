@@ -156,7 +156,7 @@ describe('legacy board shortcut action resolver', () => {
         code: 'KeyS',
         altKey: true,
       })
-    ).toBeNull();
+    ).toEqual({ action: 'shuffleOwnHandAndDraw' });
     expect(
       resolveLegacyBoardUnselectedShortcutKey({
         key: '0',
@@ -200,6 +200,25 @@ describe('legacy board shortcut action resolver', () => {
           altKey: false,
         })
       ).toBeNull();
+    }
+  });
+
+  it('maps only the three Alt-modified unselected hand actions', () => {
+    for (const [key, code, request] of [
+      ['d', 'KeyD', { action: 'discardOwnHandAndDraw' }],
+      ['s', 'KeyS', { action: 'shuffleOwnHandAndDraw' }],
+      [
+        'ArrowDown',
+        'ArrowDown',
+        { action: 'shuffleOwnHandToDeckBottomAndDraw' },
+      ],
+    ] as const) {
+      expect(
+        resolveLegacyBoardUnselectedShortcutKey({ key, code, altKey: true })
+      ).toEqual(request);
+      expect(
+        resolveLegacyBoardUnselectedShortcutKey({ key, code, altKey: false })
+      ).not.toEqual(request);
     }
   });
 
@@ -392,6 +411,118 @@ describe('legacy board shortcut action resolver', () => {
         { action: 'startOwnTurn' }
       )
     ).toEqual({ ok: false, reason: 'stale_player' });
+  });
+
+  it('owns unselected hand prompts and clamps their existing atomic commands', () => {
+    const view = createRendererSpikeView();
+    if (view.viewer.kind !== 'player') {
+      throw new Error('Shortcut fixture must use a player viewer');
+    }
+    const viewerId = view.viewer.playerId;
+    const hand = Object.values(view.zones).find(
+      (zone) => zone.ownerId === viewerId && zone.kind === 'hand'
+    )!;
+    const deck = Object.values(view.zones).find(
+      (zone) => zone.ownerId === viewerId && zone.kind === 'deck'
+    )!;
+    const expectedInput = (action: string) => ({
+      ok: true,
+      input: {
+        kind: 'shortcutCount',
+        action,
+        playerId: viewerId,
+        zoneId: hand.id,
+        message: 'Draw how many cards?',
+        initialValue: '0',
+        minimum: 0,
+        invalidMessage: 'Please enter a valid number for the draw amount.',
+      },
+      dismissSelection: false,
+    });
+
+    for (const [action, type, available] of [
+      ['discardOwnHandAndDraw', 'DiscardHandAndDraw', deck.cards.length],
+      [
+        'shuffleOwnHandAndDraw',
+        'ShuffleHandIntoDeckAndDraw',
+        deck.cards.length + hand.cards.length,
+      ],
+      [
+        'shuffleOwnHandToDeckBottomAndDraw',
+        'ShuffleHandToDeckBottomAndDraw',
+        deck.cards.length + hand.cards.length,
+      ],
+    ] as const) {
+      expect(resolveLegacyBoardShortcutAction(view, { action })).toEqual(
+        expectedInput(action)
+      );
+      expect(
+        resolveLegacyBoardShortcutAction(view, { action, value: '999' })
+      ).toEqual({
+        ok: true,
+        command: { type, count: available },
+        dismissSelection: false,
+      });
+    }
+
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'discardOwnHandAndDraw',
+        value: '-1',
+      })
+    ).toEqual({ ok: false, reason: 'invalid_value' });
+    const inflatedView = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [hand.id]: {
+          ...hand,
+          cards: Array.from({ length: 150 }, () => hand.cards[0]!),
+        },
+        [deck.id]: {
+          ...deck,
+          cards: Array.from({ length: 100 }, () => deck.cards[0]!),
+        },
+      },
+    };
+    expect(
+      resolveLegacyBoardShortcutAction(inflatedView, {
+        action: 'shuffleOwnHandAndDraw',
+        value: '999',
+      })
+    ).toEqual({
+      ok: true,
+      command: { type: 'ShuffleHandIntoDeckAndDraw', count: 200 },
+      dismissSelection: false,
+    });
+    expect(
+      resolveLegacyBoardShortcutAction(
+        { ...view, viewer: { kind: 'spectator' } },
+        { action: 'shuffleOwnHandAndDraw' }
+      )
+    ).toEqual({ ok: false, reason: 'not_player' });
+    expect(
+      resolveLegacyBoardShortcutAction(
+        {
+          ...view,
+          zones: Object.fromEntries(
+            Object.entries(view.zones).filter(([, zone]) => zone.id !== hand.id)
+          ),
+        },
+        { action: 'shuffleOwnHandAndDraw' }
+      )
+    ).toEqual({ ok: false, reason: 'unsupported_target' });
+    expect(
+      resolveLegacyBoardShortcutAction(
+        {
+          ...view,
+          zones: Object.fromEntries(
+            Object.entries(view.zones).filter(([, zone]) => zone.id !== deck.id)
+          ),
+        },
+        { action: 'shuffleOwnHandAndDraw' }
+      )
+    ).toEqual({ ok: false, reason: 'no_deck' });
   });
 
   it('maps exact key/code and Alt combinations to closed selected-card requests', () => {

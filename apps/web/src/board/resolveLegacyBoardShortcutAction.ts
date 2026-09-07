@@ -26,6 +26,7 @@ import { resolveCardInspectionAction } from './resolvePrivateInspectionAction.js
 import { resolvePublicCardVisibilityAction } from './resolvePublicVisibilityAction.js';
 import { resolveLooseBoardAction } from './resolveLooseBoardAction.js';
 import { resolveLifecycleAction } from './resolveLifecycleAction.js';
+import { parseLegacyCountInput } from './resolveLegacyBoardCountAction.js';
 import { resolveStackStateAction } from './resolveStackStateAction.js';
 import { resolveTableAction } from './resolveTableAction.js';
 
@@ -33,6 +34,29 @@ export type LegacyLooseBoardShortcutDestination =
   'discard' | 'hand' | 'shuffleIntoDeck';
 
 export type LegacyOwnDeckInspectionEdge = 'top' | 'bottom';
+
+export type LegacyOwnHandShortcutAction =
+  | 'discardOwnHandAndDraw'
+  | 'shuffleOwnHandAndDraw'
+  | 'shuffleOwnHandToDeckBottomAndDraw';
+
+export const isLegacyOwnHandShortcutAction = (
+  value: unknown
+): value is LegacyOwnHandShortcutAction =>
+  value === 'discardOwnHandAndDraw' ||
+  value === 'shuffleOwnHandAndDraw' ||
+  value === 'shuffleOwnHandToDeckBottomAndDraw';
+
+export interface LegacyBoardShortcutCountPrompt {
+  readonly kind: 'shortcutCount';
+  readonly action: LegacyOwnHandShortcutAction;
+  readonly playerId: string;
+  readonly zoneId: string;
+  readonly message: 'Draw how many cards?';
+  readonly initialValue: '0';
+  readonly minimum: 0;
+  readonly invalidMessage: 'Please enter a valid number for the draw amount.';
+}
 
 const isLegacyLooseBoardShortcutDestination = (
   value: unknown
@@ -55,6 +79,11 @@ export type LegacyBoardShortcutActionRequest =
   | { readonly action: 'setupOwnPlayer' }
   | { readonly action: 'resetOwnPlayer' }
   | { readonly action: 'startOwnTurn' }
+  | {
+      readonly action: LegacyOwnHandShortcutAction;
+      /** Missing opens the source-compatible prompt; present submits it. */
+      readonly value?: string;
+    }
   | {
       readonly action: 'adjustDamage';
       readonly cardId: ViewCardId;
@@ -115,6 +144,11 @@ export type LegacyBoardShortcutActionResolution =
       readonly command: WireGameCommand;
       /** Matches the source's immediate selection cleanup for this gesture. */
       readonly dismissSelection: boolean;
+    }
+  | {
+      readonly ok: true;
+      readonly input: LegacyBoardShortcutCountPrompt;
+      readonly dismissSelection: false;
     }
   | {
       readonly ok: false;
@@ -258,6 +292,63 @@ export const resolveLegacyBoardShortcutAction = (
         resolveTableAction(view, view.viewer.playerId, 'startTurn'),
         false
       );
+    }
+    case 'discardOwnHandAndDraw':
+    case 'shuffleOwnHandAndDraw':
+    case 'shuffleOwnHandToDeckBottomAndDraw': {
+      if (view.viewer.kind !== 'player') {
+        return { ok: false, reason: 'not_player' };
+      }
+      const viewerId = view.viewer.playerId;
+      if (!view.players[viewerId]) {
+        return { ok: false, reason: 'stale_player' };
+      }
+      const hand = Object.values(view.zones).find(
+        (zone) => zone.ownerId === viewerId && zone.kind === 'hand'
+      );
+      if (!hand) return { ok: false, reason: 'unsupported_target' };
+      const deck = Object.values(view.zones).find(
+        (zone) => zone.ownerId === viewerId && zone.kind === 'deck'
+      );
+      if (!deck) return { ok: false, reason: 'no_deck' };
+      if (request.value === undefined) {
+        return {
+          ok: true,
+          input: {
+            kind: 'shortcutCount',
+            action: request.action,
+            playerId: viewerId,
+            zoneId: hand.id,
+            message: 'Draw how many cards?',
+            initialValue: '0',
+            minimum: 0,
+            invalidMessage: 'Please enter a valid number for the draw amount.',
+          },
+          dismissSelection: false,
+        };
+      }
+      const requested = parseLegacyCountInput(request.value, 0);
+      if (requested === undefined) {
+        return { ok: false, reason: 'invalid_value' };
+      }
+      const available =
+        request.action === 'discardOwnHandAndDraw'
+          ? deck.cards.length
+          : deck.cards.length + hand.cards.length;
+      const count = Math.min(requested, available, 200);
+      return {
+        ok: true,
+        command: {
+          type:
+            request.action === 'discardOwnHandAndDraw'
+              ? 'DiscardHandAndDraw'
+              : request.action === 'shuffleOwnHandAndDraw'
+                ? 'ShuffleHandIntoDeckAndDraw'
+                : 'ShuffleHandToDeckBottomAndDraw',
+          count,
+        },
+        dismissSelection: false,
+      };
     }
     case 'adjustDamage': {
       const resolution = resolveStackStateAction(view, request.cardId, {
@@ -571,6 +662,15 @@ export const resolveLegacyBoardUnselectedShortcutKey = (
   }
   if (altKey && matches(input, 't', 'KeyT')) {
     return { action: 'startOwnTurn' };
+  }
+  if (altKey && matches(input, 'd', 'KeyD')) {
+    return { action: 'discardOwnHandAndDraw' };
+  }
+  if (altKey && matches(input, 's', 'KeyS')) {
+    return { action: 'shuffleOwnHandAndDraw' };
+  }
+  if (altKey && matches(input, 'ArrowDown', 'ArrowDown')) {
+    return { action: 'shuffleOwnHandToDeckBottomAndDraw' };
   }
   return null;
 };

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 
 import type { BoardSessionControllerState } from './BoardSessionController.js';
 import {
+  isLegacyOwnHandShortcutAction,
   resolveLegacyBoardGlobalShortcutKey,
   resolveLegacyBoardShortcutKey,
   resolveLegacyBoardUnselectedShortcutKey,
@@ -51,18 +52,33 @@ export const LegacyBoardKeyboardShortcuts = ({
         selectedCardId === null
           ? null
           : resolveLegacyBoardShortcutKey(event, selectedCardId);
+      const unselectedRequest = resolveLegacyBoardUnselectedShortcutKey(event);
       const request =
         selectedRequest ??
         (isNativeEnterActivationTarget(event)
           ? null
           : resolveLegacyBoardGlobalShortcutKey(event)) ??
-        (selectedCardId === null
-          ? resolveLegacyBoardUnselectedShortcutKey(event)
-          : null);
-      if (!request) return;
+        (selectedCardId === null ? unselectedRequest : null);
+      if (!request) {
+        if (
+          selectedCardId !== null &&
+          unselectedRequest &&
+          isLegacyOwnHandShortcutAction(unselectedRequest.action) &&
+          event.cancelable
+        ) {
+          event.preventDefault();
+        }
+        return;
+      }
       // V1 prevents defaults inside its selected-card branch, but leaves the
-      // unselected global keys to the document after dispatch.
-      if (selectedCardId !== null && event.cancelable) event.preventDefault();
+      // other unselected keys to the document after dispatch. Alt-D is the
+      // one characterized unselected exception.
+      if (
+        event.cancelable &&
+        (selectedCardId !== null || request.action === 'discardOwnHandAndDraw')
+      ) {
+        event.preventDefault();
+      }
       onRequest(request);
     };
     document.addEventListener('keydown', handleKeyDown);

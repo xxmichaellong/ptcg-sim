@@ -592,6 +592,86 @@ describe('headless board session controller', () => {
     }
   });
 
+  it('owns unselected hand shortcut prompts through exact staged submission', () => {
+    const state = install();
+    if (state.view?.viewer.kind !== 'player') {
+      throw new Error('Controller shortcut fixture must use a player viewer');
+    }
+    const playerId = state.view.viewer.playerId;
+    const hand = Object.values(state.view.zones).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'hand'
+    )!;
+    const deck = Object.values(state.view.zones).find(
+      (zone) => zone.ownerId === playerId && zone.kind === 'deck'
+    )!;
+
+    for (const [action, type, count] of [
+      ['discardOwnHandAndDraw', 'DiscardHandAndDraw', deck.cards.length],
+      [
+        'shuffleOwnHandAndDraw',
+        'ShuffleHandIntoDeckAndDraw',
+        deck.cards.length + hand.cards.length,
+      ],
+      [
+        'shuffleOwnHandToDeckBottomAndDraw',
+        'ShuffleHandToDeckBottomAndDraw',
+        deck.cards.length + hand.cards.length,
+      ],
+    ] as const) {
+      const opened = apply(state, {
+        kind: 'LegacyShortcutActionRequested',
+        request: { action },
+      });
+      expect(opened.effects).toEqual([]);
+      expect(opened.state.overlays.input).toEqual({
+        kind: 'shortcutCount',
+        action,
+        playerId,
+        zoneId: hand.id,
+        message: 'Draw how many cards?',
+        initialValue: '0',
+        minimum: 0,
+        invalidMessage: 'Please enter a valid number for the draw amount.',
+      });
+
+      const submitted = apply(opened.state, {
+        kind: 'LegacyShortcutActionRequested',
+        request: { action, value: '999' },
+      });
+      expect(submitted.state.overlays.input).toBeNull();
+      expect(submitted.effects).toEqual([
+        { kind: 'SubmitCommand', command: { type, count } },
+      ]);
+    }
+
+    const forged = apply(state, {
+      kind: 'LegacyShortcutActionRequested',
+      request: { action: 'discardOwnHandAndDraw', value: '2' },
+    });
+    expect(forged.state).toBe(state);
+    expect(forged.effects).toEqual([
+      {
+        kind: 'ShortcutActionRejected',
+        request: { action: 'discardOwnHandAndDraw', value: '2' },
+        reason: 'stale_input',
+      },
+    ]);
+
+    const discardPrompt = apply(state, {
+      kind: 'LegacyShortcutActionRequested',
+      request: { action: 'discardOwnHandAndDraw' },
+    });
+    const mismatched = apply(discardPrompt.state, {
+      kind: 'LegacyShortcutActionRequested',
+      request: { action: 'shuffleOwnHandAndDraw', value: '2' },
+    });
+    expect(mismatched.state).toBe(discardPrompt.state);
+    expect(mismatched.effects[0]).toMatchObject({
+      kind: 'ShortcutActionRejected',
+      reason: 'stale_input',
+    });
+  });
+
   it('keeps replay shortcut requests outside the resolver and submitter', () => {
     const view = createRendererSpikeView();
     const resolveShortcutAction = vi.fn(() => {

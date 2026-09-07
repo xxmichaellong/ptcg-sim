@@ -252,6 +252,54 @@ describe('legacy board keyboard shortcut bridge', () => {
     ]);
   });
 
+  it('routes prompt-driven hand keys only while unselected and preserves source defaults', async () => {
+    const onRequest = vi.fn();
+    const state = createInitialBoardSessionControllerState();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, { state, onRequest })
+      );
+    });
+
+    const dispatch = (key: string, code: string) =>
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key,
+          code,
+          altKey: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    expect(dispatch('d', 'KeyD')).toBe(false);
+    expect(dispatch('s', 'KeyS')).toBe(true);
+    expect(dispatch('ArrowDown', 'ArrowDown')).toBe(true);
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state: {
+            ...state,
+            presentation: {
+              ...state.presentation,
+              selectedCardId: 'selected-card',
+            },
+          },
+          onRequest,
+        })
+      );
+    });
+    expect(dispatch('d', 'KeyD')).toBe(false);
+    expect(dispatch('s', 'KeyS')).toBe(false);
+    expect(dispatch('ArrowDown', 'ArrowDown')).toBe(false);
+
+    expect(onRequest.mock.calls.map(([request]) => request)).toEqual([
+      { action: 'discardOwnHandAndDraw' },
+      { action: 'shuffleOwnHandAndDraw' },
+      { action: 'shuffleOwnHandToDeckBottomAndDraw' },
+    ]);
+  });
+
   it('does not let global shortcuts collide with overlays or native card and zone activation', async () => {
     const onRequest = vi.fn();
     const state = createInitialBoardSessionControllerState();

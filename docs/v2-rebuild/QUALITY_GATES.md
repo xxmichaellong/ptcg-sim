@@ -189,3 +189,12 @@ traces are retained as a 14-day artifact. Browser binaries are not cached.
   silence, and the v1 replay-guard defect. The candidate must derive the viewer,
   preserve selected-key precedence, suppress editable input, emit each intended
   live command once, and reject each replay request before submission.
+- The unselected hand-key lane pairs ten fresh deny-by-default v1 pages with one
+  candidate DOM case. It pins all three native prompt/default paths, cancel
+  alert, Alt-`D` default suppression, deterministic zone/shuffle order,
+  random-call counts, messages, live/export records, selected/spectator silence,
+  and v1 replay leakage. The candidate must bind the prompt to the viewer/hand
+  and initiating action, reject forged stages, preserve invalid/cancel behavior,
+  submit exactly one existing atomic command for valid input, leave randomness
+  to authority, suppress selected/editable input, and reject replay before a
+  prompt appears.

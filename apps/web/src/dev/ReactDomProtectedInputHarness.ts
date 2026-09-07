@@ -510,6 +510,11 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
         value,
       });
     },
+    submitShortcutCountInput: (action, value) => {
+      const request: LegacyBoardShortcutActionRequest = { action, value };
+      shortcutActions.push(request);
+      runtime.emitLegacyShortcutAction(request);
+    },
     submitCategoryChoice: (cardId, category) => {
       overlayActions.push({
         kind: 'context',

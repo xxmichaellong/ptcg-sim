@@ -146,6 +146,16 @@ state and proves one typed rejection plus zero submissions for each replay
 request. Candidate commands derive their target from the installed viewer and
 selected Alt-`T` retains category precedence.
 
+Unselected hand-key parity has paired Chromium evidence across ten fresh v1
+pages and one candidate route. Alt-`D`, Alt-`S`, and Alt-ArrowDown pin the exact
+native prompt/default, cancel alert, default-prevention split, deterministic
+zone order and shuffle indices, random-call counts, messages, live/export
+records, selected/spectator silence, and the same v1 replay leak. Candidate
+input is controller-owned and action-bound: a valid second stage emits one
+existing atomic hand command, invalid/canceled input emits none, forged staged
+input fails closed, authority owns randomness, and replay is rejected before a
+prompt opens.
+
 ### Implemented seeded authority/storage model
 
 The server model suite at

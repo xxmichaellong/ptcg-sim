@@ -338,6 +338,14 @@ The controller's ready/live/write boundary intentionally fixes v1's replay
 leak, where all three lifecycle branches execute against replay state because
 the source guard never invokes its predicate. Each replay request receives one
 typed `read_only` rejection and no command.
+Alt-`D`, Alt-`S`, and Alt-ArrowDown extend that unselected tier through a
+two-stage count input. The first request can only install a controller-owned
+prompt bound to the current viewer and hand zone. The second must match its
+exact action; its string is reparsed and clamped against the current deck/hand
+projection before `DiscardHandAndDraw`, `ShuffleHandIntoDeckAndDraw`, or
+`ShuffleHandToDeckBottomAndDraw` is submitted. Cancellation/invalid input clears
+the prompt, a forged second stage returns `stale_input`, and replay is rejected
+before any modal opens. The authority remains the sole shuffle owner.
 `A`/`B` now use the dedicated play-placement slice. A zone card emits
 `MoveCardToPlay`, an eligible top play card emits a fully preconditioned
 `MovePlayStack`, and a viewer-owned staged top emits `RestoreStagedStack`.

@@ -1016,6 +1016,27 @@ selected Alt-`N`/Alt-`R` silence, editable silence, and individual exactly-once
 replay rejections. No new wire/domain/authority schema or visible UI/UX is
 introduced.
 
+### Implemented unselected hand keyboard subset
+
+Alt-`D`, Alt-`S`, and Alt-ArrowDown now open the existing native `Draw how many
+cards?` prompt with its zero default, then map valid input to the existing
+`DiscardHandAndDraw`, `ShuffleHandIntoDeckAndDraw`, or
+`ShuffleHandToDeckBottomAndDraw` command. The first shortcut request carries no
+seat or count and installs a controller-owned prompt bound to the current viewer
+and hand. Only a matching second-stage request may carry the string draft; the
+resolver reparses it and clamps it to the current recipient-safe capacity and
+wire ceiling. Authority owns both shuffle permutations.
+
+A ten-page deny-by-default Chromium oracle executes the unchanged v1 modules
+and pins exact deck/hand/discard order, shuffle indices and random-call counts,
+prompt/default/cancel alert behavior, the Alt-`D`-only default suppression,
+messages, action/export records, selected-card and spectator silence, and v1's
+replay mutation leak. Candidate Chromium proves the exact two-stage request and
+one-command path, invalid/canceled silence, selected/editable boundaries, and
+one typed replay rejection per key before any prompt opens; focused controller
+coverage rejects a forged second stage. No new wire/domain/authority schema or
+visible UI/UX is introduced.
+
 ### Implemented authority-random face-down subset
 
 `playRandomCardFaceDown` now submits only the explicit target player; authority

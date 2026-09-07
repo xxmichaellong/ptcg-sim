@@ -31,9 +31,11 @@ import {
 } from './resolveLegacyBoardOverlayAction.js';
 import { isLegacyBoardCountActionId } from './resolveLegacyBoardCountAction.js';
 import {
+  isLegacyOwnHandShortcutAction,
   resolveLegacyBoardShortcutAction,
   type LegacyBoardShortcutActionRejectionReason,
   type LegacyBoardShortcutActionRequest,
+  type LegacyBoardShortcutCountPrompt,
 } from './resolveLegacyBoardShortcutAction.js';
 
 type ReplayLocalDisclosureState = NonNullable<
@@ -80,7 +82,8 @@ export type BoardPreviewState =
 export interface BoardOverlayState {
   readonly contextMenuCardId: ViewCardId | null;
   readonly preview: BoardPreviewState | null;
-  readonly input: LegacyBoardOverlayInput | null;
+  readonly input:
+    LegacyBoardOverlayInput | LegacyBoardShortcutCountPrompt | null;
 }
 
 export type BoardPresentationDismissScope =
@@ -160,6 +163,7 @@ export type BoardShortcutActionRejectionReason =
   | 'not_ready'
   | 'read_only'
   | 'stale_card'
+  | 'stale_input'
   | LegacyBoardShortcutActionRejectionReason;
 
 export type BoardSessionControllerEffect =
@@ -458,20 +462,35 @@ const reconcilePresentation = (
           : null
         : null;
   const input = state.overlays.input;
-  const inputCard = input
-    ? scene.cards.find((card) => card.id === input.cardId)
-    : undefined;
+  const shortcutInputZone =
+    input?.kind === 'shortcutCount' ? view.zones[input.zoneId] : undefined;
+  const shortcutInputIsCurrent =
+    input?.kind === 'shortcutCount' &&
+    view.viewer.kind === 'player' &&
+    view.viewer.playerId === input.playerId &&
+    Boolean(view.players[input.playerId]) &&
+    shortcutInputZone?.kind === 'hand' &&
+    shortcutInputZone.ownerId === input.playerId;
+  const inputCard =
+    input && input.kind !== 'shortcutCount'
+      ? scene.cards.find((card) => card.id === input.cardId)
+      : undefined;
   const inputStack = inputCard ? view.stacks[inputCard.parentId] : undefined;
   const inputZone =
     input?.kind === 'count' ? view.zones[input.zoneId] : undefined;
   const reconciledInput =
-    input &&
-    inputCard &&
-    (input.kind === 'count'
-      ? inputZone?.cards.some((card) => card.id === input.cardId)
-      : inputStack && (input.kind === 'damage' || inputStack.slot === 'active'))
-      ? input
-      : null;
+    input?.kind === 'shortcutCount'
+      ? shortcutInputIsCurrent
+        ? input
+        : null
+      : input &&
+          inputCard &&
+          (input.kind === 'count'
+            ? inputZone?.cards.some((card) => card.id === input.cardId)
+            : inputStack &&
+              (input.kind === 'damage' || inputStack.slot === 'active'))
+        ? input
+        : null;
   return {
     presentation: {
       selectedCardId,
@@ -1298,22 +1317,48 @@ const handleShortcutAction = (
       return rejectShortcutAction(state, request, 'stale_card');
     }
   }
+  const submittedCountInput =
+    isLegacyOwnHandShortcutAction(request.action) &&
+    'value' in request &&
+    request.value !== undefined;
+  if (
+    submittedCountInput &&
+    (state.overlays.input?.kind !== 'shortcutCount' ||
+      state.overlays.input.action !== request.action)
+  ) {
+    return rejectShortcutAction(state, request, 'stale_input');
+  }
   const resolution = (
     dependencies.resolveShortcutAction ?? resolveLegacyBoardShortcutAction
   )(view, request);
   if (!resolution.ok) {
     return rejectShortcutAction(state, request, resolution.reason);
   }
+  if ('input' in resolution) {
+    const next = nextState(state, {
+      overlays: {
+        contextMenuCardId: null,
+        preview: null,
+        input: resolution.input,
+      },
+    });
+    return accepted(next, []);
+  }
+  const stateAfterInput = submittedCountInput
+    ? nextState(state, {
+        overlays: { ...state.overlays, input: null },
+      })
+    : state;
   if (!resolution.dismissSelection) {
-    return accepted(state, [
+    return accepted(stateAfterInput, [
       { kind: 'SubmitCommand', command: resolution.command },
     ]);
   }
   const presentation: BoardPresentation = {
-    ...state.presentation,
+    ...stateAfterInput.presentation,
     selectedCardId: null,
   };
-  const next = nextState(state, { presentation });
+  const next = nextState(stateAfterInput, { presentation });
   return accepted(next, [
     { kind: 'InstallPresentation', presentation },
     { kind: 'SubmitCommand', command: resolution.command },

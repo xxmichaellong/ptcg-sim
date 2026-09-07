@@ -46,6 +46,10 @@ import {
   type LegacyBoardCountActionId,
   type LegacyBoardCountPrompt,
 } from '../resolveLegacyBoardCountAction.js';
+import type {
+  LegacyBoardShortcutCountPrompt,
+  LegacyOwnHandShortcutAction,
+} from '../resolveLegacyBoardShortcutAction.js';
 import './LegacyBoardOverlays.css';
 
 export type {
@@ -74,6 +78,10 @@ export interface LegacyBoardOverlayActions {
   readonly submitCountInput: (
     action: LegacyBoardCountActionId,
     cardId: ViewCardId,
+    value: string
+  ) => void;
+  readonly submitShortcutCountInput: (
+    action: LegacyOwnHandShortcutAction,
     value: string
   ) => void;
   readonly submitCategoryChoice: (
@@ -915,7 +923,15 @@ const markerEditorMarker = (
   const input = state.overlays.input;
   const scene = state.scene;
   const view = state.view;
-  if (!input || input.kind === 'count' || !scene || !view) return null;
+  if (
+    !input ||
+    input.kind === 'count' ||
+    input.kind === 'shortcutCount' ||
+    !scene ||
+    !view
+  ) {
+    return null;
+  }
   const selected = scene.cards.find((card) => card.id === input.cardId);
   const stack = selected ? view.stacks[selected.parentId] : undefined;
   const topCardId = stack?.evolutionCards.at(-1)?.id;
@@ -982,11 +998,23 @@ const MarkerEditor = ({
   const [draft, setDraft] = useState(input?.initialValue ?? '');
   const [edited, setEdited] = useState(false);
   useLayoutEffect(() => {
-    if (editor.current && input && input.kind !== 'count') {
+    if (
+      editor.current &&
+      input &&
+      input.kind !== 'count' &&
+      input.kind !== 'shortcutCount'
+    ) {
       editor.current.textContent = input.initialValue;
     }
   }, [input]);
-  if (!input || input.kind === 'count' || !marker) return null;
+  if (
+    !input ||
+    input.kind === 'count' ||
+    input.kind === 'shortcutCount' ||
+    !marker
+  ) {
+    return null;
+  }
   const legacy = isLegacyMarkerPresentation(marker.presentation);
   const markerWasPresent = state.scene?.markers.some(
     (candidate) =>
@@ -1088,13 +1116,16 @@ const MarkerEditor = ({
 
 // The object identity survives React's development StrictMode effect probe, so
 // one controller prompt can never produce two native modal dialogs.
-const promptedCountInputs = new WeakSet<LegacyBoardCountPrompt>();
+type LegacyBoardCountInput =
+  LegacyBoardCountPrompt | LegacyBoardShortcutCountPrompt;
+
+const promptedCountInputs = new WeakSet<LegacyBoardCountInput>();
 
 const CountPrompt = ({
   input,
   actions,
 }: {
-  readonly input: LegacyBoardCountPrompt;
+  readonly input: LegacyBoardCountInput;
   readonly actions: LegacyBoardOverlayActions;
 }) => {
   useEffect(() => {
@@ -1102,6 +1133,9 @@ const CountPrompt = ({
     promptedCountInputs.add(input);
     const value = window.prompt(input.message, input.initialValue);
     if (value === null) {
+      if (input.kind === 'shortcutCount') {
+        window.alert(input.invalidMessage);
+      }
       actions.dismiss('input');
       return;
     }
@@ -1110,7 +1144,11 @@ const CountPrompt = ({
       actions.dismiss('input');
       return;
     }
-    actions.submitCountInput(input.action, input.cardId, value);
+    if (input.kind === 'shortcutCount') {
+      actions.submitShortcutCountInput(input.action, value);
+    } else {
+      actions.submitCountInput(input.action, input.cardId, value);
+    }
   }, [actions, input]);
   return null;
 };
@@ -1189,9 +1227,10 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
           actions={actions}
         />
       ) : null}
-      {state.overlays.input?.kind === 'count' ? (
+      {state.overlays.input?.kind === 'count' ||
+      state.overlays.input?.kind === 'shortcutCount' ? (
         <CountPrompt
-          key={`${state.overlays.input.action}:${state.overlays.input.cardId}:${state.overlays.input.zoneId}`}
+          key={`${state.overlays.input.kind}:${state.overlays.input.action}:${state.overlays.input.zoneId}`}
           input={state.overlays.input}
           actions={actions}
         />

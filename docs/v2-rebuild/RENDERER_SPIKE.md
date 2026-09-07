@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 1032 v2 tests across 154 files. A separate suite
-passes 155 Playwright checks across 75 Chromium 151 browser files:
+The repository-wide gate passes 1036 v2 tests across 154 files. A separate suite
+passes 157 Playwright checks across 76 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -1454,6 +1454,17 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     one typed read-only rejection with zero submission for every replay key. No
     protocol/domain/authority schema, visible control, key reference, layout,
     styling, UI, or UX changed.
+85. Alt-`D`, Alt-`S`, and Alt-ArrowDown now use a two-stage controller-owned
+    prompt before emitting existing atomic discard/shuffle-and-draw commands.
+    The first request carries no seat/count; the second must match the installed
+    viewer/hand/action, is reparsed and clamped to current safe capacity, and
+    leaves both shuffle permutations to authority. A ten-page Chromium oracle
+    pins v1 prompt/default/cancel alert and default-prevention behavior, exact
+    zone order, random calls, messages, live/export records, selection/spectator
+    silence, and replay leakage. Candidate Chromium proves valid, invalid,
+    canceled, selected/editable, and pre-prompt read-only paths; focused
+    controller coverage rejects a forged second stage. No wire/domain/authority
+    schema, visible control, label, layout, styling, UI, or UX changed.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

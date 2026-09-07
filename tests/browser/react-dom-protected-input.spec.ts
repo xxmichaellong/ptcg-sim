@@ -1,4 +1,10 @@
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import {
+  expect,
+  test,
+  type Dialog,
+  type Locator,
+  type Page,
+} from '@playwright/test';
 
 interface ProtectedInputFixture {
   readonly ownPlayerId: string;
@@ -65,6 +71,16 @@ interface ProtectedInputEvidence {
           readonly message: string;
           readonly initialValue: '0' | '1';
           readonly minimum: 0 | 1;
+          readonly invalidMessage: string;
+        }
+      | {
+          readonly kind: 'shortcutCount';
+          readonly action: string;
+          readonly playerId: string;
+          readonly zoneId: string;
+          readonly message: string;
+          readonly initialValue: '0';
+          readonly minimum: 0;
           readonly invalidMessage: string;
         }
       | null;
@@ -2073,6 +2089,222 @@ test('unselected lifecycle shortcuts derive the viewer and reject replay atomica
     expect(current.presentation.selectedCardId).toBeNull();
     expect(current.reportedErrors).toEqual([]);
   }
+
+  await page.evaluate(() => {
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.dispose();
+  });
+  await expect(host).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('unselected hand shortcuts stage native counts before atomic authority commands', async ({
+  page,
+}) => {
+  const errors = collectRuntimeErrors(page);
+  const fixture = await mountHarness(page);
+  const host = page.locator('[data-react-dom-protected-input-harness]');
+  const cases = [
+    {
+      key: 'Alt+KeyD',
+      action: 'discardOwnHandAndDraw',
+      command: { type: 'DiscardHandAndDraw', count: 2 },
+    },
+    {
+      key: 'Alt+KeyS',
+      action: 'shuffleOwnHandAndDraw',
+      command: { type: 'ShuffleHandIntoDeckAndDraw', count: 2 },
+    },
+    {
+      key: 'Alt+ArrowDown',
+      action: 'shuffleOwnHandToDeckBottomAndDraw',
+      command: { type: 'ShuffleHandToDeckBottomAndDraw', count: 2 },
+    },
+  ] as const;
+
+  for (const [index, scenario] of cases.entries()) {
+    await clearEvidence(page);
+    const prompt = answerNextPrompt(page, '2');
+    await page.keyboard.press(scenario.key);
+    expect(await prompt).toEqual({
+      type: 'prompt',
+      message: 'Draw how many cards?',
+      defaultValue: '0',
+    });
+    await expect
+      .poll(async () => (await evidence(page)).submissions)
+      .toEqual([scenario.command]);
+    const current = await evidence(page);
+    expect(current.submissionResults).toEqual([
+      {
+        queued: true,
+        commandId: `protected-input-command-${index + 1}`,
+        clientSequence: index + 1,
+      },
+    ]);
+    expect(current.shortcutActions).toEqual([
+      { action: scenario.action },
+      { action: scenario.action, value: '2' },
+    ]);
+    expect(current.shortcutRejections).toEqual([]);
+    expect(current.overlays.input).toBeNull();
+    expect(current.presentation.selectedCardId).toBeNull();
+    expect(current.reportedErrors).toEqual([]);
+  }
+
+  await clearEvidence(page);
+  const cancelDialogs: {
+    type: string;
+    message: string;
+    defaultValue: string;
+  }[] = [];
+  const handleCancelDialog = async (dialog: Dialog) => {
+    cancelDialogs.push({
+      type: dialog.type(),
+      message: dialog.message(),
+      defaultValue: dialog.defaultValue(),
+    });
+    await dialog.dismiss();
+  };
+  page.on('dialog', handleCancelDialog);
+  await page.keyboard.press('Alt+KeyD');
+  await expect
+    .poll(() => cancelDialogs)
+    .toEqual([
+      {
+        type: 'prompt',
+        message: 'Draw how many cards?',
+        defaultValue: '0',
+      },
+      {
+        type: 'alert',
+        message: 'Please enter a valid number for the draw amount.',
+        defaultValue: '',
+      },
+    ]);
+  page.off('dialog', handleCancelDialog);
+  await expect
+    .poll(async () => (await evidence(page)).overlays.input)
+    .toBeNull();
+  let current = await evidence(page);
+  expect(current.submissions).toEqual([]);
+  expect(current.shortcutActions).toEqual([
+    { action: 'discardOwnHandAndDraw' },
+  ]);
+  expect(current.shortcutRejections).toEqual([]);
+
+  await clearEvidence(page);
+  const dialogs: {
+    type: string;
+    message: string;
+    defaultValue: string;
+  }[] = [];
+  const handleInvalidDialog = async (dialog: Dialog) => {
+    dialogs.push({
+      type: dialog.type(),
+      message: dialog.message(),
+      defaultValue: dialog.defaultValue(),
+    });
+    if (dialog.type() === 'prompt') await dialog.accept('invalid');
+    else await dialog.dismiss();
+  };
+  page.on('dialog', handleInvalidDialog);
+  await page.keyboard.press('Alt+KeyS');
+  await expect
+    .poll(() => dialogs)
+    .toEqual([
+      {
+        type: 'prompt',
+        message: 'Draw how many cards?',
+        defaultValue: '0',
+      },
+      {
+        type: 'alert',
+        message: 'Please enter a valid number for the draw amount.',
+        defaultValue: '',
+      },
+    ]);
+  page.off('dialog', handleInvalidDialog);
+  current = await evidence(page);
+  expect(current.submissions).toEqual([]);
+  expect(current.shortcutActions).toEqual([
+    { action: 'shuffleOwnHandAndDraw' },
+  ]);
+  expect(current.shortcutRejections).toEqual([]);
+  expect(current.overlays.input).toBeNull();
+
+  const selectedCard = host.locator(
+    `[data-card-id="${fixture.activeTopCardId}"]`
+  );
+  const point = await exposedCardPoint(selectedCard);
+  await page.mouse.click(point.x, point.y);
+  await expect
+    .poll(async () => (await evidence(page)).presentation.selectedCardId)
+    .toBe(fixture.activeTopCardId);
+  await clearEvidence(page);
+  for (const scenario of cases) await page.keyboard.press(scenario.key);
+  current = await evidence(page);
+  expect(current.submissions).toEqual([]);
+  expect(current.shortcutActions).toEqual([]);
+  expect(current.shortcutRejections).toEqual([]);
+  expect(current.presentation.selectedCardId).toBe(fixture.activeTopCardId);
+
+  await page.evaluate(() => {
+    const input = document.createElement('input');
+    input.dataset.handShortcutEditor = 'true';
+    document.body.append(input);
+    input.focus();
+  });
+  for (const scenario of cases) await page.keyboard.press(scenario.key);
+  current = await evidence(page);
+  expect(current.submissions).toEqual([]);
+  expect(current.shortcutActions).toEqual([]);
+  expect(current.shortcutRejections).toEqual([]);
+
+  await page.evaluate(() => {
+    document.querySelector('[data-hand-shortcut-editor]')?.remove();
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.enterSoloReplay();
+  });
+  await expect
+    .poll(async () => (await evidence(page)).sourceKind)
+    .toBe('replay');
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      )
+  );
+  const unexpectedDialogs: string[] = [];
+  const dismissUnexpectedDialog = async (dialog: Dialog) => {
+    unexpectedDialogs.push(dialog.message());
+    await dialog.dismiss();
+  };
+  page.on('dialog', dismissUnexpectedDialog);
+  for (const scenario of cases) {
+    await clearEvidence(page);
+    await page.keyboard.press(scenario.key);
+    await expect
+      .poll(async () => (await evidence(page)).shortcutRejections)
+      .toEqual([
+        {
+          kind: 'ShortcutActionRejected',
+          request: { action: scenario.action },
+          reason: 'read_only',
+        },
+      ]);
+    current = await evidence(page);
+    expect(current.submissions).toEqual([]);
+    expect(current.shortcutActions).toEqual([{ action: scenario.action }]);
+    expect(current.overlays.input).toBeNull();
+    expect(current.reportedErrors).toEqual([]);
+  }
+  page.off('dialog', dismissUnexpectedDialog);
+  expect(unexpectedDialogs).toEqual([]);
 
   await page.evaluate(() => {
     const harness = (window as ProtectedInputHarnessWindow)
