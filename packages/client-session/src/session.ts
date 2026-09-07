@@ -404,7 +404,11 @@ export class RemoteGameSession {
         this.updateState({ latencyMs: Math.max(0, this.now() - started) });
         return;
       }
-      case 'ServerNotice':
+      case 'ServerNotice': {
+        const noticeGeneration = this.socketGeneration;
+        const noticePhase = this.state.phase;
+        const commandAtReceipt =
+          noticePhase === 'ready' ? this.pending[0] : undefined;
         if (message.code === 'replay_unavailable') {
           this.replayTransfer = undefined;
         }
@@ -418,17 +422,33 @@ export class RemoteGameSession {
             ? { replayLoading: false }
             : {}),
         });
-        if (message.retryable && this.state.phase === 'ready') {
+        if (!this.isCurrent(noticeGeneration)) return;
+        if (
+          message.retryable &&
+          noticePhase === 'ready' &&
+          this.state.phase === 'ready' &&
+          commandAtReceipt !== undefined &&
+          this.pending[0] === commandAtReceipt
+        ) {
           this.retryHead();
-        } else if (message.retryable && this.state.phase === 'handshaking') {
+        } else if (
+          message.retryable &&
+          noticePhase === 'handshaking' &&
+          this.state.phase === 'handshaking'
+        ) {
           this.reconnectTransport('Admission retry requested');
-        } else if (!message.retryable && this.state.phase === 'handshaking') {
+        } else if (
+          !message.retryable &&
+          noticePhase === 'handshaking' &&
+          this.state.phase === 'handshaking'
+        ) {
           this.fail({
             code: 'admission_rejected',
             message: `Room admission was rejected: ${message.code}`,
           });
         }
         return;
+      }
       case 'SessionSuperseded':
         this.manualClose = true;
         this.cancelReconnect();

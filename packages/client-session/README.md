@@ -18,6 +18,7 @@ DOM renderer, and the Pixi renderer can consume without owning networking.
 - every send, handshake, reconnect-timer, or socket-open continuation after a public notification revalidates its phase and socket generation
 - locally initiated closes invalidate the socket generation before calling transport, so synchronous and asynchronous close delivery are both stale and cannot spend a second reconnect attempt
 - inconsistent replay termination publishes only the failed state with replay loading cleared
+- retryable notices bind to the phase, socket generation, and command head present at receipt; a reentrant observer cannot retarget an old notice onto a newly created command
 - admission and resume capabilities never enter the public store, command history, or notices
 - failed, cleanly closed, and superseded sessions clear replay loading; superseded sessions become terminal read-only sessions and never reconnect
 

@@ -208,7 +208,9 @@ Release requires all of the following:
     connecting, handshaking, ready admission, in-flight command, and reconnect
     timer notifications cannot open, write, or reconnect afterward; locally
     initiated transport close invalidates its generation before even a
-    synchronous close callback can run.
+    synchronous close callback can run. Retryable notices can affect only the
+    receipt-time command head and cannot spend the retry budget of a command
+    created by a synchronous notice observer.
 15. The remote board renders the effective live/replay projection, blocks every
     command during loading/active/discarding replay phases, and rewinds through
     explicit renderer replacement without weakening monotonic live installs. A

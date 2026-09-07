@@ -521,6 +521,15 @@ React external-store callbacks from resurrecting a session or acting on a
 partially published transition without imposing asynchronous notification
 ordering.
 
+Server-notice consequences use the same causal rule. Before a notice becomes
+public, the session captures its transport generation, phase, and current
+command head. A retryable ready-session notice may retry only that exact head;
+if no command existed at receipt, a synchronous observer that submits in
+response to the notice creates new work and the old notice has no effect on it.
+Handshake retry or rejection likewise applies only while the receipt-time
+generation remains current and handshaking. This prevents observer code from
+retargeting a server decision across a public notification boundary.
+
 Solo player replay may additionally carry an optional replay-local disclosure
 catalog on `ReplayStarted` and an alias-keyed disclosure record on every
 `ReplayFrame`. This is not canonical state and is never merged into the

@@ -290,7 +290,7 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 1009 v2 tests across 154 files. A separate suite
+The repository-wide gate passes 1010 v2 tests across 154 files. A separate suite
 passes 146 Playwright checks across 71 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
@@ -1350,11 +1350,22 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     delivery from spending a second reconnect attempt. Identical equal-revision
     resume views retain their current object identity, avoiding a redundant
     renderer commit, while divergent authoritative replacements still install.
-    Invalid replay streams also transition directly to failed/not-loading. Nine focused tests
-    pin observer-triggered close at each continuation boundary, atomic
-    publication shapes, no post-close Hello/Command/socket creation, a single
+    Invalid replay streams also transition directly to failed/not-loading. Nine
+    focused tests pin observer-triggered close at each continuation boundary,
+    atomic publication shapes, no post-close Hello/Command/socket creation, a single
     reconnect timer, and an untouched command sequence on replay failure. No
     protocol, authority, renderer, visible UI, or UX changed.
+78. Retryable server notices are now causally bound to the socket generation,
+    phase, and pending command head present when the notice arrived. Previously
+    the notice was published first and `retryHead()` looked up the queue only
+    after synchronous observers returned. An observer could submit the first
+    command in response to a notice received with an empty queue, causing that
+    unrelated command to be retried immediately or fail with an exhausted retry
+    budget. A red-first regression uses a zero retry budget and proves the new
+    command remains ready, in flight, written exactly once, and unclosed.
+    Handshake retry/rejection also requires the receipt-time generation and
+    phase to remain current. No protocol, authority, renderer, visible UI, or UX
+    changed.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

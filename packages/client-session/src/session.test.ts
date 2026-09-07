@@ -1023,6 +1023,41 @@ describe('RemoteGameSession', () => {
     });
   });
 
+  it('does not retarget a retryable notice onto a command created by a reentrant observer', () => {
+    const test = setup({ maximumCommandRetries: 0 });
+    const socket = test.admit();
+    let attempted = false;
+    let reentrantSubmission: ReturnType<typeof test.session.submit> | undefined;
+    test.session.subscribe(() => {
+      const snapshot = test.session.getSnapshot();
+      if (snapshot.notices.length === 0 || attempted) return;
+      attempted = true;
+      reentrantSubmission = test.session.submit({ type: 'FlipCoin' });
+    });
+
+    socket.serverMessage({
+      type: 'ServerNotice',
+      protocolVersion: PROTOCOL_VERSION,
+      code: 'internal_retryable',
+      message: 'Retry only the command that preceded this notice',
+      retryable: true,
+    });
+
+    expect(reentrantSubmission).toMatchObject({
+      queued: true,
+      clientSequence: 1,
+    });
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'ready',
+      pendingCommands: [{ state: 'in_flight' }],
+    });
+    expect(socket.sent.map((frame) => JSON.parse(frame).type)).toEqual([
+      'Hello',
+      'Command',
+    ]);
+    expect(socket.close).not.toHaveBeenCalled();
+  });
+
   it('tracks bounded ping latency and terminates a rejected handshake', () => {
     const test = setup();
     const socket = test.admit();
