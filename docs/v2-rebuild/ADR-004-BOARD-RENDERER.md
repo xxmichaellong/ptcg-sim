@@ -157,6 +157,14 @@ no command or authority state exists for this gesture. Focused semantic overlays
 keep their narrower Escape behavior and focus return. Six source pages plus the
 candidate pin modifiers, replay/spectator use, full-stack closure, protected
 input, and zero game traffic without introducing a visible UI change.
+The existing hold-to-show Shift reference is also DOM presentation outside the
+renderer contract. The route-owned shortcut bridge toggles a source-shaped
+React surface for either physical Shift key, preserves the selected-player and
+spectator default boundaries, and closes it on document keyup, Escape, or blur.
+Six source pages and the candidate compare its complete ordered content,
+1600×900 geometry, theme paint, focus migration, replay behavior, and empty
+traffic. This preserves a text-heavy semantic DOM surface without adding Pixi
+text/layout or any protocol, controller, authority, or replay state.
 The bridge now distinguishes those always-global actions from unselected-only
 deck/lifecycle actions. Alt-`N`, Alt-`R`, and Alt-`T` carry no seat identity and
 reuse the existing viewer-derived setup/reset/start-turn resolvers. Selected

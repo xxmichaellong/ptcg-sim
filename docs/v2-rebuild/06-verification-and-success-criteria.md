@@ -156,6 +156,15 @@ must dispatch only the existing all-scope local presentation dismissal, clear
 selection/context/zone/preview state, preserve overlay-owned scoped Escape and
 editable input, remain available in replay, and emit no command or rejection.
 
+Shift-reference parity has paired Chromium evidence across six fresh v1 pages
+and the protected candidate. The contract compares the complete ordered
+surface—six headings, 53 entries, every shortcut token, and the macOS note—plus
+exact 1600×900 bounds and computed light/dark paint. It also pins both physical
+Shift keys, selected-player default prevention, spectator/native defaults,
+replay availability, editor keydown suppression, unguarded keyup after focus
+migration, Escape closure, and zero game traffic. The candidate adds a blur
+cleanup guard so a lost keyup cannot strand the presentation surface.
+
 Unselected lifecycle-key parity has paired Chromium evidence across nine fresh
 v1 pages and one candidate route. Alt-`N` setup, Alt-`R` reset, and Alt-`T`
 start-turn pin exact empty-deck messages, live/export records, owner rewriting,

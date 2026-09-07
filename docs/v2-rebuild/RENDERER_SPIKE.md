@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 1056 v2 tests across 154 files. A separate suite
-passes 205 Playwright checks across 82 Chromium 151 browser files:
+The repository-wide gate passes 1057 v2 tests across 154 files. A separate suite
+passes 212 Playwright checks across 84 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -1544,6 +1544,18 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     action, or rejection traffic. No protocol, domain, authority, renderer
     contract, visible control, key reference, geometry, styling, UI, or UX
     changed.
+92. The existing hold-to-show Shift reference now crosses the route-owned DOM
+    presentation boundary. Either physical Shift key reveals a source-shaped
+    React surface only while held; selected players retain v1's consumed
+    keydown, unselected users and spectators remain native, and document keyup
+    closes after focus migration. Escape shares the adjacent local dismissal,
+    while a blur cleanup prevents a missed release from stranding the surface.
+    Six deny-by-default source pages plus the candidate compare all six headings,
+    53 ordered entries and shortcut tokens, the macOS note, exact 1600×900
+    bounds, light/dark paint, replay/editor/default behavior, and empty action,
+    export, socket, command, and rejection traffic. The surface remains outside
+    renderer, controller, protocol, authority, and replay state; it preserves
+    the existing visible reference without changing its content, layout, or UX.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

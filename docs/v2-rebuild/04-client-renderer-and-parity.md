@@ -1250,6 +1250,17 @@ proves the same global local-only cleanup across selection, context, zone,
 preview, editor, and replay states. Focused v2 overlays retain their existing
 scoped Escape/focus-return handlers. No visible surface, key reference, layout,
 styling, UI, or UX changed.
+The adjacent Shift reference remains a route-owned presentation surface rather
+than renderer or game state. Either physical Shift key opens the complete
+source text only for the duration of the hold; document keyup closes it even if
+focus moved into an editor, and window blur additionally prevents a stranded
+overlay. The selected player retains v1's consumed keydown while unselected and
+spectator input remains native. A six-page real-v1 oracle and the protected
+candidate compare all six headings, all 53 ordered entries and shortcut tokens,
+the macOS note, exact 1600×900 bounds, light/dark paint, replay behavior,
+Escape interaction, editor suppression, and empty game traffic. The React
+surface deliberately preserves the existing reference and UX without entering
+the renderer contract, controller, protocol, or replay timeline.
 The key bridge now separates always-global Enter/Slash/`F` from unselected-only
 deck and lifecycle input. Alt-`N`, Alt-`R`, and Alt-`T` derive the viewer and
 reuse existing `SetupPlayer`, `ResetPlayer`, and `StartTurn` commands; selected

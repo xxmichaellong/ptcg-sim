@@ -1031,6 +1031,26 @@ zone, preview, and replay, plus protected-editor silence and zero command,
 action, or rejection traffic. No wire, domain, authority, renderer contract,
 visible control, key reference, geometry, style, UI, or UX changed.
 
+### Implemented Shift shortcut-reference presentation subset
+
+Either physical Shift key now holds open a route-owned React reconstruction of
+the existing shortcut reference. It retains all six source headings, 53
+ordered entries, 52 code tokens, the macOS note, exact 1600×900 outer bounds,
+and light/dark paint. The surface is local presentation only: it cannot create
+an action request, controller action, renderer intent, command, rejection,
+authority revision, replay mutation, export record, or socket message.
+
+The bridge preserves v1's target and default boundaries. Editable, overlay,
+composing, and already-consumed keydowns remain ignored; selected player
+keydown is consumed after opening, while unselected and spectator keydown is
+native. Keyup remains unguarded so a release closes the surface even after
+focus enters an editor. Escape closes through the adjacent dismissal path, and
+an additional blur cleanup prevents a missed release from leaving it visible.
+Six deny-by-default source pages and one candidate case pin the complete content,
+geometry, theme, player/spectator/replay behavior, focus migration, dismissal,
+and zero game traffic. This restores the existing visible reference without
+changing its labels, layout, styling, or UX.
+
 ### Implemented unselected lifecycle keyboard subset
 
 Alt-`N`, Alt-`R`, and Alt-`T` now produce payload-free setup, reset, and

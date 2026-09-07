@@ -853,6 +853,156 @@ describe('legacy board keyboard shortcut bridge', () => {
     zone.remove();
   });
 
+  it('shows the complete shortcut reference only while Shift is held', async () => {
+    const onRequest = vi.fn();
+    const state = createInitialBoardSessionControllerState();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, { state, onRequest })
+      );
+    });
+    const reference = host.querySelector<HTMLElement>(
+      '[data-legacy-shortcut-reference]'
+    );
+    expect(reference?.dataset.shortcutReferenceVisible).toBe('false');
+    expect(
+      [...(reference?.querySelectorAll('h1') ?? [])].map(
+        (heading) => heading.textContent
+      )
+    ).toEqual([
+      'Move card...',
+      'Deck',
+      'Hand',
+      'Playboard',
+      'Card actions',
+      'General',
+    ]);
+    expect(reference?.querySelectorAll('li')).toHaveLength(53);
+    expect(reference?.textContent).toContain('Attach[q]');
+    expect(reference?.textContent).toContain('Close popups[esc]');
+    expect(reference?.textContent).toContain(
+      'For macOS: Use option instead of alt'
+    );
+
+    const target = document.createElement('button');
+    const input = document.createElement('input');
+    document.body.append(target, input);
+    let accepted = false;
+    await act(async () => {
+      accepted = target.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Shift',
+          code: 'ShiftLeft',
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(accepted).toBe(true);
+    expect(reference?.dataset.shortcutReferenceVisible).toBe('true');
+    expect(reference?.getAttribute('aria-hidden')).toBe('false');
+
+    await act(async () => {
+      input.dispatchEvent(
+        new KeyboardEvent('keyup', {
+          key: 'Shift',
+          code: 'ShiftLeft',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(reference?.dataset.shortcutReferenceVisible).toBe('false');
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state: {
+            ...state,
+            presentation: {
+              ...state.presentation,
+              selectedCardId: 'selected-card',
+            },
+          },
+          onRequest,
+        })
+      );
+    });
+    await act(async () => {
+      accepted = target.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Shift',
+          code: 'ShiftRight',
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(accepted).toBe(false);
+    expect(reference?.dataset.shortcutReferenceVisible).toBe('true');
+    expect(onRequest).not.toHaveBeenCalled();
+
+    const spectatorView = {
+      ...createRendererSpikeView(),
+      viewer: { kind: 'spectator' } as const,
+    };
+    await act(async () => {
+      input.dispatchEvent(
+        new KeyboardEvent('keyup', {
+          key: 'Shift',
+          code: 'ShiftRight',
+          bubbles: true,
+        })
+      );
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state: {
+            ...state,
+            view: spectatorView,
+            presentation: {
+              ...state.presentation,
+              selectedCardId: 'selected-card',
+            },
+          },
+          onRequest,
+        })
+      );
+    });
+    await act(async () => {
+      accepted = target.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Shift',
+          code: 'ShiftLeft',
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(accepted).toBe(true);
+    expect(reference?.dataset.shortcutReferenceVisible).toBe('true');
+
+    await act(async () => window.dispatchEvent(new Event('blur')));
+    expect(reference?.dataset.shortcutReferenceVisible).toBe('false');
+    await act(async () => {
+      input.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Shift',
+          code: 'ShiftLeft',
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(reference?.dataset.shortcutReferenceVisible).toBe('false');
+
+    target.remove();
+    input.remove();
+  });
+
   it('dismisses local presentation with native Escape semantics outside protected targets', async () => {
     const onRequest = vi.fn();
     const onDismissPresentation = vi.fn();

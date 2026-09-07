@@ -6,6 +6,12 @@ import {
   type Page,
 } from '@playwright/test';
 
+import {
+  LEGACY_SHORTCUT_REFERENCE_ENTRIES,
+  LEGACY_SHORTCUT_REFERENCE_HEADINGS,
+  LEGACY_SHORTCUT_REFERENCE_MACOS_NOTE,
+} from './support/legacy-shortcut-reference-contract.js';
+
 interface ProtectedInputFixture {
   readonly ownPlayerId: string;
   readonly opponentPlayerId: string;
@@ -2891,6 +2897,201 @@ test('Escape globally dismisses local board presentation without command traffic
   );
   await expectOnlyLocalDismissal();
 
+  await page.evaluate(() => {
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.dispose();
+  });
+  await expect(host).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('Shift holds the source-shaped shortcut reference without game traffic', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1600, height: 900 });
+  const errors = collectRuntimeErrors(page);
+  const fixture = await mountHarness(page);
+  const host = page.locator('[data-react-dom-protected-input-harness]');
+  const reference = host.locator('[data-legacy-shortcut-reference]');
+  await expect(reference).toHaveAttribute(
+    'data-shortcut-reference-visible',
+    'false'
+  );
+  await expect(reference).toHaveCSS('display', 'none');
+
+  await clearEvidence(page);
+  await page.keyboard.down('ShiftLeft');
+  await expect(reference).toHaveAttribute(
+    'data-shortcut-reference-visible',
+    'true'
+  );
+  await expect(reference).toHaveCSS('display', 'block');
+  await expect(reference).toHaveCSS(
+    'background-color',
+    'rgba(200, 200, 200, 0.875)'
+  );
+  await expect(reference).toHaveCSS('color', 'rgb(0, 0, 0)');
+  expect(await reference.boundingBox()).toEqual({
+    x: 16,
+    y: 14,
+    width: 1184,
+    height: 872,
+  });
+  expect(
+    await reference
+      .locator('h1')
+      .evaluateAll((headings) =>
+        headings.map((heading) => heading.textContent?.trim())
+      )
+  ).toEqual(LEGACY_SHORTCUT_REFERENCE_HEADINGS);
+  expect(
+    await reference.locator('li').evaluateAll((entries) =>
+      entries.map((entry) => ({
+        label: entry.querySelector('span')?.textContent?.trim() ?? '',
+        shortcut: entry.querySelector('code')?.textContent?.trim() ?? null,
+      }))
+    )
+  ).toEqual(LEGACY_SHORTCUT_REFERENCE_ENTRIES);
+  await expect(reference.locator('code')).toHaveCount(52);
+  expect(
+    await reference.locator('.ptcgsim-legacy-shortcut-macos-note').textContent()
+  ).toBeTruthy();
+  expect(
+    (
+      await reference
+        .locator('.ptcgsim-legacy-shortcut-macos-note')
+        .textContent()
+    )
+      ?.replace(/\s+/g, ' ')
+      .trim()
+  ).toBe(LEGACY_SHORTCUT_REFERENCE_MACOS_NOTE);
+  let current = await evidence(page);
+  expect(current).toMatchObject({
+    submissions: [],
+    rejections: [],
+    overlayActions: [],
+    shortcutActions: [],
+    shortcutRejections: [],
+    presentationDismissals: 0,
+    reportedErrors: [],
+  });
+  await page.keyboard.up('ShiftLeft');
+  await expect(reference).toHaveCSS('display', 'none');
+
+  const selectedCard = host.locator(
+    `[data-card-id="${fixture.activeTopCardId}"]`
+  );
+  const selectedPoint = await exposedCardPoint(selectedCard);
+  await page.mouse.click(selectedPoint.x, selectedPoint.y);
+  await expect
+    .poll(async () => (await evidence(page)).presentation.selectedCardId)
+    .toBe(fixture.activeTopCardId);
+  expect(
+    await page.evaluate(() =>
+      document.body.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Shift',
+          code: 'ShiftRight',
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      )
+    )
+  ).toBe(false);
+  await expect(reference).toHaveCSS('display', 'block');
+  expect((await evidence(page)).presentation.selectedCardId).toBe(
+    fixture.activeTopCardId
+  );
+  await page.evaluate(() =>
+    document.body.dispatchEvent(
+      new KeyboardEvent('keyup', {
+        key: 'Shift',
+        code: 'ShiftRight',
+        bubbles: true,
+        cancelable: true,
+      })
+    )
+  );
+  await expect(reference).toHaveCSS('display', 'none');
+
+  await page.evaluate(() => {
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.setDarkMode(true);
+  });
+  await page.keyboard.down('ShiftLeft');
+  await expect(reference).toHaveCSS(
+    'background-color',
+    'rgba(21, 21, 21, 0.87)'
+  );
+  await expect(reference).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await page.keyboard.up('ShiftLeft');
+
+  await page.evaluate(() => {
+    const input = document.createElement('input');
+    input.dataset.shortcutReferenceEditor = 'true';
+    document.body.append(input);
+    input.focus();
+  });
+  await page.keyboard.down('ShiftLeft');
+  await expect(reference).toHaveCSS('display', 'none');
+  await page.keyboard.up('ShiftLeft');
+
+  await page.evaluate(() => {
+    document.body.tabIndex = -1;
+    document.body.focus();
+  });
+  await page.keyboard.down('ShiftRight');
+  await expect(reference).toHaveCSS('display', 'block');
+  await page.locator('[data-shortcut-reference-editor]').focus();
+  await page.keyboard.up('ShiftRight');
+  await expect(reference).toHaveCSS('display', 'none');
+
+  await page
+    .locator('[data-shortcut-reference-editor]')
+    .evaluate((element) => element.remove());
+  await page.evaluate(() => document.body.focus());
+  await page.keyboard.down('ShiftLeft');
+  await expect(reference).toHaveCSS('display', 'block');
+  await page.keyboard.press('Escape');
+  await expect(reference).toHaveCSS('display', 'none');
+  await page.keyboard.up('ShiftLeft');
+  expect((await evidence(page)).presentationDismissals).toBe(1);
+
+  await page.keyboard.down('ShiftLeft');
+  await expect(reference).toHaveCSS('display', 'block');
+  await page.evaluate(() => window.dispatchEvent(new Event('blur')));
+  await expect(reference).toHaveCSS('display', 'none');
+  await page.keyboard.up('ShiftLeft');
+
+  await page.evaluate(() => {
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.enterSoloReplay();
+  });
+  await expect
+    .poll(async () => (await evidence(page)).sourceKind)
+    .toBe('replay');
+  await page.keyboard.down('ShiftLeft');
+  await expect(reference).toHaveCSS('display', 'block');
+  await page.keyboard.up('ShiftLeft');
+
+  current = await evidence(page);
+  expect(current).toMatchObject({
+    submissions: [],
+    submissionResults: [],
+    rejections: [],
+    overlayRejections: [],
+    overlayActions: [],
+    shortcutRejections: [],
+    shortcutActions: [],
+    reportedErrors: [],
+  });
   await page.evaluate(() => {
     const harness = (window as ProtectedInputHarnessWindow)
       .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;

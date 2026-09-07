@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { BoardIntent } from '@ptcgsim/renderer-contract';
 
 import type { BoardSessionControllerState } from './BoardSessionController.js';
+import { LegacyBoardShortcutReference } from './LegacyBoardShortcutReference.js';
 import {
   resolveLegacyBoardGlobalShortcutKey,
   resolveLegacyBoardShortcutKey,
@@ -33,6 +34,8 @@ export interface LegacyBoardKeyboardShortcutsProps {
   readonly soloUndoEnabled?: boolean;
   /** Supplied for a solo player or an explicitly authorized coaching view. */
   readonly boardFlipEnabled?: boolean;
+  /** Mirrors the route-owned legacy theme without changing shortcut policy. */
+  readonly darkMode?: boolean;
 }
 
 const EDITABLE_SHORTCUT_TARGET =
@@ -65,7 +68,10 @@ export const LegacyBoardKeyboardShortcuts = ({
   onDeclareDeckView,
   soloUndoEnabled = false,
   boardFlipEnabled = false,
+  darkMode = false,
 }: LegacyBoardKeyboardShortcutsProps) => {
+  const [shortcutReferenceVisible, setShortcutReferenceVisible] =
+    useState(false);
   const selectedCardId = state.presentation.selectedCardId;
   const isSpectator = state.view?.viewer.kind === 'spectator';
   const deckViewPlayerId =
@@ -88,9 +94,21 @@ export const LegacyBoardKeyboardShortcuts = ({
       ) {
         return;
       }
+      const showsShortcutReference =
+        event.key === 'Shift' ||
+        event.code === 'ShiftLeft' ||
+        event.code === 'ShiftRight';
+      if (showsShortcutReference) {
+        setShortcutReferenceVisible(true);
+        if (selectedCardId !== null && !isSpectator && event.cancelable) {
+          event.preventDefault();
+        }
+        return;
+      }
       if (event.key === 'Escape' || event.code === 'Escape') {
         // V1 closes every transient board surface without consuming Escape.
         // Overlay-focused Escape remains owned by the scoped overlay handlers.
+        setShortcutReferenceVisible(false);
         onDismissPresentation?.();
         return;
       }
@@ -180,8 +198,25 @@ export const LegacyBoardKeyboardShortcuts = ({
       }
       onRequest(request);
     };
+    const handleKeyUp = (event: KeyboardEvent): void => {
+      if (
+        event.key === 'Shift' ||
+        event.code === 'ShiftLeft' ||
+        event.code === 'ShiftRight'
+      ) {
+        setShortcutReferenceVisible(false);
+      }
+    };
+    const hideShortcutReference = (): void =>
+      setShortcutReferenceVisible(false);
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', hideShortcutReference);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', hideShortcutReference);
+    };
   }, [
     onDeclareMulligan,
     onDeclareDeckView,
@@ -198,5 +233,10 @@ export const LegacyBoardKeyboardShortcuts = ({
     state.overlays.preview,
     state.view?.viewer.kind,
   ]);
-  return null;
+  return (
+    <LegacyBoardShortcutReference
+      visible={shortcutReferenceVisible}
+      darkMode={darkMode}
+    />
+  );
 };

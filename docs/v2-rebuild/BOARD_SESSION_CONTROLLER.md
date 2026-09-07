@@ -346,6 +346,15 @@ preview, and input in one local presentation transition and remains valid in
 replay or spectator views. Focused overlays continue to handle their own scoped
 Escape and focus return; no renderer intent, game command, authority update, or
 protocol message is created.
+The hold-to-show Shift reference is sibling route presentation owned by the
+same keyboard bridge, not controller state. Keydown after the established
+editable/overlay/composition guards reveals the complete source-shaped DOM
+surface; selected non-spectators retain v1's prevented default, while
+unselected users and spectators remain native. Document keyup is intentionally
+unguarded so release still closes after focus moves into an input. Escape and
+window blur also close it, with blur providing safe cleanup for a lost keyup.
+None of these transitions emits a controller action, renderer intent, command,
+rejection, authority revision, replay mutation, or socket frame.
 Alt-`N`, Alt-`R`, and Alt-`T` are handled by a separate unselected-only mapper.
 They carry no player ID; the resolver derives the viewer and composes the
 existing setup/reset and start-turn resolvers. Selected Alt-`N`/Alt-`R` remain

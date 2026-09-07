@@ -198,6 +198,14 @@ traces are retained as a 14-day artifact. Browser binaries are not cached.
   export, and socket history. The candidate must call only the existing
   all-scope local presentation dismissal, clear selection/context/zone/preview,
   preserve overlay-owned scoped Escape, and emit no command or rejection.
+- The Shift-reference lane pairs six fresh deny-by-default v1 pages with the
+  protected candidate. It compares all six headings, 53 ordered entries and
+  shortcut values, 52 code tokens, the macOS note, exact 1600×900 bounds, and
+  computed light/dark paint. It pins left/right Shift hold/release, selected
+  player prevention, spectator/native defaults, replay, editable suppression,
+  release after focus migration, Escape closure, and empty action/export/socket
+  history. Candidate blur cleanup must also prevent a sticky reference without
+  producing controller, command, rejection, or renderer traffic.
 - The unselected lifecycle-key lane pairs nine fresh deny-by-default v1 pages
   with one candidate DOM case. It pins exact setup/reset/turn messages and
   action/export records, owner rewriting, selection boundaries, spectator

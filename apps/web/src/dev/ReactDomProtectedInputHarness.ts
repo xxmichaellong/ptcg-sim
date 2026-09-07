@@ -582,6 +582,7 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
             }),
             createElement(LegacyBoardKeyboardShortcuts, {
               state: current,
+              darkMode,
               soloUndoEnabled: true,
               onRequest: (request) => {
                 shortcutActions.push(request);
