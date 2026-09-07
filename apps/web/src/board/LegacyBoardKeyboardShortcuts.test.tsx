@@ -193,6 +193,65 @@ describe('legacy board keyboard shortcut bridge', () => {
     ]);
   });
 
+  it('routes lifecycle keys only through the unselected branch', async () => {
+    const onRequest = vi.fn();
+    const state = createInitialBoardSessionControllerState();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, { state, onRequest })
+      );
+    });
+
+    for (const code of ['KeyN', 'KeyR', 'KeyT']) {
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: code.slice(-1).toLowerCase(),
+          code,
+          altKey: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    }
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state: {
+            ...state,
+            presentation: {
+              ...state.presentation,
+              selectedCardId: 'selected-card',
+            },
+          },
+          onRequest,
+        })
+      );
+    });
+    for (const code of ['KeyN', 'KeyR', 'KeyT']) {
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: code.slice(-1).toLowerCase(),
+          code,
+          altKey: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    }
+
+    expect(onRequest.mock.calls.map(([request]) => request)).toEqual([
+      { action: 'setupOwnPlayer' },
+      { action: 'resetOwnPlayer' },
+      { action: 'startOwnTurn' },
+      {
+        action: 'changeCardType',
+        cardId: 'selected-card',
+        category: 'Trainer',
+      },
+    ]);
+  });
+
   it('does not let global shortcuts collide with overlays or native card and zone activation', async () => {
     const onRequest = vi.fn();
     const state = createInitialBoardSessionControllerState();
@@ -351,6 +410,17 @@ describe('legacy board keyboard shortcut bridge', () => {
           cancelable: true,
         })
       );
+      for (const code of ['KeyN', 'KeyR', 'KeyT']) {
+        target.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: code.slice(-1).toLowerCase(),
+            code,
+            altKey: true,
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+      }
     }
     const composing = new KeyboardEvent('keydown', {
       key: '3',

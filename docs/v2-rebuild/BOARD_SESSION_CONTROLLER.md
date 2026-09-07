@@ -330,6 +330,14 @@ the installed player perspective and emits only `{ type: 'FlipCoin' }`; actor
 identity, randomness, persistence, and presentation remain authority-owned.
 Spectator, stale-player, replay/read-only, editable, composing, consumed, and
 overlay input cannot submit.
+Alt-`N`, Alt-`R`, and Alt-`T` are handled by a separate unselected-only mapper.
+They carry no player ID; the resolver derives the viewer and composes the
+existing setup/reset and start-turn resolvers. Selected Alt-`N`/Alt-`R` remain
+outside this path, while selected Alt-`T` keeps its Trainer-category priority.
+The controller's ready/live/write boundary intentionally fixes v1's replay
+leak, where all three lifecycle branches execute against replay state because
+the source guard never invokes its predicate. Each replay request receives one
+typed `read_only` rejection and no command.
 `A`/`B` now use the dedicated play-placement slice. A zone card emits
 `MoveCardToPlay`, an eligible top play card emits a fully preconditioned
 `MovePlayStack`, and a viewer-owned staged top emits `RestoreStagedStack`.

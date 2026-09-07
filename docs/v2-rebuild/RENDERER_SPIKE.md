@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 1028 v2 tests across 154 files. A separate suite
-passes 153 Playwright checks across 74 Chromium 151 browser files:
+The repository-wide gate passes 1032 v2 tests across 154 files. A separate suite
+passes 155 Playwright checks across 75 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -1440,6 +1440,20 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     selection, editable/Alt silence, and typed replay rejection before
     submission. No protocol/domain/authority schema, visible control, key
     reference, layout, styling, UI, or UX changed.
+84. Always-global Enter/Slash/`F` routing is now structurally separate from
+    unselected-only deck/lifecycle routing. Alt-`N`, Alt-`R`, and Alt-`T` carry
+    no seat ID; the resolver derives the current player and composes the
+    existing setup/reset/start-turn resolvers into `SetupPlayer`, `ResetPlayer`,
+    or `StartTurn`. Selected Alt-`N`/Alt-`R` cannot fall through, and selected
+    Alt-`T` retains its Trainer-category precedence. A nine-page deny-by-default
+    Chromium oracle pins exact empty-deck messages, live/export records, owner
+    rewriting, turn/selection state, spectator silence, and the v1 defect where
+    all three branches still mutate replay because the source replay guard
+    tests a function object rather than invoking it. Candidate Chromium proves
+    the three viewer-derived live commands, selection/editable boundaries, and
+    one typed read-only rejection with zero submission for every replay key. No
+    protocol/domain/authority schema, visible control, key reference, layout,
+    styling, UI, or UX changed.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

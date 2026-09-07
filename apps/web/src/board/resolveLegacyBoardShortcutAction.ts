@@ -25,7 +25,9 @@ import {
 import { resolveCardInspectionAction } from './resolvePrivateInspectionAction.js';
 import { resolvePublicCardVisibilityAction } from './resolvePublicVisibilityAction.js';
 import { resolveLooseBoardAction } from './resolveLooseBoardAction.js';
+import { resolveLifecycleAction } from './resolveLifecycleAction.js';
 import { resolveStackStateAction } from './resolveStackStateAction.js';
+import { resolveTableAction } from './resolveTableAction.js';
 
 export type LegacyLooseBoardShortcutDestination =
   'discard' | 'hand' | 'shuffleIntoDeck';
@@ -50,6 +52,9 @@ export type LegacyBoardShortcutActionRequest =
     }
   | { readonly action: 'shuffleOwnDeck' }
   | { readonly action: 'flipCoin' }
+  | { readonly action: 'setupOwnPlayer' }
+  | { readonly action: 'resetOwnPlayer' }
+  | { readonly action: 'startOwnTurn' }
   | {
       readonly action: 'adjustDamage';
       readonly cardId: ViewCardId;
@@ -125,7 +130,9 @@ type ExistingActionResolution =
   | ReturnType<typeof resolveDeckRelativeCardAction>
   | ReturnType<typeof resolveCardInspectionAction>
   | ReturnType<typeof resolvePublicCardVisibilityAction>
-  | ReturnType<typeof resolveLooseBoardAction>;
+  | ReturnType<typeof resolveLooseBoardAction>
+  | ReturnType<typeof resolveLifecycleAction>
+  | ReturnType<typeof resolveTableAction>;
 
 const retainResolution = (
   resolution: ExistingActionResolution,
@@ -228,6 +235,29 @@ export const resolveLegacyBoardShortcutAction = (
         command: { type: 'FlipCoin' },
         dismissSelection: false,
       };
+    }
+    case 'setupOwnPlayer':
+    case 'resetOwnPlayer': {
+      if (view.viewer.kind !== 'player') {
+        return { ok: false, reason: 'not_player' };
+      }
+      return retainResolution(
+        resolveLifecycleAction(
+          view,
+          view.viewer.playerId,
+          request.action === 'setupOwnPlayer' ? 'setup' : 'reset'
+        ),
+        false
+      );
+    }
+    case 'startOwnTurn': {
+      if (view.viewer.kind !== 'player') {
+        return { ok: false, reason: 'not_player' };
+      }
+      return retainResolution(
+        resolveTableAction(view, view.viewer.playerId, 'startTurn'),
+        false
+      );
     }
     case 'adjustDamage': {
       const resolution = resolveStackStateAction(view, request.cardId, {
@@ -487,8 +517,31 @@ export const resolveLegacyBoardShortcutKey = (
   return null;
 };
 
-/** Converts the characterized unselected/global keys into viewer-owned requests. */
+/** Converts the characterized always-global keys into viewer-owned requests. */
 export const resolveLegacyBoardGlobalShortcutKey = (
+  input: LegacyBoardShortcutKey
+): LegacyBoardShortcutActionRequest | null => {
+  const altKey = hasAltModifier(input);
+  if (!altKey && matches(input, 'f', 'KeyF')) {
+    return { action: 'flipCoin' };
+  }
+  if (matches(input, 'Enter', 'Enter')) {
+    return {
+      action: 'resolveOwnLooseBoard',
+      destination: altKey ? 'hand' : 'discard',
+    };
+  }
+  if (matches(input, '/', 'Slash')) {
+    return {
+      action: 'resolveOwnLooseBoard',
+      destination: 'shuffleIntoDeck',
+    };
+  }
+  return null;
+};
+
+/** Converts keys that v1 accepts only while no card is selected. */
+export const resolveLegacyBoardUnselectedShortcutKey = (
   input: LegacyBoardShortcutKey
 ): LegacyBoardShortcutActionRequest | null => {
   const altKey = hasAltModifier(input);
@@ -510,20 +563,14 @@ export const resolveLegacyBoardGlobalShortcutKey = (
   if (!altKey && matches(input, 's', 'KeyS')) {
     return { action: 'shuffleOwnDeck' };
   }
-  if (!altKey && matches(input, 'f', 'KeyF')) {
-    return { action: 'flipCoin' };
+  if (altKey && matches(input, 'n', 'KeyN')) {
+    return { action: 'setupOwnPlayer' };
   }
-  if (matches(input, 'Enter', 'Enter')) {
-    return {
-      action: 'resolveOwnLooseBoard',
-      destination: altKey ? 'hand' : 'discard',
-    };
+  if (altKey && matches(input, 'r', 'KeyR')) {
+    return { action: 'resetOwnPlayer' };
   }
-  if (matches(input, '/', 'Slash')) {
-    return {
-      action: 'resolveOwnLooseBoard',
-      destination: 'shuffleIntoDeck',
-    };
+  if (altKey && matches(input, 't', 'KeyT')) {
+    return { action: 'startOwnTurn' };
   }
   return null;
 };

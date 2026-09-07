@@ -1957,6 +1957,133 @@ test('global coin shortcut stays authority-owned across selection and read-only 
   expect(errors).toEqual([]);
 });
 
+test('unselected lifecycle shortcuts derive the viewer and reject replay atomically', async ({
+  page,
+}) => {
+  const errors = collectRuntimeErrors(page);
+  const fixture = await mountHarness(page);
+  const host = page.locator('[data-react-dom-protected-input-harness]');
+  const cases = [
+    {
+      key: 'Alt+KeyN',
+      action: { action: 'setupOwnPlayer' },
+      command: {
+        type: 'SetupPlayer',
+        targetPlayerId: fixture.ownPlayerId,
+      },
+    },
+    {
+      key: 'Alt+KeyR',
+      action: { action: 'resetOwnPlayer' },
+      command: {
+        type: 'ResetPlayer',
+        targetPlayerId: fixture.ownPlayerId,
+      },
+    },
+    {
+      key: 'Alt+KeyT',
+      action: { action: 'startOwnTurn' },
+      command: {
+        type: 'StartTurn',
+        targetPlayerId: fixture.ownPlayerId,
+      },
+    },
+  ] as const;
+
+  for (const [index, scenario] of cases.entries()) {
+    await clearEvidence(page);
+    await page.keyboard.press(scenario.key);
+    await expect
+      .poll(async () => (await evidence(page)).submissions)
+      .toEqual([scenario.command]);
+    const current = await evidence(page);
+    expect(current.submissionResults).toEqual([
+      {
+        queued: true,
+        commandId: `protected-input-command-${index + 1}`,
+        clientSequence: index + 1,
+      },
+    ]);
+    expect(current.shortcutActions).toEqual([scenario.action]);
+    expect(current.shortcutRejections).toEqual([]);
+    expect(current.presentation.selectedCardId).toBeNull();
+    expect(current.reportedErrors).toEqual([]);
+  }
+
+  const selectedCard = host.locator(
+    `[data-card-id="${fixture.activeTopCardId}"]`
+  );
+  const point = await exposedCardPoint(selectedCard);
+  await page.mouse.click(point.x, point.y);
+  await expect
+    .poll(async () => (await evidence(page)).presentation.selectedCardId)
+    .toBe(fixture.activeTopCardId);
+  await clearEvidence(page);
+  await page.keyboard.press('Alt+KeyN');
+  await page.keyboard.press('Alt+KeyR');
+  let current = await evidence(page);
+  expect(current.submissions).toEqual([]);
+  expect(current.shortcutActions).toEqual([]);
+  expect(current.shortcutRejections).toEqual([]);
+  expect(current.presentation.selectedCardId).toBe(fixture.activeTopCardId);
+
+  await page.evaluate(() => {
+    const input = document.createElement('input');
+    input.dataset.lifecycleShortcutEditor = 'true';
+    document.body.append(input);
+    input.focus();
+  });
+  for (const scenario of cases) await page.keyboard.press(scenario.key);
+  current = await evidence(page);
+  expect(current.submissions).toEqual([]);
+  expect(current.shortcutActions).toEqual([]);
+  expect(current.shortcutRejections).toEqual([]);
+
+  await page.evaluate(() => {
+    document.querySelector('[data-lifecycle-shortcut-editor]')?.remove();
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.enterSoloReplay();
+  });
+  await expect
+    .poll(async () => (await evidence(page)).sourceKind)
+    .toBe('replay');
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      )
+  );
+  for (const scenario of cases) {
+    await clearEvidence(page);
+    await page.keyboard.press(scenario.key);
+    await expect
+      .poll(async () => (await evidence(page)).shortcutRejections)
+      .toEqual([
+        {
+          kind: 'ShortcutActionRejected',
+          request: scenario.action,
+          reason: 'read_only',
+        },
+      ]);
+    current = await evidence(page);
+    expect(current.submissions).toEqual([]);
+    expect(current.shortcutActions).toEqual([scenario.action]);
+    expect(current.presentation.selectedCardId).toBeNull();
+    expect(current.reportedErrors).toEqual([]);
+  }
+
+  await page.evaluate(() => {
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.dispose();
+  });
+  await expect(host).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
 test('solo replay disclosure changes only local DOM card faces and never submits', async ({
   page,
 }) => {

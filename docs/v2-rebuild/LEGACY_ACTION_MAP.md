@@ -992,6 +992,30 @@ moves randomness and replayability behind authority without changing the
 visible message or shortcut. No new protocol, domain, or UI/UX surface is
 introduced.
 
+### Implemented unselected lifecycle keyboard subset
+
+Alt-`N`, Alt-`R`, and Alt-`T` now produce payload-free setup, reset, and
+start-turn requests only when no card is selected. A dedicated unselected-key
+mapper is separate from the always-global Enter/Slash/`F` mapper, so selected
+Alt-`N`/Alt-`R` cannot become lifecycle mutations and selected Alt-`T` retains
+its existing Trainer-category precedence. The resolver derives the current
+viewer player ID and reuses `resolveLifecycleAction`/`resolveTableAction` to
+emit `SetupPlayer`, `ResetPlayer`, or `StartTurn`. A caller cannot nominate the
+affected seat.
+
+A nine-page deny-by-default Chromium oracle executes the unchanged v1 modules
+against empty-deck fixtures. It pins exact setup/reset/take-turn live and export
+records, invalid/no-deck messages, the turn value, selection boundaries,
+spectator silence, and export owner rewriting. It also exposes a v1 defect: all
+three Alt lifecycle keys still execute while replay is active because the
+top-level replay guard tests the helper function object instead of calling it,
+and none of the three inner branches adds its own replay guard. V2
+intentionally rejects each replay request as read-only before resolution or
+submission. Candidate Chromium proves the three exact viewer-derived commands,
+selected Alt-`N`/Alt-`R` silence, editable silence, and individual exactly-once
+replay rejections. No new wire/domain/authority schema or visible UI/UX is
+introduced.
+
 ### Implemented authority-random face-down subset
 
 `playRandomCardFaceDown` now submits only the explicit target player; authority

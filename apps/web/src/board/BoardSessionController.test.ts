@@ -571,6 +571,27 @@ describe('headless board session controller', () => {
     ]);
   });
 
+  it('submits viewer-derived setup, reset, and start-turn shortcuts', () => {
+    const state = install();
+    if (state.view?.viewer.kind !== 'player') {
+      throw new Error('Controller shortcut fixture must use a player viewer');
+    }
+    const targetPlayerId = state.view.viewer.playerId;
+
+    for (const [request, command] of [
+      [{ action: 'setupOwnPlayer' }, { type: 'SetupPlayer', targetPlayerId }],
+      [{ action: 'resetOwnPlayer' }, { type: 'ResetPlayer', targetPlayerId }],
+      [{ action: 'startOwnTurn' }, { type: 'StartTurn', targetPlayerId }],
+    ] as const) {
+      const result = apply(state, {
+        kind: 'LegacyShortcutActionRequested',
+        request,
+      });
+      expect(result.state).toBe(state);
+      expect(result.effects).toEqual([{ kind: 'SubmitCommand', command }]);
+    }
+  });
+
   it('keeps replay shortcut requests outside the resolver and submitter', () => {
     const view = createRendererSpikeView();
     const resolveShortcutAction = vi.fn(() => {

@@ -137,6 +137,15 @@ intent, retains selection, suppresses editable/Alt input, and rejects replay
 before submission. Actor identity, randomness, persistence, and presentation
 remain authority-owned.
 
+Unselected lifecycle-key parity has paired Chromium evidence across nine fresh
+v1 pages and one candidate route. Alt-`N` setup, Alt-`R` reset, and Alt-`T`
+start-turn pin exact empty-deck messages, live/export records, owner rewriting,
+turn state, selected/unselected boundaries, and spectator silence. The source
+oracle also pins v1's replay mutation leak; v2 deliberately requires live ready
+state and proves one typed rejection plus zero submissions for each replay
+request. Candidate commands derive their target from the installed viewer and
+selected Alt-`T` retains category precedence.
+
 ### Implemented seeded authority/storage model
 
 The server model suite at

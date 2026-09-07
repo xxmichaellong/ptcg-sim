@@ -183,3 +183,9 @@ traces are retained as a 14-day artifact. Browser binaries are not cached.
   silence, and the Alt-`F` board-flip boundary. The candidate must submit only
   parameterless `FlipCoin`, retain selection, suppress editable/Alt input, and
   reject replay before submission.
+- The unselected lifecycle-key lane pairs nine fresh deny-by-default v1 pages
+  with one candidate DOM case. It pins exact setup/reset/turn messages and
+  action/export records, owner rewriting, selection boundaries, spectator
+  silence, and the v1 replay-guard defect. The candidate must derive the viewer,
+  preserve selected-key precedence, suppress editable input, emit each intended
+  live command once, and reject each replay request before submission.

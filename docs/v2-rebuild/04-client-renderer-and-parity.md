@@ -1226,6 +1226,15 @@ call, unchanged selection, empty legacy action logs, and replay/spectator
 silence. Candidate Chromium pins one command, retained selection, editable/Alt
 silence, and replay rejection before submission. The visible result stays on
 the existing presentation surface.
+The key bridge now separates always-global Enter/Slash/`F` from unselected-only
+deck and lifecycle input. Alt-`N`, Alt-`R`, and Alt-`T` derive the viewer and
+reuse existing `SetupPlayer`, `ResetPlayer`, and `StartTurn` commands; selected
+Alt-`T` keeps category-change precedence and selected Alt-`N`/Alt-`R` cannot
+fall through. Nine source pages pin exact empty-deck actions/messages, export
+rewriting, selection, spectator silence, and the v1 replay-guard bug that lets
+all three mutate during replay. Candidate Chromium retains live behavior but
+rejects every replay request before resolution/submission. No visible renderer
+state owns these operations.
 `A` and `B` now cross a separate closed active/bench resolver. Zone cards emit
 `MoveCardToPlay`; eligible top cards move a whole stack with exact board-order
 preconditions; a viewer-owned staged top restores atomically. Real v1 active

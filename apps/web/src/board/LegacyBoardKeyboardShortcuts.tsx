@@ -4,6 +4,7 @@ import type { BoardSessionControllerState } from './BoardSessionController.js';
 import {
   resolveLegacyBoardGlobalShortcutKey,
   resolveLegacyBoardShortcutKey,
+  resolveLegacyBoardUnselectedShortcutKey,
   type LegacyBoardShortcutActionRequest,
 } from './resolveLegacyBoardShortcutAction.js';
 
@@ -54,7 +55,10 @@ export const LegacyBoardKeyboardShortcuts = ({
         selectedRequest ??
         (isNativeEnterActivationTarget(event)
           ? null
-          : resolveLegacyBoardGlobalShortcutKey(event));
+          : resolveLegacyBoardGlobalShortcutKey(event)) ??
+        (selectedCardId === null
+          ? resolveLegacyBoardUnselectedShortcutKey(event)
+          : null);
       if (!request) return;
       // V1 prevents defaults inside its selected-card branch, but leaves the
       // unselected global keys to the document after dispatch.

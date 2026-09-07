@@ -7,6 +7,7 @@ import {
   resolveLegacyBoardGlobalShortcutKey,
   resolveLegacyBoardShortcutAction,
   resolveLegacyBoardShortcutKey,
+  resolveLegacyBoardUnselectedShortcutKey,
 } from './resolveLegacyBoardShortcutAction.js';
 
 describe('legacy board shortcut action resolver', () => {
@@ -96,23 +97,23 @@ describe('legacy board shortcut action resolver', () => {
     ).toEqual({ ok: false, reason: 'not_player' });
   });
 
-  it('maps unselected deck and coin keys with explicit modifier precedence', () => {
+  it('separates global coin and unselected deck keys with explicit modifier precedence', () => {
     expect(
-      resolveLegacyBoardGlobalShortcutKey({
+      resolveLegacyBoardUnselectedShortcutKey({
         key: '4',
         code: 'Digit4',
         altKey: false,
       })
     ).toEqual({ action: 'drawOwnDeck', count: 4 });
     expect(
-      resolveLegacyBoardGlobalShortcutKey({
+      resolveLegacyBoardUnselectedShortcutKey({
         key: 'Unidentified',
         code: 'Digit8',
         altKey: true,
       })
     ).toEqual({ action: 'inspectOwnDeck', count: 8, edge: 'top' });
     expect(
-      resolveLegacyBoardGlobalShortcutKey({
+      resolveLegacyBoardUnselectedShortcutKey({
         key: '7',
         code: 'Digit7',
         altKey: false,
@@ -120,7 +121,7 @@ describe('legacy board shortcut action resolver', () => {
       })
     ).toEqual({ action: 'inspectOwnDeck', count: 7, edge: 'bottom' });
     expect(
-      resolveLegacyBoardGlobalShortcutKey({
+      resolveLegacyBoardUnselectedShortcutKey({
         key: '2',
         code: 'Digit2',
         altKey: true,
@@ -128,7 +129,7 @@ describe('legacy board shortcut action resolver', () => {
       })
     ).toBeNull();
     expect(
-      resolveLegacyBoardGlobalShortcutKey({
+      resolveLegacyBoardUnselectedShortcutKey({
         key: 'S',
         code: 'KeyS',
         altKey: false,
@@ -150,19 +151,56 @@ describe('legacy board shortcut action resolver', () => {
       })
     ).toBeNull();
     expect(
-      resolveLegacyBoardGlobalShortcutKey({
+      resolveLegacyBoardUnselectedShortcutKey({
         key: 's',
         code: 'KeyS',
         altKey: true,
       })
     ).toBeNull();
     expect(
-      resolveLegacyBoardGlobalShortcutKey({
+      resolveLegacyBoardUnselectedShortcutKey({
         key: '0',
         code: 'Digit0',
         altKey: false,
       })
     ).toBeNull();
+    expect(
+      resolveLegacyBoardGlobalShortcutKey({
+        key: '4',
+        code: 'Digit4',
+        altKey: false,
+      })
+    ).toBeNull();
+    expect(
+      resolveLegacyBoardUnselectedShortcutKey({
+        key: 'f',
+        code: 'KeyF',
+        altKey: false,
+      })
+    ).toBeNull();
+  });
+
+  it('maps only the three Alt-modified unselected lifecycle keys', () => {
+    for (const [key, code, request] of [
+      ['n', 'KeyN', { action: 'setupOwnPlayer' }],
+      ['r', 'KeyR', { action: 'resetOwnPlayer' }],
+      ['t', 'KeyT', { action: 'startOwnTurn' }],
+    ] as const) {
+      expect(
+        resolveLegacyBoardUnselectedShortcutKey({
+          key,
+          code,
+          altKey: true,
+        })
+      ).toEqual(request);
+      expect(
+        resolveLegacyBoardUnselectedShortcutKey({
+          key,
+          code,
+          altKey: false,
+        })
+      ).toBeNull();
+    }
   });
 
   it('resolves unselected deck requests only against the viewer deck', () => {
@@ -306,6 +344,54 @@ describe('legacy board shortcut action resolver', () => {
         { action: 'flipCoin' }
       )
     ).toEqual({ ok: false, reason: 'not_player' });
+  });
+
+  it('derives lifecycle and turn targets from the viewer perspective', () => {
+    const view = createRendererSpikeView();
+    if (view.viewer.kind !== 'player') {
+      throw new Error('Shortcut fixture must use a player viewer');
+    }
+    const viewerId = view.viewer.playerId;
+
+    for (const [request, command] of [
+      [
+        { action: 'setupOwnPlayer' },
+        { type: 'SetupPlayer', targetPlayerId: viewerId },
+      ],
+      [
+        { action: 'resetOwnPlayer' },
+        { type: 'ResetPlayer', targetPlayerId: viewerId },
+      ],
+      [
+        { action: 'startOwnTurn' },
+        { type: 'StartTurn', targetPlayerId: viewerId },
+      ],
+    ] as const) {
+      expect(resolveLegacyBoardShortcutAction(view, request)).toEqual({
+        ok: true,
+        command,
+        dismissSelection: false,
+      });
+    }
+    expect(
+      resolveLegacyBoardShortcutAction(
+        { ...view, viewer: { kind: 'spectator' } },
+        { action: 'resetOwnPlayer' }
+      )
+    ).toEqual({ ok: false, reason: 'not_player' });
+    expect(
+      resolveLegacyBoardShortcutAction(
+        {
+          ...view,
+          players: Object.fromEntries(
+            Object.entries(view.players).filter(
+              ([playerId]) => playerId !== viewerId
+            )
+          ),
+        },
+        { action: 'startOwnTurn' }
+      )
+    ).toEqual({ ok: false, reason: 'stale_player' });
   });
 
   it('maps exact key/code and Alt combinations to closed selected-card requests', () => {
