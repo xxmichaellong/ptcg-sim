@@ -130,6 +130,11 @@ describe('legacy board shortcut action resolver', () => {
       action: 'moveCardToStadium',
       cardId,
     });
+    expect(key('P', 'KeyP')).toEqual({
+      action: 'moveCardToZone',
+      cardId,
+      destination: 'prizes',
+    });
     expect(key('ArrowUp', 'ArrowUp', true)).toBeNull();
     expect(key('s', 'KeyS', true)).toBeNull();
     expect(key('h', 'KeyH', true)).toBeNull();
@@ -239,7 +244,12 @@ describe('legacy board shortcut action resolver', () => {
     const view = createRendererSpikeView();
     const hand = view.zones['zone:spike-blue:hand']!;
     const card = hand.cards[0]!;
-    for (const destination of ['discard', 'lostZone', 'board'] as const) {
+    for (const destination of [
+      'discard',
+      'lostZone',
+      'board',
+      'prizes',
+    ] as const) {
       expect(
         resolveLegacyBoardShortcutAction(view, {
           action: 'moveCardToZone',

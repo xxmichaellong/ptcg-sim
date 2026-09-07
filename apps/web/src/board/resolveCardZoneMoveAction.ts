@@ -8,6 +8,7 @@ export const CARD_ZONE_MOVE_DESTINATIONS = [
   'discard',
   'lostZone',
   'board',
+  'prizes',
 ] as const;
 
 export type CardZoneMoveDestination =

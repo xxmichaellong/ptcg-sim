@@ -111,8 +111,12 @@ and shuffle commands and dismiss accepted selection. The source's `S` key
 falls through into a redundant second whole-deck shuffle after deselection;
 the protected path deliberately emits one atomic shuffle. `H`, `D`, `L`, and
 Space reuse one per-card hand/discard/lost-zone/loose-board resolver shared with
-the existing context-menu board move; accepted requests dismiss selection and
-retain exact source and work-area preconditions. `A`/`B` delegate to a closed
+the existing context-menu board move; non-Alt `P` reuses the same resolver for
+the current board-side prizes, while Alt-`P` retains category behavior.
+Accepted requests dismiss selection and retain exact source and work-area
+preconditions. Prize entry uses the existing concealed-zone event semantics to
+rotate visibility identity and expose fresh distinct opaque aliases to each
+recipient. `A`/`B` delegate to a closed
 active/bench placement resolver using existing zone-to-play, whole-stack, or
 staged-restore commands; v1 incumbent-active displacement stays one atomic v2
 transition. `G` now delegates to an atomic singleton stadium resolver. The wire
@@ -127,7 +131,7 @@ it derives a stable copy from disclosed labels and never enters the controller
 or mutates its projection; forged requests still fail closed as `local_only`.
 Native Chromium pins exact damage and condition edit/removal plus ability-marker
 commands, all six count prompts/commands, all three category choices, all five
-move choices, all twenty-three selected-card shortcut commands, and reversible
+move choices, all twenty-four selected-card shortcut commands, and reversible
 sorting with zero action/effect/command traffic.
 Replay-local prize/hand disclosure now uses an isolated solo-player-only
 projection. Its opaque catalog never enters the historical view, its three

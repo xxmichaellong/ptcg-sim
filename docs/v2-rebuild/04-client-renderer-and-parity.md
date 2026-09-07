@@ -1169,9 +1169,9 @@ schemas.
 The selected-card marker/category/visibility/movement bridge is likewise
 route-owned. It maps digit/Alt-digit/`0`, `Y`/Alt-`Y`, `W`,
 Alt-`E`/`T`/`P`, `C`, `Z`/Alt-`Z`, ArrowUp/ArrowDown/ArrowRight, `S`,
-`H`/`D`/`L`/Space, `A`/`B`, and `G` key/code pairs to one typed request carrying the
-selected stable card ID. The controller rechecks selection, ready/live-player policy,
-and current recipient-safe membership, then delegates to the existing bounded
+`H`/`D`/`L`/Space, `A`/`B`, `G`, and non-Alt `P` key/code pairs to one typed
+request carrying the selected stable card ID. The controller rechecks selection,
+ready/live-player policy, and current recipient-safe membership, then delegates to the existing bounded
 stack, annotation, private-inspection, public-visibility, deck-relative,
 per-card zone-movement, play-placement, or atomic stadium-placement resolver. It
 preserves v1's immediate marker/category selection cleanup and retains
@@ -1189,13 +1189,16 @@ acceptance. Real v1's `S` handler performs the intended shuffle, deselects, and
 then accidentally falls through to a second global deck shuffle in the same
 keydown. V2 deliberately keeps one atomic command: the second shuffle changes
 no probability distribution but adds redundant mutation/log traffic.
-The next four non-Alt moves send the card to its current board-side hand,
-discard, lost zone, or loose board. They share one resolver with the existing
-context-menu `to Board` path, retain stable source/work-area preconditions,
+The next five non-Alt moves send the card to its current board-side hand,
+discard, lost zone, loose board, or prizes. They share one resolver with the
+existing context-menu `to Board` path, retain stable source/work-area preconditions,
 reject lower evolutions and same-zone requests, and dismiss selection only
-after acceptance. At this generic-zone boundary, active/bench, stadium, and
-prize keys remain separate because they require placement, singleton
-replacement, or concealment policy.
+after acceptance. Active/bench and stadium remain separate because they require
+placement or singleton-replacement policy. Prize movement can reuse the generic
+source resolver because the domain already treats prizes as concealed: the move
+forces a concealed identity-generation rotation, and owner and opponent
+projections receive distinct fresh opaque aliases rather than the prior public
+card identity.
 `A` and `B` now cross a separate closed active/bench resolver. Zone cards emit
 `MoveCardToPlay`; eligible top cards move a whole stack with exact board-order
 preconditions; a viewer-owned staged top restores atomically. Real v1 active
@@ -1214,8 +1217,7 @@ cards, top evolution cards, attachments, and viewer-owned inspection or staged
 cards are supported; lower evolutions, foreign work areas, malformed multi-card
 stadium views, stale incumbents, and already-stadium cards fail closed. Three
 fresh v1 pages prove empty, self-owned, and opponent-owned replacement with one
-outer `moveCardBundle` action. Prize placement remains a separate concealment
-slice.
+outer `moveCardBundle` action.
 Zone sort
 now has a deliberately narrower owner: controlled state inside the mounted zone
 browser. It sorts a copy by recipient-safe scene label, keeps equal labels in

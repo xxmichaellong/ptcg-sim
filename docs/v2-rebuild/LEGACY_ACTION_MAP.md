@@ -863,8 +863,9 @@ Alt-`E`/`T`/`P` changes category, `C` toggles private card inspection,
 `Z`/Alt-`Z` requests public hide/reveal, and
 ArrowUp/ArrowDown/ArrowRight/`S` moves to deck top/bottom, swaps with deck top,
 or shuffles into the deck. `H`/`D`/`L`/Space moves to the current board-side
-hand/discard/lost zone/loose board, `A`/`B` places on active/bench, and `G`
-replaces the shared stadium. The
+hand/discard/lost zone/loose board, `A`/`B` places on active/bench, `G`
+replaces the shared stadium, and non-Alt `P` moves to the current board-side
+prizes. Alt-`P` remains the Pokémon category shortcut. The
 source's missing-marker rules remain exact:
 Alt-digit creates the positive damage value and Alt-`Y` creates `P` when no
 corresponding marker exists.
@@ -882,7 +883,7 @@ false/true targets and duplicate values are no-ops. Forged, stale, unsupported,
 invalid, replay, and post-dismissal requests cannot submit. The bridge ignores
 unselected, composing, already-consumed, input, textarea, select, table-cell,
 contenteditable, textbox-role, and legacy marker/tab targets. Native Chromium
-proves all twenty-three exact commands and zero traffic from an editable target
+proves all twenty-four exact commands and zero traffic from an editable target
 without adding a visible control or enabling the production route. A separate
 real-v1 Chromium measurement pins the original local `C`/Alt-`C` source swap
 and `Z`/Alt-`Z` face/public flags behind the deny-by-default network boundary.
@@ -895,8 +896,9 @@ A further four-page runtime measurement pins exact `moveCardBundle` hand,
 discard, lost-zone, and board payloads, destination arrays, selection cleanup,
 asset service, and export owner rewriting. V2 shares one source-specific zone
 resolver with the existing context-menu board move, preserves stale/work-area
-preconditions, and leaves active/bench, stadium, and prizes outside that bounded
-generic-zone group.
+preconditions, with active/bench and stadium kept outside that bounded generic-
+zone group. Prize placement now joins the group because the existing domain
+zone policy already forces concealment and rotates visibility identity.
 A two-page runtime measurement pins `A` active replacement and `B` bench
 placement from hand, including arrays, the single outer `moveCardBundle`
 payload, selection cleanup, incumbent-active movement, asset service, and
@@ -914,7 +916,16 @@ both opaque aliases and derives source ownership, and one domain revision emits
 the discard event before the selected-card departure. Zone, top evolution,
 attachment, viewer-owned inspection, and staged sources are supported; stale,
 lower-evolution, foreign-work-area, multi-card-stadium, and same-stadium inputs
-fail closed. Prize placement remains separate.
+fail closed.
+A final two-page runtime measurement selects self- and opponent-owned public
+board cards before pressing non-Alt `P`. V1 sends each card to the prizes on its
+own board side, forces card-back paint with `faceDown` and `public` cleared,
+emits one outer `moveCardBundle`, clears selection, and rewrites only the export
+owner perspective. V2 reuses the source-specific zone resolver and its existing
+move commands; entering prizes sets `concealIdentity`, increments visibility
+generation, and yields distinct fresh concealed aliases to owner and opponent
+projections. Same-prize, stale, lower-evolution, and foreign-work-area inputs
+retain the generic fail-closed gates.
 
 ### Implemented authority-random face-down subset
 

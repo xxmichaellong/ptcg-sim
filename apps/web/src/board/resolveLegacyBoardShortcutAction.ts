@@ -357,6 +357,9 @@ export const resolveLegacyBoardShortcutKey = (
   if (!altKey && matches(input, 'g', 'KeyG')) {
     return { action: 'moveCardToStadium', cardId };
   }
+  if (!altKey && matches(input, 'p', 'KeyP')) {
+    return { action: 'moveCardToZone', cardId, destination: 'prizes' };
+  }
   if (!altKey) return null;
   if (matches(input, 'e', 'KeyE')) {
     return { action: 'changeCardType', cardId, category: 'Energy' };

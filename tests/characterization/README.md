@@ -453,6 +453,22 @@ Candidate Chromium proves the command after the prior twenty-two continuous
 shortcuts while focused editable input remains silent. No visible control,
 label, key reference, route, layout, styling, UI, or UX changes.
 
+The protected prize shortcut checkpoint completes non-Alt `P` without changing
+Alt-`P`'s Pokémon category behavior. Two clean real-v1 Chromium pages select a
+self- or opponent-owned public board card and pin movement to that card's own
+prize zone, card-back rendering, cleared `faceDown`/`public` flags, selection
+cleanup, the single outer `moveCardBundle` live/export payload, asset service,
+and a clean page-error boundary. V2 extends the closed generic-zone destination
+tuple and reuses its existing source-specific `MoveCard`, `MoveCardFromStack`,
+`MoveInspectedCard`, or `MoveStagedCard` commands. The established concealed-
+zone domain path marks the event `concealIdentity`, advances visibility
+generation, and supplies owner and opponent projections with distinct fresh
+opaque aliases. Same-prize, stale, lower-evolution, foreign-work-area, replay,
+and submit-time races remain fail closed. Candidate Chromium proves the command
+after the prior twenty-three continuous shortcuts and focused editable input
+remains silent. No protocol, domain, authority, route, label, layout, styling,
+UI, or UX surface changes.
+
 The solo replay disclosure checkpoint closes the three replay exceptions pinned
 by `client/src/setup/general/replay-block.js`: prize reveal, prize look, and
 opponent-hand look. It preserves their exact source labels and show/cover

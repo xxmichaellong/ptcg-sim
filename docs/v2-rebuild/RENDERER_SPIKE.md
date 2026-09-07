@@ -1219,7 +1219,25 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     selection cleanup, asset service, and no page errors. Candidate Chromium
     proves the exact command after the prior twenty-two continuous shortcuts
     and editable input remains silent. No visible control, label, key reference,
-    route, layout, styling, UI, or UX changes; prize placement remains separate.
+    route, layout, styling, UI, or UX changes; at this checkpoint prize placement
+    remained separate.
+70. Non-Alt `P` now maps a selected card to prizes on the card's current board
+    side; Alt-`P` remains the Pokémon category gesture. The already-validated
+    per-card zone resolver expands its closed destination tuple to include
+    `prizes`, so zone cards, top evolutions, attachments, viewer-owned inspected
+    cards, and staged cards continue to emit their existing source-specific
+    commands with exact preconditions. Same-prize moves, lower evolutions,
+    foreign work areas, stale cards, and malformed destinations fail closed.
+    Two fresh real-v1 Chromium pages prove self- and opponent-owned source cards,
+    correct prize ownership, card-back paint, cleared `faceDown`/`public` flags,
+    selection cleanup, one outer `moveCardBundle`, live/export owner handling,
+    local assets, and no page errors. The domain's existing concealed-zone event
+    path sets `concealIdentity`, advances visibility generation, and gives owner
+    and opponent projections distinct fresh concealed aliases. Candidate
+    Chromium proves the exact command after the prior twenty-three continuous
+    shortcuts and editable input remains silent. No wire, domain, authority,
+    visible control, label, key reference, route, layout, styling, UI, or UX
+    changes.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

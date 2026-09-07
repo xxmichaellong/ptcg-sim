@@ -279,7 +279,8 @@ Selected-card marker/category/visibility/movement shortcuts enter through
 a separate typed controller action rather than pretending a context menu is open. The DOM
 keymap emits only digit/Alt-digit/`0`, `Y`/Alt-`Y`, `W`, Alt-`E`/`T`/`P`, `C`,
 `Z`/Alt-`Z`, ArrowUp/ArrowDown/ArrowRight, and `S` requests with the current
-stable card ID, plus `H`/`D`/`L`/Space requests for generic zone movement. The controller
+stable card ID, plus `H`/`D`/`L`/Space and non-Alt `P` requests for generic zone
+movement. The controller
 also accepts non-Alt `A`/`B` requests for active/bench placement. It
 requires that ID to be the installed selection on a ready live-player
 projection, then reuses the bounded stack, annotation, private-inspection,
@@ -296,13 +297,15 @@ The four non-Alt deck gestures resolve to top, bottom, top-swap, and
 shuffle-into-deck commands. Source-characterized `S` performs a second global
 shuffle after deselection; v2 deliberately submits only the intended atomic
 move-and-shuffle command, avoiding redundant action-log and authority traffic.
-`H`, `D`, `L`, and Space resolve to the card's current board-side hand,
-discard, lost zone, or loose board. The resolver is shared with the existing
+`H`, `D`, `L`, Space, and non-Alt `P` resolve to the card's current board-side
+hand, discard, lost zone, loose board, or prizes. The resolver is shared with the existing
 context-menu board destination and emits source-specific `MoveCard`,
 `MoveCardFromStack`, `MoveInspectedCard`, or `MoveStagedCard` commands. Lower
 evolutions, foreign work areas, missing destinations, and same-zone moves fail
-closed. At this generic-zone boundary, active/bench, stadium, and prizes remain
-separate shortcut slices.
+closed. Active/bench and stadium retain their separate placement policies.
+Prize entry reuses the existing domain concealment boundary, rotates the card's
+visibility generation, and gives owner and opponent projections separate fresh
+concealed aliases. Alt-`P` remains the Pokémon category gesture.
 `A`/`B` now use the dedicated play-placement slice. A zone card emits
 `MoveCardToPlay`, an eligible top play card emits a fully preconditioned
 `MovePlayStack`, and a viewer-owned staged top emits `RestoreStagedStack`.
@@ -317,7 +320,7 @@ source ownership; one domain batch moves an incumbent to its immutable owner's
 discard and installs the selected card. A shared view-source locator covers
 zone, top-evolution, attachment, viewer-owned inspection, and staged sources.
 Lower evolutions, foreign work areas, stale occupants, malformed stadiums, and
-same-stadium no-ops reject before submission. Prize placement remains separate.
+same-stadium no-ops reject before submission.
 The checkbox dispatches no controller request, effect, or command. The resolver
 retains a `local_only` rejection for forged `sortZone` requests as a fail-closed
 boundary. Replay remains strictly non-submitting. V1's replay-only local
@@ -333,7 +336,7 @@ expose no replay mutation rows; a forged request is rejected as `read_only`
 before the resolver runs. Native Chromium
 now proves exact accepted `SetDamage`, `SetSpecialCondition`, both removals,
 `SetAbilityUsed`, all six count submissions, all three category choices, all
-five move choices, and all twenty-three selected-card shortcut commands; native
+five move choices, and all twenty-four selected-card shortcut commands; native
 prompt
 text/defaults, capacity clamps, zero hand draws, and
 private/public inspection policy; local rejection of malformed marker/count

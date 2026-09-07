@@ -15,6 +15,7 @@ describe('per-card zone movement', () => {
       'discard',
       'lostZone',
       'board',
+      'prizes',
     ]);
     expect(CARD_ZONE_MOVE_DESTINATIONS.every(isCardZoneMoveDestination)).toBe(
       true
@@ -58,6 +59,15 @@ describe('per-card zone movement', () => {
         },
       });
     }
+    expect(resolveCardZoneMoveAction(view, top.id, 'prizes')).toEqual({
+      ok: true,
+      command: {
+        type: 'MoveCardFromStack',
+        cardId: top.id,
+        expectedStackId: active.id,
+        destinationZoneId: `zone:${playerId}:prizes`,
+      },
+    });
 
     const movedCard = hand.cards[0]!;
     const withoutCard: MatchViewState = {
@@ -139,6 +149,10 @@ describe('per-card zone movement', () => {
       ok: false,
       reason: 'no_op',
     });
+    const prizes = view.zones[`zone:${playerId}:prizes`]!;
+    expect(
+      resolveCardZoneMoveAction(view, prizes.cards[0]!.id, 'prizes')
+    ).toEqual({ ok: false, reason: 'no_op' });
     expect(
       resolveCardZoneMoveAction(view, active.evolutionCards[0]!.id, 'discard')
     ).toEqual({ ok: false, reason: 'unsupported_source' });

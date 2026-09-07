@@ -1623,6 +1623,23 @@ test('selected-card marker, category, visibility, deck, zone, and play shortcuts
       },
       retained: false,
     },
+    {
+      key: 'KeyP',
+      card: sourceCard,
+      cardId: fixture.sourceCardId,
+      request: {
+        action: 'moveCardToZone',
+        cardId: fixture.sourceCardId,
+        destination: 'prizes',
+      },
+      command: {
+        type: 'MoveCard',
+        cardId: fixture.sourceCardId,
+        expectedSourceZoneId: fixture.sourceZoneId,
+        destinationZoneId: `zone:${fixture.ownPlayerId}:prizes`,
+      },
+      retained: false,
+    },
   ] as const;
 
   for (const [index, shortcut] of cases.entries()) {
@@ -1664,6 +1681,7 @@ test('selected-card marker, category, visibility, deck, zone, and play shortcuts
   await page.keyboard.press('KeyH');
   await page.keyboard.press('KeyA');
   await page.keyboard.press('KeyG');
+  await page.keyboard.press('KeyP');
   const suppressed = await evidence(page);
   expect(suppressed.submissions).toEqual([]);
   expect(suppressed.shortcutActions).toEqual([]);

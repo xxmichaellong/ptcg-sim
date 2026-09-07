@@ -124,6 +124,74 @@ const expectForgedConcealmentRejected = (
 };
 
 describe('movement visibility hardening', () => {
+  it('conceals and rotates public identity when a card enters prizes', () => {
+    const prepared = fixture();
+    const handId = playerZoneId(p1, 'hand');
+    const boardId = playerZoneId(p1, 'board');
+    const prizesId = playerZoneId(p1, 'prizes');
+    const cardId = prepared.state.zones[handId]!.cardIds[0]!;
+    const boardState = accepted(
+      prepared.state,
+      {
+        type: 'MoveCard',
+        cardId,
+        expectedSourceZoneId: handId,
+        destinationZoneId: boardId,
+      },
+      prepared.context
+    );
+    const before = projectMatch(
+      boardState,
+      { kind: 'player', playerId: p2 },
+      identities
+    );
+    const beforeCard = before.zones[boardId]!.cards[0]!;
+    expect(beforeCard.kind).toBe('known');
+
+    const result = acceptedResult(
+      boardState,
+      {
+        type: 'MoveCard',
+        cardId,
+        expectedSourceZoneId: boardId,
+        destinationZoneId: prizesId,
+      },
+      prepared.context
+    );
+    expect(result.batch.events).toEqual([
+      {
+        type: 'CardMoved',
+        cardId,
+        expectedSourceZoneId: boardId,
+        destinationZoneId: prizesId,
+        destinationIndex: boardState.zones[prizesId]!.cardIds.length,
+        concealIdentity: true,
+      },
+    ]);
+    expect(result.state.cards[cardId]!.visibilityGeneration).toBe(
+      boardState.cards[cardId]!.visibilityGeneration + 1
+    );
+
+    const opponentAfter = projectMatch(
+      result.state,
+      { kind: 'player', playerId: p2 },
+      identities
+    );
+    const ownerAfter = projectMatch(
+      result.state,
+      { kind: 'player', playerId: p1 },
+      identities
+    );
+    const concealed = opponentAfter.zones[prizesId]!.cards.at(-1)!;
+    const ownerConcealed = ownerAfter.zones[prizesId]!.cards.at(-1)!;
+    expect(concealed.kind).toBe('concealed');
+    expect(concealed.id).not.toBe(beforeCard.id);
+    expect(ownerConcealed.kind).toBe('concealed');
+    expect(ownerConcealed.id).not.toBe(beforeCard.id);
+    expect(ownerConcealed.id).not.toBe(concealed.id);
+    assertMatchInvariants(result.state);
+  });
+
   it.each([
     'move-zone-contents',
     'move-card-to-deck-top',
