@@ -505,6 +505,22 @@ enqueue a command into a dead generation or consume a second reconnect attempt.
 Clean close, terminal failure, and supersession likewise clear the public replay
 loading flag with their terminal phase.
 
+The external store permits synchronous, reentrant subscribers, so a published
+snapshot is also a control-flow boundary. Welcome publishes `ready`, role,
+recipient view, next sequence, and the reconciled pending queue together. A
+live state publication publishes its advancing view and matching presentation
+events together, and command allocation publishes its incremented sequence and
+queued summary together. After any notification, a handshake, socket open,
+command write, or reconnect timer revalidates both its phase and socket
+generation before continuing. Client-initiated close paths invalidate that
+generation before invoking the transport; a transport that delivers `close`
+synchronously therefore cannot enter the current generation or consume a
+second reconnect attempt. Invalid replay termination similarly moves directly
+from ready/loading to failed/not-loading in one notification. These rules keep
+React external-store callbacks from resurrecting a session or acting on a
+partially published transition without imposing asynchronous notification
+ordering.
+
 Solo player replay may additionally carry an optional replay-local disclosure
 catalog on `ReplayStarted` and an alias-keyed disclosure record on every
 `ReplayFrame`. This is not canonical state and is never merged into the

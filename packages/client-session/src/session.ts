@@ -174,8 +174,8 @@ export class RemoteGameSession {
 
   connect(options: ConnectSessionOptions): void {
     this.cancelReconnect();
-    this.closeSocket(1000, 'Session replaced');
     this.socketGeneration += 1;
+    this.closeSocket(1000, 'Session replaced');
     this.pending.length = 0;
     this.pingTimes.clear();
     this.replayTransfer = undefined;
@@ -192,7 +192,15 @@ export class RemoteGameSession {
     this.reconnectAttempts = 0;
     this.manualClose = false;
     this.state = { ...initialState(), phase: 'connecting' };
+    const generation = this.socketGeneration;
     this.emit();
+    if (
+      !this.isCurrent(generation) ||
+      this.manualClose ||
+      this.state.phase !== 'connecting'
+    ) {
+      return;
+    }
     this.openSocket();
   }
 
@@ -218,8 +226,10 @@ export class RemoteGameSession {
       command,
     };
     this.pending.push({ envelope, status: 'queued', retries: 0 });
-    this.updateState({ nextClientSequence: clientSequence + 1 });
-    this.publishPending();
+    this.updateState({
+      nextClientSequence: clientSequence + 1,
+      pendingCommands: this.pendingSummaries(),
+    });
     this.sendHead();
     return { queued: true, commandId, clientSequence };
   }
@@ -271,8 +281,8 @@ export class RemoteGameSession {
     if (this.state.phase === 'ready') {
       this.send({ type: 'Leave', protocolVersion: PROTOCOL_VERSION });
     }
-    this.closeSocket(1000, 'Client left room');
     this.socketGeneration += 1;
+    this.closeSocket(1000, 'Client left room');
     this.clearCapabilities();
     this.updateState({
       phase: 'closed',
@@ -290,6 +300,12 @@ export class RemoteGameSession {
         open: () => {
           if (!this.isCurrent(generation)) return;
           this.updateState({ phase: 'handshaking' });
+          if (
+            !this.isCurrent(generation) ||
+            this.state.phase !== 'handshaking'
+          ) {
+            return;
+          }
           const capability = this.resumeToken ?? this.admissionTicket;
           if (!capability) {
             this.fail({
@@ -389,17 +405,19 @@ export class RemoteGameSession {
         return;
       }
       case 'ServerNotice':
+        if (message.code === 'replay_unavailable') {
+          this.replayTransfer = undefined;
+        }
         this.updateState({
           notices: appendBounded(
             this.state.notices,
             message,
             this.policy.maximumNotices
           ),
+          ...(message.code === 'replay_unavailable'
+            ? { replayLoading: false }
+            : {}),
         });
-        if (message.code === 'replay_unavailable') {
-          this.replayTransfer = undefined;
-          this.updateState({ replayLoading: false });
-        }
         if (message.retryable && this.state.phase === 'ready') {
           this.retryHead();
         } else if (message.retryable && this.state.phase === 'handshaking') {
@@ -414,8 +432,8 @@ export class RemoteGameSession {
       case 'SessionSuperseded':
         this.manualClose = true;
         this.cancelReconnect();
-        this.closeSocket(4409, 'Session superseded');
         this.socketGeneration += 1;
+        this.closeSocket(4409, 'Session superseded');
         this.clearCapabilities();
         this.updateState({
           phase: 'superseded',
@@ -544,7 +562,6 @@ export class RemoteGameSession {
 
   private failReplay(message: string): void {
     this.replayTransfer = undefined;
-    this.updateState({ replayLoading: false });
     this.fail({ code: 'inconsistent_replay', message });
   }
 
@@ -577,8 +594,15 @@ export class RemoteGameSession {
       });
       return;
     }
-    if (!this.installView(hydrateMatchViewState(message.snapshot), true))
-      return;
+    const candidate = hydrateMatchViewState(message.snapshot);
+    const current = this.state.view;
+    const nextView =
+      current &&
+      (candidate.revision < current.revision ||
+        (candidate.revision === current.revision &&
+          stableSerialize(candidate) === stableSerialize(current)))
+        ? current
+        : candidate;
     this.sessionId = message.sessionId;
     this.resumeToken = message.resumeToken ?? this.resumeToken;
     this.admissionTicket = undefined;
@@ -601,8 +625,15 @@ export class RemoteGameSession {
       ),
       reconnectAttempt: 0,
       failure: undefined,
+      view: nextView,
+      pendingCommands: this.pendingSummaries(),
     });
-    this.publishPending();
+    if (
+      this.getSnapshot().phase !== 'ready' ||
+      this.sessionId !== message.sessionId
+    ) {
+      return;
+    }
     this.sendHead();
   }
 
@@ -610,6 +641,7 @@ export class RemoteGameSession {
     message: Extract<ServerMessage, { type: 'StatePublication' }>
   ): void {
     if (this.state.phase !== 'ready') return;
+    const generation = this.socketGeneration;
     if (
       message.presentationEvents?.some(
         (event) => event.revision !== message.snapshot.revision
@@ -621,19 +653,35 @@ export class RemoteGameSession {
       });
       return;
     }
-    const previousRevision = this.state.view?.revision ?? -1;
-    if (!this.installView(hydrateMatchViewState(message.snapshot))) return;
+    const candidate = hydrateMatchViewState(message.snapshot);
+    const current = this.state.view;
+    const previousRevision = current?.revision ?? -1;
     if (
-      message.snapshot.revision > previousRevision &&
-      message.presentationEvents
+      current &&
+      candidate.revision === current.revision &&
+      stableSerialize(candidate) !== stableSerialize(current)
     ) {
-      this.updateState({
-        presentationEvents: appendManyBounded(
-          this.state.presentationEvents,
-          message.presentationEvents,
-          this.policy.maximumPresentationEvents
-        ),
+      this.fail({
+        code: 'inconsistent_publication',
+        message: 'Equal state revisions contained different projections',
       });
+      return;
+    }
+    const advancesView = !current || candidate.revision > current.revision;
+    const presentationEvents =
+      candidate.revision > previousRevision && message.presentationEvents
+        ? appendManyBounded(
+            this.state.presentationEvents,
+            message.presentationEvents,
+            this.policy.maximumPresentationEvents
+          )
+        : this.state.presentationEvents;
+    if (advancesView || presentationEvents !== this.state.presentationEvents) {
+      this.updateState({
+        ...(advancesView ? { view: candidate } : {}),
+        presentationEvents,
+      });
+      if (!this.isCurrent(generation) || this.state.phase !== 'ready') return;
     }
     if (message.coveringCommandId) {
       const pending = this.pending.find(
@@ -705,39 +753,23 @@ export class RemoteGameSession {
     this.sendHead();
   }
 
-  private installView(
-    candidate: NonNullable<ClientSessionState['view']>,
-    authoritativeReplacement = false
-  ): boolean {
-    const current = this.state.view;
-    if (current && candidate.revision < current.revision) return true;
-    if (
-      current &&
-      candidate.revision === current.revision &&
-      stableSerialize(candidate) !== stableSerialize(current)
-    ) {
-      if (authoritativeReplacement) {
-        this.updateState({ view: candidate });
-        return true;
-      }
-      this.fail({
-        code: 'inconsistent_publication',
-        message: 'Equal state revisions contained different projections',
-      });
-      return false;
-    }
-    if (!current || candidate.revision > current.revision) {
-      this.updateState({ view: candidate });
-    }
-    return true;
-  }
-
   private sendHead(): void {
     if (this.state.phase !== 'ready') return;
     const head = this.pending[0];
     if (!head || head.status !== 'queued') return;
+    const generation = this.socketGeneration;
+    const sessionId = this.sessionId;
     head.status = 'in_flight';
     this.publishPending();
+    if (
+      !this.isCurrent(generation) ||
+      this.state.phase !== 'ready' ||
+      this.sessionId !== sessionId ||
+      this.pending[0] !== head ||
+      head.status !== 'in_flight'
+    ) {
+      return;
+    }
     if (!this.sendEnvelope(head.envelope)) {
       this.reconnectTransport('Command write failed');
     }
@@ -814,22 +846,38 @@ export class RemoteGameSession {
     const jitter =
       exponential * this.policy.reconnectJitterRatio * (this.random() * 2 - 1);
     const delay = Math.max(0, Math.round(exponential + jitter));
+    const generation = this.socketGeneration;
+    const reconnectAttempt = this.reconnectAttempts;
     this.updateState({
       phase: 'reconnecting',
-      reconnectAttempt: this.reconnectAttempts,
+      reconnectAttempt,
       replayLoading: false,
     });
+    if (
+      !this.isCurrent(generation) ||
+      this.state.phase !== 'reconnecting' ||
+      this.reconnectAttempts !== reconnectAttempt
+    ) {
+      return;
+    }
     this.reconnectTimer = this.scheduler.schedule(() => {
       this.reconnectTimer = undefined;
       if (this.state.phase !== 'reconnecting') return;
+      const timerGeneration = this.socketGeneration;
       this.updateState({ phase: 'connecting' });
+      if (
+        !this.isCurrent(timerGeneration) ||
+        this.getSnapshot().phase !== 'connecting'
+      ) {
+        return;
+      }
       this.openSocket();
     }, delay);
   }
 
   private reconnectTransport(reason: string): void {
-    this.closeSocket(1012, reason);
     this.socketGeneration += 1;
+    this.closeSocket(1012, reason);
     this.scheduleReconnect();
   }
 
@@ -842,8 +890,8 @@ export class RemoteGameSession {
   private fail(failure: ClientSessionFailure): void {
     this.manualClose = true;
     this.cancelReconnect();
-    this.closeSocket(4400, failure.code);
     this.socketGeneration += 1;
+    this.closeSocket(4400, failure.code);
     this.clearCapabilities();
     this.updateState({ phase: 'failed', replayLoading: false, failure });
   }
@@ -870,12 +918,7 @@ export class RemoteGameSession {
   }
 
   private publishPending(): void {
-    const pendingCommands = this.pending.map((item) => ({
-      commandId: item.envelope.commandId,
-      clientSequence: item.envelope.clientSequence,
-      commandType: item.envelope.command.type,
-      state: item.status,
-    }));
+    const pendingCommands = this.pendingSummaries();
     if (
       pendingCommands.length === this.state.pendingCommands.length &&
       pendingCommands.every((pending, index) => {
@@ -891,6 +934,15 @@ export class RemoteGameSession {
       return;
     }
     this.updateState({ pendingCommands });
+  }
+
+  private pendingSummaries(): PendingCommandSummary[] {
+    return this.pending.map((item) => ({
+      commandId: item.envelope.commandId,
+      clientSequence: item.envelope.clientSequence,
+      commandType: item.envelope.command.type,
+      state: item.status,
+    }));
   }
 
   private updateState(patch: Partial<ClientSessionState>): void {

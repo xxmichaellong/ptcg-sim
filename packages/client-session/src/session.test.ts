@@ -75,8 +75,19 @@ const welcome = (
 
 class FakeSocket implements SessionSocket {
   readonly sent: string[] = [];
-  readonly close = vi.fn<(code?: number, reason?: string) => void>();
+  readonly close = vi.fn((code?: number, reason?: string): void => {
+    const event = this.clientCloseEvent;
+    if (!event) return;
+    this.clientCloseEvent = undefined;
+    this.handlers.close({
+      code: event.code ?? code ?? 1000,
+      reason: event.reason ?? reason ?? '',
+      wasClean: event.wasClean,
+    });
+  });
   throwOnSend = false;
+  clientCloseEvent?: Partial<SessionSocketCloseEvent> &
+    Pick<SessionSocketCloseEvent, 'wasClean'>;
 
   constructor(readonly handlers: SessionSocketHandlers) {}
 
@@ -222,6 +233,78 @@ describe('RemoteGameSession', () => {
     expect(listener).toHaveBeenCalled();
   });
 
+  it('does not open a transport after a connecting observer closes the session', () => {
+    const test = setup();
+    let connectingObserved = false;
+    test.session.subscribe(() => {
+      if (test.session.getSnapshot().phase !== 'connecting') return;
+      connectingObserved = true;
+      test.session.disconnect();
+    });
+
+    test.session.connect({
+      url: 'wss://example.test/room',
+      buildId: 'client-build',
+      roomCode: 'ROOM',
+      displayName: 'Blue',
+      requestedRole: 'player',
+      admissionTicket: capability,
+    });
+
+    expect(connectingObserved).toBe(true);
+    expect(test.session.getSnapshot().phase).toBe('closed');
+    expect(test.factory.sockets).toHaveLength(0);
+    expect(test.scheduler.tasks.size).toBe(0);
+  });
+
+  it('does not send a handshake after a handshaking observer closes the session', () => {
+    const test = setup();
+    test.session.subscribe(() => {
+      if (test.session.getSnapshot().phase === 'handshaking') {
+        test.session.disconnect();
+      }
+    });
+    test.session.connect({
+      url: 'wss://example.test/room',
+      buildId: 'client-build',
+      roomCode: 'ROOM',
+      displayName: 'Blue',
+      requestedRole: 'player',
+      admissionTicket: capability,
+    });
+    const socket = test.factory.sockets[0]!;
+
+    socket.serverOpen();
+
+    expect(test.session.getSnapshot().phase).toBe('closed');
+    expect(socket.sent).toEqual([]);
+    expect(socket.close).toHaveBeenCalledWith(1000, 'Client left room');
+    expect(test.scheduler.tasks.size).toBe(0);
+  });
+
+  it('publishes Welcome as one ready snapshot before honoring a reentrant close', () => {
+    const test = setup();
+    const socket = test.connect();
+    let firstViewPhase: string | undefined;
+    const phases: string[] = [];
+    test.session.subscribe(() => {
+      const snapshot = test.session.getSnapshot();
+      phases.push(snapshot.phase);
+      if (snapshot.view && firstViewPhase === undefined) {
+        firstViewPhase = snapshot.phase;
+        test.session.disconnect();
+      }
+    });
+
+    socket.serverMessage(welcome());
+
+    expect(firstViewPhase).toBe('ready');
+    expect(phases).toEqual(['ready', 'closed']);
+    expect(test.session.getSnapshot().phase).toBe('closed');
+    expect(clientFrame(socket, 1)).toMatchObject({ type: 'Leave' });
+    expect(test.scheduler.tasks.size).toBe(0);
+  });
+
   it('serializes commands and waits for both result and covering publication', () => {
     const test = setup();
     const socket = test.admit();
@@ -271,6 +354,47 @@ describe('RemoteGameSession', () => {
       commandId: 'command-2',
       clientSequence: 2,
     });
+  });
+
+  it('does not reconnect or write after an in-flight observer closes the session', () => {
+    const test = setup();
+    const socket = test.admit();
+    const commandPublications: Array<{
+      readonly nextClientSequence: number;
+      readonly pendingState: string | undefined;
+    }> = [];
+    test.session.subscribe(() => {
+      const snapshot = test.session.getSnapshot();
+      commandPublications.push({
+        nextClientSequence: snapshot.nextClientSequence,
+        pendingState: snapshot.pendingCommands[0]?.state,
+      });
+      if (
+        snapshot.phase === 'ready' &&
+        snapshot.pendingCommands[0]?.state === 'in_flight'
+      ) {
+        test.session.disconnect();
+      }
+    });
+
+    expect(test.session.submit({ type: 'FlipCoin' })).toMatchObject({
+      queued: true,
+      clientSequence: 1,
+    });
+
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'closed',
+      reconnectAttempt: 0,
+    });
+    expect(commandPublications[0]).toEqual({
+      nextClientSequence: 2,
+      pendingState: 'queued',
+    });
+    expect(socket.sent.map((frame) => JSON.parse(frame).type)).toEqual([
+      'Hello',
+      'Leave',
+    ]);
+    expect(test.scheduler.tasks.size).toBe(0);
   });
 
   it('also reconciles publication-before-result and rejection-without-publication', () => {
@@ -371,6 +495,39 @@ describe('RemoteGameSession', () => {
         turnNumber: 1,
       },
     ]);
+  });
+
+  it('publishes an advancing view and its presentation events atomically', () => {
+    const test = setup();
+    const socket = test.admit();
+    const publications: Array<{
+      readonly revision: number | undefined;
+      readonly presentationEventCount: number;
+    }> = [];
+    test.session.subscribe(() => {
+      const snapshot = test.session.getSnapshot();
+      publications.push({
+        revision: snapshot.view?.revision,
+        presentationEventCount: snapshot.presentationEvents.length,
+      });
+    });
+
+    socket.serverMessage({
+      type: 'StatePublication',
+      protocolVersion: PROTOCOL_VERSION,
+      executedClientSequence: 0,
+      snapshot: view(1),
+      presentationEvents: [
+        {
+          type: 'AttackDeclared',
+          revision: 1,
+          playerId: 'blue',
+          turnNumber: 0,
+        },
+      ],
+    });
+
+    expect(publications).toEqual([{ revision: 1, presentationEventCount: 1 }]);
   });
 
   it('fails closed when a presentation event does not cover its snapshot', () => {
@@ -582,6 +739,52 @@ describe('RemoteGameSession', () => {
     unsubscribe();
   });
 
+  it('fails an inconsistent replay in one terminal publication before reentrant observers can submit', () => {
+    const test = setup();
+    const socket = test.admit();
+    expect(test.session.requestReplay()).toBe(true);
+    const publications: Array<{
+      readonly phase: string;
+      readonly replayLoading: boolean;
+    }> = [];
+    let attempted = false;
+    let reentrantSubmission: ReturnType<typeof test.session.submit> | undefined;
+    test.session.subscribe(() => {
+      const snapshot = test.session.getSnapshot();
+      publications.push({
+        phase: snapshot.phase,
+        replayLoading: snapshot.replayLoading,
+      });
+      if (!snapshot.replayLoading && !attempted) {
+        attempted = true;
+        reentrantSubmission = test.session.submit({ type: 'FlipCoin' });
+      }
+    });
+
+    socket.serverMessage({
+      type: 'ReplayFrame',
+      protocolVersion: PROTOCOL_VERSION,
+      replayId: 'replay-without-start',
+      index: 0,
+      snapshot: view(0),
+    });
+
+    expect(reentrantSubmission).toEqual({ queued: false, reason: 'not_ready' });
+    expect(publications).toEqual([{ phase: 'failed', replayLoading: false }]);
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'failed',
+      nextClientSequence: 1,
+      pendingCommands: [],
+      replayLoading: false,
+      failure: { code: 'inconsistent_replay' },
+    });
+    expect(socket.sent.map((frame) => JSON.parse(frame).type)).toEqual([
+      'Hello',
+      'RequestReplay',
+    ]);
+    expect(test.scheduler.tasks.size).toBe(0);
+  });
+
   it('reconnects with the resume capability and retries the exact envelope', () => {
     const test = setup();
     const firstSocket = test.admit();
@@ -608,8 +811,19 @@ describe('RemoteGameSession', () => {
       resumeToken: resumeCapability,
     });
     expect(secondSocket.sent[0]).not.toContain(capability);
+    const readyPendingStates: string[][] = [];
+    const unsubscribe = test.session.subscribe(() => {
+      const snapshot = test.session.getSnapshot();
+      if (snapshot.phase === 'ready') {
+        readyPendingStates.push(
+          snapshot.pendingCommands.map((command) => command.state)
+        );
+      }
+    });
     secondSocket.serverMessage(welcome(2, view(1)));
 
+    expect(readyPendingStates).toEqual([['queued'], ['in_flight']]);
+    unsubscribe();
     expect(secondSocket.sent[1]).toBe(originalCommandFrame);
     secondSocket.serverMessage({
       type: 'CommandResult',
@@ -643,6 +857,44 @@ describe('RemoteGameSession', () => {
       'ready',
     ]);
     unsubscribe();
+  });
+
+  it('does not open a reconnect transport after a connecting observer closes the session', () => {
+    const test = setup();
+    const firstSocket = test.admit();
+    firstSocket.serverClose();
+    test.session.subscribe(() => {
+      if (test.session.getSnapshot().phase === 'connecting') {
+        test.session.disconnect();
+      }
+    });
+
+    test.scheduler.runNext();
+
+    expect(test.session.getSnapshot().phase).toBe('closed');
+    expect(test.factory.sockets).toHaveLength(1);
+    expect(test.scheduler.tasks.size).toBe(0);
+  });
+
+  it('invalidates a socket before closing it so synchronous close delivery cannot spend two reconnect attempts', () => {
+    const test = setup();
+    const socket = test.admit();
+    socket.throwOnSend = true;
+    socket.clientCloseEvent = {
+      code: 1012,
+      reason: 'synchronous transport close',
+      wasClean: false,
+    };
+
+    test.session.submit({ type: 'FlipCoin' });
+
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'reconnecting',
+      reconnectAttempt: 1,
+    });
+    expect(test.scheduler.tasks.size).toBe(1);
+    expect([...test.scheduler.tasks.values()][0]?.delayMs).toBe(250);
+    expect(socket.close).toHaveBeenCalledWith(1012, 'Command write failed');
   });
 
   it('ignores stale publications and fails closed on divergent equal revisions', () => {
@@ -861,5 +1113,19 @@ describe('RemoteGameSession', () => {
         players: { blue: { displayName: 'Renamed while offline' } },
       },
     });
+  });
+
+  it('retains the current view object across an identical equal-revision reconnect', () => {
+    const test = setup();
+    const firstSocket = test.admit();
+    const initialView = test.session.getSnapshot().view;
+    firstSocket.serverClose();
+    test.scheduler.runNext();
+    const secondSocket = test.factory.sockets[1]!;
+    secondSocket.serverOpen();
+    secondSocket.serverMessage(welcome(1, view(0)));
+
+    expect(test.session.getSnapshot().phase).toBe('ready');
+    expect(test.session.getSnapshot().view).toBe(initialView);
   });
 });

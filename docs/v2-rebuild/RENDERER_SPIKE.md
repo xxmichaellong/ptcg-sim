@@ -290,7 +290,7 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 1000 v2 tests across 154 files. A separate suite
+The repository-wide gate passes 1009 v2 tests across 154 files. A separate suite
 passes 146 Playwright checks across 71 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
@@ -1338,6 +1338,23 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     reconnecting notification. Supersession coverage also begins during replay
     loading and proves terminal cleanup. No protocol, authority, renderer,
     visible UI, or UX changed.
+77. The remaining client-session notification boundaries are now explicitly
+    safe for synchronous, reentrant external-store subscribers. Welcome emits
+    role, ready phase, recipient view, sequence, and reconciled pending queue as
+    one snapshot; command allocation emits its next sequence and queued summary
+    together; and an advancing authority publication emits its view plus
+    matching presentation events together. Connecting, handshaking, command
+    send, and reconnect-timer continuations revalidate phase and socket
+    generation after observers run. Every client-initiated close invalidates
+    the generation before calling transport, preventing synchronous close
+    delivery from spending a second reconnect attempt. Identical equal-revision
+    resume views retain their current object identity, avoiding a redundant
+    renderer commit, while divergent authoritative replacements still install.
+    Invalid replay streams also transition directly to failed/not-loading. Nine focused tests
+    pin observer-triggered close at each continuation boundary, atomic
+    publication shapes, no post-close Hello/Command/socket creation, a single
+    reconnect timer, and an untouched command sequence on replay failure. No
+    protocol, authority, renderer, visible UI, or UX changed.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
