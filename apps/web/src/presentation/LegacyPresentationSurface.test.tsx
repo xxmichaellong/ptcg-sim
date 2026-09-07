@@ -197,6 +197,11 @@ describe('LegacyPresentationSurface', () => {
 
     const first = coin(2, 'spike-blue', 'heads');
     const second = coin(3, 'spike-red', 'tails');
+    const mulligan: PresentationEvent = {
+      type: 'MulliganDeclared',
+      revision: 3,
+      playerId: 'spike-blue',
+    };
     await act(async () => {
       live.publish([first]);
       await flushConsumers();
@@ -212,9 +217,8 @@ describe('LegacyPresentationSurface', () => {
     expect(runtime.game.animation.getSnapshot().animations).toEqual([]);
     expect(host.querySelector('[data-coin-animation]')).toBeNull();
 
-    feed.scrollTop = 0;
     await act(async () => {
-      live.publish([first, second]);
+      live.publish([first, mulligan]);
       await flushConsumers();
     });
     expect(
@@ -224,12 +228,37 @@ describe('LegacyPresentationSurface', () => {
       ])
     ).toEqual([
       ['self-text', 'Blue flipped heads'],
+      ['announcement', 'Blue mulligans'],
+    ]);
+
+    feed.scrollTop = 0;
+    await act(async () => {
+      live.publish([first, mulligan, second]);
+      await flushConsumers();
+    });
+    expect(
+      [...feed.querySelectorAll('p')].map((row) => [
+        row.className,
+        row.textContent,
+      ])
+    ).toEqual([
+      ['self-text', 'Blue flipped heads'],
+      ['announcement', 'Blue mulligans'],
       ['opp-text', 'Red flipped tails'],
     ]);
     expect(feed.scrollTop).toBe(321);
     expect(host.querySelector('[role="status"]')?.textContent).toBe(
       'Blue flipped heads'
     );
+
+    await act(async () => {
+      scheduler.completeNext();
+      await flushConsumers();
+    });
+    expect(host.querySelector('[role="status"]')?.textContent).toBe(
+      'Blue mulligans'
+    );
+    expect(scheduler.pendingCount).toBe(1);
 
     await act(async () => {
       scheduler.completeNext();

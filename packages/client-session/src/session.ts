@@ -254,6 +254,17 @@ export class RemoteGameSession {
     });
   }
 
+  /** Sends no player identity; the bound room session owns attribution. */
+  declareMulligan(): boolean {
+    if (this.state.phase !== 'ready' || this.state.role !== 'player') {
+      return false;
+    }
+    return this.send({
+      type: 'DeclareMulligan',
+      protocolVersion: PROTOCOL_VERSION,
+    });
+  }
+
   requestReplay(): boolean {
     if (
       this.state.phase !== 'ready' ||
@@ -403,6 +414,29 @@ export class RemoteGameSession {
           ),
         });
         return;
+      case 'MulliganAnnouncement': {
+        const current = this.state.view;
+        if (
+          this.state.phase !== 'ready' ||
+          !current ||
+          message.event.revision !== current.revision ||
+          !current.players[message.event.playerId]
+        ) {
+          this.fail({
+            code: 'inconsistent_publication',
+            message: 'Mulligan announcement does not match the current room',
+          });
+          return;
+        }
+        this.updateState({
+          presentationEvents: appendBounded(
+            this.state.presentationEvents,
+            message.event,
+            this.policy.maximumPresentationEvents
+          ),
+        });
+        return;
+      }
       case 'Presence':
         this.updateState({
           presence: appendBounded(

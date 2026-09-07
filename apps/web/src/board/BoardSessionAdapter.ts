@@ -31,7 +31,8 @@ import type { LegacyBoardShortcutActionRequest } from './resolveLegacyBoardShort
 export type BoardSessionLiveSource = Pick<
   RemoteGameSession,
   'getSnapshot' | 'subscribe' | 'submit'
->;
+> &
+  Partial<Pick<RemoteGameSession, 'declareMulligan'>>;
 
 export type BoardSessionReplaySource = Pick<
   ReplaySessionCoordinator,
@@ -155,6 +156,22 @@ export class BoardSessionAdapter {
       kind: 'LegacyShortcutActionRequested',
       request,
     });
+  }
+
+  /** Sends an ephemeral room declaration only from a writable live player view. */
+  declareMulligan(): boolean {
+    if (this.disposed) return false;
+    const replay = this.options.replay.getSnapshot();
+    const live = this.options.live.getSnapshot();
+    if (
+      replay.mode !== 'live' ||
+      replay.requestPhase !== 'idle' ||
+      live.phase !== 'ready' ||
+      live.view?.viewer.kind !== 'player'
+    ) {
+      return false;
+    }
+    return this.options.live.declareMulligan?.() ?? false;
   }
 
   refreshScene(): boolean {

@@ -256,6 +256,30 @@ const sceneEffects = (effects: readonly BoardSessionRendererEffect[]) =>
   effects.filter((effect) => effect.kind === 'InstallScene');
 
 describe('BoardSessionAdapter with real session coordinators', () => {
+  it('routes mulligan declarations only through a writable live player session', () => {
+    const test = setup();
+    expect(test.adapter.declareMulligan()).toBe(false);
+    test.socket.serverOpen();
+    test.socket.serverMessage(welcome(viewAt(4)));
+
+    expect(test.adapter.declareMulligan()).toBe(true);
+    expect(JSON.parse(test.socket.sent.at(-1)!)).toEqual({
+      type: 'DeclareMulligan',
+      protocolVersion: PROTOCOL_VERSION,
+    });
+
+    expect(test.replay.requestReplay()).toBe(true);
+    replayTransfer(test.socket);
+    const sentCount = test.socket.sent.length;
+    expect(test.adapter.declareMulligan()).toBe(false);
+    expect(test.socket.sent).toHaveLength(sentCount);
+
+    test.adapter.dispose();
+    expect(test.adapter.declareMulligan()).toBe(false);
+    test.replay.dispose();
+    test.live.disconnect();
+  });
+
   it('defers Welcome until ready and keeps split presentation publication separate', () => {
     const test = setup();
     const activity: number[] = [];

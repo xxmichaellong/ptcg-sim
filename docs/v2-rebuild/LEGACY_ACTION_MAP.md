@@ -1056,6 +1056,25 @@ a second pending `ApplySoloUndo` as `command_pending` without consuming a
 sequence or socket frame, then permits retry after a settled authority result.
 No wire/domain/authority schema or visible UI/UX is introduced.
 
+### Implemented mulligan-announcement keyboard subset
+
+Plain or modified `M` now invokes an ephemeral declaration only from an
+unselected, ready live player surface. It does not enter the game-command
+resolver: `DeclareMulligan` contains no player identity or free-form text, the
+server derives the player from the bound active session, and one typed
+`MulliganAnnouncement` is delivered to every active room connection. The
+delivery does not update authority state, client command sequence, audit
+journal, undo checkpoints, or replay history.
+
+Seven deny-by-default source pages pin the exact `Blue/Azure mulligans` text,
+neutral class, solo/multiplayer feed host, modifier behavior, relay envelope,
+empty action/export state, selected default prevention, spectator/editable
+silence, and the v1 replay leak. Client semantic validation requires the
+announcement revision and player to match its installed view before appending
+the event to the bounded presentation stream. Candidate Chromium proves repeat,
+selection, editable, and replay boundaries; a real local Worker/browser path
+proves the resulting unchanged announcement row. General chat remains separate.
+
 ### Implemented authority-random face-down subset
 
 `playRandomCardFaceDown` now submits only the explicit target player; authority

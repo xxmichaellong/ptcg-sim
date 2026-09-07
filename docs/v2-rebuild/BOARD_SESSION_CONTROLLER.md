@@ -353,6 +353,14 @@ is rejected before the resolver. The remote client accepts at most one pending
 undo and returns `command_pending` for a rapid repeat without consuming a
 sequence or transport write. A settled rejection permits retry; authority mode
 and the private retained-history checkpoint remain the final decision.
+Modifier-agnostic `M` is intentionally outside the command reducer. The
+document bridge calls a separate runtime/adapter seam only while unselected;
+the adapter repeats live, idle-request, ready-session, and player-view checks
+before invoking the transport. The parameterless declaration is attributed by
+the bound server session and returns as a typed bounded presentation fact. It
+does not allocate a command ID/sequence, enter undo or replay history, or mutate
+the controller's scene. Selected input retains v1 default prevention, editable
+targets remain native, and replay fails silently at the adapter boundary.
 `A`/`B` now use the dedicated play-placement slice. A zone card emits
 `MoveCardToPlay`, an eligible top play card emits a fully preconditioned
 `MovePlayStack`, and a viewer-owned staged top emits `RestoreStagedStack`.

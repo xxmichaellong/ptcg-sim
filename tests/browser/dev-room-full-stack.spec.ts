@@ -32,6 +32,7 @@ interface BrowserDevRoomHandle {
       };
       readonly subscribe: (listener: () => void) => () => void;
       readonly sendChat: (message: string) => boolean;
+      readonly declareMulligan: () => boolean;
       readonly submit: (command: { readonly type: 'FlipCoin' }) => {
         readonly queued: boolean;
         readonly commandId?: string;
@@ -215,6 +216,21 @@ test('development route reaches and resumes a real durable room through the same
     expect(url.username).toBe('');
     expect(url.password).toBe('');
   }
+
+  expect(
+    await page.evaluate(() => {
+      const handle = (globalThis as BrowserDevRoomGlobals).__ptcgsimDevRoom;
+      if (!handle) throw new Error('Missing development room handle');
+      return handle.runtime.session.declareMulligan();
+    })
+  ).toBe(true);
+  const mulliganRow = page.locator('#p2Chatbox p.announcement').last();
+  await expect(mulliganRow).toHaveText('Transport Smoke mulligans');
+  await expect(mulliganRow).toHaveAttribute(
+    'data-event-type',
+    'MulliganDeclared'
+  );
+  await expect(mulliganRow).toHaveAttribute('data-revision', '0');
 
   expect(
     await page.evaluate(() => {

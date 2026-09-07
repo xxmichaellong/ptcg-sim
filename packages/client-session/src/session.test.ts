@@ -1228,6 +1228,16 @@ describe('RemoteGameSession', () => {
     });
     expect(chat.scheduler.tasks.size).toBe(1);
 
+    const mulligan = setup();
+    const mulliganSocket = mulligan.admit();
+    mulliganSocket.sendCloseEvent = { wasClean: false };
+    expect(mulligan.session.declareMulligan()).toBe(false);
+    expect(mulligan.session.getSnapshot()).toMatchObject({
+      phase: 'reconnecting',
+      reconnectAttempt: 1,
+    });
+    expect(mulligan.scheduler.tasks.size).toBe(1);
+
     const ping = setup();
     const pingSocket = ping.admit();
     pingSocket.sendCloseEvent = { wasClean: false };
@@ -1237,6 +1247,66 @@ describe('RemoteGameSession', () => {
       reconnectAttempt: 1,
     });
     expect(ping.scheduler.tasks.size).toBe(1);
+  });
+
+  it('sends a parameterless mulligan declaration and retains its typed room announcement', () => {
+    const test = setup({ maximumPresentationEvents: 2 });
+    expect(test.session.declareMulligan()).toBe(false);
+    const socket = test.admit();
+
+    expect(test.session.declareMulligan()).toBe(true);
+    expect(clientFrame(socket, 1)).toEqual({
+      type: 'DeclareMulligan',
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    for (const playerId of ['blue', 'red', 'blue'] as const) {
+      socket.serverMessage({
+        type: 'MulliganAnnouncement',
+        protocolVersion: PROTOCOL_VERSION,
+        event: { type: 'MulliganDeclared', revision: 0, playerId },
+      });
+    }
+    expect(test.session.getSnapshot().presentationEvents).toEqual([
+      { type: 'MulliganDeclared', revision: 0, playerId: 'red' },
+      { type: 'MulliganDeclared', revision: 0, playerId: 'blue' },
+    ]);
+
+    const spectator = setup();
+    const spectatorSocket = spectator.connect();
+    spectatorSocket.serverMessage({
+      type: 'Welcome',
+      protocolVersion: PROTOCOL_VERSION,
+      buildId: 'server-build',
+      role: 'spectator',
+      sessionId: 'spectator-session',
+      resumeToken: resumeCapability,
+      nextClientSequence: 1,
+      snapshot: {
+        ...view(0),
+        viewer: { kind: 'spectator' },
+      },
+    });
+    expect(spectator.session.declareMulligan()).toBe(false);
+    expect(spectatorSocket.sent).toHaveLength(1);
+  });
+
+  it('fails closed on a mulligan announcement for another revision or room player', () => {
+    for (const event of [
+      { type: 'MulliganDeclared', revision: 1, playerId: 'blue' },
+      { type: 'MulliganDeclared', revision: 0, playerId: 'intruder' },
+    ] as const) {
+      const test = setup();
+      const socket = test.admit();
+      socket.serverMessage({
+        type: 'MulliganAnnouncement',
+        protocolVersion: PROTOCOL_VERSION,
+        event,
+      });
+      expect(test.session.getSnapshot()).toMatchObject({
+        phase: 'failed',
+        failure: { code: 'inconsistent_publication' },
+      });
+    }
   });
 
   it('retries a transient handshake on a new socket with the same capability', () => {

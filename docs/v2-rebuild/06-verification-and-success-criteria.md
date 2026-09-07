@@ -166,6 +166,17 @@ rejects replay before resolution, and queues only one command under rapid
 repeat. The client-session gate proves `command_pending` consumes no sequence
 or socket write and clears only when the pending authority result settles.
 
+Mulligan-key parity has paired Chromium evidence across seven fresh v1 pages,
+the protected candidate, and the real local Worker/browser route. Plain and
+modified `M` produce the exact neutral announcement but no legacy action/export
+record; selected, spectator, and editable paths stay silent, while the source
+oracle records v1's replay leak. V2 sends a parameterless non-command intent,
+derives the actor from the bound server session, broadcasts to active players
+and spectators without a durable mutation, rejects spectator forgery, validates
+the incoming revision/player against the installed view, and suppresses live
+delivery during replay. The end-to-end route renders the unchanged announcement
+class and text through the existing presentation surface.
+
 ### Implemented seeded authority/storage model
 
 The server model suite at

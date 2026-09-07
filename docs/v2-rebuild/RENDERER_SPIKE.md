@@ -290,8 +290,8 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 1040 v2 tests across 154 files. A separate suite
-passes 159 Playwright checks across 77 Chromium 151 browser files:
+The repository-wide gate passes 1047 v2 tests across 154 files. A separate suite
+passes 167 Playwright checks across 78 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
    hand geometry, emits card and pointer-captured stable-target drag intents,
@@ -1477,6 +1477,17 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     until the prior undo result settles; authority mode/history remains final.
     No wire/domain/authority schema, visible control, label, layout, styling,
     UI, or UX changed.
+87. Plain or modified `M` now crosses a separate ephemeral declaration path,
+    never the game-command or free-form chat path. Seven source pages pin exact
+    solo/multiplayer neutral rows and relay data, modifiers, empty action/export
+    history, selection/spectator/editor boundaries, and replay leakage. The v2
+    client sends only `DeclareMulligan`; the server derives the player, rejects
+    spectators, and broadcasts a typed `MulliganDeclared` presentation fact
+    without persistence, revision, sequence, undo, or replay mutation. Client
+    semantic validation and the existing live/replay coordinator keep the event
+    bounded and suppress it during replay. Candidate Chromium proves protected
+    input, and the real Wrangler/Vite room renders the unchanged row end to end.
+    No visible control, label, layout, styling, UI, or UX changed.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

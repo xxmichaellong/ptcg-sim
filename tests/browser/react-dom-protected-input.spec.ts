@@ -47,6 +47,7 @@ interface ProtectedInputEvidence {
   readonly overlayActions: readonly unknown[];
   readonly shortcutRejections: readonly unknown[];
   readonly shortcutActions: readonly unknown[];
+  readonly mulliganDeclarations: number;
   readonly presentation: {
     readonly selectedCardId: string | null;
     readonly drag: {
@@ -2418,6 +2419,86 @@ test('solo U submits one viewer-derived undo while repeat, selection, and replay
   expect(current.submissionResults).toEqual([]);
   expect(current.shortcutActions).toEqual([{ action: 'undoOwnLastMove' }]);
   expect(current.overlays.input).toBeNull();
+  expect(current.reportedErrors).toEqual([]);
+
+  await page.evaluate(() => {
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.dispose();
+  });
+  await expect(host).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('M emits only ephemeral live-player mulligan declarations and preserves protected inputs', async ({
+  page,
+}) => {
+  const errors = collectRuntimeErrors(page);
+  const fixture = await mountHarness(page);
+  const host = page.locator('[data-react-dom-protected-input-harness]');
+
+  await page.evaluate(() => {
+    const init = {
+      key: 'm',
+      code: 'KeyM',
+      bubbles: true,
+      cancelable: true,
+    };
+    document.body.dispatchEvent(new KeyboardEvent('keydown', init));
+    document.body.dispatchEvent(
+      new KeyboardEvent('keydown', { ...init, altKey: true })
+    );
+  });
+  await expect
+    .poll(async () => (await evidence(page)).mulliganDeclarations)
+    .toBe(2);
+  let current = await evidence(page);
+  expect(current.submissions).toEqual([]);
+  expect(current.submissionResults).toEqual([]);
+  expect(current.shortcutActions).toEqual([]);
+  expect(current.shortcutRejections).toEqual([]);
+
+  const selectedCard = host.locator(
+    `[data-card-id="${fixture.activeTopCardId}"]`
+  );
+  const point = await exposedCardPoint(selectedCard);
+  await page.mouse.click(point.x, point.y);
+  await clearEvidence(page);
+  await page.keyboard.press('KeyM');
+  current = await evidence(page);
+  expect(current.mulliganDeclarations).toBe(0);
+  expect(current.presentation.selectedCardId).toBe(fixture.activeTopCardId);
+
+  await page.evaluate(() => {
+    const input = document.createElement('input');
+    input.dataset.mulliganShortcutEditor = 'true';
+    document.body.append(input);
+    input.focus();
+  });
+  await page.keyboard.press('KeyM');
+  current = await evidence(page);
+  expect(current.mulliganDeclarations).toBe(0);
+  await expect(page.locator('[data-mulligan-shortcut-editor]')).toHaveValue(
+    'm'
+  );
+
+  await page.evaluate(() => {
+    document.querySelector('[data-mulligan-shortcut-editor]')?.remove();
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.enterSoloReplay();
+  });
+  await expect
+    .poll(async () => (await evidence(page)).sourceKind)
+    .toBe('replay');
+  await clearEvidence(page);
+  await page.keyboard.press('KeyM');
+  current = await evidence(page);
+  expect(current.mulliganDeclarations).toBe(0);
+  expect(current.submissions).toEqual([]);
+  expect(current.shortcutActions).toEqual([]);
   expect(current.reportedErrors).toEqual([]);
 
   await page.evaluate(() => {

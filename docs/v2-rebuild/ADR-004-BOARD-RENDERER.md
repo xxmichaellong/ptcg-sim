@@ -159,6 +159,14 @@ solo-undo resolver, and replay still fails before resolution. Remote session
 submission suppresses a second pending `ApplySoloUndo` without allocating a
 sequence or transport write, matching the source async in-progress boundary;
 authority mode/history remains definitive.
+`M` remains the neighboring modifier-agnostic unselected gesture, but crosses a
+separate non-command seam. The board adapter admits it only for a ready live
+player; the client sends no player or message text, and the server derives the
+actor before broadcasting a typed, ephemeral mulligan fact. That fact enters
+the same neutral activity/accessibility presentation path as other safe events,
+without changing authority state, command sequence, or replay history. Replay
+consumes the live fact without delivery. This preserves the existing row and
+avoids coupling the shortcut to the still-stubbed general-chat migration.
 Local zone sorting is
 controlled by the mounted zone browser:
 it derives a stable copy from disclosed labels and never enters the controller

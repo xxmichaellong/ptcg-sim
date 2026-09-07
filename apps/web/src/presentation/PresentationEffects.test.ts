@@ -104,6 +104,11 @@ const events: readonly PresentationEvent[] = [
     targetPlayerId: 'spike-blue',
     revertedRevision: 13,
   },
+  {
+    type: 'MulliganDeclared',
+    revision: 14,
+    playerId: 'spike-red',
+  },
 ];
 
 const messages = (effects: readonly PresentationEffect[]) =>
@@ -160,6 +165,7 @@ describe('presentationEffectsForEvent', () => {
         'announcement:Blue took back their last move!',
         'accessibility:Blue took back their last move!',
       ],
+      ['announcement:Red mulligans', 'accessibility:Red mulligans'],
     ]);
 
     expect(presentationEffectsForEvent(events[0]!, view)).toContainEqual({

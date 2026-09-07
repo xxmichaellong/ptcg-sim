@@ -378,6 +378,18 @@ export class RoomSessionHub {
     }
   }
 
+  /** Broadcasts only to the currently bound sockets for active room sessions. */
+  private broadcastToActiveSessions(
+    snapshot: ReturnType<RoomAuthorityCoordinator['currentSnapshot']>,
+    message: ServerMessage
+  ): void {
+    for (const [sessionId, connectionId] of this.sessionConnections) {
+      if (!snapshot.sessions[sessionId]?.active) continue;
+      const target = this.connections.get(connectionId);
+      if (target) this.send(target, message);
+    }
+  }
+
   private async processFrame(
     connection: RuntimeConnection,
     frame: string
@@ -596,6 +608,34 @@ export class RoomSessionHub {
           notice('not_implemented', 'Chat migration is not implemented yet')
         );
         return;
+      case 'DeclareMulligan': {
+        const snapshot = this.coordinator.currentSnapshot();
+        const session = snapshot.sessions[boundSessionId];
+        if (!session?.active) {
+          this.send(
+            connection,
+            notice('session_superseded', 'Session is no longer active')
+          );
+          return;
+        }
+        if (session.viewer.kind !== 'player') {
+          this.send(
+            connection,
+            notice('unauthorized', 'Only a player can declare a mulligan')
+          );
+          return;
+        }
+        this.broadcastToActiveSessions(snapshot, {
+          type: 'MulliganAnnouncement',
+          protocolVersion: PROTOCOL_VERSION,
+          event: {
+            type: 'MulliganDeclared',
+            revision: snapshot.state.revision,
+            playerId: session.viewer.playerId,
+          },
+        });
+        return;
+      }
       case 'RequestReplay': {
         const snapshot = this.coordinator.currentSnapshot();
         const session = snapshot.sessions[boundSessionId];

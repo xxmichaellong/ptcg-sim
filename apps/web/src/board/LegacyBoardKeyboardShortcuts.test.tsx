@@ -360,6 +360,64 @@ describe('legacy board keyboard shortcut bridge', () => {
     expect(onRequest).toHaveBeenCalledTimes(1);
   });
 
+  it('routes modifier-agnostic M through the separate unselected announcement callback', async () => {
+    const onRequest = vi.fn();
+    const onDeclareMulligan = vi.fn();
+    const state = createInitialBoardSessionControllerState();
+    const dispatch = (
+      target: EventTarget = document,
+      init: KeyboardEventInit = {}
+    ) =>
+      target.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'm',
+          code: 'KeyM',
+          bubbles: true,
+          cancelable: true,
+          ...init,
+        })
+      );
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state,
+          onRequest,
+          onDeclareMulligan,
+        })
+      );
+    });
+    expect(dispatch()).toBe(true);
+    expect(dispatch(document, { altKey: true })).toBe(true);
+    expect(dispatch(document, { key: 'M', shiftKey: true })).toBe(true);
+    expect(onDeclareMulligan).toHaveBeenCalledTimes(3);
+    expect(onRequest).not.toHaveBeenCalled();
+
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state: {
+            ...state,
+            presentation: {
+              ...state.presentation,
+              selectedCardId: 'selected-card',
+            },
+          },
+          onRequest,
+          onDeclareMulligan,
+        })
+      );
+    });
+    expect(dispatch()).toBe(false);
+
+    const input = document.createElement('input');
+    document.body.append(input);
+    expect(dispatch(input)).toBe(true);
+    input.remove();
+    expect(onDeclareMulligan).toHaveBeenCalledTimes(3);
+    expect(onRequest).not.toHaveBeenCalled();
+  });
+
   it('does not let global shortcuts collide with overlays or native card and zone activation', async () => {
     const onRequest = vi.fn();
     const state = createInitialBoardSessionControllerState();

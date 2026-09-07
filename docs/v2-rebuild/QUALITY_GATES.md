@@ -207,3 +207,12 @@ traces are retained as a 14-day artifact. Browser binaries are not cached.
   resolution, and queue at most one command for a rapid repeat. A real session
   unit gate must prove `command_pending` allocates no sequence and writes no
   frame until the first authority result settles.
+- The mulligan-key lane pairs seven fresh deny-by-default v1 pages with the
+  protected candidate and real local Worker/browser route. It pins exact
+  neutral text/class and solo/multiplayer host, modifier behavior, relay shape,
+  empty action/export history, selected default prevention, spectator/editor
+  silence, and v1 replay leakage. V2 must send no actor/text, derive the player
+  from the active server binding, broadcast a typed ephemeral fact without any
+  authority/sequence/history mutation, reject spectator forgery, validate the
+  current revision/player on receipt, and consume live delivery silently during
+  replay. General chat is not accepted as a substitute.

@@ -805,6 +805,23 @@ describe('client protocol ingress', () => {
     expect(JSON.stringify(result)).not.toContain(secret);
   });
 
+  it('accepts only the parameterless mulligan declaration intent', () => {
+    const parsed = parseClientFrame(
+      JSON.stringify({
+        type: 'DeclareMulligan',
+        protocolVersion: PROTOCOL_VERSION,
+        playerId: 'forged-player',
+      })
+    );
+    expect(parsed).toEqual({
+      ok: true,
+      value: {
+        type: 'DeclareMulligan',
+        protocolVersion: PROTOCOL_VERSION,
+      },
+    });
+  });
+
   it('validates bounded recipient-safe activity detail', () => {
     const events = [
       {
@@ -843,6 +860,11 @@ describe('client protocol ingress', () => {
         scope: 'card',
         source: 'bench',
         cardCount: 1,
+      },
+      {
+        type: 'MulliganDeclared',
+        revision: 8,
+        playerId: 'actor',
       },
     ] as const;
 
@@ -896,6 +918,47 @@ describe('client protocol ingress', () => {
         ).ok
       ).toBe(false);
     }
+  });
+
+  it('accepts only a typed mulligan announcement from the server', () => {
+    expect(
+      parseServerFrame(
+        JSON.stringify({
+          type: 'MulliganAnnouncement',
+          protocolVersion: PROTOCOL_VERSION,
+          event: {
+            type: 'MulliganDeclared',
+            revision: 12,
+            playerId: 'blue',
+          },
+        })
+      )
+    ).toEqual({
+      ok: true,
+      value: {
+        type: 'MulliganAnnouncement',
+        protocolVersion: PROTOCOL_VERSION,
+        event: {
+          type: 'MulliganDeclared',
+          revision: 12,
+          playerId: 'blue',
+        },
+      },
+    });
+    expect(
+      parseServerFrame(
+        JSON.stringify({
+          type: 'MulliganAnnouncement',
+          protocolVersion: PROTOCOL_VERSION,
+          event: {
+            type: 'CoinFlipped',
+            revision: 12,
+            playerId: 'blue',
+            result: 'heads',
+          },
+        })
+      ).ok
+    ).toBe(false);
   });
 
   it('bounds streamed replay transfer metadata', () => {

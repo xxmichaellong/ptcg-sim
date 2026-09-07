@@ -402,6 +402,12 @@ const SendChatSchema = v.object({
   message: boundedString(MAX_CHAT_CODE_UNITS),
 });
 
+/** Parameterless intent: the room authority derives the declaring player. */
+const DeclareMulliganSchema = v.object({
+  type: v.literal('DeclareMulligan'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+});
+
 const PingSchema = v.object({
   type: v.literal('Ping'),
   protocolVersion: v.literal(PROTOCOL_VERSION),
@@ -422,6 +428,7 @@ export const ClientMessageSchema = v.variant('type', [
   HelloSchema,
   CommandSchema,
   SendChatSchema,
+  DeclareMulliganSchema,
   PingSchema,
   RequestReplaySchema,
   LeaveSchema,
@@ -581,6 +588,12 @@ const PresentationCardSourceSchema = v.picklist([
 
 const PresentationScopeSchema = v.picklist(['card', 'zone'] as const);
 
+const MulliganDeclaredPresentationEventSchema = v.object({
+  type: v.literal('MulliganDeclared'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+});
+
 export const PresentationEventSchema = v.variant('type', [
   v.object({
     type: v.literal('CoinFlipped'),
@@ -680,6 +693,7 @@ export const PresentationEventSchema = v.variant('type', [
     targetPlayerId: IdentifierSchema,
     revertedRevision: RevisionSchema,
   }),
+  MulliganDeclaredPresentationEventSchema,
 ]);
 
 const StatePublicationSchema = v.object({
@@ -724,6 +738,13 @@ const ChatMessageSchema = v.object({
   displayName: boundedString(64),
   message: boundedString(MAX_CHAT_CODE_UNITS),
   createdAtMs: NonNegativeIntegerSchema,
+});
+
+/** Ephemeral room delivery. It is intentionally absent from replay history. */
+const MulliganAnnouncementSchema = v.object({
+  type: v.literal('MulliganAnnouncement'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  event: MulliganDeclaredPresentationEventSchema,
 });
 
 const PresenceSchema = v.object({
@@ -816,6 +837,7 @@ export const ServerMessageSchema = v.variant('type', [
   StatePublicationSchema,
   CommandResultSchema,
   ChatMessageSchema,
+  MulliganAnnouncementSchema,
   PresenceSchema,
   PongSchema,
   ServerNoticeSchema,

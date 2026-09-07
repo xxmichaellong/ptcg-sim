@@ -1254,6 +1254,18 @@ Candidate replay fails before resolution. The client session also permits only
 one pending undo command, returning local `command_pending` without allocating
 a sequence or socket frame until the authority result settles; authority mode
 and retained history remain the final permission/precondition boundary.
+The adjacent `M` shortcut is deliberately not a game command. Its
+modifier-agnostic, unselected keyboard branch invokes a separate board-runtime
+seam, which is gated to a ready live player before `RemoteGameSession` sends the
+parameterless `DeclareMulligan` intent. The server derives the actor from the
+bound session and broadcasts one ephemeral `MulliganAnnouncement`; it changes
+no revision, authority snapshot, command sequence, or replay history. The client
+accepts only a current-revision event for a player in its installed view, then
+feeds `MulliganDeclared` through the existing bounded activity/accessibility
+pipeline as the unchanged neutral “Blue mulligans” row. Live facts received
+while replay is active are consumed silently, fixing v1's replay-feed leak
+without a key-specific presentation store. General chat remains a separate,
+still-unimplemented migration.
 `A` and `B` now cross a separate closed active/bench resolver. Zone cards emit
 `MoveCardToPlay`; eligible top cards move a whole stack with exact board-order
 preconditions; a viewer-owned staged top restores atomically. Real v1 active

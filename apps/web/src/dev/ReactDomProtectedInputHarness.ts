@@ -89,6 +89,7 @@ export interface ReactDomProtectedInputEvidence {
   readonly overlayActions: readonly ReactDomProtectedOverlayAction[];
   readonly shortcutRejections: readonly ShortcutRejectionEffect[];
   readonly shortcutActions: readonly LegacyBoardShortcutActionRequest[];
+  readonly mulliganDeclarations: number;
   readonly presentation: BoardPresentation;
   readonly overlays: BoardOverlayState;
   readonly sourceKind: 'live' | 'replay' | null;
@@ -251,12 +252,17 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
   const overlayActions: ReactDomProtectedOverlayAction[] = [];
   const shortcutRejections: ShortcutRejectionEffect[] = [];
   const shortcutActions: LegacyBoardShortcutActionRequest[] = [];
+  let mulliganDeclarations = 0;
   const reportedErrors: string[] = [];
   let clientSequence = 0;
   let soloUndoPending = false;
   const live: BoardSessionLiveSource = {
     getSnapshot: () => liveState,
     subscribe: () => () => undefined,
+    declareMulligan: () => {
+      mulliganDeclarations += 1;
+      return true;
+    },
     submit: (command) => {
       if (command.type === 'ApplySoloUndo' && soloUndoPending) {
         return { queued: false, reason: 'command_pending' };
@@ -569,6 +575,9 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
                 shortcutActions.push(request);
                 runtime.emitLegacyShortcutAction(request);
               },
+              onDeclareMulligan: () => {
+                runtime.declareMulligan();
+              },
             })
           )
         : null
@@ -596,6 +605,7 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
         overlayActions: [...overlayActions],
         shortcutRejections: [...shortcutRejections],
         shortcutActions: [...shortcutActions],
+        mulliganDeclarations,
         presentation: current.presentation,
         overlays: current.overlays,
         sourceKind: current.source?.kind ?? null,
@@ -617,6 +627,7 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
       overlayActions.length = 0;
       shortcutRejections.length = 0;
       shortcutActions.length = 0;
+      mulliganDeclarations = 0;
       reportedErrors.length = 0;
     },
     setDarkMode: (enabled) => {

@@ -215,6 +215,14 @@ export class BoardSessionRuntime {
     return adapter.emitLegacyShortcutAction(request);
   }
 
+  /** Route-owned keyboard seam for an ephemeral, non-command declaration. */
+  declareMulligan(): boolean {
+    this.assertUsable();
+    const adapter = this.adapter;
+    if (!adapter) throw new Error('Board session adapter is unavailable');
+    return adapter.declareMulligan();
+  }
+
   dismissLocalPresentation(
     scope: BoardPresentationDismissScope = 'all'
   ): boolean {

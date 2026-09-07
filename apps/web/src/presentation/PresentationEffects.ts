@@ -275,6 +275,13 @@ export const presentationEffectsForEvent = (
         accessibility(event, message),
       ];
     }
+    case 'MulliganDeclared': {
+      const message = `${playerName(view, event.playerId)} mulligans`;
+      return [
+        activity(event, 'announcement', message),
+        accessibility(event, message),
+      ];
+    }
   }
   const unhandled: never = event;
   return unhandled;

@@ -72,6 +72,7 @@ const fixture = async (mode: 'multiplayer' | 'solo' = 'multiplayer') => {
   const crypto = new WebCryptoAuthoritySource();
   const seatToken = crypto.nextSeatCapability();
   const otherSeatToken = crypto.nextSeatCapability();
+  const spectatorToken = crypto.nextSeatCapability();
   const state = createEmptyMatch(asMatchId('hub-room'), [
     { playerId: p1, displayName: 'Player 1', cardBackUrl: '/blue.png' },
     { playerId: p2, displayName: 'Player 2', cardBackUrl: '/red.png' },
@@ -91,6 +92,7 @@ const fixture = async (mode: 'multiplayer' | 'solo' = 'multiplayer') => {
         [p1]: await crypto.digestCapability(seatToken),
         [p2]: await crypto.digestCapability(otherSeatToken),
       },
+      spectatorCapabilityDigest: await crypto.digestCapability(spectatorToken),
     }),
   };
   const store = new MemoryAuthorityStore(initial);
@@ -136,6 +138,7 @@ const fixture = async (mode: 'multiplayer' | 'solo' = 'multiplayer') => {
     admissionTicket: issued.admissionTicket,
     seatCapability: seatToken,
     otherSeatCapability: otherSeatToken,
+    spectatorCapability: spectatorToken,
     crypto,
     rateLimits,
     telemetry,
@@ -145,14 +148,16 @@ const fixture = async (mode: 'multiplayer' | 'solo' = 'multiplayer') => {
 const helloFrame = (input: {
   readonly admissionTicket?: string;
   readonly resumeToken?: string;
+  readonly displayName?: string;
+  readonly requestedRole?: 'player' | 'spectator';
 }): string =>
   JSON.stringify({
     type: 'Hello',
     protocolVersion: PROTOCOL_VERSION,
     buildId: 'client-build',
     roomCode: 'ROOM',
-    displayName: 'Blue',
-    requestedRole: 'player',
+    displayName: input.displayName ?? 'Blue',
+    requestedRole: input.requestedRole ?? 'player',
     ...input,
   });
 
@@ -459,6 +464,87 @@ describe('serialized room session hub', () => {
       })
     );
     expect(setup.hub.recentAcceptedCommandPerformance()).toHaveLength(1);
+  });
+
+  it('broadcasts an ephemeral server-attributed mulligan announcement without authority mutation', async () => {
+    const setup = await fixture();
+    const redTicket = await setup.hub.issueAdmissionTicket({
+      capability: setup.otherSeatCapability,
+      displayName: 'Red',
+      requestedRole: 'player',
+    });
+    const spectatorTicket = await setup.hub.issueAdmissionTicket({
+      capability: setup.spectatorCapability,
+      displayName: 'Watcher',
+      requestedRole: 'spectator',
+    });
+    if (!redTicket.accepted || !spectatorTicket.accepted) {
+      throw new Error('missing mulligan fixture tickets');
+    }
+    const blue = connection('mulligan-blue');
+    const red = connection('mulligan-red');
+    const spectator = connection('mulligan-spectator');
+    await setup.hub.handleFrame(
+      blue.value,
+      helloFrame({ admissionTicket: setup.admissionTicket })
+    );
+    await setup.hub.handleFrame(
+      red.value,
+      helloFrame({
+        admissionTicket: redTicket.admissionTicket,
+        displayName: 'Red',
+      })
+    );
+    await setup.hub.handleFrame(
+      spectator.value,
+      helloFrame({
+        admissionTicket: spectatorTicket.admissionTicket,
+        displayName: 'Watcher',
+        requestedRole: 'spectator',
+      })
+    );
+    const authorityVersion = setup.store.durable.authorityVersion;
+    const commandCommitCount = setup.store.commandCommits.length;
+
+    await setup.hub.handleFrame(
+      blue.value,
+      JSON.stringify({
+        type: 'DeclareMulligan',
+        protocolVersion: PROTOCOL_VERSION,
+        playerId: p2,
+      })
+    );
+
+    const announcement = {
+      type: 'MulliganAnnouncement',
+      protocolVersion: PROTOCOL_VERSION,
+      event: {
+        type: 'MulliganDeclared',
+        revision: 0,
+        playerId: p1,
+      },
+    };
+    expect(blue.messages.at(-1)).toEqual(announcement);
+    expect(red.messages.at(-1)).toEqual(announcement);
+    expect(spectator.messages.at(-1)).toEqual(announcement);
+    expect(setup.store.durable.authorityVersion).toBe(authorityVersion);
+    expect(setup.store.commandCommits).toHaveLength(commandCommitCount);
+
+    const blueMessageCount = blue.messages.length;
+    const redMessageCount = red.messages.length;
+    await setup.hub.handleFrame(
+      spectator.value,
+      JSON.stringify({
+        type: 'DeclareMulligan',
+        protocolVersion: PROTOCOL_VERSION,
+      })
+    );
+    expect(spectator.messages.at(-1)).toMatchObject({
+      type: 'ServerNotice',
+      code: 'unauthorized',
+    });
+    expect(blue.messages).toHaveLength(blueMessageCount);
+    expect(red.messages).toHaveLength(redMessageCount);
   });
 
   it('streams only the requesting session perspective from retained history', async () => {
