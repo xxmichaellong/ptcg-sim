@@ -69,6 +69,7 @@ export const RendererSpikeBoard = ({
   onIntent,
   submitCommand,
   allowRevisionRegression = false,
+  sessionReady = true,
 }: {
   readonly view: MatchViewState;
   readonly rendererKind: RendererKind;
@@ -76,6 +77,8 @@ export const RendererSpikeBoard = ({
   readonly submitCommand: (command: WireGameCommand) => unknown;
   /** Replay-only escape hatch; live callers retain monotonic stale protection. */
   readonly allowRevisionRegression?: boolean;
+  /** Cancels presentation state retained across a live transport interruption. */
+  readonly sessionReady?: boolean;
 }) => {
   const hostRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<BoardRenderer | null>(null);
@@ -258,6 +261,19 @@ export const RendererSpikeBoard = ({
   useEffect(() => {
     rendererRef.current?.installPresentation(presentation);
   }, [presentation]);
+
+  useEffect(() => {
+    if (sessionReady) return;
+    rendererRef.current?.cancelInteraction();
+    setPresentation((current) =>
+      current.selectedCardId === null &&
+      current.hoveredCardId === null &&
+      current.drag === null &&
+      current.openedZoneId === null
+        ? current
+        : DEFAULT_BOARD_PRESENTATION
+    );
+  }, [sessionReady]);
 
   return (
     <div className="board-spike-host">

@@ -425,9 +425,15 @@ and window resize, DPR media changes, and foreground resume. Browser coverage
 proves same-size DPR reconciliation, one commit for a 25-signal burst, safe
 zero-size hide/restore, stable renderer/card ownership, and foreground reread;
 unit coverage proves exact observer/listener teardown and post-unmount inertness.
-It does not claim a manual screen-reader audit, keyboard suppression in every editable context,
-coaching flip, reconnect reconciliation, or the non-Chromium matrix. These
-remain Playwright/manual parity gates before any production switch.
+The currently mounted remote-room path now also forwards session readiness into
+its selected renderer seam. A local real-transport gate proves exact unclean-loss
+phase order, resume-capability use, same-renderer/surface continuity, post-resume
+command acceptance, and two-socket cleanup; component coverage proves stale
+presentation cancellation and non-ready drop/submission blocking. This does not
+instantiate the full headless runtime on that route or claim deployed document
+navigation. It also does not claim a manual screen-reader audit, keyboard
+suppression in every editable context, coaching flip, or the non-Chromium matrix.
+These remain Playwright/manual parity gates before any production switch.
 
 ## Acceptance gates
 

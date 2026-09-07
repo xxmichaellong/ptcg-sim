@@ -290,7 +290,7 @@ recipient-safe checkpoint view, so neither renderer replays legacy actions or
 repairs board state locally. No renderer component, geometry, label, shortcut,
 or asset lifecycle changed in the slice.
 
-The repository-wide gate passes 997 v2 tests across 154 files. A separate suite
+The repository-wide gate passes 999 v2 tests across 154 files. A separate suite
 passes 146 Playwright checks across 71 Chromium 151 browser files:
 
 1. React DOM mounts all 61 stable card nodes, preserves the measured v1 board and
@@ -851,13 +851,19 @@ passes 146 Playwright checks across 71 Chromium 151 browser files:
 44. A complementary Chromium gate starts local Wrangler and Vite, verifies the
     safe public health response, creates a real Durable Object room through the
     same-origin proxy, exchanges the creator capability for a one-time ticket,
-    completes WebSocket admission, and reaches a ready projected DOM board. A
-    client message receives the documented `not_implemented` server notice,
-    proving bidirectional transport without claiming chat parity. Every observed
-    HTTP/socket URL is query-, credential-, and fragment-free, disposal closes
-    the real socket exactly once, successful `101` telemetry is accepted, and
-    the terminal socket count reaches zero. Deployed navigation churn and the
-    ADR-020 second-browser journey remain separate gates.
+    completes WebSocket admission, and reaches a ready projected DOM board. It
+    now drives an unclean transport-loss signal, lets the real client backoff
+    open a second socket, and proves the second Hello uses the rotated resume
+    capability rather than the spent admission ticket. The same room, view,
+    renderer generation, renderer object, DOM surface, and revision survive the
+    exact reconnecting→connecting→handshaking→ready sequence; a post-resume coin
+    command commits revision 1. A client message still receives the documented
+    `not_implemented` server notice, proving bidirectional transport without
+    claiming chat parity. Every observed HTTP/socket URL is query-, credential-,
+    and fragment-free, no second HTTP admission occurs, the superseded and
+    current native sockets both close, successful `101` telemetry is accepted,
+    and the terminal socket count reaches zero. Deployed navigation churn and
+    the ADR-020 second-browser journey remain separate gates.
 45. A thirty-fifth source checkpoint follows one ordinary marked Pokémon through
     active→bench movement, same-bench refresh reconstruction, and bench→active
     movement independently in both physical frames. Chromium proves that the
@@ -1303,6 +1309,23 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     coalescing and exact post-unmount inertness. Physical background freezing,
     monitor movement in other browsers, and BFCache remain release-matrix gates;
     no visible UI/UX or scene contract changed.
+75. The mounted remote-room board now receives live session readiness. Leaving
+    `ready` cancels any captured renderer gesture and clears selection, hover,
+    drag, and opened-zone presentation without remounting or discarding the last
+    recipient-safe scene; drop intents and commands fail closed until readiness
+    returns, while non-mutating selection remains available. The client session
+    also skips pending-queue publications whose public summary is unchanged, so
+    an empty-queue resume emits each lifecycle phase exactly once instead of a
+    redundant second `ready` snapshot. Focused tests pin cancellation once per
+    ready→non-ready boundary, real `not_ready` submission results, and exact
+    notification order. The expanded local Wrangler/Vite gate interrupts the
+    live socket, resumes with the rotated capability, preserves the same route,
+    renderer, DOM surface, generation, and revision, commits a command after
+    recovery, avoids repeat admission HTTP, and closes both native sockets. The
+    abnormal close event is injected because JavaScript cannot ask Chromium to
+    emit reserved network-loss code 1006; both resumed transport and server-side
+    supersession are real. No visible UI/UX, protocol, or authority semantics
+    changed; deployed document-navigation churn remains a separate gate.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

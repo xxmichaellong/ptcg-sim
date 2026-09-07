@@ -862,14 +862,27 @@ export class RemoteGameSession {
   }
 
   private publishPending(): void {
-    this.updateState({
-      pendingCommands: this.pending.map((item) => ({
-        commandId: item.envelope.commandId,
-        clientSequence: item.envelope.clientSequence,
-        commandType: item.envelope.command.type,
-        state: item.status,
-      })),
-    });
+    const pendingCommands = this.pending.map((item) => ({
+      commandId: item.envelope.commandId,
+      clientSequence: item.envelope.clientSequence,
+      commandType: item.envelope.command.type,
+      state: item.status,
+    }));
+    if (
+      pendingCommands.length === this.state.pendingCommands.length &&
+      pendingCommands.every((pending, index) => {
+        const current = this.state.pendingCommands[index];
+        return (
+          current?.commandId === pending.commandId &&
+          current.clientSequence === pending.clientSequence &&
+          current.commandType === pending.commandType &&
+          current.state === pending.state
+        );
+      })
+    ) {
+      return;
+    }
+    this.updateState({ pendingCommands });
   }
 
   private updateState(patch: Partial<ClientSessionState>): void {

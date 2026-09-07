@@ -40,8 +40,10 @@ export const RemoteSessionBoard = ({
   ) => void;
 }) => {
   const state = useReplaySession(replay);
-  const submissionsBlocked =
+  const replaySubmissionsBlocked =
     state.mode === 'replay' || state.requestPhase !== 'idle';
+  const submissionsBlocked =
+    replaySubmissionsBlocked || state.sessionPhase !== 'ready';
   const forwardIntent = useCallback(
     (intent: BoardIntent) => {
       if (submissionsBlocked && intent.kind === 'CardDropRequested') return;
@@ -51,13 +53,13 @@ export const RemoteSessionBoard = ({
   );
   const submitCommand = useCallback(
     (command: WireGameCommand) => {
-      const result: RemoteBoardSubmissionResult = submissionsBlocked
+      const result: RemoteBoardSubmissionResult = replaySubmissionsBlocked
         ? { queued: false, reason: 'replay_mode' }
         : session.submit(command);
       onSubmission?.(command, result);
       return result;
     },
-    [onSubmission, session, submissionsBlocked]
+    [onSubmission, replaySubmissionsBlocked, session]
   );
 
   if (!state.view) {
@@ -86,6 +88,7 @@ export const RemoteSessionBoard = ({
       onIntent={forwardIntent}
       submitCommand={submitCommand}
       allowRevisionRegression={state.mode === 'replay'}
+      sessionReady={state.sessionPhase === 'ready'}
     />
   );
 };

@@ -31,7 +31,11 @@ one sequential Playwright-managed Chromium worker. Default renderer cases use
 configuration builds the production web output and serves it beside the room
 Worker from one local Wrangler origin. That lane pins static/authority route
 priority, SPA fallback, production exclusion of the developer module, repeated
-document replacement, and room creation/ticket exchange. Both lanes run after
+document replacement, room creation/ticket exchange, and a real resumed room
+socket after a deterministic unclean-close signal. The resume gate pins the
+rotated capability, exact client phase sequence, stable renderer/DOM ownership,
+no repeated HTTP admission, a post-resume command, and both socket closures.
+Both lanes run after
 the non-browser quality gate with retries disabled, CI-only focused-test
 rejection, fresh server ownership, failure screenshots, and retained failure
 traces. `tsconfig.browser.json` independently typechecks both Playwright
@@ -198,7 +202,10 @@ Release requires all of the following:
     malformed refresh leaves the current replay intact.
 15. The remote board renders the effective live/replay projection, blocks every
     command during loading/active/discarding replay phases, and rewinds through
-    explicit renderer replacement without weakening monotonic live installs.
+    explicit renderer replacement without weakening monotonic live installs. A
+    live ready→non-ready boundary cancels captured interaction, clears transient
+    presentation, blocks drop submission, and retains the last safe scene; a
+    resumed ready phase reuses the same renderer and DOM surface.
 16. Replay chrome matches the legacy live/active visibility map, all four
     controls and exit call the coordinator exactly once, and presentation facts
     are delivered once per later playback generation in recorded order across

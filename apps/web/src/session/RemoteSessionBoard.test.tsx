@@ -30,6 +30,7 @@ const boardHarness = vi.hoisted(() => ({
     | {
         readonly view: { readonly revision: number };
         readonly allowRevisionRegression?: boolean;
+        readonly sessionReady?: boolean;
         readonly onIntent: (intent: BoardIntent) => void;
         readonly submitCommand: (command: WireGameCommand) => unknown;
       }
@@ -81,11 +82,15 @@ class FakeRemoteBoardSession
 {
   private state: ClientSessionState;
   private readonly listeners = new Set<() => void>();
-  readonly submit = vi.fn((_command: WireGameCommand): SubmitCommandResult => ({
-    queued: true,
-    commandId: 'board-command',
-    clientSequence: 1,
-  }));
+  readonly submit = vi.fn((_command: WireGameCommand): SubmitCommandResult =>
+    this.state.phase === 'ready'
+      ? {
+          queued: true,
+          commandId: 'board-command',
+          clientSequence: 1,
+        }
+      : { queued: false, reason: 'not_ready' }
+  );
 
   constructor(state: ClientSessionState = initialState()) {
     this.state = state;
@@ -156,6 +161,7 @@ describe('RemoteSessionBoard replay binding', () => {
     );
     expect(host.textContent).toBe('10');
     expect(boardHarness.props?.allowRevisionRegression).toBe(false);
+    expect(boardHarness.props?.sessionReady).toBe(true);
     expect(boardHarness.props?.submitCommand(command)).toMatchObject({
       queued: true,
     });
@@ -212,6 +218,26 @@ describe('RemoteSessionBoard replay binding', () => {
       queued: true,
     });
     expect(session.submit).toHaveBeenCalledTimes(3);
+
+    onIntent.mockClear();
+    const ready = session.getSnapshot();
+    await act(async () =>
+      session.publish({
+        ...ready,
+        phase: 'reconnecting',
+        reconnectAttempt: 1,
+      })
+    );
+    expect(host.textContent).toBe('10');
+    expect(boardHarness.props?.sessionReady).toBe(false);
+    expect(boardHarness.props?.submitCommand(command)).toEqual({
+      queued: false,
+      reason: 'not_ready',
+    });
+    boardHarness.props?.onIntent(dropIntent);
+    boardHarness.props?.onIntent(selectionIntent);
+    expect(onIntent).toHaveBeenCalledTimes(1);
+    expect(onIntent).toHaveBeenCalledWith(selectionIntent);
 
     await act(async () => root.unmount());
     replay.dispose();

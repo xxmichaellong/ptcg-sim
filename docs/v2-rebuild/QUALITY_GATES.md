@@ -154,5 +154,10 @@ traces are retained as a 14-day artifact. Browser binaries are not cached.
 - The developer-only creator route exercises the actual route/runtime/renderer
   ownership stack. A 20-cycle StrictMode test proves exact teardown with mocked
   transport, while a separate Chromium gate proves the real local Wrangler/Vite
-  HTTP and WebSocket path for one complete creator session. Deployed navigation
-  churn and the ADR-020 second-browser invitation path remain outstanding.
+  HTTP and WebSocket path through initial admission, an unclean-loss reconnect
+  with the rotated resume capability, same-renderer continuity, a post-resume
+  command, and exact two-socket teardown. The browser supplies the reserved
+  unclean-close event that ordinary JavaScript cannot generate from the network;
+  the resumed socket, Durable Object handshake, prior-socket supersession, and
+  command are real. Deployed document-navigation churn and the ADR-020
+  second-browser invitation path remain outstanding.

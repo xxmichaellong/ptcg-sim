@@ -1514,8 +1514,15 @@ the HTTP/WebSocket transport is mocked in-process. A complementary Chromium gate
 starts real local Wrangler and Vite servers, then proves same-origin health,
 creation, ticket exchange, WebSocket admission, projected board readiness,
 bidirectional response, credential-free URLs, and clean close for one creator
-session. Real raster decoded-byte and retained-heap limits, external-host and
-failure behavior, and deployed browser navigation churn remain separate gates.
+session. That gate now injects the browser's unclean-close signal, completes a
+real resume-capability handshake on a second socket, preserves the room, view,
+renderer object/generation and DOM surface without a second admission POST,
+commits a post-resume command, and closes both native sockets. The remote board
+receives readiness directly: a ready→non-ready boundary cancels captured input,
+clears transient presentation, and blocks drops while the last safe projection
+stays painted. Empty pending queues no longer publish a redundant ready snapshot.
+Real raster decoded-byte and retained-heap limits, external-host and failure
+behavior, and deployed browser document-navigation churn remain separate gates.
 
 A separate selected-DOM privacy oracle now starts from canonical match state and
 uses the production recipient projection plus scene builder before mounting the

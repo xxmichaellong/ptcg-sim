@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 
 import {
+  DEFAULT_BOARD_PRESENTATION,
   createRendererSpikeView,
   type BoardRendererAdapters,
   type BoardScene,
@@ -139,6 +140,70 @@ describe('RendererSpikeBoard application boundary', () => {
     expect(readRendererKind('dom')).toBe('dom');
     expect(readRendererKind('pixi')).toBe('pixi');
     expect(readRendererKind('unsupported')).toBe('dom');
+  });
+
+  it('cancels stale local presentation once when a live session stops being ready', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const view = createRendererSpikeView();
+    const props = {
+      view,
+      rendererKind: 'dom' as const,
+      onIntent: vi.fn(),
+      submitCommand: vi.fn(),
+    };
+
+    await act(async () => {
+      root.render(<RendererSpikeBoard {...props} sessionReady />);
+      await Promise.resolve();
+    });
+    const card = (
+      rendererHarness.mount.mock.calls[0]?.[1] as BoardScene | undefined
+    )?.cards.find((candidate) => candidate.interactive);
+    if (!card) throw new Error('Fixture has no interactive card');
+
+    await act(async () => {
+      rendererHarness.adapters?.emitIntent({
+        kind: 'CardSelected',
+        cardId: card.id,
+      });
+      rendererHarness.adapters?.emitPresentationUpdate({
+        kind: 'DragChanged',
+        drag: {
+          cardId: card.id,
+          x: card.bounds.x,
+          y: card.bounds.y,
+          targetId: null,
+        },
+      });
+    });
+    expect(rendererHarness.installPresentation.mock.calls.at(-1)?.[0]).toEqual(
+      expect.objectContaining({
+        selectedCardId: card.id,
+        drag: expect.objectContaining({ cardId: card.id }),
+      })
+    );
+
+    rendererHarness.cancelInteraction.mockClear();
+    rendererHarness.installPresentation.mockClear();
+    await act(async () => {
+      root.render(<RendererSpikeBoard {...props} sessionReady={false} />);
+    });
+    expect(rendererHarness.cancelInteraction).toHaveBeenCalledOnce();
+    expect(rendererHarness.installPresentation).toHaveBeenCalledWith(
+      DEFAULT_BOARD_PRESENTATION
+    );
+
+    await act(async () => {
+      root.render(<RendererSpikeBoard {...props} sessionReady={false} />);
+    });
+    expect(rendererHarness.cancelInteraction).toHaveBeenCalledOnce();
+    expect(rendererHarness.mount).toHaveBeenCalledOnce();
+    expect(rendererHarness.destroy).not.toHaveBeenCalled();
+
+    await act(async () => root.unmount());
+    expect(rendererHarness.destroy).toHaveBeenCalledOnce();
   });
 
   it('coalesces viewport lifecycle signals and releases every listener', async () => {

@@ -579,6 +579,29 @@ describe('RemoteGameSession', () => {
     expect(test.session.getSnapshot().pendingCommands).toHaveLength(0);
   });
 
+  it('publishes each empty-queue reconnect phase exactly once', () => {
+    const test = setup();
+    const firstSocket = test.admit();
+    const phases: string[] = [];
+    const unsubscribe = test.session.subscribe(() => {
+      phases.push(test.session.getSnapshot().phase);
+    });
+
+    firstSocket.serverClose();
+    test.scheduler.runNext();
+    const resumed = test.factory.sockets[1]!;
+    resumed.serverOpen();
+    resumed.serverMessage(welcome(1));
+
+    expect(phases).toEqual([
+      'reconnecting',
+      'connecting',
+      'handshaking',
+      'ready',
+    ]);
+    unsubscribe();
+  });
+
   it('ignores stale publications and fails closed on divergent equal revisions', () => {
     const test = setup();
     const socket = test.admit();
