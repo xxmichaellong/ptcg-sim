@@ -239,9 +239,15 @@ and `shuffleBottom` forms validate their complete recorded basis and pass it
 through unchanged because canonical inspection order now matches V1 order:
 full-deck shuffle uses the remaining deck followed by inspected cards, while
 bottom shuffle permutes only inspected cards after the unchanged deck prefix.
-Missing work areas and stale permutations fail the whole candidate. Other
-target-free play, stadium, deck-relative, and individual inspection-origin
-shapes remain closed.
+Missing work areas and stale permutations fail the whole candidate. Individual
+`viewCards` move bundles now resolve the card at its exact current inspection
+index after every prior mutation. Loose destinations execute
+`MoveInspectedCard`; a numeric active/bench stack-top target executes
+`PlaceCardOnPlayStack` with evolution versus attachment derived from the card's
+current category. The last departure closes the inspection and retires its
+viewer grant. Missing/stale coordinates and targets fail the whole candidate.
+Target-free new-play, stadium, bottom-mode, and specialized deck-relative
+inspection shapes remain closed.
 Reachable tests now prove both-player
 loose-board take-turn cleanup plus owner-scoped loose/stadium/play reset/rebuild
 behavior.

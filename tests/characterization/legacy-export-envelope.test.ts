@@ -1039,7 +1039,7 @@ describe('legacy action-export source envelope', () => {
     );
   });
 
-  it('pins attached-card index capture and direct staged-card movement ingress', () => {
+  it('pins work-area index capture and direct individual-card movement ingress', () => {
     const clicks = readRepositoryFile(
       'client/src/setup/image-logic/click-events.js'
     );
@@ -1058,6 +1058,7 @@ describe('legacy action-export source envelope', () => {
       'mouseClick.cardIndex = getZone(\n      mouseClick.cardUser,\n      mouseClick.zoneId\n    ).array.findIndex((card) => card.image === event.target)'
     );
     expect(drag).toContain("  'attachedCards',");
+    expect(drag).toContain("  'viewCards',");
     expect(drag).toContain(
       "moveCardBundle(\n          mouseClick.cardUser,\n          systemState.initiator,\n          mouseClick.zoneId,\n          dZoneId,\n          mouseClick.cardIndex,\n          targetIndex,\n          'move'\n        )"
     );

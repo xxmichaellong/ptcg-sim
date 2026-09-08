@@ -266,8 +266,14 @@ retains the existing deck prefix. Those bases already match V1 exactly, so no
 staged-order translation is applied. Resolution closes the inspection and its
 visibility grant atomically, applies destination normalization/concealment, and
 rejects missing work areas or stale lengths without exposing partial state.
-Individual inspection-card, other target-free play restoration, and
-stadium/deck-relative work-area actions remain closed.
+Individual `viewCards` move bundles now resolve the exact current inspection
+coordinate after every prior departure. Loose destinations execute
+`MoveInspectedCard`; numeric active/bench targets must identify an existing
+stack top and execute `PlaceCardOnPlayStack`, with mode derived from current
+category. Each command retires the moved card's inspection visibility, and the
+last departure closes the work area. Missing/stale coordinates or targets
+return no candidate. Target-free new-play, stadium, bottom-mode, and specialized
+deck-relative work-area actions remain closed.
 
 A directly exported prize shuffle carries exactly
 `[initiator, "prizes", permutation, true]`. Empty permutations are valid for an
@@ -372,7 +378,8 @@ legacy labels into authority.
 This deliberately narrow builder succeeds only when every action is one of
 `loadDeckData`, `reset`, `setup`, `takeTurn`, `draw`, `discardAndDraw`,
 `shuffleAndDraw`, `shuffleBottomAndDraw`, first `viewDeck`, inspection-source
-`discardAll`/`lostZoneAll`/`handAll`/`shuffleAll`/`shuffleBottom`, the bottom-mode, target-free
+`discardAll`/`lostZoneAll`/`handAll`/`shuffleAll`/`shuffleBottom`, individual
+inspection-source loose-zone/targeted-play `moveCardBundle`, the bottom-mode, target-free
 loose-zone/stadium/new-play-stack/rich-whole-stack, or source-zone-targeted
 active/bench `moveCardBundle`, exact staged `leaveAll`, `discardAll`,
 `lostZoneAll`, `handAll`, `shuffleAll`, and `shuffleBottom`, `moveToDeckTop`,
@@ -488,8 +495,13 @@ The lifecycle mapping is source-backed:
   loose destinations execute `MoveStagedCard`, while an exact numeric stack-top
   target executes `PlaceCardOnPlayStack`. Changing offsets, category-derived
   evolution/attachment mode, concealment, empty-area cleanup, retry, and
-  rollback are pinned; target-free play, stadium, deck-relative, inspection,
-  and bulk work-area forms remain closed; and
+  rollback are pinned. Inspection work-area origins use their exact current
+  top/edge-first popup order: loose destinations execute `MoveInspectedCard`,
+  while an exact numeric stack-top target executes `PlaceCardOnPlayStack`.
+  Changing offsets, category-derived mode, concealment, viewer-grant retirement,
+  empty-area cleanup, retry, replay, and rollback are pinned. Target-free play,
+  stadium, bottom-mode, and specialized deck-relative work-area forms remain
+  closed; and
 - active/bench stack-top sources are resolved through the same rich flat order,
   snapshot the exact board order, and execute `MovePlayStack`. Target-free
   promotion, demotion with zero or multiple benches, lone-bench automatic
@@ -518,8 +530,8 @@ The lifecycle mapping is source-backed:
   record rather than forcing game-core to accept an invalid live command.
   Missing/out-of-range cards and stale discard/Lost Zone cover indices fail the
   whole attempt. Active, bench, attachment-resolution, and inspection origins
-  remain fail-closed until legacy flattened-array order is mapped explicitly to
-  canonical stack/work-area locations; and
+  remain fail-closed in this specialized deck-relative family even though their
+  flattened order is mapped for ordinary movement; and
 - shuffle-into-deck uses the same stable source resolution, requires the
   recorded permutation length to equal the exact deck size after insertion,
   and executes `ShuffleCardIntoDeck` with that resolved outcome. For an
@@ -555,6 +567,7 @@ source-zone-attach-evolve/stack-card-reattachment/stack-card-departure/
 individual-staged-card-loose-and-targeted-play/exact-leave-all-restore/
 flat-ordered-staged-discard-lost-zone-hand/identity-translated-staged-shuffles/
 first-deck-inspection/atomic-inspection-bulk-resolution/
+individual-inspection-card-loose-and-targeted-play/
 move-to-top/
 rich-whole-stack-move-and-swap/move-to-bottom/
 shuffle-into-deck/deck-top-switch/
@@ -570,28 +583,31 @@ identity-translated recorded permutation. It can also open a first private deck
 inspection for the exact source viewer in top order or V1 edge-first bottom
 order, then atomically resolve the whole inspection to discard, Lost Zone,
 hand, the shuffled deck, or the shuffled deck bottom with exact recorded bases
-and replay. Tests prove that a later
+and replay, or resolve changing individual inspection coordinates into loose
+zones and existing stack tops with exact events and visibility cleanup. Tests
+prove that a later
 take-turn discards both players' loose boards in
 source order before drawing, and that an owner reset clears only that owner's
 reachable loose state, owned stadium, and play stacks before rebuilding its
 deck. Opponent-owned stadium and play state remain. The subset still cannot
-append to inspections, resolve individual inspection-card actions, handle other
-target-free staged work, markers, face-down play state, or cross-owner play placements, so take-turn in-play
+append to inspections, handle target-free/stadium/deck-relative inspection or
+other target-free staged work, markers, face-down play state, or cross-owner
+play placements, so take-turn in-play
 reveal and reset behavior for those shapes remain gated on their dedicated
 movement/state decoders.
 
 ## Next conversion slices
 
-1. Continue source-backed positional schemas for individual inspection origins and the
-   remaining target-free `moveCardBundle`, stadium, and deck-relative work-area
+1. Continue source-backed positional schemas for the remaining target-free
+   `moveCardBundle`, stadium, and deck-relative work-area
    forms. Staged `shuffleAll` and `shuffleBottom` now translate recorded V1 flat
    indices to the canonical command's semantic input order by stable identity.
    The prerequisite draw, first deck-inspection open and whole-inspection bulk
    resolution, loose/stadium/play/stack
    movement, direct prize shuffle, and zone-backed deck atoms are already
-   transactional. Map each inspection coordinate against the new reachable
-   work area; design repeated-view extension explicitly instead of overloading
-   the open event.
+   transactional. Individual inspection coordinates now resolve against the
+   current reachable work area; design repeated-view extension explicitly
+   instead of overloading the open event.
 2. Add markers, visibility/inspection, randomized/bulk, table signals, and the
    remaining action families using the same allowlisted dispatch table.
 3. Produce a conversion report with warnings, dropped presentation fields, and

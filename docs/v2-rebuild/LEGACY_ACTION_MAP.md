@@ -190,8 +190,7 @@ missing-target rollback are pinned. An attachment-resolution work-area origin
 uses its source-authentic newest-to-oldest staged evolution order followed by
 the versioned attachment order. A numeric top target executes the same atomic
 `PlaceCardOnPlayStack` path, deriving evolution versus attachment from the
-staged card's current category. Inspections remain fail-closed for their
-distinct departure semantics.
+staged card's current category.
 
 Target-free top-card, lower-evolution, and attachment sources paired with a
 loose destination use canonical `MoveCardFromStack`. An attachment or lower
@@ -206,8 +205,14 @@ invariants, event-source forgery rejection, and unresolved-coordinate rollback
 are pinned. A subsequent target-free `attachedCards` source can now move one
 exact staged card to a loose zone through `MoveStagedCard`; the refreshed flat
 coordinate is resolved after every prior mutation and an empty work area closes.
-Target-free play restoration, stadium/deck-relative stack or staged sources,
-and individual inspection-card sources remain closed for later source-specific
+An individual `viewCards` source uses the active inspection's already-matching
+V1 popup order. Each current coordinate can move to a loose zone through
+`MoveInspectedCard` or onto an exact numeric active/bench stack top through
+`PlaceCardOnPlayStack`; current category again selects evolution versus
+attachment, and the last departure closes the work area and retires its viewer
+grant. Missing/stale coordinates or targets return no candidate state.
+Target-free play restoration plus stadium, bottom-mode, and specialized
+deck-relative stack/work-area sources remain closed for later source-specific
 slices.
 
 Deck inspection creation is admitted as the exact exported
@@ -225,8 +230,8 @@ bottom source-order representation for replay compatibility. The source's
 accidental zero-card export changes no model state and is retained with zero
 batches. V1 can append another positive view into an existing `viewCards`
 array; that additive case remains fail-closed until it has a dedicated
-canonical extension event. Whole-inspection resolution is admitted below;
-individual inspection-card actions remain a separate dependent slice.
+canonical extension event. Whole- and individual-inspection resolution are
+admitted below.
 
 The direct shuffle is restricted to exact
 `[initiator, "prizes", permutation, true]` records produced by the prize
@@ -248,7 +253,7 @@ is retained as a zero-batch source record. Active/bench plus the
 `attachedCards`/`viewCards` pseudo-zones remain fail-closed in this
 deck-relative action family; their removal, shuffle basis, and return-card
 behavior require separate mappings even though the ordinary `moveCardBundle`
-staged coordinate is now characterized.
+work-area coordinates are now characterized.
 
 Shuffle-into-deck is admitted as exact
 `[initiator, sourceZone, sourceIndex, permutation]`. V1 moves the selected card
@@ -464,6 +469,18 @@ inspection work areas, ownership mismatches, capacity failures, and stale
 permutation lengths return no candidate state. Full-deck shuffle conceals every
 result identity; hand and bottom-shuffle resolution conceal only the inspected
 cards.
+
+Individual inspection movement is admitted only through exact
+`moveCardBundle` tuples. The converter resolves `sourceIndex` against the
+current inspection list after every earlier departure. A loose destination
+executes `MoveInspectedCard`; a numeric active/bench target must resolve the
+current top of one existing stack and executes `PlaceCardOnPlayStack`. That
+atomic placement derives evolution or attachment from current category. Both
+commands remove only the selected card, preserve remaining inspection order,
+retire that card's viewer grant, and close the work area on its final member.
+Target-free active/bench, stadium, bottom-mode, `moveToDeckTop`,
+`shuffleIntoDeck`, and `switchWithDeckTop` inspection sources remain
+fail-closed rather than borrowing different positional semantics.
 
 Ordinary direct non-Pokémon ingress onto an existing live stack now emits the
 versioned `CardAttachedToPlayStack` event. `attachmentOrderVersion: 1` freezes

@@ -932,6 +932,468 @@ describe('legacy v1 canonical candidate builder', () => {
     }
   );
 
+  it('moves changing inspection coordinates to loose zones and closes on the last card', () => {
+    const parsed = parse(
+      payload(
+        cardRows(6, 'Inspection individual'),
+        '',
+        action('self', 'viewDeck', ['self', 4, false, 6, false]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'viewCards',
+          'hand',
+          1,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'viewCards',
+          'discard',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'viewCards',
+          'lostZone',
+          1,
+          null,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'viewCards',
+          'board',
+          0,
+          false,
+          'move',
+        ])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) {
+      throw new Error('Expected individual inspection conversion success');
+    }
+
+    const playerId = target.selfSeat.playerId;
+    const deckId = playerZoneId(playerId, 'deck');
+    const handId = playerZoneId(playerId, 'hand');
+    const discardId = playerZoneId(playerId, 'discard');
+    const lostZoneId = playerZoneId(playerId, 'lostZone');
+    const boardId = playerZoneId(playerId, 'board');
+    const inspectionId = 'legacy:v1:inspection:000000';
+    const workAreaId = `work:${playerId}:inspection:${inspectionId}`;
+    const cardIds = Array.from(
+      { length: 6 },
+      (_, index) => `legacy:v1:card:${String(index).padStart(6, '0')}`
+    );
+    expect(result.state.zones[deckId]?.cardIds).toEqual(cardIds.slice(0, 2));
+    expect(result.state.zones[handId]?.cardIds).toEqual([cardIds[4]]);
+    expect(result.state.zones[discardId]?.cardIds).toEqual([cardIds[5]]);
+    expect(result.state.zones[lostZoneId]?.cardIds).toEqual([cardIds[2]]);
+    expect(result.state.zones[boardId]?.cardIds).toEqual([cardIds[3]]);
+    expect(result.state.workAreas[playerId]?.inspection).toBeNull();
+    expect(result.state.visibility.inspectionGrants).toEqual({});
+    expect(
+      result.records.slice(3, 7).map((record) => record.batches[0]!.events)
+    ).toEqual([
+      [
+        {
+          type: 'InspectedCardMoved',
+          playerId,
+          inspectionId,
+          expectedWorkAreaId: workAreaId,
+          cardId: cardIds[4],
+          destinationZoneId: handId,
+          destinationIndex: 0,
+          concealIdentity: true,
+        },
+      ],
+      [
+        {
+          type: 'InspectedCardMoved',
+          playerId,
+          inspectionId,
+          expectedWorkAreaId: workAreaId,
+          cardId: cardIds[5],
+          destinationZoneId: discardId,
+          destinationIndex: 0,
+          concealIdentity: false,
+        },
+      ],
+      [
+        {
+          type: 'InspectedCardMoved',
+          playerId,
+          inspectionId,
+          expectedWorkAreaId: workAreaId,
+          cardId: cardIds[2],
+          destinationZoneId: lostZoneId,
+          destinationIndex: 0,
+          concealIdentity: false,
+        },
+      ],
+      [
+        {
+          type: 'InspectedCardMoved',
+          playerId,
+          inspectionId,
+          expectedWorkAreaId: workAreaId,
+          cardId: cardIds[3],
+          destinationZoneId: boardId,
+          destinationIndex: 0,
+          concealIdentity: false,
+        },
+      ],
+    ]);
+    expect(result.state.cards[cardIds[4]!]?.visibilityGeneration).toBe(1);
+    for (const cardId of [cardIds[5]!, cardIds[2]!, cardIds[3]!]) {
+      expect(result.state.cards[cardId]?.visibilityGeneration).toBe(0);
+    }
+    const replayed = result.records
+      .flatMap((record) => record.batches)
+      .reduce(
+        applyEventBatch,
+        createEmptyMatch(target.matchId, [target.selfSeat, target.opponentSeat])
+      );
+    expect(replayed).toEqual(result.state);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+  });
+
+  it.each([
+    ['deck', 'deck'],
+    ['prizes', 'prizes'],
+    ['discardCover', 'discard'],
+    ['lostZoneCover', 'lostZone'],
+  ] as const)(
+    'moves one inspected card through loose destination alias %s',
+    (destinationZone, destinationKind) => {
+      const result = buildLegacyV1Candidate(
+        parse(
+          payload(
+            cardRows(3, 'Inspection loose alias'),
+            '',
+            action('self', 'viewDeck', ['self', 1, true, 3, false]),
+            action('self', 'moveCardBundle', [
+              'opp',
+              'viewCards',
+              destinationZone,
+              0,
+              false,
+              'move',
+            ])
+          )
+        ),
+        target
+      );
+      expect(result.ok).toBe(true);
+      if (!result.ok) throw new Error(result.issues[0]?.message);
+
+      const playerId = target.selfSeat.playerId;
+      const destinationZoneId = playerZoneId(playerId, destinationKind);
+      const movedId = 'legacy:v1:card:000000';
+      expect(result.state.zones[destinationZoneId]?.cardIds).toContain(movedId);
+      expect(result.state.workAreas[playerId]?.inspection).toBeNull();
+      expect(result.records[3]!.batches[0]!.events).toEqual([
+        {
+          type: 'InspectedCardMoved',
+          playerId,
+          inspectionId: 'legacy:v1:inspection:000000',
+          expectedWorkAreaId: `work:${playerId}:inspection:legacy:v1:inspection:000000`,
+          cardId: movedId,
+          destinationZoneId,
+          destinationIndex: destinationKind === 'deck' ? 2 : 0,
+          concealIdentity:
+            destinationKind === 'deck' || destinationKind === 'prizes',
+        },
+      ]);
+      expect(result.state.cards[movedId]?.visibilityGeneration).toBe(
+        destinationKind === 'deck' || destinationKind === 'prizes' ? 1 : 0
+      );
+      assertMatchInvariants(result.state);
+    }
+  );
+
+  it('places inspected Pokémon and Trainer cards on an existing stack by current index', () => {
+    const parsed = parse(
+      payload(
+        [
+          ['1', 'Inspection target', 'Pokémon', '/legacy/target.png'],
+          ['1', 'Inspection tool', 'Trainer', '/legacy/tool.png'],
+          ['1', 'Inspection evolution', 'Pokémon', '/legacy/evolution.png'],
+          ['1', 'Inspection reserve', 'Energy', '/legacy/reserve.png'],
+        ],
+        '',
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'active',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'viewDeck', ['self', 2, true, 3, false]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'viewCards',
+          'active',
+          1,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'viewCards',
+          'active',
+          0,
+          0,
+          'move',
+        ])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) {
+      throw new Error('Expected inspected-card placement success');
+    }
+
+    const playerId = target.selfSeat.playerId;
+    const stackId = 'legacy:v1:stack:000000';
+    const targetId = 'legacy:v1:card:000000';
+    const toolId = 'legacy:v1:card:000001';
+    const evolutionId = 'legacy:v1:card:000002';
+    const workAreaId = `work:${playerId}:inspection:legacy:v1:inspection:000000`;
+    expect(result.state.stacks[stackId]).toMatchObject({
+      evolutionCardIds: [targetId, evolutionId],
+      attachmentCardIds: [toolId],
+    });
+    expect(result.state.workAreas[playerId]?.inspection).toBeNull();
+    expect(result.state.visibility.inspectionGrants).toEqual({});
+    expect(result.records[4]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardPlacedOnPlayStack',
+        playerId,
+        cardId: evolutionId,
+        expectedSourceId: workAreaId,
+        targetStackId: stackId,
+        expectedTargetTopCardId: targetId,
+        expectedTargetEvolutionCardIds: [targetId],
+        expectedTargetAttachmentCardIds: [],
+        mode: 'evolution',
+        attachmentOrderVersion: 1,
+        evolutionCardIds: [targetId, evolutionId],
+        attachmentCardIds: [],
+      },
+    ]);
+    expect(result.records[5]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardPlacedOnPlayStack',
+        playerId,
+        cardId: toolId,
+        expectedSourceId: workAreaId,
+        targetStackId: stackId,
+        expectedTargetTopCardId: evolutionId,
+        expectedTargetEvolutionCardIds: [targetId, evolutionId],
+        expectedTargetAttachmentCardIds: [],
+        mode: 'attachment',
+        attachmentOrderVersion: 1,
+        evolutionCardIds: [targetId, evolutionId],
+        attachmentCardIds: [toolId],
+      },
+    ]);
+    const replayed = result.records
+      .flatMap((record) => record.batches)
+      .reduce(
+        applyEventBatch,
+        createEmptyMatch(target.matchId, [target.selfSeat, target.opponentSeat])
+      );
+    expect(replayed).toEqual(result.state);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+  });
+
+  it('rolls back missing, stale, and unsupported individual inspection movement', () => {
+    const inspectThen = (...actions: unknown[]) =>
+      buildLegacyV1Candidate(
+        parse(
+          payload(
+            cardRows(4, 'Inspection rollback'),
+            '',
+            action('self', 'viewDeck', ['self', 2, true, 4, false]),
+            ...actions
+          )
+        ),
+        target
+      );
+
+    const missing = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(1, 'Missing inspection'),
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'viewCards',
+            'hand',
+            0,
+            false,
+            'move',
+          ])
+        )
+      ),
+      target
+    );
+    expect(missing).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 3,
+          path: '$[3].parameters[3]',
+          message:
+            'Recorded inspected-card coordinate does not identify a current deck-inspection card',
+        },
+      ],
+    });
+    expect('state' in missing).toBe(false);
+
+    const stale = inspectThen(
+      action('self', 'moveCardBundle', [
+        'opp',
+        'viewCards',
+        'hand',
+        1,
+        false,
+        'move',
+      ]),
+      action('self', 'moveCardBundle', [
+        'opp',
+        'viewCards',
+        'discard',
+        1,
+        false,
+        'move',
+      ])
+    );
+    expect(stale).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 5,
+          path: '$[5].parameters[3]',
+          message:
+            'Recorded inspected-card coordinate does not identify a current deck-inspection card',
+        },
+      ],
+    });
+    expect('state' in stale).toBe(false);
+
+    const unsupported = [
+      {
+        result: inspectThen(
+          action('self', 'moveCardBundle', [
+            'opp',
+            'viewCards',
+            'active',
+            0,
+            false,
+            'move',
+          ])
+        ),
+        path: '$[4].parameters[4]',
+        message:
+          'Recorded inspected-card destination does not identify a current stack top',
+      },
+      {
+        result: inspectThen(
+          action('self', 'moveCardBundle', [
+            'opp',
+            'viewCards',
+            'stadium',
+            0,
+            false,
+            'move',
+          ])
+        ),
+        path: '$[4].parameters[1]',
+        message:
+          'Current closed candidate cannot apply this inspected-card movement shape',
+      },
+      {
+        result: inspectThen(
+          action('self', 'moveCardBundle', [
+            'opp',
+            'viewCards',
+            'deck',
+            0,
+            false,
+            'bottom',
+          ])
+        ),
+        path: '$[4].parameters[1]',
+        message:
+          'Current closed candidate cannot apply this inspected-card movement shape',
+      },
+    ];
+    for (const { result, path, message } of unsupported) {
+      expect(result).toEqual({
+        ok: false,
+        issues: [
+          {
+            code: 'source_state_mismatch',
+            recordIndex: 4,
+            path,
+            message,
+          },
+        ],
+      });
+      expect('state' in result).toBe(false);
+    }
+  });
+
+  it.each([
+    ['moveToDeckTop', ['opp', 'viewCards', 0]],
+    ['shuffleIntoDeck', ['opp', 'viewCards', 0, [0]]],
+    ['switchWithDeckTop', ['opp', 'viewCards', 0]],
+  ] as const)(
+    'keeps individual inspection deck-relative action %s fail-closed',
+    (actionName, parameters) => {
+      const result = buildLegacyV1Candidate(
+        parse(
+          payload(
+            cardRows(4, 'Inspection deck relative'),
+            '',
+            action('self', 'viewDeck', ['self', 1, true, 4, false]),
+            action('self', actionName, [...parameters])
+          )
+        ),
+        target
+      );
+      expect(result).toEqual({
+        ok: false,
+        issues: [
+          {
+            code: 'source_state_mismatch',
+            recordIndex: 4,
+            path: '$[4].parameters[1]',
+            message:
+              'Current closed candidate cannot resolve this legacy source container',
+          },
+        ],
+      });
+      expect('state' in result).toBe(false);
+    }
+  );
+
   it('atomically appends the whole hand to discard and draws the recorded count', () => {
     const result = buildLegacyV1Candidate(
       parse(

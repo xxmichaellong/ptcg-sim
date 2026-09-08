@@ -299,6 +299,11 @@ interface CandidateInspectionCards {
   readonly workAreaId: WorkAreaId;
 }
 
+interface CandidateInspectionCard {
+  readonly cardId: CardInstanceId;
+  readonly workAreaId: WorkAreaId;
+}
+
 const candidateInspectionCardsInLegacyOrder = (
   state: MatchState,
   playerId: PlayerId
@@ -315,6 +320,18 @@ const candidateInspectionCardsInLegacyOrder = (
     return null;
   }
   return { cardIds: inspection.cardIds, workAreaId: inspection.id };
+};
+
+const candidateInspectionCardAtLegacyIndex = (
+  state: MatchState,
+  playerId: PlayerId,
+  legacyCardIndex: number
+): CandidateInspectionCard | null => {
+  const inspection = candidateInspectionCardsInLegacyOrder(state, playerId);
+  const cardId = inspection?.cardIds[legacyCardIndex];
+  return inspection && cardId
+    ? { cardId, workAreaId: inspection.workAreaId }
+    : null;
 };
 
 const candidateStagedCardsInLegacyOrder = (
@@ -896,6 +913,82 @@ export const buildLegacyV1Candidate = (
           });
           if (problem) return problem;
           break;
+        }
+
+        if (action.sourceZone === 'viewCards') {
+          const source = candidateInspectionCardAtLegacyIndex(
+            state,
+            playerId,
+            action.sourceIndex
+          );
+          if (!source) {
+            return failure({
+              code: 'source_state_mismatch',
+              recordIndex: action.recordIndex,
+              path: `$[${action.recordIndex}].parameters[3]`,
+              message:
+                'Recorded inspected-card coordinate does not identify a current deck-inspection card',
+            });
+          }
+
+          if (
+            action.destinationZone === 'active' ||
+            action.destinationZone === 'bench'
+          ) {
+            const targetStack =
+              typeof action.targetIndex === 'number'
+                ? candidatePlayStackTopAtLegacyIndex(
+                    state,
+                    playerId,
+                    action.destinationZone,
+                    action.targetIndex
+                  )
+                : null;
+            if (!targetStack) {
+              return failure({
+                code: 'source_state_mismatch',
+                recordIndex: action.recordIndex,
+                path: `$[${action.recordIndex}].parameters[4]`,
+                message:
+                  'Recorded inspected-card destination does not identify a current stack top',
+              });
+            }
+            const card = state.cards[source.cardId]!;
+            const problem = apply({
+              type: 'PlaceCardOnPlayStack',
+              playerId,
+              cardId: source.cardId,
+              expectedSourceId: source.workAreaId,
+              targetStackId: targetStack.id,
+              expectedTargetTopCardId: targetStack.evolutionCardIds.at(-1)!,
+              mode:
+                card.currentCategory === 'Pokémon' ? 'evolution' : 'attachment',
+            });
+            if (problem) return problem;
+            break;
+          }
+
+          if (action.mode === 'move' && action.destinationZone !== 'stadium') {
+            const problem = apply({
+              type: 'MoveInspectedCard',
+              cardId: source.cardId,
+              expectedWorkAreaId: source.workAreaId,
+              destinationZoneId: candidateDestinationZoneId(
+                playerId,
+                action.destinationZone
+              ),
+            });
+            if (problem) return problem;
+            break;
+          }
+
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[1]`,
+            message:
+              'Current closed candidate cannot apply this inspected-card movement shape',
+          });
         }
 
         if (action.sourceZone === 'attachedCards') {

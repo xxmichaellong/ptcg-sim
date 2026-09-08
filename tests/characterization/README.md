@@ -479,6 +479,19 @@ the inspection basis for `shuffleBottom`. Candidate fixtures pin exact events,
 replay, concealment generations, deterministic retry, missing-work-area
 rollback, and stale-permutation rollback.
 
+The individual work-area characterization pins that both `attachedCards` and
+`viewCards` participate in the same drag source list, while generic click
+identification records the selected card's current flat array index. V1's
+shared move path removes exactly that index and appends the card to its
+destination. The importer therefore resolves every `viewCards` coordinate
+against the current inspection after prior moves, emits `MoveInspectedCard` for
+loose destinations, or emits `PlaceCardOnPlayStack` for an exact numeric
+active/bench top target. Candidate fixtures pin changing indices, every loose
+destination family and cover alias, category-derived evolution/attachment,
+last-card closure, viewer-grant cleanup, exact events, replay, stable hashing,
+and whole-candidate rollback. Target-free active/bench, stadium, bottom-mode,
+and specialized deck-relative inspection actions remain explicitly closed.
+
 The protected active/bench shortcut checkpoint covers non-Alt `A` and `B`
 without absorbing stadium or prize rules. Two fresh real-v1 Chromium pages
 place a selected hand Pokémon beside one incumbent active, then pin active and

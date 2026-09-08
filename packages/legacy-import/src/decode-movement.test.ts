@@ -503,6 +503,14 @@ describe('legacy v1 movement positional decoder', () => {
           7,
           MAX_DECK_CARDS - 1,
           'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'viewCards',
+          'active',
+          2,
+          4,
+          'move',
         ])
       )
     ).toEqual({
@@ -528,6 +536,17 @@ describe('legacy v1 movement positional decoder', () => {
           sourceIndex: 7,
           destinationZone: 'bench',
           targetIndex: MAX_DECK_CARDS - 1,
+          mode: 'move',
+        },
+        {
+          type: 'moveCardBundle',
+          recordIndex: 5,
+          player: 'self',
+          initiator: 'opp',
+          sourceZone: 'viewCards',
+          sourceIndex: 2,
+          destinationZone: 'active',
+          targetIndex: 4,
           mode: 'move',
         },
       ],
