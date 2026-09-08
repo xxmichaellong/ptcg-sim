@@ -5,6 +5,7 @@ import {
   executeCommand,
   playerZoneId,
   stableSerialize,
+  stadiumZoneId,
   type CommandRejectionCode,
   type EventBatch,
   type GameCommand,
@@ -25,6 +26,7 @@ import {
 } from './decode-lifecycle.js';
 import {
   decodeLegacyV1MovementActions,
+  type LegacyV1CardSourceZone,
   type LegacyV1MovementAction,
   type LegacyV1MovementDecodeIssueCode,
 } from './decode-movement.js';
@@ -47,6 +49,7 @@ const CONVERTED_ACTIONS = new Set<LegacySynchronizedActionName>([
   'takeTurn',
   'draw',
   'shuffleZone',
+  'moveToDeckTop',
 ]);
 
 type LegacyV1ConvertedAction = LegacyV1LifecycleAction | LegacyV1MovementAction;
@@ -103,6 +106,36 @@ const targetPlayerId = (
   player: LegacyExportUser
 ): PlayerId =>
   player === 'self' ? target.selfSeat.playerId : target.opponentSeat.playerId;
+
+const candidateSourceZoneId = (
+  playerId: PlayerId,
+  sourceZone: LegacyV1CardSourceZone
+): ReturnType<typeof playerZoneId> | null => {
+  switch (sourceZone) {
+    case 'deck':
+    case 'deckCover':
+      return playerZoneId(playerId, 'deck');
+    case 'hand':
+      return playerZoneId(playerId, 'hand');
+    case 'prizes':
+      return playerZoneId(playerId, 'prizes');
+    case 'discard':
+    case 'discardCover':
+      return playerZoneId(playerId, 'discard');
+    case 'lostZone':
+    case 'lostZoneCover':
+      return playerZoneId(playerId, 'lostZone');
+    case 'board':
+      return playerZoneId(playerId, 'board');
+    case 'stadium':
+      return stadiumZoneId();
+    case 'active':
+    case 'bench':
+    case 'attachedCards':
+    case 'viewCards':
+      return null;
+  }
+};
 
 /**
  * Builds a private canonical candidate only when every admitted record belongs
@@ -376,6 +409,57 @@ export const buildLegacyV1Candidate = (
           { type: 'ShuffleZone', zoneId },
           { kind: 'shuffle', indices: action.shuffleIndices }
         );
+        if (problem) return problem;
+        break;
+      }
+      case 'moveToDeckTop': {
+        const sourceZoneId = candidateSourceZoneId(playerId, action.sourceZone);
+        if (!sourceZoneId) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[1]`,
+            message:
+              'Current closed candidate cannot resolve this legacy source container',
+          });
+        }
+        const sourceZone = state.zones[sourceZoneId];
+        const expectedSourceIndex =
+          action.sourceZone === 'deckCover'
+            ? 0
+            : action.sourceZone === 'discardCover' ||
+                action.sourceZone === 'lostZoneCover'
+              ? (sourceZone?.cardIds.length ?? 0) - 1
+              : action.sourceIndex;
+        const cardId =
+          action.sourceIndex === expectedSourceIndex
+            ? sourceZone?.cardIds[action.sourceIndex]
+            : undefined;
+        const card = cardId ? state.cards[cardId] : undefined;
+        if (
+          !sourceZone ||
+          !cardId ||
+          !card ||
+          (sourceZone.ownerId ?? card.ownerId) !== playerId
+        ) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[2]`,
+            message:
+              'Recorded move-to-top source coordinate does not identify the current player card',
+          });
+        }
+
+        const deckId = playerZoneId(playerId, 'deck');
+        if (sourceZone.id === deckId && action.sourceIndex === 0) break;
+
+        const problem = apply({
+          type: 'MoveCardToDeckTop',
+          playerId,
+          cardId,
+          expectedSourceId: sourceZone.id,
+        });
         if (problem) return problem;
         break;
       }

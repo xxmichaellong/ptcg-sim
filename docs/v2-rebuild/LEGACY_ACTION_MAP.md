@@ -26,8 +26,9 @@ applying its recorded permutation; `reset` loads the original source entries or
 an empty deck according to its `build` flag; and `takeTurn` uses `StartTurn`.
 The legacy `clean` and `invalidMessage` reset flags are presentation-only. The
 candidate retains source-record-to-event-batch mappings and proves exact replay,
-and now also admits the bounded `draw` and direct prize `shuffleZone` atoms
-below, but rejects any other action before constructing state. This
+and now also admits the bounded `draw`, direct prize `shuffleZone`, and
+zone-backed `moveToDeckTop` atoms below, but rejects any other action before
+constructing state. This
 is intentionally not yet a complete import compatibility claim: take-turn
 cleanup/reveal and reset behavior over dirty, cross-owner board state remain
 gated on the movement/state decoders that can construct those conditions.
@@ -72,8 +73,20 @@ is supplied to game-core as a resolved outcome; conversion never generates a
 replacement order. Setup and the composite board, deck, hand, prize, and
 staged-zone actions call the legacy helper internally with `message=false` and
 `emit=false`, so those calls remain part of their enclosing action instead of
-being double-applied as standalone shuffles. Every other row above remains
-undecoded and cannot enter the transactional candidate yet.
+being double-applied as standalone shuffles.
+
+Move-to-top is admitted as exact
+`[initiator, sourceZone, sourceIndex]`. Context-menu, Arrow-Up, and drop ingress
+all preserve the legacy array coordinate; `deckCover` selects zero while
+discard/Lost Zone covers select the current last card. The current closed
+candidate resolves ordinary player zones, those aliases, and stadium to stable
+card IDs before executing `MoveCardToDeckTop`; missing/stale coordinates fail
+the whole attempt. Selecting an already-top deck card is a genuine v1 no-op and
+is retained as a zero-batch source record. Active/bench and the
+`attachedCards`/`viewCards` pseudo-zones remain fail-closed because their legacy
+flattened indices cannot safely be inferred as canonical stack/work-area IDs.
+Every other row above remains undecoded and cannot enter the transactional
+candidate yet.
 
 ## Markers and card/stack state
 

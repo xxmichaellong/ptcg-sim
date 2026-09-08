@@ -177,6 +177,85 @@ describe('legacy action-export source envelope', () => {
     );
   });
 
+  it('pins move-to-deck-top ingress, source coordinates, and index-zero ordering', () => {
+    const deckActions = readRepositoryFile(
+      'client/src/actions/zones/deck-actions.js'
+    );
+    const generalButtons = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/card-context-menu/general-buttons.js'
+    );
+    const keybinds = readRepositoryFile(
+      'client/src/actions/keybinds/keybinds.js'
+    );
+    const drag = readRepositoryFile('client/src/setup/image-logic/drag.js');
+    const clicks = readRepositoryFile(
+      'client/src/setup/image-logic/click-events.js'
+    );
+    const moveCard = readRepositoryFile(
+      'client/src/actions/move-card-bundle/move-card.js'
+    );
+    const getZone = readRepositoryFile('client/src/setup/zones/get-zone.js');
+
+    expect(generalButtons).toContain(
+      'moveToDeckTop(\n      mouseClick.cardUser,\n      systemState.initiator,\n      mouseClick.zoneId,\n      mouseClick.cardIndex\n    )'
+    );
+    expect(keybinds).toContain(
+      'moveToDeckTop(\n          mouseClick.cardUser,\n          systemState.initiator,\n          mouseClick.zoneId,\n          mouseClick.cardIndex\n        )'
+    );
+    expect(drag).toContain("if (dZoneId === 'deckCover')");
+    expect(drag).toContain(
+      'moveToDeckTop(\n          mouseClick.cardUser,\n          systemState.initiator,\n          mouseClick.zoneId,\n          mouseClick.cardIndex\n        )'
+    );
+    expect(deckActions).toContain(
+      "moveCardBundle(user, initiator, oZoneId, 'deck', index, false, 'top', false)"
+    );
+    expect(deckActions).toContain(
+      "const selectedDeckCount = getZone(user, 'deck').getCount();"
+    );
+    expect(deckActions).toContain(
+      "moveCard(user, initiator, 'deck', 'deck', 0)"
+    );
+    expect(deckActions).toContain(
+      "processAction(user, emit, 'moveToDeckTop', [oInitiator, oZoneId, index])"
+    );
+    expect(
+      deckActions.indexOf(
+        "moveCardBundle(user, initiator, oZoneId, 'deck', index, false, 'top', false)"
+      )
+    ).toBeLessThan(
+      deckActions.lastIndexOf(
+        "processAction(user, emit, 'moveToDeckTop', [oInitiator, oZoneId, index])"
+      )
+    );
+
+    expect(clicks).toContain("if (mouseClick.zoneId === 'deckCover')");
+    expect(clicks).toContain('mouseClick.cardIndex = 0;');
+    expect(clicks).toContain(
+      "['lostZoneCover', 'discardCover'].includes(mouseClick.zoneId)"
+    );
+    expect(clicks).toContain(
+      'getZone(mouseClick.cardUser, mouseClick.zoneId).getCount() - 1'
+    );
+    expect(moveCard).toContain("oZoneId = oZoneId.replace('Cover', '');");
+    for (const zone of [
+      'deck',
+      'lostZone',
+      'discard',
+      'prizes',
+      'active',
+      'bench',
+      'hand',
+      'attachedCards',
+      'viewCards',
+      'board',
+    ]) {
+      expect(getZone).toContain(`${zone}: [],`);
+    }
+    expect(getZone).toContain(
+      'const neutralZoneArrays = {\n  stadium: [],\n};'
+    );
+  });
+
   it('pins direct prize shuffle and excludes internal helper shuffles', () => {
     const shuffleZone = readRepositoryFile(
       'client/src/actions/zones/shuffle-zone.js'

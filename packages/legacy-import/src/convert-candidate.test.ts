@@ -176,7 +176,8 @@ describe('legacy v1 canonical candidate builder', () => {
           'prizes',
           [5, 4, 3, 2, 1, 0],
           true,
-        ])
+        ]),
+        action('self', 'moveToDeckTop', ['opp', 'hand', 0])
       )
     );
     const first = buildLegacyV1Candidate(parsed, target);
@@ -436,6 +437,184 @@ describe('legacy v1 canonical candidate builder', () => {
       ],
     });
     expect('state' in mismatch).toBe(false);
+  });
+
+  it('moves a source deck card to index-zero top and preserves a top-cover no-op', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(6, 'Deck top'),
+          '',
+          action('self', 'moveToDeckTop', ['opp', 'deck', 3]),
+          action('self', 'moveToDeckTop', ['opp', 'deckCover', 0])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    expect(
+      result.state.zones[playerZoneId(target.selfSeat.playerId, 'deck')]!
+        .cardIds
+    ).toEqual([
+      'legacy:v1:card:000003',
+      'legacy:v1:card:000000',
+      'legacy:v1:card:000001',
+      'legacy:v1:card:000002',
+      'legacy:v1:card:000004',
+      'legacy:v1:card:000005',
+    ]);
+    expect(
+      result.records.map(({ recordIndex, action, batches }) => ({
+        recordIndex,
+        action,
+        batchCount: batches.length,
+      }))
+    ).toEqual([
+      { recordIndex: 1, action: 'loadDeckData', batchCount: 1 },
+      { recordIndex: 2, action: 'loadDeckData', batchCount: 1 },
+      { recordIndex: 3, action: 'moveToDeckTop', batchCount: 1 },
+      { recordIndex: 4, action: 'moveToDeckTop', batchCount: 0 },
+    ]);
+    expect(result.records[2]!.batches[0]!.events).toEqual([
+      {
+        type: 'ZoneOrdersSet',
+        reason: 'move-card-to-deck-top',
+        zones: [
+          {
+            zoneId: playerZoneId(target.selfSeat.playerId, 'deck'),
+            expectedCardIds: [
+              'legacy:v1:card:000000',
+              'legacy:v1:card:000001',
+              'legacy:v1:card:000002',
+              'legacy:v1:card:000003',
+              'legacy:v1:card:000004',
+              'legacy:v1:card:000005',
+            ],
+            cardIds: [
+              'legacy:v1:card:000003',
+              'legacy:v1:card:000000',
+              'legacy:v1:card:000001',
+              'legacy:v1:card:000002',
+              'legacy:v1:card:000004',
+              'legacy:v1:card:000005',
+            ],
+          },
+        ],
+        concealedCardIds: ['legacy:v1:card:000003'],
+      },
+    ]);
+    expect(result.state.revision).toBe(3);
+    assertMatchInvariants(result.state);
+  });
+
+  it('moves setup hand and prize cards to deck top in source order', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(10, 'Zone top'),
+          '',
+          action('self', 'setup', [Array.from({ length: 10 }, (_, i) => i)]),
+          action('self', 'moveToDeckTop', ['opp', 'hand', 2]),
+          action('self', 'moveToDeckTop', ['opp', 'prizes', 1])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    const deckId = playerZoneId(target.selfSeat.playerId, 'deck');
+    const handId = playerZoneId(target.selfSeat.playerId, 'hand');
+    const prizesId = playerZoneId(target.selfSeat.playerId, 'prizes');
+    expect(result.state.zones[deckId]!.cardIds).toEqual([
+      'legacy:v1:card:000018',
+      'legacy:v1:card:000012',
+    ]);
+    expect(result.state.zones[handId]!.cardIds).toEqual([
+      'legacy:v1:card:000010',
+      'legacy:v1:card:000011',
+      'legacy:v1:card:000013',
+      'legacy:v1:card:000014',
+      'legacy:v1:card:000015',
+      'legacy:v1:card:000016',
+    ]);
+    expect(result.state.zones[prizesId]!.cardIds).toEqual([
+      'legacy:v1:card:000017',
+      'legacy:v1:card:000019',
+    ]);
+    expect(result.records[3]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardMoved',
+        cardId: 'legacy:v1:card:000012',
+        expectedSourceZoneId: handId,
+        destinationZoneId: deckId,
+        destinationIndex: 0,
+        concealIdentity: true,
+      },
+    ]);
+    expect(result.records[4]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardMoved',
+        cardId: 'legacy:v1:card:000018',
+        expectedSourceZoneId: prizesId,
+        destinationZoneId: deckId,
+        destinationIndex: 0,
+        concealIdentity: true,
+      },
+    ]);
+    assertMatchInvariants(result.state);
+  });
+
+  it('rejects stale and currently unrepresentable move-to-top sources without state', () => {
+    const stale = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(2, 'Stale top'),
+          '',
+          action('self', 'moveToDeckTop', ['self', 'deck', 2])
+        )
+      ),
+      target
+    );
+    expect(stale).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 3,
+          path: '$[3].parameters[2]',
+          message:
+            'Recorded move-to-top source coordinate does not identify the current player card',
+        },
+      ],
+    });
+    expect('state' in stale).toBe(false);
+
+    const stackSource = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(2, 'Stack top'),
+          '',
+          action('self', 'moveToDeckTop', ['self', 'active', 0])
+        )
+      ),
+      target
+    );
+    expect(stackSource).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 3,
+          path: '$[3].parameters[1]',
+          message:
+            'Current closed candidate cannot resolve this legacy source container',
+        },
+      ],
+    });
+    expect('state' in stackSource).toBe(false);
   });
 
   it('does not fabricate a turn draw or increment for an empty deck', () => {

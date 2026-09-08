@@ -100,6 +100,45 @@ describe('legacy v1 movement positional decoder', () => {
     });
   });
 
+  it('decodes move-to-top target, initiator, every source container, and index', () => {
+    const sourceZones = [
+      'deck',
+      'deckCover',
+      'hand',
+      'prizes',
+      'discard',
+      'discardCover',
+      'lostZone',
+      'lostZoneCover',
+      'board',
+      'stadium',
+      'active',
+      'bench',
+      'attachedCards',
+      'viewCards',
+    ] as const;
+    const result = decode(
+      ...sourceZones.map((zone, index) =>
+        action(index % 2 === 0 ? 'self' : 'opp', 'moveToDeckTop', [
+          index % 2 === 0 ? 'opp' : 'self',
+          zone,
+          zone === 'deckCover' ? 0 : index,
+        ])
+      )
+    );
+    expect(result).toEqual({
+      ok: true,
+      actions: sourceZones.map((zone, index) => ({
+        type: 'moveToDeckTop',
+        recordIndex: index + 3,
+        player: index % 2 === 0 ? 'self' : 'opp',
+        initiator: index % 2 === 0 ? 'opp' : 'self',
+        sourceZone: zone,
+        sourceIndex: zone === 'deckCover' ? 0 : index,
+      })),
+    });
+  });
+
   it('ignores all other admitted families rather than inferring tuples', () => {
     expect(
       decode(
@@ -137,6 +176,23 @@ describe('legacy v1 movement positional decoder', () => {
       firstIssue(
         action('self', 'shuffleZone', ['self', 'prizes', [0], true, 'extra'])
       )
+    ).toMatchObject({
+      code: 'invalid_parameter_count',
+      recordIndex: 3,
+      path: '$[3].parameters',
+    });
+  });
+
+  it('requires exactly three move-to-top parameters', () => {
+    expect(
+      firstIssue(action('self', 'moveToDeckTop', ['self', 'hand']))
+    ).toMatchObject({
+      code: 'invalid_parameter_count',
+      recordIndex: 3,
+      path: '$[3].parameters',
+    });
+    expect(
+      firstIssue(action('self', 'moveToDeckTop', ['self', 'hand', 0, 'extra']))
     ).toMatchObject({
       code: 'invalid_parameter_count',
       recordIndex: 3,
@@ -199,6 +255,70 @@ describe('legacy v1 movement positional decoder', () => {
       code: 'invalid_shuffle_permutation',
       recordIndex: 3,
       path: '$[3].parameters[2]',
+    });
+  });
+
+  it('requires a perspective initiator and a source card container', () => {
+    expect(
+      firstIssue(action('self', 'moveToDeckTop', [false, 'hand', 0]))
+    ).toMatchObject({
+      code: 'invalid_parameter_type',
+      path: '$[3].parameters[0]',
+    });
+    expect(
+      firstIssue(action('self', 'moveToDeckTop', ['self', null, 0]))
+    ).toMatchObject({
+      code: 'invalid_parameter_type',
+      path: '$[3].parameters[1]',
+    });
+    expect(
+      firstIssue(action('self', 'moveToDeckTop', ['self', 'deckcover', 0]))
+    ).toMatchObject({
+      code: 'invalid_source_zone',
+      path: '$[3].parameters[1]',
+    });
+    expect(
+      firstIssue(action('self', 'moveToDeckTop', ['self', 'not-a-zone', 0]))
+    ).toMatchObject({
+      code: 'invalid_source_zone',
+      path: '$[3].parameters[1]',
+    });
+  });
+
+  it.each([null, true, '0', [], {}])(
+    'rejects non-number move-to-top index %j',
+    (index) => {
+      expect(
+        firstIssue(action('self', 'moveToDeckTop', ['self', 'hand', index]))
+      ).toMatchObject({
+        code: 'invalid_parameter_type',
+        recordIndex: 3,
+        path: '$[3].parameters[2]',
+      });
+    }
+  );
+
+  it.each([-1, 0.5, MAX_DECK_CARDS, 9_007_199_254_740_992])(
+    'rejects unsafe or out-of-range move-to-top index %j',
+    (index) => {
+      expect(
+        firstIssue(action('self', 'moveToDeckTop', ['self', 'hand', index]))
+      ).toMatchObject({
+        code: 'invalid_card_index',
+        recordIndex: 3,
+        path: '$[3].parameters[2]',
+      });
+    }
+  );
+
+  it('requires the deck cover to select the source top', () => {
+    expect(
+      firstIssue(action('self', 'moveToDeckTop', ['self', 'deckCover', 1]))
+    ).toEqual({
+      code: 'invalid_card_index',
+      recordIndex: 3,
+      path: '$[3].parameters[2]',
+      message: `moveToDeckTop source index must be an integer from 0 to ${MAX_DECK_CARDS - 1}, and deckCover always selects index 0`,
     });
   });
 

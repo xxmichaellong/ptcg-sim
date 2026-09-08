@@ -144,6 +144,15 @@ action and must not be decoded as independent shuffles. The remaining movement
 names are still ignored by this non-applying decoder until their zone, index,
 stack, visibility, and resolved-outcome behavior is frozen.
 
+`moveToDeckTop` carries exactly `[initiator, sourceZone, sourceIndex]`. Its
+context-menu, Arrow-Up, and deck-cover drop paths all snapshot the same legacy
+array coordinate before the action is exported. The decoder admits only the ten
+legacy player card containers, shared stadium, and three cover aliases; indices
+are safe integers from 0 through 199, and `deckCover` always denotes index zero.
+The discard and Lost Zone covers select their current last index, which remains
+a state-dependent conversion check. The action owner still selects the target
+player's deck while initiator remains independent provenance.
+
 ### Deck definition adapter
 
 `decodeLegacyV1Decks` converts the two parser-verified deck tuples into
@@ -200,11 +209,11 @@ identities; source `self` and `opp` are mapped to those seats without turning
 legacy labels into authority.
 
 This deliberately narrow builder succeeds only when every action is one of
-`loadDeckData`, `reset`, `setup`, `takeTurn`, `draw`, or the direct prize form of
-`shuffleZone`. Any other allowlisted family is rejected before state
-construction. Deck, lifecycle, and movement diagnostics are lifted with their
-exact source record/path, while context and canonical command failures also
-return no candidate state.
+`loadDeckData`, `reset`, `setup`, `takeTurn`, `draw`, `moveToDeckTop`, or the
+direct prize form of `shuffleZone`. Any other allowlisted family is rejected
+before state construction. Deck, lifecycle, and movement diagnostics are lifted
+with their exact source record/path, while context and canonical command
+failures also return no candidate state.
 The preflight additionally requires a one-to-one, source-ordered match between
 all records and the union of private decoder outputs; a future allowlist/decoder
 drift can neither omit nor double-apply a record.
@@ -232,7 +241,15 @@ The lifecycle mapping is source-backed:
 - direct prize shuffle executes `ShuffleZone` for the record's target player
   using the recorded permutation as the action-scoped resolved outcome. Its
   length must match the exact current prize zone, so conversion neither creates
-  a random order nor applies an outcome to different source state.
+  a random order nor applies an outcome to different source state; and
+- move-to-top resolves a currently representable player-zone, cover, or stadium
+  coordinate to a stable card ID and executes `MoveCardToDeckTop`. A deck card
+  already at index zero is a genuine source no-op and retains a zero-batch
+  record rather than forcing game-core to accept an invalid live command.
+  Missing/out-of-range cards and stale discard/Lost Zone cover indices fail the
+  whole attempt. Active, bench, attachment-resolution, and inspection origins
+  remain fail-closed until legacy flattened-array order is mapped explicitly to
+  canonical stack/work-area locations.
 
 One source record may therefore map to multiple canonical event batches. The
 result retains the exact record-to-batch mapping, validates invariants after
@@ -240,17 +257,18 @@ normal game-core application, replays every batch from a fresh target shell,
 and requires byte-identical stable serialization before returning the private
 candidate. No partial batches escape on failure.
 
-The closed lifecycle/draw/direct-prize-shuffle subset cannot create play stacks,
-loose board cards, markers, or cross-owner placements. It therefore does not yet
-claim take-turn cleanup/reveal parity or dirty-board reset parity; those
-interactions stay gated on the movement/state-family decoders rather than being
-inferred from an unreachable lifecycle-only fixture.
+The closed lifecycle/draw/direct-prize-shuffle/move-to-top subset cannot create
+play stacks, loose board cards, markers, or cross-owner placements. It therefore
+does not yet claim take-turn cleanup/reveal parity or dirty-board reset parity;
+those interactions stay gated on the movement/state-family decoders rather than
+being inferred from an unreachable lifecycle-only fixture.
 
 ## Next conversion slices
 
 1. Continue source-backed positional schemas for direct movement after the
-   transactionally applied draw and direct prize-shuffle atoms, widening the
-   candidate only after each newly admitted command is decoded.
+   transactionally applied draw, direct prize-shuffle, and zone-backed
+   move-to-top atoms. Map stack/work-area coordinates only after their producing
+   families make those states reachable in the closed transaction.
 2. Add markers, visibility/inspection, randomized/bulk, table signals, and the
    remaining action families using the same allowlisted dispatch table.
 3. Produce a conversion report with warnings, dropped presentation fields, and
