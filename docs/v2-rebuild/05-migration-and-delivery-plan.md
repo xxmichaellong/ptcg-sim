@@ -176,7 +176,7 @@ stack-card-departure/
 source-zone-targeted-play/
 work-area-target-free-play/
 zone-backed-deck-action/
-prizes-to-deck-bottom/once-per-game-marker/parameterless-attack-and-pass subset
+prizes-to-deck-bottom/once-per-game-marker/ability-marker/parameterless-attack-and-pass subset
 through normal game-core commands and verifies exact event replay; it rejects every
 unconverted family before constructing state, rejects recorded draws that exceed
 the exact current source-state deck, applies only direct prize shuffles
@@ -307,6 +307,14 @@ derive the explicit target boolean from the preceding candidate state before
 executing `SetOncePerGameMarker`. Repeated toggles, marker/player independence,
 exact events, deterministic retry/replay/hash/invariants, malformed rollback,
 and real-V1 control/export behavior are pinned without a schema change.
+Exact `useAbility` and `removeAbilityCounter` records now decode the four
+source-accessible zones and current flat card coordinates. Stack tops reuse
+`SetAbilityUsed`; attachments, discard cards, and owned stadium cards reuse
+`SetCardAbilityUsed`. Already-matching use/removal records retain zero batches,
+while stale, cross-owner stadium, and lower-evolution coordinates fail the
+whole candidate. Exact events, deterministic retry/replay/hash/invariants,
+malformed rollback, and existing real-V1 marker/export behavior are pinned
+without a schema change.
 Shuffle-into-deck translates v1's in-deck tail-move
 permutation basis to the canonical input order. Switch-with-deck-top preserves
 v1's source-tail return and empty-deck branch through one or two canonical

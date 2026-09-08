@@ -822,6 +822,266 @@ describe('legacy v1 canonical candidate builder', () => {
     expect(replayed).toEqual(result.state);
   });
 
+  it('imports stack-top and per-card ability markers with source-valid no-op records', () => {
+    const parsed = parse(
+      payload(
+        [
+          ['1', 'Ability base', 'Pokémon', '/legacy/ability-base.png'],
+          ['1', 'Ability tool', 'Trainer', '/legacy/ability-tool.png'],
+          ['1', 'Ability discard', 'Pokémon', '/legacy/ability-discard.png'],
+          ['1', 'Ability stadium', 'Trainer', '/legacy/ability-stadium.png'],
+        ],
+        [
+          [
+            '1',
+            'Opponent ability base',
+            'Pokémon',
+            '/legacy/opponent-ability-base.png',
+          ],
+        ],
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'active',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'useAbility', ['opp', 'active', 0]),
+        action('self', 'useAbility', ['opp', 'active', 0]),
+        action('self', 'removeAbilityCounter', ['active', 0]),
+        action('self', 'removeAbilityCounter', ['active', 0]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'active',
+          0,
+          0,
+          'move',
+        ]),
+        action('self', 'useAbility', ['opp', 'active', 1]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'discard',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'useAbility', ['opp', 'discard', 0]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'stadium',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'useAbility', ['opp', 'stadium', 0]),
+        action('self', 'removeAbilityCounter', ['active', 1]),
+        action('opp', 'moveCardBundle', [
+          'self',
+          'deck',
+          'bench',
+          0,
+          false,
+          'move',
+        ]),
+        action('opp', 'useAbility', ['self', 'bench', 0])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) throw new Error('Expected conversion success');
+
+    const playerId = target.selfSeat.playerId;
+    const stackId = 'legacy:v1:stack:000000';
+    const opponentStackId = 'legacy:v1:stack:000001';
+    const attachmentId = 'legacy:v1:card:000001';
+    const discardId = 'legacy:v1:card:000002';
+    const stadiumId = 'legacy:v1:card:000003';
+    expect(
+      result.records
+        .filter(
+          ({ action }) =>
+            action === 'useAbility' || action === 'removeAbilityCounter'
+        )
+        .map(({ recordIndex, action, batches }) => ({
+          recordIndex,
+          action,
+          events: batches.flatMap((batch) => batch.events),
+        }))
+    ).toEqual([
+      {
+        recordIndex: 4,
+        action: 'useAbility',
+        events: [{ type: 'StackAbilitySet', stackId, used: true }],
+      },
+      { recordIndex: 5, action: 'useAbility', events: [] },
+      {
+        recordIndex: 6,
+        action: 'removeAbilityCounter',
+        events: [{ type: 'StackAbilitySet', stackId, used: false }],
+      },
+      { recordIndex: 7, action: 'removeAbilityCounter', events: [] },
+      {
+        recordIndex: 9,
+        action: 'useAbility',
+        events: [{ type: 'CardAbilitySet', cardId: attachmentId, used: true }],
+      },
+      {
+        recordIndex: 11,
+        action: 'useAbility',
+        events: [{ type: 'CardAbilitySet', cardId: discardId, used: true }],
+      },
+      {
+        recordIndex: 13,
+        action: 'useAbility',
+        events: [{ type: 'CardAbilitySet', cardId: stadiumId, used: true }],
+      },
+      {
+        recordIndex: 14,
+        action: 'removeAbilityCounter',
+        events: [{ type: 'CardAbilitySet', cardId: attachmentId, used: false }],
+      },
+      {
+        recordIndex: 16,
+        action: 'useAbility',
+        events: [
+          { type: 'StackAbilitySet', stackId: opponentStackId, used: true },
+        ],
+      },
+    ]);
+    expect(result.state.stacks[stackId]?.abilityUsed).toBe(false);
+    expect(result.state.stacks[opponentStackId]?.abilityUsed).toBe(true);
+    expect(result.state.cards[attachmentId]?.abilityUsed).toBe(false);
+    expect(result.state.cards[discardId]?.abilityUsed).toBe(true);
+    expect(result.state.cards[stadiumId]?.abilityUsed).toBe(true);
+    expect(
+      result.state.zones[playerZoneId(playerId, 'discard')]?.cardIds
+    ).toEqual([discardId]);
+    expect(result.state.zones[stadiumZoneId()]?.cardIds).toEqual([stadiumId]);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+
+    const replayed = result.records
+      .flatMap((record) => record.batches)
+      .reduce(
+        applyEventBatch,
+        createEmptyMatch(target.matchId, [target.selfSeat, target.opponentSeat])
+      );
+    expect(replayed).toEqual(result.state);
+  });
+
+  it('refuses lossy ability-marker coordinates on lower evolution cards', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          [
+            ['1', 'Ability base', 'Pokémon', '/legacy/ability-base.png'],
+            [
+              '1',
+              'Ability evolution',
+              'Pokémon',
+              '/legacy/ability-evolution.png',
+            ],
+          ],
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            0,
+            'move',
+          ]),
+          action('self', 'useAbility', ['opp', 'active', 1])
+        )
+      ),
+      target
+    );
+    expect(result).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 5,
+          path: '$[5].parameters[2]',
+          message:
+            'Recorded ability marker coordinate does not identify an exact canonical stack top, attachment, discard card, or stadium card',
+        },
+      ],
+    });
+    expect('state' in result).toBe(false);
+  });
+
+  it('refuses missing and cross-owner ability-marker coordinates without partial state', () => {
+    const missing = buildLegacyV1Candidate(
+      parse(
+        payload('', '', action('self', 'removeAbilityCounter', ['discard', 0]))
+      ),
+      target
+    );
+    expect(missing).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 3,
+          path: '$[3].parameters[1]',
+        },
+      ],
+    });
+    expect('state' in missing).toBe(false);
+
+    const crossOwnerStadium = buildLegacyV1Candidate(
+      parse(
+        payload(
+          [
+            [
+              '1',
+              'Owned ability stadium',
+              'Trainer',
+              '/legacy/owned-ability-stadium.png',
+            ],
+          ],
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'stadium',
+            0,
+            false,
+            'move',
+          ]),
+          action('opp', 'useAbility', ['self', 'stadium', 0])
+        )
+      ),
+      target
+    );
+    expect(crossOwnerStadium).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 4,
+          path: '$[4].parameters[2]',
+        },
+      ],
+    });
+    expect('state' in crossOwnerStadium).toBe(false);
+  });
+
   it.each([
     { parameters: [], code: 'marker.invalid_parameter_count' },
     { parameters: [null], code: 'marker.invalid_parameter_type' },
@@ -7834,7 +8094,7 @@ describe('legacy v1 canonical candidate builder', () => {
 
   it('rejects an admitted but unconverted family before creating state', () => {
     const result = buildLegacyV1Candidate(
-      parse(payload('', '', action('self', 'useAbility', ['unconverted']))),
+      parse(payload('', '', action('self', 'addDamageCounter', [10]))),
       target
     );
     expect(result).toEqual({

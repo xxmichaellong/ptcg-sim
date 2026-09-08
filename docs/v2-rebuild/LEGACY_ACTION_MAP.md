@@ -32,8 +32,8 @@ the bottom-mode, target-free loose-zone/stadium/new-play-stack/rich-whole-stack,
 source-zone-targeted active/bench, and individual work-area new-stack
 `moveCardBundle`, resolved
 `shuffleIntoDeck`, source-authentic `switchWithDeckTop`, and
-`shufflePrizesToDeckBottom` atoms below. Exact direct loose-board bulk records
-once-per-game marker records, and empty-tuple `attack` and `pass` records also
+`shufflePrizesToDeckBottom` atoms below. Exact direct loose-board bulk records,
+once-per-game and ability marker records, and empty-tuple `attack` and `pass` records also
 reuse their canonical atomic commands, but every other action is rejected before
 constructing state. This is intentionally not yet a complete import
 compatibility claim: reachable loose-board take-turn cleanup and owner reset are
@@ -353,6 +353,20 @@ retry/replay/hash/invariants, and malformed rollback. Static and real-runtime
 oracles pin all four shipped controls, class toggles, messages, split undo logs,
 and chronological exports. No core, protocol, authority, state, public API,
 renderer, route, UI, or UX schema changes.
+
+It also admits exact `useAbility [initiator, zone, index]` and
+`removeAbilityCounter [zone, index]` records for the four shipped marker zones.
+Current flat active/bench coordinates resolve top cards to `SetAbilityUsed` and
+attachments to `SetCardAbilityUsed`; discard and owned stadium cards use the
+same per-card command. Repeated use or removal against an already-matching
+source state remains a zero-batch record, while missing, stale, cross-owner
+stadium, and lower-evolution coordinates reject the complete candidate.
+Decoder and candidate tests pin all zones, exact events, deterministic
+retry/replay/hash/invariants, malformed input, no-op behavior, and lossy-target
+rollback. Static characterization plus the existing real-runtime marker oracle
+pin the source tuples, controls, state transitions, and chronological export.
+No core, protocol, authority, state, public API, renderer, route, UI, or UX
+schema changes.
 
 ### Executable marker-control characterization
 

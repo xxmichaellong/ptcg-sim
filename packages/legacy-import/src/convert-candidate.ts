@@ -30,6 +30,7 @@ import {
 } from './decode-lifecycle.js';
 import {
   decodeLegacyV1MarkerActions,
+  type LegacyV1AbilityMarkerZone,
   type LegacyV1MarkerAction,
   type LegacyV1MarkerActionDecodeIssueCode,
 } from './decode-markers.js';
@@ -86,6 +87,8 @@ const CONVERTED_ACTIONS = new Set<LegacySynchronizedActionName>([
   'attack',
   'pass',
   'VSTARGXFunction',
+  'useAbility',
+  'removeAbilityCounter',
 ]);
 
 type LegacyV1ConvertedAction =
@@ -304,6 +307,52 @@ const candidatePlayStackTopAtLegacyIndex = (
     legacyCardIndex
   );
   return source?.kind === 'top' ? source.stack : null;
+};
+
+type CandidateAbilityMarkerTarget =
+  | {
+      readonly kind: 'stack';
+      readonly stack: PlayStack;
+    }
+  | {
+      readonly kind: 'card';
+      readonly cardId: CardInstanceId;
+    };
+
+const candidateAbilityMarkerTarget = (
+  state: MatchState,
+  playerId: PlayerId,
+  zone: LegacyV1AbilityMarkerZone,
+  sourceIndex: number
+): CandidateAbilityMarkerTarget | null => {
+  if (zone === 'active' || zone === 'bench') {
+    const source = candidatePlayStackCardAtLegacyIndex(
+      state,
+      playerId,
+      zone,
+      sourceIndex
+    );
+    if (source?.kind === 'top') {
+      return { kind: 'stack', stack: source.stack };
+    }
+    if (source?.kind === 'attachment') {
+      return { kind: 'card', cardId: source.cardId };
+    }
+    // V1 can put a marker on a lower evolution card, but canonical state owns
+    // the play-stack marker at the current top. Refuse that lossy conversion.
+    return null;
+  }
+
+  const zoneId =
+    zone === 'stadium' ? stadiumZoneId() : playerZoneId(playerId, 'discard');
+  const cardId = candidateSourceCardId(
+    state,
+    playerId,
+    zoneId,
+    zone,
+    sourceIndex
+  );
+  return cardId ? { kind: 'card', cardId } : null;
 };
 
 interface CandidateStagedCard {
@@ -729,6 +778,48 @@ export const buildLegacyV1Candidate = (
           marker: action.marker,
           used: !used,
         });
+        if (problem) return problem;
+        break;
+      }
+      case 'useAbility':
+      case 'removeAbilityCounter': {
+        const targetMarker = candidateAbilityMarkerTarget(
+          state,
+          playerId,
+          action.zone,
+          action.sourceIndex
+        );
+        if (!targetMarker) {
+          const sourceIndexParameter = action.type === 'useAbility' ? 2 : 1;
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[${sourceIndexParameter}]`,
+            message:
+              'Recorded ability marker coordinate does not identify an exact canonical stack top, attachment, discard card, or stadium card',
+          });
+        }
+
+        const requestedUsed = action.type === 'useAbility';
+        const used =
+          targetMarker.kind === 'stack'
+            ? targetMarker.stack.abilityUsed
+            : state.cards[targetMarker.cardId]?.abilityUsed;
+        if (used === requestedUsed) break;
+
+        const problem = apply(
+          targetMarker.kind === 'stack'
+            ? {
+                type: 'SetAbilityUsed',
+                stackId: targetMarker.stack.id,
+                used: requestedUsed,
+              }
+            : {
+                type: 'SetCardAbilityUsed',
+                cardId: targetMarker.cardId,
+                used: requestedUsed,
+              }
+        );
         if (problem) return problem;
         break;
       }

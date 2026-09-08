@@ -370,6 +370,19 @@ leaving the other marker and player untouched. Repeated records therefore must
 derive their explicit canonical target from the preceding converted state, not
 from UI defaults or a guessed final snapshot.
 
+`useAbility` carries exactly `[initiator, zone, index]`, while
+`removeAbilityCounter` carries `[zone, index]`. The source-accessible zones are
+`active`, `bench`, `discard`, and `stadium`; indices are current V1 flat-array
+coordinates. Record `user` selects the target board/card owner and the saved
+initiator is message provenance only. V1 replaces an existing ability tab on
+repeated use and still exports the record; removal likewise exports when the
+card exists but no tab does. Conversion therefore retains either case as a
+source-valid zero-batch record. Active/bench top cards map to the canonical
+stack marker, while attachments, discard cards, and the owned stadium card map
+to canonical per-card markers. Lower evolutions fail closed because canonical
+state intentionally owns one ability marker on the current stack top and cannot
+represent a distinct lower-card marker without loss.
+
 `attack` and `pass` each carry an exact empty parameter array. Their record
 `user` is the acting/target player in the saved perspective. Conversion emits
 one canonical `DeclareAttack` or `PassTurn` batch, preserving the source's
@@ -648,6 +661,12 @@ The lifecycle mapping is source-backed:
   This preserves ordered toggles and independent markers for both players while
   producing an explicit replay-safe event. Unknown marker strings fail before
   candidate construction; and
+- each exact ability-use/removal record resolves its current source coordinate
+  before applying `SetAbilityUsed` to a stack top or `SetCardAbilityUsed` to an
+  attachment, discard card, or owned stadium card. An already-used `useAbility`
+  and already-clear `removeAbilityCounter` retain zero batches, matching V1's
+  exported state no-op. Missing, stale, cross-owner stadium, and lower-evolution
+  coordinates return no candidate rather than targeting the wrong card; and
 - attack and pass require exact empty parameter arrays and execute one
   `DeclareAttack` or `PassTurn` for the source record's target player. The
   canonical batch resets every ability marker, discards only that player's
@@ -672,7 +691,7 @@ individual-inspection-card-loose-and-targeted-play/
 individual-inspection-card-deck-edge-shuffle-and-stadium/
 move-to-top/
 rich-whole-stack-move-and-swap/move-to-bottom/
-shuffle-into-deck/deck-top-switch/once-per-game-marker/parameterless-attack-and-pass/
+shuffle-into-deck/deck-top-switch/once-per-game-marker/ability-marker/parameterless-attack-and-pass/
 prizes-to-deck-bottom subset can now create ordinary loose-board, singleton
 stadium, and active/bench stack state, enrich those stacks with zone-backed
 evolutions and attachments, move or swap those rich stacks, reattach lower
@@ -695,14 +714,17 @@ canonical table command, so their internal board cleanup is not double-counted
 as a source record. Direct loose-board records resolve the current ordered
 board to discard, Lost Zone, hand, or an exactly recorded full-deck shuffle;
 source-authentic empty records remain zero-batch mappings. Ordered GX/VSTAR
-records independently toggle explicit per-player canonical marker state. Tests
+records independently toggle explicit per-player canonical marker state.
+Ability records now resolve stack tops and per-card attachment/discard/stadium
+targets, including source-authentic repeated no-ops and fail-closed lower
+evolutions. Tests
 prove that a later
 take-turn discards both players' loose boards in
 source order before drawing, and that an owner reset clears only that owner's
 reachable loose state, owned stadium, and play stacks before rebuilding its
 deck. Opponent-owned stadium and play state remain. The subset still cannot
 represent cross-viewer repeated-inspection visibility, handle category-
-interleaved staged deck-top tails, handle markers or face-down
+interleaved staged deck-top tails, handle the remaining marker families or face-down
 play state, or handle cross-owner play placements, so take-turn in-play reveal
 and reset behavior for those shapes remain gated on their dedicated
 movement/state decoders.
@@ -724,7 +746,7 @@ movement/state decoders.
    current reachable work area. Cross-viewer repeated inspections remain closed
    until per-card visibility is modeled explicitly rather than widening the
    work area's viewer set.
-2. Add markers, visibility/inspection, randomized/bulk, undo, and the
+2. Add the remaining marker families, visibility/inspection, randomized/bulk, undo, and the
    remaining action families using the same allowlisted dispatch table.
 3. Produce a conversion report with warnings, dropped presentation fields, and
    the exact failing record/path. Integrity identities must use SHA-256 over the

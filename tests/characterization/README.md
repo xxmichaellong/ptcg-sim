@@ -23,6 +23,15 @@ Its real-runtime browser companion executes an interleaved both-player sequence
 and verifies classes, messages, split undo logs, chronological export, and
 network/page-error boundaries.
 
+The source-envelope lock also pins ability-marker use/removal tuples, repeated
+source behavior, the four zones reachable through `W`, and the active/bench
+context-menu toggle. The existing real-runtime marker-editing companion proves
+the unchanged card marker node, exact `useAbility`/`removeAbilityCounter`
+sequence, saved-perspective exports, resize cleanup, and clean page boundary.
+The private importer maps top cards to stack markers and attachment/discard/
+stadium cards to per-card markers, retains already-matching state as zero-batch
+source records, and rejects lower-evolution coordinates without partial state.
+
 Renderer geometry locks additionally pair a manually reviewed numeric fixture
 with source digests. Text sources are normalized to LF for portable hashing;
 image fixtures are hashed as raw bytes. The browser harness loads those sources

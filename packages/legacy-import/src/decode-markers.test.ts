@@ -1,3 +1,4 @@
+import { MAX_DECK_CARDS } from '@ptcgsim/game-core';
 import { describe, expect, it } from 'vitest';
 
 import { decodeLegacyV1MarkerActions } from './decode-markers.js';
@@ -99,6 +100,140 @@ describe('legacy v1 marker-action positional decoder', () => {
           },
         ],
       });
+    }
+  );
+
+  it('decodes source-accessible ability marker coordinates and initiator perspective', () => {
+    expect(
+      decode(
+        action('self', 'useAbility', ['opp', 'active', 0]),
+        action('opp', 'removeAbilityCounter', ['bench', 4]),
+        action('self', 'useAbility', ['self', 'discard', 2]),
+        action('opp', 'removeAbilityCounter', ['stadium', 0])
+      )
+    ).toEqual({
+      ok: true,
+      actions: [
+        {
+          type: 'useAbility',
+          recordIndex: 3,
+          player: 'self',
+          initiator: 'opp',
+          zone: 'active',
+          sourceIndex: 0,
+        },
+        {
+          type: 'removeAbilityCounter',
+          recordIndex: 4,
+          player: 'opp',
+          zone: 'bench',
+          sourceIndex: 4,
+        },
+        {
+          type: 'useAbility',
+          recordIndex: 5,
+          player: 'self',
+          initiator: 'self',
+          zone: 'discard',
+          sourceIndex: 2,
+        },
+        {
+          type: 'removeAbilityCounter',
+          recordIndex: 6,
+          player: 'opp',
+          zone: 'stadium',
+          sourceIndex: 0,
+        },
+      ],
+    });
+  });
+
+  it.each([
+    { actionName: 'useAbility', parameters: ['self', 'active'] },
+    { actionName: 'removeAbilityCounter', parameters: ['active'] },
+  ])('rejects a malformed $actionName tuple', ({ actionName, parameters }) => {
+    expect(decode(action('self', actionName, parameters))).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'invalid_parameter_count',
+          recordIndex: 3,
+          path: '$[3].parameters',
+        },
+      ],
+    });
+  });
+
+  it('requires an exported initiator for ability use', () => {
+    expect(
+      decode(action('self', 'useAbility', [false, 'active', 0]))
+    ).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'invalid_parameter_type',
+          recordIndex: 3,
+          path: '$[3].parameters[0]',
+        },
+      ],
+    });
+  });
+
+  it.each(['useAbility', 'removeAbilityCounter'] as const)(
+    'rejects invalid %s zones and indices',
+    (actionName) => {
+      const parameters = (zone: unknown, index: unknown): unknown[] =>
+        actionName === 'useAbility' ? ['self', zone, index] : [zone, index];
+      const zoneParameter = actionName === 'useAbility' ? 1 : 0;
+      const indexParameter = zoneParameter + 1;
+      expect(
+        decode(action('self', actionName, parameters(null, 0)))
+      ).toMatchObject({
+        ok: false,
+        issues: [
+          {
+            code: 'invalid_parameter_type',
+            path: `$[3].parameters[${zoneParameter}]`,
+          },
+        ],
+      });
+      expect(
+        decode(action('self', actionName, parameters('hand', 0)))
+      ).toMatchObject({
+        ok: false,
+        issues: [
+          {
+            code: 'invalid_marker_zone',
+            path: `$[3].parameters[${zoneParameter}]`,
+          },
+        ],
+      });
+      for (const index of [null, '0', true]) {
+        expect(
+          decode(action('self', actionName, parameters('active', index)))
+        ).toMatchObject({
+          ok: false,
+          issues: [
+            {
+              code: 'invalid_parameter_type',
+              path: `$[3].parameters[${indexParameter}]`,
+            },
+          ],
+        });
+      }
+      for (const index of [-1, 0.5, MAX_DECK_CARDS, Number.MAX_SAFE_INTEGER]) {
+        expect(
+          decode(action('self', actionName, parameters('active', index)))
+        ).toMatchObject({
+          ok: false,
+          issues: [
+            {
+              code: 'invalid_card_index',
+              path: `$[3].parameters[${indexParameter}]`,
+            },
+          ],
+        });
+      }
     }
   );
 

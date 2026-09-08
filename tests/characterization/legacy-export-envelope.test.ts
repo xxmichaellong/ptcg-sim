@@ -244,6 +244,56 @@ describe('legacy action-export source envelope', () => {
     expect(boardButtons.match(/!systemState\.isReplay/g)).toHaveLength(4);
   });
 
+  it('pins ability-marker tuples, idempotent source behavior, and shipped controls', () => {
+    const useAbility = readRepositoryFile(
+      'client/src/actions/counters/use-ability.js'
+    );
+    const abilityCounter = readRepositoryFile(
+      'client/src/actions/counters/ability-counter.js'
+    );
+    const keybinds = readRepositoryFile(
+      'client/src/actions/keybinds/keybinds.js'
+    );
+    const activeBenchButtons = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/card-context-menu/active-bench-buttons.js'
+    );
+
+    expect(useAbility).toContain(
+      "const oInitiator = initiator === 'self' ? 'opp' : 'self';"
+    );
+    expect(useAbility).toContain('addAbilityCounter(user, zoneId, index);');
+    expect(useAbility).toContain("if (zoneId !== 'stadium')");
+    expect(
+      useAbility.match(
+        /processAction\(user, emit, 'useAbility', \[oInitiator, zoneId, index\]\);/g
+      )
+    ).toHaveLength(2);
+    expect(abilityCounter).toContain('if (targetCard.image.abilityCounter) {');
+    expect(
+      abilityCounter.match(
+        /processAction\(user, emit, 'removeAbilityCounter', \[zoneId, index\]\);/g
+      )
+    ).toHaveLength(2);
+    expect(keybinds).toContain(
+      "['active', 'bench', 'stadium', 'discard'].includes(mouseClick.zoneId)"
+    );
+    expect(keybinds).toContain(
+      'mouseClick.card.image.abilityCounter.handleRemove();'
+    );
+    expect(keybinds).toContain(
+      'useAbility(\n          mouseClick.cardUser,\n          systemState.initiator,\n          mouseClick.zoneId,\n          mouseClick.cardIndex\n        );'
+    );
+    expect(activeBenchButtons).toContain(
+      'if (mouseClick.card.image.abilityCounter) {'
+    );
+    expect(activeBenchButtons).toContain(
+      'mouseClick.card.image.abilityCounter.handleRemove();'
+    );
+    expect(activeBenchButtons).toContain(
+      'useAbility(\n        mouseClick.cardUser,\n        systemState.initiator,\n        mouseClick.zoneId,\n        mouseClick.cardIndex\n      );'
+    );
+  });
+
   it('pins the first movement tuple, clamp, and independent target ownership', () => {
     const deckActions = readRepositoryFile(
       'client/src/actions/zones/deck-actions.js'

@@ -275,6 +275,14 @@ executes the existing atomic once-per-game command. Ordered repeat toggles and
 both players remain deterministic without importing DOM class state or
 widening any public package, schema, renderer, route, UI, or UX.
 
+The same private marker interpreter now accepts exact `useAbility` and
+`removeAbilityCounter` tuples for active, bench, discard, and stadium. It maps
+current flat top-card coordinates to the existing stack command and
+attachments/discard/owned-stadium coordinates to the existing per-card command.
+Repeated source state no-ops retain zero batches; stale, cross-owner stadium,
+and lower-evolution coordinates fail closed. No public package, state, command,
+event, wire, renderer, route, UI, or UX schema is widened.
+
 ## Files added during characterization
 
 ```text
