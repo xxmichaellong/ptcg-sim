@@ -789,6 +789,49 @@ describe('legacy action-export source envelope', () => {
     );
   });
 
+  it('pins move-to-deck-bottom as the bottom-mode move-card-bundle tuple', () => {
+    const deckActions = readRepositoryFile(
+      'client/src/actions/zones/deck-actions.js'
+    );
+    const moveBundle = readRepositoryFile(
+      'client/src/actions/move-card-bundle/move-card-bundle.js'
+    );
+    const generalButtons = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/card-context-menu/general-buttons.js'
+    );
+    const keybinds = readRepositoryFile(
+      'client/src/actions/keybinds/keybinds.js'
+    );
+
+    expect(generalButtons).toContain(
+      'moveToDeckBottom(\n      mouseClick.cardUser,\n      systemState.initiator,\n      mouseClick.zoneId,\n      mouseClick.cardIndex\n    )'
+    );
+    expect(keybinds).toContain(
+      "event.key === 'ArrowDown' || event.code === 'ArrowDown'"
+    );
+    expect(keybinds).toContain(
+      'moveToDeckBottom(\n          mouseClick.cardUser,\n          systemState.initiator,\n          mouseClick.zoneId,\n          mouseClick.cardIndex\n        )'
+    );
+
+    const wrapper = deckActions.slice(
+      deckActions.indexOf('export const moveToDeckBottom ='),
+      deckActions.indexOf('export const moveToBoard =')
+    );
+    expect(wrapper).toContain(
+      "moveCardBundle(user, initiator, oZoneId, 'deck', index, false, 'bottom')"
+    );
+    expect(wrapper).not.toContain(
+      "processAction(user, emit, 'moveToDeckBottom'"
+    );
+
+    const exportedTuple =
+      "processAction(user, emit, 'moveCardBundle', [\n    oInitiator,\n    oZoneId,\n    dZoneId,\n    index,\n    targetIndex,\n    action,\n  ])";
+    expect(moveBundle).toContain(exportedTuple);
+    expect(moveBundle).toContain(
+      "processAction(user, emit, 'moveCardBundle', [\n      oInitiator,\n      oZoneId,\n      dZoneId,\n      index,\n      targetIndex,\n      action,\n    ])"
+    );
+  });
+
   it('pins deck tuple materialization, selectable categories, and the unknown error marker', () => {
     const buildDeck = readRepositoryFile(
       'client/src/setup/deck-constructor/build-deck.js'

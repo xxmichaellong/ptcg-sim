@@ -51,6 +51,7 @@ const CONVERTED_ACTIONS = new Set<LegacySynchronizedActionName>([
   'discardAndDraw',
   'shuffleAndDraw',
   'shuffleBottomAndDraw',
+  'moveCardBundle',
   'shuffleZone',
   'moveToDeckTop',
   'shuffleIntoDeck',
@@ -523,6 +524,52 @@ export const buildLegacyV1Candidate = (
           },
           { kind: 'shuffle', indices: action.shuffleIndices }
         );
+        if (problem) return problem;
+        break;
+      }
+      case 'moveCardBundle': {
+        const sourceZoneId = candidateSourceZoneId(playerId, action.sourceZone);
+        if (!sourceZoneId) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[1]`,
+            message:
+              'Current closed candidate cannot resolve this legacy source container',
+          });
+        }
+        const cardId = candidateSourceCardId(
+          state,
+          playerId,
+          sourceZoneId,
+          action.sourceZone,
+          action.sourceIndex
+        );
+        if (!cardId) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[3]`,
+            message:
+              'Recorded move-to-bottom source coordinate does not identify the current player card',
+          });
+        }
+
+        const deckId = playerZoneId(playerId, action.destinationZone);
+        const deck = state.zones[deckId];
+        if (
+          sourceZoneId === deckId &&
+          action.sourceIndex === (deck?.cardIds.length ?? 0) - 1
+        ) {
+          break;
+        }
+
+        const problem = apply({
+          type: 'MoveCardToDeckBottom',
+          playerId,
+          cardId,
+          expectedSourceId: sourceZoneId,
+        });
         if (problem) return problem;
         break;
       }

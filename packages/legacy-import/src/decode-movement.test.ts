@@ -196,6 +196,35 @@ describe('legacy v1 movement positional decoder', () => {
     });
   });
 
+  it('decodes the source-authentic bottom-mode bundle from every card container', () => {
+    const result = decode(
+      ...CARD_SOURCE_ZONES.map((zone, index) =>
+        action(index % 2 === 0 ? 'self' : 'opp', 'moveCardBundle', [
+          index % 2 === 0 ? 'opp' : 'self',
+          zone,
+          'deck',
+          zone === 'deckCover' ? 0 : index,
+          false,
+          'bottom',
+        ])
+      )
+    );
+    expect(result).toEqual({
+      ok: true,
+      actions: CARD_SOURCE_ZONES.map((zone, index) => ({
+        type: 'moveCardBundle',
+        recordIndex: index + 3,
+        player: index % 2 === 0 ? 'self' : 'opp',
+        initiator: index % 2 === 0 ? 'opp' : 'self',
+        sourceZone: zone,
+        sourceIndex: zone === 'deckCover' ? 0 : index,
+        destinationZone: 'deck',
+        targetIndex: false,
+        mode: 'bottom',
+      })),
+    });
+  });
+
   it('decodes only source-authentic direct prize shuffles', () => {
     expect(
       decode(
@@ -337,7 +366,7 @@ describe('legacy v1 movement positional decoder', () => {
   it('ignores all other admitted families rather than inferring tuples', () => {
     expect(
       decode(
-        action('self', 'moveCardBundle', ['unvalidated']),
+        action('self', 'changeCardBack', ['/cardback.png']),
         action('opp', 'pass', []),
         action('self', 'setup', [[]])
       )
@@ -404,6 +433,35 @@ describe('legacy v1 movement positional decoder', () => {
     expect(
       firstIssue(
         action('self', 'shuffleBottomAndDraw', ['self', 0, [], 'extra'])
+      )
+    ).toMatchObject({
+      code: 'invalid_parameter_count',
+      recordIndex: 3,
+      path: '$[3].parameters',
+    });
+  });
+
+  it('requires exactly the six source-exported move-card-bundle parameters', () => {
+    expect(
+      firstIssue(
+        action('self', 'moveCardBundle', ['self', 'hand', 'deck', 0, false])
+      )
+    ).toMatchObject({
+      code: 'invalid_parameter_count',
+      recordIndex: 3,
+      path: '$[3].parameters',
+    });
+    expect(
+      firstIssue(
+        action('self', 'moveCardBundle', [
+          'self',
+          'hand',
+          'deck',
+          0,
+          false,
+          'bottom',
+          'extra',
+        ])
       )
     ).toMatchObject({
       code: 'invalid_parameter_count',
@@ -939,4 +997,199 @@ describe('legacy v1 movement positional decoder', () => {
       path: '$[3].parameters[2]',
     });
   });
+
+  it('requires a typed bottom mode for the incremental move-card-bundle subset', () => {
+    expect(
+      firstIssue(
+        action('self', 'moveCardBundle', [
+          'self',
+          'hand',
+          'deck',
+          0,
+          false,
+          null,
+        ])
+      )
+    ).toMatchObject({
+      code: 'invalid_parameter_type',
+      recordIndex: 3,
+      path: '$[3].parameters[5]',
+    });
+  });
+
+  it.each(['move', 'shuffle', 'top', 'switch', 'attach', 'evolve'])(
+    'keeps move-card-bundle mode %s fail-closed',
+    (mode) => {
+      expect(
+        firstIssue(
+          action('self', 'moveCardBundle', [
+            'self',
+            'hand',
+            'deck',
+            0,
+            false,
+            mode,
+          ])
+        )
+      ).toEqual({
+        code: 'unsupported_move_card_bundle',
+        recordIndex: 3,
+        path: '$[3].parameters[5]',
+        message:
+          'Only the source-authentic move-to-deck-bottom bundle is converted',
+      });
+    }
+  );
+
+  it('requires a perspective initiator and card-container source for a bottom bundle', () => {
+    expect(
+      firstIssue(
+        action('self', 'moveCardBundle', [
+          false,
+          'hand',
+          'deck',
+          0,
+          false,
+          'bottom',
+        ])
+      )
+    ).toMatchObject({
+      code: 'invalid_parameter_type',
+      path: '$[3].parameters[0]',
+    });
+    expect(
+      firstIssue(
+        action('self', 'moveCardBundle', [
+          'self',
+          null,
+          'deck',
+          0,
+          false,
+          'bottom',
+        ])
+      )
+    ).toMatchObject({
+      code: 'invalid_parameter_type',
+      path: '$[3].parameters[1]',
+    });
+    expect(
+      firstIssue(
+        action('self', 'moveCardBundle', [
+          'self',
+          'not-a-zone',
+          'deck',
+          0,
+          false,
+          'bottom',
+        ])
+      )
+    ).toMatchObject({
+      code: 'invalid_source_zone',
+      path: '$[3].parameters[1]',
+    });
+  });
+
+  it.each([null, true, '0', [], {}, -1, 0.5, MAX_DECK_CARDS])(
+    'rejects invalid bottom-bundle source index %j',
+    (index) => {
+      expect(
+        firstIssue(
+          action('self', 'moveCardBundle', [
+            'self',
+            'hand',
+            'deck',
+            index,
+            false,
+            'bottom',
+          ])
+        )
+      ).toMatchObject({
+        code:
+          typeof index === 'number'
+            ? 'invalid_card_index'
+            : 'invalid_parameter_type',
+        recordIndex: 3,
+        path: '$[3].parameters[3]',
+      });
+    }
+  );
+
+  it('enforces the deck-cover index-zero alias for a bottom bundle', () => {
+    expect(
+      firstIssue(
+        action('self', 'moveCardBundle', [
+          'self',
+          'deckCover',
+          'deck',
+          1,
+          false,
+          'bottom',
+        ])
+      )
+    ).toMatchObject({
+      code: 'invalid_card_index',
+      recordIndex: 3,
+      path: '$[3].parameters[3]',
+    });
+  });
+
+  it('requires an exact deck destination for a bottom bundle', () => {
+    expect(
+      firstIssue(
+        action('self', 'moveCardBundle', [
+          'self',
+          'hand',
+          null,
+          0,
+          false,
+          'bottom',
+        ])
+      )
+    ).toMatchObject({
+      code: 'invalid_parameter_type',
+      recordIndex: 3,
+      path: '$[3].parameters[2]',
+    });
+    expect(
+      firstIssue(
+        action('self', 'moveCardBundle', [
+          'self',
+          'hand',
+          'discard',
+          0,
+          false,
+          'bottom',
+        ])
+      )
+    ).toEqual({
+      code: 'invalid_destination_zone',
+      recordIndex: 3,
+      path: '$[3].parameters[2]',
+      message: 'A bottom-mode moveCardBundle must target deck',
+    });
+  });
+
+  it.each([null, true, 0, 'false', []])(
+    'rejects bottom-bundle target index %j',
+    (targetIndex) => {
+      expect(
+        firstIssue(
+          action('self', 'moveCardBundle', [
+            'self',
+            'hand',
+            'deck',
+            0,
+            targetIndex,
+            'bottom',
+          ])
+        )
+      ).toEqual({
+        code: 'invalid_target_index',
+        recordIndex: 3,
+        path: '$[3].parameters[4]',
+        message:
+          'A bottom-mode moveCardBundle must not carry a target card index',
+      });
+    }
+  );
 });

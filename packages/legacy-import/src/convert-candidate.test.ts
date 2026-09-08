@@ -186,7 +186,15 @@ describe('legacy v1 canonical candidate builder', () => {
         ]),
         action('self', 'discardAndDraw', ['opp', 2]),
         action('self', 'shuffleAndDraw', ['opp', 2, [7, 6, 5, 4, 3, 2, 1, 0]]),
-        action('self', 'shuffleBottomAndDraw', ['opp', 2, [1, 0]])
+        action('self', 'shuffleBottomAndDraw', ['opp', 2, [1, 0]]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'hand',
+          'deck',
+          0,
+          false,
+          'bottom',
+        ])
       )
     );
     const first = buildLegacyV1Candidate(parsed, target);
@@ -1209,6 +1217,223 @@ describe('legacy v1 canonical candidate builder', () => {
     assertMatchInvariants(result.state);
   });
 
+  it('moves a setup hand card to the existing deck bottom through the exported bundle', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          '',
+          cardRows(14, 'Opponent zone bottom'),
+          action('opp', 'setup', [Array.from({ length: 14 }, (_, i) => i)]),
+          action('opp', 'moveCardBundle', [
+            'self',
+            'hand',
+            'deck',
+            2,
+            false,
+            'bottom',
+          ])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    const playerId = target.opponentSeat.playerId;
+    const handId = playerZoneId(playerId, 'hand');
+    const deckId = playerZoneId(playerId, 'deck');
+    expect(result.state.zones[handId]!.cardIds).toEqual([
+      'legacy:v1:card:000014',
+      'legacy:v1:card:000015',
+      'legacy:v1:card:000017',
+      'legacy:v1:card:000018',
+      'legacy:v1:card:000019',
+      'legacy:v1:card:000020',
+    ]);
+    expect(result.state.zones[deckId]!.cardIds).toEqual([
+      'legacy:v1:card:000027',
+      'legacy:v1:card:000016',
+    ]);
+    expect(result.records[3]).toEqual({
+      recordIndex: 4,
+      action: 'moveCardBundle',
+      batches: [
+        expect.objectContaining({
+          events: [
+            {
+              type: 'CardMoved',
+              cardId: 'legacy:v1:card:000016',
+              expectedSourceZoneId: handId,
+              destinationZoneId: deckId,
+              destinationIndex: 1,
+              concealIdentity: true,
+            },
+          ],
+        }),
+      ],
+    });
+    assertMatchInvariants(result.state);
+  });
+
+  it('reorders deck sources to bottom and preserves an already-bottom source record', () => {
+    const originalDeck = Array.from(
+      { length: 5 },
+      (_, index) => `legacy:v1:card:${String(index).padStart(6, '0')}`
+    );
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(5, 'Deck bottom'),
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'deck',
+            1,
+            false,
+            'bottom',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deckCover',
+            'deck',
+            0,
+            false,
+            'bottom',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'deck',
+            4,
+            false,
+            'bottom',
+          ])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    const deckId = playerZoneId(target.selfSeat.playerId, 'deck');
+    const afterFirst = [
+      originalDeck[0]!,
+      originalDeck[2]!,
+      originalDeck[3]!,
+      originalDeck[4]!,
+      originalDeck[1]!,
+    ];
+    const finalOrder = [...afterFirst.slice(1), afterFirst[0]!];
+    expect(result.state.zones[deckId]!.cardIds).toEqual(finalOrder);
+    expect(
+      result.records.map(({ recordIndex, action, batches }) => ({
+        recordIndex,
+        action,
+        batchCount: batches.length,
+      }))
+    ).toEqual([
+      { recordIndex: 1, action: 'loadDeckData', batchCount: 1 },
+      { recordIndex: 2, action: 'loadDeckData', batchCount: 1 },
+      { recordIndex: 3, action: 'moveCardBundle', batchCount: 1 },
+      { recordIndex: 4, action: 'moveCardBundle', batchCount: 1 },
+      { recordIndex: 5, action: 'moveCardBundle', batchCount: 0 },
+    ]);
+    expect(result.records[2]!.batches[0]!.events).toEqual([
+      {
+        type: 'ZoneOrdersSet',
+        reason: 'move-card-to-deck-bottom',
+        zones: [
+          {
+            zoneId: deckId,
+            expectedCardIds: originalDeck,
+            cardIds: afterFirst,
+          },
+        ],
+        concealedCardIds: [originalDeck[1]],
+      },
+    ]);
+    expect(result.records[3]!.batches[0]!.events).toEqual([
+      {
+        type: 'ZoneOrdersSet',
+        reason: 'move-card-to-deck-bottom',
+        zones: [
+          {
+            zoneId: deckId,
+            expectedCardIds: afterFirst,
+            cardIds: finalOrder,
+          },
+        ],
+        concealedCardIds: [afterFirst[0]],
+      },
+    ]);
+    assertMatchInvariants(result.state);
+  });
+
+  it('rejects stale and unresolved bottom-bundle sources without state', () => {
+    const staleSource = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(2, 'Stale bundle bottom'),
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'hand',
+            'deck',
+            0,
+            false,
+            'bottom',
+          ])
+        )
+      ),
+      target
+    );
+    expect(staleSource).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 3,
+          path: '$[3].parameters[3]',
+          message:
+            'Recorded move-to-bottom source coordinate does not identify the current player card',
+        },
+      ],
+    });
+    expect('state' in staleSource).toBe(false);
+
+    const stackSource = buildLegacyV1Candidate(
+      parse(
+        payload(
+          '',
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'active',
+            'deck',
+            0,
+            false,
+            'bottom',
+          ])
+        )
+      ),
+      target
+    );
+    expect(stackSource).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 3,
+          path: '$[3].parameters[1]',
+          message:
+            'Current closed candidate cannot resolve this legacy source container',
+        },
+      ],
+    });
+    expect('state' in stackSource).toBe(false);
+  });
+
   it('translates a recorded in-deck shuffle from the legacy tail-move order', () => {
     const result = buildLegacyV1Candidate(
       parse(
@@ -1632,7 +1857,7 @@ describe('legacy v1 canonical candidate builder', () => {
 
   it('rejects an admitted but unconverted family before creating state', () => {
     const result = buildLegacyV1Candidate(
-      parse(payload('', '', action('self', 'moveCardBundle', ['unconverted']))),
+      parse(payload('', '', action('self', 'viewDeck', ['unconverted']))),
       target
     );
     expect(result).toEqual({
@@ -1697,6 +1922,35 @@ describe('legacy v1 canonical candidate builder', () => {
       ],
     });
     expect('state' in invalidMovement).toBe(false);
+
+    const unsupportedBundle = buildLegacyV1Candidate(
+      parse(
+        payload(
+          '',
+          '',
+          action('self', 'moveCardBundle', [
+            'self',
+            'hand',
+            'discard',
+            0,
+            false,
+            'move',
+          ])
+        )
+      ),
+      target
+    );
+    expect(unsupportedBundle).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'movement.unsupported_move_card_bundle',
+          recordIndex: 3,
+          path: '$[3].parameters[5]',
+        },
+      ],
+    });
+    expect('state' in unsupportedBundle).toBe(false);
 
     const invalidShuffle = buildLegacyV1Candidate(
       parse(

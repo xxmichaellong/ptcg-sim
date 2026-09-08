@@ -176,8 +176,12 @@ normal game-core commands and verifies exact event replay; it rejects every
 unconverted family before constructing state, rejects recorded draws that exceed
 the exact current source-state deck, applies only direct prize shuffles
 whose recorded permutation matches the current prize zone, and resolves legacy
-zone indices to stable card IDs before move-to-top, shuffle-into-deck, or
-switch-with-deck-top. Shuffle-into-deck translates v1's in-deck tail-move
+zone indices to stable card IDs before bottom-mode bundled movement,
+move-to-top, shuffle-into-deck, or switch-with-deck-top. The bottom helper is
+represented by its real `moveCardBundle` export rather than a fabricated
+standalone action; it moves the resolved card to canonical deck bottom and
+preserves an already-bottom source as a zero-batch legacy record. Other bundle
+modes remain fail-closed. Shuffle-into-deck translates v1's in-deck tail-move
 permutation basis to the canonical input order. Switch-with-deck-top preserves
 v1's source-tail return and empty-deck branch through one or two canonical
 batches instead of using the old-index-replacing live swap command.

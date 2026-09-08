@@ -28,7 +28,7 @@ The legacy `clean` and `invalidMessage` reset flags are presentation-only. The
 candidate retains source-record-to-event-batch mappings and proves exact replay.
 It now also admits the bounded `draw`, `discardAndDraw`, `shuffleAndDraw`,
 `shuffleBottomAndDraw`, direct prize `shuffleZone`, zone-backed `moveToDeckTop`,
-resolved `shuffleIntoDeck`, source-authentic `switchWithDeckTop`, and
+the bottom-mode `moveCardBundle`, resolved `shuffleIntoDeck`, source-authentic `switchWithDeckTop`, and
 `shufflePrizesToDeckBottom` atoms below, but rejects any other action before
 constructing state. This is intentionally not yet a complete import
 compatibility claim: take-turn
@@ -59,9 +59,9 @@ gated on the movement/state decoders that can construct those conditions.
 | `shuffleZone`               | `ShuffleZone` resolved permutation event                                                                                      | Every allowed zone, deterministic legacy indices, new handle generation, safe timeline                         |
 
 The private movement decoder and candidate now admit the exact `draw`,
-`discardAndDraw`, `shuffleAndDraw`, `shuffleBottomAndDraw`, direct prize
-`shuffleZone`, `moveToDeckTop`, `shuffleIntoDeck`, `switchWithDeckTop`, and
-`shufflePrizesToDeckBottom` tuples.
+`discardAndDraw`, `shuffleAndDraw`, `shuffleBottomAndDraw`, the bottom-mode
+`moveCardBundle`, direct prize `shuffleZone`, `moveToDeckTop`, `shuffleIntoDeck`,
+`switchWithDeckTop`, and `shufflePrizesToDeckBottom` tuples.
 Record `user` selects the target player's zones, while the exported initiator
 remains independent provenance. Draw counts are already clamped by v1 before a successful action is
 exported; conversion accepts only positive integers
@@ -104,6 +104,18 @@ the exact hand count. One atomic event preserves the deck prefix, conceals the
 shuffled hand and drawn identities, and retains positive, zero-draw,
 empty-hand/non-empty-deck, and completely empty branches. Stale counts or orders
 return no candidate.
+
+Move-to-deck-bottom is not a standalone synchronized action. Its context-menu
+and Arrow-Down helper delegates to `moveCardBundle`, which exports exact
+`[initiator, sourceZone, "deck", sourceIndex, false, "bottom"]`. The decoder
+admits only that source-authentic bundle subshape; ordinary movement and every
+other bundle mode remain explicitly fail-closed. The candidate resolves the
+legacy source coordinate and cover aliases to a stable current card, then uses
+canonical `MoveCardToDeckBottom`. A source already at the deck's last-index
+bottom is retained as a genuine zero-batch record because v1 still exports the
+unchanged splice-and-append result while the live canonical command correctly
+rejects an already-bottom request. External and in-deck moves conceal the card;
+stale or currently unrepresentable stack/work-area sources return no candidate.
 
 The direct shuffle is restricted to exact
 `[initiator, "prizes", permutation, true]` records produced by the prize

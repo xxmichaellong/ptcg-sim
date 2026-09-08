@@ -58,6 +58,17 @@ export type LegacyV1MovementAction =
       readonly shuffleIndices: readonly number[];
     }
   | {
+      readonly type: 'moveCardBundle';
+      readonly recordIndex: number;
+      readonly player: LegacyExportUser;
+      readonly initiator: LegacyExportUser;
+      readonly sourceZone: LegacyV1CardSourceZone;
+      readonly sourceIndex: number;
+      readonly destinationZone: 'deck';
+      readonly targetIndex: false;
+      readonly mode: 'bottom';
+    }
+  | {
       readonly type: 'shuffleZone';
       readonly recordIndex: number;
       readonly player: LegacyExportUser;
@@ -106,6 +117,9 @@ export type LegacyV1MovementDecodeIssueCode =
   | 'invalid_discard_draw_count'
   | 'invalid_shuffle_draw_count'
   | 'invalid_shuffle_bottom_draw_count'
+  | 'unsupported_move_card_bundle'
+  | 'invalid_destination_zone'
+  | 'invalid_target_index'
   | 'invalid_shuffle_zone'
   | 'invalid_shuffle_permutation'
   | 'invalid_shuffle_message'
@@ -154,6 +168,7 @@ const isMovementAction = (
     | 'discardAndDraw'
     | 'shuffleAndDraw'
     | 'shuffleBottomAndDraw'
+    | 'moveCardBundle'
     | 'shuffleZone'
     | 'moveToDeckTop'
     | 'shuffleIntoDeck'
@@ -164,6 +179,7 @@ const isMovementAction = (
   action.action === 'discardAndDraw' ||
   action.action === 'shuffleAndDraw' ||
   action.action === 'shuffleBottomAndDraw' ||
+  action.action === 'moveCardBundle' ||
   action.action === 'shuffleZone' ||
   action.action === 'moveToDeckTop' ||
   action.action === 'shuffleIntoDeck' ||
@@ -208,7 +224,12 @@ type LegacyV1CardSourceDecodeResult =
 const decodeCardSource = (
   action: LegacyActionRecord,
   actionIndex: number,
-  actionName: 'moveToDeckTop' | 'shuffleIntoDeck' | 'switchWithDeckTop'
+  actionName:
+    | 'moveCardBundle'
+    | 'moveToDeckTop'
+    | 'shuffleIntoDeck'
+    | 'switchWithDeckTop',
+  sourceIndexParameter = 2
 ): LegacyV1CardSourceDecodeResult => {
   const initiator = action.parameters[0];
   if (initiator !== 'self' && initiator !== 'opp') {
@@ -247,14 +268,14 @@ const decodeCardSource = (
     };
   }
 
-  const sourceIndex = action.parameters[2];
+  const sourceIndex = action.parameters[sourceIndexParameter];
   if (typeof sourceIndex !== 'number') {
     return {
       ok: false,
       result: failure(
         'invalid_parameter_type',
         actionIndex,
-        '.parameters[2]',
+        `.parameters[${sourceIndexParameter}]`,
         `${actionName} source index must be a number`
       ),
     };
@@ -270,7 +291,7 @@ const decodeCardSource = (
       result: failure(
         'invalid_card_index',
         actionIndex,
-        '.parameters[2]',
+        `.parameters[${sourceIndexParameter}]`,
         `${actionName} source index must be an integer from 0 to ${MAX_DECK_CARDS - 1}, and deckCover always selects index 0`
       ),
     };
@@ -282,8 +303,8 @@ const decodeCardSource = (
 /**
  * Decodes admitted movement tuples without applying them. This starts with the
  * source-bounded draw, discard-and-draw, shuffle-hand-and-draw, and
- * shuffle-hand-to-deck-bottom-and-draw; direct prize-shuffle;
- * move-to-deck-top; shuffle-into-deck; switch-with-deck-top; and
+ * shuffle-hand-to-deck-bottom-and-draw; bottom-mode card bundles; direct
+ * prize-shuffle; move-to-deck-top; shuffle-into-deck; switch-with-deck-top; and
  * shuffled-prizes-to-deck-bottom atoms. The remaining movement actions stay
  * untouched until their positional and state-dependent behavior is frozen.
  */
@@ -531,6 +552,76 @@ export const decodeLegacyV1MovementActions = (
           initiator,
           count,
           shuffleIndices,
+        });
+        break;
+      }
+      case 'moveCardBundle': {
+        if (action.parameters.length !== 6) {
+          return failure(
+            'invalid_parameter_count',
+            actionIndex,
+            '.parameters',
+            'moveCardBundle requires [initiator, sourceZone, destinationZone, sourceIndex, targetIndex, mode]'
+          );
+        }
+
+        const mode = action.parameters[5];
+        if (typeof mode !== 'string') {
+          return failure(
+            'invalid_parameter_type',
+            actionIndex,
+            '.parameters[5]',
+            'moveCardBundle mode must be a string'
+          );
+        }
+        if (mode !== 'bottom') {
+          return failure(
+            'unsupported_move_card_bundle',
+            actionIndex,
+            '.parameters[5]',
+            'Only the source-authentic move-to-deck-bottom bundle is converted'
+          );
+        }
+
+        const source = decodeCardSource(action, actionIndex, action.action, 3);
+        if (!source.ok) return source.result;
+
+        const destinationZone = action.parameters[2];
+        if (typeof destinationZone !== 'string') {
+          return failure(
+            'invalid_parameter_type',
+            actionIndex,
+            '.parameters[2]',
+            'moveCardBundle destination zone must be a string'
+          );
+        }
+        if (destinationZone !== 'deck') {
+          return failure(
+            'invalid_destination_zone',
+            actionIndex,
+            '.parameters[2]',
+            'A bottom-mode moveCardBundle must target deck'
+          );
+        }
+        if (action.parameters[4] !== false) {
+          return failure(
+            'invalid_target_index',
+            actionIndex,
+            '.parameters[4]',
+            'A bottom-mode moveCardBundle must not carry a target card index'
+          );
+        }
+
+        decoded.push({
+          type: 'moveCardBundle',
+          recordIndex: actionIndex + 1,
+          player: action.user,
+          initiator: source.initiator,
+          sourceZone: source.sourceZone,
+          sourceIndex: source.sourceIndex,
+          destinationZone: 'deck',
+          targetIndex: false,
+          mode: 'bottom',
         });
         break;
       }
