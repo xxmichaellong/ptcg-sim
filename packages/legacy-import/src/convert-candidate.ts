@@ -968,27 +968,34 @@ export const buildLegacyV1Candidate = (
             break;
           }
 
-          if (action.mode === 'move' && action.destinationZone !== 'stadium') {
-            const problem = apply({
-              type: 'MoveInspectedCard',
-              cardId: source.cardId,
-              expectedWorkAreaId: source.workAreaId,
-              destinationZoneId: candidateDestinationZoneId(
-                playerId,
-                action.destinationZone
-              ),
-            });
-            if (problem) return problem;
-            break;
-          }
-
-          return failure({
-            code: 'source_state_mismatch',
-            recordIndex: action.recordIndex,
-            path: `$[${action.recordIndex}].parameters[1]`,
-            message:
-              'Current closed candidate cannot apply this inspected-card movement shape',
-          });
+          const problem =
+            action.mode === 'bottom'
+              ? apply({
+                  type: 'MoveCardToDeckBottom',
+                  playerId,
+                  cardId: source.cardId,
+                  expectedSourceId: source.workAreaId,
+                })
+              : action.destinationZone === 'stadium'
+                ? apply({
+                    type: 'MoveCardToStadium',
+                    playerId,
+                    cardId: source.cardId,
+                    expectedSourceId: source.workAreaId,
+                    expectedStadiumCardId:
+                      state.zones[stadiumZoneId()]?.cardIds[0] ?? null,
+                  })
+                : apply({
+                    type: 'MoveInspectedCard',
+                    cardId: source.cardId,
+                    expectedWorkAreaId: source.workAreaId,
+                    destinationZoneId: candidateDestinationZoneId(
+                      playerId,
+                      action.destinationZone
+                    ),
+                  });
+          if (problem) return problem;
+          break;
         }
 
         if (action.sourceZone === 'attachedCards') {
@@ -1447,6 +1454,31 @@ export const buildLegacyV1Candidate = (
         break;
       }
       case 'moveToDeckTop': {
+        if (action.sourceZone === 'viewCards') {
+          const source = candidateInspectionCardAtLegacyIndex(
+            state,
+            playerId,
+            action.sourceIndex
+          );
+          if (!source) {
+            return failure({
+              code: 'source_state_mismatch',
+              recordIndex: action.recordIndex,
+              path: `$[${action.recordIndex}].parameters[2]`,
+              message:
+                'Recorded move-to-top source coordinate does not identify a current deck-inspection card',
+            });
+          }
+          const problem = apply({
+            type: 'MoveCardToDeckTop',
+            playerId,
+            cardId: source.cardId,
+            expectedSourceId: source.workAreaId,
+          });
+          if (problem) return problem;
+          break;
+        }
+
         const sourceZoneId = candidateSourceZoneId(playerId, action.sourceZone);
         if (!sourceZoneId) {
           return failure({
@@ -1487,6 +1519,44 @@ export const buildLegacyV1Candidate = (
         break;
       }
       case 'shuffleIntoDeck': {
+        if (action.sourceZone === 'viewCards') {
+          const source = candidateInspectionCardAtLegacyIndex(
+            state,
+            playerId,
+            action.sourceIndex
+          );
+          if (!source) {
+            return failure({
+              code: 'source_state_mismatch',
+              recordIndex: action.recordIndex,
+              path: `$[${action.recordIndex}].parameters[2]`,
+              message:
+                'Recorded shuffle-into-deck source coordinate does not identify a current deck-inspection card',
+            });
+          }
+          const deck = state.zones[playerZoneId(playerId, 'deck')]!;
+          if (action.shuffleIndices.length !== deck.cardIds.length + 1) {
+            return failure({
+              code: 'source_state_mismatch',
+              recordIndex: action.recordIndex,
+              path: `$[${action.recordIndex}].parameters[3]`,
+              message:
+                'Recorded shuffle-into-deck length does not match the post-move source deck',
+            });
+          }
+          const problem = apply(
+            {
+              type: 'ShuffleCardIntoDeck',
+              playerId,
+              cardId: source.cardId,
+              expectedSourceId: source.workAreaId,
+            },
+            { kind: 'shuffle', indices: action.shuffleIndices }
+          );
+          if (problem) return problem;
+          break;
+        }
+
         const sourceZoneId = candidateSourceZoneId(playerId, action.sourceZone);
         if (!sourceZoneId) {
           return failure({

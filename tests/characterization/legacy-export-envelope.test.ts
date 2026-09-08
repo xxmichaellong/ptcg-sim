@@ -1076,6 +1076,63 @@ describe('legacy action-export source envelope', () => {
     expect(relocate).toContain('i--;');
   });
 
+  it('pins inspection-origin deck-edge, shuffle, and stadium actions to the current popup index', () => {
+    const clicks = readRepositoryFile(
+      'client/src/setup/image-logic/click-events.js'
+    );
+    const keybinds = readRepositoryFile(
+      'client/src/actions/keybinds/keybinds.js'
+    );
+    const deckActions = readRepositoryFile(
+      'client/src/actions/zones/deck-actions.js'
+    );
+    const moveCard = readRepositoryFile(
+      'client/src/actions/move-card-bundle/move-card.js'
+    );
+    const updateStadium = readRepositoryFile(
+      'client/src/actions/move-card-bundle/update-stadium-card.js'
+    );
+    const getZone = readRepositoryFile('client/src/setup/zones/get-zone.js');
+
+    expect(getZone).toContain('viewCards: [],');
+    expect(clicks).toContain(
+      'mouseClick.cardIndex = getZone(\n      mouseClick.cardUser,\n      mouseClick.zoneId\n    ).array.findIndex((card) => card.image === event.target)'
+    );
+    for (const actionCall of [
+      'moveToDeckTop',
+      'moveToDeckBottom',
+      'shuffleIntoDeck',
+    ]) {
+      expect(keybinds).toContain(
+        `${actionCall}(\n          mouseClick.cardUser,\n          systemState.initiator,\n          mouseClick.zoneId,\n          mouseClick.cardIndex\n        )`
+      );
+    }
+    expect(keybinds).toContain(
+      "moveCardBundle(\n          mouseClick.cardUser,\n          systemState.initiator,\n          mouseClick.zoneId,\n          dZoneId,\n          mouseClick.cardIndex,\n          false,\n          'move'\n        )"
+    );
+    expect(deckActions).toContain(
+      "moveCardBundle(user, initiator, oZoneId, 'deck', index, false, 'bottom')"
+    );
+    expect(deckActions).toContain(
+      "moveCardBundle(user, initiator, oZoneId, 'deck', index, false, 'top', false)"
+    );
+    expect(deckActions).toContain(
+      "moveCardBundle(\n    user,\n    initiator,\n    zoneId,\n    'deck',\n    index,\n    false,\n    'shuffle',\n    false\n  )"
+    );
+    expect(
+      deckActions.indexOf('shuffleIndices(deck.getCount())')
+    ).toBeGreaterThan(deckActions.indexOf("    'shuffle',\n    false\n  )"));
+    expect(moveCard).toContain(
+      'updateStadiumCard(user, initiator, dZoneId, dZone);'
+    );
+    expect(updateStadium).toContain(
+      "moveCard('self', initiator, 'stadium', 'discard', 0)"
+    );
+    expect(updateStadium).toContain(
+      "moveCard('opp', initiator, 'stadium', 'discard', 0)"
+    );
+  });
+
   it('pins leave-all destination export and category-driven reconstruction order', () => {
     const zones = readRepositoryFile('client/src/actions/zones/general.js');
     const exportCall =

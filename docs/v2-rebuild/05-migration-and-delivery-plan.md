@@ -246,8 +246,16 @@ index after every prior mutation. Loose destinations execute
 `PlaceCardOnPlayStack` with evolution versus attachment derived from the card's
 current category. The last departure closes the inspection and retires its
 viewer grant. Missing/stale coordinates and targets fail the whole candidate.
-Target-free new-play, stadium, bottom-mode, and specialized deck-relative
-inspection shapes remain closed.
+The same current-coordinate resolver now admits V1's inspection-origin deck
+bottom, deck top, shuffle-into-deck, and stadium paths. Deck-edge moves conceal
+the selected identity; shuffle validates and passes through the exact basis of
+the remaining deck plus selected card; stadium replacement atomically
+displaces the incumbent to its owner's discard. Exact events, inspection
+cleanup, retry, replay, concealment generations, stale-coordinate rollback, and
+stale-permutation rollback are pinned. Target-free new-play and
+`switchWithDeckTop` inspection shapes remain closed: V1 appends the prior deck
+top to the popup tail, while the current canonical swap replaces the selected
+popup position.
 Reachable tests now prove both-player
 loose-board take-turn cleanup plus owner-scoped loose/stadium/play reset/rebuild
 behavior.

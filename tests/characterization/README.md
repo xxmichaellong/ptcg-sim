@@ -489,8 +489,15 @@ loose destinations, or emits `PlaceCardOnPlayStack` for an exact numeric
 active/bench top target. Candidate fixtures pin changing indices, every loose
 destination family and cover alias, category-derived evolution/attachment,
 last-card closure, viewer-grant cleanup, exact events, replay, stable hashing,
-and whole-candidate rollback. Target-free active/bench, stadium, bottom-mode,
-and specialized deck-relative inspection actions remain explicitly closed.
+and whole-candidate rollback. The adjacent source characterization pins
+Arrow-Up, Arrow-Down, `S`, and generic stadium dispatch to that same current
+popup coordinate. The importer executes canonical deck-top/deck-bottom
+departures, passes through the exact remaining-deck-plus-selected-card shuffle
+basis, and performs atomic stadium replacement. Candidate fixtures pin exact
+events, last-card closure, residual inspection order, concealment generations,
+retry, replay, invariants, and stale input rollback. Target-free active/bench
+and `switchWithDeckTop` remain closed; V1 appends the prior deck top to the
+popup tail, unlike the canonical swap's same-position replacement.
 
 The protected active/bench shortcut checkpoint covers non-Alt `A` and `B`
 without absorbing stadium or prize rules. Two fresh real-v1 Chromium pages

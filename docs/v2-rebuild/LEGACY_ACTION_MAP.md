@@ -211,9 +211,14 @@ V1 popup order. Each current coordinate can move to a loose zone through
 `PlaceCardOnPlayStack`; current category again selects evolution versus
 attachment, and the last departure closes the work area and retires its viewer
 grant. Missing/stale coordinates or targets return no candidate state.
-Target-free play restoration plus stadium, bottom-mode, and specialized
-deck-relative stack/work-area sources remain closed for later source-specific
-slices.
+The same current inspection coordinate now feeds source-relative
+`MoveCardToDeckBottom`, `MoveCardToDeckTop`, `ShuffleCardIntoDeck`, and
+`MoveCardToStadium`. The shuffle basis is exactly V1's remaining deck followed
+by the selected card; stadium replacement keeps the incumbent-owner discard
+rule. Target-free play restoration and the inspection-origin deck-top swap
+remain closed. V1 appends the old deck top to the popup tail after removing the
+selected card, whereas `InspectionCardSwappedWithDeckTop` replaces the selected
+position.
 
 Deck inspection creation is admitted as the exact exported
 `[initiator, count, top, selectedDeckCount, targetIsOpp]` tuple. The record
@@ -246,14 +251,12 @@ Move-to-top is admitted as exact
 `[initiator, sourceZone, sourceIndex]`. Context-menu, Arrow-Up, and drop ingress
 all preserve the legacy array coordinate; `deckCover` selects zero while
 discard/Lost Zone covers select the current last card. The current closed
-candidate resolves ordinary player zones, those aliases, and stadium to stable
-card IDs before executing `MoveCardToDeckTop`; missing/stale coordinates fail
-the whole attempt. Selecting an already-top deck card is a genuine v1 no-op and
-is retained as a zero-batch source record. Active/bench plus the
-`attachedCards`/`viewCards` pseudo-zones remain fail-closed in this
-deck-relative action family; their removal, shuffle basis, and return-card
-behavior require separate mappings even though the ordinary `moveCardBundle`
-work-area coordinates are now characterized.
+candidate resolves ordinary player zones, those aliases, stadium, and the exact
+current `viewCards` coordinate to a stable card ID before executing
+`MoveCardToDeckTop`; missing/stale coordinates fail the whole attempt. Selecting
+an already-top deck card is a genuine v1 no-op and is retained as a zero-batch
+source record. Active/bench and `attachedCards` remain fail-closed in this
+deck-relative action family.
 
 Shuffle-into-deck is admitted as exact
 `[initiator, sourceZone, sourceIndex, permutation]`. V1 moves the selected card
@@ -262,9 +265,12 @@ candidate requires that permutation to match the exact post-move deck size and
 supplies it as a one-shot resolved outcome to `ShuffleCardIntoDeck`. External
 zone sources share the same input order. For an existing deck card, conversion
 translates the indices from v1's tail-moved intermediate order to game-core's
-original-deck shuffle input, preserving the exact final order. Stale coordinates
-and outcome lengths roll back the attempt, and the same stack/work-area sources
-remain fail-closed.
+original-deck shuffle input, preserving the exact final order. A `viewCards`
+source resolves its current inspection coordinate and already has the same V1
+basis as the canonical non-deck command: remaining deck followed by the selected
+card. Its recorded indices therefore pass through unchanged. Stale coordinates
+and outcome lengths roll back the attempt; active/bench and `attachedCards`
+sources remain fail-closed.
 
 Switch-with-deck-top is admitted as exact
 `[initiator, sourceZone, sourceIndex]`, with `deck` and `deckCover` rejected
@@ -276,7 +282,10 @@ command because that command replaces at the selected card's former index,
 whereas v1 removes the selected card before appending the return card. An empty
 deck emits only the move-to-top batch. Stable-ID resolution, normal concealment,
 final invariant checks, and whole-attempt replay cover both branches; stale and
-currently unrepresentable stack/work-area sources return no candidate.
+currently unrepresentable stack/work-area sources return no candidate. In
+particular, `viewCards` remains closed because the existing canonical
+inspection swap replaces the selected popup position instead of reproducing
+V1's tail append.
 
 Shuffled-prizes-to-deck-bottom is admitted as exact
 `[initiator, permutation]`. The source exports nothing when prizes are empty;
@@ -478,9 +487,13 @@ current top of one existing stack and executes `PlaceCardOnPlayStack`. That
 atomic placement derives evolution or attachment from current category. Both
 commands remove only the selected card, preserve remaining inspection order,
 retire that card's viewer grant, and close the work area on its final member.
-Target-free active/bench, stadium, bottom-mode, `moveToDeckTop`,
-`shuffleIntoDeck`, and `switchWithDeckTop` inspection sources remain
-fail-closed rather than borrowing different positional semantics.
+Bottom-mode deck movement, `moveToDeckTop`, and stadium movement reuse that
+same current coordinate with source-relative canonical commands. Stadium
+replacement includes incumbent-owner discard. `shuffleIntoDeck` validates the
+exact remaining-deck-plus-selected-card V1 basis and passes its permutation
+through unchanged. Target-free active/bench and `switchWithDeckTop` inspection
+sources remain fail-closed rather than borrowing different positional
+semantics; V1's swap returns the old top to popup tail, not the selected index.
 
 Ordinary direct non-Pokémon ingress onto an existing live stack now emits the
 versioned `CardAttachedToPlayStack` event. `attachmentOrderVersion: 1` freezes
