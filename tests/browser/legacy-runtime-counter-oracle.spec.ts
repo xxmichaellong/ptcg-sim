@@ -114,9 +114,27 @@ const captureCounters = async (page: Page): Promise<CounterCapture> =>
     await card.image.decode();
     zone.array.push(card);
     initializeActiveBenchCard('self', card, 'active', zone);
-    await new Promise((resolve) =>
-      requestAnimationFrame(() => requestAnimationFrame(resolve))
-    );
+    let previousSize: readonly [number, number] | null = null;
+    let stableFrames = 0;
+    for (let frame = 0; frame < 120; frame += 1) {
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => resolve())
+      );
+      const rect = card.image.getBoundingClientRect();
+      const size = [rect.width, rect.height] as const;
+      stableFrames =
+        rect.width > 0 &&
+        rect.height > 0 &&
+        previousSize?.[0] === size[0] &&
+        previousSize[1] === size[1]
+          ? stableFrames + 1
+          : 0;
+      previousSize = size;
+      if (stableFrames >= 2) break;
+    }
+    if (stableFrames < 2) {
+      throw new Error('Legacy card did not reach a stable nonzero painted box');
+    }
 
     addDamageCounter('self', 'active', 0, '130', false);
     addSpecialCondition('self', 'active', 0, false);
