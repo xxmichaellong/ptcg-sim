@@ -127,8 +127,9 @@ schema while the final transaction can require every record to have exactly one
 decoder before any canonical state is created.
 
 `decodeLegacyV1MovementActions` starts the next private family with `draw`,
-`discardAndDraw`, `shuffleAndDraw`, direct prize `shuffleZone`, `moveToDeckTop`,
-`shuffleIntoDeck`, `switchWithDeckTop`, and `shufflePrizesToDeckBottom` records.
+`discardAndDraw`, `shuffleAndDraw`, `shuffleBottomAndDraw`, direct prize
+`shuffleZone`, `moveToDeckTop`, `shuffleIntoDeck`, `switchWithDeckTop`, and
+`shufflePrizesToDeckBottom` records.
 The draw record owns the target deck/hand through `user`; its two
 positional parameters are the independently exported initiator and the
 already-clamped draw count. The decoder therefore accepts both self/opp initiators without
@@ -152,6 +153,17 @@ from index zero. Zero and an empty combined permutation are valid. The decoder
 requires a safe count from zero through 200 and a bounded complete permutation;
 the count cannot exceed that recorded permutation. Their exact relationship to
 current state remains a conversion-time check.
+
+`shuffleBottomAndDraw` carries exactly
+`[initiator, count, handPermutation]` through its hand context-menu and
+Alt-ArrowDown ingress. V1 clamps the count to exact deck-plus-hand size, but
+generates and applies the complete permutation only to the current hand. It
+then appends that shuffled hand to the current deck and draws from index zero.
+Zero, an empty hand permutation with a non-empty deck, and a completely empty
+record are valid. The decoder requires a safe count from zero through 200 and a
+bounded complete hand permutation; it deliberately does not compare their
+lengths because the count may draw from the pre-existing deck. Exact count and
+hand cardinality remain conversion-time checks.
 
 A directly exported prize shuffle carries exactly
 `[initiator, "prizes", permutation, true]`. Empty permutations are valid for an
@@ -255,11 +267,12 @@ legacy labels into authority.
 
 This deliberately narrow builder succeeds only when every action is one of
 `loadDeckData`, `reset`, `setup`, `takeTurn`, `draw`, `discardAndDraw`,
-`shuffleAndDraw`, `moveToDeckTop`, `shuffleIntoDeck`, `switchWithDeckTop`,
-`shufflePrizesToDeckBottom`, or the direct prize form of `shuffleZone`. Any other
-allowlisted family is rejected before state construction. Deck, lifecycle, and
-movement diagnostics are lifted with their exact source record/path, while
-context and canonical command failures also return no candidate state.
+`shuffleAndDraw`, `shuffleBottomAndDraw`, `moveToDeckTop`, `shuffleIntoDeck`,
+`switchWithDeckTop`, `shufflePrizesToDeckBottom`, or the direct prize form of
+`shuffleZone`. Any other allowlisted family is rejected before state
+construction. Deck, lifecycle, and movement diagnostics are lifted with their
+exact source record/path, while context and canonical command failures also
+return no candidate state.
 The preflight additionally requires a one-to-one, source-ordered match between
 all records and the union of private decoder outputs; a future allowlist/decoder
 drift can neither omit nor double-apply a record.
@@ -298,6 +311,15 @@ The lifecycle mapping is source-backed:
   zero and conceals the complete shuffled set. Zero-draw and empty-combined
   records remain valid, while stale counts or lengths fail the whole attempt;
   and
+- shuffle-bottom-and-draw requires its already-clamped count to fit exact
+  deck-plus-hand state while its complete permutation length must equal only
+  the exact current hand. V1 and canonical `ShuffleHandToDeckBottomAndDraw`
+  share the same input basis: shuffle the ordered old hand, append it after the
+  unchanged old deck, then draw from index zero. Conversion therefore supplies
+  the recorded hand indices directly as its one-shot resolved outcome. The
+  atomic event conceals the shuffled hand plus drawn identities and preserves
+  zero-draw, empty-hand/non-empty-deck, and completely empty records. Stale
+  counts or hand-order lengths fail the whole attempt; and
 - direct prize shuffle executes `ShuffleZone` for the record's target player
   using the recorded permutation as the action-scoped resolved outcome. Its
   length must match the exact current prize zone, so conversion neither creates
@@ -339,7 +361,7 @@ normal game-core application, replays every batch from a fresh target shell,
 and requires byte-identical stable serialization before returning the private
 candidate. No partial batches escape on failure.
 
-The closed lifecycle/draw/discard-and-draw/shuffle-hand-and-draw/
+The closed lifecycle/draw/discard-and-draw/both hand-shuffle-and-draw forms/
 direct-prize-shuffle/move-to-top/shuffle-into-deck/deck-top-switch/
 prizes-to-deck-bottom subset cannot create play stacks, loose board cards,
 markers, or cross-owner placements. It therefore
@@ -350,8 +372,8 @@ being inferred from an unreachable lifecycle-only fixture.
 ## Next conversion slices
 
 1. Continue source-backed positional schemas for direct movement after the
-   transactionally applied draw/discard-and-draw/shuffle-hand-and-draw, direct
-   prize-shuffle, and zone-backed move-to-top/shuffle-into-deck/
+   transactionally applied draw/discard-and-draw/both hand-shuffle-and-draw
+   forms, direct prize-shuffle, and zone-backed move-to-top/shuffle-into-deck/
    deck-top-switch/prizes-to-deck-bottom atoms.
    Map stack/work-area coordinates only after their producing families make
    those states reachable in the closed transaction.

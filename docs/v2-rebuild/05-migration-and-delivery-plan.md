@@ -170,7 +170,8 @@ materialize bounded deck definitions with deterministic order-preserving IDs,
 and provide import-wide monotonic identities plus one-shot source-resolved
 outcome adapters. A first all-or-nothing candidate builder now applies the
 closed lifecycle/draw/discard-and-draw/shuffle-hand-and-draw/
-direct-prize-shuffle/zone-backed-deck-action/prizes-to-deck-bottom subset through
+shuffle-hand-to-deck-bottom-and-draw/direct-prize-shuffle/
+zone-backed-deck-action/prizes-to-deck-bottom subset through
 normal game-core commands and verifies exact event replay; it rejects every
 unconverted family before constructing state, rejects recorded draws that exceed
 the exact current source-state deck, applies only direct prize shuffles
@@ -191,6 +192,12 @@ against the exact current deck-plus-hand source, then consumes that deck-first,
 hand-tail order directly through one atomic canonical command. Zero-draw and
 completely empty shuffles remain valid, and all shuffled identities are
 concealed.
+Shuffle-hand-to-deck-bottom-and-draw validates the already-clamped count against
+the exact deck-plus-hand total and the recorded hand-only permutation against
+the exact current hand. It preserves the existing deck prefix, appends the
+shuffled hand, and draws from index zero through the matching atomic canonical
+command. Zero-draw, empty-hand/non-empty-deck, and completely empty records all
+remain valid.
 Stack/work-area origins, remaining movement/action-family coverage, the complete
 transaction, conversion reports, and real-user corpus evidence remain before
 Phase 3 can exit.

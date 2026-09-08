@@ -26,11 +26,12 @@ applying its recorded permutation; `reset` loads the original source entries or
 an empty deck according to its `build` flag; and `takeTurn` uses `StartTurn`.
 The legacy `clean` and `invalidMessage` reset flags are presentation-only. The
 candidate retains source-record-to-event-batch mappings and proves exact replay.
-It now also admits the bounded `draw`, `discardAndDraw`, `shuffleAndDraw`, direct
-prize `shuffleZone`, zone-backed `moveToDeckTop`, resolved `shuffleIntoDeck`,
-source-authentic `switchWithDeckTop`, and `shufflePrizesToDeckBottom` atoms below,
-but rejects any other action before constructing state. This is intentionally
-not yet a complete import compatibility claim: take-turn
+It now also admits the bounded `draw`, `discardAndDraw`, `shuffleAndDraw`,
+`shuffleBottomAndDraw`, direct prize `shuffleZone`, zone-backed `moveToDeckTop`,
+resolved `shuffleIntoDeck`, source-authentic `switchWithDeckTop`, and
+`shufflePrizesToDeckBottom` atoms below, but rejects any other action before
+constructing state. This is intentionally not yet a complete import
+compatibility claim: take-turn
 cleanup/reveal and reset behavior over dirty, cross-owner board state remain
 gated on the movement/state decoders that can construct those conditions.
 
@@ -53,13 +54,14 @@ gated on the movement/state decoders that can construct those conditions.
 | `leaveAll`                  | `RestoreStagedStack`                                                                                                          | Reconstruct evolution order and attachments into active/bench, selected destination, marker/rotation semantics |
 | `discardAndDraw`            | Atomic `DiscardHandAndDraw`                                                                                                   | Zero count, clamps, order, hidden data, message                                                                |
 | `shuffleAndDraw`            | Atomic `ShuffleHandIntoDeckAndDraw`                                                                                           | Authority permutation, requested count, empty/short cases, concealment handles                                 |
-| `shuffleBottomAndDraw`      | Atomic `PutHandOnDeckBottomAndDraw`                                                                                           | Which subset is shuffled, bottom/top convention, draw after placement                                          |
+| `shuffleBottomAndDraw`      | Atomic `ShuffleHandToDeckBottomAndDraw`                                                                                       | Hand-only recorded permutation, preserved deck prefix, count clamp, empty-hand draw, concealment               |
 | `shufflePrizesToDeckBottom` | Atomic `MovePrizesToDeckBottom`                                                                                               | Prize ordering/randomization, concealment, empty prizes                                                        |
 | `shuffleZone`               | `ShuffleZone` resolved permutation event                                                                                      | Every allowed zone, deterministic legacy indices, new handle generation, safe timeline                         |
 
 The private movement decoder and candidate now admit the exact `draw`,
-`discardAndDraw`, `shuffleAndDraw`, direct prize `shuffleZone`, `moveToDeckTop`,
-`shuffleIntoDeck`, `switchWithDeckTop`, and `shufflePrizesToDeckBottom` tuples.
+`discardAndDraw`, `shuffleAndDraw`, `shuffleBottomAndDraw`, direct prize
+`shuffleZone`, `moveToDeckTop`, `shuffleIntoDeck`, `switchWithDeckTop`, and
+`shufflePrizesToDeckBottom` tuples.
 Record `user` selects the target player's zones, while the exported initiator
 remains independent provenance. Draw counts are already clamped by v1 before a successful action is
 exported; conversion accepts only positive integers
@@ -88,6 +90,20 @@ recorded permutation length; conversion also requires the count to fit the exact
 current deck-plus-hand state and the permutation length to equal it. One atomic event
 conceals the entire shuffled set and preserves positive, zero-draw, and
 completely empty branches; malformed or stale input returns no candidate.
+
+Shuffle-bottom-and-draw is admitted as exact
+`[initiator, count, handPermutation]`. V1 clamps the count to the combined deck
+and hand, but generates and applies the recorded permutation only to the current
+hand. It then appends hand index zero repeatedly to the existing deck tail and
+draws from deck index zero. That hand-only basis exactly matches canonical
+`ShuffleHandToDeckBottomAndDraw`, so conversion supplies the recorded order
+directly. Unlike shuffle-and-draw, the count may exceed permutation length when
+the original deck provides some or all drawn cards. Conversion instead requires
+the count to fit exact deck-plus-hand state and the permutation length to equal
+the exact hand count. One atomic event preserves the deck prefix, conceals the
+shuffled hand and drawn identities, and retains positive, zero-draw,
+empty-hand/non-empty-deck, and completely empty branches. Stale counts or orders
+return no candidate.
 
 The direct shuffle is restricted to exact
 `[initiator, "prizes", permutation, true]` records produced by the prize

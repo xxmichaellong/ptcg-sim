@@ -50,6 +50,14 @@ export type LegacyV1MovementAction =
       readonly shuffleIndices: readonly number[];
     }
   | {
+      readonly type: 'shuffleBottomAndDraw';
+      readonly recordIndex: number;
+      readonly player: LegacyExportUser;
+      readonly initiator: LegacyExportUser;
+      readonly count: number;
+      readonly shuffleIndices: readonly number[];
+    }
+  | {
       readonly type: 'shuffleZone';
       readonly recordIndex: number;
       readonly player: LegacyExportUser;
@@ -97,6 +105,7 @@ export type LegacyV1MovementDecodeIssueCode =
   | 'invalid_draw_count'
   | 'invalid_discard_draw_count'
   | 'invalid_shuffle_draw_count'
+  | 'invalid_shuffle_bottom_draw_count'
   | 'invalid_shuffle_zone'
   | 'invalid_shuffle_permutation'
   | 'invalid_shuffle_message'
@@ -144,6 +153,7 @@ const isMovementAction = (
     | 'draw'
     | 'discardAndDraw'
     | 'shuffleAndDraw'
+    | 'shuffleBottomAndDraw'
     | 'shuffleZone'
     | 'moveToDeckTop'
     | 'shuffleIntoDeck'
@@ -153,6 +163,7 @@ const isMovementAction = (
   action.action === 'draw' ||
   action.action === 'discardAndDraw' ||
   action.action === 'shuffleAndDraw' ||
+  action.action === 'shuffleBottomAndDraw' ||
   action.action === 'shuffleZone' ||
   action.action === 'moveToDeckTop' ||
   action.action === 'shuffleIntoDeck' ||
@@ -270,8 +281,9 @@ const decodeCardSource = (
 
 /**
  * Decodes admitted movement tuples without applying them. This starts with the
- * source-bounded draw, discard-and-draw, and shuffle-hand-and-draw; direct
- * prize-shuffle; move-to-deck-top; shuffle-into-deck; switch-with-deck-top; and
+ * source-bounded draw, discard-and-draw, shuffle-hand-and-draw, and
+ * shuffle-hand-to-deck-bottom-and-draw; direct prize-shuffle;
+ * move-to-deck-top; shuffle-into-deck; switch-with-deck-top; and
  * shuffled-prizes-to-deck-bottom atoms. The remaining movement actions stay
  * untouched until their positional and state-dependent behavior is frozen.
  */
@@ -452,6 +464,68 @@ export const decodeLegacyV1MovementActions = (
 
         decoded.push({
           type: 'shuffleAndDraw',
+          recordIndex: actionIndex + 1,
+          player: action.user,
+          initiator,
+          count,
+          shuffleIndices,
+        });
+        break;
+      }
+      case 'shuffleBottomAndDraw': {
+        if (action.parameters.length !== 3) {
+          return failure(
+            'invalid_parameter_count',
+            actionIndex,
+            '.parameters',
+            'shuffleBottomAndDraw requires [initiator, count, handPermutation]'
+          );
+        }
+
+        const initiator = action.parameters[0];
+        if (initiator !== 'self' && initiator !== 'opp') {
+          return failure(
+            'invalid_parameter_type',
+            actionIndex,
+            '.parameters[0]',
+            'shuffleBottomAndDraw initiator must use the exported self/opp perspective'
+          );
+        }
+
+        const count = action.parameters[1];
+        if (typeof count !== 'number') {
+          return failure(
+            'invalid_parameter_type',
+            actionIndex,
+            '.parameters[1]',
+            'shuffleBottomAndDraw count must be a number'
+          );
+        }
+        if (
+          !Number.isSafeInteger(count) ||
+          count < 0 ||
+          count > MAX_DECK_CARDS
+        ) {
+          return failure(
+            'invalid_shuffle_bottom_draw_count',
+            actionIndex,
+            '.parameters[1]',
+            `shuffleBottomAndDraw count must be an integer from 0 to ${MAX_DECK_CARDS}`
+          );
+        }
+
+        const shuffleIndices = decodeShuffle(action.parameters[2]);
+        if (!shuffleIndices) {
+          return failure(
+            'invalid_shuffle_permutation',
+            actionIndex,
+            '.parameters[2]',
+            'shuffleBottomAndDraw requires a complete zero-based hand permutation'
+          );
+        }
+
+        decoded.push({
+          type: 'shuffleBottomAndDraw',
           recordIndex: actionIndex + 1,
           player: action.user,
           initiator,

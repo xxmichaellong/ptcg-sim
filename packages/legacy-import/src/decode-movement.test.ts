@@ -150,6 +150,52 @@ describe('legacy v1 movement positional decoder', () => {
     });
   });
 
+  it('decodes shuffle-bottom-and-draw with a hand-only order and independent combined count', () => {
+    const maximumOrder = Array.from(
+      { length: MAX_DECK_CARDS },
+      (_, index) => MAX_DECK_CARDS - index - 1
+    );
+    expect(
+      decode(
+        action('self', 'shuffleBottomAndDraw', ['opp', 0, []]),
+        action('opp', 'shuffleBottomAndDraw', [
+          'self',
+          MAX_DECK_CARDS,
+          maximumOrder,
+        ]),
+        action('self', 'shuffleBottomAndDraw', ['self', 2, [0]])
+      )
+    ).toEqual({
+      ok: true,
+      actions: [
+        {
+          type: 'shuffleBottomAndDraw',
+          recordIndex: 3,
+          player: 'self',
+          initiator: 'opp',
+          count: 0,
+          shuffleIndices: [],
+        },
+        {
+          type: 'shuffleBottomAndDraw',
+          recordIndex: 4,
+          player: 'opp',
+          initiator: 'self',
+          count: MAX_DECK_CARDS,
+          shuffleIndices: maximumOrder,
+        },
+        {
+          type: 'shuffleBottomAndDraw',
+          recordIndex: 5,
+          player: 'self',
+          initiator: 'self',
+          count: 2,
+          shuffleIndices: [0],
+        },
+      ],
+    });
+  });
+
   it('decodes only source-authentic direct prize shuffles', () => {
     expect(
       decode(
@@ -340,6 +386,25 @@ describe('legacy v1 movement positional decoder', () => {
     });
     expect(
       firstIssue(action('self', 'shuffleAndDraw', ['self', 0, [], 'extra']))
+    ).toMatchObject({
+      code: 'invalid_parameter_count',
+      recordIndex: 3,
+      path: '$[3].parameters',
+    });
+  });
+
+  it('requires exactly the source-exported shuffle-bottom-and-draw parameters', () => {
+    expect(
+      firstIssue(action('self', 'shuffleBottomAndDraw', ['self', 0]))
+    ).toMatchObject({
+      code: 'invalid_parameter_count',
+      recordIndex: 3,
+      path: '$[3].parameters',
+    });
+    expect(
+      firstIssue(
+        action('self', 'shuffleBottomAndDraw', ['self', 0, [], 'extra'])
+      )
     ).toMatchObject({
       code: 'invalid_parameter_count',
       recordIndex: 3,
@@ -804,6 +869,70 @@ describe('legacy v1 movement positional decoder', () => {
     );
     expect(
       firstIssue(action('self', 'shuffleAndDraw', ['self', 0, oversized]))
+    ).toMatchObject({
+      code: 'invalid_shuffle_permutation',
+      recordIndex: 3,
+      path: '$[3].parameters[2]',
+    });
+  });
+
+  it('requires a perspective initiator for shuffle-bottom-and-draw', () => {
+    expect(
+      firstIssue(action('self', 'shuffleBottomAndDraw', [false, 0, []]))
+    ).toMatchObject({
+      code: 'invalid_parameter_type',
+      recordIndex: 3,
+      path: '$[3].parameters[0]',
+    });
+  });
+
+  it.each([null, true, '0', [], {}])(
+    'rejects non-number shuffle-bottom-and-draw count %j',
+    (count) => {
+      expect(
+        firstIssue(action('self', 'shuffleBottomAndDraw', ['self', count, []]))
+      ).toMatchObject({
+        code: 'invalid_parameter_type',
+        recordIndex: 3,
+        path: '$[3].parameters[1]',
+      });
+    }
+  );
+
+  it.each([-1, 0.5, 1.5, MAX_DECK_CARDS + 1, 9_007_199_254_740_992])(
+    'rejects unsafe or out-of-range shuffle-bottom-and-draw count %j',
+    (count) => {
+      expect(
+        firstIssue(action('self', 'shuffleBottomAndDraw', ['self', count, []]))
+      ).toEqual({
+        code: 'invalid_shuffle_bottom_draw_count',
+        recordIndex: 3,
+        path: '$[3].parameters[1]',
+        message: `shuffleBottomAndDraw count must be an integer from 0 to ${MAX_DECK_CARDS}`,
+      });
+    }
+  );
+
+  it.each([null, [0, 0], [0, 2], [1], [-1], [0.5], ['0']])(
+    'rejects an invalid shuffle-bottom-and-draw hand permutation: %j',
+    (indices) => {
+      expect(
+        firstIssue(action('self', 'shuffleBottomAndDraw', ['self', 0, indices]))
+      ).toMatchObject({
+        code: 'invalid_shuffle_permutation',
+        recordIndex: 3,
+        path: '$[3].parameters[2]',
+      });
+    }
+  );
+
+  it('bounds a syntactically complete shuffle-bottom-and-draw hand permutation', () => {
+    const oversized = Array.from(
+      { length: MAX_DECK_CARDS + 1 },
+      (_, index) => index
+    );
+    expect(
+      firstIssue(action('self', 'shuffleBottomAndDraw', ['self', 0, oversized]))
     ).toMatchObject({
       code: 'invalid_shuffle_permutation',
       recordIndex: 3,

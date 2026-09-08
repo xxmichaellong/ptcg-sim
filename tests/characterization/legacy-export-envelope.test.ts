@@ -688,6 +688,107 @@ describe('legacy action-export source envelope', () => {
     );
   });
 
+  it('pins shuffle-bottom-and-draw ingress, hand-only basis, append order, and export', () => {
+    const handActions = readRepositoryFile(
+      'client/src/actions/zones/hand-actions.js'
+    );
+    const handButtons = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/card-context-menu/hand-buttons.js'
+    );
+    const keybinds = readRepositoryFile(
+      'client/src/actions/keybinds/keybinds.js'
+    );
+
+    expect(handButtons).toContain(
+      'shuffleBottomAndDraw(mouseClick.cardUser, systemState.initiator)'
+    );
+    expect(keybinds).toContain(
+      "(event.key === 'ArrowDown' || event.code === 'ArrowDown') &&\n      isAltKeyPressed(event)"
+    );
+    expect(keybinds).toContain(
+      'shuffleBottomAndDraw(systemState.initiator, systemState.initiator)'
+    );
+
+    const implementation = handActions.slice(
+      handActions.indexOf('export const shuffleBottomAndDraw =')
+    );
+    const promptedCount =
+      "parseInt(window.prompt('Draw how many cards?', '0'))";
+    const sourceDeckCount =
+      "const selectedDeckCount = getZone(user, 'deck').getCount();";
+    const sourceHandCount =
+      "const shuffleAmount = getZone(user, 'hand').getCount();";
+    const combinedClamp =
+      'drawAmount = Math.min(drawAmount, selectedDeckCount + shuffleAmount);';
+    const remoteRelay =
+      "if (user === 'opp' && emit && systemState.isTwoPlayer) {";
+    const relayTuple =
+      "processAction(user, emit, 'shuffleBottomAndDraw', [\n      oInitiator,\n      drawAmount,\n      indices,\n    ])";
+    const exportedTuple =
+      "processAction(user, emit, 'shuffleBottomAndDraw', [\n    oInitiator,\n    drawAmount,\n    indices,\n  ])";
+    const validGuard = 'if (!isNaN(drawAmount) && drawAmount >= 0) {';
+    const resolvedHandOrder =
+      'indices = indices ? indices : shuffleIndices(shuffleAmount);';
+    const appliedHandOrder =
+      "shuffleZone(user, initiator, 'hand', indices, false, false);";
+    const appendHandLoop =
+      "for (let i = 0; i < shuffleAmount; i++) {\n      moveCard(user, initiator, 'hand', 'deck', 0);\n    }";
+    const drawLoop =
+      "for (let i = 0; i < drawAmount; i++) {\n      moveCard(user, initiator, 'deck', 'hand', 0);\n    }";
+    const zeroMessage =
+      "determineUsername(initiator) + ' shuffled hand to bottom of deck'";
+    const invalidExportGuard = 'emit = false;';
+
+    for (const fragment of [
+      promptedCount,
+      sourceDeckCount,
+      sourceHandCount,
+      combinedClamp,
+      remoteRelay,
+      relayTuple,
+      exportedTuple,
+      validGuard,
+      resolvedHandOrder,
+      appliedHandOrder,
+      appendHandLoop,
+      drawLoop,
+      zeroMessage,
+      invalidExportGuard,
+    ]) {
+      expect(implementation).toContain(fragment);
+    }
+    expect(implementation.indexOf(sourceDeckCount)).toBeLessThan(
+      implementation.indexOf(sourceHandCount)
+    );
+    expect(implementation.indexOf(sourceHandCount)).toBeLessThan(
+      implementation.indexOf(combinedClamp)
+    );
+    expect(implementation.indexOf(combinedClamp)).toBeLessThan(
+      implementation.indexOf(remoteRelay)
+    );
+    expect(implementation.indexOf(remoteRelay)).toBeLessThan(
+      implementation.indexOf(relayTuple)
+    );
+    expect(implementation.indexOf(relayTuple)).toBeLessThan(
+      implementation.indexOf(validGuard)
+    );
+    expect(implementation.indexOf(validGuard)).toBeLessThan(
+      implementation.indexOf(resolvedHandOrder)
+    );
+    expect(implementation.indexOf(resolvedHandOrder)).toBeLessThan(
+      implementation.indexOf(appliedHandOrder)
+    );
+    expect(implementation.indexOf(appliedHandOrder)).toBeLessThan(
+      implementation.indexOf(appendHandLoop)
+    );
+    expect(implementation.indexOf(appendHandLoop)).toBeLessThan(
+      implementation.indexOf(drawLoop)
+    );
+    expect(implementation.indexOf(drawLoop)).toBeLessThan(
+      implementation.indexOf(exportedTuple)
+    );
+  });
+
   it('pins deck tuple materialization, selectable categories, and the unknown error marker', () => {
     const buildDeck = readRepositoryFile(
       'client/src/setup/deck-constructor/build-deck.js'
