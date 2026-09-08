@@ -721,6 +721,50 @@ export const buildLegacyV1Candidate = (
           break;
         }
 
+        if (
+          (action.sourceZone === 'active' || action.sourceZone === 'bench') &&
+          action.mode === 'move' &&
+          action.destinationZone !== 'active' &&
+          action.destinationZone !== 'bench' &&
+          action.destinationZone !== 'stadium'
+        ) {
+          const source = candidatePlayStackCardAtLegacyIndex(
+            state,
+            playerId,
+            action.sourceZone,
+            action.sourceIndex
+          );
+          if (!source) {
+            return failure({
+              code: 'source_state_mismatch',
+              recordIndex: action.recordIndex,
+              path: `$[${action.recordIndex}].parameters[3]`,
+              message:
+                'Recorded move-card source coordinate does not identify a current active/bench card',
+            });
+          }
+          if (source.kind === 'lowerEvolution') {
+            return failure({
+              code: 'source_state_mismatch',
+              recordIndex: action.recordIndex,
+              path: `$[${action.recordIndex}].parameters[3]`,
+              message:
+                'Current closed candidate cannot depart a lower evolution from a play stack',
+            });
+          }
+          const problem = apply({
+            type: 'MoveCardFromStack',
+            cardId: source.cardId,
+            expectedStackId: source.stack.id,
+            destinationZoneId: candidateDestinationZoneId(
+              playerId,
+              action.destinationZone
+            ),
+          });
+          if (problem) return problem;
+          break;
+        }
+
         const sourceZoneId = candidateSourceZoneId(playerId, action.sourceZone);
         if (!sourceZoneId) {
           return failure({

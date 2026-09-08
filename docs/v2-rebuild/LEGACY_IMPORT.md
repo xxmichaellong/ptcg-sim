@@ -225,8 +225,13 @@ or attachment source with a numeric top target instead executes atomic
 `PlaceCardOnPlayStack`. Exact newest-to-oldest evolution and attachment offsets
 are resolved after every prior mutation; same-stack reattachment is valid and a
 lower Pokémon is reclassified as an attachment, matching v1. Target-free
-lower-card departures, inspection, and work-area sources remain closed for their
-distinct card-departure semantics.
+top-card and attachment moves into loose zones use canonical
+`MoveCardFromStack`. An attachment leaves its source stack in place. A top card
+removes its stack and stages every lower evolution plus attachment in one
+deterministically identified attachment-resolution work area, preserving the
+canonical base-to-top and versioned attachment sequences plus the source-slot
+hint. Direct lower-evolution departure, inspection, and work-area sources remain
+closed for their distinct card-departure semantics.
 
 A directly exported prize shuffle carries exactly
 `[initiator, "prizes", permutation, true]`. Empty permutations are valid for an
@@ -441,7 +446,13 @@ The lifecycle mapping is source-backed:
   valid numeric top target execute atomic `PlaceCardOnPlayStack`, including
   same-stack reattachment and lower-Pokémon attachment classification. Exact
   source offsets, events, retry, invariants, and missing-target rollback are
-  pinned; out-of-range coordinates return no candidate; and
+  pinned. A target-free top or attachment moving to a loose destination executes
+  `MoveCardFromStack`: attachments depart independently, while a top removes its
+  stack and stages ordered dependents with a deterministic work-area ID and
+  restoration slot. Exact events, cover normalization, concealed destinations,
+  an occupied work area plus independent singleton departure, retry, and
+  lower-evolution rollback are pinned; out-of-range coordinates return no
+  candidate; and
 - direct prize shuffle executes `ShuffleZone` for the record's target player
   using the recorded permutation as the action-scoped resolved outcome. Its
   length must match the exact current prize zone, so conversion neither creates
@@ -485,18 +496,19 @@ candidate. No partial batches escape on failure.
 
 The closed lifecycle/draw/discard-and-draw/both hand-shuffle-and-draw forms/
 direct-prize-shuffle/target-free-loose/stadium/new-play-stack-move/
-source-zone-attach-evolve/stack-card-reattachment/move-to-top/
+source-zone-attach-evolve/stack-card-reattachment/
+stack-top-and-attachment-departure/move-to-top/
 rich-whole-stack-move-and-swap/move-to-bottom/
 shuffle-into-deck/deck-top-switch/
 prizes-to-deck-bottom subset can now create ordinary loose-board, singleton
 stadium, and active/bench stack state, enrich those stacks with zone-backed
-evolutions and attachments, move or swap those rich stacks, and reattach lower
-stack members. Tests prove
+evolutions and attachments, move or swap those rich stacks, reattach lower
+stack members, and depart stack tops or attachments into loose zones. Tests prove
 that a later take-turn discards both players' loose boards in
 source order before drawing, and that an owner reset clears only that owner's
 reachable loose state, owned stadium, and play stacks before rebuilding its
 deck. Opponent-owned stadium and play state remain. The subset still cannot
-resolve target-free rich-stack departures or work-area origins, inspections,
+resolve direct lower-evolution departures or work-area origins, inspections,
 staged work, markers,
 face-down play state, or cross-owner play placements, so take-turn in-play
 reveal and reset behavior for those shapes remain gated on their dedicated
@@ -504,8 +516,8 @@ movement/state decoders.
 
 ## Next conversion slices
 
-1. Continue source-backed positional schemas for target-free stack departure
-   and work areas after the
+1. Continue source-backed positional schemas for direct lower-evolution
+   departure and work areas after the
    transactionally applied draw/discard-and-draw/both hand-shuffle-and-draw
    forms, target-free loose/stadium/new-play-stack/rich-whole-stack movement,
    numeric stack switching,

@@ -184,9 +184,21 @@ and attachments with a numeric top target instead execute atomic
 followed by versioned attachment order. It preserves exact source-stack
 membership, makes lower Pokémon attachments as v1 does, and admits same-stack
 reattachment. Exact events, evolving source offsets, retry, invariants, and a
-missing-target rollback are pinned. Target-free lower-card departures,
+missing-target rollback are pinned. Target-free lower-evolution departures,
 inspections, and work-area origins remain fail-closed for their distinct
 departure semantics.
+
+Target-free top-card and attachment sources paired with a loose destination use
+canonical `MoveCardFromStack`. An attachment leaves only itself and preserves
+its stack. A top card removes the complete stack, moves only that top to the
+destination, and places its base-to-top lower evolutions plus versioned
+attachments in one deterministic attachment-resolution work area with the
+source slot as its restoration hint. A later independent singleton top may
+still depart while that area is occupied. Cover normalization, concealed-zone
+identity retirement, exact events, deterministic work-area IDs, retry,
+invariants, and unresolved/lower-evolution rollback are pinned. Direct lower-
+evolution departure, stadium/deck-relative stack sources, and work-area origins
+remain closed.
 
 The direct shuffle is restricted to exact
 `[initiator, "prizes", permutation, true]` records produced by the prize

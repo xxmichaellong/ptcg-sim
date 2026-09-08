@@ -945,7 +945,7 @@ describe('legacy action-export source envelope', () => {
     );
   });
 
-  it('pins target-free play placement and no-target whole-stack movement', () => {
+  it('pins target-free play placement, whole-stack movement, and departures', () => {
     const keybinds = readRepositoryFile(
       'client/src/actions/keybinds/keybinds.js'
     );
@@ -1013,10 +1013,22 @@ describe('legacy action-export source envelope', () => {
     expect(moveCard).toContain(
       'zonesWithAttachedCards.includes(oZoneId) && !movingCard.image.attached'
     );
+    expect(moveCard).toContain(
+      "if (movingCard.image.target === 'on') {\n    decreaseCardLayer(movingCard);"
+    );
     expect(relocate).toContain('if (image.relative === movingCard.image)');
     expect(relocate).toContain("if (['active', 'bench'].includes(dZoneId))");
     expect(relocate).toContain(
       'moveCard(user, initiator, oZoneId, dZoneId, i, targetIndex)'
+    );
+    expect(relocate).toContain(
+      "getZone(user, 'attachedCards').element.style.display = 'block'"
+    );
+    expect(relocate).toContain(
+      "moveCard(user, initiator, oZoneId, 'attachedCards', i)"
+    );
+    expect(relocate).toContain(
+      "mouseClick.isActiveZone = oZoneId === 'active'"
     );
   });
 
