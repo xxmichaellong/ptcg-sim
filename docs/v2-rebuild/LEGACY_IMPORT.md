@@ -363,6 +363,13 @@ export a record for an empty board. In the empty shuffle branch no permutation
 is created, so JSON serialization turns the third parameter's `undefined` into
 the source-authentic `null` sentinel.
 
+`VSTARGXFunction` carries exactly `[marker]`, where shipped controls emit only
+`GX` or `VSTAR`. Record `user` identifies the affected player. V1 stores no
+result boolean: each record toggles only the named player's named DOM class,
+leaving the other marker and player untouched. Repeated records therefore must
+derive their explicit canonical target from the preceding converted state, not
+from UI defaults or a guessed final snapshot.
+
 `attack` and `pass` each carry an exact empty parameter array. Their record
 `user` is the acting/target player in the saved perspective. Conversion emits
 one canonical `DeclareAttack` or `PassTurn` batch, preserving the source's
@@ -636,6 +643,11 @@ The lifecycle mapping is source-backed:
   the action's one-shot resolved outcome. Empty boards retain the source record
   with zero batches; only the serialized `null` shuffle sentinel is valid in
   that branch. Stale or mismatched shuffle state returns no candidate; and
+- each exact once-per-game marker record reads the target player's current GX
+  or VSTAR boolean and executes one `SetOncePerGameMarker` with its inverse.
+  This preserves ordered toggles and independent markers for both players while
+  producing an explicit replay-safe event. Unknown marker strings fail before
+  candidate construction; and
 - attack and pass require exact empty parameter arrays and execute one
   `DeclareAttack` or `PassTurn` for the source record's target player. The
   canonical batch resets every ability marker, discards only that player's
@@ -660,7 +672,7 @@ individual-inspection-card-loose-and-targeted-play/
 individual-inspection-card-deck-edge-shuffle-and-stadium/
 move-to-top/
 rich-whole-stack-move-and-swap/move-to-bottom/
-shuffle-into-deck/deck-top-switch/parameterless-attack-and-pass/
+shuffle-into-deck/deck-top-switch/once-per-game-marker/parameterless-attack-and-pass/
 prizes-to-deck-bottom subset can now create ordinary loose-board, singleton
 stadium, and active/bench stack state, enrich those stacks with zone-backed
 evolutions and attachments, move or swap those rich stacks, reattach lower
@@ -682,7 +694,8 @@ cleanup. Parameterless attack and pass also resolve through one atomic
 canonical table command, so their internal board cleanup is not double-counted
 as a source record. Direct loose-board records resolve the current ordered
 board to discard, Lost Zone, hand, or an exactly recorded full-deck shuffle;
-source-authentic empty records remain zero-batch mappings. Tests
+source-authentic empty records remain zero-batch mappings. Ordered GX/VSTAR
+records independently toggle explicit per-player canonical marker state. Tests
 prove that a later
 take-turn discards both players' loose boards in
 source order before drawing, and that an owner reset clears only that owner's

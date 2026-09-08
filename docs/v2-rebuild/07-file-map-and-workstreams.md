@@ -268,6 +268,13 @@ empty records retain zero batches and require the serialized null shuffle
 sentinel. No state, command, event, wire, renderer, route, UI, or UX schema is
 widened.
 
+The marker interpreter begins with exact `VSTARGXFunction` records. It accepts
+only the shipped `GX` and `VSTAR` strings, uses record ownership to select the
+player, derives the next explicit boolean from preceding candidate state, and
+executes the existing atomic once-per-game command. Ordered repeat toggles and
+both players remain deterministic without importing DOM class state or
+widening any public package, schema, renderer, route, UI, or UX.
+
 ## Files added during characterization
 
 ```text

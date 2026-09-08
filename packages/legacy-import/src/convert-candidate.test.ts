@@ -694,6 +694,159 @@ describe('legacy v1 canonical candidate builder', () => {
     }
   );
 
+  it('imports independent GX/VSTAR toggles as explicit deterministic marker targets', () => {
+    const parsed = parse(
+      payload(
+        '',
+        '',
+        action('self', 'VSTARGXFunction', ['VSTAR']),
+        action('self', 'VSTARGXFunction', ['GX']),
+        action('opp', 'VSTARGXFunction', ['GX']),
+        action('self', 'VSTARGXFunction', ['VSTAR']),
+        action('opp', 'VSTARGXFunction', ['VSTAR']),
+        action('opp', 'VSTARGXFunction', ['GX'])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    const selfId = target.selfSeat.playerId;
+    const opponentId = target.opponentSeat.playerId;
+    expect(
+      result.records.slice(2).map(({ recordIndex, action, batches }) => ({
+        recordIndex,
+        action,
+        batchCount: batches.length,
+        events: batches.flatMap((batch) => batch.events),
+      }))
+    ).toEqual([
+      {
+        recordIndex: 3,
+        action: 'VSTARGXFunction',
+        batchCount: 1,
+        events: [
+          {
+            type: 'OncePerGameMarkerSet',
+            playerId: selfId,
+            marker: 'vstar',
+            used: true,
+          },
+        ],
+      },
+      {
+        recordIndex: 4,
+        action: 'VSTARGXFunction',
+        batchCount: 1,
+        events: [
+          {
+            type: 'OncePerGameMarkerSet',
+            playerId: selfId,
+            marker: 'gx',
+            used: true,
+          },
+        ],
+      },
+      {
+        recordIndex: 5,
+        action: 'VSTARGXFunction',
+        batchCount: 1,
+        events: [
+          {
+            type: 'OncePerGameMarkerSet',
+            playerId: opponentId,
+            marker: 'gx',
+            used: true,
+          },
+        ],
+      },
+      {
+        recordIndex: 6,
+        action: 'VSTARGXFunction',
+        batchCount: 1,
+        events: [
+          {
+            type: 'OncePerGameMarkerSet',
+            playerId: selfId,
+            marker: 'vstar',
+            used: false,
+          },
+        ],
+      },
+      {
+        recordIndex: 7,
+        action: 'VSTARGXFunction',
+        batchCount: 1,
+        events: [
+          {
+            type: 'OncePerGameMarkerSet',
+            playerId: opponentId,
+            marker: 'vstar',
+            used: true,
+          },
+        ],
+      },
+      {
+        recordIndex: 8,
+        action: 'VSTARGXFunction',
+        batchCount: 1,
+        events: [
+          {
+            type: 'OncePerGameMarkerSet',
+            playerId: opponentId,
+            marker: 'gx',
+            used: false,
+          },
+        ],
+      },
+    ]);
+    expect(result.state.players[selfId]!.oncePerGame).toEqual({
+      gxUsed: true,
+      vstarUsed: false,
+    });
+    expect(result.state.players[opponentId]!.oncePerGame).toEqual({
+      gxUsed: false,
+      vstarUsed: true,
+    });
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+
+    const replayed = result.records
+      .flatMap((record) => record.batches)
+      .reduce(
+        applyEventBatch,
+        createEmptyMatch(target.matchId, [target.selfSeat, target.opponentSeat])
+      );
+    expect(replayed).toEqual(result.state);
+  });
+
+  it.each([
+    { parameters: [], code: 'marker.invalid_parameter_count' },
+    { parameters: [null], code: 'marker.invalid_parameter_type' },
+    { parameters: ['OTHER'], code: 'marker.invalid_once_per_game_marker' },
+  ])(
+    'returns no candidate for malformed once-per-game parameters $parameters',
+    ({ parameters, code }) => {
+      const result = buildLegacyV1Candidate(
+        parse(payload('', '', action('self', 'VSTARGXFunction', parameters))),
+        target
+      );
+      expect(result).toMatchObject({
+        ok: false,
+        issues: [
+          {
+            code,
+            recordIndex: 3,
+            path: expect.stringMatching(/\.parameters(?:\[0\])?$/),
+          },
+        ],
+      });
+      expect('state' in result).toBe(false);
+    }
+  );
+
   it.each(['attack', 'pass'] as const)(
     'returns no candidate for a non-empty %s tuple',
     (actionName) => {

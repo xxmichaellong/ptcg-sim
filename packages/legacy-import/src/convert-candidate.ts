@@ -29,6 +29,11 @@ import {
   type LegacyV1LifecycleDecodeIssueCode,
 } from './decode-lifecycle.js';
 import {
+  decodeLegacyV1MarkerActions,
+  type LegacyV1MarkerAction,
+  type LegacyV1MarkerActionDecodeIssueCode,
+} from './decode-markers.js';
+import {
   decodeLegacyV1MovementActions,
   type LegacyV1CardSourceZone,
   type LegacyV1LooseDestinationZone,
@@ -80,10 +85,14 @@ const CONVERTED_ACTIONS = new Set<LegacySynchronizedActionName>([
   'shufflePrizesToDeckBottom',
   'attack',
   'pass',
+  'VSTARGXFunction',
 ]);
 
 type LegacyV1ConvertedAction =
-  LegacyV1LifecycleAction | LegacyV1MovementAction | LegacyV1TableAction;
+  | LegacyV1LifecycleAction
+  | LegacyV1MarkerAction
+  | LegacyV1MovementAction
+  | LegacyV1TableAction;
 
 export interface LegacyV1CandidateTarget {
   readonly matchId: MatchId;
@@ -99,6 +108,7 @@ export type LegacyV1CandidateIssueCode =
   | 'canonical_error'
   | `deck.${LegacyV1DeckDecodeIssueCode}`
   | `lifecycle.${LegacyV1LifecycleDecodeIssueCode}`
+  | `marker.${LegacyV1MarkerActionDecodeIssueCode}`
   | `movement.${LegacyV1MovementDecodeIssueCode}`
   | `table.${LegacyV1TableActionDecodeIssueCode}`
   | `context.${LegacyV1ImportContextErrorCode}`
@@ -472,6 +482,17 @@ export const buildLegacyV1Candidate = (
     });
   }
 
+  const decodedMarkers = decodeLegacyV1MarkerActions(parsed);
+  if (!decodedMarkers.ok) {
+    const issue = decodedMarkers.issues[0]!;
+    return failure({
+      code: `marker.${issue.code}`,
+      recordIndex: issue.recordIndex,
+      path: issue.path,
+      message: issue.message,
+    });
+  }
+
   const decodedTableActions = decodeLegacyV1TableActions(parsed);
   if (!decodedTableActions.ok) {
     const issue = decodedTableActions.issues[0]!;
@@ -485,6 +506,7 @@ export const buildLegacyV1Candidate = (
 
   const convertedActions: LegacyV1ConvertedAction[] = [
     ...decodedLifecycle.actions,
+    ...decodedMarkers.actions,
     ...decodedMovement.actions,
     ...decodedTableActions.actions,
   ].sort((left, right) => left.recordIndex - right.recordIndex);
@@ -682,6 +704,30 @@ export const buildLegacyV1Candidate = (
         const problem = apply({
           type: action.type === 'attack' ? 'DeclareAttack' : 'PassTurn',
           playerId,
+        });
+        if (problem) return problem;
+        break;
+      }
+      case 'VSTARGXFunction': {
+        const player = state.players[playerId];
+        if (!player) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].action`,
+            message:
+              'Recorded once-per-game marker action has no canonical player',
+          });
+        }
+        const used =
+          action.marker === 'gx'
+            ? player.oncePerGame.gxUsed
+            : player.oncePerGame.vstarUsed;
+        const problem = apply({
+          type: 'SetOncePerGameMarker',
+          playerId,
+          marker: action.marker,
+          used: !used,
         });
         if (problem) return problem;
         break;

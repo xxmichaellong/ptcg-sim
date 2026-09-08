@@ -176,7 +176,7 @@ stack-card-departure/
 source-zone-targeted-play/
 work-area-target-free-play/
 zone-backed-deck-action/
-prizes-to-deck-bottom/parameterless-attack-and-pass subset
+prizes-to-deck-bottom/once-per-game-marker/parameterless-attack-and-pass subset
 through normal game-core commands and verifies exact event replay; it rejects every
 unconverted family before constructing state, rejects recorded draws that exceed
 the exact current source-state deck, applies only direct prize shuffles
@@ -302,6 +302,11 @@ over the current deck-plus-board basis. Empty records preserve V1's exported
 no-op as zero batches, including the JSON-serialized null shuffle sentinel.
 Destination order, concealment, self/opponent targeting, deterministic retry,
 replay, and stale-permutation rollback are pinned without a schema change.
+Exact `VSTARGXFunction` records now decode only shipped `GX`/`VSTAR` tuples and
+derive the explicit target boolean from the preceding candidate state before
+executing `SetOncePerGameMarker`. Repeated toggles, marker/player independence,
+exact events, deterministic retry/replay/hash/invariants, malformed rollback,
+and real-V1 control/export behavior are pinned without a schema change.
 Shuffle-into-deck translates v1's in-deck tail-move
 permutation basis to the canonical input order. Switch-with-deck-top preserves
 v1's source-tail return and empty-deck branch through one or two canonical

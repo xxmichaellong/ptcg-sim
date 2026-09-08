@@ -210,6 +210,40 @@ describe('legacy action-export source envelope', () => {
     );
   });
 
+  it('pins independent GX/VSTAR toggle exports and all four player controls', () => {
+    const markerAction = readRepositoryFile(
+      'client/src/actions/general/VSTAR-GX.js'
+    );
+    const boardButtons = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/table/board-buttons.js'
+    );
+
+    expect(markerAction).toContain("if (type === 'GX')");
+    expect(markerAction).toContain(
+      "if (button.classList.contains('used-special-move'))"
+    );
+    expect(markerAction).toContain(
+      "button.classList.remove('used-special-move')"
+    );
+    expect(markerAction).toContain("button.classList.add('used-special-move')");
+    expect(markerAction).toContain("' reset their ' + type");
+    expect(markerAction).toContain("' used their ' + type + '!'");
+    expect(
+      markerAction.match(
+        /processAction\(user, emit, 'VSTARGXFunction', \[type\]\);/g
+      )
+    ).toHaveLength(2);
+    for (const [user, marker] of [
+      ['self', 'VSTAR'],
+      ['self', 'GX'],
+      ['opp', 'VSTAR'],
+      ['opp', 'GX'],
+    ] as const) {
+      expect(boardButtons).toContain(`VSTARGXFunction('${user}', '${marker}')`);
+    }
+    expect(boardButtons.match(/!systemState\.isReplay/g)).toHaveLength(4);
+  });
+
   it('pins the first movement tuple, clamp, and independent target ownership', () => {
     const deckActions = readRepositoryFile(
       'client/src/actions/zones/deck-actions.js'

@@ -33,8 +33,8 @@ source-zone-targeted active/bench, and individual work-area new-stack
 `moveCardBundle`, resolved
 `shuffleIntoDeck`, source-authentic `switchWithDeckTop`, and
 `shufflePrizesToDeckBottom` atoms below. Exact direct loose-board bulk records
-and empty-tuple `attack` and `pass` records also reuse their canonical atomic
-commands, but every other action is rejected before
+once-per-game marker records, and empty-tuple `attack` and `pass` records also
+reuse their canonical atomic commands, but every other action is rejected before
 constructing state. This is intentionally not yet a complete import
 compatibility claim: reachable loose-board take-turn cleanup and owner reset are
 now proven alongside owned-stadium and play-stack reset, while face-down in-play
@@ -342,6 +342,17 @@ transactional candidate yet.
 | `rotateCard`             | `RotateStack` or `SetCardOrientation`               | Whole stack versus individual/BREAK orientation, quarter-turn convention, face/zone restrictions |
 | `changeType`             | `ChangeCardCategory`                                | Pokémon/Energy/Trainer shortcuts, atomic loose-board departure, original category restoration    |
 | `VSTARGXFunction`        | `SetOncePerGameMarker`                              | Independent VSTAR/GX state, used styling, policy-gated self/opponent control, reset              |
+
+The private V1 importer now admits `VSTARGXFunction` only as exact `[GX]` or
+`[VSTAR]` tuples. Record `user` selects the target player. Because V1 records a
+toggle rather than its result, conversion reads the preceding candidate's one
+named marker and emits one explicit `SetOncePerGameMarker` target with the
+inverse boolean. The other marker and player remain untouched. Candidate tests
+pin ordered repeat toggles, both-player and marker independence, exact events,
+retry/replay/hash/invariants, and malformed rollback. Static and real-runtime
+oracles pin all four shipped controls, class toggles, messages, split undo logs,
+and chronological exports. No core, protocol, authority, state, public API,
+renderer, route, UI, or UX schema changes.
 
 ### Executable marker-control characterization
 

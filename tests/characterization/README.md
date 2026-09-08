@@ -16,6 +16,13 @@ discard/hand/shuffle keyboard bindings plus all four shipped context-menu
 buttons. The real-runtime browser companion separately proves destination
 arrays and the empty-board shuffle's JSON `null` permutation sentinel.
 
+The same source-envelope lock pins V1's independent GX/VSTAR implementation:
+all four player/marker controls call the one-parameter toggle, repeat clicks
+remove the same class, and exact reset/used message branches remain distinct.
+Its real-runtime browser companion executes an interleaved both-player sequence
+and verifies classes, messages, split undo logs, chronological export, and
+network/page-error boundaries.
+
 Renderer geometry locks additionally pair a manually reviewed numeric fixture
 with source digests. Text sources are normalized to LF for portable hashing;
 image fixtures are hashed as raw bytes. The browser harness loads those sources
