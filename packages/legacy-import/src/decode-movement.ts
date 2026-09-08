@@ -154,14 +154,14 @@ export type LegacyV1MovementAction =
       readonly recordIndex: number;
       readonly player: LegacyExportUser;
       readonly initiator: LegacyExportUser;
-      readonly sourceZone: 'attachedCards';
+      readonly sourceZone: 'attachedCards' | 'viewCards';
     }
   | {
       readonly type: 'shuffleAll' | 'shuffleBottom';
       readonly recordIndex: number;
       readonly player: LegacyExportUser;
       readonly initiator: LegacyExportUser;
-      readonly sourceZone: 'attachedCards';
+      readonly sourceZone: 'attachedCards' | 'viewCards';
       readonly shuffleIndices: readonly number[];
     }
   | {
@@ -1034,12 +1034,13 @@ export const decodeLegacyV1MovementActions = (
             `${action.action} initiator must use the exported self/opp perspective`
           );
         }
-        if (action.parameters[1] !== 'attachedCards') {
+        const sourceZone = action.parameters[1];
+        if (sourceZone !== 'attachedCards' && sourceZone !== 'viewCards') {
           return failure(
             'invalid_source_zone',
             actionIndex,
             '.parameters[1]',
-            `The converted ${action.action} subset must source attachedCards`
+            `The converted ${action.action} subset must source attachedCards or viewCards`
           );
         }
 
@@ -1048,7 +1049,7 @@ export const decodeLegacyV1MovementActions = (
           recordIndex: actionIndex + 1,
           player: action.user,
           initiator,
-          sourceZone: 'attachedCards',
+          sourceZone,
         });
         break;
       }
@@ -1072,12 +1073,13 @@ export const decodeLegacyV1MovementActions = (
             `${action.action} initiator must use the exported self/opp perspective`
           );
         }
-        if (action.parameters[1] !== 'attachedCards') {
+        const sourceZone = action.parameters[1];
+        if (sourceZone !== 'attachedCards' && sourceZone !== 'viewCards') {
           return failure(
             'invalid_source_zone',
             actionIndex,
             '.parameters[1]',
-            `The converted ${action.action} subset must source attachedCards`
+            `The converted ${action.action} subset must source attachedCards or viewCards`
           );
         }
         const shuffleIndices = decodeShuffle(action.parameters[2]);
@@ -1095,7 +1097,7 @@ export const decodeLegacyV1MovementActions = (
           recordIndex: actionIndex + 1,
           player: action.user,
           initiator,
-          sourceZone: 'attachedCards',
+          sourceZone,
           shuffleIndices,
         });
         break;

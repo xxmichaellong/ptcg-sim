@@ -66,8 +66,8 @@ The private movement decoder and candidate now admit the exact `draw`,
 target-free loose-zone/stadium/new-play-stack/rich-whole-stack, and
 source-zone-targeted active/bench `moveCardBundle`, direct prize
 `shuffleZone`, exact staged-stack `leaveAll`, `moveToDeckTop`,
-staged `discardAll`/`lostZoneAll`/`handAll`, `shuffleIntoDeck`,
-staged `shuffleAll`/`shuffleBottom`, `switchWithDeckTop`, and
+staged/inspection `discardAll`/`lostZoneAll`/`handAll`, `shuffleIntoDeck`,
+staged/inspection `shuffleAll`/`shuffleBottom`, `switchWithDeckTop`, and
 `shufflePrizesToDeckBottom` tuples.
 Record `user` selects the target player's zones, while the exported initiator
 remains independent provenance. Draw counts are already clamped by v1 before a successful action is
@@ -207,8 +207,8 @@ are pinned. A subsequent target-free `attachedCards` source can now move one
 exact staged card to a loose zone through `MoveStagedCard`; the refreshed flat
 coordinate is resolved after every prior mutation and an empty work area closes.
 Target-free play restoration, stadium/deck-relative stack or staged sources,
-inspection-card sources, and bulk work-area actions remain closed for later
-source-specific slices.
+and individual inspection-card sources remain closed for later source-specific
+slices.
 
 Deck inspection creation is admitted as the exact exported
 `[initiator, count, top, selectedDeckCount, targetIsOpp]` tuple. The record
@@ -225,8 +225,8 @@ bottom source-order representation for replay compatibility. The source's
 accidental zero-card export changes no model state and is retained with zero
 batches. V1 can append another positive view into an existing `viewCards`
 array; that additive case remains fail-closed until it has a dedicated
-canonical extension event. Individual and bulk inspection-card resolutions are
-the next dependent slices.
+canonical extension event. Whole-inspection resolution is admitted below;
+individual inspection-card actions remain a separate dependent slice.
 
 The direct shuffle is restricted to exact
 `[initiator, "prizes", permutation, true]` records produced by the prize
@@ -439,7 +439,7 @@ base, then attachments—to stable IDs before applying one bounded
 `MoveStagedCard` batch per card. No intermediate state escapes if a later batch
 fails. Destination append order, category/face/orientation reset, and hand
 identity concealment are event-replay exact; missing and non-same-owner work
-areas return no candidate. Inspection-origin forms remain gated.
+areas return no candidate.
 
 Exact staged-source `shuffleAll` and `shuffleBottom` records add a complete
 zero-based permutation. V1 `shuffleAll` first appends popup cards to the current
@@ -451,6 +451,19 @@ expected by `ResolveStagedCards`; it never applies legacy indices directly to a
 different basis. Length/set mismatches, missing work areas, and capacity
 failures return no candidate. Full-deck shuffles conceal the entire result,
 while bottom shuffles rotate only the staged identities.
+
+The exact `viewCards` source forms of those same five bulk actions resolve the
+current same-owner deck-inspection work area atomically through
+`ResolveInspectionCards`. Non-random destinations preserve the inspection's V1
+popup order and close its viewer state. For `shuffleAll`, the recorded basis is
+the remaining deck followed by inspection cards; for `shuffleBottom`, it is the
+inspection cards alone after the unchanged deck prefix. Because first-view top
+order and edge-first bottom order are now identical in V1 and canonical state,
+these complete permutations pass through unchanged. Missing/non-deck
+inspection work areas, ownership mismatches, capacity failures, and stale
+permutation lengths return no candidate state. Full-deck shuffle conceals every
+result identity; hand and bottom-shuffle resolution conceal only the inspected
+cards.
 
 Ordinary direct non-Pokémon ingress onto an existing live stack now emits the
 versioned `CardAttachedToPlayStack` event. `attachmentOrderVersion: 1` freezes

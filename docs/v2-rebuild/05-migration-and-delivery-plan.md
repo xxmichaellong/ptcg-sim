@@ -231,9 +231,17 @@ owner, the decoded initiator is the sole viewer, and `targetIsOpp` must agree
 with that relationship. Top views preserve deck order; bottom views preserve
 V1's edge-first descending order. The historical zero-card export remains a
 zero-batch record. Repeated nonzero appends to an already-open view remain
-closed until the canonical model has an explicit extension event. Other
-target-free play, stadium, deck-relative, and inspection-origin shapes remain
-closed.
+closed until the canonical model has an explicit extension event. Exact
+`viewCards` forms of `discardAll`, `lostZoneAll`, and `handAll` now resolve the
+entire inspection through one atomic `ResolveInspectionCards` batch, preserving
+the V1 popup order and closing the work area. The corresponding `shuffleAll`
+and `shuffleBottom` forms validate their complete recorded basis and pass it
+through unchanged because canonical inspection order now matches V1 order:
+full-deck shuffle uses the remaining deck followed by inspected cards, while
+bottom shuffle permutes only inspected cards after the unchanged deck prefix.
+Missing work areas and stale permutations fail the whole candidate. Other
+target-free play, stadium, deck-relative, and individual inspection-origin
+shapes remain closed.
 Reachable tests now prove both-player
 loose-board take-turn cleanup plus owner-scoped loose/stadium/play reset/rebuild
 behavior.

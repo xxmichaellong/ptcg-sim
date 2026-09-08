@@ -674,6 +674,264 @@ describe('legacy v1 canonical candidate builder', () => {
     expect('state' in additive).toBe(false);
   });
 
+  it.each([
+    ['discardAll', 'discard', false],
+    ['lostZoneAll', 'lostZone', false],
+    ['handAll', 'hand', true],
+  ] as const)(
+    'atomically resolves an edge-first inspection through %s',
+    (actionName, destination, concealIdentity) => {
+      const parsed = parse(
+        payload(
+          cardRows(5, 'Inspection bulk'),
+          '',
+          action('self', 'viewDeck', ['opp', 3, false, 5, true]),
+          action('self', actionName, ['self', 'viewCards'])
+        )
+      );
+      const result = buildLegacyV1Candidate(parsed, target);
+      const retry = buildLegacyV1Candidate(parsed, target);
+      expect(result).toEqual(retry);
+      expect(result.ok).toBe(true);
+      if (!result.ok || !retry.ok) {
+        throw new Error('Expected inspection bulk conversion success');
+      }
+
+      const playerId = target.selfSeat.playerId;
+      const deckId = playerZoneId(playerId, 'deck');
+      const destinationZoneId = playerZoneId(playerId, destination);
+      const allCardIds = Array.from(
+        { length: 5 },
+        (_, index) => `legacy:v1:card:${String(index).padStart(6, '0')}`
+      );
+      const inspectionCardIds = allCardIds.slice(-3).reverse();
+      const inspectionId = 'legacy:v1:inspection:000000';
+      const workAreaId = `work:${playerId}:inspection:${inspectionId}`;
+      expect(result.state.zones[deckId]?.cardIds).toEqual(
+        allCardIds.slice(0, 2)
+      );
+      expect(result.state.zones[destinationZoneId]?.cardIds).toEqual(
+        inspectionCardIds
+      );
+      expect(result.state.workAreas[playerId]?.inspection).toBeNull();
+      expect(result.records[3]!.batches).toHaveLength(1);
+      expect(result.records[3]!.batches[0]!.events).toEqual([
+        {
+          type: 'InspectionCardsResolved',
+          playerId,
+          inspectionId,
+          expectedWorkAreaId: workAreaId,
+          expectedCardIds: inspectionCardIds,
+          destination,
+          destinationZoneId,
+          expectedDestinationCardIds: [],
+          destinationCardIds: inspectionCardIds,
+          concealedCardIds: concealIdentity ? inspectionCardIds : [],
+        },
+      ]);
+      for (const cardId of inspectionCardIds) {
+        expect(result.state.cards[cardId]?.visibilityGeneration).toBe(
+          concealIdentity ? 1 : 0
+        );
+      }
+      const replayed = result.records
+        .flatMap((record) => record.batches)
+        .reduce(
+          applyEventBatch,
+          createEmptyMatch(target.matchId, [
+            target.selfSeat,
+            target.opponentSeat,
+          ])
+        );
+      expect(replayed).toEqual(result.state);
+      expect(stableHash(result.state)).toBe(stableHash(retry.state));
+      assertMatchInvariants(result.state);
+    }
+  );
+
+  it.each([
+    {
+      actionName: 'shuffleAll',
+      shuffleIndices: [5, 2, 0, 4, 1, 3],
+      destination: 'shuffleIntoDeck',
+      expectedDeckIds: [
+        'legacy:v1:card:000002',
+        'legacy:v1:card:000005',
+        'legacy:v1:card:000003',
+        'legacy:v1:card:000001',
+        'legacy:v1:card:000004',
+        'legacy:v1:card:000000',
+      ],
+      expectedConcealedIds: [
+        'legacy:v1:card:000002',
+        'legacy:v1:card:000005',
+        'legacy:v1:card:000003',
+        'legacy:v1:card:000001',
+        'legacy:v1:card:000004',
+        'legacy:v1:card:000000',
+      ],
+    },
+    {
+      actionName: 'shuffleBottom',
+      shuffleIndices: [2, 0, 1],
+      destination: 'shuffleToDeckBottom',
+      expectedDeckIds: [
+        'legacy:v1:card:000003',
+        'legacy:v1:card:000004',
+        'legacy:v1:card:000005',
+        'legacy:v1:card:000002',
+        'legacy:v1:card:000000',
+        'legacy:v1:card:000001',
+      ],
+      expectedConcealedIds: [
+        'legacy:v1:card:000002',
+        'legacy:v1:card:000000',
+        'legacy:v1:card:000001',
+      ],
+    },
+  ] as const)(
+    'passes the exact inspection-order permutation through $actionName',
+    ({
+      actionName,
+      shuffleIndices,
+      destination,
+      expectedDeckIds,
+      expectedConcealedIds,
+    }) => {
+      const parsed = parse(
+        payload(
+          cardRows(6, 'Inspection shuffle'),
+          '',
+          action('self', 'viewDeck', ['self', 3, true, 6, false]),
+          action('self', actionName, ['opp', 'viewCards', shuffleIndices])
+        )
+      );
+      const result = buildLegacyV1Candidate(parsed, target);
+      const retry = buildLegacyV1Candidate(parsed, target);
+      expect(result).toEqual(retry);
+      expect(result.ok).toBe(true);
+      if (!result.ok || !retry.ok) {
+        throw new Error('Expected inspection shuffle conversion success');
+      }
+
+      const playerId = target.selfSeat.playerId;
+      const deckId = playerZoneId(playerId, 'deck');
+      const inspectionCardIds = [
+        'legacy:v1:card:000000',
+        'legacy:v1:card:000001',
+        'legacy:v1:card:000002',
+      ];
+      const remainingDeckIds = [
+        'legacy:v1:card:000003',
+        'legacy:v1:card:000004',
+        'legacy:v1:card:000005',
+      ];
+      const inspectionId = 'legacy:v1:inspection:000000';
+      const workAreaId = `work:${playerId}:inspection:${inspectionId}`;
+      expect(result.state.zones[deckId]?.cardIds).toEqual(expectedDeckIds);
+      expect(result.state.workAreas[playerId]?.inspection).toBeNull();
+      expect(result.records[3]!.batches).toHaveLength(1);
+      expect(result.records[3]!.batches[0]!.events).toEqual([
+        {
+          type: 'InspectionCardsResolved',
+          playerId,
+          inspectionId,
+          expectedWorkAreaId: workAreaId,
+          expectedCardIds: inspectionCardIds,
+          destination,
+          destinationZoneId: deckId,
+          expectedDestinationCardIds: remainingDeckIds,
+          destinationCardIds: expectedDeckIds,
+          concealedCardIds: expectedConcealedIds,
+        },
+      ]);
+      for (const cardId of inspectionCardIds) {
+        expect(result.state.cards[cardId]?.visibilityGeneration).toBe(1);
+      }
+      for (const cardId of remainingDeckIds) {
+        expect(result.state.cards[cardId]?.visibilityGeneration).toBe(
+          actionName === 'shuffleAll' ? 1 : 0
+        );
+      }
+      const replayed = result.records
+        .flatMap((record) => record.batches)
+        .reduce(
+          applyEventBatch,
+          createEmptyMatch(target.matchId, [
+            target.selfSeat,
+            target.opponentSeat,
+          ])
+        );
+      expect(replayed).toEqual(result.state);
+      expect(stableHash(result.state)).toBe(stableHash(retry.state));
+      assertMatchInvariants(result.state);
+    }
+  );
+
+  it.each([
+    ['shuffleAll', [0, 1]],
+    ['shuffleBottom', [0]],
+  ] as const)(
+    'rolls back inspection %s when its permutation length is stale',
+    (actionName, shuffleIndices) => {
+      const result = buildLegacyV1Candidate(
+        parse(
+          payload(
+            cardRows(5, 'Stale inspection shuffle'),
+            '',
+            action('self', 'viewDeck', ['self', 2, true, 5, false]),
+            action('self', actionName, ['opp', 'viewCards', shuffleIndices])
+          )
+        ),
+        target
+      );
+      expect(result).toEqual({
+        ok: false,
+        issues: [
+          {
+            code: 'source_state_mismatch',
+            recordIndex: 4,
+            path: '$[4].parameters[2]',
+            message:
+              'Recorded inspection shuffle length does not match its exact V1 permutation basis',
+          },
+        ],
+      });
+      expect('state' in result).toBe(false);
+    }
+  );
+
+  it.each([
+    ['discardAll', ['self', 'viewCards'], 'bulk'],
+    ['lostZoneAll', ['self', 'viewCards'], 'bulk'],
+    ['handAll', ['self', 'viewCards'], 'bulk'],
+    ['shuffleAll', ['self', 'viewCards', []], 'shuffle'],
+    ['shuffleBottom', ['self', 'viewCards', []], 'shuffle'],
+  ] as const)(
+    'rolls back inspection %s when no inspection work area exists',
+    (actionName, parameters, kind) => {
+      const result = buildLegacyV1Candidate(
+        parse(payload('', '', action('self', actionName, [...parameters]))),
+        target
+      );
+      expect(result).toEqual({
+        ok: false,
+        issues: [
+          {
+            code: 'source_state_mismatch',
+            recordIndex: 3,
+            path: '$[3].parameters[1]',
+            message:
+              kind === 'bulk'
+                ? 'Recorded inspection bulk source does not identify a current same-owner deck-inspection work area'
+                : 'Recorded inspection shuffle source does not identify a current same-owner deck-inspection work area',
+          },
+        ],
+      });
+      expect('state' in result).toBe(false);
+    }
+  );
+
   it('atomically appends the whole hand to discard and draws the recorded count', () => {
     const result = buildLegacyV1Candidate(
       parse(

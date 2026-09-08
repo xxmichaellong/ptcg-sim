@@ -635,12 +635,15 @@ describe('legacy v1 movement positional decoder', () => {
     });
   });
 
-  it('decodes exact staged discard, lost-zone, and hand bulk tuples', () => {
+  it('decodes exact staged and inspection discard, lost-zone, and hand bulk tuples', () => {
     expect(
       decode(
         action('self', 'discardAll', ['opp', 'attachedCards']),
         action('opp', 'lostZoneAll', ['self', 'attachedCards']),
-        action('self', 'handAll', ['self', 'attachedCards'])
+        action('self', 'handAll', ['self', 'attachedCards']),
+        action('opp', 'discardAll', ['opp', 'viewCards']),
+        action('self', 'lostZoneAll', ['opp', 'viewCards']),
+        action('opp', 'handAll', ['self', 'viewCards'])
       )
     ).toEqual({
       ok: true,
@@ -666,12 +669,33 @@ describe('legacy v1 movement positional decoder', () => {
           initiator: 'self',
           sourceZone: 'attachedCards',
         },
+        {
+          type: 'discardAll',
+          recordIndex: 6,
+          player: 'opp',
+          initiator: 'opp',
+          sourceZone: 'viewCards',
+        },
+        {
+          type: 'lostZoneAll',
+          recordIndex: 7,
+          player: 'self',
+          initiator: 'opp',
+          sourceZone: 'viewCards',
+        },
+        {
+          type: 'handAll',
+          recordIndex: 8,
+          player: 'opp',
+          initiator: 'self',
+          sourceZone: 'viewCards',
+        },
       ],
     });
   });
 
   it.each(['discardAll', 'lostZoneAll', 'handAll'])(
-    'rejects malformed or non-staged %s tuples',
+    'rejects malformed or non-work-area %s tuples',
     (actionName) => {
       expect(firstIssue(action('self', actionName, ['self']))).toMatchObject({
         code: 'invalid_parameter_count',
@@ -686,7 +710,7 @@ describe('legacy v1 movement positional decoder', () => {
         path: '$[3].parameters[0]',
       });
       expect(
-        firstIssue(action('self', actionName, ['self', 'viewCards']))
+        firstIssue(action('self', actionName, ['self', 'deck']))
       ).toMatchObject({
         code: 'invalid_source_zone',
         recordIndex: 3,
@@ -695,11 +719,13 @@ describe('legacy v1 movement positional decoder', () => {
     }
   );
 
-  it('decodes exact staged full-deck and deck-bottom shuffle tuples', () => {
+  it('decodes exact staged and inspection full-deck and deck-bottom shuffle tuples', () => {
     expect(
       decode(
         action('self', 'shuffleAll', ['opp', 'attachedCards', [3, 0, 2, 1]]),
-        action('opp', 'shuffleBottom', ['self', 'attachedCards', [1, 0]])
+        action('opp', 'shuffleBottom', ['self', 'attachedCards', [1, 0]]),
+        action('self', 'shuffleAll', ['self', 'viewCards', [2, 0, 1]]),
+        action('opp', 'shuffleBottom', ['opp', 'viewCards', [0]])
       )
     ).toEqual({
       ok: true,
@@ -720,12 +746,28 @@ describe('legacy v1 movement positional decoder', () => {
           sourceZone: 'attachedCards',
           shuffleIndices: [1, 0],
         },
+        {
+          type: 'shuffleAll',
+          recordIndex: 5,
+          player: 'self',
+          initiator: 'self',
+          sourceZone: 'viewCards',
+          shuffleIndices: [2, 0, 1],
+        },
+        {
+          type: 'shuffleBottom',
+          recordIndex: 6,
+          player: 'opp',
+          initiator: 'opp',
+          sourceZone: 'viewCards',
+          shuffleIndices: [0],
+        },
       ],
     });
   });
 
   it.each(['shuffleAll', 'shuffleBottom'])(
-    'rejects malformed, non-staged, or invalid-permutation %s tuples',
+    'rejects malformed, non-work-area, or invalid-permutation %s tuples',
     (actionName) => {
       expect(
         firstIssue(action('self', actionName, ['self', 'attachedCards']))
@@ -742,7 +784,7 @@ describe('legacy v1 movement positional decoder', () => {
         path: '$[3].parameters[0]',
       });
       expect(
-        firstIssue(action('self', actionName, ['self', 'viewCards', [0]]))
+        firstIssue(action('self', actionName, ['self', 'deck', [0]]))
       ).toMatchObject({
         code: 'invalid_source_zone',
         recordIndex: 3,

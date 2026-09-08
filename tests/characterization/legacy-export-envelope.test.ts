@@ -1111,7 +1111,7 @@ describe('legacy action-export source envelope', () => {
     );
   });
 
-  it('pins attached-card bulk draining and its self/opponent button ingress', () => {
+  it('pins work-area bulk draining and its self/opponent button ingress', () => {
     const zones = readRepositoryFile('client/src/actions/zones/general.js');
     const buttons = readRepositoryFile(
       'client/src/initialization/document-event-listeners/table/zone-buttons.js'
@@ -1141,6 +1141,9 @@ describe('legacy action-export source envelope', () => {
       for (const user of ['self', 'opp']) {
         expect(buttons).toContain(
           `${actionName}('${user}', systemState.initiator, 'attachedCards')`
+        );
+        expect(buttons).toContain(
+          `${actionName}('${user}', systemState.initiator, 'viewCards')`
         );
       }
     }
@@ -1218,6 +1221,12 @@ describe('legacy action-export source envelope', () => {
       );
       expect(buttons).not.toContain(
         `shuffleBottom('${user}', systemState.initiator, 'attachedCards')`
+      );
+      expect(buttons).toContain(
+        `shuffleAll('${user}', systemState.initiator, 'viewCards')`
+      );
+      expect(buttons).toContain(
+        `shuffleBottom('${user}', systemState.initiator, 'viewCards')`
       );
     }
     expect(acceptAction).toContain('shuffleAll: shuffleAll,');

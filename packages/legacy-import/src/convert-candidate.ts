@@ -294,6 +294,29 @@ interface CandidateStagedCards {
   readonly workAreaId: WorkAreaId;
 }
 
+interface CandidateInspectionCards {
+  readonly cardIds: readonly CardInstanceId[];
+  readonly workAreaId: WorkAreaId;
+}
+
+const candidateInspectionCardsInLegacyOrder = (
+  state: MatchState,
+  playerId: PlayerId
+): CandidateInspectionCards | null => {
+  const inspection = state.workAreas[playerId]?.inspection;
+  if (
+    !inspection ||
+    inspection.sourceZoneId !== playerZoneId(playerId, 'deck') ||
+    inspection.cardIds.length === 0 ||
+    inspection.cardIds.some(
+      (cardId) => state.cards[cardId]?.ownerId !== playerId
+    )
+  ) {
+    return null;
+  }
+  return { cardIds: inspection.cardIds, workAreaId: inspection.id };
+};
+
 const candidateStagedCardsInLegacyOrder = (
   state: MatchState,
   playerId: PlayerId
@@ -1114,6 +1137,51 @@ export const buildLegacyV1Candidate = (
       case 'discardAll':
       case 'lostZoneAll':
       case 'handAll': {
+        const destinationKind =
+          action.type === 'discardAll'
+            ? 'discard'
+            : action.type === 'lostZoneAll'
+              ? 'lostZone'
+              : 'hand';
+        const destinationZoneId = playerZoneId(playerId, destinationKind);
+        const destination = state.zones[destinationZoneId];
+        if (action.sourceZone === 'viewCards') {
+          const inspection = candidateInspectionCardsInLegacyOrder(
+            state,
+            playerId
+          );
+          if (!inspection) {
+            return failure({
+              code: 'source_state_mismatch',
+              recordIndex: action.recordIndex,
+              path: `$[${action.recordIndex}].parameters[1]`,
+              message:
+                'Recorded inspection bulk source does not identify a current same-owner deck-inspection work area',
+            });
+          }
+          if (
+            !destination ||
+            destination.cardIds.length + inspection.cardIds.length >
+              MAX_DECK_CARDS
+          ) {
+            return failure({
+              code: 'source_state_mismatch',
+              recordIndex: action.recordIndex,
+              path: `$[${action.recordIndex}].parameters[1]`,
+              message:
+                'Recorded inspection bulk move exceeds the current destination capacity',
+            });
+          }
+          const problem = apply({
+            type: 'ResolveInspectionCards',
+            playerId,
+            expectedWorkAreaId: inspection.workAreaId,
+            destination: destinationKind,
+          });
+          if (problem) return problem;
+          break;
+        }
+
         const staged = candidateStagedCardsInLegacyOrder(state, playerId);
         if (!staged) {
           return failure({
@@ -1124,14 +1192,6 @@ export const buildLegacyV1Candidate = (
               'Recorded staged bulk source does not identify a current same-owner work area',
           });
         }
-        const destinationKind =
-          action.type === 'discardAll'
-            ? 'discard'
-            : action.type === 'lostZoneAll'
-              ? 'lostZone'
-              : 'hand';
-        const destinationZoneId = playerZoneId(playerId, destinationKind);
-        const destination = state.zones[destinationZoneId];
         if (
           !destination ||
           destination.cardIds.length + staged.legacyCardIds.length >
@@ -1158,6 +1218,63 @@ export const buildLegacyV1Candidate = (
       }
       case 'shuffleAll':
       case 'shuffleBottom': {
+        const deckId = playerZoneId(playerId, 'deck');
+        const deck = state.zones[deckId];
+        if (action.sourceZone === 'viewCards') {
+          const inspection = candidateInspectionCardsInLegacyOrder(
+            state,
+            playerId
+          );
+          if (!inspection) {
+            return failure({
+              code: 'source_state_mismatch',
+              recordIndex: action.recordIndex,
+              path: `$[${action.recordIndex}].parameters[1]`,
+              message:
+                'Recorded inspection shuffle source does not identify a current same-owner deck-inspection work area',
+            });
+          }
+          if (
+            !deck ||
+            deck.cardIds.length + inspection.cardIds.length > MAX_DECK_CARDS
+          ) {
+            return failure({
+              code: 'source_state_mismatch',
+              recordIndex: action.recordIndex,
+              path: `$[${action.recordIndex}].parameters[2]`,
+              message:
+                'Recorded inspection shuffle exceeds the current deck capacity',
+            });
+          }
+          const shuffleBasisLength =
+            action.type === 'shuffleAll'
+              ? deck.cardIds.length + inspection.cardIds.length
+              : inspection.cardIds.length;
+          if (action.shuffleIndices.length !== shuffleBasisLength) {
+            return failure({
+              code: 'source_state_mismatch',
+              recordIndex: action.recordIndex,
+              path: `$[${action.recordIndex}].parameters[2]`,
+              message:
+                'Recorded inspection shuffle length does not match its exact V1 permutation basis',
+            });
+          }
+          const problem = apply(
+            {
+              type: 'ResolveInspectionCards',
+              playerId,
+              expectedWorkAreaId: inspection.workAreaId,
+              destination:
+                action.type === 'shuffleAll'
+                  ? 'shuffleIntoDeck'
+                  : 'shuffleToDeckBottom',
+            },
+            { kind: 'shuffle', indices: action.shuffleIndices }
+          );
+          if (problem) return problem;
+          break;
+        }
+
         const staged = candidateStagedCardsInLegacyOrder(state, playerId);
         if (!staged) {
           return failure({
@@ -1168,8 +1285,6 @@ export const buildLegacyV1Candidate = (
               'Recorded staged shuffle source does not identify a current same-owner work area',
           });
         }
-        const deckId = playerZoneId(playerId, 'deck');
-        const deck = state.zones[deckId];
         if (
           !deck ||
           deck.cardIds.length + staged.canonicalCardIds.length > MAX_DECK_CARDS

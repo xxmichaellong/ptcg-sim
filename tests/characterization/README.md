@@ -469,6 +469,16 @@ dispatch are pinned. Because V1 does not clear `viewCards` when opening again,
 the importer converts only a first positive inspection and preserves a
 zero-card export as a no-op until an additive canonical event exists.
 
+The adjacent work-area characterization also pins the visible `viewCards`
+buttons on both player sides for `discardAll`, `lostZoneAll`, `handAll`,
+`shuffleAll`, and the inspection-only `shuffleBottom` ingress. The importer now
+chains a first `viewDeck` into one atomic whole-inspection resolution. It keeps
+the popup's top or edge-first bottom order for non-random moves, validates the
+full remaining-deck-plus-inspection basis for `shuffleAll`, and validates only
+the inspection basis for `shuffleBottom`. Candidate fixtures pin exact events,
+replay, concealment generations, deterministic retry, missing-work-area
+rollback, and stale-permutation rollback.
+
 The protected active/bench shortcut checkpoint covers non-Alt `A` and `B`
 without absorbing stadium or prize rules. Two fresh real-v1 Chromium pages
 place a selected hand Pokémon beside one incumbent active, then pin active and
