@@ -160,6 +160,15 @@ Rollback: remove the hidden v2 route; package work does not affect v1.
 
 Goal: prove all tabletop state can exist without DOM/image properties.
 
+Current status (2026-09-08): the normalized core, stable identities, projection,
+invariants, and all 50 live action responsibilities have substantial vertical
+coverage. The isolated `legacy-import` package now admits only the frozen 1.5
+and 1.5.1 action-export envelope through an exact 50-action allowlist, required
+deck bootstraps, structural bounds, and typed diagnostics without executing an
+action. Action-specific positional schemas, deterministic interpretation,
+conversion reports, and real-user corpus evidence remain before Phase 3 can
+exit.
+
 Work:
 
 - Implement state schema, constructors, serializers, stable IDs, zone ordering,

@@ -3,6 +3,7 @@
   "files": [],
   "references": [
     { "path": "./packages/game-core" },
+    { "path": "./packages/legacy-import" },
     { "path": "./packages/protocol" },
     { "path": "./packages/client-session" },
     { "path": "./packages/room-authority" },

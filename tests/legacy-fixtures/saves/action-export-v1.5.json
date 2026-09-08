@@ -1,0 +1,17 @@
+[
+  {
+    "version": "1.5"
+  },
+  {
+    "user": "self",
+    "emit": true,
+    "action": "loadDeckData",
+    "parameters": [""]
+  },
+  {
+    "user": "opp",
+    "emit": true,
+    "action": "loadDeckData",
+    "parameters": [""]
+  }
+]

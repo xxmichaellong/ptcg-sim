@@ -514,6 +514,74 @@
       ]
     },
     {
+      "package": "@ptcgsim/legacy-import",
+      "root": "packages/legacy-import",
+      "entrypoints": [
+        {
+          "subpath": ".",
+          "source": "packages/legacy-import/src/index.ts",
+          "symbols": [
+            {
+              "name": "LEGACY_EXPORT_FORMAT",
+              "kind": "value"
+            },
+            {
+              "name": "LegacyActionRecord",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyDeckData",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyDeckRow",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyExportParseIssue",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyExportParseIssueCode",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyExportParseResult",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyExportUser",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyExportVersion",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyJsonValue",
+              "kind": "type"
+            },
+            {
+              "name": "LegacySynchronizedActionName",
+              "kind": "type"
+            },
+            {
+              "name": "ParsedLegacyExport",
+              "kind": "type"
+            },
+            {
+              "name": "parseLegacyExportJson",
+              "kind": "value"
+            },
+            {
+              "name": "SUPPORTED_LEGACY_EXPORT_VERSIONS",
+              "kind": "value"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "package": "@ptcgsim/protocol",
       "root": "packages/protocol",
       "entrypoints": [

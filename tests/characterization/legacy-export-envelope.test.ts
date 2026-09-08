@@ -1,0 +1,82 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
+import { describe, expect, it } from 'vitest';
+
+const repositoryRoot = fileURLToPath(new URL('../../', import.meta.url));
+
+const readRepositoryFile = (relativePath: string): string =>
+  readFileSync(new URL(relativePath, `file://${repositoryRoot}`), 'utf8');
+
+const extractObjectBody = (source: string, declaration: string): string => {
+  const start = source.indexOf(declaration);
+  expect(start, `missing declaration: ${declaration}`).toBeGreaterThanOrEqual(
+    0
+  );
+  const openingBrace = source.indexOf('{', start);
+  let depth = 0;
+  for (let index = openingBrace; index < source.length; index += 1) {
+    if (source[index] === '{') depth += 1;
+    if (source[index] === '}') depth -= 1;
+    if (depth === 0) return source.slice(openingBrace + 1, index);
+  }
+  throw new Error(`unterminated object: ${declaration}`);
+};
+
+const propertyKeys = (body: string): string[] =>
+  [...body.matchAll(/^\s*([A-Za-z][A-Za-z0-9]*):/gm)].map((match) => match[1]!);
+
+describe('legacy action-export source envelope', () => {
+  it('pins the current declared version and exact exported record fields', () => {
+    const globals = readRepositoryFile(
+      'client/src/initialization/global-variables/global-variables.js'
+    );
+    const exporter = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/sidebox/p1/bottom-buttons.js'
+    );
+
+    expect(globals).toContain("export const version = '1.5.1';");
+    expect(
+      propertyKeys(extractObjectBody(exporter, 'const selfData ='))
+    ).toEqual(['user', 'emit', 'action', 'parameters']);
+    expect(
+      propertyKeys(extractObjectBody(exporter, 'const oppData ='))
+    ).toEqual(['user', 'emit', 'action', 'parameters']);
+    expect(exporter).toContain("user: 'self'");
+    expect(exporter).toContain("user: 'opp'");
+    expect(exporter.match(/action: 'loadDeckData'/g)).toHaveLength(2);
+    expect(exporter).toContain('const versionData = { version: version };');
+    expect(exporter).toMatch(
+      /const exportData = \[\s*versionData,\s*selfData,\s*oppData,\s*\.\.\.systemState\.exportActionData,\s*\];/
+    );
+  });
+
+  it('pins the deck tuple and documents the current unsafe import ordering', () => {
+    const exporter = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/sidebox/p1/bottom-buttons.js'
+    );
+    const deckConstructor = readRepositoryFile(
+      'client/src/setup/deck-constructor/import.js'
+    );
+    const urlLoader = readRepositoryFile(
+      'client/src/initialization/load-import-data/load-import-data.js'
+    );
+
+    expect(deckConstructor).toContain(
+      'let cardData = [quantity, name, type, url];'
+    );
+    expect(exporter).toContain("socket.emit('initiateImport'");
+    expect(exporter.indexOf("socket.emit('initiateImport'")).toBeLessThan(
+      exporter.indexOf('const jsonData = JSON.parse(e.target.result);')
+    );
+    expect(exporter).toContain(
+      "jsonData.filter((data) => !('version' in data))"
+    );
+    expect(urlLoader).toContain(
+      "importData.filter((obj) => !('version' in obj))"
+    );
+    expect(urlLoader).toContain(
+      'acceptAction(data.user, data.action, data.parameters, true)'
+    );
+  });
+});

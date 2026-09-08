@@ -1,0 +1,127 @@
+# Legacy import boundary
+
+- Status: **v1 envelope parser implemented; semantic conversion not yet implemented**
+- Supported source versions: `1.5`, `1.5.1`
+- Production route status: unwired
+
+## Purpose
+
+PTCG Sim v1 saves are executable action histories, not state snapshots. Loading
+one currently calls the legacy dispatcher for every record and allows earlier
+actions to mutate the board even if a later record fails. V2 must never pass an
+uploaded name into dynamic function lookup or install a partially converted
+match.
+
+`packages/legacy-import` is the only planned production package allowed to know
+v1 action names, positional parameters, export versions, or action-era card
+quirks. It remains independent of the browser, v1 runtime, renderer, transport,
+and room authority.
+
+## Source-backed format
+
+The current exporter in
+`client/src/initialization/document-event-listeners/sidebox/p1/bottom-buttons.js`
+writes one JSON array:
+
+```json
+[
+  { "version": "1.5.1" },
+  {
+    "user": "self",
+    "emit": true,
+    "action": "loadDeckData",
+    "parameters": [
+      [["2", "Pikachu", "Pokémon", "https://cards.example/pikachu.png"]]
+    ]
+  },
+  {
+    "user": "opp",
+    "emit": true,
+    "action": "loadDeckData",
+    "parameters": [""]
+  },
+  {
+    "user": "self",
+    "emit": true,
+    "action": "setup",
+    "parameters": []
+  }
+]
+```
+
+The first record is the displayed package version. The next two records always
+bootstrap the self and opponent decks in that order. Each nonempty deck is an
+array of `[quantity, name, category, imageUrl]` string tuples; the initial empty
+deck sentinel is `""`. Remaining records are the source's exported action log.
+
+Repository history shows the same exporter structure from initial version `1.5`
+through `1.5.1`; commit `c9df292` changed only the displayed version string.
+Both shapes are retained as source-shaped fixtures in
+`tests/legacy-fixtures/saves/`. They establish parser compatibility, not yet a
+claim that every historical action parameter has a semantic converter.
+
+## Legacy hazards preserved as evidence, not behavior
+
+V1 currently:
+
+- parses before applying no payload, action-count, depth, or string bounds;
+- ignores rather than verifies every object containing a `version` field;
+- performs dynamic name lookup against the 50-entry action dispatcher;
+- begins import side effects and clears action history before full validation;
+- catches individual action failures and continues, leaving partial state;
+- trusts positional arrays, owner strings, shuffle results, URLs, and DOM-era
+  indices; and
+- stores raw exports under weak four-character database keys without a per-item
+  size boundary.
+
+None of those properties are copied into the v2 runtime.
+
+## Implemented checkpoint
+
+`parseLegacyExportJson` now performs a side-effect-free first pass:
+
+1. Reject empty, malformed, or oversized JSON before inspecting actions.
+2. Require the first and only metadata record to declare `1.5` or `1.5.1`.
+3. Require exact action record fields: `user`, `emit`, `action`, and
+   `parameters`.
+4. Accept only `self`/`opp` and the frozen 50-action dispatcher allowlist.
+5. Require exact self-then-opponent `loadDeckData` bootstraps and validate their
+   tuple structure.
+6. Bound action count, parameter count, collection size, nesting, and strings.
+7. Return typed path-specific diagnostics without invoking an action or
+   producing canonical state.
+
+Current provisional parser bounds are deliberately explicit and unwired, so a
+real user corpus can adjust them before compatibility is promised:
+
+| Boundary               | Limit                |
+| ---------------------- | -------------------- |
+| Raw JSON               | 4,194,304 code units |
+| Action records         | 10,000               |
+| Parameters per action  | 64                   |
+| JSON nesting           | 16 levels            |
+| Items per array/object | 10,000               |
+| One string/field name  | 16,384 code units    |
+| Deck rows per player   | 200                  |
+
+The package does not depend on `game-core` yet. That keeps format admission
+separate from semantic interpretation and prevents an invalid upload from
+allocating canonical card instances or room state.
+
+## Next conversion slices
+
+1. Freeze action-specific positional schemas for the two deck bootstraps and
+   lifecycle actions, including exact source version differences.
+2. Introduce deterministic import-only ID, randomness, and card-definition
+   adapters; external card URLs are data and are never fetched during parsing.
+3. Interpret lifecycle and movement families into a private canonical candidate,
+   then run the normal game-core invariants and stable hash.
+4. Add markers, visibility/inspection, randomized/bulk, table signals, and the
+   remaining action families using the same allowlisted dispatch table.
+5. Produce a conversion report with source/target hashes, warnings, dropped
+   presentation fields, and the exact failing record/path.
+6. Only after representative real-user fixtures convert transactionally should
+   the route loader or old `/import?key=` reader call this package.
+
+No v1 module is imported, no save/replay route is enabled, and no visible UI or
+UX changes in this checkpoint.

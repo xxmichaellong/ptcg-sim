@@ -62,7 +62,7 @@ unsupported or divergent conditional exports, targets outside the owning
 package, missing/non-TypeScript targets, entrypoint compiler errors, newly
 exported packages or subpaths, and symbol drift.
 
-The report currently records 8 export-bearing packages, 8 entrypoints, and 472
+The report currently records 9 export-bearing packages, 9 entrypoints, and 486
 symbols. `pnpm run check:api:v2` is part of `check:static:v2`. Regenerate the
 report with `node scripts/check-v2-public-api.mjs --write` only after reviewing
 whether each surface change is deliberately public; the quality job separately
