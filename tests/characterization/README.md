@@ -372,12 +372,18 @@ static lock only prevents source drift while the importer applies the approved
 canonical target-value normalization.
 
 The same frozen export-envelope contract now pins `changeType`'s exact
-four-value tuple and flipped initiator, original-category storage, three
+four-value tuple and initiator perspective rewrite, original-category storage, three
 keyboard categories, active/bench context choices, face-down-safe messaging,
 and unconditional loose-board departure. These source facts bound the private
 legacy importer: it resolves the record owner's exact selected card, treats the
 initiator as provenance only, and reuses the canonical category-change command
 without changing the legacy UI/UX.
+
+The frozen contract also pins `playRandomCardFaceDown` from hand-menu ingress
+through its resolved `Math.random` index, concealment, loose-board movement,
+message, both `processAction` paths, and final export perspective rewrite. This
+proves that an import must consume the saved index once and retain independent
+actor/target provenance rather than rerun randomness or expose a card selector.
 
 The protected count-input checkpoint completes all six context-menu numeric
 prompts while retaining the browser-native v1 UI. A typed controller descriptor

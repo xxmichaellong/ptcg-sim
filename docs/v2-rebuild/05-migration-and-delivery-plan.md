@@ -176,7 +176,7 @@ stack-card-departure/
 source-zone-targeted-play/
 work-area-target-free-play/
 zone-backed-deck-action/
-prizes-to-deck-bottom/once-per-game-marker/ability-marker/damage-marker/special-condition-marker/rotation/category-change/parameterless-attack-and-pass subset
+prizes-to-deck-bottom/once-per-game-marker/ability-marker/damage-marker/special-condition-marker/rotation/category-change/resolved-random-face-down/parameterless-attack-and-pass subset
 through normal game-core commands and verifies exact event replay; it rejects every
 unconverted family before constructing state, rejects recorded draws that exceed
 the exact current source-state deck, applies only direct prize shuffles
@@ -346,7 +346,7 @@ Exact `changeType` records now decode the exported
 `[initiator, zone, index, category]` tuple for every card-selectable source:
 deck, hand, prizes, discard, Lost Zone, loose board, active, bench, staged
 attachments, inspection cards, and stadium. The source record's `user` owns
-the target; the flipped initiator remains presentation provenance only. Exact
+the target; the exported initiator remains presentation provenance only. Exact
 current coordinates feed the existing atomic `ChangeCardCategory` command,
 which moves the selected card to the owner's loose-board tail, applies the
 current Pokémon/Trainer/Energy category, and clears transient orientation and
@@ -358,6 +358,20 @@ evolutions, stale or cross-owner coordinates, and malformed categories fail
 the complete candidate. Exact events and order, both-player provenance,
 deterministic retry/replay/hash/invariants, rollback, and static source behavior
 are pinned without a core, protocol, renderer, route, UI, or UX change.
+Exact `playRandomCardFaceDown` records now decode only
+`[initiator, randomIndex]`. V1 saves the already-resolved hand index; the
+importer supplies it exactly once through the existing action-scoped random
+adapter instead of choosing a new card. Record `user` selects the target hand
+and board, while the exported initiator selects the canonical actor. The
+existing `PlayRandomCardFaceDown` command snapshots current hand/board order,
+moves that exact card to the board tail face down, clears transient orientation
+and ability state, retires visibility, and emits the replay-safe
+identity-bearing event only inside the trusted candidate. Empty/depleted hands,
+out-of-range or later-stale indices, capacity failures, and malformed tuples
+reject the whole candidate. Exact events, changing indices, cross-player actor/target pairs,
+deterministic retry/replay/hash/invariants, and static source behavior are
+pinned without a core, protocol, authority, state, renderer, route, UI, or UX
+change.
 Shuffle-into-deck translates v1's in-deck tail-move
 permutation basis to the canonical input order. Switch-with-deck-top preserves
 v1's source-tail return and empty-deck branch through one or two canonical

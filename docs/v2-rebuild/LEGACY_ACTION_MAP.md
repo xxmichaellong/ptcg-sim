@@ -34,8 +34,8 @@ source-zone-targeted active/bench, and individual work-area new-stack
 `shuffleIntoDeck`, source-authentic `switchWithDeckTop`, and
 `shufflePrizesToDeckBottom` atoms below. Exact direct loose-board bulk records,
 once-per-game, ability, damage, and special-condition marker records,
-normalized rotation and category-change records, and empty-tuple `attack` and
-`pass` records also
+normalized rotation, category-change, and resolved random-face-down records,
+and empty-tuple `attack` and `pass` records also
 reuse their canonical atomic commands, but every other action is rejected before
 constructing state. This is intentionally not yet a complete import
 compatibility claim: reachable loose-board take-turn cleanup and owner reset are
@@ -425,7 +425,7 @@ schema changes.
 
 The category-change family now admits exact
 `changeType [initiator, zone, index, category]` records. The record `user`
-selects the owner; the exported flipped initiator is presentation provenance,
+selects the owner; the exported initiator is presentation provenance,
 not target authority. Deck, hand, prizes, discard, Lost Zone, loose board,
 active, bench, staged attachments, inspection cards, and stadium use their
 exact current V1 coordinates. The stable target then executes the existing
@@ -443,6 +443,23 @@ order, retry/replay/hash/invariants, no-op behavior, and rollback. Static source
 locks pin the three keyboard choices, active/bench context menu, exact export
 tuple, original-category storage, and loose-board departure. No core, protocol,
 authority, state, public API, renderer, route, UI, or UX schema changes.
+
+The resolved-random family now admits exact
+`playRandomCardFaceDown [initiator, randomIndex]` records. V1 stores the
+historical `Math.random` result after resolving it against the then-current
+target hand. Conversion never samples again: the strict bounded index is
+supplied exactly once through `LegacyV1ImportContext` to the existing
+`PlayRandomCardFaceDown` command. Record `user` resolves the target player's
+hand and loose board; the independently exported initiator resolves the actor.
+The canonical command snapshots both source orders, appends the exact card face
+down, clears transient orientation/ability state, retires visibility, and
+emits its existing replay-safe trusted event. Tests pin changing indices,
+self/opponent and cross-player actor/target pairs, exact events and order,
+deterministic retry/replay/hash/invariants, malformed tuples, and
+empty/out-of-range/later-stale rollback. The static source lock pins the hand
+menu, random selection, concealment, loose-board move, two export paths, and
+export perspective rewrite. No core, protocol, authority, state, public API,
+renderer, route, UI, or UX schema changes.
 
 ### Executable marker-control characterization
 

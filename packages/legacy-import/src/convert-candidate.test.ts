@@ -2950,6 +2950,273 @@ describe('legacy v1 canonical candidate builder', () => {
     expect('state' in resetDeck).toBe(false);
   });
 
+  it('replays recorded random hand indices with independent actor and target ownership', () => {
+    const parsed = parse(
+      payload(
+        cardRows(4, 'Random self'),
+        cardRows(3, 'Random opponent'),
+        action('self', 'moveCardBundle', [
+          'self',
+          'deck',
+          'hand',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'self',
+          'deck',
+          'hand',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'self',
+          'deck',
+          'hand',
+          0,
+          false,
+          'move',
+        ]),
+        action('opp', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'hand',
+          0,
+          false,
+          'move',
+        ]),
+        action('opp', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'hand',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'playRandomCardFaceDown', ['self', 1]),
+        action('opp', 'playRandomCardFaceDown', ['self', 0]),
+        action('self', 'playRandomCardFaceDown', ['opp', 1])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) throw new Error('Expected conversion success');
+
+    const selfId = target.selfSeat.playerId;
+    const opponentId = target.opponentSeat.playerId;
+    const selfHandId = playerZoneId(selfId, 'hand');
+    const selfBoardId = playerZoneId(selfId, 'board');
+    const opponentHandId = playerZoneId(opponentId, 'hand');
+    const opponentBoardId = playerZoneId(opponentId, 'board');
+    expect(
+      result.records
+        .filter(({ action }) => action === 'playRandomCardFaceDown')
+        .map(({ recordIndex, batches }) => ({
+          recordIndex,
+          events: batches.flatMap((batch) => batch.events),
+        }))
+    ).toEqual([
+      {
+        recordIndex: 8,
+        events: [
+          {
+            type: 'RandomHandCardPlayedFaceDown',
+            actorPlayerId: selfId,
+            targetPlayerId: selfId,
+            handZoneId: selfHandId,
+            boardZoneId: selfBoardId,
+            expectedHandCardIds: [
+              'legacy:v1:card:000000',
+              'legacy:v1:card:000001',
+              'legacy:v1:card:000002',
+            ],
+            expectedBoardCardIds: [],
+            cardId: 'legacy:v1:card:000001',
+            destinationIndex: 0,
+          },
+        ],
+      },
+      {
+        recordIndex: 9,
+        events: [
+          {
+            type: 'RandomHandCardPlayedFaceDown',
+            actorPlayerId: selfId,
+            targetPlayerId: opponentId,
+            handZoneId: opponentHandId,
+            boardZoneId: opponentBoardId,
+            expectedHandCardIds: [
+              'legacy:v1:card:000004',
+              'legacy:v1:card:000005',
+            ],
+            expectedBoardCardIds: [],
+            cardId: 'legacy:v1:card:000004',
+            destinationIndex: 0,
+          },
+        ],
+      },
+      {
+        recordIndex: 10,
+        events: [
+          {
+            type: 'RandomHandCardPlayedFaceDown',
+            actorPlayerId: opponentId,
+            targetPlayerId: selfId,
+            handZoneId: selfHandId,
+            boardZoneId: selfBoardId,
+            expectedHandCardIds: [
+              'legacy:v1:card:000000',
+              'legacy:v1:card:000002',
+            ],
+            expectedBoardCardIds: ['legacy:v1:card:000001'],
+            cardId: 'legacy:v1:card:000002',
+            destinationIndex: 1,
+          },
+        ],
+      },
+    ]);
+    expect(result.state.zones[selfHandId]?.cardIds).toEqual([
+      'legacy:v1:card:000000',
+    ]);
+    expect(result.state.zones[selfBoardId]?.cardIds).toEqual([
+      'legacy:v1:card:000001',
+      'legacy:v1:card:000002',
+    ]);
+    expect(result.state.zones[opponentHandId]?.cardIds).toEqual([
+      'legacy:v1:card:000005',
+    ]);
+    expect(result.state.zones[opponentBoardId]?.cardIds).toEqual([
+      'legacy:v1:card:000004',
+    ]);
+    for (const cardId of [
+      'legacy:v1:card:000001',
+      'legacy:v1:card:000002',
+      'legacy:v1:card:000004',
+    ]) {
+      expect(result.state.cards[cardId]).toMatchObject({
+        face: 'down',
+        orientationQuarterTurns: 0,
+        abilityUsed: false,
+      });
+    }
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+
+    const replayed = result.records
+      .flatMap((record) => record.batches)
+      .reduce(
+        applyEventBatch,
+        createEmptyMatch(target.matchId, [target.selfSeat, target.opponentSeat])
+      );
+    expect(replayed).toEqual(result.state);
+  });
+
+  it('refuses empty, out-of-range, and later-stale random hand outcomes', () => {
+    const empty = buildLegacyV1Candidate(
+      parse(
+        payload('', '', action('self', 'playRandomCardFaceDown', ['self', 0]))
+      ),
+      target
+    );
+    expect(empty).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 3,
+          path: '$[3].parameters[1]',
+        },
+      ],
+    });
+    expect('state' in empty).toBe(false);
+
+    const outOfRange = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(1, 'Short random hand'),
+          '',
+          action('self', 'moveCardBundle', [
+            'self',
+            'deck',
+            'hand',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'playRandomCardFaceDown', ['self', 1])
+        )
+      ),
+      target
+    );
+    expect(outOfRange).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 4,
+          path: '$[4].parameters[1]',
+        },
+      ],
+    });
+    expect('state' in outOfRange).toBe(false);
+
+    const laterStale = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(1, 'Depleted random hand'),
+          '',
+          action('self', 'moveCardBundle', [
+            'self',
+            'deck',
+            'hand',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'playRandomCardFaceDown', ['self', 0]),
+          action('self', 'playRandomCardFaceDown', ['self', 0])
+        )
+      ),
+      target
+    );
+    expect(laterStale).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 5,
+          path: '$[5].parameters[1]',
+        },
+      ],
+    });
+    expect('state' in laterStale).toBe(false);
+  });
+
+  it('lifts strict resolved-random tuple diagnostics before state construction', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload('', '', action('self', 'playRandomCardFaceDown', ['self', '0']))
+      ),
+      target
+    );
+    expect(result).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'random.invalid_parameter_type',
+          recordIndex: 3,
+          path: '$[3].parameters[1]',
+          message: 'playRandomCardFaceDown random index must be a number',
+        },
+      ],
+    });
+    expect('state' in result).toBe(false);
+  });
+
   it('opens exact top and edge-first bottom inspections for the recorded viewer', () => {
     const parsed = parse(
       payload(

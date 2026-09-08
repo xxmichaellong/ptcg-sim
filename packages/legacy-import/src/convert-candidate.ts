@@ -53,6 +53,11 @@ import {
   type LegacyV1TableActionDecodeIssueCode,
 } from './decode-table-actions.js';
 import {
+  decodeLegacyV1RandomActions,
+  type LegacyV1RandomAction,
+  type LegacyV1RandomActionDecodeIssueCode,
+} from './decode-random-actions.js';
+import {
   createLegacyV1ImportContext,
   LegacyV1ImportContextError,
   type LegacyV1ImportContextErrorCode,
@@ -103,6 +108,7 @@ const CONVERTED_ACTIONS = new Set<LegacySynchronizedActionName>([
   'removeSpecialCondition',
   'rotateCard',
   'changeType',
+  'playRandomCardFaceDown',
 ]);
 
 type LegacyV1ConvertedAction =
@@ -110,6 +116,7 @@ type LegacyV1ConvertedAction =
   | LegacyV1LifecycleAction
   | LegacyV1MarkerAction
   | LegacyV1MovementAction
+  | LegacyV1RandomAction
   | LegacyV1TableAction;
 
 export interface LegacyV1CandidateTarget {
@@ -129,6 +136,7 @@ export type LegacyV1CandidateIssueCode =
   | `lifecycle.${LegacyV1LifecycleDecodeIssueCode}`
   | `marker.${LegacyV1MarkerActionDecodeIssueCode}`
   | `movement.${LegacyV1MovementDecodeIssueCode}`
+  | `random.${LegacyV1RandomActionDecodeIssueCode}`
   | `table.${LegacyV1TableActionDecodeIssueCode}`
   | `context.${LegacyV1ImportContextErrorCode}`
   | `command.${CommandRejectionCode}`;
@@ -636,11 +644,23 @@ export const buildLegacyV1Candidate = (
     });
   }
 
+  const decodedRandomActions = decodeLegacyV1RandomActions(parsed);
+  if (!decodedRandomActions.ok) {
+    const issue = decodedRandomActions.issues[0]!;
+    return failure({
+      code: `random.${issue.code}`,
+      recordIndex: issue.recordIndex,
+      path: issue.path,
+      message: issue.message,
+    });
+  }
+
   const convertedActions: LegacyV1ConvertedAction[] = [
     ...decodedCardAnnotations.actions,
     ...decodedLifecycle.actions,
     ...decodedMarkers.actions,
     ...decodedMovement.actions,
+    ...decodedRandomActions.actions,
     ...decodedTableActions.actions,
   ].sort((left, right) => left.recordIndex - right.recordIndex);
   const decoderCoverageIndex = parsed.actions.findIndex(
@@ -1229,6 +1249,34 @@ export const buildLegacyV1Candidate = (
           playerId,
           count: action.count,
         });
+        if (problem) return problem;
+        break;
+      }
+      case 'playRandomCardFaceDown': {
+        const hand = state.zones[playerZoneId(playerId, 'hand')];
+        const board = state.zones[playerZoneId(playerId, 'board')];
+        if (
+          !hand ||
+          !board ||
+          action.randomIndex >= hand.cardIds.length ||
+          board.cardIds.length >= MAX_DECK_CARDS
+        ) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[1]`,
+            message:
+              'Recorded random hand index cannot be applied to the exact current target hand and loose board',
+          });
+        }
+        const problem = apply(
+          {
+            type: 'PlayRandomCardFaceDown',
+            actorPlayerId: targetPlayerId(target, action.initiator),
+            targetPlayerId: playerId,
+          },
+          { kind: 'randomInt', value: action.randomIndex }
+        );
         if (problem) return problem;
         break;
       }

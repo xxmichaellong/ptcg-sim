@@ -503,10 +503,13 @@ loose-zone/stadium/new-play-stack/rich-whole-stack, or source-zone-targeted
 active/bench `moveCardBundle`, exact staged `leaveAll`, `discardAll`,
 `lostZoneAll`, `handAll`, `shuffleAll`, and `shuffleBottom`, `moveToDeckTop`,
 `shuffleIntoDeck`, `switchWithDeckTop`, `shufflePrizesToDeckBottom`, or the
-direct prize form of `shuffleZone`. Any other allowlisted family or bundle
-subshape is rejected before state construction. Deck, lifecycle, and movement
-diagnostics are lifted with their exact source record/path, while context and
-canonical command failures also return no candidate state.
+direct prize form of `shuffleZone`; exact once-per-game, ability, damage, and
+special-condition marker records; `rotateCard`, `changeType`,
+`playRandomCardFaceDown`, `attack`, and `pass`. Any other allowlisted family or
+bundle subshape is rejected before state construction. Deck, lifecycle,
+movement, marker, annotation, resolved-random, and table diagnostics are lifted
+with their exact source record/path, while context and canonical command
+failures also return no candidate state.
 The preflight additionally requires a one-to-one, source-ordered match between
 all records and the union of private decoder outputs; a future allowlist/decoder
 drift can neither omit nor double-apply a record.
@@ -739,13 +742,20 @@ The lifecycle mapping is source-backed:
   cross-owner, and source-inaccessible modes return no candidate; and
 - each exact category-change record resolves the source record owner's card at
   a current card-selectable zone, flat stack, staged, or inspection coordinate.
-  The flipped initiator is retained as presentation provenance only. The
+  The exported initiator is retained as presentation provenance only. The
   existing atomic `ChangeCardCategory` path departs the exact card to its
   owner's loose-board tail, applies Pokémon/Trainer/Energy, and clears transient
   orientation and ability state; stack-top dependents are staged. Exact
   already-matching board-tail records retain zero batches. Covers, lower
   evolutions, stale/cross-owner coordinates, and malformed categories return no
   candidate; and
+- each exact random-face-down record supplies V1's already-resolved hand index
+  once to `PlayRandomCardFaceDown` through the action-scoped import context.
+  Record ownership selects the target hand/board and the exported initiator
+  selects the actor. Canonical order snapshots, face-down annotation reset,
+  visibility retirement, and replay-safe trusted identity remain unchanged;
+  no random value is regenerated. Empty/depleted hands, stale or out-of-range
+  indices, capacity failures, and malformed tuples return no candidate; and
 - attack and pass require exact empty parameter arrays and execute one
   `DeclareAttack` or `PassTurn` for the source record's target player. The
   canonical batch resets every ability marker, discards only that player's
@@ -770,7 +780,7 @@ individual-inspection-card-loose-and-targeted-play/
 individual-inspection-card-deck-edge-shuffle-and-stadium/
 move-to-top/
 rich-whole-stack-move-and-swap/move-to-bottom/
-shuffle-into-deck/deck-top-switch/once-per-game-marker/ability-marker/damage-marker/special-condition-marker/rotation/category-change/parameterless-attack-and-pass/
+shuffle-into-deck/deck-top-switch/once-per-game-marker/ability-marker/damage-marker/special-condition-marker/rotation/category-change/resolved-random-face-down/parameterless-attack-and-pass/
 prizes-to-deck-bottom subset can now create ordinary loose-board, singleton
 stadium, and active/bench stack state, enrich those stacks with zone-backed
 evolutions and attachments, move or swap those rich stacks, reattach lower

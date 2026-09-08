@@ -1917,4 +1917,82 @@ describe('legacy action-export source envelope', () => {
     );
     expect(revealAndHide).toContain('oInitiator,\n    randomIndex,');
   });
+
+  it('pins random-hand selection, concealment, movement, and export provenance', () => {
+    const revealAndHide = readRepositoryFile(
+      'client/src/actions/general/reveal-and-hide.js'
+    );
+    const handButtons = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/card-context-menu/hand-buttons.js'
+    );
+    const processAction = readRepositoryFile(
+      'client/src/setup/general/process-action.js'
+    );
+
+    expect(revealAndHide).toContain(
+      "const oInitiator = initiator === 'self' ? 'opp' : 'self';"
+    );
+    expect(revealAndHide).toContain(
+      "if (user === 'opp' && emit && systemState.isTwoPlayer)"
+    );
+    expect(revealAndHide).toContain(
+      "typeof randomIndex === 'number'\n      ? randomIndex\n      : Math.floor(Math.random() * hand.getCount())"
+    );
+    expect(revealAndHide).toContain(
+      'hand.array[randomIndex].image.faceDown = true;'
+    );
+    expect(revealAndHide).toContain(
+      "hideShortcut(user, initiator, 'hand', randomIndex, false, false);"
+    );
+    expect(revealAndHide).toContain(
+      "moveCard(user, initiator, 'hand', 'board', randomIndex);"
+    );
+    expect(revealAndHide).toContain("' moved a random card from '");
+    expect(
+      revealAndHide.match(
+        /processAction\(user, emit, 'playRandomCardFaceDown', \[\s*oInitiator,\s*randomIndex,\s*\]\);/g
+      )
+    ).toHaveLength(2);
+    expect(handButtons).toContain(
+      'playRandomCardFaceDown(mouseClick.cardUser, systemState.initiator)'
+    );
+    expect(processAction).toContain(
+      'const exportParameters = [...parameters];'
+    );
+    expect(processAction).toContain(
+      "if (exportParameters[0] === 'self') {\n          exportParameters[0] = 'opp';"
+    );
+    expect(processAction).toContain(
+      "} else if (exportParameters[0] === 'opp') {\n          exportParameters[0] = 'self';"
+    );
+
+    const resolvedIndex = revealAndHide.indexOf(
+      'randomIndex =\n    typeof randomIndex'
+    );
+    const faceDown = revealAndHide.indexOf(
+      'hand.array[randomIndex].image.faceDown = true;'
+    );
+    const conceal = revealAndHide.indexOf(
+      "hideShortcut(user, initiator, 'hand', randomIndex, false, false);"
+    );
+    const move = revealAndHide.indexOf(
+      "moveCard(user, initiator, 'hand', 'board', randomIndex);"
+    );
+    const message = revealAndHide.indexOf("' moved a random card from '");
+    const finalExport = revealAndHide.lastIndexOf(
+      "processAction(user, emit, 'playRandomCardFaceDown', ["
+    );
+    expect([
+      resolvedIndex,
+      faceDown,
+      conceal,
+      move,
+      message,
+      finalExport,
+    ]).toEqual(
+      [...[resolvedIndex, faceDown, conceal, move, message, finalExport]].sort(
+        (left, right) => left - right
+      )
+    );
+  });
 });
