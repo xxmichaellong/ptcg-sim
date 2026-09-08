@@ -11,6 +11,63 @@ import {
 } from './resolveLegacyBoardShortcutAction.js';
 
 describe('legacy board shortcut action resolver', () => {
+  // Every shortcut reaches an authority command, so none may resolve for a
+  // viewer who cannot submit. Most branches inherit the check by delegating to
+  // a resolver that performs it, which makes the guarantee incidental: a new
+  // shortcut, or an existing one pointed at a new resolver, can lose it
+  // silently. This enumerates the whole union so that cannot happen quietly.
+  it('refuses every shortcut action for a spectator', () => {
+    const playerView = createRendererSpikeView();
+    if (playerView.viewer.kind !== 'player') {
+      throw new Error('Shortcut fixture must use a player viewer');
+    }
+    const cardId =
+      playerView.stacks['stack:blue:active']!.evolutionCards.at(-1)!.id;
+    const view = {
+      ...playerView,
+      viewer: { kind: 'spectator' } as const,
+    };
+
+    const requests: readonly LegacyBoardShortcutActionRequest[] = [
+      { action: 'resolveOwnLooseBoard', destination: 'discard' },
+      { action: 'drawOwnDeck', count: 1 },
+      { action: 'inspectOwnDeck', count: 1, edge: 'top' },
+      { action: 'shuffleOwnDeck' },
+      { action: 'flipCoin' },
+      { action: 'setupOwnPlayer' },
+      { action: 'resetOwnPlayer' },
+      { action: 'startOwnTurn' },
+      { action: 'undoOwnLastMove' },
+      { action: 'discardOwnHandAndDraw', value: '1' },
+      { action: 'shuffleOwnHandAndDraw', value: '1' },
+      { action: 'shuffleOwnHandToDeckBottomAndDraw', value: '1' },
+      { action: 'rotateSelectedCard', cardId, single: true },
+      { action: 'adjustDamage', cardId, delta: 10 },
+      { action: 'removeDamage', cardId },
+      { action: 'cycleSpecialCondition', cardId, remove: false },
+      { action: 'toggleAbility', cardId },
+      { action: 'changeCardType', cardId, category: 'Pokémon' },
+      { action: 'togglePrivateInspection', cardId },
+      { action: 'setPublicReveal', cardId, revealed: true },
+      { action: 'moveCardRelativeToDeck', cardId, deckAction: 'moveToDeckTop' },
+      { action: 'moveCardToZone', cardId, destination: 'hand' },
+      { action: 'moveCardToPlay', cardId, slot: 'bench' },
+      { action: 'beginAttachOrEvolve', cardId },
+      { action: 'moveCardToStadium', cardId },
+    ];
+
+    // Guards the enumeration itself: if a variant is added to the union and not
+    // listed here, this count stops matching the resolver's own branches.
+    expect(new Set(requests.map((request) => request.action)).size).toBe(25);
+
+    for (const request of requests) {
+      const resolution = resolveLegacyBoardShortcutAction(view, request);
+      expect(resolution.ok, `${request.action} resolved for a spectator`).toBe(
+        false
+      );
+    }
+  });
+
   it('maps the exact global loose-board key and Alt combinations', () => {
     expect(
       resolveLegacyBoardGlobalShortcutKey({
