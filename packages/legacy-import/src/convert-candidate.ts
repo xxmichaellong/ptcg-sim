@@ -6,6 +6,7 @@ import {
   playerZoneId,
   stableSerialize,
   stadiumZoneId,
+  type CardInstanceId,
   type CommandRejectionCode,
   type EventBatch,
   type GameCommand,
@@ -195,12 +196,18 @@ const candidateSourceCardId = (
     : null;
 };
 
-const candidatePlayStackTopAtLegacyIndex = (
+interface CandidatePlayStackCard {
+  readonly cardId: CardInstanceId;
+  readonly kind: 'attachment' | 'lowerEvolution' | 'top';
+  readonly stack: PlayStack;
+}
+
+const candidatePlayStackCardAtLegacyIndex = (
   state: MatchState,
   playerId: PlayerId,
   playZone: 'active' | 'bench',
   legacyCardIndex: number
-): PlayStack | null => {
+): CandidatePlayStackCard | null => {
   const board = state.boards[playerId];
   if (!board) return null;
   const stackIds =
@@ -224,16 +231,47 @@ const candidatePlayStackTopAtLegacyIndex = (
       return null;
     }
 
-    // V1 refreshes each play container to top-first evolution order followed
-    // by its versioned attachment order. Only the unattached top image names
-    // the whole stack or an attach/evolve target; every lower coordinate fails.
-    if (legacyCardIndex === legacyIndex) return stack;
-    legacyIndex +=
-      stack.evolutionCardIds.length + stack.attachmentCardIds.length;
+    // V1 refresh moves each successively newer unattached top to the front,
+    // leaving the complete evolution line newest-to-oldest, followed by the
+    // versioned attachment order.
+    const legacyCardIds = [
+      ...[...stack.evolutionCardIds].reverse(),
+      ...stack.attachmentCardIds,
+    ];
+    const offset = legacyCardIndex - legacyIndex;
+    const cardId = legacyCardIds[offset];
+    if (cardId) {
+      return {
+        cardId,
+        kind:
+          offset === 0
+            ? 'top'
+            : offset < stack.evolutionCardIds.length
+              ? 'lowerEvolution'
+              : 'attachment',
+        stack,
+      };
+    }
+    legacyIndex += legacyCardIds.length;
     if (legacyCardIndex < legacyIndex) return null;
   }
 
   return null;
+};
+
+const candidatePlayStackTopAtLegacyIndex = (
+  state: MatchState,
+  playerId: PlayerId,
+  playZone: 'active' | 'bench',
+  legacyCardIndex: number
+): PlayStack | null => {
+  const source = candidatePlayStackCardAtLegacyIndex(
+    state,
+    playerId,
+    playZone,
+    legacyCardIndex
+  );
+  return source?.kind === 'top' ? source.stack : null;
 };
 
 const translateLegacyInDeckShuffle = (
@@ -598,19 +636,19 @@ export const buildLegacyV1Candidate = (
           (action.destinationZone === 'active' ||
             action.destinationZone === 'bench')
         ) {
-          const stack = candidatePlayStackTopAtLegacyIndex(
+          const source = candidatePlayStackCardAtLegacyIndex(
             state,
             playerId,
             action.sourceZone,
             action.sourceIndex
           );
-          if (!stack) {
+          if (!source) {
             return failure({
               code: 'source_state_mismatch',
               recordIndex: action.recordIndex,
               path: `$[${action.recordIndex}].parameters[3]`,
               message:
-                'Recorded move-card source coordinate does not identify a current active/bench stack top',
+                'Recorded move-card source coordinate does not identify a current active/bench card',
             });
           }
           const targetStack =
@@ -622,6 +660,29 @@ export const buildLegacyV1Candidate = (
                   action.targetIndex
                 )
               : null;
+          if (source.kind !== 'top') {
+            if (!targetStack) {
+              return failure({
+                code: 'source_state_mismatch',
+                recordIndex: action.recordIndex,
+                path: `$[${action.recordIndex}].parameters[4]`,
+                message:
+                  'Recorded lower active/bench card does not identify a current stack-top target',
+              });
+            }
+            const problem = apply({
+              type: 'PlaceCardOnPlayStack',
+              playerId,
+              cardId: source.cardId,
+              expectedSourceId: source.stack.id,
+              targetStackId: targetStack.id,
+              expectedTargetTopCardId: targetStack.evolutionCardIds.at(-1)!,
+              mode: 'attachment',
+            });
+            if (problem) return problem;
+            break;
+          }
+          const stack = source.stack;
           if (
             typeof action.targetIndex === 'number' &&
             (!targetStack ||

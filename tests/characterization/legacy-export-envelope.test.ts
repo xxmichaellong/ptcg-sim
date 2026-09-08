@@ -1059,6 +1059,9 @@ describe('legacy action-export source envelope', () => {
     expect(drag).toContain(
       '(mouseClick.zoneId !== dZoneId || draggedImage.attached)'
     );
+    expect(drag).toContain(
+      "!draggedImage.attached ||\n        !['active', 'bench'].includes(dZoneId) ||\n        targetIndex !== undefined"
+    );
 
     expect(moveCard).toContain(
       "if (typeof targetIndex === 'number') {\n    targetCard = dZone.array[targetIndex];"
@@ -1072,6 +1075,9 @@ describe('legacy action-export source envelope', () => {
     expect(moveCard).toContain(
       "movingCard.type === 'Pokémon' && !activeOrBenchZone.includes(oZoneId)"
     );
+    expect(moveCard).toContain(
+      '} else {\n      attachCard(user, initiator, movingCard, targetCard, dZoneId, dZone);'
+    );
     expect(autoMove).toContain('//case 3: yes target, switch spots');
     expect(autoMove).toContain(
       '!movingCard.image.attached && //we are not attaching a card\n    !dZone.array[targetIndex].image.attached'
@@ -1082,6 +1088,9 @@ describe('legacy action-export source envelope', () => {
     expect(evolve).toContain('targetCard.image.after(movingCard.image);');
     expect(evolve).toContain('targetCard.image.relative = movingCard.image;');
     expect(attach).toContain('targetCard.image.after(movingCard.image);');
+    expect(attach).toContain(
+      "movingCard.image.target === 'on' ||\n    !movingCard.image.parentElement.classList.contains('play-container')"
+    );
 
     expect(refresh).toContain(
       "const playContainers = zone.element.querySelectorAll('DIV');"

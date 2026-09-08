@@ -2504,7 +2504,7 @@ describe('legacy v1 canonical candidate builder', () => {
     });
     expect('state' in outOfRangeTarget).toBe(false);
 
-    const lowerStackSource = buildLegacyV1Candidate(
+    const lowerStackWithoutTarget = buildLegacyV1Candidate(
       parse(
         payload(
           [
@@ -2542,26 +2542,26 @@ describe('legacy v1 canonical candidate builder', () => {
             'active',
             'bench',
             1,
-            0,
+            false,
             'move',
           ])
         )
       ),
       target
     );
-    expect(lowerStackSource).toEqual({
+    expect(lowerStackWithoutTarget).toEqual({
       ok: false,
       issues: [
         {
           code: 'source_state_mismatch',
           recordIndex: 6,
-          path: '$[6].parameters[3]',
+          path: '$[6].parameters[4]',
           message:
-            'Recorded move-card source coordinate does not identify a current active/bench stack top',
+            'Recorded lower active/bench card does not identify a current stack-top target',
         },
       ],
     });
-    expect('state' in lowerStackSource).toBe(false);
+    expect('state' in lowerStackWithoutTarget).toBe(false);
   });
 
   it('moves and swaps rich play stacks using exact top-card offsets', () => {
@@ -2728,6 +2728,267 @@ describe('legacy v1 canonical candidate builder', () => {
       { recordIndex: 12, batchCount: 1 },
       { recordIndex: 13, batchCount: 0 },
       { recordIndex: 14, batchCount: 0 },
+    ]);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+  });
+
+  it('reattaches lower evolutions and attachments from exact rich-stack offsets', () => {
+    const parsed = parse(
+      payload(
+        [
+          ['1', 'Source base', 'Pokémon', '/legacy/lower-source-base.png'],
+          ['1', 'Source middle', 'Pokémon', '/legacy/lower-source-middle.png'],
+          ['1', 'Source top', 'Pokémon', '/legacy/lower-source-top.png'],
+          ['1', 'Source energy', 'Energy', '/legacy/lower-source-energy.png'],
+          ['1', 'Target base', 'Pokémon', '/legacy/lower-target-base.png'],
+        ],
+        '',
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'active',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'active',
+          0,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'active',
+          0,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'active',
+          0,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'bench',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'active',
+          'bench',
+          1,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'active',
+          'active',
+          1,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'active',
+          'bench',
+          1,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'bench',
+          'bench',
+          2,
+          0,
+          'move',
+        ])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) throw new Error('Expected conversion success');
+
+    const playerId = target.selfSeat.playerId;
+    const activeStackId = 'legacy:v1:stack:000000';
+    const benchStackId = 'legacy:v1:stack:000001';
+    const baseId = 'legacy:v1:card:000000';
+    const middleId = 'legacy:v1:card:000001';
+    const topId = 'legacy:v1:card:000002';
+    const energyId = 'legacy:v1:card:000003';
+    const targetId = 'legacy:v1:card:000004';
+    expect(result.state.stacks[activeStackId]).toMatchObject({
+      evolutionCardIds: [topId],
+      attachmentCardIds: [baseId],
+    });
+    expect(result.state.stacks[benchStackId]).toMatchObject({
+      evolutionCardIds: [targetId],
+      attachmentCardIds: [middleId, energyId],
+    });
+    expect(result.records[7]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardPlacedOnPlayStack',
+        playerId,
+        cardId: middleId,
+        expectedSourceId: activeStackId,
+        targetStackId: benchStackId,
+        expectedTargetTopCardId: targetId,
+        expectedTargetEvolutionCardIds: [targetId],
+        expectedTargetAttachmentCardIds: [],
+        mode: 'attachment',
+        attachmentOrderVersion: 1,
+        evolutionCardIds: [targetId],
+        attachmentCardIds: [middleId],
+      },
+    ]);
+    expect(result.records[8]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardPlacedOnPlayStack',
+        playerId,
+        cardId: baseId,
+        expectedSourceId: activeStackId,
+        targetStackId: activeStackId,
+        expectedTargetTopCardId: topId,
+        expectedTargetEvolutionCardIds: [baseId, topId],
+        expectedTargetAttachmentCardIds: [energyId],
+        mode: 'attachment',
+        attachmentOrderVersion: 1,
+        evolutionCardIds: [topId],
+        attachmentCardIds: [energyId, baseId],
+      },
+    ]);
+    expect(result.records[9]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardPlacedOnPlayStack',
+        playerId,
+        cardId: energyId,
+        expectedSourceId: activeStackId,
+        targetStackId: benchStackId,
+        expectedTargetTopCardId: targetId,
+        expectedTargetEvolutionCardIds: [targetId],
+        expectedTargetAttachmentCardIds: [middleId],
+        mode: 'attachment',
+        attachmentOrderVersion: 1,
+        evolutionCardIds: [targetId],
+        attachmentCardIds: [middleId, energyId],
+      },
+    ]);
+    expect(result.records[10]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardPlacedOnPlayStack',
+        playerId,
+        cardId: energyId,
+        expectedSourceId: benchStackId,
+        targetStackId: benchStackId,
+        expectedTargetTopCardId: targetId,
+        expectedTargetEvolutionCardIds: [targetId],
+        expectedTargetAttachmentCardIds: [middleId, energyId],
+        mode: 'attachment',
+        attachmentOrderVersion: 1,
+        evolutionCardIds: [targetId],
+        attachmentCardIds: [middleId, energyId],
+      },
+    ]);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+  });
+
+  it('reattaches across bench stacks using changing nonzero flat offsets', () => {
+    const parsed = parse(
+      payload(
+        [
+          ['1', 'First bench base', 'Pokémon', '/legacy/first-bench.png'],
+          ['1', 'Second bench base', 'Pokémon', '/legacy/second-bench.png'],
+          ['1', 'Bench energy', 'Energy', '/legacy/bench-energy.png'],
+        ],
+        '',
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'bench',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'bench',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'bench',
+          0,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'bench',
+          'bench',
+          1,
+          2,
+          'move',
+        ])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) throw new Error('Expected conversion success');
+
+    const playerId = target.selfSeat.playerId;
+    const firstStackId = 'legacy:v1:stack:000000';
+    const secondStackId = 'legacy:v1:stack:000001';
+    const firstBaseId = 'legacy:v1:card:000000';
+    const secondBaseId = 'legacy:v1:card:000001';
+    const energyId = 'legacy:v1:card:000002';
+    expect(result.state.boards[playerId]?.benchStackIds).toEqual([
+      firstStackId,
+      secondStackId,
+    ]);
+    expect(result.state.stacks[firstStackId]?.attachmentCardIds).toEqual([]);
+    expect(result.state.stacks[secondStackId]?.attachmentCardIds).toEqual([
+      energyId,
+    ]);
+    expect(result.records[5]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardPlacedOnPlayStack',
+        playerId,
+        cardId: energyId,
+        expectedSourceId: firstStackId,
+        targetStackId: secondStackId,
+        expectedTargetTopCardId: secondBaseId,
+        expectedTargetEvolutionCardIds: [secondBaseId],
+        expectedTargetAttachmentCardIds: [],
+        mode: 'attachment',
+        attachmentOrderVersion: 1,
+        evolutionCardIds: [secondBaseId],
+        attachmentCardIds: [energyId],
+      },
+    ]);
+    expect(result.state.stacks[firstStackId]?.evolutionCardIds).toEqual([
+      firstBaseId,
     ]);
     expect(stableHash(result.state)).toBe(stableHash(retry.state));
     assertMatchInvariants(result.state);
@@ -3024,7 +3285,7 @@ describe('legacy v1 canonical candidate builder', () => {
           recordIndex: 4,
           path: '$[4].parameters[3]',
           message:
-            'Recorded move-card source coordinate does not identify a current active/bench stack top',
+            'Recorded move-card source coordinate does not identify a current active/bench card',
         },
       ],
     });

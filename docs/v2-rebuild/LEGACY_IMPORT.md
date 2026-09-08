@@ -204,9 +204,10 @@ board, and stadium when it creates a new stack.
 
 A numeric active/bench target is decoded as the bounded flat destination-array
 coordinate exported by Q/E target selection or pointer drag. Conversion accepts
-this shape only from the same stable source zones. It reconstructs each target
-container in v1 refresh order: board-ordered stacks, reversed evolution order
-(top first), then the already-versioned attachment order. The coordinate must
+this shape from stable source zones and exact active/bench stack coordinates.
+It reconstructs each target container in v1 refresh order: board-ordered stacks,
+reversed evolution order (top first), then the already-versioned attachment
+order. The coordinate must
 identify the first, unattached top card of one current stack. Lower evolutions,
 attachments, gaps, and out-of-range values fail the whole candidate instead of
 being guessed. The candidate derives attachment versus evolution from the
@@ -219,9 +220,13 @@ also admitted when its flat coordinate identifies a stack top in the same exact
 rich ordering. Conversion snapshots the entire board layout and executes
 `MovePlayStack`. A numeric top target in the opposite active/bench slot supplies
 the exact target stack and atomically swaps the pair. Same-zone top-target drops
-are not admitted because the v1 drag guard never exports them. Lower-evolution,
-attachment, inspection, and work-area sources remain closed for their distinct
-card-departure semantics.
+are not admitted because the v1 drag guard never exports them. A lower evolution
+or attachment source with a numeric top target instead executes atomic
+`PlaceCardOnPlayStack`. Exact newest-to-oldest evolution and attachment offsets
+are resolved after every prior mutation; same-stack reattachment is valid and a
+lower Pokémon is reclassified as an attachment, matching v1. Target-free
+lower-card departures, inspection, and work-area sources remain closed for their
+distinct card-departure semantics.
 
 A directly exported prize shuffle carries exactly
 `[initiator, "prizes", permutation, true]`. Empty permutations are valid for an
@@ -422,8 +427,8 @@ The lifecycle mapping is source-backed:
   category and executes one atomic `PlaceCardOnPlayStack`, preserving evolution
   order and Energy-before-Trainer attachment order. Rich target offsets, exact
   events, deterministic retry, lower/attachment target rejection, and whole-
-  candidate rollback are pinned. Lower-card stack and work-area origins remain
-  closed;
+  candidate rollback are pinned. Lower-card stack sources are handled by the
+  numeric reattachment path below; work-area origins remain closed;
   and
 - active/bench stack-top sources are resolved through the same rich flat order,
   snapshot the exact board order, and execute `MovePlayStack`. Target-free
@@ -432,8 +437,11 @@ The lifecycle mapping is source-backed:
   Active-to-active and an already-tail bench-to-bench action preserve their
   exported source mapping with zero batches. A numeric opposite-slot top target
   atomically swaps the two stacks. Rich source/target offsets, retry, and exact
-  layout events are pinned; lower-card, same-stack, and out-of-range coordinates
-  return no candidate; and
+  layout events are pinned. Lower evolution and attachment coordinates with a
+  valid numeric top target execute atomic `PlaceCardOnPlayStack`, including
+  same-stack reattachment and lower-Pokémon attachment classification. Exact
+  source offsets, events, retry, invariants, and missing-target rollback are
+  pinned; out-of-range coordinates return no candidate; and
 - direct prize shuffle executes `ShuffleZone` for the record's target player
   using the recorded permutation as the action-scoped resolved outcome. Its
   length must match the exact current prize zone, so conversion neither creates
@@ -477,24 +485,27 @@ candidate. No partial batches escape on failure.
 
 The closed lifecycle/draw/discard-and-draw/both hand-shuffle-and-draw forms/
 direct-prize-shuffle/target-free-loose/stadium/new-play-stack-move/
-source-zone-attach-evolve/move-to-top/rich-whole-stack-move-and-swap/move-to-bottom/
+source-zone-attach-evolve/stack-card-reattachment/move-to-top/
+rich-whole-stack-move-and-swap/move-to-bottom/
 shuffle-into-deck/deck-top-switch/
 prizes-to-deck-bottom subset can now create ordinary loose-board, singleton
 stadium, and active/bench stack state, enrich those stacks with zone-backed
-evolutions and attachments, and move or swap those rich stacks. Tests prove
+evolutions and attachments, move or swap those rich stacks, and reattach lower
+stack members. Tests prove
 that a later take-turn discards both players' loose boards in
 source order before drawing, and that an owner reset clears only that owner's
 reachable loose state, owned stadium, and play stacks before rebuilding its
 deck. Opponent-owned stadium and play state remain. The subset still cannot
-resolve rich-stack or work-area origins, inspections, staged work, markers,
+resolve target-free rich-stack departures or work-area origins, inspections,
+staged work, markers,
 face-down play state, or cross-owner play placements, so take-turn in-play
 reveal and reset behavior for those shapes remain gated on their dedicated
 movement/state decoders.
 
 ## Next conversion slices
 
-1. Continue source-backed positional schemas for lower evolution/attachment
-   origins, stack departure, and work areas after the
+1. Continue source-backed positional schemas for target-free stack departure
+   and work areas after the
    transactionally applied draw/discard-and-draw/both hand-shuffle-and-draw
    forms, target-free loose/stadium/new-play-stack/rich-whole-stack movement,
    numeric stack switching,

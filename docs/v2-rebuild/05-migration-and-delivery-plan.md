@@ -171,7 +171,8 @@ and provide import-wide monotonic identities plus one-shot source-resolved
 outcome adapters. A first all-or-nothing candidate builder now applies the
 closed lifecycle/draw/discard-and-draw/shuffle-hand-and-draw/
 shuffle-hand-to-deck-bottom-and-draw/direct-prize-shuffle/target-free-loose/
-stadium/new-play-stack/rich-whole-stack-movement-and-swap/source-zone-targeted-play/
+stadium/new-play-stack/rich-whole-stack-movement-and-swap/stack-card-reattachment/
+source-zone-targeted-play/
 zone-backed-deck-action/
 prizes-to-deck-bottom subset
 through normal game-core commands and verifies exact event replay; it rejects every
@@ -196,11 +197,14 @@ an occupied active to the bench. Active/bench top coordinates now resolve across
 rich flattened stacks and apply canonical `MovePlayStack`. Target-free
 promotion, demotion, lone-bench auto-promotion, bench tail reordering, and
 same-slot no-ops match v1; numeric cross-slot top targets atomically swap the
-two stacks. Targeted
+two stacks. Numeric lower-evolution and attachment sources resolve through the
+same newest-to-oldest evolution order followed by versioned attachment order;
+an exact stack-top target applies atomic `PlaceCardOnPlayStack`, including
+same-stack reattachment and v1's lower-Pokémon-to-attachment behavior. Targeted
 active/bench destinations from stable source zones now recover v1's flattened
 top-card coordinate across rich stacks and apply atomic `PlaceCardOnPlayStack`
 events. Lower-evolution, attachment, missing, and out-of-range targets fail the
-whole candidate. Lower-evolution, attachment, and work-area origins remain
+whole candidate. Target-free lower-card departures and work-area origins remain
 closed. Reachable tests now prove both-player
 loose-board take-turn cleanup plus owner-scoped loose/stadium/play reset/rebuild
 behavior.
@@ -225,7 +229,7 @@ the exact current hand. It preserves the existing deck prefix, appends the
 shuffled hand, and draws from index zero through the matching atomic canonical
 command. Zero-draw, empty-hand/non-empty-deck, and completely empty records all
 remain valid.
-Lower-card stack/work-area origins and stack departure,
+Target-free stack departure and work-area origins,
 remaining action-family coverage, the complete
 transaction, conversion reports, and real-user corpus evidence remain before
 Phase 3 can exit.

@@ -178,9 +178,15 @@ bench-to-bench export retain zero-batch mappings. A numeric top target on the
 opposite slot atomically swaps the two resolved stacks; same-zone top-target
 drops are excluded because the v1 drag guard never exports them. Source-backed
 relocation/auto-move call order, rich source/target offsets, exact layout events,
-retry, invariants, and late out-of-range rollback are pinned. Lower evolutions,
-attachments, inspections, and work-area origins remain fail-closed for their
-distinct card-departure semantics.
+retry, invariants, and late out-of-range rollback are pinned. Lower evolutions
+and attachments with a numeric top target instead execute atomic
+`PlaceCardOnPlayStack`. Source resolution uses newest-to-oldest evolution order
+followed by versioned attachment order. It preserves exact source-stack
+membership, makes lower Pokémon attachments as v1 does, and admits same-stack
+reattachment. Exact events, evolving source offsets, retry, invariants, and a
+missing-target rollback are pinned. Target-free lower-card departures,
+inspections, and work-area origins remain fail-closed for their distinct
+departure semantics.
 
 The direct shuffle is restricted to exact
 `[initiator, "prizes", permutation, true]` records produced by the prize
