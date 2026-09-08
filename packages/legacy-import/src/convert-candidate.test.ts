@@ -2504,10 +2504,14 @@ describe('legacy v1 canonical candidate builder', () => {
     });
     expect('state' in outOfRangeTarget).toBe(false);
 
-    const stackSource = buildLegacyV1Candidate(
+    const lowerStackSource = buildLegacyV1Candidate(
       parse(
         payload(
-          cardRows(2, 'Targeted stack source'),
+          [
+            ['1', 'Stack source base', 'Pokémon', '/legacy/source-base.png'],
+            ['1', 'Stack target base', 'Pokémon', '/legacy/source-target.png'],
+            ['1', 'Stack source energy', 'Energy', '/legacy/source-energy.png'],
+          ],
           '',
           action('self', 'moveCardBundle', [
             'opp',
@@ -2527,9 +2531,17 @@ describe('legacy v1 canonical candidate builder', () => {
           ]),
           action('self', 'moveCardBundle', [
             'opp',
+            'deck',
+            'active',
+            0,
+            0,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
             'active',
             'bench',
-            0,
+            1,
             0,
             'move',
           ])
@@ -2537,19 +2549,237 @@ describe('legacy v1 canonical candidate builder', () => {
       ),
       target
     );
-    expect(stackSource).toEqual({
+    expect(lowerStackSource).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 6,
+          path: '$[6].parameters[3]',
+          message:
+            'Recorded move-card source coordinate does not identify a current active/bench stack top',
+        },
+      ],
+    });
+    expect('state' in lowerStackSource).toBe(false);
+  });
+
+  it('moves and swaps rich play stacks using exact top-card offsets', () => {
+    const parsed = parse(
+      payload(
+        [
+          ['1', 'Rich active base', 'Pokémon', '/legacy/rich-active.png'],
+          ['1', 'Rich bench base', 'Pokémon', '/legacy/rich-bench.png'],
+          ['1', 'Rich second base', 'Pokémon', '/legacy/rich-second.png'],
+          ['1', 'Rich bench energy', 'Energy', '/legacy/rich-energy.png'],
+          ['1', 'Rich second evolution', 'Pokémon', '/legacy/rich-evo.png'],
+        ],
+        '',
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'active',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'bench',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'bench',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'bench',
+          0,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'bench',
+          0,
+          2,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'bench',
+          'active',
+          2,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'active',
+          'bench',
+          0,
+          2,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'bench',
+          'active',
+          2,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'active',
+          'bench',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'bench',
+          'active',
+          3,
+          null,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'active',
+          'active',
+          0,
+          null,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'bench',
+          'bench',
+          2,
+          false,
+          'move',
+        ])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) throw new Error('Expected conversion success');
+
+    const playerId = target.selfSeat.playerId;
+    const active = 'legacy:v1:stack:000000';
+    const firstBench = 'legacy:v1:stack:000001';
+    const secondBench = 'legacy:v1:stack:000002';
+    expect(result.state.boards[playerId]).toEqual({
+      activeStackId: secondBench,
+      benchStackIds: [firstBench, active],
+    });
+    expect(result.state.stacks[firstBench]).toMatchObject({
+      evolutionCardIds: ['legacy:v1:card:000001'],
+      attachmentCardIds: ['legacy:v1:card:000003'],
+    });
+    expect(result.state.stacks[secondBench]).toMatchObject({
+      evolutionCardIds: ['legacy:v1:card:000002', 'legacy:v1:card:000004'],
+      attachmentCardIds: [],
+    });
+    expect(result.records[8]!.batches[0]!.events).toEqual([
+      {
+        type: 'PlayStackLayoutSet',
+        boardPlayerId: playerId,
+        expectedActiveStackId: secondBench,
+        expectedBenchStackIds: [firstBench, active],
+        activeStackId: active,
+        benchStackIds: [firstBench, secondBench],
+      },
+    ]);
+    expect(result.records[9]!.batches[0]!.events).toEqual([
+      {
+        type: 'PlayStackLayoutSet',
+        boardPlayerId: playerId,
+        expectedActiveStackId: active,
+        expectedBenchStackIds: [firstBench, secondBench],
+        activeStackId: secondBench,
+        benchStackIds: [firstBench, active],
+      },
+    ]);
+    expect(
+      result.records.slice(7).map(({ recordIndex, batches }) => ({
+        recordIndex,
+        batchCount: batches.length,
+      }))
+    ).toEqual([
+      { recordIndex: 8, batchCount: 1 },
+      { recordIndex: 9, batchCount: 1 },
+      { recordIndex: 10, batchCount: 1 },
+      { recordIndex: 11, batchCount: 1 },
+      { recordIndex: 12, batchCount: 1 },
+      { recordIndex: 13, batchCount: 0 },
+      { recordIndex: 14, batchCount: 0 },
+    ]);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+  });
+
+  it('rejects a numeric same-slot stack target that v1 drag cannot export', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(2, 'Same-slot stack target'),
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'bench',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'bench',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'bench',
+            'bench',
+            0,
+            1,
+            'move',
+          ])
+        )
+      ),
+      target
+    );
+    expect(result).toEqual({
       ok: false,
       issues: [
         {
           code: 'source_state_mismatch',
           recordIndex: 5,
-          path: '$[5].parameters[1]',
+          path: '$[5].parameters[4]',
           message:
-            'Current closed candidate cannot resolve this legacy source container',
+            'Recorded target coordinate does not identify a distinct opposite-slot active/bench stack top',
         },
       ],
     });
-    expect('state' in stackSource).toBe(false);
+    expect('state' in result).toBe(false);
   });
 
   it('moves bare play stacks with legacy no-target layout semantics', () => {
@@ -2794,7 +3024,7 @@ describe('legacy v1 canonical candidate builder', () => {
           recordIndex: 4,
           path: '$[4].parameters[3]',
           message:
-            'Recorded move-card source coordinate does not identify a current bare play stack',
+            'Recorded move-card source coordinate does not identify a current active/bench stack top',
         },
       ],
     });

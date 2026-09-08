@@ -1027,8 +1027,12 @@ describe('legacy action-export source envelope', () => {
     const clicks = readRepositoryFile(
       'client/src/setup/image-logic/click-events.js'
     );
+    const drag = readRepositoryFile('client/src/setup/image-logic/drag.js');
     const moveCard = readRepositoryFile(
       'client/src/actions/move-card-bundle/move-card.js'
+    );
+    const autoMove = readRepositoryFile(
+      'client/src/actions/move-card-bundle/auto-move-active-bench-card.js'
     );
     const attach = readRepositoryFile(
       'client/src/actions/move-card-bundle/attach-card.js'
@@ -1052,6 +1056,9 @@ describe('legacy action-export source envelope', () => {
     expect(clicks).toContain(
       "mouseClick.cardIndex,\n      targetIndex,\n      'move'"
     );
+    expect(drag).toContain(
+      '(mouseClick.zoneId !== dZoneId || draggedImage.attached)'
+    );
 
     expect(moveCard).toContain(
       "if (typeof targetIndex === 'number') {\n    targetCard = dZone.array[targetIndex];"
@@ -1064,6 +1071,13 @@ describe('legacy action-export source envelope', () => {
     );
     expect(moveCard).toContain(
       "movingCard.type === 'Pokémon' && !activeOrBenchZone.includes(oZoneId)"
+    );
+    expect(autoMove).toContain('//case 3: yes target, switch spots');
+    expect(autoMove).toContain(
+      '!movingCard.image.attached && //we are not attaching a card\n    !dZone.array[targetIndex].image.attached'
+    );
+    expect(autoMove).toContain(
+      'moveCard(user, initiator, dZoneId, oZoneId, targetIndex, false);'
     );
     expect(evolve).toContain('targetCard.image.after(movingCard.image);');
     expect(evolve).toContain('targetCard.image.relative = movingCard.image;');

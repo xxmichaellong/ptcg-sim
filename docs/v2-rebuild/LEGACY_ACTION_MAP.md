@@ -28,7 +28,7 @@ The legacy `clean` and `invalidMessage` reset flags are presentation-only. The
 candidate retains source-record-to-event-batch mappings and proves exact replay.
 It now also admits the bounded `draw`, `discardAndDraw`, `shuffleAndDraw`,
 `shuffleBottomAndDraw`, direct prize `shuffleZone`, zone-backed `moveToDeckTop`,
-the bottom-mode, target-free loose-zone/stadium/new-play-stack/bare-whole-stack,
+the bottom-mode, target-free loose-zone/stadium/new-play-stack/rich-whole-stack,
 and source-zone-targeted active/bench `moveCardBundle`, resolved
 `shuffleIntoDeck`, source-authentic `switchWithDeckTop`, and
 `shufflePrizesToDeckBottom` atoms below, but rejects any other action before
@@ -63,7 +63,7 @@ that can construct those conditions.
 
 The private movement decoder and candidate now admit the exact `draw`,
 `discardAndDraw`, `shuffleAndDraw`, `shuffleBottomAndDraw`, the bottom-mode,
-target-free loose-zone/stadium/new-play-stack/bare-whole-stack, and
+target-free loose-zone/stadium/new-play-stack/rich-whole-stack, and
 source-zone-targeted active/bench `moveCardBundle`, direct prize
 `shuffleZone`, `moveToDeckTop`, `shuffleIntoDeck`, `switchWithDeckTop`, and
 `shufflePrizesToDeckBottom` tuples.
@@ -167,22 +167,20 @@ out-of-range value rejects the whole candidate. The source card's current
 category derives attachment versus evolution, and one canonical
 `PlaceCardOnPlayStack` event preserves evolution and Energy-before-Trainer
 ordering. Repeated rich-target placement, exact events, retry, and rollback are
-pinned. Numeric active/bench stack sources remain closed because a top-to-top
-drag performs stack switching rather than attach/evolve.
+pinned. Top-to-top numeric stack sources use the separate switching path below.
 
-The same target-free tuple now resolves bare active/bench sources for movement
-back into active or bench. Because each reachable stack currently contains one
-evolution card and no attachments, its legacy flat-array index equals its
-canonical board-order index; conversion additionally requires every stack in
-the selected source container to retain that bare shape. It then snapshots the
-complete board layout and executes `MovePlayStack`. Bench-to-active promotion,
-active demotion with zero or multiple benches, the v1 lone-bench automatic
-promotion, and non-tail bench-to-bench append are atomic. Active-to-active and
-an already-tail bench-to-bench export retain zero-batch mappings. Source-backed
-relocation/auto-move call order, exact layout events, retry, invariants, and late
-out-of-range rollback are pinned. Rich active/bench stacks, stack departures,
-attachment/inspection/work-area origins, and numeric stack-switch sources remain
-fail-closed until their source ordering and semantics are admitted.
+The same tuple resolves active/bench source stack tops through that exact rich
+flat-array order. It snapshots the complete board layout and executes
+`MovePlayStack`. Target-free bench-to-active promotion, active demotion with zero
+or multiple benches, v1 lone-bench automatic promotion, and non-tail
+bench-to-bench append are atomic. Active-to-active and an already-tail
+bench-to-bench export retain zero-batch mappings. A numeric top target on the
+opposite slot atomically swaps the two resolved stacks; same-zone top-target
+drops are excluded because the v1 drag guard never exports them. Source-backed
+relocation/auto-move call order, rich source/target offsets, exact layout events,
+retry, invariants, and late out-of-range rollback are pinned. Lower evolutions,
+attachments, inspections, and work-area origins remain fail-closed for their
+distinct card-departure semantics.
 
 The direct shuffle is restricted to exact
 `[initiator, "prizes", permutation, true]` records produced by the prize

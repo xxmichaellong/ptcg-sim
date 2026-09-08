@@ -195,48 +195,16 @@ const candidateSourceCardId = (
     : null;
 };
 
-const candidateBarePlayStackAtLegacyIndex = (
+const candidatePlayStackTopAtLegacyIndex = (
   state: MatchState,
   playerId: PlayerId,
-  sourceZone: 'active' | 'bench',
-  sourceIndex: number
+  playZone: 'active' | 'bench',
+  legacyCardIndex: number
 ): PlayStack | null => {
   const board = state.boards[playerId];
   if (!board) return null;
   const stackIds =
-    sourceZone === 'active'
-      ? board.activeStackId
-        ? [board.activeStackId]
-        : []
-      : board.benchStackIds;
-  const stacks = stackIds.map((stackId) => state.stacks[stackId]);
-  if (
-    stacks.some(
-      (stack) =>
-        !stack ||
-        stack.boardPlayerId !== playerId ||
-        stack.evolutionCardIds.length !== 1 ||
-        stack.attachmentCardIds.length !== 0
-    )
-  ) {
-    return null;
-  }
-  const stack = stacks[sourceIndex];
-  const cardId = stack?.evolutionCardIds[0];
-  const card = cardId ? state.cards[cardId] : undefined;
-  return stack && card?.ownerId === playerId ? stack : null;
-};
-
-const candidateTargetPlayStackAtLegacyIndex = (
-  state: MatchState,
-  playerId: PlayerId,
-  destinationZone: 'active' | 'bench',
-  targetIndex: number
-): PlayStack | null => {
-  const board = state.boards[playerId];
-  if (!board) return null;
-  const stackIds =
-    destinationZone === 'active'
+    playZone === 'active'
       ? board.activeStackId
         ? [board.activeStackId]
         : []
@@ -257,12 +225,12 @@ const candidateTargetPlayStackAtLegacyIndex = (
     }
 
     // V1 refreshes each play container to top-first evolution order followed
-    // by its versioned attachment order. Only the unattached top image is an
-    // authentic attach/evolve target; every other flat coordinate fails shut.
-    if (targetIndex === legacyIndex) return stack;
+    // by its versioned attachment order. Only the unattached top image names
+    // the whole stack or an attach/evolve target; every lower coordinate fails.
+    if (legacyCardIndex === legacyIndex) return stack;
     legacyIndex +=
       stack.evolutionCardIds.length + stack.attachmentCardIds.length;
-    if (targetIndex < legacyIndex) return null;
+    if (legacyCardIndex < legacyIndex) return null;
   }
 
   return null;
@@ -626,12 +594,11 @@ export const buildLegacyV1Candidate = (
       }
       case 'moveCardBundle': {
         if (
-          typeof action.targetIndex !== 'number' &&
           (action.sourceZone === 'active' || action.sourceZone === 'bench') &&
           (action.destinationZone === 'active' ||
             action.destinationZone === 'bench')
         ) {
-          const stack = candidateBarePlayStackAtLegacyIndex(
+          const stack = candidatePlayStackTopAtLegacyIndex(
             state,
             playerId,
             action.sourceZone,
@@ -643,16 +610,40 @@ export const buildLegacyV1Candidate = (
               recordIndex: action.recordIndex,
               path: `$[${action.recordIndex}].parameters[3]`,
               message:
-                'Recorded move-card source coordinate does not identify a current bare play stack',
+                'Recorded move-card source coordinate does not identify a current active/bench stack top',
+            });
+          }
+          const targetStack =
+            typeof action.targetIndex === 'number'
+              ? candidatePlayStackTopAtLegacyIndex(
+                  state,
+                  playerId,
+                  action.destinationZone,
+                  action.targetIndex
+                )
+              : null;
+          if (
+            typeof action.targetIndex === 'number' &&
+            (!targetStack ||
+              targetStack.id === stack.id ||
+              action.sourceZone === action.destinationZone)
+          ) {
+            return failure({
+              code: 'source_state_mismatch',
+              recordIndex: action.recordIndex,
+              path: `$[${action.recordIndex}].parameters[4]`,
+              message:
+                'Recorded target coordinate does not identify a distinct opposite-slot active/bench stack top',
             });
           }
           const board = state.boards[playerId]!;
           if (
-            (action.sourceZone === 'active' &&
+            !targetStack &&
+            ((action.sourceZone === 'active' &&
               action.destinationZone === 'active') ||
-            (action.sourceZone === 'bench' &&
-              action.destinationZone === 'bench' &&
-              board.benchStackIds.at(-1) === stack.id)
+              (action.sourceZone === 'bench' &&
+                action.destinationZone === 'bench' &&
+                board.benchStackIds.at(-1) === stack.id))
           ) {
             break;
           }
@@ -663,6 +654,7 @@ export const buildLegacyV1Candidate = (
             expectedActiveStackId: board.activeStackId,
             expectedBenchStackIds: [...board.benchStackIds],
             destinationSlot: action.destinationZone,
+            ...(targetStack ? { targetStackId: targetStack.id } : {}),
           });
           if (problem) return problem;
           break;
@@ -701,7 +693,7 @@ export const buildLegacyV1Candidate = (
         ) {
           const targetStack =
             typeof action.targetIndex === 'number'
-              ? candidateTargetPlayStackAtLegacyIndex(
+              ? candidatePlayStackTopAtLegacyIndex(
                   state,
                   playerId,
                   action.destinationZone,
