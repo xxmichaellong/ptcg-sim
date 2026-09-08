@@ -24,6 +24,11 @@ import {
   type LegacyV1DeckDecodeIssueCode,
 } from './decode-decks.js';
 import {
+  decodeLegacyV1CardAnnotationActions,
+  type LegacyV1CardAnnotationAction,
+  type LegacyV1CardAnnotationDecodeIssueCode,
+} from './decode-card-annotations.js';
+import {
   decodeLegacyV1LifecycleActions,
   type LegacyV1LifecycleAction,
   type LegacyV1LifecycleDecodeIssueCode,
@@ -95,9 +100,11 @@ const CONVERTED_ACTIONS = new Set<LegacySynchronizedActionName>([
   'addSpecialCondition',
   'updateSpecialCondition',
   'removeSpecialCondition',
+  'rotateCard',
 ]);
 
 type LegacyV1ConvertedAction =
+  | LegacyV1CardAnnotationAction
   | LegacyV1LifecycleAction
   | LegacyV1MarkerAction
   | LegacyV1MovementAction
@@ -115,6 +122,7 @@ export type LegacyV1CandidateIssueCode =
   | 'invalid_target'
   | 'source_state_mismatch'
   | 'canonical_error'
+  | `annotation.${LegacyV1CardAnnotationDecodeIssueCode}`
   | `deck.${LegacyV1DeckDecodeIssueCode}`
   | `lifecycle.${LegacyV1LifecycleDecodeIssueCode}`
   | `marker.${LegacyV1MarkerActionDecodeIssueCode}`
@@ -526,6 +534,17 @@ export const buildLegacyV1Candidate = (
     });
   }
 
+  const decodedCardAnnotations = decodeLegacyV1CardAnnotationActions(parsed);
+  if (!decodedCardAnnotations.ok) {
+    const issue = decodedCardAnnotations.issues[0]!;
+    return failure({
+      code: `annotation.${issue.code}`,
+      recordIndex: issue.recordIndex,
+      path: issue.path,
+      message: issue.message,
+    });
+  }
+
   const decodedMovement = decodeLegacyV1MovementActions(parsed);
   if (!decodedMovement.ok) {
     const issue = decodedMovement.issues[0]!;
@@ -560,6 +579,7 @@ export const buildLegacyV1Candidate = (
   }
 
   const convertedActions: LegacyV1ConvertedAction[] = [
+    ...decodedCardAnnotations.actions,
     ...decodedLifecycle.actions,
     ...decodedMarkers.actions,
     ...decodedMovement.actions,
@@ -940,6 +960,80 @@ export const buildLegacyV1Candidate = (
         } else if (action.type === 'removeSpecialCondition') {
           sourceSpecialConditionTopCardIds.delete(stack.id);
         }
+        break;
+      }
+      case 'rotateCard': {
+        if (action.zone === 'stadium') {
+          const cardId = candidateSourceCardId(
+            state,
+            playerId,
+            stadiumZoneId(),
+            'stadium',
+            action.sourceIndex
+          );
+          const card = cardId ? state.cards[cardId] : undefined;
+          if (!cardId || !card) {
+            return failure({
+              code: 'source_state_mismatch',
+              recordIndex: action.recordIndex,
+              path: `$[${action.recordIndex}].parameters[1]`,
+              message:
+                'Recorded stadium rotation coordinate does not identify the current player card',
+            });
+          }
+          const problem = apply({
+            type: 'SetCardOrientation',
+            cardId,
+            orientationQuarterTurns: ((card.orientationQuarterTurns + 1) %
+              4) as 0 | 1 | 2 | 3,
+          });
+          if (problem) return problem;
+          break;
+        }
+
+        const source = candidatePlayStackCardAtLegacyIndex(
+          state,
+          playerId,
+          action.zone,
+          action.sourceIndex
+        );
+        if (!source) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[1]`,
+            message:
+              'Recorded play rotation coordinate does not identify the current player stack card',
+          });
+        }
+
+        if (!action.single) {
+          const problem = apply({
+            type: 'RotateStack',
+            stackId: source.stack.id,
+            rotationQuarterTurns: ((source.stack.rotationQuarterTurns + 1) %
+              4) as 0 | 1 | 2 | 3,
+          });
+          if (problem) return problem;
+          break;
+        }
+
+        const card = state.cards[source.cardId];
+        if (!card) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[1]`,
+            message:
+              'Recorded single-card rotation coordinate does not identify a canonical card',
+          });
+        }
+        const problem = apply({
+          type: 'SetCardOrientation',
+          cardId: source.cardId,
+          orientationQuarterTurns: card.orientationQuarterTurns === 1 ? 0 : 1,
+        });
+        if (problem) return problem;
         break;
       }
       case 'discardBoard':

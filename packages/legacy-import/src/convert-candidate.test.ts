@@ -1691,6 +1691,430 @@ describe('legacy v1 canonical candidate builder', () => {
     });
   });
 
+  it('imports play-group, exact play-card, and stadium rotation targets deterministically', () => {
+    const parsed = parse(
+      payload(
+        [
+          ['1', 'Rotation base', 'Pokémon', '/legacy/rotation-base.png'],
+          [
+            '1',
+            'Rotation evolution',
+            'Pokémon',
+            '/legacy/rotation-evolution.png',
+          ],
+          ['1', 'Rotation tool', 'Trainer', '/legacy/rotation-tool.png'],
+          ['1', 'Rotation stadium', 'Trainer', '/legacy/rotation-stadium.png'],
+        ],
+        '',
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'active',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'active',
+          0,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'active',
+          0,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'stadium',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'rotateCard', ['active', 0, false]),
+        action('self', 'rotateCard', ['active', 1, false]),
+        action('self', 'rotateCard', ['active', 2, false]),
+        action('self', 'rotateCard', ['active', 0, true]),
+        action('self', 'rotateCard', ['active', 0, true]),
+        action('self', 'rotateCard', ['active', 1, true]),
+        action('self', 'rotateCard', ['active', 2, true]),
+        action('self', 'rotateCard', ['stadium', 0, false]),
+        action('self', 'rotateCard', ['stadium', 0, false])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) throw new Error('Expected conversion success');
+
+    const stackId = 'legacy:v1:stack:000000';
+    const baseId = 'legacy:v1:card:000000';
+    const evolutionId = 'legacy:v1:card:000001';
+    const attachmentId = 'legacy:v1:card:000002';
+    const stadiumId = 'legacy:v1:card:000003';
+    expect(
+      result.records
+        .filter(({ action }) => action === 'rotateCard')
+        .map(({ recordIndex, batches }) => ({
+          recordIndex,
+          events: batches.flatMap((batch) => batch.events),
+        }))
+    ).toEqual([
+      {
+        recordIndex: 7,
+        events: [
+          { type: 'StackRotationSet', stackId, rotationQuarterTurns: 1 },
+        ],
+      },
+      {
+        recordIndex: 8,
+        events: [
+          { type: 'StackRotationSet', stackId, rotationQuarterTurns: 2 },
+        ],
+      },
+      {
+        recordIndex: 9,
+        events: [
+          { type: 'StackRotationSet', stackId, rotationQuarterTurns: 3 },
+        ],
+      },
+      {
+        recordIndex: 10,
+        events: [
+          {
+            type: 'CardOrientationSet',
+            cardId: evolutionId,
+            orientationQuarterTurns: 1,
+          },
+        ],
+      },
+      {
+        recordIndex: 11,
+        events: [
+          {
+            type: 'CardOrientationSet',
+            cardId: evolutionId,
+            orientationQuarterTurns: 0,
+          },
+        ],
+      },
+      {
+        recordIndex: 12,
+        events: [
+          {
+            type: 'CardOrientationSet',
+            cardId: baseId,
+            orientationQuarterTurns: 1,
+          },
+        ],
+      },
+      {
+        recordIndex: 13,
+        events: [
+          {
+            type: 'CardOrientationSet',
+            cardId: attachmentId,
+            orientationQuarterTurns: 1,
+          },
+        ],
+      },
+      {
+        recordIndex: 14,
+        events: [
+          {
+            type: 'CardOrientationSet',
+            cardId: stadiumId,
+            orientationQuarterTurns: 1,
+          },
+        ],
+      },
+      {
+        recordIndex: 15,
+        events: [
+          {
+            type: 'CardOrientationSet',
+            cardId: stadiumId,
+            orientationQuarterTurns: 2,
+          },
+        ],
+      },
+    ]);
+    expect(result.state.stacks[stackId]?.rotationQuarterTurns).toBe(3);
+    expect(result.state.cards[evolutionId]?.orientationQuarterTurns).toBe(0);
+    expect(result.state.cards[baseId]?.orientationQuarterTurns).toBe(1);
+    expect(result.state.cards[attachmentId]?.orientationQuarterTurns).toBe(1);
+    expect(result.state.cards[stadiumId]?.orientationQuarterTurns).toBe(2);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+
+    const replayed = result.records
+      .flatMap((record) => record.batches)
+      .reduce(
+        applyEventBatch,
+        createEmptyMatch(target.matchId, [target.selfSeat, target.opponentSeat])
+      );
+    expect(replayed).toEqual(result.state);
+  });
+
+  it('resolves opponent bench rotation through changing flat stack-card offsets', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          '',
+          [
+            ['1', 'Bench first', 'Pokémon', '/legacy/bench-first.png'],
+            ['1', 'Bench base', 'Pokémon', '/legacy/bench-base.png'],
+            ['1', 'Bench evolution', 'Pokémon', '/legacy/bench-evolution.png'],
+            ['1', 'Bench tool', 'Trainer', '/legacy/bench-tool.png'],
+          ],
+          action('opp', 'moveCardBundle', [
+            'self',
+            'deck',
+            'bench',
+            0,
+            false,
+            'move',
+          ]),
+          action('opp', 'moveCardBundle', [
+            'self',
+            'deck',
+            'bench',
+            0,
+            false,
+            'move',
+          ]),
+          action('opp', 'moveCardBundle', [
+            'self',
+            'deck',
+            'bench',
+            0,
+            1,
+            'move',
+          ]),
+          action('opp', 'moveCardBundle', [
+            'self',
+            'deck',
+            'bench',
+            0,
+            1,
+            'move',
+          ]),
+          action('opp', 'rotateCard', ['bench', 3, false]),
+          action('opp', 'rotateCard', ['bench', 2, true])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    expect(
+      result.records
+        .filter(({ action }) => action === 'rotateCard')
+        .flatMap(({ batches }) => batches.flatMap((batch) => batch.events))
+    ).toEqual([
+      {
+        type: 'StackRotationSet',
+        stackId: 'legacy:v1:stack:000001',
+        rotationQuarterTurns: 1,
+      },
+      {
+        type: 'CardOrientationSet',
+        cardId: 'legacy:v1:card:000001',
+        orientationQuarterTurns: 1,
+      },
+    ]);
+    expect(
+      result.state.stacks['legacy:v1:stack:000000']?.rotationQuarterTurns
+    ).toBe(0);
+    expect(
+      result.state.stacks['legacy:v1:stack:000001']?.rotationQuarterTurns
+    ).toBe(1);
+    assertMatchInvariants(result.state);
+  });
+
+  it('normalizes nonzero-group single rotation to the production per-card target model', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          [['1', 'Rotation base', 'Pokémon', '/legacy/rotation-base.png']],
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'rotateCard', ['active', 0, false]),
+          action('self', 'rotateCard', ['active', 0, false]),
+          action('self', 'rotateCard', ['active', 0, true])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    const stack = result.state.stacks['legacy:v1:stack:000000'];
+    const card = result.state.cards['legacy:v1:card:000000'];
+    expect(stack?.rotationQuarterTurns).toBe(2);
+    expect(card?.orientationQuarterTurns).toBe(1);
+    expect(
+      result.records.at(-1)?.batches.flatMap((batch) => batch.events)
+    ).toEqual([
+      {
+        type: 'CardOrientationSet',
+        cardId: 'legacy:v1:card:000000',
+        orientationQuarterTurns: 1,
+      },
+    ]);
+    assertMatchInvariants(result.state);
+  });
+
+  it('derives later rotations from canonical evolution cleanup', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          [
+            ['1', 'Rotation base', 'Pokémon', '/legacy/rotation-base.png'],
+            [
+              '1',
+              'Rotation evolution',
+              'Pokémon',
+              '/legacy/rotation-evolution.png',
+            ],
+          ],
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'rotateCard', ['active', 0, false]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            0,
+            'move',
+          ]),
+          action('self', 'rotateCard', ['active', 1, false])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+    expect(
+      result.records.at(-1)?.batches.flatMap((batch) => batch.events)
+    ).toEqual([
+      {
+        type: 'StackRotationSet',
+        stackId: 'legacy:v1:stack:000000',
+        rotationQuarterTurns: 1,
+      },
+    ]);
+    expect(
+      result.state.stacks['legacy:v1:stack:000000']?.rotationQuarterTurns
+    ).toBe(1);
+    assertMatchInvariants(result.state);
+  });
+
+  it('refuses missing and cross-owner rotation coordinates without partial state', () => {
+    const missing = buildLegacyV1Candidate(
+      parse(
+        payload('', '', action('self', 'rotateCard', ['active', 0, false]))
+      ),
+      target
+    );
+    expect(missing).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 3,
+          path: '$[3].parameters[1]',
+          message:
+            'Recorded play rotation coordinate does not identify the current player stack card',
+        },
+      ],
+    });
+    expect('state' in missing).toBe(false);
+
+    const crossOwnerStadium = buildLegacyV1Candidate(
+      parse(
+        payload(
+          [
+            [
+              '1',
+              'Owned rotation stadium',
+              'Trainer',
+              '/legacy/owned-rotation-stadium.png',
+            ],
+          ],
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'stadium',
+            0,
+            false,
+            'move',
+          ]),
+          action('opp', 'rotateCard', ['stadium', 0, false])
+        )
+      ),
+      target
+    );
+    expect(crossOwnerStadium).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 4,
+          path: '$[4].parameters[1]',
+        },
+      ],
+    });
+    expect('state' in crossOwnerStadium).toBe(false);
+  });
+
+  it('lifts strict rotation tuple diagnostics before constructing state', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload('', '', action('self', 'rotateCard', ['stadium', 0, true]))
+      ),
+      target
+    );
+    expect(result).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'annotation.invalid_rotation_mode',
+          recordIndex: 3,
+          path: '$[3].parameters[2]',
+          message:
+            'rotateCard single mode is only source-accessible in active or bench',
+        },
+      ],
+    });
+    expect('state' in result).toBe(false);
+  });
+
   it.each([
     { parameters: [], code: 'marker.invalid_parameter_count' },
     { parameters: [null], code: 'marker.invalid_parameter_type' },
@@ -8703,7 +9127,7 @@ describe('legacy v1 canonical candidate builder', () => {
 
   it('rejects an admitted but unconverted family before creating state', () => {
     const result = buildLegacyV1Candidate(
-      parse(payload('', '', action('self', 'rotateCard', [null]))),
+      parse(payload('', '', action('self', 'changeType', [null]))),
       target
     );
     expect(result).toEqual({

@@ -33,8 +33,8 @@ source-zone-targeted active/bench, and individual work-area new-stack
 `moveCardBundle`, resolved
 `shuffleIntoDeck`, source-authentic `switchWithDeckTop`, and
 `shufflePrizesToDeckBottom` atoms below. Exact direct loose-board bulk records,
-once-per-game, ability, damage, and special-condition marker records, and
-empty-tuple `attack` and `pass` records also
+once-per-game, ability, damage, and special-condition marker records,
+normalized rotation records, and empty-tuple `attack` and `pass` records also
 reuse their canonical atomic commands, but every other action is rejected before
 constructing state. This is intentionally not yet a complete import
 compatibility claim: reachable loose-board take-turn cleanup and owner reset are
@@ -402,6 +402,25 @@ no-ops, automatic cleanup, and malformed/lossy rollback. Static
 characterization plus the existing real-runtime marker editing, movement, and
 evolution oracles pin the unchanged source. No core, protocol, authority,
 state, public API, renderer, route, UI, or UX schema changes.
+
+The rotation family now admits exact `rotateCard [zone, index, single]`
+records. Active and bench coordinates use the frozen V1 flat order—newest to
+oldest evolutions followed by attachments across stacks. A nonsingle play
+record advances that exact stack's `RotateStack` target by one quarter turn; a
+single play record toggles only the exact card's `SetCardOrientation` target
+between one and zero. Nonsingle stadium rotation advances the owned stadium
+card's orientation by one quarter turn. Stadium single mode is rejected because
+the shipped keyboard path never exposes it. This is the same deliberate
+normalization used by the production V2 shortcut resolver: import preserves the
+semantic group/card gesture and stable target, not V1's hidden inline angles,
+wrapper margins, or independently stale `PokémonBreak` flags. Missing,
+out-of-range, cross-owner, invalid-zone, and malformed tuples fail the complete
+candidate. Tests pin top/lower/attachment/stadium targets, exact events,
+quarter-turn progression, single-card toggling, evolution cleanup,
+deterministic retry/replay/hash/invariants, and rollback. Static source locks
+and the existing real-runtime rotation oracles pin the unchanged V1 behavior.
+No core, protocol, authority, state, public API, renderer, route, UI, or UX
+schema changes.
 
 ### Executable marker-control characterization
 

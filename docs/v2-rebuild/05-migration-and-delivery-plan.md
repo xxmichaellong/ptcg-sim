@@ -176,7 +176,7 @@ stack-card-departure/
 source-zone-targeted-play/
 work-area-target-free-play/
 zone-backed-deck-action/
-prizes-to-deck-bottom/once-per-game-marker/ability-marker/damage-marker/special-condition-marker/parameterless-attack-and-pass subset
+prizes-to-deck-bottom/once-per-game-marker/ability-marker/damage-marker/special-condition-marker/rotation/parameterless-attack-and-pass subset
 through normal game-core commands and verifies exact event replay; it rejects every
 unconverted family before constructing state, rejects recorded draws that exceed
 the exact current source-state deck, applies only direct prize shuffles
@@ -332,6 +332,16 @@ transient null edits while recognizing V1's automatic cleanup on evolution or
 active-slot departure. Both players, exact events, deterministic
 retry/replay/hash/invariants, malformed rollback, and existing real-V1
 editor/movement behavior are pinned without a schema change.
+Exact rotation records now decode only the shipped active/bench group-or-single
+and stadium group modes. Current flat play coordinates resolve an exact stack
+card; group records advance `RotateStack`, single records toggle that card's
+q0/q1 `SetCardOrientation`, and stadium records advance the exact owned card's
+orientation modulo four. This reuses the production V2 keyboard normalization
+and intentionally excludes hidden V1 DOM angle/margin/BREAK history. Exact
+events, top/lower/attachment/stadium targeting, evolution cleanup,
+deterministic retry/replay/hash/invariants, malformed/stale rollback, static
+source locks, and existing real-runtime oracles are pinned without a schema or
+UI/UX change.
 Shuffle-into-deck translates v1's in-deck tail-move
 permutation basis to the canonical input order. Switch-with-deck-top preserves
 v1's source-tail return and empty-deck branch through one or two canonical

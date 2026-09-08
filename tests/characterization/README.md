@@ -363,6 +363,14 @@ overlong condition retention, `Pa`, condition removal, then an ability toggle at
 client sequences 1/2/3/4/5 exactly once. The later selected-card checkpoint
 completes the keyboard path.
 
+The frozen export-envelope source contract now also pins `rotateCard`'s exact
+three-value tuple, quarter-turn arithmetic, active/bench/stadium shortcut
+boundary, play-group sibling rule, single-card `PokémonBreak` toggle, and
+reset/synchronization helpers. The existing real-runtime rotation suites remain
+the behavioral oracle for its history-dependent DOM angles and margins; this
+static lock only prevents source drift while the importer applies the approved
+canonical target-value normalization.
+
 The protected count-input checkpoint completes all six context-menu numeric
 prompts while retaining the browser-native v1 UI. A typed controller descriptor
 binds the exact action, card, and source zone; StrictMode can invoke its effect

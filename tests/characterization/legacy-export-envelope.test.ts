@@ -428,6 +428,54 @@ describe('legacy action-export source envelope', () => {
     );
   });
 
+  it('pins rotation tuples, source-accessible modes, and DOM-only state', () => {
+    const rotateCard = readRepositoryFile(
+      'client/src/actions/general/rotate-card.js'
+    );
+    const keybinds = readRepositoryFile(
+      'client/src/actions/keybinds/keybinds.js'
+    );
+
+    expect(rotateCard).toContain('single = false,\n  emit = true');
+    expect(
+      rotateCard.match(
+        /processAction\(user, emit, 'rotateCard', \[zoneId, index, single\]\);/g
+      )
+    ).toHaveLength(2);
+    expect(rotateCard).toContain(
+      'const newRotation = (currentRotation + 90) % 360;'
+    );
+    expect(rotateCard).toContain("if (['bench'].includes(zoneId))");
+    expect(rotateCard).toContain('if ([0, 180].includes(newRotation))');
+    expect(rotateCard).toContain('if (!single)');
+    expect(rotateCard).toContain(
+      "if (image !== rotatingImage && image.type === 'Pokémon')"
+    );
+    expect(rotateCard).toContain('rotatingImage.PokémonBreak = true;');
+    expect(rotateCard).toContain(
+      "rotatingImage.style.transform = 'rotate(0deg)';"
+    );
+    expect(rotateCard).toContain('rotatingImage.PokémonBreak = false;');
+    expect(rotateCard).toContain('export const resetRotation = (targetImage)');
+    expect(rotateCard).toContain(
+      'export const syncRotation = (card, targetImage)'
+    );
+
+    expect(keybinds).toContain(
+      "['stadium', 'active', 'bench'].includes(mouseClick.zoneId)"
+    );
+    expect(keybinds).toContain(
+      'rotateCard(mouseClick.cardUser, mouseClick.zoneId, mouseClick.cardIndex);'
+    );
+    expect(keybinds).toContain(
+      "['active', 'bench'].includes(mouseClick.zoneId)"
+    );
+    expect(keybinds).toContain(
+      'rotateCard(\n        mouseClick.cardUser,\n        mouseClick.zoneId,\n        mouseClick.cardIndex,\n        true\n      );'
+    );
+    expect(keybinds).toContain('!systemState.isReplay');
+  });
+
   it('pins the first movement tuple, clamp, and independent target ownership', () => {
     const deckActions = readRepositoryFile(
       'client/src/actions/zones/deck-actions.js'

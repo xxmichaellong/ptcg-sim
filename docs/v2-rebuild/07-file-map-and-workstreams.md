@@ -303,6 +303,17 @@ matching the source's automatic DOM-node cleanup. Markerless updates plus
 missing, bench, lower-evolution, attachment, malformed, and over-bound targets
 fail closed without importing client/runtime code or widening a public schema.
 
+Rotation decoding now covers exact active/bench group-or-single tuples and the
+nonsingle stadium tuple. It resolves the frozen flat play coordinate to a stable
+stack card, advances the containing `RotateStack` target for group mode, toggles
+the exact card's q0/q1 `SetCardOrientation` target for single mode, or advances
+the owned stadium card modulo four. This is intentionally the same normalized
+target-value model as production keyboard ingress; the importer does not add
+V1's hidden inline-angle, wrapper-margin, or per-image `PokémonBreak` history to
+canonical state. Missing, cross-owner, source-inaccessible, and malformed
+records fail closed without importing client/runtime code or widening a public
+schema.
+
 ## Files added during characterization
 
 ```text

@@ -415,6 +415,22 @@ V1's non-emitting automatic cleanup. Conversion maps only the current active
 stack top through `SetSpecialCondition`; bench, lower-evolution, attachment,
 missing, malformed, and over-bound coordinates fail closed.
 
+`rotateCard` carries exactly `[zone, index, single]`. The shipped keyboard path
+emits `single=false` for `active`, `bench`, or `stadium`, and `single=true` only
+for `active` or `bench`. Play indices address the current V1 flat order:
+newest-to-oldest evolutions followed by attachments, concatenated across bench
+stacks. Record `user` selects the target player/card owner. Conversion applies
+the already-approved production V2 normalization: nonsingle play records
+advance the resolved stack's `RotateStack` target modulo four, single play
+records toggle the resolved card's independent `SetCardOrientation` target
+between q1 and q0, and nonsingle stadium records advance the exact owned card's
+orientation modulo four. It intentionally does not reconstruct V1's
+history-dependent inline angles, wrapper margins, or per-image `PokémonBreak`
+flags; those DOM defects are not canonical game state and the same boundary is
+already enforced by live V2 keyboard ingress. Stadium single mode plus missing,
+stale, cross-owner, invalid-zone, malformed, and out-of-bound coordinates fail
+closed.
+
 `attack` and `pass` each carry an exact empty parameter array. Their record
 `user` is the acting/target player in the saved perspective. Conversion emits
 one canonical `DeclareAttack` or `PassTurn` batch, preserving the source's
@@ -713,6 +729,14 @@ The lifecycle mapping is source-backed:
   private exact-host map preserves transient null edits and observes automatic
   evolution/active-departure cleanup. Invalid text plus bench, missing,
   lower-evolution, or attachment coordinates return no candidate; and
+- each exact rotation record resolves a current active/bench flat card or the
+  owned stadium card. Nonsingle play rotation advances `RotateStack`; single
+  play rotation toggles that exact card's orientation q0/q1; stadium rotation
+  advances its per-card orientation modulo four. This preserves stable semantic
+  targets under the same normalization as production keyboard ingress while
+  excluding V1's hidden DOM-only angle/margin/BREAK history. Evolution-reset
+  progression is derived from current canonical state; malformed, stale,
+  cross-owner, and source-inaccessible modes return no candidate; and
 - attack and pass require exact empty parameter arrays and execute one
   `DeclareAttack` or `PassTurn` for the source record's target player. The
   canonical batch resets every ability marker, discards only that player's
@@ -737,7 +761,7 @@ individual-inspection-card-loose-and-targeted-play/
 individual-inspection-card-deck-edge-shuffle-and-stadium/
 move-to-top/
 rich-whole-stack-move-and-swap/move-to-bottom/
-shuffle-into-deck/deck-top-switch/once-per-game-marker/ability-marker/damage-marker/special-condition-marker/parameterless-attack-and-pass/
+shuffle-into-deck/deck-top-switch/once-per-game-marker/ability-marker/damage-marker/special-condition-marker/rotation/parameterless-attack-and-pass/
 prizes-to-deck-bottom subset can now create ordinary loose-board, singleton
 stadium, and active/bench stack state, enrich those stacks with zone-backed
 evolutions and attachments, move or swap those rich stacks, reattach lower
