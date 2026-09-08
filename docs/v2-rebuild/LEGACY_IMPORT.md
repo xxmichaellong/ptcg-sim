@@ -231,8 +231,13 @@ preserves the source stack plus its marker state. A top card removes its stack
 and stages every lower evolution plus attachment in one deterministically
 identified attachment-resolution work area, preserving the canonical
 base-to-top and versioned attachment sequences plus the source-slot hint.
-Inspection and work-area sources remain closed for their distinct departure
-semantics.
+Attachment-resolution work-area sources now resolve their exact V1 flat order:
+newest-to-oldest staged evolutions followed by versioned attachments. A staged
+card can move individually to a loose zone through `MoveStagedCard`, or onto an
+exact numeric active/bench stack top through `PlaceCardOnPlayStack`; current
+category derives evolution versus attachment and an empty work area closes.
+Inspection sources, target-free play restoration, stadium/deck-relative staged
+movement, and bulk work-area actions remain closed for their distinct semantics.
 
 A directly exported prize shuffle carries exactly
 `[initiator, "prizes", permutation, true]`. Empty permutations are valid for an
@@ -434,8 +439,13 @@ The lifecycle mapping is source-backed:
   order and Energy-before-Trainer attachment order. Rich target offsets, exact
   events, deterministic retry, lower/attachment target rejection, and whole-
   candidate rollback are pinned. Lower-card stack sources are handled by the
-  numeric reattachment path below; work-area origins remain closed;
-  and
+  numeric reattachment path below. Attachment-resolution work-area origins use
+  the matching newest-to-oldest evolution plus versioned-attachment flat order:
+  loose destinations execute `MoveStagedCard`, while an exact numeric stack-top
+  target executes `PlaceCardOnPlayStack`. Changing offsets, category-derived
+  evolution/attachment mode, concealment, empty-area cleanup, retry, and
+  rollback are pinned; target-free play, stadium, deck-relative, inspection,
+  and bulk work-area forms remain closed; and
 - active/bench stack-top sources are resolved through the same rich flat order,
   snapshot the exact board order, and execute `MovePlayStack`. Target-free
   promotion, demotion with zero or multiple benches, lone-bench automatic
@@ -498,33 +508,31 @@ candidate. No partial batches escape on failure.
 The closed lifecycle/draw/discard-and-draw/both hand-shuffle-and-draw forms/
 direct-prize-shuffle/target-free-loose/stadium/new-play-stack-move/
 source-zone-attach-evolve/stack-card-reattachment/stack-card-departure/
-move-to-top/
+individual-staged-card-loose-and-targeted-play/move-to-top/
 rich-whole-stack-move-and-swap/move-to-bottom/
 shuffle-into-deck/deck-top-switch/
 prizes-to-deck-bottom subset can now create ordinary loose-board, singleton
 stadium, and active/bench stack state, enrich those stacks with zone-backed
 evolutions and attachments, move or swap those rich stacks, reattach lower
-stack members, and depart any stack card into loose zones. Tests prove
-that a later take-turn discards both players' loose boards in
+stack members, depart any stack card into loose zones, and individually resolve
+staged cards into loose zones or existing stacks. Tests prove that a later
+take-turn discards both players' loose boards in
 source order before drawing, and that an owner reset clears only that owner's
 reachable loose state, owned stadium, and play stacks before rebuilding its
 deck. Opponent-owned stadium and play state remain. The subset still cannot
-resolve work-area origins, inspections, staged work, markers,
+resolve inspections, target-free/bulk/deck-relative staged work, markers,
 face-down play state, or cross-owner play placements, so take-turn in-play
 reveal and reset behavior for those shapes remain gated on their dedicated
 movement/state decoders.
 
 ## Next conversion slices
 
-1. Continue source-backed positional schemas for work-area origins after the
-   transactionally applied draw/discard-and-draw/both hand-shuffle-and-draw
-   forms, target-free loose/stadium/new-play-stack/rich-whole-stack movement,
-   numeric stack switching,
-   source-zone attach/evolve,
-   direct prize-shuffle, and zone-backed move-to-top/move-to-bottom/
-   shuffle-into-deck/deck-top-switch/prizes-to-deck-bottom atoms.
-   Map stack/work-area coordinates only after their producing families make
-   those states reachable in the closed transaction.
+1. Continue source-backed positional schemas for inspection origins and the
+   remaining target-free, bulk, stadium, and deck-relative work-area forms.
+   The prerequisite draw, loose/stadium/play/stack movement, direct prize
+   shuffle, and zone-backed deck atoms are already transactional. Map each
+   additional coordinate only after its producing family makes that state
+   reachable in the closed transaction.
 2. Add markers, visibility/inspection, randomized/bulk, table signals, and the
    remaining action families using the same allowlisted dispatch table.
 3. Produce a conversion report with warnings, dropped presentation fields, and

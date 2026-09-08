@@ -3610,6 +3610,345 @@ describe('legacy v1 canonical candidate builder', () => {
     assertMatchInvariants(result.state);
   });
 
+  it('moves changing staged coordinates to loose zones and an existing stack', () => {
+    const parsed = parse(
+      payload(
+        [
+          ['1', 'Staged target base', 'Pokémon', '/legacy/staged-target.png'],
+          ['1', 'Staged source base', 'Pokémon', '/legacy/staged-base.png'],
+          ['1', 'Staged source middle', 'Pokémon', '/legacy/staged-middle.png'],
+          ['1', 'Staged source top', 'Pokémon', '/legacy/staged-top.png'],
+          ['1', 'Staged source energy', 'Energy', '/legacy/staged-energy.png'],
+          ['1', 'Staged source tool', 'Trainer', '/legacy/staged-tool.png'],
+        ],
+        '',
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'active',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'bench',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'bench',
+          0,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'bench',
+          0,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'bench',
+          0,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'bench',
+          0,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'bench',
+          'discard',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'attachedCards',
+          'active',
+          0,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'attachedCards',
+          'hand',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'attachedCards',
+          'active',
+          1,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'attachedCards',
+          'lostZone',
+          0,
+          null,
+          'move',
+        ])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) throw new Error('Expected conversion success');
+
+    const playerId = target.selfSeat.playerId;
+    const targetStackId = 'legacy:v1:stack:000000';
+    const sourceStackId = 'legacy:v1:stack:000001';
+    const targetBaseId = 'legacy:v1:card:000000';
+    const sourceBaseId = 'legacy:v1:card:000001';
+    const sourceMiddleId = 'legacy:v1:card:000002';
+    const sourceTopId = 'legacy:v1:card:000003';
+    const sourceEnergyId = 'legacy:v1:card:000004';
+    const sourceToolId = 'legacy:v1:card:000005';
+    const workAreaId = 'legacy:v1:work-area:000000';
+    const discardId = playerZoneId(playerId, 'discard');
+    const handId = playerZoneId(playerId, 'hand');
+    const lostZoneId = playerZoneId(playerId, 'lostZone');
+    expect(result.state.boards[playerId]).toEqual({
+      activeStackId: targetStackId,
+      benchStackIds: [],
+    });
+    expect(result.state.stacks[targetStackId]).toMatchObject({
+      evolutionCardIds: [targetBaseId, sourceMiddleId],
+      attachmentCardIds: [sourceToolId],
+    });
+    expect(result.state.stacks[sourceStackId]).toBeUndefined();
+    expect(result.state.zones[discardId]?.cardIds).toEqual([sourceTopId]);
+    expect(result.state.zones[handId]?.cardIds).toEqual([sourceBaseId]);
+    expect(result.state.zones[lostZoneId]?.cardIds).toEqual([sourceEnergyId]);
+    expect(result.state.workAreas[playerId]?.attachmentResolution).toBeNull();
+    expect(result.records[8]!.batches[0]!.events).toEqual([
+      {
+        type: 'PlayStackDeparted',
+        cardId: sourceTopId,
+        expectedStackId: sourceStackId,
+        boardPlayerId: playerId,
+        expectedEvolutionCardIds: [sourceBaseId, sourceMiddleId, sourceTopId],
+        expectedAttachmentCardIds: [sourceEnergyId, sourceToolId],
+        destinationZoneId: discardId,
+        destinationIndex: 0,
+        concealIdentity: false,
+        attachmentResolution: {
+          id: workAreaId,
+          evolutionCardIds: [sourceBaseId, sourceMiddleId],
+          attachmentCardIds: [sourceEnergyId, sourceToolId],
+          suggestedSlot: 'bench',
+        },
+      },
+    ]);
+    expect(result.records[9]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardPlacedOnPlayStack',
+        playerId,
+        cardId: sourceMiddleId,
+        expectedSourceId: workAreaId,
+        targetStackId,
+        expectedTargetTopCardId: targetBaseId,
+        expectedTargetEvolutionCardIds: [targetBaseId],
+        expectedTargetAttachmentCardIds: [],
+        mode: 'evolution',
+        attachmentOrderVersion: 1,
+        evolutionCardIds: [targetBaseId, sourceMiddleId],
+        attachmentCardIds: [],
+      },
+    ]);
+    expect(result.records[10]!.batches[0]!.events).toEqual([
+      {
+        type: 'StagedCardMoved',
+        playerId,
+        expectedWorkAreaId: workAreaId,
+        source: 'evolution',
+        cardId: sourceBaseId,
+        destinationZoneId: handId,
+        destinationIndex: 0,
+        concealIdentity: true,
+      },
+    ]);
+    expect(result.records[11]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardPlacedOnPlayStack',
+        playerId,
+        cardId: sourceToolId,
+        expectedSourceId: workAreaId,
+        targetStackId,
+        expectedTargetTopCardId: sourceMiddleId,
+        expectedTargetEvolutionCardIds: [targetBaseId, sourceMiddleId],
+        expectedTargetAttachmentCardIds: [],
+        mode: 'attachment',
+        attachmentOrderVersion: 1,
+        evolutionCardIds: [targetBaseId, sourceMiddleId],
+        attachmentCardIds: [sourceToolId],
+      },
+    ]);
+    expect(result.records[12]!.batches[0]!.events).toEqual([
+      {
+        type: 'StagedCardMoved',
+        playerId,
+        expectedWorkAreaId: workAreaId,
+        source: 'attachment',
+        cardId: sourceEnergyId,
+        destinationZoneId: lostZoneId,
+        destinationIndex: 0,
+        concealIdentity: false,
+      },
+    ]);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+  });
+
+  it('rolls back stale and deliberately unsupported staged movement shapes', () => {
+    const stageThen = (...finalActions: unknown[]) =>
+      buildLegacyV1Candidate(
+        parse(
+          payload(
+            [
+              ['1', 'Staged rollback base', 'Pokémon', '/legacy/base.png'],
+              ['1', 'Staged rollback top', 'Pokémon', '/legacy/top.png'],
+            ],
+            '',
+            action('self', 'moveCardBundle', [
+              'opp',
+              'deck',
+              'active',
+              0,
+              false,
+              'move',
+            ]),
+            action('self', 'moveCardBundle', [
+              'opp',
+              'deck',
+              'active',
+              0,
+              0,
+              'move',
+            ]),
+            action('self', 'moveCardBundle', [
+              'opp',
+              'active',
+              'discard',
+              0,
+              false,
+              'move',
+            ]),
+            ...finalActions
+          )
+        ),
+        target
+      );
+
+    const stale = stageThen(
+      action('self', 'moveCardBundle', [
+        'opp',
+        'attachedCards',
+        'hand',
+        1,
+        false,
+        'move',
+      ])
+    );
+    expect(stale).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 6,
+          path: '$[6].parameters[3]',
+          message:
+            'Recorded attached-card coordinate does not identify a current staged card',
+        },
+      ],
+    });
+    expect('state' in stale).toBe(false);
+
+    const targetFreePlay = stageThen(
+      action('self', 'moveCardBundle', [
+        'opp',
+        'attachedCards',
+        'active',
+        0,
+        false,
+        'move',
+      ])
+    );
+    expect(targetFreePlay).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 6,
+          path: '$[6].parameters[4]',
+          message:
+            'Recorded staged-card destination does not identify a current stack top',
+        },
+      ],
+    });
+    expect('state' in targetFreePlay).toBe(false);
+
+    for (const result of [
+      stageThen(
+        action('self', 'moveCardBundle', [
+          'opp',
+          'attachedCards',
+          'stadium',
+          0,
+          false,
+          'move',
+        ])
+      ),
+      stageThen(
+        action('self', 'moveCardBundle', [
+          'opp',
+          'attachedCards',
+          'deck',
+          0,
+          false,
+          'bottom',
+        ])
+      ),
+    ]) {
+      expect(result).toEqual({
+        ok: false,
+        issues: [
+          {
+            code: 'source_state_mismatch',
+            recordIndex: 6,
+            path: '$[6].parameters[1]',
+            message:
+              'Current closed candidate cannot apply this staged-card movement shape',
+          },
+        ],
+      });
+      expect('state' in result).toBe(false);
+    }
+  });
+
   it('rejects stale and unresolved bottom-bundle sources without state', () => {
     const staleSource = buildLegacyV1Candidate(
       parse(

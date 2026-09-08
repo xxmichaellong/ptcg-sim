@@ -209,8 +209,11 @@ whole candidate. Target-free top, lower-evolution, and attachment moves into
 loose zones use canonical `MoveCardFromStack`; a top departure removes its stack
 and stages the ordered dependents in a deterministic attachment-resolution work
 area, while a lower evolution or attachment departs independently and leaves
-the stack plus its marker state in place. Work-area origins remain closed.
-Reachable tests now prove both-player
+the stack plus its marker state in place. The exact staged flat order now
+supports individual moves to loose zones and numeric existing-stack targets via
+`MoveStagedCard` and `PlaceCardOnPlayStack`; changing indices and empty-area
+cleanup are pinned. Target-free play, stadium, deck-relative, inspection, and
+bulk work-area shapes remain closed. Reachable tests now prove both-player
 loose-board take-turn cleanup plus owner-scoped loose/stadium/play reset/rebuild
 behavior.
 Shuffle-into-deck translates v1's in-deck tail-move

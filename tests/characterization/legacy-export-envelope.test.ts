@@ -1039,6 +1039,42 @@ describe('legacy action-export source envelope', () => {
     );
   });
 
+  it('pins attached-card index capture and direct staged-card movement ingress', () => {
+    const clicks = readRepositoryFile(
+      'client/src/setup/image-logic/click-events.js'
+    );
+    const drag = readRepositoryFile('client/src/setup/image-logic/drag.js');
+    const keybinds = readRepositoryFile(
+      'client/src/actions/keybinds/keybinds.js'
+    );
+    const moveCard = readRepositoryFile(
+      'client/src/actions/move-card-bundle/move-card.js'
+    );
+    const relocate = readRepositoryFile(
+      'client/src/actions/move-card-bundle/relocate-attached-cards.js'
+    );
+
+    expect(clicks).toContain(
+      'mouseClick.cardIndex = getZone(\n      mouseClick.cardUser,\n      mouseClick.zoneId\n    ).array.findIndex((card) => card.image === event.target)'
+    );
+    expect(drag).toContain("  'attachedCards',");
+    expect(drag).toContain(
+      "moveCardBundle(\n          mouseClick.cardUser,\n          systemState.initiator,\n          mouseClick.zoneId,\n          dZoneId,\n          mouseClick.cardIndex,\n          targetIndex,\n          'move'\n        )"
+    );
+    expect(keybinds).toContain(
+      "moveCardBundle(\n          mouseClick.cardUser,\n          systemState.initiator,\n          mouseClick.zoneId,\n          dZoneId,\n          mouseClick.cardIndex,\n          false,\n          'move'\n        )"
+    );
+    expect(moveCard).toContain('const movingCard = oZone.array[index];');
+    expect(moveCard).toContain(
+      'dZone.array.push(...oZone.array.splice(index, 1));'
+    );
+    expect(relocate).toContain('for (let i = 0; i < oZone.getCount(); i++) {');
+    expect(relocate).toContain(
+      "moveCard(user, initiator, oZoneId, 'attachedCards', i);"
+    );
+    expect(relocate).toContain('i--;');
+  });
+
   it('pins numeric play targets, top-only eligibility, and refreshed flat ordering', () => {
     const keybinds = readRepositoryFile(
       'client/src/actions/keybinds/keybinds.js'

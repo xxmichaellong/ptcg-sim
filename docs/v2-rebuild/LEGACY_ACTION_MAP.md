@@ -184,8 +184,12 @@ and attachments with a numeric top target instead execute atomic
 followed by versioned attachment order. It preserves exact source-stack
 membership, makes lower Pokémon attachments as v1 does, and admits same-stack
 reattachment. Exact events, evolving source offsets, retry, invariants, and a
-missing-target rollback are pinned. Inspections and work-area origins remain
-fail-closed for their distinct departure semantics.
+missing-target rollback are pinned. An attachment-resolution work-area origin
+uses its source-authentic newest-to-oldest staged evolution order followed by
+the versioned attachment order. A numeric top target executes the same atomic
+`PlaceCardOnPlayStack` path, deriving evolution versus attachment from the
+staged card's current category. Inspections remain fail-closed for their
+distinct departure semantics.
 
 Target-free top-card, lower-evolution, and attachment sources paired with a
 loose destination use canonical `MoveCardFromStack`. An attachment or lower
@@ -197,8 +201,12 @@ the source slot as its restoration hint. A later independent singleton top may
 still depart while that area is occupied. Cover normalization, concealed-zone
 identity retirement, exact events, deterministic work-area IDs, retry,
 invariants, event-source forgery rejection, and unresolved-coordinate rollback
-are pinned. Stadium/deck-relative stack sources and work-area origins remain
-closed for later source-specific slices.
+are pinned. A subsequent target-free `attachedCards` source can now move one
+exact staged card to a loose zone through `MoveStagedCard`; the refreshed flat
+coordinate is resolved after every prior mutation and an empty work area closes.
+Target-free play restoration, stadium/deck-relative stack or staged sources,
+inspection sources, and bulk work-area actions remain closed for later
+source-specific slices.
 
 The direct shuffle is restricted to exact
 `[initiator, "prizes", permutation, true]` records produced by the prize
@@ -216,9 +224,11 @@ discard/Lost Zone covers select the current last card. The current closed
 candidate resolves ordinary player zones, those aliases, and stadium to stable
 card IDs before executing `MoveCardToDeckTop`; missing/stale coordinates fail
 the whole attempt. Selecting an already-top deck card is a genuine v1 no-op and
-is retained as a zero-batch source record. Active/bench and the
-`attachedCards`/`viewCards` pseudo-zones remain fail-closed because their legacy
-flattened indices cannot safely be inferred as canonical stack/work-area IDs.
+is retained as a zero-batch source record. Active/bench plus the
+`attachedCards`/`viewCards` pseudo-zones remain fail-closed in this
+deck-relative action family; their removal, shuffle basis, and return-card
+behavior require separate mappings even though the ordinary `moveCardBundle`
+staged coordinate is now characterized.
 
 Shuffle-into-deck is admitted as exact
 `[initiator, sourceZone, sourceIndex, permutation]`. V1 moves the selected card

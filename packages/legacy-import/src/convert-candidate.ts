@@ -15,6 +15,7 @@ import {
   type MatchState,
   type PlayStack,
   type PlayerId,
+  type WorkAreaId,
 } from '@ptcgsim/game-core';
 
 import {
@@ -272,6 +273,34 @@ const candidatePlayStackTopAtLegacyIndex = (
     legacyCardIndex
   );
   return source?.kind === 'top' ? source.stack : null;
+};
+
+interface CandidateStagedCard {
+  readonly cardId: CardInstanceId;
+  readonly workAreaId: WorkAreaId;
+}
+
+const candidateStagedCardAtLegacyIndex = (
+  state: MatchState,
+  playerId: PlayerId,
+  legacyCardIndex: number
+): CandidateStagedCard | null => {
+  const resolution = state.workAreas[playerId]?.attachmentResolution;
+  if (!resolution) return null;
+
+  // Recursive V1 departure moves the newest lower evolution first, then each
+  // successively older stage, before preserving the live attachment order.
+  const legacyCardIds = [
+    ...[...resolution.evolutionCardIds].reverse(),
+    ...resolution.attachmentCardIds,
+  ];
+  if (
+    legacyCardIds.some((cardId) => state.cards[cardId]?.ownerId !== playerId)
+  ) {
+    return null;
+  }
+  const cardId = legacyCardIds[legacyCardIndex];
+  return cardId ? { cardId, workAreaId: resolution.id } : null;
 };
 
 const translateLegacyInDeckShuffle = (
@@ -754,6 +783,82 @@ export const buildLegacyV1Candidate = (
           });
           if (problem) return problem;
           break;
+        }
+
+        if (action.sourceZone === 'attachedCards') {
+          const source = candidateStagedCardAtLegacyIndex(
+            state,
+            playerId,
+            action.sourceIndex
+          );
+          if (!source) {
+            return failure({
+              code: 'source_state_mismatch',
+              recordIndex: action.recordIndex,
+              path: `$[${action.recordIndex}].parameters[3]`,
+              message:
+                'Recorded attached-card coordinate does not identify a current staged card',
+            });
+          }
+
+          if (
+            action.destinationZone === 'active' ||
+            action.destinationZone === 'bench'
+          ) {
+            const targetStack =
+              typeof action.targetIndex === 'number'
+                ? candidatePlayStackTopAtLegacyIndex(
+                    state,
+                    playerId,
+                    action.destinationZone,
+                    action.targetIndex
+                  )
+                : null;
+            if (!targetStack) {
+              return failure({
+                code: 'source_state_mismatch',
+                recordIndex: action.recordIndex,
+                path: `$[${action.recordIndex}].parameters[4]`,
+                message:
+                  'Recorded staged-card destination does not identify a current stack top',
+              });
+            }
+            const card = state.cards[source.cardId]!;
+            const problem = apply({
+              type: 'PlaceCardOnPlayStack',
+              playerId,
+              cardId: source.cardId,
+              expectedSourceId: source.workAreaId,
+              targetStackId: targetStack.id,
+              expectedTargetTopCardId: targetStack.evolutionCardIds.at(-1)!,
+              mode:
+                card.currentCategory === 'Pokémon' ? 'evolution' : 'attachment',
+            });
+            if (problem) return problem;
+            break;
+          }
+
+          if (action.mode === 'move' && action.destinationZone !== 'stadium') {
+            const problem = apply({
+              type: 'MoveStagedCard',
+              cardId: source.cardId,
+              expectedWorkAreaId: source.workAreaId,
+              destinationZoneId: candidateDestinationZoneId(
+                playerId,
+                action.destinationZone
+              ),
+            });
+            if (problem) return problem;
+            break;
+          }
+
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[1]`,
+            message:
+              'Current closed candidate cannot apply this staged-card movement shape',
+          });
         }
 
         const sourceZoneId = candidateSourceZoneId(playerId, action.sourceZone);

@@ -423,6 +423,16 @@ shortcut commands after the prior sixteen continuous shortcuts; focused editable
 input remains silent. No protocol, domain,
 authority, route, label, layout, styling, UI, or UX surface changes.
 
+The action-export source characterization also pins individual
+`attachedCards` movement without treating that temporary container as a
+persistent zone. V1 captures the selected card's current flat array index and
+forwards it unchanged through drag or keyboard `moveCardBundle`; recursive top
+departure fills the array newest-to-oldest across lower evolutions, followed by
+the settled attachment order. The private importer can therefore resolve a
+changing staged coordinate to a canonical work-area card for a loose-zone move
+or a numeric existing-stack placement while continuing to reject other staged
+action shapes.
+
 The protected active/bench shortcut checkpoint covers non-Alt `A` and `B`
 without absorbing stadium or prize rules. Two fresh real-v1 Chromium pages
 place a selected hand Pokémon beside one incumbent active, then pin active and
