@@ -945,7 +945,7 @@ describe('legacy action-export source envelope', () => {
     );
   });
 
-  it('pins target-free play placement and occupied-active demotion', () => {
+  it('pins target-free play placement and no-target whole-stack movement', () => {
     const keybinds = readRepositoryFile(
       'client/src/actions/keybinds/keybinds.js'
     );
@@ -957,6 +957,9 @@ describe('legacy action-export source envelope', () => {
     );
     const autoMove = readRepositoryFile(
       'client/src/actions/move-card-bundle/auto-move-active-bench-card.js'
+    );
+    const relocate = readRepositoryFile(
+      'client/src/actions/move-card-bundle/relocate-attached-cards.js'
     );
 
     for (const binding of [
@@ -1000,6 +1003,20 @@ describe('legacy action-export source envelope', () => {
     expect(autoMove).toContain(activeDemotion);
     expect(autoMove.indexOf(activeDemotionMessage)).toBeLessThan(
       autoMove.indexOf(activeDemotion)
+    );
+    expect(autoMove).toContain(
+      "['bench'].includes(dZoneId) &&\n    ['active'].includes(oZoneId) &&\n    dZone.array.filter((card) => !card.image.attached).length === 2"
+    );
+    expect(autoMove).toContain(
+      "moveCard(user, initiator, 'bench', 'active', 0, false)"
+    );
+    expect(moveCard).toContain(
+      'zonesWithAttachedCards.includes(oZoneId) && !movingCard.image.attached'
+    );
+    expect(relocate).toContain('if (image.relative === movingCard.image)');
+    expect(relocate).toContain("if (['active', 'bench'].includes(dZoneId))");
+    expect(relocate).toContain(
+      'moveCard(user, initiator, oZoneId, dZoneId, i, targetIndex)'
     );
   });
 

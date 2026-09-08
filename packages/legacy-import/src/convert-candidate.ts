@@ -12,6 +12,7 @@ import {
   type MatchId,
   type MatchSeatInput,
   type MatchState,
+  type PlayStack,
   type PlayerId,
 } from '@ptcgsim/game-core';
 
@@ -192,6 +193,38 @@ const candidateSourceCardId = (
     (sourceZone.ownerId ?? card.ownerId) === playerId
     ? cardId
     : null;
+};
+
+const candidateBarePlayStackAtLegacyIndex = (
+  state: MatchState,
+  playerId: PlayerId,
+  sourceZone: 'active' | 'bench',
+  sourceIndex: number
+): PlayStack | null => {
+  const board = state.boards[playerId];
+  if (!board) return null;
+  const stackIds =
+    sourceZone === 'active'
+      ? board.activeStackId
+        ? [board.activeStackId]
+        : []
+      : board.benchStackIds;
+  const stacks = stackIds.map((stackId) => state.stacks[stackId]);
+  if (
+    stacks.some(
+      (stack) =>
+        !stack ||
+        stack.boardPlayerId !== playerId ||
+        stack.evolutionCardIds.length !== 1 ||
+        stack.attachmentCardIds.length !== 0
+    )
+  ) {
+    return null;
+  }
+  const stack = stacks[sourceIndex];
+  const cardId = stack?.evolutionCardIds[0];
+  const card = cardId ? state.cards[cardId] : undefined;
+  return stack && card?.ownerId === playerId ? stack : null;
 };
 
 const translateLegacyInDeckShuffle = (
@@ -551,6 +584,48 @@ export const buildLegacyV1Candidate = (
         break;
       }
       case 'moveCardBundle': {
+        if (
+          (action.sourceZone === 'active' || action.sourceZone === 'bench') &&
+          (action.destinationZone === 'active' ||
+            action.destinationZone === 'bench')
+        ) {
+          const stack = candidateBarePlayStackAtLegacyIndex(
+            state,
+            playerId,
+            action.sourceZone,
+            action.sourceIndex
+          );
+          if (!stack) {
+            return failure({
+              code: 'source_state_mismatch',
+              recordIndex: action.recordIndex,
+              path: `$[${action.recordIndex}].parameters[3]`,
+              message:
+                'Recorded move-card source coordinate does not identify a current bare play stack',
+            });
+          }
+          const board = state.boards[playerId]!;
+          if (
+            (action.sourceZone === 'active' &&
+              action.destinationZone === 'active') ||
+            (action.sourceZone === 'bench' &&
+              action.destinationZone === 'bench' &&
+              board.benchStackIds.at(-1) === stack.id)
+          ) {
+            break;
+          }
+          const problem = apply({
+            type: 'MovePlayStack',
+            stackId: stack.id,
+            expectedSourceSlot: action.sourceZone,
+            expectedActiveStackId: board.activeStackId,
+            expectedBenchStackIds: [...board.benchStackIds],
+            destinationSlot: action.destinationZone,
+          });
+          if (problem) return problem;
+          break;
+        }
+
         const sourceZoneId = candidateSourceZoneId(playerId, action.sourceZone);
         if (!sourceZoneId) {
           return failure({

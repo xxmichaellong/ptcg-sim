@@ -128,7 +128,7 @@ decoder before any canonical state is created.
 
 `decodeLegacyV1MovementActions` starts the next private family with `draw`,
 `discardAndDraw`, `shuffleAndDraw`, `shuffleBottomAndDraw`, bottom-mode and
-target-free loose-zone/stadium/new-play-stack `moveCardBundle`, direct prize
+target-free loose-zone/stadium/new-play-stack/bare-whole-stack `moveCardBundle`, direct prize
 `shuffleZone`, `moveToDeckTop`, `shuffleIntoDeck`, `switchWithDeckTop`, and
 `shufflePrizesToDeckBottom` records.
 The draw record owns the target deck/hand through `user`; its two
@@ -198,9 +198,16 @@ Target-free active and bench destinations are decoded as new play stacks. The
 `A`/`B` shortcuts supply `false`; an untargeted drag may serialize as `null`.
 The source may use any legacy card-container name at the positional boundary,
 but conversion currently resolves only ordinary zones, supported covers, loose
-board, and stadium. Active/bench/attachment/inspection/work-area origins remain
-closed until their flattened coordinates are modeled. Numeric active/bench
-targets remain closed for the separate switch/attach/evolve shapes.
+board, and stadium when it creates a new stack. Numeric active/bench targets
+remain closed for the separate switch/attach/evolve shapes.
+
+An active/bench source paired with a target-free active/bench destination is
+also admitted while every stack in that source container is bare: exactly one
+evolution card and no attachments. Under that closed reachable state, the
+legacy flat index equals the canonical active or bench-order index. Conversion
+snapshots the entire board layout and executes `MovePlayStack`; rich-stack,
+departure, attachment, inspection, and work-area sources remain closed until
+their flattened coordinates are modeled.
 
 A directly exported prize shuffle carries exactly
 `[initiator, "prizes", permutation, true]`. Empty permutations are valid for an
@@ -305,7 +312,7 @@ legacy labels into authority.
 This deliberately narrow builder succeeds only when every action is one of
 `loadDeckData`, `reset`, `setup`, `takeTurn`, `draw`, `discardAndDraw`,
 `shuffleAndDraw`, `shuffleBottomAndDraw`, the bottom-mode or target-free
-loose-zone/stadium/new-play-stack `moveCardBundle`, `moveToDeckTop`,
+loose-zone/stadium/new-play-stack/bare-whole-stack `moveCardBundle`, `moveToDeckTop`,
 `shuffleIntoDeck`, `switchWithDeckTop`, `shufflePrizesToDeckBottom`, or the
 direct prize form of `shuffleZone`. Any other allowlisted family or bundle
 subshape is rejected before state construction. Deck, lifecycle, and movement diagnostics are lifted
@@ -391,7 +398,17 @@ The lifecycle mapping is source-backed:
   atomically demotes an existing active stack to the bench. Empty and occupied
   active, self/opponent board, original non-Pokémon category, stadium source,
   exact event mapping, retry, rollback, and owner-only reset cases are pinned.
-  Stack/work-area sources and numeric targets return no candidate; and
+  Numeric targets and every stack/work-area source outside the separately
+  bounded bare-stack relocation below return no candidate; and
+- target-free bare active/bench sources paired with an active/bench destination
+  snapshot the exact board order and execute `MovePlayStack`. Promotion,
+  demotion with zero or multiple benches, lone-bench automatic promotion, and
+  non-tail bench append each produce one layout batch. Active-to-active and an
+  already-tail bench-to-bench action preserve their exported source mapping with
+  zero batches. Every stack in the selected source container must contain one
+  evolution card and no attachments, preventing a legacy flat index from being
+  guessed once richer stacks exist. Out-of-range and rich-stack coordinates
+  return no candidate; and
 - direct prize shuffle executes `ShuffleZone` for the record's target player
   using the recorded permutation as the action-scoped resolved outcome. Its
   length must match the exact current prize zone, so conversion neither creates
@@ -435,9 +452,10 @@ candidate. No partial batches escape on failure.
 
 The closed lifecycle/draw/discard-and-draw/both hand-shuffle-and-draw forms/
 direct-prize-shuffle/target-free-loose/stadium/new-play-stack-move/move-to-top/
-move-to-bottom/shuffle-into-deck/deck-top-switch/prizes-to-deck-bottom subset can
-now create ordinary loose-board, singleton stadium, and active/bench stack
-state. Tests prove that a later take-turn discards both players' loose boards in
+bare-whole-stack-move/move-to-bottom/shuffle-into-deck/deck-top-switch/
+prizes-to-deck-bottom subset can now create ordinary loose-board, singleton
+stadium, and active/bench stack state and move those bare stacks. Tests prove
+that a later take-turn discards both players' loose boards in
 source order before drawing, and that an owner reset clears only that owner's
 reachable loose state, owned stadium, and play stacks before rebuilding its
 deck. Opponent-owned stadium and play state remain. The subset still cannot
@@ -447,12 +465,12 @@ those shapes remain gated on their dedicated movement/state decoders.
 
 ## Next conversion slices
 
-1. Continue source-backed positional schemas for stack-origin and targeted
-   movement after the
+1. Continue source-backed positional schemas for rich-stack origins, stack
+   departure, and targeted movement after the
    transactionally applied draw/discard-and-draw/both hand-shuffle-and-draw
-   forms, target-free loose/stadium/new-play-stack movement, direct
-   prize-shuffle, and zone-backed move-to-top/move-to-bottom/shuffle-into-deck/
-   deck-top-switch/prizes-to-deck-bottom atoms.
+   forms, target-free loose/stadium/new-play-stack/bare-whole-stack movement,
+   direct prize-shuffle, and zone-backed move-to-top/move-to-bottom/
+   shuffle-into-deck/deck-top-switch/prizes-to-deck-bottom atoms.
    Map stack/work-area coordinates only after their producing families make
    those states reachable in the closed transaction.
 2. Add markers, visibility/inspection, randomized/bulk, table signals, and the

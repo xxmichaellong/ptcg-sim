@@ -363,6 +363,45 @@ describe('legacy v1 movement positional decoder', () => {
     });
   });
 
+  it('decodes target-free active and bench source coordinates for whole-stack movement', () => {
+    const inputs = [
+      ['active', 'bench', 0, false],
+      ['bench', 'active', 1, null],
+      ['bench', 'bench', 2, false],
+      ['active', 'active', 0, null],
+    ] as const;
+    expect(
+      decode(
+        ...inputs.map(
+          ([sourceZone, destinationZone, sourceIndex, targetIndex]) =>
+            action('self', 'moveCardBundle', [
+              'opp',
+              sourceZone,
+              destinationZone,
+              sourceIndex,
+              targetIndex,
+              'move',
+            ])
+        )
+      )
+    ).toEqual({
+      ok: true,
+      actions: inputs.map(
+        ([sourceZone, destinationZone, sourceIndex, targetIndex], index) => ({
+          type: 'moveCardBundle',
+          recordIndex: index + 3,
+          player: 'self',
+          initiator: 'opp',
+          sourceZone,
+          sourceIndex,
+          destinationZone,
+          targetIndex,
+          mode: 'move',
+        })
+      ),
+    });
+  });
+
   it('decodes only source-authentic direct prize shuffles', () => {
     expect(
       decode(

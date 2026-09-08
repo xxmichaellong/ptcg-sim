@@ -28,7 +28,7 @@ The legacy `clean` and `invalidMessage` reset flags are presentation-only. The
 candidate retains source-record-to-event-batch mappings and proves exact replay.
 It now also admits the bounded `draw`, `discardAndDraw`, `shuffleAndDraw`,
 `shuffleBottomAndDraw`, direct prize `shuffleZone`, zone-backed `moveToDeckTop`,
-the bottom-mode and target-free loose-zone/stadium/new-play-stack
+the bottom-mode and target-free loose-zone/stadium/new-play-stack/bare-whole-stack
 `moveCardBundle`, resolved
 `shuffleIntoDeck`, source-authentic `switchWithDeckTop`, and
 `shufflePrizesToDeckBottom` atoms below, but rejects any other action before
@@ -63,7 +63,7 @@ that can construct those conditions.
 
 The private movement decoder and candidate now admit the exact `draw`,
 `discardAndDraw`, `shuffleAndDraw`, `shuffleBottomAndDraw`, the bottom-mode and
-target-free loose-zone/stadium/new-play-stack `moveCardBundle`, direct prize
+target-free loose-zone/stadium/new-play-stack/bare-whole-stack `moveCardBundle`, direct prize
 `shuffleZone`, `moveToDeckTop`, `shuffleIntoDeck`, `switchWithDeckTop`, and
 `shufflePrizesToDeckBottom` tuples.
 Record `user` selects the target player's zones, while the exported initiator
@@ -155,9 +155,21 @@ face-up and Pokémon-category normalization for every original category,
 append-to-bench order, and atomic occupied-active demotion to the bench. The
 import-wide stack factory makes retry identities deterministic. Self/opponent
 boards, stadium-to-bench movement, exact event fields, replay, retry, and
-owner-scoped reset are pinned. Active/bench/attachment/inspection/work-area
-origins and every numeric target remain fail-closed for the later whole-stack
-and attach/evolve slices.
+owner-scoped reset are pinned.
+
+The same target-free tuple now resolves bare active/bench sources for movement
+back into active or bench. Because each reachable stack currently contains one
+evolution card and no attachments, its legacy flat-array index equals its
+canonical board-order index; conversion additionally requires every stack in
+the selected source container to retain that bare shape. It then snapshots the
+complete board layout and executes `MovePlayStack`. Bench-to-active promotion,
+active demotion with zero or multiple benches, the v1 lone-bench automatic
+promotion, and non-tail bench-to-bench append are atomic. Active-to-active and
+an already-tail bench-to-bench export retain zero-batch mappings. Source-backed
+relocation/auto-move call order, exact layout events, retry, invariants, and late
+out-of-range rollback are pinned. Rich active/bench stacks, stack departures,
+attachment/inspection/work-area origins, and every numeric target remain
+fail-closed until their flattened ordering and target semantics are admitted.
 
 The direct shuffle is restricted to exact
 `[initiator, "prizes", permutation, true]` records produced by the prize

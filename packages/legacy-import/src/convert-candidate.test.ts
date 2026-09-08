@@ -2144,6 +2144,255 @@ describe('legacy v1 canonical candidate builder', () => {
     assertMatchInvariants(result.state);
   });
 
+  it('moves bare play stacks with legacy no-target layout semantics', () => {
+    const parsed = parse(
+      payload(
+        cardRows(3, 'Bare stack movement'),
+        '',
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'active',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'bench',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'bench',
+          0,
+          null,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'bench',
+          'active',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'active',
+          'bench',
+          0,
+          null,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'bench',
+          'active',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'bench',
+          'bench',
+          0,
+          null,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'bench',
+          'bench',
+          1,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'active',
+          'active',
+          0,
+          null,
+          'move',
+        ])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) throw new Error('Expected conversion success');
+
+    const playerId = target.selfSeat.playerId;
+    const first = 'legacy:v1:stack:000000';
+    const second = 'legacy:v1:stack:000001';
+    const third = 'legacy:v1:stack:000002';
+    expect(result.state.boards[playerId]).toEqual({
+      activeStackId: third,
+      benchStackIds: [second, first],
+    });
+    expect(
+      result.records.slice(2).map(({ recordIndex, batches }) => ({
+        recordIndex,
+        batchCount: batches.length,
+      }))
+    ).toEqual([
+      { recordIndex: 3, batchCount: 1 },
+      { recordIndex: 4, batchCount: 1 },
+      { recordIndex: 5, batchCount: 1 },
+      { recordIndex: 6, batchCount: 1 },
+      { recordIndex: 7, batchCount: 1 },
+      { recordIndex: 8, batchCount: 1 },
+      { recordIndex: 9, batchCount: 1 },
+      { recordIndex: 10, batchCount: 0 },
+      { recordIndex: 11, batchCount: 0 },
+    ]);
+    expect(result.records[5]!.batches[0]!.events).toEqual([
+      {
+        type: 'PlayStackLayoutSet',
+        boardPlayerId: playerId,
+        expectedActiveStackId: first,
+        expectedBenchStackIds: [second, third],
+        activeStackId: second,
+        benchStackIds: [third, first],
+      },
+    ]);
+    expect(result.records[6]!.batches[0]!.events).toEqual([
+      {
+        type: 'PlayStackLayoutSet',
+        boardPlayerId: playerId,
+        expectedActiveStackId: second,
+        expectedBenchStackIds: [third, first],
+        activeStackId: null,
+        benchStackIds: [third, first, second],
+      },
+    ]);
+    expect(result.records[7]!.batches[0]!.events).toEqual([
+      {
+        type: 'PlayStackLayoutSet',
+        boardPlayerId: playerId,
+        expectedActiveStackId: null,
+        expectedBenchStackIds: [third, first, second],
+        activeStackId: third,
+        benchStackIds: [first, second],
+      },
+    ]);
+    expect(result.records[8]!.batches[0]!.events).toEqual([
+      {
+        type: 'PlayStackLayoutSet',
+        boardPlayerId: playerId,
+        expectedActiveStackId: third,
+        expectedBenchStackIds: [first, second],
+        activeStackId: third,
+        benchStackIds: [second, first],
+      },
+    ]);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+  });
+
+  it('promotes a lone bench when the active moves to bench', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(2, 'Lone bench promotion'),
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'bench',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'active',
+            'bench',
+            0,
+            false,
+            'move',
+          ])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    const playerId = target.selfSeat.playerId;
+    expect(result.state.boards[playerId]).toEqual({
+      activeStackId: 'legacy:v1:stack:000001',
+      benchStackIds: ['legacy:v1:stack:000000'],
+    });
+    expect(result.records[4]!.batches[0]!.events).toEqual([
+      {
+        type: 'PlayStackLayoutSet',
+        boardPlayerId: playerId,
+        expectedActiveStackId: 'legacy:v1:stack:000000',
+        expectedBenchStackIds: ['legacy:v1:stack:000001'],
+        activeStackId: 'legacy:v1:stack:000001',
+        benchStackIds: ['legacy:v1:stack:000000'],
+      },
+    ]);
+    assertMatchInvariants(result.state);
+  });
+
+  it('rolls back prior stack creation for an out-of-range bare stack coordinate', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(2, 'Bare stack rollback'),
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'bench',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'bench',
+            'active',
+            1,
+            false,
+            'move',
+          ])
+        )
+      ),
+      target
+    );
+    expect(result).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 4,
+          path: '$[4].parameters[3]',
+          message:
+            'Recorded move-card source coordinate does not identify a current bare play stack',
+        },
+      ],
+    });
+    expect('state' in result).toBe(false);
+  });
+
   it('resets only owned play stacks while retaining the opponent board', () => {
     const result = buildLegacyV1Candidate(
       parse(
