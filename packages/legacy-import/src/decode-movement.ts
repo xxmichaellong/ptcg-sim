@@ -50,6 +50,15 @@ export type LegacyV1MovementAction =
       readonly initiator: LegacyExportUser;
       readonly sourceZone: LegacyV1CardSourceZone;
       readonly sourceIndex: number;
+    }
+  | {
+      readonly type: 'shuffleIntoDeck';
+      readonly recordIndex: number;
+      readonly player: LegacyExportUser;
+      readonly initiator: LegacyExportUser;
+      readonly sourceZone: LegacyV1CardSourceZone;
+      readonly sourceIndex: number;
+      readonly shuffleIndices: readonly number[];
     };
 
 export type LegacyV1MovementDecodeIssueCode =
@@ -99,11 +108,12 @@ const failure = (
 const isMovementAction = (
   action: LegacyActionRecord
 ): action is LegacyActionRecord & {
-  readonly action: 'draw' | 'shuffleZone' | 'moveToDeckTop';
+  readonly action: 'draw' | 'shuffleZone' | 'moveToDeckTop' | 'shuffleIntoDeck';
 } =>
   action.action === 'draw' ||
   action.action === 'shuffleZone' ||
-  action.action === 'moveToDeckTop';
+  action.action === 'moveToDeckTop' ||
+  action.action === 'shuffleIntoDeck';
 
 const cardSourceZones = new Set<string>(LEGACY_V1_CARD_SOURCE_ZONES);
 
@@ -128,11 +138,97 @@ const decodeShuffle = (value: unknown): readonly number[] | null => {
   return value as number[];
 };
 
+type LegacyV1CardSourceDecodeResult =
+  | {
+      readonly ok: true;
+      readonly initiator: LegacyExportUser;
+      readonly sourceZone: LegacyV1CardSourceZone;
+      readonly sourceIndex: number;
+    }
+  | {
+      readonly ok: false;
+      readonly result: LegacyV1MovementDecodeResult;
+    };
+
+const decodeCardSource = (
+  action: LegacyActionRecord,
+  actionIndex: number,
+  actionName: 'moveToDeckTop' | 'shuffleIntoDeck'
+): LegacyV1CardSourceDecodeResult => {
+  const initiator = action.parameters[0];
+  if (initiator !== 'self' && initiator !== 'opp') {
+    return {
+      ok: false,
+      result: failure(
+        'invalid_parameter_type',
+        actionIndex,
+        '.parameters[0]',
+        `${actionName} initiator must use the exported self/opp perspective`
+      ),
+    };
+  }
+
+  const sourceZone = action.parameters[1];
+  if (typeof sourceZone !== 'string') {
+    return {
+      ok: false,
+      result: failure(
+        'invalid_parameter_type',
+        actionIndex,
+        '.parameters[1]',
+        `${actionName} source zone must be a string`
+      ),
+    };
+  }
+  if (!isCardSourceZone(sourceZone)) {
+    return {
+      ok: false,
+      result: failure(
+        'invalid_source_zone',
+        actionIndex,
+        '.parameters[1]',
+        `${actionName} source zone is not a legacy card container`
+      ),
+    };
+  }
+
+  const sourceIndex = action.parameters[2];
+  if (typeof sourceIndex !== 'number') {
+    return {
+      ok: false,
+      result: failure(
+        'invalid_parameter_type',
+        actionIndex,
+        '.parameters[2]',
+        `${actionName} source index must be a number`
+      ),
+    };
+  }
+  if (
+    !Number.isSafeInteger(sourceIndex) ||
+    sourceIndex < 0 ||
+    sourceIndex >= MAX_DECK_CARDS ||
+    (sourceZone === 'deckCover' && sourceIndex !== 0)
+  ) {
+    return {
+      ok: false,
+      result: failure(
+        'invalid_card_index',
+        actionIndex,
+        '.parameters[2]',
+        `${actionName} source index must be an integer from 0 to ${MAX_DECK_CARDS - 1}, and deckCover always selects index 0`
+      ),
+    };
+  }
+
+  return { ok: true, initiator, sourceZone, sourceIndex };
+};
+
 /**
  * Decodes admitted movement tuples without applying them. This starts with the
- * source-bounded draw, direct prize-shuffle, and move-to-deck-top atoms; the
- * remaining movement actions stay untouched until their positional and
- * state-dependent behavior is frozen separately.
+ * source-bounded draw, direct prize-shuffle, move-to-deck-top, and
+ * shuffle-into-deck atoms; the remaining movement actions stay untouched until
+ * their positional and state-dependent behavior is frozen separately.
  */
 export const decodeLegacyV1MovementActions = (
   parsed: ParsedLegacyExport
@@ -264,64 +360,49 @@ export const decodeLegacyV1MovementActions = (
           );
         }
 
-        const initiator = action.parameters[0];
-        if (initiator !== 'self' && initiator !== 'opp') {
-          return failure(
-            'invalid_parameter_type',
-            actionIndex,
-            '.parameters[0]',
-            'moveToDeckTop initiator must use the exported self/opp perspective'
-          );
-        }
-
-        const sourceZone = action.parameters[1];
-        if (typeof sourceZone !== 'string') {
-          return failure(
-            'invalid_parameter_type',
-            actionIndex,
-            '.parameters[1]',
-            'moveToDeckTop source zone must be a string'
-          );
-        }
-        if (!isCardSourceZone(sourceZone)) {
-          return failure(
-            'invalid_source_zone',
-            actionIndex,
-            '.parameters[1]',
-            'moveToDeckTop source zone is not a legacy card container'
-          );
-        }
-
-        const sourceIndex = action.parameters[2];
-        if (typeof sourceIndex !== 'number') {
-          return failure(
-            'invalid_parameter_type',
-            actionIndex,
-            '.parameters[2]',
-            'moveToDeckTop source index must be a number'
-          );
-        }
-        if (
-          !Number.isSafeInteger(sourceIndex) ||
-          sourceIndex < 0 ||
-          sourceIndex >= MAX_DECK_CARDS ||
-          (sourceZone === 'deckCover' && sourceIndex !== 0)
-        ) {
-          return failure(
-            'invalid_card_index',
-            actionIndex,
-            '.parameters[2]',
-            `moveToDeckTop source index must be an integer from 0 to ${MAX_DECK_CARDS - 1}, and deckCover always selects index 0`
-          );
-        }
+        const source = decodeCardSource(action, actionIndex, action.action);
+        if (!source.ok) return source.result;
 
         decoded.push({
           type: 'moveToDeckTop',
           recordIndex: actionIndex + 1,
           player: action.user,
-          initiator,
-          sourceZone,
-          sourceIndex,
+          initiator: source.initiator,
+          sourceZone: source.sourceZone,
+          sourceIndex: source.sourceIndex,
+        });
+        break;
+      }
+      case 'shuffleIntoDeck': {
+        if (action.parameters.length !== 4) {
+          return failure(
+            'invalid_parameter_count',
+            actionIndex,
+            '.parameters',
+            'shuffleIntoDeck requires [initiator, sourceZone, sourceIndex, indices]'
+          );
+        }
+
+        const source = decodeCardSource(action, actionIndex, action.action);
+        if (!source.ok) return source.result;
+        const shuffleIndices = decodeShuffle(action.parameters[3]);
+        if (!shuffleIndices) {
+          return failure(
+            'invalid_shuffle_permutation',
+            actionIndex,
+            '.parameters[3]',
+            'shuffleIntoDeck requires a complete zero-based shuffle permutation'
+          );
+        }
+
+        decoded.push({
+          type: 'shuffleIntoDeck',
+          recordIndex: actionIndex + 1,
+          player: action.user,
+          initiator: source.initiator,
+          sourceZone: source.sourceZone,
+          sourceIndex: source.sourceIndex,
+          shuffleIndices,
         });
         break;
       }

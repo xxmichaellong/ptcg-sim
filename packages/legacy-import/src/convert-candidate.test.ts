@@ -177,7 +177,8 @@ describe('legacy v1 canonical candidate builder', () => {
           [5, 4, 3, 2, 1, 0],
           true,
         ]),
-        action('self', 'moveToDeckTop', ['opp', 'hand', 0])
+        action('self', 'moveToDeckTop', ['opp', 'hand', 0]),
+        action('self', 'shuffleIntoDeck', ['opp', 'hand', 0, [1, 0]])
       )
     );
     const first = buildLegacyV1Candidate(parsed, target);
@@ -565,6 +566,183 @@ describe('legacy v1 canonical candidate builder', () => {
       },
     ]);
     assertMatchInvariants(result.state);
+  });
+
+  it('translates a recorded in-deck shuffle from the legacy tail-move order', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(6, 'Deck shuffle'),
+          '',
+          action('self', 'shuffleIntoDeck', [
+            'opp',
+            'deck',
+            2,
+            [5, 0, 4, 2, 1, 3],
+          ])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    const deckId = playerZoneId(target.selfSeat.playerId, 'deck');
+    const finalOrder = [
+      'legacy:v1:card:000002',
+      'legacy:v1:card:000000',
+      'legacy:v1:card:000005',
+      'legacy:v1:card:000003',
+      'legacy:v1:card:000001',
+      'legacy:v1:card:000004',
+    ];
+    expect(result.state.zones[deckId]!.cardIds).toEqual(finalOrder);
+    expect(result.records[2]).toEqual({
+      recordIndex: 3,
+      action: 'shuffleIntoDeck',
+      batches: [
+        expect.objectContaining({
+          events: [
+            {
+              type: 'CardMoved',
+              cardId: 'legacy:v1:card:000002',
+              expectedSourceZoneId: deckId,
+              destinationZoneId: deckId,
+              destinationIndex: 6,
+              concealIdentity: false,
+            },
+            {
+              type: 'ZoneShuffled',
+              zoneId: deckId,
+              cardOrder: finalOrder,
+              concealedCardIds: finalOrder,
+            },
+          ],
+        }),
+      ],
+    });
+    expect(result.state.revision).toBe(3);
+    assertMatchInvariants(result.state);
+  });
+
+  it('moves a zone card to the deck tail before applying its recorded shuffle', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(5, 'Hand shuffle'),
+          '',
+          action('self', 'draw', ['opp', 2]),
+          action('self', 'shuffleIntoDeck', ['opp', 'hand', 1, [3, 2, 0, 1]])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    const deckId = playerZoneId(target.selfSeat.playerId, 'deck');
+    const handId = playerZoneId(target.selfSeat.playerId, 'hand');
+    const finalOrder = [
+      'legacy:v1:card:000001',
+      'legacy:v1:card:000004',
+      'legacy:v1:card:000002',
+      'legacy:v1:card:000003',
+    ];
+    expect(result.state.zones[deckId]!.cardIds).toEqual(finalOrder);
+    expect(result.state.zones[handId]!.cardIds).toEqual([
+      'legacy:v1:card:000000',
+    ]);
+    expect(result.records[3]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardMoved',
+        cardId: 'legacy:v1:card:000001',
+        expectedSourceZoneId: handId,
+        destinationZoneId: deckId,
+        destinationIndex: 3,
+        concealIdentity: false,
+      },
+      {
+        type: 'ZoneShuffled',
+        zoneId: deckId,
+        cardOrder: finalOrder,
+        concealedCardIds: finalOrder,
+      },
+    ]);
+    assertMatchInvariants(result.state);
+  });
+
+  it('rejects stale, mismatched, and unrepresentable shuffle sources without state', () => {
+    const stale = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(2, 'Stale shuffle'),
+          '',
+          action('self', 'shuffleIntoDeck', ['self', 'deck', 2, [0, 1]])
+        )
+      ),
+      target
+    );
+    expect(stale).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 3,
+          path: '$[3].parameters[2]',
+          message:
+            'Recorded shuffle-into-deck source coordinate does not identify the current player card',
+        },
+      ],
+    });
+    expect('state' in stale).toBe(false);
+
+    const wrongLength = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(4, 'Short shuffle'),
+          '',
+          action('self', 'shuffleIntoDeck', ['self', 'deck', 1, [2, 0, 1]])
+        )
+      ),
+      target
+    );
+    expect(wrongLength).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 3,
+          path: '$[3].parameters[3]',
+          message:
+            'Recorded shuffle-into-deck length does not match the post-move source deck',
+        },
+      ],
+    });
+    expect('state' in wrongLength).toBe(false);
+
+    const stackSource = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(2, 'Stack shuffle'),
+          '',
+          action('self', 'shuffleIntoDeck', ['self', 'active', 0, [0, 1]])
+        )
+      ),
+      target
+    );
+    expect(stackSource).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 3,
+          path: '$[3].parameters[1]',
+          message:
+            'Current closed candidate cannot resolve this legacy source container',
+        },
+      ],
+    });
+    expect('state' in stackSource).toBe(false);
   });
 
   it('rejects stale and currently unrepresentable move-to-top sources without state', () => {

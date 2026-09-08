@@ -126,14 +126,14 @@ not guessed. This lets each family acquire its own source-backed positional
 schema while the final transaction can require every record to have exactly one
 decoder before any canonical state is created.
 
-`decodeLegacyV1MovementActions` starts the next private family with `draw` and
-direct prize `shuffleZone` records. The draw record owns the target deck/hand
-through `user`; its two positional parameters are the independently exported
-initiator and the already-clamped draw count. The decoder therefore accepts
-both self/opp initiators without requiring them to equal the target, but
-requires an integer count from 1 through the canonical 200-card bound.
-Source-invalid/empty draws set `emit=false` and do not belong in a locally
-applied genuine export.
+`decodeLegacyV1MovementActions` starts the next private family with `draw`,
+direct prize `shuffleZone`, `moveToDeckTop`, and `shuffleIntoDeck` records. The
+draw record owns the target deck/hand through `user`; its two positional
+parameters are the independently exported initiator and the already-clamped
+draw count. The decoder therefore accepts both self/opp initiators without
+requiring them to equal the target, but requires an integer count from 1 through
+the canonical 200-card bound. Source-invalid/empty draws set `emit=false` and do
+not belong in a locally applied genuine export.
 
 A directly exported prize shuffle carries exactly
 `[initiator, "prizes", permutation, true]`. Empty permutations are valid for an
@@ -152,6 +152,14 @@ are safe integers from 0 through 199, and `deckCover` always denotes index zero.
 The discard and Lost Zone covers select their current last index, which remains
 a state-dependent conversion check. The action owner still selects the target
 player's deck while initiator remains independent provenance.
+
+`shuffleIntoDeck` carries exactly
+`[initiator, sourceZone, sourceIndex, permutation]` through its context-menu and
+S-key ingress. The source first appends the selected card to the deck tail,
+generates a complete permutation against that post-move deck, applies it, and
+only then exports the tuple. The decoder reuses the move-to-top source contract
+and bounds the permutation to at most 200 positions; exact deck cardinality
+remains a conversion-time state check.
 
 ### Deck definition adapter
 
@@ -209,11 +217,11 @@ identities; source `self` and `opp` are mapped to those seats without turning
 legacy labels into authority.
 
 This deliberately narrow builder succeeds only when every action is one of
-`loadDeckData`, `reset`, `setup`, `takeTurn`, `draw`, `moveToDeckTop`, or the
-direct prize form of `shuffleZone`. Any other allowlisted family is rejected
-before state construction. Deck, lifecycle, and movement diagnostics are lifted
-with their exact source record/path, while context and canonical command
-failures also return no candidate state.
+`loadDeckData`, `reset`, `setup`, `takeTurn`, `draw`, `moveToDeckTop`,
+`shuffleIntoDeck`, or the direct prize form of `shuffleZone`. Any other
+allowlisted family is rejected before state construction. Deck, lifecycle, and
+movement diagnostics are lifted with their exact source record/path, while
+context and canonical command failures also return no candidate state.
 The preflight additionally requires a one-to-one, source-ordered match between
 all records and the union of private decoder outputs; a future allowlist/decoder
 drift can neither omit nor double-apply a record.
@@ -249,7 +257,15 @@ The lifecycle mapping is source-backed:
   Missing/out-of-range cards and stale discard/Lost Zone cover indices fail the
   whole attempt. Active, bench, attachment-resolution, and inspection origins
   remain fail-closed until legacy flattened-array order is mapped explicitly to
-  canonical stack/work-area locations.
+  canonical stack/work-area locations; and
+- shuffle-into-deck uses the same stable source resolution, requires the
+  recorded permutation length to equal the exact deck size after insertion,
+  and executes `ShuffleCardIntoDeck` with that resolved outcome. For an
+  in-deck source, v1 first moves the selected array entry to the tail, whereas
+  the canonical command's shuffle input is the original deck; conversion
+  translates the positional permutation between those two bases before
+  execution. The final card order therefore matches v1 without replaying its
+  mutable intermediate implementation or generating randomness.
 
 One source record may therefore map to multiple canonical event batches. The
 result retains the exact record-to-batch mapping, validates invariants after
@@ -257,18 +273,20 @@ normal game-core application, replays every batch from a fresh target shell,
 and requires byte-identical stable serialization before returning the private
 candidate. No partial batches escape on failure.
 
-The closed lifecycle/draw/direct-prize-shuffle/move-to-top subset cannot create
-play stacks, loose board cards, markers, or cross-owner placements. It therefore
-does not yet claim take-turn cleanup/reveal parity or dirty-board reset parity;
-those interactions stay gated on the movement/state-family decoders rather than
-being inferred from an unreachable lifecycle-only fixture.
+The closed lifecycle/draw/direct-prize-shuffle/move-to-top/shuffle-into-deck
+subset cannot create play stacks, loose board cards, markers, or cross-owner
+placements. It therefore does not yet claim take-turn cleanup/reveal parity or
+dirty-board reset parity; those interactions stay gated on the
+movement/state-family decoders rather than being inferred from an unreachable
+lifecycle-only fixture.
 
 ## Next conversion slices
 
 1. Continue source-backed positional schemas for direct movement after the
    transactionally applied draw, direct prize-shuffle, and zone-backed
-   move-to-top atoms. Map stack/work-area coordinates only after their producing
-   families make those states reachable in the closed transaction.
+   move-to-top/shuffle-into-deck atoms. Map stack/work-area coordinates only
+   after their producing families make those states reachable in the closed
+   transaction.
 2. Add markers, visibility/inspection, randomized/bulk, table signals, and the
    remaining action families using the same allowlisted dispatch table.
 3. Produce a conversion report with warnings, dropped presentation fields, and

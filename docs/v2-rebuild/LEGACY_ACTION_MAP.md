@@ -26,9 +26,9 @@ applying its recorded permutation; `reset` loads the original source entries or
 an empty deck according to its `build` flag; and `takeTurn` uses `StartTurn`.
 The legacy `clean` and `invalidMessage` reset flags are presentation-only. The
 candidate retains source-record-to-event-batch mappings and proves exact replay,
-and now also admits the bounded `draw`, direct prize `shuffleZone`, and
-zone-backed `moveToDeckTop` atoms below, but rejects any other action before
-constructing state. This
+and now also admits the bounded `draw`, direct prize `shuffleZone`,
+zone-backed `moveToDeckTop`, and resolved `shuffleIntoDeck` atoms below, but
+rejects any other action before constructing state. This
 is intentionally not yet a complete import compatibility claim: take-turn
 cleanup/reveal and reset behavior over dirty, cross-owner board state remain
 gated on the movement/state decoders that can construct those conditions.
@@ -39,7 +39,7 @@ gated on the movement/state decoders that can construct those conditions.
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `draw`                      | `DrawCards` using authority-resolved deck top                                                                                 | Count validation/clamp, empty/short deck, hidden identities, message grammar                                   |
 | `moveCardBundle`            | Intent resolves to `MoveCard`, `MoveStack`, `AttachCard`, `EvolveCard`, `MoveCardToStadium`, or active/bench swap event batch | Every source/destination, target, cover, stack/work-area/counter/face/category effect and message              |
-| `shuffleIntoDeck`           | Atomic `ShuffleCardIntoDeck`                                                                                                  | Source removal/stack policy, full authority permutation, concealment generation                                |
+| `shuffleIntoDeck`           | Atomic `ShuffleCardIntoDeck`                                                                                                  | Recorded post-tail-move permutation, in-deck basis translation, concealment generation, stack policy           |
 | `moveToDeckTop`             | `MoveCardToDeckTop`                                                                                                           | v1 index-zero top convention, visibility clearing, stack policy                                                |
 | `moveToDeckBottom`          | `MoveCardToDeckBottom`                                                                                                        | v1 last-index bottom convention, visibility clearing, stack policy                                             |
 | `switchWithDeckTop`         | Atomic `SwapCardWithDeckTop`                                                                                                  | Empty/one-card deck, original destination, concealment, message                                                |
@@ -56,15 +56,15 @@ gated on the movement/state decoders that can construct those conditions.
 | `shufflePrizesToDeckBottom` | Atomic `MovePrizesToDeckBottom`                                                                                               | Prize ordering/randomization, concealment, empty prizes                                                        |
 | `shuffleZone`               | `ShuffleZone` resolved permutation event                                                                                      | Every allowed zone, deterministic legacy indices, new handle generation, safe timeline                         |
 
-The private movement decoder and candidate now admit the exact `draw` tuple and
-the directly exported prize `shuffleZone` tuple. Record `user` selects the
-target deck/hand or prize zone, while the exported initiator remains independent
-provenance. Draw counts are already clamped by v1 before a successful action is
-exported; conversion accepts only positive integers through the shared 200-card
-bound and requires the recorded count to fit the current candidate deck exactly.
-This prevents game-core's live short-deck clamp from accepting an inconsistent
-legacy record. Locally applied empty or invalid source draws use `emit=false` and
-are not valid exported records.
+The private movement decoder and candidate now admit the exact `draw`, direct
+prize `shuffleZone`, `moveToDeckTop`, and `shuffleIntoDeck` tuples. Record `user`
+selects the target player's zones, while the exported initiator remains
+independent provenance. Draw counts are already clamped by v1 before a
+successful action is exported; conversion accepts only positive integers
+through the shared 200-card bound and requires the recorded count to fit the
+current candidate deck exactly. This prevents game-core's live short-deck clamp
+from accepting an inconsistent legacy record. Locally applied empty or invalid
+source draws use `emit=false` and are not valid exported records.
 
 The direct shuffle is restricted to exact
 `[initiator, "prizes", permutation, true]` records produced by the prize
@@ -85,8 +85,18 @@ the whole attempt. Selecting an already-top deck card is a genuine v1 no-op and
 is retained as a zero-batch source record. Active/bench and the
 `attachedCards`/`viewCards` pseudo-zones remain fail-closed because their legacy
 flattened indices cannot safely be inferred as canonical stack/work-area IDs.
-Every other row above remains undecoded and cannot enter the transactional
-candidate yet.
+
+Shuffle-into-deck is admitted as exact
+`[initiator, sourceZone, sourceIndex, permutation]`. V1 moves the selected card
+to deck tail before generating and applying the recorded permutation. The
+candidate requires that permutation to match the exact post-move deck size and
+supplies it as a one-shot resolved outcome to `ShuffleCardIntoDeck`. External
+zone sources share the same input order. For an existing deck card, conversion
+translates the indices from v1's tail-moved intermediate order to game-core's
+original-deck shuffle input, preserving the exact final order. Stale coordinates
+and outcome lengths roll back the attempt, and the same stack/work-area sources
+remain fail-closed. Every other row above remains undecoded and cannot enter the
+transactional candidate yet.
 
 ## Markers and card/stack state
 

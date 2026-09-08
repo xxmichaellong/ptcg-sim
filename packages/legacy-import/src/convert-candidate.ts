@@ -50,6 +50,7 @@ const CONVERTED_ACTIONS = new Set<LegacySynchronizedActionName>([
   'draw',
   'shuffleZone',
   'moveToDeckTop',
+  'shuffleIntoDeck',
 ]);
 
 type LegacyV1ConvertedAction = LegacyV1LifecycleAction | LegacyV1MovementAction;
@@ -135,6 +136,46 @@ const candidateSourceZoneId = (
     case 'viewCards':
       return null;
   }
+};
+
+const candidateSourceCardId = (
+  state: MatchState,
+  playerId: PlayerId,
+  sourceZoneId: ReturnType<typeof playerZoneId>,
+  sourceZoneName: LegacyV1CardSourceZone,
+  sourceIndex: number
+) => {
+  const sourceZone = state.zones[sourceZoneId];
+  const expectedSourceIndex =
+    sourceZoneName === 'deckCover'
+      ? 0
+      : sourceZoneName === 'discardCover' || sourceZoneName === 'lostZoneCover'
+        ? (sourceZone?.cardIds.length ?? 0) - 1
+        : sourceIndex;
+  const cardId =
+    sourceIndex === expectedSourceIndex
+      ? sourceZone?.cardIds[sourceIndex]
+      : undefined;
+  const card = cardId ? state.cards[cardId] : undefined;
+  return sourceZone &&
+    cardId &&
+    card &&
+    (sourceZone.ownerId ?? card.ownerId) === playerId
+    ? cardId
+    : null;
+};
+
+const translateLegacyInDeckShuffle = (
+  deckCount: number,
+  sourceIndex: number,
+  shuffleIndices: readonly number[]
+): readonly number[] => {
+  const legacyPreShufflePositions = Array.from(
+    { length: deckCount },
+    (_, index) => index
+  ).filter((index) => index !== sourceIndex);
+  legacyPreShufflePositions.push(sourceIndex);
+  return shuffleIndices.map((index) => legacyPreShufflePositions[index]!);
 };
 
 /**
@@ -423,25 +464,14 @@ export const buildLegacyV1Candidate = (
               'Current closed candidate cannot resolve this legacy source container',
           });
         }
-        const sourceZone = state.zones[sourceZoneId];
-        const expectedSourceIndex =
-          action.sourceZone === 'deckCover'
-            ? 0
-            : action.sourceZone === 'discardCover' ||
-                action.sourceZone === 'lostZoneCover'
-              ? (sourceZone?.cardIds.length ?? 0) - 1
-              : action.sourceIndex;
-        const cardId =
-          action.sourceIndex === expectedSourceIndex
-            ? sourceZone?.cardIds[action.sourceIndex]
-            : undefined;
-        const card = cardId ? state.cards[cardId] : undefined;
-        if (
-          !sourceZone ||
-          !cardId ||
-          !card ||
-          (sourceZone.ownerId ?? card.ownerId) !== playerId
-        ) {
+        const cardId = candidateSourceCardId(
+          state,
+          playerId,
+          sourceZoneId,
+          action.sourceZone,
+          action.sourceIndex
+        );
+        if (!cardId) {
           return failure({
             code: 'source_state_mismatch',
             recordIndex: action.recordIndex,
@@ -452,14 +482,75 @@ export const buildLegacyV1Candidate = (
         }
 
         const deckId = playerZoneId(playerId, 'deck');
-        if (sourceZone.id === deckId && action.sourceIndex === 0) break;
+        if (sourceZoneId === deckId && action.sourceIndex === 0) break;
 
         const problem = apply({
           type: 'MoveCardToDeckTop',
           playerId,
           cardId,
-          expectedSourceId: sourceZone.id,
+          expectedSourceId: sourceZoneId,
         });
+        if (problem) return problem;
+        break;
+      }
+      case 'shuffleIntoDeck': {
+        const sourceZoneId = candidateSourceZoneId(playerId, action.sourceZone);
+        if (!sourceZoneId) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[1]`,
+            message:
+              'Current closed candidate cannot resolve this legacy source container',
+          });
+        }
+        const cardId = candidateSourceCardId(
+          state,
+          playerId,
+          sourceZoneId,
+          action.sourceZone,
+          action.sourceIndex
+        );
+        if (!cardId) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[2]`,
+            message:
+              'Recorded shuffle-into-deck source coordinate does not identify the current player card',
+          });
+        }
+
+        const deckId = playerZoneId(playerId, 'deck');
+        const deck = state.zones[deckId]!;
+        const sourceIsDeck = sourceZoneId === deckId;
+        const expectedShuffleCount =
+          deck.cardIds.length + (sourceIsDeck ? 0 : 1);
+        if (action.shuffleIndices.length !== expectedShuffleCount) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[3]`,
+            message:
+              'Recorded shuffle-into-deck length does not match the post-move source deck',
+          });
+        }
+        const canonicalShuffleIndices = sourceIsDeck
+          ? translateLegacyInDeckShuffle(
+              deck.cardIds.length,
+              action.sourceIndex,
+              action.shuffleIndices
+            )
+          : action.shuffleIndices;
+        const problem = apply(
+          {
+            type: 'ShuffleCardIntoDeck',
+            playerId,
+            cardId,
+            expectedSourceId: sourceZoneId,
+          },
+          { kind: 'shuffle', indices: canonicalShuffleIndices }
+        );
         if (problem) return problem;
         break;
       }

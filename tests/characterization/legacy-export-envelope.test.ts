@@ -256,6 +256,47 @@ describe('legacy action-export source envelope', () => {
     );
   });
 
+  it('pins shuffle-into-deck ingress, tail move, and post-move permutation', () => {
+    const deckActions = readRepositoryFile(
+      'client/src/actions/zones/deck-actions.js'
+    );
+    const generalButtons = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/card-context-menu/general-buttons.js'
+    );
+    const keybinds = readRepositoryFile(
+      'client/src/actions/keybinds/keybinds.js'
+    );
+
+    const contextCall =
+      'shuffleIntoDeck(\n      mouseClick.cardUser,\n      systemState.initiator,\n      mouseClick.zoneId,\n      mouseClick.cardIndex\n    )';
+    const keyCall =
+      'shuffleIntoDeck(\n          mouseClick.cardUser,\n          systemState.initiator,\n          mouseClick.zoneId,\n          mouseClick.cardIndex\n        )';
+    const tailMove =
+      "moveCardBundle(\n    user,\n    initiator,\n    zoneId,\n    'deck',\n    index,\n    false,\n    'shuffle',\n    false\n  )";
+    const generatedOrder =
+      'indices = indices ? indices : shuffleIndices(deck.getCount())';
+    const appliedOrder =
+      "shuffleZone(user, initiator, 'deck', indices, false, false)";
+    const exportedTuple =
+      "processAction(user, emit, 'shuffleIntoDeck', [\n    oInitiator,\n    zoneId,\n    index,\n    indices,\n  ])";
+
+    expect(generalButtons).toContain(contextCall);
+    expect(keybinds).toContain(keyCall);
+    expect(deckActions).toContain(tailMove);
+    expect(deckActions).toContain(generatedOrder);
+    expect(deckActions).toContain(appliedOrder);
+    expect(deckActions).toContain(exportedTuple);
+    expect(deckActions.indexOf(tailMove)).toBeLessThan(
+      deckActions.indexOf(generatedOrder)
+    );
+    expect(deckActions.indexOf(generatedOrder)).toBeLessThan(
+      deckActions.indexOf(appliedOrder)
+    );
+    expect(deckActions.indexOf(appliedOrder)).toBeLessThan(
+      deckActions.lastIndexOf(exportedTuple)
+    );
+  });
+
   it('pins direct prize shuffle and excludes internal helper shuffles', () => {
     const shuffleZone = readRepositoryFile(
       'client/src/actions/zones/shuffle-zone.js'

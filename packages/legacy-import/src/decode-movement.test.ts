@@ -18,6 +18,23 @@ const payload = (...actions: unknown[]) => [
   ...actions,
 ];
 
+const CARD_SOURCE_ZONES = [
+  'deck',
+  'deckCover',
+  'hand',
+  'prizes',
+  'discard',
+  'discardCover',
+  'lostZone',
+  'lostZoneCover',
+  'board',
+  'stadium',
+  'active',
+  'bench',
+  'attachedCards',
+  'viewCards',
+] as const;
+
 const decode = (...actions: unknown[]) => {
   const parsed = parseLegacyExportJson(JSON.stringify(payload(...actions)));
   expect(parsed.ok).toBe(true);
@@ -101,24 +118,8 @@ describe('legacy v1 movement positional decoder', () => {
   });
 
   it('decodes move-to-top target, initiator, every source container, and index', () => {
-    const sourceZones = [
-      'deck',
-      'deckCover',
-      'hand',
-      'prizes',
-      'discard',
-      'discardCover',
-      'lostZone',
-      'lostZoneCover',
-      'board',
-      'stadium',
-      'active',
-      'bench',
-      'attachedCards',
-      'viewCards',
-    ] as const;
     const result = decode(
-      ...sourceZones.map((zone, index) =>
+      ...CARD_SOURCE_ZONES.map((zone, index) =>
         action(index % 2 === 0 ? 'self' : 'opp', 'moveToDeckTop', [
           index % 2 === 0 ? 'opp' : 'self',
           zone,
@@ -128,7 +129,7 @@ describe('legacy v1 movement positional decoder', () => {
     );
     expect(result).toEqual({
       ok: true,
-      actions: sourceZones.map((zone, index) => ({
+      actions: CARD_SOURCE_ZONES.map((zone, index) => ({
         type: 'moveToDeckTop',
         recordIndex: index + 3,
         player: index % 2 === 0 ? 'self' : 'opp',
@@ -139,11 +140,42 @@ describe('legacy v1 movement positional decoder', () => {
     });
   });
 
+  it('decodes shuffle-into-deck target, source coordinate, and recorded order', () => {
+    expect(
+      decode(
+        action('opp', 'shuffleIntoDeck', ['self', 'deck', 2, [2, 0, 1]]),
+        action('self', 'shuffleIntoDeck', ['opp', 'discardCover', 4, [0]])
+      )
+    ).toEqual({
+      ok: true,
+      actions: [
+        {
+          type: 'shuffleIntoDeck',
+          recordIndex: 3,
+          player: 'opp',
+          initiator: 'self',
+          sourceZone: 'deck',
+          sourceIndex: 2,
+          shuffleIndices: [2, 0, 1],
+        },
+        {
+          type: 'shuffleIntoDeck',
+          recordIndex: 4,
+          player: 'self',
+          initiator: 'opp',
+          sourceZone: 'discardCover',
+          sourceIndex: 4,
+          shuffleIndices: [0],
+        },
+      ],
+    });
+  });
+
   it('ignores all other admitted families rather than inferring tuples', () => {
     expect(
       decode(
         action('self', 'moveCardBundle', ['unvalidated']),
-        action('opp', 'shuffleIntoDeck', []),
+        action('opp', 'switchWithDeckTop', []),
         action('self', 'setup', [[]])
       )
     ).toEqual({ ok: true, actions: [] });
@@ -193,6 +225,25 @@ describe('legacy v1 movement positional decoder', () => {
     });
     expect(
       firstIssue(action('self', 'moveToDeckTop', ['self', 'hand', 0, 'extra']))
+    ).toMatchObject({
+      code: 'invalid_parameter_count',
+      recordIndex: 3,
+      path: '$[3].parameters',
+    });
+  });
+
+  it('requires exactly four shuffle-into-deck parameters', () => {
+    expect(
+      firstIssue(action('self', 'shuffleIntoDeck', ['self', 'hand', 0]))
+    ).toMatchObject({
+      code: 'invalid_parameter_count',
+      recordIndex: 3,
+      path: '$[3].parameters',
+    });
+    expect(
+      firstIssue(
+        action('self', 'shuffleIntoDeck', ['self', 'hand', 0, [0], 'extra'])
+      )
     ).toMatchObject({
       code: 'invalid_parameter_count',
       recordIndex: 3,
@@ -321,6 +372,46 @@ describe('legacy v1 movement positional decoder', () => {
       message: `moveToDeckTop source index must be an integer from 0 to ${MAX_DECK_CARDS - 1}, and deckCover always selects index 0`,
     });
   });
+
+  it('applies shared source validation to shuffle-into-deck tuples', () => {
+    expect(
+      firstIssue(action('self', 'shuffleIntoDeck', [false, 'hand', 0, [0]]))
+    ).toMatchObject({
+      code: 'invalid_parameter_type',
+      path: '$[3].parameters[0]',
+    });
+    expect(
+      firstIssue(
+        action('self', 'shuffleIntoDeck', ['self', 'not-a-zone', 0, [0]])
+      )
+    ).toMatchObject({
+      code: 'invalid_source_zone',
+      path: '$[3].parameters[1]',
+    });
+    expect(
+      firstIssue(
+        action('self', 'shuffleIntoDeck', ['self', 'deckCover', 1, [0]])
+      )
+    ).toMatchObject({
+      code: 'invalid_card_index',
+      path: '$[3].parameters[2]',
+    });
+  });
+
+  it.each([null, [0, 0], [0, 2], [1], [-1], [0.5], ['0']])(
+    'rejects an invalid shuffle-into-deck permutation: %j',
+    (indices) => {
+      expect(
+        firstIssue(
+          action('self', 'shuffleIntoDeck', ['self', 'hand', 0, indices])
+        )
+      ).toMatchObject({
+        code: 'invalid_shuffle_permutation',
+        recordIndex: 3,
+        path: '$[3].parameters[3]',
+      });
+    }
+  );
 
   it.each([null, true, 0, 'player'])('rejects initiator %j', (initiator) => {
     expect(firstIssue(action('self', 'draw', [initiator, 1]))).toMatchObject({
