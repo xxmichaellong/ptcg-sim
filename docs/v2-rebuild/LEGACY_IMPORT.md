@@ -1,6 +1,6 @@
 # Legacy import boundary
 
-- Status: **v1 envelope parser implemented; semantic conversion not yet implemented**
+- Status: **v1 envelope parser and first private semantic adapters implemented**
 - Supported source versions: `1.5`, `1.5.1`
 - Production route status: unwired
 
@@ -106,8 +106,9 @@ real user corpus can adjust them before compatibility is promised:
 
 The envelope parser itself remains independent of `game-core`. The package now
 has one deliberate, one-way `game-core` dependency for its private semantic
-deck adapter. Admission still completes before that adapter can allocate a
-definition, and neither layer constructs card instances or match state.
+adapters. Admission still completes before those adapters can allocate a
+definition or identity, and no production route constructs imported match
+state.
 
 ### First positional family
 
@@ -145,19 +146,44 @@ receives a distinct run ID so `A, B, A` never becomes `A, A, B`; matching run
 occurrences across both players share IDs. Source strings and expanded row order
 are otherwise preserved without trimming or Unicode normalization.
 
+### Import command context
+
+`createLegacyV1ImportContext` is a private, per-attempt adapter for future
+transactional interpretation. One registry is shared by every action in the
+attempt, so card instance IDs remain globally monotonic when game-core's
+`LoadDeck` copy index restarts for the opponent. Card, stack, inspection, and
+work-area IDs use separate deterministic ordinal namespaces and contain no
+uploaded text. Recreating the context for a whole-attempt retry produces the
+same IDs, event data, and canonical hash.
+
+Each action receives an isolated command context with either no resolved
+outcome, one source-recorded shuffle permutation, or one source-recorded bounded
+integer. The adapter snapshots a permutation and reproduces v1's exact
+`indices.map(index => values[index])` behavior only when its length and members
+form a complete permutation for the canonical operation. Recorded integer
+outcomes must be safe and inside the requested range. Missing, mismatched,
+invalid, reused, unconsumed, or post-finish outcome access throws a typed,
+record-indexed import error. It never calls `Math.random`, `crypto`, a seeded
+PRNG, or an environment-dependent generator, because those would fabricate a
+different result instead of importing the resolved fact.
+
+This context is not exported from the package entry point and is not yet called
+by a route. A later all-or-nothing interpreter will create it only after the
+entire positional schema has passed, abandon the whole candidate on any typed
+adapter error or command rejection, and install state only after canonical
+invariants pass.
+
 ## Next conversion slices
 
-1. Introduce deterministic import-only instance/stack/work-area IDs and
-   resolved-randomness adapters; never invent an outcome omitted by the source.
-2. Interpret lifecycle and movement families into a private canonical candidate,
+1. Interpret lifecycle and movement families into a private canonical candidate,
    then run the normal game-core invariants and stable hash.
-3. Add markers, visibility/inspection, randomized/bulk, table signals, and the
+2. Add markers, visibility/inspection, randomized/bulk, table signals, and the
    remaining action families using the same allowlisted dispatch table.
-4. Produce a conversion report with warnings, dropped presentation fields, and
+3. Produce a conversion report with warnings, dropped presentation fields, and
    the exact failing record/path. Integrity identities must use SHA-256 over the
    exact source bytes and a specified canonical target serialization; the
    current 32-bit game-core stable hash remains a non-security diagnostic only.
-5. Only after representative real-user fixtures convert transactionally should
+4. Only after representative real-user fixtures convert transactionally should
    the route loader or old `/import?key=` reader call this package.
 
 No v1 module is imported, no save/replay route is enabled, and no visible UI or

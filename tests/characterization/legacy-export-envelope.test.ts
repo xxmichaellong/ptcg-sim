@@ -138,4 +138,29 @@ describe('legacy action-export source envelope', () => {
     }
     expect(importDeck).toContain("type === 'Unknown'");
   });
+
+  it('pins exported permutations and random indices as resolved outcomes', () => {
+    const shuffle = readRepositoryFile('client/src/setup/general/shuffle.js');
+    const setup = readRepositoryFile('client/src/actions/general/setup.js');
+    const shuffleZone = readRepositoryFile(
+      'client/src/actions/zones/shuffle-zone.js'
+    );
+    const revealAndHide = readRepositoryFile(
+      'client/src/actions/general/reveal-and-hide.js'
+    );
+
+    expect(shuffle).toContain(
+      'const rearrangedArray = indices.map((newIndex) => array[newIndex])'
+    );
+    expect(setup).toContain(
+      'indices = indices ? indices : shuffleIndices(deck.getCount())'
+    );
+    expect(setup).toContain("processAction(user, emit, 'setup', [indices])");
+    expect(shuffleZone).toContain("processAction(user, emit, 'shuffleZone', [");
+    expect(shuffleZone).toContain('oInitiator,\n    zoneId,\n    indices,');
+    expect(revealAndHide).toContain(
+      "processAction(user, emit, 'playRandomCardFaceDown', ["
+    );
+    expect(revealAndHide).toContain('oInitiator,\n    randomIndex,');
+  });
 });

@@ -165,11 +165,12 @@ invariants, and all 50 live action responsibilities have substantial vertical
 coverage. The isolated `legacy-import` package now admits only the frozen 1.5
 and 1.5.1 action-export envelope through an exact 50-action allowlist, required
 deck bootstraps, structural bounds, and typed diagnostics without executing an
-action. Its first private semantic layers now validate lifecycle tuples and
-materialize bounded deck definitions with deterministic order-preserving IDs.
-Complete action-family coverage, deterministic instance/outcome adapters,
-transactional interpretation, conversion reports, and real-user corpus
-evidence remain before Phase 3 can exit.
+action. Its first private semantic layers now validate lifecycle tuples,
+materialize bounded deck definitions with deterministic order-preserving IDs,
+and provide import-wide monotonic identities plus one-shot source-resolved
+outcome adapters. Complete action-family coverage, transactional
+interpretation, conversion reports, and real-user corpus evidence remain before
+Phase 3 can exit.
 
 Work:
 
