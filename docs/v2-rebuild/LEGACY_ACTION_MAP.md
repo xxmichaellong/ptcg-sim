@@ -19,14 +19,15 @@ a hard-to-find behavior. Proposed names are not final APIs.
 | `setup`          | Atomic `SetupSeat` resolved events                                                 | Reset, authority shuffle, seven-card hand, up to six prizes, short deck, message                                       |
 | `takeTurn`       | Atomic `StartTurn` resolved events plus safe timeline                              | Clears loose board cards, resets ability markers, reveals in-play face-down cards, turn increment, draw/no-deck branch |
 
-The private lifecycle-only conversion checkpoint now executes this closed
-subset through game-core. Both deck bootstraps use `LoadDeck`; `setup` uses a
+The private closed conversion candidate executes lifecycle through game-core.
+Both deck bootstraps use `LoadDeck`; `setup` uses a
 fresh `LoadDeck` plus `SetupPlayer` because v1 rebuilds the source deck before
 applying its recorded permutation; `reset` loads the original source entries or
 an empty deck according to its `build` flag; and `takeTurn` uses `StartTurn`.
 The legacy `clean` and `invalidMessage` reset flags are presentation-only. The
 candidate retains source-record-to-event-batch mappings and proves exact replay,
-but rejects any action from the remaining rows before constructing state. This
+and now also admits the bounded `draw` atom below, but rejects any other action
+before constructing state. This
 is intentionally not yet a complete import compatibility claim: take-turn
 cleanup/reveal and reset behavior over dirty, cross-owner board state remain
 gated on the movement/state decoders that can construct those conditions.
@@ -54,14 +55,16 @@ gated on the movement/state decoders that can construct those conditions.
 | `shufflePrizesToDeckBottom` | Atomic `MovePrizesToDeckBottom`                                                                                               | Prize ordering/randomization, concealment, empty prizes                                                        |
 | `shuffleZone`               | `ShuffleZone` resolved permutation event                                                                                      | Every allowed zone, deterministic legacy indices, new handle generation, safe timeline                         |
 
-The private movement decoder now admits the exact `draw` tuple without applying
-it. Record `user` selects the target deck/hand, while the exported initiator is
+The private movement decoder and candidate now admit the exact `draw` tuple.
+Record `user` selects the target deck/hand, while the exported initiator is
 kept separate because the legacy context-menu path can draw from the other
 physical side. Counts are already clamped by v1 before a successful action is
 exported; conversion accepts only positive integers through the shared 200-card
-bound. Locally applied empty or invalid source draws use `emit=false` and are not
-valid exported records. Every other row above remains undecoded and cannot enter
-the transactional candidate yet.
+bound and requires the recorded count to fit the current candidate deck exactly.
+This prevents game-core's live short-deck clamp from accepting an inconsistent
+legacy record. Locally applied empty or invalid source draws use `emit=false` and
+are not valid exported records. Every other row above remains undecoded and
+cannot enter the transactional candidate yet.
 
 ## Markers and card/stack state
 

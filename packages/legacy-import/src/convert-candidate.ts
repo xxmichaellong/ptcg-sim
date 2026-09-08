@@ -3,6 +3,7 @@ import {
   assertMatchInvariants,
   createEmptyMatch,
   executeCommand,
+  playerZoneId,
   stableSerialize,
   type CommandRejectionCode,
   type EventBatch,
@@ -23,6 +24,11 @@ import {
   type LegacyV1LifecycleDecodeIssueCode,
 } from './decode-lifecycle.js';
 import {
+  decodeLegacyV1MovementActions,
+  type LegacyV1MovementAction,
+  type LegacyV1MovementDecodeIssueCode,
+} from './decode-movement.js';
+import {
   createLegacyV1ImportContext,
   LegacyV1ImportContextError,
   type LegacyV1ImportContextErrorCode,
@@ -34,73 +40,81 @@ import type {
   ParsedLegacyExport,
 } from './parse-export.js';
 
-const LIFECYCLE_ACTIONS = new Set<LegacySynchronizedActionName>([
+const CONVERTED_ACTIONS = new Set<LegacySynchronizedActionName>([
   'loadDeckData',
   'reset',
   'setup',
   'takeTurn',
+  'draw',
 ]);
 
-export interface LegacyV1LifecycleCandidateTarget {
+type LegacyV1ConvertedAction = LegacyV1LifecycleAction | LegacyV1MovementAction;
+
+export interface LegacyV1CandidateTarget {
   readonly matchId: MatchId;
   readonly selfSeat: MatchSeatInput;
   readonly opponentSeat: MatchSeatInput;
 }
 
-export type LegacyV1LifecycleCandidateIssueCode =
+export type LegacyV1CandidateIssueCode =
   | 'unsupported_action'
+  | 'decoder_coverage_error'
   | 'invalid_target'
+  | 'source_state_mismatch'
   | 'canonical_error'
   | `deck.${LegacyV1DeckDecodeIssueCode}`
   | `lifecycle.${LegacyV1LifecycleDecodeIssueCode}`
+  | `movement.${LegacyV1MovementDecodeIssueCode}`
   | `context.${LegacyV1ImportContextErrorCode}`
   | `command.${CommandRejectionCode}`;
 
-export interface LegacyV1LifecycleCandidateIssue {
-  readonly code: LegacyV1LifecycleCandidateIssueCode;
+export interface LegacyV1CandidateIssue {
+  readonly code: LegacyV1CandidateIssueCode;
   readonly recordIndex: number | null;
   readonly path: string;
   readonly message: string;
 }
 
-export interface LegacyV1AppliedLifecycleRecord {
+export interface LegacyV1AppliedRecord {
   readonly recordIndex: number;
-  readonly action: LegacyV1LifecycleAction['type'];
+  readonly action: LegacyV1ConvertedAction['type'];
   readonly batches: readonly EventBatch[];
 }
 
-export type LegacyV1LifecycleCandidateResult =
+export type LegacyV1CandidateResult =
   | {
       readonly ok: true;
       readonly state: MatchState;
-      readonly records: readonly LegacyV1AppliedLifecycleRecord[];
+      readonly records: readonly LegacyV1AppliedRecord[];
     }
   | {
       readonly ok: false;
-      readonly issues: readonly LegacyV1LifecycleCandidateIssue[];
+      readonly issues: readonly LegacyV1CandidateIssue[];
     };
 
-const failure = (
-  issue: LegacyV1LifecycleCandidateIssue
-): LegacyV1LifecycleCandidateResult => ({ ok: false, issues: [issue] });
+const failure = (issue: LegacyV1CandidateIssue): LegacyV1CandidateResult => ({
+  ok: false,
+  issues: [issue],
+});
 
 const targetPlayerId = (
-  target: LegacyV1LifecycleCandidateTarget,
+  target: LegacyV1CandidateTarget,
   player: LegacyExportUser
 ): PlayerId =>
   player === 'self' ? target.selfSeat.playerId : target.opponentSeat.playerId;
 
 /**
  * Builds a private canonical candidate only when every admitted record belongs
- * to the fully decoded lifecycle subset. Failures return no state, and callers
- * must discard the whole result rather than installing an intermediate batch.
+ * to the closed set of fully decoded action atoms. Failures return no state,
+ * and callers must discard the whole result rather than installing an
+ * intermediate batch.
  */
-export const buildLegacyV1LifecycleCandidate = (
+export const buildLegacyV1Candidate = (
   parsed: ParsedLegacyExport,
-  target: LegacyV1LifecycleCandidateTarget
-): LegacyV1LifecycleCandidateResult => {
+  target: LegacyV1CandidateTarget
+): LegacyV1CandidateResult => {
   const unsupportedIndex = parsed.actions.findIndex(
-    (action) => !LIFECYCLE_ACTIONS.has(action.action)
+    (action) => !CONVERTED_ACTIONS.has(action.action)
   );
   if (unsupportedIndex >= 0) {
     return failure({
@@ -119,6 +133,44 @@ export const buildLegacyV1LifecycleCandidate = (
       recordIndex: issue.recordIndex,
       path: issue.path,
       message: issue.message,
+    });
+  }
+
+  const decodedMovement = decodeLegacyV1MovementActions(parsed);
+  if (!decodedMovement.ok) {
+    const issue = decodedMovement.issues[0]!;
+    return failure({
+      code: `movement.${issue.code}`,
+      recordIndex: issue.recordIndex,
+      path: issue.path,
+      message: issue.message,
+    });
+  }
+
+  const convertedActions: LegacyV1ConvertedAction[] = [
+    ...decodedLifecycle.actions,
+    ...decodedMovement.actions,
+  ].sort((left, right) => left.recordIndex - right.recordIndex);
+  const decoderCoverageIndex = parsed.actions.findIndex(
+    (sourceAction, actionIndex) => {
+      const decodedAction = convertedActions[actionIndex];
+      return (
+        decodedAction?.recordIndex !== actionIndex + 1 ||
+        decodedAction.type !== sourceAction.action
+      );
+    }
+  );
+  if (
+    convertedActions.length !== parsed.actions.length ||
+    decoderCoverageIndex >= 0
+  ) {
+    const recordIndex =
+      decoderCoverageIndex >= 0 ? decoderCoverageIndex + 1 : null;
+    return failure({
+      code: 'decoder_coverage_error',
+      recordIndex,
+      path: recordIndex === null ? '$' : `$[${recordIndex}].action`,
+      message: 'Legacy action must be decoded exactly once before conversion',
     });
   }
 
@@ -178,7 +230,7 @@ export const buildLegacyV1LifecycleCandidate = (
   }
 
   const importContext = createLegacyV1ImportContext();
-  const records: LegacyV1AppliedLifecycleRecord[] = [];
+  const records: LegacyV1AppliedRecord[] = [];
   const entriesFor = (player: LegacyExportUser) =>
     player === 'self' ? decodedDecks.selfEntries : decodedDecks.opponentEntries;
 
@@ -190,7 +242,7 @@ export const buildLegacyV1LifecycleCandidate = (
     | { readonly ok: true; readonly batch: EventBatch }
     | {
         readonly ok: false;
-        readonly issue: LegacyV1LifecycleCandidateIssue;
+        readonly issue: LegacyV1CandidateIssue;
       } => {
     const actionContext = importContext.forAction(recordIndex, outcome);
     try {
@@ -231,19 +283,19 @@ export const buildLegacyV1LifecycleCandidate = (
           code: 'canonical_error',
           recordIndex,
           path: `$[${recordIndex}]`,
-          message: 'Canonical lifecycle application failed',
+          message: 'Canonical legacy action application failed',
         },
       };
     }
   };
 
-  for (const action of decodedLifecycle.actions) {
+  for (const action of convertedActions) {
     const playerId = targetPlayerId(target, action.player);
     const batches: EventBatch[] = [];
     const apply = (
       command: GameCommand,
       outcome?: LegacyV1ResolvedOutcome
-    ): LegacyV1LifecycleCandidateResult | null => {
+    ): LegacyV1CandidateResult | null => {
       const result = execute(action.recordIndex, command, outcome);
       if (!result.ok) return failure(result.issue);
       batches.push(result.batch);
@@ -288,6 +340,25 @@ export const buildLegacyV1LifecycleCandidate = (
         if (problem) return problem;
         break;
       }
+      case 'draw': {
+        const deck = state.zones[playerZoneId(playerId, 'deck')];
+        if (!deck || action.count > deck.cardIds.length) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[1]`,
+            message:
+              'Recorded draw count exceeds the source-state deck card count',
+          });
+        }
+        const problem = apply({
+          type: 'DrawCards',
+          playerId,
+          count: action.count,
+        });
+        if (problem) return problem;
+        break;
+      }
     }
     records.push({
       recordIndex: action.recordIndex,
@@ -306,14 +377,14 @@ export const buildLegacyV1LifecycleCandidate = (
       );
     assertMatchInvariants(replayed);
     if (stableSerialize(replayed) !== stableSerialize(state)) {
-      throw new Error('Lifecycle candidate does not match event replay');
+      throw new Error('Legacy candidate does not match event replay');
     }
   } catch {
     return failure({
       code: 'canonical_error',
       recordIndex: null,
       path: '$',
-      message: 'Canonical lifecycle candidate failed final validation',
+      message: 'Canonical legacy candidate failed final validation',
     });
   }
 

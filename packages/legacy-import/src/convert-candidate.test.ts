@@ -9,7 +9,7 @@ import {
 } from '@ptcgsim/game-core';
 import { describe, expect, it } from 'vitest';
 
-import { buildLegacyV1LifecycleCandidate } from './convert-lifecycle.js';
+import { buildLegacyV1Candidate } from './convert-candidate.js';
 import { parseLegacyExportJson } from './parse-export.js';
 
 type Row = readonly [string, string, string, string];
@@ -33,14 +33,14 @@ const payload = (
 ];
 
 const target = {
-  matchId: asMatchId('legacy-lifecycle-match'),
+  matchId: asMatchId('legacy-candidate-match'),
   selfSeat: {
-    playerId: asPlayerId('legacy-lifecycle-self'),
+    playerId: asPlayerId('legacy-candidate-self'),
     displayName: 'Self',
     cardBackUrl: '/self.png',
   },
   opponentSeat: {
-    playerId: asPlayerId('legacy-lifecycle-opponent'),
+    playerId: asPlayerId('legacy-candidate-opponent'),
     displayName: 'Opponent',
     cardBackUrl: '/opponent.png',
   },
@@ -61,11 +61,11 @@ const cardRows = (count: number, prefix: string): readonly Row[] =>
     `/legacy/${prefix}-${index}.png`,
   ]);
 
-describe('legacy v1 lifecycle candidate builder', () => {
+describe('legacy v1 canonical candidate builder', () => {
   it('transactionally applies deck, setup, turn, and both reset modes', () => {
     const selfDeck = cardRows(14, 'Self');
     const opponentDeck = cardRows(3, 'Opponent');
-    const result = buildLegacyV1LifecycleCandidate(
+    const result = buildLegacyV1Candidate(
       parse(
         payload(
           selfDeck,
@@ -166,14 +166,15 @@ describe('legacy v1 lifecycle candidate builder', () => {
   it('recreates the same state and event batches for a whole-attempt retry', () => {
     const parsed = parse(
       payload(
-        cardRows(8, 'Retry'),
+        cardRows(15, 'Retry'),
         '',
-        action('self', 'setup', [Array.from({ length: 8 }, (_, i) => 7 - i)]),
-        action('self', 'takeTurn', ['self'])
+        action('self', 'setup', [Array.from({ length: 15 }, (_, i) => 14 - i)]),
+        action('self', 'takeTurn', ['self']),
+        action('self', 'draw', ['opp', 1])
       )
     );
-    const first = buildLegacyV1LifecycleCandidate(parsed, target);
-    const retry = buildLegacyV1LifecycleCandidate(parsed, target);
+    const first = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
     expect(first).toEqual(retry);
     expect(first.ok).toBe(true);
     if (!first.ok || !retry.ok) throw new Error('Expected conversion success');
@@ -181,7 +182,7 @@ describe('legacy v1 lifecycle candidate builder', () => {
   });
 
   it('retains source deck data across a build-false reset and later setup', () => {
-    const result = buildLegacyV1LifecycleCandidate(
+    const result = buildLegacyV1Candidate(
       parse(
         payload(
           cardRows(2, 'Reload'),
@@ -201,8 +202,132 @@ describe('legacy v1 lifecycle candidate builder', () => {
     expect(result.state.lifecycle).toBe('playing');
   });
 
+  it('applies draws in source order without treating initiator as target', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(5, 'Self draw'),
+          cardRows(3, 'Opponent draw'),
+          action('self', 'draw', ['opp', 2]),
+          action('opp', 'draw', ['self', 1])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    expect(
+      result.records.map(({ recordIndex, action, batches }) => ({
+        recordIndex,
+        action,
+        batchCount: batches.length,
+      }))
+    ).toEqual([
+      { recordIndex: 1, action: 'loadDeckData', batchCount: 1 },
+      { recordIndex: 2, action: 'loadDeckData', batchCount: 1 },
+      { recordIndex: 3, action: 'draw', batchCount: 1 },
+      { recordIndex: 4, action: 'draw', batchCount: 1 },
+    ]);
+    expect(result.records[2]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardsDrawn',
+        playerId: target.selfSeat.playerId,
+        cardIds: ['legacy:v1:card:000000', 'legacy:v1:card:000001'],
+      },
+    ]);
+    expect(result.records[3]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardsDrawn',
+        playerId: target.opponentSeat.playerId,
+        cardIds: ['legacy:v1:card:000005'],
+      },
+    ]);
+    expect(
+      result.state.zones[playerZoneId(target.selfSeat.playerId, 'hand')]!
+        .cardIds
+    ).toEqual(['legacy:v1:card:000000', 'legacy:v1:card:000001']);
+    expect(
+      result.state.zones[playerZoneId(target.opponentSeat.playerId, 'hand')]!
+        .cardIds
+    ).toEqual(['legacy:v1:card:000005']);
+    expect(result.state.revision).toBe(4);
+  });
+
+  it('rejects a draw that exceeds the exact source-state deck count', () => {
+    const shortDeck = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(2, 'Short draw'),
+          '',
+          action('self', 'draw', ['self', 3])
+        )
+      ),
+      target
+    );
+    expect(shortDeck).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 3,
+          path: '$[3].parameters[1]',
+          message:
+            'Recorded draw count exceeds the source-state deck card count',
+        },
+      ],
+    });
+    expect('state' in shortDeck).toBe(false);
+
+    const depletedDeck = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(2, 'Depleted draw'),
+          '',
+          action('self', 'draw', ['self', 2]),
+          action('self', 'draw', ['self', 1])
+        )
+      ),
+      target
+    );
+    expect(depletedDeck).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 4,
+          path: '$[4].parameters[1]',
+        },
+      ],
+    });
+    expect('state' in depletedDeck).toBe(false);
+
+    const resetDeck = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(1, 'Reset draw'),
+          '',
+          action('self', 'reset', [false, false, false]),
+          action('self', 'draw', ['self', 1])
+        )
+      ),
+      target
+    );
+    expect(resetDeck).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 4,
+          path: '$[4].parameters[1]',
+        },
+      ],
+    });
+    expect('state' in resetDeck).toBe(false);
+  });
+
   it('does not fabricate a turn draw or increment for an empty deck', () => {
-    const result = buildLegacyV1LifecycleCandidate(
+    const result = buildLegacyV1Candidate(
       parse(payload('', '', action('self', 'takeTurn', ['self']))),
       target
     );
@@ -221,7 +346,7 @@ describe('legacy v1 lifecycle candidate builder', () => {
   });
 
   it('returns no candidate when setup does not match the expanded deck', () => {
-    const result = buildLegacyV1LifecycleCandidate(
+    const result = buildLegacyV1Candidate(
       parse(
         payload(cardRows(2, 'Mismatch'), '', action('self', 'setup', [[0]]))
       ),
@@ -243,8 +368,8 @@ describe('legacy v1 lifecycle candidate builder', () => {
   });
 
   it('rejects an admitted but unconverted family before creating state', () => {
-    const result = buildLegacyV1LifecycleCandidate(
-      parse(payload('', '', action('self', 'draw', ['self', 1]))),
+    const result = buildLegacyV1Candidate(
+      parse(payload('', '', action('self', 'moveCardBundle', ['unconverted']))),
       target
     );
     expect(result).toEqual({
@@ -261,8 +386,8 @@ describe('legacy v1 lifecycle candidate builder', () => {
     expect('state' in result).toBe(false);
   });
 
-  it('lifts deck and lifecycle diagnostics without creating state', () => {
-    const invalidDeck = buildLegacyV1LifecycleCandidate(
+  it('lifts deck, lifecycle, and movement diagnostics without state', () => {
+    const invalidDeck = buildLegacyV1Candidate(
       parse(payload([['0', 'Card', 'Trainer', '/card.png']], '')),
       target
     );
@@ -278,7 +403,7 @@ describe('legacy v1 lifecycle candidate builder', () => {
     });
     expect('state' in invalidDeck).toBe(false);
 
-    const invalidLifecycle = buildLegacyV1LifecycleCandidate(
+    const invalidLifecycle = buildLegacyV1Candidate(
       parse(payload('', '', action('self', 'reset', [false]))),
       target
     );
@@ -293,10 +418,26 @@ describe('legacy v1 lifecycle candidate builder', () => {
       ],
     });
     expect('state' in invalidLifecycle).toBe(false);
+
+    const invalidMovement = buildLegacyV1Candidate(
+      parse(payload('', '', action('self', 'draw', ['self', 0]))),
+      target
+    );
+    expect(invalidMovement).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'movement.invalid_draw_count',
+          recordIndex: 3,
+          path: '$[3].parameters[1]',
+        },
+      ],
+    });
+    expect('state' in invalidMovement).toBe(false);
   });
 
   it('rejects an invalid canonical target without creating state', () => {
-    const result = buildLegacyV1LifecycleCandidate(parse(payload('', '')), {
+    const result = buildLegacyV1Candidate(parse(payload('', '')), {
       ...target,
       opponentSeat: {
         ...target.opponentSeat,

@@ -178,25 +178,27 @@ PRNG, or an environment-dependent generator, because those would fabricate a
 different result instead of importing the resolved fact.
 
 This context is not exported from the package entry point and is not called by
-a route. The lifecycle-only candidate below creates it after its closed subset
-schema has passed. The complete interpreter will likewise abandon the whole
-candidate on any typed adapter error or command rejection and install state only
-after every supported positional schema and canonical invariant passes.
+a route. The closed candidate below creates it after its admitted schemas have
+passed. The complete interpreter will likewise abandon the whole candidate on
+any typed adapter error or command rejection and install state only after every
+supported positional schema and canonical invariant passes.
 
-### Lifecycle-only canonical candidate
+### Closed canonical candidate
 
-`buildLegacyV1LifecycleCandidate` proves that the admitted data, private
-decoders, deterministic context, and normal game-core execution can form one
-all-or-nothing conversion pipeline. The caller supplies the canonical match and
-two seat identities; source `self` and `opp` are mapped to those seats without
-turning legacy labels into authority.
+`buildLegacyV1Candidate` proves that the admitted data, private decoders,
+deterministic context, and normal game-core execution can form one all-or-nothing
+conversion pipeline. The caller supplies the canonical match and two seat
+identities; source `self` and `opp` are mapped to those seats without turning
+legacy labels into authority.
 
 This deliberately narrow builder succeeds only when every action is one of
-`loadDeckData`, `reset`, `setup`, or `takeTurn`. Any other allowlisted family is
-rejected before state construction, including `draw` in the representative
-fixture. Deck and lifecycle diagnostics are lifted with their exact source
-record/path, while context and canonical command failures also return no
-candidate state.
+`loadDeckData`, `reset`, `setup`, `takeTurn`, or `draw`. Any other allowlisted
+family is rejected before state construction. Deck, lifecycle, and movement
+diagnostics are lifted with their exact source record/path, while context and
+canonical command failures also return no candidate state.
+The preflight additionally requires a one-to-one, source-ordered match between
+all records and the union of private decoder outputs; a future allowlist/decoder
+drift can neither omit nor double-apply a record.
 Setup permutations are also cross-checked against the expanded source deck
 before the target shell is created; the action-scoped adapter repeats that
 validation at the canonical operation boundary as defense in depth.
@@ -211,7 +213,13 @@ The lifecycle mapping is source-backed:
   deck when it is false; `clean` and `invalidMessage` affect legacy presentation,
   not canonical state; and
 - take-turn executes `StartTurn`; the closed subset proves the resolved
-  draw/advance and empty-deck branches without fabricating a draw or increment.
+  draw/advance and empty-deck branches without fabricating a draw or increment;
+  and
+- draw executes `DrawCards` for the record's target player. Before execution,
+  the candidate requires the recorded already-clamped count to fit the exact
+  current deck, so a forged short/empty/depleted-deck record fails the whole
+  attempt instead of being silently clamped by game-core. The legacy initiator
+  remains decoded provenance, not canonical target authority.
 
 One source record may therefore map to multiple canonical event batches. The
 result retains the exact record-to-batch mapping, validates invariants after
@@ -219,7 +227,7 @@ normal game-core application, replays every batch from a fresh target shell,
 and requires byte-identical stable serialization before returning the private
 candidate. No partial batches escape on failure.
 
-The closed subset cannot create play stacks, loose board cards, markers, or
+The closed lifecycle-plus-draw subset cannot create play stacks, loose board cards, markers, or
 cross-owner placements. It therefore does not yet claim take-turn cleanup/reveal
 parity or dirty-board reset parity; those interactions stay gated on the
 movement/state-family decoders rather than being inferred from an unreachable
@@ -228,8 +236,8 @@ lifecycle-only fixture.
 ## Next conversion slices
 
 1. Continue source-backed positional schemas for direct movement after the
-   non-applying `draw` atom, then widen the transactional candidate only after
-   each newly admitted command is decoded.
+   transactionally applied `draw` atom, widening the candidate only after each
+   newly admitted command is decoded.
 2. Add markers, visibility/inspection, randomized/bulk, table signals, and the
    remaining action families using the same allowlisted dispatch table.
 3. Produce a conversion report with warnings, dropped presentation fields, and

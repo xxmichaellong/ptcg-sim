@@ -169,12 +169,12 @@ action. Its first private semantic layers now validate lifecycle tuples,
 materialize bounded deck definitions with deterministic order-preserving IDs,
 and provide import-wide monotonic identities plus one-shot source-resolved
 outcome adapters. A first all-or-nothing candidate builder now applies the
-closed lifecycle-only subset through normal game-core commands and verifies
+closed lifecycle-plus-draw subset through normal game-core commands and verifies
 exact event replay; it rejects every unconverted family before constructing
-state. Movement and remaining action-family coverage, the complete transaction,
+state and rejects recorded draws that exceed the exact current source-state
+deck. Remaining movement/action-family coverage, the complete transaction,
 conversion reports, and real-user corpus evidence remain before Phase 3 can
-exit. The first non-applying movement atom now validates the exact exported
-`draw` target/initiator/count tuple; it does not widen the candidate by itself.
+exit.
 
 Work:
 
