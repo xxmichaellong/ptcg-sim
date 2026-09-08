@@ -1020,6 +1020,65 @@ describe('legacy action-export source envelope', () => {
     );
   });
 
+  it('pins numeric play targets, top-only eligibility, and refreshed flat ordering', () => {
+    const keybinds = readRepositoryFile(
+      'client/src/actions/keybinds/keybinds.js'
+    );
+    const clicks = readRepositoryFile(
+      'client/src/setup/image-logic/click-events.js'
+    );
+    const moveCard = readRepositoryFile(
+      'client/src/actions/move-card-bundle/move-card.js'
+    );
+    const attach = readRepositoryFile(
+      'client/src/actions/move-card-bundle/attach-card.js'
+    );
+    const evolve = readRepositoryFile(
+      'client/src/actions/move-card-bundle/evolve-card.js'
+    );
+    const refresh = readRepositoryFile(
+      'client/src/setup/sizing/refresh-board.js'
+    );
+
+    expect(keybinds).toContain(
+      "(!['active', 'bench'].includes(mouseClick.zoneId) ||\n        mouseClick.card.image.attached)"
+    );
+    expect(keybinds).toContain(
+      'getZone(mouseClick.cardUser, zoneId).array.forEach((card) => {\n          if (!card.image.attached)'
+    );
+    expect(clicks).toContain(
+      'const targetIndex = getZone(event.target.user, dZoneId).array.findIndex('
+    );
+    expect(clicks).toContain(
+      "mouseClick.cardIndex,\n      targetIndex,\n      'move'"
+    );
+
+    expect(moveCard).toContain(
+      "if (typeof targetIndex === 'number') {\n    targetCard = dZone.array[targetIndex];"
+    );
+    expect(moveCard).toContain(
+      'targetCard &&\n    activeOrBenchZone.includes(dZoneId) &&\n    !targetCard.image.attached'
+    );
+    expect(moveCard).toContain(
+      '!activeOrBenchZone.includes(oZoneId) || movingCard.image.attached'
+    );
+    expect(moveCard).toContain(
+      "movingCard.type === 'Pokémon' && !activeOrBenchZone.includes(oZoneId)"
+    );
+    expect(evolve).toContain('targetCard.image.after(movingCard.image);');
+    expect(evolve).toContain('targetCard.image.relative = movingCard.image;');
+    expect(attach).toContain('targetCard.image.after(movingCard.image);');
+
+    expect(refresh).toContain(
+      "const playContainers = zone.element.querySelectorAll('DIV');"
+    );
+    expect(refresh).toContain(
+      "const images = playContainer.querySelectorAll('img');"
+    );
+    expect(refresh).toContain('if (!image.attached) {');
+    expect(refresh).toContain('moveCard(user, user, zoneId, zoneId, index);');
+  });
+
   it('pins deck tuple materialization, selectable categories, and the unknown error marker', () => {
     const buildDeck = readRepositoryFile(
       'client/src/setup/deck-constructor/build-deck.js'

@@ -171,15 +171,16 @@ and provide import-wide monotonic identities plus one-shot source-resolved
 outcome adapters. A first all-or-nothing candidate builder now applies the
 closed lifecycle/draw/discard-and-draw/shuffle-hand-and-draw/
 shuffle-hand-to-deck-bottom-and-draw/direct-prize-shuffle/target-free-loose/
-stadium/new-play-stack/bare-whole-stack-movement/zone-backed-deck-action/
+stadium/new-play-stack/bare-whole-stack-movement/source-zone-targeted-play/
+zone-backed-deck-action/
 prizes-to-deck-bottom subset
 through normal game-core commands and verifies exact event replay; it rejects every
 unconverted family before constructing state, rejects recorded draws that exceed
 the exact current source-state deck, applies only direct prize shuffles
 whose recorded permutation matches the current prize zone, and resolves legacy
 zone indices to stable card IDs before bottom-mode bundled movement,
-target-free loose/stadium/play movement, move-to-top, shuffle-into-deck, or
-switch-with-deck-top. The bottom helper is
+target-free loose/stadium/play movement, targeted attach/evolve placement,
+move-to-top, shuffle-into-deck, or switch-with-deck-top. The bottom helper is
 represented by its real `moveCardBundle` export rather than a fabricated
 standalone action; it moves the resolved card to canonical deck bottom and
 preserves an already-bottom source as a zero-batch legacy record. Target-free
@@ -195,8 +196,11 @@ an occupied active to the bench. Target-free active/bench movement now also
 resolves a source coordinate only while every stack in that legacy container is
 bare, then applies canonical `MovePlayStack`. Promotion, demotion, lone-bench
 auto-promotion, bench tail reordering, and same-slot no-ops match v1. Targeted
-bundles plus rich-stack and work-area coordinates remain closed until flattened
-evolution/attachment ordering is mapped. Reachable tests now prove both-player
+active/bench destinations from stable source zones now recover v1's flattened
+top-card coordinate across rich stacks and apply atomic `PlaceCardOnPlayStack`
+events. Lower-evolution, attachment, missing, and out-of-range targets fail the
+whole candidate. Rich-stack origins, targeted stack swaps, and work-area
+coordinates remain closed. Reachable tests now prove both-player
 loose-board take-turn cleanup plus owner-scoped loose/stadium/play reset/rebuild
 behavior.
 Shuffle-into-deck translates v1's in-deck tail-move
@@ -220,7 +224,7 @@ the exact current hand. It preserves the existing deck prefix, appends the
 shuffled hand, and draws from index zero through the matching atomic canonical
 command. Zero-draw, empty-hand/non-empty-deck, and completely empty records all
 remain valid.
-Rich stack/work-area origins, stack departure and targeted play movement,
+Rich stack/work-area origins, stack departure, and targeted stack movement,
 remaining action-family coverage, the complete
 transaction, conversion reports, and real-user corpus evidence remain before
 Phase 3 can exit.

@@ -28,8 +28,8 @@ The legacy `clean` and `invalidMessage` reset flags are presentation-only. The
 candidate retains source-record-to-event-batch mappings and proves exact replay.
 It now also admits the bounded `draw`, `discardAndDraw`, `shuffleAndDraw`,
 `shuffleBottomAndDraw`, direct prize `shuffleZone`, zone-backed `moveToDeckTop`,
-the bottom-mode and target-free loose-zone/stadium/new-play-stack/bare-whole-stack
-`moveCardBundle`, resolved
+the bottom-mode, target-free loose-zone/stadium/new-play-stack/bare-whole-stack,
+and source-zone-targeted active/bench `moveCardBundle`, resolved
 `shuffleIntoDeck`, source-authentic `switchWithDeckTop`, and
 `shufflePrizesToDeckBottom` atoms below, but rejects any other action before
 constructing state. This is intentionally not yet a complete import
@@ -62,8 +62,9 @@ that can construct those conditions.
 | `shuffleZone`               | `ShuffleZone` resolved permutation event                                                                                      | Every allowed zone, deterministic legacy indices, new handle generation, safe timeline                         |
 
 The private movement decoder and candidate now admit the exact `draw`,
-`discardAndDraw`, `shuffleAndDraw`, `shuffleBottomAndDraw`, the bottom-mode and
-target-free loose-zone/stadium/new-play-stack/bare-whole-stack `moveCardBundle`, direct prize
+`discardAndDraw`, `shuffleAndDraw`, `shuffleBottomAndDraw`, the bottom-mode,
+target-free loose-zone/stadium/new-play-stack/bare-whole-stack, and
+source-zone-targeted active/bench `moveCardBundle`, direct prize
 `shuffleZone`, `moveToDeckTop`, `shuffleIntoDeck`, `switchWithDeckTop`, and
 `shufflePrizesToDeckBottom` tuples.
 Record `user` selects the target player's zones, while the exported initiator
@@ -144,7 +145,7 @@ with incumbent displacement first. Empty, self-incumbent, opponent-incumbent,
 and same-stadium zero-batch cases are pinned. Newly reachable stadium sources
 also pass through ordinary movement, whole-attempt retry stays byte
 deterministic, and reset removes only an incumbent owned by the resetting
-player. Stack/work-area origins and all targeted play shapes remain fail-closed.
+player. Stack/work-area origins remain fail-closed.
 
 Target-free active and bench destinations are admitted as new-play-stack moves
 under the same exact move-mode tuple. The `A`/`B` shortcuts export `false`, while
@@ -157,6 +158,18 @@ import-wide stack factory makes retry identities deterministic. Self/opponent
 boards, stadium-to-bench movement, exact event fields, replay, retry, and
 owner-scoped reset are pinned.
 
+Numeric active/bench destinations are admitted for the same stable source-zone
+cards. The number is the v1 refreshed flat-array coordinate, so conversion
+walks board-ordered stacks as reversed evolution order (top first) followed by
+the versioned attachment order. Only a coordinate naming the first unattached
+top card of a current stack resolves; a lower evolution, attachment, gap, or
+out-of-range value rejects the whole candidate. The source card's current
+category derives attachment versus evolution, and one canonical
+`PlaceCardOnPlayStack` event preserves evolution and Energy-before-Trainer
+ordering. Repeated rich-target placement, exact events, retry, and rollback are
+pinned. Numeric active/bench stack sources remain closed because a top-to-top
+drag performs stack switching rather than attach/evolve.
+
 The same target-free tuple now resolves bare active/bench sources for movement
 back into active or bench. Because each reachable stack currently contains one
 evolution card and no attachments, its legacy flat-array index equals its
@@ -168,8 +181,8 @@ promotion, and non-tail bench-to-bench append are atomic. Active-to-active and
 an already-tail bench-to-bench export retain zero-batch mappings. Source-backed
 relocation/auto-move call order, exact layout events, retry, invariants, and late
 out-of-range rollback are pinned. Rich active/bench stacks, stack departures,
-attachment/inspection/work-area origins, and every numeric target remain
-fail-closed until their flattened ordering and target semantics are admitted.
+attachment/inspection/work-area origins, and numeric stack-switch sources remain
+fail-closed until their source ordering and semantics are admitted.
 
 The direct shuffle is restricted to exact
 `[initiator, "prizes", permutation, true]` records produced by the prize

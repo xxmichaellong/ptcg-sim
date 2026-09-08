@@ -363,6 +363,55 @@ describe('legacy v1 movement positional decoder', () => {
     });
   });
 
+  it('decodes bounded numeric active and bench targets from every card container', () => {
+    expect(
+      decode(
+        action('self', 'moveCardBundle', [
+          'opp',
+          'hand',
+          'active',
+          3,
+          0,
+          'move',
+        ]),
+        action('opp', 'moveCardBundle', [
+          'self',
+          'attachedCards',
+          'bench',
+          7,
+          MAX_DECK_CARDS - 1,
+          'move',
+        ])
+      )
+    ).toEqual({
+      ok: true,
+      actions: [
+        {
+          type: 'moveCardBundle',
+          recordIndex: 3,
+          player: 'self',
+          initiator: 'opp',
+          sourceZone: 'hand',
+          sourceIndex: 3,
+          destinationZone: 'active',
+          targetIndex: 0,
+          mode: 'move',
+        },
+        {
+          type: 'moveCardBundle',
+          recordIndex: 4,
+          player: 'opp',
+          initiator: 'self',
+          sourceZone: 'attachedCards',
+          sourceIndex: 7,
+          destinationZone: 'bench',
+          targetIndex: MAX_DECK_CARDS - 1,
+          mode: 'move',
+        },
+      ],
+    });
+  });
+
   it('decodes target-free active and bench source coordinates for whole-stack movement', () => {
     const inputs = [
       ['active', 'bench', 0, false],
@@ -1213,7 +1262,7 @@ describe('legacy v1 movement positional decoder', () => {
         recordIndex: 3,
         path: '$[3].parameters[5]',
         message:
-          'Only source-authentic deck-bottom and target-free loose-zone, stadium, or new-play-stack bundles are converted',
+          'Only source-authentic deck-bottom, loose-zone, stadium, new-play-stack, and targeted play-stack bundles are converted',
       });
     }
   );
@@ -1241,8 +1290,8 @@ describe('legacy v1 movement positional decoder', () => {
     }
   );
 
-  it.each([true, 0, 'false', [], {}])(
-    'rejects targeted loose-zone bundle value %j',
+  it.each([true, 'false', [], {}])(
+    'rejects malformed loose-zone target value %j',
     (targetIndex) => {
       expect(
         firstIssue(
@@ -1260,34 +1309,13 @@ describe('legacy v1 movement positional decoder', () => {
         recordIndex: 3,
         path: '$[3].parameters[4]',
         message:
-          'A target-free moveCardBundle must not carry a target card index',
+          'A moveCardBundle target must be false, null, or a numeric active/bench card index',
       });
     }
   );
 
-  it('rejects a targeted stadium bundle', () => {
-    expect(
-      firstIssue(
-        action('self', 'moveCardBundle', [
-          'opp',
-          'hand',
-          'stadium',
-          0,
-          0,
-          'move',
-        ])
-      )
-    ).toEqual({
-      code: 'invalid_target_index',
-      recordIndex: 3,
-      path: '$[3].parameters[4]',
-      message:
-        'A target-free moveCardBundle must not carry a target card index',
-    });
-  });
-
-  it.each(['active', 'bench'])(
-    'rejects a targeted %s bundle until attach/evolve decoding',
+  it.each(['discard', 'stadium'])(
+    'rejects a numeric target whose destination is %s',
     (destinationZone) => {
       expect(
         firstIssue(
@@ -1301,11 +1329,33 @@ describe('legacy v1 movement positional decoder', () => {
           ])
         )
       ).toEqual({
+        code: 'invalid_destination_zone',
+        recordIndex: 3,
+        path: '$[3].parameters[2]',
+        message: 'A targeted moveCardBundle must target active or bench',
+      });
+    }
+  );
+
+  it.each([-1, 0.5, MAX_DECK_CARDS, Number.MAX_SAFE_INTEGER])(
+    'rejects an out-of-bounds numeric play target %j',
+    (targetIndex) => {
+      expect(
+        firstIssue(
+          action('self', 'moveCardBundle', [
+            'opp',
+            'hand',
+            'active',
+            0,
+            targetIndex,
+            'move',
+          ])
+        )
+      ).toEqual({
         code: 'invalid_target_index',
         recordIndex: 3,
         path: '$[3].parameters[4]',
-        message:
-          'A target-free moveCardBundle must not carry a target card index',
+        message: `A targeted moveCardBundle index must be an integer from 0 to ${MAX_DECK_CARDS - 1}`,
       });
     }
   );

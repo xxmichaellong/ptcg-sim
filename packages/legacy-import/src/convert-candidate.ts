@@ -227,6 +227,47 @@ const candidateBarePlayStackAtLegacyIndex = (
   return stack && card?.ownerId === playerId ? stack : null;
 };
 
+const candidateTargetPlayStackAtLegacyIndex = (
+  state: MatchState,
+  playerId: PlayerId,
+  destinationZone: 'active' | 'bench',
+  targetIndex: number
+): PlayStack | null => {
+  const board = state.boards[playerId];
+  if (!board) return null;
+  const stackIds =
+    destinationZone === 'active'
+      ? board.activeStackId
+        ? [board.activeStackId]
+        : []
+      : board.benchStackIds;
+  let legacyIndex = 0;
+
+  for (const stackId of stackIds) {
+    const stack = state.stacks[stackId];
+    if (
+      !stack ||
+      stack.boardPlayerId !== playerId ||
+      stack.evolutionCardIds.length === 0 ||
+      [...stack.evolutionCardIds, ...stack.attachmentCardIds].some(
+        (cardId) => state.cards[cardId]?.ownerId !== playerId
+      )
+    ) {
+      return null;
+    }
+
+    // V1 refreshes each play container to top-first evolution order followed
+    // by its versioned attachment order. Only the unattached top image is an
+    // authentic attach/evolve target; every other flat coordinate fails shut.
+    if (targetIndex === legacyIndex) return stack;
+    legacyIndex +=
+      stack.evolutionCardIds.length + stack.attachmentCardIds.length;
+    if (targetIndex < legacyIndex) return null;
+  }
+
+  return null;
+};
+
 const translateLegacyInDeckShuffle = (
   deckCount: number,
   sourceIndex: number,
@@ -585,6 +626,7 @@ export const buildLegacyV1Candidate = (
       }
       case 'moveCardBundle': {
         if (
+          typeof action.targetIndex !== 'number' &&
           (action.sourceZone === 'active' || action.sourceZone === 'bench') &&
           (action.destinationZone === 'active' ||
             action.destinationZone === 'bench')
@@ -657,13 +699,45 @@ export const buildLegacyV1Candidate = (
           action.destinationZone === 'active' ||
           action.destinationZone === 'bench'
         ) {
-          const problem = apply({
-            type: 'MoveCardToPlay',
-            cardId,
-            expectedSourceZoneId: sourceZoneId,
-            boardPlayerId: playerId,
-            slot: action.destinationZone,
-          });
+          const targetStack =
+            typeof action.targetIndex === 'number'
+              ? candidateTargetPlayStackAtLegacyIndex(
+                  state,
+                  playerId,
+                  action.destinationZone,
+                  action.targetIndex
+                )
+              : null;
+          if (typeof action.targetIndex === 'number' && !targetStack) {
+            return failure({
+              code: 'source_state_mismatch',
+              recordIndex: action.recordIndex,
+              path: `$[${action.recordIndex}].parameters[4]`,
+              message:
+                'Recorded target coordinate does not identify a current active/bench stack top',
+            });
+          }
+          const card = state.cards[cardId]!;
+          const problem = targetStack
+            ? apply({
+                type: 'PlaceCardOnPlayStack',
+                playerId,
+                cardId,
+                expectedSourceId: sourceZoneId,
+                targetStackId: targetStack.id,
+                expectedTargetTopCardId: targetStack.evolutionCardIds.at(-1)!,
+                mode:
+                  card.currentCategory === 'Pokémon'
+                    ? 'evolution'
+                    : 'attachment',
+              })
+            : apply({
+                type: 'MoveCardToPlay',
+                cardId,
+                expectedSourceZoneId: sourceZoneId,
+                boardPlayerId: playerId,
+                slot: action.destinationZone,
+              });
           if (problem) return problem;
           break;
         }

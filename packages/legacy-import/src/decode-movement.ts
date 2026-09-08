@@ -116,6 +116,17 @@ export type LegacyV1MovementAction =
       readonly initiator: LegacyExportUser;
       readonly sourceZone: LegacyV1CardSourceZone;
       readonly sourceIndex: number;
+      readonly destinationZone: LegacyV1PlayDestinationZone;
+      readonly targetIndex: number;
+      readonly mode: 'move';
+    }
+  | {
+      readonly type: 'moveCardBundle';
+      readonly recordIndex: number;
+      readonly player: LegacyExportUser;
+      readonly initiator: LegacyExportUser;
+      readonly sourceZone: LegacyV1CardSourceZone;
+      readonly sourceIndex: number;
       readonly destinationZone: 'stadium';
       readonly targetIndex: false | null;
       readonly mode: 'move';
@@ -642,7 +653,7 @@ export const decodeLegacyV1MovementActions = (
             'unsupported_move_card_bundle',
             actionIndex,
             '.parameters[5]',
-            'Only source-authentic deck-bottom and target-free loose-zone, stadium, or new-play-stack bundles are converted'
+            'Only source-authentic deck-bottom, loose-zone, stadium, new-play-stack, and targeted play-stack bundles are converted'
           );
         }
 
@@ -691,12 +702,48 @@ export const decodeLegacyV1MovementActions = (
         }
 
         const targetIndex = action.parameters[4];
+        if (typeof targetIndex === 'number') {
+          if (
+            !Number.isSafeInteger(targetIndex) ||
+            targetIndex < 0 ||
+            targetIndex >= MAX_DECK_CARDS
+          ) {
+            return failure(
+              'invalid_target_index',
+              actionIndex,
+              '.parameters[4]',
+              `A targeted moveCardBundle index must be an integer from 0 to ${MAX_DECK_CARDS - 1}`
+            );
+          }
+          if (!isPlayDestinationZone(destinationZone)) {
+            return failure(
+              'invalid_destination_zone',
+              actionIndex,
+              '.parameters[2]',
+              'A targeted moveCardBundle must target active or bench'
+            );
+          }
+
+          decoded.push({
+            type: 'moveCardBundle',
+            recordIndex: actionIndex + 1,
+            player: action.user,
+            initiator: source.initiator,
+            sourceZone: source.sourceZone,
+            sourceIndex: source.sourceIndex,
+            destinationZone,
+            targetIndex,
+            mode: 'move',
+          });
+          break;
+        }
+
         if (targetIndex !== false && targetIndex !== null) {
           return failure(
             'invalid_target_index',
             actionIndex,
             '.parameters[4]',
-            'A target-free moveCardBundle must not carry a target card index'
+            'A moveCardBundle target must be false, null, or a numeric active/bench card index'
           );
         }
 
