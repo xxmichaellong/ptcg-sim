@@ -2384,6 +2384,13 @@ const applyEventInternal = (
       const inspectionCardIds = inspection.cardIds.map((cardId) =>
         cardId === event.cardId ? event.deckTopCardId : cardId
       );
+      const returnedInspectionCardIds =
+        event.returnTo === 'sourceTail'
+          ? [
+              ...inspection.cardIds.filter((cardId) => cardId !== event.cardId),
+              event.deckTopCardId,
+            ]
+          : inspectionCardIds;
       const normalizedSelected = {
         ...selected,
         currentCategory: selected.originalCategory,
@@ -2406,9 +2413,16 @@ const applyEventInternal = (
               ...grant,
               cardIds:
                 inspectionId === event.inspectionId
-                  ? grant.cardIds.map((cardId) =>
-                      cardId === event.cardId ? event.deckTopCardId : cardId
-                    )
+                  ? event.returnTo === 'sourceTail'
+                    ? [
+                        ...grant.cardIds.filter(
+                          (cardId) => cardId !== event.cardId
+                        ),
+                        event.deckTopCardId,
+                      ]
+                    : grant.cardIds.map((cardId) =>
+                        cardId === event.cardId ? event.deckTopCardId : cardId
+                      )
                   : grant.cardIds.filter((cardId) => cardId !== event.cardId),
             },
           ])
@@ -2437,7 +2451,7 @@ const applyEventInternal = (
           ...state.workAreas,
           [event.playerId]: {
             ...areas,
-            inspection: { ...inspection, cardIds: inspectionCardIds },
+            inspection: { ...inspection, cardIds: returnedInspectionCardIds },
           },
         },
         visibility: {

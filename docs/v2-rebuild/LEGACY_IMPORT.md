@@ -294,9 +294,12 @@ move-to-deck-top, shuffle-into-deck, and stadium placement from `viewCards`.
 Deck-edge commands conceal the selected identity, the shuffle validates the
 exact remaining-deck-plus-selected-card basis before passing through its
 recorded permutation, and stadium replacement atomically displaces the
-incumbent to its owner's discard. Inspection-origin `switchWithDeckTop` remains
-closed because V1 appends the prior top to the popup tail while the canonical
-inspection swap replaces the selected position.
+incumbent to its owner's discard. Inspection-origin `switchWithDeckTop` opts
+the atomic inspection swap into V1's source-tail return, updating the popup and
+viewer grant in the same order after placing the selected card on deck top. An
+empty deck instead performs the single selected-card move. The mode is internal
+and optional, preserving source-position replacement for native commands and
+older replay batches.
 
 A directly exported prize shuffle carries exactly
 `[initiator, "prizes", permutation, true]`. Empty permutations are valid for an
@@ -644,16 +647,16 @@ take-turn discards both players' loose boards in
 source order before drawing, and that an owner reset clears only that owner's
 reachable loose state, owned stadium, and play stacks before rebuilding its
 deck. Opponent-owned stadium and play state remain. The subset still cannot
-represent cross-viewer repeated-inspection visibility, handle
-position-incompatible work-area deck-top swaps, handle markers or face-down
+represent cross-viewer repeated-inspection visibility, handle the remaining
+position-incompatible staged deck-top swap, handle markers or face-down
 play state, or handle cross-owner play placements, so take-turn in-play reveal
 and reset behavior for those shapes remain gated on their dedicated
 movement/state decoders.
 
 ## Next conversion slices
 
-1. Design the position-incompatible work-area deck-top swaps explicitly and
-   continue the remaining source-backed positional schemas. Staged `shuffleAll`
+1. Design the remaining position-incompatible staged deck-top swap explicitly
+   and continue the remaining source-backed positional schemas. Staged `shuffleAll`
    and `shuffleBottom`
    translate recorded V1 flat indices to the canonical command's semantic input
    order by stable identity; individual staged and inspection deck/stadium paths

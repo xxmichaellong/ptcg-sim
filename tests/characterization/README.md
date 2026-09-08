@@ -524,9 +524,13 @@ popup coordinate. The importer executes canonical deck-top/deck-bottom
 departures, passes through the exact remaining-deck-plus-selected-card shuffle
 basis, and performs atomic stadium replacement. Candidate fixtures pin exact
 events, last-card closure, residual inspection order, concealment generations,
-retry, replay, invariants, and stale input rollback. Target-free active/bench
-and `switchWithDeckTop` remain closed; V1 appends the prior deck top to the
-popup tail, unlike the canonical swap's same-position replacement.
+retry, replay, invariants, and stale input rollback. A real-V1 Chromium oracle
+now also pins Arrow-Right against `viewCards`: the selected inspection card
+becomes deck top and the prior deck top appends to the popup tail. The importer
+reproduces that ordering with the atomic inspection swap's internal source-tail
+mode, updates the viewer grant identically, and uses a single deck-top move for
+the empty-deck branch. Default native and historical swaps keep same-position
+replacement. Target-free active/bench inspection moves remain closed.
 
 The protected active/bench shortcut checkpoint covers non-Alt `A` and `B`
 without absorbing stadium or prize rules. Two fresh real-v1 Chromium pages

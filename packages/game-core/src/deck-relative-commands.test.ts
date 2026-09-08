@@ -457,6 +457,19 @@ describe('atomic deck-relative commands', () => {
     );
     const selected = originalDeck[0]!;
     const priorTop = originalDeck[1]!;
+    expect(
+      executeCommand(
+        state,
+        {
+          type: 'SwapCardWithDeckTop',
+          playerId: p1,
+          cardId: selected,
+          expectedSourceId: discardId,
+          inspectionReturnTo: 'sourceTail',
+        },
+        fixture.context
+      )
+    ).toMatchObject({ accepted: false, code: 'invalid_command' });
     state = accepted(
       state,
       {
@@ -545,6 +558,42 @@ describe('atomic deck-relative commands', () => {
     expect(
       state.visibility.inspectionGrants[inspection.inspectionId]?.cardIds
     ).toEqual([movedToTop, retained]);
+
+    const expectedDeckCardIds = [...state.zones[deckId]!.cardIds];
+    const tailSwap = executeCommand(
+      state,
+      {
+        type: 'SwapCardWithDeckTop',
+        playerId: p1,
+        cardId: movedToTop,
+        expectedSourceId: inspection.id,
+        inspectionReturnTo: 'sourceTail',
+      },
+      fixture.context
+    );
+    if (!tailSwap.accepted) throw new Error(tailSwap.message);
+    expect(tailSwap.batch.events).toEqual([
+      {
+        type: 'InspectionCardSwappedWithDeckTop',
+        playerId: p1,
+        inspectionId: inspection.inspectionId,
+        expectedWorkAreaId: inspection.id,
+        cardId: movedToTop,
+        deckTopCardId: selected,
+        expectedInspectionCardIds: [movedToTop, retained],
+        expectedDeckCardIds,
+        returnTo: 'sourceTail',
+      },
+    ]);
+    state = tailSwap.state;
+    expect(state.zones[deckId]?.cardIds[0]).toBe(movedToTop);
+    expect(state.workAreas[p1]?.inspection?.cardIds).toEqual([
+      retained,
+      selected,
+    ]);
+    expect(
+      state.visibility.inspectionGrants[inspection.inspectionId]?.cardIds
+    ).toEqual([retained, selected]);
     assertMatchInvariants(state);
   });
 

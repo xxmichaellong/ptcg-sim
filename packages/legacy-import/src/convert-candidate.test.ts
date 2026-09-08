@@ -1868,31 +1868,115 @@ describe('legacy v1 canonical candidate builder', () => {
     expect('state' in stale).toBe(false);
   });
 
-  it('keeps the position-incompatible inspection deck-top swap fail-closed', () => {
-    const result = buildLegacyV1Candidate(
+  it('returns deck top to the inspection tail and preserves the empty-deck branch', () => {
+    const parsed = parse(
+      payload(
+        cardRows(4, 'Inspection deck relative'),
+        '',
+        action('self', 'viewDeck', ['self', 2, true, 4, false]),
+        action('self', 'switchWithDeckTop', ['opp', 'viewCards', 0])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) {
+      throw new Error('Expected inspection deck-top switch success');
+    }
+    const playerId = target.selfSeat.playerId;
+    const deckId = playerZoneId(playerId, 'deck');
+    const inspectionId = 'legacy:v1:inspection:000000';
+    const workAreaId = `work:${playerId}:inspection:${inspectionId}`;
+    const cardIds = Array.from(
+      { length: 4 },
+      (_, index) => `legacy:v1:card:${String(index).padStart(6, '0')}`
+    );
+    expect(result.records[3]!.batches[0]!.events).toEqual([
+      {
+        type: 'InspectionCardSwappedWithDeckTop',
+        playerId,
+        inspectionId,
+        expectedWorkAreaId: workAreaId,
+        cardId: cardIds[0],
+        deckTopCardId: cardIds[2],
+        expectedInspectionCardIds: [cardIds[0], cardIds[1]],
+        expectedDeckCardIds: [cardIds[2], cardIds[3]],
+        returnTo: 'sourceTail',
+      },
+    ]);
+    expect(result.state.zones[deckId]?.cardIds).toEqual([
+      cardIds[0],
+      cardIds[3],
+    ]);
+    expect(result.state.workAreas[playerId]?.inspection).toMatchObject({
+      id: workAreaId,
+      inspectionId,
+      cardIds: [cardIds[1], cardIds[2]],
+      viewerIds: [playerId],
+    });
+    expect(result.state.cards[cardIds[0]!]?.visibilityGeneration).toBe(1);
+    const replayed = result.records
+      .flatMap((record) => record.batches)
+      .reduce(
+        applyEventBatch,
+        createEmptyMatch(target.matchId, [target.selfSeat, target.opponentSeat])
+      );
+    expect(replayed).toEqual(result.state);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+
+    const emptyDeck = buildLegacyV1Candidate(
       parse(
         payload(
-          cardRows(4, 'Inspection deck relative'),
+          cardRows(2, 'Empty-deck inspection switch'),
           '',
-          action('self', 'viewDeck', ['self', 2, true, 4, false]),
+          action('self', 'viewDeck', ['self', 2, true, 2, false]),
           action('self', 'switchWithDeckTop', ['opp', 'viewCards', 0])
         )
       ),
       target
     );
-    expect(result).toEqual({
+    expect(emptyDeck.ok).toBe(true);
+    if (!emptyDeck.ok) throw new Error(emptyDeck.issues[0]?.message);
+    expect(emptyDeck.state.zones[deckId]?.cardIds).toEqual([
+      'legacy:v1:card:000000',
+    ]);
+    expect(emptyDeck.state.workAreas[playerId]?.inspection).toMatchObject({
+      cardIds: ['legacy:v1:card:000001'],
+    });
+    expect(emptyDeck.records[3]!.batches[0]!.events).toMatchObject([
+      {
+        type: 'InspectedCardMoved',
+        cardId: 'legacy:v1:card:000000',
+        destinationZoneId: deckId,
+        destinationIndex: 0,
+        concealIdentity: true,
+      },
+    ]);
+
+    const stale = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(4, 'Stale inspection switch'),
+          '',
+          action('self', 'viewDeck', ['self', 2, true, 4, false]),
+          action('self', 'switchWithDeckTop', ['opp', 'viewCards', 2])
+        )
+      ),
+      target
+    );
+    expect(stale).toMatchObject({
       ok: false,
       issues: [
         {
           code: 'source_state_mismatch',
           recordIndex: 4,
-          path: '$[4].parameters[1]',
-          message:
-            'Current closed candidate cannot resolve this legacy source container',
+          path: '$[4].parameters[2]',
         },
       ],
     });
-    expect('state' in result).toBe(false);
+    expect('state' in stale).toBe(false);
   });
 
   it.each([

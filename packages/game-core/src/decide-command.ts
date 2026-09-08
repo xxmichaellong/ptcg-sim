@@ -1551,6 +1551,15 @@ export const decideCommand = (
       const source = resolveDeckRelativeSource(state, command);
       if (!source.accepted) return source;
       const { card, location, deck } = source;
+      if (
+        command.inspectionReturnTo &&
+        location.kind !== 'inspectionWorkArea'
+      ) {
+        return reject(
+          'invalid_command',
+          'Inspection return mode requires an inspection source'
+        );
+      }
       if (deck.cardIds.length === 0) {
         return reject('precondition_failed', 'Deck is empty');
       }
@@ -1597,6 +1606,9 @@ export const decideCommand = (
             deckTopCardId,
             expectedInspectionCardIds: [...inspection.cardIds],
             expectedDeckCardIds: [...deck.cardIds],
+            ...(command.inspectionReturnTo
+              ? { returnTo: command.inspectionReturnTo }
+              : {}),
           });
         }
         case 'attachmentResolutionWorkArea': {

@@ -270,14 +270,17 @@ same private import record. The last departure closes the inspection and
 retires its viewer grant. Missing/stale coordinates and targets fail the whole
 candidate.
 The same current-coordinate resolver now admits V1's inspection-origin deck
-bottom, deck top, shuffle-into-deck, and stadium paths. Deck-edge moves conceal
-the selected identity; shuffle validates and passes through the exact basis of
-the remaining deck plus selected card; stadium replacement atomically
-displaces the incumbent to its owner's discard. Exact events, inspection
+bottom, deck top, shuffle-into-deck, stadium, and deck-top-swap paths. Deck-edge
+moves conceal the selected identity; shuffle validates and passes through the
+exact basis of the remaining deck plus selected card; stadium replacement
+atomically displaces the incumbent to its owner's discard. Inspection-origin
+`switchWithDeckTop` opts into source-tail return on the existing atomic swap:
+the selected card becomes deck top and the prior deck top is appended after the
+remaining popup cards. The empty-deck branch moves only the selected card to
+deck top. Native callers and historical events retain source-position return by
+default, so no wire shape changes. Exact events, inspection/grant order,
 cleanup, retry, replay, concealment generations, stale-coordinate rollback, and
-stale-permutation rollback are pinned. The `switchWithDeckTop` inspection shape
-remains closed: V1 appends the prior deck top to the popup tail, while the
-current canonical swap replaces the selected popup position.
+stale-permutation rollback are pinned.
 Reachable tests now prove both-player
 loose-board take-turn cleanup plus owner-scoped loose/stadium/play reset/rebuild
 behavior.

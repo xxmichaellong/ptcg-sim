@@ -226,10 +226,12 @@ The same current inspection coordinate now feeds source-relative
 `MoveCardToDeckBottom`, `MoveCardToDeckTop`, `ShuffleCardIntoDeck`, and
 `MoveCardToStadium`. The shuffle basis is exactly V1's remaining deck followed
 by the selected card; stadium replacement keeps the incumbent-owner discard
-rule. The inspection-origin deck-top swap remains closed. V1 appends the old
-deck top to the popup tail after removing the
-selected card, whereas `InspectionCardSwappedWithDeckTop` replaces the selected
-position.
+rule. Inspection-origin `switchWithDeckTop` uses the same exact coordinate and
+opts `InspectionCardSwappedWithDeckTop` into source-tail return: the selected
+card becomes deck top while the old deck top is appended after the remaining
+inspection cards and viewer grant. With an empty deck, `MoveCardToDeckTop`
+moves only the selected card. The optional internal mode leaves native callers
+and historical events on source-position replacement.
 
 Deck inspection creation is admitted as the exact exported
 `[initiator, count, top, selectedDeckCount, targetIsOpp]` tuple. The record
@@ -534,9 +536,11 @@ Bottom-mode deck movement, `moveToDeckTop`, and stadium movement reuse that
 same current coordinate with source-relative canonical commands. Stadium
 replacement includes incumbent-owner discard. `shuffleIntoDeck` validates the
 exact remaining-deck-plus-selected-card V1 basis and passes its permutation
-through unchanged. Target-free active/bench and `switchWithDeckTop` inspection
-sources remain fail-closed rather than borrowing different positional
-semantics; V1's swap returns the old top to popup tail, not the selected index.
+through unchanged. `switchWithDeckTop` selects the same exact current card,
+uses atomic source-tail return when a prior deck top exists, and falls back to a
+single deck-top move when none exists. Target-free active/bench inspection
+sources remain fail-closed rather than borrowing different placement
+semantics.
 
 Ordinary direct non-Pokémon ingress onto an existing live stack now emits the
 versioned `CardAttachedToPlayStack` event. `attachmentOrderVersion: 1` freezes

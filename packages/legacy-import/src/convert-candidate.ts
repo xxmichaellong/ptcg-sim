@@ -1736,6 +1736,41 @@ export const buildLegacyV1Candidate = (
         break;
       }
       case 'switchWithDeckTop': {
+        if (action.sourceZone === 'viewCards') {
+          const source = candidateInspectionCardAtLegacyIndex(
+            state,
+            playerId,
+            action.sourceIndex
+          );
+          if (!source) {
+            return failure({
+              code: 'source_state_mismatch',
+              recordIndex: action.recordIndex,
+              path: `$[${action.recordIndex}].parameters[2]`,
+              message:
+                'Recorded deck-top-switch source coordinate does not identify a current inspection card',
+            });
+          }
+          const deck = state.zones[playerZoneId(playerId, 'deck')];
+          const problem = apply(
+            deck?.cardIds[0]
+              ? {
+                  type: 'SwapCardWithDeckTop',
+                  playerId,
+                  cardId: source.cardId,
+                  expectedSourceId: source.workAreaId,
+                  inspectionReturnTo: 'sourceTail',
+                }
+              : {
+                  type: 'MoveCardToDeckTop',
+                  playerId,
+                  cardId: source.cardId,
+                  expectedSourceId: source.workAreaId,
+                }
+          );
+          if (problem) return problem;
+          break;
+        }
         const sourceZoneId = candidateSourceZoneId(playerId, action.sourceZone);
         if (!sourceZoneId) {
           return failure({

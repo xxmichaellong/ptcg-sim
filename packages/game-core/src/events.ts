@@ -286,6 +286,7 @@ export type DomainEvent =
       readonly deckTopCardId: CardInstanceId;
       readonly expectedInspectionCardIds: readonly CardInstanceId[];
       readonly expectedDeckCardIds: readonly CardInstanceId[];
+      readonly returnTo?: 'sourcePosition' | 'sourceTail';
     }
   | {
       readonly type: 'StagedCardSwappedWithDeckTop';
