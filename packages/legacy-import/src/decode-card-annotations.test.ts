@@ -26,6 +26,46 @@ const decode = (...actions: unknown[]) => {
 };
 
 describe('legacy v1 card-annotation positional decoder', () => {
+  it('decodes all source-selectable category targets and exported initiators', () => {
+    const zones = [
+      'deck',
+      'hand',
+      'prizes',
+      'discard',
+      'lostZone',
+      'board',
+      'active',
+      'bench',
+      'attachedCards',
+      'viewCards',
+      'stadium',
+    ] as const;
+    const categories = ['Energy', 'Trainer', 'Pokémon'] as const;
+    const result = decode(
+      ...zones.map((zone, index) =>
+        action(index % 2 === 0 ? 'self' : 'opp', 'changeType', [
+          index % 2 === 0 ? 'opp' : 'self',
+          zone,
+          index,
+          categories[index % categories.length],
+        ])
+      )
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+    expect(result.actions).toEqual(
+      zones.map((zone, index) => ({
+        type: 'changeType',
+        recordIndex: index + 3,
+        player: index % 2 === 0 ? 'self' : 'opp',
+        initiator: index % 2 === 0 ? 'opp' : 'self',
+        zone,
+        sourceIndex: index,
+        category: categories[index % categories.length],
+      }))
+    );
+  });
+
   it('decodes play group, play single, and stadium rotation in source order', () => {
     expect(
       decode(
@@ -183,4 +223,155 @@ describe('legacy v1 card-annotation positional decoder', () => {
       ],
     });
   });
+
+  it.each([
+    { parameters: [] },
+    { parameters: ['opp', 'active', 0] },
+    { parameters: ['opp', 'active', 0, 'Energy', 'extra'] },
+  ])('requires the exact changeType tuple %j', ({ parameters }) => {
+    expect(decode(action('self', 'changeType', parameters))).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'invalid_parameter_count',
+          recordIndex: 3,
+          path: '$[3].parameters',
+          message: 'changeType requires [initiator, zone, index, category]',
+        },
+      ],
+    });
+  });
+
+  it.each([null, true, 1, 'player', [], {}])(
+    'rejects a non-perspective category initiator %j',
+    (initiator) => {
+      expect(
+        decode(action('self', 'changeType', [initiator, 'active', 0, 'Energy']))
+      ).toMatchObject({
+        ok: false,
+        issues: [
+          {
+            code: 'invalid_parameter_type',
+            recordIndex: 3,
+            path: '$[3].parameters[0]',
+          },
+        ],
+      });
+    }
+  );
+
+  it.each([null, true, 1, [], {}])(
+    'rejects a non-string category zone %j',
+    (zone) => {
+      expect(
+        decode(action('self', 'changeType', ['opp', zone, 0, 'Energy']))
+      ).toMatchObject({
+        ok: false,
+        issues: [
+          {
+            code: 'invalid_parameter_type',
+            recordIndex: 3,
+            path: '$[3].parameters[1]',
+          },
+        ],
+      });
+    }
+  );
+
+  it.each(['deckCover', 'discardCover', 'lostZoneCover', 'unknown'])(
+    'rejects a source-inaccessible category zone %s',
+    (zone) => {
+      expect(
+        decode(action('self', 'changeType', ['opp', zone, 0, 'Energy']))
+      ).toEqual({
+        ok: false,
+        issues: [
+          {
+            code: 'invalid_annotation_zone',
+            recordIndex: 3,
+            path: '$[3].parameters[1]',
+            message:
+              'changeType must target a source-selectable card container',
+          },
+        ],
+      });
+    }
+  );
+
+  it.each([null, '0', true, [], {}])(
+    'rejects a non-number category card index %j',
+    (sourceIndex) => {
+      expect(
+        decode(
+          action('self', 'changeType', ['opp', 'active', sourceIndex, 'Energy'])
+        )
+      ).toMatchObject({
+        ok: false,
+        issues: [
+          {
+            code: 'invalid_parameter_type',
+            recordIndex: 3,
+            path: '$[3].parameters[2]',
+          },
+        ],
+      });
+    }
+  );
+
+  it.each([-1, 0.5, MAX_DECK_CARDS, Number.MAX_SAFE_INTEGER])(
+    'rejects an out-of-bound category card index %j',
+    (sourceIndex) => {
+      expect(
+        decode(
+          action('self', 'changeType', ['opp', 'active', sourceIndex, 'Energy'])
+        )
+      ).toMatchObject({
+        ok: false,
+        issues: [
+          {
+            code: 'invalid_card_index',
+            recordIndex: 3,
+            path: '$[3].parameters[2]',
+          },
+        ],
+      });
+    }
+  );
+
+  it.each([null, true, 1, [], {}])(
+    'rejects a non-string category %j',
+    (category) => {
+      expect(
+        decode(action('self', 'changeType', ['opp', 'active', 0, category]))
+      ).toMatchObject({
+        ok: false,
+        issues: [
+          {
+            code: 'invalid_parameter_type',
+            recordIndex: 3,
+            path: '$[3].parameters[3]',
+          },
+        ],
+      });
+    }
+  );
+
+  it.each(['Pokemon', 'Tool', 'Supporter', 'Unknown', '', 'energy'])(
+    'rejects an unsupported category %j',
+    (category) => {
+      expect(
+        decode(action('self', 'changeType', ['opp', 'active', 0, category]))
+      ).toEqual({
+        ok: false,
+        issues: [
+          {
+            code: 'invalid_card_category',
+            recordIndex: 3,
+            path: '$[3].parameters[3]',
+            message: 'changeType category must be Pokémon, Trainer, or Energy',
+          },
+        ],
+      });
+    }
+  );
 });

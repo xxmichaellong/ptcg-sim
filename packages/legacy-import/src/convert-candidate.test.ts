@@ -2115,6 +2115,583 @@ describe('legacy v1 canonical candidate builder', () => {
     expect('state' in result).toBe(false);
   });
 
+  it('imports category changes from every ordinary source zone and preserves source no-ops', () => {
+    const parsed = parse(
+      payload(
+        [
+          ['1', 'Category hand', 'Pokémon', '/legacy/category-hand.png'],
+          ['1', 'Category prize', 'Trainer', '/legacy/category-prize.png'],
+          ['1', 'Category discard', 'Energy', '/legacy/category-discard.png'],
+          ['1', 'Category lost', 'Pokémon', '/legacy/category-lost.png'],
+          ['1', 'Category board', 'Trainer', '/legacy/category-board.png'],
+          ['1', 'Category stadium', 'Energy', '/legacy/category-stadium.png'],
+          ['1', 'Category deck', 'Pokémon', '/legacy/category-deck.png'],
+        ],
+        '',
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'hand',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'prizes',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'discard',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'lostZone',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'board',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'stadium',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'rotateCard', ['stadium', 0, false]),
+        action('self', 'useAbility', ['self', 'stadium', 0]),
+        action('self', 'changeType', ['opp', 'deck', 0, 'Trainer']),
+        action('self', 'changeType', ['opp', 'hand', 0, 'Energy']),
+        action('self', 'changeType', ['opp', 'prizes', 0, 'Pokémon']),
+        action('self', 'changeType', ['opp', 'discard', 0, 'Trainer']),
+        action('self', 'changeType', ['opp', 'lostZone', 0, 'Energy']),
+        action('self', 'changeType', ['opp', 'stadium', 0, 'Pokémon']),
+        action('self', 'changeType', ['opp', 'board', 0, 'Energy']),
+        action('self', 'changeType', ['opp', 'board', 6, 'Energy'])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) throw new Error('Expected conversion success');
+
+    const boardId = playerZoneId(target.selfSeat.playerId, 'board');
+    const deckId = playerZoneId(target.selfSeat.playerId, 'deck');
+    const handId = playerZoneId(target.selfSeat.playerId, 'hand');
+    const prizesId = playerZoneId(target.selfSeat.playerId, 'prizes');
+    const discardId = playerZoneId(target.selfSeat.playerId, 'discard');
+    const lostZoneId = playerZoneId(target.selfSeat.playerId, 'lostZone');
+    const stadiumId = stadiumZoneId();
+    expect(
+      result.records
+        .filter(({ action }) => action === 'changeType')
+        .map(({ recordIndex, batches }) => ({
+          recordIndex,
+          events: batches.flatMap((batch) => batch.events),
+        }))
+    ).toEqual([
+      {
+        recordIndex: 11,
+        events: [
+          {
+            type: 'CardMoved',
+            cardId: 'legacy:v1:card:000006',
+            expectedSourceZoneId: deckId,
+            destinationZoneId: boardId,
+            destinationIndex: 1,
+            concealIdentity: false,
+          },
+          {
+            type: 'CardCategorySet',
+            cardId: 'legacy:v1:card:000006',
+            category: 'Trainer',
+          },
+        ],
+      },
+      {
+        recordIndex: 12,
+        events: [
+          {
+            type: 'CardMoved',
+            cardId: 'legacy:v1:card:000000',
+            expectedSourceZoneId: handId,
+            destinationZoneId: boardId,
+            destinationIndex: 2,
+            concealIdentity: false,
+          },
+          {
+            type: 'CardCategorySet',
+            cardId: 'legacy:v1:card:000000',
+            category: 'Energy',
+          },
+        ],
+      },
+      {
+        recordIndex: 13,
+        events: [
+          {
+            type: 'CardMoved',
+            cardId: 'legacy:v1:card:000001',
+            expectedSourceZoneId: prizesId,
+            destinationZoneId: boardId,
+            destinationIndex: 3,
+            concealIdentity: false,
+          },
+          {
+            type: 'CardCategorySet',
+            cardId: 'legacy:v1:card:000001',
+            category: 'Pokémon',
+          },
+        ],
+      },
+      {
+        recordIndex: 14,
+        events: [
+          {
+            type: 'CardMoved',
+            cardId: 'legacy:v1:card:000002',
+            expectedSourceZoneId: discardId,
+            destinationZoneId: boardId,
+            destinationIndex: 4,
+            concealIdentity: false,
+          },
+          {
+            type: 'CardCategorySet',
+            cardId: 'legacy:v1:card:000002',
+            category: 'Trainer',
+          },
+        ],
+      },
+      {
+        recordIndex: 15,
+        events: [
+          {
+            type: 'CardMoved',
+            cardId: 'legacy:v1:card:000003',
+            expectedSourceZoneId: lostZoneId,
+            destinationZoneId: boardId,
+            destinationIndex: 5,
+            concealIdentity: false,
+          },
+          {
+            type: 'CardCategorySet',
+            cardId: 'legacy:v1:card:000003',
+            category: 'Energy',
+          },
+        ],
+      },
+      {
+        recordIndex: 16,
+        events: [
+          {
+            type: 'CardMoved',
+            cardId: 'legacy:v1:card:000005',
+            expectedSourceZoneId: stadiumId,
+            destinationZoneId: boardId,
+            destinationIndex: 6,
+            concealIdentity: false,
+          },
+          {
+            type: 'CardCategorySet',
+            cardId: 'legacy:v1:card:000005',
+            category: 'Pokémon',
+          },
+          {
+            type: 'CardOrientationSet',
+            cardId: 'legacy:v1:card:000005',
+            orientationQuarterTurns: 0,
+          },
+        ],
+      },
+      {
+        recordIndex: 17,
+        events: [
+          {
+            type: 'CardMoved',
+            cardId: 'legacy:v1:card:000004',
+            expectedSourceZoneId: boardId,
+            destinationZoneId: boardId,
+            destinationIndex: 7,
+            concealIdentity: false,
+          },
+          {
+            type: 'CardCategorySet',
+            cardId: 'legacy:v1:card:000004',
+            category: 'Energy',
+          },
+        ],
+      },
+      { recordIndex: 18, events: [] },
+    ]);
+    expect(result.state.zones[boardId]?.cardIds).toEqual([
+      'legacy:v1:card:000006',
+      'legacy:v1:card:000000',
+      'legacy:v1:card:000001',
+      'legacy:v1:card:000002',
+      'legacy:v1:card:000003',
+      'legacy:v1:card:000005',
+      'legacy:v1:card:000004',
+    ]);
+    expect(result.state.cards['legacy:v1:card:000005']).toMatchObject({
+      currentCategory: 'Pokémon',
+      orientationQuarterTurns: 0,
+      abilityUsed: false,
+    });
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+
+    const replayed = result.records
+      .flatMap((record) => record.batches)
+      .reduce(
+        applyEventBatch,
+        createEmptyMatch(target.matchId, [target.selfSeat, target.opponentSeat])
+      );
+    expect(replayed).toEqual(result.state);
+  });
+
+  it('imports category departure from a stack top, attachment, and staged card', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          [
+            ['1', 'Category base', 'Pokémon', '/legacy/category-base.png'],
+            [
+              '1',
+              'Category evolution',
+              'Pokémon',
+              '/legacy/category-evolution.png',
+            ],
+            ['1', 'Category tool', 'Trainer', '/legacy/category-tool.png'],
+          ],
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            0,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            0,
+            'move',
+          ]),
+          action('self', 'changeType', ['opp', 'active', 2, 'Energy']),
+          action('self', 'rotateCard', ['active', 0, true]),
+          action('self', 'changeType', ['opp', 'active', 0, 'Trainer']),
+          action('self', 'changeType', ['opp', 'attachedCards', 0, 'Energy'])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    expect(
+      result.records
+        .filter(({ action }) => action === 'changeType')
+        .map(({ recordIndex, batches }) => ({
+          recordIndex,
+          events: batches.flatMap((batch) => batch.events),
+        }))
+    ).toEqual([
+      {
+        recordIndex: 6,
+        events: [
+          expect.objectContaining({
+            type: 'CardMovedFromStack',
+            cardId: 'legacy:v1:card:000002',
+            source: 'attachment',
+          }),
+          {
+            type: 'CardCategorySet',
+            cardId: 'legacy:v1:card:000002',
+            category: 'Energy',
+          },
+        ],
+      },
+      {
+        recordIndex: 8,
+        events: [
+          expect.objectContaining({
+            type: 'PlayStackDeparted',
+            cardId: 'legacy:v1:card:000001',
+            expectedEvolutionCardIds: [
+              'legacy:v1:card:000000',
+              'legacy:v1:card:000001',
+            ],
+            expectedAttachmentCardIds: [],
+          }),
+          {
+            type: 'CardCategorySet',
+            cardId: 'legacy:v1:card:000001',
+            category: 'Trainer',
+          },
+          {
+            type: 'CardOrientationSet',
+            cardId: 'legacy:v1:card:000001',
+            orientationQuarterTurns: 0,
+          },
+        ],
+      },
+      {
+        recordIndex: 9,
+        events: [
+          expect.objectContaining({
+            type: 'StagedCardMoved',
+            cardId: 'legacy:v1:card:000000',
+            source: 'evolution',
+          }),
+          {
+            type: 'CardCategorySet',
+            cardId: 'legacy:v1:card:000000',
+            category: 'Energy',
+          },
+        ],
+      },
+    ]);
+    expect(
+      result.state.zones[playerZoneId(target.selfSeat.playerId, 'board')]
+        ?.cardIds
+    ).toEqual([
+      'legacy:v1:card:000002',
+      'legacy:v1:card:000001',
+      'legacy:v1:card:000000',
+    ]);
+    expect(
+      result.state.workAreas[target.selfSeat.playerId]?.attachmentResolution
+    ).toBeNull();
+    assertMatchInvariants(result.state);
+  });
+
+  it('imports a category change from the exact current inspection coordinate', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          [
+            ['1', 'Viewed first', 'Pokémon', '/legacy/viewed-first.png'],
+            ['1', 'Viewed second', 'Trainer', '/legacy/viewed-second.png'],
+            ['1', 'Deck remainder', 'Energy', '/legacy/deck-remainder.png'],
+          ],
+          '',
+          action('self', 'viewDeck', ['self', 2, true, 3, false]),
+          action('self', 'changeType', ['opp', 'viewCards', 1, 'Energy'])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+    expect(
+      result.records.at(-1)?.batches.flatMap((batch) => batch.events)
+    ).toEqual([
+      expect.objectContaining({
+        type: 'InspectedCardMoved',
+        cardId: 'legacy:v1:card:000001',
+      }),
+      {
+        type: 'CardCategorySet',
+        cardId: 'legacy:v1:card:000001',
+        category: 'Energy',
+      },
+    ]);
+    expect(
+      result.state.zones[playerZoneId(target.selfSeat.playerId, 'board')]
+        ?.cardIds
+    ).toEqual(['legacy:v1:card:000001']);
+    assertMatchInvariants(result.state);
+  });
+
+  it('uses the record player as category target and retains initiator as provenance only', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          '',
+          [
+            [
+              '1',
+              'Opponent category card',
+              'Pokémon',
+              '/legacy/opponent-category.png',
+            ],
+          ],
+          action('opp', 'changeType', ['self', 'deck', 0, 'Trainer'])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+    const opponentBoardId = playerZoneId(target.opponentSeat.playerId, 'board');
+    expect(result.state.zones[opponentBoardId]?.cardIds).toEqual([
+      'legacy:v1:card:000000',
+    ]);
+    expect(result.state.cards['legacy:v1:card:000000']?.currentCategory).toBe(
+      'Trainer'
+    );
+    expect(
+      result.state.zones[playerZoneId(target.selfSeat.playerId, 'board')]
+        ?.cardIds
+    ).toEqual([]);
+    assertMatchInvariants(result.state);
+  });
+
+  it('refuses lower-evolution, missing, and cross-owner category coordinates', () => {
+    const lower = buildLegacyV1Candidate(
+      parse(
+        payload(
+          [
+            ['1', 'Category base', 'Pokémon', '/legacy/category-base.png'],
+            [
+              '1',
+              'Category evolution',
+              'Pokémon',
+              '/legacy/category-evolution.png',
+            ],
+          ],
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            0,
+            'move',
+          ]),
+          action('self', 'changeType', ['opp', 'active', 1, 'Energy'])
+        )
+      ),
+      target
+    );
+    expect(lower).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 5,
+          path: '$[5].parameters[2]',
+        },
+      ],
+    });
+    expect('state' in lower).toBe(false);
+
+    const missing = buildLegacyV1Candidate(
+      parse(
+        payload(
+          '',
+          '',
+          action('self', 'changeType', ['opp', 'discard', 0, 'Trainer'])
+        )
+      ),
+      target
+    );
+    expect(missing).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 3,
+          path: '$[3].parameters[2]',
+        },
+      ],
+    });
+    expect('state' in missing).toBe(false);
+
+    const crossOwner = buildLegacyV1Candidate(
+      parse(
+        payload(
+          [['1', 'Owned stadium', 'Trainer', '/legacy/owned-stadium.png']],
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'stadium',
+            0,
+            false,
+            'move',
+          ]),
+          action('opp', 'changeType', ['self', 'stadium', 0, 'Energy'])
+        )
+      ),
+      target
+    );
+    expect(crossOwner).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 4,
+          path: '$[4].parameters[2]',
+        },
+      ],
+    });
+    expect('state' in crossOwner).toBe(false);
+  });
+
+  it('lifts strict category tuple diagnostics before constructing state', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          '',
+          '',
+          action('self', 'changeType', ['opp', 'active', 0, 'Tool'])
+        )
+      ),
+      target
+    );
+    expect(result).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'annotation.invalid_card_category',
+          recordIndex: 3,
+          path: '$[3].parameters[3]',
+          message: 'changeType category must be Pokémon, Trainer, or Energy',
+        },
+      ],
+    });
+    expect('state' in result).toBe(false);
+  });
+
   it.each([
     { parameters: [], code: 'marker.invalid_parameter_count' },
     { parameters: [null], code: 'marker.invalid_parameter_type' },
@@ -9127,7 +9704,7 @@ describe('legacy v1 canonical candidate builder', () => {
 
   it('rejects an admitted but unconverted family before creating state', () => {
     const result = buildLegacyV1Candidate(
-      parse(payload('', '', action('self', 'changeType', [null]))),
+      parse(payload('', '', action('self', 'changeCardBack', [null]))),
       target
     );
     expect(result).toEqual({

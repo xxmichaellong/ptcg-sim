@@ -176,7 +176,7 @@ stack-card-departure/
 source-zone-targeted-play/
 work-area-target-free-play/
 zone-backed-deck-action/
-prizes-to-deck-bottom/once-per-game-marker/ability-marker/damage-marker/special-condition-marker/rotation/parameterless-attack-and-pass subset
+prizes-to-deck-bottom/once-per-game-marker/ability-marker/damage-marker/special-condition-marker/rotation/category-change/parameterless-attack-and-pass subset
 through normal game-core commands and verifies exact event replay; it rejects every
 unconverted family before constructing state, rejects recorded draws that exceed
 the exact current source-state deck, applies only direct prize shuffles
@@ -342,6 +342,22 @@ events, top/lower/attachment/stadium targeting, evolution cleanup,
 deterministic retry/replay/hash/invariants, malformed/stale rollback, static
 source locks, and existing real-runtime oracles are pinned without a schema or
 UI/UX change.
+Exact `changeType` records now decode the exported
+`[initiator, zone, index, category]` tuple for every card-selectable source:
+deck, hand, prizes, discard, Lost Zone, loose board, active, bench, staged
+attachments, inspection cards, and stadium. The source record's `user` owns
+the target; the flipped initiator remains presentation provenance only. Exact
+current coordinates feed the existing atomic `ChangeCardCategory` command,
+which moves the selected card to the owner's loose-board tail, applies the
+current Pokémon/Trainer/Energy category, and clears transient orientation and
+ability state while retaining the original category for later movement
+normalization. Stack tops stage their dependents; attachments, staged cards,
+and inspection cards depart through their canonical paths. An already-matching
+board-tail record remains a zero-batch source no-op. Zone-cover aliases, lower
+evolutions, stale or cross-owner coordinates, and malformed categories fail
+the complete candidate. Exact events and order, both-player provenance,
+deterministic retry/replay/hash/invariants, rollback, and static source behavior
+are pinned without a core, protocol, renderer, route, UI, or UX change.
 Shuffle-into-deck translates v1's in-deck tail-move
 permutation basis to the canonical input order. Switch-with-deck-top preserves
 v1's source-tail return and empty-deck branch through one or two canonical

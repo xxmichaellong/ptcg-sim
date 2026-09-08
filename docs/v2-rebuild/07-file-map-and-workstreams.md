@@ -314,6 +314,19 @@ canonical state. Missing, cross-owner, source-inaccessible, and malformed
 records fail closed without importing client/runtime code or widening a public
 schema.
 
+Category-change decoding now covers exact
+`changeType [initiator, zone, index, category]` tuples from all eleven
+card-selectable source containers. Record ownership resolves the target while
+the flipped initiator is retained only as provenance. The exact stable card is
+passed to the existing atomic `ChangeCardCategory` command, preserving V1's
+departure to the owner's loose-board tail and current-category override while
+canonical movement clears transient orientation and ability state. Stack-top,
+attachment, staged, and inspection departures reuse their existing paths; an
+already-matching board-tail record retains zero batches. Covers, lower
+evolutions, stale/cross-owner coordinates, and malformed categories fail
+closed. No core, protocol, authority, state, public API, renderer, route, UI,
+or UX schema is widened.
+
 ## Files added during characterization
 
 ```text

@@ -371,6 +371,14 @@ the behavioral oracle for its history-dependent DOM angles and margins; this
 static lock only prevents source drift while the importer applies the approved
 canonical target-value normalization.
 
+The same frozen export-envelope contract now pins `changeType`'s exact
+four-value tuple and flipped initiator, original-category storage, three
+keyboard categories, active/bench context choices, face-down-safe messaging,
+and unconditional loose-board departure. These source facts bound the private
+legacy importer: it resolves the record owner's exact selected card, treats the
+initiator as provenance only, and reuses the canonical category-change command
+without changing the legacy UI/UX.
+
 The protected count-input checkpoint completes all six context-menu numeric
 prompts while retaining the browser-native v1 UI. A typed controller descriptor
 binds the exact action, card, and source zone; StrictMode can invoke its effect

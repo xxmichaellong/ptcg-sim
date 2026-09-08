@@ -737,6 +737,15 @@ The lifecycle mapping is source-backed:
   excluding V1's hidden DOM-only angle/margin/BREAK history. Evolution-reset
   progression is derived from current canonical state; malformed, stale,
   cross-owner, and source-inaccessible modes return no candidate; and
+- each exact category-change record resolves the source record owner's card at
+  a current card-selectable zone, flat stack, staged, or inspection coordinate.
+  The flipped initiator is retained as presentation provenance only. The
+  existing atomic `ChangeCardCategory` path departs the exact card to its
+  owner's loose-board tail, applies Pokémon/Trainer/Energy, and clears transient
+  orientation and ability state; stack-top dependents are staged. Exact
+  already-matching board-tail records retain zero batches. Covers, lower
+  evolutions, stale/cross-owner coordinates, and malformed categories return no
+  candidate; and
 - attack and pass require exact empty parameter arrays and execute one
   `DeclareAttack` or `PassTurn` for the source record's target player. The
   canonical batch resets every ability marker, discards only that player's
@@ -761,7 +770,7 @@ individual-inspection-card-loose-and-targeted-play/
 individual-inspection-card-deck-edge-shuffle-and-stadium/
 move-to-top/
 rich-whole-stack-move-and-swap/move-to-bottom/
-shuffle-into-deck/deck-top-switch/once-per-game-marker/ability-marker/damage-marker/special-condition-marker/rotation/parameterless-attack-and-pass/
+shuffle-into-deck/deck-top-switch/once-per-game-marker/ability-marker/damage-marker/special-condition-marker/rotation/category-change/parameterless-attack-and-pass/
 prizes-to-deck-bottom subset can now create ordinary loose-board, singleton
 stadium, and active/bench stack state, enrich those stacks with zone-backed
 evolutions and attachments, move or swap those rich stacks, reattach lower

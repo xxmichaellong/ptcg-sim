@@ -476,6 +476,62 @@ describe('legacy action-export source envelope', () => {
     expect(keybinds).toContain('!systemState.isReplay');
   });
 
+  it('pins category-change tuples, controls, original type, and board departure', () => {
+    const changeType = readRepositoryFile(
+      'client/src/actions/general/change-type.js'
+    );
+    const keybinds = readRepositoryFile(
+      'client/src/actions/keybinds/keybinds.js'
+    );
+    const activeBenchButtons = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/card-context-menu/active-bench-buttons.js'
+    );
+    const clickEvents = readRepositoryFile(
+      'client/src/setup/image-logic/click-events.js'
+    );
+    const moveCard = readRepositoryFile(
+      'client/src/actions/move-card-bundle/move-card.js'
+    );
+
+    expect(changeType).toContain(
+      "const oInitiator = initiator === 'self' ? 'opp' : 'self';"
+    );
+    expect(
+      changeType.match(
+        /processAction\(user, emit, 'changeType', \[oInitiator, zoneId, index, type\]\);/g
+      )
+    ).toHaveLength(2);
+    expect(changeType).toContain('if (!card.type2)');
+    expect(changeType).toContain('card.type2 = card.type;');
+    expect(changeType).toContain('card.type = type;');
+    expect(changeType).toContain(
+      "const cardName = card.image.faceDown ? 'card' : card.name;"
+    );
+    expect(changeType).toContain("typeName = 'a tool';");
+    expect(changeType).toContain("typeName = 'an energy';");
+    expect(changeType).toContain("typeName = 'a Pokémon';");
+    expect(changeType).toContain(
+      "moveCard(user, initiator, zoneId, 'board', index);"
+    );
+
+    for (const [code, category] of [
+      ['KeyE', 'Energy'],
+      ['KeyT', 'Trainer'],
+      ['KeyP', 'Pokémon'],
+    ] as const) {
+      expect(keybinds).toContain(`event.code === '${code}'`);
+      expect(keybinds).toContain(`        '${category}'\n      );`);
+      expect(activeBenchButtons).toContain(`      '${category}'\n    );`);
+    }
+    expect(clickEvents).toContain(
+      "changeButton: [\n      [true, 'active'],\n      [true, 'bench'],\n    ]"
+    );
+    expect(moveCard).toContain(
+      "!['active', 'board', 'bench', 'attachedCards'].includes(dZoneId)"
+    );
+    expect(moveCard).toContain('movingCard.type = movingCard.type2;');
+  });
+
   it('pins the first movement tuple, clamp, and independent target ownership', () => {
     const deckActions = readRepositoryFile(
       'client/src/actions/zones/deck-actions.js'

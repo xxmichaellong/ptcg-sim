@@ -34,7 +34,8 @@ source-zone-targeted active/bench, and individual work-area new-stack
 `shuffleIntoDeck`, source-authentic `switchWithDeckTop`, and
 `shufflePrizesToDeckBottom` atoms below. Exact direct loose-board bulk records,
 once-per-game, ability, damage, and special-condition marker records,
-normalized rotation records, and empty-tuple `attack` and `pass` records also
+normalized rotation and category-change records, and empty-tuple `attack` and
+`pass` records also
 reuse their canonical atomic commands, but every other action is rejected before
 constructing state. This is intentionally not yet a complete import
 compatibility claim: reachable loose-board take-turn cleanup and owner reset are
@@ -421,6 +422,27 @@ deterministic retry/replay/hash/invariants, and rollback. Static source locks
 and the existing real-runtime rotation oracles pin the unchanged V1 behavior.
 No core, protocol, authority, state, public API, renderer, route, UI, or UX
 schema changes.
+
+The category-change family now admits exact
+`changeType [initiator, zone, index, category]` records. The record `user`
+selects the owner; the exported flipped initiator is presentation provenance,
+not target authority. Deck, hand, prizes, discard, Lost Zone, loose board,
+active, bench, staged attachments, inspection cards, and stadium use their
+exact current V1 coordinates. The stable target then executes the existing
+atomic `ChangeCardCategory`: it departs to the owner's loose-board tail, stores
+the requested Pokémon/Trainer/Energy current category, and clears transient
+orientation and ability state while the original category remains available
+for later movement normalization. Stack tops stage their dependents;
+attachments, staged cards, and inspection cards use their canonical departure
+paths. An already-matching board-tail target is a zero-batch source no-op.
+Zone-cover aliases are intentionally excluded because they are not selected
+cards; lower evolutions, missing/stale/cross-owner coordinates, and malformed
+categories fail the whole candidate. Tests pin ordinary, stack, attachment,
+staged, inspection, stadium, and both-player provenance paths, exact event
+order, retry/replay/hash/invariants, no-op behavior, and rollback. Static source
+locks pin the three keyboard choices, active/bench context menu, exact export
+tuple, original-category storage, and loose-board departure. No core, protocol,
+authority, state, public API, renderer, route, UI, or UX schema changes.
 
 ### Executable marker-control characterization
 

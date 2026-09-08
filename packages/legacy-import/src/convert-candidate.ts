@@ -27,6 +27,7 @@ import {
   decodeLegacyV1CardAnnotationActions,
   type LegacyV1CardAnnotationAction,
   type LegacyV1CardAnnotationDecodeIssueCode,
+  type LegacyV1CardAnnotationZone,
 } from './decode-card-annotations.js';
 import {
   decodeLegacyV1LifecycleActions,
@@ -101,6 +102,7 @@ const CONVERTED_ACTIONS = new Set<LegacySynchronizedActionName>([
   'updateSpecialCondition',
   'removeSpecialCondition',
   'rotateCard',
+  'changeType',
 ]);
 
 type LegacyV1ConvertedAction =
@@ -459,6 +461,62 @@ const candidateStagedCardAtLegacyIndex = (
   if (!staged) return null;
   const cardId = staged.legacyCardIds[legacyCardIndex];
   return cardId ? { cardId, workAreaId: staged.workAreaId } : null;
+};
+
+interface CandidateCardAnnotationTarget {
+  readonly cardId: CardInstanceId;
+  readonly expectedSourceId:
+    ReturnType<typeof playerZoneId> | PlayStack['id'] | WorkAreaId;
+}
+
+const candidateCardAnnotationTarget = (
+  state: MatchState,
+  playerId: PlayerId,
+  zone: LegacyV1CardAnnotationZone,
+  sourceIndex: number
+): CandidateCardAnnotationTarget | null => {
+  if (zone === 'active' || zone === 'bench') {
+    const source = candidatePlayStackCardAtLegacyIndex(
+      state,
+      playerId,
+      zone,
+      sourceIndex
+    );
+    return source && source.kind !== 'lowerEvolution'
+      ? { cardId: source.cardId, expectedSourceId: source.stack.id }
+      : null;
+  }
+  if (zone === 'attachedCards') {
+    const source = candidateStagedCardAtLegacyIndex(
+      state,
+      playerId,
+      sourceIndex
+    );
+    return source
+      ? { cardId: source.cardId, expectedSourceId: source.workAreaId }
+      : null;
+  }
+  if (zone === 'viewCards') {
+    const source = candidateInspectionCardAtLegacyIndex(
+      state,
+      playerId,
+      sourceIndex
+    );
+    return source
+      ? { cardId: source.cardId, expectedSourceId: source.workAreaId }
+      : null;
+  }
+
+  const sourceZoneId = candidateSourceZoneId(playerId, zone);
+  if (!sourceZoneId) return null;
+  const cardId = candidateSourceCardId(
+    state,
+    playerId,
+    sourceZoneId,
+    zone,
+    sourceIndex
+  );
+  return cardId ? { cardId, expectedSourceId: sourceZoneId } : null;
 };
 
 const translateLegacyShuffleBasis = (
@@ -1032,6 +1090,54 @@ export const buildLegacyV1Candidate = (
           type: 'SetCardOrientation',
           cardId: source.cardId,
           orientationQuarterTurns: card.orientationQuarterTurns === 1 ? 0 : 1,
+        });
+        if (problem) return problem;
+        break;
+      }
+      case 'changeType': {
+        const targetCard = candidateCardAnnotationTarget(
+          state,
+          playerId,
+          action.zone,
+          action.sourceIndex
+        );
+        if (!targetCard) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[2]`,
+            message:
+              'Recorded category-change coordinate does not identify an exact supported current player card',
+          });
+        }
+
+        const card = state.cards[targetCard.cardId];
+        const board = state.zones[playerZoneId(playerId, 'board')];
+        if (!card || !board) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[2]`,
+            message:
+              'Recorded category-change target has no canonical card or loose board',
+          });
+        }
+        if (
+          targetCard.expectedSourceId === board.id &&
+          board.cardIds.at(-1) === card.id &&
+          card.currentCategory === action.category &&
+          card.orientationQuarterTurns === 0 &&
+          !card.abilityUsed
+        ) {
+          break;
+        }
+
+        const problem = apply({
+          type: 'ChangeCardCategory',
+          playerId,
+          cardId: targetCard.cardId,
+          expectedSourceId: targetCard.expectedSourceId,
+          category: action.category,
         });
         if (problem) return problem;
         break;
