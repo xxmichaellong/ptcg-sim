@@ -228,6 +228,125 @@ export const resolveWireCommand = (
         },
       };
     }
+    case 'PlaceCardOnPlayStack': {
+      const card = resolveCard(wire.cardId);
+      const expectedTargetTop = resolveCard(wire.expectedTargetTopCardId);
+      if (!card || !expectedTargetTop) return rejected('stale_reference');
+      const canonicalCard = state.cards[card.cardId];
+      const location = canonicalCard
+        ? findCardLocation(state, canonicalCard.id)
+        : null;
+      if (!canonicalCard || !location) return rejected('stale_reference');
+
+      let sourceId: string;
+      let sourcePlayerId: PlayerId;
+      let expectedSourceId:
+        | ReturnType<typeof asZoneId>
+        | ReturnType<typeof asStackId>
+        | ReturnType<typeof asWorkAreaId>;
+      switch (location.kind) {
+        case 'zone': {
+          const zone = state.zones[location.zoneId];
+          if (!zone) return rejected('stale_reference');
+          sourceId = zone.id;
+          sourcePlayerId = zone.ownerId ?? canonicalCard.ownerId;
+          expectedSourceId = asZoneId(wire.expectedSourceId);
+          break;
+        }
+        case 'stackEvolution':
+        case 'stackAttachment': {
+          const stack = state.stacks[location.stackId];
+          if (!stack) return rejected('stale_reference');
+          sourceId = stack.id;
+          sourcePlayerId = stack.boardPlayerId;
+          expectedSourceId = asStackId(wire.expectedSourceId);
+          break;
+        }
+        case 'inspectionWorkArea': {
+          const inspection = state.workAreas[location.playerId]?.inspection;
+          if (!inspection || location.playerId !== actorId) {
+            return rejected('unauthorized');
+          }
+          sourceId = inspection.id;
+          sourcePlayerId = location.playerId;
+          expectedSourceId = asWorkAreaId(wire.expectedSourceId);
+          break;
+        }
+        case 'attachmentResolutionWorkArea': {
+          const resolution =
+            state.workAreas[location.playerId]?.attachmentResolution;
+          if (!resolution || location.playerId !== actorId) {
+            return rejected('unauthorized');
+          }
+          sourceId = resolution.id;
+          sourcePlayerId = location.playerId;
+          expectedSourceId = asWorkAreaId(wire.expectedSourceId);
+          break;
+        }
+      }
+      if (sourceId !== wire.expectedSourceId) {
+        return rejected('stale_reference');
+      }
+      if (
+        sourcePlayerId !== actorId &&
+        !policy.allowOpponentPublicInteraction
+      ) {
+        return rejected('unauthorized');
+      }
+      if (
+        location.kind !== 'attachmentResolutionWorkArea' &&
+        !canControlCard(
+          state,
+          actorId,
+          canonicalCard.ownerId,
+          card.known,
+          policy
+        )
+      ) {
+        return rejected('unauthorized');
+      }
+
+      const target = state.stacks[wire.targetStackId];
+      if (
+        !target ||
+        target.boardPlayerId !== sourcePlayerId ||
+        target.evolutionCardIds.at(-1) !== expectedTargetTop.cardId
+      ) {
+        return rejected('stale_reference');
+      }
+      let derivedMode: typeof wire.mode;
+      if (location.kind === 'stackEvolution') {
+        const sourceStack = state.stacks[location.stackId];
+        if (
+          !sourceStack ||
+          location.index >= sourceStack.evolutionCardIds.length - 1
+        ) {
+          return rejected('precondition_failed');
+        }
+        derivedMode = 'attachment';
+      } else if (location.kind === 'stackAttachment') {
+        derivedMode = 'attachment';
+      } else {
+        derivedMode =
+          canonicalCard.currentCategory === 'Pokémon'
+            ? 'evolution'
+            : 'attachment';
+      }
+      if (derivedMode !== wire.mode) return rejected('stale_reference');
+
+      return {
+        accepted: true,
+        command: {
+          type: 'PlaceCardOnPlayStack',
+          playerId: sourcePlayerId,
+          cardId: canonicalCard.id,
+          expectedSourceId,
+          targetStackId: asStackId(wire.targetStackId),
+          expectedTargetTopCardId: expectedTargetTop.cardId,
+          mode: derivedMode,
+        },
+      };
+    }
     case 'MoveCardFromStack': {
       const card = resolveCard(wire.cardId);
       if (!card) return rejected('stale_reference');

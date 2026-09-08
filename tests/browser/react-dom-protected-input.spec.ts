@@ -30,6 +30,9 @@ interface ProtectedInputFixture {
   readonly unsupportedStackCardIds: readonly string[];
   readonly activeTopCardId: string;
   readonly activeStackId: string;
+  readonly activeAttachmentCardId: string;
+  readonly activeLowerEvolutionCardId: string;
+  readonly evolutionSourceCardId: string;
   readonly activeAbilityUsed: boolean;
   readonly conditionlessActiveTopCardId: string;
   readonly conditionlessActiveStackId: string;
@@ -60,6 +63,7 @@ interface ProtectedInputEvidence {
   readonly presentationDismissals: number;
   readonly presentation: {
     readonly selectedCardId: string | null;
+    readonly targetableCardIds: readonly string[];
     readonly drag: {
       readonly cardId: string;
       readonly targetId: string | null;
@@ -274,6 +278,161 @@ const sameRectangle = (left: Rectangle, right: Rectangle): boolean =>
   left.y === right.y &&
   left.width === right.width &&
   left.height === right.height;
+
+test('Q/E attach targeting stays local until one exact target click and fails closed in replay', async ({
+  page,
+}) => {
+  const errors = collectRuntimeErrors(page);
+  const fixture = await mountHarness(page);
+  const host = page.locator('[data-react-dom-protected-input-harness]');
+  const source = host.locator(`[data-card-id="${fixture.sourceCardId}"]`);
+  const target = host.locator(`[data-card-id="${fixture.activeTopCardId}"]`);
+  const sourceZone = host.locator(`[data-zone-id="${fixture.sourceZoneId}"]`);
+  const sourcePoint = await exposedCardPoint(source);
+  const backgroundPoint = await exposedZonePoint(sourceZone);
+
+  await page.mouse.click(sourcePoint.x, sourcePoint.y);
+  await page.keyboard.press('q');
+  await expect
+    .poll(() => evidence(page))
+    .toMatchObject({
+      submissions: [],
+      shortcutRejections: [],
+      shortcutActions: [
+        { action: 'beginAttachOrEvolve', cardId: fixture.sourceCardId },
+      ],
+      presentation: {
+        selectedCardId: null,
+        targetableCardIds: [fixture.activeTopCardId],
+      },
+    });
+  await expect(target).toHaveCSS(
+    'box-shadow',
+    'rgba(143, 215, 153, 0.863) 0px 0px 0px 4px'
+  );
+
+  await page.keyboard.press('Escape');
+  await expect
+    .poll(async () => (await evidence(page)).presentation.targetableCardIds)
+    .toEqual([]);
+  expect((await evidence(page)).submissions).toEqual([]);
+
+  await clearEvidence(page);
+  await page.mouse.click(sourcePoint.x, sourcePoint.y);
+  await page.keyboard.press('e');
+  await page.mouse.click(backgroundPoint.x, backgroundPoint.y);
+  await expect
+    .poll(() => evidence(page))
+    .toMatchObject({
+      submissions: [],
+      shortcutActions: [
+        { action: 'beginAttachOrEvolve', cardId: fixture.sourceCardId },
+      ],
+      presentation: { selectedCardId: null, targetableCardIds: [] },
+    });
+
+  for (const scenario of [
+    {
+      cardId: fixture.evolutionSourceCardId,
+      expectedSourceId: fixture.sourceZoneId,
+      mode: 'evolution',
+    },
+    {
+      cardId: fixture.activeAttachmentCardId,
+      expectedSourceId: fixture.activeStackId,
+      mode: 'attachment',
+    },
+    {
+      cardId: fixture.activeLowerEvolutionCardId,
+      expectedSourceId: fixture.activeStackId,
+      mode: 'attachment',
+    },
+  ] as const) {
+    await clearEvidence(page);
+    const scenarioSource = host.locator(`[data-card-id="${scenario.cardId}"]`);
+    const scenarioPoint = await exposedCardPoint(scenarioSource);
+    await page.mouse.click(scenarioPoint.x, scenarioPoint.y);
+    await page.keyboard.press('q');
+    const currentTargetPoint = await exposedCardPoint(target);
+    await page.mouse.click(currentTargetPoint.x, currentTargetPoint.y);
+    await expect
+      .poll(async () => (await evidence(page)).submissions)
+      .toEqual([
+        {
+          type: 'PlaceCardOnPlayStack',
+          cardId: scenario.cardId,
+          expectedSourceId: scenario.expectedSourceId,
+          targetStackId: fixture.activeStackId,
+          expectedTargetTopCardId: fixture.activeTopCardId,
+          mode: scenario.mode,
+        },
+      ]);
+  }
+
+  await clearEvidence(page);
+  await page.mouse.click(sourcePoint.x, sourcePoint.y);
+  await page.keyboard.press('q');
+  const targetPoint = await exposedCardPoint(target);
+  await page.mouse.click(targetPoint.x, targetPoint.y);
+  await expect
+    .poll(() => evidence(page))
+    .toMatchObject({
+      submissions: [
+        {
+          type: 'PlaceCardOnPlayStack',
+          cardId: fixture.sourceCardId,
+          expectedSourceId: fixture.sourceZoneId,
+          targetStackId: fixture.activeStackId,
+          expectedTargetTopCardId: fixture.activeTopCardId,
+          mode: 'attachment',
+        },
+      ],
+      submissionResults: [
+        {
+          queued: true,
+          commandId: 'protected-input-command-4',
+          clientSequence: 4,
+        },
+      ],
+      presentation: { selectedCardId: null, targetableCardIds: [] },
+    });
+
+  await clearEvidence(page);
+  await page.evaluate(() => {
+    const harness = (window as ProtectedInputHarnessWindow)
+      .__PTCG_REACT_DOM_PROTECTED_INPUT_HARNESS__;
+    if (!harness) throw new Error('Missing protected-input harness');
+    harness.enterSoloReplay();
+  });
+  await expect
+    .poll(async () => (await evidence(page)).sourceKind)
+    .toBe('replay');
+  await page.mouse.click(sourcePoint.x, sourcePoint.y);
+  await page.keyboard.press('q');
+  await expect
+    .poll(() => evidence(page))
+    .toMatchObject({
+      submissions: [],
+      shortcutActions: [
+        { action: 'beginAttachOrEvolve', cardId: fixture.sourceCardId },
+      ],
+      shortcutRejections: [
+        {
+          kind: 'ShortcutActionRejected',
+          reason: 'read_only',
+          request: {
+            action: 'beginAttachOrEvolve',
+            cardId: fixture.sourceCardId,
+          },
+        },
+      ],
+      presentation: {
+        selectedCardId: fixture.sourceCardId,
+        targetableCardIds: [],
+      },
+    });
+  expect(errors).toEqual([]);
+});
 
 test('native DOM input reaches protected controller state, semantic drop rejection, and exactly-once submit', async ({
   page,

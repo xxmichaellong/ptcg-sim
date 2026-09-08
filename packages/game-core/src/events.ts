@@ -150,6 +150,21 @@ export type DomainEvent =
       readonly attachmentCardIds: readonly CardInstanceId[];
     }
   | {
+      /** Atomic source departure plus target evolution/attachment. */
+      readonly type: 'CardPlacedOnPlayStack';
+      readonly playerId: PlayerId;
+      readonly cardId: CardInstanceId;
+      readonly expectedSourceId: ZoneId | StackId | WorkAreaId;
+      readonly targetStackId: StackId;
+      readonly expectedTargetTopCardId: CardInstanceId;
+      readonly expectedTargetEvolutionCardIds: readonly CardInstanceId[];
+      readonly expectedTargetAttachmentCardIds: readonly CardInstanceId[];
+      readonly mode: 'attachment' | 'evolution';
+      readonly attachmentOrderVersion: 1;
+      readonly evolutionCardIds: readonly CardInstanceId[];
+      readonly attachmentCardIds: readonly CardInstanceId[];
+    }
+  | {
       readonly type: 'CardMovedFromStack';
       readonly cardId: CardInstanceId;
       readonly expectedStackId: StackId;

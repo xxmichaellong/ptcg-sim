@@ -702,6 +702,7 @@ test('pristine source active markers match the strict React DOM candidate', asyn
               presentation: {
                 selectedCardId: null;
                 hoveredCardId: null;
+                targetableCardIds: readonly [];
                 drag: null;
                 openedZoneId: null;
               }
@@ -735,6 +736,7 @@ test('pristine source active markers match the strict React DOM candidate', asyn
     await renderer.mount(host, scene, {
       selectedCardId: null,
       hoveredCardId: null,
+      targetableCardIds: [],
       drag: null,
       openedZoneId: null,
     });

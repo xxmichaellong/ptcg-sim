@@ -1,6 +1,6 @@
 # Attach/evolve target-selection blueprint
 
-Status: source behavior characterized; V2 implementation pending.
+Status: V2 vertical slice implemented and locally verified.
 
 This document freezes the selected-card `Q`/`E` interaction before the V2
 implementation changes renderer, controller, wire, domain-event, and authority
@@ -255,8 +255,34 @@ the normal event batch without a special client path.
 | Shared renderer contract          | `packages/renderer-contract/src/model.ts`, defaults, public API baseline, renderer contract tests                                 |
 | DOM renderer                      | `packages/renderer-dom/src/BoardSurface.tsx` and tests                                                                            |
 | Pixi renderer                     | `packages/renderer-pixi/src/PixiBoardRenderer.ts` and tests                                                                       |
-| Browser candidate                 | `tests/browser/react-dom-protected-input.spec.ts` or a dedicated attach/evolve candidate spec                                     |
+| Browser candidate                 | `tests/browser/react-dom-protected-input.spec.ts`                                                                                 |
 | Architecture/evidence             | this document, `LEGACY_ACTION_MAP.md`, `QUALITY_GATES.md`, and draft PR evidence                                                  |
+
+## Implemented V2 result
+
+The implementation follows the chosen flow without adding a second mutable
+board model. `resolveAttachEvolveTargeting.ts` derives a revision-bound pending
+descriptor from one recipient projection, `BoardSessionController` owns its
+lifecycle, and both renderers consume only the ordered `targetableCardIds`.
+DOM uses the source-green shadow; Pixi uses a non-interactive green outline and
+does not alter card alpha, hit areas, or canonical z-order.
+
+One strict wire variant crosses the client/server boundary. Room authority
+resolves both card aliases, derives the source player and semantic mode, applies
+the existing opponent-public policy, protects private work areas, and produces
+one branded core command. Core decision/application emits and validates one
+`CardPlacedOnPlayStack` event for the atomic source departure and target
+placement. The server model-fuzz registry includes the command, so protocol
+union growth cannot silently leave the path ungenerated.
+
+Focused tests cover all source classifications and same-stack behavior, forged
+or stale facts, V1 attachment ordering, marker transfer, cleanup, both renderer
+adapters, controller cancellation/replacement, and replay denial. The in-memory
+multiplayer gate carries projected aliases through the real client queue,
+authority, durable commit, new projection, and replay history. Native Chromium
+drives Q and E, exact target paint, cancellation, hand attachment/evolution,
+existing-attachment and lower-evolution reclassification, exactly-once submit,
+and the deliberate replay correction.
 
 ## Required verification
 

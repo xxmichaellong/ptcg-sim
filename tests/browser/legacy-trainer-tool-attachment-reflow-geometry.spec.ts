@@ -431,6 +431,7 @@ test('checked-in legacy sources and React DOM share stable Trainer-as-Tool attac
               presentation: {
                 selectedCardId: null;
                 hoveredCardId: null;
+                targetableCardIds: readonly [];
                 drag: null;
                 openedZoneId: null;
               }
@@ -464,6 +465,7 @@ test('checked-in legacy sources and React DOM share stable Trainer-as-Tool attac
     await renderer.mount(host, scene, {
       selectedCardId: null,
       hoveredCardId: null,
+      targetableCardIds: [],
       drag: null,
       openedZoneId: null,
     });

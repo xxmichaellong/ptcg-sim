@@ -370,6 +370,7 @@ test('checked-in legacy sources and React DOM share stable one-Energy attachment
     await renderer.mount(host, scene, {
       selectedCardId: null,
       hoveredCardId: null,
+      targetableCardIds: [],
       drag: null,
       openedZoneId: null,
     });

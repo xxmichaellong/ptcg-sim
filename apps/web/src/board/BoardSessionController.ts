@@ -37,6 +37,11 @@ import {
   type LegacyBoardShortcutActionRequest,
   type LegacyBoardShortcutCountPrompt,
 } from './resolveLegacyBoardShortcutAction.js';
+import {
+  resolveAttachEvolveTarget,
+  type AttachEvolveTargetingRejectionReason,
+  type BoardPlayTargetingState,
+} from './resolveAttachEvolveTargeting.js';
 
 type ReplayLocalDisclosureState = NonNullable<
   ReadyReplayPlaybackState['localDisclosure']
@@ -112,6 +117,7 @@ export interface BoardSessionControllerState {
   readonly scene?: BoardScene;
   readonly sceneInstallMode: BoardSceneInstallMode;
   readonly presentation: BoardPresentation;
+  readonly playTargeting: BoardPlayTargetingState | null;
   readonly overlays: BoardOverlayState;
   readonly canSubmitCommands: boolean;
 }
@@ -150,6 +156,7 @@ export type BoardIntentRejectionReason =
   | 'stale_card'
   | 'stale_zone'
   | 'unsupported_intent'
+  | AttachEvolveTargetingRejectionReason
   | Exclude<BoardDropResolution, { readonly ok: true }>['reason'];
 
 export type BoardOverlayActionRejectionReason =
@@ -214,6 +221,7 @@ export interface BoardSessionControllerDependencies {
   readonly resolveDrop?: typeof resolveBoardDrop;
   readonly resolveOverlayAction?: typeof resolveLegacyBoardOverlayAction;
   readonly resolveShortcutAction?: typeof resolveLegacyBoardShortcutAction;
+  readonly resolveAttachEvolveTarget?: typeof resolveAttachEvolveTarget;
 }
 
 export interface BoardSessionControllerOptions {
@@ -241,6 +249,7 @@ export const createInitialBoardSessionControllerState =
     cursor: null,
     sceneInstallMode: 'advance',
     presentation: DEFAULT_BOARD_PRESENTATION,
+    playTargeting: null,
     overlays: EMPTY_OVERLAYS,
     canSubmitCommands: false,
   });
@@ -347,6 +356,7 @@ const emptyOverlays = (): BoardOverlayState => ({ ...EMPTY_OVERLAYS });
 const presentationIsEmpty = (presentation: BoardPresentation): boolean =>
   presentation.selectedCardId === null &&
   presentation.hoveredCardId === null &&
+  presentation.targetableCardIds.length === 0 &&
   presentation.drag === null &&
   presentation.openedZoneId === null;
 
@@ -365,10 +375,14 @@ const sameOverlays = (
 
 const clearLocalPresentation = (
   state: BoardSessionControllerState
-): Pick<BoardSessionControllerState, 'presentation' | 'overlays'> => ({
+): Pick<
+  BoardSessionControllerState,
+  'presentation' | 'playTargeting' | 'overlays'
+> => ({
   presentation: presentationIsEmpty(state.presentation)
     ? state.presentation
     : emptyPresentation(),
+  playTargeting: null,
   overlays: overlaysAreEmpty(state.overlays) ? state.overlays : emptyOverlays(),
 });
 
@@ -414,7 +428,10 @@ const reconcilePresentation = (
   state: BoardSessionControllerState,
   view: MatchViewState,
   scene: BoardScene
-): Pick<BoardSessionControllerState, 'presentation' | 'overlays'> => {
+): Pick<
+  BoardSessionControllerState,
+  'presentation' | 'playTargeting' | 'overlays'
+> => {
   const selectedCardId =
     state.presentation.selectedCardId &&
     hasCard(scene, state.presentation.selectedCardId)
@@ -495,9 +512,11 @@ const reconcilePresentation = (
     presentation: {
       selectedCardId,
       hoveredCardId,
+      targetableCardIds: [],
       drag: reconciledDrag,
       openedZoneId,
     },
+    playTargeting: null,
     overlays: {
       contextMenuCardId,
       preview: reconciledPreview,
@@ -565,6 +584,10 @@ const samePresentation = (
 ): boolean =>
   left.selectedCardId === right.selectedCardId &&
   left.hoveredCardId === right.hoveredCardId &&
+  left.targetableCardIds.length === right.targetableCardIds.length &&
+  left.targetableCardIds.every(
+    (cardId, index) => right.targetableCardIds[index] === cardId
+  ) &&
   left.drag === right.drag &&
   left.openedZoneId === right.openedZoneId;
 
@@ -993,15 +1016,17 @@ const rejectIntent = (
 const installPresentation = (
   state: BoardSessionControllerState,
   presentation: BoardPresentation,
-  overlays: BoardOverlayState = state.overlays
+  overlays: BoardOverlayState = state.overlays,
+  playTargeting: BoardPlayTargetingState | null = state.playTargeting
 ): BoardSessionControllerReduction => {
   if (
     samePresentation(state.presentation, presentation) &&
-    sameOverlays(overlays, state.overlays)
+    sameOverlays(overlays, state.overlays) &&
+    playTargeting === state.playTargeting
   ) {
     return ignored(state);
   }
-  const next = nextState(state, { presentation, overlays });
+  const next = nextState(state, { presentation, overlays, playTargeting });
   return accepted(next, [
     { kind: 'InstallPresentation', presentation: next.presentation },
   ]);
@@ -1028,6 +1053,44 @@ const handleIntent = (
           candidate.id === intent.cardId && hasPresentableCard(candidate.id)
       );
       if (!card) return rejectIntent(state, intent, 'stale_card');
+      if (state.playTargeting) {
+        const targeting = state.playTargeting;
+        const target = targeting.targets.find(
+          (candidate) => candidate.topCardId === intent.cardId
+        );
+        if (target) {
+          const presentation: BoardPresentation = {
+            ...state.presentation,
+            selectedCardId: null,
+            targetableCardIds: [],
+            drag: null,
+          };
+          const cleared = nextState(state, {
+            presentation,
+            playTargeting: null,
+            overlays: emptyOverlays(),
+          });
+          const resolution = (
+            dependencies.resolveAttachEvolveTarget ?? resolveAttachEvolveTarget
+          )(view, targeting, intent.cardId);
+          const effects: BoardSessionControllerEffect[] = [
+            { kind: 'InstallPresentation', presentation },
+          ];
+          if (resolution.ok) {
+            effects.push({
+              kind: 'SubmitCommand',
+              command: resolution.command,
+            });
+          } else {
+            effects.push({
+              kind: 'IntentRejected',
+              intent,
+              reason: resolution.reason,
+            });
+          }
+          return accepted(cleared, effects);
+        }
+      }
       const retainOpenedZone =
         state.presentation.openedZoneId === card.parentId
           ? state.presentation.openedZoneId
@@ -1037,12 +1100,23 @@ const handleIntent = (
         {
           ...state.presentation,
           selectedCardId: intent.cardId,
+          targetableCardIds: [],
           drag: null,
           openedZoneId: retainOpenedZone,
         },
-        emptyOverlays()
+        emptyOverlays(),
+        null
       );
     }
+    case 'BoardBackgroundPressed':
+      return state.playTargeting
+        ? installPresentation(
+            state,
+            { ...state.presentation, targetableCardIds: [], drag: null },
+            emptyOverlays(),
+            null
+          )
+        : ignored(state);
     case 'CardContextRequested': {
       if (!hasPresentableCard(intent.cardId))
         return rejectIntent(state, intent, 'stale_card');
@@ -1344,6 +1418,23 @@ const handleShortcutAction = (
     });
     return accepted(next, []);
   }
+  if ('targeting' in resolution) {
+    const presentation: BoardPresentation = {
+      ...state.presentation,
+      selectedCardId: null,
+      targetableCardIds: resolution.targeting.targets.map(
+        (target) => target.topCardId
+      ),
+      drag: null,
+      openedZoneId: null,
+    };
+    const next = nextState(state, {
+      presentation,
+      playTargeting: resolution.targeting,
+      overlays: emptyOverlays(),
+    });
+    return accepted(next, [{ kind: 'InstallPresentation', presentation }]);
+  }
   const stateAfterInput = submittedCountInput
     ? nextState(state, {
         overlays: { ...state.overlays, input: null },
@@ -1388,6 +1479,7 @@ const refreshScene = (
     scene,
     sceneInstallMode: 'replace',
     presentation,
+    playTargeting: reconciled.playTargeting,
     overlays: reconciled.overlays,
   });
   const effects: BoardSessionControllerEffect[] = [
@@ -1415,7 +1507,7 @@ const dismissPresentation = (
   const presentation: BoardPresentation = {
     ...state.presentation,
     ...(scope === 'all' || scope === 'selection'
-      ? { selectedCardId: null }
+      ? { selectedCardId: null, targetableCardIds: [] }
       : {}),
     ...(scope === 'all' || scope === 'zone' ? { openedZoneId: null } : {}),
     ...(scope === 'all' ? { hoveredCardId: null, drag: null } : {}),
@@ -1429,7 +1521,12 @@ const dismissPresentation = (
       scope === 'all' || scope === 'preview' ? null : state.overlays.preview,
     input: scope === 'all' || scope === 'input' ? null : state.overlays.input,
   };
-  return installPresentation(state, presentation, overlays);
+  return installPresentation(
+    state,
+    presentation,
+    overlays,
+    scope === 'all' || scope === 'selection' ? null : state.playTargeting
+  );
 };
 
 export const reduceBoardSessionController = (
@@ -1467,10 +1564,16 @@ export const reduceBoardSessionController = (
     case 'DismissLocalPresentation':
       return dismissPresentation(state, action.scope ?? 'all');
     case 'SubmissionRejected':
-      return installPresentation(state, {
-        ...state.presentation,
-        drag: null,
-      });
+      return installPresentation(
+        state,
+        {
+          ...state.presentation,
+          targetableCardIds: [],
+          drag: null,
+        },
+        state.overlays,
+        null
+      );
   }
 };
 

@@ -52,6 +52,7 @@ const PIXI_TEXTURE_LEASES = new TextureAssetLeaseBroker(PIXI_TEXTURE_ASSETS);
 
 interface CardView {
   readonly sprite: Sprite;
+  readonly outline: Graphics;
   descriptor: CardSceneNode;
 }
 
@@ -318,6 +319,7 @@ export class PixiBoardRenderer implements BoardRenderer {
     app.stage.on('pointerup', this.handlePointerUp);
     app.stage.on('pointerupoutside', this.handlePointerUp);
     app.stage.on('pointercancel', this.handlePointerCancel);
+    app.stage.on('pointertap', this.handleStagePointerTap);
     this.layers = this.createLayers(app.stage);
     app.canvas.setAttribute('aria-label', 'Pokémon Trading Card Game board');
     app.canvas.style.display = 'block';
@@ -387,12 +389,16 @@ export class PixiBoardRenderer implements BoardRenderer {
       this.cardViews.delete(id);
       this.textures.release(id);
       view.sprite.removeFromParent();
+      view.outline.removeFromParent();
       view.sprite.destroy({ texture: false, textureSource: false });
+      view.outline.destroy();
     }
     for (const descriptor of scene.cards) {
       const id = String(descriptor.id);
       let view = this.cardViews.get(id);
       if (!view) {
+        const outline = new Graphics({ label: `target:${id}` });
+        outline.eventMode = 'none';
         const sprite = new Sprite({
           texture: this.textures.placeholder,
           label: id,
@@ -438,9 +444,10 @@ export class PixiBoardRenderer implements BoardRenderer {
             }
           }
         });
-        view = { sprite, descriptor };
+        view = { sprite, outline, descriptor };
         this.cardViews.set(id, view);
         layers.cards.addChild(sprite);
+        layers.interaction.addChild(outline);
       } else {
         view.descriptor = descriptor;
       }
@@ -506,7 +513,7 @@ export class PixiBoardRenderer implements BoardRenderer {
   }
 
   private applyCardView(view: CardView): void {
-    const { sprite, descriptor } = view;
+    const { sprite, outline, descriptor } = view;
     const drag = this.presentation?.drag;
     const dragging = drag?.cardId === descriptor.id;
     sprite.position.set(
@@ -531,7 +538,37 @@ export class PixiBoardRenderer implements BoardRenderer {
     sprite.accessibleHint = 'Select card';
     const selected = this.presentation?.selectedCardId === descriptor.id;
     sprite.alpha = selected ? 0.88 : 1;
+    outline.clear();
+    outline
+      .rect(
+        -descriptor.bounds.width / 2,
+        -descriptor.bounds.height / 2,
+        descriptor.bounds.width,
+        descriptor.bounds.height
+      )
+      .stroke({ color: 0x8fd799, alpha: 0.864, width: 4 });
+    outline.position.copyFrom(sprite.position);
+    outline.rotation = sprite.rotation;
+    outline.zIndex = sprite.zIndex;
+    outline.visible =
+      this.presentation?.targetableCardIds.includes(descriptor.id) === true;
   }
+
+  private readonly handleStagePointerTap = (
+    event: FederatedPointerEvent
+  ): void => {
+    const target = event.target;
+    const label = (target as { readonly label?: unknown } | null)?.label;
+    if (
+      typeof label === 'string' &&
+      this.cardViews.get(label)?.sprite === target
+    ) {
+      return;
+    }
+    if (this.isPrimaryActivation(event)) {
+      this.adapters.emitIntent({ kind: 'BoardBackgroundPressed' });
+    }
+  };
 
   private applyMarkerView(view: MarkerView): void {
     const { root, graphic, text, descriptor } = view;

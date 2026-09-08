@@ -131,6 +131,14 @@ export const WireGameCommandSchema = v.variant('type', [
     targetStackId: v.optional(IdentifierSchema),
     benchIndex: v.optional(NonNegativeIntegerSchema),
   }),
+  v.strictObject({
+    type: v.literal('PlaceCardOnPlayStack'),
+    cardId: IdentifierSchema,
+    expectedSourceId: IdentifierSchema,
+    targetStackId: IdentifierSchema,
+    expectedTargetTopCardId: IdentifierSchema,
+    mode: v.picklist(['attachment', 'evolution'] as const),
+  }),
   v.object({
     type: v.literal('MoveCardFromStack'),
     cardId: IdentifierSchema,

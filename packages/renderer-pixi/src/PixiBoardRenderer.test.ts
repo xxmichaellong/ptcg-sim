@@ -211,7 +211,11 @@ interface RendererInternals {
   readonly dragController: BoardDragController;
   readonly cardViews: Map<
     string,
-    { readonly sprite: Sprite; descriptor: BoardScene['cards'][number] }
+    {
+      readonly sprite: Sprite;
+      readonly outline: Graphics;
+      descriptor: BoardScene['cards'][number];
+    }
   >;
   readonly markerViews: Map<
     string,
@@ -346,6 +350,13 @@ describe('Pixi board interaction cancellation', () => {
     const card = currentScene.cards[0]!;
     const cardView = internals.cardViews.get(String(card.id))!;
     expect(cardView.sprite.hitArea).toBeNull();
+    expect(cardView.outline.visible).toBe(false);
+    renderer.installPresentation({
+      ...DEFAULT_BOARD_PRESENTATION,
+      targetableCardIds: [card.id],
+    });
+    expect(cardView.outline.visible).toBe(true);
+    expect(cardView.sprite.alpha).toBe(1);
     cardView.sprite.emit('pointertap', { button: 0, detail: 1 });
     cardView.sprite.emit('pointertap', { button: 0, detail: 2 });
     cardView.sprite.emit('pointertap', { button: 0, detail: 3 });
@@ -359,6 +370,11 @@ describe('Pixi board interaction cancellation', () => {
     zone.emit('pointertap', { button: 0, detail: 3 });
     zone.emit('pointertap', { button: 0, detail: 4 });
     zone.emit('pointertap', { button: 2, detail: 2 });
+    application.stage.emit('pointertap', {
+      button: 0,
+      detail: 1,
+      target: application.stage,
+    });
 
     expect(intents).toEqual([
       { kind: 'CardSelected', cardId: card.id },
@@ -369,6 +385,7 @@ describe('Pixi board interaction cancellation', () => {
       { kind: 'CardSelected', cardId: card.id },
       { kind: 'CardContextRequested', cardId: card.id },
       { kind: 'ZoneOpened', zoneId: currentScene.zones[0]!.id },
+      { kind: 'BoardBackgroundPressed' },
     ]);
     expect(renderer.getDiagnostics()).toMatchObject({
       rendererKind: 'pixi',
@@ -1222,8 +1239,14 @@ describe('Pixi board interaction cancellation', () => {
     internals.layers = layers;
     const descriptor = currentScene.cards[0]!;
     const sprite = new Sprite({ texture: Texture.WHITE });
+    const outline = new Graphics();
     layers.cards.addChild(sprite);
-    internals.cardViews.set(String(descriptor.id), { sprite, descriptor });
+    layers.interaction.addChild(outline);
+    internals.cardViews.set(String(descriptor.id), {
+      sprite,
+      outline,
+      descriptor,
+    });
     const release = vi.spyOn(internals.textures, 'release');
     vi.spyOn(internals.textures, 'bind').mockImplementation(() => undefined);
 

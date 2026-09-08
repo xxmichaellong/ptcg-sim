@@ -39,6 +39,10 @@ export const MODEL_COMMAND_REGISTRY = {
   MoveCard: { coverage: 'generated', family: 'movement' },
   MoveCardToStadium: { coverage: 'generated', family: 'movement' },
   MoveCardToPlay: { coverage: 'generated', family: 'movement' },
+  PlaceCardOnPlayStack: {
+    coverage: 'generated',
+    family: 'stack-work-area',
+  },
   MoveCardFromStack: { coverage: 'generated', family: 'stack-work-area' },
   MovePlayStack: { coverage: 'generated', family: 'movement' },
   MoveInspectedCard: {

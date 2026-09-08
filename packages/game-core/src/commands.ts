@@ -32,6 +32,8 @@ export type LooseBoardCardsDestination = Exclude<
   'shuffleToDeckBottom'
 >;
 
+type PlayStackPlacementMode = 'attachment' | 'evolution';
+
 export type GameCommand =
   | {
       readonly type: 'LoadDeck';
@@ -62,6 +64,15 @@ export type GameCommand =
       readonly slot: PlaySlot;
       readonly targetStackId?: StackId;
       readonly benchIndex?: number;
+    }
+  | {
+      readonly type: 'PlaceCardOnPlayStack';
+      readonly playerId: PlayerId;
+      readonly cardId: CardInstanceId;
+      readonly expectedSourceId: ZoneId | StackId | WorkAreaId;
+      readonly targetStackId: StackId;
+      readonly expectedTargetTopCardId: CardInstanceId;
+      readonly mode: PlayStackPlacementMode;
     }
   | {
       readonly type: 'MoveCardFromStack';

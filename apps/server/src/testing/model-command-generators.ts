@@ -304,6 +304,38 @@ export const MODEL_COMMAND_GENERATORS = {
         : {}),
     };
   },
+  PlaceCardOnPlayStack: (context) => {
+    const sources = locatedCards(context).filter((source) => {
+      if (source.card.kind !== 'known') return false;
+      if (source.sourceKind !== 'stack') return true;
+      const stack = context.view.stacks[source.sourceId];
+      if (!stack) return false;
+      return (
+        stack.attachmentCards.some((card) => card.id === source.card.id) ||
+        stack.evolutionCards
+          .slice(0, -1)
+          .some((card) => card.id === source.card.id)
+      );
+    });
+    const source = context.random.pick(sources);
+    if (!source || source.card.kind !== 'known') return undefined;
+    const target = context.random.pick(
+      actorStacks(context).filter((stack) => stack.evolutionCards.length > 0)
+    );
+    const expectedTargetTopCardId = target?.evolutionCards.at(-1)?.id;
+    if (!target || !expectedTargetTopCardId) return undefined;
+    return {
+      type: 'PlaceCardOnPlayStack',
+      cardId: source.card.id,
+      expectedSourceId: source.sourceId,
+      targetStackId: target.id,
+      expectedTargetTopCardId,
+      mode:
+        source.sourceKind === 'stack' || source.card.category !== 'Pokémon'
+          ? 'attachment'
+          : 'evolution',
+    };
+  },
   MoveCardFromStack: (context) => {
     const stack = context.random.pick(actorStacks(context));
     const card = stack

@@ -418,6 +418,7 @@ test('source-backed contained cards match the DOM candidate at legacy pile tops'
     await renderer.mount(host, scene, {
       selectedCardId: null,
       hoveredCardId: null,
+      targetableCardIds: [],
       drag: null,
       openedZoneId: null,
     });

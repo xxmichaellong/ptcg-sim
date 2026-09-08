@@ -150,6 +150,7 @@ const CardNode = memo(function CardNode({
   card,
   selected,
   hovered,
+  targetable,
   drag,
   emitIntent,
   consumeSuppressedClick,
@@ -157,6 +158,7 @@ const CardNode = memo(function CardNode({
   readonly card: CardSceneNode;
   readonly selected: boolean;
   readonly hovered: boolean;
+  readonly targetable: boolean;
   readonly drag: BoardPresentation['drag'];
   readonly emitIntent: BoardRendererAdapters['emitIntent'];
   readonly consumeSuppressedClick: (cardId: CardSceneNode['id']) => boolean;
@@ -192,7 +194,9 @@ const CardNode = memo(function CardNode({
             : 0,
         borderRadius: '0.375rem',
         background: '#777',
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
+        boxShadow: targetable
+          ? 'rgba(143, 215, 153, 0.864) 0 0 0 4px'
+          : '0 2px 4px rgba(0, 0, 0, 0.5)',
         cursor: card.interactive ? (drag ? 'grabbing' : 'grab') : 'default',
         overflow: 'hidden',
         transform: `rotate(${card.rotationQuarterTurns * 90}deg)`,
@@ -386,9 +390,13 @@ export const BoardSurface = ({
       data-dark-mode={preferences.darkMode ? 'true' : 'false'}
       data-dragging={presentation.drag ? 'true' : 'false'}
       onPointerDown={(event) => {
-        const input = pointerInput(event);
         const target = pointerCard(event);
-        if (!input || !target) return;
+        if (!target) {
+          adapters.emitIntent({ kind: 'BoardBackgroundPressed' });
+          return;
+        }
+        const input = pointerInput(event);
+        if (!input) return;
         if (dragController.pointerDown(scene, target.card.id, input)) {
           try {
             target.element.setPointerCapture?.(event.pointerId);
@@ -453,6 +461,7 @@ export const BoardSurface = ({
           card={card}
           selected={presentation.selectedCardId === card.id}
           hovered={presentation.hoveredCardId === card.id}
+          targetable={presentation.targetableCardIds.includes(card.id)}
           drag={
             presentation.drag?.cardId === card.id ? presentation.drag : null
           }

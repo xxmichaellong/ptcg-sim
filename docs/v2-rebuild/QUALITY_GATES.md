@@ -210,12 +210,15 @@ traces are retained as a 14-day artifact. Browser binaries are not cached.
   pin identical Q/E target mode, source-board-only active/bench tops, exact green
   paint, evolution/attachment order, export mirroring, three cancellation paths,
   input/spectator/top-card guards, cross/same-stack reattachment, lower-evolution
-  reclassification, staged resolution, and the V1 replay leak. Candidate closure
-  remains gated on the atomic stable-ID contract in
-  `ATTACH_EVOLVE_TARGETING.md`: both renderers, controller cleanup, source and
-  target preconditions, authority policy, event replay/undo, private work-area
-  ownership, and native Chromium must land together. V2 must reject replay before
-  installing target paint or submitting a command.
+  reclassification, staged resolution, and the V1 replay leak. The atomic
+  stable-ID V2 contract in `ATTACH_EVOLVE_TARGETING.md` is now implemented across
+  both renderers, controller cleanup, strict protocol, authority policy, source
+  and target preconditions, event replay/persistence, private work-area
+  ownership, and server model generation. Native Chromium drives Q/E paint,
+  Escape/background cancellation, hand evolution/attachment, existing
+  attachment and lower-evolution placement, exactly-once submission, and replay
+  denial. V2 rejects replay before installing target paint or submitting a
+  command.
 - The unselected lifecycle-key lane pairs nine fresh deny-by-default v1 pages
   with one candidate DOM case. It pins exact setup/reset/turn messages and
   action/export records, owner rewriting, selection boundaries, spectator

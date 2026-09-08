@@ -18,6 +18,11 @@ import {
 } from './resolveCardZoneMoveAction.js';
 import { resolveCardStadiumMoveAction } from './resolveCardStadiumMoveAction.js';
 import {
+  resolveAttachEvolveTargeting,
+  type AttachEvolveTargetingRejectionReason,
+  type BoardPlayTargetingState,
+} from './resolveAttachEvolveTargeting.js';
+import {
   isDeckRelativeAction,
   resolveDeckRelativeCardAction,
   type DeckRelativeAction,
@@ -130,6 +135,10 @@ export type LegacyBoardShortcutActionRequest =
       readonly cardId: ViewCardId;
       readonly slot: CardPlayMoveDestination;
     }
+  | {
+      readonly action: 'beginAttachOrEvolve';
+      readonly cardId: ViewCardId;
+    }
   | { readonly action: 'moveCardToStadium'; readonly cardId: ViewCardId };
 
 export type LegacyBoardShortcutActionRejectionReason =
@@ -144,7 +153,8 @@ export type LegacyBoardShortcutActionRejectionReason =
   | 'empty_board'
   | 'empty_zone'
   | 'invalid_value'
-  | 'no_op';
+  | 'no_op'
+  | AttachEvolveTargetingRejectionReason;
 
 export type LegacyBoardShortcutActionResolution =
   | {
@@ -157,6 +167,11 @@ export type LegacyBoardShortcutActionResolution =
       readonly ok: true;
       readonly input: LegacyBoardShortcutCountPrompt;
       readonly dismissSelection: false;
+    }
+  | {
+      readonly ok: true;
+      readonly targeting: BoardPlayTargetingState;
+      readonly dismissSelection: true;
     }
   | {
       readonly ok: false;
@@ -506,6 +521,16 @@ export const resolveLegacyBoardShortcutAction = (
         resolveCardPlayMoveAction(view, request.cardId, request.slot),
         true
       );
+    case 'beginAttachOrEvolve': {
+      const resolution = resolveAttachEvolveTargeting(view, request.cardId);
+      return resolution.ok
+        ? {
+            ok: true,
+            targeting: resolution.targeting,
+            dismissSelection: true,
+          }
+        : resolution;
+    }
     case 'moveCardToStadium':
       return retainResolution(
         resolveCardStadiumMoveAction(view, request.cardId),
@@ -624,6 +649,9 @@ export const resolveLegacyBoardShortcutKey = (
   }
   if (!altKey && matches(input, 'g', 'KeyG')) {
     return { action: 'moveCardToStadium', cardId };
+  }
+  if (!altKey && (matches(input, 'q', 'KeyQ') || matches(input, 'e', 'KeyE'))) {
+    return { action: 'beginAttachOrEvolve', cardId };
   }
   if (!altKey && matches(input, 'p', 'KeyP')) {
     return { action: 'moveCardToZone', cardId, destination: 'prizes' };

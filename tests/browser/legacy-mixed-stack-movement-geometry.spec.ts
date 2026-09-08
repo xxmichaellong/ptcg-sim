@@ -847,6 +847,7 @@ test('checked-in legacy sources characterize canonical, transferred, and categor
             presentation: {
               selectedCardId: null;
               hoveredCardId: null;
+              targetableCardIds: readonly [];
               drag: null;
               openedZoneId: null;
             }
@@ -893,6 +894,7 @@ test('checked-in legacy sources characterize canonical, transferred, and categor
     await renderer.mount(host, scene, {
       selectedCardId: null,
       hoveredCardId: null,
+      targetableCardIds: [],
       drag: null,
       openedZoneId: null,
     });

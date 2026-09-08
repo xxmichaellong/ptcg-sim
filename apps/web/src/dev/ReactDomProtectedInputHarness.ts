@@ -66,6 +66,9 @@ export interface ReactDomProtectedInputFixture {
   readonly unsupportedStackCardIds: readonly string[];
   readonly activeTopCardId: string;
   readonly activeStackId: string;
+  readonly activeAttachmentCardId: string;
+  readonly activeLowerEvolutionCardId: string;
+  readonly evolutionSourceCardId: string;
   readonly activeAbilityUsed: boolean;
   readonly conditionlessActiveTopCardId: string;
   readonly conditionlessActiveStackId: string;
@@ -376,6 +379,10 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
     : undefined;
   const unsupportedCardId = localActiveStack?.evolutionCards[0]?.id;
   const activeTopCardId = localActiveStack?.evolutionCards.at(-1)?.id;
+  const activeAttachmentCardId = localActiveStack?.attachmentCards[0]?.id;
+  const evolutionSourceCardId = view.zones[sourceZoneId]?.cards.find(
+    (card) => card.kind === 'known' && card.category === 'Pokémon'
+  )?.id;
   const conditionlessActiveStackId = view.boards[secondPlayerId]?.activeStackId;
   const conditionlessActiveStack = conditionlessActiveStackId
     ? view.stacks[conditionlessActiveStackId]
@@ -388,6 +395,8 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
     !opponentDeckCard ||
     !unsupportedCardId ||
     !activeTopCardId ||
+    !activeAttachmentCardId ||
+    !evolutionSourceCardId ||
     !conditionlessActiveTopCardId ||
     !conditionlessActiveStackId ||
     conditionlessActiveStack?.specialCondition !== null ||
@@ -453,6 +462,9 @@ export const mountReactDomProtectedInputHarness = async (): Promise<void> => {
       .map((card) => String(card.id)),
     activeTopCardId: String(activeTopCardId),
     activeStackId: localActiveStackId,
+    activeAttachmentCardId: String(activeAttachmentCardId),
+    activeLowerEvolutionCardId: String(unsupportedCardId),
+    evolutionSourceCardId: String(evolutionSourceCardId),
     activeAbilityUsed: localActiveStack.abilityUsed,
     conditionlessActiveTopCardId: String(conditionlessActiveTopCardId),
     conditionlessActiveStackId,

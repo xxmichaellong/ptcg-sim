@@ -796,6 +796,7 @@ test('pristine source bench markers match the strict React DOM candidate', async
               presentation: {
                 selectedCardId: null;
                 hoveredCardId: null;
+                targetableCardIds: readonly [];
                 drag: null;
                 openedZoneId: null;
               }
@@ -829,6 +830,7 @@ test('pristine source bench markers match the strict React DOM candidate', async
     await renderer.mount(host, scene, {
       selectedCardId: null,
       hoveredCardId: null,
+      targetableCardIds: [],
       drag: null,
       openedZoneId: null,
     });

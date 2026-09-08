@@ -22,6 +22,8 @@ export interface BoardPreferences {
 export interface BoardPresentation {
   readonly selectedCardId: ViewCardId | null;
   readonly hoveredCardId: ViewCardId | null;
+  /** Ordered controller-derived targets; renderers only paint these IDs. */
+  readonly targetableCardIds: readonly ViewCardId[];
   readonly drag: {
     readonly cardId: ViewCardId;
     readonly x: number;
@@ -164,6 +166,7 @@ export interface BoardScene {
 
 export type BoardIntent =
   | { readonly kind: 'CardSelected'; readonly cardId: ViewCardId }
+  | { readonly kind: 'BoardBackgroundPressed' }
   | {
       readonly kind: 'CardDropRequested';
       readonly cardId: ViewCardId;

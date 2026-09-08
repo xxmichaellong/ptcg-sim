@@ -1064,12 +1064,17 @@ same top-level replay-guard defect seen by other legacy shortcuts: V1 enters
 target mode during replay
 because it does not invoke its Alt predicate.
 
-The V2 implementation is intentionally still pending so its renderer,
-controller, protocol, authority, domain-event, replay, and privacy changes land
-as one reviewed vertical slice. The complete chosen contract, file map, stale-
-reference rules, deliberate replay correction, and verification matrix are in
+The V2 vertical slice is now implemented across renderer, controller, protocol,
+authority, core event replay, server model generation, and native Chromium. Q/E
+creates only a revision-bound local target descriptor; a target click emits one
+strict `PlaceCardOnPlayStack` wire command, and authority converts it into one
+atomic `CardPlacedOnPlayStack` event after alias, ownership, policy, source,
+target-top, and semantic-mode checks. DOM and Pixi consume the same ordered
+target IDs. Reconnect, replacement, dismissal, rejection, and replay clear or
+deny targeting without mutation. The complete contract, file map, deliberate
+replay correction, and verification matrix are in
 [`ATTACH_EVOLVE_TARGETING.md`](./ATTACH_EVOLVE_TARGETING.md). No V1 source,
-production route, visible UI, or UX changed in this characterization checkpoint.
+visible layout, labels, or UX changed.
 
 ### Implemented unselected lifecycle keyboard subset
 

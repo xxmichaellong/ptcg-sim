@@ -288,6 +288,42 @@ describe('client protocol ingress', () => {
     expect(missingSource.ok).toBe(false);
   });
 
+  it('accepts only the closed atomic play-stack placement shape', () => {
+    const command = {
+      type: 'PlaceCardOnPlayStack',
+      cardId: 'source-card-alias',
+      expectedSourceId: 'source-zone',
+      targetStackId: 'target-stack',
+      expectedTargetTopCardId: 'target-top-alias',
+      mode: 'attachment',
+    } as const;
+    const frame = (candidate: unknown) =>
+      parseClientFrame(
+        JSON.stringify({
+          type: 'Command',
+          protocolVersion: PROTOCOL_VERSION,
+          sessionId: 'session',
+          clientSequence: 1,
+          commandId: 'place-stack-command',
+          lastSeenRevision: 0,
+          command: candidate,
+        })
+      );
+
+    expect(frame(command).ok).toBe(true);
+    expect(frame({ ...command, mode: 'evolution' }).ok).toBe(true);
+    for (const invalid of [
+      { ...command, cardId: '' },
+      { ...command, expectedSourceId: undefined },
+      { ...command, targetStackId: undefined },
+      { ...command, expectedTargetTopCardId: undefined },
+      { ...command, mode: 'newStack' },
+      { ...command, playerId: 'forged-player' },
+    ]) {
+      expect(frame(invalid).ok).toBe(false);
+    }
+  });
+
   it('requires explicit source and incumbent preconditions for stadium placement', () => {
     for (const expectedStadiumCardId of [null, 'stadium-card-alias']) {
       const result = parseClientFrame(

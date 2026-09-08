@@ -149,6 +149,7 @@ test('normalized React DOM reuses 120 distinct cacheable assets across fresh ren
         const presentation = {
           selectedCardId: null,
           hoveredCardId: null,
+          targetableCardIds: [],
           drag: null,
           openedZoneId: null,
         } as const;

@@ -1530,6 +1530,218 @@ const applyEventInternal = (
         ),
       };
     }
+    case 'CardPlacedOnPlayStack': {
+      if (event.attachmentOrderVersion !== 1) {
+        throw new Error('Unsupported atomic attachment order version');
+      }
+      const card = state.cards[event.cardId];
+      const location = card ? findCardLocation(state, card.id) : null;
+      const source =
+        card && location ? cardSourceSnapshot(state, card, location) : null;
+      const target = state.stacks[event.targetStackId];
+      if (
+        !card ||
+        !location ||
+        !source ||
+        source.id !== event.expectedSourceId ||
+        source.playerId !== event.playerId ||
+        !target ||
+        target.boardPlayerId !== event.playerId ||
+        target.evolutionCardIds.at(-1) !== event.expectedTargetTopCardId ||
+        !sameCardOrder(
+          target.evolutionCardIds,
+          event.expectedTargetEvolutionCardIds
+        ) ||
+        !sameCardOrder(
+          target.attachmentCardIds,
+          event.expectedTargetAttachmentCardIds
+        )
+      ) {
+        throw new Error('Atomic play-stack placement has stale preconditions');
+      }
+
+      let derivedMode: typeof event.mode;
+      if (location.kind === 'stackEvolution') {
+        const sourceStack = state.stacks[location.stackId];
+        if (
+          !sourceStack ||
+          location.index >= sourceStack.evolutionCardIds.length - 1
+        ) {
+          throw new Error('A top evolution cannot be atomically reattached');
+        }
+        derivedMode = 'attachment';
+      } else if (location.kind === 'stackAttachment') {
+        derivedMode = 'attachment';
+      } else {
+        derivedMode =
+          card.currentCategory === 'Pokémon' ? 'evolution' : 'attachment';
+      }
+      if (event.mode !== derivedMode) {
+        throw new Error('Atomic play-stack placement mode is malformed');
+      }
+
+      const sameStackSource =
+        (location.kind === 'stackEvolution' ||
+          location.kind === 'stackAttachment') &&
+        location.stackId === target.id;
+      const evolutionBeforePlacement = sameStackSource
+        ? target.evolutionCardIds.filter((cardId) => cardId !== card.id)
+        : [...target.evolutionCardIds];
+      const attachmentsBeforePlacement = sameStackSource
+        ? target.attachmentCardIds.filter((cardId) => cardId !== card.id)
+        : [...target.attachmentCardIds];
+      const expectedEvolutionCardIds =
+        derivedMode === 'evolution'
+          ? [...evolutionBeforePlacement, card.id]
+          : evolutionBeforePlacement;
+      const expectedAttachmentCardIds =
+        derivedMode === 'attachment'
+          ? orderAttachmentCardIdsV1(
+              state.cards,
+              attachmentsBeforePlacement,
+              card.id
+            )
+          : attachmentsBeforePlacement;
+      if (
+        !sameCardOrder(event.evolutionCardIds, expectedEvolutionCardIds) ||
+        !sameCardOrder(event.attachmentCardIds, expectedAttachmentCardIds)
+      ) {
+        throw new Error('Atomic play-stack placement result is malformed');
+      }
+
+      let zones = state.zones;
+      let stacks = state.stacks;
+      let workAreas = state.workAreas;
+      switch (location.kind) {
+        case 'zone': {
+          const sourceZone = requireZone(state, location.zoneId);
+          zones = {
+            ...zones,
+            [sourceZone.id]: {
+              ...sourceZone,
+              cardIds: sourceZone.cardIds.filter(
+                (cardId) => cardId !== card.id
+              ),
+            },
+          };
+          break;
+        }
+        case 'stackEvolution':
+        case 'stackAttachment': {
+          if (!sameStackSource) {
+            const sourceStack = requireStack(state, location.stackId);
+            stacks = {
+              ...stacks,
+              [sourceStack.id]: {
+                ...sourceStack,
+                evolutionCardIds:
+                  location.kind === 'stackEvolution'
+                    ? sourceStack.evolutionCardIds.filter(
+                        (cardId) => cardId !== card.id
+                      )
+                    : sourceStack.evolutionCardIds,
+                attachmentCardIds:
+                  location.kind === 'stackAttachment'
+                    ? sourceStack.attachmentCardIds.filter(
+                        (cardId) => cardId !== card.id
+                      )
+                    : sourceStack.attachmentCardIds,
+              },
+            };
+          }
+          break;
+        }
+        case 'inspectionWorkArea': {
+          const areas = state.workAreas[location.playerId];
+          const inspection = areas?.inspection;
+          if (
+            !areas ||
+            !inspection ||
+            inspection.id !== event.expectedSourceId
+          ) {
+            throw new Error('Atomic inspection source changed');
+          }
+          const remaining = inspection.cardIds.filter(
+            (cardId) => cardId !== card.id
+          );
+          workAreas = {
+            ...workAreas,
+            [location.playerId]: {
+              ...areas,
+              inspection:
+                remaining.length === 0
+                  ? null
+                  : { ...inspection, cardIds: remaining },
+            },
+          };
+          break;
+        }
+        case 'attachmentResolutionWorkArea': {
+          const areas = state.workAreas[location.playerId];
+          const resolution = areas?.attachmentResolution;
+          if (
+            !areas ||
+            !resolution ||
+            resolution.id !== event.expectedSourceId
+          ) {
+            throw new Error('Atomic staged source changed');
+          }
+          const evolutionCardIds = resolution.evolutionCardIds.filter(
+            (cardId) => cardId !== card.id
+          );
+          const attachmentCardIds = resolution.attachmentCardIds.filter(
+            (cardId) => cardId !== card.id
+          );
+          workAreas = {
+            ...workAreas,
+            [location.playerId]: {
+              ...areas,
+              attachmentResolution:
+                evolutionCardIds.length + attachmentCardIds.length === 0
+                  ? null
+                  : {
+                      ...resolution,
+                      evolutionCardIds,
+                      attachmentCardIds,
+                    },
+            },
+          };
+          break;
+        }
+      }
+
+      const nextTarget: PlayStack = {
+        ...target,
+        evolutionCardIds: [...event.evolutionCardIds],
+        attachmentCardIds: [...event.attachmentCardIds],
+        ...(derivedMode === 'evolution'
+          ? {
+              rotationQuarterTurns: 0 as const,
+              specialCondition: null,
+              abilityUsed: card.abilityUsed,
+            }
+          : {}),
+      };
+      return {
+        ...state,
+        cards: {
+          ...state.cards,
+          [card.id]: {
+            ...card,
+            face: 'up',
+            ...(derivedMode === 'evolution' ? { abilityUsed: false } : {}),
+          },
+        },
+        zones,
+        stacks: { ...stacks, [target.id]: nextTarget },
+        workAreas,
+        visibility: retireVisibility(
+          state,
+          new Set([card.id]),
+          new Set([card.id])
+        ),
+      };
+    }
     case 'CardMovedFromStack': {
       const stack = requireStack(state, event.expectedStackId);
       const sourceIndex = stack.attachmentCardIds.indexOf(event.cardId);

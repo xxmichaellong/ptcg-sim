@@ -732,6 +732,7 @@ test('stable two-Energy source geometry matches the React DOM candidate', async 
               presentation: {
                 selectedCardId: null;
                 hoveredCardId: null;
+                targetableCardIds: readonly [];
                 drag: null;
                 openedZoneId: null;
               }
@@ -765,6 +766,7 @@ test('stable two-Energy source geometry matches the React DOM candidate', async 
     await renderer.mount(host, scene, {
       selectedCardId: null,
       hoveredCardId: null,
+      targetableCardIds: [],
       drag: null,
       openedZoneId: null,
     });

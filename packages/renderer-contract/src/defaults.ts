@@ -13,6 +13,7 @@ export const DEFAULT_BOARD_VIEWPORT: BoardViewport = {
 export const DEFAULT_BOARD_PRESENTATION: BoardPresentation = {
   selectedCardId: null,
   hoveredCardId: null,
+  targetableCardIds: [],
   drag: null,
   openedZoneId: null,
 };

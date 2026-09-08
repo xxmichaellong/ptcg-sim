@@ -277,6 +277,7 @@ test('normalized React DOM releases board resources through 100 lifecycle cycles
     await renderer.mount(host, spike.scene, {
       selectedCardId: null,
       hoveredCardId: null,
+      targetableCardIds: [],
       drag: null,
       openedZoneId: null,
     });
@@ -328,6 +329,7 @@ test('normalized React DOM releases board resources through 100 lifecycle cycles
         await renderer.mount(host, spike.scene, {
           selectedCardId: null,
           hoveredCardId: null,
+          targetableCardIds: [],
           drag: null,
           openedZoneId: null,
         });
@@ -634,6 +636,7 @@ test('native and shared input follow center-rotated card paint in both candidate
         {
           selectedCardId: null,
           hoveredCardId: null,
+          targetableCardIds: [],
           drag: null,
           openedZoneId: null,
         }

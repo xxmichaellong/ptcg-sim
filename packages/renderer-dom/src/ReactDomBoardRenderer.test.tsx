@@ -999,6 +999,46 @@ describe('React DOM board renderer', () => {
     });
   });
 
+  it('paints controller-owned targets and emits a neutral background intent', async () => {
+    const emitIntent = vi.fn();
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent,
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    await mountInAct(renderer, host, createScene());
+
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        targetableCardIds: [cardId],
+      })
+    );
+    const card = host.querySelector<HTMLElement>('[data-card-id]')!;
+    expect(card.style.boxShadow).toBe('rgba(143, 215, 153, 0.864) 0 0 0 4px');
+    const surface = host.querySelector<HTMLElement>('.ptcgsim-board-surface')!;
+    act(() =>
+      surface.dispatchEvent(
+        new PointerEvent('pointerdown', {
+          bubbles: true,
+          pointerId: 17,
+          button: 0,
+          clientX: 700,
+          clientY: 100,
+        })
+      )
+    );
+    expect(emitIntent).toHaveBeenCalledWith({
+      kind: 'BoardBackgroundPressed',
+    });
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
+  });
+
   it('survives repeated StrictMode-compatible mount and teardown without nodes accumulating', async () => {
     const host = document.createElement('div');
     for (let index = 0; index < 10; index += 1) {

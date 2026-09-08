@@ -465,6 +465,157 @@ describe('headless board session controller', () => {
     ]);
   });
 
+  it('owns attach/evolve targeting through target, non-target, and background clicks', () => {
+    let state = install();
+    const sourceEntry = Object.values(state.view!.zones)
+      .flatMap((zone) => zone.cards.map((card) => ({ card, zone })))
+      .find(
+        ({ card, zone }) =>
+          card.kind === 'known' &&
+          card.category === 'Pokémon' &&
+          state.view!.boards[zone.ownerId ?? card.ownerId]
+      );
+    if (!sourceEntry) throw new Error('Controller fixture has no source card');
+    const request = {
+      action: 'beginAttachOrEvolve' as const,
+      cardId: sourceEntry.card.id,
+    };
+    state = select(state, sourceEntry.card.id);
+    const opened = apply(state, {
+      kind: 'LegacyShortcutActionRequested',
+      request,
+    });
+    expect(opened.effects).toEqual([
+      {
+        kind: 'InstallPresentation',
+        presentation: opened.state.presentation,
+      },
+    ]);
+    expect(opened.state.presentation.selectedCardId).toBeNull();
+    expect(opened.state.presentation.targetableCardIds).toEqual(
+      opened.state.playTargeting?.targets.map((target) => target.topCardId)
+    );
+    expect(opened.state.playTargeting).toMatchObject({
+      sourceCardId: sourceEntry.card.id,
+      expectedSourceId: sourceEntry.zone.id,
+      mode: 'evolution',
+    });
+
+    const background = apply(opened.state, {
+      kind: 'RendererIntent',
+      intent: { kind: 'BoardBackgroundPressed' },
+    });
+    expect(background.state.playTargeting).toBeNull();
+    expect(background.state.presentation.targetableCardIds).toEqual([]);
+    expect(background.effects).toEqual([
+      {
+        kind: 'InstallPresentation',
+        presentation: background.state.presentation,
+      },
+    ]);
+
+    const reopened = apply(select(background.state, sourceEntry.card.id), {
+      kind: 'LegacyShortcutActionRequested',
+      request,
+    });
+    const nonTarget = reopened.state.scene!.cards.find(
+      (card) =>
+        card.interactive &&
+        !reopened.state.presentation.targetableCardIds.includes(card.id)
+    )!;
+    const selectedInstead = apply(reopened.state, {
+      kind: 'RendererIntent',
+      intent: { kind: 'CardSelected', cardId: nonTarget.id },
+    });
+    expect(selectedInstead.state.playTargeting).toBeNull();
+    expect(selectedInstead.state.presentation).toMatchObject({
+      selectedCardId: nonTarget.id,
+      targetableCardIds: [],
+    });
+
+    const targeted = apply(
+      apply(select(selectedInstead.state, sourceEntry.card.id), {
+        kind: 'LegacyShortcutActionRequested',
+        request,
+      }).state,
+      {
+        kind: 'RendererIntent',
+        intent: {
+          kind: 'CardSelected',
+          cardId: opened.state.playTargeting!.targets[0]!.topCardId,
+        },
+      }
+    );
+    expect(targeted.state.playTargeting).toBeNull();
+    expect(targeted.state.presentation.targetableCardIds).toEqual([]);
+    expect(targeted.effects).toEqual([
+      {
+        kind: 'InstallPresentation',
+        presentation: targeted.state.presentation,
+      },
+      {
+        kind: 'SubmitCommand',
+        command: {
+          type: 'PlaceCardOnPlayStack',
+          cardId: sourceEntry.card.id,
+          expectedSourceId: sourceEntry.zone.id,
+          targetStackId: opened.state.playTargeting!.targets[0]!.stackId,
+          expectedTargetTopCardId:
+            opened.state.playTargeting!.targets[0]!.topCardId,
+          mode: 'evolution',
+        },
+      },
+    ]);
+  });
+
+  it('clears targeting on authoritative advance, dismissal, and rejection', () => {
+    const view = createRendererSpikeView();
+    const source = Object.values(view.zones)
+      .flatMap((zone) => zone.cards)
+      .find((card) => card.kind === 'known' && card.category === 'Pokémon')!;
+    const request = {
+      action: 'beginAttachOrEvolve' as const,
+      cardId: source.id,
+    };
+    const open = (state: BoardSessionControllerState) =>
+      apply(select(state, source.id), {
+        kind: 'LegacyShortcutActionRequested',
+        request,
+      }).state;
+
+    let state = open(install(initialFrame(view)));
+    const dismissed = apply(state, {
+      kind: 'DismissLocalPresentation',
+      scope: 'all',
+    });
+    expect(dismissed.state.playTargeting).toBeNull();
+    expect(dismissed.state.presentation.targetableCardIds).toEqual([]);
+
+    state = open(dismissed.state);
+    const rejectedSubmission = apply(state, { kind: 'SubmissionRejected' });
+    expect(rejectedSubmission.state.playTargeting).toBeNull();
+    expect(rejectedSubmission.state.presentation.targetableCardIds).toEqual([]);
+
+    state = open(rejectedSubmission.state);
+    const advanced = apply(state, {
+      kind: 'FrameReceived',
+      frame: liveFrame(2, withRevision(view, view.revision + 1)),
+    });
+    expect(advanced.state.playTargeting).toBeNull();
+    expect(advanced.state.presentation.targetableCardIds).toEqual([]);
+
+    const replay = install(replayFrame(1, 1, view, 'resync'));
+    const replaySelected = select(replay, source.id);
+    const blocked = apply(replaySelected, {
+      kind: 'LegacyShortcutActionRequested',
+      request,
+    });
+    expect(blocked.state).toBe(replaySelected);
+    expect(blocked.effects).toEqual([
+      { kind: 'ShortcutActionRejected', request, reason: 'read_only' },
+    ]);
+  });
+
   it('submits viewer-owned loose-board shortcuts without a selected card', () => {
     let state = install();
     if (state.view?.viewer.kind !== 'player') {

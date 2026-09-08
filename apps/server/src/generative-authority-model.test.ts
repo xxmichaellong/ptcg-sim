@@ -788,6 +788,8 @@ const commandVariant = (command: WireGameCommand): string => {
       return `${command.type}:index=${command.destinationIndex ?? 'omitted'}`;
     case 'MoveCardToPlay':
       return `${command.type}:${command.slot}:target=${command.targetStackId ? 'explicit' : 'omitted'}:index=${command.benchIndex ?? 'omitted'}`;
+    case 'PlaceCardOnPlayStack':
+      return `${command.type}:${command.mode}`;
     case 'MoveCardFromStack':
     case 'MoveInspectedCard':
     case 'MoveStagedCard':
@@ -1566,7 +1568,7 @@ describe('named model scenarios', () => {
     expect(() => parseIntegerEnvironment('MODEL_TEST', '1.5', 7, 10)).toThrow(
       'MODEL_TEST must be an integer from 1 through 10'
     );
-    expect(Object.keys(MODEL_COMMAND_REGISTRY)).toHaveLength(49);
+    expect(Object.keys(MODEL_COMMAND_REGISTRY)).toHaveLength(50);
     expect(new Set(Object.keys(MODEL_COMMAND_GENERATORS))).toEqual(
       new Set(Object.keys(MODEL_COMMAND_REGISTRY))
     );

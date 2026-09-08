@@ -545,6 +545,7 @@ test('recipient projection never requests concealed face assets across reveal an
     const presentation = {
       selectedCardId: null,
       hoveredCardId: null,
+      targetableCardIds: [],
       drag: null,
       openedZoneId: null,
     } as const;

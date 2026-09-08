@@ -715,7 +715,14 @@ describe('legacy board shortcut action resolver', () => {
       cardId,
       category: 'Pokémon',
     });
-    expect(key('e', 'KeyE')).toBeNull();
+    expect(key('q', 'KeyQ')).toEqual({
+      action: 'beginAttachOrEvolve',
+      cardId,
+    });
+    expect(key('e', 'KeyE')).toEqual({
+      action: 'beginAttachOrEvolve',
+      cardId,
+    });
     expect(key('x', 'KeyX', true)).toBeNull();
   });
 

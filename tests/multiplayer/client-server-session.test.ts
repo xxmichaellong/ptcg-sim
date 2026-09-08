@@ -11,6 +11,10 @@ import {
   submitPrizeDeckBottomAction,
 } from '../../apps/web/src/board/resolveDeckRelativeAction.js';
 import { submitCardAnnotationAction } from '../../apps/web/src/board/resolveCardAnnotationAction.js';
+import {
+  resolveAttachEvolveTarget,
+  resolveAttachEvolveTargeting,
+} from '../../apps/web/src/board/resolveAttachEvolveTargeting.js';
 import { submitInspectionCardsAction } from '../../apps/web/src/board/resolveInspectionCardsAction.js';
 import { submitLooseBoardAction } from '../../apps/web/src/board/resolveLooseBoardAction.js';
 import { submitLifecycleAction } from '../../apps/web/src/board/resolveLifecycleAction.js';
@@ -431,6 +435,105 @@ describe('client/server multiplayer contract', () => {
       expect.objectContaining({ id: card.id })
     );
     expect(room.store.commandCommits).toHaveLength(5);
+  });
+
+  it('carries one attach/evolve target choice through aliases, authority, and replay history', async () => {
+    const room = await fixture();
+    const player = await connectClient({
+      hub: room.hub,
+      name: 'Blue',
+      role: 'player',
+      capability: room.credentials.playerOneSeatCapability,
+    });
+    const playerId = player.session.getSnapshot().playerId;
+    if (!playerId) throw new Error('Missing admitted player identity');
+    expect(
+      player.session.submit({
+        type: 'LoadDeck',
+        entries: [
+          {
+            definition: {
+              id: 'targeting-pokemon',
+              name: 'Targeting Pokémon',
+              category: 'Pokémon',
+              imageUrl: '/targeting-pokemon.png',
+            },
+            count: 14,
+          },
+        ],
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+    expect(player.session.submit({ type: 'SetupPlayer' }).queued).toBe(true);
+    await player.factory.flush();
+
+    let view = player.session.getSnapshot().view;
+    const hand = view
+      ? Object.values(view.zones).find(
+          (zone) => zone.ownerId === playerId && zone.kind === 'hand'
+        )
+      : undefined;
+    const base = hand?.cards[0];
+    if (!view || !hand || !base) throw new Error('Setup did not publish hand');
+    expect(
+      player.session.submit({
+        type: 'MoveCardToPlay',
+        cardId: base.id,
+        expectedSourceZoneId: hand.id,
+        boardPlayerId: playerId,
+        slot: 'active',
+      }).queued
+    ).toBe(true);
+    await player.factory.flush();
+
+    view = player.session.getSnapshot().view;
+    const source = view?.zones[hand.id]?.cards[0];
+    if (!view || !source) throw new Error('Missing evolution source');
+    const targeting = resolveAttachEvolveTargeting(view, source.id);
+    expect(targeting).toMatchObject({
+      ok: true,
+      targeting: { mode: 'evolution' },
+    });
+    if (!targeting.ok) throw new Error(targeting.reason);
+    const target = targeting.targeting.targets[0]!;
+    const placement = resolveAttachEvolveTarget(
+      view,
+      targeting.targeting,
+      target.topCardId
+    );
+    expect(placement).toMatchObject({
+      ok: true,
+      command: {
+        type: 'PlaceCardOnPlayStack',
+        cardId: source.id,
+        expectedSourceId: hand.id,
+        targetStackId: target.stackId,
+        expectedTargetTopCardId: target.topCardId,
+        mode: 'evolution',
+      },
+    });
+    if (!placement.ok) throw new Error(placement.reason);
+    expect(player.session.submit(placement.command).queued).toBe(true);
+    await player.factory.flush();
+
+    const after = player.session.getSnapshot();
+    expect(after.pendingCommands).toEqual([]);
+    expect(after.view?.revision).toBe(4);
+    expect(
+      after.view?.stacks[target.stackId]?.evolutionCards.map((card) => card.id)
+    ).toEqual([target.topCardId, source.id]);
+    expect(after.view?.zones[hand.id]?.cards).not.toContainEqual(
+      expect.objectContaining({ id: source.id })
+    );
+    expect(
+      room.store.commandCommits.at(-1)?.snapshot.replayHistory.entries.at(-1)
+        ?.batch.events
+    ).toEqual([
+      expect.objectContaining({
+        type: 'CardPlacedOnPlayStack',
+        mode: 'evolution',
+      }),
+    ]);
   });
 
   it('projects canonical mixed attachments privately and keeps their aliases stable through reflow', async () => {

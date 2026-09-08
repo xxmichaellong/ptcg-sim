@@ -185,6 +185,7 @@ type SourceRelativeCardCommand =
       {
         readonly type:
           | 'MoveCardToStadium'
+          | 'PlaceCardOnPlayStack'
           | 'ChangeCardCategory'
           | 'SetPublicReveal'
           | 'BeginCardInspection';
@@ -504,6 +505,85 @@ const decideMoveCardToStadium = (
     accepted: true,
     events: [displacement, ...departure.events],
   };
+};
+
+const decidePlaceCardOnPlayStack = (
+  state: MatchState,
+  command: Extract<GameCommand, { readonly type: 'PlaceCardOnPlayStack' }>
+): CommandDecision => {
+  const source = resolveCardActionSource(state, command);
+  if (!source.accepted) return source;
+  const target = state.stacks[command.targetStackId];
+  if (!target || target.boardPlayerId !== command.playerId) {
+    return reject(
+      'stale_reference',
+      'Target play stack is no longer on the source board'
+    );
+  }
+  if (target.evolutionCardIds.at(-1) !== command.expectedTargetTopCardId) {
+    return reject('stale_reference', 'Target play stack top changed');
+  }
+
+  let derivedMode: typeof command.mode;
+  if (source.location.kind === 'stackEvolution') {
+    const sourceStack = state.stacks[source.location.stackId];
+    if (
+      !sourceStack ||
+      source.location.index >= sourceStack.evolutionCardIds.length - 1
+    ) {
+      return reject(
+        'precondition_failed',
+        'A top evolution cannot enter attach/evolve targeting'
+      );
+    }
+    derivedMode = 'attachment';
+  } else if (source.location.kind === 'stackAttachment') {
+    derivedMode = 'attachment';
+  } else {
+    derivedMode =
+      source.card.currentCategory === 'Pokémon' ? 'evolution' : 'attachment';
+  }
+  if (derivedMode !== command.mode) {
+    return reject('stale_reference', 'Attach/evolve placement mode changed');
+  }
+
+  const sameStackSource =
+    (source.location.kind === 'stackEvolution' ||
+      source.location.kind === 'stackAttachment') &&
+    source.location.stackId === target.id;
+  const evolutionBeforePlacement = sameStackSource
+    ? target.evolutionCardIds.filter((cardId) => cardId !== source.card.id)
+    : [...target.evolutionCardIds];
+  const attachmentsBeforePlacement = sameStackSource
+    ? target.attachmentCardIds.filter((cardId) => cardId !== source.card.id)
+    : [...target.attachmentCardIds];
+  const evolutionCardIds =
+    derivedMode === 'evolution'
+      ? [...evolutionBeforePlacement, source.card.id]
+      : evolutionBeforePlacement;
+  const attachmentCardIds =
+    derivedMode === 'attachment'
+      ? orderAttachmentCardIdsV1(
+          state.cards,
+          attachmentsBeforePlacement,
+          source.card.id
+        )
+      : attachmentsBeforePlacement;
+
+  return accept({
+    type: 'CardPlacedOnPlayStack',
+    playerId: command.playerId,
+    cardId: source.card.id,
+    expectedSourceId: command.expectedSourceId,
+    targetStackId: target.id,
+    expectedTargetTopCardId: command.expectedTargetTopCardId,
+    expectedTargetEvolutionCardIds: [...target.evolutionCardIds],
+    expectedTargetAttachmentCardIds: [...target.attachmentCardIds],
+    mode: derivedMode,
+    attachmentOrderVersion: 1,
+    evolutionCardIds,
+    attachmentCardIds,
+  });
 };
 
 const decideMoveCardToDeckEdge = (
@@ -1423,6 +1503,8 @@ export const decideCommand = (
       return decideMoveCardToDeckEdge(state, command, context);
     case 'MoveCardToStadium':
       return decideMoveCardToStadium(state, command, context);
+    case 'PlaceCardOnPlayStack':
+      return decidePlaceCardOnPlayStack(state, command);
     case 'ShuffleCardIntoDeck':
       return decideShuffleCardIntoDeck(state, command, context);
     case 'ChangeCardCategory':
