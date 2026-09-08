@@ -1053,6 +1053,9 @@ describe('legacy action-export source envelope', () => {
     const relocate = readRepositoryFile(
       'client/src/actions/move-card-bundle/relocate-attached-cards.js'
     );
+    const resetImage = readRepositoryFile(
+      'client/src/setup/image-logic/reset-image.js'
+    );
 
     expect(clicks).toContain(
       'mouseClick.cardIndex = getZone(\n      mouseClick.cardUser,\n      mouseClick.zoneId\n    ).array.findIndex((card) => card.image === event.target)'
@@ -1073,6 +1076,16 @@ describe('legacy action-export source envelope', () => {
     expect(relocate).toContain(
       "moveCard(user, initiator, oZoneId, 'attachedCards', i);"
     );
+    expect(relocate).toContain(
+      'if (image.relative === movingCard.image) {\n      resetImage(image);'
+    );
+    expect(relocate.indexOf('resetImage(image);')).toBeLessThan(
+      relocate.indexOf(
+        "moveCard(user, initiator, oZoneId, 'attachedCards', i);"
+      )
+    );
+    expect(resetImage).toContain('image.relative = 0;');
+    expect(resetImage).toContain('image.attached = false;');
     expect(relocate).toContain('i--;');
   });
 

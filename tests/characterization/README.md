@@ -468,7 +468,18 @@ single-card shuffle, or atomic stadium replacement commands. Fixtures pin
 source classification, changing coordinates, exact events, both deck edges,
 the remaining-deck-plus-selected-card shuffle basis, residual/final work-area
 cleanup, concealment, retry, replay, invariants, and rollback. Target-free play
-and `switchWithDeckTop` remain closed because V1's tail return can violate the
+from either work area now composes the existing individual departure through
+the owner's loose board with `MoveCardToPlay`, preserving current-coordinate
+selection, arbitrary-category-to-Pokémon normalization, deterministic stack
+IDs, occupied-active demotion, bench append, work-area/grant cleanup, an empty
+intermediate board, retry, and full replay. The frozen relocation path resets
+staged cards to `relative = 0` and `attached = false` before they enter
+`attachedCards`, proving that an individual play move does not restore sibling
+staged cards. A two-page real-V1 Chromium oracle separately proves a Trainer
+from `viewCards` replacing active and an Energy from `attachedCards` appending
+to bench, including exact source records, single-card removal, category
+normalization, selection cleanup, and unchanged sibling zones.
+`switchWithDeckTop` remains closed because V1's tail return can violate the
 canonical staged sequence classification.
 
 Static source characterization now freezes deck-inspection creation as well.

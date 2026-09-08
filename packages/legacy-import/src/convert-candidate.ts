@@ -935,15 +935,31 @@ export const buildLegacyV1Candidate = (
             action.destinationZone === 'active' ||
             action.destinationZone === 'bench'
           ) {
-            const targetStack =
-              typeof action.targetIndex === 'number'
-                ? candidatePlayStackTopAtLegacyIndex(
-                    state,
-                    playerId,
-                    action.destinationZone,
-                    action.targetIndex
-                  )
-                : null;
+            if (typeof action.targetIndex !== 'number') {
+              const boardZoneId = playerZoneId(playerId, 'board');
+              const departureProblem = apply({
+                type: 'MoveInspectedCard',
+                cardId: source.cardId,
+                expectedWorkAreaId: source.workAreaId,
+                destinationZoneId: boardZoneId,
+              });
+              if (departureProblem) return departureProblem;
+              const placementProblem = apply({
+                type: 'MoveCardToPlay',
+                cardId: source.cardId,
+                expectedSourceZoneId: boardZoneId,
+                boardPlayerId: playerId,
+                slot: action.destinationZone,
+              });
+              if (placementProblem) return placementProblem;
+              break;
+            }
+            const targetStack = candidatePlayStackTopAtLegacyIndex(
+              state,
+              playerId,
+              action.destinationZone,
+              action.targetIndex
+            );
             if (!targetStack) {
               return failure({
                 code: 'source_state_mismatch',
@@ -1018,15 +1034,31 @@ export const buildLegacyV1Candidate = (
             action.destinationZone === 'active' ||
             action.destinationZone === 'bench'
           ) {
-            const targetStack =
-              typeof action.targetIndex === 'number'
-                ? candidatePlayStackTopAtLegacyIndex(
-                    state,
-                    playerId,
-                    action.destinationZone,
-                    action.targetIndex
-                  )
-                : null;
+            if (typeof action.targetIndex !== 'number') {
+              const boardZoneId = playerZoneId(playerId, 'board');
+              const departureProblem = apply({
+                type: 'MoveStagedCard',
+                cardId: source.cardId,
+                expectedWorkAreaId: source.workAreaId,
+                destinationZoneId: boardZoneId,
+              });
+              if (departureProblem) return departureProblem;
+              const placementProblem = apply({
+                type: 'MoveCardToPlay',
+                cardId: source.cardId,
+                expectedSourceZoneId: boardZoneId,
+                boardPlayerId: playerId,
+                slot: action.destinationZone,
+              });
+              if (placementProblem) return placementProblem;
+              break;
+            }
+            const targetStack = candidatePlayStackTopAtLegacyIndex(
+              state,
+              playerId,
+              action.destinationZone,
+              action.targetIndex
+            );
             if (!targetStack) {
               return failure({
                 code: 'source_state_mismatch',

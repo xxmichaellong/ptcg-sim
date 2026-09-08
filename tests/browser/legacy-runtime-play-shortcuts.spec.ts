@@ -13,8 +13,12 @@ interface LegacyActionRecord {
 
 interface LegacyPlayShortcutState {
   readonly activeNames: readonly string[];
+  readonly activeTypes: readonly string[];
+  readonly attachedCardNames: readonly string[];
   readonly benchNames: readonly string[];
+  readonly benchTypes: readonly string[];
   readonly handNames: readonly string[];
+  readonly viewCardNames: readonly string[];
   readonly selectingCard: boolean;
   readonly selectedHighlighted: boolean;
   readonly selfCounter: number;
@@ -22,12 +26,19 @@ interface LegacyPlayShortcutState {
   readonly exports: readonly LegacyActionRecord[];
 }
 
+interface LegacyPlayShortcutFixtureOptions {
+  readonly sourceType?: 'Energy' | 'Pokémon' | 'Trainer';
+  readonly sourceZone?: 'attachedCards' | 'hand' | 'viewCards';
+}
+
 const mountRealLegacyPlayShortcutFixture = async (
-  page: Page
+  page: Page,
+  options: LegacyPlayShortcutFixtureOptions = {}
 ): Promise<void> => {
-  await page.evaluate(async () => {
+  await page.evaluate(async (fixtureOptions) => {
     interface RuntimeCard {
       readonly name: string;
+      readonly type: string;
       readonly image: HTMLImageElement;
     }
     interface RuntimeZone {
@@ -80,7 +91,13 @@ const mountRealLegacyPlayShortcutFixture = async (
     const systemState = frontEnd['systemState'] as RuntimeState;
     const mouseClick = frontEnd['mouseClick'] as RuntimeSelection;
 
-    for (const zoneId of ['active', 'bench', 'hand']) {
+    for (const zoneId of [
+      'active',
+      'attachedCards',
+      'bench',
+      'hand',
+      'viewCards',
+    ]) {
       const zone = getZone('self', zoneId);
       zone.array.splice(0);
       for (const image of zone.element.querySelectorAll('img')) image.remove();
@@ -94,25 +111,40 @@ const mountRealLegacyPlayShortcutFixture = async (
     systemState.isUndoInProgress = false;
     systemState.cardBackSrc = `${location.origin}/src/assets/cardback.png`;
 
-    const createCard = (name: string): RuntimeCard =>
+    const createCard = (
+      name: string,
+      type: 'Energy' | 'Pokémon' | 'Trainer' = 'Pokémon'
+    ): RuntimeCard =>
       new Card(
         'self',
         name,
-        'Pokémon',
+        type,
         `${location.origin}/src/assets/blank-logo.png`
       );
-    const selected = createCard('Selected card');
+    const selected = createCard(
+      'Selected card',
+      fixtureOptions.sourceType ?? 'Pokémon'
+    );
     const incumbent = createCard('Incumbent active');
-    await Promise.all([selected.image.decode(), incumbent.image.decode()]);
+    const sourceZoneId = fixtureOptions.sourceZone ?? 'hand';
+    const sibling =
+      sourceZoneId === 'hand'
+        ? null
+        : createCard('Sibling work-area card', 'Pokémon');
+    const cards = [selected, incumbent, ...(sibling ? [sibling] : [])];
+    await Promise.all(cards.map((card) => card.image.decode()));
 
     const active = getZone('self', 'active');
-    const hand = getZone('self', 'hand');
+    const source = getZone('self', sourceZoneId);
     active.array.push(incumbent);
     initializeActiveBenchCard('self', incumbent, 'active', active);
-    hand.array.push(selected);
-    hand.element.append(selected.image);
+    source.array.push(selected);
+    source.element.append(selected.image);
+    if (sibling) {
+      source.array.push(sibling);
+      source.element.append(sibling.image);
+    }
 
-    const cards = [selected, incumbent];
     const deadline = Date.now() + 10_000;
     while (
       cards.some(
@@ -136,10 +168,10 @@ const mountRealLegacyPlayShortcutFixture = async (
     selected.image.dataset.legacyRuntimePlayShortcutCard = 'selected';
     selected.image.classList.add('highlight');
     mouseClick.cardUser = 'self';
-    mouseClick.zoneId = 'hand';
+    mouseClick.zoneId = sourceZoneId;
     mouseClick.cardIndex = 0;
     mouseClick.selectingCard = true;
-  });
+  }, options);
 };
 
 const captureRealLegacyPlayShortcutState = async (
@@ -148,6 +180,7 @@ const captureRealLegacyPlayShortcutState = async (
   page.evaluate(async () => {
     interface RuntimeCard {
       readonly name: string;
+      readonly type: string;
     }
     interface RuntimeZone {
       readonly array: RuntimeCard[];
@@ -177,8 +210,16 @@ const captureRealLegacyPlayShortcutState = async (
     );
     return {
       activeNames: getZone('self', 'active').array.map((card) => card.name),
+      activeTypes: getZone('self', 'active').array.map((card) => card.type),
+      attachedCardNames: getZone('self', 'attachedCards').array.map(
+        (card) => card.name
+      ),
       benchNames: getZone('self', 'bench').array.map((card) => card.name),
+      benchTypes: getZone('self', 'bench').array.map((card) => card.type),
       handNames: getZone('self', 'hand').array.map((card) => card.name),
+      viewCardNames: getZone('self', 'viewCards').array.map(
+        (card) => card.name
+      ),
       selectingCard: selection.selectingCard,
       selectedHighlighted: selected?.classList.contains('highlight') ?? false,
       selfCounter: state.selfCounter,
@@ -246,6 +287,93 @@ test('real v1 selected-card play shortcuts pin active replacement and bench plac
         activeNames: scenario.activeNames,
         benchNames: scenario.benchNames,
         handNames: [],
+        selectingCard: false,
+        selectedHighlighted: false,
+        selfCounter: 1,
+        actions: expectedActions,
+      });
+      expect(state.exports).toEqual(expectedLegacyExports(state.actions));
+      expect(loaded.servedPaths).toContain('/src/assets/blank-logo.png');
+      expect(loaded.missingPaths).toEqual([]);
+      expect(loaded.blockedOrigins).toContain('https://ptcgsim.online');
+      expect(pageErrors).toEqual([]);
+    } finally {
+      await page.close();
+    }
+  }
+});
+
+test('real v1 target-free work-area play moves only the selected card and normalizes its category', async ({
+  browser,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== 'chromium',
+    'The real-runtime work-area play checkpoint is Chromium-specific.'
+  );
+
+  const cases = [
+    {
+      sourceZone: 'viewCards',
+      sourceType: 'Trainer',
+      key: 'KeyA',
+      destination: 'active',
+      activeNames: ['Selected card'],
+      activeTypes: ['Pokémon'],
+      attachedCardNames: [],
+      benchNames: ['Incumbent active'],
+      benchTypes: ['Pokémon'],
+      viewCardNames: ['Sibling work-area card'],
+    },
+    {
+      sourceZone: 'attachedCards',
+      sourceType: 'Energy',
+      key: 'KeyB',
+      destination: 'bench',
+      activeNames: ['Incumbent active'],
+      activeTypes: ['Pokémon'],
+      attachedCardNames: ['Sibling work-area card'],
+      benchNames: ['Selected card'],
+      benchTypes: ['Pokémon'],
+      viewCardNames: [],
+    },
+  ] as const;
+
+  for (const scenario of cases) {
+    const page = await browser.newPage({ viewport, deviceScaleFactor: 1 });
+    const pageErrors: string[] = [];
+    page.on('pageerror', (error) => pageErrors.push(error.message));
+    try {
+      const loaded = await loadLegacyRuntime(page);
+      await mountRealLegacyPlayShortcutFixture(page, {
+        sourceZone: scenario.sourceZone,
+        sourceType: scenario.sourceType,
+      });
+      await page.keyboard.press(scenario.key);
+      const state = await captureRealLegacyPlayShortcutState(page);
+      const expectedActions = [
+        {
+          user: 'self',
+          emit: true,
+          action: 'moveCardBundle',
+          parameters: [
+            'opp',
+            scenario.sourceZone,
+            scenario.destination,
+            0,
+            false,
+            'move',
+          ],
+        },
+      ];
+
+      expect(state).toMatchObject({
+        activeNames: scenario.activeNames,
+        activeTypes: scenario.activeTypes,
+        attachedCardNames: scenario.attachedCardNames,
+        benchNames: scenario.benchNames,
+        benchTypes: scenario.benchTypes,
+        handNames: [],
+        viewCardNames: scenario.viewCardNames,
         selectingCard: false,
         selectedHighlighted: false,
         selfCounter: 1,

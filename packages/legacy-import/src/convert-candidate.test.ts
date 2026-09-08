@@ -1483,7 +1483,167 @@ describe('legacy v1 canonical candidate builder', () => {
     assertMatchInvariants(result.state);
   });
 
-  it('rolls back missing, stale, and unsupported individual inspection movement', () => {
+  it('moves inspected Trainer and Energy cards into new play stacks by current index', () => {
+    const parsed = parse(
+      payload(
+        [
+          ['1', 'Inspection incumbent', 'Pokémon', '/legacy/incumbent.png'],
+          ['1', 'Inspection trainer', 'Trainer', '/legacy/trainer.png'],
+          ['1', 'Inspection energy', 'Energy', '/legacy/energy.png'],
+          ['1', 'Inspection reserve', 'Pokémon', '/legacy/reserve.png'],
+        ],
+        '',
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'active',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'viewDeck', ['self', 3, true, 3, false]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'viewCards',
+          'active',
+          1,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'viewCards',
+          'bench',
+          0,
+          null,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'viewCards',
+          'discard',
+          0,
+          false,
+          'move',
+        ])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) {
+      throw new Error('Expected target-free inspection play success');
+    }
+
+    const playerId = target.selfSeat.playerId;
+    const boardZoneId = playerZoneId(playerId, 'board');
+    const discardId = playerZoneId(playerId, 'discard');
+    const incumbentId = 'legacy:v1:card:000000';
+    const trainerId = 'legacy:v1:card:000001';
+    const energyId = 'legacy:v1:card:000002';
+    const reserveId = 'legacy:v1:card:000003';
+    const incumbentStackId = 'legacy:v1:stack:000000';
+    const activeStackId = 'legacy:v1:stack:000001';
+    const benchStackId = 'legacy:v1:stack:000002';
+    const inspectionId = 'legacy:v1:inspection:000000';
+    const workAreaId = `work:${playerId}:inspection:${inspectionId}`;
+    expect(result.state.zones[boardZoneId]?.cardIds).toEqual([]);
+    expect(result.state.zones[discardId]?.cardIds).toEqual([reserveId]);
+    expect(result.state.boards[playerId]).toEqual({
+      activeStackId,
+      benchStackIds: [incumbentStackId, benchStackId],
+    });
+    expect(result.state.stacks[activeStackId]).toMatchObject({
+      slot: 'active',
+      evolutionCardIds: [energyId],
+      attachmentCardIds: [],
+    });
+    expect(result.state.stacks[benchStackId]).toMatchObject({
+      slot: 'bench',
+      evolutionCardIds: [trainerId],
+      attachmentCardIds: [],
+    });
+    expect(result.state.cards[energyId]).toMatchObject({
+      originalCategory: 'Energy',
+      currentCategory: 'Pokémon',
+      face: 'up',
+    });
+    expect(result.state.cards[trainerId]).toMatchObject({
+      originalCategory: 'Trainer',
+      currentCategory: 'Pokémon',
+      face: 'up',
+    });
+    expect(result.state.workAreas[playerId]?.inspection).toBeNull();
+    expect(result.state.visibility.inspectionGrants).toEqual({});
+
+    expect(result.records[4]!.batches).toHaveLength(2);
+    expect(result.records[4]!.batches[0]!.events).toEqual([
+      {
+        type: 'InspectedCardMoved',
+        playerId,
+        inspectionId,
+        expectedWorkAreaId: workAreaId,
+        cardId: energyId,
+        destinationZoneId: boardZoneId,
+        destinationIndex: 0,
+        concealIdentity: false,
+      },
+    ]);
+    expect(result.records[4]!.batches[1]!.events).toEqual([
+      {
+        type: 'CardMovedToPlay',
+        cardId: energyId,
+        expectedSourceZoneId: boardZoneId,
+        boardPlayerId: playerId,
+        slot: 'active',
+        mode: 'newStack',
+        stackId: activeStackId,
+        benchIndex: 0,
+        previousActiveToBench: true,
+      },
+    ]);
+    expect(result.records[5]!.batches).toHaveLength(2);
+    expect(result.records[5]!.batches[0]!.events).toEqual([
+      {
+        type: 'InspectedCardMoved',
+        playerId,
+        inspectionId,
+        expectedWorkAreaId: workAreaId,
+        cardId: trainerId,
+        destinationZoneId: boardZoneId,
+        destinationIndex: 0,
+        concealIdentity: false,
+      },
+    ]);
+    expect(result.records[5]!.batches[1]!.events).toEqual([
+      {
+        type: 'CardMovedToPlay',
+        cardId: trainerId,
+        expectedSourceZoneId: boardZoneId,
+        boardPlayerId: playerId,
+        slot: 'bench',
+        mode: 'newStack',
+        stackId: benchStackId,
+        benchIndex: 1,
+        previousActiveToBench: false,
+      },
+    ]);
+    for (const cardId of [incumbentId, trainerId, energyId, reserveId]) {
+      expect(result.state.cards[cardId]?.visibilityGeneration).toBe(0);
+    }
+    const replayed = result.records
+      .flatMap((record) => record.batches)
+      .reduce(
+        applyEventBatch,
+        createEmptyMatch(target.matchId, [target.selfSeat, target.opponentSeat])
+      );
+    expect(replayed).toEqual(result.state);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+  });
+
+  it('rolls back missing and stale individual inspection movement', () => {
     const inspectThen = (...actions: unknown[]) =>
       buildLegacyV1Candidate(
         parse(
@@ -1559,38 +1719,6 @@ describe('legacy v1 canonical candidate builder', () => {
       ],
     });
     expect('state' in stale).toBe(false);
-
-    const unsupported = [
-      {
-        result: inspectThen(
-          action('self', 'moveCardBundle', [
-            'opp',
-            'viewCards',
-            'active',
-            0,
-            false,
-            'move',
-          ])
-        ),
-        path: '$[4].parameters[4]',
-        message:
-          'Recorded inspected-card destination does not identify a current stack top',
-      },
-    ];
-    for (const { result, path, message } of unsupported) {
-      expect(result).toEqual({
-        ok: false,
-        issues: [
-          {
-            code: 'source_state_mismatch',
-            recordIndex: 4,
-            path,
-            message,
-          },
-        ],
-      });
-      expect('state' in result).toBe(false);
-    }
   });
 
   it('keeps the position-incompatible inspection deck-top swap fail-closed', () => {
@@ -5749,6 +5877,141 @@ describe('legacy v1 canonical candidate builder', () => {
     assertMatchInvariants(result.state);
   });
 
+  it('moves individual staged categories into new play stacks by changing flat index', () => {
+    const parsed = parse(
+      stagedWorkAreaPayload(
+        action('self', 'moveCardBundle', [
+          'opp',
+          'attachedCards',
+          'active',
+          2,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'attachedCards',
+          'bench',
+          1,
+          null,
+          'move',
+        ]),
+        action('self', 'discardAll', ['opp', 'attachedCards'])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) {
+      throw new Error('Expected target-free staged play success');
+    }
+
+    const playerId = target.selfSeat.playerId;
+    const boardZoneId = playerZoneId(playerId, 'board');
+    const discardId = playerZoneId(playerId, 'discard');
+    const workAreaId = 'legacy:v1:work-area:000000';
+    const baseId = 'legacy:v1:card:000000';
+    const middleId = 'legacy:v1:card:000001';
+    const departedTopId = 'legacy:v1:card:000002';
+    const energyId = 'legacy:v1:card:000003';
+    const toolId = 'legacy:v1:card:000004';
+    const activeStackId = 'legacy:v1:stack:000001';
+    const benchStackId = 'legacy:v1:stack:000002';
+    expect(result.state.zones[boardZoneId]?.cardIds).toEqual([]);
+    expect(result.state.zones[discardId]?.cardIds).toEqual([
+      departedTopId,
+      middleId,
+      toolId,
+    ]);
+    expect(result.state.boards[playerId]).toEqual({
+      activeStackId,
+      benchStackIds: [benchStackId],
+    });
+    expect(result.state.stacks[activeStackId]).toMatchObject({
+      slot: 'active',
+      evolutionCardIds: [energyId],
+      attachmentCardIds: [],
+    });
+    expect(result.state.stacks[benchStackId]).toMatchObject({
+      slot: 'bench',
+      evolutionCardIds: [baseId],
+      attachmentCardIds: [],
+    });
+    expect(result.state.cards[energyId]).toMatchObject({
+      originalCategory: 'Energy',
+      currentCategory: 'Pokémon',
+      face: 'up',
+    });
+    expect(result.state.workAreas[playerId]?.attachmentResolution).toBeNull();
+
+    expect(result.records[8]!.batches).toHaveLength(2);
+    expect(result.records[8]!.batches[0]!.events).toEqual([
+      {
+        type: 'StagedCardMoved',
+        playerId,
+        expectedWorkAreaId: workAreaId,
+        source: 'attachment',
+        cardId: energyId,
+        destinationZoneId: boardZoneId,
+        destinationIndex: 0,
+        concealIdentity: false,
+      },
+    ]);
+    expect(result.records[8]!.batches[1]!.events).toEqual([
+      {
+        type: 'CardMovedToPlay',
+        cardId: energyId,
+        expectedSourceZoneId: boardZoneId,
+        boardPlayerId: playerId,
+        slot: 'active',
+        mode: 'newStack',
+        stackId: activeStackId,
+        benchIndex: 0,
+        previousActiveToBench: false,
+      },
+    ]);
+    expect(result.records[9]!.batches).toHaveLength(2);
+    expect(result.records[9]!.batches[0]!.events).toEqual([
+      {
+        type: 'StagedCardMoved',
+        playerId,
+        expectedWorkAreaId: workAreaId,
+        source: 'evolution',
+        cardId: baseId,
+        destinationZoneId: boardZoneId,
+        destinationIndex: 0,
+        concealIdentity: false,
+      },
+    ]);
+    expect(result.records[9]!.batches[1]!.events).toEqual([
+      {
+        type: 'CardMovedToPlay',
+        cardId: baseId,
+        expectedSourceZoneId: boardZoneId,
+        boardPlayerId: playerId,
+        slot: 'bench',
+        mode: 'newStack',
+        stackId: benchStackId,
+        benchIndex: 0,
+        previousActiveToBench: false,
+      },
+    ]);
+    expect(result.records[10]!.batches).toHaveLength(2);
+    for (const cardId of [baseId, middleId, departedTopId, energyId, toolId]) {
+      expect(result.state.cards[cardId]?.visibilityGeneration).toBe(0);
+    }
+    const replayed = result.records
+      .flatMap((record) => record.batches)
+      .reduce(
+        applyEventBatch,
+        createEmptyMatch(target.matchId, [target.selfSeat, target.opponentSeat])
+      );
+    expect(replayed).toEqual(result.state);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+  });
+
   it.each([
     {
       actionName: 'shuffleAll',
@@ -5911,7 +6174,7 @@ describe('legacy v1 canonical candidate builder', () => {
     }
   );
 
-  it('rolls back stale and deliberately unsupported staged-card shapes', () => {
+  it('rolls back stale staged-card coordinates and the incompatible deck swap', () => {
     const stageThen = (...finalActions: unknown[]) =>
       buildLegacyV1Candidate(
         parse(
@@ -5974,30 +6237,6 @@ describe('legacy v1 canonical candidate builder', () => {
       ],
     });
     expect('state' in stale).toBe(false);
-
-    const targetFreePlay = stageThen(
-      action('self', 'moveCardBundle', [
-        'opp',
-        'attachedCards',
-        'active',
-        0,
-        false,
-        'move',
-      ])
-    );
-    expect(targetFreePlay).toEqual({
-      ok: false,
-      issues: [
-        {
-          code: 'source_state_mismatch',
-          recordIndex: 6,
-          path: '$[6].parameters[4]',
-          message:
-            'Recorded staged-card destination does not identify a current stack top',
-        },
-      ],
-    });
-    expect('state' in targetFreePlay).toBe(false);
 
     const staleDeckRelative = [
       {

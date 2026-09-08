@@ -174,6 +174,7 @@ shuffle-hand-to-deck-bottom-and-draw/direct-prize-shuffle/target-free-loose/
 stadium/new-play-stack/rich-whole-stack-movement-and-swap/stack-card-reattachment/
 stack-card-departure/
 source-zone-targeted-play/
+work-area-target-free-play/
 zone-backed-deck-action/
 prizes-to-deck-bottom subset
 through normal game-core commands and verifies exact event replay; it rejects every
@@ -219,7 +220,11 @@ shuffle passes through the exact remaining-deck-plus-selected-card V1 basis;
 stadium replacement atomically displaces the incumbent to its owner's discard.
 Exact event classification, residual and final cleanup, retry, replay,
 concealment generations, and stale coordinate/permutation rollback are pinned.
-Target-free play and `switchWithDeckTop` remain closed because the V1 tail
+Target-free active/bench play now composes `MoveStagedCard` to the owner's loose
+board with `MoveCardToPlay` in the same closed import record. This preserves
+V1's individual-card behavior, category-to-Pokémon normalization, deterministic
+new-stack identity, occupied-active demotion, and residual work area without a
+new core or wire shape. `switchWithDeckTop` remains closed because the V1 tail
 return cannot always be represented by canonical staged classification. Exact
 `leaveAll` tuples now consume a compatible staged
 stack through `RestoreStagedStack`, snapshot the full board layout, allocate a
@@ -253,18 +258,22 @@ Missing work areas and stale permutations fail the whole candidate. Individual
 index after every prior mutation. Loose destinations execute
 `MoveInspectedCard`; a numeric active/bench stack-top target executes
 `PlaceCardOnPlayStack` with evolution versus attachment derived from the card's
-current category. The last departure closes the inspection and retires its
-viewer grant. Missing/stale coordinates and targets fail the whole candidate.
+current category. A target-free active/bench destination composes
+`MoveInspectedCard` to the owner's loose board with `MoveCardToPlay`; the second
+batch creates a deterministic normalized singleton stack and preserves
+occupied-active demotion. The temporary loose-board hop is consumed inside the
+same private import record. The last departure closes the inspection and
+retires its viewer grant. Missing/stale coordinates and targets fail the whole
+candidate.
 The same current-coordinate resolver now admits V1's inspection-origin deck
 bottom, deck top, shuffle-into-deck, and stadium paths. Deck-edge moves conceal
 the selected identity; shuffle validates and passes through the exact basis of
 the remaining deck plus selected card; stadium replacement atomically
 displaces the incumbent to its owner's discard. Exact events, inspection
 cleanup, retry, replay, concealment generations, stale-coordinate rollback, and
-stale-permutation rollback are pinned. Target-free new-play and
-`switchWithDeckTop` inspection shapes remain closed: V1 appends the prior deck
-top to the popup tail, while the current canonical swap replaces the selected
-popup position.
+stale-permutation rollback are pinned. The `switchWithDeckTop` inspection shape
+remains closed: V1 appends the prior deck top to the popup tail, while the
+current canonical swap replaces the selected popup position.
 Reachable tests now prove both-player
 loose-board take-turn cleanup plus owner-scoped loose/stadium/play reset/rebuild
 behavior.

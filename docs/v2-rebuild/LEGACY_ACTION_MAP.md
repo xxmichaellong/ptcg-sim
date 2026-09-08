@@ -29,14 +29,15 @@ candidate retains source-record-to-event-batch mappings and proves exact replay.
 It now also admits the bounded `draw`, `discardAndDraw`, `shuffleAndDraw`,
 `shuffleBottomAndDraw`, direct prize `shuffleZone`, zone-backed `moveToDeckTop`,
 the bottom-mode, target-free loose-zone/stadium/new-play-stack/rich-whole-stack,
-and source-zone-targeted active/bench `moveCardBundle`, resolved
+source-zone-targeted active/bench, and individual work-area new-stack
+`moveCardBundle`, resolved
 `shuffleIntoDeck`, source-authentic `switchWithDeckTop`, and
 `shufflePrizesToDeckBottom` atoms below, but rejects any other action before
 constructing state. This is intentionally not yet a complete import
 compatibility claim: reachable loose-board take-turn cleanup and owner reset are
 now proven alongside owned-stadium and play-stack reset, while face-down in-play
-reveal plus work-area and cross-owner play state remain gated on the decoders
-that can construct those conditions.
+reveal, repeated inspection extension, position-incompatible work-area swaps,
+and cross-owner play state remain gated on their dedicated canonical designs.
 
 ## Card movement, inspection, and zone batches
 
@@ -206,20 +207,26 @@ are pinned. A subsequent target-free `attachedCards` source can now move one
 exact staged card to a loose zone through `MoveStagedCard`; the refreshed flat
 coordinate is resolved after every prior mutation and an empty work area closes.
 That coordinate also supports deck bottom, deck top, exact single-card shuffle,
-and stadium through existing source-relative commands. Target-free staged play
-and the position-incompatible staged deck-top swap remain closed.
+and stadium through existing source-relative commands. A target-free
+active/bench destination moves that one staged card through the owner's loose
+board and into `MoveCardToPlay`, preserving V1's detached-card behavior and
+new-stack normalization across two canonical batches in the same closed import
+record. The position-incompatible staged deck-top swap remains closed.
 An individual `viewCards` source uses the active inspection's already-matching
 V1 popup order. Each current coordinate can move to a loose zone through
 `MoveInspectedCard` or onto an exact numeric active/bench stack top through
 `PlaceCardOnPlayStack`; current category again selects evolution versus
 attachment, and the last departure closes the work area and retires its viewer
-grant. Missing/stale coordinates or targets return no candidate state.
+grant. A target-free active/bench destination similarly composes
+`MoveInspectedCard` through the owner's loose board with `MoveCardToPlay`,
+creating a normalized deterministic singleton stack without widening core or
+wire schemas. Missing/stale coordinates or targets return no candidate state.
 The same current inspection coordinate now feeds source-relative
 `MoveCardToDeckBottom`, `MoveCardToDeckTop`, `ShuffleCardIntoDeck`, and
 `MoveCardToStadium`. The shuffle basis is exactly V1's remaining deck followed
 by the selected card; stadium replacement keeps the incumbent-owner discard
-rule. Target-free play restoration and the inspection-origin deck-top swap
-remain closed. V1 appends the old deck top to the popup tail after removing the
+rule. The inspection-origin deck-top swap remains closed. V1 appends the old
+deck top to the popup tail after removing the
 selected card, whereas `InspectionCardSwappedWithDeckTop` replaces the selected
 position.
 
@@ -472,6 +479,18 @@ retains its canonical classification for remaining cards and closes when empty.
 V1 `switchWithDeckTop` remains closed because its old-top tail append can create
 a flat popup order/category combination that canonical staged sequences cannot
 represent exactly.
+
+Target-free active/bench placement from either work-area family is represented
+without a new command. `MoveInspectedCard` or `MoveStagedCard` first departs the
+exact selected card to its owner's loose board, then `MoveCardToPlay` consumes
+that card into a deterministic singleton stack. Both batches stay under the
+same imported source record and the overall candidate remains all-or-nothing.
+The composition reproduces V1's arbitrary-category-to-Pokémon coercion,
+occupied-active demotion, bench append, current-coordinate removal, grant/work-
+area cleanup, and empty intermediate loose board. Staged members were reset to
+`relative = 0` and `attached = false` before entering `attachedCards`, so this
+individual path does not accidentally restore dependents; `leaveAll` remains
+the separate whole-stack restoration action.
 
 Exact staged-source `shuffleAll` and `shuffleBottom` records add a complete
 zero-based permutation. V1 `shuffleAll` first appends popup cards to the current
