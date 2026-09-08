@@ -176,7 +176,7 @@ stack-card-departure/
 source-zone-targeted-play/
 work-area-target-free-play/
 zone-backed-deck-action/
-prizes-to-deck-bottom/once-per-game-marker/ability-marker/damage-marker/special-condition-marker/rotation/category-change/resolved-random-face-down/parameterless-attack-and-pass subset
+prizes-to-deck-bottom/once-per-game-marker/ability-marker/damage-marker/special-condition-marker/rotation/category-change/resolved-random-face-down/safe-whole-match-undo/parameterless-attack-and-pass subset
 through normal game-core commands and verifies exact event replay; it rejects every
 unconverted family before constructing state, rejects recorded draws that exceed
 the exact current source-state deck, applies only direct prize shuffles
@@ -372,6 +372,21 @@ reject the whole candidate. Exact events, changing indices, cross-player actor/t
 deterministic retry/replay/hash/invariants, and static source behavior are
 pinned without a core, protocol, authority, state, renderer, route, UI, or UX
 change.
+Native `undo` records now decode only the single JSON-null placeholder produced
+when V1 serializes the wrapper's untouched `undefined` history argument. The
+candidate retains at most 128 private checkpoints for admitted source records and maps a
+safe undo to the existing `ApplySoloUndo` command, producing one replayable
+`UndoApplied` event without rerunning a shuffle, random selection, or prior
+command. Export perspective supplies the actor as `self`, while record `user`
+retains the board-flipped announcement target. Consecutive same-player undos pop the active branch; source no-ops pop
+without inventing a revision. Because V1 kept independent per-player action
+arrays while V2 deliberately uses authoritative whole-match ordering, an undo
+fails the complete import when the active checkpoint belongs to the other
+player. Private source marker-presence metadata is restored with the checkpoint
+so later edits cannot bypass source preconditions. Static source locks and the
+real-runtime shortcut oracle pin the null serialization, deck boundary,
+duplicate suppression, and unchanged UI behavior. No core, protocol,
+authority, state, renderer, route, UI, or UX change is required.
 Shuffle-into-deck translates v1's in-deck tail-move
 permutation basis to the canonical input order. Switch-with-deck-top preserves
 v1's source-tail return and empty-deck branch through one or two canonical
@@ -393,9 +408,14 @@ the exact current hand. It preserves the existing deck prefix, appends the
 shuffled hand, and draws from index zero through the matching atomic canonical
 command. Zero-draw, empty-hand/non-empty-deck, and completely empty records all
 remain valid.
-Category-interleaved work-area tails, remaining action-family coverage, the complete
-transaction, conversion reports, and real-user corpus evidence remain before
-Phase 3 can exit.
+The eight reveal/look dispatcher names are transient socket/UI operations and
+never enter native V1 export history; `exchangeData` is explicitly filtered by
+the exporter. They remain allowlisted at the frozen envelope boundary but fail
+semantic conversion with `non_exported_action` if injected. The only genuine saved action family still
+unconverted is `changeCardBack`, pending the explicit custom-asset URL policy.
+Category-interleaved work-area tails, the complete transaction/report,
+custom-card-back policy, and representative real-user corpus evidence remain
+before Phase 3 can exit.
 
 Work:
 

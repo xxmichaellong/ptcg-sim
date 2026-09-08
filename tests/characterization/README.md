@@ -385,6 +385,20 @@ message, both `processAction` paths, and final export perspective rewrite. This
 proves that an import must consume the saved index once and retain independent
 actor/target provenance rather than rerun randomness or expose a card selector.
 
+The same source lock now pins V1 undo's per-player filtering, deck-bootstrap
+replacement, final action removal, and two calls that export the wrapper's
+unchanged history argument. The exporter then serializes its `undefined` array
+entry as `null`; the real-runtime shortcut oracle records both the in-memory
+undefined and exact saved JSON-null forms. The importer accepts only that native
+tuple, restores one of at most 128 retained same-player whole-match checkpoints
+without rerunning randomness, retains exporter `self` as actor and record `user`
+as the board-flipped target, and rejects the unsafe interleaved-seat case required by V1's split
+logs. This also proves that all eight reveal/look actions are socket-only and
+that `exchangeData` is filtered from saved history, while `changeCardBack`
+remains a genuine export awaiting an approved asset policy. Candidate tests
+hold those nine injected names to `non_exported_action` rather than conflating
+them with that genuine unsupported family.
+
 The protected count-input checkpoint completes all six context-menu numeric
 prompts while retaining the browser-native v1 UI. A typed controller descriptor
 binds the exact action, card, and source zone; StrictMode can invoke its effect

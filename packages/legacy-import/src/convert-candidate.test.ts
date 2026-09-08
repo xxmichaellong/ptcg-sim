@@ -3217,6 +3217,333 @@ describe('legacy v1 canonical candidate builder', () => {
     expect('state' in result).toBe(false);
   });
 
+  it('restores and stackably pops exact whole-match checkpoints for native V1 undo records', () => {
+    const parsed = parse(
+      payload(
+        cardRows(3, 'Undo self'),
+        cardRows(2, 'Undo opponent'),
+        action('self', 'moveCardBundle', [
+          'self',
+          'deck',
+          'hand',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'self',
+          'deck',
+          'hand',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'undo', [null]),
+        action('self', 'undo', [null])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) throw new Error('Expected undo conversion');
+
+    const selfId = target.selfSeat.playerId;
+    const undoRecords = result.records.filter(
+      ({ action }) => action === 'undo'
+    );
+    expect(undoRecords).toHaveLength(2);
+    expect(undoRecords[0]!.batches).toHaveLength(1);
+    expect(undoRecords[0]!.batches[0]!.events).toEqual([
+      expect.objectContaining({
+        type: 'UndoApplied',
+        actorPlayerId: selfId,
+        targetPlayerId: selfId,
+        revertedCommandId: 'legacy:v1:record:4',
+        revertedRevision: 4,
+        fromRevision: 4,
+        checkpointRevision: 3,
+      }),
+    ]);
+    expect(undoRecords[1]!.batches).toHaveLength(1);
+    expect(undoRecords[1]!.batches[0]!.events).toEqual([
+      expect.objectContaining({
+        type: 'UndoApplied',
+        actorPlayerId: selfId,
+        targetPlayerId: selfId,
+        revertedCommandId: 'legacy:v1:record:3',
+        revertedRevision: 3,
+        fromRevision: 5,
+        checkpointRevision: 2,
+      }),
+    ]);
+    for (const record of undoRecords) {
+      const event = record.batches[0]!.events[0];
+      if (event?.type !== 'UndoApplied') throw new Error('Missing undo event');
+      expect(event.checkpointHash).toBe(stableHash(event.restoredState));
+    }
+    expect(result.state.revision).toBe(6);
+    expect(result.state.zones[playerZoneId(selfId, 'deck')]?.cardIds).toEqual([
+      'legacy:v1:card:000000',
+      'legacy:v1:card:000001',
+      'legacy:v1:card:000002',
+    ]);
+    expect(result.state.zones[playerZoneId(selfId, 'hand')]?.cardIds).toEqual(
+      []
+    );
+    assertMatchInvariants(result.state);
+
+    const replayed = result.records
+      .flatMap((record) => record.batches)
+      .reduce(
+        applyEventBatch,
+        createEmptyMatch(target.matchId, [target.selfSeat, target.opponentSeat])
+      );
+    expect(replayed).toEqual(result.state);
+  });
+
+  it('restores a resolved randomized checkpoint without replaying the random action', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(3, 'Undo random'),
+          '',
+          action('self', 'moveCardBundle', [
+            'self',
+            'deck',
+            'hand',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'self',
+            'deck',
+            'hand',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'playRandomCardFaceDown', ['self', 1]),
+          action('self', 'undo', [null])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error('Expected random undo conversion');
+
+    const selfId = target.selfSeat.playerId;
+    expect(result.state.zones[playerZoneId(selfId, 'hand')]?.cardIds).toEqual([
+      'legacy:v1:card:000000',
+      'legacy:v1:card:000001',
+    ]);
+    expect(result.state.zones[playerZoneId(selfId, 'board')]?.cardIds).toEqual(
+      []
+    );
+    const undo = result.records.at(-1)!;
+    expect(undo.action).toBe('undo');
+    expect(undo.batches).toHaveLength(1);
+    expect(undo.batches[0]!.events).toEqual([
+      expect.objectContaining({
+        type: 'UndoApplied',
+        revertedCommandId: 'legacy:v1:record:5',
+        revertedRevision: 5,
+        checkpointRevision: 4,
+      }),
+    ]);
+    expect(
+      undo.batches[0]!.events.some(
+        (event) => event.type === 'RandomHandCardPlayedFaceDown'
+      )
+    ).toBe(false);
+    assertMatchInvariants(result.state);
+  });
+
+  it('keeps the exporter as undo actor while an opponent record selects the target', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          '',
+          cardRows(2, 'Undo opponent target'),
+          action('opp', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'hand',
+            0,
+            false,
+            'move',
+          ]),
+          action('opp', 'undo', [null])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error('Expected opponent-target undo conversion');
+
+    expect(result.records.at(-1)!.batches[0]!.events).toEqual([
+      expect.objectContaining({
+        type: 'UndoApplied',
+        actorPlayerId: target.selfSeat.playerId,
+        targetPlayerId: target.opponentSeat.playerId,
+        revertedCommandId: 'legacy:v1:record:3',
+      }),
+    ]);
+    expect(
+      result.state.zones[playerZoneId(target.opponentSeat.playerId, 'hand')]
+        ?.cardIds
+    ).toEqual([]);
+    assertMatchInvariants(result.state);
+  });
+
+  it('fails closed when V1 per-player undo conflicts with active whole-match order', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(1, 'Undo interleaved self'),
+          cardRows(1, 'Undo interleaved opponent'),
+          action('self', 'moveCardBundle', [
+            'self',
+            'deck',
+            'hand',
+            0,
+            false,
+            'move',
+          ]),
+          action('opp', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'hand',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'undo', [null])
+        )
+      ),
+      target
+    );
+    expect(result).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 5,
+          path: '$[5].action',
+          message:
+            'Recorded per-player undo conflicts with the canonical whole-match action order',
+        },
+      ],
+    });
+    expect('state' in result).toBe(false);
+  });
+
+  it('pops source no-ops without fabricating a canonical historical revision', () => {
+    const parsed = parse(
+      payload(
+        '',
+        '',
+        action('self', 'discardBoard', ['self', true]),
+        action('self', 'undo', [null])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error('Expected no-op undo conversion');
+    expect(result.records.slice(2)).toEqual([
+      { recordIndex: 3, action: 'discardBoard', batches: [] },
+      { recordIndex: 4, action: 'undo', batches: [] },
+    ]);
+    expect(result.state.revision).toBe(2);
+    assertMatchInvariants(result.state);
+  });
+
+  it('bounds retained legacy undo checkpoints to the approved 128-entry depth', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          '',
+          '',
+          ...Array.from({ length: 129 }, () =>
+            action('self', 'discardBoard', ['self', true])
+          ),
+          ...Array.from({ length: 129 }, () => action('self', 'undo', [null]))
+        )
+      ),
+      target
+    );
+    expect(result).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 260,
+          path: '$[260].action',
+          message: 'Recorded undo has no retained whole-match action',
+        },
+      ],
+    });
+    expect('state' in result).toBe(false);
+  });
+
+  it('restores private source-marker existence together with an undo checkpoint', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(1, 'Undo damage marker'),
+          '',
+          action('self', 'moveCardBundle', [
+            'self',
+            'deck',
+            'active',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'addDamageCounter', ['active', 0, '10']),
+          action('self', 'undo', [null]),
+          action('self', 'updateDamageCounter', ['active', 0, '20'])
+        )
+      ),
+      target
+    );
+    expect(result).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 6,
+          path: '$[6].action',
+          message:
+            'Recorded damage update requires an existing source damage marker',
+        },
+      ],
+    });
+    expect('state' in result).toBe(false);
+  });
+
+  it('lifts strict native undo tuple diagnostics before state construction', () => {
+    const result = buildLegacyV1Candidate(
+      parse(payload('', '', action('self', 'undo', [[]]))),
+      target
+    );
+    expect(result).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'history.invalid_parameter_type',
+          recordIndex: 3,
+          path: '$[3].parameters[0]',
+          message: 'undo history placeholder must be null',
+        },
+      ],
+    });
+    expect('state' in result).toBe(false);
+  });
+
   it('opens exact top and edge-first bottom inspections for the recorded viewer', () => {
     const parsed = parse(
       payload(
@@ -9968,6 +10295,38 @@ describe('legacy v1 canonical candidate builder', () => {
     });
     expect('state' in result).toBe(false);
   });
+
+  it.each([
+    'exchangeData',
+    'lookAtCards',
+    'stopLookingAtCards',
+    'revealCards',
+    'hideCards',
+    'revealShortcut',
+    'hideShortcut',
+    'lookShortcut',
+    'stopLookingShortcut',
+  ])(
+    'rejects injected non-exported dispatcher action %s distinctly',
+    (name) => {
+      const result = buildLegacyV1Candidate(
+        parse(payload('', '', action('self', name, []))),
+        target
+      );
+      expect(result).toEqual({
+        ok: false,
+        issues: [
+          {
+            code: 'non_exported_action',
+            recordIndex: 3,
+            path: '$[3].action',
+            message: 'Legacy action cannot occur in a native V1 action export',
+          },
+        ],
+      });
+      expect('state' in result).toBe(false);
+    }
+  );
 
   it('rejects an admitted but unconverted family before creating state', () => {
     const result = buildLegacyV1Candidate(

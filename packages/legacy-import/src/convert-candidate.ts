@@ -1,6 +1,7 @@
 import {
   applyEventBatch,
   assertMatchInvariants,
+  cloneMatchState,
   createEmptyMatch,
   executeCommand,
   MAX_DECK_CARDS,
@@ -29,6 +30,11 @@ import {
   type LegacyV1CardAnnotationDecodeIssueCode,
   type LegacyV1CardAnnotationZone,
 } from './decode-card-annotations.js';
+import {
+  decodeLegacyV1HistoryActions,
+  type LegacyV1HistoryAction,
+  type LegacyV1HistoryActionDecodeIssueCode,
+} from './decode-history-actions.js';
 import {
   decodeLegacyV1LifecycleActions,
   type LegacyV1LifecycleAction,
@@ -109,10 +115,26 @@ const CONVERTED_ACTIONS = new Set<LegacySynchronizedActionName>([
   'rotateCard',
   'changeType',
   'playRandomCardFaceDown',
+  'undo',
 ]);
+
+const NON_EXPORTED_ACTIONS = new Set<LegacySynchronizedActionName>([
+  'exchangeData',
+  'lookAtCards',
+  'stopLookingAtCards',
+  'revealCards',
+  'hideCards',
+  'revealShortcut',
+  'hideShortcut',
+  'lookShortcut',
+  'stopLookingShortcut',
+]);
+
+const MAX_LEGACY_V1_UNDO_CHECKPOINTS = 128;
 
 type LegacyV1ConvertedAction =
   | LegacyV1CardAnnotationAction
+  | LegacyV1HistoryAction
   | LegacyV1LifecycleAction
   | LegacyV1MarkerAction
   | LegacyV1MovementAction
@@ -127,12 +149,14 @@ export interface LegacyV1CandidateTarget {
 
 export type LegacyV1CandidateIssueCode =
   | 'unsupported_action'
+  | 'non_exported_action'
   | 'decoder_coverage_error'
   | 'invalid_target'
   | 'source_state_mismatch'
   | 'canonical_error'
   | `annotation.${LegacyV1CardAnnotationDecodeIssueCode}`
   | `deck.${LegacyV1DeckDecodeIssueCode}`
+  | `history.${LegacyV1HistoryActionDecodeIssueCode}`
   | `lifecycle.${LegacyV1LifecycleDecodeIssueCode}`
   | `marker.${LegacyV1MarkerActionDecodeIssueCode}`
   | `movement.${LegacyV1MovementDecodeIssueCode}`
@@ -152,6 +176,17 @@ export interface LegacyV1AppliedRecord {
   readonly recordIndex: number;
   readonly action: LegacyV1ConvertedAction['type'];
   readonly batches: readonly EventBatch[];
+}
+
+interface LegacyV1UndoHistoryEntry {
+  readonly recordIndex: number;
+  readonly player: LegacyExportUser;
+  readonly checkpoint: MatchState;
+  readonly sourceDamageMarkerStackIds: ReadonlySet<PlayStack['id']>;
+  readonly sourceSpecialConditionTopCardIds: ReadonlyMap<
+    PlayStack['id'],
+    CardInstanceId
+  >;
 }
 
 export type LegacyV1CandidateResult =
@@ -577,6 +612,18 @@ export const buildLegacyV1Candidate = (
   parsed: ParsedLegacyExport,
   target: LegacyV1CandidateTarget
 ): LegacyV1CandidateResult => {
+  const nonExportedIndex = parsed.actions.findIndex((action) =>
+    NON_EXPORTED_ACTIONS.has(action.action)
+  );
+  if (nonExportedIndex >= 0) {
+    return failure({
+      code: 'non_exported_action',
+      recordIndex: nonExportedIndex + 1,
+      path: `$[${nonExportedIndex + 1}].action`,
+      message: 'Legacy action cannot occur in a native V1 action export',
+    });
+  }
+
   const unsupportedIndex = parsed.actions.findIndex(
     (action) => !CONVERTED_ACTIONS.has(action.action)
   );
@@ -594,6 +641,17 @@ export const buildLegacyV1Candidate = (
     const issue = decodedLifecycle.issues[0]!;
     return failure({
       code: `lifecycle.${issue.code}`,
+      recordIndex: issue.recordIndex,
+      path: issue.path,
+      message: issue.message,
+    });
+  }
+
+  const decodedHistory = decodeLegacyV1HistoryActions(parsed);
+  if (!decodedHistory.ok) {
+    const issue = decodedHistory.issues[0]!;
+    return failure({
+      code: `history.${issue.code}`,
       recordIndex: issue.recordIndex,
       path: issue.path,
       message: issue.message,
@@ -657,6 +715,7 @@ export const buildLegacyV1Candidate = (
 
   const convertedActions: LegacyV1ConvertedAction[] = [
     ...decodedCardAnnotations.actions,
+    ...decodedHistory.actions,
     ...decodedLifecycle.actions,
     ...decodedMarkers.actions,
     ...decodedMovement.actions,
@@ -754,6 +813,11 @@ export const buildLegacyV1Candidate = (
     PlayStack['id'],
     CardInstanceId
   >();
+  // V2 intentionally uses one authoritative whole-match branch instead of
+  // replaying V1's two independently mutable per-seat JavaScript logs. Each
+  // retained entry is one admitted V1 record, even when that record maps to
+  // multiple canonical batches or to a source-authentic state no-op.
+  const undoHistory: LegacyV1UndoHistoryEntry[] = [];
   const records: LegacyV1AppliedRecord[] = [];
   const entriesFor = (player: LegacyExportUser) =>
     player === 'self' ? decodedDecks.selfEntries : decodedDecks.opponentEntries;
@@ -814,6 +878,11 @@ export const buildLegacyV1Candidate = (
   };
 
   for (const action of convertedActions) {
+    const stateBeforeAction = state;
+    const damageMarkersBeforeAction = new Set(sourceDamageMarkerStackIds);
+    const specialConditionsBeforeAction = new Map(
+      sourceSpecialConditionTopCardIds
+    );
     const playerId = targetPlayerId(target, action.player);
     const batches: EventBatch[] = [];
     const apply = (
@@ -834,6 +903,61 @@ export const buildLegacyV1Candidate = (
           entries: entriesFor(action.player),
         });
         if (problem) return problem;
+        undoHistory.length = 0;
+        break;
+      }
+      case 'undo': {
+        const checkpoint = undoHistory.at(-1);
+        if (!checkpoint) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].action`,
+            message: 'Recorded undo has no retained whole-match action',
+          });
+        }
+        if (checkpoint.player !== action.player) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].action`,
+            message:
+              'Recorded per-player undo conflicts with the canonical whole-match action order',
+          });
+        }
+
+        // V1 records visible no-ops in its action arrays. Removing one changes
+        // the legacy branch but has no canonical state transition to restore.
+        // Preserve that branch behavior without fabricating a historical
+        // revision solely to force an UndoApplied event.
+        if (checkpoint.checkpoint.revision === state.revision) {
+          state = checkpoint.checkpoint;
+        } else {
+          const problem = apply({
+            type: 'ApplySoloUndo',
+            // The export is from the controller's `self` perspective; `user`
+            // selects the bottom-seat announcement/target after board flips.
+            actorPlayerId: target.selfSeat.playerId,
+            targetPlayerId: playerId,
+            revertedCommandId: `legacy:v1:record:${checkpoint.recordIndex}`,
+            revertedRevision: checkpoint.checkpoint.revision + 1,
+            checkpoint: cloneMatchState(checkpoint.checkpoint),
+          });
+          if (problem) return problem;
+        }
+
+        sourceDamageMarkerStackIds.clear();
+        for (const stackId of checkpoint.sourceDamageMarkerStackIds) {
+          sourceDamageMarkerStackIds.add(stackId);
+        }
+        sourceSpecialConditionTopCardIds.clear();
+        for (const [
+          stackId,
+          cardId,
+        ] of checkpoint.sourceSpecialConditionTopCardIds) {
+          sourceSpecialConditionTopCardIds.set(stackId, cardId);
+        }
+        undoHistory.pop();
         break;
       }
       case 'reset': {
@@ -2500,6 +2624,19 @@ export const buildLegacyV1Candidate = (
         stack.evolutionCardIds.at(-1) !== topCardId
       ) {
         sourceSpecialConditionTopCardIds.delete(stackId);
+      }
+    }
+
+    if (action.type !== 'loadDeckData' && action.type !== 'undo') {
+      undoHistory.push({
+        recordIndex: action.recordIndex,
+        player: action.player,
+        checkpoint: stateBeforeAction,
+        sourceDamageMarkerStackIds: damageMarkersBeforeAction,
+        sourceSpecialConditionTopCardIds: specialConditionsBeforeAction,
+      });
+      if (undoHistory.length > MAX_LEGACY_V1_UNDO_CHECKPOINTS) {
+        undoHistory.shift();
       }
     }
 

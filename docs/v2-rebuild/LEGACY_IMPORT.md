@@ -505,9 +505,9 @@ active/bench `moveCardBundle`, exact staged `leaveAll`, `discardAll`,
 `shuffleIntoDeck`, `switchWithDeckTop`, `shufflePrizesToDeckBottom`, or the
 direct prize form of `shuffleZone`; exact once-per-game, ability, damage, and
 special-condition marker records; `rotateCard`, `changeType`,
-`playRandomCardFaceDown`, `attack`, and `pass`. Any other allowlisted family or
+`playRandomCardFaceDown`, `undo`, `attack`, and `pass`. Any other allowlisted family or
 bundle subshape is rejected before state construction. Deck, lifecycle,
-movement, marker, annotation, resolved-random, and table diagnostics are lifted
+movement, marker, annotation, resolved-random, history, and table diagnostics are lifted
 with their exact source record/path, while context and canonical command
 failures also return no candidate state.
 The preflight additionally requires a one-to-one, source-ordered match between
@@ -780,7 +780,7 @@ individual-inspection-card-loose-and-targeted-play/
 individual-inspection-card-deck-edge-shuffle-and-stadium/
 move-to-top/
 rich-whole-stack-move-and-swap/move-to-bottom/
-shuffle-into-deck/deck-top-switch/once-per-game-marker/ability-marker/damage-marker/special-condition-marker/rotation/category-change/resolved-random-face-down/parameterless-attack-and-pass/
+shuffle-into-deck/deck-top-switch/once-per-game-marker/ability-marker/damage-marker/special-condition-marker/rotation/category-change/resolved-random-face-down/safe-whole-match-undo/parameterless-attack-and-pass/
 prizes-to-deck-bottom subset can now create ordinary loose-board, singleton
 stadium, and active/bench stack state, enrich those stacks with zone-backed
 evolutions and attachments, move or swap those rich stacks, reattach lower
@@ -816,11 +816,27 @@ take-turn discards both players' loose boards in
 source order before drawing, and that an owner reset clears only that owner's
 reachable loose state, owned stadium, and play stacks before rebuilding its
 deck. Opponent-owned stadium and play state remain. The subset still cannot
-represent cross-viewer repeated-inspection visibility, handle category-
-interleaved staged deck-top tails, handle the remaining marker families or face-down
-play state, or handle cross-owner play placements, so take-turn in-play reveal
-and reset behavior for those shapes remain gated on their dedicated
-movement/state decoders.
+represent cross-viewer repeated-inspection visibility, category-interleaved
+staged deck-top tails, custom card-back URL policy, or cross-owner play
+placements.
+
+Native undo records contain exactly `[null]`: V1 builds its filtered history in
+an inner function while the outer wrapper retains `undefined`, which JSON turns
+into null. The candidate retains at most 128 private pre-record
+state/source-marker checkpoints for active whole-match branch entries. A
+same-player undo uses
+the existing `ApplySoloUndo` transition and one `UndoApplied` event, so resolved
+shuffle/random outcomes are restored rather than executed. Exporter `self` is
+the actor and record ownership is the announcement target. Consecutive undos
+pop stackably and source state no-ops pop without a fabricated revision. If the
+latest active whole-match record belongs to the other player, conversion fails
+closed: replaying V1's independent per-seat array would conflict with the
+approved V2 whole-match ordering rule and could erase interleaved shared state.
+The eight reveal/look dispatcher actions never call `processAction`, and
+`exchangeData` is explicitly filtered from `exportActionData`; they remain
+envelope-known but semantically unsupported if handcrafted into a save.
+Those nine impossible records return `non_exported_action`; `changeCardBack`
+remains the only `unsupported_action` that the native exporter can produce.
 
 ## Next conversion slices
 
@@ -839,8 +855,10 @@ movement/state decoders.
    current reachable work area. Cross-viewer repeated inspections remain closed
    until per-card visibility is modeled explicitly rather than widening the
    work area's viewer set.
-2. Add the remaining marker families, visibility/inspection, randomized/bulk, undo, and the
-   remaining action families using the same allowlisted dispatch table.
+2. Resolve the custom-card-back asset policy. The eight reveal/look names are
+   transient socket/UI operations that never enter native exports, and
+   `exchangeData` is explicitly exporter-filtered; injected records remain
+   rejected rather than being promoted into durable history.
 3. Produce a conversion report with warnings, dropped presentation fields, and
    the exact failing record/path. Integrity identities must use SHA-256 over the
    exact source bytes and a specified canonical target serialization; the

@@ -27,6 +27,7 @@ interface LegacyUndoShortcutState {
   readonly selfCounter: number;
   readonly actions: readonly LegacyActionRecord[];
   readonly exports: readonly LegacyActionRecord[];
+  readonly serializedExports: string;
 }
 
 interface LegacyUndoFixtureOptions {
@@ -271,6 +272,7 @@ const captureRealLegacyUndoState = (
         selfCounter: state.selfCounter,
         actions: normalize(state.selfActionData),
         exports: normalize(state.exportActionData),
+        serializedExports: JSON.stringify(state.exportActionData),
       };
     },
     { undefinedValue: undefinedParameter }
@@ -335,6 +337,10 @@ test('real v1 U pins solo undo, replay leakage, duplicate suppression, and mode 
         selfCounter: 3,
         actions: [...seedActions, undoAction],
         exports: [...seedActions, undoAction],
+        serializedExports: JSON.stringify([
+          ...seedActions,
+          { ...undoAction, parameters: [null] },
+        ]),
       });
       expect(loaded.missingPaths).toEqual([]);
       expect(loaded.blockedOrigins).toContain('https://ptcgsim.online');
@@ -373,6 +379,7 @@ test('real v1 U pins solo undo, replay leakage, duplicate suppression, and mode 
         selfCounter: 2,
         actions: seedActions,
         exports: seedActions,
+        serializedExports: JSON.stringify(seedActions),
       });
       expect(loaded.missingPaths).toEqual([]);
       expect(pageErrors).toEqual([]);

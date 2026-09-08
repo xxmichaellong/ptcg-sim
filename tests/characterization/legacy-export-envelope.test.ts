@@ -1995,4 +1995,65 @@ describe('legacy action-export source envelope', () => {
       )
     );
   });
+
+  it('pins native undo serialization and excludes transient/session actions from saves', () => {
+    const undo = readRepositoryFile('client/src/actions/general/undo.js');
+    const revealAndHide = readRepositoryFile(
+      'client/src/actions/general/reveal-and-hide.js'
+    );
+    const exchangeData = readRepositoryFile(
+      'client/src/setup/deck-constructor/exchange-data.js'
+    );
+    const importDeck = readRepositoryFile(
+      'client/src/setup/deck-constructor/import.js'
+    );
+    const processAction = readRepositoryFile(
+      'client/src/setup/general/process-action.js'
+    );
+    const exporter = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/sidebox/p1/bottom-buttons.js'
+    );
+
+    expect(undo).toContain('if (!filteredActionData) {');
+    expect(undo).toContain(
+      'filteredActionData.pop(); //remove the most recent entry'
+    );
+    expect(undo).toContain(
+      "currentEntry.action === 'exchangeData' ||\n          currentEntry.action === 'loadDeckData'"
+    );
+    expect(
+      undo.match(
+        /processAction\(user, emit, 'undo', \[filteredActionData\]\);/g
+      )
+    ).toHaveLength(2);
+    expect(exporter).toContain(
+      'const jsonData = JSON.stringify(exportData, null, 2);'
+    );
+    expect(JSON.stringify([undefined])).toBe('[null]');
+
+    for (const actionName of [
+      'lookAtCards',
+      'stopLookingAtCards',
+      'revealCards',
+      'hideCards',
+      'revealShortcut',
+      'hideShortcut',
+      'lookShortcut',
+      'stopLookingShortcut',
+    ]) {
+      expect(revealAndHide).toContain(`socket.emit('${actionName}', data);`);
+      expect(revealAndHide).not.toMatch(
+        new RegExp(`processAction\\([^;]*'${actionName}'`)
+      );
+    }
+    expect(exchangeData).toContain(
+      "processAction(user, emit, 'exchangeData', ["
+    );
+    expect(processAction).toContain(
+      "if (action !== 'exchangeData' && action !== 'loadDeckData')"
+    );
+    expect(importDeck).toContain(
+      "processAction(user, emit, 'changeCardBack', [userInput]);"
+    );
+  });
 });

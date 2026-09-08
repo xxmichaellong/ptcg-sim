@@ -34,15 +34,18 @@ source-zone-targeted active/bench, and individual work-area new-stack
 `shuffleIntoDeck`, source-authentic `switchWithDeckTop`, and
 `shufflePrizesToDeckBottom` atoms below. Exact direct loose-board bulk records,
 once-per-game, ability, damage, and special-condition marker records,
-normalized rotation, category-change, and resolved random-face-down records,
+normalized rotation, category-change, resolved random-face-down, and safe
+whole-match undo records,
 and empty-tuple `attack` and `pass` records also
 reuse their canonical atomic commands, but every other action is rejected before
 constructing state. This is intentionally not yet a complete import
 compatibility claim: reachable loose-board take-turn cleanup and owner reset are
 now proven alongside owned-stadium and play-stack reset, while face-down in-play
-reveal, cross-viewer repeated-inspection visibility, category-interleaved staged
-tail returns, and cross-owner play state remain gated on their dedicated
-canonical designs.
+custom card backs, cross-viewer repeated-inspection visibility,
+category-interleaved staged tail returns, and cross-owner play state remain
+gated on their dedicated canonical designs. The eight reveal/look dispatcher
+names are socket-only presentation operations rather than native saved records;
+`exchangeData` is explicitly omitted by the exporter.
 
 ## Card movement, inspection, and zone batches
 
@@ -461,6 +464,30 @@ menu, random selection, concealment, loose-board move, two export paths, and
 export perspective rewrite. No core, protocol, authority, state, public API,
 renderer, route, UI, or UX schema changes.
 
+The private importer now admits native `undo [null]` records. V1 constructs a
+mutable filtered action array inside `undoAsync`, but the outer wrapper exports
+its unchanged `undefined` argument; the save's final `JSON.stringify` therefore
+writes exactly one `null`. Conversion retains at most 128 importer-private checkpoints
+and source-marker metadata before every admitted non-bootstrap record. When the
+active branch's latest record belongs to the undoing player, it uses the
+existing `ApplySoloUndo` command to restore that exact state in one monotonic
+`UndoApplied` revision. Exporter-perspective `self` is the actor and record
+`user` remains the board-flipped announcement target. Prior shuffles and random hand choices are checkpoint
+data and never execute again. Consecutive same-player records pop stackably;
+undoing an accepted source no-op changes only the private branch and emits no
+fabricated canonical revision.
+
+V1's separate self/opponent arrays can select an older player action past a
+later other-player action, while approved V2 history is whole-match ordered.
+Such an interleaved undo is rejected transactionally rather than erasing the
+other player's state. Missing history, injected non-null/nested history, and
+later marker updates whose source node was undone also fail closed. Candidate
+tests pin both players, stackable restore, randomized checkpoints, exact events,
+replay/hash/invariants, no-op behavior, metadata restoration, and interleaving
+rollback. Static characterization plus the existing real-V1 Chromium shortcut
+oracle pin native serialization and UI behavior. No core, protocol, authority,
+state, public API, renderer, route, UI, or UX schema changes.
+
 ### Executable marker-control characterization
 
 The real legacy modules now run unchanged in a deny-by-default Chromium
@@ -550,13 +577,20 @@ schema changes.
 | `stopLookingShortcut`    | `EndPrivateInspection(inspectionId)`                                 | Viewer-scoped close, re-conceal timing, and stale handle behavior                           |
 | `playRandomCardFaceDown` | `PlayRandomCardFaceDown`                                             | Authority chooses source card; destination/position; no identity leak in public event/error |
 
+These eight reveal/look functions relay directly over their named socket events
+and never call `processAction`, so the native 1.5/1.5.1 exporter cannot write
+them. The frozen parser retains all dispatcher names for honest envelope
+inventory, while semantic conversion rejects a handcrafted record rather than
+inventing persistent visibility history; the diagnostic is
+`non_exported_action`, distinct from a genuine saved family awaiting support.
+
 ## Timeline and history
 
-| v1 action | Proposed v2 responsibility                                     | Critical characterization                                                                                                     |
-| --------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `attack`  | Atomic `DeclareAttack` plus safe timeline event                | Reset all ability markers, discard the acting loose board, preserve turn/faces, announcement                                  |
-| `pass`    | Atomic `PassTurn` plus safe timeline event                     | Reset all ability markers, discard the acting loose board, preserve turn/faces, announcement                                  |
-| `undo`    | Solo `ApplySoloUndo` to previous checkpoint plus `UndoApplied` | Implemented bounded stackable solo-only history; deck-load boundary; exact resolved randomness; unchanged announcement target |
+| v1 action | Proposed v2 responsibility                                     | Critical characterization                                                                                                                               |
+| --------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `attack`  | Atomic `DeclareAttack` plus safe timeline event                | Reset all ability markers, discard the acting loose board, preserve turn/faces, announcement                                                            |
+| `pass`    | Atomic `PassTurn` plus safe timeline event                     | Reset all ability markers, discard the acting loose board, preserve turn/faces, announcement                                                            |
+| `undo`    | Solo `ApplySoloUndo` to previous checkpoint plus `UndoApplied` | Runtime: bounded stackable solo history. Import: native `[null]`, same-player whole-match checkpoint, resolved randomness, and interleaved-seat refusal |
 
 ## Mapping rules
 
