@@ -3,6 +3,7 @@ import {
   assertMatchInvariants,
   createEmptyMatch,
   executeCommand,
+  MAX_DECK_CARDS,
   playerZoneId,
   stableSerialize,
   stadiumZoneId,
@@ -57,6 +58,9 @@ const CONVERTED_ACTIONS = new Set<LegacySynchronizedActionName>([
   'shuffleBottomAndDraw',
   'moveCardBundle',
   'leaveAll',
+  'discardAll',
+  'lostZoneAll',
+  'handAll',
   'shuffleZone',
   'moveToDeckTop',
   'shuffleIntoDeck',
@@ -281,11 +285,15 @@ interface CandidateStagedCard {
   readonly workAreaId: WorkAreaId;
 }
 
-const candidateStagedCardAtLegacyIndex = (
+interface CandidateStagedCards {
+  readonly cardIds: readonly CardInstanceId[];
+  readonly workAreaId: WorkAreaId;
+}
+
+const candidateStagedCardsInLegacyOrder = (
   state: MatchState,
-  playerId: PlayerId,
-  legacyCardIndex: number
-): CandidateStagedCard | null => {
+  playerId: PlayerId
+): CandidateStagedCards | null => {
   const resolution = state.workAreas[playerId]?.attachmentResolution;
   if (!resolution) return null;
 
@@ -296,12 +304,23 @@ const candidateStagedCardAtLegacyIndex = (
     ...resolution.attachmentCardIds,
   ];
   if (
+    legacyCardIds.length === 0 ||
     legacyCardIds.some((cardId) => state.cards[cardId]?.ownerId !== playerId)
   ) {
     return null;
   }
-  const cardId = legacyCardIds[legacyCardIndex];
-  return cardId ? { cardId, workAreaId: resolution.id } : null;
+  return { cardIds: legacyCardIds, workAreaId: resolution.id };
+};
+
+const candidateStagedCardAtLegacyIndex = (
+  state: MatchState,
+  playerId: PlayerId,
+  legacyCardIndex: number
+): CandidateStagedCard | null => {
+  const staged = candidateStagedCardsInLegacyOrder(state, playerId);
+  if (!staged) return null;
+  const cardId = staged.cardIds[legacyCardIndex];
+  return cardId ? { cardId, workAreaId: staged.workAreaId } : null;
 };
 
 const translateLegacyInDeckShuffle = (
@@ -1020,6 +1039,50 @@ export const buildLegacyV1Candidate = (
           destinationSlot: action.destinationSlot,
         });
         if (problem) return problem;
+        break;
+      }
+      case 'discardAll':
+      case 'lostZoneAll':
+      case 'handAll': {
+        const staged = candidateStagedCardsInLegacyOrder(state, playerId);
+        if (!staged) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[1]`,
+            message:
+              'Recorded staged bulk source does not identify a current same-owner work area',
+          });
+        }
+        const destinationKind =
+          action.type === 'discardAll'
+            ? 'discard'
+            : action.type === 'lostZoneAll'
+              ? 'lostZone'
+              : 'hand';
+        const destinationZoneId = playerZoneId(playerId, destinationKind);
+        const destination = state.zones[destinationZoneId];
+        if (
+          !destination ||
+          destination.cardIds.length + staged.cardIds.length > MAX_DECK_CARDS
+        ) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[1]`,
+            message:
+              'Recorded staged bulk move exceeds the current destination capacity',
+          });
+        }
+        for (const cardId of staged.cardIds) {
+          const problem = apply({
+            type: 'MoveStagedCard',
+            cardId,
+            expectedWorkAreaId: staged.workAreaId,
+            destinationZoneId,
+          });
+          if (problem) return problem;
+        }
         break;
       }
       case 'shuffleZone': {

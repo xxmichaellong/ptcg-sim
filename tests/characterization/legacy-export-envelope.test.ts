@@ -1111,6 +1111,41 @@ describe('legacy action-export source envelope', () => {
     );
   });
 
+  it('pins attached-card bulk draining and its self/opponent button ingress', () => {
+    const zones = readRepositoryFile('client/src/actions/zones/general.js');
+    const buttons = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/table/zone-buttons.js'
+    );
+    const boundaries = [
+      ['discardAll', 'discard', 'lostZoneAll'],
+      ['lostZoneAll', 'lostZone', 'handAll'],
+      ['handAll', 'hand', 'closeDisplay'],
+    ] as const;
+
+    for (const [actionName, destinationZone, nextExport] of boundaries) {
+      const start = zones.indexOf(`export const ${actionName} =`);
+      const end = zones.indexOf(`export const ${nextExport} =`, start + 1);
+      expect(start).toBeGreaterThanOrEqual(0);
+      expect(end).toBeGreaterThan(start);
+      const implementation = zones.slice(start, end);
+      const exportCall = `processAction(user, emit, '${actionName}', [oInitiator, zoneId]);`;
+      expect(implementation).toContain('const count = zone.getCount();');
+      expect(implementation).toContain(
+        `for (let i = 0; i < count; i++) {\n    moveCard(user, initiator, zoneId, '${destinationZone}', 0);\n  }`
+      );
+      expect(implementation).toContain("zone.element.style.display = 'none';");
+      expect(implementation).toContain(exportCall);
+      expect(implementation.lastIndexOf(exportCall)).toBeGreaterThan(
+        implementation.indexOf("zone.element.style.display = 'none';")
+      );
+      for (const user of ['self', 'opp']) {
+        expect(buttons).toContain(
+          `${actionName}('${user}', systemState.initiator, 'attachedCards')`
+        );
+      }
+    }
+  });
+
   it('pins numeric play targets, top-only eligibility, and refreshed flat ordering', () => {
     const keybinds = readRepositoryFile(
       'client/src/actions/keybinds/keybinds.js'

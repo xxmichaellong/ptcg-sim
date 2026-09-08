@@ -4125,6 +4125,166 @@ describe('legacy v1 canonical candidate builder', () => {
     expect('state' in categoryAmbiguous).toBe(false);
   });
 
+  it.each([
+    ['discardAll', 'discard', false],
+    ['lostZoneAll', 'lostZone', false],
+    ['handAll', 'hand', true],
+  ] as const)(
+    'drains staged cards through %s in exact V1 flat order',
+    (actionName, destinationKind, concealIdentity) => {
+      const parsed = parse(
+        payload(
+          [
+            ['1', 'Bulk source base', 'Pokémon', '/legacy/base.png'],
+            ['1', 'Bulk source middle', 'Pokémon', '/legacy/middle.png'],
+            ['1', 'Bulk source top', 'Pokémon', '/legacy/top.png'],
+            ['1', 'Bulk source energy', 'Energy', '/legacy/energy.png'],
+            ['1', 'Bulk source tool', 'Trainer', '/legacy/tool.png'],
+          ],
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            0,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            0,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            0,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            0,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'active',
+            'discard',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', actionName, ['opp', 'attachedCards'])
+        )
+      );
+      const result = buildLegacyV1Candidate(parsed, target);
+      const retry = buildLegacyV1Candidate(parsed, target);
+      expect(result).toEqual(retry);
+      expect(result.ok).toBe(true);
+      if (!result.ok || !retry.ok) {
+        throw new Error('Expected staged bulk conversion success');
+      }
+
+      const playerId = target.selfSeat.playerId;
+      const baseId = 'legacy:v1:card:000000';
+      const middleId = 'legacy:v1:card:000001';
+      const topId = 'legacy:v1:card:000002';
+      const energyId = 'legacy:v1:card:000003';
+      const toolId = 'legacy:v1:card:000004';
+      const workAreaId = 'legacy:v1:work-area:000000';
+      const stagedCardIds = [middleId, baseId, energyId, toolId];
+      const destinationZoneId = playerZoneId(playerId, destinationKind);
+      const destinationPrefix = destinationKind === 'discard' ? [topId] : [];
+      expect(result.state.zones[destinationZoneId]?.cardIds).toEqual([
+        ...destinationPrefix,
+        ...stagedCardIds,
+      ]);
+      expect(result.state.workAreas[playerId]?.attachmentResolution).toBeNull();
+      expect(Object.keys(result.state.stacks)).toEqual([]);
+      expect(result.records[8]!.batches.map((batch) => batch.events)).toEqual(
+        stagedCardIds.map((cardId, index) => [
+          {
+            type: 'StagedCardMoved',
+            playerId,
+            expectedWorkAreaId: workAreaId,
+            source: index < 2 ? 'evolution' : 'attachment',
+            cardId,
+            destinationZoneId,
+            destinationIndex: destinationPrefix.length + index,
+            concealIdentity,
+          },
+        ])
+      );
+      for (const cardId of stagedCardIds) {
+        expect(result.state.cards[cardId]).toMatchObject({
+          currentCategory:
+            cardId === energyId
+              ? 'Energy'
+              : cardId === toolId
+                ? 'Trainer'
+                : 'Pokémon',
+          face: 'up',
+          orientationQuarterTurns: 0,
+          abilityUsed: false,
+          visibilityGeneration: concealIdentity ? 1 : 0,
+        });
+      }
+      const replayed = result.records
+        .flatMap((record) => record.batches)
+        .reduce(
+          applyEventBatch,
+          createEmptyMatch(target.matchId, [
+            target.selfSeat,
+            target.opponentSeat,
+          ])
+        );
+      expect(replayed).toEqual(result.state);
+      expect(stableHash(result.state)).toBe(stableHash(retry.state));
+      assertMatchInvariants(result.state);
+    }
+  );
+
+  it.each(['discardAll', 'lostZoneAll', 'handAll'] as const)(
+    'rolls back %s when no staged work area exists',
+    (actionName) => {
+      const result = buildLegacyV1Candidate(
+        parse(
+          payload('', '', action('self', actionName, ['opp', 'attachedCards']))
+        ),
+        target
+      );
+      expect(result).toEqual({
+        ok: false,
+        issues: [
+          {
+            code: 'source_state_mismatch',
+            recordIndex: 3,
+            path: '$[3].parameters[1]',
+            message:
+              'Recorded staged bulk source does not identify a current same-owner work area',
+          },
+        ],
+      });
+      expect('state' in result).toBe(false);
+    }
+  );
+
   it('rolls back stale and deliberately unsupported staged movement shapes', () => {
     const stageThen = (...finalActions: unknown[]) =>
       buildLegacyV1Candidate(

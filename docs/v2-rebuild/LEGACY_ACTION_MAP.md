@@ -66,7 +66,8 @@ The private movement decoder and candidate now admit the exact `draw`,
 target-free loose-zone/stadium/new-play-stack/rich-whole-stack, and
 source-zone-targeted active/bench `moveCardBundle`, direct prize
 `shuffleZone`, exact staged-stack `leaveAll`, `moveToDeckTop`,
-`shuffleIntoDeck`, `switchWithDeckTop`, and `shufflePrizesToDeckBottom` tuples.
+staged `discardAll`/`lostZoneAll`/`handAll`, `shuffleIntoDeck`,
+`switchWithDeckTop`, and `shufflePrizesToDeckBottom` tuples.
 Record `user` selects the target player's zones, while the exported initiator
 remains independent provenance. Draw counts are already clamped by v1 before a successful action is
 exported; conversion accepts only positive integers
@@ -412,6 +413,16 @@ attachment-only work areas, and Pokémon attachments or non-Pokémon evolution
 members return no candidate rather than guessing how v1's category scans would
 reclassify them.
 
+The same converter admits only the exact staged-source forms of `discardAll`,
+`lostZoneAll`, and `handAll`. V1 repeatedly drains popup index zero, so the
+candidate resolves the full current flat order—newest lower evolution through
+base, then attachments—to stable IDs before applying one bounded
+`MoveStagedCard` batch per card. No intermediate state escapes if a later batch
+fails. Destination append order, category/face/orientation reset, and hand
+identity concealment are event-replay exact; missing and non-same-owner work
+areas return no candidate. Inspection-origin forms and the two permutation-
+bearing staged deck actions remain gated.
+
 Ordinary direct non-Pokémon ingress onto an existing live stack now emits the
 versioned `CardAttachedToPlayStack` event. `attachmentOrderVersion: 1` freezes
 the observed incoming-card rule: Trainer appends; incoming Energy stable-
@@ -439,10 +450,14 @@ promotion, demotion, swapping, and bench reordering, including v1's asymmetric
 no-target append behavior and automatic swap when active moves onto a lone
 bench. `ResolveStagedCards` now covers the staged-work-area forms of
 `discardAll`, `handAll`, `lostZoneAll`, `shuffleAll`, and `shuffleBottom` in one
-atomic revision. It preserves flat work-area order for visible/hand moves,
-shuffles the full combined deck for `shuffleAll`, and shuffles only staged cards
-before appending them for `shuffleBottom`. Cross-owner cards retain immutable
-ownership while entering the work-area player's destination zone.
+atomic revision. It preserves canonical evolution-then-attachment work-area
+order for visible/hand moves, shuffles the full combined deck for `shuffleAll`,
+and shuffles only staged cards before appending them for `shuffleBottom`.
+Cross-owner cards retain immutable ownership while entering the work-area
+player's destination zone. The legacy importer does not mislabel that canonical
+sequence as V1's reversed-evolution popup order; its non-shuffle bridge above
+drains stable IDs explicitly, and its shuffle bridge remains gated until the
+recorded permutation basis is translated.
 
 A Chromium source oracle and bounded React comparison confirm that legacy
 whole-stack movement refreshes a reverse-restored mixed Energy/Trainer stack to

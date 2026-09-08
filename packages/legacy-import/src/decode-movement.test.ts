@@ -513,6 +513,66 @@ describe('legacy v1 movement positional decoder', () => {
     });
   });
 
+  it('decodes exact staged discard, lost-zone, and hand bulk tuples', () => {
+    expect(
+      decode(
+        action('self', 'discardAll', ['opp', 'attachedCards']),
+        action('opp', 'lostZoneAll', ['self', 'attachedCards']),
+        action('self', 'handAll', ['self', 'attachedCards'])
+      )
+    ).toEqual({
+      ok: true,
+      actions: [
+        {
+          type: 'discardAll',
+          recordIndex: 3,
+          player: 'self',
+          initiator: 'opp',
+          sourceZone: 'attachedCards',
+        },
+        {
+          type: 'lostZoneAll',
+          recordIndex: 4,
+          player: 'opp',
+          initiator: 'self',
+          sourceZone: 'attachedCards',
+        },
+        {
+          type: 'handAll',
+          recordIndex: 5,
+          player: 'self',
+          initiator: 'self',
+          sourceZone: 'attachedCards',
+        },
+      ],
+    });
+  });
+
+  it.each(['discardAll', 'lostZoneAll', 'handAll'])(
+    'rejects malformed or non-staged %s tuples',
+    (actionName) => {
+      expect(firstIssue(action('self', actionName, ['self']))).toMatchObject({
+        code: 'invalid_parameter_count',
+        recordIndex: 3,
+        path: '$[3].parameters',
+      });
+      expect(
+        firstIssue(action('self', actionName, [false, 'attachedCards']))
+      ).toMatchObject({
+        code: 'invalid_parameter_type',
+        recordIndex: 3,
+        path: '$[3].parameters[0]',
+      });
+      expect(
+        firstIssue(action('self', actionName, ['self', 'viewCards']))
+      ).toMatchObject({
+        code: 'invalid_source_zone',
+        recordIndex: 3,
+        path: '$[3].parameters[1]',
+      });
+    }
+  );
+
   it('decodes only source-authentic direct prize shuffles', () => {
     expect(
       decode(

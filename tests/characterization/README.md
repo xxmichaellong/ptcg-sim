@@ -442,6 +442,14 @@ popup is hidden. This supports the private importer's narrow atomic
 category-ambiguous staged state fail-closed. The pre-existing browser oracle
 continues to own the Energy/Trainer normalization and no-refresh layout facts.
 
+Static source characterization now also freezes the three non-random staged
+bulk buttons on both player sides. `discardAll`, `lostZoneAll`, and `handAll`
+snapshot the popup count, repeatedly move index zero to the named destination,
+hide the popup, and export exactly `[initiator, "attachedCards"]`. The
+private importer resolves that flat order to stable work-area IDs before
+draining it transactionally; the permutation-bearing deck variants remain a
+separate checkpoint because their recorded indices use the same V1 flat basis.
+
 The protected active/bench shortcut checkpoint covers non-Alt `A` and `B`
 without absorbing stadium or prize rules. Two fresh real-v1 Chromium pages
 place a selected hand Pokémon beside one incumbent active, then pin active and

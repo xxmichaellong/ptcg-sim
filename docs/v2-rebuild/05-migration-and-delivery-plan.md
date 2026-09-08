@@ -216,8 +216,12 @@ cleanup are pinned. Exact `leaveAll` tuples now consume a compatible staged
 stack through `RestoreStagedStack`, snapshot the full board layout, allocate a
 deterministic replacement stack, and preserve v1 active/bench placement,
 including occupied-active demotion. Missing, attachment-only, and category-
-ambiguous staged shapes fail the whole transaction. Other target-free play,
-stadium, deck-relative, inspection, and bulk work-area shapes remain closed.
+ambiguous staged shapes fail the whole transaction. Exact staged `discardAll`,
+`lostZoneAll`, and `handAll` records now drain stable IDs through bounded
+`MoveStagedCard` batches in V1's newest-lower-to-base-then-attachment flat
+order; the candidate remains all-or-nothing, and hand concealment is preserved.
+Other target-free play, stadium, deck-relative, inspection, and permutation-
+bearing staged deck-bulk shapes remain closed.
 Reachable tests now prove both-player
 loose-board take-turn cleanup plus owner-scoped loose/stadium/play reset/rebuild
 behavior.

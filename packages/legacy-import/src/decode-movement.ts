@@ -140,6 +140,13 @@ export type LegacyV1MovementAction =
       readonly destinationSlot: LegacyV1PlayDestinationZone;
     }
   | {
+      readonly type: 'discardAll' | 'lostZoneAll' | 'handAll';
+      readonly recordIndex: number;
+      readonly player: LegacyExportUser;
+      readonly initiator: LegacyExportUser;
+      readonly sourceZone: 'attachedCards';
+    }
+  | {
       readonly type: 'shuffleZone';
       readonly recordIndex: number;
       readonly player: LegacyExportUser;
@@ -251,6 +258,9 @@ const isMovementAction = (
     | 'shuffleBottomAndDraw'
     | 'moveCardBundle'
     | 'leaveAll'
+    | 'discardAll'
+    | 'lostZoneAll'
+    | 'handAll'
     | 'shuffleZone'
     | 'moveToDeckTop'
     | 'shuffleIntoDeck'
@@ -263,6 +273,9 @@ const isMovementAction = (
   action.action === 'shuffleBottomAndDraw' ||
   action.action === 'moveCardBundle' ||
   action.action === 'leaveAll' ||
+  action.action === 'discardAll' ||
+  action.action === 'lostZoneAll' ||
+  action.action === 'handAll' ||
   action.action === 'shuffleZone' ||
   action.action === 'moveToDeckTop' ||
   action.action === 'shuffleIntoDeck' ||
@@ -387,11 +400,11 @@ const decodeCardSource = (
  * Decodes admitted movement tuples without applying them. This starts with the
  * source-bounded draw, discard-and-draw, shuffle-hand-and-draw, and
  * shuffle-hand-to-deck-bottom-and-draw; bottom-mode and target-free
- * loose-zone/stadium/new-play-stack card bundles; staged-stack leave-all;
- * direct prize-shuffle; move-to-deck-top; shuffle-into-deck;
- * switch-with-deck-top; and shuffled-prizes-to-deck-bottom atoms. The
- * remaining movement actions stay untouched until their positional and
- * state-dependent behavior is frozen.
+ * loose-zone/stadium/new-play-stack card bundles; staged-stack leave-all and
+ * staged discard/lost-zone/hand draining; direct prize-shuffle;
+ * move-to-deck-top; shuffle-into-deck; switch-with-deck-top; and
+ * shuffled-prizes-to-deck-bottom atoms. The remaining movement actions stay
+ * untouched until their positional and state-dependent behavior is frozen.
  */
 export const decodeLegacyV1MovementActions = (
   parsed: ParsedLegacyExport
@@ -857,6 +870,45 @@ export const decodeLegacyV1MovementActions = (
           initiator,
           sourceZone: 'attachedCards',
           destinationSlot,
+        });
+        break;
+      }
+      case 'discardAll':
+      case 'lostZoneAll':
+      case 'handAll': {
+        if (action.parameters.length !== 2) {
+          return failure(
+            'invalid_parameter_count',
+            actionIndex,
+            '.parameters',
+            `${action.action} requires [initiator, sourceZone]`
+          );
+        }
+
+        const initiator = action.parameters[0];
+        if (initiator !== 'self' && initiator !== 'opp') {
+          return failure(
+            'invalid_parameter_type',
+            actionIndex,
+            '.parameters[0]',
+            `${action.action} initiator must use the exported self/opp perspective`
+          );
+        }
+        if (action.parameters[1] !== 'attachedCards') {
+          return failure(
+            'invalid_source_zone',
+            actionIndex,
+            '.parameters[1]',
+            `The converted ${action.action} subset must source attachedCards`
+          );
+        }
+
+        decoded.push({
+          type: action.action,
+          recordIndex: actionIndex + 1,
+          player: action.user,
+          initiator,
+          sourceZone: 'attachedCards',
         });
         break;
       }
