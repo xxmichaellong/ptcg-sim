@@ -247,9 +247,14 @@ stale coordinate/permutation rollback are pinned. A target-free active/bench
 destination composes `MoveStagedCard` to the owner's loose board with
 `MoveCardToPlay` in two batches under the same import record. This preserves
 V1's individual-card new-stack normalization and does not restore unrelated
-staged members. `switchWithDeckTop` remains closed because V1's old-top tail
-append cannot always be represented by the canonical evolution/attachment
-sequences. An
+staged members. Staged `switchWithDeckTop` resolves the same current flat
+coordinate. An empty deck uses one deck-top move; otherwise an internal
+versioned swap reconstructs V1's selected-card removal and prior-top tail
+append, normalizes the returned card to its original category, then records the
+exact canonical sequences only when the result has a Pokémon prefix followed
+by a non-Pokémon suffix. That proof preserves both the
+popup order and subsequent `leaveAll`; category-interleaved tails reject the
+whole candidate. An
 exact `leaveAll` record carries `[initiator, "attachedCards", destinationSlot]`;
 conversion accepts only `active` or `bench`, requires staged evolution members
 to remain Pokémon and staged attachments to remain non-Pokémon, snapshots the
@@ -647,16 +652,17 @@ take-turn discards both players' loose boards in
 source order before drawing, and that an owner reset clears only that owner's
 reachable loose state, owned stadium, and play stacks before rebuilding its
 deck. Opponent-owned stadium and play state remain. The subset still cannot
-represent cross-viewer repeated-inspection visibility, handle the remaining
-position-incompatible staged deck-top swap, handle markers or face-down
+represent cross-viewer repeated-inspection visibility, handle category-
+interleaved staged deck-top tails, handle markers or face-down
 play state, or handle cross-owner play placements, so take-turn in-play reveal
 and reset behavior for those shapes remain gated on their dedicated
 movement/state decoders.
 
 ## Next conversion slices
 
-1. Design the remaining position-incompatible staged deck-top swap explicitly
-   and continue the remaining source-backed positional schemas. Staged `shuffleAll`
+1. Decide whether category-interleaved staged deck-top tails require an explicit
+   flat work-area model, and continue the remaining source-backed positional
+   schemas. Staged `shuffleAll`
    and `shuffleBottom`
    translate recorded V1 flat indices to the canonical command's semantic input
    order by stable identity; individual staged and inspection deck/stadium paths

@@ -470,6 +470,19 @@ describe('atomic deck-relative commands', () => {
         fixture.context
       )
     ).toMatchObject({ accepted: false, code: 'invalid_command' });
+    expect(
+      executeCommand(
+        state,
+        {
+          type: 'SwapCardWithDeckTop',
+          playerId: p1,
+          cardId: selected,
+          expectedSourceId: discardId,
+          stagedReturnTo: 'legacyFlatTailV1',
+        },
+        fixture.context
+      )
+    ).toMatchObject({ accepted: false, code: 'invalid_command' });
     state = accepted(
       state,
       {

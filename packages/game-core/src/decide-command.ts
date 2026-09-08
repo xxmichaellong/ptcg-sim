@@ -5,6 +5,7 @@ import type {
   WorkAreaCardsDestination,
 } from './commands.js';
 import {
+  classifyLegacyStagedCardIdsV1,
   normalizeAttachmentCardIdsV1,
   orderAttachmentCardIdsV1,
 } from './attachment-order.js';
@@ -1560,6 +1561,15 @@ export const decideCommand = (
           'Inspection return mode requires an inspection source'
         );
       }
+      if (
+        command.stagedReturnTo &&
+        location.kind !== 'attachmentResolutionWorkArea'
+      ) {
+        return reject(
+          'invalid_command',
+          'Staged return mode requires an attached-card work-area source'
+        );
+      }
       if (deck.cardIds.length === 0) {
         return reject('precondition_failed', 'Deck is empty');
       }
@@ -1617,6 +1627,41 @@ export const decideCommand = (
           if (!resolution) {
             return reject('stale_reference', 'Attached-card work area changed');
           }
+          const deckTop = state.cards[deckTopCardId];
+          if (!deckTop) {
+            return reject('not_found', 'Deck top card does not exist');
+          }
+          const classificationCards =
+            deckTop.currentCategory === deckTop.originalCategory
+              ? state.cards
+              : {
+                  ...state.cards,
+                  [deckTop.id]: {
+                    ...deckTop,
+                    currentCategory: deckTop.originalCategory,
+                  },
+                };
+          const returnedSequences =
+            command.stagedReturnTo === 'legacyFlatTailV1'
+              ? classifyLegacyStagedCardIdsV1(classificationCards, [
+                  ...[...resolution.evolutionCardIds]
+                    .reverse()
+                    .filter((cardId) => cardId !== card.id),
+                  ...resolution.attachmentCardIds.filter(
+                    (cardId) => cardId !== card.id
+                  ),
+                  deckTopCardId,
+                ])
+              : null;
+          if (
+            command.stagedReturnTo === 'legacyFlatTailV1' &&
+            !returnedSequences
+          ) {
+            return reject(
+              'precondition_failed',
+              'Legacy staged tail return cannot preserve canonical card classification'
+            );
+          }
           return accept({
             type: 'StagedCardSwappedWithDeckTop',
             playerId: location.playerId,
@@ -1627,6 +1672,16 @@ export const decideCommand = (
             expectedEvolutionCardIds: [...resolution.evolutionCardIds],
             expectedAttachmentCardIds: [...resolution.attachmentCardIds],
             expectedDeckCardIds: [...deck.cardIds],
+            ...(command.stagedReturnTo
+              ? { returnTo: command.stagedReturnTo }
+              : {}),
+            ...(returnedSequences
+              ? {
+                  returnedEvolutionCardIds: returnedSequences.evolutionCardIds,
+                  returnedAttachmentCardIds:
+                    returnedSequences.attachmentCardIds,
+                }
+              : {}),
           });
         }
         case 'stackEvolution':

@@ -298,6 +298,9 @@ export type DomainEvent =
       readonly expectedEvolutionCardIds: readonly CardInstanceId[];
       readonly expectedAttachmentCardIds: readonly CardInstanceId[];
       readonly expectedDeckCardIds: readonly CardInstanceId[];
+      readonly returnTo?: 'sourcePosition' | 'legacyFlatTailV1';
+      readonly returnedEvolutionCardIds?: readonly CardInstanceId[];
+      readonly returnedAttachmentCardIds?: readonly CardInstanceId[];
     }
   | {
       readonly type: 'StackDamageSet';

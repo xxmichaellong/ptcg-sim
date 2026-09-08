@@ -1,6 +1,7 @@
 import { playerZoneId } from './create-match.js';
 import { cloneMatchState } from './clone.js';
 import {
+  classifyLegacyStagedCardIdsV1,
   normalizeAttachmentCardIdsV1,
   orderAttachmentCardIdsV1,
 } from './attachment-order.js';
@@ -2506,6 +2507,44 @@ const applyEventInternal = (
       if (!selected || !deckTop) {
         throw new Error('Staged deck-top swap references a missing card');
       }
+      const classificationCards =
+        deckTop.currentCategory === deckTop.originalCategory
+          ? state.cards
+          : {
+              ...state.cards,
+              [deckTop.id]: {
+                ...deckTop,
+                currentCategory: deckTop.originalCategory,
+              },
+            };
+      const returnedSequences =
+        event.returnTo === 'legacyFlatTailV1'
+          ? classifyLegacyStagedCardIdsV1(classificationCards, [
+              ...[...resolution.evolutionCardIds]
+                .reverse()
+                .filter((cardId) => cardId !== event.cardId),
+              ...resolution.attachmentCardIds.filter(
+                (cardId) => cardId !== event.cardId
+              ),
+              event.deckTopCardId,
+            ])
+          : null;
+      if (
+        event.returnTo === 'legacyFlatTailV1' &&
+        (!returnedSequences ||
+          !event.returnedEvolutionCardIds ||
+          !sameCardOrder(
+            returnedSequences.evolutionCardIds,
+            event.returnedEvolutionCardIds
+          ) ||
+          !event.returnedAttachmentCardIds ||
+          !sameCardOrder(
+            returnedSequences.attachmentCardIds,
+            event.returnedAttachmentCardIds
+          ))
+      ) {
+        throw new Error('Staged deck-top swap has an invalid V1 tail return');
+      }
       const swap = (cardIds: readonly CardInstanceId[]) =>
         cardIds.map((cardId) =>
           cardId === event.cardId ? event.deckTopCardId : cardId
@@ -2545,13 +2584,17 @@ const applyEventInternal = (
             attachmentResolution: {
               ...resolution,
               evolutionCardIds:
-                event.source === 'evolution'
-                  ? swap(resolution.evolutionCardIds)
-                  : resolution.evolutionCardIds,
+                event.returnTo === 'legacyFlatTailV1'
+                  ? returnedSequences!.evolutionCardIds
+                  : event.source === 'evolution'
+                    ? swap(resolution.evolutionCardIds)
+                    : resolution.evolutionCardIds,
               attachmentCardIds:
-                event.source === 'attachment'
-                  ? swap(resolution.attachmentCardIds)
-                  : resolution.attachmentCardIds,
+                event.returnTo === 'legacyFlatTailV1'
+                  ? returnedSequences!.attachmentCardIds
+                  : event.source === 'attachment'
+                    ? swap(resolution.attachmentCardIds)
+                    : resolution.attachmentCardIds,
             },
           },
         },

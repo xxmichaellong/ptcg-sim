@@ -408,6 +408,159 @@ describe('versioned staged attachment restoration', () => {
     assertMatchInvariants(restored.state);
   });
 
+  it('returns deck top to a compatible V1 staged tail and preserves restoration', () => {
+    const input = fixture();
+    const staged = stage(
+      oldAttach(input.state, input, [
+        input.trainer1Id,
+        input.energy1Id,
+        input.trainer2Id,
+        input.energy2Id,
+      ]),
+      input
+    ).state;
+    const resolution = staged.workAreas[p1]!.attachmentResolution!;
+    const expectedDeckCardIds = [...staged.zones[input.deckId]!.cardIds];
+    const swapped = accepted(
+      staged,
+      {
+        type: 'SwapCardWithDeckTop',
+        playerId: p1,
+        cardId: input.energy1Id,
+        expectedSourceId: resolution.id,
+        stagedReturnTo: 'legacyFlatTailV1',
+      },
+      input.context
+    );
+    expect(swapped.batch.events).toEqual([
+      {
+        type: 'StagedCardSwappedWithDeckTop',
+        playerId: p1,
+        expectedWorkAreaId: resolution.id,
+        source: 'attachment',
+        cardId: input.energy1Id,
+        deckTopCardId: input.deckTopTrainerId,
+        expectedEvolutionCardIds: [input.baseId],
+        expectedAttachmentCardIds: [
+          input.trainer1Id,
+          input.energy1Id,
+          input.trainer2Id,
+          input.energy2Id,
+        ],
+        expectedDeckCardIds,
+        returnTo: 'legacyFlatTailV1',
+        returnedEvolutionCardIds: [input.baseId],
+        returnedAttachmentCardIds: [
+          input.trainer1Id,
+          input.trainer2Id,
+          input.energy2Id,
+          input.deckTopTrainerId,
+        ],
+      },
+    ]);
+    expect(applyEventBatch(staged, swapped.batch)).toEqual(swapped.state);
+    const swapEvent = swapped.batch.events[0]!;
+    if (swapEvent.type !== 'StagedCardSwappedWithDeckTop') {
+      throw new Error('Expected staged deck-top swap event');
+    }
+    expectApplyFailureWithoutMutation(
+      staged,
+      { ...swapEvent, returnedAttachmentCardIds: [input.trainer1Id] },
+      'Staged deck-top swap has an invalid V1 tail return'
+    );
+    expect(swapped.state.zones[input.deckId]?.cardIds).toEqual([
+      input.energy1Id,
+      input.unknownId,
+    ]);
+    expect(swapped.state.workAreas[p1]?.attachmentResolution).toMatchObject({
+      evolutionCardIds: [input.baseId],
+      attachmentCardIds: [
+        input.trainer1Id,
+        input.trainer2Id,
+        input.energy2Id,
+        input.deckTopTrainerId,
+      ],
+    });
+
+    const restored = accepted(
+      swapped.state,
+      restoreCommand(swapped.state, 'active'),
+      input.context
+    );
+    const stackId = restored.state.boards[p1]!.activeStackId!;
+    expect(restored.state.stacks[stackId]?.evolutionCardIds).toEqual([
+      input.baseId,
+    ]);
+    expect(restored.state.stacks[stackId]?.attachmentCardIds).toEqual([
+      input.energy2Id,
+      input.trainer1Id,
+      input.trainer2Id,
+      input.deckTopTrainerId,
+    ]);
+    assertMatchInvariants(restored.state);
+
+    const historicalDeckCategory = {
+      ...staged,
+      cards: {
+        ...staged.cards,
+        [input.deckTopTrainerId]: {
+          ...staged.cards[input.deckTopTrainerId]!,
+          currentCategory: 'Pokémon' as const,
+        },
+      },
+    };
+    const normalizedHistorical = accepted(
+      historicalDeckCategory,
+      {
+        type: 'SwapCardWithDeckTop',
+        playerId: p1,
+        cardId: input.energy1Id,
+        expectedSourceId: resolution.id,
+        stagedReturnTo: 'legacyFlatTailV1',
+      },
+      input.context
+    );
+    expect(
+      normalizedHistorical.state.cards[input.deckTopTrainerId]?.currentCategory
+    ).toBe('Trainer');
+    expect(
+      normalizedHistorical.state.workAreas[p1]?.attachmentResolution
+        ?.attachmentCardIds
+    ).toEqual([
+      input.trainer1Id,
+      input.trainer2Id,
+      input.energy2Id,
+      input.deckTopTrainerId,
+    ]);
+    assertMatchInvariants(normalizedHistorical.state);
+
+    const incompatible = accepted(
+      staged,
+      {
+        type: 'MoveCardToDeckTop',
+        playerId: p1,
+        cardId: input.topId,
+        expectedSourceId: input.discardId,
+      },
+      input.context
+    ).state;
+    expect(
+      executeCommand(
+        incompatible,
+        {
+          type: 'SwapCardWithDeckTop',
+          playerId: p1,
+          cardId: input.energy1Id,
+          expectedSourceId:
+            incompatible.workAreas[p1]!.attachmentResolution!.id,
+          stagedReturnTo: 'legacyFlatTailV1',
+        },
+        input.context
+      )
+    ).toMatchObject({ accepted: false, code: 'precondition_failed' });
+    assertMatchInvariants(incompatible);
+  });
+
   it('uses current category history while requiring semantic staged departure', () => {
     const { input, state: staged } = reverseStaged();
     const resolution = staged.workAreas[p1]!.attachmentResolution!;

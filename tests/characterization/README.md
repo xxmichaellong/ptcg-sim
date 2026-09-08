@@ -478,9 +478,13 @@ staged cards to `relative = 0` and `attached = false` before they enter
 staged cards. A two-page real-V1 Chromium oracle separately proves a Trainer
 from `viewCards` replacing active and an Energy from `attachedCards` appending
 to bench, including exact source records, single-card removal, category
-normalization, selection cleanup, and unchanged sibling zones.
-`switchWithDeckTop` remains closed because V1's tail return can violate the
-canonical staged sequence classification.
+normalization, selection cleanup, and unchanged sibling zones. The staged
+`switchWithDeckTop` path is also pinned by the source-authentic mixed-attachment
+fixture and a real-V1 Arrow-Right oracle: selected-card removal precedes deck
+rotation, and the prior top appends to the flat popup tail. The importer admits
+that result only when it round-trips through the canonical Pokémon-prefix and
+non-Pokémon-suffix sequences, carries both returned lists in the event, and
+preserves a following `leaveAll`. Category-interleaved results stay closed.
 
 Static source characterization now freezes deck-inspection creation as well.
 The prompt path records the target relationship before clamping to the current

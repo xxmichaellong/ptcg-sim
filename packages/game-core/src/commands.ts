@@ -149,6 +149,7 @@ export type GameCommand =
       readonly cardId: CardInstanceId;
       readonly expectedSourceId: ZoneId | StackId | WorkAreaId;
       readonly inspectionReturnTo?: 'sourcePosition' | 'sourceTail';
+      readonly stagedReturnTo?: 'sourcePosition' | 'legacyFlatTailV1';
     }
   | { readonly type: 'MovePrizesToDeckBottom'; readonly playerId: PlayerId }
   | {

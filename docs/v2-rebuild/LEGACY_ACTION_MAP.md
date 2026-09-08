@@ -36,8 +36,8 @@ source-zone-targeted active/bench, and individual work-area new-stack
 constructing state. This is intentionally not yet a complete import
 compatibility claim: reachable loose-board take-turn cleanup and owner reset are
 now proven alongside owned-stadium and play-stack reset, while face-down in-play
-reveal, cross-viewer repeated-inspection visibility, position-incompatible
-work-area swaps, and cross-owner play state remain gated on their dedicated
+reveal, cross-viewer repeated-inspection visibility, category-interleaved staged
+tail returns, and cross-owner play state remain gated on their dedicated
 canonical designs.
 
 ## Card movement, inspection, and zone batches
@@ -49,7 +49,7 @@ canonical designs.
 | `shuffleIntoDeck`           | Atomic `ShuffleCardIntoDeck`                                                                                                  | Recorded post-tail-move permutation, in-deck basis translation, concealment generation, stack policy           |
 | `moveToDeckTop`             | `MoveCardToDeckTop`                                                                                                           | v1 index-zero top convention, visibility clearing, stack policy                                                |
 | `moveToDeckBottom`          | `MoveCardToDeckBottom`                                                                                                        | v1 last-index bottom convention, visibility clearing, stack policy                                             |
-| `switchWithDeckTop`         | Transactional `MoveCardToDeckTop` plus tail-appending `MoveCard`                                                              | Empty deck, source-tail return (not old-index replacement), concealment, stack policy                          |
+| `switchWithDeckTop`         | Zone transaction or atomic work-area swap with source-tail return                                                             | Empty deck, exact flat tail, compatibility partition, concealment, stack policy                                |
 | `viewDeck`                  | `ExtractDeckCardsForInspection`                                                                                               | Top/bottom selection, count clamp, target's deck, inspection viewer, ordered holding work area                 |
 | `shuffleAll`                | `ResolveStagedCards(shuffleIntoDeck)` or `ResolveInspectionCards(shuffleIntoDeck)`                                            | Supported sources (deck/discard/view/detached), messages, popup close, no-op                                   |
 | `shuffleBottom`             | `ResolveStagedCards(shuffleToDeckBottom)` or `ResolveInspectionCards(shuffleToDeckBottom)`                                    | Shuffle only selected source cards, bottom order relative to existing deck, visibility generation              |
@@ -212,7 +212,11 @@ and stadium through existing source-relative commands. A target-free
 active/bench destination moves that one staged card through the owner's loose
 board and into `MoveCardToPlay`, preserving V1's detached-card behavior and
 new-stack normalization across two canonical batches in the same closed import
-record. The position-incompatible staged deck-top swap remains closed.
+record. Staged `switchWithDeckTop` uses the same exact flat coordinate. With an
+empty deck it performs one deck-top move. Otherwise a versioned internal swap
+rebuilds the V1 flat tail result, carries its exact returned sequences, and
+accepts only a lossless Pokémon-prefix/non-Pokémon-suffix partition. This keeps
+later `leaveAll` restoration exact; category-interleaved results fail closed.
 An individual `viewCards` source uses the active inspection's already-matching
 V1 popup order. Each current coordinate can move to a loose zone through
 `MoveInspectedCard` or onto an exact numeric active/bench stack top through
@@ -484,9 +488,11 @@ work-area ID to the existing source-relative command. The shuffle basis is the
 remaining deck followed by that selected card and therefore passes through
 unchanged; stadium replacement preserves incumbent-owner discard. The work area
 retains its canonical classification for remaining cards and closes when empty.
-V1 `switchWithDeckTop` remains closed because its old-top tail append can create
-a flat popup order/category combination that canonical staged sequences cannot
-represent exactly.
+`switchWithDeckTop` removes that exact current card, places it at deck top, and
+appends the prior top to V1's flat popup tail. The importer derives and records
+the only canonical sequence partition that round-trips that flat order. If a
+returned Pokémon would follow a non-Pokémon card, no such partition exists and
+the whole candidate is rejected.
 
 Target-free active/bench placement from either work-area family is represented
 without a new command. `MoveInspectedCard` or `MoveStagedCard` first departs the

@@ -13,6 +13,7 @@ interface LegacyActionRecord {
 
 interface LegacyDeckShortcutState {
   readonly activeNames: readonly string[];
+  readonly attachedCardNames: readonly string[];
   readonly deckNames: readonly string[];
   readonly viewCardNames: readonly string[];
   readonly selectingCard: boolean;
@@ -186,6 +187,9 @@ const captureRealLegacyDeckShortcutState = async (
     );
     return {
       activeNames: getZone('self', 'active').array.map((card) => card.name),
+      attachedCardNames: getZone('self', 'attachedCards').array.map(
+        (card) => card.name
+      ),
       deckNames: getZone('self', 'deck').array.map((card) => card.name),
       viewCardNames: getZone('self', 'viewCards').array.map(
         (card) => card.name
@@ -380,6 +384,106 @@ test('real v1 inspection deck-top swap appends the prior top to the popup tail',
           emit: true,
           action: 'switchWithDeckTop',
           parameters: ['opp', 'viewCards', 0],
+        },
+      ],
+    });
+    expect(state.exports).toEqual(expectedLegacyExports(state.actions));
+    expect(loaded.servedPaths).toContain('/src/assets/blank-logo.png');
+    expect(loaded.missingPaths).toEqual([]);
+    expect(loaded.blockedOrigins).toContain('https://ptcgsim.online');
+    expect(pageErrors).toEqual([]);
+  } finally {
+    await page.close();
+  }
+});
+
+test('real v1 staged deck-top swap appends the prior top to the popup tail', async ({
+  browser,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== 'chromium',
+    'The real-runtime staged deck-top swap checkpoint is Chromium-specific.'
+  );
+
+  const page = await browser.newPage({ viewport, deviceScaleFactor: 1 });
+  const pageErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+  try {
+    const loaded = await loadLegacyRuntime(page);
+    await mountRealLegacyDeckShortcutFixture(page);
+    await page.evaluate(async () => {
+      interface RuntimeCard {
+        readonly name: string;
+        readonly image: HTMLImageElement;
+      }
+      interface RuntimeZone {
+        readonly array: RuntimeCard[];
+        readonly element: HTMLElement;
+      }
+      const load = (specifier: string): Promise<Record<string, unknown>> =>
+        import(/* @vite-ignore */ specifier);
+      const [frontEnd, cardModule, zoneModule] = await Promise.all([
+        load('/src/front-end.js'),
+        load('/src/setup/deck-constructor/card.js'),
+        load('/src/setup/zones/get-zone.js'),
+      ]);
+      const Card = cardModule['Card'] as new (
+        user: string,
+        name: string,
+        type: string,
+        imageUrl: string
+      ) => RuntimeCard;
+      const getZone = zoneModule['getZone'] as (
+        user: string,
+        zoneId: string
+      ) => RuntimeZone;
+      const mouseClick = frontEnd['mouseClick'] as {
+        cardIndex: number | string;
+        zoneId: string;
+        cardUser: string;
+        selectingCard: boolean;
+      };
+
+      const active = getZone('self', 'active');
+      const attachedCards = getZone('self', 'attachedCards');
+      const selected = active.array[0]!;
+      const sibling = new Card(
+        'self',
+        'Sibling staged card',
+        'Pokémon',
+        `${location.origin}/src/assets/blank-logo.png`
+      );
+      await sibling.image.decode();
+      active.array.splice(0);
+      active.element.replaceChildren();
+      attachedCards.array.splice(0);
+      attachedCards.element
+        .querySelectorAll('img')
+        .forEach((image) => image.remove());
+      attachedCards.array.push(selected, sibling);
+      attachedCards.element.append(selected.image, sibling.image);
+      attachedCards.element.style.display = 'block';
+      selected.image.classList.add('highlight');
+      mouseClick.cardUser = 'self';
+      mouseClick.zoneId = 'attachedCards';
+      mouseClick.cardIndex = 0;
+      mouseClick.selectingCard = true;
+    });
+    await page.keyboard.press('ArrowRight');
+    const state = await captureRealLegacyDeckShortcutState(page);
+
+    expect(state).toMatchObject({
+      activeNames: [],
+      attachedCardNames: ['Sibling staged card', 'Deck top'],
+      deckNames: ['Selected card', 'Deck bottom'],
+      selectingCard: false,
+      selfCounter: 1,
+      actions: [
+        {
+          user: 'self',
+          emit: true,
+          action: 'switchWithDeckTop',
+          parameters: ['opp', 'attachedCards', 0],
         },
       ],
     });
