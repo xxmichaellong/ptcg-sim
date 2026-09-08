@@ -180,7 +180,11 @@ describe('legacy v1 canonical candidate builder', () => {
         action('self', 'moveToDeckTop', ['opp', 'hand', 0]),
         action('self', 'shuffleIntoDeck', ['opp', 'hand', 0, [1, 0]]),
         action('self', 'switchWithDeckTop', ['opp', 'hand', 0]),
-        action('self', 'shufflePrizesToDeckBottom', ['opp', [5, 4, 3, 2, 1, 0]])
+        action('self', 'shufflePrizesToDeckBottom', [
+          'opp',
+          [5, 4, 3, 2, 1, 0],
+        ]),
+        action('self', 'discardAndDraw', ['opp', 2])
       )
     );
     const first = buildLegacyV1Candidate(parsed, target);
@@ -334,6 +338,129 @@ describe('legacy v1 canonical candidate builder', () => {
       ],
     });
     expect('state' in resetDeck).toBe(false);
+  });
+
+  it('atomically appends the whole hand to discard and draws the recorded count', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          '',
+          cardRows(18, 'Opponent discard draw'),
+          action('opp', 'setup', [Array.from({ length: 18 }, (_, i) => i)]),
+          action('opp', 'discardAndDraw', ['self', 3])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    const playerId = target.opponentSeat.playerId;
+    const handId = playerZoneId(playerId, 'hand');
+    const deckId = playerZoneId(playerId, 'deck');
+    const discardId = playerZoneId(playerId, 'discard');
+    const oldHand = Array.from(
+      { length: 7 },
+      (_, index) => `legacy:v1:card:${String(index + 18).padStart(6, '0')}`
+    );
+    const oldDeck = Array.from(
+      { length: 5 },
+      (_, index) => `legacy:v1:card:${String(index + 31).padStart(6, '0')}`
+    );
+    const drawn = oldDeck.slice(0, 3);
+    expect(result.state.zones[handId]!.cardIds).toEqual(drawn);
+    expect(result.state.zones[deckId]!.cardIds).toEqual(oldDeck.slice(3));
+    expect(result.state.zones[discardId]!.cardIds).toEqual(oldHand);
+    expect(result.records[3]).toEqual({
+      recordIndex: 4,
+      action: 'discardAndDraw',
+      batches: [
+        expect.objectContaining({
+          events: [
+            {
+              type: 'ZoneOrdersSet',
+              reason: 'discard-hand-and-draw',
+              zones: [
+                {
+                  zoneId: handId,
+                  expectedCardIds: oldHand,
+                  cardIds: drawn,
+                },
+                {
+                  zoneId: deckId,
+                  expectedCardIds: oldDeck,
+                  cardIds: oldDeck.slice(3),
+                },
+                {
+                  zoneId: discardId,
+                  expectedCardIds: [],
+                  cardIds: oldHand,
+                },
+              ],
+              concealedCardIds: drawn,
+            },
+          ],
+        }),
+      ],
+    });
+    assertMatchInvariants(result.state);
+  });
+
+  it('preserves a zero-draw hand discard and rejects an unclamped count without state', () => {
+    const zeroDraw = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(13, 'Zero discard draw'),
+          '',
+          action('self', 'setup', [Array.from({ length: 13 }, (_, i) => i)]),
+          action('self', 'discardAndDraw', ['opp', 0])
+        )
+      ),
+      target
+    );
+    expect(zeroDraw.ok).toBe(true);
+    if (!zeroDraw.ok) throw new Error(zeroDraw.issues[0]?.message);
+    const handId = playerZoneId(target.selfSeat.playerId, 'hand');
+    const deckId = playerZoneId(target.selfSeat.playerId, 'deck');
+    const discardId = playerZoneId(target.selfSeat.playerId, 'discard');
+    expect(zeroDraw.state.zones[handId]!.cardIds).toEqual([]);
+    expect(zeroDraw.state.zones[deckId]!.cardIds).toEqual([]);
+    expect(zeroDraw.state.zones[discardId]!.cardIds).toEqual(
+      Array.from(
+        { length: 7 },
+        (_, index) => `legacy:v1:card:${String(index + 13).padStart(6, '0')}`
+      )
+    );
+    expect(zeroDraw.records[3]).toMatchObject({
+      recordIndex: 4,
+      action: 'discardAndDraw',
+      batches: [{ events: [{ type: 'ZoneOrdersSet' }] }],
+    });
+    assertMatchInvariants(zeroDraw.state);
+
+    const unclamped = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(2, 'Unclamped discard draw'),
+          '',
+          action('self', 'discardAndDraw', ['self', 3])
+        )
+      ),
+      target
+    );
+    expect(unclamped).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 3,
+          path: '$[3].parameters[1]',
+          message:
+            'Recorded discard-and-draw count exceeds the source-state deck card count',
+        },
+      ],
+    });
+    expect('state' in unclamped).toBe(false);
   });
 
   it('applies a recorded direct prize shuffle with its resolved permutation', () => {

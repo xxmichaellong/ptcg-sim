@@ -25,12 +25,12 @@ fresh `LoadDeck` plus `SetupPlayer` because v1 rebuilds the source deck before
 applying its recorded permutation; `reset` loads the original source entries or
 an empty deck according to its `build` flag; and `takeTurn` uses `StartTurn`.
 The legacy `clean` and `invalidMessage` reset flags are presentation-only. The
-candidate retains source-record-to-event-batch mappings and proves exact replay,
-and now also admits the bounded `draw`, direct prize `shuffleZone`,
-zone-backed `moveToDeckTop`, resolved `shuffleIntoDeck`, and source-authentic
-`switchWithDeckTop` and `shufflePrizesToDeckBottom` atoms below, but rejects any
-other action before constructing state. This
-is intentionally not yet a complete import compatibility claim: take-turn
+candidate retains source-record-to-event-batch mappings and proves exact replay.
+It now also admits the bounded `draw`, `discardAndDraw`, direct prize
+`shuffleZone`, zone-backed `moveToDeckTop`, resolved `shuffleIntoDeck`,
+source-authentic `switchWithDeckTop`, and `shufflePrizesToDeckBottom` atoms below,
+but rejects any other action before constructing state. This is intentionally
+not yet a complete import compatibility claim: take-turn
 cleanup/reveal and reset behavior over dirty, cross-owner board state remain
 gated on the movement/state decoders that can construct those conditions.
 
@@ -57,16 +57,25 @@ gated on the movement/state decoders that can construct those conditions.
 | `shufflePrizesToDeckBottom` | Atomic `MovePrizesToDeckBottom`                                                                                               | Prize ordering/randomization, concealment, empty prizes                                                        |
 | `shuffleZone`               | `ShuffleZone` resolved permutation event                                                                                      | Every allowed zone, deterministic legacy indices, new handle generation, safe timeline                         |
 
-The private movement decoder and candidate now admit the exact `draw`, direct
-prize `shuffleZone`, `moveToDeckTop`, `shuffleIntoDeck`, and
-`switchWithDeckTop` and `shufflePrizesToDeckBottom` tuples. Record `user` selects the target player's zones,
-while the exported initiator remains independent provenance. Draw counts are
-already clamped by v1 before a
-successful action is exported; conversion accepts only positive integers
+The private movement decoder and candidate now admit the exact `draw`,
+`discardAndDraw`, direct prize `shuffleZone`, `moveToDeckTop`, `shuffleIntoDeck`,
+`switchWithDeckTop`, and `shufflePrizesToDeckBottom` tuples. Record `user` selects
+the target player's zones, while the exported initiator remains independent
+provenance. Draw counts are already clamped by v1 before a successful action is
+exported; conversion accepts only positive integers
 through the shared 200-card bound and requires the recorded count to fit the
 current candidate deck exactly. This prevents game-core's live short-deck clamp
 from accepting an inconsistent legacy record. Locally applied empty or invalid
 source draws use `emit=false` and are not valid exported records.
+
+Discard-and-draw is admitted as exact `[initiator, count]`. V1 clamps the
+prompted count to the current target deck before exporting, accepts zero, moves
+the full hand to the discard tail in order, then draws from deck index zero.
+Conversion requires the recorded safe integer from zero through 200 to fit the
+exact current deck and executes one atomic `DiscardHandAndDraw`. The event keeps
+the discard prefix, preserves hand order, conceals drawn identities, and retains
+the valid zero-draw discard branch; an unclamped or stale count returns no
+candidate instead of relying on the live command's short-deck clamp.
 
 The direct shuffle is restricted to exact
 `[initiator, "prizes", permutation, true]` records produced by the prize

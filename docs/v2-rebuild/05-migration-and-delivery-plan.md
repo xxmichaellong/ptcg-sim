@@ -169,10 +169,10 @@ action. Its first private semantic layers now validate lifecycle tuples,
 materialize bounded deck definitions with deterministic order-preserving IDs,
 and provide import-wide monotonic identities plus one-shot source-resolved
 outcome adapters. A first all-or-nothing candidate builder now applies the
-closed lifecycle/draw/direct-prize-shuffle/zone-backed-deck-action/
-prizes-to-deck-bottom subset through normal game-core commands and verifies
-exact event replay; it rejects every
-unconverted family before constructing state, rejects recorded draws that
+closed lifecycle/draw/discard-and-draw/direct-prize-shuffle/
+zone-backed-deck-action/prizes-to-deck-bottom subset through normal game-core
+commands and verifies exact event replay; it rejects every unconverted family
+before constructing state, rejects recorded draws that
 exceed the exact current source-state deck, applies only direct prize shuffles
 whose recorded permutation matches the current prize zone, and resolves legacy
 zone indices to stable card IDs before move-to-top, shuffle-into-deck, or
@@ -183,6 +183,9 @@ batches instead of using the old-index-replacing live swap command.
 Shuffled-prizes-to-deck-bottom requires the recorded non-empty permutation to
 match the current prize count and applies one atomic canonical batch that
 preserves the deck prefix, appends prizes in recorded order, and conceals them.
+Discard-and-draw validates v1's already-clamped count against the exact current
+deck, then atomically appends the ordered hand to discard and draws/conceals from
+deck index zero; zero remains a valid discard-only branch.
 Stack/work-area origins, remaining movement/action-family coverage, the complete
 transaction, conversion reports, and real-user corpus evidence remain before
 Phase 3 can exit.

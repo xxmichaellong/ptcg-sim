@@ -90,6 +90,33 @@ describe('legacy v1 movement positional decoder', () => {
     });
   });
 
+  it('decodes discard-and-draw target, independent initiator, and clamped count', () => {
+    expect(
+      decode(
+        action('self', 'discardAndDraw', ['opp', 0]),
+        action('opp', 'discardAndDraw', ['self', MAX_DECK_CARDS])
+      )
+    ).toEqual({
+      ok: true,
+      actions: [
+        {
+          type: 'discardAndDraw',
+          recordIndex: 3,
+          player: 'self',
+          initiator: 'opp',
+          count: 0,
+        },
+        {
+          type: 'discardAndDraw',
+          recordIndex: 4,
+          player: 'opp',
+          initiator: 'self',
+          count: MAX_DECK_CARDS,
+        },
+      ],
+    });
+  });
+
   it('decodes only source-authentic direct prize shuffles', () => {
     expect(
       decode(
@@ -246,6 +273,23 @@ describe('legacy v1 movement positional decoder', () => {
     });
     expect(
       firstIssue(action('self', 'draw', ['self', 1, 'extra']))
+    ).toMatchObject({
+      code: 'invalid_parameter_count',
+      recordIndex: 3,
+      path: '$[3].parameters',
+    });
+  });
+
+  it('requires exactly the source-exported discard-and-draw parameters', () => {
+    expect(
+      firstIssue(action('self', 'discardAndDraw', ['self']))
+    ).toMatchObject({
+      code: 'invalid_parameter_count',
+      recordIndex: 3,
+      path: '$[3].parameters',
+    });
+    expect(
+      firstIssue(action('self', 'discardAndDraw', ['self', 0, 'extra']))
     ).toMatchObject({
       code: 'invalid_parameter_count',
       recordIndex: 3,
@@ -600,6 +644,43 @@ describe('legacy v1 movement positional decoder', () => {
         recordIndex: 3,
         path: '$[3].parameters[1]',
         message: `draw count must be an integer from 1 to ${MAX_DECK_CARDS}`,
+      });
+    }
+  );
+
+  it('requires a perspective initiator for discard-and-draw', () => {
+    expect(
+      firstIssue(action('self', 'discardAndDraw', [false, 0]))
+    ).toMatchObject({
+      code: 'invalid_parameter_type',
+      recordIndex: 3,
+      path: '$[3].parameters[0]',
+    });
+  });
+
+  it.each([null, true, '0', [], {}])(
+    'rejects non-number discard-and-draw count %j',
+    (count) => {
+      expect(
+        firstIssue(action('self', 'discardAndDraw', ['self', count]))
+      ).toMatchObject({
+        code: 'invalid_parameter_type',
+        recordIndex: 3,
+        path: '$[3].parameters[1]',
+      });
+    }
+  );
+
+  it.each([-1, 0.5, 1.5, MAX_DECK_CARDS + 1, 9_007_199_254_740_992])(
+    'rejects unsafe or out-of-range discard-and-draw count %j',
+    (count) => {
+      expect(
+        firstIssue(action('self', 'discardAndDraw', ['self', count]))
+      ).toEqual({
+        code: 'invalid_discard_draw_count',
+        recordIndex: 3,
+        path: '$[3].parameters[1]',
+        message: `discardAndDraw count must be an integer from 0 to ${MAX_DECK_CARDS}`,
       });
     }
   );

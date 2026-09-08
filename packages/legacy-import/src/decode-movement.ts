@@ -35,6 +35,13 @@ export type LegacyV1MovementAction =
       readonly count: number;
     }
   | {
+      readonly type: 'discardAndDraw';
+      readonly recordIndex: number;
+      readonly player: LegacyExportUser;
+      readonly initiator: LegacyExportUser;
+      readonly count: number;
+    }
+  | {
       readonly type: 'shuffleZone';
       readonly recordIndex: number;
       readonly player: LegacyExportUser;
@@ -80,6 +87,7 @@ export type LegacyV1MovementDecodeIssueCode =
   | 'invalid_parameter_count'
   | 'invalid_parameter_type'
   | 'invalid_draw_count'
+  | 'invalid_discard_draw_count'
   | 'invalid_shuffle_zone'
   | 'invalid_shuffle_permutation'
   | 'invalid_shuffle_message'
@@ -125,6 +133,7 @@ const isMovementAction = (
 ): action is LegacyActionRecord & {
   readonly action:
     | 'draw'
+    | 'discardAndDraw'
     | 'shuffleZone'
     | 'moveToDeckTop'
     | 'shuffleIntoDeck'
@@ -132,6 +141,7 @@ const isMovementAction = (
     | 'shufflePrizesToDeckBottom';
 } =>
   action.action === 'draw' ||
+  action.action === 'discardAndDraw' ||
   action.action === 'shuffleZone' ||
   action.action === 'moveToDeckTop' ||
   action.action === 'shuffleIntoDeck' ||
@@ -249,10 +259,11 @@ const decodeCardSource = (
 
 /**
  * Decodes admitted movement tuples without applying them. This starts with the
- * source-bounded draw, direct prize-shuffle, move-to-deck-top,
- * shuffle-into-deck, switch-with-deck-top, and shuffled-prizes-to-deck-bottom
- * atoms; the remaining movement actions stay untouched until their positional
- * and state-dependent behavior is frozen separately.
+ * source-bounded draw and discard-and-draw, direct prize-shuffle,
+ * move-to-deck-top, shuffle-into-deck, switch-with-deck-top, and
+ * shuffled-prizes-to-deck-bottom atoms; the remaining movement actions stay
+ * untouched until their positional and state-dependent behavior is frozen
+ * separately.
  */
 export const decodeLegacyV1MovementActions = (
   parsed: ParsedLegacyExport
@@ -311,6 +322,57 @@ export const decodeLegacyV1MovementActions = (
 
         decoded.push({
           type: 'draw',
+          recordIndex: actionIndex + 1,
+          player: action.user,
+          initiator,
+          count,
+        });
+        break;
+      }
+      case 'discardAndDraw': {
+        if (action.parameters.length !== 2) {
+          return failure(
+            'invalid_parameter_count',
+            actionIndex,
+            '.parameters',
+            'discardAndDraw requires [initiator, count]'
+          );
+        }
+
+        const initiator = action.parameters[0];
+        if (initiator !== 'self' && initiator !== 'opp') {
+          return failure(
+            'invalid_parameter_type',
+            actionIndex,
+            '.parameters[0]',
+            'discardAndDraw initiator must use the exported self/opp perspective'
+          );
+        }
+
+        const count = action.parameters[1];
+        if (typeof count !== 'number') {
+          return failure(
+            'invalid_parameter_type',
+            actionIndex,
+            '.parameters[1]',
+            'discardAndDraw count must be a number'
+          );
+        }
+        if (
+          !Number.isSafeInteger(count) ||
+          count < 0 ||
+          count > MAX_DECK_CARDS
+        ) {
+          return failure(
+            'invalid_discard_draw_count',
+            actionIndex,
+            '.parameters[1]',
+            `discardAndDraw count must be an integer from 0 to ${MAX_DECK_CARDS}`
+          );
+        }
+
+        decoded.push({
+          type: 'discardAndDraw',
           recordIndex: actionIndex + 1,
           player: action.user,
           initiator,

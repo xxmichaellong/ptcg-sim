@@ -48,6 +48,7 @@ const CONVERTED_ACTIONS = new Set<LegacySynchronizedActionName>([
   'setup',
   'takeTurn',
   'draw',
+  'discardAndDraw',
   'shuffleZone',
   'moveToDeckTop',
   'shuffleIntoDeck',
@@ -430,6 +431,25 @@ export const buildLegacyV1Candidate = (
         }
         const problem = apply({
           type: 'DrawCards',
+          playerId,
+          count: action.count,
+        });
+        if (problem) return problem;
+        break;
+      }
+      case 'discardAndDraw': {
+        const deck = state.zones[playerZoneId(playerId, 'deck')];
+        if (!deck || action.count > deck.cardIds.length) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[1]`,
+            message:
+              'Recorded discard-and-draw count exceeds the source-state deck card count',
+          });
+        }
+        const problem = apply({
+          type: 'DiscardHandAndDraw',
           playerId,
           count: action.count,
         });

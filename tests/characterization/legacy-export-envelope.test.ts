@@ -488,6 +488,98 @@ describe('legacy action-export source envelope', () => {
     );
   });
 
+  it('pins discard-and-draw ingress, clamped count, ordered moves, and export', () => {
+    const handActions = readRepositoryFile(
+      'client/src/actions/zones/hand-actions.js'
+    );
+    const handButtons = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/card-context-menu/hand-buttons.js'
+    );
+    const keybinds = readRepositoryFile(
+      'client/src/actions/keybinds/keybinds.js'
+    );
+
+    expect(handButtons).toContain(
+      'discardAndDraw(mouseClick.cardUser, systemState.initiator)'
+    );
+    expect(keybinds).toContain(
+      "(event.key === 'd' || event.code === 'KeyD') &&\n      isAltKeyPressed(event)"
+    );
+    expect(keybinds).toContain(
+      'discardAndDraw(systemState.initiator, systemState.initiator)'
+    );
+
+    const implementation = handActions.slice(
+      handActions.indexOf('export const discardAndDraw ='),
+      handActions.indexOf('export const shuffleAndDraw =')
+    );
+    const promptedCount =
+      "parseInt(window.prompt('Draw how many cards?', '0'))";
+    const sourceDeckCount =
+      "const selectedDeckCount = getZone(user, 'deck').getCount();";
+    const sourceHandCount =
+      "const discardAmount = getZone(user, 'hand').getCount();";
+    const clampedCount =
+      'drawAmount = Math.min(drawAmount, selectedDeckCount);';
+    const remoteRelay =
+      "if (user === 'opp' && emit && systemState.isTwoPlayer) {";
+    const relayTuple =
+      "processAction(user, emit, 'discardAndDraw', [oInitiator, drawAmount]);";
+    const validGuard = 'if (!isNaN(drawAmount) && drawAmount >= 0) {';
+    const discardLoop =
+      "for (let i = 0; i < discardAmount; i++) {\n      moveCard(user, initiator, 'hand', 'discard', 0);\n    }";
+    const drawLoop =
+      "for (let i = 0; i < drawAmount; i++) {\n      moveCard(user, initiator, 'deck', 'hand', 0);\n    }";
+    const positiveMessage = 'if (drawAmount > 0) {';
+    const zeroMessage =
+      "message = determineUsername(initiator) + ' discarded hand';";
+    const invalidExportGuard = 'emit = false;';
+
+    for (const fragment of [
+      promptedCount,
+      sourceDeckCount,
+      sourceHandCount,
+      clampedCount,
+      remoteRelay,
+      relayTuple,
+      validGuard,
+      discardLoop,
+      drawLoop,
+      positiveMessage,
+      zeroMessage,
+      invalidExportGuard,
+    ]) {
+      expect(implementation).toContain(fragment);
+    }
+    expect(implementation.indexOf(promptedCount)).toBeLessThan(
+      implementation.indexOf(sourceDeckCount)
+    );
+    expect(implementation.indexOf(sourceDeckCount)).toBeLessThan(
+      implementation.indexOf(sourceHandCount)
+    );
+    expect(implementation.indexOf(sourceHandCount)).toBeLessThan(
+      implementation.indexOf(clampedCount)
+    );
+    expect(implementation.indexOf(clampedCount)).toBeLessThan(
+      implementation.indexOf(remoteRelay)
+    );
+    expect(implementation.indexOf(remoteRelay)).toBeLessThan(
+      implementation.indexOf(relayTuple)
+    );
+    expect(implementation.indexOf(relayTuple)).toBeLessThan(
+      implementation.indexOf(validGuard)
+    );
+    expect(implementation.indexOf(validGuard)).toBeLessThan(
+      implementation.indexOf(discardLoop)
+    );
+    expect(implementation.indexOf(discardLoop)).toBeLessThan(
+      implementation.indexOf(drawLoop)
+    );
+    expect(implementation.indexOf(drawLoop)).toBeLessThan(
+      implementation.lastIndexOf(relayTuple)
+    );
+  });
+
   it('pins deck tuple materialization, selectable categories, and the unknown error marker', () => {
     const buildDeck = readRepositoryFile(
       'client/src/setup/deck-constructor/build-deck.js'
