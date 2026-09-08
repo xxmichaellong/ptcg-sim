@@ -170,7 +170,7 @@ materialize bounded deck definitions with deterministic order-preserving IDs,
 and provide import-wide monotonic identities plus one-shot source-resolved
 outcome adapters. A first all-or-nothing candidate builder now applies the
 closed lifecycle/draw/discard-and-draw/shuffle-hand-and-draw/
-shuffle-hand-to-deck-bottom-and-draw/direct-prize-shuffle/target-free-loose/
+shuffle-hand-to-deck-bottom-and-draw/direct-prize-shuffle/direct-loose-board-bulk/target-free-loose/
 stadium/new-play-stack/rich-whole-stack-movement-and-swap/stack-card-reattachment/
 stack-card-departure/
 source-zone-targeted-play/
@@ -295,6 +295,13 @@ resets all ability markers, discards only that player's loose board, preserves
 turn/card-face state, and emits one replayable table declaration. Strict
 decoder, self/opponent candidate, retry/replay/hash/invariant, malformed-tuple,
 and real-V1 button/export/browser coverage are pinned without a schema change.
+Exact `discardBoard`, `handBoard`, `lostZoneBoard`, and `shuffleBoard` tuples now
+reuse `ResolveLooseBoardCards`. Nonempty records snapshot the exact current
+board; shuffle additionally validates and consumes the recorded permutation
+over the current deck-plus-board basis. Empty records preserve V1's exported
+no-op as zero batches, including the JSON-serialized null shuffle sentinel.
+Destination order, concealment, self/opponent targeting, deterministic retry,
+replay, and stale-permutation rollback are pinned without a schema change.
 Shuffle-into-deck translates v1's in-deck tail-move
 permutation basis to the canonical input order. Switch-with-deck-top preserves
 v1's source-tail return and empty-deck branch through one or two canonical

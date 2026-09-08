@@ -69,6 +69,10 @@ const CONVERTED_ACTIONS = new Set<LegacySynchronizedActionName>([
   'handAll',
   'shuffleAll',
   'shuffleBottom',
+  'discardBoard',
+  'handBoard',
+  'shuffleBoard',
+  'lostZoneBoard',
   'shuffleZone',
   'moveToDeckTop',
   'shuffleIntoDeck',
@@ -679,6 +683,77 @@ export const buildLegacyV1Candidate = (
           type: action.type === 'attack' ? 'DeclareAttack' : 'PassTurn',
           playerId,
         });
+        if (problem) return problem;
+        break;
+      }
+      case 'discardBoard':
+      case 'handBoard':
+      case 'shuffleBoard':
+      case 'lostZoneBoard': {
+        const board = state.zones[playerZoneId(playerId, 'board')];
+        if (!board) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].action`,
+            message:
+              'Recorded loose-board action has no canonical player board',
+          });
+        }
+
+        if (board.cardIds.length === 0) {
+          if (
+            action.type === 'shuffleBoard' &&
+            action.shuffleIndices !== null
+          ) {
+            return failure({
+              code: 'source_state_mismatch',
+              recordIndex: action.recordIndex,
+              path: `$[${action.recordIndex}].parameters[2]`,
+              message:
+                'An empty-board shuffle must carry the V1 null permutation sentinel',
+            });
+          }
+          break;
+        }
+
+        const destination =
+          action.type === 'discardBoard'
+            ? 'discard'
+            : action.type === 'handBoard'
+              ? 'hand'
+              : action.type === 'lostZoneBoard'
+                ? 'lostZone'
+                : 'shuffleIntoDeck';
+        let outcome: LegacyV1ResolvedOutcome | undefined;
+        if (action.type === 'shuffleBoard') {
+          const deck = state.zones[playerZoneId(playerId, 'deck')];
+          if (
+            !deck ||
+            action.shuffleIndices === null ||
+            action.shuffleIndices.length !==
+              deck.cardIds.length + board.cardIds.length
+          ) {
+            return failure({
+              code: 'source_state_mismatch',
+              recordIndex: action.recordIndex,
+              path: `$[${action.recordIndex}].parameters[2]`,
+              message:
+                'Recorded board-shuffle length does not match the source-state deck-plus-board card count',
+            });
+          }
+          outcome = { kind: 'shuffle', indices: action.shuffleIndices };
+        }
+
+        const problem = apply(
+          {
+            type: 'ResolveLooseBoardCards',
+            playerId,
+            expectedBoardCardIds: [...board.cardIds],
+            destination,
+          },
+          outcome
+        );
         if (problem) return problem;
         break;
       }

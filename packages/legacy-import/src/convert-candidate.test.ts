@@ -408,6 +408,292 @@ describe('legacy v1 canonical candidate builder', () => {
     expect(replayed).toEqual(result.state);
   });
 
+  it('imports all direct loose-board destinations through exact atomic batches', () => {
+    const parsed = parse(
+      payload(
+        cardRows(8, 'Self board batch'),
+        cardRows(3, 'Opponent board batch'),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'board',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'self',
+          'deck',
+          'board',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'discardBoard', ['opp', false]),
+        action('self', 'moveCardBundle', [
+          'self',
+          'deck',
+          'board',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'board',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'handBoard', ['self', true]),
+        action('opp', 'moveCardBundle', [
+          'self',
+          'deck',
+          'board',
+          0,
+          false,
+          'move',
+        ]),
+        action('opp', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'board',
+          0,
+          false,
+          'move',
+        ]),
+        action('opp', 'lostZoneBoard', ['self', true]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'board',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'self',
+          'deck',
+          'board',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'shuffleBoard', ['opp', true, [2, 0, 3, 1]])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    const selfId = target.selfSeat.playerId;
+    const opponentId = target.opponentSeat.playerId;
+    expect(
+      result.records
+        .filter(({ action }) =>
+          [
+            'discardBoard',
+            'handBoard',
+            'lostZoneBoard',
+            'shuffleBoard',
+          ].includes(action)
+        )
+        .map(({ recordIndex, action, batches }) => ({
+          recordIndex,
+          action,
+          batchCount: batches.length,
+          eventTypes: batches.flatMap((batch) =>
+            batch.events.map((event) => event.type)
+          ),
+        }))
+    ).toEqual([
+      {
+        recordIndex: 5,
+        action: 'discardBoard',
+        batchCount: 1,
+        eventTypes: ['LooseBoardCardsResolved'],
+      },
+      {
+        recordIndex: 8,
+        action: 'handBoard',
+        batchCount: 1,
+        eventTypes: ['LooseBoardCardsResolved'],
+      },
+      {
+        recordIndex: 11,
+        action: 'lostZoneBoard',
+        batchCount: 1,
+        eventTypes: ['LooseBoardCardsResolved'],
+      },
+      {
+        recordIndex: 14,
+        action: 'shuffleBoard',
+        batchCount: 1,
+        eventTypes: ['LooseBoardCardsResolved'],
+      },
+    ]);
+    expect(result.records[4]!.batches[0]!.events[0]).toMatchObject({
+      type: 'LooseBoardCardsResolved',
+      playerId: selfId,
+      destination: 'discard',
+      expectedBoardCardIds: ['legacy:v1:card:000000', 'legacy:v1:card:000001'],
+    });
+    expect(result.records[7]!.batches[0]!.events[0]).toMatchObject({
+      type: 'LooseBoardCardsResolved',
+      playerId: selfId,
+      destination: 'hand',
+      concealedCardIds: ['legacy:v1:card:000002', 'legacy:v1:card:000003'],
+    });
+    expect(result.records[10]!.batches[0]!.events[0]).toMatchObject({
+      type: 'LooseBoardCardsResolved',
+      playerId: opponentId,
+      destination: 'lostZone',
+      expectedBoardCardIds: ['legacy:v1:card:000008', 'legacy:v1:card:000009'],
+    });
+    expect(result.records[13]!.batches[0]!.events[0]).toMatchObject({
+      type: 'LooseBoardCardsResolved',
+      playerId: selfId,
+      destination: 'shuffleIntoDeck',
+      destinationCardIds: [
+        'legacy:v1:card:000004',
+        'legacy:v1:card:000006',
+        'legacy:v1:card:000005',
+        'legacy:v1:card:000007',
+      ],
+      concealedCardIds: [
+        'legacy:v1:card:000004',
+        'legacy:v1:card:000006',
+        'legacy:v1:card:000005',
+        'legacy:v1:card:000007',
+      ],
+    });
+    expect(
+      result.state.zones[playerZoneId(selfId, 'discard')]!.cardIds
+    ).toEqual(['legacy:v1:card:000000', 'legacy:v1:card:000001']);
+    expect(result.state.zones[playerZoneId(selfId, 'hand')]!.cardIds).toEqual([
+      'legacy:v1:card:000002',
+      'legacy:v1:card:000003',
+    ]);
+    expect(
+      result.state.zones[playerZoneId(opponentId, 'lostZone')]!.cardIds
+    ).toEqual(['legacy:v1:card:000008', 'legacy:v1:card:000009']);
+    expect(result.state.zones[playerZoneId(selfId, 'deck')]!.cardIds).toEqual([
+      'legacy:v1:card:000004',
+      'legacy:v1:card:000006',
+      'legacy:v1:card:000005',
+      'legacy:v1:card:000007',
+    ]);
+    expect(result.state.zones[playerZoneId(selfId, 'board')]!.cardIds).toEqual(
+      []
+    );
+    expect(
+      result.state.zones[playerZoneId(opponentId, 'board')]!.cardIds
+    ).toEqual([]);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+
+    const replayed = result.records
+      .flatMap((record) => record.batches)
+      .reduce(
+        applyEventBatch,
+        createEmptyMatch(target.matchId, [target.selfSeat, target.opponentSeat])
+      );
+    expect(replayed).toEqual(result.state);
+  });
+
+  it('preserves source-authentic empty loose-board actions as zero-batch records', () => {
+    const parsed = parse(
+      payload(
+        cardRows(2, 'Empty board'),
+        '',
+        action('self', 'discardBoard', ['opp', true]),
+        action('self', 'handBoard', ['self', false]),
+        action('opp', 'lostZoneBoard', ['self', true]),
+        action('opp', 'shuffleBoard', ['opp', false, null])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    expect(
+      result.records.map(({ recordIndex, action, batches }) => ({
+        recordIndex,
+        action,
+        batchCount: batches.length,
+      }))
+    ).toEqual([
+      { recordIndex: 1, action: 'loadDeckData', batchCount: 1 },
+      { recordIndex: 2, action: 'loadDeckData', batchCount: 1 },
+      { recordIndex: 3, action: 'discardBoard', batchCount: 0 },
+      { recordIndex: 4, action: 'handBoard', batchCount: 0 },
+      { recordIndex: 5, action: 'lostZoneBoard', batchCount: 0 },
+      { recordIndex: 6, action: 'shuffleBoard', batchCount: 0 },
+    ]);
+    expect(result.state.revision).toBe(2);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+  });
+
+  it.each([
+    {
+      label: 'nonempty null shuffle',
+      deckRows: cardRows(2, 'Nonempty null shuffle'),
+      setup: action('self', 'moveCardBundle', [
+        'self',
+        'deck',
+        'board',
+        0,
+        false,
+        'move',
+      ]),
+      boardAction: action('self', 'shuffleBoard', ['self', true, null]),
+    },
+    {
+      label: 'nonempty wrong-length shuffle',
+      deckRows: cardRows(2, 'Wrong shuffle length'),
+      setup: action('self', 'moveCardBundle', [
+        'opp',
+        'deck',
+        'board',
+        0,
+        false,
+        'move',
+      ]),
+      boardAction: action('self', 'shuffleBoard', ['opp', false, [0]]),
+    },
+    {
+      label: 'empty non-null shuffle',
+      deckRows: cardRows(1, 'Empty non-null shuffle'),
+      setup: null,
+      boardAction: action('self', 'shuffleBoard', ['self', true, [0]]),
+    },
+  ])(
+    'returns no candidate for a $label',
+    ({ deckRows, setup, boardAction }) => {
+      const actions = setup ? [setup, boardAction] : [boardAction];
+      const result = buildLegacyV1Candidate(
+        parse(payload(deckRows, '', ...actions)),
+        target
+      );
+      expect(result).toMatchObject({
+        ok: false,
+        issues: [
+          {
+            code: 'source_state_mismatch',
+            path: expect.stringMatching(/\.parameters\[2\]$/),
+          },
+        ],
+      });
+      expect('state' in result).toBe(false);
+    }
+  );
+
   it.each(['attack', 'pass'] as const)(
     'returns no candidate for a non-empty %s tuple',
     (actionName) => {

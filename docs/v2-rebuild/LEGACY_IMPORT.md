@@ -351,6 +351,18 @@ only changes DOM presentation and does not reorder either legacy array. Record
 `user` remains the target player, while exact prize cardinality stays a
 conversion-time source-state check.
 
+`discardBoard`, `handBoard`, and `lostZoneBoard` each carry exactly
+`[initiator, message]`; `shuffleBoard` carries
+`[initiator, message, permutationOrNull]`. Record `user` identifies the board
+owner, the first parameter retains the saved initiator perspective, and the
+message flag is presentation-only. V1 repeatedly moves board index zero, so
+discard, hand, and Lost Zone preserve the board's ordered tail append.
+`shuffleBoard` first appends the board to the existing deck and then applies a
+complete permutation over that deck-plus-board basis. All four functions still
+export a record for an empty board. In the empty shuffle branch no permutation
+is created, so JSON serialization turns the third parameter's `undefined` into
+the source-authentic `null` sentinel.
+
 `attack` and `pass` each carry an exact empty parameter array. Their record
 `user` is the acting/target player in the saved perspective. Conversion emits
 one canonical `DeclareAttack` or `PassTurn` batch, preserving the source's
@@ -617,6 +629,13 @@ The lifecycle mapping is source-backed:
   The prize zone becomes empty, the unchanged deck prefix is followed by the
   shuffled prizes, and every moved identity is concealed. Empty or mismatched
   source state fails before command execution and returns no candidate; and
+- direct discard/hand/Lost Zone board actions snapshot the target player's
+  exact current loose-board order and execute one `ResolveLooseBoardCards`
+  batch. Direct board shuffle additionally requires its recorded permutation
+  to match the exact current deck-plus-board count and supplies that order as
+  the action's one-shot resolved outcome. Empty boards retain the source record
+  with zero batches; only the serialized `null` shuffle sentinel is valid in
+  that branch. Stale or mismatched shuffle state returns no candidate; and
 - attack and pass require exact empty parameter arrays and execute one
   `DeclareAttack` or `PassTurn` for the source record's target player. The
   canonical batch resets every ability marker, discards only that player's
@@ -630,7 +649,7 @@ and requires byte-identical stable serialization before returning the private
 candidate. No partial batches escape on failure.
 
 The closed lifecycle/draw/discard-and-draw/both hand-shuffle-and-draw forms/
-direct-prize-shuffle/target-free-loose/stadium/new-play-stack-move/
+direct-prize-shuffle/direct-loose-board-bulk/target-free-loose/stadium/new-play-stack-move/
 source-zone-attach-evolve/stack-card-reattachment/stack-card-departure/
 individual-staged-card-loose-and-targeted-play/
 individual-staged-card-deck-edge-shuffle-and-stadium/exact-leave-all-restore/
@@ -661,7 +680,9 @@ zones, existing stack tops, either deck edge, an exact recorded shuffle, or
 stadium, or normalized new active/bench stacks with exact events and visibility
 cleanup. Parameterless attack and pass also resolve through one atomic
 canonical table command, so their internal board cleanup is not double-counted
-as a source record. Tests
+as a source record. Direct loose-board records resolve the current ordered
+board to discard, Lost Zone, hand, or an exactly recorded full-deck shuffle;
+source-authentic empty records remain zero-batch mappings. Tests
 prove that a later
 take-turn discards both players' loose boards in
 source order before drawing, and that an owner reset clears only that owner's

@@ -260,6 +260,14 @@ records through one canonical table-action batch, preserving acting-board-only
 cleanup, unchanged turn state, deterministic replay, and source-authentic
 timeline facts without widening any public package or production route.
 
+It also admits exact direct `discardBoard`, `handBoard`, `lostZoneBoard`, and
+`shuffleBoard` records through the existing atomic loose-board command. The
+source record's player selects the board; nonempty shuffle permutations are
+validated against the current deck-plus-board basis, while source-authentic
+empty records retain zero batches and require the serialized null shuffle
+sentinel. No state, command, event, wire, renderer, route, UI, or UX schema is
+widened.
+
 ## Files added during characterization
 
 ```text

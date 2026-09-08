@@ -165,6 +165,21 @@ export type LegacyV1MovementAction =
       readonly shuffleIndices: readonly number[];
     }
   | {
+      readonly type: 'discardBoard' | 'handBoard' | 'lostZoneBoard';
+      readonly recordIndex: number;
+      readonly player: LegacyExportUser;
+      readonly initiator: LegacyExportUser;
+      readonly message: boolean;
+    }
+  | {
+      readonly type: 'shuffleBoard';
+      readonly recordIndex: number;
+      readonly player: LegacyExportUser;
+      readonly initiator: LegacyExportUser;
+      readonly message: boolean;
+      readonly shuffleIndices: readonly number[] | null;
+    }
+  | {
       readonly type: 'shuffleZone';
       readonly recordIndex: number;
       readonly player: LegacyExportUser;
@@ -285,6 +300,10 @@ const isMovementAction = (
     | 'handAll'
     | 'shuffleAll'
     | 'shuffleBottom'
+    | 'discardBoard'
+    | 'handBoard'
+    | 'shuffleBoard'
+    | 'lostZoneBoard'
     | 'shuffleZone'
     | 'moveToDeckTop'
     | 'shuffleIntoDeck'
@@ -303,6 +322,10 @@ const isMovementAction = (
   action.action === 'handAll' ||
   action.action === 'shuffleAll' ||
   action.action === 'shuffleBottom' ||
+  action.action === 'discardBoard' ||
+  action.action === 'handBoard' ||
+  action.action === 'shuffleBoard' ||
+  action.action === 'lostZoneBoard' ||
   action.action === 'shuffleZone' ||
   action.action === 'moveToDeckTop' ||
   action.action === 'shuffleIntoDeck' ||
@@ -429,10 +452,10 @@ const decodeCardSource = (
  * shuffle-hand-to-deck-bottom-and-draw, and deck inspection; bottom-mode and
  * target-free loose-zone/stadium/new-play-stack card bundles; staged-stack leave-all,
  * staged discard/lost-zone/hand draining, and staged deck shuffles; direct
- * prize-shuffle; move-to-deck-top; shuffle-into-deck; switch-with-deck-top;
- * and shuffled-prizes-to-deck-bottom atoms. The remaining movement actions
- * stay untouched until their positional and state-dependent behavior is
- * frozen.
+ * prize-shuffle; direct loose-board bulk resolution; move-to-deck-top;
+ * shuffle-into-deck; switch-with-deck-top; and shuffled-prizes-to-deck-bottom
+ * atoms. The remaining movement actions stay untouched until their positional
+ * and state-dependent behavior is frozen.
  */
 export const decodeLegacyV1MovementActions = (
   parsed: ParsedLegacyExport
@@ -1098,6 +1121,99 @@ export const decodeLegacyV1MovementActions = (
           player: action.user,
           initiator,
           sourceZone,
+          shuffleIndices,
+        });
+        break;
+      }
+      case 'discardBoard':
+      case 'handBoard':
+      case 'lostZoneBoard': {
+        if (action.parameters.length !== 2) {
+          return failure(
+            'invalid_parameter_count',
+            actionIndex,
+            '.parameters',
+            `${action.action} requires [initiator, message]`
+          );
+        }
+
+        const initiator = action.parameters[0];
+        if (initiator !== 'self' && initiator !== 'opp') {
+          return failure(
+            'invalid_parameter_type',
+            actionIndex,
+            '.parameters[0]',
+            `${action.action} initiator must use the exported self/opp perspective`
+          );
+        }
+
+        const message = action.parameters[1];
+        if (typeof message !== 'boolean') {
+          return failure(
+            'invalid_parameter_type',
+            actionIndex,
+            '.parameters[1]',
+            `${action.action} message flag must be a boolean`
+          );
+        }
+
+        decoded.push({
+          type: action.action,
+          recordIndex: actionIndex + 1,
+          player: action.user,
+          initiator,
+          message,
+        });
+        break;
+      }
+      case 'shuffleBoard': {
+        if (action.parameters.length !== 3) {
+          return failure(
+            'invalid_parameter_count',
+            actionIndex,
+            '.parameters',
+            'shuffleBoard requires [initiator, message, permutationOrNull]'
+          );
+        }
+
+        const initiator = action.parameters[0];
+        if (initiator !== 'self' && initiator !== 'opp') {
+          return failure(
+            'invalid_parameter_type',
+            actionIndex,
+            '.parameters[0]',
+            'shuffleBoard initiator must use the exported self/opp perspective'
+          );
+        }
+
+        const message = action.parameters[1];
+        if (typeof message !== 'boolean') {
+          return failure(
+            'invalid_parameter_type',
+            actionIndex,
+            '.parameters[1]',
+            'shuffleBoard message flag must be a boolean'
+          );
+        }
+
+        const recordedShuffle = action.parameters[2];
+        const shuffleIndices =
+          recordedShuffle === null ? null : decodeShuffle(recordedShuffle);
+        if (recordedShuffle !== null && !shuffleIndices) {
+          return failure(
+            'invalid_shuffle_permutation',
+            actionIndex,
+            '.parameters[2]',
+            'shuffleBoard requires a complete zero-based permutation or the empty-board null sentinel'
+          );
+        }
+
+        decoded.push({
+          type: 'shuffleBoard',
+          recordIndex: actionIndex + 1,
+          player: action.user,
+          initiator,
+          message,
           shuffleIndices,
         });
         break;

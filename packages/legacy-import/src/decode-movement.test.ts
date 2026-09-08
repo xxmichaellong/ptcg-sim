@@ -821,6 +821,117 @@ describe('legacy v1 movement positional decoder', () => {
     }
   );
 
+  it('decodes direct loose-board destinations, presentation flags, and shuffle sentinel', () => {
+    expect(
+      decode(
+        action('self', 'discardBoard', ['opp', true]),
+        action('opp', 'handBoard', ['self', false]),
+        action('self', 'lostZoneBoard', ['self', true]),
+        action('opp', 'shuffleBoard', ['opp', false, [2, 0, 1]]),
+        action('self', 'shuffleBoard', ['opp', true, null])
+      )
+    ).toEqual({
+      ok: true,
+      actions: [
+        {
+          type: 'discardBoard',
+          recordIndex: 3,
+          player: 'self',
+          initiator: 'opp',
+          message: true,
+        },
+        {
+          type: 'handBoard',
+          recordIndex: 4,
+          player: 'opp',
+          initiator: 'self',
+          message: false,
+        },
+        {
+          type: 'lostZoneBoard',
+          recordIndex: 5,
+          player: 'self',
+          initiator: 'self',
+          message: true,
+        },
+        {
+          type: 'shuffleBoard',
+          recordIndex: 6,
+          player: 'opp',
+          initiator: 'opp',
+          message: false,
+          shuffleIndices: [2, 0, 1],
+        },
+        {
+          type: 'shuffleBoard',
+          recordIndex: 7,
+          player: 'self',
+          initiator: 'opp',
+          message: true,
+          shuffleIndices: null,
+        },
+      ],
+    });
+  });
+
+  it.each(['discardBoard', 'handBoard', 'lostZoneBoard'] as const)(
+    'rejects malformed direct %s tuples',
+    (actionName) => {
+      expect(firstIssue(action('self', actionName, ['self']))).toMatchObject({
+        code: 'invalid_parameter_count',
+        recordIndex: 3,
+        path: '$[3].parameters',
+      });
+      expect(
+        firstIssue(action('self', actionName, [false, true]))
+      ).toMatchObject({
+        code: 'invalid_parameter_type',
+        recordIndex: 3,
+        path: '$[3].parameters[0]',
+      });
+      expect(
+        firstIssue(action('self', actionName, ['self', 'true']))
+      ).toMatchObject({
+        code: 'invalid_parameter_type',
+        recordIndex: 3,
+        path: '$[3].parameters[1]',
+      });
+    }
+  );
+
+  it('rejects malformed direct board-shuffle tuples', () => {
+    expect(
+      firstIssue(action('self', 'shuffleBoard', ['self', true]))
+    ).toMatchObject({
+      code: 'invalid_parameter_count',
+      recordIndex: 3,
+      path: '$[3].parameters',
+    });
+    expect(
+      firstIssue(action('self', 'shuffleBoard', [false, true, null]))
+    ).toMatchObject({
+      code: 'invalid_parameter_type',
+      recordIndex: 3,
+      path: '$[3].parameters[0]',
+    });
+    expect(
+      firstIssue(action('self', 'shuffleBoard', ['self', 'true', null]))
+    ).toMatchObject({
+      code: 'invalid_parameter_type',
+      recordIndex: 3,
+      path: '$[3].parameters[1]',
+    });
+    for (const indices of [true, [0, 0], [0, 2], [-1], [0.5], ['0']]) {
+      expect(
+        firstIssue(action('self', 'shuffleBoard', ['self', true, indices]))
+      ).toMatchObject({
+        code: 'invalid_shuffle_permutation',
+        recordIndex: 3,
+        path: '$[3].parameters[2]',
+      });
+    }
+  });
+
   it('decodes only source-authentic direct prize shuffles', () => {
     expect(
       decode(

@@ -9,6 +9,13 @@ only after recording its explicit preserve/fix decision in
 `docs/v2-rebuild/LEGACY_ACTION_MAP.md`. These inventory locks are the first layer;
 scenario fixtures will add state, message, visibility, and ordering outcomes.
 
+`legacy-export-envelope.test.ts` also pins the direct loose-board bulk source
+contract: all four actions export after their guarded movement loops, preserve
+index-zero move order, retain the saved initiator/message tuple, and expose
+discard/hand/shuffle keyboard bindings plus all four shipped context-menu
+buttons. The real-runtime browser companion separately proves destination
+arrays and the empty-board shuffle's JSON `null` permutation sentinel.
+
 Renderer geometry locks additionally pair a manually reviewed numeric fixture
 with source digests. Text sources are normalized to LF for portable hashing;
 image fixtures are hashed as raw bytes. The browser harness loads those sources

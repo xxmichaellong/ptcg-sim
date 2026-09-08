@@ -17,10 +17,14 @@ interface LegacyLooseBoardShortcutState {
   readonly selfCounter: number;
   readonly actions: readonly LegacyActionRecord[];
   readonly exports: readonly LegacyActionRecord[];
+  readonly serializedExports: readonly LegacyActionRecord[];
 }
 
-const mountRealLegacyLooseBoardFixture = async (page: Page): Promise<void> => {
-  await page.evaluate(async () => {
+const mountRealLegacyLooseBoardFixture = async (
+  page: Page,
+  withBoardCards = true
+): Promise<void> => {
+  await page.evaluate(async (includeBoardCards) => {
     interface RuntimeCard {
       readonly name: string;
       readonly image: HTMLImageElement;
@@ -64,7 +68,7 @@ const mountRealLegacyLooseBoardFixture = async (page: Page): Promise<void> => {
     const systemState = frontEnd['systemState'] as RuntimeState;
     const mouseClick = frontEnd['mouseClick'] as RuntimeSelection;
 
-    for (const zoneId of ['deck', 'board', 'discard', 'hand']) {
+    for (const zoneId of ['deck', 'board', 'discard', 'hand', 'lostZone']) {
       const zone = getZone('self', zoneId);
       zone.array.splice(0);
       for (const image of zone.element.querySelectorAll('img')) image.remove();
@@ -79,6 +83,7 @@ const mountRealLegacyLooseBoardFixture = async (page: Page): Promise<void> => {
     systemState.isReplay = false;
     systemState.cardBackSrc = `${location.origin}/src/assets/cardback.png`;
     mouseClick.selectingCard = false;
+    (mouseClick as RuntimeSelection & { cardUser: string }).cardUser = 'self';
     Math.random = () => 0;
 
     const imageUrl = `${location.origin}/src/assets/blank-logo.png`;
@@ -96,10 +101,12 @@ const mountRealLegacyLooseBoardFixture = async (page: Page): Promise<void> => {
     const deck = getZone('self', 'deck');
     const board = getZone('self', 'board');
     deck.array.push(...deckCards);
-    board.array.push(...boardCards);
+    if (includeBoardCards) board.array.push(...boardCards);
     deck.element.append(...deckCards.map((card) => card.image));
-    board.element.append(...boardCards.map((card) => card.image));
-  });
+    if (includeBoardCards) {
+      board.element.append(...boardCards.map((card) => card.image));
+    }
+  }, withBoardCards);
 };
 
 const captureRealLegacyLooseBoardState = (
@@ -132,7 +139,7 @@ const captureRealLegacyLooseBoardState = (
     ) => RuntimeZone;
     return {
       zoneNames: Object.fromEntries(
-        ['deck', 'board', 'discard', 'hand'].map((zoneId) => [
+        ['deck', 'board', 'discard', 'hand', 'lostZone'].map((zoneId) => [
           zoneId,
           getZone('self', zoneId).array.map((card) => card.name),
         ])
@@ -141,6 +148,7 @@ const captureRealLegacyLooseBoardState = (
       selfCounter: state.selfCounter,
       actions: structuredClone(state.selfActionData),
       exports: structuredClone(state.exportActionData),
+      serializedExports: JSON.parse(JSON.stringify(state.exportActionData)),
     };
   });
 
@@ -158,7 +166,7 @@ const expectedLegacyExports = (
     ),
   }));
 
-test('real v1 global loose-board shortcuts pin discard, hand, and shuffle semantics', async ({
+test('real v1 loose-board controls pin all destinations and empty shuffle serialization', async ({
   browser,
 }, testInfo) => {
   test.skip(
@@ -176,6 +184,7 @@ test('real v1 global loose-board shortcuts pin discard, hand, and shuffle semant
         board: [],
         discard: ['Board one', 'Board two'],
         hand: [],
+        lostZone: [],
       },
     },
     {
@@ -187,6 +196,7 @@ test('real v1 global loose-board shortcuts pin discard, hand, and shuffle semant
         board: [],
         discard: [],
         hand: ['Board one', 'Board two'],
+        lostZone: [],
       },
     },
     {
@@ -198,6 +208,19 @@ test('real v1 global loose-board shortcuts pin discard, hand, and shuffle semant
         board: [],
         discard: [],
         hand: [],
+        lostZone: [],
+      },
+    },
+    {
+      buttonId: 'lostZoneBoardButton',
+      action: 'lostZoneBoard',
+      parameters: ['opp', true],
+      zoneNames: {
+        deck: ['Deck one', 'Deck two'],
+        board: [],
+        discard: [],
+        hand: [],
+        lostZone: ['Board one', 'Board two'],
       },
     },
   ] as const;
@@ -209,7 +232,11 @@ test('real v1 global loose-board shortcuts pin discard, hand, and shuffle semant
     try {
       const loaded = await loadLegacyRuntime(page);
       await mountRealLegacyLooseBoardFixture(page);
-      await page.keyboard.press(scenario.key);
+      if ('key' in scenario) {
+        await page.keyboard.press(scenario.key);
+      } else {
+        await page.locator(`#${scenario.buttonId}`).dispatchEvent('click');
+      }
       const state = await captureRealLegacyLooseBoardState(page);
       const expectedActions = [
         {
@@ -234,5 +261,46 @@ test('real v1 global loose-board shortcuts pin discard, hand, and shuffle semant
     } finally {
       await page.close();
     }
+  }
+
+  const emptyPage = await browser.newPage({ viewport, deviceScaleFactor: 1 });
+  const emptyPageErrors: string[] = [];
+  emptyPage.on('pageerror', (error) => emptyPageErrors.push(error.message));
+  try {
+    const loaded = await loadLegacyRuntime(emptyPage);
+    await mountRealLegacyLooseBoardFixture(emptyPage, false);
+    await emptyPage.keyboard.press('Slash');
+    const state = await captureRealLegacyLooseBoardState(emptyPage);
+
+    expect(state.zoneNames).toEqual({
+      deck: ['Deck one', 'Deck two'],
+      board: [],
+      discard: [],
+      hand: [],
+      lostZone: [],
+    });
+    expect(state.selfCounter).toBe(1);
+    expect(state.actions).toHaveLength(1);
+    expect(state.actions[0]).toMatchObject({
+      user: 'self',
+      emit: true,
+      action: 'shuffleBoard',
+    });
+    expect(state.actions[0]!.parameters.slice(0, 2)).toEqual(['opp', true]);
+    expect(state.actions[0]!.parameters).toHaveLength(3);
+    expect(state.serializedExports).toEqual([
+      {
+        user: 'self',
+        emit: true,
+        action: 'shuffleBoard',
+        parameters: ['self', true, null],
+      },
+    ]);
+    expect(loaded.servedPaths).toContain('/src/assets/blank-logo.png');
+    expect(loaded.missingPaths).toEqual([]);
+    expect(loaded.blockedOrigins).toContain('https://ptcgsim.online');
+    expect(emptyPageErrors).toEqual([]);
+  } finally {
+    await emptyPage.close();
   }
 });

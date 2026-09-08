@@ -32,9 +32,9 @@ the bottom-mode, target-free loose-zone/stadium/new-play-stack/rich-whole-stack,
 source-zone-targeted active/bench, and individual work-area new-stack
 `moveCardBundle`, resolved
 `shuffleIntoDeck`, source-authentic `switchWithDeckTop`, and
-`shufflePrizesToDeckBottom` atoms below. Exact empty-tuple `attack` and `pass`
-records also reuse the canonical atomic table commands, but every other action
-is rejected before
+`shufflePrizesToDeckBottom` atoms below. Exact direct loose-board bulk records
+and empty-tuple `attack` and `pass` records also reuse their canonical atomic
+commands, but every other action is rejected before
 constructing state. This is intentionally not yet a complete import
 compatibility claim: reachable loose-board take-turn cleanup and owner reset are
 now proven alongside owned-stadium and play-stack reset, while face-down in-play
@@ -403,6 +403,20 @@ completed by the following protected checkpoints.
 | `handBoard`     | `ResolveLooseBoardCards(hand)`            | Ownership versus board placement, hidden projection            |
 | `shuffleBoard`  | `ResolveLooseBoardCards(shuffleIntoDeck)` | Per-board deck, authority permutation, message batching        |
 | `lostZoneBoard` | `ResolveLooseBoardCards(lostZone)`        | Ownership destination and ordering                             |
+
+The private V1 importer now decodes all four source tuples strictly. Record
+`user` selects the target board, while saved initiator and message parameters
+are validated but remain presentation-only. A nonempty board produces one
+atomic resolution with its exact current card order. Shuffle consumes the
+recorded complete permutation over the existing-deck-plus-board basis; it never
+rerolls. V1 exports empty actions too, so those remain zero-batch source records,
+with `shuffleBoard` requiring the JSON-serialized null permutation sentinel.
+Candidate tests pin all destinations, self/opponent targeting, append and
+shuffle order, hand/deck concealment, deterministic retry/replay/hash,
+invariants, and all-or-nothing mismatch rejection. Static and real-V1 browser
+oracles pin the shipped keyboard/context-menu paths and empty serialization.
+No core, protocol, authority, state, public API, renderer, route, UI, or UX
+schema changes.
 
 ## Visibility and per-card shortcuts
 

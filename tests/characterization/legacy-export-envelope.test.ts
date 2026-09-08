@@ -145,6 +145,71 @@ describe('legacy action-export source envelope', () => {
     expect(tableButtons).toContain('pass(systemState.initiator)');
   });
 
+  it('pins direct loose-board bulk exports, order, triggers, and empty shuffle behavior', () => {
+    const boardActions = readRepositoryFile(
+      'client/src/actions/general/board-actions.js'
+    );
+    const boardButtons = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/card-context-menu/board-buttons.js'
+    );
+    const keybinds = readRepositoryFile(
+      'client/src/actions/keybinds/keybinds.js'
+    );
+
+    expect(
+      boardActions.match(
+        /const selectedBoardCount = getZone\(user, 'board'\)\.getCount\(\);/g
+      )
+    ).toHaveLength(4);
+    expect(
+      boardActions.match(/for \(let i = 0; i < selectedBoardCount; i\+\+\) \{/g)
+    ).toHaveLength(4);
+    for (const [actionName, destination] of [
+      ['discardBoard', 'discard'],
+      ['handBoard', 'hand'],
+      ['lostZoneBoard', 'lostZone'],
+    ] as const) {
+      expect(boardActions).toContain(
+        `moveCard(user, initiator, 'board', '${destination}', 0)`
+      );
+      expect(boardActions).toContain(
+        `processAction(user, emit, '${actionName}', [oInitiator, message])`
+      );
+      expect(boardButtons).toContain(
+        `${actionName}(mouseClick.cardUser, systemState.initiator)`
+      );
+    }
+    expect(boardActions).toContain(
+      "moveCard(user, initiator, 'board', 'deck', 0)"
+    );
+    expect(boardActions).toContain(
+      'indices = indices ? indices : shuffleIndices(deck.getCount())'
+    );
+    expect(boardActions).toContain(
+      "shuffleZone(user, initiator, 'deck', indices, false, false)"
+    );
+    expect(boardActions).toContain(
+      "processAction(user, emit, 'shuffleBoard', [oInitiator, message, indices])"
+    );
+    expect(boardButtons).toContain(
+      'shuffleBoard(mouseClick.cardUser, systemState.initiator)'
+    );
+    expect(keybinds).toContain(
+      'discardBoard(systemState.initiator, systemState.initiator)'
+    );
+    expect(keybinds).toContain(
+      'handBoard(systemState.initiator, systemState.initiator)'
+    );
+    expect(keybinds).toContain(
+      'shuffleBoard(systemState.initiator, systemState.initiator)'
+    );
+    expect(boardActions.indexOf('if (selectedBoardCount > 0)')).toBeLessThan(
+      boardActions.indexOf(
+        "processAction(user, emit, 'shuffleBoard', [oInitiator, message, indices])"
+      )
+    );
+  });
+
   it('pins the first movement tuple, clamp, and independent target ownership', () => {
     const deckActions = readRepositoryFile(
       'client/src/actions/zones/deck-actions.js'
