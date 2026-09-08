@@ -120,7 +120,11 @@ importers:
 
   packages/game-core: {}
 
-  packages/legacy-import: {}
+  packages/legacy-import:
+    dependencies:
+      '@ptcgsim/game-core':
+        specifier: workspace:*
+        version: link:../game-core
 
   packages/protocol:
     dependencies:

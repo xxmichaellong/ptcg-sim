@@ -117,4 +117,25 @@ describe('legacy action-export source envelope', () => {
     expect(processAction).toContain("exportParameters[0] = 'opp'");
     expect(processAction).toContain("exportParameters[0] = 'self'");
   });
+
+  it('pins deck tuple materialization, selectable categories, and the unknown error marker', () => {
+    const buildDeck = readRepositoryFile(
+      'client/src/setup/deck-constructor/build-deck.js'
+    );
+    const importDeck = readRepositoryFile(
+      'client/src/setup/deck-constructor/import.js'
+    );
+
+    expect(buildDeck).toContain(
+      'for (const [quantity, name, type, imageURL] of deckData)'
+    );
+    expect(buildDeck).toContain('for (let i = 0; i < quantity; i++)');
+    expect(buildDeck).toContain('new Card(user, name, type, imageURL)');
+    for (const category of ['Pokémon', 'Trainer', 'Energy']) {
+      expect(importDeck).toContain(
+        `<option value="${category}">${category}</option>`
+      );
+    }
+    expect(importDeck).toContain("type === 'Unknown'");
+  });
 });

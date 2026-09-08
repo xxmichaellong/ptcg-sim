@@ -12,5 +12,8 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --build"
+  },
+  "dependencies": {
+    "@ptcgsim/game-core": "workspace:*"
   }
 }

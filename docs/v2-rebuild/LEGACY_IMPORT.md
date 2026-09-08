@@ -44,7 +44,7 @@ writes one JSON array:
     "user": "self",
     "emit": true,
     "action": "setup",
-    "parameters": []
+    "parameters": [[1, 0]]
   }
 ]
 ```
@@ -104,9 +104,10 @@ real user corpus can adjust them before compatibility is promised:
 | One string/field name  | 16,384 code units    |
 | Deck rows per player   | 200                  |
 
-The package does not depend on `game-core` yet. That keeps format admission
-separate from semantic interpretation and prevents an invalid upload from
-allocating canonical card instances or room state.
+The envelope parser itself remains independent of `game-core`. The package now
+has one deliberate, one-way `game-core` dependency for its private semantic
+deck adapter. Admission still completes before that adapter can allocate a
+definition, and neither layer constructs card instances or match state.
 
 ### First positional family
 
@@ -124,16 +125,38 @@ not guessed. This lets each family acquire its own source-backed positional
 schema while the final transaction can require every record to have exactly one
 decoder before any canonical state is created.
 
+### Deck definition adapter
+
+`decodeLegacyV1Decks` converts the two parser-verified deck tuples into
+game-core `DeckEntry` values without constructing match state. Quantity strings
+must be positive canonical decimal integers, and each player's expanded deck is
+bounded by game-core's 200-card limit. Names, categories, and image URL strings
+must satisfy the canonical model's limits; URLs remain inert data and are never
+fetched by the importer. `Pokémon`, `Trainer`, and `Energy` are the source UI's
+selectable categories; explicit `Unknown` is retained as a compatibility value
+because game-core models it, but it is not presented as a selectable source UI
+category.
+
+Definition identity uses a shared self-then-opponent encounter registry over
+the exact `[name, category, imageUrl]` tuple. IDs are short deterministic
+ordinals, so they cannot leak uploaded text or collide through a truncated
+hash. Adjacent exact duplicate rows are coalesced safely. A separated repeat
+receives a distinct run ID so `A, B, A` never becomes `A, A, B`; matching run
+occurrences across both players share IDs. Source strings and expanded row order
+are otherwise preserved without trimming or Unicode normalization.
+
 ## Next conversion slices
 
-1. Introduce deterministic import-only ID, randomness, and card-definition
-   adapters; external card URLs are data and are never fetched during parsing.
+1. Introduce deterministic import-only instance/stack/work-area IDs and
+   resolved-randomness adapters; never invent an outcome omitted by the source.
 2. Interpret lifecycle and movement families into a private canonical candidate,
    then run the normal game-core invariants and stable hash.
 3. Add markers, visibility/inspection, randomized/bulk, table signals, and the
    remaining action families using the same allowlisted dispatch table.
-4. Produce a conversion report with source/target hashes, warnings, dropped
-   presentation fields, and the exact failing record/path.
+4. Produce a conversion report with warnings, dropped presentation fields, and
+   the exact failing record/path. Integrity identities must use SHA-256 over the
+   exact source bytes and a specified canonical target serialization; the
+   current 32-bit game-core stable hash remains a non-security diagnostic only.
 5. Only after representative real-user fixtures convert transactionally should
    the route loader or old `/import?key=` reader call this package.
 
