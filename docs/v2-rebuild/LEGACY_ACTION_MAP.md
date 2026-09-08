@@ -19,6 +19,18 @@ a hard-to-find behavior. Proposed names are not final APIs.
 | `setup`          | Atomic `SetupSeat` resolved events                                                 | Reset, authority shuffle, seven-card hand, up to six prizes, short deck, message                                       |
 | `takeTurn`       | Atomic `StartTurn` resolved events plus safe timeline                              | Clears loose board cards, resets ability markers, reveals in-play face-down cards, turn increment, draw/no-deck branch |
 
+The private lifecycle-only conversion checkpoint now executes this closed
+subset through game-core. Both deck bootstraps use `LoadDeck`; `setup` uses a
+fresh `LoadDeck` plus `SetupPlayer` because v1 rebuilds the source deck before
+applying its recorded permutation; `reset` loads the original source entries or
+an empty deck according to its `build` flag; and `takeTurn` uses `StartTurn`.
+The legacy `clean` and `invalidMessage` reset flags are presentation-only. The
+candidate retains source-record-to-event-batch mappings and proves exact replay,
+but rejects any action from the remaining rows before constructing state. This
+is intentionally not yet a complete import compatibility claim: take-turn
+cleanup/reveal and reset behavior over dirty, cross-owner board state remain
+gated on the movement/state decoders that can construct those conditions.
+
 ## Card movement, inspection, and zone batches
 
 | v1 action                   | Proposed v2 responsibility                                                                                                    | Critical characterization                                                                                      |

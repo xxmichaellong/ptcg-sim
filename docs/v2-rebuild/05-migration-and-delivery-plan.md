@@ -168,9 +168,12 @@ deck bootstraps, structural bounds, and typed diagnostics without executing an
 action. Its first private semantic layers now validate lifecycle tuples,
 materialize bounded deck definitions with deterministic order-preserving IDs,
 and provide import-wide monotonic identities plus one-shot source-resolved
-outcome adapters. Complete action-family coverage, transactional
-interpretation, conversion reports, and real-user corpus evidence remain before
-Phase 3 can exit.
+outcome adapters. A first all-or-nothing candidate builder now applies the
+closed lifecycle-only subset through normal game-core commands and verifies
+exact event replay; it rejects every unconverted family before constructing
+state. Movement and remaining action-family coverage, the complete transaction,
+conversion reports, and real-user corpus evidence remain before Phase 3 can
+exit.
 
 Work:
 

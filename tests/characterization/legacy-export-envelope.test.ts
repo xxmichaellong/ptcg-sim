@@ -99,7 +99,16 @@ describe('legacy action-export source envelope', () => {
     expect(reset).toContain(
       "processAction(user, emit, 'reset', [clean, build, invalidMessage])"
     );
+    expect(reset).toContain('systemState.turn = 0;');
+    expect(reset).toContain('if (build) {');
+    expect(reset).toContain('buildDeck(user);');
+    expect(setup).toContain('reset(user, true, true, true, false);');
     expect(setup).toContain("processAction(user, emit, 'setup', [indices])");
+    expect(takeTurn).toContain("discardBoard(initiator, 'self', false, false)");
+    expect(takeTurn).toContain("discardBoard(initiator, 'opp', false, false)");
+    expect(takeTurn).toContain('resetAbilityCounters();');
+    expect(takeTurn).toContain('systemState.turn++;');
+    expect(takeTurn).toContain("moveCard(user, initiator, 'deck', 'hand', 0)");
     expect(takeTurn).toContain(
       "const oInitiator = initiator === 'self' ? 'opp' : 'self';"
     );
