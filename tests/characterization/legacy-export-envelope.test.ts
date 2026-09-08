@@ -127,6 +127,56 @@ describe('legacy action-export source envelope', () => {
     expect(processAction).toContain("exportParameters[0] = 'self'");
   });
 
+  it('pins the first movement tuple, clamp, and independent target ownership', () => {
+    const deckActions = readRepositoryFile(
+      'client/src/actions/zones/deck-actions.js'
+    );
+    const keybinds = readRepositoryFile(
+      'client/src/actions/keybinds/keybinds.js'
+    );
+    const deckButtons = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/card-context-menu/deck-buttons.js'
+    );
+    const acceptAction = readRepositoryFile(
+      'client/src/setup/general/accept-action.js'
+    );
+
+    expect(deckActions).toContain(
+      'drawAmount = Math.min(drawAmount, selectedDeckCount);'
+    );
+    expect(deckActions).toContain('if (!isNaN(drawAmount) && drawAmount > 0)');
+    expect(deckActions).toContain('emit = false;');
+    expect(deckActions).toContain(
+      "moveCard(user, initiator, 'deck', 'hand', 0)"
+    );
+    expect(deckActions).toContain(
+      "processAction(user, emit, 'draw', [oInitiator, drawAmount])"
+    );
+    expect(keybinds).toContain(
+      'draw(\n        systemState.initiator,\n        systemState.initiator,'
+    );
+    expect(deckButtons).toContain(
+      'draw(mouseClick.cardUser, systemState.initiator)'
+    );
+    expect(acceptAction).toContain(
+      'actionToFunction(action)(user, ...parameters, emit)'
+    );
+    expect(
+      deckActions.indexOf(
+        'drawAmount = Math.min(drawAmount, selectedDeckCount);'
+      )
+    ).toBeLessThan(
+      deckActions.indexOf('if (!isNaN(drawAmount) && drawAmount > 0)')
+    );
+    expect(
+      deckActions.indexOf('if (!isNaN(drawAmount) && drawAmount > 0)')
+    ).toBeLessThan(
+      deckActions.lastIndexOf(
+        "processAction(user, emit, 'draw', [oInitiator, drawAmount])"
+      )
+    );
+  });
+
   it('pins deck tuple materialization, selectable categories, and the unknown error marker', () => {
     const buildDeck = readRepositoryFile(
       'client/src/setup/deck-constructor/build-deck.js'

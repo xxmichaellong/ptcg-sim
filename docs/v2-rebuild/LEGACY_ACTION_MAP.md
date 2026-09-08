@@ -54,6 +54,15 @@ gated on the movement/state decoders that can construct those conditions.
 | `shufflePrizesToDeckBottom` | Atomic `MovePrizesToDeckBottom`                                                                                               | Prize ordering/randomization, concealment, empty prizes                                                        |
 | `shuffleZone`               | `ShuffleZone` resolved permutation event                                                                                      | Every allowed zone, deterministic legacy indices, new handle generation, safe timeline                         |
 
+The private movement decoder now admits the exact `draw` tuple without applying
+it. Record `user` selects the target deck/hand, while the exported initiator is
+kept separate because the legacy context-menu path can draw from the other
+physical side. Counts are already clamped by v1 before a successful action is
+exported; conversion accepts only positive integers through the shared 200-card
+bound. Locally applied empty or invalid source draws use `emit=false` and are not
+valid exported records. Every other row above remains undecoded and cannot enter
+the transactional candidate yet.
+
 ## Markers and card/stack state
 
 | v1 action                | Proposed v2 responsibility                          | Critical characterization                                                                        |

@@ -110,7 +110,7 @@ adapters. Admission still completes before those adapters can allocate a
 definition or identity, and no production route constructs imported match
 state.
 
-### First positional family
+### Positional families
 
 `decodeLegacyV1LifecycleActions` is the first private interpretation layer. It
 decodes the two parser-verified `loadDeckData` records and exact `reset`,
@@ -125,6 +125,16 @@ Other allowlisted action families are deliberately ignored by this decoder,
 not guessed. This lets each family acquire its own source-backed positional
 schema while the final transaction can require every record to have exactly one
 decoder before any canonical state is created.
+
+`decodeLegacyV1MovementActions` starts the next private family with `draw` only.
+The source record owns the target deck/hand through `user`; its two positional
+parameters are the independently exported initiator and the already-clamped
+draw count. The decoder therefore accepts both self/opp initiators without
+requiring them to equal the target, but requires an integer count from 1 through
+the canonical 200-card bound. Source-invalid/empty draws set `emit=false` and do
+not belong in a locally applied genuine export. The remaining movement names
+are still ignored by this non-applying decoder until their zone, index, stack,
+visibility, and resolved-outcome behavior is frozen.
 
 ### Deck definition adapter
 
@@ -217,8 +227,9 @@ lifecycle-only fixture.
 
 ## Next conversion slices
 
-1. Add source-backed positional schemas for the movement family, then widen the
-   transactional candidate only after every newly admitted command is decoded.
+1. Continue source-backed positional schemas for direct movement after the
+   non-applying `draw` atom, then widen the transactional candidate only after
+   each newly admitted command is decoded.
 2. Add markers, visibility/inspection, randomized/bulk, table signals, and the
    remaining action families using the same allowlisted dispatch table.
 3. Produce a conversion report with warnings, dropped presentation fields, and

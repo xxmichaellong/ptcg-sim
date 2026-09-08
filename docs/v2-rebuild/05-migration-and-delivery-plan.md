@@ -173,7 +173,8 @@ closed lifecycle-only subset through normal game-core commands and verifies
 exact event replay; it rejects every unconverted family before constructing
 state. Movement and remaining action-family coverage, the complete transaction,
 conversion reports, and real-user corpus evidence remain before Phase 3 can
-exit.
+exit. The first non-applying movement atom now validates the exact exported
+`draw` target/initiator/count tuple; it does not widen the candidate by itself.
 
 Work:
 
