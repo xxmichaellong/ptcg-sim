@@ -1051,6 +1051,26 @@ geometry, theme, player/spectator/replay behavior, focus migration, dismissal,
 and zero game traffic. This restores the existing visible reference without
 changing its labels, layout, styling, or UX.
 
+### Characterized selected Q/E attach/evolve targeting subset
+
+Nine fresh deny-by-default Chromium cases now execute the unchanged V1
+keybind, click, `moveCardBundle`, attach, evolve, and refresh modules. They pin
+Q/E equivalence; source-side active/bench top targets; the exact green computed
+shadow; Pokémon evolution and Energy attachment topology/order; live/export
+records; Escape, outside, and non-target dismissal; input, spectator, and
+active-top boundaries; cross-stack and same-stack reattachment; lower-evolution
+reclassification; and the `attachedCards` work-area path. They also expose the
+same top-level replay-guard defect seen by other legacy shortcuts: V1 enters
+target mode during replay
+because it does not invoke its Alt predicate.
+
+The V2 implementation is intentionally still pending so its renderer,
+controller, protocol, authority, domain-event, replay, and privacy changes land
+as one reviewed vertical slice. The complete chosen contract, file map, stale-
+reference rules, deliberate replay correction, and verification matrix are in
+[`ATTACH_EVOLVE_TARGETING.md`](./ATTACH_EVOLVE_TARGETING.md). No V1 source,
+production route, visible UI, or UX changed in this characterization checkpoint.
+
 ### Implemented unselected lifecycle keyboard subset
 
 Alt-`N`, Alt-`R`, and Alt-`T` now produce payload-free setup, reset, and
