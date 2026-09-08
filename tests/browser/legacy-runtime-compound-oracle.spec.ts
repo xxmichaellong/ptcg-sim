@@ -12,6 +12,12 @@ interface PhaseSample {
   readonly inlineMargins: readonly [string, string];
 }
 
+interface CapturedPhaseSample {
+  readonly phase: string;
+  readonly transforms: Readonly<Record<Role, string>>;
+  readonly inlineMargins: readonly [string, string];
+}
+
 /**
  * The compound-rotation family is the largest block of characterized fixtures
  * in the repository, and every gate over it compares a TypeScript
@@ -37,7 +43,7 @@ const quarterTurnsFromTransform = (transform: string): number => {
 const captureGroupRotation = async (
   page: Page,
   slot: Slot
-): Promise<readonly PhaseSample[]> =>
+): Promise<readonly CapturedPhaseSample[]> =>
   page.evaluate(async (zoneId) => {
     const load = (specifier: string): Promise<Record<string, never>> =>
       import(/* @vite-ignore */ specifier);
@@ -118,7 +124,7 @@ const captureGroupRotation = async (
     await frames();
 
     const roles = { base, middle, top } as const;
-    const sample = (phase: string) => ({
+    const sample = (phase: string): CapturedPhaseSample => ({
       phase,
       transforms: {
         base: roles.base.image.style.transform,
@@ -128,7 +134,7 @@ const captureGroupRotation = async (
       inlineMargins: [
         container.style.marginRight,
         container.style.marginLeft,
-      ] as [string, string],
+      ] as const,
     });
 
     const samples = [sample('pristine-q0')];
@@ -139,13 +145,7 @@ const captureGroupRotation = async (
       samples.push(sample(phase));
     }
     return samples;
-  }, slot) as Promise<
-    readonly {
-      readonly phase: string;
-      readonly transforms: Readonly<Record<Role, string>>;
-      readonly inlineMargins: readonly [string, string];
-    }[]
-  >;
+  }, slot);
 
 const withRuntime = async <Value>(
   browser: Browser,
@@ -195,7 +195,7 @@ for (const slot of ['active', 'bench'] as const) {
       Record<string, Readonly<Record<Role, number>>>
     >;
     const recordedMargins = (
-      groupOracle.expected.inlineMargins as Readonly<
+      groupOracle.expected.inlineMargins as unknown as Readonly<
         Record<Slot, Readonly<Record<string, readonly [string, string]>>>
       >
     )[slot];
