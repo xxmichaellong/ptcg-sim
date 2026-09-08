@@ -94,6 +94,17 @@ export type LegacyV1MovementAction =
       readonly mode: 'move';
     }
   | {
+      readonly type: 'moveCardBundle';
+      readonly recordIndex: number;
+      readonly player: LegacyExportUser;
+      readonly initiator: LegacyExportUser;
+      readonly sourceZone: LegacyV1CardSourceZone;
+      readonly sourceIndex: number;
+      readonly destinationZone: 'stadium';
+      readonly targetIndex: false | null;
+      readonly mode: 'move';
+    }
+  | {
       readonly type: 'shuffleZone';
       readonly recordIndex: number;
       readonly player: LegacyExportUser;
@@ -333,11 +344,11 @@ const decodeCardSource = (
 /**
  * Decodes admitted movement tuples without applying them. This starts with the
  * source-bounded draw, discard-and-draw, shuffle-hand-and-draw, and
- * shuffle-hand-to-deck-bottom-and-draw; bottom-mode and target-free loose-zone
- * card bundles; direct prize-shuffle; move-to-deck-top; shuffle-into-deck;
- * switch-with-deck-top; and shuffled-prizes-to-deck-bottom atoms. The remaining
- * movement actions stay untouched until their positional and state-dependent
- * behavior is frozen.
+ * shuffle-hand-to-deck-bottom-and-draw; bottom-mode and target-free
+ * loose-zone/stadium card bundles; direct prize-shuffle; move-to-deck-top;
+ * shuffle-into-deck; switch-with-deck-top; and shuffled-prizes-to-deck-bottom
+ * atoms. The remaining movement actions stay untouched until their positional
+ * and state-dependent behavior is frozen.
  */
 export const decodeLegacyV1MovementActions = (
   parsed: ParsedLegacyExport
@@ -610,7 +621,7 @@ export const decodeLegacyV1MovementActions = (
             'unsupported_move_card_bundle',
             actionIndex,
             '.parameters[5]',
-            'Only source-authentic deck-bottom and target-free loose-zone bundles are converted'
+            'Only source-authentic deck-bottom, target-free loose-zone, and stadium bundles are converted'
           );
         }
 
@@ -658,21 +669,37 @@ export const decodeLegacyV1MovementActions = (
           break;
         }
 
-        if (!isLooseDestinationZone(destinationZone)) {
-          return failure(
-            'invalid_destination_zone',
-            actionIndex,
-            '.parameters[2]',
-            'A target-free moveCardBundle must target a loose player zone'
-          );
-        }
         const targetIndex = action.parameters[4];
         if (targetIndex !== false && targetIndex !== null) {
           return failure(
             'invalid_target_index',
             actionIndex,
             '.parameters[4]',
-            'A loose-zone moveCardBundle must not carry a target card index'
+            'A target-free moveCardBundle must not carry a target card index'
+          );
+        }
+
+        if (destinationZone === 'stadium') {
+          decoded.push({
+            type: 'moveCardBundle',
+            recordIndex: actionIndex + 1,
+            player: action.user,
+            initiator: source.initiator,
+            sourceZone: source.sourceZone,
+            sourceIndex: source.sourceIndex,
+            destinationZone: 'stadium',
+            targetIndex,
+            mode: 'move',
+          });
+          break;
+        }
+
+        if (!isLooseDestinationZone(destinationZone)) {
+          return failure(
+            'invalid_destination_zone',
+            actionIndex,
+            '.parameters[2]',
+            'A target-free moveCardBundle must target a supported zone'
           );
         }
 

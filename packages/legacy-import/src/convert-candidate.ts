@@ -581,7 +581,9 @@ export const buildLegacyV1Candidate = (
         const destinationZoneId =
           action.mode === 'bottom'
             ? playerZoneId(playerId, 'deck')
-            : candidateDestinationZoneId(playerId, action.destinationZone);
+            : action.destinationZone === 'stadium'
+              ? stadiumZoneId()
+              : candidateDestinationZoneId(playerId, action.destinationZone);
         const destination = state.zones[destinationZoneId];
         if (
           sourceZoneId === destinationZoneId &&
@@ -598,12 +600,20 @@ export const buildLegacyV1Candidate = (
                 cardId,
                 expectedSourceId: sourceZoneId,
               })
-            : apply({
-                type: 'MoveCard',
-                cardId,
-                expectedSourceZoneId: sourceZoneId,
-                destinationZoneId,
-              });
+            : action.destinationZone === 'stadium'
+              ? apply({
+                  type: 'MoveCardToStadium',
+                  playerId,
+                  cardId,
+                  expectedSourceId: sourceZoneId,
+                  expectedStadiumCardId: destination?.cardIds[0] ?? null,
+                })
+              : apply({
+                  type: 'MoveCard',
+                  cardId,
+                  expectedSourceZoneId: sourceZoneId,
+                  destinationZoneId,
+                });
         if (problem) return problem;
         break;
       }

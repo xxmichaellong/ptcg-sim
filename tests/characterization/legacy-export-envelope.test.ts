@@ -896,6 +896,55 @@ describe('legacy action-export source envelope', () => {
     );
   });
 
+  it('pins stadium bundle ingress, incumbent-owner displacement, and outer export order', () => {
+    const keybinds = readRepositoryFile(
+      'client/src/actions/keybinds/keybinds.js'
+    );
+    const moveBundle = readRepositoryFile(
+      'client/src/actions/move-card-bundle/move-card-bundle.js'
+    );
+    const moveCard = readRepositoryFile(
+      'client/src/actions/move-card-bundle/move-card.js'
+    );
+    const updateStadium = readRepositoryFile(
+      'client/src/actions/move-card-bundle/update-stadium-card.js'
+    );
+
+    expect(keybinds).toContain("g: 'stadium'");
+    expect(keybinds).toContain("KeyG: 'stadium'");
+    expect(keybinds).toContain(
+      "moveCardBundle(\n          mouseClick.cardUser,\n          systemState.initiator,\n          mouseClick.zoneId,\n          dZoneId,\n          mouseClick.cardIndex,\n          false,\n          'move'\n        )"
+    );
+
+    expect(moveCard).toContain(
+      'updateStadiumCard(user, initiator, dZoneId, dZone);'
+    );
+    expect(updateStadium).toContain(
+      "if (['stadium'].includes(dZoneId) && dZone.array[1])"
+    );
+    expect(updateStadium).toContain(
+      "if (dZone.array[0].image.user === 'self')"
+    );
+    expect(updateStadium).toContain(
+      "moveCard('self', initiator, 'stadium', 'discard', 0)"
+    );
+    expect(updateStadium).toContain(
+      "moveCard('opp', initiator, 'stadium', 'discard', 0)"
+    );
+
+    const localMove =
+      'moveCard(user, initiator, oZoneId, dZoneId, index, targetIndex);';
+    const refresh = 'refreshBoard();';
+    const exportedTuple =
+      "processAction(user, emit, 'moveCardBundle', [\n    oInitiator,\n    oZoneId,\n    dZoneId,\n    index,\n    targetIndex,\n    action,\n  ])";
+    expect(moveBundle.indexOf(localMove)).toBeLessThan(
+      moveBundle.indexOf(refresh)
+    );
+    expect(moveBundle.indexOf(refresh)).toBeLessThan(
+      moveBundle.indexOf(exportedTuple)
+    );
+  });
+
   it('pins deck tuple materialization, selectable categories, and the unknown error marker', () => {
     const buildDeck = readRepositoryFile(
       'client/src/setup/deck-constructor/build-deck.js'

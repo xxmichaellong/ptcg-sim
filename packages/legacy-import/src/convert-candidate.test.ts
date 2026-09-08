@@ -6,6 +6,7 @@ import {
   createEmptyMatch,
   playerZoneId,
   stableHash,
+  stadiumZoneId,
 } from '@ptcgsim/game-core';
 import { describe, expect, it } from 'vitest';
 
@@ -272,6 +273,22 @@ describe('legacy v1 canonical candidate builder', () => {
         cardRows(15, 'Retry'),
         '',
         action('self', 'setup', [Array.from({ length: 15 }, (_, i) => 14 - i)]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'hand',
+          'stadium',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'stadium',
+          'hand',
+          0,
+          false,
+          'move',
+        ]),
         action('self', 'takeTurn', ['self']),
         action('self', 'draw', ['opp', 1]),
         action('self', 'shuffleZone', [
@@ -1715,6 +1732,222 @@ describe('legacy v1 canonical candidate builder', () => {
         concealIdentity: true,
       },
     ]);
+    assertMatchInvariants(result.state);
+  });
+
+  it('places and replaces stadium cards atomically, then resolves stadium-source movement', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(3, 'Self stadium'),
+          cardRows(1, 'Opponent stadium'),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deckCover',
+            'stadium',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'stadium',
+            0,
+            null,
+            'move',
+          ]),
+          action('opp', 'moveCardBundle', [
+            'self',
+            'deckCover',
+            'stadium',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'stadium',
+            0,
+            null,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'stadium',
+            'stadium',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'stadium',
+            'hand',
+            0,
+            false,
+            'move',
+          ])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    const selfId = target.selfSeat.playerId;
+    const opponentId = target.opponentSeat.playerId;
+    const selfDeckId = playerZoneId(selfId, 'deck');
+    const opponentDeckId = playerZoneId(opponentId, 'deck');
+    const selfDiscardId = playerZoneId(selfId, 'discard');
+    const opponentDiscardId = playerZoneId(opponentId, 'discard');
+    const selfHandId = playerZoneId(selfId, 'hand');
+    const stadiumId = stadiumZoneId();
+    expect(result.state.zones[stadiumId]!.cardIds).toEqual([]);
+    expect(result.state.zones[selfDiscardId]!.cardIds).toEqual([
+      'legacy:v1:card:000000',
+      'legacy:v1:card:000001',
+    ]);
+    expect(result.state.zones[opponentDiscardId]!.cardIds).toEqual([
+      'legacy:v1:card:000003',
+    ]);
+    expect(result.state.zones[selfHandId]!.cardIds).toEqual([
+      'legacy:v1:card:000002',
+    ]);
+    expect(
+      result.records.map(({ recordIndex, action, batches }) => ({
+        recordIndex,
+        action,
+        batchCount: batches.length,
+      }))
+    ).toEqual([
+      { recordIndex: 1, action: 'loadDeckData', batchCount: 1 },
+      { recordIndex: 2, action: 'loadDeckData', batchCount: 1 },
+      { recordIndex: 3, action: 'moveCardBundle', batchCount: 1 },
+      { recordIndex: 4, action: 'moveCardBundle', batchCount: 1 },
+      { recordIndex: 5, action: 'moveCardBundle', batchCount: 1 },
+      { recordIndex: 6, action: 'moveCardBundle', batchCount: 1 },
+      { recordIndex: 7, action: 'moveCardBundle', batchCount: 0 },
+      { recordIndex: 8, action: 'moveCardBundle', batchCount: 1 },
+    ]);
+    expect(result.records[2]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardMoved',
+        cardId: 'legacy:v1:card:000000',
+        expectedSourceZoneId: selfDeckId,
+        destinationZoneId: stadiumId,
+        destinationIndex: 0,
+        concealIdentity: false,
+      },
+    ]);
+    expect(result.records[3]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardMoved',
+        cardId: 'legacy:v1:card:000000',
+        expectedSourceZoneId: stadiumId,
+        destinationZoneId: selfDiscardId,
+        destinationIndex: 0,
+        concealIdentity: false,
+      },
+      {
+        type: 'CardMoved',
+        cardId: 'legacy:v1:card:000001',
+        expectedSourceZoneId: selfDeckId,
+        destinationZoneId: stadiumId,
+        destinationIndex: 0,
+        concealIdentity: false,
+      },
+    ]);
+    expect(result.records[4]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardMoved',
+        cardId: 'legacy:v1:card:000001',
+        expectedSourceZoneId: stadiumId,
+        destinationZoneId: selfDiscardId,
+        destinationIndex: 1,
+        concealIdentity: false,
+      },
+      {
+        type: 'CardMoved',
+        cardId: 'legacy:v1:card:000003',
+        expectedSourceZoneId: opponentDeckId,
+        destinationZoneId: stadiumId,
+        destinationIndex: 0,
+        concealIdentity: false,
+      },
+    ]);
+    expect(result.records[5]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardMoved',
+        cardId: 'legacy:v1:card:000003',
+        expectedSourceZoneId: stadiumId,
+        destinationZoneId: opponentDiscardId,
+        destinationIndex: 0,
+        concealIdentity: false,
+      },
+      {
+        type: 'CardMoved',
+        cardId: 'legacy:v1:card:000002',
+        expectedSourceZoneId: selfDeckId,
+        destinationZoneId: stadiumId,
+        destinationIndex: 0,
+        concealIdentity: false,
+      },
+    ]);
+    expect(result.records[7]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardMoved',
+        cardId: 'legacy:v1:card:000002',
+        expectedSourceZoneId: stadiumId,
+        destinationZoneId: selfHandId,
+        destinationIndex: 0,
+        concealIdentity: true,
+      },
+    ]);
+    assertMatchInvariants(result.state);
+  });
+
+  it('resets only an owned stadium while retaining an opponent incumbent', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(2, 'Stadium reset'),
+          cardRows(1, 'Opponent stadium reset'),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'stadium',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'reset', [false, true, true]),
+          action('opp', 'moveCardBundle', [
+            'self',
+            'deck',
+            'stadium',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'reset', [false, true, true])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    expect(result.state.zones[stadiumZoneId()]!.cardIds).toEqual([
+      'legacy:v1:card:000002',
+    ]);
+    expect(
+      result.state.zones[playerZoneId(target.selfSeat.playerId, 'deck')]!
+        .cardIds
+    ).toEqual(['legacy:v1:card:000005', 'legacy:v1:card:000006']);
+    expect(result.state.cards['legacy:v1:card:000000']).toBeUndefined();
+    expect(result.state.cards['legacy:v1:card:000002']).toBeDefined();
     assertMatchInvariants(result.state);
   });
 

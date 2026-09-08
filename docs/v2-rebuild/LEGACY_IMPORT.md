@@ -128,7 +128,7 @@ decoder before any canonical state is created.
 
 `decodeLegacyV1MovementActions` starts the next private family with `draw`,
 `discardAndDraw`, `shuffleAndDraw`, `shuffleBottomAndDraw`, bottom-mode and
-target-free loose-zone `moveCardBundle`, direct prize `shuffleZone`,
+target-free loose-zone/stadium `moveCardBundle`, direct prize `shuffleZone`,
 `moveToDeckTop`, `shuffleIntoDeck`, `switchWithDeckTop`, and
 `shufflePrizesToDeckBottom` records.
 The draw record owns the target deck/hand through `user`; its two
@@ -182,10 +182,17 @@ to `null`. The decoder accepts both representations only when the destination
 is deck, hand, prizes, discard, Lost Zone, board, or the discard/Lost Zone cover
 aliases. `deckCover` is excluded because the drag handler routes it to the
 separately exported move-to-top action before the generic bundle call. Active,
-bench, attached-card, inspection, and stadium destinations remain outside this
-subshape because the same bundle also encodes new-stack, active/bench
-relocation, attach/evolve, and singleton-stadium behavior. Numeric targets and
-every unrecognized mode remain fail-closed.
+bench, attached-card, and inspection destinations remain outside this subshape
+because the same bundle also encodes new-stack, active/bench relocation, and
+attach/evolve behavior. Numeric targets and every unrecognized mode remain
+fail-closed.
+
+Stadium placement is the separately admitted target-free destination within the
+same move-mode tuple. The `G` shortcut supplies `false`; drag export can supply
+`null`. V1 appends the selected card to the shared singleton and then moves a
+previous index-zero incumbent to that card owner's discard. A same-stadium move
+re-appends the only card and exports a genuine no-state record. Exact incumbent,
+source identity, owner discard, and atomicity remain conversion-time checks.
 
 A directly exported prize shuffle carries exactly
 `[initiator, "prizes", permutation, true]`. Empty permutations are valid for an
@@ -290,7 +297,7 @@ legacy labels into authority.
 This deliberately narrow builder succeeds only when every action is one of
 `loadDeckData`, `reset`, `setup`, `takeTurn`, `draw`, `discardAndDraw`,
 `shuffleAndDraw`, `shuffleBottomAndDraw`, the bottom-mode or target-free
-loose-zone `moveCardBundle`, `moveToDeckTop`, `shuffleIntoDeck`,
+loose-zone/stadium `moveCardBundle`, `moveToDeckTop`, `shuffleIntoDeck`,
 `switchWithDeckTop`, `shufflePrizesToDeckBottom`, or the direct prize form of
 `shuffleZone`. Any other allowlisted family or bundle subshape is rejected
 before state construction. Deck, lifecycle, and movement diagnostics are lifted
@@ -359,8 +366,16 @@ The lifecycle mapping is source-backed:
   rule. Same-zone moves reorder a non-tail card to the tail; an already-tail
   record remains source-authentic but produces zero canonical batches. Both
   explicit `false` and JSON-serialized drag `null` are accepted as no target.
-  Numeric targets, play destinations, stadium placement, stale cards, and
-  unresolved stack/work-area sources return no candidate; and
+  Numeric targets, play destinations, stale cards, and unresolved
+  stack/work-area sources return no candidate; and
+- stadium-destination move bundles snapshot the exact zero-or-one incumbent and
+  execute one canonical `MoveCardToStadium`. Empty placement emits one move;
+  replacement atomically moves the incumbent to its own discard before placing
+  the selected card, regardless of which player owns each card. A same-stadium
+  record is retained with zero batches. The newly reachable stadium can then be
+  used by the already admitted stable-source movement actions. Reset removes an
+  incumbent only when that resetting player owns it. Stale/unresolved sources
+  and numeric targets return no candidate; and
 - direct prize shuffle executes `ShuffleZone` for the record's target player
   using the recorded permutation as the action-scoped resolved outcome. Its
   length must match the exact current prize zone, so conversion neither creates
@@ -403,20 +418,20 @@ and requires byte-identical stable serialization before returning the private
 candidate. No partial batches escape on failure.
 
 The closed lifecycle/draw/discard-and-draw/both hand-shuffle-and-draw forms/
-direct-prize-shuffle/target-free-loose-move/move-to-top/move-to-bottom/
-shuffle-into-deck/deck-top-switch/prizes-to-deck-bottom subset can now create
-ordinary loose-board state. Tests prove that a later take-turn discards both
+direct-prize-shuffle/target-free-loose-and-stadium-move/move-to-top/
+move-to-bottom/shuffle-into-deck/deck-top-switch/prizes-to-deck-bottom subset can now create
+ordinary loose-board and singleton stadium state. Tests prove that a later take-turn discards both
 players' loose boards in source order before drawing, and that an owner reset
-clears only that owner's reachable loose state before rebuilding its deck. The
-subset still cannot create play stacks, attachments, inspections, staged work,
-markers, singleton stadium state, or cross-owner placements, so take-turn
-in-play reveal and reset behavior for those shapes remain gated on their
-dedicated movement/state decoders.
+clears only that owner's reachable loose state and owned stadium before
+rebuilding its deck. An opponent-owned incumbent remains. The subset still
+cannot create play stacks, attachments, inspections, staged work, markers, or
+cross-owner play placements, so take-turn in-play reveal and reset behavior for
+those shapes remain gated on their dedicated movement/state decoders.
 
 ## Next conversion slices
 
-1. Continue source-backed positional schemas for stack, targeted, and stadium
-   movement after the
+1. Continue source-backed positional schemas for stack and targeted movement
+   after the
    transactionally applied draw/discard-and-draw/both hand-shuffle-and-draw
    forms, target-free loose movement, direct prize-shuffle, and zone-backed
    move-to-top/move-to-bottom/shuffle-into-deck/deck-top-switch/

@@ -265,6 +265,55 @@ describe('legacy v1 movement positional decoder', () => {
     });
   });
 
+  it('decodes target-free stadium bundles from keyboard and serialized drag records', () => {
+    expect(
+      decode(
+        action('self', 'moveCardBundle', [
+          'opp',
+          'hand',
+          'stadium',
+          3,
+          false,
+          'move',
+        ]),
+        action('opp', 'moveCardBundle', [
+          'self',
+          'deckCover',
+          'stadium',
+          0,
+          null,
+          'move',
+        ])
+      )
+    ).toEqual({
+      ok: true,
+      actions: [
+        {
+          type: 'moveCardBundle',
+          recordIndex: 3,
+          player: 'self',
+          initiator: 'opp',
+          sourceZone: 'hand',
+          sourceIndex: 3,
+          destinationZone: 'stadium',
+          targetIndex: false,
+          mode: 'move',
+        },
+        {
+          type: 'moveCardBundle',
+          recordIndex: 4,
+          player: 'opp',
+          initiator: 'self',
+          sourceZone: 'deckCover',
+          sourceIndex: 0,
+          destinationZone: 'stadium',
+          targetIndex: null,
+          mode: 'move',
+        },
+      ],
+    });
+  });
+
   it('decodes only source-authentic direct prize shuffles', () => {
     expect(
       decode(
@@ -1076,7 +1125,7 @@ describe('legacy v1 movement positional decoder', () => {
         recordIndex: 3,
         path: '$[3].parameters[5]',
         message:
-          'Only source-authentic deck-bottom and target-free loose-zone bundles are converted',
+          'Only source-authentic deck-bottom, target-free loose-zone, and stadium bundles are converted',
       });
     }
   );
@@ -1087,7 +1136,6 @@ describe('legacy v1 movement positional decoder', () => {
     'bench',
     'attachedCards',
     'viewCards',
-    'stadium',
     'not-a-zone',
   ])('rejects special move-bundle destination %s', (destinationZone) => {
     expect(
@@ -1105,7 +1153,7 @@ describe('legacy v1 movement positional decoder', () => {
       code: 'invalid_destination_zone',
       recordIndex: 3,
       path: '$[3].parameters[2]',
-      message: 'A target-free moveCardBundle must target a loose player zone',
+      message: 'A target-free moveCardBundle must target a supported zone',
     });
   });
 
@@ -1128,10 +1176,31 @@ describe('legacy v1 movement positional decoder', () => {
         recordIndex: 3,
         path: '$[3].parameters[4]',
         message:
-          'A loose-zone moveCardBundle must not carry a target card index',
+          'A target-free moveCardBundle must not carry a target card index',
       });
     }
   );
+
+  it('rejects a targeted stadium bundle', () => {
+    expect(
+      firstIssue(
+        action('self', 'moveCardBundle', [
+          'opp',
+          'hand',
+          'stadium',
+          0,
+          0,
+          'move',
+        ])
+      )
+    ).toEqual({
+      code: 'invalid_target_index',
+      recordIndex: 3,
+      path: '$[3].parameters[4]',
+      message:
+        'A target-free moveCardBundle must not carry a target card index',
+    });
+  });
 
   it('requires a perspective initiator and card-container source for a bottom bundle', () => {
     expect(

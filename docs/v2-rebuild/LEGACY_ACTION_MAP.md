@@ -28,14 +28,14 @@ The legacy `clean` and `invalidMessage` reset flags are presentation-only. The
 candidate retains source-record-to-event-batch mappings and proves exact replay.
 It now also admits the bounded `draw`, `discardAndDraw`, `shuffleAndDraw`,
 `shuffleBottomAndDraw`, direct prize `shuffleZone`, zone-backed `moveToDeckTop`,
-the bottom-mode and target-free loose-zone `moveCardBundle`, resolved
+the bottom-mode and target-free loose-zone/stadium `moveCardBundle`, resolved
 `shuffleIntoDeck`, source-authentic `switchWithDeckTop`, and
 `shufflePrizesToDeckBottom` atoms below, but rejects any other action before
 constructing state. This is intentionally not yet a complete import
 compatibility claim: reachable loose-board take-turn cleanup and owner reset are
-now proven, while in-play reveal plus reset behavior over stacks, stadium, work
-areas, and cross-owner state remain gated on the decoders that can construct
-those conditions.
+now proven alongside owned-stadium reset, while in-play reveal plus reset
+behavior over stacks, work areas, and cross-owner play state remain gated on the
+decoders that can construct those conditions.
 
 ## Card movement, inspection, and zone batches
 
@@ -62,7 +62,7 @@ those conditions.
 
 The private movement decoder and candidate now admit the exact `draw`,
 `discardAndDraw`, `shuffleAndDraw`, `shuffleBottomAndDraw`, the bottom-mode and
-target-free loose-zone `moveCardBundle`, direct prize `shuffleZone`,
+target-free loose-zone/stadium `moveCardBundle`, direct prize `shuffleZone`,
 `moveToDeckTop`, `shuffleIntoDeck`, `switchWithDeckTop`, and
 `shufflePrizesToDeckBottom` tuples.
 Record `user` selects the target player's zones, while the exported initiator
@@ -125,15 +125,25 @@ Target-free ordinary movement is admitted as exact
 form of an undefined drag target. The destination is restricted to the loose
 player zones plus discard/Lost Zone cover aliases, excluding `deckCover`
 because that drop is separately exported as move-to-top, and excluding active,
-bench, attachments, inspection, and stadium. Conversion resolves the source to
-a stable card, normalizes supported aliases, and executes canonical `MoveCard`,
-whose default append matches v1's splice-and-push order. Normal concealed-zone
-rules apply to deck, hand, and prizes. A same-zone non-tail card moves to the
-tail; an already-tail record retains its source mapping with zero batches.
-Targeted, stack/play, stadium-special, stale, and unresolved work-area shapes
-fail the entire attempt. This slice also makes loose-board state reachable:
-candidate tests prove later take-turn cleanup for both owners and owner-scoped
-reset/rebuild parity.
+bench, attachments, and inspection. Conversion resolves the source to a stable
+card, normalizes supported aliases, and executes canonical `MoveCard`, whose
+default append matches v1's splice-and-push order. Normal concealed-zone rules
+apply to deck, hand, and prizes. A same-zone non-tail card moves to the tail; an
+already-tail record retains its source mapping with zero batches. Targeted,
+stack/play, stale, and unresolved work-area shapes fail the entire attempt. This
+slice also makes loose-board state reachable: candidate tests prove later
+take-turn cleanup for both owners and owner-scoped reset/rebuild parity.
+
+The stadium destination is admitted separately under that same exact target-free
+move-mode tuple. V1 appends the selected card, then moves the prior index-zero
+incumbent to its actual owner's discard; `G` exports `false` and an untargeted
+drag serializes as `null`. Conversion snapshots the current zero-or-one
+incumbent and executes canonical `MoveCardToStadium`, producing one atomic batch
+with incumbent displacement first. Empty, self-incumbent, opponent-incumbent,
+and same-stadium zero-batch cases are pinned. Newly reachable stadium sources
+also pass through ordinary movement, whole-attempt retry stays byte
+deterministic, and reset removes only an incumbent owned by the resetting
+player. Stack/work-area origins and all targeted play shapes remain fail-closed.
 
 The direct shuffle is restricted to exact
 `[initiator, "prizes", permutation, true]` records produced by the prize
