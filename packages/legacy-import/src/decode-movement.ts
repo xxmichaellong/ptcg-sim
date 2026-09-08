@@ -147,6 +147,14 @@ export type LegacyV1MovementAction =
       readonly sourceZone: 'attachedCards';
     }
   | {
+      readonly type: 'shuffleAll' | 'shuffleBottom';
+      readonly recordIndex: number;
+      readonly player: LegacyExportUser;
+      readonly initiator: LegacyExportUser;
+      readonly sourceZone: 'attachedCards';
+      readonly shuffleIndices: readonly number[];
+    }
+  | {
       readonly type: 'shuffleZone';
       readonly recordIndex: number;
       readonly player: LegacyExportUser;
@@ -261,6 +269,8 @@ const isMovementAction = (
     | 'discardAll'
     | 'lostZoneAll'
     | 'handAll'
+    | 'shuffleAll'
+    | 'shuffleBottom'
     | 'shuffleZone'
     | 'moveToDeckTop'
     | 'shuffleIntoDeck'
@@ -276,6 +286,8 @@ const isMovementAction = (
   action.action === 'discardAll' ||
   action.action === 'lostZoneAll' ||
   action.action === 'handAll' ||
+  action.action === 'shuffleAll' ||
+  action.action === 'shuffleBottom' ||
   action.action === 'shuffleZone' ||
   action.action === 'moveToDeckTop' ||
   action.action === 'shuffleIntoDeck' ||
@@ -400,11 +412,12 @@ const decodeCardSource = (
  * Decodes admitted movement tuples without applying them. This starts with the
  * source-bounded draw, discard-and-draw, shuffle-hand-and-draw, and
  * shuffle-hand-to-deck-bottom-and-draw; bottom-mode and target-free
- * loose-zone/stadium/new-play-stack card bundles; staged-stack leave-all and
- * staged discard/lost-zone/hand draining; direct prize-shuffle;
- * move-to-deck-top; shuffle-into-deck; switch-with-deck-top; and
- * shuffled-prizes-to-deck-bottom atoms. The remaining movement actions stay
- * untouched until their positional and state-dependent behavior is frozen.
+ * loose-zone/stadium/new-play-stack card bundles; staged-stack leave-all,
+ * staged discard/lost-zone/hand draining, and staged deck shuffles; direct
+ * prize-shuffle; move-to-deck-top; shuffle-into-deck; switch-with-deck-top;
+ * and shuffled-prizes-to-deck-bottom atoms. The remaining movement actions
+ * stay untouched until their positional and state-dependent behavior is
+ * frozen.
  */
 export const decodeLegacyV1MovementActions = (
   parsed: ParsedLegacyExport
@@ -909,6 +922,54 @@ export const decodeLegacyV1MovementActions = (
           player: action.user,
           initiator,
           sourceZone: 'attachedCards',
+        });
+        break;
+      }
+      case 'shuffleAll':
+      case 'shuffleBottom': {
+        if (action.parameters.length !== 3) {
+          return failure(
+            'invalid_parameter_count',
+            actionIndex,
+            '.parameters',
+            `${action.action} requires [initiator, sourceZone, permutation]`
+          );
+        }
+
+        const initiator = action.parameters[0];
+        if (initiator !== 'self' && initiator !== 'opp') {
+          return failure(
+            'invalid_parameter_type',
+            actionIndex,
+            '.parameters[0]',
+            `${action.action} initiator must use the exported self/opp perspective`
+          );
+        }
+        if (action.parameters[1] !== 'attachedCards') {
+          return failure(
+            'invalid_source_zone',
+            actionIndex,
+            '.parameters[1]',
+            `The converted ${action.action} subset must source attachedCards`
+          );
+        }
+        const shuffleIndices = decodeShuffle(action.parameters[2]);
+        if (!shuffleIndices) {
+          return failure(
+            'invalid_shuffle_permutation',
+            actionIndex,
+            '.parameters[2]',
+            `${action.action} requires a complete zero-based shuffle permutation`
+          );
+        }
+
+        decoded.push({
+          type: action.action,
+          recordIndex: actionIndex + 1,
+          player: action.user,
+          initiator,
+          sourceZone: 'attachedCards',
+          shuffleIndices,
         });
         break;
       }

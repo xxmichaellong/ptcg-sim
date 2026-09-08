@@ -447,8 +447,17 @@ bulk buttons on both player sides. `discardAll`, `lostZoneAll`, and `handAll`
 snapshot the popup count, repeatedly move index zero to the named destination,
 hide the popup, and export exactly `[initiator, "attachedCards"]`. The
 private importer resolves that flat order to stable work-area IDs before
-draining it transactionally; the permutation-bearing deck variants remain a
-separate checkpoint because their recorded indices use the same V1 flat basis.
+draining it transactionally.
+
+The adjacent static shuffle checkpoint freezes the distinct permutation bases.
+`shuffleAll` drains the source at index zero, then records a permutation over
+the resulting deck; for staged cards that basis is existing deck followed by V1
+flat popup order. `shuffleBottom` permutes the source first and then drains index
+zero to the deck tail, so its basis is only the flat popup. The current UI has
+self/opponent staged `shuffleAll` buttons but no staged `shuffleBottom` button;
+the latter remains an accepted general action/dispatcher shape. Importer tests
+prove that both exact staged tuples translate positions by stable identity into
+canonical work-area order rather than reusing incompatible indices.
 
 The protected active/bench shortcut checkpoint covers non-Alt `A` and `B`
 without absorbing stadium or prize rules. Two fresh real-v1 Chromium pages

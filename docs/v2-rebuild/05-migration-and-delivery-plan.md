@@ -220,8 +220,13 @@ ambiguous staged shapes fail the whole transaction. Exact staged `discardAll`,
 `lostZoneAll`, and `handAll` records now drain stable IDs through bounded
 `MoveStagedCard` batches in V1's newest-lower-to-base-then-attachment flat
 order; the candidate remains all-or-nothing, and hand concealment is preserved.
-Other target-free play, stadium, deck-relative, inspection, and permutation-
-bearing staged deck-bulk shapes remain closed.
+Exact staged `shuffleAll` and `shuffleBottom` records now translate their
+recorded permutations by stable card identity from that V1 flat basis to the
+canonical evolution-then-attachment command basis. `shuffleAll` includes the
+existing deck in both bases; `shuffleBottom` permutes only staged cards before
+the unchanged deck prefix. Both execute through atomic `ResolveStagedCards`.
+Other target-free play, stadium, deck-relative, and inspection shapes remain
+closed.
 Reachable tests now prove both-player
 loose-board take-turn cleanup plus owner-scoped loose/stadium/play reset/rebuild
 behavior.

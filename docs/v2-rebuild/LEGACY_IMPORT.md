@@ -130,8 +130,9 @@ decoder before any canonical state is created.
 `discardAndDraw`, `shuffleAndDraw`, `shuffleBottomAndDraw`, bottom-mode,
 target-free loose-zone/stadium/new-play-stack/rich-whole-stack, and
 source-zone-targeted active/bench `moveCardBundle`, direct prize
-`shuffleZone`, `moveToDeckTop`, `shuffleIntoDeck`, `switchWithDeckTop`, and
-`shufflePrizesToDeckBottom` records.
+`shuffleZone`, exact staged `leaveAll`, `discardAll`, `lostZoneAll`, `handAll`,
+`shuffleAll`, and `shuffleBottom`, plus `moveToDeckTop`, `shuffleIntoDeck`,
+`switchWithDeckTop`, and `shufflePrizesToDeckBottom` records.
 The draw record owns the target deck/hand through `user`; its two
 positional parameters are the independently exported initiator and the
 already-clamped draw count. The decoder therefore accepts both self/opp initiators without
@@ -247,9 +248,16 @@ and `handAll` drain the same current V1 flat order through one stable-ID
 `MoveStagedCard` batch per card. The private candidate still commits nothing
 unless every batch succeeds, and replay preserves destination append order,
 category reset, public discard/lost-zone state, and concealed hand identities.
-Inspection sources, other target-free play restoration, stadium/deck-relative
-staged movement, and the permutation-bearing staged deck-bulk actions remain
-closed for their distinct semantics.
+Exact staged-source `shuffleAll` and `shuffleBottom` add a complete permutation.
+For `shuffleAll`, V1's basis is current deck followed by the V1 flat staged
+order; for `shuffleBottom`, it is only the V1 flat staged order. The candidate
+resolves both V1 and canonical bases to stable IDs, translates every recorded
+index by identity, and executes one atomic `ResolveStagedCards`. This preserves
+the full-deck result, the deck-bottom prefix, and the correct concealed-identity
+scope without conflating reversed-evolution popup order with canonical work-area
+order. Inspection sources, other target-free play restoration, and
+stadium/deck-relative staged movement remain closed for their distinct
+semantics.
 
 A directly exported prize shuffle carries exactly
 `[initiator, "prizes", permutation, true]`. Empty permutations are valid for an
@@ -355,12 +363,13 @@ This deliberately narrow builder succeeds only when every action is one of
 `loadDeckData`, `reset`, `setup`, `takeTurn`, `draw`, `discardAndDraw`,
 `shuffleAndDraw`, `shuffleBottomAndDraw`, the bottom-mode, target-free
 loose-zone/stadium/new-play-stack/rich-whole-stack, or source-zone-targeted
-active/bench `moveCardBundle`, `moveToDeckTop`,
+active/bench `moveCardBundle`, exact staged `leaveAll`, `discardAll`,
+`lostZoneAll`, `handAll`, `shuffleAll`, and `shuffleBottom`, `moveToDeckTop`,
 `shuffleIntoDeck`, `switchWithDeckTop`, `shufflePrizesToDeckBottom`, or the
 direct prize form of `shuffleZone`. Any other allowlisted family or bundle
-subshape is rejected before state construction. Deck, lifecycle, and movement diagnostics are lifted
-with their exact source record/path, while context and canonical command
-failures also return no candidate state.
+subshape is rejected before state construction. Deck, lifecycle, and movement
+diagnostics are lifted with their exact source record/path, while context and
+canonical command failures also return no candidate state.
 The preflight additionally requires a one-to-one, source-ordered match between
 all records and the union of private decoder outputs; a future allowlist/decoder
 drift can neither omit nor double-apply a record.
@@ -521,7 +530,8 @@ The closed lifecycle/draw/discard-and-draw/both hand-shuffle-and-draw forms/
 direct-prize-shuffle/target-free-loose/stadium/new-play-stack-move/
 source-zone-attach-evolve/stack-card-reattachment/stack-card-departure/
 individual-staged-card-loose-and-targeted-play/exact-leave-all-restore/
-flat-ordered-staged-discard-lost-zone-hand/move-to-top/
+flat-ordered-staged-discard-lost-zone-hand/identity-translated-staged-shuffles/
+move-to-top/
 rich-whole-stack-move-and-swap/move-to-bottom/
 shuffle-into-deck/deck-top-switch/
 prizes-to-deck-bottom subset can now create ordinary loose-board, singleton
@@ -530,13 +540,14 @@ evolutions and attachments, move or swap those rich stacks, reattach lower
 stack members, depart any stack card into loose zones, and individually resolve
 staged cards into loose zones or existing stacks. It can also atomically restore
 an exact compatible staged stack to active or bench with deterministic IDs and
-full event replay, or drain all staged cards to discard, Lost Zone, or hand in
-the exact V1 flat order. Tests prove that a later
+full event replay, drain all staged cards to discard, Lost Zone, or hand in the
+exact V1 flat order, or shuffle them into/to the bottom of the deck through an
+identity-translated recorded permutation. Tests prove that a later
 take-turn discards both players' loose boards in
 source order before drawing, and that an owner reset clears only that owner's
 reachable loose state, owned stadium, and play stacks before rebuilding its
 deck. Opponent-owned stadium and play state remain. The subset still cannot
-resolve inspections, other target-free/permuted-deck staged work, markers,
+resolve inspections, other target-free staged work, markers,
 face-down play state, or cross-owner play placements, so take-turn in-play
 reveal and reset behavior for those shapes remain gated on their dedicated
 movement/state decoders.
@@ -544,10 +555,9 @@ movement/state decoders.
 ## Next conversion slices
 
 1. Continue source-backed positional schemas for inspection origins and the
-   remaining target-free `moveCardBundle`, stadium, deck-relative, and
-   permutation-bearing staged work-area forms. Translate recorded `shuffleAll`
-   and `shuffleBottom` indices from V1 flat order to the canonical command's
-   semantic input order before admitting either tuple.
+   remaining target-free `moveCardBundle`, stadium, and deck-relative work-area
+   forms. Staged `shuffleAll` and `shuffleBottom` now translate recorded V1 flat
+   indices to the canonical command's semantic input order by stable identity.
    The prerequisite draw, loose/stadium/play/stack movement, direct prize
    shuffle, and zone-backed deck atoms are already transactional. Map each
    additional coordinate only after its producing family makes that state

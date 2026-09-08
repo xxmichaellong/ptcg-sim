@@ -1146,6 +1146,84 @@ describe('legacy action-export source envelope', () => {
     }
   });
 
+  it('pins the distinct full-deck and deck-bottom staged shuffle bases', () => {
+    const zones = readRepositoryFile('client/src/actions/zones/general.js');
+    const buttons = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/table/zone-buttons.js'
+    );
+    const acceptAction = readRepositoryFile(
+      'client/src/setup/general/accept-action.js'
+    );
+    const shuffleAllStart = zones.indexOf('export const shuffleAll =');
+    const shuffleBottomStart = zones.indexOf(
+      'export const shuffleBottom =',
+      shuffleAllStart + 1
+    );
+    const discardAllStart = zones.indexOf(
+      'export const discardAll =',
+      shuffleBottomStart + 1
+    );
+    expect(shuffleAllStart).toBeGreaterThanOrEqual(0);
+    expect(shuffleBottomStart).toBeGreaterThan(shuffleAllStart);
+    expect(discardAllStart).toBeGreaterThan(shuffleBottomStart);
+    const shuffleAll = zones.slice(shuffleAllStart, shuffleBottomStart);
+    const shuffleBottom = zones.slice(shuffleBottomStart, discardAllStart);
+    const moveLoop =
+      "for (let i = 0; i < count; i++) {\n    moveCard(user, initiator, zoneId, 'deck', 0);\n  }";
+
+    expect(shuffleAll).toContain('const count = zone.getCount();');
+    expect(shuffleAll).toContain(moveLoop);
+    expect(shuffleAll.indexOf(moveLoop)).toBeLessThan(
+      shuffleAll.indexOf(
+        'indices = indices ? indices : shuffleIndices(deck.getCount());'
+      )
+    );
+    expect(shuffleAll).toContain(
+      "shuffleZone(user, initiator, 'deck', indices, false, false);"
+    );
+    const shuffleAllExport =
+      "processAction(user, emit, 'shuffleAll', [oInitiator, zoneId, indices]);";
+    expect(shuffleAll).toContain(shuffleAllExport);
+
+    expect(shuffleBottom).toContain('const count = zone.getCount();');
+    expect(shuffleBottom).toContain(
+      'indices = indices ? indices : shuffleIndices(count);'
+    );
+    expect(shuffleBottom).toContain(
+      'shuffleZone(user, initiator, zoneId, indices, false, false);'
+    );
+    expect(
+      shuffleBottom.indexOf(
+        'shuffleZone(user, initiator, zoneId, indices, false, false);'
+      )
+    ).toBeLessThan(shuffleBottom.indexOf(moveLoop));
+    expect(shuffleBottom).toContain(moveLoop);
+    const shuffleBottomExport =
+      "processAction(user, emit, 'shuffleBottom', [oInitiator, zoneId, indices]);";
+    expect(shuffleBottom).toContain(shuffleBottomExport);
+    for (const [implementation, exportCall] of [
+      [shuffleAll, shuffleAllExport],
+      [shuffleBottom, shuffleBottomExport],
+    ] as const) {
+      const hideIndex = implementation.lastIndexOf(
+        "zone.element.style.display = 'none';"
+      );
+      expect(hideIndex).toBeGreaterThan(implementation.indexOf(moveLoop));
+      expect(implementation.lastIndexOf(exportCall)).toBeGreaterThan(hideIndex);
+    }
+
+    for (const user of ['self', 'opp']) {
+      expect(buttons).toContain(
+        `shuffleAll('${user}', systemState.initiator, 'attachedCards')`
+      );
+      expect(buttons).not.toContain(
+        `shuffleBottom('${user}', systemState.initiator, 'attachedCards')`
+      );
+    }
+    expect(acceptAction).toContain('shuffleAll: shuffleAll,');
+    expect(acceptAction).toContain('shuffleBottom: shuffleBottom,');
+  });
+
   it('pins numeric play targets, top-only eligibility, and refreshed flat ordering', () => {
     const keybinds = readRepositoryFile(
       'client/src/actions/keybinds/keybinds.js'

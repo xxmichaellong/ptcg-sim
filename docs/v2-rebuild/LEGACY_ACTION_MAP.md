@@ -67,7 +67,8 @@ target-free loose-zone/stadium/new-play-stack/rich-whole-stack, and
 source-zone-targeted active/bench `moveCardBundle`, direct prize
 `shuffleZone`, exact staged-stack `leaveAll`, `moveToDeckTop`,
 staged `discardAll`/`lostZoneAll`/`handAll`, `shuffleIntoDeck`,
-`switchWithDeckTop`, and `shufflePrizesToDeckBottom` tuples.
+staged `shuffleAll`/`shuffleBottom`, `switchWithDeckTop`, and
+`shufflePrizesToDeckBottom` tuples.
 Record `user` selects the target player's zones, while the exported initiator
 remains independent provenance. Draw counts are already clamped by v1 before a successful action is
 exported; conversion accepts only positive integers
@@ -420,8 +421,18 @@ base, then attachments—to stable IDs before applying one bounded
 `MoveStagedCard` batch per card. No intermediate state escapes if a later batch
 fails. Destination append order, category/face/orientation reset, and hand
 identity concealment are event-replay exact; missing and non-same-owner work
-areas return no candidate. Inspection-origin forms and the two permutation-
-bearing staged deck actions remain gated.
+areas return no candidate. Inspection-origin forms remain gated.
+
+Exact staged-source `shuffleAll` and `shuffleBottom` records add a complete
+zero-based permutation. V1 `shuffleAll` first appends popup cards to the current
+deck in flat order and records a permutation over that combined sequence. V1
+`shuffleBottom` records a permutation over the popup alone before appending it
+to the unchanged deck. The converter maps each recorded V1 position to its
+stable card ID and then to the canonical evolution-then-attachment position
+expected by `ResolveStagedCards`; it never applies legacy indices directly to a
+different basis. Length/set mismatches, missing work areas, and capacity
+failures return no candidate. Full-deck shuffles conceal the entire result,
+while bottom shuffles rotate only the staged identities.
 
 Ordinary direct non-Pokémon ingress onto an existing live stack now emits the
 versioned `CardAttachedToPlayStack` event. `attachmentOrderVersion: 1` freezes
@@ -455,9 +466,9 @@ order for visible/hand moves, shuffles the full combined deck for `shuffleAll`,
 and shuffles only staged cards before appending them for `shuffleBottom`.
 Cross-owner cards retain immutable ownership while entering the work-area
 player's destination zone. The legacy importer does not mislabel that canonical
-sequence as V1's reversed-evolution popup order; its non-shuffle bridge above
-drains stable IDs explicitly, and its shuffle bridge remains gated until the
-recorded permutation basis is translated.
+sequence as V1's reversed-evolution popup order: its non-shuffle bridge drains
+stable IDs explicitly, while its shuffle bridge translates each permutation by
+stable identity before invoking the atomic command.
 
 A Chromium source oracle and bounded React comparison confirm that legacy
 whole-stack movement refreshes a reverse-restored mixed Energy/Trainer stack to

@@ -62,6 +62,44 @@ const cardRows = (count: number, prefix: string): readonly Row[] =>
     `/legacy/${prefix}-${index}.png`,
   ]);
 
+const stagedShufflePayload = (
+  actionName: 'shuffleAll' | 'shuffleBottom',
+  shuffleIndices: readonly number[]
+) =>
+  payload(
+    [
+      ['1', 'Shuffle source base', 'Pokémon', '/legacy/base.png'],
+      ['1', 'Shuffle source middle', 'Pokémon', '/legacy/middle.png'],
+      ['1', 'Shuffle source top', 'Pokémon', '/legacy/top.png'],
+      ['1', 'Shuffle source energy', 'Energy', '/legacy/energy.png'],
+      ['1', 'Shuffle source tool', 'Trainer', '/legacy/tool.png'],
+      ['1', 'Shuffle deck first', 'Trainer', '/legacy/deck-first.png'],
+      ['1', 'Shuffle deck second', 'Energy', '/legacy/deck-second.png'],
+    ],
+    '',
+    action('self', 'moveCardBundle', [
+      'opp',
+      'deck',
+      'active',
+      0,
+      false,
+      'move',
+    ]),
+    action('self', 'moveCardBundle', ['opp', 'deck', 'active', 0, 0, 'move']),
+    action('self', 'moveCardBundle', ['opp', 'deck', 'active', 0, 0, 'move']),
+    action('self', 'moveCardBundle', ['opp', 'deck', 'active', 0, 0, 'move']),
+    action('self', 'moveCardBundle', ['opp', 'deck', 'active', 0, 0, 'move']),
+    action('self', 'moveCardBundle', [
+      'opp',
+      'active',
+      'discard',
+      0,
+      false,
+      'move',
+    ]),
+    action('self', actionName, ['opp', 'attachedCards', shuffleIndices])
+  );
+
 describe('legacy v1 canonical candidate builder', () => {
   it('transactionally applies deck, setup, turn, and both reset modes', () => {
     const selfDeck = cardRows(14, 'Self');
@@ -4278,6 +4316,168 @@ describe('legacy v1 canonical candidate builder', () => {
             path: '$[3].parameters[1]',
             message:
               'Recorded staged bulk source does not identify a current same-owner work area',
+          },
+        ],
+      });
+      expect('state' in result).toBe(false);
+    }
+  );
+
+  it.each([
+    {
+      actionName: 'shuffleAll',
+      shuffleIndices: [5, 2, 0, 4, 1, 3],
+      destination: 'shuffleIntoDeck',
+      expectedDeckIds: [
+        'legacy:v1:card:000004',
+        'legacy:v1:card:000001',
+        'legacy:v1:card:000005',
+        'legacy:v1:card:000003',
+        'legacy:v1:card:000006',
+        'legacy:v1:card:000000',
+      ],
+      expectedConcealedIds: [
+        'legacy:v1:card:000004',
+        'legacy:v1:card:000001',
+        'legacy:v1:card:000005',
+        'legacy:v1:card:000003',
+        'legacy:v1:card:000006',
+        'legacy:v1:card:000000',
+      ],
+    },
+    {
+      actionName: 'shuffleBottom',
+      shuffleIndices: [2, 0, 3, 1],
+      destination: 'shuffleToDeckBottom',
+      expectedDeckIds: [
+        'legacy:v1:card:000005',
+        'legacy:v1:card:000006',
+        'legacy:v1:card:000003',
+        'legacy:v1:card:000001',
+        'legacy:v1:card:000004',
+        'legacy:v1:card:000000',
+      ],
+      expectedConcealedIds: [
+        'legacy:v1:card:000003',
+        'legacy:v1:card:000001',
+        'legacy:v1:card:000004',
+        'legacy:v1:card:000000',
+      ],
+    },
+  ] as const)(
+    'translates the V1 $actionName permutation basis by stable card identity',
+    ({
+      actionName,
+      shuffleIndices,
+      destination,
+      expectedDeckIds,
+      expectedConcealedIds,
+    }) => {
+      const parsed = parse(stagedShufflePayload(actionName, shuffleIndices));
+      const result = buildLegacyV1Candidate(parsed, target);
+      const retry = buildLegacyV1Candidate(parsed, target);
+      expect(result).toEqual(retry);
+      expect(result.ok).toBe(true);
+      if (!result.ok || !retry.ok) {
+        throw new Error('Expected staged shuffle conversion success');
+      }
+
+      const playerId = target.selfSeat.playerId;
+      const deckId = playerZoneId(playerId, 'deck');
+      const baseId = 'legacy:v1:card:000000';
+      const middleId = 'legacy:v1:card:000001';
+      const energyId = 'legacy:v1:card:000003';
+      const toolId = 'legacy:v1:card:000004';
+      const deckFirstId = 'legacy:v1:card:000005';
+      const deckSecondId = 'legacy:v1:card:000006';
+      expect(result.state.zones[deckId]?.cardIds).toEqual(expectedDeckIds);
+      expect(result.state.workAreas[playerId]?.attachmentResolution).toBeNull();
+      expect(result.records[8]!.batches).toHaveLength(1);
+      expect(result.records[8]!.batches[0]!.events).toEqual([
+        {
+          type: 'StagedCardsResolved',
+          playerId,
+          expectedWorkAreaId: 'legacy:v1:work-area:000000',
+          expectedEvolutionCardIds: [baseId, middleId],
+          expectedAttachmentCardIds: [energyId, toolId],
+          destination,
+          destinationZoneId: deckId,
+          expectedDestinationCardIds: [deckFirstId, deckSecondId],
+          destinationCardIds: expectedDeckIds,
+          concealedCardIds: expectedConcealedIds,
+        },
+      ]);
+      for (const cardId of [baseId, middleId, energyId, toolId]) {
+        expect(result.state.cards[cardId]?.visibilityGeneration).toBe(1);
+      }
+      for (const cardId of [deckFirstId, deckSecondId]) {
+        expect(result.state.cards[cardId]?.visibilityGeneration).toBe(
+          actionName === 'shuffleAll' ? 1 : 0
+        );
+      }
+      const replayed = result.records
+        .flatMap((record) => record.batches)
+        .reduce(
+          applyEventBatch,
+          createEmptyMatch(target.matchId, [
+            target.selfSeat,
+            target.opponentSeat,
+          ])
+        );
+      expect(replayed).toEqual(result.state);
+      expect(stableHash(result.state)).toBe(stableHash(retry.state));
+      assertMatchInvariants(result.state);
+    }
+  );
+
+  it.each([
+    ['shuffleAll', [0, 1, 2, 3]],
+    ['shuffleBottom', [0, 1, 2]],
+  ] as const)(
+    'rolls back %s when its permutation length does not match current state',
+    (actionName, shuffleIndices) => {
+      const result = buildLegacyV1Candidate(
+        parse(stagedShufflePayload(actionName, shuffleIndices)),
+        target
+      );
+      expect(result).toEqual({
+        ok: false,
+        issues: [
+          {
+            code: 'source_state_mismatch',
+            recordIndex: 9,
+            path: '$[9].parameters[2]',
+            message:
+              'Recorded staged shuffle length does not match its exact V1 permutation basis',
+          },
+        ],
+      });
+      expect('state' in result).toBe(false);
+    }
+  );
+
+  it.each(['shuffleAll', 'shuffleBottom'] as const)(
+    'rolls back %s when no staged work area exists',
+    (actionName) => {
+      const result = buildLegacyV1Candidate(
+        parse(
+          payload(
+            '',
+            '',
+            action('self', actionName, ['opp', 'attachedCards', []])
+          )
+        ),
+        target
+      );
+      expect(result).toEqual({
+        ok: false,
+        issues: [
+          {
+            code: 'source_state_mismatch',
+            recordIndex: 3,
+            path: '$[3].parameters[1]',
+            message:
+              'Recorded staged shuffle source does not identify a current same-owner work area',
           },
         ],
       });

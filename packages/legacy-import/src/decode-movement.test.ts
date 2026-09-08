@@ -573,6 +573,71 @@ describe('legacy v1 movement positional decoder', () => {
     }
   );
 
+  it('decodes exact staged full-deck and deck-bottom shuffle tuples', () => {
+    expect(
+      decode(
+        action('self', 'shuffleAll', ['opp', 'attachedCards', [3, 0, 2, 1]]),
+        action('opp', 'shuffleBottom', ['self', 'attachedCards', [1, 0]])
+      )
+    ).toEqual({
+      ok: true,
+      actions: [
+        {
+          type: 'shuffleAll',
+          recordIndex: 3,
+          player: 'self',
+          initiator: 'opp',
+          sourceZone: 'attachedCards',
+          shuffleIndices: [3, 0, 2, 1],
+        },
+        {
+          type: 'shuffleBottom',
+          recordIndex: 4,
+          player: 'opp',
+          initiator: 'self',
+          sourceZone: 'attachedCards',
+          shuffleIndices: [1, 0],
+        },
+      ],
+    });
+  });
+
+  it.each(['shuffleAll', 'shuffleBottom'])(
+    'rejects malformed, non-staged, or invalid-permutation %s tuples',
+    (actionName) => {
+      expect(
+        firstIssue(action('self', actionName, ['self', 'attachedCards']))
+      ).toMatchObject({
+        code: 'invalid_parameter_count',
+        recordIndex: 3,
+        path: '$[3].parameters',
+      });
+      expect(
+        firstIssue(action('self', actionName, [false, 'attachedCards', [0]]))
+      ).toMatchObject({
+        code: 'invalid_parameter_type',
+        recordIndex: 3,
+        path: '$[3].parameters[0]',
+      });
+      expect(
+        firstIssue(action('self', actionName, ['self', 'viewCards', [0]]))
+      ).toMatchObject({
+        code: 'invalid_source_zone',
+        recordIndex: 3,
+        path: '$[3].parameters[1]',
+      });
+      expect(
+        firstIssue(
+          action('self', actionName, ['self', 'attachedCards', [0, 0]])
+        )
+      ).toMatchObject({
+        code: 'invalid_shuffle_permutation',
+        recordIndex: 3,
+        path: '$[3].parameters[2]',
+      });
+    }
+  );
+
   it('decodes only source-authentic direct prize shuffles', () => {
     expect(
       decode(
