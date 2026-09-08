@@ -354,6 +354,80 @@ describe('legacy action-export source envelope', () => {
     );
   });
 
+  it('pins special-condition tuples, editor policy, controls, and automatic cleanup', () => {
+    const specialCondition = readRepositoryFile(
+      'client/src/actions/counters/special-condition.js'
+    );
+    const keybinds = readRepositoryFile(
+      'client/src/actions/keybinds/keybinds.js'
+    );
+    const activeBenchButtons = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/card-context-menu/active-bench-buttons.js'
+    );
+    const clickEvents = readRepositoryFile(
+      'client/src/setup/image-logic/click-events.js'
+    );
+    const updateCounters = readRepositoryFile(
+      'client/src/actions/move-card-bundle/update-counters.js'
+    );
+    const evolveCard = readRepositoryFile(
+      'client/src/actions/move-card-bundle/evolve-card.js'
+    );
+
+    expect(
+      specialCondition.match(
+        /processAction\(user, emit, 'addSpecialCondition',/g
+      )
+    ).toHaveLength(2);
+    expect(specialCondition).toContain(
+      "processAction(user, emit, 'addSpecialCondition', [zoneId, index]);"
+    );
+    expect(
+      specialCondition.match(
+        /processAction\(user, emit, 'updateSpecialCondition',/g
+      )
+    ).toHaveLength(2);
+    expect(specialCondition).toContain(
+      "processAction(user, emit, 'updateSpecialCondition', [\n    zoneId,\n    index,\n    textContent,\n  ]);"
+    );
+    expect(
+      specialCondition.match(
+        /processAction\(user, emit, 'removeSpecialCondition', \[zoneId, index\]\);/g
+      )
+    ).toHaveLength(2);
+    expect(specialCondition).toContain("specialCondition.textContent = 'P';");
+    expect(specialCondition).toContain(
+      'updateSpecialCondition(user, zoneId, index, specialCondition.textContent);'
+    );
+    expect(specialCondition).toContain(
+      "specialCondition.textContent.trim() === ''"
+    );
+    expect(specialCondition).toContain("specialCondition.textContent === '0'");
+    expect(specialCondition).toContain(
+      'removeSpecialCondition(user, zoneId, index);'
+    );
+    expect(activeBenchButtons).toContain(
+      'addSpecialCondition(\n      mouseClick.cardUser,\n      mouseClick.zoneId,\n      mouseClick.cardIndex\n    );'
+    );
+    expect(clickEvents).toContain("specialConditionButton: [[true, 'active']]");
+    expect(keybinds).toContain("mouseClick.zoneId === 'active'");
+    for (const condition of ['P', 'B', 'PA', 'C', 'A']) {
+      expect(keybinds).toContain(`case '${condition}':`);
+    }
+    expect(keybinds).toContain(
+      "mouseClick.card.image.specialCondition.textContent = '';"
+    );
+    expect(updateCounters).toContain(
+      "movingCard.image.specialCondition && !['active'].includes(dZoneId)"
+    );
+    expect(updateCounters).toContain(
+      "movingCard.image.specialCondition.textContent = '0';"
+    );
+    expect(evolveCard).toContain(
+      "targetCard.image.specialCondition.textContent = '0';"
+    );
+  });
+
   it('pins the first movement tuple, clamp, and independent target ownership', () => {
     const deckActions = readRepositoryFile(
       'client/src/actions/zones/deck-actions.js'

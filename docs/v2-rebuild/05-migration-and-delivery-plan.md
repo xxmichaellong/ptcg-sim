@@ -176,7 +176,7 @@ stack-card-departure/
 source-zone-targeted-play/
 work-area-target-free-play/
 zone-backed-deck-action/
-prizes-to-deck-bottom/once-per-game-marker/ability-marker/damage-marker/parameterless-attack-and-pass subset
+prizes-to-deck-bottom/once-per-game-marker/ability-marker/damage-marker/special-condition-marker/parameterless-attack-and-pass subset
 through normal game-core commands and verifies exact event replay; it rejects every
 unconverted family before constructing state, rejects recorded draws that exceed
 the exact current source-state deck, applies only direct prize shuffles
@@ -323,6 +323,15 @@ missing-remove state no-ops retain zero batches; missing-update and non-top
 coordinates fail the whole candidate. Both players/zones, exact events,
 deterministic retry/replay/hash/invariants, malformed/free-form input, and the
 existing real-V1 editor/export behavior are pinned without a schema change.
+Exact special-condition add/update/remove records now decode only current active
+stack-top coordinates. Add defaults to `P`; bounded edit strings reuse the
+approved trim/empty-or-zero-removal policy and `SetSpecialCondition`. Existing
+add, duplicate update, and missing removal remain zero-batch source records;
+markerless updates fail closed. A private exact-top presence map preserves
+transient null edits while recognizing V1's automatic cleanup on evolution or
+active-slot departure. Both players, exact events, deterministic
+retry/replay/hash/invariants, malformed rollback, and existing real-V1
+editor/movement behavior are pinned without a schema change.
 Shuffle-into-deck translates v1's in-deck tail-move
 permutation basis to the canonical input order. Switch-with-deck-top preserves
 v1's source-tail return and empty-deck branch through one or two canonical

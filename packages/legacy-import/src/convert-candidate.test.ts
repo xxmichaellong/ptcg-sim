@@ -1288,6 +1288,409 @@ describe('legacy v1 canonical candidate builder', () => {
     }
   );
 
+  it('imports bounded special-condition edits with defaults and source-valid no-op records', () => {
+    const parsed = parse(
+      payload(
+        [['1', 'Condition base', 'Pokémon', '/legacy/condition-base.png']],
+        [
+          [
+            '1',
+            'Opponent condition base',
+            'Pokémon',
+            '/legacy/opponent-condition-base.png',
+          ],
+        ],
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'active',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'addSpecialCondition', ['active', 0]),
+        action('self', 'addSpecialCondition', ['active', 0]),
+        action('self', 'updateSpecialCondition', ['active', 0, 'B']),
+        action('self', 'updateSpecialCondition', ['active', 0, 'B']),
+        action('self', 'updateSpecialCondition', ['active', 0, '0']),
+        action('self', 'updateSpecialCondition', ['active', 0, ' Pa ']),
+        action('self', 'updateSpecialCondition', ['active', 0, '']),
+        action('self', 'removeSpecialCondition', ['active', 0]),
+        action('self', 'removeSpecialCondition', ['active', 0]),
+        action('self', 'addSpecialCondition', ['active', 0]),
+        action('opp', 'moveCardBundle', [
+          'self',
+          'deck',
+          'active',
+          0,
+          false,
+          'move',
+        ]),
+        action('opp', 'addSpecialCondition', ['active', 0]),
+        action('opp', 'updateSpecialCondition', [
+          'active',
+          0,
+          'custom condition',
+        ]),
+        action('opp', 'removeSpecialCondition', ['active', 0])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) throw new Error('Expected conversion success');
+
+    const selfStackId = 'legacy:v1:stack:000000';
+    const opponentStackId = 'legacy:v1:stack:000001';
+    expect(
+      result.records
+        .filter(({ action }) => action.includes('SpecialCondition'))
+        .map(({ recordIndex, action, batches }) => ({
+          recordIndex,
+          action,
+          events: batches.flatMap((batch) => batch.events),
+        }))
+    ).toEqual([
+      {
+        recordIndex: 4,
+        action: 'addSpecialCondition',
+        events: [
+          { type: 'StackConditionSet', stackId: selfStackId, condition: 'P' },
+        ],
+      },
+      { recordIndex: 5, action: 'addSpecialCondition', events: [] },
+      {
+        recordIndex: 6,
+        action: 'updateSpecialCondition',
+        events: [
+          { type: 'StackConditionSet', stackId: selfStackId, condition: 'B' },
+        ],
+      },
+      { recordIndex: 7, action: 'updateSpecialCondition', events: [] },
+      {
+        recordIndex: 8,
+        action: 'updateSpecialCondition',
+        events: [
+          { type: 'StackConditionSet', stackId: selfStackId, condition: null },
+        ],
+      },
+      {
+        recordIndex: 9,
+        action: 'updateSpecialCondition',
+        events: [
+          {
+            type: 'StackConditionSet',
+            stackId: selfStackId,
+            condition: 'Pa',
+          },
+        ],
+      },
+      {
+        recordIndex: 10,
+        action: 'updateSpecialCondition',
+        events: [
+          { type: 'StackConditionSet', stackId: selfStackId, condition: null },
+        ],
+      },
+      { recordIndex: 11, action: 'removeSpecialCondition', events: [] },
+      { recordIndex: 12, action: 'removeSpecialCondition', events: [] },
+      {
+        recordIndex: 13,
+        action: 'addSpecialCondition',
+        events: [
+          { type: 'StackConditionSet', stackId: selfStackId, condition: 'P' },
+        ],
+      },
+      {
+        recordIndex: 15,
+        action: 'addSpecialCondition',
+        events: [
+          {
+            type: 'StackConditionSet',
+            stackId: opponentStackId,
+            condition: 'P',
+          },
+        ],
+      },
+      {
+        recordIndex: 16,
+        action: 'updateSpecialCondition',
+        events: [
+          {
+            type: 'StackConditionSet',
+            stackId: opponentStackId,
+            condition: 'custom condition',
+          },
+        ],
+      },
+      {
+        recordIndex: 17,
+        action: 'removeSpecialCondition',
+        events: [
+          {
+            type: 'StackConditionSet',
+            stackId: opponentStackId,
+            condition: null,
+          },
+        ],
+      },
+    ]);
+    expect(result.state.stacks[selfStackId]?.specialCondition).toBe('P');
+    expect(result.state.stacks[opponentStackId]?.specialCondition).toBeNull();
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+
+    const replayed = result.records
+      .flatMap((record) => record.batches)
+      .reduce(
+        applyEventBatch,
+        createEmptyMatch(target.matchId, [target.selfSeat, target.opponentSeat])
+      );
+    expect(replayed).toEqual(result.state);
+  });
+
+  it('refuses special-condition updates without a source marker', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          [['1', 'Condition base', 'Pokémon', '/legacy/condition-base.png']],
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'updateSpecialCondition', ['active', 0, 'B'])
+        )
+      ),
+      target
+    );
+    expect(result).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 4,
+          path: '$[4].action',
+          message:
+            'Recorded special-condition update requires an existing source marker',
+        },
+      ],
+    });
+    expect('state' in result).toBe(false);
+  });
+
+  it('returns no candidate for an over-bound special-condition edit', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          '',
+          '',
+          action('self', 'updateSpecialCondition', [
+            'active',
+            0,
+            '12345678901234567',
+          ])
+        )
+      ),
+      target
+    );
+    expect(result).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'marker.invalid_condition_value',
+          recordIndex: 3,
+          path: '$[3].parameters[2]',
+          message:
+            'updateSpecialCondition condition must normalize to null or at most 16 characters',
+        },
+      ],
+    });
+    expect('state' in result).toBe(false);
+  });
+
+  it.each(['Pokémon', 'Trainer'] as const)(
+    'refuses special-condition coordinates on a non-top %s stack member',
+    (category) => {
+      const result = buildLegacyV1Candidate(
+        parse(
+          payload(
+            [
+              ['1', 'Condition base', 'Pokémon', '/legacy/condition-base.png'],
+              [
+                '1',
+                'Condition member',
+                category,
+                '/legacy/condition-member.png',
+              ],
+            ],
+            '',
+            action('self', 'moveCardBundle', [
+              'opp',
+              'deck',
+              'active',
+              0,
+              false,
+              'move',
+            ]),
+            action('self', 'moveCardBundle', [
+              'opp',
+              'deck',
+              'active',
+              0,
+              0,
+              'move',
+            ]),
+            action('self', 'addSpecialCondition', ['active', 1])
+          )
+        ),
+        target
+      );
+      expect(result).toMatchObject({
+        ok: false,
+        issues: [
+          {
+            code: 'source_state_mismatch',
+            recordIndex: 5,
+            path: '$[5].parameters[1]',
+          },
+        ],
+      });
+      expect('state' in result).toBe(false);
+    }
+  );
+
+  it('tracks automatic condition cleanup across evolution and active-slot departure', () => {
+    const evolutionActions = [
+      action('self', 'moveCardBundle', [
+        'opp',
+        'deck',
+        'active',
+        0,
+        false,
+        'move',
+      ]),
+      action('self', 'addSpecialCondition', ['active', 0]),
+      action('self', 'moveCardBundle', ['opp', 'deck', 'active', 0, 0, 'move']),
+    ];
+    const cleaned = buildLegacyV1Candidate(
+      parse(
+        payload(
+          [
+            ['1', 'Condition base', 'Pokémon', '/legacy/condition-base.png'],
+            [
+              '1',
+              'Condition evolution',
+              'Pokémon',
+              '/legacy/condition-evolution.png',
+            ],
+          ],
+          '',
+          ...evolutionActions,
+          action('self', 'removeSpecialCondition', ['active', 0])
+        )
+      ),
+      target
+    );
+    expect(cleaned.ok).toBe(true);
+    if (!cleaned.ok) throw new Error(cleaned.issues[0]?.message);
+    expect(
+      cleaned.records.at(-1)?.batches.flatMap((batch) => batch.events)
+    ).toEqual([]);
+    expect(
+      cleaned.state.stacks['legacy:v1:stack:000000']?.specialCondition
+    ).toBeNull();
+
+    const updateAfterEvolution = buildLegacyV1Candidate(
+      parse(
+        payload(
+          [
+            ['1', 'Condition base', 'Pokémon', '/legacy/condition-base.png'],
+            [
+              '1',
+              'Condition evolution',
+              'Pokémon',
+              '/legacy/condition-evolution.png',
+            ],
+          ],
+          '',
+          ...evolutionActions,
+          action('self', 'updateSpecialCondition', ['active', 0, 'B'])
+        )
+      ),
+      target
+    );
+    expect(updateAfterEvolution).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 6,
+          path: '$[6].action',
+        },
+      ],
+    });
+
+    const updateAfterBenchRoundTrip = buildLegacyV1Candidate(
+      parse(
+        payload(
+          [
+            ['1', 'Condition active', 'Pokémon', '/legacy/active.png'],
+            [
+              '1',
+              'Condition replacement',
+              'Pokémon',
+              '/legacy/replacement.png',
+            ],
+          ],
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'addSpecialCondition', ['active', 0]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'active',
+            'bench',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'updateSpecialCondition', ['active', 0, 'B'])
+        )
+      ),
+      target
+    );
+    expect(updateAfterBenchRoundTrip).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 7,
+          path: '$[7].action',
+        },
+      ],
+    });
+  });
+
   it.each([
     { parameters: [], code: 'marker.invalid_parameter_count' },
     { parameters: [null], code: 'marker.invalid_parameter_type' },
@@ -8300,7 +8703,7 @@ describe('legacy v1 canonical candidate builder', () => {
 
   it('rejects an admitted but unconverted family before creating state', () => {
     const result = buildLegacyV1Candidate(
-      parse(payload('', '', action('self', 'addSpecialCondition', [null]))),
+      parse(payload('', '', action('self', 'rotateCard', [null]))),
       target
     );
     expect(result).toEqual({

@@ -40,6 +40,15 @@ removed` input sequence and exact exports. The private importer accepts only
 bounded canonical values on exact stack tops, preserves repeated source no-ops,
 and rejects free-form values or lower/attachment coordinates transactionally.
 
+Special-condition source locks cover exact add/update/remove tuples, the `P`
+default and recognized color cycle, active-only context/shortcut ingress,
+editable text, empty/zero blur removal, and automatic movement/evolution
+cleanup. The real-runtime editor and shortcut oracles already pin default,
+`P → B → Pa → C → A → P`, bounded free-form edits, removal, chronological
+exports, and stable marker identity. The private importer preserves source
+node no-ops and transient null edits only on the exact active top, and rejects
+bench, lower/attachment, malformed, or over-bound records transactionally.
+
 Renderer geometry locks additionally pair a manually reviewed numeric fixture
 with source digests. Text sources are normalized to LF for portable hashing;
 image fixtures are hashed as raw bytes. The browser harness loads those sources

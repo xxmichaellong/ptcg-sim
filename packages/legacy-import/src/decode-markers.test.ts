@@ -409,6 +409,177 @@ describe('legacy v1 marker-action positional decoder', () => {
     }
   );
 
+  it('decodes active special-condition defaults, bounded edits, and removals', () => {
+    expect(
+      decode(
+        action('self', 'addSpecialCondition', ['active', 0]),
+        action('opp', 'updateSpecialCondition', ['active', 1, ' Pa ']),
+        action('self', 'updateSpecialCondition', ['active', 2, '0']),
+        action('opp', 'updateSpecialCondition', ['active', 3, '   ']),
+        action('self', 'updateSpecialCondition', [
+          'active',
+          4,
+          '1234567890123456',
+        ]),
+        action('opp', 'removeSpecialCondition', ['active', 5])
+      )
+    ).toEqual({
+      ok: true,
+      actions: [
+        {
+          type: 'addSpecialCondition',
+          recordIndex: 3,
+          player: 'self',
+          zone: 'active',
+          sourceIndex: 0,
+          condition: 'P',
+        },
+        {
+          type: 'updateSpecialCondition',
+          recordIndex: 4,
+          player: 'opp',
+          zone: 'active',
+          sourceIndex: 1,
+          condition: 'Pa',
+        },
+        {
+          type: 'updateSpecialCondition',
+          recordIndex: 5,
+          player: 'self',
+          zone: 'active',
+          sourceIndex: 2,
+          condition: null,
+        },
+        {
+          type: 'updateSpecialCondition',
+          recordIndex: 6,
+          player: 'opp',
+          zone: 'active',
+          sourceIndex: 3,
+          condition: null,
+        },
+        {
+          type: 'updateSpecialCondition',
+          recordIndex: 7,
+          player: 'self',
+          zone: 'active',
+          sourceIndex: 4,
+          condition: '1234567890123456',
+        },
+        {
+          type: 'removeSpecialCondition',
+          recordIndex: 8,
+          player: 'opp',
+          zone: 'active',
+          sourceIndex: 5,
+        },
+      ],
+    });
+  });
+
+  it.each([
+    { actionName: 'addSpecialCondition', parameters: ['active'] },
+    {
+      actionName: 'addSpecialCondition',
+      parameters: ['active', 0, 'extra'],
+    },
+    { actionName: 'updateSpecialCondition', parameters: ['active', 0] },
+    {
+      actionName: 'updateSpecialCondition',
+      parameters: ['active', 0, 'P', 'extra'],
+    },
+    { actionName: 'removeSpecialCondition', parameters: ['active'] },
+    {
+      actionName: 'removeSpecialCondition',
+      parameters: ['active', 0, 'extra'],
+    },
+  ])('rejects a malformed $actionName tuple', ({ actionName, parameters }) => {
+    expect(decode(action('self', actionName, parameters))).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'invalid_parameter_count',
+          recordIndex: 3,
+          path: '$[3].parameters',
+        },
+      ],
+    });
+  });
+
+  it.each([
+    'addSpecialCondition',
+    'updateSpecialCondition',
+    'removeSpecialCondition',
+  ] as const)('rejects invalid %s zones and indices', (actionName) => {
+    const parameters = (zone: unknown, index: unknown): unknown[] =>
+      actionName === 'updateSpecialCondition'
+        ? [zone, index, 'P']
+        : [zone, index];
+    expect(
+      decode(action('self', actionName, parameters(null, 0)))
+    ).toMatchObject({
+      ok: false,
+      issues: [{ code: 'invalid_parameter_type', path: '$[3].parameters[0]' }],
+    });
+    for (const zone of ['bench', 'discard', 'stadium']) {
+      expect(
+        decode(action('self', actionName, parameters(zone, 0)))
+      ).toMatchObject({
+        ok: false,
+        issues: [{ code: 'invalid_marker_zone', path: '$[3].parameters[0]' }],
+      });
+    }
+    for (const index of [null, '0', true]) {
+      expect(
+        decode(action('self', actionName, parameters('active', index)))
+      ).toMatchObject({
+        ok: false,
+        issues: [
+          { code: 'invalid_parameter_type', path: '$[3].parameters[1]' },
+        ],
+      });
+    }
+    for (const index of [-1, 0.5, MAX_DECK_CARDS]) {
+      expect(
+        decode(action('self', actionName, parameters('active', index)))
+      ).toMatchObject({
+        ok: false,
+        issues: [{ code: 'invalid_card_index', path: '$[3].parameters[1]' }],
+      });
+    }
+  });
+
+  it.each([null, true, 1, [], {}])(
+    'rejects a non-string special-condition edit %j',
+    (condition) => {
+      expect(
+        decode(
+          action('self', 'updateSpecialCondition', ['active', 0, condition])
+        )
+      ).toMatchObject({
+        ok: false,
+        issues: [
+          { code: 'invalid_parameter_type', path: '$[3].parameters[2]' },
+        ],
+      });
+    }
+  );
+
+  it('rejects a special-condition edit over the approved bound', () => {
+    expect(
+      decode(
+        action('self', 'updateSpecialCondition', [
+          'active',
+          0,
+          '12345678901234567',
+        ])
+      )
+    ).toMatchObject({
+      ok: false,
+      issues: [{ code: 'invalid_condition_value', path: '$[3].parameters[2]' }],
+    });
+  });
+
   it('ignores other allowlisted action families', () => {
     expect(
       decode(

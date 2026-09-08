@@ -33,7 +33,8 @@ source-zone-targeted active/bench, and individual work-area new-stack
 `moveCardBundle`, resolved
 `shuffleIntoDeck`, source-authentic `switchWithDeckTop`, and
 `shufflePrizesToDeckBottom` atoms below. Exact direct loose-board bulk records,
-once-per-game, ability, and damage marker records, and empty-tuple `attack` and `pass` records also
+once-per-game, ability, damage, and special-condition marker records, and
+empty-tuple `attack` and `pass` records also
 reuse their canonical atomic commands, but every other action is rejected before
 constructing state. This is intentionally not yet a complete import
 compatibility claim: reachable loose-board take-turn cleanup and owner reset are
@@ -383,6 +384,24 @@ no-op, malformed, and lossy-target behavior. Static characterization plus the
 existing real-runtime marker editor and counter-placement oracle pin the
 unchanged source. No core, protocol, authority, state, public API, renderer,
 route, UI, or UX schema changes.
+
+The special-condition family now admits exact active-only
+`addSpecialCondition [zone, index]`,
+`updateSpecialCondition [zone, index, value]`, and
+`removeSpecialCondition [zone, index]` records on the current stack top. Add
+uses V1's `P` default. Edits reuse the approved V2 boundary: trim outer
+whitespace, normalize empty or exact `0` to removal, preserve other strings
+through 16 characters, and reject longer or non-string values. Existing add,
+duplicate update, and missing removal retain zero batches; updates require a
+source marker. A private exact-host map distinguishes transient null edits from
+missing nodes and is pruned when V1 automatically removes the node on evolution
+or active-slot departure. Bench, lower-evolution, attachment, missing,
+malformed, and over-bound records fail the complete candidate. Tests pin both
+players, exact events, deterministic retry/replay/hash/invariants, source
+no-ops, automatic cleanup, and malformed/lossy rollback. Static
+characterization plus the existing real-runtime marker editing, movement, and
+evolution oracles pin the unchanged source. No core, protocol, authority,
+state, public API, renderer, route, UI, or UX schema changes.
 
 ### Executable marker-control characterization
 

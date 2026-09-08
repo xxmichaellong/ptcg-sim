@@ -400,6 +400,21 @@ a current active/bench stack top to `SetDamage`. Lower-evolution and attachment
 coordinates fail closed because V1 can place distinct damage nodes on those
 cards while canonical state intentionally owns one stack-level value.
 
+`addSpecialCondition` and `removeSpecialCondition` each carry `[active, index]`;
+`updateSpecialCondition` carries `[active, index, value]`. The shipped context
+menu and `Y` shortcut expose conditions only on the active card, and add creates
+`P`. V1 accepts arbitrary editable text, colors recognized `P`/`B`/`Pa`/`C`/`A`
+values, and removes the node on blur when trimmed empty or exactly `0`. The
+approved authoritative boundary trims outer whitespace, maps empty or `0` to
+null, preserves other strings through 16 characters, and rejects longer or
+non-string values. Existing add and missing removal are exported source
+no-ops; update requires a source node. A private conversion-only map records
+the node's exact stack top, preserving an update after a transient canonical
+null while pruning the node when evolution or active-slot departure triggers
+V1's non-emitting automatic cleanup. Conversion maps only the current active
+stack top through `SetSpecialCondition`; bench, lower-evolution, attachment,
+missing, malformed, and over-bound coordinates fail closed.
+
 `attack` and `pass` each carry an exact empty parameter array. Their record
 `user` is the acting/target player in the saved perspective. Conversion emits
 one canonical `DeclareAttack` or `PassTurn` batch, preserving the source's
@@ -691,6 +706,13 @@ The lifecycle mapping is source-backed:
   duplicate or normalized-null updates remain source-node-aware no-ops. Invalid
   text plus missing, lower-evolution, or attachment coordinates return no
   candidate; and
+- each exact special-condition add/update/removal record resolves the current
+  active stack top and applies the bounded target through
+  `SetSpecialCondition`. Add defaults to `P`; existing add, duplicate update,
+  and missing removal retain zero batches, while markerless update fails. The
+  private exact-host map preserves transient null edits and observes automatic
+  evolution/active-departure cleanup. Invalid text plus bench, missing,
+  lower-evolution, or attachment coordinates return no candidate; and
 - attack and pass require exact empty parameter arrays and execute one
   `DeclareAttack` or `PassTurn` for the source record's target player. The
   canonical batch resets every ability marker, discards only that player's
@@ -715,7 +737,7 @@ individual-inspection-card-loose-and-targeted-play/
 individual-inspection-card-deck-edge-shuffle-and-stadium/
 move-to-top/
 rich-whole-stack-move-and-swap/move-to-bottom/
-shuffle-into-deck/deck-top-switch/once-per-game-marker/ability-marker/damage-marker/parameterless-attack-and-pass/
+shuffle-into-deck/deck-top-switch/once-per-game-marker/ability-marker/damage-marker/special-condition-marker/parameterless-attack-and-pass/
 prizes-to-deck-bottom subset can now create ordinary loose-board, singleton
 stadium, and active/bench stack state, enrich those stacks with zone-backed
 evolutions and attachments, move or swap those rich stacks, reattach lower
@@ -743,7 +765,9 @@ Ability records now resolve stack tops and per-card attachment/discard/stadium
 targets, including source-authentic repeated no-ops and fail-closed lower
 evolutions. Bounded damage records resolve active/bench tops, preserve the
 serialized default and source no-ops, and reject unrepresentable per-card
-coordinates. Tests
+coordinates. Special-condition records now resolve only exact active tops,
+preserve the default, bounded editor normalization, source node no-ops, and
+automatic cleanup, and reject unrepresentable targets. Tests
 prove that a later
 take-turn discards both players' loose boards in
 source order before drawing, and that an owner reset clears only that owner's

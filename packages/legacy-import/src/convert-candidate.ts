@@ -92,6 +92,9 @@ const CONVERTED_ACTIONS = new Set<LegacySynchronizedActionName>([
   'addDamageCounter',
   'updateDamageCounter',
   'removeDamageCounter',
+  'addSpecialCondition',
+  'updateSpecialCondition',
+  'removeSpecialCondition',
 ]);
 
 type LegacyV1ConvertedAction =
@@ -646,6 +649,13 @@ export const buildLegacyV1Candidate = (
   // null. Track source-node existence separately so a later edit before blur
   // remains valid without admitting an update that never had a source marker.
   const sourceDamageMarkerStackIds = new Set<PlayStack['id']>();
+  // Unlike damage, V1 removes a condition node whenever its active host leaves
+  // the slot or evolves. Remember the exact host top so record-boundary cleanup
+  // can distinguish that automatic removal from a transient empty/zero edit.
+  const sourceSpecialConditionTopCardIds = new Map<
+    PlayStack['id'],
+    CardInstanceId
+  >();
   const records: LegacyV1AppliedRecord[] = [];
   const entriesFor = (player: LegacyExportUser) =>
     player === 'self' ? decodedDecks.selfEntries : decodedDecks.opponentEntries;
@@ -877,6 +887,58 @@ export const buildLegacyV1Candidate = (
           sourceDamageMarkerStackIds.add(stack.id);
         } else if (action.type === 'removeDamageCounter') {
           sourceDamageMarkerStackIds.delete(stack.id);
+        }
+        break;
+      }
+      case 'addSpecialCondition':
+      case 'updateSpecialCondition':
+      case 'removeSpecialCondition': {
+        const stack = candidatePlayStackTopAtLegacyIndex(
+          state,
+          playerId,
+          action.zone,
+          action.sourceIndex
+        );
+        if (!stack) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[1]`,
+            message:
+              'Recorded special-condition coordinate does not identify an exact canonical active stack top',
+          });
+        }
+        const topCardId = stack.evolutionCardIds.at(-1)!;
+        const sourceMarkerExists =
+          sourceSpecialConditionTopCardIds.get(stack.id) === topCardId;
+        if (action.type === 'updateSpecialCondition' && !sourceMarkerExists) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].action`,
+            message:
+              'Recorded special-condition update requires an existing source marker',
+          });
+        }
+
+        if (action.type === 'addSpecialCondition' && sourceMarkerExists) break;
+        if (action.type === 'removeSpecialCondition' && !sourceMarkerExists)
+          break;
+        const condition =
+          action.type === 'removeSpecialCondition' ? null : action.condition;
+
+        if (stack.specialCondition !== condition) {
+          const problem = apply({
+            type: 'SetSpecialCondition',
+            stackId: stack.id,
+            condition,
+          });
+          if (problem) return problem;
+        }
+        if (action.type === 'addSpecialCondition') {
+          sourceSpecialConditionTopCardIds.set(stack.id, topCardId);
+        } else if (action.type === 'removeSpecialCondition') {
+          sourceSpecialConditionTopCardIds.delete(stack.id);
         }
         break;
       }
@@ -2178,6 +2240,21 @@ export const buildLegacyV1Candidate = (
         break;
       }
     }
+    // V1 automatically removes a special-condition node when its exact host
+    // top evolves, leaves play, or moves off the active slot. Canonical movement
+    // already clears the value; this keeps private source-node presence aligned
+    // so a later markerless update still fails closed.
+    for (const [stackId, topCardId] of sourceSpecialConditionTopCardIds) {
+      const stack = state.stacks[stackId];
+      if (
+        !stack ||
+        stack.slot !== 'active' ||
+        stack.evolutionCardIds.at(-1) !== topCardId
+      ) {
+        sourceSpecialConditionTopCardIds.delete(stackId);
+      }
+    }
+
     records.push({
       recordIndex: action.recordIndex,
       action: action.type,

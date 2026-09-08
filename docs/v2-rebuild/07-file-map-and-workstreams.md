@@ -293,6 +293,16 @@ missing/lower/attachment coordinates fail closed. The private package
 duplicates only the approved bounded value normalization and does not import
 any client/runtime module or widen a public schema.
 
+Special-condition marker decoding now covers exact active-only add, update, and
+removal tuples. Add maps to the source default `P`; bounded strings reuse the
+existing `SetSpecialCondition` trim and empty/zero-removal policy. Source-valid
+existing-add, duplicate-update, and missing-remove records retain zero batches.
+A private stack-to-exact-top presence map preserves transient null edits and is
+pruned after evolution, stack departure, or an active-to-bench transition,
+matching the source's automatic DOM-node cleanup. Markerless updates plus
+missing, bench, lower-evolution, attachment, malformed, and over-bound targets
+fail closed without importing client/runtime code or widening a public schema.
+
 ## Files added during characterization
 
 ```text
