@@ -169,8 +169,9 @@ action. Its first private semantic layers now validate lifecycle tuples,
 materialize bounded deck definitions with deterministic order-preserving IDs,
 and provide import-wide monotonic identities plus one-shot source-resolved
 outcome adapters. A first all-or-nothing candidate builder now applies the
-closed lifecycle/draw/direct-prize-shuffle/zone-backed-deck-action subset through
-normal game-core commands and verifies exact event replay; it rejects every
+closed lifecycle/draw/direct-prize-shuffle/zone-backed-deck-action/
+prizes-to-deck-bottom subset through normal game-core commands and verifies
+exact event replay; it rejects every
 unconverted family before constructing state, rejects recorded draws that
 exceed the exact current source-state deck, applies only direct prize shuffles
 whose recorded permutation matches the current prize zone, and resolves legacy
@@ -179,6 +180,9 @@ switch-with-deck-top. Shuffle-into-deck translates v1's in-deck tail-move
 permutation basis to the canonical input order. Switch-with-deck-top preserves
 v1's source-tail return and empty-deck branch through one or two canonical
 batches instead of using the old-index-replacing live swap command.
+Shuffled-prizes-to-deck-bottom requires the recorded non-empty permutation to
+match the current prize count and applies one atomic canonical batch that
+preserves the deck prefix, appends prizes in recorded order, and conceals them.
 Stack/work-area origins, remaining movement/action-family coverage, the complete
 transaction, conversion reports, and real-user corpus evidence remain before
 Phase 3 can exit.

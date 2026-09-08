@@ -52,6 +52,7 @@ const CONVERTED_ACTIONS = new Set<LegacySynchronizedActionName>([
   'moveToDeckTop',
   'shuffleIntoDeck',
   'switchWithDeckTop',
+  'shufflePrizesToDeckBottom',
 ]);
 
 type LegacyV1ConvertedAction = LegacyV1LifecycleAction | LegacyV1MovementAction;
@@ -602,6 +603,30 @@ export const buildLegacyV1Candidate = (
           });
           if (returnTopProblem) return returnTopProblem;
         }
+        break;
+      }
+      case 'shufflePrizesToDeckBottom': {
+        const prizesId = playerZoneId(playerId, 'prizes');
+        const prizes = state.zones[prizesId];
+        if (
+          !prizes ||
+          prizes.cardIds.length === 0 ||
+          action.shuffleIndices.length !== prizes.cardIds.length
+        ) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[1]`,
+            message:
+              'Recorded shuffled-prize length does not match the non-empty source-state prize zone',
+          });
+        }
+
+        const problem = apply(
+          { type: 'MovePrizesToDeckBottom', playerId },
+          { kind: 'shuffle', indices: action.shuffleIndices }
+        );
+        if (problem) return problem;
         break;
       }
     }

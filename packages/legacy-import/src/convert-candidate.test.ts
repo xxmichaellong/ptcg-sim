@@ -179,7 +179,8 @@ describe('legacy v1 canonical candidate builder', () => {
         ]),
         action('self', 'moveToDeckTop', ['opp', 'hand', 0]),
         action('self', 'shuffleIntoDeck', ['opp', 'hand', 0, [1, 0]]),
-        action('self', 'switchWithDeckTop', ['opp', 'hand', 0])
+        action('self', 'switchWithDeckTop', ['opp', 'hand', 0]),
+        action('self', 'shufflePrizesToDeckBottom', ['opp', [5, 4, 3, 2, 1, 0]])
       )
     );
     const first = buildLegacyV1Candidate(parsed, target);
@@ -439,6 +440,129 @@ describe('legacy v1 canonical candidate builder', () => {
       ],
     });
     expect('state' in mismatch).toBe(false);
+  });
+
+  it('atomically appends prizes to the deck bottom in their recorded shuffled order', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(15, 'Prizes to bottom'),
+          '',
+          action('self', 'setup', [Array.from({ length: 15 }, (_, i) => i)]),
+          action('self', 'shufflePrizesToDeckBottom', [
+            'opp',
+            [5, 3, 1, 4, 2, 0],
+          ])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    const deckId = playerZoneId(target.selfSeat.playerId, 'deck');
+    const prizesId = playerZoneId(target.selfSeat.playerId, 'prizes');
+    const oldDeck = ['legacy:v1:card:000028', 'legacy:v1:card:000029'];
+    const oldPrizes = [
+      'legacy:v1:card:000022',
+      'legacy:v1:card:000023',
+      'legacy:v1:card:000024',
+      'legacy:v1:card:000025',
+      'legacy:v1:card:000026',
+      'legacy:v1:card:000027',
+    ];
+    const shuffledPrizes = [
+      'legacy:v1:card:000027',
+      'legacy:v1:card:000025',
+      'legacy:v1:card:000023',
+      'legacy:v1:card:000026',
+      'legacy:v1:card:000024',
+      'legacy:v1:card:000022',
+    ];
+    expect(result.state.zones[prizesId]!.cardIds).toEqual([]);
+    expect(result.state.zones[deckId]!.cardIds).toEqual([
+      ...oldDeck,
+      ...shuffledPrizes,
+    ]);
+    expect(result.records[3]).toEqual({
+      recordIndex: 4,
+      action: 'shufflePrizesToDeckBottom',
+      batches: [
+        expect.objectContaining({
+          events: [
+            {
+              type: 'ZoneOrdersSet',
+              reason: 'move-prizes-to-deck-bottom',
+              zones: [
+                {
+                  zoneId: prizesId,
+                  expectedCardIds: oldPrizes,
+                  cardIds: [],
+                },
+                {
+                  zoneId: deckId,
+                  expectedCardIds: oldDeck,
+                  cardIds: [...oldDeck, ...shuffledPrizes],
+                },
+              ],
+              concealedCardIds: shuffledPrizes,
+            },
+          ],
+        }),
+      ],
+    });
+    assertMatchInvariants(result.state);
+  });
+
+  it('rejects empty or mismatched source prizes without returning partial state', () => {
+    const empty = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(2, 'Empty prizes'),
+          '',
+          action('self', 'shufflePrizesToDeckBottom', ['self', [0]])
+        )
+      ),
+      target
+    );
+    expect(empty).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 3,
+          path: '$[3].parameters[1]',
+          message:
+            'Recorded shuffled-prize length does not match the non-empty source-state prize zone',
+        },
+      ],
+    });
+    expect('state' in empty).toBe(false);
+
+    const wrongLength = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(15, 'Prize length mismatch'),
+          '',
+          action('self', 'setup', [Array.from({ length: 15 }, (_, i) => i)]),
+          action('self', 'shufflePrizesToDeckBottom', ['self', [4, 3, 2, 1, 0]])
+        )
+      ),
+      target
+    );
+    expect(wrongLength).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 4,
+          path: '$[4].parameters[1]',
+          message:
+            'Recorded shuffled-prize length does not match the non-empty source-state prize zone',
+        },
+      ],
+    });
+    expect('state' in wrongLength).toBe(false);
   });
 
   it('moves a source deck card to index-zero top and preserves a top-cover no-op', () => {

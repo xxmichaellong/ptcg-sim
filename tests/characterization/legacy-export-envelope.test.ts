@@ -423,6 +423,71 @@ describe('legacy action-export source envelope', () => {
     );
   });
 
+  it('pins shuffled-prizes-to-deck-bottom ingress, permutation, and empty guard', () => {
+    const prizesActions = readRepositoryFile(
+      'client/src/actions/zones/prizes-actions.js'
+    );
+    const prizesButtons = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/card-context-menu/prizes-buttons.js'
+    );
+
+    expect(prizesButtons).toContain(
+      'shufflePrizesToDeckBottom(mouseClick.cardUser, systemState.initiator)'
+    );
+
+    const implementation = prizesActions.slice(
+      prizesActions.indexOf('export const shufflePrizesToDeckBottom =')
+    );
+    const remoteRelay =
+      "if (user === 'opp' && emit && systemState.isTwoPlayer) {";
+    const relayTuple =
+      "processAction(user, emit, 'shufflePrizesToDeckBottom', [\n      oInitiator,\n      indices,\n    ])";
+    const prizeCount = "const prizeCount = getZone(user, 'prizes').getCount();";
+    const emptyGuard = 'if (prizeCount === 0) return;';
+    const generatedOrder =
+      'indices = indices ? indices : shuffleIndices(prizeCount);';
+    const appliedOrder =
+      "shuffleZone(user, initiator, 'prizes', indices, false, false);";
+    const appendLoop =
+      "for (let i = 0; i < prizeCount; i++) {\n    moveCard(user, initiator, 'prizes', 'deck', 0);\n  }";
+    const exportedTuple =
+      "processAction(user, emit, 'shufflePrizesToDeckBottom', [oInitiator, indices]);";
+
+    for (const fragment of [
+      remoteRelay,
+      relayTuple,
+      prizeCount,
+      emptyGuard,
+      generatedOrder,
+      appliedOrder,
+      appendLoop,
+      exportedTuple,
+    ]) {
+      expect(implementation).toContain(fragment);
+    }
+    expect(implementation.indexOf(remoteRelay)).toBeLessThan(
+      implementation.indexOf(relayTuple)
+    );
+    expect(implementation.indexOf(relayTuple)).toBeLessThan(
+      implementation.indexOf(prizeCount)
+    );
+    expect(implementation.indexOf(prizeCount)).toBeLessThan(
+      implementation.indexOf(emptyGuard)
+    );
+    expect(implementation.indexOf(emptyGuard)).toBeLessThan(
+      implementation.indexOf(generatedOrder)
+    );
+    expect(implementation.indexOf(generatedOrder)).toBeLessThan(
+      implementation.indexOf(appliedOrder)
+    );
+    expect(implementation.indexOf(appliedOrder)).toBeLessThan(
+      implementation.indexOf(appendLoop)
+    );
+    expect(implementation.indexOf(appendLoop)).toBeLessThan(
+      implementation.lastIndexOf(exportedTuple)
+    );
+  });
+
   it('pins deck tuple materialization, selectable categories, and the unknown error marker', () => {
     const buildDeck = readRepositoryFile(
       'client/src/setup/deck-constructor/build-deck.js'

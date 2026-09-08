@@ -198,6 +198,36 @@ describe('legacy v1 movement positional decoder', () => {
     });
   });
 
+  it('decodes shuffled-prizes-to-deck-bottom target, initiator, and recorded order', () => {
+    expect(
+      decode(
+        action('self', 'shufflePrizesToDeckBottom', [
+          'opp',
+          [5, 3, 1, 4, 2, 0],
+        ]),
+        action('opp', 'shufflePrizesToDeckBottom', ['self', [0]])
+      )
+    ).toEqual({
+      ok: true,
+      actions: [
+        {
+          type: 'shufflePrizesToDeckBottom',
+          recordIndex: 3,
+          player: 'self',
+          initiator: 'opp',
+          shuffleIndices: [5, 3, 1, 4, 2, 0],
+        },
+        {
+          type: 'shufflePrizesToDeckBottom',
+          recordIndex: 4,
+          player: 'opp',
+          initiator: 'self',
+          shuffleIndices: [0],
+        },
+      ],
+    });
+  });
+
   it('ignores all other admitted families rather than inferring tuples', () => {
     expect(
       decode(
@@ -297,6 +327,25 @@ describe('legacy v1 movement positional decoder', () => {
     });
   });
 
+  it('requires exactly two shuffled-prizes-to-deck-bottom parameters', () => {
+    expect(
+      firstIssue(action('self', 'shufflePrizesToDeckBottom', ['self']))
+    ).toMatchObject({
+      code: 'invalid_parameter_count',
+      recordIndex: 3,
+      path: '$[3].parameters',
+    });
+    expect(
+      firstIssue(
+        action('self', 'shufflePrizesToDeckBottom', ['self', [0], 'extra'])
+      )
+    ).toMatchObject({
+      code: 'invalid_parameter_count',
+      recordIndex: 3,
+      path: '$[3].parameters',
+    });
+  });
+
   it('requires a perspective initiator and the direct prizes/message shape', () => {
     expect(
       firstIssue(action('self', 'shuffleZone', [7, 'prizes', [], true]))
@@ -335,6 +384,31 @@ describe('legacy v1 movement positional decoder', () => {
         code: 'invalid_shuffle_permutation',
         recordIndex: 3,
         path: '$[3].parameters[2]',
+      });
+    }
+  );
+
+  it('requires a perspective initiator for shuffled prizes to deck bottom', () => {
+    expect(
+      firstIssue(action('self', 'shufflePrizesToDeckBottom', [false, [0]]))
+    ).toMatchObject({
+      code: 'invalid_parameter_type',
+      recordIndex: 3,
+      path: '$[3].parameters[0]',
+    });
+  });
+
+  it.each([null, [], [0, 0], [0, 2], [1], [-1], [0.5], ['0']])(
+    'rejects an invalid shuffled-prizes-to-deck-bottom permutation: %j',
+    (indices) => {
+      expect(
+        firstIssue(
+          action('self', 'shufflePrizesToDeckBottom', ['self', indices])
+        )
+      ).toMatchObject({
+        code: 'invalid_shuffle_permutation',
+        recordIndex: 3,
+        path: '$[3].parameters[1]',
       });
     }
   );

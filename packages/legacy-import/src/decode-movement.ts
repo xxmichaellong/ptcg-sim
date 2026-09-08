@@ -67,6 +67,13 @@ export type LegacyV1MovementAction =
       readonly initiator: LegacyExportUser;
       readonly sourceZone: LegacyV1CardSourceZone;
       readonly sourceIndex: number;
+    }
+  | {
+      readonly type: 'shufflePrizesToDeckBottom';
+      readonly recordIndex: number;
+      readonly player: LegacyExportUser;
+      readonly initiator: LegacyExportUser;
+      readonly shuffleIndices: readonly number[];
     };
 
 export type LegacyV1MovementDecodeIssueCode =
@@ -121,13 +128,15 @@ const isMovementAction = (
     | 'shuffleZone'
     | 'moveToDeckTop'
     | 'shuffleIntoDeck'
-    | 'switchWithDeckTop';
+    | 'switchWithDeckTop'
+    | 'shufflePrizesToDeckBottom';
 } =>
   action.action === 'draw' ||
   action.action === 'shuffleZone' ||
   action.action === 'moveToDeckTop' ||
   action.action === 'shuffleIntoDeck' ||
-  action.action === 'switchWithDeckTop';
+  action.action === 'switchWithDeckTop' ||
+  action.action === 'shufflePrizesToDeckBottom';
 
 const cardSourceZones = new Set<string>(LEGACY_V1_CARD_SOURCE_ZONES);
 
@@ -241,9 +250,9 @@ const decodeCardSource = (
 /**
  * Decodes admitted movement tuples without applying them. This starts with the
  * source-bounded draw, direct prize-shuffle, move-to-deck-top,
- * shuffle-into-deck, and switch-with-deck-top atoms; the remaining movement
- * actions stay untouched until their positional and state-dependent behavior
- * is frozen separately.
+ * shuffle-into-deck, switch-with-deck-top, and shuffled-prizes-to-deck-bottom
+ * atoms; the remaining movement actions stay untouched until their positional
+ * and state-dependent behavior is frozen separately.
  */
 export const decodeLegacyV1MovementActions = (
   parsed: ParsedLegacyExport
@@ -449,6 +458,44 @@ export const decodeLegacyV1MovementActions = (
           initiator: source.initiator,
           sourceZone: source.sourceZone,
           sourceIndex: source.sourceIndex,
+        });
+        break;
+      }
+      case 'shufflePrizesToDeckBottom': {
+        if (action.parameters.length !== 2) {
+          return failure(
+            'invalid_parameter_count',
+            actionIndex,
+            '.parameters',
+            'shufflePrizesToDeckBottom requires [initiator, indices]'
+          );
+        }
+
+        const initiator = action.parameters[0];
+        if (initiator !== 'self' && initiator !== 'opp') {
+          return failure(
+            'invalid_parameter_type',
+            actionIndex,
+            '.parameters[0]',
+            'shufflePrizesToDeckBottom initiator must use the exported self/opp perspective'
+          );
+        }
+        const shuffleIndices = decodeShuffle(action.parameters[1]);
+        if (!shuffleIndices || shuffleIndices.length === 0) {
+          return failure(
+            'invalid_shuffle_permutation',
+            actionIndex,
+            '.parameters[1]',
+            'shufflePrizesToDeckBottom requires a non-empty complete zero-based shuffle permutation'
+          );
+        }
+
+        decoded.push({
+          type: 'shufflePrizesToDeckBottom',
+          recordIndex: actionIndex + 1,
+          player: action.user,
+          initiator,
+          shuffleIndices,
         });
         break;
       }

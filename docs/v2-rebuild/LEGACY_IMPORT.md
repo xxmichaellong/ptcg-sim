@@ -128,8 +128,8 @@ decoder before any canonical state is created.
 
 `decodeLegacyV1MovementActions` starts the next private family with `draw`,
 direct prize `shuffleZone`, `moveToDeckTop`, `shuffleIntoDeck`, and
-`switchWithDeckTop` records. The draw record owns the target deck/hand through
-`user`; its two positional
+`switchWithDeckTop`, and `shufflePrizesToDeckBottom` records. The draw record
+owns the target deck/hand through `user`; its two positional
 parameters are the independently exported initiator and the already-clamped
 draw count. The decoder therefore accepts both self/opp initiators without
 requiring them to equal the target, but requires an integer count from 1 through
@@ -171,6 +171,15 @@ zero, and—when a prior deck top exists—moves that prior top from index one t
 the end of the original source array. An empty deck keeps the selected card and
 returns nothing. The decoder preserves the coordinate while exact source state
 and the return ordering remain conversion-time checks.
+
+`shufflePrizesToDeckBottom` carries exactly `[initiator, permutation]` through
+its prize context-menu ingress. V1 returns before export when the prize zone is
+empty; a genuine locally applied record therefore requires a non-empty complete
+permutation. It first applies that order to the prize array, then repeatedly
+removes prize index zero and appends it to the deck array. The deck sort hook
+only changes DOM presentation and does not reorder either legacy array. Record
+`user` remains the target player, while exact prize cardinality stays a
+conversion-time source-state check.
 
 ### Deck definition adapter
 
@@ -229,8 +238,8 @@ legacy labels into authority.
 
 This deliberately narrow builder succeeds only when every action is one of
 `loadDeckData`, `reset`, `setup`, `takeTurn`, `draw`, `moveToDeckTop`,
-`shuffleIntoDeck`, `switchWithDeckTop`, or the direct prize form of
-`shuffleZone`. Any other
+`shuffleIntoDeck`, `switchWithDeckTop`, `shufflePrizesToDeckBottom`, or the
+direct prize form of `shuffleZone`. Any other
 allowlisted family is rejected before state construction. Deck, lifecycle, and
 movement diagnostics are lifted with their exact source record/path, while
 context and canonical command failures also return no candidate state.
@@ -285,7 +294,13 @@ The lifecycle mapping is source-backed:
   restores the prior top at the selected card's old index, while v1 appends it
   to the source tail. With an empty deck only the first batch is emitted.
   Missing/stale coordinates and unresolved stack/work-area origins fail the
-  whole candidate.
+  whole candidate; and
+- shuffled-prizes-to-deck-bottom requires the recorded non-empty permutation to
+  match the exact current prize count, then executes one atomic
+  `MovePrizesToDeckBottom` using that order as its one-shot resolved outcome.
+  The prize zone becomes empty, the unchanged deck prefix is followed by the
+  shuffled prizes, and every moved identity is concealed. Empty or mismatched
+  source state fails before command execution and returns no candidate.
 
 One source record may therefore map to multiple canonical event batches. The
 result retains the exact record-to-batch mapping, validates invariants after
@@ -294,8 +309,8 @@ and requires byte-identical stable serialization before returning the private
 candidate. No partial batches escape on failure.
 
 The closed lifecycle/draw/direct-prize-shuffle/move-to-top/shuffle-into-deck/
-deck-top-switch subset cannot create play stacks, loose board cards, markers,
-or cross-owner placements. It therefore does not yet claim take-turn
+deck-top-switch/prizes-to-deck-bottom subset cannot create play stacks, loose
+board cards, markers, or cross-owner placements. It therefore does not yet claim take-turn
 cleanup/reveal parity or dirty-board reset parity; those interactions stay gated
 on the movement/state-family decoders rather than being inferred from an
 unreachable lifecycle-only fixture.
@@ -304,9 +319,9 @@ unreachable lifecycle-only fixture.
 
 1. Continue source-backed positional schemas for direct movement after the
    transactionally applied draw, direct prize-shuffle, and zone-backed
-   move-to-top/shuffle-into-deck/deck-top-switch atoms. Map stack/work-area
-   coordinates only after their producing families make those states reachable
-   in the closed transaction.
+   move-to-top/shuffle-into-deck/deck-top-switch/prizes-to-deck-bottom atoms.
+   Map stack/work-area coordinates only after their producing families make
+   those states reachable in the closed transaction.
 2. Add markers, visibility/inspection, randomized/bulk, table signals, and the
    remaining action families using the same allowlisted dispatch table.
 3. Produce a conversion report with warnings, dropped presentation fields, and

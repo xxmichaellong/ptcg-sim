@@ -28,8 +28,8 @@ The legacy `clean` and `invalidMessage` reset flags are presentation-only. The
 candidate retains source-record-to-event-batch mappings and proves exact replay,
 and now also admits the bounded `draw`, direct prize `shuffleZone`,
 zone-backed `moveToDeckTop`, resolved `shuffleIntoDeck`, and source-authentic
-`switchWithDeckTop` atoms below, but rejects any other action before constructing
-state. This
+`switchWithDeckTop` and `shufflePrizesToDeckBottom` atoms below, but rejects any
+other action before constructing state. This
 is intentionally not yet a complete import compatibility claim: take-turn
 cleanup/reveal and reset behavior over dirty, cross-owner board state remain
 gated on the movement/state decoders that can construct those conditions.
@@ -59,7 +59,7 @@ gated on the movement/state decoders that can construct those conditions.
 
 The private movement decoder and candidate now admit the exact `draw`, direct
 prize `shuffleZone`, `moveToDeckTop`, `shuffleIntoDeck`, and
-`switchWithDeckTop` tuples. Record `user` selects the target player's zones,
+`switchWithDeckTop` and `shufflePrizesToDeckBottom` tuples. Record `user` selects the target player's zones,
 while the exported initiator remains independent provenance. Draw counts are
 already clamped by v1 before a
 successful action is exported; conversion accepts only positive integers
@@ -109,9 +109,18 @@ command because that command replaces at the selected card's former index,
 whereas v1 removes the selected card before appending the return card. An empty
 deck emits only the move-to-top batch. Stable-ID resolution, normal concealment,
 final invariant checks, and whole-attempt replay cover both branches; stale and
-currently unrepresentable stack/work-area sources return no candidate. Every
-other row above remains undecoded and cannot enter the transactional candidate
-yet.
+currently unrepresentable stack/work-area sources return no candidate.
+
+Shuffled-prizes-to-deck-bottom is admitted as exact
+`[initiator, permutation]`. The source exports nothing when prizes are empty;
+conversion therefore requires a non-empty complete permutation whose length
+matches the exact current prize count. V1 reorders prizes, then appends index zero
+to the deck until prizes are empty; its optional deck sort changes only DOM
+presentation, not array order. One canonical `MovePrizesToDeckBottom` reproduces
+that result atomically with the recorded one-shot outcome, an unchanged deck
+prefix, concealed moved identities, final invariant/replay proof, and no partial
+state on mismatch. Every other row above remains undecoded and cannot enter the
+transactional candidate yet.
 
 ## Markers and card/stack state
 
