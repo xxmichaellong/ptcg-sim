@@ -212,7 +212,16 @@ area, while a lower evolution or attachment departs independently and leaves
 the stack plus its marker state in place. The exact staged flat order now
 supports individual moves to loose zones and numeric existing-stack targets via
 `MoveStagedCard` and `PlaceCardOnPlayStack`; changing indices and empty-area
-cleanup are pinned. Exact `leaveAll` tuples now consume a compatible staged
+cleanup are pinned. Those same current staged coordinates now feed
+`MoveCardToDeckBottom`, `MoveCardToDeckTop`, `ShuffleCardIntoDeck`, and
+`MoveCardToStadium`. Deck-edge moves conceal the selected identity; single-card
+shuffle passes through the exact remaining-deck-plus-selected-card V1 basis;
+stadium replacement atomically displaces the incumbent to its owner's discard.
+Exact event classification, residual and final cleanup, retry, replay,
+concealment generations, and stale coordinate/permutation rollback are pinned.
+Target-free play and `switchWithDeckTop` remain closed because the V1 tail
+return cannot always be represented by canonical staged classification. Exact
+`leaveAll` tuples now consume a compatible staged
 stack through `RestoreStagedStack`, snapshot the full board layout, allocate a
 deterministic replacement stack, and preserve v1 active/bench placement,
 including occupied-active demotion. Missing, attachment-only, and category-

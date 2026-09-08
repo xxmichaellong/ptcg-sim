@@ -1076,7 +1076,7 @@ describe('legacy action-export source envelope', () => {
     expect(relocate).toContain('i--;');
   });
 
-  it('pins inspection-origin deck-edge, shuffle, and stadium actions to the current popup index', () => {
+  it('pins work-area-origin deck-edge, shuffle, and stadium actions to the current popup index', () => {
     const clicks = readRepositoryFile(
       'client/src/setup/image-logic/click-events.js'
     );
@@ -1094,6 +1094,7 @@ describe('legacy action-export source envelope', () => {
     );
     const getZone = readRepositoryFile('client/src/setup/zones/get-zone.js');
 
+    expect(getZone).toContain('attachedCards: [],');
     expect(getZone).toContain('viewCards: [],');
     expect(clicks).toContain(
       'mouseClick.cardIndex = getZone(\n      mouseClick.cardUser,\n      mouseClick.zoneId\n    ).array.findIndex((card) => card.image === event.target)'

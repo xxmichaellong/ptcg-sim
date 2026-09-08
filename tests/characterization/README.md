@@ -459,6 +459,18 @@ the latter remains an accepted general action/dispatcher shape. Importer tests
 prove that both exact staged tuples translate positions by stable identity into
 canonical work-area order rather than reusing incompatible indices.
 
+The shared work-area deck/stadium characterization now pins Arrow-Up,
+Arrow-Down, `S`, and generic stadium dispatch to the selected card's current
+flat popup index for both `attachedCards` and `viewCards`. The staged importer
+path resolves that index through the frozen newest-to-oldest-evolution then
+versioned-attachment order and executes canonical deck-top, deck-bottom,
+single-card shuffle, or atomic stadium replacement commands. Fixtures pin
+source classification, changing coordinates, exact events, both deck edges,
+the remaining-deck-plus-selected-card shuffle basis, residual/final work-area
+cleanup, concealment, retry, replay, invariants, and rollback. Target-free play
+and `switchWithDeckTop` remain closed because V1's tail return can violate the
+canonical staged sequence classification.
+
 Static source characterization now freezes deck-inspection creation as well.
 The prompt path records the target relationship before clamping to the current
 deck count; top views repeatedly remove index zero, while bottom views walk the

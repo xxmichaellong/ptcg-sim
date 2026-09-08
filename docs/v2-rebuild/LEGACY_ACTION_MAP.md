@@ -205,6 +205,9 @@ invariants, event-source forgery rejection, and unresolved-coordinate rollback
 are pinned. A subsequent target-free `attachedCards` source can now move one
 exact staged card to a loose zone through `MoveStagedCard`; the refreshed flat
 coordinate is resolved after every prior mutation and an empty work area closes.
+That coordinate also supports deck bottom, deck top, exact single-card shuffle,
+and stadium through existing source-relative commands. Target-free staged play
+and the position-incompatible staged deck-top swap remain closed.
 An individual `viewCards` source uses the active inspection's already-matching
 V1 popup order. Each current coordinate can move to a loose zone through
 `MoveInspectedCard` or onto an exact numeric active/bench stack top through
@@ -255,8 +258,9 @@ candidate resolves ordinary player zones, those aliases, stadium, and the exact
 current `viewCards` coordinate to a stable card ID before executing
 `MoveCardToDeckTop`; missing/stale coordinates fail the whole attempt. Selecting
 an already-top deck card is a genuine v1 no-op and is retained as a zero-batch
-source record. Active/bench and `attachedCards` remain fail-closed in this
-deck-relative action family.
+source record. An `attachedCards` source resolves the exact current staged flat
+coordinate and uses its work-area ID. Active and bench sources remain
+fail-closed in this deck-relative action family.
 
 Shuffle-into-deck is admitted as exact
 `[initiator, sourceZone, sourceIndex, permutation]`. V1 moves the selected card
@@ -268,9 +272,10 @@ translates the indices from v1's tail-moved intermediate order to game-core's
 original-deck shuffle input, preserving the exact final order. A `viewCards`
 source resolves its current inspection coordinate and already has the same V1
 basis as the canonical non-deck command: remaining deck followed by the selected
-card. Its recorded indices therefore pass through unchanged. Stale coordinates
-and outcome lengths roll back the attempt; active/bench and `attachedCards`
-sources remain fail-closed.
+card. Its recorded indices therefore pass through unchanged. An `attachedCards`
+source likewise resolves its current staged coordinate and already matches that
+canonical remaining-deck-plus-selected-card basis. Stale coordinates and
+outcome lengths roll back the attempt; active/bench sources remain fail-closed.
 
 Switch-with-deck-top is admitted as exact
 `[initiator, sourceZone, sourceIndex]`, with `deck` and `deckCover` rejected
@@ -285,7 +290,9 @@ final invariant checks, and whole-attempt replay cover both branches; stale and
 currently unrepresentable stack/work-area sources return no candidate. In
 particular, `viewCards` remains closed because the existing canonical
 inspection swap replaces the selected popup position instead of reproducing
-V1's tail append.
+V1's tail append. `attachedCards` also remains closed: an arbitrary old deck-top
+category appended to the V1 popup tail cannot always preserve the canonical
+evolution/attachment sequence classification.
 
 Shuffled-prizes-to-deck-bottom is admitted as exact
 `[initiator, permutation]`. The source exports nothing when prizes are empty;
@@ -454,6 +461,17 @@ base, then attachments—to stable IDs before applying one bounded
 fails. Destination append order, category/face/orientation reset, and hand
 identity concealment are event-replay exact; missing and non-same-owner work
 areas return no candidate.
+
+An individual staged coordinate can also follow V1's Arrow-Down deck-bottom,
+Arrow-Up deck-top, `S` shuffle-into-deck, or generic stadium path. The candidate
+resolves the exact current V1 flat index to a stable card and supplies the same
+work-area ID to the existing source-relative command. The shuffle basis is the
+remaining deck followed by that selected card and therefore passes through
+unchanged; stadium replacement preserves incumbent-owner discard. The work area
+retains its canonical classification for remaining cards and closes when empty.
+V1 `switchWithDeckTop` remains closed because its old-top tail append can create
+a flat popup order/category combination that canonical staged sequences cannot
+represent exactly.
 
 Exact staged-source `shuffleAll` and `shuffleBottom` records add a complete
 zero-based permutation. V1 `shuffleAll` first appends popup cards to the current

@@ -62,10 +62,7 @@ const cardRows = (count: number, prefix: string): readonly Row[] =>
     `/legacy/${prefix}-${index}.png`,
   ]);
 
-const stagedShufflePayload = (
-  actionName: 'shuffleAll' | 'shuffleBottom',
-  shuffleIndices: readonly number[]
-) =>
+const stagedWorkAreaPayload = (...finalActions: unknown[]) =>
   payload(
     [
       ['1', 'Shuffle source base', 'Pokémon', '/legacy/base.png'],
@@ -97,6 +94,14 @@ const stagedShufflePayload = (
       false,
       'move',
     ]),
+    ...finalActions
+  );
+
+const stagedShufflePayload = (
+  actionName: 'shuffleAll' | 'shuffleBottom',
+  shuffleIndices: readonly number[]
+) =>
+  stagedWorkAreaPayload(
     action('self', actionName, ['opp', 'attachedCards', shuffleIndices])
   );
 
@@ -5473,6 +5478,277 @@ describe('legacy v1 canonical candidate builder', () => {
     }
   );
 
+  it('moves changing staged coordinates to both deck edges and closes through later departures', () => {
+    const parsed = parse(
+      stagedWorkAreaPayload(
+        action('self', 'moveCardBundle', [
+          'opp',
+          'attachedCards',
+          'deck',
+          1,
+          false,
+          'bottom',
+        ]),
+        action('self', 'moveToDeckTop', ['opp', 'attachedCards', 1]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'attachedCards',
+          'hand',
+          1,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'attachedCards',
+          'lostZone',
+          0,
+          false,
+          'move',
+        ])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) {
+      throw new Error('Expected staged deck-edge conversion success');
+    }
+
+    const playerId = target.selfSeat.playerId;
+    const deckId = playerZoneId(playerId, 'deck');
+    const handId = playerZoneId(playerId, 'hand');
+    const lostZoneId = playerZoneId(playerId, 'lostZone');
+    const workAreaId = 'legacy:v1:work-area:000000';
+    const baseId = 'legacy:v1:card:000000';
+    const middleId = 'legacy:v1:card:000001';
+    const energyId = 'legacy:v1:card:000003';
+    const toolId = 'legacy:v1:card:000004';
+    expect(result.state.zones[deckId]?.cardIds).toEqual([
+      energyId,
+      'legacy:v1:card:000005',
+      'legacy:v1:card:000006',
+      baseId,
+    ]);
+    expect(result.state.zones[handId]?.cardIds).toEqual([toolId]);
+    expect(result.state.zones[lostZoneId]?.cardIds).toEqual([middleId]);
+    expect(result.state.workAreas[playerId]?.attachmentResolution).toBeNull();
+    expect(
+      result.records.slice(8, 12).map((record) => record.batches[0]!.events)
+    ).toEqual([
+      [
+        {
+          type: 'StagedCardMoved',
+          playerId,
+          expectedWorkAreaId: workAreaId,
+          source: 'evolution',
+          cardId: baseId,
+          destinationZoneId: deckId,
+          destinationIndex: 2,
+          concealIdentity: true,
+        },
+      ],
+      [
+        {
+          type: 'StagedCardMoved',
+          playerId,
+          expectedWorkAreaId: workAreaId,
+          source: 'attachment',
+          cardId: energyId,
+          destinationZoneId: deckId,
+          destinationIndex: 0,
+          concealIdentity: true,
+        },
+      ],
+      [
+        {
+          type: 'StagedCardMoved',
+          playerId,
+          expectedWorkAreaId: workAreaId,
+          source: 'attachment',
+          cardId: toolId,
+          destinationZoneId: handId,
+          destinationIndex: 0,
+          concealIdentity: true,
+        },
+      ],
+      [
+        {
+          type: 'StagedCardMoved',
+          playerId,
+          expectedWorkAreaId: workAreaId,
+          source: 'evolution',
+          cardId: middleId,
+          destinationZoneId: lostZoneId,
+          destinationIndex: 0,
+          concealIdentity: false,
+        },
+      ],
+    ]);
+    for (const cardId of [baseId, energyId, toolId]) {
+      expect(result.state.cards[cardId]?.visibilityGeneration).toBe(1);
+    }
+    expect(result.state.cards[middleId]?.visibilityGeneration).toBe(0);
+    const replayed = result.records
+      .flatMap((record) => record.batches)
+      .reduce(
+        applyEventBatch,
+        createEmptyMatch(target.matchId, [target.selfSeat, target.opponentSeat])
+      );
+    expect(replayed).toEqual(result.state);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+  });
+
+  it('shuffles one current staged card through the exact V1 post-move deck basis', () => {
+    const parsed = parse(
+      stagedWorkAreaPayload(
+        action('self', 'shuffleIntoDeck', [
+          'opp',
+          'attachedCards',
+          1,
+          [2, 0, 1],
+        ])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) {
+      throw new Error('Expected staged individual shuffle conversion success');
+    }
+
+    const playerId = target.selfSeat.playerId;
+    const deckId = playerZoneId(playerId, 'deck');
+    const workAreaId = 'legacy:v1:work-area:000000';
+    const selectedId = 'legacy:v1:card:000000';
+    const finalOrder = [
+      selectedId,
+      'legacy:v1:card:000005',
+      'legacy:v1:card:000006',
+    ];
+    expect(result.state.zones[deckId]?.cardIds).toEqual(finalOrder);
+    expect(
+      result.state.workAreas[playerId]?.attachmentResolution
+    ).toMatchObject({
+      id: workAreaId,
+      evolutionCardIds: ['legacy:v1:card:000001'],
+      attachmentCardIds: ['legacy:v1:card:000003', 'legacy:v1:card:000004'],
+    });
+    expect(result.records[8]!.batches[0]!.events).toEqual([
+      {
+        type: 'StagedCardMoved',
+        playerId,
+        expectedWorkAreaId: workAreaId,
+        source: 'evolution',
+        cardId: selectedId,
+        destinationZoneId: deckId,
+        destinationIndex: 2,
+        concealIdentity: false,
+      },
+      {
+        type: 'ZoneShuffled',
+        zoneId: deckId,
+        cardOrder: finalOrder,
+        concealedCardIds: finalOrder,
+      },
+    ]);
+    for (const cardId of finalOrder) {
+      expect(result.state.cards[cardId]?.visibilityGeneration).toBe(1);
+    }
+    expect(
+      result.state.cards['legacy:v1:card:000001']?.visibilityGeneration
+    ).toBe(0);
+    const replayed = result.records
+      .flatMap((record) => record.batches)
+      .reduce(
+        applyEventBatch,
+        createEmptyMatch(target.matchId, [target.selfSeat, target.opponentSeat])
+      );
+    expect(replayed).toEqual(result.state);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+  });
+
+  it('atomically replaces a stadium from staged cards and closes through bulk cleanup', () => {
+    const parsed = parse(
+      stagedWorkAreaPayload(
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'stadium',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'attachedCards',
+          'stadium',
+          2,
+          false,
+          'move',
+        ]),
+        action('self', 'discardAll', ['opp', 'attachedCards'])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) {
+      throw new Error('Expected staged stadium conversion success');
+    }
+
+    const playerId = target.selfSeat.playerId;
+    const stadiumId = stadiumZoneId();
+    const discardId = playerZoneId(playerId, 'discard');
+    const workAreaId = 'legacy:v1:work-area:000000';
+    const incumbentId = 'legacy:v1:card:000005';
+    const stagedStadiumId = 'legacy:v1:card:000003';
+    expect(result.state.zones[stadiumId]?.cardIds).toEqual([stagedStadiumId]);
+    expect(result.state.zones[discardId]?.cardIds).toEqual([
+      'legacy:v1:card:000002',
+      incumbentId,
+      'legacy:v1:card:000001',
+      'legacy:v1:card:000000',
+      'legacy:v1:card:000004',
+    ]);
+    expect(result.state.workAreas[playerId]?.attachmentResolution).toBeNull();
+    expect(result.records[9]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardMoved',
+        cardId: incumbentId,
+        expectedSourceZoneId: stadiumId,
+        destinationZoneId: discardId,
+        destinationIndex: 1,
+        concealIdentity: false,
+      },
+      {
+        type: 'StagedCardMoved',
+        playerId,
+        expectedWorkAreaId: workAreaId,
+        source: 'attachment',
+        cardId: stagedStadiumId,
+        destinationZoneId: stadiumId,
+        destinationIndex: 0,
+        concealIdentity: false,
+      },
+    ]);
+    expect(result.records[10]!.batches).toHaveLength(3);
+    const replayed = result.records
+      .flatMap((record) => record.batches)
+      .reduce(
+        applyEventBatch,
+        createEmptyMatch(target.matchId, [target.selfSeat, target.opponentSeat])
+      );
+    expect(replayed).toEqual(result.state);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+  });
+
   it.each([
     {
       actionName: 'shuffleAll',
@@ -5635,7 +5911,7 @@ describe('legacy v1 canonical candidate builder', () => {
     }
   );
 
-  it('rolls back stale and deliberately unsupported staged movement shapes', () => {
+  it('rolls back stale and deliberately unsupported staged-card shapes', () => {
     const stageThen = (...finalActions: unknown[]) =>
       buildLegacyV1Candidate(
         parse(
@@ -5723,42 +5999,63 @@ describe('legacy v1 canonical candidate builder', () => {
     });
     expect('state' in targetFreePlay).toBe(false);
 
-    for (const result of [
-      stageThen(
-        action('self', 'moveCardBundle', [
-          'opp',
-          'attachedCards',
-          'stadium',
-          0,
-          false,
-          'move',
-        ])
-      ),
-      stageThen(
-        action('self', 'moveCardBundle', [
-          'opp',
-          'attachedCards',
-          'deck',
-          0,
-          false,
-          'bottom',
-        ])
-      ),
-    ]) {
+    const staleDeckRelative = [
+      {
+        result: stageThen(
+          action('self', 'moveToDeckTop', ['opp', 'attachedCards', 1])
+        ),
+        path: '$[6].parameters[2]',
+        message:
+          'Recorded move-to-top source coordinate does not identify a current staged card',
+      },
+      {
+        result: stageThen(
+          action('self', 'shuffleIntoDeck', ['opp', 'attachedCards', 1, [0]])
+        ),
+        path: '$[6].parameters[2]',
+        message:
+          'Recorded shuffle-into-deck source coordinate does not identify a current staged card',
+      },
+      {
+        result: stageThen(
+          action('self', 'shuffleIntoDeck', ['opp', 'attachedCards', 0, [0, 1]])
+        ),
+        path: '$[6].parameters[3]',
+        message:
+          'Recorded shuffle-into-deck length does not match the post-move source deck',
+      },
+    ];
+    for (const { result, path, message } of staleDeckRelative) {
       expect(result).toEqual({
         ok: false,
         issues: [
           {
             code: 'source_state_mismatch',
             recordIndex: 6,
-            path: '$[6].parameters[1]',
-            message:
-              'Current closed candidate cannot apply this staged-card movement shape',
+            path,
+            message,
           },
         ],
       });
       expect('state' in result).toBe(false);
     }
+
+    const deckTopSwap = stageThen(
+      action('self', 'switchWithDeckTop', ['opp', 'attachedCards', 0])
+    );
+    expect(deckTopSwap).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 6,
+          path: '$[6].parameters[1]',
+          message:
+            'Current closed candidate cannot resolve this legacy source container',
+        },
+      ],
+    });
+    expect('state' in deckTopSwap).toBe(false);
   });
 
   it('rejects stale and unresolved bottom-bundle sources without state', () => {
