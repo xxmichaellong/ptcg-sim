@@ -35,6 +35,10 @@ const CARD_SOURCE_ZONES = [
   'viewCards',
 ] as const;
 
+const SWITCH_SOURCE_ZONES = CARD_SOURCE_ZONES.filter(
+  (zone) => zone !== 'deck' && zone !== 'deckCover'
+);
+
 const decode = (...actions: unknown[]) => {
   const parsed = parseLegacyExportJson(JSON.stringify(payload(...actions)));
   expect(parsed.ok).toBe(true);
@@ -171,11 +175,34 @@ describe('legacy v1 movement positional decoder', () => {
     });
   });
 
+  it('decodes deck-top switches only from source-authentic non-deck containers', () => {
+    const result = decode(
+      ...SWITCH_SOURCE_ZONES.map((zone, index) =>
+        action(index % 2 === 0 ? 'self' : 'opp', 'switchWithDeckTop', [
+          index % 2 === 0 ? 'opp' : 'self',
+          zone,
+          index,
+        ])
+      )
+    );
+    expect(result).toEqual({
+      ok: true,
+      actions: SWITCH_SOURCE_ZONES.map((zone, index) => ({
+        type: 'switchWithDeckTop',
+        recordIndex: index + 3,
+        player: index % 2 === 0 ? 'self' : 'opp',
+        initiator: index % 2 === 0 ? 'opp' : 'self',
+        sourceZone: zone,
+        sourceIndex: index,
+      })),
+    });
+  });
+
   it('ignores all other admitted families rather than inferring tuples', () => {
     expect(
       decode(
         action('self', 'moveCardBundle', ['unvalidated']),
-        action('opp', 'switchWithDeckTop', []),
+        action('opp', 'pass', []),
         action('self', 'setup', [[]])
       )
     ).toEqual({ ok: true, actions: [] });
@@ -243,6 +270,25 @@ describe('legacy v1 movement positional decoder', () => {
     expect(
       firstIssue(
         action('self', 'shuffleIntoDeck', ['self', 'hand', 0, [0], 'extra'])
+      )
+    ).toMatchObject({
+      code: 'invalid_parameter_count',
+      recordIndex: 3,
+      path: '$[3].parameters',
+    });
+  });
+
+  it('requires exactly three switch-with-deck-top parameters', () => {
+    expect(
+      firstIssue(action('self', 'switchWithDeckTop', ['self', 'hand']))
+    ).toMatchObject({
+      code: 'invalid_parameter_count',
+      recordIndex: 3,
+      path: '$[3].parameters',
+    });
+    expect(
+      firstIssue(
+        action('self', 'switchWithDeckTop', ['self', 'hand', 0, 'extra'])
       )
     ).toMatchObject({
       code: 'invalid_parameter_count',
@@ -396,6 +442,44 @@ describe('legacy v1 movement positional decoder', () => {
       code: 'invalid_card_index',
       path: '$[3].parameters[2]',
     });
+  });
+
+  it('applies shared source validation and excludes deck sources for switches', () => {
+    expect(
+      firstIssue(action('self', 'switchWithDeckTop', [false, 'hand', 0]))
+    ).toMatchObject({
+      code: 'invalid_parameter_type',
+      path: '$[3].parameters[0]',
+    });
+    expect(
+      firstIssue(action('self', 'switchWithDeckTop', ['self', 'not-a-zone', 0]))
+    ).toMatchObject({
+      code: 'invalid_source_zone',
+      path: '$[3].parameters[1]',
+    });
+    expect(
+      firstIssue(action('self', 'switchWithDeckTop', ['self', 'hand', '0']))
+    ).toMatchObject({
+      code: 'invalid_parameter_type',
+      path: '$[3].parameters[2]',
+    });
+    expect(
+      firstIssue(action('self', 'switchWithDeckTop', ['self', 'hand', -1]))
+    ).toMatchObject({
+      code: 'invalid_card_index',
+      path: '$[3].parameters[2]',
+    });
+    for (const zone of ['deck', 'deckCover']) {
+      expect(
+        firstIssue(action('self', 'switchWithDeckTop', ['self', zone, 0]))
+      ).toEqual({
+        code: 'invalid_source_zone',
+        recordIndex: 3,
+        path: '$[3].parameters[1]',
+        message:
+          'switchWithDeckTop is exported only for a source outside the deck',
+      });
+    }
   });
 
   it.each([null, [0, 0], [0, 2], [1], [-1], [0.5], ['0']])(

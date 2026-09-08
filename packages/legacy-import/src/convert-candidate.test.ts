@@ -178,7 +178,8 @@ describe('legacy v1 canonical candidate builder', () => {
           true,
         ]),
         action('self', 'moveToDeckTop', ['opp', 'hand', 0]),
-        action('self', 'shuffleIntoDeck', ['opp', 'hand', 0, [1, 0]])
+        action('self', 'shuffleIntoDeck', ['opp', 'hand', 0, [1, 0]]),
+        action('self', 'switchWithDeckTop', ['opp', 'hand', 0])
       )
     );
     const first = buildLegacyV1Candidate(parsed, target);
@@ -669,6 +670,159 @@ describe('legacy v1 canonical candidate builder', () => {
       },
     ]);
     assertMatchInvariants(result.state);
+  });
+
+  it('switches a zone card with deck top and appends the prior top to the source tail', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(7, 'Deck switch'),
+          '',
+          action('self', 'draw', ['opp', 3]),
+          action('self', 'switchWithDeckTop', ['opp', 'hand', 1])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    const deckId = playerZoneId(target.selfSeat.playerId, 'deck');
+    const handId = playerZoneId(target.selfSeat.playerId, 'hand');
+    expect(result.state.zones[deckId]!.cardIds).toEqual([
+      'legacy:v1:card:000001',
+      'legacy:v1:card:000004',
+      'legacy:v1:card:000005',
+      'legacy:v1:card:000006',
+    ]);
+    expect(result.state.zones[handId]!.cardIds).toEqual([
+      'legacy:v1:card:000000',
+      'legacy:v1:card:000002',
+      'legacy:v1:card:000003',
+    ]);
+    expect(result.records[3]).toEqual({
+      recordIndex: 4,
+      action: 'switchWithDeckTop',
+      batches: [
+        expect.objectContaining({
+          events: [
+            {
+              type: 'CardMoved',
+              cardId: 'legacy:v1:card:000001',
+              expectedSourceZoneId: handId,
+              destinationZoneId: deckId,
+              destinationIndex: 0,
+              concealIdentity: true,
+            },
+          ],
+        }),
+        expect.objectContaining({
+          events: [
+            {
+              type: 'CardMoved',
+              cardId: 'legacy:v1:card:000003',
+              expectedSourceZoneId: deckId,
+              destinationZoneId: handId,
+              destinationIndex: 2,
+              concealIdentity: true,
+            },
+          ],
+        }),
+      ],
+    });
+    assertMatchInvariants(result.state);
+  });
+
+  it('moves the selected card into an empty deck without fabricating a return card', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(1, 'Empty switch'),
+          '',
+          action('self', 'draw', ['self', 1]),
+          action('self', 'switchWithDeckTop', ['self', 'hand', 0])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    const deckId = playerZoneId(target.selfSeat.playerId, 'deck');
+    const handId = playerZoneId(target.selfSeat.playerId, 'hand');
+    expect(result.state.zones[deckId]!.cardIds).toEqual([
+      'legacy:v1:card:000000',
+    ]);
+    expect(result.state.zones[handId]!.cardIds).toEqual([]);
+    expect(result.records[3]).toMatchObject({
+      recordIndex: 4,
+      action: 'switchWithDeckTop',
+      batches: [
+        {
+          events: [
+            {
+              type: 'CardMoved',
+              cardId: 'legacy:v1:card:000000',
+              expectedSourceZoneId: handId,
+              destinationZoneId: deckId,
+              destinationIndex: 0,
+              concealIdentity: true,
+            },
+          ],
+        },
+      ],
+    });
+    assertMatchInvariants(result.state);
+  });
+
+  it('rejects stale and currently unrepresentable deck-top-switch sources without state', () => {
+    const stale = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(2, 'Stale switch'),
+          '',
+          action('self', 'switchWithDeckTop', ['self', 'hand', 0])
+        )
+      ),
+      target
+    );
+    expect(stale).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 3,
+          path: '$[3].parameters[2]',
+          message:
+            'Recorded deck-top-switch source coordinate does not identify the current player card',
+        },
+      ],
+    });
+    expect('state' in stale).toBe(false);
+
+    const stackSource = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(2, 'Stack switch'),
+          '',
+          action('self', 'switchWithDeckTop', ['self', 'active', 0])
+        )
+      ),
+      target
+    );
+    expect(stackSource).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 3,
+          path: '$[3].parameters[1]',
+          message:
+            'Current closed candidate cannot resolve this legacy source container',
+        },
+      ],
+    });
+    expect('state' in stackSource).toBe(false);
   });
 
   it('rejects stale, mismatched, and unrepresentable shuffle sources without state', () => {

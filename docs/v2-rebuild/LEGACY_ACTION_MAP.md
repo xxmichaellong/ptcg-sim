@@ -27,8 +27,9 @@ an empty deck according to its `build` flag; and `takeTurn` uses `StartTurn`.
 The legacy `clean` and `invalidMessage` reset flags are presentation-only. The
 candidate retains source-record-to-event-batch mappings and proves exact replay,
 and now also admits the bounded `draw`, direct prize `shuffleZone`,
-zone-backed `moveToDeckTop`, and resolved `shuffleIntoDeck` atoms below, but
-rejects any other action before constructing state. This
+zone-backed `moveToDeckTop`, resolved `shuffleIntoDeck`, and source-authentic
+`switchWithDeckTop` atoms below, but rejects any other action before constructing
+state. This
 is intentionally not yet a complete import compatibility claim: take-turn
 cleanup/reveal and reset behavior over dirty, cross-owner board state remain
 gated on the movement/state decoders that can construct those conditions.
@@ -42,7 +43,7 @@ gated on the movement/state decoders that can construct those conditions.
 | `shuffleIntoDeck`           | Atomic `ShuffleCardIntoDeck`                                                                                                  | Recorded post-tail-move permutation, in-deck basis translation, concealment generation, stack policy           |
 | `moveToDeckTop`             | `MoveCardToDeckTop`                                                                                                           | v1 index-zero top convention, visibility clearing, stack policy                                                |
 | `moveToDeckBottom`          | `MoveCardToDeckBottom`                                                                                                        | v1 last-index bottom convention, visibility clearing, stack policy                                             |
-| `switchWithDeckTop`         | Atomic `SwapCardWithDeckTop`                                                                                                  | Empty/one-card deck, original destination, concealment, message                                                |
+| `switchWithDeckTop`         | Transactional `MoveCardToDeckTop` plus tail-appending `MoveCard`                                                              | Empty deck, source-tail return (not old-index replacement), concealment, stack policy                          |
 | `viewDeck`                  | `ExtractDeckCardsForInspection`                                                                                               | Top/bottom selection, count clamp, target's deck, inspection viewer, ordered holding work area                 |
 | `shuffleAll`                | `ResolveStagedCards(shuffleIntoDeck)` or `ResolveInspectionCards(shuffleIntoDeck)`                                            | Supported sources (deck/discard/view/detached), messages, popup close, no-op                                   |
 | `shuffleBottom`             | `ResolveStagedCards(shuffleToDeckBottom)` or `ResolveInspectionCards(shuffleToDeckBottom)`                                    | Shuffle only selected source cards, bottom order relative to existing deck, visibility generation              |
@@ -57,9 +58,10 @@ gated on the movement/state decoders that can construct those conditions.
 | `shuffleZone`               | `ShuffleZone` resolved permutation event                                                                                      | Every allowed zone, deterministic legacy indices, new handle generation, safe timeline                         |
 
 The private movement decoder and candidate now admit the exact `draw`, direct
-prize `shuffleZone`, `moveToDeckTop`, and `shuffleIntoDeck` tuples. Record `user`
-selects the target player's zones, while the exported initiator remains
-independent provenance. Draw counts are already clamped by v1 before a
+prize `shuffleZone`, `moveToDeckTop`, `shuffleIntoDeck`, and
+`switchWithDeckTop` tuples. Record `user` selects the target player's zones,
+while the exported initiator remains independent provenance. Draw counts are
+already clamped by v1 before a
 successful action is exported; conversion accepts only positive integers
 through the shared 200-card bound and requires the recorded count to fit the
 current candidate deck exactly. This prevents game-core's live short-deck clamp
@@ -95,8 +97,21 @@ zone sources share the same input order. For an existing deck card, conversion
 translates the indices from v1's tail-moved intermediate order to game-core's
 original-deck shuffle input, preserving the exact final order. Stale coordinates
 and outcome lengths roll back the attempt, and the same stack/work-area sources
-remain fail-closed. Every other row above remains undecoded and cannot enter the
-transactional candidate yet.
+remain fail-closed.
+
+Switch-with-deck-top is admitted as exact
+`[initiator, sourceZone, sourceIndex]`, with `deck` and `deckCover` rejected
+because the local v1 branch exports nothing for those sources. For an ordinary
+zone or stadium source, conversion snapshots the prior deck top, moves the
+selected card to canonical deck index zero, and appends the prior top to the
+source through a second command. It does not use the existing atomic swap
+command because that command replaces at the selected card's former index,
+whereas v1 removes the selected card before appending the return card. An empty
+deck emits only the move-to-top batch. Stable-ID resolution, normal concealment,
+final invariant checks, and whole-attempt replay cover both branches; stale and
+currently unrepresentable stack/work-area sources return no candidate. Every
+other row above remains undecoded and cannot enter the transactional candidate
+yet.
 
 ## Markers and card/stack state
 

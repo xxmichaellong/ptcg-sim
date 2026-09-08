@@ -297,6 +297,72 @@ describe('legacy action-export source envelope', () => {
     );
   });
 
+  it('pins switch-with-deck-top ingress, source tail return, and empty-deck branch', () => {
+    const deckActions = readRepositoryFile(
+      'client/src/actions/zones/deck-actions.js'
+    );
+    const generalButtons = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/card-context-menu/general-buttons.js'
+    );
+    const keybinds = readRepositoryFile(
+      'client/src/actions/keybinds/keybinds.js'
+    );
+
+    expect(generalButtons).toContain(
+      'switchWithDeckTop(\n      mouseClick.cardUser,\n      systemState.initiator,\n      mouseClick.zoneId,\n      mouseClick.cardIndex\n    )'
+    );
+    expect(keybinds).toContain(
+      "} else if (event.key === 'ArrowRight' || event.code === 'ArrowRight') {"
+    );
+    expect(keybinds).toContain(
+      'switchWithDeckTop(\n          mouseClick.cardUser,\n          systemState.initiator,\n          mouseClick.zoneId,\n          mouseClick.cardIndex\n        )'
+    );
+
+    const implementation = deckActions.slice(
+      deckActions.indexOf('export const switchWithDeckTop =')
+    );
+    const sourceGuard = "if (oZoneId !== 'deck' && oZoneId !== 'deckCover') {";
+    const tailMove =
+      "moveCardBundle(\n      user,\n      initiator,\n      oZoneId,\n      'deck',\n      index,\n      false,\n      'switch',\n      false\n    )";
+    const deckCount =
+      "const initialDeckCount = getZone(user, 'deck').getCount();";
+    const rotateTop = "moveCard(user, initiator, 'deck', 'deck', 0);";
+    const returnGuard = 'if (selectedDeckCount > 1) {';
+    const returnToSourceTail = "moveCard(user, initiator, 'deck', oZoneId, 1);";
+    const exportedTuple =
+      "processAction(user, emit, 'switchWithDeckTop', [\n      oInitiator,\n      oZoneId,\n      index,\n    ])";
+
+    for (const fragment of [
+      sourceGuard,
+      tailMove,
+      deckCount,
+      rotateTop,
+      returnGuard,
+      returnToSourceTail,
+      exportedTuple,
+    ]) {
+      expect(implementation).toContain(fragment);
+    }
+    expect(implementation.indexOf(sourceGuard)).toBeLessThan(
+      implementation.indexOf(tailMove)
+    );
+    expect(implementation.indexOf(tailMove)).toBeLessThan(
+      implementation.indexOf(deckCount)
+    );
+    expect(implementation.indexOf(deckCount)).toBeLessThan(
+      implementation.indexOf(rotateTop)
+    );
+    expect(implementation.indexOf(rotateTop)).toBeLessThan(
+      implementation.indexOf(returnGuard)
+    );
+    expect(implementation.indexOf(returnGuard)).toBeLessThan(
+      implementation.indexOf(returnToSourceTail)
+    );
+    expect(implementation.indexOf(returnToSourceTail)).toBeLessThan(
+      implementation.lastIndexOf(exportedTuple)
+    );
+  });
+
   it('pins direct prize shuffle and excludes internal helper shuffles', () => {
     const shuffleZone = readRepositoryFile(
       'client/src/actions/zones/shuffle-zone.js'

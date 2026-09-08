@@ -59,6 +59,14 @@ export type LegacyV1MovementAction =
       readonly sourceZone: LegacyV1CardSourceZone;
       readonly sourceIndex: number;
       readonly shuffleIndices: readonly number[];
+    }
+  | {
+      readonly type: 'switchWithDeckTop';
+      readonly recordIndex: number;
+      readonly player: LegacyExportUser;
+      readonly initiator: LegacyExportUser;
+      readonly sourceZone: LegacyV1CardSourceZone;
+      readonly sourceIndex: number;
     };
 
 export type LegacyV1MovementDecodeIssueCode =
@@ -108,12 +116,18 @@ const failure = (
 const isMovementAction = (
   action: LegacyActionRecord
 ): action is LegacyActionRecord & {
-  readonly action: 'draw' | 'shuffleZone' | 'moveToDeckTop' | 'shuffleIntoDeck';
+  readonly action:
+    | 'draw'
+    | 'shuffleZone'
+    | 'moveToDeckTop'
+    | 'shuffleIntoDeck'
+    | 'switchWithDeckTop';
 } =>
   action.action === 'draw' ||
   action.action === 'shuffleZone' ||
   action.action === 'moveToDeckTop' ||
-  action.action === 'shuffleIntoDeck';
+  action.action === 'shuffleIntoDeck' ||
+  action.action === 'switchWithDeckTop';
 
 const cardSourceZones = new Set<string>(LEGACY_V1_CARD_SOURCE_ZONES);
 
@@ -153,7 +167,7 @@ type LegacyV1CardSourceDecodeResult =
 const decodeCardSource = (
   action: LegacyActionRecord,
   actionIndex: number,
-  actionName: 'moveToDeckTop' | 'shuffleIntoDeck'
+  actionName: 'moveToDeckTop' | 'shuffleIntoDeck' | 'switchWithDeckTop'
 ): LegacyV1CardSourceDecodeResult => {
   const initiator = action.parameters[0];
   if (initiator !== 'self' && initiator !== 'opp') {
@@ -226,9 +240,10 @@ const decodeCardSource = (
 
 /**
  * Decodes admitted movement tuples without applying them. This starts with the
- * source-bounded draw, direct prize-shuffle, move-to-deck-top, and
- * shuffle-into-deck atoms; the remaining movement actions stay untouched until
- * their positional and state-dependent behavior is frozen separately.
+ * source-bounded draw, direct prize-shuffle, move-to-deck-top,
+ * shuffle-into-deck, and switch-with-deck-top atoms; the remaining movement
+ * actions stay untouched until their positional and state-dependent behavior
+ * is frozen separately.
  */
 export const decodeLegacyV1MovementActions = (
   parsed: ParsedLegacyExport
@@ -403,6 +418,37 @@ export const decodeLegacyV1MovementActions = (
           sourceZone: source.sourceZone,
           sourceIndex: source.sourceIndex,
           shuffleIndices,
+        });
+        break;
+      }
+      case 'switchWithDeckTop': {
+        if (action.parameters.length !== 3) {
+          return failure(
+            'invalid_parameter_count',
+            actionIndex,
+            '.parameters',
+            'switchWithDeckTop requires [initiator, sourceZone, sourceIndex]'
+          );
+        }
+
+        const source = decodeCardSource(action, actionIndex, action.action);
+        if (!source.ok) return source.result;
+        if (source.sourceZone === 'deck' || source.sourceZone === 'deckCover') {
+          return failure(
+            'invalid_source_zone',
+            actionIndex,
+            '.parameters[1]',
+            'switchWithDeckTop is exported only for a source outside the deck'
+          );
+        }
+
+        decoded.push({
+          type: 'switchWithDeckTop',
+          recordIndex: actionIndex + 1,
+          player: action.user,
+          initiator: source.initiator,
+          sourceZone: source.sourceZone,
+          sourceIndex: source.sourceIndex,
         });
         break;
       }

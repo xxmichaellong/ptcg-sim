@@ -174,11 +174,14 @@ normal game-core commands and verifies exact event replay; it rejects every
 unconverted family before constructing state, rejects recorded draws that
 exceed the exact current source-state deck, applies only direct prize shuffles
 whose recorded permutation matches the current prize zone, and resolves legacy
-zone indices to stable card IDs before move-to-top or shuffle-into-deck. The
-latter also translates v1's in-deck tail-move permutation basis to the canonical
-input order. Stack/work-area origins, remaining movement/action-family coverage,
-the complete transaction, conversion reports, and real-user corpus evidence
-remain before Phase 3 can exit.
+zone indices to stable card IDs before move-to-top, shuffle-into-deck, or
+switch-with-deck-top. Shuffle-into-deck translates v1's in-deck tail-move
+permutation basis to the canonical input order. Switch-with-deck-top preserves
+v1's source-tail return and empty-deck branch through one or two canonical
+batches instead of using the old-index-replacing live swap command.
+Stack/work-area origins, remaining movement/action-family coverage, the complete
+transaction, conversion reports, and real-user corpus evidence remain before
+Phase 3 can exit.
 
 Work:
 

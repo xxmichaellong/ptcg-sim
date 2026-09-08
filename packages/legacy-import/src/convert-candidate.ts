@@ -51,6 +51,7 @@ const CONVERTED_ACTIONS = new Set<LegacySynchronizedActionName>([
   'shuffleZone',
   'moveToDeckTop',
   'shuffleIntoDeck',
+  'switchWithDeckTop',
 ]);
 
 type LegacyV1ConvertedAction = LegacyV1LifecycleAction | LegacyV1MovementAction;
@@ -552,6 +553,55 @@ export const buildLegacyV1Candidate = (
           { kind: 'shuffle', indices: canonicalShuffleIndices }
         );
         if (problem) return problem;
+        break;
+      }
+      case 'switchWithDeckTop': {
+        const sourceZoneId = candidateSourceZoneId(playerId, action.sourceZone);
+        if (!sourceZoneId) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[1]`,
+            message:
+              'Current closed candidate cannot resolve this legacy source container',
+          });
+        }
+        const cardId = candidateSourceCardId(
+          state,
+          playerId,
+          sourceZoneId,
+          action.sourceZone,
+          action.sourceIndex
+        );
+        if (!cardId) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[2]`,
+            message:
+              'Recorded deck-top-switch source coordinate does not identify the current player card',
+          });
+        }
+
+        const deckId = playerZoneId(playerId, 'deck');
+        const previousDeckTopId = state.zones[deckId]?.cardIds[0];
+        const moveSelectedProblem = apply({
+          type: 'MoveCardToDeckTop',
+          playerId,
+          cardId,
+          expectedSourceId: sourceZoneId,
+        });
+        if (moveSelectedProblem) return moveSelectedProblem;
+
+        if (previousDeckTopId) {
+          const returnTopProblem = apply({
+            type: 'MoveCard',
+            cardId: previousDeckTopId,
+            expectedSourceZoneId: deckId,
+            destinationZoneId: sourceZoneId,
+          });
+          if (returnTopProblem) return returnTopProblem;
+        }
         break;
       }
     }
