@@ -35,6 +35,17 @@ const CARD_SOURCE_ZONES = [
   'viewCards',
 ] as const;
 
+const LOOSE_DESTINATION_ZONES = [
+  'deck',
+  'hand',
+  'prizes',
+  'discard',
+  'discardCover',
+  'lostZone',
+  'lostZoneCover',
+  'board',
+] as const;
+
 const SWITCH_SOURCE_ZONES = CARD_SOURCE_ZONES.filter(
   (zone) => zone !== 'deck' && zone !== 'deckCover'
 );
@@ -221,6 +232,35 @@ describe('legacy v1 movement positional decoder', () => {
         destinationZone: 'deck',
         targetIndex: false,
         mode: 'bottom',
+      })),
+    });
+  });
+
+  it('decodes target-free loose-zone bundles, including serialized drag nulls and cover aliases', () => {
+    const result = decode(
+      ...LOOSE_DESTINATION_ZONES.map((destinationZone, index) =>
+        action(index % 2 === 0 ? 'self' : 'opp', 'moveCardBundle', [
+          index % 2 === 0 ? 'opp' : 'self',
+          CARD_SOURCE_ZONES[index]!,
+          destinationZone,
+          CARD_SOURCE_ZONES[index] === 'deckCover' ? 0 : index,
+          index % 2 === 0 ? false : null,
+          'move',
+        ])
+      )
+    );
+    expect(result).toEqual({
+      ok: true,
+      actions: LOOSE_DESTINATION_ZONES.map((destinationZone, index) => ({
+        type: 'moveCardBundle',
+        recordIndex: index + 3,
+        player: index % 2 === 0 ? 'self' : 'opp',
+        initiator: index % 2 === 0 ? 'opp' : 'self',
+        sourceZone: CARD_SOURCE_ZONES[index]!,
+        sourceIndex: CARD_SOURCE_ZONES[index] === 'deckCover' ? 0 : index,
+        destinationZone,
+        targetIndex: index % 2 === 0 ? false : null,
+        mode: 'move',
       })),
     });
   });
@@ -1017,7 +1057,7 @@ describe('legacy v1 movement positional decoder', () => {
     });
   });
 
-  it.each(['move', 'shuffle', 'top', 'switch', 'attach', 'evolve'])(
+  it.each(['shuffle', 'top', 'switch', 'attach', 'evolve'])(
     'keeps move-card-bundle mode %s fail-closed',
     (mode) => {
       expect(
@@ -1036,7 +1076,59 @@ describe('legacy v1 movement positional decoder', () => {
         recordIndex: 3,
         path: '$[3].parameters[5]',
         message:
-          'Only the source-authentic move-to-deck-bottom bundle is converted',
+          'Only source-authentic deck-bottom and target-free loose-zone bundles are converted',
+      });
+    }
+  );
+
+  it.each([
+    'deckCover',
+    'active',
+    'bench',
+    'attachedCards',
+    'viewCards',
+    'stadium',
+    'not-a-zone',
+  ])('rejects special move-bundle destination %s', (destinationZone) => {
+    expect(
+      firstIssue(
+        action('self', 'moveCardBundle', [
+          'opp',
+          'hand',
+          destinationZone,
+          0,
+          false,
+          'move',
+        ])
+      )
+    ).toEqual({
+      code: 'invalid_destination_zone',
+      recordIndex: 3,
+      path: '$[3].parameters[2]',
+      message: 'A target-free moveCardBundle must target a loose player zone',
+    });
+  });
+
+  it.each([true, 0, 'false', [], {}])(
+    'rejects targeted loose-zone bundle value %j',
+    (targetIndex) => {
+      expect(
+        firstIssue(
+          action('self', 'moveCardBundle', [
+            'opp',
+            'hand',
+            'discard',
+            0,
+            targetIndex,
+            'move',
+          ])
+        )
+      ).toEqual({
+        code: 'invalid_target_index',
+        recordIndex: 3,
+        path: '$[3].parameters[4]',
+        message:
+          'A loose-zone moveCardBundle must not carry a target card index',
       });
     }
   );

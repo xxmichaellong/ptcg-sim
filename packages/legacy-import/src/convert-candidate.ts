@@ -27,6 +27,7 @@ import {
 import {
   decodeLegacyV1MovementActions,
   type LegacyV1CardSourceZone,
+  type LegacyV1LooseDestinationZone,
   type LegacyV1MovementAction,
   type LegacyV1MovementDecodeIssueCode,
 } from './decode-movement.js';
@@ -141,6 +142,28 @@ const candidateSourceZoneId = (
     case 'attachedCards':
     case 'viewCards':
       return null;
+  }
+};
+
+const candidateDestinationZoneId = (
+  playerId: PlayerId,
+  destinationZone: LegacyV1LooseDestinationZone
+): ReturnType<typeof playerZoneId> => {
+  switch (destinationZone) {
+    case 'deck':
+      return playerZoneId(playerId, 'deck');
+    case 'hand':
+      return playerZoneId(playerId, 'hand');
+    case 'prizes':
+      return playerZoneId(playerId, 'prizes');
+    case 'discard':
+    case 'discardCover':
+      return playerZoneId(playerId, 'discard');
+    case 'lostZone':
+    case 'lostZoneCover':
+      return playerZoneId(playerId, 'lostZone');
+    case 'board':
+      return playerZoneId(playerId, 'board');
   }
 };
 
@@ -551,25 +574,36 @@ export const buildLegacyV1Candidate = (
             recordIndex: action.recordIndex,
             path: `$[${action.recordIndex}].parameters[3]`,
             message:
-              'Recorded move-to-bottom source coordinate does not identify the current player card',
+              'Recorded move-card source coordinate does not identify the current player card',
           });
         }
 
-        const deckId = playerZoneId(playerId, action.destinationZone);
-        const deck = state.zones[deckId];
+        const destinationZoneId =
+          action.mode === 'bottom'
+            ? playerZoneId(playerId, 'deck')
+            : candidateDestinationZoneId(playerId, action.destinationZone);
+        const destination = state.zones[destinationZoneId];
         if (
-          sourceZoneId === deckId &&
-          action.sourceIndex === (deck?.cardIds.length ?? 0) - 1
+          sourceZoneId === destinationZoneId &&
+          action.sourceIndex === (destination?.cardIds.length ?? 0) - 1
         ) {
           break;
         }
 
-        const problem = apply({
-          type: 'MoveCardToDeckBottom',
-          playerId,
-          cardId,
-          expectedSourceId: sourceZoneId,
-        });
+        const problem =
+          action.mode === 'bottom'
+            ? apply({
+                type: 'MoveCardToDeckBottom',
+                playerId,
+                cardId,
+                expectedSourceId: sourceZoneId,
+              })
+            : apply({
+                type: 'MoveCard',
+                cardId,
+                expectedSourceZoneId: sourceZoneId,
+                destinationZoneId,
+              });
         if (problem) return problem;
         break;
       }

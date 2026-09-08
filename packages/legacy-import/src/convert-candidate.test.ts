@@ -163,6 +163,109 @@ describe('legacy v1 canonical candidate builder', () => {
     expect(replayed).toEqual(result.state);
   });
 
+  it('applies take-turn cleanup and owner reset after loose board moves make dirty state reachable', () => {
+    const turnResult = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(3, 'Turn board'),
+          cardRows(2, 'Opponent turn board'),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'board',
+            0,
+            false,
+            'move',
+          ]),
+          action('opp', 'moveCardBundle', [
+            'self',
+            'deck',
+            'board',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'takeTurn', ['self'])
+        )
+      ),
+      target
+    );
+    expect(turnResult.ok).toBe(true);
+    if (!turnResult.ok) throw new Error(turnResult.issues[0]?.message);
+
+    const selfId = target.selfSeat.playerId;
+    const opponentId = target.opponentSeat.playerId;
+    expect(
+      turnResult.state.zones[playerZoneId(selfId, 'board')]!.cardIds
+    ).toEqual([]);
+    expect(
+      turnResult.state.zones[playerZoneId(opponentId, 'board')]!.cardIds
+    ).toEqual([]);
+    expect(
+      turnResult.state.zones[playerZoneId(selfId, 'discard')]!.cardIds
+    ).toEqual(['legacy:v1:card:000000']);
+    expect(
+      turnResult.state.zones[playerZoneId(opponentId, 'discard')]!.cardIds
+    ).toEqual(['legacy:v1:card:000003']);
+    expect(
+      turnResult.state.zones[playerZoneId(selfId, 'hand')]!.cardIds
+    ).toEqual(['legacy:v1:card:000001']);
+    expect(
+      turnResult.records[4]!.batches[0]!.events.map((event) => event.type)
+    ).toEqual([
+      'LooseBoardCardsResolved',
+      'LooseBoardCardsResolved',
+      'CardsDrawn',
+      'TurnAdvanced',
+      'TableActionDeclared',
+    ]);
+    assertMatchInvariants(turnResult.state);
+
+    const resetResult = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(3, 'Reset board'),
+          cardRows(2, 'Opponent reset board'),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'board',
+            0,
+            false,
+            'move',
+          ]),
+          action('opp', 'moveCardBundle', [
+            'self',
+            'deck',
+            'board',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'reset', [false, true, true])
+        )
+      ),
+      target
+    );
+    expect(resetResult.ok).toBe(true);
+    if (!resetResult.ok) throw new Error(resetResult.issues[0]?.message);
+    expect(
+      resetResult.state.zones[playerZoneId(selfId, 'board')]!.cardIds
+    ).toEqual([]);
+    expect(
+      resetResult.state.zones[playerZoneId(opponentId, 'board')]!.cardIds
+    ).toEqual(['legacy:v1:card:000003']);
+    expect(
+      resetResult.state.zones[playerZoneId(selfId, 'deck')]!.cardIds
+    ).toEqual([
+      'legacy:v1:card:000005',
+      'legacy:v1:card:000006',
+      'legacy:v1:card:000007',
+    ]);
+    expect(resetResult.state.cards['legacy:v1:card:000000']).toBeUndefined();
+    assertMatchInvariants(resetResult.state);
+  });
+
   it('recreates the same state and event batches for a whole-attempt retry', () => {
     const parsed = parse(
       payload(
@@ -194,6 +297,14 @@ describe('legacy v1 canonical candidate builder', () => {
           0,
           false,
           'bottom',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'hand',
+          'discardCover',
+          0,
+          null,
+          'move',
         ])
       )
     );
@@ -1370,6 +1481,243 @@ describe('legacy v1 canonical candidate builder', () => {
     assertMatchInvariants(result.state);
   });
 
+  it('moves cards across loose player zones with append order, concealment, and cover aliases', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(14, 'Loose move'),
+          '',
+          action('self', 'setup', [Array.from({ length: 14 }, (_, i) => i)]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'hand',
+            'discardCover',
+            2,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'hand',
+            'lostZoneCover',
+            2,
+            null,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'hand',
+            'board',
+            2,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'board',
+            'prizes',
+            0,
+            null,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'discardCover',
+            'hand',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'lostZoneCover',
+            'deck',
+            0,
+            null,
+            'move',
+          ])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    const playerId = target.selfSeat.playerId;
+    const deckId = playerZoneId(playerId, 'deck');
+    const handId = playerZoneId(playerId, 'hand');
+    const prizesId = playerZoneId(playerId, 'prizes');
+    const discardId = playerZoneId(playerId, 'discard');
+    const lostZoneId = playerZoneId(playerId, 'lostZone');
+    const boardId = playerZoneId(playerId, 'board');
+    expect(result.state.zones[deckId]!.cardIds).toEqual([
+      'legacy:v1:card:000027',
+      'legacy:v1:card:000017',
+    ]);
+    expect(result.state.zones[handId]!.cardIds).toEqual([
+      'legacy:v1:card:000014',
+      'legacy:v1:card:000015',
+      'legacy:v1:card:000019',
+      'legacy:v1:card:000020',
+      'legacy:v1:card:000016',
+    ]);
+    expect(result.state.zones[prizesId]!.cardIds).toEqual([
+      'legacy:v1:card:000021',
+      'legacy:v1:card:000022',
+      'legacy:v1:card:000023',
+      'legacy:v1:card:000024',
+      'legacy:v1:card:000025',
+      'legacy:v1:card:000026',
+      'legacy:v1:card:000018',
+    ]);
+    expect(result.state.zones[discardId]!.cardIds).toEqual([]);
+    expect(result.state.zones[lostZoneId]!.cardIds).toEqual([]);
+    expect(result.state.zones[boardId]!.cardIds).toEqual([]);
+    expect(
+      result.records.slice(3).map(({ action, batches }) => ({
+        action,
+        batchCount: batches.length,
+        event: batches[0]?.events[0],
+      }))
+    ).toEqual([
+      {
+        action: 'moveCardBundle',
+        batchCount: 1,
+        event: expect.objectContaining({
+          type: 'CardMoved',
+          cardId: 'legacy:v1:card:000016',
+          expectedSourceZoneId: handId,
+          destinationZoneId: discardId,
+          destinationIndex: 0,
+          concealIdentity: false,
+        }),
+      },
+      {
+        action: 'moveCardBundle',
+        batchCount: 1,
+        event: expect.objectContaining({
+          type: 'CardMoved',
+          cardId: 'legacy:v1:card:000017',
+          expectedSourceZoneId: handId,
+          destinationZoneId: lostZoneId,
+          destinationIndex: 0,
+          concealIdentity: false,
+        }),
+      },
+      {
+        action: 'moveCardBundle',
+        batchCount: 1,
+        event: expect.objectContaining({
+          type: 'CardMoved',
+          cardId: 'legacy:v1:card:000018',
+          expectedSourceZoneId: handId,
+          destinationZoneId: boardId,
+          destinationIndex: 0,
+          concealIdentity: false,
+        }),
+      },
+      {
+        action: 'moveCardBundle',
+        batchCount: 1,
+        event: expect.objectContaining({
+          type: 'CardMoved',
+          cardId: 'legacy:v1:card:000018',
+          expectedSourceZoneId: boardId,
+          destinationZoneId: prizesId,
+          destinationIndex: 6,
+          concealIdentity: true,
+        }),
+      },
+      {
+        action: 'moveCardBundle',
+        batchCount: 1,
+        event: expect.objectContaining({
+          type: 'CardMoved',
+          cardId: 'legacy:v1:card:000016',
+          expectedSourceZoneId: discardId,
+          destinationZoneId: handId,
+          destinationIndex: 4,
+          concealIdentity: true,
+        }),
+      },
+      {
+        action: 'moveCardBundle',
+        batchCount: 1,
+        event: expect.objectContaining({
+          type: 'CardMoved',
+          cardId: 'legacy:v1:card:000017',
+          expectedSourceZoneId: lostZoneId,
+          destinationZoneId: deckId,
+          destinationIndex: 1,
+          concealIdentity: true,
+        }),
+      },
+    ]);
+    assertMatchInvariants(result.state);
+  });
+
+  it('reorders same-zone loose moves to the tail and preserves an already-tail record', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(5, 'Same-zone loose move'),
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'deck',
+            1,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'deck',
+            4,
+            null,
+            'move',
+          ])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    const deckId = playerZoneId(target.selfSeat.playerId, 'deck');
+    expect(result.state.zones[deckId]!.cardIds).toEqual([
+      'legacy:v1:card:000000',
+      'legacy:v1:card:000002',
+      'legacy:v1:card:000003',
+      'legacy:v1:card:000004',
+      'legacy:v1:card:000001',
+    ]);
+    expect(
+      result.records.map(({ recordIndex, action, batches }) => ({
+        recordIndex,
+        action,
+        batchCount: batches.length,
+      }))
+    ).toEqual([
+      { recordIndex: 1, action: 'loadDeckData', batchCount: 1 },
+      { recordIndex: 2, action: 'loadDeckData', batchCount: 1 },
+      { recordIndex: 3, action: 'moveCardBundle', batchCount: 1 },
+      { recordIndex: 4, action: 'moveCardBundle', batchCount: 0 },
+    ]);
+    expect(result.records[2]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardMoved',
+        cardId: 'legacy:v1:card:000001',
+        expectedSourceZoneId: deckId,
+        destinationZoneId: deckId,
+        destinationIndex: 5,
+        concealIdentity: true,
+      },
+    ]);
+    assertMatchInvariants(result.state);
+  });
+
   it('rejects stale and unresolved bottom-bundle sources without state', () => {
     const staleSource = buildLegacyV1Candidate(
       parse(
@@ -1396,7 +1744,7 @@ describe('legacy v1 canonical candidate builder', () => {
           recordIndex: 3,
           path: '$[3].parameters[3]',
           message:
-            'Recorded move-to-bottom source coordinate does not identify the current player card',
+            'Recorded move-card source coordinate does not identify the current player card',
         },
       ],
     });
@@ -1428,6 +1776,119 @@ describe('legacy v1 canonical candidate builder', () => {
           path: '$[3].parameters[1]',
           message:
             'Current closed candidate cannot resolve this legacy source container',
+        },
+      ],
+    });
+    expect('state' in stackSource).toBe(false);
+  });
+
+  it('rolls back loose moves for late-stale, invalid-cover, and stack coordinates', () => {
+    const lateStale = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(3, 'Late stale loose move'),
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'discard',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'hand',
+            2,
+            false,
+            'move',
+          ])
+        )
+      ),
+      target
+    );
+    expect(lateStale).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 4,
+          path: '$[4].parameters[3]',
+        },
+      ],
+    });
+    expect('state' in lateStale).toBe(false);
+
+    const invalidCover = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(3, 'Invalid cover loose move'),
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'discard',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'discard',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'discardCover',
+            'hand',
+            0,
+            null,
+            'move',
+          ])
+        )
+      ),
+      target
+    );
+    expect(invalidCover).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 5,
+          path: '$[5].parameters[3]',
+        },
+      ],
+    });
+    expect('state' in invalidCover).toBe(false);
+
+    const stackSource = buildLegacyV1Candidate(
+      parse(
+        payload(
+          '',
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'active',
+            'discard',
+            0,
+            false,
+            'move',
+          ])
+        )
+      ),
+      target
+    );
+    expect(stackSource).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 3,
+          path: '$[3].parameters[1]',
         },
       ],
     });
@@ -1934,7 +2395,7 @@ describe('legacy v1 canonical candidate builder', () => {
             'discard',
             0,
             false,
-            'move',
+            'top',
           ])
         )
       ),

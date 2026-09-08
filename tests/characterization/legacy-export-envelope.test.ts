@@ -832,6 +832,70 @@ describe('legacy action-export source envelope', () => {
     );
   });
 
+  it('pins target-free loose-zone move bundles, cover normalization, and append order', () => {
+    const keybinds = readRepositoryFile(
+      'client/src/actions/keybinds/keybinds.js'
+    );
+    const deckActions = readRepositoryFile(
+      'client/src/actions/zones/deck-actions.js'
+    );
+    const drag = readRepositoryFile('client/src/setup/image-logic/drag.js');
+    const moveCard = readRepositoryFile(
+      'client/src/actions/move-card-bundle/move-card.js'
+    );
+    const exporter = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/sidebox/p1/bottom-buttons.js'
+    );
+
+    for (const binding of [
+      "h: 'hand'",
+      "d: 'discard'",
+      "l: 'lostZone'",
+      "p: 'prizes'",
+      "' ': 'board'",
+    ]) {
+      expect(keybinds).toContain(binding);
+    }
+    expect(keybinds).toContain(
+      "moveCardBundle(\n          mouseClick.cardUser,\n          systemState.initiator,\n          mouseClick.zoneId,\n          dZoneId,\n          mouseClick.cardIndex,\n          false,\n          'move'\n        )"
+    );
+    expect(deckActions).toContain(
+      "moveCardBundle(user, initiator, oZoneId, 'board', index, false, 'move')"
+    );
+
+    expect(drag).toContain('let targetIndex;');
+    expect(drag).toContain(
+      "['active', 'bench'].includes(event.target.parentElement.parentElement.id)"
+    );
+    expect(drag).toContain(
+      "moveCardBundle(\n          mouseClick.cardUser,\n          systemState.initiator,\n          mouseClick.zoneId,\n          dZoneId,\n          mouseClick.cardIndex,\n          targetIndex,\n          'move'\n        )"
+    );
+    expect(exporter).toContain(
+      'const jsonData = JSON.stringify(exportData, null, 2);'
+    );
+    expect(JSON.parse(JSON.stringify([undefined]))).toEqual([null]);
+
+    const originNormalization = "oZoneId = oZoneId.replace('Cover', '');";
+    const destinationNormalization = "dZoneId = dZoneId.replace('Cover', '');";
+    const appendMove = 'dZone.array.push(...oZone.array.splice(index, 1));';
+    expect(moveCard).toContain(originNormalization);
+    expect(moveCard).toContain(destinationNormalization);
+    expect(moveCard).toContain(appendMove);
+    expect(moveCard.indexOf(originNormalization)).toBeLessThan(
+      moveCard.indexOf(appendMove)
+    );
+    expect(moveCard.indexOf(destinationNormalization)).toBeLessThan(
+      moveCard.indexOf(appendMove)
+    );
+    expect(moveCard).toContain("['prizes'].includes(dZoneId)");
+    expect(moveCard).toContain("['hand'].includes(dZoneId)");
+    expect(moveCard).toContain('if (dZoneId !== oZoneId) {');
+    expect(moveCard).toContain('movingCard.image.public = false;');
+    expect(moveCard).toContain(
+      "if (['deck', 'lostZone', 'discard', 'hand'].includes(dZoneId))"
+    );
+  });
+
   it('pins deck tuple materialization, selectable categories, and the unknown error marker', () => {
     const buildDeck = readRepositoryFile(
       'client/src/setup/deck-constructor/build-deck.js'

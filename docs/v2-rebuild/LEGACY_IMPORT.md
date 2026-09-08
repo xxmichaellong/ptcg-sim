@@ -127,9 +127,10 @@ schema while the final transaction can require every record to have exactly one
 decoder before any canonical state is created.
 
 `decodeLegacyV1MovementActions` starts the next private family with `draw`,
-`discardAndDraw`, `shuffleAndDraw`, `shuffleBottomAndDraw`, bottom-mode
-`moveCardBundle`, direct prize `shuffleZone`, `moveToDeckTop`, `shuffleIntoDeck`,
-`switchWithDeckTop`, and `shufflePrizesToDeckBottom` records.
+`discardAndDraw`, `shuffleAndDraw`, `shuffleBottomAndDraw`, bottom-mode and
+target-free loose-zone `moveCardBundle`, direct prize `shuffleZone`,
+`moveToDeckTop`, `shuffleIntoDeck`, `switchWithDeckTop`, and
+`shufflePrizesToDeckBottom` records.
 The draw record owns the target deck/hand through `user`; its two
 positional parameters are the independently exported initiator and the
 already-clamped draw count. The decoder therefore accepts both self/opp initiators without
@@ -170,9 +171,21 @@ shared bundle and therefore carries exact
 `[initiator, sourceZone, "deck", sourceIndex, false, "bottom"]` under action
 name `moveCardBundle`. Context-menu and Arrow-Down ingress preserve the legacy
 source coordinate; cover aliases keep their normal top/last-card conventions.
-The decoder admits only this bottom-mode subshape and rejects every other bundle
-mode as not yet converted. Stable card identity, exact current source state,
-and the already-bottom no-op branch remain conversion-time responsibilities.
+Stable card identity, exact current source state, and the already-bottom no-op
+branch remain conversion-time responsibilities.
+
+Ordinary loose movement uses the same action name with exact
+`[initiator, sourceZone, destinationZone, sourceIndex, targetIndex, "move"]`.
+Keyboard and context-menu ingress supply `false` for a target-free move; a
+target-free drag leaves the JavaScript value undefined, which JSON serializes
+to `null`. The decoder accepts both representations only when the destination
+is deck, hand, prizes, discard, Lost Zone, board, or the discard/Lost Zone cover
+aliases. `deckCover` is excluded because the drag handler routes it to the
+separately exported move-to-top action before the generic bundle call. Active,
+bench, attached-card, inspection, and stadium destinations remain outside this
+subshape because the same bundle also encodes new-stack, active/bench
+relocation, attach/evolve, and singleton-stadium behavior. Numeric targets and
+every unrecognized mode remain fail-closed.
 
 A directly exported prize shuffle carries exactly
 `[initiator, "prizes", permutation, true]`. Empty permutations are valid for an
@@ -276,13 +289,13 @@ legacy labels into authority.
 
 This deliberately narrow builder succeeds only when every action is one of
 `loadDeckData`, `reset`, `setup`, `takeTurn`, `draw`, `discardAndDraw`,
-`shuffleAndDraw`, `shuffleBottomAndDraw`, the bottom-mode `moveCardBundle`,
-`moveToDeckTop`, `shuffleIntoDeck`, `switchWithDeckTop`,
-`shufflePrizesToDeckBottom`, or the direct prize form of `shuffleZone`. Any
-other allowlisted family or bundle mode is rejected before state
-construction. Deck, lifecycle, and movement diagnostics are lifted with their
-exact source record/path, while context and canonical command failures also
-return no candidate state.
+`shuffleAndDraw`, `shuffleBottomAndDraw`, the bottom-mode or target-free
+loose-zone `moveCardBundle`, `moveToDeckTop`, `shuffleIntoDeck`,
+`switchWithDeckTop`, `shufflePrizesToDeckBottom`, or the direct prize form of
+`shuffleZone`. Any other allowlisted family or bundle subshape is rejected
+before state construction. Deck, lifecycle, and movement diagnostics are lifted
+with their exact source record/path, while context and canonical command
+failures also return no candidate state.
 The preflight additionally requires a one-to-one, source-ordered match between
 all records and the union of private decoder outputs; a future allowlist/decoder
 drift can neither omit nor double-apply a record.
@@ -336,7 +349,18 @@ The lifecycle mapping is source-backed:
   false target, and bottom mode. A card already at last-index deck bottom keeps
   a zero-batch source record instead of asking the live command to accept a
   no-op. Stale coordinates and unresolved stack/work-area sources fail the whole
-  candidate; all non-bottom bundle modes remain fail-closed; and
+  candidate; and
+- the target-free move-mode bundle resolves the same stable source coordinate,
+  normalizes source plus supported discard/Lost Zone destination cover aliases,
+  and executes canonical `MoveCard` only for loose player-zone destinations.
+  V1's splice-then-push order and canonical default insertion both append to the
+  destination tail.
+  Deck, hand, and prize destinations conceal identity through the normal domain
+  rule. Same-zone moves reorder a non-tail card to the tail; an already-tail
+  record remains source-authentic but produces zero canonical batches. Both
+  explicit `false` and JSON-serialized drag `null` are accepted as no target.
+  Numeric targets, play destinations, stadium placement, stale cards, and
+  unresolved stack/work-area sources return no candidate; and
 - direct prize shuffle executes `ShuffleZone` for the record's target player
   using the recorded permutation as the action-scoped resolved outcome. Its
   length must match the exact current prize zone, so conversion neither creates
@@ -379,19 +403,24 @@ and requires byte-identical stable serialization before returning the private
 candidate. No partial batches escape on failure.
 
 The closed lifecycle/draw/discard-and-draw/both hand-shuffle-and-draw forms/
-direct-prize-shuffle/move-to-top/move-to-bottom/shuffle-into-deck/
-deck-top-switch/prizes-to-deck-bottom subset cannot create play stacks, loose
-board cards, markers, or cross-owner placements. It therefore
-does not yet claim take-turn cleanup/reveal parity or dirty-board reset parity;
-those interactions stay gated on the movement/state-family decoders rather than
-being inferred from an unreachable lifecycle-only fixture.
+direct-prize-shuffle/target-free-loose-move/move-to-top/move-to-bottom/
+shuffle-into-deck/deck-top-switch/prizes-to-deck-bottom subset can now create
+ordinary loose-board state. Tests prove that a later take-turn discards both
+players' loose boards in source order before drawing, and that an owner reset
+clears only that owner's reachable loose state before rebuilding its deck. The
+subset still cannot create play stacks, attachments, inspections, staged work,
+markers, singleton stadium state, or cross-owner placements, so take-turn
+in-play reveal and reset behavior for those shapes remain gated on their
+dedicated movement/state decoders.
 
 ## Next conversion slices
 
-1. Continue source-backed positional schemas for direct movement after the
+1. Continue source-backed positional schemas for stack, targeted, and stadium
+   movement after the
    transactionally applied draw/discard-and-draw/both hand-shuffle-and-draw
-   forms, direct prize-shuffle, and zone-backed move-to-top/move-to-bottom/
-   shuffle-into-deck/deck-top-switch/prizes-to-deck-bottom atoms.
+   forms, target-free loose movement, direct prize-shuffle, and zone-backed
+   move-to-top/move-to-bottom/shuffle-into-deck/deck-top-switch/
+   prizes-to-deck-bottom atoms.
    Map stack/work-area coordinates only after their producing families make
    those states reachable in the closed transaction.
 2. Add markers, visibility/inspection, randomized/bulk, table signals, and the

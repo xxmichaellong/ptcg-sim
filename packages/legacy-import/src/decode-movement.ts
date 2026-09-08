@@ -26,6 +26,20 @@ const LEGACY_V1_CARD_SOURCE_ZONES = [
 export type LegacyV1CardSourceZone =
   (typeof LEGACY_V1_CARD_SOURCE_ZONES)[number];
 
+const LEGACY_V1_LOOSE_DESTINATION_ZONES = [
+  'deck',
+  'hand',
+  'prizes',
+  'discard',
+  'discardCover',
+  'lostZone',
+  'lostZoneCover',
+  'board',
+] as const;
+
+export type LegacyV1LooseDestinationZone =
+  (typeof LEGACY_V1_LOOSE_DESTINATION_ZONES)[number];
+
 export type LegacyV1MovementAction =
   | {
       readonly type: 'draw';
@@ -67,6 +81,17 @@ export type LegacyV1MovementAction =
       readonly destinationZone: 'deck';
       readonly targetIndex: false;
       readonly mode: 'bottom';
+    }
+  | {
+      readonly type: 'moveCardBundle';
+      readonly recordIndex: number;
+      readonly player: LegacyExportUser;
+      readonly initiator: LegacyExportUser;
+      readonly sourceZone: LegacyV1CardSourceZone;
+      readonly sourceIndex: number;
+      readonly destinationZone: LegacyV1LooseDestinationZone;
+      readonly targetIndex: false | null;
+      readonly mode: 'move';
     }
   | {
       readonly type: 'shuffleZone';
@@ -159,6 +184,11 @@ const failure = (
     },
   ],
 });
+
+const isLooseDestinationZone = (
+  value: string
+): value is LegacyV1LooseDestinationZone =>
+  (LEGACY_V1_LOOSE_DESTINATION_ZONES as readonly string[]).includes(value);
 
 const isMovementAction = (
   action: LegacyActionRecord
@@ -303,10 +333,11 @@ const decodeCardSource = (
 /**
  * Decodes admitted movement tuples without applying them. This starts with the
  * source-bounded draw, discard-and-draw, shuffle-hand-and-draw, and
- * shuffle-hand-to-deck-bottom-and-draw; bottom-mode card bundles; direct
- * prize-shuffle; move-to-deck-top; shuffle-into-deck; switch-with-deck-top; and
- * shuffled-prizes-to-deck-bottom atoms. The remaining movement actions stay
- * untouched until their positional and state-dependent behavior is frozen.
+ * shuffle-hand-to-deck-bottom-and-draw; bottom-mode and target-free loose-zone
+ * card bundles; direct prize-shuffle; move-to-deck-top; shuffle-into-deck;
+ * switch-with-deck-top; and shuffled-prizes-to-deck-bottom atoms. The remaining
+ * movement actions stay untouched until their positional and state-dependent
+ * behavior is frozen.
  */
 export const decodeLegacyV1MovementActions = (
   parsed: ParsedLegacyExport
@@ -574,12 +605,12 @@ export const decodeLegacyV1MovementActions = (
             'moveCardBundle mode must be a string'
           );
         }
-        if (mode !== 'bottom') {
+        if (mode !== 'bottom' && mode !== 'move') {
           return failure(
             'unsupported_move_card_bundle',
             actionIndex,
             '.parameters[5]',
-            'Only the source-authentic move-to-deck-bottom bundle is converted'
+            'Only source-authentic deck-bottom and target-free loose-zone bundles are converted'
           );
         }
 
@@ -595,20 +626,53 @@ export const decodeLegacyV1MovementActions = (
             'moveCardBundle destination zone must be a string'
           );
         }
-        if (destinationZone !== 'deck') {
+        if (mode === 'bottom') {
+          if (destinationZone !== 'deck') {
+            return failure(
+              'invalid_destination_zone',
+              actionIndex,
+              '.parameters[2]',
+              'A bottom-mode moveCardBundle must target deck'
+            );
+          }
+          if (action.parameters[4] !== false) {
+            return failure(
+              'invalid_target_index',
+              actionIndex,
+              '.parameters[4]',
+              'A bottom-mode moveCardBundle must not carry a target card index'
+            );
+          }
+
+          decoded.push({
+            type: 'moveCardBundle',
+            recordIndex: actionIndex + 1,
+            player: action.user,
+            initiator: source.initiator,
+            sourceZone: source.sourceZone,
+            sourceIndex: source.sourceIndex,
+            destinationZone: 'deck',
+            targetIndex: false,
+            mode: 'bottom',
+          });
+          break;
+        }
+
+        if (!isLooseDestinationZone(destinationZone)) {
           return failure(
             'invalid_destination_zone',
             actionIndex,
             '.parameters[2]',
-            'A bottom-mode moveCardBundle must target deck'
+            'A target-free moveCardBundle must target a loose player zone'
           );
         }
-        if (action.parameters[4] !== false) {
+        const targetIndex = action.parameters[4];
+        if (targetIndex !== false && targetIndex !== null) {
           return failure(
             'invalid_target_index',
             actionIndex,
             '.parameters[4]',
-            'A bottom-mode moveCardBundle must not carry a target card index'
+            'A loose-zone moveCardBundle must not carry a target card index'
           );
         }
 
@@ -619,9 +683,9 @@ export const decodeLegacyV1MovementActions = (
           initiator: source.initiator,
           sourceZone: source.sourceZone,
           sourceIndex: source.sourceIndex,
-          destinationZone: 'deck',
-          targetIndex: false,
-          mode: 'bottom',
+          destinationZone,
+          targetIndex,
+          mode: 'move',
         });
         break;
       }
