@@ -578,6 +578,21 @@ export const buildLegacyV1Candidate = (
           });
         }
 
+        if (
+          action.destinationZone === 'active' ||
+          action.destinationZone === 'bench'
+        ) {
+          const problem = apply({
+            type: 'MoveCardToPlay',
+            cardId,
+            expectedSourceZoneId: sourceZoneId,
+            boardPlayerId: playerId,
+            slot: action.destinationZone,
+          });
+          if (problem) return problem;
+          break;
+        }
+
         const destinationZoneId =
           action.mode === 'bottom'
             ? playerZoneId(playerId, 'deck')

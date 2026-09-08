@@ -171,14 +171,14 @@ and provide import-wide monotonic identities plus one-shot source-resolved
 outcome adapters. A first all-or-nothing candidate builder now applies the
 closed lifecycle/draw/discard-and-draw/shuffle-hand-and-draw/
 shuffle-hand-to-deck-bottom-and-draw/direct-prize-shuffle/
-target-free-loose-and-stadium-movement/zone-backed-deck-action/
+target-free-loose/stadium/new-play-stack-movement/zone-backed-deck-action/
 prizes-to-deck-bottom subset
 through normal game-core commands and verifies exact event replay; it rejects every
 unconverted family before constructing state, rejects recorded draws that exceed
 the exact current source-state deck, applies only direct prize shuffles
 whose recorded permutation matches the current prize zone, and resolves legacy
 zone indices to stable card IDs before bottom-mode bundled movement,
-target-free loose movement, move-to-top, shuffle-into-deck, or
+target-free loose/stadium/play movement, move-to-top, shuffle-into-deck, or
 switch-with-deck-top. The bottom helper is
 represented by its real `moveCardBundle` export rather than a fabricated
 standalone action; it moves the resolved card to canonical deck bottom and
@@ -188,9 +188,12 @@ normalize supported discard/Lost Zone cover aliases, preserve same-zone tail
 behavior, and accept both explicit false and JSON-serialized null targets. The
 deck cover remains in move-to-top. Stadium destinations now use atomic
 `MoveCardToStadium`, displacing an incumbent to its actual owner's discard and
-preserving same-stadium records as zero-batch transactions. Play/stack and
-targeted bundle shapes remain fail-closed. Reachable loose-board/stadium tests
-now prove both-player take-turn cleanup and owner-scoped reset/rebuild behavior.
+preserving same-stadium records as zero-batch transactions. Target-free active
+and bench destinations now execute `MoveCardToPlay`, creating deterministic
+stacks, coercing v1's arbitrary card category to Pokémon, and atomically moving
+an occupied active to the bench. Stack/work-area origins and targeted bundle
+shapes remain fail-closed. Reachable tests now prove both-player loose-board
+take-turn cleanup plus owner-scoped loose/stadium/play reset/rebuild behavior.
 Shuffle-into-deck translates v1's in-deck tail-move
 permutation basis to the canonical input order. Switch-with-deck-top preserves
 v1's source-tail return and empty-deck branch through one or two canonical
@@ -212,8 +215,8 @@ the exact current hand. It preserves the existing deck prefix, appends the
 shuffled hand, and draws from index zero through the matching atomic canonical
 command. Zero-draw, empty-hand/non-empty-deck, and completely empty records all
 remain valid.
-Stack/work-area origins, targeted/play movement, remaining action-family
-coverage, the complete
+Stack/work-area origins, whole-stack and targeted play movement, remaining
+action-family coverage, the complete
 transaction, conversion reports, and real-user corpus evidence remain before
 Phase 3 can exit.
 

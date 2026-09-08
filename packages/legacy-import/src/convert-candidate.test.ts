@@ -1951,6 +1951,290 @@ describe('legacy v1 canonical candidate builder', () => {
     assertMatchInvariants(result.state);
   });
 
+  it('creates deterministic play stacks and demotes an occupied active atomically', () => {
+    const parsed = parse(
+      payload(
+        cardRows(5, 'Self play'),
+        cardRows(2, 'Opponent play'),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'bench',
+          1,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deckCover',
+          'active',
+          0,
+          null,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'active',
+          1,
+          false,
+          'move',
+        ]),
+        action('opp', 'moveCardBundle', [
+          'self',
+          'deckCover',
+          'bench',
+          0,
+          null,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deckCover',
+          'stadium',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'stadium',
+          'bench',
+          0,
+          false,
+          'move',
+        ])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) throw new Error('Expected conversion success');
+
+    const selfId = target.selfSeat.playerId;
+    const opponentId = target.opponentSeat.playerId;
+    const selfDeckId = playerZoneId(selfId, 'deck');
+    const opponentDeckId = playerZoneId(opponentId, 'deck');
+    expect(result.state.boards[selfId]).toEqual({
+      activeStackId: 'legacy:v1:stack:000002',
+      benchStackIds: [
+        'legacy:v1:stack:000000',
+        'legacy:v1:stack:000001',
+        'legacy:v1:stack:000004',
+      ],
+    });
+    expect(result.state.boards[opponentId]).toEqual({
+      activeStackId: null,
+      benchStackIds: ['legacy:v1:stack:000003'],
+    });
+    expect(result.state.stacks['legacy:v1:stack:000000']).toMatchObject({
+      boardPlayerId: selfId,
+      slot: 'bench',
+      evolutionCardIds: ['legacy:v1:card:000001'],
+      attachmentCardIds: [],
+    });
+    expect(result.state.stacks['legacy:v1:stack:000001']).toMatchObject({
+      boardPlayerId: selfId,
+      slot: 'bench',
+      evolutionCardIds: ['legacy:v1:card:000000'],
+      attachmentCardIds: [],
+    });
+    expect(result.state.stacks['legacy:v1:stack:000002']).toMatchObject({
+      boardPlayerId: selfId,
+      slot: 'active',
+      evolutionCardIds: ['legacy:v1:card:000003'],
+      attachmentCardIds: [],
+    });
+    expect(result.state.stacks['legacy:v1:stack:000003']).toMatchObject({
+      boardPlayerId: opponentId,
+      slot: 'bench',
+      evolutionCardIds: ['legacy:v1:card:000005'],
+      attachmentCardIds: [],
+    });
+    expect(result.state.stacks['legacy:v1:stack:000004']).toMatchObject({
+      boardPlayerId: selfId,
+      slot: 'bench',
+      evolutionCardIds: ['legacy:v1:card:000002'],
+      attachmentCardIds: [],
+    });
+    expect(result.state.cards['legacy:v1:card:000001']).toMatchObject({
+      originalCategory: 'Trainer',
+      currentCategory: 'Pokémon',
+      face: 'up',
+    });
+    expect(result.state.cards['legacy:v1:card:000003']).toMatchObject({
+      originalCategory: 'Trainer',
+      currentCategory: 'Pokémon',
+      face: 'up',
+    });
+    expect(result.state.zones[stadiumZoneId()]!.cardIds).toEqual([]);
+    expect(result.state.zones[selfDeckId]!.cardIds).toEqual([
+      'legacy:v1:card:000004',
+    ]);
+    expect(result.state.zones[opponentDeckId]!.cardIds).toEqual([
+      'legacy:v1:card:000006',
+    ]);
+    expect(
+      result.records.slice(2).map(({ recordIndex, batches }) => ({
+        recordIndex,
+        batchCount: batches.length,
+      }))
+    ).toEqual([
+      { recordIndex: 3, batchCount: 1 },
+      { recordIndex: 4, batchCount: 1 },
+      { recordIndex: 5, batchCount: 1 },
+      { recordIndex: 6, batchCount: 1 },
+      { recordIndex: 7, batchCount: 1 },
+      { recordIndex: 8, batchCount: 1 },
+    ]);
+    expect(result.records[2]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardMovedToPlay',
+        cardId: 'legacy:v1:card:000001',
+        expectedSourceZoneId: selfDeckId,
+        boardPlayerId: selfId,
+        slot: 'bench',
+        mode: 'newStack',
+        stackId: 'legacy:v1:stack:000000',
+        benchIndex: 0,
+        previousActiveToBench: false,
+      },
+    ]);
+    expect(result.records[3]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardMovedToPlay',
+        cardId: 'legacy:v1:card:000000',
+        expectedSourceZoneId: selfDeckId,
+        boardPlayerId: selfId,
+        slot: 'active',
+        mode: 'newStack',
+        stackId: 'legacy:v1:stack:000001',
+        benchIndex: 1,
+        previousActiveToBench: false,
+      },
+    ]);
+    expect(result.records[4]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardMovedToPlay',
+        cardId: 'legacy:v1:card:000003',
+        expectedSourceZoneId: selfDeckId,
+        boardPlayerId: selfId,
+        slot: 'active',
+        mode: 'newStack',
+        stackId: 'legacy:v1:stack:000002',
+        benchIndex: 1,
+        previousActiveToBench: true,
+      },
+    ]);
+    expect(result.records[7]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardMovedToPlay',
+        cardId: 'legacy:v1:card:000002',
+        expectedSourceZoneId: stadiumZoneId(),
+        boardPlayerId: selfId,
+        slot: 'bench',
+        mode: 'newStack',
+        stackId: 'legacy:v1:stack:000004',
+        benchIndex: 2,
+        previousActiveToBench: false,
+      },
+    ]);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+  });
+
+  it('resets only owned play stacks while retaining the opponent board', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(2, 'Self play reset'),
+          cardRows(2, 'Opponent play reset'),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            false,
+            'move',
+          ]),
+          action('opp', 'moveCardBundle', [
+            'self',
+            'deck',
+            'active',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'reset', [false, true, true])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    const selfId = target.selfSeat.playerId;
+    const opponentId = target.opponentSeat.playerId;
+    expect(result.state.boards[selfId]).toEqual({
+      activeStackId: null,
+      benchStackIds: [],
+    });
+    expect(result.state.boards[opponentId]).toEqual({
+      activeStackId: 'legacy:v1:stack:000001',
+      benchStackIds: [],
+    });
+    expect(Object.keys(result.state.stacks)).toEqual([
+      'legacy:v1:stack:000001',
+    ]);
+    expect(result.state.zones[playerZoneId(selfId, 'deck')]!.cardIds).toEqual([
+      'legacy:v1:card:000004',
+      'legacy:v1:card:000005',
+    ]);
+    expect(result.state.cards['legacy:v1:card:000000']).toBeUndefined();
+    expect(result.state.cards['legacy:v1:card:000002']).toBeDefined();
+    assertMatchInvariants(result.state);
+  });
+
+  it('rolls back a created play stack when a later stack coordinate is unresolved', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(2, 'Play rollback'),
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'active',
+            'discard',
+            0,
+            false,
+            'move',
+          ])
+        )
+      ),
+      target
+    );
+    expect(result).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 4,
+          path: '$[4].parameters[1]',
+        },
+      ],
+    });
+    expect('state' in result).toBe(false);
+  });
+
   it('rejects stale and unresolved bottom-bundle sources without state', () => {
     const staleSource = buildLegacyV1Candidate(
       parse(

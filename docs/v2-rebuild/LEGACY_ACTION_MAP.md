@@ -28,14 +28,15 @@ The legacy `clean` and `invalidMessage` reset flags are presentation-only. The
 candidate retains source-record-to-event-batch mappings and proves exact replay.
 It now also admits the bounded `draw`, `discardAndDraw`, `shuffleAndDraw`,
 `shuffleBottomAndDraw`, direct prize `shuffleZone`, zone-backed `moveToDeckTop`,
-the bottom-mode and target-free loose-zone/stadium `moveCardBundle`, resolved
+the bottom-mode and target-free loose-zone/stadium/new-play-stack
+`moveCardBundle`, resolved
 `shuffleIntoDeck`, source-authentic `switchWithDeckTop`, and
 `shufflePrizesToDeckBottom` atoms below, but rejects any other action before
 constructing state. This is intentionally not yet a complete import
 compatibility claim: reachable loose-board take-turn cleanup and owner reset are
-now proven alongside owned-stadium reset, while in-play reveal plus reset
-behavior over stacks, work areas, and cross-owner play state remain gated on the
-decoders that can construct those conditions.
+now proven alongside owned-stadium and play-stack reset, while face-down in-play
+reveal plus work-area and cross-owner play state remain gated on the decoders
+that can construct those conditions.
 
 ## Card movement, inspection, and zone batches
 
@@ -62,8 +63,8 @@ decoders that can construct those conditions.
 
 The private movement decoder and candidate now admit the exact `draw`,
 `discardAndDraw`, `shuffleAndDraw`, `shuffleBottomAndDraw`, the bottom-mode and
-target-free loose-zone/stadium `moveCardBundle`, direct prize `shuffleZone`,
-`moveToDeckTop`, `shuffleIntoDeck`, `switchWithDeckTop`, and
+target-free loose-zone/stadium/new-play-stack `moveCardBundle`, direct prize
+`shuffleZone`, `moveToDeckTop`, `shuffleIntoDeck`, `switchWithDeckTop`, and
 `shufflePrizesToDeckBottom` tuples.
 Record `user` selects the target player's zones, while the exported initiator
 remains independent provenance. Draw counts are already clamped by v1 before a successful action is
@@ -144,6 +145,19 @@ and same-stadium zero-batch cases are pinned. Newly reachable stadium sources
 also pass through ordinary movement, whole-attempt retry stays byte
 deterministic, and reset removes only an incumbent owned by the resetting
 player. Stack/work-area origins and all targeted play shapes remain fail-closed.
+
+Target-free active and bench destinations are admitted as new-play-stack moves
+under the same exact move-mode tuple. The `A`/`B` shortcuts export `false`, while
+an untargeted drag may serialize as `null`. Conversion stable-resolves only a
+currently representable source-zone card and executes canonical
+`MoveCardToPlay` on that card owner's board. This preserves v1's new stack,
+face-up and Pokémon-category normalization for every original category,
+append-to-bench order, and atomic occupied-active demotion to the bench. The
+import-wide stack factory makes retry identities deterministic. Self/opponent
+boards, stadium-to-bench movement, exact event fields, replay, retry, and
+owner-scoped reset are pinned. Active/bench/attachment/inspection/work-area
+origins and every numeric target remain fail-closed for the later whole-stack
+and attach/evolve slices.
 
 The direct shuffle is restricted to exact
 `[initiator, "prizes", permutation, true]` records produced by the prize

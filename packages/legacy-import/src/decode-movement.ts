@@ -40,6 +40,11 @@ const LEGACY_V1_LOOSE_DESTINATION_ZONES = [
 export type LegacyV1LooseDestinationZone =
   (typeof LEGACY_V1_LOOSE_DESTINATION_ZONES)[number];
 
+const LEGACY_V1_PLAY_DESTINATION_ZONES = ['active', 'bench'] as const;
+
+type LegacyV1PlayDestinationZone =
+  (typeof LEGACY_V1_PLAY_DESTINATION_ZONES)[number];
+
 export type LegacyV1MovementAction =
   | {
       readonly type: 'draw';
@@ -90,6 +95,17 @@ export type LegacyV1MovementAction =
       readonly sourceZone: LegacyV1CardSourceZone;
       readonly sourceIndex: number;
       readonly destinationZone: LegacyV1LooseDestinationZone;
+      readonly targetIndex: false | null;
+      readonly mode: 'move';
+    }
+  | {
+      readonly type: 'moveCardBundle';
+      readonly recordIndex: number;
+      readonly player: LegacyExportUser;
+      readonly initiator: LegacyExportUser;
+      readonly sourceZone: LegacyV1CardSourceZone;
+      readonly sourceIndex: number;
+      readonly destinationZone: LegacyV1PlayDestinationZone;
       readonly targetIndex: false | null;
       readonly mode: 'move';
     }
@@ -200,6 +216,11 @@ const isLooseDestinationZone = (
   value: string
 ): value is LegacyV1LooseDestinationZone =>
   (LEGACY_V1_LOOSE_DESTINATION_ZONES as readonly string[]).includes(value);
+
+const isPlayDestinationZone = (
+  value: string
+): value is LegacyV1PlayDestinationZone =>
+  (LEGACY_V1_PLAY_DESTINATION_ZONES as readonly string[]).includes(value);
 
 const isMovementAction = (
   action: LegacyActionRecord
@@ -345,10 +366,10 @@ const decodeCardSource = (
  * Decodes admitted movement tuples without applying them. This starts with the
  * source-bounded draw, discard-and-draw, shuffle-hand-and-draw, and
  * shuffle-hand-to-deck-bottom-and-draw; bottom-mode and target-free
- * loose-zone/stadium card bundles; direct prize-shuffle; move-to-deck-top;
- * shuffle-into-deck; switch-with-deck-top; and shuffled-prizes-to-deck-bottom
- * atoms. The remaining movement actions stay untouched until their positional
- * and state-dependent behavior is frozen.
+ * loose-zone/stadium/new-play-stack card bundles; direct prize-shuffle;
+ * move-to-deck-top; shuffle-into-deck; switch-with-deck-top; and
+ * shuffled-prizes-to-deck-bottom atoms. The remaining movement actions stay
+ * untouched until their positional and state-dependent behavior is frozen.
  */
 export const decodeLegacyV1MovementActions = (
   parsed: ParsedLegacyExport
@@ -621,7 +642,7 @@ export const decodeLegacyV1MovementActions = (
             'unsupported_move_card_bundle',
             actionIndex,
             '.parameters[5]',
-            'Only source-authentic deck-bottom, target-free loose-zone, and stadium bundles are converted'
+            'Only source-authentic deck-bottom and target-free loose-zone, stadium, or new-play-stack bundles are converted'
           );
         }
 
@@ -679,7 +700,10 @@ export const decodeLegacyV1MovementActions = (
           );
         }
 
-        if (destinationZone === 'stadium') {
+        if (
+          destinationZone === 'stadium' ||
+          isPlayDestinationZone(destinationZone)
+        ) {
           decoded.push({
             type: 'moveCardBundle',
             recordIndex: actionIndex + 1,
@@ -687,7 +711,7 @@ export const decodeLegacyV1MovementActions = (
             initiator: source.initiator,
             sourceZone: source.sourceZone,
             sourceIndex: source.sourceIndex,
-            destinationZone: 'stadium',
+            destinationZone,
             targetIndex,
             mode: 'move',
           });

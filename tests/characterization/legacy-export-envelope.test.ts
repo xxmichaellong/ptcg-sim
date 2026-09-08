@@ -945,6 +945,64 @@ describe('legacy action-export source envelope', () => {
     );
   });
 
+  it('pins target-free play placement and occupied-active demotion', () => {
+    const keybinds = readRepositoryFile(
+      'client/src/actions/keybinds/keybinds.js'
+    );
+    const moveCard = readRepositoryFile(
+      'client/src/actions/move-card-bundle/move-card.js'
+    );
+    const initializePlayCard = readRepositoryFile(
+      'client/src/actions/move-card-bundle/initialize-active-bench-card.js'
+    );
+    const autoMove = readRepositoryFile(
+      'client/src/actions/move-card-bundle/auto-move-active-bench-card.js'
+    );
+
+    for (const binding of [
+      "b: 'bench'",
+      "KeyB: 'bench'",
+      "a: 'active'",
+      "KeyA: 'active'",
+    ]) {
+      expect(keybinds).toContain(binding);
+    }
+    expect(keybinds).toContain(
+      "moveCardBundle(\n          mouseClick.cardUser,\n          systemState.initiator,\n          mouseClick.zoneId,\n          dZoneId,\n          mouseClick.cardIndex,\n          false,\n          'move'\n        )"
+    );
+
+    const appendMove = 'dZone.array.push(...oZone.array.splice(index, 1));';
+    const initialize =
+      'initializeActiveBenchCard(user, movingCard, dZoneId, dZone);';
+    const autoMoveCall =
+      'autoMoveActiveBenchCard(\n      user,\n      initiator,\n      movingCard,\n      targetCard,\n      oZoneId,\n      oZone,\n      dZoneId,\n      dZone,\n      targetIndex\n    );';
+    expect(moveCard).toContain(initialize);
+    expect(moveCard).toContain(autoMoveCall);
+    expect(moveCard.indexOf(appendMove)).toBeLessThan(
+      moveCard.indexOf(initialize)
+    );
+    expect(moveCard.indexOf(initialize)).toBeLessThan(
+      moveCard.indexOf(autoMoveCall)
+    );
+
+    expect(initializePlayCard).toContain("movingCard.type = 'Pokémon'");
+    expect(initializePlayCard).toContain(
+      "container.className = 'play-container'"
+    );
+    expect(autoMove).toContain(
+      "['active'].includes(dZoneId) &&\n    dZone.array[1]"
+    );
+    const activeDemotionMessage =
+      "moveCardMessage(user, initiator, 'active', 'bench', 0, false, 'move')";
+    const activeDemotion =
+      "moveCard(user, initiator, 'active', 'bench', 0, false)";
+    expect(autoMove).toContain(activeDemotionMessage);
+    expect(autoMove).toContain(activeDemotion);
+    expect(autoMove.indexOf(activeDemotionMessage)).toBeLessThan(
+      autoMove.indexOf(activeDemotion)
+    );
+  });
+
   it('pins deck tuple materialization, selectable categories, and the unknown error marker', () => {
     const buildDeck = readRepositoryFile(
       'client/src/setup/deck-constructor/build-deck.js'
