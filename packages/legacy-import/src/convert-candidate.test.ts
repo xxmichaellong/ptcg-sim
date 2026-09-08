@@ -316,6 +316,120 @@ describe('legacy v1 canonical candidate builder', () => {
     assertMatchInvariants(resetResult.state);
   });
 
+  it('imports attack and pass as atomic target-board cleanup plus timeline facts', () => {
+    const parsed = parse(
+      payload(
+        cardRows(3, 'Attack board'),
+        cardRows(2, 'Pass board'),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'board',
+          0,
+          false,
+          'move',
+        ]),
+        action('opp', 'moveCardBundle', [
+          'self',
+          'deck',
+          'board',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'attack', []),
+        action('opp', 'pass', [])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    const selfId = target.selfSeat.playerId;
+    const opponentId = target.opponentSeat.playerId;
+    expect(
+      result.records.map(({ recordIndex, action, batches }) => ({
+        recordIndex,
+        action,
+        batchCount: batches.length,
+      }))
+    ).toEqual([
+      { recordIndex: 1, action: 'loadDeckData', batchCount: 1 },
+      { recordIndex: 2, action: 'loadDeckData', batchCount: 1 },
+      { recordIndex: 3, action: 'moveCardBundle', batchCount: 1 },
+      { recordIndex: 4, action: 'moveCardBundle', batchCount: 1 },
+      { recordIndex: 5, action: 'attack', batchCount: 1 },
+      { recordIndex: 6, action: 'pass', batchCount: 1 },
+    ]);
+    expect(
+      result.records[4]!.batches[0]!.events.map((event) => event.type)
+    ).toEqual(['LooseBoardCardsResolved', 'TableActionDeclared']);
+    expect(result.records[4]!.batches[0]!.events.at(-1)).toEqual({
+      type: 'TableActionDeclared',
+      action: 'attack',
+      playerId: selfId,
+      outcome: 'declared',
+      turnNumber: 0,
+    });
+    expect(
+      result.records[5]!.batches[0]!.events.map((event) => event.type)
+    ).toEqual(['LooseBoardCardsResolved', 'TableActionDeclared']);
+    expect(result.records[5]!.batches[0]!.events.at(-1)).toEqual({
+      type: 'TableActionDeclared',
+      action: 'pass',
+      playerId: opponentId,
+      outcome: 'declared',
+      turnNumber: 0,
+    });
+    expect(result.state.turn).toEqual({ number: 0, currentPlayerId: null });
+    expect(result.state.zones[playerZoneId(selfId, 'board')]!.cardIds).toEqual(
+      []
+    );
+    expect(
+      result.state.zones[playerZoneId(opponentId, 'board')]!.cardIds
+    ).toEqual([]);
+    expect(
+      result.state.zones[playerZoneId(selfId, 'discard')]!.cardIds
+    ).toEqual(['legacy:v1:card:000000']);
+    expect(
+      result.state.zones[playerZoneId(opponentId, 'discard')]!.cardIds
+    ).toEqual(['legacy:v1:card:000003']);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+
+    const replayed = result.records
+      .flatMap((record) => record.batches)
+      .reduce(
+        applyEventBatch,
+        createEmptyMatch(target.matchId, [target.selfSeat, target.opponentSeat])
+      );
+    expect(replayed).toEqual(result.state);
+  });
+
+  it.each(['attack', 'pass'] as const)(
+    'returns no candidate for a non-empty %s tuple',
+    (actionName) => {
+      const result = buildLegacyV1Candidate(
+        parse(payload('', '', action('self', actionName, [null]))),
+        target
+      );
+      expect(result).toEqual({
+        ok: false,
+        issues: [
+          {
+            code: 'table.invalid_parameter_count',
+            recordIndex: 3,
+            path: '$[3].parameters',
+            message: `${actionName} requires an empty parameter list`,
+          },
+        ],
+      });
+      expect('state' in result).toBe(false);
+    }
+  );
+
   it('recreates the same state and event batches for a whole-attempt retry', () => {
     const parsed = parse(
       payload(

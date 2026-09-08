@@ -32,7 +32,9 @@ the bottom-mode, target-free loose-zone/stadium/new-play-stack/rich-whole-stack,
 source-zone-targeted active/bench, and individual work-area new-stack
 `moveCardBundle`, resolved
 `shuffleIntoDeck`, source-authentic `switchWithDeckTop`, and
-`shufflePrizesToDeckBottom` atoms below, but rejects any other action before
+`shufflePrizesToDeckBottom` atoms below. Exact empty-tuple `attack` and `pass`
+records also reuse the canonical atomic table commands, but every other action
+is rejected before
 constructing state. This is intentionally not yet a complete import
 compatibility claim: reachable loose-board take-turn cleanup and owner reset are
 now proven alongside owned-stadium and play-stack reset, while face-down in-play
@@ -306,12 +308,13 @@ command because that command replaces at the selected card's former index,
 whereas v1 removes the selected card before appending the return card. An empty
 deck emits only the move-to-top batch. Stable-ID resolution, normal concealment,
 final invariant checks, and whole-attempt replay cover both branches; stale and
-currently unrepresentable stack/work-area sources return no candidate. In
-particular, `viewCards` remains closed because the existing canonical
-inspection swap replaces the selected popup position instead of reproducing
-V1's tail append. `attachedCards` also remains closed: an arbitrary old deck-top
-category appended to the V1 popup tail cannot always preserve the canonical
-evolution/attachment sequence classification.
+currently unrepresentable stack sources return no candidate. `viewCards` now
+opts the atomic inspection swap into a backward-compatible source-tail mode,
+while an empty deck uses the one-move branch. `attachedCards` similarly uses a
+versioned internal return mode when the exact V1 flat result can be partitioned
+into a Pokémon prefix and non-Pokémon suffix. Its event records both returned
+canonical sequences for replay and later restoration. Category-interleaved
+staged tails remain fail-closed because no canonical partition preserves them.
 
 Shuffled-prizes-to-deck-bottom is admitted as exact
 `[initiator, permutation]`. The source exports nothing when prizes are empty;
@@ -559,13 +562,14 @@ historical reverse order is not rewritten merely by loading it.
 
 `SetCardCategory` is prohibited while the target is an evolution or attachment
 member of a live stack or its attachment-resolution work area. Such a category
-change must first perform a semantic departure. Work-area/deck-top swaps retain
-the v2 exact-position replacement policy and otherwise preserve the staged
-list; this deliberately differs from the legacy implementation's remove,
-deck-rotation, and old-top append sequence. A subsequent current restore runs
-the versioned full-list rule, while the old restore event, whole-stack
-active/bench movement, snapshots, and undo preserve recorded order. Reverse and
-unsupported histories remain valid outside the v1 normalized transition
+change must first perform a semantic departure. Native work-area/deck-top swaps
+retain the v2 exact-position replacement policy. The private legacy importer
+may explicitly select its versioned inspection-tail or compatible staged-tail
+mode to reproduce V1's remove, deck-rotation, and old-top append sequence;
+omitted historical events retain exact-position replay. A subsequent current
+restore runs the versioned full-list rule, while the old restore event,
+whole-stack active/bench movement, snapshots, and undo preserve recorded order.
+Reverse and unsupported histories remain valid outside the v1 normalized transition
 subset. Renderer eligibility remains a separate, fail-closed decision: only the
 exact canonical `[Energy, Trainer]` current-state shape and characterized
 active/sole-bench placements enter the strict mixed geometry path.
@@ -1046,6 +1050,15 @@ revision. The client retains a bounded timeline, ignores stale publications,
 and does not replay presentation events for duplicate command recovery. No
 labels, layout, or visible interaction have changed in this under-the-hood
 slice.
+
+The private V1 importer now admits `attack` and `pass` only with their exact
+empty parameter arrays. The source record's `user` selects the canonical target
+player, and one `DeclareAttack` or `PassTurn` batch performs the marker reset,
+target loose-board discard, and timeline fact atomically. Candidate tests pin
+self/opponent targeting, unchanged turn state, exact record-to-batch mapping,
+retry, replay, stable hashing, invariants, and malformed-tuple rollback. A
+real-V1 Chromium oracle clicks both shipped buttons and pins the empty export,
+acting-board-only cleanup, message, asset boundary, and page-error boundary.
 
 The parameterless `FlipCoin` wire intent is resolved for the trusted session
 player; the persisted `CoinFlipped` fact now carries both that actor and the

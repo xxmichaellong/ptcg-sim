@@ -536,6 +536,15 @@ mode, updates the viewer grant identically, and uses a single deck-top move for
 the empty-deck branch. Default native and historical swaps keep same-position
 replacement. Target-free active/bench inspection moves remain closed.
 
+The table-action checkpoint pins the shipped `Attack` and `Pass` buttons against
+the real V1 runtime. Both actions reset ability counters, discard only the
+acting player's loose board through an internal non-emitting helper, retain the
+opponent board and current turn, append the expected player message, and export
+exact empty parameter arrays. The private importer strictly decodes those two
+records and routes each through one existing atomic table command; candidate
+coverage pins both source owners, exact batches, deterministic retry/replay,
+stable hashing, invariants, and malformed-tuple rollback.
+
 The protected active/bench shortcut checkpoint covers non-Alt `A` and `B`
 without absorbing stadium or prize rules. Two fresh real-v1 Chromium pages
 place a selected hand Pokémon beside one incumbent active, then pin active and

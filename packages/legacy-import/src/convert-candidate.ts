@@ -36,6 +36,11 @@ import {
   type LegacyV1MovementDecodeIssueCode,
 } from './decode-movement.js';
 import {
+  decodeLegacyV1TableActions,
+  type LegacyV1TableAction,
+  type LegacyV1TableActionDecodeIssueCode,
+} from './decode-table-actions.js';
+import {
   createLegacyV1ImportContext,
   LegacyV1ImportContextError,
   type LegacyV1ImportContextErrorCode,
@@ -69,9 +74,12 @@ const CONVERTED_ACTIONS = new Set<LegacySynchronizedActionName>([
   'shuffleIntoDeck',
   'switchWithDeckTop',
   'shufflePrizesToDeckBottom',
+  'attack',
+  'pass',
 ]);
 
-type LegacyV1ConvertedAction = LegacyV1LifecycleAction | LegacyV1MovementAction;
+type LegacyV1ConvertedAction =
+  LegacyV1LifecycleAction | LegacyV1MovementAction | LegacyV1TableAction;
 
 export interface LegacyV1CandidateTarget {
   readonly matchId: MatchId;
@@ -88,6 +96,7 @@ export type LegacyV1CandidateIssueCode =
   | `deck.${LegacyV1DeckDecodeIssueCode}`
   | `lifecycle.${LegacyV1LifecycleDecodeIssueCode}`
   | `movement.${LegacyV1MovementDecodeIssueCode}`
+  | `table.${LegacyV1TableActionDecodeIssueCode}`
   | `context.${LegacyV1ImportContextErrorCode}`
   | `command.${CommandRejectionCode}`;
 
@@ -459,9 +468,21 @@ export const buildLegacyV1Candidate = (
     });
   }
 
+  const decodedTableActions = decodeLegacyV1TableActions(parsed);
+  if (!decodedTableActions.ok) {
+    const issue = decodedTableActions.issues[0]!;
+    return failure({
+      code: `table.${issue.code}`,
+      recordIndex: issue.recordIndex,
+      path: issue.path,
+      message: issue.message,
+    });
+  }
+
   const convertedActions: LegacyV1ConvertedAction[] = [
     ...decodedLifecycle.actions,
     ...decodedMovement.actions,
+    ...decodedTableActions.actions,
   ].sort((left, right) => left.recordIndex - right.recordIndex);
   const decoderCoverageIndex = parsed.actions.findIndex(
     (sourceAction, actionIndex) => {
@@ -649,6 +670,15 @@ export const buildLegacyV1Candidate = (
       }
       case 'takeTurn': {
         const problem = apply({ type: 'StartTurn', playerId });
+        if (problem) return problem;
+        break;
+      }
+      case 'attack':
+      case 'pass': {
+        const problem = apply({
+          type: action.type === 'attack' ? 'DeclareAttack' : 'PassTurn',
+          playerId,
+        });
         if (problem) return problem;
         break;
       }

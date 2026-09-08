@@ -176,7 +176,7 @@ stack-card-departure/
 source-zone-targeted-play/
 work-area-target-free-play/
 zone-backed-deck-action/
-prizes-to-deck-bottom subset
+prizes-to-deck-bottom/parameterless-attack-and-pass subset
 through normal game-core commands and verifies exact event replay; it rejects every
 unconverted family before constructing state, rejects recorded draws that exceed
 the exact current source-state deck, applies only direct prize shuffles
@@ -289,6 +289,12 @@ stale-permutation rollback are pinned.
 Reachable tests now prove both-player
 loose-board take-turn cleanup plus owner-scoped loose/stadium/play reset/rebuild
 behavior.
+Exact empty-tuple `attack` and `pass` records now reuse the canonical atomic
+table commands. The source record owner selects the target player; the command
+resets all ability markers, discards only that player's loose board, preserves
+turn/card-face state, and emits one replayable table declaration. Strict
+decoder, self/opponent candidate, retry/replay/hash/invariant, malformed-tuple,
+and real-V1 button/export/browser coverage are pinned without a schema change.
 Shuffle-into-deck translates v1's in-deck tail-move
 permutation basis to the canonical input order. Switch-with-deck-top preserves
 v1's source-tail return and empty-deck branch through one or two canonical
@@ -310,7 +316,7 @@ the exact current hand. It preserves the existing deck prefix, appends the
 shuffled hand, and draws from index zero through the matching atomic canonical
 command. Zero-draw, empty-hand/non-empty-deck, and completely empty records all
 remain valid.
-Work-area origins, remaining action-family coverage, the complete
+Category-interleaved work-area tails, remaining action-family coverage, the complete
 transaction, conversion reports, and real-user corpus evidence remain before
 Phase 3 can exit.
 

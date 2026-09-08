@@ -127,6 +127,24 @@ describe('legacy action-export source envelope', () => {
     expect(processAction).toContain("exportParameters[0] = 'self'");
   });
 
+  it('pins parameterless attack/pass export and their atomic helper semantics', () => {
+    const tableActions = readRepositoryFile(
+      'client/src/actions/chat-buttons/chat-buttons.js'
+    );
+    const tableButtons = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/sidebox/p1/chat-buttons.js'
+    );
+
+    expect(tableActions.match(/resetAbilityCounters\(\);/g)).toHaveLength(2);
+    expect(
+      tableActions.match(/discardBoard\(user, user, false, false\);/g)
+    ).toHaveLength(2);
+    expect(tableActions).toContain("processAction(user, emit, 'attack', []);");
+    expect(tableActions).toContain("processAction(user, emit, 'pass', []);");
+    expect(tableButtons).toContain('attack(systemState.initiator)');
+    expect(tableButtons).toContain('pass(systemState.initiator)');
+  });
+
   it('pins the first movement tuple, clamp, and independent target ownership', () => {
     const deckActions = readRepositoryFile(
       'client/src/actions/zones/deck-actions.js'

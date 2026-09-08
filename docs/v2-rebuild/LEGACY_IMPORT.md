@@ -351,6 +351,13 @@ only changes DOM presentation and does not reorder either legacy array. Record
 `user` remains the target player, while exact prize cardinality stays a
 conversion-time source-state check.
 
+`attack` and `pass` each carry an exact empty parameter array. Their record
+`user` is the acting/target player in the saved perspective. Conversion emits
+one canonical `DeclareAttack` or `PassTurn` batch, preserving the source's
+global ability-marker reset, acting loose-board discard, unchanged turn/card
+faces, and replayable table declaration without replaying its internal
+`discardBoard(..., false, false)` helper call as another source record.
+
 ### Deck definition adapter
 
 `decodeLegacyV1Decks` converts the two parser-verified deck tuples into
@@ -597,18 +604,24 @@ The lifecycle mapping is source-backed:
   This two-batch mapping is intentional: canonical `SwapCardWithDeckTop`
   restores the prior top at the selected card's old index, while v1 appends it
   to the source tail. With an empty deck only the first batch is emitted.
-  Missing/stale coordinates and unresolved stack/work-area origins fail the
-  whole candidate. Inspection sources stay closed specifically because their
-  current canonical swap performs that incompatible same-position replacement.
-  Staged sources also stay closed because an arbitrary returned card category
-  cannot always preserve the canonical evolution/attachment classifications;
-  and
+  Missing/stale coordinates and unresolved stack origins fail the whole
+  candidate. Inspection sources use the optional atomic source-tail return mode
+  and preserve the existing viewer grant; staged sources use a versioned
+  returned-sequence mode only when V1's exact flat result has a Pokémon prefix
+  followed by a non-Pokémon suffix. Empty work-area deck swaps use one move.
+  Category-interleaved staged tails remain closed because they cannot preserve
+  canonical evolution/attachment classification; and
 - shuffled-prizes-to-deck-bottom requires the recorded non-empty permutation to
   match the exact current prize count, then executes one atomic
   `MovePrizesToDeckBottom` using that order as its one-shot resolved outcome.
   The prize zone becomes empty, the unchanged deck prefix is followed by the
   shuffled prizes, and every moved identity is concealed. Empty or mismatched
-  source state fails before command execution and returns no candidate.
+  source state fails before command execution and returns no candidate; and
+- attack and pass require exact empty parameter arrays and execute one
+  `DeclareAttack` or `PassTurn` for the source record's target player. The
+  canonical batch resets every ability marker, discards only that player's
+  loose board, leaves turn and card-face state unchanged, and records the
+  replayable table declaration.
 
 One source record may therefore map to multiple canonical event batches. The
 result retains the exact record-to-batch mapping, validates invariants after
@@ -628,7 +641,7 @@ individual-inspection-card-loose-and-targeted-play/
 individual-inspection-card-deck-edge-shuffle-and-stadium/
 move-to-top/
 rich-whole-stack-move-and-swap/move-to-bottom/
-shuffle-into-deck/deck-top-switch/
+shuffle-into-deck/deck-top-switch/parameterless-attack-and-pass/
 prizes-to-deck-bottom subset can now create ordinary loose-board, singleton
 stadium, and active/bench stack state, enrich those stacks with zone-backed
 evolutions and attachments, move or swap those rich stacks, reattach lower
@@ -646,7 +659,9 @@ hand, the shuffled deck, or the shuffled deck bottom with exact recorded bases
 and replay, or resolve changing individual inspection coordinates into loose
 zones, existing stack tops, either deck edge, an exact recorded shuffle, or
 stadium, or normalized new active/bench stacks with exact events and visibility
-cleanup. Tests
+cleanup. Parameterless attack and pass also resolve through one atomic
+canonical table command, so their internal board cleanup is not double-counted
+as a source record. Tests
 prove that a later
 take-turn discards both players' loose boards in
 source order before drawing, and that an owner reset clears only that owner's
@@ -675,7 +690,7 @@ movement/state decoders.
    current reachable work area. Cross-viewer repeated inspections remain closed
    until per-card visibility is modeled explicitly rather than widening the
    work area's viewer set.
-2. Add markers, visibility/inspection, randomized/bulk, table signals, and the
+2. Add markers, visibility/inspection, randomized/bulk, undo, and the
    remaining action families using the same allowlisted dispatch table.
 3. Produce a conversion report with warnings, dropped presentation fields, and
    the exact failing record/path. Integrity identities must use SHA-256 over the
