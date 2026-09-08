@@ -170,7 +170,13 @@ describe('legacy v1 canonical candidate builder', () => {
         '',
         action('self', 'setup', [Array.from({ length: 15 }, (_, i) => 14 - i)]),
         action('self', 'takeTurn', ['self']),
-        action('self', 'draw', ['opp', 1])
+        action('self', 'draw', ['opp', 1]),
+        action('self', 'shuffleZone', [
+          'opp',
+          'prizes',
+          [5, 4, 3, 2, 1, 0],
+          true,
+        ])
       )
     );
     const first = buildLegacyV1Candidate(parsed, target);
@@ -326,6 +332,112 @@ describe('legacy v1 canonical candidate builder', () => {
     expect('state' in resetDeck).toBe(false);
   });
 
+  it('applies a recorded direct prize shuffle with its resolved permutation', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(10, 'Prize shuffle'),
+          '',
+          action('self', 'setup', [Array.from({ length: 10 }, (_, i) => i)]),
+          action('self', 'shuffleZone', ['opp', 'prizes', [2, 0, 1], true])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    expect(result.records[3]).toEqual({
+      recordIndex: 4,
+      action: 'shuffleZone',
+      batches: [
+        expect.objectContaining({
+          events: [
+            {
+              type: 'ZoneShuffled',
+              zoneId: playerZoneId(target.selfSeat.playerId, 'prizes'),
+              cardOrder: [
+                'legacy:v1:card:000019',
+                'legacy:v1:card:000017',
+                'legacy:v1:card:000018',
+              ],
+              concealedCardIds: [
+                'legacy:v1:card:000019',
+                'legacy:v1:card:000017',
+                'legacy:v1:card:000018',
+              ],
+            },
+          ],
+        }),
+      ],
+    });
+    expect(
+      result.state.zones[playerZoneId(target.selfSeat.playerId, 'prizes')]!
+        .cardIds
+    ).toEqual([
+      'legacy:v1:card:000019',
+      'legacy:v1:card:000017',
+      'legacy:v1:card:000018',
+    ]);
+    assertMatchInvariants(result.state);
+  });
+
+  it('preserves an empty prize shuffle and rejects a source-state length mismatch', () => {
+    const empty = buildLegacyV1Candidate(
+      parse(
+        payload(
+          '',
+          '',
+          action('opp', 'shuffleZone', ['self', 'prizes', [], true])
+        )
+      ),
+      target
+    );
+    expect(empty.ok).toBe(true);
+    if (!empty.ok) throw new Error(empty.issues[0]?.message);
+    expect(empty.records[2]).toEqual({
+      recordIndex: 3,
+      action: 'shuffleZone',
+      batches: [
+        expect.objectContaining({
+          events: [
+            {
+              type: 'ZoneShuffled',
+              zoneId: playerZoneId(target.opponentSeat.playerId, 'prizes'),
+              cardOrder: [],
+              concealedCardIds: [],
+            },
+          ],
+        }),
+      ],
+    });
+
+    const mismatch = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(8, 'Prize mismatch'),
+          '',
+          action('self', 'setup', [Array.from({ length: 8 }, (_, i) => i)]),
+          action('self', 'shuffleZone', ['self', 'prizes', [0, 1], true])
+        )
+      ),
+      target
+    );
+    expect(mismatch).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 4,
+          path: '$[4].parameters[2]',
+          message:
+            'Recorded prize shuffle length does not match the source-state zone',
+        },
+      ],
+    });
+    expect('state' in mismatch).toBe(false);
+  });
+
   it('does not fabricate a turn draw or increment for an empty deck', () => {
     const result = buildLegacyV1Candidate(
       parse(payload('', '', action('self', 'takeTurn', ['self']))),
@@ -434,6 +546,28 @@ describe('legacy v1 canonical candidate builder', () => {
       ],
     });
     expect('state' in invalidMovement).toBe(false);
+
+    const invalidShuffle = buildLegacyV1Candidate(
+      parse(
+        payload(
+          '',
+          '',
+          action('self', 'shuffleZone', ['self', 'prizes', [], false])
+        )
+      ),
+      target
+    );
+    expect(invalidShuffle).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'movement.invalid_shuffle_message',
+          recordIndex: 3,
+          path: '$[3].parameters[3]',
+        },
+      ],
+    });
+    expect('state' in invalidShuffle).toBe(false);
   });
 
   it('rejects an invalid canonical target without creating state', () => {

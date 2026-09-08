@@ -26,8 +26,8 @@ applying its recorded permutation; `reset` loads the original source entries or
 an empty deck according to its `build` flag; and `takeTurn` uses `StartTurn`.
 The legacy `clean` and `invalidMessage` reset flags are presentation-only. The
 candidate retains source-record-to-event-batch mappings and proves exact replay,
-and now also admits the bounded `draw` atom below, but rejects any other action
-before constructing state. This
+and now also admits the bounded `draw` and direct prize `shuffleZone` atoms
+below, but rejects any other action before constructing state. This
 is intentionally not yet a complete import compatibility claim: take-turn
 cleanup/reveal and reset behavior over dirty, cross-owner board state remain
 gated on the movement/state decoders that can construct those conditions.
@@ -55,16 +55,25 @@ gated on the movement/state decoders that can construct those conditions.
 | `shufflePrizesToDeckBottom` | Atomic `MovePrizesToDeckBottom`                                                                                               | Prize ordering/randomization, concealment, empty prizes                                                        |
 | `shuffleZone`               | `ShuffleZone` resolved permutation event                                                                                      | Every allowed zone, deterministic legacy indices, new handle generation, safe timeline                         |
 
-The private movement decoder and candidate now admit the exact `draw` tuple.
-Record `user` selects the target deck/hand, while the exported initiator is
-kept separate because the legacy context-menu path can draw from the other
-physical side. Counts are already clamped by v1 before a successful action is
+The private movement decoder and candidate now admit the exact `draw` tuple and
+the directly exported prize `shuffleZone` tuple. Record `user` selects the
+target deck/hand or prize zone, while the exported initiator remains independent
+provenance. Draw counts are already clamped by v1 before a successful action is
 exported; conversion accepts only positive integers through the shared 200-card
 bound and requires the recorded count to fit the current candidate deck exactly.
 This prevents game-core's live short-deck clamp from accepting an inconsistent
 legacy record. Locally applied empty or invalid source draws use `emit=false` and
-are not valid exported records. Every other row above remains undecoded and
-cannot enter the transactional candidate yet.
+are not valid exported records.
+
+The direct shuffle is restricted to exact
+`[initiator, "prizes", permutation, true]` records produced by the prize
+context menu. Its complete permutation must match the current prize count and
+is supplied to game-core as a resolved outcome; conversion never generates a
+replacement order. Setup and the composite board, deck, hand, prize, and
+staged-zone actions call the legacy helper internally with `message=false` and
+`emit=false`, so those calls remain part of their enclosing action instead of
+being double-applied as standalone shuffles. Every other row above remains
+undecoded and cannot enter the transactional candidate yet.
 
 ## Markers and card/stack state
 

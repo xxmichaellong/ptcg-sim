@@ -69,6 +69,37 @@ describe('legacy v1 movement positional decoder', () => {
     });
   });
 
+  it('decodes only source-authentic direct prize shuffles', () => {
+    expect(
+      decode(
+        action('opp', 'shuffleZone', ['self', 'prizes', [2, 0, 1], true]),
+        action('self', 'shuffleZone', ['opp', 'prizes', [], true])
+      )
+    ).toEqual({
+      ok: true,
+      actions: [
+        {
+          type: 'shuffleZone',
+          recordIndex: 3,
+          player: 'opp',
+          initiator: 'self',
+          zone: 'prizes',
+          shuffleIndices: [2, 0, 1],
+          message: true,
+        },
+        {
+          type: 'shuffleZone',
+          recordIndex: 4,
+          player: 'self',
+          initiator: 'opp',
+          zone: 'prizes',
+          shuffleIndices: [],
+          message: true,
+        },
+      ],
+    });
+  });
+
   it('ignores all other admitted families rather than inferring tuples', () => {
     expect(
       decode(
@@ -79,7 +110,7 @@ describe('legacy v1 movement positional decoder', () => {
     ).toEqual({ ok: true, actions: [] });
   });
 
-  it('requires exactly the source-exported two parameters', () => {
+  it('requires exactly the source-exported draw parameters', () => {
     expect(firstIssue(action('self', 'draw', ['self']))).toMatchObject({
       code: 'invalid_parameter_count',
       recordIndex: 3,
@@ -91,6 +122,83 @@ describe('legacy v1 movement positional decoder', () => {
       code: 'invalid_parameter_count',
       recordIndex: 3,
       path: '$[3].parameters',
+    });
+  });
+
+  it('requires exactly four direct shuffle parameters', () => {
+    expect(
+      firstIssue(action('self', 'shuffleZone', ['self', 'prizes', [0]]))
+    ).toMatchObject({
+      code: 'invalid_parameter_count',
+      recordIndex: 3,
+      path: '$[3].parameters',
+    });
+    expect(
+      firstIssue(
+        action('self', 'shuffleZone', ['self', 'prizes', [0], true, 'extra'])
+      )
+    ).toMatchObject({
+      code: 'invalid_parameter_count',
+      recordIndex: 3,
+      path: '$[3].parameters',
+    });
+  });
+
+  it('requires a perspective initiator and the direct prizes/message shape', () => {
+    expect(
+      firstIssue(action('self', 'shuffleZone', [7, 'prizes', [], true]))
+    ).toMatchObject({
+      code: 'invalid_parameter_type',
+      path: '$[3].parameters[0]',
+    });
+    expect(
+      firstIssue(action('self', 'shuffleZone', ['self', 'deck', [], true]))
+    ).toMatchObject({
+      code: 'invalid_shuffle_zone',
+      path: '$[3].parameters[1]',
+    });
+    expect(
+      firstIssue(action('self', 'shuffleZone', ['self', 'prizes', [], false]))
+    ).toMatchObject({
+      code: 'invalid_shuffle_message',
+      path: '$[3].parameters[3]',
+    });
+    expect(
+      firstIssue(action('self', 'shuffleZone', ['self', 'prizes', [], 'true']))
+    ).toMatchObject({
+      code: 'invalid_shuffle_message',
+      path: '$[3].parameters[3]',
+    });
+  });
+
+  it.each([null, [0, 0], [0, 2], [1], [-1], [0.5], ['0']])(
+    'rejects an invalid prize shuffle permutation: %j',
+    (indices) => {
+      expect(
+        firstIssue(
+          action('self', 'shuffleZone', ['self', 'prizes', indices, true])
+        )
+      ).toMatchObject({
+        code: 'invalid_shuffle_permutation',
+        recordIndex: 3,
+        path: '$[3].parameters[2]',
+      });
+    }
+  );
+
+  it('bounds a syntactically complete prize shuffle permutation', () => {
+    const oversized = Array.from(
+      { length: MAX_DECK_CARDS + 1 },
+      (_, index) => index
+    );
+    expect(
+      firstIssue(
+        action('self', 'shuffleZone', ['self', 'prizes', oversized, true])
+      )
+    ).toMatchObject({
+      code: 'invalid_shuffle_permutation',
+      recordIndex: 3,
+      path: '$[3].parameters[2]',
     });
   });
 

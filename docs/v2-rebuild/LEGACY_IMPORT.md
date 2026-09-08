@@ -126,15 +126,23 @@ not guessed. This lets each family acquire its own source-backed positional
 schema while the final transaction can require every record to have exactly one
 decoder before any canonical state is created.
 
-`decodeLegacyV1MovementActions` starts the next private family with `draw` only.
-The source record owns the target deck/hand through `user`; its two positional
-parameters are the independently exported initiator and the already-clamped
-draw count. The decoder therefore accepts both self/opp initiators without
-requiring them to equal the target, but requires an integer count from 1 through
-the canonical 200-card bound. Source-invalid/empty draws set `emit=false` and do
-not belong in a locally applied genuine export. The remaining movement names
-are still ignored by this non-applying decoder until their zone, index, stack,
-visibility, and resolved-outcome behavior is frozen.
+`decodeLegacyV1MovementActions` starts the next private family with `draw` and
+direct prize `shuffleZone` records. The draw record owns the target deck/hand
+through `user`; its two positional parameters are the independently exported
+initiator and the already-clamped draw count. The decoder therefore accepts
+both self/opp initiators without requiring them to equal the target, but
+requires an integer count from 1 through the canonical 200-card bound.
+Source-invalid/empty draws set `emit=false` and do not belong in a locally
+applied genuine export.
+
+A directly exported prize shuffle carries exactly
+`[initiator, "prizes", permutation, true]`. Empty permutations are valid for an
+empty prize zone. The source also calls the same helper internally for setup and
+composite board, deck, hand, prize, and staged-zone actions with both message and
+emit disabled; those helper calls are represented by their enclosing exported
+action and must not be decoded as independent shuffles. The remaining movement
+names are still ignored by this non-applying decoder until their zone, index,
+stack, visibility, and resolved-outcome behavior is frozen.
 
 ### Deck definition adapter
 
@@ -192,10 +200,11 @@ identities; source `self` and `opp` are mapped to those seats without turning
 legacy labels into authority.
 
 This deliberately narrow builder succeeds only when every action is one of
-`loadDeckData`, `reset`, `setup`, `takeTurn`, or `draw`. Any other allowlisted
-family is rejected before state construction. Deck, lifecycle, and movement
-diagnostics are lifted with their exact source record/path, while context and
-canonical command failures also return no candidate state.
+`loadDeckData`, `reset`, `setup`, `takeTurn`, `draw`, or the direct prize form of
+`shuffleZone`. Any other allowlisted family is rejected before state
+construction. Deck, lifecycle, and movement diagnostics are lifted with their
+exact source record/path, while context and canonical command failures also
+return no candidate state.
 The preflight additionally requires a one-to-one, source-ordered match between
 all records and the union of private decoder outputs; a future allowlist/decoder
 drift can neither omit nor double-apply a record.
@@ -219,7 +228,11 @@ The lifecycle mapping is source-backed:
   the candidate requires the recorded already-clamped count to fit the exact
   current deck, so a forged short/empty/depleted-deck record fails the whole
   attempt instead of being silently clamped by game-core. The legacy initiator
-  remains decoded provenance, not canonical target authority.
+  remains decoded provenance, not canonical target authority; and
+- direct prize shuffle executes `ShuffleZone` for the record's target player
+  using the recorded permutation as the action-scoped resolved outcome. Its
+  length must match the exact current prize zone, so conversion neither creates
+  a random order nor applies an outcome to different source state.
 
 One source record may therefore map to multiple canonical event batches. The
 result retains the exact record-to-batch mapping, validates invariants after
@@ -227,17 +240,17 @@ normal game-core application, replays every batch from a fresh target shell,
 and requires byte-identical stable serialization before returning the private
 candidate. No partial batches escape on failure.
 
-The closed lifecycle-plus-draw subset cannot create play stacks, loose board cards, markers, or
-cross-owner placements. It therefore does not yet claim take-turn cleanup/reveal
-parity or dirty-board reset parity; those interactions stay gated on the
-movement/state-family decoders rather than being inferred from an unreachable
-lifecycle-only fixture.
+The closed lifecycle/draw/direct-prize-shuffle subset cannot create play stacks,
+loose board cards, markers, or cross-owner placements. It therefore does not yet
+claim take-turn cleanup/reveal parity or dirty-board reset parity; those
+interactions stay gated on the movement/state-family decoders rather than being
+inferred from an unreachable lifecycle-only fixture.
 
 ## Next conversion slices
 
 1. Continue source-backed positional schemas for direct movement after the
-   transactionally applied `draw` atom, widening the candidate only after each
-   newly admitted command is decoded.
+   transactionally applied draw and direct prize-shuffle atoms, widening the
+   candidate only after each newly admitted command is decoded.
 2. Add markers, visibility/inspection, randomized/bulk, table signals, and the
    remaining action families using the same allowlisted dispatch table.
 3. Produce a conversion report with warnings, dropped presentation fields, and

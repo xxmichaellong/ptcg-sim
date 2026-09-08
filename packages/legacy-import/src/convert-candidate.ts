@@ -46,6 +46,7 @@ const CONVERTED_ACTIONS = new Set<LegacySynchronizedActionName>([
   'setup',
   'takeTurn',
   'draw',
+  'shuffleZone',
 ]);
 
 type LegacyV1ConvertedAction = LegacyV1LifecycleAction | LegacyV1MovementAction;
@@ -356,6 +357,25 @@ export const buildLegacyV1Candidate = (
           playerId,
           count: action.count,
         });
+        if (problem) return problem;
+        break;
+      }
+      case 'shuffleZone': {
+        const zoneId = playerZoneId(playerId, action.zone);
+        const zone = state.zones[zoneId];
+        if (!zone || action.shuffleIndices.length !== zone.cardIds.length) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[2]`,
+            message:
+              'Recorded prize shuffle length does not match the source-state zone',
+          });
+        }
+        const problem = apply(
+          { type: 'ShuffleZone', zoneId },
+          { kind: 'shuffle', indices: action.shuffleIndices }
+        );
         if (problem) return problem;
         break;
       }

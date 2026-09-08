@@ -177,6 +177,66 @@ describe('legacy action-export source envelope', () => {
     );
   });
 
+  it('pins direct prize shuffle and excludes internal helper shuffles', () => {
+    const shuffleZone = readRepositoryFile(
+      'client/src/actions/zones/shuffle-zone.js'
+    );
+    const prizesButtons = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/card-context-menu/prizes-buttons.js'
+    );
+    const setup = readRepositoryFile('client/src/actions/general/setup.js');
+    const deckActions = readRepositoryFile(
+      'client/src/actions/zones/deck-actions.js'
+    );
+    const handActions = readRepositoryFile(
+      'client/src/actions/zones/hand-actions.js'
+    );
+    const prizesActions = readRepositoryFile(
+      'client/src/actions/zones/prizes-actions.js'
+    );
+    const boardActions = readRepositoryFile(
+      'client/src/actions/general/board-actions.js'
+    );
+    const generalZoneActions = readRepositoryFile(
+      'client/src/actions/zones/general.js'
+    );
+
+    expect(shuffleZone).toContain(
+      'indices = indices ? indices : shuffleIndices(zone.getCount())'
+    );
+    expect(shuffleZone).toContain('rearrangeArray(zone.array, indices)');
+    expect(shuffleZone).toContain(
+      "processAction(user, emit, 'shuffleZone', [\n    oInitiator,\n    zoneId,\n    indices,\n    message,\n  ])"
+    );
+    expect(prizesButtons).toContain(
+      "shuffleZone(mouseClick.cardUser, systemState.initiator, 'prizes')"
+    );
+    expect(setup).toContain(
+      "shuffleZone(user, user, 'deck', indices, false, false)"
+    );
+    expect(deckActions).toContain(
+      "shuffleZone(user, initiator, 'deck', indices, false, false)"
+    );
+    expect(handActions).toContain(
+      "shuffleZone(user, initiator, 'deck', indices, false, false)"
+    );
+    expect(handActions).toContain(
+      "shuffleZone(user, initiator, 'hand', indices, false, false)"
+    );
+    expect(prizesActions).toContain(
+      "shuffleZone(user, initiator, 'prizes', indices, false, false)"
+    );
+    expect(boardActions).toContain(
+      "shuffleZone(user, initiator, 'deck', indices, false, false)"
+    );
+    expect(generalZoneActions).toContain(
+      "shuffleZone(user, initiator, 'deck', indices, false, false)"
+    );
+    expect(generalZoneActions).toContain(
+      'shuffleZone(user, initiator, zoneId, indices, false, false)'
+    );
+  });
+
   it('pins deck tuple materialization, selectable categories, and the unknown error marker', () => {
     const buildDeck = readRepositoryFile(
       'client/src/setup/deck-constructor/build-deck.js'
