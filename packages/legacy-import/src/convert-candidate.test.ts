@@ -8025,6 +8025,7 @@ describe('legacy v1 canonical candidate builder', () => {
     expect(result.state.workAreas[playerId]?.attachmentResolution).toEqual({
       id: workAreaId,
       sourceStackId: activeStackId,
+      cardIds: [activeBaseId, activeEnergyId],
       evolutionCardIds: [activeBaseId],
       attachmentCardIds: [activeEnergyId],
       suggestedSlot: 'active',
@@ -8053,6 +8054,7 @@ describe('legacy v1 canonical candidate builder', () => {
         concealIdentity: false,
         attachmentResolution: {
           id: workAreaId,
+          cardIds: [activeBaseId, activeEnergyId],
           evolutionCardIds: [activeBaseId],
           attachmentCardIds: [activeEnergyId],
           suggestedSlot: 'active',
@@ -8332,6 +8334,7 @@ describe('legacy v1 canonical candidate builder', () => {
         concealIdentity: false,
         attachmentResolution: {
           id: workAreaId,
+          cardIds: [sourceMiddleId, sourceBaseId, sourceEnergyId, sourceToolId],
           evolutionCardIds: [sourceBaseId, sourceMiddleId],
           attachmentCardIds: [sourceEnergyId, sourceToolId],
           suggestedSlot: 'bench',
@@ -9461,9 +9464,21 @@ describe('legacy v1 canonical candidate builder', () => {
         source: 'evolution',
         cardId: selectedEvolutionId,
         deckTopCardId: priorDeckTopId,
+        expectedCardIds: [
+          selectedEvolutionId,
+          baseId,
+          retainedEnergyId,
+          retainedToolId,
+        ],
         expectedEvolutionCardIds: [baseId, selectedEvolutionId],
         expectedAttachmentCardIds: [retainedEnergyId, retainedToolId],
         expectedDeckCardIds: [priorDeckTopId, deckRemainderId],
+        returnedCardIds: [
+          baseId,
+          retainedEnergyId,
+          retainedToolId,
+          priorDeckTopId,
+        ],
         returnTo: 'legacyFlatTailV1',
         returnedEvolutionCardIds: [baseId],
         returnedAttachmentCardIds: [
@@ -9513,29 +9528,140 @@ describe('legacy v1 canonical candidate builder', () => {
     assertMatchInvariants(result.state);
   });
 
-  it('rejects a staged tail that cannot preserve canonical category sequences', () => {
+  it('preserves a category-interleaved staged tail and restores V1 right-to-left evolution order', () => {
+    const parsed = parse(
+      stagedWorkAreaPayloadWithDeckTop(
+        'Pokémon',
+        action('self', 'switchWithDeckTop', ['opp', 'attachedCards', 2]),
+        action('self', 'leaveAll', ['opp', 'attachedCards', 'active'])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) {
+      throw new Error('Expected category-interleaved staged-tail success');
+    }
+
+    const playerId = target.selfSeat.playerId;
+    const middleId = 'legacy:v1:card:000001';
+    const selectedEnergyId = 'legacy:v1:card:000003';
+    const retainedToolId = 'legacy:v1:card:000004';
+    const priorDeckTopId = 'legacy:v1:card:000005';
+    expect(result.records[8]!.batches[0]!.events).toEqual([
+      {
+        type: 'StagedCardSwappedWithDeckTop',
+        playerId,
+        expectedWorkAreaId: 'legacy:v1:work-area:000000',
+        source: 'attachment',
+        cardId: selectedEnergyId,
+        deckTopCardId: priorDeckTopId,
+        expectedCardIds: [
+          middleId,
+          'legacy:v1:card:000000',
+          selectedEnergyId,
+          retainedToolId,
+        ],
+        expectedEvolutionCardIds: ['legacy:v1:card:000000', middleId],
+        expectedAttachmentCardIds: [selectedEnergyId, retainedToolId],
+        expectedDeckCardIds: [priorDeckTopId, 'legacy:v1:card:000006'],
+        returnedCardIds: [
+          middleId,
+          'legacy:v1:card:000000',
+          retainedToolId,
+          priorDeckTopId,
+        ],
+        returnTo: 'legacyFlatTailV1',
+        returnedEvolutionCardIds: [
+          priorDeckTopId,
+          'legacy:v1:card:000000',
+          middleId,
+        ],
+        returnedAttachmentCardIds: [retainedToolId],
+      },
+    ]);
+    expect(result.records[9]!.batches[0]!.events[0]).toMatchObject({
+      type: 'StagedStackRestoredToPlayStack',
+      expectedEvolutionCardIds: [
+        priorDeckTopId,
+        'legacy:v1:card:000000',
+        middleId,
+      ],
+      expectedAttachmentCardIds: [retainedToolId],
+      attachmentCardIds: [retainedToolId],
+    });
+    const activeStackId = result.state.boards[playerId]!.activeStackId!;
+    expect(result.state.stacks[activeStackId]).toMatchObject({
+      evolutionCardIds: [priorDeckTopId, 'legacy:v1:card:000000', middleId],
+      attachmentCardIds: [retainedToolId],
+    });
+    expect(result.state.zones[playerZoneId(playerId, 'deck')]?.cardIds).toEqual(
+      [selectedEnergyId, 'legacy:v1:card:000006']
+    );
+    const replayed = result.records
+      .flatMap((record) => record.batches)
+      .reduce(
+        applyEventBatch,
+        createEmptyMatch(target.matchId, [target.selfSeat, target.opponentSeat])
+      );
+    expect(replayed).toEqual(result.state);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+  });
+
+  it('resolves later staged coordinates from a category-interleaved flat tail', () => {
     const result = buildLegacyV1Candidate(
       parse(
         stagedWorkAreaPayloadWithDeckTop(
           'Pokémon',
-          action('self', 'switchWithDeckTop', ['opp', 'attachedCards', 2])
+          action('self', 'switchWithDeckTop', ['opp', 'attachedCards', 2]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'attachedCards',
+            'lostZone',
+            2,
+            false,
+            'move',
+          ]),
+          action('self', 'leaveAll', ['opp', 'attachedCards', 'active'])
         )
       ),
       target
     );
-    expect(result).toEqual({
-      ok: false,
-      issues: [
-        {
-          code: 'command.precondition_failed',
-          recordIndex: 9,
-          path: '$[9].action',
-          message:
-            'Legacy staged tail return cannot preserve canonical card classification',
-        },
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error('Expected later interleaved coordinate success');
+    }
+
+    const playerId = target.selfSeat.playerId;
+    const retainedToolId = 'legacy:v1:card:000004';
+    expect(result.records[9]!.batches[0]!.events).toEqual([
+      {
+        type: 'StagedCardMoved',
+        playerId,
+        expectedWorkAreaId: 'legacy:v1:work-area:000000',
+        source: 'attachment',
+        cardId: retainedToolId,
+        destinationZoneId: playerZoneId(playerId, 'lostZone'),
+        destinationIndex: 0,
+        concealIdentity: false,
+      },
+    ]);
+    expect(
+      result.state.zones[playerZoneId(playerId, 'lostZone')]?.cardIds
+    ).toEqual([retainedToolId]);
+    const activeStackId = result.state.boards[playerId]!.activeStackId!;
+    expect(result.state.stacks[activeStackId]).toMatchObject({
+      evolutionCardIds: [
+        'legacy:v1:card:000005',
+        'legacy:v1:card:000000',
+        'legacy:v1:card:000001',
       ],
+      attachmentCardIds: [],
     });
-    expect('state' in result).toBe(false);
+    expect(result.state.workAreas[playerId]?.attachmentResolution).toBeNull();
+    assertMatchInvariants(result.state);
   });
 
   it('rolls back stale staged-card coordinates and preserves the empty-deck swap', () => {

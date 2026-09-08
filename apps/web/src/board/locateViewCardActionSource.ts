@@ -70,6 +70,8 @@ export const locateViewCardActionSource = (
       };
     }
     const resolution = areas.attachmentResolution;
+    const flatIndex =
+      resolution?.cards.findIndex((card) => card.id === cardId) ?? -1;
     const evolutionIndex =
       resolution?.evolutionCards.findIndex((card) => card.id === cardId) ?? -1;
     if (evolutionIndex >= 0 && resolution) {
@@ -78,7 +80,7 @@ export const locateViewCardActionSource = (
         sourceId: resolution.id,
         sourcePlayerId: playerId,
         sourceKind: 'staged',
-        sourceIndex: evolutionIndex,
+        sourceIndex: flatIndex,
         isLowerEvolution: false,
       };
     }
@@ -90,7 +92,7 @@ export const locateViewCardActionSource = (
         sourceId: resolution.id,
         sourcePlayerId: playerId,
         sourceKind: 'staged',
-        sourceIndex: attachmentIndex,
+        sourceIndex: flatIndex,
         isLowerEvolution: false,
       };
     }

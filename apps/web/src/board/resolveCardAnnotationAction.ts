@@ -96,6 +96,8 @@ const locateCard = (
       };
     }
     const resolution = areas.attachmentResolution;
+    const flatIndex =
+      resolution?.cards.findIndex((card) => card.id === cardId) ?? -1;
     const evolutionIndex =
       resolution?.evolutionCards.findIndex((card) => card.id === cardId) ?? -1;
     if (evolutionIndex >= 0 && resolution) {
@@ -104,9 +106,8 @@ const locateCard = (
         sourceId: resolution.id,
         kind: 'staged',
         isLowerEvolution: false,
-        sourceIndex: evolutionIndex,
-        sourceCount:
-          resolution.evolutionCards.length + resolution.attachmentCards.length,
+        sourceIndex: flatIndex,
+        sourceCount: resolution.cards.length,
       };
     }
     const attachmentIndex =
@@ -117,9 +118,8 @@ const locateCard = (
         sourceId: resolution.id,
         kind: 'staged',
         isLowerEvolution: false,
-        sourceIndex: resolution.evolutionCards.length + attachmentIndex,
-        sourceCount:
-          resolution.evolutionCards.length + resolution.attachmentCards.length,
+        sourceIndex: flatIndex,
+        sourceCount: resolution.cards.length,
       };
     }
   }

@@ -251,10 +251,12 @@ staged members. Staged `switchWithDeckTop` resolves the same current flat
 coordinate. An empty deck uses one deck-top move; otherwise an internal
 versioned swap reconstructs V1's selected-card removal and prior-top tail
 append, normalizes the returned card to its original category, then records the
-exact canonical sequences only when the result has a Pokémon prefix followed
-by a non-Pokémon suffix. That proof preserves both the
-popup order and subsequent `leaveAll`; category-interleaved tails reject the
-whole candidate. An
+exact returned flat order plus its semantic evolution and attachment sequences.
+V2 persists the flat order as an exact permutation of those semantic lists, so
+category-interleaved popup coordinates survive later individual actions,
+snapshots, replay, and reconnect. The classifier reproduces V1 `leaveAll`:
+Pokémon are consumed right-to-left into the evolution stack while non-Pokémon
+retain their relative attachment order. An
 exact `leaveAll` record carries `[initiator, "attachedCards", destinationSlot]`;
 conversion accepts only `active` or `bench`, requires staged evolution members
 to remain Pokémon and staged attachments to remain non-Pokémon, snapshots the
@@ -690,10 +692,10 @@ The lifecycle mapping is source-backed:
   Missing/stale coordinates and unresolved stack origins fail the whole
   candidate. Inspection sources use the optional atomic source-tail return mode
   and preserve the existing viewer grant; staged sources use a versioned
-  returned-sequence mode only when V1's exact flat result has a Pokémon prefix
-  followed by a non-Pokémon suffix. Empty work-area deck swaps use one move.
-  Category-interleaved staged tails remain closed because they cannot preserve
-  canonical evolution/attachment classification; and
+  returned-sequence mode carrying V1's exact flat tail and its right-to-left
+  Pokémon evolution/non-Pokémon attachment classification. Empty work-area
+  deck swaps use one move. Category-interleaved staged tails retain their exact
+  later coordinates and restoration semantics; and
 - shuffled-prizes-to-deck-bottom requires the recorded non-empty permutation to
   match the exact current prize count, then executes one atomic
   `MovePrizesToDeckBottom` using that order as its one-shot resolved outcome.
@@ -816,9 +818,8 @@ take-turn discards both players' loose boards in
 source order before drawing, and that an owner reset clears only that owner's
 reachable loose state, owned stadium, and play stacks before rebuilding its
 deck. Opponent-owned stadium and play state remain. The subset still cannot
-represent cross-viewer repeated-inspection visibility, category-interleaved
-staged deck-top tails, custom card-back URL policy, or cross-owner play
-placements.
+represent cross-viewer repeated-inspection visibility, custom card-back URL
+policy, or cross-owner play placements.
 
 Native undo records contain exactly `[null]`: V1 builds its filtered history in
 an inner function while the outer wrapper retains `undefined`, which JSON turns
@@ -840,21 +841,9 @@ remains the only `unsupported_action` that the native exporter can produce.
 
 ## Next conversion slices
 
-1. Decide whether category-interleaved staged deck-top tails require an explicit
-   flat work-area model, and continue the remaining source-backed positional
-   schemas. Staged `shuffleAll`
-   and `shuffleBottom`
-   translate recorded V1 flat indices to the canonical command's semantic input
-   order by stable identity; individual staged and inspection deck/stadium paths
-   use current-coordinate source-relative commands, while target-free play
-   composes existing departure and new-stack commands without a schema change.
-   The prerequisite draw, deck-inspection open/same-viewer extension and
-   whole-inspection bulk resolution, loose/stadium/play/stack
-   movement, direct prize shuffle, and zone-backed deck atoms are already
-   transactional. Individual inspection coordinates now resolve against the
-   current reachable work area. Cross-viewer repeated inspections remain closed
-   until per-card visibility is modeled explicitly rather than widening the
-   work area's viewer set.
+1. Model cross-viewer repeated deck-inspection visibility per card rather than
+   widening one work area's viewer set. Same-viewer extension and individual or
+   whole-inspection resolution are already transactional.
 2. Resolve the custom-card-back asset policy. The eight reveal/look names are
    transient socket/UI operations that never enter native exports, and
    `exchangeData` is explicitly exporter-filtered; injected records remain

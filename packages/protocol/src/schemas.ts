@@ -534,6 +534,7 @@ const WorkAreaViewSchema = v.object({
     v.object({
       id: IdentifierSchema,
       sourceStackId: IdentifierSchema,
+      cards: v.pipe(v.array(ViewCardSchema), v.maxLength(200)),
       evolutionCards: v.pipe(v.array(ViewCardSchema), v.maxLength(200)),
       attachmentCards: v.pipe(v.array(ViewCardSchema), v.maxLength(200)),
       suggestedSlot: v.picklist(['active', 'bench'] as const),

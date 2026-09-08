@@ -189,6 +189,7 @@ export type DomainEvent =
       readonly concealIdentity: boolean;
       readonly attachmentResolution: {
         readonly id: WorkAreaId;
+        readonly cardIds: readonly CardInstanceId[];
         readonly evolutionCardIds: readonly CardInstanceId[];
         readonly attachmentCardIds: readonly CardInstanceId[];
         readonly suggestedSlot: PlaySlot;
@@ -295,9 +296,11 @@ export type DomainEvent =
       readonly source: 'evolution' | 'attachment';
       readonly cardId: CardInstanceId;
       readonly deckTopCardId: CardInstanceId;
+      readonly expectedCardIds: readonly CardInstanceId[];
       readonly expectedEvolutionCardIds: readonly CardInstanceId[];
       readonly expectedAttachmentCardIds: readonly CardInstanceId[];
       readonly expectedDeckCardIds: readonly CardInstanceId[];
+      readonly returnedCardIds: readonly CardInstanceId[];
       readonly returnTo?: 'sourcePosition' | 'legacyFlatTailV1';
       readonly returnedEvolutionCardIds?: readonly CardInstanceId[];
       readonly returnedAttachmentCardIds?: readonly CardInstanceId[];

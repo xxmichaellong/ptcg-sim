@@ -89,6 +89,7 @@ describe('selected-card stadium placement', () => {
           attachmentResolution: {
             id: 'stadium-move-staged',
             sourceStackId: active.id,
+            cards: [card],
             evolutionCards: [],
             attachmentCards: [card],
             suggestedSlot: 'active' as const,

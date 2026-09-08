@@ -25,6 +25,7 @@ const stagedView = (): MatchViewState => {
         attachmentResolution: {
           id: 'staged-bulk-work-area',
           sourceStackId: 'removed-stack',
+          cards: [stagedCard],
           evolutionCards: [],
           attachmentCards: [stagedCard],
           suggestedSlot: 'bench',

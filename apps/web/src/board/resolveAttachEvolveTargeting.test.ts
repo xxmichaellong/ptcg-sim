@@ -138,6 +138,7 @@ describe('attach/evolve target resolver', () => {
           attachmentResolution: {
             id: 'staged-work',
             sourceStackId: base.boards[playerId]!.activeStackId!,
+            cards: [stagedCard],
             evolutionCards: [stagedCard],
             attachmentCards: [],
             suggestedSlot: 'active' as const,

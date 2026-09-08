@@ -472,16 +472,11 @@ const candidateStagedCardsInLegacyOrder = (
   const resolution = state.workAreas[playerId]?.attachmentResolution;
   if (!resolution) return null;
 
-  // Recursive V1 departure moves the newest lower evolution first, then each
-  // successively older stage, before preserving the live attachment order.
   const canonicalCardIds = [
     ...resolution.evolutionCardIds,
     ...resolution.attachmentCardIds,
   ];
-  const legacyCardIds = [
-    ...[...resolution.evolutionCardIds].reverse(),
-    ...resolution.attachmentCardIds,
-  ];
+  const legacyCardIds = resolution.cardIds;
   if (
     legacyCardIds.length === 0 ||
     legacyCardIds.some((cardId) => state.cards[cardId]?.ownerId !== playerId)

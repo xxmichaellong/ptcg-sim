@@ -151,6 +151,8 @@ describe('explicit card departures', () => {
       suggestedSlot: 'active',
       evolutionCards: [],
     });
+    expect(ownerArea.cards[0]?.kind).toBe('known');
+    expect(opponentArea.cards[0]?.kind).toBe('concealed');
     expect(ownerArea.attachmentCards[0]?.kind).toBe('known');
     expect(opponentArea.attachmentCards[0]?.kind).toBe('concealed');
     expect(

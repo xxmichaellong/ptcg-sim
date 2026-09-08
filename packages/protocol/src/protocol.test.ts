@@ -1178,6 +1178,55 @@ describe('client protocol ingress', () => {
       localDisclosure: { zoneIds: ['blue-prizes'], cards: [card] },
     };
     expect(parseServerFrame(JSON.stringify(frame)).ok).toBe(true);
+    const orderedWorkArea = {
+      id: 'work-area-blue-1',
+      sourceStackId: 'stack-blue-1',
+      cards: [card],
+      evolutionCards: [card],
+      attachmentCards: [],
+      suggestedSlot: 'active',
+    };
+    expect(
+      parseServerFrame(
+        JSON.stringify({
+          ...frame,
+          snapshot: {
+            ...snapshot,
+            workAreas: {
+              ...snapshot.workAreas,
+              blue: {
+                inspection: null,
+                attachmentResolution: orderedWorkArea,
+              },
+            },
+          },
+        })
+      ).ok
+    ).toBe(true);
+    const workAreaWithoutOrder = {
+      id: orderedWorkArea.id,
+      sourceStackId: orderedWorkArea.sourceStackId,
+      evolutionCards: orderedWorkArea.evolutionCards,
+      attachmentCards: orderedWorkArea.attachmentCards,
+      suggestedSlot: orderedWorkArea.suggestedSlot,
+    };
+    expect(
+      parseServerFrame(
+        JSON.stringify({
+          ...frame,
+          snapshot: {
+            ...snapshot,
+            workAreas: {
+              ...snapshot.workAreas,
+              blue: {
+                inspection: null,
+                attachmentResolution: workAreaWithoutOrder,
+              },
+            },
+          },
+        })
+      ).ok
+    ).toBe(false);
     for (const malformed of [
       { ...card, face: 'down' },
       { ...card, publiclyRevealed: true },

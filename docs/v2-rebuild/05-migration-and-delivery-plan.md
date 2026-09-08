@@ -227,10 +227,11 @@ new-stack identity, occupied-active demotion, and residual work area without a
 new core or wire shape. Staged `switchWithDeckTop` now resolves the exact current
 flat coordinate. An empty deck moves only the selected card; a non-empty deck
 uses a versioned internal tail-return mode that rebuilds V1's post-swap popup
-order and admits it only when that order losslessly partitions into a Pokémon
-prefix and non-Pokémon attachment suffix. The event carries the exact returned
-canonical sequences, while omitted historical events retain positional
-replacement. Category-interleaved tails fail before application. Exact
+order. Attachment-resolution state now carries that exact flat order alongside
+its semantic evolution and attachment lists. The event carries both the exact
+returned flat list and the right-to-left V1 `leaveAll` classification, while
+omitted historical events retain positional replacement. Category-interleaved
+tails therefore remain coordinate-, replay-, and reconnect-safe. Exact
 `leaveAll` tuples now consume a compatible staged
 stack through `RestoreStagedStack`, snapshot the full board layout, allocate a
 deterministic replacement stack, and preserve v1 active/bench placement,
@@ -413,7 +414,7 @@ never enter native V1 export history; `exchangeData` is explicitly filtered by
 the exporter. They remain allowlisted at the frozen envelope boundary but fail
 semantic conversion with `non_exported_action` if injected. The only genuine saved action family still
 unconverted is `changeCardBack`, pending the explicit custom-asset URL policy.
-Category-interleaved work-area tails, the complete transaction/report,
+Cross-viewer repeated-inspection visibility, the complete transaction/report,
 custom-card-back policy, and representative real-user corpus evidence remain
 before Phase 3 can exit.
 

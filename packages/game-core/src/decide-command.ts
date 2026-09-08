@@ -357,6 +357,7 @@ const decideTopEvolutionDeparture = (
       attachmentResolution: workAreaId
         ? {
             id: workAreaId,
+            cardIds: [...[...evolutionCardIds].reverse(), ...attachmentCardIds],
             evolutionCardIds,
             attachmentCardIds,
             suggestedSlot: stack.slot,
@@ -1641,17 +1642,21 @@ export const decideCommand = (
                     currentCategory: deckTop.originalCategory,
                   },
                 };
+          const returnedCardIds =
+            command.stagedReturnTo === 'legacyFlatTailV1'
+              ? [
+                  ...resolution.cardIds.filter((cardId) => cardId !== card.id),
+                  deckTopCardId,
+                ]
+              : resolution.cardIds.map((cardId) =>
+                  cardId === card.id ? deckTopCardId : cardId
+                );
           const returnedSequences =
             command.stagedReturnTo === 'legacyFlatTailV1'
-              ? classifyLegacyStagedCardIdsV1(classificationCards, [
-                  ...[...resolution.evolutionCardIds]
-                    .reverse()
-                    .filter((cardId) => cardId !== card.id),
-                  ...resolution.attachmentCardIds.filter(
-                    (cardId) => cardId !== card.id
-                  ),
-                  deckTopCardId,
-                ])
+              ? classifyLegacyStagedCardIdsV1(
+                  classificationCards,
+                  returnedCardIds
+                )
               : null;
           if (
             command.stagedReturnTo === 'legacyFlatTailV1' &&
@@ -1659,7 +1664,7 @@ export const decideCommand = (
           ) {
             return reject(
               'precondition_failed',
-              'Legacy staged tail return cannot preserve canonical card classification'
+              'Legacy staged tail return references missing card classification'
             );
           }
           return accept({
@@ -1669,9 +1674,11 @@ export const decideCommand = (
             source: location.source,
             cardId: card.id,
             deckTopCardId,
+            expectedCardIds: [...resolution.cardIds],
             expectedEvolutionCardIds: [...resolution.evolutionCardIds],
             expectedAttachmentCardIds: [...resolution.attachmentCardIds],
             expectedDeckCardIds: [...deck.cardIds],
+            returnedCardIds,
             ...(command.stagedReturnTo
               ? { returnTo: command.stagedReturnTo }
               : {}),

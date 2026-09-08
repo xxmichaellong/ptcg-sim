@@ -97,6 +97,8 @@ export interface InspectionWorkArea {
 export interface AttachmentResolutionWorkArea {
   readonly id: WorkAreaId;
   readonly sourceStackId: StackId;
+  /** Exact flat order presented while the detached cards remain staged. */
+  readonly cardIds: readonly CardInstanceId[];
   readonly evolutionCardIds: readonly CardInstanceId[];
   readonly attachmentCardIds: readonly CardInstanceId[];
   readonly suggestedSlot: PlaySlot;

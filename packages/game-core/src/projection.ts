@@ -129,6 +129,7 @@ export interface MatchViewState {
         readonly attachmentResolution: {
           readonly id: string;
           readonly sourceStackId: string;
+          readonly cards: readonly ViewCard[];
           readonly evolutionCards: readonly ViewCard[];
           readonly attachmentCards: readonly ViewCard[];
           readonly suggestedSlot: 'active' | 'bench';
@@ -323,6 +324,7 @@ export const projectMatch = (
             ? {
                 id: areas.attachmentResolution.id,
                 sourceStackId: areas.attachmentResolution.sourceStackId,
+                cards: areas.attachmentResolution.cardIds.map(projectCard),
                 evolutionCards:
                   areas.attachmentResolution.evolutionCardIds.map(projectCard),
                 attachmentCards:

@@ -539,10 +539,7 @@ const publicCardIds = (view: MatchViewState): ReadonlySet<ViewCardId> => {
       for (const card of workArea.inspection.cards) ids.add(card.id);
     }
     if (workArea.attachmentResolution) {
-      for (const card of workArea.attachmentResolution.evolutionCards)
-        ids.add(card.id);
-      for (const card of workArea.attachmentResolution.attachmentCards)
-        ids.add(card.id);
+      for (const card of workArea.attachmentResolution.cards) ids.add(card.id);
     }
   }
   return ids;

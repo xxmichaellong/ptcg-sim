@@ -231,8 +231,19 @@ export const collectInvariantProblems = (
           ...areas.attachmentResolution.attachmentCardIds,
         ]
       : [];
+    const stagedCardOrder = areas.attachmentResolution?.cardIds ?? [];
     if (hasDuplicates(stagedIds)) {
       problems.push(`attachment resolution for ${playerId} duplicates a card`);
+    }
+    if (
+      areas.attachmentResolution &&
+      (hasDuplicates(stagedCardOrder) ||
+        stagedCardOrder.length !== stagedIds.length ||
+        stagedCardOrder.some((cardId) => !stagedIds.includes(cardId)))
+    ) {
+      problems.push(
+        `attachment resolution for ${playerId} has invalid flat card order`
+      );
     }
     for (const cardId of stagedIds) {
       if (workAreaCardIds.has(cardId))

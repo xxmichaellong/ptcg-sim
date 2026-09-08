@@ -67,6 +67,7 @@ describe('selected-card play placement', () => {
           attachmentResolution: {
             id: 'play-move-staged',
             sourceStackId: 'removed-play-stack',
+            cards: [stagedCard],
             evolutionCards: [stagedCard],
             attachmentCards: [],
             suggestedSlot: 'bench',
@@ -179,6 +180,7 @@ describe('selected-card play placement', () => {
           attachmentResolution: {
             id: 'foreign-play-move-staged',
             sourceStackId: null,
+            cards: [first],
             evolutionCards: [first],
             attachmentCards: [],
             suggestedSlot: 'bench',
@@ -199,6 +201,7 @@ describe('selected-card play placement', () => {
           attachmentResolution: {
             id: 'partial-play-move-staged',
             sourceStackId: null,
+            cards: [first, second, third],
             evolutionCards: [first, second],
             attachmentCards: [third],
             suggestedSlot: 'active',

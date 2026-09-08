@@ -298,12 +298,9 @@ const locateCard = (
         card: inspected,
       };
     }
-    const staged = areas.attachmentResolution
-      ? [
-          ...areas.attachmentResolution.evolutionCards,
-          ...areas.attachmentResolution.attachmentCards,
-        ].find((candidate) => candidate.id === cardId)
-      : undefined;
+    const staged = areas.attachmentResolution?.cards.find(
+      (candidate) => candidate.id === cardId
+    );
     if (staged && areas.attachmentResolution) {
       return {
         card: staged,

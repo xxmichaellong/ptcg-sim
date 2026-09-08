@@ -194,6 +194,9 @@ const removeCardsFromAllLocations = (
               stagedAttachmentCardIds.length > 0)
               ? {
                   ...areas.attachmentResolution,
+                  cardIds: areas.attachmentResolution.cardIds.filter(
+                    (cardId) => !cardIds.has(cardId)
+                  ),
                   evolutionCardIds: stagedEvolutionCardIds,
                   attachmentCardIds: stagedAttachmentCardIds,
                 }
@@ -1702,6 +1705,9 @@ const applyEventInternal = (
                   ? null
                   : {
                       ...resolution,
+                      cardIds: resolution.cardIds.filter(
+                        (cardId) => cardId !== card.id
+                      ),
                       evolutionCardIds,
                       attachmentCardIds,
                     },
@@ -1842,6 +1848,10 @@ const applyEventInternal = (
       }
       const remainingEvolutionCardIds = stack.evolutionCardIds.slice(0, -1);
       const remainingAttachmentCardIds = [...stack.attachmentCardIds];
+      const remainingCardIds = [
+        ...[...remainingEvolutionCardIds].reverse(),
+        ...remainingAttachmentCardIds,
+      ];
       const dependentCount =
         remainingEvolutionCardIds.length + remainingAttachmentCardIds.length;
       if (
@@ -1849,6 +1859,10 @@ const applyEventInternal = (
           ? event.attachmentResolution !== null
           : !event.attachmentResolution ||
             event.attachmentResolution.suggestedSlot !== stack.slot ||
+            !sameCardOrder(
+              event.attachmentResolution.cardIds,
+              remainingCardIds
+            ) ||
             event.attachmentResolution.evolutionCardIds.length !==
               remainingEvolutionCardIds.length ||
             event.attachmentResolution.evolutionCardIds.some(
@@ -1924,6 +1938,7 @@ const applyEventInternal = (
               ? {
                   id: event.attachmentResolution.id,
                   sourceStackId: stack.id,
+                  cardIds: [...event.attachmentResolution.cardIds],
                   evolutionCardIds: [
                     ...event.attachmentResolution.evolutionCardIds,
                   ],
@@ -2127,6 +2142,9 @@ const applyEventInternal = (
                 ? null
                 : {
                     ...resolution,
+                    cardIds: resolution.cardIds.filter(
+                      (cardId) => cardId !== event.cardId
+                    ),
                     evolutionCardIds,
                     attachmentCardIds,
                   },
@@ -2473,6 +2491,7 @@ const applyEventInternal = (
         !areas ||
         !resolution ||
         resolution.id !== event.expectedWorkAreaId ||
+        !sameCardOrder(resolution.cardIds, event.expectedCardIds) ||
         resolution.evolutionCardIds.length !==
           event.expectedEvolutionCardIds.length ||
         resolution.evolutionCardIds.some(
@@ -2517,17 +2536,21 @@ const applyEventInternal = (
                 currentCategory: deckTop.originalCategory,
               },
             };
+      const returnedCardIds =
+        event.returnTo === 'legacyFlatTailV1'
+          ? [
+              ...resolution.cardIds.filter((cardId) => cardId !== event.cardId),
+              event.deckTopCardId,
+            ]
+          : resolution.cardIds.map((cardId) =>
+              cardId === event.cardId ? event.deckTopCardId : cardId
+            );
+      if (!sameCardOrder(returnedCardIds, event.returnedCardIds)) {
+        throw new Error('Staged deck-top swap has an invalid returned order');
+      }
       const returnedSequences =
         event.returnTo === 'legacyFlatTailV1'
-          ? classifyLegacyStagedCardIdsV1(classificationCards, [
-              ...[...resolution.evolutionCardIds]
-                .reverse()
-                .filter((cardId) => cardId !== event.cardId),
-              ...resolution.attachmentCardIds.filter(
-                (cardId) => cardId !== event.cardId
-              ),
-              event.deckTopCardId,
-            ])
+          ? classifyLegacyStagedCardIdsV1(classificationCards, returnedCardIds)
           : null;
       if (
         event.returnTo === 'legacyFlatTailV1' &&
@@ -2583,6 +2606,7 @@ const applyEventInternal = (
             ...areas,
             attachmentResolution: {
               ...resolution,
+              cardIds: returnedCardIds,
               evolutionCardIds:
                 event.returnTo === 'legacyFlatTailV1'
                   ? returnedSequences!.evolutionCardIds

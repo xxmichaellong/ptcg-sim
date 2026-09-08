@@ -113,6 +113,7 @@ describe('per-card zone movement', () => {
           attachmentResolution: {
             id: 'zone-move-staged',
             sourceStackId: active.id,
+            cards: [movedCard],
             evolutionCards: [],
             attachmentCards: [movedCard],
             suggestedSlot: 'active',

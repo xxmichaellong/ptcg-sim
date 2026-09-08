@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { applyEvent, applyEventBatch } from './apply-events.js';
+import { cloneMatchState } from './clone.js';
 import type { CommandContext, DeckEntry, GameCommand } from './commands.js';
 import { createEmptyMatch, playerZoneId } from './create-match.js';
 import { executeCommand, type CommandExecution } from './execute-command.js';
@@ -12,15 +13,26 @@ import {
   asMatchId,
   asPlayerId,
   asStackId,
+  asViewCardId,
+  asViewDefinitionId,
   asWorkAreaId,
 } from './ids.js';
-import { assertMatchInvariants } from './invariants.js';
+import {
+  assertMatchInvariants,
+  collectInvariantProblems,
+} from './invariants.js';
 import type { CardInstanceId, StackId } from './ids.js';
 import type { MatchState } from './model.js';
+import { projectMatch, type ProjectionIdentityAdapter } from './projection.js';
 import { stableSerialize } from './stable-hash.js';
 
 const p1 = asPlayerId('staged-order-player-one');
 const p2 = asPlayerId('staged-order-player-two');
+
+const projectionIdentities: ProjectionIdentityAdapter = {
+  viewCardId: ({ cardId }) => asViewCardId(cardId),
+  viewDefinitionId: ({ definitionId }) => asViewDefinitionId(definitionId),
+};
 
 const context = (): CommandContext => {
   let card = 0;
@@ -440,6 +452,13 @@ describe('versioned staged attachment restoration', () => {
         source: 'attachment',
         cardId: input.energy1Id,
         deckTopCardId: input.deckTopTrainerId,
+        expectedCardIds: [
+          input.baseId,
+          input.trainer1Id,
+          input.energy1Id,
+          input.trainer2Id,
+          input.energy2Id,
+        ],
         expectedEvolutionCardIds: [input.baseId],
         expectedAttachmentCardIds: [
           input.trainer1Id,
@@ -448,6 +467,13 @@ describe('versioned staged attachment restoration', () => {
           input.energy2Id,
         ],
         expectedDeckCardIds,
+        returnedCardIds: [
+          input.baseId,
+          input.trainer1Id,
+          input.trainer2Id,
+          input.energy2Id,
+          input.deckTopTrainerId,
+        ],
         returnTo: 'legacyFlatTailV1',
         returnedEvolutionCardIds: [input.baseId],
         returnedAttachmentCardIds: [
@@ -467,6 +493,16 @@ describe('versioned staged attachment restoration', () => {
       staged,
       { ...swapEvent, returnedAttachmentCardIds: [input.trainer1Id] },
       'Staged deck-top swap has an invalid V1 tail return'
+    );
+    expectApplyFailureWithoutMutation(
+      staged,
+      { ...swapEvent, returnedCardIds: [input.baseId] },
+      'Staged deck-top swap has an invalid returned order'
+    );
+    expectApplyFailureWithoutMutation(
+      staged,
+      { ...swapEvent, expectedCardIds: [input.baseId] },
+      'Staged deck-top swap has a stale work area'
     );
     expect(swapped.state.zones[input.deckId]?.cardIds).toEqual([
       input.energy1Id,
@@ -544,21 +580,86 @@ describe('versioned staged attachment restoration', () => {
       },
       input.context
     ).state;
+    const interleaved = accepted(
+      incompatible,
+      {
+        type: 'SwapCardWithDeckTop',
+        playerId: p1,
+        cardId: input.energy1Id,
+        expectedSourceId: incompatible.workAreas[p1]!.attachmentResolution!.id,
+        stagedReturnTo: 'legacyFlatTailV1',
+      },
+      input.context
+    );
+    expect(interleaved.state.workAreas[p1]?.attachmentResolution).toMatchObject(
+      {
+        cardIds: [
+          input.baseId,
+          input.trainer1Id,
+          input.trainer2Id,
+          input.energy2Id,
+          input.topId,
+        ],
+        evolutionCardIds: [input.topId, input.baseId],
+        attachmentCardIds: [
+          input.trainer1Id,
+          input.trainer2Id,
+          input.energy2Id,
+        ],
+      }
+    );
     expect(
-      executeCommand(
-        incompatible,
-        {
-          type: 'SwapCardWithDeckTop',
-          playerId: p1,
-          cardId: input.energy1Id,
-          expectedSourceId:
-            incompatible.workAreas[p1]!.attachmentResolution!.id,
-          stagedReturnTo: 'legacyFlatTailV1',
+      projectMatch(
+        interleaved.state,
+        { kind: 'player', playerId: p1 },
+        projectionIdentities
+      ).workAreas[p1]?.attachmentResolution?.cards.map((card) => card.id)
+    ).toEqual([
+      input.baseId,
+      input.trainer1Id,
+      input.trainer2Id,
+      input.energy2Id,
+      input.topId,
+    ]);
+    const clonedInterleaved = cloneMatchState(interleaved.state);
+    expect(
+      clonedInterleaved.workAreas[p1]?.attachmentResolution?.cardIds
+    ).toEqual(interleaved.state.workAreas[p1]?.attachmentResolution?.cardIds);
+    expect(
+      clonedInterleaved.workAreas[p1]?.attachmentResolution?.cardIds
+    ).not.toBe(interleaved.state.workAreas[p1]?.attachmentResolution?.cardIds);
+    const interleavedRestored = accepted(
+      interleaved.state,
+      restoreCommand(interleaved.state, 'active'),
+      input.context
+    );
+    const interleavedStackId =
+      interleavedRestored.state.boards[p1]!.activeStackId!;
+    expect(
+      interleavedRestored.state.stacks[interleavedStackId]?.evolutionCardIds
+    ).toEqual([input.topId, input.baseId]);
+    assertMatchInvariants(interleavedRestored.state);
+  });
+
+  it('rejects a flat staged order that is not an exact semantic permutation', () => {
+    const { input, state } = reverseStaged();
+    const resolution = state.workAreas[p1]!.attachmentResolution!;
+    const invalid: MatchState = {
+      ...state,
+      workAreas: {
+        ...state.workAreas,
+        [p1]: {
+          ...state.workAreas[p1]!,
+          attachmentResolution: {
+            ...resolution,
+            cardIds: [input.baseId, input.baseId],
+          },
         },
-        input.context
-      )
-    ).toMatchObject({ accepted: false, code: 'precondition_failed' });
-    assertMatchInvariants(incompatible);
+      },
+    };
+    expect(collectInvariantProblems(invalid)).toContain(
+      `attachment resolution for ${p1} has invalid flat card order`
+    );
   });
 
   it('uses current category history while requiring semantic staged departure', () => {

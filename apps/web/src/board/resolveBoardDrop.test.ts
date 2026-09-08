@@ -252,6 +252,7 @@ describe('board drop command resolution', () => {
           attachmentResolution: {
             id: 'staged-work-area',
             sourceStackId: 'removed-stack',
+            cards: [viewCard],
             evolutionCards: [viewCard],
             attachmentCards: [],
             suggestedSlot: 'bench',

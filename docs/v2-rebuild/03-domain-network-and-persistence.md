@@ -91,8 +91,11 @@ Legacy `attachedCards` and `viewCards` arrays are not ordinary permanent zones:
 - an **inspection session** records the source, ordered cards being inspected,
   allowed viewer(s), and return/move policy; and
 - an **attachment-resolution work area** records the removed host stack, its
-  suggested slot, ordered lower evolutions, and separately ordered attachments
-  while the player chooses discard, hand, lost zone, shuffle, or leave-in-play.
+  suggested slot, exact flat interaction order, ordered lower evolutions, and
+  separately ordered attachments while the player chooses discard, hand, lost
+  zone, shuffle, or leave-in-play. The flat list must be an exact duplicate-free
+  permutation of the two semantic lists; keeping both allows legacy interleaving
+  to survive snapshots/reconnect without weakening live-stack invariants.
 
 These are canonical when unresolved because reconnect and multiplayer must not
 lose them. Opening a visual deck/discard popup without moving cards is local
@@ -162,12 +165,13 @@ within both supported categories.
 Previously stored `StagedStackRestored` events keep their literal recorded-order
 reducer behavior, just as old direct-attachment events do. Departure into a work
 area, staged removals, staged deck-top replacement, bulk resolution, whole-stack
-movement, snapshots, and undo preserve their exact arrays and are not implicit
-normalization boundaries. A fully supported list is normalized only when the
-current restore command creates a new live stack; lists containing Pokémon or
-Unknown members retain their input order, while a genuinely missing staged card
-is rejected. Reverse and unsupported lists therefore remain valid historical
-states outside the v1 normalized transition subset rather than violating a
+movement, snapshots, and undo preserve their exact semantic arrays and flat
+order and are not implicit normalization boundaries. A fully supported list is
+normalized only when the current restore command creates a new live stack;
+lists containing Pokémon or Unknown members retain their input order, while a
+genuinely missing staged card is rejected. Reverse and unsupported lists
+therefore remain valid historical states outside the v1 normalized transition
+subset rather than violating a
 global invariant.
 
 `MovePlayStack`/`PlayStackLayoutSet` preserves evolution and attachment arrays

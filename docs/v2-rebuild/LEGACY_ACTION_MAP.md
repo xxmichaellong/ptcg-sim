@@ -42,8 +42,9 @@ constructing state. This is intentionally not yet a complete import
 compatibility claim: reachable loose-board take-turn cleanup and owner reset are
 now proven alongside owned-stadium and play-stack reset, while face-down in-play
 custom card backs, cross-viewer repeated-inspection visibility,
-category-interleaved staged tail returns, and cross-owner play state remain
-gated on their dedicated canonical designs. The eight reveal/look dispatcher
+and cross-owner play state remain gated on their dedicated canonical designs.
+Category-interleaved staged tail returns now use the explicit flat work-area
+order described below. The eight reveal/look dispatcher
 names are socket-only presentation operations rather than native saved records;
 `exchangeData` is explicitly omitted by the exporter.
 
@@ -56,7 +57,7 @@ names are socket-only presentation operations rather than native saved records;
 | `shuffleIntoDeck`           | Atomic `ShuffleCardIntoDeck`                                                                                                  | Recorded post-tail-move permutation, in-deck basis translation, concealment generation, stack policy           |
 | `moveToDeckTop`             | `MoveCardToDeckTop`                                                                                                           | v1 index-zero top convention, visibility clearing, stack policy                                                |
 | `moveToDeckBottom`          | `MoveCardToDeckBottom`                                                                                                        | v1 last-index bottom convention, visibility clearing, stack policy                                             |
-| `switchWithDeckTop`         | Zone transaction or atomic work-area swap with source-tail return                                                             | Empty deck, exact flat tail, compatibility partition, concealment, stack policy                                |
+| `switchWithDeckTop`         | Zone transaction or atomic work-area swap with source-tail return                                                             | Empty deck, exact flat tail, semantic classification, concealment, stack policy                                |
 | `viewDeck`                  | `ExtractDeckCardsForInspection`                                                                                               | Top/bottom selection, count clamp, target's deck, inspection viewer, ordered holding work area                 |
 | `shuffleAll`                | `ResolveStagedCards(shuffleIntoDeck)` or `ResolveInspectionCards(shuffleIntoDeck)`                                            | Supported sources (deck/discard/view/detached), messages, popup close, no-op                                   |
 | `shuffleBottom`             | `ResolveStagedCards(shuffleToDeckBottom)` or `ResolveInspectionCards(shuffleToDeckBottom)`                                    | Shuffle only selected source cards, bottom order relative to existing deck, visibility generation              |
@@ -221,9 +222,10 @@ board and into `MoveCardToPlay`, preserving V1's detached-card behavior and
 new-stack normalization across two canonical batches in the same closed import
 record. Staged `switchWithDeckTop` uses the same exact flat coordinate. With an
 empty deck it performs one deck-top move. Otherwise a versioned internal swap
-rebuilds the V1 flat tail result, carries its exact returned sequences, and
-accepts only a lossless Pokémon-prefix/non-Pokémon-suffix partition. This keeps
-later `leaveAll` restoration exact; category-interleaved results fail closed.
+rebuilds the V1 flat tail result and carries its exact returned flat and
+semantic sequences. The work area persists flat interaction order separately
+from evolution/attachment membership, so later indices and `leaveAll`
+restoration remain exact even when Pokémon and non-Pokémon are interleaved.
 An individual `viewCards` source uses the active inspection's already-matching
 V1 popup order. Each current coordinate can move to a loose zone through
 `MoveInspectedCard` or onto an exact numeric active/bench stack top through
@@ -316,10 +318,10 @@ final invariant checks, and whole-attempt replay cover both branches; stale and
 currently unrepresentable stack sources return no candidate. `viewCards` now
 opts the atomic inspection swap into a backward-compatible source-tail mode,
 while an empty deck uses the one-move branch. `attachedCards` similarly uses a
-versioned internal return mode when the exact V1 flat result can be partitioned
-into a Pokémon prefix and non-Pokémon suffix. Its event records both returned
-canonical sequences for replay and later restoration. Category-interleaved
-staged tails remain fail-closed because no canonical partition preserves them.
+versioned internal return mode. Its event records the exact returned flat order
+and the semantic sequences produced by V1's right-to-left Pokémon restoration
+rule. Category-interleaved staged tails therefore retain later popup
+coordinates, replay, reconnect, and restoration.
 
 Shuffled-prizes-to-deck-bottom is admitted as exact
 `[initiator, permutation]`. The source exports nothing when prizes are empty;
@@ -659,9 +661,10 @@ unchanged; stadium replacement preserves incumbent-owner discard. The work area
 retains its canonical classification for remaining cards and closes when empty.
 `switchWithDeckTop` removes that exact current card, places it at deck top, and
 appends the prior top to V1's flat popup tail. The importer derives and records
-the only canonical sequence partition that round-trips that flat order. If a
-returned Pokémon would follow a non-Pokémon card, no such partition exists and
-the whole candidate is rejected.
+the semantic result V1 would create: Pokémon are read right-to-left as the live
+evolution stack and non-Pokémon preserve relative attachment order. The work
+area separately stores the exact flat permutation, so a returned Pokémon after
+a non-Pokémon no longer loses its source coordinate or restoration semantics.
 
 Target-free active/bench placement from either work-area family is represented
 without a new command. `MoveInspectedCard` or `MoveStagedCard` first departs the

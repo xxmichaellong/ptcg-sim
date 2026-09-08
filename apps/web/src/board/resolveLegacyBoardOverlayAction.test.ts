@@ -467,6 +467,7 @@ describe('legacy board overlay action resolver', () => {
           attachmentResolution: {
             id: 'move-submenu-staged',
             sourceStackId: active.id,
+            cards: [hand.cards[0]!],
             evolutionCards: [],
             attachmentCards: [hand.cards[0]!],
             suggestedSlot: 'active',
