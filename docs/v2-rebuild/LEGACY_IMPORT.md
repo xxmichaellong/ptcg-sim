@@ -235,9 +235,16 @@ Attachment-resolution work-area sources now resolve their exact V1 flat order:
 newest-to-oldest staged evolutions followed by versioned attachments. A staged
 card can move individually to a loose zone through `MoveStagedCard`, or onto an
 exact numeric active/bench stack top through `PlaceCardOnPlayStack`; current
-category derives evolution versus attachment and an empty work area closes.
-Inspection sources, target-free play restoration, stadium/deck-relative staged
-movement, and bulk work-area actions remain closed for their distinct semantics.
+category derives evolution versus attachment and an empty work area closes. An
+exact `leaveAll` record carries `[initiator, "attachedCards", destinationSlot]`;
+conversion accepts only `active` or `bench`, requires staged evolution members
+to remain Pokémon and staged attachments to remain non-Pokémon, snapshots the
+complete board, and executes `RestoreStagedStack`. The event consumes the work
+area, allocates a deterministic stack, and preserves occupied-active demotion.
+Missing, attachment-only, or category-ambiguous work areas fail closed.
+Inspection sources, other target-free play restoration, stadium/deck-relative
+staged movement, and bulk work-area actions remain closed for their distinct
+semantics.
 
 A directly exported prize shuffle carries exactly
 `[initiator, "prizes", permutation, true]`. Empty permutations are valid for an
@@ -508,19 +515,22 @@ candidate. No partial batches escape on failure.
 The closed lifecycle/draw/discard-and-draw/both hand-shuffle-and-draw forms/
 direct-prize-shuffle/target-free-loose/stadium/new-play-stack-move/
 source-zone-attach-evolve/stack-card-reattachment/stack-card-departure/
-individual-staged-card-loose-and-targeted-play/move-to-top/
+individual-staged-card-loose-and-targeted-play/exact-leave-all-restore/
+move-to-top/
 rich-whole-stack-move-and-swap/move-to-bottom/
 shuffle-into-deck/deck-top-switch/
 prizes-to-deck-bottom subset can now create ordinary loose-board, singleton
 stadium, and active/bench stack state, enrich those stacks with zone-backed
 evolutions and attachments, move or swap those rich stacks, reattach lower
 stack members, depart any stack card into loose zones, and individually resolve
-staged cards into loose zones or existing stacks. Tests prove that a later
+staged cards into loose zones or existing stacks. It can also atomically restore
+an exact compatible staged stack to active or bench with deterministic IDs and
+full event replay. Tests prove that a later
 take-turn discards both players' loose boards in
 source order before drawing, and that an owner reset clears only that owner's
 reachable loose state, owned stadium, and play stacks before rebuilding its
 deck. Opponent-owned stadium and play state remain. The subset still cannot
-resolve inspections, target-free/bulk/deck-relative staged work, markers,
+resolve inspections, other target-free/bulk/deck-relative staged work, markers,
 face-down play state, or cross-owner play placements, so take-turn in-play
 reveal and reset behavior for those shapes remain gated on their dedicated
 movement/state decoders.
@@ -528,7 +538,8 @@ movement/state decoders.
 ## Next conversion slices
 
 1. Continue source-backed positional schemas for inspection origins and the
-   remaining target-free, bulk, stadium, and deck-relative work-area forms.
+   remaining target-free `moveCardBundle`, bulk, stadium, and deck-relative
+   work-area forms.
    The prerequisite draw, loose/stadium/play/stack movement, direct prize
    shuffle, and zone-backed deck atoms are already transactional. Map each
    additional coordinate only after its producing family makes that state

@@ -3823,6 +3823,308 @@ describe('legacy v1 canonical candidate builder', () => {
     assertMatchInvariants(result.state);
   });
 
+  it('atomically restores an exact staged stack to occupied active play', () => {
+    const parsed = parse(
+      payload(
+        [
+          ['1', 'Leave-all incumbent', 'Pokémon', '/legacy/incumbent.png'],
+          ['1', 'Leave-all source base', 'Pokémon', '/legacy/base.png'],
+          ['1', 'Leave-all source middle', 'Pokémon', '/legacy/middle.png'],
+          ['1', 'Leave-all source top', 'Pokémon', '/legacy/top.png'],
+          ['1', 'Leave-all source energy', 'Energy', '/legacy/energy.png'],
+          ['1', 'Leave-all source tool', 'Trainer', '/legacy/tool.png'],
+        ],
+        '',
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'active',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'bench',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'bench',
+          0,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'bench',
+          0,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'bench',
+          0,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'bench',
+          0,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'bench',
+          'discard',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'leaveAll', ['opp', 'attachedCards', 'active'])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) throw new Error('Expected conversion success');
+
+    const playerId = target.selfSeat.playerId;
+    const incumbentStackId = 'legacy:v1:stack:000000';
+    const departedStackId = 'legacy:v1:stack:000001';
+    const restoredStackId = 'legacy:v1:stack:000002';
+    const incumbentId = 'legacy:v1:card:000000';
+    const baseId = 'legacy:v1:card:000001';
+    const middleId = 'legacy:v1:card:000002';
+    const topId = 'legacy:v1:card:000003';
+    const energyId = 'legacy:v1:card:000004';
+    const toolId = 'legacy:v1:card:000005';
+    const workAreaId = 'legacy:v1:work-area:000000';
+    expect(result.state.boards[playerId]).toEqual({
+      activeStackId: restoredStackId,
+      benchStackIds: [incumbentStackId],
+    });
+    expect(result.state.stacks[restoredStackId]).toEqual({
+      id: restoredStackId,
+      boardPlayerId: playerId,
+      slot: 'active',
+      evolutionCardIds: [baseId, middleId],
+      attachmentCardIds: [energyId, toolId],
+      rotationQuarterTurns: 0,
+      damage: null,
+      specialCondition: null,
+      abilityUsed: false,
+    });
+    expect(result.state.stacks[incumbentStackId]).toMatchObject({
+      slot: 'bench',
+      evolutionCardIds: [incumbentId],
+    });
+    expect(result.state.stacks[departedStackId]).toBeUndefined();
+    expect(
+      result.state.zones[playerZoneId(playerId, 'discard')]?.cardIds
+    ).toEqual([topId]);
+    expect(result.state.workAreas[playerId]?.attachmentResolution).toBeNull();
+    expect(result.records[9]!.batches[0]!.events).toEqual([
+      {
+        type: 'StagedStackRestoredToPlayStack',
+        playerId,
+        expectedWorkAreaId: workAreaId,
+        expectedEvolutionCardIds: [baseId, middleId],
+        expectedAttachmentCardIds: [energyId, toolId],
+        attachmentOrderVersion: 1,
+        attachmentCardIds: [energyId, toolId],
+        expectedActiveStackId: incumbentStackId,
+        expectedBenchStackIds: [],
+        stackId: restoredStackId,
+        destinationSlot: 'active',
+        benchIndex: 0,
+      },
+    ]);
+    const replayed = result.records
+      .flatMap((record) => record.batches)
+      .reduce(
+        applyEventBatch,
+        createEmptyMatch(target.matchId, [target.selfSeat, target.opponentSeat])
+      );
+    expect(replayed).toEqual(result.state);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+  });
+
+  it('rolls back leave-all without an exact restorable staged stack', () => {
+    const noWorkArea = buildLegacyV1Candidate(
+      parse(
+        payload(
+          '',
+          '',
+          action('self', 'leaveAll', ['opp', 'attachedCards', 'bench'])
+        )
+      ),
+      target
+    );
+    expect(noWorkArea).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 3,
+          path: '$[3].parameters[1]',
+          message:
+            'Recorded leave-all source does not identify an exact restorable staged stack',
+        },
+      ],
+    });
+    expect('state' in noWorkArea).toBe(false);
+
+    const attachmentOnly = buildLegacyV1Candidate(
+      parse(
+        payload(
+          [
+            ['1', 'Attachment-only base', 'Pokémon', '/legacy/base.png'],
+            ['1', 'Attachment-only energy', 'Energy', '/legacy/energy.png'],
+          ],
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            0,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'active',
+            'discard',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'leaveAll', ['opp', 'attachedCards', 'bench'])
+        )
+      ),
+      target
+    );
+    expect(attachmentOnly).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 6,
+          path: '$[6].parameters[1]',
+          message:
+            'Recorded leave-all source does not identify an exact restorable staged stack',
+        },
+      ],
+    });
+    expect('state' in attachmentOnly).toBe(false);
+
+    const categoryAmbiguous = buildLegacyV1Candidate(
+      parse(
+        payload(
+          [
+            ['1', 'Ambiguous source base', 'Pokémon', '/legacy/a-base.png'],
+            ['1', 'Ambiguous lower Pokémon', 'Pokémon', '/legacy/a-middle.png'],
+            ['1', 'Ambiguous source top', 'Pokémon', '/legacy/a-top.png'],
+            ['1', 'Ambiguous target base', 'Pokémon', '/legacy/b-base.png'],
+            ['1', 'Ambiguous target top', 'Pokémon', '/legacy/b-top.png'],
+          ],
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'bench',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'bench',
+            0,
+            0,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'bench',
+            0,
+            0,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'bench',
+            'active',
+            1,
+            0,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            0,
+            'move',
+          ]),
+          action('self', 'moveCardBundle', [
+            'opp',
+            'active',
+            'discard',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'leaveAll', ['opp', 'attachedCards', 'active'])
+        )
+      ),
+      target
+    );
+    expect(categoryAmbiguous).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 10,
+          path: '$[10].parameters[1]',
+          message:
+            'Recorded leave-all source does not identify an exact restorable staged stack',
+        },
+      ],
+    });
+    expect('state' in categoryAmbiguous).toBe(false);
+  });
+
   it('rolls back stale and deliberately unsupported staged movement shapes', () => {
     const stageThen = (...finalActions: unknown[]) =>
       buildLegacyV1Candidate(

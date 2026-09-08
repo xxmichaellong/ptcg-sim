@@ -212,8 +212,13 @@ area, while a lower evolution or attachment departs independently and leaves
 the stack plus its marker state in place. The exact staged flat order now
 supports individual moves to loose zones and numeric existing-stack targets via
 `MoveStagedCard` and `PlaceCardOnPlayStack`; changing indices and empty-area
-cleanup are pinned. Target-free play, stadium, deck-relative, inspection, and
-bulk work-area shapes remain closed. Reachable tests now prove both-player
+cleanup are pinned. Exact `leaveAll` tuples now consume a compatible staged
+stack through `RestoreStagedStack`, snapshot the full board layout, allocate a
+deterministic replacement stack, and preserve v1 active/bench placement,
+including occupied-active demotion. Missing, attachment-only, and category-
+ambiguous staged shapes fail the whole transaction. Other target-free play,
+stadium, deck-relative, inspection, and bulk work-area shapes remain closed.
+Reachable tests now prove both-player
 loose-board take-turn cleanup plus owner-scoped loose/stadium/play reset/rebuild
 behavior.
 Shuffle-into-deck translates v1's in-deck tail-move

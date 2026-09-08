@@ -132,6 +132,14 @@ export type LegacyV1MovementAction =
       readonly mode: 'move';
     }
   | {
+      readonly type: 'leaveAll';
+      readonly recordIndex: number;
+      readonly player: LegacyExportUser;
+      readonly initiator: LegacyExportUser;
+      readonly sourceZone: 'attachedCards';
+      readonly destinationSlot: LegacyV1PlayDestinationZone;
+    }
+  | {
       readonly type: 'shuffleZone';
       readonly recordIndex: number;
       readonly player: LegacyExportUser;
@@ -242,6 +250,7 @@ const isMovementAction = (
     | 'shuffleAndDraw'
     | 'shuffleBottomAndDraw'
     | 'moveCardBundle'
+    | 'leaveAll'
     | 'shuffleZone'
     | 'moveToDeckTop'
     | 'shuffleIntoDeck'
@@ -253,6 +262,7 @@ const isMovementAction = (
   action.action === 'shuffleAndDraw' ||
   action.action === 'shuffleBottomAndDraw' ||
   action.action === 'moveCardBundle' ||
+  action.action === 'leaveAll' ||
   action.action === 'shuffleZone' ||
   action.action === 'moveToDeckTop' ||
   action.action === 'shuffleIntoDeck' ||
@@ -377,10 +387,11 @@ const decodeCardSource = (
  * Decodes admitted movement tuples without applying them. This starts with the
  * source-bounded draw, discard-and-draw, shuffle-hand-and-draw, and
  * shuffle-hand-to-deck-bottom-and-draw; bottom-mode and target-free
- * loose-zone/stadium/new-play-stack card bundles; direct prize-shuffle;
- * move-to-deck-top; shuffle-into-deck; switch-with-deck-top; and
- * shuffled-prizes-to-deck-bottom atoms. The remaining movement actions stay
- * untouched until their positional and state-dependent behavior is frozen.
+ * loose-zone/stadium/new-play-stack card bundles; staged-stack leave-all;
+ * direct prize-shuffle; move-to-deck-top; shuffle-into-deck;
+ * switch-with-deck-top; and shuffled-prizes-to-deck-bottom atoms. The
+ * remaining movement actions stay untouched until their positional and
+ * state-dependent behavior is frozen.
  */
 export const decodeLegacyV1MovementActions = (
   parsed: ParsedLegacyExport
@@ -747,10 +758,22 @@ export const decodeLegacyV1MovementActions = (
           );
         }
 
-        if (
-          destinationZone === 'stadium' ||
-          isPlayDestinationZone(destinationZone)
-        ) {
+        if (destinationZone === 'stadium') {
+          decoded.push({
+            type: 'moveCardBundle',
+            recordIndex: actionIndex + 1,
+            player: action.user,
+            initiator: source.initiator,
+            sourceZone: source.sourceZone,
+            sourceIndex: source.sourceIndex,
+            destinationZone,
+            targetIndex,
+            mode: 'move',
+          });
+          break;
+        }
+
+        if (isPlayDestinationZone(destinationZone)) {
           decoded.push({
             type: 'moveCardBundle',
             recordIndex: actionIndex + 1,
@@ -784,6 +807,56 @@ export const decodeLegacyV1MovementActions = (
           destinationZone,
           targetIndex,
           mode: 'move',
+        });
+        break;
+      }
+      case 'leaveAll': {
+        if (action.parameters.length !== 3) {
+          return failure(
+            'invalid_parameter_count',
+            actionIndex,
+            '.parameters',
+            'leaveAll requires [initiator, sourceZone, destinationSlot]'
+          );
+        }
+
+        const initiator = action.parameters[0];
+        if (initiator !== 'self' && initiator !== 'opp') {
+          return failure(
+            'invalid_parameter_type',
+            actionIndex,
+            '.parameters[0]',
+            'leaveAll initiator must use the exported self/opp perspective'
+          );
+        }
+        if (action.parameters[1] !== 'attachedCards') {
+          return failure(
+            'invalid_source_zone',
+            actionIndex,
+            '.parameters[1]',
+            'A directly exported leaveAll action must source attachedCards'
+          );
+        }
+        const destinationSlot = action.parameters[2];
+        if (
+          typeof destinationSlot !== 'string' ||
+          !isPlayDestinationZone(destinationSlot)
+        ) {
+          return failure(
+            'invalid_destination_zone',
+            actionIndex,
+            '.parameters[2]',
+            'A directly exported leaveAll action must target active or bench'
+          );
+        }
+
+        decoded.push({
+          type: 'leaveAll',
+          recordIndex: actionIndex + 1,
+          player: action.user,
+          initiator,
+          sourceZone: 'attachedCards',
+          destinationSlot,
         });
         break;
       }

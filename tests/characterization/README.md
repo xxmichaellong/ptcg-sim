@@ -433,6 +433,15 @@ changing staged coordinate to a canonical work-area card for a loose-zone move
 or a numeric existing-stack placement while continuing to reject other staged
 action shapes.
 
+The same static source envelope now pins `leaveAll` separately: its exported
+three-tuple includes the resolved active/bench destination, its first two loops
+scan the flat staging array from the tail for current-category Pokémon, and its
+final loop repeatedly moves index zero onto the reconstructed target before the
+popup is hidden. This supports the private importer's narrow atomic
+`RestoreStagedStack` conversion while keeping missing, attachment-only, and
+category-ambiguous staged state fail-closed. The pre-existing browser oracle
+continues to own the Energy/Trainer normalization and no-refresh layout facts.
+
 The protected active/bench shortcut checkpoint covers non-Alt `A` and `B`
 without absorbing stadium or prize rules. Two fresh real-v1 Chromium pages
 place a selected hand Pokémon beside one incumbent active, then pin active and

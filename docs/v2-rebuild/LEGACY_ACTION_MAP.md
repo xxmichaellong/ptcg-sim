@@ -65,8 +65,8 @@ The private movement decoder and candidate now admit the exact `draw`,
 `discardAndDraw`, `shuffleAndDraw`, `shuffleBottomAndDraw`, the bottom-mode,
 target-free loose-zone/stadium/new-play-stack/rich-whole-stack, and
 source-zone-targeted active/bench `moveCardBundle`, direct prize
-`shuffleZone`, `moveToDeckTop`, `shuffleIntoDeck`, `switchWithDeckTop`, and
-`shufflePrizesToDeckBottom` tuples.
+`shuffleZone`, exact staged-stack `leaveAll`, `moveToDeckTop`,
+`shuffleIntoDeck`, `switchWithDeckTop`, and `shufflePrizesToDeckBottom` tuples.
 Record `user` selects the target player's zones, while the exported initiator
 remains independent provenance. Draw counts are already clamped by v1 before a successful action is
 exported; conversion accepts only positive integers
@@ -401,6 +401,16 @@ unsupported membership remains in recorded order. Historical
 staged cards individually when no Pokémon remains to restore. An occupied work
 area rejects another dependent-producing departure but does not block an
 independent single-card stack departure.
+
+The private v1 converter now applies the exact exported
+`leaveAll` tuple `[initiator, "attachedCards", destinationSlot]` through that
+command. It admits only active/bench destinations and category-compatible staged
+membership, snapshots the full board order, consumes the work area, and uses the
+deterministic import ID adapter for the replacement stack. Occupied active
+restoration demotes the incumbent exactly once. Missing work areas,
+attachment-only work areas, and Pokémon attachments or non-Pokémon evolution
+members return no candidate rather than guessing how v1's category scans would
+reclassify them.
 
 Ordinary direct non-Pokémon ingress onto an existing live stack now emits the
 versioned `CardAttachedToPlayStack` event. `attachmentOrderVersion: 1` freezes

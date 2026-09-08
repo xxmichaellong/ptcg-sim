@@ -451,6 +451,68 @@ describe('legacy v1 movement positional decoder', () => {
     });
   });
 
+  it('decodes exact staged-stack leave-all destinations for both perspectives', () => {
+    expect(
+      decode(
+        action('self', 'leaveAll', ['opp', 'attachedCards', 'active']),
+        action('opp', 'leaveAll', ['self', 'attachedCards', 'bench'])
+      )
+    ).toEqual({
+      ok: true,
+      actions: [
+        {
+          type: 'leaveAll',
+          recordIndex: 3,
+          player: 'self',
+          initiator: 'opp',
+          sourceZone: 'attachedCards',
+          destinationSlot: 'active',
+        },
+        {
+          type: 'leaveAll',
+          recordIndex: 4,
+          player: 'opp',
+          initiator: 'self',
+          sourceZone: 'attachedCards',
+          destinationSlot: 'bench',
+        },
+      ],
+    });
+  });
+
+  it('rejects malformed or broadened leave-all tuples', () => {
+    expect(
+      firstIssue(action('self', 'leaveAll', ['self', 'attachedCards']))
+    ).toMatchObject({
+      code: 'invalid_parameter_count',
+      recordIndex: 3,
+      path: '$[3].parameters',
+    });
+    expect(
+      firstIssue(action('self', 'leaveAll', [false, 'attachedCards', 'active']))
+    ).toMatchObject({
+      code: 'invalid_parameter_type',
+      recordIndex: 3,
+      path: '$[3].parameters[0]',
+    });
+    expect(
+      firstIssue(action('self', 'leaveAll', ['self', 'bench', 'active']))
+    ).toMatchObject({
+      code: 'invalid_source_zone',
+      recordIndex: 3,
+      path: '$[3].parameters[1]',
+    });
+    expect(
+      firstIssue(
+        action('self', 'leaveAll', ['self', 'attachedCards', 'discard'])
+      )
+    ).toMatchObject({
+      code: 'invalid_destination_zone',
+      recordIndex: 3,
+      path: '$[3].parameters[2]',
+    });
+  });
+
   it('decodes only source-authentic direct prize shuffles', () => {
     expect(
       decode(

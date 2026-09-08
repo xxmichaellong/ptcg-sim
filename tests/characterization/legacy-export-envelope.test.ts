@@ -1075,6 +1075,42 @@ describe('legacy action-export source envelope', () => {
     expect(relocate).toContain('i--;');
   });
 
+  it('pins leave-all destination export and category-driven reconstruction order', () => {
+    const zones = readRepositoryFile('client/src/actions/zones/general.js');
+    const exportCall =
+      "processAction(user, emit, 'leaveAll', [oInitiator, oZoneId, dZoneId]);";
+
+    expect(zones).toContain(
+      "const oInitiator = initiator === 'self' ? 'opp' : 'self';"
+    );
+    expect(zones).toContain(
+      "if (typeof dZoneIdParam === 'boolean') {\n    emit = dZoneIdParam;\n    dZoneIdParam = undefined;\n  }"
+    );
+    expect(zones).toContain(
+      "const dZoneId = dZoneIdParam || (mouseClick.isActiveZone ? 'active' : 'bench');"
+    );
+    expect(zones).toContain(
+      "if (user === 'opp' && emit && systemState.isTwoPlayer) {\n    processAction(user, emit, 'leaveAll', [oInitiator, oZoneId, dZoneId]);\n    return;\n  }"
+    );
+    expect(zones).toContain(
+      "for (let i = oZoneCount1; i >= 0; i--) {\n      if (oZone.array[i].type === 'Pokémon') {\n        targetImage = oZone.array[i].image;\n        moveCard(user, initiator, oZoneId, dZoneId, i);\n        break;"
+    );
+    expect(zones).toContain(
+      "for (let i = oZoneCount2; i >= 0; i--) {\n      if (oZone.array[i].type === 'Pokémon') {\n        const targetIndex = dZone.array.findIndex(\n          (card) => card.image === targetImage\n        );\n        targetImage = oZone.array[i].image;\n        moveCard(user, initiator, oZoneId, dZoneId, i, targetIndex);"
+    );
+    expect(zones).toContain(
+      'const oZoneCount3 = oZone.getCount();\n    for (let i = 0; i < oZoneCount3; i++) {'
+    );
+    expect(zones).toContain(
+      'moveCard(user, initiator, oZoneId, dZoneId, 0, targetIndex);'
+    );
+    expect(zones).toContain("oZone.element.style.display = 'none';");
+    expect(zones).toContain(exportCall);
+    expect(zones.lastIndexOf(exportCall)).toBeGreaterThan(
+      zones.indexOf("oZone.element.style.display = 'none';")
+    );
+  });
+
   it('pins numeric play targets, top-only eligibility, and refreshed flat ordering', () => {
     const keybinds = readRepositoryFile(
       'client/src/actions/keybinds/keybinds.js'

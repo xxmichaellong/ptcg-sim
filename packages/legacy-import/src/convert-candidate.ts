@@ -56,6 +56,7 @@ const CONVERTED_ACTIONS = new Set<LegacySynchronizedActionName>([
   'shuffleAndDraw',
   'shuffleBottomAndDraw',
   'moveCardBundle',
+  'leaveAll',
   'shuffleZone',
   'moveToDeckTop',
   'shuffleIntoDeck',
@@ -971,6 +972,53 @@ export const buildLegacyV1Candidate = (
                   expectedSourceZoneId: sourceZoneId,
                   destinationZoneId,
                 });
+        if (problem) return problem;
+        break;
+      }
+      case 'leaveAll': {
+        const resolution = state.workAreas[playerId]?.attachmentResolution;
+        const board = state.boards[playerId];
+        const evolutionCards = resolution?.evolutionCardIds.map(
+          (cardId) => state.cards[cardId]
+        );
+        const attachmentCards = resolution?.attachmentCardIds.map(
+          (cardId) => state.cards[cardId]
+        );
+        if (
+          !resolution ||
+          !board ||
+          !evolutionCards ||
+          evolutionCards.length === 0 ||
+          evolutionCards.some(
+            (card) =>
+              !card ||
+              card.ownerId !== playerId ||
+              card.currentCategory !== 'Pokémon'
+          ) ||
+          !attachmentCards ||
+          attachmentCards.some(
+            (card) =>
+              !card ||
+              card.ownerId !== playerId ||
+              card.currentCategory === 'Pokémon'
+          )
+        ) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[1]`,
+            message:
+              'Recorded leave-all source does not identify an exact restorable staged stack',
+          });
+        }
+        const problem = apply({
+          type: 'RestoreStagedStack',
+          playerId,
+          expectedWorkAreaId: resolution.id,
+          expectedActiveStackId: board.activeStackId,
+          expectedBenchStackIds: [...board.benchStackIds],
+          destinationSlot: action.destinationSlot,
+        });
         if (problem) return problem;
         break;
       }
