@@ -206,9 +206,9 @@ chunk graph will be measured in the browser evidence run.
 - the repository-wide v2 and 79-test legacy gates.
 
 The drop resolver also refuses spectator submissions, stale scenes/cards/targets,
-same-zone no-ops, lower-evolution departures, foreign staged work areas, and
-transitions for which the core does not yet expose an explicit command. Safe
-top-evolution/attachment stack departures, individual inspection/staged-card
+same-zone no-ops, foreign staged work areas, and transitions for which the core
+does not yet expose an explicit command. Safe top/lower-evolution/attachment
+stack departures, individual inspection/staged-card
 departures, and staged-stack restoration have dedicated commands, resolved
 events, authority checks, and source preconditions. A staged work area projects
 its source stack, suggested slot, ordered evolution cards, and separately

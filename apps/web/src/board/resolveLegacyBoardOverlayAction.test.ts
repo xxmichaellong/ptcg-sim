@@ -508,7 +508,15 @@ describe('legacy board overlay action resolver', () => {
         cardId: active.evolutionCards[0]!.id,
         destination: 'board',
       })
-    ).toEqual({ ok: false, reason: 'unsupported_source' });
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'MoveCardFromStack',
+        cardId: active.evolutionCards[0]!.id,
+        expectedStackId: active.id,
+        destinationZoneId: board.id,
+      },
+    });
     expect(
       resolveLegacyBoardOverlayAction(view, {
         kind: 'context',

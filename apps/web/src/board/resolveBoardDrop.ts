@@ -112,15 +112,6 @@ export const resolveBoardDrop = (
       };
     }
     if (sourceStack) {
-      const evolutionIndex = sourceStack.evolutionCards.findIndex(
-        (card) => card.id === intent.cardId
-      );
-      if (
-        evolutionIndex >= 0 &&
-        evolutionIndex !== sourceStack.evolutionCards.length - 1
-      ) {
-        return rejected('unsupported_source');
-      }
       return {
         ok: true,
         command: {

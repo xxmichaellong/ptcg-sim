@@ -168,7 +168,11 @@ export type DomainEvent =
       readonly type: 'CardMovedFromStack';
       readonly cardId: CardInstanceId;
       readonly expectedStackId: StackId;
-      readonly source: 'attachment';
+      /**
+       * `attachment` preserves the original event shape. A lower evolution is
+       * distinct from a top departure because its play stack remains intact.
+       */
+      readonly source: 'attachment' | 'lowerEvolution';
       readonly destinationZoneId: ZoneId;
       readonly destinationIndex: number;
       readonly concealIdentity: boolean;

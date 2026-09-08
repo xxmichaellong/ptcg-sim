@@ -1744,11 +1744,24 @@ const applyEventInternal = (
     }
     case 'CardMovedFromStack': {
       const stack = requireStack(state, event.expectedStackId);
-      const sourceIndex = stack.attachmentCardIds.indexOf(event.cardId);
+      if (event.source !== 'attachment' && event.source !== 'lowerEvolution') {
+        throw new Error('Stack departure source is invalid');
+      }
+      const sourceCardIds =
+        event.source === 'attachment'
+          ? stack.attachmentCardIds
+          : stack.evolutionCardIds;
+      const sourceIndex = sourceCardIds.indexOf(event.cardId);
       if (sourceIndex < 0) {
         throw new Error(
-          `Attachment ${event.cardId} is not in the expected stack`
+          `Card ${event.cardId} is not in the expected stack source`
         );
+      }
+      if (
+        event.source === 'lowerEvolution' &&
+        sourceIndex === stack.evolutionCardIds.length - 1
+      ) {
+        throw new Error('A top evolution must use play-stack departure');
       }
       const destination = requireZone(state, event.destinationZoneId);
       if (
@@ -1776,9 +1789,20 @@ const applyEventInternal = (
       const nextCard = event.concealIdentity
         ? incrementVisibility(normalizedCard)
         : normalizedCard;
-      const attachmentCardIds = stack.attachmentCardIds.filter(
-        (cardId) => cardId !== event.cardId
-      );
+      const evolutionCardIds =
+        event.source === 'lowerEvolution'
+          ? [
+              ...stack.evolutionCardIds.slice(0, sourceIndex),
+              ...stack.evolutionCardIds.slice(sourceIndex + 1),
+            ]
+          : stack.evolutionCardIds;
+      const attachmentCardIds =
+        event.source === 'attachment'
+          ? [
+              ...stack.attachmentCardIds.slice(0, sourceIndex),
+              ...stack.attachmentCardIds.slice(sourceIndex + 1),
+            ]
+          : stack.attachmentCardIds;
       return {
         ...state,
         cards: { ...state.cards, [card.id]: nextCard },
@@ -1788,7 +1812,7 @@ const applyEventInternal = (
         },
         stacks: {
           ...state.stacks,
-          [stack.id]: { ...stack, attachmentCardIds },
+          [stack.id]: { ...stack, evolutionCardIds, attachmentCardIds },
         },
         visibility: retireVisibility(
           state,

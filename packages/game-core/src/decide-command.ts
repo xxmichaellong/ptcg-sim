@@ -365,6 +365,45 @@ const decideTopEvolutionDeparture = (
   };
 };
 
+const decideEvolutionCardDepartureToZone = (
+  state: MatchState,
+  stack: PlayStack,
+  cardId: CardInstanceId,
+  destination: CardZone,
+  destinationIndex: number,
+  context: CommandContext,
+  concealIdentity = isConcealedZone(destination)
+): CommandDecision => {
+  const sourceIndex = stack.evolutionCardIds.indexOf(cardId);
+  if (sourceIndex < 0) {
+    return reject(
+      'stale_reference',
+      'Card is no longer an evolution in the expected play stack'
+    );
+  }
+  if (sourceIndex < stack.evolutionCardIds.length - 1) {
+    return accept({
+      type: 'CardMovedFromStack',
+      cardId,
+      expectedStackId: stack.id,
+      source: 'lowerEvolution',
+      destinationZoneId: destination.id,
+      destinationIndex,
+      concealIdentity,
+    });
+  }
+  const departure = decideTopEvolutionDeparture(
+    state,
+    stack,
+    cardId,
+    destination,
+    destinationIndex,
+    context,
+    concealIdentity
+  );
+  return departure.accepted ? accept(departure.event) : departure;
+};
+
 const decideCardDepartureToZone = (
   state: MatchState,
   source: CardActionSource,
@@ -1194,7 +1233,7 @@ export const decideCommand = (
           concealIdentity: isConcealedZone(destination),
         });
       }
-      const departure = decideTopEvolutionDeparture(
+      return decideEvolutionCardDepartureToZone(
         state,
         stack,
         card.id,
@@ -1202,7 +1241,6 @@ export const decideCommand = (
         destinationIndex,
         context
       );
-      return departure.accepted ? accept(departure.event) : departure;
     }
     case 'MovePlayStack': {
       const stack = state.stacks[command.stackId];

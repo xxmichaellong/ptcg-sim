@@ -945,7 +945,7 @@ describe('legacy action-export source envelope', () => {
     );
   });
 
-  it('pins target-free play placement, whole-stack movement, and departures', () => {
+  it('pins target-free play placement, whole-stack movement, and every stack-card departure', () => {
     const keybinds = readRepositoryFile(
       'client/src/actions/keybinds/keybinds.js'
     );
@@ -960,6 +960,9 @@ describe('legacy action-export source envelope', () => {
     );
     const relocate = readRepositoryFile(
       'client/src/actions/move-card-bundle/relocate-attached-cards.js'
+    );
+    const evolve = readRepositoryFile(
+      'client/src/actions/move-card-bundle/evolve-card.js'
     );
 
     for (const binding of [
@@ -1015,6 +1018,10 @@ describe('legacy action-export source envelope', () => {
     );
     expect(moveCard).toContain(
       "if (movingCard.image.target === 'on') {\n    decreaseCardLayer(movingCard);"
+    );
+    expect(evolve).toContain('targetCard.image.relative = movingCard.image;');
+    expect(evolve).toContain(
+      'if (card.image.relative === targetCard.image) {\n      card.image.relative = movingCard.image;'
     );
     expect(relocate).toContain('if (image.relative === movingCard.image)');
     expect(relocate).toContain("if (['active', 'bench'].includes(dZoneId))");

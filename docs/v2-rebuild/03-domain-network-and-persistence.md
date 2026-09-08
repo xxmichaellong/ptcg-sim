@@ -117,6 +117,17 @@ card owned by one player attached or moved to the other player's public board.
 Moving a stack out of play has an explicit atomic policy for evolution layers and
 attachments, including creation of the detached-card work area.
 
+Direct single-card stack departures distinguish three cases without changing
+the wire command. An attachment and a lower evolution each leave independently
+through `CardMovedFromStack`, while the top evolution continues to use
+`PlayStackDeparted` because it removes the stack and may create the detached-card
+work area. The event's original literal `source: "attachment"` remains valid;
+new lower-evolution events use the additive `source: "lowerEvolution"` variant.
+Replay validates the named source collection and rejects a lower-evolution event
+for the current top, so old attachment history retains its exact reducer behavior
+and a forged event cannot bypass top-departure staging. Stack markers, rotation,
+slot, and identity remain unchanged when a lower evolution leaves.
+
 Ordinary direct non-Pokémon attachment ingress has a frozen v1 ordering rule. A
 Trainer appends to the existing attachment list. An incoming Energy stable-
 partitions a fully supported Energy/Trainer list so every Energy precedes every

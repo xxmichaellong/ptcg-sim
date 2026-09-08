@@ -339,10 +339,7 @@ export const MODEL_COMMAND_GENERATORS = {
   MoveCardFromStack: (context) => {
     const stack = context.random.pick(actorStacks(context));
     const card = stack
-      ? context.random.pick([
-          ...stack.attachmentCards,
-          ...stack.evolutionCards.slice(-1),
-        ])
+      ? context.random.pick([...stack.attachmentCards, ...stack.evolutionCards])
       : undefined;
     const destination = actorZone(context, 'discard');
     return stack && card && destination

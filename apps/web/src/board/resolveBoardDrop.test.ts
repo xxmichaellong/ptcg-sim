@@ -115,6 +115,7 @@ describe('board drop command resolution', () => {
       )
     ).toEqual({ ok: false, reason: 'stale_scene' });
     const stack = input.view.stacks['stack:blue:active']!;
+    const lowerEvolution = stack.evolutionCards[0]!;
     const stackCard = stack.evolutionCards.at(-1)!;
     expect(
       resolveBoardDrop(input.view, input.scene, {
@@ -158,6 +159,21 @@ describe('board drop command resolution', () => {
       command: {
         type: 'MoveCardFromStack',
         cardId: stackCard.id,
+        expectedStackId: stack.id,
+        destinationZoneId: 'zone:spike-blue:discard',
+      },
+    });
+    expect(
+      resolveBoardDrop(input.view, input.scene, {
+        kind: 'CardDropRequested',
+        cardId: lowerEvolution.id,
+        targetId: 'zone:spike-blue:discard',
+      })
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'MoveCardFromStack',
+        cardId: lowerEvolution.id,
         expectedStackId: stack.id,
         destinationZoneId: 'zone:spike-blue:discard',
       },

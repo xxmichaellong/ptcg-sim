@@ -434,14 +434,14 @@ test('Q/E attach targeting stays local until one exact target click and fails cl
   expect(errors).toEqual([]);
 });
 
-test('native DOM input reaches protected controller state, semantic drop rejection, and exactly-once submit', async ({
+test('native DOM input reaches protected controller state, lower-stack departure, and exactly-once submit', async ({
   page,
 }) => {
   const errors = collectRuntimeErrors(page);
   const fixture = await mountHarness(page);
   const host = page.locator('[data-react-dom-protected-input-harness]');
   const sourceCard = host.locator(`[data-card-id="${fixture.sourceCardId}"]`);
-  const unsupportedCard = host.locator(
+  const lowerEvolutionCard = host.locator(
     `[data-card-id="${fixture.unsupportedCardId}"]`
   );
   const sourceZone = host.locator(`[data-zone-id="${fixture.sourceZoneId}"]`);
@@ -449,7 +449,7 @@ test('native DOM input reaches protected controller state, semantic drop rejecti
     `[data-zone-id="${fixture.destinationZoneId}"]`
   );
   await expect(sourceCard).toBeVisible();
-  await expect(unsupportedCard).toBeVisible();
+  await expect(lowerEvolutionCard).toBeVisible();
   const sourceZonePoint = await exposedZonePoint(sourceZone);
   const destinationZonePoint = await exposedZonePoint(destinationZone);
 
@@ -480,32 +480,35 @@ test('native DOM input reaches protected controller state, semantic drop rejecti
   await clearEvidence(page);
   await drag(
     page,
-    unsupportedCard,
+    lowerEvolutionCard,
     destinationZonePoint,
     fixture.destinationZoneId
   );
   await expect
-    .poll(async () => (await evidence(page)).rejections)
+    .poll(async () => (await evidence(page)).submissionResults)
     .toEqual([
       {
-        kind: 'IntentRejected',
-        reason: 'unsupported_source',
-        intent: {
-          kind: 'CardDropRequested',
-          cardId: fixture.unsupportedCardId,
-          targetId: fixture.destinationZoneId,
-        },
+        queued: true,
+        commandId: 'protected-input-command-1',
+        clientSequence: 1,
       },
     ]);
-  const unsupportedEvidence = await evidence(page);
-  expect(unsupportedEvidence.submissions).toEqual([]);
-  expect(unsupportedEvidence.submissionResults).toEqual([]);
-  expect(unsupportedEvidence.presentation).toMatchObject({
+  const lowerDepartureEvidence = await evidence(page);
+  expect(lowerDepartureEvidence.submissions).toEqual([
+    {
+      type: 'MoveCardFromStack',
+      cardId: fixture.unsupportedCardId,
+      expectedStackId: fixture.activeStackId,
+      destinationZoneId: fixture.destinationZoneId,
+    },
+  ]);
+  expect(lowerDepartureEvidence.rejections).toEqual([]);
+  expect(lowerDepartureEvidence.presentation).toMatchObject({
     selectedCardId: null,
     drag: null,
   });
-  expect(unsupportedEvidence.reportedErrors).toEqual([]);
-  await expect(unsupportedCard).toHaveAttribute('aria-pressed', 'false');
+  expect(lowerDepartureEvidence.reportedErrors).toEqual([]);
+  await expect(lowerEvolutionCard).toHaveAttribute('aria-pressed', 'false');
 
   await clearEvidence(page);
   await drag(page, sourceCard, destinationZonePoint, fixture.destinationZoneId);
@@ -514,8 +517,8 @@ test('native DOM input reaches protected controller state, semantic drop rejecti
     .toEqual([
       {
         queued: true,
-        commandId: 'protected-input-command-1',
-        clientSequence: 1,
+        commandId: 'protected-input-command-2',
+        clientSequence: 2,
       },
     ]);
   const submittedEvidence = await evidence(page);
@@ -530,8 +533,8 @@ test('native DOM input reaches protected controller state, semantic drop rejecti
   expect(submittedEvidence.submissionResults).toEqual([
     {
       queued: true,
-      commandId: 'protected-input-command-1',
-      clientSequence: 1,
+      commandId: 'protected-input-command-2',
+      clientSequence: 2,
     },
   ]);
   expect(submittedEvidence.rejections).toEqual([]);

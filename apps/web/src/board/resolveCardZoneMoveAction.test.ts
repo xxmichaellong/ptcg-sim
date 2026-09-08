@@ -40,15 +40,16 @@ describe('per-card zone movement', () => {
     }
   });
 
-  it('supports top/attachment and viewer-owned work-area departures', () => {
+  it('supports stack-card and viewer-owned work-area departures', () => {
     const view = createRendererSpikeView();
     const playerId = view.playerOrder[0]!;
     const hand = view.zones[`zone:${playerId}:hand`]!;
     const discard = view.zones[`zone:${playerId}:discard`]!;
     const active = view.stacks[`stack:blue:active`]!;
+    const lowerEvolution = active.evolutionCards[0]!;
     const top = active.evolutionCards.at(-1)!;
     const attachment = active.attachmentCards[0]!;
-    for (const card of [top, attachment]) {
+    for (const card of [lowerEvolution, top, attachment]) {
       expect(resolveCardZoneMoveAction(view, card.id, 'discard')).toEqual({
         ok: true,
         command: {
@@ -130,11 +131,10 @@ describe('per-card zone movement', () => {
     });
   });
 
-  it('fails closed for spectators, stale/no-op cards, lower evolutions, and missing targets', () => {
+  it('fails closed for spectators, stale/no-op cards, and missing targets', () => {
     const view = createRendererSpikeView();
     const playerId = view.playerOrder[0]!;
     const hand = view.zones[`zone:${playerId}:hand`]!;
-    const active = view.stacks[`stack:blue:active`]!;
     expect(
       resolveCardZoneMoveAction(
         { ...view, viewer: { kind: 'spectator' } },
@@ -153,10 +153,6 @@ describe('per-card zone movement', () => {
     expect(
       resolveCardZoneMoveAction(view, prizes.cards[0]!.id, 'prizes')
     ).toEqual({ ok: false, reason: 'no_op' });
-    expect(
-      resolveCardZoneMoveAction(view, active.evolutionCards[0]!.id, 'discard')
-    ).toEqual({ ok: false, reason: 'unsupported_source' });
-
     const discard = view.zones[`zone:${playerId}:discard`]!;
     const missingTarget: MatchViewState = {
       ...view,

@@ -242,6 +242,43 @@ describe('atomic play-stack placement authority resolution', () => {
     ).toEqual({ accepted: false, code: 'unauthorized' });
   });
 
+  it('resolves a known lower evolution for an independent stack departure', () => {
+    const input = fixture();
+    const state = run(input.state, {
+      type: 'MoveCardToPlay',
+      cardId: input.evolutionId,
+      expectedSourceZoneId: input.discardId,
+      boardPlayerId: p1,
+      slot: 'active',
+      targetStackId: input.stackId,
+    });
+    const identities = aliasState(state, [
+      { alias: 'known-lower', cardId: input.baseId, viewerId: p1 },
+    ]);
+    expect(
+      resolveWireCommand(
+        state,
+        identities,
+        session(p1),
+        {
+          type: 'MoveCardFromStack',
+          cardId: 'known-lower',
+          expectedStackId: input.stackId,
+          destinationZoneId: input.discardId,
+        },
+        DEFAULT_AUTHORITY_POLICY
+      )
+    ).toEqual({
+      accepted: true,
+      command: {
+        type: 'MoveCardFromStack',
+        cardId: input.baseId,
+        expectedStackId: input.stackId,
+        destinationZoneId: input.discardId,
+      },
+    });
+  });
+
   it('rejects another player resolving a private attached-card work area', () => {
     const input = fixture();
     let state = run(input.state, {

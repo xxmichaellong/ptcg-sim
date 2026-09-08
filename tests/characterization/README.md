@@ -415,10 +415,12 @@ discard, lost-zone, and loose-board arrays, selection cleanup, live/export
 closed runtime-validated destination tuple now drives a per-card resolver shared
 with the existing context-menu `to Board` path. It selects `MoveCard`,
 `MoveCardFromStack`, `MoveInspectedCard`, or `MoveStagedCard` from the current
-recipient-safe source and preserves same-zone, lower-evolution, foreign-work-
-area, stale-card, missing-target, replay, controller, and submit-time rejection.
-Candidate Chromium proves the four commands after the prior sixteen continuous
-shortcuts and focused editable input remains silent. No protocol, domain,
+recipient-safe source. Every live stack card is supported; same-zone, foreign-
+work-area, stale-card, missing-target, replay, controller, and submit-time
+rejection remains fail closed. Candidate Chromium proves a native lower-
+evolution drag emits exactly one `MoveCardFromStack`, then proves the four
+shortcut commands after the prior sixteen continuous shortcuts; focused editable
+input remains silent. No protocol, domain,
 authority, route, label, layout, styling, UI, or UX surface changes.
 
 The protected active/bench shortcut checkpoint covers non-Alt `A` and `B`
@@ -463,8 +465,8 @@ tuple and reuses its existing source-specific `MoveCard`, `MoveCardFromStack`,
 `MoveInspectedCard`, or `MoveStagedCard` commands. The established concealed-
 zone domain path marks the event `concealIdentity`, advances visibility
 generation, and supplies owner and opponent projections with distinct fresh
-opaque aliases. Same-prize, stale, lower-evolution, foreign-work-area, replay,
-and submit-time races remain fail closed. Candidate Chromium proves the command
+opaque aliases. Same-prize, stale, foreign-work-area, replay, and submit-time
+races remain fail closed. Candidate Chromium proves the command
 after the prior twenty-three continuous shortcuts and focused editable input
 remains silent. No protocol, domain, authority, route, label, layout, styling,
 UI, or UX surface changes.

@@ -3502,56 +3502,112 @@ describe('legacy v1 canonical candidate builder', () => {
     assertMatchInvariants(result.state);
   });
 
-  it('rejects a target-free lower-evolution departure transactionally', () => {
-    const result = buildLegacyV1Candidate(
-      parse(
-        payload(
+  it('departs changing lower-evolution coordinates while preserving their source stack', () => {
+    const parsed = parse(
+      payload(
+        [
+          ['1', 'Lower departure base', 'Pokémon', '/legacy/lower-base.png'],
           [
-            ['1', 'Lower departure base', 'Pokémon', '/legacy/lower-base.png'],
-            ['1', 'Lower departure top', 'Pokémon', '/legacy/lower-top.png'],
+            '1',
+            'Lower departure middle',
+            'Pokémon',
+            '/legacy/lower-middle.png',
           ],
-          '',
-          action('self', 'moveCardBundle', [
-            'opp',
-            'deck',
-            'active',
-            0,
-            false,
-            'move',
-          ]),
-          action('self', 'moveCardBundle', [
-            'opp',
-            'deck',
-            'active',
-            0,
-            0,
-            'move',
-          ]),
-          action('self', 'moveCardBundle', [
-            'opp',
-            'active',
-            'discard',
-            1,
-            false,
-            'move',
-          ])
-        )
-      ),
-      target
+          ['1', 'Lower departure top', 'Pokémon', '/legacy/lower-top.png'],
+        ],
+        '',
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'active',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'active',
+          0,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'active',
+          0,
+          0,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'active',
+          'discard',
+          1,
+          false,
+          'move',
+        ]),
+        action('self', 'moveCardBundle', [
+          'opp',
+          'active',
+          'hand',
+          1,
+          false,
+          'move',
+        ])
+      )
     );
-    expect(result).toEqual({
-      ok: false,
-      issues: [
-        {
-          code: 'source_state_mismatch',
-          recordIndex: 5,
-          path: '$[5].parameters[3]',
-          message:
-            'Current closed candidate cannot depart a lower evolution from a play stack',
-        },
-      ],
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) throw new Error('Expected conversion success');
+
+    const playerId = target.selfSeat.playerId;
+    const stackId = 'legacy:v1:stack:000000';
+    const baseId = 'legacy:v1:card:000000';
+    const middleId = 'legacy:v1:card:000001';
+    const topId = 'legacy:v1:card:000002';
+    const discardId = playerZoneId(playerId, 'discard');
+    const handId = playerZoneId(playerId, 'hand');
+    expect(result.state.boards[playerId]).toEqual({
+      activeStackId: stackId,
+      benchStackIds: [],
     });
-    expect('state' in result).toBe(false);
+    expect(result.state.stacks[stackId]).toMatchObject({
+      boardPlayerId: playerId,
+      slot: 'active',
+      evolutionCardIds: [topId],
+      attachmentCardIds: [],
+    });
+    expect(result.state.zones[discardId]?.cardIds).toEqual([middleId]);
+    expect(result.state.zones[handId]?.cardIds).toEqual([baseId]);
+    expect(result.state.workAreas[playerId]?.attachmentResolution).toBeNull();
+    expect(result.records[5]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardMovedFromStack',
+        cardId: middleId,
+        expectedStackId: stackId,
+        source: 'lowerEvolution',
+        destinationZoneId: discardId,
+        destinationIndex: 0,
+        concealIdentity: false,
+      },
+    ]);
+    expect(result.records[6]!.batches[0]!.events).toEqual([
+      {
+        type: 'CardMovedFromStack',
+        cardId: baseId,
+        expectedStackId: stackId,
+        source: 'lowerEvolution',
+        destinationZoneId: handId,
+        destinationIndex: 0,
+        concealIdentity: true,
+      },
+    ]);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
   });
 
   it('rejects stale and unresolved bottom-bundle sources without state', () => {

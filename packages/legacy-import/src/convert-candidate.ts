@@ -743,15 +743,6 @@ export const buildLegacyV1Candidate = (
                 'Recorded move-card source coordinate does not identify a current active/bench card',
             });
           }
-          if (source.kind === 'lowerEvolution') {
-            return failure({
-              code: 'source_state_mismatch',
-              recordIndex: action.recordIndex,
-              path: `$[${action.recordIndex}].parameters[3]`,
-              message:
-                'Current closed candidate cannot depart a lower evolution from a play stack',
-            });
-          }
           const problem = apply({
             type: 'MoveCardFromStack',
             cardId: source.cardId,

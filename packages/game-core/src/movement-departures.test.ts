@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { applyEventBatch } from './apply-events.js';
 import type { CommandContext, DeckEntry } from './commands.js';
 import { createEmptyMatch, playerZoneId } from './create-match.js';
 import { executeCommand } from './execute-command.js';
@@ -185,7 +186,129 @@ describe('explicit card departures', () => {
     assertMatchInvariants(resolved.state);
   });
 
-  it('stages and restores ordered evolutions after only the top may leave', () => {
+  it('removes a lower evolution without disassembling or resetting its stack', () => {
+    const commandContext = context();
+    const loaded = executeCommand(
+      emptyMatch(),
+      {
+        type: 'LoadDeck',
+        playerId: p1,
+        entries: deck('Pokémon', 'Pokémon', 'Pokémon'),
+      },
+      commandContext
+    );
+    if (!loaded.accepted) throw new Error(loaded.message);
+    let state = loaded.state;
+    const deckId = playerZoneId(p1, 'deck');
+    const handId = playerZoneId(p1, 'hand');
+    const [baseId, middleId, topId] = state.zones[deckId]!.cardIds;
+    for (const cardId of [baseId!, middleId!, topId!]) {
+      const stackId = state.boards[p1]!.activeStackId;
+      const played = executeCommand(
+        state,
+        {
+          type: 'MoveCardToPlay',
+          cardId,
+          expectedSourceZoneId: deckId,
+          boardPlayerId: p1,
+          slot: 'active',
+          ...(stackId ? { targetStackId: stackId } : {}),
+        },
+        commandContext
+      );
+      if (!played.accepted) throw new Error(played.message);
+      state = played.state;
+    }
+    const stackId = state.boards[p1]!.activeStackId!;
+    for (const command of [
+      { type: 'SetDamage', stackId, damage: 70 },
+      { type: 'SetSpecialCondition', stackId, condition: 'P' },
+      { type: 'SetAbilityUsed', stackId, used: true },
+      { type: 'RotateStack', stackId, rotationQuarterTurns: 2 },
+      {
+        type: 'SetCardOrientation',
+        cardId: middleId!,
+        orientationQuarterTurns: 1,
+      },
+    ] as const) {
+      const annotated = executeCommand(state, command, commandContext);
+      if (!annotated.accepted) throw new Error(annotated.message);
+      state = annotated.state;
+    }
+    const before = state;
+    const beforeGeneration = before.cards[middleId!]!.visibilityGeneration;
+
+    const departed = executeCommand(
+      before,
+      {
+        type: 'MoveCardFromStack',
+        cardId: middleId!,
+        expectedStackId: stackId,
+        destinationZoneId: handId,
+      },
+      commandContext
+    );
+    if (!departed.accepted) throw new Error(departed.message);
+    expect(departed.batch.events).toEqual([
+      {
+        type: 'CardMovedFromStack',
+        cardId: middleId,
+        expectedStackId: stackId,
+        source: 'lowerEvolution',
+        destinationZoneId: handId,
+        destinationIndex: 0,
+        concealIdentity: true,
+      },
+    ]);
+    expect(departed.state.boards[p1]!.activeStackId).toBe(stackId);
+    expect(departed.state.stacks[stackId]).toEqual({
+      ...before.stacks[stackId],
+      evolutionCardIds: [baseId, topId],
+    });
+    expect(departed.state.workAreas[p1]!.attachmentResolution).toBeNull();
+    expect(departed.state.zones[handId]!.cardIds).toEqual([middleId]);
+    expect(departed.state.cards[middleId!]).toMatchObject({
+      currentCategory: 'Pokémon',
+      face: 'up',
+      orientationQuarterTurns: 0,
+      abilityUsed: false,
+      visibilityGeneration: beforeGeneration + 1,
+    });
+    expect(applyEventBatch(before, departed.batch)).toEqual(departed.state);
+
+    expect(() =>
+      applyEventBatch(before, {
+        ...departed.batch,
+        events: [{ ...departed.batch.events[0]!, source: 'attachment' }],
+      })
+    ).toThrow(/expected stack source/u);
+    expect(() =>
+      applyEventBatch(before, {
+        ...departed.batch,
+        events: [
+          {
+            ...departed.batch.events[0]!,
+            cardId: topId!,
+            source: 'lowerEvolution',
+          },
+        ],
+      })
+    ).toThrow(/top evolution/u);
+    expect(() =>
+      applyEventBatch(before, {
+        ...departed.batch,
+        events: [
+          {
+            ...departed.batch.events[0]!,
+            source: 'forged' as 'attachment',
+          },
+        ],
+      })
+    ).toThrow(/source is invalid/u);
+    assertMatchInvariants(departed.state);
+  });
+
+  it('stages and restores ordered evolutions after the top leaves', () => {
     const commandContext = context();
     const loaded = executeCommand(
       emptyMatch(),
@@ -227,18 +350,6 @@ describe('explicit card departures', () => {
     if (!evolved.accepted) throw new Error(evolved.message);
     state = evolved.state;
 
-    expect(
-      executeCommand(
-        state,
-        {
-          type: 'MoveCardFromStack',
-          cardId: baseId,
-          expectedStackId: stackId,
-          destinationZoneId: discardId,
-        },
-        commandContext
-      )
-    ).toMatchObject({ accepted: false, code: 'precondition_failed' });
     const departed = executeCommand(
       state,
       {

@@ -172,7 +172,7 @@ outcome adapters. A first all-or-nothing candidate builder now applies the
 closed lifecycle/draw/discard-and-draw/shuffle-hand-and-draw/
 shuffle-hand-to-deck-bottom-and-draw/direct-prize-shuffle/target-free-loose/
 stadium/new-play-stack/rich-whole-stack-movement-and-swap/stack-card-reattachment/
-stack-top-and-attachment-departure/
+stack-card-departure/
 source-zone-targeted-play/
 zone-backed-deck-action/
 prizes-to-deck-bottom subset
@@ -205,11 +205,12 @@ same-stack reattachment and v1's lower-Pokémon-to-attachment behavior. Targeted
 active/bench destinations from stable source zones now recover v1's flattened
 top-card coordinate across rich stacks and apply atomic `PlaceCardOnPlayStack`
 events. Lower-evolution, attachment, missing, and out-of-range targets fail the
-whole candidate. Target-free top and attachment moves into loose zones use
-canonical `MoveCardFromStack`; a top departure removes its stack and stages the
-ordered dependents in a deterministic attachment-resolution work area, while an
-attachment departure leaves the stack in place. Direct lower-evolution
-departures and work-area origins remain closed. Reachable tests now prove both-player
+whole candidate. Target-free top, lower-evolution, and attachment moves into
+loose zones use canonical `MoveCardFromStack`; a top departure removes its stack
+and stages the ordered dependents in a deterministic attachment-resolution work
+area, while a lower evolution or attachment departs independently and leaves
+the stack plus its marker state in place. Work-area origins remain closed.
+Reachable tests now prove both-player
 loose-board take-turn cleanup plus owner-scoped loose/stadium/play reset/rebuild
 behavior.
 Shuffle-into-deck translates v1's in-deck tail-move
@@ -233,8 +234,7 @@ the exact current hand. It preserves the existing deck prefix, appends the
 shuffled hand, and draws from index zero through the matching atomic canonical
 command. Zero-draw, empty-hand/non-empty-deck, and completely empty records all
 remain valid.
-Direct lower-evolution departure and work-area origins,
-remaining action-family coverage, the complete
+Work-area origins, remaining action-family coverage, the complete
 transaction, conversion reports, and real-user corpus evidence remain before
 Phase 3 can exit.
 

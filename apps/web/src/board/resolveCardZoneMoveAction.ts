@@ -45,7 +45,6 @@ export const resolveCardZoneMoveAction = (
   if (view.viewer.kind !== 'player') return rejected('not_player');
   const located = locateViewCardActionSource(view, cardId);
   if (!located) return rejected('stale_card');
-  if (located.isLowerEvolution) return rejected('unsupported_source');
   if (
     (located.sourceKind === 'inspection' || located.sourceKind === 'staged') &&
     located.sourcePlayerId !== view.viewer.playerId

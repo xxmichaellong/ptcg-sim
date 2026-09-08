@@ -184,21 +184,21 @@ and attachments with a numeric top target instead execute atomic
 followed by versioned attachment order. It preserves exact source-stack
 membership, makes lower Pokémon attachments as v1 does, and admits same-stack
 reattachment. Exact events, evolving source offsets, retry, invariants, and a
-missing-target rollback are pinned. Target-free lower-evolution departures,
-inspections, and work-area origins remain fail-closed for their distinct
-departure semantics.
+missing-target rollback are pinned. Inspections and work-area origins remain
+fail-closed for their distinct departure semantics.
 
-Target-free top-card and attachment sources paired with a loose destination use
-canonical `MoveCardFromStack`. An attachment leaves only itself and preserves
-its stack. A top card removes the complete stack, moves only that top to the
-destination, and places its base-to-top lower evolutions plus versioned
-attachments in one deterministic attachment-resolution work area with the
-source slot as its restoration hint. A later independent singleton top may
+Target-free top-card, lower-evolution, and attachment sources paired with a
+loose destination use canonical `MoveCardFromStack`. An attachment or lower
+evolution leaves only itself and preserves its stack, including stack marker,
+rotation, and slot state. A top card removes the complete stack, moves only that
+top to the destination, and places its base-to-top lower evolutions plus
+versioned attachments in one deterministic attachment-resolution work area with
+the source slot as its restoration hint. A later independent singleton top may
 still depart while that area is occupied. Cover normalization, concealed-zone
 identity retirement, exact events, deterministic work-area IDs, retry,
-invariants, and unresolved/lower-evolution rollback are pinned. Direct lower-
-evolution departure, stadium/deck-relative stack sources, and work-area origins
-remain closed.
+invariants, event-source forgery rejection, and unresolved-coordinate rollback
+are pinned. Stadium/deck-relative stack sources and work-area origins remain
+closed for later source-specific slices.
 
 The direct shuffle is restricted to exact
 `[initiator, "prizes", permutation, true]` records produced by the prize
@@ -372,11 +372,12 @@ completed by the following protected checkpoints.
 ### Implemented movement subset
 
 The v2 core now distinguishes zone-to-play, stack-to-zone, inspection-work-area,
-and attachment-resolution-work-area movement. An individual attachment can
-leave a live stack directly. When the top evolution card leaves play, the old
-stack is removed atomically and every lower evolution and attachment is staged
-in separate ordered sequences. This also handles a base leaving attachments
-without orphaning them.
+and attachment-resolution-work-area movement. An individual attachment or lower
+evolution can leave a live stack directly without changing that stack's marker,
+rotation, or slot state. When the top evolution card leaves play, the old stack
+is removed atomically and every lower evolution and attachment is staged in
+separate ordered sequences. This also handles a base leaving attachments without
+orphaning them.
 
 `RestoreStagedStack` implements the logical `leaveAll` transition. It consumes
 the exact work-area version, preserves evolution and attachment classification,
