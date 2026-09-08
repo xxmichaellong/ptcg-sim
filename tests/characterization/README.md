@@ -32,6 +32,14 @@ The private importer maps top cards to stack markers and attachment/discard/
 stadium cards to per-card markers, retains already-matching state as zero-batch
 source records, and rejects lower-evolution coordinates without partial state.
 
+Damage source locks cover exact add/update/remove tuples, the JSON-null default
+that renders as `10`, editable text and blur removal, active/bench digit
+shortcuts, and context-menu ingress. The real-runtime marker editor already
+pins the full `30 → 50 → 10 → removed` keyboard sequence plus `10 → 70 → 0 →
+removed` input sequence and exact exports. The private importer accepts only
+bounded canonical values on exact stack tops, preserves repeated source no-ops,
+and rejects free-form values or lower/attachment coordinates transactionally.
+
 Renderer geometry locks additionally pair a manually reviewed numeric fixture
 with source digests. Text sources are normalized to LF for portable hashing;
 image fixtures are hashed as raw bytes. The browser harness loads those sources

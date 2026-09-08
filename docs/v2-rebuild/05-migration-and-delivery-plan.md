@@ -176,7 +176,7 @@ stack-card-departure/
 source-zone-targeted-play/
 work-area-target-free-play/
 zone-backed-deck-action/
-prizes-to-deck-bottom/once-per-game-marker/ability-marker/parameterless-attack-and-pass subset
+prizes-to-deck-bottom/once-per-game-marker/ability-marker/damage-marker/parameterless-attack-and-pass subset
 through normal game-core commands and verifies exact event replay; it rejects every
 unconverted family before constructing state, rejects recorded draws that exceed
 the exact current source-state deck, applies only direct prize shuffles
@@ -315,6 +315,14 @@ while stale, cross-owner stadium, and lower-evolution coordinates fail the
 whole candidate. Exact events, deterministic retry/replay/hash/invariants,
 malformed rollback, and existing real-V1 marker/export behavior are pinned
 without a schema change.
+Exact damage add/update/remove records now decode only active/bench coordinates
+and bounded values under the approved V2 input policy. Serialized-null add
+defaults to `10`; positive decimal edit strings map through `SetDamage`, while
+empty/zero/negative updates remove. Existing-add, duplicate-update, and
+missing-remove state no-ops retain zero batches; missing-update and non-top
+coordinates fail the whole candidate. Both players/zones, exact events,
+deterministic retry/replay/hash/invariants, malformed/free-form input, and the
+existing real-V1 editor/export behavior are pinned without a schema change.
 Shuffle-into-deck translates v1's in-deck tail-move
 permutation basis to the canonical input order. Switch-with-deck-top preserves
 v1's source-tail return and empty-deck branch through one or two canonical

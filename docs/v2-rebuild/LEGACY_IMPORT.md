@@ -383,6 +383,23 @@ to canonical per-card markers. Lower evolutions fail closed because canonical
 state intentionally owns one ability marker on the current stack top and cannot
 represent a distinct lower-card marker without loss.
 
+`addDamageCounter` and `updateDamageCounter` each carry
+`[zone, index, damage]`; `removeDamageCounter` carries `[zone, index]`. Only
+`active` and `bench` are source-accessible. A context-menu add omits the value,
+which JSON serializes to `null` and V1 renders as `10`; digit shortcuts and
+edits export strings. The approved authoritative policy trims decimal strings,
+accepts positive integers through `9990`, and normalizes empty, zero, or
+negative update values to removal. Other free-form V1 text fails conversion
+rather than entering canonical state. Adding over an existing source marker
+only rebinds that DOM node and leaves its old value unchanged; removing a
+missing marker is also an exported state no-op. Updates require an existing
+source marker. A private conversion-only presence set distinguishes a transient
+empty/zero/negative source node from canonical `null`, so another edit before
+blur remains valid without admitting a markerless update. Conversion maps only
+a current active/bench stack top to `SetDamage`. Lower-evolution and attachment
+coordinates fail closed because V1 can place distinct damage nodes on those
+cards while canonical state intentionally owns one stack-level value.
+
 `attack` and `pass` each carry an exact empty parameter array. Their record
 `user` is the acting/target player in the saved perspective. Conversion emits
 one canonical `DeclareAttack` or `PassTurn` batch, preserving the source's
@@ -667,6 +684,13 @@ The lifecycle mapping is source-backed:
   and already-clear `removeAbilityCounter` retain zero batches, matching V1's
   exported state no-op. Missing, stale, cross-owner stadium, and lower-evolution
   coordinates return no candidate rather than targeting the wrong card; and
+- each exact damage add/update/removal record resolves a current active/bench
+  stack-top coordinate and applies the bounded target through `SetDamage`.
+  Serialized-null add defaults to `10`; repeated add and remove-on-missing
+  retain zero batches, update-on-missing fails as source-inaccessible, and
+  duplicate or normalized-null updates remain source-node-aware no-ops. Invalid
+  text plus missing, lower-evolution, or attachment coordinates return no
+  candidate; and
 - attack and pass require exact empty parameter arrays and execute one
   `DeclareAttack` or `PassTurn` for the source record's target player. The
   canonical batch resets every ability marker, discards only that player's
@@ -691,7 +715,7 @@ individual-inspection-card-loose-and-targeted-play/
 individual-inspection-card-deck-edge-shuffle-and-stadium/
 move-to-top/
 rich-whole-stack-move-and-swap/move-to-bottom/
-shuffle-into-deck/deck-top-switch/once-per-game-marker/ability-marker/parameterless-attack-and-pass/
+shuffle-into-deck/deck-top-switch/once-per-game-marker/ability-marker/damage-marker/parameterless-attack-and-pass/
 prizes-to-deck-bottom subset can now create ordinary loose-board, singleton
 stadium, and active/bench stack state, enrich those stacks with zone-backed
 evolutions and attachments, move or swap those rich stacks, reattach lower
@@ -717,7 +741,9 @@ source-authentic empty records remain zero-batch mappings. Ordered GX/VSTAR
 records independently toggle explicit per-player canonical marker state.
 Ability records now resolve stack tops and per-card attachment/discard/stadium
 targets, including source-authentic repeated no-ops and fail-closed lower
-evolutions. Tests
+evolutions. Bounded damage records resolve active/bench tops, preserve the
+serialized default and source no-ops, and reject unrepresentable per-card
+coordinates. Tests
 prove that a later
 take-turn discards both players' loose boards in
 source order before drawing, and that an owner reset clears only that owner's

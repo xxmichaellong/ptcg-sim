@@ -9,6 +9,8 @@ import type {
 export type LegacyV1AbilityMarkerZone =
   'active' | 'bench' | 'discard' | 'stadium';
 
+export type LegacyV1DamageMarkerZone = 'active' | 'bench';
+
 export type LegacyV1MarkerAction =
   | {
       readonly type: 'VSTARGXFunction';
@@ -30,6 +32,29 @@ export type LegacyV1MarkerAction =
       readonly player: LegacyExportUser;
       readonly zone: LegacyV1AbilityMarkerZone;
       readonly sourceIndex: number;
+    }
+  | {
+      readonly type: 'addDamageCounter';
+      readonly recordIndex: number;
+      readonly player: LegacyExportUser;
+      readonly zone: LegacyV1DamageMarkerZone;
+      readonly sourceIndex: number;
+      readonly damage: number;
+    }
+  | {
+      readonly type: 'updateDamageCounter';
+      readonly recordIndex: number;
+      readonly player: LegacyExportUser;
+      readonly zone: LegacyV1DamageMarkerZone;
+      readonly sourceIndex: number;
+      readonly damage: number | null;
+    }
+  | {
+      readonly type: 'removeDamageCounter';
+      readonly recordIndex: number;
+      readonly player: LegacyExportUser;
+      readonly zone: LegacyV1DamageMarkerZone;
+      readonly sourceIndex: number;
     };
 
 export type LegacyV1MarkerActionDecodeIssueCode =
@@ -37,7 +62,8 @@ export type LegacyV1MarkerActionDecodeIssueCode =
   | 'invalid_parameter_type'
   | 'invalid_once_per_game_marker'
   | 'invalid_marker_zone'
-  | 'invalid_card_index';
+  | 'invalid_card_index'
+  | 'invalid_damage_value';
 
 export interface LegacyV1MarkerActionDecodeIssue {
   readonly code: LegacyV1MarkerActionDecodeIssueCode;
@@ -76,11 +102,20 @@ const failure = (
 const isMarkerAction = (
   action: LegacyActionRecord
 ): action is LegacyActionRecord & {
-  readonly action: 'VSTARGXFunction' | 'useAbility' | 'removeAbilityCounter';
+  readonly action:
+    | 'VSTARGXFunction'
+    | 'useAbility'
+    | 'removeAbilityCounter'
+    | 'addDamageCounter'
+    | 'updateDamageCounter'
+    | 'removeDamageCounter';
 } =>
   action.action === 'VSTARGXFunction' ||
   action.action === 'useAbility' ||
-  action.action === 'removeAbilityCounter';
+  action.action === 'removeAbilityCounter' ||
+  action.action === 'addDamageCounter' ||
+  action.action === 'updateDamageCounter' ||
+  action.action === 'removeDamageCounter';
 
 const abilityMarkerZones = new Set<string>([
   'active',
@@ -93,10 +128,23 @@ const isAbilityMarkerZone = (
   value: string
 ): value is LegacyV1AbilityMarkerZone => abilityMarkerZones.has(value);
 
+const isDamageMarkerZone = (value: string): value is LegacyV1DamageMarkerZone =>
+  value === 'active' || value === 'bench';
+
+const parseDamageValue = (value: string): number | null | undefined => {
+  const normalized = value.trim();
+  if (normalized === '') return null;
+  if (normalized.length > 16 || !/^-?\d+$/.test(normalized)) return undefined;
+  const damage = Number(normalized);
+  if (!Number.isSafeInteger(damage) || damage > 9_990) return undefined;
+  return damage <= 0 ? null : damage;
+};
+
 /**
- * Decodes V1's independent GX/VSTAR button toggle and ability marker records
- * without applying them. Toggle records store no result boolean, so conversion
- * derives each explicit target from the preceding candidate state.
+ * Decodes V1's independent GX/VSTAR button toggle and card-marker records
+ * without applying them. Toggle records store no result boolean, and repeated
+ * marker records can be state no-ops, so conversion derives explicit targets
+ * from the preceding candidate state.
  */
 export const decodeLegacyV1MarkerActions = (
   parsed: ParsedLegacyExport
@@ -232,6 +280,128 @@ export const decodeLegacyV1MarkerActions = (
                 sourceIndex,
               }
         );
+        break;
+      }
+      case 'addDamageCounter':
+      case 'updateDamageCounter':
+      case 'removeDamageCounter': {
+        const hasDamageValue = action.action !== 'removeDamageCounter';
+        const expectedParameterCount = hasDamageValue ? 3 : 2;
+        if (action.parameters.length !== expectedParameterCount) {
+          return failure(
+            'invalid_parameter_count',
+            actionIndex,
+            '.parameters',
+            hasDamageValue
+              ? `${action.action} requires [zone, index, damage]`
+              : 'removeDamageCounter requires [zone, index]'
+          );
+        }
+
+        const zone = action.parameters[0];
+        if (typeof zone !== 'string') {
+          return failure(
+            'invalid_parameter_type',
+            actionIndex,
+            '.parameters[0]',
+            `${action.action} zone must be a string`
+          );
+        }
+        if (!isDamageMarkerZone(zone)) {
+          return failure(
+            'invalid_marker_zone',
+            actionIndex,
+            '.parameters[0]',
+            `${action.action} must target active or bench`
+          );
+        }
+
+        const sourceIndex = action.parameters[1];
+        if (typeof sourceIndex !== 'number') {
+          return failure(
+            'invalid_parameter_type',
+            actionIndex,
+            '.parameters[1]',
+            `${action.action} card index must be a number`
+          );
+        }
+        if (
+          !Number.isSafeInteger(sourceIndex) ||
+          sourceIndex < 0 ||
+          sourceIndex >= MAX_DECK_CARDS
+        ) {
+          return failure(
+            'invalid_card_index',
+            actionIndex,
+            '.parameters[1]',
+            `${action.action} card index must be an integer from 0 to ${MAX_DECK_CARDS - 1}`
+          );
+        }
+
+        if (action.action === 'removeDamageCounter') {
+          decoded.push({
+            type: action.action,
+            recordIndex: actionIndex + 1,
+            player: action.user,
+            zone,
+            sourceIndex,
+          });
+          break;
+        }
+
+        const rawDamage = action.parameters[2];
+        let damage: number | null | undefined;
+        if (action.action === 'addDamageCounter' && rawDamage === null) {
+          damage = 10;
+        } else {
+          if (typeof rawDamage !== 'string') {
+            return failure(
+              'invalid_parameter_type',
+              actionIndex,
+              '.parameters[2]',
+              `${action.action} damage must be a string or the saved null default`
+            );
+          }
+          damage = parseDamageValue(rawDamage);
+        }
+        if (damage === undefined) {
+          return failure(
+            'invalid_damage_value',
+            actionIndex,
+            '.parameters[2]',
+            action.action === 'addDamageCounter'
+              ? 'addDamageCounter damage must resolve to an integer from 1 to 9990'
+              : 'updateDamageCounter damage must resolve to null or an integer from 1 to 9990'
+          );
+        }
+
+        if (action.action === 'addDamageCounter') {
+          if (damage === null) {
+            return failure(
+              'invalid_damage_value',
+              actionIndex,
+              '.parameters[2]',
+              'addDamageCounter damage must resolve to an integer from 1 to 9990'
+            );
+          }
+          decoded.push({
+            type: action.action,
+            recordIndex: actionIndex + 1,
+            player: action.user,
+            zone,
+            sourceIndex,
+            damage,
+          });
+        } else {
+          decoded.push({
+            type: action.action,
+            recordIndex: actionIndex + 1,
+            player: action.user,
+            zone,
+            sourceIndex,
+            damage,
+          });
+        }
         break;
       }
     }

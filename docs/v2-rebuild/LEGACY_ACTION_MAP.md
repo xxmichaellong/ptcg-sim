@@ -33,7 +33,7 @@ source-zone-targeted active/bench, and individual work-area new-stack
 `moveCardBundle`, resolved
 `shuffleIntoDeck`, source-authentic `switchWithDeckTop`, and
 `shufflePrizesToDeckBottom` atoms below. Exact direct loose-board bulk records,
-once-per-game and ability marker records, and empty-tuple `attack` and `pass` records also
+once-per-game, ability, and damage marker records, and empty-tuple `attack` and `pass` records also
 reuse their canonical atomic commands, but every other action is rejected before
 constructing state. This is intentionally not yet a complete import
 compatibility claim: reachable loose-board take-turn cleanup and owner reset are
@@ -367,6 +367,22 @@ rollback. Static characterization plus the existing real-runtime marker oracle
 pin the source tuples, controls, state transitions, and chronological export.
 No core, protocol, authority, state, public API, renderer, route, UI, or UX
 schema changes.
+
+The damage family now admits exact `addDamageCounter [zone, index, value]`,
+`updateDamageCounter [zone, index, value]`, and
+`removeDamageCounter [zone, index]` records for active/bench top cards. The
+serialized null add default becomes `10`; bounded decimal edit strings become
+positive integers through `9990`, while empty/zero/negative updates become
+removal under the already-approved safe V2 policy. An add against an existing
+source marker and a remove against a missing marker retain zero batches;
+updates require a source marker. A private presence set retains that distinction
+when an edit temporarily normalizes to canonical `null` before blur.
+Lower-evolution, attachment, missing, malformed, and free-form-text records fail the complete candidate. Tests pin both players,
+both zones, exact events, deterministic retry/replay/hash/invariants, default,
+no-op, malformed, and lossy-target behavior. Static characterization plus the
+existing real-runtime marker editor and counter-placement oracle pin the
+unchanged source. No core, protocol, authority, state, public API, renderer,
+route, UI, or UX schema changes.
 
 ### Executable marker-control characterization
 

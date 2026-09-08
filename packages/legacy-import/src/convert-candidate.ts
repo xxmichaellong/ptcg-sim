@@ -89,6 +89,9 @@ const CONVERTED_ACTIONS = new Set<LegacySynchronizedActionName>([
   'VSTARGXFunction',
   'useAbility',
   'removeAbilityCounter',
+  'addDamageCounter',
+  'updateDamageCounter',
+  'removeDamageCounter',
 ]);
 
 type LegacyV1ConvertedAction =
@@ -638,6 +641,11 @@ export const buildLegacyV1Candidate = (
   }
 
   const importContext = createLegacyV1ImportContext();
+  // A source damage node can temporarily contain empty/zero/negative text
+  // before blur removes it, while canonical state normalizes that value to
+  // null. Track source-node existence separately so a later edit before blur
+  // remains valid without admitting an update that never had a source marker.
+  const sourceDamageMarkerStackIds = new Set<PlayStack['id']>();
   const records: LegacyV1AppliedRecord[] = [];
   const entriesFor = (player: LegacyExportUser) =>
     player === 'self' ? decodedDecks.selfEntries : decodedDecks.opponentEntries;
@@ -821,6 +829,55 @@ export const buildLegacyV1Candidate = (
               }
         );
         if (problem) return problem;
+        break;
+      }
+      case 'addDamageCounter':
+      case 'updateDamageCounter':
+      case 'removeDamageCounter': {
+        const stack = candidatePlayStackTopAtLegacyIndex(
+          state,
+          playerId,
+          action.zone,
+          action.sourceIndex
+        );
+        if (!stack) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[1]`,
+            message:
+              'Recorded damage marker coordinate does not identify an exact canonical stack top',
+          });
+        }
+        const sourceMarkerExists = sourceDamageMarkerStackIds.has(stack.id);
+        if (action.type === 'updateDamageCounter' && !sourceMarkerExists) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].action`,
+            message:
+              'Recorded damage update requires an existing source damage marker',
+          });
+        }
+
+        if (action.type === 'addDamageCounter' && sourceMarkerExists) break;
+        if (action.type === 'removeDamageCounter' && !sourceMarkerExists) break;
+        const damage =
+          action.type === 'removeDamageCounter' ? null : action.damage;
+
+        if (stack.damage !== damage) {
+          const problem = apply({
+            type: 'SetDamage',
+            stackId: stack.id,
+            damage,
+          });
+          if (problem) return problem;
+        }
+        if (action.type === 'addDamageCounter') {
+          sourceDamageMarkerStackIds.add(stack.id);
+        } else if (action.type === 'removeDamageCounter') {
+          sourceDamageMarkerStackIds.delete(stack.id);
+        }
         break;
       }
       case 'discardBoard':

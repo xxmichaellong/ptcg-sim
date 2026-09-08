@@ -237,6 +237,178 @@ describe('legacy v1 marker-action positional decoder', () => {
     }
   );
 
+  it('decodes bounded damage marker targets and the serialized add default', () => {
+    expect(
+      decode(
+        action('self', 'addDamageCounter', ['active', 0, null]),
+        action('self', 'addDamageCounter', ['bench', 1, '30']),
+        action('opp', 'updateDamageCounter', ['active', 2, ' 70 ']),
+        action('opp', 'updateDamageCounter', ['bench', 3, '0']),
+        action('self', 'updateDamageCounter', ['active', 4, '-20']),
+        action('self', 'updateDamageCounter', ['bench', 5, '']),
+        action('opp', 'removeDamageCounter', ['active', 6])
+      )
+    ).toEqual({
+      ok: true,
+      actions: [
+        {
+          type: 'addDamageCounter',
+          recordIndex: 3,
+          player: 'self',
+          zone: 'active',
+          sourceIndex: 0,
+          damage: 10,
+        },
+        {
+          type: 'addDamageCounter',
+          recordIndex: 4,
+          player: 'self',
+          zone: 'bench',
+          sourceIndex: 1,
+          damage: 30,
+        },
+        {
+          type: 'updateDamageCounter',
+          recordIndex: 5,
+          player: 'opp',
+          zone: 'active',
+          sourceIndex: 2,
+          damage: 70,
+        },
+        {
+          type: 'updateDamageCounter',
+          recordIndex: 6,
+          player: 'opp',
+          zone: 'bench',
+          sourceIndex: 3,
+          damage: null,
+        },
+        {
+          type: 'updateDamageCounter',
+          recordIndex: 7,
+          player: 'self',
+          zone: 'active',
+          sourceIndex: 4,
+          damage: null,
+        },
+        {
+          type: 'updateDamageCounter',
+          recordIndex: 8,
+          player: 'self',
+          zone: 'bench',
+          sourceIndex: 5,
+          damage: null,
+        },
+        {
+          type: 'removeDamageCounter',
+          recordIndex: 9,
+          player: 'opp',
+          zone: 'active',
+          sourceIndex: 6,
+        },
+      ],
+    });
+  });
+
+  it.each([
+    { actionName: 'addDamageCounter', parameters: ['active', 0] },
+    { actionName: 'updateDamageCounter', parameters: ['active', 0] },
+    { actionName: 'removeDamageCounter', parameters: ['active'] },
+  ])('rejects a malformed $actionName tuple', ({ actionName, parameters }) => {
+    expect(decode(action('self', actionName, parameters))).toMatchObject({
+      ok: false,
+      issues: [
+        {
+          code: 'invalid_parameter_count',
+          recordIndex: 3,
+          path: '$[3].parameters',
+        },
+      ],
+    });
+  });
+
+  it.each([
+    'addDamageCounter',
+    'updateDamageCounter',
+    'removeDamageCounter',
+  ] as const)('rejects invalid %s zones and indices', (actionName) => {
+    const parameters = (zone: unknown, index: unknown): unknown[] =>
+      actionName === 'removeDamageCounter'
+        ? [zone, index]
+        : [zone, index, '10'];
+    expect(
+      decode(action('self', actionName, parameters(null, 0)))
+    ).toMatchObject({
+      ok: false,
+      issues: [{ code: 'invalid_parameter_type', path: '$[3].parameters[0]' }],
+    });
+    expect(
+      decode(action('self', actionName, parameters('discard', 0)))
+    ).toMatchObject({
+      ok: false,
+      issues: [{ code: 'invalid_marker_zone', path: '$[3].parameters[0]' }],
+    });
+    for (const index of [null, '0', true]) {
+      expect(
+        decode(action('self', actionName, parameters('active', index)))
+      ).toMatchObject({
+        ok: false,
+        issues: [
+          { code: 'invalid_parameter_type', path: '$[3].parameters[1]' },
+        ],
+      });
+    }
+    for (const index of [-1, 0.5, MAX_DECK_CARDS]) {
+      expect(
+        decode(action('self', actionName, parameters('active', index)))
+      ).toMatchObject({
+        ok: false,
+        issues: [{ code: 'invalid_card_index', path: '$[3].parameters[1]' }],
+      });
+    }
+  });
+
+  it.each(['addDamageCounter', 'updateDamageCounter'] as const)(
+    'requires string damage for %s outside the serialized add default',
+    (actionName) => {
+      for (const damage of [true, 10, [], {}, null]) {
+        if (actionName === 'addDamageCounter' && damage === null) continue;
+        expect(
+          decode(action('self', actionName, ['active', 0, damage]))
+        ).toMatchObject({
+          ok: false,
+          issues: [
+            { code: 'invalid_parameter_type', path: '$[3].parameters[2]' },
+          ],
+        });
+      }
+    }
+  );
+
+  it.each(['', '0', '-10', '1.5', 'damage', '9991'])(
+    'rejects an unrepresentable add-damage value %j',
+    (damage) => {
+      expect(
+        decode(action('self', 'addDamageCounter', ['active', 0, damage]))
+      ).toMatchObject({
+        ok: false,
+        issues: [{ code: 'invalid_damage_value', path: '$[3].parameters[2]' }],
+      });
+    }
+  );
+
+  it.each(['1.5', 'damage', '9991', '9999999999999999'])(
+    'rejects an unrepresentable update-damage value %j',
+    (damage) => {
+      expect(
+        decode(action('self', 'updateDamageCounter', ['active', 0, damage]))
+      ).toMatchObject({
+        ok: false,
+        issues: [{ code: 'invalid_damage_value', path: '$[3].parameters[2]' }],
+      });
+    }
+  );
+
   it('ignores other allowlisted action families', () => {
     expect(
       decode(

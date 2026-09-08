@@ -1082,6 +1082,212 @@ describe('legacy v1 canonical candidate builder', () => {
     expect('state' in crossOwnerStadium).toBe(false);
   });
 
+  it('imports bounded damage-marker edits with defaults and source-valid no-op records', () => {
+    const parsed = parse(
+      payload(
+        [['1', 'Damage base', 'Pokémon', '/legacy/damage-base.png']],
+        [
+          [
+            '1',
+            'Opponent damage base',
+            'Pokémon',
+            '/legacy/opponent-damage-base.png',
+          ],
+        ],
+        action('self', 'moveCardBundle', [
+          'opp',
+          'deck',
+          'active',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'addDamageCounter', ['active', 0, null]),
+        action('self', 'addDamageCounter', ['active', 0, '80']),
+        action('self', 'updateDamageCounter', ['active', 0, '70']),
+        action('self', 'updateDamageCounter', ['active', 0, '70']),
+        action('self', 'updateDamageCounter', ['active', 0, '0']),
+        action('self', 'updateDamageCounter', ['active', 0, '20']),
+        action('self', 'updateDamageCounter', ['active', 0, '0']),
+        action('self', 'removeDamageCounter', ['active', 0]),
+        action('self', 'removeDamageCounter', ['active', 0]),
+        action('self', 'addDamageCounter', ['active', 0, '30']),
+        action('opp', 'moveCardBundle', [
+          'self',
+          'deck',
+          'bench',
+          0,
+          false,
+          'move',
+        ]),
+        action('opp', 'addDamageCounter', ['bench', 0, '40']),
+        action('opp', 'removeDamageCounter', ['bench', 0])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) throw new Error('Expected conversion success');
+
+    const selfStackId = 'legacy:v1:stack:000000';
+    const opponentStackId = 'legacy:v1:stack:000001';
+    expect(
+      result.records
+        .filter(({ action }) => action.includes('DamageCounter'))
+        .map(({ recordIndex, action, batches }) => ({
+          recordIndex,
+          action,
+          events: batches.flatMap((batch) => batch.events),
+        }))
+    ).toEqual([
+      {
+        recordIndex: 4,
+        action: 'addDamageCounter',
+        events: [{ type: 'StackDamageSet', stackId: selfStackId, damage: 10 }],
+      },
+      { recordIndex: 5, action: 'addDamageCounter', events: [] },
+      {
+        recordIndex: 6,
+        action: 'updateDamageCounter',
+        events: [{ type: 'StackDamageSet', stackId: selfStackId, damage: 70 }],
+      },
+      { recordIndex: 7, action: 'updateDamageCounter', events: [] },
+      {
+        recordIndex: 8,
+        action: 'updateDamageCounter',
+        events: [
+          { type: 'StackDamageSet', stackId: selfStackId, damage: null },
+        ],
+      },
+      {
+        recordIndex: 9,
+        action: 'updateDamageCounter',
+        events: [{ type: 'StackDamageSet', stackId: selfStackId, damage: 20 }],
+      },
+      {
+        recordIndex: 10,
+        action: 'updateDamageCounter',
+        events: [
+          { type: 'StackDamageSet', stackId: selfStackId, damage: null },
+        ],
+      },
+      { recordIndex: 11, action: 'removeDamageCounter', events: [] },
+      { recordIndex: 12, action: 'removeDamageCounter', events: [] },
+      {
+        recordIndex: 13,
+        action: 'addDamageCounter',
+        events: [{ type: 'StackDamageSet', stackId: selfStackId, damage: 30 }],
+      },
+      {
+        recordIndex: 15,
+        action: 'addDamageCounter',
+        events: [
+          { type: 'StackDamageSet', stackId: opponentStackId, damage: 40 },
+        ],
+      },
+      {
+        recordIndex: 16,
+        action: 'removeDamageCounter',
+        events: [
+          { type: 'StackDamageSet', stackId: opponentStackId, damage: null },
+        ],
+      },
+    ]);
+    expect(result.state.stacks[selfStackId]?.damage).toBe(30);
+    expect(result.state.stacks[opponentStackId]?.damage).toBeNull();
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+
+    const replayed = result.records
+      .flatMap((record) => record.batches)
+      .reduce(
+        applyEventBatch,
+        createEmptyMatch(target.matchId, [target.selfSeat, target.opponentSeat])
+      );
+    expect(replayed).toEqual(result.state);
+  });
+
+  it('refuses damage updates without a source marker', () => {
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          [['1', 'Damage base', 'Pokémon', '/legacy/damage-base.png']],
+          '',
+          action('self', 'moveCardBundle', [
+            'opp',
+            'deck',
+            'active',
+            0,
+            false,
+            'move',
+          ]),
+          action('self', 'updateDamageCounter', ['active', 0, '70'])
+        )
+      ),
+      target
+    );
+    expect(result).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 4,
+          path: '$[4].action',
+          message:
+            'Recorded damage update requires an existing source damage marker',
+        },
+      ],
+    });
+    expect('state' in result).toBe(false);
+  });
+
+  it.each(['Pokémon', 'Trainer'] as const)(
+    'refuses damage-marker coordinates on a non-top %s stack member',
+    (category) => {
+      const result = buildLegacyV1Candidate(
+        parse(
+          payload(
+            [
+              ['1', 'Damage base', 'Pokémon', '/legacy/damage-base.png'],
+              ['1', 'Damage member', category, '/legacy/damage-member.png'],
+            ],
+            '',
+            action('self', 'moveCardBundle', [
+              'opp',
+              'deck',
+              'active',
+              0,
+              false,
+              'move',
+            ]),
+            action('self', 'moveCardBundle', [
+              'opp',
+              'deck',
+              'active',
+              0,
+              0,
+              'move',
+            ]),
+            action('self', 'addDamageCounter', ['active', 1, '30'])
+          )
+        ),
+        target
+      );
+      expect(result).toMatchObject({
+        ok: false,
+        issues: [
+          {
+            code: 'source_state_mismatch',
+            recordIndex: 5,
+            path: '$[5].parameters[1]',
+          },
+        ],
+      });
+      expect('state' in result).toBe(false);
+    }
+  );
+
   it.each([
     { parameters: [], code: 'marker.invalid_parameter_count' },
     { parameters: [null], code: 'marker.invalid_parameter_type' },
@@ -8094,7 +8300,7 @@ describe('legacy v1 canonical candidate builder', () => {
 
   it('rejects an admitted but unconverted family before creating state', () => {
     const result = buildLegacyV1Candidate(
-      parse(payload('', '', action('self', 'addDamageCounter', [10]))),
+      parse(payload('', '', action('self', 'addSpecialCondition', [null]))),
       target
     );
     expect(result).toEqual({

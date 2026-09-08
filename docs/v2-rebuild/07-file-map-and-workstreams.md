@@ -283,6 +283,16 @@ Repeated source state no-ops retain zero batches; stale, cross-owner stadium,
 and lower-evolution coordinates fail closed. No public package, state, command,
 event, wire, renderer, route, UI, or UX schema is widened.
 
+Damage marker decoding now covers exact active/bench add, update, and removal
+tuples. The saved null default maps to `10`; bounded decimal strings reuse the
+existing `SetDamage` command, and empty/zero/negative updates map to removal.
+Source-valid existing-add, duplicate-update, and missing-remove records retain
+zero batches. A private source-node-presence set preserves updates after
+transient values normalize to canonical `null`; updates without a marker and
+missing/lower/attachment coordinates fail closed. The private package
+duplicates only the approved bounded value normalization and does not import
+any client/runtime module or widen a public schema.
+
 ## Files added during characterization
 
 ```text

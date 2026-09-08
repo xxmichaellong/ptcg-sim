@@ -294,6 +294,66 @@ describe('legacy action-export source envelope', () => {
     );
   });
 
+  it('pins damage-marker tuples, default/coercion behavior, and shipped controls', () => {
+    const damageCounter = readRepositoryFile(
+      'client/src/actions/counters/damage-counter.js'
+    );
+    const keybinds = readRepositoryFile(
+      'client/src/actions/keybinds/keybinds.js'
+    );
+    const activeBenchButtons = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/card-context-menu/active-bench-buttons.js'
+    );
+
+    expect(
+      damageCounter.match(/processAction\(user, emit, 'addDamageCounter',/g)
+    ).toHaveLength(2);
+    expect(damageCounter).toContain(
+      "processAction(user, emit, 'addDamageCounter', [zoneId, index, damageAmount]);"
+    );
+    expect(
+      damageCounter.match(/processAction\(user, emit, 'updateDamageCounter',/g)
+    ).toHaveLength(2);
+    expect(damageCounter).toContain(
+      "processAction(user, emit, 'updateDamageCounter', [\n    zoneId,\n    index,\n    damageAmount,\n  ]);"
+    );
+    expect(
+      damageCounter.match(
+        /processAction\(user, emit, 'removeDamageCounter', \[zoneId, index\]\);/g
+      )
+    ).toHaveLength(2);
+    expect(damageCounter).toContain(
+      "damageCounter.textContent = damageAmount ? damageAmount : '10';"
+    );
+    expect(damageCounter).toContain(
+      'updateDamageCounter(user, zoneId, index, damageCounter.textContent);'
+    );
+    expect(damageCounter).toContain(
+      "targetCard.image.damageCounter.textContent.trim() === ''"
+    );
+    expect(damageCounter).toContain(
+      'targetCard.image.damageCounter.textContent <= 0'
+    );
+    expect(damageCounter).toContain(
+      'removeDamageCounter(user, zoneId, index);'
+    );
+    expect(activeBenchButtons).toContain(
+      'addDamageCounter(\n      mouseClick.cardUser,\n      mouseClick.zoneId,\n      mouseClick.cardIndex\n    );'
+    );
+    expect(keybinds).toContain(
+      "isNonZeroDigitKeyPressed(event) &&\n      ['active', 'bench'].includes(mouseClick.zoneId)"
+    );
+    expect(keybinds).toContain(
+      'const damageAmount = parseInt(numberPressed * 10).toString();'
+    );
+    expect(keybinds).toContain(
+      'mouseClick.card.image.damageCounter.textContent = event.key;'
+    );
+    expect(keybinds).toContain(
+      'mouseClick.card.image.damageCounter.handleRemove(true);'
+    );
+  });
+
   it('pins the first movement tuple, clamp, and independent target ownership', () => {
     const deckActions = readRepositoryFile(
       'client/src/actions/zones/deck-actions.js'
