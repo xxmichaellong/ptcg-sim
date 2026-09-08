@@ -1224,6 +1224,73 @@ describe('legacy action-export source envelope', () => {
     expect(acceptAction).toContain('shuffleBottom: shuffleBottom,');
   });
 
+  it('pins deck-inspection witnesses, viewers, and edge-first bottom order', () => {
+    const deckActions = readRepositoryFile(
+      'client/src/actions/zones/deck-actions.js'
+    );
+    const deckButtons = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/card-context-menu/deck-buttons.js'
+    );
+    const keybinds = readRepositoryFile(
+      'client/src/actions/keybinds/keybinds.js'
+    );
+    const acceptAction = readRepositoryFile(
+      'client/src/setup/general/accept-action.js'
+    );
+    const viewStart = deckActions.indexOf('export const viewDeck =');
+    const switchStart = deckActions.indexOf(
+      'export const switchWithDeckTop =',
+      viewStart + 1
+    );
+    expect(viewStart).toBeGreaterThanOrEqual(0);
+    expect(switchStart).toBeGreaterThan(viewStart);
+    const viewDeck = deckActions.slice(viewStart, switchStart);
+
+    const targetRelationship = 'const targetIsOpp = user !== initiator;';
+    const countClamp = 'viewAmount = Math.min(viewAmount, selectedDeckCount);';
+    expect(deckActions).toContain(targetRelationship);
+    expect(deckActions).toContain(countClamp);
+    expect(deckActions.indexOf(targetRelationship)).toBeLessThan(
+      deckActions.indexOf(countClamp)
+    );
+    expect(deckActions).toContain(
+      'viewDeck(user, initiator, viewAmount, top, selectedDeckCount, targetIsOpp);'
+    );
+    expect(viewDeck).toContain(
+      "selectedViewCards.element.style.display = 'block';"
+    );
+    expect(viewDeck).toContain(
+      "for (let i = 0; i < viewAmount; i++) {\n      moveCard(user, initiator, 'deck', 'viewCards', 0);\n    }"
+    );
+    expect(viewDeck).toContain(
+      "for (\n      let i = selectedDeckCount - 1;\n      i > selectedDeckCount - 1 - viewAmount;\n      i--\n    ) {\n      moveCard(user, initiator, 'deck', 'viewCards', i);\n    }"
+    );
+    expect(viewDeck).toContain(
+      '(systemState.initiator !== user && !targetIsOpp) ||\n    (systemState.initiator === user && targetIsOpp)'
+    );
+    const exportCall =
+      "processAction(user, emit, 'viewDeck', [\n    oInitiator,\n    viewAmount,\n    top,\n    selectedDeckCount,\n    targetIsOpp,\n  ]);";
+    expect(viewDeck).toContain(exportCall);
+    expect(viewDeck.lastIndexOf(exportCall)).toBeGreaterThan(
+      viewDeck.lastIndexOf("moveCard(user, initiator, 'deck', 'viewCards', i);")
+    );
+    expect(viewDeck).not.toContain('selectedViewCards.array = []');
+
+    expect(deckButtons).toContain(
+      'handleViewButtonClick(mouseClick.cardUser, systemState.initiator, true)'
+    );
+    expect(deckButtons).toContain(
+      'handleViewButtonClick(mouseClick.cardUser, systemState.initiator, false)'
+    );
+    expect(keybinds).toContain(
+      'viewAmount,\n        true,\n        selectedDeckCount,\n        false'
+    );
+    expect(keybinds).toContain(
+      'viewAmount,\n        false,\n        selectedDeckCount,\n        false'
+    );
+    expect(acceptAction).toContain('viewDeck: viewDeck,');
+  });
+
   it('pins numeric play targets, top-only eligibility, and refreshed flat ordering', () => {
     const keybinds = readRepositoryFile(
       'client/src/actions/keybinds/keybinds.js'

@@ -516,6 +516,164 @@ describe('legacy v1 canonical candidate builder', () => {
     expect('state' in resetDeck).toBe(false);
   });
 
+  it('opens exact top and edge-first bottom inspections for the recorded viewer', () => {
+    const parsed = parse(
+      payload(
+        cardRows(5, 'Self inspect'),
+        cardRows(5, 'Opponent inspect'),
+        action('self', 'viewDeck', ['self', 2, true, 5, false]),
+        action('opp', 'viewDeck', ['self', 3, false, 5, true])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) {
+      throw new Error('Expected view-deck conversion success');
+    }
+
+    const selfId = target.selfSeat.playerId;
+    const opponentId = target.opponentSeat.playerId;
+    const selfDeckId = playerZoneId(selfId, 'deck');
+    const opponentDeckId = playerZoneId(opponentId, 'deck');
+    const selfCards = Array.from(
+      { length: 5 },
+      (_, index) => `legacy:v1:card:${String(index).padStart(6, '0')}`
+    );
+    const opponentCards = Array.from(
+      { length: 5 },
+      (_, index) => `legacy:v1:card:${String(index + 5).padStart(6, '0')}`
+    );
+    const selfInspectionId = 'legacy:v1:inspection:000000';
+    const opponentInspectionId = 'legacy:v1:inspection:000001';
+    const selfWorkAreaId = `work:${selfId}:inspection:${selfInspectionId}`;
+    const opponentWorkAreaId = `work:${opponentId}:inspection:${opponentInspectionId}`;
+    expect(result.records[2]!.batches[0]!.events).toEqual([
+      {
+        type: 'InspectionOpened',
+        playerId: selfId,
+        workAreaId: selfWorkAreaId,
+        inspectionId: selfInspectionId,
+        sourceZoneId: selfDeckId,
+        cardIds: selfCards.slice(0, 2),
+        viewerIds: [selfId],
+      },
+    ]);
+    expect(result.records[3]!.batches[0]!.events).toEqual([
+      {
+        type: 'InspectionOpened',
+        playerId: opponentId,
+        workAreaId: opponentWorkAreaId,
+        inspectionId: opponentInspectionId,
+        sourceZoneId: opponentDeckId,
+        cardIds: opponentCards.slice(-3).reverse(),
+        viewerIds: [selfId],
+      },
+    ]);
+    expect(result.state.zones[selfDeckId]?.cardIds).toEqual(selfCards.slice(2));
+    expect(result.state.zones[opponentDeckId]?.cardIds).toEqual(
+      opponentCards.slice(0, 2)
+    );
+    expect(result.state.workAreas[selfId]?.inspection).toMatchObject({
+      id: selfWorkAreaId,
+      inspectionId: selfInspectionId,
+      cardIds: selfCards.slice(0, 2),
+      viewerIds: [selfId],
+    });
+    expect(result.state.workAreas[opponentId]?.inspection).toMatchObject({
+      id: opponentWorkAreaId,
+      inspectionId: opponentInspectionId,
+      cardIds: opponentCards.slice(-3).reverse(),
+      viewerIds: [selfId],
+    });
+    const replayed = result.records
+      .flatMap((record) => record.batches)
+      .reduce(
+        applyEventBatch,
+        createEmptyMatch(target.matchId, [target.selfSeat, target.opponentSeat])
+      );
+    expect(replayed).toEqual(result.state);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
+  });
+
+  it('retains a zero-card view as a no-op and rejects stale or additive inspections', () => {
+    const zeroView = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(3, 'Zero inspect'),
+          '',
+          action('self', 'viewDeck', ['self', 1, true, 3, false]),
+          action('self', 'viewDeck', ['self', 0, false, 2, false])
+        )
+      ),
+      target
+    );
+    expect(zeroView.ok).toBe(true);
+    if (!zeroView.ok) throw new Error(zeroView.issues[0]?.message);
+    expect(zeroView.records[3]).toEqual({
+      recordIndex: 4,
+      action: 'viewDeck',
+      batches: [],
+    });
+    expect(
+      zeroView.state.workAreas[target.selfSeat.playerId]?.inspection
+    ).toMatchObject({
+      cardIds: ['legacy:v1:card:000000'],
+    });
+    assertMatchInvariants(zeroView.state);
+
+    const staleCount = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(3, 'Stale inspect'),
+          '',
+          action('self', 'viewDeck', ['self', 1, true, 2, false])
+        )
+      ),
+      target
+    );
+    expect(staleCount).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 3,
+          path: '$[3].parameters[3]',
+          message:
+            'Recorded view-deck deck-count witness does not match the exact current deck state',
+        },
+      ],
+    });
+    expect('state' in staleCount).toBe(false);
+
+    const additive = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(3, 'Additive inspect'),
+          '',
+          action('self', 'viewDeck', ['self', 1, true, 3, false]),
+          action('self', 'viewDeck', ['self', 1, false, 2, false])
+        )
+      ),
+      target
+    );
+    expect(additive).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 4,
+          path: '$[4].action',
+          message:
+            'Current closed candidate cannot append to an active inspection work area',
+        },
+      ],
+    });
+    expect('state' in additive).toBe(false);
+  });
+
   it('atomically appends the whole hand to discard and draws the recorded count', () => {
     const result = buildLegacyV1Candidate(
       parse(
@@ -5211,7 +5369,7 @@ describe('legacy v1 canonical candidate builder', () => {
 
   it('rejects an admitted but unconverted family before creating state', () => {
     const result = buildLegacyV1Candidate(
-      parse(payload('', '', action('self', 'viewDeck', ['unconverted']))),
+      parse(payload('', '', action('self', 'useAbility', ['unconverted']))),
       target
     );
     expect(result).toEqual({

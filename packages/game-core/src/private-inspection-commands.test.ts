@@ -317,6 +317,96 @@ describe('private inspection grants', () => {
     }
   });
 
+  it('extracts bottom cards edge-first while retaining prior event replay compatibility', () => {
+    const context = createContext();
+    const initial = createEmptyMatch(asMatchId('bottom-inspection-match'), [
+      { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
+      { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
+    ]);
+    const loaded = accepted(
+      initial,
+      { type: 'LoadDeck', playerId: p1, entries: entries('bottom', 5) },
+      context
+    );
+    const deckId = playerZoneId(p1, 'deck');
+    const oldDeck = [...loaded.state.zones[deckId]!.cardIds];
+    const opened = accepted(
+      loaded.state,
+      {
+        type: 'ExtractDeckCardsForInspection',
+        playerId: p1,
+        viewerIds: [p2],
+        count: 3,
+        edge: 'bottom',
+      },
+      context
+    );
+    const expectedEdgeFirst = oldDeck.slice(-3).reverse();
+    expect(opened.state.workAreas[p1]?.inspection?.cardIds).toEqual(
+      expectedEdgeFirst
+    );
+    expect(opened.state.zones[deckId]?.cardIds).toEqual(oldDeck.slice(0, 2));
+    expect(opened.batch.events).toEqual([
+      {
+        type: 'InspectionOpened',
+        playerId: p1,
+        workAreaId: 'work:inspection-blue:inspection:inspection-grant-1',
+        inspectionId: 'inspection-grant-1',
+        sourceZoneId: deckId,
+        cardIds: expectedEdgeFirst,
+        viewerIds: [p2],
+      },
+    ]);
+    const ownerView = projectMatch(
+      opened.state,
+      { kind: 'player', playerId: p1 },
+      identities
+    );
+    const viewerView = projectMatch(
+      opened.state,
+      { kind: 'player', playerId: p2 },
+      identities
+    );
+    expect(
+      ownerView.workAreas[p1]?.inspection?.cards.every(
+        (card) => card.kind === 'concealed'
+      )
+    ).toBe(true);
+    expect(
+      viewerView.workAreas[p1]?.inspection?.cards.every(
+        (card) => card.kind === 'known'
+      )
+    ).toBe(true);
+    expect(stableSerialize(applyEventBatch(loaded.state, opened.batch))).toBe(
+      stableSerialize(opened.state)
+    );
+
+    const event = opened.batch.events[0];
+    if (event?.type !== 'InspectionOpened') {
+      throw new Error('missing bottom inspection open event');
+    }
+    const priorSourceOrderState = applyEventBatch(loaded.state, {
+      revision: opened.batch.revision,
+      events: [{ ...event, cardIds: oldDeck.slice(-3) }],
+    });
+    expect(priorSourceOrderState.workAreas[p1]?.inspection?.cardIds).toEqual(
+      oldDeck.slice(-3)
+    );
+    expect(() =>
+      applyEventBatch(loaded.state, {
+        revision: opened.batch.revision,
+        events: [
+          {
+            ...event,
+            cardIds: [oldDeck[2]!, oldDeck[4]!, oldDeck[3]!],
+          },
+        ],
+      })
+    ).toThrow('Inspection open event is malformed');
+    assertMatchInvariants(opened.state);
+    assertMatchInvariants(priorSourceOrderState);
+  });
+
   it('rejects malformed open and close replay events before mutation', () => {
     const prepared = fixture();
     const prizeId = playerZoneId(p1, 'prizes');

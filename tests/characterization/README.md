@@ -459,6 +459,16 @@ the latter remains an accepted general action/dispatcher shape. Importer tests
 prove that both exact staged tuples translate positions by stable identity into
 canonical work-area order rather than reusing incompatible indices.
 
+Static source characterization now freezes deck-inspection creation as well.
+The prompt path records the target relationship before clamping to the current
+deck count; top views repeatedly remove index zero, while bottom views walk the
+recorded last index downward and therefore append cards edge-first. The source
+exports all five witnesses after movement and reveals the temporary array only
+to the initiating perspective. Keyboard and context-menu ingress plus replay
+dispatch are pinned. Because V1 does not clear `viewCards` when opening again,
+the importer converts only a first positive inspection and preserves a
+zero-card export as a no-op until an additive canonical event exists.
+
 The protected active/bench shortcut checkpoint covers non-Alt `A` and `B`
 without absorbing stadium or prize rules. Two fresh real-v1 Chromium pages
 place a selected hand Pokémon beside one incumbent active, then pin active and

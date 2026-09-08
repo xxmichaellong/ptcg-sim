@@ -2852,10 +2852,15 @@ const applyEventInternal = (
         event.cardIds,
         source.cardIds.slice(0, event.cardIds.length)
       );
-      const isBottom = sameCardOrder(
-        event.cardIds,
-        source.cardIds.slice(source.cardIds.length - event.cardIds.length)
+      const bottomCardIds = source.cardIds.slice(
+        source.cardIds.length - event.cardIds.length
       );
+      // Current commands preserve V1's edge-first bottom order. Accept the
+      // earlier source-order form as well so already-recorded event batches
+      // remain replayable.
+      const isBottom =
+        sameCardOrder(event.cardIds, bottomCardIds) ||
+        sameCardOrder(event.cardIds, [...bottomCardIds].reverse());
       if (
         !areas ||
         source.id !== playerZoneId(event.playerId, 'deck') ||

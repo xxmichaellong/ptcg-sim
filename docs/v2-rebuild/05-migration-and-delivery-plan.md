@@ -225,7 +225,14 @@ recorded permutations by stable card identity from that V1 flat basis to the
 canonical evolution-then-attachment command basis. `shuffleAll` includes the
 existing deck in both bases; `shuffleBottom` permutes only staged cards before
 the unchanged deck prefix. Both execute through atomic `ResolveStagedCards`.
-Other target-free play, stadium, deck-relative, and inspection shapes remain
+Exact first `viewDeck` records now execute `ExtractDeckCardsForInspection`
+against the recorded current-deck-count witness. Source `user` remains the deck
+owner, the decoded initiator is the sole viewer, and `targetIsOpp` must agree
+with that relationship. Top views preserve deck order; bottom views preserve
+V1's edge-first descending order. The historical zero-card export remains a
+zero-batch record. Repeated nonzero appends to an already-open view remain
+closed until the canonical model has an explicit extension event. Other
+target-free play, stadium, deck-relative, and inspection-origin shapes remain
 closed.
 Reachable tests now prove both-player
 loose-board take-turn cleanup plus owner-scoped loose/stadium/play reset/rebuild

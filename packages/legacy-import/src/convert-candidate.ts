@@ -56,6 +56,7 @@ const CONVERTED_ACTIONS = new Set<LegacySynchronizedActionName>([
   'discardAndDraw',
   'shuffleAndDraw',
   'shuffleBottomAndDraw',
+  'viewDeck',
   'moveCardBundle',
   'leaveAll',
   'discardAll',
@@ -714,6 +715,37 @@ export const buildLegacyV1Candidate = (
           },
           { kind: 'shuffle', indices: action.shuffleIndices }
         );
+        if (problem) return problem;
+        break;
+      }
+      case 'viewDeck': {
+        const deck = state.zones[playerZoneId(playerId, 'deck')];
+        if (!deck || deck.cardIds.length !== action.expectedDeckCount) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[3]`,
+            message:
+              'Recorded view-deck deck-count witness does not match the exact current deck state',
+          });
+        }
+        if (action.count === 0) break;
+        if (state.workAreas[playerId]?.inspection) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].action`,
+            message:
+              'Current closed candidate cannot append to an active inspection work area',
+          });
+        }
+        const problem = apply({
+          type: 'ExtractDeckCardsForInspection',
+          playerId,
+          viewerIds: [targetPlayerId(target, action.initiator)],
+          count: action.count,
+          edge: action.edge,
+        });
         if (problem) return problem;
         break;
       }

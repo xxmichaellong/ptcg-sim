@@ -2513,7 +2513,7 @@ export const decideCommand = (
       const cardIds =
         command.edge === 'top'
           ? deck.cardIds.slice(0, count)
-          : deck.cardIds.slice(deck.cardIds.length - count);
+          : deck.cardIds.slice(deck.cardIds.length - count).reverse();
       const inspectionId = context.nextInspectionId();
       if (inspectionIdIsUsed(state, inspectionId)) {
         return reject('conflict', 'Inspection ID factory returned a duplicate');

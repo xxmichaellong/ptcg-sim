@@ -207,8 +207,26 @@ are pinned. A subsequent target-free `attachedCards` source can now move one
 exact staged card to a loose zone through `MoveStagedCard`; the refreshed flat
 coordinate is resolved after every prior mutation and an empty work area closes.
 Target-free play restoration, stadium/deck-relative stack or staged sources,
-inspection sources, and bulk work-area actions remain closed for later
+inspection-card sources, and bulk work-area actions remain closed for later
 source-specific slices.
+
+Deck inspection creation is admitted as the exact exported
+`[initiator, count, top, selectedDeckCount, targetIsOpp]` tuple. The record
+`user` owns the target deck; the decoded initiator is the sole inspection
+viewer; and the relationship flag must equal whether those source perspectives
+differ. The already-clamped count may be zero, but cannot exceed the bounded
+recorded deck count. Conversion requires that count witness to equal the exact
+current deck size before doing anything. A positive first view executes
+`ExtractDeckCardsForInspection` with a deterministic inspection ID. Top cards
+retain source order, while V1's descending bottom loop appends the physical
+bottom first, so the canonical command now records a bottom selection in that
+same edge-first order. Event application continues accepting the earlier
+bottom source-order representation for replay compatibility. The source's
+accidental zero-card export changes no model state and is retained with zero
+batches. V1 can append another positive view into an existing `viewCards`
+array; that additive case remains fail-closed until it has a dedicated
+canonical extension event. Individual and bulk inspection-card resolutions are
+the next dependent slices.
 
 The direct shuffle is restricted to exact
 `[initiator, "prizes", permutation, true]` records produced by the prize

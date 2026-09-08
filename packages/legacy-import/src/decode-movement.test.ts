@@ -207,6 +207,128 @@ describe('legacy v1 movement positional decoder', () => {
     });
   });
 
+  it('decodes exact top, bottom, cross-owner, and zero-card deck inspections', () => {
+    expect(
+      decode(
+        action('self', 'viewDeck', ['self', 2, true, 4, false]),
+        action('opp', 'viewDeck', ['self', 3, false, 5, true]),
+        action('opp', 'viewDeck', ['opp', 0, true, 0, false])
+      )
+    ).toEqual({
+      ok: true,
+      actions: [
+        {
+          type: 'viewDeck',
+          recordIndex: 3,
+          player: 'self',
+          initiator: 'self',
+          count: 2,
+          edge: 'top',
+          expectedDeckCount: 4,
+          targetIsOpponent: false,
+        },
+        {
+          type: 'viewDeck',
+          recordIndex: 4,
+          player: 'opp',
+          initiator: 'self',
+          count: 3,
+          edge: 'bottom',
+          expectedDeckCount: 5,
+          targetIsOpponent: true,
+        },
+        {
+          type: 'viewDeck',
+          recordIndex: 5,
+          player: 'opp',
+          initiator: 'opp',
+          count: 0,
+          edge: 'top',
+          expectedDeckCount: 0,
+          targetIsOpponent: false,
+        },
+      ],
+    });
+  });
+
+  it('rejects malformed or source-inconsistent deck inspections', () => {
+    expect(
+      firstIssue(action('self', 'viewDeck', ['self', 1, true, 1]))
+    ).toMatchObject({
+      code: 'invalid_parameter_count',
+      path: '$[3].parameters',
+    });
+    expect(
+      firstIssue(action('self', 'viewDeck', [false, 1, true, 1, false]))
+    ).toMatchObject({
+      code: 'invalid_parameter_type',
+      path: '$[3].parameters[0]',
+    });
+    expect(
+      firstIssue(action('self', 'viewDeck', ['self', '1', true, 1, false]))
+    ).toMatchObject({
+      code: 'invalid_parameter_type',
+      path: '$[3].parameters[1]',
+    });
+    for (const count of [-1, 0.5, MAX_DECK_CARDS + 1]) {
+      expect(
+        firstIssue(
+          action('self', 'viewDeck', [
+            'self',
+            count,
+            true,
+            MAX_DECK_CARDS,
+            false,
+          ])
+        )
+      ).toMatchObject({
+        code: 'invalid_view_count',
+        path: '$[3].parameters[1]',
+      });
+    }
+    expect(
+      firstIssue(action('self', 'viewDeck', ['self', 1, 1, 1, false]))
+    ).toMatchObject({
+      code: 'invalid_parameter_type',
+      path: '$[3].parameters[2]',
+    });
+    expect(
+      firstIssue(action('self', 'viewDeck', ['self', 1, true, '1', false]))
+    ).toMatchObject({
+      code: 'invalid_parameter_type',
+      path: '$[3].parameters[3]',
+    });
+    for (const deckCount of [-1, 0.5, MAX_DECK_CARDS + 1]) {
+      expect(
+        firstIssue(
+          action('self', 'viewDeck', ['self', 0, true, deckCount, false])
+        )
+      ).toMatchObject({
+        code: 'invalid_recorded_deck_count',
+        path: '$[3].parameters[3]',
+      });
+    }
+    expect(
+      firstIssue(action('self', 'viewDeck', ['self', 2, true, 1, false]))
+    ).toMatchObject({
+      code: 'invalid_view_count',
+      path: '$[3].parameters[1]',
+    });
+    expect(
+      firstIssue(action('self', 'viewDeck', ['self', 1, true, 1, 'false']))
+    ).toMatchObject({
+      code: 'invalid_parameter_type',
+      path: '$[3].parameters[4]',
+    });
+    expect(
+      firstIssue(action('opp', 'viewDeck', ['self', 1, true, 1, false]))
+    ).toMatchObject({
+      code: 'invalid_view_target',
+      recordIndex: 3,
+      path: '$[3].parameters[4]',
+    });
+  });
+
   it('decodes the source-authentic bottom-mode bundle from every card container', () => {
     const result = decode(
       ...CARD_SOURCE_ZONES.map((zone, index) =>

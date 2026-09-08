@@ -77,6 +77,16 @@ export type LegacyV1MovementAction =
       readonly shuffleIndices: readonly number[];
     }
   | {
+      readonly type: 'viewDeck';
+      readonly recordIndex: number;
+      readonly player: LegacyExportUser;
+      readonly initiator: LegacyExportUser;
+      readonly count: number;
+      readonly edge: 'top' | 'bottom';
+      readonly expectedDeckCount: number;
+      readonly targetIsOpponent: boolean;
+    }
+  | {
       readonly type: 'moveCardBundle';
       readonly recordIndex: number;
       readonly player: LegacyExportUser;
@@ -203,6 +213,9 @@ export type LegacyV1MovementDecodeIssueCode =
   | 'invalid_discard_draw_count'
   | 'invalid_shuffle_draw_count'
   | 'invalid_shuffle_bottom_draw_count'
+  | 'invalid_view_count'
+  | 'invalid_recorded_deck_count'
+  | 'invalid_view_target'
   | 'unsupported_move_card_bundle'
   | 'invalid_destination_zone'
   | 'invalid_target_index'
@@ -264,6 +277,7 @@ const isMovementAction = (
     | 'discardAndDraw'
     | 'shuffleAndDraw'
     | 'shuffleBottomAndDraw'
+    | 'viewDeck'
     | 'moveCardBundle'
     | 'leaveAll'
     | 'discardAll'
@@ -281,6 +295,7 @@ const isMovementAction = (
   action.action === 'discardAndDraw' ||
   action.action === 'shuffleAndDraw' ||
   action.action === 'shuffleBottomAndDraw' ||
+  action.action === 'viewDeck' ||
   action.action === 'moveCardBundle' ||
   action.action === 'leaveAll' ||
   action.action === 'discardAll' ||
@@ -410,9 +425,9 @@ const decodeCardSource = (
 
 /**
  * Decodes admitted movement tuples without applying them. This starts with the
- * source-bounded draw, discard-and-draw, shuffle-hand-and-draw, and
- * shuffle-hand-to-deck-bottom-and-draw; bottom-mode and target-free
- * loose-zone/stadium/new-play-stack card bundles; staged-stack leave-all,
+ * source-bounded draw, discard-and-draw, shuffle-hand-and-draw,
+ * shuffle-hand-to-deck-bottom-and-draw, and deck inspection; bottom-mode and
+ * target-free loose-zone/stadium/new-play-stack card bundles; staged-stack leave-all,
  * staged discard/lost-zone/hand draining, and staged deck shuffles; direct
  * prize-shuffle; move-to-deck-top; shuffle-into-deck; switch-with-deck-top;
  * and shuffled-prizes-to-deck-bottom atoms. The remaining movement actions
@@ -663,6 +678,118 @@ export const decodeLegacyV1MovementActions = (
           initiator,
           count,
           shuffleIndices,
+        });
+        break;
+      }
+      case 'viewDeck': {
+        if (action.parameters.length !== 5) {
+          return failure(
+            'invalid_parameter_count',
+            actionIndex,
+            '.parameters',
+            'viewDeck requires [initiator, count, top, deckCount, targetIsOpponent]'
+          );
+        }
+
+        const initiator = action.parameters[0];
+        if (initiator !== 'self' && initiator !== 'opp') {
+          return failure(
+            'invalid_parameter_type',
+            actionIndex,
+            '.parameters[0]',
+            'viewDeck initiator must use the exported self/opp perspective'
+          );
+        }
+
+        const count = action.parameters[1];
+        if (typeof count !== 'number') {
+          return failure(
+            'invalid_parameter_type',
+            actionIndex,
+            '.parameters[1]',
+            'viewDeck count must be a number'
+          );
+        }
+        if (
+          !Number.isSafeInteger(count) ||
+          count < 0 ||
+          count > MAX_DECK_CARDS
+        ) {
+          return failure(
+            'invalid_view_count',
+            actionIndex,
+            '.parameters[1]',
+            `viewDeck count must be an integer from 0 to ${MAX_DECK_CARDS}`
+          );
+        }
+
+        const top = action.parameters[2];
+        if (typeof top !== 'boolean') {
+          return failure(
+            'invalid_parameter_type',
+            actionIndex,
+            '.parameters[2]',
+            'viewDeck top flag must be a boolean'
+          );
+        }
+
+        const expectedDeckCount = action.parameters[3];
+        if (typeof expectedDeckCount !== 'number') {
+          return failure(
+            'invalid_parameter_type',
+            actionIndex,
+            '.parameters[3]',
+            'viewDeck recorded deck count must be a number'
+          );
+        }
+        if (
+          !Number.isSafeInteger(expectedDeckCount) ||
+          expectedDeckCount < 0 ||
+          expectedDeckCount > MAX_DECK_CARDS
+        ) {
+          return failure(
+            'invalid_recorded_deck_count',
+            actionIndex,
+            '.parameters[3]',
+            `viewDeck recorded deck count must be an integer from 0 to ${MAX_DECK_CARDS}`
+          );
+        }
+        if (count > expectedDeckCount) {
+          return failure(
+            'invalid_view_count',
+            actionIndex,
+            '.parameters[1]',
+            'viewDeck count cannot exceed its recorded deck count'
+          );
+        }
+
+        const targetIsOpponent = action.parameters[4];
+        if (typeof targetIsOpponent !== 'boolean') {
+          return failure(
+            'invalid_parameter_type',
+            actionIndex,
+            '.parameters[4]',
+            'viewDeck target relationship must be a boolean'
+          );
+        }
+        if (targetIsOpponent !== (action.user !== initiator)) {
+          return failure(
+            'invalid_view_target',
+            actionIndex,
+            '.parameters[4]',
+            'viewDeck target relationship must match the exported target and initiator'
+          );
+        }
+
+        decoded.push({
+          type: 'viewDeck',
+          recordIndex: actionIndex + 1,
+          player: action.user,
+          initiator,
+          count,
+          edge: top ? 'top' : 'bottom',
+          expectedDeckCount,
+          targetIsOpponent,
         });
         break;
       }
