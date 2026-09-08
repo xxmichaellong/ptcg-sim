@@ -676,7 +676,12 @@ test('native and shared input follow center-rotated card paint in both candidate
     });
     await page.mouse.click(230, 105);
     await page.waitForTimeout(50);
-    expect(JSON.parse((await host.getAttribute('data-intents'))!)).toEqual([]);
+    expect(JSON.parse((await host.getAttribute('data-intents'))!)).toEqual([
+      { kind: 'BoardBackgroundPressed' },
+    ]);
+    await host.evaluate((element) => {
+      if (element instanceof HTMLElement) element.dataset.intents = '[]';
+    });
 
     await page.mouse.move(50, 150);
     await page.mouse.down();
