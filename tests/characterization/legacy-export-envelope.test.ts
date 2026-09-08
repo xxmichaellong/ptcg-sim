@@ -1305,9 +1305,12 @@ describe('legacy action-export source envelope', () => {
     expect(acceptAction).toContain('shuffleBottom: shuffleBottom,');
   });
 
-  it('pins deck-inspection witnesses, viewers, and edge-first bottom order', () => {
+  it('pins deck-inspection witnesses, append order, viewers, and edge-first bottom order', () => {
     const deckActions = readRepositoryFile(
       'client/src/actions/zones/deck-actions.js'
+    );
+    const moveCard = readRepositoryFile(
+      'client/src/actions/move-card-bundle/move-card.js'
     );
     const deckButtons = readRepositoryFile(
       'client/src/initialization/document-event-listeners/card-context-menu/deck-buttons.js'
@@ -1356,6 +1359,16 @@ describe('legacy action-export source envelope', () => {
       viewDeck.lastIndexOf("moveCard(user, initiator, 'deck', 'viewCards', i);")
     );
     expect(viewDeck).not.toContain('selectedViewCards.array = []');
+    expect(moveCard).toContain(
+      'dZone.array.push(...oZone.array.splice(index, 1));'
+    );
+    expect(moveCard.lastIndexOf('revealCard(user, movingCard);')).toBeLessThan(
+      moveCard.indexOf('dZone.element.appendChild(movingCard.image);')
+    );
+    expect(viewDeck).toContain(
+      "const zone = getZone(user, 'viewCards');\n    removeImages(zone.element);\n    zone.array.forEach((card) => {\n      hideCard(user, card);\n      zone.element.appendChild(card.image);\n    });"
+    );
+    expect(viewDeck).not.toContain('revealCard(user, card)');
 
     expect(deckButtons).toContain(
       'handleViewButtonClick(mouseClick.cardUser, systemState.initiator, true)'

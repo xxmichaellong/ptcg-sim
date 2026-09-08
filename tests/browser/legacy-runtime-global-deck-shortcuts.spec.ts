@@ -13,6 +13,7 @@ interface LegacyActionRecord {
 
 interface LegacyGlobalDeckShortcutState {
   readonly zoneNames: Readonly<Record<string, readonly string[]>>;
+  readonly viewCardAlts: readonly string[];
   readonly viewCardsDisplay: string;
   readonly selectingCard: boolean;
   readonly selfCounter: number;
@@ -117,6 +118,7 @@ const captureRealLegacyGlobalDeckState = (
   page.evaluate(async () => {
     interface RuntimeCard {
       readonly name: string;
+      readonly image: HTMLImageElement;
     }
     interface RuntimeZone {
       readonly array: RuntimeCard[];
@@ -148,6 +150,7 @@ const captureRealLegacyGlobalDeckState = (
           getZone('self', zoneId).array.map((card) => card.name),
         ])
       ),
+      viewCardAlts: viewCards.array.map((card) => card.image.alt),
       viewCardsDisplay: viewCards.element.style.display,
       selectingCard: selection.selectingCard,
       selfCounter: state.selfCounter,
@@ -298,5 +301,58 @@ test('real v1 unselected deck shortcuts pin draw, inspection, shuffle, and dual-
     } finally {
       await page.close();
     }
+  }
+});
+
+test('real v1 repeated same-viewer deck inspections append mixed edges to one popup', async ({
+  browser,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== 'chromium',
+    'The real-runtime repeated inspection checkpoint is Chromium-specific.'
+  );
+
+  const page = await browser.newPage({ viewport, deviceScaleFactor: 1 });
+  const pageErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+  try {
+    const loaded = await loadLegacyRuntime(page);
+    await mountRealLegacyGlobalDeckFixture(page);
+    await page.keyboard.press('Alt+Digit1');
+    await page.keyboard.press('Control+Digit1');
+    const state = await captureRealLegacyGlobalDeckState(page);
+
+    expect(state).toMatchObject({
+      zoneNames: {
+        deck: ['Deck two'],
+        hand: [],
+        viewCards: ['Deck one', 'Deck three'],
+      },
+      viewCardAlts: ['Deck one', 'Deck three'],
+      viewCardsDisplay: 'block',
+      selectingCard: false,
+      selfCounter: 2,
+      actions: [
+        {
+          user: 'self',
+          emit: true,
+          action: 'viewDeck',
+          parameters: ['opp', 1, true, 3, false],
+        },
+        {
+          user: 'self',
+          emit: true,
+          action: 'viewDeck',
+          parameters: ['opp', 1, false, 2, false],
+        },
+      ],
+    });
+    expect(state.exports).toEqual(expectedLegacyExports(state.actions));
+    expect(loaded.servedPaths).toContain('/src/assets/blank-logo.png');
+    expect(loaded.missingPaths).toEqual([]);
+    expect(loaded.blockedOrigins).toContain('https://ptcgsim.online');
+    expect(pageErrors).toEqual([]);
+  } finally {
+    await page.close();
   }
 });

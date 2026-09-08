@@ -239,13 +239,17 @@ recorded permutations by stable card identity from that V1 flat basis to the
 canonical evolution-then-attachment command basis. `shuffleAll` includes the
 existing deck in both bases; `shuffleBottom` permutes only staged cards before
 the unchanged deck prefix. Both execute through atomic `ResolveStagedCards`.
-Exact first `viewDeck` records now execute `ExtractDeckCardsForInspection`
-against the recorded current-deck-count witness. Source `user` remains the deck
-owner, the decoded initiator is the sole viewer, and `targetIsOpp` must agree
-with that relationship. Top views preserve deck order; bottom views preserve
-V1's edge-first descending order. The historical zero-card export remains a
-zero-batch record. Repeated nonzero appends to an already-open view remain
-closed until the canonical model has an explicit extension event. Exact
+Exact `viewDeck` records now execute `ExtractDeckCardsForInspection` against the
+recorded current-deck-count witness. Source `user` remains the deck owner, the
+decoded initiator is the sole viewer, and `targetIsOpp` must agree with that
+relationship. Top views preserve deck order; bottom views preserve V1's
+edge-first descending order. A repeated positive view by the same viewer carries
+the exact active inspection snapshot and emits replay-safe `InspectionExtended`,
+appending the newly selected edge cards without allocating another work area or
+inspection ID. The historical zero-card export remains a zero-batch record for
+that same viewer. Cross-viewer repeats remain closed because V1 retains
+per-extraction visibility inside one popup, while the canonical work area has
+one viewer set for all contained cards. Exact
 `viewCards` forms of `discardAll`, `lostZoneAll`, and `handAll` now resolve the
 entire inspection through one atomic `ResolveInspectionCards` batch, preserving
 the V1 popup order and closing the work area. The corresponding `shuffleAll`

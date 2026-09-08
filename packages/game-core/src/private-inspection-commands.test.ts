@@ -407,6 +407,152 @@ describe('private inspection grants', () => {
     assertMatchInvariants(priorSourceOrderState);
   });
 
+  it('extends an exact same-viewer inspection in V1 append order', () => {
+    const context = createContext();
+    const initial = createEmptyMatch(asMatchId('extended-inspection-match'), [
+      { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
+      { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
+    ]);
+    const loaded = accepted(
+      initial,
+      { type: 'LoadDeck', playerId: p1, entries: entries('extended', 6) },
+      context
+    );
+    const deckId = playerZoneId(p1, 'deck');
+    const originalDeck = [...loaded.state.zones[deckId]!.cardIds];
+    const opened = accepted(
+      loaded.state,
+      {
+        type: 'ExtractDeckCardsForInspection',
+        playerId: p1,
+        viewerIds: [p1],
+        count: 2,
+        edge: 'top',
+      },
+      context
+    );
+    const inspection = opened.state.workAreas[p1]!.inspection!;
+    const extended = accepted(
+      opened.state,
+      {
+        type: 'ExtractDeckCardsForInspection',
+        playerId: p1,
+        viewerIds: [p1],
+        count: 2,
+        edge: 'bottom',
+        expectedInspection: {
+          inspectionId: inspection.inspectionId,
+          workAreaId: inspection.id,
+          cardIds: [...inspection.cardIds],
+          viewerIds: [...inspection.viewerIds],
+        },
+      },
+      context
+    );
+    const appendedCardIds = originalDeck.slice(-2).reverse();
+    expect(extended.batch.events).toEqual([
+      {
+        type: 'InspectionExtended',
+        playerId: p1,
+        expectedWorkAreaId: inspection.id,
+        inspectionId: inspection.inspectionId,
+        sourceZoneId: deckId,
+        expectedCardIds: originalDeck.slice(0, 2),
+        cardIds: appendedCardIds,
+        expectedViewerIds: [p1],
+      },
+    ]);
+    expect(extended.state.zones[deckId]?.cardIds).toEqual(
+      originalDeck.slice(2, -2)
+    );
+    expect(extended.state.workAreas[p1]?.inspection).toEqual({
+      ...inspection,
+      cardIds: [...originalDeck.slice(0, 2), ...appendedCardIds],
+    });
+    expect(
+      projectMatch(
+        extended.state,
+        { kind: 'player', playerId: p1 },
+        identities
+      ).workAreas[p1]?.inspection?.cards.every((card) => card.kind === 'known')
+    ).toBe(true);
+    expect(
+      projectMatch(
+        extended.state,
+        { kind: 'player', playerId: p2 },
+        identities
+      ).workAreas[p1]?.inspection?.cards.every(
+        (card) => card.kind === 'concealed'
+      )
+    ).toBe(true);
+    expect(stableSerialize(applyEventBatch(opened.state, extended.batch))).toBe(
+      stableSerialize(extended.state)
+    );
+    expect(
+      stableSerialize(
+        applyEventBatch(
+          applyEventBatch(loaded.state, opened.batch),
+          extended.batch
+        )
+      )
+    ).toBe(stableSerialize(extended.state));
+
+    const before = stableSerialize(opened.state);
+    const rejectedExtensions: GameCommand[] = [
+      {
+        type: 'ExtractDeckCardsForInspection',
+        playerId: p1,
+        viewerIds: [p1],
+        count: 1,
+        edge: 'top',
+      },
+      {
+        type: 'ExtractDeckCardsForInspection',
+        playerId: p1,
+        viewerIds: [p2],
+        count: 1,
+        edge: 'top',
+        expectedInspection: {
+          inspectionId: inspection.inspectionId,
+          workAreaId: inspection.id,
+          cardIds: [...inspection.cardIds],
+          viewerIds: [...inspection.viewerIds],
+        },
+      },
+      {
+        type: 'ExtractDeckCardsForInspection',
+        playerId: p1,
+        viewerIds: [p1],
+        count: 1,
+        edge: 'top',
+        expectedInspection: {
+          inspectionId: inspection.inspectionId,
+          workAreaId: inspection.id,
+          cardIds: [...inspection.cardIds].reverse(),
+          viewerIds: [...inspection.viewerIds],
+        },
+      },
+    ];
+    for (const command of rejectedExtensions) {
+      expect(executeCommand(opened.state, command, context).accepted).toBe(
+        false
+      );
+      expect(stableSerialize(opened.state)).toBe(before);
+    }
+    expect(() =>
+      applyEventBatch(opened.state, {
+        ...extended.batch,
+        events: [
+          {
+            ...extended.batch.events[0]!,
+            cardIds: [originalDeck[2]!, originalDeck[4]!],
+          },
+        ],
+      })
+    ).toThrow('Inspection extension event is malformed');
+    assertMatchInvariants(extended.state);
+  });
+
   it('rejects malformed open and close replay events before mutation', () => {
     const prepared = fixture();
     const prizeId = playerZoneId(p1, 'prizes');

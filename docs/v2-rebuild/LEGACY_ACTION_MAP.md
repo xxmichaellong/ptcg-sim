@@ -36,8 +36,9 @@ source-zone-targeted active/bench, and individual work-area new-stack
 constructing state. This is intentionally not yet a complete import
 compatibility claim: reachable loose-board take-turn cleanup and owner reset are
 now proven alongside owned-stadium and play-stack reset, while face-down in-play
-reveal, repeated inspection extension, position-incompatible work-area swaps,
-and cross-owner play state remain gated on their dedicated canonical designs.
+reveal, cross-viewer repeated-inspection visibility, position-incompatible
+work-area swaps, and cross-owner play state remain gated on their dedicated
+canonical designs.
 
 ## Card movement, inspection, and zone batches
 
@@ -243,10 +244,15 @@ bottom first, so the canonical command now records a bottom selection in that
 same edge-first order. Event application continues accepting the earlier
 bottom source-order representation for replay compatibility. The source's
 accidental zero-card export changes no model state and is retained with zero
-batches. V1 can append another positive view into an existing `viewCards`
-array; that additive case remains fail-closed until it has a dedicated
-canonical extension event. Whole- and individual-inspection resolution are
-admitted below.
+batches for the same viewer. V1 can append another positive view into an
+existing `viewCards` array; a same-viewer record now supplies the exact active
+inspection snapshot to `ExtractDeckCardsForInspection` and emits one
+`InspectionExtended` event. Replay validates the work-area and inspection IDs,
+source deck, prior cards and viewers, and exact top or edge-first-bottom
+selection before appending. A cross-viewer repeat remains fail-closed because
+V1 can retain different visibility for older and newly appended popup cards,
+while the canonical work area currently has one viewer set. Whole- and
+individual-inspection resolution are admitted below.
 
 The direct shuffle is restricted to exact
 `[initiator, "prizes", permutation, true]` records produced by the prize

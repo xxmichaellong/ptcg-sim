@@ -2904,6 +2904,62 @@ const applyEventInternal = (
         visibility: retireVisibility(state, selected, selected),
       };
     }
+    case 'InspectionExtended': {
+      const source = requireZone(state, event.sourceZoneId);
+      const areas = state.workAreas[event.playerId];
+      const inspection = areas?.inspection;
+      const selected = new Set(event.cardIds);
+      const isTop = sameCardOrder(
+        event.cardIds,
+        source.cardIds.slice(0, event.cardIds.length)
+      );
+      const bottomCardIds = source.cardIds.slice(
+        source.cardIds.length - event.cardIds.length
+      );
+      const isBottom = sameCardOrder(
+        event.cardIds,
+        [...bottomCardIds].reverse()
+      );
+      if (
+        !areas ||
+        !inspection ||
+        inspection.id !== event.expectedWorkAreaId ||
+        inspection.inspectionId !== event.inspectionId ||
+        inspection.sourceZoneId !== event.sourceZoneId ||
+        source.id !== playerZoneId(event.playerId, 'deck') ||
+        source.kind !== 'deck' ||
+        source.ownerId !== event.playerId ||
+        !sameCardOrder(inspection.cardIds, event.expectedCardIds) ||
+        !sameCardOrder(inspection.viewerIds, event.expectedViewerIds) ||
+        event.cardIds.length === 0 ||
+        inspection.cardIds.length + event.cardIds.length > 200 ||
+        selected.size !== event.cardIds.length ||
+        (!isTop && !isBottom)
+      ) {
+        throw new Error('Inspection extension event is malformed');
+      }
+      return {
+        ...state,
+        zones: {
+          ...state.zones,
+          [source.id]: {
+            ...source,
+            cardIds: source.cardIds.filter((cardId) => !selected.has(cardId)),
+          },
+        },
+        workAreas: {
+          ...state.workAreas,
+          [event.playerId]: {
+            ...areas,
+            inspection: {
+              ...inspection,
+              cardIds: [...inspection.cardIds, ...event.cardIds],
+            },
+          },
+        },
+        visibility: retireVisibility(state, selected, selected),
+      };
+    }
     case 'InspectionClosed': {
       const areas = state.workAreas[event.playerId];
       if (areas?.inspection?.inspectionId !== event.inspectionId) {

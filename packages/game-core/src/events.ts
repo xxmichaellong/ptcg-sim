@@ -379,6 +379,16 @@ export type DomainEvent =
       readonly viewerIds: readonly PlayerId[];
     }
   | {
+      readonly type: 'InspectionExtended';
+      readonly playerId: PlayerId;
+      readonly expectedWorkAreaId: WorkAreaId;
+      readonly inspectionId: InspectionId;
+      readonly sourceZoneId: ZoneId;
+      readonly expectedCardIds: readonly CardInstanceId[];
+      readonly cardIds: readonly CardInstanceId[];
+      readonly expectedViewerIds: readonly PlayerId[];
+    }
+  | {
       readonly type: 'InspectionClosed';
       readonly playerId: PlayerId;
       readonly inspectionId: InspectionId;

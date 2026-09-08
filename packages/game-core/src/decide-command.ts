@@ -2495,14 +2495,18 @@ export const decideCommand = (
     case 'ExtractDeckCardsForInspection': {
       const playerError = requirePlayer(state, command.playerId);
       if (playerError) return playerError;
-      if (state.workAreas[command.playerId]?.inspection) {
-        return reject('conflict', 'An inspection is already open');
-      }
       if (!Number.isSafeInteger(command.count) || command.count <= 0) {
         return reject('invalid_command', 'Inspection count must be positive');
       }
       if (command.viewerIds.some((viewerId) => !state.players[viewerId])) {
         return reject('not_found', 'Inspection viewer does not exist');
+      }
+      const viewerIds = [...new Set(command.viewerIds)];
+      if (viewerIds.length === 0) {
+        return reject(
+          'invalid_command',
+          'Inspection requires at least one viewer'
+        );
       }
       const deckId = playerZoneId(command.playerId, 'deck');
       const deck = state.zones[deckId];
@@ -2514,6 +2518,47 @@ export const decideCommand = (
         command.edge === 'top'
           ? deck.cardIds.slice(0, count)
           : deck.cardIds.slice(deck.cardIds.length - count).reverse();
+      const inspection = state.workAreas[command.playerId]?.inspection;
+      if (inspection) {
+        const expected = command.expectedInspection;
+        if (!expected) {
+          return reject('conflict', 'An inspection is already open');
+        }
+        if (
+          inspection.inspectionId !== expected.inspectionId ||
+          inspection.id !== expected.workAreaId ||
+          inspection.sourceZoneId !== deck.id ||
+          !sameOrder(inspection.cardIds, expected.cardIds) ||
+          !sameOrder(inspection.viewerIds, expected.viewerIds)
+        ) {
+          return reject('stale_reference', 'Inspection state changed');
+        }
+        if (!sameOrder(viewerIds, inspection.viewerIds)) {
+          return reject(
+            'precondition_failed',
+            'Inspection extension cannot change viewers'
+          );
+        }
+        if (inspection.cardIds.length + cardIds.length > MAX_DECK_CARDS) {
+          return reject(
+            'precondition_failed',
+            'Inspection cannot contain more than 200 cards'
+          );
+        }
+        return accept({
+          type: 'InspectionExtended',
+          playerId: command.playerId,
+          expectedWorkAreaId: inspection.id,
+          inspectionId: inspection.inspectionId,
+          sourceZoneId: deck.id,
+          expectedCardIds: [...inspection.cardIds],
+          cardIds,
+          expectedViewerIds: [...inspection.viewerIds],
+        });
+      }
+      if (command.expectedInspection) {
+        return reject('stale_reference', 'Inspection is no longer active');
+      }
       const inspectionId = context.nextInspectionId();
       if (inspectionIdIsUsed(state, inspectionId)) {
         return reject('conflict', 'Inspection ID factory returned a duplicate');
@@ -2527,7 +2572,7 @@ export const decideCommand = (
         inspectionId,
         sourceZoneId: deck.id,
         cardIds,
-        viewerIds: [...new Set(command.viewerIds)],
+        viewerIds,
       });
     }
     case 'CloseInspection': {

@@ -603,7 +603,7 @@ describe('legacy v1 canonical candidate builder', () => {
     assertMatchInvariants(result.state);
   });
 
-  it('retains a zero-card view as a no-op and rejects stale or additive inspections', () => {
+  it('retains compatible zero views, appends repeated inspections, and rejects stale or cross-viewer records', () => {
     const zeroView = buildLegacyV1Candidate(
       parse(
         payload(
@@ -664,19 +664,166 @@ describe('legacy v1 canonical candidate builder', () => {
       ),
       target
     );
-    expect(additive).toEqual({
-      ok: false,
-      issues: [
-        {
-          code: 'source_state_mismatch',
-          recordIndex: 4,
-          path: '$[4].action',
-          message:
-            'Current closed candidate cannot append to an active inspection work area',
-        },
-      ],
+    const additiveRetry = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(3, 'Additive inspect'),
+          '',
+          action('self', 'viewDeck', ['self', 1, true, 3, false]),
+          action('self', 'viewDeck', ['self', 1, false, 2, false])
+        )
+      ),
+      target
+    );
+    expect(additive).toEqual(additiveRetry);
+    expect(additive.ok).toBe(true);
+    if (!additive.ok || !additiveRetry.ok) {
+      throw new Error('Expected additive inspection conversion success');
+    }
+    const playerId = target.selfSeat.playerId;
+    const deckId = playerZoneId(playerId, 'deck');
+    const inspectionId = 'legacy:v1:inspection:000000';
+    const workAreaId = `work:${playerId}:inspection:${inspectionId}`;
+    const firstCardId = 'legacy:v1:card:000000';
+    const middleCardId = 'legacy:v1:card:000001';
+    const lastCardId = 'legacy:v1:card:000002';
+    expect(additive.state.zones[deckId]?.cardIds).toEqual([middleCardId]);
+    expect(additive.state.workAreas[playerId]?.inspection).toEqual({
+      id: workAreaId,
+      inspectionId,
+      sourceZoneId: deckId,
+      cardIds: [firstCardId, lastCardId],
+      viewerIds: [playerId],
     });
-    expect('state' in additive).toBe(false);
+    expect(additive.records[3]!.batches[0]!.events).toEqual([
+      {
+        type: 'InspectionExtended',
+        playerId,
+        expectedWorkAreaId: workAreaId,
+        inspectionId,
+        sourceZoneId: deckId,
+        expectedCardIds: [firstCardId],
+        cardIds: [lastCardId],
+        expectedViewerIds: [playerId],
+      },
+    ]);
+    const replayed = additive.records
+      .flatMap((record) => record.batches)
+      .reduce(
+        applyEventBatch,
+        createEmptyMatch(target.matchId, [target.selfSeat, target.opponentSeat])
+      );
+    expect(replayed).toEqual(additive.state);
+    expect(stableHash(additive.state)).toBe(stableHash(additiveRetry.state));
+    assertMatchInvariants(additive.state);
+
+    for (const count of [1, 0]) {
+      const crossViewer = buildLegacyV1Candidate(
+        parse(
+          payload(
+            cardRows(3, 'Cross-viewer inspect'),
+            '',
+            action('self', 'viewDeck', ['self', 1, true, 3, false]),
+            action('self', 'viewDeck', ['opp', count, false, 2, true])
+          )
+        ),
+        target
+      );
+      expect(crossViewer).toEqual({
+        ok: false,
+        issues: [
+          {
+            code: 'source_state_mismatch',
+            recordIndex: 4,
+            path: '$[4].action',
+            message:
+              'Repeated V1 deck inspection by a different viewer requires per-card visibility that the canonical work area cannot represent',
+          },
+        ],
+      });
+      expect('state' in crossViewer).toBe(false);
+    }
+  });
+
+  it('extends a partially resolved inspection and preserves later bulk order and cleanup', () => {
+    const parsed = parse(
+      payload(
+        cardRows(5, 'Extended inspection cleanup'),
+        '',
+        action('self', 'viewDeck', ['self', 2, true, 5, false]),
+        action('self', 'moveCardBundle', [
+          'self',
+          'viewCards',
+          'discard',
+          0,
+          false,
+          'move',
+        ]),
+        action('self', 'viewDeck', ['self', 2, false, 3, false]),
+        action('self', 'discardAll', ['self', 'viewCards'])
+      )
+    );
+    const result = buildLegacyV1Candidate(parsed, target);
+    const retry = buildLegacyV1Candidate(parsed, target);
+    expect(result).toEqual(retry);
+    expect(result.ok).toBe(true);
+    if (!result.ok || !retry.ok) {
+      throw new Error('Expected extended inspection cleanup success');
+    }
+
+    const playerId = target.selfSeat.playerId;
+    const deckId = playerZoneId(playerId, 'deck');
+    const discardId = playerZoneId(playerId, 'discard');
+    const cardIds = Array.from(
+      { length: 5 },
+      (_, index) => `legacy:v1:card:${String(index).padStart(6, '0')}`
+    );
+    const inspectionId = 'legacy:v1:inspection:000000';
+    const workAreaId = `work:${playerId}:inspection:${inspectionId}`;
+    expect(result.records[4]!.batches[0]!.events).toEqual([
+      {
+        type: 'InspectionExtended',
+        playerId,
+        expectedWorkAreaId: workAreaId,
+        inspectionId,
+        sourceZoneId: deckId,
+        expectedCardIds: [cardIds[1]],
+        cardIds: [cardIds[4], cardIds[3]],
+        expectedViewerIds: [playerId],
+      },
+    ]);
+    expect(result.records[5]!.batches[0]!.events).toEqual([
+      {
+        type: 'InspectionCardsResolved',
+        playerId,
+        inspectionId,
+        expectedWorkAreaId: workAreaId,
+        expectedCardIds: [cardIds[1], cardIds[4], cardIds[3]],
+        destination: 'discard',
+        destinationZoneId: discardId,
+        expectedDestinationCardIds: [cardIds[0]],
+        destinationCardIds: [cardIds[0], cardIds[1], cardIds[4], cardIds[3]],
+        concealedCardIds: [],
+      },
+    ]);
+    expect(result.state.zones[deckId]?.cardIds).toEqual([cardIds[2]]);
+    expect(result.state.zones[discardId]?.cardIds).toEqual([
+      cardIds[0],
+      cardIds[1],
+      cardIds[4],
+      cardIds[3],
+    ]);
+    expect(result.state.workAreas[playerId]?.inspection).toBeNull();
+    expect(result.state.visibility.inspectionGrants).toEqual({});
+    const replayed = result.records
+      .flatMap((record) => record.batches)
+      .reduce(
+        applyEventBatch,
+        createEmptyMatch(target.matchId, [target.selfSeat, target.opponentSeat])
+      );
+    expect(replayed).toEqual(result.state);
+    expect(stableHash(result.state)).toBe(stableHash(retry.state));
+    assertMatchInvariants(result.state);
   });
 
   it.each([

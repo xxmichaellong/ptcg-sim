@@ -769,22 +769,38 @@ export const buildLegacyV1Candidate = (
               'Recorded view-deck deck-count witness does not match the exact current deck state',
           });
         }
-        if (action.count === 0) break;
-        if (state.workAreas[playerId]?.inspection) {
+        const viewerId = targetPlayerId(target, action.initiator);
+        const inspection = state.workAreas[playerId]?.inspection;
+        if (
+          inspection &&
+          (inspection.viewerIds.length !== 1 ||
+            inspection.viewerIds[0] !== viewerId)
+        ) {
           return failure({
             code: 'source_state_mismatch',
             recordIndex: action.recordIndex,
             path: `$[${action.recordIndex}].action`,
             message:
-              'Current closed candidate cannot append to an active inspection work area',
+              'Repeated V1 deck inspection by a different viewer requires per-card visibility that the canonical work area cannot represent',
           });
         }
+        if (action.count === 0) break;
         const problem = apply({
           type: 'ExtractDeckCardsForInspection',
           playerId,
-          viewerIds: [targetPlayerId(target, action.initiator)],
+          viewerIds: [viewerId],
           count: action.count,
           edge: action.edge,
+          ...(inspection
+            ? {
+                expectedInspection: {
+                  inspectionId: inspection.inspectionId,
+                  workAreaId: inspection.id,
+                  cardIds: [...inspection.cardIds],
+                  viewerIds: [...inspection.viewerIds],
+                },
+              }
+            : {}),
         });
         if (problem) return problem;
         break;

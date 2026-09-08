@@ -489,8 +489,14 @@ recorded last index downward and therefore append cards edge-first. The source
 exports all five witnesses after movement and reveals the temporary array only
 to the initiating perspective. Keyboard and context-menu ingress plus replay
 dispatch are pinned. Because V1 does not clear `viewCards` when opening again,
-the importer converts only a first positive inspection and preserves a
-zero-card export as a no-op until an additive canonical event exists.
+a second same-viewer top or bottom view appends its newly moved cards to the
+popup tail. The canonical importer now records that exact transition through
+`InspectionExtended`, while a compatible zero-card export remains a no-op.
+Source characterization also pins the privacy boundary: every newly moved card
+is revealed before the non-viewing client may hide the complete popup, and a
+later call does not re-reveal older popup cards. Cross-viewer repeats therefore
+retain per-extraction visibility and remain fail-closed until the canonical
+model can express it per card.
 
 The adjacent work-area characterization also pins the visible `viewCards`
 buttons on both player sides for `discardAll`, `lostZoneAll`, `handAll`,

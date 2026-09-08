@@ -400,7 +400,8 @@ legacy labels into authority.
 
 This deliberately narrow builder succeeds only when every action is one of
 `loadDeckData`, `reset`, `setup`, `takeTurn`, `draw`, `discardAndDraw`,
-`shuffleAndDraw`, `shuffleBottomAndDraw`, first `viewDeck`, inspection-source
+`shuffleAndDraw`, `shuffleBottomAndDraw`, first or same-viewer repeated
+`viewDeck`, inspection-source
 `discardAll`/`lostZoneAll`/`handAll`/`shuffleAll`/`shuffleBottom`, individual
 inspection-source loose-zone/targeted-play `moveCardBundle`, the bottom-mode, target-free
 loose-zone/stadium/new-play-stack/rich-whole-stack, or source-zone-targeted
@@ -466,10 +467,14 @@ The lifecycle mapping is source-backed:
   `ExtractDeckCardsForInspection` with deterministic identity. Top views retain
   deck order; V1's descending bottom loop produces bottom-to-top edge order, so
   the canonical command now preserves that order while event application also
-  accepts its earlier source-order form for replay compatibility. The
-  historical zero-card source defect produces a zero-batch record. A second
-  positive view while that player's inspection remains open fails the whole
-  candidate until an explicit additive-inspection event is designed; and
+  accepts its earlier source-order form for replay compatibility. A positive
+  same-viewer repeat supplies the exact inspection ID, work-area ID, prior card
+  order, and viewer set to the same command and emits `InspectionExtended`.
+  Replay revalidates that snapshot plus the exact selected deck edge before
+  appending. The historical zero-card source defect produces a zero-batch
+  record for a compatible viewer. Cross-viewer repeats fail the whole candidate
+  because V1 can preserve per-extraction popup visibility that the current
+  whole-work-area viewer set cannot represent; and
 - the bottom-mode move-card bundle resolves an ordinary player-zone, cover,
   stadium, exact current inspection, or exact current staged source coordinate
   to a stable card ID and executes `MoveCardToDeckBottom`. Its exact source tuple
@@ -626,9 +631,9 @@ also atomically restore an exact
 compatible staged stack to active or bench with deterministic IDs and
 full event replay, drain all staged cards to discard, Lost Zone, or hand in the
 exact V1 flat order, or shuffle them into/to the bottom of the deck through an
-identity-translated recorded permutation. It can also open a first private deck
-inspection for the exact source viewer in top order or V1 edge-first bottom
-order, then atomically resolve the whole inspection to discard, Lost Zone,
+identity-translated recorded permutation. It can also open or same-viewer-extend
+a private deck inspection for the exact source viewer in top order or V1
+edge-first bottom order, then atomically resolve the whole inspection to discard, Lost Zone,
 hand, the shuffled deck, or the shuffled deck bottom with exact recorded bases
 and replay, or resolve changing individual inspection coordinates into loose
 zones, existing stack tops, either deck edge, an exact recorded shuffle, or
@@ -639,10 +644,11 @@ take-turn discards both players' loose boards in
 source order before drawing, and that an owner reset clears only that owner's
 reachable loose state, owned stadium, and play stacks before rebuilding its
 deck. Opponent-owned stadium and play state remain. The subset still cannot
-append to inspections, handle position-incompatible work-area deck-top swaps,
-handle markers or face-down play state, or handle cross-owner play placements,
-so take-turn in-play reveal and reset behavior for those shapes remain gated on
-their dedicated movement/state decoders.
+represent cross-viewer repeated-inspection visibility, handle
+position-incompatible work-area deck-top swaps, handle markers or face-down
+play state, or handle cross-owner play placements, so take-turn in-play reveal
+and reset behavior for those shapes remain gated on their dedicated
+movement/state decoders.
 
 ## Next conversion slices
 
@@ -653,12 +659,13 @@ their dedicated movement/state decoders.
    order by stable identity; individual staged and inspection deck/stadium paths
    use current-coordinate source-relative commands, while target-free play
    composes existing departure and new-stack commands without a schema change.
-   The prerequisite draw, first deck-inspection open and whole-inspection bulk
-   resolution, loose/stadium/play/stack
+   The prerequisite draw, deck-inspection open/same-viewer extension and
+   whole-inspection bulk resolution, loose/stadium/play/stack
    movement, direct prize shuffle, and zone-backed deck atoms are already
    transactional. Individual inspection coordinates now resolve against the
-   current reachable work area; design repeated-view extension explicitly
-   instead of overloading the open event.
+   current reachable work area. Cross-viewer repeated inspections remain closed
+   until per-card visibility is modeled explicitly rather than widening the
+   work area's viewer set.
 2. Add markers, visibility/inspection, randomized/bulk, table signals, and the
    remaining action families using the same allowlisted dispatch table.
 3. Produce a conversion report with warnings, dropped presentation fields, and

@@ -291,6 +291,12 @@ export type GameCommand =
       readonly viewerIds: readonly PlayerId[];
       readonly count: number;
       readonly edge: 'top' | 'bottom';
+      readonly expectedInspection?: {
+        readonly inspectionId: InspectionId;
+        readonly workAreaId: WorkAreaId;
+        readonly cardIds: readonly CardInstanceId[];
+        readonly viewerIds: readonly PlayerId[];
+      };
     }
   | {
       readonly type: 'CloseInspection';
