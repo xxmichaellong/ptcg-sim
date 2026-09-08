@@ -54,8 +54,10 @@ describe('legacy v1 export envelope', () => {
     expect(version151.ok && version151.value.version).toBe('1.5.1');
     expect(version151.ok && version151.value.selfDeck).toEqual(deck);
     expect(version151.ok && version151.value.actions.slice(2)).toEqual([
-      action('self', 'setup'),
+      action('self', 'setup', [[4, 3, 2, 1, 0]]),
       action('opp', 'changeCardBack', ['https://cards.example/back.png']),
+      action('self', 'takeTurn', ['self']),
+      action('opp', 'reset', [false, true, true]),
     ]);
   });
 
@@ -167,6 +169,11 @@ describe('legacy v1 export envelope', () => {
         action('opp', 'loadDeckData', ['']),
       ])
     ).toMatchObject({ code: 'invalid_action_record', path: '$[1]' });
+    expect(
+      firstIssue(
+        exportPayload('1.5.1', [{ ...action('self', 'setup'), emit: false }])
+      )
+    ).toMatchObject({ code: 'invalid_action_record', path: '$[3]' });
   });
 
   it('requires the source exporter self/opponent loadDeckData bootstrap', () => {
@@ -183,7 +190,7 @@ describe('legacy v1 export envelope', () => {
         { ...action('self', 'loadDeckData', [deck]), emit: false },
         action('opp', 'loadDeckData', ['']),
       ])
-    ).toMatchObject({ code: 'invalid_bootstrap', path: '$[1..2]' });
+    ).toMatchObject({ code: 'invalid_action_record', path: '$[1]' });
   });
 
   it('validates both deck bootstraps structurally before interpretation', () => {

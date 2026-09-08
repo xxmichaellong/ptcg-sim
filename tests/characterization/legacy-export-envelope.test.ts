@@ -79,4 +79,42 @@ describe('legacy action-export source envelope', () => {
       'acceptAction(data.user, data.action, data.parameters, true)'
     );
   });
+
+  it('pins the first lifecycle positional family and export perspective rewrite', () => {
+    const reset = readRepositoryFile('client/src/actions/general/reset.js');
+    const setup = readRepositoryFile('client/src/actions/general/setup.js');
+    const takeTurn = readRepositoryFile(
+      'client/src/actions/general/take-turn.js'
+    );
+    const keybinds = readRepositoryFile(
+      'client/src/actions/keybinds/keybinds.js'
+    );
+    const boardButtons = readRepositoryFile(
+      'client/src/initialization/document-event-listeners/table/board-buttons.js'
+    );
+    const processAction = readRepositoryFile(
+      'client/src/setup/general/process-action.js'
+    );
+
+    expect(reset).toContain(
+      "processAction(user, emit, 'reset', [clean, build, invalidMessage])"
+    );
+    expect(setup).toContain("processAction(user, emit, 'setup', [indices])");
+    expect(takeTurn).toContain(
+      "const oInitiator = initiator === 'self' ? 'opp' : 'self';"
+    );
+    expect(takeTurn).toContain(
+      "processAction(user, emit, 'takeTurn', [oInitiator])"
+    );
+    expect(keybinds).toContain(
+      'takeTurn(systemState.initiator, systemState.initiator)'
+    );
+    expect(boardButtons).toContain(
+      'takeTurn(systemState.initiator, systemState.initiator)'
+    );
+    expect(processAction).toContain('const exportParameters = [...parameters]');
+    expect(processAction).toContain("if (exportParameters[0] === 'self')");
+    expect(processAction).toContain("exportParameters[0] = 'opp'");
+    expect(processAction).toContain("exportParameters[0] = 'self'");
+  });
 });

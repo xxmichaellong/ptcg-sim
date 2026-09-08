@@ -23,12 +23,24 @@
     "user": "self",
     "emit": true,
     "action": "setup",
-    "parameters": []
+    "parameters": [[4, 3, 2, 1, 0]]
   },
   {
     "user": "opp",
     "emit": true,
     "action": "changeCardBack",
     "parameters": ["https://cards.example/back.png"]
+  },
+  {
+    "user": "self",
+    "emit": true,
+    "action": "takeTurn",
+    "parameters": ["self"]
+  },
+  {
+    "user": "opp",
+    "emit": true,
+    "action": "reset",
+    "parameters": [false, true, true]
   }
 ]

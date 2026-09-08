@@ -83,7 +83,7 @@ None of those properties are copied into the v2 runtime.
 1. Reject empty, malformed, or oversized JSON before inspecting actions.
 2. Require the first and only metadata record to declare `1.5` or `1.5.1`.
 3. Require exact action record fields: `user`, `emit`, `action`, and
-   `parameters`.
+   `parameters`; genuine exported records always carry `emit: true`.
 4. Accept only `self`/`opp` and the frozen 50-action dispatcher allowlist.
 5. Require exact self-then-opponent `loadDeckData` bootstraps and validate their
    tuple structure.
@@ -108,19 +108,33 @@ The package does not depend on `game-core` yet. That keeps format admission
 separate from semantic interpretation and prevents an invalid upload from
 allocating canonical card instances or room state.
 
+### First positional family
+
+`decodeLegacyV1LifecycleActions` is the first private interpretation layer. It
+decodes the two parser-verified `loadDeckData` records and exact `reset`,
+`setup`, and `takeTurn` parameter tuples, but still applies nothing. Setup must
+carry the source-produced complete zero-based permutation, including the valid
+empty permutation for an empty deck. A reset carries exactly
+`[clean, build, invalidMessage]` booleans. `takeTurn` must carry the action
+owner after v1's export-copy perspective rewrite. A later `loadDeckData` is not
+a genuine exporter record and fails closed.
+
+Other allowlisted action families are deliberately ignored by this decoder,
+not guessed. This lets each family acquire its own source-backed positional
+schema while the final transaction can require every record to have exactly one
+decoder before any canonical state is created.
+
 ## Next conversion slices
 
-1. Freeze action-specific positional schemas for the two deck bootstraps and
-   lifecycle actions, including exact source version differences.
-2. Introduce deterministic import-only ID, randomness, and card-definition
+1. Introduce deterministic import-only ID, randomness, and card-definition
    adapters; external card URLs are data and are never fetched during parsing.
-3. Interpret lifecycle and movement families into a private canonical candidate,
+2. Interpret lifecycle and movement families into a private canonical candidate,
    then run the normal game-core invariants and stable hash.
-4. Add markers, visibility/inspection, randomized/bulk, table signals, and the
+3. Add markers, visibility/inspection, randomized/bulk, table signals, and the
    remaining action families using the same allowlisted dispatch table.
-5. Produce a conversion report with source/target hashes, warnings, dropped
+4. Produce a conversion report with source/target hashes, warnings, dropped
    presentation fields, and the exact failing record/path.
-6. Only after representative real-user fixtures convert transactionally should
+5. Only after representative real-user fixtures convert transactionally should
    the route loader or old `/import?key=` reader call this package.
 
 No v1 module is imported, no save/replay route is enabled, and no visible UI or

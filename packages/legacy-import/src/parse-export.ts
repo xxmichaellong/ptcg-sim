@@ -88,7 +88,7 @@ export type LegacyDeckData = '' | readonly LegacyDeckRow[];
 
 export interface LegacyActionRecord {
   readonly user: LegacyExportUser;
-  readonly emit: boolean;
+  readonly emit: true;
   readonly action: LegacySynchronizedActionName;
   readonly parameters: readonly LegacyJsonValue[];
 }
@@ -243,7 +243,7 @@ const parseAction = (
     !isRecord(value) ||
     !hasExactKeys(value, ['user', 'emit', 'action', 'parameters']) ||
     (value.user !== 'self' && value.user !== 'opp') ||
-    typeof value.emit !== 'boolean' ||
+    value.emit !== true ||
     typeof value.action !== 'string' ||
     !Array.isArray(value.parameters)
   ) {
