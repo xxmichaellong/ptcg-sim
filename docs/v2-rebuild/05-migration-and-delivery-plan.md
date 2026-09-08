@@ -169,11 +169,11 @@ action. Its first private semantic layers now validate lifecycle tuples,
 materialize bounded deck definitions with deterministic order-preserving IDs,
 and provide import-wide monotonic identities plus one-shot source-resolved
 outcome adapters. A first all-or-nothing candidate builder now applies the
-closed lifecycle/draw/discard-and-draw/direct-prize-shuffle/
-zone-backed-deck-action/prizes-to-deck-bottom subset through normal game-core
-commands and verifies exact event replay; it rejects every unconverted family
-before constructing state, rejects recorded draws that
-exceed the exact current source-state deck, applies only direct prize shuffles
+closed lifecycle/draw/discard-and-draw/shuffle-hand-and-draw/
+direct-prize-shuffle/zone-backed-deck-action/prizes-to-deck-bottom subset through
+normal game-core commands and verifies exact event replay; it rejects every
+unconverted family before constructing state, rejects recorded draws that exceed
+the exact current source-state deck, applies only direct prize shuffles
 whose recorded permutation matches the current prize zone, and resolves legacy
 zone indices to stable card IDs before move-to-top, shuffle-into-deck, or
 switch-with-deck-top. Shuffle-into-deck translates v1's in-deck tail-move
@@ -186,6 +186,11 @@ preserves the deck prefix, appends prizes in recorded order, and conceals them.
 Discard-and-draw validates v1's already-clamped count against the exact current
 deck, then atomically appends the ordered hand to discard and draws/conceals from
 deck index zero; zero remains a valid discard-only branch.
+Shuffle-hand-and-draw validates the recorded count and complete permutation
+against the exact current deck-plus-hand source, then consumes that deck-first,
+hand-tail order directly through one atomic canonical command. Zero-draw and
+completely empty shuffles remain valid, and all shuffled identities are
+concealed.
 Stack/work-area origins, remaining movement/action-family coverage, the complete
 transaction, conversion reports, and real-user corpus evidence remain before
 Phase 3 can exit.

@@ -49,6 +49,7 @@ const CONVERTED_ACTIONS = new Set<LegacySynchronizedActionName>([
   'takeTurn',
   'draw',
   'discardAndDraw',
+  'shuffleAndDraw',
   'shuffleZone',
   'moveToDeckTop',
   'shuffleIntoDeck',
@@ -453,6 +454,40 @@ export const buildLegacyV1Candidate = (
           playerId,
           count: action.count,
         });
+        if (problem) return problem;
+        break;
+      }
+      case 'shuffleAndDraw': {
+        const deck = state.zones[playerZoneId(playerId, 'deck')];
+        const hand = state.zones[playerZoneId(playerId, 'hand')];
+        const combinedCount =
+          (deck?.cardIds.length ?? 0) + (hand?.cardIds.length ?? 0);
+        if (!deck || !hand || action.count > combinedCount) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[1]`,
+            message:
+              'Recorded shuffle-and-draw count exceeds the source-state deck-plus-hand card count',
+          });
+        }
+        if (action.shuffleIndices.length !== combinedCount) {
+          return failure({
+            code: 'source_state_mismatch',
+            recordIndex: action.recordIndex,
+            path: `$[${action.recordIndex}].parameters[2]`,
+            message:
+              'Recorded shuffle-and-draw length does not match the source-state deck-plus-hand card count',
+          });
+        }
+        const problem = apply(
+          {
+            type: 'ShuffleHandIntoDeckAndDraw',
+            playerId,
+            count: action.count,
+          },
+          { kind: 'shuffle', indices: action.shuffleIndices }
+        );
         if (problem) return problem;
         break;
       }

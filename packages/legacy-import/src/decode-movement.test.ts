@@ -117,6 +117,39 @@ describe('legacy v1 movement positional decoder', () => {
     });
   });
 
+  it('decodes shuffle-and-draw target, independent initiator, count, and order', () => {
+    const maximumOrder = Array.from(
+      { length: MAX_DECK_CARDS },
+      (_, index) => MAX_DECK_CARDS - index - 1
+    );
+    expect(
+      decode(
+        action('self', 'shuffleAndDraw', ['opp', 0, []]),
+        action('opp', 'shuffleAndDraw', ['self', MAX_DECK_CARDS, maximumOrder])
+      )
+    ).toEqual({
+      ok: true,
+      actions: [
+        {
+          type: 'shuffleAndDraw',
+          recordIndex: 3,
+          player: 'self',
+          initiator: 'opp',
+          count: 0,
+          shuffleIndices: [],
+        },
+        {
+          type: 'shuffleAndDraw',
+          recordIndex: 4,
+          player: 'opp',
+          initiator: 'self',
+          count: MAX_DECK_CARDS,
+          shuffleIndices: maximumOrder,
+        },
+      ],
+    });
+  });
+
   it('decodes only source-authentic direct prize shuffles', () => {
     expect(
       decode(
@@ -290,6 +323,23 @@ describe('legacy v1 movement positional decoder', () => {
     });
     expect(
       firstIssue(action('self', 'discardAndDraw', ['self', 0, 'extra']))
+    ).toMatchObject({
+      code: 'invalid_parameter_count',
+      recordIndex: 3,
+      path: '$[3].parameters',
+    });
+  });
+
+  it('requires exactly the source-exported shuffle-and-draw parameters', () => {
+    expect(
+      firstIssue(action('self', 'shuffleAndDraw', ['self', 0]))
+    ).toMatchObject({
+      code: 'invalid_parameter_count',
+      recordIndex: 3,
+      path: '$[3].parameters',
+    });
+    expect(
+      firstIssue(action('self', 'shuffleAndDraw', ['self', 0, [], 'extra']))
     ).toMatchObject({
       code: 'invalid_parameter_count',
       recordIndex: 3,
@@ -684,4 +734,80 @@ describe('legacy v1 movement positional decoder', () => {
       });
     }
   );
+
+  it('requires a perspective initiator for shuffle-and-draw', () => {
+    expect(
+      firstIssue(action('self', 'shuffleAndDraw', [false, 0, []]))
+    ).toMatchObject({
+      code: 'invalid_parameter_type',
+      recordIndex: 3,
+      path: '$[3].parameters[0]',
+    });
+  });
+
+  it.each([null, true, '0', [], {}])(
+    'rejects non-number shuffle-and-draw count %j',
+    (count) => {
+      expect(
+        firstIssue(action('self', 'shuffleAndDraw', ['self', count, []]))
+      ).toMatchObject({
+        code: 'invalid_parameter_type',
+        recordIndex: 3,
+        path: '$[3].parameters[1]',
+      });
+    }
+  );
+
+  it.each([-1, 0.5, 1.5, MAX_DECK_CARDS + 1, 9_007_199_254_740_992])(
+    'rejects unsafe or out-of-range shuffle-and-draw count %j',
+    (count) => {
+      expect(
+        firstIssue(action('self', 'shuffleAndDraw', ['self', count, []]))
+      ).toEqual({
+        code: 'invalid_shuffle_draw_count',
+        recordIndex: 3,
+        path: '$[3].parameters[1]',
+        message: `shuffleAndDraw count must be an integer from 0 to ${MAX_DECK_CARDS}`,
+      });
+    }
+  );
+
+  it.each([null, [0, 0], [0, 2], [1], [-1], [0.5], ['0']])(
+    'rejects an invalid shuffle-and-draw permutation: %j',
+    (indices) => {
+      expect(
+        firstIssue(action('self', 'shuffleAndDraw', ['self', 0, indices]))
+      ).toMatchObject({
+        code: 'invalid_shuffle_permutation',
+        recordIndex: 3,
+        path: '$[3].parameters[2]',
+      });
+    }
+  );
+
+  it('rejects a shuffle-and-draw count above its recorded permutation length', () => {
+    expect(
+      firstIssue(action('self', 'shuffleAndDraw', ['self', 2, [0]]))
+    ).toEqual({
+      code: 'invalid_shuffle_draw_count',
+      recordIndex: 3,
+      path: '$[3].parameters[1]',
+      message:
+        'shuffleAndDraw count cannot exceed its recorded shuffle permutation length',
+    });
+  });
+
+  it('bounds a syntactically complete shuffle-and-draw permutation', () => {
+    const oversized = Array.from(
+      { length: MAX_DECK_CARDS + 1 },
+      (_, index) => index
+    );
+    expect(
+      firstIssue(action('self', 'shuffleAndDraw', ['self', 0, oversized]))
+    ).toMatchObject({
+      code: 'invalid_shuffle_permutation',
+      recordIndex: 3,
+      path: '$[3].parameters[2]',
+    });
+  });
 });

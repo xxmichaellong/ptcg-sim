@@ -184,7 +184,8 @@ describe('legacy v1 canonical candidate builder', () => {
           'opp',
           [5, 4, 3, 2, 1, 0],
         ]),
-        action('self', 'discardAndDraw', ['opp', 2])
+        action('self', 'discardAndDraw', ['opp', 2]),
+        action('self', 'shuffleAndDraw', ['opp', 2, [7, 6, 5, 4, 3, 2, 1, 0]])
       )
     );
     const first = buildLegacyV1Candidate(parsed, target);
@@ -461,6 +462,175 @@ describe('legacy v1 canonical candidate builder', () => {
       ],
     });
     expect('state' in unclamped).toBe(false);
+  });
+
+  it('atomically shuffles the deck-plus-hand source basis and draws its recorded count', () => {
+    const shuffleIndices = [5, 0, 11, 1, 6, 2, 7, 3, 8, 4, 9, 10];
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          '',
+          cardRows(18, 'Opponent shuffle draw'),
+          action('opp', 'setup', [Array.from({ length: 18 }, (_, i) => i)]),
+          action('opp', 'shuffleAndDraw', ['self', 3, shuffleIndices])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+
+    const playerId = target.opponentSeat.playerId;
+    const handId = playerZoneId(playerId, 'hand');
+    const deckId = playerZoneId(playerId, 'deck');
+    const oldHand = Array.from(
+      { length: 7 },
+      (_, index) => `legacy:v1:card:${String(index + 18).padStart(6, '0')}`
+    );
+    const oldDeck = Array.from(
+      { length: 5 },
+      (_, index) => `legacy:v1:card:${String(index + 31).padStart(6, '0')}`
+    );
+    const combined = [...oldDeck, ...oldHand];
+    const shuffled = shuffleIndices.map((index) => combined[index]!);
+    const drawn = shuffled.slice(0, 3);
+    expect(result.state.zones[handId]!.cardIds).toEqual(drawn);
+    expect(result.state.zones[deckId]!.cardIds).toEqual(shuffled.slice(3));
+    expect(result.records[3]).toEqual({
+      recordIndex: 4,
+      action: 'shuffleAndDraw',
+      batches: [
+        expect.objectContaining({
+          events: [
+            {
+              type: 'ZoneOrdersSet',
+              reason: 'shuffle-hand-into-deck-and-draw',
+              zones: [
+                {
+                  zoneId: handId,
+                  expectedCardIds: oldHand,
+                  cardIds: drawn,
+                },
+                {
+                  zoneId: deckId,
+                  expectedCardIds: oldDeck,
+                  cardIds: shuffled.slice(3),
+                },
+              ],
+              concealedCardIds: shuffled,
+            },
+          ],
+        }),
+      ],
+    });
+    assertMatchInvariants(result.state);
+  });
+
+  it('preserves zero and empty shuffles and rejects stale count/order without state', () => {
+    const reverseHand = Array.from({ length: 7 }, (_, index) => 6 - index);
+    const zeroDraw = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(13, 'Zero shuffle draw'),
+          '',
+          action('self', 'setup', [Array.from({ length: 13 }, (_, i) => i)]),
+          action('self', 'shuffleAndDraw', ['opp', 0, reverseHand])
+        )
+      ),
+      target
+    );
+    expect(zeroDraw.ok).toBe(true);
+    if (!zeroDraw.ok) throw new Error(zeroDraw.issues[0]?.message);
+    const handId = playerZoneId(target.selfSeat.playerId, 'hand');
+    const deckId = playerZoneId(target.selfSeat.playerId, 'deck');
+    const oldHand = Array.from(
+      { length: 7 },
+      (_, index) => `legacy:v1:card:${String(index + 13).padStart(6, '0')}`
+    );
+    const shuffledHand = [...oldHand].reverse();
+    expect(zeroDraw.state.zones[handId]!.cardIds).toEqual([]);
+    expect(zeroDraw.state.zones[deckId]!.cardIds).toEqual(shuffledHand);
+    expect(zeroDraw.records[3]).toMatchObject({
+      recordIndex: 4,
+      action: 'shuffleAndDraw',
+      batches: [
+        {
+          events: [
+            {
+              type: 'ZoneOrdersSet',
+              reason: 'shuffle-hand-into-deck-and-draw',
+              zones: [
+                { zoneId: handId, expectedCardIds: oldHand, cardIds: [] },
+                { zoneId: deckId, expectedCardIds: [], cardIds: shuffledHand },
+              ],
+              concealedCardIds: shuffledHand,
+            },
+          ],
+        },
+      ],
+    });
+    assertMatchInvariants(zeroDraw.state);
+
+    const empty = buildLegacyV1Candidate(
+      parse(payload('', '', action('self', 'shuffleAndDraw', ['opp', 0, []]))),
+      target
+    );
+    expect(empty.ok).toBe(true);
+    if (!empty.ok) throw new Error(empty.issues[0]?.message);
+    expect(empty.records[2]).toMatchObject({
+      recordIndex: 3,
+      action: 'shuffleAndDraw',
+      batches: [{ events: [{ type: 'ZoneOrdersSet' }] }],
+    });
+    assertMatchInvariants(empty.state);
+
+    const unclamped = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(2, 'Unclamped shuffle draw'),
+          '',
+          action('self', 'shuffleAndDraw', ['self', 3, [2, 1, 0]])
+        )
+      ),
+      target
+    );
+    expect(unclamped).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 3,
+          path: '$[3].parameters[1]',
+          message:
+            'Recorded shuffle-and-draw count exceeds the source-state deck-plus-hand card count',
+        },
+      ],
+    });
+    expect('state' in unclamped).toBe(false);
+
+    const staleOrder = buildLegacyV1Candidate(
+      parse(
+        payload(
+          cardRows(2, 'Stale shuffle draw'),
+          '',
+          action('self', 'shuffleAndDraw', ['self', 1, [0]])
+        )
+      ),
+      target
+    );
+    expect(staleOrder).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: 'source_state_mismatch',
+          recordIndex: 3,
+          path: '$[3].parameters[2]',
+          message:
+            'Recorded shuffle-and-draw length does not match the source-state deck-plus-hand card count',
+        },
+      ],
+    });
+    expect('state' in staleOrder).toBe(false);
   });
 
   it('applies a recorded direct prize shuffle with its resolved permutation', () => {
