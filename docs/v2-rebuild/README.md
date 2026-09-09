@@ -78,7 +78,12 @@ the relevant product decisions and phase exit criteria.
   disconnect, reconnect, and leave. Explicit leave durably removes the session
   registry entry and bounded command-outcome cache, revokes its resume
   capability, and releases its claimed player seat, while
-  hibernation restoration and superseded-socket closure stay silent. Socket
+  hibernation restoration and superseded-socket closure stay silent. Unclean
+  transport loss instead commits a 30-second reconnect deadline, shares its
+  earliest expiry with the Durable Object alarm, and preserves the session and
+  seat until resume clears it or one batch expiry removes due sessions. Expiry
+  releases authorization without mutating seat-owned match/private state, and
+  the bounded browser retry schedule finishes inside that server lease. Socket
   admission is also response-loss safe: the ticket exchange binds a distinct
   server-minted resume digest before `Hello`, and the client retries the exact
   private pair until `Welcome` can prove either one-time redemption or recovery

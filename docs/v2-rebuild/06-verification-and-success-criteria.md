@@ -464,9 +464,14 @@ Release requires all of the following:
 31. Explicit leave removes, rather than tombstones, the exact durable session
     and its bounded command-outcome cache. Transition validation rejects a
     retained inactive session or any unrelated session mutation; repeated
-    spectator admission/leave cycles leave an empty registry. Disconnected
-    resumable sessions remain active until the separately decided grace policy
-    expires or the client explicitly leaves.
+    spectator admission/leave cycles leave an empty registry. Transport loss
+    instead commits a 30-second absolute reconnect deadline without releasing
+    the session or seat. Resume clears it; one shared-alarm transaction removes
+    all due sessions and releases exactly their seats while canonical player
+    state/private grants remain seat-owned. Late bearers fail, replacement
+    admission succeeds, ambiguous commits reconcile, missing markers are
+    repaired after eviction, and the client's worst-case default retry schedule
+    remains below the server deadline in unit and real-runtime tests.
 32. `CloseInspection` is formable from the recipient projection without
     disclosing its canonical inspection token. The client submits the projected
     work-area handle; authority accepts only the actor's exact current handle,

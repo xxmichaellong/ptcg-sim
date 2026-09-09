@@ -325,8 +325,10 @@ export class PtcgRoom extends DurableObject<Env> {
     }
     if (
       attachment.sessionId &&
-      !runtime.coordinator.currentSnapshot().sessions[attachment.sessionId]
-        ?.active
+      (!runtime.coordinator.currentSnapshot().sessions[attachment.sessionId]
+        ?.active ||
+        runtime.coordinator.currentSnapshot().sessions[attachment.sessionId]
+          ?.reconnectExpiresAt !== undefined)
     ) {
       await runtime.hub.disconnect(attachment.connectionId);
       socket.close(4409, 'Session is no longer active');
@@ -359,7 +361,7 @@ export class PtcgRoom extends DurableObject<Env> {
     socket: WebSocket,
     code: number
   ): Promise<void> {
-    this.disconnectSocket(socket);
+    await this.disconnectSocket(socket);
     this.telemetry.roomSocket({
       outcome: 'closed',
       closeCode: code,
@@ -371,7 +373,7 @@ export class PtcgRoom extends DurableObject<Env> {
   }
 
   override async webSocketError(socket: WebSocket): Promise<void> {
-    this.disconnectSocket(socket);
+    await this.disconnectSocket(socket);
     this.telemetry.roomSocket({
       outcome: 'error',
       activeSockets: activeSocketCountExcluding(
@@ -390,6 +392,8 @@ export class PtcgRoom extends DurableObject<Env> {
     const runtime = await this.runtimePromise;
     const now = Date.now();
     const nextSocketAdmission = await this.expireSocketAdmissions(now, runtime);
+    await runtime?.hub.expireDisconnectedSessions(now);
+    const nextReconnect = runtime?.hub.nextReconnectExpiry();
     let result;
     try {
       result = await this.store.expireUnclaimedRoom(now);
@@ -397,13 +401,26 @@ export class PtcgRoom extends DurableObject<Env> {
       this.telemetry.failure({ subsystem: 'room_alarm', retryable: true });
       throw error;
     }
-    if (result !== 'expired' && nextSocketAdmission !== undefined) {
-      await this.ensureAlarmNoLaterThan(nextSocketAdmission);
+    const nextDeadline = [nextSocketAdmission, nextReconnect].reduce<
+      number | undefined
+    >(
+      (next, deadline) =>
+        deadline === undefined
+          ? next
+          : next === undefined
+            ? deadline
+            : Math.min(next, deadline),
+      undefined
+    );
+    if (result !== 'expired' && nextDeadline !== undefined) {
+      await this.ensureAlarmNoLaterThan(nextDeadline);
     }
     if (result === 'scheduled' || result === 'claimed') {
       this.telemetry.roomLifecycle({
         outcome:
-          result === 'scheduled' ? 'alarm_rescheduled' : 'alarm_cancelled',
+          result === 'scheduled' || nextDeadline !== undefined
+            ? 'alarm_rescheduled'
+            : 'alarm_cancelled',
         authorityVersion:
           runtime?.coordinator.currentSnapshot().authorityVersion ?? 0,
         activeSessions: runtime
@@ -435,13 +452,12 @@ export class PtcgRoom extends DurableObject<Env> {
     return runtime?.hub.recentAcceptedCommandPerformance() ?? [];
   }
 
-  private disconnectSocket(socket: WebSocket): void {
+  private async disconnectSocket(socket: WebSocket): Promise<void> {
     const attachment =
       socket.deserializeAttachment() as SocketAttachment | null;
     if (!attachment?.connectionId) return;
-    void this.runtimePromise.then((runtime) =>
-      runtime?.hub.disconnect(attachment.connectionId)
-    );
+    const runtime = await this.runtimePromise;
+    await runtime?.hub.disconnect(attachment.connectionId);
   }
 
   private coordinateSocketAlarm<Value>(
@@ -490,10 +506,17 @@ export class PtcgRoom extends DurableObject<Env> {
     runtime: RoomRuntime
   ): Promise<void> {
     const nextDeadline = await this.expireSocketAdmissions(now, runtime);
-    if (nextDeadline === undefined) {
+    const nextReconnect = runtime.hub.nextReconnectExpiry();
+    const earliest =
+      nextDeadline === undefined
+        ? nextReconnect
+        : nextReconnect === undefined
+          ? nextDeadline
+          : Math.min(nextDeadline, nextReconnect);
+    if (earliest === undefined) {
       await this.ctx.storage.deleteAlarm();
     } else {
-      await this.ctx.storage.setAlarm(nextDeadline);
+      await this.ctx.storage.setAlarm(earliest);
     }
   }
 
@@ -563,7 +586,9 @@ export class PtcgRoom extends DurableObject<Env> {
     for (const { socket, attachment } of sockets) {
       if (
         attachment.sessionId &&
-        !snapshot.sessions[attachment.sessionId]?.active
+        (!snapshot.sessions[attachment.sessionId]?.active ||
+          snapshot.sessions[attachment.sessionId]?.reconnectExpiresAt !==
+            undefined)
       ) {
         socket.close(4409, 'Session is no longer active');
         continue;
@@ -587,11 +612,19 @@ export class PtcgRoom extends DurableObject<Env> {
       );
       restoredSockets.push({ socket, attachment });
     }
-    if (Object.keys(snapshot.sessions).length > 0) {
-      if (nextSocketAdmission === undefined) {
+    const nextReconnect = await runtime.hub.reconcileDisconnectedBindings();
+    const restoredSnapshot = runtime.coordinator.currentSnapshot();
+    const nextDeadline =
+      nextSocketAdmission === undefined
+        ? nextReconnect
+        : nextReconnect === undefined
+          ? nextSocketAdmission
+          : Math.min(nextSocketAdmission, nextReconnect);
+    if (Object.keys(restoredSnapshot.sessions).length > 0) {
+      if (nextDeadline === undefined) {
         await this.ctx.storage.deleteAlarm();
       } else {
-        await this.ctx.storage.setAlarm(nextSocketAdmission);
+        await this.ctx.storage.setAlarm(nextDeadline);
       }
     } else {
       const lifecycle = await this.store.expireUnclaimedRoom(now);
@@ -614,8 +647,8 @@ export class PtcgRoom extends DurableObject<Env> {
     }
     this.telemetry.roomLifecycle({
       outcome: 'restored',
-      authorityVersion: snapshot.authorityVersion,
-      activeSessions: activeSessionCount(snapshot),
+      authorityVersion: restoredSnapshot.authorityVersion,
+      activeSessions: activeSessionCount(restoredSnapshot),
       activeSockets: restoredSockets.length,
       durationMs: performance.now() - startedAt,
     });

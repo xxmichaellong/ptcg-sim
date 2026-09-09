@@ -327,6 +327,53 @@ const leftTransaction = (
   };
 };
 
+const disconnectedTransaction = (
+  current: RoomAuthoritySnapshot,
+  reconnectExpiresAt = 40_000
+): PersistedAdmissionTransaction => ({
+  expectedAuthorityVersion: current.authorityVersion,
+  sessionId: current.sessions.session!.id,
+  kind: 'session_disconnected',
+  disconnectedAt: reconnectExpiresAt - 30_000,
+  reconnectExpiresAt,
+  snapshot: {
+    ...current,
+    authorityVersion: current.authorityVersion + 1,
+    sessions: {
+      ...current.sessions,
+      session: {
+        ...current.sessions.session!,
+        reconnectExpiresAt,
+      },
+    },
+  },
+});
+
+const expiredTransaction = (
+  current: RoomAuthoritySnapshot,
+  expiredAt = current.sessions.session!.reconnectExpiresAt!
+): PersistedAdmissionTransaction => ({
+  expectedAuthorityVersion: current.authorityVersion,
+  kind: 'sessions_expired',
+  sessionIds: ['session'],
+  expiredAt,
+  snapshot: {
+    ...current,
+    authorityVersion: current.authorityVersion + 1,
+    sessions: {},
+    admission: {
+      ...current.admission!,
+      seats: {
+        ...current.admission!.seats,
+        [p1]: {
+          ...current.admission!.seats[p1]!,
+          claimedSessionId: null,
+        },
+      },
+    },
+  },
+});
+
 interface ObservedRetentionIndex {
   readonly frontierAuthorityVersion: number;
   readonly authority: readonly {
@@ -2120,6 +2167,122 @@ describe('Durable Object authority snapshot store', () => {
     );
     expect(await store.load()).toEqual(current);
     expect(storedKeys(storage, 'authority:admission:')).toEqual([]);
+  });
+
+  it('atomically schedules the earliest disconnected-session alarm', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    const current = admissionSnapshot('disconnect-alarm-room');
+    await store.initialize(current);
+    storage.alarm = 50_000;
+
+    const disconnected = disconnectedTransaction(current, 40_000);
+    await store.commitAdmission(disconnected);
+    expect(storage.alarm).toBe(40_000);
+    expect(await store.load()).toEqual(disconnected.snapshot);
+    const [disconnectedJournalKey] = storedKeys(
+      storage,
+      'authority:admission:'
+    );
+    expect(storage.values.get(disconnectedJournalKey!)).toMatchObject({
+      kind: 'session_disconnected',
+      sessionId: 'session',
+      disconnectedAt: 10_000,
+      reconnectExpiresAt: 40_000,
+    });
+
+    const expired = expiredTransaction(disconnected.snapshot);
+    await store.commitAdmission(expired);
+    expect(await store.load()).toEqual(expired.snapshot);
+    const expiredJournalKey = storedKeys(storage, 'authority:admission:').at(
+      -1
+    );
+    expect(storage.values.get(expiredJournalKey!)).toMatchObject({
+      kind: 'sessions_expired',
+      sessionIds: ['session'],
+      expiredAt: 40_000,
+    });
+  });
+
+  it('rejects forged disconnect and expiry lifecycle transitions', async () => {
+    const current = admissionSnapshot('forged-session-lifecycle-room');
+    const disconnected = disconnectedTransaction(current);
+    const forgedState = {
+      ...disconnected.snapshot.state,
+      players: {
+        ...disconnected.snapshot.state.players,
+        [p1]: {
+          ...disconnected.snapshot.state.players[p1]!,
+          displayName: 'Forged name',
+        },
+      },
+    };
+    const cases: readonly {
+      readonly current: RoomAuthoritySnapshot;
+      readonly transaction: PersistedAdmissionTransaction;
+      readonly expected: string;
+    }[] = [
+      {
+        current,
+        transaction: {
+          ...disconnectedTransaction(current, 41_000),
+          disconnectedAt: 10_000,
+        },
+        expected: 'session disconnect changed the session registry',
+      },
+      {
+        current,
+        transaction: {
+          ...disconnected,
+          snapshot: {
+            ...disconnected.snapshot,
+            state: forgedState,
+            replayHistory: createReplayHistory(forgedState),
+          },
+        },
+        expected: 'session disconnect changed match state',
+      },
+      {
+        current: disconnected.snapshot,
+        transaction: {
+          ...expiredTransaction(disconnected.snapshot),
+          expiredAt: 39_999,
+        },
+        expected: 'session expiry declaration does not match due sessions',
+      },
+      {
+        current: disconnected.snapshot,
+        transaction: {
+          ...expiredTransaction(disconnected.snapshot),
+          snapshot: {
+            ...expiredTransaction(disconnected.snapshot).snapshot,
+            admission: {
+              ...expiredTransaction(disconnected.snapshot).snapshot.admission!,
+              seats: {
+                ...expiredTransaction(disconnected.snapshot).snapshot.admission!
+                  .seats,
+                [p2]: {
+                  ...expiredTransaction(disconnected.snapshot).snapshot
+                    .admission!.seats[p2]!,
+                  claimCapabilityDigest: 'd'.repeat(64),
+                },
+              },
+            },
+          },
+        },
+        expected: 'session expiry did not release exactly its seats',
+      },
+    ];
+
+    for (const testCase of cases) {
+      const storage = new MemoryDurableStorage();
+      const store = new DurableRoomSnapshotStore(storage);
+      await store.initialize(testCase.current);
+      await expect(store.commitAdmission(testCase.transaction)).rejects.toThrow(
+        testCase.expected
+      );
+      expect(await store.load()).toEqual(testCase.current);
+    }
   });
 
   it('binds a durable seat claim to its ticket role and display name', async () => {

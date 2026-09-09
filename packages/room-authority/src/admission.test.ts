@@ -9,6 +9,8 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   admitRoomSession,
   createRoomAdmissionState,
+  disconnectRoomSession,
+  expireDisconnectedRoomSessions,
   issueRoomAdmissionTicket,
   issueRoomInvitation,
   leaveRoomSession,
@@ -953,6 +955,123 @@ describe('room capability admission', () => {
     expect(replacement.session.id).not.toBe(claimed.session.id);
     expect(replacement.snapshot.sessions[claimed.session.id]).toBeUndefined();
     expect(collectAuthoritySnapshotProblems(replacement.snapshot)).toEqual([]);
+  });
+
+  it('expires disconnected sessions atomically while preserving seat-owned game state', async () => {
+    const storage = persistence();
+    const crypto = createCrypto();
+    const deps = dependencies(crypto, storage);
+    const claimed = await admitRoomSession(
+      createSnapshot(),
+      {
+        type: 'ClaimSeat',
+        seatCapability: seatOneToken,
+        displayName: 'Blue',
+      },
+      deps
+    );
+    if (!claimed.accepted) throw new Error(claimed.code);
+    const spectator = await admitRoomSession(
+      claimed.snapshot,
+      { type: 'JoinSpectator', spectatorCapability: spectatorToken },
+      deps
+    );
+    if (!spectator.accepted) throw new Error(spectator.code);
+
+    const disconnectedPlayer = await disconnectRoomSession(
+      spectator.snapshot,
+      claimed.session.id,
+      1_000,
+      storage
+    );
+    if (!disconnectedPlayer.accepted) {
+      throw new Error(disconnectedPlayer.code);
+    }
+    const disconnectedSpectator = await disconnectRoomSession(
+      disconnectedPlayer.snapshot,
+      spectator.session.id,
+      2_000,
+      storage
+    );
+    if (!disconnectedSpectator.accepted) {
+      throw new Error(disconnectedSpectator.code);
+    }
+    expect(disconnectedPlayer.reconnectExpiresAt).toBe(31_000);
+    expect(disconnectedSpectator.reconnectExpiresAt).toBe(32_000);
+
+    const state = disconnectedSpectator.snapshot.state;
+    const replayHistory = disconnectedSpectator.snapshot.replayHistory;
+    const identities = disconnectedSpectator.snapshot.identities;
+    const expired = await expireDisconnectedRoomSessions(
+      disconnectedSpectator.snapshot,
+      31_000,
+      storage
+    );
+    expect(expired).toMatchObject({
+      committed: true,
+      expiredSessions: [{ id: claimed.session.id }],
+      nextReconnectExpiresAt: 32_000,
+      snapshot: {
+        sessions: {
+          [spectator.session.id]: { reconnectExpiresAt: 32_000 },
+        },
+        admission: { seats: { [p1]: { claimedSessionId: null } } },
+      },
+    });
+    expect(expired.snapshot.state).toBe(state);
+    expect(expired.snapshot.replayHistory).toBe(replayHistory);
+    expect(expired.snapshot.identities).toBe(identities);
+
+    await expect(
+      admitRoomSession(
+        expired.snapshot,
+        { type: 'Resume', resumeCapability: claimed.resumeCapability },
+        { ...deps, now: () => 31_000 }
+      )
+    ).resolves.toMatchObject({
+      accepted: false,
+      code: 'invalid_capability',
+    });
+    const resumedSpectator = await admitRoomSession(
+      expired.snapshot,
+      {
+        type: 'Resume',
+        resumeCapability: spectator.resumeCapability,
+      },
+      { ...deps, now: () => 31_999 }
+    );
+    expect(resumedSpectator).toMatchObject({
+      accepted: true,
+      session: { id: spectator.session.id },
+    });
+    if (!resumedSpectator.accepted) return;
+    expect(resumedSpectator.session).not.toHaveProperty('reconnectExpiresAt');
+
+    const replacement = await admitRoomSession(
+      resumedSpectator.snapshot,
+      {
+        type: 'ClaimSeat',
+        seatCapability: seatOneToken,
+        displayName: 'Replacement Blue',
+      },
+      deps
+    );
+    expect(replacement).toMatchObject({
+      accepted: true,
+      session: {
+        viewer: { kind: 'player', playerId: p1 },
+        displayName: 'Replacement Blue',
+      },
+    });
+    expect(storage.transactions.map((entry) => entry.kind)).toEqual([
+      'seat_claimed',
+      'spectator_joined',
+      'session_disconnected',
+      'session_disconnected',
+      'sessions_expired',
+      'session_resumed',
+      'seat_claimed',
+    ]);
   });
 
   it('retires a spectator without changing any player seat', async () => {

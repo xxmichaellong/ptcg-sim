@@ -95,6 +95,7 @@ export class MemoryDurableStorage implements DurableStorageLike {
         }
         return deleted;
       },
+      getAlarm: async () => stagedAlarm,
       setAlarm: async (scheduledTime) => {
         if (this.failSetAlarm) throw new Error('injected setAlarm failure');
         stagedAlarm =

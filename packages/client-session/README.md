@@ -12,6 +12,7 @@ DOM renderer, and the Pixi renderer can consume without owning networking.
 - accepted commands complete only after both their result and covering publication
 - stale command publications are ignored and divergent equal-revision views fail closed; the separate authority-reconciliation refresh is accepted only when it is identical or changes player display names alone
 - initial admission retains and retries the exact server-minted ticket/resume pair until Welcome; reconnects then use only the in-memory resume capability and reconcile against the Welcome sequence
+- the default eight-attempt jittered exponential retry schedule has a 27.3-second worst-case delay total, inside the authority-owned 30-second disconnected-session lease
 - transport loss clears replay transfer state in the same non-ready publication, so reentrant observers cannot submit against a socket that is already gone
 - Welcome publishes the ready phase, role, view, sequence, and reconciled queue together; advancing state publications likewise publish their view and presentation events together, while a validated metadata refresh replaces one equal-revision view atomically
 - command allocation publishes its next sequence and queued summary together, so observers never see one without the other

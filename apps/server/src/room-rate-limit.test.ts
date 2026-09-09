@@ -57,6 +57,7 @@ class MemoryDurableStorage implements DurableStorageLike {
           }
           return deleted;
         },
+        getAlarm: async () => null,
         setAlarm: async () => undefined,
         deleteAlarm: async () => undefined,
       });

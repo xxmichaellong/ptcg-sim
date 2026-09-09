@@ -1,5 +1,9 @@
 import type { MatchViewState, PlayerId } from '@ptcgsim/game-core';
-import { PROTOCOL_VERSION, serializeMatchViewState } from '@ptcgsim/protocol';
+import {
+  PROTOCOL_VERSION,
+  SESSION_RECONNECT_GRACE_MS,
+  serializeMatchViewState,
+} from '@ptcgsim/protocol';
 
 import { projectRecipient, type OpaqueIdSource } from './identity-registry.js';
 import { assertAuthoritySnapshotInvariants } from './invariants.js';
@@ -51,6 +55,8 @@ export interface AdmissionDependencies {
   readonly crypto: AdmissionCrypto;
   readonly opaqueIds: OpaqueIdSource;
   readonly persistence: AdmissionPersistence;
+  /** Required when validating the lifetime of a disconnected resume bearer. */
+  readonly now?: () => number;
 }
 
 export interface AdmissionTicketDependencies extends Omit<
@@ -418,8 +424,9 @@ const persistSessionResume = async (
   admissionTicketDigest?: string,
   invitationDigest?: string
 ): Promise<AdmissionResult> => {
+  const { reconnectExpiresAt: _reconnected, ...connectedSession } = session;
   const resumedSession: AuthoritySession = {
-    ...session,
+    ...connectedSession,
     resumeCapabilityDigest:
       await dependencies.crypto.digestCapability(resumeCapability),
   };
@@ -467,6 +474,153 @@ const persistSessionResume = async (
     resumeCapability,
     view: projections.admittedView,
     refreshes: projections.refreshes,
+  };
+};
+
+export type DisconnectRoomSessionResult =
+  | {
+      readonly accepted: true;
+      readonly committed: boolean;
+      readonly snapshot: RoomAuthoritySnapshot;
+      readonly session: AuthoritySession;
+      readonly reconnectExpiresAt: number;
+    }
+  | {
+      readonly accepted: false;
+      readonly code: 'invalid_session';
+      readonly snapshot: RoomAuthoritySnapshot;
+    };
+
+/** Durably starts (or observes) the bounded reconnect lease for one session. */
+export const disconnectRoomSession = async (
+  current: RoomAuthoritySnapshot,
+  sessionId: string,
+  now: number,
+  persistence: AdmissionPersistence
+): Promise<DisconnectRoomSessionResult> => {
+  assertAuthoritySnapshotInvariants(current);
+  if (!validNow(now)) throw new Error('Session disconnect clock is invalid');
+  const session = current.sessions[sessionId];
+  if (!session?.active) {
+    return { accepted: false, code: 'invalid_session', snapshot: current };
+  }
+  if (session.reconnectExpiresAt !== undefined) {
+    return {
+      accepted: true,
+      committed: false,
+      snapshot: current,
+      session,
+      reconnectExpiresAt: session.reconnectExpiresAt,
+    };
+  }
+  const reconnectExpiresAt = now + SESSION_RECONNECT_GRACE_MS;
+  if (!Number.isSafeInteger(reconnectExpiresAt)) {
+    throw new Error('Session reconnect deadline overflowed');
+  }
+  const disconnectedSession: AuthoritySession = {
+    ...session,
+    reconnectExpiresAt,
+  };
+  const candidate: RoomAuthoritySnapshot = {
+    ...current,
+    authorityVersion: current.authorityVersion + 1,
+    sessions: { ...current.sessions, [sessionId]: disconnectedSession },
+  };
+  assertAuthoritySnapshotInvariants(candidate);
+  await persistence.commitAdmission({
+    expectedAuthorityVersion: current.authorityVersion,
+    snapshot: candidate,
+    sessionId,
+    kind: 'session_disconnected',
+    disconnectedAt: now,
+    reconnectExpiresAt,
+  });
+  return {
+    accepted: true,
+    committed: true,
+    snapshot: candidate,
+    session: disconnectedSession,
+    reconnectExpiresAt,
+  };
+};
+
+export interface ExpireDisconnectedRoomSessionsResult {
+  readonly committed: boolean;
+  readonly snapshot: RoomAuthoritySnapshot;
+  readonly expiredSessions: readonly AuthoritySession[];
+  readonly nextReconnectExpiresAt?: number;
+}
+
+/** Atomically retires every reconnect lease due at the supplied wall clock. */
+export const expireDisconnectedRoomSessions = async (
+  current: RoomAuthoritySnapshot,
+  now: number,
+  persistence: AdmissionPersistence
+): Promise<ExpireDisconnectedRoomSessionsResult> => {
+  assertAuthoritySnapshotInvariants(current);
+  if (!validNow(now)) throw new Error('Session expiry clock is invalid');
+  const disconnected = Object.values(current.sessions).filter(
+    (session) => session.reconnectExpiresAt !== undefined
+  );
+  const expiredSessions = disconnected
+    .filter((session) => session.reconnectExpiresAt! <= now)
+    .sort((left, right) => left.id.localeCompare(right.id));
+  const nextReconnectExpiresAt = disconnected
+    .filter((session) => session.reconnectExpiresAt! > now)
+    .reduce<number | undefined>(
+      (next, session) =>
+        next === undefined
+          ? session.reconnectExpiresAt
+          : Math.min(next, session.reconnectExpiresAt!),
+      undefined
+    );
+  if (expiredSessions.length === 0) {
+    return {
+      committed: false,
+      snapshot: current,
+      expiredSessions,
+      ...(nextReconnectExpiresAt !== undefined
+        ? { nextReconnectExpiresAt }
+        : {}),
+    };
+  }
+  const expiredIds = new Set(expiredSessions.map((session) => session.id));
+  const admission = current.admission
+    ? {
+        ...current.admission,
+        seats: Object.fromEntries(
+          Object.entries(current.admission.seats).map(([playerId, seat]) => [
+            playerId,
+            seat.claimedSessionId && expiredIds.has(seat.claimedSessionId)
+              ? { ...seat, claimedSessionId: null }
+              : seat,
+          ])
+        ),
+      }
+    : undefined;
+  const candidate: RoomAuthoritySnapshot = {
+    ...current,
+    authorityVersion: current.authorityVersion + 1,
+    sessions: Object.fromEntries(
+      Object.entries(current.sessions).filter(
+        ([sessionId]) => !expiredIds.has(sessionId)
+      )
+    ),
+    ...(admission ? { admission } : {}),
+  };
+  assertAuthoritySnapshotInvariants(candidate);
+  await persistence.commitAdmission({
+    expectedAuthorityVersion: current.authorityVersion,
+    snapshot: candidate,
+    kind: 'sessions_expired',
+    sessionIds: expiredSessions.map((session) => session.id),
+    expiredAt: now,
+  });
+  return {
+    committed: true,
+    snapshot: candidate,
+    expiredSessions,
+    ...(nextReconnectExpiresAt !== undefined ? { nextReconnectExpiresAt } : {}),
   };
 };
 
@@ -1093,9 +1247,12 @@ export const admitRoomSession = async (
     await dependencies.crypto.digestCapability(suppliedCapability);
 
   if (request.type === 'Resume') {
+    const now = dependencies.now?.();
     const session = Object.values(current.sessions).find(
       (candidate) =>
         candidate.active &&
+        (candidate.reconnectExpiresAt === undefined ||
+          (now !== undefined && candidate.reconnectExpiresAt > now)) &&
         candidate.resumeCapabilityDigest !== undefined &&
         dependencies.crypto.equalDigest(
           candidate.resumeCapabilityDigest,

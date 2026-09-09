@@ -14,6 +14,11 @@ Strict invitation-issue and cross-browser handoff schemas carry a
 bounded expiring one-use claim and its requested role without exposing the
 creator's long-lived seat or spectator credential.
 
+The protocol constants also publish the 30-second server reconnect grace used
+by authority and the client retry-budget assertion. It is lifecycle policy, not
+a client extension: only a durable server transition can resume or expire a
+session.
+
 `ProjectionRefresh` is a separate, closed server message for authoritative
 metadata changes that do not execute a game command. Its only current cause is
 `authority_reconciled`; clients verify that a refresh is either identical or

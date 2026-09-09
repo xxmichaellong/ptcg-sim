@@ -43,6 +43,7 @@ const GENERATION_PATTERN = /^[0-9a-f]{32}$/u;
 
 export interface DurableStorageTransactionLike extends JournalRetentionTransaction {
   readonly put: (entries: Record<string, unknown>) => Promise<void>;
+  readonly getAlarm: () => Promise<number | null>;
   readonly setAlarm: (scheduledTime: number | Date) => Promise<void>;
   readonly deleteAlarm: () => Promise<void>;
 }
@@ -134,6 +135,10 @@ export interface StoredAdmissionJournalEntry {
   readonly invitationDigest?: string;
   readonly sourceInvitationDigest?: string;
   readonly admissionTicketDigest?: string;
+  readonly sessionIds?: readonly string[];
+  readonly disconnectedAt?: number;
+  readonly reconnectExpiresAt?: number;
+  readonly expiredAt?: number;
 }
 
 export class ConcurrentRoomWriteError extends Error {
@@ -1108,18 +1113,29 @@ export class DurableRoomSnapshotStore
                       }
                     : {}),
                 }
-              : {
-                  sessionId: transaction.sessionId,
-                  ...(transaction.admissionTicketDigest
-                    ? {
-                        admissionTicketDigest:
-                          transaction.admissionTicketDigest,
-                      }
-                    : {}),
-                  ...(transaction.invitationDigest
-                    ? { invitationDigest: transaction.invitationDigest }
-                    : {}),
-                }),
+              : transaction.kind === 'sessions_expired'
+                ? {
+                    sessionIds: transaction.sessionIds,
+                    expiredAt: transaction.expiredAt,
+                  }
+                : {
+                    sessionId: transaction.sessionId,
+                    ...(transaction.kind === 'session_disconnected'
+                      ? {
+                          disconnectedAt: transaction.disconnectedAt,
+                          reconnectExpiresAt: transaction.reconnectExpiresAt,
+                        }
+                      : {}),
+                    ...(transaction.admissionTicketDigest
+                      ? {
+                          admissionTicketDigest:
+                            transaction.admissionTicketDigest,
+                        }
+                      : {}),
+                    ...(transaction.invitationDigest
+                      ? { invitationDigest: transaction.invitationDigest }
+                      : {}),
+                  }),
         };
         const retained = await prepareJournalRetention(
           storageTransaction,
@@ -1154,6 +1170,15 @@ export class DurableRoomSnapshotStore
               }
             : {}),
         });
+        if (transaction.kind === 'session_disconnected') {
+          const currentAlarm = await storageTransaction.getAlarm();
+          if (
+            currentAlarm === null ||
+            transaction.reconnectExpiresAt < currentAlarm
+          ) {
+            await storageTransaction.setAlarm(transaction.reconnectExpiresAt);
+          }
+        }
         if (claimsRoom && lifecycle?.state === 'unclaimed') {
           await storageTransaction.deleteAlarm();
         }

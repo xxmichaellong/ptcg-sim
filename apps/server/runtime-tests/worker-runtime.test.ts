@@ -1,13 +1,18 @@
 import { exports } from 'cloudflare:workers';
-import { PROTOCOL_VERSION } from '@ptcgsim/protocol';
+import {
+  PROTOCOL_VERSION,
+  SESSION_RECONNECT_GRACE_MS,
+} from '@ptcgsim/protocol';
 import {
   evictDurableObject,
   runDurableObjectAlarm,
   runInDurableObject,
 } from 'cloudflare:test';
+import type { RoomAuthoritySnapshot } from '@ptcgsim/room-authority';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  AUTHORITY_SNAPSHOT_STORAGE_KEY,
   DurableRoomSnapshotStore,
   ROOM_LIFECYCLE_STORAGE_KEY,
 } from '../src/durable-storage.js';
@@ -605,10 +610,23 @@ describe('Cloudflare Worker runtime', () => {
       }),
     ]);
     const disconnected = await runtimeEvidence(created);
-    expect(disconnected.snapshot).toEqual(beforeDisconnect.snapshot);
     expect(
       disconnected.snapshot?.sessions[secondWelcome.sessionId]
-    ).toMatchObject({ active: true });
+    ).toMatchObject({
+      active: true,
+      reconnectExpiresAt: expect.any(Number),
+    });
+    const reconnectExpiresAt =
+      disconnected.snapshot?.sessions[secondWelcome.sessionId]
+        ?.reconnectExpiresAt;
+    expect(reconnectExpiresAt).toBeGreaterThan(Date.now());
+    expect(reconnectExpiresAt! - Date.now()).toBeLessThanOrEqual(
+      SESSION_RECONNECT_GRACE_MS
+    );
+    expect(disconnected.alarm).toBe(reconnectExpiresAt);
+    expect(disconnected.snapshot?.state).toEqual(
+      beforeDisconnect.snapshot?.state
+    );
     expect(
       disconnected.snapshot?.admission?.seats[secondWelcome.playerId!]
         ?.claimedSessionId
@@ -643,6 +661,7 @@ describe('Cloudflare Worker runtime', () => {
       displayName: 'Runtime Red',
       status: 'reconnected',
     });
+    expect((await runtimeEvidence(created)).alarm).toBeNull();
     await expect(firstSeesReconnect).resolves.toEqual([
       expect.objectContaining({
         message: expect.objectContaining({
@@ -689,6 +708,126 @@ describe('Cloudflare Worker runtime', () => {
     await expect(
       issuePlayerTicket(created, 'two', 'Replacement Runtime Red')
     ).resolves.toMatchObject({ admissionTicket: expect.any(String) });
+  });
+
+  it('expires a disconnected player through the real alarm and admits a seat-owned replacement', async () => {
+    const created = await createRoom();
+    const firstTicket = await issuePlayerTicket(created, 'one', 'Alarm Blue');
+    const firstSocket = await connect(created);
+    const firstAdmission = nextServerFrames(firstSocket, 2);
+    firstSocket.send(helloFrame(created, firstTicket, 'Alarm Blue'));
+    await firstAdmission;
+
+    const secondTicket = await issuePlayerTicket(created, 'two', 'Alarm Red');
+    const secondSocket = await connect(created);
+    const firstSeesJoin = nextServerFrames(firstSocket, 2);
+    const secondAdmission = nextServerFrames(secondSocket, 2);
+    secondSocket.send(helloFrame(created, secondTicket, 'Alarm Red'));
+    const [secondWelcomeFrame] = await secondAdmission;
+    await firstSeesJoin;
+    const secondWelcome = secondWelcomeFrame?.message;
+    if (secondWelcome?.type !== 'Welcome' || !secondWelcome.playerId) {
+      throw new Error('Expected second player Welcome');
+    }
+
+    const firstSeesDisconnect = nextServerFrames(firstSocket, 1);
+    secondSocket.close(1011, 'Injected expiry transport loss');
+    await firstSeesDisconnect;
+    const disconnected = await runtimeEvidence(created);
+    if (!disconnected.snapshot) throw new Error('Missing durable snapshot');
+    const preservedState = disconnected.snapshot.state;
+    expect(
+      disconnected.snapshot.sessions[secondWelcome.sessionId]
+        ?.reconnectExpiresAt
+    ).toBeGreaterThan(Date.now());
+
+    const forcedExpiry = Date.now() - 1;
+    await runInDurableObject(roomStub(created), async (_instance, state) => {
+      const envelope = await state.storage.get<{
+        readonly format: string;
+        readonly generation?: string;
+        readonly snapshot: RoomAuthoritySnapshot;
+      }>(AUTHORITY_SNAPSHOT_STORAGE_KEY);
+      if (!envelope) throw new Error('Missing authority envelope');
+      const session = envelope.snapshot.sessions[secondWelcome.sessionId];
+      if (!session) throw new Error('Missing disconnected session');
+      await state.storage.put(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
+        ...envelope,
+        snapshot: {
+          ...envelope.snapshot,
+          sessions: {
+            ...envelope.snapshot.sessions,
+            [session.id]: { ...session, reconnectExpiresAt: forcedExpiry },
+          },
+        },
+      });
+      await state.storage.setAlarm(Date.now());
+    });
+    await evictDurableObject(roomStub(created));
+
+    const firstSeesExpiry = nextServerFrames(firstSocket, 1);
+    await runDurableObjectAlarm(roomStub(created));
+    await expect(firstSeesExpiry).resolves.toEqual([
+      expect.objectContaining({
+        message: expect.objectContaining({
+          type: 'Presence',
+          displayName: 'Alarm Red',
+          status: 'left',
+        }),
+      }),
+    ]);
+    const expired = await runtimeEvidence(created);
+    expect(expired.snapshot?.sessions[secondWelcome.sessionId]).toBeUndefined();
+    expect(
+      expired.snapshot?.admission?.seats[secondWelcome.playerId]
+        ?.claimedSessionId
+    ).toBeNull();
+    expect(expired.snapshot?.state).toEqual(preservedState);
+    expect(expired.alarm).toBeNull();
+
+    const lateSocket = await connect(created);
+    const lateRejection = nextServerMessage(lateSocket);
+    lateSocket.send(
+      JSON.stringify({
+        type: 'Hello',
+        protocolVersion: PROTOCOL_VERSION,
+        buildId: 'local-development',
+        roomCode: created.roomCode,
+        displayName: 'Late Alarm Red',
+        requestedRole: 'player',
+        resumeToken: secondWelcome.resumeToken,
+      })
+    );
+    await expect(lateRejection).resolves.toMatchObject({
+      type: 'ServerNotice',
+      code: 'invalid_capability',
+    });
+    lateSocket.close(1000, 'Late resume rejected');
+
+    const replacementTicket = await issuePlayerTicket(
+      created,
+      'two',
+      'Replacement Alarm Red'
+    );
+    const replacementSocket = await connect(created);
+    const replacementAdmission = nextServerFrames(replacementSocket, 2);
+    replacementSocket.send(
+      helloFrame(created, replacementTicket, 'Replacement Alarm Red')
+    );
+    const [replacementWelcomeFrame] = await replacementAdmission;
+    const replacementWelcome = replacementWelcomeFrame?.message;
+    expect(replacementWelcome).toMatchObject({
+      type: 'Welcome',
+      playerId: secondWelcome.playerId,
+    });
+    const replaced = await runtimeEvidence(created);
+    expect(replaced.snapshot?.state.visibility).toEqual(
+      preservedState.visibility
+    );
+    expect(replaced.snapshot?.state.workAreas).toEqual(
+      preservedState.workAreas
+    );
+    expect(replaced.snapshot?.state.zones).toEqual(preservedState.zones);
   });
 
   it('keeps an admission ticket retryable when its durable claim fails', async () => {

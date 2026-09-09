@@ -7,6 +7,7 @@ import {
   type EventBatch,
   type PlayerId,
 } from '@ptcgsim/game-core';
+import { SESSION_RECONNECT_GRACE_MS } from '@ptcgsim/protocol';
 
 import { resolveViewCard, viewerIdentityKey } from './identity-registry.js';
 import {
@@ -482,6 +483,14 @@ const collectAuthoritySnapshotProblemsInternal = (
         session.resumeCapabilityDigest.length > 128)
     ) {
       problems.push(`session ${session.id} has an invalid resume digest`);
+    }
+    if (
+      session.reconnectExpiresAt !== undefined &&
+      (!session.active ||
+        !Number.isSafeInteger(session.reconnectExpiresAt) ||
+        session.reconnectExpiresAt < 0)
+    ) {
+      problems.push(`session ${session.id} has an invalid reconnect expiry`);
     }
     if (session.viewer.kind === 'player') {
       if (!snapshot.state.players[session.viewer.playerId]) {
@@ -965,6 +974,71 @@ export const assertAdmissionTransactionTransition = (
         }
       }
     }
+  } else if (transaction.kind === 'sessions_expired') {
+    unchangedAuthorityData('session expiry');
+    if (!structurallyEqual(candidate.identities, current.identities)) {
+      problems.push('session expiry changed projection identities');
+    }
+    const declaredIds = [...transaction.sessionIds];
+    const expectedIds = Object.values(current.sessions)
+      .filter(
+        (session) =>
+          session.reconnectExpiresAt !== undefined &&
+          session.reconnectExpiresAt <= transaction.expiredAt
+      )
+      .map((session) => session.id)
+      .sort();
+    if (
+      !Number.isSafeInteger(transaction.expiredAt) ||
+      transaction.expiredAt < 0 ||
+      declaredIds.length === 0 ||
+      !structurallyEqual(declaredIds, [...new Set(declaredIds)].sort()) ||
+      !structurallyEqual(declaredIds, expectedIds)
+    ) {
+      problems.push('session expiry declaration does not match due sessions');
+    }
+    const declared = new Set(declaredIds);
+    const expectedRemainingIds = Object.keys(current.sessions)
+      .filter((sessionId) => !declared.has(sessionId))
+      .sort();
+    if (
+      !structurallyEqual(
+        Object.keys(candidate.sessions).sort(),
+        expectedRemainingIds
+      )
+    ) {
+      problems.push('session expiry changed the session registry');
+    }
+    for (const [sessionId, session] of Object.entries(current.sessions)) {
+      if (
+        !declared.has(sessionId) &&
+        !structurallyEqual(candidate.sessions[sessionId], session)
+      ) {
+        problems.push('session expiry changed a retained session');
+      }
+    }
+    if (currentAdmission && candidateAdmission) {
+      if (
+        !structurallyEqual(
+          candidateAdmission.invitations,
+          currentAdmission.invitations
+        ) ||
+        !structurallyEqual(candidateAdmission.tickets, currentAdmission.tickets)
+      ) {
+        problems.push('session expiry changed admission credentials');
+      }
+      const expectedSeats = Object.fromEntries(
+        Object.entries(currentAdmission.seats).map(([playerId, seat]) => [
+          playerId,
+          seat.claimedSessionId && declared.has(seat.claimedSessionId)
+            ? { ...seat, claimedSessionId: null }
+            : seat,
+        ])
+      );
+      if (!structurallyEqual(candidateAdmission.seats, expectedSeats)) {
+        problems.push('session expiry did not release exactly its seats');
+      }
+    }
   } else {
     if (currentAdmission && candidateAdmission) {
       if (
@@ -1045,7 +1119,48 @@ export const assertAdmissionTransactionTransition = (
         problems.push('session invitation does not authorize its ticket');
       }
     }
-    if (transaction.kind === 'session_left') {
+    if (transaction.kind === 'session_disconnected') {
+      unchangedAuthorityData('session disconnect');
+      if (!structurallyEqual(candidate.identities, current.identities)) {
+        problems.push('session disconnect changed projection identities');
+      }
+      if (
+        !Number.isSafeInteger(transaction.disconnectedAt) ||
+        transaction.disconnectedAt < 0 ||
+        !Number.isSafeInteger(transaction.reconnectExpiresAt) ||
+        transaction.reconnectExpiresAt - transaction.disconnectedAt !==
+          SESSION_RECONNECT_GRACE_MS ||
+        !currentSession?.active ||
+        currentSession.reconnectExpiresAt !== undefined ||
+        !candidateSession ||
+        !sameRecordKeys(candidate.sessions, current.sessions)
+      ) {
+        problems.push('session disconnect changed the session registry');
+      } else {
+        const expected = {
+          ...currentSession,
+          reconnectExpiresAt: transaction.reconnectExpiresAt,
+        };
+        if (!structurallyEqual(candidateSession, expected)) {
+          problems.push('session disconnect changed protected session state');
+        }
+        for (const [sessionId, session] of Object.entries(current.sessions)) {
+          if (
+            sessionId !== transaction.sessionId &&
+            !structurallyEqual(candidate.sessions[sessionId], session)
+          ) {
+            problems.push('session disconnect changed another session');
+          }
+        }
+      }
+      if (
+        currentAdmission &&
+        candidateAdmission &&
+        !structurallyEqual(candidateAdmission, currentAdmission)
+      ) {
+        problems.push('session disconnect changed admission state');
+      }
+    } else if (transaction.kind === 'session_left') {
       unchangedAuthorityData('session leave');
       if (!structurallyEqual(candidate.identities, current.identities)) {
         problems.push('session leave changed projection identities');
@@ -1117,8 +1232,10 @@ export const assertAdmissionTransactionTransition = (
       ) {
         problems.push('session resume changed the session registry');
       } else {
+        const { reconnectExpiresAt: _reconnected, ...connectedSession } =
+          currentSession;
         const expected = {
-          ...currentSession,
+          ...connectedSession,
           resumeCapabilityDigest: candidateSession.resumeCapabilityDigest,
         };
         if (!structurallyEqual(candidateSession, expected)) {

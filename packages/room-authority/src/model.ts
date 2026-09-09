@@ -56,6 +56,8 @@ export interface AuthoritySession {
   readonly nextClientSequence: number;
   readonly recentOutcomes: readonly PersistedCommandOutcome[];
   readonly resumeCapabilityDigest?: string;
+  /** Absolute wall-clock deadline set only while no transport owns the session. */
+  readonly reconnectExpiresAt?: number;
 }
 
 export interface AdmissionSeat {
@@ -229,6 +231,23 @@ export type PersistedAdmissionTransaction =
       readonly admissionTicketDigest?: string;
       /** Present only when the ticket consumes a one-time invitation. */
       readonly invitationDigest?: string;
+    }
+  | {
+      readonly expectedAuthorityVersion: number;
+      readonly snapshot: RoomAuthoritySnapshot;
+      readonly sessionId: string;
+      readonly kind: 'session_disconnected';
+      readonly disconnectedAt: number;
+      readonly reconnectExpiresAt: number;
+      readonly admissionTicketDigest?: never;
+      readonly invitationDigest?: never;
+    }
+  | {
+      readonly expectedAuthorityVersion: number;
+      readonly snapshot: RoomAuthoritySnapshot;
+      readonly kind: 'sessions_expired';
+      readonly sessionIds: readonly string[];
+      readonly expiredAt: number;
     };
 
 export interface AdmissionPersistence {

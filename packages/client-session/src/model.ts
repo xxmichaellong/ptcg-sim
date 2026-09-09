@@ -124,7 +124,9 @@ export const DEFAULT_CLIENT_SESSION_POLICY: ClientSessionPolicy = {
   maximumChatMessages: 100,
   maximumPresenceEvents: 100,
   maximumNotices: 50,
-  maximumReconnectAttempts: 5,
+  // Eight worst-case jittered delays total 27.3 seconds, leaving headroom
+  // inside the authority's 30-second reconnect lease.
+  maximumReconnectAttempts: 8,
   maximumCommandRetries: 3,
   reconnectBaseDelayMs: 250,
   reconnectMaximumDelayMs: 5_000,

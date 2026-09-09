@@ -47,6 +47,8 @@ export type ServerFailureSubsystem =
   | 'invitation_issue'
   | 'ticket_issue'
   | 'session_admission'
+  | 'session_disconnect'
+  | 'session_expiry'
   | 'session_leave'
   | 'chat_processing'
   | 'command_processing'

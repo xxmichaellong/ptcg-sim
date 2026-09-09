@@ -794,6 +794,10 @@
               "kind": "value"
             },
             {
+              "name": "SESSION_RECONNECT_GRACE_MS",
+              "kind": "value"
+            },
+            {
               "name": "V2_ROOM_CODE_PATTERN",
               "kind": "value"
             },
@@ -1546,12 +1550,28 @@
               "kind": "type"
             },
             {
+              "name": "disconnectRoomSession",
+              "kind": "value"
+            },
+            {
+              "name": "DisconnectRoomSessionResult",
+              "kind": "type"
+            },
+            {
               "name": "emptyProjectionIdentityState",
               "kind": "value"
             },
             {
               "name": "emptySoloUndoHistory",
               "kind": "value"
+            },
+            {
+              "name": "expireDisconnectedRoomSessions",
+              "kind": "value"
+            },
+            {
+              "name": "ExpireDisconnectedRoomSessionsResult",
+              "kind": "type"
             },
             {
               "name": "issueRoomAdmissionTicket",

@@ -14,3 +14,9 @@ export const MAX_DECK_ENTRIES = 200;
 export const MAX_DECK_CARDS = 200;
 /** One base projection plus at most 128 accepted revision projections. */
 export const MAX_REPLAY_FRAMES = 129;
+/**
+ * Server-owned grace after an admitted transport disappears. The client retry
+ * budget is deliberately bounded below this deadline so expiry remains an
+ * authority decision rather than a browser-timer decision.
+ */
+export const SESSION_RECONNECT_GRACE_MS = 30_000;

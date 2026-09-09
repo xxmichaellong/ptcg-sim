@@ -411,8 +411,10 @@ room runtime.
    code and display username are never authorization.
 4. Server replies with `Welcome`: room metadata, role, session/sequence, current
    revision, and a full role-specific snapshot.
-5. Heartbeats detect dead links; short disconnects reserve a seat for a bounded
-   grace period.
+5. A detected transport loss durably marks the session disconnected and
+   reserves its seat for a 30-second server-owned grace period. The earliest
+   reconnect deadline shares the Durable Object alarm with pre-admission socket
+   and unclaimed-room expiry.
 6. Reconnect replaces the connection binding but retains session command
    deduplication and sends a fresh projection.
 7. Explicit leave removes the session registry entry and its bounded command
@@ -492,21 +494,30 @@ admission commit repairs a publication that could not previously be sent.
 
 The implemented session-lifecycle boundary now emits authenticated ephemeral
 `joined`, `disconnected`, `reconnected`, and `left` presence from the durable
-session identity. A transport loss removes only the current socket binding and
-leaves the active session, resume digest, sequence frontier, and player-seat
-claim unchanged. Durable Object wake restores the serialized binding silently,
-and a superseded socket cannot publish a false disconnect after the replacement
-is installed. Explicit `Leave` instead commits one predecessor-validated
+session identity. A transport loss removes the current socket binding and
+commits a predecessor-validated `session_disconnected` transition with an
+absolute 30-second `reconnectExpiresAt`; it leaves the active session, resume
+digest, sequence frontier, command outcomes, and player-seat claim unchanged.
+Resume before that deadline clears the marker atomically. Durable Object wake
+restores a still-connected serialized binding silently, reconstructs a missing
+disconnect marker when no binding survived, and never revives a socket for an
+already-disconnected session. A superseded socket cannot publish a false
+disconnect after the replacement is installed. Explicit `Leave` instead
+commits one predecessor-validated
 `session_left` transition: it removes the exact session registry entry (and
 therefore its resume digest and bounded command-outcome cache), releases its
 player seat (or leaves all seats untouched for a spectator), then publishes
 `left` only to remaining active bindings. A failure
 reported after commit is reconciled from durable state before publication.
 Presence remains outside canonical match state, replay/undo history, and
-payload-bearing telemetry. The bounded disconnect-grace expiry described above
-is still a separate lifecycle/garbage-collection gate; a transiently
-disconnected active session is currently retained until resume or explicit
-leave.
+payload-bearing telemetry. At the deadline, one predecessor-validated
+`sessions_expired` transaction removes every due session, revokes its resume
+digest/outcome cache, and releases exactly its seat before publishing `left`.
+Canonical match state, replay/undo history, projection identities, work areas,
+and visibility grants do not change: they belong to the player seat, so a later
+replacement inherits them. Late resume is rejected even if alarm delivery was
+delayed. The browser's eight jittered exponential retries fit within 27.3
+seconds at worst, leaving authority-owned headroom before expiry.
 
 The snapshot also persists an immutable player-seat admission ceiling: one for
 `solo`, two for `multiplayer`. A solo room may therefore admit exactly one human

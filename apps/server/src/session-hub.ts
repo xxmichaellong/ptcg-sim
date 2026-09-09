@@ -1,17 +1,22 @@
 import {
+  assertAdmissionTransactionTransition,
   buildProjectedReplay,
+  disconnectRoomSession,
+  expireDisconnectedRoomSessions,
   issueRoomAdmissionTicket,
   issueRoomInvitation,
   leaveRoomSession,
   RoomAuthorityCoordinator,
   type AdmissionTicketIssueRequest,
   type AuthorityCommandTimingBreakdown,
+  type AuthoritySession,
   type AuthoritySnapshotStore,
   type RoomInvitationDependencies,
   type RoomInvitationIssueRequest,
 } from '@ptcgsim/room-authority';
 import {
   PROTOCOL_VERSION,
+  SESSION_RECONNECT_GRACE_MS,
   parseClientFrame,
   serializeMatchViewState,
   type ClientMessage,
@@ -121,6 +126,7 @@ export class RoomSessionHub {
   private readonly connections = new Map<string, RuntimeConnection>();
   private readonly connectionSessions = new Map<string, string>();
   private readonly sessionConnections = new Map<string, string>();
+  private readonly pendingDisconnects = new Map<string, boolean>();
   private readonly chat: RoomChatService;
   private readonly acceptedCommandPerformance: AcceptedCommandPerformanceObservation[] =
     [];
@@ -142,7 +148,13 @@ export class RoomSessionHub {
 
   handleFrame(connection: RuntimeConnection, frame: string): Promise<void> {
     this.connections.set(connection.id, connection);
-    const run = this.tail.then(() => this.processFrame(connection, frame));
+    const run = this.tail.then(async () => {
+      try {
+        await this.processFrame(connection, frame);
+      } finally {
+        await this.flushPendingDisconnects();
+      }
+    });
     this.tail = run.catch(() => undefined);
     return run;
   }
@@ -326,25 +338,118 @@ export class RoomSessionHub {
   }
 
   disconnect(connectionId: string): Promise<void> {
-    const run = this.tail.then(() => this.disconnectNow(connectionId, true));
+    const run = this.tail.then(async () => {
+      const sessionId = this.disconnectNow(connectionId);
+      if (sessionId) this.queueSessionDisconnect(sessionId, true);
+      await this.flushPendingDisconnects();
+    });
     this.tail = run.catch(() => undefined);
     return run;
   }
 
-  private disconnectNow(connectionId: string, publishPresence: boolean): void {
+  private disconnectNow(connectionId: string): string | undefined {
     this.connections.delete(connectionId);
     this.chat.releaseConnection(connectionId);
     const sessionId = this.connectionSessions.get(connectionId);
     this.connectionSessions.delete(connectionId);
     if (sessionId && this.sessionConnections.get(sessionId) === connectionId) {
       this.sessionConnections.delete(sessionId);
-      if (publishPresence) {
-        this.broadcastPresence(
-          this.coordinator.currentSnapshot(),
-          sessionId,
-          'disconnected'
-        );
+      return sessionId;
+    }
+    return undefined;
+  }
+
+  private queueSessionDisconnect(
+    sessionId: string,
+    publishPresence: boolean
+  ): void {
+    this.pendingDisconnects.set(
+      sessionId,
+      Boolean(this.pendingDisconnects.get(sessionId)) || publishPresence
+    );
+  }
+
+  private async flushPendingDisconnects(): Promise<void> {
+    while (this.pendingDisconnects.size > 0) {
+      const pending = [...this.pendingDisconnects];
+      this.pendingDisconnects.clear();
+      for (const [sessionId, publishPresence] of pending) {
+        if (this.sessionConnections.has(sessionId)) continue;
+        try {
+          await this.persistSessionDisconnect(sessionId, publishPresence);
+        } catch (error) {
+          this.queueSessionDisconnect(sessionId, publishPresence);
+          throw error;
+        }
       }
+    }
+  }
+
+  private async persistSessionDisconnect(
+    sessionId: string,
+    publishPresence: boolean
+  ): Promise<void> {
+    const before = this.coordinator.currentSnapshot();
+    const existing = before.sessions[sessionId];
+    if (!existing?.active) return;
+    const now = this.dependencies.admission.now();
+    try {
+      const result = await disconnectRoomSession(
+        before,
+        sessionId,
+        now,
+        this.dependencies.admission.persistence
+      );
+      if (!result.accepted) return;
+      this.coordinator.installCommittedSnapshot(result.snapshot);
+      if (publishPresence && result.committed) {
+        this.broadcastPresence(result.snapshot, sessionId, 'disconnected');
+      }
+    } catch (error) {
+      let durable:
+        ReturnType<RoomAuthorityCoordinator['currentSnapshot']> | undefined;
+      try {
+        durable = await this.dependencies.store.load();
+      } catch {
+        // The original disconnect failure remains authoritative.
+      }
+      if (
+        durable &&
+        this.isCommittedDisconnect(before, durable, sessionId, now)
+      ) {
+        this.coordinator.installCommittedSnapshot(durable);
+        if (publishPresence) {
+          this.broadcastPresence(durable, sessionId, 'disconnected');
+        }
+        return;
+      }
+      if (durable) this.coordinator.installCommittedSnapshot(durable);
+      this.dependencies.telemetry.failure({
+        subsystem: 'session_disconnect',
+        retryable: true,
+      });
+      throw error;
+    }
+  }
+
+  private isCommittedDisconnect(
+    before: ReturnType<RoomAuthorityCoordinator['currentSnapshot']>,
+    durable: ReturnType<RoomAuthorityCoordinator['currentSnapshot']>,
+    sessionId: string,
+    disconnectedAt: number
+  ): boolean {
+    try {
+      assertAdmissionTransactionTransition(before, {
+        expectedAuthorityVersion: before.authorityVersion,
+        snapshot: durable,
+        sessionId,
+        kind: 'session_disconnected',
+        disconnectedAt,
+        reconnectExpiresAt: disconnectedAt + SESSION_RECONNECT_GRACE_MS,
+      });
+      return true;
+    } catch {
+      return false;
     }
   }
 
@@ -352,7 +457,7 @@ export class RoomSessionHub {
     this.connections.set(connection.id, connection);
     if (!sessionId) return;
     const session = this.coordinator.currentSnapshot().sessions[sessionId];
-    if (!session?.active) return;
+    if (!session?.active || session.reconnectExpiresAt !== undefined) return;
     const previousConnectionId = this.sessionConnections.get(sessionId);
     if (previousConnectionId && previousConnectionId !== connection.id) {
       const previous = this.connections.get(previousConnectionId);
@@ -401,7 +506,10 @@ export class RoomSessionHub {
       connection.send(JSON.stringify(message));
       return true;
     } catch {
-      this.disconnectNow(connection.id, publishDisconnect);
+      const sessionId = this.disconnectNow(connection.id);
+      if (sessionId) {
+        this.queueSessionDisconnect(sessionId, publishDisconnect);
+      }
       this.dependencies.telemetry.failure({
         subsystem: 'socket_send',
         retryable: true,
@@ -440,6 +548,141 @@ export class RoomSessionHub {
       ...identity,
       status,
     });
+  }
+
+  nextReconnectExpiry(): number | undefined {
+    return Object.values(this.coordinator.currentSnapshot().sessions).reduce<
+      number | undefined
+    >(
+      (next, session) =>
+        session.reconnectExpiresAt === undefined
+          ? next
+          : next === undefined
+            ? session.reconnectExpiresAt
+            : Math.min(next, session.reconnectExpiresAt),
+      undefined
+    );
+  }
+
+  reconcileDisconnectedBindings(): Promise<number | undefined> {
+    const run = this.tail.then(async () => {
+      for (const session of Object.values(
+        this.coordinator.currentSnapshot().sessions
+      )) {
+        if (
+          session.active &&
+          session.reconnectExpiresAt === undefined &&
+          !this.sessionConnections.has(session.id)
+        ) {
+          this.queueSessionDisconnect(session.id, true);
+        }
+      }
+      await this.flushPendingDisconnects();
+      return this.nextReconnectExpiry();
+    });
+    this.tail = run.then(
+      () => undefined,
+      () => undefined
+    );
+    return run;
+  }
+
+  expireDisconnectedSessions(now: number): Promise<number | undefined> {
+    const run = this.tail.then(async () => {
+      await this.flushPendingDisconnects();
+      const before = this.coordinator.currentSnapshot();
+      const expiredSessions = Object.values(before.sessions)
+        .filter(
+          (session) =>
+            session.reconnectExpiresAt !== undefined &&
+            session.reconnectExpiresAt <= now
+        )
+        .sort((left, right) => left.id.localeCompare(right.id));
+      try {
+        const result = await expireDisconnectedRoomSessions(
+          before,
+          now,
+          this.dependencies.admission.persistence
+        );
+        if (result.committed) {
+          this.finishExpiredSessions(
+            before,
+            result.snapshot,
+            result.expiredSessions
+          );
+        }
+      } catch (error) {
+        let durable:
+          ReturnType<RoomAuthorityCoordinator['currentSnapshot']> | undefined;
+        try {
+          durable = await this.dependencies.store.load();
+        } catch {
+          // The original expiry failure remains authoritative.
+        }
+        if (
+          durable &&
+          this.isCommittedExpiry(before, durable, expiredSessions, now)
+        ) {
+          this.finishExpiredSessions(before, durable, expiredSessions);
+        } else {
+          if (durable) this.coordinator.installCommittedSnapshot(durable);
+          this.dependencies.telemetry.failure({
+            subsystem: 'session_expiry',
+            retryable: true,
+          });
+          throw error;
+        }
+      } finally {
+        await this.flushPendingDisconnects();
+      }
+      return this.nextReconnectExpiry();
+    });
+    this.tail = run.then(
+      () => undefined,
+      () => undefined
+    );
+    return run;
+  }
+
+  private finishExpiredSessions(
+    before: ReturnType<RoomAuthorityCoordinator['currentSnapshot']>,
+    committed: ReturnType<RoomAuthorityCoordinator['currentSnapshot']>,
+    expiredSessions: readonly AuthoritySession[]
+  ): void {
+    const identities = expiredSessions.flatMap((session) => {
+      const identity = sessionPresentationIdentity(before, session.id);
+      return identity ? [identity] : [];
+    });
+    this.coordinator.installCommittedSnapshot(committed);
+    for (const identity of identities) {
+      this.broadcastToActiveSessions(committed, {
+        type: 'Presence',
+        protocolVersion: PROTOCOL_VERSION,
+        ...identity,
+        status: 'left',
+      });
+    }
+  }
+
+  private isCommittedExpiry(
+    before: ReturnType<RoomAuthorityCoordinator['currentSnapshot']>,
+    durable: ReturnType<RoomAuthorityCoordinator['currentSnapshot']>,
+    expiredSessions: readonly AuthoritySession[],
+    expiredAt: number
+  ): boolean {
+    if (expiredSessions.length === 0) return false;
+    try {
+      assertAdmissionTransactionTransition(before, {
+        expectedAuthorityVersion: before.authorityVersion,
+        snapshot: durable,
+        kind: 'sessions_expired',
+        sessionIds: expiredSessions.map((session) => session.id),
+        expiredAt,
+      });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   private async processFrame(
@@ -954,7 +1197,7 @@ export class RoomSessionHub {
           authorityVersion: result.snapshot.authorityVersion,
           durationMs: this.dependencies.monotonicNow() - startedAt,
         });
-        this.disconnectNow(connection.id, false);
+        this.disconnectNow(connection.id);
         connection.close(4409, 'Session is no longer active');
         return;
       }
@@ -1019,7 +1262,7 @@ export class RoomSessionHub {
   ): void {
     const identity = sessionPresentationIdentity(before, sessionId);
     this.coordinator.installCommittedSnapshot(committed);
-    this.disconnectNow(connection.id, false);
+    this.disconnectNow(connection.id);
     if (identity) {
       this.broadcastToActiveSessions(committed, {
         type: 'Presence',

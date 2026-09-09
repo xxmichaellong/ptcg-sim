@@ -97,14 +97,20 @@ const fixture = async (mode: 'multiplayer' | 'solo' = 'multiplayer') => {
     }),
   };
   const store = new MemoryAuthorityStore(initial);
+  let wallClock = 10_000;
   let monotonicTick = 0;
   const monotonicNow = () => monotonicTick++;
-  const coordinator = new RoomAuthorityCoordinator(initial, store, {
+  const coordinatorDependencies = {
     commandContext: crypto,
     opaqueIds: crypto,
     policy: DEFAULT_AUTHORITY_POLICY,
     monotonicNow,
-  });
+  };
+  const coordinator = new RoomAuthorityCoordinator(
+    initial,
+    store,
+    coordinatorDependencies
+  );
   const rateLimits = {
     attempt: vi.fn(async () => ({ allowed: true, remaining: 1 }) as const),
   };
@@ -115,7 +121,7 @@ const fixture = async (mode: 'multiplayer' | 'solo' = 'multiplayer') => {
     roomCommand: vi.fn(),
     failure: vi.fn(),
   };
-  const hub = new RoomSessionHub(coordinator, 'server-build', {
+  const hubDependencies = {
     store,
     rateLimits,
     telemetry,
@@ -124,9 +130,10 @@ const fixture = async (mode: 'multiplayer' | 'solo' = 'multiplayer') => {
       crypto,
       opaqueIds: crypto,
       persistence: store,
-      now: () => 10_000,
+      now: () => wallClock,
     },
-  });
+  };
+  const hub = new RoomSessionHub(coordinator, 'server-build', hubDependencies);
   const issued = await hub.issueAdmissionTicket({
     capability: seatToken,
     displayName: 'Blue',
@@ -144,6 +151,19 @@ const fixture = async (mode: 'multiplayer' | 'solo' = 'multiplayer') => {
     crypto,
     rateLimits,
     telemetry,
+    setWallClock: (value: number) => {
+      wallClock = value;
+    },
+    restoreHub: () =>
+      new RoomSessionHub(
+        new RoomAuthorityCoordinator(
+          store.durable,
+          store,
+          coordinatorDependencies
+        ),
+        'server-build',
+        hubDependencies
+      ),
   };
 };
 
@@ -296,6 +316,7 @@ describe('serialized room session hub', () => {
     expect(setup.store.admissionCommits.map((entry) => entry.kind)).toEqual([
       'ticket_issued',
       'seat_claimed',
+      'session_disconnected',
       'session_resumed',
     ]);
     expect(setup.telemetry.failure).toHaveBeenCalledWith({
@@ -648,12 +669,21 @@ describe('serialized room session hub', () => {
       ...joined,
       status: 'disconnected',
     });
-    expect(setup.store.durable.authorityVersion).toBe(versionBeforeDisconnect);
+    expect(setup.store.durable.authorityVersion).toBe(
+      versionBeforeDisconnect + 1
+    );
+    expect(
+      setup.store.durable.sessions[spectatorWelcome.sessionId]
+        ?.reconnectExpiresAt
+    ).toBe(40_000);
 
     const afterWake = connection('presence-after-wake');
     const blueMessageCount = blue.messages.length;
     setup.hub.restoreBinding(afterWake.value, spectatorWelcome.sessionId);
     expect(afterWake.messages).toEqual([]);
+    expect(
+      setup.hub.bindingForConnection(afterWake.value.id).sessionId
+    ).toBeUndefined();
     expect(blue.messages).toHaveLength(blueMessageCount);
 
     const resumed = connection('presence-resumed');
@@ -665,10 +695,8 @@ describe('serialized room session hub', () => {
         requestedRole: 'spectator',
       })
     );
-    expect(afterWake.messages).toEqual([
-      { type: 'SessionSuperseded', protocolVersion: PROTOCOL_VERSION },
-    ]);
-    expect(afterWake.close).toHaveBeenCalledWith(4409, 'Session superseded');
+    expect(afterWake.messages).toEqual([]);
+    expect(afterWake.close).not.toHaveBeenCalled();
     const reconnected = { ...joined, status: 'reconnected' as const };
     expect(blue.messages.at(-1)).toEqual(reconnected);
     expect(resumed.messages.at(-1)).toEqual(reconnected);
@@ -742,6 +770,127 @@ describe('serialized room session hub', () => {
       requestedRole: 'player',
     });
     expect(replacementTicket).toMatchObject({ accepted: true });
+  });
+
+  it('expires a disconnected seat once and rejects its late resume bearer', async () => {
+    const setup = await fixture();
+    const player = connection('expiring-player');
+    await setup.hub.handleFrame(
+      player.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+    const welcome = player.messages[0];
+    if (welcome?.type !== 'Welcome' || !welcome.playerId) {
+      throw new Error('missing player welcome');
+    }
+    const spectatorTicket = await setup.hub.issueAdmissionTicket({
+      capability: setup.spectatorCapability,
+      displayName: 'Lease Observer',
+      requestedRole: 'spectator',
+    });
+    if (!spectatorTicket.accepted) throw new Error(spectatorTicket.code);
+    const spectator = connection('lease-observer');
+    await setup.hub.handleFrame(
+      spectator.value,
+      helloFrame({
+        admissionTicket: spectatorTicket.admissionTicket,
+        resumeToken: spectatorTicket.resumeCapability,
+        displayName: 'Lease Observer',
+        requestedRole: 'spectator',
+      })
+    );
+
+    const preservedState = setup.store.durable.state;
+    const preservedReplay = setup.store.durable.replayHistory;
+    setup.store.failAdmissionAfterCommitOnce = true;
+    await setup.hub.disconnect(player.value.id);
+    expect(setup.hub.nextReconnectExpiry()).toBe(40_000);
+    await expect(setup.hub.expireDisconnectedSessions(39_999)).resolves.toBe(
+      40_000
+    );
+    expect(setup.store.admissionCommits.at(-1)?.kind).toBe(
+      'session_disconnected'
+    );
+
+    setup.store.failAdmissionAfterCommitOnce = true;
+    await expect(setup.hub.expireDisconnectedSessions(40_000)).resolves.toBe(
+      undefined
+    );
+    expect(setup.store.durable.sessions[welcome.sessionId]).toBeUndefined();
+    expect(
+      setup.store.durable.admission?.seats[welcome.playerId]?.claimedSessionId
+    ).toBeNull();
+    expect(setup.store.durable.state).toBe(preservedState);
+    expect(setup.store.durable.replayHistory).toBe(preservedReplay);
+    expect(spectator.messages.at(-1)).toMatchObject({
+      type: 'Presence',
+      displayName: 'Blue',
+      status: 'left',
+    });
+    expect(setup.store.admissionCommits.at(-1)).toMatchObject({
+      kind: 'sessions_expired',
+      sessionIds: [welcome.sessionId],
+      expiredAt: 40_000,
+    });
+
+    setup.setWallClock(40_000);
+    const late = connection('late-resume');
+    await setup.hub.handleFrame(
+      late.value,
+      helloFrame({ resumeToken: welcome.resumeToken })
+    );
+    expect(late.messages).toEqual([
+      expect.objectContaining({
+        type: 'ServerNotice',
+        code: 'invalid_capability',
+      }),
+    ]);
+    await expect(
+      setup.hub.issueAdmissionTicket({
+        capability: setup.seatCapability,
+        displayName: 'Replacement Blue',
+        requestedRole: 'player',
+      })
+    ).resolves.toMatchObject({ accepted: true });
+  });
+
+  it('repairs a missing disconnect marker once after runtime restoration', async () => {
+    const setup = await fixture();
+    const player = connection('lost-runtime-player');
+    await setup.hub.handleFrame(
+      player.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+    const welcome = player.messages[0];
+    if (welcome?.type !== 'Welcome') throw new Error('missing player welcome');
+    const beforeRepair = setup.store.durable.authorityVersion;
+
+    // A fresh runtime sees durable authorization but no surviving socket
+    // attachment, as can happen after an interrupted close callback.
+    const restored = setup.restoreHub();
+    await expect(restored.reconcileDisconnectedBindings()).resolves.toBe(
+      40_000
+    );
+    expect(setup.store.durable.authorityVersion).toBe(beforeRepair + 1);
+    expect(
+      setup.store.durable.sessions[welcome.sessionId]?.reconnectExpiresAt
+    ).toBe(40_000);
+    expect(setup.store.admissionCommits.at(-1)).toMatchObject({
+      kind: 'session_disconnected',
+      sessionId: welcome.sessionId,
+    });
+
+    const commitCount = setup.store.admissionCommits.length;
+    await expect(restored.reconcileDisconnectedBindings()).resolves.toBe(
+      40_000
+    );
+    expect(setup.store.admissionCommits).toHaveLength(commitCount);
   });
 
   it('serializes a socket-close callback behind an in-flight durable leave', async () => {
@@ -1142,7 +1291,14 @@ describe('serialized room session hub', () => {
     const resumed = connection('bounded-chat-resumed');
     const welcome = client.messages[0];
     if (welcome?.type !== 'Welcome') throw new Error('missing welcome');
-    setup.hub.restoreBinding(resumed.value, welcome.sessionId);
+    await setup.hub.handleFrame(
+      resumed.value,
+      helloFrame({
+        resumeToken: welcome.resumeToken,
+        requestedRole: welcome.role,
+      })
+    );
+    resumed.messages.length = 0;
     setup.rateLimits.attempt.mockResolvedValueOnce({
       allowed: false,
       retryAfterSeconds: 17,

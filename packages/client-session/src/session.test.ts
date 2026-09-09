@@ -1,6 +1,7 @@
 import {
   MAX_SERVER_FRAME_CODE_UNITS,
   PROTOCOL_VERSION,
+  SESSION_RECONNECT_GRACE_MS,
   type ClientMessage,
   type SerializedMatchViewState,
   type ServerMessage,
@@ -8,6 +9,7 @@ import {
 import { describe, expect, it, vi } from 'vitest';
 
 import { RemoteGameSession, type ClientSessionScheduler } from './session.js';
+import { DEFAULT_CLIENT_SESSION_POLICY } from './model.js';
 import type {
   SessionSocket,
   SessionSocketCloseEvent,
@@ -215,6 +217,23 @@ const setup = (
 };
 
 describe('RemoteGameSession', () => {
+  it('keeps the complete default retry schedule inside the server reconnect lease', () => {
+    const policy = DEFAULT_CLIENT_SESSION_POLICY;
+    const maximumDelay = Array.from(
+      { length: policy.maximumReconnectAttempts },
+      (_, index) =>
+        Math.min(
+          policy.reconnectMaximumDelayMs,
+          policy.reconnectBaseDelayMs * 2 ** index
+        ) *
+        (1 + policy.reconnectJitterRatio)
+    ).reduce((total, delay) => total + delay, 0);
+
+    expect(policy.maximumReconnectAttempts).toBe(8);
+    expect(maximumDelay).toBe(27_300);
+    expect(maximumDelay).toBeLessThan(SESSION_RECONNECT_GRACE_MS);
+  });
+
   it('admits into an immutable external-store shape without exposing capabilities', () => {
     const test = setup();
     const listener = vi.fn();
