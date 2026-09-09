@@ -424,6 +424,16 @@ const persistSessionResume = async (
   admissionTicketDigest?: string,
   invitationDigest?: string
 ): Promise<AdmissionResult> => {
+  const resumedAt =
+    session.reconnectExpiresAt === undefined ? undefined : dependencies.now?.();
+  if (
+    session.reconnectExpiresAt !== undefined &&
+    (resumedAt === undefined ||
+      !validNow(resumedAt) ||
+      session.reconnectExpiresAt <= resumedAt)
+  ) {
+    return rejection(current, 'invalid_capability');
+  }
   const { reconnectExpiresAt: _reconnected, ...connectedSession } = session;
   const resumedSession: AuthoritySession = {
     ...connectedSession,
@@ -463,6 +473,7 @@ const persistSessionResume = async (
     snapshot: projectedCandidate,
     sessionId: session.id,
     kind: 'session_resumed',
+    ...(resumedAt !== undefined ? { resumedAt } : {}),
     ...(admissionTicketDigest ? { admissionTicketDigest } : {}),
     ...(invitationDigest ? { invitationDigest } : {}),
   });
@@ -1247,12 +1258,9 @@ export const admitRoomSession = async (
     await dependencies.crypto.digestCapability(suppliedCapability);
 
   if (request.type === 'Resume') {
-    const now = dependencies.now?.();
     const session = Object.values(current.sessions).find(
       (candidate) =>
         candidate.active &&
-        (candidate.reconnectExpiresAt === undefined ||
-          (now !== undefined && candidate.reconnectExpiresAt > now)) &&
         candidate.resumeCapabilityDigest !== undefined &&
         dependencies.crypto.equalDigest(
           candidate.resumeCapabilityDigest,

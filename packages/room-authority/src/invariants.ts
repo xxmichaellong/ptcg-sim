@@ -1073,6 +1073,12 @@ export const assertAdmissionTransactionTransition = (
 
     const currentSession = current.sessions[transaction.sessionId];
     const candidateSession = candidate.sessions[transaction.sessionId];
+    if (
+      transaction.kind !== 'session_resumed' &&
+      transaction.resumedAt !== undefined
+    ) {
+      problems.push('non-resume transaction declared a resume clock');
+    }
     if (currentAdmission && candidateSession) {
       const ticket = transaction.admissionTicketDigest
         ? currentAdmission.tickets[transaction.admissionTicketDigest]
@@ -1225,6 +1231,15 @@ export const assertAdmissionTransactionTransition = (
       }
     } else if (transaction.kind === 'session_resumed') {
       unchangedAuthorityData('session resume');
+      if (
+        currentSession?.reconnectExpiresAt !== undefined
+          ? !Number.isSafeInteger(transaction.resumedAt) ||
+            transaction.resumedAt! < 0 ||
+            transaction.resumedAt! >= currentSession.reconnectExpiresAt
+          : transaction.resumedAt !== undefined
+      ) {
+        problems.push('session resume has an invalid reconnect clock');
+      }
       if (
         !currentSession ||
         !candidateSession ||

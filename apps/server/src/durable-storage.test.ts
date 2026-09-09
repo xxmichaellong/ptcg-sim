@@ -284,22 +284,29 @@ const capturedAcceptedTransaction = async (
 
 const resumedTransaction = (
   current: RoomAuthoritySnapshot
-): PersistedAdmissionTransaction => ({
-  expectedAuthorityVersion: current.authorityVersion,
-  sessionId: current.sessions.session!.id,
-  kind: 'session_resumed',
-  snapshot: {
-    ...current,
-    authorityVersion: current.authorityVersion + 1,
-    sessions: {
-      ...current.sessions,
-      session: {
-        ...current.sessions.session!,
-        resumeCapabilityDigest: 'f'.repeat(64),
+): PersistedAdmissionTransaction => {
+  const session = current.sessions.session!;
+  const { reconnectExpiresAt: _reconnected, ...connectedSession } = session;
+  return {
+    expectedAuthorityVersion: current.authorityVersion,
+    sessionId: session.id,
+    kind: 'session_resumed',
+    ...(session.reconnectExpiresAt !== undefined
+      ? { resumedAt: session.reconnectExpiresAt - 1 }
+      : {}),
+    snapshot: {
+      ...current,
+      authorityVersion: current.authorityVersion + 1,
+      sessions: {
+        ...current.sessions,
+        session: {
+          ...connectedSession,
+          resumeCapabilityDigest: 'f'.repeat(64),
+        },
       },
     },
-  },
-});
+  };
+};
 
 const leftTransaction = (
   current: RoomAuthoritySnapshot
@@ -2241,6 +2248,14 @@ describe('Durable Object authority snapshot store', () => {
           },
         },
         expected: 'session disconnect changed match state',
+      },
+      {
+        current: disconnected.snapshot,
+        transaction: {
+          ...resumedTransaction(disconnected.snapshot),
+          resumedAt: 40_000,
+        },
+        expected: 'session resume has an invalid reconnect clock',
       },
       {
         current: disconnected.snapshot,

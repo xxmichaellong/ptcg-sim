@@ -1074,6 +1074,85 @@ describe('room capability admission', () => {
     ]);
   });
 
+  it('rejects a ticket-backed resume at its deadline before delayed expiry runs', async () => {
+    const storage = persistence();
+    const crypto = createCrypto();
+    const deps = dependencies(crypto, storage);
+    const claimed = await admitRoomSession(
+      createSnapshot(),
+      {
+        type: 'ClaimSeat',
+        seatCapability: seatOneToken,
+        displayName: 'Blue',
+      },
+      deps
+    );
+    if (!claimed.accepted) throw new Error(claimed.code);
+    const disconnected = await disconnectRoomSession(
+      claimed.snapshot,
+      claimed.session.id,
+      1_000,
+      storage
+    );
+    if (!disconnected.accepted) throw new Error(disconnected.code);
+
+    const issued = await issueRoomAdmissionTicket(
+      disconnected.snapshot,
+      {
+        capability: seatOneToken,
+        displayName: 'Replacement Blue',
+        requestedRole: 'player',
+      },
+      2_000,
+      deps
+    );
+    if (!issued.accepted) throw new Error(issued.code);
+    const redemption = {
+      admissionTicket: issued.admissionTicket,
+      resumeCapability: issued.resumeCapability,
+      displayName: 'Replacement Blue',
+      requestedRole: 'player' as const,
+    };
+
+    await expect(
+      redeemRoomAdmissionTicket(issued.snapshot, redemption, 31_000, {
+        ...deps,
+        now: () => 31_000,
+      })
+    ).resolves.toMatchObject({
+      accepted: false,
+      code: 'invalid_capability',
+      snapshot: issued.snapshot,
+    });
+    expect(storage.transactions.at(-1)?.kind).toBe('ticket_issued');
+
+    const expired = await expireDisconnectedRoomSessions(
+      issued.snapshot,
+      31_000,
+      storage
+    );
+    const replacement = await redeemRoomAdmissionTicket(
+      expired.snapshot,
+      redemption,
+      31_000,
+      { ...deps, now: () => 31_000 }
+    );
+    expect(replacement).toMatchObject({
+      accepted: true,
+      session: {
+        viewer: { kind: 'player', playerId: p1 },
+        displayName: 'Replacement Blue',
+      },
+    });
+    if (!replacement.accepted) return;
+    expect(replacement.session.id).not.toBe(claimed.session.id);
+    expect(replacement.snapshot.sessions[claimed.session.id]).toBeUndefined();
+    expect(storage.transactions.at(-1)).toMatchObject({
+      kind: 'seat_claimed',
+      admissionTicketDigest: digest(issued.admissionTicket),
+    });
+  });
+
   it('retires a spectator without changing any player seat', async () => {
     const storage = persistence();
     const crypto = createCrypto();

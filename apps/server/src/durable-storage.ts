@@ -139,6 +139,7 @@ export interface StoredAdmissionJournalEntry {
   readonly disconnectedAt?: number;
   readonly reconnectExpiresAt?: number;
   readonly expiredAt?: number;
+  readonly resumedAt?: number;
 }
 
 export class ConcurrentRoomWriteError extends Error {
@@ -1134,6 +1135,9 @@ export class DurableRoomSnapshotStore
                       : {}),
                     ...(transaction.invitationDigest
                       ? { invitationDigest: transaction.invitationDigest }
+                      : {}),
+                    ...(transaction.resumedAt !== undefined
+                      ? { resumedAt: transaction.resumedAt }
                       : {}),
                   }),
         };
