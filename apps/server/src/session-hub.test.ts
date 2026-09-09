@@ -685,10 +685,7 @@ describe('serialized room session hub', () => {
     expect(blue.messages.at(-1)).toEqual({ ...joined, status: 'left' });
     expect(
       setup.store.durable.sessions[spectatorWelcome.sessionId]
-    ).toMatchObject({ active: false, displayName: 'Persistent Watcher' });
-    expect(
-      setup.store.durable.sessions[spectatorWelcome.sessionId]
-    ).not.toHaveProperty('resumeCapabilityDigest');
+    ).toBeUndefined();
     expect(setup.store.admissionCommits.at(-1)).toMatchObject({
       kind: 'session_left',
       sessionId: spectatorWelcome.sessionId,
@@ -730,12 +727,7 @@ describe('serialized room session hub', () => {
     );
 
     expect(blue.close).toHaveBeenCalledWith(1000, 'Client left room');
-    expect(setup.store.durable.sessions[welcome.sessionId]).toMatchObject({
-      active: false,
-    });
-    expect(setup.store.durable.sessions[welcome.sessionId]).not.toHaveProperty(
-      'resumeCapabilityDigest'
-    );
+    expect(setup.store.durable.sessions[welcome.sessionId]).toBeUndefined();
     expect(
       setup.store.durable.admission?.seats[p1]?.claimedSessionId
     ).toBeNull();

@@ -471,7 +471,8 @@ const persistSessionResume = async (
 };
 
 /**
- * Durably retires one admitted session. The raw resume capability is revoked,
+ * Durably retires one admitted session by removing its registry entry and
+ * bounded command-outcome cache. The raw resume capability is thereby revoked,
  * and a player session atomically releases its seat for a future admission.
  */
 export const leaveRoomSession = async (
@@ -510,10 +511,9 @@ export const leaveRoomSession = async (
   const candidate: RoomAuthoritySnapshot = {
     ...current,
     authorityVersion: current.authorityVersion + 1,
-    sessions: {
-      ...current.sessions,
-      [sessionId]: retiredSession,
-    },
+    sessions: Object.fromEntries(
+      Object.entries(current.sessions).filter(([id]) => id !== sessionId)
+    ),
     ...(currentAdmission && claimedSeat
       ? {
           admission: {

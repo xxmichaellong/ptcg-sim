@@ -681,13 +681,7 @@ describe('Cloudflare Worker runtime', () => {
       }),
     ]);
     const left = await runtimeEvidence(created);
-    expect(left.snapshot?.sessions[secondWelcome.sessionId]).toMatchObject({
-      active: false,
-      displayName: 'Runtime Red',
-    });
-    expect(left.snapshot?.sessions[secondWelcome.sessionId]).not.toHaveProperty(
-      'resumeCapabilityDigest'
-    );
+    expect(left.snapshot?.sessions[secondWelcome.sessionId]).toBeUndefined();
     expect(
       left.snapshot?.admission?.seats[secondWelcome.playerId!]?.claimedSessionId
     ).toBeNull();

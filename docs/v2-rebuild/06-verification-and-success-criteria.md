@@ -431,9 +431,11 @@ Release requires all of the following:
     ephemeral. Initial admission, transport loss, resume, and explicit leave
     publish the exact lifecycle sequence; hibernation restoration and a
     superseded socket's later close are silent. Explicit leave atomically
-    retires the session, revokes its resume digest, releases only its claimed
-    player seat, survives a committed-but-failed response path, and permits a
-    fresh seat admission. Authority, durable-adapter, hub, client,
+    removes the session registry entry and bounded command-outcome cache,
+    revokes its resume digest, releases only its claimed player seat, survives
+    a committed-but-failed response path, and permits a fresh seat admission.
+    Repeated spectator join/leave cycles prove the registry remains bounded.
+    Authority, durable-adapter, hub, client,
     presentation, real-Worker, and real-browser tests cover the boundary, while
     replay and canonical state remain unchanged.
 28. Admission-ticket issuance returns a distinct server-minted resume bearer
@@ -459,6 +461,12 @@ Release requires all of the following:
     and late-message tests prove expired or malformed idle sockets close without
     consuming tickets, the earliest deadline coexists with unclaimed-room
     expiry, and authenticated peers are never selected for cleanup.
+31. Explicit leave removes, rather than tombstones, the exact durable session
+    and its bounded command-outcome cache. Transition validation rejects a
+    retained inactive session or any unrelated session mutation; repeated
+    spectator admission/leave cycles leave an empty registry. Disconnected
+    resumable sessions remain active until the separately decided grace policy
+    expires or the client explicitly leaves.
 
 ## Privacy and security gates
 

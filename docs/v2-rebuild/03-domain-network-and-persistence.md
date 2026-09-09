@@ -414,7 +414,9 @@ room runtime.
    grace period.
 6. Reconnect replaces the connection binding but retains session command
    deduplication and sends a fresh projection.
-7. Explicit leave revokes the binding/capability and publishes presence.
+7. Explicit leave removes the session registry entry and its bounded command
+   outcome cache, releases any claimed seat, revokes the binding/capability,
+   and publishes presence.
 
 The implemented upgrade boundary also closes the pre-admission accumulation
 gap: every credential-free socket receives an absolute 30-second `Hello` lease
@@ -494,9 +496,10 @@ leaves the active session, resume digest, sequence frontier, and player-seat
 claim unchanged. Durable Object wake restores the serialized binding silently,
 and a superseded socket cannot publish a false disconnect after the replacement
 is installed. Explicit `Leave` instead commits one predecessor-validated
-`session_left` transition: it marks the session inactive, removes its resume
-digest, releases its player seat (or leaves all seats untouched for a
-spectator), then publishes `left` only to remaining active bindings. A failure
+`session_left` transition: it removes the exact session registry entry (and
+therefore its resume digest and bounded command-outcome cache), releases its
+player seat (or leaves all seats untouched for a spectator), then publishes
+`left` only to remaining active bindings. A failure
 reported after commit is reconciled from durable state before publication.
 Presence remains outside canonical match state, replay/undo history, and
 payload-bearing telemetry. The bounded disconnect-grace expiry described above

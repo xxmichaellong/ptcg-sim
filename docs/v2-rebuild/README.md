@@ -75,8 +75,9 @@ the relevant product decisions and phase exit criteria.
   budgets, retained only in bounded client/presentation memory, and excluded
   from canonical state, replay, storage, and telemetry. Authenticated ephemeral
   presence now preserves the existing announcement text across join,
-  disconnect, reconnect, and leave. Explicit leave durably retires the session,
-  revokes its resume capability, and releases its claimed player seat, while
+  disconnect, reconnect, and leave. Explicit leave durably removes the session
+  registry entry and bounded command-outcome cache, revokes its resume
+  capability, and releases its claimed player seat, while
   hibernation restoration and superseded-socket closure stay silent. Socket
   admission is also response-loss safe: the ticket exchange binds a distinct
   server-minted resume digest before `Hello`, and the client retries the exact

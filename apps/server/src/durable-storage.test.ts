@@ -305,7 +305,6 @@ const leftTransaction = (
   current: RoomAuthoritySnapshot
 ): PersistedAdmissionTransaction => {
   const session = current.sessions.session!;
-  const { resumeCapabilityDigest: _revoked, ...retained } = session;
   return {
     expectedAuthorityVersion: current.authorityVersion,
     sessionId: session.id,
@@ -313,10 +312,7 @@ const leftTransaction = (
     snapshot: {
       ...current,
       authorityVersion: current.authorityVersion + 1,
-      sessions: {
-        ...current.sessions,
-        session: { ...retained, active: false },
-      },
+      sessions: {},
       admission: {
         ...current.admission!,
         seats: {
@@ -2093,6 +2089,34 @@ describe('Durable Object authority snapshot store', () => {
 
     await expect(store.commitAdmission(forged)).rejects.toThrow(
       'session leave changed admission credentials'
+    );
+    expect(await store.load()).toEqual(current);
+    expect(storedKeys(storage, 'authority:admission:')).toEqual([]);
+  });
+
+  it('rejects a session leave that retains an inactive session tombstone', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    const resumed = resumedTransaction(
+      admissionSnapshot('forged-leave-tombstone-room')
+    );
+    const current = resumed.snapshot;
+    await store.initialize(current);
+    const correct = leftTransaction(current);
+    const { resumeCapabilityDigest: _revoked, ...retained } =
+      current.sessions.session!;
+    const forged: PersistedAdmissionTransaction = {
+      ...correct,
+      snapshot: {
+        ...correct.snapshot,
+        sessions: {
+          session: { ...retained, active: false },
+        },
+      },
+    };
+
+    await expect(store.commitAdmission(forged)).rejects.toThrow(
+      'session leave changed the session registry'
     );
     expect(await store.load()).toEqual(current);
     expect(storedKeys(storage, 'authority:admission:')).toEqual([]);

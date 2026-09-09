@@ -907,12 +907,7 @@ describe('room capability admission', () => {
       committed: true,
       snapshot: {
         authorityVersion: 2,
-        sessions: {
-          [claimed.session.id]: {
-            id: claimed.session.id,
-            active: false,
-          },
-        },
+        sessions: {},
         admission: {
           seats: { [p1]: { claimedSessionId: null } },
         },
@@ -956,10 +951,7 @@ describe('room capability admission', () => {
     });
     if (!replacement.accepted) return;
     expect(replacement.session.id).not.toBe(claimed.session.id);
-    expect(replacement.snapshot.sessions[claimed.session.id]).toMatchObject({
-      active: false,
-      displayName: 'First Blue',
-    });
+    expect(replacement.snapshot.sessions[claimed.session.id]).toBeUndefined();
     expect(collectAuthoritySnapshotProblems(replacement.snapshot)).toEqual([]);
   });
 
@@ -983,6 +975,7 @@ describe('room capability admission', () => {
       session: { active: false },
     });
     if (!left.accepted) return;
+    expect(left.snapshot.sessions[joined.session.id]).toBeUndefined();
     expect(left.snapshot.admission?.seats).toEqual(
       joined.snapshot.admission?.seats
     );
@@ -994,6 +987,33 @@ describe('room capability admission', () => {
       code: 'invalid_session',
       snapshot: left.snapshot,
     });
+  });
+
+  it('does not accumulate revoked spectator sessions across explicit leave cycles', async () => {
+    const storage = persistence();
+    const deps = dependencies(createCrypto(), storage);
+    let snapshot = createSnapshot();
+
+    for (let cycle = 0; cycle < 40; cycle += 1) {
+      const joined = await admitRoomSession(
+        snapshot,
+        { type: 'JoinSpectator', spectatorCapability: spectatorToken },
+        deps
+      );
+      if (!joined.accepted) throw new Error(joined.code);
+      const left = await leaveRoomSession(
+        joined.snapshot,
+        joined.session.id,
+        storage
+      );
+      if (!left.accepted) throw new Error(left.code);
+      snapshot = left.snapshot;
+      expect(Object.keys(snapshot.sessions)).toHaveLength(0);
+    }
+
+    expect(snapshot.authorityVersion).toBe(80);
+    expect(storage.transactions).toHaveLength(80);
+    expect(collectAuthoritySnapshotProblems(snapshot)).toEqual([]);
   });
 
   it('recovers a seat claim committed before its welcome reply was lost', async () => {

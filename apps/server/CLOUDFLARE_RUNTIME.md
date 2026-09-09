@@ -31,7 +31,7 @@ rollback evidence remain required before ADR-005 becomes accepted.
   shares the Durable Object alarm with unclaimed-room expiry; due, missing,
   malformed, or implausibly distant deadlines close with `4408` without
   consuming a ticket. Claimed sockets are excluded, and restoration closes a
-  stale attachment that names an inactive session.
+  stale attachment that names a missing or inactive session.
 - Initialization stores a five-minute unclaimed lifecycle marker and schedules
   its alarm in the same transaction as the authority snapshot. The first
   successful session admission atomically marks the room claimed and cancels

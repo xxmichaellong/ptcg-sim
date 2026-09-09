@@ -1052,19 +1052,16 @@ export const assertAdmissionTransactionTransition = (
       }
       if (
         !currentSession?.active ||
-        !candidateSession ||
-        !sameRecordKeys(candidate.sessions, current.sessions)
+        candidateSession ||
+        !structurallyEqual(
+          Object.keys(candidate.sessions).sort(),
+          Object.keys(current.sessions)
+            .filter((sessionId) => sessionId !== transaction.sessionId)
+            .sort()
+        )
       ) {
         problems.push('session leave changed the session registry');
       } else {
-        const {
-          resumeCapabilityDigest: _revokedCapability,
-          ...retainedSession
-        } = currentSession;
-        const expected = { ...retainedSession, active: false };
-        if (!structurallyEqual(candidateSession, expected)) {
-          problems.push('session leave did not retire exactly one session');
-        }
         for (const [sessionId, session] of Object.entries(current.sessions)) {
           if (
             sessionId !== transaction.sessionId &&

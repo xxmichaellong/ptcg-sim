@@ -1577,9 +1577,10 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     boundary. New admission, real transport loss, resume, and explicit leave
     produce server-derived lifecycle facts; Durable Object restoration and the
     close of a superseded socket remain silent. `Leave` is no longer an
-    in-memory socket deletion: one validated durable transaction retires the
-    session, deletes its resume digest, and releases exactly its player seat,
-    with post-commit failure reconciliation. A separate identity-cursor
+    in-memory socket deletion: one validated durable transaction removes the
+    session registry entry and bounded command-outcome cache, thereby revoking
+    its resume digest, and releases exactly its player seat, with post-commit
+    failure reconciliation. A separate identity-cursor
     dispatcher maps those facts to the existing announcement row and polite
     live region, consumes replay-time facts without a later burst, and tears
     down with presentation ownership. Unit, real-`workerd`, and Wrangler/Vite
@@ -1616,6 +1617,15 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     rescheduling, and isolation from authenticated peers. This bounds a
     pre-admission resource path without adding timers, altering UI/UX, or
     deciding the separate active-session disconnect grace policy.
+98. Explicit leave no longer leaves an unreachable inactive session tombstone.
+    Its predecessor-validated transaction deletes exactly that registry entry
+    and its bounded command-outcome cache while preserving every other session,
+    identity, credential, match, and replay field. Ambiguous commit recovery
+    recognizes the missing session as success, presence still uses the captured
+    pre-leave identity, and repeated spectator admission/leave cycles keep the
+    durable registry empty. Disconnected resumable sessions remain untouched,
+    so this closes the policy-independent leak without choosing their grace or
+    private-inspection semantics.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

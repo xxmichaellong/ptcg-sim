@@ -1041,9 +1041,7 @@ export class RoomSessionHub {
     if (
       !priorSession?.active ||
       durable.authorityVersion !== before.authorityVersion + 1 ||
-      !durableSession ||
-      durableSession.active ||
-      durableSession.resumeCapabilityDigest !== undefined
+      durableSession
     ) {
       return false;
     }
