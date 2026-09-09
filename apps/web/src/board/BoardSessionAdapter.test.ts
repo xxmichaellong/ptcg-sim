@@ -257,6 +257,53 @@ const sceneEffects = (effects: readonly BoardSessionRendererEffect[]) =>
   effects.filter((effect) => effect.kind === 'InstallScene');
 
 describe('BoardSessionAdapter with real session coordinators', () => {
+  it('routes an equal-revision display-name refresh through the metadata boundary', () => {
+    const test = setup();
+    test.socket.serverOpen();
+    const initial = viewAt(4);
+    test.socket.serverMessage(welcome(initial));
+    const selectedCardId = initial.zones['zone:spike-blue:hand']!.cards[0]!.id;
+    expect(
+      test.adapter.emitIntent({
+        kind: 'CardSelected',
+        cardId: selectedCardId,
+      })
+    ).toBe(true);
+    const effectCount = test.rendererEffects.length;
+    const renamed = {
+      ...initial,
+      players: {
+        ...initial.players,
+        'spike-red': {
+          ...initial.players['spike-red']!,
+          displayName: 'Joined opponent',
+        },
+      },
+    };
+
+    test.socket.serverMessage({
+      type: 'ProjectionRefresh',
+      protocolVersion: PROTOCOL_VERSION,
+      cause: 'authority_reconciled',
+      snapshot: renamed,
+    });
+
+    expect(test.adapter.getSnapshot().view).toBe(test.live.getSnapshot().view);
+    expect(
+      test.adapter.getSnapshot().view?.players['spike-red']?.displayName
+    ).toBe('Joined opponent');
+    expect(test.adapter.getSnapshot().presentation.selectedCardId).toBe(
+      selectedCardId
+    );
+    expect(test.rendererEffects.slice(effectCount)).toEqual([
+      {
+        kind: 'InstallScene',
+        scene: test.adapter.getSnapshot().scene,
+        mode: 'replace',
+      },
+    ]);
+  });
+
   it('routes ephemeral declarations only through a writable live player session', () => {
     const test = setup();
     expect(test.adapter.declareMulligan()).toBe(false);

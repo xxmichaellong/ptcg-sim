@@ -328,7 +328,7 @@ describe('Cloudflare Worker runtime', () => {
 
     const secondTicket = await issuePlayerTicket(created, 'two', 'Runtime Red');
     const secondSocket = await connect(created);
-    const firstSeesJoin = nextServerFrames(firstSocket, 1);
+    const firstSeesJoin = nextServerFrames(firstSocket, 2);
     const secondAdmission = nextServerFrames(secondSocket, 2);
     secondSocket.send(helloFrame(created, secondTicket, 'Runtime Red'));
     const [secondWelcomeFrame, secondJoinedFrame] = await secondAdmission;
@@ -342,6 +342,20 @@ describe('Cloudflare Worker runtime', () => {
       status: 'joined',
     });
     await expect(firstSeesJoin).resolves.toEqual([
+      expect.objectContaining({
+        message: expect.objectContaining({
+          type: 'ProjectionRefresh',
+          cause: 'authority_reconciled',
+          snapshot: expect.objectContaining({
+            revision: 0,
+            players: expect.objectContaining({
+              [secondWelcome.playerId!]: expect.objectContaining({
+                displayName: 'Runtime Red',
+              }),
+            }),
+          }),
+        }),
+      }),
       expect.objectContaining({
         message: expect.objectContaining({
           type: 'Presence',
@@ -373,7 +387,7 @@ describe('Cloudflare Worker runtime', () => {
         ?.claimedSessionId
     ).toBe(secondWelcome.sessionId);
 
-    const firstSeesReconnect = nextServerFrames(firstSocket, 1);
+    const firstSeesReconnect = nextServerFrames(firstSocket, 2);
     await evictDurableObject(roomStub(created));
     const resumedSocket = await connect(created);
     const resumedAdmission = nextServerFrames(resumedSocket, 2);
@@ -403,6 +417,20 @@ describe('Cloudflare Worker runtime', () => {
       status: 'reconnected',
     });
     await expect(firstSeesReconnect).resolves.toEqual([
+      expect.objectContaining({
+        message: expect.objectContaining({
+          type: 'ProjectionRefresh',
+          cause: 'authority_reconciled',
+          snapshot: expect.objectContaining({
+            revision: 0,
+            players: expect.objectContaining({
+              [resumedWelcome.playerId!]: expect.objectContaining({
+                displayName: 'Runtime Red',
+              }),
+            }),
+          }),
+        }),
+      }),
       expect.objectContaining({
         message: expect.objectContaining({
           type: 'Presence',
@@ -559,17 +587,30 @@ describe('Cloudflare Worker runtime', () => {
       'runtime-concurrent-fault-flip'
     );
     const secondWelcomePromise = nextServerMessage(secondSocket);
-    const failedCommandPromise = nextServerMessage(firstSocket);
+    const firstPeerFramesPromise = nextServerMessages(firstSocket, 2);
 
     secondSocket.send(helloFrame(created, secondTicket, 'Runtime Opponent'));
     firstSocket.send(commandFrame);
 
-    const [secondWelcome, failedCommand] = await Promise.all([
+    const [secondWelcome, firstPeerFrames] = await Promise.all([
       secondWelcomePromise,
-      failedCommandPromise,
+      firstPeerFramesPromise,
     ]);
     expect(secondWelcome.type).toBe('Welcome');
-    expect(failedCommand).toMatchObject({
+    if (secondWelcome.type !== 'Welcome') throw new Error('Expected Welcome');
+    expect(firstPeerFrames[0]).toMatchObject({
+      type: 'ProjectionRefresh',
+      cause: 'authority_reconciled',
+      snapshot: {
+        revision: firstWelcome.snapshot.revision,
+        players: expect.objectContaining({
+          [secondWelcome.playerId!]: expect.objectContaining({
+            displayName: 'Runtime Opponent',
+          }),
+        }),
+      },
+    });
+    expect(firstPeerFrames[1]).toMatchObject({
       type: 'ServerNotice',
       code: 'internal_retryable',
       retryable: true,

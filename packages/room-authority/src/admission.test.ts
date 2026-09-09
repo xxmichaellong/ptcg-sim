@@ -121,6 +121,61 @@ const dependencies = (
 };
 
 describe('room capability admission', () => {
+  it('projects a new player display name for every already-active peer', async () => {
+    const storage = persistence();
+    const crypto = createCrypto();
+    const deps = dependencies(crypto, storage);
+    const spectator = await admitRoomSession(
+      createSnapshot(),
+      { type: 'JoinSpectator', spectatorCapability: spectatorToken },
+      deps
+    );
+    expect(spectator.accepted).toBe(true);
+    if (!spectator.accepted) return;
+
+    const player = await admitRoomSession(
+      spectator.snapshot,
+      {
+        type: 'ClaimSeat',
+        seatCapability: seatOneToken,
+        displayName: 'Blue',
+      },
+      deps
+    );
+    expect(player.accepted).toBe(true);
+    if (!player.accepted) return;
+    expect(player.snapshot.state.revision).toBe(0);
+    expect(player.refreshes).toHaveLength(1);
+    expect(player.refreshes[0]).toMatchObject({
+      sessionId: spectator.session.id,
+      message: {
+        type: 'ProjectionRefresh',
+        cause: 'authority_reconciled',
+        snapshot: {
+          revision: 0,
+          players: { [p1]: { displayName: 'Blue' } },
+        },
+      },
+    });
+    expect(player.refreshes[0]?.message).not.toHaveProperty(
+      'coveringCommandId'
+    );
+
+    const resumed = await admitRoomSession(
+      player.snapshot,
+      {
+        type: 'Resume',
+        resumeCapability: player.resumeCapability,
+      },
+      deps
+    );
+    expect(resumed.accepted).toBe(true);
+    if (!resumed.accepted) return;
+    expect(resumed.refreshes.map((refresh) => refresh.sessionId)).toEqual([
+      spectator.session.id,
+    ]);
+  });
+
   it('mints a digest-only player invitation and consumes it only with the socket ticket', async () => {
     const storage = persistence();
     const crypto = createCrypto();

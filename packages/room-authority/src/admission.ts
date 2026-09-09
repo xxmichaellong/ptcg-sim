@@ -1,4 +1,5 @@
 import type { MatchViewState, PlayerId } from '@ptcgsim/game-core';
+import { PROTOCOL_VERSION, serializeMatchViewState } from '@ptcgsim/protocol';
 
 import { projectRecipient, type OpaqueIdSource } from './identity-registry.js';
 import { assertAuthoritySnapshotInvariants } from './invariants.js';
@@ -6,6 +7,7 @@ import {
   MAX_OUTSTANDING_ADMISSION_TICKETS,
   MAX_OUTSTANDING_ROOM_INVITATIONS,
   type AdmissionPersistence,
+  type AuthorityDelivery,
   type AuthoritySession,
   type RoomAdmissionState,
   type RoomAdmissionTicket,
@@ -93,6 +95,7 @@ export type AdmissionResult =
       readonly session: AuthoritySession;
       readonly resumeCapability: string;
       readonly view: MatchViewState;
+      readonly refreshes: readonly AuthorityDelivery[];
     }
   | {
       readonly accepted: false;
@@ -359,6 +362,54 @@ const admissionAfterTicket = (
           : ticketsWithout(admission.tickets, admissionTicketDigest!),
       };
 
+const projectAdmissionViews = (
+  snapshot: RoomAuthoritySnapshot,
+  admittedSessionId: string,
+  includePeerRefreshes: boolean,
+  dependencies: AdmissionDependencies
+): {
+  readonly identities: RoomAuthoritySnapshot['identities'];
+  readonly admittedView: MatchViewState;
+  readonly refreshes: readonly AuthorityDelivery[];
+} => {
+  let identities = snapshot.identities;
+  let admittedView: MatchViewState | undefined;
+  const refreshes: AuthorityDelivery[] = [];
+  const admittedSession = snapshot.sessions[admittedSessionId];
+  if (!admittedSession?.active) {
+    throw new Error('Admitted session is not active');
+  }
+  const projectionSessions = includePeerRefreshes
+    ? Object.values(snapshot.sessions).filter((entry) => entry.active)
+    : [admittedSession];
+  for (const projectionSession of projectionSessions) {
+    const projected = projectRecipient(
+      snapshot.state,
+      projectionSession.viewer,
+      identities,
+      dependencies.opaqueIds
+    );
+    identities = projected.identities;
+    if (projectionSession.id === admittedSessionId) {
+      admittedView = projected.snapshot;
+    } else {
+      refreshes.push({
+        sessionId: projectionSession.id,
+        message: {
+          type: 'ProjectionRefresh',
+          protocolVersion: PROTOCOL_VERSION,
+          cause: 'authority_reconciled',
+          snapshot: serializeMatchViewState(projected.snapshot),
+        },
+      });
+    }
+  }
+  if (!admittedView) {
+    throw new Error('Admitted session projection was not created');
+  }
+  return { identities, admittedView, refreshes };
+};
+
 const persistSessionResume = async (
   current: RoomAuthoritySnapshot,
   session: AuthoritySession,
@@ -367,12 +418,6 @@ const persistSessionResume = async (
   admissionTicketDigest?: string,
   invitationDigest?: string
 ): Promise<AdmissionResult> => {
-  const projected = projectRecipient(
-    current.state,
-    session.viewer,
-    current.identities,
-    dependencies.opaqueIds
-  );
   const resumedSession: AuthoritySession = {
     ...session,
     resumeCapabilityDigest:
@@ -381,7 +426,6 @@ const persistSessionResume = async (
   const candidate: RoomAuthoritySnapshot = {
     ...current,
     authorityVersion: current.authorityVersion + 1,
-    identities: projected.identities,
     sessions: {
       ...current.sessions,
       [session.id]: resumedSession,
@@ -396,10 +440,20 @@ const persistSessionResume = async (
         }
       : {}),
   };
-  assertAuthoritySnapshotInvariants(candidate);
+  const projections = projectAdmissionViews(
+    candidate,
+    session.id,
+    true,
+    dependencies
+  );
+  const projectedCandidate = {
+    ...candidate,
+    identities: projections.identities,
+  };
+  assertAuthoritySnapshotInvariants(projectedCandidate);
   await dependencies.persistence.commitAdmission({
     expectedAuthorityVersion: current.authorityVersion,
-    snapshot: candidate,
+    snapshot: projectedCandidate,
     sessionId: session.id,
     kind: 'session_resumed',
     ...(admissionTicketDigest ? { admissionTicketDigest } : {}),
@@ -408,10 +462,11 @@ const persistSessionResume = async (
   return {
     accepted: true,
     committed: true,
-    snapshot: candidate,
+    snapshot: projectedCandidate,
     session: resumedSession,
     resumeCapability,
-    view: projected.snapshot,
+    view: projections.admittedView,
+    refreshes: projections.refreshes,
   };
 };
 
@@ -606,13 +661,13 @@ const admitAuthorizedSession = async (
     sessions,
     admission,
   };
-  const projected = projectRecipient(
-    candidate.state,
-    session.viewer,
-    candidate.identities,
-    dependencies.opaqueIds
+  const projections = projectAdmissionViews(
+    candidate,
+    session.id,
+    Boolean(claimedPlayerId),
+    dependencies
   );
-  candidate = { ...candidate, identities: projected.identities };
+  candidate = { ...candidate, identities: projections.identities };
   assertAuthoritySnapshotInvariants(candidate);
   await dependencies.persistence.commitAdmission({
     expectedAuthorityVersion: current.authorityVersion,
@@ -628,7 +683,8 @@ const admitAuthorizedSession = async (
     snapshot: candidate,
     session,
     resumeCapability: authorized.resumeCapability,
-    view: projected.snapshot,
+    view: projections.admittedView,
+    refreshes: projections.refreshes,
   };
 };
 

@@ -58,7 +58,7 @@ export type BoardProjectionSource =
       readonly frameIndex: number;
     };
 
-export type BoardProjectionBoundary = 'advance' | 'resync' | 'seek';
+export type BoardProjectionBoundary = 'advance' | 'refresh' | 'resync' | 'seek';
 
 /**
  * One already recipient-projected application publication. `frameToken` is a
@@ -296,7 +296,7 @@ const validFrameHeader = (frame: BoardProjectionFrame): boolean => {
   if (!frame.source || typeof frame.source !== 'object') return false;
   if (
     !validCounter(frame.frameToken) ||
-    !['advance', 'resync', 'seek'].includes(frame.boundary) ||
+    !['advance', 'refresh', 'resync', 'seek'].includes(frame.boundary) ||
     ![
       'idle',
       'connecting',
@@ -316,6 +316,7 @@ const validFrameHeader = (frame: BoardProjectionFrame): boolean => {
   }
   if (frame.source.kind !== 'replay') return false;
   return (
+    frame.boundary !== 'refresh' &&
     typeof frame.source.replayId === 'string' &&
     frame.source.replayId.length > 0 &&
     frame.source.replayId.length <= 128 &&
@@ -762,6 +763,7 @@ const installFrame = (
     frame.source.playbackGeneration > cursor.source.playbackGeneration;
   const replacementBoundary =
     frame.boundary === 'resync' || frame.boundary === 'seek';
+  const metadataRefresh = frame.boundary === 'refresh';
   const phaseOnlyPublication =
     sameTimeline &&
     frame.boundary === 'advance' &&
@@ -770,6 +772,18 @@ const installFrame = (
     (frame.source.kind === 'live' || !replayGenerationChanged);
 
   if ((recipientChanged || timelineChanged) && frame.boundary !== 'resync') {
+    return rejected(state);
+  }
+  if (
+    metadataRefresh &&
+    (frame.source.kind !== 'live' ||
+      !sameTimeline ||
+      previousRevision === undefined ||
+      frame.view.revision !== previousRevision ||
+      frame.view === previousView ||
+      recipientChanged ||
+      frame.sessionPhase !== 'ready')
+  ) {
     return rejected(state);
   }
   if (
@@ -895,7 +909,8 @@ const installFrame = (
     previousRevision !== undefined &&
     frame.view.revision === previousRevision &&
     frame.view !== previousView &&
-    !replacementBoundary
+    !replacementBoundary &&
+    !metadataRefresh
   ) {
     return rejected(state);
   }

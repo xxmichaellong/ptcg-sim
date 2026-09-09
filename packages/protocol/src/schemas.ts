@@ -751,6 +751,18 @@ const StatePublicationSchema = v.object({
   ),
 });
 
+/**
+ * Authority metadata can change without executing a game command. This
+ * message is intentionally distinct from StatePublication so an
+ * equal-revision replacement cannot be mistaken for a command publication.
+ */
+const ProjectionRefreshSchema = v.object({
+  type: v.literal('ProjectionRefresh'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  cause: v.literal('authority_reconciled'),
+  snapshot: MatchViewStateSchema,
+});
+
 const CommandResultSchema = v.object({
   type: v.literal('CommandResult'),
   protocolVersion: v.literal(PROTOCOL_VERSION),
@@ -886,6 +898,7 @@ const ReplayCompletedSchema = v.strictObject({
 export const ServerMessageSchema = v.variant('type', [
   WelcomeSchema,
   StatePublicationSchema,
+  ProjectionRefreshSchema,
   CommandResultSchema,
   ChatMessageSchema,
   MulliganAnnouncementSchema,

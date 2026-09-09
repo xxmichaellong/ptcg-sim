@@ -466,6 +466,17 @@ omitted-credential fetch semantics, derives credential-free HTTP and WebSocket
 URLs from the same origin, validates the untrusted handoff before exchange, and
 hands only the resulting runtime and route descriptor to React.
 
+A player seat claim updates canonical display-name metadata but deliberately
+does not fabricate a game command, event, or match revision. Before committing
+that admission, authority projects the resulting state for every active
+recipient and persists any new opaque identities. After commit, the hub sends
+each existing binding a recipient-specific `ProjectionRefresh` with the closed
+`authority_reconciled` cause. The client accepts the equal-revision snapshot
+only when its hydrated form is identical or differs solely in player display
+names; all gameplay, visibility, viewer, identity, and revision changes fail
+closed. Resume rebuilds the peer refresh set so retry after an ambiguous
+admission commit repairs a publication that could not previously be sent.
+
 The implemented session-lifecycle boundary now emits authenticated ephemeral
 `joined`, `disconnected`, `reconnected`, and `left` presence from the durable
 session identity. A transport loss removes only the current socket binding and

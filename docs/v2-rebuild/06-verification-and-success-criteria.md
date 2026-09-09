@@ -445,6 +445,15 @@ Release requires all of the following:
     a forged ticket/resume pair are covered without persisting raw credentials,
     changing session identity, duplicating a seat, or exposing capabilities in
     public client state.
+29. A player admission projects its canonical display-name update for every
+    active recipient inside the same durable transaction and then emits a
+    distinct `ProjectionRefresh`; it does not fabricate a command result,
+    replay event, or game revision. The client accepts an equal-revision refresh
+    only when the complete hydrated projection is identical or differs solely
+    in player display names. The board replaces label metadata without rotating
+    aliases or clearing valid local presentation. Resume regenerates peer
+    projections so an exact-pair retry repairs an update skipped by an
+    ambiguously successful admission write.
 
 ## Privacy and security gates
 

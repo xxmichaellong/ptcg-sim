@@ -3858,17 +3858,15 @@ describe('client/server multiplayer contract', () => {
     expect(room.store.commandCommits).toHaveLength(4);
   });
 
-  it('replaces equal-revision metadata from an authoritative reconnect Welcome', async () => {
+  it('publishes admitted player metadata to an existing peer without a game revision', async () => {
     const room = await fixture();
     const spectatorCapability = room.credentials.spectatorCapability;
     if (!spectatorCapability) throw new Error('Missing spectator capability');
-    const scheduler = new ManualScheduler();
     const spectator = await connectClient({
       hub: room.hub,
       name: 'Observer',
       role: 'spectator',
       capability: spectatorCapability,
-      scheduler,
     });
     const firstPlayerId = spectator.session.getSnapshot().view?.playerOrder[0];
     if (!firstPlayerId) throw new Error('Missing player in spectator view');
@@ -3882,11 +3880,6 @@ describe('client/server multiplayer contract', () => {
       role: 'player',
       capability: room.credentials.playerOneSeatCapability,
     });
-    const firstLink = spectator.factory.latest();
-    firstLink.networkDrop();
-    scheduler.runNext();
-    spectator.factory.latest().open();
-    await spectator.factory.flush();
 
     expect(spectator.session.getSnapshot()).toMatchObject({
       phase: 'ready',
@@ -3895,5 +3888,6 @@ describe('client/server multiplayer contract', () => {
     expect(
       spectator.session.getSnapshot().view?.players[firstPlayerId]?.displayName
     ).toBe('Blue');
+    expect(spectator.factory.links).toHaveLength(1);
   });
 });

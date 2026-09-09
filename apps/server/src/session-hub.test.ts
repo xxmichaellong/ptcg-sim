@@ -338,6 +338,100 @@ describe('serialized room session hub', () => {
     ]);
   });
 
+  it('refreshes an existing peer when a player display name is admitted', async () => {
+    const setup = await fixture();
+    const spectatorTicket = await setup.hub.issueAdmissionTicket({
+      capability: setup.spectatorCapability,
+      displayName: 'Watcher',
+      requestedRole: 'spectator',
+    });
+    if (!spectatorTicket.accepted) throw new Error(spectatorTicket.code);
+    const watcher = connection('name-refresh-watcher');
+    await setup.hub.handleFrame(
+      watcher.value,
+      helloFrame({
+        admissionTicket: spectatorTicket.admissionTicket,
+        resumeToken: spectatorTicket.resumeCapability,
+        displayName: 'Watcher',
+        requestedRole: 'spectator',
+      })
+    );
+    const watcherWelcome = watcher.messages.find(
+      (message) => message.type === 'Welcome'
+    );
+    expect(watcherWelcome).toMatchObject({
+      type: 'Welcome',
+      snapshot: {
+        revision: 0,
+        players: { [p1]: { displayName: 'Player 1' } },
+      },
+    });
+
+    const blue = connection('name-refresh-blue');
+    await setup.hub.handleFrame(
+      blue.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+
+    const refresh = watcher.messages.find(
+      (message) => message.type === 'ProjectionRefresh'
+    );
+    expect(refresh).toMatchObject({
+      type: 'ProjectionRefresh',
+      cause: 'authority_reconciled',
+      snapshot: {
+        revision: 0,
+        players: { [p1]: { displayName: 'Blue' } },
+      },
+    });
+    expect(refresh).not.toHaveProperty('coveringCommandId');
+  });
+
+  it('repairs a missed peer-name refresh after an ambiguous admission commit', async () => {
+    const setup = await fixture();
+    const spectatorTicket = await setup.hub.issueAdmissionTicket({
+      capability: setup.spectatorCapability,
+      displayName: 'Watcher',
+      requestedRole: 'spectator',
+    });
+    if (!spectatorTicket.accepted) throw new Error(spectatorTicket.code);
+    const watcher = connection('ambiguous-name-watcher');
+    await setup.hub.handleFrame(
+      watcher.value,
+      helloFrame({
+        admissionTicket: spectatorTicket.admissionTicket,
+        resumeToken: spectatorTicket.resumeCapability,
+        displayName: 'Watcher',
+        requestedRole: 'spectator',
+      })
+    );
+    setup.store.failAdmissionAfterCommitOnce = true;
+    const blue = connection('ambiguous-name-blue');
+    const frame = helloFrame({
+      admissionTicket: setup.admissionTicket,
+      resumeToken: setup.resumeToken,
+    });
+
+    await setup.hub.handleFrame(blue.value, frame);
+    expect(
+      watcher.messages.some((message) => message.type === 'ProjectionRefresh')
+    ).toBe(false);
+
+    await setup.hub.handleFrame(blue.value, frame);
+    expect(
+      watcher.messages.find((message) => message.type === 'ProjectionRefresh')
+    ).toMatchObject({
+      type: 'ProjectionRefresh',
+      snapshot: {
+        revision: 0,
+        players: { [p1]: { displayName: 'Blue' } },
+      },
+    });
+  });
+
   it('reloads and safely rotates an invitation committed before a failed response', async () => {
     const setup = await fixture();
     setup.store.failAdmissionAfterCommitOnce = true;

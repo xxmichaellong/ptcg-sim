@@ -26,6 +26,13 @@ budget. Only rate metadata is durable or observable: message text is excluded
 from authority state, journals, replay, storage, and telemetry, and ephemeral
 delivery failures are never retried automatically.
 
+Player admission publishes a recipient-specific `ProjectionRefresh` to every
+other active binding after the admission is durable. It carries no command
+result or replay event and does not advance the game revision. Resume regenerates
+the refresh set, repairing a peer update that could not be emitted after an
+ambiguously successful admission write; clients accept only identical or
+display-name-only replacements.
+
 Recent audit rows are transactionally bounded independently from the authority
 snapshot: 128 command rows/512 KiB and 64 admission rows/128 KiB. The snapshot,
 new row, retention frontier, and displaced-row deletion commit or roll back

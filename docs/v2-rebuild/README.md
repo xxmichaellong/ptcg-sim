@@ -44,8 +44,9 @@ the relevant product decisions and phase exit criteria.
   replay controls, and Exit path behind a lazy application branch. It requires a
   trusted in-memory connection handoff. ADR-018 now supplies that handoff through
   a bounded same-origin no-store POST: authority stores only a short-lived
-  role/name-bound ticket digest, atomically consumes it into a fresh resume
-  capability, and the browser passes only the runtime/route descriptor to React.
+  role/name-bound ticket plus its bound resume digest, atomically consumes the
+  ticket into a session retaining that resume authority, and the browser passes
+  only the runtime/route descriptor to React.
   Room creation is also a strict bounded same-origin no-store exchange. The
   creator is bootstrapped immediately while the other master credentials remain
   in a non-serializing in-memory custodian. That custodian now mints bounded,
@@ -80,8 +81,12 @@ the relevant product decisions and phase exit criteria.
   admission is also response-loss safe: the ticket exchange binds a distinct
   server-minted resume digest before `Hello`, and the client retries the exact
   private pair until `Welcome` can prove either one-time redemption or recovery
-  of the already-committed session. Visible create/join wiring
-  waits on ADR-020's decision about how the handoff moves between browsers. The
+  of the already-committed session. Already-connected peers receive a
+  separately validated, equal-revision
+  display-name refresh after player admission; this changes labels without
+  fabricating a command/replay revision or rotating card aliases. Visible
+  create/join wiring waits on ADR-020's decision about how the handoff moves
+  between browsers. The
   canonical Wrangler topology now publishes the built Vite app beside the room
   Worker, with explicit authority-first and static-asset route namespaces plus
   SPA fallback. A separate production-build Chromium lane proves that one-origin

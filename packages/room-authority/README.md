@@ -19,6 +19,12 @@ the private pair can therefore resume an already-committed session after a lost
 Welcome without making the consumed ticket reusable. Raw invitation, ticket, seat,
 spectator, and resume credentials never enter canonical state.
 
+A player admission changes canonical display-name metadata without inventing a
+game command or revision. The same admission transaction projects the resulting
+view for every active peer and persists any new opaque identities before the
+hub emits a closed `authority_reconciled` refresh. Resume reprojects peers too,
+so an exact-pair retry repairs a refresh missed after an ambiguous commit.
+
 Admission state persists a mode-bound player-seat ceiling (`1` for solo, `2`
 for multiplayer). A first solo claim atomically removes all credentials for the
 other canonical seat while preserving spectators and resume. Snapshot

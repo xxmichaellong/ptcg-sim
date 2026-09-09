@@ -2,6 +2,7 @@ import {
   admitRoomSession,
   redeemRoomAdmissionTicket,
   type AdmissionDependencies,
+  type AuthorityDelivery,
   type RoomAuthoritySnapshot,
 } from '@ptcgsim/room-authority';
 import {
@@ -23,6 +24,7 @@ export type HandshakeResult =
       readonly snapshot: RoomAuthoritySnapshot;
       readonly sessionId: string;
       readonly presenceStatus: 'joined' | 'reconnected';
+      readonly refreshes: readonly AuthorityDelivery[];
       readonly message: Extract<ServerMessage, { type: 'Welcome' }>;
     }
   | {
@@ -110,6 +112,7 @@ export const establishSession = async (
     snapshot: result.snapshot,
     sessionId: result.session.id,
     presenceStatus: recovered?.accepted ? 'reconnected' : 'joined',
+    refreshes: result.refreshes,
     message: {
       type: 'Welcome',
       protocolVersion: PROTOCOL_VERSION,

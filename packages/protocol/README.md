@@ -14,6 +14,11 @@ Strict invitation-issue and cross-browser handoff schemas carry a
 bounded expiring one-use claim and its requested role without exposing the
 creator's long-lived seat or spectator credential.
 
+`ProjectionRefresh` is a separate, closed server message for authoritative
+metadata changes that do not execute a game command. Its only current cause is
+`authority_reconciled`; clients verify that a refresh is either identical or
+changes only player display names before replacing the recipient-safe view.
+
 Visibility presentation events use bounded actor/owner IDs, card-versus-zone
 scope, and a closed semantic-source enum. Only public single-card reveal facts
 may contain a bounded card display name; hide and private-inspection facts have

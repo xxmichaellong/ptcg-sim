@@ -1596,6 +1596,17 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     tests cover pre-commit rejection, post-commit throw, failed Welcome send,
     exact session/seat identity, and raw-credential absence without visible UI
     or UX changes.
+96. Player admission metadata now reaches already-connected peers immediately
+    without pretending that a game command ran. The admission transaction
+    projects every active recipient and persists any new opaque identities
+    before the hub emits a closed `authority_reconciled`
+    `ProjectionRefresh`. Client validation permits only an identical or
+    display-name-only equal-revision replacement; all gameplay, visibility,
+    identity, and revision differences fail closed. The board uses a dedicated
+    metadata boundary to replace labels while preserving recipient aliases,
+    current selection, and command availability. A resume regenerates peer
+    projections, so exact-pair recovery after a post-commit failure also repairs
+    any refresh that could not previously be delivered.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

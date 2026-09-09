@@ -206,6 +206,46 @@ describe('headless board session controller', () => {
     ]);
   });
 
+  it('refreshes equal-revision metadata without resetting aliases or local presentation', () => {
+    const base = createRendererSpikeView();
+    const selectedCardId = base.zones['zone:spike-blue:hand']!.cards[0]!.id;
+    const selected = select(install(initialFrame(base)), selectedCardId);
+    const renamed = {
+      ...base,
+      players: {
+        ...base.players,
+        'spike-red': {
+          ...base.players['spike-red']!,
+          displayName: 'New opponent',
+        },
+      },
+    };
+
+    const refreshed = apply(selected, {
+      kind: 'FrameReceived',
+      frame: liveFrame(2, renamed, { boundary: 'refresh' }),
+    });
+
+    expect(refreshed.outcome).toBe('accepted');
+    expect(refreshed.state.view).toBe(renamed);
+    expect(refreshed.state.presentation.selectedCardId).toBe(selectedCardId);
+    expect(refreshed.effects).toEqual([
+      {
+        kind: 'InstallScene',
+        scene: refreshed.state.scene,
+        mode: 'replace',
+      },
+    ]);
+    expect(
+      apply(refreshed.state, {
+        kind: 'FrameReceived',
+        frame: liveFrame(3, withRevision(renamed, renamed.revision + 1), {
+          boundary: 'refresh',
+        }),
+      }).outcome
+    ).toBe('rejected');
+  });
+
   it('never rewinds a live projection', () => {
     const base = withRevision(createRendererSpikeView(), 5);
     const state = install(initialFrame(base));

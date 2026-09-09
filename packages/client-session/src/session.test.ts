@@ -261,6 +261,69 @@ describe('RemoteGameSession', () => {
     expect(test.scheduler.tasks.size).toBe(0);
   });
 
+  it('accepts only an equal-revision display-name projection refresh', () => {
+    const test = setup();
+    const socket = test.admit();
+    const before = test.session.getSnapshot().view;
+
+    socket.serverMessage({
+      type: 'ProjectionRefresh',
+      protocolVersion: PROTOCOL_VERSION,
+      cause: 'authority_reconciled',
+      snapshot: view(0),
+    });
+    expect(test.session.getSnapshot().view).toBe(before);
+
+    socket.serverMessage({
+      type: 'ProjectionRefresh',
+      protocolVersion: PROTOCOL_VERSION,
+      cause: 'authority_reconciled',
+      snapshot: view(0, 'Renamed Blue'),
+    });
+
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'ready',
+      view: {
+        revision: 0,
+        players: { blue: { displayName: 'Renamed Blue' } },
+      },
+    });
+    expect(test.session.getSnapshot().view).not.toBe(before);
+
+    socket.serverMessage({
+      type: 'ProjectionRefresh',
+      protocolVersion: PROTOCOL_VERSION,
+      cause: 'authority_reconciled',
+      snapshot: {
+        ...view(0, 'Another Name'),
+        turn: { number: 2, currentPlayerId: 'blue' },
+      },
+    });
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'failed',
+      failure: { code: 'inconsistent_publication' },
+    });
+  });
+
+  it('rejects an unrecognized projection-refresh cause at the wire boundary', () => {
+    const test = setup();
+    const socket = test.admit();
+
+    socket.serverMessage(
+      JSON.stringify({
+        type: 'ProjectionRefresh',
+        protocolVersion: PROTOCOL_VERSION,
+        cause: 'command_applied',
+        snapshot: view(0, 'Forged Name'),
+      })
+    );
+
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'failed',
+      failure: { code: 'invalid_server_frame' },
+    });
+  });
+
   it('does not open a transport after a connecting observer closes the session', () => {
     const test = setup();
     let connectingObserved = false;

@@ -3,6 +3,7 @@ import {
   asViewCardId,
   asViewDefinitionId,
   stableSerialize,
+  type MatchViewState,
 } from '@ptcgsim/game-core';
 import {
   hydrateMatchViewState,
@@ -111,6 +112,33 @@ const appendManyBounded = <Value>(
   maximum: number
 ): readonly Value[] =>
   maximum === 0 ? [] : [...values, ...additions].slice(-maximum);
+
+const isDisplayNameOnlyRefresh = (
+  current: MatchViewState,
+  candidate: MatchViewState
+): boolean => {
+  const currentPlayerIds = Object.keys(current.players);
+  const candidatePlayerIds = Object.keys(candidate.players);
+  if (
+    currentPlayerIds.length !== candidatePlayerIds.length ||
+    candidatePlayerIds.some((playerId) => !current.players[playerId])
+  ) {
+    return false;
+  }
+  const normalizedPlayers = Object.fromEntries(
+    candidatePlayerIds.map((playerId) => [
+      playerId,
+      {
+        ...candidate.players[playerId]!,
+        displayName: current.players[playerId]!.displayName,
+      },
+    ])
+  );
+  return (
+    stableSerialize({ ...candidate, players: normalizedPlayers }) ===
+    stableSerialize(current)
+  );
+};
 
 const validPolicy = (policy: ClientSessionPolicy): ClientSessionPolicy => {
   for (const [key, value] of Object.entries(policy)) {
@@ -411,6 +439,9 @@ export class RemoteGameSession {
         return;
       case 'StatePublication':
         this.handlePublication(message);
+        return;
+      case 'ProjectionRefresh':
+        this.handleProjectionRefresh(message);
         return;
       case 'CommandResult':
         this.handleCommandResult(message);
@@ -803,6 +834,35 @@ export class RemoteGameSession {
     }
     this.finishHeadIfComplete();
     this.publishPending();
+  }
+
+  private handleProjectionRefresh(
+    message: Extract<ServerMessage, { type: 'ProjectionRefresh' }>
+  ): void {
+    const current = this.state.view;
+    if (this.state.phase !== 'ready' || !current) {
+      this.fail({
+        code: 'sequence_divergence',
+        message: 'Projection refresh received outside an admitted room',
+      });
+      return;
+    }
+    const candidate = hydrateMatchViewState(message.snapshot);
+    const sameProjection =
+      candidate.revision === current.revision &&
+      stableSerialize(candidate) === stableSerialize(current);
+    if (sameProjection) return;
+    if (
+      candidate.revision !== current.revision ||
+      !isDisplayNameOnlyRefresh(current, candidate)
+    ) {
+      this.fail({
+        code: 'inconsistent_publication',
+        message: 'Projection refresh changed non-refreshable authority state',
+      });
+      return;
+    }
+    this.updateState({ view: candidate });
   }
 
   private handleCommandResult(message: CommandResult): void {

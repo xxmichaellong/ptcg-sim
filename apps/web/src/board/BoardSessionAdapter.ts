@@ -270,6 +270,15 @@ export class BoardSessionAdapter {
       return 'resync';
     }
     if (viewerKey(accepted.view) !== viewerKey(view)) return 'resync';
+    if (
+      source.kind === 'live' &&
+      accepted.view &&
+      view &&
+      accepted.view !== view &&
+      accepted.view.revision === view.revision
+    ) {
+      return 'refresh';
+    }
     return 'advance';
   }
 

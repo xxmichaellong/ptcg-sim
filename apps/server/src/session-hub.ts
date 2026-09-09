@@ -891,6 +891,15 @@ export class RoomSessionHub {
         durationMs: this.dependencies.monotonicNow() - startedAt,
       });
       if (!this.send(connection, result.message, false)) return;
+      for (const refresh of result.refreshes) {
+        const targetConnectionId = this.sessionConnections.get(
+          refresh.sessionId
+        );
+        const target = targetConnectionId
+          ? this.connections.get(targetConnectionId)
+          : undefined;
+        if (target) this.send(target, refresh.message);
+      }
       this.broadcastPresence(
         result.snapshot,
         result.sessionId,
