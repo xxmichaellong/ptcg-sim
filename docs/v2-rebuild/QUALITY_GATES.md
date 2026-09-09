@@ -46,16 +46,25 @@ TypeScript compiler API. It rejects:
 - imports into the root v1 `client/` or `server/` trees;
 - relative imports across workspace ownership boundaries;
 - `@ptcgsim/*` deep imports that bypass a package export;
-- undeclared workspace imports; and
+- undeclared workspace imports;
+- any production, optional, or peer runtime dependency declaration on the
+  quarantined `@ptcgsim/legacy-import` package; and
 - cycles in the workspace import graph.
+
+The importer quarantine applies even when the declared dependency is unused;
+dev-only declarations remain available for isolated compatibility tests. It may
+be removed only in the reviewed route-activation change after representative
+real-user compatibility evidence is approved.
 
 `--bundles` requires parseable version-3 source maps and checks their provenance.
 The web artifact may contain the web app, client session, protocol, renderer
 packages, and only the explicitly safe game-core identity/hash helpers. It may
-not contain room-authority, server, legacy, or `apps/web/src/dev/` sources. The
-last rule makes the creator-only `?dev-room=1` integration seam fail closed if
-its development guard is ever defeated. The Worker artifact may contain only
-its server app, game core, protocol, and room-authority sources. Every emitted
+not contain room-authority, server, frozen legacy roots,
+`packages/legacy-import/`, or `apps/web/src/dev/` sources. The last two rules
+keep both the importer and creator-only `?dev-room=1` integration seam closed if
+an earlier source/development guard is defeated. The Worker artifact may contain
+only its server app, game core, protocol, and room-authority sources, so it also
+rejects importer provenance. Every emitted
 JavaScript file must have a map except a syntax-checked
 import/export-only facade whose targets are present in the build, or the exact
 digest-pinned source-free Rolldown runtime emitted by the pinned toolchain. The

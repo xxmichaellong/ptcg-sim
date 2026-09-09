@@ -27,6 +27,15 @@ const SOURCE_FREE_WEB_RUNTIME_DIGESTS = new Set([
   'bbf7c5086ae414dc3f33777e3eebf16ea8631325b8bb4690d25091c03567f31a',
 ]);
 
+// Compatibility packages remain operator/test-only until their evidence gate
+// and production consumer are approved in the same reviewed change.
+const QUARANTINED_RUNTIME_DEPENDENCIES = new Set(['@ptcgsim/legacy-import']);
+const RUNTIME_DEPENDENCY_SECTIONS = [
+  'dependencies',
+  'optionalDependencies',
+  'peerDependencies',
+];
+
 const normalizePath = (value) => value.split(sep).join('/');
 const repoRelative = (repoRoot, value) =>
   normalizePath(relative(repoRoot, value));
@@ -69,6 +78,12 @@ const workspacePackages = async (repoRoot) => {
         name: manifest.name,
         root,
         dependencies: new Set(Object.keys(manifest.dependencies ?? {})),
+        runtimeDependencies: RUNTIME_DEPENDENCY_SECTIONS.flatMap((section) =>
+          Object.keys(manifest[section] ?? {}).map((name) => ({
+            name,
+            section,
+          }))
+        ),
       });
     }
   }
@@ -147,6 +162,15 @@ export const checkSourceBoundaries = async (repoRoot) => {
   );
   const legacyRoots = [join(repoRoot, 'client'), join(repoRoot, 'server')];
   const failures = [];
+
+  for (const workspace of workspaces) {
+    for (const dependency of workspace.runtimeDependencies) {
+      if (!QUARANTINED_RUNTIME_DEPENDENCIES.has(dependency.name)) continue;
+      failures.push(
+        `${workspace.name} declares quarantined runtime dependency ${dependency.name} in ${dependency.section}; approve compatibility evidence and route activation before production use`
+      );
+    }
+  }
 
   for (const workspace of workspaces) {
     const sourceRoot = join(workspace.root, 'src');

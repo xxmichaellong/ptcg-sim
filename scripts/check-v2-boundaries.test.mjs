@@ -83,6 +83,64 @@ test('rejects workspace deep imports even when the dependency is declared', asyn
   await assert.rejects(checkSourceBoundaries(root), /deep-imports/u);
 });
 
+test('rejects every runtime dependency path to the quarantined legacy importer', async () => {
+  for (const dependencySection of [
+    'dependencies',
+    'optionalDependencies',
+    'peerDependencies',
+  ]) {
+    const root = await temporaryRepo();
+    await addWorkspace(
+      root,
+      'apps',
+      'web',
+      {
+        name: '@ptcgsim/web',
+        [dependencySection]: { '@ptcgsim/legacy-import': 'workspace:*' },
+      },
+      'export const productionRouteRemainsClosed = true;'
+    );
+    await addWorkspace(
+      root,
+      'packages',
+      'legacy-import',
+      { name: '@ptcgsim/legacy-import' },
+      'export const convert = () => undefined;'
+    );
+
+    await assert.rejects(
+      checkSourceBoundaries(root),
+      new RegExp(
+        `@ptcgsim/web declares quarantined runtime dependency @ptcgsim/legacy-import in ${dependencySection}`,
+        'u'
+      )
+    );
+  }
+});
+
+test('allows dev-only dependency declarations for isolated importer tests', async () => {
+  const root = await temporaryRepo();
+  await addWorkspace(
+    root,
+    'apps',
+    'web',
+    {
+      name: '@ptcgsim/web',
+      devDependencies: { '@ptcgsim/legacy-import': 'workspace:*' },
+    },
+    'export const productionRouteRemainsClosed = true;'
+  );
+  await addWorkspace(
+    root,
+    'packages',
+    'legacy-import',
+    { name: '@ptcgsim/legacy-import' },
+    'export const convert = () => undefined;'
+  );
+
+  await assert.doesNotReject(checkSourceBoundaries(root));
+});
+
 test('rejects cycles in the imported workspace graph', async () => {
   const root = await temporaryRepo();
   await addWorkspace(
@@ -142,6 +200,26 @@ test('rejects developer-only modules in a production web source map', async () =
     checkBundleProvenance(root, 'web', dist),
     /apps\/web\/src\/dev/u
   );
+});
+
+test('rejects quarantined legacy-import provenance from production bundles', async () => {
+  for (const kind of ['web', 'server']) {
+    const root = await temporaryRepo();
+    const dist = join(root, `apps/${kind}/dist`);
+    await mkdir(dist, { recursive: true });
+    await writeFile(
+      join(dist, 'chunk.js.map'),
+      JSON.stringify({
+        version: 3,
+        sources: ['../../../packages/legacy-import/src/index.ts'],
+        mappings: '',
+      })
+    );
+    await assert.rejects(
+      checkBundleProvenance(root, kind, dist),
+      /packages\/legacy-import\/src\/index\.ts/u
+    );
+  }
 });
 
 test('fails closed when a bundle has no source maps', async () => {

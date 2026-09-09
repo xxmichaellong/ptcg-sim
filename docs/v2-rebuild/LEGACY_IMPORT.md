@@ -150,6 +150,14 @@ diagnostics but is not treated as an integrity credential. Rejected conversions
 list no dropped fields because no target was installed. The package and report
 remain unwired from upload, save, or `/import?key=` routes.
 
+That unwired state is enforced rather than conventional. The source-boundary
+gate rejects `@ptcgsim/legacy-import` from every workspace `dependencies`,
+`optionalDependencies`, and `peerDependencies` section even if unused;
+`devDependencies` remain available for isolated verification. Production web
+and Worker source-map provenance independently reject any emitted importer
+module. Activating a route therefore requires an explicit reviewed gate change
+after the representative real-user corpus evidence is approved.
+
 ### Privacy-safe corpus evidence runner
 
 `pnpm run check:legacy-corpus` is an operator-only tool around the public byte
@@ -953,8 +961,10 @@ typed `cardBack.*` diagnostics.
 1. Use the implemented private-corpus runner against a representative,
    privacy-reviewed real-user corpus and approve its redacted expected
    report/state identities as compatibility evidence.
-2. Only after that corpus passes should
-   the route loader or old `/import?key=` reader call this package.
+2. Only after that corpus passes should the same reviewed change deliberately
+   relax the source quarantine and let the route loader or old `/import?key=`
+   reader call this package. Bundle provenance must remain closed until the
+   intended production consumer is separately admitted.
 
 No v1 module is imported, no save/replay route is enabled, and no visible UI or
 UX changes in this checkpoint.

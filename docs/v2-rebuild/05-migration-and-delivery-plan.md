@@ -416,7 +416,11 @@ and returns either complete canonical state/records plus a versioned report or a
 path-specific report with no partial state. Target integrity is separately
 defined as SHA-256 over UTF-8 `stableSerialize(state)` bytes. Reports count
 records/batches/events/no-ops and enumerate intentionally omitted V1 transport
-and presentation metadata. The transaction remains unwired from routes.
+and presentation metadata. The transaction remains unwired from routes. The
+source boundary rejects any production, optional, or peer runtime dependency on
+`@ptcgsim/legacy-import`, and both production bundle provenance policies reject
+emitted importer modules. Route activation must deliberately revise those gates
+after compatibility evidence is approved.
 An operator-only corpus runner now processes private exports sequentially under
 the same transaction and a fixed anonymous target. It emits deterministic
 digest-keyed conversion, action-family, and failure evidence without source
@@ -424,7 +428,7 @@ paths, filenames, raw JSON, deck/card names, image URLs, or diagnostic messages;
 raw in-repository input is allowed only below an ignored private directory.
 Synthetic tests prove its privacy and fail-closed boundaries. No real-user
 corpus or approved baseline is present, so representative evidence remains an
-open Phase 2 exit gate.
+open Phase 3 exit gate.
 The eight reveal/look dispatcher names are transient socket/UI operations and
 never enter native V1 export history; `exchangeData` is explicitly filtered by
 the exporter. They remain allowlisted at the frozen envelope boundary but fail

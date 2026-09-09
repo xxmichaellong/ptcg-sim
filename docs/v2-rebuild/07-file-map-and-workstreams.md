@@ -269,6 +269,13 @@ normalized value by record/path and count. The earlier table wording that leaves
 reports or custom-card-back policy pending is superseded by these checkpoints;
 corpus evidence and route installation remain.
 
+Route installation is now mechanically quarantined: no workspace may declare
+the importer as a production, optional, or peer runtime dependency, and neither
+the web nor Worker production source-map policy admits importer provenance.
+Dev-only dependencies remain available for isolated tests. The eventual route
+change must carry the approved corpus evidence and explicitly revise both
+source and bundle admission rather than inheriting accidental reachability.
+
 The operator-only corpus runner accepts raw exports only from outside the
 repository or the ignored `.private/legacy-import-corpus/` tree, reads them
 sequentially, rejects links/duplicates/boundary excess, and emits a deterministic
