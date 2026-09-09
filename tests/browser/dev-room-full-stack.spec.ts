@@ -31,6 +31,11 @@ interface BrowserDevRoomHandle {
           readonly displayName: string;
           readonly message: string;
         }[];
+        readonly presence: readonly {
+          readonly playerId?: string;
+          readonly displayName: string;
+          readonly status: string;
+        }[];
         readonly completedCommands: readonly {
           readonly accepted: boolean;
           readonly revision: number;
@@ -209,6 +214,12 @@ test('development route reaches and resumes a real durable room through the same
   );
   await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(1);
   await expect(page.locator('canvas')).toHaveCount(0);
+  const initialPresenceRow = page.locator('#p2Chatbox p.announcement').last();
+  await expect(initialPresenceRow).toHaveText('Transport Smoke joined');
+  await expect(initialPresenceRow).toHaveAttribute(
+    'data-event-type',
+    'Presence'
+  );
 
   const connected = await page.evaluate(() => {
     const handle = (globalThis as BrowserDevRoomGlobals).__ptcgsimDevRoom;
@@ -351,7 +362,8 @@ test('development route reaches and resumes a real durable room through the same
     probe.initialSurface = surface;
     probe.initialRenderer = rendererHandle.renderer;
     probe.unsubscribe = handle.runtime.session.subscribe(() => {
-      probe.phases.push(handle.runtime.session.getSnapshot().phase);
+      const phase = handle.runtime.session.getSnapshot().phase;
+      if (probe.phases.at(-1) !== phase) probe.phases.push(phase);
     });
     const diagnostics = rendererHandle.renderer.getDiagnostics?.();
     if (!diagnostics) throw new Error('DOM renderer diagnostics are missing');
@@ -440,6 +452,12 @@ test('development route reaches and resumes a real durable room through the same
       renderCommits: beforeReconnect.renderCommits,
     },
   });
+  const resumedPresenceRow = page.locator('#p2Chatbox p.announcement').last();
+  await expect(resumedPresenceRow).toHaveText('Transport Smoke reconnected!');
+  await expect(resumedPresenceRow).toHaveAttribute(
+    'data-event-type',
+    'Presence'
+  );
   expect(socketUrls.map((url) => new URL(url).pathname)).toEqual([
     `/v2/rooms/${connected.roomCode}/connect`,
     `/v2/rooms/${connected.roomCode}/connect`,

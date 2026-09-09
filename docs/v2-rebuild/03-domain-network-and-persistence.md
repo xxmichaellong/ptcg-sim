@@ -456,6 +456,23 @@ omitted-credential fetch semantics, derives credential-free HTTP and WebSocket
 URLs from the same origin, validates the untrusted handoff before exchange, and
 hands only the resulting runtime and route descriptor to React.
 
+The implemented session-lifecycle boundary now emits authenticated ephemeral
+`joined`, `disconnected`, `reconnected`, and `left` presence from the durable
+session identity. A transport loss removes only the current socket binding and
+leaves the active session, resume digest, sequence frontier, and player-seat
+claim unchanged. Durable Object wake restores the serialized binding silently,
+and a superseded socket cannot publish a false disconnect after the replacement
+is installed. Explicit `Leave` instead commits one predecessor-validated
+`session_left` transition: it marks the session inactive, removes its resume
+digest, releases its player seat (or leaves all seats untouched for a
+spectator), then publishes `left` only to remaining active bindings. A failure
+reported after commit is reconciled from durable state before publication.
+Presence remains outside canonical match state, replay/undo history, and
+payload-bearing telemetry. The bounded disconnect-grace expiry described above
+is still a separate lifecycle/garbage-collection gate; a transiently
+disconnected active session is currently retained until resume or explicit
+leave.
+
 The snapshot also persists an immutable player-seat admission ceiling: one for
 `solo`, two for `multiplayer`. A solo room may therefore admit exactly one human
 player session, which may operate either canonical board, while spectator joins

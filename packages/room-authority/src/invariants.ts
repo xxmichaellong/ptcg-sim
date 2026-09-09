@@ -488,6 +488,7 @@ const collectAuthoritySnapshotProblemsInternal = (
         problems.push(`session ${session.id} references an unknown player`);
       }
       if (
+        session.active &&
         session.displayName !== undefined &&
         snapshot.state.players[session.viewer.playerId]?.displayName !==
           session.displayName
@@ -590,6 +591,7 @@ const collectAuthoritySnapshotProblemsInternal = (
     }
     for (const session of Object.values(snapshot.sessions)) {
       if (
+        session.active &&
         session.viewer.kind === 'player' &&
         snapshot.admission.seats[session.viewer.playerId]?.claimedSessionId !==
           session.id
@@ -1023,7 +1025,73 @@ export const assertAdmissionTransactionTransition = (
         problems.push('session invitation does not authorize its ticket');
       }
     }
-    if (transaction.kind === 'session_resumed') {
+    if (transaction.kind === 'session_left') {
+      unchangedAuthorityData('session leave');
+      if (!structurallyEqual(candidate.identities, current.identities)) {
+        problems.push('session leave changed projection identities');
+      }
+      if (
+        !currentSession?.active ||
+        !candidateSession ||
+        !sameRecordKeys(candidate.sessions, current.sessions)
+      ) {
+        problems.push('session leave changed the session registry');
+      } else {
+        const {
+          resumeCapabilityDigest: _revokedCapability,
+          ...retainedSession
+        } = currentSession;
+        const expected = { ...retainedSession, active: false };
+        if (!structurallyEqual(candidateSession, expected)) {
+          problems.push('session leave did not retire exactly one session');
+        }
+        for (const [sessionId, session] of Object.entries(current.sessions)) {
+          if (
+            sessionId !== transaction.sessionId &&
+            !structurallyEqual(candidate.sessions[sessionId], session)
+          ) {
+            problems.push('session leave changed another session');
+          }
+        }
+      }
+      if (currentAdmission && candidateAdmission) {
+        if (
+          !structurallyEqual(
+            candidateAdmission.invitations,
+            currentAdmission.invitations
+          ) ||
+          !structurallyEqual(
+            candidateAdmission.tickets,
+            currentAdmission.tickets
+          )
+        ) {
+          problems.push('session leave changed admission credentials');
+        }
+        if (currentSession?.viewer.kind === 'player') {
+          const playerId = currentSession.viewer.playerId;
+          const currentSeat = currentAdmission.seats[playerId];
+          const candidateSeat = candidateAdmission.seats[playerId];
+          if (
+            currentSeat?.claimedSessionId !== transaction.sessionId ||
+            candidateSeat?.claimedSessionId !== null
+          ) {
+            problems.push('session leave did not release its player seat');
+          }
+          for (const [seatId, seat] of Object.entries(currentAdmission.seats)) {
+            if (
+              seatId !== playerId &&
+              !structurallyEqual(candidateAdmission.seats[seatId], seat)
+            ) {
+              problems.push('session leave changed another seat');
+            }
+          }
+        } else if (
+          !structurallyEqual(candidateAdmission.seats, currentAdmission.seats)
+        ) {
+          problems.push('spectator leave changed seat claims');
+        }
+      }
+    } else if (transaction.kind === 'session_resumed') {
       unchangedAuthorityData('session resume');
       if (
         !currentSession ||

@@ -1144,6 +1144,37 @@ describe('RemoteGameSession', () => {
     );
   });
 
+  it('fails closed on presence outside admission or for an unknown player', () => {
+    const beforeAdmission = setup();
+    const connectingSocket = beforeAdmission.connect();
+    connectingSocket.serverMessage({
+      type: 'Presence',
+      protocolVersion: PROTOCOL_VERSION,
+      displayName: 'Too Early',
+      status: 'joined',
+    });
+    expect(beforeAdmission.session.getSnapshot()).toMatchObject({
+      phase: 'failed',
+      failure: { code: 'sequence_divergence' },
+      presence: [],
+    });
+
+    const unknownPlayer = setup();
+    const readySocket = unknownPlayer.admit();
+    readySocket.serverMessage({
+      type: 'Presence',
+      protocolVersion: PROTOCOL_VERSION,
+      playerId: 'intruder',
+      displayName: 'Unknown',
+      status: 'joined',
+    });
+    expect(unknownPlayer.session.getSnapshot()).toMatchObject({
+      phase: 'failed',
+      failure: { code: 'inconsistent_publication' },
+      presence: [],
+    });
+  });
+
   it('normalizes bounded chat locally before writing transport', () => {
     const test = setup();
     const socket = test.admit();

@@ -72,7 +72,11 @@ the relevant product decisions and phase exit criteria.
   trimmed and bounded at both client and server, attributed only from the
   durable bound session, protected by per-connection and durable per-room
   budgets, retained only in bounded client/presentation memory, and excluded
-  from canonical state, replay, storage, and telemetry. Visible create/join wiring
+  from canonical state, replay, storage, and telemetry. Authenticated ephemeral
+  presence now preserves the existing announcement text across join,
+  disconnect, reconnect, and leave. Explicit leave durably retires the session,
+  revokes its resume capability, and releases its claimed player seat, while
+  hibernation restoration and superseded-socket closure stay silent. Visible create/join wiring
   waits on ADR-020's decision about how the handoff moves between browsers. The
   canonical Wrangler topology now publishes the built Vite app beside the room
   Worker, with explicit authority-first and static-asset route namespaces plus

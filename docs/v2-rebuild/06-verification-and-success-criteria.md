@@ -426,6 +426,15 @@ Release requires all of the following:
     acknowledgement or second mutation. Preview managed-service fault rehearsal,
     load/cost measurement, and platform alarm/rate-limit distribution remain
     explicit pre-rollout gates.
+27. Presence is derived only from the bound durable session and remains
+    ephemeral. Initial admission, transport loss, resume, and explicit leave
+    publish the exact lifecycle sequence; hibernation restoration and a
+    superseded socket's later close are silent. Explicit leave atomically
+    retires the session, revokes its resume digest, releases only its claimed
+    player seat, survives a committed-but-failed response path, and permits a
+    fresh seat admission. Authority, durable-adapter, hub, client,
+    presentation, real-Worker, and real-browser tests cover the boundary, while
+    replay and canonical state remain unchanged.
 
 ## Privacy and security gates
 

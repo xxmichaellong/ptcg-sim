@@ -556,7 +556,7 @@ describe('opt-in React DOM board session runtime', () => {
       runtime.dispose();
       await Promise.resolve();
     });
-    expect(live.listenerCount()).toBe(2);
+    expect(live.listenerCount()).toBe(3);
     expect(replay.listenerCount()).toBe(1);
     live.publish(readyState(atRevision(3), [secondEvent, coin(3)]));
     expect(activity).toEqual([2, 3]);

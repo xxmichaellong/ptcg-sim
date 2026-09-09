@@ -1439,6 +1439,16 @@ replay and suppresses the remainder of an event's effects and replay batch if
 mode exits reentrantly. Dispatcher, timeline, lifecycle, and effect failures are
 isolated, and all teardown operations are idempotent.
 
+Authenticated presence uses the same immutable-log discipline through a
+separate `SessionPresenceDispatcher`. It maps only the four server-derived
+lifecycle statuses into the existing announcement category and polite live
+region, preserving the V1 text (`joined`, `disconnected`, `reconnected!`, and
+`left the room`) without introducing controls or styling. Initial retained
+history is consumed silently, live notices received during replay cannot bleed
+through or burst afterward, unknown player attribution fails closed in the
+client session, and the dispatcher is disposed at the route presentation
+boundary.
+
 `PresentationRuntime` is the concrete local adapter target. Activity,
 accessibility, and animation are independent immutable external-store channels,
 with defaults of 100 history entries, 32 queued announcements, and 16 queued

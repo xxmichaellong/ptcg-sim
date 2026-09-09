@@ -123,7 +123,9 @@ export const executeRuntimeCommand = async (
   commandSerial += 1;
   const commandId = `performance-command-${String(commandSerial).padStart(4, '0')}`;
   const responsePromises = sessions.map((session) =>
-    nextServerFrames(session.socket, session === actor ? 2 : 1)
+    nextServerFrames(session.socket, session === actor ? 2 : 1, {
+      ignorePresence: true,
+    })
   );
   const rawRequest = commandFrame(
     actor.welcome,

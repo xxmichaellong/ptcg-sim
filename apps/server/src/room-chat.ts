@@ -3,6 +3,7 @@ import { PROTOCOL_VERSION, type ServerMessage } from '@ptcgsim/protocol';
 
 import type { RoomRateLimitPort } from './room-rate-limit.js';
 import type { ServerTelemetryPort } from './server-telemetry.js';
+import { sessionPresentationIdentity } from './session-presentation-identity.js';
 
 const MAX_RECENT_MESSAGE_IDS = 256;
 const CONNECTION_BURST_MAXIMUM = 8;
@@ -110,12 +111,11 @@ export class RoomChatService {
         };
       }
 
-      const playerId =
-        session.viewer.kind === 'player' ? session.viewer.playerId : undefined;
-      const displayName = playerId
-        ? input.snapshot.state.players[playerId]?.displayName
-        : (session.displayName ?? 'Spectator');
-      if (!displayName) {
+      const identity = sessionPresentationIdentity(
+        input.snapshot,
+        input.sessionId
+      );
+      if (!identity) {
         throw new Error('Chat session has no presentation identity');
       }
       return {
@@ -124,8 +124,7 @@ export class RoomChatService {
           type: 'ChatMessage',
           protocolVersion: PROTOCOL_VERSION,
           messageId: this.nextMessageId(),
-          ...(playerId ? { playerId } : {}),
-          displayName,
+          ...identity,
           message: normalizedMessage,
           createdAtMs: now,
         },

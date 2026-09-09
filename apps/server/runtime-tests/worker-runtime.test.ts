@@ -19,6 +19,7 @@ import {
   flipCommandFrame,
   helloFrame,
   issuePlayerTicket,
+  nextServerFrames,
   nextServerMessage,
   nextServerMessages,
   roomStub,
@@ -209,7 +210,7 @@ describe('Cloudflare Worker runtime', () => {
 
     await evictDurableObject(roomStub(created));
 
-    const pongPromise = nextServerMessage(socket);
+    const pongPromise = nextServerFrames(socket, 1);
     socket.send(
       JSON.stringify({
         type: 'Ping',
@@ -217,10 +218,11 @@ describe('Cloudflare Worker runtime', () => {
         id: 17,
       })
     );
-    await expect(pongPromise).resolves.toMatchObject({
-      type: 'Pong',
-      id: 17,
-    });
+    await expect(pongPromise).resolves.toEqual([
+      expect.objectContaining({
+        message: expect.objectContaining({ type: 'Pong', id: 17 }),
+      }),
+    ]);
 
     const privateChat = 'post-hibernation chat';
     const chatPromise = nextServerMessage(socket);
@@ -305,6 +307,139 @@ describe('Cloudflare Worker runtime', () => {
       (await runtimeCommandPerformanceEvidence(created)).at(-1)?.breakdown
         .frontierFastPathHit
     ).toBe(1);
+  });
+
+  it('publishes real presence and durably revokes an explicit player leave', async () => {
+    const created = await createRoom();
+    const firstTicket = await issuePlayerTicket(created, 'one', 'Runtime Blue');
+    const firstSocket = await connect(created);
+    const firstAdmission = nextServerFrames(firstSocket, 2);
+    firstSocket.send(helloFrame(created, firstTicket, 'Runtime Blue'));
+    const [firstWelcomeFrame, firstJoinedFrame] = await firstAdmission;
+    expect(firstWelcomeFrame?.message).toMatchObject({
+      type: 'Welcome',
+      role: 'player',
+    });
+    expect(firstJoinedFrame?.message).toMatchObject({
+      type: 'Presence',
+      displayName: 'Runtime Blue',
+      status: 'joined',
+    });
+
+    const secondTicket = await issuePlayerTicket(created, 'two', 'Runtime Red');
+    const secondSocket = await connect(created);
+    const firstSeesJoin = nextServerFrames(firstSocket, 1);
+    const secondAdmission = nextServerFrames(secondSocket, 2);
+    secondSocket.send(helloFrame(created, secondTicket, 'Runtime Red'));
+    const [secondWelcomeFrame, secondJoinedFrame] = await secondAdmission;
+    const secondWelcome = secondWelcomeFrame?.message;
+    if (secondWelcome?.type !== 'Welcome') {
+      throw new Error('Expected second player Welcome');
+    }
+    expect(secondJoinedFrame?.message).toMatchObject({
+      type: 'Presence',
+      displayName: 'Runtime Red',
+      status: 'joined',
+    });
+    await expect(firstSeesJoin).resolves.toEqual([
+      expect.objectContaining({
+        message: expect.objectContaining({
+          type: 'Presence',
+          displayName: 'Runtime Red',
+          status: 'joined',
+        }),
+      }),
+    ]);
+
+    const beforeDisconnect = await runtimeEvidence(created);
+    const firstSeesDisconnect = nextServerFrames(firstSocket, 1);
+    secondSocket.close(1011, 'Injected transport loss');
+    await expect(firstSeesDisconnect).resolves.toEqual([
+      expect.objectContaining({
+        message: expect.objectContaining({
+          type: 'Presence',
+          displayName: 'Runtime Red',
+          status: 'disconnected',
+        }),
+      }),
+    ]);
+    const disconnected = await runtimeEvidence(created);
+    expect(disconnected.snapshot).toEqual(beforeDisconnect.snapshot);
+    expect(
+      disconnected.snapshot?.sessions[secondWelcome.sessionId]
+    ).toMatchObject({ active: true });
+    expect(
+      disconnected.snapshot?.admission?.seats[secondWelcome.playerId!]
+        ?.claimedSessionId
+    ).toBe(secondWelcome.sessionId);
+
+    const firstSeesReconnect = nextServerFrames(firstSocket, 1);
+    await evictDurableObject(roomStub(created));
+    const resumedSocket = await connect(created);
+    const resumedAdmission = nextServerFrames(resumedSocket, 2);
+    resumedSocket.send(
+      JSON.stringify({
+        type: 'Hello',
+        protocolVersion: PROTOCOL_VERSION,
+        buildId: 'local-development',
+        roomCode: created.roomCode,
+        displayName: 'Forged Runtime Red',
+        requestedRole: 'player',
+        resumeToken: secondWelcome.resumeToken,
+      })
+    );
+    const [resumedWelcomeFrame, reconnectedFrame] = await resumedAdmission;
+    const resumedWelcome = resumedWelcomeFrame?.message;
+    if (resumedWelcome?.type !== 'Welcome') {
+      throw new Error('Expected resumed player Welcome');
+    }
+    expect(resumedWelcome.sessionId).toBe(secondWelcome.sessionId);
+    // Reconnect reuses the durable resume bearer so a Welcome lost after an
+    // ambiguous commit remains retryable; explicit Leave revokes it below.
+    expect(resumedWelcome.resumeToken).toBe(secondWelcome.resumeToken);
+    expect(reconnectedFrame?.message).toMatchObject({
+      type: 'Presence',
+      displayName: 'Runtime Red',
+      status: 'reconnected',
+    });
+    await expect(firstSeesReconnect).resolves.toEqual([
+      expect.objectContaining({
+        message: expect.objectContaining({
+          type: 'Presence',
+          displayName: 'Runtime Red',
+          status: 'reconnected',
+        }),
+      }),
+    ]);
+
+    const firstSeesLeave = nextServerFrames(firstSocket, 1);
+    resumedSocket.send(
+      JSON.stringify({ type: 'Leave', protocolVersion: PROTOCOL_VERSION })
+    );
+    await expect(firstSeesLeave).resolves.toEqual([
+      expect.objectContaining({
+        message: expect.objectContaining({
+          type: 'Presence',
+          displayName: 'Runtime Red',
+          status: 'left',
+        }),
+      }),
+    ]);
+    const left = await runtimeEvidence(created);
+    expect(left.snapshot?.sessions[secondWelcome.sessionId]).toMatchObject({
+      active: false,
+      displayName: 'Runtime Red',
+    });
+    expect(left.snapshot?.sessions[secondWelcome.sessionId]).not.toHaveProperty(
+      'resumeCapabilityDigest'
+    );
+    expect(
+      left.snapshot?.admission?.seats[secondWelcome.playerId!]?.claimedSessionId
+    ).toBeNull();
+
+    await expect(
+      issuePlayerTicket(created, 'two', 'Replacement Runtime Red')
+    ).resolves.toMatchObject({ admissionTicket: expect.any(String) });
   });
 
   it('keeps an admission ticket retryable when its durable claim fails', async () => {

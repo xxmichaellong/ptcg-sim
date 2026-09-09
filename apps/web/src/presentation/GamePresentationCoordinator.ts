@@ -7,13 +7,16 @@ import {
 import {
   activityPresentationEffectsForEvents,
   createChatPresentationEffectSink,
+  createPresencePresentationEffectSink,
   createPresentationEffectSink,
   type ActivityPresentationEffect,
   type ChatMessage,
   type PresentationEffect,
   type PresentationEffectAdapters,
+  type PresenceMessage,
 } from './PresentationEffects.js';
 import { SessionChatDispatcher } from './SessionChatDispatcher.js';
+import { SessionPresenceDispatcher } from './SessionPresenceDispatcher.js';
 import {
   SessionPresentationDispatcher,
   type SessionPresentationSource,
@@ -23,12 +26,12 @@ export type GamePresentationFailureContext =
   | {
       readonly stage: 'event';
       readonly source: 'live' | 'replay';
-      readonly event: PresentationEvent | ChatMessage;
+      readonly event: PresentationEvent | ChatMessage | PresenceMessage;
     }
   | {
       readonly stage: 'effect';
       readonly source: 'live' | 'replay';
-      readonly event: PresentationEvent | ChatMessage;
+      readonly event: PresentationEvent | ChatMessage | PresenceMessage;
       readonly effect: PresentationEffect;
     }
   | {
@@ -87,6 +90,7 @@ const withoutActivityAdapter = (
 export class GamePresentationCoordinator {
   private readonly liveDispatcher: SessionPresentationDispatcher;
   private readonly liveChatDispatcher: SessionChatDispatcher;
+  private readonly livePresenceDispatcher: SessionPresenceDispatcher;
   private readonly replayDispatcher: ReplayPresentationDispatcher;
   private readonly unsubscribeLiveState: () => void;
   private readonly unsubscribeReplayState: () => void;
@@ -120,6 +124,17 @@ export class GamePresentationCoordinator {
       error: unknown,
       effect: PresentationEffect,
       message: ChatMessage
+    ) =>
+      reportSafely(error, {
+        stage: 'effect',
+        source: 'live',
+        effect,
+        event: message,
+      });
+    const reportPresenceEffectFailure = (
+      error: unknown,
+      effect: PresentationEffect,
+      message: PresenceMessage
     ) =>
       reportSafely(error, {
         stage: 'effect',
@@ -270,6 +285,12 @@ export class GamePresentationCoordinator {
       reportChatEffectFailure,
       () => replay.getSnapshot().mode === 'live'
     );
+    const livePresenceEffectSink = createPresencePresentationEffectSink(
+      () => live.getSnapshot().view?.revision ?? 0,
+      adapters,
+      reportPresenceEffectFailure,
+      () => replay.getSnapshot().mode === 'live'
+    );
     const replayEffectSink = createPresentationEffectSink(
       () => replay.getSnapshot().view,
       replaceReplayActivity ? withoutActivityAdapter(adapters) : adapters,
@@ -294,6 +315,16 @@ export class GamePresentationCoordinator {
           event: message,
         })
     );
+    this.livePresenceDispatcher = new SessionPresenceDispatcher(
+      live,
+      livePresenceEffectSink,
+      (error, message) =>
+        reportSafely(error, {
+          stage: 'event',
+          source: 'live',
+          event: message,
+        })
+    );
     this.replayDispatcher = new ReplayPresentationDispatcher(
       replay,
       (event) => {
@@ -311,6 +342,7 @@ export class GamePresentationCoordinator {
     this.unsubscribeReplayState();
     this.liveDispatcher.dispose();
     this.liveChatDispatcher.dispose();
+    this.livePresenceDispatcher.dispose();
     this.replayDispatcher.dispose();
   }
 }

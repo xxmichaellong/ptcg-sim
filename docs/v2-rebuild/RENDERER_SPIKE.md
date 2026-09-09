@@ -1572,6 +1572,17 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     the real Durable Object eviction suite and Wrangler/Vite Chromium route prove
     restored attribution, storage privacy, and the unchanged activity row end to
     end. No visible control, label, layout, or workflow changed.
+94. Room presence now crosses the same authenticated, live-only presentation
+    boundary. New admission, real transport loss, resume, and explicit leave
+    produce server-derived lifecycle facts; Durable Object restoration and the
+    close of a superseded socket remain silent. `Leave` is no longer an
+    in-memory socket deletion: one validated durable transaction retires the
+    session, deletes its resume digest, and releases exactly its player seat,
+    with post-commit failure reconciliation. A separate identity-cursor
+    dispatcher maps those facts to the existing announcement row and polite
+    live region, consumes replay-time facts without a later burst, and tears
+    down with presentation ownership. Unit, real-`workerd`, and Wrangler/Vite
+    Chromium gates cover the lifecycle without adding or changing visible UI.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

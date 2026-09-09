@@ -301,6 +301,36 @@ const resumedTransaction = (
   },
 });
 
+const leftTransaction = (
+  current: RoomAuthoritySnapshot
+): PersistedAdmissionTransaction => {
+  const session = current.sessions.session!;
+  const { resumeCapabilityDigest: _revoked, ...retained } = session;
+  return {
+    expectedAuthorityVersion: current.authorityVersion,
+    sessionId: session.id,
+    kind: 'session_left',
+    snapshot: {
+      ...current,
+      authorityVersion: current.authorityVersion + 1,
+      sessions: {
+        ...current.sessions,
+        session: { ...retained, active: false },
+      },
+      admission: {
+        ...current.admission!,
+        seats: {
+          ...current.admission!.seats,
+          [p1]: {
+            ...current.admission!.seats[p1]!,
+            claimedSessionId: null,
+          },
+        },
+      },
+    },
+  };
+};
+
 interface ObservedRetentionIndex {
   readonly frontierAuthorityVersion: number;
   readonly authority: readonly {
@@ -2036,6 +2066,37 @@ describe('Durable Object authority snapshot store', () => {
     }
   });
 
+  it('rejects a session leave that mutates durable credentials', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    const resumed = resumedTransaction(admissionSnapshot('forged-leave-room'));
+    const current = resumed.snapshot;
+    await store.initialize(current);
+    const correct = leftTransaction(current);
+    const forged: PersistedAdmissionTransaction = {
+      ...correct,
+      snapshot: {
+        ...correct.snapshot,
+        admission: {
+          ...correct.snapshot.admission!,
+          tickets: {
+            ['d'.repeat(64)]: {
+              role: 'spectator',
+              displayName: 'Forged viewer',
+              expiresAt: 10_000,
+            },
+          },
+        },
+      },
+    };
+
+    await expect(store.commitAdmission(forged)).rejects.toThrow(
+      'session leave changed admission credentials'
+    );
+    expect(await store.load()).toEqual(current);
+    expect(storedKeys(storage, 'authority:admission:')).toEqual([]);
+  });
+
   it('binds a durable seat claim to its ticket role and display name', async () => {
     const ticketDigest = 'd'.repeat(64);
     const baseAdmission = createRoomAdmissionState({
@@ -2238,6 +2299,7 @@ describe('Durable Object authority snapshot store', () => {
         },
       },
     };
+    const resumed = resumedTransaction(ticketed);
     const transactions: readonly PersistedAdmissionTransaction[] = [
       {
         expectedAuthorityVersion: 0,
@@ -2251,7 +2313,8 @@ describe('Durable Object authority snapshot store', () => {
         ticketDigest,
         snapshot: ticketed,
       },
-      resumedTransaction(ticketed),
+      resumed,
+      leftTransaction(resumed.snapshot),
     ];
 
     for (const transaction of transactions) {

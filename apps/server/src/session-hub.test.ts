@@ -382,6 +382,217 @@ describe('serialized room session hub', () => {
     ]);
   });
 
+  it('publishes authenticated presence without false hibernation or supersession disconnects', async () => {
+    const setup = await fixture();
+    const blue = connection('presence-blue');
+    await setup.hub.handleFrame(
+      blue.value,
+      helloFrame({ admissionTicket: setup.admissionTicket })
+    );
+    expect(blue.messages).toEqual([
+      expect.objectContaining({ type: 'Welcome', role: 'player' }),
+      {
+        type: 'Presence',
+        protocolVersion: PROTOCOL_VERSION,
+        playerId: p1,
+        displayName: 'Blue',
+        status: 'joined',
+      },
+    ]);
+
+    const ticket = await setup.hub.issueAdmissionTicket({
+      capability: setup.spectatorCapability,
+      displayName: 'Persistent Watcher',
+      requestedRole: 'spectator',
+    });
+    if (!ticket.accepted) throw new Error(ticket.code);
+    const spectator = connection('presence-spectator');
+    await setup.hub.handleFrame(
+      spectator.value,
+      helloFrame({
+        admissionTicket: ticket.admissionTicket,
+        displayName: 'Persistent Watcher',
+        requestedRole: 'spectator',
+      })
+    );
+    const spectatorWelcome = spectator.messages[0];
+    if (spectatorWelcome?.type !== 'Welcome') {
+      throw new Error('missing spectator welcome');
+    }
+    const joined = {
+      type: 'Presence' as const,
+      protocolVersion: PROTOCOL_VERSION,
+      displayName: 'Persistent Watcher',
+      status: 'joined' as const,
+    };
+    expect(blue.messages.at(-1)).toEqual(joined);
+    expect(spectator.messages.at(-1)).toEqual(joined);
+
+    const versionBeforeDisconnect = setup.store.durable.authorityVersion;
+    await setup.hub.disconnect(spectator.value.id);
+    expect(blue.messages.at(-1)).toEqual({
+      ...joined,
+      status: 'disconnected',
+    });
+    expect(setup.store.durable.authorityVersion).toBe(versionBeforeDisconnect);
+
+    const afterWake = connection('presence-after-wake');
+    const blueMessageCount = blue.messages.length;
+    setup.hub.restoreBinding(afterWake.value, spectatorWelcome.sessionId);
+    expect(afterWake.messages).toEqual([]);
+    expect(blue.messages).toHaveLength(blueMessageCount);
+
+    const resumed = connection('presence-resumed');
+    await setup.hub.handleFrame(
+      resumed.value,
+      helloFrame({
+        resumeToken: spectatorWelcome.resumeToken,
+        displayName: 'Forged Name',
+        requestedRole: 'spectator',
+      })
+    );
+    expect(afterWake.messages).toEqual([
+      { type: 'SessionSuperseded', protocolVersion: PROTOCOL_VERSION },
+    ]);
+    expect(afterWake.close).toHaveBeenCalledWith(4409, 'Session superseded');
+    const reconnected = { ...joined, status: 'reconnected' as const };
+    expect(blue.messages.at(-1)).toEqual(reconnected);
+    expect(resumed.messages.at(-1)).toEqual(reconnected);
+
+    const countBeforeSupersededClose = blue.messages.length;
+    await setup.hub.disconnect(afterWake.value.id);
+    expect(blue.messages).toHaveLength(countBeforeSupersededClose);
+
+    await setup.hub.handleFrame(
+      resumed.value,
+      JSON.stringify({ type: 'Leave', protocolVersion: PROTOCOL_VERSION })
+    );
+    expect(resumed.close).toHaveBeenCalledWith(1000, 'Client left room');
+    expect(blue.messages.at(-1)).toEqual({ ...joined, status: 'left' });
+    expect(
+      setup.store.durable.sessions[spectatorWelcome.sessionId]
+    ).toMatchObject({ active: false, displayName: 'Persistent Watcher' });
+    expect(
+      setup.store.durable.sessions[spectatorWelcome.sessionId]
+    ).not.toHaveProperty('resumeCapabilityDigest');
+    expect(setup.store.admissionCommits.at(-1)).toMatchObject({
+      kind: 'session_left',
+      sessionId: spectatorWelcome.sessionId,
+    });
+
+    const rejectedResume = connection('presence-retired-resume');
+    await setup.hub.handleFrame(
+      rejectedResume.value,
+      helloFrame({
+        resumeToken: spectatorWelcome.resumeToken,
+        requestedRole: 'spectator',
+      })
+    );
+    expect(rejectedResume.messages).toEqual([
+      expect.objectContaining({
+        type: 'ServerNotice',
+        code: 'invalid_capability',
+      }),
+    ]);
+  });
+
+  it('reconciles an ambiguously committed leave and releases a player seat', async () => {
+    const setup = await fixture();
+    const blue = connection('ambiguous-leave-blue');
+    await setup.hub.handleFrame(
+      blue.value,
+      helloFrame({ admissionTicket: setup.admissionTicket })
+    );
+    const welcome = blue.messages[0];
+    if (welcome?.type !== 'Welcome') throw new Error('missing welcome');
+    setup.store.failAdmissionAfterCommitOnce = true;
+
+    await setup.hub.handleFrame(
+      blue.value,
+      JSON.stringify({ type: 'Leave', protocolVersion: PROTOCOL_VERSION })
+    );
+
+    expect(blue.close).toHaveBeenCalledWith(1000, 'Client left room');
+    expect(setup.store.durable.sessions[welcome.sessionId]).toMatchObject({
+      active: false,
+    });
+    expect(setup.store.durable.sessions[welcome.sessionId]).not.toHaveProperty(
+      'resumeCapabilityDigest'
+    );
+    expect(
+      setup.store.durable.admission?.seats[p1]?.claimedSessionId
+    ).toBeNull();
+    expect(setup.telemetry.failure).not.toHaveBeenCalledWith({
+      subsystem: 'session_leave',
+      retryable: true,
+    });
+
+    const replacementTicket = await setup.hub.issueAdmissionTicket({
+      capability: setup.seatCapability,
+      displayName: 'Replacement Blue',
+      requestedRole: 'player',
+    });
+    expect(replacementTicket).toMatchObject({ accepted: true });
+  });
+
+  it('serializes a socket-close callback behind an in-flight durable leave', async () => {
+    const setup = await fixture();
+    const blue = connection('leave-race-blue');
+    await setup.hub.handleFrame(
+      blue.value,
+      helloFrame({ admissionTicket: setup.admissionTicket })
+    );
+    const watcherTicket = await setup.hub.issueAdmissionTicket({
+      capability: setup.spectatorCapability,
+      displayName: 'Leave Race Watcher',
+      requestedRole: 'spectator',
+    });
+    if (!watcherTicket.accepted) throw new Error(watcherTicket.code);
+    const watcher = connection('leave-race-watcher');
+    await setup.hub.handleFrame(
+      watcher.value,
+      helloFrame({
+        admissionTicket: watcherTicket.admissionTicket,
+        displayName: 'Leave Race Watcher',
+        requestedRole: 'spectator',
+      })
+    );
+    const beforeLifecycle = watcher.messages.length;
+
+    const originalCommit = setup.store.commitAdmission.bind(setup.store);
+    let announceCommitStarted = (): void => undefined;
+    const commitStarted = new Promise<void>((resolve) => {
+      announceCommitStarted = resolve;
+    });
+    let releaseCommit = (): void => undefined;
+    const commitGate = new Promise<void>((resolve) => {
+      releaseCommit = resolve;
+    });
+    vi.spyOn(setup.store, 'commitAdmission').mockImplementationOnce(
+      async (transaction) => {
+        announceCommitStarted();
+        await commitGate;
+        await originalCommit(transaction);
+      }
+    );
+
+    const leave = setup.hub.handleFrame(
+      blue.value,
+      JSON.stringify({ type: 'Leave', protocolVersion: PROTOCOL_VERSION })
+    );
+    await commitStarted;
+    const socketClose = setup.hub.disconnect(blue.value.id);
+    releaseCommit();
+    await Promise.all([leave, socketClose]);
+
+    expect(
+      watcher.messages
+        .slice(beforeLifecycle)
+        .filter((message) => message.type === 'Presence')
+        .map((message) => message.status)
+    ).toEqual(['left']);
+  });
+
   it('routes an accepted command publication before its result', async () => {
     const setup = await fixture();
     const client = connection('connection');
@@ -403,7 +614,7 @@ describe('serialized room session hub', () => {
     });
     await setup.hub.handleFrame(client.value, frame);
 
-    expect(client.messages.slice(1).map((message) => message.type)).toEqual([
+    expect(client.messages.slice(-2).map((message) => message.type)).toEqual([
       'StatePublication',
       'CommandResult',
     ]);
@@ -703,7 +914,7 @@ describe('serialized room session hub', () => {
     );
     expect(setup.store.commandCommits).toHaveLength(0);
 
-    setup.hub.disconnect(client.value.id);
+    await setup.hub.disconnect(client.value.id);
     const resumed = connection('bounded-chat-resumed');
     const welcome = client.messages[0];
     if (welcome?.type !== 'Welcome') throw new Error('missing welcome');
@@ -764,7 +975,7 @@ describe('serialized room session hub', () => {
       })
     );
 
-    const replayMessages = client.messages.slice(3);
+    const replayMessages = client.messages.slice(-4);
     expect(replayMessages.map((message) => message.type)).toEqual([
       'ReplayStarted',
       'ReplayFrame',

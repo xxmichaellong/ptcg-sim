@@ -2,7 +2,9 @@ import type { MatchViewState } from '@ptcgsim/game-core';
 import type { PresentationEvent, ServerMessage } from '@ptcgsim/protocol';
 
 export type ChatMessage = Extract<ServerMessage, { type: 'ChatMessage' }>;
-type PresentationEventType = PresentationEvent['type'] | ChatMessage['type'];
+export type PresenceMessage = Extract<ServerMessage, { type: 'Presence' }>;
+type PresentationEventType =
+  PresentationEvent['type'] | ChatMessage['type'] | PresenceMessage['type'];
 
 interface PresentationEffectBase {
   /** Chat uses the locally observed live revision; it is still not replayed. */
@@ -57,6 +59,12 @@ export type ChatPresentationEffectFailureReporter = (
   error: unknown,
   effect: PresentationEffect,
   message: ChatMessage
+) => void;
+
+export type PresencePresentationEffectFailureReporter = (
+  error: unknown,
+  effect: PresentationEffect,
+  message: PresenceMessage
 ) => void;
 
 export type PresentationEventSink = (event: PresentationEvent) => void;
@@ -340,6 +348,37 @@ export const presentationEffectsForChatMessage = (
   ];
 };
 
+/** Maps authenticated session lifecycle into the legacy announcement style. */
+export const presentationEffectsForPresence = (
+  presence: PresenceMessage,
+  observedRevision = 0
+): readonly PresentationEffect[] => {
+  const message =
+    presence.status === 'joined'
+      ? `${presence.displayName} joined`
+      : presence.status === 'disconnected'
+        ? `${presence.displayName} disconnected`
+        : presence.status === 'reconnected'
+          ? `${presence.displayName} reconnected!`
+          : `${presence.displayName} left the room`;
+  return [
+    {
+      kind: 'activity',
+      revision: observedRevision,
+      eventType: 'Presence',
+      category: 'announcement',
+      message,
+    },
+    {
+      kind: 'accessibility',
+      revision: observedRevision,
+      eventType: 'Presence',
+      message,
+      politeness: 'polite',
+    },
+  ];
+};
+
 const deliverEffect = (
   effect: PresentationEffect,
   adapters: PresentationEffectAdapters
@@ -404,6 +443,35 @@ export const createChatPresentationEffectSink =
       } catch (error) {
         try {
           reportFailure(error, effect, message);
+        } catch {
+          // Diagnostics must not prevent later deterministic effects.
+        }
+      }
+    }
+  };
+
+/** Creates the live-only isolated sink for authenticated presence notices. */
+export const createPresencePresentationEffectSink =
+  (
+    getObservedRevision: () => number,
+    adapters: PresentationEffectAdapters,
+    reportFailure: PresencePresentationEffectFailureReporter = (
+      error,
+      effect
+    ) => console.error('Presence presentation effect failed', effect, error),
+    shouldDeliver: () => boolean = () => true
+  ) =>
+  (presence: PresenceMessage): void => {
+    if (!shouldDeliver()) return;
+    for (const effect of presentationEffectsForPresence(
+      presence,
+      getObservedRevision()
+    )) {
+      try {
+        deliverEffect(effect, adapters);
+      } catch (error) {
+        try {
+          reportFailure(error, effect, presence);
         } catch {
           // Diagnostics must not prevent later deterministic effects.
         }

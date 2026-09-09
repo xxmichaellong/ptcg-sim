@@ -455,6 +455,23 @@ export class RemoteGameSession {
         return;
       }
       case 'Presence':
+        if (this.state.phase !== 'ready' || !this.state.view) {
+          this.fail({
+            code: 'sequence_divergence',
+            message: 'Presence received outside an admitted room session',
+          });
+          return;
+        }
+        if (
+          message.playerId !== undefined &&
+          !this.state.view.players[message.playerId]
+        ) {
+          this.fail({
+            code: 'inconsistent_publication',
+            message: 'Presence references a player outside the current room',
+          });
+          return;
+        }
         this.updateState({
           presence: appendBounded(
             this.state.presence,

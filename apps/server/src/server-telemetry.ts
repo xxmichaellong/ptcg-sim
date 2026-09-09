@@ -23,7 +23,11 @@ export type ServerHttpOutcome =
 export type RoomLifecycleOutcome =
   'created' | 'restored' | 'expired' | 'alarm_rescheduled' | 'alarm_cancelled';
 export type RoomAdmissionOperation =
-  'invitation_issue' | 'ticket_issue' | 'hello_ticket' | 'hello_resume';
+  | 'invitation_issue'
+  | 'ticket_issue'
+  | 'hello_ticket'
+  | 'hello_resume'
+  | 'session_leave';
 export type RoomAdmissionOutcome =
   'accepted' | 'rejected' | 'rate_limited' | 'failed';
 export type RoomCommandOutcome =
@@ -43,6 +47,7 @@ export type ServerFailureSubsystem =
   | 'invitation_issue'
   | 'ticket_issue'
   | 'session_admission'
+  | 'session_leave'
   | 'chat_processing'
   | 'command_processing'
   | 'replay_projection'

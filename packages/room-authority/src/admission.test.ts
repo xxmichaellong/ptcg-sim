@@ -11,6 +11,7 @@ import {
   createRoomAdmissionState,
   issueRoomAdmissionTicket,
   issueRoomInvitation,
+  leaveRoomSession,
   redeemRoomAdmissionTicket,
   type RoomInvitationCrypto,
 } from './admission.js';
@@ -731,6 +732,119 @@ describe('room capability admission', () => {
     });
     expect(storage.transactions).toHaveLength(2);
     expect(storage.transactions[1]?.kind).toBe('session_resumed');
+  });
+
+  it('durably revokes a leaving player session and releases its seat', async () => {
+    const storage = persistence();
+    const crypto = createCrypto();
+    const claimed = await admitRoomSession(
+      createSnapshot(),
+      {
+        type: 'ClaimSeat',
+        seatCapability: seatOneToken,
+        displayName: 'First Blue',
+      },
+      dependencies(crypto, storage)
+    );
+    if (!claimed.accepted) throw new Error(claimed.code);
+
+    const left = await leaveRoomSession(
+      claimed.snapshot,
+      claimed.session.id,
+      storage
+    );
+    expect(left).toMatchObject({
+      accepted: true,
+      committed: true,
+      snapshot: {
+        authorityVersion: 2,
+        sessions: {
+          [claimed.session.id]: {
+            id: claimed.session.id,
+            active: false,
+          },
+        },
+        admission: {
+          seats: { [p1]: { claimedSessionId: null } },
+        },
+      },
+    });
+    if (!left.accepted) return;
+    expect(left.session).not.toHaveProperty('resumeCapabilityDigest');
+    expect(left.snapshot.state).toBe(claimed.snapshot.state);
+    expect(left.snapshot.replayHistory).toBe(claimed.snapshot.replayHistory);
+    expect(left.snapshot.soloUndoHistory).toBe(
+      claimed.snapshot.soloUndoHistory
+    );
+    expect(storage.transactions.at(-1)).toMatchObject({
+      kind: 'session_left',
+      sessionId: claimed.session.id,
+    });
+
+    await expect(
+      admitRoomSession(
+        left.snapshot,
+        { type: 'Resume', resumeCapability: claimed.resumeCapability },
+        dependencies(crypto, storage)
+      )
+    ).resolves.toMatchObject({
+      accepted: false,
+      code: 'invalid_capability',
+    });
+
+    const replacement = await admitRoomSession(
+      left.snapshot,
+      {
+        type: 'ClaimSeat',
+        seatCapability: seatOneToken,
+        displayName: 'Second Blue',
+      },
+      dependencies(crypto, storage)
+    );
+    expect(replacement).toMatchObject({
+      accepted: true,
+      session: { active: true, displayName: 'Second Blue' },
+    });
+    if (!replacement.accepted) return;
+    expect(replacement.session.id).not.toBe(claimed.session.id);
+    expect(replacement.snapshot.sessions[claimed.session.id]).toMatchObject({
+      active: false,
+      displayName: 'First Blue',
+    });
+    expect(collectAuthoritySnapshotProblems(replacement.snapshot)).toEqual([]);
+  });
+
+  it('retires a spectator without changing any player seat', async () => {
+    const storage = persistence();
+    const crypto = createCrypto();
+    const joined = await admitRoomSession(
+      createSnapshot(),
+      { type: 'JoinSpectator', spectatorCapability: spectatorToken },
+      dependencies(crypto, storage)
+    );
+    if (!joined.accepted) throw new Error(joined.code);
+
+    const left = await leaveRoomSession(
+      joined.snapshot,
+      joined.session.id,
+      storage
+    );
+    expect(left).toMatchObject({
+      accepted: true,
+      session: { active: false },
+    });
+    if (!left.accepted) return;
+    expect(left.snapshot.admission?.seats).toEqual(
+      joined.snapshot.admission?.seats
+    );
+    expect(left.session).not.toHaveProperty('resumeCapabilityDigest');
+    await expect(
+      leaveRoomSession(left.snapshot, joined.session.id, storage)
+    ).resolves.toMatchObject({
+      accepted: false,
+      code: 'invalid_session',
+      snapshot: left.snapshot,
+    });
   });
 
   it('recovers a seat claim committed before its welcome reply was lost', async () => {

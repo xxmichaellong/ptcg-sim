@@ -5,9 +5,11 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   activityPresentationEffectsForEvents,
   createChatPresentationEffectSink,
+  createPresencePresentationEffectSink,
   createPresentationEffectSink,
   presentationEffectsForChatMessage,
   presentationEffectsForEvent,
+  presentationEffectsForPresence,
   type PresentationEffect,
 } from './PresentationEffects.js';
 
@@ -213,6 +215,62 @@ describe('presentationEffectsForEvent', () => {
       expect.objectContaining({ eventType: 'ChatMessage' }),
       message
     );
+  });
+
+  it('maps legacy-compatible presence text and gates live-only delivery', () => {
+    const variants = [
+      ['joined', 'Viewer joined'],
+      ['disconnected', 'Viewer disconnected'],
+      ['reconnected', 'Viewer reconnected!'],
+      ['left', 'Viewer left the room'],
+    ] as const;
+    for (const [status, visible] of variants) {
+      expect(
+        presentationEffectsForPresence(
+          {
+            type: 'Presence',
+            protocolVersion: 2,
+            displayName: 'Viewer',
+            status,
+          },
+          14
+        )
+      ).toEqual([
+        {
+          kind: 'activity',
+          revision: 14,
+          eventType: 'Presence',
+          category: 'announcement',
+          message: visible,
+        },
+        {
+          kind: 'accessibility',
+          revision: 14,
+          eventType: 'Presence',
+          message: visible,
+          politeness: 'polite',
+        },
+      ]);
+    }
+
+    const activity = vi.fn();
+    let live = false;
+    const sink = createPresencePresentationEffectSink(
+      () => 14,
+      { appendActivity: activity },
+      undefined,
+      () => live
+    );
+    const entry = {
+      type: 'Presence' as const,
+      protocolVersion: 2 as const,
+      displayName: 'Viewer',
+      status: 'joined' as const,
+    };
+    sink(entry);
+    live = true;
+    sink(entry);
+    expect(activity).toHaveBeenCalledOnce();
   });
 
   it('maps every recipient-safe event to parity activity and accessibility', () => {

@@ -212,7 +212,11 @@ export type PersistedAdmissionTransaction =
       readonly expectedAuthorityVersion: number;
       readonly snapshot: RoomAuthoritySnapshot;
       readonly sessionId: string;
-      readonly kind: 'seat_claimed' | 'spectator_joined' | 'session_resumed';
+      readonly kind:
+        | 'seat_claimed'
+        | 'spectator_joined'
+        | 'session_resumed'
+        | 'session_left';
       /** Present only when this commit atomically consumes a socket ticket. */
       readonly admissionTicketDigest?: string;
       /** Present only when the ticket consumes a one-time invitation. */

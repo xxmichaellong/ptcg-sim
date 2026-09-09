@@ -247,7 +247,8 @@ export const connect = async (
 
 export const nextServerFrames = (
   socket: WebSocket,
-  count: number
+  count: number,
+  options: { readonly ignorePresence?: boolean } = {}
 ): Promise<readonly RuntimeServerFrame[]> =>
   new Promise((resolve, reject) => {
     const frames: RuntimeServerFrame[] = [];
@@ -263,6 +264,7 @@ export const nextServerFrames = (
         reject(new Error(`Invalid server frame: ${parsed.reason}`));
         return;
       }
+      if (options.ignorePresence && parsed.value.type === 'Presence') return;
       frames.push({
         raw: event.data,
         bytes: utf8Bytes(event.data),
@@ -280,7 +282,9 @@ export const nextServerMessages = async (
   socket: WebSocket,
   count: number
 ): Promise<readonly ServerMessage[]> =>
-  (await nextServerFrames(socket, count)).map((frame) => frame.message);
+  (await nextServerFrames(socket, count, { ignorePresence: true })).map(
+    (frame) => frame.message
+  );
 
 export const nextServerMessage = async (
   socket: WebSocket

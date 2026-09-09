@@ -402,6 +402,80 @@ const persistSessionResume = async (
   };
 };
 
+/**
+ * Durably retires one admitted session. The raw resume capability is revoked,
+ * and a player session atomically releases its seat for a future admission.
+ */
+export const leaveRoomSession = async (
+  current: RoomAuthoritySnapshot,
+  sessionId: string,
+  persistence: AdmissionPersistence
+): Promise<
+  | {
+      readonly accepted: true;
+      readonly committed: true;
+      readonly snapshot: RoomAuthoritySnapshot;
+      readonly session: AuthoritySession;
+    }
+  | {
+      readonly accepted: false;
+      readonly code: 'invalid_session';
+      readonly snapshot: RoomAuthoritySnapshot;
+    }
+> => {
+  assertAuthoritySnapshotInvariants(current);
+  const session = current.sessions[sessionId];
+  if (!session?.active) {
+    return { accepted: false, code: 'invalid_session', snapshot: current };
+  }
+
+  const { resumeCapabilityDigest: _revoked, ...retainedSession } = session;
+  const retiredSession: AuthoritySession = {
+    ...retainedSession,
+    active: false,
+  };
+  const currentAdmission = current.admission;
+  const playerId =
+    session.viewer.kind === 'player' ? session.viewer.playerId : undefined;
+  const claimedSeat =
+    playerId === undefined ? undefined : currentAdmission?.seats[playerId];
+  const candidate: RoomAuthoritySnapshot = {
+    ...current,
+    authorityVersion: current.authorityVersion + 1,
+    sessions: {
+      ...current.sessions,
+      [sessionId]: retiredSession,
+    },
+    ...(currentAdmission && claimedSeat
+      ? {
+          admission: {
+            ...currentAdmission,
+            seats: {
+              ...currentAdmission.seats,
+              [claimedSeat.playerId]: {
+                ...claimedSeat,
+                claimedSessionId: null,
+              },
+            },
+          },
+        }
+      : {}),
+  };
+  assertAuthoritySnapshotInvariants(candidate);
+  await persistence.commitAdmission({
+    expectedAuthorityVersion: current.authorityVersion,
+    snapshot: candidate,
+    sessionId,
+    kind: 'session_left',
+  });
+  return {
+    accepted: true,
+    committed: true,
+    snapshot: candidate,
+    session: retiredSession,
+  };
+};
+
 type AuthorizedAdmission =
   | {
       readonly role: 'player';

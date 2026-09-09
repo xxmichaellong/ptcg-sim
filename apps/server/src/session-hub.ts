@@ -2,6 +2,7 @@ import {
   buildProjectedReplay,
   issueRoomAdmissionTicket,
   issueRoomInvitation,
+  leaveRoomSession,
   RoomAuthorityCoordinator,
   type AdmissionTicketIssueRequest,
   type AuthorityCommandTimingBreakdown,
@@ -19,6 +20,7 @@ import {
 
 import { establishSession } from './session-handshake.js';
 import { RoomChatService } from './room-chat.js';
+import { sessionPresentationIdentity } from './session-presentation-identity.js';
 import type {
   BoundedAdmissionTicketIssueResult,
   BoundedRoomInvitationIssueResult,
@@ -323,13 +325,26 @@ export class RoomSessionHub {
     return run;
   }
 
-  disconnect(connectionId: string): void {
+  disconnect(connectionId: string): Promise<void> {
+    const run = this.tail.then(() => this.disconnectNow(connectionId, true));
+    this.tail = run.catch(() => undefined);
+    return run;
+  }
+
+  private disconnectNow(connectionId: string, publishPresence: boolean): void {
     this.connections.delete(connectionId);
     this.chat.releaseConnection(connectionId);
     const sessionId = this.connectionSessions.get(connectionId);
     this.connectionSessions.delete(connectionId);
     if (sessionId && this.sessionConnections.get(sessionId) === connectionId) {
       this.sessionConnections.delete(sessionId);
+      if (publishPresence) {
+        this.broadcastPresence(
+          this.coordinator.currentSnapshot(),
+          sessionId,
+          'disconnected'
+        );
+      }
     }
   }
 
@@ -342,10 +357,14 @@ export class RoomSessionHub {
     if (previousConnectionId && previousConnectionId !== connection.id) {
       const previous = this.connections.get(previousConnectionId);
       if (previous) {
-        this.send(previous, {
-          type: 'SessionSuperseded',
-          protocolVersion: PROTOCOL_VERSION,
-        });
+        this.send(
+          previous,
+          {
+            type: 'SessionSuperseded',
+            protocolVersion: PROTOCOL_VERSION,
+          },
+          false
+        );
         previous.close(4409, 'Session superseded');
       }
       this.connectionSessions.delete(previousConnectionId);
@@ -373,11 +392,16 @@ export class RoomSessionHub {
     }));
   }
 
-  private send(connection: RuntimeConnection, message: ServerMessage): void {
+  private send(
+    connection: RuntimeConnection,
+    message: ServerMessage,
+    publishDisconnect = true
+  ): boolean {
     try {
       connection.send(JSON.stringify(message));
+      return true;
     } catch {
-      this.disconnect(connection.id);
+      this.disconnectNow(connection.id, publishDisconnect);
       this.dependencies.telemetry.failure({
         subsystem: 'socket_send',
         retryable: true,
@@ -386,6 +410,7 @@ export class RoomSessionHub {
         outcome: 'error',
         activeSockets: this.connections.size,
       });
+      return false;
     }
   }
 
@@ -399,6 +424,22 @@ export class RoomSessionHub {
       const target = this.connections.get(connectionId);
       if (target) this.send(target, message);
     }
+  }
+
+  private broadcastPresence(
+    snapshot: ReturnType<RoomAuthorityCoordinator['currentSnapshot']>,
+    sessionId: string,
+    status: Extract<ServerMessage, { type: 'Presence' }>['status']
+  ): void {
+    const session = snapshot.sessions[sessionId];
+    const identity = sessionPresentationIdentity(snapshot, sessionId);
+    if (!session?.active || !identity) return;
+    this.broadcastToActiveSessions(snapshot, {
+      type: 'Presence',
+      protocolVersion: PROTOCOL_VERSION,
+      ...identity,
+      status,
+    });
   }
 
   private async processFrame(
@@ -761,8 +802,7 @@ export class RoomSessionHub {
         return;
       }
       case 'Leave':
-        this.disconnect(connection.id);
-        connection.close(1000, 'Client left room');
+        await this.handleLeave(connection, boundSessionId);
         return;
     }
   }
@@ -829,10 +869,14 @@ export class RoomSessionHub {
       if (previousConnectionId && previousConnectionId !== connection.id) {
         const previous = this.connections.get(previousConnectionId);
         if (previous) {
-          this.send(previous, {
-            type: 'SessionSuperseded',
-            protocolVersion: PROTOCOL_VERSION,
-          });
+          this.send(
+            previous,
+            {
+              type: 'SessionSuperseded',
+              protocolVersion: PROTOCOL_VERSION,
+            },
+            false
+          );
           previous.close(4409, 'Session superseded');
         }
         this.connectionSessions.delete(previousConnectionId);
@@ -846,7 +890,12 @@ export class RoomSessionHub {
         authorityVersion: result.snapshot.authorityVersion,
         durationMs: this.dependencies.monotonicNow() - startedAt,
       });
-      this.send(connection, result.message);
+      if (!this.send(connection, result.message, false)) return;
+      this.broadcastPresence(
+        result.snapshot,
+        result.sessionId,
+        hello.resumeToken ? 'reconnected' : 'joined'
+      );
     } catch {
       const durable = await this.dependencies.store.load();
       if (durable) this.coordinator.installCommittedSnapshot(durable);
@@ -871,5 +920,128 @@ export class RoomSessionHub {
         )
       );
     }
+  }
+
+  private async handleLeave(
+    connection: RuntimeConnection,
+    sessionId: string
+  ): Promise<void> {
+    const startedAt = this.dependencies.monotonicNow();
+    const before = this.coordinator.currentSnapshot();
+    const session = before.sessions[sessionId];
+    const requestedRole = session?.viewer.kind ?? 'spectator';
+    try {
+      const result = await leaveRoomSession(
+        before,
+        sessionId,
+        this.dependencies.admission.persistence
+      );
+      if (!result.accepted) {
+        this.dependencies.telemetry.roomAdmission({
+          operation: 'session_leave',
+          requestedRole,
+          outcome: 'rejected',
+          reason: 'invalid_admission',
+          authorityVersion: result.snapshot.authorityVersion,
+          durationMs: this.dependencies.monotonicNow() - startedAt,
+        });
+        this.disconnectNow(connection.id, false);
+        connection.close(4409, 'Session is no longer active');
+        return;
+      }
+      this.finishCommittedLeave(connection, before, result.snapshot, sessionId);
+      this.dependencies.telemetry.roomAdmission({
+        operation: 'session_leave',
+        requestedRole,
+        outcome: 'accepted',
+        reason: 'none',
+        authorityVersion: result.snapshot.authorityVersion,
+        durationMs: this.dependencies.monotonicNow() - startedAt,
+      });
+    } catch {
+      let durable:
+        ReturnType<RoomAuthorityCoordinator['currentSnapshot']> | undefined;
+      try {
+        durable = await this.dependencies.store.load();
+      } catch {
+        // The original failure remains authoritative when reconciliation fails.
+      }
+      if (durable && this.isCommittedLeave(before, durable, sessionId)) {
+        this.finishCommittedLeave(connection, before, durable, sessionId);
+        this.dependencies.telemetry.roomAdmission({
+          operation: 'session_leave',
+          requestedRole,
+          outcome: 'accepted',
+          reason: 'none',
+          authorityVersion: durable.authorityVersion,
+          durationMs: this.dependencies.monotonicNow() - startedAt,
+        });
+        return;
+      }
+      if (durable) this.coordinator.installCommittedSnapshot(durable);
+      this.dependencies.telemetry.roomAdmission({
+        operation: 'session_leave',
+        requestedRole,
+        outcome: 'failed',
+        reason: 'internal_retryable',
+        authorityVersion: this.coordinator.currentSnapshot().authorityVersion,
+        durationMs: this.dependencies.monotonicNow() - startedAt,
+      });
+      this.dependencies.telemetry.failure({
+        subsystem: 'session_leave',
+        retryable: true,
+      });
+      this.send(
+        connection,
+        notice(
+          'internal_retryable',
+          'Leaving the room could not be durably confirmed; retry Leave',
+          true
+        )
+      );
+    }
+  }
+
+  private finishCommittedLeave(
+    connection: RuntimeConnection,
+    before: ReturnType<RoomAuthorityCoordinator['currentSnapshot']>,
+    committed: ReturnType<RoomAuthorityCoordinator['currentSnapshot']>,
+    sessionId: string
+  ): void {
+    const identity = sessionPresentationIdentity(before, sessionId);
+    this.coordinator.installCommittedSnapshot(committed);
+    this.disconnectNow(connection.id, false);
+    if (identity) {
+      this.broadcastToActiveSessions(committed, {
+        type: 'Presence',
+        protocolVersion: PROTOCOL_VERSION,
+        ...identity,
+        status: 'left',
+      });
+    }
+    connection.close(1000, 'Client left room');
+  }
+
+  private isCommittedLeave(
+    before: ReturnType<RoomAuthorityCoordinator['currentSnapshot']>,
+    durable: ReturnType<RoomAuthorityCoordinator['currentSnapshot']>,
+    sessionId: string
+  ): boolean {
+    const priorSession = before.sessions[sessionId];
+    const durableSession = durable.sessions[sessionId];
+    if (
+      !priorSession?.active ||
+      durable.authorityVersion !== before.authorityVersion + 1 ||
+      !durableSession ||
+      durableSession.active ||
+      durableSession.resumeCapabilityDigest !== undefined
+    ) {
+      return false;
+    }
+    return (
+      priorSession.viewer.kind !== 'player' ||
+      durable.admission?.seats[priorSession.viewer.playerId]
+        ?.claimedSessionId === null
+    );
   }
 }
