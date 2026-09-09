@@ -143,7 +143,10 @@ export class RemoteGameSession {
   private readonly pending: PendingCommand[] = [];
   private readonly pingTimes = new Map<number, number>();
   private state: ClientSessionState = initialState();
-  private options?: Omit<ConnectSessionOptions, 'admissionTicket'>;
+  private options?: Omit<
+    ConnectSessionOptions,
+    'admissionTicket' | 'resumeToken'
+  >;
   private admissionTicket?: string;
   private resumeToken?: string;
   private sessionId?: string;
@@ -189,7 +192,7 @@ export class RemoteGameSession {
       requestedRole: options.requestedRole,
     };
     this.admissionTicket = options.admissionTicket;
-    this.resumeToken = undefined;
+    this.resumeToken = options.resumeToken;
     this.sessionId = undefined;
     this.reconnectAttempts = 0;
     this.manualClose = false;
@@ -344,11 +347,10 @@ export class RemoteGameSession {
           ) {
             return;
           }
-          const capability = this.resumeToken ?? this.admissionTicket;
-          if (!capability) {
+          if (!this.resumeToken) {
             this.fail({
               code: 'sequence_divergence',
-              message: 'No admission capability is available',
+              message: 'No resume capability is available',
             });
             return;
           }
@@ -359,9 +361,10 @@ export class RemoteGameSession {
             roomCode: options.roomCode,
             displayName: options.displayName,
             requestedRole: options.requestedRole,
-            ...(this.resumeToken
-              ? { resumeToken: capability }
-              : { admissionTicket: capability }),
+            resumeToken: this.resumeToken,
+            ...(this.admissionTicket
+              ? { admissionTicket: this.admissionTicket }
+              : {}),
           });
           if (
             !sent &&
@@ -685,6 +688,13 @@ export class RemoteGameSession {
       });
       return;
     }
+    if (message.resumeToken !== this.resumeToken) {
+      this.fail({
+        code: 'sequence_divergence',
+        message: 'The server changed the bound resume capability',
+      });
+      return;
+    }
     const sequenceFloor =
       this.pending[0]?.envelope.clientSequence ?? this.state.nextClientSequence;
     if (
@@ -707,7 +717,6 @@ export class RemoteGameSession {
         ? current
         : candidate;
     this.sessionId = message.sessionId;
-    this.resumeToken = message.resumeToken ?? this.resumeToken;
     this.admissionTicket = undefined;
     this.reconnectAttempts = 0;
     for (const command of this.pending) {

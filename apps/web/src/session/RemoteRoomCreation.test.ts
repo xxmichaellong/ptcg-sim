@@ -14,6 +14,7 @@ const credentials = {
   spectatorCapability: 'spectator-capability-kept-in-memory-000000003',
 };
 const admissionTicket = 'socket-ticket-kept-in-session-memory-00000001';
+const resumeToken = 'resume-token-kept-in-session-memory-000000000001';
 const playerInvitation = 'player-invitation-share-token-000000000000001';
 const spectatorInvitation = 'spectator-invitation-share-token-0000000001';
 const input = {
@@ -34,7 +35,10 @@ describe('remote room creation bootstrap', () => {
         )
       )
       .mockResolvedValueOnce(
-        Response.json({ admissionTicket, expiresAt: 40_000 }, { status: 201 })
+        Response.json(
+          { admissionTicket, resumeToken, expiresAt: 40_000 },
+          { status: 201 }
+        )
       )
       .mockResolvedValueOnce(
         Response.json(
@@ -446,7 +450,10 @@ describe('remote room invitation custody', () => {
 describe('invited remote room bootstrap', () => {
   it('validates a handoff then exchanges only its one-time invitation', async () => {
     const fetchImplementation = vi.fn(async () =>
-      Response.json({ admissionTicket, expiresAt: 40_000 }, { status: 201 })
+      Response.json(
+        { admissionTicket, resumeToken, expiresAt: 40_000 },
+        { status: 201 }
+      )
     );
     const runtime = { dispose: vi.fn() } as unknown as RemoteRoomRuntime;
     const createRuntime = vi.fn(() => runtime);

@@ -1636,6 +1636,7 @@ describe('Durable Object authority snapshot store', () => {
             playerId: p1,
             displayName: 'Blue',
             expiresAt: 40_000,
+            resumeCapabilityDigest: 'c'.repeat(64),
           },
         },
       },
@@ -2114,8 +2115,10 @@ describe('Durable Object authority snapshot store', () => {
           role: 'spectator' as const,
           displayName: 'Viewer',
           expiresAt: 10_000,
+          resumeCapabilityDigest: 'e'.repeat(64),
         },
         candidateDisplayName: 'Blue',
+        candidateResumeDigest: 'e'.repeat(64),
       },
       {
         expected: 'seat claim display name does not match its admission ticket',
@@ -2124,8 +2127,22 @@ describe('Durable Object authority snapshot store', () => {
           playerId: p1,
           displayName: 'Ticket name',
           expiresAt: 10_000,
+          resumeCapabilityDigest: 'e'.repeat(64),
         },
         candidateDisplayName: 'Forged name',
+        candidateResumeDigest: 'e'.repeat(64),
+      },
+      {
+        expected: 'session resume capability does not match its ticket',
+        ticket: {
+          role: 'player' as const,
+          playerId: p1,
+          displayName: 'Blue',
+          expiresAt: 10_000,
+          resumeCapabilityDigest: 'f'.repeat(64),
+        },
+        candidateDisplayName: 'Blue',
+        candidateResumeDigest: 'e'.repeat(64),
       },
     ];
 
@@ -2169,7 +2186,7 @@ describe('Durable Object authority snapshot store', () => {
               active: true,
               nextClientSequence: 1,
               recentOutcomes: [],
-              resumeCapabilityDigest: 'e'.repeat(64),
+              resumeCapabilityDigest: testCase.candidateResumeDigest,
             },
           },
           admission: {
@@ -2295,6 +2312,7 @@ describe('Durable Object authority snapshot store', () => {
             role: 'spectator',
             displayName: 'Viewer',
             expiresAt: 5_000,
+            resumeCapabilityDigest: 'c'.repeat(64),
           },
         },
       },

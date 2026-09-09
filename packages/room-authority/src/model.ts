@@ -75,6 +75,12 @@ export type RoomAdmissionTicket =
       readonly playerId: PlayerId;
       readonly displayName: string;
       readonly expiresAt: number;
+      /**
+       * Digest of the server-minted resume bearer returned with this ticket.
+       * Optional only for additive restoration of short-lived pre-checkpoint
+       * schema-v7 tickets.
+       */
+      readonly resumeCapabilityDigest?: string;
       /** Set when this ticket is a retryable exchange of an invitation. */
       readonly sourceInvitationDigest?: string;
     }
@@ -82,6 +88,8 @@ export type RoomAdmissionTicket =
       readonly role: 'spectator';
       readonly displayName: string;
       readonly expiresAt: number;
+      /** See the player-ticket compatibility note above. */
+      readonly resumeCapabilityDigest?: string;
       readonly sourceInvitationDigest?: string;
     };
 

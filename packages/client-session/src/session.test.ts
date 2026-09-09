@@ -191,6 +191,7 @@ const setup = (
       displayName: 'Blue',
       requestedRole: 'player',
       admissionTicket: capability,
+      resumeToken: resumeCapability,
     });
     const socket = factory.sockets.at(-1)!;
     socket.serverOpen();
@@ -223,6 +224,7 @@ describe('RemoteGameSession', () => {
     expect(clientFrame(socket, 0)).toMatchObject({
       type: 'Hello',
       admissionTicket: capability,
+      resumeToken: resumeCapability,
     });
     expect(JSON.stringify(test.session.getSnapshot())).not.toContain(
       capability
@@ -243,6 +245,22 @@ describe('RemoteGameSession', () => {
     expect(listener).toHaveBeenCalled();
   });
 
+  it('fails closed if Welcome changes the ticket-bound resume bearer', () => {
+    const test = setup();
+    const socket = test.connect();
+
+    socket.serverMessage({
+      ...welcome(),
+      resumeToken: 'different-resume-capability-0000000000000001',
+    });
+
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'failed',
+      failure: { code: 'sequence_divergence' },
+    });
+    expect(test.scheduler.tasks.size).toBe(0);
+  });
+
   it('does not open a transport after a connecting observer closes the session', () => {
     const test = setup();
     let connectingObserved = false;
@@ -259,6 +277,7 @@ describe('RemoteGameSession', () => {
       displayName: 'Blue',
       requestedRole: 'player',
       admissionTicket: capability,
+      resumeToken: resumeCapability,
     });
 
     expect(connectingObserved).toBe(true);
@@ -281,6 +300,7 @@ describe('RemoteGameSession', () => {
       displayName: 'Blue',
       requestedRole: 'player',
       admissionTicket: capability,
+      resumeToken: resumeCapability,
     });
     const socket = test.factory.sockets[0]!;
 
@@ -301,6 +321,7 @@ describe('RemoteGameSession', () => {
       displayName: 'Blue',
       requestedRole: 'player',
       admissionTicket: capability,
+      resumeToken: resumeCapability,
     });
     const socket = test.factory.sockets[0]!;
     socket.sendCloseEvent = { wasClean: false };

@@ -850,8 +850,9 @@ passes 212 Playwright checks across 84 Chromium 151 browser files:
     and heap/resource accounting remain separate evidence.
 44. A complementary Chromium gate starts local Wrangler and Vite, verifies the
     safe public health response, creates a real Durable Object room through the
-    same-origin proxy, exchanges the creator capability for a one-time ticket,
-    completes WebSocket admission, and reaches a ready projected DOM board. It
+    same-origin proxy, exchanges the creator capability for a one-time ticket
+    and its bound resume bearer, completes WebSocket admission with that exact
+    pair, and reaches a ready projected DOM board. It
     now drives an unclean transport-loss signal, lets the real client backoff
     open a second socket, and proves the second Hello uses the rotated resume
     capability rather than the spent admission ticket. The same room, view,
@@ -1583,6 +1584,18 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     live region, consumes replay-time facts without a later burst, and tears
     down with presentation ownership. Unit, real-`workerd`, and Wrangler/Vite
     Chromium gates cover the lifecycle without adding or changing visible UI.
+95. Initial socket admission is now recoverable across every response-loss
+    window. The same-origin ticket exchange mints a distinct resume bearer and
+    persists only its digest inside the short-lived role/name-bound ticket. The
+    client retains and retries that exact private pair until `Welcome`; the room
+    either consumes the live ticket once or uses the resume bearer to recover
+    the session already installed by an ambiguous commit or lost send. Storage
+    transition checks bind the consumed ticket digest to the resulting session
+    digest, `Welcome` cannot substitute another bearer, and a consumed ticket
+    paired with any other token fails closed. Unit and real-`workerd` fault
+    tests cover pre-commit rejection, post-commit throw, failed Welcome send,
+    exact session/seat identity, and raw-credential absence without visible UI
+    or UX changes.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

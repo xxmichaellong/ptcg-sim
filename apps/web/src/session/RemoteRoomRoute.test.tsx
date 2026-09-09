@@ -137,6 +137,7 @@ describe('RemoteRoomRoute', () => {
         displayName: 'Blue',
         requestedRole: 'player',
         admissionTicket,
+        resumeToken,
       },
       session: {
         socketFactory,
@@ -328,6 +329,7 @@ describe('RemoteRoomRoute', () => {
         displayName: 'Blue',
         requestedRole: 'player',
         admissionTicket,
+        resumeToken,
       },
       session: {
         socketFactory,

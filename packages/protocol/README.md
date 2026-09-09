@@ -6,8 +6,11 @@ match state must never enter this package.
 
 The package also owns strict request/response schemas for the same-origin HTTP
 socket-ticket exchange. The long-lived capability is accepted only in the
-bounded POST body; the response contains one short-lived admission ticket and
-its expiry. Strict invitation-issue and cross-browser handoff schemas carry a
+bounded POST body; the response contains one short-lived admission ticket, a
+distinct server-minted resume bearer bound to its durable digest, and the ticket
+expiry. Initial `Hello` may carry that exact pair so a lost Welcome can recover
+the already-committed session; later reconnects carry only the resume bearer.
+Strict invitation-issue and cross-browser handoff schemas carry a
 bounded expiring one-use claim and its requested role without exposing the
 creator's long-lived seat or spectator credential.
 

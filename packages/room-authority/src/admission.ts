@@ -110,6 +110,7 @@ export type AdmissionTicketIssueResult =
       readonly committed: true;
       readonly snapshot: RoomAuthoritySnapshot;
       readonly admissionTicket: string;
+      readonly resumeCapability: string;
       readonly expiresAt: number;
     }
   | {
@@ -158,7 +159,19 @@ export interface AdmissionTicketRedemptionRequest {
   readonly admissionTicket: string;
   readonly displayName: string;
   readonly requestedRole: 'player' | 'spectator';
+  /** Required for tickets issued with a bound resume digest. */
+  readonly resumeCapability?: string;
 }
+
+type UnboundRoomAdmissionTicket =
+  | Omit<
+      Extract<RoomAdmissionTicket, { role: 'player' }>,
+      'resumeCapabilityDigest'
+    >
+  | Omit<
+      Extract<RoomAdmissionTicket, { role: 'spectator' }>,
+      'resumeCapabilityDigest'
+    >;
 
 export const createRoomAdmissionState = (input: {
   readonly playerSeatLimit: RoomAdmissionState['playerSeatLimit'];
@@ -629,6 +642,9 @@ const digestAlreadyAuthorized = (
   (snapshot.admission !== undefined &&
     (Boolean(snapshot.admission.invitations[digest]) ||
       Boolean(snapshot.admission.tickets[digest]) ||
+      Object.values(snapshot.admission.tickets).some(
+        (ticket) => ticket.resumeCapabilityDigest === digest
+      ) ||
       Object.values(snapshot.admission.seats).some(
         (seat) => seat.claimCapabilityDigest === digest
       ) ||
@@ -783,7 +799,7 @@ export const issueRoomAdmissionTicket = async (
   );
   const invitations = liveInvitations(current.admission.invitations, now);
   let sourceInvitationDigest: string | undefined;
-  let ticket: RoomAdmissionTicket;
+  let ticket: UnboundRoomAdmissionTicket;
   if (request.requestedRole === 'player') {
     const seat = Object.values(current.admission.seats).find((candidate) =>
       dependencies.crypto.equalDigest(
@@ -875,13 +891,36 @@ export const issueRoomAdmissionTicket = async (
     throw new Error('Admission ticket source failed to produce a unique token');
   }
 
+  let resumeCapability: string | undefined;
+  let resumeCapabilityDigest: string | undefined;
+  for (let attempt = 0; attempt < 32; attempt += 1) {
+    const candidate = dependencies.crypto.nextResumeCapability();
+    if (!validBoundedCapability(candidate)) continue;
+    const digest = await dependencies.crypto.digestCapability(candidate);
+    if (digest !== ticketDigest && !digestAlreadyAuthorized(current, digest)) {
+      resumeCapability = candidate;
+      resumeCapabilityDigest = digest;
+      break;
+    }
+  }
+  if (!resumeCapability || !resumeCapabilityDigest) {
+    throw new Error(
+      'Resume capability source failed to produce a unique token'
+    );
+  }
+
+  const boundTicket: RoomAdmissionTicket = {
+    ...ticket,
+    resumeCapabilityDigest,
+  };
+
   const candidate: RoomAuthoritySnapshot = {
     ...current,
     authorityVersion: current.authorityVersion + 1,
     admission: {
       ...current.admission,
       invitations,
-      tickets: { ...retainedTickets, [ticketDigest]: ticket },
+      tickets: { ...retainedTickets, [ticketDigest]: boundTicket },
     },
   };
   assertAuthoritySnapshotInvariants(candidate);
@@ -897,6 +936,7 @@ export const issueRoomAdmissionTicket = async (
     committed: true,
     snapshot: candidate,
     admissionTicket,
+    resumeCapability,
     expiresAt: ticket.expiresAt,
   };
 };
@@ -912,7 +952,9 @@ export const redeemRoomAdmissionTicket = async (
   if (
     !validNow(now) ||
     !validBoundedCapability(request.admissionTicket) ||
-    !validDisplayName(request.displayName)
+    !validDisplayName(request.displayName) ||
+    (request.resumeCapability !== undefined &&
+      !validBoundedCapability(request.resumeCapability))
   ) {
     return rejection(current, 'invalid_request');
   }
@@ -920,11 +962,20 @@ export const redeemRoomAdmissionTicket = async (
     request.admissionTicket
   );
   const ticket = current.admission.tickets[ticketDigest];
+  const suppliedResumeDigest = request.resumeCapability
+    ? await dependencies.crypto.digestCapability(request.resumeCapability)
+    : undefined;
   if (
     !ticket ||
     ticket.expiresAt <= now ||
     ticket.role !== request.requestedRole ||
-    ticket.displayName !== request.displayName.trim()
+    ticket.displayName !== request.displayName.trim() ||
+    (ticket.resumeCapabilityDigest !== undefined &&
+      (suppliedResumeDigest === undefined ||
+        !dependencies.crypto.equalDigest(
+          ticket.resumeCapabilityDigest,
+          suppliedResumeDigest
+        )))
   ) {
     return rejection(current, 'invalid_capability');
   }
@@ -943,7 +994,8 @@ export const redeemRoomAdmissionTicket = async (
     return rejection(current, 'invalid_capability');
   }
 
-  const resumeCapability = dependencies.crypto.nextResumeCapability();
+  const resumeCapability =
+    request.resumeCapability ?? dependencies.crypto.nextResumeCapability();
   return admitAuthorizedSession(
     current,
     ticket.role === 'player'

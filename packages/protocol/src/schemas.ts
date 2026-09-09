@@ -82,6 +82,7 @@ export const RoomAdmissionTicketRequestSchema = v.strictObject({
 
 export const RoomAdmissionTicketResponseSchema = v.strictObject({
   admissionTicket: CapabilitySchema,
+  resumeToken: CapabilitySchema,
   expiresAt: NonNegativeIntegerSchema,
 });
 
@@ -406,7 +407,12 @@ const HelloSchema = v.object({
   displayName: boundedString(64),
   requestedRole: v.picklist(['player', 'spectator'] as const),
   admissionTicket: v.optional(boundedString(512)),
-  resumeToken: v.optional(boundedString(512)),
+  /**
+   * A ticket-bound resume bearer is sent alongside a new admission ticket.
+   * Retrying that exact pair is safe whether ticket redemption did not run or
+   * committed before its Welcome was lost.
+   */
+  resumeToken: v.optional(CapabilitySchema),
 });
 
 const CommandSchema = v.object({
@@ -598,7 +604,7 @@ const WelcomeSchema = v.object({
   role: v.picklist(['player', 'spectator'] as const),
   playerId: v.optional(IdentifierSchema),
   sessionId: IdentifierSchema,
-  resumeToken: v.optional(boundedString(512)),
+  resumeToken: CapabilitySchema,
   nextClientSequence: PositiveIntegerSchema,
   snapshot: MatchViewStateSchema,
 });

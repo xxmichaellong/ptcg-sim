@@ -386,9 +386,10 @@ Release requires all of the following:
 23. Browser admission sends a long-lived seat/spectator capability only in a
     bounded same-origin no-store POST body, rejects redirects and unsafe
     response shapes, and derives credential-free room/socket URLs. Authority
-    persists only a role/name-bound ticket digest, enforces a 30-second expiry
-    and 32-ticket room cap, consumes it atomically with session admission,
-    rotates a distinct resume capability, rejects replay/expiry/mismatch, and
+    persists only a role/name/resume-digest-bound ticket record, enforces a
+    30-second expiry and 32-ticket room cap, consumes it atomically with session
+    admission, returns a distinct server-minted resume capability, rejects
+    replay/expiry/mismatch, and
     restores its committed frontier after an ambiguous persistence failure.
     Schema-v4 rooms migrate with empty ticket/invitation registries, schema-v5
     rooms preserve their tickets while gaining an empty invitation registry,
@@ -435,6 +436,15 @@ Release requires all of the following:
     fresh seat admission. Authority, durable-adapter, hub, client,
     presentation, real-Worker, and real-browser tests cover the boundary, while
     replay and canonical state remain unchanged.
+28. Admission-ticket issuance returns a distinct server-minted resume bearer
+    whose digest is durably bound to the role/name ticket record before socket
+    admission. Initial `Hello` retries the exact private pair until `Welcome`;
+    the authority either consumes the live ticket once or resumes the session
+    created by an ambiguously committed attempt. Definite pre-commit failure,
+    post-commit failure, failed Welcome send, normal reconnect, hibernation, and
+    a forged ticket/resume pair are covered without persisting raw credentials,
+    changing session identity, duplicating a seat, or exposing capabilities in
+    public client state.
 
 ## Privacy and security gates
 

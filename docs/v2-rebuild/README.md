@@ -76,7 +76,11 @@ the relevant product decisions and phase exit criteria.
   presence now preserves the existing announcement text across join,
   disconnect, reconnect, and leave. Explicit leave durably retires the session,
   revokes its resume capability, and releases its claimed player seat, while
-  hibernation restoration and superseded-socket closure stay silent. Visible create/join wiring
+  hibernation restoration and superseded-socket closure stay silent. Socket
+  admission is also response-loss safe: the ticket exchange binds a distinct
+  server-minted resume digest before `Hello`, and the client retries the exact
+  private pair until `Welcome` can prove either one-time redemption or recovery
+  of the already-committed session. Visible create/join wiring
   waits on ADR-020's decision about how the handoff moves between browsers. The
   canonical Wrangler topology now publishes the built Vite app beside the room
   Worker, with explicit authority-first and static-asset route namespaces plus

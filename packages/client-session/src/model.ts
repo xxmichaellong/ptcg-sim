@@ -99,6 +99,8 @@ export interface ConnectSessionOptions {
   readonly requestedRole: 'player' | 'spectator';
   /** Short-lived one-time socket ticket, retained only in private memory. */
   readonly admissionTicket: string;
+  /** Server-minted bearer bound to the ticket before socket admission. */
+  readonly resumeToken: string;
 }
 
 export interface ClientSessionPolicy {

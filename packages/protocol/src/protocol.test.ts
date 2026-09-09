@@ -46,12 +46,20 @@ describe('room admission HTTP schemas', () => {
     expect(
       parseRoomAdmissionTicketResponse({
         admissionTicket: 'socket-ticket-0000000000000000000001',
+        resumeToken: 'resume-capability-00000000000000000001',
         expiresAt: 40_000,
       }).ok
     ).toBe(true);
     expect(
       parseRoomAdmissionTicketResponse({
         admissionTicket: 'short',
+        resumeToken: 'resume-capability-00000000000000000001',
+        expiresAt: 40_000,
+      }).ok
+    ).toBe(false);
+    expect(
+      parseRoomAdmissionTicketResponse({
+        admissionTicket: 'socket-ticket-0000000000000000000001',
         expiresAt: 40_000,
       }).ok
     ).toBe(false);

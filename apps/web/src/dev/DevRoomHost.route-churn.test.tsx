@@ -71,14 +71,17 @@ class FakeSessionScheduler implements ClientSessionScheduler {
 
 const view = createRendererSpikeView();
 
-const welcome = (sessionId: string): ServerMessage => ({
+const welcome = (
+  sessionId: string,
+  connectionIndex: number
+): ServerMessage => ({
   type: 'Welcome',
   protocolVersion: PROTOCOL_VERSION,
   buildId: 'route-churn-server',
   role: 'player',
   playerId: 'spike-blue',
   sessionId,
-  resumeToken: `route-churn-resume-${sessionId}-0000000000000001`,
+  resumeToken: `route-churn-resume-${connectionIndex}-000000000000000001`,
   nextClientSequence: 1,
   snapshot: view,
 });
@@ -134,6 +137,7 @@ describe('development room route churn', () => {
           displayName: `Route ${index}`,
           requestedRole: 'player',
           admissionTicket: `route-churn-ticket-${index}-000000000000000001`,
+          resumeToken: `route-churn-resume-${index}-000000000000000001`,
         },
         session: {
           socketFactory,
@@ -177,7 +181,7 @@ describe('development room route churn', () => {
 
       await act(async () => {
         active.socket.serverOpen();
-        active.socket.serverMessage(welcome(`route-churn-${cycle}`));
+        active.socket.serverMessage(welcome(`route-churn-${cycle}`, cycle));
         await flushRoute();
       });
       await waitForMountedBoard(host);

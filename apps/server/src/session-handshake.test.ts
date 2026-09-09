@@ -88,7 +88,10 @@ describe('session handshake', () => {
     if (!issued.accepted) throw new Error(issued.code);
     const result = await establishSession(
       issued.snapshot,
-      hello({ admissionTicket: issued.admissionTicket }),
+      hello({
+        admissionTicket: issued.admissionTicket,
+        resumeToken: issued.resumeCapability,
+      }),
       'server-build',
       setup.dependencies
     );
@@ -101,6 +104,7 @@ describe('session handshake', () => {
       buildId: 'server-build',
       role: 'player',
       playerId: p1,
+      resumeToken: issued.resumeCapability,
       nextClientSequence: 1,
       snapshot: { revision: 0 },
     });
@@ -108,7 +112,7 @@ describe('session handshake', () => {
     expect(result.snapshot.admission?.tickets).toEqual({});
   });
 
-  it('rejects ambiguous or missing credentials before hashing or persistence', async () => {
+  it('rejects an invalid recovery pair or missing credentials without persistence', async () => {
     const setup = await fixture();
     const both = await establishSession(
       setup.snapshot,
@@ -128,13 +132,58 @@ describe('session handshake', () => {
 
     expect(both).toMatchObject({
       accepted: false,
-      message: { code: 'invalid_admission' },
+      message: { code: 'invalid_capability' },
     });
     expect(neither).toMatchObject({
       accepted: false,
       message: { code: 'admission_required' },
     });
     expect(setup.transactions).toHaveLength(0);
+  });
+
+  it('retries one exact ticket/resume pair across a lost Welcome', async () => {
+    const setup = await fixture();
+    const issued = await issueRoomAdmissionTicket(
+      setup.snapshot,
+      {
+        capability: setup.seatToken,
+        displayName: 'Blue',
+        requestedRole: 'player',
+      },
+      10_000,
+      setup.dependencies
+    );
+    if (!issued.accepted) throw new Error(issued.code);
+    const frame = hello({
+      admissionTicket: issued.admissionTicket,
+      resumeToken: issued.resumeCapability,
+    });
+    const admitted = await establishSession(
+      issued.snapshot,
+      frame,
+      'server-build',
+      setup.dependencies
+    );
+    if (!admitted.accepted) throw new Error(admitted.message.code);
+
+    const recovered = await establishSession(
+      admitted.snapshot,
+      frame,
+      'server-build',
+      setup.dependencies
+    );
+
+    expect(recovered).toMatchObject({
+      accepted: true,
+      sessionId: admitted.sessionId,
+      presenceStatus: 'reconnected',
+      message: {
+        type: 'Welcome',
+        sessionId: admitted.sessionId,
+        resumeToken: issued.resumeCapability,
+      },
+    });
+    expect(setup.transactions).toHaveLength(3);
   });
 
   it('does not echo a rejected capability in the notice', async () => {

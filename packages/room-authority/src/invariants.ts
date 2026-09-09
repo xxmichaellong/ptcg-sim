@@ -680,6 +680,16 @@ const collectAuthoritySnapshotProblemsInternal = (
           problems.push('admission ticket has an invalid expiry');
         }
         if (
+          ticket.resumeCapabilityDigest !== undefined &&
+          (ticket.resumeCapabilityDigest.length < 32 ||
+            ticket.resumeCapabilityDigest.length > 128)
+        ) {
+          problems.push('admission ticket has an invalid resume digest');
+        }
+        if (ticket.resumeCapabilityDigest === digest) {
+          problems.push('admission ticket reuses its ticket digest for resume');
+        }
+        if (
           ticket.displayName.trim().length < 1 ||
           ticket.displayName.length > 64
         ) {
@@ -945,6 +955,9 @@ export const assertAdmissionTransactionTransition = (
       }
       if (transaction.kind === 'ticket_issued') {
         const issued = candidateAdmission.tickets[transaction.ticketDigest];
+        if (!issued?.resumeCapabilityDigest) {
+          problems.push('ticket issuance does not bind a resume capability');
+        }
         if (
           issued?.sourceInvitationDigest !== transaction.sourceInvitationDigest
         ) {
@@ -1013,6 +1026,13 @@ export const assertAdmissionTransactionTransition = (
         candidateSession.displayName !== ticket.displayName
       ) {
         problems.push('spectator admission ticket name does not match session');
+      }
+      if (
+        ticket?.resumeCapabilityDigest !== undefined &&
+        candidateSession.resumeCapabilityDigest !==
+          ticket.resumeCapabilityDigest
+      ) {
+        problems.push('session resume capability does not match its ticket');
       }
       if (invitation && !credentialMatchesViewer(invitation)) {
         problems.push('session invitation role does not match viewer');

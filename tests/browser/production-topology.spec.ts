@@ -22,6 +22,7 @@ interface CreatedRoom {
 
 interface AdmissionTicket {
   readonly admissionTicket: string;
+  readonly resumeToken: string;
   readonly expiresAt: number;
 }
 
@@ -208,6 +209,8 @@ test('built SPA and room authority share one production-like Worker origin', asy
       admissionType: admission.headers.get('Content-Type'),
       admissionCache: admission.headers.get('Cache-Control'),
       ticketShape: ticket.admissionTicket.length >= 32,
+      resumeShape: ticket.resumeToken.length >= 32,
+      ticketAndResumeDiffer: ticket.admissionTicket !== ticket.resumeToken,
       ticketIsFresh: ticket.expiresAt > Date.now(),
     };
   });
@@ -223,6 +226,8 @@ test('built SPA and room authority share one production-like Worker origin', asy
     admissionType: 'application/json',
     admissionCache: 'no-store, max-age=0',
     ticketShape: true,
+    resumeShape: true,
+    ticketAndResumeDiffer: true,
     ticketIsFresh: true,
   });
   expect(authorityRequests).toEqual([

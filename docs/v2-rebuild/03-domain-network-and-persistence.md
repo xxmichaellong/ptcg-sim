@@ -400,11 +400,14 @@ room runtime.
 1. Creator custody may derive a high-entropy, expiring, one-use guest invitation
    from a seat/spectator master capability through a same-origin bounded POST.
    The joining client exchanges either that invitation or its own master
-   capability for a short-lived one-time socket ticket.
+   capability for a short-lived one-time socket ticket and a distinct
+   server-minted resume bearer whose digest is bound to that ticket.
 2. Client opens a credential-free transport URL with protocol/build metadata.
-3. `Hello` consumes the socket ticket to establish a new session or proves a
-   reconnect with its resume capability; room code and
-   display username are never authorization.
+3. Initial `Hello` presents the exact ticket/resume pair. It consumes the
+   socket ticket to establish a new session or, when a prior attempt committed
+   before `Welcome` arrived, proves the already-created session with the bound
+   resume capability. Later reconnects need only the resume capability; room
+   code and display username are never authorization.
 4. Server replies with `Welcome`: room metadata, role, session/sequence, current
    revision, and a full role-specific snapshot.
 5. Heartbeats detect dead links; short disconnects reserve a seat for a bounded
@@ -441,16 +444,23 @@ browser.
 The implemented admission boundary accepts a long-lived seat/spectator master
 capability or a derived guest invitation only in a bounded, strict, same-origin
 JSON `POST` to `/v2/rooms/:roomCode/admission-tickets`. It returns a `no-store`
-30-second socket ticket. Authority schema v7 stores at most 32 unexpired
-invitation digests and 32 ticket digests, never bearer values; invitation grants
-are role-bound and ticket records also bind the normalized display name.
+30-second socket ticket and a distinct server-minted 256-bit resume bearer.
+Authority schema v7 stores at most 32 unexpired invitation digests and 32 ticket
+records, never bearer values; invitation grants are role-bound and ticket
+records bind the normalized display name plus only the resume digest.
 Issuance and redemption are serialized with room messages. If an invitation
 exchange response is lost, retrying it revokes the previous unconsumed ticket
 and returns a new one. WebSocket redemption removes the invitation and every
 linked ticket in the same compare-and-swap transaction that claims the session
-and rotates to a fresh resume capability. Player invitation rotation also
-revokes any ticket linked to the old claim. Expired, replayed, wrong-role,
-wrong-name, cross-origin, oversized, and malformed inputs fail without
+and transfers the ticket-bound resume digest onto it. The browser retains the
+exact pair until a validated `Welcome`: retrying it either redeems the still-live
+ticket or resumes the already-committed session, closing pre-commit failure,
+ambiguous commit, lost response, and failed socket-send windows without
+replaying the ticket or weakening resume entropy. A different resume bearer
+cannot replay a consumed ticket, and `Welcome` cannot replace the bound bearer.
+Player invitation rotation also revokes any ticket linked to the old claim.
+Expired, replayed, wrong-role, wrong-name, wrong-resume, cross-origin,
+oversized, and malformed inputs fail without
 reflecting credential material. The browser uses redirect-error, no-referrer,
 omitted-credential fetch semantics, derives credential-free HTTP and WebSocket
 URLs from the same origin, validates the untrusted handoff before exchange, and
@@ -905,8 +915,11 @@ and presentation owner before connecting, then disposes them outside-in before
 closing transport. The lazy `RemoteRoomRoute` composes that runtime with the
 board, exact replay chrome, multiplayer/replay activity IDs, live region, and
 Options/Exit path. `RemoteRoomBootstrap` now creates that trusted connection
-handoff by exchanging an in-memory long-lived capability for a one-time ticket;
-no credential enters a URL, storage, DOM, React state, or log.
+handoff by exchanging an in-memory long-lived capability for a one-time ticket
+plus its server-minted, ticket-bound resume bearer; no credential enters a URL,
+storage, DOM, React state, or log. The exact private pair remains retryable
+until Welcome confirms the session, after which reconnect uses only the resume
+bearer.
 `RemoteRoomCreation` keeps guest master credentials private while minting
 bounded handoff values, and the guest bootstrap validates and exchanges such a
 handoff through the same ticket path. The renderer-spike entry remains the

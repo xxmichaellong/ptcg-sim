@@ -275,6 +275,7 @@ const connectClient = async (input: {
     displayName: input.name,
     requestedRole: input.role,
     admissionTicket: issued.admissionTicket,
+    resumeToken: issued.resumeCapability,
   });
   factory.latest().open();
   await factory.flush();

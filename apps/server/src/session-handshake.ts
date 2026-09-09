@@ -22,6 +22,7 @@ export type HandshakeResult =
       readonly accepted: true;
       readonly snapshot: RoomAuthoritySnapshot;
       readonly sessionId: string;
+      readonly presenceStatus: 'joined' | 'reconnected';
       readonly message: Extract<ServerMessage, { type: 'Welcome' }>;
     }
   | {
@@ -52,13 +53,6 @@ export const establishSession = async (
   buildId: string,
   dependencies: SessionHandshakeDependencies
 ): Promise<HandshakeResult> => {
-  if (hello.resumeToken && hello.admissionTicket) {
-    return rejection(
-      current,
-      'invalid_admission',
-      'Provide either a resume token or an admission ticket'
-    );
-  }
   if (!hello.resumeToken && !hello.admissionTicket) {
     return rejection(
       current,
@@ -67,7 +61,11 @@ export const establishSession = async (
     );
   }
 
-  const result = hello.resumeToken
+  // A modern initial Hello carries the ticket-bound resume bearer too. Try
+  // it first so the exact same frame recovers an admission whose durable
+  // commit succeeded but whose Welcome was lost. If no session owns it yet,
+  // redeem the still-live ticket and bind that bearer atomically.
+  const recovered = hello.resumeToken
     ? await admitRoomSession(
         current,
         {
@@ -76,16 +74,23 @@ export const establishSession = async (
         },
         dependencies
       )
-    : await redeemRoomAdmissionTicket(
-        current,
-        {
-          admissionTicket: hello.admissionTicket!,
-          displayName: hello.displayName,
-          requestedRole: hello.requestedRole,
-        },
-        dependencies.now(),
-        dependencies
-      );
+    : undefined;
+  const result =
+    recovered?.accepted || !hello.admissionTicket
+      ? recovered!
+      : await redeemRoomAdmissionTicket(
+          current,
+          {
+            admissionTicket: hello.admissionTicket,
+            displayName: hello.displayName,
+            requestedRole: hello.requestedRole,
+            ...(hello.resumeToken
+              ? { resumeCapability: hello.resumeToken }
+              : {}),
+          },
+          dependencies.now(),
+          dependencies
+        );
   if (!result.accepted) {
     return rejection(
       result.snapshot,
@@ -104,6 +109,7 @@ export const establishSession = async (
     accepted: true,
     snapshot: result.snapshot,
     sessionId: result.session.id,
+    presenceStatus: recovered?.accepted ? 'reconnected' : 'joined',
     message: {
       type: 'Welcome',
       protocolVersion: PROTOCOL_VERSION,

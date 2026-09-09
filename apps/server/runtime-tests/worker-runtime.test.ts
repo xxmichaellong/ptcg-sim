@@ -486,6 +486,55 @@ describe('Cloudflare Worker runtime', () => {
     expect(commitAdmission).toHaveBeenCalledTimes(2);
   });
 
+  it('recovers an admission whose durable commit reports failure after writing', async () => {
+    const created = await createRoom();
+    const ticket = await issuePlayerTicket(created);
+    const socket = await connect(created);
+    const originalCommit = DurableRoomSnapshotStore.prototype.commitAdmission;
+    const commitAdmission = vi
+      .spyOn(DurableRoomSnapshotStore.prototype, 'commitAdmission')
+      .mockImplementationOnce(async function (
+        this: DurableRoomSnapshotStore,
+        transaction
+      ) {
+        await originalCommit.call(this, transaction);
+        throw new Error('injected post-commit admission failure');
+      });
+
+    const ambiguousPromise = nextServerMessage(socket);
+    socket.send(helloFrame(created, ticket));
+    await expect(ambiguousPromise).resolves.toMatchObject({
+      type: 'ServerNotice',
+      code: 'internal_retryable',
+      retryable: true,
+    });
+
+    const ambiguous = await runtimeEvidence(created);
+    const committedSessionId = Object.keys(
+      ambiguous.snapshot?.sessions ?? {}
+    )[0];
+    expect(committedSessionId).toBeDefined();
+    expect(ambiguous.snapshot?.admission?.tickets).toEqual({});
+    expect(ambiguous.attachment?.sessionId).toBeUndefined();
+    expect(ambiguous.lifecycle).toMatchObject({ state: 'claimed' });
+
+    const recoveredPromise = nextServerMessage(socket);
+    socket.send(helloFrame(created, ticket));
+    await expect(recoveredPromise).resolves.toMatchObject({
+      type: 'Welcome',
+      sessionId: committedSessionId,
+      resumeToken: ticket.resumeToken,
+    });
+
+    const recovered = await runtimeEvidence(created);
+    expect(recovered.snapshot?.authorityVersion).toBe(3);
+    expect(Object.keys(recovered.snapshot?.sessions ?? {})).toEqual([
+      committedSessionId,
+    ]);
+    expect(recovered.attachment?.sessionId).toBe(committedSessionId);
+    expect(commitAdmission).toHaveBeenCalledTimes(2);
+  });
+
   it('serializes concurrent admission around a failed command without phantom acknowledgement', async () => {
     const created = await createRoom();
     const firstTicket = await issuePlayerTicket(created);

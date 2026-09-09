@@ -58,6 +58,7 @@ export const handleAdmissionTicketRequest = async (
       return json(
         {
           admissionTicket: result.admissionTicket,
+          resumeToken: result.resumeCapability,
           expiresAt: result.expiresAt,
         },
         201

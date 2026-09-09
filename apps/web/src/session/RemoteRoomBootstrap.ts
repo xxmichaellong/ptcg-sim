@@ -152,6 +152,7 @@ export const bootstrapRemoteRoom = async (
       displayName,
       requestedRole: input.requestedRole,
       admissionTicket: parsed.value.admissionTicket,
+      resumeToken: parsed.value.resumeToken,
     },
   });
   return {

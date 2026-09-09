@@ -114,6 +114,7 @@ const connection = {
   displayName: 'Blue',
   requestedRole: 'player' as const,
   admissionTicket,
+  resumeToken,
 };
 
 const welcome = (snapshot: MatchViewState, sessionId = 'board-session-one') =>

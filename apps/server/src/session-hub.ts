@@ -812,7 +812,7 @@ export class RoomSessionHub {
     hello: Extract<ClientMessage, { type: 'Hello' }>
   ): Promise<void> {
     const startedAt = this.dependencies.monotonicNow();
-    const operation = hello.resumeToken ? 'hello_resume' : 'hello_ticket';
+    const operation = hello.admissionTicket ? 'hello_ticket' : 'hello_resume';
     try {
       const rateLimit = await this.dependencies.rateLimits.attempt(
         'session_hello',
@@ -894,7 +894,7 @@ export class RoomSessionHub {
       this.broadcastPresence(
         result.snapshot,
         result.sessionId,
-        hello.resumeToken ? 'reconnected' : 'joined'
+        result.presenceStatus
       );
     } catch {
       const durable = await this.dependencies.store.load();

@@ -11,7 +11,7 @@ DOM renderer, and the Pixi renderer can consume without owning networking.
 - retries reuse the byte-for-byte command envelope and never allocate a new identity
 - accepted commands complete only after both their result and covering publication
 - stale publications are ignored and divergent equal-revision views fail closed
-- reconnects use the in-memory resume capability and reconcile against the Welcome sequence
+- initial admission retains and retries the exact server-minted ticket/resume pair until Welcome; reconnects then use only the in-memory resume capability and reconcile against the Welcome sequence
 - transport loss clears replay transfer state in the same non-ready publication, so reentrant observers cannot submit against a socket that is already gone
 - Welcome publishes the ready phase, role, view, sequence, and reconciled queue together; advancing state publications likewise publish their view and presentation events together
 - command allocation publishes its next sequence and queued summary together, so observers never see one without the other
@@ -21,7 +21,7 @@ DOM renderer, and the Pixi renderer can consume without owning networking.
 - retryable notices bind to the phase, socket generation, and command head present at receipt; a reentrant observer cannot retarget an old notice onto a newly created command
 - a transport write is successful only if the same socket generation remains installed when `send()` returns; synchronous close delivery cannot report chat/ping/replay success, restore replay loading, or schedule duplicate recovery
 - outbound chat is trimmed and rejected locally when empty or over the wire bound; authenticated deliveries are retained in a separate bounded immutable history
-- admission and resume capabilities never enter the public store, command history, or notices
+- admission and resume capabilities never enter the public store, command history, or notices; Welcome must echo the already-bound resume bearer
 - failed, cleanly closed, and superseded sessions clear replay loading; superseded sessions become terminal read-only sessions and never reconnect
 
 Capabilities are deliberately memory-only in this slice. Durable credential storage must

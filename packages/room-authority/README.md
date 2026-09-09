@@ -11,9 +11,12 @@ one-use guest invitations; player issuance rotates the prior seat invitation,
 while spectator invitations remain distinct up to the room cap. The authority
 persists at most 32 invitation digests and 32 short-lived socket-ticket digests,
 prunes expired records, and permits a lost ticket response to be retried by
-rotating the prior unconsumed ticket. Successful redemption consumes the
-invitation and ticket in the same durable transaction that creates the session
-and rotates to a separate resume capability. Raw invitation, ticket, seat,
+rotating the prior unconsumed ticket. Ticket issuance also mints a distinct
+resume bearer and persists only its digest in the role/name-bound ticket record.
+Successful redemption consumes the invitation and ticket in the same durable
+transaction that creates the session with that exact resume digest. Retrying
+the private pair can therefore resume an already-committed session after a lost
+Welcome without making the consumed ticket reusable. Raw invitation, ticket, seat,
 spectator, and resume credentials never enter canonical state.
 
 Admission state persists a mode-bound player-seat ceiling (`1` for solo, `2`

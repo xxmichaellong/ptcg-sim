@@ -189,6 +189,7 @@ export const admissionHelloFrame = (
     roomCode: created.roomCode,
     ...identity,
     admissionTicket: ticket.admissionTicket,
+    resumeToken: ticket.resumeToken,
   });
 
 export const helloFrame = (

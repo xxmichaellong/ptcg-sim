@@ -8,6 +8,7 @@ import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
 
 const seatCapability = 'seat-capability-kept-in-post-body-0000000001';
 const admissionTicket = 'socket-ticket-kept-in-session-memory-00000001';
+const resumeToken = 'resume-token-kept-in-session-memory-000000000001';
 
 const input = {
   buildId: 'client-build',
@@ -22,7 +23,10 @@ describe('remote room admission bootstrap', () => {
   it('exchanges the long-lived capability only in a same-origin POST body', async () => {
     const fetchImplementation = vi.fn(
       async (_request: RequestInfo | URL, _init?: RequestInit) =>
-        Response.json({ admissionTicket, expiresAt: 40_000 }, { status: 201 })
+        Response.json(
+          { admissionTicket, resumeToken, expiresAt: 40_000 },
+          { status: 201 }
+        )
     );
     const runtime = { dispose: vi.fn() } as unknown as RemoteRoomRuntime;
     const createRuntime = vi.fn(() => runtime);
@@ -59,6 +63,7 @@ describe('remote room admission bootstrap', () => {
         displayName: 'Blue',
         requestedRole: 'player',
         admissionTicket,
+        resumeToken,
       },
     });
     expect(JSON.stringify(createRuntime.mock.calls)).not.toContain(
@@ -80,7 +85,7 @@ describe('remote room admission bootstrap', () => {
       {
         fetch: async () =>
           Response.json(
-            { admissionTicket: 'short', expiresAt: 40_000 },
+            { admissionTicket: 'short', resumeToken, expiresAt: 40_000 },
             { status: 201 }
           ),
         expected: 'invalid_response',
@@ -88,7 +93,7 @@ describe('remote room admission bootstrap', () => {
       {
         fetch: async () =>
           Response.json(
-            { admissionTicket, expiresAt: 10_000 },
+            { admissionTicket, resumeToken, expiresAt: 10_000 },
             { status: 201 }
           ),
         expected: 'expired_ticket',
@@ -103,10 +108,13 @@ describe('remote room admission bootstrap', () => {
       },
       {
         fetch: async () =>
-          new Response(JSON.stringify({ admissionTicket, expiresAt: 40_000 }), {
-            status: 201,
-            headers: { 'Content-Type': 'text/html' },
-          }),
+          new Response(
+            JSON.stringify({ admissionTicket, resumeToken, expiresAt: 40_000 }),
+            {
+              status: 201,
+              headers: { 'Content-Type': 'text/html' },
+            }
+          ),
         expected: 'invalid_response',
       },
     ];

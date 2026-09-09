@@ -175,6 +175,7 @@ describe('room capability admission', () => {
       exchanged.snapshot,
       {
         admissionTicket: exchanged.admissionTicket,
+        resumeCapability: exchanged.resumeCapability,
         displayName: 'Red',
         requestedRole: 'player',
       },
@@ -258,6 +259,7 @@ describe('room capability admission', () => {
       second.snapshot,
       {
         admissionTicket: first.admissionTicket,
+        resumeCapability: first.resumeCapability,
         displayName: 'Viewer',
         requestedRole: 'spectator',
       },
@@ -272,6 +274,7 @@ describe('room capability admission', () => {
       second.snapshot,
       {
         admissionTicket: second.admissionTicket,
+        resumeCapability: second.resumeCapability,
         displayName: 'Viewer',
         requestedRole: 'spectator',
       },
@@ -398,6 +401,7 @@ describe('room capability admission', () => {
       ticket.snapshot,
       {
         admissionTicket: ticket.admissionTicket,
+        resumeCapability: ticket.resumeCapability,
         displayName: 'Blue',
         requestedRole: 'player',
       },
@@ -423,6 +427,10 @@ describe('room capability admission', () => {
       .fn()
       .mockReturnValueOnce(claimed.resumeCapability)
       .mockReturnValueOnce('socket-admission-after-resume-00000001');
+    const resumeSource = vi
+      .fn()
+      .mockReturnValueOnce(claimed.resumeCapability)
+      .mockReturnValueOnce('resume-capability-after-resume-0000001');
     const exchanged = await issueRoomAdmissionTicket(
       invitation.snapshot,
       {
@@ -431,13 +439,25 @@ describe('room capability admission', () => {
         requestedRole: 'spectator',
       },
       1_003,
-      dependencies({ ...crypto, nextAdmissionTicket: ticketSource }, storage)
+      dependencies(
+        {
+          ...crypto,
+          nextAdmissionTicket: ticketSource,
+          nextResumeCapability: resumeSource,
+        },
+        storage
+      )
     );
     expect(exchanged.accepted).toBe(true);
+    if (!exchanged.accepted) return;
     expect(ticketSource).toHaveBeenCalledTimes(2);
+    expect(resumeSource).toHaveBeenCalledTimes(2);
+    expect(exchanged.resumeCapability).toBe(
+      'resume-capability-after-resume-0000001'
+    );
   });
 
-  it('issues a digest-only ticket and consumes it atomically into a fresh resume capability', async () => {
+  it('issues a digest-only ticket bound to a fresh resume capability and consumes both atomically', async () => {
     const storage = persistence();
     const crypto = createCrypto();
     const issued = await issueRoomAdmissionTicket(
@@ -458,8 +478,15 @@ describe('room capability admission', () => {
     expect(Object.keys(issued.snapshot.admission?.tickets ?? {})).toEqual([
       digest(issued.admissionTicket),
     ]);
+    expect(
+      issued.snapshot.admission?.tickets[digest(issued.admissionTicket)]
+        ?.resumeCapabilityDigest
+    ).toBe(digest(issued.resumeCapability));
     expect(JSON.stringify(issued.snapshot)).not.toContain(
       issued.admissionTicket
+    );
+    expect(JSON.stringify(issued.snapshot)).not.toContain(
+      issued.resumeCapability
     );
     expect(JSON.stringify(issued.snapshot)).not.toContain(seatOneToken);
     expect(storage.transactions[0]).toMatchObject({
@@ -471,6 +498,7 @@ describe('room capability admission', () => {
       issued.snapshot,
       {
         admissionTicket: issued.admissionTicket,
+        resumeCapability: issued.resumeCapability,
         displayName: 'Blue',
         requestedRole: 'player',
       },
@@ -479,7 +507,7 @@ describe('room capability admission', () => {
     );
     expect(redeemed.accepted).toBe(true);
     if (!redeemed.accepted) return;
-    expect(redeemed.resumeCapability).not.toBe(seatOneToken);
+    expect(redeemed.resumeCapability).toBe(issued.resumeCapability);
     expect(redeemed.session.displayName).toBe('Blue');
     expect(redeemed.session.resumeCapabilityDigest).toBe(
       digest(redeemed.resumeCapability)
@@ -494,6 +522,7 @@ describe('room capability admission', () => {
       redeemed.snapshot,
       {
         admissionTicket: issued.admissionTicket,
+        resumeCapability: issued.resumeCapability,
         displayName: 'Blue',
         requestedRole: 'player',
       },
@@ -529,7 +558,31 @@ describe('room capability admission', () => {
     ]) {
       const result = await redeemRoomAdmissionTicket(
         issued.snapshot,
-        { admissionTicket: issued.admissionTicket, ...request },
+        {
+          admissionTicket: issued.admissionTicket,
+          resumeCapability: issued.resumeCapability,
+          ...request,
+        },
+        50_500,
+        dependencies(crypto, storage)
+      );
+      expect(result).toMatchObject({
+        accepted: false,
+        code: 'invalid_capability',
+      });
+    }
+    for (const resumeCapability of [
+      undefined,
+      'wrong-resume-capability-0000000000000001',
+    ]) {
+      const result = await redeemRoomAdmissionTicket(
+        issued.snapshot,
+        {
+          admissionTicket: issued.admissionTicket,
+          ...(resumeCapability ? { resumeCapability } : {}),
+          displayName: 'Viewer',
+          requestedRole: 'spectator',
+        },
         50_500,
         dependencies(crypto, storage)
       );
@@ -542,6 +595,7 @@ describe('room capability admission', () => {
       issued.snapshot,
       {
         admissionTicket: issued.admissionTicket,
+        resumeCapability: issued.resumeCapability,
         displayName: 'Viewer',
         requestedRole: 'spectator',
       },
@@ -553,6 +607,45 @@ describe('room capability admission', () => {
       code: 'invalid_capability',
     });
     expect(storage.transactions).toHaveLength(1);
+  });
+
+  it('redeems a short-lived pre-checkpoint v7 ticket without a bound resume digest', async () => {
+    const storage = persistence();
+    const crypto = createCrypto();
+    const admissionTicket = 'legacy-socket-admission-capability-0000000000001';
+    const current = createSnapshot();
+    const legacy: RoomAuthoritySnapshot = {
+      ...current,
+      admission: {
+        ...current.admission!,
+        tickets: {
+          [digest(admissionTicket)]: {
+            role: 'player',
+            playerId: p1,
+            displayName: 'Legacy Blue',
+            expiresAt: 80_000,
+          },
+        },
+      },
+    };
+
+    const result = await redeemRoomAdmissionTicket(
+      legacy,
+      {
+        admissionTicket,
+        displayName: 'Legacy Blue',
+        requestedRole: 'player',
+      },
+      79_999,
+      dependencies(crypto, storage)
+    );
+
+    expect(result).toMatchObject({ accepted: true });
+    if (!result.accepted) return;
+    expect(result.resumeCapability).toMatch(/^resume-capability-/u);
+    expect(result.session.resumeCapabilityDigest).toBe(
+      digest(result.resumeCapability)
+    );
   });
 
   it('caps live tickets and prunes expired records during the next issue', async () => {
@@ -608,6 +701,7 @@ describe('room capability admission', () => {
         role: 'spectator',
         displayName: 'Third',
         expiresAt: 3_000,
+        resumeCapabilityDigest: digest(afterExpiry.resumeCapability),
       },
     ]);
   });
@@ -1024,6 +1118,7 @@ describe('room capability admission', () => {
         role: 'spectator',
         displayName: 'Spectator',
         expiresAt: 40_000,
+        resumeCapabilityDigest: digest(spectatorTicket.resumeCapability),
       },
     });
 
@@ -1031,6 +1126,7 @@ describe('room capability admission', () => {
       winner.snapshot,
       {
         admissionTicket: losingTicket.admissionTicket,
+        resumeCapability: losingTicket.resumeCapability,
         displayName: 'Second contender',
         requestedRole: 'player',
       },

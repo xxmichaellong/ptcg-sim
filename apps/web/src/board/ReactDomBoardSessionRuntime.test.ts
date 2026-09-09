@@ -313,6 +313,7 @@ const runtimeConnection = {
   displayName: 'Blue',
   requestedRole: 'player' as const,
   admissionTicket: 'runtime-admission-capability-that-stays-private-0001',
+  resumeToken: 'runtime-resume-capability-that-stays-private-0000001',
 };
 
 const runtimeWelcome = (snapshot: MatchViewState): ServerMessage => ({

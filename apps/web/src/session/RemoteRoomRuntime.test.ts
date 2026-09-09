@@ -62,6 +62,7 @@ const connection = {
   displayName: 'Blue',
   requestedRole: 'player' as const,
   admissionTicket,
+  resumeToken,
 };
 
 const welcome = (): ServerMessage => ({
@@ -111,6 +112,7 @@ describe('RemoteRoomRuntime', () => {
       type: 'Hello',
       roomCode: 'ABCDEFGH2345',
       admissionTicket,
+      resumeToken,
     });
     socket.serverMessage(welcome());
     expect(runtime.session.getSnapshot()).toMatchObject({

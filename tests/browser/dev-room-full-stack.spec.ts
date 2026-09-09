@@ -182,11 +182,13 @@ test('development route reaches and resumes a real durable room through the same
         };
         if (frame.type !== 'Hello') return;
         helloCapabilities.push(
-          frame.resumeToken
-            ? 'resume'
-            : frame.admissionTicket
-              ? 'admission'
-              : 'missing'
+          frame.admissionTicket && frame.resumeToken
+            ? 'admission-pair'
+            : frame.resumeToken
+              ? 'resume'
+              : frame.admissionTicket
+                ? 'legacy-admission'
+                : 'missing'
         );
       } catch {
         // Protocol parsing owns malformed-frame behavior; this records only Hello shape.
@@ -376,7 +378,7 @@ test('development route reaches and resumes a real durable room through the same
     generation: 1,
     sceneRevision: 0,
   });
-  expect(helloCapabilities).toEqual(['admission']);
+  expect(helloCapabilities).toEqual(['admission-pair']);
 
   await page.evaluate(() => {
     const socket = (globalThis as BrowserDevRoomGlobals).__ptcgsimSocketProbe
@@ -401,7 +403,9 @@ test('development route reaches and resumes a real durable room through the same
       )
     )
     .toBe('ready');
-  await expect.poll(() => helloCapabilities).toEqual(['admission', 'resume']);
+  await expect
+    .poll(() => helloCapabilities)
+    .toEqual(['admission-pair', 'resume']);
   await expect
     .poll(() =>
       page.evaluate(() =>

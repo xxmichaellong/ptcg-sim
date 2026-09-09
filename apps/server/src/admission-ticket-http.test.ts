@@ -12,6 +12,7 @@ import {
 
 const capability = 'seat-capability-never-reflected-000000000001';
 const admissionTicket = 'socket-ticket-returned-once-00000000000001';
+const resumeCapability = 'resume-ticket-returned-once-00000000000001';
 const snapshot = {} as RoomAuthoritySnapshot;
 
 const request = (
@@ -35,6 +36,7 @@ const acceptedIssuer = (): AdmissionTicketIssuer =>
     committed: true,
     snapshot,
     admissionTicket,
+    resumeCapability,
     expiresAt: 40_000,
   }));
 
@@ -60,6 +62,7 @@ describe('admission ticket HTTP boundary', () => {
     });
     expect(await response.json()).toEqual({
       admissionTicket,
+      resumeToken: resumeCapability,
       expiresAt: 40_000,
     });
     expect(response.headers.get('Cache-Control')).toContain('no-store');
