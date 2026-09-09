@@ -80,10 +80,10 @@ unsupported or divergent conditional exports, targets outside the owning
 package, missing/non-TypeScript targets, entrypoint compiler errors, newly
 exported packages or subpaths, and symbol drift.
 
-The report currently records 9 export-bearing packages, 9 entrypoints, and 493
-symbols. The seven reviewed additions are the byte conversion entrypoint, its
-three format/size constants, and its target/result/report types; private
-decoders and candidate-building internals remain unexported. `pnpm run
+The report currently records 9 export-bearing packages, 9 entrypoints, and 494
+symbols. The current reviewed addition is the room-authority admission
+transaction validator used by the server persistence adapter; private decoders
+and candidate-building internals remain unexported. `pnpm run
 check:api:v2` is part of `check:static:v2`. Regenerate the
 report with `node scripts/check-v2-public-api.mjs --write` only after reviewing
 whether each surface change is deliberately public; the quality job separately
@@ -186,6 +186,10 @@ traces are retained as a 14-day artifact. Browser binaries are not cached.
   owner before the neutral document mounts; persisted pagehide preservation is
   pinned in the unit layer. Deployed navigation, physical BFCache restoration,
   and the ADR-020 second-browser invitation path remain outstanding.
+- Schema-v7 admission now makes solo replay disclosure structurally safe by
+  persisting a one-player ceiling and rejecting a second human through every
+  credential path. Visible solo room creation is still unwired; it must select
+  this persisted mode at creation rather than infer safety from live sockets.
 - The keyboard parity lane includes a deny-by-default real-v1 oracle for Enter,
   Alt-Enter, and Slash loose-board actions plus a selected-DOM candidate case.
   The source pages pin destination and shuffled-deck arrays, outer action and

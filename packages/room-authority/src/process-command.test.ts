@@ -59,6 +59,15 @@ const createSnapshot = (): RoomAuthoritySnapshot => {
       cardBackUrl: '/cardback-red.png',
     },
   ]);
+  const admission = createRoomAdmissionState({
+    playerSeatLimit: 2,
+    playerIds: [p1, p2],
+    seatCapabilityDigests: {
+      [p1]: 'a'.repeat(32),
+      [p2]: 'b'.repeat(32),
+    },
+    spectatorCapabilityDigest: 'c'.repeat(32),
+  });
   return {
     schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
     authorityVersion: 0,
@@ -67,14 +76,20 @@ const createSnapshot = (): RoomAuthoritySnapshot => {
     soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
     replayHistory: createReplayHistory(state),
     identities: emptyProjectionIdentityState(),
-    admission: createRoomAdmissionState({
-      playerIds: [p1, p2],
-      seatCapabilityDigests: {
-        [p1]: 'a'.repeat(32),
-        [p2]: 'b'.repeat(32),
+    admission: {
+      ...admission,
+      seats: {
+        ...admission.seats,
+        [p1]: {
+          ...admission.seats[p1]!,
+          claimedSessionId: 'session-player-one',
+        },
+        [p2]: {
+          ...admission.seats[p2]!,
+          claimedSessionId: 'session-player-two',
+        },
       },
-      spectatorCapabilityDigest: 'c'.repeat(32),
-    }),
+    },
     sessions: {
       'session-player-one': {
         id: 'session-player-one',
@@ -96,6 +111,29 @@ const createSnapshot = (): RoomAuthoritySnapshot => {
         active: true,
         nextClientSequence: 1,
         recentOutcomes: [],
+      },
+    },
+  };
+};
+
+const createSoloSnapshot = (): RoomAuthoritySnapshot => {
+  const current = createSnapshot();
+  return {
+    ...current,
+    mode: 'solo',
+    sessions: {
+      'session-player-one': current.sessions['session-player-one']!,
+      'session-spectator': current.sessions['session-spectator']!,
+    },
+    admission: {
+      ...current.admission!,
+      playerSeatLimit: 1,
+      seats: {
+        ...current.admission!.seats,
+        [p2]: {
+          ...current.admission!.seats[p2]!,
+          claimedSessionId: null,
+        },
       },
     },
   };
@@ -1746,7 +1784,7 @@ describe('authoritative room command transaction', () => {
   it('applies bounded stackable solo checkpoints without replaying randomness', async () => {
     const persistence = createPersistence();
     const dependencies = createDependencies(persistence);
-    const solo = { ...createSnapshot(), mode: 'solo' as const };
+    const solo = createSoloSnapshot();
     const loaded = await processAuthorityCommand(
       solo,
       loadDeck(),
@@ -1772,15 +1810,15 @@ describe('authoritative room command transaction', () => {
     expect(setup.snapshot.soloUndoHistory.entries).toHaveLength(1);
     const setupState = setup.snapshot.state;
     const handId = playerZoneId(p1, 'hand');
-    const setupOpponentPublication = setup.deliveries.find(
+    const setupSpectatorPublication = setup.deliveries.find(
       (delivery) =>
-        delivery.sessionId === 'session-player-two' &&
+        delivery.sessionId === 'session-spectator' &&
         delivery.message.type === 'StatePublication'
     );
-    if (setupOpponentPublication?.message.type !== 'StatePublication') {
-      throw new Error('missing pre-undo opponent publication');
+    if (setupSpectatorPublication?.message.type !== 'StatePublication') {
+      throw new Error('missing pre-undo spectator publication');
     }
-    const setupAliases = setupOpponentPublication.message.snapshot.zones[
+    const setupAliases = setupSpectatorPublication.message.snapshot.zones[
       handId
     ]!.cards.map((card) => card.id);
 
@@ -1824,7 +1862,7 @@ describe('authoritative room command transaction', () => {
     const undoPublications = undone.deliveries.filter(
       (delivery) => delivery.message.type === 'StatePublication'
     );
-    expect(undoPublications).toHaveLength(3);
+    expect(undoPublications).toHaveLength(2);
     for (const delivery of undoPublications) {
       if (delivery.message.type !== 'StatePublication') continue;
       expect(delivery.message.presentationEvents).toEqual([
@@ -1841,13 +1879,13 @@ describe('authoritative room command transaction', () => {
         'secret-definition-'
       );
     }
-    const undoOpponentPublication = undoPublications.find(
-      (delivery) => delivery.sessionId === 'session-player-two'
+    const undoSpectatorPublication = undoPublications.find(
+      (delivery) => delivery.sessionId === 'session-spectator'
     );
-    if (undoOpponentPublication?.message.type !== 'StatePublication') {
-      throw new Error('missing post-undo opponent publication');
+    if (undoSpectatorPublication?.message.type !== 'StatePublication') {
+      throw new Error('missing post-undo spectator publication');
     }
-    const undoAliases = undoOpponentPublication.message.snapshot.zones[
+    const undoAliases = undoSpectatorPublication.message.snapshot.zones[
       handId
     ]!.cards.map((card) => card.id);
     expect(undoAliases).toHaveLength(7);
@@ -1950,7 +1988,7 @@ describe('authoritative room command transaction', () => {
       ...base,
       policy: { ...base.policy, maximumSoloUndoCheckpoints: 2 },
     };
-    let current = { ...createSnapshot(), mode: 'solo' as const };
+    let current = createSoloSnapshot();
     const markerCommands = [
       {
         type: 'SetOncePerGameMarker' as const,

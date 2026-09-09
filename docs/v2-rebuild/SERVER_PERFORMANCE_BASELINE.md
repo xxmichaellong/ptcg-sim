@@ -9,6 +9,11 @@ Recorded: 2026-09-03
 
 Branch: `codex/v2-engine-rebuild`
 
+The named numbers below predate authority schema v7's admission-transition
+predecessor validation. That change does not alter the measured multiplayer
+command hot path; it deliberately adds full kind/delta validation only to
+admission commits, for which no new portable timing claim is made here.
+
 ## What is measured
 
 The server harness executes the deployed Worker and SQLite-backed Durable

@@ -25,6 +25,15 @@ const createSnapshot = (): RoomAuthoritySnapshot => {
     { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
     { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
   ]);
+  const admission = createRoomAdmissionState({
+    playerSeatLimit: 2,
+    playerIds: [p1, p2],
+    seatCapabilityDigests: {
+      [p1]: 'a'.repeat(32),
+      [p2]: 'b'.repeat(32),
+    },
+    spectatorCapabilityDigest: 'c'.repeat(32),
+  });
   return {
     schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
     authorityVersion: 0,
@@ -33,11 +42,16 @@ const createSnapshot = (): RoomAuthoritySnapshot => {
     soloUndoHistory: { baseState: null, baseStateHash: null, entries: [] },
     replayHistory: createReplayHistory(state),
     identities: emptyProjectionIdentityState(),
-    admission: createRoomAdmissionState({
-      playerIds: [p1, p2],
-      seatCapabilityDigests: { [p1]: 'a'.repeat(32), [p2]: 'b'.repeat(32) },
-      spectatorCapabilityDigest: 'c'.repeat(32),
-    }),
+    admission: {
+      ...admission,
+      seats: {
+        ...admission.seats,
+        [p1]: {
+          ...admission.seats[p1]!,
+          claimedSessionId: 'session-one',
+        },
+      },
+    },
     sessions: {
       'session-one': {
         id: 'session-one',

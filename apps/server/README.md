@@ -45,8 +45,11 @@ state revision. A proven multiplayer command whose source object, proof, and
 metadata match both the cache and stored frontier reads no durable snapshot.
 It rotates the generation and atomically writes the snapshot/frontier pair with
 the journal, retention index, and displaced-row deletion. Admissions still read
-and fully validate their predecessor and pair lifecycle/alarm changes with the
-same write. Expiry also validates the pair before lifecycle repair or deletion.
+and fully validate their predecessor, verify that the declared admission kind
+alone explains the candidate delta, and pair lifecycle/alarm changes with the
+same write. Schema-v7 admission also persists the mode-bound player-seat limit;
+solo accepts one player session while preserving spectators and the winner's
+resume. Expiry validates the pair before lifecycle repair or deletion.
 
 Neither proof is a security credential, portable signature, durable field, or
 wire value. Missing, forged, stale, reused, cross-room, mutated, or mismatched

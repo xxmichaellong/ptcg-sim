@@ -1,7 +1,7 @@
 # PTCG Sim v2 rebuild blueprint
 
 - Status: **approved implementation in progress on the isolated v2 feature branch**
-- Last updated: 2026-09-08
+- Last updated: 2026-09-09
 - Primary objective: replace the internals while preserving the current UI and UX.
 
 This directory is the implementation contract for the PTCG Sim v2 rebuild.
@@ -51,8 +51,11 @@ the relevant product decisions and phase exit criteria.
   in a non-serializing in-memory custodian. That custodian now mints bounded,
   expiring, one-use player or spectator claims; an untrusted guest handoff is
   validated and exchanged through the existing short-lived ticket boundary.
-  Durable schema v6 stores only invitation digests and atomically consumes the
-  invitation with its final ticket. Creation now atomically schedules a
+  Durable schema v7 stores only invitation/ticket digests, binds solo to one
+  persisted human-player seat, retires losing-seat credentials after the first
+  claim, and atomically consumes the invitation with its final ticket. Every
+  admission write is validated against its exact durable predecessor. Creation
+  now atomically schedules a
   five-minute unclaimed-room alarm, first admission cancels it, retry-safe
   tombstones prevent resurrection, and layered edge/per-room budgets bound
   creation, credential exchange, socket allocation, and repeated `Hello`

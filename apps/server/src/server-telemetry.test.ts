@@ -59,7 +59,7 @@ describe('structured server telemetry', () => {
         sourceInstanceId: 'opaque-event-1',
         buildId: 'build-abc.123',
         protocolVersion: 2,
-        authoritySchemaVersion: 6,
+        authoritySchemaVersion: 7,
         matchStateSchemaVersion: 3,
         kind: 'room_admission',
         operation: 'ticket_issue',

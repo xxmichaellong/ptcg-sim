@@ -14,7 +14,7 @@ describe('server health boundary', () => {
       status: 'ok',
       buildId: 'build-abc.123',
       protocolVersion: 2,
-      authoritySchemaVersion: 6,
+      authoritySchemaVersion: 7,
       matchStateSchemaVersion: 3,
     });
     expect(response.headers.get('Cache-Control')).toContain('no-store');

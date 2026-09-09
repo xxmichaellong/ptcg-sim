@@ -435,7 +435,7 @@ browser.
 The implemented admission boundary accepts a long-lived seat/spectator master
 capability or a derived guest invitation only in a bounded, strict, same-origin
 JSON `POST` to `/v2/rooms/:roomCode/admission-tickets`. It returns a `no-store`
-30-second socket ticket. Authority schema v6 stores at most 32 unexpired
+30-second socket ticket. Authority schema v7 stores at most 32 unexpired
 invitation digests and 32 ticket digests, never bearer values; invitation grants
 are role-bound and ticket records also bind the normalized display name.
 Issuance and redemption are serialized with room messages. If an invitation
@@ -449,6 +449,17 @@ reflecting credential material. The browser uses redirect-error, no-referrer,
 omitted-credential fetch semantics, derives credential-free HTTP and WebSocket
 URLs from the same origin, validates the untrusted handoff before exchange, and
 hands only the resulting runtime and route descriptor to React.
+
+The snapshot also persists an immutable player-seat admission ceiling: one for
+`solo`, two for `multiplayer`. A solo room may therefore admit exactly one human
+player session, which may operate either canonical board, while spectator joins
+and the winning player's resume remain available. The first winning claim
+atomically retires every invitation and ticket for the losing player seat. Both
+issuance and redemption reject later attempts for that seat. Snapshot
+invariants bind every player session back to its claimed seat and reject a solo
+snapshot with multiple active player sessions, including a legacy snapshot with
+no admission metadata. This durable property—not a transient socket count—is
+what makes complete local replay disclosure safe for a solo controller.
 
 Creation is limited at the Worker edge to 12 valid allocation requests per
 hashed anonymous network identity per 60 seconds. Because the Cloudflare binding
@@ -698,6 +709,14 @@ path. Proofless or mismatched persistence performs complete candidate validation
 and checks the full accepted/rejected transition against the fully validated
 durable predecessor.
 
+Admission commits follow the same predecessor principle even though they do not
+carry command proofs. The adapter validates the declared transaction kind,
+one-version advance, immutable mode and seat ceiling, exact session/seat delta,
+credential issue or consumption, ticket role/name binding, unchanged canonical
+gameplay for non-seat operations, and replay/undo rebasing for a first seat
+claim. A structurally valid candidate from the wrong admission operation is
+rejected before the snapshot or either journal lane is written.
+
 The storage adapter now maintains an exact store-local validated head alongside
 a strict `ptcgsim-authority-frontier-v1` record. The existing v6 snapshot
 envelope accepts an optional 128-bit generation; the frontier binds it to the
@@ -767,7 +786,7 @@ event batches under a pinned event/state version. New clients never execute
 arbitrary legacy function names. Public replay uses projected frames and cannot
 reveal secrets that were not public at that revision.
 
-The implemented authority schema v6 persists one hashed canonical replay base
+The implemented authority schema v7 persists one hashed canonical replay base
 plus a contiguous accepted resolved-event tail bounded by both 128 batches and
 512 KiB of serialized event data. Rejected commands do not enter replay
 history. When either bound is exceeded, the oldest event is applied to the base
@@ -887,7 +906,7 @@ Solo undo is a new authoritative transition with a monotonically increasing
 revision: it restores the prior approved logical checkpoint, records
 `UndoApplied`, and publishes the resulting view. Audit history is not deleted.
 The v2 authority snapshot records an explicit `solo` or `multiplayer` mode; live
-connection count is never used to infer permission. Authority schema v6 stores
+connection count is never used to infer permission. Authority schema v7 stores
 one hashed base state plus a bounded active-branch tail of resolved event
 batches. It reconstructs the selected checkpoint inside the trusted boundary,
 then persists the exact restored canonical state in the resolved undo event so
@@ -903,14 +922,16 @@ rerun. Undo rotates every projection alias before publication to prevent
 correlation with a discarded hidden branch. Audit history is not deleted,
 reconnect restores the new branch without replaying the presentation fact, and
 multiplayer undo is not added by this rebuild. Stored authority-v1 rooms migrate
-explicitly to multiplayer schema v6, while schema-v2 and schema-v3 rooms retain
+explicitly to multiplayer schema v7, while schema-v2 and schema-v3 rooms retain
 their explicit mode. All prior schemas receive empty solo history and a replay
 base rooted at their migrated current canonical state because their older event
 tails do not contain the v2 match-state visibility scope required for safe
 deterministic replay. Schema-v4 rooms keep their compatible state and replay
 history while receiving empty one-time-ticket and invitation registries.
 Schema-v5 rooms retain their compatible ticket registry and receive an empty
-invitation registry.
+invitation registry. Schema-v6 rooms derive the new durable player-seat ceiling
+from their already-persisted mode and fail closed if their sessions or seat
+claims contradict it.
 
 The provisional command order is whole-match authority order, not v1's two
 independent client action arrays. This avoids replaying one seat's JavaScript

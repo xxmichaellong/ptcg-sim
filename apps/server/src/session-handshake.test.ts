@@ -35,6 +35,7 @@ const fixture = async () => {
     identities: emptyProjectionIdentityState(),
     sessions: {},
     admission: createRoomAdmissionState({
+      playerSeatLimit: 2,
       playerIds: [p1, p2],
       seatCapabilityDigests: {
         [p1]: await crypto.digestCapability(seatToken),

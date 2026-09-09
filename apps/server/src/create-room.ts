@@ -171,6 +171,7 @@ export const initializeNewRoom = async (
     identities: emptyProjectionIdentityState(),
     sessions: {},
     admission: createRoomAdmissionState({
+      playerSeatLimit: 2,
       playerIds: [playerOneId, playerTwoId],
       seatCapabilityDigests: {
         [playerOneId]: playerOneDigest,

@@ -7,6 +7,7 @@ import {
   authoritySnapshotCommandValidationMatches,
   authoritySnapshotValidationFor,
   authoritySnapshotValidationMatches,
+  assertAdmissionTransactionTransition,
   assertAuthorityTransactionTransition,
   createReplayHistory,
   validateAuthoritySnapshot,
@@ -464,6 +465,8 @@ const migrateStoredSnapshot = (value: unknown): RoomAuthoritySnapshot => {
     schemaVersion === 2 ||
     schemaVersion === 3 ||
     schemaVersion === 4;
+  const legacyAdmissionSchema =
+    legacySchema || schemaVersion === 5 || schemaVersion === 6;
   if (schemaVersion === 1) {
     const state = migrateMatchState(rawState);
     candidate = {
@@ -524,6 +527,11 @@ const migrateStoredSnapshot = (value: unknown): RoomAuthoritySnapshot => {
           }
         : {}),
     };
+  } else if (schemaVersion === 6) {
+    candidate = {
+      ...(value as Omit<RoomAuthoritySnapshot, 'schemaVersion'>),
+      schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+    };
   } else if (schemaVersion === AUTHORITY_SNAPSHOT_SCHEMA_VERSION) {
     candidate = value as RoomAuthoritySnapshot;
   } else {
@@ -540,6 +548,15 @@ const migrateStoredSnapshot = (value: unknown): RoomAuthoritySnapshot => {
         entries: [],
       },
       replayHistory: createReplayHistory(state),
+    };
+  }
+  if (legacyAdmissionSchema && candidate.admission) {
+    candidate = {
+      ...candidate,
+      admission: {
+        ...candidate.admission,
+        playerSeatLimit: candidate.mode === 'solo' ? 1 : 2,
+      },
     };
   }
   if (legacySchema && candidate.admission) {
@@ -1066,6 +1083,7 @@ export class DurableRoomSnapshotStore
             'Admission commit did not advance exactly one version'
           );
         }
+        assertAdmissionTransactionTransition(current, transaction);
         const key = journalStorageKey(
           'admission',
           transaction.snapshot.authorityVersion

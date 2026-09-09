@@ -5,6 +5,7 @@ import {
   stableHash,
   stableSerialize,
   type EventBatch,
+  type PlayerId,
 } from '@ptcgsim/game-core';
 
 import { resolveViewCard, viewerIdentityKey } from './identity-registry.js';
@@ -16,6 +17,7 @@ import {
   MAX_REPLAY_EVENT_BYTES,
   MAX_SOLO_UNDO_CHECKPOINTS,
   type AuthoritySnapshotValidation,
+  type PersistedAdmissionTransaction,
   type PersistedAuthorityTransaction,
   type PersistedCommandOutcome,
   type ReplayHistory,
@@ -506,9 +508,27 @@ const collectAuthoritySnapshotProblemsInternal = (
       }
     }
   }
+  if (snapshot.mode === 'solo' && activePlayerSessions.size > 1) {
+    problems.push(
+      'solo authority cannot retain multiple active player sessions'
+    );
+  }
 
   if (snapshot.admission) {
+    const playerSeatLimit = snapshot.admission.playerSeatLimit;
+    if (playerSeatLimit !== 1 && playerSeatLimit !== 2) {
+      problems.push('admission player-seat limit must be one or two');
+    }
+    if (snapshot.mode === 'solo' && playerSeatLimit !== 1) {
+      problems.push('solo authority requires a one-player admission limit');
+    }
+    if (snapshot.mode === 'multiplayer' && playerSeatLimit !== 2) {
+      problems.push(
+        'multiplayer authority requires a two-player admission limit'
+      );
+    }
     const seatPlayerIds = new Set<string>();
+    const claimedPlayerIds: PlayerId[] = [];
     for (const [key, seat] of Object.entries(snapshot.admission.seats)) {
       if (key !== seat.playerId) {
         problems.push(`admission seat key ${key} mismatches player ID`);
@@ -548,7 +568,28 @@ const collectAuthoritySnapshotProblemsInternal = (
           `admission seat ${seat.playerId} claim belongs to another player`
         );
       }
+      if (seat.claimedSessionId !== null) {
+        claimedPlayerIds.push(seat.playerId);
+      }
     }
+    if (claimedPlayerIds.length > playerSeatLimit) {
+      problems.push('admission exceeds its durable player-seat limit');
+    }
+    for (const session of Object.values(snapshot.sessions)) {
+      if (
+        session.viewer.kind === 'player' &&
+        snapshot.admission.seats[session.viewer.playerId]?.claimedSessionId !==
+          session.id
+      ) {
+        problems.push(
+          `player session ${session.id} is not the durable claim for its seat`
+        );
+      }
+    }
+    const soleClaimedPlayerId =
+      playerSeatLimit === 1 && claimedPlayerIds.length === 1
+        ? claimedPlayerIds[0]
+        : undefined;
     if (
       snapshot.state.playerOrder.some(
         (playerId) => !seatPlayerIds.has(playerId)
@@ -591,6 +632,14 @@ const collectAuthoritySnapshotProblemsInternal = (
           if (!snapshot.admission.seats[invitation.playerId]) {
             problems.push('room invitation references an unknown player seat');
           }
+          if (
+            soleClaimedPlayerId &&
+            invitation.playerId !== soleClaimedPlayerId
+          ) {
+            problems.push(
+              'single-player admission retains an unavailable player invitation'
+            );
+          }
         } else if (invitation.role !== 'spectator') {
           problems.push('room invitation has an invalid role');
         }
@@ -624,6 +673,11 @@ const collectAuthoritySnapshotProblemsInternal = (
         if (ticket.role === 'player') {
           if (!snapshot.admission.seats[ticket.playerId]) {
             problems.push('admission ticket references an unknown player seat');
+          }
+          if (soleClaimedPlayerId && ticket.playerId !== soleClaimedPlayerId) {
+            problems.push(
+              'single-player admission retains an unavailable player ticket'
+            );
           }
         } else if (ticket.role !== 'spectator') {
           problems.push('admission ticket has an invalid role');
@@ -738,6 +792,371 @@ export const validateAuthoritySnapshot = (
 // whole match state twice. Identical references are structurally equal.
 const structurallyEqual = (left: unknown, right: unknown): boolean =>
   left === right || stableSerialize(left) === stableSerialize(right);
+
+const unchangedRecordSubset = <Value>(
+  candidate: Readonly<Record<string, Value>>,
+  current: Readonly<Record<string, Value>>,
+  except?: string
+): boolean =>
+  Object.entries(candidate).every(
+    ([key, value]) =>
+      key === except ||
+      (current[key] !== undefined && structurallyEqual(value, current[key]))
+  );
+
+const sameRecordKeys = (
+  left: Readonly<Record<string, unknown>>,
+  right: Readonly<Record<string, unknown>>
+): boolean =>
+  structurallyEqual(Object.keys(left).sort(), Object.keys(right).sort());
+
+/**
+ * Validates a proofless admission transaction against its durable predecessor.
+ * Snapshot validation alone cannot prove which admission operation produced it.
+ */
+export const assertAdmissionTransactionTransition = (
+  current: RoomAuthoritySnapshot,
+  transaction: PersistedAdmissionTransaction
+): void => {
+  const candidate = transaction.snapshot;
+  const problems: string[] = [];
+  if (transaction.expectedAuthorityVersion !== current.authorityVersion) {
+    problems.push(
+      'admission expected authority version does not match current'
+    );
+  }
+  if (candidate.schemaVersion !== current.schemaVersion) {
+    problems.push('admission transaction changed authority schema');
+  }
+  if (candidate.mode !== current.mode) {
+    problems.push('admission transaction changed authority mode');
+  }
+  if (candidate.authorityVersion !== current.authorityVersion + 1) {
+    problems.push(
+      'admission transaction did not advance one authority version'
+    );
+  }
+
+  const currentAdmission = current.admission;
+  const candidateAdmission = candidate.admission;
+  if (!currentAdmission || !candidateAdmission) {
+    problems.push('admission transaction requires durable admission state');
+  } else {
+    if (
+      candidateAdmission.playerSeatLimit !== currentAdmission.playerSeatLimit
+    ) {
+      problems.push('admission transaction changed the player-seat limit');
+    }
+    if (
+      candidateAdmission.spectatorCapabilityDigest !==
+      currentAdmission.spectatorCapabilityDigest
+    ) {
+      problems.push('admission transaction changed the spectator capability');
+    }
+  }
+
+  const unchangedAuthorityData = (kind: string): void => {
+    if (!structurallyEqual(candidate.state, current.state)) {
+      problems.push(`${kind} changed match state`);
+    }
+    if (
+      !structurallyEqual(candidate.soloUndoHistory, current.soloUndoHistory)
+    ) {
+      problems.push(`${kind} changed solo undo history`);
+    }
+    if (!structurallyEqual(candidate.replayHistory, current.replayHistory)) {
+      problems.push(`${kind} changed replay history`);
+    }
+  };
+
+  if (
+    transaction.kind === 'invitation_issued' ||
+    transaction.kind === 'ticket_issued'
+  ) {
+    const label =
+      transaction.kind === 'invitation_issued'
+        ? 'invitation issuance'
+        : 'ticket issuance';
+    unchangedAuthorityData(label);
+    if (!structurallyEqual(candidate.identities, current.identities)) {
+      problems.push(`${label} changed projection identities`);
+    }
+    if (!structurallyEqual(candidate.sessions, current.sessions)) {
+      problems.push(`${label} changed sessions`);
+    }
+    if (currentAdmission && candidateAdmission) {
+      if (
+        !structurallyEqual(candidateAdmission.seats, currentAdmission.seats)
+      ) {
+        problems.push(`${label} changed seat claims`);
+      }
+      if (
+        transaction.kind === 'invitation_issued' &&
+        (!candidateAdmission.invitations[transaction.invitationDigest] ||
+          currentAdmission.invitations[transaction.invitationDigest])
+      ) {
+        problems.push(
+          'invitation issuance does not add its declared invitation'
+        );
+      }
+      if (
+        transaction.kind === 'ticket_issued' &&
+        (!candidateAdmission.tickets[transaction.ticketDigest] ||
+          currentAdmission.tickets[transaction.ticketDigest])
+      ) {
+        problems.push('ticket issuance does not add its declared ticket');
+      }
+      if (
+        !unchangedRecordSubset(
+          candidateAdmission.invitations,
+          currentAdmission.invitations,
+          transaction.kind === 'invitation_issued'
+            ? transaction.invitationDigest
+            : undefined
+        )
+      ) {
+        problems.push(`${label} changed or added another invitation`);
+      }
+      if (
+        !unchangedRecordSubset(
+          candidateAdmission.tickets,
+          currentAdmission.tickets,
+          transaction.kind === 'ticket_issued'
+            ? transaction.ticketDigest
+            : undefined
+        )
+      ) {
+        problems.push(`${label} changed or added another ticket`);
+      }
+      if (transaction.kind === 'ticket_issued') {
+        const issued = candidateAdmission.tickets[transaction.ticketDigest];
+        if (
+          issued?.sourceInvitationDigest !== transaction.sourceInvitationDigest
+        ) {
+          problems.push('ticket issuance source invitation does not match');
+        }
+      }
+    }
+  } else {
+    if (currentAdmission && candidateAdmission) {
+      if (
+        !unchangedRecordSubset(
+          candidateAdmission.invitations,
+          currentAdmission.invitations
+        ) ||
+        !unchangedRecordSubset(
+          candidateAdmission.tickets,
+          currentAdmission.tickets
+        )
+      ) {
+        problems.push('session admission added or changed a credential record');
+      }
+      if (
+        transaction.admissionTicketDigest &&
+        (!currentAdmission.tickets[transaction.admissionTicketDigest] ||
+          candidateAdmission.tickets[transaction.admissionTicketDigest])
+      ) {
+        problems.push('session admission did not consume its declared ticket');
+      }
+      if (
+        transaction.invitationDigest &&
+        (!currentAdmission.invitations[transaction.invitationDigest] ||
+          candidateAdmission.invitations[transaction.invitationDigest])
+      ) {
+        problems.push(
+          'session admission did not consume its declared invitation'
+        );
+      }
+    }
+
+    const currentSession = current.sessions[transaction.sessionId];
+    const candidateSession = candidate.sessions[transaction.sessionId];
+    if (currentAdmission && candidateSession) {
+      const ticket = transaction.admissionTicketDigest
+        ? currentAdmission.tickets[transaction.admissionTicketDigest]
+        : undefined;
+      const invitation = transaction.invitationDigest
+        ? currentAdmission.invitations[transaction.invitationDigest]
+        : undefined;
+      const credentialMatchesViewer = (
+        credential:
+          | (typeof currentAdmission.tickets)[string]
+          | (typeof currentAdmission.invitations)[string]
+          | undefined
+      ): boolean => {
+        if (!credential) return false;
+        return credential.role === 'spectator'
+          ? candidateSession.viewer.kind === 'spectator'
+          : candidateSession.viewer.kind === 'player' &&
+              credential.playerId === candidateSession.viewer.playerId;
+      };
+      if (ticket && !credentialMatchesViewer(ticket)) {
+        problems.push('session admission ticket role does not match viewer');
+      }
+      if (invitation && !credentialMatchesViewer(invitation)) {
+        problems.push('session invitation role does not match viewer');
+      }
+      if (
+        transaction.invitationDigest &&
+        (!ticket ||
+          ticket.sourceInvitationDigest !== transaction.invitationDigest)
+      ) {
+        problems.push('session invitation does not authorize its ticket');
+      }
+    }
+    if (transaction.kind === 'session_resumed') {
+      unchangedAuthorityData('session resume');
+      if (
+        !currentSession ||
+        !candidateSession ||
+        !sameRecordKeys(candidate.sessions, current.sessions)
+      ) {
+        problems.push('session resume changed the session registry');
+      } else {
+        const expected = {
+          ...currentSession,
+          resumeCapabilityDigest: candidateSession.resumeCapabilityDigest,
+        };
+        if (!structurallyEqual(candidateSession, expected)) {
+          problems.push('session resume changed protected session state');
+        }
+        for (const [sessionId, session] of Object.entries(current.sessions)) {
+          if (
+            sessionId !== transaction.sessionId &&
+            !structurallyEqual(candidate.sessions[sessionId], session)
+          ) {
+            problems.push('session resume changed another session');
+          }
+        }
+      }
+      if (
+        currentAdmission &&
+        candidateAdmission &&
+        !structurallyEqual(candidateAdmission.seats, currentAdmission.seats)
+      ) {
+        problems.push('session resume changed seat claims');
+      }
+    } else {
+      const label =
+        transaction.kind === 'seat_claimed' ? 'seat claim' : 'spectator join';
+      const expectedSessionIds = [
+        ...Object.keys(current.sessions),
+        transaction.sessionId,
+      ].sort();
+      if (
+        currentSession ||
+        !candidateSession ||
+        !structurallyEqual(
+          Object.keys(candidate.sessions).sort(),
+          expectedSessionIds
+        )
+      ) {
+        problems.push(`${label} did not add exactly its declared session`);
+      }
+      for (const [sessionId, session] of Object.entries(current.sessions)) {
+        if (!structurallyEqual(candidate.sessions[sessionId], session)) {
+          problems.push(`${label} changed an existing session`);
+        }
+      }
+      if (
+        !candidateSession ||
+        candidateSession.id !== transaction.sessionId ||
+        !candidateSession.active ||
+        candidateSession.nextClientSequence !== 1 ||
+        candidateSession.recentOutcomes.length !== 0 ||
+        !candidateSession.resumeCapabilityDigest
+      ) {
+        problems.push(`${label} created an invalid session`);
+      }
+
+      if (transaction.kind === 'spectator_joined') {
+        unchangedAuthorityData('spectator join');
+        if (candidateSession?.viewer.kind !== 'spectator') {
+          problems.push('spectator join created a player session');
+        }
+        if (
+          currentAdmission &&
+          candidateAdmission &&
+          !structurallyEqual(candidateAdmission.seats, currentAdmission.seats)
+        ) {
+          problems.push('spectator join changed seat claims');
+        }
+      } else if (candidateSession?.viewer.kind !== 'player') {
+        problems.push('seat claim did not create a player session');
+      } else if (currentAdmission && candidateAdmission) {
+        const playerId = candidateSession.viewer.playerId;
+        const currentSeat = currentAdmission.seats[playerId];
+        const candidateSeat = candidateAdmission.seats[playerId];
+        if (
+          !currentSeat ||
+          currentSeat.claimedSessionId !== null ||
+          candidateSeat?.claimedSessionId !== transaction.sessionId
+        ) {
+          problems.push('seat claim does not claim one available seat');
+        }
+        for (const [seatId, seat] of Object.entries(currentAdmission.seats)) {
+          if (
+            seatId !== playerId &&
+            !structurallyEqual(candidateAdmission.seats[seatId], seat)
+          ) {
+            problems.push('seat claim changed another seat');
+          }
+        }
+        const currentPlayer = current.state.players[playerId];
+        const candidatePlayer = candidate.state.players[playerId];
+        const admissionTicket = transaction.admissionTicketDigest
+          ? currentAdmission.tickets[transaction.admissionTicketDigest]
+          : undefined;
+        if (
+          admissionTicket?.role === 'player' &&
+          candidatePlayer?.displayName !== admissionTicket.displayName
+        ) {
+          problems.push(
+            'seat claim display name does not match its admission ticket'
+          );
+        }
+        const expectedState =
+          currentPlayer && candidatePlayer
+            ? {
+                ...current.state,
+                players: {
+                  ...current.state.players,
+                  [playerId]: {
+                    ...currentPlayer,
+                    displayName: candidatePlayer.displayName,
+                  },
+                },
+              }
+            : undefined;
+        if (
+          !expectedState ||
+          !structurallyEqual(candidate.state, expectedState)
+        ) {
+          problems.push('seat claim changed state outside its display name');
+        }
+        if (
+          candidate.soloUndoHistory.baseState !== null ||
+          candidate.soloUndoHistory.baseStateHash !== null ||
+          candidate.soloUndoHistory.entries.length !== 0
+        ) {
+          problems.push('seat claim did not clear solo undo history');
+        }
+        if (
+          candidate.replayHistory.entries.length !== 0 ||
+          !structurallyEqual(
+            candidate.replayHistory.baseState,
+            candidate.state
+          ) ||
+          candidate.replayHistory.baseStateHash !== stableHash(candidate.state)
+        ) {
+          problems.push('seat claim did not rebase replay history');
+        }
+      }
+    }
+  }
+
+  if (problems.length > 0) throw new AuthoritySnapshotInvariantError(problems);
+};
 
 const authorityRejectionCodes = new Set([
   'invalid_message',

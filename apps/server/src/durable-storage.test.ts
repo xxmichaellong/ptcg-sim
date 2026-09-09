@@ -87,6 +87,38 @@ const unclaimedSnapshot = (): RoomAuthoritySnapshot => ({
   sessions: {},
 });
 
+const admissionSnapshot = (
+  matchId: string = 'durable-admission-room',
+  claimed: boolean = true
+): RoomAuthoritySnapshot => {
+  const initial = initialSnapshot(matchId);
+  const admission = createRoomAdmissionState({
+    playerSeatLimit: 2,
+    playerIds: [p1, p2],
+    seatCapabilityDigests: {
+      [p1]: 'a'.repeat(64),
+      [p2]: 'b'.repeat(64),
+    },
+    spectatorCapabilityDigest: 'c'.repeat(64),
+  });
+  return {
+    ...initial,
+    sessions: claimed ? initial.sessions : {},
+    admission: claimed
+      ? {
+          ...admission,
+          seats: {
+            ...admission.seats,
+            [p1]: {
+              ...admission.seats[p1]!,
+              claimedSessionId: 'session',
+            },
+          },
+        }
+      : admission,
+  };
+};
+
 const snapshotWithActiveAlias = (): RoomAuthoritySnapshot => {
   const initial = initialSnapshot('durable-alias-integrity');
   const loaded = executeCommand(
@@ -259,6 +291,13 @@ const resumedTransaction = (
   snapshot: {
     ...current,
     authorityVersion: current.authorityVersion + 1,
+    sessions: {
+      ...current.sessions,
+      session: {
+        ...current.sessions.session!,
+        resumeCapabilityDigest: 'f'.repeat(64),
+      },
+    },
   },
 });
 
@@ -504,7 +543,7 @@ describe('Durable Object authority snapshot store', () => {
 
     const admissionStorage = new MemoryDurableStorage();
     const admissionStore = new DurableRoomSnapshotStore(admissionStorage);
-    const admissionInitial = initialSnapshot('rollback-admission-room');
+    const admissionInitial = admissionSnapshot('rollback-admission-room');
     await admissionStore.initialize(admissionInitial);
     const firstAdmission = resumedTransaction(admissionInitial);
     await admissionStore.commitAdmission(firstAdmission);
@@ -672,7 +711,7 @@ describe('Durable Object authority snapshot store', () => {
   it('claims the lifecycle and cancels expiry with the first admission commit', async () => {
     const storage = new MemoryDurableStorage();
     const store = new DurableRoomSnapshotStore(storage);
-    const initial = unclaimedSnapshot();
+    const initial = admissionSnapshot('lifecycle-admission-room', false);
     await store.initialize(initial, {
       createdAt: 1_000,
       unclaimedExpiresAt: 301_000,
@@ -1110,7 +1149,7 @@ describe('Durable Object authority snapshot store', () => {
       () => 0,
       () => repeated
     );
-    const admissionInitial = initialSnapshot('repeated-admission-generation');
+    const admissionInitial = admissionSnapshot('repeated-admission-generation');
     await admissionStore.initialize(admissionInitial);
     const admissionBefore = structuredClone([...admissionStorage.values]);
     await expect(
@@ -1372,7 +1411,7 @@ describe('Durable Object authority snapshot store', () => {
   it('bounds admission audit rows independently from command rows', async () => {
     const storage = new MemoryDurableStorage();
     const store = new DurableRoomSnapshotStore(storage);
-    let current = initialSnapshot();
+    let current = admissionSnapshot('admission-retention-room');
     await store.initialize(current);
 
     for (
@@ -1501,7 +1540,7 @@ describe('Durable Object authority snapshot store', () => {
   it('atomically persists admission metadata on the authority frontier', async () => {
     const storage = new MemoryDurableStorage();
     const store = new DurableRoomSnapshotStore(storage);
-    const initial = initialSnapshot();
+    const initial = admissionSnapshot('admission-metadata-room', false);
     await store.initialize(initial);
     const spectatorSession = {
       id: 'spectator-session-0000000001',
@@ -1545,8 +1584,9 @@ describe('Durable Object authority snapshot store', () => {
     const ticket = 'socket-ticket-never-persisted-000000000001';
     const ticketDigest = 'd'.repeat(64);
     const initial: RoomAuthoritySnapshot = {
-      ...initialSnapshot(),
+      ...unclaimedSnapshot(),
       admission: createRoomAdmissionState({
+        playerSeatLimit: 2,
         playerIds: [p1, p2],
         seatCapabilityDigests: {
           [p1]: 'a'.repeat(64),
@@ -1651,8 +1691,9 @@ describe('Durable Object authority snapshot store', () => {
     const invitation = 'room-invitation-never-persisted-000000001';
     const invitationDigest = 'e'.repeat(64);
     const initial: RoomAuthoritySnapshot = {
-      ...initialSnapshot(),
+      ...unclaimedSnapshot(),
       admission: createRoomAdmissionState({
+        playerSeatLimit: 2,
         playerIds: [p1, p2],
         seatCapabilityDigests: {
           [p1]: 'a'.repeat(64),
@@ -1705,8 +1746,9 @@ describe('Durable Object authority snapshot store', () => {
 
   it('migrates v4 admission state with an empty ticket registry', async () => {
     const storage = new MemoryDurableStorage();
-    const current = initialSnapshot();
+    const current = unclaimedSnapshot();
     const admission = createRoomAdmissionState({
+      playerSeatLimit: 2,
       playerIds: [p1, p2],
       seatCapabilityDigests: {
         [p1]: 'a'.repeat(64),
@@ -1714,6 +1756,7 @@ describe('Durable Object authority snapshot store', () => {
       },
     });
     const {
+      playerSeatLimit: _playerSeatLimit,
       invitations: _invitations,
       tickets: _tickets,
       ...legacyAdmission
@@ -1736,8 +1779,9 @@ describe('Durable Object authority snapshot store', () => {
 
   it('migrates v5 admission tickets with an empty invitation registry', async () => {
     const storage = new MemoryDurableStorage();
-    const current = initialSnapshot();
+    const current = unclaimedSnapshot();
     const admission = createRoomAdmissionState({
+      playerSeatLimit: 2,
       playerIds: [p1, p2],
       seatCapabilityDigests: {
         [p1]: 'a'.repeat(64),
@@ -1745,7 +1789,11 @@ describe('Durable Object authority snapshot store', () => {
       },
     });
     const ticketDigest = 'd'.repeat(64);
-    const { invitations: _invitations, ...legacyAdmissionBase } = admission;
+    const {
+      playerSeatLimit: _playerSeatLimit,
+      invitations: _invitations,
+      ...legacyAdmissionBase
+    } = admission;
     const legacyAdmission = {
       ...legacyAdmissionBase,
       tickets: {
@@ -1779,6 +1827,81 @@ describe('Durable Object authority snapshot store', () => {
         },
       },
     });
+  });
+
+  it('migrates v6 admission to an explicit persisted player-seat limit', async () => {
+    const storage = new MemoryDurableStorage();
+    const current = unclaimedSnapshot();
+    const admission = createRoomAdmissionState({
+      playerSeatLimit: 2,
+      playerIds: [p1, p2],
+      seatCapabilityDigests: {
+        [p1]: 'a'.repeat(64),
+        [p2]: 'b'.repeat(64),
+      },
+    });
+    const { playerSeatLimit: _playerSeatLimit, ...legacyAdmission } = admission;
+    storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
+      format: 'ptcgsim-room-authority-v6',
+      snapshot: {
+        ...current,
+        schemaVersion: 6,
+        mode: 'solo',
+        admission: legacyAdmission,
+      },
+    });
+
+    const restored = await new DurableRoomSnapshotStore(storage).load();
+    expect(restored).toMatchObject({
+      schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+      mode: 'solo',
+      admission: { playerSeatLimit: 1 },
+    });
+  });
+
+  it('fails closed when a migrated solo snapshot already has two player sessions', async () => {
+    const storage = new MemoryDurableStorage();
+    const current = initialSnapshot();
+    const secondSession = {
+      id: 'session-two',
+      viewer: { kind: 'player' as const, playerId: p2 },
+      active: true,
+      nextClientSequence: 1,
+      recentOutcomes: [],
+    };
+    const admission = createRoomAdmissionState({
+      playerSeatLimit: 2,
+      playerIds: [p1, p2],
+      seatCapabilityDigests: {
+        [p1]: 'a'.repeat(64),
+        [p2]: 'b'.repeat(64),
+      },
+    });
+    const { playerSeatLimit: _playerSeatLimit, ...legacyAdmission } = {
+      ...admission,
+      seats: {
+        ...admission.seats,
+        [p1]: { ...admission.seats[p1]!, claimedSessionId: 'session' },
+        [p2]: {
+          ...admission.seats[p2]!,
+          claimedSessionId: secondSession.id,
+        },
+      },
+    };
+    storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
+      format: 'ptcgsim-room-authority-v6',
+      snapshot: {
+        ...current,
+        schemaVersion: 6,
+        mode: 'solo',
+        sessions: { ...current.sessions, [secondSession.id]: secondSession },
+        admission: legacyAdmission,
+      },
+    });
+
+    await expect(new DurableRoomSnapshotStore(storage).load()).rejects.toThrow(
+      'solo authority cannot retain multiple active player sessions'
+    );
   });
 
   it('rejects stale compare-and-swap commits', async () => {
@@ -1828,6 +1951,186 @@ describe('Durable Object authority snapshot store', () => {
     });
   });
 
+  it('validates each admission kind against its durable predecessor', async () => {
+    const admission = createRoomAdmissionState({
+      playerSeatLimit: 2,
+      playerIds: [p1, p2],
+      seatCapabilityDigests: {
+        [p1]: 'a'.repeat(64),
+        [p2]: 'b'.repeat(64),
+      },
+    });
+    const initial: RoomAuthoritySnapshot = {
+      ...unclaimedSnapshot(),
+      admission,
+    };
+    const renamedState = {
+      ...initial.state,
+      players: {
+        ...initial.state.players,
+        [p1]: { ...initial.state.players[p1]!, displayName: 'Forged name' },
+      },
+    };
+    const spectatorSession = {
+      id: 'forged-spectator-session',
+      viewer: { kind: 'spectator' as const },
+      active: true,
+      nextClientSequence: 1,
+      recentOutcomes: [],
+      resumeCapabilityDigest: 'c'.repeat(64),
+    };
+    const cases: readonly {
+      readonly expected: string;
+      readonly transaction: PersistedAdmissionTransaction;
+    }[] = [
+      {
+        expected: 'changed authority mode',
+        transaction: {
+          expectedAuthorityVersion: 0,
+          kind: 'invitation_issued',
+          invitationDigest: 'd'.repeat(64),
+          snapshot: {
+            ...initial,
+            authorityVersion: 1,
+            mode: 'solo',
+            admission: { ...admission, playerSeatLimit: 1 },
+          },
+        },
+      },
+      {
+        expected: 'does not add its declared invitation',
+        transaction: {
+          expectedAuthorityVersion: 0,
+          kind: 'invitation_issued',
+          invitationDigest: 'd'.repeat(64),
+          snapshot: { ...initial, authorityVersion: 1 },
+        },
+      },
+      {
+        expected: 'spectator join changed match state',
+        transaction: {
+          expectedAuthorityVersion: 0,
+          kind: 'spectator_joined',
+          sessionId: spectatorSession.id,
+          snapshot: {
+            ...initial,
+            authorityVersion: 1,
+            state: renamedState,
+            replayHistory: createReplayHistory(renamedState),
+            sessions: { [spectatorSession.id]: spectatorSession },
+          },
+        },
+      },
+    ];
+
+    for (const testCase of cases) {
+      const storage = new MemoryDurableStorage();
+      const store = new DurableRoomSnapshotStore(storage);
+      await store.initialize(initial);
+      await expect(store.commitAdmission(testCase.transaction)).rejects.toThrow(
+        testCase.expected
+      );
+      expect(await store.load()).toEqual(initial);
+      expect(storedKeys(storage, 'authority:admission:')).toEqual([]);
+    }
+  });
+
+  it('binds a durable seat claim to its ticket role and display name', async () => {
+    const ticketDigest = 'd'.repeat(64);
+    const baseAdmission = createRoomAdmissionState({
+      playerSeatLimit: 2,
+      playerIds: [p1, p2],
+      seatCapabilityDigests: {
+        [p1]: 'a'.repeat(64),
+        [p2]: 'b'.repeat(64),
+      },
+    });
+    const cases = [
+      {
+        expected: 'admission ticket role does not match viewer',
+        ticket: {
+          role: 'spectator' as const,
+          displayName: 'Viewer',
+          expiresAt: 10_000,
+        },
+        candidateDisplayName: 'Blue',
+      },
+      {
+        expected: 'seat claim display name does not match its admission ticket',
+        ticket: {
+          role: 'player' as const,
+          playerId: p1,
+          displayName: 'Ticket name',
+          expiresAt: 10_000,
+        },
+        candidateDisplayName: 'Forged name',
+      },
+    ];
+
+    for (const testCase of cases) {
+      const storage = new MemoryDurableStorage();
+      const store = new DurableRoomSnapshotStore(storage);
+      const initial: RoomAuthoritySnapshot = {
+        ...unclaimedSnapshot(),
+        admission: {
+          ...baseAdmission,
+          tickets: { [ticketDigest]: testCase.ticket },
+        },
+      };
+      await store.initialize(initial);
+      const sessionId = 'ticket-player-session';
+      const state = {
+        ...initial.state,
+        players: {
+          ...initial.state.players,
+          [p1]: {
+            ...initial.state.players[p1]!,
+            displayName: testCase.candidateDisplayName,
+          },
+        },
+      };
+      const transaction: PersistedAdmissionTransaction = {
+        expectedAuthorityVersion: 0,
+        kind: 'seat_claimed',
+        sessionId,
+        admissionTicketDigest: ticketDigest,
+        snapshot: {
+          ...initial,
+          authorityVersion: 1,
+          state,
+          replayHistory: createReplayHistory(state),
+          sessions: {
+            [sessionId]: {
+              id: sessionId,
+              viewer: { kind: 'player', playerId: p1 },
+              active: true,
+              nextClientSequence: 1,
+              recentOutcomes: [],
+              resumeCapabilityDigest: 'e'.repeat(64),
+            },
+          },
+          admission: {
+            ...initial.admission!,
+            seats: {
+              ...initial.admission!.seats,
+              [p1]: {
+                ...initial.admission!.seats[p1]!,
+                claimedSessionId: sessionId,
+              },
+            },
+            tickets: {},
+          },
+        },
+      };
+
+      await expect(store.commitAdmission(transaction)).rejects.toThrow(
+        testCase.expected
+      );
+      expect(await store.load()).toEqual(initial);
+      expect(storedKeys(storage, 'authority:admission:')).toEqual([]);
+    }
+  });
+
   it('rolls back the snapshot when the journal write fails', async () => {
     const storage = new MemoryDurableStorage();
     const store = new DurableRoomSnapshotStore(storage);
@@ -1853,28 +2156,52 @@ describe('Durable Object authority snapshot store', () => {
       () => 0,
       nextGeneration
     );
-    let current = initialSnapshot('admission-frontier-room');
+    let current = admissionSnapshot('admission-frontier-room');
     await store.initialize(current);
     let previousGeneration = storedFrontier(storage).generation;
+    const invitationDigest = 'a'.repeat(64);
+    const invited: RoomAuthoritySnapshot = {
+      ...current,
+      authorityVersion: 1,
+      admission: {
+        ...current.admission!,
+        invitations: {
+          [invitationDigest]: {
+            role: 'spectator',
+            expiresAt: 10_000,
+          },
+        },
+      },
+    };
+    const ticketDigest = 'b'.repeat(64);
+    const ticketed: RoomAuthoritySnapshot = {
+      ...invited,
+      authorityVersion: 2,
+      admission: {
+        ...invited.admission!,
+        tickets: {
+          [ticketDigest]: {
+            role: 'spectator',
+            displayName: 'Viewer',
+            expiresAt: 5_000,
+          },
+        },
+      },
+    };
     const transactions: readonly PersistedAdmissionTransaction[] = [
       {
         expectedAuthorityVersion: 0,
         kind: 'invitation_issued',
-        invitationDigest: 'a'.repeat(64),
-        snapshot: { ...current, authorityVersion: 1 },
+        invitationDigest,
+        snapshot: invited,
       },
       {
         expectedAuthorityVersion: 1,
         kind: 'ticket_issued',
-        ticketDigest: 'b'.repeat(64),
-        snapshot: { ...current, authorityVersion: 2 },
+        ticketDigest,
+        snapshot: ticketed,
       },
-      {
-        expectedAuthorityVersion: 2,
-        kind: 'session_resumed',
-        sessionId: 'session',
-        snapshot: { ...current, authorityVersion: 3 },
-      },
+      resumedTransaction(ticketed),
     ];
 
     for (const transaction of transactions) {

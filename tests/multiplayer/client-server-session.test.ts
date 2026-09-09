@@ -224,7 +224,14 @@ const fixture = async (mode: 'solo' | 'multiplayer' = 'multiplayer') => {
     cryptoSource,
     10_000
   );
-  const authoritySnapshot = { ...initialized.snapshot, mode };
+  const authoritySnapshot: RoomAuthoritySnapshot = {
+    ...initialized.snapshot,
+    mode,
+    admission: {
+      ...initialized.snapshot.admission!,
+      playerSeatLimit: mode === 'solo' ? 1 : 2,
+    },
+  };
   store.snapshot = authoritySnapshot;
   const coordinator = new RoomAuthorityCoordinator(authoritySnapshot, store, {
     commandContext: cryptoSource,

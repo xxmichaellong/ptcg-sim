@@ -14,7 +14,7 @@ import type {
   ProjectionIdentityState,
 } from './identity-registry.js';
 
-export const AUTHORITY_SNAPSHOT_SCHEMA_VERSION = 6 as const;
+export const AUTHORITY_SNAPSHOT_SCHEMA_VERSION = 7 as const;
 export const MAX_SOLO_UNDO_CHECKPOINTS = 128;
 export const MAX_REPLAY_EVENT_BATCHES = MAX_REPLAY_FRAMES - 1;
 export const MAX_REPLAY_EVENT_BYTES = 512 * 1024;
@@ -92,6 +92,8 @@ export type RoomInvitationGrant =
     };
 
 export interface RoomAdmissionState {
+  /** Durable ceiling on logical player seats that may ever be claimed. */
+  readonly playerSeatLimit: 1 | 2;
   readonly seats: Readonly<Record<string, AdmissionSeat>>;
   readonly spectatorCapabilityDigest: string | null;
   readonly invitations: Readonly<Record<string, RoomInvitationGrant>>;

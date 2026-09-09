@@ -253,13 +253,17 @@ const initialSnapshot = (
         nextClientSequence: 1,
         recentOutcomes: [],
       },
-      [playerTwoSessionId]: {
-        id: playerTwoSessionId,
-        viewer: { kind: 'player', playerId: p2 },
-        active: true,
-        nextClientSequence: 1,
-        recentOutcomes: [],
-      },
+      ...(mode === 'multiplayer'
+        ? {
+            [playerTwoSessionId]: {
+              id: playerTwoSessionId,
+              viewer: { kind: 'player' as const, playerId: p2 },
+              active: true,
+              nextClientSequence: 1,
+              recentOutcomes: [],
+            },
+          }
+        : {}),
       [spectatorSessionId]: {
         id: spectatorSessionId,
         viewer: { kind: 'spectator' },
@@ -561,7 +565,9 @@ const bootstrapHarness = async (
   harness: ModelHarness,
   coverage?: ModelCoverage
 ): Promise<void> => {
-  for (const playerId of [p1, p2]) {
+  const playerIds =
+    harness.coordinator.currentSnapshot().mode === 'solo' ? [p1] : [p1, p2];
+  for (const playerId of playerIds) {
     const sessionId = sessionIdForPlayer(playerId);
     const view = projectRecipient(
       harness.coordinator.currentSnapshot().state,

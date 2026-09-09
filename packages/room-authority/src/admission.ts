@@ -117,6 +117,7 @@ export type AdmissionTicketIssueResult =
       readonly code:
         | 'invalid_request'
         | 'invalid_capability'
+        | 'seat_unavailable'
         | 'room_not_ready'
         | 'ticket_capacity';
       readonly snapshot: RoomAuthoritySnapshot;
@@ -160,10 +161,12 @@ export interface AdmissionTicketRedemptionRequest {
 }
 
 export const createRoomAdmissionState = (input: {
+  readonly playerSeatLimit: RoomAdmissionState['playerSeatLimit'];
   readonly seatCapabilityDigests: Readonly<Record<string, string>>;
   readonly playerIds: readonly PlayerId[];
   readonly spectatorCapabilityDigest?: string;
 }): RoomAdmissionState => ({
+  playerSeatLimit: input.playerSeatLimit,
   seats: Object.fromEntries(
     input.playerIds.map((playerId) => [
       playerId,
@@ -187,6 +190,46 @@ const validDisplayName = (value: string): boolean =>
 
 const validNow = (value: number): boolean =>
   Number.isSafeInteger(value) && value >= 0;
+
+const claimedPlayerSeatCount = (admission: RoomAdmissionState): number =>
+  Object.values(admission.seats).filter(
+    (seat) => seat.claimedSessionId !== null
+  ).length;
+
+const canClaimPlayerSeat = (
+  admission: RoomAdmissionState,
+  playerId: PlayerId
+): boolean => {
+  const seat = admission.seats[playerId];
+  if (!seat) return false;
+  return (
+    seat.claimedSessionId !== null ||
+    claimedPlayerSeatCount(admission) < admission.playerSeatLimit
+  );
+};
+
+const removeUnavailablePlayerCredentials = (
+  admission: RoomAdmissionState,
+  claimedPlayerId: PlayerId
+): RoomAdmissionState =>
+  admission.playerSeatLimit !== 1
+    ? admission
+    : {
+        ...admission,
+        invitations: Object.fromEntries(
+          Object.entries(admission.invitations).filter(
+            ([, invitation]) =>
+              invitation.role === 'spectator' ||
+              invitation.playerId === claimedPlayerId
+          )
+        ),
+        tickets: Object.fromEntries(
+          Object.entries(admission.tickets).filter(
+            ([, ticket]) =>
+              ticket.role === 'spectator' || ticket.playerId === claimedPlayerId
+          )
+        ),
+      };
 
 const validTicketPolicy = (policy: AdmissionTicketPolicy): boolean =>
   Number.isSafeInteger(policy.lifetimeMs) &&
@@ -388,6 +431,9 @@ const admitAuthorizedSession = async (
   if (claimedPlayerId) {
     const seat = current.admission.seats[claimedPlayerId];
     if (!seat) return rejection(current, 'invalid_capability');
+    if (!canClaimPlayerSeat(current.admission, claimedPlayerId)) {
+      return rejection(current, 'seat_unavailable');
+    }
     if (seat.claimedSessionId !== null) {
       if (invitationDigest) return rejection(current, 'seat_unavailable');
       const claimedSession = current.sessions[seat.claimedSessionId];
@@ -419,11 +465,20 @@ const admitAuthorizedSession = async (
     ),
   };
   const sessions = { ...current.sessions, [session.id]: session };
-  const consumedAdmission = admissionAfterTicket(
-    current.admission,
-    admissionTicketDigest,
-    invitationDigest
-  );
+  const consumedAdmission = claimedPlayerId
+    ? removeUnavailablePlayerCredentials(
+        admissionAfterTicket(
+          current.admission,
+          admissionTicketDigest,
+          invitationDigest
+        ),
+        claimedPlayerId
+      )
+    : admissionAfterTicket(
+        current.admission,
+        admissionTicketDigest,
+        invitationDigest
+      );
   const admission: RoomAdmissionState = claimedPlayerId
     ? {
         ...consumedAdmission,
@@ -533,6 +588,9 @@ export const issueRoomInvitation = async (
     );
     if (!seat) return invitationRejection(current, 'invalid_capability');
     if (seat.claimedSessionId !== null) {
+      return invitationRejection(current, 'seat_unavailable');
+    }
+    if (!canClaimPlayerSeat(current.admission, seat.playerId)) {
       return invitationRejection(current, 'seat_unavailable');
     }
     grant = {
@@ -673,6 +731,9 @@ export const issueRoomAdmissionTicket = async (
       seat?.playerId ??
       (invitation?.role === 'player' ? invitation.playerId : undefined);
     if (!playerId) return ticketRejection(current, 'invalid_capability');
+    if (!canClaimPlayerSeat(current.admission, playerId)) {
+      return ticketRejection(current, 'seat_unavailable');
+    }
     ticket = {
       role: 'player',
       playerId,

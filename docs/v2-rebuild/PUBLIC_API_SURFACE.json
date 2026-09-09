@@ -1414,6 +1414,10 @@
               "kind": "value"
             },
             {
+              "name": "assertAdmissionTransactionTransition",
+              "kind": "value"
+            },
+            {
               "name": "assertAuthoritySnapshotInvariants",
               "kind": "value"
             },

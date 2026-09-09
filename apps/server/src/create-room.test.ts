@@ -34,6 +34,8 @@ describe('new durable room initialization', () => {
       expect(serialized).not.toContain(capability);
     }
     expect(result.snapshot.state.playerOrder).toHaveLength(2);
+    expect(result.snapshot.mode).toBe('multiplayer');
+    expect(result.snapshot.admission?.playerSeatLimit).toBe(2);
     expect(result.snapshot.admission?.spectatorCapabilityDigest).toHaveLength(
       43
     );

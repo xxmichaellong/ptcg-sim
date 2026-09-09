@@ -21,6 +21,7 @@ import {
   type PersistedAdmissionTransaction,
   type RoomAuthoritySnapshot,
 } from './model.js';
+import { collectAuthoritySnapshotProblems } from './invariants.js';
 
 const p1 = asPlayerId('player-one');
 const p2 = asPlayerId('player-two');
@@ -52,6 +53,7 @@ const createSnapshot = (): RoomAuthoritySnapshot => {
     identities: emptyProjectionIdentityState(),
     sessions: {},
     admission: createRoomAdmissionState({
+      playerSeatLimit: 2,
       playerIds: [p1, p2],
       seatCapabilityDigests: {
         [p1]: digest(seatOneToken),
@@ -60,6 +62,18 @@ const createSnapshot = (): RoomAuthoritySnapshot => {
       spectatorCapabilityDigest: digest(spectatorToken),
     }),
   };
+};
+
+const createSingleOccupancySnapshot = (): RoomAuthoritySnapshot => {
+  const current = createSnapshot();
+  return {
+    ...current,
+    mode: 'solo',
+    admission: {
+      ...current.admission!,
+      playerSeatLimit: 1,
+    },
+  } as unknown as RoomAuthoritySnapshot;
 };
 
 const createCrypto = (): RoomInvitationCrypto => {
@@ -779,6 +793,220 @@ describe('room capability admission', () => {
     expect(second.session.id).not.toBe(first.session.id);
     expect(second.snapshot.authorityVersion).toBe(2);
     expect(storage.transactions).toHaveLength(2);
+  });
+
+  it('binds solo admission to one durably claimed player seat without blocking spectators or resume', async () => {
+    const storage = persistence();
+    const crypto = createCrypto();
+    const first = await admitRoomSession(
+      createSingleOccupancySnapshot(),
+      {
+        type: 'ClaimSeat',
+        seatCapability: seatOneToken,
+        displayName: 'Solo player',
+      },
+      dependencies(crypto, storage)
+    );
+    if (!first.accepted) throw new Error(first.code);
+
+    const secondSeat = await admitRoomSession(
+      first.snapshot,
+      {
+        type: 'ClaimSeat',
+        seatCapability: seatTwoToken,
+        displayName: 'Unexpected second player',
+      },
+      dependencies(crypto, storage)
+    );
+    expect(secondSeat).toMatchObject({
+      accepted: false,
+      code: 'seat_unavailable',
+      snapshot: first.snapshot,
+    });
+
+    const resumed = await admitRoomSession(
+      first.snapshot,
+      {
+        type: 'ClaimSeat',
+        seatCapability: seatOneToken,
+        displayName: 'Ignored replacement name',
+      },
+      dependencies(crypto, storage)
+    );
+    expect(resumed).toMatchObject({
+      accepted: true,
+      session: { id: first.session.id },
+    });
+    if (!resumed.accepted) return;
+
+    const spectator = await admitRoomSession(
+      resumed.snapshot,
+      { type: 'JoinSpectator', spectatorCapability: spectatorToken },
+      dependencies(crypto, storage)
+    );
+    expect(spectator).toMatchObject({
+      accepted: true,
+      session: { viewer: { kind: 'spectator' } },
+    });
+    expect(storage.transactions.map((entry) => entry.kind)).toEqual([
+      'seat_claimed',
+      'session_resumed',
+      'spectator_joined',
+    ]);
+  });
+
+  it('retires losing player credentials when the first single-occupancy seat wins', async () => {
+    const storage = persistence();
+    const crypto = createCrypto();
+    const losingInvitation = await issueRoomInvitation(
+      createSingleOccupancySnapshot(),
+      { capability: seatTwoToken, requestedRole: 'player' },
+      9_999,
+      dependencies(crypto, storage)
+    );
+    if (!losingInvitation.accepted) throw new Error(losingInvitation.code);
+    const losingTicket = await issueRoomAdmissionTicket(
+      losingInvitation.snapshot,
+      {
+        capability: seatTwoToken,
+        displayName: 'Second contender',
+        requestedRole: 'player',
+      },
+      10_000,
+      dependencies(crypto, storage)
+    );
+    if (!losingTicket.accepted) throw new Error(losingTicket.code);
+    const spectatorTicket = await issueRoomAdmissionTicket(
+      losingTicket.snapshot,
+      {
+        capability: spectatorToken,
+        displayName: 'Spectator',
+        requestedRole: 'spectator',
+      },
+      10_000,
+      dependencies(crypto, storage)
+    );
+    if (!spectatorTicket.accepted) throw new Error(spectatorTicket.code);
+
+    const winner = await admitRoomSession(
+      spectatorTicket.snapshot,
+      {
+        type: 'ClaimSeat',
+        seatCapability: seatOneToken,
+        displayName: 'Solo player',
+      },
+      dependencies(crypto, storage)
+    );
+    if (!winner.accepted) throw new Error(winner.code);
+    expect(winner.snapshot.admission?.invitations).toEqual({});
+    expect(winner.snapshot.admission?.tickets).toEqual({
+      [digest(spectatorTicket.admissionTicket)]: {
+        role: 'spectator',
+        displayName: 'Spectator',
+        expiresAt: 40_000,
+      },
+    });
+
+    const staleTicket = await redeemRoomAdmissionTicket(
+      winner.snapshot,
+      {
+        admissionTicket: losingTicket.admissionTicket,
+        displayName: 'Second contender',
+        requestedRole: 'player',
+      },
+      10_001,
+      dependencies(crypto, storage)
+    );
+    expect(staleTicket).toMatchObject({
+      accepted: false,
+      code: 'invalid_capability',
+    });
+
+    const invitation = await issueRoomInvitation(
+      winner.snapshot,
+      { capability: seatTwoToken, requestedRole: 'player' },
+      10_001,
+      dependencies(crypto, storage)
+    );
+    expect(invitation).toMatchObject({
+      accepted: false,
+      code: 'seat_unavailable',
+    });
+
+    const directTicket = await issueRoomAdmissionTicket(
+      winner.snapshot,
+      {
+        capability: seatTwoToken,
+        displayName: 'Second contender',
+        requestedRole: 'player',
+      },
+      10_001,
+      dependencies(crypto, storage)
+    );
+    expect(directTicket).toMatchObject({
+      accepted: false,
+      code: 'seat_unavailable',
+    });
+  });
+
+  it('requires room mode and persisted player-seat limit to agree', () => {
+    const solo = createSingleOccupancySnapshot();
+    expect(collectAuthoritySnapshotProblems(solo)).toEqual([]);
+    const unsafe = {
+      ...solo,
+      admission: { ...solo.admission!, playerSeatLimit: 2 },
+    } as unknown as RoomAuthoritySnapshot;
+    expect(collectAuthoritySnapshotProblems(unsafe)).toContain(
+      'solo authority requires a one-player admission limit'
+    );
+  });
+
+  it('requires every player session to own its durable seat claim', () => {
+    const current = createSnapshot();
+    const session = {
+      id: 'unbound-player-session',
+      viewer: { kind: 'player' as const, playerId: p1 },
+      active: true,
+      nextClientSequence: 1,
+      recentOutcomes: [],
+    };
+    const unbound = {
+      ...current,
+      sessions: { [session.id]: session },
+    };
+
+    expect(collectAuthoritySnapshotProblems(unbound)).toContain(
+      `player session ${session.id} is not the durable claim for its seat`
+    );
+  });
+
+  it('rejects multiple active player sessions even without admission metadata', () => {
+    const current = createSnapshot();
+    const sessions = Object.fromEntries(
+      [p1, p2].map((playerId, index) => {
+        const id = `legacy-solo-session-${index + 1}`;
+        return [
+          id,
+          {
+            id,
+            viewer: { kind: 'player' as const, playerId },
+            active: true,
+            nextClientSequence: 1,
+            recentOutcomes: [],
+          },
+        ];
+      })
+    );
+    const unsafe = {
+      ...current,
+      mode: 'solo' as const,
+      sessions,
+      admission: undefined,
+    };
+
+    expect(collectAuthoritySnapshotProblems(unsafe)).toContain(
+      'solo authority cannot retain multiple active player sessions'
+    );
   });
 
   it('rejects invalid capabilities without echoing them or writing', async () => {

@@ -392,8 +392,10 @@ Release requires all of the following:
     restores its committed frontier after an ambiguous persistence failure.
     Schema-v4 rooms migrate with empty ticket/invitation registries, schema-v5
     rooms preserve their tickets while gaining an empty invitation registry,
-    and no bearer is exposed through snapshots, journals, errors, DOM, React
-    state, storage, or URLs.
+    and schema-v6 rooms derive the schema-v7 player-seat ceiling from their
+    persisted mode. Contradictory legacy sessions/claims fail closed, and no
+    bearer is exposed through snapshots, journals, errors, DOM, React state,
+    storage, or URLs.
 24. Creator custody never releases its long-lived player-two or spectator
     credential. It mints only bounded 15-minute role-bound invitations; player
     issuance revokes prior seat invitations and their tickets, spectator claims
@@ -402,6 +404,9 @@ Release requires all of the following:
     response is recoverable. Final WebSocket admission atomically consumes the
     invitation and every linked ticket, and replay is rejected across authority,
     persistence, HTTP, hub-recovery, and client-bootstrap tests.
+    Solo admission persists a one-player ceiling, atomically retires losing-seat
+    credentials after the first claim, permits the winning resume and spectators,
+    and rejects a second player through direct, invitation, and ticket paths.
 25. New-room initialization atomically persists its snapshot, unclaimed
     lifecycle, and five-minute alarm; first admission atomically claims it and
     cancels expiry. Early, duplicate, failed-deletion, stale-marker, malformed,
@@ -463,6 +468,8 @@ Inject failure at each boundary:
 | Room process eviction/hibernation                          | Wake restores identical hash, roles, sequence frontiers, and visibility generations          |
 | Send fails for one connection                              | Other recipients progress; failed client recovers by snapshot                                |
 | Connection supersession race                               | Exactly one controlling connection remains per seat                                          |
+| Forged admission kind/delta or credential binding          | Candidate and predecessor remain unchanged; no admission journal row is written              |
+| Migrated solo snapshot with two player sessions            | Restore fails closed before frontier repair or any new write                                 |
 | Import/conversion fails at action N                        | Current match unchanged; report format/version/action/reason                                 |
 | Storage quota/unavailable                                  | Command is rejected retryably before acknowledgement; no phantom acceptance                  |
 

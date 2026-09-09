@@ -16,6 +16,15 @@ invitation and ticket in the same durable transaction that creates the session
 and rotates to a separate resume capability. Raw invitation, ticket, seat,
 spectator, and resume credentials never enter canonical state.
 
+Admission state persists a mode-bound player-seat ceiling (`1` for solo, `2`
+for multiplayer). A first solo claim atomically removes all credentials for the
+other canonical seat while preserving spectators and resume. Snapshot
+invariants require every player session to be its seat's durable claim and
+forbid multiple active player sessions in solo. The persistence-facing
+transaction validator binds each declared admission kind to its exact
+predecessor, including credential role/name, session, seat, history, and state
+deltas.
+
 Presentation facts are derived from the matching resulting canonical revision.
 They retain trusted actor/viewer attribution and semantic source detail, but a
 card name is emitted only for a single-card reveal already visible to the

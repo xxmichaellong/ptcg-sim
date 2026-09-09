@@ -68,6 +68,8 @@ export const handleAdmissionTicketRequest = async (
         return json({ error: 'invalid_request' }, 400);
       case 'invalid_capability':
         return json({ error: 'admission_rejected' }, 403);
+      case 'seat_unavailable':
+        return json({ error: 'seat_unavailable' }, 409);
       case 'room_not_ready':
         return json({ error: 'room_not_ready' }, 409);
       case 'ticket_capacity':

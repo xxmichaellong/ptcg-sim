@@ -161,4 +161,24 @@ describe('admission ticket HTTP boundary', () => {
     expect(response.headers.get('Retry-After')).toBe('19');
     expect(await response.json()).toEqual({ error: 'rate_limited' });
   });
+
+  it('reports a durably unavailable player seat without issuing a ticket', async () => {
+    const response = await handleAdmissionTicketRequest(
+      request(
+        JSON.stringify({
+          capability,
+          displayName: 'Second player',
+          requestedRole: 'player',
+        })
+      ),
+      async () => ({
+        accepted: false,
+        code: 'seat_unavailable',
+        snapshot,
+      })
+    );
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ error: 'seat_unavailable' });
+  });
 });

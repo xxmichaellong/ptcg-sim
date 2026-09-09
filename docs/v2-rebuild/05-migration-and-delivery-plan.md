@@ -568,6 +568,10 @@ Work:
   creator bootstrap, non-serializing master-credential custody, and bounded
   digest-only 15-minute guest invitations. Invitation-to-ticket retries rotate
   the prior ticket; final socket admission atomically consumes both records.
+  Schema v7 additionally persists a mode-bound one-player ceiling for solo
+  rooms. The first claim retires all losing-seat credentials; every player
+  session must be the durable claim for its seat; and the persistence adapter
+  validates each admission kind against the exact predecessor before writing.
   Resolve ADR-020 before presenting or moving the handoff between browsers or
   wiring the lobby.
 - Retain the implemented layered abuse controls: a coarse location-local edge
@@ -600,6 +604,8 @@ Exit gate:
 - pending interactions recover cleanly from rejection/disconnect;
 - spectator and coaching parity matrices pass;
 - rate/size/abuse tests pass without harming a normal room.
+- solo replay disclosure is reachable only through a durably single-player room
+  and a second human cannot claim the other canonical board.
 
 Rollback: disable v2 multiplayer room creation; solo v2 may remain available if
 approved. Active v2 rooms may finish or receive a maintenance close with a v2
