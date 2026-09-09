@@ -104,6 +104,42 @@ describe('Cloudflare Worker runtime', () => {
     expect(evidence.alarm).toBeGreaterThan(Date.now());
   });
 
+  it('creates a real solo room without releasing a second-player bearer', async () => {
+    const created = await createRoom('solo');
+    const beforeAdmission = await runtimeEvidence(created);
+
+    expect(created).toMatchObject({ mode: 'solo' });
+    expect(created.credentials).not.toHaveProperty('playerTwoSeatCapability');
+    expect(beforeAdmission.snapshot).toMatchObject({
+      mode: 'solo',
+      admission: { playerSeatLimit: 1 },
+    });
+    await expect(issuePlayerTicket(created, 'two')).rejects.toThrow(
+      'no second-player bearer'
+    );
+
+    const ticket = await issuePlayerTicket(
+      created,
+      'one',
+      'Solo Runtime Player'
+    );
+    const socket = await connect(created);
+    const welcomePromise = nextServerMessage(socket);
+    socket.send(helloFrame(created, ticket, 'Solo Runtime Player'));
+    const welcome = await welcomePromise;
+
+    if (welcome.type !== 'Welcome') {
+      throw new Error(`Expected solo Welcome: ${JSON.stringify(welcome)}`);
+    }
+    expect(welcome).toMatchObject({ type: 'Welcome', role: 'player' });
+    const afterAdmission = await runtimeEvidence(created);
+    expect(afterAdmission.snapshot?.mode).toBe('solo');
+    expect(afterAdmission.snapshot?.admission?.playerSeatLimit).toBe(1);
+    expect(Object.values(afterAdmission.snapshot?.sessions ?? {})).toHaveLength(
+      1
+    );
+  });
+
   it('reschedules an early alarm and deletes an expired unclaimed room', async () => {
     const created = await createRoom();
     const room = roomStub(created);

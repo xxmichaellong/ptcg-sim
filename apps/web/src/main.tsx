@@ -20,6 +20,8 @@ const DevRoomHost = import.meta.env.DEV
 
 const parameters = new URLSearchParams(window.location.search);
 const rendererKind = readRendererKind(parameters.get('renderer'));
+const roomMode =
+  parameters.get('room-mode') === 'solo' ? 'solo' : 'multiplayer';
 const devRoomRequested =
   DevRoomHost !== null && parameters.get('dev-room') === '1';
 
@@ -36,6 +38,7 @@ createRoot(root).render(
       >
         <DevRoomHost
           displayName={parameters.get('name')?.trim() || 'Developer'}
+          mode={roomMode}
           rendererKind={rendererKind}
         />
       </Suspense>

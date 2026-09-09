@@ -12,9 +12,11 @@ const CARD_BACK_SHA256 =
   '44a5ffdcd9df23d3322250da733099c2c29c984362260efc5914a5a8745fa327';
 
 interface CreatedRoom {
+  readonly mode: string;
   readonly roomCode: string;
   readonly credentials: {
     readonly playerOneSeatCapability: string;
+    readonly playerTwoSeatCapability: string;
   };
 }
 
@@ -195,7 +197,13 @@ test('built SPA and room authority share one production-like Worker origin', asy
       creationStatus: creation.status,
       creationType: creation.headers.get('Content-Type'),
       creationCache: creation.headers.get('Cache-Control'),
+      creationMode: created.mode,
       roomCodeShape: /^[A-HJ-NP-Z2-9]{12}$/u.test(created.roomCode),
+      secondSeatBearerShape:
+        created.credentials.playerTwoSeatCapability.length >= 32,
+      seatBearersDistinct:
+        created.credentials.playerOneSeatCapability !==
+        created.credentials.playerTwoSeatCapability,
       admissionStatus: admission.status,
       admissionType: admission.headers.get('Content-Type'),
       admissionCache: admission.headers.get('Cache-Control'),
@@ -207,7 +215,10 @@ test('built SPA and room authority share one production-like Worker origin', asy
     creationStatus: 201,
     creationType: 'application/json',
     creationCache: 'no-store, max-age=0',
+    creationMode: 'multiplayer',
     roomCodeShape: true,
+    secondSeatBearerShape: true,
+    seatBearersDistinct: true,
     admissionStatus: 201,
     admissionType: 'application/json',
     admissionCache: 'no-store, max-age=0',

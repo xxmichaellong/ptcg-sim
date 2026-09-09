@@ -9,11 +9,14 @@ spectator capability through a same-origin, no-store POST and constructs the
 room runtime with only the returned short-lived ticket. Neither credential is
 placed in a URL, browser storage, DOM, React state, or log. The bootstrap returns
 the lazy `RemoteRoomRoute` input. `RemoteRoomCreation` now validates lobby input,
-creates a room through a strict bounded same-origin POST, immediately bootstraps
-the creator, and keeps the player-two and spectator master credentials in
-non-serializing in-memory custody. Callers can mint bounded 15-minute one-use
-invitation handoffs without receiving those master credentials. Player
-invitations rotate; spectator invitations are independently bounded. The guest
+creates an explicitly solo or multiplayer room through a strict bounded
+same-origin POST, immediately bootstraps the creator, and keeps any player-two
+and spectator master credentials in non-serializing in-memory custody. A solo
+response never carries a player-two bearer, so its custody rejects player
+invitation requests locally without network traffic. Multiplayer callers can
+mint bounded 15-minute one-use player handoffs; both modes may mint spectator
+handoffs when spectator custody exists. Player invitations rotate; spectator
+invitations are independently bounded. The guest
 bootstrap validates an untrusted handoff and exchanges its invitation through
 the existing short-lived ticket boundary. `main.tsx` selects the renderer spike
 for normal traffic until ADR-020 chooses how that handoff moves between browsers
@@ -39,6 +42,10 @@ not create an abandoned duplicate room. The Vite proxy forwards only
 the web app. Override the Worker origin with `PTCGSIM_V2_SERVER_ORIGIN` when it
 is not listening at `http://127.0.0.1:8787`.
 
+Add `&room-mode=solo` to exercise persisted single occupancy and solo replay;
+the hidden route defaults to `multiplayer`. This is development-only protocol
+coverage, not a visible mode selector.
+
 This seam is deliberately available only under `import.meta.env.DEV`; it does
 not choose an ADR-020 invitation transport or expose the player-two/spectator
 credentials. The production bundle gate rejects any source provenance under
@@ -48,8 +55,10 @@ The Chromium suite starts both Wrangler and Vite and drives this route over the
 real same-origin HTTP/WebSocket proxy. It verifies health, room creation,
 admission-ticket exchange, a ready projected session and DOM board, a
 bidirectional server notice, credential-free request URLs, and clean socket
-closure. The separate in-process churn gate retains the stronger 20-cycle
-ownership/teardown proof.
+closure. Its solo case additionally proves the exact creation request/response,
+absence of player-two custody, real load/setup commands, and replay-local prize
+disclosure without changing the live view. The separate in-process churn gate
+retains the stronger 20-cycle ownership/teardown proof.
 
 Both screens preserve the v1 75.5% board / 24% side-panel split. The room screen
 mounts the effective live/replay board, multiplayer/replay activity surface,

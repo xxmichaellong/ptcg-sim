@@ -195,8 +195,11 @@ traces are retained as a 14-day artifact. Browser binaries are not cached.
   and the ADR-020 second-browser invitation path remain outstanding.
 - Schema-v7 admission now makes solo replay disclosure structurally safe by
   persisting a one-player ceiling and rejecting a second human through every
-  credential path. Visible solo room creation is still unwired; it must select
-  this persisted mode at creation rather than infer safety from live sockets.
+  credential path. The protocol, Worker, client bootstrap, and hidden
+  development harness now select that persisted mode at creation and exercise
+  real solo replay. A visible production mode selector remains deliberately
+  unwired; it must reuse this explicit request rather than infer safety from
+  live sockets.
 - The keyboard parity lane includes a deny-by-default real-v1 oracle for Enter,
   Alt-Enter, and Slash loose-board actions plus a selected-DOM candidate case.
   The source pages pin destination and shuffled-deck arrays, outer action and

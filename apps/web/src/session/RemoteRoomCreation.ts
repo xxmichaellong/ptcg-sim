@@ -3,6 +3,8 @@ import {
   parseRoomInvitationHandoff,
   parseRoomInvitationIssueRequest,
   parseRoomInvitationIssueResponse,
+  type RoomCreationRequest,
+  type RoomCreationResponse,
   type RoomInvitationHandoff,
 } from '@ptcgsim/protocol';
 
@@ -35,6 +37,7 @@ export class RemoteRoomCreationError extends Error {
 export interface RemoteRoomCreationInput {
   readonly buildId: string;
   readonly displayName: string;
+  readonly mode: RoomCreationRequest['mode'];
   readonly rendererKind: RendererKind;
   readonly signal?: AbortSignal;
 }
@@ -57,7 +60,7 @@ export class RemoteRoomInvitationError extends Error {
 
 export interface RemoteRoomInvitationCustodyOptions {
   readonly roomCode: string;
-  readonly playerCapability: string;
+  readonly playerCapability?: string;
   readonly spectatorCapability?: string;
   readonly fetch: typeof globalThis.fetch;
   readonly origin: URL;
@@ -67,7 +70,7 @@ export interface RemoteRoomInvitationCustodyOptions {
 
 /**
  * Non-serializable custody that mints bounded one-time invitations without
- * releasing the long-lived player-two or spectator credentials to callers.
+ * releasing any long-lived player-two or spectator credentials to callers.
  */
 export class RemoteRoomInvitationCustody {
   readonly #roomCode: string;
@@ -197,6 +200,7 @@ export interface RemoteRoomCreationDependencies {
 }
 
 export interface RemoteRoomCreationResult extends RemoteRoomBootstrapResult {
+  readonly mode: RoomCreationRequest['mode'];
   readonly invitations: RemoteRoomInvitationCustody;
   readonly dispose: () => void;
 }
@@ -245,20 +249,19 @@ const validInput = (input: RemoteRoomCreationInput): boolean => {
     input.buildId.length <= 128 &&
     displayName.length >= 1 &&
     displayName.length <= 64 &&
+    (input.mode === 'solo' || input.mode === 'multiplayer') &&
     (input.rendererKind === 'pixi' || input.rendererKind === 'dom')
   );
 };
 
-const distinctCredentials = (credentials: {
-  readonly playerOneSeatCapability: string;
-  readonly playerTwoSeatCapability: string;
-  readonly spectatorCapability?: string;
-}): boolean => {
+const distinctCredentials = (response: RoomCreationResponse): boolean => {
   const values = [
-    credentials.playerOneSeatCapability,
-    credentials.playerTwoSeatCapability,
-    ...(credentials.spectatorCapability
-      ? [credentials.spectatorCapability]
+    response.credentials.playerOneSeatCapability,
+    ...(response.mode === 'multiplayer'
+      ? [response.credentials.playerTwoSeatCapability]
+      : []),
+    ...(response.credentials.spectatorCapability
+      ? [response.credentials.spectatorCapability]
       : []),
   ];
   return new Set(values).size === values.length;
@@ -286,7 +289,7 @@ export const createRemoteRoom = async (
     response = await fetchImplementation(new URL('/v2/rooms', origin), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: '{}',
+      body: JSON.stringify({ mode: input.mode }),
       cache: 'no-store',
       credentials: 'omit',
       redirect: 'error',
@@ -307,16 +310,24 @@ export const createRemoteRoom = async (
     throw new RemoteRoomCreationError('invalid_response');
   }
   const parsed = parseRoomCreationResponse(responseBody.value);
-  if (!parsed.ok || !distinctCredentials(parsed.value.credentials)) {
+  if (
+    !parsed.ok ||
+    parsed.value.mode !== input.mode ||
+    !distinctCredentials(parsed.value)
+  ) {
     throw new RemoteRoomCreationError('invalid_response');
   }
 
+  const playerCapability =
+    parsed.value.mode === 'multiplayer'
+      ? parsed.value.credentials.playerTwoSeatCapability
+      : undefined;
   const { roomCode, credentials } = parsed.value;
   const now =
     dependencies.now ?? dependencies.bootstrapDependencies?.now ?? Date.now;
   const invitations = new RemoteRoomInvitationCustody({
     roomCode,
-    playerCapability: credentials.playerTwoSeatCapability,
+    ...(playerCapability ? { playerCapability } : {}),
     ...(credentials.spectatorCapability
       ? { spectatorCapability: credentials.spectatorCapability }
       : {}),
@@ -346,6 +357,7 @@ export const createRemoteRoom = async (
     let disposed = false;
     return {
       ...result,
+      mode: parsed.value.mode,
       invitations,
       dispose: () => {
         if (disposed) return;

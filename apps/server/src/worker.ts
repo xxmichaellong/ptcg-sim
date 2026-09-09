@@ -4,7 +4,11 @@ import {
   RoomAuthorityCoordinator,
   type RoomAuthoritySnapshot,
 } from '@ptcgsim/room-authority';
-import { PROTOCOL_VERSION, type RoomCreationResponse } from '@ptcgsim/protocol';
+import {
+  PROTOCOL_VERSION,
+  type RoomCreationRequest,
+  type RoomCreationResponse,
+} from '@ptcgsim/protocol';
 
 import { handleAdmissionTicketRequest } from './admission-ticket-http.js';
 import {
@@ -139,7 +143,10 @@ export class PtcgRoom extends DurableObject<Env> {
     this.runtimePromise = this.restoreRuntime();
   }
 
-  async initialize(roomCodeValue: string): Promise<InitializedRoom> {
+  async initialize(
+    roomCodeValue: string,
+    mode: RoomCreationRequest['mode']
+  ): Promise<InitializedRoom> {
     const existing = await this.store.load();
     if (existing) throw new RoomAlreadyInitializedError();
     const startedAt = performance.now();
@@ -148,6 +155,7 @@ export class PtcgRoom extends DurableObject<Env> {
       created = await initializeNewRoom(
         {
           matchId: roomCodeValue,
+          mode,
           playerOneCardBackUrl: '/v2/assets/cardback.png',
           playerTwoCardBackUrl: '/v2/assets/cardback.png',
           spectatorsAllowed: true,
@@ -171,7 +179,21 @@ export class PtcgRoom extends DurableObject<Env> {
       activeSockets: 0,
       durationMs: performance.now() - startedAt,
     });
-    return { roomCode: roomCodeValue, credentials: created.credentials };
+    if (mode === 'solo') {
+      return {
+        mode,
+        roomCode: roomCodeValue,
+        credentials: {
+          playerOneSeatCapability: created.credentials.playerOneSeatCapability,
+          ...(created.credentials.spectatorCapability
+            ? {
+                spectatorCapability: created.credentials.spectatorCapability,
+              }
+            : {}),
+        },
+      };
+    }
+    return { mode, roomCode: roomCodeValue, credentials: created.credentials };
   }
 
   override async fetch(request: Request): Promise<Response> {
@@ -462,12 +484,12 @@ const worker: ExportedHandler<Env> = {
       return observeHttp(telemetry, 'room_creation', () =>
         handleRoomCreationRequest(
           request,
-          async () => {
+          async ({ mode }) => {
             for (let attempt = 0; attempt < 8; attempt += 1) {
               const code = roomCode();
               const stub = env.PTCG_ROOM.getByName(code);
               try {
-                return await stub.initialize(code);
+                return await stub.initialize(code, mode);
               } catch (error) {
                 if (isRoomAlreadyInitialized(error)) continue;
                 throw error;

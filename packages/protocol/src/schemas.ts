@@ -30,16 +30,31 @@ const RoomCodeSchema = v.pipe(
   v.regex(V2_ROOM_CODE_PATTERN, 'Invalid room code')
 );
 
-export const RoomCreationRequestSchema = v.strictObject({});
+const RoomModeSchema = v.picklist(['solo', 'multiplayer'] as const);
 
-export const RoomCreationResponseSchema = v.strictObject({
-  roomCode: RoomCodeSchema,
-  credentials: v.strictObject({
-    playerOneSeatCapability: CapabilitySchema,
-    playerTwoSeatCapability: CapabilitySchema,
-    spectatorCapability: v.optional(CapabilitySchema),
-  }),
+export const RoomCreationRequestSchema = v.strictObject({
+  mode: v.optional(RoomModeSchema, 'multiplayer'),
 });
+
+export const RoomCreationResponseSchema = v.variant('mode', [
+  v.strictObject({
+    mode: v.literal('solo'),
+    roomCode: RoomCodeSchema,
+    credentials: v.strictObject({
+      playerOneSeatCapability: CapabilitySchema,
+      spectatorCapability: v.optional(CapabilitySchema),
+    }),
+  }),
+  v.strictObject({
+    mode: v.literal('multiplayer'),
+    roomCode: RoomCodeSchema,
+    credentials: v.strictObject({
+      playerOneSeatCapability: CapabilitySchema,
+      playerTwoSeatCapability: CapabilitySchema,
+      spectatorCapability: v.optional(CapabilitySchema),
+    }),
+  }),
+]);
 
 export const RoomInvitationIssueRequestSchema = v.strictObject({
   capability: CapabilitySchema,

@@ -416,15 +416,21 @@ room runtime.
 Anonymous guest play can remain. It still requires unguessable seat/reconnect
 capabilities rather than trusting a display name.
 
-The implemented creation boundary accepts only an empty, bounded, strict,
-same-origin JSON `POST` to `/v2/rooms`; room configuration remains server-owned.
-It returns a runtime-validated, `no-store` room code plus three distinct
-high-entropy credentials only after durable initialization. A faulty entropy
-source cannot persist duplicate or out-of-bounds credentials. The browser
-validates its lobby input before creation, immediately exchanges the creator's
-seat credential, and retains the player-two and spectator master credentials
-only in a non-serializing in-memory custodian. That custodian can mint a
-15-minute role-bound handoff via a second strict, bounded, same-origin `POST` to
+The implemented creation boundary accepts a bounded, strict, same-origin JSON
+`POST` to `/v2/rooms` with an exact `solo` or `multiplayer` mode; `{}` defaults
+to multiplayer for the existing caller contract. Mode is persisted during the
+same durable initialization that installs the matching one- or two-player seat
+ceiling. The runtime-validated, `no-store` response returns the room code,
+creator credential, optional spectator credential, explicit mode, and a
+player-two credential only for multiplayer. A faulty entropy source cannot
+persist duplicate or out-of-bounds credentials, and a mismatched mode/result
+pair fails closed at both server and browser boundaries. The browser validates
+its lobby input before creation, immediately exchanges the creator's seat
+credential, and retains any player-two and spectator master credentials only in
+a non-serializing in-memory custodian. Solo creation never releases a
+player-two bearer, so its custodian rejects player invitation issuance locally.
+The custodian can mint a 15-minute role-bound handoff via a second strict,
+bounded, same-origin `POST` to
 `/v2/rooms/:roomCode/invitations` without returning the master credential to its
 caller. Player issuance rotates the prior invitation for that seat; spectator
 issuance creates distinct invitations up to the room cap. Creation, issue, and

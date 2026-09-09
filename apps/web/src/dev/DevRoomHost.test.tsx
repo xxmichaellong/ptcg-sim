@@ -59,7 +59,13 @@ describe('DevRoomHost ownership', () => {
     const root = createRoot(host);
 
     await act(async () => {
-      root.render(<DevRoomHost displayName=" Blue " rendererKind="dom" />);
+      root.render(
+        <DevRoomHost
+          displayName=" Blue "
+          mode="multiplayer"
+          rendererKind="dom"
+        />
+      );
       await flushEffects();
     });
 
@@ -69,6 +75,7 @@ describe('DevRoomHost ownership', () => {
     expect(input).toMatchObject({
       buildId: 'local-development',
       displayName: ' Blue ',
+      mode: 'multiplayer',
       rendererKind: 'dom',
     });
     expect(input?.signal?.aborted).toBe(false);
@@ -97,7 +104,11 @@ describe('DevRoomHost ownership', () => {
     await act(async () => {
       root.render(
         <StrictMode>
-          <DevRoomHost displayName="Blue" rendererKind="dom" />
+          <DevRoomHost
+            displayName="Blue"
+            mode="multiplayer"
+            rendererKind="dom"
+          />
         </StrictMode>
       );
       await flushEffects();
@@ -121,7 +132,9 @@ describe('DevRoomHost ownership', () => {
     const root = createRoot(host);
 
     await act(async () => {
-      root.render(<DevRoomHost displayName="Blue" rendererKind="dom" />);
+      root.render(
+        <DevRoomHost displayName="Blue" mode="multiplayer" rendererKind="dom" />
+      );
       await flushEffects();
     });
 
@@ -143,7 +156,9 @@ describe('DevRoomHost ownership', () => {
     const root = createRoot(host);
 
     await act(async () => {
-      root.render(<DevRoomHost displayName="Blue" rendererKind="dom" />);
+      root.render(
+        <DevRoomHost displayName="Blue" mode="multiplayer" rendererKind="dom" />
+      );
       await flushEffects();
     });
 
@@ -172,9 +187,13 @@ describe('DevRoomHost ownership', () => {
     const secondRoot = createRoot(secondHost);
 
     await act(async () => {
-      firstRoot.render(<DevRoomHost displayName="One" rendererKind="dom" />);
+      firstRoot.render(
+        <DevRoomHost displayName="One" mode="multiplayer" rendererKind="dom" />
+      );
       await flushEffects();
-      secondRoot.render(<DevRoomHost displayName="Two" rendererKind="dom" />);
+      secondRoot.render(
+        <DevRoomHost displayName="Two" mode="multiplayer" rendererKind="dom" />
+      );
       await flushEffects();
     });
     expect((globalThis as Record<string, unknown>)['__ptcgsimDevRoom']).toBe(

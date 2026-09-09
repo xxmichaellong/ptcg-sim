@@ -216,6 +216,7 @@ const fixture = async (mode: 'solo' | 'multiplayer' = 'multiplayer') => {
   const initialized = await initializeNewRoom(
     {
       matchId: 'multiplayer-client-contract',
+      mode,
       playerOneCardBackUrl: '/blue.png',
       playerTwoCardBackUrl: '/red.png',
       spectatorsAllowed: true,
@@ -224,14 +225,7 @@ const fixture = async (mode: 'solo' | 'multiplayer' = 'multiplayer') => {
     cryptoSource,
     10_000
   );
-  const authoritySnapshot: RoomAuthoritySnapshot = {
-    ...initialized.snapshot,
-    mode,
-    admission: {
-      ...initialized.snapshot.admission!,
-      playerSeatLimit: mode === 'solo' ? 1 : 2,
-    },
-  };
+  const authoritySnapshot: RoomAuthoritySnapshot = initialized.snapshot;
   store.snapshot = authoritySnapshot;
   const coordinator = new RoomAuthorityCoordinator(authoritySnapshot, store, {
     commandContext: cryptoSource,

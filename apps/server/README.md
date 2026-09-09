@@ -49,7 +49,10 @@ and fully validate their predecessor, verify that the declared admission kind
 alone explains the candidate delta, and pair lifecycle/alarm changes with the
 same write. Schema-v7 admission also persists the mode-bound player-seat limit;
 solo accepts one player session while preserving spectators and the winner's
-resume. Expiry validates the pair before lifecycle repair or deletion.
+resume. The strict creation request defaults `{}` to multiplayer or accepts an
+explicit `solo`; a solo response withholds the unusable second-seat bearer even
+though the authority retains both canonical boards and their private digests.
+Expiry validates the pair before lifecycle repair or deletion.
 
 Neither proof is a security credential, portable signature, durable field, or
 wire value. Missing, forged, stale, reused, cross-room, mutated, or mismatched
@@ -64,7 +67,8 @@ schemas are unchanged; only the local performance artifact advances to v3.
 
 `pnpm run test:runtime` executes the isolated Cloudflare runtime suite through
 `@cloudflare/vitest-plugin`. It covers the deployed Worker boundary, SQLite
-Durable Object storage and alarms, WebSocket admission, real eviction with a
+Durable Object storage and alarms, explicit solo creation plus single-player
+admission, WebSocket admission, real eviction with a
 hibernated socket, attachment reconstruction, concurrent admission/command
 traffic, pre-commit and ambiguous post-commit persistence failures, exact
 retries, payload/resource envelopes, and post-wake idempotency. The

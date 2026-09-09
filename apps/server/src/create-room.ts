@@ -13,7 +13,6 @@ import {
   type AdmissionCrypto,
   type RoomAuthoritySnapshot,
 } from '@ptcgsim/room-authority';
-import type { RoomCreationResponse } from '@ptcgsim/protocol';
 
 export interface RoomCreationCrypto extends AdmissionCrypto {
   readonly nextPlayerId: () => string;
@@ -35,12 +34,17 @@ export const DEFAULT_UNCLAIMED_ROOM_LIFETIME_MS = 5 * 60_000;
 
 export interface NewRoomInput {
   readonly matchId: string;
+  readonly mode: RoomAuthoritySnapshot['mode'];
   readonly playerOneCardBackUrl: string;
   readonly playerTwoCardBackUrl: string;
   readonly spectatorsAllowed: boolean;
 }
 
-export type NewRoomCredentials = RoomCreationResponse['credentials'];
+export interface NewRoomCredentials {
+  readonly playerOneSeatCapability: string;
+  readonly playerTwoSeatCapability: string;
+  readonly spectatorCapability?: string;
+}
 
 const nextDistinctPlayerIds = (
   cryptoSource: RoomCreationCrypto
@@ -105,6 +109,9 @@ export const initializeNewRoom = async (
   readonly snapshot: RoomAuthoritySnapshot;
   readonly credentials: NewRoomCredentials;
 }> => {
+  if (input.mode !== 'solo' && input.mode !== 'multiplayer') {
+    throw new Error('Room mode is invalid');
+  }
   if (input.matchId.length < 1 || input.matchId.length > 128) {
     throw new Error('Match ID must be a bounded non-empty string');
   }
@@ -160,7 +167,7 @@ export const initializeNewRoom = async (
   const snapshot: RoomAuthoritySnapshot = {
     schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
     authorityVersion: 0,
-    mode: 'multiplayer',
+    mode: input.mode,
     state,
     soloUndoHistory: {
       baseState: null,
@@ -171,7 +178,7 @@ export const initializeNewRoom = async (
     identities: emptyProjectionIdentityState(),
     sessions: {},
     admission: createRoomAdmissionState({
-      playerSeatLimit: 2,
+      playerSeatLimit: input.mode === 'solo' ? 1 : 2,
       playerIds: [playerOneId, playerTwoId],
       seatCapabilityDigests: {
         [playerOneId]: playerOneDigest,

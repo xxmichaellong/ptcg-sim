@@ -1296,13 +1296,14 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
 74. The route-owned renderer viewport lifecycle now funnels host resize, window
     resize, resolution-media changes, and visible-document resume through one
     request-animation-frame scheduler. A synchronous signal burst cannot queue
-    duplicate work; each committed reconciliation rereads window dimensions and
-    DPR, then rearms the resolution query for the next monitor. Teardown cancels
-    the frame and removes the observer plus all window, document, and media
-    listeners. A browser gate reproduces the former same-CSS-size DPR 1→2 stale
-    scene, verifies the corrected outer/scene DPR without replacing the renderer
-    or its 61 cards, pins one commit for 25 simultaneous signals, collapses and
-    restores a zero-paint-size host safely, and exercises hidden→visible DPR
+    duplicate work; each reconciliation rereads window dimensions and DPR, skips
+    the renderer when both the view and outer viewport are unchanged, and rearms
+    the resolution query after an actual commit. Teardown cancels the frame and
+    removes the observer plus all window, document, and media listeners. A browser
+    gate reproduces the former same-CSS-size DPR 1→2 stale scene, verifies the
+    corrected outer/scene DPR without replacing the renderer or its 61 cards,
+    pins zero commits for 25 unchanged signals, collapses and restores a
+    zero-paint-size host safely, and exercises hidden→visible DPR
     resynchronization. Chromium CDP changes query matches without emitting its
     normal media event, so the test injects only that missing event while
     retaining the real query and device-metrics transition. Unit coverage pins

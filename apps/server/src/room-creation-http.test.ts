@@ -12,7 +12,8 @@ const playerOneSeatCapability =
 const playerTwoSeatCapability =
   'player-two-capability-never-reflected-0000000002';
 const spectatorCapability = 'spectator-capability-never-reflected-00000000003';
-const created: RoomCreationResponse = {
+const created: Extract<RoomCreationResponse, { mode: 'multiplayer' }> = {
+  mode: 'multiplayer',
   roomCode: 'ABCDEFGH2345',
   credentials: {
     playerOneSeatCapability,
@@ -39,12 +40,13 @@ const request = (
 const acceptedCreator = (): RoomCreator => vi.fn(async () => created);
 
 describe('room creation HTTP boundary', () => {
-  it('accepts only an empty same-origin JSON request and returns no-store credentials', async () => {
+  it('defaults an empty same-origin JSON request to multiplayer and returns no-store credentials', async () => {
     const create = acceptedCreator();
     const response = await handleRoomCreationRequest(request('{}'), create);
 
     expect(response.status).toBe(201);
     expect(create).toHaveBeenCalledOnce();
+    expect(create).toHaveBeenCalledWith({ mode: 'multiplayer' });
     expect(await response.json()).toEqual(created);
     expect(response.headers.get('Cache-Control')).toContain('no-store');
     expect(response.headers.get('Content-Security-Policy')).toContain(
@@ -54,7 +56,7 @@ describe('room creation HTTP boundary', () => {
     expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
   });
 
-  it('rejects cross-origin, non-JSON, non-empty, malformed, encoded, queried, and oversized requests', async () => {
+  it('rejects cross-origin, non-JSON, unsupported, malformed, encoded, queried, and oversized requests', async () => {
     const create = acceptedCreator();
     const responses = await Promise.all([
       handleRoomCreationRequest(
@@ -89,6 +91,31 @@ describe('room creation HTTP boundary', () => {
       403, 415, 400, 400, 415, 400, 413,
     ]);
     expect(create).not.toHaveBeenCalled();
+  });
+
+  it('passes an explicit solo mode and rejects a mismatched creation result', async () => {
+    const solo: Extract<RoomCreationResponse, { mode: 'solo' }> = {
+      mode: 'solo',
+      roomCode: created.roomCode,
+      credentials: {
+        playerOneSeatCapability,
+        spectatorCapability,
+      },
+    };
+    const create = vi.fn(async () => solo);
+    const accepted = await handleRoomCreationRequest(
+      request('{"mode":"solo"}'),
+      create
+    );
+    const mismatched = await handleRoomCreationRequest(
+      request('{"mode":"solo"}'),
+      async () => created
+    );
+
+    expect(accepted.status).toBe(201);
+    expect(create).toHaveBeenCalledWith({ mode: 'solo' });
+    expect(await accepted.json()).toEqual(solo);
+    expect(mismatched.status).toBe(503);
   });
 
   it('advertises POST for other methods without invoking creation', async () => {

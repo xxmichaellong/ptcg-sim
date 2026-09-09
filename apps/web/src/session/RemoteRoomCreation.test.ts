@@ -19,6 +19,7 @@ const spectatorInvitation = 'spectator-invitation-share-token-0000000001';
 const input = {
   buildId: 'client-build',
   displayName: '  Blue  ',
+  mode: 'multiplayer' as const,
   rendererKind: 'pixi' as const,
 };
 
@@ -28,7 +29,7 @@ describe('remote room creation bootstrap', () => {
       .fn<typeof fetch>()
       .mockResolvedValueOnce(
         Response.json(
-          { roomCode: 'ABCDEFGH2345', credentials },
+          { mode: 'multiplayer', roomCode: 'ABCDEFGH2345', credentials },
           { status: 201 }
         )
       )
@@ -69,7 +70,7 @@ describe('remote room creation bootstrap', () => {
     expect(String(creationUrl)).toBe('https://play.example/v2/rooms');
     expect(creationInit).toMatchObject({
       method: 'POST',
-      body: '{}',
+      body: '{"mode":"multiplayer"}',
       cache: 'no-store',
       credentials: 'omit',
       redirect: 'error',
@@ -92,6 +93,7 @@ describe('remote room creation bootstrap', () => {
       runtime,
       rendererKind: 'pixi',
     });
+    expect(result.mode).toBe('multiplayer');
     expect(JSON.stringify(result)).not.toContain('capability-kept-in-memory');
 
     const player = await result.invitations.issuePlayerInvitation();
@@ -140,6 +142,7 @@ describe('remote room creation bootstrap', () => {
       { ...input, buildId: '' },
       { ...input, displayName: '   ' },
       { ...input, displayName: 'x'.repeat(65) },
+      { ...input, mode: 'coaching' as 'multiplayer' },
       { ...input, rendererKind: 'unknown' as 'pixi' },
     ]) {
       await expect(
@@ -168,6 +171,7 @@ describe('remote room creation bootstrap', () => {
         fetch: async () =>
           Response.json(
             {
+              mode: 'multiplayer',
               roomCode: 'ABCDEFGH2345',
               credentials: {
                 ...credentials,
@@ -211,7 +215,10 @@ describe('remote room creation bootstrap', () => {
 
   it('clears untaken invitations and redacts a failed owner bootstrap', async () => {
     const fetchImplementation = vi.fn(async () =>
-      Response.json({ roomCode: 'ABCDEFGH2345', credentials }, { status: 201 })
+      Response.json(
+        { mode: 'multiplayer', roomCode: 'ABCDEFGH2345', credentials },
+        { status: 201 }
+      )
     );
     let error: unknown;
     try {
@@ -228,6 +235,95 @@ describe('remote room creation bootstrap', () => {
     expect(error).toBeInstanceOf(RemoteRoomCreationError);
     expect(error).toMatchObject({ code: 'bootstrap_failed' });
     expect(String(error)).not.toContain(credentials.playerOneSeatCapability);
+  });
+
+  it('creates a solo room without retaining or issuing a second-player bearer', async () => {
+    const soloCredentials = {
+      playerOneSeatCapability: credentials.playerOneSeatCapability,
+      spectatorCapability: credentials.spectatorCapability,
+    };
+    const fetchImplementation = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        Response.json(
+          {
+            mode: 'solo',
+            roomCode: 'ABCDEFGH2345',
+            credentials: soloCredentials,
+          },
+          { status: 201 }
+        )
+      )
+      .mockResolvedValueOnce(
+        Response.json(
+          {
+            invitation: spectatorInvitation,
+            requestedRole: 'spectator',
+            expiresAt: 910_000,
+          },
+          { status: 201 }
+        )
+      );
+    const runtime = { dispose: vi.fn() } as unknown as RemoteRoomRuntime;
+    const bootstrap = vi.fn(async () => ({
+      runtime,
+      route: {
+        kind: 'remote-room' as const,
+        runtime,
+        rendererKind: 'pixi' as const,
+      },
+    }));
+
+    const result = await createRemoteRoom(
+      { ...input, mode: 'solo' },
+      {
+        fetch: fetchImplementation,
+        origin: 'https://play.example',
+        bootstrap,
+        now: () => 10_000,
+      }
+    );
+
+    expect(result.mode).toBe('solo');
+    expect(fetchImplementation.mock.calls[0]?.[1]?.body).toBe(
+      '{"mode":"solo"}'
+    );
+    await expect(
+      result.invitations.issuePlayerInvitation()
+    ).rejects.toMatchObject({ code: 'invalid_input' });
+    expect(fetchImplementation).toHaveBeenCalledOnce();
+    await expect(
+      result.invitations.issueSpectatorInvitation()
+    ).resolves.toMatchObject({ requestedRole: 'spectator' });
+    expect(fetchImplementation).toHaveBeenCalledTimes(2);
+    expect(JSON.stringify(result)).not.toContain(
+      credentials.playerTwoSeatCapability
+    );
+    result.dispose();
+  });
+
+  it('rejects a creation response whose mode differs from the request', async () => {
+    const bootstrap = vi.fn();
+    await expect(
+      createRemoteRoom(
+        { ...input, mode: 'solo' },
+        {
+          fetch: vi.fn(async () =>
+            Response.json(
+              {
+                mode: 'multiplayer',
+                roomCode: 'ABCDEFGH2345',
+                credentials,
+              },
+              { status: 201 }
+            )
+          ),
+          origin: 'https://play.example',
+          bootstrap,
+        }
+      )
+    ).rejects.toMatchObject({ code: 'invalid_response' });
+    expect(bootstrap).not.toHaveBeenCalled();
   });
 });
 

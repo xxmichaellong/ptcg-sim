@@ -1,6 +1,7 @@
 import {
   parseRoomCreationRequest,
   parseRoomCreationResponse,
+  type RoomCreationRequest,
   type RoomCreationResponse,
 } from '@ptcgsim/protocol';
 
@@ -14,10 +15,12 @@ import type { RequestRateLimitDecision } from './request-rate-limit.js';
 
 export const MAX_ROOM_CREATION_REQUEST_BYTES = 64;
 
-export type RoomCreator = () => Promise<RoomCreationResponse>;
+export type RoomCreator = (
+  input: RoomCreationRequest
+) => Promise<RoomCreationResponse>;
 export type RoomCreationRateLimit = () => Promise<RequestRateLimitDecision>;
 
-/** Strict browser-only creation endpoint; no creation options are client-owned. */
+/** Strict browser-only creation endpoint with an exact supported room mode. */
 export const handleRoomCreationRequest = async (
   request: Request,
   create: RoomCreator,
@@ -51,7 +54,8 @@ export const handleRoomCreationRequest = async (
       error instanceof RangeError ? 413 : 400
     );
   }
-  if (!parseRoomCreationRequest(body).ok) {
+  const parsedRequest = parseRoomCreationRequest(body);
+  if (!parsedRequest.ok) {
     return json({ error: 'invalid_request' }, 400);
   }
 
@@ -64,8 +68,12 @@ export const handleRoomCreationRequest = async (
         });
       }
     }
-    const created = parseRoomCreationResponse(await create());
-    if (!created.ok) throw new Error('invalid_room_creation_result');
+    const created = parseRoomCreationResponse(
+      await create(parsedRequest.value)
+    );
+    if (!created.ok || created.value.mode !== parsedRequest.value.mode) {
+      throw new Error('invalid_room_creation_result');
+    }
     return json(created.value, 201);
   } catch {
     return json({ error: 'internal_retryable' }, 503, { 'Retry-After': '1' });

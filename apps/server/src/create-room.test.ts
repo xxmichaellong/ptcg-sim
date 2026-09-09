@@ -17,6 +17,7 @@ describe('new durable room initialization', () => {
     const result = await initializeNewRoom(
       {
         matchId: 'ROOM_ABC123',
+        mode: 'multiplayer',
         playerOneCardBackUrl: '/cardback.png',
         playerTwoCardBackUrl: '/cardback.png',
         spectatorsAllowed: true,
@@ -41,12 +42,46 @@ describe('new durable room initialization', () => {
     );
   });
 
+  it('persists a single-player admission ceiling for a solo room', async () => {
+    let persisted: unknown;
+    const initialize = vi.fn(async (snapshot) => {
+      persisted = structuredClone(snapshot);
+    });
+    const result = await initializeNewRoom(
+      {
+        matchId: 'ROOM_SOLO',
+        mode: 'solo',
+        playerOneCardBackUrl: '/cardback.png',
+        playerTwoCardBackUrl: '/cardback.png',
+        spectatorsAllowed: true,
+      },
+      { initialize },
+      new WebCryptoAuthoritySource(),
+      10_000
+    );
+
+    expect(result.snapshot.mode).toBe('solo');
+    expect(result.snapshot.admission?.playerSeatLimit).toBe(1);
+    expect(result.snapshot.state.playerOrder).toHaveLength(2);
+    expect(
+      result.credentials.playerTwoSeatCapability.length
+    ).toBeGreaterThanOrEqual(32);
+    const serialized = JSON.stringify(persisted);
+    expect(serialized).not.toContain(
+      result.credentials.playerOneSeatCapability
+    );
+    expect(serialized).not.toContain(
+      result.credentials.playerTwoSeatCapability
+    );
+  });
+
   it('does not return credentials when durable initialization fails', async () => {
     const source = new WebCryptoAuthoritySource();
     await expect(
       initializeNewRoom(
         {
           matchId: 'ROOM_FAILURE',
+          mode: 'multiplayer',
           playerOneCardBackUrl: '/cardback.png',
           playerTwoCardBackUrl: '/cardback.png',
           spectatorsAllowed: false,
@@ -68,6 +103,7 @@ describe('new durable room initialization', () => {
       initializeNewRoom(
         {
           matchId: '',
+          mode: 'multiplayer',
           playerOneCardBackUrl: '/cardback.png',
           playerTwoCardBackUrl: '/cardback.png',
           spectatorsAllowed: false,
@@ -80,6 +116,29 @@ describe('new durable room initialization', () => {
     expect(initialize).not.toHaveBeenCalled();
   });
 
+  it('fails before entropy or persistence for an invalid runtime mode', async () => {
+    const initialize = vi.fn();
+    const source = new WebCryptoAuthoritySource();
+    const nextPlayerId = vi.spyOn(source, 'nextPlayerId');
+
+    await expect(
+      initializeNewRoom(
+        {
+          matchId: 'ROOM_INVALID_MODE',
+          mode: 'coaching' as 'solo',
+          playerOneCardBackUrl: '/cardback.png',
+          playerTwoCardBackUrl: '/cardback.png',
+          spectatorsAllowed: false,
+        },
+        { initialize },
+        source,
+        10_000
+      )
+    ).rejects.toThrow('Room mode');
+    expect(nextPlayerId).not.toHaveBeenCalled();
+    expect(initialize).not.toHaveBeenCalled();
+  });
+
   it('fails before entropy or persistence for an invalid lifecycle policy', async () => {
     const initialize = vi.fn();
     const source = new WebCryptoAuthoritySource();
@@ -89,6 +148,7 @@ describe('new durable room initialization', () => {
       initializeNewRoom(
         {
           matchId: 'ROOM_INVALID_LIFECYCLE',
+          mode: 'multiplayer',
           playerOneCardBackUrl: '/cardback.png',
           playerTwoCardBackUrl: '/cardback.png',
           spectatorsAllowed: false,
@@ -127,6 +187,7 @@ describe('new durable room initialization', () => {
     const result = await initializeNewRoom(
       {
         matchId: 'ROOM_RECOVERED',
+        mode: 'multiplayer',
         playerOneCardBackUrl: '/cardback.png',
         playerTwoCardBackUrl: '/cardback.png',
         spectatorsAllowed: true,
@@ -145,6 +206,7 @@ describe('new durable room initialization', () => {
       initializeNewRoom(
         {
           matchId: 'ROOM_REJECTED',
+          mode: 'multiplayer',
           playerOneCardBackUrl: '/cardback.png',
           playerTwoCardBackUrl: '/cardback.png',
           spectatorsAllowed: true,
@@ -163,6 +225,7 @@ describe('new durable room initialization', () => {
       initializeNewRoom(
         {
           matchId: 'ROOM_DIGEST_REJECTED',
+          mode: 'multiplayer',
           playerOneCardBackUrl: '/cardback.png',
           playerTwoCardBackUrl: '/cardback.png',
           spectatorsAllowed: true,

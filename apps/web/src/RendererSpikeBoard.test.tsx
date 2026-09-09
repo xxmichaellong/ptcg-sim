@@ -206,7 +206,7 @@ describe('RendererSpikeBoard application boundary', () => {
     expect(rendererHarness.destroy).toHaveBeenCalledOnce();
   });
 
-  it('coalesces viewport lifecycle signals and releases every listener', async () => {
+  it('coalesces viewport signals, suppresses unchanged work, and releases every listener', async () => {
     const listeners = new Set<EventListenerOrEventListenerObject>();
     const addResolutionListener = vi.fn(
       (type: string, listener: EventListenerOrEventListenerObject) => {
@@ -235,6 +235,10 @@ describe('RendererSpikeBoard application boundary', () => {
       },
     } as unknown as MediaQueryList;
     const nativeMatchMedia = globalThis.matchMedia;
+    const nativeDevicePixelRatio = Object.getOwnPropertyDescriptor(
+      window,
+      'devicePixelRatio'
+    );
     globalThis.matchMedia = vi.fn(() => mediaQuery);
     const removeWindowListener = vi.spyOn(window, 'removeEventListener');
     const removeDocumentListener = vi.spyOn(document, 'removeEventListener');
@@ -267,8 +271,25 @@ describe('RendererSpikeBoard application boundary', () => {
           requestAnimationFrame(() => resolve())
         );
       });
-      expect(rendererHarness.resize).toHaveBeenCalledTimes(1);
-      expect(rendererHarness.installScene).toHaveBeenCalledTimes(1);
+      expect(rendererHarness.resize).not.toHaveBeenCalled();
+      expect(rendererHarness.installScene).not.toHaveBeenCalled();
+
+      Object.defineProperty(window, 'devicePixelRatio', {
+        configurable: true,
+        value: 2,
+      });
+      await act(async () => {
+        mediaQuery.dispatchEvent(new Event('change'));
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => resolve())
+        );
+      });
+      expect(rendererHarness.resize).toHaveBeenCalledOnce();
+      expect(rendererHarness.installScene).toHaveBeenCalledOnce();
+      expect(
+        (rendererHarness.installScene.mock.calls[0]?.[0] as BoardScene).viewport
+          .devicePixelRatio
+      ).toBe(2);
 
       await act(async () => root.unmount());
       expect(removeWindowListener).toHaveBeenCalledWith(
@@ -279,7 +300,7 @@ describe('RendererSpikeBoard application boundary', () => {
         'visibilitychange',
         expect.any(Function)
       );
-      expect(removeResolutionListener).toHaveBeenCalledTimes(1);
+      expect(removeResolutionListener).toHaveBeenCalledTimes(2);
       expect(listeners.size).toBe(0);
 
       rendererHarness.resize.mockClear();
@@ -294,6 +315,15 @@ describe('RendererSpikeBoard application boundary', () => {
       removeWindowListener.mockRestore();
       removeDocumentListener.mockRestore();
       globalThis.matchMedia = nativeMatchMedia;
+      if (nativeDevicePixelRatio) {
+        Object.defineProperty(
+          window,
+          'devicePixelRatio',
+          nativeDevicePixelRatio
+        );
+      } else {
+        Reflect.deleteProperty(window, 'devicePixelRatio');
+      }
     }
   });
 });

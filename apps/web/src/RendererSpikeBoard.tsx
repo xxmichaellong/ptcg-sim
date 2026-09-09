@@ -11,6 +11,7 @@ import {
   type BoardPresentationUpdate,
   type BoardRenderer,
   type BoardRendererStatus,
+  type BoardViewport,
 } from '@ptcgsim/renderer-contract';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 import { useEffect, useRef, useState } from 'react';
@@ -62,6 +63,14 @@ const sceneForHost = (host: HTMLElement, view: MatchViewState) => {
     scene,
   };
 };
+
+const sameOuterViewport = (
+  left: BoardViewport,
+  right: BoardViewport
+): boolean =>
+  left.width === right.width &&
+  left.height === right.height &&
+  left.devicePixelRatio === right.devicePixelRatio;
 
 export const RendererSpikeBoard = ({
   view,
@@ -188,19 +197,30 @@ export const RendererSpikeBoard = ({
           const latestView = viewRef.current;
           const next = sceneForHost(host, latestView);
           const installed = installedRef.current;
-          const mode =
-            allowRevisionRegressionRef.current &&
-            installed &&
-            next.scene.revision < installed.scene.revision
-              ? 'replace'
-              : 'advance';
-          renderer.resize(next.viewport);
-          renderer.installScene(next.scene, [], mode);
-          installedRef.current = { view: latestView, scene: next.scene };
+          if (
+            !installed ||
+            installed.view !== latestView ||
+            !sameOuterViewport(
+              installed.scene.layout.outerViewport,
+              next.scene.layout.outerViewport
+            )
+          ) {
+            const mode =
+              allowRevisionRegressionRef.current &&
+              installed &&
+              next.scene.revision < installed.scene.revision
+                ? 'replace'
+                : 'advance';
+            renderer.resize(next.viewport);
+            renderer.installScene(next.scene, [], mode);
+            installedRef.current = { view: latestView, scene: next.scene };
+          }
+          const published = installedRef.current;
+          if (!published) return;
           window.__PTCG_RENDERER_SPIKE__ = {
             rendererKind,
             renderer,
-            scene: next.scene,
+            scene: published.scene,
             ...(import.meta.env.DEV ? { createRenderer } : {}),
           };
           observeCurrentResolution();

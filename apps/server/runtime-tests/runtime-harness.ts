@@ -90,7 +90,23 @@ const responseError = async (
     `${operation} returned ${response.status}: ${await response.text()}`
   );
 
-export const createRoom = async (): Promise<RoomCreationResponse> => {
+export type MultiplayerCreatedRoom = Extract<
+  RoomCreationResponse,
+  { readonly mode: 'multiplayer' }
+>;
+export type SoloCreatedRoom = Extract<
+  RoomCreationResponse,
+  { readonly mode: 'solo' }
+>;
+
+export function createRoom(): Promise<MultiplayerCreatedRoom>;
+export function createRoom(
+  mode: 'multiplayer'
+): Promise<MultiplayerCreatedRoom>;
+export function createRoom(mode: 'solo'): Promise<SoloCreatedRoom>;
+export async function createRoom(
+  mode: 'solo' | 'multiplayer' = 'multiplayer'
+): Promise<RoomCreationResponse> {
   const response = await exports.default.fetch(
     new Request(`${RUNTIME_ORIGIN}/v2/rooms`, {
       method: 'POST',
@@ -99,15 +115,18 @@ export const createRoom = async (): Promise<RoomCreationResponse> => {
         'Content-Type': 'application/json',
         Origin: RUNTIME_ORIGIN,
       },
-      body: '{}',
+      body: JSON.stringify({ mode }),
     })
   );
   if (response.status !== 201)
     throw await responseError('create room', response);
   const parsed = parseRoomCreationResponse(await response.json());
   if (!parsed.ok) throw new Error(JSON.stringify(parsed.issues));
+  if (parsed.value.mode !== mode) {
+    throw new Error('Room creation response mode did not match its request');
+  }
   return parsed.value;
-};
+}
 
 export const roomStub = (created: RoomCreationResponse) =>
   env.PTCG_ROOM.getByName(created.roomCode);
@@ -142,14 +161,21 @@ export const issuePlayerTicket = (
   created: RoomCreationResponse,
   seat: 'one' | 'two' = 'one',
   displayName = 'Runtime Player'
-): Promise<RoomAdmissionTicketResponse> =>
-  issueAdmissionTicket(
-    created,
+): Promise<RoomAdmissionTicketResponse> => {
+  const capability =
     seat === 'one'
       ? created.credentials.playerOneSeatCapability
-      : created.credentials.playerTwoSeatCapability,
-    { displayName, requestedRole: 'player' }
-  );
+      : created.mode === 'multiplayer'
+        ? created.credentials.playerTwoSeatCapability
+        : undefined;
+  if (!capability) {
+    return Promise.reject(new Error('Solo rooms have no second-player bearer'));
+  }
+  return issueAdmissionTicket(created, capability, {
+    displayName,
+    requestedRole: 'player',
+  });
+};
 
 export const admissionHelloFrame = (
   created: RoomCreationResponse,

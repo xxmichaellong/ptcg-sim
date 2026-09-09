@@ -494,7 +494,7 @@ test('route coalesces viewport signals and reconciles DPR, zero-size, and foregr
   });
   await waitForReactPaint(page);
   const afterBurst = await readRouteViewport(page);
-  expect(afterBurst.renderCommits).toBe(beforeBurst.renderCommits + 1);
+  expect(afterBurst.renderCommits).toBe(beforeBurst.renderCommits);
   expect(afterBurst).toMatchObject({
     outerDpr: 2,
     sceneDpr: 2,

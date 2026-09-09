@@ -7,6 +7,7 @@ import {
 } from '@playwright/test';
 
 interface BrowserDevRoomHandle {
+  readonly mode: string;
   readonly route: {
     readonly kind: string;
     readonly rendererKind: string;
@@ -34,18 +35,67 @@ interface BrowserDevRoomHandle {
       readonly sendChat: (message: string) => boolean;
       readonly declareMulligan: () => boolean;
       readonly declareDeckView: () => boolean;
-      readonly submit: (command: { readonly type: 'FlipCoin' }) => {
+      readonly submit: (
+        command:
+          | { readonly type: 'FlipCoin' }
+          | {
+              readonly type: 'LoadDeck';
+              readonly entries: readonly {
+                readonly definition: {
+                  readonly id: string;
+                  readonly name: string;
+                  readonly category: 'Pokémon';
+                  readonly imageUrl: string;
+                };
+                readonly count: number;
+              }[];
+            }
+          | { readonly type: 'SetupPlayer' }
+      ) => {
         readonly queued: boolean;
         readonly commandId?: string;
         readonly clientSequence?: number;
       };
     };
+    readonly replay: {
+      readonly requestReplay: () => boolean;
+      readonly fastForward: () => boolean;
+      readonly getSnapshot: () => {
+        readonly mode: string;
+        readonly liveRevision?: number;
+        readonly playback:
+          | { readonly phase: 'empty' }
+          | {
+              readonly phase: 'ready';
+              readonly frameCount: number;
+              readonly view: { readonly revision: number };
+              readonly localDisclosure?: {
+                readonly definitions: readonly {
+                  readonly id: string;
+                  readonly name: string;
+                  readonly imageUrl: string;
+                }[];
+                readonly zoneIds: readonly string[];
+                readonly cards: readonly {
+                  readonly id: string;
+                  readonly definitionId: string;
+                  readonly face: string;
+                  readonly publiclyRevealed: boolean;
+                }[];
+              };
+            };
+      };
+    };
+  };
+  readonly invitations: {
+    readonly issuePlayerInvitation: () => Promise<unknown>;
   };
   readonly dispose: () => void;
 }
 
 interface BrowserDevRoomGlobals {
   readonly __ptcgsimDevRoom?: BrowserDevRoomHandle;
+  readonly __ptcgsimCreationProbe?: unknown;
   readonly __ptcgsimSocketProbe?: {
     readonly sockets: WebSocket[];
     phases: string[];
@@ -427,6 +477,210 @@ test('development route reaches and resumes a real durable room through the same
     )
     .toEqual([3, 3]);
   await expect.poll(() => closedSockets).toBe(2);
+  expect(errors).toEqual([]);
+});
+
+test('solo creation serves one-player authority and locally disclosed replay without a second-seat bearer', async ({
+  page,
+}) => {
+  const errors = collectRuntimeErrors(page);
+  const invitationRequests: Request[] = [];
+  await page.addInitScript(() => {
+    const nativeFetch = globalThis.fetch.bind(globalThis);
+    const trackedFetch: typeof globalThis.fetch = async (input, init) => {
+      const response = await nativeFetch(input, init);
+      const request = input instanceof Request ? input : undefined;
+      const url = new URL(
+        request?.url ?? String(input),
+        globalThis.location.href
+      );
+      const method = init?.method ?? request?.method ?? 'GET';
+      if (method === 'POST' && url.pathname === '/v2/rooms') {
+        (
+          globalThis as BrowserDevRoomGlobals & {
+            __ptcgsimCreationProbe?: unknown;
+          }
+        ).__ptcgsimCreationProbe = await response.clone().json();
+      }
+      return response;
+    };
+    globalThis.fetch = trackedFetch;
+  });
+  page.on('request', (request) => {
+    if (new URL(request.url()).pathname.endsWith('/invitations')) {
+      invitationRequests.push(request);
+    }
+  });
+  const creationResponsePromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'POST' &&
+      new URL(response.url()).pathname === '/v2/rooms'
+  );
+
+  await page.goto(
+    '/?dev-room=1&room-mode=solo&renderer=dom&name=Solo%20Replay'
+  );
+  const creationResponse = await creationResponsePromise;
+  expect(creationResponse.status()).toBe(201);
+  expect(creationResponse.request().postDataJSON()).toEqual({ mode: 'solo' });
+  await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible();
+  await expect(page.locator('[data-session-phase="ready"]')).toBeVisible();
+  const creationBody = await page.evaluate(
+    () =>
+      (globalThis as BrowserDevRoomGlobals).__ptcgsimCreationProbe as {
+        readonly mode?: string;
+        readonly roomCode?: string;
+        readonly credentials?: Record<string, unknown>;
+      }
+  );
+  expect(creationBody.mode).toBe('solo');
+  expect(creationBody.roomCode).toMatch(/^[A-HJ-NP-Z2-9]{12}$/u);
+  expect(creationBody.credentials).toHaveProperty('playerOneSeatCapability');
+  expect(creationBody.credentials).not.toHaveProperty(
+    'playerTwoSeatCapability'
+  );
+
+  const noSecondPlayer = await page.evaluate(async () => {
+    const handle = (globalThis as BrowserDevRoomGlobals).__ptcgsimDevRoom;
+    if (!handle) throw new Error('Missing solo development room handle');
+    try {
+      await handle.invitations.issuePlayerInvitation();
+      return { accepted: true };
+    } catch (error) {
+      return {
+        accepted: false,
+        code:
+          error && typeof error === 'object' && 'code' in error
+            ? String(error.code)
+            : 'unknown',
+      };
+    }
+  });
+  expect(noSecondPlayer).toEqual({ accepted: false, code: 'invalid_input' });
+  expect(invitationRequests).toHaveLength(0);
+
+  const submittedLoad = await page.evaluate(() => {
+    const handle = (globalThis as BrowserDevRoomGlobals).__ptcgsimDevRoom;
+    if (!handle) throw new Error('Missing solo development room handle');
+    if (handle.mode !== 'solo') {
+      throw new Error(`Unexpected development room mode: ${handle.mode}`);
+    }
+    return handle.runtime.session.submit({
+      type: 'LoadDeck',
+      entries: [
+        {
+          definition: {
+            id: 'solo-browser-definition',
+            name: 'Solo Browser Replay Card',
+            category: 'Pokémon',
+            imageUrl: '/v2/assets/cardback.png',
+          },
+          count: 14,
+        },
+      ],
+    });
+  });
+  expect(submittedLoad).toMatchObject({ queued: true });
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const handle = (globalThis as BrowserDevRoomGlobals).__ptcgsimDevRoom;
+        const snapshot = handle?.runtime.session.getSnapshot();
+        return {
+          revision: snapshot?.view?.revision,
+          completed: snapshot?.completedCommands.at(-1),
+        };
+      })
+    )
+    .toMatchObject({ revision: 1, completed: { accepted: true, revision: 1 } });
+
+  const submittedSetup = await page.evaluate(() => {
+    const handle = (globalThis as BrowserDevRoomGlobals).__ptcgsimDevRoom;
+    if (!handle) throw new Error('Missing solo development room handle');
+    return handle.runtime.session.submit({ type: 'SetupPlayer' });
+  });
+  expect(submittedSetup).toMatchObject({ queued: true });
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const handle = (globalThis as BrowserDevRoomGlobals).__ptcgsimDevRoom;
+        const snapshot = handle?.runtime.session.getSnapshot();
+        return {
+          revision: snapshot?.view?.revision,
+          completed: snapshot?.completedCommands.at(-1),
+        };
+      })
+    )
+    .toMatchObject({ revision: 2, completed: { accepted: true, revision: 2 } });
+
+  expect(
+    await page.evaluate(() => {
+      const handle = (globalThis as BrowserDevRoomGlobals).__ptcgsimDevRoom;
+      if (!handle) throw new Error('Missing solo development room handle');
+      return handle.runtime.replay.requestReplay();
+    })
+  ).toBe(true);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (
+            globalThis as BrowserDevRoomGlobals
+          ).__ptcgsimDevRoom?.runtime.replay.getSnapshot().mode
+      )
+    )
+    .toBe('replay');
+
+  expect(
+    await page.evaluate(() => {
+      const handle = (globalThis as BrowserDevRoomGlobals).__ptcgsimDevRoom;
+      if (!handle) throw new Error('Missing solo development room handle');
+      return handle.runtime.replay.fastForward();
+    })
+  ).toBe(true);
+
+  const replay = await page.evaluate(() => {
+    const handle = (globalThis as BrowserDevRoomGlobals).__ptcgsimDevRoom;
+    if (!handle) throw new Error('Missing solo development room handle');
+    const replaySnapshot = handle.runtime.replay.getSnapshot();
+    const playback = replaySnapshot.playback;
+    if (playback.phase !== 'ready') {
+      throw new Error('Solo replay did not install');
+    }
+    return {
+      mode: handle.mode,
+      liveRevision: handle.runtime.session.getSnapshot().view?.revision,
+      replayMode: replaySnapshot.mode,
+      replayRevision: playback.view.revision,
+      frameCount: playback.frameCount,
+      definitions: playback.localDisclosure?.definitions,
+      zoneCount: playback.localDisclosure?.zoneIds.length,
+      cards: playback.localDisclosure?.cards,
+    };
+  });
+  expect(replay).toMatchObject({
+    mode: 'solo',
+    liveRevision: 2,
+    replayMode: 'replay',
+    replayRevision: 2,
+    frameCount: 3,
+    definitions: [
+      {
+        name: 'Solo Browser Replay Card',
+        imageUrl: '/v2/assets/cardback.png',
+      },
+    ],
+    zoneCount: 3,
+  });
+  expect(replay.cards).toHaveLength(6);
+  expect(
+    replay.cards?.every(
+      (card) =>
+        card.face === 'up' &&
+        card.publiclyRevealed === false &&
+        card.definitionId === replay.definitions?.[0]?.id
+    )
+  ).toBe(true);
   expect(errors).toEqual([]);
 });
 

@@ -60,6 +60,7 @@ describe('room admission HTTP schemas', () => {
 
 describe('room creation HTTP schemas', () => {
   const response = {
+    mode: 'multiplayer' as const,
     roomCode: 'ABCDEFGH2345',
     credentials: {
       playerOneSeatCapability: 'player-one-capability-0000000000000001',
@@ -68,8 +69,16 @@ describe('room creation HTTP schemas', () => {
     },
   };
 
-  it('accepts only an empty request and an exact bounded credential bundle', () => {
-    expect(parseRoomCreationRequest({}).ok).toBe(true);
+  it('accepts only a supported mode and an exact mode-bound credential bundle', () => {
+    expect(parseRoomCreationRequest({})).toMatchObject({
+      ok: true,
+      value: { mode: 'multiplayer' },
+    });
+    expect(parseRoomCreationRequest({ mode: 'solo' })).toMatchObject({
+      ok: true,
+      value: { mode: 'solo' },
+    });
+    expect(parseRoomCreationRequest({ mode: 'coaching' }).ok).toBe(false);
     expect(parseRoomCreationRequest({ injected: true }).ok).toBe(false);
     expect(parseRoomCreationResponse(response).ok).toBe(true);
     expect(
@@ -88,6 +97,23 @@ describe('room creation HTTP schemas', () => {
           ...response.credentials,
           playerTwoSeatCapability: 'short',
         },
+      }).ok
+    ).toBe(false);
+    expect(
+      parseRoomCreationResponse({
+        mode: 'solo',
+        roomCode: response.roomCode,
+        credentials: {
+          playerOneSeatCapability: response.credentials.playerOneSeatCapability,
+          spectatorCapability: response.credentials.spectatorCapability,
+        },
+      }).ok
+    ).toBe(true);
+    expect(
+      parseRoomCreationResponse({
+        mode: 'solo',
+        roomCode: response.roomCode,
+        credentials: response.credentials,
       }).ok
     ).toBe(false);
   });

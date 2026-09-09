@@ -160,7 +160,11 @@ describe('development room route churn', () => {
       await act(async () => {
         root.render(
           <StrictMode>
-            <DevRoomHost displayName={`Route ${cycle}`} rendererKind="dom" />
+            <DevRoomHost
+              displayName={`Route ${cycle}`}
+              mode="multiplayer"
+              rendererKind="dom"
+            />
           </StrictMode>
         );
         await flushRoute();
