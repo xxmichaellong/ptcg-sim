@@ -454,6 +454,11 @@ Release requires all of the following:
     aliases or clearing valid local presentation. Resume regenerates peer
     projections so an exact-pair retry repairs an update skipped by an
     ambiguously successful admission write.
+30. Credential-free WebSocket upgrades carry a non-renewing admission deadline
+    no longer than the one-time ticket lifetime. Real-runtime eviction, alarm,
+    and late-message tests prove expired or malformed idle sockets close without
+    consuming tickets, the earliest deadline coexists with unclaimed-room
+    expiry, and authenticated peers are never selected for cleanup.
 
 ## Privacy and security gates
 

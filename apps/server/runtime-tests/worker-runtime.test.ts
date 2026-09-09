@@ -36,6 +36,17 @@ const connect = async (
   return socket;
 };
 
+const nextSocketClose = (
+  socket: WebSocket
+): Promise<{ readonly code: number; readonly reason: string }> =>
+  new Promise((resolve) => {
+    socket.addEventListener(
+      'close',
+      (event) => resolve({ code: event.code, reason: event.reason }),
+      { once: true }
+    );
+  });
+
 beforeEach(() => {
   vi.spyOn(console, 'info').mockImplementation(() => undefined);
   vi.spyOn(console, 'warn').mockImplementation(() => undefined);
@@ -178,6 +189,222 @@ describe('Cloudflare Worker runtime', () => {
       })
     );
     expect(expiredConnect.status).toBe(404);
+  });
+
+  it('expires an unauthenticated socket without losing unclaimed-room cleanup', async () => {
+    const created = await createRoom();
+    const room = roomStub(created);
+    const socket = await connect(created);
+    const initial = await runtimeEvidence(created);
+    const admissionExpiresAt = initial.attachment?.admissionExpiresAt;
+    if (admissionExpiresAt === undefined || !initial.lifecycle) {
+      throw new Error('Missing socket admission lease');
+    }
+    expect(admissionExpiresAt).toBeGreaterThan(Date.now());
+    expect(initial.alarm).toBe(admissionExpiresAt);
+
+    await evictDurableObject(room);
+    const notice = nextServerMessage(socket);
+    socket.send(
+      JSON.stringify({
+        type: 'Ping',
+        protocolVersion: PROTOCOL_VERSION,
+        id: 91,
+      })
+    );
+    await expect(notice).resolves.toMatchObject({
+      type: 'ServerNotice',
+      code: 'hello_required',
+    });
+    const restored = await runtimeEvidence(created);
+    expect(restored.attachment?.admissionExpiresAt).toBe(admissionExpiresAt);
+    expect(restored.alarm).toBe(admissionExpiresAt);
+
+    const expiredAt = Date.now() - 1;
+    await runInDurableObject(room, async (_instance, state) => {
+      const [serverSocket] = state.getWebSockets();
+      const attachment = serverSocket?.deserializeAttachment() as
+        | {
+            readonly connectionId: string;
+            readonly authorityVersion: number;
+          }
+        | undefined;
+      if (!serverSocket || !attachment) throw new Error('Missing test socket');
+      serverSocket.serializeAttachment({
+        ...attachment,
+        admissionExpiresAt: expiredAt,
+      });
+      // Keep automatic local delivery from racing the explicit test helper.
+      await state.storage.setAlarm(Date.now() + 60_000);
+    });
+    const closed = nextSocketClose(socket);
+    expect(await runDurableObjectAlarm(room)).toBe(true);
+    await expect(closed).resolves.toEqual({
+      code: 4408,
+      reason: 'Admission timed out',
+    });
+
+    const afterExpiry = await runtimeEvidence(created);
+    expect(afterExpiry.socketCount).toBe(0);
+    expect(afterExpiry.lifecycle).toEqual(initial.lifecycle);
+    expect(afterExpiry.alarm).toBe(initial.lifecycle.unclaimedExpiresAt);
+  });
+
+  it('refuses a late Hello without consuming its still-retryable ticket', async () => {
+    const created = await createRoom();
+    const ticket = await issuePlayerTicket(created);
+    const lateSocket = await connect(created);
+    await runInDurableObject(roomStub(created), async (_instance, state) => {
+      const [serverSocket] = state.getWebSockets();
+      if (!serverSocket) throw new Error('Missing test socket');
+      const attachment = serverSocket.deserializeAttachment() as object;
+      serverSocket.serializeAttachment({
+        ...attachment,
+        admissionExpiresAt: Date.now() - 1,
+      });
+      // Keep automatic local delivery from racing the message-path assertion.
+      await state.storage.setAlarm(Date.now() + 60_000);
+    });
+
+    const closed = nextSocketClose(lateSocket);
+    lateSocket.send(helloFrame(created, ticket));
+    await expect(closed).resolves.toEqual({
+      code: 4408,
+      reason: 'Admission timed out',
+    });
+    const afterRefusal = await runtimeEvidence(created);
+    expect(Object.keys(afterRefusal.snapshot?.sessions ?? {})).toHaveLength(0);
+    expect(afterRefusal.snapshot?.admission?.tickets).not.toEqual({});
+
+    const retrySocket = await connect(created);
+    const welcome = nextServerMessage(retrySocket);
+    retrySocket.send(helloFrame(created, ticket));
+    await expect(welcome).resolves.toMatchObject({
+      type: 'Welcome',
+      resumeToken: ticket.resumeToken,
+    });
+  });
+
+  it('fails closed on a restored idle socket with no admission deadline', async () => {
+    const created = await createRoom();
+    const room = roomStub(created);
+    const socket = await connect(created);
+    await runInDurableObject(room, async (_instance, state) => {
+      const [serverSocket] = state.getWebSockets();
+      const attachment = serverSocket?.deserializeAttachment() as
+        | {
+            readonly connectionId: string;
+            readonly authorityVersion: number;
+          }
+        | undefined;
+      if (!serverSocket || !attachment) throw new Error('Missing test socket');
+      serverSocket.serializeAttachment({
+        connectionId: attachment.connectionId,
+        authorityVersion: attachment.authorityVersion,
+      });
+    });
+
+    await evictDurableObject(room);
+    const closed = nextSocketClose(socket);
+    socket.send(
+      JSON.stringify({
+        type: 'Ping',
+        protocolVersion: PROTOCOL_VERSION,
+        id: 93,
+      })
+    );
+    await expect(closed).resolves.toEqual({
+      code: 4408,
+      reason: 'Admission timed out',
+    });
+    expect((await runtimeEvidence(created)).socketCount).toBe(0);
+  });
+
+  it('expires only idle socket admissions after a room is claimed', async () => {
+    const created = await createRoom();
+    const ticket = await issuePlayerTicket(created);
+    const admittedSocket = await connect(created);
+    const welcomePromise = nextServerMessage(admittedSocket);
+    admittedSocket.send(helloFrame(created, ticket));
+    await expect(welcomePromise).resolves.toMatchObject({ type: 'Welcome' });
+
+    const idleSocket = await connect(created);
+    const beforeExpiry = await runtimeEvidence(created);
+    const idleAttachment = beforeExpiry.attachments.find(
+      (attachment) => attachment.sessionId === undefined
+    );
+    expect(beforeExpiry.socketCount).toBe(2);
+    expect(idleAttachment?.admissionExpiresAt).toBeGreaterThan(Date.now());
+    expect(beforeExpiry.alarm).toBe(idleAttachment?.admissionExpiresAt);
+
+    const expiredAt = Date.now() - 1;
+    await runInDurableObject(roomStub(created), async (_instance, state) => {
+      const serverSocket = state.getWebSockets().find((candidate) => {
+        const attachment = candidate.deserializeAttachment() as {
+          readonly sessionId?: string;
+        };
+        return attachment.sessionId === undefined;
+      });
+      if (!serverSocket) throw new Error('Missing idle server socket');
+      const attachment = serverSocket.deserializeAttachment() as object;
+      serverSocket.serializeAttachment({
+        ...attachment,
+        admissionExpiresAt: expiredAt,
+      });
+      // Keep automatic local delivery from racing the explicit test helper.
+      await state.storage.setAlarm(Date.now() + 60_000);
+    });
+    const closed = nextSocketClose(idleSocket);
+    expect(await runDurableObjectAlarm(roomStub(created))).toBe(true);
+    await expect(closed).resolves.toEqual({
+      code: 4408,
+      reason: 'Admission timed out',
+    });
+
+    const pong = nextServerMessage(admittedSocket);
+    admittedSocket.send(
+      JSON.stringify({
+        type: 'Ping',
+        protocolVersion: PROTOCOL_VERSION,
+        id: 92,
+      })
+    );
+    await expect(pong).resolves.toMatchObject({ type: 'Pong', id: 92 });
+    const afterExpiry = await runtimeEvidence(created);
+    expect(afterExpiry.socketCount).toBe(1);
+    expect(afterExpiry.alarm).toBeNull();
+    expect(afterExpiry.lifecycle).toMatchObject({ state: 'claimed' });
+    expect(afterExpiry.attachment?.sessionId).toBeDefined();
+  });
+
+  it('serializes concurrent socket leases and retains the remaining idle deadline after admission', async () => {
+    const created = await createRoom();
+    const ticket = await issuePlayerTicket(created);
+    const [firstSocket] = await Promise.all([
+      connect(created),
+      connect(created),
+    ]);
+    const beforeAdmission = await runtimeEvidence(created);
+    const initialDeadlines = beforeAdmission.attachments.flatMap(
+      (attachment) =>
+        attachment.admissionExpiresAt === undefined
+          ? []
+          : [attachment.admissionExpiresAt]
+    );
+    expect(initialDeadlines).toHaveLength(2);
+    expect(beforeAdmission.alarm).toBe(Math.min(...initialDeadlines));
+
+    const welcome = nextServerMessage(firstSocket);
+    firstSocket.send(helloFrame(created, ticket));
+    await expect(welcome).resolves.toMatchObject({ type: 'Welcome' });
+
+    const afterAdmission = await runtimeEvidence(created);
+    const remainingIdle = afterAdmission.attachments.find(
+      (attachment) => attachment.sessionId === undefined
+    );
+    expect(afterAdmission.socketCount).toBe(2);
+    expect(afterAdmission.alarm).toBe(remainingIdle?.admissionExpiresAt);
+    expect(remainingIdle?.admissionExpiresAt).toBeGreaterThan(Date.now());
   });
 
   it('claims atomically and resumes an admitted socket after real eviction', async () => {

@@ -1607,6 +1607,15 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     current selection, and command availability. A resume regenerates peer
     projections, so exact-pair recovery after a post-commit failure also repairs
     any refresh that could not previously be delivered.
+97. Credential-free WebSocket upgrades now have a hibernation-safe absolute
+    `Hello` deadline equal to the 30-second ticket lifetime. The attachment
+    lease never renews on stray traffic, is removed on active-session binding,
+    and shares the Durable Object alarm with unclaimed-room cleanup. Real
+    `workerd` eviction, alarm, late-`Hello`, and mixed admitted/idle-socket cases
+    prove exact timeout closure, ticket retryability, future cleanup
+    rescheduling, and isolation from authenticated peers. This bounds a
+    pre-admission resource path without adding timers, altering UI/UX, or
+    deciding the separate active-session disconnect grace policy.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

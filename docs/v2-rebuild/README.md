@@ -84,7 +84,12 @@ the relevant product decisions and phase exit criteria.
   of the already-committed session. Already-connected peers receive a
   separately validated, equal-revision
   display-name refresh after player admission; this changes labels without
-  fabricating a command/replay revision or rotating card aliases. Visible
+  fabricating a command/replay revision or rotating card aliases.
+  Credential-free upgrades also carry a non-renewing 30-second `Hello` lease in
+  their hibernation attachment. Its deadline shares the room alarm with
+  unclaimed cleanup, survives object eviction, closes malformed/late idle
+  sockets without consuming tickets, and is removed once a durable active
+  session is bound. Visible
   create/join wiring waits on ADR-020's decision about how the handoff moves
   between browsers. The
   canonical Wrangler topology now publishes the built Vite app beside the room

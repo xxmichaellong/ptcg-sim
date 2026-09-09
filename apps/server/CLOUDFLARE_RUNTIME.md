@@ -24,6 +24,14 @@ rollback evidence remain required before ADR-005 becomes accepted.
   room, preserving hibernation eligibility.
 - Cloudflare protocol ping/pong remains automatic; the application `Ping`/`Pong`
   message measures application reachability and sequence health separately.
+- Every upgraded socket receives a server-owned absolute admission deadline
+  equal to the 30-second ticket lifetime. The deadline lives only in the
+  hibernation attachment, is never extended by stray frames, and is removed
+  after `Hello` binds an active session. The earliest idle-socket deadline
+  shares the Durable Object alarm with unclaimed-room expiry; due, missing,
+  malformed, or implausibly distant deadlines close with `4408` without
+  consuming a ticket. Claimed sockets are excluded, and restoration closes a
+  stale attachment that names an inactive session.
 - Initialization stores a five-minute unclaimed lifecycle marker and schedules
   its alarm in the same transaction as the authority snapshot. The first
   successful session admission atomically marks the room claimed and cancels
@@ -65,6 +73,11 @@ rollback evidence remain required before ADR-005 becomes accepted.
   room, retains its serialized connection/session attachment and identical
   durable authority snapshot, answers an application ping, and durably accepts
   the next sequenced command.
+- Real-runtime admission-lease cases force object eviction, early alarms, late
+  `Hello`, and a claimed room with an admitted peer plus an idle upgrade. They
+  prove deadline persistence, no extension, ticket retryability, exact `4408`
+  closure, preservation of the five-minute unclaimed cleanup alarm, and no
+  effect on the admitted socket.
 - The Chromium suite starts local Wrangler and Vite together, then creates a
   room through the same-origin proxy, exchanges the creator ticket, completes a
   real WebSocket admission, renders the projected DOM board, observes a server

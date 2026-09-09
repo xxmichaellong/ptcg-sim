@@ -1,5 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
 import {
+  DEFAULT_ADMISSION_TICKET_POLICY,
   DEFAULT_AUTHORITY_POLICY,
   RoomAuthorityCoordinator,
   type RoomAuthoritySnapshot,
@@ -51,6 +52,8 @@ interface SocketAttachment {
   readonly connectionId: string;
   readonly sessionId?: string;
   readonly authorityVersion: number;
+  /** Absolute wall-clock deadline for an upgraded socket to complete Hello. */
+  readonly admissionExpiresAt?: number;
 }
 
 type InitializedRoom = RoomCreationResponse;
@@ -62,6 +65,14 @@ interface RoomRuntime {
 
 const activeSessionCount = (snapshot: RoomAuthoritySnapshot): number =>
   Object.values(snapshot.sessions).filter((session) => session.active).length;
+
+const validAdmissionDeadline = (value: unknown): value is number =>
+  Number.isSafeInteger(value) && Number(value) >= 0;
+
+const liveAdmissionDeadline = (value: unknown, now: number): value is number =>
+  validAdmissionDeadline(value) &&
+  value > now &&
+  value - now <= DEFAULT_ADMISSION_TICKET_POLICY.lifetimeMs;
 
 const telemetrySink = new ConsoleServerTelemetrySink();
 const createTelemetry = (
@@ -133,6 +144,7 @@ export class PtcgRoom extends DurableObject<Env> {
   private readonly store: DurableRoomSnapshotStore;
   private readonly rateLimits: DurableRoomRateLimiter;
   private readonly telemetry: StructuredServerTelemetry;
+  private socketAlarmTail: Promise<void> = Promise.resolve();
   private runtimePromise: Promise<RoomRuntime | undefined>;
 
   constructor(ctx: DurableObjectState, env: Env) {
@@ -252,11 +264,17 @@ export class PtcgRoom extends DurableObject<Env> {
       const pair = new WebSocketPair();
       const client = pair[0];
       const server = pair[1];
+      const admissionExpiresAt =
+        Date.now() + DEFAULT_ADMISSION_TICKET_POLICY.lifetimeMs;
       const attachment: SocketAttachment = {
         connectionId: this.cryptoSource.nextSessionId(),
         authorityVersion:
           runtime.coordinator.currentSnapshot().authorityVersion,
+        admissionExpiresAt,
       };
+      await this.coordinateSocketAlarm(() =>
+        this.ensureAlarmNoLaterThan(admissionExpiresAt)
+      );
       server.serializeAttachment(attachment);
       this.ctx.acceptWebSocket(server);
       runtime.hub.restoreBinding(
@@ -297,15 +315,44 @@ export class PtcgRoom extends DurableObject<Env> {
       socket.close(4400, 'Missing connection attachment');
       return;
     }
+    if (
+      !attachment.sessionId &&
+      !liveAdmissionDeadline(attachment.admissionExpiresAt, Date.now())
+    ) {
+      await runtime.hub.disconnect(attachment.connectionId);
+      socket.close(4408, 'Admission timed out');
+      return;
+    }
+    if (
+      attachment.sessionId &&
+      !runtime.coordinator.currentSnapshot().sessions[attachment.sessionId]
+        ?.active
+    ) {
+      await runtime.hub.disconnect(attachment.connectionId);
+      socket.close(4409, 'Session is no longer active');
+      return;
+    }
     await runtime.hub.handleFrame(
       this.connection(socket, attachment.connectionId),
       message
     );
     const binding = runtime.hub.bindingForConnection(attachment.connectionId);
-    socket.serializeAttachment({
-      connectionId: attachment.connectionId,
-      ...binding,
-    } satisfies SocketAttachment);
+    socket.serializeAttachment(
+      binding.sessionId
+        ? ({
+            connectionId: attachment.connectionId,
+            ...binding,
+          } satisfies SocketAttachment)
+        : ({
+            ...attachment,
+            authorityVersion: binding.authorityVersion,
+          } satisfies SocketAttachment)
+    );
+    if (binding.sessionId) {
+      await this.coordinateSocketAlarm(() =>
+        this.reconcileClaimedSocketAdmissionAlarm(Date.now(), runtime)
+      );
+    }
   }
 
   override async webSocketClose(
@@ -335,14 +382,23 @@ export class PtcgRoom extends DurableObject<Env> {
   }
 
   override async alarm(): Promise<void> {
+    await this.coordinateSocketAlarm(() => this.handleAlarm());
+  }
+
+  private async handleAlarm(): Promise<void> {
     const startedAt = performance.now();
     const runtime = await this.runtimePromise;
+    const now = Date.now();
+    const nextSocketAdmission = await this.expireSocketAdmissions(now, runtime);
     let result;
     try {
-      result = await this.store.expireUnclaimedRoom(Date.now());
+      result = await this.store.expireUnclaimedRoom(now);
     } catch (error) {
       this.telemetry.failure({ subsystem: 'room_alarm', retryable: true });
       throw error;
+    }
+    if (result !== 'expired' && nextSocketAdmission !== undefined) {
+      await this.ensureAlarmNoLaterThan(nextSocketAdmission);
     }
     if (result === 'scheduled' || result === 'claimed') {
       this.telemetry.roomLifecycle({
@@ -386,6 +442,59 @@ export class PtcgRoom extends DurableObject<Env> {
     void this.runtimePromise.then((runtime) =>
       runtime?.hub.disconnect(attachment.connectionId)
     );
+  }
+
+  private coordinateSocketAlarm<Value>(
+    operation: () => Promise<Value>
+  ): Promise<Value> {
+    const run = this.socketAlarmTail.then(operation);
+    this.socketAlarmTail = run.then(
+      () => undefined,
+      () => undefined
+    );
+    return run;
+  }
+
+  private async ensureAlarmNoLaterThan(deadline: number): Promise<void> {
+    const current = await this.ctx.storage.getAlarm();
+    if (current === null || deadline < current) {
+      await this.ctx.storage.setAlarm(deadline);
+    }
+  }
+
+  private async expireSocketAdmissions(
+    now: number,
+    runtime: RoomRuntime | undefined
+  ): Promise<number | undefined> {
+    let nextDeadline: number | undefined;
+    for (const socket of this.ctx.getWebSockets()) {
+      const attachment =
+        socket.deserializeAttachment() as SocketAttachment | null;
+      if (!attachment?.connectionId || attachment.sessionId) continue;
+      const deadline = attachment.admissionExpiresAt;
+      if (!liveAdmissionDeadline(deadline, now)) {
+        await runtime?.hub.disconnect(attachment.connectionId);
+        socket.close(4408, 'Admission timed out');
+        continue;
+      }
+      nextDeadline =
+        nextDeadline === undefined
+          ? deadline
+          : Math.min(nextDeadline, deadline);
+    }
+    return nextDeadline;
+  }
+
+  private async reconcileClaimedSocketAdmissionAlarm(
+    now: number,
+    runtime: RoomRuntime
+  ): Promise<void> {
+    const nextDeadline = await this.expireSocketAdmissions(now, runtime);
+    if (nextDeadline === undefined) {
+      await this.ctx.storage.deleteAlarm();
+    } else {
+      await this.ctx.storage.setAlarm(nextDeadline);
+    }
   }
 
   private connection(socket: WebSocket, id: string): RuntimeConnection {
@@ -448,23 +557,72 @@ export class PtcgRoom extends DurableObject<Env> {
         (left, right) =>
           left.attachment.authorityVersion - right.attachment.authorityVersion
       );
+    const now = Date.now();
+    let nextSocketAdmission: number | undefined;
+    const restoredSockets: typeof sockets = [];
     for (const { socket, attachment } of sockets) {
+      if (
+        attachment.sessionId &&
+        !snapshot.sessions[attachment.sessionId]?.active
+      ) {
+        socket.close(4409, 'Session is no longer active');
+        continue;
+      }
+      if (
+        !attachment.sessionId &&
+        !liveAdmissionDeadline(attachment.admissionExpiresAt, now)
+      ) {
+        socket.close(4408, 'Admission timed out');
+        continue;
+      }
+      if (!attachment.sessionId) {
+        nextSocketAdmission =
+          nextSocketAdmission === undefined
+            ? attachment.admissionExpiresAt
+            : Math.min(nextSocketAdmission, attachment.admissionExpiresAt!);
+      }
       runtime.hub.restoreBinding(
         this.connection(socket, attachment.connectionId),
         attachment.sessionId
       );
+      restoredSockets.push({ socket, attachment });
+    }
+    if (Object.keys(snapshot.sessions).length > 0) {
+      if (nextSocketAdmission === undefined) {
+        await this.ctx.storage.deleteAlarm();
+      } else {
+        await this.ctx.storage.setAlarm(nextSocketAdmission);
+      }
+    } else {
+      const lifecycle = await this.store.expireUnclaimedRoom(now);
+      if (lifecycle === 'expired') {
+        for (const { socket } of restoredSockets) {
+          socket.close(4404, 'Room expired before admission');
+        }
+        this.telemetry.roomLifecycle({
+          outcome: 'expired',
+          authorityVersion: snapshot.authorityVersion,
+          activeSessions: 0,
+          activeSockets: 0,
+          durationMs: performance.now() - startedAt,
+        });
+        return undefined;
+      }
+      if (nextSocketAdmission !== undefined) {
+        await this.ensureAlarmNoLaterThan(nextSocketAdmission);
+      }
     }
     this.telemetry.roomLifecycle({
       outcome: 'restored',
       authorityVersion: snapshot.authorityVersion,
       activeSessions: activeSessionCount(snapshot),
-      activeSockets: sockets.length,
+      activeSockets: restoredSockets.length,
       durationMs: performance.now() - startedAt,
     });
-    if (sockets.length > 0) {
+    if (restoredSockets.length > 0) {
       this.telemetry.roomSocket({
         outcome: 'restored',
-        activeSockets: sockets.length,
+        activeSockets: restoredSockets.length,
       });
     }
     return runtime;

@@ -64,6 +64,7 @@ interface SocketAttachment {
   readonly connectionId: string;
   readonly sessionId?: string;
   readonly authorityVersion: number;
+  readonly admissionExpiresAt?: number;
 }
 
 export type RuntimeWelcome = Extract<
@@ -99,6 +100,8 @@ export type SoloCreatedRoom = Extract<
   { readonly mode: 'solo' }
 >;
 
+let nextRoomCreationIdentity = 10;
+
 export function createRoom(): Promise<MultiplayerCreatedRoom>;
 export function createRoom(
   mode: 'multiplayer'
@@ -111,7 +114,7 @@ export async function createRoom(
     new Request(`${RUNTIME_ORIGIN}/v2/rooms`, {
       method: 'POST',
       headers: {
-        'CF-Connecting-IP': '192.0.2.10',
+        'CF-Connecting-IP': `192.0.2.${nextRoomCreationIdentity++}`,
         'Content-Type': 'application/json',
         Origin: RUNTIME_ORIGIN,
       },

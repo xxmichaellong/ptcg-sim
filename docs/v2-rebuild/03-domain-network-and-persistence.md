@@ -416,6 +416,16 @@ room runtime.
    deduplication and sends a fresh projection.
 7. Explicit leave revokes the binding/capability and publishes presence.
 
+The implemented upgrade boundary also closes the pre-admission accumulation
+gap: every credential-free socket receives an absolute 30-second `Hello` lease
+in its hibernation attachment. Stray frames do not renew it. The earliest lease
+shares the Durable Object alarm with five-minute unclaimed-room cleanup, while
+successful admission removes the deadline and recomputes the next idle-socket
+alarm without touching an admitted peer. Alarm delivery, message delivery, and
+object restoration all fail closed on expired, missing, malformed, or
+implausibly distant deadlines. A late `Hello` does not consume its still-valid
+ticket, so a fresh socket can retry safely.
+
 Anonymous guest play can remain. It still requires unguessable seat/reconnect
 capabilities rather than trusting a display name.
 
