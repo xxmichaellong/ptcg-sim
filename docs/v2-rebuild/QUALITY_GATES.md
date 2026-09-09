@@ -29,6 +29,11 @@ narrow legacy-server startup smoke test are explicit security exceptions.
 | `pnpm run check:full`           | Run `check:ci` and then `check:browser` locally.                                                                             |
 | `pnpm run audit:dependencies`   | Query the registry advisory service and reject known runtime or development dependency vulnerabilities at any severity.      |
 
+Hosted CI may retry the Playwright browser/dependency installation up to three
+times because runner package mirrors can be temporarily inconsistent. The
+browser regression command itself remains single-attempt and fail-fast, so this
+infrastructure retry cannot conceal a test failure.
+
 Use `corepack pnpm` when invoking these commands directly from a new checkout.
 The repository pins pnpm 11.24.0 in `packageManager`.
 

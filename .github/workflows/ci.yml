@@ -54,7 +54,17 @@ jobs:
       - name: Install dependencies
         run: corepack pnpm install --frozen-lockfile
       - name: Install Playwright Chromium
-        run: corepack pnpm exec playwright install --with-deps chromium
+        run: |
+          for browser_install_attempt in 1 2 3; do
+            if corepack pnpm exec playwright install --with-deps chromium; then
+              exit 0
+            fi
+            if [ "$browser_install_attempt" -eq 3 ]; then
+              exit 1
+            fi
+            echo "::warning::Playwright Chromium installation failed; retrying in 30 seconds"
+            sleep 30
+          done
       - name: Run browser regressions
         run: corepack pnpm run check:browser
       - name: Upload browser diagnostics
@@ -65,5 +75,5 @@ jobs:
           path: |
             playwright-report/
             test-results/
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 14
