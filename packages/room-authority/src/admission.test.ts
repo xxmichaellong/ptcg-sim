@@ -183,6 +183,7 @@ describe('room capability admission', () => {
     expect(admitted.accepted).toBe(true);
     if (!admitted.accepted) return;
     expect(admitted.session.viewer).toEqual({ kind: 'player', playerId: p2 });
+    expect(admitted.session.displayName).toBe('Red');
     expect(admitted.snapshot.admission?.invitations).toEqual({});
     expect(admitted.snapshot.admission?.tickets).toEqual({});
     expect(storage.transactions[2]).toMatchObject({
@@ -277,6 +278,8 @@ describe('room capability admission', () => {
       dependencies(crypto, storage)
     );
     expect(latest.accepted).toBe(true);
+    if (!latest.accepted) return;
+    expect(latest.session.displayName).toBe('Viewer');
   });
 
   it('rotates player invitations, permits distinct spectator invitations, and enforces expiry', async () => {
@@ -476,6 +479,7 @@ describe('room capability admission', () => {
     expect(redeemed.accepted).toBe(true);
     if (!redeemed.accepted) return;
     expect(redeemed.resumeCapability).not.toBe(seatOneToken);
+    expect(redeemed.session.displayName).toBe('Blue');
     expect(redeemed.session.resumeCapabilityDigest).toBe(
       digest(redeemed.resumeCapability)
     );
@@ -626,6 +630,7 @@ describe('room capability admission', () => {
     expect(result.snapshot.state.revision).toBe(0);
     expect(result.snapshot.state.players[p1]?.displayName).toBe('Blue Player');
     expect(result.session.viewer).toEqual({ kind: 'player', playerId: p1 });
+    expect(result.session.displayName).toBe('Blue Player');
     expect(result.session.resumeCapabilityDigest).toBe(
       digest(result.resumeCapability)
     );
@@ -790,6 +795,7 @@ describe('room capability admission', () => {
     if (!second.accepted) throw new Error(second.code);
 
     expect(first.session.viewer).toEqual({ kind: 'spectator' });
+    expect(first.session.displayName).toBe('Spectator');
     expect(second.session.id).not.toBe(first.session.id);
     expect(second.snapshot.authorityVersion).toBe(2);
     expect(storage.transactions).toHaveLength(2);

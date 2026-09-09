@@ -79,6 +79,7 @@ const policies = (
   admission_ticket: policy,
   session_hello: policy,
   socket_upgrade: policy,
+  chat: policy,
 });
 
 describe('durable per-room rate limits', () => {
@@ -115,6 +116,9 @@ describe('durable per-room rate limits', () => {
     await expect(
       first.attempt('admission_ticket', 1_000)
     ).resolves.toMatchObject({ allowed: true });
+    await expect(first.attempt('chat', 1_000)).resolves.toMatchObject({
+      allowed: true,
+    });
     await expect(
       new DurableRoomRateLimiter(storage, configured).attempt(
         'invitation',

@@ -17,6 +17,15 @@ ephemeral presentation fact to active room sockets. It accepts no client
 identity, zone identity, or message text and performs no authority, journal,
 undo, or replay mutation. Spectators cannot originate either declaration.
 
+General chat is a separate authenticated non-command stream. `room-chat.ts` accepts
+only trimmed bounded text, derives player/name attribution from the active
+durable session, and broadcasts to currently bound active sessions. Spectators
+retain their admitted display name across hibernation. An eight-message/five-
+second connection burst limit precedes the persisted 120-message/minute room
+budget. Only rate metadata is durable or observable: message text is excluded
+from authority state, journals, replay, storage, and telemetry, and ephemeral
+delivery failures are never retried automatically.
+
 Recent audit rows are transactionally bounded independently from the authority
 snapshot: 128 command rows/512 KiB and 64 admission rows/128 KiB. The snapshot,
 new row, retention frontier, and displaced-row deletion commit or roll back
@@ -69,7 +78,8 @@ schemas are unchanged; only the local performance artifact advances to v3.
 `@cloudflare/vitest-plugin`. It covers the deployed Worker boundary, SQLite
 Durable Object storage and alarms, explicit solo creation plus single-player
 admission, WebSocket admission, real eviction with a
-hibernated socket, attachment reconstruction, concurrent admission/command
+hibernated socket, authenticated post-eviction chat without durable text,
+attachment reconstruction, concurrent admission/command
 traffic, pre-commit and ambiguous post-commit persistence failures, exact
 retries, payload/resource envelopes, and post-wake idempotency. The
 repository-level `check:v2` gate runs this suite after the fast unit tests.

@@ -7,6 +7,7 @@ import type { ReplaySessionCoordinatorState } from '../replay/ReplaySessionCoord
 import type { ReplayPresentationSource } from '../replay/ReplayPresentationDispatcher.js';
 import { GamePresentationCoordinator } from './GamePresentationCoordinator.js';
 import { GamePresentationRuntime } from './GamePresentationRuntime.js';
+import type { ChatMessage } from './PresentationEffects.js';
 import type { SessionPresentationSource } from './SessionPresentationDispatcher.js';
 
 const coin = (
@@ -19,8 +20,19 @@ const coin = (
   result,
 });
 
+const chat = (index: number, playerId = 'spike-blue'): ChatMessage => ({
+  type: 'ChatMessage',
+  protocolVersion: 2,
+  messageId: `chat-${index}`,
+  playerId,
+  displayName: playerId === 'spike-blue' ? 'Blue' : 'Red',
+  message: `Message ${index}`,
+  createdAtMs: index,
+});
+
 const liveState = (
-  presentationEvents: readonly PresentationEvent[]
+  presentationEvents: readonly PresentationEvent[],
+  chatMessages: readonly ChatMessage[] = []
 ): ClientSessionState => ({
   phase: 'ready',
   role: 'player',
@@ -30,7 +42,7 @@ const liveState = (
   pendingCommands: [],
   completedCommands: [],
   presentationEvents,
-  chatMessages: [],
+  chatMessages,
   presence: [],
   notices: [],
   replayLoading: false,
@@ -102,6 +114,11 @@ class FakeLiveSource implements SessionPresentationSource {
     for (const listener of [...this.listeners]) listener();
   }
 
+  publishChat(messages: readonly ChatMessage[]): void {
+    this.state = liveState(this.state.presentationEvents, messages);
+    for (const listener of [...this.listeners]) listener();
+  }
+
   publishState(state: ClientSessionState): void {
     this.state = state;
     for (const listener of [...this.listeners]) listener();
@@ -161,7 +178,7 @@ describe('GamePresentationCoordinator', () => {
     const replayEffect = coin(8, 'tails');
     const liveAfterReplay = coin(3, 'heads');
 
-    expect(live.listenerCount()).toBe(1);
+    expect(live.listenerCount()).toBe(2);
     expect(replay.listenerCount()).toBe(1);
     live.publish([liveBeforeReplay]);
 
@@ -188,6 +205,40 @@ describe('GamePresentationCoordinator', () => {
     live.publish([suppressedLive, liveAfterReplay, coin(4, 'tails')]);
     replay.publish(coordinatorState(4, 'replay', [coin(9, 'heads')]));
     expect(activity).toHaveLength(3);
+  });
+
+  it('presents new chat only in live mode and never bursts suppressed history', () => {
+    const live = new FakeLiveSource();
+    const replay = new FakeReplaySource();
+    const runtime = new GamePresentationRuntime({ live, replay });
+    const first = chat(1);
+    const suppressed = chat(2, 'spike-red');
+    const afterReplay = chat(3, 'spike-red');
+
+    live.publishChat([first]);
+    expect(
+      runtime.activity
+        .getSnapshot()
+        .entries.map((entry) => [entry.effect.category, entry.effect.message])
+    ).toEqual([['message', 'Blue: Message 1']]);
+
+    replay.publish(coordinatorState(1, 'replay'));
+    live.publishChat([first, suppressed]);
+    expect(runtime.activity.getSnapshot().entries).toEqual([]);
+
+    replay.publish(coordinatorState(2, 'live'));
+    live.publishChat([suppressed]);
+    live.publishChat([suppressed, afterReplay]);
+    expect(
+      runtime.activity
+        .getSnapshot()
+        .entries.map((entry) => entry.effect.message)
+    ).toEqual(['Red: Message 3']);
+    expect(runtime.accessibility.getSnapshot().announcements).toHaveLength(1);
+
+    runtime.dispose();
+    expect(live.listenerCount()).toBe(0);
+    expect(replay.listenerCount()).toBe(0);
   });
 
   it('labels effect failures with their source event', () => {
@@ -253,7 +304,7 @@ describe('GamePresentationCoordinator', () => {
     const replacementReplayEffect = coin(9, 'heads');
     const laterLiveEffect = coin(2, 'tails');
 
-    expect(live.listenerCount()).toBe(2);
+    expect(live.listenerCount()).toBe(3);
     expect(replay.listenerCount()).toBe(2);
     live.publish([liveEffect]);
     expect(

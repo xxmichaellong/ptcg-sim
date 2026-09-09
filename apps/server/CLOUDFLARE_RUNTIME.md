@@ -35,9 +35,11 @@ rollback evidence remain required before ADR-005 becomes accepted.
   location-local limit protects allocation but is not an authorization or
   accounting primitive.
 - Each room separately persists exact fixed-window budgets: 24 invitation
-  issues, 60 admission-ticket exchanges, 120 WebSocket upgrades, and 120
-  `Hello` attempts per 60 seconds. These bounded operational records are outside
-  canonical match state and survive object eviction.
+  issues, 60 admission-ticket exchanges, 120 WebSocket upgrades, 120 `Hello`
+  attempts, and 120 chat deliveries per 60 seconds. Chat also has an
+  eight-message/five-second per-connection burst gate before durable storage.
+  These bounded operational records contain no chat text, sit outside canonical
+  match state, and survive object eviction where applicable.
 - `GET /v2/health` exposes only sanitized build and protocol/schema versions.
   The Worker and room emit a closed, versioned structured telemetry union for
   HTTP, lifecycle, rate, admission, command, publication-size, socket, and fixed

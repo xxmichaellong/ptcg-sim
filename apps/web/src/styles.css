@@ -188,6 +188,9 @@ select {
 
 .legacy-activity-feed .self-text,
 .legacy-activity-feed .opp-text,
+.legacy-activity-feed .self-message,
+.legacy-activity-feed .opp-message,
+.legacy-activity-feed .spectator-message,
 .legacy-activity-feed .announcement {
   display: block;
   margin: 0.5vh 0 0;
@@ -208,6 +211,27 @@ select {
   width: fit-content;
   background: rgb(247 217 223 / 86.4%);
   text-align: left;
+}
+
+.legacy-activity-feed .self-message {
+  width: fit-content;
+  background-color: rgb(142 155 209 / 86.4%);
+  text-align: left;
+  user-select: text;
+}
+
+.legacy-activity-feed .opp-message {
+  width: fit-content;
+  background-color: rgb(187 120 136 / 86.4%);
+  text-align: left;
+  user-select: text;
+}
+
+.legacy-activity-feed .spectator-message {
+  width: fit-content;
+  background-color: rgb(228 214 145);
+  text-align: left;
+  user-select: text;
 }
 
 .legacy-activity-feed .announcement {

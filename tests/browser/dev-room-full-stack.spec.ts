@@ -26,6 +26,11 @@ interface BrowserDevRoomHandle {
           readonly playerOrder: readonly string[];
         };
         readonly notices: readonly { readonly code: string }[];
+        readonly chatMessages: readonly {
+          readonly playerId?: string;
+          readonly displayName: string;
+          readonly message: string;
+        }[];
         readonly completedCommands: readonly {
           readonly accepted: boolean;
           readonly revision: number;
@@ -307,6 +312,10 @@ test('development route reaches and resumes a real durable room through the same
       return handle.runtime.session.sendChat('transport-smoke');
     })
   ).toBe(true);
+  const chatRow = page.locator('#p2Chatbox p.self-message').last();
+  await expect(chatRow).toHaveText('Transport Smoke: transport-smoke');
+  await expect(chatRow).toHaveAttribute('data-event-type', 'ChatMessage');
+  await expect(chatRow).toHaveAttribute('data-revision', '0');
   await expect
     .poll(() =>
       page.evaluate(() => {
@@ -314,10 +323,20 @@ test('development route reaches and resumes a real durable room through the same
         if (!handle) throw new Error('Missing development room handle');
         return handle.runtime.session
           .getSnapshot()
-          .notices.map((notice) => notice.code);
+          .chatMessages.map((message) => ({
+            playerId: message.playerId,
+            displayName: message.displayName,
+            message: message.message,
+          }));
       })
     )
-    .toContain('not_implemented');
+    .toEqual([
+      {
+        playerId: expect.any(String),
+        displayName: 'Transport Smoke',
+        message: 'transport-smoke',
+      },
+    ]);
 
   const beforeReconnect = await page.evaluate(() => {
     const globals = globalThis as BrowserDevRoomGlobals;

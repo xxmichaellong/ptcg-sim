@@ -46,6 +46,12 @@ export interface PersistedCommandOutcome {
 export interface AuthoritySession {
   readonly id: string;
   readonly viewer: ViewerRole;
+  /**
+   * Server-authenticated presentation identity. Older v7 snapshots may omit
+   * it; player names remain recoverable from canonical match state while an
+   * old spectator safely falls back to the generic Spectator label.
+   */
+  readonly displayName?: string;
   readonly active: boolean;
   readonly nextClientSequence: number;
   readonly recentOutcomes: readonly PersistedCommandOutcome[];

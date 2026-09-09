@@ -43,6 +43,7 @@ export type ServerFailureSubsystem =
   | 'invitation_issue'
   | 'ticket_issue'
   | 'session_admission'
+  | 'chat_processing'
   | 'command_processing'
   | 'replay_projection'
   | 'socket_send'

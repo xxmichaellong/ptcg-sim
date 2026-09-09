@@ -1621,6 +1621,7 @@ describe('Durable Object authority snapshot store', () => {
     const session = {
       id: sessionId,
       viewer: { kind: 'player' as const, playerId: p1 },
+      displayName: 'Blue',
       active: true,
       nextClientSequence: 1,
       recentOutcomes: [],
@@ -2103,6 +2104,7 @@ describe('Durable Object authority snapshot store', () => {
             [sessionId]: {
               id: sessionId,
               viewer: { kind: 'player', playerId: p1 },
+              displayName: testCase.candidateDisplayName,
               active: true,
               nextClientSequence: 1,
               recentOutcomes: [],
@@ -2129,6 +2131,54 @@ describe('Durable Object authority snapshot store', () => {
       expect(await store.load()).toEqual(initial);
       expect(storedKeys(storage, 'authority:admission:')).toEqual([]);
     }
+  });
+
+  it('binds a durable spectator display name to its admission ticket', async () => {
+    const storage = new MemoryDurableStorage();
+    const store = new DurableRoomSnapshotStore(storage);
+    const ticketDigest = 'd'.repeat(64);
+    const unclaimed = admissionSnapshot('spectator-name-binding', false);
+    const initial: RoomAuthoritySnapshot = {
+      ...unclaimed,
+      admission: {
+        ...unclaimed.admission!,
+        tickets: {
+          [ticketDigest]: {
+            role: 'spectator',
+            displayName: 'Ticket Watcher',
+            expiresAt: 10_000,
+          },
+        },
+      },
+    };
+    await store.initialize(initial);
+    const sessionId = 'ticket-spectator-session';
+    await expect(
+      store.commitAdmission({
+        expectedAuthorityVersion: 0,
+        kind: 'spectator_joined',
+        sessionId,
+        admissionTicketDigest: ticketDigest,
+        snapshot: {
+          ...initial,
+          authorityVersion: 1,
+          sessions: {
+            [sessionId]: {
+              id: sessionId,
+              viewer: { kind: 'spectator' },
+              displayName: 'Forged Watcher',
+              active: true,
+              nextClientSequence: 1,
+              recentOutcomes: [],
+              resumeCapabilityDigest: 'e'.repeat(64),
+            },
+          },
+          admission: { ...initial.admission!, tickets: {} },
+        },
+      })
+    ).rejects.toThrow('spectator admission ticket name does not match session');
+    expect(await store.load()).toEqual(initial);
+    expect(storedKeys(storage, 'authority:admission:')).toEqual([]);
   });
 
   it('rolls back the snapshot when the journal write fails', async () => {

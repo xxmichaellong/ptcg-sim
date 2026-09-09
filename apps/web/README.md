@@ -54,7 +54,7 @@ credentials. The production bundle gate rejects any source provenance under
 The Chromium suite starts both Wrangler and Vite and drives this route over the
 real same-origin HTTP/WebSocket proxy. It verifies health, room creation,
 admission-ticket exchange, a ready projected session and DOM board, a
-bidirectional server notice, credential-free request URLs, and clean socket
+server-attributed chat round trip, credential-free request URLs, and clean socket
 closure. Its solo case additionally proves the exact creation request/response,
 absence of player-two custody, real load/setup commands, and replay-local prize
 disclosure without changing the live view. The separate in-process churn gate
@@ -63,8 +63,8 @@ retains the stronger 20-cycle ownership/teardown proof.
 Both screens preserve the v1 75.5% board / 24% side-panel split. The room screen
 mounts the effective live/replay board, multiplayer/replay activity surface,
 legacy replay controls, and externally owned route teardown. Normal sidebar
-actions, chat, deck/settings navigation, and create/join form wiring remain
-later slices.
+actions, the visible chat input, deck/settings navigation, and create/join form
+wiring remain later slices.
 
 The default v2 card back is published at `/v2/assets/cardback.png`. It is an
 exact byte copy of the current v1 PNG, and the build gate verifies its digest,

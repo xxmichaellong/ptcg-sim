@@ -6,6 +6,7 @@ import {
 } from '@ptcgsim/game-core';
 import {
   hydrateMatchViewState,
+  MAX_CHAT_CODE_UNITS,
   PROTOCOL_VERSION,
   parseServerFrame,
   type ClientMessage,
@@ -247,10 +248,14 @@ export class RemoteGameSession {
 
   sendChat(message: string): boolean {
     if (this.state.phase !== 'ready') return false;
+    const normalized = message.trim();
+    if (normalized.length === 0 || normalized.length > MAX_CHAT_CODE_UNITS) {
+      return false;
+    }
     return this.send({
       type: 'SendChat',
       protocolVersion: PROTOCOL_VERSION,
-      message,
+      message: normalized,
     });
   }
 

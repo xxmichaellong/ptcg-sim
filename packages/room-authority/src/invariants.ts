@@ -465,6 +465,12 @@ const collectAuthoritySnapshotProblemsInternal = (
   for (const [key, session] of Object.entries(snapshot.sessions)) {
     if (key !== session.id) problems.push(`session key ${key} mismatches ID`);
     if (
+      session.displayName !== undefined &&
+      (session.displayName.trim().length < 1 || session.displayName.length > 64)
+    ) {
+      problems.push(`session ${session.id} has an invalid display name`);
+    }
+    if (
       !Number.isSafeInteger(session.nextClientSequence) ||
       session.nextClientSequence < 1
     ) {
@@ -480,6 +486,13 @@ const collectAuthoritySnapshotProblemsInternal = (
     if (session.viewer.kind === 'player') {
       if (!snapshot.state.players[session.viewer.playerId]) {
         problems.push(`session ${session.id} references an unknown player`);
+      }
+      if (
+        session.displayName !== undefined &&
+        snapshot.state.players[session.viewer.playerId]?.displayName !==
+          session.displayName
+      ) {
+        problems.push(`session ${session.id} display name mismatches player`);
       }
       if (session.active) {
         if (activePlayerSessions.has(session.viewer.playerId)) {
@@ -992,6 +1005,12 @@ export const assertAdmissionTransactionTransition = (
       };
       if (ticket && !credentialMatchesViewer(ticket)) {
         problems.push('session admission ticket role does not match viewer');
+      }
+      if (
+        ticket?.role === 'spectator' &&
+        candidateSession.displayName !== ticket.displayName
+      ) {
+        problems.push('spectator admission ticket name does not match session');
       }
       if (invitation && !credentialMatchesViewer(invitation)) {
         problems.push('session invitation role does not match viewer');

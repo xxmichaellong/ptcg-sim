@@ -20,6 +20,7 @@ DOM renderer, and the Pixi renderer can consume without owning networking.
 - inconsistent replay termination publishes only the failed state with replay loading cleared
 - retryable notices bind to the phase, socket generation, and command head present at receipt; a reentrant observer cannot retarget an old notice onto a newly created command
 - a transport write is successful only if the same socket generation remains installed when `send()` returns; synchronous close delivery cannot report chat/ping/replay success, restore replay loading, or schedule duplicate recovery
+- outbound chat is trimmed and rejected locally when empty or over the wire bound; authenticated deliveries are retained in a separate bounded immutable history
 - admission and resume capabilities never enter the public store, command history, or notices
 - failed, cleanly closed, and superseded sessions clear replay loading; superseded sessions become terminal read-only sessions and never reconnect
 

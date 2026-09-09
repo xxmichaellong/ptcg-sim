@@ -18,6 +18,7 @@ import {
 } from '@ptcgsim/protocol';
 
 import { establishSession } from './session-handshake.js';
+import { RoomChatService } from './room-chat.js';
 import type {
   BoundedAdmissionTicketIssueResult,
   BoundedRoomInvitationIssueResult,
@@ -118,6 +119,7 @@ export class RoomSessionHub {
   private readonly connections = new Map<string, RuntimeConnection>();
   private readonly connectionSessions = new Map<string, string>();
   private readonly sessionConnections = new Map<string, string>();
+  private readonly chat: RoomChatService;
   private readonly acceptedCommandPerformance: AcceptedCommandPerformanceObservation[] =
     [];
   private nextReplayId = 1;
@@ -126,7 +128,15 @@ export class RoomSessionHub {
     private readonly coordinator: RoomAuthorityCoordinator,
     private readonly buildId: string,
     private readonly dependencies: SessionHubDependencies
-  ) {}
+  ) {
+    this.chat = new RoomChatService({
+      rateLimits: dependencies.rateLimits,
+      telemetry: dependencies.telemetry,
+      now: dependencies.admission.now,
+      nextMessageIdCandidate: () =>
+        dependencies.admission.crypto.nextSessionId(),
+    });
+  }
 
   handleFrame(connection: RuntimeConnection, frame: string): Promise<void> {
     this.connections.set(connection.id, connection);
@@ -315,6 +325,7 @@ export class RoomSessionHub {
 
   disconnect(connectionId: string): void {
     this.connections.delete(connectionId);
+    this.chat.releaseConnection(connectionId);
     const sessionId = this.connectionSessions.get(connectionId);
     this.connectionSessions.delete(connectionId);
     if (sessionId && this.sessionConnections.get(sessionId) === connectionId) {
@@ -602,12 +613,21 @@ export class RoomSessionHub {
           id: message.id,
         });
         return;
-      case 'SendChat':
-        this.send(
-          connection,
-          notice('not_implemented', 'Chat migration is not implemented yet')
-        );
+      case 'SendChat': {
+        const snapshot = this.coordinator.currentSnapshot();
+        const prepared = await this.chat.prepareDelivery({
+          snapshot,
+          sessionId: boundSessionId,
+          connectionId: connection.id,
+          message: message.message,
+        });
+        if (prepared.accepted) {
+          this.broadcastToActiveSessions(snapshot, prepared.message);
+        } else {
+          this.send(connection, prepared.notice);
+        }
         return;
+      }
       case 'DeclareMulligan': {
         const snapshot = this.coordinator.currentSnapshot();
         const session = snapshot.sessions[boundSessionId];

@@ -380,5 +380,26 @@ describe('LegacyPresentationSurface', () => {
     expect(
       legacyActivityClassName({ ...item, category: 'announcement' }, spectator)
     ).toBe('announcement');
+    expect(
+      legacyActivityClassName({ ...item, category: 'message' }, view)
+    ).toBe('self-message');
+    expect(
+      legacyActivityClassName(
+        { ...item, category: 'message', playerId: 'spike-red' },
+        view
+      )
+    ).toBe('opp-message');
+    expect(
+      legacyActivityClassName(
+        {
+          id: 2,
+          revision: 1,
+          eventType: 'ChatMessage',
+          category: 'spectator',
+          message: 'Watcher: Safe display text',
+        },
+        view
+      )
+    ).toBe('spectator-message');
   });
 });

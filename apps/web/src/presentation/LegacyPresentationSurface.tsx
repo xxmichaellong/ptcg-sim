@@ -5,7 +5,13 @@ import type { ActivityFeedItem } from './ActivityFeedModel.js';
 import type { LegacyGamePresentationRuntime } from './LegacyGamePresentationRuntime.js';
 import { usePresentationState } from './usePresentationRuntime.js';
 
-export type LegacyActivityClassName = 'self-text' | 'opp-text' | 'announcement';
+export type LegacyActivityClassName =
+  | 'self-text'
+  | 'opp-text'
+  | 'self-message'
+  | 'opp-message'
+  | 'spectator-message'
+  | 'announcement';
 
 export type LegacyActivityPerspective = Pick<
   MatchViewState,
@@ -18,13 +24,20 @@ export const legacyActivityClassName = (
   perspective: LegacyActivityPerspective | undefined
 ): LegacyActivityClassName => {
   if (item.category === 'announcement' || !item.playerId || !perspective) {
-    return 'announcement';
+    return item.category === 'spectator' ? 'spectator-message' : 'announcement';
   }
   const primaryPlayerId =
     perspective.viewer.kind === 'player'
       ? perspective.viewer.playerId
       : perspective.playerOrder[0];
-  return item.playerId === primaryPlayerId ? 'self-text' : 'opp-text';
+  const self = item.playerId === primaryPlayerId;
+  return item.category === 'message'
+    ? self
+      ? 'self-message'
+      : 'opp-message'
+    : self
+      ? 'self-text'
+      : 'opp-text';
 };
 
 export interface LegacyPresentationSurfaceProps {

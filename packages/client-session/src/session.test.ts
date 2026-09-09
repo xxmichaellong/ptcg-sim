@@ -1097,6 +1097,7 @@ describe('RemoteGameSession', () => {
     const test = setup({
       maximumPendingCommands: 2,
       maximumCompletedCommands: 1,
+      maximumChatMessages: 2,
       maximumPresenceEvents: 2,
       maximumNotices: 2,
     });
@@ -1109,6 +1110,15 @@ describe('RemoteGameSession', () => {
     });
 
     for (let index = 0; index < 3; index += 1) {
+      socket.serverMessage({
+        type: 'ChatMessage',
+        protocolVersion: PROTOCOL_VERSION,
+        messageId: `chat-${index}`,
+        playerId: 'blue',
+        displayName: 'Blue',
+        message: `Message ${index}`,
+        createdAtMs: index,
+      });
       socket.serverMessage({
         type: 'Presence',
         protocolVersion: PROTOCOL_VERSION,
@@ -1124,11 +1134,29 @@ describe('RemoteGameSession', () => {
       });
     }
     expect(
+      test.session.getSnapshot().chatMessages.map((item) => item.message)
+    ).toEqual(['Message 1', 'Message 2']);
+    expect(
       test.session.getSnapshot().presence.map((item) => item.displayName)
     ).toEqual(['Player 1', 'Player 2']);
     expect(test.session.getSnapshot().notices.map((item) => item.code)).toEqual(
       ['notice-1', 'notice-2']
     );
+  });
+
+  it('normalizes bounded chat locally before writing transport', () => {
+    const test = setup();
+    const socket = test.admit();
+
+    expect(test.session.sendChat('  hello room  ')).toBe(true);
+    expect(clientFrame(socket, 1)).toEqual({
+      type: 'SendChat',
+      protocolVersion: PROTOCOL_VERSION,
+      message: 'hello room',
+    });
+    expect(test.session.sendChat('   ')).toBe(false);
+    expect(test.session.sendChat('x'.repeat(1_001))).toBe(false);
+    expect(socket.sent).toHaveLength(2);
   });
 
   it('retries retryable ambiguity byte-for-byte with a strict budget', () => {

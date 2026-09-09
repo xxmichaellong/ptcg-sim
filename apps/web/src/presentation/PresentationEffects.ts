@@ -1,16 +1,18 @@
 import type { MatchViewState } from '@ptcgsim/game-core';
-import type { PresentationEvent } from '@ptcgsim/protocol';
+import type { PresentationEvent, ServerMessage } from '@ptcgsim/protocol';
 
-type PresentationEventType = PresentationEvent['type'];
+export type ChatMessage = Extract<ServerMessage, { type: 'ChatMessage' }>;
+type PresentationEventType = PresentationEvent['type'] | ChatMessage['type'];
 
 interface PresentationEffectBase {
+  /** Chat uses the locally observed live revision; it is still not replayed. */
   readonly revision: number;
   readonly eventType: PresentationEventType;
 }
 
 export interface ActivityPresentationEffect extends PresentationEffectBase {
   readonly kind: 'activity';
-  readonly category: 'player' | 'announcement';
+  readonly category: 'player' | 'announcement' | 'message' | 'spectator';
   readonly message: string;
   /** Used only for existing blue/red visual treatment, never message content. */
   readonly playerId?: string;
@@ -49,6 +51,12 @@ export type PresentationEffectFailureReporter = (
   error: unknown,
   effect: PresentationEffect,
   event: PresentationEvent
+) => void;
+
+export type ChatPresentationEffectFailureReporter = (
+  error: unknown,
+  effect: PresentationEffect,
+  message: ChatMessage
 ) => void;
 
 export type PresentationEventSink = (event: PresentationEvent) => void;
@@ -307,6 +315,31 @@ export const activityPresentationEffectsForEvents = (
     )
   );
 
+/** Maps authenticated ephemeral chat into the same bounded local feed. */
+export const presentationEffectsForChatMessage = (
+  message: ChatMessage,
+  observedRevision = 0
+): readonly PresentationEffect[] => {
+  const visibleMessage = `${message.displayName}: ${message.message}`;
+  return [
+    {
+      kind: 'activity',
+      revision: observedRevision,
+      eventType: 'ChatMessage',
+      category: message.playerId ? 'message' : 'spectator',
+      message: visibleMessage,
+      ...(message.playerId ? { playerId: message.playerId } : {}),
+    },
+    {
+      kind: 'accessibility',
+      revision: observedRevision,
+      eventType: 'ChatMessage',
+      message: visibleMessage,
+      politeness: 'polite',
+    },
+  ];
+};
+
 const deliverEffect = (
   effect: PresentationEffect,
   adapters: PresentationEffectAdapters
@@ -346,6 +379,33 @@ export const createPresentationEffectSink =
           reportFailure(error, effect, event);
         } catch {
           // One diagnostics adapter cannot suppress later UI effects.
+        }
+      }
+    }
+  };
+
+/** Creates the live-only isolated sink for authenticated ephemeral chat. */
+export const createChatPresentationEffectSink =
+  (
+    getObservedRevision: () => number,
+    adapters: PresentationEffectAdapters,
+    reportFailure: ChatPresentationEffectFailureReporter = (error, effect) =>
+      console.error('Chat presentation effect failed', effect, error),
+    shouldDeliver: () => boolean = () => true
+  ) =>
+  (message: ChatMessage): void => {
+    if (!shouldDeliver()) return;
+    for (const effect of presentationEffectsForChatMessage(
+      message,
+      getObservedRevision()
+    )) {
+      try {
+        deliverEffect(effect, adapters);
+      } catch (error) {
+        try {
+          reportFailure(error, effect, message);
+        } catch {
+          // Diagnostics must not prevent later deterministic effects.
         }
       }
     }

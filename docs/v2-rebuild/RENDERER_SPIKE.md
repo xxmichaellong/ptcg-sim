@@ -857,9 +857,10 @@ passes 212 Playwright checks across 84 Chromium 151 browser files:
     capability rather than the spent admission ticket. The same room, view,
     renderer generation, renderer object, DOM surface, and revision survive the
     exact reconnecting→connecting→handshaking→ready sequence; a post-resume coin
-    command commits revision 1. A client message still receives the documented
-    `not_implemented` server notice, proving bidirectional transport without
-    claiming chat parity. Every observed HTTP/socket URL is query-, credential-,
+    command commits revision 1. A client message receives authenticated,
+    server-attributed chat delivery and a correctly keyed/styled activity row,
+    proving the migrated transport/presentation path without adding the visible
+    input yet. Every observed HTTP/socket URL is query-, credential-,
     and fragment-free, no second HTTP admission occurs, the superseded and
     current native sockets both close, successful `101` telemetry is accepted,
     and the terminal socket count reaches zero. Deployed navigation churn and
@@ -1557,6 +1558,20 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     export, socket, command, and rejection traffic. The surface remains outside
     renderer, controller, protocol, authority, and replay state; it preserves
     the existing visible reference without changing its content, layout, or UX.
+93. General chat now crosses an authenticated ephemeral path without adding a
+    visible control. The client trims and bounds outbound text; the room derives
+    player or spectator attribution from the active durable session, applies an
+    eight-message/five-second connection burst and a persisted 120-message/minute
+    room budget, and broadcasts only to currently bound active sessions. Message
+    content never enters canonical state, replay/undo, journals, storage, or
+    telemetry. A separate identity-cursor dispatcher consumes chat silently in
+    replay mode and maps live delivery to the existing self/opponent/spectator
+    message classes and polite accessibility feed. Unit coverage pins forged
+    identity rejection, bounded history, rate layers, collision recovery,
+    legacy-snapshot fallback, remount/reentrancy behavior, and replay suppression;
+    the real Durable Object eviction suite and Wrangler/Vite Chromium route prove
+    restored attribution, storage privacy, and the unchanged activity row end to
+    end. No visible control, label, layout, or workflow changed.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

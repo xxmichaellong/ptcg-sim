@@ -507,6 +507,62 @@ describe('serialized room session hub', () => {
     const authorityVersion = setup.store.durable.authorityVersion;
     const commandCommitCount = setup.store.commandCommits.length;
 
+    const privateChat = 'hello private room';
+    await setup.hub.handleFrame(
+      blue.value,
+      JSON.stringify({
+        type: 'SendChat',
+        protocolVersion: PROTOCOL_VERSION,
+        message: `  ${privateChat}  `,
+        playerId: p2,
+        displayName: 'Forged Red',
+      })
+    );
+    const playerChat = blue.messages.at(-1);
+    expect(playerChat).toMatchObject({
+      type: 'ChatMessage',
+      protocolVersion: PROTOCOL_VERSION,
+      messageId: expect.any(String),
+      playerId: p1,
+      displayName: 'Blue',
+      message: privateChat,
+      createdAtMs: 10_000,
+    });
+    expect(red.messages.at(-1)).toEqual(playerChat);
+    expect(spectator.messages.at(-1)).toEqual(playerChat);
+
+    await setup.hub.handleFrame(
+      spectator.value,
+      JSON.stringify({
+        type: 'SendChat',
+        protocolVersion: PROTOCOL_VERSION,
+        message: 'spectator hello',
+      })
+    );
+    const spectatorChat = spectator.messages.at(-1);
+    expect(spectatorChat).toMatchObject({
+      type: 'ChatMessage',
+      displayName: 'Watcher',
+      message: 'spectator hello',
+    });
+    expect(spectatorChat).not.toHaveProperty('playerId');
+    expect(blue.messages.at(-1)).toEqual(spectatorChat);
+    expect(red.messages.at(-1)).toEqual(spectatorChat);
+    expect(setup.rateLimits.attempt.mock.calls.slice(-2)).toEqual([
+      ['chat', 10_000],
+      ['chat', 10_000],
+    ]);
+    expect(
+      JSON.stringify({
+        rateLimits: setup.telemetry.roomRateLimit.mock.calls,
+        admissions: setup.telemetry.roomAdmission.mock.calls,
+        commands: setup.telemetry.roomCommand.mock.calls,
+        failures: setup.telemetry.failure.mock.calls,
+      })
+    ).not.toContain(privateChat);
+    expect(setup.store.durable.authorityVersion).toBe(authorityVersion);
+    expect(setup.store.commandCommits).toHaveLength(commandCommitCount);
+
     await setup.hub.handleFrame(
       blue.value,
       JSON.stringify({
@@ -584,6 +640,99 @@ describe('serialized room session hub', () => {
     });
     expect(blue.messages).toHaveLength(blueMessageCount);
     expect(red.messages).toHaveLength(redMessageCount);
+  });
+
+  it('rejects empty and layered over-budget chat without room mutation', async () => {
+    const setup = await fixture();
+    const client = connection('bounded-chat');
+    await setup.hub.handleFrame(
+      client.value,
+      helloFrame({ admissionTicket: setup.admissionTicket })
+    );
+    const callsBeforeEmpty = setup.rateLimits.attempt.mock.calls.length;
+    await setup.hub.handleFrame(
+      client.value,
+      JSON.stringify({
+        type: 'SendChat',
+        protocolVersion: PROTOCOL_VERSION,
+        message: '   ',
+      })
+    );
+    expect(client.messages.at(-1)).toMatchObject({
+      type: 'ServerNotice',
+      code: 'invalid_message',
+      retryable: false,
+    });
+    expect(setup.rateLimits.attempt).toHaveBeenCalledTimes(callsBeforeEmpty);
+
+    const ids = new Set<string>();
+    for (let index = 0; index < 8; index += 1) {
+      await setup.hub.handleFrame(
+        client.value,
+        JSON.stringify({
+          type: 'SendChat',
+          protocolVersion: PROTOCOL_VERSION,
+          message: `burst ${index}`,
+        })
+      );
+      const delivered = client.messages.at(-1);
+      expect(delivered).toMatchObject({
+        type: 'ChatMessage',
+        message: `burst ${index}`,
+      });
+      if (delivered?.type === 'ChatMessage') ids.add(delivered.messageId);
+    }
+    expect(ids.size).toBe(8);
+    const callsBeforeBurstRejection =
+      setup.rateLimits.attempt.mock.calls.length;
+    await setup.hub.handleFrame(
+      client.value,
+      JSON.stringify({
+        type: 'SendChat',
+        protocolVersion: PROTOCOL_VERSION,
+        message: 'one too many',
+      })
+    );
+    expect(client.messages.at(-1)).toMatchObject({
+      type: 'ServerNotice',
+      code: 'rate_limited',
+      retryable: false,
+    });
+    expect(setup.rateLimits.attempt).toHaveBeenCalledTimes(
+      callsBeforeBurstRejection
+    );
+    expect(setup.store.commandCommits).toHaveLength(0);
+
+    setup.hub.disconnect(client.value.id);
+    const resumed = connection('bounded-chat-resumed');
+    const welcome = client.messages[0];
+    if (welcome?.type !== 'Welcome') throw new Error('missing welcome');
+    setup.hub.restoreBinding(resumed.value, welcome.sessionId);
+    setup.rateLimits.attempt.mockResolvedValueOnce({
+      allowed: false,
+      retryAfterSeconds: 17,
+    });
+    await setup.hub.handleFrame(
+      resumed.value,
+      JSON.stringify({
+        type: 'SendChat',
+        protocolVersion: PROTOCOL_VERSION,
+        message: 'room budget',
+      })
+    );
+    expect(resumed.messages).toEqual([
+      expect.objectContaining({
+        type: 'ServerNotice',
+        code: 'rate_limited',
+        retryable: false,
+        message: expect.stringContaining('17 seconds'),
+      }),
+    ]);
+    expect(setup.telemetry.roomRateLimit).toHaveBeenLastCalledWith({
+      operation: 'chat',
+      allowed: false,
+      retryAfterSeconds: 17,
+    });
   });
 
   it('streams only the requesting session perspective from retained history', async () => {
@@ -733,6 +882,79 @@ describe('serialized room session hub', () => {
       'CommandResult',
     ]);
     expect(setup.store.durable.state.revision).toBe(1);
+  });
+
+  it('restores authenticated spectator chat attribution after hibernation', async () => {
+    const setup = await fixture();
+    const ticket = await setup.hub.issueAdmissionTicket({
+      capability: setup.spectatorCapability,
+      displayName: 'Persistent Watcher',
+      requestedRole: 'spectator',
+    });
+    if (!ticket.accepted) throw new Error(ticket.code);
+    const beforeSleep = connection('spectator-before-sleep');
+    await setup.hub.handleFrame(
+      beforeSleep.value,
+      helloFrame({
+        admissionTicket: ticket.admissionTicket,
+        displayName: 'Persistent Watcher',
+        requestedRole: 'spectator',
+      })
+    );
+    const welcome = beforeSleep.messages[0];
+    if (welcome?.type !== 'Welcome') throw new Error('missing welcome');
+    expect(setup.store.durable.sessions[welcome.sessionId]).toMatchObject({
+      viewer: { kind: 'spectator' },
+      displayName: 'Persistent Watcher',
+    });
+
+    const restoredCoordinator = new RoomAuthorityCoordinator(
+      setup.store.durable,
+      setup.store,
+      {
+        commandContext: setup.crypto,
+        opaqueIds: setup.crypto,
+        policy: DEFAULT_AUTHORITY_POLICY,
+      }
+    );
+    const restoredHub = new RoomSessionHub(
+      restoredCoordinator,
+      'server-build',
+      {
+        store: setup.store,
+        rateLimits: allowRoomOperations,
+        telemetry: NOOP_SERVER_TELEMETRY,
+        monotonicNow: () => 0,
+        admission: {
+          crypto: setup.crypto,
+          opaqueIds: setup.crypto,
+          persistence: setup.store,
+          now: () => 10_001,
+        },
+      }
+    );
+    const afterWake = connection('spectator-after-wake');
+    restoredHub.restoreBinding(afterWake.value, welcome.sessionId);
+    await restoredHub.handleFrame(
+      afterWake.value,
+      JSON.stringify({
+        type: 'SendChat',
+        protocolVersion: PROTOCOL_VERSION,
+        message: 'still watching',
+        displayName: 'Forged Viewer',
+        playerId: p1,
+      })
+    );
+
+    expect(afterWake.messages).toEqual([
+      expect.objectContaining({
+        type: 'ChatMessage',
+        displayName: 'Persistent Watcher',
+        message: 'still watching',
+      }),
+    ]);
+    expect(afterWake.messages[0]).not.toHaveProperty('playerId');
+    expect(JSON.stringify(setup.store.durable)).not.toContain('still watching');
   });
 
   it('rejects commands before Hello and session spoofing without mutation', async () => {

@@ -1299,8 +1299,10 @@ accepts only a current-revision event for a player in its installed view, then
 feeds `MulliganDeclared` through the existing bounded activity/accessibility
 pipeline as the unchanged neutral “Blue mulligans” row. Live facts received
 while replay is active are consumed silently, fixing v1's replay-feed leak
-without a key-specific presentation store. General chat remains a separate,
-still-unimplemented migration.
+without a key-specific presentation store. General chat stays a separate
+non-command stream and is now authenticated, bounded, server-attributed, and
+fed through an independent identity-cursor dispatcher; it remains absent from
+canonical and replay history.
 `R` now closes the adjacent refresh/rotation keyboard collision. Without a
 selection, plain/Control/Shift `R` calls the runtime's local scene reconstruction
 and Alt-`R` reconstructs before continuing to the existing reset request. With
@@ -1536,8 +1538,9 @@ deck, chat, import, clear-log, turn, coin, and twelve private mutation-action
 visibility; persistent export and Options actions; and the exit action. Loading
 and post-exit discarding deliberately retain live chrome until replay mode is
 active. `LegacyPresentationSurface` now concretely renders the existing
-`#chatbox` contract from keyed recipient-safe rows, preserves self/opponent and
-announcement styling plus bottom scrolling, and uses a separate visually hidden
+`#chatbox` contract from keyed recipient-safe rows, preserves self/opponent,
+player-message, spectator-message, and announcement styling plus bottom
+scrolling, and uses a separate visually hidden
 polite live region with serial dwell. Its integration tests mount live and
 replay sources and verify seek cancellation and teardown. `RemoteRoomRoute` now
 mounts that surface as `#p2Chatbox` in connected live mode and `#chatbox` in
@@ -1556,7 +1559,7 @@ malformed/expired responses, derives a credential-free WebSocket URL, and gives
 only the short-lived ticket to `RemoteRoomRuntime`. React receives the runtime
 and route descriptor, never either credential. `main.tsx` still selects the
 renderer spike until the existing create/join form can supply the bootstrap
-input. Normal live sidebar actions, chat, navigation, and complete
+input. Normal live sidebar actions, the visible chat input, navigation, and complete
 focus/keyboard/visual parity remain later slices.
 
 ## Rendering cadence and performance

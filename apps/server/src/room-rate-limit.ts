@@ -16,7 +16,11 @@ export const ROOM_RATE_LIMIT_STORAGE_KEY = 'room:rate-limits';
 const ROOM_RATE_LIMIT_FORMAT = 'ptcgsim-room-rate-limits-v1';
 
 export type RoomRateLimitedOperation =
-  'invitation' | 'admission_ticket' | 'session_hello' | 'socket_upgrade';
+  | 'invitation'
+  | 'admission_ticket'
+  | 'session_hello'
+  | 'socket_upgrade'
+  | 'chat';
 
 export interface RoomRateLimitPolicy {
   readonly maximumAttempts: number;
@@ -30,6 +34,7 @@ export const DEFAULT_ROOM_RATE_LIMIT_POLICIES: Readonly<
   admission_ticket: { maximumAttempts: 60, windowMs: 60_000 },
   session_hello: { maximumAttempts: 120, windowMs: 60_000 },
   socket_upgrade: { maximumAttempts: 120, windowMs: 60_000 },
+  chat: { maximumAttempts: 120, windowMs: 60_000 },
 };
 
 interface StoredRateLimitBucket {
@@ -111,6 +116,7 @@ const readStoredRateLimits = (value: unknown): StoredRoomRateLimits => {
         'admission_ticket',
         'session_hello',
         'socket_upgrade',
+        'chat',
       ].includes(operation) ||
       typeof bucket !== 'object' ||
       bucket === null ||

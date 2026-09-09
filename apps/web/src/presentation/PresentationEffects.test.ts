@@ -4,7 +4,9 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   activityPresentationEffectsForEvents,
+  createChatPresentationEffectSink,
   createPresentationEffectSink,
+  presentationEffectsForChatMessage,
   presentationEffectsForEvent,
   type PresentationEffect,
 } from './PresentationEffects.js';
@@ -126,6 +128,93 @@ const messages = (effects: readonly PresentationEffect[]) =>
     );
 
 describe('presentationEffectsForEvent', () => {
+  it('maps authenticated player and spectator chat without a replay fact', () => {
+    const player = {
+      type: 'ChatMessage' as const,
+      protocolVersion: 2 as const,
+      messageId: 'chat-player',
+      playerId: 'spike-blue',
+      displayName: 'Blue',
+      message: '<safe text>',
+      createdAtMs: 1_000,
+    };
+    expect(presentationEffectsForChatMessage(player, 14)).toEqual([
+      {
+        kind: 'activity',
+        revision: 14,
+        eventType: 'ChatMessage',
+        category: 'message',
+        playerId: 'spike-blue',
+        message: 'Blue: <safe text>',
+      },
+      {
+        kind: 'accessibility',
+        revision: 14,
+        eventType: 'ChatMessage',
+        message: 'Blue: <safe text>',
+        politeness: 'polite',
+      },
+    ]);
+    expect(
+      presentationEffectsForChatMessage({
+        type: 'ChatMessage',
+        protocolVersion: 2,
+        messageId: 'chat-spectator',
+        displayName: 'Watcher',
+        message: '<safe text>',
+        createdAtMs: 1_000,
+      })
+    ).toEqual([
+      expect.objectContaining({
+        kind: 'activity',
+        revision: 0,
+        category: 'spectator',
+        message: 'Watcher: <safe text>',
+      }),
+      expect.objectContaining({
+        kind: 'accessibility',
+        revision: 0,
+        message: 'Watcher: <safe text>',
+      }),
+    ]);
+  });
+
+  it('gates chat delivery and isolates effect failures', () => {
+    const message = {
+      type: 'ChatMessage' as const,
+      protocolVersion: 2 as const,
+      messageId: 'chat-player',
+      playerId: 'spike-blue',
+      displayName: 'Blue',
+      message: 'hello',
+      createdAtMs: 1_000,
+    };
+    const activity = vi.fn(() => {
+      throw new Error('chat surface failed');
+    });
+    const accessibility = vi.fn();
+    const reportFailure = vi.fn();
+    let enabled = false;
+    const sink = createChatPresentationEffectSink(
+      () => 14,
+      { appendActivity: activity, announceAccessibility: accessibility },
+      reportFailure,
+      () => enabled
+    );
+
+    sink(message);
+    expect(activity).not.toHaveBeenCalled();
+    enabled = true;
+    sink(message);
+    expect(activity).toHaveBeenCalledOnce();
+    expect(accessibility).toHaveBeenCalledOnce();
+    expect(reportFailure).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'chat surface failed' }),
+      expect.objectContaining({ eventType: 'ChatMessage' }),
+      message
+    );
+  });
+
   it('maps every recipient-safe event to parity activity and accessibility', () => {
     const view = createRendererSpikeView();
     expect(

@@ -6,11 +6,14 @@ import {
 } from '../replay/ReplayPresentationDispatcher.js';
 import {
   activityPresentationEffectsForEvents,
+  createChatPresentationEffectSink,
   createPresentationEffectSink,
   type ActivityPresentationEffect,
+  type ChatMessage,
   type PresentationEffect,
   type PresentationEffectAdapters,
 } from './PresentationEffects.js';
+import { SessionChatDispatcher } from './SessionChatDispatcher.js';
 import {
   SessionPresentationDispatcher,
   type SessionPresentationSource,
@@ -20,12 +23,12 @@ export type GamePresentationFailureContext =
   | {
       readonly stage: 'event';
       readonly source: 'live' | 'replay';
-      readonly event: PresentationEvent;
+      readonly event: PresentationEvent | ChatMessage;
     }
   | {
       readonly stage: 'effect';
       readonly source: 'live' | 'replay';
-      readonly event: PresentationEvent;
+      readonly event: PresentationEvent | ChatMessage;
       readonly effect: PresentationEffect;
     }
   | {
@@ -83,6 +86,7 @@ const withoutActivityAdapter = (
  */
 export class GamePresentationCoordinator {
   private readonly liveDispatcher: SessionPresentationDispatcher;
+  private readonly liveChatDispatcher: SessionChatDispatcher;
   private readonly replayDispatcher: ReplayPresentationDispatcher;
   private readonly unsubscribeLiveState: () => void;
   private readonly unsubscribeReplayState: () => void;
@@ -108,10 +112,21 @@ export class GamePresentationCoordinator {
         // Diagnostics must not prevent later deterministic effects.
       }
     };
-    const reportEffectFailure =
+    const reportEventEffectFailure =
       (source: 'live' | 'replay') =>
       (error: unknown, effect: PresentationEffect, event: PresentationEvent) =>
         reportSafely(error, { stage: 'effect', source, effect, event });
+    const reportChatEffectFailure = (
+      error: unknown,
+      effect: PresentationEffect,
+      message: ChatMessage
+    ) =>
+      reportSafely(error, {
+        stage: 'effect',
+        source: 'live',
+        effect,
+        event: message,
+      });
 
     const presentationIdentity = (): string | undefined => {
       const session = live.getSnapshot();
@@ -246,13 +261,19 @@ export class GamePresentationCoordinator {
     const liveEffectSink = createPresentationEffectSink(
       () => live.getSnapshot().view,
       adapters,
-      reportEffectFailure('live'),
+      reportEventEffectFailure('live'),
+      () => replay.getSnapshot().mode === 'live'
+    );
+    const liveChatEffectSink = createChatPresentationEffectSink(
+      () => live.getSnapshot().view?.revision ?? 0,
+      adapters,
+      reportChatEffectFailure,
       () => replay.getSnapshot().mode === 'live'
     );
     const replayEffectSink = createPresentationEffectSink(
       () => replay.getSnapshot().view,
       replaceReplayActivity ? withoutActivityAdapter(adapters) : adapters,
-      reportEffectFailure('replay'),
+      reportEventEffectFailure('replay'),
       () => replay.getSnapshot().mode === 'replay'
     );
     this.liveDispatcher = new SessionPresentationDispatcher(
@@ -262,6 +283,16 @@ export class GamePresentationCoordinator {
       },
       (error, event) =>
         reportSafely(error, { stage: 'event', source: 'live', event })
+    );
+    this.liveChatDispatcher = new SessionChatDispatcher(
+      live,
+      liveChatEffectSink,
+      (error, message) =>
+        reportSafely(error, {
+          stage: 'event',
+          source: 'live',
+          event: message,
+        })
     );
     this.replayDispatcher = new ReplayPresentationDispatcher(
       replay,
@@ -279,6 +310,7 @@ export class GamePresentationCoordinator {
     this.unsubscribeLiveState();
     this.unsubscribeReplayState();
     this.liveDispatcher.dispose();
+    this.liveChatDispatcher.dispose();
     this.replayDispatcher.dispose();
   }
 }

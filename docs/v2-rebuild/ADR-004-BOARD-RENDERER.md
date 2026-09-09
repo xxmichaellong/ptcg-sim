@@ -189,7 +189,8 @@ actor before broadcasting a typed, ephemeral mulligan fact. That fact enters
 the same neutral activity/accessibility presentation path as other safe events,
 without changing authority state, command sequence, or replay history. Replay
 consumes the live fact without delivery. This preserves the existing row and
-avoids coupling the shortcut to the still-stubbed general-chat migration.
+keeps the shortcut independent from the separately authenticated general-chat
+stream.
 `R` retains its context-sensitive source contract without putting refresh state
 in either renderer. Unselected plain/Control/Shift `R` asks the runtime to
 reinstall a scene from its current recipient-safe view; unselected Alt-`R` does

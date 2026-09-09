@@ -21,4 +21,6 @@ non-command room intents. Their server deliveries carry only current-revision
 `MulliganDeclared` or `DeckViewDeclared` events with server-derived player
 attribution; they contain no free-form text, client-supplied player/zone
 identity, or replay-history record. General `SendChat`/`ChatMessage` remains a
-separate protocol surface.
+separate authenticated ephemeral surface: clients provide only bounded text;
+the server delivery supplies the bound session's display identity, an opaque
+message ID, and timestamp. Chat is absent from canonical state and replay.

@@ -203,6 +203,9 @@ describe('Cloudflare Worker runtime', () => {
       sessionId: welcome.sessionId,
       authorityVersion: beforeEviction.snapshot.authorityVersion,
     });
+    expect(beforeEviction.snapshot.sessions[welcome.sessionId]).toMatchObject({
+      displayName: 'Runtime Player',
+    });
 
     await evictDurableObject(roomStub(created));
 
@@ -218,6 +221,33 @@ describe('Cloudflare Worker runtime', () => {
       type: 'Pong',
       id: 17,
     });
+
+    const privateChat = 'post-hibernation chat';
+    const chatPromise = nextServerMessage(socket);
+    socket.send(
+      JSON.stringify({
+        type: 'SendChat',
+        protocolVersion: PROTOCOL_VERSION,
+        message: `  ${privateChat}  `,
+        playerId: 'forged-player',
+        displayName: 'Forged Name',
+      })
+    );
+    await expect(chatPromise).resolves.toMatchObject({
+      type: 'ChatMessage',
+      playerId: expect.any(String),
+      displayName: 'Runtime Player',
+      message: privateChat,
+      createdAtMs: expect.any(Number),
+    });
+    const storedChatLeak = await runInDurableObject(
+      roomStub(created),
+      async (_instance, state) =>
+        JSON.stringify([...(await state.storage.list()).values()]).includes(
+          privateChat
+        )
+    );
+    expect(storedChatLeak).toBe(false);
 
     const afterEviction = await runtimeEvidence(created);
     expect(afterEviction.snapshot).toEqual(beforeEviction.snapshot);

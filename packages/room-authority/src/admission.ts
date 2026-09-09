@@ -411,6 +411,7 @@ type AuthorizedAdmission =
     }
   | {
       readonly role: 'spectator';
+      readonly displayName: string;
       readonly resumeCapability: string;
     };
 
@@ -457,6 +458,7 @@ const admitAuthorizedSession = async (
   const session: AuthoritySession = {
     id: sessionId,
     viewer,
+    displayName: authorized.displayName,
     active: true,
     nextClientSequence: 1,
     recentOutcomes: [],
@@ -877,7 +879,11 @@ export const redeemRoomAdmissionTicket = async (
           displayName: ticket.displayName,
           resumeCapability,
         }
-      : { role: 'spectator', resumeCapability },
+      : {
+          role: 'spectator',
+          displayName: ticket.displayName,
+          resumeCapability,
+        },
     dependencies,
     ticketDigest,
     ticket.sourceInvitationDigest
@@ -959,6 +965,7 @@ export const admitRoomSession = async (
     current,
     {
       role: 'spectator',
+      displayName: 'Spectator',
       resumeCapability: dependencies.crypto.nextResumeCapability(),
     },
     dependencies

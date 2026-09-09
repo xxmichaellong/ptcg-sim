@@ -8,7 +8,7 @@ export interface ActivityFeedItem {
   readonly id: number;
   readonly revision: number;
   readonly eventType: ActivityPresentationSnapshot['entries'][number]['effect']['eventType'];
-  readonly category: 'player' | 'announcement';
+  readonly category: ActivityPresentationSnapshot['entries'][number]['effect']['category'];
   readonly message: string;
   /** Styling metadata only. It must never be interpolated into visible text. */
   readonly playerId?: string;

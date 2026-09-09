@@ -472,9 +472,23 @@ hashed anonymous network identity per 60 seconds. Because the Cloudflare binding
 is location-local and eventually consistent, it is only a coarse allocation
 guard. Each Durable Object independently enforces persisted, transactional
 60-second fixed-window limits of 24 invitation issues, 60 admission-ticket
-exchanges, 120 WebSocket upgrades, and 120 `Hello` attempts. These records are
-bounded operational state, not canonical game state or authorization evidence;
-normal authority validation still applies after the budget check.
+exchanges, 120 WebSocket upgrades, 120 `Hello` attempts, and 120 chat
+deliveries. Chat additionally has an eight-message/five-second per-connection
+burst gate before durable storage. These records contain only bounded rate
+metadata, not chat text, and are operational state rather than canonical game
+state or authorization evidence; normal authority validation still applies
+after the budget check.
+
+General chat now follows that authenticated non-command path. The client sends
+only trimmed bounded text; the room looks up the active session bound to the
+socket, derives player identity from canonical state or spectator identity from
+durable admission metadata, and broadcasts one opaque-ID/timestamped
+`ChatMessage` to currently active bound sessions. Extra client player/name
+fields are discarded. Older v7 spectators without the additive session-name
+field receive the generic `Spectator` label rather than trusting a reconnecting
+client. Message content never enters authority snapshots, journals, replay,
+telemetry, or rate-limit records. A delivery failure is not automatically
+retried because this ephemeral channel has no idempotency key from the client.
 
 A newly initialized room is `unclaimed` for five minutes. Its lifecycle record,
 authority snapshot/frontier pair, and Durable Object alarm are installed
