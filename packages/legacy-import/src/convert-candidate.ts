@@ -1499,20 +1499,17 @@ export const buildLegacyV1Candidate = (
         }
         const viewerId = targetPlayerId(target, action.initiator);
         const inspection = state.workAreas[playerId]?.inspection;
+        const activeViewerIds = inspection?.cardIds
+          .map((cardId) => inspection.viewerIdsByCardId[cardId] ?? [])
+          .find((viewerIds) => viewerIds.length > 0);
         if (
-          inspection &&
-          (inspection.viewerIds.length !== 1 ||
-            inspection.viewerIds[0] !== viewerId)
+          action.count === 0 &&
+          (!inspection ||
+            !activeViewerIds ||
+            (activeViewerIds.length === 1 && activeViewerIds[0] === viewerId))
         ) {
-          return failure({
-            code: 'source_state_mismatch',
-            recordIndex: action.recordIndex,
-            path: `$[${action.recordIndex}].action`,
-            message:
-              'Repeated V1 deck inspection by a different viewer requires per-card visibility that the canonical work area cannot represent',
-          });
+          break;
         }
-        if (action.count === 0) break;
         const problem = apply({
           type: 'ExtractDeckCardsForInspection',
           playerId,
@@ -1525,7 +1522,12 @@ export const buildLegacyV1Candidate = (
                   inspectionId: inspection.inspectionId,
                   workAreaId: inspection.id,
                   cardIds: [...inspection.cardIds],
-                  viewerIds: [...inspection.viewerIds],
+                  viewerIdsByCardId: Object.fromEntries(
+                    inspection.cardIds.map((cardId) => [
+                      cardId,
+                      [...inspection.viewerIdsByCardId[cardId]!],
+                    ])
+                  ),
                 },
               }
             : {}),

@@ -497,8 +497,8 @@ legacy labels into authority.
 
 This deliberately narrow builder succeeds only when every action is one of
 `loadDeckData`, `reset`, `setup`, `takeTurn`, `draw`, `discardAndDraw`,
-`shuffleAndDraw`, `shuffleBottomAndDraw`, first or same-viewer repeated
-`viewDeck`, inspection-source
+`shuffleAndDraw`, `shuffleBottomAndDraw`, first or same-/cross-viewer repeated
+`viewDeck` (including zero-card visibility revocation), inspection-source
 `discardAll`/`lostZoneAll`/`handAll`/`shuffleAll`/`shuffleBottom`, individual
 inspection-source loose-zone/targeted-play `moveCardBundle`, the bottom-mode, target-free
 loose-zone/stadium/new-play-stack/rich-whole-stack, or source-zone-targeted
@@ -569,12 +569,15 @@ The lifecycle mapping is source-backed:
   the canonical command now preserves that order while event application also
   accepts its earlier source-order form for replay compatibility. A positive
   same-viewer repeat supplies the exact inspection ID, work-area ID, prior card
-  order, and viewer set to the same command and emits `InspectionExtended`.
-  Replay revalidates that snapshot plus the exact selected deck edge before
-  appending. The historical zero-card source defect produces a zero-batch
-  record for a compatible viewer. Cross-viewer repeats fail the whole candidate
-  because V1 can preserve per-extraction popup visibility that the current
-  whole-work-area viewer set cannot represent; and
+  order, and per-card viewer map to the same command and emits
+  `InspectionExtended`. Replay revalidates that snapshot plus the exact selected
+  deck edge before appending. A different viewer reproduces V1's asymmetric DOM
+  transition: every previously visible popup card becomes concealed to both
+  players, its opaque visibility generation advances, and only the newly
+  extracted batch is granted to the new viewer. The historical zero-card source
+  defect remains a zero-batch record for a compatible viewer; for a different
+  viewer it emits `InspectionVisibilityCleared`, revoking all remaining popup
+  visibility without moving cards; and
 - the bottom-mode move-card bundle resolves an ordinary player-zone, cover,
   stadium, exact current inspection, or exact current staged source coordinate
   to a stable card ID and executes `MoveCardToDeckBottom`. Its exact source tuple
@@ -818,8 +821,7 @@ take-turn discards both players' loose boards in
 source order before drawing, and that an owner reset clears only that owner's
 reachable loose state, owned stadium, and play stacks before rebuilding its
 deck. Opponent-owned stadium and play state remain. The subset still cannot
-represent cross-viewer repeated-inspection visibility, custom card-back URL
-policy, or cross-owner play placements.
+represent custom card-back URL policy or cross-owner play placements.
 
 Native undo records contain exactly `[null]`: V1 builds its filtered history in
 an inner function while the outer wrapper retains `undefined`, which JSON turns
@@ -841,18 +843,15 @@ remains the only `unsupported_action` that the native exporter can produce.
 
 ## Next conversion slices
 
-1. Model cross-viewer repeated deck-inspection visibility per card rather than
-   widening one work area's viewer set. Same-viewer extension and individual or
-   whole-inspection resolution are already transactional.
-2. Resolve the custom-card-back asset policy. The eight reveal/look names are
+1. Resolve the custom-card-back asset policy. The eight reveal/look names are
    transient socket/UI operations that never enter native exports, and
    `exchangeData` is explicitly exporter-filtered; injected records remain
    rejected rather than being promoted into durable history.
-3. Produce a conversion report with warnings, dropped presentation fields, and
+2. Produce a conversion report with warnings, dropped presentation fields, and
    the exact failing record/path. Integrity identities must use SHA-256 over the
    exact source bytes and a specified canonical target serialization; the
    current 32-bit game-core stable hash remains a non-security diagnostic only.
-4. Only after representative real-user fixtures convert transactionally should
+3. Only after representative real-user fixtures convert transactionally should
    the route loader or old `/import?key=` reader call this package.
 
 No v1 module is imported, no save/replay route is enabled, and no visible UI or

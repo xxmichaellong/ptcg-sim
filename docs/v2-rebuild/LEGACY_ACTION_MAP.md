@@ -41,8 +41,8 @@ reuse their canonical atomic commands, but every other action is rejected before
 constructing state. This is intentionally not yet a complete import
 compatibility claim: reachable loose-board take-turn cleanup and owner reset are
 now proven alongside owned-stadium and play-stack reset, while face-down in-play
-custom card backs, cross-viewer repeated-inspection visibility,
-and cross-owner play state remain gated on their dedicated canonical designs.
+custom card backs and cross-owner play state remain gated on their dedicated
+canonical designs.
 Category-interleaved staged tail returns now use the explicit flat work-area
 order described below. The eight reveal/look dispatcher
 names are socket-only presentation operations rather than native saved records;
@@ -260,14 +260,18 @@ same edge-first order. Event application continues accepting the earlier
 bottom source-order representation for replay compatibility. The source's
 accidental zero-card export changes no model state and is retained with zero
 batches for the same viewer. V1 can append another positive view into an
-existing `viewCards` array; a same-viewer record now supplies the exact active
+existing `viewCards` array; every repeated record now supplies the exact active
 inspection snapshot to `ExtractDeckCardsForInspection` and emits one
 `InspectionExtended` event. Replay validates the work-area and inspection IDs,
-source deck, prior cards and viewers, and exact top or edge-first-bottom
-selection before appending. A cross-viewer repeat remains fail-closed because
-V1 can retain different visibility for older and newly appended popup cards,
-while the canonical work area currently has one viewer set. Whole- and
-individual-inspection resolution are admitted below.
+source deck, prior cards, per-card viewers, the incoming viewer, and exact top
+or edge-first-bottom selection before appending. Same-viewer extension preserves
+existing visibility. A cross-viewer extension conceals every previously visible
+card, rotates those opaque identities, and grants only the appended batch to the
+new viewer, matching the two clients' asymmetric V1 image state. A zero-card
+repeat remains a no-op for the compatible viewer; a different viewer emits
+`InspectionVisibilityCleared` and revokes all remaining per-card grants without
+moving the popup. Whole- and individual-inspection resolution are admitted
+below.
 
 The direct shuffle is restricted to exact
 `[initiator, "prizes", permutation, true]` records produced by the prize

@@ -574,9 +574,11 @@ popup tail. The canonical importer now records that exact transition through
 `InspectionExtended`, while a compatible zero-card export remains a no-op.
 Source characterization also pins the privacy boundary: every newly moved card
 is revealed before the non-viewing client may hide the complete popup, and a
-later call does not re-reveal older popup cards. Cross-viewer repeats therefore
-retain per-extraction visibility and remain fail-closed until the canonical
-model can express it per card.
+later call does not re-reveal older popup cards. The real-runtime cross-viewer
+oracle executes both player perspectives: the former viewer loses all previous
+faces, the new viewer sees only the newly appended batch, and a zero-card viewer
+change still hides the old batch. Canonical per-card viewer entries now reproduce
+those positive and zero-card transitions with replay-safe opaque-ID rotation.
 
 The adjacent work-area characterization also pins the visible `viewCards`
 buttons on both player sides for `discardAll`, `lostZoneAll`, `handAll`,

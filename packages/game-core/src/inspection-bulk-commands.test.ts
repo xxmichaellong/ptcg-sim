@@ -147,7 +147,7 @@ const prepareInspection = (
           sourcePlayerId: p1,
           sourceId: inspection.id,
           cardIds: [...inspection.cardIds],
-          viewerIds: [...inspection.viewerIds],
+          viewerIds: [p1, p2],
         },
       },
     },

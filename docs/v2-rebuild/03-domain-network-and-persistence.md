@@ -341,6 +341,14 @@ and server-only. A username or board orientation does not select a role.
   survives reconnect/restoration until the viewer closes it, but movement out
   of its recorded source removes the moved cards and deletes an empty grant.
   Setup/reset therefore revoke affected grants through the same movement rule.
+- Deck-inspection work areas carry an exact viewer list for every staged card,
+  rather than one viewer list for the entire popup. Repeated same-viewer
+  extraction preserves those entries. A different viewer conceals all older
+  visible cards, advances their opaque identity generation, and receives only
+  the newly extracted batch; a zero-card viewer transition conceals the prior
+  batch without moving cards. Match-state schema v3 migrates v1/v2 whole-area
+  viewers to uniform per-card entries and safely truncates persisted event and
+  undo histories whose old event payloads cannot replay under the new schema.
 - Grant metadata and newly visible definitions are projected only to a named
   viewer. Other players and spectators receive no grant ID/card list. Safe
   presentation facts may disclose only source player, viewer player, and count.

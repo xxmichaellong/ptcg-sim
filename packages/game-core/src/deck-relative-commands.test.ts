@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { applyEventBatch } from './apply-events.js';
 import type { CommandContext, DeckEntry, GameCommand } from './commands.js';
 import {
   createEmptyMatch,
@@ -534,7 +535,7 @@ describe('atomic deck-relative commands', () => {
             sourcePlayerId: p1,
             sourceId: inspection.id,
             cardIds: [...inspection.cardIds],
-            viewerIds: [...inspection.viewerIds],
+            viewerIds: [p1, p2],
           },
         },
       },
@@ -568,11 +569,16 @@ describe('atomic deck-relative commands', () => {
       movedToTop,
       retained,
     ]);
+    expect(state.workAreas[p1]?.inspection?.viewerIdsByCardId).toEqual({
+      [movedToTop]: [p1, p2],
+      [retained]: [p1, p2],
+    });
     expect(
       state.visibility.inspectionGrants[inspection.inspectionId]?.cardIds
     ).toEqual([movedToTop, retained]);
 
     const expectedDeckCardIds = [...state.zones[deckId]!.cardIds];
+    const beforeTailState = state;
     const tailSwap = executeCommand(
       state,
       {
@@ -594,6 +600,10 @@ describe('atomic deck-relative commands', () => {
         cardId: movedToTop,
         deckTopCardId: selected,
         expectedInspectionCardIds: [movedToTop, retained],
+        expectedViewerIdsByCardId: {
+          [movedToTop]: [p1, p2],
+          [retained]: [p1, p2],
+        },
         expectedDeckCardIds,
         returnTo: 'sourceTail',
       },
@@ -607,6 +617,24 @@ describe('atomic deck-relative commands', () => {
     expect(
       state.visibility.inspectionGrants[inspection.inspectionId]?.cardIds
     ).toEqual([retained, selected]);
+    expect(state.workAreas[p1]?.inspection?.viewerIdsByCardId).toEqual({
+      [retained]: [p1, p2],
+      [selected]: [p1, p2],
+    });
+    expect(() =>
+      applyEventBatch(beforeTailState, {
+        revision: beforeTailState.revision + 1,
+        events: [
+          {
+            ...tailSwap.batch.events[0]!,
+            expectedViewerIdsByCardId: {
+              [movedToTop]: [p1],
+              [retained]: [p1, p2],
+            },
+          },
+        ],
+      })
+    ).toThrow('Inspection deck-top swap has a stale work area');
     assertMatchInvariants(state);
   });
 

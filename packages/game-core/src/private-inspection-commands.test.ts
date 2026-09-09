@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { applyEventBatch } from './apply-events.js';
+import { cloneMatchState } from './clone.js';
 import type { CommandContext, DeckEntry, GameCommand } from './commands.js';
 import { createEmptyMatch, playerZoneId } from './create-match.js';
 import { executeCommand } from './execute-command.js';
@@ -444,7 +445,7 @@ describe('private inspection grants', () => {
           inspectionId: inspection.inspectionId,
           workAreaId: inspection.id,
           cardIds: [...inspection.cardIds],
-          viewerIds: [...inspection.viewerIds],
+          viewerIdsByCardId: structuredClone(inspection.viewerIdsByCardId),
         },
       },
       context
@@ -459,7 +460,11 @@ describe('private inspection grants', () => {
         sourceZoneId: deckId,
         expectedCardIds: originalDeck.slice(0, 2),
         cardIds: appendedCardIds,
-        expectedViewerIds: [p1],
+        expectedViewerIdsByCardId: {
+          [originalDeck[0]!]: [p1],
+          [originalDeck[1]!]: [p1],
+        },
+        viewerIds: [p1],
       },
     ]);
     expect(extended.state.zones[deckId]?.cardIds).toEqual(
@@ -468,6 +473,12 @@ describe('private inspection grants', () => {
     expect(extended.state.workAreas[p1]?.inspection).toEqual({
       ...inspection,
       cardIds: [...originalDeck.slice(0, 2), ...appendedCardIds],
+      viewerIdsByCardId: Object.fromEntries(
+        [...originalDeck.slice(0, 2), ...appendedCardIds].map((cardId) => [
+          cardId,
+          [p1],
+        ])
+      ),
     });
     expect(
       projectMatch(
@@ -509,19 +520,6 @@ describe('private inspection grants', () => {
       {
         type: 'ExtractDeckCardsForInspection',
         playerId: p1,
-        viewerIds: [p2],
-        count: 1,
-        edge: 'top',
-        expectedInspection: {
-          inspectionId: inspection.inspectionId,
-          workAreaId: inspection.id,
-          cardIds: [...inspection.cardIds],
-          viewerIds: [...inspection.viewerIds],
-        },
-      },
-      {
-        type: 'ExtractDeckCardsForInspection',
-        playerId: p1,
         viewerIds: [p1],
         count: 1,
         edge: 'top',
@@ -529,7 +527,7 @@ describe('private inspection grants', () => {
           inspectionId: inspection.inspectionId,
           workAreaId: inspection.id,
           cardIds: [...inspection.cardIds].reverse(),
-          viewerIds: [...inspection.viewerIds],
+          viewerIdsByCardId: structuredClone(inspection.viewerIdsByCardId),
         },
       },
     ];
@@ -551,6 +549,229 @@ describe('private inspection grants', () => {
       })
     ).toThrow('Inspection extension event is malformed');
     assertMatchInvariants(extended.state);
+  });
+
+  it('tracks V1 cross-viewer extensions and zero-card concealment per card', () => {
+    const context = createContext();
+    const initial = createEmptyMatch(asMatchId('cross-viewer-inspection'), [
+      { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
+      { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
+    ]);
+    const loaded = accepted(
+      initial,
+      { type: 'LoadDeck', playerId: p1, entries: entries('cross-viewer', 6) },
+      context
+    );
+    const originalDeck = [
+      ...loaded.state.zones[playerZoneId(p1, 'deck')]!.cardIds,
+    ];
+    const opened = accepted(
+      loaded.state,
+      {
+        type: 'ExtractDeckCardsForInspection',
+        playerId: p1,
+        viewerIds: [p1],
+        count: 2,
+        edge: 'top',
+      },
+      context
+    );
+    const firstInspection = opened.state.workAreas[p1]!.inspection!;
+    const beforeSameViewerZero = stableSerialize(opened.state);
+    const sameViewerZero = executeCommand(
+      opened.state,
+      {
+        type: 'ExtractDeckCardsForInspection',
+        playerId: p1,
+        viewerIds: [p1],
+        count: 0,
+        edge: 'top',
+        expectedInspection: {
+          inspectionId: firstInspection.inspectionId,
+          workAreaId: firstInspection.id,
+          cardIds: [...firstInspection.cardIds],
+          viewerIdsByCardId: structuredClone(firstInspection.viewerIdsByCardId),
+        },
+      },
+      context
+    );
+    expect(sameViewerZero).toMatchObject({
+      accepted: false,
+      code: 'invalid_command',
+    });
+    expect(stableSerialize(opened.state)).toBe(beforeSameViewerZero);
+    const crossViewer = accepted(
+      opened.state,
+      {
+        type: 'ExtractDeckCardsForInspection',
+        playerId: p1,
+        viewerIds: [p2],
+        count: 2,
+        edge: 'bottom',
+        expectedInspection: {
+          inspectionId: firstInspection.inspectionId,
+          workAreaId: firstInspection.id,
+          cardIds: [...firstInspection.cardIds],
+          viewerIdsByCardId: structuredClone(firstInspection.viewerIdsByCardId),
+        },
+      },
+      context
+    );
+    const crossInspection = crossViewer.state.workAreas[p1]!.inspection!;
+    const appended = originalDeck.slice(-2).reverse();
+    expect(crossInspection.viewerIdsByCardId).toEqual({
+      [originalDeck[0]!]: [],
+      [originalDeck[1]!]: [],
+      [appended[0]!]: [p2],
+      [appended[1]!]: [p2],
+    });
+    expect(
+      crossViewer.state.cards[originalDeck[0]!]!.visibilityGeneration
+    ).toBe(1);
+    expect(crossViewer.state.cards[appended[0]!]!.visibilityGeneration).toBe(0);
+    expect(
+      projectMatch(
+        crossViewer.state,
+        { kind: 'player', playerId: p1 },
+        identities
+      ).workAreas[p1]?.inspection?.cards.map((card) => card.kind)
+    ).toEqual(['concealed', 'concealed', 'concealed', 'concealed']);
+    expect(
+      projectMatch(
+        crossViewer.state,
+        { kind: 'player', playerId: p2 },
+        identities
+      ).workAreas[p1]?.inspection?.cards.map((card) => card.kind)
+    ).toEqual(['concealed', 'concealed', 'known', 'known']);
+
+    const sameViewer = accepted(
+      crossViewer.state,
+      {
+        type: 'ExtractDeckCardsForInspection',
+        playerId: p1,
+        viewerIds: [p2],
+        count: 1,
+        edge: 'top',
+        expectedInspection: {
+          inspectionId: crossInspection.inspectionId,
+          workAreaId: crossInspection.id,
+          cardIds: [...crossInspection.cardIds],
+          viewerIdsByCardId: structuredClone(crossInspection.viewerIdsByCardId),
+        },
+      },
+      context
+    );
+    const sameInspection = sameViewer.state.workAreas[p1]!.inspection!;
+    expect(sameInspection.viewerIdsByCardId[originalDeck[0]!]).toEqual([]);
+    expect(sameInspection.viewerIdsByCardId[appended[0]!]).toEqual([p2]);
+    expect(
+      sameInspection.viewerIdsByCardId[
+        sameInspection.cardIds[sameInspection.cardIds.length - 1]!
+      ]
+    ).toEqual([p2]);
+
+    const cleared = accepted(
+      sameViewer.state,
+      {
+        type: 'ExtractDeckCardsForInspection',
+        playerId: p1,
+        viewerIds: [p1],
+        count: 0,
+        edge: 'bottom',
+        expectedInspection: {
+          inspectionId: sameInspection.inspectionId,
+          workAreaId: sameInspection.id,
+          cardIds: [...sameInspection.cardIds],
+          viewerIdsByCardId: structuredClone(sameInspection.viewerIdsByCardId),
+        },
+      },
+      context
+    );
+    expect(cleared.batch.events).toEqual([
+      {
+        type: 'InspectionVisibilityCleared',
+        playerId: p1,
+        expectedWorkAreaId: sameInspection.id,
+        inspectionId: sameInspection.inspectionId,
+        expectedCardIds: [...sameInspection.cardIds],
+        expectedViewerIdsByCardId: structuredClone(
+          sameInspection.viewerIdsByCardId
+        ),
+        replacementViewerIds: [p1],
+      },
+    ]);
+    expect(
+      Object.values(
+        cleared.state.workAreas[p1]!.inspection!.viewerIdsByCardId
+      ).every((viewerIds) => viewerIds.length === 0)
+    ).toBe(true);
+    expect(cleared.state.cards[originalDeck[0]!]!.visibilityGeneration).toBe(1);
+    expect(cleared.state.cards[appended[0]!]!.visibilityGeneration).toBe(1);
+    for (const viewerId of [p1, p2]) {
+      expect(
+        projectMatch(
+          cleared.state,
+          { kind: 'player', playerId: viewerId },
+          identities
+        ).workAreas[p1]?.inspection?.cards.every(
+          (card) => card.kind === 'concealed'
+        )
+      ).toBe(true);
+    }
+
+    const replayed = [
+      loaded.batch,
+      opened.batch,
+      crossViewer.batch,
+      sameViewer.batch,
+      cleared.batch,
+    ].reduce(applyEventBatch, initial);
+    expect(stableSerialize(replayed)).toBe(stableSerialize(cleared.state));
+    const cloned = cloneMatchState(crossViewer.state);
+    expect(cloned.workAreas[p1]!.inspection!.viewerIdsByCardId).not.toBe(
+      crossInspection.viewerIdsByCardId
+    );
+    for (const cardId of crossInspection.cardIds) {
+      expect(
+        cloned.workAreas[p1]!.inspection!.viewerIdsByCardId[cardId]
+      ).not.toBe(crossInspection.viewerIdsByCardId[cardId]);
+    }
+    expect(() =>
+      applyEventBatch(opened.state, {
+        ...crossViewer.batch,
+        events: [
+          {
+            ...crossViewer.batch.events[0]!,
+            expectedViewerIdsByCardId: {
+              [originalDeck[0]!]: [],
+              [originalDeck[1]!]: [],
+            },
+          },
+        ],
+      })
+    ).toThrow('Inspection extension event is malformed');
+    expect(() =>
+      applyEventBatch(sameViewer.state, {
+        ...cleared.batch,
+        events: [
+          {
+            ...cleared.batch.events[0]!,
+            replacementViewerIds: [p2],
+          },
+        ],
+      })
+    ).toThrow('Inspection visibility-clear event is malformed');
+    const malformed = structuredClone(crossViewer.state);
+    delete (
+      malformed.workAreas[p1]!.inspection!.viewerIdsByCardId as Record<
+        string,
+        readonly (typeof p1)[]
+      >
+    )[originalDeck[0]!];
+    expect(() => assertMatchInvariants(malformed)).toThrow(
+      'invalid per-card visibility keys'
+    );
+    assertMatchInvariants(cleared.state);
   });
 
   it('rejects malformed open and close replay events before mutation', () => {

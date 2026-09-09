@@ -9,7 +9,7 @@ import type {
   ZoneId,
 } from './ids.js';
 
-export const MATCH_STATE_SCHEMA_VERSION = 2 as const;
+export const MATCH_STATE_SCHEMA_VERSION = 3 as const;
 
 /**
  * Maximum card instances one player may load. Enforced by `decideLoadDeck`;
@@ -91,7 +91,8 @@ export interface InspectionWorkArea {
   readonly inspectionId: InspectionId;
   readonly sourceZoneId: ZoneId;
   readonly cardIds: readonly CardInstanceId[];
-  readonly viewerIds: readonly PlayerId[];
+  /** Exact private viewers for each staged card, keyed by card instance ID. */
+  readonly viewerIdsByCardId: Readonly<Record<string, readonly PlayerId[]>>;
 }
 
 export interface AttachmentResolutionWorkArea {

@@ -249,13 +249,14 @@ Exact `viewDeck` records now execute `ExtractDeckCardsForInspection` against the
 recorded current-deck-count witness. Source `user` remains the deck owner, the
 decoded initiator is the sole viewer, and `targetIsOpp` must agree with that
 relationship. Top views preserve deck order; bottom views preserve V1's
-edge-first descending order. A repeated positive view by the same viewer carries
-the exact active inspection snapshot and emits replay-safe `InspectionExtended`,
-appending the newly selected edge cards without allocating another work area or
-inspection ID. The historical zero-card export remains a zero-batch record for
-that same viewer. Cross-viewer repeats remain closed because V1 retains
-per-extraction visibility inside one popup, while the canonical work area has
-one viewer set for all contained cards. Exact
+edge-first descending order. A repeated positive view carries the exact active
+inspection card order and per-card viewer map into replay-safe
+`InspectionExtended`, appending the newly selected edge cards without allocating
+another work area or inspection ID. The same viewer retains prior visibility;
+a different viewer conceals prior cards, rotates their opaque identities, and
+sees only the new batch. The historical zero-card export remains a zero-batch
+record for the same viewer and emits `InspectionVisibilityCleared` for a
+different viewer. Exact
 `viewCards` forms of `discardAll`, `lostZoneAll`, and `handAll` now resolve the
 entire inspection through one atomic `ResolveInspectionCards` batch, preserving
 the V1 popup order and closing the work area. The corresponding `shuffleAll`
@@ -412,11 +413,11 @@ remain valid.
 The eight reveal/look dispatcher names are transient socket/UI operations and
 never enter native V1 export history; `exchangeData` is explicitly filtered by
 the exporter. They remain allowlisted at the frozen envelope boundary but fail
-semantic conversion with `non_exported_action` if injected. The only genuine saved action family still
-unconverted is `changeCardBack`, pending the explicit custom-asset URL policy.
-Cross-viewer repeated-inspection visibility, the complete transaction/report,
-custom-card-back policy, and representative real-user corpus evidence remain
-before Phase 3 can exit.
+semantic conversion with `non_exported_action` if injected. The only genuine
+saved action family still unconverted is `changeCardBack`, pending the explicit
+custom-asset URL policy. The complete transaction/report, custom-card-back
+policy, cross-owner play policy, and representative real-user corpus evidence
+remain before Phase 3 can exit.
 
 Work:
 

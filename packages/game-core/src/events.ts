@@ -286,6 +286,9 @@ export type DomainEvent =
       readonly cardId: CardInstanceId;
       readonly deckTopCardId: CardInstanceId;
       readonly expectedInspectionCardIds: readonly CardInstanceId[];
+      readonly expectedViewerIdsByCardId: Readonly<
+        Record<string, readonly PlayerId[]>
+      >;
       readonly expectedDeckCardIds: readonly CardInstanceId[];
       readonly returnTo?: 'sourcePosition' | 'sourceTail';
     }
@@ -393,7 +396,21 @@ export type DomainEvent =
       readonly sourceZoneId: ZoneId;
       readonly expectedCardIds: readonly CardInstanceId[];
       readonly cardIds: readonly CardInstanceId[];
-      readonly expectedViewerIds: readonly PlayerId[];
+      readonly expectedViewerIdsByCardId: Readonly<
+        Record<string, readonly PlayerId[]>
+      >;
+      readonly viewerIds: readonly PlayerId[];
+    }
+  | {
+      readonly type: 'InspectionVisibilityCleared';
+      readonly playerId: PlayerId;
+      readonly expectedWorkAreaId: WorkAreaId;
+      readonly inspectionId: InspectionId;
+      readonly expectedCardIds: readonly CardInstanceId[];
+      readonly expectedViewerIdsByCardId: Readonly<
+        Record<string, readonly PlayerId[]>
+      >;
+      readonly replacementViewerIds: readonly PlayerId[];
     }
   | {
       readonly type: 'InspectionClosed';

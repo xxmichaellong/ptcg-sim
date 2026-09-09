@@ -216,6 +216,169 @@ const expectedLegacyExports = (
     ),
   }));
 
+const mountRealLegacyInspectionVisibilityFixture = async (
+  page: Page,
+  ownerUser: 'self' | 'opp'
+): Promise<void> => {
+  await page.evaluate(async (owner) => {
+    interface RuntimeCard {
+      readonly image: HTMLImageElement;
+    }
+    interface RuntimeZone {
+      readonly array: RuntimeCard[];
+      readonly element: HTMLElement;
+      readonly elementCover?: HTMLElement;
+    }
+    const load = (specifier: string): Promise<Record<string, unknown>> =>
+      import(/* @vite-ignore */ specifier);
+    const [frontEnd, cardModule, zoneModule] = await Promise.all([
+      load('/src/front-end.js'),
+      load('/src/setup/deck-constructor/card.js'),
+      load('/src/setup/zones/get-zone.js'),
+    ]);
+    const Card = cardModule['Card'] as new (
+      user: string,
+      name: string,
+      type: string,
+      imageUrl: string
+    ) => RuntimeCard;
+    const getZone = zoneModule['getZone'] as (
+      user: string,
+      zoneId: string
+    ) => RuntimeZone;
+    const systemState = frontEnd['systemState'] as {
+      isTwoPlayer: boolean;
+      cardBackSrc: string;
+      p2OppCardBackSrc: string;
+    };
+    const deck = getZone(owner, 'deck');
+    const viewCards = getZone(owner, 'viewCards');
+    for (const zone of [deck, viewCards]) {
+      zone.array.splice(0);
+      zone.element.querySelectorAll('img').forEach((image) => image.remove());
+      zone.elementCover?.replaceChildren();
+    }
+    systemState.isTwoPlayer = true;
+    systemState.cardBackSrc = `${location.origin}/src/assets/cardback.png`;
+    systemState.p2OppCardBackSrc = `${location.origin}/src/assets/cardback.png`;
+    const cards = ['First inspected', 'Second inspected', 'Deck remainder'].map(
+      (name) =>
+        new Card(
+          owner,
+          name,
+          'Pokémon',
+          `${location.origin}/src/assets/blank-logo.png`
+        )
+    );
+    await Promise.all(cards.map((card) => card.image.decode()));
+    deck.array.push(...cards);
+    deck.element.append(...cards.map((card) => card.image));
+  }, ownerUser);
+};
+
+test('real v1 cross-viewer deck inspection hides old cards and reveals only the new batch', async ({
+  browser,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== 'chromium',
+    'The real-runtime inspection visibility checkpoint is Chromium-specific.'
+  );
+
+  const run = async (
+    ownerUser: 'self' | 'opp',
+    actions: readonly {
+      readonly initiator: 'self' | 'opp';
+      readonly count: number;
+      readonly targetIsOpponent: boolean;
+    }[]
+  ) => {
+    const page = await browser.newPage({ viewport, deviceScaleFactor: 1 });
+    const pageErrors: string[] = [];
+    page.on('pageerror', (error) => pageErrors.push(error.message));
+    try {
+      const loaded = await loadLegacyRuntime(page);
+      await mountRealLegacyInspectionVisibilityFixture(page, ownerUser);
+      const visibility = await page.evaluate(
+        async ({ owner, steps }) => {
+          const load = (specifier: string): Promise<Record<string, unknown>> =>
+            import(/* @vite-ignore */ specifier);
+          const [deckActions, zoneModule] = await Promise.all([
+            load('/src/actions/zones/deck-actions.js'),
+            load('/src/setup/zones/get-zone.js'),
+          ]);
+          const viewDeck = deckActions['viewDeck'] as (
+            user: string,
+            initiator: string,
+            count: number,
+            top: boolean,
+            deckCount: number,
+            targetIsOpponent: boolean,
+            emit: boolean
+          ) => void;
+          const getZone = zoneModule['getZone'] as (
+            user: string,
+            zoneId: string
+          ) => {
+            readonly array: readonly {
+              readonly image: HTMLImageElement;
+            }[];
+          };
+          let deckCount = 3;
+          for (const step of steps) {
+            viewDeck(
+              owner,
+              step.initiator,
+              step.count,
+              true,
+              deckCount,
+              step.targetIsOpponent,
+              false
+            );
+            deckCount -= step.count;
+          }
+          return getZone(owner, 'viewCards').array.map((card) => ({
+            alt: card.image.alt,
+            concealed: card.image.src.endsWith('/src/assets/cardback.png'),
+          }));
+        },
+        { owner: ownerUser, steps: actions }
+      );
+      expect(loaded.servedPaths).toContain('/src/assets/blank-logo.png');
+      expect(loaded.missingPaths).toEqual([]);
+      expect(loaded.blockedOrigins).toContain('https://ptcgsim.online');
+      expect(pageErrors).toEqual([]);
+      return visibility;
+    } finally {
+      await page.close();
+    }
+  };
+
+  expect(
+    await run('self', [
+      { initiator: 'self', count: 1, targetIsOpponent: false },
+      { initiator: 'opp', count: 1, targetIsOpponent: true },
+    ])
+  ).toEqual([
+    { alt: 'Card back', concealed: true },
+    { alt: 'Card back', concealed: true },
+  ]);
+  expect(
+    await run('opp', [
+      { initiator: 'opp', count: 1, targetIsOpponent: false },
+      { initiator: 'self', count: 1, targetIsOpponent: true },
+    ])
+  ).toEqual([
+    { alt: 'Card back', concealed: true },
+    { alt: 'Second inspected', concealed: false },
+  ]);
+  expect(
+    await run('self', [
+      { initiator: 'self', count: 1, targetIsOpponent: false },
+      { initiator: 'opp', count: 0, targetIsOpponent: true },
+    ])
+  ).toEqual([{ alt: 'Card back', concealed: true }]);
+});
+
 test('real v1 selected-card deck shortcuts pin top, bottom, swap, and shuffle semantics', async ({
   browser,
 }, testInfo) => {

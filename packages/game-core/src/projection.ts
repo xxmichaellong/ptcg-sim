@@ -158,7 +158,7 @@ const isGrantedInspection = (
   for (const areas of Object.values(state.workAreas)) {
     if (
       areas.inspection?.cardIds.includes(cardId) &&
-      areas.inspection.viewerIds.includes(viewer.playerId)
+      areas.inspection.viewerIdsByCardId[cardId]?.includes(viewer.playerId)
     ) {
       return true;
     }

@@ -12,6 +12,11 @@ import {
 import { playerZoneId, stadiumZoneId } from './create-match.js';
 import type { DomainEvent } from './events.js';
 import { asWorkAreaId, type CardInstanceId, type PlayerId } from './ids.js';
+import {
+  activeInspectionViewerIds,
+  cloneInspectionViewerIds,
+  sameInspectionViewerIds,
+} from './inspection-visibility.js';
 import { findCardLocation } from './location.js';
 import {
   analyzePlayerReset,
@@ -1616,6 +1621,10 @@ export const decideCommand = (
             cardId: card.id,
             deckTopCardId,
             expectedInspectionCardIds: [...inspection.cardIds],
+            expectedViewerIdsByCardId: cloneInspectionViewerIds(
+              inspection.cardIds,
+              inspection.viewerIdsByCardId
+            ),
             expectedDeckCardIds: [...deck.cardIds],
             ...(command.inspectionReturnTo
               ? { returnTo: command.inspectionReturnTo }
@@ -2569,8 +2578,15 @@ export const decideCommand = (
     case 'ExtractDeckCardsForInspection': {
       const playerError = requirePlayer(state, command.playerId);
       if (playerError) return playerError;
-      if (!Number.isSafeInteger(command.count) || command.count <= 0) {
-        return reject('invalid_command', 'Inspection count must be positive');
+      if (
+        !Number.isSafeInteger(command.count) ||
+        command.count < 0 ||
+        command.count > MAX_DECK_CARDS
+      ) {
+        return reject(
+          'invalid_command',
+          'Inspection count must be an integer from 0 to 200'
+        );
       }
       if (command.viewerIds.some((viewerId) => !state.players[viewerId])) {
         return reject('not_found', 'Inspection viewer does not exist');
@@ -2584,14 +2600,6 @@ export const decideCommand = (
       }
       const deckId = playerZoneId(command.playerId, 'deck');
       const deck = state.zones[deckId];
-      if (!deck || deck.cardIds.length === 0) {
-        return reject('precondition_failed', 'Deck is empty');
-      }
-      const count = Math.min(command.count, deck.cardIds.length);
-      const cardIds =
-        command.edge === 'top'
-          ? deck.cardIds.slice(0, count)
-          : deck.cardIds.slice(deck.cardIds.length - count).reverse();
       const inspection = state.workAreas[command.playerId]?.inspection;
       if (inspection) {
         const expected = command.expectedInspection;
@@ -2601,18 +2609,48 @@ export const decideCommand = (
         if (
           inspection.inspectionId !== expected.inspectionId ||
           inspection.id !== expected.workAreaId ||
-          inspection.sourceZoneId !== deck.id ||
+          inspection.sourceZoneId !== deckId ||
           !sameOrder(inspection.cardIds, expected.cardIds) ||
-          !sameOrder(inspection.viewerIds, expected.viewerIds)
+          !sameInspectionViewerIds(
+            inspection.cardIds,
+            inspection.viewerIdsByCardId,
+            expected.viewerIdsByCardId
+          )
         ) {
           return reject('stale_reference', 'Inspection state changed');
         }
-        if (!sameOrder(viewerIds, inspection.viewerIds)) {
-          return reject(
-            'precondition_failed',
-            'Inspection extension cannot change viewers'
-          );
+        if (command.count === 0) {
+          const activeViewerIds = activeInspectionViewerIds(inspection);
+          if (
+            activeViewerIds === null ||
+            sameOrder(viewerIds, activeViewerIds)
+          ) {
+            return reject(
+              'invalid_command',
+              'Zero-card inspection does not change visibility'
+            );
+          }
+          return accept({
+            type: 'InspectionVisibilityCleared',
+            playerId: command.playerId,
+            expectedWorkAreaId: inspection.id,
+            inspectionId: inspection.inspectionId,
+            expectedCardIds: [...inspection.cardIds],
+            expectedViewerIdsByCardId: cloneInspectionViewerIds(
+              inspection.cardIds,
+              inspection.viewerIdsByCardId
+            ),
+            replacementViewerIds: viewerIds,
+          });
         }
+        if (!deck || deck.cardIds.length === 0) {
+          return reject('precondition_failed', 'Deck is empty');
+        }
+        const count = Math.min(command.count, deck.cardIds.length);
+        const cardIds =
+          command.edge === 'top'
+            ? deck.cardIds.slice(0, count)
+            : deck.cardIds.slice(deck.cardIds.length - count).reverse();
         if (inspection.cardIds.length + cardIds.length > MAX_DECK_CARDS) {
           return reject(
             'precondition_failed',
@@ -2627,12 +2665,27 @@ export const decideCommand = (
           sourceZoneId: deck.id,
           expectedCardIds: [...inspection.cardIds],
           cardIds,
-          expectedViewerIds: [...inspection.viewerIds],
+          expectedViewerIdsByCardId: cloneInspectionViewerIds(
+            inspection.cardIds,
+            inspection.viewerIdsByCardId
+          ),
+          viewerIds,
         });
       }
       if (command.expectedInspection) {
         return reject('stale_reference', 'Inspection is no longer active');
       }
+      if (command.count === 0) {
+        return reject('invalid_command', 'Inspection count must be positive');
+      }
+      if (!deck || deck.cardIds.length === 0) {
+        return reject('precondition_failed', 'Deck is empty');
+      }
+      const count = Math.min(command.count, deck.cardIds.length);
+      const cardIds =
+        command.edge === 'top'
+          ? deck.cardIds.slice(0, count)
+          : deck.cardIds.slice(deck.cardIds.length - count).reverse();
       const inspectionId = context.nextInspectionId();
       if (inspectionIdIsUsed(state, inspectionId)) {
         return reject('conflict', 'Inspection ID factory returned a duplicate');

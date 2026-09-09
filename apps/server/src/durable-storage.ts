@@ -334,7 +334,11 @@ const migrateMatchState = (value: unknown): MatchState => {
     throw new Error('Stored match state has an unsupported schema');
   }
   const schemaVersion = Reflect.get(value, 'schemaVersion');
-  if (schemaVersion !== 1 && schemaVersion !== MATCH_STATE_SCHEMA_VERSION) {
+  if (
+    schemaVersion !== 1 &&
+    schemaVersion !== 2 &&
+    schemaVersion !== MATCH_STATE_SCHEMA_VERSION
+  ) {
     throw new Error('Stored match state has an unsupported schema');
   }
   const state = value as MatchState;
@@ -362,14 +366,88 @@ const migrateMatchState = (value: unknown): MatchState => {
           ...grant,
           // Old state did not distinguish a one-card zone look from a card
           // look. Prefer the privacy-safe generic wording when ambiguous.
-          scope: cardIds.length === 1 ? 'card' : 'zone',
+          ...(schemaVersion === 1
+            ? { scope: cardIds.length === 1 ? 'card' : 'zone' }
+            : {}),
         },
       ];
     })
   ) as MatchState['visibility']['inspectionGrants'];
+  const workAreasValue = Reflect.get(value, 'workAreas');
+  if (
+    typeof workAreasValue !== 'object' ||
+    workAreasValue === null ||
+    Array.isArray(workAreasValue)
+  ) {
+    throw new Error('Stored match work areas are malformed');
+  }
+  const workAreas = Object.fromEntries(
+    Object.entries(workAreasValue).map(([playerId, areasValue]) => {
+      if (typeof areasValue !== 'object' || areasValue === null) {
+        throw new Error('Stored player work areas are malformed');
+      }
+      const inspectionValue = Reflect.get(areasValue, 'inspection');
+      let inspection: MatchState['workAreas'][string]['inspection'] = null;
+      if (inspectionValue !== null) {
+        if (typeof inspectionValue !== 'object') {
+          throw new Error('Stored inspection work area is malformed');
+        }
+        const cardIds = Reflect.get(inspectionValue, 'cardIds');
+        const viewerIds = Reflect.get(inspectionValue, 'viewerIds');
+        if (!Array.isArray(cardIds) || !Array.isArray(viewerIds)) {
+          throw new Error('Stored inspection visibility is malformed');
+        }
+        inspection = {
+          ...(inspectionValue as Omit<
+            NonNullable<MatchState['workAreas'][string]['inspection']>,
+            'viewerIdsByCardId'
+          >),
+          cardIds,
+          viewerIdsByCardId: Object.fromEntries(
+            cardIds.map((cardId) => [cardId, [...viewerIds]])
+          ),
+        };
+        delete (inspection as { viewerIds?: unknown }).viewerIds;
+      }
+      const resolutionValue = Reflect.get(areasValue, 'attachmentResolution');
+      let attachmentResolution: MatchState['workAreas'][string]['attachmentResolution'] =
+        null;
+      if (resolutionValue !== null) {
+        if (typeof resolutionValue !== 'object') {
+          throw new Error('Stored attachment work area is malformed');
+        }
+        const evolutionCardIds = Reflect.get(
+          resolutionValue,
+          'evolutionCardIds'
+        );
+        const attachmentCardIds = Reflect.get(
+          resolutionValue,
+          'attachmentCardIds'
+        );
+        const cardIds = Reflect.get(resolutionValue, 'cardIds');
+        if (
+          !Array.isArray(evolutionCardIds) ||
+          !Array.isArray(attachmentCardIds) ||
+          (cardIds !== undefined && !Array.isArray(cardIds))
+        ) {
+          throw new Error('Stored attachment work-area order is malformed');
+        }
+        attachmentResolution = {
+          ...(resolutionValue as NonNullable<
+            MatchState['workAreas'][string]['attachmentResolution']
+          >),
+          cardIds: cardIds ?? [...evolutionCardIds, ...attachmentCardIds],
+          evolutionCardIds,
+          attachmentCardIds,
+        };
+      }
+      return [playerId, { inspection, attachmentResolution }];
+    })
+  ) as MatchState['workAreas'];
   return {
     ...state,
     schemaVersion: MATCH_STATE_SCHEMA_VERSION,
+    workAreas,
     visibility: { ...state.visibility, inspectionGrants },
   };
 };
@@ -450,6 +528,19 @@ const migrateStoredSnapshot = (value: unknown): RoomAuthoritySnapshot => {
     candidate = value as RoomAuthoritySnapshot;
   } else {
     throw new Error('Stored room snapshot has an unsupported schema');
+  }
+  const state = migrateMatchState(candidate.state);
+  if (state !== candidate.state) {
+    candidate = {
+      ...candidate,
+      state,
+      soloUndoHistory: {
+        baseState: null,
+        baseStateHash: null,
+        entries: [],
+      },
+      replayHistory: createReplayHistory(state),
+    };
   }
   if (legacySchema && candidate.admission) {
     candidate = {

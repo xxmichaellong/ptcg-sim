@@ -919,6 +919,98 @@ describe('Durable Object authority snapshot store', () => {
     );
   });
 
+  it('migrates v2 work-area viewers to exact per-card visibility', async () => {
+    const storage = new MemoryDurableStorage();
+    const initial = initialSnapshot('legacy-inspection-visibility');
+    const context = {
+      nextCardId: (() => {
+        let index = 0;
+        return () => asCardInstanceId(`legacy-inspection-card-${++index}`);
+      })(),
+      nextStackId: () => asStackId('legacy-inspection-stack'),
+      nextInspectionId: () => asInspectionId('legacy-inspection-work-area-id'),
+      nextWorkAreaId: () => asWorkAreaId('legacy-inspection-unused-work'),
+      shuffle: <Value>(values: readonly Value[]) => [...values],
+      randomInt: () => 0,
+    };
+    const loaded = executeCommand(
+      initial.state,
+      {
+        type: 'LoadDeck',
+        playerId: p1,
+        entries: [
+          {
+            definition: {
+              id: asCardDefinitionId('legacy-inspection-definition'),
+              name: 'Legacy inspection card',
+              category: 'Trainer',
+              imageUrl: '/legacy-inspection.png',
+            },
+            count: 3,
+          },
+        ],
+      },
+      context
+    );
+    if (!loaded.accepted) throw new Error(loaded.message);
+    const opened = executeCommand(
+      loaded.state,
+      {
+        type: 'ExtractDeckCardsForInspection',
+        playerId: p1,
+        viewerIds: [p1],
+        count: 2,
+        edge: 'top',
+      },
+      context
+    );
+    if (!opened.accepted) throw new Error(opened.message);
+    const legacyState = structuredClone(opened.state) as unknown as {
+      schemaVersion: number;
+      workAreas: Record<
+        string,
+        {
+          inspection: null | {
+            cardIds: readonly string[];
+            viewerIds?: readonly string[];
+            viewerIdsByCardId?: Readonly<Record<string, readonly string[]>>;
+          };
+        }
+      >;
+    };
+    legacyState.schemaVersion = 2;
+    const legacyInspection = legacyState.workAreas[p1]!.inspection!;
+    legacyInspection.viewerIds = [p1];
+    delete legacyInspection.viewerIdsByCardId;
+    storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
+      format: 'ptcgsim-room-authority-v6',
+      snapshot: {
+        ...initial,
+        state: legacyState,
+        replayHistory: createReplayHistory(opened.state),
+      },
+    });
+
+    const restored = await new DurableRoomSnapshotStore(storage).load();
+    const restoredInspection = restored!.state.workAreas[p1]!.inspection!;
+    expect(restored!.state.schemaVersion).toBe(MATCH_STATE_SCHEMA_VERSION);
+    expect(restoredInspection.viewerIdsByCardId).toEqual(
+      Object.fromEntries(
+        restoredInspection.cardIds.map((cardId) => [cardId, [p1]])
+      )
+    );
+    expect(restored!.replayHistory).toMatchObject({
+      baseState: { revision: opened.state.revision },
+      entries: [],
+    });
+    expect(restored!.soloUndoHistory).toEqual({
+      baseState: null,
+      baseStateHash: null,
+      entries: [],
+    });
+    expect(authoritySnapshotValidationFor(restored!)).toBeDefined();
+  });
+
   it('atomically writes the snapshot and resolved journal record', async () => {
     const storage = new MemoryDurableStorage();
     const initial = initialSnapshot();

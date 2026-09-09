@@ -258,11 +258,43 @@ export const collectInvariantProblems = (
     if (areas.attachmentResolution && stagedIds.length === 0) {
       problems.push(`attachment resolution for ${playerId} is empty`);
     }
-    if (
-      areas.inspection &&
-      areas.inspection.viewerIds.some((viewerId) => !state.players[viewerId])
-    ) {
-      problems.push(`inspection for ${playerId} contains unknown viewer`);
+    if (areas.inspection) {
+      const viewerMap = areas.inspection.viewerIdsByCardId;
+      const cardIdSet = new Set(areas.inspection.cardIds);
+      const viewerMapKeys = Object.keys(viewerMap);
+      if (
+        viewerMapKeys.length !== areas.inspection.cardIds.length ||
+        viewerMapKeys.some((cardId) => !cardIdSet.has(cardId as CardInstanceId))
+      ) {
+        problems.push(
+          `inspection for ${playerId} has invalid per-card visibility keys`
+        );
+      }
+      const activeViewerOrders = new Set<string>();
+      for (const cardId of areas.inspection.cardIds) {
+        const viewerIds = viewerMap[cardId];
+        if (
+          !viewerIds ||
+          viewerIds.length > state.playerOrder.length ||
+          hasDuplicates(viewerIds)
+        ) {
+          problems.push(
+            `inspection for ${playerId} has invalid viewers for ${cardId}`
+          );
+          continue;
+        }
+        if (viewerIds.some((viewerId) => !state.players[viewerId])) {
+          problems.push(`inspection for ${playerId} contains unknown viewer`);
+        }
+        if (viewerIds.length > 0) {
+          activeViewerOrders.add(JSON.stringify(viewerIds));
+        }
+      }
+      if (activeViewerOrders.size > 1) {
+        problems.push(
+          `inspection for ${playerId} has conflicting active viewer sets`
+        );
+      }
     }
   }
 

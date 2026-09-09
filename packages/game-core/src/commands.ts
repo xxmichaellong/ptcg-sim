@@ -297,7 +297,9 @@ export type GameCommand =
         readonly inspectionId: InspectionId;
         readonly workAreaId: WorkAreaId;
         readonly cardIds: readonly CardInstanceId[];
-        readonly viewerIds: readonly PlayerId[];
+        readonly viewerIdsByCardId: Readonly<
+          Record<string, readonly PlayerId[]>
+        >;
       };
     }
   | {

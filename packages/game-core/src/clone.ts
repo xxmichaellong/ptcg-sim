@@ -1,4 +1,5 @@
 import type { MatchState } from './model.js';
+import { cloneInspectionViewerIds } from './inspection-visibility.js';
 
 export const cloneMatchState = (state: MatchState): MatchState => ({
   ...state,
@@ -51,7 +52,10 @@ export const cloneMatchState = (state: MatchState): MatchState => ({
           ? {
               ...areas.inspection,
               cardIds: [...areas.inspection.cardIds],
-              viewerIds: [...areas.inspection.viewerIds],
+              viewerIdsByCardId: cloneInspectionViewerIds(
+                areas.inspection.cardIds,
+                areas.inspection.viewerIdsByCardId
+              ),
             }
           : null,
         attachmentResolution: areas.attachmentResolution

@@ -3607,13 +3607,18 @@ describe('legacy v1 canonical candidate builder', () => {
       id: selfWorkAreaId,
       inspectionId: selfInspectionId,
       cardIds: selfCards.slice(0, 2),
-      viewerIds: [selfId],
+      viewerIdsByCardId: {
+        [selfCards[0]!]: [selfId],
+        [selfCards[1]!]: [selfId],
+      },
     });
     expect(result.state.workAreas[opponentId]?.inspection).toMatchObject({
       id: opponentWorkAreaId,
       inspectionId: opponentInspectionId,
       cardIds: opponentCards.slice(-3).reverse(),
-      viewerIds: [selfId],
+      viewerIdsByCardId: Object.fromEntries(
+        opponentCards.slice(-3).map((cardId) => [cardId, [selfId]])
+      ),
     });
     const replayed = result.records
       .flatMap((record) => record.batches)
@@ -3626,7 +3631,7 @@ describe('legacy v1 canonical candidate builder', () => {
     assertMatchInvariants(result.state);
   });
 
-  it('retains compatible zero views, appends repeated inspections, and rejects stale or cross-viewer records', () => {
+  it('retains compatible zero views and appends repeated inspections with exact per-card viewers', () => {
     const zeroView = buildLegacyV1Candidate(
       parse(
         payload(
@@ -3716,7 +3721,10 @@ describe('legacy v1 canonical candidate builder', () => {
       inspectionId,
       sourceZoneId: deckId,
       cardIds: [firstCardId, lastCardId],
-      viewerIds: [playerId],
+      viewerIdsByCardId: {
+        [firstCardId]: [playerId],
+        [lastCardId]: [playerId],
+      },
     });
     expect(additive.records[3]!.batches[0]!.events).toEqual([
       {
@@ -3727,7 +3735,8 @@ describe('legacy v1 canonical candidate builder', () => {
         sourceZoneId: deckId,
         expectedCardIds: [firstCardId],
         cardIds: [lastCardId],
-        expectedViewerIds: [playerId],
+        expectedViewerIdsByCardId: { [firstCardId]: [playerId] },
+        viewerIds: [playerId],
       },
     ]);
     const replayed = additive.records
@@ -3740,32 +3749,105 @@ describe('legacy v1 canonical candidate builder', () => {
     expect(stableHash(additive.state)).toBe(stableHash(additiveRetry.state));
     assertMatchInvariants(additive.state);
 
-    for (const count of [1, 0]) {
-      const crossViewer = buildLegacyV1Candidate(
-        parse(
-          payload(
-            cardRows(3, 'Cross-viewer inspect'),
-            '',
-            action('self', 'viewDeck', ['self', 1, true, 3, false]),
-            action('self', 'viewDeck', ['opp', count, false, 2, true])
-          )
-        ),
-        target
-      );
-      expect(crossViewer).toEqual({
-        ok: false,
-        issues: [
-          {
-            code: 'source_state_mismatch',
-            recordIndex: 4,
-            path: '$[4].action',
-            message:
-              'Repeated V1 deck inspection by a different viewer requires per-card visibility that the canonical work area cannot represent',
-          },
-        ],
-      });
-      expect('state' in crossViewer).toBe(false);
+    const crossViewerPayload = parse(
+      payload(
+        cardRows(3, 'Cross-viewer inspect'),
+        '',
+        action('self', 'viewDeck', ['self', 1, true, 3, false]),
+        action('self', 'viewDeck', ['opp', 1, false, 2, true])
+      )
+    );
+    const crossViewer = buildLegacyV1Candidate(crossViewerPayload, target);
+    const crossViewerRetry = buildLegacyV1Candidate(crossViewerPayload, target);
+    expect(crossViewer).toEqual(crossViewerRetry);
+    expect(crossViewer.ok).toBe(true);
+    if (!crossViewer.ok) throw new Error(crossViewer.issues[0]?.message);
+    const opponentId = target.opponentSeat.playerId;
+    expect(crossViewer.state.workAreas[playerId]?.inspection).toMatchObject({
+      cardIds: [firstCardId, lastCardId],
+      viewerIdsByCardId: {
+        [firstCardId]: [],
+        [lastCardId]: [opponentId],
+      },
+    });
+    expect(crossViewer.state.cards[firstCardId]?.visibilityGeneration).toBe(1);
+    expect(crossViewer.state.cards[lastCardId]?.visibilityGeneration).toBe(0);
+    expect(crossViewer.records[3]!.batches[0]!.events).toEqual([
+      {
+        type: 'InspectionExtended',
+        playerId,
+        expectedWorkAreaId: workAreaId,
+        inspectionId,
+        sourceZoneId: deckId,
+        expectedCardIds: [firstCardId],
+        cardIds: [lastCardId],
+        expectedViewerIdsByCardId: { [firstCardId]: [playerId] },
+        viewerIds: [opponentId],
+      },
+    ]);
+    expect(
+      crossViewer.records
+        .flatMap((record) => record.batches)
+        .reduce(
+          applyEventBatch,
+          createEmptyMatch(target.matchId, [
+            target.selfSeat,
+            target.opponentSeat,
+          ])
+        )
+    ).toEqual(crossViewer.state);
+    assertMatchInvariants(crossViewer.state);
+
+    const zeroCrossViewerPayload = parse(
+      payload(
+        cardRows(3, 'Zero cross-viewer inspect'),
+        '',
+        action('self', 'viewDeck', ['self', 1, true, 3, false]),
+        action('self', 'viewDeck', ['opp', 0, false, 2, true])
+      )
+    );
+    const zeroCrossViewer = buildLegacyV1Candidate(
+      zeroCrossViewerPayload,
+      target
+    );
+    const zeroCrossViewerRetry = buildLegacyV1Candidate(
+      zeroCrossViewerPayload,
+      target
+    );
+    expect(zeroCrossViewer).toEqual(zeroCrossViewerRetry);
+    expect(zeroCrossViewer.ok).toBe(true);
+    if (!zeroCrossViewer.ok) {
+      throw new Error(zeroCrossViewer.issues[0]?.message);
     }
+    expect(
+      zeroCrossViewer.state.workAreas[playerId]?.inspection?.viewerIdsByCardId
+    ).toEqual({ [firstCardId]: [] });
+    expect(zeroCrossViewer.state.cards[firstCardId]?.visibilityGeneration).toBe(
+      1
+    );
+    expect(zeroCrossViewer.records[3]!.batches[0]!.events).toEqual([
+      {
+        type: 'InspectionVisibilityCleared',
+        playerId,
+        expectedWorkAreaId: workAreaId,
+        inspectionId,
+        expectedCardIds: [firstCardId],
+        expectedViewerIdsByCardId: { [firstCardId]: [playerId] },
+        replacementViewerIds: [opponentId],
+      },
+    ]);
+    expect(
+      zeroCrossViewer.records
+        .flatMap((record) => record.batches)
+        .reduce(
+          applyEventBatch,
+          createEmptyMatch(target.matchId, [
+            target.selfSeat,
+            target.opponentSeat,
+          ])
+        )
+    ).toEqual(zeroCrossViewer.state);
+    assertMatchInvariants(zeroCrossViewer.state);
   });
 
   it('extends a partially resolved inspection and preserves later bulk order and cleanup', () => {
@@ -3812,7 +3894,8 @@ describe('legacy v1 canonical candidate builder', () => {
         sourceZoneId: deckId,
         expectedCardIds: [cardIds[1]],
         cardIds: [cardIds[4], cardIds[3]],
-        expectedViewerIds: [playerId],
+        expectedViewerIdsByCardId: { [cardIds[1]!]: [playerId] },
+        viewerIds: [playerId],
       },
     ]);
     expect(result.records[5]!.batches[0]!.events).toEqual([
@@ -4414,7 +4497,7 @@ describe('legacy v1 canonical candidate builder', () => {
       id: workAreaId,
       inspectionId,
       cardIds: [retainedId],
-      viewerIds: [playerId],
+      viewerIdsByCardId: { [retainedId]: [playerId] },
     });
     expect(result.records[3]!.batches[0]!.events).toEqual([
       {
@@ -4924,6 +5007,10 @@ describe('legacy v1 canonical candidate builder', () => {
         cardId: cardIds[0],
         deckTopCardId: cardIds[2],
         expectedInspectionCardIds: [cardIds[0], cardIds[1]],
+        expectedViewerIdsByCardId: {
+          [cardIds[0]!]: [playerId],
+          [cardIds[1]!]: [playerId],
+        },
         expectedDeckCardIds: [cardIds[2], cardIds[3]],
         returnTo: 'sourceTail',
       },
@@ -4936,7 +5023,10 @@ describe('legacy v1 canonical candidate builder', () => {
       id: workAreaId,
       inspectionId,
       cardIds: [cardIds[1], cardIds[2]],
-      viewerIds: [playerId],
+      viewerIdsByCardId: {
+        [cardIds[1]!]: [playerId],
+        [cardIds[2]!]: [playerId],
+      },
     });
     expect(result.state.cards[cardIds[0]!]?.visibilityGeneration).toBe(1);
     const replayed = result.records

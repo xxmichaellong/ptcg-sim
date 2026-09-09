@@ -8,6 +8,14 @@ import {
 import type { DomainEvent, EventBatch } from './events.js';
 import type { CardInstanceId, PlayerId, StackId, ZoneId } from './ids.js';
 import {
+  activeInspectionViewerIds,
+  clearInspectionViewerIds,
+  cloneInspectionViewerIds,
+  extendInspectionViewerIds,
+  sameInspectionViewerIds,
+  uniformInspectionViewerIds,
+} from './inspection-visibility.js';
+import {
   analyzePlayerReset,
   resetReturnCapacityIsValid,
 } from './lifecycle-reset.js';
@@ -169,6 +177,9 @@ const removeCardsFromAllLocations = (
 
   const workAreas = Object.fromEntries(
     Object.entries(state.workAreas).map(([playerId, areas]) => {
+      const inspectionCardIds =
+        areas.inspection?.cardIds.filter((cardId) => !cardIds.has(cardId)) ??
+        [];
       const stagedEvolutionCardIds =
         areas.attachmentResolution?.evolutionCardIds.filter(
           (cardId) => !cardIds.has(cardId)
@@ -183,8 +194,10 @@ const removeCardsFromAllLocations = (
           inspection: areas.inspection
             ? {
                 ...areas.inspection,
-                cardIds: areas.inspection.cardIds.filter(
-                  (cardId) => !cardIds.has(cardId)
+                cardIds: inspectionCardIds,
+                viewerIdsByCardId: cloneInspectionViewerIds(
+                  inspectionCardIds,
+                  areas.inspection.viewerIdsByCardId
                 ),
               }
             : null,
@@ -1675,7 +1688,14 @@ const applyEventInternal = (
               inspection:
                 remaining.length === 0
                   ? null
-                  : { ...inspection, cardIds: remaining },
+                  : {
+                      ...inspection,
+                      cardIds: remaining,
+                      viewerIdsByCardId: cloneInspectionViewerIds(
+                        remaining,
+                        inspection.viewerIdsByCardId
+                      ),
+                    },
             },
           };
           break;
@@ -2069,7 +2089,14 @@ const applyEventInternal = (
             inspection:
               remaining.length === 0
                 ? null
-                : { ...inspection, cardIds: remaining },
+                : {
+                    ...inspection,
+                    cardIds: remaining,
+                    viewerIdsByCardId: cloneInspectionViewerIds(
+                      remaining,
+                      inspection.viewerIdsByCardId
+                    ),
+                  },
           },
         },
         visibility: retireVisibility(
@@ -2382,6 +2409,11 @@ const applyEventInternal = (
         inspection.cardIds.some(
           (cardId, index) => cardId !== event.expectedInspectionCardIds[index]
         ) ||
+        !sameInspectionViewerIds(
+          inspection.cardIds,
+          inspection.viewerIdsByCardId,
+          event.expectedViewerIdsByCardId
+        ) ||
         !inspection.cardIds.includes(event.cardId)
       ) {
         throw new Error('Inspection deck-top swap has a stale work area');
@@ -2410,6 +2442,17 @@ const applyEventInternal = (
               event.deckTopCardId,
             ]
           : inspectionCardIds;
+      const selectedViewerIds = [
+        ...(inspection.viewerIdsByCardId[event.cardId] ?? []),
+      ];
+      const returnedViewerIdsByCardId = Object.fromEntries(
+        returnedInspectionCardIds.map((cardId) => [
+          cardId,
+          cardId === event.deckTopCardId
+            ? selectedViewerIds
+            : [...inspection.viewerIdsByCardId[cardId]!],
+        ])
+      );
       const normalizedSelected = {
         ...selected,
         currentCategory: selected.originalCategory,
@@ -2470,7 +2513,11 @@ const applyEventInternal = (
           ...state.workAreas,
           [event.playerId]: {
             ...areas,
-            inspection: { ...inspection, cardIds: returnedInspectionCardIds },
+            inspection: {
+              ...inspection,
+              cardIds: returnedInspectionCardIds,
+              viewerIdsByCardId: returnedViewerIdsByCardId,
+            },
           },
         },
         visibility: {
@@ -2978,7 +3025,10 @@ const applyEventInternal = (
               inspectionId: event.inspectionId,
               sourceZoneId: event.sourceZoneId,
               cardIds: [...event.cardIds],
-              viewerIds: [...event.viewerIds],
+              viewerIdsByCardId: uniformInspectionViewerIds(
+                event.cardIds,
+                event.viewerIds
+              ),
             },
           },
         },
@@ -3001,6 +3051,9 @@ const applyEventInternal = (
         event.cardIds,
         [...bottomCardIds].reverse()
       );
+      const activeViewerIds = inspection
+        ? activeInspectionViewerIds(inspection)
+        : null;
       if (
         !areas ||
         !inspection ||
@@ -3011,7 +3064,15 @@ const applyEventInternal = (
         source.kind !== 'deck' ||
         source.ownerId !== event.playerId ||
         !sameCardOrder(inspection.cardIds, event.expectedCardIds) ||
-        !sameCardOrder(inspection.viewerIds, event.expectedViewerIds) ||
+        !sameInspectionViewerIds(
+          inspection.cardIds,
+          inspection.viewerIdsByCardId,
+          event.expectedViewerIdsByCardId
+        ) ||
+        event.viewerIds.length === 0 ||
+        event.viewerIds.length > state.playerOrder.length ||
+        new Set(event.viewerIds).size !== event.viewerIds.length ||
+        event.viewerIds.some((viewerId) => !state.players[viewerId]) ||
         event.cardIds.length === 0 ||
         inspection.cardIds.length + event.cardIds.length > 200 ||
         selected.size !== event.cardIds.length ||
@@ -3019,8 +3080,27 @@ const applyEventInternal = (
       ) {
         throw new Error('Inspection extension event is malformed');
       }
+      const revokedCardIds = new Set(
+        activeViewerIds && !sameCardOrder(activeViewerIds, event.viewerIds)
+          ? inspection.cardIds.filter(
+              (cardId) =>
+                (inspection.viewerIdsByCardId[cardId]?.length ?? 0) > 0
+            )
+          : []
+      );
       return {
         ...state,
+        cards:
+          revokedCardIds.size === 0
+            ? state.cards
+            : Object.fromEntries(
+                Object.entries(state.cards).map(([cardId, card]) => [
+                  cardId,
+                  revokedCardIds.has(card.id)
+                    ? incrementVisibility(card)
+                    : card,
+                ])
+              ),
         zones: {
           ...state.zones,
           [source.id]: {
@@ -3035,10 +3115,66 @@ const applyEventInternal = (
             inspection: {
               ...inspection,
               cardIds: [...inspection.cardIds, ...event.cardIds],
+              viewerIdsByCardId: extendInspectionViewerIds(
+                inspection,
+                event.cardIds,
+                event.viewerIds
+              ),
             },
           },
         },
         visibility: retireVisibility(state, selected, selected),
+      };
+    }
+    case 'InspectionVisibilityCleared': {
+      const areas = state.workAreas[event.playerId];
+      const inspection = areas?.inspection;
+      const activeViewerIds = inspection
+        ? activeInspectionViewerIds(inspection)
+        : null;
+      if (
+        !areas ||
+        !inspection ||
+        inspection.id !== event.expectedWorkAreaId ||
+        inspection.inspectionId !== event.inspectionId ||
+        !sameCardOrder(inspection.cardIds, event.expectedCardIds) ||
+        !sameInspectionViewerIds(
+          inspection.cardIds,
+          inspection.viewerIdsByCardId,
+          event.expectedViewerIdsByCardId
+        ) ||
+        event.replacementViewerIds.length === 0 ||
+        event.replacementViewerIds.length > state.playerOrder.length ||
+        new Set(event.replacementViewerIds).size !==
+          event.replacementViewerIds.length ||
+        event.replacementViewerIds.some(
+          (viewerId) => !state.players[viewerId]
+        ) ||
+        activeViewerIds === null ||
+        sameCardOrder(activeViewerIds, event.replacementViewerIds)
+      ) {
+        throw new Error('Inspection visibility-clear event is malformed');
+      }
+      return {
+        ...state,
+        cards: Object.fromEntries(
+          Object.entries(state.cards).map(([cardId, card]) => [
+            cardId,
+            (inspection.viewerIdsByCardId[card.id]?.length ?? 0) > 0
+              ? incrementVisibility(card)
+              : card,
+          ])
+        ),
+        workAreas: {
+          ...state.workAreas,
+          [event.playerId]: {
+            ...areas,
+            inspection: {
+              ...inspection,
+              viewerIdsByCardId: clearInspectionViewerIds(inspection.cardIds),
+            },
+          },
+        },
       };
     }
     case 'InspectionClosed': {
