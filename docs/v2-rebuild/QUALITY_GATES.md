@@ -17,8 +17,9 @@ the frozen v1 runtime.
 | `pnpm run check:api:v2`         | Reject unreviewed workspace entrypoints and exported symbol additions, removals, renames, or type/value-kind changes.        |
 | `pnpm run check:cycles:v2`      | Check relative TypeScript module cycles while excluding generated `lib`, `dist`, `.wrangler`, and Worker types.              |
 | `pnpm run typecheck:browser:v2` | Typecheck Playwright specs/support against the strict production profile, including unchecked-index protection.              |
-| `pnpm run typecheck:v2`         | Strictly build production references and typecheck Worker model/runtime plus browser harnesses.                              |
-| `pnpm run test:tooling:v2`      | Prove the boundary checker rejects legacy/deep imports, workspace cycles, forbidden web provenance, and missing maps.        |
+| `pnpm run typecheck:v2`         | Strictly build production references and typecheck Worker model/runtime, browser harnesses, and TypeScript operator tooling. |
+| `pnpm run test:tooling:v2`      | Prove architecture/API gates plus the private legacy-corpus runner's privacy, bounds, determinism, and drift behavior.       |
+| `pnpm run check:legacy-corpus`  | Operator-only: convert an explicit private corpus into redacted deterministic evidence, optionally comparing a baseline.     |
 | `pnpm run build:v2`             | Build Worker and web artifacts, then verify bundle provenance, fixture exclusion, and emitted card-back bytes.               |
 | `pnpm run check:v2`             | Run every non-legacy, non-browser check above plus v2 unit and Worker-runtime tests.                                         |
 | `pnpm run check:ci`             | Run the frozen 79-test v1 suite followed by `check:v2`; this is the required non-browser CI job.                             |
@@ -28,6 +29,14 @@ the frozen v1 runtime.
 
 Use `corepack pnpm` when invoking these commands directly from a new checkout.
 The repository pins pnpm 11.24.0 in `packageManager`.
+
+`check:legacy-corpus` is deliberately not a CI corpus run because no raw private
+exports belong in the repository. It accepts `--input <directory>` and optional
+`--expect <redacted-report.json>` arguments. In-repository source data must be
+under the ignored `.private/legacy-import-corpus/` tree; the expected report must
+be outside that input tree. The checked-in ten-test synthetic suite still runs
+inside `test:tooling:v2`. Full handling and privacy caveats are documented in
+[`LEGACY_IMPORT.md`](./LEGACY_IMPORT.md).
 
 ## Enforced architecture boundary
 

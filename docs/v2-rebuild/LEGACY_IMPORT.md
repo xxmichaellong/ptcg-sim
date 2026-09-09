@@ -1,6 +1,6 @@
 # Legacy import boundary
 
-- Status: **bounded v1 conversion transaction and private semantic adapters implemented**
+- Status: **bounded v1 conversion transaction, report, and private-corpus evidence runner implemented**
 - Supported source versions: `1.5`, `1.5.1`
 - Production route status: unwired
 
@@ -144,6 +144,59 @@ unchanged. The existing `fnv1a32` game-core hash remains useful for deterministi
 diagnostics but is not treated as an integrity credential. Rejected conversions
 list no dropped fields because no target was installed. The package and report
 remain unwired from upload, save, or `/import?key=` routes.
+
+### Privacy-safe corpus evidence runner
+
+`pnpm run check:legacy-corpus` is an operator-only tool around the public byte
+transaction. It recursively reads lowercase `.json` files from an explicitly
+provided directory, converts them sequentially against the fixed anonymous
+`ptcgsim-anonymous-legacy-corpus-target-v1` profile, and emits a deterministic
+`ptcgsim-legacy-import-corpus-report-v1` JSON document. The output is sorted by
+exact source SHA-256 rather than filename and contains only:
+
+- source digests and byte lengths;
+- source version and action-family counts;
+- conversion/target identities and aggregate event counts;
+- warning and dropped-field reason counts; and
+- failure stage, code, record index, and JSON path without diagnostic messages.
+
+It never emits source paths, filenames, card/deck names, image URLs, or raw JSON.
+Exact source digests, byte lengths, and action distributions are nevertheless
+pseudonymous metadata and still require privacy review before a report is
+committed or shared.
+
+Raw private exports must stay outside the repository or below the ignored
+`.private/legacy-import-corpus/` directory. The CLI rejects any other
+in-repository input, any symbolic link in the tree, duplicate exact artifacts,
+an empty corpus, more than 1,000 cases, a source above the transaction's 4 MiB
+limit, or more than 256 MiB in total. Non-JSON regular files are ignored. Input
+is processed one artifact at a time; the tool does not retain raw contents.
+
+Generate a review artifact outside the input tree:
+
+```bash
+corepack pnpm run check:legacy-corpus -- \
+  --input .private/legacy-import-corpus/reviewed \
+  > /tmp/ptcgsim-legacy-corpus-report.json
+```
+
+After the redacted artifact itself is approved and stored in a controlled
+location, compare later runs semantically (JSON whitespace and object-key order
+do not matter):
+
+```bash
+corepack pnpm run check:legacy-corpus -- \
+  --input .private/legacy-import-corpus/reviewed \
+  --expect /approved/ptcgsim-legacy-corpus-report.json
+```
+
+The expected report must be a regular, non-symlink, valid-UTF-8 JSON file no
+larger than 8 MiB and must live outside the input directory. A rejected
+conversion or baseline drift exits nonzero. Ten synthetic tooling tests prove
+determinism, content/path redaction, action coverage, duplicate refusal, limits,
+symlink refusal, input isolation, and baseline behavior. No raw or redacted
+real-user corpus is currently present, so this infrastructure does not satisfy
+the representative-corpus exit gate by itself.
 
 ### Positional families
 
@@ -882,8 +935,9 @@ remains the only `unsupported_action` that the native exporter can produce.
    transient socket/UI operations that never enter native exports, and
    `exchangeData` is explicitly exporter-filtered; injected records remain
    rejected rather than being promoted into durable history.
-2. Run the byte transaction against a representative, privacy-reviewed real-user
-   corpus and retain expected report/state identities as compatibility evidence.
+2. Use the implemented private-corpus runner against a representative,
+   privacy-reviewed real-user corpus and approve its redacted expected
+   report/state identities as compatibility evidence.
 3. Only after that corpus passes should
    the route loader or old `/import?key=` reader call this package.
 

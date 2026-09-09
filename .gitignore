@@ -1,4 +1,5 @@
 node_modules/
+.private/
 packages/*/lib/
 apps/*/lib/
 apps/*/dist/

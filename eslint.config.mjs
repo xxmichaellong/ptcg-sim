@@ -6,6 +6,7 @@ import tseslint from 'typescript-eslint';
 const v2TypeScriptFiles = [
   'apps/**/*.{ts,tsx}',
   'packages/**/*.{ts,tsx}',
+  'scripts/**/*.ts',
   'tests/**/*.{ts,tsx}',
   '*.config.ts',
 ];

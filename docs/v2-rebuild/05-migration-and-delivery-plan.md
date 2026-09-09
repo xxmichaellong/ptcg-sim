@@ -417,6 +417,14 @@ path-specific report with no partial state. Target integrity is separately
 defined as SHA-256 over UTF-8 `stableSerialize(state)` bytes. Reports count
 records/batches/events/no-ops and enumerate intentionally omitted V1 transport
 and presentation metadata. The transaction remains unwired from routes.
+An operator-only corpus runner now processes private exports sequentially under
+the same transaction and a fixed anonymous target. It emits deterministic
+digest-keyed conversion, action-family, and failure evidence without source
+paths, filenames, raw JSON, deck/card names, image URLs, or diagnostic messages;
+raw in-repository input is allowed only below an ignored private directory.
+Synthetic tests prove its privacy and fail-closed boundaries. No real-user
+corpus or approved baseline is present, so representative evidence remains an
+open Phase 2 exit gate.
 The eight reveal/look dispatcher names are transient socket/UI operations and
 never enter native V1 export history; `exchangeData` is explicitly filtered by
 the exporter. They remain allowlisted at the frozen envelope boundary but fail

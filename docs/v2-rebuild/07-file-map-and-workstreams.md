@@ -30,6 +30,9 @@ scripts/check-v2-boundaries.mjs
 scripts/check-v2-boundaries.test.mjs
 scripts/check-v2-public-api.mjs
 scripts/check-v2-public-api.test.mjs
+scripts/check-legacy-import-corpus.ts
+scripts/check-legacy-import-corpus.test.ts
+scripts/tsconfig.json
 docs/v2-rebuild/PUBLIC_API_SURFACE.json
 ```
 
@@ -262,6 +265,15 @@ returns no state on any parse/semantic failure, and inventories omitted V1-only
 presentation fields. The earlier table wording that leaves reports pending is
 superseded by this checkpoint; custom-card-back policy, corpus evidence, and
 route installation remain.
+
+The operator-only corpus runner accepts raw exports only from outside the
+repository or the ignored `.private/legacy-import-corpus/` tree, reads them
+sequentially, rejects links/duplicates/boundary excess, and emits a deterministic
+digest-keyed report with action-family coverage but no filenames, paths, raw
+content, card/deck names, image URLs, or diagnostic messages. Its synthetic
+self-tests are part of the tooling gate. It prepares—but does not claim—the
+privacy-reviewed representative real-user corpus evidence still required before
+route installation.
 
 The same private interpreter now admits exact empty-tuple `attack` and `pass`
 records through one canonical table-action batch, preserving acting-board-only
