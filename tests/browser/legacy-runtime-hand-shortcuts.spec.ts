@@ -243,6 +243,9 @@ const expectedExports = (
 test('real v1 hand shortcuts pin prompts, atomic zone order, replay leakage, and selection boundaries', async ({
   browser,
 }, testInfo) => {
+  // Drives the real v1 runtime through a long shortcut sequence; the
+  // default per-test budget leaves almost no headroom on a slower runner.
+  test.setTimeout(90_000);
   test.skip(
     testInfo.project.name !== 'chromium',
     'The real-runtime hand shortcut checkpoint is Chromium-specific.'

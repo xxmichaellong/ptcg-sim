@@ -171,6 +171,9 @@ const expectedExports = (
 test('real v1 unselected lifecycle shortcuts pin setup, reset, turn, replay leakage, and selection boundaries', async ({
   browser,
 }, testInfo) => {
+  // Drives the real v1 runtime through a long shortcut sequence; the
+  // default per-test budget leaves almost no headroom on a slower runner.
+  test.setTimeout(90_000);
   test.skip(
     testInfo.project.name !== 'chromium',
     'The real-runtime lifecycle shortcut checkpoint is Chromium-specific.'
