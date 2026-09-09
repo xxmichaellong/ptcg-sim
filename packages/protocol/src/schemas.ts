@@ -383,7 +383,7 @@ export const WireGameCommandSchema = v.variant('type', [
   }),
   v.object({
     type: v.literal('CloseInspection'),
-    inspectionId: IdentifierSchema,
+    expectedWorkAreaId: IdentifierSchema,
     returnTo: v.picklist(['top', 'bottom'] as const),
   }),
   v.object({

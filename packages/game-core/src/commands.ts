@@ -305,7 +305,7 @@ export type GameCommand =
   | {
       readonly type: 'CloseInspection';
       readonly playerId: PlayerId;
-      readonly inspectionId: InspectionId;
+      readonly expectedWorkAreaId: WorkAreaId;
       readonly returnTo: 'top' | 'bottom';
     }
   | {

@@ -99,11 +99,12 @@ Legacy `attachedCards` and `viewCards` arrays are not ordinary permanent zones:
 
 These are canonical when unresolved because reconnect and multiplayer must not
 lose them. Opening a visual deck/discard popup without moving cards is local
-presentation state. A known client/protocol reachability debt remains:
-`CloseInspection` requires the canonical inspection token, but the public work
-area projection exposes only the work-area handle. Authority/core coverage uses
-the canonical token explicitly; browser reachability must be resolved before
-claiming full command parity (R-020).
+presentation state. `CloseInspection` uses the recipient-projected work-area
+handle as its stale-state precondition; authority verifies that the handle names
+the actor's current inspection, and the domain derives its canonical inspection
+ID only after that check. A stale, foreign, or guessed handle fails closed. No
+separate inspection-ID field is added to the projection, wire command, or
+domain command.
 
 ### Play stacks and ownership
 

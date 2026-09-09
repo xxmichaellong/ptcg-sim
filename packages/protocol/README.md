@@ -24,6 +24,11 @@ scope, and a closed semantic-source enum. Only public single-card reveal facts
 may contain a bounded card display name; hide and private-inspection facts have
 no card-identity field.
 
+`CloseInspection` carries the recipient-projected inspection work-area handle
+instead of requiring a separate canonical inspection token. The room validates
+that handle against the actor's current work area before constructing the
+domain command.
+
 The parameterless `DeclareMulligan` and `DeclareDeckView` messages are typed
 non-command room intents. Their server deliveries carry only current-revision
 `MulliganDeclared` or `DeckViewDeclared` events with server-derived player

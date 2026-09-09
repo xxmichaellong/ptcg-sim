@@ -937,7 +937,7 @@ describe('movement visibility hardening', () => {
       {
         type: 'CloseInspection',
         playerId: p1,
-        inspectionId: inspection.inspectionId,
+        expectedWorkAreaId: inspection.id,
         returnTo: 'bottom',
       },
       prepared.context,

@@ -1087,16 +1087,21 @@ export const resolveWireCommand = (
         },
       };
     }
-    case 'CloseInspection':
+    case 'CloseInspection': {
+      const inspection = state.workAreas[actorId]?.inspection;
+      if (!inspection || inspection.id !== wire.expectedWorkAreaId) {
+        return rejected('stale_reference');
+      }
       return {
         accepted: true,
         command: {
           type: 'CloseInspection',
           playerId: actorId,
-          inspectionId: asInspectionId(wire.inspectionId),
+          expectedWorkAreaId: asWorkAreaId(wire.expectedWorkAreaId),
           returnTo: wire.returnTo,
         },
       };
+    }
     case 'SetOncePerGameMarker': {
       const targetPlayerId = asPlayerId(wire.targetPlayerId);
       if (!state.players[targetPlayerId]) return rejected('stale_reference');

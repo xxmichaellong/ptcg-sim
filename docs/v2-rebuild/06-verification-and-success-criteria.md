@@ -467,6 +467,12 @@ Release requires all of the following:
     spectator admission/leave cycles leave an empty registry. Disconnected
     resumable sessions remain active until the separately decided grace policy
     expires or the client explicitly leaves.
+32. `CloseInspection` is formable from the recipient projection without
+    disclosing its canonical inspection token. The client submits the projected
+    work-area handle; authority accepts only the actor's exact current handle,
+    the domain derives its internal inspection ID after the same precondition,
+    and stale or cross-player attempts are rejected. Protocol, resolver,
+    authority, core, and generated-model tests cover the complete path.
 
 ## Privacy and security gates
 

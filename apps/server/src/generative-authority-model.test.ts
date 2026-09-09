@@ -1584,7 +1584,6 @@ describe('named model scenarios', () => {
       'RestoreStagedStack',
       'ResolveStagedCards',
       'ResolveInspectionCards',
-      'CloseInspection',
       'ApplySoloUndo',
     ]);
     const actual = new Set(
@@ -1683,18 +1682,14 @@ describe('named model scenarios', () => {
     );
     const projectedInspection = playerView(work, p1).workAreas[p1]!.inspection!;
     expect(projectedInspection).not.toHaveProperty('inspectionId');
-    const canonicalInspection =
-      work.coordinator.currentSnapshot().state.workAreas[p1]!.inspection!;
     await submitScenarioCommand(
       work,
       coverage,
       playerOneSessionId,
-      'close-inspection-core-only',
+      'close-inspection-from-projection',
       {
         type: 'CloseInspection',
-        // Known protocol gap: the public work-area projection exposes only the
-        // work-area ID, while this command still requires the canonical token.
-        inspectionId: canonicalInspection.inspectionId,
+        expectedWorkAreaId: projectedInspection.id,
         returnTo: 'bottom',
       }
     );
@@ -1736,7 +1731,6 @@ describe('named model scenarios', () => {
         'RestoreStagedStack',
         'ResolveStagedCards',
         'ResolveInspectionCards',
-        'CloseInspection',
         'ApplySoloUndo',
       ])
     );

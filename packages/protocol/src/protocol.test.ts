@@ -622,6 +622,11 @@ describe('client protocol ingress', () => {
         type: 'EndPrivateInspection',
         inspectionId: 'private-inspection',
       },
+      {
+        type: 'CloseInspection',
+        expectedWorkAreaId: 'inspection-work-area',
+        returnTo: 'bottom',
+      },
     ]) {
       expect(parseCommand(command).ok).toBe(true);
     }
@@ -643,6 +648,16 @@ describe('client protocol ingress', () => {
       },
       { type: 'BeginCardInspection', cardId: 'private-card' },
       { type: 'EndPrivateInspection', inspectionId: '' },
+      {
+        type: 'CloseInspection',
+        expectedWorkAreaId: '',
+        returnTo: 'top',
+      },
+      {
+        type: 'CloseInspection',
+        inspectionId: 'canonical-inspection-token',
+        returnTo: 'top',
+      },
     ]) {
       expect(parseCommand(command).ok).toBe(false);
     }

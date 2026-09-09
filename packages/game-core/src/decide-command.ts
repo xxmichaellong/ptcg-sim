@@ -2704,7 +2704,7 @@ export const decideCommand = (
     }
     case 'CloseInspection': {
       const inspection = state.workAreas[command.playerId]?.inspection;
-      if (!inspection || inspection.inspectionId !== command.inspectionId) {
+      if (!inspection || inspection.id !== command.expectedWorkAreaId) {
         return reject('stale_reference', 'Inspection is no longer active');
       }
       const destination = state.zones[inspection.sourceZoneId];

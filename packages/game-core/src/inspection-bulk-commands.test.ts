@@ -294,7 +294,7 @@ describe('atomic inspection-card bulk resolution', () => {
       {
         type: 'CloseInspection',
         playerId: p1,
-        inspectionId: prepared.inspectionId,
+        expectedWorkAreaId: prepared.workAreaId,
         returnTo: 'top',
       },
       prepared.context

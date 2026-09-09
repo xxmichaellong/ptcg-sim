@@ -14,7 +14,10 @@ import {
 } from '@ptcgsim/game-core';
 import { describe, expect, it } from 'vitest';
 
-import type { ProjectionIdentityState } from './identity-registry.js';
+import {
+  projectRecipient,
+  type ProjectionIdentityState,
+} from './identity-registry.js';
 import { DEFAULT_AUTHORITY_POLICY, type AuthoritySession } from './model.js';
 import { resolveWireCommand } from './resolve-command.js';
 
@@ -235,6 +238,82 @@ describe('private inspection authority resolution', () => {
         prepared.identities,
         session(p2),
         { type: 'EndPrivateInspection', inspectionId },
+        DEFAULT_AUTHORITY_POLICY
+      )
+    ).toEqual({ accepted: false, code: 'stale_reference' });
+  });
+
+  it('resolves a projected work-area handle to the private inspection token', () => {
+    const prepared = fixture();
+    const opened = executeCommand(
+      prepared.state,
+      {
+        type: 'ExtractDeckCardsForInspection',
+        playerId: p1,
+        viewerIds: [p1],
+        count: 2,
+        edge: 'top',
+      },
+      context
+    );
+    if (!opened.accepted) throw new Error(opened.message);
+    let opaque = 0;
+    const projected = projectRecipient(
+      opened.state,
+      { kind: 'player', playerId: p1 },
+      prepared.identities,
+      {
+        nextOpaqueId: (kind) =>
+          `private-authority-${kind}-${String(++opaque).padStart(6, '0')}`,
+      }
+    );
+    const visible = projected.snapshot.workAreas[p1]!.inspection!;
+    const canonical = opened.state.workAreas[p1]!.inspection!;
+    expect(visible).not.toHaveProperty('inspectionId');
+    expect(
+      resolveWireCommand(
+        opened.state,
+        projected.identities,
+        session(p1),
+        {
+          type: 'CloseInspection',
+          expectedWorkAreaId: visible.id,
+          returnTo: 'bottom',
+        },
+        DEFAULT_AUTHORITY_POLICY
+      )
+    ).toEqual({
+      accepted: true,
+      command: {
+        type: 'CloseInspection',
+        playerId: p1,
+        expectedWorkAreaId: canonical.id,
+        returnTo: 'bottom',
+      },
+    });
+    expect(
+      resolveWireCommand(
+        opened.state,
+        projected.identities,
+        session(p1),
+        {
+          type: 'CloseInspection',
+          expectedWorkAreaId: 'stale-inspection-work-area',
+          returnTo: 'top',
+        },
+        DEFAULT_AUTHORITY_POLICY
+      )
+    ).toEqual({ accepted: false, code: 'stale_reference' });
+    expect(
+      resolveWireCommand(
+        opened.state,
+        projected.identities,
+        session(p2),
+        {
+          type: 'CloseInspection',
+          expectedWorkAreaId: visible.id,
+          returnTo: 'top',
+        },
         DEFAULT_AUTHORITY_POLICY
       )
     ).toEqual({ accepted: false, code: 'stale_reference' });

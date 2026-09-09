@@ -40,5 +40,11 @@ card name is emitted only for a single-card reveal already visible to the
 least-privileged spectator projection. Private-look and hide facts are
 identity-free and shared safely across recipients.
 
+Persistent inspection closure is similarly projection-safe: the wire command
+names only the projected work-area handle. Authority requires it to match the
+actor's current inspection, and the domain repeats that exact work-area
+precondition before deriving its accepted event, so stale and cross-player close
+attempts fail closed.
+
 Cloudflare Durable Objects and local/integration servers are adapters around
 this package. No WebSocket or platform API belongs here.

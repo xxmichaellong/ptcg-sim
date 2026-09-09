@@ -145,10 +145,8 @@ export const MODEL_COMMAND_REGISTRY = {
     family: 'visibility-inspection',
   },
   CloseInspection: {
-    coverage: 'scenario',
+    coverage: 'generated',
     family: 'visibility-inspection',
-    rationale:
-      'the current recipient work-area projection does not expose its inspection token',
   },
   SetOncePerGameMarker: {
     coverage: 'generated',

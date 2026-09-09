@@ -3,7 +3,9 @@ import { createRendererSpikeView } from '@ptcgsim/renderer-contract';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  resolveCloseInspectionAction,
   resolveInspectionCardsAction,
+  submitCloseInspectionAction,
   submitInspectionCardsAction,
 } from './resolveInspectionCardsAction.js';
 
@@ -80,5 +82,32 @@ describe('inspection-card bulk action resolution', () => {
         'hand'
       )
     ).toEqual({ ok: false, reason: 'no_work_area' });
+  });
+
+  it('forms a close command from only the recipient-safe work-area handle', () => {
+    const view = inspectionView();
+    expect(resolveCloseInspectionAction(view, 'top')).toEqual({
+      ok: true,
+      command: {
+        type: 'CloseInspection',
+        expectedWorkAreaId: 'inspection-bulk-work-area',
+        returnTo: 'top',
+      },
+    });
+    const submit = vi.fn();
+    expect(submitCloseInspectionAction(view, 'bottom', submit).ok).toBe(true);
+    expect(submit).toHaveBeenCalledWith({
+      type: 'CloseInspection',
+      expectedWorkAreaId: 'inspection-bulk-work-area',
+      returnTo: 'bottom',
+    });
+
+    const spectator = { ...view, viewer: { kind: 'spectator' as const } };
+    expect(resolveCloseInspectionAction(spectator, 'bottom')).toEqual({
+      ok: false,
+      reason: 'not_player',
+    });
+    submitCloseInspectionAction(spectator, 'top', submit);
+    expect(submit).toHaveBeenCalledTimes(1);
   });
 });

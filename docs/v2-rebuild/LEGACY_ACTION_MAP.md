@@ -274,6 +274,13 @@ repeat remains a no-op for the compatible viewer; a different viewer emits
 moving the popup. Whole- and individual-inspection resolution are admitted
 below.
 
+The live close boundary uses that inspection work area's recipient-projected ID
+as the wire precondition for `CloseInspection`. Authority verifies it is the
+actor's exact current work area, and the domain derives the internal inspection
+ID only while creating the accepted event. Top/bottom return order is therefore
+client-formable without a separate token field, and stale or foreign handles
+fail closed.
+
 The direct shuffle is restricted to exact
 `[initiator, "prizes", permutation, true]` records produced by the prize
 context menu. Its complete permutation must match the current prize count and

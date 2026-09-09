@@ -1626,6 +1626,14 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     durable registry empty. Disconnected resumable sessions remain untouched,
     so this closes the policy-independent leak without choosing their grace or
     private-inspection semantics.
+99. The persistent deck-inspection close path is now client-formable without
+    projecting its canonical token. `CloseInspection` carries the same
+    recipient-visible work-area handle already used by move/bulk operations;
+    authority and domain both bind it to the actor's current inspection before
+    the accepted event derives the internal ID. A pure client resolver forms
+    both top and bottom returns, and the generated authority model now
+    exercises the command instead of classifying it as core-only. No visible
+    control, layout, or UX changed, and coaching/lifetime policy remains open.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

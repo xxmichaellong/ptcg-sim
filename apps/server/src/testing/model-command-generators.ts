@@ -760,7 +760,19 @@ export const MODEL_COMMAND_GENERATORS = {
         }
       : undefined;
   },
-  CloseInspection: () => undefined,
+  CloseInspection: (context) => {
+    const playerId = actorId(context);
+    const inspection = playerId
+      ? context.view.workAreas[playerId]?.inspection
+      : undefined;
+    return inspection
+      ? {
+          type: 'CloseInspection',
+          expectedWorkAreaId: inspection.id,
+          returnTo: context.random.boolean() ? 'top' : 'bottom',
+        }
+      : undefined;
+  },
   SetOncePerGameMarker: (context) => {
     const playerId = actorId(context);
     if (!playerId) return undefined;
