@@ -394,10 +394,13 @@ tuple, restores one of at most 128 retained same-player whole-match checkpoints
 without rerunning randomness, retains exporter `self` as actor and record `user`
 as the board-flipped target, and rejects the unsafe interleaved-seat case required by V1's split
 logs. This also proves that all eight reveal/look actions are socket-only and
-that `exchangeData` is filtered from saved history, while `changeCardBack`
-remains a genuine export awaiting an approved asset policy. Candidate tests
-hold those nine injected names to `non_exported_action` rather than conflating
-them with that genuine unsupported family.
+that `exchangeData` is filtered from saved history. `changeCardBack` remains a
+genuine export: a focused source lock pins its prompt/default, image-load gate,
+perspective-specific mutable fields, and saved-history ordering. The approved
+V2 import policy validates its exact tuple but discards the arbitrary value in
+favor of the canonical integrity-gated card back. Candidate tests hold the nine
+injected names to `non_exported_action` and give malformed saved card-back tuples
+their own typed diagnostics.
 
 The protected count-input checkpoint completes all six context-menu numeric
 prompts while retaining the browser-native v1 UI. A typed controller descriptor

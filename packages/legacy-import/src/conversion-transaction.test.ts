@@ -40,12 +40,10 @@ const target = {
   selfSeat: {
     playerId: asPlayerId('legacy-transaction-self'),
     displayName: 'Self',
-    cardBackUrl: '/self.png',
   },
   opponentSeat: {
     playerId: asPlayerId('legacy-transaction-opponent'),
     displayName: 'Opponent',
-    cardBackUrl: '/opponent.png',
   },
 } as const;
 
@@ -139,7 +137,7 @@ describe('legacy conversion transaction and report', () => {
       sha256: nodeSha256(canonicalTargetBytes),
     });
     expect(compact.report.target.sha256).toBe(
-      'sha256:28e8812060b4419c998f0d3f314db6c381d345abccf70a50e1985c55d2f2f654'
+      'sha256:60ed6937bd572dd4bd8288b060f95d13e2bd49e65c6fe318155ea126eac85afb'
     );
     expect(pretty.report.source.sha256).toBe(nodeSha256(prettyBytes));
     expect(pretty.report.source.sha256).not.toBe(compact.report.source.sha256);
@@ -160,7 +158,6 @@ describe('legacy conversion transaction and report', () => {
     source.fill(0);
     mutableTarget.matchId = asMatchId('mutated-match');
     mutableTarget.selfSeat.displayName = 'Mutated self';
-    mutableTarget.selfSeat.cardBackUrl = '/mutated-self.png';
     mutableTarget.opponentSeat.displayName = 'Mutated opponent';
     const result = await conversion;
 
@@ -171,13 +168,95 @@ describe('legacy conversion transaction and report', () => {
     expect(result.state.players[target.selfSeat.playerId]).toMatchObject({
       id: target.selfSeat.playerId,
       displayName: target.selfSeat.displayName,
-      cardBackUrl: target.selfSeat.cardBackUrl,
+      cardBackUrl: '/v2/assets/cardback.png',
     });
     expect(result.state.players[target.opponentSeat.playerId]).toMatchObject({
       id: target.opponentSeat.playerId,
       displayName: target.opponentSeat.displayName,
-      cardBackUrl: target.opponentSeat.cardBackUrl,
+      cardBackUrl: '/v2/assets/cardback.png',
     });
+  });
+
+  it('normalizes arbitrary saved card backs to the canonical asset with explicit evidence', async () => {
+    const selfSecret = 'https://private.example/self-secret-card-back.png';
+    const opponentSecret = 'data:image/png;base64,b3Bwb25lbnQtc2VjcmV0';
+    const bytes = encoder.encode(
+      JSON.stringify(
+        payload(
+          action('self', 'changeCardBack', [selfSecret]),
+          action('opp', 'changeCardBack', [opponentSecret])
+        )
+      )
+    );
+    const targetWithUnapprovedBacks = {
+      ...target,
+      selfSeat: {
+        ...target.selfSeat,
+        cardBackUrl: '/unapproved-target-self.png',
+      },
+      opponentSeat: {
+        ...target.opponentSeat,
+        cardBackUrl: '/unapproved-target-opponent.png',
+      },
+    };
+    const first = await convertLegacyExportBytes(
+      bytes,
+      targetWithUnapprovedBacks
+    );
+    const retry = await convertLegacyExportBytes(
+      bytes,
+      targetWithUnapprovedBacks
+    );
+
+    expect(first).toEqual(retry);
+    expect(first.ok).toBe(true);
+    if (!first.ok) throw new Error('Expected conversion');
+    expect(first.state.players[target.selfSeat.playerId]?.cardBackUrl).toBe(
+      '/v2/assets/cardback.png'
+    );
+    expect(first.state.players[target.opponentSeat.playerId]?.cardBackUrl).toBe(
+      '/v2/assets/cardback.png'
+    );
+    expect(first.records.slice(2)).toEqual([
+      { recordIndex: 3, action: 'changeCardBack', batches: [] },
+      { recordIndex: 4, action: 'changeCardBack', batches: [] },
+    ]);
+    expect(first.report).toMatchObject({
+      status: 'converted',
+      summary: {
+        sourceActionCount: 4,
+        convertedRecordCount: 4,
+        batchCount: 2,
+        eventCount: 2,
+        zeroBatchRecordCount: 2,
+      },
+      warnings: [
+        {
+          code: 'legacy_transport_metadata_not_persisted',
+          count: 4,
+        },
+        { code: 'presentation_fields_not_persisted', count: 2 },
+        { code: 'custom_card_back_urls_normalized', count: 2 },
+      ],
+      droppedPresentationFields: [
+        {
+          recordIndex: 3,
+          path: '$[3].parameters[0]',
+          reason: 'custom_card_back_url_was_normalized',
+        },
+        {
+          recordIndex: 4,
+          path: '$[4].parameters[0]',
+          reason: 'custom_card_back_url_was_normalized',
+        },
+      ],
+      issues: [],
+    });
+    const serializedResult = JSON.stringify(first);
+    expect(serializedResult).not.toContain(selfSecret);
+    expect(serializedResult).not.toContain(opponentSecret);
+    expect(serializedResult).not.toContain('/unapproved-target-self.png');
+    expect(serializedResult).not.toContain('/unapproved-target-opponent.png');
   });
 
   it('hashes bounded invalid UTF-8 and JSON while preserving safe diagnostics', async () => {
@@ -262,13 +341,7 @@ describe('legacy conversion transaction and report', () => {
 
   it('reports exact semantic failure records without returning partial state', async () => {
     const bytes = encoder.encode(
-      JSON.stringify(
-        payload(
-          action('self', 'changeCardBack', [
-            'https://cards.example/custom-back.png',
-          ])
-        )
-      )
+      JSON.stringify(payload(action('self', 'changeCardBack', [null])))
     );
     const first = await convertLegacyExportBytes(bytes, target);
     const retry = await convertLegacyExportBytes(bytes, target);
@@ -289,10 +362,10 @@ describe('legacy conversion transaction and report', () => {
         issues: [
           {
             stage: 'convert',
-            code: 'convert.unsupported_action',
+            code: 'convert.cardBack.invalid_parameter_type',
             recordIndex: 3,
-            path: '$[3].action',
-            message: 'Legacy action family has not been semantically converted',
+            path: '$[3].parameters[0]',
+            message: 'changeCardBack source URL must be a string',
           },
         ],
       },

@@ -63,7 +63,11 @@ describe('legacy import corpus evidence tool', () => {
     const directory = await temporaryDirectory();
     const nested = join(directory, 'private-player-folder');
     await mkdir(nested);
-    const value = payload();
+    const value = payload(
+      action('changeCardBack', [
+        'https://private.example/successful-secret-card-back.png',
+      ])
+    );
     await writeFile(
       join(directory, 'alice-full-name.json'),
       JSON.stringify(value)
@@ -87,7 +91,13 @@ describe('legacy import corpus evidence tool', () => {
       { version: '1.5.1', count: 2 },
     ]);
     assert.deepEqual(first.summary.actionCounts, [
+      { action: 'changeCardBack', count: 2 },
       { action: 'loadDeckData', count: 4 },
+    ]);
+    assert.deepEqual(first.summary.warningCounts, [
+      { code: 'custom_card_back_urls_normalized', count: 2 },
+      { code: 'legacy_transport_metadata_not_persisted', count: 6 },
+      { code: 'presentation_fields_not_persisted', count: 2 },
     ]);
     assert.deepEqual(
       first.cases.map((entry) => entry.caseId),
@@ -103,6 +113,7 @@ describe('legacy import corpus evidence tool', () => {
       'account-1234',
       'Private Secret Card',
       'private.example',
+      'successful-secret-card-back',
       'ignored private notes',
     ]) {
       assert.equal(serialized.includes(secret), false);
@@ -115,6 +126,7 @@ describe('legacy import corpus evidence tool', () => {
         payload(
           action('changeCardBack', [
             'https://private.example/very-secret-card-back.png',
+            'unexpected-second-value',
           ])
         )
       )
@@ -130,16 +142,17 @@ describe('legacy import corpus evidence tool', () => {
     assert.equal(report.summary.convertedCaseCount, 0);
     assert.equal(report.summary.rejectedCaseCount, 2);
     assert.deepEqual(report.summary.issueCounts, [
-      { code: 'convert.unsupported_action', count: 1 },
+      { code: 'convert.cardBack.invalid_parameter_count', count: 1 },
       { code: 'source.invalid_utf8', count: 1 },
     ]);
     const paths = report.cases
       .flatMap((entry) => entry.issues)
       .map((issue) => issue.path);
     assert.equal(paths.includes('$'), true);
-    assert.equal(paths.includes('$[3].action'), true);
+    assert.equal(paths.includes('$[3].parameters'), true);
     assert.equal(serialized.includes('message'), false);
     assert.equal(serialized.includes('very-secret-card-back'), false);
+    assert.equal(serialized.includes('unexpected-second-value'), false);
     assert.equal(serialized.includes('Private Secret Card'), false);
   });
 

@@ -25,6 +25,11 @@ import {
   type LegacyV1DeckDecodeIssueCode,
 } from './decode-decks.js';
 import {
+  decodeLegacyV1CardBackActions,
+  type LegacyV1CardBackAction,
+  type LegacyV1CardBackActionDecodeIssueCode,
+} from './decode-card-back-actions.js';
+import {
   decodeLegacyV1CardAnnotationActions,
   type LegacyV1CardAnnotationAction,
   type LegacyV1CardAnnotationDecodeIssueCode,
@@ -77,6 +82,7 @@ import type {
 
 const CONVERTED_ACTIONS = new Set<LegacySynchronizedActionName>([
   'loadDeckData',
+  'changeCardBack',
   'reset',
   'setup',
   'takeTurn',
@@ -133,6 +139,7 @@ const NON_EXPORTED_ACTIONS = new Set<LegacySynchronizedActionName>([
 const MAX_LEGACY_V1_UNDO_CHECKPOINTS = 128;
 
 type LegacyV1ConvertedAction =
+  | LegacyV1CardBackAction
   | LegacyV1CardAnnotationAction
   | LegacyV1HistoryAction
   | LegacyV1LifecycleAction
@@ -154,6 +161,7 @@ export type LegacyV1CandidateIssueCode =
   | 'invalid_target'
   | 'source_state_mismatch'
   | 'canonical_error'
+  | `cardBack.${LegacyV1CardBackActionDecodeIssueCode}`
   | `annotation.${LegacyV1CardAnnotationDecodeIssueCode}`
   | `deck.${LegacyV1DeckDecodeIssueCode}`
   | `history.${LegacyV1HistoryActionDecodeIssueCode}`
@@ -653,6 +661,17 @@ export const buildLegacyV1Candidate = (
     });
   }
 
+  const decodedCardBacks = decodeLegacyV1CardBackActions(parsed);
+  if (!decodedCardBacks.ok) {
+    const issue = decodedCardBacks.issues[0]!;
+    return failure({
+      code: `cardBack.${issue.code}`,
+      recordIndex: issue.recordIndex,
+      path: issue.path,
+      message: issue.message,
+    });
+  }
+
   const decodedCardAnnotations = decodeLegacyV1CardAnnotationActions(parsed);
   if (!decodedCardAnnotations.ok) {
     const issue = decodedCardAnnotations.issues[0]!;
@@ -709,6 +728,7 @@ export const buildLegacyV1Candidate = (
   }
 
   const convertedActions: LegacyV1ConvertedAction[] = [
+    ...decodedCardBacks.actions,
     ...decodedCardAnnotations.actions,
     ...decodedHistory.actions,
     ...decodedLifecycle.actions,
@@ -899,6 +919,12 @@ export const buildLegacyV1Candidate = (
         });
         if (problem) return problem;
         undoHistory.length = 0;
+        break;
+      }
+      case 'changeCardBack': {
+        // The byte transaction forces both seats to the approved canonical
+        // card back. Preserve this source record for ordering/undo evidence,
+        // but never retain or apply its arbitrary presentation URL.
         break;
       }
       case 'undo': {

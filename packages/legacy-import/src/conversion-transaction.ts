@@ -25,6 +25,7 @@ export const LEGACY_CONVERSION_REPORT_FORMAT =
   'ptcgsim-legacy-conversion-report-v1' as const;
 export const LEGACY_CONVERSION_TARGET_SERIALIZATION =
   'ptcgsim-match-state-stable-json-v1' as const;
+const LEGACY_IMPORT_CANONICAL_CARD_BACK_URL = '/v2/assets/cardback.png';
 /**
  * The byte-oriented transaction is intentionally no larger than the existing
  * parser's code-unit limit. This keeps multi-byte input from widening the
@@ -34,8 +35,8 @@ export const MAX_LEGACY_CONVERSION_SOURCE_BYTES = MAX_LEGACY_EXPORT_CODE_UNITS;
 
 export interface LegacyConversionTarget {
   readonly matchId: MatchId;
-  readonly selfSeat: MatchSeatInput;
-  readonly opponentSeat: MatchSeatInput;
+  readonly selfSeat: Pick<MatchSeatInput, 'playerId' | 'displayName'>;
+  readonly opponentSeat: Pick<MatchSeatInput, 'playerId' | 'displayName'>;
 }
 
 export interface LegacyConversionAppliedRecord {
@@ -77,7 +78,8 @@ export interface LegacyConversionIssue {
 export type LegacyDroppedPresentationFieldReason =
   | 'initiator_was_presentation_only'
   | 'message_flag_was_presentation_only'
-  | 'target_relationship_was_validation_only';
+  | 'target_relationship_was_validation_only'
+  | 'custom_card_back_url_was_normalized';
 
 export interface LegacyDroppedPresentationField {
   readonly recordIndex: number;
@@ -87,7 +89,8 @@ export interface LegacyDroppedPresentationField {
 
 export type LegacyConversionWarningCode =
   | 'legacy_transport_metadata_not_persisted'
-  | 'presentation_fields_not_persisted';
+  | 'presentation_fields_not_persisted'
+  | 'custom_card_back_urls_normalized';
 
 export interface LegacyConversionWarning {
   readonly code: LegacyConversionWarningCode;
@@ -212,6 +215,13 @@ const droppedPresentationFields = (
         reason: 'target_relationship_was_validation_only',
       });
     }
+    if (action.action === 'changeCardBack') {
+      dropped.push({
+        recordIndex,
+        path: `$[${recordIndex}].parameters[0]`,
+        reason: 'custom_card_back_url_was_normalized',
+      });
+    }
   }
   return dropped;
 };
@@ -219,24 +229,39 @@ const droppedPresentationFields = (
 const warningsFor = (
   actionCount: number,
   droppedFields: readonly LegacyDroppedPresentationField[]
-): readonly LegacyConversionWarning[] => [
-  {
-    code: 'legacy_transport_metadata_not_persisted',
-    count: actionCount,
-    message:
-      'Validated V1 emit flags are transport metadata and are not persisted in canonical state.',
-  },
-  ...(droppedFields.length === 0
-    ? []
-    : [
-        {
-          code: 'presentation_fields_not_persisted' as const,
-          count: droppedFields.length,
-          message:
-            'Validated V1-only presentation fields are listed separately and are not persisted in canonical state.',
-        },
-      ]),
-];
+): readonly LegacyConversionWarning[] => {
+  const normalizedCardBackCount = droppedFields.filter(
+    (field) => field.reason === 'custom_card_back_url_was_normalized'
+  ).length;
+  return [
+    {
+      code: 'legacy_transport_metadata_not_persisted',
+      count: actionCount,
+      message:
+        'Validated V1 emit flags are transport metadata and are not persisted in canonical state.',
+    },
+    ...(droppedFields.length === 0
+      ? []
+      : [
+          {
+            code: 'presentation_fields_not_persisted' as const,
+            count: droppedFields.length,
+            message:
+              'Validated V1-only presentation fields are listed separately and are not persisted in canonical state.',
+          },
+        ]),
+    ...(normalizedCardBackCount === 0
+      ? []
+      : [
+          {
+            code: 'custom_card_back_urls_normalized' as const,
+            count: normalizedCardBackCount,
+            message:
+              'Legacy custom card-back URLs were replaced by the approved canonical V2 card back.',
+          },
+        ]),
+  ];
+};
 
 const emptySummary = (): LegacyConversionSummary => ({
   sourceVersion: null,
@@ -342,6 +367,17 @@ export const convertLegacyExportBytes = async (
     selfSeat: { ...target.selfSeat },
     opponentSeat: { ...target.opponentSeat },
   };
+  const candidateTarget = {
+    matchId: transactionTarget.matchId,
+    selfSeat: {
+      ...transactionTarget.selfSeat,
+      cardBackUrl: LEGACY_IMPORT_CANONICAL_CARD_BACK_URL,
+    },
+    opponentSeat: {
+      ...transactionTarget.opponentSeat,
+      cardBackUrl: LEGACY_IMPORT_CANONICAL_CARD_BACK_URL,
+    },
+  };
 
   const sourceIdentity: LegacyConversionSourceIdentity = {
     byteLength: bytes.byteLength,
@@ -366,7 +402,7 @@ export const convertLegacyExportBytes = async (
     return rejected(sourceIdentity, parseIssue(parsed.issues[0]!));
   }
 
-  const candidate = buildLegacyV1Candidate(parsed.value, transactionTarget);
+  const candidate = buildLegacyV1Candidate(parsed.value, candidateTarget);
   if (!candidate.ok) {
     const issue = candidate.issues[0]!;
     return rejected(

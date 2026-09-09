@@ -428,11 +428,15 @@ open Phase 2 exit gate.
 The eight reveal/look dispatcher names are transient socket/UI operations and
 never enter native V1 export history; `exchangeData` is explicitly filtered by
 the exporter. They remain allowlisted at the frozen envelope boundary but fail
-semantic conversion with `non_exported_action` if injected. The only genuine
-saved action family still unconverted is `changeCardBack`, pending the explicit
-custom-asset URL policy. That policy, cross-owner play policy, representative
-real-user corpus evidence, and route installation remain before Phase 3 can
-exit.
+semantic conversion with `non_exported_action` if injected. The final genuine
+saved family, `changeCardBack`, now validates its exact one-nonempty-string tuple
+without retaining or fetching the source URL. The public transaction forces both
+seat card backs to the integrity-gated `/v2/assets/cardback.png`, preserves the
+history entry as a zero-batch record, and reports each normalized URL explicitly.
+All genuine native saved action families therefore have strict conversion or an
+approved normalization. Unprovable cross-owner play remains fail-closed;
+representative real-user corpus evidence and route installation remain before
+Phase 3 can exit.
 
 Work:
 

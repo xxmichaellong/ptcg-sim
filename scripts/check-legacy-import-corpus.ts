@@ -106,12 +106,10 @@ const ANONYMOUS_TARGET = Object.freeze({
   selfSeat: Object.freeze({
     playerId: asPlayerId('legacy-corpus-self'),
     displayName: 'Self',
-    cardBackUrl: '/v2/assets/cardback.png',
   }),
   opponentSeat: Object.freeze({
     playerId: asPlayerId('legacy-corpus-opponent'),
     displayName: 'Opponent',
-    cardBackUrl: '/v2/assets/cardback.png',
   }),
 });
 

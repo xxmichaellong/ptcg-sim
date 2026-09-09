@@ -1,6 +1,6 @@
 # Legacy import boundary
 
-- Status: **bounded v1 conversion transaction, report, and private-corpus evidence runner implemented**
+- Status: **bounded v1 conversion transaction, canonical card-back policy, report, and private-corpus evidence runner implemented**
 - Supported source versions: `1.5`, `1.5.1`
 - Production route status: unwired
 
@@ -113,8 +113,11 @@ state.
 ### Conversion transaction and integrity report
 
 `convertLegacyExportBytes` is the first public all-or-nothing conversion
-boundary. It accepts a `Uint8Array`, snapshots it and the target seat metadata
-before its first asynchronous operation, and admits at most 4,194,304 bytes.
+boundary. It accepts a `Uint8Array`, snapshots it and the target seat identity
+and display-name metadata before its first asynchronous operation, and admits at
+most 4,194,304 bytes. Card-back URLs are deliberately not accepted as target
+metadata: every imported seat receives the integrity-gated canonical
+`/v2/assets/cardback.png` asset.
 Oversized input is rejected before hashing or decoding. Bounded input is
 identified by SHA-256 over the exact source bytes and decoded as fatal UTF-8
 before the existing JSON parser runs. Invalid
@@ -132,7 +135,9 @@ A successful report uses the explicit
   failure (currently fail-fast, so one issue);
 - warnings for V1 transport metadata that is intentionally not persisted;
 - exact paths and reasons for validated presentation-only initiator, message,
-  and redundant target-relationship fields; and
+  redundant target-relationship, and normalized custom-card-back fields;
+- a counted warning whenever saved custom card-back URLs were replaced without
+  retaining or fetching their values; and
 - a separate target identity computed as SHA-256 over the UTF-8 bytes of
   `stableSerialize(state)`, named
   `ptcgsim-match-state-stable-json-v1` and pinned to the current match-state
@@ -528,6 +533,16 @@ global ability-marker reset, acting loose-board discard, unchanged turn/card
 faces, and replayable table declaration without replaying its internal
 `discardBoard(..., false, false)` helper call as another source record.
 
+`changeCardBack` carries exactly one nonempty string. V1 admits the local action
+only after an `Image` load succeeds, replaces its mutable card-back fields and
+matching image nodes, and then writes the arbitrary URL into saved history. V2
+does not parse, fetch, retain, replay, proxy, or persist that URL. The private
+decoder keeps only record index and target player; conversion retains a
+zero-batch audit/undo record while both imported seats use the canonical
+`/v2/assets/cardback.png`. The conversion report lists the exact dropped field
+path and a counted `custom_card_back_urls_normalized` warning. Empty, non-string,
+or non-singleton tuples reject the complete candidate.
+
 ### Deck definition adapter
 
 `decodeLegacyV1Decks` converts the two parser-verified deck tuples into
@@ -908,8 +923,10 @@ prove that a later
 take-turn discards both players' loose boards in
 source order before drawing, and that an owner reset clears only that owner's
 reachable loose state, owned stadium, and play stacks before rebuilding its
-deck. Opponent-owned stadium and play state remain. The subset still cannot
-represent custom card-back URL policy or cross-owner play placements.
+deck. Opponent-owned stadium and play state remain. Custom card-back history is
+now normalized under the approved canonical-asset policy. Cross-owner play
+placements that the current source-coordinate model cannot prove remain
+fail-closed rather than being guessed.
 
 Native undo records contain exactly `[null]`: V1 builds its filtered history in
 an inner function while the outer wrapper retains `undefined`, which JSON turns
@@ -926,19 +943,17 @@ approved V2 whole-match ordering rule and could erase interleaved shared state.
 The eight reveal/look dispatcher actions never call `processAction`, and
 `exchangeData` is explicitly filtered from `exportActionData`; they remain
 envelope-known but semantically unsupported if handcrafted into a save.
-Those nine impossible records return `non_exported_action`; `changeCardBack`
-remains the only `unsupported_action` that the native exporter can produce.
+Those nine impossible records return `non_exported_action`. Every genuine native
+saved action family now has a strict decoder and either a canonical transition or
+an explicit approved zero-batch normalization; malformed card-back tuples retain
+typed `cardBack.*` diagnostics.
 
 ## Next conversion slices
 
-1. Resolve the custom-card-back asset policy. The eight reveal/look names are
-   transient socket/UI operations that never enter native exports, and
-   `exchangeData` is explicitly exporter-filtered; injected records remain
-   rejected rather than being promoted into durable history.
-2. Use the implemented private-corpus runner against a representative,
+1. Use the implemented private-corpus runner against a representative,
    privacy-reviewed real-user corpus and approve its redacted expected
    report/state identities as compatibility evidence.
-3. Only after that corpus passes should
+2. Only after that corpus passes should
    the route loader or old `/import?key=` reader call this package.
 
 No v1 module is imported, no save/replay route is enabled, and no visible UI or

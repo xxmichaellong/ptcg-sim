@@ -2056,4 +2056,42 @@ describe('legacy action-export source envelope', () => {
       "processAction(user, emit, 'changeCardBack', [userInput]);"
     );
   });
+
+  it('pins custom card-back validation, state replacement, and saved-history order', () => {
+    const importDeck = readRepositoryFile(
+      'client/src/setup/deck-constructor/import.js'
+    );
+    const processAction = readRepositoryFile(
+      'client/src/setup/general/process-action.js'
+    );
+
+    expect(importDeck).toContain(
+      `window.prompt("Paste your image URL or type 'default':")`
+    );
+    expect(importDeck).toContain(
+      "userInput = 'https://ptcgsim.online/src/assets/cardback.png';"
+    );
+    expect(importDeck).toContain("alert('Please enter a valid image URL.');");
+    expect(importDeck).toContain('img.src = userInput;');
+    expect(importDeck).toContain('systemState.cardBackSrc = userInput;');
+    expect(importDeck).toContain('systemState.p2OppCardBackSrc = userInput;');
+    expect(importDeck).toContain('systemState.p1OppCardBackSrc = userInput;');
+
+    const loadGate = importDeck.indexOf('img.onload = () => {');
+    const stateReplacement = importDeck.indexOf(
+      'systemState.cardBackSrc = userInput;'
+    );
+    const historyWrite = importDeck.indexOf(
+      "processAction(user, emit, 'changeCardBack', [userInput]);"
+    );
+    const loadStart = importDeck.indexOf('img.src = userInput;');
+    expect(loadGate).toBeGreaterThan(-1);
+    expect(stateReplacement).toBeGreaterThan(-1);
+    expect(historyWrite).toBeGreaterThan(stateReplacement);
+    expect(loadStart).toBeGreaterThan(loadGate);
+    expect(processAction).toContain(
+      "if (action !== 'exchangeData' && action !== 'loadDeckData')"
+    );
+    expect(processAction).not.toContain("action !== 'changeCardBack'");
+  });
 });

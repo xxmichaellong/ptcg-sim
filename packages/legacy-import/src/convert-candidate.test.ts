@@ -10544,7 +10544,37 @@ describe('legacy v1 canonical candidate builder', () => {
     }
   );
 
-  it('rejects an admitted but unconverted family before creating state', () => {
+  it('retains card-back history as URL-free zero-batch records', () => {
+    const selfSecret = 'https://private.example/self-card-back.png';
+    const opponentSecret = 'data:image/png;base64,c2VjcmV0LWJhY2s=';
+    const result = buildLegacyV1Candidate(
+      parse(
+        payload(
+          '',
+          '',
+          action('self', 'changeCardBack', [selfSecret]),
+          action('opp', 'changeCardBack', [opponentSecret])
+        )
+      ),
+      target
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.issues[0]?.message);
+    expect(result.records.slice(2)).toEqual([
+      { recordIndex: 3, action: 'changeCardBack', batches: [] },
+      { recordIndex: 4, action: 'changeCardBack', batches: [] },
+    ]);
+    expect(result.state.players[target.selfSeat.playerId]?.cardBackUrl).toBe(
+      target.selfSeat.cardBackUrl
+    );
+    expect(
+      result.state.players[target.opponentSeat.playerId]?.cardBackUrl
+    ).toBe(target.opponentSeat.cardBackUrl);
+    expect(JSON.stringify(result)).not.toContain(selfSecret);
+    expect(JSON.stringify(result)).not.toContain(opponentSecret);
+  });
+
+  it('lifts invalid card-back tuples without creating state', () => {
     const result = buildLegacyV1Candidate(
       parse(payload('', '', action('self', 'changeCardBack', [null]))),
       target
@@ -10553,10 +10583,10 @@ describe('legacy v1 canonical candidate builder', () => {
       ok: false,
       issues: [
         {
-          code: 'unsupported_action',
+          code: 'cardBack.invalid_parameter_type',
           recordIndex: 3,
-          path: '$[3].action',
-          message: 'Legacy action family has not been semantically converted',
+          path: '$[3].parameters[0]',
+          message: 'changeCardBack source URL must be a string',
         },
       ],
     });

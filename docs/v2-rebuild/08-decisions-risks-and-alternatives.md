@@ -36,6 +36,13 @@
 Phase 0 turns each non-deferred row into an ADR file containing context, options,
 decision, consequences, evidence, migration, rollback, and review date.
 
+ADR-013 remains open for live arbitrary card-face/background URLs and any future
+Pixi proxy/CORS path. Its legacy-import card-back subpolicy was explicitly
+approved on 2026-09-09: saved arbitrary values are validated structurally but
+never fetched, retained, proxied, or persisted; both imported seats receive the
+integrity-gated `/v2/assets/cardback.png`, and conversion reports a counted
+normalization warning.
+
 ADR-017 now has a deliberately replaceable implementation default for audit:
 self-private inspection is allowed; opponent-private inspection requires mutual
 persisted coaching consent; grants survive reconnect and replay; explicit close
@@ -110,8 +117,9 @@ These cannot be answered purely by engineering:
    which are accidental privacy leaks?
 5. Should private inspection survive a disconnect/reconnect, and when does it
    expire?
-6. Are arbitrary custom card, card-back, and background URLs a guaranteed feature
-   or can they be restricted/proxied for security and WebGL compatibility?
+6. Are arbitrary live custom card and background URLs a guaranteed feature or
+   can they be restricted/proxied for security and WebGL compatibility? Legacy
+   imported card backs are already normalized to the canonical V2 asset.
 7. Which known behavioral bugs may be corrected during parity work, and who signs
    each exception?
 8. What is the v1 fallback/deprecation observation window?
