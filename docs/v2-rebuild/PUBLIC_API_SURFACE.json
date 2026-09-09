@@ -522,11 +522,35 @@
           "source": "packages/legacy-import/src/index.ts",
           "symbols": [
             {
+              "name": "convertLegacyExportBytes",
+              "kind": "value"
+            },
+            {
+              "name": "LEGACY_CONVERSION_REPORT_FORMAT",
+              "kind": "value"
+            },
+            {
+              "name": "LEGACY_CONVERSION_TARGET_SERIALIZATION",
+              "kind": "value"
+            },
+            {
               "name": "LEGACY_EXPORT_FORMAT",
               "kind": "value"
             },
             {
               "name": "LegacyActionRecord",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyConversionReport",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyConversionResult",
+              "kind": "type"
+            },
+            {
+              "name": "LegacyConversionTarget",
               "kind": "type"
             },
             {
@@ -564,6 +588,10 @@
             {
               "name": "LegacySynchronizedActionName",
               "kind": "type"
+            },
+            {
+              "name": "MAX_LEGACY_CONVERSION_SOURCE_BYTES",
+              "kind": "value"
             },
             {
               "name": "ParsedLegacyExport",

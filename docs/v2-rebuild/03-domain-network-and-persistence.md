@@ -937,6 +937,17 @@ Conversion procedure:
 7. Save only the v2 result. The new runtime does not continue appending v1
    actions.
 
+The isolated byte transaction now implements steps 1-6 without route wiring. It
+snapshots target seats, copies and bounds raw bytes, performs fatal UTF-8
+decoding, preserves exact parse/conversion record paths, and returns no candidate
+state on failure. Its
+source identity is SHA-256 over the exact uploaded bytes. Its separately named
+target identity is SHA-256 over UTF-8 `stableSerialize(state)` bytes under the
+current match-state schema. Successful reports enumerate V1-only presentation
+fields that were validated but intentionally omitted; rejected reports claim no
+drops because nothing was installed. Oversized input is rejected before hashing
+to keep the resource boundary fail-closed.
+
 Unsupported or corrupt inputs fail safely with an actionable report; partial
 conversion is never silently loaded into a live room. Immutable fixtures cover
 every known exported version and representative complex states.

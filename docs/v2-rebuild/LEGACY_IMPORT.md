@@ -1,6 +1,6 @@
 # Legacy import boundary
 
-- Status: **v1 envelope parser and first private semantic adapters implemented**
+- Status: **bounded v1 conversion transaction and private semantic adapters implemented**
 - Supported source versions: `1.5`, `1.5.1`
 - Production route status: unwired
 
@@ -109,6 +109,41 @@ has one deliberate, one-way `game-core` dependency for its private semantic
 adapters. Admission still completes before those adapters can allocate a
 definition or identity, and no production route constructs imported match
 state.
+
+### Conversion transaction and integrity report
+
+`convertLegacyExportBytes` is the first public all-or-nothing conversion
+boundary. It accepts a `Uint8Array`, snapshots it and the target seat metadata
+before its first asynchronous operation, and admits at most 4,194,304 bytes.
+Oversized input is rejected before hashing or decoding. Bounded input is
+identified by SHA-256 over the exact source bytes and decoded as fatal UTF-8
+before the existing JSON parser runs. Invalid
+UTF-8, invalid JSON, unsupported records, stale source coordinates, canonical
+command rejection, or invariant failure returns a rejected report and no state
+or event records.
+
+A successful report uses the explicit
+`ptcgsim-legacy-conversion-report-v1` format and includes:
+
+- exact source byte length and `sha256:<hex>` identity;
+- source version and action, converted-record, batch, event, and zero-batch
+  counts;
+- the exact record index, JSON path, stage, code, and safe message for every
+  failure (currently fail-fast, so one issue);
+- warnings for V1 transport metadata that is intentionally not persisted;
+- exact paths and reasons for validated presentation-only initiator, message,
+  and redundant target-relationship fields; and
+- a separate target identity computed as SHA-256 over the UTF-8 bytes of
+  `stableSerialize(state)`, named
+  `ptcgsim-match-state-stable-json-v1` and pinned to the current match-state
+  schema version.
+
+The source and target identities have deliberately different meanings: JSON
+whitespace changes the source hash while leaving the canonical target hash
+unchanged. The existing `fnv1a32` game-core hash remains useful for deterministic
+diagnostics but is not treated as an integrity credential. Rejected conversions
+list no dropped fields because no target was installed. The package and report
+remain unwired from upload, save, or `/import?key=` routes.
 
 ### Positional families
 
@@ -847,11 +882,9 @@ remains the only `unsupported_action` that the native exporter can produce.
    transient socket/UI operations that never enter native exports, and
    `exchangeData` is explicitly exporter-filtered; injected records remain
    rejected rather than being promoted into durable history.
-2. Produce a conversion report with warnings, dropped presentation fields, and
-   the exact failing record/path. Integrity identities must use SHA-256 over the
-   exact source bytes and a specified canonical target serialization; the
-   current 32-bit game-core stable hash remains a non-security diagnostic only.
-3. Only after representative real-user fixtures convert transactionally should
+2. Run the byte transaction against a representative, privacy-reviewed real-user
+   corpus and retain expected report/state identities as compatibility evidence.
+3. Only after that corpus passes should
    the route loader or old `/import?key=` reader call this package.
 
 No v1 module is imported, no save/replay route is enabled, and no visible UI or

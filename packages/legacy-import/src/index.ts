@@ -16,3 +16,14 @@ export type {
   LegacySynchronizedActionName,
   ParsedLegacyExport,
 } from './parse-export.js';
+export {
+  LEGACY_CONVERSION_REPORT_FORMAT,
+  LEGACY_CONVERSION_TARGET_SERIALIZATION,
+  MAX_LEGACY_CONVERSION_SOURCE_BYTES,
+  convertLegacyExportBytes,
+} from './conversion-transaction.js';
+export type {
+  LegacyConversionReport,
+  LegacyConversionResult,
+  LegacyConversionTarget,
+} from './conversion-transaction.js';

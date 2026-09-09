@@ -160,7 +160,7 @@ Rollback: remove the hidden v2 route; package work does not affect v1.
 
 Goal: prove all tabletop state can exist without DOM/image properties.
 
-Current status (2026-09-08): the normalized core, stable identities, projection,
+Current status (2026-09-09): the normalized core, stable identities, projection,
 invariants, and all 50 live action responsibilities have substantial vertical
 coverage. The isolated `legacy-import` package now admits only the frozen 1.5
 and 1.5.1 action-export envelope through an exact 50-action allowlist, required
@@ -410,14 +410,21 @@ the exact current hand. It preserves the existing deck prefix, appends the
 shuffled hand, and draws from index zero through the matching atomic canonical
 command. Zero-draw, empty-hand/non-empty-deck, and completely empty records all
 remain valid.
+The public byte-oriented conversion transaction now copies and bounds source
+bytes, hashes bounded input exactly with SHA-256, performs fatal UTF-8 admission,
+and returns either complete canonical state/records plus a versioned report or a
+path-specific report with no partial state. Target integrity is separately
+defined as SHA-256 over UTF-8 `stableSerialize(state)` bytes. Reports count
+records/batches/events/no-ops and enumerate intentionally omitted V1 transport
+and presentation metadata. The transaction remains unwired from routes.
 The eight reveal/look dispatcher names are transient socket/UI operations and
 never enter native V1 export history; `exchangeData` is explicitly filtered by
 the exporter. They remain allowlisted at the frozen envelope boundary but fail
 semantic conversion with `non_exported_action` if injected. The only genuine
 saved action family still unconverted is `changeCardBack`, pending the explicit
-custom-asset URL policy. The complete transaction/report, custom-card-back
-policy, cross-owner play policy, and representative real-user corpus evidence
-remain before Phase 3 can exit.
+custom-asset URL policy. That policy, cross-owner play policy, representative
+real-user corpus evidence, and route installation remain before Phase 3 can
+exit.
 
 Work:
 
@@ -428,7 +435,8 @@ Work:
   history/table signals.
 - Implement role projections and concealed-handle epochs.
 - Port the pure deck-builder core and strengthen CSV/dirty/unload behavior.
-- Build the isolated v1 interpreter/converter and conversion reports.
+- Maintain the isolated v1 interpreter/converter and versioned conversion
+  reports while corpus evidence expands.
 - Differentially run characterized action scenarios through v1 fixtures and v2
   reducers, comparing semantic normalized outcomes rather than DOM details.
 
