@@ -53,6 +53,15 @@ jobs:
         run: corepack enable
       - name: Install dependencies
         run: corepack pnpm install --frozen-lockfile
+      - name: Disable unrelated Chrome apt source
+        run: |
+          for chrome_source in \
+            /etc/apt/sources.list.d/google-chrome.list \
+            /etc/apt/sources.list.d/google-chrome.sources; do
+            if [ -f "$chrome_source" ]; then
+              sudo mv "$chrome_source" "$chrome_source.disabled"
+            fi
+          done
       - name: Install Playwright Chromium
         run: |
           for browser_install_attempt in 1 2 3; do
