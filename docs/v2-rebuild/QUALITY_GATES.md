@@ -3,9 +3,10 @@
 ## Purpose
 
 The rebuild now has one reproducible local contract and one matching pull-request
-workflow. The gates apply only to the isolated v2 workspace and its shared
-characterization/browser evidence; they intentionally do not reformat or lint
-the frozen v1 runtime.
+workflow. Static, type, build, and browser gates apply to the isolated v2
+workspace and its shared characterization evidence; they intentionally do not
+reformat or lint the frozen v1 runtime. The repository-wide dependency audit and
+narrow legacy-server startup smoke test are explicit security exceptions.
 
 ## Canonical commands
 
@@ -18,7 +19,7 @@ the frozen v1 runtime.
 | `pnpm run check:cycles:v2`      | Check relative TypeScript module cycles while excluding generated `lib`, `dist`, `.wrangler`, and Worker types.              |
 | `pnpm run typecheck:browser:v2` | Typecheck Playwright specs/support against the strict production profile, including unchecked-index protection.              |
 | `pnpm run typecheck:v2`         | Strictly build production references and typecheck Worker model/runtime, browser harnesses, and TypeScript operator tooling. |
-| `pnpm run test:tooling:v2`      | Prove architecture/API gates plus the private legacy-corpus runner's privacy, bounds, determinism, and drift behavior.       |
+| `pnpm run test:tooling:v2`      | Prove architecture/API gates, legacy-corpus privacy/determinism, and legacy-server dependency compatibility.                 |
 | `pnpm run check:legacy-corpus`  | Operator-only: convert an explicit private corpus into redacted deterministic evidence, optionally comparing a baseline.     |
 | `pnpm run build:v2`             | Build Worker and web artifacts, then verify bundle provenance, fixture exclusion, and emitted card-back bytes.               |
 | `pnpm run check:v2`             | Run every non-legacy, non-browser check above plus v2 unit and Worker-runtime tests.                                         |
@@ -26,6 +27,7 @@ the frozen v1 runtime.
 | `pnpm run test:preview:browser` | Build the web app, serve it and the room Worker from one Wrangler origin, and run the production-topology Chromium gate.     |
 | `pnpm run check:browser`        | Run the sequential Vite/Wrangler browser suite, then the isolated built-production topology lane, in Chromium without retry. |
 | `pnpm run check:full`           | Run `check:ci` and then `check:browser` locally.                                                                             |
+| `pnpm run audit:dependencies`   | Query the registry advisory service and reject known runtime or development dependency vulnerabilities at any severity.      |
 
 Use `corepack pnpm` when invoking these commands directly from a new checkout.
 The repository pins pnpm 11.24.0 in `packageManager`.
@@ -150,8 +152,13 @@ network behavior, or production rollout approval.
 dispatch. It grants read-only repository contents permission, cancels superseded
 runs, pins action revisions, and pins Ubuntu 24.04 plus Node 24.19.0.
 
-The `quality` job runs `check:ci` and verifies that its generators do not modify
-tracked files. Only after it succeeds does the `chromium` job install
+The `quality` job installs the frozen lockfile, runs `audit:dependencies`, runs
+`check:ci`, and verifies that its generators do not modify tracked files. The
+audit fails on any reported severity; registry transport failures are ignored so
+an advisory-service outage cannot make unrelated changes unmergeable. The
+updated legacy dependency graph is additionally exercised through a child-process
+smoke test covering its rendered root, SQLite-backed import lookup, and a real
+Socket.IO player admission. Only after the quality job succeeds does the `chromium` job install
 Playwright's own Chromium with its Linux dependencies and run `check:browser`.
 The first Playwright lane starts Wrangler on port 8787 and Vite on port 4173.
 After it tears both down, the production-topology lane builds Vite and starts

@@ -30,6 +30,8 @@ jobs:
         run: corepack enable
       - name: Install dependencies
         run: corepack pnpm install --frozen-lockfile
+      - name: Audit dependencies
+        run: corepack pnpm run audit:dependencies
       - name: Run the non-browser quality gate
         run: corepack pnpm run check:ci
       - name: Verify tracked files remain unchanged

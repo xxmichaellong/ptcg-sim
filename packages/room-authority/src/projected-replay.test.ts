@@ -95,7 +95,7 @@ describe('role-projected replay', () => {
       },
       adapter
     );
-    [state, history] = executeAndAppend(
+    [, history] = executeAndAppend(
       state,
       history,
       { type: 'SetupPlayer', playerId: p1 },
@@ -345,7 +345,7 @@ describe('role-projected replay', () => {
       { type: 'FlipCoin', playerId: p1 },
       adapter
     );
-    [state, history] = executeAndAppend(
+    [, history] = executeAndAppend(
       state,
       history,
       {
@@ -433,7 +433,7 @@ describe('role-projected replay', () => {
       },
       adapter
     );
-    [state, history] = executeAndAppend(
+    [, history] = executeAndAppend(
       state,
       history,
       {
@@ -535,9 +535,9 @@ describe('role-projected replay', () => {
 
   it('fails closed when a persisted result hash is corrupted', () => {
     const adapter = context();
-    let state = initialState();
+    const state = initialState();
     let history = createReplayHistory(state);
-    [state, history] = executeAndAppend(
+    [, history] = executeAndAppend(
       state,
       history,
       { type: 'FlipCoin', playerId: p1 },

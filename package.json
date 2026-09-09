@@ -26,6 +26,7 @@
     "test:renderer:browser": "playwright test",
     "test:preview:browser": "playwright test --config=playwright.preview.config.ts",
     "check:browser": "corepack pnpm run test:renderer:browser --project=chromium && corepack pnpm run test:preview:browser --project=chromium",
+    "audit:dependencies": "corepack pnpm audit --audit-level low --ignore-registry-errors",
     "check:legacy-corpus": "tsx scripts/check-legacy-import-corpus.ts",
     "typecheck:browser:v2": "tsc --noEmit --project tsconfig.browser.json",
     "typecheck:v2": "corepack pnpm --filter @ptcgsim/server-v2 run cf-typegen && tsc --build && corepack pnpm --filter @ptcgsim/server-v2 run typecheck:model && corepack pnpm --filter @ptcgsim/server-v2 run typecheck:runtime && corepack pnpm run typecheck:browser:v2 && tsc --project scripts/tsconfig.json",
@@ -46,10 +47,10 @@
     "format:check:v2": "prettier --check --no-error-on-unmatched-pattern \"apps/**/*.{js,jsx,ts,tsx,json,md,css}\" \"packages/**/*.{js,jsx,ts,tsx,json,md,css}\" \"tests/**/*.{js,jsx,ts,tsx,json,md,css}\" \"docs/v2-rebuild/**/*.{json,md}\" \"scripts/**/*.{js,mjs,ts}\" \".github/**/*.{yml,yaml}\" package.json tsconfig.json tsconfig.base.json tsconfig.browser.json playwright.config.ts playwright.preview.config.ts vitest.config.ts eslint.config.mjs README.md"
   },
   "devDependencies": {
-    "@eslint/js": "^9.20.0",
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "1.62.1",
     "@types/node": "^24.3.0",
-    "eslint": "^9.20.0",
+    "eslint": "^10.10.0",
     "eslint-config-prettier": "^10.0.1",
     "globals": "^15.14.0",
     "madge": "^8.0.0",
@@ -57,7 +58,7 @@
     "prettier": "^3.9.6",
     "tsx": "^4.23.13",
     "typescript": "^5.9.2",
-    "typescript-eslint": "8.69.0",
+    "typescript-eslint": "8.70.0",
     "vitest": "^4.1.11"
   }
 }

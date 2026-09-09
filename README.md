@@ -51,6 +51,7 @@ After installing dependencies with `corepack pnpm install`, use:
 
 - `corepack pnpm run check:ci` for the required non-browser quality gate;
 - `corepack pnpm run check:browser` for the sequential Chromium regression lane;
+- `corepack pnpm run audit:dependencies` for the full lockfile advisory gate;
 - `corepack pnpm run check:full` for both gates locally.
 
 The exact checks, CI environment, and known limitations are recorded in

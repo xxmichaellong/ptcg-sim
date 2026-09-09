@@ -2156,7 +2156,7 @@ describe('Durable Object authority snapshot store', () => {
       () => 0,
       nextGeneration
     );
-    let current = admissionSnapshot('admission-frontier-room');
+    const current = admissionSnapshot('admission-frontier-room');
     await store.initialize(current);
     let previousGeneration = storedFrontier(storage).generation;
     const invitationDigest = 'a'.repeat(64);
@@ -2207,7 +2207,6 @@ describe('Durable Object authority snapshot store', () => {
     for (const transaction of transactions) {
       storage.transactionGetKeys = [];
       await store.commitAdmission(transaction);
-      current = transaction.snapshot;
       expect(storage.transactionGetKeys).toContain(
         AUTHORITY_SNAPSHOT_STORAGE_KEY
       );
