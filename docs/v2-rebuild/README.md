@@ -96,8 +96,12 @@ the relevant product decisions and phase exit criteria.
   unclaimed cleanup, survives object eviction, closes malformed/late idle
   sockets without consuming tickets, and is removed once a durable active
   session is bound. Visible
-  create/join wiring waits on ADR-020's decision about how the handoff moves
-  between browsers. The
+  ADR-020 now selects a manual foreground clipboard handoff: creator custody
+  writes a strict bounded envelope without returning its bearer to UI code,
+  native guest paste prevents DOM insertion and retains it only in a private
+  non-serializing custodian, player copies rotate, and repeat spectators receive
+  distinct claims. An isolated five-browser-context Chromium journey covers the
+  secure path. Visible create/join wiring remains the next parity slice. The
   canonical Wrangler topology now publishes the built Vite app beside the room
   Worker, with explicit authority-first and static-asset route namespaces plus
   SPA fallback. A separate production-build Chromium lane proves that one-origin

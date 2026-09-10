@@ -486,6 +486,15 @@ Release requires all of the following:
     viewer to concealed aliases, and publishes only identity-free close facts.
     Protocol, core, authority, projection, presentation, client-resolver, and
     generated-model tests cover accepted ADR-017 without a UI change.
+34. Anonymous cross-browser invitation transfer uses only a foreground clipboard
+    operation. Its branded text is strict and bounded; creator APIs return only
+    safe room/role/expiry metadata; native paste prevents bearer insertion and
+    gives it only to a private non-serializing custodian; room-code-only,
+    malformed, expired, concurrent, and disposed joins fail closed. A failed
+    exchange retains custody for bounded retry and success clears it. Five
+    isolated browser contexts prove rotated player claims, player-two admission,
+    two distinct repeat-spectator claims, correct projected roles,
+    credential-free URLs, and no envelope in document HTML or browser storage.
 
 ## Privacy and security gates
 

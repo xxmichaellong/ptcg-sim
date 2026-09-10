@@ -3,6 +3,7 @@ import {
   parseRoomInvitationHandoff,
   parseRoomInvitationIssueRequest,
   parseRoomInvitationIssueResponse,
+  serializeRoomInvitationHandoffText,
   type RoomCreationRequest,
   type RoomCreationResponse,
   type RoomInvitationHandoff,
@@ -19,6 +20,10 @@ import {
   normalizeHttpOrigin,
   readBoundedJsonResponse,
 } from './browser-json.js';
+import {
+  currentBrowserInvitationClipboard,
+  type DeferredTextClipboardWriter,
+} from './browser-invitation-clipboard.js';
 
 const MAX_CREATION_RESPONSE_BYTES = 4_096;
 const MAX_INVITATION_RESPONSE_BYTES = 2_048;
@@ -49,6 +54,9 @@ export type RemoteRoomInvitationFailureCode =
   | 'issue_failed'
   | 'invalid_response'
   | 'expired_invitation'
+  | 'clipboard_unavailable'
+  | 'clipboard_failed'
+  | 'copy_in_progress'
   | 'disposed';
 
 export class RemoteRoomInvitationError extends Error {
@@ -81,6 +89,7 @@ export class RemoteRoomInvitationCustody {
   readonly #abort = new AbortController();
   #playerCapability: string | undefined;
   #spectatorCapability: string | undefined;
+  #copying = false;
 
   constructor(options: RemoteRoomInvitationCustodyOptions) {
     this.#roomCode = options.roomCode;
@@ -92,14 +101,18 @@ export class RemoteRoomInvitationCustody {
     this.#ownerSignal = options.signal;
   }
 
-  issuePlayerInvitation(signal?: AbortSignal): Promise<RemoteRoomInvitation> {
-    return this.issue('player', signal);
+  copyPlayerInvitation(
+    clipboard = currentBrowserInvitationClipboard(),
+    signal?: AbortSignal
+  ): Promise<RemoteRoomInvitationCopyReceipt> {
+    return this.copy('player', clipboard, signal);
   }
 
-  issueSpectatorInvitation(
+  copySpectatorInvitation(
+    clipboard = currentBrowserInvitationClipboard(),
     signal?: AbortSignal
-  ): Promise<RemoteRoomInvitation> {
-    return this.issue('spectator', signal);
+  ): Promise<RemoteRoomInvitationCopyReceipt> {
+    return this.copy('spectator', clipboard, signal);
   }
 
   get roomCode(): string {
@@ -110,6 +123,41 @@ export class RemoteRoomInvitationCustody {
     this.#abort.abort();
     this.#playerCapability = undefined;
     this.#spectatorCapability = undefined;
+  }
+
+  private async copy(
+    requestedRole: RemoteRoomInvitation['requestedRole'],
+    clipboard: DeferredTextClipboardWriter | undefined,
+    signal?: AbortSignal
+  ): Promise<RemoteRoomInvitationCopyReceipt> {
+    if (!clipboard) {
+      throw new RemoteRoomInvitationError('clipboard_unavailable');
+    }
+    if (this.#copying) {
+      throw new RemoteRoomInvitationError('copy_in_progress');
+    }
+    this.#copying = true;
+    try {
+      const invitation = this.issue(requestedRole, signal);
+      const text = invitation.then(serializeRoomInvitationHandoffText);
+      await Promise.all([clipboard.writeText(text), text]);
+      const handoff = await invitation;
+      return Object.freeze({
+        roomCode: handoff.roomCode,
+        requestedRole: handoff.requestedRole,
+        expiresAt: handoff.expiresAt,
+      });
+    } catch (error) {
+      if (
+        error instanceof RemoteRoomInvitationError &&
+        error.code !== 'clipboard_failed'
+      ) {
+        throw error;
+      }
+      throw new RemoteRoomInvitationError('clipboard_failed');
+    } finally {
+      this.#copying = false;
+    }
   }
 
   private async issue(
@@ -186,6 +234,12 @@ export class RemoteRoomInvitationCustody {
     }
     return Object.freeze({ roomCode: this.#roomCode, ...parsed.value });
   }
+}
+
+export interface RemoteRoomInvitationCopyReceipt {
+  readonly roomCode: string;
+  readonly requestedRole: RemoteRoomInvitation['requestedRole'];
+  readonly expiresAt: number;
 }
 
 export interface RemoteRoomCreationDependencies {

@@ -18,6 +18,11 @@ import {
   parseRoomAdmissionTicketResponse,
   parseServerFrame,
 } from './ingress.js';
+import {
+  MAX_ROOM_INVITATION_HANDOFF_TEXT_CODE_UNITS,
+  parseRoomInvitationHandoffText,
+  serializeRoomInvitationHandoffText,
+} from './invitation-handoff.js';
 import { PresentationEventSchema } from './schemas.js';
 
 describe('cross-package wire limits', () => {
@@ -176,6 +181,47 @@ describe('room invitation HTTP schemas', () => {
         injected: true,
       }).ok
     ).toBe(false);
+  });
+
+  it('round-trips only branded, bounded, exact invitation handoff text', () => {
+    const handoff = {
+      roomCode: 'ABCDEFGH2345',
+      invitation,
+      requestedRole: 'player' as const,
+      expiresAt: 900_000,
+    };
+    const text = serializeRoomInvitationHandoffText(handoff);
+    expect(text).toMatch(/^PTCGSIM2-INVITE:/u);
+    expect(parseRoomInvitationHandoffText(text)).toEqual({
+      ok: true,
+      value: handoff,
+    });
+    expect(parseRoomInvitationHandoffText({ text })).toEqual({
+      ok: false,
+      reason: 'invalid_type',
+    });
+    expect(parseRoomInvitationHandoffText('ABCDEFGH2345')).toEqual({
+      ok: false,
+      reason: 'invalid_prefix',
+    });
+    expect(parseRoomInvitationHandoffText('PTCGSIM2-INVITE:{')).toEqual({
+      ok: false,
+      reason: 'invalid_json',
+    });
+    expect(
+      parseRoomInvitationHandoffText(
+        `PTCGSIM2-INVITE:${JSON.stringify({ ...handoff, injected: true })}`
+      )
+    ).toEqual({ ok: false, reason: 'invalid_handoff' });
+    expect(parseRoomInvitationHandoffText(`${text}\n`)).toEqual({
+      ok: false,
+      reason: 'invalid_handoff',
+    });
+    expect(
+      parseRoomInvitationHandoffText(
+        'x'.repeat(MAX_ROOM_INVITATION_HANDOFF_TEXT_CODE_UNITS + 1)
+      )
+    ).toEqual({ ok: false, reason: 'text_too_large' });
   });
 });
 

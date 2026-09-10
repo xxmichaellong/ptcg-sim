@@ -662,6 +662,10 @@
               "kind": "value"
             },
             {
+              "name": "MAX_ROOM_INVITATION_HANDOFF_TEXT_CODE_UNITS",
+              "kind": "value"
+            },
+            {
               "name": "MAX_SERVER_FRAME_CODE_UNITS",
               "kind": "value"
             },
@@ -690,6 +694,10 @@
               "kind": "value"
             },
             {
+              "name": "parseRoomInvitationHandoffText",
+              "kind": "value"
+            },
+            {
               "name": "parseRoomInvitationIssueRequest",
               "kind": "value"
             },
@@ -711,6 +719,10 @@
             },
             {
               "name": "PROTOCOL_VERSION",
+              "kind": "value"
+            },
+            {
+              "name": "ROOM_INVITATION_HANDOFF_TEXT_PREFIX",
               "kind": "value"
             },
             {
@@ -754,6 +766,10 @@
               "kind": "value"
             },
             {
+              "name": "RoomInvitationHandoffTextParseResult",
+              "kind": "type"
+            },
+            {
               "name": "RoomInvitationIssueRequest",
               "kind": "type"
             },
@@ -783,6 +799,10 @@
             },
             {
               "name": "serializeMatchViewState",
+              "kind": "value"
+            },
+            {
+              "name": "serializeRoomInvitationHandoffText",
               "kind": "value"
             },
             {

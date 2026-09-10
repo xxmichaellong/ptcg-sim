@@ -865,7 +865,8 @@ passes 212 Playwright checks across 84 Chromium 151 browser files:
     and fragment-free, no second HTTP admission occurs, the superseded and
     current native sockets both close, successful `101` telemetry is accepted,
     and the terminal socket count reaches zero. Deployed navigation churn and
-    the ADR-020 second-browser journey remain separate gates.
+    the accepted ADR-020 five-context journey remain separate from renderer
+    behavior.
 45. A thirty-fifth source checkpoint follows one ordinary marked Pokémon through
     active→bench movement, same-bench refresh reconstruction, and bench→active
     movement independently in both physical frames. Chromium proves that the

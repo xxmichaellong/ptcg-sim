@@ -185,9 +185,12 @@ Object transaction boundary; only coarse creation allocation uses the platform
 edge binding. Telemetry is a non-throwing, closed adapter outside authority
 state. The strict client-side
 creation/admission/invitation composition lives in
-`apps/web/src/session/RemoteRoomCreation.ts` and `RemoteRoomBootstrap.ts`;
-ADR-020 still owns how the validated invitation handoff is presented and moved
-between browsers. The later production split remains:
+`apps/web/src/session/RemoteRoomCreation.ts` and `RemoteRoomBootstrap.ts`.
+Accepted ADR-020 adds the strict protocol text codec plus
+`browser-invitation-clipboard.ts` and `RemoteRoomInvitationHandoff.ts`: creator
+copy returns only safe metadata, native paste prevents DOM insertion, and guest
+bootstrap owns the private claim through exchange. The later production split
+remains:
 
 ```text
 apps/server/src/

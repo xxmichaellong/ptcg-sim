@@ -98,7 +98,9 @@ interface BrowserDevRoomHandle {
     };
   };
   readonly invitations: {
-    readonly issuePlayerInvitation: () => Promise<unknown>;
+    readonly copyPlayerInvitation: (clipboard: {
+      readonly writeText: (text: Promise<string>) => Promise<void>;
+    }) => Promise<unknown>;
   };
   readonly dispose: () => void;
 }
@@ -585,7 +587,9 @@ test('solo creation serves one-player authority and locally disclosed replay wit
     const handle = (globalThis as BrowserDevRoomGlobals).__ptcgsimDevRoom;
     if (!handle) throw new Error('Missing solo development room handle');
     try {
-      await handle.invitations.issuePlayerInvitation();
+      await handle.invitations.copyPlayerInvitation({
+        writeText: async (text) => void (await text),
+      });
       return { accepted: true };
     } catch (error) {
       return {

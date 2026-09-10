@@ -572,8 +572,12 @@ Work:
   rooms. The first claim retires all losing-seat credentials; every player
   session must be the durable claim for its seat; and the persistence adapter
   validates each admission kind against the exact predecessor before writing.
-  Resolve ADR-020 before presenting or moving the handoff between browsers or
-  wiring the lobby.
+  Retain accepted ADR-020 foreground clipboard transfer: strict branded text is
+  written without returning the bearer to UI code, native paste prevents DOM
+  insertion, private guest custody survives a retry and clears on success, a
+  room code alone never authorizes, player copies rotate, and spectator copies
+  are distinct. Wire the unchanged lobby shape only after its isolated-context
+  browser gate is green.
 - Retain the implemented layered abuse controls: a coarse location-local edge
   creation budget plus exact persisted per-room invitation, ticket, upgrade, and
   `Hello` budgets. Retain the atomic five-minute unclaimed lifecycle/alarm,

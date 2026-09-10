@@ -59,10 +59,10 @@ The target is a small PTCG `ReliableRoomConnection` implementing
 MagicCircle's visible room-code travel is not a drop-in anonymous invitation
 design. Its room connection is bound to authenticated user identity (including
 JWT-backed admission), so a shareable room code can remain discovery rather than
-seat authority. PTCG Sim currently promises account-free named guests. ADR-020
-must therefore choose how the implemented high-entropy, expiring, one-use
-invitation handoff is presented and moved between browsers; copying
-MagicCircle's code-only navigation would silently restore v1's room-ID
+seat authority. PTCG Sim currently promises account-free named guests. Accepted
+ADR-020 therefore uses a foreground clipboard envelope plus private paste
+custody for the implemented high-entropy, expiring, one-use invitation;
+copying MagicCircle's code-only navigation would silently restore v1's room-ID
 authorization flaw.
 
 ## Server candidates

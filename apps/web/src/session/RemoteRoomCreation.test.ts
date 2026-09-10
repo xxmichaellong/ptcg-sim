@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { parseRoomInvitationHandoffText } from '@ptcgsim/protocol';
 
 import {
   bootstrapRemoteRoomInvitation,
@@ -22,6 +23,18 @@ const input = {
   displayName: '  Blue  ',
   mode: 'multiplayer' as const,
   rendererKind: 'pixi' as const,
+};
+
+const capturingClipboard = () => {
+  const values: string[] = [];
+  return {
+    values,
+    writer: {
+      writeText: async (text: Promise<string>) => {
+        values.push(await text);
+      },
+    },
+  };
 };
 
 describe('remote room creation bootstrap', () => {
@@ -100,12 +113,23 @@ describe('remote room creation bootstrap', () => {
     expect(result.mode).toBe('multiplayer');
     expect(JSON.stringify(result)).not.toContain('capability-kept-in-memory');
 
-    const player = await result.invitations.issuePlayerInvitation();
+    const playerClipboard = capturingClipboard();
+    const player = await result.invitations.copyPlayerInvitation(
+      playerClipboard.writer
+    );
     expect(player).toEqual({
       roomCode: 'ABCDEFGH2345',
       requestedRole: 'player',
-      invitation: playerInvitation,
       expiresAt: 910_000,
+    });
+    expect(parseRoomInvitationHandoffText(playerClipboard.values[0])).toEqual({
+      ok: true,
+      value: {
+        roomCode: 'ABCDEFGH2345',
+        requestedRole: 'player',
+        invitation: playerInvitation,
+        expiresAt: 910_000,
+      },
     });
     const [playerUrl, playerInit] = fetchImplementation.mock.calls[2]!;
     expect(String(playerUrl)).toBe(
@@ -119,13 +143,16 @@ describe('remote room creation bootstrap', () => {
       requestedRole: 'player',
     });
 
-    const spectator = await result.invitations.issueSpectatorInvitation();
+    const spectatorClipboard = capturingClipboard();
+    const spectator = await result.invitations.copySpectatorInvitation(
+      spectatorClipboard.writer
+    );
     expect(spectator).toEqual({
       roomCode: 'ABCDEFGH2345',
       requestedRole: 'spectator',
-      invitation: spectatorInvitation,
       expiresAt: 910_000,
     });
+    expect(spectatorClipboard.values[0]).toContain(spectatorInvitation);
     expect(
       JSON.parse(String(fetchImplementation.mock.calls[3]?.[1]?.body))
     ).toEqual({
@@ -136,7 +163,7 @@ describe('remote room creation bootstrap', () => {
     result.dispose();
     expect(runtime.dispose).toHaveBeenCalledOnce();
     await expect(
-      result.invitations.issuePlayerInvitation()
+      result.invitations.copyPlayerInvitation(capturingClipboard().writer)
     ).rejects.toMatchObject({ code: 'disposed' });
   });
 
@@ -293,11 +320,11 @@ describe('remote room creation bootstrap', () => {
       '{"mode":"solo"}'
     );
     await expect(
-      result.invitations.issuePlayerInvitation()
+      result.invitations.copyPlayerInvitation(capturingClipboard().writer)
     ).rejects.toMatchObject({ code: 'invalid_input' });
     expect(fetchImplementation).toHaveBeenCalledOnce();
     await expect(
-      result.invitations.issueSpectatorInvitation()
+      result.invitations.copySpectatorInvitation(capturingClipboard().writer)
     ).resolves.toMatchObject({ requestedRole: 'spectator' });
     expect(fetchImplementation).toHaveBeenCalledTimes(2);
     expect(JSON.stringify(result)).not.toContain(
@@ -344,13 +371,52 @@ describe('remote room invitation custody', () => {
     expect(custody.roomCode).toBe('ABCDEFGH2345');
     expect(JSON.stringify(custody)).toBe('{}');
     custody.dispose();
-    await expect(custody.issuePlayerInvitation()).rejects.toMatchObject({
-      code: 'disposed',
-    });
-    await expect(custody.issueSpectatorInvitation()).rejects.toMatchObject({
-      code: 'disposed',
-    });
+    await expect(
+      custody.copyPlayerInvitation(capturingClipboard().writer)
+    ).rejects.toMatchObject({ code: 'disposed' });
+    await expect(
+      custody.copySpectatorInvitation(capturingClipboard().writer)
+    ).rejects.toMatchObject({ code: 'disposed' });
     custody.dispose();
+  });
+
+  it('fails closed without clipboard access or when the foreground write is denied', async () => {
+    const fetchImplementation = vi.fn(async () =>
+      Response.json(
+        {
+          invitation: playerInvitation,
+          requestedRole: 'player',
+          expiresAt: 910_000,
+        },
+        { status: 201 }
+      )
+    );
+    const custody = new RemoteRoomInvitationCustody({
+      roomCode: 'ABCDEFGH2345',
+      playerCapability: credentials.playerTwoSeatCapability,
+      fetch: fetchImplementation,
+      origin: new URL('https://play.example'),
+      now: () => 10_000,
+    });
+
+    await expect(custody.copyPlayerInvitation()).rejects.toMatchObject({
+      code: 'clipboard_unavailable',
+    });
+    expect(fetchImplementation).not.toHaveBeenCalled();
+
+    let error: unknown;
+    try {
+      await custody.copyPlayerInvitation({
+        writeText: async () => {
+          throw new Error(playerInvitation);
+        },
+      });
+    } catch (caught) {
+      error = caught;
+    }
+    expect(error).toMatchObject({ code: 'clipboard_failed' });
+    expect(String(error)).not.toContain(playerInvitation);
+    expect(fetchImplementation).toHaveBeenCalledOnce();
   });
 
   it('fails closed on missing custody and invalid or expired issue responses', async () => {
@@ -362,7 +428,7 @@ describe('remote room invitation custody', () => {
       now: () => 10_000,
     });
     await expect(
-      withoutSpectator.issueSpectatorInvitation()
+      withoutSpectator.copySpectatorInvitation(capturingClipboard().writer)
     ).rejects.toMatchObject({ code: 'invalid_input' });
 
     for (const [response, code] of [
@@ -408,9 +474,9 @@ describe('remote room invitation custody', () => {
         origin: new URL('https://play.example'),
         now: () => 10_000,
       });
-      await expect(custody.issuePlayerInvitation()).rejects.toMatchObject({
-        code,
-      });
+      await expect(
+        custody.copyPlayerInvitation(capturingClipboard().writer)
+      ).rejects.toMatchObject({ code });
     }
   });
 
@@ -430,7 +496,11 @@ describe('remote room invitation custody', () => {
       origin: new URL('https://play.example'),
       now: () => 10_000,
     });
-    const pending = custody.issuePlayerInvitation();
+    const pending = custody.copyPlayerInvitation(capturingClipboard().writer);
+    await expect(
+      custody.copyPlayerInvitation(capturingClipboard().writer)
+    ).rejects.toMatchObject({ code: 'copy_in_progress' });
+    expect(fetchImplementation).toHaveBeenCalledOnce();
     custody.dispose();
     finish?.(
       Response.json(

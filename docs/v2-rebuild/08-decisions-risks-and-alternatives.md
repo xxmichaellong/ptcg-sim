@@ -31,7 +31,7 @@
 | ADR-017 | `ACCEPTED`         | Preserve mutual opt-in coaching/private looks with server-owned consent, immediate withdrawal, and the accepted reconnect lifetime.              | Each authenticated seat controls only its own persisted consent. Self-inspection remains available; opponent-private access requires both current consents. Withdrawal atomically closes every cross-player grant involving that seat, while acknowledging that software cannot erase knowledge already delivered. Disconnect retains canonical state for the 30-second server-owned grace; expiry releases authorization and the seat, and explicit leave remains immediate.                                                                                                                                  |
 | ADR-018 | `PROVISIONAL`      | Keep room code UX but authorize with high-entropy seat/resume capabilities and one-time WebSocket tickets.                                       | Implemented with strict creation/invitation/ticket POSTs, distinct credential validation, bounded digest-only invitation and 30-second ticket registries, retry rotation, atomic issue/redemption journals, a server-minted resume bearer bound to each new ticket, exact-pair initial Hello recovery, resume-only reconnect, safe creator/guest bootstraps, v4/v5/v6→v7 migrations, persisted solo/multiplayer seat ceilings, layered creation/room request budgets, five-minute unclaimed cleanup, and failure tests. Cross-browser presentation is split into ADR-020; preview abuse/load evidence remains. |
 | ADR-019 | `ACCEPTED`         | Project owner explicitly authorized direct MagicCircle implementation reuse on 2026-08-31; preserve provenance and any required notices.         | Resolves the code-copy blocker while retaining PTCG-owned contracts and tests.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| ADR-020 | `PRODUCT_REQUIRED` | Select how anonymous player-two and spectator invitation handoffs move between browsers while preserving the familiar room-code workflow.        | Creator-only custody now mints bounded 15-minute one-use claims without releasing master credentials, and guest bootstrap validates/exchanges them. Choose manual transfer, a trusted account-free relay, or another audited presentation channel before lobby wiring; raw bearer values in URLs, storage, analytics, React state, or hidden DOM are rejected.                                                                                                                                                                                                                                                 |
+| ADR-020 | `ACCEPTED`         | Use a manual foreground clipboard handoff for anonymous player-two and spectator invitations while preserving the familiar room-code workflow.   | Creator custody writes a strict bounded envelope without returning it to UI code; native paste prevents bearer insertion and gives private non-serializing custody only to guest bootstrap. Player copies rotate, spectator copies are distinct, and room-code-only/manual bearer typing, URLs, storage, React state, DOM, logs, analytics, and a new relay are rejected. See `ADR-020-ANONYMOUS-INVITATION-HANDOFF.md`.                                                                                                                                                                                       |
 
 Phase 0 turns each non-deferred row into an ADR file containing context, options,
 decision, consequences, evidence, migration, rollback, and review date.
@@ -55,6 +55,13 @@ lifetime was accepted on 2026-09-09: transport loss durably reserves the
 session/seat for 30 seconds; timely resume clears the deadline; expiry revokes
 the session and releases the seat without deleting seat-owned canonical match
 state; and explicit Leave remains immediate.
+
+ADR-020 was accepted on 2026-09-10. Anonymous authority moves only through an
+explicit foreground clipboard operation. Creator APIs return safe receipt
+metadata, not the bearer; guest paste is intercepted before DOM insertion and
+held only by a private in-memory custodian through successful ticket exchange.
+The visible Room ID remains discovery metadata. Player copies rotate, repeat
+spectators receive distinct claims, and a room code alone never authorizes.
 
 ## Major alternatives
 
@@ -124,15 +131,8 @@ These cannot be answered purely by engineering:
 5. Which known behavioral bugs may be corrected during parity work, and who signs
    each exception?
 6. What is the v1 fallback/deprecation observation window?
-7. For anonymous multiplayer, how should the second player and spectators
-   receive the implemented high-entropy invitation handoff while the lobby still
-   looks and feels like the current room-ID flow? This must define manual typing,
-   copy/paste, repeat spectators, and whether an account-free trusted relay is
-   acceptable. The protocol default is already 15-minute expiry, player-claim
-   rotation, distinct bounded spectator claims, and atomic one-use consumption.
-
-Until answered, implement fixtures and interfaces but do not lock the affected
-production behavior.
+   Until answered, implement fixtures and interfaces but do not lock the affected
+   production behavior.
 
 ## Seed parity-exception register
 
@@ -172,7 +172,7 @@ silently copied or silently changed:
 | R-015 | Authorization blocks legitimate manual opponent interactions or permits unintended cross-seat destinations | Medium / High       | Characterize permission by actor, controlled card, source, destination, and action. The current resolver intentionally uses card-based authorization: a player may move their own card into an opponent zone even when opponent-public interaction is disabled. Ratify that behavior before changing it. |
 | R-016 | Optimistic client becomes a second reducer and diverges                                                    | Medium / High       | Pending presentation overlay only; no prediction for random/hidden/bulk; snapshot reconciliation tests.                                                                                                                                                                                                  |
 | R-017 | Deployment mixes v1/v2 clients in one room                                                                 | Medium / Critical   | Namespaced protocol generation, admission rejection, sticky session cohort.                                                                                                                                                                                                                              |
-| R-018 | Guest invitation leaks authority or failed creator bootstrap accumulates orphan rooms                      | Medium / High       | Implemented digest-only bounded claims, redacted boundaries, layered creation/admission limits, and atomic retry-safe unclaimed-room expiry; finish the ADR-020 transfer threat model and preview load/alarm evidence before lobby rollout.                                                              |
+| R-018 | Guest invitation leaks authority or failed creator bootstrap accumulates orphan rooms                      | Medium / High       | Implemented digest-only bounded claims, redacted boundaries, layered creation/admission limits, atomic retry-safe unclaimed-room expiry, and ADR-020 foreground copy/private-paste custody; finish preview load/alarm evidence before lobby rollout.                                                     |
 | R-019 | Contributor complexity rises despite better architecture                                                   | Medium / High       | Small public packages, examples/readmes, no giant ECS/store/manager, architecture lint and onboarding test.                                                                                                                                                                                              |
 | R-020 | A stale or foreign client attempts to close a canonical inspection work area                               | Low / Medium        | Resolved end to end: client, wire, authority, and domain command use the projected work-area handle as the precondition; only the resulting event names the internal inspection ID, and generated plus targeted tests reject stale/cross-player handles.                                                 |
 

@@ -573,13 +573,15 @@ retroactively deleted. See the documented
 [Durable Object lifecycle](https://developers.cloudflare.com/durable-objects/concepts/durable-object-lifecycle/)
 and [alarm API](https://developers.cloudflare.com/durable-objects/api/alarms/).
 
-ADR-020 blocks visible create/join wiring. The v1 room ID is both discovery and
-authorization; retaining that behavior would negate SEC-001/SEC-003. The v2
-guest invitation protocol and validated handoff now exist, but their
-cross-browser presentation/transport still needs an explicitly approved choice
-(for example manual transfer versus a trusted relay). Raw credentials must not
-be added to URLs, logs, analytics, storage, React state, or hidden DOM fields as
-a convenience.
+ADR-020 selects a manual foreground clipboard handoff before visible create/join
+wiring. The v1 room ID is both discovery and authorization; retaining that
+behavior would negate SEC-001/SEC-003. V2 serializes a strict branded, bounded
+invitation envelope only into an explicitly initiated clipboard write. Creator
+custody returns safe role/room/expiry metadata rather than the bearer. A native
+guest paste is prevented before insertion and retained only by a private
+non-serializing custodian until successful bootstrap. Raw credentials are not
+added to URLs, logs, analytics, storage, React state, or DOM fields. A manually
+typed room code remains discovery only and fails admission without custody.
 
 ### Message families
 
@@ -962,9 +964,12 @@ storage, DOM, React state, or log. The exact private pair remains retryable
 until Welcome confirms the session, after which reconnect uses only the resume
 bearer.
 `RemoteRoomCreation` keeps guest master credentials private while minting
-bounded handoff values, and the guest bootstrap validates and exchanges such a
-handoff through the same ticket path. The renderer-spike entry remains the
-default until ADR-020 selects the cross-browser transfer/presentation adapter,
+bounded handoff values directly into the ADR-020 foreground clipboard adapter;
+its public result contains only a safe receipt. Native paste places a validated
+handoff in `RemoteRoomInvitationJoinCustody`, which exposes only receipt metadata
+and exchanges its private claim through the same ticket path. Failed exchange
+retains private custody for bounded retry; success and disposal clear it. The
+renderer-spike entry remains the default until the legacy-shaped lobby is wired,
 so the current UI/UX remains unchanged.
 
 The Worker now publishes only the closed `ptcgsim-server-telemetry-v2` union.

@@ -197,8 +197,10 @@ traces are retained as a 14-day artifact. Browser binaries are not cached.
   navigation cycles through that stack and proves each non-persisted
   `pagehide` closes the session, starts its native socket close, and removes the
   owner before the neutral document mounts; persisted pagehide preservation is
-  pinned in the unit layer. Deployed navigation, physical BFCache restoration,
-  and the ADR-020 second-browser invitation path remain outstanding.
+  pinned in the unit layer. ADR-020's separate five-context Chromium path covers
+  rotated player invitation transfer plus two distinct spectator claims without
+  URL, document, or storage exposure. Deployed navigation and physical BFCache
+  restoration remain outstanding.
 - Schema-v7 admission now makes solo replay disclosure structurally safe by
   persisting a one-player ceiling and rejecting a second human through every
   credential path. The protocol, Worker, client bootstrap, and hidden
