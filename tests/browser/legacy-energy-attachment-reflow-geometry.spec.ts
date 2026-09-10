@@ -14,6 +14,14 @@ import {
 
 import oracle from '../legacy-fixtures/renderer/energy-attachment-reflow-v1.json' with { type: 'json' };
 
+import {
+  attachForegroundPaintComparison,
+  compareForegroundScreenshots,
+} from './support/foreground-paint-comparison.js';
+import {
+  isolateCandidateCardPaint,
+  isolateLegacyIframeCardPaint,
+} from './support/isolated-card-paint.js';
 import { captureLegacySourceEnergyAttachmentReflowFixture } from './support/legacy-source-board.js';
 
 type Rect = {
@@ -53,6 +61,10 @@ const modularDegreesBetween = (left: number, right: number): number => {
   const distance = Math.abs(left - right) % 360;
   return Math.min(distance, 360 - distance);
 };
+
+const PAINT_SPATIAL_TOLERANCE = 3;
+const PAINT_CHANNEL_TOLERANCE = 24;
+const MAX_UNMATCHED_FOREGROUND_RATIO = 0.025;
 
 const expectStructuredNumber = (
   actual: number,
@@ -120,6 +132,17 @@ const createCandidateSingleEnergyScene = () => {
   const view: MatchViewState = {
     ...base,
     revision: base.revision + 1,
+    definitions: {
+      ...base.definitions,
+      [pokemonDefinition.id]: {
+        ...pokemonDefinition,
+        imageUrl: '/v2/assets/cardback.png',
+      },
+      [energyDefinition.id]: {
+        ...energyDefinition,
+        imageUrl: '/v2/assets/cardback.png',
+      },
+    },
     zones: Object.fromEntries(
       Object.entries(base.zones).map(([id, zone]) => [
         id,
@@ -168,6 +191,15 @@ test('checked-in legacy sources and React DOM share stable one-Energy attachment
 
   expect(capture.cards).toHaveLength(4);
   expect(capture.stacks).toHaveLength(2);
+
+  await isolateLegacyIframeCardPaint(
+    page,
+    'img[data-legacy-canonical-attachment-card-id]'
+  );
+  const sourcePaint = await page.screenshot({
+    animations: 'disabled',
+    caret: 'hide',
+  });
 
   for (const side of ['local', 'opponent'] as const) {
     expectRectWithin(
@@ -385,6 +417,49 @@ test('checked-in legacy sources and React DOM share stable one-Energy attachment
   await expect(
     candidateHost.locator('[data-card-id="local-attachment-base"]')
   ).toBeVisible();
+
+  await isolateCandidateCardPaint(
+    page,
+    '[data-energy-attachment-candidate-host]',
+    '[data-card-id*="-attachment-"]'
+  );
+  const candidatePaint = await page.screenshot({
+    animations: 'disabled',
+    caret: 'hide',
+  });
+  const paintComparison = await compareForegroundScreenshots(
+    page,
+    sourcePaint,
+    candidatePaint,
+    {
+      spatialTolerance: PAINT_SPATIAL_TOLERANCE,
+      channelTolerance: PAINT_CHANNEL_TOLERANCE,
+    }
+  );
+  await attachForegroundPaintComparison(
+    testInfo,
+    'legacy-energy-card-paint',
+    sourcePaint,
+    candidatePaint,
+    paintComparison
+  );
+  expect(paintComparison.width).toBe(1600);
+  expect(paintComparison.height).toBe(900);
+  expect(paintComparison.sourceForegroundPixels).toBeGreaterThan(15_000);
+  expect(paintComparison.candidateForegroundPixels).toBeGreaterThan(15_000);
+  const paintEvidence = JSON.stringify(paintComparison);
+  expect
+    .soft(
+      paintComparison.unmatchedSourceRatio,
+      `source card paint: ${paintEvidence}`
+    )
+    .toBeLessThanOrEqual(MAX_UNMATCHED_FOREGROUND_RATIO);
+  expect
+    .soft(
+      paintComparison.unmatchedCandidateRatio,
+      `candidate card paint: ${paintEvidence}`
+    )
+    .toBeLessThanOrEqual(MAX_UNMATCHED_FOREGROUND_RATIO);
 
   const candidateEvidence: {
     cards: Array<{

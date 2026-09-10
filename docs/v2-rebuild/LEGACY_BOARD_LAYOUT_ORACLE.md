@@ -472,6 +472,13 @@ boxes, rotations, mapped z ranks `300/299`, and common/Energy-only hit order to
 the source within 2 px / 1% / 0.1 degrees. The renderer list stays back-to-front
 and does not reproduce legacy wrapper or sibling identity.
 
+The same browser gate now isolates those four base/Energy images over white and
+attaches both screenshots plus bidirectional foreground metrics. It applies the
+shared 97.5% match requirement within a three-pixel and 24/255-channel
+compositor tolerance while leaving every structured threshold intact. This
+proves stable one-Energy card paint only; the transient attach and ghost-wrapper
+phases remain numeric source diagnostics.
+
 This Energy checkpoint does not itself cover the separate Trainer-as-Tool path,
 multiple Energy or mixed-order normalization, departures/compaction, Pokémon
 evolution layers or Pokémon-classified attachments, bench/flex overflow,

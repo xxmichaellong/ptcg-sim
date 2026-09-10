@@ -1774,6 +1774,16 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      focused unit coverage for all three sides. This closes ordinary-evolution
      card-image paint only; other card modes, overlays, alternate assets, and
      Pixi paint remain separately gated.
+112. The stable one-Energy attachment checkpoint now uses the same isolated
+     screenshot contract for its four local/opponent base-and-Energy cards.
+     Both the source and candidate use the digest-pinned card back; the same
+     97.5% bidirectional foreground threshold and three-pixel/24-channel
+     compositor tolerance supplement, but do not weaken, the existing 2 px /
+     1% / 0.1-degree geometry, rotation, z-order, and Energy-only/common-hit
+     checks. Paint isolation is now shared browser-test support, and both the
+     evolution and Energy gates pass together after the extraction. Multiple or
+     mixed attachments, departure transitions, alternate assets, and Pixi
+     paint remain outside this checkpoint.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

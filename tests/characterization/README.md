@@ -92,8 +92,11 @@ cleanup. Trainer-as-Tool, multiple or reordered attachments, departures,
 evolution layers, bench/overflow, rotated hit regions, and interaction behavior
 remain excluded. Its browser companion now compares the exact stable four-card
 boundary with a separately mounted React DOM candidate using public canonical
-card geometry; this does not broaden the source oracle's scope or claim Pixi,
-wrapper-identity, or sibling-order parity.
+card geometry. It now also attaches isolated source/candidate screenshots and
+bidirectional foreground metrics under the same 97.5%, three-pixel, and
+24-channel-value paint contract as ordinary evolution. This does not broaden
+the source oracle's scope or claim transient-phase, Pixi, wrapper-identity, or
+sibling-order parity.
 
 `legacy-trainer-tool-attachment-reflow-layout.test.ts` pins the corresponding
 current-category `Trainer` presentation as a separate source checkpoint.

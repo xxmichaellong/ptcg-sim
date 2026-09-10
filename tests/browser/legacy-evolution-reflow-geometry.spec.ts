@@ -1,4 +1,4 @@
-import { expect, test, type Page, type TestInfo } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import {
   asViewCardId,
   type MatchViewState,
@@ -15,9 +15,13 @@ import {
 import oracle from '../legacy-fixtures/renderer/evolution-reflow-v1.json' with { type: 'json' };
 
 import {
+  attachForegroundPaintComparison,
   compareForegroundScreenshots,
-  type ForegroundPaintComparison,
 } from './support/foreground-paint-comparison.js';
+import {
+  isolateCandidateCardPaint,
+  isolateLegacyIframeCardPaint,
+} from './support/isolated-card-paint.js';
 import { captureLegacySourceEvolutionReflowFixture } from './support/legacy-source-board.js';
 
 type Rect = {
@@ -78,96 +82,6 @@ const PAINT_CHANNEL_TOLERANCE = 24;
 // 24/255 channel fringe across the iframe and normalized-DOM compositors, then
 // requires at least 97.5% of foreground pixels to agree in both directions.
 const MAX_UNMATCHED_FOREGROUND_RATIO = 0.025;
-
-const isolateLegacyEvolutionPaint = async (page: Page): Promise<void> => {
-  await page.addStyleTag({
-    content: `
-      html, body { background: #fff !important; }
-      body * { visibility: hidden !important; }
-      #selfContainer, #oppContainer { visibility: visible !important; }
-    `,
-  });
-  for (const selector of ['#selfContainer', '#oppContainer']) {
-    await page
-      .frameLocator(selector)
-      .locator('head')
-      .evaluate((head) => {
-        const style = document.createElement('style');
-        style.textContent = `
-        html, body { background: transparent !important; }
-        body * { visibility: hidden !important; }
-        img[data-legacy-evolution-card-id] {
-          visibility: visible !important;
-        }
-        *, *::before, *::after {
-          animation: none !important;
-          caret-color: transparent !important;
-          transition: none !important;
-        }
-      `;
-        head.append(style);
-      });
-  }
-  await page.evaluate(
-    () =>
-      new Promise<void>((resolve) =>
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
-      )
-  );
-};
-
-const isolateCandidateEvolutionPaint = async (page: Page): Promise<void> => {
-  await page.addStyleTag({
-    content: `
-      html, body { background: #fff !important; }
-      body * { visibility: hidden !important; }
-      [data-evolution-candidate-host],
-      [data-evolution-candidate-host] [data-card-id*="-evolution-"],
-      [data-evolution-candidate-host] [data-card-id*="-evolution-"] * {
-        visibility: visible !important;
-      }
-      *, *::before, *::after {
-        animation: none !important;
-        caret-color: transparent !important;
-        transition: none !important;
-      }
-    `,
-  });
-  await page
-    .locator(
-      '[data-evolution-candidate-host] [data-card-id*="-evolution-"] img'
-    )
-    .evaluateAll(async (images) => {
-      await Promise.all(
-        images.map((image) => (image as HTMLImageElement).decode())
-      );
-      await new Promise<void>((resolve) =>
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
-      );
-    });
-};
-
-const attachEvolutionPaint = async (
-  testInfo: TestInfo,
-  source: Buffer,
-  candidate: Buffer,
-  comparison: ForegroundPaintComparison
-): Promise<void> => {
-  await Promise.all([
-    testInfo.attach('legacy-evolution-card-paint-source.png', {
-      body: source,
-      contentType: 'image/png',
-    }),
-    testInfo.attach('legacy-evolution-card-paint-candidate.png', {
-      body: candidate,
-      contentType: 'image/png',
-    }),
-    testInfo.attach('legacy-evolution-card-paint-comparison.json', {
-      body: Buffer.from(JSON.stringify(comparison, null, 2)),
-      contentType: 'application/json',
-    }),
-  ]);
-};
 
 const createCandidateEvolutionScene = () => {
   const base = createRendererSpikeView();
@@ -288,7 +202,10 @@ test('checked-in legacy sources and React DOM share ordinary evolution reflow se
   );
   expect(capture.sourceFulfillment.unexpectedSameOriginPaths).toEqual([]);
 
-  await isolateLegacyEvolutionPaint(page);
+  await isolateLegacyIframeCardPaint(
+    page,
+    'img[data-legacy-evolution-card-id]'
+  );
   const sourcePaint = await page.screenshot({
     animations: 'disabled',
     caret: 'hide',
@@ -624,7 +541,11 @@ test('checked-in legacy sources and React DOM share ordinary evolution reflow se
   await expect(
     page.locator('[data-card-id="local-active-evolution-top"]')
   ).toBeVisible();
-  await isolateCandidateEvolutionPaint(page);
+  await isolateCandidateCardPaint(
+    page,
+    '[data-evolution-candidate-host]',
+    '[data-card-id*="-evolution-"]'
+  );
   const candidatePaint = await page.screenshot({
     animations: 'disabled',
     caret: 'hide',
@@ -638,8 +559,9 @@ test('checked-in legacy sources and React DOM share ordinary evolution reflow se
       channelTolerance: PAINT_CHANNEL_TOLERANCE,
     }
   );
-  await attachEvolutionPaint(
+  await attachForegroundPaintComparison(
     testInfo,
+    'legacy-evolution-card-paint',
     sourcePaint,
     candidatePaint,
     paintComparison

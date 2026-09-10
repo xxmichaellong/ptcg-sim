@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Page, TestInfo } from '@playwright/test';
 
 export interface ForegroundPaintComparisonOptions {
   readonly spatialTolerance: number;
@@ -16,6 +16,29 @@ export interface ForegroundPaintComparison {
   readonly unmatchedSourceRatio: number;
   readonly unmatchedCandidateRatio: number;
 }
+
+export const attachForegroundPaintComparison = async (
+  testInfo: TestInfo,
+  attachmentPrefix: string,
+  source: Buffer,
+  candidate: Buffer,
+  comparison: ForegroundPaintComparison
+): Promise<void> => {
+  await Promise.all([
+    testInfo.attach(`${attachmentPrefix}-source.png`, {
+      body: source,
+      contentType: 'image/png',
+    }),
+    testInfo.attach(`${attachmentPrefix}-candidate.png`, {
+      body: candidate,
+      contentType: 'image/png',
+    }),
+    testInfo.attach(`${attachmentPrefix}-comparison.json`, {
+      body: Buffer.from(JSON.stringify(comparison, null, 2)),
+      contentType: 'application/json',
+    }),
+  ]);
+};
 
 export const compareForegroundScreenshots = (
   page: Page,
