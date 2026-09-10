@@ -1,6 +1,7 @@
 import {
   InvalidProjectedReplayError,
   ReplayPlaybackController,
+  assertProjectedReplayArtifact,
   type ClientSessionPhase,
   type ClientSessionState,
   type ProjectedReplayArtifact,
@@ -24,6 +25,16 @@ export interface ReplaySessionFailure {
   readonly message: string;
 }
 
+export type ReplayArtifactRequestResult =
+  | {
+      readonly ok: true;
+      readonly artifact: ProjectedReplayArtifact;
+    }
+  | {
+      readonly ok: false;
+      readonly failure: ReplaySessionFailure;
+    };
+
 export interface ReplaySessionCoordinatorState {
   readonly generation: number;
   readonly mode: ReplaySessionMode;
@@ -39,9 +50,12 @@ export interface ReplaySessionCoordinatorState {
 }
 
 interface ReplayRequestContext {
+  readonly purpose: 'playback' | 'export';
   readonly baselineArtifact?: ProjectedReplayArtifact;
   readonly baselineNotices: ClientSessionState['notices'];
+  readonly resolve?: (result: ReplayArtifactRequestResult) => void;
   cancelled: boolean;
+  settled: boolean;
 }
 
 interface LiveIdentity {
@@ -77,6 +91,7 @@ export class ReplaySessionCoordinator {
   private readonly playback = new ReplayPlaybackController();
   private readonly unsubscribeSession: () => void;
   private request?: ReplayRequestContext;
+  private activeReplayArtifact?: ProjectedReplayArtifact;
   private identity?: LiveIdentity;
   private mode: ReplaySessionMode = 'live';
   private failure?: ReplaySessionFailure;
@@ -109,11 +124,13 @@ export class ReplaySessionCoordinator {
 
     const previousFailure = this.failure;
     const context: ReplayRequestContext = {
+      purpose: 'playback',
       ...(sessionState.replayArtifact
         ? { baselineArtifact: sessionState.replayArtifact }
         : {}),
       baselineNotices: sessionState.notices,
       cancelled: false,
+      settled: false,
     };
     this.request = context;
     this.failure = undefined;
@@ -130,14 +147,78 @@ export class ReplaySessionCoordinator {
     return true;
   }
 
+  /** Requests a fresh safe artifact without changing the effective live view. */
+  requestReplayArtifact(): Promise<ReplayArtifactRequestResult> {
+    if (this.disposed || this.request) {
+      return Promise.resolve({
+        ok: false,
+        failure: {
+          code: 'unavailable',
+          message: 'A replay request is already active or unavailable',
+        },
+      });
+    }
+    const sessionState = this.session.getSnapshot();
+    if (sessionState.phase !== 'ready' || sessionState.replayLoading) {
+      return Promise.resolve({
+        ok: false,
+        failure: {
+          code: 'unavailable',
+          message: 'The live session is not ready to export a replay',
+        },
+      });
+    }
+
+    return new Promise((resolve) => {
+      const previousFailure = this.failure;
+      const context: ReplayRequestContext = {
+        purpose: 'export',
+        ...(sessionState.replayArtifact
+          ? { baselineArtifact: sessionState.replayArtifact }
+          : {}),
+        baselineNotices: sessionState.notices,
+        resolve,
+        cancelled: false,
+        settled: false,
+      };
+      this.request = context;
+      this.failure = undefined;
+      const accepted = this.session.requestReplay();
+      if (!accepted && this.request === context) {
+        this.request = undefined;
+        this.failure = previousFailure;
+        this.settleRequest(context, {
+          ok: false,
+          failure: {
+            code: 'unavailable',
+            message: 'The live session could not start a replay export',
+          },
+        });
+        this.publish(this.session.getSnapshot());
+        return;
+      }
+      this.publish(this.session.getSnapshot());
+    });
+  }
+
+  /** The exact artifact installed for the current replay mode, if any. */
+  getReplayArtifact(): ProjectedReplayArtifact | undefined {
+    return this.mode === 'replay' && !this.disposed
+      ? this.activeReplayArtifact
+      : undefined;
+  }
+
   exitReplay(): boolean {
     if (this.disposed) return false;
     const wasActive = this.mode === 'replay';
-    const wasLoading = Boolean(this.request && !this.request.cancelled);
+    const wasLoading = Boolean(
+      this.request?.purpose === 'playback' && !this.request.cancelled
+    );
     if (!wasActive && !wasLoading) return false;
 
-    if (this.request) this.request.cancelled = true;
+    if (this.request?.purpose === 'playback') this.request.cancelled = true;
     this.mode = 'live';
+    this.activeReplayArtifact = undefined;
     this.failure = undefined;
     this.playback.clear();
     this.publish(this.session.getSnapshot());
@@ -178,8 +259,19 @@ export class ReplaySessionCoordinator {
     if (this.disposed) return;
     this.disposed = true;
     this.unsubscribeSession();
+    const request = this.request;
     this.request = undefined;
+    if (request) {
+      this.settleRequest(request, {
+        ok: false,
+        failure: {
+          code: 'interrupted',
+          message: 'The replay export was interrupted by route teardown',
+        },
+      });
+    }
     this.mode = 'live';
+    this.activeReplayArtifact = undefined;
     this.failure = undefined;
     this.playback.clear();
     this.state = this.createState(
@@ -195,8 +287,10 @@ export class ReplaySessionCoordinator {
     const sessionState = this.session.getSnapshot();
 
     if (terminalSession(sessionState.phase)) {
+      const request = this.request;
       this.request = undefined;
       this.mode = 'live';
+      this.activeReplayArtifact = undefined;
       this.playback.clear();
       this.identity = undefined;
       this.failure =
@@ -208,6 +302,18 @@ export class ReplaySessionCoordinator {
                 'The live session failed while replay was active',
             }
           : undefined;
+      if (request) {
+        this.settleRequest(request, {
+          ok: false,
+          failure:
+            this.failure ??
+            ({
+              code: 'interrupted',
+              message:
+                'The replay transfer was interrupted by the live session',
+            } satisfies ReplaySessionFailure),
+        });
+      }
       this.publish(sessionState);
       return;
     }
@@ -246,9 +352,14 @@ export class ReplaySessionCoordinator {
     if (artifact && artifact !== request.baselineArtifact) {
       this.request = undefined;
       try {
-        this.playback.load(artifact);
-        this.mode = 'replay';
+        assertProjectedReplayArtifact(artifact);
+        if (request.purpose === 'playback') {
+          this.playback.load(artifact);
+          this.activeReplayArtifact = artifact;
+          this.mode = 'replay';
+        }
         this.failure = undefined;
+        this.settleRequest(request, { ok: true, artifact });
       } catch (error) {
         this.failure = {
           code: 'invalid_artifact',
@@ -257,6 +368,7 @@ export class ReplaySessionCoordinator {
               ? error.message
               : 'The projected replay could not be installed',
         };
+        this.settleRequest(request, { ok: false, failure: this.failure });
       }
       return true;
     }
@@ -269,6 +381,7 @@ export class ReplaySessionCoordinator {
     if (unavailable) {
       this.request = undefined;
       this.failure = { code: 'unavailable', message: unavailable.message };
+      this.settleRequest(request, { ok: false, failure: this.failure });
       return true;
     } else if (sessionState.phase !== 'ready') {
       this.request = undefined;
@@ -276,6 +389,7 @@ export class ReplaySessionCoordinator {
         code: 'interrupted',
         message: 'The replay transfer was interrupted by the live session',
       };
+      this.settleRequest(request, { ok: false, failure: this.failure });
       return true;
     }
     return false;
@@ -295,14 +409,26 @@ export class ReplaySessionCoordinator {
           code: 'unavailable',
           message: 'The replay request completed without a new artifact',
         };
+        this.settleRequest(request, { ok: false, failure: this.failure });
       }
       this.publish(sessionState);
     });
   }
 
   private resetForLiveIdentityChange(): void {
+    const request = this.request;
     this.request = undefined;
+    if (request) {
+      this.settleRequest(request, {
+        ok: false,
+        failure: {
+          code: 'interrupted',
+          message: 'The replay transfer was interrupted by a session change',
+        },
+      });
+    }
     this.mode = 'live';
+    this.activeReplayArtifact = undefined;
     this.failure = undefined;
     this.playback.clear();
     this.identity = undefined;
@@ -333,7 +459,9 @@ export class ReplaySessionCoordinator {
         sessionState.phase === 'ready' &&
         !sessionState.replayLoading &&
         !this.request,
-      canExit: this.mode === 'replay' || requestPhase === 'loading',
+      canExit:
+        this.mode === 'replay' ||
+        (this.request?.purpose === 'playback' && requestPhase === 'loading'),
       ...(sessionState.view
         ? { liveRevision: sessionState.view.revision }
         : {}),
@@ -368,5 +496,14 @@ export class ReplaySessionCoordinator {
       left.playback === right.playback &&
       sameFailure(left.failure, right.failure)
     );
+  }
+
+  private settleRequest(
+    request: ReplayRequestContext,
+    result: ReplayArtifactRequestResult
+  ): void {
+    if (request.settled) return;
+    request.settled = true;
+    request.resolve?.(result);
   }
 }

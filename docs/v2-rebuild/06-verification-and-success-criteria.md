@@ -510,6 +510,16 @@ Release requires all of the following:
     isolated browser contexts prove rotated player claims, player-two admission,
     two distinct repeat-spectator claims, correct projected roles,
     credential-free URLs, and no envelope in document HTML or browser storage.
+35. A normal game-state download contains only the authority-produced requesting
+    role's replay projection and declares `canonicalState: false` and
+    `resumable: false`. Exact bytes are deterministic for the same artifact and
+    carry a SHA-256 digest. Wrong format/protocol/privacy metadata, excess size,
+    corruption, malformed frames, perspective mismatch, and invalid replay
+    semantics fail before playback. Live export waits for a fresh artifact
+    without entering replay mode or rewinding the board; replay export uses the
+    exact installed artifact. Teardown settles an in-flight export without a
+    late download, and neither path contains or creates admission, invitation,
+    socket, resume, or save authority.
 
 ## Privacy and security gates
 

@@ -864,11 +864,14 @@ transaction detail. The largest frame and aggregate publication were 62,431 and
 - Provide revocation/deletion and operational cleanup.
 - Store immutable save schema version, source build, and integrity checksum.
 
-Solo saves may contain the complete state because the local user controls both
-sides. Multiplayer export is a blocking product/security decision: a client must
-not receive an opponent's concealed deck just to preserve the current export
-mechanism. Preferred options are an opaque encrypted/server-hosted resume token
-for full continuation and a role-projected downloadable replay for viewing.
+ADR-012 separates viewing from continuation. The ordinary download is a
+versioned, integrity-checked, non-resumable role-projected replay. A canonical
+multiplayer continuation is encrypted and server-held behind a distinct
+role-bound, expiring, revocable save capability; restore forks a new room and
+rotates all other credentials and identities. A full file containing both
+hidden decks is unavailable by default and requires both authenticated players'
+independent consent to that exact export. See
+`ADR-012-MULTIPLAYER-SAVES-AND-EXPORTS.md`.
 
 ### Replay and undo
 
@@ -1013,10 +1016,10 @@ production destinations, dashboards, preview baselines, and alert/runbook
 rehearsal remain rollout gates documented in `apps/server/OPERATIONS.md`.
 
 This bounded ledger, stream, and playback state machine are the runtime replay
-foundation, not the final archive/export contract. Phase 7 still owns
-long-retention journal chunks, download/import schemas, share capabilities,
-quotas, full-sidebar replay integration, and the unresolved multiplayer export
-policy in ADR-012.
+foundation. ADR-012 now fixes the archive privacy boundary. Phase 7 still owns
+the perspective download/import implementation, long-retention journal chunks,
+server-held continuation capabilities, encryption, quotas, migration, and the
+remaining sidebar integration.
 
 Solo undo is a new authoritative transition with a monotonically increasing
 revision: it restores the prior approved logical checkpoint, records

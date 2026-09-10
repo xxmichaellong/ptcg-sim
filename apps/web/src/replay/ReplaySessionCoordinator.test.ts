@@ -211,6 +211,7 @@ describe('ReplaySessionCoordinator', () => {
     });
 
     session.completeReplay(artifact('fresh'));
+    expect(coordinator.getReplayArtifact()?.replayId).toBe('fresh');
     expect(coordinator.getSnapshot()).toMatchObject({
       mode: 'replay',
       requestPhase: 'idle',
@@ -235,10 +236,69 @@ describe('ReplaySessionCoordinator', () => {
     });
 
     expect(coordinator.exitReplay()).toBe(true);
+    expect(coordinator.getReplayArtifact()).toBeUndefined();
     expect(coordinator.getSnapshot()).toMatchObject({
       mode: 'live',
       view: { revision: 11 },
       playback: { phase: 'empty' },
+    });
+  });
+
+  it('returns a fresh export artifact without entering or rewinding replay mode', async () => {
+    const stale = artifact('stale-export');
+    const session = new FakeReplaySession({
+      ...initialState(),
+      replayArtifact: stale,
+    });
+    const coordinator = new ReplaySessionCoordinator(session);
+    const resultPromise = coordinator.requestReplayArtifact();
+
+    expect(coordinator.getSnapshot()).toMatchObject({
+      mode: 'live',
+      requestPhase: 'loading',
+      canRequest: false,
+      canExit: false,
+      view: { revision: 10 },
+      playback: { phase: 'empty' },
+    });
+    expect(coordinator.getReplayArtifact()).toBeUndefined();
+
+    const fresh = artifact('fresh-export', 4);
+    session.completeReplay(fresh);
+    await expect(resultPromise).resolves.toEqual({ ok: true, artifact: fresh });
+    expect(coordinator.getSnapshot()).toMatchObject({
+      mode: 'live',
+      requestPhase: 'idle',
+      canRequest: true,
+      canExit: false,
+      view: { revision: 10 },
+      playback: { phase: 'empty' },
+    });
+    expect(coordinator.getReplayArtifact()).toBeUndefined();
+  });
+
+  it('settles export requests on authority refusal and route teardown', async () => {
+    const session = new FakeReplaySession();
+    const coordinator = new ReplaySessionCoordinator(session);
+    const unavailable = coordinator.requestReplayArtifact();
+    session.makeUnavailable('No safe replay is retained');
+    await expect(unavailable).resolves.toEqual({
+      ok: false,
+      failure: {
+        code: 'unavailable',
+        message: 'No safe replay is retained',
+      },
+    });
+
+    coordinator.dismissFailure();
+    const interrupted = coordinator.requestReplayArtifact();
+    coordinator.dispose();
+    await expect(interrupted).resolves.toEqual({
+      ok: false,
+      failure: {
+        code: 'interrupted',
+        message: 'The replay export was interrupted by route teardown',
+      },
     });
   });
 

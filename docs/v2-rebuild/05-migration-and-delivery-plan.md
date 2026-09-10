@@ -639,6 +639,17 @@ save; they are never silently moved to v1.
 
 Goal: make v2 sessions durable and legacy data safe to carry forward.
 
+Current status (2026-09-10): ADR-012 is accepted. The first bounded archive
+slice serializes only the authority-produced role projection into a
+deterministic, SHA-256 integrity-checked, version/size-bounded file explicitly
+marked non-canonical and non-resumable. The existing Export game state control
+works in live and replay mode; live export requests a fresh artifact without
+changing the effective board. Strict import parsing and semantic validation
+exist at the package boundary, but file-selection/import UI stays disabled until
+the untrusted-file and compatibility gates are complete. Canonical multiplayer
+continuation remains server-held and unwired pending its encryption,
+role-capability, retention, recovery, quota, and abuse slices.
+
 Work:
 
 - Implement versioned snapshots, journal chunks, recovery, retention, and
@@ -660,8 +671,9 @@ Work:
   acknowledgement adapter; adding a separate coin visual requires an approved
   parity exception. Preserve the
   implemented recipient-safe actor/scope/source facts and spectator-public
-  single-reveal names while adding long-retention journal chunks plus
-  download/import formats.
+  single-reveal names while adding long-retention journal chunks and remaining
+  import formats. The v1-shaped export control now writes the accepted
+  perspective replay format.
 - Expose v1 conversion through an isolated upload/import transaction.
 - Add storage migration rehearsal, corrupt/truncated data recovery, quotas, and
   cleanup jobs.

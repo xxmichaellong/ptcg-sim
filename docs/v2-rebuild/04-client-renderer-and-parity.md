@@ -1585,8 +1585,9 @@ battle log remains live-only exactly as the replay visibility contract requires.
 Export reads the bounded effective activity source rather than DOM, uses the
 legacy numbered text format, and revokes the object URL; Clear is local
 presentation only; Full screen retains the foreground gesture and vendor
-fallbacks. Game-state/replay import and export, Deck navigation, and complete
-focus/keyboard/visual parity remain later slices.
+fallbacks. Perspective-safe game-state/replay export is now wired for both live
+and replay mode; replay-file import, server-held continuation, Deck navigation,
+and complete focus/keyboard/visual parity remain later slices.
 `RendererSpikeBoard` and `RemoteSessionBoard` now carry an optional
 renderer-neutral `BoardPreferences` value from their composing route. Explicit
 preferences install after asynchronous mount and update in place; removing the

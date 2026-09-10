@@ -411,6 +411,41 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     );
 
     await playerTwo.page.locator('#p2OptionsButton').click();
+    const [perspectiveReplay] = await Promise.all([
+      playerTwo.page.waitForEvent('download'),
+      playerTwo.page.locator('#exportState').click(),
+    ]);
+    expect(perspectiveReplay.suggestedFilename()).toBe(
+      'ptcgsim-perspective-replay.json'
+    );
+    const perspectiveReplayStream = await perspectiveReplay.createReadStream();
+    let perspectiveReplayText = '';
+    for await (const chunk of perspectiveReplayStream) {
+      perspectiveReplayText += chunk.toString();
+    }
+    expect(JSON.parse(perspectiveReplayText)).toMatchObject({
+      format: 'ptcgsim-perspective-replay',
+      formatVersion: 1,
+      protocolVersion: 2,
+      privacy: {
+        kind: 'viewer-projection',
+        viewer: { kind: 'player' },
+        canonicalState: false,
+        resumable: false,
+      },
+      integrity: {
+        algorithm: 'SHA-256',
+        digest: expect.stringMatching(/^[a-f0-9]{64}$/u),
+      },
+    });
+    for (const bearer of bearerValues) {
+      expect(perspectiveReplayText).not.toContain(bearer);
+    }
+    expect(perspectiveReplayText).not.toContain('admissionTicket');
+    expect(perspectiveReplayText).not.toContain('resumeToken');
+    await expect(playerTwo.page.locator('#p2MessageInput')).toBeVisible();
+
+    await playerTwo.page.locator('#p2OptionsButton').click();
     const [battleLog] = await Promise.all([
       playerTwo.page.waitForEvent('download'),
       playerTwo.page.locator('#exportLog').click(),

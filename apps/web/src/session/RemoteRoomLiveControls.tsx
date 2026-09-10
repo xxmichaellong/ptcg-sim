@@ -38,6 +38,7 @@ export const RemoteRoomLiveControls = ({
   session,
   presentation,
   onLeave,
+  onExportState,
   confirmLeave = () =>
     globalThis.confirm(
       'Are you sure you want to leave the room? Current game state will be lost.'
@@ -48,6 +49,7 @@ export const RemoteRoomLiveControls = ({
   readonly session: RemoteRoomLiveSession;
   readonly presentation: RemoteRoomLivePresentation;
   readonly onLeave?: () => void;
+  readonly onExportState?: () => void;
   readonly confirmLeave?: () => boolean;
   readonly downloadTextFile?: (filename: string, contents: string) => boolean;
   readonly requestFullscreen?: () => boolean;
@@ -180,6 +182,20 @@ export const RemoteRoomLiveControls = ({
         role="menu"
         hidden={!options.open}
       >
+        {onExportState && (
+          <button
+            id="exportState"
+            type="button"
+            role="menuitem"
+            disabled={!ready}
+            onClick={() => {
+              options.setOpen(false);
+              onExportState();
+            }}
+          >
+            Export game state
+          </button>
+        )}
         <button
           id="exportLog"
           type="button"

@@ -1,7 +1,7 @@
 # PTCG Sim v2 rebuild blueprint
 
 - Status: **approved implementation in progress on the isolated v2 feature branch**
-- Last updated: 2026-09-09
+- Last updated: 2026-09-10
 - Primary objective: replace the internals while preserving the current UI and UX.
 
 This directory is the implementation contract for the PTCG Sim v2 rebuild.
@@ -120,8 +120,12 @@ the relevant product decisions and phase exit criteria.
   and exclusion of the development module. Managed-preview behavior remains a
   release gate. Live and replay Options now export the bounded recipient-safe
   battle log without reading DOM and start browser full screen from the
-  foreground click; Clear battle log remains live-only and local. Game-state/replay import and
-  export formats plus Deck navigation remain later parity work. The
+  foreground click; Clear battle log remains live-only and local. Accepted
+  ADR-012 now also wires the existing Export game state action to a versioned,
+  SHA-256 integrity-checked, non-resumable perspective replay. A live export
+  requests a fresh authority artifact without entering replay mode; an active
+  replay exports its exact installed artifact. Replay-file import, canonical
+  server-held continuation, and Deck navigation remain later parity work. The
   live Solo header tab retains its separate v1 confirmation text and delegates
   to the same durable route teardown as Leave Room. The board composition now
   accepts optional route-owned local preferences across live and replay without
@@ -186,6 +190,7 @@ a manual tabletop simulator.
 | [MAGICCIRCLE_REUSE.md](./MAGICCIRCLE_REUSE.md)                                         | Exact reuse/adaptation boundary for the local MagicCircle client, Pixi, and room patterns                    |
 | [RENDERER_SPIKE.md](./RENDERER_SPIKE.md)                                               | Live DOM/Pixi implementation evidence, research, current result, and remaining decision gates                |
 | [ADR-004-BOARD-RENDERER.md](./ADR-004-BOARD-RENDERER.md)                               | Accepted first-production renderer decision, evidence, consequences, and revisit triggers                    |
+| [ADR-012-MULTIPLAYER-SAVES-AND-EXPORTS.md](./ADR-012-MULTIPLAYER-SAVES-AND-EXPORTS.md) | Accepted perspective replay, server-held continuation, and dual-consent full-export policy                   |
 | [ATTACH_EVOLVE_TARGETING.md](./ATTACH_EVOLVE_TARGETING.md)                             | Frozen Q/E source behavior and implemented atomic stable-ID vertical slice                                   |
 | [LEGACY_IMPORT.md](./LEGACY_IMPORT.md)                                                 | Source-backed v1 format, bounded conversion/report, private corpus runner, and staged route plan             |
 | [SERVER_PERFORMANCE_BASELINE.md](./SERVER_PERFORMANCE_BASELINE.md)                     | Reproducible `workerd` payload/resource gate, named local timing observation, and remaining preview evidence |

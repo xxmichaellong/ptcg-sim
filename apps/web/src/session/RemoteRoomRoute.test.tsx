@@ -6,6 +6,7 @@ import type {
   SessionSocketFactory,
   SessionSocketHandlers,
 } from '@ptcgsim/client-session';
+import { parseProjectedReplayFile } from '@ptcgsim/client-session';
 import {
   PROTOCOL_VERSION,
   type ServerMessage,
@@ -153,7 +154,9 @@ describe('RemoteRoomRoute', () => {
     const onSubmission = vi.fn();
     const onLeave = vi.fn();
     const confirmHeaderLeave = vi.fn(() => false);
-    const downloadTextFile = vi.fn(() => true);
+    const downloadTextFile = vi.fn(
+      (_filename: string, _contents: string) => true
+    );
     const requestFullscreen = vi.fn(() => true);
     const requestBackground = vi.fn(async () => ({
       kind: 'image' as const,
@@ -215,6 +218,54 @@ describe('RemoteRoomRoute', () => {
       (host.querySelector('#p2MessageInput') as HTMLInputElement).disabled
     ).toBe(false);
     expect(boardHarness.props?.preferences).toBeUndefined();
+
+    await act(async () => {
+      (host.querySelector('#p2OptionsButton') as HTMLButtonElement).click();
+      (host.querySelector('#exportState') as HTMLButtonElement).click();
+    });
+    expect(JSON.parse(socket.sent.at(-1)!)).toEqual({
+      type: 'RequestReplay',
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    await act(async () => {
+      socket.serverMessage({
+        type: 'ReplayStarted',
+        protocolVersion: PROTOCOL_VERSION,
+        replayId: 'live-route-export',
+        viewer: view.viewer,
+        startRevision: 1,
+        endRevision: 1,
+        truncated: true,
+        frameCount: 1,
+      });
+      socket.serverMessage({
+        type: 'ReplayFrame',
+        protocolVersion: PROTOCOL_VERSION,
+        replayId: 'live-route-export',
+        index: 0,
+        snapshot: view,
+      });
+      socket.serverMessage({
+        type: 'ReplayCompleted',
+        protocolVersion: PROTOCOL_VERSION,
+        replayId: 'live-route-export',
+        frameCount: 1,
+      });
+      await vi.waitFor(() => expect(downloadTextFile).toHaveBeenCalledTimes(1));
+    });
+    const [liveExportFilename, liveExportContents] =
+      downloadTextFile.mock.calls[0]!;
+    expect(liveExportFilename).toBe('ptcgsim-perspective-replay.json');
+    await expect(
+      parseProjectedReplayFile(liveExportContents)
+    ).resolves.toMatchObject({ replayId: 'live-route-export' });
+    expect(runtime.replay.getSnapshot()).toMatchObject({
+      mode: 'live',
+      requestPhase: 'idle',
+      view: { revision: 1 },
+      playback: { phase: 'empty' },
+    });
+    expect(host.querySelector('#room-board')?.textContent).toBe('1');
 
     const sentBeforeSettings = socket.sent.length;
     await act(async () =>
@@ -468,6 +519,32 @@ describe('RemoteRoomRoute', () => {
       (host.querySelector('#optionsContextMenu') as HTMLElement).hidden
     ).toBe(false);
     expect(host.querySelector('#clearLog')).toBeNull();
+    await act(async () => {
+      (host.querySelector('#exportState') as HTMLButtonElement).click();
+      await vi.waitFor(() => expect(downloadTextFile).toHaveBeenCalledTimes(2));
+    });
+    const [replayFilename, replayContents] = downloadTextFile.mock.calls[1]!;
+    expect(replayFilename).toBe('ptcgsim-perspective-replay.json');
+    expect(JSON.parse(replayContents)).toMatchObject({
+      format: 'ptcgsim-perspective-replay',
+      privacy: {
+        kind: 'viewer-projection',
+        canonicalState: false,
+        resumable: false,
+      },
+    });
+    await expect(
+      parseProjectedReplayFile(replayContents)
+    ).resolves.toMatchObject({
+      replayId: 'route-screen-replay',
+      viewer: view.viewer,
+      startRevision: 1,
+      endRevision: 2,
+    });
+    expect(runtime.replay.getSnapshot().mode).toBe('replay');
+    await act(async () =>
+      (host.querySelector('#optionsButton') as HTMLButtonElement).click()
+    );
     await act(async () =>
       (host.querySelector('#exportLog') as HTMLButtonElement).click()
     );

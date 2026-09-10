@@ -91,6 +91,7 @@ const mount = async (
   options: {
     readonly presentation?: RemoteRoomLivePresentation;
     readonly onLeave?: () => void;
+    readonly onExportState?: () => void;
     readonly confirmLeave?: () => boolean;
     readonly downloadTextFile?: (filename: string, contents: string) => boolean;
     readonly requestFullscreen?: () => boolean;
@@ -105,6 +106,9 @@ const mount = async (
         session={session}
         presentation={options.presentation ?? livePresentation().value}
         {...(options.onLeave ? { onLeave: options.onLeave } : {})}
+        {...(options.onExportState
+          ? { onExportState: options.onExportState }
+          : {})}
         {...(options.confirmLeave
           ? { confirmLeave: options.confirmLeave }
           : {})}
@@ -266,8 +270,10 @@ describe('RemoteRoomLiveControls', () => {
     const presentation = livePresentation(['  Blue attacked  ', 'Red: hi']);
     const downloadTextFile = vi.fn(() => true);
     const requestFullscreen = vi.fn(() => true);
+    const onExportState = vi.fn();
     const { host, root } = await mount(session, {
       presentation: presentation.value,
+      onExportState,
       downloadTextFile,
       requestFullscreen,
     });
@@ -277,6 +283,13 @@ describe('RemoteRoomLiveControls', () => {
     await act(async () => options.click());
     expect(menu.hidden).toBe(false);
     expect(options.getAttribute('aria-expanded')).toBe('true');
+    await act(async () =>
+      element<HTMLButtonElement>(host, '#exportState').click()
+    );
+    expect(onExportState).toHaveBeenCalledOnce();
+    expect(menu.hidden).toBe(true);
+
+    await act(async () => options.click());
     await act(async () =>
       element<HTMLButtonElement>(host, '#exportLog').click()
     );
@@ -338,12 +351,17 @@ describe('RemoteRoomLiveControls', () => {
       playerId: undefined,
       view: undefined,
     });
-    const { host, root } = await mount(session);
+    const { host, root } = await mount(session, {
+      onExportState: vi.fn(),
+    });
 
     expect(element<HTMLButtonElement>(host, '#p2FREEBUTTON').disabled).toBe(
       true
     );
     expect(element<HTMLInputElement>(host, '#p2MessageInput').disabled).toBe(
+      true
+    );
+    expect(element<HTMLButtonElement>(host, '#exportState').disabled).toBe(
       true
     );
     expect(host.querySelector('#p2AttackButton')).toBeNull();

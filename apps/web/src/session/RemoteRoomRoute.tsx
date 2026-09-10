@@ -1,4 +1,8 @@
 import {
+  serializeProjectedReplayFile,
+  type ProjectedReplayArtifact,
+} from '@ptcgsim/client-session';
+import {
   DEFAULT_BOARD_PREFERENCES,
   type BoardIntent,
   type BoardPreferences,
@@ -117,6 +121,20 @@ export const RemoteRoomRoute = ({
   const setHideOpponentHand = (hidden: boolean): void => {
     if (onHideOpponentHandChange) onHideOpponentHandChange(hidden);
     else setLocalHideOpponentHand(hidden);
+  };
+  const downloadPerspectiveReplay = (
+    artifact: ProjectedReplayArtifact
+  ): void => {
+    void serializeProjectedReplayFile(artifact)
+      .then((contents) =>
+        downloadTextFile('ptcgsim-perspective-replay.json', contents)
+      )
+      .catch(() => undefined);
+  };
+  const exportLivePerspective = (): void => {
+    void runtime.replay.requestReplayArtifact().then((result) => {
+      if (result.ok) downloadPerspectiveReplay(result.artifact);
+    });
   };
 
   return (
@@ -261,6 +279,7 @@ export const RemoteRoomRoute = ({
                     session={runtime.session}
                     presentation={runtime.presentation}
                     {...(onLeave ? { onLeave } : {})}
+                    onExportState={exportLivePerspective}
                     downloadTextFile={downloadTextFile}
                     requestFullscreen={requestFullscreen}
                   />
@@ -291,6 +310,18 @@ export const RemoteRoomRoute = ({
                     role="menu"
                     hidden={!options.open}
                   >
+                    <button
+                      id="exportState"
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        const artifact = runtime.replay.getReplayArtifact();
+                        options.setOpen(false);
+                        if (artifact) downloadPerspectiveReplay(artifact);
+                      }}
+                    >
+                      Export game state
+                    </button>
                     <button
                       id="exportLog"
                       type="button"

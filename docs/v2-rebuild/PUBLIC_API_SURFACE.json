@@ -70,8 +70,28 @@
               "kind": "type-value"
             },
             {
+              "name": "InvalidProjectedReplayFileError",
+              "kind": "type-value"
+            },
+            {
+              "name": "MAX_PROJECTED_REPLAY_FILE_CODE_UNITS",
+              "kind": "value"
+            },
+            {
+              "name": "parseProjectedReplayFile",
+              "kind": "value"
+            },
+            {
               "name": "PendingCommandSummary",
               "kind": "type"
+            },
+            {
+              "name": "PROJECTED_REPLAY_FILE_FORMAT",
+              "kind": "value"
+            },
+            {
+              "name": "PROJECTED_REPLAY_FILE_VERSION",
+              "kind": "value"
             },
             {
               "name": "ProjectedReplayArtifact",
@@ -100,6 +120,10 @@
             {
               "name": "ReplayPlaybackState",
               "kind": "type"
+            },
+            {
+              "name": "serializeProjectedReplayFile",
+              "kind": "value"
             },
             {
               "name": "SessionSocket",
