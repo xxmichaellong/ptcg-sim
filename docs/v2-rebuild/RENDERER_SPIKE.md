@@ -1651,6 +1651,22 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      Attack publication, spectator exclusion, server-attributed presence, and
      lobby return without bearer exposure. Default v2 and v1 entry behavior are
      unchanged; live Options and navigation remain later slices.
+101. The live connected Options button now restores the local-only portion of
+     the existing menu without inventing a save format. Export battle log reads
+     the bounded recipient-safe activity model rather than DOM, emits the exact
+     numbered plain-text shape, clicks one foreground download, and revokes its
+     object URL on success or failure. Clear battle log resets only local
+     presentation; authenticated session/canonical/replay state and dispatcher
+     cursors remain intact. Full screen calls the current standard or legacy
+     document method with its owning receiver, absorbs denial without an
+     unhandled rejection, and stays inside the click gesture. The menu retains
+     the legacy IDs/labels, closes after actions or an outside press, and removes
+     its document listener. Unit coverage pins serialization, unavailable API
+     failure, native receivers, revocation, delegation, dismissal, and no
+     command/chat traffic; the real lobby journey downloads the file, validates
+     its safe contents, clears the live feed, and observes the fullscreen call.
+     Canonical game-state/replay import-export remains gated on its existing
+     format/privacy decisions, and the default route remains unchanged.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

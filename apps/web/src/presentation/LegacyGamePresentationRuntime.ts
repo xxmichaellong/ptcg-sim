@@ -166,6 +166,8 @@ export class LegacyGamePresentationRuntime {
     this.activityFeed = this.game.consumers!.activityFeed;
   }
 
+  clearActivity = (): boolean => this.game.clearActivity();
+
   dispose(): void {
     try {
       this.game.dispose();

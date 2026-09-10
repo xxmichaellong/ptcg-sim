@@ -134,6 +134,7 @@ export const RemoteRoomRoute = ({
                 {!chrome.active && (
                   <RemoteRoomLiveControls
                     session={runtime.session}
+                    presentation={runtime.presentation}
                     {...(onLeave ? { onLeave } : {})}
                   />
                 )}

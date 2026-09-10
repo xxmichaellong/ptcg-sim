@@ -12,6 +12,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   RemoteRoomLiveControls,
+  type RemoteRoomLivePresentation,
   type RemoteRoomLiveSession,
 } from './RemoteRoomLiveControls.js';
 
@@ -63,11 +64,36 @@ class FakeLiveSession implements RemoteRoomLiveSession {
   }
 }
 
+const livePresentation = (messages: readonly string[] = []) => {
+  const items = messages.map((message, index) => ({
+    id: index + 1,
+    revision: 1,
+    eventType: 'ChatMessage' as const,
+    category: 'message' as const,
+    message,
+  }));
+  const clearActivity = vi.fn(() => items.length > 0);
+  const value: RemoteRoomLivePresentation = {
+    activityFeed: {
+      subscribe: () => () => undefined,
+      getSnapshot: () => ({
+        items,
+        newestItemId: items.at(-1)?.id ?? null,
+      }),
+    },
+    clearActivity,
+  };
+  return { value, clearActivity };
+};
+
 const mount = async (
   session: FakeLiveSession,
   options: {
+    readonly presentation?: RemoteRoomLivePresentation;
     readonly onLeave?: () => void;
     readonly confirmLeave?: () => boolean;
+    readonly downloadTextFile?: (filename: string, contents: string) => boolean;
+    readonly requestFullscreen?: () => boolean;
   } = {}
 ): Promise<{ readonly host: HTMLDivElement; readonly root: Root }> => {
   const host = document.createElement('div');
@@ -77,9 +103,16 @@ const mount = async (
     root.render(
       <RemoteRoomLiveControls
         session={session}
+        presentation={options.presentation ?? livePresentation().value}
         {...(options.onLeave ? { onLeave: options.onLeave } : {})}
         {...(options.confirmLeave
           ? { confirmLeave: options.confirmLeave }
+          : {})}
+        {...(options.downloadTextFile
+          ? { downloadTextFile: options.downloadTextFile }
+          : {})}
+        {...(options.requestFullscreen
+          ? { requestFullscreen: options.requestFullscreen }
           : {})}
       />
     )
@@ -226,6 +259,75 @@ describe('RemoteRoomLiveControls', () => {
     expect(session.submit).not.toHaveBeenCalled();
 
     await act(async () => root.unmount());
+  });
+
+  it('provides local battle-log and fullscreen options without canonical commands', async () => {
+    const session = new FakeLiveSession();
+    const presentation = livePresentation(['  Blue attacked  ', 'Red: hi']);
+    const downloadTextFile = vi.fn(() => true);
+    const requestFullscreen = vi.fn(() => true);
+    const { host, root } = await mount(session, {
+      presentation: presentation.value,
+      downloadTextFile,
+      requestFullscreen,
+    });
+    const options = element<HTMLButtonElement>(host, '#p2OptionsButton');
+    const menu = element<HTMLElement>(host, '#optionsContextMenu');
+
+    await act(async () => options.click());
+    expect(menu.hidden).toBe(false);
+    expect(options.getAttribute('aria-expanded')).toBe('true');
+    await act(async () =>
+      element<HTMLButtonElement>(host, '#exportLog').click()
+    );
+    expect(downloadTextFile).toHaveBeenCalledWith(
+      'battle-log.txt',
+      '1: Blue attacked\n\n2: Red: hi\n\n'
+    );
+    expect(menu.hidden).toBe(true);
+
+    await act(async () => {
+      options.click();
+      element<HTMLButtonElement>(host, '#clearLog').click();
+    });
+    expect(presentation.clearActivity).toHaveBeenCalledOnce();
+    expect(menu.hidden).toBe(true);
+
+    await act(async () => {
+      options.click();
+      element<HTMLButtonElement>(host, '#fullscreenButton').click();
+    });
+    expect(requestFullscreen).toHaveBeenCalledOnce();
+    expect(session.submit).not.toHaveBeenCalled();
+    expect(session.sendChat).not.toHaveBeenCalled();
+
+    await act(async () => root.unmount());
+  });
+
+  it('dismisses an open options menu outside and releases its document listener', async () => {
+    const session = new FakeLiveSession();
+    const add = vi.spyOn(document, 'addEventListener');
+    const remove = vi.spyOn(document, 'removeEventListener');
+    const { host, root } = await mount(session);
+
+    await act(async () =>
+      element<HTMLButtonElement>(host, '#p2OptionsButton').click()
+    );
+    expect(element<HTMLElement>(host, '#optionsContextMenu').hidden).toBe(
+      false
+    );
+    await act(async () =>
+      document.body.dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true })
+      )
+    );
+    expect(element<HTMLElement>(host, '#optionsContextMenu').hidden).toBe(true);
+    expect(add.mock.calls.some(([type]) => type === 'mousedown')).toBe(true);
+    expect(remove.mock.calls.some(([type]) => type === 'mousedown')).toBe(true);
+
+    await act(async () => root.unmount());
+    add.mockRestore();
+    remove.mockRestore();
   });
 
   it('disables all shared send controls until the session is ready', async () => {

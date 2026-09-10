@@ -82,8 +82,11 @@ retains the stronger 20-cycle ownership/teardown proof.
 Both screens preserve the v1 75.5% board / 24% side-panel split. The room screen
 mounts the effective live/replay board, multiplayer/replay activity surface,
 legacy replay controls, authenticated live sidebox controls, and externally
-owned route teardown. Live Options, deck/settings navigation, save/export, and
-the remaining focus/visual parity remain later slices.
+owned route teardown. Live Options now restores recipient-safe battle-log
+export, local log clearing, and browser full screen; object URLs are revoked
+after the foreground download. Game-state/replay import and export,
+deck/settings navigation, and the remaining focus/visual parity remain later
+slices.
 
 The default v2 card back is published at `/v2/assets/cardback.png`. It is an
 exact byte copy of the current v1 PNG, and the build gate verifies its digest,

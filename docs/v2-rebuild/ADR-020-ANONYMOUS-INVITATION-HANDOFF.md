@@ -130,8 +130,9 @@ rotated-player rejection, player-two and spectator admission, safe rendered
 receipts, and connected-route handoff. That same journey now submits player and
 spectator chat through the visible input, uses the flower and player Attack
 controls, proves spectator mutation buttons are absent, accepts the unchanged
-Leave confirmation, observes server-attributed durable leave, and verifies the
-departed client returns to an empty-code lobby with fresh custody. The
+Leave confirmation, observes server-attributed durable leave, exercises
+recipient-safe battle-log download/clear and foreground full screen, and
+verifies the departed client returns to an empty-code lobby with fresh custody. The
 built-production topology lane proves the lobby chunk is reachable only through
 its explicit flag and creates no room on mount.
 

@@ -281,6 +281,23 @@ select {
   cursor: pointer;
 }
 
+.legacy-room-sidebox #optionsContextMenu button {
+  display: block;
+  width: 100%;
+  padding: 3px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 1.75vh;
+  text-align: left;
+  cursor: pointer;
+}
+
+.legacy-room-sidebox #optionsContextMenu button:hover {
+  background-color: #757575;
+  color: #fff;
+}
+
 .legacy-lobby-sidebox #p2ExplanationBox {
   display: block;
   width: 100%;

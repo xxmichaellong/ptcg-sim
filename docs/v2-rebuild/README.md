@@ -118,8 +118,10 @@ the relevant product decisions and phase exit criteria.
   SPA fallback. A separate production-build Chromium lane proves that one-origin
   routing, document replacement, room creation/ticket exchange, card-back bytes,
   and exclusion of the development module. Managed-preview behavior remains a
-  release gate. Live Options, normal navigation, and downloadable/export
-  formats remain later parity work.
+  release gate. The live Options subset now exports the bounded recipient-safe
+  battle log without reading DOM, clears only local presentation, and starts
+  browser full screen from the foreground click. Game-state/replay import and
+  export formats plus normal navigation remain later parity work.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 

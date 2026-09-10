@@ -301,6 +301,45 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
         .getByText('Watcher: still watching', { exact: true })
     ).toBeVisible();
 
+    await playerTwo.page.locator('#p2OptionsButton').click();
+    const [battleLog] = await Promise.all([
+      playerTwo.page.waitForEvent('download'),
+      playerTwo.page.locator('#exportLog').click(),
+    ]);
+    expect(battleLog.suggestedFilename()).toBe('battle-log.txt');
+    const battleLogStream = await battleLog.createReadStream();
+    let battleLogText = '';
+    for await (const chunk of battleLogStream) {
+      battleLogText += chunk.toString();
+    }
+    expect(battleLogText).toContain(': Red: lobby chat\n\n');
+    expect(battleLogText).toContain(': Red attacked\n\n');
+
+    await playerTwo.page.evaluate(() => {
+      Object.defineProperty(
+        globalThis.document.documentElement,
+        'requestFullscreen',
+        {
+          configurable: true,
+          value: () => {
+            globalThis.document.documentElement.dataset.testFullscreen =
+              'requested';
+            return Promise.resolve();
+          },
+        }
+      );
+    });
+    await playerTwo.page.locator('#p2OptionsButton').click();
+    await playerTwo.page.locator('#fullscreenButton').click();
+    await expect(playerTwo.page.locator('html')).toHaveAttribute(
+      'data-test-fullscreen',
+      'requested'
+    );
+
+    await playerTwo.page.locator('#p2OptionsButton').click();
+    await playerTwo.page.locator('#clearLog').click();
+    await expect(playerTwo.page.locator('#p2Chatbox')).toBeEmpty();
+
     playerTwo.page.once('dialog', (dialog) => dialog.accept());
     await playerTwo.page.locator('#leaveRoomButton').click();
     await expect(
