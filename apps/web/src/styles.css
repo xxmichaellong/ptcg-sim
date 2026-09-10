@@ -187,6 +187,11 @@ select {
   height: 80%;
 }
 
+/* The wrapper owns the v1 chatbox's remaining 80%-ish live sidebox space. */
+.legacy-room-sidebox--live .legacy-activity-feed--multiplayer {
+  height: 100%;
+}
+
 .legacy-activity-feed .self-text,
 .legacy-activity-feed .opp-text,
 .legacy-activity-feed .self-message,
@@ -415,6 +420,77 @@ select {
   border-radius: 10px;
   background: #fff;
   font-size: 1.75vh;
+}
+
+.self-color {
+  background: linear-gradient(
+    to bottom,
+    rgb(90 110 188 / 86.4%),
+    rgb(60 80 158 / 86.4%)
+  );
+  box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
+}
+
+.chat-button-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 100%;
+  margin-block: 0.5vh;
+  overflow: hidden;
+  gap: 0.5vw;
+  box-sizing: border-box;
+}
+
+.chat-button-container button {
+  flex: 1;
+  padding: 7px;
+  border: 0;
+  border-radius: 0.5vw;
+  color: #fff;
+  font-size: 2vh;
+  cursor: pointer;
+}
+
+.chat-button-container button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.chat-button-container button.self-color:hover:not(:disabled) {
+  background-color: rgb(116 129 183 / 86.4%);
+}
+
+.chat-button-container button.spectator-color:hover:not(:disabled) {
+  background-color: rgb(217 200 117);
+}
+
+#p2AttackButton {
+  border-radius: 0 0.5vw 0.5vw 0;
+}
+
+#p2FREEBUTTON {
+  border-radius: 0.5vw 0 0 0.5vw;
+}
+
+#p2MessageInput {
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 0 0 10px 10px;
+}
+
+#p2BottomButtonContainer {
+  width: 100%;
+}
+
+.sidebox-button-container button.self-color:hover {
+  background-color: rgb(116 129 183 / 86.4%);
+}
+
+.sidebox-button-container button.neutral-color:hover {
+  background-color: rgb(150 144 144 / 86.4%);
 }
 
 /* Shared by the mounted room replay shell and later normal sidebox actions. */

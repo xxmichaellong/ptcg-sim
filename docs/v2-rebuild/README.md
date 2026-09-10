@@ -105,15 +105,21 @@ the relevant product decisions and phase exit criteria.
   familiar multiplayer controls while driving real create/copy/paste/join,
   input bounding, safe status messages, role reflection, creator/guest ownership,
   initial coaching consent, and teardown. A second four-context journey drives
-  that visible path. Normal traffic still receives the renderer harness, so
+  that visible path. The connected screen now preserves the existing Attack,
+  Pass, flower, chat, Set Up, Reset, and Leave Room controls. Player actions use
+  existing atomic resolvers, chat attribution remains session-authenticated,
+  spectators retain only chat/flower/leave, replay suppresses live controls,
+  and confirmed leave disposes the current runtime and replaces its private
+  invitation custody before returning to the lobby. Normal traffic still
+  receives the renderer harness, so
   neither v1 nor the public/default v2 route is cut over. The
   canonical Wrangler topology now publishes the built Vite app beside the room
   Worker, with explicit authority-first and static-asset route namespaces plus
   SPA fallback. A separate production-build Chromium lane proves that one-origin
   routing, document replacement, room creation/ticket exchange, card-back bytes,
   and exclusion of the development module. Managed-preview behavior remains a
-  release gate. The visible chat input, normal sidebar/navigation, and
-  downloadable/export formats remain later parity work.
+  release gate. Live Options, normal navigation, and downloadable/export
+  formats remain later parity work.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 

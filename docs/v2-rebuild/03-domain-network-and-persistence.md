@@ -975,7 +975,14 @@ legacy-shaped `RemoteRoomLobby` canonicalizes manual Room ID text to the public
 replacement paste, serializes operations, and owns creator/guest teardown across
 StrictMode and navigation. It is production-built behind `?room-lobby=1`; the
 renderer-spike entry remains the default, so the current v1 and normal v2 UI/UX
-remain unchanged.
+remain unchanged. Its connected route mounts the legacy sidebox IDs through
+`RemoteRoomLiveControls`: chat and the flower cross only the authenticated
+ephemeral session API, while Attack, Pass, Set Up, and Reset are available only
+from a ready player projection and form existing atomic commands. Replay never
+mounts those live controls. Confirmed Leave disposes the creator result or guest
+runtime, which sends the durable `Leave` before closing transport, clears the
+consumed join custody, and installs a fresh private custodian before the lobby
+returns.
 
 The Worker now publishes only the closed `ptcgsim-server-telemetry-v2` union.
 Its safe facts cover route status/latency, room lifecycle and bounded counts,

@@ -580,7 +580,11 @@ Work:
   production-built `?room-lobby=1` flag with bounded Room ID input, safe status,
   role reflection, initial coaching-consent submission, and lifecycle ownership;
   its direct-custody and visible-control multi-context browser gates must remain
-  green before broader rollout.
+  green before broader rollout. The connected portion now binds the unchanged
+  Attack, Pass, flower, chat, Set Up, Reset, and Leave Room controls to
+  authenticated session APIs, with spectator mutation controls absent, replay
+  isolation, failed-chat retention, the exact leave confirmation, durable leave,
+  and fresh post-leave custody. Live Options and navigation remain later work.
 - Retain the implemented layered abuse controls: a coarse location-local edge
   creation budget plus exact persisted per-room invitation, ticket, upgrade, and
   `Hello` budgets. Retain the atomic five-minute unclaimed lifecycle/alarm,
@@ -631,8 +635,10 @@ Work:
 - Extend the implemented authoritative replay ledger, role-projected streaming,
   client artifact assembly, renderer-neutral playback controller, and
   live/replay application coordinator/board guard and implemented
-  `RemoteRoomRuntime`/`RemoteRoomRoute` by completing normal sidebar actions,
-  chat, navigation, and focus/keyboard/visual parity.
+  `RemoteRoomRuntime`/`RemoteRoomRoute` by completing remaining sidebar Options,
+  navigation, and focus/keyboard/visual parity. Authenticated connected chat and
+  the player/spectator action boundary are already mounted in the isolated
+  lobby route.
   Reuse the implemented ADR-018 browser ticket bootstrap, mounted legacy chrome,
   presentation surface, bounded stores, keyed feed, serial consumers, and
   live-region dwell.

@@ -201,7 +201,9 @@ traces are retained as a 14-day artifact. Browser binaries are not cached.
   rotated player invitation transfer plus two distinct spectator claims without
   URL, document, or storage exposure. A four-context companion drives the
   production-built lobby's actual Generate, Copy, native paste, role reflection,
-  Join, rotated rejection, player-two/spectator connection, and safe-DOM path.
+  Join, rotated rejection, player-two/spectator connection, authenticated chat,
+  flower and player Attack submission, spectator mutation exclusion, confirmed
+  durable Leave, fresh-lobby return, and safe-DOM path.
   The production-topology lane separately proves the query-gated lobby chunk is
   reachable from the built SPA without creating a room on mount. Deployed
   navigation and physical BFCache restoration remain outstanding.

@@ -1571,9 +1571,15 @@ and route descriptor, never either credential. `RemoteRoomLobby` now supplies
 that input through the legacy-shaped controls behind `?room-lobby=1`; creator
 and guest owners transfer directly into `RemoteRoomRoute`, and initial coaching
 consent waits for a ready authoritative player projection. `main.tsx` still
-selects the renderer spike for normal traffic. Normal live sidebar actions, the
-visible chat input, navigation, and complete focus/keyboard/visual parity remain
-later slices.
+selects the renderer spike for normal traffic. `RemoteRoomLiveControls` now
+preserves the connected Attack, Pass, flower, chat, Set Up, Reset, and Leave
+Room IDs and labels. Ready player projections can submit only the existing
+atomic resolvers; spectators see only flower, authenticated chat, and Leave.
+Chat clears after a successful session send but retains failed text, IME
+composition does not submit, replay hides the entire live-control group, and
+confirmed leave returns the lobby to fresh custody after disposing the route
+owner. Live Options, navigation, and complete focus/keyboard/visual parity
+remain later slices.
 
 ## Rendering cadence and performance
 

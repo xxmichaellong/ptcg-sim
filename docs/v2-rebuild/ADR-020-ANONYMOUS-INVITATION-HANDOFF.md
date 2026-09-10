@@ -127,9 +127,13 @@ claims, correct projected roles, and absence of envelope text from URLs,
 document HTML, and browser storage. A second journey drives the actual lobby
 controls in four isolated contexts, including native clipboard copy/paste,
 rotated-player rejection, player-two and spectator admission, safe rendered
-receipts, and connected-route handoff. The built-production topology lane proves
-the lobby chunk is reachable only through its explicit flag and creates no room
-on mount.
+receipts, and connected-route handoff. That same journey now submits player and
+spectator chat through the visible input, uses the flower and player Attack
+controls, proves spectator mutation buttons are absent, accepts the unchanged
+Leave confirmation, observes server-attributed durable leave, and verifies the
+departed client returns to an empty-code lobby with fresh custody. The
+built-production topology lane proves the lobby chunk is reachable only through
+its explicit flag and creates no room on mount.
 
 The normal v2 entry and the v1 application remain unchanged. Rollback removes
 the query-route branch and lobby presentation adapter without weakening or

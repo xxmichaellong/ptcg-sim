@@ -72,7 +72,7 @@ interface InvitationJoinCustody {
 }
 
 interface LobbyOwner {
-  readonly invitation: InvitationJoinCustody;
+  invitation: InvitationJoinCustody;
   disposed: boolean;
   operation?: {
     readonly kind: LobbyOperation;
@@ -430,6 +430,31 @@ export const RemoteRoomLobby = ({
     }
   };
 
+  const handleLeave = (): void => {
+    const owner = ownerRef.current;
+    if (!owner || owner.disposed || owner.operation) return;
+    const nextInvitation = dependencies.createInvitationJoinCustody();
+    if (owner.copyReset !== undefined) {
+      clearTimeout(owner.copyReset);
+      delete owner.copyReset;
+    }
+    owner.invitation.dispose();
+    owner.invitation = nextInvitation;
+    if (owner.creator) {
+      owner.creator.result.dispose();
+      delete owner.creator;
+    } else {
+      owner.guestRuntime?.dispose();
+      delete owner.guestRuntime;
+    }
+    setReceipt(undefined);
+    setRoomCode('');
+    setCoachingConsent(false);
+    setCopyConfirmed(false);
+    setConnected(undefined);
+    setStatus('Left room.');
+  };
+
   if (connected) {
     return (
       <>
@@ -440,6 +465,7 @@ export const RemoteRoomLobby = ({
         <RemoteRoomRoute
           runtime={connected.runtime}
           rendererKind={connected.rendererKind}
+          onLeave={handleLeave}
         />
       </>
     );

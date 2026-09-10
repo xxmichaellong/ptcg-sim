@@ -9,6 +9,7 @@ import {
   RemoteSessionBoard,
   type RemoteBoardSubmissionResult,
 } from './RemoteSessionBoard.js';
+import { RemoteRoomLiveControls } from './RemoteRoomLiveControls.js';
 import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
 
 const ignoreIntent = (_intent: BoardIntent): void => undefined;
@@ -21,6 +22,7 @@ export interface RemoteRoomRouteProps {
     command: WireGameCommand,
     result: RemoteBoardSubmissionResult
   ) => void;
+  readonly onLeave?: () => void;
 }
 
 /**
@@ -32,6 +34,7 @@ export const RemoteRoomRoute = ({
   rendererKind,
   onIntent = ignoreIntent,
   onSubmission,
+  onLeave,
 }: RemoteRoomRouteProps) => {
   const [optionsOpen, setOptionsOpen] = useState(false);
 
@@ -107,7 +110,9 @@ export const RemoteRoomRoute = ({
               </nav>
               <section
                 id={chrome.active ? 'p1Box' : 'p2Box'}
-                className="legacy-room-sidebox"
+                className={`legacy-room-sidebox${
+                  chrome.active ? '' : ' legacy-room-sidebox--live'
+                }`}
                 data-replay-active={String(chrome.active)}
               >
                 {!chrome.active && (
@@ -126,6 +131,12 @@ export const RemoteRoomRoute = ({
                   perspective={state.view}
                   feedId={feedId}
                 />
+                {!chrome.active && (
+                  <RemoteRoomLiveControls
+                    session={runtime.session}
+                    {...(onLeave ? { onLeave } : {})}
+                  />
+                )}
                 {controls && (
                   <div
                     id="bottomP1ButtonContainer"

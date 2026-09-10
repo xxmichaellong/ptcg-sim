@@ -167,7 +167,15 @@ describe('RemoteRoomRoute', () => {
     expect(host.querySelector('#p1Button')?.textContent).toBe('Solo');
     expect(host.querySelector('#p2Button')?.className).toBe('selected-page');
     expect(host.querySelector('#p2Box')).not.toBeNull();
+    expect(host.querySelector('#p2Box')?.classList).toContain(
+      'legacy-room-sidebox--live'
+    );
     expect(host.querySelector('#p2Chatbox')).not.toBeNull();
+    expect(host.querySelector('#p2MessageInput')).not.toBeNull();
+    expect(
+      (host.querySelector('#p2MessageInput') as HTMLInputElement).disabled
+    ).toBe(true);
+    expect(host.querySelector('#p2AttackButton')).toBeNull();
     expect(host.textContent).not.toContain(admissionTicket);
     expect(
       host.querySelector('#roomHeaderText')?.getAttribute('data-session-phase')
@@ -182,6 +190,13 @@ describe('RemoteRoomRoute', () => {
     expect(host.querySelector('#roomHeaderText')?.textContent).toBe(
       'Room ABCDEFGH2345'
     );
+    expect(host.querySelector('#p2AttackButton')).not.toBeNull();
+    expect(host.querySelector('#p2PassButton')).not.toBeNull();
+    expect(host.querySelector('#p2SetupButton')).not.toBeNull();
+    expect(host.querySelector('#p2ResetButton')).not.toBeNull();
+    expect(
+      (host.querySelector('#p2MessageInput') as HTMLInputElement).disabled
+    ).toBe(false);
 
     await act(async () => {
       socket.serverMessage({
@@ -253,7 +268,12 @@ describe('RemoteRoomRoute', () => {
     expect(host.querySelector('#p2Button')).toBeNull();
     expect(host.querySelector('#deckImportButton')).toBeNull();
     expect(host.querySelector('#p1Box')).not.toBeNull();
+    expect(host.querySelector('#p1Box')?.classList).not.toContain(
+      'legacy-room-sidebox--live'
+    );
     expect(host.querySelector('#chatbox')?.textContent).toBe('');
+    expect(host.querySelector('#p2MessageInput')).toBeNull();
+    expect(host.querySelector('#p2AttackButton')).toBeNull();
     expect(host.querySelector('#room-board')?.textContent).toBe('1');
     expect(boardHarness.props?.allowRevisionRegression).toBe(true);
     expect(
@@ -308,6 +328,7 @@ describe('RemoteRoomRoute', () => {
     expect(host.querySelector('#p2Chatbox')?.textContent).toBe(
       'Blue flipped heads'
     );
+    expect(host.querySelector('#p2MessageInput')).not.toBeNull();
     expect(host.querySelector('#room-board')?.textContent).toBe('2');
     expect(boardHarness.props?.allowRevisionRegression).toBe(false);
     expect(announcements.pendingCount).toBe(0);

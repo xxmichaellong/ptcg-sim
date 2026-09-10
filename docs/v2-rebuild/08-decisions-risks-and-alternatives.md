@@ -66,6 +66,12 @@ The accepted path is now wired behind the production-built, non-default
 `?room-lobby=1` route. Manual Room ID state is bounded to the public code
 alphabet, drops are rejected, a failed replacement paste disarms the prior
 claim, and component ownership closes creator/guest runtimes on teardown.
+The connected sidebox now uses the same route owner: authenticated chat/flower
+remain available to players and spectators, player-only buttons form existing
+atomic commands from the recipient projection, replay hides live inputs, and
+confirmed Leave disposes the runtime and replaces private join custody before
+showing the lobby. This does not expose room authority or change the default
+route.
 
 ## Major alternatives
 

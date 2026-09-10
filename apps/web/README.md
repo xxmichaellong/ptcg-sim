@@ -14,6 +14,15 @@ runtime into the connected room route. This explicit query remains a rollout
 flag: normal v2 traffic still receives the renderer harness, and the v1 client
 is unchanged.
 
+The connected route now mounts the existing Attack, Pass, flower, chat, Set Up,
+Reset, and Leave Room controls with their original IDs and role visibility.
+Player mutations resolve to atomic authority commands, while player and
+spectator chat uses the authenticated ephemeral session channel so the browser
+never supplies attribution. Replay hides the live controls. Leave retains the
+legacy confirmation text, sends the durable session leave through runtime
+disposal, clears the old private invitation custody, and returns to a fresh
+lobby owner.
+
 `RemoteRoomBootstrap` exchanges an explicitly supplied in-memory seat or
 spectator capability through a same-origin, no-store POST and constructs the
 room runtime with only the returned short-lived ticket. Neither credential is
@@ -72,9 +81,9 @@ retains the stronger 20-cycle ownership/teardown proof.
 
 Both screens preserve the v1 75.5% board / 24% side-panel split. The room screen
 mounts the effective live/replay board, multiplayer/replay activity surface,
-legacy replay controls, and externally owned route teardown. Normal sidebar
-actions, the visible chat input, and deck/settings navigation remain later
-slices.
+legacy replay controls, authenticated live sidebox controls, and externally
+owned route teardown. Live Options, deck/settings navigation, save/export, and
+the remaining focus/visual parity remain later slices.
 
 The default v2 card back is published at `/v2/assets/cardback.png`. It is an
 exact byte copy of the current v1 PNG, and the build gate verifies its digest,

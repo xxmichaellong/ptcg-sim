@@ -1636,6 +1636,21 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     exercises the command instead of classifying it as core-only. No visible
     control, layout, or UX changed. The coaching/lifetime policy was subsequently
     accepted in ADR-017 and is implemented through a separate seat-owned command.
+100. The isolated production-built lobby now carries its familiar connected
+     sidebox through the actual session boundary. `RemoteRoomLiveControls`
+     preserves Attack, Pass, flower, chat, Set Up, Reset, and Leave Room IDs,
+     labels, role visibility, and confirmation copy. Ready-player commands reuse
+     the existing atomic resolvers; spectator projections cannot render mutation
+     buttons; both roles send chat and flower through server-attributed ephemeral
+     transport; failed chat stays editable; and replay mounts no live controls.
+     Confirmed leave disposes creator or guest ownership, sends the durable Leave,
+     retires consumed invitation custody, installs a fresh custodian, clears the
+     room code, and returns to the lobby. Component tests pin command formation,
+     send failure, role gating, replay composition, and single disposal. The real
+     four-context Chromium journey covers player/spectator messages, flower,
+     Attack publication, spectator exclusion, server-attributed presence, and
+     lobby return without bearer exposure. Default v2 and v1 entry behavior are
+     unchanged; live Options and navigation remain later slices.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

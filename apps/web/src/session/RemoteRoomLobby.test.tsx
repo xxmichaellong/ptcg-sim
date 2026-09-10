@@ -22,9 +22,20 @@ vi.mock('../RendererSpikeBoard.js', () => ({
 vi.mock('./RemoteRoomRoute.js', () => ({
   RemoteRoomRoute: ({
     runtime,
+    onLeave,
   }: {
     readonly runtime: { readonly label?: string };
-  }) => <main data-app-route="test-remote-room">{runtime.label}</main>,
+    readonly onLeave?: () => void;
+  }) => (
+    <main data-app-route="test-remote-room">
+      {runtime.label}
+      {onLeave && (
+        <button id="testLeaveRoom" type="button" onClick={onLeave}>
+          Leave
+        </button>
+      )}
+    </main>
+  ),
 }));
 
 const ROOM_CODE = 'ABCDEFGH2345';
@@ -489,5 +500,92 @@ describe('remote room lobby wiring', () => {
     await act(async () => root.unmount());
     expect(created.dispose).toHaveBeenCalledOnce();
     expect(created.roomRuntime.listeners.size).toBe(0);
+  });
+
+  it('returns a creator to a fresh lobby and disposes each ownership generation once', async () => {
+    const firstInvitation = custody();
+    const secondInvitation = custody();
+    const invitations = [firstInvitation, secondInvitation];
+    const created = creationResult();
+    const dependencies: RemoteRoomLobbyDependencies = {
+      createRoom: vi.fn(
+        async () => created.value
+      ) as unknown as RemoteRoomLobbyDependencies['createRoom'],
+      createInvitationJoinCustody: () => invitations.shift()!,
+      fallbackDisplayName: () => 'Froakie',
+    };
+    const { host, root } = await mount(dependencies);
+
+    await act(async () => {
+      element<HTMLButtonElement>(host, '#generateIdButton').click();
+      await flush();
+    });
+    await act(async () => {
+      element<HTMLButtonElement>(host, '#joinRoomButton').click();
+      await flush();
+    });
+    expect(host.querySelector('#testLeaveRoom')).not.toBeNull();
+
+    await act(async () =>
+      element<HTMLButtonElement>(host, '#testLeaveRoom').click()
+    );
+    expect(
+      host.querySelector('[data-app-route="remote-room-lobby"]')
+    ).not.toBeNull();
+    expect(element<HTMLInputElement>(host, '#roomIdInput').value).toBe('');
+    expect(host.textContent).toContain('Left room.');
+    expect(created.dispose).toHaveBeenCalledOnce();
+    expect(firstInvitation.dispose).toHaveBeenCalledOnce();
+    expect(secondInvitation.dispose).not.toHaveBeenCalled();
+
+    await act(async () => root.unmount());
+    expect(created.dispose).toHaveBeenCalledOnce();
+    expect(firstInvitation.dispose).toHaveBeenCalledOnce();
+    expect(secondInvitation.dispose).toHaveBeenCalledOnce();
+  });
+
+  it('releases a guest runtime and its consumed bearer custody on leave', async () => {
+    const firstInvitation = custody();
+    const secondInvitation = custody();
+    const invitations = [firstInvitation, secondInvitation];
+    const guest = runtime({ label: 'guest' });
+    firstInvitation.bootstrap.mockResolvedValueOnce({
+      runtime: guest.value,
+      route: {
+        kind: 'remote-room',
+        runtime: guest.value,
+        rendererKind: 'dom',
+      },
+    });
+    const dependencies: RemoteRoomLobbyDependencies = {
+      createRoom:
+        vi.fn() as unknown as RemoteRoomLobbyDependencies['createRoom'],
+      createInvitationJoinCustody: () => invitations.shift()!,
+      fallbackDisplayName: () => 'Froakie',
+    };
+    const { host, root } = await mount(dependencies);
+
+    await act(async () => {
+      paste(element(host, '#roomIdInput'), RAW_HANDOFF);
+      await flush();
+    });
+    await act(async () => {
+      element<HTMLButtonElement>(host, '#joinRoomButton').click();
+      await flush();
+    });
+    await act(async () =>
+      element<HTMLButtonElement>(host, '#testLeaveRoom').click()
+    );
+
+    expect(guest.dispose).toHaveBeenCalledOnce();
+    expect(firstInvitation.dispose).toHaveBeenCalledOnce();
+    expect(element<HTMLInputElement>(host, '#roomIdInput').value).toBe('');
+    expect(
+      element<HTMLInputElement>(host, '#spectatorModeCheckbox').disabled
+    ).toBe(false);
+
+    await act(async () => root.unmount());
+    expect(guest.dispose).toHaveBeenCalledOnce();
+    expect(secondInvitation.dispose).toHaveBeenCalledOnce();
   });
 });

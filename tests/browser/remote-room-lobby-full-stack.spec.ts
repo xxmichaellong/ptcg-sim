@@ -198,6 +198,39 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await joinReadyRoom(spectator.page);
     await joinReadyRoom(creator.page);
 
+    const connectedChrome = await creator.page.evaluate(() => {
+      const bounds = (selector: string) => {
+        const node = globalThis.document.querySelector(selector);
+        if (!(node instanceof HTMLElement)) {
+          throw new Error(`Missing connected chrome: ${selector}`);
+        }
+        const rect = node.getBoundingClientRect();
+        return { top: rect.top, bottom: rect.bottom };
+      };
+      return {
+        sidebox: bounds('#p2Box'),
+        chat: bounds('#p2Chatbox'),
+        chatButtons: bounds('#p2ChatboxButtonContainer'),
+        message: bounds('#p2MessageInput'),
+        bottomButtons: bounds('#p2BottomButtonContainer'),
+      };
+    });
+    expect(connectedChrome.chat.bottom).toBeLessThanOrEqual(
+      connectedChrome.chatButtons.top
+    );
+    expect(
+      connectedChrome.chatButtons.top - connectedChrome.chat.bottom
+    ).toBeLessThan(10);
+    expect(connectedChrome.chatButtons.bottom).toBeLessThanOrEqual(
+      connectedChrome.message.top
+    );
+    expect(connectedChrome.message.bottom).toBeLessThanOrEqual(
+      connectedChrome.bottomButtons.top
+    );
+    expect(connectedChrome.bottomButtons.bottom).toBeLessThanOrEqual(
+      connectedChrome.sidebox.bottom
+    );
+
     const handoffs = [rotatedPlayer, activePlayer, spectatorInvitation];
     const bearerValues = handoffs.flatMap((handoff) => {
       const parsed = JSON.parse(handoff.slice('PTCGSIM2-INVITE:'.length)) as {
@@ -231,6 +264,57 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
         expect(JSON.stringify(exposed)).not.toContain(bearer);
       }
     }
+
+    await playerTwo.page.locator('#p2MessageInput').fill('lobby chat');
+    await playerTwo.page.locator('#p2MessageInput').press('Enter');
+    for (const page of [creator.page, playerTwo.page, spectator.page]) {
+      await expect(
+        page.locator('#p2Chatbox').getByText('Red: lobby chat', { exact: true })
+      ).toBeVisible();
+    }
+    await expect(playerTwo.page.locator('#p2MessageInput')).toHaveValue('');
+
+    await playerTwo.page.locator('#p2FREEBUTTON').click();
+    await expect(
+      creator.page.locator('#p2Chatbox').getByText('Red: 🌺', { exact: true })
+    ).toBeVisible();
+
+    await playerTwo.page.locator('#p2AttackButton').click();
+    for (const page of [creator.page, playerTwo.page, spectator.page]) {
+      await expect(
+        page.locator('#p2Chatbox').getByText('Red attacked', { exact: true })
+      ).toBeVisible();
+    }
+
+    await expect(spectator.page.locator('#p2AttackButton')).toHaveCount(0);
+    await expect(spectator.page.locator('#p2PassButton')).toHaveCount(0);
+    await expect(spectator.page.locator('#p2SetupButton')).toHaveCount(0);
+    await expect(spectator.page.locator('#p2ResetButton')).toHaveCount(0);
+    await expect(spectator.page.locator('#p2FREEBUTTON')).toHaveClass(
+      'spectator-color'
+    );
+    await spectator.page.locator('#p2MessageInput').fill('still watching');
+    await spectator.page.locator('#p2MessageInput').press('Enter');
+    await expect(
+      creator.page
+        .locator('#p2Chatbox')
+        .getByText('Watcher: still watching', { exact: true })
+    ).toBeVisible();
+
+    playerTwo.page.once('dialog', (dialog) => dialog.accept());
+    await playerTwo.page.locator('#leaveRoomButton').click();
+    await expect(
+      playerTwo.page.locator('[data-app-route="remote-room-lobby"]')
+    ).toBeVisible();
+    await expect(playerTwo.page.locator('#roomIdInput')).toHaveValue('');
+    await expect(playerTwo.page.locator('.lobby-status')).toHaveText(
+      'Left room.'
+    );
+    await expect(
+      creator.page
+        .locator('#p2Chatbox')
+        .getByText('Red left the room', { exact: true })
+    ).toBeVisible();
 
     expect(creator.errors).toEqual([]);
     expect(playerTwo.errors).toEqual([]);
