@@ -88,11 +88,11 @@ unsupported or divergent conditional exports, targets outside the owning
 package, missing/non-TypeScript targets, entrypoint compiler errors, newly
 exported packages or subpaths, and symbol drift.
 
-The report currently records 9 export-bearing packages, 9 entrypoints, and 494
-symbols. The current reviewed addition is the room-authority admission
-transaction validator used by the server persistence adapter; private decoders
-and candidate-building internals remain unexported. `pnpm run
-check:api:v2` is part of `check:static:v2`. Regenerate the
+The report currently records 10 export-bearing packages, 10 entrypoints, and
+547 symbols. The current reviewed addition is the dependency-free `deck-core`
+entrypoint: only the operations and value types needed by later web adapters are
+public, while comparison, CSV limits, parsing internals, and rule tables remain
+private. `pnpm run check:api:v2` is part of `check:static:v2`. Regenerate the
 report with `node scripts/check-v2-public-api.mjs --write` only after reviewing
 whether each surface change is deliberately public; the quality job separately
 ensures generators leave tracked files unchanged.

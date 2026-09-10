@@ -2,6 +2,7 @@
   "extends": "./tsconfig.base.json",
   "files": [],
   "references": [
+    { "path": "./packages/deck-core" },
     { "path": "./packages/game-core" },
     { "path": "./packages/legacy-import" },
     { "path": "./packages/protocol" },

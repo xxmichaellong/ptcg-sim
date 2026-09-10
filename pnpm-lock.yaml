@@ -134,6 +134,8 @@ importers:
         specifier: workspace:*
         version: link:../protocol
 
+  packages/deck-core: {}
+
   packages/game-core: {}
 
   packages/legacy-import:

@@ -150,6 +150,154 @@
       ]
     },
     {
+      "package": "@ptcgsim/deck-core",
+      "root": "packages/deck-core",
+      "entrypoints": [
+        {
+          "subpath": ".",
+          "source": "packages/deck-core/src/index.ts",
+          "symbols": [
+            {
+              "name": "addCard",
+              "kind": "value"
+            },
+            {
+              "name": "applyLocalControls",
+              "kind": "value"
+            },
+            {
+              "name": "CardPoolFilter",
+              "kind": "type"
+            },
+            {
+              "name": "CardSearchControls",
+              "kind": "type"
+            },
+            {
+              "name": "CardSearchPlan",
+              "kind": "type"
+            },
+            {
+              "name": "CardSortField",
+              "kind": "type"
+            },
+            {
+              "name": "createEmptyDeck",
+              "kind": "value"
+            },
+            {
+              "name": "Deck",
+              "kind": "type"
+            },
+            {
+              "name": "DECK_FORMATS",
+              "kind": "value"
+            },
+            {
+              "name": "DeckCard",
+              "kind": "type"
+            },
+            {
+              "name": "DeckCardGroup",
+              "kind": "type"
+            },
+            {
+              "name": "DeckCardVariant",
+              "kind": "type"
+            },
+            {
+              "name": "DeckCounts",
+              "kind": "type"
+            },
+            {
+              "name": "DeckCsvIssue",
+              "kind": "type"
+            },
+            {
+              "name": "DeckCsvIssueCode",
+              "kind": "type"
+            },
+            {
+              "name": "DeckFilters",
+              "kind": "type"
+            },
+            {
+              "name": "DeckFormat",
+              "kind": "type"
+            },
+            {
+              "name": "DeckImportFormat",
+              "kind": "type"
+            },
+            {
+              "name": "DeckValidationResult",
+              "kind": "type"
+            },
+            {
+              "name": "detectDeckFormat",
+              "kind": "value"
+            },
+            {
+              "name": "detectImportFormat",
+              "kind": "value"
+            },
+            {
+              "name": "filterDeck",
+              "kind": "value"
+            },
+            {
+              "name": "formatImageUrl",
+              "kind": "value"
+            },
+            {
+              "name": "getDeckCounts",
+              "kind": "value"
+            },
+            {
+              "name": "getSortedDeckCardArray",
+              "kind": "value"
+            },
+            {
+              "name": "normalizeSearchQuery",
+              "kind": "value"
+            },
+            {
+              "name": "parseSimCsvResult",
+              "kind": "value"
+            },
+            {
+              "name": "ParseSimCsvResult",
+              "kind": "type"
+            },
+            {
+              "name": "prepareCardSearchTerm",
+              "kind": "value"
+            },
+            {
+              "name": "removeCard",
+              "kind": "value"
+            },
+            {
+              "name": "resolveSearchPlan",
+              "kind": "value"
+            },
+            {
+              "name": "serializeDeckToSimCsv",
+              "kind": "value"
+            },
+            {
+              "name": "SortDirection",
+              "kind": "type"
+            },
+            {
+              "name": "validateDeck",
+              "kind": "value"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "package": "@ptcgsim/game-core",
       "root": "packages/game-core",
       "entrypoints": [

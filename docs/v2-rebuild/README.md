@@ -201,6 +201,7 @@ a manual tabletop simulator.
 | [ADR-013-ARBITRARY-IMAGE-URLS.md](./ADR-013-ARBITRARY-IMAGE-URLS.md)                   | Accepted direct arbitrary background, custom-face, and custom-card-back image policy                         |
 | [ATTACH_EVOLVE_TARGETING.md](./ATTACH_EVOLVE_TARGETING.md)                             | Frozen Q/E source behavior and implemented atomic stable-ID vertical slice                                   |
 | [LEGACY_IMPORT.md](./LEGACY_IMPORT.md)                                                 | Source-backed v1 format, bounded conversion/report, private corpus runner, and staged route plan             |
+| [DECK_CORE.md](./DECK_CORE.md)                                                         | Pure deck-logic port, compatibility boundary, hardened CSV transaction, and remaining UI adapter slices      |
 | [SERVER_PERFORMANCE_BASELINE.md](./SERVER_PERFORMANCE_BASELINE.md)                     | Reproducible `workerd` payload/resource gate, named local timing observation, and remaining preview evidence |
 | [PUBLIC_API_SURFACE.json](./PUBLIC_API_SURFACE.json)                                   | Compiler-resolved reviewed workspace entrypoints and exported symbol/type-value kinds                        |
 | [QUALITY_GATES.md](./QUALITY_GATES.md)                                                 | Canonical local/CI commands, enforced architecture and asset boundaries, and explicit residual gaps          |
