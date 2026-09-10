@@ -156,9 +156,10 @@ the relevant product decisions and phase exit criteria.
   replay and undo. The source-shaped React Deck workspace, including direct
   custom-face entry, is reconstructed but remains unmounted. The pure pasted
   deck-list parser now covers the complete checked-in sample corpus while
-  remaining DOM/network-free; its bounded provider fallback, right-side
-  navigation/card-back controls, composition, and route activation remain in
-  the deck-builder workstream.
+  remaining DOM/network-free. Its bounded Limitless completion and native
+  image-preload transaction are also isolated; popular-deck loading,
+  right-side navigation/card-back controls, composition, and route activation
+  remain in the deck-builder workstream.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 

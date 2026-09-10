@@ -27,6 +27,19 @@ export const PASTED_DECKLIST_LANGUAGES = [
 export type PastedDecklistLanguage = (typeof PASTED_DECKLIST_LANGUAGES)[number];
 export type PastedDecklistFormat = 'pocket' | 'legacy' | 'unknown';
 
+export interface PastedDecklistImageReference {
+  readonly name: string;
+  readonly setCode?: string;
+  readonly number?: string;
+  readonly catalogId?: string;
+  readonly region?: 'int' | 'tpc';
+}
+
+export interface ResolvePastedDecklistImageOptions {
+  readonly format?: PastedDecklistFormat;
+  readonly language?: PastedDecklistLanguage;
+}
+
 export interface PastedDecklistRow {
   readonly quantity: number;
   readonly name: string;
@@ -249,6 +262,13 @@ const LANGUAGE_CODES: Readonly<Record<PastedDecklistLanguage, string>> = {
   Spanish: 'ES',
 };
 
+const normalizePastedDecklistLanguage = (
+  value: string | undefined
+): PastedDecklistLanguage =>
+  value && (PASTED_DECKLIST_LANGUAGES as readonly string[]).includes(value)
+    ? (value as PastedDecklistLanguage)
+    : 'English';
+
 const energyImages = (
   language: PastedDecklistLanguage
 ): Readonly<Record<string, string>> => {
@@ -465,25 +485,32 @@ const resolveCatalogId = (
   return NO_IMAGE_CATALOG_IDS[`${setCode} ${number}`];
 };
 
-const resolveImageUrl = (
-  row: ParsedRow,
-  catalogId: string | undefined,
-  format: PastedDecklistFormat,
-  language: PastedDecklistLanguage,
-  energies: Readonly<Record<string, string>>
+export const resolvePastedDecklistImageUrl = (
+  reference: PastedDecklistImageReference,
+  options: ResolvePastedDecklistImageOptions = {}
 ): string | undefined => {
-  if (!row.setCode && !catalogId) return energies[row.name];
-  const setCode = row.setCode ? (SET_ALIASES[row.setCode] ?? row.setCode) : '';
+  const language = normalizePastedDecklistLanguage(options.language);
+  const format = options.format ?? 'unknown';
+  const energies = energyImages(language);
+  const { catalogId } = reference;
+  if (!reference.setCode && !catalogId) return energies[reference.name];
+  const setCode = reference.setCode
+    ? (SET_ALIASES[reference.setCode] ?? reference.setCode)
+    : '';
+  if (
+    setCode &&
+    reference.number &&
+    (reference.region === 'tpc' || TPC_SET_CODES.has(setCode))
+  ) {
+    return `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpc/${setCode}/${setCode}_${reference.number}_R_JP_LG.png`;
+  }
   if (catalogId) {
     const separator = catalogId.indexOf('-');
     if (separator <= 0 || separator === catalogId.length - 1) return undefined;
     return `https://images.pokemontcg.io/${catalogId.slice(0, separator)}/${catalogId.slice(separator + 1)}_hires.png`;
   }
-  if (!setCode || !row.number) return undefined;
-  if (TPC_SET_CODES.has(setCode)) {
-    return `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpc/${setCode}/${setCode}_${row.number}_R_JP_LG.png`;
-  }
-  const paddedNumber = row.number.replace(
+  if (!setCode || !reference.number) return undefined;
+  const paddedNumber = reference.number.replace(
     /^(\d+)([a-zA-Z])?$/u,
     (_match, digits: string, letter: string | undefined) =>
       `${digits.length < 3 ? digits.padStart(3, '0') : digits}${letter ?? ''}`
@@ -629,21 +656,13 @@ export const parsePastedDecklist = (
   // TypeScript callers are constrained by the public union, but persisted or
   // untyped browser input can still cross this boundary at runtime. Preserve
   // the source default instead of synthesizing an "undefined" language code.
-  const requestedLanguage: string | undefined = options.language;
-  const language: PastedDecklistLanguage =
-    requestedLanguage &&
-    (PASTED_DECKLIST_LANGUAGES as readonly string[]).includes(requestedLanguage)
-      ? (requestedLanguage as PastedDecklistLanguage)
-      : 'English';
+  const language = normalizePastedDecklistLanguage(options.language);
   const energies = energyImages(language);
   const rows = parsed.map((row): PastedDecklistRow => {
     const catalogId = resolveCatalogId(row, format);
-    const imageUrl = resolveImageUrl(
-      row,
-      catalogId,
-      format,
-      language,
-      energies
+    const imageUrl = resolvePastedDecklistImageUrl(
+      { ...row, ...(catalogId ? { catalogId } : {}) },
+      { format, language }
     );
     if (imageUrl && imageUrl.length > MAX_DECK_IMAGE_URL_CODE_UNITS) {
       issues.push(

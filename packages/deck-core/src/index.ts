@@ -39,16 +39,20 @@ export {
 export type { DeckFormat, DeckValidationResult } from './deck-validation.js';
 export {
   PASTED_DECKLIST_LANGUAGES,
+  isPastedDecklistPocketSet,
   parsePastedDecklist,
+  resolvePastedDecklistImageUrl,
 } from './pasted-decklist.js';
 export type { LegacyCardType } from './legacy-card-type-lookup.js';
 export type {
   ParsePastedDecklistResult,
   PastedDecklistFormat,
+  PastedDecklistImageReference,
   PastedDecklistIssue,
   PastedDecklistIssueCode,
   PastedDecklistLanguage,
   PastedDecklistRow,
+  ResolvePastedDecklistImageOptions,
 } from './pasted-decklist.js';
 export type {
   Deck,

@@ -10,6 +10,7 @@ import {
   MAX_PASTED_DECKLIST_LINES,
   isPastedDecklistPocketSet,
   parsePastedDecklist,
+  resolvePastedDecklistImageUrl,
 } from './pasted-decklist.js';
 
 const rows = (source: string, language?: 'English' | 'French') => {
@@ -150,6 +151,19 @@ describe('parsePastedDecklist', () => {
     if (!parsed.ok) throw new Error('Expected a parsed decklist.');
     expect(parsed.rows[0]?.imageUrl).toBe(
       'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/BRS/BRS_122_R_EN.png'
+    );
+  });
+
+  it('resolves provider-declared Japanese regions without a hard-coded set entry', () => {
+    expect(
+      resolvePastedDecklistImageUrl({
+        name: 'Japanese Card',
+        setCode: 'XYZZY',
+        number: '7',
+        region: 'tpc',
+      })
+    ).toBe(
+      'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpc/XYZZY/XYZZY_7_R_JP_LG.png'
     );
   });
 

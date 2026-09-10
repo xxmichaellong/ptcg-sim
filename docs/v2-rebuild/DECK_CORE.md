@@ -37,7 +37,7 @@ For valid existing inputs, the port preserves:
 - the `QTY,Name,Type,URL` simulator interchange shape and legacy image mapping.
 
 The v1 modules and their 79 tests remain frozen and continue to run. The new
-package adds 118 TypeScript tests over the same cases plus hardened boundaries.
+package adds 119 TypeScript tests over the same cases plus hardened boundaries.
 
 ## Deliberate hardening
 
@@ -80,6 +80,10 @@ packages/deck-core/
 apps/web/src/features/deck/
   LegacyDeckBuilderWorkspace.tsx  unmounted source-shaped React workspace
   LegacyDeckBuilderWorkspace.css  source-equivalent light/dark workspace skin
+  pasted-decklist-import.ts   local parse/provider merge/native preload transaction
+  limitless-decklist-contract.ts  provider limits, result types, typed failures
+  limitless-decklist-http.ts      bounded credential-free JSON POST transport
+  limitless-decklist-decode.ts    strict consumed-field response decoder
   deck-builder-store.ts        independent main/alternate edit transactions
   deck-browser-io.ts           bounded CSV file/download/unload ownership
   deck-install-adapter.ts      canonical conversion and acknowledged drain
@@ -137,6 +141,49 @@ immutability, and every resource boundary. A read-only compatibility audit also
 parsed all 168 checked-in sample decks (3,861 rows): every list parsed without
 failure, retained a 60-card total, and had no locally missing image or type
 metadata. That audit is evidence only; v2 does not import the v1 sample module.
+
+## Bounded Limitless fallback and image-preload checkpoint
+
+`pasted-decklist-import.ts` reconstructs the remaining non-UI import
+transaction. It first calls the pure local parser, sends only unresolved
+quantity/name rows to the source Limitless deck-list endpoint, merges matching
+metadata without replacing local row identity, applies the source's final
+Pocket Trainer fallback, and then requires every resolved image to emit a
+native browser `load` event. No partial rows are published on failure.
+
+The provider edge is explicit and narrow:
+
+- the browser sends a credential-free CORS JSON `POST` only when local metadata
+  is incomplete; complete sample/source rows make no provider request;
+- input is limited to 200 parsed rows and a 65,536-code-unit JSON body;
+- the streamed response is limited to one million code units, 200 cards, 200
+  error strings, and bounded consumed name/set/number/region/type fields;
+- non-2xx, network, body, malformed JSON, invalid-shape, and oversized-response
+  cases become typed failures without exposing player text in diagnostics;
+- name matching retains v1's trim/case/hyphen/whitespace equivalence and its
+  first-match behavior; and
+- an outage remains contained when local metadata plus the existing Pocket
+  fallback can still complete the import, but unresolved rows remain retryable
+  and are reported only by one-based row position.
+
+The subsequent image preflight deliberately uses native `<img>` assignment,
+not application `fetch`. It applies no URL parser, rewrite, scheme or host
+allowlist, proxy, `crossOrigin` assignment, or CORS opt-in. The exact bounded
+string is assigned to `src`; success retains that original string rather than
+the browser's normalized property. V1 starts a whole deck in one pass, so the
+default allows all rows to start while the 200-row ceiling keeps fan-out finite.
+Abort detaches active handlers, prevents new loads, and publishes nothing.
+
+The Limitless endpoint was checked read-only on 2026-09-10 with one known and
+one unknown card. It returned the currently consumed `cards`/`errors`,
+`name`/`set`/`number`/`region`/`card_type` shape and an explicit permissive CORS
+response. This observation is not a test dependency. Twelve deterministic web
+tests plus one new core resolver test cover no-request local completion,
+request custody, normalized metadata merge, arbitrary TPC regions, Pocket
+classification and outage containment, status/decoder/resource failures,
+parse/empty/row limits, exact arbitrary native image assignment, load failure,
+concurrency, and abort cleanup. The seam remains unmounted and absent from
+production output.
 
 ## TCGdex catalog adapter checkpoint
 
@@ -315,14 +362,12 @@ This checkpoint is complete when:
 
 The following remain separate, reviewable checkpoints:
 
-1. add the bounded Limitless fallback and native image-preload seam for pasted
-   rows whose local metadata remains incomplete;
-2. move the existing popular sample decks behind a lazy seam, reconstruct the
+1. move the existing popular sample decks behind a lazy seam, reconstruct the
    right-side Deck panel, and connect the already prepared custom-card-back
    chooser at its original location;
-3. compose panel open/close, dirty-install draining, authoritative deck sync,
+2. compose panel open/close, dirty-install draining, authoritative deck sync,
    and current-route ownership without activating the replacement; and
-4. activate it only after source-browser layout, arbitrary-image, multiplayer,
+3. activate it only after source-browser layout, arbitrary-image, multiplayer,
    solo, import, install, recovery, and accessibility parity evidence is green.
 
 Rollback for these checkpoints is removal of the unused package and unmounted

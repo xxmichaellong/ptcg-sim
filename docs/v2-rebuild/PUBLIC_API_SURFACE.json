@@ -258,6 +258,10 @@
               "kind": "value"
             },
             {
+              "name": "isPastedDecklistPocketSet",
+              "kind": "value"
+            },
+            {
               "name": "LegacyCardType",
               "kind": "type"
             },
@@ -290,6 +294,10 @@
               "kind": "type"
             },
             {
+              "name": "PastedDecklistImageReference",
+              "kind": "type"
+            },
+            {
               "name": "PastedDecklistIssue",
               "kind": "type"
             },
@@ -311,6 +319,14 @@
             },
             {
               "name": "removeCard",
+              "kind": "value"
+            },
+            {
+              "name": "ResolvePastedDecklistImageOptions",
+              "kind": "type"
+            },
+            {
+              "name": "resolvePastedDecklistImageUrl",
               "kind": "value"
             },
             {
