@@ -1802,6 +1802,15 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      four native-hit regions; the source-only transient removal and refresh
      phases remain numeric diagnostics. Mixed categories, three-plus
      attachments, alternate assets, and Pixi paint remain excluded.
+115. The contained-card checkpoint now adds one isolated screenshot containing
+     all six local/opponent deck, discard, and lost-zone covers plus the
+     opponent-readable stadium. A dedicated top-owner candidate uses the exact
+     digest-pinned card-back bytes and preserves local/opponent/shared edge
+     paint, containment, and the stadium's effective half-turn. The seven
+     source/candidate cards pass the shared 97.5%, three-pixel,
+     24-channel-value gate alongside the existing eight-state geometry and
+     owner-orientation proof. Cover-open behavior, opened-zone contents,
+     undersized/noncanonical assets, and Pixi paint remain excluded.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

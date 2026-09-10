@@ -387,6 +387,13 @@ top-owner candidate holds the bottom player and explicit card turn fixed while
 changing only projected stadium ownership; its q2 rotation and lower-edge
 alignment are therefore independent of the measured source result.
 
+The source's final opponent-readable stadium state can also be compared in one
+isolated paint frame with all six pile covers. The top-owner React candidate
+uses the byte-identical digest-pinned card back for its seven interactive pile
+tops; unrelated and covered card nodes are hidden only for the screenshot. Both
+images and foreground metrics are attached, with the shared 97.5%, three-pixel,
+24/255-channel match contract supplementing the eight-state numeric checks.
+
 This does not yet prove the legacy cover-click behavior: v1 opens the zone,
 whereas the current candidate's top card still emits its ordinary card intent.
 Opened-zone cards/markers, exact one-node cover rendering, Pixi geometry,

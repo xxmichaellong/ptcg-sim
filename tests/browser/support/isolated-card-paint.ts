@@ -7,13 +7,18 @@ const settlePaint = (): Promise<void> =>
 
 export const isolateLegacyIframeCardPaint = async (
   page: Page,
-  cardSelector: string
+  cardSelector: string,
+  options: { readonly rootCardSelector?: string } = {}
 ): Promise<void> => {
+  const rootCardVisibility = options.rootCardSelector
+    ? `${options.rootCardSelector} { visibility: visible !important; }`
+    : '';
   await page.addStyleTag({
     content: `
       html, body { background: #fff !important; }
       body * { visibility: hidden !important; }
       #selfContainer, #oppContainer { visibility: visible !important; }
+      ${rootCardVisibility}
     `,
   });
   for (const frameSelector of ['#selfContainer', '#oppContainer']) {

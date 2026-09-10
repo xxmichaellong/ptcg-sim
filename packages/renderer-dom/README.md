@@ -9,6 +9,6 @@ not own game rules, canonical state, networking, or renderer-derived state.
 Renderer preferences update the mounted tree in place, including removal of
 zone/stadium paint while retaining the same accessible DOM hit regions.
 Card nodes retain the legacy side-specific border radii and shadow opacity. The
-ordinary-evolution, stable one- and two-Energy, and rotated Trainer-as-Tool
-browser gates compare isolated source/candidate card paint in addition to exact
-structured geometry and hit order.
+contained pile/stadium, ordinary-evolution, stable one- and two-Energy, and
+rotated Trainer-as-Tool browser gates compare isolated source/candidate card
+paint in addition to exact structured geometry and hit order.

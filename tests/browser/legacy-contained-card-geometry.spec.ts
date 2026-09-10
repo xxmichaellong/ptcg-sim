@@ -11,6 +11,14 @@ import {
 import oracle from '../legacy-fixtures/renderer/contained-card-layout-v1.json' with { type: 'json' };
 
 import {
+  attachForegroundPaintComparison,
+  compareForegroundScreenshots,
+} from './support/foreground-paint-comparison.js';
+import {
+  isolateCandidateCardPaint,
+  isolateLegacyIframeCardPaint,
+} from './support/isolated-card-paint.js';
+import {
   captureLegacySourceContainedCardFixture,
   type CapturedRect,
   type LegacyContainedCardFixtureCard,
@@ -19,6 +27,9 @@ import {
 const anchorTolerancePixels = oracle.tolerances.anchorPixels;
 const sizeToleranceRelative = oracle.tolerances.cardSizeRelative;
 const rotationToleranceDegrees = oracle.tolerances.rotationDegrees;
+const PAINT_SPATIAL_TOLERANCE = 3;
+const PAINT_CHANNEL_TOLERANCE = 24;
+const MAX_UNMATCHED_FOREGROUND_RATIO = 0.025;
 
 const modularDegreesBetween = (left: number, right: number): number => {
   const distance = Math.abs(left - right) % 360;
@@ -93,7 +104,7 @@ const createTopOwnerStadiumCandidateScene = () => {
       },
     },
   };
-  return createBoardScene(
+  const scene = createBoardScene(
     view,
     createBoardLayoutSnapshot({
       geometryVersion: BOARD_LAYOUT_GEOMETRY_VERSION,
@@ -104,6 +115,13 @@ const createTopOwnerStadiumCandidateScene = () => {
       vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
     })
   );
+  return {
+    ...scene,
+    cards: scene.cards.map((card) => ({
+      ...card,
+      imageUrl: '/v2/assets/cardback.png',
+    })),
+  };
 };
 
 test('source-backed contained cards match the DOM candidate at legacy pile tops', async ({
@@ -129,6 +147,17 @@ test('source-backed contained cards match the DOM candidate at legacy pile tops'
   expect(source.sourceFulfillment.blockedExternalOrigins).toContain(
     'https://cdn.socket.io'
   );
+  await isolateLegacyIframeCardPaint(
+    page,
+    'img[data-legacy-contained-card-id]',
+    {
+      rootCardSelector: '[data-legacy-contained-card-id="shared-stadium"]',
+    }
+  );
+  const sourcePaint = await page.screenshot({
+    animations: 'disabled',
+    caret: 'hide',
+  });
   const sourceByKey = new Map(
     source.cards.map((card) => [cardKey(card), card] as const)
   );
@@ -438,6 +467,65 @@ test('source-backed contained cards match the DOM candidate at legacy pile tops'
   await expect(topOwnerLocator).toHaveCount(1);
   await expect(topOwnerLocator).toHaveAttribute('data-card-role', 'zone');
   await expect(topOwnerLocator).toBeEnabled();
+  const pileTopCardIds = topOwnerStadiumScene.zones.flatMap((zone) => {
+    if (
+      zone.kind !== 'deck' &&
+      zone.kind !== 'discard' &&
+      zone.kind !== 'lostZone' &&
+      zone.kind !== 'stadium'
+    ) {
+      return [];
+    }
+    return topOwnerStadiumScene.cards
+      .filter((card) => card.parentId === zone.id && card.interactive)
+      .map((card) => card.id);
+  });
+  expect(pileTopCardIds).toHaveLength(7);
+  const pileTopSelector = `:is(${pileTopCardIds
+    .map((cardId) => `[data-card-id="${cardId}"]`)
+    .join(', ')})`;
+  await isolateCandidateCardPaint(
+    page,
+    '[data-top-owner-stadium-candidate-host]',
+    pileTopSelector
+  );
+  const candidatePaint = await page.screenshot({
+    animations: 'disabled',
+    caret: 'hide',
+  });
+  const paintComparison = await compareForegroundScreenshots(
+    page,
+    sourcePaint,
+    candidatePaint,
+    {
+      spatialTolerance: PAINT_SPATIAL_TOLERANCE,
+      channelTolerance: PAINT_CHANNEL_TOLERANCE,
+    }
+  );
+  await attachForegroundPaintComparison(
+    testInfo,
+    'legacy-contained-card-paint',
+    sourcePaint,
+    candidatePaint,
+    paintComparison
+  );
+  expect(paintComparison.width).toBe(1600);
+  expect(paintComparison.height).toBe(900);
+  expect(paintComparison.sourceForegroundPixels).toBeGreaterThan(30_000);
+  expect(paintComparison.candidateForegroundPixels).toBeGreaterThan(30_000);
+  const paintEvidence = JSON.stringify(paintComparison);
+  expect
+    .soft(
+      paintComparison.unmatchedSourceRatio,
+      `source card paint: ${paintEvidence}`
+    )
+    .toBeLessThanOrEqual(MAX_UNMATCHED_FOREGROUND_RATIO);
+  expect
+    .soft(
+      paintComparison.unmatchedCandidateRatio,
+      `candidate card paint: ${paintEvidence}`
+    )
+    .toBeLessThanOrEqual(MAX_UNMATCHED_FOREGROUND_RATIO);
   const renderedStadiumBounds = await topOwnerLocator.boundingBox();
   const renderedStadiumContainerBounds = await topOwnerHost
     .locator(`[data-zone-content-id="${candidateStadiumZone.id}"]`)

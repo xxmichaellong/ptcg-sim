@@ -60,8 +60,12 @@ deck-first versus discard/lost-zone-last covers, single-card owner-readable
 stadium orientation, closed-cover marker placement, and the exact HTML/CSS/JS/
 asset sources behind those claims. Its browser companion compares contained
 cover/stadium boxes, including both owner-readable stadium states, with the
-React DOM candidate while retaining explicit exclusions for cover-open UX,
-opened-zone layout, undersized assets, Pixi geometry, and rotated hit regions.
+React DOM candidate. It now also isolates all six pile covers plus the final
+opponent-readable stadium against a top-owner candidate and attaches
+source/candidate screenshots plus foreground metrics under the shared 97.5%,
+three-pixel, and 24-channel-value paint contract. Cover-open UX, opened-zone
+layout, undersized assets, Pixi geometry, and rotated hit regions remain
+excluded.
 
 `legacy-evolution-reflow-layout.test.ts` pins the separate ordinary-evolution
 boundary. Four isolated local/opponent active/bench cases record a second
