@@ -6,6 +6,6 @@
     "rootDir": "./src",
     "tsBuildInfoFile": "./lib/.tsbuildinfo"
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.json"],
   "exclude": ["src/**/*.test.ts", "lib"]
 }

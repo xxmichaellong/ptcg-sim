@@ -12,7 +12,9 @@ The package owns only deterministic data work:
 - card identity comparison and immutable grouped-deck updates;
 - counts, type filters, flattening, and display-order sorting;
 - TCG versus Pocket detection and validation;
-- simulator CSV serialization and transactional parsing; and
+- simulator CSV serialization and transactional parsing;
+- pasted-list parsing, format detection, local image resolution, and legacy
+  card-type lookup; and
 - search-term normalization, query planning, local pool filtering, and sorting.
 
 It does not own React state, file pickers, unload prompts, downloads, browser
@@ -35,7 +37,7 @@ For valid existing inputs, the port preserves:
 - the `QTY,Name,Type,URL` simulator interchange shape and legacy image mapping.
 
 The v1 modules and their 79 tests remain frozen and continue to run. The new
-package adds 108 TypeScript tests over the same cases plus hardened boundaries.
+package adds 118 TypeScript tests over the same cases plus hardened boundaries.
 
 ## Deliberate hardening
 
@@ -70,6 +72,9 @@ packages/deck-core/
   src/card-sort.ts         internal flattening and supertype ordering
   src/deck-validation.ts   format detection and rules
   src/csv-adapter.ts       bounded transactional interchange
+  src/pasted-decklist.ts   bounded local pasted-list parser/resolver
+  src/legacy-card-type-lookup.ts  source-equivalent threshold lookup
+  src/legacy-{,old-}card-types.json  frozen v1 threshold-table copies
   src/card-search.ts       pure normalization/planning/local controls
   src/index.ts             reviewed minimal public API
 apps/web/src/features/deck/
@@ -89,6 +94,49 @@ The package has no runtime dependencies and uses an ES-only TypeScript project.
 It is a root project reference and a reviewed public-API entrypoint. The web app
 declares it only for the isolated deck adapters; no route imports them, so they
 do not enter the production module graph yet.
+
+## Pasted deck-list parser checkpoint
+
+`parsePastedDecklist` is the deterministic local half of the source textarea
+importer. It recognizes the existing Pokémon TCG Live list shapes, promo and
+Pocket-promo codes, gallery-prefixed numbers, historical PTCGO set codes,
+pokemontcg.io catalog IDs, Japanese TPC set codes, name-only custom rows, and
+the source's Basic Energy spellings. It detects Pocket versus legacy context to
+disambiguate `B2`, preserves all six existing language choices, and synthesizes
+the same direct TCGdex-independent image locations used by v1.
+
+The current and historical card-type threshold tables are data-only copies of
+the frozen v1 tables. Lookup is isolated behind two small pure functions;
+malformed IDs and unknown sets return `Unknown` instead of throwing. The parser
+itself performs no DOM, image, network, storage, timer, or random work. Missing
+metadata remains an editable row for the later bounded provider fallback rather
+than disappearing.
+
+Valid source behavior is retained, with three deliberate parser corrections:
+
+- each structured format must consume the complete line, so digits inside a
+  card name or heading cannot become a fake set and card number;
+- a rewritten gallery entry such as `BRS-TG 17` resolves as `BRS` / `TG17`
+  instead of being split at earlier words in the card name; and
+- advertised multiword name-only cards and Basic Energy rows keep their full
+  names instead of donating their final words to fake metadata. The legacy
+  no-image catalog override table is also applied in the local path where it
+  was intended to run.
+
+The boundary is transactional and capped before expensive parsing: one million
+input code units, 10,000 lines, 8,192 code units per line, 10,000 copies per
+row, 100,000 total cards, 256 code units per card name, 128 per identifier
+token, and 4,096 per synthesized image URL. Invalid untyped language values
+fall back to English, matching the source UI default. Successful rows are
+frozen and the caller receives no partial result when any resource or value
+check fails.
+
+Ten deterministic tests cover each input family, format collisions, language
+routing and runtime fallback, type thresholds, incomplete editable rows,
+immutability, and every resource boundary. A read-only compatibility audit also
+parsed all 168 checked-in sample decks (3,861 rows): every list parsed without
+failure, retained a 60-card total, and had no locally missing image or type
+metadata. That audit is evidence only; v2 does not import the v1 sample module.
 
 ## TCGdex catalog adapter checkpoint
 
@@ -267,11 +315,14 @@ This checkpoint is complete when:
 
 The following remain separate, reviewable checkpoints:
 
-1. reconstruct the existing right-side Deck panel controls and connect the
-   already prepared custom-card-back chooser at its original location;
-2. compose panel open/close, dirty-install draining, authoritative deck sync,
+1. add the bounded Limitless fallback and native image-preload seam for pasted
+   rows whose local metadata remains incomplete;
+2. move the existing popular sample decks behind a lazy seam, reconstruct the
+   right-side Deck panel, and connect the already prepared custom-card-back
+   chooser at its original location;
+3. compose panel open/close, dirty-install draining, authoritative deck sync,
    and current-route ownership without activating the replacement; and
-3. activate it only after source-browser layout, arbitrary-image, multiplayer,
+4. activate it only after source-browser layout, arbitrary-image, multiplayer,
    solo, import, install, recovery, and accessibility parity evidence is green.
 
 Rollback for these checkpoints is removal of the unused package and unmounted

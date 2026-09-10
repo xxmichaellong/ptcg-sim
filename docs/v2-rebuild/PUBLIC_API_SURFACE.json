@@ -258,8 +258,20 @@
               "kind": "value"
             },
             {
+              "name": "LegacyCardType",
+              "kind": "type"
+            },
+            {
               "name": "normalizeSearchQuery",
               "kind": "value"
+            },
+            {
+              "name": "parsePastedDecklist",
+              "kind": "value"
+            },
+            {
+              "name": "ParsePastedDecklistResult",
+              "kind": "type"
             },
             {
               "name": "parseSimCsvResult",
@@ -267,6 +279,30 @@
             },
             {
               "name": "ParseSimCsvResult",
+              "kind": "type"
+            },
+            {
+              "name": "PASTED_DECKLIST_LANGUAGES",
+              "kind": "value"
+            },
+            {
+              "name": "PastedDecklistFormat",
+              "kind": "type"
+            },
+            {
+              "name": "PastedDecklistIssue",
+              "kind": "type"
+            },
+            {
+              "name": "PastedDecklistIssueCode",
+              "kind": "type"
+            },
+            {
+              "name": "PastedDecklistLanguage",
+              "kind": "type"
+            },
+            {
+              "name": "PastedDecklistRow",
               "kind": "type"
             },
             {

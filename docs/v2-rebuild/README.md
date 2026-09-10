@@ -154,9 +154,11 @@ the relevant product decisions and phase exit criteria.
   default. The bounded owner-authorized `SetCardBack` transition and ordered
   legacy-import conversion now preserve exact custom-back URLs across event
   replay and undo. The source-shaped React Deck workspace, including direct
-  custom-face entry, is reconstructed but remains unmounted; its right-side
-  navigation/card-back controls and route activation remain in the
-  deck-builder workstream.
+  custom-face entry, is reconstructed but remains unmounted. The pure pasted
+  deck-list parser now covers the complete checked-in sample corpus while
+  remaining DOM/network-free; its bounded provider fallback, right-side
+  navigation/card-back controls, composition, and route activation remain in
+  the deck-builder workstream.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 
@@ -204,7 +206,7 @@ a manual tabletop simulator.
 | [ADR-013-ARBITRARY-IMAGE-URLS.md](./ADR-013-ARBITRARY-IMAGE-URLS.md)                   | Accepted direct arbitrary background, custom-face, and custom-card-back image policy                         |
 | [ATTACH_EVOLVE_TARGETING.md](./ATTACH_EVOLVE_TARGETING.md)                             | Frozen Q/E source behavior and implemented atomic stable-ID vertical slice                                   |
 | [LEGACY_IMPORT.md](./LEGACY_IMPORT.md)                                                 | Source-backed v1 format, bounded conversion/report, private corpus runner, and staged route plan             |
-| [DECK_CORE.md](./DECK_CORE.md)                                                         | Deck core/adapters, unmounted React workspace reconstruction, and remaining route-integration slices         |
+| [DECK_CORE.md](./DECK_CORE.md)                                                         | Deck core, pasted-list parser, adapters, unmounted React workspace, and remaining integration slices         |
 | [SERVER_PERFORMANCE_BASELINE.md](./SERVER_PERFORMANCE_BASELINE.md)                     | Reproducible `workerd` payload/resource gate, named local timing observation, and remaining preview evidence |
 | [PUBLIC_API_SURFACE.json](./PUBLIC_API_SURFACE.json)                                   | Compiler-resolved reviewed workspace entrypoints and exported symbol/type-value kinds                        |
 | [QUALITY_GATES.md](./QUALITY_GATES.md)                                                 | Canonical local/CI commands, enforced architecture and asset boundaries, and explicit residual gaps          |
