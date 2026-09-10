@@ -1221,7 +1221,7 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     singleton stadium. Lower evolutions, foreign work areas, stale source or
     incumbent state, malformed multi-card stadium views, and same-stadium no-
     ops fail closed. The generated authority registry now exhaustively covers
-    all 49 wire variants. Three fresh real-v1 Chromium pages prove empty, self-
+    all 51 wire variants. Three fresh real-v1 Chromium pages prove empty, self-
     incumbent, and opponent-incumbent replacement with one outer
     `moveCardBundle`, exact live/export payloads, correct discard ownership,
     selection cleanup, asset service, and no page errors. Candidate Chromium
@@ -1633,7 +1633,8 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
     the accepted event derives the internal ID. A pure client resolver forms
     both top and bottom returns, and the generated authority model now
     exercises the command instead of classifying it as core-only. No visible
-    control, layout, or UX changed, and coaching/lifetime policy remains open.
+    control, layout, or UX changed. The coaching/lifetime policy was subsequently
+    accepted in ADR-017 and is implemented through a separate seat-owned command.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

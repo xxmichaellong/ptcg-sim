@@ -386,6 +386,10 @@ export const WireGameCommandSchema = v.variant('type', [
     expectedWorkAreaId: IdentifierSchema,
     returnTo: v.picklist(['top', 'bottom'] as const),
   }),
+  v.strictObject({
+    type: v.literal('SetCoachingConsent'),
+    consent: v.boolean(),
+  }),
   v.object({
     type: v.literal('SetOncePerGameMarker'),
     targetPlayerId: IdentifierSchema,

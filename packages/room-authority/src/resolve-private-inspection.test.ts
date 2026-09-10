@@ -10,7 +10,6 @@ import {
   executeCommand,
   playerZoneId,
   type CommandContext,
-  type MatchState,
 } from '@ptcgsim/game-core';
 import { describe, expect, it } from 'vitest';
 
@@ -176,19 +175,53 @@ describe('private inspection authority resolution', () => {
         DEFAULT_AUTHORITY_POLICY
       )
     ).toEqual({ accepted: false, code: 'unauthorized' });
-    const consented: MatchState = {
-      ...prepared.state,
-      players: {
-        ...prepared.state.players,
-        [p1]: { ...prepared.state.players[p1]!, coachingConsent: true },
-        [p2]: { ...prepared.state.players[p2]!, coachingConsent: true },
-      },
-    };
+    const blueResolution = resolveWireCommand(
+      prepared.state,
+      prepared.identities,
+      session(p1),
+      { type: 'SetCoachingConsent', consent: true },
+      DEFAULT_AUTHORITY_POLICY
+    );
+    expect(blueResolution).toEqual({
+      accepted: true,
+      command: { type: 'SetCoachingConsent', playerId: p1, consent: true },
+    });
+    if (!blueResolution.accepted) throw new Error('consent was not resolved');
+    const blueConsent = executeCommand(
+      prepared.state,
+      blueResolution.command,
+      context
+    );
+    if (!blueConsent.accepted) throw new Error(blueConsent.message);
+    const redResolution = resolveWireCommand(
+      blueConsent.state,
+      prepared.identities,
+      session(p2),
+      { type: 'SetCoachingConsent', consent: true },
+      DEFAULT_AUTHORITY_POLICY
+    );
+    expect(redResolution).toEqual({
+      accepted: true,
+      command: { type: 'SetCoachingConsent', playerId: p2, consent: true },
+    });
+    if (!redResolution.accepted) throw new Error('consent was not resolved');
+    const redConsent = executeCommand(
+      blueConsent.state,
+      redResolution.command,
+      context
+    );
+    if (!redConsent.accepted) throw new Error(redConsent.message);
     expect(
-      resolveWireCommand(consented, prepared.identities, session(p2), wire, {
-        ...DEFAULT_AUTHORITY_POLICY,
-        allowOpponentPublicInteraction: false,
-      })
+      resolveWireCommand(
+        redConsent.state,
+        prepared.identities,
+        session(p2),
+        wire,
+        {
+          ...DEFAULT_AUTHORITY_POLICY,
+          allowOpponentPublicInteraction: false,
+        }
+      )
     ).toMatchObject({
       accepted: true,
       command: {

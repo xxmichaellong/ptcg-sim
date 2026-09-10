@@ -622,6 +622,8 @@ describe('client protocol ingress', () => {
         type: 'EndPrivateInspection',
         inspectionId: 'private-inspection',
       },
+      { type: 'SetCoachingConsent', consent: true },
+      { type: 'SetCoachingConsent', consent: false },
       {
         type: 'CloseInspection',
         expectedWorkAreaId: 'inspection-work-area',
@@ -648,6 +650,13 @@ describe('client protocol ingress', () => {
       },
       { type: 'BeginCardInspection', cardId: 'private-card' },
       { type: 'EndPrivateInspection', inspectionId: '' },
+      { type: 'SetCoachingConsent' },
+      { type: 'SetCoachingConsent', consent: 'yes' },
+      {
+        type: 'SetCoachingConsent',
+        consent: true,
+        targetPlayerId: 'another-player',
+      },
       {
         type: 'CloseInspection',
         expectedWorkAreaId: '',

@@ -1,6 +1,11 @@
 import { playerZoneId } from './create-match.js';
 import { cloneMatchState } from './clone.js';
 import {
+  coachingConsentRevocations,
+  playersHaveMutualCoachingConsent,
+  sameCoachingConsentRevocations,
+} from './coaching-consent.js';
+import {
   classifyLegacyStagedCardIdsV1,
   normalizeAttachmentCardIdsV1,
   orderAttachmentCardIdsV1,
@@ -2894,6 +2899,14 @@ const applyEventInternal = (
           (source.kind !== 'zone' ||
             (source.zoneKind !== 'hand' && source.zoneKind !== 'prizes'))) ||
         event.viewerIds.some((viewerId) => !state.players[viewerId]) ||
+        event.viewerIds.some(
+          (viewerId) =>
+            !playersHaveMutualCoachingConsent(
+              state,
+              event.sourcePlayerId,
+              viewerId
+            )
+        ) ||
         event.cardIds.some((cardId) => {
           const card = state.cards[cardId];
           return (
@@ -2957,6 +2970,51 @@ const applyEventInternal = (
       }
       return {
         ...state,
+        visibility: { ...state.visibility, inspectionGrants },
+      };
+    }
+    case 'CoachingConsentSet': {
+      const player = state.players[event.playerId];
+      const expectedRevocations = event.consent
+        ? []
+        : coachingConsentRevocations(state, event.playerId);
+      if (
+        !player ||
+        typeof event.expectedConsent !== 'boolean' ||
+        typeof event.consent !== 'boolean' ||
+        player.coachingConsent !== event.expectedConsent ||
+        event.expectedConsent === event.consent ||
+        !Array.isArray(event.revokedInspections) ||
+        !sameCoachingConsentRevocations(
+          event.revokedInspections,
+          expectedRevocations
+        )
+      ) {
+        throw new Error('Coaching consent event is malformed');
+      }
+      const inspectionGrants = Object.fromEntries(
+        Object.entries(state.visibility.inspectionGrants).flatMap(
+          ([inspectionId, grant]) => {
+            const viewerIds = grant.viewerIds.filter(
+              (viewerPlayerId) =>
+                !event.revokedInspections.some(
+                  (revocation) =>
+                    revocation.inspectionId === inspectionId &&
+                    revocation.viewerPlayerId === viewerPlayerId
+                )
+            );
+            return viewerIds.length > 0
+              ? [[inspectionId, { ...grant, viewerIds }]]
+              : [];
+          }
+        )
+      ) as MatchState['visibility']['inspectionGrants'];
+      return {
+        ...state,
+        players: {
+          ...state.players,
+          [event.playerId]: { ...player, coachingConsent: event.consent },
+        },
         visibility: { ...state.visibility, inspectionGrants },
       };
     }

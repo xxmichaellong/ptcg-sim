@@ -66,6 +66,16 @@ const accepted = (
   return result.state;
 };
 
+const withMutualCoachingConsent = (state: MatchState): MatchState => ({
+  ...state,
+  players: Object.fromEntries(
+    Object.entries(state.players).map(([playerId, player]) => [
+      playerId,
+      { ...player, coachingConsent: true },
+    ])
+  ),
+});
+
 const loaded = (count = 15) => {
   const context = createContext();
   const empty = createEmptyMatch(asMatchId('deck-relative-match'), [
@@ -525,7 +535,7 @@ describe('atomic deck-relative commands', () => {
     const retained = inspection.cardIds[1]!;
     const movedToTop = inspection.cardIds[2]!;
     state = {
-      ...state,
+      ...withMutualCoachingConsent(state),
       visibility: {
         ...state.visibility,
         inspectionGrants: {

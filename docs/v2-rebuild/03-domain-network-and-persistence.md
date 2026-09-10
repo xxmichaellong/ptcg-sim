@@ -337,6 +337,10 @@ and server-only. A username or board orientation does not select a role.
   stack, or work-area source. The player may inspect their own private cards;
   opponent-private inspection requires mutual persisted `coachingConsent` and
   is not enabled by the public opponent-interaction policy.
+- Each authenticated seat sets only its own `coachingConsent` through a
+  target-free command. Enabling changes no visibility by itself. Disabling is
+  one durable event that records and removes every active cross-player grant in
+  either direction while retaining self-inspection.
 - Private inspection grants are canonical, bounded, replay-validated records of
   source player, exact source container, card set, and viewer set. A grant
   survives reconnect/restoration until the viewer closes it, but movement out
@@ -353,8 +357,9 @@ and server-only. A username or board orientation does not select a role.
 - Grant metadata and newly visible definitions are projected only to a named
   viewer. Other players and spectators receive no grant ID/card list. Safe
   presentation facts may disclose only source player, viewer player, and count.
-  Consent revocation cannot erase knowledge already delivered, so ADR-017 still
-  requires product ratification of this draft policy.
+  Consent withdrawal emits the same identity-free closing fact and rotates the
+  former viewer back to concealed aliases. It cannot erase knowledge already
+  delivered; that limitation is explicit in accepted ADR-017.
 - Public reveal/hide commands bind to an exact source and revision. Whole-zone
   commands are limited to the complete ordered prize zone; selective reveal of
   an unknown opponent card is forbidden even when public opponent interaction

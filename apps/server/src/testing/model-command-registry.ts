@@ -148,6 +148,10 @@ export const MODEL_COMMAND_REGISTRY = {
     coverage: 'generated',
     family: 'visibility-inspection',
   },
+  SetCoachingConsent: {
+    coverage: 'generated',
+    family: 'visibility-inspection',
+  },
   SetOncePerGameMarker: {
     coverage: 'generated',
     family: 'markers-annotations',

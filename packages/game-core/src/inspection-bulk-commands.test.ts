@@ -76,6 +76,16 @@ const accepted = (
   return result.state;
 };
 
+const withMutualCoachingConsent = (state: MatchState): MatchState => ({
+  ...state,
+  players: Object.fromEntries(
+    Object.entries(state.players).map(([playerId, player]) => [
+      playerId,
+      { ...player, coachingConsent: true },
+    ])
+  ),
+});
+
 const prepareInspection = (
   shuffle?: CommandContext['shuffle']
 ): {
@@ -136,7 +146,7 @@ const prepareInspection = (
     context
   );
   state = {
-    ...state,
+    ...withMutualCoachingConsent(state),
     visibility: {
       ...state.visibility,
       inspectionGrants: {

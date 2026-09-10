@@ -211,8 +211,7 @@ class DeterministicAuthoritySource implements CommandContext, OpaqueIdSource {
 
 const initialSnapshot = (
   seed: number,
-  mode: 'solo' | 'multiplayer' = 'multiplayer',
-  coachingConsent = false
+  mode: 'solo' | 'multiplayer' = 'multiplayer'
 ): RoomAuthoritySnapshot => {
   const created = createEmptyMatch(asMatchId(`model-match-${seed}`), [
     {
@@ -226,17 +225,7 @@ const initialSnapshot = (
       cardBackUrl: '/model/red.png',
     },
   ]);
-  const state = coachingConsent
-    ? {
-        ...created,
-        players: Object.fromEntries(
-          Object.entries(created.players).map(([playerId, player]) => [
-            playerId,
-            { ...player, coachingConsent: true },
-          ])
-        ),
-      }
-    : created;
+  const state = created;
   return {
     schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
     authorityVersion: 0,
@@ -301,8 +290,7 @@ const createHarness = async (
   policy: AuthorityPolicy = {
     ...DEFAULT_AUTHORITY_POLICY,
     maximumReplayEventBatches: 8,
-  },
-  coachingConsent = false
+  }
 ): Promise<ModelHarness> => {
   const storage = new MemoryDurableStorage();
   const authoritySource = new DeterministicAuthoritySource(seed);
@@ -334,7 +322,7 @@ const createHarness = async (
     () => 0,
     harness.generation
   );
-  const snapshot = initialSnapshot(seed, mode, coachingConsent);
+  const snapshot = initialSnapshot(seed, mode);
   await harness.store.initialize(snapshot);
   harness.coordinator = new RoomAuthorityCoordinator(snapshot, harness.store, {
     commandContext: authoritySource,
@@ -863,6 +851,8 @@ const commandVariant = (command: WireGameCommand): string => {
       return `${command.type}:${command.edge}:${command.visibility}:count=${command.count}`;
     case 'CloseInspection':
       return `${command.type}:${command.returnTo}`;
+    case 'SetCoachingConsent':
+      return `${command.type}:${command.consent}`;
     case 'SetOncePerGameMarker':
       return `${command.type}:${command.marker}:${command.used}`;
     default: {
@@ -1574,7 +1564,7 @@ describe('named model scenarios', () => {
     expect(() => parseIntegerEnvironment('MODEL_TEST', '1.5', 7, 10)).toThrow(
       'MODEL_TEST must be an integer from 1 through 10'
     );
-    expect(Object.keys(MODEL_COMMAND_REGISTRY)).toHaveLength(50);
+    expect(Object.keys(MODEL_COMMAND_REGISTRY)).toHaveLength(51);
     expect(new Set(Object.keys(MODEL_COMMAND_GENERATORS))).toEqual(
       new Set(Object.keys(MODEL_COMMAND_REGISTRY))
     );
@@ -1838,13 +1828,25 @@ describe('named model scenarios', () => {
       code: 'unauthorized',
     });
 
-    const coached = await createHarness(
-      0x7000_0012,
-      'multiplayer',
-      { ...DEFAULT_AUTHORITY_POLICY, maximumReplayEventBatches: 8 },
-      true
-    );
+    const coached = await createHarness(0x7000_0012, 'multiplayer', {
+      ...DEFAULT_AUTHORITY_POLICY,
+      maximumReplayEventBatches: 8,
+    });
     await bootstrapHarness(coached, coverage);
+    await submitScenarioCommand(
+      coached,
+      coverage,
+      playerOneSessionId,
+      'coaching-blue-consent',
+      { type: 'SetCoachingConsent', consent: true }
+    );
+    await submitScenarioCommand(
+      coached,
+      coverage,
+      playerTwoSessionId,
+      'coaching-red-consent',
+      { type: 'SetCoachingConsent', consent: true }
+    );
     const opponentHand = zoneViewedBy(coached, p1, p2, 'hand');
     await submitScenarioCommand(
       coached,
@@ -1856,6 +1858,50 @@ describe('named model scenarios', () => {
         targetPlayerId: p2,
         zoneId: opponentHand.id,
         expectedCardIds: opponentHand.cards.map((card) => card.id),
+      }
+    );
+    const grantedHand = zoneViewedBy(coached, p1, p2, 'hand');
+    const grantedAliases = grantedHand.cards.map((card) => card.id);
+    expect(grantedHand.cards.every((card) => card.kind === 'known')).toBe(true);
+    await submitScenarioCommand(
+      coached,
+      coverage,
+      playerTwoSessionId,
+      'coaching-red-withdrawal',
+      { type: 'SetCoachingConsent', consent: false }
+    );
+    const withdrawnHand = zoneViewedBy(coached, p1, p2, 'hand');
+    expect(withdrawnHand.cards.every((card) => card.kind === 'concealed')).toBe(
+      true
+    );
+    expect(withdrawnHand.cards.map((card) => card.id)).not.toEqual(
+      grantedAliases
+    );
+    expect(playerView(coached, p1).privateInspections).toEqual([]);
+    await reconstructHarness(coached);
+    expect(
+      zoneViewedBy(coached, p1, p2, 'hand').cards.every(
+        (card) => card.kind === 'concealed'
+      )
+    ).toBe(true);
+    await submitScenarioCommand(
+      coached,
+      coverage,
+      playerTwoSessionId,
+      'coaching-red-reconsent',
+      { type: 'SetCoachingConsent', consent: true }
+    );
+    const reopenedHand = zoneViewedBy(coached, p1, p2, 'hand');
+    await submitScenarioCommand(
+      coached,
+      coverage,
+      playerOneSessionId,
+      'coached-opponent-zone-reopened',
+      {
+        type: 'BeginZoneInspection',
+        targetPlayerId: p2,
+        zoneId: reopenedHand.id,
+        expectedCardIds: reopenedHand.cards.map((card) => card.id),
       }
     );
     const grant = playerView(coached, p1).privateInspections.at(-1)!;

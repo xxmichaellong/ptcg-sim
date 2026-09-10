@@ -773,6 +773,16 @@ export const MODEL_COMMAND_GENERATORS = {
         }
       : undefined;
   },
+  SetCoachingConsent: (context) => {
+    const playerId = actorId(context);
+    const player = playerId ? context.view.players[playerId] : undefined;
+    return player
+      ? {
+          type: 'SetCoachingConsent',
+          consent: !player.coachingConsent,
+        }
+      : undefined;
+  },
   SetOncePerGameMarker: (context) => {
     const playerId = actorId(context);
     if (!playerId) return undefined;

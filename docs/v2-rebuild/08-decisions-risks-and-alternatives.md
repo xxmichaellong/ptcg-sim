@@ -28,7 +28,7 @@
 | ADR-014 | `PROVISIONAL`      | Preserve solo-only undo using a hashed base plus bounded resolved-event tail; restore exact outcomes in a new revision and rotate aliases.       | Implemented without UI scope; whole-match last-command ordering and the 128-entry default remain reviewable before release.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ADR-015 | `PRODUCT_REQUIRED` | Ratify browser, viewport, reference hardware, accessibility, and legacy import support windows.                                                  | Quantitative gates require named environments and retention promises.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | ADR-016 | `PROVISIONAL`      | Persist resolved domain events and canonical checkpoints; project a connected session's own replay perspective and stream frames separately.     | A 128-batch/512-KiB ledger, v1/v2/v3-to-v4 migration, fresh aliases, atomic assembly, deterministic playback, request-correlated coordination, guarded board binding, explicit renderer rewind, replay chrome, trusted-actor presentation facts, recipient-safe legacy detail, seek-synchronized activity, cancellable consumers, and an explicit-input remote room screen are implemented; full sidebar/admission and archival retention/export remain Phase 7.                                                                                                                                               |
-| ADR-017 | `PRODUCT_REQUIRED` | Decide coaching/private-look permission exactly; the reconnect/session lifetime subpolicy is accepted.                                           | A disconnected session has a 30-second server-owned grace; expiry releases authorization and the seat, while canonical private state remains attached to that player seat. Mutual consent cannot revoke knowledge already delivered, so the broader coaching threat promise still needs explicit ratification.                                                                                                                                                                                                                                                                                                 |
+| ADR-017 | `ACCEPTED`         | Preserve mutual opt-in coaching/private looks with server-owned consent, immediate withdrawal, and the accepted reconnect lifetime.              | Each authenticated seat controls only its own persisted consent. Self-inspection remains available; opponent-private access requires both current consents. Withdrawal atomically closes every cross-player grant involving that seat, while acknowledging that software cannot erase knowledge already delivered. Disconnect retains canonical state for the 30-second server-owned grace; expiry releases authorization and the seat, and explicit leave remains immediate.                                                                                                                                  |
 | ADR-018 | `PROVISIONAL`      | Keep room code UX but authorize with high-entropy seat/resume capabilities and one-time WebSocket tickets.                                       | Implemented with strict creation/invitation/ticket POSTs, distinct credential validation, bounded digest-only invitation and 30-second ticket registries, retry rotation, atomic issue/redemption journals, a server-minted resume bearer bound to each new ticket, exact-pair initial Hello recovery, resume-only reconnect, safe creator/guest bootstraps, v4/v5/v6→v7 migrations, persisted solo/multiplayer seat ceilings, layered creation/room request budgets, five-minute unclaimed cleanup, and failure tests. Cross-browser presentation is split into ADR-020; preview abuse/load evidence remains. |
 | ADR-019 | `ACCEPTED`         | Project owner explicitly authorized direct MagicCircle implementation reuse on 2026-08-31; preserve provenance and any required notices.         | Resolves the code-copy blocker while retaining PTCG-owned contracts and tests.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | ADR-020 | `PRODUCT_REQUIRED` | Select how anonymous player-two and spectator invitation handoffs move between browsers while preserving the familiar room-code workflow.        | Creator-only custody now mints bounded 15-minute one-use claims without releasing master credentials, and guest bootstrap validates/exchanges them. Choose manual transfer, a trusted account-free relay, or another audited presentation channel before lobby wiring; raw bearer values in URLs, storage, analytics, React state, or hidden DOM are rejected.                                                                                                                                                                                                                                                 |
@@ -43,18 +43,18 @@ never fetched, retained, proxied, or persisted; both imported seats receive the
 integrity-gated `/v2/assets/cardback.png`, and conversion reports a counted
 normalization warning.
 
-ADR-017 now has a deliberately replaceable implementation default for audit:
-self-private inspection is allowed; opponent-private inspection requires mutual
-persisted coaching consent; grants survive reconnect and replay; explicit close
-or movement/reset out of the recorded source revokes them. Grant data is
-projected only to its viewer, while presentation facts expose only player IDs
-and counts. The row remains `PRODUCT_REQUIRED`: changing this policy should be a
-narrow authority decision, and no software can revoke knowledge already shown.
-Its session-lifetime subpolicy was accepted on 2026-09-09: transport loss
-durably reserves the session/seat for 30 seconds; timely resume clears the
-deadline; expiry revokes the session and releases the seat without deleting
-seat-owned work areas, inspection grants, or other canonical match state; and
-explicit Leave remains immediate.
+ADR-017 was accepted by the project owner on 2026-09-10. Self-private inspection
+is allowed; opponent-private inspection requires both seats' current persisted
+coaching consent. Each authenticated player can change only their own consent.
+Withdrawal is one replay-validatable state transition that atomically removes
+every active cross-player inspection grant involving that seat, retains
+self-inspection, and emits identity-free close facts. Grants otherwise survive
+reconnect and replay until explicit close or movement/reset out of their source.
+No software can erase knowledge already shown before withdrawal. Its session
+lifetime was accepted on 2026-09-09: transport loss durably reserves the
+session/seat for 30 seconds; timely resume clears the deadline; expiry revokes
+the session and releases the seat without deleting seat-owned canonical match
+state; and explicit Leave remains immediate.
 
 ## Major alternatives
 
@@ -116,19 +116,15 @@ These cannot be answered purely by engineering:
 2. In two-player mode, what exactly should Export produce: opaque resumable save,
    player-perspective replay, full private match only with both players' consent,
    or some combination?
-3. Does coaching mode reveal complete hands/decks, permit board flipping only, or
-   retain current behavior exactly? How is mutual consent revoked?
-4. Which opponent-private manipulations are intentional tabletop features and
+3. Which opponent-private manipulations are intentional tabletop features and
    which are accidental privacy leaks?
-5. Should private inspection survive a disconnect/reconnect, and when does it
-   expire?
-6. Are arbitrary live custom card and background URLs a guaranteed feature or
+4. Are arbitrary live custom card and background URLs a guaranteed feature or
    can they be restricted/proxied for security and WebGL compatibility? Legacy
    imported card backs are already normalized to the canonical V2 asset.
-7. Which known behavioral bugs may be corrected during parity work, and who signs
+5. Which known behavioral bugs may be corrected during parity work, and who signs
    each exception?
-8. What is the v1 fallback/deprecation observation window?
-9. For anonymous multiplayer, how should the second player and spectators
+6. What is the v1 fallback/deprecation observation window?
+7. For anonymous multiplayer, how should the second player and spectators
    receive the implemented high-entropy invitation handoff while the lobby still
    looks and feels like the current room-ID flow? This must define manual typing,
    copy/paste, repeat spectators, and whether an account-free trusted relay is

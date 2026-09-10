@@ -309,6 +309,11 @@ export type GameCommand =
       readonly returnTo: 'top' | 'bottom';
     }
   | {
+      readonly type: 'SetCoachingConsent';
+      readonly playerId: PlayerId;
+      readonly consent: boolean;
+    }
+  | {
       readonly type: 'SetOncePerGameMarker';
       readonly playerId: PlayerId;
       readonly marker: 'gx' | 'vstar';

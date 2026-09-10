@@ -162,6 +162,48 @@ describe('presentation event privacy', () => {
     }
   });
 
+  it('publishes consent revocation as identity-free inspection endings', () => {
+    const state = stateWithSecret('Never published', false);
+    const events = presentationEventsForBatch(
+      {
+        revision: 7,
+        events: [
+          {
+            type: 'CoachingConsentSet',
+            playerId: actorId,
+            expectedConsent: true,
+            consent: false,
+            revokedInspections: [
+              {
+                inspectionId: 'inspection-secret',
+                scope: 'card',
+                sourcePlayerId: ownerId,
+                sourceId: deckId,
+                viewerPlayerId: actorId,
+                cardCount: 1,
+              },
+            ],
+          },
+        ],
+      },
+      state
+    );
+    expect(events).toEqual([
+      {
+        type: 'PrivateInspectionEnded',
+        revision: 7,
+        sourcePlayerId: ownerId,
+        viewerPlayerId: actorId,
+        scope: 'card',
+        source: 'deck',
+        cardCount: 1,
+      },
+    ]);
+    expect(JSON.stringify(events)).not.toContain(cardId);
+    expect(JSON.stringify(events)).not.toContain(definitionId);
+    expect(JSON.stringify(events)).not.toContain('Never published');
+  });
+
   it('fails closed if a single-card reveal is not spectator-visible', () => {
     expect(() =>
       presentationEventsForBatch(

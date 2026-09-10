@@ -1102,6 +1102,15 @@ export const resolveWireCommand = (
         },
       };
     }
+    case 'SetCoachingConsent':
+      return {
+        accepted: true,
+        command: {
+          type: 'SetCoachingConsent',
+          playerId: actorId,
+          consent: wire.consent,
+        },
+      };
     case 'SetOncePerGameMarker': {
       const targetPlayerId = asPlayerId(wire.targetPlayerId);
       if (!state.players[targetPlayerId]) return rejected('stale_reference');

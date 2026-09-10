@@ -235,8 +235,8 @@ The server model suite at
 `apps/server/src/generative-authority-model.test.ts` is a dependency-free,
 deterministic bridge across game core, room authority, recipient projection,
 replay, and the production durable snapshot adapter with in-memory Durable
-Object storage. A compile-time registry covers all 48 public wire-game-command
-variants: 41 have projection-driven generators and seven hard-precondition
+Object storage. A compile-time registry covers all 51 public wire-game-command
+variants: 45 have projection-driven generators and six hard-precondition
 variants have named, asserted scenarios. Generated and named-scenario commands
 are runtime parsed by the public protocol schema before they reach the
 coordinator.
@@ -478,6 +478,14 @@ Release requires all of the following:
     the domain derives its internal inspection ID after the same precondition,
     and stale or cross-player attempts are rejected. Protocol, resolver,
     authority, core, and generated-model tests cover the complete path.
+33. `SetCoachingConsent` is target-free on the wire and resolved to the
+    authenticated player. Core decision and replay independently require mutual
+    current consent for cross-player inspection. Withdrawing either seat emits
+    one exact event that rejects incomplete revocation metadata, removes every
+    affected cross-player grant, retains self-inspection, rotates the former
+    viewer to concealed aliases, and publishes only identity-free close facts.
+    Protocol, core, authority, projection, presentation, client-resolver, and
+    generated-model tests cover accepted ADR-017 without a UI change.
 
 ## Privacy and security gates
 

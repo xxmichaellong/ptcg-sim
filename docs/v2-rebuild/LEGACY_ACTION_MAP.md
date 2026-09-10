@@ -10,14 +10,14 @@ a hard-to-find behavior. Proposed names are not final APIs.
 
 ## Session, deck, and lifecycle
 
-| v1 action        | Proposed v2 responsibility                                                         | Critical characterization                                                                                              |
-| ---------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `exchangeData`   | Admission/session configuration plus `ConfigureSeat`; not a peer game-action relay | Username, deck/card-back exchange, coaching consent, side perspective, log reset                                       |
-| `loadDeckData`   | Privileged/pre-match `LoadDeck` transaction                                        | Deck replacement, instance creation, self/alternate data, covers, reset/export boundary                                |
-| `changeCardBack` | Seat/render asset setting through validated catalog/policy                         | Self/opponent selection, old saves, failed/custom URL                                                                  |
-| `reset`          | Atomic `ResetSeat` or `ResetMatch` command                                         | Which zones/markers/work areas/log/turn fields reset; current shared-turn side effect                                  |
-| `setup`          | Atomic `SetupSeat` resolved events                                                 | Reset, authority shuffle, seven-card hand, up to six prizes, short deck, message                                       |
-| `takeTurn`       | Atomic `StartTurn` resolved events plus safe timeline                              | Clears loose board cards, resets ability markers, reveals in-play face-down cards, turn increment, draw/no-deck branch |
+| v1 action        | Proposed v2 responsibility                                                                         | Critical characterization                                                                                              |
+| ---------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `exchangeData`   | Admission/session configuration plus seat-owned `SetCoachingConsent`; not a peer game-action relay | Username, deck/card-back exchange, coaching consent, side perspective, log reset                                       |
+| `loadDeckData`   | Privileged/pre-match `LoadDeck` transaction                                                        | Deck replacement, instance creation, self/alternate data, covers, reset/export boundary                                |
+| `changeCardBack` | Seat/render asset setting through validated catalog/policy                                         | Self/opponent selection, old saves, failed/custom URL                                                                  |
+| `reset`          | Atomic `ResetSeat` or `ResetMatch` command                                                         | Which zones/markers/work areas/log/turn fields reset; current shared-turn side effect                                  |
+| `setup`          | Atomic `SetupSeat` resolved events                                                                 | Reset, authority shuffle, seven-card hand, up to six prizes, short deck, message                                       |
+| `takeTurn`       | Atomic `StartTurn` resolved events plus safe timeline                                              | Clears loose board cards, resets ability markers, reveals in-play face-down cards, turn increment, draw/no-deck branch |
 
 The private closed conversion candidate executes lifecycle through game-core.
 Both deck bootstraps use `LoadDeck`; `setup` uses a
@@ -1359,18 +1359,21 @@ to canonical cards, rejects stale sources/order/revisions, and the domain emits
 one replay-validatable `InspectionGrantOpened` or `InspectionGrantClosed` batch.
 Known cards and repeated opens are explicit no-ops rather than new revisions.
 
-The draft permission rule allows a player to inspect their own private cards.
-Inspecting an opponent-private card requires both seats' persisted
-`coachingConsent`; the broader public opponent-interaction switch does not grant
-private access. This is the auditable engineering default while ADR-017 remains
-open for product ratification.
+The accepted permission rule allows a player to inspect their own private
+cards. Inspecting an opponent-private card requires both seats' current
+persisted `coachingConsent`; the broader public opponent-interaction switch does
+not grant private access. A target-free `SetCoachingConsent` command lets each
+authenticated seat change only its own choice.
 
 An active grant survives disconnect, reconnect, authority restoration, and
-event replay. It ends when its named viewer closes it. Cards are removed from a
-grant as soon as they leave the exact source recorded by the grant, and the
-grant disappears when none remain; setup/reset movement therefore invalidates
-it without a second client command. This bounds the lifetime while avoiding a
-reconnect flash or client-owned secrecy state.
+event replay while both seats remain opted in. It ends when its named viewer
+closes it or either involved seat withdraws consent. Withdrawal records and
+removes every affected cross-player viewer in the same event while preserving
+self-inspection. Cards are also removed from a grant as soon as they leave the
+exact source recorded by the grant, and the grant disappears when none remain;
+setup/reset movement therefore invalidates it without a second client command.
+This bounds the lifetime while avoiding a reconnect flash or client-owned
+secrecy state.
 
 Only the named viewer receives the grant metadata and known definitions. Every
 other player and spectator continues to receive concealed cards and an empty
@@ -1378,10 +1381,11 @@ other player and spectator continues to receive concealed cards and an empty
 revision, source player, viewer player, card-versus-zone scope, fixed semantic
 source, and count. They restore the legacy whole-zone and generic per-card
 wording without ever carrying canonical card IDs, definition IDs, names, image
-URLs, or recipient-only handles. Closing rotates the viewer's known handle back
-to a fresh concealed handle. The web layer now provides UI-neutral toggle
-resolvers for the existing menu/shortcut behavior; no control, label, layout,
-or styling was changed.
+URLs, or recipient-only handles. Closing or consent withdrawal rotates the
+viewer's known handle back to a fresh concealed handle. The web layer provides a
+UI-neutral, no-op-aware consent resolver for wiring the existing lobby checkbox,
+plus the existing menu/shortcut look resolvers; no control, label, layout, or
+styling was changed.
 
 ### Implemented route-owned overlay dispatch subset
 

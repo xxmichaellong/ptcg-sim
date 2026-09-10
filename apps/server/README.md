@@ -101,8 +101,8 @@ repository-level `check:v2` gate runs this suite after the fast unit tests.
 `generative-authority-model.test.ts` drives schema-parsed client commands
 through the real authority coordinator, recipient projection, replay, and
 `DurableRoomSnapshotStore` backed by the reusable in-memory Durable Object
-adapter. Its compile-time registry covers all 48 public `WireGameCommand`
-variants: 41 projection-driven generators and seven named hard-precondition
+adapter. Its compile-time registry covers all 51 public `WireGameCommand`
+variants: 45 projection-driven generators and six named hard-precondition
 scenarios. Adding a public command without classifying and implementing its
 coverage fails the dedicated model-test typecheck, which is part of the root
 `typecheck:v2` and `check:v2` gates.

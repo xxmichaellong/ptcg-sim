@@ -1,4 +1,5 @@
 import type { CardInstanceId, StackId } from './ids.js';
+import { playersHaveMutualCoachingConsent } from './coaching-consent.js';
 import { findCardLocations } from './location.js';
 import { MATCH_STATE_SCHEMA_VERSION, type MatchState } from './model.js';
 
@@ -40,11 +41,16 @@ export const collectInvariantProblems = (
   for (const playerId of state.playerOrder) {
     const player = state.players[playerId];
     if (!player) problems.push(`missing player ${playerId}`);
-    else if (
-      typeof player.oncePerGame.gxUsed !== 'boolean' ||
-      typeof player.oncePerGame.vstarUsed !== 'boolean'
-    ) {
-      problems.push(`player ${playerId} has invalid once-per-game markers`);
+    else {
+      if (typeof player.coachingConsent !== 'boolean') {
+        problems.push(`player ${playerId} has invalid coaching consent`);
+      }
+      if (
+        typeof player.oncePerGame.gxUsed !== 'boolean' ||
+        typeof player.oncePerGame.vstarUsed !== 'boolean'
+      ) {
+        problems.push(`player ${playerId} has invalid once-per-game markers`);
+      }
     }
     if (!state.boards[playerId]) problems.push(`missing board ${playerId}`);
     if (!state.workAreas[playerId])
@@ -335,6 +341,12 @@ export const collectInvariantProblems = (
       if (!state.players[viewerId]) {
         problems.push(
           `inspection ${inspectionId} has unknown viewer ${viewerId}`
+        );
+      } else if (
+        !playersHaveMutualCoachingConsent(state, grant.sourcePlayerId, viewerId)
+      ) {
+        problems.push(
+          `inspection ${inspectionId} lacks mutual coaching consent`
         );
       }
     }

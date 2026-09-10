@@ -71,6 +71,16 @@ const accepted = (
   return result;
 };
 
+const withMutualCoachingConsent = (state: MatchState): MatchState => ({
+  ...state,
+  players: Object.fromEntries(
+    Object.entries(state.players).map(([playerId, player]) => [
+      playerId,
+      { ...player, coachingConsent: true },
+    ])
+  ),
+});
+
 const fixture = (context = createContext()) => {
   let state = createEmptyMatch(asMatchId('random-face-match'), [
     { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
@@ -224,7 +234,7 @@ describe('random face-down hand play', () => {
     const boardId = playerZoneId(p1, 'board');
     const selectedId = prepared.state.zones[handId]!.cardIds[2]!;
     const inspected = accepted(
-      prepared.state,
+      withMutualCoachingConsent(prepared.state),
       {
         type: 'BeginCardInspection',
         playerId: p1,

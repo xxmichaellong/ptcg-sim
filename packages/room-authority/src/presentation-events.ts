@@ -148,6 +148,17 @@ export const presentationEventsForBatch = (
         },
       ];
     }
+    if (event.type === 'CoachingConsentSet') {
+      return event.revokedInspections.map((revocation) => ({
+        type: 'PrivateInspectionEnded',
+        revision: batch.revision,
+        sourcePlayerId: revocation.sourcePlayerId,
+        viewerPlayerId: revocation.viewerPlayerId,
+        scope: revocation.scope,
+        source: presentationCardSource(state, revocation.sourceId),
+        cardCount: revocation.cardCount,
+      }));
+    }
     if (event.type === 'UndoApplied') {
       return [
         {

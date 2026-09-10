@@ -5,6 +5,10 @@ import type {
   WorkAreaCardsDestination,
 } from './commands.js';
 import {
+  coachingConsentRevocations,
+  playersHaveMutualCoachingConsent,
+} from './coaching-consent.js';
+import {
   classifyLegacyStagedCardIdsV1,
   normalizeAttachmentCardIdsV1,
   orderAttachmentCardIdsV1,
@@ -2467,6 +2471,18 @@ export const decideCommand = (
       if (sourcePlayerError) return sourcePlayerError;
       const viewerError = requirePlayer(state, command.viewerPlayerId);
       if (viewerError) return viewerError;
+      if (
+        !playersHaveMutualCoachingConsent(
+          state,
+          command.sourcePlayerId,
+          command.viewerPlayerId
+        )
+      ) {
+        return reject(
+          'precondition_failed',
+          'Opponent private inspection requires mutual coaching consent'
+        );
+      }
       const zone = state.zones[command.sourceZoneId];
       if (!zone) return reject('not_found', 'Inspection zone does not exist');
       if (
@@ -2525,6 +2541,18 @@ export const decideCommand = (
       const snapshot = cardSourceSnapshot(state, source.card, source.location);
       if (!snapshot) {
         return reject('stale_reference', 'Card inspection source changed');
+      }
+      if (
+        !playersHaveMutualCoachingConsent(
+          state,
+          snapshot.playerId,
+          command.viewerPlayerId
+        )
+      ) {
+        return reject(
+          'precondition_failed',
+          'Opponent private inspection requires mutual coaching consent'
+        );
       }
       if (snapshot.cardIds.length > 200) {
         return reject(
@@ -2721,6 +2749,26 @@ export const decideCommand = (
         destinationZoneId: destination.id,
         cardOrder,
         concealIdentity: isConcealedZone(destination),
+      });
+    }
+    case 'SetCoachingConsent': {
+      const playerError = requirePlayer(state, command.playerId);
+      if (playerError) return playerError;
+      if (typeof command.consent !== 'boolean') {
+        return reject('invalid_command', 'Coaching consent must be boolean');
+      }
+      const current = state.players[command.playerId]!.coachingConsent;
+      if (current === command.consent) {
+        return reject('invalid_command', 'Coaching consent is already set');
+      }
+      return accept({
+        type: 'CoachingConsentSet',
+        playerId: command.playerId,
+        expectedConsent: current,
+        consent: command.consent,
+        revokedInspections: command.consent
+          ? []
+          : coachingConsentRevocations(state, command.playerId),
       });
     }
     case 'SetOncePerGameMarker': {

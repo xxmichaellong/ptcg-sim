@@ -78,6 +78,16 @@ const accepted = (
   context: CommandContext
 ): MatchState => acceptedResult(state, command, context).state;
 
+const withMutualCoachingConsent = (state: MatchState): MatchState => ({
+  ...state,
+  players: Object.fromEntries(
+    Object.entries(state.players).map(([playerId, player]) => [
+      playerId,
+      { ...player, coachingConsent: true },
+    ])
+  ),
+});
+
 const fixture = () => {
   const context = createContext();
   let state = createEmptyMatch(asMatchId('movement-visibility-hardening'), [
@@ -313,7 +323,7 @@ describe('movement visibility hardening', () => {
     const deckCardId = prepared.state.zones[deckId]!.cardIds[0]!;
     const handCardId = prepared.state.zones[handId]!.cardIds[0]!;
     const withGrants: MatchState = {
-      ...prepared.state,
+      ...withMutualCoachingConsent(prepared.state),
       visibility: {
         ...prepared.state.visibility,
         inspectionGrants: {
@@ -354,7 +364,7 @@ describe('movement visibility hardening', () => {
     ]);
 
     const movedWithGrants: MatchState = {
-      ...prepared.state,
+      ...withMutualCoachingConsent(prepared.state),
       visibility: {
         ...prepared.state.visibility,
         inspectionGrants: withGrants.visibility.inspectionGrants,
@@ -478,7 +488,7 @@ describe('movement visibility hardening', () => {
       prepared.context
     );
     playState = {
-      ...playState,
+      ...withMutualCoachingConsent(playState),
       visibility: {
         ...playState.visibility,
         inspectionGrants: {
@@ -521,7 +531,7 @@ describe('movement visibility hardening', () => {
       prepared.context
     );
     inspectionState = {
-      ...inspectionState,
+      ...withMutualCoachingConsent(inspectionState),
       visibility: {
         ...inspectionState.visibility,
         inspectionGrants: {
@@ -673,7 +683,7 @@ describe('movement visibility hardening', () => {
         prepared.context
       );
       state = {
-        ...state,
+        ...withMutualCoachingConsent(state),
         visibility: {
           ...state.visibility,
           inspectionGrants: Object.fromEntries(

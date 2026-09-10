@@ -421,6 +421,20 @@ export type DomainEvent =
       readonly concealIdentity: boolean;
     }
   | {
+      readonly type: 'CoachingConsentSet';
+      readonly playerId: PlayerId;
+      readonly expectedConsent: boolean;
+      readonly consent: boolean;
+      readonly revokedInspections: readonly {
+        readonly inspectionId: InspectionId;
+        readonly scope: 'card' | 'zone';
+        readonly sourcePlayerId: PlayerId;
+        readonly sourceId: ZoneId | StackId | WorkAreaId;
+        readonly viewerPlayerId: PlayerId;
+        readonly cardCount: number;
+      }[];
+    }
+  | {
       readonly type: 'OncePerGameMarkerSet';
       readonly playerId: PlayerId;
       readonly marker: 'gx' | 'vstar';
