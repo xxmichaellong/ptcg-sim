@@ -78,6 +78,7 @@ packages/deck-core/
   src/card-search.ts       pure normalization/planning/local controls
   src/index.ts             reviewed minimal public API
 apps/web/src/features/deck/
+  LegacyDeckBuilderSession.tsx    unmounted route/session composition owner
   LegacyDeckBuilderWorkspace.tsx  unmounted source-shaped React workspace
   LegacyDeckBuilderWorkspace.css  source-equivalent light/dark workspace skin
   LegacyDeckImportPanel.tsx  unmounted source-shaped right panel/review table
@@ -392,6 +393,41 @@ deduplicated loading, cancellation, exact corpus order/count/provenance, all
 malformed/resource failures, retry, freezing, and shared-load abort behavior.
 The panel, corpus, and review table remain absent from production output.
 
+## Deck session-composition checkpoint
+
+`LegacyDeckBuilderSession.tsx` joins the previously isolated pieces behind one
+route-neutral React boundary without importing that boundary from a production
+route. It creates one editor store and TCGdex catalog for the component
+lifetime, shares the store across the right import panel and full-height
+workspace, and accepts only `open` plus `onRequestClose` navigation ownership
+from its eventual route. Multiplayer construction disables the alternate slot;
+solo construction preserves both targets.
+
+The boundary owns one `DeckInstallCoordinator` and one browser-native dirty-page
+guard. Editing while Deck is open does not emit room traffic. A true-to-false
+open transition or the workspace Play button begins the deterministic main,
+then alternate drain. The editor remains dirty until the exact `LoadDeck`
+command receives its authority result and covering state publication; failures
+release in-flight ownership, report through a contained typed callback, and
+leave the same revision retryable. Unmount disposes coordinator, session
+subscription, pending ownership, unload listener, catalog/search/import work,
+and card-back selection outside-in.
+
+The source Change Card Back control now reaches the already isolated foreground
+hook through this composition seam. It refuses to prompt until a ready player
+projection exists, resolves the other side from the captured projection for a
+solo alternate request, and otherwise submits for the actor. The hook retains
+the accepted arbitrary-URL behavior and makes superseded/unmounted requests
+inert.
+
+Six composition tests plus the 73 directly adjacent store, install, browser-I/O,
+workspace, panel, sample, pasted-import, and card-back tests cover shared target
+state, multiplayer denial, closed-state traffic silence, close/Play flushing,
+authority-publication acknowledgement, retryable rejection, exact arbitrary
+card backs for both sides, not-ready refusal, unload guarding, and teardown.
+The composed module remains absent from production output, so this checkpoint
+still changes no current route, control, bundle, UI, or UX.
+
 ## Verification and success criteria
 
 This checkpoint is complete when:
@@ -406,11 +442,10 @@ This checkpoint is complete when:
 
 ## Remaining deck slices
 
-The following remain separate, reviewable checkpoints:
+The following remains a separate, reviewable checkpoint:
 
-1. compose panel open/close, dirty-install draining, authoritative deck sync,
-   and current-route ownership without activating the replacement; and
-2. activate it only after source-browser layout, arbitrary-image, multiplayer,
+1. activate the composed surface only after source-browser layout,
+   arbitrary-image, multiplayer,
    solo, import, install, recovery, and accessibility parity evidence is green.
 
 Rollback for these checkpoints is removal of the unused package and unmounted

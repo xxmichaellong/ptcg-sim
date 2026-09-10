@@ -160,8 +160,9 @@ the relevant product decisions and phase exit criteria.
   image-preload transaction are also isolated. The exact 168-deck corpus is
   now behind a validated lazy chunk, and the source-shaped right-side Deck,
   review-table, language, and card-back controls are reconstructed but remain
-  unmounted; session composition and route activation remain in the
-  deck-builder workstream.
+  unmounted. A route-neutral owner now composes both surfaces with one editor,
+  catalog, acknowledged install drain, dirty-page guard, and card-back
+  lifecycle; route activation remains in the deck-builder workstream.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 
