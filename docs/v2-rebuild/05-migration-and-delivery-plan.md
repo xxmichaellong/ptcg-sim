@@ -589,7 +589,10 @@ Work:
   affecting Replay. The local live/replay Options subset additionally
   exports the recipient-safe effective battle log and requests browser full
   screen; Clear remains live-only and resets only local presentation.
-  Save/replay import-export and Deck/Settings navigation remain later work.
+  Save/replay import-export and Deck navigation remain later work. The first
+  Settings slice restores tab ownership plus page-local Dark mode and Hide
+  containers across lobby/live/replay without authority or storage traffic;
+  opponent-hand, background, and remaining static content parity remain later.
 - Retain the implemented layered abuse controls: a coarse location-local edge
   creation budget plus exact persisted per-room invitation, ticket, upgrade, and
   `Hello` budgets. Retain the atomic five-minute unclaimed lifecycle/alarm,

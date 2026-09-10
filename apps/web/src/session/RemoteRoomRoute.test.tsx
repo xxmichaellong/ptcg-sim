@@ -14,6 +14,7 @@ import {
 import {
   createRendererSpikeView,
   type BoardIntent,
+  type BoardPreferences,
 } from '@ptcgsim/renderer-contract';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -30,6 +31,7 @@ const boardHarness = vi.hoisted(() => ({
     | {
         readonly view: { readonly revision: number };
         readonly allowRevisionRegression?: boolean;
+        readonly preferences?: BoardPreferences;
         readonly onIntent: (intent: BoardIntent) => void;
         readonly submitCommand: (command: WireGameCommand) => unknown;
       }
@@ -175,6 +177,8 @@ describe('RemoteRoomRoute', () => {
     expect(host.querySelector('#p1Button')?.textContent).toBe('Solo');
     expect(host.querySelector('#p2Button')?.className).toBe('selected-page');
     expect(host.querySelector('#p2Box')).not.toBeNull();
+    expect((host.querySelector('#p2Box') as HTMLElement).hidden).toBe(false);
+    expect((host.querySelector('#settings') as HTMLElement).hidden).toBe(true);
     expect(host.querySelector('#p2Box')?.classList).toContain(
       'legacy-room-sidebox--live'
     );
@@ -205,6 +209,57 @@ describe('RemoteRoomRoute', () => {
     expect(
       (host.querySelector('#p2MessageInput') as HTMLInputElement).disabled
     ).toBe(false);
+    expect(boardHarness.props?.preferences).toBeUndefined();
+
+    const sentBeforeSettings = socket.sent.length;
+    await act(async () =>
+      (host.querySelector('#settingsButton') as HTMLButtonElement).click()
+    );
+    expect(host.querySelector('#settingsButton')?.className).toBe(
+      'selected-page'
+    );
+    expect(host.querySelector('#p2Button')?.className).toBe(
+      'not-selected-page'
+    );
+    expect((host.querySelector('#settings') as HTMLElement).hidden).toBe(false);
+    expect((host.querySelector('#p2Box') as HTMLElement).hidden).toBe(true);
+    expect(host.querySelector('#darkModeCheckbox')).not.toBeNull();
+    expect(host.querySelector('#showZonesCheckbox')).not.toBeNull();
+    expect(host.textContent).toContain('Dark mode');
+    expect(host.textContent).toContain('Hide containers');
+
+    await act(async () =>
+      (host.querySelector('#darkModeCheckbox') as HTMLInputElement).click()
+    );
+    expect(boardHarness.props?.preferences).toEqual({
+      reducedMotion: false,
+      highContrast: false,
+      darkMode: true,
+      showZoneOutlines: true,
+    });
+    expect(host.querySelector('main')?.dataset.darkMode).toBe('true');
+    expect(host.querySelector('main')?.classList).toContain(
+      'remote-room-route--dark'
+    );
+
+    await act(async () =>
+      (host.querySelector('#showZonesCheckbox') as HTMLInputElement).click()
+    );
+    expect(boardHarness.props?.preferences).toEqual({
+      reducedMotion: false,
+      highContrast: false,
+      darkMode: true,
+      showZoneOutlines: false,
+    });
+    expect(socket.sent).toHaveLength(sentBeforeSettings);
+    expect(onSubmission).not.toHaveBeenCalled();
+
+    await act(async () =>
+      (host.querySelector('#p2Button') as HTMLButtonElement).click()
+    );
+    expect(host.querySelector('#p2Button')?.className).toBe('selected-page');
+    expect((host.querySelector('#settings') as HTMLElement).hidden).toBe(true);
+    expect((host.querySelector('#p2Box') as HTMLElement).hidden).toBe(false);
 
     await act(async () =>
       (host.querySelector('#p1Button') as HTMLButtonElement).click()
@@ -288,10 +343,28 @@ describe('RemoteRoomRoute', () => {
     expect(host.querySelector('#p2Button')).toBeNull();
     expect(host.querySelector('#deckImportButton')).toBeNull();
     await act(async () =>
+      (host.querySelector('#settingsButton') as HTMLButtonElement).click()
+    );
+    expect(host.querySelector('#settingsButton')?.className).toBe(
+      'selected-page'
+    );
+    expect(host.querySelector('#p1Button')?.className).toBe(
+      'not-selected-page'
+    );
+    expect((host.querySelector('#p1Box') as HTMLElement).hidden).toBe(true);
+    expect(
+      (host.querySelector('#darkModeCheckbox') as HTMLInputElement).checked
+    ).toBe(true);
+    expect(
+      (host.querySelector('#showZonesCheckbox') as HTMLInputElement).checked
+    ).toBe(true);
+    await act(async () =>
       (host.querySelector('#p1Button') as HTMLButtonElement).click()
     );
     expect(confirmHeaderLeave).toHaveBeenCalledTimes(2);
     expect(onLeave).toHaveBeenCalledOnce();
+    expect(host.querySelector('#p1Button')?.className).toBe('selected-page');
+    expect((host.querySelector('#settings') as HTMLElement).hidden).toBe(true);
     expect(host.querySelector('#p1Box')).not.toBeNull();
     expect(host.querySelector('#p1Box')?.classList).not.toContain(
       'legacy-room-sidebox--live'

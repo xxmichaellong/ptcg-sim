@@ -1,5 +1,10 @@
-import type { BoardIntent } from '@ptcgsim/renderer-contract';
+import {
+  DEFAULT_BOARD_PREFERENCES,
+  type BoardIntent,
+  type BoardPreferences,
+} from '@ptcgsim/renderer-contract';
 import type { WireGameCommand } from '@ptcgsim/protocol';
+import { useState } from 'react';
 
 import type { RendererKind } from '../RendererSpikeBoard.js';
 import { LegacyPresentationSurface } from '../presentation/LegacyPresentationSurface.js';
@@ -10,6 +15,7 @@ import {
 } from './RemoteSessionBoard.js';
 import { RemoteRoomLiveControls } from './RemoteRoomLiveControls.js';
 import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
+import { RemoteRoomSettings } from './RemoteRoomSettings.js';
 import {
   downloadBrowserTextFile,
   requestBrowserFullscreen,
@@ -32,6 +38,9 @@ export interface RemoteRoomRouteProps {
     result: RemoteBoardSubmissionResult
   ) => void;
   readonly onLeave?: () => void;
+  /** When supplied with onPreferencesChange, ownership remains above the route. */
+  readonly preferences?: BoardPreferences;
+  readonly onPreferencesChange?: (preferences: BoardPreferences) => void;
   readonly confirmHeaderLeave?: () => boolean;
   readonly downloadTextFile?: (filename: string, contents: string) => boolean;
   readonly requestFullscreen?: () => boolean;
@@ -47,11 +56,35 @@ export const RemoteRoomRoute = ({
   onIntent = ignoreIntent,
   onSubmission,
   onLeave,
+  preferences: ownedPreferences,
+  onPreferencesChange,
   confirmHeaderLeave = confirmConnectedRoomExit,
   downloadTextFile = downloadBrowserTextFile,
   requestFullscreen = requestBrowserFullscreen,
 }: RemoteRoomRouteProps) => {
   const options = useDismissibleRoomOptions();
+  const [activePanel, setActivePanel] = useState<'room' | 'settings'>('room');
+  const [localPreferences, setLocalPreferences] = useState<
+    BoardPreferences | undefined
+  >(ownedPreferences);
+  const preferences = onPreferencesChange ? ownedPreferences : localPreferences;
+  const effectivePreferences = preferences ?? DEFAULT_BOARD_PREFERENCES;
+  const publishPreferences = (next: BoardPreferences): void => {
+    if (onPreferencesChange) onPreferencesChange(next);
+    else setLocalPreferences(next);
+  };
+  const setDarkMode = (enabled: boolean): void => {
+    publishPreferences({
+      ...effectivePreferences,
+      darkMode: enabled,
+    });
+  };
+  const setZoneOutlines = (visible: boolean): void => {
+    publishPreferences({
+      ...effectivePreferences,
+      showZoneOutlines: visible,
+    });
+  };
 
   return (
     <ReplayModeShell coordinator={runtime.replay}>
@@ -68,7 +101,13 @@ export const RemoteRoomRoute = ({
         };
 
         return (
-          <main className="app-shell" data-app-route="remote-room">
+          <main
+            className={`app-shell remote-room-route${
+              effectivePreferences.darkMode ? ' remote-room-route--dark' : ''
+            }`}
+            data-app-route="remote-room"
+            data-dark-mode={String(effectivePreferences.darkMode)}
+          >
             <section className="board-column" aria-label="Game board">
               <RemoteSessionBoard
                 session={runtime.session}
@@ -76,6 +115,7 @@ export const RemoteRoomRoute = ({
                 rendererKind={rendererKind}
                 onIntent={onIntent}
                 {...(onSubmission ? { onSubmission } : {})}
+                {...(preferences ? { preferences } : {})}
               />
             </section>
             <aside className="legacy-sidebar legacy-room-sidebar">
@@ -88,17 +128,21 @@ export const RemoteRoomRoute = ({
                   id="p1Button"
                   type="button"
                   className={
-                    chrome.active ? 'selected-page' : 'not-selected-page'
+                    chrome.active && activePanel === 'room'
+                      ? 'selected-page'
+                      : 'not-selected-page'
                   }
                   style={{ width: chrome.primaryTabWidth }}
-                  aria-current={chrome.active ? 'page' : undefined}
-                  onClick={
-                    !chrome.active && onLeave
-                      ? () => {
-                          if (confirmHeaderLeave()) onLeave();
-                        }
-                      : undefined
+                  aria-current={
+                    chrome.active && activePanel === 'room' ? 'page' : undefined
                   }
+                  onClick={() => {
+                    if (chrome.active) {
+                      setActivePanel('room');
+                    } else if (onLeave && confirmHeaderLeave()) {
+                      onLeave();
+                    }
+                  }}
                 >
                   {chrome.primaryTabLabel}
                 </button>
@@ -106,8 +150,13 @@ export const RemoteRoomRoute = ({
                   <button
                     id="p2Button"
                     type="button"
-                    className="selected-page"
-                    aria-current="page"
+                    className={
+                      activePanel === 'room'
+                        ? 'selected-page'
+                        : 'not-selected-page'
+                    }
+                    aria-current={activePanel === 'room' ? 'page' : undefined}
+                    onClick={() => setActivePanel('room')}
                   >
                     Multiplayer
                   </button>
@@ -124,8 +173,14 @@ export const RemoteRoomRoute = ({
                 <button
                   id="settingsButton"
                   type="button"
-                  className="not-selected-page"
+                  className={
+                    activePanel === 'settings'
+                      ? 'selected-page'
+                      : 'not-selected-page'
+                  }
                   style={{ width: chrome.settingsTabWidth }}
+                  aria-current={activePanel === 'settings' ? 'page' : undefined}
+                  onClick={() => setActivePanel('settings')}
                 >
                   Settings
                 </button>
@@ -136,6 +191,7 @@ export const RemoteRoomRoute = ({
                   chrome.active ? '' : ' legacy-room-sidebox--live'
                 }`}
                 data-replay-active={String(chrome.active)}
+                hidden={activePanel !== 'room'}
               >
                 {!chrome.active && (
                   <div id="roomHeader">
@@ -222,6 +278,12 @@ export const RemoteRoomRoute = ({
                   </div>
                 )}
               </section>
+              <RemoteRoomSettings
+                hidden={activePanel !== 'settings'}
+                preferences={effectivePreferences}
+                onDarkModeChange={setDarkMode}
+                onZoneOutlinesChange={setZoneOutlines}
+              />
             </aside>
           </main>
         );

@@ -1585,20 +1585,32 @@ battle log remains live-only exactly as the replay visibility contract requires.
 Export reads the bounded effective activity source rather than DOM, uses the
 legacy numbered text format, and revokes the object URL; Clear is local
 presentation only; Full screen retains the foreground gesture and vendor
-fallbacks. Game-state/replay import and export, Deck/Settings navigation,
-and complete focus/keyboard/visual parity remain later slices.
+fallbacks. Game-state/replay import and export, Deck navigation, and complete
+focus/keyboard/visual parity remain later slices.
 `RendererSpikeBoard` and `RemoteSessionBoard` now carry an optional
 renderer-neutral `BoardPreferences` value from their composing route. Explicit
 preferences install after asynchronous mount and update in place; removing the
 value restores the renderer defaults, while callers that never opt in incur no
-extra repaint. No Settings panel, browser storage, server command, or custom
-background boundary is implied by this seam.
+extra repaint. The seam itself adds no browser storage, server command, or
+custom-background boundary.
 `BoardPreferences.showZoneOutlines` now models the existing checked “Hide
 containers” behavior with a positive, default-`true` renderer contract. DOM
 removes only the translucent background and shadow; Pixi makes the equivalent
 zone/stadium graphics fully transparent. Both retain the same scene nodes,
 bounds, pointer/keyboard behavior, accessibility metadata, and stable identity,
 and preference changes do not reinstall the scene.
+The isolated multiplayer lobby now owns the first visible Settings slice across
+lobby, connected live room, and replay navigation. Its controlled Dark mode and
+Hide containers checkboxes retain the v1 IDs, labels, order, and inverted
+container-checkbox meaning. Default users still omit an explicit preference
+value and avoid the post-mount preference repaint; the first change creates one
+client-only value that survives room entry/leave inside the mounted lobby host,
+updates the board and source-colored route chrome, and disappears on document
+reload. Tab switches keep room/replay surfaces mounted but hidden, preserving
+their local state. No command, ephemeral message, storage write, or new browser
+listener occurs. Hide opponent hand, Change background, and the remaining
+static Settings content are not part of this bounded slice; arbitrary live
+background URLs remain behind ADR-013.
 
 ## Rendering cadence and performance
 

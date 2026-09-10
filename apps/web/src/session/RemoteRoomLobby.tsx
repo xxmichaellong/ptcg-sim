@@ -1,4 +1,8 @@
-import { createRendererSpikeView } from '@ptcgsim/renderer-contract';
+import {
+  createRendererSpikeView,
+  DEFAULT_BOARD_PREFERENCES,
+  type BoardPreferences,
+} from '@ptcgsim/renderer-contract';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ClipboardEvent as ReactClipboardEvent } from 'react';
 
@@ -17,6 +21,7 @@ import {
 } from './RemoteRoomInvitationHandoff.js';
 import { RemoteRoomRoute } from './RemoteRoomRoute.js';
 import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
+import { RemoteRoomSettings } from './RemoteRoomSettings.js';
 
 const LEGACY_FALLBACK_NAMES = Object.freeze([
   'Froakie',
@@ -220,6 +225,23 @@ export const RemoteRoomLobby = ({
   const [status, setStatus] = useState<string>();
   const [copyConfirmed, setCopyConfirmed] = useState(false);
   const [connected, setConnected] = useState<ConnectedRoom>();
+  const [activePanel, setActivePanel] = useState<'lobby' | 'settings'>('lobby');
+  const [preferences, setPreferences] = useState<
+    BoardPreferences | undefined
+  >();
+  const effectivePreferences = preferences ?? DEFAULT_BOARD_PREFERENCES;
+  const setDarkMode = (enabled: boolean): void => {
+    setPreferences((current) => ({
+      ...(current ?? DEFAULT_BOARD_PREFERENCES),
+      darkMode: enabled,
+    }));
+  };
+  const setZoneOutlines = (visible: boolean): void => {
+    setPreferences((current) => ({
+      ...(current ?? DEFAULT_BOARD_PREFERENCES),
+      showZoneOutlines: visible,
+    }));
+  };
 
   useEffect(() => {
     const owner: LobbyOwner = {
@@ -466,6 +488,8 @@ export const RemoteRoomLobby = ({
           runtime={connected.runtime}
           rendererKind={connected.rendererKind}
           onLeave={handleLeave}
+          {...(preferences ? { preferences } : {})}
+          onPreferencesChange={setPreferences}
         />
       </>
     );
@@ -473,7 +497,13 @@ export const RemoteRoomLobby = ({
 
   const busy = operation !== undefined;
   return (
-    <main className="app-shell" data-app-route="remote-room-lobby">
+    <main
+      className={`app-shell remote-room-route${
+        effectivePreferences.darkMode ? ' remote-room-route--dark' : ''
+      }`}
+      data-app-route="remote-room-lobby"
+      data-dark-mode={String(effectivePreferences.darkMode)}
+    >
       <section className="board-column" aria-label="Game board">
         <RendererSpikeBoard
           view={boardView}
@@ -481,6 +511,7 @@ export const RemoteRoomLobby = ({
           onIntent={() => undefined}
           submitCommand={() => undefined}
           sessionReady={false}
+          {...(preferences ? { preferences } : {})}
         />
       </section>
       <aside className="legacy-sidebar legacy-room-sidebar">
@@ -495,8 +526,11 @@ export const RemoteRoomLobby = ({
           <button
             id="p2Button"
             type="button"
-            className="selected-page"
-            aria-current="page"
+            className={
+              activePanel === 'lobby' ? 'selected-page' : 'not-selected-page'
+            }
+            aria-current={activePanel === 'lobby' ? 'page' : undefined}
+            onClick={() => setActivePanel('lobby')}
           >
             Multiplayer
           </button>
@@ -510,7 +544,11 @@ export const RemoteRoomLobby = ({
           <button
             id="settingsButton"
             type="button"
-            className="not-selected-page"
+            className={
+              activePanel === 'settings' ? 'selected-page' : 'not-selected-page'
+            }
+            aria-current={activePanel === 'settings' ? 'page' : undefined}
+            onClick={() => setActivePanel('settings')}
           >
             Settings
           </button>
@@ -518,6 +556,7 @@ export const RemoteRoomLobby = ({
         <section
           id="p2Box"
           className="legacy-room-sidebox legacy-lobby-sidebox"
+          hidden={activePanel !== 'lobby'}
         >
           <div id="p2ExplanationBox">
             <strong>Online Multiplayer Mode</strong>
@@ -607,6 +646,12 @@ export const RemoteRoomLobby = ({
             </p>
           )}
         </section>
+        <RemoteRoomSettings
+          hidden={activePanel !== 'settings'}
+          preferences={effectivePreferences}
+          onDarkModeChange={setDarkMode}
+          onZoneOutlinesChange={setZoneOutlines}
+        />
       </aside>
     </main>
   );

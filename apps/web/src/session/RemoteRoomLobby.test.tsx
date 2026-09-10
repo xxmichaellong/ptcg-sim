@@ -1,6 +1,9 @@
 // @vitest-environment happy-dom
 
-import { createRendererSpikeView } from '@ptcgsim/renderer-contract';
+import {
+  createRendererSpikeView,
+  type BoardPreferences,
+} from '@ptcgsim/renderer-contract';
 import { StrictMode } from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -15,27 +18,47 @@ import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
+const lobbyBoardHarness = vi.hoisted(() => ({
+  preferences: undefined as BoardPreferences | undefined,
+}));
+const roomRouteHarness = vi.hoisted(() => ({
+  preferences: undefined as BoardPreferences | undefined,
+  onPreferencesChange: undefined as
+    ((preferences: BoardPreferences) => void) | undefined,
+}));
+
 vi.mock('../RendererSpikeBoard.js', () => ({
-  RendererSpikeBoard: () => <div data-testid="lobby-board" />,
+  RendererSpikeBoard: (props: { readonly preferences?: BoardPreferences }) => {
+    lobbyBoardHarness.preferences = props.preferences;
+    return <div data-testid="lobby-board" />;
+  },
 }));
 
 vi.mock('./RemoteRoomRoute.js', () => ({
   RemoteRoomRoute: ({
     runtime,
     onLeave,
+    preferences,
+    onPreferencesChange,
   }: {
     readonly runtime: { readonly label?: string };
     readonly onLeave?: () => void;
-  }) => (
-    <main data-app-route="test-remote-room">
-      {runtime.label}
-      {onLeave && (
-        <button id="testLeaveRoom" type="button" onClick={onLeave}>
-          Leave
-        </button>
-      )}
-    </main>
-  ),
+    readonly preferences?: BoardPreferences;
+    readonly onPreferencesChange?: (preferences: BoardPreferences) => void;
+  }) => {
+    roomRouteHarness.preferences = preferences;
+    roomRouteHarness.onPreferencesChange = onPreferencesChange;
+    return (
+      <main data-app-route="test-remote-room">
+        {runtime.label}
+        {onLeave && (
+          <button id="testLeaveRoom" type="button" onClick={onLeave}>
+            Leave
+          </button>
+        )}
+      </main>
+    );
+  },
 }));
 
 const ROOM_CODE = 'ABCDEFGH2345';
@@ -220,6 +243,9 @@ describe('remote room lobby wiring', () => {
   beforeEach(() => {
     document.body.replaceChildren();
     vi.clearAllMocks();
+    lobbyBoardHarness.preferences = undefined;
+    roomRouteHarness.preferences = undefined;
+    roomRouteHarness.onPreferencesChange = undefined;
   });
 
   it('preserves the legacy multiplayer control shape without creating a room on mount', async () => {
@@ -236,6 +262,9 @@ describe('remote room lobby wiring', () => {
     expect(element(host, '#p2Button').getAttribute('aria-current')).toBe(
       'page'
     );
+    expect(element<HTMLElement>(host, '#p2Box').hidden).toBe(false);
+    expect(element<HTMLElement>(host, '#settings').hidden).toBe(true);
+    expect(lobbyBoardHarness.preferences).toBeUndefined();
     for (const id of [
       'nameInput',
       'roomIdInput',
@@ -250,6 +279,36 @@ describe('remote room lobby wiring', () => {
     expect(element(host, '#joinRoomButton').tagName).toBe('BUTTON');
     expect(createRoom).not.toHaveBeenCalled();
     expect(host.innerHTML).not.toContain('PTCGSIM2-INVITE:');
+
+    await act(async () =>
+      element<HTMLButtonElement>(host, '#settingsButton').click()
+    );
+    expect(element(host, '#settingsButton').className).toBe('selected-page');
+    expect(element(host, '#p2Button').className).toBe('not-selected-page');
+    expect(element<HTMLElement>(host, '#settings').hidden).toBe(false);
+    expect(element<HTMLElement>(host, '#p2Box').hidden).toBe(true);
+    await act(async () =>
+      element<HTMLInputElement>(host, '#darkModeCheckbox').click()
+    );
+    await act(async () =>
+      element<HTMLInputElement>(host, '#showZonesCheckbox').click()
+    );
+    expect(lobbyBoardHarness.preferences).toEqual({
+      reducedMotion: false,
+      highContrast: false,
+      darkMode: true,
+      showZoneOutlines: false,
+    });
+    expect(
+      element<HTMLElement>(host, '[data-app-route="remote-room-lobby"]').dataset
+        .darkMode
+    ).toBe('true');
+    expect(createRoom).not.toHaveBeenCalled();
+    await act(async () =>
+      element<HTMLButtonElement>(host, '#p2Button').click()
+    );
+    expect(element<HTMLElement>(host, '#settings').hidden).toBe(true);
+    expect(element<HTMLElement>(host, '#p2Box').hidden).toBe(false);
 
     await act(async () => root.unmount());
     expect(invitation.dispose).toHaveBeenCalledOnce();
@@ -526,6 +585,17 @@ describe('remote room lobby wiring', () => {
     });
     expect(host.querySelector('#testLeaveRoom')).not.toBeNull();
 
+    const retainedPreferences: BoardPreferences = {
+      reducedMotion: false,
+      highContrast: false,
+      darkMode: true,
+      showZoneOutlines: false,
+    };
+    await act(async () =>
+      roomRouteHarness.onPreferencesChange?.(retainedPreferences)
+    );
+    expect(roomRouteHarness.preferences).toEqual(retainedPreferences);
+
     await act(async () =>
       element<HTMLButtonElement>(host, '#testLeaveRoom').click()
     );
@@ -534,6 +604,13 @@ describe('remote room lobby wiring', () => {
     ).not.toBeNull();
     expect(element<HTMLInputElement>(host, '#roomIdInput').value).toBe('');
     expect(host.textContent).toContain('Left room.');
+    expect(lobbyBoardHarness.preferences).toEqual(retainedPreferences);
+    expect(element<HTMLInputElement>(host, '#darkModeCheckbox').checked).toBe(
+      true
+    );
+    expect(element<HTMLInputElement>(host, '#showZonesCheckbox').checked).toBe(
+      true
+    );
     expect(created.dispose).toHaveBeenCalledOnce();
     expect(firstInvitation.dispose).toHaveBeenCalledOnce();
     expect(secondInvitation.dispose).not.toHaveBeenCalled();

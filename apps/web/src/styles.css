@@ -148,6 +148,57 @@ select {
   background: rgb(231 228 228);
 }
 
+.legacy-room-sidebox[hidden] {
+  display: none;
+}
+
+.legacy-room-settings #settingsToggles {
+  display: block;
+  width: 100%;
+  height: min-content;
+  padding: 10px;
+  overflow-y: auto;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.legacy-room-settings label {
+  position: relative;
+  cursor: pointer;
+}
+
+.legacy-room-settings #darkModeCheckbox,
+.legacy-room-settings #showZonesCheckbox {
+  margin-top: 1vh;
+}
+
+.remote-room-route--dark {
+  background: rgb(8 18 18);
+  color: #fff;
+}
+
+.remote-room-route--dark .legacy-room-sidebar,
+.remote-room-route--dark .legacy-room-sidebox,
+.remote-room-route--dark .legacy-tabs .selected-page {
+  background: #000;
+  color: #fff;
+}
+
+.remote-room-route--dark .legacy-room-settings #settingsToggles,
+.remote-room-route--dark .legacy-activity-feed,
+.remote-room-route--dark #p2ExplanationBox,
+.remote-room-route--dark #nameInput,
+.remote-room-route--dark #roomIdInput,
+.remote-room-route--dark #p2MessageInput {
+  background: rgb(8 18 18);
+  color: #fff;
+}
+
+.remote-room-route--dark .legacy-activity-feed .self-text,
+.remote-room-route--dark .legacy-activity-feed .opp-text {
+  color: rgb(149 149 149);
+}
+
 .legacy-room-sidebox > .legacy-presentation-surface {
   flex: 1;
   min-height: 0;

@@ -1707,7 +1707,19 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      nodes, bounds, stable identity, accessible metadata, and interactive hit
      regions, and restore paint in place without scene installation. Focused
      renderer tests cover defaults, hide/restore, paint, geometry, and input;
-     the Settings owner and visible checkbox remain a later slice.
+     the panel owner and visible checkbox follow in checkpoint 107.
+107. The isolated multiplayer lobby now owns the first visible Settings slice
+     across lobby, connected live room, and replay navigation. The existing
+     Settings tab, Dark mode, and Hide containers IDs, labels, and order are
+     restored; tab switches hide rather than destroy the active room or replay
+     surface. Preferences are allocated lazily on first change, update route
+     chrome and the mounted renderer without remounting, survive room entry and
+     leave within the same lobby host, and reset on document teardown. Component
+     coverage pins navigation, inverted container semantics, retention, and zero
+     session traffic; the full-stack browser journey checks paint and post-leave
+     retention. Hide opponent hand, Change background, and the remaining static
+     Settings content remain later slices; arbitrary live background URLs remain
+     behind ADR-013.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

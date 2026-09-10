@@ -301,6 +301,64 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
         .getByText('Watcher: still watching', { exact: true })
     ).toBeVisible();
 
+    await expect(
+      playerTwo.page.locator('[data-renderer-status]')
+    ).toHaveAttribute('data-renderer-status', 'ready');
+    const boardSurface = playerTwo.page.locator('.ptcgsim-board-surface');
+    await expect(boardSurface).toHaveAttribute('data-dark-mode', 'false');
+    await expect(boardSurface).toHaveAttribute(
+      'data-show-zone-outlines',
+      'true'
+    );
+    await playerTwo.page.locator('#settingsButton').click();
+    await expect(playerTwo.page.locator('#settings')).toBeVisible();
+    await expect(playerTwo.page.locator('#p2Box')).toBeHidden();
+    await expect(playerTwo.page.locator('#settingsButton')).toHaveClass(
+      'selected-page'
+    );
+    await playerTwo.page.locator('#darkModeCheckbox').check();
+    await expect(boardSurface).toHaveAttribute('data-dark-mode', 'true');
+    const roomRoute = playerTwo.page.locator('[data-app-route="remote-room"]');
+    await expect(roomRoute).toHaveAttribute('data-dark-mode', 'true');
+    await expect(roomRoute).toHaveCSS('background-color', 'rgb(8, 18, 18)');
+    await expect(playerTwo.page.locator('#settings')).toHaveCSS(
+      'background-color',
+      'rgb(0, 0, 0)'
+    );
+    await expect(playerTwo.page.locator('#settingsToggles')).toHaveCSS(
+      'background-color',
+      'rgb(8, 18, 18)'
+    );
+    await playerTwo.page.locator('#showZonesCheckbox').check();
+    await expect(boardSurface).toHaveAttribute(
+      'data-show-zone-outlines',
+      'false'
+    );
+    const hiddenZone = playerTwo.page.locator('[data-zone-id]').first();
+    await expect(hiddenZone).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(hiddenZone).toHaveCSS('box-shadow', 'none');
+    await expect(hiddenZone).toHaveAttribute('role', 'button');
+    await playerTwo.page.locator('#p2Button').click();
+    await expect(playerTwo.page.locator('#p2Box')).toBeVisible();
+    await expect(playerTwo.page.locator('#settings')).toBeHidden();
+    await expect(boardSurface).toHaveAttribute('data-dark-mode', 'true');
+    await expect(boardSurface).toHaveAttribute(
+      'data-show-zone-outlines',
+      'false'
+    );
+    await expect(playerTwo.page.locator('#p2Box')).toHaveCSS(
+      'background-color',
+      'rgb(0, 0, 0)'
+    );
+    await expect(playerTwo.page.locator('.legacy-activity-feed')).toHaveCSS(
+      'background-color',
+      'rgb(8, 18, 18)'
+    );
+    await expect(playerTwo.page.locator('#p2MessageInput')).toHaveCSS(
+      'background-color',
+      'rgb(8, 18, 18)'
+    );
+
     await playerTwo.page.locator('#p2OptionsButton').click();
     const [battleLog] = await Promise.all([
       playerTwo.page.waitForEvent('download'),
@@ -356,6 +414,21 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect(
       playerTwo.page.locator('[data-app-route="remote-room-lobby"]')
     ).toBeVisible();
+    await expect(
+      playerTwo.page.locator('[data-app-route="remote-room-lobby"]')
+    ).toHaveAttribute('data-dark-mode', 'true');
+    await expect(playerTwo.page.locator('#p2ExplanationBox')).toHaveCSS(
+      'background-color',
+      'rgb(8, 18, 18)'
+    );
+    await expect(playerTwo.page.locator('#nameInput')).toHaveCSS(
+      'background-color',
+      'rgb(8, 18, 18)'
+    );
+    await expect(playerTwo.page.locator('#roomIdInput')).toHaveCSS(
+      'background-color',
+      'rgb(8, 18, 18)'
+    );
     await expect(playerTwo.page.locator('#roomIdInput')).toHaveValue('');
     await expect(playerTwo.page.locator('.lobby-status')).toHaveText(
       'Left room.'
@@ -365,6 +438,9 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
         .locator('#p2Chatbox')
         .getByText('Red left the room', { exact: true })
     ).toBeVisible();
+    await playerTwo.page.locator('#settingsButton').click();
+    await expect(playerTwo.page.locator('#darkModeCheckbox')).toBeChecked();
+    await expect(playerTwo.page.locator('#showZonesCheckbox')).toBeChecked();
 
     expect(creator.errors).toEqual([]);
     expect(playerTwo.errors).toEqual([]);

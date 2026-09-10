@@ -121,14 +121,20 @@ the relevant product decisions and phase exit criteria.
   release gate. Live and replay Options now export the bounded recipient-safe
   battle log without reading DOM and start browser full screen from the
   foreground click; Clear battle log remains live-only and local. Game-state/replay import and
-  export formats plus Deck/Settings navigation remain later parity work. The
+  export formats plus Deck navigation remain later parity work. The
   live Solo header tab retains its separate v1 confirmation text and delegates
   to the same durable route teardown as Leave Room. The board composition now
   accepts optional route-owned local preferences across live and replay without
-  remounting its renderer; the Settings panel/store remains unwired.
+  remounting its renderer. The isolated lobby owns the first visible Settings
+  slice across lobby, connected live room, and replay navigation: Dark mode and
+  Hide containers retain their source IDs, labels, and behavior without storage
+  or authority traffic, and survive room entry/leave only while that lobby host
+  remains mounted.
   The shared preference contract also models the legacy “Hide containers”
   checkbox as default-visible zone/stadium paint. DOM and Pixi hide only that
-  paint while preserving stable nodes, geometry, accessibility, and input.
+  paint while preserving stable nodes, geometry, accessibility, and input. Hide
+  opponent hand, custom background, and remaining static Settings content stay
+  separate parity work; arbitrary live background URLs remain behind ADR-013.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 
