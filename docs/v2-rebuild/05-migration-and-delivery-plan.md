@@ -433,14 +433,14 @@ The eight reveal/look dispatcher names are transient socket/UI operations and
 never enter native V1 export history; `exchangeData` is explicitly filtered by
 the exporter. They remain allowlisted at the frozen envelope boundary but fail
 semantic conversion with `non_exported_action` if injected. The final genuine
-saved family, `changeCardBack`, now validates its exact one-nonempty-string tuple
-without retaining or fetching the source URL. The public transaction forces both
-seat card backs to the integrity-gated `/v2/assets/cardback.png`, preserves the
-history entry as a zero-batch record, and reports each normalized URL explicitly.
-All genuine native saved action families therefore have strict conversion or an
-approved normalization. Unprovable cross-owner play remains fail-closed;
-representative real-user corpus evidence and route installation remain before
-Phase 3 can exit.
+saved family, `changeCardBack`, currently validates its exact
+one-nonempty-string tuple without retaining or fetching the source URL. That
+unwired checkpoint forces both seat backs to `/v2/assets/cardback.png` and
+reports normalization. Broadened ADR-013 supersedes it: ordered bounded back
+URLs must become canonical replayable transitions with exact undo/final-state
+tests before route installation. Unprovable cross-owner play remains
+fail-closed; that correction, representative real-user corpus evidence, and
+route installation remain before Phase 3 can exit.
 
 Work:
 
@@ -589,7 +589,8 @@ Work:
   affecting Replay. The local live/replay Options subset additionally
   exports the recipient-safe effective battle log and requests browser full
   screen; Clear remains live-only and resets only local presentation.
-  Save/replay import-export and Deck navigation remain later work. The first
+  Perspective replay export is implemented; replay-file import, server-held
+  continuation, and Deck navigation remain later work. The first
   Settings slice restores tab ownership plus page-local Dark mode and Hide
   containers across lobby/live/replay without authority or storage traffic;
   the follow-on slice restores the source Solo-only hand checkbox as an explicit
@@ -597,7 +598,10 @@ Work:
   third-party image request. Accepted ADR-013 restores Change background through
   a direct player-selected, preloaded, page-local DOM/CSS image. The URL is never
   synchronized or persisted; the selecting browser's direct contact with that
-  host is an explicitly accepted parity tradeoff.
+  host is an explicitly accepted parity tradeoff. The broadened ADR also binds
+  later Deck work to direct arbitrary custom-card faces and public custom card
+  backs through native DOM loading; it rejects a mandatory allowlist, proxy, or
+  CORS opt-in.
 - Retain the implemented layered abuse controls: a coarse location-local edge
   creation budget plus exact persisted per-room invitation, ticket, upgrade, and
   `Hello` budgets. Retain the atomic five-minute unclaimed lifecycle/alarm,
@@ -698,8 +702,8 @@ Work:
 
 - Close all non-deferred parity differences or approve explicit exceptions.
 - Run performance tuning based on traces, not architectural rewrites.
-- Conduct security review/threat modeling of rooms, hidden info, image proxy,
-  chat, imports, saves, admin/observability, and dependencies.
+- Conduct security review/threat modeling of rooms, hidden info, direct external
+  images, chat, imports, saves, admin/observability, and dependencies.
 - Run browser/device checks, accessibility audit, load/fault tests, two-hour CI
   soaks, and 24-hour pre-release soak.
 - Exercise deploy/rollback, mixed build/protocol, storage restore, and incident

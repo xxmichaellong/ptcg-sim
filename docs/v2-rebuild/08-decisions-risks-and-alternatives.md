@@ -24,7 +24,7 @@
 | ADR-010 | `PROPOSED`         | Model active/bench as explicit `PlayStack` aggregates; ordered card zones/work areas hold other cards.                                                                                                | Matches evolution/attachment/counter/rotation semantics better than DOM-relative pointers or a generic renderer graph.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | ADR-011 | `PROVISIONAL`      | Separate authoritative view, pending overlay, and presentation stores; use a small external store (Zustand vanilla acceptable).                                                                       | The dependency-free bounded runtime now proves independent channels, atomic reset, keyed activity projection, exact-head serial consumption, cancellation, reduced-motion switching, narrow React bindings, and one correctly wired lifecycle owner without making React/Pixi a second truth.                                                                                                                                                                                                                                                                                                                  |
 | ADR-012 | `ACCEPTED`         | Download only role-projected view-only replays; keep resumable multiplayer state server-held behind a role-bound capability; require both players' explicit consent for any full hidden-state export. | The owner approved the split on 2026-09-10. An ordinary download never contains canonical state or credentials; exact continuation never sends both hidden decks to a browser. See `ADR-012-MULTIPLAYER-SAVES-AND-EXPORTS.md`.                                                                                                                                                                                                                                                                                                                                                                                 |
-| ADR-013 | `ACCEPTED`         | Preserve player-selected arbitrary page-background URLs through a direct client-only DOM/CSS path; keep arbitrary live card/back URLs out of this exception.                                          | The owner explicitly prioritized legacy background parity on 2026-09-10 and accepted that the selecting browser contacts the supplied host. Preload before paint; never send the URL to the server, peer, authority, replay, storage, telemetry, `BoardPreferences`, or Pixi. Opponent-controlled and canonical visual assets still require a controlled asset policy.                                                                                                                                                                                                                                         |
+| ADR-013 | `ACCEPTED`         | Preserve direct player-selected arbitrary image URLs for local backgrounds, custom card faces, and custom card backs through native DOM image loading.                                                | The owner explicitly prioritized legacy compatibility on 2026-09-10 and accepted direct-host request metadata. Background URLs stay page-local; bounded custom-face URLs reach only recipients authorized to see that face; custom backs are public player presentation metadata. No allowlist, proxy, or CORS opt-in is required. See `ADR-013-ARBITRARY-IMAGE-URLS.md`.                                                                                                                                                                                                                                      |
 | ADR-014 | `PROVISIONAL`      | Preserve solo-only undo using a hashed base plus bounded resolved-event tail; restore exact outcomes in a new revision and rotate aliases.                                                            | Implemented without UI scope; whole-match last-command ordering and the 128-entry default remain reviewable before release.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ADR-015 | `PRODUCT_REQUIRED` | Ratify browser, viewport, reference hardware, accessibility, and legacy import support windows.                                                                                                       | Quantitative gates require named environments and retention promises.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | ADR-016 | `PROVISIONAL`      | Persist resolved domain events and canonical checkpoints; project a connected session's own replay perspective and stream frames separately.                                                          | A 128-batch/512-KiB ledger, v1/v2/v3-to-v4 migration, fresh aliases, atomic assembly, deterministic playback, request-correlated coordination, guarded board binding, explicit renderer rewind, replay chrome, trusted-actor presentation facts, recipient-safe legacy detail, seek-synchronized activity, cancellable consumers, and an explicit-input remote room screen are implemented; full sidebar/admission and archival retention/export remain Phase 7.                                                                                                                                               |
@@ -46,24 +46,18 @@ file requires independent, current consent from both authenticated players for
 that exact export; coaching consent cannot substitute. See
 `ADR-012-MULTIPLAYER-SAVES-AND-EXPORTS.md`.
 
-ADR-013 was accepted narrowly for the source Change background control on
-2026-09-10. A player may explicitly paste any URL; that browser preloads it and,
-on success, paints it as the local route background outside the renderer. The
-URL and result survive lobby/live/replay/Leave only for the mounted page and are
-never synchronized or persisted. `blank` and the two randomized source `theme`
-URLs remain supported. Cancel/empty input is a no-op, failure retains the prior
-background and reports the source error, a newer request supersedes an older
-load, and teardown makes pending work inert. The owner accepts that this direct,
-user-initiated request discloses ordinary network metadata to the chosen host
-and inherits that host's availability; it is not an endorsement of remotely or
-opponent-selected content.
-
-Arbitrary live card-face/card-back URLs and any future Pixi proxy/CORS path
-remain blocked outside this narrow exception. The legacy-import card-back
-subpolicy was explicitly approved on 2026-09-09: saved arbitrary values are
-validated structurally but never fetched, retained, proxied, or persisted; both
-imported seats receive the integrity-gated `/v2/assets/cardback.png`, and
-conversion reports a counted normalization warning.
+ADR-013 was broadened and accepted by the project owner on 2026-09-10. A player
+may explicitly paste any bounded image URL for the local background or a custom
+card face. Native DOM images load it directly without a host allowlist, proxy,
+or CORS opt-in. A background stays page-local. A custom-card URL is persisted as
+card-definition metadata and is sent only to a recipient authorized to see that
+face; a hidden card never discloses or requests it. A custom card back is public
+player presentation metadata and is projected for concealed cards. The owner
+accepts that each displaying browser contacts the chosen host and exposes
+ordinary request metadata. Missing/corrupt assets retain an interactive neutral
+card and may recover in the same stable node. The shipped v2 card back remains
+the default, while legacy imports preserve the last saved custom back for each
+side. See `ADR-013-ARBITRARY-IMAGE-URLS.md`.
 
 ADR-017 was accepted by the project owner on 2026-09-10. Self-private inspection
 is allowed; opponent-private inspection requires both seats' current persisted
@@ -160,18 +154,11 @@ These cannot be answered purely by engineering:
 
 1. Which historical v1 save/action formats are promised support, and for how
    long should old share links remain readable?
-2. In two-player mode, what exactly should Export produce: opaque resumable save,
-   player-perspective replay, full private match only with both players' consent,
-   or some combination?
-3. Which opponent-private manipulations are intentional tabletop features and
+2. Which opponent-private manipulations are intentional tabletop features and
    which are accidental privacy leaks?
-4. Are arbitrary live custom card URLs a guaranteed feature or can they be
-   restricted/proxied for security and WebGL compatibility? Player-selected,
-   page-local backgrounds are separately accepted by ADR-013; legacy imported
-   card backs are normalized to the canonical V2 asset.
-5. Which known behavioral bugs may be corrected during parity work, and who signs
+3. Which known behavioral bugs may be corrected during parity work, and who signs
    each exception?
-6. What is the v1 fallback/deprecation observation window?
+4. What is the v1 fallback/deprecation observation window?
    Until answered, implement fixtures and interfaces but do not lock the affected
    production behavior.
 
@@ -208,8 +195,8 @@ silently copied or silently changed:
 | R-010 | Full projected snapshots exceed bandwidth/latency budgets                                                  | Low–Medium / Medium | Deduplicate definitions, measure compression/payloads; add per-recipient patches only behind tests if needed.                                                                                                                                                                                            |
 | R-011 | Durable Object/hosting cost or tooling blocks maintainers                                                  | Medium / Medium     | Runtime spike, adapter boundary, cost/load model, Colyseus fallback.                                                                                                                                                                                                                                     |
 | R-012 | Parallel contributors create schema drift and merge conflicts                                              | High / Medium       | Single schema/integrator owner, isolated audit reports, requirement IDs, small vertical PRs.                                                                                                                                                                                                             |
-| R-013 | External image provider/proxy outage breaks play                                                           | High / Medium       | Controlled cache, placeholders, timeouts, no logical dependence, provider outage runbook.                                                                                                                                                                                                                |
-| R-014 | Image proxy enables SSRF, oversized decode, tracking, or unsafe SVG                                        | Medium / Critical   | HTTPS allowlist/validated redirects, private-network blocking, MIME/byte/dimension/time limits, no SVG, rate limits.                                                                                                                                                                                     |
+| R-013 | External image host failure or oversized decode degrades the board                                         | High / Medium       | Native-load failure containment, stable neutral placeholders, no logical dependence, bounded URL strings, lifecycle/resource gates, and an incident switch that disables external loading without changing state.                                                                                        |
+| R-014 | A player-selected custom image host tracks authorized viewers                                              | Medium / High       | Explicitly accepted by ADR-013 for compatibility. Never server-fetch or log URLs; disclose/project a face URL only when its card identity is authorized; document direct-host contact; keep hidden-asset request interception as a release blocker.                                                      |
 | R-015 | Authorization blocks legitimate manual opponent interactions or permits unintended cross-seat destinations | Medium / High       | Characterize permission by actor, controlled card, source, destination, and action. The current resolver intentionally uses card-based authorization: a player may move their own card into an opponent zone even when opponent-public interaction is disabled. Ratify that behavior before changing it. |
 | R-016 | Optimistic client becomes a second reducer and diverges                                                    | Medium / High       | Pending presentation overlay only; no prediction for random/hidden/bulk; snapshot reconciliation tests.                                                                                                                                                                                                  |
 | R-017 | Deployment mixes v1/v2 clients in one room                                                                 | Medium / Critical   | Namespaced protocol generation, admission rejection, sticky session cohort.                                                                                                                                                                                                                              |
@@ -224,8 +211,8 @@ residual rating before Phase 1 starts.
 
 - Stop production implementation if the command/action catalog or visibility
   matrix has unresolved semantic holes affecting the current slice.
-- Select React DOM if Pixi misses parity/resource/recovery gates or cannot support
-  promised custom images safely.
+- Retain React DOM if Pixi misses parity/resource/recovery gates or cannot
+  preserve ADR-013 arbitrary custom-image behavior.
 - Select/retain another authoritative runtime if the Durable Object spike cannot
   meet durability, tooling, cost, or recovery requirements.
 - Do not weaken durability to meet latency until batching/storage measurements

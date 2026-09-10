@@ -87,8 +87,9 @@ battle-log export and browser full screen, while Clear battle log remains live
 only as in v1; object URLs are revoked after the foreground download.
 The connected Solo header tab also retains its v1 confirmed-leave behavior and
 uses the same route-owned durable teardown as Leave Room. Game-state/replay
-import and export, Deck navigation, and the remaining focus/visual parity remain
-later slices. An optional route-owned `BoardPreferences` seam now
+perspective export is implemented; replay-file import, server-held continuation,
+Deck navigation, and the remaining focus/visual parity remain later slices. An
+optional route-owned `BoardPreferences` seam now
 crosses the live/replay wrapper and updates either renderer in place. The
 isolated lobby and connected route restore Settings-tab ownership plus the
 existing Dark mode and Hide containers controls. Preferences stay above room
@@ -98,11 +99,14 @@ checkbox and static keybind/contact content are also restored; on this
 multiplayer-only route the hand value is explicitly local and cannot alter the
 server-projected view. Its source Twitter mark is inline rather than a
 third-party image request. The source Change background control is also restored
-under the accepted narrow ADR-013 exception: `blank`, randomized `theme`, and
+under accepted ADR-013: `blank`, randomized `theme`, and
 arbitrary player-pasted URLs preload in the browser and paint only the local
 route. The URL is not persisted or sent to the renderer, room, replay, server,
 peer, or telemetry; direct host contact is the explicitly accepted parity
-tradeoff. The renderer-neutral preferences include default-visible zone/stadium
+tradeoff. ADR-013 also requires future v2 deck tooling to preserve direct
+arbitrary custom-card faces for authorized viewers and public custom card backs
+without an allowlist, proxy, or CORS requirement. The renderer-neutral
+preferences include default-visible zone/stadium
 outlines: hiding them removes only the legacy translucent paint while retaining
 the same accessible hit regions.
 

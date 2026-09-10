@@ -135,9 +135,10 @@ A successful report uses the explicit
   failure (currently fail-fast, so one issue);
 - warnings for V1 transport metadata that is intentionally not persisted;
 - exact paths and reasons for validated presentation-only initiator, message,
-  redundant target-relationship, and normalized custom-card-back fields;
-- a counted warning whenever saved custom card-back URLs were replaced without
-  retaining or fetching their values; and
+  redundant target-relationship, and, in the current pre-ADR-013 checkpoint,
+  normalized custom-card-back fields;
+- a temporary counted warning whenever that checkpoint replaces saved custom
+  card-back URLs without retaining or fetching their values; and
 - a separate target identity computed as SHA-256 over the UTF-8 bytes of
   `stableSerialize(state)`, named
   `ptcgsim-match-state-stable-json-v1` and pinned to the current match-state
@@ -543,13 +544,16 @@ faces, and replayable table declaration without replaying its internal
 
 `changeCardBack` carries exactly one nonempty string. V1 admits the local action
 only after an `Image` load succeeds, replaces its mutable card-back fields and
-matching image nodes, and then writes the arbitrary URL into saved history. V2
-does not parse, fetch, retain, replay, proxy, or persist that URL. The private
-decoder keeps only record index and target player; conversion retains a
-zero-batch audit/undo record while both imported seats use the canonical
-`/v2/assets/cardback.png`. The conversion report lists the exact dropped field
-path and a counted `custom_card_back_urls_normalized` warning. Empty, non-string,
-or non-singleton tuples reject the complete candidate.
+matching image nodes, and then writes the arbitrary URL into saved history. The
+current unwired converter predates broadened ADR-013: its private decoder keeps
+only record index and target player, conversion retains a zero-batch audit/undo
+record, and both imported seats use `/v2/assets/cardback.png`; the report lists
+the dropped path and `custom_card_back_urls_normalized` warning. That behavior
+is no longer release-compatible. Before route installation, conversion must
+retain the bounded URL, apply each change as a replayable canonical card-back
+event so undo/order stay exact, and preserve the final back for each side. It
+must still never fetch or proxy the URL. Empty, oversized, non-string, or
+non-singleton tuples reject the complete candidate.
 
 ### Deck definition adapter
 
@@ -952,16 +956,19 @@ The eight reveal/look dispatcher actions never call `processAction`, and
 `exchangeData` is explicitly filtered from `exportActionData`; they remain
 envelope-known but semantically unsupported if handcrafted into a save.
 Those nine impossible records return `non_exported_action`. Every genuine native
-saved action family now has a strict decoder and either a canonical transition or
-an explicit approved zero-batch normalization; malformed card-back tuples retain
-typed `cardBack.*` diagnostics.
+saved action family now has a strict decoder, but the current zero-batch
+card-back normalization must be replaced by ADR-013's canonical transition
+before route installation; malformed card-back tuples retain typed
+`cardBack.*` diagnostics.
 
 ## Next conversion slices
 
-1. Use the implemented private-corpus runner against a representative,
+1. Implement and verify ADR-013 ordered custom-card-back preservation, including
+   whole-match undo and final-state replay.
+2. Use the implemented private-corpus runner against a representative,
    privacy-reviewed real-user corpus and approve its redacted expected
    report/state identities as compatibility evidence.
-2. Only after that corpus passes should the same reviewed change deliberately
+3. Only after that corpus passes should the same reviewed change deliberately
    relax the source quarantine and let the route loader or old `/import?key=`
    reader call this package. Bundle provenance must remain closed until the
    intended production consumer is separately admitted.

@@ -897,6 +897,23 @@ describe('client protocol ingress', () => {
     expect(
       parseCommand({ type: 'LoadDeck', targetPlayerId: '', entries: [] }).ok
     ).toBe(false);
+    expect(
+      parseCommand({
+        type: 'LoadDeck',
+        entries: [
+          {
+            definition: {
+              id: 'player-selected-definition',
+              name: 'Player-selected card',
+              category: 'Pokémon',
+              imageUrl:
+                'https://unlisted-player-images.example/custom-face.png?variant=one',
+            },
+            count: 1,
+          },
+        ],
+      }).ok
+    ).toBe(true);
   });
 
   it('bounds client-supplied expected stack layouts', () => {

@@ -142,11 +142,16 @@ the relevant product decisions and phase exit criteria.
   server-projected view, and the source Twitter mark is inlined to remove its
   third-party fetch. The final Change background control preserves the source
   prompt plus `blank`, randomized `theme`, and arbitrary player-pasted image
-  URLs under the accepted narrow ADR-013 exception. Images preload before the
+  URLs under accepted ADR-013. Images preload before the
   route background changes and remain page-local across lobby/live/replay/Leave;
   their URL never enters authority, protocol, replay, storage, renderer
   preferences, or Pixi. A direct request still reveals ordinary network
   metadata to the player-selected host, an explicitly accepted parity tradeoff.
+  The same ADR preserves bounded custom-card face URLs when a recipient is
+  authorized to see that face and public player-selected card backs. Those
+  synchronized images also load directly through native DOM without an
+  allowlist, proxy, or CORS requirement; the shipped card back remains the
+  default.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 
@@ -191,6 +196,7 @@ a manual tabletop simulator.
 | [RENDERER_SPIKE.md](./RENDERER_SPIKE.md)                                               | Live DOM/Pixi implementation evidence, research, current result, and remaining decision gates                |
 | [ADR-004-BOARD-RENDERER.md](./ADR-004-BOARD-RENDERER.md)                               | Accepted first-production renderer decision, evidence, consequences, and revisit triggers                    |
 | [ADR-012-MULTIPLAYER-SAVES-AND-EXPORTS.md](./ADR-012-MULTIPLAYER-SAVES-AND-EXPORTS.md) | Accepted perspective replay, server-held continuation, and dual-consent full-export policy                   |
+| [ADR-013-ARBITRARY-IMAGE-URLS.md](./ADR-013-ARBITRARY-IMAGE-URLS.md)                   | Accepted direct arbitrary background, custom-face, and custom-card-back image policy                         |
 | [ATTACH_EVOLVE_TARGETING.md](./ATTACH_EVOLVE_TARGETING.md)                             | Frozen Q/E source behavior and implemented atomic stable-ID vertical slice                                   |
 | [LEGACY_IMPORT.md](./LEGACY_IMPORT.md)                                                 | Source-backed v1 format, bounded conversion/report, private corpus runner, and staged route plan             |
 | [SERVER_PERFORMANCE_BASELINE.md](./SERVER_PERFORMANCE_BASELINE.md)                     | Reproducible `workerd` payload/resource gate, named local timing observation, and remaining preview evidence |

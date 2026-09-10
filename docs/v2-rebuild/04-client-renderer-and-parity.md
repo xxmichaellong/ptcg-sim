@@ -1628,8 +1628,11 @@ survives lobby/live/replay/Leave inside the mounted lobby owner and resets on
 document teardown. It is deliberately outside `BoardPreferences` and the board
 renderer: no URL reaches Pixi, protocol, authority, peer projections, replay,
 storage, or telemetry. The selecting browser does contact the supplied host,
-which is the explicitly accepted legacy-parity exception; remotely selected
-card/back assets remain subject to the stronger controlled-image policy below.
+which is an explicitly accepted legacy-parity tradeoff. ADR-013 also preserves
+direct arbitrary custom-card face URLs, but unlike a background those URLs are
+canonical metadata and reach each recipient only when that face is authorized.
+ADR-013 also restores player-selected card backs as public canonical
+presentation metadata; the shipped v2 asset remains the default.
 
 ## Rendering cadence and performance
 
@@ -1677,9 +1680,10 @@ Card images are the dominant memory and reliability risk.
 6. Preload only the imminent visible set and small likely-next set, not both full
    decks at maximum resolution.
 7. Instrument cache hits, decodes, bytes, failures, and evictions.
-8. Use a controlled image proxy/CDN or verified CORS-capable allowlist so WebGL
-   uploads and screenshots are reliable. Validate content type, dimensions,
-   response size, and upstream URL to avoid proxy abuse.
+8. Load player-selected custom faces and card backs directly through native DOM
+   `<img>` without an allowlist, proxy, or CORS requirement. Never dereference
+   them on the server. First-party/provider assets may use a controlled CDN, but
+   that path cannot become a restriction on custom URLs.
 9. Recover after WebGL context loss by rebuilding GPU views from current view
    state and cache/source descriptors; never ask the game core to repair state.
 10. Fall back to Canvas rendering or a clear compatibility message only if the
@@ -1687,11 +1691,11 @@ Card images are the dominant memory and reliability risk.
 
 The spike must explicitly cover every supported Limitless/language/native-builder
 host, redirects, card backs/backgrounds, and user-supplied URLs with and without
-CORS. If arbitrary URLs remain a guaranteed feature, choose and security-test one
-of: a hardened proxy; a DOM image fallback for non-uploadable cards; or a
-documented hybrid renderer. Silently losing a formerly valid custom image is not
-parity. Opponent-controlled direct URLs also leak participant network metadata,
-so visual compatibility cannot be the only decision driver.
+CORS. ADR-013 selects native React DOM loading for arbitrary custom faces and
+card backs and accepts that a displaying recipient's browser exposes ordinary
+request metadata to the player-selected host. Silently losing a formerly valid
+custom image is not parity. A Pixi replacement remains blocked unless it
+preserves this behavior and the hidden-face request boundary.
 
 A hidden card must never trigger a face-image request. Private textures and async
 loads are scoped to renderer generation, room/session, viewer role, view-card ID,

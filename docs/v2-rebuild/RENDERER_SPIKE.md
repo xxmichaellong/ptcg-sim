@@ -1734,8 +1734,9 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      repainted returned lobby fields white; the dark selector now includes the
      lobby-sidebox scope, and the same computed-color assertions are retained as
      the corrective browser proof.
-109. The project owner accepted the narrow ADR-013 legacy-parity path for Change
-     background. Its exact source control and prompt accept `blank`, randomized
+109. The first ADR-013 checkpoint restored Change background before the owner
+     broadened the accepted policy to custom faces and backs. Its exact source
+     control and prompt accept `blank`, randomized
      `theme`, or any player-pasted image URL. Image values preload before paint;
      invalid loads retain the prior background and show the source error. A
      latest-request/teardown guard prevents stale completion, while the selected
@@ -1743,8 +1744,9 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      route-only DOM/CSS presentation, not `BoardPreferences`: the URL never
      reaches Pixi, room commands, authority, peers, replay, storage, or telemetry.
      The selecting browser's direct request and resulting host-visible network
-     metadata are explicitly accepted; arbitrary live card/back assets remain
-     outside this exception. Unit/component coverage pins prompt keywords,
+     metadata are explicitly accepted. ADR-013 now also preserves direct
+     arbitrary custom-card face URLs for authorized viewers and public custom
+     card backs for displaying recipients. Unit/component coverage pins prompt keywords,
      arbitrary load/failure/cancellation, single-layer CSS escaping, retention,
      and zero session effects; the multi-context browser journey intercepts and
      renders an actual external URL for one player only and retains it after
@@ -2046,10 +2048,9 @@ wiring:
 - a manual screen-reader audit beyond the automated replay-local and transformed
   stack/zone-dialog semantic names, roles, keyboard traversal/wrap,
   focus-visible paint/return, exact face assets, and stable geometry;
-- actual supported card-face/back hosts, cross-origin redirect chains,
-  oversized assets, and their final privacy/proxy/hybrid policy outside
-  ADR-013's accepted player-selected page-background exception (the controlled
-  DOM gate now covers an intercepted external hostname, no-CORS success,
+- actual supported card-face/back hosts, cross-origin redirect chains, and
+  oversized assets under ADR-013's accepted direct native-DOM policy (the
+  controlled DOM gate now covers an intercepted external hostname, no-CORS success,
   missing/corrupt containment, same-origin redirect completion, and stable-node
   recovery);
 - physical background freeze/resume and BFCache behavior plus non-Chromium

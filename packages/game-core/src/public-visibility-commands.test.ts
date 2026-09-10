@@ -81,6 +81,82 @@ const fixture = () => {
 };
 
 describe('atomic public visibility commands', () => {
+  it('preserves arbitrary custom image URLs only across their intended visibility boundary', () => {
+    const customFaceUrl =
+      'https://unlisted-player-images.example/custom-face.png?variant=one';
+    const customBackUrl =
+      'https://another-unlisted-host.example/custom-card-back.webp';
+    const context = createContext();
+    let state = createEmptyMatch(asMatchId('custom-image-visibility-match'), [
+      { playerId: p1, displayName: 'Blue', cardBackUrl: customBackUrl },
+      { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
+    ]);
+    state = accepted(
+      state,
+      {
+        type: 'LoadDeck',
+        playerId: p1,
+        entries: [
+          {
+            definition: {
+              id: asCardDefinitionId('player-selected-definition'),
+              name: 'Player-selected card',
+              category: 'Pokémon',
+              imageUrl: customFaceUrl,
+            },
+            count: 14,
+          },
+        ],
+      },
+      context
+    ).state;
+    state = accepted(
+      state,
+      { type: 'SetupPlayer', playerId: p1 },
+      context
+    ).state;
+
+    const prizeId = playerZoneId(p1, 'prizes');
+    const prizeCards = [...state.zones[prizeId]!.cardIds];
+    const concealed = projectMatch(
+      state,
+      { kind: 'player', playerId: p2 },
+      identities
+    );
+    expect(concealed.players[p1]?.cardBackUrl).toBe(customBackUrl);
+    expect(
+      concealed.zones[prizeId]!.cards.every(
+        (card) =>
+          card.kind === 'concealed' && card.cardBackUrl === customBackUrl
+      )
+    ).toBe(true);
+    expect(stableSerialize(concealed)).not.toContain(customFaceUrl);
+
+    const revealed = accepted(
+      state,
+      {
+        type: 'SetZonePublicReveal',
+        actorPlayerId: p1,
+        playerId: p1,
+        zoneId: prizeId,
+        expectedCardIds: prizeCards,
+        revealed: true,
+      },
+      context
+    ).state;
+    const publicView = projectMatch(
+      revealed,
+      { kind: 'player', playerId: p2 },
+      identities
+    );
+    expect(
+      Object.values(publicView.definitions).map(
+        (definition) => definition.imageUrl
+      )
+    ).toContain(customFaceUrl);
+    assertMatchInvariants(revealed);
+  });
+
   it('reveals and hides the exact prize zone with replay-safe concealment', () => {
     const prepared = fixture();
     const prizeId = playerZoneId(p1, 'prizes');

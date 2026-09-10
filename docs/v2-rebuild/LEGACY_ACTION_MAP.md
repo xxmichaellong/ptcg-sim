@@ -40,10 +40,11 @@ and empty-tuple `attack` and `pass` records also
 reuse their canonical atomic commands, but every other action is rejected before
 constructing state. This is intentionally not yet a complete import
 compatibility claim: reachable loose-board take-turn cleanup and owner reset are
-now proven alongside owned-stadium and play-stack reset. Saved custom card-back
-URLs now have an approved zero-batch normalization to the integrity-gated V2
-asset; cross-owner play state that cannot be proven from source coordinates
-remains fail-closed.
+now proven alongside owned-stadium and play-stack reset. The current unwired
+custom-card-back normalization checkpoint is superseded by ADR-013 and must
+become a bounded replayable card-back transition before route installation;
+cross-owner play state that cannot be proven from source coordinates remains
+fail-closed.
 Category-interleaved staged tail returns now use the explicit flat work-area
 order described below. The eight reveal/look dispatcher
 names are socket-only presentation operations rather than native saved records;
@@ -464,13 +465,13 @@ authority, state, public API, renderer, route, UI, or UX schema changes.
 The card-back family admits exact `changeCardBack [sourceUrl]` records only when
 the value is a nonempty string. V1 gates its local control through `Image`
 loading, mutates one of three perspective-dependent card-back fields, replaces
-matching image nodes, and then exports the arbitrary value. The private decoder
-retains no URL, and the public transaction accepts only target seat identities
-and display names: both canonical players receive `/v2/assets/cardback.png`.
-Each source action remains a zero-batch record for chronology and undo behavior,
-while its field path and a counted `custom_card_back_urls_normalized` warning
-make the compatibility exception explicit. Invalid tuples reject the entire
-candidate. No source URL is parsed, fetched, proxied, stored, or returned.
+matching image nodes, and then exports the arbitrary value. The current unwired
+pre-ADR-013 checkpoint retains no URL and normalizes both players to
+`/v2/assets/cardback.png`, reporting `custom_card_back_urls_normalized`. The
+accepted target instead retains each bounded value, emits a canonical
+player-card-back event in source order, lets whole-match undo restore the prior
+value, and persists the resulting final backs. Invalid tuples still reject the
+entire candidate, and no server/importer fetches or proxies a source URL.
 
 The resolved-random family now admits exact
 `playRandomCardFaceDown [initiator, randomIndex]` records. V1 stores the

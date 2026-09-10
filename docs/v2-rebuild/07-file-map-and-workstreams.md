@@ -281,12 +281,14 @@ The public legacy-import boundary now also provides an unwired byte conversion
 transaction and versioned report. It hashes exact bounded source bytes and
 canonical stable-serialized target state with separate SHA-256 identities,
 returns no state on any parse/semantic failure, and inventories omitted V1-only
-presentation fields. `decode-card-back-actions.ts` validates saved custom-back
-tuples without retaining their URLs; the transaction excludes caller-provided
-card-back URLs, forces the integrity-gated canonical V2 asset, and reports every
-normalized value by record/path and count. The earlier table wording that leaves
-reports or custom-card-back policy pending is superseded by these checkpoints;
-corpus evidence and route installation remain.
+presentation fields. The current unwired `decode-card-back-actions.ts`
+checkpoint validates saved custom-back tuples without retaining their URLs and
+reports normalization to the shipped asset. Broadened ADR-013 supersedes that
+behavior: before route installation the decoder and canonical transaction must
+retain bounded URLs, apply replayable ordered card-back changes, and preserve
+the final value for each side without fetching it. The long table's URL-free
+normalization wording describes the current checkpoint, not the accepted
+release target. Corpus evidence and route installation remain.
 
 Route installation is now mechanically quarantined: no workspace may declare
 the importer as a production, optional, or peer runtime dependency, and neither
