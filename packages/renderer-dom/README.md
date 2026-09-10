@@ -12,4 +12,5 @@ Card nodes retain the legacy side-specific border radii and shadow opacity. The
 contained pile/stadium, ordinary-evolution, stable one- and two-Energy,
 rotated Trainer-as-Tool, and settled mixed-stack browser gates compare
 isolated source/candidate card paint in addition to exact structured
-geometry and hit order.
+geometry and hit order. The pristine active-marker gate applies the same
+comparison to card/marker compositing and typography.

@@ -12429,7 +12429,8 @@ type RawMarkerRotationCase = Omit<
  * a narrow transcription of the digest-pinned legacy functions.
  */
 export const captureLegacySourceMarkerRotationFixture = async (
-  page: Page
+  page: Page,
+  options: { readonly retainStablePaint?: boolean } = {}
 ): Promise<LegacySourceMarkerRotationFixture> => {
   const loaded = await loadLegacySourceBoard(page);
   const rawCases: { side: LegacyFixtureSide; value: RawMarkerRotationCase }[] =
@@ -12984,6 +12985,18 @@ export const captureLegacySourceMarkerRotationFixture = async (
               '[data-legacy-marker-card-id]'
             ).length,
           };
+          if (input.retainStablePaint) {
+            wrapper.style.marginRight = initialWrapperMargins.inlineRight;
+            wrapper.style.marginLeft = initialWrapperMargins.inlineLeft;
+            image.style.transform = 'rotate(0deg)';
+            active.append(wrapper);
+            wrapper.append(image);
+            addDamageCounter('130', false);
+            addSpecialCondition(false);
+            updateSpecialCondition('P', false);
+            addAbilityCounter(false);
+            await waitForStableLayout();
+          }
           wrapperObserver.disconnect();
 
           return {
@@ -12996,7 +13009,7 @@ export const captureLegacySourceMarkerRotationFixture = async (
             cleanup,
           };
         },
-        { side }
+        { side, retainStablePaint: options.retainStablePaint ?? false }
       );
     rawCases.push({ side, value });
   }

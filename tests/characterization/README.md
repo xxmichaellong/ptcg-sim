@@ -238,6 +238,12 @@ source-history-dependent active layout, BREAK/compound and
 attachment rotation, movement/evolution/refresh transfer, text-entry gestures,
 alternate layouts, and Pixi-native paint/hit parity remain deferred.
 
+The source-to-React browser path also retains a fresh pristine q0 state only
+after recording the source cleanup, pins both card definitions to the exact
+cardback, and compares the two cards plus all six markers over white. Attached
+screenshots and foreground metrics must satisfy the shared 97.5%, three-pixel,
+24-channel-value contract in both directions.
+
 `legacy-bench-marker-rotation-layout.test.ts` independently pins the narrower
 sole-bench source history. Local and opponent cases contain one ordinary card,
 one damage circle, and one ability-used tab; canonical visible controls,

@@ -782,6 +782,15 @@ views update and clean up without card asset churn. Real owner, opponent, and
 spectator sessions retain distinct stable aliases and identical normalized
 geometry without serializing canonical card or definition IDs.
 
+For paint evidence, the source harness optionally restores the pristine q0 card
+and all three markers only after its recorded cleanup reaches zero marker, card,
+and wrapper nodes. The browser then isolates the two local/opponent cards and
+six damage, poison, and ability markers alongside the React equivalents. Both
+card definitions use the digest-pinned card back, and the attached screenshots
+must meet the shared 97.5%, three-pixel, 24/255-channel foreground contract in
+both directions. This covers q0 marker/card compositing and typography, not the
+rotated or history-retained phases.
+
 Rotated bench markers, BREAK and compound evolution/group rotation,
 Energy/Trainer rotation, marker transfer/reconstruction, editing gestures,
 alternate layouts, and Pixi-native paint/hit parity remain deferred.

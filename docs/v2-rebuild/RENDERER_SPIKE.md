@@ -1820,6 +1820,15 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      the existing active/bench structured geometry and native-hit assertions.
      Transient wrappers, category-cycle paint, alternate assets, and Pixi paint
      remain excluded.
+117. The pristine active-marker checkpoint now retains a fresh q0 source scene
+     after the independent rotation history records complete marker/card/wrapper
+     cleanup. Its two card images and six local/opponent damage,
+     special-condition, and ability-used markers are isolated together over
+     white and pass the shared bidirectional screenshot gate against React DOM.
+     This supplements the existing box, palette, text, typography, z-order, and
+     intentional pointer-policy assertions; rotated/history-dependent marker
+     paint, editing interactions, alternate assets, and Pixi paint remain
+     excluded.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
