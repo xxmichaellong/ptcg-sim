@@ -319,7 +319,12 @@ test('manual handoff admits player two and distinct repeat spectators across iso
         expect(JSON.stringify(exposed)).not.toContain(secret);
       }
     }
-    expect(errors).toEqual([]);
+    // Chromium reports a failed-resource console error for the deliberate 403
+    // above even though Fetch resolves and the client handles it. Require that
+    // exact rejection signal, and no unrelated page or console failures.
+    expect(errors).toEqual([
+      'console: Failed to load resource: the server responded with a status of 403 (Forbidden)',
+    ]);
   } finally {
     await Promise.all(contexts.map((context) => context.close()));
   }
