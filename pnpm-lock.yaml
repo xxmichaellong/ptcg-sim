@@ -88,6 +88,9 @@ importers:
       '@ptcgsim/client-session':
         specifier: workspace:*
         version: link:../../packages/client-session
+      '@ptcgsim/deck-core':
+        specifier: workspace:*
+        version: link:../../packages/deck-core
       '@ptcgsim/game-core':
         specifier: workspace:*
         version: link:../../packages/game-core

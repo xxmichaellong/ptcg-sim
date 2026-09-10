@@ -17,9 +17,9 @@ The package owns only deterministic data work:
 
 It does not own React state, file pickers, unload prompts, downloads, browser
 storage, image loading, or TCGdex requests. Those concerns belong to explicit
-web adapters. In particular, the existing network-bound search implementation
-was not copied into this package: the later catalog adapter will inject request
-and cancellation behavior and return data to these pure search controls.
+web adapters. The existing network-bound search implementation is therefore not
+inside this package: the unmounted web catalog adapter injects request and
+cancellation behavior and returns data to these pure search controls.
 
 ## Compatibility contract
 
@@ -72,12 +72,63 @@ packages/deck-core/
   src/csv-adapter.ts       bounded transactional interchange
   src/card-search.ts       pure normalization/planning/local controls
   src/index.ts             reviewed minimal public API
+apps/web/src/features/deck/
+  tcgdex-card-catalog.ts        browser catalog orchestration and public seam
+  tcgdex-catalog-contract.ts    provider limits, types, and typed failures
+  tcgdex-catalog-http.ts        bounded direct-browser JSON transport
+  tcgdex-catalog-decode.ts      strict provider response normalization
+  tcgdex-catalog-runtime.ts     bounded concurrency and set-date LRU cache
 ```
 
 The package has no runtime dependencies and uses an ES-only TypeScript project.
-It is a root project reference and a reviewed public-API entrypoint. No app
-declares it as a dependency until a production consumer is ready in the same
-reviewed change.
+It is a root project reference and a reviewed public-API entrypoint. The web app
+declares it only for the isolated catalog adapter; no route imports either one,
+so neither enters the production module graph yet.
+
+## TCGdex catalog adapter checkpoint
+
+The provider boundary follows the current official TCGdex v2 REST contract:
+
+- REST is HTTPS, GET-only JSON according to the
+  [official REST overview](https://tcgdex.dev/rest);
+- card search returns `CardBrief` objects from `/v2/en/cards` according to the
+  [official card-list documentation](https://tcgdex.dev/rest/cards);
+- query fields use the provider's default case-insensitive contains filter, with
+  `name=pikachu` as its documented example, according to the
+  [official filtering documentation](https://tcgdex.dev/rest/filtering-sorting-pagination);
+- detailed cards come from `/v2/en/cards/{id}` according to the
+  [official card documentation](https://tcgdex.dev/rest/card); and
+- set release dates come from `/v2/en/sets/{id}` according to the
+  [official set documentation](https://tcgdex.dev/rest/set).
+
+The `tcgdex-catalog-*` modules preserve the valid v1 search behavior while
+closing its lifecycle and resource gaps:
+
+- normalized terms and LV.X/EX/GX plans come from `deck-core`; dual spellings
+  retain query order and deduplicate IDs;
+- an empty term performs no request and a result above 2,000 summaries performs
+  no detail requests;
+- at most 150 details are hydrated, with eight concurrent detail requests and
+  four concurrent set requests by default;
+- list, detail, and set bodies have independent code-unit limits and every
+  consumed provider field has a type/length decoder;
+- non-2xx, unreadable, malformed JSON, invalid shape, and oversized search
+  responses fail with typed errors; an individual bad detail or set lookup is
+  contained as in v1;
+- one `AbortSignal` covers list, detail, and set work, and cancellation is never
+  converted into a successful empty result;
+- requests omit credentials, request JSON directly from TCGdex, and never use a
+  server proxy; and
+- set release dates use an explicit 512-entry least-recently-used cache with a
+  lifecycle `clearCache` operation.
+
+Seventeen deterministic adapter tests cover query construction, normalization,
+deduplication, huge-result/detail limits, detail and set concurrency, normalized
+cards, partial provider failure, response validation and size limits, bounded
+cache eviction/clearing, missing browser fetch, and cancellation before and
+during hydration. A read-only live smoke on 2026-09-10 returned and normalized
+all 12 current `Furret` summaries; its first card's set date was hydrated through
+the set endpoint. This live observation is evidence, not a CI dependency.
 
 ## Verification and success criteria
 
@@ -95,15 +146,13 @@ This checkpoint is complete when:
 
 The following remain separate, reviewable checkpoints:
 
-1. add an abortable TCGdex catalog adapter with injected transport, bounded
-   concurrency, response validation, caching, and failure tests;
-2. add a headless main/alternate deck-builder store with dirty-state semantics;
-3. add file/download/unload and canonical deck-install adapters;
-4. reconstruct the existing Deck panel in React without changing its controls,
+1. add a headless main/alternate deck-builder store with dirty-state semantics;
+2. add file/download/unload and canonical deck-install adapters;
+3. reconstruct the existing Deck panel in React without changing its controls,
    labels, layout, target-main/alternate behavior, or keyboard flow;
-5. connect the already prepared custom-card-back chooser at its original Deck
+4. connect the already prepared custom-card-back chooser at its original Deck
    panel location; and
-6. activate the panel only after component, browser, multiplayer, solo, import,
+5. activate the panel only after component, browser, multiplayer, solo, import,
    and accessibility parity evidence is green.
 
 Rollback for this checkpoint is removal of the unused package and its project,

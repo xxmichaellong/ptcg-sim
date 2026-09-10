@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ptcgsim/client-session": "workspace:*",
+    "@ptcgsim/deck-core": "workspace:*",
     "@ptcgsim/game-core": "workspace:*",
     "@ptcgsim/protocol": "workspace:*",
     "@ptcgsim/renderer-contract": "workspace:*",
