@@ -107,7 +107,9 @@ stable oracle also covers rotated paint overflow, z/DOM/hit order, attachment
 state, and observer-settled wrapper cleanup. Its browser companion now compares
 the strict one-base/one-Trainer production scene and React DOM paint to all four
 source boxes, rotations, z ranks, and hit regions. Shared center-rotated hit/drop
-containment is independently verified in both candidates. Energy and
+containment is independently verified in both candidates. It also attaches
+isolated source/candidate screenshots and foreground metrics under the shared
+97.5%, three-pixel, and 24-channel-value paint contract. Energy and
 mixed/multiple attachments, category history, departure and stale margins,
 evolution combinations, bench/flex competition, markers, BREAK/compound
 rotation, alternate layouts, wrapper/sibling identity, and Tool-specific Pixi

@@ -522,6 +522,13 @@ within 2 px / 1% / 0.1 degrees. A separate both-candidate fixture verifies the
 same painted-only versus authored-layout-only click/drop boundary and removes
 Pixi's incorrect CSS-pixel explicit sprite hit area.
 
+The browser companion also isolates the four base/Tool card images over white
+and attaches source/candidate screenshots plus bidirectional foreground
+metrics. The shared 97.5% match requirement with a three-pixel and
+24/255-channel compositor allowance covers both portrait bases and the
+center-rotated 90/270-degree Tool paint without replacing the numeric authored-
+versus-painted rectangle or native-hit assertions.
+
 Energy retains its separate strict path; mixed ordering, multiple attachments,
 departures and stale margins, category history, evolution combinations,
 bench/flex variants, markers, BREAK/compound rotation, alternate layouts,

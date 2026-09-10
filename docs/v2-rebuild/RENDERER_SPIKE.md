@@ -1784,6 +1784,15 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      evolution and Energy gates pass together after the extraction. Multiple or
      mixed attachments, departure transitions, alternate assets, and Pixi
      paint remain outside this checkpoint.
+113. The stable Trainer-as-Tool checkpoint extends isolated paint evidence to
+     the first transformed attachment mode. Its local Tool paints at 90 degrees
+     and its opponent Tool at an effective 270 degrees, including overflow
+     beyond the authored portrait box. The four source/candidate base-and-Tool
+     cards satisfy the shared 97.5%, three-pixel, 24-channel-value paint gate
+     alongside the unchanged structured transformed/untransformed rectangles,
+     z-order, and common/Tool-only/base-only/authored-only hit regions. Mixed
+     categories, multiple Tools, transition history, alternate assets, and Pixi
+     paint remain excluded.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
