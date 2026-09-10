@@ -154,6 +154,7 @@ describe('RendererSpikeBoard application boundary', () => {
       reducedMotion: false,
       highContrast: false,
       darkMode: true,
+      showZoneOutlines: true,
     };
     const light: BoardPreferences = { ...dark, darkMode: false };
     const props = {

@@ -90,7 +90,9 @@ uses the same route-owned durable teardown as Leave Room. Game-state/replay
 import and export, Deck/Settings navigation, and the remaining focus/visual
 parity remain later slices. An optional route-owned `BoardPreferences` seam now
 crosses the live/replay wrapper and updates either renderer in place; it does not
-yet mount Settings UI or persist anything.
+yet mount Settings UI or persist anything. The renderer-neutral preferences now
+include default-visible zone/stadium outlines: hiding them removes only the
+legacy translucent paint while retaining the same accessible hit regions.
 
 The default v2 card back is published at `/v2/assets/cardback.png`. It is an
 exact byte copy of the current v1 PNG, and the build gate verifies its digest,

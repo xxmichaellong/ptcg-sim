@@ -6,4 +6,6 @@ hit testing, and stable-ID scene diffing for the v2 client.
 The package consumes only recipient-safe `MatchViewState` projections. It does
 not import canonical match state, networking, React, PixiJS, or legacy DOM code.
 Both competitive renderer spikes must consume this exact scene and emit the same
-semantic intents.
+semantic intents. Local `BoardPreferences` include a default-visible legacy
+zone/stadium outline policy; hiding that paint never removes scene nodes or
+their interaction geometry.

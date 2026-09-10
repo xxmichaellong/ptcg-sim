@@ -17,6 +17,8 @@ export interface BoardPreferences {
   readonly reducedMotion: boolean;
   readonly highContrast: boolean;
   readonly darkMode: boolean;
+  /** Paints the legacy translucent zone/stadium containers when enabled. */
+  readonly showZoneOutlines: boolean;
 }
 
 export interface BoardPresentation {

@@ -226,6 +226,12 @@ export class PixiBoardRenderer implements BoardRenderer {
       this.app.canvas.dataset.reducedMotion = String(preferences.reducedMotion);
       this.app.canvas.dataset.highContrast = String(preferences.highContrast);
       this.app.canvas.dataset.darkMode = String(preferences.darkMode);
+      this.app.canvas.dataset.showZoneOutlines = String(
+        preferences.showZoneOutlines
+      );
+      for (const zone of this.layers?.playmat.children ?? []) {
+        zone.alpha = preferences.showZoneOutlines ? 1 : 0;
+      }
       this.renderOnce();
     }
   }
@@ -368,6 +374,7 @@ export class PixiBoardRenderer implements BoardRenderer {
         .fill({ color: 0xffffff, alpha: 0.1 })
         .stroke({ color: 0x000000, alpha: 0.1, width: 2 });
       graphic.zIndex = zone.zIndex;
+      graphic.alpha = this.preferences.showZoneOutlines ? 1 : 0;
       graphic.eventMode = zone.interactive ? 'static' : 'none';
       graphic.cursor = zone.interactive ? 'pointer' : 'default';
       graphic.accessible = zone.interactive;

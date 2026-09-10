@@ -6,3 +6,5 @@ assumed temporary implementation.
 
 React reconciliation only sees recipient-safe immutable board scenes. It does
 not own game rules, canonical state, networking, or renderer-derived state.
+Renderer preferences update the mounted tree in place, including removal of
+zone/stadium paint while retaining the same accessible DOM hit regions.

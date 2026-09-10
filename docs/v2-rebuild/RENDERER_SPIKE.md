@@ -1700,6 +1700,14 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      presentation owners; omitted callers retain the renderer defaults without
      an extra repaint. This is a UI-neutral Settings foundation only: no panel,
      storage, server command, custom background, or new preference is wired.
+106. `BoardPreferences.showZoneOutlines` now provides the renderer-neutral,
+     default-`true` policy required by the legacy checked “Hide containers”
+     control. DOM removes only each zone/stadium background and shadow; Pixi
+     sets equivalent playmat graphics to zero alpha. Both keep the same scene
+     nodes, bounds, stable identity, accessible metadata, and interactive hit
+     regions, and restore paint in place without scene installation. Focused
+     renderer tests cover defaults, hide/restore, paint, geometry, and input;
+     the Settings owner and visible checkbox remain a later slice.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

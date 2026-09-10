@@ -274,6 +274,54 @@ describe('React DOM board renderer', () => {
     expect(statuses.at(-1)).toEqual({ kind: 'destroyed' });
   });
 
+  it('hides only zone paint while preserving the same accessible hit region', async () => {
+    const emitIntent = vi.fn();
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent,
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+
+    await mountInAct(renderer, host, createScene());
+    const surface = host.querySelector<HTMLElement>('.ptcgsim-board-surface')!;
+    const zone = host.querySelector<HTMLElement>('[data-zone-id]')!;
+    expect(surface.dataset.showZoneOutlines).toBe('true');
+    expect(zone.style.background).toBe('rgba(255, 255, 255, 0.1)');
+    expect(zone.style.boxShadow).toBe('2px 2px 5px rgba(0, 0, 0, 0.1)');
+
+    act(() =>
+      renderer.setPreferences({
+        ...DEFAULT_BOARD_PREFERENCES,
+        showZoneOutlines: false,
+      })
+    );
+    expect(surface.dataset.showZoneOutlines).toBe('false');
+    expect(zone.style.background).toBe('transparent');
+    expect(zone.style.boxShadow).toBe('none');
+    expect(zone.getAttribute('role')).toBe('button');
+    expect(zone.getAttribute('aria-haspopup')).toBe('dialog');
+    expect(zone.tabIndex).toBe(0);
+    zone.dispatchEvent(
+      new MouseEvent('dblclick', { bubbles: true, detail: 2 })
+    );
+    expect(emitIntent).toHaveBeenCalledWith({
+      kind: 'ZoneOpened',
+      zoneId: 'zone:p1:hand',
+    });
+
+    act(() => renderer.setPreferences(DEFAULT_BOARD_PREFERENCES));
+    expect(surface.dataset.showZoneOutlines).toBe('true');
+    expect(zone.style.background).toBe('rgba(255, 255, 255, 0.1)');
+    expect(zone.style.boxShadow).toBe('2px 2px 5px rgba(0, 0, 0, 0.1)');
+
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
+  });
+
   it('preserves generic marker appearance and stable keyed DOM identity', async () => {
     const renderer = new ReactDomBoardRenderer({
       emitIntent: vi.fn(),

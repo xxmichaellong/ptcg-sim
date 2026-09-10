@@ -8,4 +8,6 @@ The current Phase 4 implementation provides stable card views, deduplicated and
 stale-safe texture binding, immediate private-texture release, on-demand renders,
 semantic input intents, bounded context-loss reconstruction, and idempotent deep
 teardown. Renderer selection remains provisional until browser parity and
-performance evidence is recorded.
+performance evidence is recorded. Local preference updates retain the Pixi
+scene graph and interaction geometry; the legacy container-visibility option
+changes only zone/stadium alpha.

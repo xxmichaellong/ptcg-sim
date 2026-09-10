@@ -126,6 +126,9 @@ the relevant product decisions and phase exit criteria.
   to the same durable route teardown as Leave Room. The board composition now
   accepts optional route-owned local preferences across live and replay without
   remounting its renderer; the Settings panel/store remains unwired.
+  The shared preference contract also models the legacy “Hide containers”
+  checkbox as default-visible zone/stadium paint. DOM and Pixi hide only that
+  paint while preserving stable nodes, geometry, accessibility, and input.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 

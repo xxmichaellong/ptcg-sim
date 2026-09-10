@@ -1593,6 +1593,12 @@ preferences install after asynchronous mount and update in place; removing the
 value restores the renderer defaults, while callers that never opt in incur no
 extra repaint. No Settings panel, browser storage, server command, or custom
 background boundary is implied by this seam.
+`BoardPreferences.showZoneOutlines` now models the existing checked “Hide
+containers” behavior with a positive, default-`true` renderer contract. DOM
+removes only the translucent background and shadow; Pixi makes the equivalent
+zone/stadium graphics fully transparent. Both retain the same scene nodes,
+bounds, pointer/keyboard behavior, accessibility metadata, and stable identity,
+and preference changes do not reinstall the scene.
 
 ## Rendering cadence and performance
 

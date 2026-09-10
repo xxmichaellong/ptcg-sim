@@ -92,9 +92,11 @@ const BoardControlsAnchorNode = memo(function BoardControlsAnchorNode({
 
 const ZoneNode = memo(function ZoneNode({
   zone,
+  showOutline,
   emitIntent,
 }: {
   readonly zone: ZoneSceneNode;
+  readonly showOutline: boolean;
   readonly emitIntent: BoardRendererAdapters['emitIntent'];
 }) {
   return (
@@ -110,8 +112,8 @@ const ZoneNode = memo(function ZoneNode({
       style={{
         ...absoluteRect(zone.bounds, zone.zIndex),
         borderRadius: 15,
-        background: 'rgba(255, 255, 255, 0.1)',
-        boxShadow: '2px 2px 5px rgba(0, 0, 0, 0.1)',
+        background: showOutline ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+        boxShadow: showOutline ? '2px 2px 5px rgba(0, 0, 0, 0.1)' : 'none',
         pointerEvents: zone.interactive ? 'auto' : 'none',
       }}
       onDoubleClick={() => {
@@ -388,6 +390,7 @@ export const BoardSurface = ({
       data-reduced-motion={preferences.reducedMotion ? 'true' : 'false'}
       data-high-contrast={preferences.highContrast ? 'true' : 'false'}
       data-dark-mode={preferences.darkMode ? 'true' : 'false'}
+      data-show-zone-outlines={preferences.showZoneOutlines ? 'true' : 'false'}
       data-dragging={presentation.drag ? 'true' : 'false'}
       onPointerDown={(event) => {
         const target = pointerCard(event);
@@ -453,7 +456,12 @@ export const BoardSurface = ({
         anchor={scene.layout.shared.boardControlsAnchor}
       />
       {scene.zones.map((zone) => (
-        <ZoneNode key={zone.id} zone={zone} emitIntent={adapters.emitIntent} />
+        <ZoneNode
+          key={zone.id}
+          zone={zone}
+          showOutline={preferences.showZoneOutlines}
+          emitIntent={adapters.emitIntent}
+        />
       ))}
       {scene.cards.map((card) => (
         <CardNode

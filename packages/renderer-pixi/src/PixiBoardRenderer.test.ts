@@ -7,6 +7,7 @@ import {
   createBoardScene,
   createBoardSceneForViewport,
   createRendererSpikeView,
+  DEFAULT_BOARD_PREFERENCES,
   DEFAULT_BOARD_PRESENTATION,
   DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
   type BoardPresentation,
@@ -443,6 +444,61 @@ describe('Pixi board interaction cancellation', () => {
       contextLossListeners: 0,
       displayObjects: 0,
     });
+  });
+
+  it('hides only zone paint while preserving the same accessible hit region', async () => {
+    vi.spyOn(Assets, 'load').mockResolvedValue(Texture.WHITE);
+    vi.spyOn(Assets, 'unload').mockResolvedValue(undefined);
+    const emitIntent = vi.fn();
+    const application = fakeApplication();
+    const renderer = new PixiBoardRenderer(
+      {
+        emitIntent,
+        emitPresentationUpdate: vi.fn(),
+        reportError: vi.fn(),
+      },
+      { createApplication: () => application }
+    );
+    const currentScene = scene();
+    await renderer.mount(
+      document.createElement('div'),
+      currentScene,
+      DEFAULT_BOARD_PRESENTATION
+    );
+    await Promise.resolve();
+    const internals = renderer as unknown as RendererInternals;
+    const zone = internals.layers!.playmat.children[0]!;
+    expect(application.canvas.dataset.showZoneOutlines).toBe('true');
+    expect(zone.alpha).toBe(1);
+    expect(zone.visible).toBe(true);
+
+    renderer.setPreferences({
+      ...DEFAULT_BOARD_PREFERENCES,
+      showZoneOutlines: false,
+    });
+    expect(application.canvas.dataset.showZoneOutlines).toBe('false');
+    expect(zone.alpha).toBe(0);
+    expect(zone.visible).toBe(true);
+    expect(zone.eventMode).toBe('static');
+    expect(zone.accessible).toBe(true);
+    const zoneBounds = currentScene.zones[0]!.bounds;
+    expect(
+      zone.containsPoint({
+        x: zoneBounds.x + zoneBounds.width / 2,
+        y: zoneBounds.y + zoneBounds.height / 2,
+      })
+    ).toBe(true);
+    zone.emit('pointertap', { button: 0, detail: 2 });
+    expect(emitIntent).toHaveBeenCalledWith({
+      kind: 'ZoneOpened',
+      zoneId: currentScene.zones[0]!.id,
+    });
+
+    renderer.setPreferences(DEFAULT_BOARD_PREFERENCES);
+    expect(application.canvas.dataset.showZoneOutlines).toBe('true');
+    expect(zone.alpha).toBe(1);
+    renderer.destroy();
+    await Promise.resolve();
   });
 
   it('reuses keyed generic and active-q0 marker views through style updates and removal without card asset churn', async () => {

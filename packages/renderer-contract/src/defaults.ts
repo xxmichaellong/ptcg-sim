@@ -22,4 +22,5 @@ export const DEFAULT_BOARD_PREFERENCES: BoardPreferences = {
   reducedMotion: false,
   highContrast: false,
   darkMode: false,
+  showZoneOutlines: true,
 };

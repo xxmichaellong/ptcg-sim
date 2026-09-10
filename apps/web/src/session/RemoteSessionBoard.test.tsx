@@ -140,6 +140,7 @@ describe('RemoteSessionBoard replay binding', () => {
       reducedMotion: false,
       highContrast: false,
       darkMode: true,
+      showZoneOutlines: true,
     };
     const host = document.createElement('div');
     document.body.append(host);
