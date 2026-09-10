@@ -226,8 +226,18 @@ const createFixture = (): PrivacyFixture => {
     },
     context
   );
-  const privateOpened = accepted(
+  const ownerConsented = accepted(
     state,
+    { type: 'SetCoachingConsent', playerId: owner, consent: true },
+    context
+  );
+  const mutuallyConsented = accepted(
+    ownerConsented,
+    { type: 'SetCoachingConsent', playerId: observer, consent: true },
+    context
+  );
+  const privateOpened = accepted(
+    mutuallyConsented,
     {
       type: 'BeginCardInspection',
       playerId: owner,
