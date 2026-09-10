@@ -168,8 +168,51 @@ select {
 }
 
 .legacy-room-settings #darkModeCheckbox,
-.legacy-room-settings #showZonesCheckbox {
+.legacy-room-settings #showZonesCheckbox,
+.legacy-room-settings #hideHandCheckbox,
+.legacy-room-settings #keybindReminder {
   margin-top: 1vh;
+}
+
+.legacy-room-settings #keybindReminder {
+  width: 100%;
+  color: grey;
+  text-align: center;
+}
+
+.legacy-room-settings .shift-font {
+  font-family: monospace;
+}
+
+.legacy-room-settings #twitterDescription {
+  position: absolute;
+  bottom: 2%;
+  left: 5%;
+  display: block;
+  max-width: 90%;
+  font-weight: bold;
+}
+
+.legacy-room-settings #twitterDescription a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.legacy-room-settings #twitterDescription a:hover {
+  text-decoration: underline;
+}
+
+.legacy-room-settings #twitterHandle {
+  display: flex;
+  align-items: center;
+  margin-top: 1vh;
+  font-weight: normal;
+}
+
+.legacy-room-settings #twitterHandle svg {
+  width: auto;
+  height: 2vh;
+  margin-right: 0.5vw;
 }
 
 .remote-room-route--dark {
@@ -186,9 +229,9 @@ select {
 
 .remote-room-route--dark .legacy-room-settings #settingsToggles,
 .remote-room-route--dark .legacy-activity-feed,
-.remote-room-route--dark #p2ExplanationBox,
-.remote-room-route--dark #nameInput,
-.remote-room-route--dark #roomIdInput,
+.remote-room-route--dark .legacy-lobby-sidebox #p2ExplanationBox,
+.remote-room-route--dark .legacy-lobby-sidebox #nameInput,
+.remote-room-route--dark .legacy-lobby-sidebox #roomIdInput,
 .remote-room-route--dark #p2MessageInput {
   background: rgb(8 18 18);
   color: #fff;

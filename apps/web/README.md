@@ -93,9 +93,12 @@ crosses the live/replay wrapper and updates either renderer in place. The
 isolated lobby and connected route restore Settings-tab ownership plus the
 existing Dark mode and Hide containers controls. Preferences stay above room
 ownership so they survive lobby/room/replay navigation, but they emit no
-protocol traffic and reset on document reload. Hide opponent hand, custom
-background, and the remaining static Settings content remain later parity
-slices. The renderer-neutral preferences include default-visible zone/stadium
+protocol traffic and reset on document reload. The source Solo-only hand
+checkbox and static keybind/contact content are also restored; on this
+multiplayer-only route the hand value is explicitly local and cannot alter the
+server-projected view. Its source Twitter mark is inline rather than a
+third-party image request. Custom background remains later parity work behind
+ADR-013. The renderer-neutral preferences include default-visible zone/stadium
 outlines: hiding them removes only the legacy translucent paint while retaining
 the same accessible hit regions.
 

@@ -1720,6 +1720,20 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      retention. Hide opponent hand, Change background, and the remaining static
      Settings content remain later slices; arbitrary live background URLs remain
      behind ADR-013.
+108. The next source-shape slice restores the existing Solo-only hide-hand
+     checkbox plus its static keybind reminder and contact block. Because this
+     route is multiplayer-only, the checked value is locally retained across
+     lobby, live room, replay, and explicit Leave but cannot transform the
+     server-projected opponent hand, enter renderer preferences, or produce any
+     session traffic. The contact URL is unchanged; the exact source Twitter SVG
+     is inline, eliminating the legacy third-party image request. Component and
+     full-stack coverage pin labels, links, checked-state retention, unchanged
+     board preferences, and zero socket/submission effects. Change background is
+     now the only missing Settings control and remains behind ADR-013. The first
+     hosted Settings journey also exposed an equal-specificity base rule that
+     repainted returned lobby fields white; the dark selector now includes the
+     lobby-sidebox scope, and the same computed-color assertions are retained as
+     the corrective browser proof.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`

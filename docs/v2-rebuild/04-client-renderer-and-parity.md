@@ -1611,6 +1611,14 @@ their local state. No command, ephemeral message, storage write, or new browser
 listener occurs. Hide opponent hand, Change background, and the remaining
 static Settings content are not part of this bounded slice; arbitrary live
 background URLs remain behind ADR-013.
+The follow-on source-shape slice restores the existing Solo-only hide-hand
+checkbox plus the static keybind reminder and contact block. The route is
+multiplayer-only, so the checkbox retains its local checked state across the
+same lobby/room/replay lifetime but deliberately never transforms the
+server-projected opponent hand, sends a command, or enters `BoardPreferences`.
+The contact link retains its source URL while its exact source Twitter SVG is
+inlined, eliminating the former third-party image fetch. Change background is
+the only remaining Settings control and stays behind ADR-013.
 
 ## Rendering cadence and performance
 

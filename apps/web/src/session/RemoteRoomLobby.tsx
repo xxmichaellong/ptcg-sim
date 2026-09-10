@@ -229,6 +229,7 @@ export const RemoteRoomLobby = ({
   const [preferences, setPreferences] = useState<
     BoardPreferences | undefined
   >();
+  const [hideOpponentHand, setHideOpponentHand] = useState(false);
   const effectivePreferences = preferences ?? DEFAULT_BOARD_PREFERENCES;
   const setDarkMode = (enabled: boolean): void => {
     setPreferences((current) => ({
@@ -490,6 +491,8 @@ export const RemoteRoomLobby = ({
           onLeave={handleLeave}
           {...(preferences ? { preferences } : {})}
           onPreferencesChange={setPreferences}
+          hideOpponentHand={hideOpponentHand}
+          onHideOpponentHandChange={setHideOpponentHand}
         />
       </>
     );
@@ -649,8 +652,10 @@ export const RemoteRoomLobby = ({
         <RemoteRoomSettings
           hidden={activePanel !== 'settings'}
           preferences={effectivePreferences}
+          hideOpponentHand={hideOpponentHand}
           onDarkModeChange={setDarkMode}
           onZoneOutlinesChange={setZoneOutlines}
+          onHideOpponentHandChange={setHideOpponentHand}
         />
       </aside>
     </main>

@@ -225,8 +225,18 @@ describe('RemoteRoomRoute', () => {
     expect((host.querySelector('#p2Box') as HTMLElement).hidden).toBe(true);
     expect(host.querySelector('#darkModeCheckbox')).not.toBeNull();
     expect(host.querySelector('#showZonesCheckbox')).not.toBeNull();
+    expect(host.querySelector('#hideHandCheckbox')).not.toBeNull();
     expect(host.textContent).toContain('Dark mode');
     expect(host.textContent).toContain('Hide containers');
+    expect(host.textContent).toContain("Hide opponent's hand (Solo mode)");
+    expect(host.textContent).toContain('Hold (shift) to view keybinds');
+    const contact = host.querySelector<HTMLAnchorElement>(
+      '#twitterDescription a'
+    )!;
+    expect(contact.href).toBe('https://twitter.com/xxmichaellong');
+    expect(contact.target).toBe('blank');
+    expect(contact.rel).toBe('noopener noreferrer');
+    expect(contact.querySelector('svg')).not.toBeNull();
 
     await act(async () =>
       (host.querySelector('#darkModeCheckbox') as HTMLInputElement).click()
@@ -251,6 +261,14 @@ describe('RemoteRoomRoute', () => {
       darkMode: true,
       showZoneOutlines: false,
     });
+    const preferencesBeforeHideHand = boardHarness.props?.preferences;
+    await act(async () =>
+      (host.querySelector('#hideHandCheckbox') as HTMLInputElement).click()
+    );
+    expect(
+      (host.querySelector('#hideHandCheckbox') as HTMLInputElement).checked
+    ).toBe(true);
+    expect(boardHarness.props?.preferences).toBe(preferencesBeforeHideHand);
     expect(socket.sent).toHaveLength(sentBeforeSettings);
     expect(onSubmission).not.toHaveBeenCalled();
 
@@ -357,6 +375,9 @@ describe('RemoteRoomRoute', () => {
     ).toBe(true);
     expect(
       (host.querySelector('#showZonesCheckbox') as HTMLInputElement).checked
+    ).toBe(true);
+    expect(
+      (host.querySelector('#hideHandCheckbox') as HTMLInputElement).checked
     ).toBe(true);
     await act(async () =>
       (host.querySelector('#p1Button') as HTMLButtonElement).click()

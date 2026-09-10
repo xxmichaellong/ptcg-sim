@@ -41,6 +41,9 @@ export interface RemoteRoomRouteProps {
   /** When supplied with onPreferencesChange, ownership remains above the route. */
   readonly preferences?: BoardPreferences;
   readonly onPreferencesChange?: (preferences: BoardPreferences) => void;
+  /** Source-shaped local checkbox state; multiplayer projections stay unchanged. */
+  readonly hideOpponentHand?: boolean;
+  readonly onHideOpponentHandChange?: (hidden: boolean) => void;
   readonly confirmHeaderLeave?: () => boolean;
   readonly downloadTextFile?: (filename: string, contents: string) => boolean;
   readonly requestFullscreen?: () => boolean;
@@ -58,6 +61,8 @@ export const RemoteRoomRoute = ({
   onLeave,
   preferences: ownedPreferences,
   onPreferencesChange,
+  hideOpponentHand: ownedHideOpponentHand,
+  onHideOpponentHandChange,
   confirmHeaderLeave = confirmConnectedRoomExit,
   downloadTextFile = downloadBrowserTextFile,
   requestFullscreen = requestBrowserFullscreen,
@@ -67,7 +72,13 @@ export const RemoteRoomRoute = ({
   const [localPreferences, setLocalPreferences] = useState<
     BoardPreferences | undefined
   >(ownedPreferences);
+  const [localHideOpponentHand, setLocalHideOpponentHand] = useState(
+    ownedHideOpponentHand ?? false
+  );
   const preferences = onPreferencesChange ? ownedPreferences : localPreferences;
+  const hideOpponentHand = onHideOpponentHandChange
+    ? (ownedHideOpponentHand ?? false)
+    : localHideOpponentHand;
   const effectivePreferences = preferences ?? DEFAULT_BOARD_PREFERENCES;
   const publishPreferences = (next: BoardPreferences): void => {
     if (onPreferencesChange) onPreferencesChange(next);
@@ -84,6 +95,10 @@ export const RemoteRoomRoute = ({
       ...effectivePreferences,
       showZoneOutlines: visible,
     });
+  };
+  const setHideOpponentHand = (hidden: boolean): void => {
+    if (onHideOpponentHandChange) onHideOpponentHandChange(hidden);
+    else setLocalHideOpponentHand(hidden);
   };
 
   return (
@@ -281,8 +296,10 @@ export const RemoteRoomRoute = ({
               <RemoteRoomSettings
                 hidden={activePanel !== 'settings'}
                 preferences={effectivePreferences}
+                hideOpponentHand={hideOpponentHand}
                 onDarkModeChange={setDarkMode}
                 onZoneOutlinesChange={setZoneOutlines}
+                onHideOpponentHandChange={setHideOpponentHand}
               />
             </aside>
           </main>

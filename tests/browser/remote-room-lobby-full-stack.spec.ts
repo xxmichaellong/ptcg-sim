@@ -316,6 +316,26 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect(playerTwo.page.locator('#settingsButton')).toHaveClass(
       'selected-page'
     );
+    await expect(playerTwo.page.locator('#hideHandCheckbox')).not.toBeChecked();
+    await expect(
+      playerTwo.page.locator('label[for="hideHandCheckbox"]')
+    ).toHaveText("Hide opponent's hand (Solo mode)");
+    await expect(playerTwo.page.locator('#keybindReminder')).toHaveText(
+      'Hold (shift) to view keybinds'
+    );
+    const contact = playerTwo.page.locator('#twitterDescription a');
+    await expect(contact).toHaveAttribute(
+      'href',
+      'https://twitter.com/xxmichaellong'
+    );
+    await expect(contact).toHaveAttribute('target', 'blank');
+    await expect(contact.locator('svg')).toHaveCount(1);
+    await playerTwo.page.locator('#hideHandCheckbox').check();
+    await expect(boardSurface).toHaveAttribute('data-dark-mode', 'false');
+    await expect(boardSurface).toHaveAttribute(
+      'data-show-zone-outlines',
+      'true'
+    );
     await playerTwo.page.locator('#darkModeCheckbox').check();
     await expect(boardSurface).toHaveAttribute('data-dark-mode', 'true');
     const roomRoute = playerTwo.page.locator('[data-app-route="remote-room"]');
@@ -441,6 +461,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await playerTwo.page.locator('#settingsButton').click();
     await expect(playerTwo.page.locator('#darkModeCheckbox')).toBeChecked();
     await expect(playerTwo.page.locator('#showZonesCheckbox')).toBeChecked();
+    await expect(playerTwo.page.locator('#hideHandCheckbox')).toBeChecked();
 
     expect(creator.errors).toEqual([]);
     expect(playerTwo.errors).toEqual([]);

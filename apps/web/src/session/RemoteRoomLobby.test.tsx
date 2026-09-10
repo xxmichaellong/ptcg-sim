@@ -25,6 +25,9 @@ const roomRouteHarness = vi.hoisted(() => ({
   preferences: undefined as BoardPreferences | undefined,
   onPreferencesChange: undefined as
     ((preferences: BoardPreferences) => void) | undefined,
+  hideOpponentHand: false,
+  onHideOpponentHandChange: undefined as
+    ((hidden: boolean) => void) | undefined,
 }));
 
 vi.mock('../RendererSpikeBoard.js', () => ({
@@ -40,14 +43,20 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     onLeave,
     preferences,
     onPreferencesChange,
+    hideOpponentHand,
+    onHideOpponentHandChange,
   }: {
     readonly runtime: { readonly label?: string };
     readonly onLeave?: () => void;
     readonly preferences?: BoardPreferences;
     readonly onPreferencesChange?: (preferences: BoardPreferences) => void;
+    readonly hideOpponentHand?: boolean;
+    readonly onHideOpponentHandChange?: (hidden: boolean) => void;
   }) => {
     roomRouteHarness.preferences = preferences;
     roomRouteHarness.onPreferencesChange = onPreferencesChange;
+    roomRouteHarness.hideOpponentHand = hideOpponentHand ?? false;
+    roomRouteHarness.onHideOpponentHandChange = onHideOpponentHandChange;
     return (
       <main data-app-route="test-remote-room">
         {runtime.label}
@@ -246,6 +255,8 @@ describe('remote room lobby wiring', () => {
     lobbyBoardHarness.preferences = undefined;
     roomRouteHarness.preferences = undefined;
     roomRouteHarness.onPreferencesChange = undefined;
+    roomRouteHarness.hideOpponentHand = false;
+    roomRouteHarness.onHideOpponentHandChange = undefined;
   });
 
   it('preserves the legacy multiplayer control shape without creating a room on mount', async () => {
@@ -299,6 +310,18 @@ describe('remote room lobby wiring', () => {
       darkMode: true,
       showZoneOutlines: false,
     });
+    const preferencesBeforeHideHand = lobbyBoardHarness.preferences;
+    await act(async () =>
+      element<HTMLInputElement>(host, '#hideHandCheckbox').click()
+    );
+    expect(element<HTMLInputElement>(host, '#hideHandCheckbox').checked).toBe(
+      true
+    );
+    expect(lobbyBoardHarness.preferences).toBe(preferencesBeforeHideHand);
+    expect(host.textContent).toContain('Hold (shift) to view keybinds');
+    expect(element<HTMLAnchorElement>(host, '#twitterDescription a').href).toBe(
+      'https://twitter.com/xxmichaellong'
+    );
     expect(
       element<HTMLElement>(host, '[data-app-route="remote-room-lobby"]').dataset
         .darkMode
@@ -575,6 +598,15 @@ describe('remote room lobby wiring', () => {
     };
     const { host, root } = await mount(dependencies);
 
+    await act(async () =>
+      element<HTMLButtonElement>(host, '#settingsButton').click()
+    );
+    await act(async () =>
+      element<HTMLInputElement>(host, '#hideHandCheckbox').click()
+    );
+    await act(async () =>
+      element<HTMLButtonElement>(host, '#p2Button').click()
+    );
     await act(async () => {
       element<HTMLButtonElement>(host, '#generateIdButton').click();
       await flush();
@@ -595,6 +627,7 @@ describe('remote room lobby wiring', () => {
       roomRouteHarness.onPreferencesChange?.(retainedPreferences)
     );
     expect(roomRouteHarness.preferences).toEqual(retainedPreferences);
+    expect(roomRouteHarness.hideOpponentHand).toBe(true);
 
     await act(async () =>
       element<HTMLButtonElement>(host, '#testLeaveRoom').click()
@@ -609,6 +642,9 @@ describe('remote room lobby wiring', () => {
       true
     );
     expect(element<HTMLInputElement>(host, '#showZonesCheckbox').checked).toBe(
+      true
+    );
+    expect(element<HTMLInputElement>(host, '#hideHandCheckbox').checked).toBe(
       true
     );
     expect(created.dispose).toHaveBeenCalledOnce();

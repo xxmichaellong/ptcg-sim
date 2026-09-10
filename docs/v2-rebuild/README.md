@@ -132,9 +132,12 @@ the relevant product decisions and phase exit criteria.
   remains mounted.
   The shared preference contract also models the legacy “Hide containers”
   checkbox as default-visible zone/stadium paint. DOM and Pixi hide only that
-  paint while preserving stable nodes, geometry, accessibility, and input. Hide
-  opponent hand, custom background, and remaining static Settings content stay
-  separate parity work; arbitrary live background URLs remain behind ADR-013.
+  paint while preserving stable nodes, geometry, accessibility, and input. The
+  source Solo-only hide-hand checkbox and static keybind/contact block are also
+  restored; on this multiplayer-only route the checkbox cannot transform the
+  server-projected view, and the source Twitter mark is inlined to remove its
+  third-party fetch. Custom background is the only remaining Settings control
+  and stays behind ADR-013.
 - A strangler migration: v1 stays available while v2 reaches parity behind a
   route/feature flag. There is no in-place big-bang rewrite.
 
