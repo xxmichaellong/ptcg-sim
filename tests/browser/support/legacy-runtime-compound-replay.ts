@@ -366,10 +366,13 @@ export const replayCompoundRefreshTrace = async (
       };
       const container = (): HTMLElement => {
         const element = byRole.get('base')?.image.parentElement;
-        if (!(element instanceof HTMLElement)) {
+        // The cards live in the self-player iframe. A top-window
+        // `instanceof HTMLElement` check rejects valid cross-realm elements,
+        // so presence is the correct structural guard here.
+        if (!element) {
           throw new Error('Real-v1 compound card has no play container');
         }
-        return element;
+        return element as HTMLElement;
       };
       const sample = () => {
         const turns: Record<string, number> = {};
