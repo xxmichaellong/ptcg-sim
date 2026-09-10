@@ -7,6 +7,7 @@ export interface RemoteRoomSettingsProps {
   readonly onDarkModeChange: (enabled: boolean) => void;
   readonly onZoneOutlinesChange: (visible: boolean) => void;
   readonly onHideOpponentHandChange: (hidden: boolean) => void;
+  readonly onChangeBackground: () => void;
 }
 
 /** The source page's exact mark, inlined to avoid its third-party image request. */
@@ -32,6 +33,7 @@ export const RemoteRoomSettings = ({
   onDarkModeChange,
   onZoneOutlinesChange,
   onHideOpponentHandChange,
+  onChangeBackground,
 }: RemoteRoomSettingsProps) => (
   <section
     id="settings"
@@ -74,6 +76,15 @@ export const RemoteRoomSettings = ({
         </label>
       </div>
     </div>
+    <button
+      id="changeBackgroundButton"
+      type="button"
+      className="neutral-color"
+      onClick={onChangeBackground}
+    >
+      Change background
+    </button>
+    <br />
     <div id="keybindReminder">
       Hold (<span className="shift-font">shift</span>) to view keybinds
     </div>

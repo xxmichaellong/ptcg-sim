@@ -1734,6 +1734,21 @@ prizes`, and `Look/cover hand`. Each action emits one replacement scene and
      repainted returned lobby fields white; the dark selector now includes the
      lobby-sidebox scope, and the same computed-color assertions are retained as
      the corrective browser proof.
+109. The project owner accepted the narrow ADR-013 legacy-parity path for Change
+     background. Its exact source control and prompt accept `blank`, randomized
+     `theme`, or any player-pasted image URL. Image values preload before paint;
+     invalid loads retain the prior background and show the source error. A
+     latest-request/teardown guard prevents stale completion, while the selected
+     value stays above lobby/live/replay/Leave and resets with the page. This is
+     route-only DOM/CSS presentation, not `BoardPreferences`: the URL never
+     reaches Pixi, room commands, authority, peers, replay, storage, or telemetry.
+     The selecting browser's direct request and resulting host-visible network
+     metadata are explicitly accepted; arbitrary live card/back assets remain
+     outside this exception. Unit/component coverage pins prompt keywords,
+     arbitrary load/failure/cancellation, single-layer CSS escaping, retention,
+     and zero session effects; the multi-context browser journey intercepts and
+     renders an actual external URL for one player only and retains it after
+     Leave.
 
 The first browser run exposed a React integration defect that DOM emulation did
 not: the nested renderer root used `flushSync()` and synchronous `unmount()`
@@ -1915,8 +1930,9 @@ wiring:
 - a manual screen-reader audit beyond the automated replay-local and transformed
   stack/zone-dialog semantic names, roles, keyboard traversal/wrap,
   focus-visible paint/return, exact face assets, and stable geometry;
-- actual external card/image hosts, redirects, CORS failures, oversized/corrupt
-  images, and the proxy/hybrid policy in ADR-013;
+- actual external card-face/back hosts, redirects, CORS failures,
+  oversized/corrupt assets, and their controlled proxy/hybrid policy outside
+  ADR-013's accepted player-selected page-background exception;
 - physical background freeze/resume and BFCache behavior plus non-Chromium
   monitor-DPR transitions; WebGL-only recovery/eviction cases remain gates for
   any future Pixi rollout;

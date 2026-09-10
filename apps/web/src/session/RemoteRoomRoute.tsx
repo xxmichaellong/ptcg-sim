@@ -17,11 +17,17 @@ import { RemoteRoomLiveControls } from './RemoteRoomLiveControls.js';
 import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
 import { RemoteRoomSettings } from './RemoteRoomSettings.js';
 import {
+  roomBackgroundCssImage,
+  type BrowserRoomBackgroundRequest,
+  type RoomBackground,
+} from './browser-room-background.js';
+import {
   downloadBrowserTextFile,
   requestBrowserFullscreen,
   serializeBattleLog,
 } from './browser-room-options.js';
 import { useDismissibleRoomOptions } from './useDismissibleRoomOptions.js';
+import { useRoomBackground } from './useRoomBackground.js';
 
 const ignoreIntent = (_intent: BoardIntent): void => undefined;
 const confirmConnectedRoomExit = (): boolean =>
@@ -44,6 +50,10 @@ export interface RemoteRoomRouteProps {
   /** Source-shaped local checkbox state; multiplayer projections stay unchanged. */
   readonly hideOpponentHand?: boolean;
   readonly onHideOpponentHandChange?: (hidden: boolean) => void;
+  /** Page-local visual only; no room, replay, renderer, or storage ownership. */
+  readonly background?: RoomBackground;
+  readonly onBackgroundChange?: (background: RoomBackground) => void;
+  readonly requestBackground?: BrowserRoomBackgroundRequest;
   readonly confirmHeaderLeave?: () => boolean;
   readonly downloadTextFile?: (filename: string, contents: string) => boolean;
   readonly requestFullscreen?: () => boolean;
@@ -63,11 +73,19 @@ export const RemoteRoomRoute = ({
   onPreferencesChange,
   hideOpponentHand: ownedHideOpponentHand,
   onHideOpponentHandChange,
+  background: ownedBackground,
+  onBackgroundChange,
+  requestBackground,
   confirmHeaderLeave = confirmConnectedRoomExit,
   downloadTextFile = downloadBrowserTextFile,
   requestFullscreen = requestBrowserFullscreen,
 }: RemoteRoomRouteProps) => {
   const options = useDismissibleRoomOptions();
+  const backgroundSelection = useRoomBackground({
+    ...(ownedBackground ? { background: ownedBackground } : {}),
+    ...(onBackgroundChange ? { onBackgroundChange } : {}),
+    ...(requestBackground ? { requestBackground } : {}),
+  });
   const [activePanel, setActivePanel] = useState<'room' | 'settings'>('room');
   const [localPreferences, setLocalPreferences] = useState<
     BoardPreferences | undefined
@@ -122,6 +140,20 @@ export const RemoteRoomRoute = ({
             }`}
             data-app-route="remote-room"
             data-dark-mode={String(effectivePreferences.darkMode)}
+            data-room-background={
+              backgroundSelection.background?.kind ?? 'default'
+            }
+            style={
+              backgroundSelection.background
+                ? {
+                    backgroundImage: roomBackgroundCssImage(
+                      backgroundSelection.background
+                    ),
+                    backgroundSize: '100% 100%',
+                    backgroundRepeat: 'no-repeat',
+                  }
+                : undefined
+            }
           >
             <section className="board-column" aria-label="Game board">
               <RemoteSessionBoard
@@ -300,6 +332,7 @@ export const RemoteRoomRoute = ({
                 onDarkModeChange={setDarkMode}
                 onZoneOutlinesChange={setZoneOutlines}
                 onHideOpponentHandChange={setHideOpponentHand}
+                onChangeBackground={backgroundSelection.chooseBackground}
               />
             </aside>
           </main>

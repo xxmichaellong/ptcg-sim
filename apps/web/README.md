@@ -97,8 +97,12 @@ protocol traffic and reset on document reload. The source Solo-only hand
 checkbox and static keybind/contact content are also restored; on this
 multiplayer-only route the hand value is explicitly local and cannot alter the
 server-projected view. Its source Twitter mark is inline rather than a
-third-party image request. Custom background remains later parity work behind
-ADR-013. The renderer-neutral preferences include default-visible zone/stadium
+third-party image request. The source Change background control is also restored
+under the accepted narrow ADR-013 exception: `blank`, randomized `theme`, and
+arbitrary player-pasted URLs preload in the browser and paint only the local
+route. The URL is not persisted or sent to the renderer, room, replay, server,
+peer, or telemetry; direct host contact is the explicitly accepted parity
+tradeoff. The renderer-neutral preferences include default-visible zone/stadium
 outlines: hiding them removes only the legacy translucent paint while retaining
 the same accessible hit regions.
 

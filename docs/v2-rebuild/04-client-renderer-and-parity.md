@@ -1617,8 +1617,18 @@ multiplayer-only, so the checkbox retains its local checked state across the
 same lobby/room/replay lifetime but deliberately never transforms the
 server-projected opponent hand, sends a command, or enters `BoardPreferences`.
 The contact link retains its source URL while its exact source Twitter SVG is
-inlined, eliminating the former third-party image fetch. Change background is
-the only remaining Settings control and stays behind ADR-013.
+inlined, eliminating the former third-party image fetch.
+The final Settings slice implements accepted ADR-013 for the source Change
+background control. The exact prompt accepts `blank`, randomized `theme`, or any
+player-pasted URL. Image values preload before replacing the existing route
+background; failed loads preserve the old value and show the source error.
+Latest-request and teardown guards make stale completion inert. The local value
+survives lobby/live/replay/Leave inside the mounted lobby owner and resets on
+document teardown. It is deliberately outside `BoardPreferences` and the board
+renderer: no URL reaches Pixi, protocol, authority, peer projections, replay,
+storage, or telemetry. The selecting browser does contact the supplied host,
+which is the explicitly accepted legacy-parity exception; remotely selected
+card/back assets remain subject to the stronger controlled-image policy below.
 
 ## Rendering cadence and performance
 

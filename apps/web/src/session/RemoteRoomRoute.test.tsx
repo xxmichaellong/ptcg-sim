@@ -155,6 +155,10 @@ describe('RemoteRoomRoute', () => {
     const confirmHeaderLeave = vi.fn(() => false);
     const downloadTextFile = vi.fn(() => true);
     const requestFullscreen = vi.fn(() => true);
+    const requestBackground = vi.fn(async () => ({
+      kind: 'image' as const,
+      url: 'https://images.example.test/table.png',
+    }));
     const host = document.createElement('div');
     document.body.append(host);
     const root = createRoot(host);
@@ -170,6 +174,7 @@ describe('RemoteRoomRoute', () => {
           confirmHeaderLeave={confirmHeaderLeave}
           downloadTextFile={downloadTextFile}
           requestFullscreen={requestFullscreen}
+          requestBackground={requestBackground}
         />
       )
     );
@@ -226,6 +231,9 @@ describe('RemoteRoomRoute', () => {
     expect(host.querySelector('#darkModeCheckbox')).not.toBeNull();
     expect(host.querySelector('#showZonesCheckbox')).not.toBeNull();
     expect(host.querySelector('#hideHandCheckbox')).not.toBeNull();
+    expect(host.querySelector('#changeBackgroundButton')?.textContent).toBe(
+      'Change background'
+    );
     expect(host.textContent).toContain('Dark mode');
     expect(host.textContent).toContain('Hide containers');
     expect(host.textContent).toContain("Hide opponent's hand (Solo mode)");
@@ -237,6 +245,24 @@ describe('RemoteRoomRoute', () => {
     expect(contact.target).toBe('blank');
     expect(contact.rel).toBe('noopener noreferrer');
     expect(contact.querySelector('svg')).not.toBeNull();
+
+    await act(async () => {
+      (
+        host.querySelector('#changeBackgroundButton') as HTMLButtonElement
+      ).click();
+      await flushConsumers();
+    });
+    expect(requestBackground).toHaveBeenCalledOnce();
+    expect(requestBackground.mock.calls[0]?.[0]?.signal).toBeInstanceOf(
+      AbortSignal
+    );
+    expect(host.querySelector('main')?.dataset.roomBackground).toBe('image');
+    expect(
+      (host.querySelector('main') as HTMLElement).style.backgroundImage
+    ).toBe('url("https://images.example.test/table.png")');
+    expect(boardHarness.props?.preferences).toBeUndefined();
+    expect(socket.sent).toHaveLength(sentBeforeSettings);
+    expect(onSubmission).not.toHaveBeenCalled();
 
     await act(async () =>
       (host.querySelector('#darkModeCheckbox') as HTMLInputElement).click()
@@ -268,6 +294,7 @@ describe('RemoteRoomRoute', () => {
     expect(
       (host.querySelector('#hideHandCheckbox') as HTMLInputElement).checked
     ).toBe(true);
+    expect(host.querySelector('main')?.dataset.roomBackground).toBe('image');
     expect(boardHarness.props?.preferences).toBe(preferencesBeforeHideHand);
     expect(socket.sent).toHaveLength(sentBeforeSettings);
     expect(onSubmission).not.toHaveBeenCalled();

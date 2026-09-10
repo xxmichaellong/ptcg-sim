@@ -15,6 +15,7 @@ import {
   type RemoteRoomLobbyDependencies,
 } from './RemoteRoomLobby.js';
 import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
+import type { RoomBackground } from './browser-room-background.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -28,6 +29,9 @@ const roomRouteHarness = vi.hoisted(() => ({
   hideOpponentHand: false,
   onHideOpponentHandChange: undefined as
     ((hidden: boolean) => void) | undefined,
+  background: undefined as RoomBackground | undefined,
+  onBackgroundChange: undefined as
+    ((background: RoomBackground) => void) | undefined,
 }));
 
 vi.mock('../RendererSpikeBoard.js', () => ({
@@ -45,6 +49,8 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     onPreferencesChange,
     hideOpponentHand,
     onHideOpponentHandChange,
+    background,
+    onBackgroundChange,
   }: {
     readonly runtime: { readonly label?: string };
     readonly onLeave?: () => void;
@@ -52,11 +58,15 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     readonly onPreferencesChange?: (preferences: BoardPreferences) => void;
     readonly hideOpponentHand?: boolean;
     readonly onHideOpponentHandChange?: (hidden: boolean) => void;
+    readonly background?: RoomBackground;
+    readonly onBackgroundChange?: (background: RoomBackground) => void;
   }) => {
     roomRouteHarness.preferences = preferences;
     roomRouteHarness.onPreferencesChange = onPreferencesChange;
     roomRouteHarness.hideOpponentHand = hideOpponentHand ?? false;
     roomRouteHarness.onHideOpponentHandChange = onHideOpponentHandChange;
+    roomRouteHarness.background = background;
+    roomRouteHarness.onBackgroundChange = onBackgroundChange;
     return (
       <main data-app-route="test-remote-room">
         {runtime.label}
@@ -210,12 +220,14 @@ const creationResult = (roomRuntime = runtime({ label: 'creator' })) => {
 
 const lobbyDependencies = (
   invitationCustody: ReturnType<typeof custody>,
-  createRoom: ReturnType<typeof vi.fn>
+  createRoom: ReturnType<typeof vi.fn>,
+  requestBackground?: RemoteRoomLobbyDependencies['requestBackground']
 ): RemoteRoomLobbyDependencies => ({
   createRoom:
     createRoom as unknown as RemoteRoomLobbyDependencies['createRoom'],
   createInvitationJoinCustody: () => invitationCustody,
   fallbackDisplayName: () => 'Froakie',
+  ...(requestBackground ? { requestBackground } : {}),
 });
 
 const mount = async (
@@ -257,13 +269,19 @@ describe('remote room lobby wiring', () => {
     roomRouteHarness.onPreferencesChange = undefined;
     roomRouteHarness.hideOpponentHand = false;
     roomRouteHarness.onHideOpponentHandChange = undefined;
+    roomRouteHarness.background = undefined;
+    roomRouteHarness.onBackgroundChange = undefined;
   });
 
   it('preserves the legacy multiplayer control shape without creating a room on mount', async () => {
     const invitation = custody();
     const createRoom = vi.fn();
+    const requestBackground = vi.fn(async () => ({
+      kind: 'image' as const,
+      url: 'https://images.example.test/lobby.png',
+    }));
     const { host, root } = await mount(
-      lobbyDependencies(invitation, createRoom)
+      lobbyDependencies(invitation, createRoom, requestBackground)
     );
 
     expect(
@@ -319,6 +337,9 @@ describe('remote room lobby wiring', () => {
     );
     expect(lobbyBoardHarness.preferences).toBe(preferencesBeforeHideHand);
     expect(host.textContent).toContain('Hold (shift) to view keybinds');
+    expect(element(host, '#changeBackgroundButton').textContent).toBe(
+      'Change background'
+    );
     expect(element<HTMLAnchorElement>(host, '#twitterDescription a').href).toBe(
       'https://twitter.com/xxmichaellong'
     );
@@ -326,6 +347,21 @@ describe('remote room lobby wiring', () => {
       element<HTMLElement>(host, '[data-app-route="remote-room-lobby"]').dataset
         .darkMode
     ).toBe('true');
+    await act(async () => {
+      element<HTMLButtonElement>(host, '#changeBackgroundButton').click();
+      await flush();
+    });
+    expect(requestBackground).toHaveBeenCalledOnce();
+    expect(
+      element<HTMLElement>(host, '[data-app-route="remote-room-lobby"]').style
+        .backgroundImage
+    ).toBe('url("https://images.example.test/lobby.png")');
+    expect(lobbyBoardHarness.preferences).toEqual({
+      reducedMotion: false,
+      highContrast: false,
+      darkMode: true,
+      showZoneOutlines: false,
+    });
     expect(createRoom).not.toHaveBeenCalled();
     await act(async () =>
       element<HTMLButtonElement>(host, '#p2Button').click()
@@ -589,12 +625,17 @@ describe('remote room lobby wiring', () => {
     const secondInvitation = custody();
     const invitations = [firstInvitation, secondInvitation];
     const created = creationResult();
+    const requestBackground = vi.fn(async () => ({
+      kind: 'image' as const,
+      url: 'https://images.example.test/retained.png',
+    }));
     const dependencies: RemoteRoomLobbyDependencies = {
       createRoom: vi.fn(
         async () => created.value
       ) as unknown as RemoteRoomLobbyDependencies['createRoom'],
       createInvitationJoinCustody: () => invitations.shift()!,
       fallbackDisplayName: () => 'Froakie',
+      requestBackground,
     };
     const { host, root } = await mount(dependencies);
 
@@ -604,6 +645,10 @@ describe('remote room lobby wiring', () => {
     await act(async () =>
       element<HTMLInputElement>(host, '#hideHandCheckbox').click()
     );
+    await act(async () => {
+      element<HTMLButtonElement>(host, '#changeBackgroundButton').click();
+      await flush();
+    });
     await act(async () =>
       element<HTMLButtonElement>(host, '#p2Button').click()
     );
@@ -628,6 +673,10 @@ describe('remote room lobby wiring', () => {
     );
     expect(roomRouteHarness.preferences).toEqual(retainedPreferences);
     expect(roomRouteHarness.hideOpponentHand).toBe(true);
+    expect(roomRouteHarness.background).toEqual({
+      kind: 'image',
+      url: 'https://images.example.test/retained.png',
+    });
 
     await act(async () =>
       element<HTMLButtonElement>(host, '#testLeaveRoom').click()
@@ -647,6 +696,10 @@ describe('remote room lobby wiring', () => {
     expect(element<HTMLInputElement>(host, '#hideHandCheckbox').checked).toBe(
       true
     );
+    expect(
+      element<HTMLElement>(host, '[data-app-route="remote-room-lobby"]').style
+        .backgroundImage
+    ).toBe('url("https://images.example.test/retained.png")');
     expect(created.dispose).toHaveBeenCalledOnce();
     expect(firstInvitation.dispose).toHaveBeenCalledOnce();
     expect(secondInvitation.dispose).not.toHaveBeenCalled();

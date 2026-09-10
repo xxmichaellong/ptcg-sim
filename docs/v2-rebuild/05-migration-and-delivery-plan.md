@@ -594,7 +594,10 @@ Work:
   containers across lobby/live/replay without authority or storage traffic;
   the follow-on slice restores the source Solo-only hand checkbox as an explicit
   multiplayer no-op plus static keybind/contact content without disclosure or a
-  third-party image request. Change background remains behind ADR-013.
+  third-party image request. Accepted ADR-013 restores Change background through
+  a direct player-selected, preloaded, page-local DOM/CSS image. The URL is never
+  synchronized or persisted; the selecting browser's direct contact with that
+  host is an explicitly accepted parity tradeoff.
 - Retain the implemented layered abuse controls: a coarse location-local edge
   creation budget plus exact persisted per-room invitation, ticket, upgrade, and
   `Hello` budgets. Retain the atomic five-minute unclaimed lifecycle/alarm,

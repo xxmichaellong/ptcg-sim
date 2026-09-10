@@ -22,6 +22,11 @@ import {
 import { RemoteRoomRoute } from './RemoteRoomRoute.js';
 import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
 import { RemoteRoomSettings } from './RemoteRoomSettings.js';
+import {
+  roomBackgroundCssImage,
+  type BrowserRoomBackgroundRequest,
+} from './browser-room-background.js';
+import { useRoomBackground } from './useRoomBackground.js';
 
 const LEGACY_FALLBACK_NAMES = Object.freeze([
   'Froakie',
@@ -95,6 +100,7 @@ export interface RemoteRoomLobbyDependencies {
   readonly createRoom: typeof createRemoteRoom;
   readonly createInvitationJoinCustody: () => InvitationJoinCustody;
   readonly fallbackDisplayName: () => string;
+  readonly requestBackground?: BrowserRoomBackgroundRequest;
 }
 
 const defaultDependencies: RemoteRoomLobbyDependencies = {
@@ -230,6 +236,11 @@ export const RemoteRoomLobby = ({
     BoardPreferences | undefined
   >();
   const [hideOpponentHand, setHideOpponentHand] = useState(false);
+  const backgroundSelection = useRoomBackground({
+    ...(dependencies.requestBackground
+      ? { requestBackground: dependencies.requestBackground }
+      : {}),
+  });
   const effectivePreferences = preferences ?? DEFAULT_BOARD_PREFERENCES;
   const setDarkMode = (enabled: boolean): void => {
     setPreferences((current) => ({
@@ -493,6 +504,13 @@ export const RemoteRoomLobby = ({
           onPreferencesChange={setPreferences}
           hideOpponentHand={hideOpponentHand}
           onHideOpponentHandChange={setHideOpponentHand}
+          {...(backgroundSelection.background
+            ? { background: backgroundSelection.background }
+            : {})}
+          onBackgroundChange={backgroundSelection.setBackground}
+          {...(dependencies.requestBackground
+            ? { requestBackground: dependencies.requestBackground }
+            : {})}
         />
       </>
     );
@@ -506,6 +524,18 @@ export const RemoteRoomLobby = ({
       }`}
       data-app-route="remote-room-lobby"
       data-dark-mode={String(effectivePreferences.darkMode)}
+      data-room-background={backgroundSelection.background?.kind ?? 'default'}
+      style={
+        backgroundSelection.background
+          ? {
+              backgroundImage: roomBackgroundCssImage(
+                backgroundSelection.background
+              ),
+              backgroundSize: '100% 100%',
+              backgroundRepeat: 'no-repeat',
+            }
+          : undefined
+      }
     >
       <section className="board-column" aria-label="Game board">
         <RendererSpikeBoard
@@ -656,6 +686,7 @@ export const RemoteRoomLobby = ({
           onDarkModeChange={setDarkMode}
           onZoneOutlinesChange={setZoneOutlines}
           onHideOpponentHandChange={setHideOpponentHand}
+          onChangeBackground={backgroundSelection.chooseBackground}
         />
       </aside>
     </main>

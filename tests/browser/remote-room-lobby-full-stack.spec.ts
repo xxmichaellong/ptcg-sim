@@ -3,6 +3,12 @@ import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 const ROOM_CODE = /^[A-HJ-NP-Z2-9]{12}$/u;
 const EXPECTED_ROTATION_CONSOLE_ERROR =
   'console: Failed to load resource: the server responded with a status of 403 (Forbidden)';
+const CUSTOM_BACKGROUND_URL =
+  'https://images.example.test/player-two-background.png';
+const ONE_PIXEL_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAF/gL+3MxZ5wAAAABJRU5ErkJggg==',
+  'base64'
+);
 
 interface OpenedLobby {
   readonly page: Page;
@@ -330,6 +336,32 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     );
     await expect(contact).toHaveAttribute('target', 'blank');
     await expect(contact.locator('svg')).toHaveCount(1);
+    const roomRoute = playerTwo.page.locator('[data-app-route="remote-room"]');
+    let customBackgroundRequests = 0;
+    await playerTwo.page.route(CUSTOM_BACKGROUND_URL, async (route) => {
+      customBackgroundRequests += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'image/png',
+        body: ONE_PIXEL_PNG,
+      });
+    });
+    playerTwo.page.once('dialog', async (dialog) => {
+      expect(dialog.message()).toBe(
+        "Paste your image URL, or type 'blank' or 'theme':"
+      );
+      await dialog.accept(CUSTOM_BACKGROUND_URL);
+    });
+    await playerTwo.page.locator('#changeBackgroundButton').click();
+    await expect(roomRoute).toHaveAttribute('data-room-background', 'image');
+    await expect(roomRoute).toHaveCSS(
+      'background-image',
+      `url("${CUSTOM_BACKGROUND_URL}")`
+    );
+    expect(customBackgroundRequests).toBe(1);
+    await expect(
+      creator.page.locator('[data-app-route="remote-room"]')
+    ).toHaveAttribute('data-room-background', 'default');
     await playerTwo.page.locator('#hideHandCheckbox').check();
     await expect(boardSurface).toHaveAttribute('data-dark-mode', 'false');
     await expect(boardSurface).toHaveAttribute(
@@ -338,7 +370,6 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     );
     await playerTwo.page.locator('#darkModeCheckbox').check();
     await expect(boardSurface).toHaveAttribute('data-dark-mode', 'true');
-    const roomRoute = playerTwo.page.locator('[data-app-route="remote-room"]');
     await expect(roomRoute).toHaveAttribute('data-dark-mode', 'true');
     await expect(roomRoute).toHaveCSS('background-color', 'rgb(8, 18, 18)');
     await expect(playerTwo.page.locator('#settings')).toHaveCSS(
@@ -462,6 +493,9 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect(playerTwo.page.locator('#darkModeCheckbox')).toBeChecked();
     await expect(playerTwo.page.locator('#showZonesCheckbox')).toBeChecked();
     await expect(playerTwo.page.locator('#hideHandCheckbox')).toBeChecked();
+    await expect(
+      playerTwo.page.locator('[data-app-route="remote-room-lobby"]')
+    ).toHaveCSS('background-image', `url("${CUSTOM_BACKGROUND_URL}")`);
 
     expect(creator.errors).toEqual([]);
     expect(playerTwo.errors).toEqual([]);
